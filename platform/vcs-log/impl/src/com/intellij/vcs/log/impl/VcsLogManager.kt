@@ -276,10 +276,9 @@ open class VcsLogManager @Internal constructor(
    * Release all resources associated with the manager
    *
    * @param useRawSwingDispatcher on app shutdown the proper EDT dispatcher might not be available
-   * @param clearStorage clear the persistent storage (indexes and stuff)
    */
   @Internal
-  suspend fun dispose(useRawSwingDispatcher: Boolean = false, clearStorage: Boolean = false) {
+  suspend fun dispose(useRawSwingDispatcher: Boolean = false) {
     if (!startDisposing()) return
     withContext(NonCancellable) {
       cs.cancel()
@@ -288,26 +287,18 @@ open class VcsLogManager @Internal constructor(
         disposeUi()
       }
       withContext(Dispatchers.Default) {
-        val storageToClear = if (clearStorage) storageIds() else emptyList()
         dataManager.awaitDispose()
-
-        for (storageId in storageToClear) {
-          try {
-            val deleted = withContext(Dispatchers.IO) { storageId.cleanupAllStorageFiles() }
-            if (deleted) {
-              LOG.info("Deleted ${storageId.storagePath}")
-            }
-            else {
-              LOG.error("Could not delete ${storageId.storagePath}")
-            }
-          }
-          catch (t: Throwable) {
-            LOG.error(t)
-          }
-        }
       }
       LOG.debug("Disposed ${name}")
     }
+  }
+
+  internal val hasPersistentStorage: Boolean
+    get() = dataManager.hasPersistentStorage
+
+  internal suspend fun clearPersistentStorage() {
+    require(isDisposed) { "Cannot clear persistent storage of a not disposed VcsLogManager"}
+    dataManager.clearPersistentStorage()
   }
 
   private fun refreshLogOnVcsEvents(

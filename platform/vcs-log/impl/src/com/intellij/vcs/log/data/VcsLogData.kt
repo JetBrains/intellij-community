@@ -29,6 +29,7 @@ import com.intellij.vcs.log.impl.VcsLogCachesInvalidator
 import com.intellij.vcs.log.impl.VcsLogErrorHandler
 import com.intellij.vcs.log.impl.VcsLogStorageLocker
 import com.intellij.vcs.log.util.PersistentUtil
+import com.intellij.vcs.log.util.StorageId
 import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.log.util.VcsUserUtil.VcsUserHashingStrategy
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet
@@ -331,6 +332,40 @@ class VcsLogData @ApiStatus.Internal constructor(
     val index = VcsLogPersistentIndex(project, logProviders, indexers, storage, indexBackend, progress, errorHandler, dataDisposable)
     return storage to index
   }
+
+  internal val hasPersistentStorage: Boolean
+    get() = collectStorageIds().isNotEmpty()
+
+  internal suspend fun clearPersistentStorage() {
+    require(isDisposed) { "Cannot clear persistent storage of a non-disposed data manager" }
+    awaitDispose()
+    storageLocker.acquireLock(storageId)
+    try {
+      for (persistentId in collectStorageIds()) {
+        try {
+          val deleted = withContext(Dispatchers.IO) { persistentId.cleanupAllStorageFiles() }
+          if (deleted) {
+            LOG.info("Deleted ${persistentId.storagePath}")
+          }
+          else {
+            LOG.error("Could not delete ${persistentId.storagePath}")
+          }
+        }
+        catch (t: Throwable) {
+          LOG.error(t)
+        }
+      }
+    }
+    finally {
+      storageLocker.releaseLock(storageId)
+    }
+  }
+
+  private fun collectStorageIds(): List<StorageId> =
+    linkedSetOf((index as? VcsLogPersistentIndex)?.indexStorageId,
+                (storage as? VcsLogStorageImpl)?.refsStorageId,
+                (storage as? VcsLogStorageImpl)?.hashesStorageId)
+      .filterNotNull()
 
   private inner class MyVcsLogUserResolver : VcsLogUserResolverBase(), Disposable {
     private val listener = DataPackChangeListener {

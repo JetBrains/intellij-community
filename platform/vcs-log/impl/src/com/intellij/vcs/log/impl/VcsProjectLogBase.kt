@@ -30,11 +30,8 @@ import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.VcsLogProvider
 import com.intellij.vcs.log.data.VcsLogData
-import com.intellij.vcs.log.data.VcsLogStorageImpl
 import com.intellij.vcs.log.data.index.PhmVcsLogStorageBackend
 import com.intellij.vcs.log.data.index.VcsLogBigRepositoriesList
-import com.intellij.vcs.log.data.index.VcsLogPersistentIndex
-import com.intellij.vcs.log.util.StorageId
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -166,8 +163,8 @@ abstract class VcsProjectLogBase<M : VcsLogManager>(
       }
     }
 
-  final override suspend fun reinit(invalidateCaches: Boolean) {
-    reinitAsync(invalidateCaches).await()
+  final override suspend fun invalidateCaches() {
+    reinitAsync(invalidateCaches = true).await()
   }
 
   private fun reinitAsync(invalidateCaches: Boolean = false) =
@@ -189,7 +186,10 @@ abstract class VcsProjectLogBase<M : VcsLogManager>(
     withContext(Dispatchers.EDT) {
       notifyLogDisposed(manager)
     }
-    manager.dispose(clearStorage = invalidateCaches)
+    manager.dispose()
+    if (invalidateCaches) {
+      manager.clearPersistentStorage()
+    }
   }
 
   private suspend fun getOrCreateLogManager(forceInit: Boolean): M? {
@@ -325,12 +325,6 @@ abstract class VcsProjectLogBase<M : VcsLogManager>(
 
 private const val INVALIDATE_CACHES_COUNT = 5
 private const val DISABLE_INDEX_COUNT = 2 * INVALIDATE_CACHES_COUNT
-
-internal fun VcsLogManager.storageIds(): List<StorageId> {
-  return linkedSetOf((dataManager.index as? VcsLogPersistentIndex)?.indexStorageId,
-                     (dataManager.storage as? VcsLogStorageImpl)?.refsStorageId,
-                     (dataManager.storage as? VcsLogStorageImpl)?.hashesStorageId).filterNotNull()
-}
 
 /**
  * @param force run the initialization ignoring the invalid caches and the possible init delay in the manager
