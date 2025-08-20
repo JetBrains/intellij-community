@@ -6,8 +6,10 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -68,8 +70,7 @@ open class VcsLogManager @Internal constructor(
   val colorManager: VcsLogColorManager = VcsLogColorManagerFactory.create(logProviders.keys)
   private val statusBarProgress = VcsLogStatusBarProgress(project, logProviders, dataManager.index.indexingRoots, dataManager.progress)
 
-  private val disposed = AtomicBoolean(false)
-  val isDisposed: Boolean get() = disposed.get()
+  val isDisposed: Boolean get() = !cs.isActive
 
   init {
     cs.launch(start = CoroutineStart.UNDISPATCHED) {
@@ -80,7 +81,17 @@ open class VcsLogManager @Internal constructor(
         awaitCancellation()
       }
       finally {
-        Disposer.dispose(refresherDisposable)
+        LOG.debug { "Disposing $name" }
+        withContext(NonCancellable) {
+          Disposer.dispose(refresherDisposable)
+
+          withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+            runCatching {
+              disposeUi()
+            }.getOrLogException(LOG)
+          }
+          LOG.debug { "Disposed ${name}" }
+        }
       }
     }
   }
@@ -263,32 +274,12 @@ open class VcsLogManager @Internal constructor(
     Disposer.dispose(statusBarProgress)
   }
 
-  private fun startDisposing(): Boolean {
-    val wasNotStartedBefore = disposed.compareAndSet(false, true)
-    if (!wasNotStartedBefore) {
-      LOG.warn("$name is already disposed. Ignoring dispose request", Throwable("Dispose trace for $name"))
-      return false
-    }
-    return true
-  }
-
   /**
-   * Release all resources associated with the manager
+   * Manually release all resources associated with the manager
    */
   @Internal
   suspend fun dispose() {
-    if (!startDisposing()) return
-    LOG.debug { "Disposing $name" }
-    withContext(NonCancellable) {
-      cs.cancel()
-      withContext(Dispatchers.EDT) {
-        disposeUi()
-      }
-      withContext(Dispatchers.Default) {
-        dataManager.awaitDispose()
-      }
-      LOG.debug("Disposed ${name}")
-    }
+    cs.coroutineContext.job.cancelAndJoin()
   }
 
   internal val hasPersistentStorage: Boolean

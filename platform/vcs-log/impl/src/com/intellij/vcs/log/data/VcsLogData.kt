@@ -264,11 +264,6 @@ class VcsLogData @ApiStatus.Internal constructor(
     }, { isDisposed })
   }
 
-  @ApiStatus.Internal
-  suspend fun awaitDispose() {
-    cs.coroutineContext.job.cancelAndJoin()
-  }
-
   private suspend fun readCurrentUser(): Map<VirtualFile, VcsUser> =
     TelemetryManager.getInstance().getTracer(VcsScope).trace(VcsBackendTelemetrySpan.LogData.ReadingCurrentUser) {
       buildMap {
@@ -356,7 +351,7 @@ class VcsLogData @ApiStatus.Internal constructor(
 
   internal suspend fun clearPersistentStorage() {
     require(isDisposed) { "Cannot clear persistent storage of a non-disposed data manager" }
-    awaitDispose()
+    cs.coroutineContext.job.cancelAndJoin()
     storageLocker.acquireLock(storageId)
     try {
       for (persistentId in collectStorageIds()) {

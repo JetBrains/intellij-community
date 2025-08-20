@@ -66,7 +66,7 @@ abstract class VcsProjectLogBase<M : VcsLogManager>(
       }
       finally {
         mutex.withLock {
-          _logManagerState.getAndUpdate { null }?.dispose()
+          _logManagerState.value = null
         }
       }
     }
