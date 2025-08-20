@@ -964,7 +964,7 @@ private fun computeKotlincOptions(buildFile: BuildFile, module: ModuleDescriptor
   handleArgument(K2JVMCompilerArguments::pluginOptions) { pluginOptions ->
     if (pluginOptions?.isNotEmpty() == true) {
       options.put("plugin_options", pluginOptions.map {
-        it.replace("${module.bazelBuildFileDir.invariantSeparatorsPathString}/", "")
+        it.replace("${module.bazelBuildFileDir.invariantSeparatorsPathString}/", "${'$'}BASE_DIR$/${module.relativePathFromProjectRoot.invariantSeparatorsPathString}/")
       })
     }
   }
