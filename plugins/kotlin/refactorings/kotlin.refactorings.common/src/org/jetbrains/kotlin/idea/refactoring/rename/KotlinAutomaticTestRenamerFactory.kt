@@ -18,7 +18,7 @@ class KotlinAutomaticTestRenamerFactory : AutomaticTestRenamerFactory() {
         if (element is KtFile) {
             return element.declarations.none { it is KtClassOrObject && KotlinPsiBasedTestFramework.findTestFramework(it) != null }
         }
-        val namedDeclaration = element as? KtNamedDeclaration ?: return false
+        val namedDeclaration = element as? KtClassOrObject ?: return false
         return KotlinPsiBasedTestFramework.findTestFramework(namedDeclaration) == null
     }
 
