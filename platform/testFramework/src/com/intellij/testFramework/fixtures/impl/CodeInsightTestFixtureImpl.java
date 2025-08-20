@@ -129,6 +129,7 @@ import com.intellij.refactoring.rename.*;
 import com.intellij.refactoring.rename.api.RenameTarget;
 import com.intellij.refactoring.rename.impl.RenameKt;
 import com.intellij.testFramework.*;
+import com.intellij.testFramework.common.EditorCaretTestUtil;
 import com.intellij.testFramework.fixtures.*;
 import com.intellij.testFramework.utils.inlays.CaretAndInlaysInfo;
 import com.intellij.testFramework.utils.inlays.InlayHintsChecker;
@@ -153,7 +154,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.annotations.Unmodifiable;
-import org.junit.Assert;
 
 import java.io.File;
 import java.io.IOException;
@@ -2365,7 +2365,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     private final String filePath;
     private final String newFileText;
     private final String newDocumentText;
-    private final EditorTestUtil.CaretAndSelectionState caretState;
+    private final EditorCaretTestUtil.CaretAndSelectionState caretState;
 
     private SelectionAndCaretMarkupLoader(@NotNull String fileText, @NotNull String documentText, String filePath) {
       this.filePath = filePath;

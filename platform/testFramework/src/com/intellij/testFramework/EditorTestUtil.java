@@ -5,7 +5,6 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPassFactory;
 import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.ide.DataManager;
-import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.lang.folding.LanguageFolding;
@@ -46,6 +45,9 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
+import com.intellij.testFramework.common.EditorCaretTestUtil;
+import com.intellij.testFramework.common.EditorCaretTestUtil.CaretInfo;
+import com.intellij.testFramework.common.EditorCaretTestUtil.CaretAndSelectionState;
 import com.intellij.platform.testFramework.core.FileComparisonFailedError;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiDocumentManager;
@@ -80,13 +82,13 @@ import static org.junit.Assert.*;
  * @author Maxim.Mossienko
  */
 public final class EditorTestUtil {
-  public static final String CARET_TAG = "<caret>";
-  public static final String CARET_TAG_PREFIX = CARET_TAG.substring(0, CARET_TAG.length() - 1);
+  public static final String CARET_TAG = EditorCaretTestUtil.CARET_TAG;
+  public static final String CARET_TAG_PREFIX = EditorCaretTestUtil.CARET_TAG_PREFIX;
 
-  public static final String SELECTION_START_TAG = "<selection>";
-  public static final String SELECTION_END_TAG = "</selection>";
-  public static final String BLOCK_SELECTION_START_TAG = "<block>";
-  public static final String BLOCK_SELECTION_END_TAG = "</block>";
+  public static final String SELECTION_START_TAG = EditorCaretTestUtil.SELECTION_START_TAG;
+  public static final String SELECTION_END_TAG = EditorCaretTestUtil.SELECTION_END_TAG;
+  public static final String BLOCK_SELECTION_START_TAG = EditorCaretTestUtil.BLOCK_SELECTION_START_TAG;
+  public static final String BLOCK_SELECTION_END_TAG = EditorCaretTestUtil.BLOCK_SELECTION_END_TAG;
 
   public static final char BACKSPACE_FAKE_CHAR = '\uFFFF';
   public static final char SMART_ENTER_FAKE_CHAR = '\uFFFE';
@@ -361,7 +363,7 @@ public final class EditorTestUtil {
    * @see #extractCaretAndSelectionMarkers(Document, boolean)
    */
   public static @NotNull CaretAndSelectionState extractCaretAndSelectionMarkers(@NotNull Document document) {
-    return extractCaretAndSelectionMarkers(document, true);
+    return EditorCaretTestUtil.extractCaretAndSelectionMarkers(document, true);
   }
 
   /**
@@ -371,114 +373,18 @@ public final class EditorTestUtil {
    * @param processBlockSelection if {@code true}, &lt;block&gt; and &lt;/block&gt; tags describing a block selection state will also be extracted.
    */
   public static @NotNull CaretAndSelectionState extractCaretAndSelectionMarkers(@NotNull Document document, final boolean processBlockSelection) {
-    return WriteCommandAction.writeCommandAction(null).compute(() -> extractCaretAndSelectionMarkersImpl(document, processBlockSelection));
+    return EditorCaretTestUtil.extractCaretAndSelectionMarkers(document, processBlockSelection);
   }
 
   public static @NotNull CaretAndSelectionState extractCaretAndSelectionMarkersImpl(@NotNull Document document, boolean processBlockSelection) {
-    List<CaretInfo> carets = new ArrayList<>();
-    String fileText = document.getText();
-
-    RangeMarker blockSelectionStartMarker = null;
-    RangeMarker blockSelectionEndMarker = null;
-    if (processBlockSelection) {
-      int blockSelectionStart = fileText.indexOf(BLOCK_SELECTION_START_TAG);
-      int blockSelectionEnd = fileText.indexOf(BLOCK_SELECTION_END_TAG);
-      if ((blockSelectionStart ^ blockSelectionEnd) < 0) {
-        throw new IllegalArgumentException("Both block selection opening and closing tag must be present");
-      }
-      if (blockSelectionStart >= 0) {
-        blockSelectionStartMarker = document.createRangeMarker(blockSelectionStart, blockSelectionStart);
-        blockSelectionEndMarker = document.createRangeMarker(blockSelectionEnd, blockSelectionEnd);
-        document.deleteString(blockSelectionStartMarker.getStartOffset(), blockSelectionStartMarker.getStartOffset() + BLOCK_SELECTION_START_TAG.length());
-        document.deleteString(blockSelectionEndMarker.getStartOffset(), blockSelectionEndMarker.getStartOffset() + BLOCK_SELECTION_END_TAG.length());
-      }
-    }
-
-    boolean multiCaret = StringUtil.getOccurrenceCount(document.getText(), CARET_TAG) > 1
-                         || StringUtil.getOccurrenceCount(document.getText(), SELECTION_START_TAG) > 1;
-    int pos = 0;
-    while (pos < document.getTextLength()) {
-      fileText = document.getText();
-      int caretIndex = fileText.indexOf(CARET_TAG, pos);
-      int selStartIndex = fileText.indexOf(SELECTION_START_TAG, pos);
-      int selEndIndex = fileText.indexOf(SELECTION_END_TAG, pos);
-
-      if ((selStartIndex ^ selEndIndex) < 0) {
-        selStartIndex = -1;
-        selEndIndex = -1;
-      }
-      if (0 <= selEndIndex && selEndIndex < selStartIndex) {
-        throw new IllegalArgumentException("Wrong order of selection opening and closing tags");
-      }
-      if (caretIndex < 0 && selStartIndex < 0 && selEndIndex < 0) {
-        break;
-      }
-      if (multiCaret && 0 <= caretIndex && caretIndex < selStartIndex) {
-        selStartIndex = -1;
-        selEndIndex = -1;
-      }
-      if (multiCaret && caretIndex > selEndIndex && selEndIndex >= 0) {
-        caretIndex = -1;
-      }
-
-      final RangeMarker caretMarker = caretIndex >= 0 ? document.createRangeMarker(caretIndex, caretIndex) : null;
-      final RangeMarker selStartMarker = selStartIndex >= 0
-                                         ? document.createRangeMarker(selStartIndex, selStartIndex)
-                                         : null;
-      final RangeMarker selEndMarker = selEndIndex >= 0
-                                       ? document.createRangeMarker(selEndIndex, selEndIndex)
-                                       : null;
-
-      if (caretMarker != null) {
-        document.deleteString(caretMarker.getStartOffset(), caretMarker.getStartOffset() + CARET_TAG.length());
-      }
-      if (selStartMarker != null) {
-        document.deleteString(selStartMarker.getStartOffset(),
-                              selStartMarker.getStartOffset() + SELECTION_START_TAG.length());
-      }
-      if (selEndMarker != null) {
-        document.deleteString(selEndMarker.getStartOffset(),
-                              selEndMarker.getStartOffset() + SELECTION_END_TAG.length());
-      }
-      LogicalPosition caretPosition = null;
-      if (caretMarker != null) {
-        int line = document.getLineNumber(caretMarker.getStartOffset());
-        int column = caretMarker.getStartOffset() - document.getLineStartOffset(line);
-        caretPosition = new LogicalPosition(line, column);
-      }
-      carets.add(new CaretInfo(caretPosition,
-                                      selStartMarker == null || selEndMarker == null
-                                      ? null
-                                      : new TextRange(selStartMarker.getStartOffset(), selEndMarker.getEndOffset())));
-
-      pos = Math.max(caretMarker == null ? -1 : caretMarker.getStartOffset(), selEndMarker == null ? -1 : selEndMarker.getEndOffset());
-    }
-    if (carets.isEmpty()) {
-      carets.add(new CaretInfo(null, null));
-    }
-    TextRange blockSelection = null;
-    if (blockSelectionStartMarker != null) {
-      blockSelection = new TextRange(blockSelectionStartMarker.getStartOffset(), blockSelectionEndMarker.getStartOffset());
-    }
-    return new CaretAndSelectionState(Arrays.asList(carets.toArray(new CaretInfo[0])), blockSelection);
+    return EditorCaretTestUtil.extractCaretAndSelectionMarkersImpl(document, processBlockSelection);
   }
 
   /**
    * Applies given caret/selection state to the editor. Editor text must have been set up previously.
    */
   public static void setCaretsAndSelection(Editor editor, CaretAndSelectionState caretsState) {
-    CaretModel caretModel = editor.getCaretModel();
-    List<CaretState> states = new ArrayList<>(caretsState.carets.size());
-    for (CaretInfo caret : caretsState.carets) {
-      states.add(new CaretState(caret.position == null ? null : editor.offsetToLogicalPosition(caret.getCaretOffset(editor.getDocument())),
-                                caret.selection == null ? null : editor.offsetToLogicalPosition(caret.selection.getStartOffset()),
-                                caret.selection == null ? null : editor.offsetToLogicalPosition(caret.selection.getEndOffset())));
-    }
-    caretModel.setCaretsAndSelections(states);
-    if (caretsState.blockSelection != null) {
-      editor.getSelectionModel().setBlockSelection(editor.offsetToLogicalPosition(caretsState.blockSelection.getStartOffset()),
-                                                   editor.offsetToLogicalPosition(caretsState.blockSelection.getEndOffset()));
-    }
+    EditorCaretTestUtil.setCaretsAndSelection(editor, caretsState);
   }
 
   public static void verifyCaretAndSelectionState(Editor editor, CaretAndSelectionState caretState) {
@@ -491,8 +397,8 @@ public final class EditorTestUtil {
 
   public static void verifyCaretAndSelectionState(Editor editor, CaretAndSelectionState caretState, String message, String expectedFilePath) {
     boolean hasChecks = false;
-    for (int i = 0; i < caretState.carets.size(); i++) {
-      EditorTestUtil.CaretInfo expected = caretState.carets.get(i);
+    for (int i = 0; i < caretState.carets().size(); i++) {
+      CaretInfo expected = caretState.carets().get(i);
       if (expected.position != null || expected.selection != null) {
         hasChecks = true;
         break;
@@ -507,7 +413,7 @@ public final class EditorTestUtil {
     }
     catch (AssertionError e) {
       try {
-        String expected = CaretAndSelectionMarkup.renderExpectedState(editor, caretState.carets);
+        String expected = CaretAndSelectionMarkup.renderExpectedState(editor, caretState.carets());
         String actual = CaretAndSelectionMarkup.renderActualState(editor);
         if (expectedFilePath != null) {
           if (!expected.equals(actual)) {
@@ -529,9 +435,9 @@ public final class EditorTestUtil {
     String messageSuffix = message == null ? "" : (message + ": ");
     CaretModel caretModel = editor.getCaretModel();
     List<Caret> allCarets = new ArrayList<>(caretModel.getAllCarets());
-    assertEquals(messageSuffix + " Unexpected number of carets", caretState.carets.size(), allCarets.size());
-    for (int i = 0; i < caretState.carets.size(); i++) {
-      String caretDescription = caretState.carets.size() == 1 ? "" : "caret " + (i + 1) + "/" + caretState.carets.size() + " ";
+    assertEquals(messageSuffix + " Unexpected number of carets", caretState.carets().size(), allCarets.size());
+    for (int i = 0; i < caretState.carets().size(); i++) {
+      String caretDescription = caretState.carets().size() == 1 ? "" : "caret " + (i + 1) + "/" + caretState.carets().size() + " ";
       Caret currentCaret = allCarets.get(i);
       int actualCaretLine = editor.getDocument().getLineNumber(currentCaret.getOffset());
       int actualCaretColumn = currentCaret.getOffset() - editor.getDocument().getLineStartOffset(actualCaretLine);
@@ -540,7 +446,7 @@ public final class EditorTestUtil {
       int selectionEnd = currentCaret.getSelectionEnd();
       LogicalPosition actualSelectionStart = editor.offsetToLogicalPosition(selectionStart);
       LogicalPosition actualSelectionEnd = editor.offsetToLogicalPosition(selectionEnd);
-      CaretInfo expected = caretState.carets.get(i);
+      CaretInfo expected = caretState.carets().get(i);
       if (expected.position != null) {
         assertEquals(messageSuffix + caretDescription + "unexpected caret position", expected.position, actualCaretPosition);
       }
@@ -885,38 +791,6 @@ public final class EditorTestUtil {
       sb.append(marker.second);
     }
     return sb.append(documentSequence.subSequence(lastEnd, documentSequence.length())).toString();
-  }
-
-
-  public record CaretAndSelectionState(List<CaretInfo> carets, @Nullable TextRange blockSelection) {
-
-    /**
-     * Returns true if current CaretAndSelectionState contains at least one caret or selection explicitly specified
-     */
-    public boolean hasExplicitCaret() {
-      if(carets.isEmpty()) return false;
-      if(blockSelection == null && carets.size() == 1) {
-        CaretInfo caret = carets.get(0);
-        return caret.position != null || caret.selection != null;
-      }
-      return true;
-    }
-  }
-
-  public static class CaretInfo {
-    public final @Nullable LogicalPosition position; // column number in this position is calculated in terms of characters,
-                                           // not in terms of visual position
-                                           // so Tab character always increases the column number by 1
-                                           public final @Nullable TextRange selection;
-
-    public CaretInfo(@Nullable LogicalPosition position, @Nullable TextRange selection) {
-      this.position = position;
-      this.selection = selection;
-    }
-
-    public int getCaretOffset(Document document) {
-      return position == null ? -1 : document.getLineStartOffset(position.line) + position.column;
-    }
   }
 
   private static final class EmptyInlayRenderer implements EditorCustomElementRenderer {

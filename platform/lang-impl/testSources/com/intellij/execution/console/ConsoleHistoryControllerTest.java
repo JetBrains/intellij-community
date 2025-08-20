@@ -24,6 +24,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import com.intellij.testFramework.TestActionEvent;
+import com.intellij.testFramework.common.EditorCaretTestUtil;
 
 
 /**
@@ -54,7 +55,7 @@ public class ConsoleHistoryControllerTest extends LightPlatformCodeInsightTestCa
 
   private void setCaretWithText(String markedText) {
     myConsole.setInputText(markedText);
-    EditorTestUtil.CaretAndSelectionState state = EditorTestUtil.extractCaretAndSelectionMarkers(myConsole.getEditorDocument());
+    EditorCaretTestUtil.CaretAndSelectionState state = EditorTestUtil.extractCaretAndSelectionMarkers(myConsole.getEditorDocument());
     EditorTestUtil.setCaretsAndSelection(myConsole.getConsoleEditor(), state);
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
   }

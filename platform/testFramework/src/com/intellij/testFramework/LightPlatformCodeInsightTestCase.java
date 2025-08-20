@@ -43,6 +43,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.testFramework.common.EditorCaretTestUtil;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -162,7 +163,8 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     return WriteCommandAction.writeCommandAction(null).compute(() -> {
       Document fakeDocument = new DocumentImpl(fileText);
 
-      EditorTestUtil.CaretAndSelectionState caretsState = EditorTestUtil.extractCaretAndSelectionMarkers(fakeDocument);
+      EditorCaretTestUtil.CaretAndSelectionState
+        caretsState = EditorTestUtil.extractCaretAndSelectionMarkers(fakeDocument);
       if (checkCaret) {
         assertTrue("No caret specified in " + fileName, caretsState.hasExplicitCaret());
       }
@@ -185,7 +187,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   protected @NotNull Editor configureFromFileTextWithoutPSI(@NonNls @NotNull String fileText) {
     return WriteCommandAction.writeCommandAction(getProject()).compute(() -> {
       Document fakeDocument = EditorFactory.getInstance().createDocument(fileText);
-      EditorTestUtil.CaretAndSelectionState caretsState = EditorTestUtil.extractCaretAndSelectionMarkers(fakeDocument);
+      EditorCaretTestUtil.CaretAndSelectionState caretsState = EditorTestUtil.extractCaretAndSelectionMarkers(fakeDocument);
 
       String newFileText = fakeDocument.getText();
       Document document = EditorFactory.getInstance().createDocument(newFileText);
@@ -424,7 +426,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
         ((DocumentImpl)document).stripTrailingSpaces(getProject());
       }
 
-      EditorTestUtil.CaretAndSelectionState carets = EditorTestUtil.extractCaretAndSelectionMarkers(document);
+      EditorCaretTestUtil.CaretAndSelectionState carets = EditorTestUtil.extractCaretAndSelectionMarkers(document);
 
       PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
       String newFileText = document.getText();
@@ -453,7 +455,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
         ((DocumentImpl)fakeDocument).stripTrailingSpaces(getProject());
       }
 
-      EditorTestUtil.CaretAndSelectionState carets = EditorTestUtil.extractCaretAndSelectionMarkers(fakeDocument);
+      EditorCaretTestUtil.CaretAndSelectionState carets = EditorTestUtil.extractCaretAndSelectionMarkers(fakeDocument);
 
       String newFileText = fakeDocument.getText();
       String fileText1 = editor.getDocument().getText();
