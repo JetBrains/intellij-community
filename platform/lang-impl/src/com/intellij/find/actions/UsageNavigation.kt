@@ -19,12 +19,10 @@ import com.intellij.usages.impl.UsageViewStatisticsCollector
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NotNull
 
 @Service(Service.Level.PROJECT)
-@ApiStatus.Internal
-class UsageNavigation(private val project: Project, private val cs: CoroutineScope) {
+internal class UsageNavigation(private val project: Project, private val cs: CoroutineScope) {
   companion object {
     @JvmStatic
     fun getInstance(project: Project): UsageNavigation = project.getService(UsageNavigation::class.java)
