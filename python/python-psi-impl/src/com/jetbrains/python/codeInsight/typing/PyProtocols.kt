@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.typing
 
+import com.intellij.psi.util.contextOfType
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.PROTOCOL
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.PROTOCOL_EXT
@@ -38,6 +39,10 @@ fun inspectProtocolSubclass(protocol: PyClassType, subclass: PyClassType, contex
           }
         }
         if (e is PyTypeParameter) {
+          return@visitMembers true
+        }
+
+        if (e.contextOfType<PyFunction>()?.containingClass == protocol.pyClass) {
           return@visitMembers true
         }
 

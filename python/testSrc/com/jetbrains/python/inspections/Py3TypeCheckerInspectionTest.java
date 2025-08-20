@@ -3098,4 +3098,31 @@ def foo(param: str | int) -> TypeGuard[str]:
   public void testStrictUnionImplicitProtocolMatching() {
     doTest();
   }
+
+  // PY-76822
+  public void testProtocolWithAssignedPropertyInMethod() {
+    doTestByText("""
+                   from typing import Protocol
+                   
+                   class Template(Protocol):
+                       name: str
+                       value: int = 0
+                   
+                       def method(self) -> None:
+                           self.name = "name"
+                           self.temp: list[int] = []
+                   
+                   
+                   class Concrete:
+                       def __init__(self, name: str, value: int) -> None:
+                           self.name = name
+                           self.value = value
+                   
+                       def method(self) -> None:
+                           return
+                   
+                   
+                   var: Template = Concrete("value", 42)
+                   """);
+  }
 }
