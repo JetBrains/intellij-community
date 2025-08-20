@@ -5,7 +5,6 @@ import com.intellij.CacheSwitcher;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.concurrency.Job;
 import com.intellij.concurrency.JobLauncher;
-import com.intellij.idea.IJIgnore;
 import com.intellij.mock.MockVirtualFile;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -186,7 +185,6 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     assertTrue(pointerToFileToReCreateAnotherCase.isValid());
   }
 
-  @IJIgnore(issue = "IJPL-149673")
   @Test
   public void testSwitchingVfs() {
     final var file = tempDir.newFile("myfile.txt");
@@ -1306,8 +1304,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     UsefulTestCase.assertSameElements(myVirtualFilePointerManager.getPointersUnder(b, "p2"), p2);
   }
 
-  @NotNull
-  private static VirtualFileSystemEntry createChildDirectory(VirtualFile root, String childName) {
+  private static @NotNull VirtualFileSystemEntry createChildDirectory(VirtualFile root, String childName) {
     return (VirtualFileSystemEntry)HeavyPlatformTestCase.createChildDirectory(root, childName);
   }
 
@@ -1315,16 +1312,15 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     UsefulTestCase.assertSameElements(myVirtualFilePointerManager.getPointersUnder(file, childName), pointers);
   }
 
-  @NotNull
-  private VirtualFilePointer createPointer(@NotNull String relativePath) {
+  private @NotNull VirtualFilePointer createPointer(@NotNull String relativePath) {
     return myVirtualFilePointerManager.create(myDir().getUrl()+"/"+relativePath, disposable, null);
   }
 
-  @NotNull
-  private VirtualFilePointer createRecursivePointer(@NotNull String relativePath) {
+  private @NotNull VirtualFilePointer createRecursivePointer(@NotNull String relativePath) {
     return myVirtualFilePointerManager.createDirectoryPointer(myDir().getUrl()+"/"+relativePath, true, disposable, new VirtualFilePointerListener() {
     });
   }
+
   private VirtualFile myDir() {
     return tempDir.getVirtualFileRoot();
   }

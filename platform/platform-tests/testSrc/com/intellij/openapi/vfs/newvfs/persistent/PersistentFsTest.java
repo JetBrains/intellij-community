@@ -987,7 +987,6 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     events.clear();
   }
 
-  //@IJIgnore(issue = "IJPL-149673")
   @Test
   public void testChildMove() throws IOException {
     final File firstDirIoFile = tempDirectory.newDirectory("dir1");
