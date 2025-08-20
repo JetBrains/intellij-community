@@ -40,7 +40,7 @@ public fun TextColors.Companion.light(
     disabled: Color = IntUiLightTheme.colors.gray(8),
     info: Color = IntUiLightTheme.colors.gray(7),
     error: Color = IntUiLightTheme.colors.red(4),
-): TextColors = TextColors(normal, selected, disabled, info, error)
+): TextColors = TextColors(normal, selected, disabled, disabledSelected = disabled, info, error, warning = normal)
 
 public fun TextColors.Companion.dark(
     normal: Color = IntUiDarkTheme.colors.gray(12),
@@ -48,7 +48,7 @@ public fun TextColors.Companion.dark(
     disabled: Color = IntUiDarkTheme.colors.gray(6),
     info: Color = IntUiDarkTheme.colors.gray(7),
     error: Color = IntUiDarkTheme.colors.red(7),
-): TextColors = TextColors(normal, selected, disabled, info, error)
+): TextColors = TextColors(normal, selected, disabled, disabledSelected = disabled, info, error, warning = normal)
 
 public fun OutlineColors.Companion.light(
     focused: Color = IntUiLightTheme.colors.blue(4),

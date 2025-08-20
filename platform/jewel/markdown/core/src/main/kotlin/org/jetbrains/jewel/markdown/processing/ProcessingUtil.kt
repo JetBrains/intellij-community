@@ -48,6 +48,8 @@ public fun Node.readInlineMarkdown(markdownProcessor: MarkdownProcessor): List<I
  *   registered to [markdownProcessor].
  * @see readInlineMarkdown
  */
+@ExperimentalJewelApi
+@ApiStatus.Experimental
 public fun Node.toInlineMarkdownOrNull(markdownProcessor: MarkdownProcessor): InlineMarkdown? =
     when (this) {
         is CMText -> InlineMarkdown.Text(literal)
