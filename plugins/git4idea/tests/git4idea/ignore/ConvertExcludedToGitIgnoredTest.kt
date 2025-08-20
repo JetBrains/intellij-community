@@ -150,6 +150,8 @@ class ConvertExcludedToGitIgnoredTest : GitSingleRepoTest() {
     AsyncVfsEventsPostProcessorImpl.waitEventsProcessed()
     flushIgnoreHoldersQueue()
     VcsImplUtil.generateIgnoreFileIfNeeded(project, vcs, projectRoot)
+    AsyncVfsEventsPostProcessorImpl.waitEventsProcessed()
+    repo.untrackedFilesHolder.invalidate()
     repo.untrackedFilesHolder.awaitNotBusy()
   }
 
