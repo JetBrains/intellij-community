@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.java.syntax.element
+package com.intellij.java.syntax.element.lazyParser
 
+import com.intellij.java.syntax.element.JavaSyntaxTokenType
+import com.intellij.java.syntax.element.getLanguageLevel
 import com.intellij.java.syntax.parser.JavaParser
 import com.intellij.platform.syntax.LazyParser
 import com.intellij.platform.syntax.LazyParsingContext

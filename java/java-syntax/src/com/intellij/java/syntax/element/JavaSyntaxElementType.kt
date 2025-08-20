@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.syntax.element
 
+import com.intellij.java.syntax.element.lazyParser.JavaCodeBlockParser
 import com.intellij.platform.syntax.SyntaxElementType
 import kotlin.jvm.JvmField
 
