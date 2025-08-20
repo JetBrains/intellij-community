@@ -7,6 +7,7 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.CommentSaver.Companion.tokenType
@@ -18,7 +19,7 @@ import org.jetbrains.kotlin.psi.KtUserType
 internal class KotlinTypeHierarchyCompletionCommandProvider : AbstractTypeHierarchyCompletionCommandProvider() {
     override fun findElement(offset: Int, psiFile: PsiFile): PsiElement? {
         var context = getCommandContext(offset, psiFile)
-        if (context is PsiWhiteSpace) context = context.prevSibling
+        if (context is PsiWhiteSpace) context = PsiTreeUtil.prevVisibleLeaf(context) ?: return null
         if (context?.tokenType == KtTokens.IDENTIFIER && context.parent is KtClass) return context
         if (context?.tokenType == KtTokens.IDENTIFIER &&
             context.parent is KtNameReferenceExpression &&

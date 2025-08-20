@@ -10,7 +10,7 @@ import com.intellij.psi.util.PsiTreeUtil
 internal class JavaTypeInfoCompletionCommandProvider : AbstractTypeInfoCompletionCommandProvider() {
   override fun findElement(offset: Int, psiFile: PsiFile): PsiElement? {
     var context = getCommandContext(offset, psiFile)
-    if (context is PsiWhiteSpace) context = context.prevSibling
+    if (context is PsiWhiteSpace) context = PsiTreeUtil.prevVisibleLeaf(context) ?: return null
     val expression = PsiTreeUtil.getParentOfType(context, PsiExpression::class.java, false)
     if (expression != null && expression.type != null) return expression
     if (context is PsiIdentifier && context.parent is PsiVariable) return context

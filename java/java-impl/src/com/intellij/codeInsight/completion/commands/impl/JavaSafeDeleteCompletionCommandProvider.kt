@@ -38,7 +38,7 @@ public class JavaSafeDeleteCompletionCommandProvider : AbstractSafeDeleteComplet
     return element
   }
 
-  override fun skipForHighlightCommand(command: CompletionCommand): Boolean {
+  override fun skipCommandFromHighlighting(command: CompletionCommand): Boolean {
     return command is DirectInspectionFixCompletionCommand && command.inspectionId == "unused"
   }
 }

@@ -10,7 +10,7 @@ import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 
-abstract class AbstractSafeDeleteCompletionCommandProvider : HighlightCommandSkipper,
+abstract class AbstractSafeDeleteCompletionCommandProvider : AfterHighlightingCommandProvider,
                                                              ActionCommandProvider(actionId = "SafeDelete",
                                                                                    presentableName = ActionsBundle.message("action.SafeDelete.text"),
                                                                                    synonyms = listOf("delete", "safe delete"),
@@ -20,7 +20,7 @@ abstract class AbstractSafeDeleteCompletionCommandProvider : HighlightCommandSki
 
   abstract fun findElement(offset: Int, psiFile: PsiFile, editor: Editor?): PsiElement?
 
-  abstract override fun skipForHighlightCommand(command: CompletionCommand): Boolean
+  abstract override fun skipCommandFromHighlighting(command: CompletionCommand): Boolean
 
   override fun isApplicable(offset: Int, psiFile: PsiFile, editor: Editor?): Boolean {
     val element = findElement(offset, psiFile, editor) ?: return false

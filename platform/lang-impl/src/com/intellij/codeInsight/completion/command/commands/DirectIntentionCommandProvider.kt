@@ -69,9 +69,9 @@ import java.util.function.Predicate
  * based on intentions, errors, and inspections within the given context.
  */
 internal class DirectIntentionCommandProvider : CommandProvider {
-  private var mySkipper: Set<CommandProvider> = emptySet()
-  fun setSkippers(skippers: Set<CommandProvider>) {
-    mySkipper = skippers
+  private var myAfterHighlightingProviders: Set<CommandProvider> = emptySet()
+  fun setAfterHighlightingProviders(skippers: Set<CommandProvider>) {
+    myAfterHighlightingProviders = skippers
   }
 
   override fun getCommands(context: CommandCompletionProviderContext): List<CompletionCommand> {
@@ -138,17 +138,17 @@ internal class DirectIntentionCommandProvider : CommandProvider {
 
       val intentions = asyncIntentions.await()
       result.addAll(intentions)
-      result.addAll(processSkippers(result, context))
+      result.addAll(processAfterHighlightingProviders(result, context))
       return@runBlockingCancellable result
     }
   }
 
-  private fun processSkippers(fromHighlights: MutableList<CompletionCommand>, context: CommandCompletionProviderContext): Collection<CompletionCommand> {
+  private fun processAfterHighlightingProviders(fromHighlights: MutableList<CompletionCommand>, context: CommandCompletionProviderContext): Collection<CompletionCommand> {
     val result = mutableListOf<CompletionCommand>()
-    if (mySkipper.isEmpty()) return emptyList()
-    for (provider in mySkipper) {
-      if (provider is HighlightCommandSkipper) {
-        if (fromHighlights.any { provider.skipForHighlightCommand(it) }) continue
+    if (myAfterHighlightingProviders.isEmpty()) return emptyList()
+    for (provider in myAfterHighlightingProviders) {
+      if (provider is AfterHighlightingCommandProvider) {
+        if (fromHighlights.any { provider.skipCommandFromHighlighting(it) }) continue
         try {
           context.editor.caretModel.moveToOffset(context.offset)
           result.addAll(provider.getCommands(context))
