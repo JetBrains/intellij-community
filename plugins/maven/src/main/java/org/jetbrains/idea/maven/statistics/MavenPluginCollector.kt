@@ -9,7 +9,7 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 
 class MavenPluginCollector : ProjectUsagesCollector() {
-  private val GROUP = EventLogGroup("community.detection", 1)
+  private val GROUP = EventLogGroup("maven.plugins", 5)
 
   private val groupArtifactId = EventFields.StringValidatedByCustomRule<MavenPluginCoordinatesWhitelistValidationRule>("group_artifact_id")
   private val pluginVersion = EventFields.Version
