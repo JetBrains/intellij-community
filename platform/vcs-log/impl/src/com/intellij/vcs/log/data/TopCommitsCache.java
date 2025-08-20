@@ -20,7 +20,7 @@ public class TopCommitsCache {
   private final @NotNull VcsLogStorage myStorage;
   private final @NotNull IntObjectMap<VcsCommitMetadata> myCache =
     ConcurrentCollectionFactory.createConcurrentIntObjectMap();
-  private @NotNull List<VcsCommitMetadata> mySortedDetails = new ArrayList<>();
+  private volatile @NotNull List<VcsCommitMetadata> mySortedDetails = new ArrayList<>();
 
   public TopCommitsCache(@NotNull VcsLogStorage storage) {
     myStorage = storage;
@@ -30,7 +30,7 @@ public class TopCommitsCache {
     return myStorage.getCommitIndex(metadata.getId(), metadata.getRoot());
   }
 
-  public void storeDetails(@NotNull List<? extends VcsCommitMetadata> sortedDetails) {
+  public synchronized void storeDetails(@NotNull List<? extends VcsCommitMetadata> sortedDetails) {
     List<VcsCommitMetadata> newDetails = ContainerUtil.filter(sortedDetails, metadata -> !myCache.containsValue(metadata));
     if (newDetails.isEmpty()) return;
     Iterator<VcsCommitMetadata> it = new MergingIterator(mySortedDetails, newDetails);
@@ -61,7 +61,7 @@ public class TopCommitsCache {
     return myCache.get(index);
   }
 
-  public void clear() {
+  public synchronized void clear() {
     myCache.clear();
     mySortedDetails.clear();
   }
