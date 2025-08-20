@@ -3,6 +3,8 @@ package org.jetbrains.plugins.groovy.compiler;
 
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import org.jetbrains.jps.incremental.groovy.JpsGroovycRunner;
 
 public final class GroovycForkedJava8Test extends Groovyc25Test {
@@ -10,6 +12,12 @@ public final class GroovycForkedJava8Test extends Groovyc25Test {
   @Override
   protected JavaSdkVersion getJdkVersion() {
     return JavaSdkVersion.JDK_1_8;
+  }
+
+  @Override
+  protected void tuneFixture(JavaModuleFixtureBuilder<?> moduleBuilder) throws Exception {
+    super.tuneFixture(moduleBuilder);
+    moduleBuilder.setLanguageLevel(LanguageLevel.JDK_1_8);
   }
 
   public void testForkedGroovycWithOptimizedClasspath() {
