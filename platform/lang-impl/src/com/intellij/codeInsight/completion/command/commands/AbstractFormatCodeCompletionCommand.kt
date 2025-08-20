@@ -60,7 +60,10 @@ abstract class AbstractFormatCodeCompletionCommand(private val context: CommandC
         val element = getCommandContext(offset, psiFile) ?: return@tryToCalculateCommandCompletionPreview null
         val target = findTargetToRefactor(element)
         CodeStyleManager.getInstance(psiFile.getProject()).reformat(target)
-        IntentionPreviewInfo.CustomDiff(context.psiFile.fileType, null, context.psiFile.text, psiFile.text, true)
+        val origText = context.psiFile.text
+        val modifiedText = psiFile.text
+        if (origText == modifiedText) return@tryToCalculateCommandCompletionPreview IntentionPreviewInfo.EMPTY
+        IntentionPreviewInfo.CustomDiff(context.psiFile.fileType, null, origText, modifiedText, true)
       },
       context = context,
       highlight = { _, _, _ -> true },
