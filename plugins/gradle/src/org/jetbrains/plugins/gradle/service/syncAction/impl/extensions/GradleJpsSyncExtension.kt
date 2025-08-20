@@ -8,6 +8,7 @@ import com.intellij.openapi.module.impl.UnloadedModulesListStorage
 import com.intellij.platform.workspace.jps.JpsImportedEntitySource
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.exModuleOptions
 import com.intellij.platform.workspace.jps.entities.modifyModuleEntity
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
@@ -29,10 +30,26 @@ class GradleJpsSyncExtension : GradleSyncExtension {
     projectStorage: MutableEntityStorage,
     phase: GradleSyncPhase,
   ) {
+    removeModulesWithUsedContentRoots(context, syncStorage, projectStorage, phase)
     removeUnloadedModules(context, syncStorage, phase)
     removeBridgeModules(context, syncStorage, projectStorage, phase)
     renameDuplicatedModules(context, syncStorage, projectStorage, phase)
     removeDuplicatedContentRoots(context, syncStorage, projectStorage, phase)
+  }
+
+  private fun removeModulesWithUsedContentRoots(
+    context: ProjectResolverContext,
+    syncStorage: EntityStorage,
+    projectStorage: MutableEntityStorage,
+    phase: GradleSyncPhase,
+  ) {
+    val usedContentRoots = syncStorage.entitiesToReplace<ContentRootEntity>(context, phase)
+      .mapTo(HashSet()) { it.url }
+    val entitiesToRemove = projectStorage.entitiesToSkip<ModuleEntity>(context, phase)
+      .filter { module -> module.exModuleOptions?.externalSystem == null }
+      .filter { module -> module.contentRoots.any { it.url in usedContentRoots } }
+      .toList()
+    projectStorage.removeAllEntities(entitiesToRemove)
   }
 
   private fun removeUnloadedModules(
@@ -46,7 +63,7 @@ class GradleJpsSyncExtension : GradleSyncExtension {
     for (moduleEntity in syncStorage.entitiesToReplace<ModuleEntity>(context, phase)) {
       for (moduleName in generateModuleNames(context, moduleEntity)) {
         if (unloadedModuleNameHolder.isUnloaded(moduleName)) {
-          syncStorage.removeEntity(moduleEntity)
+          entitiesToRemove.add(moduleEntity)
         }
       }
     }
@@ -104,6 +121,7 @@ class GradleJpsSyncExtension : GradleSyncExtension {
             syncStorage.modifyModuleEntity(moduleEntity) {
               name = moduleName
             }
+            break
           }
         }
       }
