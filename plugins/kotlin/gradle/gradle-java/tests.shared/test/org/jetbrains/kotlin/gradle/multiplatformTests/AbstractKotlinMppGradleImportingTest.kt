@@ -122,11 +122,8 @@ abstract class AbstractKotlinMppGradleImportingTest : GradleImportingTestCase(),
     @get:Rule
     val pluginTargetVersionRule = PluginTargetVersionsRule()
 
-    // Two properties below are needed solely for compatibility with PluginTargetVersionsRule;
-    // please, use context.testPropertiesService if you need those versions in your code
-    final override val gradleVersion: String
-        get() = context.testProperties.gradleVersion.version
-
+    // The property below are needed solely for compatibility with PluginTargetVersionsRule;
+    // please, use context.testPropertiesService if you need the version in your code
     final override val kotlinPluginVersion: KotlinToolingVersion
         get() = context.testProperties.kotlinVersion
 

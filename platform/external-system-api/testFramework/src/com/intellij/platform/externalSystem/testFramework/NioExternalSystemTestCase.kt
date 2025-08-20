@@ -117,7 +117,7 @@ abstract class NioExternalSystemTestCase : UsefulTestCase() {
       })
     })
 
-    val allowedRoots: MutableList<String?> = ArrayList<String?>()
+    val allowedRoots: MutableList<String> = ArrayList()
     collectAllowedRoots(allowedRoots)
     if (!allowedRoots.isEmpty()) {
       VfsRootAccess.allowRootAccess(myTestFixture.testRootDisposable, *ArrayUtilRt.toStringArray(allowedRoots))
@@ -132,7 +132,7 @@ abstract class NioExternalSystemTestCase : UsefulTestCase() {
                         ?: throw IllegalStateException("Distribution $wslMsId was not found")
   }
 
-  protected open fun collectAllowedRoots(roots: MutableList<String?>?): Unit = Unit
+  protected open fun collectAllowedRoots(roots: MutableList<String>): Unit = Unit
 
   @Throws(IOException::class)
   private fun ensureTempDirCreated() {

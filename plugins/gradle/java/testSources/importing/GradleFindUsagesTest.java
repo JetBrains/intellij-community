@@ -54,9 +54,9 @@ public class GradleFindUsagesTest extends GradleImportingTestCase {
   protected void collectAllowedRoots(List<String> roots, PathAssembler.LocalDistribution distribution) {
     super.collectAllowedRoots(roots, distribution);
     File gradleUserHomeDir = GradleUserHomeUtil.gradleUserHomeDir();
-    File generatedGradleJarsDir = new File(gradleUserHomeDir, "caches/" + gradleVersion + "/generated-gradle-jars");
+    File generatedGradleJarsDir = new File(gradleUserHomeDir, "caches/" + getGradleVersion() + "/generated-gradle-jars");
     roots.add(generatedGradleJarsDir.getPath());
-    File gradleDistLibDir = new File(distribution.getDistributionDir(), "gradle-" + gradleVersion + "/lib");
+    File gradleDistLibDir = new File(distribution.getDistributionDir(), "gradle-" + getGradleVersion() + "/lib");
     roots.add(gradleDistLibDir.getPath());
   }
 

@@ -174,13 +174,13 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
                 "gradle/highlighting/gradle8",
                 pattern = DIRECTORY,
                 isRecursive = false,
-                setUpStatements = listOf("gradleVersion = \"8.6\";")
+                setUpStatements = listOf("setGradleVersion(\"8.6\");")
             )
             model(
                 "gradle/highlighting/gradle7",
                 pattern = DIRECTORY,
                 isRecursive = false,
-                setUpStatements = listOf("gradleVersion = \"7.6.4\";")
+                setUpStatements = listOf("setGradleVersion(\"7.6.4\");")
             )
         }
     }
