@@ -11,7 +11,7 @@
 - *bs:buildHyperlink$default(com.intellij.execution.impl.EditorTextDecorationId,I,I,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.execution.impl.HyperlinkDecoration
 - *sf:buildInlay(com.intellij.execution.impl.EditorTextDecorationId,I,com.intellij.execution.impl.InlayProvider,kotlin.jvm.functions.Function1):com.intellij.execution.impl.InlayDecoration
 - *bs:buildInlay$default(com.intellij.execution.impl.EditorTextDecorationId,I,com.intellij.execution.impl.InlayProvider,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.execution.impl.InlayDecoration
-- *sf:createDecorationApplier(com.intellij.openapi.editor.ex.EditorEx,com.intellij.openapi.Disposable):com.intellij.execution.impl.EditorTextDecorationApplier
+- *sf:createEditorTextDecorationApplier(com.intellij.openapi.editor.ex.EditorEx,com.intellij.openapi.Disposable):com.intellij.execution.impl.EditorTextDecorationApplier
 - *sf:createTextDecorationId(J):com.intellij.execution.impl.EditorTextDecorationId
 *:com.intellij.execution.impl.EditorTextDecorationId
 - java.lang.Comparable

@@ -31,7 +31,7 @@ import kotlin.math.abs
  * The client is responsible for providing decorations created by builder functions
  * and for their removal once they're no longer needed.
  *
- * An instance is created using the [createDecorationApplier] function.
+ * An instance is created using the [createEditorTextDecorationApplier] function.
  *
  * @see buildHyperlink
  * @see buildHighlighting
@@ -63,7 +63,7 @@ sealed interface EditorTextDecorationApplier {
  * A parent disposable ensures that the applier unsubscribes from the editor listeners.
  */
 @ApiStatus.Experimental
-fun createDecorationApplier(editor: EditorEx, parentDisposable: Disposable): EditorTextDecorationApplier =
+fun createEditorTextDecorationApplier(editor: EditorEx, parentDisposable: Disposable): EditorTextDecorationApplier =
   EditorTextDecorationApplierImpl(editor, parentDisposable)
 
 /** The base interface for editor decorations. */
