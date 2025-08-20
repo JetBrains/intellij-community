@@ -89,7 +89,6 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
   ) {}
 
   private final Queue<VirtualFile> myPendingUpdates = new ArrayDeque<>();
-  private final Queue<FileInfo> myProbablyExpensiveUpdates = new ArrayDeque<>();
   private final Set<IFileElementType> myModificationsInCurrentBatch = new HashSet<>();
 
   private void registerModificationForAllElementTypes() {
@@ -128,12 +127,12 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
       if (disposeTrace.get() != null) {
         throw new IllegalStateException("Cannot end updates batch because the tracker is disposed! Disposal trace is in the cause", disposeTrace.get());
       }
-      fastCheck();
-      if (myProbablyExpensiveUpdates.size() > PRECISE_CHECK_THRESHOLD) {
-        coarseCheck();
+      Queue<FileInfo> probablyExpensiveUpdates = fastCheck();
+      if (probablyExpensiveUpdates.size() > PRECISE_CHECK_THRESHOLD) {
+        coarseCheck(probablyExpensiveUpdates);
       }
       else {
-        preciseCheck();
+        preciseCheck(probablyExpensiveUpdates);
       }
     });
   }
@@ -143,13 +142,15 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
     zeroCheck();
   }
 
-  // consumes myPendingUpdates, all unprocessed updates are placed in myProbablyExpensiveUpdates
-  private void fastCheck() {
+  // consumes myPendingUpdates
+  @NotNull
+  private Queue<FileInfo> fastCheck() {
     var index = myStubUpdatingIndexStorage.getValue();
     if (index == null) { // if indexes are not ready, then just increment global mod count and exit
       zeroCheck();
-      return;
+      return new ArrayDeque<>();
     }
+    Queue<FileInfo> probablyExpensiveUpdates = new ArrayDeque<>();
     while (!myPendingUpdates.isEmpty()) {
       VirtualFile file = myPendingUpdates.remove();
 
@@ -180,9 +181,11 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
         if (before != null) registerModificationFor(before);
       }
       else {
-        if (current != null) myProbablyExpensiveUpdates.add(new FileInfo(file, project, current));
+        if (current != null) probablyExpensiveUpdates.add(new FileInfo(file, project, current));
       }
     }
+
+    return probablyExpensiveUpdates;
   }
 
   // consumes myPendingUpdates
@@ -191,26 +194,23 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
     registerModificationForAllElementTypes();
   }
 
-  // consumes myProbablyExpensiveUpdates
-  private void coarseCheck() {
-    while (!myProbablyExpensiveUpdates.isEmpty()) {
-      FileInfo info = myProbablyExpensiveUpdates.remove();
+  private void coarseCheck(@NotNull Queue<FileInfo> probablyExpensiveUpdates) {
+    while (!probablyExpensiveUpdates.isEmpty()) {
+      FileInfo info = probablyExpensiveUpdates.remove();
       if (wereModificationsInCurrentBatch(info.type)) continue;
       registerModificationFor(info.type);
     }
   }
 
-  // consumes myProbablyExpensiveUpdates
-  private void preciseCheck() {
+  private void preciseCheck(@NotNull Queue<FileInfo> probablyExpensiveUpdates) {
     var index = myStubUpdatingIndexStorage.getValue();
     if (index == null) {
-      myProbablyExpensiveUpdates.clear();
       registerModificationForAllElementTypes();
       return;
     }
     DataIndexer<Integer, SerializedStubTree, FileContent> stubIndexer = index.getIndexer();
-    while (!myProbablyExpensiveUpdates.isEmpty()) {
-      FileInfo info = myProbablyExpensiveUpdates.remove();
+    while (!probablyExpensiveUpdates.isEmpty()) {
+      FileInfo info = probablyExpensiveUpdates.remove();
       if (wereModificationsInCurrentBatch(info.type) || info.project.isDisposed()) continue;
       FileBasedIndexImpl.markFileIndexed(info.file, null);
       try {
@@ -269,7 +269,6 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
     myFileElementTypesCache.clear();
     myModCounts.clear();
     myPendingUpdates.clear();
-    myProbablyExpensiveUpdates.clear();
     myModificationsInCurrentBatch.clear();
     myStubUpdatingIndexStorage.drop();
   }
@@ -278,7 +277,6 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
   public String toString() {
     return super.toString() + " (isDisposed=" + (disposeTrace.get() != null) +
            ", pendingUpdates=" + myPendingUpdates.size() +
-           ", probablyExpensiveUpdates=" + myProbablyExpensiveUpdates.size() +
            ", modificationsInCurrentBatch=" + myModificationsInCurrentBatch.size() +
            ", modCounts=" + myModCounts + ")";
   }
