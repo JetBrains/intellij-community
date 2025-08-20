@@ -35,7 +35,7 @@ public class PyClassPatternImpl extends PyElementImpl implements PyClassPattern 
     if (type instanceof PyClassType classType) {
       final PyType instanceType = classType.toInstance();
       final PyType captureType = PyCaptureContext.getCaptureType(this, context);
-      return Ref.deref(PyTypeAssertionEvaluator.createAssertionType(captureType, instanceType, true, context));
+      return Ref.deref(PyTypeAssertionEvaluator.createAssertionType(captureType, instanceType, true, true, context));
     }
     return null;
   }
@@ -127,7 +127,7 @@ public class PyClassPatternImpl extends PyElementImpl implements PyClassPattern 
     final var captureType = PyCaptureContext.getCaptureType(pattern, context);
     final var patternType = context.getType(pattern);
     // For class pattern arguments, we need to ensure that the argument pattern covers its capture type fully
-    if (Ref.deref(PyTypeAssertionEvaluator.createAssertionType(captureType, patternType, false, context)) instanceof PyNeverType) {
+    if (Ref.deref(PyTypeAssertionEvaluator.createAssertionType(captureType, patternType, false, true, context)) instanceof PyNeverType) {
       // in case the argument pattern is also class pattern with arguments
       return pattern.canExcludePatternType(context);
     }
