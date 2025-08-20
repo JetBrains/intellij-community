@@ -2,6 +2,7 @@
 package com.jetbrains.python.codeInsight.controlflow;
 
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -185,7 +186,7 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
     final PyExpression subject = matchStatement.getSubject();
     if (subject == null) return;
     // allowAnyExpr is here because we need negative edges with Never even when subject is not reference expression
-    pushAssertion(subject, true, true, context -> {
+    pushAssertion(subject, true, true, true, context -> {
       PyType subjectType = context.getType(subject);
       for (PyCaseClause cs : matchStatement.getCaseClauses()) {
         if (cs.getPattern() == null) continue;
@@ -194,7 +195,7 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
           subjectType = PyNeverType.NEVER;
           break;
         }
-        subjectType = Ref.deref(createAssertionType(subjectType, context.getType(cs.getPattern()), false, context));
+        subjectType = Ref.deref(createAssertionType(subjectType, context.getType(cs.getPattern()), false, true, context));
       }
 
       return subjectType;
@@ -205,6 +206,7 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
   public static @Nullable Ref<PyType> createAssertionType(@Nullable PyType initial,
                                                           @Nullable PyType suggested,
                                                           boolean positive,
+                                                          boolean forceStrictNarrow, 
                                                           @NotNull TypeEvalContext context) {
     if (suggested == null) return null;
     if (positive) {
@@ -227,10 +229,10 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
     }
     else {
       if (initial instanceof PyUnionType unionType) {
-        return Ref.create(excludeFromUnion(unionType, suggested, context));
+        return Ref.create(excludeFromUnion(unionType, suggested, context, forceStrictNarrow));
       }
       if (match(suggested, initial, context)) {
-        return Ref.create(PyNeverType.NEVER);
+        return (forceStrictNarrow || isStrictNarrowingAllowed()) ? Ref.create(PyNeverType.NEVER) : null;
       }
       Ref<@Nullable PyType> diff = trySubtract(initial, suggested, context);
       return diff != null ? diff : Ref.create(initial);
@@ -239,7 +241,8 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
 
   private static @Nullable PyType excludeFromUnion(@NotNull PyUnionType unionType,
                                                    @Nullable PyType type,
-                                                   @NotNull TypeEvalContext context) {
+                                                   @NotNull TypeEvalContext context,
+                                                   boolean forceStrictNarrow) {
     final List<PyType> members = new ArrayList<>();
     for (PyType m : unionType.getMembers()) {
       Ref<@Nullable PyType> diff = trySubtract(m, type, context);
@@ -250,10 +253,14 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
         members.add(m);
       }
     }
-    if (members.isEmpty()) {
+    if ((forceStrictNarrow || isStrictNarrowingAllowed()) && members.isEmpty()) {
       return PyNeverType.NEVER;
     }
     return PyUnionType.union(members);
+  }
+
+  public static boolean isStrictNarrowingAllowed() {
+    return Registry.is("python.strict.type.narrow");
   }
 
   private static @Nullable Ref<@Nullable PyType> trySubtract(@Nullable PyType type1,
@@ -342,26 +349,26 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
   }
 
   private void pushAssertion(@Nullable PyExpression expr, boolean positive, @NotNull Function<TypeEvalContext, PyType> suggestedType) {
-    pushAssertion(expr, positive, false, suggestedType);
+    pushAssertion(expr, positive, false, isStrictNarrowingAllowed(), suggestedType);
   }
 
-  private void pushAssertion(@Nullable PyExpression expr, boolean positive, boolean allowAnyExpr, @NotNull Function<TypeEvalContext, PyType> suggestedType) {
+  private void pushAssertion(@Nullable PyExpression expr, boolean positive, boolean allowAnyExpr, boolean forceStrictNarrow, @NotNull Function<TypeEvalContext, PyType> suggestedType) {
     expr = PyPsiUtils.flattenParens(expr);
     if (expr instanceof PySequenceExpression seqExpr) {
       PyExpression[] elements = seqExpr.getElements();
       for (int i = 0; i < elements.length; i++) {
-        pushAssertion(elements[i], positive, allowAnyExpr, getIteratedType(suggestedType, i));
+        pushAssertion(elements[i], positive, allowAnyExpr, forceStrictNarrow, getIteratedType(suggestedType, i));
       }
     }
     else if (expr instanceof PyAssignmentExpression walrus) {
-      pushAssertion(walrus.getTarget(), positive, allowAnyExpr, suggestedType);
+      pushAssertion(walrus.getTarget(), positive, allowAnyExpr, forceStrictNarrow, suggestedType);
     }
     else if (expr != null) {
       final var target = expr;
       final InstructionTypeCallback typeCallback = new InstructionTypeCallback() {
         @Override
         public Ref<PyType> getType(TypeEvalContext context) {
-          return createAssertionType(context.getType(target), suggestedType.apply(context), positive, context);
+          return createAssertionType(context.getType(target), suggestedType.apply(context), positive, forceStrictNarrow, context);
         }
       };
 

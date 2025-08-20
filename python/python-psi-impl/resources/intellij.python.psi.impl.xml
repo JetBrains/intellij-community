@@ -509,6 +509,8 @@
                  description="It enables the use of a library-level cache for PSI elements from packages."/>
     <registryKey key="python.statement.lists.incremental.reparse" defaultValue="false"
                  description="Enables incremental reparse for statement lists"/>
+    <registryKey key="python.strict.type.narrow" defaultValue="false"
+                 description="Allows narrowing types exhaustively to Never"/>
 
     <virtualFileCustomDataProvider implementation="com.jetbrains.python.formatter.PyCodeStyleSettingsProvider"/>
   </extensions>
