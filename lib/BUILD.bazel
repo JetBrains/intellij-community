@@ -2745,8 +2745,8 @@ jvm_import(
 
 jvm_import(
   name = "jcef",
-  jar = "@jcef-122_1_9-gd14e051-chromium-122_0_6261_94-api-1_18-251-b27_http//file",
-  source_jar = "@jcef-122_1_9-gd14e051-chromium-122_0_6261_94-api-1_18-251-b27-sources_http//file",
+  jar = "@jcef-137_0_17-gf354b0e-chromium-137_0_7151_104-api-1_19-253-b9_http//file",
+  source_jar = "@jcef-137_0_17-gf354b0e-chromium-137_0_7151_104-api-1_19-253-b9-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
