@@ -49,5 +49,5 @@ internal class ProjectModelContextBridgeImpl(private val project: Project) : Pro
 }
 
 private object NULL : SdkContext {
-  override fun getSdk(): Sdk? = null
+  override fun getSdk() = throw UnsupportedOperationException("NULL object can't be used")
 }
