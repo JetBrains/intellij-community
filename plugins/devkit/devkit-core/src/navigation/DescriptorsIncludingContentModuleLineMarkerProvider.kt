@@ -62,7 +62,7 @@ internal class DescriptorsIncludingContentModuleLineMarkerProvider : DevkitRelat
     return PluginIdDependenciesIndex.findDependsTo(element.project, moduleVirtualFile).flatMap { dependingFile ->
       val psiFile = psiManager.findFile(dependingFile) as? XmlFile ?: return@flatMap emptyList<PsiElement>()
       val plugin = DescriptorUtil.getIdeaPlugin(psiFile) ?: return@flatMap emptyList<PsiElement>()
-      plugin.content.moduleEntry.filter { it.name.stringValue == moduleName }
+      plugin.content.flatMap { it.moduleEntry }.filter { it.name.stringValue == moduleName }
     } as List<ModuleDescriptor>
   }
 

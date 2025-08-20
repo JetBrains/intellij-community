@@ -91,7 +91,7 @@ internal class ModuleNotRegisteredAsPluginContentInspection : LocalInspectionToo
 
     private fun includeModuleInPluginXml(pluginXmlFile: XmlFile) {
       val ideaPlugin = DescriptorUtil.getIdeaPlugin(pluginXmlFile) ?: return
-      ideaPlugin.content.addModuleEntry().name.stringValue = addedModuleName
+      ideaPlugin.getFirstOrAddContentDescriptor().addModuleEntry().name.stringValue = addedModuleName
     }
 
     override fun getFamilyName(): String {

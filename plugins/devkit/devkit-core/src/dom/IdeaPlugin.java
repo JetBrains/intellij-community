@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom;
 
 import com.intellij.ide.plugins.PluginManagerCore;
@@ -21,6 +21,8 @@ public interface IdeaPlugin extends DomElement {
 
   @Nullable @NlsSafe String getPluginId();
 
+  @NotNull ContentDescriptor getFirstOrAddContentDescriptor();
+
   default boolean hasRealPluginId() {
     String pluginId = getPluginId();
     return pluginId != null && !pluginId.equals(PluginManagerCore.CORE_PLUGIN_ID);
@@ -28,16 +30,19 @@ public interface IdeaPlugin extends DomElement {
 
   default boolean isV2Descriptor() {
     return DomUtil.hasXml(getPackage()) ||
-           DomUtil.hasXml(getContent()) ||
+           !getContent().isEmpty() ||
            DomUtil.hasXml(getDependencies());
   }
 
   @SubTag("product-descriptor")
   @NotNull ProductDescriptor getProductDescriptor();
 
-  @SubTag("content")
+  @SubTagList("content")
   @Stubbed
-  @NotNull ContentDescriptor getContent();
+  @NotNull List<? extends ContentDescriptor> getContent();
+
+  @SubTagList("content")
+  ContentDescriptor addContent();
 
   @SubTag("dependencies")
   @Stubbed
