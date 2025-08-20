@@ -2,7 +2,7 @@ rootProject.name = "rpc-compiler-plugin"
 
 pluginManagement {
   // the compiler plugin will be built by this Kotlin compiler
-  val KOTLIN_VERSION = "2.2.0"
+  val KOTLIN_VERSION = "2.2.20-RC"
 
   plugins {
     kotlin("jvm") version KOTLIN_VERSION
