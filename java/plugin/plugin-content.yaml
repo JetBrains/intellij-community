@@ -142,9 +142,6 @@
   module: intellij.java.aetherDependencyResolver
   files:
   - name: $MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-transport-http/1/maven-resolver-transport-http-1.jar
-- name: lib/modules/intellij.debugger.collections.visualizer.jvm.backend.jar
-  contentModules:
-  - name: intellij.debugger.collections.visualizer.jvm.backend
 - name: lib/modules/intellij.java.debugger.impl.frontend.jar
   contentModules:
   - name: intellij.java.debugger.impl.frontend
