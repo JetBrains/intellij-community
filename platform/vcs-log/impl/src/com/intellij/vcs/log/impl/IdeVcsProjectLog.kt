@@ -59,6 +59,7 @@ internal class IdeVcsProjectLog(
   }
 
   fun setMainUiHolder(holder: MainUiHolder?) {
+    if (!coroutineScope.isActive) return
     mainUiHolderState.value = holder
   }
 

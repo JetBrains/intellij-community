@@ -14,9 +14,9 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.Disposer.dispose
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
@@ -25,7 +25,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.observation.trackActivity
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.util.PlatformUtils
-import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.VcsLogProvider
@@ -53,8 +52,6 @@ abstract class VcsProjectLogBase<M : VcsLogManager>(
   override val logManagerState: StateFlow<M?> = _logManagerState.asStateFlow()
   private val errorCountBySource = EnumMultiset.create(VcsLogErrorHandler.Source::class.java)
 
-  val isDisposing: Boolean get() = !coroutineScope.isActive
-
   // not-reentrant - invoking [lock] even from the same thread/coroutine that currently holds the lock still suspends the invoker
   private val mutex = Mutex()
 
@@ -62,40 +59,55 @@ abstract class VcsProjectLogBase<M : VcsLogManager>(
 
   final override val dataManager: VcsLogData? get() = logManager?.dataManager
 
-  private val listenersDisposable = Disposer.newDisposable()
-
   init {
-    coroutineScope.awaitCancellationAndInvoke(CoroutineName("Close VCS log")) {
-      dispose(listenersDisposable)
-      mutex.withLock {
-        _logManagerState.getAndUpdate { null }?.dispose()
+    coroutineScope.launch(CoroutineName("Disposer"), start = CoroutineStart.UNDISPATCHED) {
+      try {
+        awaitCancellation()
+      }
+      finally {
+        mutex.withLock {
+          _logManagerState.getAndUpdate { null }?.dispose()
+        }
       }
     }
   }
 
   protected fun initListeners() {
-    val busConnection = project.messageBus.connect(listenersDisposable)
-    busConnection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, VcsMappingListener {
-      LOG.debug("Recreating Vcs Log after roots changed")
-      reinitAsync()
-    })
-    busConnection.subscribe(DynamicPluginListener.TOPIC, MyDynamicPluginUnloader())
-    VcsLogData.getIndexingRegistryValue().addListener(object : RegistryValueListener {
-      override fun afterValueChanged(value: RegistryValue) {
-        LOG.debug("Recreating Vcs Log after indexing registry value changed")
+    coroutineScope.launch(CoroutineName("Listeners")) {
+      val listenersCs = this
+      val busConnection = project.messageBus.connect(listenersCs)
+      busConnection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, VcsMappingListener {
+        LOG.debug("Recreating Vcs Log after roots changed")
         reinitAsync()
+      })
+      busConnection.subscribe(DynamicPluginListener.TOPIC, MyDynamicPluginUnloader())
+
+      val listenersDisposable = Disposer.newDisposable()
+
+      VcsLogData.getIndexingRegistryValue().addListener(object : RegistryValueListener {
+        override fun afterValueChanged(value: RegistryValue) {
+          LOG.debug("Recreating Vcs Log after indexing registry value changed")
+          reinitAsync()
+        }
+      }, listenersDisposable)
+      project.service<VcsLogSharedSettings>().addListener(VcsLogSharedSettings.Listener {
+        LOG.debug("Recreating Vcs Log after settings changed")
+        reinitAsync()
+      }, listenersDisposable)
+      PhmVcsLogStorageBackend.durableEnumeratorRegistryProperty.addListener(object : RegistryValueListener {
+        override fun afterValueChanged(value: RegistryValue) {
+          LOG.debug("Recreating Vcs Log after durable enumerator registry value changed")
+          reinitAsync(invalidateCaches = true)
+        }
+      }, listenersDisposable)
+
+      try {
+        awaitCancellation()
       }
-    }, listenersDisposable)
-    project.service<VcsLogSharedSettings>().addListener(VcsLogSharedSettings.Listener {
-      LOG.debug("Recreating Vcs Log after settings changed")
-      reinitAsync()
-    }, listenersDisposable)
-    PhmVcsLogStorageBackend.durableEnumeratorRegistryProperty.addListener(object : RegistryValueListener {
-      override fun afterValueChanged(value: RegistryValue) {
-        LOG.debug("Recreating Vcs Log after durable enumerator registry value changed")
-        reinitAsync(invalidateCaches = true)
+      finally {
+        Disposer.dispose(listenersDisposable)
       }
-    }, listenersDisposable)
+    }
   }
 
   final override fun runWhenLogIsReady(action: (VcsLogManager) -> Unit): Unit = doRunWhenLogIsReady(action)
@@ -166,7 +178,8 @@ abstract class VcsProjectLogBase<M : VcsLogManager>(
   }
 
   private suspend fun getOrCreateLogManager(forceInit: Boolean): M? {
-    if (isDisposing || PlatformUtils.isQodana()) return null
+    checkCanceled()
+    if (PlatformUtils.isQodana()) return null
 
     val projectLevelVcsManager = project.serviceAsync<ProjectLevelVcsManager>()
     val logProviders = VcsLogManager.findLogProviders(projectLevelVcsManager.allVcsRoots.toList(), project)
@@ -195,6 +208,7 @@ abstract class VcsProjectLogBase<M : VcsLogManager>(
       LOG.error("Failed to initialize log manager", e)
       throw e
     }
+    checkCanceled()
     _logManagerState.value = logManager
     withContext(Dispatchers.EDT) {
       notifyLogCreated(logManager)
@@ -205,9 +219,9 @@ abstract class VcsProjectLogBase<M : VcsLogManager>(
   protected abstract suspend fun createLogManager(logProviders: Map<VirtualFile, VcsLogProvider>): M
 
   private suspend fun reinitOnError(source: VcsLogErrorHandler.Source, error: Throwable) {
-    if (isDisposing) return
+    checkCanceled()
     mutex.withLock {
-      if (isDisposing) return
+      checkCanceled()
       val logManager = logManagerState.value ?: return
 
       errorCountBySource.add(source)
@@ -237,7 +251,6 @@ abstract class VcsProjectLogBase<M : VcsLogManager>(
   }
 
   protected fun reinitOnErrorAsync(source: VcsLogErrorHandler.Source, error: Throwable) {
-    if (isDisposing) return
     coroutineScope.asyncWithAnyModality {
       reinitOnError(source, error)
     }
