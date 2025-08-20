@@ -126,19 +126,19 @@ sealed interface DataPlacement<In, Out> {
     }
   }
 
-  data class AdditionalNamedRanges(val propertyKey: String) : DataPlacement<List<NamedRange>, List<NamedRange>> {
-    override val serialName: String = "named_range"
+  data class AdditionalCodeCommentRanges(val propertyKey: String) : DataPlacement<List<CodeCommentRange>, List<CodeCommentRange>> {
+    override val serialName: String = "code_comment_range"
 
-    override fun dump(lookup: Lookup, t: List<NamedRange>): Lookup {
+    override fun dump(lookup: Lookup, t: List<CodeCommentRange>): Lookup {
       return lookup.copy(
         additionalInfo = lookup.additionalInfo + Pair(propertyKey, gson.toJsonTree(t))
       )
     }
 
-    override fun restore(props: DataProps): List<List<NamedRange>> {
+    override fun restore(props: DataProps): List<List<CodeCommentRange>> {
       val namedRanges = props.lookup.additionalInfo[propertyKey] ?: return emptyList()
       val ranges = namedRanges as? JsonElement ?: gson.toJsonTree(namedRanges)
-      return listOf(gson.fromJson(ranges, Array<NamedRange>::class.java).toList())
+      return listOf(gson.fromJson(ranges, Array<CodeCommentRange>::class.java).toList())
     }
   }
 
@@ -173,7 +173,7 @@ sealed interface DataPlacement<In, Out> {
         "additional_boolean" -> context?.deserialize(json, AdditionalBoolean::class.java)
         "additional_double" -> context?.deserialize(json, AdditionalDouble::class.java)
         "additional_int" -> context?.deserialize(json, AdditionalInt::class.java)
-        "named_range" -> context?.deserialize(json, AdditionalNamedRanges::class.java)
+        "code_comment_range" -> context?.deserialize(json, AdditionalCodeCommentRanges::class.java)
         "additional_concatenated_lines" -> context?.deserialize(json, AdditionalConcatenatedLines::class.java)
         "additional_concatenated_snippets" -> context?.deserialize(json, AdditionalJsonSerializedStrings::class.java)
         "latency" -> Latency

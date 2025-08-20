@@ -27,8 +27,8 @@ sealed interface DataRenderer<in T> {
     override val serialName: String = "inline_int"
   }
 
-  data object NamedRanges : DataRenderer<List<NamedRange>> {
-    override val serialName: String = "named_ranges"
+  data object CodeCommentRanges : DataRenderer<List<CodeCommentRange>> {
+    override val serialName: String = "code_comment_ranges"
   }
 
   data object ClickableLink : DataRenderer<String> {
@@ -71,7 +71,7 @@ sealed interface DataRenderer<in T> {
         "inline_long" -> InlineLong
         "inline_double" -> InlineDouble
         "inline_int" -> InlineInt
-        "named_ranges" -> NamedRanges
+        "code_comment_ranges" -> CodeCommentRanges
         "clickable_link" -> ClickableLink
         "text" -> context?.deserialize(json, Text::class.java)
         "lines" -> Lines
@@ -123,4 +123,10 @@ interface Range {
   val end: Int
 }
 
-data class NamedRange(override val start: Int, override val end: Int, val text: String, val negativeExample: Boolean? = null) : Range
+data class CodeCommentRange(
+  override val start: Int,
+  override val end: Int,
+  val text: String,
+  val negativeExample: Boolean? = null,
+  val category: String? = null,
+) : Range

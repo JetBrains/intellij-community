@@ -353,7 +353,7 @@ private data class PropertyValue(
         is DataRenderer.InlineLong -> PropertyValue(null, "${property.value}")
         is DataRenderer.InlineDouble -> PropertyValue(null, "${property.value}")
         is DataRenderer.InlineInt -> PropertyValue(null, "${property.value}")
-        is DataRenderer.NamedRanges -> PropertyValue(null, "${property.value}")
+        is DataRenderer.CodeCommentRanges -> PropertyValue(null, "${property.value}")
         is DataRenderer.ClickableLink -> PropertyValue(null, null, "${property.value}")
         is DataRenderer.Text -> PropertyValue("""openText($element, ${stringValues[0]}, ${description}, ${property.renderer.wrapping});""", null)
         is DataRenderer.Lines -> PropertyValue("""openText($element, ${stringValues[0]}, ${description});""", null)
@@ -400,10 +400,12 @@ private data class PropertyValue(
           """sessions["${sessionId}"]["_lookups"][${lookupIndex}]["additionalInfo"]["${placement.propertyKey}"][${placementIndex}].originalText""",
           """sessions["${sessionId}"]["_lookups"][${lookupIndex}]["additionalInfo"]["${placement.propertyKey}"][${placementIndex}].updatedText"""
         )
-        is DataPlacement.AdditionalNamedRanges -> listOf(
+        is DataPlacement.AdditionalCodeCommentRanges -> listOf(
           """sessions["${sessionId}"]["_lookups"][${lookupIndex}]["additionalInfo"]["${placement.propertyKey}"][${placementIndex}].start""",
           """sessions["${sessionId}"]["_lookups"][${lookupIndex}]["additionalInfo"]["${placement.propertyKey}"][${placementIndex}].end""",
-          """sessions["${sessionId}"]["_lookups"][${lookupIndex}]["additionalInfo"]["${placement.propertyKey}"][${placementIndex}].text"""
+          """sessions["${sessionId}"]["_lookups"][${lookupIndex}]["additionalInfo"]["${placement.propertyKey}"][${placementIndex}].text""",
+          """sessions["${sessionId}"]["_lookups"][${lookupIndex}]["additionalInfo"]["${placement.propertyKey}"][${placementIndex}].negativeExample""",
+          """sessions["${sessionId}"]["_lookups"][${lookupIndex}]["additionalInfo"]["${placement.propertyKey}"][${placementIndex}].category""",
         )
         is DataPlacement.ColoredInsightsPlacement -> listOf(
           """sessions["${sessionId}"]["_lookups"][${lookupIndex}]["additionalInfo"]["${placement.propertyKey}"][${placementIndex}].text"""
@@ -425,10 +427,12 @@ private data class PropertyValue(
           embedString((value as TextUpdate).originalText),
           embedString((value as TextUpdate).updatedText)
         )
-        DataRenderer.NamedRanges -> listOf(
-          "\"${(value as NamedRange).start}\"",
-          "\"${(value as NamedRange).end}\"",
-          embedString((value as NamedRange).text)
+        DataRenderer.CodeCommentRanges -> listOf(
+          "\"${(value as CodeCommentRange).start}\"",
+          "\"${(value as CodeCommentRange).end}\"",
+          embedString((value as CodeCommentRange).text),
+          "\"${(value as CodeCommentRange).negativeExample}\"",
+          embedString((value as CodeCommentRange).category.toString()),
         )
         DataRenderer.ColoredInsights -> listOf(embedString((value as ColoredInsightsData).text))
       }
