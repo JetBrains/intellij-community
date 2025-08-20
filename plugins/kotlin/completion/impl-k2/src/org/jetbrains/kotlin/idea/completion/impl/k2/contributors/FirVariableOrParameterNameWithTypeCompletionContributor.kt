@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 
 import com.intellij.codeInsight.completion.PrefixMatcher
@@ -99,9 +99,11 @@ internal class FirVariableOrParameterNameWithTypeCompletionContributor(
                 element !is KtExpression || element is KtDeclaration
             },
             predicate = { parameter ->
-                parameter.name != null
+                parameter.name.let { parameterName ->
+                    parameterName != null
                         && variableOrParameterInOriginal != parameter
-                        && prefixMatcher.isStartMatch(parameter.name)
+                        && prefixMatcher.isStartMatch(parameterName)
+                }
             }
         )
 

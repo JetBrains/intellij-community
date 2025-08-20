@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.impl;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -48,12 +48,12 @@ public class CamelHumpMatcher extends PrefixMatcher {
   }
 
   @Override
-  public boolean isStartMatch(String name) {
+  public boolean isStartMatch(@NotNull String name) {
     return myMatcher.isStartMatch(name);
   }
 
   @Override
-  public boolean isStartMatch(LookupElement element) {
+  public boolean isStartMatch(@NotNull LookupElement element) {
     for (String s : CompletionUtil.iterateLookupStrings(element)) {
       FList<TextRange> ranges = myCaseInsensitiveMatcher.matchingFragments(s);
       if (ranges == null) continue;
@@ -175,7 +175,7 @@ public class CamelHumpMatcher extends PrefixMatcher {
   }
 
   @Override
-  public int matchingDegree(String string) {
+  public int matchingDegree(@NotNull String string) {
     return matchingDegree(string, matchingFragments(string));
   }
 
