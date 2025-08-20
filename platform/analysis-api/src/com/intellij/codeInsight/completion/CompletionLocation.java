@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.openapi.project.Project;
@@ -12,23 +12,23 @@ public final class CompletionLocation implements UserDataHolder {
   private final CompletionParameters myCompletionParameters;
   private final ProcessingContext myProcessingContext = new ProcessingContext();
 
-  public CompletionLocation(final CompletionParameters completionParameters) {
+  public CompletionLocation(@NotNull CompletionParameters completionParameters) {
     myCompletionParameters = completionParameters;
   }
 
-  public CompletionParameters getCompletionParameters() {
+  public @NotNull CompletionParameters getCompletionParameters() {
     return myCompletionParameters;
   }
 
-  public CompletionType getCompletionType() {
+  public @NotNull CompletionType getCompletionType() {
     return myCompletionParameters.getCompletionType();
   }
 
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myCompletionParameters.getPosition().getProject();
   }
 
-  public ProcessingContext getProcessingContext() {
+  public @NotNull ProcessingContext getProcessingContext() {
     return myProcessingContext;
   }
 
