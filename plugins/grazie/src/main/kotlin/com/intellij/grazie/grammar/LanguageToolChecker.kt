@@ -194,6 +194,10 @@ open class LanguageToolChecker : TextChecker() {
 
     private fun isAbstractCategory(id: String) =
       id == RuleGroup.SENTENCE_END_PUNCTUATION || id == RuleGroup.SENTENCE_START_CASE || id == RuleGroup.UNLIKELY_OPENING_PUNCTUATION
+
+    override fun isStyleLike(): Boolean {
+      return LanguageToolRule.isStyleLike(match.rule)
+    }
   }
 }
 

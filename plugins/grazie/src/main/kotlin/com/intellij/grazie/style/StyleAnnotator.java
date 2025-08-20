@@ -128,7 +128,7 @@ public class StyleAnnotator implements Annotator {
             .findExtension(LanguageToolChecker.class);
           if (ltChecker != null) {
             return StreamEx.of(ltChecker.check(extracted))
-              .filter(LTStyleProblemFilter::isStyleLike)
+              .filter(TextProblem::isStyleLike)
               .map(LTStyleProblemWrapper::new)
               .toList();
           }
@@ -190,6 +190,11 @@ public class StyleAnnotator implements Annotator {
     @Override
     public @NotNull @InspectionMessage String getDescriptionTemplate(boolean isOnTheFly) {
       return delegate.getDescriptionTemplate(isOnTheFly);
+    }
+
+    @Override
+    public boolean isStyleLike() {
+      return true;
     }
   }
 }

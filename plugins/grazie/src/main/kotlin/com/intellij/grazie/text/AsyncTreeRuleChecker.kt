@@ -26,7 +26,7 @@ sealed class AsyncTreeRuleChecker : ExternalTextChecker() {
     }
 
     override suspend fun checkExternally(content: TextContent): Collection<TreeProblem> {
-      return super.checkExternally(content).filter { !it.match.rule().isStyleLike && !it.concedeToOtherCheckers }
+      return super.checkExternally(content).filter { !it.isStyleLike && !it.concedeToOtherCheckers }
     }
   }
 
@@ -34,7 +34,7 @@ sealed class AsyncTreeRuleChecker : ExternalTextChecker() {
     override fun getRules(locale: Locale): Collection<Rule> = emptyList()
 
     override suspend fun checkExternally(content: TextContent): Collection<TreeProblem> {
-      return super.checkExternally(content).filter { !it.match.rule().isStyleLike && it.concedeToOtherCheckers }
+      return super.checkExternally(content).filter { !it.isStyleLike && it.concedeToOtherCheckers }
     }
   }
 
@@ -42,7 +42,7 @@ sealed class AsyncTreeRuleChecker : ExternalTextChecker() {
     override fun getRules(locale: Locale): Collection<Rule> = emptyList()
 
     override suspend fun checkExternally(content: TextContent): Collection<TreeProblem> {
-      return super.checkExternally(content).filter { it.match.rule().isStyleLike }
+      return super.checkExternally(content).filter { it.isStyleLike }
     }
   }
 }

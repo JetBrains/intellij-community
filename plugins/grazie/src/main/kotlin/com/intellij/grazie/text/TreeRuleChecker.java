@@ -623,6 +623,11 @@ public final class TreeRuleChecker {
     }
 
     @Override
+    public boolean isStyleLike() {
+      return match.rule().isStyleLike();
+    }
+
+    @Override
     public boolean shouldSuppressInCodeLikeFragments() {
       return match.rule().shouldSuppressInCodeLikeFragments();
     }
