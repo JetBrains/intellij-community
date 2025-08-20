@@ -8,6 +8,11 @@
   files:
   - name: $MAVEN_REPOSITORY$/io/github/z4kn4fein/semver-jvm/2/semver-jvm-2.jar
   reason: <- intellij.python.sdk.ui
+- name: lib/jackson-dataformat-yaml.jar
+  library: jackson-dataformat-yaml
+  files:
+  - name: $MAVEN_REPOSITORY$/com/fasterxml/jackson/dataformat/jackson-dataformat-yaml/2/jackson-dataformat-yaml-2.jar
+  reason: <- intellij.python.community.impl
 - name: lib/jsr305.jar
   library: jsr305
   files:
