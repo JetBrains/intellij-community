@@ -39,8 +39,10 @@ a:com.intellij.xdebugger.frame.XStackFrame
 - f:getTooltipText():java.lang.String
 - setIcon(javax.swing.Icon):V
 - setToolTipText(java.lang.String):V
-*:com.intellij.xdebugger.frame.XStringValueModifier
-- a:stringToXExpression(java.lang.String):com.intellij.xdebugger.XExpression
+*:com.intellij.xdebugger.frame.XValueTextModificationPreparator
+- a:convertToStringLiteral(java.lang.String):java.lang.String
+*:com.intellij.xdebugger.frame.XValueTextModificationPreparatorProvider
+- a:getTextValuePreparator(com.intellij.xdebugger.frame.XValue):com.intellij.xdebugger.frame.XValueTextModificationPreparator
 *:com.intellij.xdebugger.hotswap.HotSwapInDebugSessionEnabler
 - a:createProvider(com.intellij.xdebugger.XDebugProcess):com.intellij.xdebugger.hotswap.HotSwapProvider
 *:com.intellij.xdebugger.ui.TextValueVisualizer

@@ -9,6 +9,8 @@
     <xdebugger.customXDescriptorSerializerProvider
       implementation="com.intellij.java.debugger.impl.shared.engine.JavaExecutionStackDescriptorSerializerProvider"/>
     <postStartupActivity implementation="com.intellij.java.debugger.impl.shared.SharedDebuggerInitializationProjectActivity"/>
+    <xdebugger.xTextValueModificationPreparatorProvider
+      implementation="com.intellij.java.debugger.impl.shared.engine.JavaValueTextModificationPreparatorProvider"/>
     <registryKey defaultValue="1000"
                  description="Maximum number of dump items that can be serialized to pass to the frontend"
                  key="debugger.thread.dump.max.items.frontend"/>

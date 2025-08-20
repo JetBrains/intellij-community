@@ -42,6 +42,8 @@
                     dynamic="true"/>
     <extensionPoint name="xdebugger.splitDebuggerModeEnabler" interface="com.intellij.xdebugger.impl.XDebuggerSplitModeEnabler"
                     dynamic="false"/>
+    <extensionPoint name="xdebugger.xTextValueModificationPreparatorProvider" interface="com.intellij.xdebugger.frame.XValueTextModificationPreparatorProvider"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

@@ -22,6 +22,8 @@ import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
+import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
+import com.intellij.xdebugger.impl.frame.XValueTextModificationPreparatorProviders;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.XValueTextProvider;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
@@ -298,17 +300,17 @@ public class XDebuggerTextPopup<D> extends XDebuggerPopupPanel {
   }
 
   private static boolean canSetTextValue(@Nullable XValueNodeImpl node) {
-    return getTextValueModifier(node) != null;
+    return getTextValuePreparator(node) != null;
   }
 
-  private static @Nullable XStringValueModifier getTextValueModifier(@Nullable XValueNodeImpl node) {
+  private static @Nullable XValueTextModificationPreparator getTextValuePreparator(@Nullable XValueNodeImpl node) {
     if (node == null) return null;
 
     XValue value = node.getValueContainer();
     return value instanceof XValueTextProvider textProvider &&
            textProvider.shouldShowTextValue() &&
-           value.getModifier() instanceof XStringValueModifier modifier
-           ? modifier
+           value.getModifier() != null
+           ? XValueTextModificationPreparatorProviders.INSTANCE.getPreparator(value)
            : null;
   }
 
@@ -356,10 +358,10 @@ public class XDebuggerTextPopup<D> extends XDebuggerPopupPanel {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       @Nullable XValueNodeImpl node = getValueNode();
-      var modifier = getTextValueModifier(node);
-      if (modifier != null) {
+      var preparator = getTextValuePreparator(node);
+      if (preparator != null) {
         String newValue = disableSetValueMode(true);
-        setTextValue(node, modifier, newValue);
+        setTextValue(node, preparator, newValue);
       }
       else {
         // No need to call disableSetValueMode(), popup will be hidden on error.
@@ -367,8 +369,8 @@ public class XDebuggerTextPopup<D> extends XDebuggerPopupPanel {
       }
     }
 
-    private void setTextValue(@NotNull XValueNodeImpl node, @NotNull XStringValueModifier modifier, @NotNull String text) {
-      XExpression expression = modifier.stringToXExpression(text);
+    private void setTextValue(@NotNull XValueNodeImpl node, @NotNull XValueTextModificationPreparator preparator, @NotNull String text) {
+      XExpression expression = XExpressionImpl.fromText(preparator.convertToStringLiteral(text));
       DebuggerUIUtil.setTreeNodeValue(node, expression, this::onErrorSettingValue);
     }
 
