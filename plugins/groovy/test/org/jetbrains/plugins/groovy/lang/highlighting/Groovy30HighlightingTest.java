@@ -250,6 +250,29 @@ public class Groovy30HighlightingTest extends GroovyVersionBasedTest {
                        """, GroovyAssignabilityCheckInspection.class);
   }
 
+  public void testIncompatibleTypeOfArrayInitializer() {
+    highlightingTest("""
+                       static void main(String[] args) {
+                          def a = <error descr="Multi-dimensional array initializer is available in Groovy 5.0 or later">new String[]{
+                          {"a"},
+                          {},
+                          "foo"
+                          }</error>
+                       
+                          def b = new String[][]{<warning descr="Cannot assign 'String' to 'String[]'">"a"</warning>}
+                       
+                          def c = new String[]{
+                          <warning descr="Cannot assign 'Integer' to 'String'">1</warning>
+                          }
+                       
+                          def d = <error descr="Multi-dimensional array initializer is available in Groovy 5.0 or later">new String[][]{
+                          {},
+                          {<warning descr="Cannot assign 'Object' to 'String'">new Object()</warning>}
+                          }</error>
+                       }
+                       """, GroovyAssignabilityCheckInspection.class);
+  }
+
   public void testClosureInsideArrayInitializer() { fileHighlightingTest(); }
 
   @Override

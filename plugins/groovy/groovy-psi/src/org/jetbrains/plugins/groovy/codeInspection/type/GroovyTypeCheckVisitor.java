@@ -21,6 +21,7 @@ import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentUtilKt;
 import org.jetbrains.plugins.groovy.highlighting.HighlightSink;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.GrArrayInitializer;
 import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
@@ -378,6 +379,42 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
   public void visitExpression(@NotNull GrExpression expression) {
     if (isImplicitReturnStatement(expression)) {
       processReturnValue(expression, expression, expression);
+    } else {
+      processExpressionInsideArrayInitializer(expression);
+    }
+  }
+
+  @Override
+  public void visitArrayInitializer(@NotNull GrArrayInitializer arrayInitializer) {
+    super.visitArrayInitializer(arrayInitializer);
+    if (!GroovyConfigUtils.isAtLeastGroovy50(arrayInitializer)) return;
+    processExpressionInsideArrayInitializer(arrayInitializer);
+  }
+
+  private void processExpressionInsideArrayInitializer(@NotNull GrExpression expression) {
+    PsiElement parent = expression.getParent();
+    if (!(parent instanceof GrArrayInitializer arrayInitializer)) return;
+
+    PsiType initializerType = expression.getType();
+    PsiType arrayInitializerType = arrayInitializer.getType();
+
+
+    if (!(arrayInitializerType instanceof PsiArrayType arrayType)) return;
+
+    PsiType componentType = arrayType.getComponentType();
+
+    if (initializerType == null) {
+      registerError(
+        expression,
+        GroovyBundle.message("illegal.array.initializer", componentType.getInternalCanonicalText()),
+        LocalQuickFix.EMPTY_ARRAY,
+        ProblemHighlightType.GENERIC_ERROR
+      );
+    }
+    else {
+      ConversionResult result =
+        TypesUtil.isAssignableWithoutConversions(componentType, initializerType) ? ConversionResult.OK : ConversionResult.ERROR;
+      processResult(result, expression, componentType, initializerType, LocalQuickFix.EMPTY_ARRAY);
     }
   }
 

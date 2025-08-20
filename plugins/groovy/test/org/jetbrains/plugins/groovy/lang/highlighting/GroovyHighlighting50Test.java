@@ -5,6 +5,7 @@ import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 import org.jetbrains.plugins.groovy.LightGroovyTestCase;
+import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection;
 import org.jetbrains.plugins.groovy.util.HighlightingTest;
 
 public class GroovyHighlighting50Test extends LightGroovyTestCase implements HighlightingTest {
@@ -36,5 +37,28 @@ public class GroovyHighlighting50Test extends LightGroovyTestCase implements Hig
                      }
                    }
                    """);
+  }
+
+  public void testIncompatibleTypeOfArrayInitializer() {
+    highlightingTest("""
+                       static void main(String[] args) {
+                          def a = new String[]{
+                          <warning descr="Illegal initializer for 'java.lang.String'">{"a"}</warning>,
+                          <warning descr="Illegal initializer for 'java.lang.String'">{}</warning>,
+                          "foo"
+                          }
+                       
+                          def b = new String[][]{<warning descr="Cannot assign 'String' to 'String[]'">"a"</warning>}
+                       
+                          def c = new String[]{
+                          <warning descr="Cannot assign 'Integer' to 'String'">1</warning>
+                          }
+                       
+                          def d = new String[][]{
+                          {},
+                          {<warning descr="Cannot assign 'Object' to 'String'">new Object()</warning>}
+                          }
+                       }
+                       """, GroovyAssignabilityCheckInspection.class);
   }
 }
