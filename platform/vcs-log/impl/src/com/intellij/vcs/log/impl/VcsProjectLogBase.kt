@@ -16,7 +16,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.ShutDownTracker
+import com.intellij.openapi.util.Disposer.dispose
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
@@ -40,7 +40,6 @@ import kotlinx.coroutines.flow.getAndUpdate
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.util.concurrent.atomic.AtomicBoolean
 
 private val LOG: Logger
   get() = logger<VcsProjectLogBase<*>>()
@@ -54,8 +53,7 @@ abstract class VcsProjectLogBase<M : VcsLogManager>(
   override val logManagerState: StateFlow<M?> = _logManagerState.asStateFlow()
   private val errorCountBySource = EnumMultiset.create(VcsLogErrorHandler.Source::class.java)
 
-  private val shutDownStarted = AtomicBoolean(false)
-  val isDisposing: Boolean get() = shutDownStarted.get()
+  val isDisposing: Boolean get() = !coroutineScope.isActive
 
   // not-reentrant - invoking [lock] even from the same thread/coroutine that currently holds the lock still suspends the invoker
   private val mutex = Mutex()
@@ -67,24 +65,11 @@ abstract class VcsProjectLogBase<M : VcsLogManager>(
   private val listenersDisposable = Disposer.newDisposable()
 
   init {
-    @Suppress("SSBasedInspection")
-    val shutdownTask = object : Runnable {
-      override fun run() {
-        if (shutDownStarted.get()) {
-          LOG.warn("unregisterShutdownTask should be called")
-          return
-        }
-
-        runBlocking {
-          shutDown(useRawSwingDispatcher = true)
-        }
-      }
-    }
-
-    ShutDownTracker.getInstance().registerShutdownTask(shutdownTask)
     coroutineScope.awaitCancellationAndInvoke(CoroutineName("Close VCS log")) {
-      ShutDownTracker.getInstance().unregisterShutdownTask(shutdownTask)
-      shutDown(useRawSwingDispatcher = false)
+      dispose(listenersDisposable)
+      mutex.withLock {
+        _logManagerState.getAndUpdate { null }?.dispose()
+      }
     }
   }
 
@@ -111,18 +96,6 @@ abstract class VcsProjectLogBase<M : VcsLogManager>(
         reinitAsync(invalidateCaches = true)
       }
     }, listenersDisposable)
-  }
-
-  private suspend fun shutDown(useRawSwingDispatcher: Boolean) {
-    if (!shutDownStarted.compareAndSet(false, true)) return
-
-    Disposer.dispose(listenersDisposable)
-    mutex.withLock {
-      _logManagerState.getAndUpdate { null }?.let {
-        LOG.debug { "Disposing ${it.name}" }
-        it.dispose(useRawSwingDispatcher = useRawSwingDispatcher)
-      }
-    }
   }
 
   final override fun runWhenLogIsReady(action: (VcsLogManager) -> Unit): Unit = doRunWhenLogIsReady(action)

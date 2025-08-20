@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.Registry.Companion.`is`
 import com.intellij.openapi.util.registry.RegistryValue
@@ -38,6 +39,7 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Consumer
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -96,14 +98,37 @@ class VcsLogData @ApiStatus.Internal constructor(
 
   init {
     val dataDisposable = Disposer.newDisposable("Vcs Log Data Disposable for ${logProviders}")
-    val dataDisposableJob = cs.launch(start = CoroutineStart.UNDISPATCHED) {
+    val dataDisposableJob = cs.launch(CoroutineName("Data disposer"), start = CoroutineStart.UNDISPATCHED) {
+      val dataDisposalStarted = AtomicBoolean(false)
+      val shutdownTask = Runnable {
+        if (!dataDisposalStarted.compareAndSet(false, true)) {
+          LOG.warn("unregisterShutdownTask should be called")
+          return@Runnable
+        }
+
+        LOG.info("Disposing log data on app shutdown")
+        // Forcibly dispose the storage data holders to flush the data on disk.
+        Disposer.dispose(dataDisposable)
+      }
+
       try {
+        ShutDownTracker.getInstance().registerShutdownTask(shutdownTask)
         awaitCancellation()
       }
       finally {
-        // disposing storage triggers flushing on disk
-        withContext(NonCancellable + Dispatchers.IO) {
-          Disposer.dispose(dataDisposable)
+        ShutDownTracker.getInstance().unregisterShutdownTask(shutdownTask)
+        if (dataDisposalStarted.compareAndSet(false, true)) {
+          // disposing storage triggers flushing on disk
+          withContext(NonCancellable + Dispatchers.IO) {
+            LOG.info("Disposing log data")
+            Disposer.dispose(dataDisposable)
+
+            yield() // give constructor a chance to complete
+            if (storage is VcsLogStorageImpl && !storage.isDisposed) {
+              LOG.error("Storage for $logProviders was not disposed")
+              Disposer.dispose(storage)
+            }
+          }
         }
       }
     }.apply {
@@ -169,13 +194,6 @@ class VcsLogData @ApiStatus.Internal constructor(
             indexDiagnosticJob.joinWithTimeout(10.milliseconds) { LOG.warn("Index diagnostic shutdown timed out", it) }
 
             dataDisposableJob.join()
-            // disposing storage triggers flushing on disk
-            withContext(Dispatchers.IO) {
-              if (storage is VcsLogStorageImpl && !storage.isDisposed) {
-                LOG.error("Storage for $logProviders was not disposed")
-                Disposer.dispose(storage)
-              }
-            }
           }
         }
         finally {

@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -21,7 +22,6 @@ import com.intellij.util.BitUtil
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.MultiMap
-import com.intellij.util.ui.RawSwingDispatcher
 import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.DataPack
 import com.intellij.vcs.log.data.DataPackChangeListener
@@ -274,16 +274,14 @@ open class VcsLogManager @Internal constructor(
 
   /**
    * Release all resources associated with the manager
-   *
-   * @param useRawSwingDispatcher on app shutdown the proper EDT dispatcher might not be available
    */
   @Internal
-  suspend fun dispose(useRawSwingDispatcher: Boolean = false) {
+  suspend fun dispose() {
     if (!startDisposing()) return
+    LOG.debug { "Disposing $name" }
     withContext(NonCancellable) {
       cs.cancel()
-      val uiDispatcher = if (useRawSwingDispatcher) RawSwingDispatcher else Dispatchers.EDT
-      withContext(uiDispatcher) {
+      withContext(Dispatchers.EDT) {
         disposeUi()
       }
       withContext(Dispatchers.Default) {
