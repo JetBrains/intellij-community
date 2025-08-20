@@ -66,6 +66,7 @@ import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.platform.testFramework.core.FileComparisonFailedError;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.DocumentCommitThread;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.testFramework.common.TestApplicationKt;
 import com.intellij.testFramework.fixtures.IdeaTestExecutionPolicy;
@@ -1354,5 +1355,16 @@ public final class PlatformTestUtil {
         "; FJP configured parallelism=" + ForkJoinPool.getCommonPoolParallelism() +
         "; FJP actual common pool parallelism=" + ForkJoinPool.commonPool().getParallelism());
     }
+  }
+
+  @TestOnly
+  public static void waitForAllDocumentsCommitted(long timeout, @NotNull TimeUnit timeUnit) {
+    DocumentCommitThread documentCommitThread = DocumentCommitThread.getInstance();
+    TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(() -> {
+      documentCommitThread.waitForAllCommits(timeout, timeUnit);
+      return Unit.INSTANCE;
+    });
+    // some callbacks on document commit might require EDT. So we forcibly dispatch pending events to run these callbacks
+    dispatchAllInvocationEventsInIdeEventQueue();
   }
 }
