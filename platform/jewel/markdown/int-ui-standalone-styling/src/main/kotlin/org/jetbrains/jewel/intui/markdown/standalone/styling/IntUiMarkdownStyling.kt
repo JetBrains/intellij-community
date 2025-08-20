@@ -428,16 +428,42 @@ public fun BlockQuote.Companion.dark(
 @ExperimentalJewelApi
 public fun List.Companion.light(
     baseTextStyle: TextStyle = defaultTextStyle,
-    ordered: Ordered = Ordered.light(numberStyle = baseTextStyle),
-    unordered: Unordered = Unordered.light(bulletStyle = baseTextStyle.copy(fontWeight = FontWeight.Black)),
+    ordered: Ordered =
+        Ordered.light(
+            numberStyle = baseTextStyle,
+            numberFormatStyles =
+                Ordered.NumberFormatStyles(
+                    firstLevel = NumberFormatStyle.Decimal,
+                    secondLevel = NumberFormatStyle.Roman,
+                    thirdLevel = NumberFormatStyle.Alphabetical,
+                ),
+        ),
+    unordered: Unordered =
+        Unordered.light(
+            bulletStyle = baseTextStyle.copy(fontWeight = FontWeight.Black),
+            bulletCharStyles = Unordered.BulletCharStyles(firstLevel = '•', secondLevel = '◦', thirdLevel = '▪'),
+        ),
 ): List = List(ordered, unordered)
 
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun List.Companion.dark(
     baseTextStyle: TextStyle = defaultTextStyle,
-    ordered: Ordered = Ordered.dark(numberStyle = baseTextStyle),
-    unordered: Unordered = Unordered.dark(bulletStyle = baseTextStyle.copy(fontWeight = FontWeight.Black)),
+    ordered: Ordered =
+        Ordered.dark(
+            numberStyle = baseTextStyle,
+            numberFormatStyles =
+                Ordered.NumberFormatStyles(
+                    firstLevel = NumberFormatStyle.Decimal,
+                    secondLevel = NumberFormatStyle.Roman,
+                    thirdLevel = NumberFormatStyle.Alphabetical,
+                ),
+        ),
+    unordered: Unordered =
+        Unordered.dark(
+            bulletStyle = baseTextStyle.copy(fontWeight = FontWeight.Black),
+            bulletCharStyles = Unordered.BulletCharStyles(firstLevel = '•', secondLevel = '◦', thirdLevel = '▪'),
+        ),
 ): List = List(ordered, unordered)
 
 @ApiStatus.Experimental

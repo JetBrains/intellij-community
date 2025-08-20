@@ -17,7 +17,7 @@ import org.jetbrains.jewel.bridge.actionSystem.ComponentDataProviderBridge
 import org.jetbrains.jewel.bridge.component.JBPopupRenderer
 import org.jetbrains.jewel.bridge.theme.SwingBridgeTheme
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
-import org.jetbrains.jewel.foundation.LocalComponent as JewelLocalComponent
+import org.jetbrains.jewel.foundation.LocalComponent as LocalComponentFoundation
 import org.jetbrains.jewel.foundation.util.JewelLogger
 import org.jetbrains.jewel.ui.component.LocalPopupRenderer
 import org.jetbrains.jewel.ui.util.LocalMessageResourceResolverProvider
@@ -50,7 +50,7 @@ public fun JewelComposePanel(config: ComposePanel.() -> Unit = {}, content: @Com
         setContent {
             SwingBridgeTheme {
                 CompositionLocalProvider(
-                    JewelLocalComponent provides this@createJewelComposePanel,
+                    LocalComponentFoundation provides this@createJewelComposePanel,
                     LocalPopupRenderer provides JBPopupRenderer,
                 ) {
                     ComponentDataProviderBridge(jewelPanel, content = content)
@@ -95,7 +95,7 @@ public fun JewelComposeNoThemePanel(config: ComposePanel.() -> Unit = {}, conten
         config()
         setContent {
             CompositionLocalProvider(
-                JewelLocalComponent provides this@createJewelComposePanel,
+                LocalComponentFoundation provides this@createJewelComposePanel,
                 LocalPopupRenderer provides JBPopupRenderer,
                 LocalMessageResourceResolverProvider provides BridgeMessageResourceResolver(),
             ) {
@@ -155,4 +155,4 @@ internal class JewelComposePanelWrapper : JPanel(), UiDataProvider {
     "Use the LocalComponent from the foundation API",
     replaceWith = ReplaceWith("LocalComponent", "org.jetbrains.jewel.foundation.LocalComponent"),
 )
-public val LocalComponent: ProvidableCompositionLocal<JComponent> = JewelLocalComponent
+public val LocalComponent: ProvidableCompositionLocal<JComponent> = LocalComponentFoundation

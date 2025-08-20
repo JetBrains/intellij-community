@@ -19,6 +19,8 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import org.intellij.lang.annotations.Language
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.foundation.theme.LocalContentColor
 import org.jetbrains.jewel.markdown.extensions.markdownBlockRenderer
@@ -35,8 +37,7 @@ import org.jetbrains.jewel.markdown.rendering.MarkdownStyling
  * @param text The text to be displayed.
  * @param enabled True if the block should be enabled, false otherwise.
  * @param modifier The modifier to be applied to the composable.
- * @param color [Color] to apply to the text. If [Color.Unspecified], and [style] has no color set, this will be
- *   [LocalContentColor].
+ * @param color [Color] to apply to the text. If it is [Color.Unspecified], this will be [LocalContentColor].
  * @param fontSize The size of glyphs to use when painting the text. See [TextStyle.fontSize].
  * @param fontStyle The typeface variant to use when drawing the letters (e.g., italic). See [TextStyle.fontStyle].
  * @param fontWeight The typeface thickness to use when painting the text (e.g., [FontWeight.Bold]).
@@ -57,6 +58,8 @@ import org.jetbrains.jewel.markdown.rendering.MarkdownStyling
  * @param processor The processor to use for parsing the Markdown.
  * @param blockRenderer The renderer to use for rendering the Markdown blocks.
  */
+@ApiStatus.Experimental
+@ExperimentalJewelApi
 @Composable
 public fun MarkdownText(
     @Language("Markdown") text: String,
@@ -114,8 +117,7 @@ public fun MarkdownText(
  * @param paragraph The paragraph to render.
  * @param enabled True if the block should be enabled, false otherwise.
  * @param modifier The modifier to be applied to the composable.
- * @param color [Color] to apply to the text. If [Color.Unspecified], and [style] has no color set, this will be
- *   [LocalContentColor].
+ * @param color [Color] to apply to the text. If it is [Color.Unspecified], this will be [LocalContentColor].
  * @param fontSize The size of glyphs to use when painting the text. See [TextStyle.fontSize].
  * @param fontStyle The typeface variant to use when drawing the letters (e.g., italic). See [TextStyle.fontStyle].
  * @param fontWeight The typeface thickness to use when painting the text (e.g., [FontWeight.Bold]).
@@ -135,6 +137,8 @@ public fun MarkdownText(
  * @param styling The [`Paragraph`][MarkdownStyling.Paragraph] styling to use to render.
  * @param blockRenderer The renderer to use for rendering the Markdown blocks.
  */
+@ApiStatus.Experimental
+@ExperimentalJewelApi
 @Composable
 public fun MarkdownText(
     paragraph: MarkdownBlock.Paragraph,
