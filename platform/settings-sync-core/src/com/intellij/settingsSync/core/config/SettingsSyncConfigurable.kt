@@ -191,7 +191,7 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
           } else {
             component.text = component.selectedItem.toString()
           }
-        }.comment("")
+        }.comment("", MAX_LINE_LENGTH_NO_WRAP)
       }.visibleIf(userAccountListIsNotEmpty)
 
       // settings to sync
