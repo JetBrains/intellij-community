@@ -1,0 +1,18 @@
+new
+ArrayList<String>()
+-----
+Groovy script
+  NEW expression
+    PsiElement(new)('new')
+    PsiElement(new line)('\n')
+    Reference element
+      PsiElement(identifier)('ArrayList')
+      Type arguments
+        PsiElement(<)('<')
+        Type element
+          Reference element
+            PsiElement(identifier)('String')
+        PsiElement(>)('>')
+    Arguments
+      PsiElement(()('(')
+      PsiElement())(')')

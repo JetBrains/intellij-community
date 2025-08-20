@@ -1,0 +1,31 @@
+def a = new int[
+
+][
+
+     ]{}
+-----
+Groovy script
+  Variable definitions
+    Modifiers
+      PsiElement(def)('def')
+    PsiWhiteSpace(' ')
+    Variable
+      PsiElement(identifier)('a')
+      PsiWhiteSpace(' ')
+      PsiElement(=)('=')
+      PsiWhiteSpace(' ')
+      NEW expression
+        PsiElement(new)('new')
+        PsiWhiteSpace(' ')
+        Built in type
+          PsiElement(int)('int')
+        Array declaration
+          PsiElement([)('[')
+          PsiElement(new line)('\n\n')
+          PsiElement(])(']')
+          PsiElement([)('[')
+          PsiElement(new line)('\n\n     ')
+          PsiElement(])(']')
+        Array initializer
+          PsiElement({)('{')
+          PsiElement(})('}')
