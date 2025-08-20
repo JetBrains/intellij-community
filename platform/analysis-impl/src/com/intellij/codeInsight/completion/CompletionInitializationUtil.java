@@ -37,6 +37,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.SoftReference;
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -82,20 +83,22 @@ public final class CompletionInitializationUtil {
           super.setDummyIdentifier(dummyIdentifier);
 
           if (dummyIdentifierChanger != null) {
-            LOG.error("Changing the dummy identifier twice, already changed by " + dummyIdentifierChanger);
+            LOG.error("Changing the dummy identifier twice, already changed by " + dummyIdentifierChanger + ". The second one is " + current.get());
           }
           dummyIdentifierChanger = current.get();
         }
       };
     Project project = psiFile.getProject();
     DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
-      for (final CompletionContributor contributor : CompletionContributor.forLanguageHonorDumbness(context.getPositionLanguage(), project)) {
+      PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
+      List<CompletionContributor> contributors = CompletionContributor.forLanguageHonorDumbness(context.getPositionLanguage(), project);
+      for (CompletionContributor contributor : contributors) {
         current.set(contributor);
         contributor.beforeCompletion(context);
         CompletionAssertions.checkEditorValid(editor);
-        assert !PsiDocumentManager.getInstance(project).isUncommited(editor.getDocument()) : "Contributor " +
-                                                                                             contributor +
-                                                                                             " left the document uncommitted";
+        if (documentManager.isUncommited(editor.getDocument())) {
+          LOG.error("Contributor " + contributor + " left the document uncommitted");
+        }
       }
     });
     return context;
