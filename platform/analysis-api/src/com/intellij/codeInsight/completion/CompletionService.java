@@ -45,25 +45,28 @@ public abstract class CompletionService {
    * Run all contributors until any of them returns false or the list is exhausted. If {@code from} parameter is not null, contributors
    * will be run starting from the next one after that.
    */
-  public void getVariantsFromContributors(final CompletionParameters parameters,
-                                          final @Nullable CompletionContributor from,
-                                          final Consumer<? super CompletionResult> consumer) {
+  public void getVariantsFromContributors(@NotNull CompletionParameters parameters,
+                                          @Nullable CompletionContributor from,
+                                          Consumer<? super CompletionResult> consumer) {
     getVariantsFromContributors(parameters, from, createMatcher(suggestPrefix(parameters), false), consumer);
   }
 
-  protected void getVariantsFromContributors(CompletionParameters parameters,
+  protected void getVariantsFromContributors(@NotNull CompletionParameters parameters,
                                              @Nullable CompletionContributor from,
-                                             PrefixMatcher matcher, Consumer<? super CompletionResult> consumer) {
+                                             PrefixMatcher matcher,
+                                             Consumer<? super CompletionResult> consumer) {
     getVariantsFromContributors(parameters, from, matcher, consumer, null);
   }
 
-  protected void getVariantsFromContributors(CompletionParameters parameters,
+  protected void getVariantsFromContributors(@NotNull CompletionParameters parameters,
                                              @Nullable CompletionContributor from,
-                                             PrefixMatcher matcher, Consumer<? super CompletionResult> consumer,
-                                             CompletionSorter customSorter) {
-    final List<CompletionContributor> contributors = CompletionContributor.forParameters(parameters);
+                                             PrefixMatcher matcher,
+                                             Consumer<? super CompletionResult> consumer,
+                                             @Nullable CompletionSorter customSorter) {
+    List<CompletionContributor> contributors = CompletionContributor.forParameters(parameters);
 
-    for (int i = contributors.indexOf(from) + 1; i < contributors.size(); i++) {
+    int startingIndex = from != null ? contributors.indexOf(from) + 1 : 0;
+    for (int i = startingIndex; i < contributors.size(); i++) {
       ProgressManager.checkCanceled();
       CompletionContributor contributor = contributors.get(i);
 
@@ -88,8 +91,10 @@ public abstract class CompletionService {
   }
 
   @ApiStatus.Internal
-  public abstract CompletionResultSet createResultSet(CompletionParameters parameters, Consumer<? super CompletionResult> consumer,
-                                                         @NotNull CompletionContributor contributor, PrefixMatcher matcher);
+  public abstract @NotNull CompletionResultSet createResultSet(CompletionParameters parameters,
+                                                               Consumer<? super CompletionResult> consumer,
+                                                               @NotNull CompletionContributor contributor,
+                                                               PrefixMatcher matcher);
 
   protected abstract String suggestPrefix(CompletionParameters parameters);
 

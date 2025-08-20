@@ -82,8 +82,10 @@ public class BaseCompletionService extends CompletionService {
 
   @Override
   @ApiStatus.Internal
-  public CompletionResultSet createResultSet(CompletionParameters parameters, Consumer<? super CompletionResult> consumer,
-                                                @NotNull CompletionContributor contributor, PrefixMatcher matcher) {
+  public @NotNull CompletionResultSet createResultSet(CompletionParameters parameters,
+                                                      Consumer<? super CompletionResult> consumer,
+                                                      @NotNull CompletionContributor contributor,
+                                                      PrefixMatcher matcher) {
     return new BaseCompletionResultSet(consumer, matcher, contributor, parameters, null, null);
   }
 
@@ -98,9 +100,12 @@ public class BaseCompletionService extends CompletionService {
     protected final @Nullable BaseCompletionService.BaseCompletionResultSet myOriginal;
     private int itemCounter = 0;
 
-    protected BaseCompletionResultSet(java.util.function.Consumer<? super CompletionResult> consumer, PrefixMatcher prefixMatcher,
-                                      CompletionContributor contributor, CompletionParameters parameters,
-                                      @Nullable CompletionSorter sorter, @Nullable BaseCompletionService.BaseCompletionResultSet original) {
+    protected BaseCompletionResultSet(java.util.function.Consumer<? super CompletionResult> consumer,
+                                      PrefixMatcher prefixMatcher,
+                                      CompletionContributor contributor,
+                                      CompletionParameters parameters,
+                                      @Nullable CompletionSorter sorter,
+                                      @Nullable BaseCompletionService.BaseCompletionResultSet original) {
       super(prefixMatcher, consumer, contributor);
       this.parameters = parameters;
       this.sorter = sorter;
