@@ -31,6 +31,7 @@ import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
+import com.intellij.testFramework.common.EditorCaretTestUtil
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.delete
 import kotlinx.coroutines.Dispatchers
@@ -241,6 +242,10 @@ fun TestFixture<PsiFile>.editorFixture(): TestFixture<Editor> = testFixture { _ 
     writeIntentReadAction {
       val editor = fileEditorManager.openTextEditor(OpenFileDescriptor(project, file), true)
       requireNotNull(editor)
+
+      val caretAndSelection = EditorCaretTestUtil.extractCaretAndSelectionMarkers(editor.document)
+      EditorCaretTestUtil.setCaretsAndSelection(editor, caretAndSelection)
+      editor
     }
   }
   initialized(editor) {
