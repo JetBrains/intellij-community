@@ -9,8 +9,6 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import java.util.UUID
-import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.GlobalColors
 import org.jetbrains.jewel.foundation.GlobalMetrics
 import org.jetbrains.jewel.foundation.LocalDisabledAppearanceValues
@@ -23,8 +21,6 @@ public interface JewelTheme {
             @Composable @ReadOnlyComposable get() = LocalThemeName.current
 
         /** @see LocalThemeInstanceUuid */
-        @get:ApiStatus.Experimental
-        @ExperimentalJewelApi
         public val instanceUuid: UUID
             @Composable @ReadOnlyComposable get() = LocalThemeInstanceUuid.current
 
@@ -89,8 +85,6 @@ public val LocalThemeName: ProvidableCompositionLocal<String> = staticCompositio
  * The provided value should be random, and must change every time the theme definition is changed, and be different
  * from all previous values.
  */
-@ApiStatus.Experimental
-@ExperimentalJewelApi
 public val LocalThemeInstanceUuid: ProvidableCompositionLocal<UUID> = staticCompositionLocalOf {
     error("No ThemeInstanceUuid provided")
 }

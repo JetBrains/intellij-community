@@ -129,7 +129,7 @@ public interface PopupRenderer {
  *
  * Note that the value will only be used if the [JewelFlags.useCustomPopupRenderer] flag is set to `true`.
  */
-@ApiStatus.Experimental
+@get:ApiStatus.Experimental
 @ExperimentalJewelApi
 public val LocalPopupRenderer: ProvidableCompositionLocal<PopupRenderer> = staticCompositionLocalOf {
     DefaultPopupRenderer
