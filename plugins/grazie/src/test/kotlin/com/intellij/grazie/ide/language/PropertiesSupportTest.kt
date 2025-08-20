@@ -2,6 +2,7 @@
 package com.intellij.grazie.ide.language
 
 import com.intellij.grazie.GrazieTestBase
+import com.intellij.grazie.jlanguage.Lang
 import com.intellij.openapi.components.service
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager
 import com.intellij.spellchecker.grazie.GrazieSpellCheckerEngine
@@ -20,6 +21,7 @@ class PropertiesSupportTest : GrazieTestBase() {
   }
 
   fun `test properties typos spellcheck performance`() {
+    configureGrazieSettings(enabledLanguages = setOf(Lang.AMERICAN_ENGLISH))
     Benchmark.newBenchmark("Highlight typos in i18n.properties file") {
       runHighlightTestForFile("ide/language/properties/i18n.properties")
     }.setup {

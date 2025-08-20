@@ -2,6 +2,7 @@
 package com.intellij.grazie.ide.language
 
 import com.intellij.grazie.GrazieTestBase
+import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.text.TextContent
 import com.intellij.grazie.text.TextExtractor
 import com.intellij.openapi.components.service
@@ -19,6 +20,7 @@ class YamlSupportTest : GrazieTestBase() {
   }
 
   fun `test yaml typos spellcheck performance`() {
+    configureGrazieSettings(setOf(Lang.AMERICAN_ENGLISH))
     Benchmark.newBenchmark("Highlight typos in i18n.yaml file") {
       runHighlightTestForFile("ide/language/yaml/i18n.yaml")
     }.setup {
