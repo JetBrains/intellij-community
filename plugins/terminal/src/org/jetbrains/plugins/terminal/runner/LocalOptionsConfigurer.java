@@ -29,7 +29,6 @@ import org.jetbrains.plugins.terminal.ShellStartupOptions;
 import org.jetbrains.plugins.terminal.TerminalProjectOptionsProvider;
 import org.jetbrains.plugins.terminal.TerminalStartupKt;
 import org.jetbrains.plugins.terminal.util.TerminalEnvironment;
-import org.jetbrains.plugins.terminal.util.WslEnvInterop;
 
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
@@ -41,12 +40,12 @@ import java.util.UUID;
 
 import static org.jetbrains.plugins.terminal.LocalTerminalDirectRunner.isDirectory;
 import static org.jetbrains.plugins.terminal.TerminalStartupKt.findEelDescriptor;
+import static org.jetbrains.plugins.terminal.util.TerminalEnvironment.TERMINAL_EMULATOR;
+import static org.jetbrains.plugins.terminal.util.TerminalEnvironment.TERM_SESSION_ID;
 
 @ApiStatus.Internal
 public final class LocalOptionsConfigurer {
   private static final Logger LOG = Logger.getInstance(LocalOptionsConfigurer.class);
-  private static final String TERMINAL_EMULATOR = "TERMINAL_EMULATOR";
-  private static final String TERM_SESSION_ID = "TERM_SESSION_ID";
 
   public static @NotNull ShellStartupOptions configureStartupOptions(@NotNull ShellStartupOptions baseOptions, @NotNull Project project) {
     String workingDir = getWorkingDirectory(baseOptions.getWorkingDirectory(), project);
@@ -147,16 +146,15 @@ public final class LocalOptionsConfigurer {
 
     TerminalEnvironment.INSTANCE.setCharacterEncoding(envs);
 
-    WslEnvInterop wslEnvInterop = new WslEnvInterop(eelDescriptor, shellCommand);
-    if (TrustedProjects.isProjectTrusted(project)) {
+    // user-defined envs are passed for trusted projects only (IJPL-111912)
+    EnvironmentVariablesData trustedEnvData = TrustedProjects.isProjectTrusted(project) ? envData : null;
+    if (trustedEnvData != null) {
       PathMacroManager macroManager = PathMacroManager.getInstance(project);
-      for (Map.Entry<String, String> env : envData.getEnvs().entrySet()) {
+      for (Map.Entry<String, String> env : trustedEnvData.getEnvs().entrySet()) {
         envs.put(env.getKey(), macroManager.expandPath(env.getValue()));
       }
-      wslEnvInterop.passEnvsToWsl(envData.getEnvs().keySet());
     }
-    wslEnvInterop.passEnvsToWsl(List.of(TERMINAL_EMULATOR, TERM_SESSION_ID));
-    wslEnvInterop.applyTo(envs);
+    TerminalEnvironment.setWslEnv(eelDescriptor, shellCommand, trustedEnvData, envs);
     return envs;
   }
 

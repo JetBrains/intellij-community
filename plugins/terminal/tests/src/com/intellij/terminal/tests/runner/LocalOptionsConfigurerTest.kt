@@ -1,14 +1,21 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.terminal.tests.runner
 
+import com.intellij.execution.configuration.EnvironmentVariablesData
 import com.intellij.idea.TestFor
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vfs.impl.wsl.WslConstants
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.utils.io.deleteRecursively
+import com.intellij.util.containers.CollectionFactory
+import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.ShellStartupOptions
 import org.jetbrains.plugins.terminal.TerminalProjectOptionsProvider
 import org.jetbrains.plugins.terminal.runner.LocalOptionsConfigurer
 import org.jetbrains.plugins.terminal.runner.LocalTerminalStartCommandBuilder.convertShellPathToCommand
+import org.jetbrains.plugins.terminal.util.TerminalEnvironment
+import org.jetbrains.plugins.terminal.util.TerminalEnvironment.TERMINAL_EMULATOR
+import org.jetbrains.plugins.terminal.util.TerminalEnvironment.TERM_SESSION_ID
 import java.nio.file.Path
 import kotlin.io.path.createTempDirectory
 import kotlin.io.path.pathString
@@ -94,6 +101,56 @@ internal class LocalOptionsConfigurerTest : BasePlatformTestCase() {
     assertEquals("JetBrains-JediTerm", actual.envVariables["TERMINAL_EMULATOR"])
     assertTrue(actual.envVariables["TERM_SESSION_ID"].let { it != null && it.isNotBlank() })
     assertEquals("MY_CUSTOM_ENV_VALUE1", actual.envVariables["MY_CUSTOM_ENV1"])
+  }
+
+  fun testWslEnvSetup() {
+    doTestWslEnvSetup(
+      listOf(),
+      null,
+      "$TERMINAL_EMULATOR/u:$TERM_SESSION_ID/u"
+    )
+    doTestWslEnvSetup(
+      null,
+      null,
+      "$TERMINAL_EMULATOR/u:$TERM_SESSION_ID/u"
+    )
+    doTestWslEnvSetup(
+      listOf("MY_CUSTOM_ENV"),
+      null,
+      "MY_CUSTOM_ENV/u:$TERMINAL_EMULATOR/u:$TERM_SESSION_ID/u"
+    )
+    doTestWslEnvSetup(
+      listOf("Terminal_Emulator"),
+      "BASH_ENV/u",
+      "BASH_ENV/u:Terminal_Emulator/u:$TERM_SESSION_ID/u"
+    )
+    doTestWslEnvSetup(
+      listOf("Foo", "FOO", "BAR"),
+      "PATH/p:BASH_ENV/u:",
+      "PATH/p:BASH_ENV/u:Foo/u:BAR/u:$TERMINAL_EMULATOR/u:$TERM_SESSION_ID/u"
+    )
+    doTestWslEnvSetup(
+      null,
+      "BASH_ENV/u:",
+      "BASH_ENV/u:$TERMINAL_EMULATOR/u:$TERM_SESSION_ID/u"
+    )
+  }
+
+  private fun doTestWslEnvSetup(
+    userDefinedEnvsToPass: List<String>?,
+    initialWslEnvValue: String?,
+    expectedResultWslEnvValue: String,
+  ) {
+    val userEnvData = userDefinedEnvsToPass?.let {
+      EnvironmentVariablesData.create(userDefinedEnvsToPass.associateWith { "${it}_VALUE" }, true)
+    }
+    val resultEnvs = CollectionFactory.createCaseInsensitiveStringMap(
+      initialWslEnvValue?.let {
+        mapOf(WslConstants.WSLENV to initialWslEnvValue)
+      }.orEmpty()
+    )
+    TerminalEnvironment.doSetWslEnv(userEnvData, resultEnvs)
+    assertThat(resultEnvs).isEqualTo(mapOf(WslConstants.WSLENV to expectedResultWslEnvValue))
   }
 
 }

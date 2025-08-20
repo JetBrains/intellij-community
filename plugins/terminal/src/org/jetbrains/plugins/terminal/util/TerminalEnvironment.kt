@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.util
 
+import com.intellij.execution.configuration.EnvironmentVariablesData
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.util.SystemInfo
@@ -8,10 +9,17 @@ import com.intellij.openapi.vfs.impl.wsl.WslConstants.WSLENV
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.isWindows
 import com.intellij.platform.eel.provider.LocalEelDescriptor
-import com.intellij.util.containers.CollectionFactory
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.terminal.isWslCommand
 
+@ApiStatus.Internal
 object TerminalEnvironment {
+
+  const val TERMINAL_EMULATOR: String = "TERMINAL_EMULATOR"
+  const val TERM_SESSION_ID: String = "TERM_SESSION_ID"
+  private const val COLON: String = ":"
+
   fun setCharacterEncoding(env: MutableMap<String, String>) {
     if (SystemInfo.isMac) {
       val charsetName = AdvancedSettings.getString("terminal.character.encoding")
@@ -27,33 +35,40 @@ object TerminalEnvironment {
   }
 
   private const val LC_CTYPE = "LC_CTYPE"
-}
 
-/**
- * Propagates environment variables to WSL via `WSLENV`:
- * https://devblogs.microsoft.com/commandline/share-environment-vars-between-wsl-and-windows/
- *
- * Takes effect only when shell is running in WSL via wsl.exe without IJEnt (`terminal.use.EelApi` is disabled).
- */
-internal class WslEnvInterop(eelDescriptor: EelDescriptor, shellCommand: MutableList<String>) {
-  private val enabled: Boolean = eelDescriptor.osFamily.isWindows &&
-                                 eelDescriptor == LocalEelDescriptor &&
-                                 isWslCommand(shellCommand)
-  private val envNamesToPass: MutableSet<String> = CollectionFactory.createCaseInsensitiveStringSet()
-
-  fun passEnvsToWsl(envNames: Collection<String>) {
-    if (enabled) {
-      envNamesToPass.addAll(envNames)
+  /**
+   * Propagates environment variables to WSL via `WSLENV`:
+   * https://devblogs.microsoft.com/commandline/share-environment-vars-between-wsl-and-windows/
+   *
+   * Takes effect only when shell is running in WSL via wsl.exe without IJEnt (`terminal.use.EelApi` is disabled).
+   */
+  @JvmStatic
+  fun setWslEnv(
+    eelDescriptor: EelDescriptor,
+    shellCommand: List<String>,
+    userDefinedEnvData: EnvironmentVariablesData?,
+    envs: MutableMap<String, String>,
+  ) {
+    if (eelDescriptor.osFamily.isWindows && eelDescriptor == LocalEelDescriptor && isWslCommand(shellCommand)) {
+      doSetWslEnv(userDefinedEnvData, envs)
     }
   }
 
-  fun applyTo(envs: MutableMap<String, String>) {
-    if (!enabled) return
+  @VisibleForTesting
+  fun doSetWslEnv(
+    userDefinedEnvData: EnvironmentVariablesData?,
+    envs: MutableMap<String, String>,
+  ) {
+    val envNamesToPass = mutableListOf<String>().apply {
+      if (userDefinedEnvData != null) {
+        addAll(userDefinedEnvData.envs.keys)
+      }
+      add(TERMINAL_EMULATOR)
+      add(TERM_SESSION_ID)
+    }.distinctBy { it.lowercase() }
+
     val newItems = envNamesToPass.filter { it != WSLENV }.map { "$it/u" }
-    if (newItems.isNotEmpty()) {
-      val colon = ":"
-      val allItems = listOfNotNull(envs[WSLENV]?.removeSuffix(colon)) + newItems
-      envs[WSLENV] = allItems.joinToString(colon)
-    }
+    val allItems = listOfNotNull(envs[WSLENV]?.removeSuffix(COLON)) + newItems
+    envs[WSLENV] = allItems.joinToString(COLON)
   }
 }
