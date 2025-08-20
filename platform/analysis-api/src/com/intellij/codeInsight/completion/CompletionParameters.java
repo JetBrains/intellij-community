@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.openapi.editor.Editor;
@@ -26,9 +26,15 @@ public final class CompletionParameters {
   private boolean myIsTestingMode;
   private boolean myCompleteOnlyNotImported;
 
-  private CompletionParameters(final @NotNull PsiElement position, final @NotNull PsiFile originalFile,
-                               @NotNull CompletionType completionType, int offset, int invocationCount, @NotNull Editor editor,
-                               @NotNull CompletionProcess process, boolean isTestingMode, boolean completeOnlyNotImported) {
+  private CompletionParameters(@NotNull PsiElement position,
+                               @NotNull PsiFile originalFile,
+                               @NotNull CompletionType completionType,
+                               int offset,
+                               int invocationCount,
+                               @NotNull Editor editor,
+                               @NotNull CompletionProcess process,
+                               boolean isTestingMode,
+                               boolean completeOnlyNotImported) {
     PsiUtilCore.ensureValid(position);
     assert position.getTextRange().containsOffset(offset) : position;
     myPosition = position;
@@ -43,8 +49,12 @@ public final class CompletionParameters {
   }
 
   @ApiStatus.Internal
-  public CompletionParameters(final @NotNull PsiElement position, final @NotNull PsiFile originalFile,
-                              @NotNull CompletionType completionType, int offset, int invocationCount, @NotNull Editor editor,
+  public CompletionParameters(@NotNull PsiElement position,
+                              @NotNull PsiFile originalFile,
+                              @NotNull CompletionType completionType,
+                              int offset,
+                              int invocationCount,
+                              @NotNull Editor editor,
                               @NotNull CompletionProcess process) {
     this(position, originalFile, completionType, offset, invocationCount, editor, process, false, false);
   }
