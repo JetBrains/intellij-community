@@ -36,6 +36,7 @@ jvm_library(
     "//platform/vcs-api/shared",
     "@lib//:fastutil-min",
     "//platform/util/jdom",
+    "//platform/ide-core-impl",
   ],
   runtime_deps = [":shared_resources"]
 )

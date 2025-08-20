@@ -22,10 +22,6 @@ import java.awt.event.MouseEvent
 interface ChangesTreeCompatibilityProvider {
   fun getScopeVirtualFileFor(filePath: FilePath): VirtualFile?
 
-  fun getPresentablePath(project: Project?, path: VirtualFile, useRelativeRootPaths: Boolean, acceptEmptyPath: Boolean): @NlsSafe String
-
-  fun getPresentablePath(project: Project?, path: FilePath, useRelativeRootPaths: Boolean, acceptEmptyPath: Boolean): @NlsSafe String
-
   fun getFileStatus(project: Project, file: VirtualFile): FileStatus
 
   fun logInclusionToggle(project: Project, exclude: Boolean, event: MouseEvent)

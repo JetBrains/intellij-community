@@ -17,20 +17,14 @@ import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.vcs.commit.CommitSessionCollector
 import com.intellij.vcsUtil.VcsImplUtil
-import com.intellij.vcsUtil.VcsUtil
 import com.intellij.vcsUtil.VcsUtil.getVcsFor
 import java.awt.event.MouseEvent
 import javax.swing.tree.TreePath
 
 internal class BackendChangesTreeCompatibilityProvider : ChangesTreeCompatibilityProvider {
-  override fun getPresentablePath(project: Project?, path: VirtualFile, useRelativeRootPaths: Boolean, acceptEmptyPath: Boolean): @NlsSafe String =
-    VcsUtil.getPresentablePath(project, path, true, true)
 
   override fun getFileStatus(project: Project, file: VirtualFile): FileStatus =
     ChangeListManager.getInstance(project).getStatus(file)
-
-  override fun getPresentablePath(project: Project?, path: FilePath, useRelativeRootPaths: Boolean, acceptEmptyPath: Boolean): @NlsSafe String =
-    VcsUtil.getPresentablePath(project, path, true, true)
 
   override fun logInclusionToggle(project: Project, exclude: Boolean, event: MouseEvent) {
     CommitSessionCollector.getInstance(project).logInclusionToggle(exclude, event)

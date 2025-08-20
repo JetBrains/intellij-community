@@ -1,14 +1,16 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.changes
 
-import com.intellij.ide.vfs.rpcId
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProjectOrNull
-import com.intellij.platform.vcs.impl.shared.rpc.*
+import com.intellij.platform.vcs.impl.shared.rpc.ChangeDto
+import com.intellij.platform.vcs.impl.shared.rpc.ChangeListDto
+import com.intellij.platform.vcs.impl.shared.rpc.ChangeListsApi
+import com.intellij.platform.vcs.impl.shared.rpc.ContentRevisionDto
 import com.intellij.vcs.VcsDisposable
+import com.intellij.vcs.toDto
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -95,12 +97,5 @@ internal class ChangeListsApiImpl : ChangeListsApi {
     revisionString = revisionNumber.asString(),
     filePath = file.toDto(),
     localValue = this,
-  )
-
-  private fun FilePath.toDto() = FilePathDto(
-    virtualFileId = virtualFile?.rpcId(),
-    path = path,
-    isDirectory = isDirectory,
-    localFilePath = this,
   )
 }

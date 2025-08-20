@@ -6,15 +6,14 @@ import com.intellij.ide.util.treeView.SerializablePathElement
 import com.intellij.ide.util.treeView.TreeState
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.Change
-import com.intellij.openapi.vcs.changes.ChangesTreeCompatibilityProvider
 import com.intellij.openapi.vcs.impl.PlatformVcsPathPresenter.getPresentableRelativePath
 import com.intellij.platform.vcs.changes.ChangesUtil
+import com.intellij.platform.vcs.impl.shared.ui.VcsPresentablePath
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.FontUtil
 import org.jetbrains.annotations.ApiStatus
@@ -73,20 +72,11 @@ abstract class AbstractChangesBrowserFilePathNode<U>(
   fun getOriginText(): String? = originInfo?.getText()
 
   fun getRelativeFilePath(project: Project?, path: FilePath): @NlsSafe String {
-    val isLocal = !path.isNonLocal
     val parentPath = safeCastToFilePath(getParent())
     if (parentPath != null) {
-      val caseSensitive = isLocal && SystemInfo.isFileSystemCaseSensitive
-      val relativePath = FileUtil.getRelativePath(parentPath.path, path.path, '/', caseSensitive)
-      val prettyPath = relativePath ?: path.path
-      return if (isLocal) FileUtil.toSystemDependentName(prettyPath) else prettyPath
+      return VcsPresentablePath.getPresentablePath(parentPath, path)
     }
-    else if (isLocal) {
-      return ChangesTreeCompatibilityProvider.getInstance().getPresentablePath(project, path, true, false)
-    }
-    else {
-      return path.path
-    }
+    return VcsPresentablePath.getPresentablePath(project, path)
   }
 
   @ApiStatus.Internal
