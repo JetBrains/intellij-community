@@ -40,4 +40,17 @@ class JavaCommandsCompletionTypeInfoTest : LightFixtureCompletionTestCase() {
     val elements = myFixture.completeBasic()
     assertNotNull(elements.firstOrNull { element -> element.lookupString.contains("Type Info", ignoreCase = true) })
   }
+
+  fun testTypeInfoVariableIdentifierCommand() {
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+      class A { 
+        void foo() {
+          var y.<caret> = 10;
+          System.out.println(y);
+        } 
+      }
+      """.trimIndent())
+    val elements = myFixture.completeBasic()
+    assertNotNull(elements.firstOrNull { element -> element.lookupString.contains("Type Info", ignoreCase = true) })
+  }
 }
