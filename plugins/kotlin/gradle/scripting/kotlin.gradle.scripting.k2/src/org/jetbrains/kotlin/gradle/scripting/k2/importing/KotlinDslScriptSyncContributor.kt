@@ -25,9 +25,9 @@ import java.nio.file.Path
 
 internal class KotlinDslScriptSyncExtension : GradleSyncExtension {
 
-    override fun updateProjectStorage(
+    override fun updateProjectModel(
         context: ProjectResolverContext,
-        syncStorage: ImmutableEntityStorage,
+        syncStorage: MutableEntityStorage,
         projectStorage: MutableEntityStorage,
         phase: GradleSyncPhase
     ) {

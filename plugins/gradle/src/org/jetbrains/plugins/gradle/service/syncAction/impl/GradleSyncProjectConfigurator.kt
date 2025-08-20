@@ -131,14 +131,9 @@ private class GradleSyncContributorRunner {
       |  projectPath = ${context.projectPath}
     """.trimMargin()
     context.project.workspaceModel.update(configuratorDescription) { projectBuilder ->
-      val projectStorage = projectBuilder.toSnapshot()
       val syncBuilder = storage.toBuilder()
       GradleSyncExtension.EP_NAME.forEachExtensionSafeAsync { extension ->
-        extension.updateSyncStorage(context, syncBuilder, projectStorage, phase)
-      }
-      val syncStorage = syncBuilder.toSnapshot()
-      GradleSyncExtension.EP_NAME.forEachExtensionSafeAsync { extension ->
-        extension.updateProjectStorage(context, syncStorage, projectBuilder, phase)
+        extension.updateProjectModel(context, syncBuilder, projectBuilder, phase)
       }
     }
     GradleSyncExtension.EP_NAME.forEachExtensionSafeAsync { extension ->
