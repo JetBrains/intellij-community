@@ -441,6 +441,19 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
     processAssignment(targetType, rValue, lValue, assignment);
   }
 
+  @Override
+  public void visitArrayDeclaration(@NotNull GrArrayDeclaration arrayDeclaration) {
+    super.visitArrayDeclaration(arrayDeclaration);
+    if (!GroovyConfigUtils.getInstance().isVersionAtLeast(arrayDeclaration, GroovyConfigUtils.GROOVY3_0)) return;
+
+    for (GrExpression expr : arrayDeclaration.getBoundExpressions()) {
+      PsiType type = expr.getType();
+      if (type == null) continue;
+      ConversionResult conversionResult = TypesUtil.isIntegralNumberType(type) ? ConversionResult.OK : ConversionResult.ERROR;
+      processResult(conversionResult, expr, type, PsiTypes.intType(), new LocalQuickFix[]{new GrCastFix(PsiTypes.intType(), expr)});
+    }
+  }
+
   void checkPossibleLooseOfPrecision(@NotNull PsiType targetType, @NotNull GrExpression expression, @NotNull PsiElement toHighlight) {
     PsiType actualType = expression.getType();
     if (actualType == null) return;

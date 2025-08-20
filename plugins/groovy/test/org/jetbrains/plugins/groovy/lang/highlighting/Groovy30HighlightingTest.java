@@ -238,6 +238,18 @@ public class Groovy30HighlightingTest extends GroovyVersionBasedTest {
                        }""");
   }
 
+  public void testIncompatibleTypeOfArrayDimension() {
+    highlightingTest("""
+                       static void main(String[] args) {
+                         def a = new String[<warning descr="Cannot assign 'int' to 'ArrayList'">[]</warning>]
+                         double doub = 1.0
+                         def b = new int[<warning descr="Cannot assign 'int' to 'double'">doub</warning>]
+                         def c = new int[10]
+                         def d = new int[(1+1)][(1+3)]
+                       }
+                       """, GroovyAssignabilityCheckInspection.class);
+  }
+
   public void testClosureInsideArrayInitializer() { fileHighlightingTest(); }
 
   @Override
