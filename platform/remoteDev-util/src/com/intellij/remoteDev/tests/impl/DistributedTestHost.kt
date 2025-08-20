@@ -322,6 +322,12 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
           requestFocus(reportFailures)
         }
 
+        session.isFocused.setSuspend(Dispatchers.IO) { _, _ ->
+          Window.getWindows().filter { it.isShowing }.any {
+            it.isFocused || it.isFocusAncestor()
+          }
+        }
+
         session.makeScreenshot.setSuspend(sessionBgtDispatcher) { _, fileName ->
           makeScreenshot(fileName)
         }
