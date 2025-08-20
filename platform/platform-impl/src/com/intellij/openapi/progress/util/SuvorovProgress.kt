@@ -20,6 +20,7 @@ import com.intellij.ui.KeyStrokeAdapter
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.application
 import com.intellij.util.ui.AsyncProcessIcon
+import com.intellij.util.ui.GraphicsUtil
 import com.jetbrains.rd.util.error
 import com.jetbrains.rd.util.getLogger
 import kotlinx.coroutines.Deferred
@@ -111,7 +112,8 @@ object SuvorovProgress {
       }
       "NiceOverlay" -> {
         val currentFocusedPane = KeyboardFocusManager.getCurrentKeyboardFocusManager().focusedWindow?.let(SwingUtilities::getRootPane)
-        if (currentFocusedPane == null) {
+        // IJPL-203107 in remote development, there is no graphics for a component
+        if (currentFocusedPane == null || GraphicsUtil.safelyGetGraphics(currentFocusedPane) == null) {
           // can happen also in tests
           processInvocationEventsWithoutDialog(awaitedValue, Int.MAX_VALUE)
         }
