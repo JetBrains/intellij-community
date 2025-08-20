@@ -153,7 +153,7 @@ class PyUnresolvedReferencesInspection : PyUnresolvedReferencesInspectionBase() 
         
         val resolveResult: List<PsiElement> = resolveInRoot(qname, containingDirectory, context)
         if (!resolveResult.isEmpty()) {
-          return PyMarkDirectoryAsSourceRootQuickFix(project, containingDirectory, module, context)
+          return PyMarkDirectoryAsSourceRootQuickFix(project, containingDirectory, module)
         }
       }
       return null

@@ -33,7 +33,6 @@ internal class PyMarkDirectoryAsSourceRootQuickFix(
   private val project: Project,
   private val sourceRoot: VirtualFile,
   private val module: Module,
-  private val context: PyQualifiedNameResolveContext,
 ) : LocalQuickFix, Iconable {
   override fun startInWriteAction(): Boolean = true
 
@@ -57,7 +56,6 @@ internal class PyMarkDirectoryAsSourceRootQuickFix(
 
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
     sourceRoot.markAsSourceRoot(module)
-    findCache(context)?.clearCache()
     showNotification()
   }
 
@@ -77,7 +75,6 @@ internal class PyMarkDirectoryAsSourceRootQuickFix(
         ApplicationManager.getApplication().runWriteAction {
           sourceRoot.unmarkAsSourceRoot(module)
         }
-        findCache(context)?.clearCache()
         notification.expire()
       }
     })
