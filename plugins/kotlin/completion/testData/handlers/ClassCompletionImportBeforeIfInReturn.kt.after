@@ -1,0 +1,10 @@
+package classCompletionImport
+
+import java.util.SortedSet
+
+fun test(): Int? {
+        return 5 as? SortedSet<caret>if (true) 5
+}
+
+// ELEMENT: SortedSet
+// USE_EXPENSIVE_RENDERER
