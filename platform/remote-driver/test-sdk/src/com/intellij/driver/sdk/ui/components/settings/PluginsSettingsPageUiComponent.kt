@@ -36,5 +36,6 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : UiComponent(data) {
     val installedButton = x { and(byType(JButton::class.java), byAccessibleName("Installed")) }
     val disableButton = x { and(byType(JButton::class.java), byAccessibleName("Disable")) }
     val enableButton = x { and(byType(JButton::class.java), byAccessibleName("Enable")) }
+    val arrowButton = x { byType($$"com.intellij.ui.components.BasicOptionButtonUI$ArrowButton")}
   }
 }
