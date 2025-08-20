@@ -102,7 +102,7 @@ open class KotlinRunConfiguration(name: String?, runConfigurationModule: JavaRun
     }
 
     override fun setWorkingDirectory(value: String?) {
-        val normalizedValue = if (StringUtil.isEmptyOrSpaces(value)) null else value!!.trim { it <= ' ' }
+        val normalizedValue = if (value.isNullOrBlank()) null else value.trim { it <= ' ' }
         val independentValue = PathUtil.toSystemIndependentName(normalizedValue)
         options.workingDirectory = independentValue?.takeIf { it != defaultWorkingDirectory() }
     }
