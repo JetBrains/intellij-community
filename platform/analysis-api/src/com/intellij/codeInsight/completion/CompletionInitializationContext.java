@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.lang.Language;
@@ -22,20 +22,20 @@ public class CompletionInitializationContext {
    */
   public static final @NonNls String DUMMY_IDENTIFIER = CompletionUtilCore.DUMMY_IDENTIFIER;
   public static final @NonNls String DUMMY_IDENTIFIER_TRIMMED = CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED;
-  private final Editor myEditor;
+  private final @NotNull Editor myEditor;
   private final @NotNull Caret myCaret;
-  private final PsiFile myPsiFile;
-  private final CompletionType myCompletionType;
+  private final @NotNull PsiFile myPsiFile;
+  private final @NotNull CompletionType myCompletionType;
   private final int myInvocationCount;
-  private final OffsetMap myOffsetMap;
+  private final @NotNull OffsetMap myOffsetMap;
   private String myDummyIdentifier = DUMMY_IDENTIFIER;
   private final Language myPositionLanguage;
 
-  public CompletionInitializationContext(final Editor editor,
-                                         final @NotNull Caret caret,
+  public CompletionInitializationContext(@NotNull Editor editor,
+                                         @NotNull Caret caret,
                                          Language language,
-                                         final PsiFile psiFile,
-                                         final CompletionType completionType,
+                                         @NotNull PsiFile psiFile,
+                                         @NotNull CompletionType completionType,
                                          int invocationCount) {
     myEditor = editor;
     myCaret = caret;

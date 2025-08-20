@@ -72,7 +72,7 @@ internal class TerminalCommandCompletion(
         })
       val hasValidContext = context != null
       if (!hasValidContext) {
-        val psiFile = PsiUtilBase.getPsiFileInEditor(caret, project)
+        val psiFile = PsiUtilBase.getPsiFileInEditor(caret, project)!!
         context = CompletionInitializationContextImpl(editor, caret, psiFile, completionType, invocationCount)
       }
 
