@@ -122,7 +122,7 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
     applyResult.pluginsToEnable.forEach { id -> super.setEnabled(id, PluginEnabledState.ENABLED) }
     myUninstalled.clear()
     updateButtons()
-    myPluginManagerCustomizer?.updateAfterModification {  }
+    myPluginManagerCustomizer?.updateAfterModification { }
     return !applyResult.needRestart
   }
 
@@ -264,13 +264,13 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
     result.pluginsToEnable.forEach { id -> changedStates[id] = true }
     applyChangedStates(changedStates)
     if (myPluginManagerCustomizer != null) {
-      myPluginManagerCustomizer.updateAfterModification {
-        info.finish(result.success, result.cancel, result.showErrors, result.restartRequired, getErrors(result), coroutineScope)
+      myPluginManagerCustomizer.updateAfterModificationAsync {
+        info.finish(result.success, result.cancel, result.showErrors, result.restartRequired, getErrors(result))
         null
       }
     }
     else {
-      info.finish(result.success, result.cancel, result.showErrors, result.restartRequired, getErrors(result), coroutineScope)
+      info.finish(result.success, result.cancel, result.showErrors, result.restartRequired, getErrors(result))
     }
     return result
   }

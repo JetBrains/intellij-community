@@ -23,6 +23,7 @@ class InstallPluginResult {
   var disabledPlugins: List<String> = emptyList()
   var disabledDependants: List<String> = emptyList()
   var allowInstallWithoutRestart: Boolean = true
+  var dynamicUiPlugin: Boolean = false
   companion object {
     val FAILED = InstallPluginResult().apply { success = false }
   }

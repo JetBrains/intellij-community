@@ -80,6 +80,7 @@ public final class ListPluginComponent extends JPanel {
   private final JBLabel myNameComponent = new JBLabel();
   private final JLabel myIconComponent = new JLabel(AllIcons.Plugins.PluginLogo);
   private final BaselineLayout myLayout = new BaselineLayout();
+  private boolean succesefullyFinishedOnce = false;
   JButton myRestartButton;
   InstallButton myInstallButton;
   JButton myUpdateButton;
@@ -757,6 +758,7 @@ public final class ListPluginComponent extends JPanel {
   }
 
   private void showProgress(boolean repaint) {
+    if (succesefullyFinishedOnce) return;
     myIndicator = new AbstractProgressIndicatorExBase();
     myLayout.setProgressComponent(new AsyncProcessIcon("PluginListComponentIconProgress") {
       @Override
@@ -781,10 +783,12 @@ public final class ListPluginComponent extends JPanel {
   }
 
   public void hideProgress(boolean success, boolean restartRequired, PluginUiModel installedPlugin) {
+    if(succesefullyFinishedOnce) return;
     myIndicator = null;
     myLayout.removeProgressComponent();
 
     if (success) {
+      succesefullyFinishedOnce = true;
       if (restartRequired) {
         enableRestart();
       }

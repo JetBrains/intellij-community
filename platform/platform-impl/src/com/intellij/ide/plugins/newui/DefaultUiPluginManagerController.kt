@@ -50,6 +50,7 @@ import java.io.IOException
 import java.nio.file.FileVisitResult
 import java.util.*
 import javax.swing.JComponent
+import kotlin.coroutines.CoroutineContext
 
 @ApiStatus.Internal
 object DefaultUiPluginManagerController : UiPluginManagerController {
@@ -140,8 +141,8 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
   ): InstallPluginResult {
     val session = findSession(sessionId) ?: return InstallPluginResult.FAILED
     val pluginEnabler = pluginEnabler ?: SessionStatePluginEnabler(session)
-    val modalityState = modalityState ?: ModalityState.any()
-    return withContext(Dispatchers.EDT + modalityState.asContextElement()) {
+    val context = getContextElement(modalityState)
+    return withContext(context) {
       val isUpdate = updateDescriptor != null
       val actionDescriptor: PluginUiModel = if (isUpdate) updateDescriptor else descriptor
       if (!PluginManagerMain.checkThirdPartyPluginsAllowed(listOf(actionDescriptor.getDescriptor()))) {
@@ -190,7 +191,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
         val pluginsToInstall = listOf(pluginUiModel.getDescriptor())
         val disabledPluginNames = mutableSetOf<IdeaPluginDescriptor>()
         val disabledDependantPlugins = mutableSetOf<IdeaPluginDescriptor>()
-        withContext(Dispatchers.EDT + modalityState.asContextElement()) {
+        withContext(getContextElement(modalityState)) {
           disabledPluginNames.addAll(PluginManagerMain.getDisabledPlugins(pluginEnabler, pluginsToInstall, isUpdate))
           disabledDependantPlugins.addAll(PluginManagerMain.getDisabledDependants(pluginEnabler, pluginsToInstall))
         }
@@ -464,7 +465,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
   suspend fun performInstallOperation(
     request: InstallPluginRequest,
     parentComponent: JComponent?,
-    modalityState: ModalityState,
+    modalityState: ModalityState?,
     pluginEnabler: PluginEnabler,
   ): InstallPluginResult {
     val session = findSession(request.sessionId) ?: return InstallPluginResult.FAILED
@@ -511,7 +512,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
       result.restartRequired = restartRequired
       session.needRestart = session.needRestart || restartRequired
     }
-    return withContext(Dispatchers.EDT + modalityState.asContextElement()) {
+    return withContext(getContextElement(modalityState)) {
       installDynamicPluginsSynchronously(request, pluginsToInstallSynchronously, session, parentComponent, result)
     }
   }
@@ -745,6 +746,14 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     return getErrors(session, pluginId)
   }
 
+  private fun getContextElement(modalityState: ModalityState?): CoroutineContext {
+    return modalityState?.let { Dispatchers.EDT + it.asContextElement() } ?: Dispatchers.EDT
+  }
+
+  private fun getContextElement(component: JComponent?): CoroutineContext {
+    return component?.let { Dispatchers.EDT + ModalityState.stateForComponent(it).asContextElement() } ?: Dispatchers.EDT
+  }
+
   private fun getErrors(session: PluginManagerSession, pluginId: PluginId): CheckErrorsResult {
     if (InstalledPluginsState.getInstance().wasUninstalledWithoutRestart(pluginId) ||
         InstalledPluginsState.getInstance().wasInstalledWithoutRestart(pluginId)) {
@@ -954,6 +963,10 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
       if (!session.dynamicPluginsToInstall.isEmpty() || !session.dynamicPluginsToUninstall.isEmpty()) {
         LOG.warn("pending dynamic plugins probably won't finish their installation: " + session.dynamicPluginsToInstall + " " + session.dynamicPluginsToUninstall)
       }
+    }
+    if (result.installedDescriptor != null) {
+      val installedPlugin = PluginManagerCore.getPlugin(request.pluginId)?.getMainDescriptor() as? PluginMainDescriptor
+      result.dynamicUiPlugin = installedPlugin != null && DynamicPlugins.isUIOnlyDynamicPlugin(installedPlugin)
     }
     result.errors = PluginManagerCore.plugins.map { it.pluginId }.associateWith { getErrors(session, it) }
     return result

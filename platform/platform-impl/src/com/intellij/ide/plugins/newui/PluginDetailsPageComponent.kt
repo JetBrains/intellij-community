@@ -1457,10 +1457,8 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   }
 
   private suspend fun updateButtonsAndApplyCustomization() {
-    coroutineScope.launch(Dispatchers.EDT + ModalityState.stateForComponent(this).asContextElement()) {
-      updateButtons()
-      applyCustomization()
-    }
+    updateButtons()
+    applyCustomization()
   }
 
   fun hideProgress() {
