@@ -31,6 +31,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.function.Consumer
@@ -78,16 +79,16 @@ open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : Find
             initScope.cancel("search disposed")
           }
         }
-
+        val maxUsagesCount = ShowUsagesAction.getUsagesPageSize()
         FindRemoteApi.getInstance().findByModel(
           findModel = findModel,
           projectId = project.projectId(),
           filesToScanInitially = filesToScanInitially.map { it.rpcId() },
-          maxUsagesCount = ShowUsagesAction.getUsagesPageSize()
+          maxUsagesCount = maxUsagesCount
         ).let {
           if (shouldThrottle) it.throttledWithAccumulation()
           else it.map { event -> ThrottledOneItem(event) }
-        }.collect { throttledItems ->
+        }.take(maxUsagesCount).collect { throttledItems ->
           if (searchDisposable?.isDisposed == true) {
             return@collect
           }

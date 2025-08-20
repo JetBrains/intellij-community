@@ -45,7 +45,6 @@ internal class FindRemoteApiImpl : FindRemoteApi {
 
       val isReplaceState = findModel.isReplaceState
       val previousResult = ThreadLocal<UsageInfo2UsageAdapter>()
-      val usagesCount = AtomicInteger()
 
       val project = projectId.findProjectOrNull()
       if (project == null) {
@@ -58,13 +57,13 @@ internal class FindRemoteApiImpl : FindRemoteApi {
       //read action is necessary in case of the loading from a directory
       val scope = readAction { FindInProjectUtil.getGlobalSearchScope(project, findModel) }
       FindInProjectUtil.findUsages(findModel, project, presentation, filesToScanInitially) { usageInfo ->
-        val usageNum = usagesCount.incrementAndGet()
-        if (usageNum > maxUsagesCount) {
-          return@findUsages false
-        }
         val virtualFile = usageInfo.virtualFile
         if (virtualFile == null)
           return@findUsages true
+
+        if (sentItems.get() >= maxUsagesCount) {
+          return@findUsages false
+        }
 
         val adapter = UsageInfo2UsageAdapter(usageInfo)
         val previousItem: UsageInfo2UsageAdapter? = previousResult.get()
@@ -96,11 +95,11 @@ internal class FindRemoteApiImpl : FindRemoteApi {
           )
 
         val sent = trySend(result)
-        if (sent.isSuccess && sentItems.incrementAndGet() >= maxUsagesCount) {
-          close()
+        if (sent.isSuccess) {
+          sentItems.incrementAndGet()
         }
 
-        usagesCount.get() <= maxUsagesCount
+        sentItems.get() <= maxUsagesCount
       }
     }.buffer(capacity = maxUsagesCount)
   }
