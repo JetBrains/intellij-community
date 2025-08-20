@@ -346,7 +346,7 @@ public final class PathManager {
           Files.createDirectories(path);
         }
         catch (IOException e) {
-          throw new UncheckedIOException(e);
+          throw new UncheckedIOException("Failed to create " + path + ", user.home=" + System.getProperty("user.home"), e);
         }
       }
       ourCommonDataPath = path;
