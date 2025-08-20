@@ -1,6 +1,7 @@
 package org.jetbrains.jewel.intui.standalone.styling
 
 import androidx.compose.ui.graphics.Color
+import kotlin.time.Duration.Companion.milliseconds
 import org.jetbrains.jewel.intui.core.theme.IntUiDarkTheme
 import org.jetbrains.jewel.intui.core.theme.IntUiLightTheme
 import org.jetbrains.jewel.ui.component.styling.TooltipAutoHideBehavior
@@ -11,7 +12,7 @@ import org.jetbrains.jewel.ui.component.styling.TooltipStyle
 @Deprecated("Please, use the overload with [TooltipAutoHideBehavior].")
 public fun TooltipStyle.Companion.light(
     intUiTooltipColors: TooltipColors = TooltipColors.light(),
-    intUiTooltipMetrics: TooltipMetrics = TooltipMetrics.defaults(),
+    intUiTooltipMetrics: TooltipMetrics = TooltipMetrics.defaults(regularDisappearDelay = 10000.milliseconds),
 ): TooltipStyle =
     TooltipStyle(
         colors = intUiTooltipColors,
@@ -21,7 +22,7 @@ public fun TooltipStyle.Companion.light(
 
 public fun TooltipStyle.Companion.light(
     intUiTooltipColors: TooltipColors = TooltipColors.light(),
-    intUiTooltipMetrics: TooltipMetrics = TooltipMetrics.defaults(),
+    intUiTooltipMetrics: TooltipMetrics = TooltipMetrics.defaults(regularDisappearDelay = 10000.milliseconds),
     autoHideBehavior: TooltipAutoHideBehavior = TooltipAutoHideBehavior.Normal,
 ): TooltipStyle =
     TooltipStyle(colors = intUiTooltipColors, metrics = intUiTooltipMetrics, autoHideBehavior = autoHideBehavior)
@@ -29,7 +30,7 @@ public fun TooltipStyle.Companion.light(
 @Deprecated("Please, use the overload with [TooltipAutoHideBehavior].")
 public fun TooltipStyle.Companion.dark(
     intUiTooltipColors: TooltipColors = TooltipColors.dark(),
-    intUiTooltipMetrics: TooltipMetrics = TooltipMetrics.defaults(),
+    intUiTooltipMetrics: TooltipMetrics = TooltipMetrics.defaults(regularDisappearDelay = 10000.milliseconds),
 ): TooltipStyle =
     TooltipStyle(
         colors = intUiTooltipColors,
@@ -39,7 +40,7 @@ public fun TooltipStyle.Companion.dark(
 
 public fun TooltipStyle.Companion.dark(
     intUiTooltipColors: TooltipColors = TooltipColors.dark(),
-    intUiTooltipMetrics: TooltipMetrics = TooltipMetrics.defaults(),
+    intUiTooltipMetrics: TooltipMetrics = TooltipMetrics.defaults(regularDisappearDelay = 10000.milliseconds),
     autoHideBehavior: TooltipAutoHideBehavior = TooltipAutoHideBehavior.Normal,
 ): TooltipStyle =
     TooltipStyle(colors = intUiTooltipColors, metrics = intUiTooltipMetrics, autoHideBehavior = autoHideBehavior)

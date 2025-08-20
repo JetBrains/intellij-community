@@ -53,6 +53,14 @@ public class MenuManager(
         MenuManager(onDismissRequest = onDismissRequest, parentMenuManager = this)
 }
 
+@Suppress("DEPRECATION")
+@Deprecated(
+    message =
+        "The MenuManager class has been superseded by the MenuController interface, " +
+            "which offers improved abstraction and new functionalities like shortcut management. " +
+            "You can use the LocalMenuController composition local to access the MenuController instance.",
+    replaceWith = ReplaceWith("LocalMenuController.current"),
+)
 public val LocalMenuManager: ProvidableCompositionLocal<MenuManager> = staticCompositionLocalOf {
     error("No MenuManager provided. Have you forgotten the theme?")
 }

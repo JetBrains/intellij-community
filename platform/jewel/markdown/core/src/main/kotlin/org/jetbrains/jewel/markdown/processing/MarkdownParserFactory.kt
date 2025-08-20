@@ -2,12 +2,16 @@ package org.jetbrains.jewel.markdown.processing
 
 import org.commonmark.parser.IncludeSourceSpans
 import org.commonmark.parser.Parser
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.markdown.extensions.MarkdownProcessorExtension
 
 /**
  * Simplifies creating a [CommonMark `Parser`][Parser] while also supporting Jewel's [MarkdownProcessorExtension]s and
  * the `optimizeEdits` flag.
  */
+@ApiStatus.Experimental
+@ExperimentalJewelApi
 public object MarkdownParserFactory {
     /**
      * Create a [CommonMark `Parser`][Parser] with the provided [extensions]. The parser's [Builder][Parser.Builder] can

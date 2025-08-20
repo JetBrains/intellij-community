@@ -29,6 +29,8 @@ public interface CodeHighlighter {
     public fun highlight(code: String, mimeType: MimeType?): Flow<AnnotatedString>
 }
 
+@ExperimentalJewelApi
+@get:ApiStatus.Experimental
 public val LocalCodeHighlighter: ProvidableCompositionLocal<CodeHighlighter> = staticCompositionLocalOf {
     NoOpCodeHighlighter
 }

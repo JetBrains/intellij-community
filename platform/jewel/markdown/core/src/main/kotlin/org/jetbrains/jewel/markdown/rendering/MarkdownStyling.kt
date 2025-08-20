@@ -1063,10 +1063,14 @@ public class MarkdownStyling(
     public companion object
 }
 
+@ApiStatus.Experimental
+@ExperimentalJewelApi
 public interface WithInlinesStyling {
     public val inlinesStyling: InlinesStyling
 }
 
+@ApiStatus.Experimental
+@ExperimentalJewelApi
 public interface WithUnderline {
     public val underlineWidth: Dp
     public val underlineColor: Color
