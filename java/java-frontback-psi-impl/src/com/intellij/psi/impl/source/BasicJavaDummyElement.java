@@ -1,6 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
+import com.intellij.java.syntax.element.lazyParser.IncompleteFragmentParsingException;
 import com.intellij.lang.java.parser.BasicJavaParserUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.impl.source.tree.FileElement;
@@ -53,7 +54,7 @@ public class BasicJavaDummyElement extends FileElement {
     try {
       return super.getFirstChildNode();
     }
-    catch (AssertionError e) {
+    catch (IncompleteFragmentParsingException e) {
       myParserError = e;
       return null;  // masquerade parser errors
     }
@@ -64,7 +65,7 @@ public class BasicJavaDummyElement extends FileElement {
     try {
       return super.getLastChildNode();
     }
-    catch (AssertionError e) {
+    catch (IncompleteFragmentParsingException e) {
       myParserError = e;
       return null;  // masquerade parser errors
     }

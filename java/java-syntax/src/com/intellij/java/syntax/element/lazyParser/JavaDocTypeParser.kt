@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.syntax.element.lazyParser
 
+import com.intellij.java.syntax.element.JavaDocSyntaxElementType
 import com.intellij.java.syntax.lexer.JavaLexer
 import com.intellij.java.syntax.lexer.JavaTypeEscapeLexer
 import com.intellij.java.syntax.parser.JavaDocParser
@@ -16,7 +17,9 @@ import com.intellij.pom.java.LanguageLevel
 internal class JavaDocTypeParser : LazyParser {
   override fun parse(parsingContext: LazyParsingContext): ProductionResult {
     val syntaxTreeBuilder = parsingContext.syntaxTreeBuilder
-    JavaDocParser(syntaxTreeBuilder, languageLevel).parseJavadocType(JavaParser(languageLevel))
+    parseFragment(syntaxTreeBuilder, JavaDocSyntaxElementType.DOC_TYPE_HOLDER, false) {
+      JavaDocParser(syntaxTreeBuilder, languageLevel).parseJavadocType(JavaParser(languageLevel))
+    }
     return prepareProduction(syntaxTreeBuilder)
   }
 
