@@ -6,6 +6,7 @@ import com.intellij.codeInsight.completion.EmptyCompletionNotifier;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.lightEdit.intentions.openInProject.LightEditOpenInProjectIntention;
+import com.intellij.idea.AppMode;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
@@ -177,7 +178,11 @@ public final class LightEditUtil {
   }
 
   public static boolean isLightEditEnabled() {
-    return Registry.is(ENABLED_FILE_OPEN_KEY) && !PlatformUtils.isDataGrip() && !PlatformUtils.isGoIde();
+    return Registry.is(ENABLED_FILE_OPEN_KEY) &&
+           !PlatformUtils.isDataGrip() &&
+           !PlatformUtils.isGoIde() &&
+           !PlatformUtils.isJetBrainsClient() &&
+           !AppMode.isRemoteDevHost();
   }
 
   @ApiStatus.Internal
