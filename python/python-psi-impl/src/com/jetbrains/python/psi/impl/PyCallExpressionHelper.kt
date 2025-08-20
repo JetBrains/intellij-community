@@ -812,12 +812,11 @@ fun PyClassType.resolveImplicitlyInvokedMethods(
   else resolveDunderCall(callSite, resolveContext)
 }
 
-fun PyClassType.getImplicitlyInvokedMethodTypes(
-  callSite: PyCallSiteExpression?,
+fun PyClassType.getImplicitlyInvokedMethod(
   resolveContext: PyResolveContext,
-): List<PyTypedResolveResult> {
-  return if (isDefinition()) getConstructorTypes(callSite, resolveContext)
-  else getDunderCallType(callSite, resolveContext)
+): List<PyTypeMember> {
+  return if (isDefinition()) getConstructorTypes(resolveContext)
+  else getDunderCallType(resolveContext)
 }
 
 private fun PyClassType.changeToImplicitlyInvokedMethods(
@@ -866,15 +865,15 @@ private fun PyClassType.resolveConstructors(callSite: PyCallSiteExpression?, res
   return initAndNew.preferInitOverNew().map { RatedResolveResult(PyReferenceImpl.getRate(it, context), it) }
 }
 
-private fun PyClassType.getConstructorTypes(callSite: PyCallSiteExpression?, resolveContext: PyResolveContext): List<PyTypedResolveResult> {
-  val initTypes = getMemberTypes(PyNames.INIT, callSite, AccessDirection.READ, resolveContext)
-  if (initTypes != null) {
-    return initTypes
+private fun PyClassType.getConstructorTypes(resolveContext: PyResolveContext): List<PyTypeMember> {
+  val initFunc = findMember(PyNames.INIT, resolveContext)
+  if (initFunc.isNotEmpty()) {
+    return initFunc
   }
 
-  val newTypes = getMemberTypes(PyNames.NEW, callSite, AccessDirection.READ, resolveContext)
-  if (newTypes != null) {
-    return newTypes
+  val newFunc = findMember(PyNames.NEW, resolveContext)
+  if (newFunc.isNotEmpty()) {
+    return newFunc
   }
 
   return emptyList()
@@ -923,8 +922,8 @@ private fun PyClassLikeType.resolveDunderCall(location: PyExpression?, resolveCo
   return resolveMember(PyNames.CALL, location, AccessDirection.READ, resolveContext) ?: emptyList()
 }
 
-private fun PyClassLikeType.getDunderCallType(location: PyExpression?, resolveContext: PyResolveContext): List<PyTypedResolveResult> {
-  return getMemberTypes(PyNames.CALL, location, AccessDirection.READ, resolveContext) ?: emptyList()
+private fun PyClassLikeType.getDunderCallType(resolveContext: PyResolveContext): List<PyTypeMember> {
+  return findMember(PyNames.CALL, resolveContext)
 }
 
 fun analyzeArguments(
