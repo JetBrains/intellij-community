@@ -32,7 +32,9 @@ public abstract class CompletionResultSet implements Consumer<LookupElement> {
   public final CompletionContributor contributor;
   private boolean myStopped;
 
-  protected CompletionResultSet(final PrefixMatcher prefixMatcher, java.util.function.Consumer<? super CompletionResult> consumer, CompletionContributor contributor) {
+  protected CompletionResultSet(@NotNull PrefixMatcher prefixMatcher,
+                                java.util.function.Consumer<? super CompletionResult> consumer,
+                                CompletionContributor contributor) {
     this.prefixMatcher = prefixMatcher;
     this.consumer = consumer;
     this.contributor = contributor;
@@ -126,7 +128,7 @@ public abstract class CompletionResultSet implements Consumer<LookupElement> {
     myStopped = true;
   }
 
-  public LinkedHashSet<CompletionResult> runRemainingContributors(CompletionParameters parameters, final boolean passResult) {
+  public @NotNull LinkedHashSet<CompletionResult> runRemainingContributors(CompletionParameters parameters, final boolean passResult) {
     final LinkedHashSet<CompletionResult> elements = new LinkedHashSet<>();
     runRemainingContributors(parameters, result -> {
       if (passResult) {
