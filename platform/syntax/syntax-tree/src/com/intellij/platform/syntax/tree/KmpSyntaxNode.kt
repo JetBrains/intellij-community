@@ -302,8 +302,8 @@ class KmpSyntaxNode internal constructor(
     val c = try {
       context.ast.chameleonAt(id)
     }
-    catch (_: NullPointerException) {
-      error("Chameleon at $id not found.")
+    catch (e: NullPointerException) {
+      throw IllegalStateException("Chameleon at $id not found.", e)
     }
     return c.realize {
       parseChameleon(
