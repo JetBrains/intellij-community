@@ -1,30 +1,32 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.joinLines
 
+import com.intellij.codeInsight.editorActions.JoinLinesHandlerDelegate
 import com.intellij.codeInsight.editorActions.JoinRawLinesHandlerDelegate
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiFile
-import org.jetbrains.kotlin.idea.base.psi.getLineCount
+import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.util.getLineCount
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtOperationReferenceExpression
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
-import org.jetbrains.kotlin.psi.psiUtil.parents
-import org.jetbrains.kotlin.util.match
 
 class JoinToStringTemplateHandler : JoinRawLinesHandlerDelegate {
     override fun tryJoinRawLines(document: Document, file: PsiFile, start: Int, end: Int): Int {
-        if (file !is KtFile) return -1
+        if (file.fileType !is KotlinFileType) return JoinLinesHandlerDelegate.CANNOT_JOIN
 
-        if (start == 0) return -1
+        if (start == 0) return JoinLinesHandlerDelegate.CANNOT_JOIN
         val c = document.charsSequence[start]
         val index = if (c == '\n') start - 1 else start
 
-        val plus = file.findElementAt(index)?.takeIf { it.node?.elementType == KtTokens.PLUS } ?: return -1
-        var binaryExpr = plus.parents.match(KtOperationReferenceExpression::class, last = KtBinaryExpression::class)
+        val plus = file.findElementAt(index)?.takeIf { it.node?.elementType == KtTokens.PLUS } ?: return JoinLinesHandlerDelegate.CANNOT_JOIN
+        var binaryExpr = ((plus.parent as? KtOperationReferenceExpression)?.parent as? KtBinaryExpression)
             ?.takeIf(KtBinaryExpression::joinable)
-            ?: return -1
+            ?: return JoinLinesHandlerDelegate.CANNOT_JOIN
 
         val lineCount = binaryExpr.getLineCount()
 
@@ -37,7 +39,7 @@ class JoinToStringTemplateHandler : JoinRawLinesHandlerDelegate {
         var rightText = unescape(binaryExpr.right as KtStringTemplateExpression)
         var left = binaryExpr.left
         while (left is KtBinaryExpression && left.joinable()) {
-            val leftLeft = (left as? KtBinaryExpression)?.left ?: break
+            val leftLeft = left.left ?: break
             if (leftLeft.getLineCount() < lineCount - 1) break
             rightText = unescape(left.right as KtStringTemplateExpression) + rightText
             left = left.left
@@ -57,10 +59,10 @@ class JoinToStringTemplateHandler : JoinRawLinesHandlerDelegate {
                     binaryExpr.replace(left)
                     offset
                 } else {
-                    -1
+                    JoinLinesHandlerDelegate.CANNOT_JOIN
                 }
             }
-            else -> -1
+            else -> JoinLinesHandlerDelegate.CANNOT_JOIN
         }
     }
 
@@ -79,7 +81,7 @@ class JoinToStringTemplateHandler : JoinRawLinesHandlerDelegate {
         return KtPsiFactory(left.project).createExpression("\"$leftText$rightText\"") as KtStringTemplateExpression
     }
 
-    override fun tryJoinLines(document: Document, file: PsiFile, start: Int, end: Int): Int = -1
+    override fun tryJoinLines(document: Document, file: PsiFile, start: Int, end: Int): Int = JoinLinesHandlerDelegate.CANNOT_JOIN
 }
 
 private fun KtBinaryExpression.joinable(): Boolean {

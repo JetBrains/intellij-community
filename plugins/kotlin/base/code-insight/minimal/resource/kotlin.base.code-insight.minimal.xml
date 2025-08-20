@@ -22,5 +22,12 @@
     <lang.foldingBuilder
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.KotlinFoldingBuilder"/>
+
+    <joinLinesHandler implementation="org.jetbrains.kotlin.idea.joinLines.JoinDeclarationAndAssignmentHandler"/>
+    <joinLinesHandler implementation="org.jetbrains.kotlin.idea.joinLines.JoinStatementsAddSemicolonHandler"/>
+    <joinLinesHandler implementation="org.jetbrains.kotlin.idea.joinLines.JoinWhenEntryHandler"/>
+    <joinLinesHandler implementation="org.jetbrains.kotlin.idea.joinLines.JoinWithTrailingCommaHandler"/>
+    <joinLinesHandler implementation="org.jetbrains.kotlin.idea.joinLines.JoinToStringTemplateHandler"/>
+
   </extensions>
 </idea-plugin>

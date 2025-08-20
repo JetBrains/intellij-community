@@ -8,6 +8,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.DocumentUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import kotlin.math.abs
@@ -74,4 +75,7 @@ fun PsiElement.isOneLiner() = getLineCount() == 1
 
 fun Document.getLineCountInRange(textRange: TextRange): Int = abs(getLineNumber(textRange.startOffset) - getLineNumber(textRange.endOffset))
 
+@Deprecated("Please use DocumentUtil.getLineCountInRange() instead", ReplaceWith("getLineCountInRange(textRange) != 0"))
+@Suppress("unused", "DeprecatedCallableAddReplaceWith")
+@ApiStatus.ScheduledForRemoval
 fun Document.containsLineBreakInRange(textRange: TextRange): Boolean = getLineCountInRange(textRange) != 0
