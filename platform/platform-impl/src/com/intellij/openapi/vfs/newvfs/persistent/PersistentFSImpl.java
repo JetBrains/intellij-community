@@ -110,7 +110,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   private final AtomicInteger structureModificationCount = new AtomicInteger();
 
   private BulkFileListener publisher;
-  private BulkFileListenerBackgroundable publisherBackgroundable;
+  private BulkFileListener publisherBackgroundable;
 
   //=========================== statistics:   ======================================================
   private final AtomicLong fileByIdCacheHits = new AtomicLong();
@@ -280,8 +280,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     return publisher;
   }
 
-  private @NotNull BulkFileListenerBackgroundable getPublisherBackgroundable() {
-    BulkFileListenerBackgroundable publisher = this.publisherBackgroundable;
+  private @NotNull BulkFileListener getPublisherBackgroundable() {
+    BulkFileListener publisher = this.publisherBackgroundable;
     if (publisher == null) {
       // the field cannot be initialized in constructor, to ensure that lazy listeners won't be created too early
       publisher = app.getMessageBus().syncPublisher(VirtualFileManager.VFS_CHANGES_BG);
@@ -1185,7 +1185,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     List<Runnable> outApplyActions = new ArrayList<>();
     List<VFileEvent> jarDeleteEvents = VfsImplUtil.getJarInvalidationEvents(event, outApplyActions);
     BulkFileListener publisher = getPublisherEdt();
-    BulkFileListenerBackgroundable publisherBackgroundable = getPublisherBackgroundable();
+    BulkFileListener publisherBackgroundable = getPublisherBackgroundable();
     if (jarDeleteEvents.isEmpty() && outApplyActions.isEmpty()) {
       // optimisation: skip all groupings
       runSuppressing(
@@ -1519,7 +1519,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
     List<VFileEvent> validated = new ArrayList<>(cappedInitialSize);
     BulkFileListener publisherEdt = getPublisherEdt();
-    BulkFileListenerBackgroundable publisherBackgroundable = getPublisherBackgroundable();
+    BulkFileListener publisherBackgroundable = getPublisherBackgroundable();
     Map<VirtualDirectoryImpl, Object> toCreate = new LinkedHashMap<>();
     Set<VFileEvent> toIgnore = new ReferenceOpenHashSet<>(); // VFileEvent overrides equals(), hence identity-based
     Set<VirtualFile> toDelete = createSmallMemoryFootprintSet();
@@ -1543,7 +1543,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   private static void applyMultipleEvents(@NotNull BulkFileListener publisher,
-                                          @NotNull BulkFileListenerBackgroundable publisherBackgroundable,
+                                          @NotNull BulkFileListener publisherBackgroundable,
                                           @NotNull List<? extends @NotNull Runnable> applyActions,
                                           @NotNull List<? extends @NotNull VFileEvent> applyEvents,
                                           boolean excludeAsyncListeners) {
@@ -1589,7 +1589,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   private static void fireBeforeEvents(@NotNull BulkFileListener publisherEdt,
-                                       @NotNull BulkFileListenerBackgroundable publisherBackgroundable,
+                                       @NotNull BulkFileListener publisherBackgroundable,
                                        @NotNull List<? extends VFileEvent> toSend) {
     runSuppressing(
       () -> publisherBackgroundable.before(toSend),
@@ -1600,7 +1600,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   private static void fireAfterEvents(@NotNull BulkFileListener publisherEdt,
-                                      @NotNull BulkFileListenerBackgroundable publisherBackgroundable,
+                                      @NotNull BulkFileListener publisherBackgroundable,
                                       @NotNull List<? extends VFileEvent> toSend) {
     runSuppressing(
       () -> CachedFileType.clearCache(),

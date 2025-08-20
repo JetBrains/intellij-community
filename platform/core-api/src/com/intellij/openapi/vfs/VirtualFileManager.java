@@ -8,7 +8,6 @@ import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.CacheAvoidingVirtualFile;
 import com.intellij.openapi.vfs.newvfs.FileSystemInterface;
-import com.intellij.openapi.vfs.newvfs.BulkFileListenerBackgroundable;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.messages.Topic;
@@ -26,15 +25,20 @@ import java.util.function.Supplier;
 public abstract class VirtualFileManager implements ModificationTracker {
 
   /**
+   * A legacy topic that is used to run listeners always on EDT.
    * Consider using {@link VirtualFileManager#VFS_CHANGES_BG} to run your listener on background.
    */
   @Topic.AppLevel
+  @ApiStatus.Obsolete
   public static final Topic<BulkFileListener> VFS_CHANGES = new Topic<>(BulkFileListener.class, Topic.BroadcastDirection.TO_DIRECT_CHILDREN, true);
 
+  /**
+   * A topic that allows running {@link BulkFileListener} on background threads. Depending on the usage of VFS refresh, these listeners may also be invoked on EDT.
+   */
   @Topic.AppLevel
   @ApiStatus.Experimental
-  public static final Topic<BulkFileListenerBackgroundable> VFS_CHANGES_BG =
-    new Topic<>(BulkFileListenerBackgroundable.class, Topic.BroadcastDirection.TO_DIRECT_CHILDREN, true);
+  public static final Topic<BulkFileListener> VFS_CHANGES_BG =
+    new Topic<>(BulkFileListener.class, Topic.BroadcastDirection.TO_DIRECT_CHILDREN, true);
 
   public static final @NotNull ModificationTracker VFS_STRUCTURE_MODIFICATIONS = () -> getInstance().getStructureModificationCount();
 

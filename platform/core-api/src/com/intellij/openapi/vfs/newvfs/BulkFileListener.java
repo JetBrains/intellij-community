@@ -9,15 +9,12 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 /**
- * A listener for VFS events, invoked inside write-action <b>on EDT</b>.
- * <p>
- * <b> In the future versions of IntelliJ Platform, this listener may start running on background threads.
- * Consider using {@link BulkFileListenerBackgroundable} to avoid changes in semantics depending on the version of the Platform.
- * </b>
+ * A listener for VFS events, invoked inside write-action. Depending on the way of registration, can be invoked on any thread
  * <p>
  * Please use {@link com.intellij.openapi.vfs.AsyncFileListener} instead, unless you absolutely sure you need to receive events synchronously.
  * <p>
- * To register this listener, use e.g. {@code project.getMessageBus().connect(disposable).subscribe(VirtualFileManager.VFS_CHANGES, listener)}
+ * To register this listener, use e.g. {@code project.getMessageBus().connect(disposable).subscribe(VirtualFileManager.VFS_CHANGES_BG, listener)} (preferrable),
+ * or {@code project.getMessageBus().connect(disposable).subscribe(VirtualFileManager.VFS_CHANGES, listener)}
  * or define the listener in {@code plugin.xml} as an application listener (the preferred way):
  * <pre>
  * &lt;applicationListeners>
