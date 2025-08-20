@@ -11,6 +11,7 @@ import com.intellij.grazie.remote.GrazieRemote
 import com.intellij.grazie.remote.GrazieRemote.getLanguagesBasedOnUserAgreement
 import com.intellij.grazie.remote.LanguageDownloader
 import com.intellij.ide.DataManager
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
@@ -42,7 +43,7 @@ import javax.swing.event.HyperlinkEvent
 class ProofreadSettingsPanel : BoundConfigurable(
   GrazieBundle.message("grazie.settings.configurable.name"),
   null
-), ConfigurableUi<GrazieConfig>, SearchableConfigurable {
+), ConfigurableUi<GrazieConfig>, SearchableConfigurable, Disposable {
   private val languages = GrazieLanguagesComponent(::download)
   private val project: Project = guessCurrentProject(languages.component)
 
@@ -81,6 +82,10 @@ class ProofreadSettingsPanel : BoundConfigurable(
     GrazieConfig.update { state ->
       languages.apply(state)
     }
+  }
+
+  override fun dispose() {
+    disposeUIResources()
   }
 
   override fun getComponent(): JPanel = panel(MigLayout(createLayoutConstraints().hideMode(3))) {
