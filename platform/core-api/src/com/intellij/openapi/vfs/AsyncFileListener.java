@@ -73,16 +73,14 @@ public interface AsyncFileListener {
   @Nullable
   ChangeApplier prepareChange(@NotNull List<? extends @NotNull VFileEvent> events);
 
+  /**
+   * Consider using {@link ChangeApplierBackgroundable} to allow running your listener in background threads
+   */
+  @ApiStatus.Obsolete
   interface ChangeApplier {
     /**
      * This method is called in write action before the VFS events are delivered and applied, and allows
      * to apply modifications based on the information calculated during {@link #prepareChange}.<p></p>
-     *
-     * <p>
-     * <b> In the future versions of IntelliJ Platform, this listener may start running on background threads.
-     * Consider using {@link ChangeApplierBackgroundable} to avoid changes in semantics depending on the version of the Platform.
-     * </b>
-     * <p>
      *
      * Although it's guaranteed that no write actions happen between {@link #prepareChange} and invoking all {@link ChangeApplier}s,
      * another listener might already have changed something (e.g. send PSI events, increase modification trackers, etc.)
