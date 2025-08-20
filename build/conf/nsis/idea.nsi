@@ -289,7 +289,7 @@ Page custom uninstallOldVersionDialog
 Page custom ConfirmDesktopShortcut
 
 !define MUI_PAGE_HEADER_TEXT "$(choose_start_menu_folder)"
-!define MUI_STARTMENUPAGE_DEFAULTFOLDER "JetBrains"
+!define MUI_STARTMENUPAGE_DEFAULTFOLDER "${MANUFACTURER}"
 !insertmacro MUI_PAGE_STARTMENU Application $startMenuFolder
 
 !define MUI_PAGE_HEADER_TEXT "$(installing_product)"
@@ -344,6 +344,7 @@ Function silentConfigReader
     ${LogText} "  config file was not provided"
     ${LogText} "  defaulting to admin mode"
     StrCpy $silentMode "admin"
+    StrCpy $startMenuFolder "${MANUFACTURER}"
     Return
   ${EndIf}
   ${LogText} "  config file: $R1"
