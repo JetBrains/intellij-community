@@ -19,7 +19,7 @@
 - parent():com.intellij.platform.syntax.tree.SyntaxNode
 - prevSibling():com.intellij.platform.syntax.tree.SyntaxNode
 - f:reportState():java.lang.String
-- f:tryReparse(com.intellij.platform.syntax.tree.SyntaxBuilderFactory,com.intellij.platform.syntax.lexer.Lexer,com.intellij.platform.syntax.lexer.TokenList,java.lang.CharSequence,J,J,com.intellij.platform.syntax.CancellationProvider):kotlin.Pair
+- f:tryReparse(com.intellij.platform.syntax.tree.SyntaxBuilderFactory,com.intellij.platform.syntax.lexer.Lexer,com.intellij.platform.syntax.lexer.TokenList,java.lang.CharSequence,I,I,com.intellij.platform.syntax.CancellationProvider):kotlin.Pair
 *f:com.intellij.platform.syntax.tree.KmpSyntaxNode$Companion
 - f:root(java.lang.CharSequence,com.intellij.platform.syntax.tree.ASTMarkers,com.intellij.platform.syntax.lexer.Lexer,com.intellij.platform.syntax.tree.TokenizationPolicy,com.intellij.platform.syntax.tree.SyntaxBuilderFactory,com.intellij.platform.syntax.lexer.TokenList,com.intellij.platform.syntax.util.language.SyntaxElementLanguageProvider,kotlin.jvm.functions.Function0):com.intellij.platform.syntax.tree.KmpSyntaxNode
 *f:com.intellij.platform.syntax.tree.ParseKt

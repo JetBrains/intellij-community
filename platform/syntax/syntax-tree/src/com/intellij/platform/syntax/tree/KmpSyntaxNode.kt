@@ -406,8 +406,8 @@ class KmpSyntaxNode internal constructor(
     rootLexer: Lexer,
     newTokens: TokenList,
     newText: CharSequence,
-    startOffset: Long,
-    endOffset: Long,
+    startOffset: Int,
+    endOffset: Int,
     cancellationProvider: CancellationProvider,
     builderFactory: SyntaxBuilderFactory,
   ): Triple<KmpSyntaxNode, TokenList, Boolean>? {
@@ -416,7 +416,7 @@ class KmpSyntaxNode internal constructor(
         startOffset >= 0 && startOffset < newTokens.tokenizedText.length -> {
           newTokens.getTokenType(
             newTokens
-              .tokenIndexAtOffset(startOffset.toInt())
+              .tokenIndexAtOffset(startOffset)
               .onMinusOne(newTokens.tokenCount - 1)
           )
         }
@@ -492,8 +492,8 @@ class KmpSyntaxNode internal constructor(
     lexer: Lexer,
     newTokens: TokenList,
     newText: CharSequence,
-    startOffset: Long,
-    endOffset: Long,
+    startOffset: Int,
+    endOffset: Int,
     cancellationProvider: CancellationProvider,
   ): Pair<ASTMarkers, TokenList>? {
     val (reparseableNode, nodeTokens, isLexerChanged) = this.findDeepestReparseableNode(
