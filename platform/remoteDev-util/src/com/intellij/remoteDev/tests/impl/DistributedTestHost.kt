@@ -371,14 +371,14 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
 
   private suspend fun requestFocusWithProjectIfNeeded(project: Project, reportFailures: Boolean): Boolean {
     val projectIdeFrame = WindowManager.getInstance().getFrame(project)
-    if (projectIdeFrame == null) {
-      LOG.info("No frame yet, nothing to focus")
+    if (projectIdeFrame == null || !projectIdeFrame.isVisible) { // it really does happen that only one is true
+      LOG.info("No visible frame yet, nothing to focus")
       return false
     }
     else {
       val frameName = "frame '${projectIdeFrame.name}'"
 
-      return if ((projectIdeFrame.isFocusAncestor() || projectIdeFrame.isFocused)) {
+      return if ((projectIdeFrame.isFocusAncestor() || projectIdeFrame.isFocused)) { // it really does happen that only one is true
         LOG.info("Frame '$frameName' is already focused")
         true
       }
@@ -407,7 +407,7 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
           LOG.info(message)
         }
       }) {
-        projectIdeFrame.isFocusAncestor() || projectIdeFrame.isFocused
+        projectIdeFrame.isFocusAncestor() || projectIdeFrame.isFocused // it really does happen that only one is true
       }
     }
   }
