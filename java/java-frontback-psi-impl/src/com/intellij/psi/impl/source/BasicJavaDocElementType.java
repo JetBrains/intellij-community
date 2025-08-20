@@ -151,12 +151,15 @@ public interface BasicJavaDocElementType {
     }
 
     @Override
-    public boolean isParsable(final @NotNull CharSequence buffer, @NotNull Language fileLanguage, final @NotNull Project project) {
-      if (!StringUtil.startsWith(buffer, "/**") || !StringUtil.endsWith(buffer, "*/")) return false;
+    public boolean isReparseable(@NotNull ASTNode currentNode,
+                                 @NotNull CharSequence newText,
+                                 @NotNull Language fileLanguage,
+                                 @NotNull Project project) {
+      if (!StringUtil.startsWith(newText, "/**") || !StringUtil.endsWith(newText, "*/")) return false;
 
       LanguageLevel level = LanguageLevelProjectExtension.getInstance(project).getLanguageLevel();
       JavaLexer lexer = new JavaLexer(level);
-      lexer.start(buffer);
+      lexer.start(newText);
       if (lexer.getTokenType() == JavaDocSyntaxElementType.DOC_COMMENT) {
         lexer.advance();
         return lexer.getTokenType() == null;
