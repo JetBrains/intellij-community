@@ -390,7 +390,6 @@ class MacDistributionBuilder(
           mainClass = context.ideMainClassName,
           customCommands = listOfNotNull(embeddedFrontendLaunchData, qodanaCustomLaunchData)
         )
-
       ),
       context
     )
@@ -463,8 +462,12 @@ class MacDistributionBuilder(
 
             for (item in extraFiles) {
               when (val content = item.content) {
-                is LocalDistFileContent -> zipOutStream.entry("${zipRoot}/${item.relativePath}", content.file, if (content.isExecutable) executableFileUnixMode else -1)
-                is InMemoryDistFileContent -> zipOutStream.entry("${zipRoot}/${item.relativePath}", content.data)
+                is LocalDistFileContent -> {
+                  zipOutStream.entry("${zipRoot}/${item.relativePath}", content.file, if (content.isExecutable) executableFileUnixMode else -1)
+                }
+                is InMemoryDistFileContent -> {
+                  zipOutStream.entry("${zipRoot}/${item.relativePath}", content.data)
+                }
               }
             }
           }
@@ -530,7 +533,6 @@ class MacDistributionBuilder(
       )
     )
 
-    @OptIn(ExperimentalPathApi::class)
     macAppDir.resolve("Resources").walk()
       .filter { it.extension == "strings" && it.isRegularFile() }
       .forEach { file ->
@@ -661,7 +663,6 @@ class MacDistributionBuilder(
     }
   }
 
-  @OptIn(ExperimentalPathApi::class)
   private suspend fun generateIntegrityManifest(sitFile: Path, sitRoot: String, arch: JvmArchitecture, context: BuildContext) {
     if (context.options.buildStepsToSkip.contains(BuildOptions.REPAIR_UTILITY_BUNDLE_STEP)) {
       return
@@ -678,6 +679,7 @@ class MacDistributionBuilder(
     }
     finally {
       withContext(Dispatchers.IO + NonCancellable) {
+        @OptIn(ExperimentalPathApi::class)
         tempSit.deleteRecursively()
       }
     }

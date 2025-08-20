@@ -78,7 +78,7 @@ internal suspend fun buildNsisInstaller(
       copy.setLastModifiedTime(FileTime.from(context.options.buildDateInSeconds, TimeUnit.SECONDS))
     }
 
-    val nsiLogDir = context.paths.buildOutputDir.resolve("log/nsi$suffix")
+    val nsiLogDir = context.paths.buildOutputDir.resolve("log/nsi${suffix}")
     NioFiles.deleteRecursively(nsiLogDir)
     NioFiles.copyRecursively(nsiConfDir, nsiLogDir)
 

@@ -341,8 +341,8 @@ class BuildContextImpl internal constructor(
 
     val macroName = when (os) {
       OsFamily.WINDOWS -> "%IDE_HOME%"
-      OsFamily.MACOS -> "\$APP_PACKAGE${if (isPortableDist) "" else "/Contents"}"
-      OsFamily.LINUX -> "\$IDE_HOME"
+      OsFamily.MACOS -> $$"$APP_PACKAGE$${if (isPortableDist) "" else "/Contents"}"
+      OsFamily.LINUX -> $$"$IDE_HOME"
     }
     val useMultiRoutingFs = !isQodana && isMultiRoutingFileSystemEnabledForProduct(productProperties.platformPrefix)
 
@@ -354,7 +354,7 @@ class BuildContextImpl internal constructor(
     }
 
     if (productProperties.enableCds) {
-      val cacheDir = if (os == OsFamily.WINDOWS) "%IDE_CACHE_DIR%\\" else "\$IDE_CACHE_DIR/"
+      val cacheDir = if (os == OsFamily.WINDOWS) "%IDE_CACHE_DIR%\\" else $$"$IDE_CACHE_DIR/"
       jvmArgs += "-XX:SharedArchiveFile=${cacheDir}${productProperties.baseFileName}${buildNumber}.jsa"
       jvmArgs += "-XX:+AutoCreateSharedArchive"
     }
