@@ -12,6 +12,11 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 
+/**
+ * Base class for prefix-based matching logic used in code completion.
+ * Determines whether strings or lookup elements match a given prefix
+ * and provides utilities for sorting and highlighting matches.
+ */
 public abstract class PrefixMatcher {
   public static final PrefixMatcher ALWAYS_TRUE = new PlainPrefixMatcher("");
 
