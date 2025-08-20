@@ -984,6 +984,7 @@
     <statistics.counterUsagesCollector
       implementationClass="com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.VcsCloneCollector"/>
 
+    <statistics.counterUsagesCollector implementationClass="com.intellij.internal.statistic.collectors.fus.SpeculativeUndoStatCollector" />
     <statistics.counterUsagesCollector
       implementationClass="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageCounterCollector"/>
     <statistics.counterUsagesCollector
