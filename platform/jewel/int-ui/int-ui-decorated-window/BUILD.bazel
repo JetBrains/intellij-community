@@ -1,6 +1,7 @@
 ### auto-generated section `build intellij.platform.jewel.intUi.decoratedWindow` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
 
 create_kotlinc_options(
   name = "custom",
@@ -19,11 +20,9 @@ jvm_resources(
   strip_prefix = "src/main/resources"
 )
 
-jvm_library(
+java_library(
   name = "jewel-intUi-decoratedWindow",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = ":custom",
   runtime_deps = [
     ":jewel-intUi-decoratedWindow_resources",
     "@lib//:kotlin-stdlib",
