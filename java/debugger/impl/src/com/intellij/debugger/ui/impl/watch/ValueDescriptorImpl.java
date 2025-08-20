@@ -163,7 +163,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   }
 
   public boolean isValueReady() {
-    return myInitFuture.isDone();
+    return myInitFuture.isDone() && !myInitFuture.isCancelled() && !myInitFuture.isCompletedExceptionally();
   }
 
   @Override

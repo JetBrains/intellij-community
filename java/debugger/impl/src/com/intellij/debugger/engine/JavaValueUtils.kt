@@ -13,13 +13,11 @@ import com.intellij.java.debugger.impl.shared.engine.JavaValueObjectReferenceInf
 import com.intellij.java.debugger.impl.shared.engine.NodeRendererDto
 import com.intellij.java.debugger.impl.shared.engine.NodeRendererId
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.components.Service
 import com.intellij.platform.debugger.impl.shared.FrontendDescriptorStateManager
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.frame.XDescriptor
 import com.sun.jdi.ObjectReference
 import fleet.rpc.core.toRpc
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.future.await
@@ -55,13 +53,17 @@ internal fun scheduleSourcePositionCompute(
 
 internal fun getJavaValueXDescriptor(javaValue: JavaValue): CompletableFuture<XDescriptor> {
   val valueDescriptor = javaValue.descriptor
-  val value = valueDescriptor.getValue()
-  var objectReferenceInfo: JavaValueObjectReferenceInfo? = null
-  if (value is ObjectReference) {
-    objectReferenceInfo = JavaValueObjectReferenceInfo(value.referenceType().name(), value.virtualMachine().canGetInstanceInfo())
-  }
-  val cs = javaValue.evaluationContext.suspendContext.coroutineScope
+
+  val suspendContext = javaValue.evaluationContext.suspendContext
+  val cs = suspendContext.coroutineScope
   return cs.future {
+    var objectReferenceInfo: JavaValueObjectReferenceInfo? = null
+    withDebugContext(suspendContext) {
+      val value = valueDescriptor.getValue()
+      if (value is ObjectReference) {
+        objectReferenceInfo = JavaValueObjectReferenceInfo(value.referenceType().name(), value.virtualMachine().canGetInstanceInfo())
+      }
+    }
     val renderersUpdatedFlow = javaValue.evaluationContext.debugProcess.renderersUpdatedFlow
     val xDescriptor = JavaValueDescriptor(
       valueDescriptor.isString(),
