@@ -624,6 +624,16 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
   }
 
   @Override
+  public @NotNull CompletableFuture<@NotNull XValueTextProvider> getValueTextProviderAsync() {
+    return myValueDescriptor.getInitFuture().thenApply(unused -> {
+      return new XValueTextProvider() {
+        @Override public @Nullable String getValueText() { return JavaValue.this.getValueText(); }
+        @Override public boolean shouldShowTextValue() { return JavaValue.this.shouldShowTextValue(); }
+      };
+    });
+  }
+
+  @Override
   public @Nullable XReferrersProvider getReferrersProvider() {
     return new XReferrersProvider() {
       @Override

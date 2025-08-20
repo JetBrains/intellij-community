@@ -2,6 +2,7 @@
 package com.intellij.find
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.UserDataHolder
@@ -20,6 +21,8 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.UnknownNullability
 import java.util.regex.Pattern
 import java.util.regex.PatternSyntaxException
+
+private val LOG = Logger.getInstance(FindModel::class.java)
 
 @Serializable
 open class FindModel : UserDataHolder, Cloneable {
@@ -744,9 +747,11 @@ open class FindModel : UserDataHolder, Cloneable {
     notifyObservers()
   }
 
-   private fun notifyObservers() {
+  private fun notifyObservers() {
     for (observer in myObservers) {
-      observer.findModelChanged(this)
+      LOG.runAndLogException {
+        observer.findModelChanged(this)
+      }
     }
   }
 

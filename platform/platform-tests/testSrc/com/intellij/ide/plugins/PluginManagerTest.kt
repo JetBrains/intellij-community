@@ -276,7 +276,7 @@ class PluginManagerTest {
       for (descriptor in loadPluginResult.pluginSet.getEnabledModules()) {
         text.append(if (descriptor.isEnabled()) "+ " else "  ").append(descriptor.getPluginId().idString)
         if (descriptor is ContentModuleDescriptor) {
-          text.append(" | ").append(descriptor.moduleName)
+          text.append(" | ").append(descriptor.moduleId)
         }
         text.append('\n')
       }
@@ -359,7 +359,7 @@ class PluginManagerTest {
         }
       }
 
-      val list = ArrayList<PluginMainDescriptor>()
+      val plugins = ArrayList<PluginMainDescriptor>()
       for (element in root.children) {
         if (element.name != "idea-plugin") {
           continue
@@ -378,21 +378,20 @@ class PluginManagerTest {
         else {
           pluginPath = Path.of(url.removePrefix("file://"))
         }
-        val descriptor = readAndInitDescriptorFromBytesForTest(
+        val descriptor = readDescriptorFromBytesForTest(
           path = pluginPath,
           isBundled = isBundled,
           data = elementAsBytes(element),
           loadingContext = loadingContext,
-          initContext = initContext,
           pathResolver = pathResolver,
           dataLoader = LocalFsDataLoader(pluginPath)
         )
-        list.add(descriptor)
+        plugins.add(descriptor)
         descriptor.jarFiles = emptyList()
       }
       loadingContext.close()
       val result = PluginLoadingResult()
-      val pluginList = DiscoveredPluginsList(list, if (isBundled) PluginsSourceContext.Bundled else PluginsSourceContext.Custom)
+      val pluginList = DiscoveredPluginsList(plugins, if (isBundled) PluginsSourceContext.Bundled else PluginsSourceContext.Custom)
       result.initAndAddAll(
         descriptorLoadingResult = PluginDescriptorLoadingResult.build(listOf(pluginList)),
         initContext = initContext

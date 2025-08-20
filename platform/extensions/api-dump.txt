@@ -201,8 +201,8 @@ bf:com.intellij.openapi.extensions.PluginId$$serializer
 f:com.intellij.openapi.extensions.PluginId$Companion
 - f:findId(java.lang.String):com.intellij.openapi.extensions.PluginId
 - f:findId(java.lang.String[]):com.intellij.openapi.extensions.PluginId
-- f:getEMPTY_ARRAY():com.intellij.openapi.extensions.PluginId[]
 - f:getId(java.lang.String):com.intellij.openapi.extensions.PluginId
+- f:invoke(java.lang.String):com.intellij.openapi.extensions.PluginId
 - f:serializer():kotlinx.serialization.KSerializer
 f:com.intellij.openapi.extensions.ProjectExtensionPointName
 - com.intellij.openapi.extensions.BaseExtensionPointName

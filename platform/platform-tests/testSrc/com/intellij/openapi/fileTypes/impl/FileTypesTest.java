@@ -681,7 +681,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     bean.implementationClass = MyTestFileType.class.getName();
     bean.extensions = MyTestFileType.EXTENSION;
     IdeaPluginDescriptorImpl pluginDescriptor =
-      PluginDescriptorLoadUtilsKt.readAndInitDescriptorFromBytesForTest(Path.of(""), false, "<idea-plugin/>".getBytes(StandardCharsets.UTF_8), PluginId.getId("myPlugin"));
+      PluginDescriptorLoadUtilsKt.readDescriptorFromBytesForTest(Path.of(""), false, "<idea-plugin/>".getBytes(StandardCharsets.UTF_8), PluginId.getId("myPlugin"));
     Disposable disposable = registerFileType(bean, pluginDescriptor);
     try {
       reInitFileTypeManagerComponent(element);

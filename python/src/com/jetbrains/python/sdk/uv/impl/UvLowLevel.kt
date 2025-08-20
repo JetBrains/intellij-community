@@ -151,7 +151,7 @@ private class UvLowLevelImpl(val cwd: Path, private val uvCli: UvCli) : UvLowLev
   }
 
   override suspend fun listTopLevelPackages(): PyResult<List<PythonPackage>> {
-    val out = uvCli.runUv(cwd, "tree", "--all-groups", "--depth=1")
+    val out = uvCli.runUv(cwd, "tree", "--depth=1", "--locked")
       .getOr { return it }
 
     return PyExecResult.success(parsePackageList(out))
@@ -165,7 +165,7 @@ private class UvLowLevelImpl(val cwd: Path, private val uvCli: UvCli) : UvLowLev
   }
 
   override suspend fun listPackageRequirementsTree(name: PythonPackage): PyResult<String> {
-    val out = uvCli.runUv(cwd, "tree", "--all-groups", "--package", name.name)
+    val out = uvCli.runUv(cwd, "tree", "--package", name.name, "--locked")
       .getOr { return it }
 
     return PyExecResult.success(out)

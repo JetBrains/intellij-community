@@ -38,7 +38,6 @@
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="library" name="kotlin-reflect" level="project" />
     <orderEntry type="library" name="slf4j-api" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.backend" scope="RUNTIME" />
     <orderEntry type="library" scope="PROVIDED" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="kotlinx-collections-immutable" level="project" />
   </component>

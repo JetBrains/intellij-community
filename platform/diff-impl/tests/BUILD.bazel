@@ -30,7 +30,7 @@ jvm_library(
     "//platform/vcs-api/vcs-api-core:vcs-core",
     "//platform/vcs-api/vcs-api-core:vcs-core_test_lib",
     "//platform/diff-impl",
-    "@lib//:mockito",
+    "//libraries/mockito",
     "//platform/analysis-api:analysis",
     "//platform/editor-ui-ex:editor-ex",
     "//platform/core-impl",

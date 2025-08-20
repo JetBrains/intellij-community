@@ -96,8 +96,6 @@ object JavaPluginLayout {
       spec.withResourceArchive("../jdkAnnotations", "lib/resources/jdkAnnotations.jar")
 
       addition?.invoke(spec)
-
-      spec.excludeProjectLibrary("jetbrains-annotations-java5")
     }
   }
 }

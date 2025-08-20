@@ -24,10 +24,10 @@ interface PathResolver {
   fun resolveModuleFile(readContext: PluginDescriptorReaderContext, dataLoader: DataLoader, path: String): PluginDescriptorBuilder
 
   /**
-   * Returns custom classes roots for a content module [moduleName] if any. 
+   * Returns custom classes roots for a content module [moduleId] if any.
    * If the module is located in the standard place (lib/modules/module.name.jar) or merged with one of JARs loaded by the main classloader, an empty list is returned. 
    */
-  fun resolveCustomModuleClassesRoots(moduleName: String): List<Path> {
+  fun resolveCustomModuleClassesRoots(moduleId: PluginModuleId): List<Path> {
     return emptyList()
   }
 }

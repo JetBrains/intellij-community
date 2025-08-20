@@ -134,27 +134,27 @@ internal class CodeStyleCachedValueProvider(val fileSupplier: Supplier<VirtualFi
         job = project.service<CodeStyleCachedValueProviderService>().coroutineScope.launch(
           CoroutineName(this@CodeStyleCachedValueProvider.toString())
         ) {
-          readAction {
+          val success = readAction {
             computeSettings()
           }
           withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
             // need to fix clients and remove global lock from there
             // maybe readAction
             writeIntentReadAction {
-              notifyCachedValueComputed()
+              notifyCachedValueComputed(success)
             }
           }
         }
       }
       else {
         LOG.debug { "sync for ${file.name}" }
-        app.runReadAction(::computeSettings)
+        val success = app.runReadAction<Boolean>(::computeSettings)
         if (app.isDispatchThread) {
-          notifyCachedValueComputed()
+          notifyCachedValueComputed(success)
         }
         else {
           project.service<CodeStyleCachedValueProviderService>().coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-            notifyCachedValueComputed()
+            notifyCachedValueComputed(success)
           }
         }
       }
@@ -178,14 +178,17 @@ internal class CodeStyleCachedValueProvider(val fileSupplier: Supplier<VirtualFi
       }
     }
 
-    private fun computeSettings() {
+    /**
+     * @return true if settings were computed successfully, false otherwise
+     */
+    private fun computeSettings(): Boolean {
       val file = file
       val psiFile = psiFile
       // If the psiFile is added and deleted in the same write action,
       // it might still be present, but invalid.
       if (psiFile == null || !psiFile.isValid) {
         cancel()
-        return
+        return false
       }
 
       computationLock.lock()
@@ -220,6 +223,7 @@ internal class CodeStyleCachedValueProvider(val fileSupplier: Supplier<VirtualFi
       finally {
         computationLock.unlock()
       }
+      return true
     }
 
     @Suppress("DEPRECATION")
@@ -242,7 +246,7 @@ internal class CodeStyleCachedValueProvider(val fileSupplier: Supplier<VirtualFi
       LOG.debug { "Computation reset for ${file.name}" }
     }
 
-    private fun notifyCachedValueComputed() {
+    private fun notifyCachedValueComputed(shouldFireEvent: Boolean = true) {
       @Suppress("DEPRECATION")
       val currentProjectSettings = settingsManager.currentSettings
       val newTrackerSetting = currentProjectSettings.modificationTracker.modificationCount
@@ -261,7 +265,7 @@ internal class CodeStyleCachedValueProvider(val fileSupplier: Supplier<VirtualFi
       for (runnable in scheduledRunnables) {
         runnable.run()
       }
-      if (!project.isDisposed) {
+      if (shouldFireEvent && !project.isDisposed) {
         /* IJPL-179136
          *
          * It is expected that CodeStyleSettingsListener implementations will access code style settings,
@@ -279,7 +283,8 @@ internal class CodeStyleCachedValueProvider(val fileSupplier: Supplier<VirtualFi
          */
         if (!TooFrequentCodeStyleComputationWatcher.getInstance(project).isTooHighEvictionRateDetected()
             && !Registry.`is`("disable.codeStyleSettingsChanged.events.on.settings.cached")) {
-          settingsManager.fireCodeStyleSettingsChanged(file)
+          val eventSettings = if (Registry.`is`("code.style.cache.change.events.include.settings")) currentResult else null
+          settingsManager.fireCodeStyleSettingsChanged(file, eventSettings)
         }
       }
       computation.reset()

@@ -232,7 +232,7 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
   public void testSubExpressionFromMagicString() { doTest("str", false, false, false, JAVA_LANG_STRING); }
   public void testSubExpressionFromPrimitiveWithConversion() { doTest("i", false, false, false, "int"); }
   public void testSubPrimitiveLiteral() { doTest("str", false, false, false, JAVA_LANG_STRING); }
-  public void testArrayFromVarargs() { doTest("strings", false, false, false, "java.lang.String[]"); }
+  public void testArrayFromVarargs() { doTestWithFailure("strings", "java.lang.String[]"); }
   public void testArrayFromVarargs1() { doTest("strings", false, false, false, "java.lang.String[]"); }
   public void testEnumArrayFromVarargs() { doTest("strings", false, false, false, "E[]"); }
   public void testFromFinalFieldOnAssignment() { doTest("strings", false, false, false, JAVA_LANG_STRING); }

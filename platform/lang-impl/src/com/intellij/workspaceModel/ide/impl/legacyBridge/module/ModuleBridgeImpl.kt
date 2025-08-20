@@ -11,6 +11,7 @@ import com.intellij.facet.impl.FacetManagerFactoryImpl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.ModulePathMacroManager
 import com.intellij.openapi.components.impl.stores.ComponentStoreOwner
@@ -30,6 +31,7 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.serviceContainer.PrecomputedExtensionModel
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.workspaceModel.ide.impl.VirtualFileUrlBridge
 import com.intellij.workspaceModel.ide.impl.jpsMetrics
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
@@ -190,6 +192,7 @@ open class ModuleBridgeImpl(
     }
 
     // separate method to see it in a profiler
+    @RequiresEdt
     private fun doInitFacetsInEdt(
       modules: Collection<Pair<ModuleEntity, ModuleBridge>>,
       facetManagerFactory: FacetManagerFactory,
@@ -198,7 +201,11 @@ open class ModuleBridgeImpl(
         if (!module.isDisposed) {
           facetsInitializationTimeMs.addMeasuredTime {
             for (facet in facetManagerFactory.getFacetManager(module).allFacets) {
-              facet.initFacet()
+              // this write-intent is needed because deeper in the stack WSM acquires a monitor IJPL-202616.
+              // Here we establish the correct order of locks
+              WriteIntentReadAction.run {
+                facet.initFacet()
+              }
             }
           }
         }

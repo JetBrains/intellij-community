@@ -1,17 +1,15 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.debugger.impl.backend
 
-import com.intellij.debugger.actions.FreezeThreadAction
-import com.intellij.debugger.actions.InterruptThreadAction
-import com.intellij.debugger.actions.ThreadDumpAction
+import com.intellij.debugger.actions.*
 import com.intellij.debugger.engine.AsyncStacksUtils
 import com.intellij.debugger.engine.JavaDebugProcess
 import com.intellij.debugger.engine.JavaExecutionStack
 import com.intellij.debugger.engine.executeOnDMT
 import com.intellij.execution.filters.ExceptionFilters
 import com.intellij.ide.ui.icons.rpcId
-import com.intellij.debugger.actions.ResumeThreadAction
 import com.intellij.java.debugger.impl.shared.rpc.*
+import com.intellij.openapi.application.EDT
 import com.intellij.platform.debugger.impl.rpc.toRpc
 import com.intellij.unscramble.CompoundDumpItem
 import com.intellij.unscramble.DumpItem
@@ -19,13 +17,10 @@ import com.intellij.xdebugger.impl.rpc.XDebugSessionId
 import com.intellij.xdebugger.impl.rpc.XExecutionStackId
 import com.intellij.xdebugger.impl.rpc.models.findValue
 import fleet.util.channels.use
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.produce
-import kotlinx.coroutines.launch
 
 internal class BackendJavaDebuggerSessionApi : JavaDebuggerSessionApi {
   @OptIn(ExperimentalCoroutinesApi::class)
@@ -62,6 +57,13 @@ internal class BackendJavaDebuggerSessionApi : JavaDebuggerSessionApi {
   override suspend fun setAsyncStacksEnabled(sessionId: XDebugSessionId, state: Boolean) {
     val session = sessionId.findValue() ?: return
     AsyncStacksUtils.setAsyncStacksEnabled(session, state)
+  }
+
+  override suspend fun stepOutOfCodeBlock(sessionId: XDebugSessionId) {
+    val xSession = sessionId.findValue() ?: return
+    withContext(Dispatchers.EDT) {
+      StepOutOfBlockActionUtils.stepOutOfBlock(xSession)
+    }
   }
 
   override suspend fun resumeThread(executionStackId: XExecutionStackId) {

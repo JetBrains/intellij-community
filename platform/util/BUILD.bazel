@@ -119,7 +119,7 @@ jvm_library(
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
     "//platform/util/coroutines",
     "@lib//:jetbrains-kotlinx-lincheck-jvm",
-    "@lib//:mockito",
+    "//libraries/mockito",
     "@lib//:mockito-kotlin",
     "@lib//:jimfs",
     "//platform/ijent/buildConstants",

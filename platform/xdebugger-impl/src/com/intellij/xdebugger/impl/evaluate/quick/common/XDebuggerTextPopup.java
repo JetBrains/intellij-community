@@ -81,14 +81,14 @@ public class XDebuggerTextPopup<D> extends XDebuggerPopupPanel {
     myProject = project;
     myHideRunnable = hideRunnable;
 
-    if (evaluator == null && value instanceof XValueTextProvider) {
+    if (evaluator == null && value instanceof XValueTextProvider textValue && textValue.shouldShowTextValue()) {
       evaluator = new XFullValueEvaluator() {
         @Override
         public void startEvaluation(@NotNull XFullValueEvaluationCallback callback) {
           value.computePresentation(new XValueNodePresentationConfigurator.ConfigurableXValueNodeImpl() {
             @Override
             public void applyPresentation(@Nullable Icon icon, @NotNull XValuePresentation valuePresenter, boolean hasChildren) {
-              callback.evaluated(StringUtil.notNullize(((XValueTextProvider)value).getValueText()));
+              callback.evaluated(StringUtil.notNullize(textValue.getValueText()));
             }
 
             @Override

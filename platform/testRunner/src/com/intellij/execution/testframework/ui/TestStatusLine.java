@@ -63,7 +63,7 @@ public class TestStatusLine extends NonOpaquePanel {
     stateWrapper.add(myWarning, constraint.next().insetLeft(12));
 
     add(stateWrapper, BorderLayout.WEST);
-    myState.append(ExecutionBundle.message("junit.runing.info.starting.label"));
+    myState.append(ExecutionBundle.message("junit.running.info.starting.label"));
 
     myConverter = new HtmlToSimpleColoredComponentConverter((tag, attr) -> {
       final String className = (String) attr.getAttribute(HTML.Attribute.CLASS);

@@ -5,8 +5,8 @@ import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.*;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.impl.LoadedModuleDescriptionImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -47,11 +47,11 @@ public class ProjectViewProjectNode extends AbstractProjectNode {
     List<VirtualFile> projectRoots = ProjectRootUtilsKt.getProjectRoots(project);
 
     // top level roots but not under project roots
-    List<VirtualFile> topLevelContentRoots = ContainerUtil
+    List<VirtualFile> topLevelRootsOutsideOfProjectRoots = ContainerUtil
       .filter(projectViewHelper.getTopLevelRoots(), topLevelRoot -> !VfsUtilCore.isUnderFiles(topLevelRoot, projectRoots));
 
-    Set<ModuleDescription> modules = new LinkedHashSet<>(topLevelContentRoots.size());
-    for (VirtualFile root : topLevelContentRoots) {
+    Set<ModuleDescription> modules = new LinkedHashSet<>(topLevelRootsOutsideOfProjectRoots.size());
+    for (VirtualFile root : topLevelRootsOutsideOfProjectRoots) {
       Module module = ModuleUtilCore.findModuleForFile(root, project);
       if (module != null) {
         modules.add(new LoadedModuleDescriptionImpl(module));
@@ -65,13 +65,11 @@ public class ProjectViewProjectNode extends AbstractProjectNode {
     }
 
     List<AbstractTreeNode<?>> nodes = new ArrayList<>(modulesAndGroups(modules));
-    if (!ContainerUtil.exists(nodes, node -> node instanceof ModuleGroupNode)) {
-      PsiManager psiManager = PsiManager.getInstance(project);
-      for (var projectRoot : projectRoots) {
-        var psiDirectory = psiManager.findDirectory(projectRoot);
-        if (psiDirectory != null) {
-          nodes.add(new PsiDirectoryNode(myProject, psiDirectory, getSettings()));
-        }
+    PsiManager psiManager = PsiManager.getInstance(project);
+    for (var projectRoot : projectRoots) {
+      var psiDirectory = psiManager.findDirectory(projectRoot);
+      if (psiDirectory != null) {
+        nodes.add(new PsiDirectoryNode(myProject, psiDirectory, getSettings()));
       }
     }
 

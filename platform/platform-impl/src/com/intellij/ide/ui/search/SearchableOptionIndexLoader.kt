@@ -210,7 +210,7 @@ private fun processSearchableOptions(processor: MySearchableOptionProcessor) {
       continue
     }
 
-    val classifier = if (module !is ContentModuleDescriptor) "p-${module.pluginId.idString}" else "m-${module.moduleName}"
+    val classifier = if (module !is ContentModuleDescriptor) "p-${module.pluginId.idString}" else "m-${module.moduleId}"
 
     val fileName = "$classifier-${SearchableOptionsRegistrar.SEARCHABLE_OPTIONS_XML_NAME}.json"
     val data = classLoader.getResourceAsBytes(fileName, false)

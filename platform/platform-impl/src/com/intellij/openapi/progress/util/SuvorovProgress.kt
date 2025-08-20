@@ -4,6 +4,7 @@ package com.intellij.openapi.progress.util
 import com.intellij.CommonBundle
 import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.PerformanceWatcher
+import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.actions.RevealFileAction
 import com.intellij.openapi.Disposable
@@ -11,7 +12,6 @@ import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.InternalThreading
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.progress.impl.fus.FreezeUiUsageCollector
 import com.intellij.openapi.progress.util.ui.NiceOverlayUi
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
@@ -89,7 +89,7 @@ object SuvorovProgress {
       return
     }
 
-    FreezeUiUsageCollector.reportUiFreezePopupVisible()
+    LifecycleUsageTriggerCollector.onFreezePopupShown()
 
     // in tests, there is no UI scale, but we still want to run SuvorovProgress
     val isScaleInitialized = (application.isUnitTestMode || JBUIScale.isInitialized())

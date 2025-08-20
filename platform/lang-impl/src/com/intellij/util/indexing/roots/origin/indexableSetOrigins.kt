@@ -2,7 +2,6 @@
 package com.intellij.util.indexing.roots.origin
 
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.SyntheticLibrary
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.workspace.storage.EntityPointer

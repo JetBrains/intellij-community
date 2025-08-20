@@ -20,6 +20,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.impl.PsiFileFactoryImpl;
 import com.intellij.testFramework.*;
+import com.intellij.testFramework.common.BazelTestUtil;
 import com.intellij.util.PathUtil;
 import junit.framework.TestCase;
 import kotlin.collections.CollectionsKt;
@@ -548,7 +549,9 @@ public final class KotlinTestUtils {
         if (testDataFile.isAbsolute()) {
             absoluteTestDataFilePath = testDataFilePath;
         } else {
-            if ("true".equals(System.getProperty("kombo.compiler.tests.mode", "false"))) {
+            if (BazelTestUtil.isUnderBazelTest()) {
+                absoluteTestDataFilePath = TestMetadataUtil.resolvePathInBazelProvidedTestData(testCase.getClass(), testDataFilePath).toString();
+            } else if ("true".equals(System.getProperty("kombo.compiler.tests.mode", "false"))) {
                 absoluteTestDataFilePath = new File(TestKotlinArtifacts.jpsPluginTestData(testDataFilePath)).getAbsolutePath();
             } else {
                 File testRoot = TestMetadataUtil.getTestRoot(testCase.getClass());

@@ -21,6 +21,7 @@ import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerDocumentOffsetEvaluat
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
 import com.intellij.xdebugger.impl.rpc.XStackFrameId
 import com.intellij.xdebugger.impl.rpc.models.*
+import com.intellij.xdebugger.impl.ui.XValueTextProvider
 import fleet.rpc.core.RpcFlow
 import fleet.rpc.core.toRpc
 import kotlinx.coroutines.*
@@ -108,6 +109,15 @@ internal suspend fun BackendXValueModel.toXValueDto(): XValueDto {
   val xValue = this.xValue
   val valueMarkupFlow: RpcFlow<XValueMarkerDto?> = xValueModel.marker.toRpc()
 
+  val textProvider = (xValue as? XValueTextProvider)
+    ?.valueTextProviderAsync
+    ?.thenApply {
+      XValueTextProviderDto(
+        it.shouldShowTextValue(),
+        it.valueText,
+      )
+    }
+
   return XValueDto(
     xValueModel.id,
     xValue.xValueDescriptorAsync?.asDeferred(),
@@ -118,6 +128,7 @@ internal suspend fun BackendXValueModel.toXValueDto(): XValueDto {
     xValueModel.presentation.toRpc(),
     xValueModel.getEvaluatorDtoFlow().toRpc(),
     (xValue as? XNamedValue)?.name,
+    textProvider?.asDeferred(),
   )
 }
 

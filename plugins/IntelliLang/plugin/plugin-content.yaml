@@ -1,21 +1,9 @@
-- name: lib/modules/intellij.java.langInjection.jar
-  contentModules:
-  - name: intellij.java.langInjection
-- name: lib/modules/intellij.java.langInjection.jps.jar
-  contentModules:
-  - name: intellij.java.langInjection.jps
 - name: lib/modules/intellij.platform.langInjection.backend.jar
   contentModules:
   - name: intellij.platform.langInjection.backend
 - name: lib/modules/intellij.platform.langInjection.jar
   contentModules:
   - name: intellij.platform.langInjection
-- name: lib/modules/intellij.xml.langInjection.jar
-  contentModules:
-  - name: intellij.xml.langInjection
-- name: lib/modules/intellij.xml.langInjection.xpath.jar
-  contentModules:
-  - name: intellij.xml.langInjection.xpath
 - name: lib/platform-langInjection-plugin.jar
   modules:
   - name: intellij.platform.langInjection.plugin

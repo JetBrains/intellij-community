@@ -382,7 +382,9 @@ internal class WorkspaceFileIndexDataImpl(
       .filter { event.storageBefore.referrers(it, dependencyDescription.referenceHolderClass).none() }
       .mapNotNull { it.resolve(event.storageAfter) }
       .forEach {
-        removedEntities.add(it)
+        if (event.storageBefore.contains(it.symbolicId)) {
+          removedEntities.add(it)
+        }
         addedEntities.add(it)
       }
 
@@ -392,7 +394,9 @@ internal class WorkspaceFileIndexDataImpl(
       .mapNotNull { it.resolve(event.storageBefore) }
       .forEach {
         removedEntities.add(it)
-        addedEntities.add(it)
+        if (event.storageAfter.contains(it.symbolicId)) {
+          addedEntities.add(it)
+        }
       }
   }
 

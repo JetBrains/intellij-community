@@ -55,7 +55,7 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "//plugins/performanceTesting/core:performanceTesting",
     "//plugins/performanceTesting/core:performanceTesting_test_lib",
-    "@lib//:mockito",
+    "//libraries/mockito",
     "//platform/util/progress",
     "@lib//:kotlinx-coroutines-test",
   ],

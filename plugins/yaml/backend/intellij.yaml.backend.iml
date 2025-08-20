@@ -39,7 +39,6 @@
     <orderEntry type="module" module-name="intellij.platform.langInjection.plugin" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="module" module-name="intellij.regexp" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.sh" scope="TEST" />
     <orderEntry type="module" module-name="intellij.tools.ide.metrics.benchmark" scope="TEST" />
     <orderEntry type="module" module-name="intellij.yaml" />
     <orderEntry type="module" module-name="intellij.platform.searchEverywhere" />

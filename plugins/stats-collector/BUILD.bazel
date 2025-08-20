@@ -47,7 +47,7 @@ jvm_library(
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   deps = [
     "//java/testFramework",
-    "@lib//:mockito",
+    "//libraries/mockito",
     "@lib//:assert_j",
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",

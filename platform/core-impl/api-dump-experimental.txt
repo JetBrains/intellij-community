@@ -7,21 +7,16 @@ c:com.intellij.extapi.psi.StubBasedPsiElementBase
 - *f:getStubOrPsiChild(com.intellij.psi.tree.IElementType):com.intellij.psi.PsiElement
 - *f:getStubOrPsiChild(com.intellij.psi.tree.IElementType,java.lang.Class):com.intellij.psi.PsiElement
 *f:com.intellij.ide.plugins.IdeaPluginDescriptorExtensions
+- *sf:getContentModuleId(com.intellij.ide.plugins.IdeaPluginDescriptor):java.lang.String
 - *sf:getContentModuleName(com.intellij.ide.plugins.IdeaPluginDescriptor):java.lang.String
 - *sf:getContentModules(com.intellij.ide.plugins.IdeaPluginDescriptor):java.util.List
 - *sf:getMainDescriptor(com.intellij.ide.plugins.IdeaPluginDescriptor):com.intellij.ide.plugins.IdeaPluginDescriptor
-- *sf:getModuleDependencies(com.intellij.ide.plugins.IdeaPluginDescriptor):com.intellij.ide.plugins.ModuleDependencies
+- *sf:getModuleDependencies(com.intellij.ide.plugins.IdeaPluginDescriptor):com.intellij.ide.plugins.ModuleDependenciesApi
 - *sf:isRequiredContentModule(com.intellij.ide.plugins.IdeaPluginDescriptor):Z
-*f:com.intellij.ide.plugins.ModuleDependencies
+*f:com.intellij.ide.plugins.ModuleDependenciesApi
 - <init>(java.util.List,java.util.List):V
-- f:getModules():java.util.List
-- f:getPlugins():java.util.List
-*f:com.intellij.ide.plugins.ModuleDependencies$ModuleReference
-- <init>(java.lang.String):V
-- f:getName():java.lang.String
-*f:com.intellij.ide.plugins.ModuleDependencies$PluginReference
-- <init>(com.intellij.openapi.extensions.PluginId):V
-- f:getId():com.intellij.openapi.extensions.PluginId
+- f:getModuleIds():java.util.List
+- f:getPluginIds():java.util.List
 *:com.intellij.ide.plugins.PluginEnabler
 - sf:HEADLESS:com.intellij.ide.plugins.PluginEnabler$Headless
 - a:disable(java.util.Collection):Z

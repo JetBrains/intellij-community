@@ -154,13 +154,10 @@ public class PyFunctionBuilder {
       }
       decoratorAppender.append("\n");
     }
-    if (myAsync) {
-      builder.append("async ");
-    }
     List<Pair<@NotNull String, @Nullable String>> parameters =
       ContainerUtil.map(myParameters, paramName -> Pair.create(paramName, myParameterTypes.get(paramName)));
 
-    appendMethodSignature(builder, myName, parameters, myReturnType);
+    appendMethodSignature(builder, myAsync, myName, parameters, myReturnType);
     builder.append(":");
     List<String> statements = myStatements.isEmpty() ? Collections.singletonList(PyNames.PASS) : myStatements;
 
@@ -191,10 +188,13 @@ public class PyFunctionBuilder {
     myDecorators.add(decoratorName);
   }
 
-  public static void appendMethodSignature(@NotNull StringBuilder builder, @NotNull String name,
+  public static void appendMethodSignature(@NotNull StringBuilder builder, boolean isAsync, @NotNull String name,
                                            @NotNull List<Pair<@NotNull String, @Nullable String>> parameters,
                                            @Nullable String returnTypeName
   ) {
+    if (isAsync) {
+      builder.append("async ");
+    }
     builder.append("def ");
     builder.append(name);
     builder.append("(");

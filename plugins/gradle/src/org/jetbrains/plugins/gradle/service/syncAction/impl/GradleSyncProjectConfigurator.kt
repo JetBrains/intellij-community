@@ -108,15 +108,15 @@ private class GradleSyncContributorRunner {
     storage: ImmutableEntityStorage,
     phase: GradleSyncPhase,
   ): ImmutableEntityStorage {
-    val builder = storage.toBuilder()
+    var result = storage
     GradleSyncContributor.EP_NAME.forEachExtensionSafeAsync { contributor ->
       if (contributor.phase == phase) {
         TELEMETRY.spanBuilder(contributor.name).use {
-          contributor.updateProjectModel(context, builder)
+          result = contributor.createProjectModel(context, result)
         }
       }
     }
-    return builder.toSnapshot()
+    return result
   }
 
   private suspend fun updateProjectModel(

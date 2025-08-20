@@ -7,7 +7,7 @@ import com.intellij.platform.syntax.SyntaxElementType
 import com.intellij.platform.syntax.SyntaxElementTypeSet
 import com.intellij.platform.syntax.SyntaxLanguage
 import com.intellij.platform.syntax.extensions.ExtensionPointKey
-import com.intellij.platform.syntax.extensions.ExtensionSupport
+import com.intellij.platform.syntax.extensions.currentExtensionSupport
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -44,7 +44,7 @@ fun SyntaxElementLanguageProvider.getLanguage(elementType: SyntaxElementType): S
  */
 @ApiStatus.Experimental
 fun syntaxElementLanguageProvider(): SyntaxElementLanguageProvider? {
-  val languageProviders = ExtensionSupport().getExtensions(syntaxElementLanguageProviderEP)
+  val languageProviders = currentExtensionSupport().getExtensions(syntaxElementLanguageProviderEP)
   if (languageProviders.isEmpty()) return null
 
   if (languageProviders.size == 1) return languageProviders[0]

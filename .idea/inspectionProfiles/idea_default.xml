@@ -2638,6 +2638,12 @@
         <constraint name="Instance" nameOfExprType="com\.sun\.jdi\.ReferenceType!" exprTypeWithinHierarchy="true" within="" contains="" />
         <constraint name="Parameter" minCount="0" maxCount="2147483647" within="" contains="" />
       </replaceConfiguration>
+      <replaceConfiguration name="Use PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue in tests" uuid="7f0c9c8a-12d3-4b5a-9e7f-1a2b3c4d5e6f" description="In tests, prefer PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue() over UIUtil.dispatchAllInvocationEvents()" suppressId="UIUtilDispatchAllInvocationEventsInTests" problemDescriptor="Use PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue() in tests" text="com.intellij.util.ui.UIUtil.dispatchAllInvocationEvents()" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" search_injected="false" reformatAccordingToStyle="false" shortenFQN="true" replacement="com.intellij.testFramework.PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()">
+        <constraint name="__context__" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Use PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue in tests" uuid="1d2c3b4a-5e6f-7081-92a3-b4c5d6e7f809" description="In tests, prefer PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue() over UIUtil.dispatchAllInvocationEvents()" suppressId="UIUtilDispatchAllInvocationEventsInTests" problemDescriptor="Use PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue() in tests" text="com.intellij.util.ui.UIUtil.dispatchAllInvocationEvents()" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="false" shortenFQN="true" replacement="com.intellij.testFramework.PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()">
+        <constraint name="__context__" within="" contains="" />
+      </replaceConfiguration>
       <searchConfiguration name="Use RecursionManager?" text="class $Class$ { &#10;  ThreadLocal&lt;$FieldType$&gt; $FieldName$ = $Init$;&#10;}" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default">
         <constraint name="Class" within="" contains="" />
         <constraint name="FieldType" regexp="Collection" withinHierarchy="true" target="true" within="" contains="" />

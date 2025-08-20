@@ -50,16 +50,16 @@ internal class FrontendTerminalHyperlinkFacade(
     applier.addDecorations(hyperlinks.mapNotNull { it.toEditorDecoration() })
   }
 
-  private fun TerminalFilterResultInfo.toEditorDecoration(): EditorDecoration? =
+  private fun TerminalFilterResultInfo.toEditorDecoration(): EditorTextDecoration? =
     when (this) {
       is TerminalHyperlinkInfo -> {
         buildHyperlink(
           id = id.toPlatformId(),
           startOffset = outputModel.absoluteOffset(absoluteStartOffset).toRelative(),
           endOffset = outputModel.absoluteOffset(absoluteEndOffset).toRelative(),
-          attributes = style,
           action = { terminalInput.sendLinkClicked(isInAlternateBuffer, id, it) },
         ) {
+          attributes = style
           followedAttributes = followedStyle
           hoveredAttributes = hoveredStyle
           layer = layer

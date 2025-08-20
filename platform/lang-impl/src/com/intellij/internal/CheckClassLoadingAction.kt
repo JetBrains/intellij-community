@@ -5,7 +5,7 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginModuleDescriptor
 import com.intellij.ide.plugins.PluginSetBuilder
 import com.intellij.ide.plugins.cl.PluginClassLoader
-import com.intellij.ide.plugins.contentModuleName
+import com.intellij.ide.plugins.contentModuleId
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAwareAction
@@ -88,7 +88,7 @@ internal class CheckClassLoadingAction : DumbAwareAction("Check Class Loading"),
 
   private val PluginModuleDescriptor.fullId: String get() = buildString {
     append(pluginId)
-    if (contentModuleName != null) append(":$contentModuleName")
+    if (contentModuleId != null) append(":${contentModuleId}")
   }
 
   private val Any.addressTag: String get() = "@" + System.identityHashCode(this).toString(16)

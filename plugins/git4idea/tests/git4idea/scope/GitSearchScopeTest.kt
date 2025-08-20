@@ -29,12 +29,12 @@ class GitSearchScopeTest : GitSingleRepoTest() {
 
 internal fun GitSingleRepoTest.awaitEvents() {
   AsyncVfsEventsPostProcessorImpl.waitEventsProcessed()
-  repo.untrackedFilesHolder.apply {
-    invalidate()
-    createWaiter().waitFor()
-  }
-
   runBlocking {
+    repo.untrackedFilesHolder.apply {
+      invalidate()
+      awaitNotBusy()
+    }
+
     waitUntil("Untracked and ignored holders initialized", timeout = 5.seconds, condition = {
       repo.untrackedFilesHolder.isInitialized && repo.ignoredFilesHolder.initialized
     })

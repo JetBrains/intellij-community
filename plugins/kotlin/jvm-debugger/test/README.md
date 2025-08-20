@@ -36,10 +36,17 @@ Evaluation commands are executed in the order they appear in the file.
 3. See [AbstractIrKotlinEvaluateExpressionTest.kt](test/org/jetbrains/kotlin/idea/debugger/test/AbstractIrKotlinEvaluateExpressionTest.kt) for details
 
 ### Adding libraries to the classpath
-Use `// ATTACH_LIBRARY: maven(<LIB>)` to add a library to the classpath.
+Use `// ATTACH_LIBRARY: maven(<LIB>)` to add a library to the classpath. (deprecated)
 
-For example,  `// ATTACH_LIBRARY: maven(org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4)` adds coroutines
+For example,  `// ATTACH_LIBRARY: maven(org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4)` adds coroutines (deprecated)
 
+Use `// ATTACH_LIBRARY_BY_LABEL: classes(<bazel-label>)` to add a library to the classpath.
+
+For example, `// ATTACH_LIBRARY_BY_LABEL: classes(@kotlin_test_deps_org_jetbrains_kotlinx_kotlinx_coroutines_core_1_10_2//file:kotlinx_coroutines_core_1_10_2.jar)`
+Note that it doesn't add transitive dependencies, and you have to attach all the required libs.
+
+### Adding javaagent
+Use `// ATTACH_JAVA_AGENT_BY_LABEL:` with the same syntax as in `// ATTACH_LIBRARY_BY_LABEL:`
 
 ### Multifile
 

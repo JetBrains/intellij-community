@@ -2,7 +2,11 @@
 package com.intellij.tools.ide.metrics.benchmark;
 
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.platform.diagnostic.telemetry.IJTracer;
@@ -32,7 +36,10 @@ import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Locale;
+import java.util.ServiceLoader;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -53,6 +60,9 @@ public class BenchmarkTestInfoImpl implements BenchmarkTestInfo {
   private String uniqueTestName;                        // at least full qualified test name (plus other identifiers, optionally)
   private final @NotNull IJTracer tracer;
   private final ArrayList<MetricsCollector> metricsCollectors = new ArrayList<>();
+
+  /** sets {@link ApplicationManagerEx#setInStressTest(boolean)} to true before the benchmark, restores original value after */
+  private boolean setInStressTest = false;
 
   private boolean useDefaultSpanMetricExporter = true;
 
@@ -207,6 +217,14 @@ public class BenchmarkTestInfoImpl implements BenchmarkTestInfo {
   }
 
   @Override
+  @Contract(pure = true) // to warn about not calling .start() in the end
+  public BenchmarkTestInfoImpl runAsStressTest() {
+    setInStressTest = true;
+    return this;
+  }
+
+
+  @Override
   public String getUniqueTestName() {
     return uniqueTestName;
   }
@@ -256,7 +274,27 @@ public class BenchmarkTestInfoImpl implements BenchmarkTestInfo {
 
   @Override
   public void start() {
-    start(getCallingTestMethod(), launchName);
+    if (setInStressTest) {
+      boolean wasInStressTestBefore = ApplicationManagerEx.isInStressTest();
+      ApplicationManagerEx.setInStressTest(true);
+      try {
+        start(getCallingTestMethod(), launchName);
+      }
+      finally {
+        ApplicationManagerEx.setInStressTest(wasInStressTestBefore);
+      }
+    }
+    else {
+      Application app = ApplicationManager.getApplication();
+      if (app != null) {//if app == null then we probably don't use platform at all
+        if (!ApplicationManagerEx.isInStressTest()) {
+          Logger log = Logger.getInstance(BenchmarkTestInfoImpl.class);
+          log.error("ApplicationManagerEx.isInStressTest=false -- not good for reliable benchmarks!\n" +
+                    "Either use .runInStressTest() on the benchmark, or @StressTestApplication on the test itself");
+        }
+      }
+      start(getCallingTestMethod(), launchName);
+    }
   }
 
   /**

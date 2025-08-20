@@ -9,13 +9,17 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiModifier
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.plugins.groovy.GroovyBundle
+import org.jetbrains.plugins.groovy.GroovyBundle.message
 import org.jetbrains.plugins.groovy.annotator.intentions.AddParenthesesToLambdaParameterIntention
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GrRemoveModifierFix
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_DEF
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_VAR
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.GrArrayInitializer
 import org.jetbrains.plugins.groovy.lang.psi.api.GrLambdaExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression
@@ -62,6 +66,14 @@ class GroovyAnnotator30(private val holder: AnnotationHolder) : GroovyElementVis
   override fun visitLambdaExpression(expression: GrLambdaExpression) {
     checkSingleArgumentLambda(expression)
     super.visitLambdaExpression(expression)
+  }
+
+  override fun visitVariableDeclaration(variableDeclaration: GrVariableDeclaration) {
+    super.visitVariableDeclaration(variableDeclaration)
+    checkTupleVariableIsNotAllowed(variableDeclaration,
+                                   holder,
+                                   message("tuple.declaration.should.end.with.def.or.var.modifier"),
+                                   setOf(KW_DEF, KW_VAR))
   }
 
   private fun checkSingleArgumentLambda(lambda: GrLambdaExpression) {

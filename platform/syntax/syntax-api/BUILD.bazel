@@ -31,7 +31,7 @@ jvm_library(
 jvm_library(
   name = "syntax_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["testJvm/**/*.kt", "testJvm/**/*.java"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   kotlinc_opts = ":custom_syntax",
   associates = [":syntax"],
   deps = [

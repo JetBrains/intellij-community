@@ -30,6 +30,7 @@ jvm_library(
     "//platform/testFramework",
     "@lib//:opentelemetry",
     "//platform/boot",
+    "//platform/core-impl",
   ],
   runtime_deps = [":ide-metrics-benchmark_resources"]
 )
@@ -57,6 +58,7 @@ jvm_library(
     "//platform/testFramework/junit5:junit5_test_lib",
     "@lib//:opentelemetry",
     "//platform/boot",
+    "//platform/core-impl",
   ],
   runtime_deps = [
     ":ide-metrics-benchmark_resources",

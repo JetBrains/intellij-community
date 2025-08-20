@@ -28,7 +28,7 @@ class ExampleClassWithNoTypos<T> {
     /**
      * Adds a [member] to this group.
      *
-     * @param cancellable Whether the progress can be cancelled.
+     * @param cancellable Whether the progress can be <STYLE_SUGGESTION descr="American English does not double '-l-' in suffixes">cancelled</STYLE_SUGGESTION>.
      * @param member member to add
      * @return the new size of the group. And another sentence.
      */
@@ -100,7 +100,7 @@ class ExampleClassWithTypos<T> {
 class ForMultiLanguageSupport {
     // er überprüfte die Rechnungen noch <TYPO descr="Typo: In word 'einal'">einal</TYPO>, um ganz <GRAMMAR_ERROR descr="COMPOUND_INFINITIV_RULE">sicher zu gehen</GRAMMAR_ERROR>.
     // das ist <GRAMMAR_ERROR descr="FUEHR_FUER">führ</GRAMMAR_ERROR> Dich!
-    // das <TYPO descr="Typo: In word 'daert'">daert</TYPO> geschätzt fünf <GRAMMAR_ERROR descr="MANNSTUNDE">Mannstunden</GRAMMAR_ERROR>.
+    // das <TYPO descr="Typo: In word 'daert'">daert</TYPO> geschätzt fünf <STYLE_SUGGESTION descr="MANNSTUNDE">Mannstunden</STYLE_SUGGESTION>.
 
   /**
    * @throws Exception wenn ein Fehler auftritt

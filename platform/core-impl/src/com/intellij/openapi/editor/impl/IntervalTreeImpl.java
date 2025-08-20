@@ -23,23 +23,22 @@ import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
-import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Supplier;
 
 @ApiStatus.Internal
-public abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTree<T> {
+public abstract class IntervalTreeImpl<T extends RangeMarkerEx> extends RedBlackTree<T> implements IntervalTree<T> {
   static final Logger LOG = Logger.getInstance(IntervalTreeImpl.class);
   static final boolean DEBUG = LOG.isDebugEnabled() || ApplicationManager.getApplication() != null && ApplicationManager.getApplication().isUnitTestMode();
   private int keySize; // number of all intervals, counting all duplicates, some of them maybe gced
-  private final ReadWriteLock l = new ReentrantReadWriteLock();
+  private final ReentrantReadWriteLock l = new ReentrantReadWriteLock();
 
   protected abstract int compareEqualStartIntervals(@NotNull IntervalNode<T> i1, @NotNull IntervalNode<T> i2);
   private final ReferenceQueue<T> myReferenceQueue = new ReferenceQueue<>();
   private int deadReferenceCount;
 
   @ApiStatus.Internal
-  protected static class IntervalNode<E> extends Node<E> implements MutableInterval {
+  protected static class IntervalNode<E extends RangeMarkerEx> extends Node<E> implements MutableInterval {
     private volatile long myRange;
     private static final byte ATTACHED_TO_TREE_FLAG = COLOR_MASK <<1; // true if the node is inserted to the tree
     protected final List<Supplier<? extends E>> intervals;
@@ -62,11 +61,11 @@ public abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements Int
       setValid(true);
     }
 
-    public int getDelta() {
+    protected int getDelta() {
       return delta;
     }
 
-    public int getMaxEnd() {
+    protected int getMaxEnd() {
       return maxEnd;
     }
 
@@ -278,11 +277,11 @@ public abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements Int
       return TextRangeScalarUtil.endOffset(myRange);
     }
 
-    public long toScalarRange() {
+    protected long toScalarRange() {
       return myRange;
     }
 
-    public @NotNull IntervalTreeImpl<E> getTree() {
+    protected @NotNull IntervalTreeImpl<E> getTree() {
       return myTree;
     }
 
@@ -366,8 +365,10 @@ public abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements Int
     }
   }
 
-  @ApiStatus.Internal
-  protected List<T> runUnderWriteLock(@NotNull Supplier<? extends List<T>> runnable) {
+  <E> E runUnderWriteLock(@NotNull Supplier<? extends E> runnable) {
+    if (l.getReadHoldCount() > 0) {
+      throw new IllegalStateException("Must not perform modifications while holding read lock/iterating");
+    }
     l.writeLock().lock();
     try {
       return runnable.get();
@@ -375,6 +376,13 @@ public abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements Int
     finally {
       l.writeLock().unlock();
     }
+  }
+  @ApiStatus.Internal
+  protected void runUnderWriteLock(@NotNull Runnable runnable) {
+    runUnderWriteLock(() -> {
+      runnable.run();
+      return null;
+    });
   }
 
   private @NotNull Supplier<? extends T> createGetter(@NotNull T interval) {
@@ -413,7 +421,7 @@ public abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements Int
   }
 
   void assertUnderWriteLock() {
-    assert ((ReentrantReadWriteLock.WriteLock)l.writeLock()).isHeldByCurrentThread() : l.writeLock();
+    assert l.isWriteLocked() : l.writeLock();
   }
 
   private void pushDeltaFromRoot(@Nullable IntervalNode<T> node) {
@@ -805,21 +813,16 @@ public abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements Int
 
   private void deleteNodes(@NotNull List<? extends IntervalNode<T>> collectedAway) {
     if (collectedAway.isEmpty()) return;
-    try {
-      l.writeLock().lock();
+    runUnderWriteLock(() -> {
       for (IntervalNode<T> node : collectedAway) {
         removeNode(node);
       }
-    }
-    finally {
-      l.writeLock().unlock();
-    }
+    });
   }
 
   protected @NotNull IntervalNode<T> addInterval(@NotNull T interval, int start, int end,
                                                  boolean greedyToLeft, boolean greedyToRight, boolean stickingToRight, int layer) {
-    l.writeLock().lock();
-    try {
+    return runUnderWriteLock(()->{
       if (firingRemove) {
         throw new IncorrectOperationException("Must not add range marker from within removed() listener");
       }
@@ -838,10 +841,7 @@ public abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements Int
       checkMax(true);
       checkBelongsToTheTree(interval, true);
       return insertedNode;
-    }
-    finally {
-      l.writeLock().unlock();
-    }
+    });
   }
 
   // returns true if all markers are valid
@@ -904,8 +904,8 @@ public abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements Int
       if (t == null) continue;
       liveInterval = t;
       checkBelongsToTheTree(t, false);
-      if (((RangeMarkerImpl)t).isValid()) {
-        long id = ((RangeMarkerImpl)t).getId();
+      if (t.isValid()) {
+        long id = t.getId();
         boolean added = ids.add(id);
         assert added : t +"\nids:"+ids+"; id="+id+"\n; root.intervals="+root.intervals;
       }
@@ -991,26 +991,34 @@ public abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements Int
 
   @Override
   public boolean removeInterval(@NotNull T interval) {
-    if (!((RangeMarkerEx)interval).isValid()) return false;
-    l.writeLock().lock();
+    if (!interval.isValid()) {
+      return false;
+    }
     try {
-      incModCount();
-      if (!((RangeMarkerEx)interval).isValid()) return false;
-      checkBelongsToTheTree(interval, true);
-      checkMax(true);
-      processReferenceQueue();
+      return runUnderWriteLock(() -> {
+        try {
+          incModCount();
+          boolean ret = false;
+          if (interval.isValid()) {
+            checkBelongsToTheTree(interval, true);
+            checkMax(true);
+            processReferenceQueue();
 
-      IntervalNode<T> node = lookupNode(interval);
-      if (node == null) return false;
-
-      beforeRemove(interval, node);
-
-      node.removeInterval(interval);
-      return true;
+            IntervalNode<T> node = lookupNode(interval);
+            if (node != null) {
+              beforeRemove(interval, node);
+              node.removeInterval(interval);
+              ret = true;
+            }
+          }
+          return ret;
+        }
+        finally {
+          setNode(interval, null);
+        }
+      });
     }
     finally {
-      setNode(interval, null);
-      l.writeLock().unlock();
       fireAfterRemoved(interval);
     }
   }
@@ -1279,9 +1287,7 @@ public abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements Int
 
   void changeData(@NotNull T interval, int start, int end,
                   boolean greedyToLeft, boolean greedyToRight, boolean stickingToRight, int layer) {
-    try {
-      l.writeLock().lock();
-
+    runUnderWriteLock(() -> {
       IntervalNode<T> node = lookupNode(interval);
       if (node == null) return;
       int before = size();
@@ -1293,13 +1299,10 @@ public abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements Int
 
       int after = size();
       // can be gced
-      assert before >= after : before +";" + after;
+      assert before >= after : before + ";" + after;
       checkBelongsToTheTree(interval, true);
       checkMax(true);
-    }
-    finally {
-      l.writeLock().unlock();
-    }
+    });
   }
 
 
@@ -1332,17 +1335,13 @@ public abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements Int
     for (T t : toRemove) {
       removeInterval(t);
     }
-    l.writeLock().lock();
-    try {
+    runUnderWriteLock(() -> {
       // make sure to avoid clearing when there are markers created between "removeInterval" and write lock start
       if (nodeSize() == 0) {
         super.clear();
         keySize = 0;
       }
-    }
-    finally {
-      l.writeLock().unlock();
-    }
+    });
   }
 
   private void collectGced(@Nullable IntervalNode<T> root, @NotNull List<? super IntervalNode<T>> gced) {
@@ -1356,10 +1355,10 @@ public abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements Int
 
   private boolean firingRemove; // accessed under l.writeLock() only
 
-  public void fireBeforeRemoved(@NotNull T marker) {
+  protected void fireBeforeRemoved(@NotNull T marker) {
   }
 
-  public void fireAfterRemoved(@NotNull T marker) {
+  protected void fireAfterRemoved(@NotNull T marker) {
   }
 
   void fireAfterRemoved(@NotNull List<? extends T> markers) {
@@ -1370,6 +1369,7 @@ public abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements Int
 
   // must be called under l.writeLock()
   void beforeRemove(@NotNull T marker, @NotNull IntervalNode<T> node) {
+    assertUnderWriteLock();
     if (firingRemove) {
       throw new IncorrectOperationException("must not remove range markers from within beforeRemove() listener");
     }
@@ -1382,9 +1382,9 @@ public abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements Int
     }
   }
 
-  private static class IntervalTreeGuide<T extends MutableInterval> implements WalkingState.TreeGuide<IntervalNode<T>> {
+  private static class IntervalTreeGuide<T extends MutableInterval & RangeMarkerEx> implements WalkingState.TreeGuide<IntervalNode<T>> {
     private static final IntervalTreeGuide<?> INSTANCE = new IntervalTreeGuide<>();
-    private static @NotNull <T> WalkingState.TreeGuide<IntervalNode<T>> getGuide() {
+    private static @NotNull <T extends RangeMarkerEx> WalkingState.TreeGuide<IntervalNode<T>> getGuide() {
       //noinspection unchecked,rawtypes
       return (WalkingState.TreeGuide)INSTANCE;
     }
@@ -1424,7 +1424,7 @@ public abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements Int
 
   // combines iterators for two trees in one using the specified comparator
   @ApiStatus.Internal
-  protected static @NotNull <T> MarkupIterator<T> mergingOverlappingIterator(
+  protected static @NotNull <T extends RangeMarkerEx> MarkupIterator<T> mergingOverlappingIterator(
     @NotNull IntervalTreeImpl<T> tree1,
     @NotNull TextRange tree1Range,
     @NotNull IntervalTreeImpl<T> tree2,

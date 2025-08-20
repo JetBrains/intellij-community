@@ -32,10 +32,13 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.events.*
 import com.intellij.util.application
 import com.intellij.util.asDisposable
+import io.ktor.http.HttpStatusCode
+import io.ktor.server.application.call
 import io.ktor.server.cio.CIO
 import io.ktor.server.cio.CIOApplicationEngine
 import io.ktor.server.engine.EmbeddedServer
 import io.ktor.server.engine.embeddedServer
+import io.ktor.server.response.respond
 import io.modelcontextprotocol.kotlin.sdk.*
 import io.modelcontextprotocol.kotlin.sdk.server.RegisteredTool
 import io.modelcontextprotocol.kotlin.sdk.server.Server
@@ -45,6 +48,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.serialization.json.JsonPrimitive
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicInteger
@@ -54,6 +58,7 @@ import kotlin.coroutines.cancellation.CancellationException
 
 private val logger = logger<McpServerService>()
 private val structuredToolOutputEnabled get() = Registry.`is`("mcp.server.structured.tool.output")
+private val IJ_MCP_AUTH_TOKEN: String = ::IJ_MCP_AUTH_TOKEN.name
 
 @Service(Service.Level.APP)
 class McpServerService(val cs: CoroutineScope) {
@@ -62,9 +67,11 @@ class McpServerService(val cs: CoroutineScope) {
     suspend fun getInstanceAsync(): McpServerService = serviceAsync()
   }
 
-  private val server = MutableStateFlow(startServerIfEnabled())
+  private val server = MutableStateFlow(startGlobalServerIfEnabled())
   @OptIn(ExperimentalAtomicApi::class)
   private val callId = AtomicInteger(0)
+
+  private val activeTokens = ConcurrentHashMap.newKeySet<String>()
 
   val isRunning: Boolean
     get() = server.value != null
@@ -82,6 +89,52 @@ class McpServerService(val cs: CoroutineScope) {
     settingsChanged(false)
   }
 
+  // probably we have to add an ability to configure server before start (like tools list, features, etc.)
+  /**
+   * Starts an isolated MCP on a separate port that doesn't interfere with the main MCP server,
+   * thus it can be used even if the main MCP server is enabled by a user.
+   * This isolated server runs only for the method execution period.
+   * The server is secured by a temporary token IJ_MCP_AUTH_TOKEN that is generated for each session.
+   * The calling site should pass the token value in http headers.
+   * @param block suspend function that runs in the isolated MCP server context
+   */
+  suspend fun authorizedSession(block: suspend CoroutineScope.(port: Int, authTokenName: String, authTokenValue: String) -> Unit) {
+    // open server here on random port
+    val uuid = UUID.randomUUID().toString()
+    val server = startServer(desiredPort = McpServerSettings.DEFAULT_MCP_PRIVATE_PORT, authCheck = true)
+    try {
+      val occupiedPort = server.engine.resolvedConnectors().first().port
+      logger.trace { "Authorized MCP session started on port $occupiedPort" }
+      activeTokens.add(uuid)
+      coroutineScope {
+        block(occupiedPort, IJ_MCP_AUTH_TOKEN, uuid)
+      }
+    }
+    finally {
+      activeTokens.remove(uuid)
+      try {
+        // if to call `stopSuspend` without NonCancellable in the case of the current coroutine cancellation the stopSuspend won't run
+        // DO NOT merge `withContext(NonCancellable)` and `withContext(Dispatchers.IO)`, otherwise it throws cancellation
+        withContext(NonCancellable) {
+          withContext(Dispatchers.IO) {
+            // timeout exception will be reported in the catch below
+            withTimeout(2000) {
+              server.stopSuspend(gracePeriodMillis = 500, timeoutMillis = 1000)
+            }
+          }
+        }
+      }
+      catch (t: Throwable) {
+        logger.error("Failed to gracefully shutdown authorized MCP server", t)
+      }
+      logger.trace { "Authorized MCP session stopped" }
+    }
+  }
+
+  private fun isKnownToken(token: String): Boolean {
+    return activeTokens.contains(token)
+  }
+
   val port: Int
     get() = (server.value ?: error("MCP Server is not enabled")).engineConfig.connectors.first().port
 
@@ -94,7 +147,7 @@ class McpServerService(val cs: CoroutineScope) {
       }
       else {
         // reuse old or start new
-        return@update currentServer ?: startServer()
+        return@update currentServer ?: startServer(McpServerSettings.getInstance().state.mcpServerPort, authCheck = false)
       }
     }
   }
@@ -106,15 +159,18 @@ class McpServerService(val cs: CoroutineScope) {
     }
   }
 
-  private fun startServerIfEnabled(): EmbeddedServer<CIOApplicationEngine, CIOApplicationEngine.Configuration>? {
+  private fun startGlobalServerIfEnabled(): EmbeddedServer<CIOApplicationEngine, CIOApplicationEngine.Configuration>? {
     if (!McpServerSettings.getInstance().state.enableMcpServer) return null
-    return startServer()
+    val server = startServer(McpServerSettings.getInstance().state.mcpServerPort, authCheck = false)
+    cs.launch {
+      // save to settings can be done asynchronously
+      McpServerSettings.getInstance().state.mcpServerPort = server.engine.resolvedConnectors().first().port
+    }
+    return server
   }
 
-  private fun startServer(): EmbeddedServer<CIOApplicationEngine, CIOApplicationEngine.Configuration> {
-    val serverSavedPort = McpServerSettings.getInstance().state.mcpServerPort
-    val freePort = findFirstFreePort(serverSavedPort)
-    McpServerSettings.getInstance().state.mcpServerPort = freePort
+  private fun startServer(desiredPort: Int, authCheck: Boolean): EmbeddedServer<CIOApplicationEngine, CIOApplicationEngine.Configuration> {
+    val freePort = findFirstFreePort(desiredPort)
 
     val mcpTools = MutableStateFlow(getMcpTools())
 
@@ -141,7 +197,16 @@ class McpServerService(val cs: CoroutineScope) {
     return cs.embeddedServer(CIO, host = "127.0.0.1", port = freePort) {
       installHostValidation()
       installHttpRequestPropagation()
-      mcpPatched {
+
+      mcpPatched(prePhase = {
+        if (authCheck) {
+          val authToken = call.request.headers[IJ_MCP_AUTH_TOKEN]
+          if (authToken == null || !isKnownToken(authToken)) {
+            call.respond(HttpStatusCode.Unauthorized, "MCP server is running in restricted mode. Please, provide valid authorization token")
+            finish()
+          }
+        }
+      }) {
         // this is added because now Kotlin MCP client doesn't support header adjusting for each request, only for initial one, see McpStdioRunner
         val projectPath = call.request.headers[IJ_MCP_SERVER_PROJECT_PATH]
         val mcpServer = Server(
@@ -157,6 +222,10 @@ class McpServerService(val cs: CoroutineScope) {
             )
           )
         )
+        mcpServer.setRequestHandler<LoggingMessageNotification.SetLevelRequest>(Method.Defined.LoggingSetLevel) { request, extra ->
+          // Workaround inspector failure
+          return@setRequestHandler EmptyRequestResult()
+        }
         launch {
           var previousTools: List<McpTool>? = null
           mcpTools.collectLatest { updatedTools ->

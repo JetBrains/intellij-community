@@ -663,11 +663,17 @@ com.intellij.openapi.fileTypes.ex.ExternalizableFileType
 com.intellij.openapi.fileTypes.impl.FileTypeOverrider
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:getOverriddenFileType(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.fileTypes.FileType
+com.intellij.openapi.keymap.impl.SystemShortcutsListener
+- sf:CHANGE_TOPIC:com.intellij.util.messages.Topic
+- a:processSystemShortcutsChanged():V
 com.intellij.openapi.keymap.impl.ui.KeymapListener
 - sf:CHANGE_TOPIC:com.intellij.util.messages.Topic
 - a:processCurrentKeymapChanged():V
 - a:processCurrentKeymapChanged(com.intellij.openapi.actionSystem.ex.QuickList[]):V
 - a:quickListRenamed(com.intellij.openapi.actionSystem.ex.QuickList,com.intellij.openapi.actionSystem.ex.QuickList):V
+f:com.intellij.openapi.keymap.impl.ui.KeymapPanel
+- com.intellij.openapi.keymap.impl.SystemShortcutsListener
+- processSystemShortcutsChanged():V
 f:com.intellij.openapi.observable.util.BindUtilKt
 - sf:bindSelected(com.intellij.ui.CardLayoutPanel,com.intellij.openapi.observable.properties.ObservableProperty):com.intellij.ui.CardLayoutPanel
 a:com.intellij.openapi.options.BeanConfigurable

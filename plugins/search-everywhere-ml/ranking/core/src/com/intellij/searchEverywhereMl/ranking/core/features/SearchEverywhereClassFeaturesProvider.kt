@@ -19,7 +19,7 @@ class SearchEverywhereClassFeaturesProvider : SearchEverywhereElementFeaturesPro
   }
 
   override fun getFeaturesDeclarations(): List<EventField<*>> {
-    return arrayListOf<EventField<*>>(IS_DEPRECATED)
+    return listOf(IS_DEPRECATED)
   }
 
   override fun getElementFeatures(element: Any,

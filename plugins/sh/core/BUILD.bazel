@@ -13,24 +13,16 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
-    "//platform/analysis-api:analysis",
     "//platform/code-style-api:codeStyle",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
-    "//platform/indexing-api:indexing",
     "//platform/lang-api:lang",
     "//platform/platform-impl:ide-impl",
     "//platform/lang-impl",
     "//platform/execution-impl",
-    "//platform/projectModel-api:projectModel",
     "//platform/usageView",
-    "@lib//:pty4j",
-    "@lib//:gson",
-    "//spellchecker",
-    "//platform/indexing-impl",
     "//platform/refactoring",
     "//platform/statistics",
-    "//platform/xdebugger-api:debugger",
     "//platform/core-ui",
     "@lib//:fastutil-min",
     "//platform/code-style-impl:codeStyle-impl",
@@ -39,11 +31,10 @@ jvm_library(
     "//platform/eel",
     "//platform/eel-provider",
     "//platform/eel-impl",
+    "//platform/analysis-api:analysis",
+    "//platform/projectModel-api:projectModel",
   ],
-  runtime_deps = [
-    ":core_resources",
-    "//platform/backend",
-  ]
+  runtime_deps = [":core_resources"]
 )
 ### auto-generated section `build intellij.sh.core` end
 
@@ -60,6 +51,8 @@ jvm_library(
     "//platform/editor-ui-api:editor-ui",
     "//platform/projectModel-api:projectModel",
     "//plugins/sh/core",
+    "//plugins/sh/backend",
+    "//plugins/sh/plugin:plugin-main",
     "//spellchecker",
     "//spellchecker:spellchecker_test_lib",
     "//platform/testFramework",
@@ -70,8 +63,7 @@ jvm_library(
     "//platform/eel-provider",
     "//platform/testRunner",
     "//platform/testRunner:testRunner_test_lib",
-  ],
-  runtime_deps = ["//plugins/sh"]
+  ]
 )
 ### auto-generated section `build intellij.sh.tests` end
 

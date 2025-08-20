@@ -8,8 +8,8 @@ jvm_resources(
 )
 
 jvm_provided_library(
-  name = "plugins_IntelliLang_xml-langInjection_provided",
-  lib = "//plugins/IntelliLang/xml-support:xml-langInjection"
+  name = "xml_langInjection_provided",
+  lib = "//xml/langInjection"
 )
 
 jvm_library(
@@ -25,7 +25,7 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//platform/backend",
     "@lib//:kotlin-stdlib",
-    ":plugins_IntelliLang_xml-langInjection_provided",
+    ":xml_langInjection_provided",
   ],
   runtime_deps = [":fenceInjection_resources"]
 )

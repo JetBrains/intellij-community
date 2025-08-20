@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
 import com.fasterxml.jackson.databind.type.TypeFactory
@@ -328,7 +328,7 @@ object DynamicPlugins {
     checkUnloadActions(module)?.let { return it }
 
     for (moduleRef in module.contentModules) {
-      if (pluginSet.isModuleEnabled(moduleRef.moduleName)) {
+      if (pluginSet.isModuleEnabled(moduleRef.moduleId)) {
         checkCanUnloadWithoutRestart(module = moduleRef,
                                      parentModule = module,
                                      optionalDependencyPluginId = null,
@@ -999,7 +999,7 @@ object DynamicPlugins {
                                                  classLoaderConfigurator = classLoaderConfigurator,
                                                  pluginSet = pluginSet).filter { descriptorImpl ->
             when (descriptorImpl) {
-              is ContentModuleDescriptor if !pluginSet.isModuleEnabled(descriptorImpl.moduleName) -> false
+              is ContentModuleDescriptor if !pluginSet.isModuleEnabled(descriptorImpl.moduleId) -> false
               is PluginMainDescriptor if !pluginSet.isPluginEnabled(descriptorImpl.pluginId) -> false
               else -> true
             }
@@ -1251,7 +1251,7 @@ private fun processDependenciesOnPlugin(
   val wantedIds = HashSet<String>(1 + dependencyTarget.contentModules.size)
   wantedIds.add(dependencyTarget.pluginId.idString)
   for (module in dependencyTarget.contentModules) {
-    wantedIds.add(module.moduleName)
+    wantedIds.add(module.moduleId.id)
   }
   // FIXME plugin aliases probably missing?
 
@@ -1276,12 +1276,12 @@ private fun processDependenciesOnPlugin(
         }
       }
       for (item in module.moduleDependencies.modules) {
-        if (wantedIds.contains(item.name) && !processor(plugin, module)) {
+        if (wantedIds.contains(item.id) && !processor(plugin, module)) {
           return
         }
       }
       for (item in module.moduleDependencies.plugins) {
-        if (dependencyTarget.pluginId == item.id && !processor(plugin, module)) {
+        if (dependencyTarget.pluginId == item && !processor(plugin, module)) {
           return
         }
       }
@@ -1426,10 +1426,7 @@ private fun findPluginExtensionPoint(pluginDescriptor: IdeaPluginDescriptorImpl,
                                                   ?: findInContainer(moduleContainerDescriptor)
   pluginDescriptor.findInAnyScope()?.let { return it }
   pluginDescriptor.contentModules.forEach { contentModule ->
-    // FIXME incomplete fix for IJPL-190703
-    if (contentModule.moduleLoadingRule.required) {
-      contentModule.findInAnyScope()?.let { return it }
-    }
+    contentModule.findInAnyScope()?.let { return it }
   }
   return null
 }
@@ -1465,13 +1462,13 @@ private inline fun processDirectDependencies(module: IdeaPluginDescriptorImpl,
                                              pluginSet: PluginSet,
                                              processor: (IdeaPluginDescriptorImpl) -> Unit) {
    for (item in module.moduleDependencies.modules) {
-     val descriptor = pluginSet.findEnabledModule(item.name)
+     val descriptor = pluginSet.findEnabledModule(item)
      if (descriptor != null) {
        processor(descriptor)
     }
   }
   for (item in module.moduleDependencies.plugins) {
-    val descriptor = pluginSet.findEnabledPlugin(item.id)
+    val descriptor = pluginSet.findEnabledPlugin(item)
     if (descriptor != null) {
       processor(descriptor)
     }

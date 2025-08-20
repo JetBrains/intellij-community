@@ -26,6 +26,10 @@ com.intellij.ide.RecentProjectsManager
 - a:suggestNewProjectLocation():java.lang.String
 - a:updateLastProjectPath():V
 - willReopenProjectOnStart(kotlin.coroutines.Continuation):java.lang.Object
+f:com.intellij.ide.RecentProjectsManager$Companion
+- f:getLAST_PROJECTS_TOPIC():com.intellij.util.messages.Topic
+com.intellij.ide.RecentProjectsManager$LastProjectsListener
+- a:lastProjectsReopened(com.intellij.openapi.project.Project):V
 com.intellij.ide.dnd.DnDDropHandler
 - a:drop(com.intellij.ide.dnd.DnDEvent):V
 com.intellij.ide.dnd.DnDDropHandler$WithResult

@@ -24,7 +24,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.Strings;
-import com.intellij.util.ReflectionUtil;
+import com.jetbrains.JBR;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +32,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.lang.reflect.Method;
 import java.util.*;
 import java.util.List;
 import java.util.function.Supplier;
@@ -42,18 +41,19 @@ public final class SystemShortcuts {
   private static final Logger LOG = Logger.getInstance(SystemShortcuts.class);
   private static final @NotNull String ourUnknownSysAction = "Unknown action";
 
-  private final @NotNull Map<KeyStroke, AWTKeyStroke> myKeyStroke2SysShortcut = new HashMap<>();
-  private final @NotNull Map<KeyStroke, String> myKeyStrokeCustomDescription = new HashMap<>();
+  private final @NotNull Map<KeyStroke, com.jetbrains.SystemShortcuts.Shortcut> myKeyStroke2SysShortcut = new HashMap<>();
   private final @NotNull MuteConflictsSettings myMutedConflicts = new MuteConflictsSettings();
   private final @NotNull Set<String> myNotifiedActions = new HashSet<>();
   private int myNotifyCount = 0;
 
   private @Nullable Keymap myKeymap;
 
-  private final @NotNull Map<AWTKeyStroke, ConflictItem> myKeymapConflicts = new HashMap<>();
+  // Map from System Shortcut *ID* to conflict
+  private final @NotNull Map<String, ConflictItem> myKeymapConflicts = new HashMap<>();
 
   private SystemShortcuts() {
     readSystem();
+    setUpSystemShortcutsChangeListener();
   }
 
   public static @NotNull SystemShortcuts getInstance() {
@@ -96,14 +96,19 @@ public final class SystemShortcuts {
       return;
     }
 
-    for (@NotNull KeyStroke sysKS : myKeyStroke2SysShortcut.keySet()) {
+    if (keymap == null) {
+      return;
+    }
+
+    for (var entry : myKeyStroke2SysShortcut.entrySet()) {
+      @NotNull var sysKS = entry.getKey();
+      @NotNull var shk = entry.getValue();
       final String[] actIds = computeOnEdt(() -> keymap.getActionIds(sysKS));
       if (actIds.length == 0) {
         continue;
       }
 
-      @NotNull AWTKeyStroke shk = myKeyStroke2SysShortcut.get(sysKS);
-      myKeymapConflicts.put(shk, new ConflictItem(sysKS, getDescription(shk), actIds));
+      myKeymapConflicts.put(shk.getId(), new ConflictItem(sysKS, getDescription(shk), actIds));
     }
   }
 
@@ -126,9 +131,10 @@ public final class SystemShortcuts {
       if (sc == null) {
         return false;
       }
-      for (KeyStroke ks : myKeyStroke2SysShortcut.keySet()) {
+      for (var entry : myKeyStroke2SysShortcut.entrySet()) {
+        @NotNull var ks = entry.getKey();
         if (sc.startsWith(new KeyboardShortcut(ks, null))) {
-          final ConflictItem ci = myKeymapConflicts.get(myKeyStroke2SysShortcut.get(ks));
+          final ConflictItem ci = myKeymapConflicts.get(entry.getValue().getId());
           if (ci != null && ci.getUnmutedActionId(myMutedConflicts) != null) {
             return true;
           }
@@ -151,10 +157,12 @@ public final class SystemShortcuts {
       if (!(sc instanceof KeyboardShortcut ksc)) {
         continue;
       }
-      for (@NotNull KeyStroke sks : myKeyStroke2SysShortcut.keySet()) {
+      for (var entry : myKeyStroke2SysShortcut.entrySet()) {
+        @NotNull var sks = entry.getKey();
+        @NotNull var shk = entry.getValue();
         if (ksc.getFirstKeyStroke().equals(sks) || sks.equals(ksc.getSecondKeyStroke())) {
           if (result == null) result = new HashMap<>();
-          result.put(ksc, getDescription(myKeyStroke2SysShortcut.get(sks)));
+          result.put(ksc, getDescription(shk));
         }
       }
     }
@@ -204,9 +212,9 @@ public final class SystemShortcuts {
     }
 
     KeyStroke ks = ksc.getFirstKeyStroke();
-    AWTKeyStroke sysKs = myKeyStroke2SysShortcut.get(ks);
+    var sysKs = myKeyStroke2SysShortcut.get(ks);
     if (sysKs == null && ksc.getSecondKeyStroke() != null) {
-      sysKs = myKeyStroke2SysShortcut.get(ks = ksc.getSecondKeyStroke());
+      sysKs = myKeyStroke2SysShortcut.get(ksc.getSecondKeyStroke());
     }
     if (sysKs == null) {
       return;
@@ -233,12 +241,11 @@ public final class SystemShortcuts {
     //System.out.println(actionId + " shortcut '" + sysKS + "' "
     //                   + Arrays.toString(actionShortcuts) + " conflicts with macOS shortcut"
     //                   + (macOsShortcutAction == null ? "." : " '" + macOsShortcutAction + "'."));
-    doNotify(keymap, unmutedActId, ks, macOsShortcutAction, ksc);
+    doNotify(keymap, unmutedActId, macOsShortcutAction, ksc);
   }
 
   private void doNotify(@NotNull Keymap keymap,
                         @NotNull String actionId,
-                        @NotNull KeyStroke sysKS,
                         @Nullable String macOsShortcutAction,
                         @NotNull KeyboardShortcut conflicted) {
     updateKeymapConflicts(keymap);
@@ -321,28 +328,11 @@ public final class SystemShortcuts {
     notification.notify(null);
   }
 
-  private static Class<?> ourShkClass;
-  private static Method ourMethodGetDescription;
-  private static Method ourMethodReadSystemHotkeys;
-
-  private @NotNull String getDescription(@NotNull AWTKeyStroke systemHotkey) {
-    if (systemHotkey instanceof KeyStroke) {
-      return myKeyStrokeCustomDescription.get(systemHotkey);
+  private static @NotNull String getDescription(com.jetbrains.SystemShortcuts.Shortcut systemHotkey) {
+    if (systemHotkey == null) {
+      return ourUnknownSysAction;
     }
-    if (ourShkClass == null) {
-      ourShkClass = ReflectionUtil.forName("java.awt.desktop.SystemHotkey");
-    }
-
-    if (ourMethodGetDescription == null) {
-      ourMethodGetDescription = ReflectionUtil.getMethod(ourShkClass, "getDescription");
-    }
-    String result = null;
-    try {
-      result = (String)ourMethodGetDescription.invoke(systemHotkey);
-    }
-    catch (Throwable e) {
-      Logger.getInstance(SystemShortcuts.class).error(e);
-    }
+    var result = systemHotkey.getDescription();
 
     if (result == null) {
       return ourUnknownSysAction;
@@ -365,33 +355,29 @@ public final class SystemShortcuts {
 
   private static final boolean DEBUG_SYSTEM_SHORTCUTS = Boolean.getBoolean("debug.system.shortcuts");
 
+  private static @Nullable com.jetbrains.SystemShortcuts getJbrApi() {
+    if (!SystemInfo.isMac || !SystemInfo.isJetBrainsJvm || !Registry.is("read.system.shortcuts")) {
+      return null;
+    }
+    return JBR.getSystemShortcuts();
+  }
+
   private void readSystem() {
     myKeyStroke2SysShortcut.clear();
 
-    if (!SystemInfo.isMac || !SystemInfo.isJetBrainsJvm || !Registry.is("read.system.shortcuts")) {
+    var systemShortcuts = getJbrApi();
+    if (systemShortcuts == null) {
       return;
     }
 
     try {
-      if (ourShkClass == null) {
-        ourShkClass = ReflectionUtil.forName("java.awt.desktop.SystemHotkey");
-      }
-
-      if (ourMethodReadSystemHotkeys == null) {
-        ourMethodReadSystemHotkeys = ReflectionUtil.getMethod(ourShkClass, "readSystemHotkeys");
-      }
-      if (ourMethodReadSystemHotkeys == null) {
-        return;
-      }
-
-      @SuppressWarnings("unchecked")
-      List<AWTKeyStroke> all = (List<AWTKeyStroke>)ourMethodReadSystemHotkeys.invoke(ourShkClass);
-      if (all == null || all.isEmpty()) {
+      com.jetbrains.SystemShortcuts.Shortcut[] all = systemShortcuts.querySystemShortcuts();
+      if (all == null || all.length == 0) {
         return;
       }
 
       StringBuilder debugInfo = new StringBuilder();
-      for (AWTKeyStroke shk : all) {
+      for (com.jetbrains.SystemShortcuts.Shortcut shk : all) {
         if (shk.getModifiers() == 0) {
           //System.out.println("Skip system shortcut [without modifiers]: " + shk);
           continue;
@@ -400,7 +386,7 @@ public final class SystemShortcuts {
           //System.out.println("Skip system shortcut [undefined key]: " + shk);
           continue;
         }
-        if ("Move focus to the next window in application".equals(getDescription(shk))) {
+        if ("FocusNextApplicationWindow".equals(shk.getId()) || "FocusPreviousApplicationWindow".equals(shk.getId())) {
           // Skip this shortcut because it handled in IDE-side
           // see: JBR-1515 Regression test jb/sun/awt/macos/MoveFocusShortcutTest.java fails on macOS  (Now we prevent Mac OS from handling the shortcut. We can enumerate windows on IDE level.)
           continue;
@@ -440,6 +426,24 @@ public final class SystemShortcuts {
     }
   }
 
+  private void setUpSystemShortcutsChangeListener() {
+    var systemShortcuts = getJbrApi();
+    if (systemShortcuts == null) {
+      return;
+    }
+
+    systemShortcuts.setChangeListener(new com.jetbrains.SystemShortcuts.ChangeEventListener() {
+      @Override
+      public void handleSystemShortcutsChangeEvent() {
+        // JBR API guarantees that this is called on the EDT
+        readSystem();
+        updateKeymapConflicts(myKeymap);
+        var messageBus = ApplicationManager.getApplication().getMessageBus();
+        messageBus.syncPublisher(SystemShortcutsListener.CHANGE_TOPIC).processSystemShortcutsChanged();
+      }
+    });
+  }
+
   private void addCustomShortcut(int keycode, int modifiers, @NotNull String description) {
     KeyStroke newStroke = KeyStroke.getKeyStroke(keycode, modifiers);
 
@@ -449,8 +453,32 @@ public final class SystemShortcuts {
       }
     }
 
-    myKeyStroke2SysShortcut.put(newStroke, newStroke);
-    myKeyStrokeCustomDescription.put(newStroke, description);
+    myKeyStroke2SysShortcut.put(newStroke, new com.jetbrains.SystemShortcuts.Shortcut() {
+      @Override
+      public int getKeyCode() {
+        return keycode;
+      }
+
+      @Override
+      public char getKeyChar() {
+        return KeyEvent.CHAR_UNDEFINED;
+      }
+
+      @Override
+      public int getModifiers() {
+        return modifiers;
+      }
+
+      @Override
+      public String getId() {
+        return "CustomShortcut_" + description;
+      }
+
+      @Override
+      public String getDescription() {
+        return description;
+      }
+    });
   }
 
   private static final class MuteConflictsSettings {

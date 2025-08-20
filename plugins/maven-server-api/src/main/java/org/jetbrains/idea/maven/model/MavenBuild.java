@@ -15,13 +15,7 @@
  */
 package org.jetbrains.idea.maven.model;
 
-import org.jetbrains.annotations.NotNull;
-
 import java.io.Serializable;
-import java.util.Collections;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 public class MavenBuild extends MavenBuildBase implements Serializable {
   private String myOutputDirectory;
@@ -42,39 +36,4 @@ public class MavenBuild extends MavenBuildBase implements Serializable {
   public void setTestOutputDirectory(String testOutputDirectory) {
     myTestOutputDirectory = testOutputDirectory;
   }
-
-  public @NotNull List<@NotNull String> getSources() {
-    return getMavenSources().stream().filter(it -> MavenSource.isSource(it))
-      .map(it -> it.getDirectory())
-      .collect(Collectors.toList());
-  }
-
-  public void setSources(@NotNull List<@NotNull String> sources) {
-    getMavenSources().removeIf(it -> MavenSource.isSource(it));
-    sources.forEach(it -> {
-      getMavenSources().add(MavenSource.fromSrc(it, false));
-    });
-  }
-
-  public void addSource(@NotNull String source) {
-    getMavenSources().add(MavenSource.fromSrc(source, false));
-  }
-
-  public @NotNull List<@NotNull String> getTestSources() {
-    return getMavenSources().stream().filter(it -> MavenSource.isTestSource(it))
-      .map(it -> it.getDirectory())
-      .collect(Collectors.toList());
-  }
-
-  public void setTestSources(@NotNull List<@NotNull String> testSources) {
-    getMavenSources().removeIf(it -> MavenSource.isTestSource(it));
-    testSources.forEach(it -> {
-      getMavenSources().add(MavenSource.fromSrc(it, true));
-    });
-  }
-
-  public void addTestSource(@NotNull String source) {
-    getMavenSources().add(MavenSource.fromSrc(source, true));
-  }
-
 }

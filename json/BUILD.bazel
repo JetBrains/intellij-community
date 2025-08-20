@@ -27,7 +27,11 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//platform/editor-ui-api:editor-ui",
     "@lib//:caffeine",
+    "//json/syntax",
+    "//platform/syntax/syntax-psi:psi",
+    "//platform/syntax/syntax-util:util",
   ],
+  exports = ["//json/syntax"],
   runtime_deps = [":json_resources"]
 )
 ### auto-generated section `build intellij.json` end

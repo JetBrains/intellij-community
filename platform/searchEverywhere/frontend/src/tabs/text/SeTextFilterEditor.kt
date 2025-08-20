@@ -4,15 +4,9 @@ package com.intellij.platform.searchEverywhere.frontend.tabs.text
 import com.intellij.find.FindManager
 import com.intellij.find.FindSettings
 import com.intellij.find.impl.JComboboxAction
-import com.intellij.find.impl.TextSearchRightActionAction.CaseSensitiveAction
-import com.intellij.find.impl.TextSearchRightActionAction.RegexpAction
-import com.intellij.find.impl.TextSearchRightActionAction.WordAction
+import com.intellij.find.impl.TextSearchRightActionAction.*
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.ActionUiKind
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.project.Project
@@ -43,7 +37,7 @@ class SeTextFilterEditor(
     }.getAction()
   }
   private val typesFilterAction: JComboboxAction? = project?.let {
-    JComboboxAction(project) { filterValue = filterValue.cloneWithType(it) }.also {
+    JComboboxAction(project, disposable) { filterValue = filterValue.cloneWithType(it) }.also {
       disposable.whenDisposed { it.saveMask() }
     }
   }

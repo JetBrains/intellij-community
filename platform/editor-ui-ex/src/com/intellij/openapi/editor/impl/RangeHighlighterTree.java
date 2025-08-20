@@ -56,15 +56,15 @@ public final class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighter
   }
 
   @Override
-  protected @NotNull RHNode createNewNode(@NotNull RangeHighlighterEx key, int start, int end,
-                                          boolean greedyToLeft, boolean greedyToRight, boolean stickingToRight, int layer) {
+  protected @NotNull RMNode<RangeHighlighterEx> createNewNode(@NotNull RangeHighlighterEx key, int start, int end,
+                                                              boolean greedyToLeft, boolean greedyToRight, boolean stickingToRight, int layer) {
     return new RHNode(this, key, start, end, greedyToLeft, greedyToRight, stickingToRight, layer);
   }
 
   @ApiStatus.Internal
-  public static final class RHNode extends RMNode<RangeHighlighterEx> {
+  protected static final class RHNode extends RMNode<RangeHighlighterEx> {
     private static final byte RENDERED_IN_GUTTER_FLAG = STICK_TO_RIGHT_FLAG << 1;
-    public static final byte IS_PERSISTENT = (byte)(RENDERED_IN_GUTTER_FLAG << 1);
+    protected static final byte IS_PERSISTENT = (byte)(RENDERED_IN_GUTTER_FLAG << 1);
 
     final int myLayer;
 
@@ -107,7 +107,6 @@ public final class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighter
           if (n.isRenderedInGutter() == prevInGutter) break;
           n = (RHNode)n.getParent();
         }
-        return null;
       });
     }
 
@@ -124,7 +123,7 @@ public final class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighter
     }
 
     @Override
-    public void removeIntervalInternal(int i) {
+    protected void removeIntervalInternal(int i) {
       RangeHighlighterEx h = intervals.get(i).get();
       boolean recalculateFlags = h.isRenderedInGutter();
       super.removeIntervalInternal(i);
@@ -135,12 +134,12 @@ public final class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighter
   }
 
   @Override
-  public void fireBeforeRemoved(@NotNull RangeHighlighterEx marker) {
+  protected void fireBeforeRemoved(@NotNull RangeHighlighterEx marker) {
     myMarkupModel.fireBeforeRemoved(marker);
   }
 
   @Override
-  public void fireAfterRemoved(@NotNull RangeHighlighterEx marker) {
+  protected void fireAfterRemoved(@NotNull RangeHighlighterEx marker) {
     myMarkupModel.fireAfterRemoved(marker);
   }
 }

@@ -7,9 +7,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.testFramework.PlatformLiteFixture;
 import com.jetbrains.python.PythonDialectsTokenSetContributor;
 import com.jetbrains.python.PythonTokenSetContributor;
-import junit.framework.AssertionFailedError;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Objects;
@@ -43,15 +41,4 @@ public abstract class PyLexerTestCase extends PlatformLiteFixture {
     assertEquals("Token mismatch. Actual values: " + expectedTokensInCode, List.of(expectedTokens), actualTokens);
   }
 
-  public static void fixme(@NotNull String comment, @NotNull Runnable test) {
-    try {
-      test.run();
-    }
-    catch (AssertionFailedError failedError) {
-      // fix-me tests are supposed to fail
-      return;
-    }
-    // the fix-me test passed -> the bug/feature was fixed!
-    fail("Test (" + comment + ") FIXED!");
-  }
 }

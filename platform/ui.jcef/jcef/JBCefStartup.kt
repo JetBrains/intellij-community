@@ -42,8 +42,8 @@ private class JBCefStartup(coroutineScope: CoroutineScope) {
       //todo[tav] remove when JavaFX + JCEF co-exist is fixed on macOS, or when JavaFX is deprecated
       //This code enables pre initialization of JCEF on macOS if and only if JavaFX Runtime plugin is installed
       val id = "com.intellij.javafx"
-      val javaFX = PluginId.findId(id)
-      if (javaFX == null || serviceAsync<PluginManager>().findEnabledPlugin(javaFX) == null) {
+      val javaFX = PluginId(id)
+      if (serviceAsync<PluginManager>().findEnabledPlugin(javaFX) == null) {
         ApplicationManager.getApplication().messageBus.connect()
           .subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
             override fun pluginLoaded(pluginDescriptor: IdeaPluginDescriptor) {

@@ -14,9 +14,6 @@ jvm_library(
   runtime_deps = [
     ":plugin_resources",
     "//plugins/IntelliLang:langInjection",
-    "//plugins/IntelliLang/java-support:java-langInjection",
-    "//plugins/IntelliLang/xml-support:xml-langInjection",
-    "//plugins/IntelliLang/intellilang-jps-plugin:java-langInjection-jps",
     "//plugins/IntelliLang/backend",
   ]
 )

@@ -10,8 +10,8 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -43,14 +43,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
-final class ShowRunningListAction extends AnAction {
-  ShowRunningListAction() {
-    super(ExecutionBundle.messagePointer("show.running.list.action.name"),
-          ExecutionBundle.messagePointer("show.running.list.action.description"));
-  }
-
+final class ShowRunningListAction extends DumbAwareAction {
   @Override
-  public void actionPerformed(final @NotNull AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getProject();
     if (project == null || project.isDisposed()) return;
     final Ref<Pair<? extends JComponent, String>> stateRef = new Ref<>();
@@ -66,7 +61,7 @@ final class ShowRunningListAction extends AnAction {
           return;
         }
         ArrayList<Project> projects = new ArrayList<>(Arrays.asList(ProjectManager.getInstance().getOpenProjects()));
-        //List should begin with current project
+        //List should begin with the current project
         projects.remove(project);
         projects.add(0, project);
         Pair<? extends JComponent, String> state = getCurrentState(projects);

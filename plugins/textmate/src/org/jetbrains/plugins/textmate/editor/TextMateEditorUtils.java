@@ -32,7 +32,7 @@ public final class TextMateEditorUtils {
       if (file != null) {
         final TextMateLanguageDescriptor languageDescriptor = TextMateService.getInstance().getLanguageDescriptorByFileName(file.getName());
         if (languageDescriptor != null) {
-          return new TextMateScope(languageDescriptor.getScopeName(), null);
+          return new TextMateScope(languageDescriptor.getRootScopeName(), null);
         }
       }
     }

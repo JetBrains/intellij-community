@@ -68,5 +68,7 @@
     <orderEntry type="module" module-name="kotlin.base.indices" />
     <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="module" module-name="kotlin.j2k.shared" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />
+    <orderEntry type="module" module-name="kotlin.ide" />
   </component>
 </module>

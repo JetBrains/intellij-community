@@ -53,11 +53,11 @@ abstract class ProductLoadingStrategy {
     mainClassLoader: ClassLoader,
   ): Deferred<List<DiscoveredPluginsList>>
   
-  abstract fun isOptionalProductModule(moduleName: String): Boolean
+  abstract fun isOptionalProductModule(moduleId: String): Boolean
 
   /**
-   * Returns the path to a JAR or directory containing classes from [moduleName] registered as a content module in the product, or `null`
+   * Returns the path to a JAR or directory containing classes from [moduleId] registered as a content module in the product, or `null`
    * if the mentioned content module isn't present in the distribution.
    */
-  abstract fun findProductContentModuleClassesRoot(moduleName: String, moduleDir: Path): Path?
+  abstract fun findProductContentModuleClassesRoot(moduleId: PluginModuleId, moduleDir: Path): Path?
 }

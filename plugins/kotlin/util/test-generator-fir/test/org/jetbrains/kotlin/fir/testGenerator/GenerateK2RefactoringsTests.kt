@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.idea.k2.refactoring.safeDelete.AbstractK2SafeDeleteT
 import org.jetbrains.kotlin.testGenerator.model.*
 import org.jetbrains.kotlin.testGenerator.model.GroupCategory.*
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT
+import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_OR_KTS_WITHOUT_DOTS
 import org.jetbrains.kotlin.testGenerator.model.Patterns.TEST
 
 internal fun MutableTWorkspace.generateK2RefactoringsTests() {
@@ -151,6 +152,10 @@ internal fun MutableTWorkspace.generateK2RefactoringsTests() {
         testClass<AbstractK2PushDownTest> {
             model("refactoring/pushDown/k2k", pattern = KT, flatten = true, testClassName = "K2K", testMethodName = "doKotlinTest")
             model("refactoring/pushDown/k2j", pattern = KT, flatten = true, testClassName = "K2J", testMethodName = "doKotlinTest")
+        }
+        testClass<AbstractK2ExtractionTest> {
+            model("refactoring/extractSuperclass", pattern = KT_OR_KTS_WITHOUT_DOTS, testMethodName = "doExtractSuperclassTest")
+            model("refactoring/extractInterface", pattern = KT_OR_KTS_WITHOUT_DOTS, testMethodName = "doExtractInterfaceTest")
         }
     }
 }

@@ -12,7 +12,6 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
 import org.jetbrains.intellij.build.BuildOptions
-import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.VmProperties
 import org.jetbrains.intellij.build.closeKtorClient
@@ -40,31 +39,27 @@ private const val PRODUCTS_PROPERTIES_PATH = "build/dev-build.json"
  */
 private const val CUSTOM_PRODUCT_PROPERTIES_PATH = "idea.product.properties.path"
 
-@Deprecated("Prefer `readVmOptions` for more accurate result")
-@Suppress("SpellCheckingInspection")
+/**
+ * Returns system properties which should be set for the IDE process.
+ * This function should be used only if the IDE is started in the same process.
+ * It's better to start the IDE in a separate process and use [readVmOptions] to pass all necessary VM options to it. 
+ */
 fun getIdeSystemProperties(runDir: Path): VmProperties {
   val result = LinkedHashMap<String, String>()
 
   val properties = Properties()
+  //we need this only because PathManager take idea.properties to the sources if 'idea.use.dev.build.server' is set to 'true'
   properties.load(Files.newInputStream(runDir.resolve("bin/idea.properties")))
   for (property in properties) {
     result.put(property.key.toString(), property.value.toString())
   }
 
-  // see BuildContextImpl.getAdditionalJvmArguments - we should somehow deduplicate code
-  val libDir = runDir.resolve("lib")
-  result.putAll(
-    listOf(
-      "jna.boot.library.path" to "$libDir/jna/${JvmArchitecture.currentJvmArch.dirName}",
-      "pty4j.preferred.native.folder" to "$libDir/pty4j",
-      // require bundled JNA dispatcher lib
-      "jna.nosys" to "true",
-      "jna.noclasspath" to "true",
-      "jb.vmOptionsFile" to "${Files.newDirectoryStream(runDir.resolve("bin"), "*.vmoptions").use { it.single() }}",
-      "compose.swing.render.on.graphics" to "true",
-      "io.netty.allocator.type" to "pooled",
-    )
-  )
+  val vmOptions = readVmOptions(runDir)
+  vmOptions.asSequence()
+    .filter { it.startsWith("-D") }
+    .map { it.removePrefix("-D") }
+    .associateByTo(result, { it.substringBefore("=") }, { it.substringAfter("=", "") })
+  
   return VmProperties(result)
 }
 
@@ -103,7 +98,7 @@ suspend fun buildProductInProcess(request: BuildRequest): Path {
         request = request,
         createProductProperties = { compilationContext ->
           val configuration = createConfiguration(homePath = request.projectDir, productionClassOutput = request.productionClassOutput)
-          val productConfiguration = getProductConfiguration(configuration, request.platformPrefix)
+          val productConfiguration = getProductConfiguration(configuration, request.platformPrefix, request.baseIdePlatformPrefixForFrontend)
           createProductProperties(productConfiguration = productConfiguration, compilationContext = compilationContext, request = request)
         },
       )
@@ -135,9 +130,10 @@ internal fun getProductPropertiesPath(homePath: Path): Path {
          ?: homePath.resolve(PRODUCTS_PROPERTIES_PATH)
 }
 
-private fun getProductConfiguration(configuration: Configuration, platformPrefix: String): ProductConfiguration {
-  return configuration.products[platformPrefix]
-         ?: throw ConfigurationException("No production configuration for platform prefix `${platformPrefix}`; please add to `${PRODUCTS_PROPERTIES_PATH}` if needed")
+private fun getProductConfiguration(configuration: Configuration, platformPrefix: String, baseIdePlatformPrefixForFrontend: String?): ProductConfiguration {
+  val key = if (baseIdePlatformPrefixForFrontend != null) "$baseIdePlatformPrefixForFrontend$platformPrefix" else platformPrefix
+  return configuration.products[key]
+         ?: throw ConfigurationException("No production configuration for `$key`; please add to `${PRODUCTS_PROPERTIES_PATH}` if needed")
 }
 
 internal class ConfigurationException(message: String) : RuntimeException(message)

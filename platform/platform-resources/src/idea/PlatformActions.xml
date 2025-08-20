@@ -665,7 +665,6 @@
         </group>
 
         <action id="EditSource" class="com.intellij.ide.actions.EditSourceAction" icon="AllIcons.Actions.EditSource"/>
-        <action id="EditMultipleSources" class="com.intellij.ide.actions.EditMultipleSourcesBackendAction" icon="AllIcons.Actions.EditSource" use-shortcut-of="EditorEnter"/>
         <action id="OpenInRightSplit" class="com.intellij.ide.actions.OpenInRightSplitAction" icon="AllIcons.Actions.SplitVertically"/>
         <action id="ViewSource" class="com.intellij.ide.actions.ViewSourceAction"/>
         <separator/>

@@ -8,6 +8,7 @@ import com.intellij.AbstractBundle
 import com.intellij.DynamicBundle
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IconLayerProvider
+import com.intellij.ide.plugins.PluginModuleId
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
@@ -256,7 +257,7 @@ class CoreIconManager : IconManager, CoreAwareIconManager {
       return plugin.classLoader
     }
     else {
-      return plugin.contentModules.firstOrNull { it.moduleName == moduleId }?.classLoader
+      return plugin.contentModules.firstOrNull { it.moduleId == PluginModuleId(moduleId) }?.classLoader
     }
   }
 

@@ -1,14 +1,17 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
+import com.intellij.ReviseWhenPortedToJDK;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Field;
+import java.nio.ByteOrder;
 
 /**
  * Implementation of {@link VarHandleWrapper} based on {@link Unsafe}, when the {@link java.lang.invoke.VarHandle} is not available in the classpath
  */
+@ReviseWhenPortedToJDK("11") // get rid of unsafe
 @ApiStatus.Internal
 class VarHandleWrapperUnsafe extends VarHandleWrapper implements VarHandleWrapper.VarHandleWrapperFactory {
   private final long OFFSET;
@@ -54,6 +57,31 @@ class VarHandleWrapperUnsafe extends VarHandleWrapper implements VarHandleWrappe
   public boolean compareAndSet(Object thisObject, Object expected, Object actual) {
     assert ASHIFT == -1;
     return Unsafe.compareAndSwapObject(thisObject, OFFSET, expected, actual);
+  }
+
+  @Override
+  public boolean compareAndSetByte(Object thisObject, byte expected, byte actual) {
+    assert ASHIFT == -1;
+    // Unsafe does not have compareAndSwapByte like VarHandle
+
+    long intWordOffset = OFFSET & ~3L;          // 4-byte aligned
+    int byteIndex = (int)(OFFSET & 3L);   // 0..3 within the word
+    int shift = ByteOrder.nativeOrder() == ByteOrder.BIG_ENDIAN ? (3 - byteIndex) * 8 : byteIndex * 8;
+    int mask = 0xFF << shift;
+    int expBits = (expected & 0xFF) << shift;
+    int updBits = (actual & 0xFF) << shift;
+
+    while(true) {
+      int cur = Unsafe.getIntVolatile(thisObject, intWordOffset);
+      if ((cur & mask) != expBits) {
+        return false; // observed byte != expected
+      }
+      int next = (cur & ~mask) | updBits;
+      if (Unsafe.compareAndSwapInt(thisObject, intWordOffset, cur, next)) {
+        return true;
+      }
+      // lost the race on some byte in the same word; retry
+    }
   }
 
   @Override

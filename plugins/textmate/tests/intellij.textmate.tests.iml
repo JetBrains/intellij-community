@@ -5,7 +5,6 @@
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/testData" type="java-test-resource" />
       <sourceFolder url="file://$MODULE_DIR$/tests" isTestSource="true" />
-      <sourceFolder url="file://$MODULE_DIR$/testsMultiplatform" isTestSource="true" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
@@ -30,5 +29,7 @@
     <orderEntry type="module" module-name="intellij.spellchecker" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" scope="TEST" />
     <orderEntry type="module" module-name="intellij.textmate.plugin" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.textmate.backend" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.textmate.core.tests" scope="TEST" />
   </component>
 </module>

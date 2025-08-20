@@ -356,7 +356,7 @@ kt_kotlinc_options = rule(
 )
 
 
-def _to_flags(opts, attr_provider):
+def to_flags(opts, attr_provider):
     """Translate options to flags
 
     Args:
@@ -394,7 +394,7 @@ def kotlinc_options_to_flags(kotlinc_options):
     Returns:
         list of flags to add to the command line.
     """
-    return _to_flags(_KOPTS, kotlinc_options)
+    return to_flags(_KOPTS, kotlinc_options)
 
 
 def kotlinc_options_to_args(kotlinc_options, args):

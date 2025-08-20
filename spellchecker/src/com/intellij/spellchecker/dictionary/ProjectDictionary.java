@@ -64,23 +64,26 @@ public final class ProjectDictionary implements EditableDictionary {
 
   @Override
   public void addToDictionary(String word) {
-    getActiveDictionary().addToDictionary(word);
+    getOrCreateActiveDictionary().addToDictionary(word);
   }
 
   @Override
   public void removeFromDictionary(String word) {
-    getActiveDictionary().removeFromDictionary(word);
+    EditableDictionary dictionary = getActiveDictionary();
+    if (dictionary == null) return;
+    dictionary.removeFromDictionary(word);
   }
 
-  private @NotNull EditableDictionary getActiveDictionary() {
-    return ensureCurrentUserDictionary();
+  private @Nullable EditableDictionary getActiveDictionary() {
+    if (activeName == null ||  dictionaries == null) return null;
+    return getDictionaryByName(activeName);
   }
 
-  private @NotNull EditableDictionary ensureCurrentUserDictionary() {
+  private @NotNull EditableDictionary getOrCreateActiveDictionary() {
     if (activeName == null) {
       activeName = DEFAULT_CURRENT_DICT_NAME;
     }
-    EditableDictionary result = getDictionaryByName(activeName);
+    EditableDictionary result = getActiveDictionary();
     if (result == null) {
       result = new UserDictionary(activeName);
       if (dictionaries == null) {
@@ -95,24 +98,25 @@ public final class ProjectDictionary implements EditableDictionary {
     if (dictionaries == null) {
       return null;
     }
-    EditableDictionary result = null;
+
     for (EditableDictionary dictionary : dictionaries) {
       if (dictionary.getName().equals(name)) {
-        result = dictionary;
-        break;
+        return dictionary;
       }
     }
-    return result;
+    return null;
   }
 
   @Override
   public void replaceAll(@Nullable Collection<String> words) {
-    getActiveDictionary().replaceAll(words);
+    getOrCreateActiveDictionary().replaceAll(words);
   }
 
   @Override
   public void clear() {
-    getActiveDictionary().clear();
+    EditableDictionary dictionary = getActiveDictionary();
+    if (dictionary == null) return;
+    dictionary.clear();
   }
 
 
@@ -130,24 +134,27 @@ public final class ProjectDictionary implements EditableDictionary {
 
   @Override
   public @NotNull Set<String> getEditableWords() {
-    return getActiveDictionary().getWords();
+    EditableDictionary dictionary = getActiveDictionary();
+    if (dictionary == null) return Set.of();
+    return dictionary.getEditableWords();
   }
 
   @Override
   public @NotNull Set<String> getCamelCaseWords() {
-    return getActiveDictionary().getCamelCaseWords();
+    EditableDictionary dictionary = getActiveDictionary();
+    if (dictionary == null) return Set.of();
+    return dictionary.getCamelCaseWords();
   }
 
 
   @Override
   public void addToDictionary(@Nullable Collection<String> words) {
-    getActiveDictionary().addToDictionary(words);
+    getOrCreateActiveDictionary().addToDictionary(words);
   }
 
   public Set<EditableDictionary> getDictionaries() {
     return dictionaries;
   }
-
 
   @Override
   public boolean equals(Object o) {

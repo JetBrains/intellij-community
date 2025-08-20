@@ -1,18 +1,18 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl;
 
-import com.intellij.json.JsonElementTypes;
 import com.intellij.json.JsonFileType;
-import com.intellij.json.JsonLexer;
+import com.intellij.json.syntax.JsonSyntaxElementTypes;
 import com.intellij.json.json5.Json5FileType;
-import com.intellij.json.json5.Json5Lexer;
-import com.intellij.lexer.Lexer;
+import com.intellij.json.syntax.json5.Json5SyntaxLexer;
+import com.intellij.json.syntax.JsonSyntaxLexer;
+import com.intellij.platform.syntax.SyntaxElementType;
+import com.intellij.platform.syntax.element.SyntaxTokenTypes;
+import com.intellij.platform.syntax.lexer.Lexer;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.TokenType;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.hints.FileTypeInputFilterPredicate;
 import com.intellij.util.io.DataExternalizer;
@@ -83,7 +83,9 @@ public final class JsonSchemaFileValuesIndex extends FileBasedIndexExtension<Str
   static @NotNull Map<String, String> readTopLevelProps(@NotNull FileType fileType, @NotNull CharSequence content) {
     if (!(fileType instanceof JsonFileType)) return new HashMap<>();
 
-    Lexer lexer = fileType == Json5FileType.INSTANCE ? new Json5Lexer() : new JsonLexer();
+    Lexer lexer = fileType == Json5FileType.INSTANCE ?
+                  new Json5SyntaxLexer() :
+                  new JsonSyntaxLexer();
     final HashMap<String, String> map = new HashMap<>();
     lexer.start(content);
 
@@ -93,18 +95,18 @@ public final class JsonSchemaFileValuesIndex extends FileBasedIndexExtension<Str
     boolean obsoleteIdFound = false;
     boolean schemaFound = false;
     while (!(idFound && schemaFound && obsoleteIdFound) && lexer.getTokenStart() < lexer.getBufferEnd()) {
-      IElementType token = lexer.getTokenType();
+      SyntaxElementType token = lexer.getTokenType();
       // Nesting level can only change at curly braces.
-      if (token == JsonElementTypes.L_CURLY) {
+      if (token == JsonSyntaxElementTypes.L_CURLY) {
         nesting++;
       }
-      else if (token == JsonElementTypes.R_CURLY) {
+      else if (token == JsonSyntaxElementTypes.R_CURLY) {
         nesting--;
       }
       else if (nesting == 1 &&
-               (token == JsonElementTypes.DOUBLE_QUOTED_STRING
-                || token == JsonElementTypes.SINGLE_QUOTED_STRING
-                || token == JsonElementTypes.IDENTIFIER)) {
+               (token == JsonSyntaxElementTypes.DOUBLE_QUOTED_STRING
+                || token == JsonSyntaxElementTypes.SINGLE_QUOTED_STRING
+                || token == JsonSyntaxElementTypes.IDENTIFIER)) {
         // We are looking for two special properties at the root level.
         switch (lexer.getTokenText()) {
           case "$id", "\"$id\"", "'$id'" -> idFound |= captureValueIfString(lexer, map, JsonCachedValues.ID_CACHE_KEY);
@@ -121,13 +123,13 @@ public final class JsonSchemaFileValuesIndex extends FileBasedIndexExtension<Str
   }
 
   private static boolean captureValueIfString(@NotNull Lexer lexer, @NotNull HashMap<String, String> destMap, @NotNull String key) {
-    IElementType token;
+    SyntaxElementType token;
     lexer.advance();
     token = skipWhitespacesAndGetTokenType(lexer);
-    if (token == JsonElementTypes.COLON) {
+    if (token == JsonSyntaxElementTypes.COLON) {
       lexer.advance();
       token = skipWhitespacesAndGetTokenType(lexer);
-      if (token == JsonElementTypes.DOUBLE_QUOTED_STRING || token == JsonElementTypes.SINGLE_QUOTED_STRING) {
+      if (token == JsonSyntaxElementTypes.DOUBLE_QUOTED_STRING || token == JsonSyntaxElementTypes.SINGLE_QUOTED_STRING) {
         String text = lexer.getTokenText();
         destMap.put(key, text.length() <= 1 ? "" : text.substring(1, text.length() - 1));
         return true;
@@ -136,10 +138,10 @@ public final class JsonSchemaFileValuesIndex extends FileBasedIndexExtension<Str
     return false;
   }
 
-  private static @Nullable IElementType skipWhitespacesAndGetTokenType(@NotNull Lexer lexer) {
-    while (lexer.getTokenType() == TokenType.WHITE_SPACE ||
-           lexer.getTokenType() == JsonElementTypes.LINE_COMMENT ||
-           lexer.getTokenType() == JsonElementTypes.BLOCK_COMMENT) {
+  private static @Nullable SyntaxElementType skipWhitespacesAndGetTokenType(@NotNull Lexer lexer) {
+    while ( lexer.getTokenType() == SyntaxTokenTypes.getWHITE_SPACE() ||
+           lexer.getTokenType() == JsonSyntaxElementTypes.LINE_COMMENT ||
+           lexer.getTokenType() == JsonSyntaxElementTypes.BLOCK_COMMENT) {
       lexer.advance();
     }
     return lexer.getTokenType();

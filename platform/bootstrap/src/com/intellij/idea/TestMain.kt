@@ -2,6 +2,7 @@
 @file:JvmName("TestMain")
 package com.intellij.idea
 
+import com.intellij.ide.plugins.PluginModuleId
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginManagerCore.scheduleDescriptorLoading
 import com.intellij.platform.ide.bootstrap.ZipFilePoolImpl
@@ -40,7 +41,7 @@ fun main(rawArgs: Array<String>) {
     ).await()
   }
 
-  val testModule = pluginSet.findEnabledModule(testEntryPointModule) ?: error("module ${testEntryPointModule} not found in product layout")
+  val testModule = pluginSet.findEnabledModule(PluginModuleId(testEntryPointModule)) ?: error("module ${testEntryPointModule} not found in product layout")
   val testMainClassLoader = if (!testAdditionalModules.isNullOrEmpty()) {
     PathClassLoader(UrlClassLoader.build().files(testAdditionalModules.split(File.pathSeparator).map(Path::of)).parent(testModule.classLoader))
   }

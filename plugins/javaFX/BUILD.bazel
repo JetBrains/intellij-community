@@ -55,7 +55,7 @@ jvm_library(
 jvm_library(
   name = "javaFX_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
   associates = [":javaFX"],
   deps = [
     "//platform/analysis-api:analysis",

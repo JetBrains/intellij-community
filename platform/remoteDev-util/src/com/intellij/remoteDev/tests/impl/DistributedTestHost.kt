@@ -11,11 +11,13 @@ import com.intellij.diagnostic.logs.LogCategory
 import com.intellij.diagnostic.logs.LogLevelConfigurationManager
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.PluginModuleId.Companion.asPluginModuleId
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.rd.util.adviseSuspend
@@ -160,7 +162,7 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
 
           // Create test class
           val testPluginId = System.getProperty("distributed.test.module", TEST_PLUGIN_ID)
-          val testPlugin = PluginManagerCore.getPluginSet().findEnabledModule(testPluginId)
+          val testPlugin = PluginManagerCore.getPluginSet().findEnabledModule(PluginId(testPluginId).asPluginModuleId())
                            ?: error("Test plugin '$testPluginId' is not found")
 
           LOG.info("Test class will be loaded from '${testPlugin.pluginId}' plugin")

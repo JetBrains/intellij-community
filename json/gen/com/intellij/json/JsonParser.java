@@ -10,8 +10,13 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.lang.PsiParser;
 import com.intellij.lang.LightPsiParser;
+import org.jetbrains.annotations.ApiStatus;
 
+/**
+ * This class is marked obsolete due to migration to a new KMP-compatible API 
+ */
 @SuppressWarnings({"SimplifiableIfStatement", "UnusedAssignment"})
+@ApiStatus.Obsolete
 public class JsonParser implements PsiParser, LightPsiParser {
 
   public ASTNode parse(IElementType t, PsiBuilder b) {

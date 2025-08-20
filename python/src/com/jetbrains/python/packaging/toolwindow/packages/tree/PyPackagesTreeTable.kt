@@ -22,6 +22,9 @@ import com.jetbrains.python.sdk.isReadOnly
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.Point
+import java.awt.event.FocusAdapter
+import java.awt.event.FocusEvent
+import java.awt.event.FocusListener
 import java.awt.event.MouseEvent
 import javax.swing.JScrollPane
 import javax.swing.JTable
@@ -77,6 +80,10 @@ class PyPackagesTreeTable(
 
   private fun initializeTreeTableProperties() {
     splitter.setResizeEnabled(false)
+    val firstComponent = splitter.firstComponent as JScrollPane
+    firstComponent.apply {
+      horizontalScrollBarPolicy = HORIZONTAL_SCROLLBAR_NEVER
+    }
     val secondComponent = splitter.secondComponent as JScrollPane
     secondComponent.apply {
       horizontalScrollBarPolicy = HORIZONTAL_SCROLLBAR_NEVER
@@ -103,20 +110,52 @@ class PyPackagesTreeTable(
   }
 
   private fun setupTreeEventListeners() {
+    registerTreeCoreListeners()
+
+    val sharedFocusListener = createSharedFocusListener()
+    tree.addFocusListener(sharedFocusListener)
+    table.addFocusListener(sharedFocusListener)
+  }
+
+  private fun registerTreeCoreListeners() {
     tree.addTreeSelectionListener(createPackageSelectionListener())
     tree.addTreeExpansionListener(createTreeExpansionListener())
     installPackageDoubleClickHandler()
   }
 
-  private fun createPackageSelectionListener() = TreeSelectionListener { event ->
-    val path = event.path ?: return@TreeSelectionListener
-    val node = path.lastPathComponent
-    when (val pkg = treeTableModel.getValueAt(node, 0)) {
-      is DisplayablePackage -> controller.packageSelected(pkg)
-      else -> controller.setEmpty()
+  private fun handlePackageSelection(pkg: DisplayablePackage) {
+    when (pkg) {
+      is InstalledPackage -> controller.packageSelected(pkg)
+      is InstallablePackage -> controller.packageSelected(pkg)
+      is RequirementPackage -> controller.packageSelected(pkg)
+      is ErrorNode -> controller.setEmpty()
+      is ExpandResultNode -> controller.setEmpty()
     }
   }
 
+  private fun hasActiveFocus(): Boolean = tree.hasFocus() || table.hasFocus()
+
+  private fun createSharedFocusListener(): FocusListener = object : FocusAdapter() {
+    override fun focusGained(e: FocusEvent) {
+      val pkg = selectedItem() ?: return
+      handlePackageSelection(pkg)
+    }
+
+    override fun focusLost(e: FocusEvent) {
+      controller.setEmpty()
+    }
+  }
+
+  private fun createPackageSelectionListener() = TreeSelectionListener { event ->
+    val path = event.path ?: return@TreeSelectionListener
+    val node = path.lastPathComponent
+
+    val hasActiveFocus = hasActiveFocus()
+    if (!hasActiveFocus) return@TreeSelectionListener
+
+    val pkg = treeTableModel.getValueAt(node, 0) as? DisplayablePackage ?: return@TreeSelectionListener
+    handlePackageSelection(pkg)
+  }
   private fun createTreeExpansionListener() = object : TreeExpansionListener {
     override fun treeExpanded(event: TreeExpansionEvent) {
       treeListener?.onTreeStructureChanged()
@@ -175,7 +214,7 @@ class PyPackagesTreeTable(
 
     private fun shouldShowPopupForNode(node: DisplayablePackage): Boolean = when (node) {
       is InstallablePackage, is InstalledPackage -> true
-      is RequirementPackage, is ExpandResultNode -> false
+      is RequirementPackage, is ExpandResultNode, is ErrorNode -> false
     }
 
     private fun createAndShowPopupMenu(comp: Component?, x: Int, y: Int, actionGroup: ActionGroup) {

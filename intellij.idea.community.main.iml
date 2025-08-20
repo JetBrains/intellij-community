@@ -144,12 +144,13 @@
     <orderEntry type="module" module-name="intellij.editorconfig.plugin.main" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.workspace.storage.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.workspace.jps.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.sh" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.sh.plugin.main" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.terminal.sh" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.gradle.java.maven" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.markdown" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.markdown.plugin.main" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.textmate.plugin" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.textmate.backend" scope="TEST" />
     <orderEntry type="module" module-name="intellij.webp" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.space.java.jps" scope="TEST" />
     <orderEntry type="module" module-name="intellij.emojipicker" scope="RUNTIME" />

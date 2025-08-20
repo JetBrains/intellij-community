@@ -50,7 +50,7 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//xml/tests:tests_test_lib",
-    "//plugins/IntelliLang/xml-support:xml-langInjection",
+    "//xml/langInjection",
     "//platform/platform-tests:tests_test_lib",
     "@lib//:jsoup",
     "@lib//:jcef",

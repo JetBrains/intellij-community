@@ -85,7 +85,7 @@ jvm_library(
     "//plugins/groovy:groovy_test_lib",
     "//platform/lang-impl:lang-tests_test_lib",
     "//platform/platform-impl/internal",
-    "@lib//:mockito",
+    "//libraries/mockito",
     "@lib//:assert_j",
     "//xml/xml-analysis-impl:analysis-impl",
     "//xml/xml-psi-api:psi",
@@ -154,12 +154,13 @@ jvm_library(
     "//platform/lang-impl",
     "//xml/impl",
     "//platform/syntax/syntax-scripts:scripts",
+    "@lib//:byte-buddy",
   ],
   runtime_deps = [
     ":tests_test_resources",
     "//community-resources:customization",
-    "//plugins/IntelliLang/java-support:java-langInjection",
-    "//plugins/IntelliLang/xml-support:xml-langInjection",
+    "//java/langInjection",
+    "//xml/langInjection",
   ]
 )
 ### auto-generated section `build intellij.java.tests` end

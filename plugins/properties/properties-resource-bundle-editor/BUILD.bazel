@@ -42,7 +42,7 @@ jvm_library(
 jvm_library(
   name = "resource-bundle-editor_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   associates = [":resource-bundle-editor"],
   deps = [
     "//platform/analysis-api:analysis",

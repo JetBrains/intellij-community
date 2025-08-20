@@ -55,7 +55,7 @@ class FrontendScopeChooser(private val project: Project, private val preselected
     comboBox.whenItemSelected {
       val scopeId = getSelectedScopeId() ?: return@whenItemSelected
       if (it.needsUserInputForScope()) {
-        FindAndReplaceExecutor.getInstance().performScopeSelection(scopeId, project)
+        FindAndReplaceExecutor.getInstance().performScopeSelection(scopeId, modelId, project)
       }
     }
 

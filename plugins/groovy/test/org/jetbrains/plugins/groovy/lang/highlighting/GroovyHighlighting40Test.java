@@ -31,6 +31,22 @@ public class GroovyHighlighting40Test extends LightGroovyTestCase implements Hig
     highlightingTest("for (var i : []) {}");
   }
 
+  public void testTupleDeclaration() {
+    highlightingTest(
+      """
+      void f() {
+          def x = 0
+          def y = 1
+          (x, y) = [-1, 0]
+          var (Integer a, b) = [1, 2]
+          def (Integer c, d) = [3, 4]
+  
+          <error descr="Tuple declaration should end with 'def' or 'var' modifier">final</error> (Integer e, f) = [5, 6]
+      }
+      """
+    );
+  }
+
   @Override
   public final @NotNull LightProjectDescriptor getProjectDescriptor() {
     return GroovyProjectDescriptors.GROOVY_4_0;

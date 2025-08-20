@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.eel
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.impl.eel.EelFileWatcher.Companion.LOG
@@ -19,6 +20,7 @@ import com.intellij.platform.eel.provider.upgradeBlocking
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.concurrent.Volatile
@@ -30,6 +32,7 @@ class EelFileWatcher : PluggableFileWatcher() {
   private val myWatchedEels = ConcurrentHashMap<EelDescriptor, WatchedEel>()
   private val mySettingRoots = AtomicInteger(0)
   private val watchedOptions = setOf(FileChangeType.CHANGED, FileChangeType.CREATED, FileChangeType.DELETED)
+  private var isEnabled: Boolean = false
 
   @Volatile
   private var myShuttingDown = false
@@ -40,6 +43,9 @@ class EelFileWatcher : PluggableFileWatcher() {
 
   override fun initialize(notificationSink: FileWatcherNotificationSink) {
     myNotificationSink = notificationSink
+    isEnabled = ApplicationManager.getApplication().let { app->
+      !(app.isCommandLine || app.isUnitTestMode)
+    }
   }
 
   override fun dispose() {
@@ -47,7 +53,7 @@ class EelFileWatcher : PluggableFileWatcher() {
     shutdownWatcherJobs()
   }
 
-  override fun isOperational(): Boolean = Registry.`is`("use.eel.file.watcher", false)
+  override fun isOperational(): Boolean = Registry.`is`("use.eel.file.watcher", false) && isEnabled
 
   override fun isSettingRoots(): Boolean = isOperational() && mySettingRoots.get() > 0
 
@@ -161,9 +167,16 @@ class EelFileWatcher : PluggableFileWatcher() {
     myWatchedEels.clear()
   }
 
-  override fun startup() {}
+  @TestOnly
+  override fun startup() {
+    isEnabled = true
+  }
 
-  override fun shutdown(): Unit = shutdownWatcherJobs()
+  @TestOnly
+  override fun shutdown() {
+    isEnabled = false
+    shutdownWatcherJobs()
+  }
 }
 
 private class WatchedEel(val data: EelData, private val cancelCallback: () -> Unit) {

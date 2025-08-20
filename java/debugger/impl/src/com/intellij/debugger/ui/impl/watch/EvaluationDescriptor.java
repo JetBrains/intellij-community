@@ -97,8 +97,15 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl {
         throw EvaluateExceptionUtil.NULL_STACK_FRAME;
       }
 
-      Value value = XEvaluationOrigin.computeWithOrigin(thisEvaluationContext, XEvaluationOrigin.RENDERER,
-                                                        () -> evaluator.evaluate(thisEvaluationContext));
+      XEvaluationOrigin descriptorOrigin = XEvaluationOrigin.getOrigin(this);
+      Value value;
+      if (descriptorOrigin != XEvaluationOrigin.UNSPECIFIED) {
+        value = XEvaluationOrigin.computeWithOrigin(thisEvaluationContext, descriptorOrigin,
+                                                          () -> evaluator.evaluate(thisEvaluationContext));
+      }
+      else {
+        value = evaluator.evaluate(thisEvaluationContext);
+      }
       thisEvaluationContext.keep(value);
 
       myModifier = evaluator.getModifier();

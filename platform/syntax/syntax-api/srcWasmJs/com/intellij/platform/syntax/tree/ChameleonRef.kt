@@ -22,11 +22,11 @@ private class ChameleonRefImpl(private var ref: AstMarkersChameleon? = null) : C
  */
 @Suppress("unused")
 @Actual("ChameleonRef")
-internal fun ChameleonRefWasmJs(): ChameleonRef = ChameleonRefImpl()
+internal fun newChameleonRefWasmJs(): ChameleonRef = ChameleonRefImpl()
 
 /**
  * Wasm implementation of [ChameleonRef].
  */
 @Suppress("unused")
 @Actual("ChameleonRef")
-internal fun ChameleonRefWasmJs(chameleon: AstMarkersChameleon): ChameleonRef = ChameleonRefImpl(chameleon)
+internal fun newChameleonRefWasmJs(chameleon: AstMarkersChameleon): ChameleonRef = ChameleonRefImpl(chameleon)

@@ -144,17 +144,17 @@ class ClassLoaderConfigurator(
     }
     else {
       val mimicJarUrlConnection = module.vendor == PluginManagerCore.VENDOR_JETBRAINS
-                                  && (module.moduleName == "intellij.rider.test.cases"
-                                      || module.moduleName == "intellij.rider.plugins.efCore.test.cases"
-                                      || module.moduleName == "intellij.rider.plugins.for.tea.test.cases"
-                                      || module.moduleName == "intellij.rider.plugins.fsharp.test.cases"
-                                      || module.moduleName == "intellij.rider.plugins.godot.test.cases"
-                                      || module.moduleName == "intellij.rider.plugins.unity.test.cases"
-                                      || module.moduleName == "intellij.rider.plugins.unreal.link.test.cases"
-                                      || module.moduleName == "intellij.rider.test.cases.qodana"
-                                      || module.moduleName == "intellij.rider.test.cases.supplementary"
-                                      || module.moduleName == "intellij.rider.test.cases.consoles"
-                                      || module.moduleName == "intellij.rider.test.cases.rdct")
+                                  && (module.moduleId.id == "intellij.rider.test.cases"
+                                      || module.moduleId.id == "intellij.rider.plugins.efCore.test.cases"
+                                      || module.moduleId.id == "intellij.rider.plugins.for.tea.test.cases"
+                                      || module.moduleId.id == "intellij.rider.plugins.fsharp.test.cases"
+                                      || module.moduleId.id == "intellij.rider.plugins.godot.test.cases"
+                                      || module.moduleId.id == "intellij.rider.plugins.unity.test.cases"
+                                      || module.moduleId.id == "intellij.rider.plugins.unreal.link.test.cases"
+                                      || module.moduleId.id == "intellij.rider.test.cases.qodana"
+                                      || module.moduleId.id == "intellij.rider.test.cases.supplementary"
+                                      || module.moduleId.id == "intellij.rider.test.cases.consoles"
+                                      || module.moduleId.id == "intellij.rider.test.cases.rdct")
       module.pluginClassLoader = PluginClassLoader(
         classPath = ClassPath(customJarFiles, DEFAULT_CLASSLOADER_CONFIGURATION, resourceFileFactory, mimicJarUrlConnection),
         parents = dependencies,
@@ -386,10 +386,10 @@ fun createPluginDependencyAndContentBasedScope(descriptor: PluginMainDescriptor,
         return null
       }
 
-      for ((prefix, moduleName) in contentPackagePrefixes) {
+      for ((prefix, moduleId) in contentPackagePrefixes) {
         if (name.startsWith(prefix)) {
           return "Class $name must not be requested from main classloader of $pluginId plugin. Matches content module " +
-                 "(packagePrefix=$prefix, moduleName=$moduleName)."
+                 "(packagePrefix=$prefix, moduleId=$moduleId)."
         }
       }
 
@@ -404,13 +404,13 @@ fun createPluginDependencyAndContentBasedScope(descriptor: PluginMainDescriptor,
   }
 }
 
-private fun getPackagePrefixesLoadedBySeparateClassLoaders(descriptor: PluginMainDescriptor): List<Pair<String, String?>> {
+private fun getPackagePrefixesLoadedBySeparateClassLoaders(descriptor: PluginMainDescriptor): List<Pair<String, PluginModuleId?>> {
   val modules = descriptor.contentModules
   if (modules.isEmpty()) {
     return emptyList()
   }
 
-  val result = ArrayList<Pair<String, String?>>(modules.size)
+  val result = ArrayList<Pair<String, PluginModuleId?>>(modules.size)
   for (module in modules) {
     if (!module.jarFiles.isNullOrEmpty() || module.moduleLoadingRule == ModuleLoadingRule.EMBEDDED) {
       continue
@@ -426,7 +426,7 @@ private fun getPackagePrefixesLoadedBySeparateClassLoaders(descriptor: PluginMai
         throw PluginException("Package is not specified (module=$module)", module.pluginId)
       }
     }
-    result.add("$packagePrefix." to module.moduleName)
+    result.add("$packagePrefix." to module.moduleId)
   }
   return result
 }
@@ -439,9 +439,9 @@ private fun getDependencyPackagePrefixes(descriptor: PluginMainDescriptor, plugi
 
   val result = ArrayList<String>(dependencies.size)
   for (item in dependencies) {
-    val packagePrefix = (pluginSet.findEnabledModule(item.name) ?: continue).packagePrefix
+    val packagePrefix = (pluginSet.findEnabledModule(item) ?: continue).packagePrefix
     // intellij.platform.commercial.verifier is injected
-    if (packagePrefix != null && item.name != "intellij.platform.commercial.verifier") {
+    if (packagePrefix != null && item.id != "intellij.platform.commercial.verifier") {
       result.add("$packagePrefix.")
     }
   }

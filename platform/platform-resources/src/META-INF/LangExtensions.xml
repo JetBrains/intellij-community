@@ -90,7 +90,7 @@
                  description="Check if files found during scanning are still in the project during indexing, and skip excluded files."/>
     <registryKey defaultValue="true" key="vfs.try.eel.for.content.loading"
                  description="Use specialized Eel API for working with remote filesystems. This may result in a significant performance improvement and better CPU utilization"/>
-    <registryKey defaultValue="false" description="Use EEL for file watching." key="use.eel.file.watcher" restartRequired="true"/>
+    <registryKey defaultValue="true" description="Use EEL for file watching." key="use.eel.file.watcher" restartRequired="true"/>
     <registryKey defaultValue="true" key="cache.nulls.for.pushed.properties" restartRequired="true"
                  description="Cache null values for pushed properties to avoid reading nulls from disk every time."/>
     <registryKey defaultValue="true" key="use.workspace.file.index.to.generate.iterators" restartRequired="true"
@@ -114,10 +114,13 @@
     <registryKey defaultValue="250"
                  description="Minimum code style cache evictions per second to trigger automatic recovery."
                  key="code.style.cache.high.eviction.rate.automatic.recovery.threshold.frequency" />
-    <registryKey defaultValue="100"
-                 description="Maximum size of the code style settings cache."
+    <registryKey defaultValue="250"
+                 description="Maximum size of the code style settings cache (>= 1)."
                  key="code.style.cache.maximum.size"
                  restartRequired="true" />
+    <registryKey defaultValue="true"
+                 description="Include code style settings in change events if the reason is computation of the settings has just finished."
+                 key="code.style.cache.change.events.include.settings" />"
     <!-- endregion -->
 
     <projectService serviceInterface="com.intellij.util.indexing.IndexableFilesIndex"

@@ -21,9 +21,11 @@ internal object JavaTestRunnerForMaven {
 
     val params = MavenRunnerParameters(/* isPomExecution = */ true,
                                        /* workingDirPath = */ projectDir.path,
-                                       /* pomFileName = */ "",
+                                       /* pomFileName = */ null,
                                        /* goals = */ listOf("test"),
                                        /* explicitEnabledProfiles = */ emptyList<String>())
+
+    params.cmdOptions = "-am"
 
     val resolvedModuleTests = resolveMavenProjects(project, moduleTests)
 
@@ -37,7 +39,6 @@ internal object JavaTestRunnerForMaven {
       }
 
     val runnerSettings = MavenRunnerSettings().also {
-      it.setVmOptions("-am")
       it.mavenProperties = mapOf(
         "surefire.reportFormat" to "plain",
         "surefire.useFile" to "false",

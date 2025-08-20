@@ -278,12 +278,16 @@ object FunctionInsertionHelper {
         }
 
 
-        symbol.receiverParameter?.returnType?.let { collectPotentiallyInferredTypes(it, onlyCollectReturnTypeOfFunctionalType = true) }
-        symbol.valueParameters.forEach { collectPotentiallyInferredTypes(it.returnType, onlyCollectReturnTypeOfFunctionalType = true) }
+        symbol.receiverParameter?.returnType?.let {
+            collectPotentiallyInferredTypes(it.upperBoundIfFlexible(), onlyCollectReturnTypeOfFunctionalType = true)
+        }
+        symbol.valueParameters.forEach {
+            collectPotentiallyInferredTypes(it.returnType.upperBoundIfFlexible(), onlyCollectReturnTypeOfFunctionalType = true)
+        }
 
         // check that there is an expected type and the return value of the function can potentially match it
         if (expectedType != null && symbol.returnType isPossiblySubTypeOf expectedType) {
-            collectPotentiallyInferredTypes(symbol.returnType, onlyCollectReturnTypeOfFunctionalType = false)
+            collectPotentiallyInferredTypes(symbol.returnType.upperBoundIfFlexible(), onlyCollectReturnTypeOfFunctionalType = false)
         }
 
         return potentiallyInferredTypeParameters.containsAll(symbol.typeParameters)

@@ -46,6 +46,11 @@ public interface MarkupModelEx extends MarkupModel {
 
   void setRangeHighlighterAttributes(@NotNull RangeHighlighter highlighter, @NotNull TextAttributes textAttributes);
 
+  /**
+   * process all highlighters intersecting with [start, end) interval by {@code processor}.
+   * You must not do any changes to the markup model in the processor.
+   * @return true if no invocations of the {@code processor} returned false
+   */
   boolean processRangeHighlightersOverlappingWith(int start, int end, @NotNull Processor<? super RangeHighlighterEx> processor);
   boolean processRangeHighlightersOutside(int start, int end, @NotNull Processor<? super RangeHighlighterEx> processor);
 

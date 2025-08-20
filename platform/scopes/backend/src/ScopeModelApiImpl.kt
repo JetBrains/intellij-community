@@ -8,7 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.packageDependencies.DependencyValidationManager
 import com.intellij.platform.project.ProjectId
-import com.intellij.platform.project.findProjectOrNullWithLogError
+import com.intellij.platform.project.findProjectOrNullWithLogWarn
 import com.intellij.platform.rpc.backend.RemoteApiProvider
 import com.intellij.platform.scopes.ScopeModelApi
 import com.intellij.platform.scopes.SearchScopeData
@@ -36,7 +36,7 @@ internal class ScopesModelApiImpl : ScopeModelApi {
     }
 
   override suspend fun createModelAndSubscribe(projectId: ProjectId, modelId: String, filterConditionType: ScopesFilterConditionType): Flow<SearchScopesInfo>? {
-    val project = projectId.findProjectOrNullWithLogError(LOG) ?: return null
+    val project = projectId.findProjectOrNullWithLogWarn(LOG) ?: return null
     val model = project.getService(ScopeService::class.java)
       .createModel(EnumSet.of(
         ScopeOption.FROM_SELECTION,
@@ -56,7 +56,7 @@ internal class ScopesModelApiImpl : ScopeModelApi {
   }
 
   override suspend fun openEditScopesDialog(projectId: ProjectId, selectedScopeId: String?): String? {
-    val project = projectId.findProjectOrNullWithLogError(LOG) ?: return null
+    val project = projectId.findProjectOrNullWithLogWarn(LOG) ?: return null
     return withContext(Dispatchers.EDT) {
       val dialog = EditScopesDialog.showDialog(project, selectedScopeName)
       if (dialog.isOK) {
@@ -101,12 +101,8 @@ internal class ScopesModelApiImpl : ScopeModelApi {
     return flow
   }
 
-  override suspend fun performScopeSelection(scopeId: String, projectId: ProjectId): Boolean {
-    val project = projectId.findProjectOrNullWithLogError(LOG)
-    if (project == null) {
-      LOG.warn("Cannot find project for id $projectId")
-      return false
-    }
+  override suspend fun performScopeSelection(scopeId: String, modelId: String, projectId: ProjectId): Boolean {
+    val project = projectId.findProjectOrNullWithLogWarn(LOG) ?: return false
     return ScopesStateService.getInstance(project).getScopeById(scopeId) != null
   }
 }

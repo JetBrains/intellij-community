@@ -3,7 +3,6 @@ package com.jetbrains.python.sdk.add.v2.hatch
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
@@ -11,9 +10,9 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.python.hatch.HatchConfiguration
 import com.intellij.python.hatch.HatchVirtualEnvironment
 import com.intellij.python.hatch.getHatchService
-import com.intellij.python.hatch.resolveHatchWorkingDirectory
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.util.text.nullize
+import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyResult
@@ -81,21 +80,20 @@ internal class HatchNewEnvironmentCreator(
     return Result.success(Unit)
   }
 
-  override suspend fun setupEnvSdk(project: Project, module: Module?, baseSdks: List<Sdk>, projectPath: String, homePath: String?, installPackages: Boolean): PyResult<Sdk> {
+  override suspend fun setupEnvSdk(moduleBasePath: Path, baseSdks: List<Sdk>, basePythonBinaryPath: PythonBinary?, installPackages: Boolean): PyResult<Sdk> {
     val hatchEnv = hatchEnvironmentProperty.get()?.hatchEnvironment
                    ?: return Result.failure(HatchUIError.HatchEnvironmentIsNotSelected())
 
     val hatchExecutablePath = executable.get().toPath().getOr { return it }
-    val hatchWorkingDirectory = resolveHatchWorkingDirectory(project, module).getOr { return it }
-    val hatchService = hatchWorkingDirectory.getHatchService(hatchExecutablePath = hatchExecutablePath).getOr { return it }
+    val hatchService = moduleBasePath.getHatchService(hatchExecutablePath = hatchExecutablePath).getOr { return it }
 
     val virtualEnvironment = hatchService.createVirtualEnvironment(
-      basePythonBinaryPath = homePath?.let { Path.of(it) },
+      basePythonBinaryPath = basePythonBinaryPath,
       envName = hatchEnv.name
     ).getOr { return it }
 
     val hatchVirtualEnv = HatchVirtualEnvironment(hatchEnv, virtualEnvironment)
-    val createdSdk = hatchVirtualEnv.createSdk(hatchService.getWorkingDirectoryPath(), module).onSuccess {
+    val createdSdk = hatchVirtualEnv.createSdk(hatchService.getWorkingDirectoryPath()).onSuccess {
       HatchConfiguration.persistPathForTarget(hatchExecutablePath = hatchExecutablePath)
     }
     return createdSdk

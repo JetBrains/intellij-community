@@ -35,12 +35,17 @@ object JavaSyntaxDefinition : LanguageSyntaxDefinition {
   @JvmStatic
   fun createParser(languageLevel: LanguageLevel): JavaParser = JavaParser(languageLevel)
 
+  @JvmStatic
+  fun parse(languageLevel: LanguageLevel, builder: SyntaxTreeBuilder) {
+    val root = builder.mark()
+    createParser(languageLevel).fileParser.parse(builder)
+    root.done(JavaSyntaxElementType.JAVA_FILE)
+  }
+
   override fun createLexer(): Lexer = JavaLexer(LanguageLevel.HIGHEST)
 
   override fun parse(builder: SyntaxTreeBuilder) {
-    val root = builder.mark()
-    createParser(LanguageLevel.HIGHEST).fileParser.parse(builder)
-    root.done(JavaSyntaxElementType.JAVA_FILE)
+    parse(LanguageLevel.HIGHEST, builder)
   }
 
   override val comments: SyntaxElementTypeSet = syntaxElementTypeSetOf(

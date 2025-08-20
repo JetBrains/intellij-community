@@ -1,12 +1,12 @@
 <idea-plugin>
   <dependencies>
-    <module name="intellij.spellchecker"/>
     <module name="intellij.textmate.core"/>
     <module name="intellij.textmate.joni"/>
   </dependencies>
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.textmate.bundleProvider"
-                    interface="org.jetbrains.plugins.textmate.api.TextMateBundleProvider"/>
+                    interface="org.jetbrains.plugins.textmate.api.TextMateBundleProvider"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -26,27 +26,25 @@
     <editorHighlighterProvider filetype="textmate" implementationClass="org.jetbrains.plugins.textmate.language.syntax.highlighting.TextMateEditorHighlighterProvider"/>
     <lang.syntaxHighlighterFactory language="textmate"
                                    implementationClass="org.jetbrains.plugins.textmate.language.syntax.highlighting.TextMateSyntaxHighlighterFactory"/>
-    <applicationConfigurable groupId="editor"
-                             bundle="messages.IdeBundle"
-                             key="configurable.TextMateConfigurableProvider.display.name"
-                             id="reference.settingsdialog.textmate.bundles" provider="org.jetbrains.plugins.textmate.configuration.TextMateConfigurableProvider"/>
     <lang.parserDefinition language="textmate" implementationClass="org.jetbrains.plugins.textmate.psi.TextMateParserDefinition"/>
     <braceMatcher filetype="textmate" implementationClass="org.jetbrains.plugins.textmate.editor.TextMateBraceMatcher"/>
     <typedHandler implementation="org.jetbrains.plugins.textmate.editor.TextMateTypedHandler"/>
     <backspaceHandlerDelegate implementation="org.jetbrains.plugins.textmate.editor.TextMateBackspaceHandler"/>
     <multiLangCommenter implementation="org.jetbrains.plugins.textmate.editor.TextMateCommentProvider"/>
     <lang.commenter language="textmate" implementationClass="org.jetbrains.plugins.textmate.editor.TextMateCommentProvider"/>
-    <customLiveTemplate implementation="org.jetbrains.plugins.textmate.editor.TextMateCustomLiveTemplate"/>
-    <todoIndexer filetype="textmate" implementationClass="com.intellij.psi.impl.cache.impl.todo.PlainTextTodoIndexer"/>
-    <idIndexer filetype="textmate" implementationClass="com.intellij.psi.impl.cache.impl.id.PlainTextIdIndexer"/>
-    <indexPatternBuilder implementation="org.jetbrains.plugins.textmate.TextMatePatternBuilder"/>
-    <spellchecker.support language="textmate" implementationClass="org.jetbrains.plugins.textmate.spellchecker.TextMateSpellingStrategy"/>
-    <completion.contributor id="TextMateCompletionContributor" language="textmate" implementationClass="org.jetbrains.plugins.textmate.editor.TextMateCompletionContributor" order="last"/>
     <notificationGroup id="TextMate Bundles" displayType="BALLOON" bundle="messages.TextMateBundle" key="notification.group.textmate.bundles"/>
     <fileIconProvider implementation="org.jetbrains.plugins.textmate.TextMateBackedFileIconProvider" order="last"/>
     <lineIndentProvider implementation="org.jetbrains.plugins.textmate.editor.TextMateLineIndentProvider" />
     <!--<lang.formatter language="textmate" implementationClass="org.jetbrains.plugins.textmate.editor.TextMateFormattingModelBuilder"/>-->
+
     <applicationService serviceImplementation="org.jetbrains.plugins.textmate.configuration.TextMateBuiltinBundlesSettings" />
+    <!--<applicationSettings service="org.jetbrains.plugins.textmate.configuration.TextMateBuiltinBundlesSettings"/>-->
+    <!--<rdct.remoteSettingProvider-->
+    <!--  implementation="org.jetbrains.plugins.textmate.configuration.TextMateBuiltinBundlesSettingsRemoteInfoProvider"/>-->
+
     <applicationService serviceImplementation="org.jetbrains.plugins.textmate.configuration.TextMateUserBundlesSettings" />
+    <!--<applicationSettings service="org.jetbrains.plugins.textmate.configuration.TextMateUserBundlesSettings"/>-->
+    <!--<rdct.remoteSettingProvider-->
+    <!--  implementation="org.jetbrains.plugins.textmate.configuration.TextMateUserBundlesSettingsRemoteInfoProvider"/>-->
   </extensions>
 </idea-plugin>

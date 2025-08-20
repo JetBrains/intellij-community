@@ -493,9 +493,6 @@
       <categoryKey>INTN.category.python</categoryKey>
     </intentionAction>
 
-    <registryKey defaultValue="false"
-                 description="Enable experimental better handling of recursive cases in type inference"
-                 key="python.use.better.control.flow.type.inference"/>
     <registryKey defaultValue="true"
                  description="Enable pyi stubs distributed with numpy (see https://github.com/numpy/numpy/issues/18565)"
                  key="enable.numpy.pyi.stubs"/>

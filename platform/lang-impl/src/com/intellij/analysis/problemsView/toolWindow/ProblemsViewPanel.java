@@ -45,19 +45,20 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.util.Arrays;
 import java.util.Comparator;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static com.intellij.openapi.application.ModalityState.stateForComponent;
-import static com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl.OPEN_IN_PREVIEW_TAB;
+import static com.intellij.openapi.fileEditor.FileEditorManagerKeys.OPEN_IN_PREVIEW_TAB;
 import static com.intellij.ui.ColorUtil.toHtmlColor;
 import static com.intellij.ui.ScrollPaneFactory.createScrollPane;
 import static com.intellij.ui.scale.JBUIScale.scale;
 import static com.intellij.util.ArrayUtil.getFirstElement;
 import static com.intellij.util.OpenSourceUtil.navigate;
-import static javax.swing.tree.TreeSelectionModel.SINGLE_TREE_SELECTION;
 
 public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, UiCompatibleDataProvider, ProblemsViewTab {
   private final ClientProjectSession mySession;
@@ -205,7 +206,6 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, U
     myTreeModel.setComparator(createComparator());
     myTree = new Tree(new AsyncTreeModel(myTreeModel, this));
     myTree.setRootVisible(false);
-    myTree.getSelectionModel().setSelectionMode(SINGLE_TREE_SELECTION);
     myTree.addTreeSelectionListener(new RestoreSelectionListener());
     myTree.addTreeSelectionListener(event -> mySelectionAlarm.cancelAndRequest());
     TreeUIHelper.getInstance().installTreeSpeedSearch(myTree);
@@ -290,6 +290,7 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, U
     VirtualFile file = node.getVirtualFile();
 
     sink.set(PlatformCoreDataKeys.SELECTED_ITEM, node);
+    sink.set(PlatformCoreDataKeys.SELECTED_ITEMS, getSelectedNodes());
     sink.set(CommonDataKeys.VIRTUAL_FILE, node.getVirtualFile());
     sink.set(CommonDataKeys.VIRTUAL_FILE_ARRAY, file == null ? null : new VirtualFile[]{file});
 
@@ -429,6 +430,15 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, U
 
   private @Nullable Node getSelectedNode() {
     return getNode(getTree().getSelectionPath());
+  }
+
+  private @NotNull Node @NotNull [] getSelectedNodes() {
+    TreePath[] selectionPaths = getTree().getSelectionPaths();
+    if (selectionPaths == null) return new Node[0];
+    return Arrays.stream(selectionPaths)
+      .map(ProblemsViewPanel::getNode)
+      .filter(Objects::nonNull)
+      .toList().toArray(new Node[0]);
   }
 
   @Nullable VirtualFile getSelectedFile() {

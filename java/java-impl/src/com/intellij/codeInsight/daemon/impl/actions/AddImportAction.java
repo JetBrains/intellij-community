@@ -35,6 +35,7 @@ import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SlowOperations;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -68,12 +69,15 @@ public class AddImportAction implements QuestionAction {
   }
 
   @RequiresReadLock
+  @RequiresBackgroundThread
   public static @Nullable AddImportAction create(
     @NotNull Editor editor,
     @NotNull Module module,
     @NotNull PsiReference reference,
     @NotNull String className
   ) {
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    ApplicationManager.getApplication().assertReadAccessAllowed();
     Project project = module.getProject();
     return DumbService.getInstance(project).computeWithAlternativeResolveEnabled(() -> {
       GlobalSearchScope scope = GlobalSearchScope.moduleWithLibrariesScope(module);
@@ -109,14 +113,7 @@ public class AddImportAction implements QuestionAction {
   private void chooseClassAndImport() {
     CodeInsightUtil.sortIdenticalShortNamedMembers(myTargetClasses, myReference);
 
-    class Maps {
-      final Map<PsiClass, String> names;
-      final Map<PsiClass, Icon> icons;
-
-      Maps(Map<PsiClass, String> names, Map<PsiClass, Icon> icons) {
-        this.names = names;
-        this.icons = icons;
-      }
+    record Maps(@NotNull Map<PsiClass, String> names, @NotNull Map<PsiClass, Icon> icons) {
     }
 
     Maps maps = ReadAction.compute(() -> {
@@ -170,8 +167,8 @@ public class AddImportAction implements QuestionAction {
         }
 
         @Override
-        public Icon getIconFor(PsiClass value) {
-          return maps.icons.get(value);
+        public Icon getIconFor(PsiClass aClass) {
+          return maps.icons.get(aClass);
         }
 
         @Override

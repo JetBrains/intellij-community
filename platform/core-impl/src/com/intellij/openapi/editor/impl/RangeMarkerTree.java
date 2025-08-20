@@ -62,7 +62,7 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
   }
 
   @ApiStatus.Internal
-  public void dispose(@NotNull Document document) {
+  protected void dispose(@NotNull Document document) {
     document.removeDocumentListener(this);
   }
 
@@ -79,7 +79,6 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
         if (msg != null) {
           LOG.warn(msg);
         }
-        return null;
       });
     }
     return node;
@@ -111,18 +110,19 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
   }
 
   @Override
-  public void setNode(@NotNull T key, IntervalNode<T> intervalNode) {
+  protected void setNode(@NotNull T key, IntervalNode<T> intervalNode) {
+    assertUnderWriteLock();
     //noinspection unchecked
     ((RangeMarkerImpl)key).myNode = (RMNode<RangeMarkerEx>)intervalNode;
   }
 
   @ApiStatus.Internal
-  public static class RMNode<T extends RangeMarkerEx> extends IntervalTreeImpl.IntervalNode<T> {
+  protected static class RMNode<T extends RangeMarkerEx> extends IntervalTreeImpl.IntervalNode<T> {
     private static final byte EXPAND_TO_LEFT_FLAG = VALID_FLAG<<1;
     private static final byte EXPAND_TO_RIGHT_FLAG = EXPAND_TO_LEFT_FLAG<<1;
     protected static final byte STICK_TO_RIGHT_FLAG = EXPAND_TO_RIGHT_FLAG << 1;
 
-    public RMNode(@NotNull RangeMarkerTree<T> rangeMarkerTree,
+    protected RMNode(@NotNull RangeMarkerTree<T> rangeMarkerTree,
                   @NotNull T key,
                   int start,
                   int end,
@@ -147,7 +147,7 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
       return isFlagSet(STICK_TO_RIGHT_FLAG);
     }
 
-    public void onRemoved() {}
+    protected void onRemoved() {}
 
     @Override
     public String toString() {
@@ -305,9 +305,9 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
 
   // returns true if all deltas involved are still 0
   @ApiStatus.Internal
-  public void collectAffectedMarkersAndShiftSubtrees(@Nullable IntervalNode<T> root,
-                                                     int start, int end, int lengthDelta,
-                                                     @NotNull List<? super IntervalNode<T>> affected) {
+  protected void collectAffectedMarkersAndShiftSubtrees(@Nullable IntervalNode<T> root,
+                                                        int start, int end, int lengthDelta,
+                                                        @NotNull List<? super IntervalNode<T>> affected) {
     if (root == null) return;
     pushDelta(root);
 

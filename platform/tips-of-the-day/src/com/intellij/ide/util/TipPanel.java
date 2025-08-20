@@ -180,7 +180,7 @@ final class TipPanel extends JPanel implements DoNotAskOption {
       }
 
       @Override
-      protected boolean isDefaultActionButtonImplementation(@NotNull ActionButton oldActionButton, @NotNull Presentation newPresentation) {
+      protected boolean canReuseActionButton(@NotNull ActionButton oldActionButton, @NotNull Presentation newPresentation) {
         return true;
       }
 

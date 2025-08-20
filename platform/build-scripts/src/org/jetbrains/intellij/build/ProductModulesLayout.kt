@@ -5,7 +5,11 @@ package org.jetbrains.intellij.build
 
 import it.unimi.dsi.fastutil.Hash
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenCustomHashSet
-import kotlinx.collections.immutable.*
+import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.PersistentSet
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentSetOf
+import kotlinx.collections.immutable.plus
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.PluginLayout
@@ -20,12 +24,22 @@ val DEFAULT_BUNDLED_PLUGINS: PersistentList<String> = persistentListOf(
 
 class ProductModulesLayout {
   /**
-   * Names of the additional product-specific modules which need to be packed into openapi.jar in the product's 'lib' directory.
+   * Names of the additional product-specific modules which need to be packed into product.jar in the product's 'lib' directory.
+   * 
+   * **Note that these modules will be loaded by the core classloader.**
+   * 
+   * It's better to include them as content modules in a regular or the core plugin instead, this way they'll be loaded by separate classloaders and you won't need to register
+   * them explicitly in the build scripts.
    */
   var productApiModules: List<String> = emptyList()
 
   /**
    * Names of the additional product-specific modules which need to be included in the product's 'lib' directory
+   *
+   * **Note that these modules will be loaded by the core classloader.**
+   *
+   * It's better to include them as content modules in a regular or the core plugin instead, this way they'll be loaded by separate classloaders and you won't need to register
+   * them explicitly in the build scripts.
    */
   var productImplementationModules: List<String> = emptyList()
 
@@ -128,8 +142,8 @@ class ProductModulesLayout {
   /**
    * Module names which should be excluded from this product.
    * Allows filtering out default platform modules (both api and implementation) as well as product modules.
-   * This API is experimental, use it with care
    */
+  @set:Deprecated("Modules which aren't included in some product must be converted to content modules instead of excluding them in the build scripts")
   var excludedModuleNames: PersistentSet<String> = persistentSetOf()
 }
 

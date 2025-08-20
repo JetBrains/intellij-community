@@ -72,7 +72,7 @@ internal class HatchExistingEnvironmentSelector(
       else -> {
         val (project, module) = moduleOrProject.destructured
         val workingDirectory = resolveHatchWorkingDirectory(project, module).getOr { return it }
-        environment.createSdk(workingDirectory, module).onSuccess { sdk ->
+        environment.createSdk(workingDirectory).onSuccess { sdk ->
           module?.let { module -> sdk.setAssociationToModule(module) }
         }
       }

@@ -18,6 +18,9 @@ interface RecentProjectsManager {
     @Topic.AppLevel
     val RECENT_PROJECTS_CHANGE_TOPIC: Topic<RecentProjectsChange> = Topic(RecentProjectsChange::class.java, Topic.BroadcastDirection.NONE)
 
+    @Topic.AppLevel
+    val LAST_PROJECTS_TOPIC: Topic<LastProjectsListener> = Topic(LastProjectsListener::class.java, Topic.BroadcastDirection.NONE)
+
     @JvmStatic
     @RequiresBlockingContext
     fun getInstance(): RecentProjectsManager = ApplicationManager.getApplication().service<RecentProjectsManager>()
@@ -69,5 +72,18 @@ interface RecentProjectsManager {
   interface RecentProjectsChange {
     @RequiresEdt
     fun change()
+  }
+
+  /**
+   * Allows observing events related to the last projects that were open when exiting the IDE
+   *
+   * @see LAST_PROJECTS_TOPIC
+   */
+  interface LastProjectsListener {
+    /**
+     * Called after reopening the last projects
+     */
+    @RequiresEdt
+    fun lastProjectsReopened(activeProject: Project)
   }
 }

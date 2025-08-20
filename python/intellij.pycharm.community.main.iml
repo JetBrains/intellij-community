@@ -30,7 +30,7 @@
     <orderEntry type="module" module-name="intellij.configurationScript" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.completionMlRanking" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.statsCollector" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.sh" />
+    <orderEntry type="module" module-name="intellij.sh.plugin.main" />
     <orderEntry type="module" module-name="intellij.terminal.sh" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.xml.langInjection" />
     <orderEntry type="module" module-name="intellij.textmate.plugin" scope="RUNTIME" />

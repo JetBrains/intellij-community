@@ -386,7 +386,9 @@ class MessageBusTest : MessageBusOwner {
       for (i in count - 1 downTo 0) {
         Disposer.dispose(children[i])
       }
-    }.start()
+    }
+      .runAsStressTest()
+      .start()
   }
 
   @Test

@@ -1,10 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.bootstrap
 
-import com.intellij.ide.plugins.DataLoader
-import com.intellij.ide.plugins.PathResolver
-import com.intellij.ide.plugins.PluginXmlPathResolver
-import com.intellij.ide.plugins.toXIncludeLoader
+import com.intellij.ide.plugins.*
 import com.intellij.platform.plugins.parser.impl.*
 import com.intellij.platform.plugins.parser.impl.elements.DependenciesElement
 import com.intellij.platform.runtime.product.IncludedRuntimeModule
@@ -60,8 +57,8 @@ internal class ModuleBasedPluginXmlPathResolver(
     return fallbackResolver.resolveModuleFile(readContext = readContext, dataLoader = dataLoader, path = path)
   }
 
-  override fun resolveCustomModuleClassesRoots(moduleName: String): List<Path> {
-    val moduleDescriptor = includedModules.find { it.moduleDescriptor.moduleId.stringId == moduleName }?.moduleDescriptor
+  override fun resolveCustomModuleClassesRoots(moduleId: PluginModuleId): List<Path> {
+    val moduleDescriptor = includedModules.find { it.moduleDescriptor.moduleId.stringId == moduleId.id }?.moduleDescriptor
     return moduleDescriptor?.resourceRootPaths ?: emptyList()
   }
 

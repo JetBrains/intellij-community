@@ -16,6 +16,7 @@ import com.intellij.xdebugger.Obsolescent
 import com.intellij.xdebugger.XExpression
 import com.intellij.xdebugger.frame.*
 import com.intellij.xdebugger.frame.presentation.XValuePresentation
+import com.intellij.xdebugger.impl.ui.XValueTextProvider
 import com.intellij.xdebugger.impl.ui.tree.XValueExtendedPresentation
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeEx
 import com.intellij.xdebugger.impl.util.MonolithUtils
@@ -35,7 +36,7 @@ class FrontendXValue private constructor(
   val xValueDto: XValueDto,
   hasParentValue: Boolean,
   private val presentation: StateFlow<XValueSerializedPresentation>,
-) : XValue() {
+) : XValue(), XValueTextProvider {
 
   @Volatile
   private var modifier: XValueModifier? = null
@@ -197,6 +198,13 @@ class FrontendXValue private constructor(
     return MonolithUtils.findXValueById(xValueDto.id)?.referrersProvider
   }
 
+  private fun getTextProviderDto(): XValueTextProviderDto? =
+    xValueDto.textProvider?.asCompletableFuture()?.getNow(null)
+
+  override fun shouldShowTextValue(): Boolean = getTextProviderDto()?.shouldShowTextValue ?: false
+
+  override fun getValueText(): String? = getTextProviderDto()?.textValue
+
   override fun toString(): String {
     return "FrontendXValue(id=${xValueDto.id}, value=${presentation.value.rawText()})"
   }
@@ -346,7 +354,7 @@ private fun XValueSerializedPresentation.rawText(): String = when (this) {
 private class FrontendXNamedValue(
   val delegate: FrontendXValue,
   name: String,
-) : XNamedValue(name) {
+) : XNamedValue(name), XValueTextProvider {
   override fun computePresentation(node: XValueNode, place: XValuePlace) {
     delegate.computePresentation(node, place)
   }
@@ -394,6 +402,14 @@ private class FrontendXNamedValue(
 
   override fun getReferrersProvider(): XReferrersProvider? {
     return delegate.referrersProvider
+  }
+
+  override fun shouldShowTextValue(): Boolean {
+    return delegate.shouldShowTextValue()
+  }
+
+  override fun getValueText(): String? {
+    return delegate.valueText
   }
 
   override fun toString(): String {

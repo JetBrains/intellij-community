@@ -7,31 +7,7 @@ import com.intellij.grazie.text.TextContent.Exclusion
 import com.intellij.grazie.text.TextContent.ExclusionKind
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.TextRange
-import kotlinx.html.*
-import kotlinx.html.stream.createHTML
 import java.util.regex.Pattern
-
-fun html(body: BODY.() -> Unit) = createHTML(false).html { body { body(this) } }
-
-var TABLE.cellpading: String
-  get() = attributes["cellpadding"] ?: ""
-  set(value) {
-    attributes["cellpadding"] = value
-  }
-
-var TABLE.cellspacing: String
-  get() = attributes["cellspacing"] ?: ""
-  set(value) {
-    attributes["cellspacing"] = value
-  }
-
-var TD.valign: String
-  get() = attributes["valign"] ?: ""
-  set(value) {
-    attributes["valign"] = value
-  }
-
-fun FlowContent.nbsp() = +Entities.nbsp
 
 private val anyTag = Pattern.compile("</?(\\w+)[^>]*>")
 private val closingTag = Pattern.compile("</\\w+\\s*>")
@@ -111,7 +87,8 @@ fun removeHtml(_content: TextContent?): TextContent? {
     if (closingTag.matcher(content.subSequence(matchStart, matchEnd)).matches()) {
       exclusions.add(Exclusion(matchStart, matchEnd, exclusionKind))
       tagClosed(content.substring(matchStart + 2, matchEnd - 1).trim())
-    } else {
+    }
+    else {
       exclusions.add(Exclusion(matchStart, matchEnd, exclusionKind))
     }
   }
@@ -145,4 +122,3 @@ fun inlineSpaceEntities(content: TextContent?): TextContent? {
 fun nbspToSpace(content: TextContent?): TextContent? {
   return inlineEntity(content, nbsp, ' ')
 }
-

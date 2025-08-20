@@ -33,7 +33,7 @@ public class Stack<T> extends ArrayList<T> {
   }
 
   @SafeVarargs
-  public Stack(@NotNull T... items) {
+  public Stack(T... items) {
     super(items.length);
     for (T item : items) {
       push(item);

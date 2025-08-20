@@ -61,7 +61,7 @@ jvm_library(
     "//platform/indexing-impl",
     "//platform/platform-api:ide",
     "//platform/diff-impl/tests:tests_test_lib",
-    "@lib//:mockito",
+    "//libraries/mockito",
     "//platform/util:util-tests_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",

@@ -79,6 +79,7 @@ jvm_library(
     "//platform/external-process-auth-helper",
     "//platform/external-process-auth-helper/rt",
     "//platform/util/progress",
+    "//platform/util/jdom",
     "//platform/diagnostic/telemetry",
     "@lib//:opentelemetry",
     "@lib//:opentelemetry-semconv",
@@ -116,7 +117,7 @@ jvm_library(
 jvm_library(
   name = "vcs-git_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["tests/**/*.kt", "tests/**/*.java", "tests/**/*.form"], allow_empty = True),
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True),
   kotlinc_opts = ":custom_vcs-git",
   associates = [":vcs-git"],
   deps = [
@@ -158,7 +159,7 @@ jvm_library(
     "//platform/dvcs-api:vcs-dvcs",
     "//platform/built-in-server:builtInServer-impl",
     "//platform/built-in-server-api:builtInServer",
-    "@lib//:mockito",
+    "//libraries/mockito",
     "@lib//:kotlin-test",
     "//platform/vcs-tests:vcs-tests_test_lib",
     "//platform/util",

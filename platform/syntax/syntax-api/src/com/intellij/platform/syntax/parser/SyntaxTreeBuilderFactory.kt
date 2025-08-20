@@ -139,7 +139,7 @@ private class BuilderImpl(
       tokens = tokenList,
       myDebugMode = debugMode,
       language = language,
-      cancellationProvider = null,
+      cancellationProvider = cancellationProvider,
       logger = logger ?: noopLogger(),
       whitespaceOrCommentBindingPolicy = whitespaceOrCommentBindingPolicy ?: WhitespaceOrCommentBindingPolicy { false },
       opaquePolicy = opaquePolicy ?: OpaqueElementPolicy { null },

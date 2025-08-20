@@ -22,11 +22,10 @@ import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
-import org.jetbrains.plugins.gradle.service.syncAction.GradleEntitySource
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncContributor
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase
-import org.jetbrains.plugins.gradle.service.syncAction.virtualFileUrl
 import org.jetbrains.plugins.gradle.service.syncAction.impl.bridge.GradleBridgeEntitySource
+import org.jetbrains.plugins.gradle.service.syncAction.virtualFileUrl
 import java.io.File
 
 private val LOG = logger<GradleDeclarativeSyncContributor>()
@@ -38,19 +37,20 @@ internal class GradleDeclarativeSyncContributor : GradleSyncContributor {
 
   override val phase: GradleSyncPhase = GradleSyncPhase.DECLARATIVE_PHASE
 
-  override suspend fun updateProjectModel(
+  override suspend fun createProjectModel(
     context: ProjectResolverContext,
-    storage: MutableEntityStorage,
-  ) {
+    storage: ImmutableEntityStorage,
+  ): ImmutableEntityStorage {
     if (!DeclarativeStudioSupport.isEnabled()) {
       LOG.debug("Skipped Declarative Gradle static import: Disabled")
-      return
+      return storage
     }
     LOG.debug("Removing preview project root")
-    storage.replaceBySource({ it is GradleEntitySource && it.phase <= phase }, ImmutableEntityStorage.empty())
+    val builder = MutableEntityStorage.create()
     LOG.debug("Starting Declarative Gradle static import")
-    configureProject(context, storage)
+    configureProject(context, builder)
     LOG.debug("Finished Declarative Gradle static import")
+    return builder.toSnapshot()
   }
 
   private fun configureProject(

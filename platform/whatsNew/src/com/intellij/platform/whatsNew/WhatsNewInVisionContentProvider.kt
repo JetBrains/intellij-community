@@ -31,6 +31,39 @@ open class WhatsNewInVisionContentProvider {
     return content.checkAvailability()
   }
 
+  /**
+   * Files that will be probed while looking for Vision content.
+   */
+  open val visionJsonFileNames: List<String> = listOf(
+    DEFAULT_VISION_JSON_FILE_NAME,
+    "vision.json" // legacy name for compatibility
+  )
+
+  /**
+   * Class loader that will be used for resource lookup.
+   * By default, will be the class loader of this object (even if it's an override).
+   */
+  open val resourceClassLoader: ClassLoader
+    get() = this::class.java.classLoader
+
+  /**
+   * Path to the resource directory in the class loader.
+   * By default, it will be "com/intellij/platform/whatsNew/(eap|release)".
+   */
+  open val baseResourcePathInClassLoader: String by lazy {
+    val appName = ApplicationNamesInfo.getInstance().productName.lowercase()
+    val isEap = ApplicationInfo.getInstance().isEAP
+    "com/intellij/platform/whatsNew/$appName${
+      if (isEap) {
+        "/eap"
+      }
+      else {
+        "/release"
+      }
+    }"
+  }
+
+
   @Serializable
   internal class Container(val entities: List<Page>)
 
@@ -50,30 +83,17 @@ open class WhatsNewInVisionContentProvider {
   @Serializable
   internal data class PublicVar(val value: String, val description: String)
 
-  protected open fun getResourceNameByPath(path: String): String {
-    val appName = ApplicationNamesInfo.getInstance().productName.lowercase()
-    val isEap = ApplicationInfo.getInstance().isEAP
-    return "com/intellij/platform/whatsNew/$appName${
-      if (isEap) {
-        "/eap/$path"
-      }
-      else {
-        "/release/$path"
-      }
-    }"
-  }
+  protected open fun getResourceNameByPath(path: String): String =
+    "$baseResourcePathInClassLoader/$path"
 
   protected open fun getResource(resourceName: String): ContentSource =
-    ResourceContentSource(WhatsNewInVisionContentProvider::class.java.classLoader, resourceName)
+    ResourceContentSource(resourceClassLoader, resourceName)
 
-  protected fun getVisionJsonResourceNames(): List<String> = listOf(
-    getResourceNameByPath("vision-in-product-pages.json"),
-    getResourceNameByPath("vision.json")
-  )
+  protected fun getVisionJsonResourceNames(): List<String> = visionJsonFileNames.map(::getResourceNameByPath)
 
   @ApiStatus.OverrideOnly
   protected open fun getResource(): ContentSource =
-    ResourceContentSource(WhatsNewInVisionContentProvider::class.java.classLoader, getVisionJsonResourceNames())
+    ResourceContentSource(resourceClassLoader, getVisionJsonResourceNames())
 
   private val content: ContentSource by lazy {
     System.getProperty(PROPERTY_WHATS_NEW_VISION_JSON)?.let { testResourcePath ->

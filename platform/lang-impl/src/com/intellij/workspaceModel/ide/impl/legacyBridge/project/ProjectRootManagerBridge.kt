@@ -8,6 +8,7 @@ import com.intellij.openapi.roots.impl.OrderRootsCache
 import com.intellij.openapi.roots.impl.ProjectRootManagerComponent
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.EmptyRunnable
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.workspace.jps.entities.LibraryTableId
 import com.intellij.util.indexing.BuildableRootsChangeRescanningInfo
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge
@@ -55,12 +56,14 @@ class ProjectRootManagerBridge(project: Project, coroutineScope: CoroutineScope)
     private var insideRootsChange = false
 
     override fun referencedLibraryAdded(library: Library) {
+      if (Registry.`is`("use.workspace.file.index.for.partial.scanning")) return
       if (shouldListen(library)) {
         fireRootsChanged(BuildableRootsChangeRescanningInfo.newInstance().addLibrary(library).buildInfo())
       }
     }
 
     override fun referencedLibraryChanged(library: Library) {
+      if (Registry.`is`("use.workspace.file.index.for.partial.scanning")) return
       if (insideRootsChange || !shouldListen(library)) return
       insideRootsChange = true
       try {

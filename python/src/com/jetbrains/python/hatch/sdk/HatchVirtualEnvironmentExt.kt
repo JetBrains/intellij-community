@@ -2,10 +2,12 @@
 package com.jetbrains.python.hatch.sdk
 
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.python.hatch.*
+import com.intellij.python.hatch.BasePythonExecutableNotFoundHatchError
+import com.intellij.python.hatch.HatchVirtualEnvironment
+import com.intellij.python.hatch.PythonVirtualEnvironment
+import com.intellij.python.hatch.getHatchEnvVirtualProjectPath
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.resolvePythonBinary
@@ -19,7 +21,7 @@ import java.nio.file.Path
 import kotlin.io.path.name
 
 @ApiStatus.Internal
-suspend fun HatchVirtualEnvironment.createSdk(workingDirectoryPath: Path, module: Module?): PyResult<Sdk> {
+suspend fun HatchVirtualEnvironment.createSdk(workingDirectoryPath: Path): PyResult<Sdk> {
   val existingPythonEnvironment = pythonVirtualEnvironment as? PythonVirtualEnvironment.Existing
                                   ?: return Result.failure(BasePythonExecutableNotFoundHatchError(null as String?))
   val pythonHomePath = pythonVirtualEnvironment?.pythonHomePath
@@ -29,9 +31,9 @@ suspend fun HatchVirtualEnvironment.createSdk(workingDirectoryPath: Path, module
 
   val hatchSdkAdditionalData = HatchSdkAdditionalData(workingDirectoryPath, this.hatchEnvironment.name)
   val sdk = createSdk(
-    sdkHomePath = pythonBinary,
+    pythonBinaryPath = pythonBinary,
     existingSdks = PythonSdkUtil.getAllSdks(),
-    associatedProjectPath = module?.project?.basePath,
+    associatedProjectPath = workingDirectoryPath.toString(),
     suggestedSdkName = existingPythonEnvironment.suggestHatchSdkName(),
     sdkAdditionalData = hatchSdkAdditionalData
   ).getOr { return it }

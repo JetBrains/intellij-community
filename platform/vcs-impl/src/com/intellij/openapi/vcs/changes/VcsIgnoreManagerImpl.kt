@@ -11,7 +11,6 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.runBlockingCancellable
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.InitialVfsRefreshService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
@@ -31,7 +30,6 @@ import com.intellij.vcsUtil.VcsUtil
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.IOException
-import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import kotlin.io.path.invariantSeparatorsPathString
 
@@ -86,14 +84,6 @@ class VcsIgnoreManagerImpl(private val project: Project, coroutineScope: Corouti
         }
       })
     }
-  }
-
-  fun awaitRefreshQueue() {
-    assert(!ApplicationManager.getApplication().isReadAccessAllowed)
-    if (ignoreRefreshQueue.isEmpty) return
-    val waiter = CountDownLatch(1)
-    ignoreRefreshQueue.queue(Update.create(waiter) { waiter.countDown() })
-    ProgressIndicatorUtils.awaitWithCheckCanceled(waiter)
   }
 
   fun findIgnoreFileType(vcs: AbstractVcs): IgnoreFileType? {

@@ -61,7 +61,7 @@ jvm_library(
 jvm_library(
   name = "impl_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["tests/**/*.kt", "tests/**/*.java", "tests/**/*.form"], allow_empty = True),
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True),
   associates = [":impl"],
   deps = [
     "//platform/analysis-api:analysis",

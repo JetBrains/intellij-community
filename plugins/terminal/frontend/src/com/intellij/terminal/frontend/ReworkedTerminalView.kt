@@ -45,6 +45,7 @@ import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
 import org.jetbrains.plugins.terminal.block.ui.addToLayer
 import org.jetbrains.plugins.terminal.block.ui.calculateTerminalSize
 import org.jetbrains.plugins.terminal.block.ui.isTerminalOutputScrollChangingActionInProgress
+import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.IS_ALTERNATE_BUFFER_DATA_KEY
 import org.jetbrains.plugins.terminal.fus.FrontendLatencyService
 import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
 import org.jetbrains.plugins.terminal.util.terminalProjectScope
@@ -462,7 +463,7 @@ class ReworkedTerminalView(
       sink[TerminalOutputModel.KEY] = outputModel
       sink[TerminalSearchController.KEY] = terminalSearchController
       sink[TerminalSessionId.KEY] = (sessionFuture.getNow(null) as? FrontendTerminalSession?)?.id
-      sink[IS_ALTERNATE_BUFFER_KEY] = isAlternateScreenBuffer
+      sink[IS_ALTERNATE_BUFFER_DATA_KEY] = isAlternateScreenBuffer
       val hyperlinkFacade = if (isAlternateScreenBuffer) alternateBufferHyperlinkFacade else outputHyperlinkFacade
       sink[TerminalHyperlinkId.KEY] = hyperlinkFacade?.getHoveredHyperlinkId()
     }

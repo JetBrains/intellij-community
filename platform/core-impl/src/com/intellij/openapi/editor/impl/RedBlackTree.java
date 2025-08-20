@@ -51,25 +51,22 @@ public abstract class RedBlackTree<K> {
     n.setParent(l);
   }
 
-  protected void replaceNode(@NotNull Node<K> oldn, Node<K> newn) {
-    Node<K> parent = oldn.getParent();
+  protected void replaceNode(@NotNull Node<K> oldN, Node<K> newN) {
+    Node<K> parent = oldN.getParent();
     if (parent == null) {
-      root = newn;
+      root = newN;
     }
     else {
-      if (oldn == parent.getLeft()) {
-        parent.setLeft(newn);
+      if (oldN == parent.getLeft()) {
+        parent.setLeft(newN);
       }
       else {
-        parent.setRight(newn);
+        parent.setRight(newN);
       }
     }
-    if (newn != null) {
-      newn.setParent(parent);
+    if (newN != null) {
+      newN.setParent(parent);
     }
-    //oldn.parent = null;
-    //oldn.left = null;
-    //oldn.right = null;
   }
 
   void onInsertNode() {
@@ -142,15 +139,8 @@ public abstract class RedBlackTree<K> {
 
     if (n.getLeft() != null && n.getRight() != null) {
       // Copy key/value from predecessor and then delete it instead
-      Node<K> pred = maximumNode(n.getLeft());
-
-      //Color c = pred.color;
-      //swap(n, pred);
-      //assert pred.color == c;
-      //pred.color = n.color;
-      //n.color = c;
-
-      n = swapWithMaxPred(n, pred);
+      Node<K> predNode = maximumNode(n.getLeft());
+      n = swapWithMaxPred(n, predNode);
     }
 
     assert n.getLeft() == null || n.getRight() == null;
@@ -304,7 +294,9 @@ public abstract class RedBlackTree<K> {
     protected Node<K> right;
     protected Node<K> parent;
 
+    @SuppressWarnings("unused")
     private volatile byte myFlags;
+    private static final VarHandleWrapper MY_FLAGS_HANDLER = VarHandleWrapper.getFactory().create(Node.class, "myFlags", byte.class);
     static final byte COLOR_MASK = 1;
 
     @Contract(pure = true)
@@ -314,7 +306,11 @@ public abstract class RedBlackTree<K> {
     }
 
     public void setFlag(byte mask, boolean value) {
-      myFlags = BitUtil.set(myFlags, mask, value);
+      byte flags;
+      do {
+        flags = myFlags;
+      }
+      while (!MY_FLAGS_HANDLER.compareAndSetByte(this, flags, BitUtil.set(flags, mask, value)));
     }
 
     public Node<K> grandparent() {

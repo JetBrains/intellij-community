@@ -12,7 +12,7 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 
 abstract class BaseIdeSerializationContext : SerializationContext {
   override val isJavaPluginPresent: Boolean
-    get() = PluginManagerCore.getPlugin(PluginId.findId("com.intellij.java")) != null
+    get() = PluginManagerCore.getPlugin(PluginId("com.intellij.java")) != null
   
   override val customModuleComponentSerializers: List<CustomModuleComponentSerializer>
     get() = CUSTOM_MODULE_COMPONENT_SERIALIZER_EP.extensionList

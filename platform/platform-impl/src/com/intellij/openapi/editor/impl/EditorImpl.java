@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.diagnostic.Dumpable;
@@ -10,6 +11,8 @@ import com.intellij.ide.dnd.DnDManager;
 import com.intellij.ide.dnd.DnDManagerImpl;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.ide.lightEdit.LightEditCompatible;
+import com.intellij.ide.plugins.DynamicPluginListener;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsUtils;
 import com.intellij.ide.ui.laf.MouseDragSelectionEventHandler;
@@ -70,6 +73,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsChangeEvent;
 import com.intellij.psi.codeStyle.CodeStyleSettingsListener;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -151,6 +155,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private static final boolean HONOR_CAMEL_HUMPS_ON_TRIPLE_CLICK =
     Boolean.parseBoolean(System.getProperty("idea.honor.camel.humps.on.triple.click"));
   private static final Key<BufferedImage> BUFFER = Key.create("buffer");
+  // A cache for CodeStyle.getSettings(myProject, myVirtualFile) and similar file-specific calls.
+  // Valid for this.myProject and this.myVirtualFile only.
+  // E.g., it is not a valid replacement for CodeStyle.getSettings(myProject).
+  @ApiStatus.Internal
+  public static final Key<CodeStyleSettings> CODE_STYLE_SETTINGS = Key.create("editor.code.style.settings");
   private final @NotNull DocumentEx myDocument;
 
   private final JPanel myPanel;
@@ -612,6 +621,22 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         case EditorState.myBorderPropertyName -> borderChanged();
       }
     }, myDisposable);
+
+    ApplicationManager.getApplication().getMessageBus().connect(myDisposable).subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
+        private void clearCachedCodeStyleSettings() {
+          putUserData(CODE_STYLE_SETTINGS, null);
+        }
+
+        @Override
+        public void pluginLoaded(@NotNull IdeaPluginDescriptor pluginDescriptor) {
+          clearCachedCodeStyleSettings();
+        }
+
+        @Override
+        public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+          clearCachedCodeStyleSettings();
+        }
+      });
   }
 
   public void applyFocusMode() {
@@ -5097,10 +5122,24 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   public void codeStyleSettingsChanged(@NotNull CodeStyleSettingsChangeEvent event) {
     if (myProject != null) {
       VirtualFile eventFile = event.getVirtualFile();
-      if (eventFile != null && !eventFile.equals(getVirtualFile())) {
+      final var file = getVirtualFile();
+      if (eventFile != null && !eventFile.equals(file)) {
         return;
       }
       int oldTabSize = EditorUtil.getTabSize(this);
+      final var eventSettings = event.getSettings();
+      final var cachedSettings = this.getUserData(CODE_STYLE_SETTINGS);
+      if (cachedSettings != null && eventSettings == null) {
+        // This event is not a result of settings computation finishing, but also we already have settings cached.
+        // As editor settings are reinitialized, only the cached settings will be used.
+        // But settings for the file may have changed, so we must request the settings properly.
+        // If the settings indeed need to be recomputed, the request will trigger a background computation.
+        // Once that computation is finished, this method will be called again with eventSettings != null.
+        CodeStyle.getSettings(myProject, file);
+      }
+      if (eventSettings != null) {
+        this.putUserData(CODE_STYLE_SETTINGS, eventSettings);
+      }
       mySettings.reinitSettings();
       int newTabSize = EditorUtil.getTabSize(this);
       if (oldTabSize != newTabSize) {

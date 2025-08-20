@@ -49,6 +49,9 @@ jvm_library(
     "@lib//:kotlinx-collections-immutable",
     "//json",
     "@lib//:jackson-module-kotlin",
+    "//json/syntax",
+    "//platform/syntax/syntax-psi:psi",
+    "//platform/syntax/syntax-util:util",
   ],
   exports = ["//json"],
   runtime_deps = [

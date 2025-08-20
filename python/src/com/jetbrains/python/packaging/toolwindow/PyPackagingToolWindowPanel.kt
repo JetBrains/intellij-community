@@ -30,6 +30,7 @@ import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.inspections.PyInterpreterInspection
 import com.jetbrains.python.packaging.toolwindow.details.PyPackageInfoPanel
 import com.jetbrains.python.packaging.toolwindow.model.DisplayablePackage
+import com.jetbrains.python.packaging.toolwindow.model.ErrorNode
 import com.jetbrains.python.packaging.toolwindow.model.InstalledPackage
 import com.jetbrains.python.packaging.toolwindow.model.PyPackagesViewData
 import com.jetbrains.python.packaging.toolwindow.modules.PyPackagesSdkController
@@ -236,6 +237,10 @@ class PyPackagingToolWindowPanel(private val project: Project) : SimpleToolWindo
 
   fun showSearchResult(installed: List<DisplayablePackage>, repoData: List<PyPackagesViewData>) {
     packageListController.showSearchResult(installed, repoData)
+  }
+
+  fun showErrorResult(errorNode: ErrorNode) {
+    packageListController.showErrorResult(errorNode)
   }
 
   fun resetSearch(installed: List<InstalledPackage>, repos: List<PyPackagesViewData>, currentSdk: Sdk?) {

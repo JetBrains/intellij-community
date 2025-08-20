@@ -16,13 +16,16 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.poetry.findPoetryLock
 import com.jetbrains.python.poetry.getPyProjectTomlForPoetry
+import com.jetbrains.python.resolvePythonBinary
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.basePath
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
-import com.jetbrains.python.sdk.poetry.*
+import com.jetbrains.python.sdk.poetry.PyPoetrySdkAdditionalData
+import com.jetbrains.python.sdk.poetry.getPoetryExecutable
+import com.jetbrains.python.sdk.poetry.setupPoetry
+import com.jetbrains.python.sdk.poetry.suggestedSdkName
 import com.jetbrains.python.sdk.setAssociationToModule
-import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.nio.file.Path
@@ -64,11 +67,8 @@ internal class PyPoetrySdkConfiguration : PyProjectSdkConfigurationExtension {
       }
       val tomlFile = PyProjectToml.findFile(module)
       val poetry = setupPoetry(basePath, null, true, tomlFile == null).getOr { return@withBackgroundProgress it }
-
-      val path = withContext(Dispatchers.IO) { VirtualEnvReader.Instance.findPythonInPythonRoot(Path.of(poetry)) }
-      if (path == null) {
-        return@withBackgroundProgress PyResult.localizedError(PyBundle.message("cannot.find.executable", "python", poetry))
-      }
+      val path = poetry.resolvePythonBinary()
+                 ?: return@withBackgroundProgress PyResult.localizedError(PyBundle.message("cannot.find.executable", "python", poetry))
 
       val file = LocalFileSystem.getInstance().refreshAndFindFileByPath(path.pathString)
       if (file == null) {

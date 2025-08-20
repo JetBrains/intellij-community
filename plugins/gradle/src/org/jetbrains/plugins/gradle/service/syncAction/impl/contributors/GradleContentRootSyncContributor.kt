@@ -4,7 +4,8 @@ package org.jetbrains.plugins.gradle.service.syncAction.impl.contributors
 import com.intellij.openapi.progress.checkCanceled
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.ImmutableEntityStorage
+import com.intellij.platform.workspace.storage.toBuilder
 import org.jetbrains.plugins.gradle.model.ExternalProject
 import org.jetbrains.plugins.gradle.model.GradleLightProject
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
@@ -21,10 +22,12 @@ internal class GradleContentRootSyncContributor : GradleSyncContributor {
 
   override val phase: GradleSyncPhase = GradleSyncPhase.PROJECT_MODEL_PHASE
 
-  override suspend fun updateProjectModel(
+  override suspend fun createProjectModel(
     context: ProjectResolverContext,
-    storage: MutableEntityStorage,
-  ) {
+    storage: ImmutableEntityStorage,
+  ): ImmutableEntityStorage {
+    val builder = storage.toBuilder()
+
     val entitySource = GradleContentRootEntitySource(context.projectPath, phase)
 
     for (buildModel in context.allBuilds) {
@@ -34,9 +37,11 @@ internal class GradleContentRootSyncContributor : GradleSyncContributor {
 
         val externalProject = context.getProjectModel(projectModel, ExternalProject::class.java) ?: continue
         val contentRootData = GradleContentRootData(projectModel, externalProject, entitySource)
-        storage addEntity createModuleEntity(context, contentRootData)
+        builder addEntity createModuleEntity(context, contentRootData)
       }
     }
+
+    return builder.toSnapshot()
   }
 
   private fun createModuleEntity(

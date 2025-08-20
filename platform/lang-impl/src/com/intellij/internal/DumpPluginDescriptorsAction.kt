@@ -1,4 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:OptIn(IntellijInternalApi::class)
+
 package com.intellij.internal
 
 import com.fasterxml.jackson.core.JsonFactory
@@ -19,6 +21,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.lang.UrlClassLoader
 import kotlinx.coroutines.CoroutineScope
@@ -94,7 +97,7 @@ private class PluginDescriptionDumper(val coroutineScope: CoroutineScope) {
     val classLoaderIds = parentClassLoaders.associateWith { classLoader ->
       when (classLoader) {
         is PluginClassLoader -> {
-          val moduleSuffix = (classLoader.pluginDescriptor as? IdeaPluginDescriptorImpl)?.contentModuleName?.let { ":$it" } ?: ""
+          val moduleSuffix = (classLoader.pluginDescriptor as? IdeaPluginDescriptorImpl)?.contentModuleId?.let { ":$it" } ?: ""
           "PluginClassLoader[${classLoader.pluginId.idString}$moduleSuffix]"
         }
         ClassLoader.getSystemClassLoader() -> "java.SystemClassLoader"
@@ -137,7 +140,7 @@ private class PluginDescriptionDumper(val coroutineScope: CoroutineScope) {
     writeArrayFieldStart("modules")
     for (module in modules) {
       writeStartObject()
-      writeStringField("name", module.moduleName)
+      writeStringField("name", module.moduleId.id)
       val isEnabled = module in PluginManagerCore.getPluginSet().getEnabledModules()
       writeBooleanField("enabled", isEnabled)
       if (isEnabled) {

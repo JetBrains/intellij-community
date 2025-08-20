@@ -224,6 +224,11 @@ internal fun generateDeps(
     if (it.name.startsWith("kotlin-compose-compiler-plugin-") && it.name.endsWith(".jar")) {
       plugins.add("@lib//:compose-plugin")
     }
+    else if (it.name.startsWith("rpc-compiler-plugin-") && it.name.endsWith(".jar")) {
+      if (module.module.name == "fleet.rpc") {  // other modules use exported_compiler_plugins
+        plugins.add("@lib//:rpc-plugin")
+      }
+    }
   }
 
   checkForDuplicates("bazel deps", deps)

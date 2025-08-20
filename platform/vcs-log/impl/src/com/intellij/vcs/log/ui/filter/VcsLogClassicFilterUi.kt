@@ -285,7 +285,7 @@ open class VcsLogClassicFilterUi(private val logData: VcsLogData,
           return button
         }
 
-        override fun isDefaultActionButtonImplementation(oldActionButton: ActionButton, newPresentation: Presentation): Boolean {
+        override fun canReuseActionButton(oldActionButton: ActionButton, newPresentation: Presentation): Boolean {
           return oldActionButton.javaClass == MyActionButton::class.java
         }
       }

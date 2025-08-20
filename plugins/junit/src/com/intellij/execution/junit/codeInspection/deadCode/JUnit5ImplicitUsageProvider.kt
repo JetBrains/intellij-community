@@ -109,7 +109,7 @@ private fun fieldSourceIsImplicitlyUsed(element: PsiField): Boolean {
 
 private fun isAnnotationMemberContainsName(name: String, method: PsiMethod, annotationFqn: String): Boolean {
   val annotation = method.getAnnotation(annotationFqn) ?: return false
-  val value = annotation.findAttributeValue("value")
+  val value = annotation.findAttributeValue(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME)
   if (value == null && method.name == name) return true
   if (value is PsiArrayInitializerMemberValue) {
     if (value.initializers.isEmpty() && method.name == name) return true

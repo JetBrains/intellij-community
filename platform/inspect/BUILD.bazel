@@ -43,7 +43,10 @@ jvm_library(
     "//platform/backend/observation",
   ],
   exports = ["//platform/extensions"],
-  runtime_deps = [":inspect_resources"]
+  runtime_deps = [
+    ":inspect_resources",
+    "//platform/backend",
+  ]
 )
 
 jvm_library(

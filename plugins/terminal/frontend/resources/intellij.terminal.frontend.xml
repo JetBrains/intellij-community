@@ -21,6 +21,9 @@
     <editorActionHandler action="Replace" implementationClass="com.intellij.terminal.frontend.action.TerminalReplaceHandler"
                          id="terminalReplace" order="first"/>
 
+    <extendWordSelectionHandler implementation="com.intellij.terminal.frontend.TerminalTextSelectioner"/>
+    <basicWordSelectionFilter implementation="com.intellij.terminal.frontend.TerminalWordSelectionFilter"/>
+
     <toolWindow.splitContentProvider toolWindowId="terminal"
                                      implementationClass="com.intellij.terminal.frontend.TerminalToolWindowSplitContentProvider"/>
 

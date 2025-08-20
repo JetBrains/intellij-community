@@ -37,8 +37,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.JBUI
 import icons.IdeSampleIconKeys
-import org.jetbrains.jewel.bridge.LocalComponent
 import org.jetbrains.jewel.bridge.toComposeColor
+import org.jetbrains.jewel.foundation.LocalComponent
 import org.jetbrains.jewel.foundation.actionSystem.provideData
 import org.jetbrains.jewel.foundation.lazy.tree.buildTree
 import org.jetbrains.jewel.foundation.modifier.onActivated

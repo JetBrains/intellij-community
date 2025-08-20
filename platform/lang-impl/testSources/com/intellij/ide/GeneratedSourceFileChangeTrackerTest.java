@@ -1,6 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -35,6 +36,11 @@ public class GeneratedSourceFileChangeTrackerTest extends CodeInsightFixtureTest
     super.tearDown();
   }
 
+  @Override
+  protected boolean runInDispatchThread() {
+    return false;
+  }
+
   public void testChangeOrdinary() {
     PsiFile file = myFixture.configureByText("Ordinary.txt", "");
     myFixture.type('a');
@@ -50,7 +56,9 @@ public class GeneratedSourceFileChangeTrackerTest extends CodeInsightFixtureTest
   public void testChangeGeneratedExternally() {
     PsiFile file = myFixture.configureByText("Gen.txt", "");
     myFixture.saveText(file.getVirtualFile(), "abc");
-    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    });
     assertFalse(isEditedGeneratedFile(file));
   }
 

@@ -3,7 +3,6 @@ package com.intellij.platform.testFramework.plugins
 
 import com.intellij.ide.plugins.ModuleLoadingRule
 import org.intellij.lang.annotations.Language
-import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicInteger
 
 private val idCounter = AtomicInteger()
@@ -48,10 +47,10 @@ fun PluginSpecBuilder.content(body: ContentScope.() -> Unit) {
   scope.body()
 }
 
-fun ContentScope.module(moduleName: String, loadingRule: ModuleLoadingRule = ModuleLoadingRule.OPTIONAL, body: PluginSpecBuilder.() -> Unit) {
+fun ContentScope.module(moduleId: String, loadingRule: ModuleLoadingRule = ModuleLoadingRule.OPTIONAL, body: PluginSpecBuilder.() -> Unit) {
   val moduleBuilder = PluginSpecBuilder()
   moduleBuilder.body()
-  plugin.content += ContentModuleSpec(moduleName, loadingRule, moduleBuilder.build())
+  plugin.content += ContentModuleSpec(moduleId, loadingRule, moduleBuilder.build())
 }
 
 fun PluginSpecBuilder.extensions(@Language("XML") xml: String, ns: String = "com.intellij") {

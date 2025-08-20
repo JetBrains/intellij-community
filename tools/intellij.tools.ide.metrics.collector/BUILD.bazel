@@ -52,7 +52,7 @@ jvm_library(
     "@lib//:jackson-module-kotlin",
     "@lib//:kotlin-test-assertions-core-jvm",
     "@lib//:junit5",
-    "@lib//:mockito",
+    "//libraries/mockito",
     "@lib//:mockito-junit-jupiter",
     "//platform/diagnostic/telemetry",
     "//platform/diagnostic/telemetry:telemetry_test_lib",

@@ -92,7 +92,7 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
       }
     }
     mavenArtifacts.isJavadocJarRequired = {
-      JewelMavenArtifacts.isPublishedJewelModule(it)
+      JewelMavenArtifacts.isPublishedJewelModule(it) && it.name != "intellij.platform.jewel.intUi.decoratedWindow"
     }
     mavenArtifacts.validate = { context, artifacts ->
       JewelMavenArtifacts.validate(context, artifacts)

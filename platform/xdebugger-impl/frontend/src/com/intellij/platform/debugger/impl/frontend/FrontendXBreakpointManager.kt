@@ -2,6 +2,7 @@
 package com.intellij.platform.debugger.impl.frontend
 
 import com.intellij.concurrency.ConcurrentCollectionFactory
+import com.intellij.ide.vfs.rpcId
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
@@ -308,6 +309,12 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
     lastRemovedBreakpoint = null
     cs.launch {
       XBreakpointTypeApi.getInstance().restoreRemovedBreakpoint(breakpoint.project.projectId())
+    }
+  }
+
+  override fun copyLineBreakpoint(breakpoint: XLineBreakpointProxy, file: VirtualFile, line: Int) {
+    cs.launch {
+      XBreakpointTypeApi.getInstance().copyLineBreakpoint(breakpoint.id, file.rpcId(), line)
     }
   }
 

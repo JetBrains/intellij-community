@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl
 
+import com.intellij.ide.plugins.PluginModuleId
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.openapi.application.ApplicationInfo
@@ -137,7 +138,7 @@ class WorkspaceModelCacheSerializer(vfuManager: VirtualFileUrlManager, urlRelati
 
     override fun getClassLoader(pluginId: String?, moduleId: String?): ClassLoader? {
       if (moduleId != null) {
-        return PluginManagerCore.getPluginSet().findEnabledModule(moduleId)!!.classLoader
+        return PluginManagerCore.getPluginSet().findEnabledModule(PluginModuleId(moduleId))!!.classLoader
       }
       val id = pluginId?.let { PluginId.getId(it) }
       if (id != null && !PluginManagerCore.isPluginInstalled(id)) {

@@ -60,7 +60,8 @@ internal suspend fun computeModuleSourcesByContent(
   layout: PluginLayout,
   addedModules: MutableSet<String>,
   jarPackager: JarPackager,
-  searchableOptionSet: SearchableOptionSetDescriptor?
+  searchableOptionSet: SearchableOptionSetDescriptor?,
+  modulesWithCustomPath: HashSet<String>
 ) {
   val frontendModuleFilter = context.getFrontendModuleFilter()
   val contentModuleFilter = context.getContentModuleFilter()
@@ -79,6 +80,10 @@ internal suspend fun computeModuleSourcesByContent(
     val descriptor = readXmlAsModel(findFileInModuleSources(module, "$moduleName.xml") ?: error("$moduleName.xml not found in module $moduleName sources"))
     val useSeparateJar = (descriptor.getAttributeValue("package") == null || 
                           helper.isPluginModulePackedIntoSeparateJar(module, layout, frontendModuleFilter)) && loadingRule != "embedded"
+    if (!useSeparateJar && modulesWithCustomPath.contains(moduleName)) {
+      addedModules.remove(moduleName)
+      continue
+    }
     jarPackager.computeSourcesForModule(
       item = ModuleItem(
         moduleName = moduleName,

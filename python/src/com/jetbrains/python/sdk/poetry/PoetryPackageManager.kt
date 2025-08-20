@@ -6,7 +6,6 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.PyPackageName
-import com.jetbrains.python.packaging.PythonDependenciesExtractor
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
@@ -55,7 +54,9 @@ class PoetryPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(pr
   override suspend fun uninstallPackageCommand(vararg pythonPackages: String): PyResult<Unit> {
     if (pythonPackages.isEmpty()) return PyResult.success(Unit)
 
-    val (standalonePackages, declaredPackages) = categorizePackages(pythonPackages)
+    val (standalonePackages, declaredPackages) = categorizePackages(pythonPackages).getOr {
+      return it
+    }
 
     uninstallDeclaredPackages(declaredPackages).getOr { return it }
     uninstallStandalonePackages(standalonePackages).getOr { return it }
@@ -63,14 +64,30 @@ class PoetryPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(pr
     return PyResult.success(Unit)
   }
 
+  override suspend fun extractDependencies(): PyResult<List<PythonPackage>> {
+    val output = runPoetryWithSdk(sdk, "show", "--top-level")
+      .getOr { return it }
+
+    if (output.isBlank()) {
+      return PyResult.success(emptyList())
+    }
+
+    return PyResult.success(parsePoetryShow(output))
+  }
+
   /**
    * Categorizes packages into standalone packages and pyproject.toml declared packages.
    */
-  private suspend fun categorizePackages(packages: Array<out String>): Pair<List<PyPackageName>, List<PyPackageName>> {
-    val dependencyNames = PythonDependenciesExtractor.forSdk(project, sdk)?.extract()?.map { it.name }?.toSet() ?: emptySet()
-    return packages
+  private suspend fun categorizePackages(packages: Array<out String>): PyResult<Pair<List<PyPackageName>, List<PyPackageName>>> {
+    val dependencyNames = extractDependencies().getOr {
+      return it
+    }.map { it.name }
+
+    val categorizedPackages = packages
       .map { PyPackageName.from(it) }
       .partition { it.name !in dependencyNames }
+
+    return PyResult.success(categorizedPackages)
   }
 
   /**

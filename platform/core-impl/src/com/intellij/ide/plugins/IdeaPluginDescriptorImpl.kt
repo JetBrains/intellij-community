@@ -12,7 +12,6 @@ import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
-import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.plugins.parser.impl.PluginDescriptorBuilder
 import com.intellij.platform.plugins.parser.impl.PluginXmlConst
@@ -82,7 +81,9 @@ sealed class IdeaPluginDescriptorImpl(
 
   @Deprecated("Deprecated in Java")
   override fun setEnabled(enabled: Boolean) {
-    isMarkedForLoading = enabled
+    if (setEnabledLogCount++ < 10) {
+      LOG.warn("no-op deprecated method call on $this", Throwable())
+    }
   }
 
   override fun equals(other: Any?): Boolean {
@@ -169,12 +170,12 @@ sealed class IdeaPluginDescriptorImpl(
       if (dependencies.isEmpty()) {
         return ModuleDependencies.EMPTY
       }
-      val moduleDeps = ArrayList<ModuleDependencies.ModuleReference>()
-      val pluginDeps = ArrayList<ModuleDependencies.PluginReference>()
+      val moduleDeps = ArrayList<PluginModuleId>()
+      val pluginDeps = ArrayList<PluginId>()
       for (dep in dependencies) {
         when (dep) {
-          is DependenciesElement.PluginDependency -> pluginDeps.add(ModuleDependencies.PluginReference(PluginId.getId(dep.pluginId)))
-          is DependenciesElement.ModuleDependency -> moduleDeps.add(ModuleDependencies.ModuleReference(dep.moduleName))
+          is DependenciesElement.PluginDependency -> pluginDeps.add(PluginId.getId(dep.pluginId))
+          is DependenciesElement.ModuleDependency -> moduleDeps.add(PluginModuleId(dep.moduleName))
           else -> LOG.error("Unknown dependency type: $dep")
         }
       }
@@ -199,7 +200,7 @@ sealed class IdeaPluginDescriptorImpl(
       LOG.warnInProduction(PluginException(buildString {
         append("Plugin descriptor for ")
         when (this@logUnexpectedElement) {
-          is ContentModuleDescriptor -> append("content module '${moduleName}' of plugin '${pluginId}'")
+          is ContentModuleDescriptor -> append("content module '${moduleId}' of plugin '${pluginId}'")
           is DependsSubDescriptor -> append("'depends' sub-descriptor '${descriptorPath}' of plugin '${pluginId}'")
           is PluginMainDescriptor -> error("not intended")
         }
@@ -237,6 +238,9 @@ sealed class IdeaPluginDescriptorImpl(
       if (raw.contentModules.isNotEmpty()) reporter(PluginXmlConst.CONTENT_ELEM)
       if (raw.incompatibleWith.isNotEmpty()) reporter(PluginXmlConst.INCOMPATIBLE_WITH_ELEM)
     }
+
+    @Volatile
+    private var setEnabledLogCount = 0
   }
 }
 
@@ -403,66 +407,10 @@ class PluginMainDescriptor(
   ): ContentModuleDescriptor = ContentModuleDescriptor(
     parent = this,
     raw = subBuilder.build(),
-    moduleName = module.name,
+    moduleId = module.moduleId,
     moduleLoadingRule = module.loadingRule,
     descriptorPath = descriptorPath
   )
-
-  fun initialize(context: PluginInitializationContext): PluginNonLoadReason? {
-    content.modules.forEach { it.requireDescriptor() }
-    if (content.modules.size > 1) {
-      val duplicates = HashSet<String>()
-      for (item in content.modules) {
-        if (!duplicates.add(item.name)) {
-          return onInitError(PluginHasDuplicateContentModuleDeclaration(this, item.name))
-        }
-      }
-    }
-    if (context.isPluginDisabled(pluginId)) {
-      return onInitError(PluginIsMarkedDisabled(this))
-    }
-    checkCompatibility(context::productBuildNumber, context::isPluginBroken)?.let {
-      return it
-    }
-    for (dependency in pluginDependencies) { // FIXME: likely we actually have to recursively traverse these after they are resolved
-      if (context.isPluginDisabled(dependency.pluginId) && !dependency.isOptional) {
-        return onInitError(PluginDependencyIsDisabled(this, dependency.pluginId, false))
-      }
-    }
-    for (pluginDependency in moduleDependencies.plugins) {
-      if (context.isPluginDisabled(pluginDependency.id)) {
-        return onInitError(PluginDependencyIsDisabled(this, pluginDependency.id, false))
-      }
-    }
-    return null
-  }
-
-  private fun checkCompatibility(getBuildNumber: () -> BuildNumber, isPluginBroken: (PluginId, version: String?) -> Boolean): PluginNonLoadReason? {
-    if (isPluginWhichDependsOnKotlinPluginAndItsIncompatibleWithIt(this)) {
-      // disable plugins which are incompatible with the Kotlin Plugin K1/K2 Modes KTIJ-24797, KTIJ-30474
-      val mode = if (isKotlinPluginK1Mode()) CoreBundle.message("plugin.loading.error.k1.mode") else CoreBundle.message("plugin.loading.error.k2.mode")
-      return onInitError(PluginIsIncompatibleWithKotlinMode(this, mode))
-    }
-    if (isBundled) {
-      return null
-    }
-    if (AppMode.isDisableNonBundledPlugins()) {
-      return onInitError(NonBundledPluginsAreExplicitlyDisabled(this))
-    }
-    PluginManagerCore.checkBuildNumberCompatibility(this, getBuildNumber())?.let {
-      return onInitError(it)
-    }
-    // "Show broken plugins in Settings | Plugins so that users can uninstall them and resolve 'Plugin Error' (IDEA-232675)"
-    if (isPluginBroken(pluginId, version)) {
-      return onInitError(PluginIsMarkedBroken(this))
-    }
-    return null
-  }
-
-  private fun onInitError(error: PluginNonLoadReason): PluginNonLoadReason {
-    isMarkedForLoading = false
-    return error
-  }
 
   init {
     if (pluginId == PluginManagerCore.CORE_ID && resourceBundleBaseName != null) {
@@ -481,7 +429,11 @@ class PluginMainDescriptor(
         val configFile: String? = if (index != -1) {
           "${elem.name.substring(0, index)}.${elem.name.substring(index + 1)}.xml"
         } else null
-        PluginContentDescriptor.ModuleItem(elem.name, configFile, elem.embeddedDescriptorContent, elem.loadingRule.convert())
+        PluginContentDescriptor.ModuleItem(
+          moduleId = PluginModuleId(elem.name),
+          configFile = configFile,
+          descriptorContent = elem.embeddedDescriptorContent,
+          loadingRule = elem.loadingRule.convert())
       }
     }
     
@@ -590,11 +542,11 @@ class DependsSubDescriptor(
 class ContentModuleDescriptor(
   val parent: PluginMainDescriptor,
   raw: RawPluginDescriptor,
-  moduleName: String,
+  moduleId: PluginModuleId,
   moduleLoadingRule: ModuleLoadingRule,
   private val descriptorPath: String
 ): PluginModuleDescriptor(raw) {
-  val moduleName: String = moduleName
+  val moduleId: PluginModuleId = moduleId
   val moduleLoadingRule: ModuleLoadingRule = moduleLoadingRule
 
   override val useCoreClassLoader: Boolean
@@ -604,15 +556,18 @@ class ContentModuleDescriptor(
 
   private val resourceBundleBaseName: String? = raw.resourceBundleBaseName
 
+  /** java helper */
+  fun getModuleIdString(): String = moduleId.id
+
   override fun getDescriptorPath(): String = descriptorPath
 
   override fun getResourceBundleBaseName(): String? = resourceBundleBaseName
 
   override fun toString(): String =
-    "ContentModuleDescriptor(moduleName=$moduleName" +
+    "ContentModuleDescriptor(id=${this@ContentModuleDescriptor.moduleId}" +
     (if (moduleLoadingRule == ModuleLoadingRule.OPTIONAL) "" else ", loadingRule=$moduleLoadingRule") +
     (if (packagePrefix == null) "" else ", package=$packagePrefix") +
-    (if (descriptorPath == "$moduleName.xml") "" else ", descriptorPath=$descriptorPath") +
+    (if (descriptorPath == "${this@ContentModuleDescriptor.moduleId}.xml") "" else ", descriptorPath=$descriptorPath") +
     ") <- $parent"
 
   init {
@@ -620,7 +575,7 @@ class ContentModuleDescriptor(
   }
 
   override fun getPluginId(): PluginId = parent.pluginId
-  @Deprecated("make sure you don't confuse it with moduleName; use main descriptor", level = DeprecationLevel.ERROR)
+  @Deprecated("make sure you don't confuse it with moduleId; use main descriptor", level = DeprecationLevel.ERROR)
   override fun getName(): @NlsSafe String = parent.name // .also { LOG.error("unexpected call") } TODO test failures
   // <editor-fold desc="Deprecated">
   // These are meaningless for sub-descriptors

@@ -19,6 +19,7 @@ fun reportMissingLicenses(collector: SoftAssertions, project: JpsProject, licens
       !nonPublicModules.contains(it.name)
       && !it.name.contains("guiTests")
       && it.name != "intellij.platform.util.immutableKeyValueStore.benchmark"
+      && it.name != "intellij.libraries.mockito"
       && !it.name.contains("integrationTests", ignoreCase = true)
     }
     .forEach { module ->

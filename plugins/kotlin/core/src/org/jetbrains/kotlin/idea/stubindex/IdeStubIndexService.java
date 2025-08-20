@@ -6,7 +6,6 @@ import com.intellij.psi.stubs.IndexSink;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics;
-import org.jetbrains.kotlin.idea.base.psi.KotlinPsiUtils;
 import org.jetbrains.kotlin.idea.base.psi.KotlinStubUtils;
 import org.jetbrains.kotlin.lexer.KtTokens;
 import org.jetbrains.kotlin.load.java.JvmAbi;
@@ -14,6 +13,7 @@ import org.jetbrains.kotlin.name.ClassId;
 import org.jetbrains.kotlin.name.FqName;
 import org.jetbrains.kotlin.name.Name;
 import org.jetbrains.kotlin.psi.*;
+import org.jetbrains.kotlin.psi.psiUtil.KtPsiUtilKt;
 import org.jetbrains.kotlin.psi.stubs.*;
 import org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes;
 import org.jetbrains.kotlin.psi.stubs.elements.StubIndexService;
@@ -88,7 +88,7 @@ public class IdeStubIndexService extends StubIndexService {
             boolean primeGrand = grand instanceof KotlinClassStub && ((KotlinClassStub) grand).isTopLevel();
 
             prime = ((KotlinObjectStub) parent).isTopLevel() ||
-                    primeGrand && ((KotlinObjectStub) parent).isCompanion();
+                    primeGrand && ((KotlinObjectStub) parent).getPsi().isCompanion();
         }
 
         if (prime) {
@@ -186,7 +186,7 @@ public class IdeStubIndexService extends StubIndexService {
                 sink.occurrence(KotlinProbablyInjectedFunctionShortNameIndex.Helper.getIndexKey(), name);
             }
 
-            if (stub.mayHaveContract()) {
+            if (stub.getMayHaveContract()) {
                 sink.occurrence(KotlinProbablyContractedFunctionShortNameIndex.Helper.getIndexKey(), name);
             }
 
@@ -198,7 +198,7 @@ public class IdeStubIndexService extends StubIndexService {
             FqName fqName = stub.getFqName();
             if (fqName != null) {
                 KtNamedFunction ktNamedFunction = stub.getPsi();
-                if (KotlinPsiUtils.isExpectDeclaration(ktNamedFunction)) {
+                if (KtPsiUtilKt.isExpectDeclaration(ktNamedFunction)) {
                     sink.occurrence(KotlinTopLevelExpectFunctionFqNameIndex.Helper.getIndexKey(), fqName.asString());
                 }
 
@@ -257,7 +257,7 @@ public class IdeStubIndexService extends StubIndexService {
             // can have special fq name in case of syntactically incorrect property with no name
             if (fqName != null) {
                 KtProperty ktProperty = stub.getPsi();
-                if (KotlinPsiUtils.isExpectDeclaration(ktProperty)) {
+                if (KtPsiUtilKt.isExpectDeclaration(ktProperty)) {
                     sink.occurrence(KotlinTopLevelExpectPropertyFqNameIndex.Helper.getIndexKey(), fqName.asString());
                 }
 
@@ -273,7 +273,7 @@ public class IdeStubIndexService extends StubIndexService {
     @Override
     public void indexParameter(@NotNull KotlinParameterStub stub, @NotNull IndexSink sink) {
         String name = stub.getName();
-        if (name != null && stub.hasValOrVar()) {
+        if (name != null && stub.getHasValOrVar()) {
             sink.occurrence(KotlinPropertyShortNameIndex.Helper.getIndexKey(), name);
         }
     }

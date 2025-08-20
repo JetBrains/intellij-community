@@ -218,8 +218,8 @@ public class XValueHint extends AbstractValueHint {
   }
 
   private Runnable getShowPopupRunnable(@NotNull XValue value, @Nullable XFullValueEvaluator evaluator) {
-    if (value instanceof XValueTextProvider && ((XValueTextProvider)value).shouldShowTextValue()) {
-      @NotNull String initialText = StringUtil.notNullize(((XValueTextProvider)value).getValueText());
+    if (value instanceof XValueTextProvider textValue && textValue.shouldShowTextValue()) {
+      @NotNull String initialText = StringUtil.notNullize(textValue.getValueText());
       return () -> showTextPopup(getTreeCreator(), Pair.create(value, myValueName), initialText, evaluator);
     }
     return () -> showTree(value);

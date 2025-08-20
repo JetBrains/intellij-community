@@ -1,5 +1,9 @@
 package com.intellij.json;
 
+import com.intellij.json.psi.JsonElementTypeConverterFactory;
+import com.intellij.platform.syntax.psi.CommonElementTypeConverterFactory;
+import com.intellij.platform.syntax.psi.ElementTypeConverters;
+import com.intellij.platform.syntax.psi.LanguageSyntaxDefinitions;
 import com.intellij.testFramework.ParsingTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestDataPath;
@@ -9,6 +13,16 @@ import com.intellij.testFramework.TestDataPath;
  */
 @TestDataPath("$CONTENT_ROOT/testData/psi/")
 public class JsonParsingTest extends ParsingTestCase {
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    addExplicitExtension(ElementTypeConverters.getInstance(), JsonLanguage.INSTANCE, new JsonElementTypeConverterFactory());
+    addExplicitExtension(ElementTypeConverters.getInstance(), JsonLanguage.INSTANCE, new CommonElementTypeConverterFactory());
+    addExplicitExtension(ElementTypeConverters.getInstance(), JsonLanguage.INSTANCE, new JsonFileTypeConverterFactory());
+    addExplicitExtension(LanguageSyntaxDefinitions.getINSTANCE(), JsonLanguage.INSTANCE, new JsonLanguageDefinition());
+  }
+
   public JsonParsingTest() {
     super("psi", "json", new JsonParserDefinition());
   }

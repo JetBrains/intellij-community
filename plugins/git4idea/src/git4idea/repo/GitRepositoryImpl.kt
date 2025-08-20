@@ -65,8 +65,7 @@ class GitRepositoryImpl private constructor(
   init {
     stagingAreaHolder = GitStagingAreaHolder(this)
 
-    untrackedFilesHolder = GitUntrackedFilesHolder(this)
-    Disposer.register(this, untrackedFilesHolder)
+    untrackedFilesHolder = GitUntrackedFilesHolder(coroutineScope, this)
 
     resolvedFilesHolder = GitResolvedMergeConflictsFilesHolder(this)
     Disposer.register(this, resolvedFilesHolder)

@@ -3275,7 +3275,6 @@ c:com.intellij.openapi.ui.LoadingDecorator
 - startLoading(Z):V
 - stopLoading():V
 f:com.intellij.openapi.ui.LoadingDecorator$Companion
-com.intellij.openapi.ui.LoadingDecorator$CursorAware
 a:com.intellij.openapi.ui.MasterDetailsComponent
 - com.intellij.openapi.options.Configurable
 - com.intellij.openapi.options.MasterDetails
@@ -6671,7 +6670,6 @@ c:com.intellij.ui.components.JBList
 - setDropTargetIndex(I):V
 - setEmptyText(java.lang.String):V
 - setExpandableItemsEnabled(Z):V
-- setOffsetFromElementTopForDnD(com.intellij.util.Function):V
 - setOffsetFromElementTopForDnD(java.util.function.Function):V
 - setPaintBusy(Z):V
 - setUI(javax.swing.plaf.ListUI):V

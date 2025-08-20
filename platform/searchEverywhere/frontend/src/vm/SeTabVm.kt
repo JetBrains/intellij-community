@@ -190,18 +190,18 @@ class SeTabVm(
   }
 }
 
-private const val ESSENTIALS_WAITING_TIMEOUT: Long = 2000
 private const val ESSENTIALS_THROTTLE_DELAY: Long = 100
 private const val ESSENTIALS_ENOUGH_COUNT: Int = 15
 private const val FAST_PASS_THROTTLE: Long = 100
 
 private fun Flow<SeResultEvent>.throttleUntilEssentialsArrive(essentialProviderIds: Set<SeProviderId>): Flow<ThrottledItems<SeResultEvent>> {
   val essentialProvidersCounts = essentialProviderIds.associateWith { 0 }.toMutableMap()
+  val essentialWaitingTimeout: Long = AdvancedSettings.getInt("search.everywhere.contributors.wait.timeout").toLong()
 
   SeLog.log(SeLog.THROTTLING) { "Will start throttle with essential providers: $essentialProviderIds"}
 
   return throttledWithAccumulation(
-    resultThrottlingMs = ESSENTIALS_WAITING_TIMEOUT,
+    resultThrottlingMs = essentialWaitingTimeout,
     shouldPassItem = { it !is SeResultEndEvent },
     fastPassThrottlingMs = FAST_PASS_THROTTLE,
     shouldFastPassItem = { it.providerId().shouldIgnoreThrottling() }

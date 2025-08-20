@@ -47,25 +47,28 @@ internal class SearchEverywhereCommonFeaturesProvider : SearchEverywhereElementF
     if (element is PsiItemWithSimilarity<*>) {
       return getElementFeatures(element.value, currentTime, searchQuery, elementPriority, cache, correction)
     }
-    val features = arrayListOf<EventPair<*>>(
-      PRIORITY_DATA_KEY.with(elementPriority),
-      IS_SPELL_CHECKED_DATA_KEY.with(correction is SearchEverywhereSpellCheckResult.Correction)
-    )
-    if (correction is SearchEverywhereSpellCheckResult.Correction) {
-      features.add(CORRECTION_CONFIDENCE_DATA_KEY.with(correction.confidence))
+
+    return buildList {
+      add(PRIORITY_DATA_KEY.with(elementPriority))
+      add(IS_SPELL_CHECKED_DATA_KEY.with(correction is SearchEverywhereSpellCheckResult.Correction))
+
+      if (correction is SearchEverywhereSpellCheckResult.Correction) {
+        add(CORRECTION_CONFIDENCE_DATA_KEY.with(correction.confidence))
+      }
+
+      addAll(getStatisticianFeatures(element))
     }
-    addStatisticianFeatures(element, features)
-    return features
   }
 
-  private fun addStatisticianFeatures(element: Any, features: MutableList<EventPair<*>>) {
+  private fun getStatisticianFeatures(element: Any): List<EventPair<*>> {
     val statisticianService = service<SearchEverywhereStatisticianService>()
+    val stats = statisticianService.getCombinedStats(element) ?: return emptyList()
 
-    statisticianService.getCombinedStats(element)?.let { stats ->
-      features.add(STATISTICIAN_USE_COUNT_DATA_KEY.with(stats.useCount))
-      features.add(STATISTICIAN_IS_MOST_POPULAR_DATA_KEY.with(stats.isMostPopular))
-      features.add(STATISTICIAN_RECENCY_DATA_KEY.with(stats.recency))
-      features.add(STATISTICIAN_IS_MOST_RECENT_DATA_KEY.with(stats.isMostRecent))
-    }
+    return listOf(
+      STATISTICIAN_USE_COUNT_DATA_KEY.with(stats.useCount),
+      STATISTICIAN_IS_MOST_POPULAR_DATA_KEY.with(stats.isMostPopular),
+      STATISTICIAN_RECENCY_DATA_KEY.with(stats.recency),
+      STATISTICIAN_IS_MOST_RECENT_DATA_KEY.with(stats.isMostRecent),
+    )
   }
 }

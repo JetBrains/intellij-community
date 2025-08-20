@@ -103,7 +103,7 @@ jvm_library(
     "//platform/credential-store-impl:credentialStore-impl",
     "//platform/credential-store-impl:credentialStore-impl_test_lib",
     "//platform/dvcs-impl/shared",
-    "@lib//:mockito",
+    "//libraries/mockito",
     "@lib//:http-client",
     "@lib//:app-cash-turbine-jvm",
     "@lib//:assert_j",

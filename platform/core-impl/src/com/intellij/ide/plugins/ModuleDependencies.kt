@@ -3,27 +3,19 @@ package com.intellij.ide.plugins
 
 import com.intellij.openapi.extensions.PluginId
 import org.jetbrains.annotations.ApiStatus
-import java.util.Collections
+import java.util.*
 
 /**
- * A dependency from [plugins] in fact means a module dependency on the *implicit main module* of a plugin.
+ * A dependency from [plugins] in fact means a module dependency on the *implicit main module* of the plugin.
  */
-@ApiStatus.Experimental
+@ApiStatus.Internal
 class ModuleDependencies(
-  val modules: List<ModuleReference>,
-  val plugins: List<PluginReference>,
+  val modules: List<PluginModuleId>,
+  val plugins: List<PluginId>,
 ) {
   @ApiStatus.Internal
   companion object {
     val EMPTY: ModuleDependencies = ModuleDependencies(Collections.emptyList(), Collections.emptyList())
-  }
-
-  class ModuleReference(val name: String) {
-    override fun toString(): String = "Module(name=$name)"
-  }
-
-  class PluginReference(val id: PluginId) {
-    override fun toString(): String = "Plugin(id=$id)"
   }
 
   override fun toString(): String = "ModuleDependencies(modules=${modules.joinToString()}, plugins=${plugins.joinToString()})"

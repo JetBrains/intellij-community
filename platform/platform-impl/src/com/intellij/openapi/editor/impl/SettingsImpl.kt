@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.EditorSettings
 import com.intellij.openapi.editor.EditorSettings.LineNumerationType
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
+import com.intellij.openapi.editor.impl.EditorImpl.CODE_STYLE_SETTINGS
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces
 import com.intellij.openapi.editor.state.ObservableStateListener
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -58,7 +59,8 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
         }
         else {
           if (file != null) {
-            CodeStyle.getIndentOptions(project, file).TAB_SIZE
+            val settings = editor?.getUserData(CODE_STYLE_SETTINGS) ?: CodeStyle.getSettings(project, file)
+            settings.getIndentOptionsByFile(project, file, null).TAB_SIZE
           }
           else {
             CodeStyle.getSettings(project).getTabSize(null)
@@ -331,15 +333,16 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
     val file = getVirtualFile() ?: return
     LOG.debug { "reinitDocumentIndentOptions, file ${file.name}" }
     val app = ApplicationManager.getApplication()
+    val editorCodeStyleSettings = editor.getUserData(CODE_STYLE_SETTINGS)
     if (app.isUnitTestMode) {
       app.runReadAction {
-        computeIndentOptions(project, file).associateWithDocument(document)
+        computeIndentOptions(project, file, editorCodeStyleSettings).associateWithDocument(document)
       }
     }
     else {
       val job = (project as ComponentManagerEx).getCoroutineScope().launch {
         val result = readAction {
-          computeIndentOptions(project, file)
+          computeIndentOptions(project, file, editorCodeStyleSettings)
         }
         withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
           result.associateWithDocument(document)
@@ -771,8 +774,7 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
 
 private val VALUE_LOCK = Any()
 
-private fun computeIndentOptions(project: Project, file: VirtualFile): CommonCodeStyleSettings.IndentOptions {
-  return CodeStyle
-    .getSettings(project, file)
-    .getIndentOptionsByFile(project, file, null, true, null)
+private fun computeIndentOptions(project: Project, file: VirtualFile, editorSettings: CodeStyleSettings?): CommonCodeStyleSettings.IndentOptions {
+  val settings = editorSettings ?: CodeStyle.getSettings(project, file)
+  return settings.getIndentOptionsByFile(project, file, null, true, null)
 }

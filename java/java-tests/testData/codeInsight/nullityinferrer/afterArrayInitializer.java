@@ -1,13 +1,11 @@
 import org.jetbrains.annotations.NotNull;
 
 public class J {
-  @NotNull
-  public String[] createArrayFailure(int size) {
+  public String @NotNull [] createArrayFailure(int size) {
     return new String[size];
   }
 
-  @NotNull
-  public String[] createArraySuccess() {
+  public String @NotNull [] createArraySuccess() {
     return new String[] {};
   }
 }

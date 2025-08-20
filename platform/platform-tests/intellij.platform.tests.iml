@@ -151,5 +151,6 @@
     <orderEntry type="module" module-name="intellij.xml.psi" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.runtime.product" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.locking.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework.junit5.highlighting" scope="TEST" />
   </component>
 </module>

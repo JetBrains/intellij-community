@@ -55,7 +55,7 @@ jvm_library(
     "//platform/workspace/jps",
     "@lib//:guava",
     "//plugins/maven/artifact-resolver/common",
-    "@lib//:mockito",
+    "//libraries/mockito",
     "//plugins/maven/jps-plugin:jps",
     "//plugins/maven/jps-plugin:jps_test_lib",
     "//plugins/maven/maven3-server-common:server-m3-common",

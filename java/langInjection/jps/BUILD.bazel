@@ -1,0 +1,29 @@
+### auto-generated section `build intellij.java.langInjection.jps` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "jps_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "jps",
+  module_name = "intellij.java.langInjection.jps",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = "@community//:k11",
+  deps = [
+    "//jps/jps-builders:build",
+    "//jps/model-api:model",
+    "@community//build:build-javac-rt",
+    "//platform/util",
+    "//java/compiler/instrumentation-util",
+    "//jps/model-serialization",
+    "@lib//:asm",
+    "//platform/util/jdom",
+    "@lib//:jetbrains-annotations",
+  ],
+  runtime_deps = [":jps_resources"]
+)
+### auto-generated section `build intellij.java.langInjection.jps` end

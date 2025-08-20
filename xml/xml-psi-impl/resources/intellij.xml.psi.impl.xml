@@ -33,6 +33,7 @@
 
     <applicationService serviceInterface="com.intellij.html.embedding.BasicHtmlRawTextElementFactory"
                         serviceImplementation="com.intellij.lang.html.HtmlRawTextElementFactoryImpl"/>
+    <applicationService serviceImplementation="com.intellij.application.options.editor.XmlFoldingSettings"/>
 
     <lang.elementManipulator forClass="com.intellij.psi.xml.XmlAttributeValue"
                              implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.manipulators.XmlAttributeValueManipulator"/>

@@ -65,41 +65,37 @@ internal class ContributorsLocalStatisticsFields {
     return selectionStats + lastTimeSelectedStats
   }
 
-  private fun getSelectionStatistics(selection: Int, maxSelection: Int, isFromAll: Boolean) : ArrayList<EventPair<*>> {
-    val data = arrayListOf<EventPair<*>>()
+  private fun getSelectionStatistics(selection: Int, maxSelection: Int, isFromAll: Boolean) : List<EventPair<*>> {
+    if (selection <= 0) return emptyList()
 
-    if (selection > 0) {
+    return buildList {
       val selectionType = if (isFromAll) SELECTION_ALL else SELECTION_OTHER
-      data.add(selectionType.with(selection))
+      add(selectionType.with(selection))
 
       if (maxSelection != 0) {
         val selectionToMaxType = if (isFromAll) SELECTION_TO_MAX_ALL else SELECTION_TO_MAX_OTHER
-        data.add(selectionToMaxType.with(selection.toDouble() / maxSelection))
+        add(selectionToMaxType.with(selection.toDouble() / maxSelection))
       }
     }
-
-    return data
   }
 
   private fun getLastTimeSelectedStatistics(sessionStartTime: Long, lastSelectedTime: Long,
-                                            isFromAll: Boolean) : ArrayList<EventPair<*>> {
-    val data = arrayListOf<EventPair<*>>()
+                                            isFromAll: Boolean) : List<EventPair<*>> {
+    if (lastSelectedTime <= 0) return emptyList()
 
-    if (lastSelectedTime > 0) {
+    return buildList {
       val timeSinceLastSelection = sessionStartTime - lastSelectedTime
-      data.add((if (isFromAll) TIME_SINCE_LAST_SELECTION_ALL else TIME_SINCE_LAST_SELECTION_OTHER).with(timeSinceLastSelection))
+      add((if (isFromAll) TIME_SINCE_LAST_SELECTION_ALL else TIME_SINCE_LAST_SELECTION_OTHER).with(timeSinceLastSelection))
 
-      data.addIfTrue(if (isFromAll) WAS_SELECTED_IN_LAST_MINUTE_ALL else WAS_SELECTED_IN_LAST_MINUTE_OTHER,
-                     timeSinceLastSelection <= 60 * 1000)
-      data.addIfTrue(if (isFromAll) WAS_SELECTED_IN_LAST_HOUR_ALL else WAS_SELECTED_IN_LAST_HOUR_OTHER,
-                     timeSinceLastSelection <= 60 * 60 * 1000)
-      data.addIfTrue(if (isFromAll) WAS_SELECTED_IN_LAST_DAY_ALL else WAS_SELECTED_IN_LAST_DAY_OTHER,
-                     timeSinceLastSelection <= 24 * 60 * 60 * 1000)
-      data.addIfTrue(if (isFromAll) WAS_SELECTED_IN_LAST_MONTH_ALL else WAS_SELECTED_IN_LAST_MONTH_OTHER,
-                     timeSinceLastSelection <= 30 * 24 * 60 * 60 * 1000L)
+      addIfTrue(if (isFromAll) WAS_SELECTED_IN_LAST_MINUTE_ALL else WAS_SELECTED_IN_LAST_MINUTE_OTHER,
+                timeSinceLastSelection <= 60 * 1000)
+      addIfTrue(if (isFromAll) WAS_SELECTED_IN_LAST_HOUR_ALL else WAS_SELECTED_IN_LAST_HOUR_OTHER,
+                timeSinceLastSelection <= 60 * 60 * 1000)
+      addIfTrue(if (isFromAll) WAS_SELECTED_IN_LAST_DAY_ALL else WAS_SELECTED_IN_LAST_DAY_OTHER,
+                timeSinceLastSelection <= 24 * 60 * 60 * 1000)
+      addIfTrue(if (isFromAll) WAS_SELECTED_IN_LAST_MONTH_ALL else WAS_SELECTED_IN_LAST_MONTH_OTHER,
+                timeSinceLastSelection <= 30 * 24 * 60 * 60 * 1000L)
     }
-
-    return data
   }
 }
 

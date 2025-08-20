@@ -262,21 +262,7 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
 
   @Override
   public void visitVariableDeclaration(@NotNull GrVariableDeclaration variableDeclaration) {
-    if (variableDeclaration.isTuple()) {
-      final GrModifierList list = variableDeclaration.getModifierList();
-
-      final PsiElement last = PsiUtil.skipWhitespacesAndComments(list.getLastChild(), false);
-      if (last != null) {
-        final IElementType type = last.getNode().getElementType();
-        if (type != GroovyTokenTypes.kDEF && type != GroovyTokenTypes.kVAR) {
-          myHolder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("tuple.declaration.should.end.with.def.modifier")).range(list).create();
-        }
-      }
-      else {
-        myHolder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("tuple.declaration.should.end.with.def.modifier")).range(list).create();
-      }
-    }
-    else {
+    if (!variableDeclaration.isTuple()) {
       GrTypeParameterList typeParameterList = findChildOfType(variableDeclaration, GrTypeParameterList.class);
       if (typeParameterList != null) {
         myHolder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("type.parameters.are.unexpected")).range(typeParameterList).create();

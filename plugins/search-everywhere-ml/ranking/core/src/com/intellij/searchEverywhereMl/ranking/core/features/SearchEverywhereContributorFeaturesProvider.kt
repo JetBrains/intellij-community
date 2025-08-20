@@ -54,23 +54,24 @@ internal class SearchEverywhereContributorFeaturesProvider {
   fun getFeatures(contributor: SearchEverywhereContributor<*>, mixedListInfo: SearchEverywhereMixedListInfo,
                   sessionStartTime: Long): List<EventPair<*>> {
     val contributor_id = contributor.searchProviderId
-    val info = arrayListOf<EventPair<*>>(
-      CONTRIBUTOR_INFO_ID.with(contributor_id),
-      CONTRIBUTOR_WEIGHT.with(contributor.sortWeight),
-    )
 
-    mixedListInfo.contributorPriorities[contributor.searchProviderId]?.let { priority ->
-      info.add(CONTRIBUTOR_PRIORITY.with(priority))
+    return buildList {
+      add(CONTRIBUTOR_INFO_ID.with(contributor_id))
+      add(CONTRIBUTOR_WEIGHT.with(contributor.sortWeight))
+
+      mixedListInfo.contributorPriorities[contributor.searchProviderId]?.let { priority ->
+        add(CONTRIBUTOR_PRIORITY.with(priority))
+      }
+
+      addAll(LOCAL_STATISTICS.getLocalStatistics(contributor_id, sessionStartTime))
+
+      val globalSummary = ContributorsGlobalSummaryManager.getInstance()
+      val contributorsStats = globalSummary.getStatistics(contributor_id)
+      val maxEventCount = globalSummary.eventCountRange.maxEventCount
+      addAll(GLOBAL_STATISTICS.getEventGlobalStatistics(contributorsStats, maxEventCount))
+
+      addAll(getStatisticianFeatures(contributor))
     }
-
-    info.addAll(LOCAL_STATISTICS.getLocalStatistics(contributor_id, sessionStartTime))
-
-    val globalSummary = ContributorsGlobalSummaryManager.getInstance()
-    val contributorsStats = globalSummary.getStatistics(contributor_id)
-    val maxEventCount = globalSummary.eventCountRange.maxEventCount
-    info.addAll(GLOBAL_STATISTICS.getEventGlobalStatistics(contributorsStats, maxEventCount))
-
-    return info + getStatisticianFeatures(contributor)
   }
 
   /**
@@ -82,14 +83,13 @@ internal class SearchEverywhereContributorFeaturesProvider {
     val marker = SearchEverywhereEssentialContributorMarker.getInstanceOrNull()
     val isEssentialContributor = EssentialContributor.checkEssential(contributor)
 
-    val result = mutableListOf<EventPair<*>>()
-    result.add(IS_ESSENTIAL_CONTRIBUTOR.with(isEssentialContributor))
+    return buildList {
+      add(IS_ESSENTIAL_CONTRIBUTOR.with(isEssentialContributor))
 
-    (marker as? SearchEverywhereEssentialContributorMlMarker)?.getContributorEssentialPrediction(contributor)?.let { prediction ->
-      result.add(ESSENTIAL_CONTRIBUTOR_PREDICTION.with(prediction))
+      (marker as? SearchEverywhereEssentialContributorMlMarker)?.getContributorEssentialPrediction(contributor)?.let { prediction ->
+        add(ESSENTIAL_CONTRIBUTOR_PREDICTION.with(prediction))
+      }
     }
-
-    return result
   }
 
   private fun getStatisticianFeatures(contributor: SearchEverywhereContributor<*>): List<EventPair<*>> {

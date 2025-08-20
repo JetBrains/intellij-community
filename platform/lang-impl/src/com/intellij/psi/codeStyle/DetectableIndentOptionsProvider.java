@@ -59,26 +59,27 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
 
     TimeStampedIndentOptions options;
     synchronized (document) {
-      options = getValidCachedIndentOptions(project, file, document);
+      options = getValidCachedIndentOptions(project, file, document, settings);
 
       if (options != null) {
         return options;
       }
 
-      options = getDefaultIndentOptions(project, file, document);
+      options = getDefaultIndentOptions(project, file, document, settings);
       options.associateWithDocument(document);
     }
 
-    scheduleDetectionInBackground(project, document, options);
+    scheduleDetectionInBackground(project, document, options, settings);
 
     return options;
   }
 
   protected void scheduleDetectionInBackground(@NotNull Project project,
                                                @NotNull Document document,
-                                               @NotNull TimeStampedIndentOptions options)
+                                               @NotNull TimeStampedIndentOptions options,
+                                               @NotNull CodeStyleSettings settings)
   {
-    new DetectAndAdjustIndentOptionsTask(project, document, options).scheduleInBackgroundForCommittedDocument();
+    new DetectAndAdjustIndentOptionsTask(project, document, options, settings).scheduleInBackgroundForCommittedDocument();
   }
 
   @Override
@@ -123,10 +124,13 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
     myDiscardedOptions.put(file, indentOptions);
   }
 
-  public TimeStampedIndentOptions getValidCachedIndentOptions(@NotNull Project project, @NotNull VirtualFile virtualFile, Document document) {
+  public TimeStampedIndentOptions getValidCachedIndentOptions(@NotNull Project project,
+                                                              @NotNull VirtualFile virtualFile,
+                                                              Document document,
+                                                              @NotNull CodeStyleSettings settings) {
     IndentOptions options = IndentOptions.retrieveFromAssociatedDocument(document);
     if (options instanceof TimeStampedIndentOptions cachedInDocument) {
-      final IndentOptions defaultIndentOptions = getDefaultIndentOptions(project, virtualFile, document);
+      final IndentOptions defaultIndentOptions = getDefaultIndentOptions(project, virtualFile, document, settings);
       if (!cachedInDocument.isOutdated(document, defaultIndentOptions)) {
         return cachedInDocument;
       }

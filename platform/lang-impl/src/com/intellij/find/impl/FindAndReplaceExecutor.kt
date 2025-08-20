@@ -6,10 +6,10 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
-import com.intellij.usageView.UsageInfo
 import com.intellij.usages.FindUsagesProcessPresentation
 import com.intellij.usages.UsageInfoAdapter
 import org.jetbrains.annotations.ApiStatus
+import java.util.function.Consumer
 import javax.swing.table.TableCellRenderer
 
 @ApiStatus.Internal
@@ -34,7 +34,7 @@ interface FindAndReplaceExecutor {
     previousUsages: Set<UsageInfoAdapter>,
     shouldThrottle: Boolean,
     disposableParent: Disposable,
-    onDocumentUpdated: (usageInfos: List<UsageInfo>) -> Unit?,
+    onUpdateModelCallback: Consumer<UsageInfoAdapter>,
     onResult: (UsageInfoAdapter) -> Boolean,
     onFinish: () -> Unit?,
   )
@@ -53,7 +53,7 @@ interface FindAndReplaceExecutor {
 
   fun validateModel(findModel: FindModel, onFinish: (Boolean) -> Any?)
 
-  fun performScopeSelection(scopeId: String, project: Project)
+  fun performScopeSelection(scopeId: String, scopesModelId:String, project: Project)
 
   fun cancelActivities()
 

@@ -6,6 +6,34 @@ load("@bazel_features//:features.bzl", "bazel_features")
 # to automatically update repositories list in community/MODULE.bazel
 def _kotlin_test_deps_impl(ctx):
     http_file(
+      name = "kotlin_test_deps_org_jetbrains_kotlinx_kotlinx_coroutines_core_1_10_2",
+      url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-coroutines-core/1.10.2/kotlinx-coroutines-core-1.10.2.jar",
+      sha256 = "319b653009d49c70982f98df29cc84fc7025b092cb0571c8e7532e3ad4366dae",
+      downloaded_file_path = "kotlinx_coroutines_core_1_10_2.jar"
+    )
+
+    http_file(
+      name = "kotlin_test_deps_org_jetbrains_kotlinx_kotlinx_coroutines_core_jvm_1_10_2",
+      url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-coroutines-core-jvm/1.10.2/kotlinx-coroutines-core-jvm-1.10.2.jar",
+      sha256 = "5ca175b38df331fd64155b35cd8cae1251fa9ee369709b36d42e0a288ccce3fd",
+      downloaded_file_path = "kotlinx_coroutines_core_jvm_1_10_2.jar"
+    )
+
+    http_file(
+      name = "kotlin_test_deps_org_jetbrains_annotations_23_0_0",
+      url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/annotations/23.0.0/annotations-23.0.0.jar",
+      sha256 = "7b0f19724082cbfcbc66e5abea2b9bc92cf08a1ea11e191933ed43801eb3cd05",
+      downloaded_file_path = "annotations_23_0_0.jar",
+    )
+
+    http_file(
+      name = "kotlin_test_deps_org_jetbrains_kotlin_kotlin_stdlib_2_1_0",
+      url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-stdlib/2.1.0/kotlin-stdlib-2.1.0.jar",
+      sha256 = "d6f91b7b0f306cca299fec74fb7c34e4874d6f5ec5b925a0b4de21901e119c3f",
+      downloaded_file_path = "kotlin_stdlib_2_1_0.jar",
+    )
+
+    http_file(
         name = "kotlin_test_deps_annotations",
         url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/annotations/26.0.2/annotations-26.0.2.jar",
         sha256 = "2037be378980d3ba9333e97955f3b2cde392aa124d04ca73ce2eee6657199297",

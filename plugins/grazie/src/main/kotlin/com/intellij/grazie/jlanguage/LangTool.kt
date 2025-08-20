@@ -7,7 +7,6 @@ import com.intellij.grazie.ide.msg.GrazieStateLifecycle
 import com.intellij.grazie.jlanguage.broker.GrazieDynamicDataBroker
 import com.intellij.grazie.jlanguage.filters.UppercaseMatchFilter
 import com.intellij.grazie.jlanguage.hunspell.LuceneHunspellDictionary
-import com.intellij.grazie.utils.text
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.util.containers.ContainerUtil
 import org.apache.commons.text.similarity.LevenshteinDistance
@@ -162,7 +161,7 @@ object LangTool : GrazieStateLifecycle {
   private fun removeVerySimilarExamples(examples: List<IncorrectExample>): List<IncorrectExample> {
     val accepted = ArrayList<IncorrectExample>()
     for (example in examples) {
-      if (accepted.none { it.text.isSimilarTo(example.text) }) {
+      if (accepted.none { it.example.isSimilarTo(example.example) }) {
         val corrections = example.corrections.filter { it.isNotBlank() }.take(3)
         accepted.add(IncorrectExample(example.example, corrections))
         if (accepted.size > 5) break

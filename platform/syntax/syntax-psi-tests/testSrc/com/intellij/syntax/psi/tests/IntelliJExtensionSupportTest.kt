@@ -6,7 +6,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFileManagerListener
 import com.intellij.platform.syntax.extensions.ExtensionPointKey
-import com.intellij.platform.syntax.extensions.ExtensionSupport
+import com.intellij.platform.syntax.extensions.currentExtensionSupport
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.registerExtension
 import org.junit.jupiter.api.AfterEach
@@ -32,7 +32,7 @@ class IntelliJExtensionSupportTest {
 
   @Test
   fun testSupport() {
-    val extensionSupport = ExtensionSupport()
+    val extensionSupport = currentExtensionSupport()
     val pointKey = ExtensionPointKey<VirtualFileManagerListener>("com.intellij.virtualFileManagerListener")
     val extensions = extensionSupport.getExtensions(pointKey)
 

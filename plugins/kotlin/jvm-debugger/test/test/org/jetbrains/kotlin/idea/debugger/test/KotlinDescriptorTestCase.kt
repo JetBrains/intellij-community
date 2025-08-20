@@ -478,6 +478,12 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase(),
             else
                 compilerFacility.compileExternalLibrary(library, librarySrcDirectory, libraryOutputDirectory)
         }
+        for (library in preferences[DebuggerPreferenceKeys.ATTACH_LIBRARY_BY_LABEL]) {
+            addLibraryByLabelDependency(compilerFacility, library)
+        }
+        for (library in preferences[DebuggerPreferenceKeys.ATTACH_JAVA_AGENT_BY_LABEL]) {
+            addJavaAgentByLabelDependency(compilerFacility, library)
+        }
 
         compilerFacility.compileLibrary(librarySrcDirectory, libraryOutputDirectory)
         compileAdditionalLibraries(compilerFacility)
@@ -604,7 +610,20 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase(),
         return debuggerSession
     }
 
+    @Deprecated("Use org.jetbrains.kotlin.idea.debugger.test.KotlinDescriptorTestCase.addLabelDependency instead")
     open fun addMavenDependency(compilerFacility: DebuggerTestCompilerFacility, library: String) {
+    }
+
+    /**
+     * attach external dependency using // ATTACH_LIBRARY_BY_LABEL: notation
+     */
+    open fun addLibraryByLabelDependency(compilerFacility: DebuggerTestCompilerFacility, library: String) {
+    }
+
+    /**
+     * add javaagent using // ATTACH_JAVA_AGENT_BY_LABEL: notation
+     */
+    open fun addJavaAgentByLabelDependency(compilerFacility: DebuggerTestCompilerFacility, library: String) {
     }
 
     abstract fun doMultiFileTest(files: TestFiles, preferences: DebuggerPreferences)

@@ -37,10 +37,9 @@
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
-    <orderEntry type="module" module-name="intellij.spellchecker" />
     <orderEntry type="module" module-name="intellij.platform.diff" />
-    <orderEntry type="module" module-name="intellij.textmate.core" />
-    <orderEntry type="module" module-name="intellij.platform.indexing.impl" />
+    <orderEntry type="module" module-name="intellij.textmate.core" exported="" />
+    <orderEntry type="module" module-name="intellij.textmate.joni" exported="" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.editor.ex" />
     <orderEntry type="library" name="jackson" level="project" />
@@ -51,7 +50,6 @@
     <orderEntry type="library" name="caffeine" level="project" />
     <orderEntry type="module" module-name="fleet.fastutil" />
     <orderEntry type="library" name="fastutil-min" level="project" />
-    <orderEntry type="module" module-name="intellij.textmate.joni" />
     <orderEntry type="module" module-name="intellij.platform.util.xmlDom" />
   </component>
 </module>

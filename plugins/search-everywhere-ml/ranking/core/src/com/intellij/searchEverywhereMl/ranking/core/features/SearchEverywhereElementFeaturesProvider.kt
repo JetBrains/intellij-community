@@ -101,21 +101,24 @@ abstract class SearchEverywhereElementFeaturesProvider(private val supportedCont
   }
 
   protected fun getNameMatchingFeatures(nameOfFoundElement: String, searchQuery: String): Collection<EventPair<*>> {
-    val features = mutableMapOf<String, Any>()
-    PrefixMatchingUtil.calculateFeatures(nameOfFoundElement, searchQuery, features)
-    val result = arrayListOf<EventPair<*>>(
-      NAME_LENGTH.with(nameOfFoundElement.length)
-    )
-    features.forEach { (key, value) ->
-      val field = prefixMatchingNameFeatureToField[key]
-      setMatchValueToField(value, field)?.let {
-        result.add(it)
+    return buildList {
+      buildMap {
+        PrefixMatchingUtil.calculateFeatures(nameOfFoundElement, searchQuery, this)
+      }.map { (featureName, value) ->
+        val field = prefixMatchingNameFeatureToField[featureName]
+        setMatchValueToField(value, field)
+      }.filterNotNull()
+        .forEach {
+        add(it)
       }
+
+
+      add(NAME_LENGTH.with(nameOfFoundElement.length))
+
+      addAll(WholeTextMatchUtil.calculateFeatures(nameOfFoundElement, searchQuery).map { (key, value) ->
+        setMatchValueToField(value, wholeMatchingNameFeatureToField[key])
+      }.filterNotNull())
     }
-    result.addAll(WholeTextMatchUtil.calculateFeatures(nameOfFoundElement, searchQuery).map { (key, value) ->
-      setMatchValueToField(value, wholeMatchingNameFeatureToField[key])
-    }.filterNotNull())
-    return result
   }
 
   protected fun getQueryEmbedding(queryText: String, split: Boolean = false): FloatTextEmbedding? {

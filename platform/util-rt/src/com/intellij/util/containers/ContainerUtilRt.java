@@ -25,7 +25,7 @@ public final class ContainerUtilRt {
   @ApiStatus.ScheduledForRemoval
   @NotNull
   @Contract(value = "_ -> new", pure = true)
-  public static <T> ArrayList<T> newArrayList(@NotNull T... elements) {
+  public static <T> ArrayList<T> newArrayList(T... elements) {
     ArrayList<T> list = new ArrayList<>(elements.length);
     Collections.addAll(list, elements);
     return list;
@@ -38,7 +38,7 @@ public final class ContainerUtilRt {
   @ApiStatus.ScheduledForRemoval
   @NotNull
   @Contract(value = "_ -> new", pure = true)
-  public static <T> LinkedHashSet<T> newLinkedHashSet(@NotNull T... elements) {
+  public static <T> LinkedHashSet<T> newLinkedHashSet(T... elements) {
     return new LinkedHashSet<>(Arrays.asList(elements));
   }
 
@@ -66,15 +66,13 @@ public final class ContainerUtilRt {
       throw new IndexOutOfBoundsException("Index: " + index);
     }
 
-    @NotNull
     @Override
-    public Object[] toArray() {
+    public Object @NotNull [] toArray() {
       return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
     }
 
-    @NotNull
     @Override
-    public <E> E[] toArray(@NotNull E[] a) {
+    public <E> E @NotNull [] toArray(E @NotNull [] a) {
       if (a.length != 0) {
         a[0] = null;
       }

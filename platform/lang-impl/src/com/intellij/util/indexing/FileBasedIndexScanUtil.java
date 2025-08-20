@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -13,8 +13,8 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.impl.cache.impl.id.IdIndex;
 import com.intellij.psi.impl.cache.impl.id.IdIndexEntry;
 import com.intellij.psi.search.FileTypeIndex;
@@ -123,7 +123,7 @@ public final class FileBasedIndexScanUtil {
         }
         return true;
       });
-      PersistentFS fs = PersistentFS.getInstance();
+      ManagingFS fs = ManagingFS.getInstance();
       IntIterator iterator = ids.iterator();
       while (iterator.hasNext()) {
         int id = iterator.nextInt();
@@ -249,7 +249,7 @@ public final class FileBasedIndexScanUtil {
         }
         return true;
       });
-      PersistentFS fs = PersistentFS.getInstance();
+      ManagingFS fs = ManagingFS.getInstance();
       IntIterator iterator = ids.iterator();
       while (iterator.hasNext()) {
         int id = iterator.nextInt();

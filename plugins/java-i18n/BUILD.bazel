@@ -57,7 +57,7 @@ jvm_library(
 jvm_library(
   name = "java-i18n_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
   associates = [":java-i18n"],
   deps = [
     "//java/java-indexing-api:indexing",

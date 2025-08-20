@@ -1,0 +1,9 @@
+<idea-plugin>
+  <dependencies>
+    <plugin id="org.intellij.intelliLang"/>
+    <module name="intellij.platform.backend"/>
+  </dependencies>
+  <extensions defaultExtensionNs="com.intellij">
+    <jps.plugin/>
+  </extensions>
+</idea-plugin>

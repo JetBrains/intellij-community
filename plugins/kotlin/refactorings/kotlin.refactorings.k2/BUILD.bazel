@@ -71,6 +71,8 @@ jvm_library(
     "//plugins/kotlin/base/indices",
     "@lib//:fastutil-min",
     "//plugins/kotlin/j2k/shared",
+    "//platform/ide-core-impl",
+    "//plugins/kotlin/kotlin.ide:ide",
   ],
   runtime_deps = [":kotlin-refactorings-k2_resources"]
 )

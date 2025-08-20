@@ -19,6 +19,7 @@ import com.jetbrains.python.codeInsight.completion.PythonCompletionWeigher.NOT_I
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyImportStatementBase
 import com.jetbrains.python.psi.PyReferenceExpression
+import com.jetbrains.python.psi.PyTargetExpression
 import com.jetbrains.python.psi.resolve.fromFoothold
 import com.jetbrains.python.psi.resolve.resolveQualifiedName
 import com.jetbrains.python.psi.types.PyModuleType
@@ -97,6 +98,7 @@ class PyModuleNameCompletionContributor : CompletionContributor(), DumbAware {
 
     return parent is PyReferenceExpression
            && !parent.isQualified
+           && parameters.originalPosition?.parent !is PyTargetExpression
            && PsiTreeUtil.getParentOfType(element, PyImportStatementBase::class.java) == null
   }
 }

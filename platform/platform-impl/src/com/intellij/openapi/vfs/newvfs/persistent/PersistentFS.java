@@ -63,6 +63,10 @@ public abstract class PersistentFS extends ManagingFS {
   @Deprecated(forRemoval = true)
   public abstract void clearIdCache();
 
+  /** @return children already cached in VFS (persistent) storage. It may be _not all_ the actual children! */
+  //MAYBE RC: rename to listCachedNames()
+  //MAYBE RC: remove this method, use FSRecordsImpl.list() instead
+  @ApiStatus.Internal
   public abstract String @NotNull [] listPersisted(@NotNull VirtualFile parent);
 
   @ApiStatus.Internal
@@ -116,6 +120,11 @@ public abstract class PersistentFS extends ManagingFS {
 
   public abstract int getCurrentContentId(@NotNull VirtualFile file);
 
-  // 'true' if the FS persisted at least one child, or it has never been queried for children
-  public abstract boolean mayHaveChildren(int id);
+  /**
+   * @return false if fileId's children are known to VFS, and they are empty (=have no children), true otherwise
+   * (=either do have known children, or children are unknown, hence _may_ be present)
+   */
+  //MAYBE RC: rename to maybeHaveChildren() or to !hasZeroChildren()?
+  //MAYBE RC: make it @Internal?
+  public abstract boolean mayHaveChildren(int fileId);
 }

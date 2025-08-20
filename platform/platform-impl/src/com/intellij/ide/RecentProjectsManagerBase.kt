@@ -638,6 +638,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
     })
     val nextIndex = index + 1
     if (nextIndex == openPaths.size) {
+      project?.let { fireLastProjectsReopenedEvent(it) }
       return someProjectWasOpened || project != null
     }
     else {
@@ -695,14 +696,21 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
 
     val projectManager = ProjectManagerEx.getInstanceEx()
     try {
+      var activeProject: Project? = null
+
       val iterator = taskList.iterator()
       while (iterator.hasNext()) {
         val (path, coroutineContext, options) = iterator.next()
-        withContext(coroutineContext ?: EmptyCoroutineContext) {
+        val project = withContext(coroutineContext ?: EmptyCoroutineContext) {
           projectManager.openProjectAsync(path, options)
+        }
+        if (activeProject == null) {
+          activeProject = project
         }
         iterator.remove()
       }
+
+      activeProject?.let { fireLastProjectsReopenedEvent(it) }
     }
     finally {
       // cleanup unused pre-allocated frames if the operation failed or was canceled
@@ -968,6 +976,12 @@ int32 "extendedState"
 private fun fireChangeEvent() {
   ApplicationManager.getApplication().invokeLater {
     ApplicationManager.getApplication().messageBus.syncPublisher(RecentProjectsManager.RECENT_PROJECTS_CHANGE_TOPIC).change()
+  }
+}
+
+private suspend fun fireLastProjectsReopenedEvent(activeProject: Project) {
+  withContext(Dispatchers.EDT) {
+    application.messageBus.syncPublisher(RecentProjectsManager.LAST_PROJECTS_TOPIC).lastProjectsReopened(activeProject)
   }
 }
 

@@ -48,7 +48,7 @@ public final class SslKeyStore extends DelegateKeyStore {
   public static void loadKey(@NotNull String alias,
                              @NotNull String clientKeyPath,
                              @Nullable String clientCertPath,
-                             @Nullable char[] password) {
+                             char @Nullable [] password) {
     try {
       Pair<PrivateKey, List<X509Certificate>> keyAndCerts = SslUtil.readPrivateKeyAndCertificate(clientKeyPath, password);
       List<X509Certificate> certificates = clientCertPath == null ? keyAndCerts.second : SslUtil.loadCertificates(clientCertPath);
@@ -107,7 +107,7 @@ public final class SslKeyStore extends DelegateKeyStore {
     private final Key key;
     private final Certificate[] certChain;
 
-    private KeyEntry(@NotNull String alias, @NotNull Key key, @Nullable Certificate[] certChain) {
+    private KeyEntry(@NotNull String alias, @NotNull Key key, Certificate @Nullable [] certChain) {
       this.alias = alias;
       this.key = key;
       this.certChain = certChain;

@@ -72,7 +72,7 @@ class JpsCompilationOutputLoaderTest : BasePlatformTestCase() {
     assertThat(affectedModules).hasSize(1)
     val affectedModule = affectedModules[0]
     assertEquals("resources-production", affectedModule!!.type)
-    assertEquals("intellij.sh", affectedModule.name)
+    assertEquals("intellij.sh.plugin", affectedModule.name)
   }
 
   fun testTargetFolderNotExist() {
@@ -82,7 +82,7 @@ class JpsCompilationOutputLoaderTest : BasePlatformTestCase() {
     val types = affectedModules.map { it.type }
     val names = affectedModules.map { it.name }
     UsefulTestCase.assertSameElements(types, "java-test", "production", "resources-test", "resources-production")
-    UsefulTestCase.assertSameElements(names, "intellij.cidr.externalSystem", "intellij.platform.ssh.integrationTests", "intellij.sh")
+    UsefulTestCase.assertSameElements(names, "intellij.cidr.externalSystem", "intellij.platform.ssh.integrationTests", "intellij.sh.plugin")
   }
 
   fun testChangedTest() {

@@ -1049,7 +1049,6 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.ide.MnemonicUsageCollector"/>
 
     <statistics.counterUsagesCollector implementationClass="com.intellij.diagnostic.UILatencyLogger"/>
-    <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.progress.impl.fus.FreezeUiUsageCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.notification.impl.NotificationsEventLogGroup"/>
     <statistics.counterUsagesCollector
       implementationClass="com.intellij.featureStatistics.FeatureUsageTrackerImpl$ProductivityUsageCollector"/>

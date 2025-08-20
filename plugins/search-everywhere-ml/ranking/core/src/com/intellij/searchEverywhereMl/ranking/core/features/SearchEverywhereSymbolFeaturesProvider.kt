@@ -35,7 +35,7 @@ internal class SearchEverywhereSymbolFeaturesProvider
                                   elementPriority: Int,
                                   cache: FeaturesProviderCache?,
                                   correction: SearchEverywhereSpellCheckResult): List<EventPair<*>> {
-    val psiElement = SearchEverywherePsiElementFeaturesProviderUtils.getPsiElement(element)
+    val psiElement = SearchEverywherePsiElementFeaturesProviderUtils.getPsiElementOrNull(element) ?: return emptyList()
     return getParentStatisticianFeatures(psiElement)
   }
 
@@ -45,7 +45,7 @@ internal class SearchEverywhereSymbolFeaturesProvider
     val service = service<SearchEverywhereStatisticianService>()
 
     return service.getCombinedStats(parent)?.let { stats ->
-      arrayListOf(
+      listOf(
         PARENT_STAT_USE_COUNT_DATA_KEY.with(stats.useCount),
         PARENT_STAT_IS_MOST_POPULAR_DATA_KEY.with(stats.isMostPopular),
         PARENT_STAT_RECENCY_DATA_KEY.with(stats.recency),

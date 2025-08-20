@@ -1733,7 +1733,7 @@ public final class UIUtil {
         component = getDeepestComponentAtForComponent(parent, x, y, rootPane.getContentPane());
       }
     }
-    if (component != null && component.getParent() instanceof JLayeredPane) { // Handle LoadingDecorator
+    if (component != null && component.getParent() instanceof LoadingDecoratorLayeredPane) {
       Component[] components = ((JLayeredPane)component.getParent()).getComponentsInLayer(JLayeredPane.DEFAULT_LAYER);
       if (components.length == 1 && ArrayUtilRt.indexOf(components, component, 0, components.length) == -1) {
         component = getDeepestComponentAtForComponent(parent, x, y, components[0]);

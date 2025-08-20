@@ -18,7 +18,6 @@ import com.intellij.execution.ui.RunToolbarPopupKt;
 import com.intellij.icons.AllIcons;
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionIdProvider;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.remoting.ActionRemotePermissionRequirements;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -144,7 +143,7 @@ public class ExecutorAction extends AnAction implements DumbAware, RequiresPermi
     }
     else {
       if (RunConfigurationsComboBoxAction.hasRunCurrentFileItem(project)) {
-        // don't compute current file to run if editors are not yet loaded
+        // don't compute the current file to run if editors are not yet loaded
         if (!project.isDefault() && !StartupManager.getInstance(project).postStartupActivityPassed()) {
           presentation.setEnabled(false);
           return;
@@ -184,7 +183,7 @@ public class ExecutorAction extends AnAction implements DumbAware, RequiresPermi
                                                  Project project,
                                                  RunnerAndConfigurationSettings selectedSettings,
                                                  Presentation presentation) {
-    // We can consider to add spinning to the inlined run actions. But there is a problem with redrawing
+    // We can consider adding spinning to the inlined run actions. But there is a problem with redrawing
     ExecutorActionStatus status = ExecutorActionStatus.NORMAL;
     if (ActionPlaces.NEW_UI_RUN_TOOLBAR.equals(e.getPlace())) {
       RunStatusHistory startHistory = RunStatusHistory.getInstance(project);
@@ -477,7 +476,6 @@ public class ExecutorAction extends AnAction implements DumbAware, RequiresPermi
     long myPsiModCount,
     @NotNull List<RunnerAndConfigurationSettings> myRunConfigs) {
   }
-
 
   private record RunCurrentFileActionStatus(
     boolean enabled,

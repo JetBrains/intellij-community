@@ -43,7 +43,6 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.encoding.EncodingManager
 import com.intellij.openapi.vfs.encoding.EncodingManagerImpl
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase
-import com.intellij.openapi.vfs.newvfs.ManagingFS
 import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.openapi.vfs.newvfs.RefreshQueueImpl
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
@@ -323,8 +322,8 @@ fun Application.checkEditorsReleased() {
 @TestOnly
 @Internal
 fun Application.clearIdCache() {
-  val managingFS = serviceIfCreated<ManagingFS>() ?: return
-  (managingFS as PersistentFS).clearIdCache()
+  //val managingFS = serviceIfCreated<ManagingFS>() ?: return
+  //(managingFS as PersistentFS).clearIdCache()
 }
 
 @TestOnly

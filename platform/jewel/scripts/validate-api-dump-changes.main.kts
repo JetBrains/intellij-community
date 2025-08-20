@@ -169,7 +169,7 @@ private val baseCommit = runBlocking {
         requireGhTool()
         runCommand("gh pr view ${getPrNumber()} --json baseRefOid -q .baseRefOid", baseDir).getOrThrow().trim()
     } else {
-        echoWarn("GitHub PR number not found, falling back to checking against HEAD~1 instead")
+        printlnWarn("GitHub PR number not found, falling back to checking against HEAD~1 instead")
         runCommand("git rev-parse HEAD~1", baseDir).getOrThrow().trim()
     }
 }
@@ -210,7 +210,7 @@ runBlocking {
         summaryFile.writeText(summary)
         println("Summary written to ${summaryFile.absolutePath}")
     } else {
-        echoWarn("GITHUB_STEP_SUMMARY environment variable not set")
+        printlnWarn("GITHUB_STEP_SUMMARY environment variable not set")
     }
 }
 

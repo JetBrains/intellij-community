@@ -11,6 +11,10 @@ jvm_library(
   name = "common",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  runtime_deps = [":common_resources"]
+  exports = ["//plugins/textmate"],
+  runtime_deps = [
+    ":common_resources",
+    "//plugins/textmate",
+  ]
 )
 ### auto-generated section `build intellij.textmate.common` end

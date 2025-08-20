@@ -881,7 +881,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
 
     @ApiStatus.Internal
     @Override
-    public void collectAffectedMarkersAndShiftSubtrees(
+    protected void collectAffectedMarkersAndShiftSubtrees(
       @Nullable IntervalNode<FoldRegionImpl> root,
       int start,
       int end,
@@ -914,7 +914,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
 
     @ApiStatus.Internal
     @Override
-    public void fireBeforeRemoved(@NotNull FoldRegionImpl markerEx) {
+    protected void fireBeforeRemoved(@NotNull FoldRegionImpl markerEx) {
       if (markerEx.getUserData(DO_NOT_NOTIFY) == null) {
         beforeFoldRegionDisposed(markerEx);
       }
@@ -936,7 +936,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
       }
 
       @Override
-      public void onRemoved() {
+      protected void onRemoved() {
         for (Supplier<? extends FoldRegionImpl> getter : intervals) {
           removeRegionFromGroup(getter.get());
         }

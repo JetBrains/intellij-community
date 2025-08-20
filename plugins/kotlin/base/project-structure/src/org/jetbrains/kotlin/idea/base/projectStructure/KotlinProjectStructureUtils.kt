@@ -118,6 +118,15 @@ val JpsModuleSourceRootType<*>.sourceRootType: KotlinSourceRootType?
         else -> null
     }
 
+fun ProjectFileIndex.isInTestSource(virtualFile: VirtualFile): Boolean {
+    if (virtualFile is VirtualFileWindow) {
+        return false
+    }
+    val sourceRootType = runReadAction {
+        getContainingSourceRootType(virtualFile)
+    }
+    return sourceRootType in testRootTypes
+}
 
 fun ProjectFileIndex.getKotlinSourceRootType(virtualFile: VirtualFile): KotlinSourceRootType? {
     // Ignore injected files

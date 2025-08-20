@@ -9,6 +9,7 @@ import org.jetbrains.intellij.build.dev.BuildRequest
 import org.jetbrains.intellij.build.dev.buildProductInProcess
 import org.jetbrains.intellij.build.dev.getIdeSystemProperties
 import org.jetbrains.intellij.build.telemetry.withTracer
+import java.io.File
 import java.nio.file.Path
 import kotlin.io.path.Path
 
@@ -35,6 +36,17 @@ fun buildDevMain(): java.util.AbstractMap.SimpleImmutableEntry<String, Collectio
     }
   }
   System.setProperty(PathManager.PROPERTY_HOME_PATH, info.systemProperties.getValue(PathManager.PROPERTY_HOME_PATH))
+  
+  //DevKitApplicationPatcher sets custom values for idea.config.path and idea.system.path only, so we need to explicitly set idea.plugins.path and idea.log.path here to avoid a warning at runtime
+  val configPath = systemProperties[PathManager.PROPERTY_CONFIG_PATH]
+  if (configPath != null && !systemProperties.containsKey(PathManager.PROPERTY_PLUGINS_PATH)) {
+    systemProperties.setProperty(PathManager.PROPERTY_PLUGINS_PATH, "$configPath${File.separator}plugins")
+  }
+  val systemPath = systemProperties[PathManager.PROPERTY_SYSTEM_PATH]
+  if (systemPath != null && !systemProperties.containsKey(PathManager.PROPERTY_LOG_PATH)) {
+    systemProperties.setProperty(PathManager.PROPERTY_LOG_PATH, "$systemPath${File.separator}log")
+  }
+  
   return java.util.AbstractMap.SimpleImmutableEntry(info.mainClassName, info.classPath)
 }
 
@@ -54,6 +66,7 @@ fun buildDevImpl(): BuildDevInfo {
     buildProductInProcess(
       BuildRequest(
         platformPrefix = System.getProperty("idea.platform.prefix", "idea"),
+        baseIdePlatformPrefixForFrontend = System.getProperty("dev.build.base.ide.platform.prefix.for.frontend"),
         additionalModules = getAdditionalPluginMainModules(),
         projectDir = ideaProjectRoot,
         keepHttpClient = false,

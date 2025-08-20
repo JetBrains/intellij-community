@@ -10,6 +10,7 @@ import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
 import org.jetbrains.intellij.build.dependencies.DependenciesProperties
 import org.jetbrains.intellij.build.impl.libraries.isLibraryModule
 import org.jetbrains.intellij.build.impl.maven.*
+import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleDependency
 import kotlin.io.path.exists
@@ -41,7 +42,7 @@ internal object JewelMavenArtifacts {
   private val transitiveJewelDependencies = mapOf(
     "jewel-foundation" to emptySet(),
     "jewel-ui" to emptySet(),
-    "jewel-decorated-window" to setOf("jewel-foundation"),
+    "jewel-decorated-window" to setOf("jewel-foundation", "jewel-ui"),
     "jewel-markdown-core" to setOf("jewel-foundation"),
     "jewel-markdown-extensions-autolink" to setOf("jewel-foundation", "jewel-ui"),
     "jewel-markdown-extensions-gfm-alerts" to setOf("jewel-foundation", "jewel-ui"),
@@ -197,13 +198,15 @@ internal object JewelMavenArtifacts {
 
   /** See https://central.sonatype.org/publish/requirements */
   private fun validateForMavenCentralPublication(artifacts: GeneratedMavenArtifacts) {
-    val sources = artifacts.coordinates.getFileName("sources", "jar")
-    check(artifacts.files.any { it.name == sources }) {
-      "No $sources is generated for the module ${artifacts.module.name}"
-    }
-    val javadoc = artifacts.coordinates.getFileName("javadoc", "jar")
-    check(artifacts.files.any { it.name == javadoc }) {
-      "No $javadoc is generated for the module ${artifacts.module.name}"
+    if (artifacts.module.getSourceRoots(JavaSourceRootType.SOURCE).any()) {
+      val sources = artifacts.coordinates.getFileName("sources", "jar")
+      check(artifacts.files.any { it.name == sources }) {
+        "No $sources is generated for the module ${artifacts.module.name}"
+      }
+      val javadoc = artifacts.coordinates.getFileName("javadoc", "jar")
+      check(artifacts.files.any { it.name == javadoc }) {
+        "No $javadoc is generated for the module ${artifacts.module.name}"
+      }
     }
     val pom = artifacts.coordinates.getFileName(packaging = "pom")
     val pomXml = artifacts.files.singleOrNull { it.name == pom }

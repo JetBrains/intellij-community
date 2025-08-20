@@ -1,0 +1,14 @@
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+
+jvm_resources(
+  name = "tests_test_resources",
+  files = glob(["testResources/**/*"]),
+  strip_prefix = "testResources",
+  visibility = ["//visibility:public"],  # used by @ultimate//:dotenv-tests_test_lib
+)
+
+filegroup(
+  name = "tests_test_sources",
+  srcs = glob(["java/**/*.kt", "java/**/*.java"], allow_empty = True),
+  visibility = ["//visibility:public"],  # used by @ultimate//:dotenv-tests_test_lib
+)

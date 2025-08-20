@@ -37,7 +37,6 @@ import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.AsyncEventSupport;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.PsiBinaryFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -1220,7 +1219,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   @Override
   public @Nullable VirtualFile findFileById(int id) {
-    return PersistentFS.getInstance().findFileById(id);
+    return ManagingFS.getInstance().findFileById(id);
   }
 
   @Override

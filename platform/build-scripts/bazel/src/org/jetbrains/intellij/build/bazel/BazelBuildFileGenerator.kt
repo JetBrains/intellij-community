@@ -25,8 +25,10 @@ import org.jetbrains.kotlin.jps.model.JpsKotlinFacetModuleExtension
 import java.nio.file.Path
 import java.util.IdentityHashMap
 import java.util.TreeMap
+import kotlin.io.path.extension
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.relativeTo
+import kotlin.io.path.walk
 import kotlin.reflect.KProperty1
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.jvm.javaField
@@ -537,14 +539,7 @@ internal class BazelBuildFileGenerator(
         else if (module.name == "fleet.rpc") {
           option("exported_compiler_plugins", listOf("@lib//:rpc-plugin"))
         }
-        else if (module.name == "fleet.noria.cells" ||
-                 module.name == "fleet.noria.html" ||
-                 module.name == "fleet.noria.ui" ||
-                 module.name == "fleet.noria.ui.examples" ||
-                 module.name == "fleet.noria.windowManagement.api" ||
-                 module.name == "fleet.noria.windowManagement.extensions" ||
-                 module.name == "fleet.noria.windowManagement.impl" ||
-                 module.name == "fleet.noria.windowManagement.implDesktopMacOS") {
+        else if (module.name == "fleet.noria.cells") {
           option("exported_compiler_plugins", listOf("@lib//:noria-plugin"))
         }
 
@@ -711,12 +706,12 @@ internal class BazelBuildFileGenerator(
     }
 
     if (!module.isCommunity && module.targetName.startsWith("dotenv-") && resources[0].baseDirectory.contains("community")) {
+      val productionLabel = "@community//plugins/env-files-support/${module.targetName.removePrefix("dotenv-")}:${module.targetName.removePrefix("dotenv-")}"
       val fixedTargetsList = if (forTests) {
-        // skip for now
-        emptyList()
+        listOf(BazelLabel("$productionLabel$TEST_RESOURCES_TARGET_SUFFIX", module))
       }
       else {
-        listOf(BazelLabel("@community//plugins/env-files-support:${module.targetName}_resources", module))
+        listOf(BazelLabel("$productionLabel$PRODUCTION_RESOURCES_TARGET_SUFFIX", module))
       }
       return GenerateResourcesResult(resourceTargets = fixedTargetsList)
     }
@@ -823,9 +818,7 @@ private fun computeSources(module: JpsModule, contentRoots: List<Path>, bazelBui
       }
 
       if (type == JavaSourceRootType.SOURCE || type == JavaSourceRootType.TEST_SOURCE) {
-        val rootProperties = root.properties
-        if ((rootProperties !is JavaSourceRootProperties || !rootProperties.isForGeneratedSources) && moduleWithForm.contains (module.name)) {
-          // rootDir.walk().any { it.extension == "form" }
+        if (!(root.properties as JavaSourceRootProperties).isForGeneratedSources && rootDir.walk().any { it.extension == "form" }) {
           sequenceOf(SourceDirDescriptor(glob = listOf("$prefix**/*.kt", "$prefix**/*.java", "$prefix**/*.form"), excludes = excludes))
         }
         else {

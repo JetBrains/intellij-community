@@ -16,6 +16,7 @@ public final class Unsafe {
   private static final MethodHandle getObjectVolatile;
   private static final MethodHandle compareAndSwapObject;
   private static final MethodHandle compareAndSwapInt;
+  private static final MethodHandle getIntVolatile;
   private static final MethodHandle compareAndSwapLong;
   private static final MethodHandle getAndAddInt;
   private static final MethodHandle objectFieldOffset;
@@ -29,6 +30,7 @@ public final class Unsafe {
       getObjectVolatile = find("getObjectVolatile", Object.class, Object.class, long.class);
       compareAndSwapObject = find("compareAndSwapObject", boolean.class, Object.class, long.class, Object.class, Object.class);
       compareAndSwapInt = find("compareAndSwapInt", boolean.class, Object.class, long.class, int.class, int.class);
+      getIntVolatile = find("getIntVolatile", int.class, Object.class, long.class);
       compareAndSwapLong = find("compareAndSwapLong", boolean.class, Object.class, long.class, long.class, long.class);
       getAndAddInt = find("getAndAddInt", int.class, Object.class, long.class, int.class);
       objectFieldOffset = find("objectFieldOffset", long.class, Field.class);
@@ -52,6 +54,14 @@ public final class Unsafe {
   static boolean compareAndSwapInt(Object object, long offset, int expected, int value) {
     try {
       return (boolean)compareAndSwapInt.invokeExact(object, offset, expected, value);
+    }
+    catch (Throwable throwable) {
+      throw new RuntimeException(throwable);
+    }
+  }
+  static int getIntVolatile(Object object, long offset) {
+    try {
+      return (int)getIntVolatile.invokeExact(object, offset);
     }
     catch (Throwable throwable) {
       throw new RuntimeException(throwable);

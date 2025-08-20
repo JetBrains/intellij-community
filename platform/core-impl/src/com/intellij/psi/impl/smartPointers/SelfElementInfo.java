@@ -3,7 +3,6 @@ package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
 import com.intellij.codeInsight.multiverse.CodeInsightContextUtil;
-import com.intellij.codeInsight.multiverse.CodeInsightContexts;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
@@ -24,6 +23,7 @@ import java.util.List;
 @ApiStatus.Internal
 public class SelfElementInfo extends SmartPointerElementInfo {
   private static final FileDocumentManager ourFileDocManager = FileDocumentManager.getInstance();
+
   private final @NotNull CodeInsightContext myContext;
   private volatile Identikit myIdentikit;
   private final VirtualFile myVirtualFile;
@@ -152,13 +152,6 @@ public class SelfElementInfo extends SmartPointerElementInfo {
     setRange(null);
   }
 
-  public static @Nullable PsiFile restoreFileFromVirtual(@NotNull VirtualFile virtualFile,
-                                                         @NotNull Project project,
-                                                         @NotNull Language language) {
-    return restoreFileFromVirtual(virtualFile, CodeInsightContexts.anyContext(), project, language);
-  }
-
-  @ApiStatus.Internal
   public static @Nullable PsiFile restoreFileFromVirtual(@NotNull VirtualFile virtualFile,
                                                          @NotNull CodeInsightContext context,
                                                          @NotNull Project project,

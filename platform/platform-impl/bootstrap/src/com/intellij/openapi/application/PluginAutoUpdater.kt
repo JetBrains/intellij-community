@@ -91,7 +91,7 @@ object PluginAutoUpdater {
       updates.mapValues { (_, info) ->
         val updateFile = autoupdatesDir.resolve(info.updateFilename)
         async(Dispatchers.IO) {
-          runCatching { loadAndInitDescriptorFromArtifact(updateFile, null) }
+          runCatching { loadDescriptorFromArtifact(updateFile, null) }
         }
       }.mapValues { it.value.await() }
     }.filter {
@@ -134,7 +134,7 @@ object PluginAutoUpdater {
     // checks mostly duplicate what is written in com.intellij.ide.plugins.PluginInstaller.installFromDisk. FIXME, I guess
     val enabledPluginsAndModulesIds: Set<String> = currentDescriptors.getIdMap().flatMap { entry ->
       val desc = entry.value
-      listOf(desc.pluginId.idString) + desc.pluginAliases.map { it.idString } + desc.contentModules.map { it.moduleName } // FIXME content module aliases are not accounted
+      listOf(desc.pluginId.idString) + desc.pluginAliases.map { it.idString } + desc.contentModules.map { it.moduleId.id } // FIXME content module aliases are not accounted
     }.toSet()
     for ((id, updateDesc) in updates) {
       val existingDesc = currentDescriptors.getIdMap()[id] ?: currentDescriptors.getIncompleteIdMap()[id]

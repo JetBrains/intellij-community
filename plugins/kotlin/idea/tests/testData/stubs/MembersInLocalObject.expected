@@ -3,7 +3,7 @@ FILE[kind=Facade[packageFqName=<root>, facadeFqName=MembersInLocalObjectKt]]
   IMPORT_LIST
   FUN[fqName=f, hasBody=true, hasNoExpressionBody=true, hasTypeParameterListBeforeFunctionName=false, isExtension=false, isTopLevel=true, mayHaveContract=false, name=f]
     VALUE_PARAMETER_LIST
-    OBJECT_DECLARATION[classId=null, fqName=null, isCompanion=false, isLocal=true, isObjectLiteral=false, isTopLevel=false, name=foo, superNames=[]]
+    OBJECT_DECLARATION[classId=null, fqName=null, isLocal=true, isObjectLiteral=false, isTopLevel=false, name=foo, superNames=[]]
       CLASS_BODY
         FUN[fqName=null, hasBody=true, hasNoExpressionBody=true, hasTypeParameterListBeforeFunctionName=false, isExtension=false, isTopLevel=false, mayHaveContract=false, name=foo]
           VALUE_PARAMETER_LIST

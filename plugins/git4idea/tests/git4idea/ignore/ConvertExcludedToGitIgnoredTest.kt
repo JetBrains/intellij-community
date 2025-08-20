@@ -50,7 +50,7 @@ class ConvertExcludedToGitIgnoredTest : GitSingleRepoTest() {
     }
   }
 
-  fun testExcludedFolder() {
+  fun testExcludedFolder() = runBlocking {
     val excluded = createChildDirectory(moduleContentRoot, "exc")
     createChildData(excluded, "excluded.txt") //Don't mark empty directories like ignored since versioning such directories not supported in Git
     PsiTestUtil.addExcludedRoot(myModule, excluded)
@@ -65,7 +65,7 @@ class ConvertExcludedToGitIgnoredTest : GitSingleRepoTest() {
     assertTrue(changeListManager.isIgnoredFile(excluded))
   }
 
-  fun testModuleOutput() {
+  fun testModuleOutput() = runBlocking {
     val output = createChildDirectory(moduleContentRoot, "out")
     PsiTestUtil.setCompilerOutputPath(myModule, output.url, false)
     createChildData(output, "out.class")
@@ -119,7 +119,7 @@ class ConvertExcludedToGitIgnoredTest : GitSingleRepoTest() {
     assertTrue(changeListManager.isIgnoredFile(moduleOutput))
   }
 
-  fun testModuleOutputUnderExcluded() {
+  fun testModuleOutputUnderExcluded() = runBlocking {
     val excluded = createChildDirectory(moduleContentRoot, "target")
     createChildData(excluded, "out.class")
     PsiTestUtil.addExcludedRoot(myModule, excluded)
@@ -146,12 +146,11 @@ class ConvertExcludedToGitIgnoredTest : GitSingleRepoTest() {
     assertFalse(changeListManager.isIgnoredFile(inner))
   }
 
-  private fun generateIgnoreFileAndWaitHoldersUpdate() {
+  private suspend fun generateIgnoreFileAndWaitHoldersUpdate() {
     AsyncVfsEventsPostProcessorImpl.waitEventsProcessed()
     flushIgnoreHoldersQueue()
-    val waiter = repo.untrackedFilesHolder.createWaiter()
     VcsImplUtil.generateIgnoreFileIfNeeded(project, vcs, projectRoot)
-    waiter.waitFor()
+    repo.untrackedFilesHolder.awaitNotBusy()
   }
 
   private fun flushIgnoreHoldersQueue() {

@@ -351,10 +351,14 @@ public final class IntroduceVariableUtil {
 
       final PsiType componentType = TypeConversionUtil.erasure(psiSubstitutor.substitute(psiType.getComponentType()));
       try {
+        int start = ArrayUtil.indexOf(args, startElement);
+        int end = ArrayUtil.indexOf(args, endElement);
+        if (start != parameters.length - 1 || end != args.length - 1) return null;
         final PsiExpression expressionFromText =
           elementFactory.createExpressionFromText("new " + componentType.getCanonicalText() + "[]{" + text + "}", parent);
-        final RangeMarker rangeMarker =
-        FileDocumentManager.getInstance().getDocument(containingFile.getVirtualFile()).createRangeMarker(startOffset, endOffset);
+        Document document = FileDocumentManager.getInstance().getDocument(containingFile.getOriginalFile().getVirtualFile());
+        if (document == null) return null;
+        final RangeMarker rangeMarker = document.createRangeMarker(startOffset, endOffset);
         expressionFromText.putUserData(ElementToWorkOn.TEXT_RANGE, rangeMarker);
         expressionFromText.putUserData(ElementToWorkOn.PARENT, parent);
         return expressionFromText;

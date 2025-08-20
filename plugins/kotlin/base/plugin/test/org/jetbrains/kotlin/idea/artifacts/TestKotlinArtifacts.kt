@@ -27,13 +27,16 @@ import java.nio.file.StandardCopyOption
 import java.util.zip.Deflater
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
-import kotlin.io.path.copyTo
+import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.copyToRecursively
 import kotlin.io.path.deleteIfExists
+import kotlin.io.path.exists
 import kotlin.io.path.moveTo
 import kotlin.io.path.name
 import kotlin.io.path.readText
 import kotlin.system.exitProcess
 
+@OptIn(ExperimentalPathApi::class)
 object TestKotlinArtifacts {
     private val communityRoot by lazy {
         BuildDependenciesCommunityRoot(Path.of(PathManager.getCommunityHomePath()))
@@ -85,7 +88,7 @@ object TestKotlinArtifacts {
         val file: String,
     ) {
         companion object {
-            private val regex = Regex("@([a-zA-Z0-9_-]+)//([a-z0-9_/-]+):([a-z0-9._-]+)")
+            private val regex = Regex("@([a-zA-Z0-9_-]+)//([a-z0-9_/-]+):([a-zA-Z0-9._-]+)")
             fun fromString(label: String): BazelLabel {
                 val match = regex.matchEntire(label) ?: error("Bazel label must match '${regex.pattern}': $label")
                 return BazelLabel(
@@ -107,10 +110,12 @@ object TestKotlinArtifacts {
         val file = BazelTestUtil.bazelTestRunfilesPath.resolve(
             repoEntry.runfilesRelativePath + "/${label.packageName}/${label.file}"
         )
-        if (!Files.isRegularFile(file)) {
-            error("Unable to find test dependency '${label.asLabel}' at $file")
+        return when {
+            file.exists() -> file.toAbsolutePath()
+            else -> {
+                error("Unable to find test dependency '${label.asLabel}' at $file")
+            }
         }
-        return file
     }
 
     private data class HttpFile(val downloadFilePath: String, val name: String, val url: String)
@@ -170,11 +175,14 @@ object TestKotlinArtifacts {
     }
 
     // @kotlin_test_deps_kotlin-stdlib//file:kotlin-stdlib.jar
-    private fun getKotlinDepsByLabel(bazelLabel: String): File {
+    fun getKotlinDepsByLabel(bazelLabel: String): File {
         val label = BazelLabel.fromString(bazelLabel)
+        return getKotlinDepsByLabel(label = label)
+    }
 
+    private fun getKotlinDepsByLabel(label: BazelLabel): File {
         // Why it is different
-        val file = if (BazelTestUtil.isUnderBazelTest) {
+        val dependency = if (BazelTestUtil.isUnderBazelTest) {
             getFileFromBazelRuntime(label)
         } else {
             downloadFile(label)
@@ -184,18 +192,18 @@ object TestKotlinArtifacts {
         val target = File(PathManager.getCommunityHomePath())
             .resolve("out")
             .resolve("kotlin-from-sources-deps")
-            .resolve(file.name)
+            .resolve(dependency.name)
 
         // we could have a file from some previous launch, but with different content
         // it is a valid scenario when file it is JAR without a version and url changed
         // we have to verify content
         @Suppress("IO_FILE_USAGE")
-        if (target.exists() && areFilesEquals(file.toFile(), target)) {
+        if (target.exists() && areFilesEquals(dependency.toFile(), target)) {
             return target
         }
-        val tempFile = Files.createTempFile(file.name, ".tmp")
+        val tempFile = Files.createTempFile(dependency.name, ".tmp")
         try {
-            file.copyTo(tempFile, true)
+            dependency.copyToRecursively(tempFile, overwrite = true, followLinks = true)
             target.parentFile.mkdirs()
             // in the case of parallel access target will be overwritten by one of the threads
             tempFile.moveTo(target.toPath(), StandardCopyOption.ATOMIC_MOVE)
@@ -292,6 +300,9 @@ object TestKotlinArtifacts {
     val parcelizeRuntime: File by lazy { getKotlinDepsByLabel("@kotlin_test_deps_parcelize-compiler-plugin-for-ide//file:parcelize-compiler-plugin-for-ide.jar") }
     @JvmStatic
     val composeCompilerPluginForIde: File by lazy { getKotlinDepsByLabel("@kotlin_test_deps_compose-compiler-plugin-for-ide//file:compose-compiler-plugin-for-ide.jar") }
+
+    @JvmStatic
+    val kotlinJvmDebuggerTestData: File by lazy { getKotlinDepsByLabel("@community//plugins/kotlin/jvm-debugger/test:testData") }
 
     @JvmStatic
     fun main(args: Array<String>) {

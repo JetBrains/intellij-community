@@ -1,0 +1,15 @@
+- name: lib/modules/intellij.sh.backend.jar
+  contentModules:
+  - name: intellij.sh.backend
+- name: lib/modules/intellij.sh.frontend.split.jar
+  contentModules:
+  - name: intellij.sh.frontend.split
+- name: lib/sh-plugin.jar
+  modules:
+  - name: intellij.sh.plugin
+  contentModules:
+  - name: intellij.sh.core
+  - name: intellij.sh.terminal
+  - name: intellij.sh.copyright
+  - name: intellij.sh.markdown
+  - name: intellij.sh.python

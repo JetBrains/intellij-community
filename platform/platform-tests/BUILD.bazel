@@ -170,6 +170,7 @@ jvm_library(
     "//xml/xml-psi-api:psi",
     "//platform/runtime/product",
     "//platform/locking.impl",
+    "//platform/testFramework/junit5/highlighting",
   ],
   runtime_deps = [
     ":tests_test_resources",

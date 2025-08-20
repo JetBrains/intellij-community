@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.vfs.newvfs.ChildInfoImpl;
@@ -106,9 +106,9 @@ public class VFSChildrenAccessBenchmark {
     }
 
     @Benchmark
-    public int[] listChildrenIds(FSRecordsContext vfsContext) throws IOException {
+    public boolean forEachChildId(FSRecordsContext vfsContext) throws IOException {
       int folderId = tossFolderId();
-      return treeAccessor.listIds(folderId);
+      return treeAccessor.forEachChild(folderId, childId -> false);
     }
 
     @Benchmark

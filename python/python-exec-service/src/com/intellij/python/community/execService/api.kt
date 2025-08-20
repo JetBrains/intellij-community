@@ -164,6 +164,20 @@ object ZeroCodeStdoutTransformer : ProcessOutputTransformer<String> {
     if (processOutput.exitCode == 0) Result.success(processOutput.stdoutString.trim()) else Result.failure(null)
 }
 
+/**
+ * A process output transformer that parses standard output using a provided parser function.
+ *
+ * @param T The type of the result produced by the transformer.
+ * @param stdoutParser A function that takes a string (standard output) and parses it into a [Result] containing
+ * either a successfully parsed result of type [T], or a failure with an optional [NlsSafe] error message.
+ */
+open class ZeroCodeStdoutParserTransformer<T>(val stdoutParser: (String) -> Result<T, @NlsSafe String?>) : ProcessOutputTransformer<T> {
+  override fun invoke(processOutput: EelProcessExecutionResult): Result<T, @NlsSafe String?> {
+    val data = ZeroCodeStdoutTransformer.invoke(processOutput).getOr { return it }
+    return stdoutParser(data)
+  }
+}
+
 
 /**
  * @property[env] Environment variables to be applied with the process run

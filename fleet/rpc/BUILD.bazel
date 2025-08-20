@@ -32,6 +32,7 @@ jvm_library(
     "@lib//:kotlinx-coroutines-core",
     "@lib//:kotlinx-datetime-jvm",
     "//fleet/util/core",
-  ]
+  ],
+  plugins = ["@lib//:rpc-plugin"]
 )
 ### auto-generated section `build fleet.rpc` end

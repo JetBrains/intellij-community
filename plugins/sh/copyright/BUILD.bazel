@@ -20,7 +20,10 @@ jvm_library(
     "//plugins/sh/core",
     "//platform/core-impl",
   ],
-  runtime_deps = [":copyright_resources"]
+  runtime_deps = [
+    ":copyright_resources",
+    "//platform/backend",
+  ]
 )
 ### auto-generated section `build intellij.sh.copyright` end
 
@@ -33,7 +36,7 @@ jvm_library(
   deps = [
     "//platform/core-api:core",
     "//platform/projectModel-api:projectModel",
-    "//plugins/sh",
+    "//plugins/sh/plugin:plugin-main",
     "//plugins/copyright",
     "//plugins/copyright:copyright_test_lib",
     "//platform/projectModel-impl",

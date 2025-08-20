@@ -17,12 +17,12 @@ import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.platform.project.projectId
 import com.intellij.platform.scopes.ScopeModelApi
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.usageView.UsageInfo
 import com.intellij.usages.FindUsagesProcessPresentation
 import com.intellij.usages.UsageInfo2UsageAdapter
 import com.intellij.usages.UsageInfoAdapter
@@ -33,6 +33,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus.Internal
+import java.util.function.Consumer
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 
 private val LOG = logger<FindAndReplaceExecutorImpl>()
@@ -42,7 +43,7 @@ open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : Find
   private var validationJob: Job? = null
   private var findUsagesJob: Job? = null
   private var selectScopeJob: Job? = null
-  private var currentSearchDisposable: Disposable? = null
+  private var currentSearchDisposable: CheckedDisposable? = null
 
   @OptIn(ExperimentalAtomicApi::class)
   override fun findUsages(
@@ -53,7 +54,7 @@ open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : Find
     previousUsages: Set<UsageInfoAdapter>,
     shouldThrottle: Boolean,
     disposableParent: Disposable,
-    onDocumentUpdated: (usageInfos: List<UsageInfo>) -> Unit?,
+    onUpdateModelCallback: Consumer<UsageInfoAdapter>,
     onResult: (UsageInfoAdapter) -> Boolean,
     onFinish: () -> Unit?
   ) {
@@ -63,7 +64,7 @@ open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : Find
         selectScopeJob?.join()
         val filesToScanInitially = previousUsages.mapNotNull { (it as? UsageInfoModel)?.model?.fileId?.virtualFile() }.toSet()
         currentSearchDisposable?.let { Disposer.dispose(it) }
-        currentSearchDisposable = Disposer.newDisposable( "Find in Project Search").also {
+        currentSearchDisposable = Disposer.newCheckedDisposable( "Find in Project Search").also {
           if (!Disposer.tryRegister(disposableParent, it)) {
             Disposer.dispose(it)
             LOG.warn("Failed to register disposable for search. Looks like FindPopup is already closed. Search will be canceled.")
@@ -71,6 +72,12 @@ open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : Find
           }
         }
         val searchDisposable = currentSearchDisposable
+        val initScope = this.childScope("FindAndReplaceExecutorImpl.UsageInit")
+        if (searchDisposable != null && !searchDisposable.isDisposed) {
+          Disposer.register(searchDisposable) {
+            initScope.cancel("search disposed")
+          }
+        }
 
         FindRemoteApi.getInstance().findByModel(
           findModel = findModel,
@@ -81,13 +88,18 @@ open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : Find
           if (shouldThrottle) it.throttledWithAccumulation()
           else it.map { event -> ThrottledOneItem(event) }
         }.collect { throttledItems ->
+          if (searchDisposable?.isDisposed == true) {
+            return@collect
+          }
           throttledItems.items.forEach { item ->
-            val usage = UsageInfoModel.createUsageInfoModel(project, item, this.childScope("UsageInfoModel.init"), onDocumentUpdated)
-            if (searchDisposable != null && Disposer.tryRegister(searchDisposable, usage)) {
-              onResult(usage)
-            }
-            else {
+            val usage = UsageInfoModel.createUsageInfoModel(project, item, initScope, onUpdateModelCallback)
+            if (searchDisposable == null || !Disposer.tryRegister(searchDisposable, usage)) {
               Disposer.dispose(usage)
+              return@collect
+            }
+
+            val shouldContinue = onResult(usage)
+            if (!shouldContinue) {
               return@collect
             }
           }
@@ -133,10 +145,10 @@ open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : Find
     }
   }
 
-  override fun performScopeSelection(scopeId: String, project: Project) {
+  override fun performScopeSelection(scopeId: String, scopesModelId: String, project: Project) {
     selectScopeJob = coroutineScope.launch {
       try {
-       ScopeModelApi.getInstance().performScopeSelection(scopeId, project.projectId())
+       ScopeModelApi.getInstance().performScopeSelection(scopeId, scopesModelId,project.projectId())
       }
       catch (e: RpcTimeoutException) {
         LOG.warn("Failed to select scope", e)

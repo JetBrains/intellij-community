@@ -70,7 +70,6 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.xmlb.annotations.Attribute
 import org.junit.Rule
 import org.junit.Test
-import org.junit.jupiter.api.assertNull
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.random.Random
@@ -1109,7 +1108,7 @@ class DynamicPluginsTest {
     PluginSetTestBuilder.fromPath(pluginsDir).withDisabledPlugins("bar").build()
     loadPluginInTest(fooPluginPath) {
       loadPluginInTest(barPluginPath) {
-        assertThat(PluginManagerCore.getPluginSet().findEnabledModule("foo.b")).isNull()
+        assertThat(PluginManagerCore.getPluginSet().findEnabledModule(PluginModuleId("foo.b"))).isNull()
         assertThat(ActionManager.getInstance().getAction("foo.b.action")).isNull()
       }
     }
@@ -1135,7 +1134,7 @@ class DynamicPluginsTest {
     PluginSetTestBuilder.fromPath(pluginsDir).withDisabledPlugins("bar").build()
     loadPluginInTest(fooPluginPath) {
       loadPluginInTest(barPluginPath) {
-        assertThat(PluginManagerCore.getPluginSet().buildContentModuleIdMap().contains("foo.a")).isTrue
+        assertThat(PluginManagerCore.getPluginSet().buildContentModuleIdMap().contains(PluginModuleId("foo.a"))).isTrue
       }
     }
   }
@@ -1271,7 +1270,7 @@ private inline fun runAndCheckThatNoNewPlugins(block: () -> Unit) {
 
 private fun lexicographicallySortedPluginIds() = PluginManagerCore.loadedPlugins.toSortedSet(compareBy { it.pluginId })
 
-private fun findEnabledModuleByName(id: String) = PluginManagerCore.getPluginSet().findEnabledModule(id)
+private fun findEnabledModuleByName(id: String) = PluginManagerCore.getPluginSet().findEnabledModule(PluginModuleId(id))
 
 private fun assertModuleIsNotLoaded(moduleName: String) {
   assertThat(findEnabledModuleByName(moduleName)).isNull()

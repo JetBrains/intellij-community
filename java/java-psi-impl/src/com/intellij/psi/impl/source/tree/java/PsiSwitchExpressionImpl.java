@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
@@ -50,7 +50,7 @@ public class PsiSwitchExpressionImpl extends PsiSwitchBlockImpl implements PsiSw
 
     //Otherwise, if the type of each result expression is boolean or Boolean, 
     //an unboxing conversion (5.1.8) is applied to each result expression of type Boolean, and the switch expression has type boolean.
-    if (resultTypes.stream().allMatch(type -> PsiTypes.booleanType().isAssignableFrom(type))) {
+    if (ContainerUtil.and(resultTypes, type -> PsiTypes.booleanType().isAssignableFrom(type))) {
       return PsiTypes.booleanType();
     }
 
@@ -96,9 +96,9 @@ public class PsiSwitchExpressionImpl extends PsiSwitchBlockImpl implements PsiSw
     return leastUpperBound != null ? PsiUtil.captureToplevelWildcards(leastUpperBound, this) : null;
   }
 
-  private static boolean isNumericPromotion(List<PsiExpression> resultExpressions, int[] ranks, final PsiPrimitiveType type) {
+  private static boolean isNumericPromotion(List<PsiExpression> resultExpressions, int[] ranks, PsiPrimitiveType type) {
     return ArrayUtil.find(ranks, TypeConversionUtil.getTypeRank(type)) > -1 && 
-           resultExpressions.stream().allMatch(expression -> TypeConversionUtil.areTypesAssignmentCompatible(type, expression));
+           ContainerUtil.and(resultExpressions, expression -> TypeConversionUtil.areTypesAssignmentCompatible(type, expression));
   }
 
   @Override

@@ -27,7 +27,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
 
   private final @NotNull Object myDocumentOrFile; // either VirtualFile (if any) or DocumentEx if no file associated
   @ApiStatus.Internal
-  protected RangeMarkerTree.RMNode<RangeMarkerEx> myNode;
+  protected volatile RangeMarkerTree.RMNode<RangeMarkerEx> myNode;
 
   private volatile long myId;
   private static final StripedIDGenerator counter = new StripedIDGenerator();

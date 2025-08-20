@@ -99,7 +99,7 @@ jvm_library(
     "//platform/editor-ui-ex:editor-ex",
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
-    "@lib//:mockito",
+    "//libraries/mockito",
     "//platform/observable",
     "//plugins/git4idea:vcs-git",
     "//plugins/git4idea:vcs-git_test_lib",

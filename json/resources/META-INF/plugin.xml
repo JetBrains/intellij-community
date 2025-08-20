@@ -20,5 +20,6 @@
     <module name="intellij.json" loading="embedded"/>
     <module name="intellij.json.backend"/>
     <module name="intellij.json.backend.regexp" loading="optional"/>
+    <module name="intellij.json.syntax" loading="embedded"/>
   </content>  
 </idea-plugin>

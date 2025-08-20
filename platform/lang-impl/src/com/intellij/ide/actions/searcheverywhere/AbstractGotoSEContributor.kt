@@ -15,6 +15,7 @@ import com.intellij.ide.util.gotoByName.*
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor
 import com.intellij.ide.util.scopeChooser.ScopeOption
 import com.intellij.ide.util.scopeChooser.ScopeService
+import com.intellij.idea.AppMode
 import com.intellij.navigation.AnonymousElementProvider
 import com.intellij.navigation.NavigationItem
 import com.intellij.navigation.PsiElementNavigationItem
@@ -509,7 +510,7 @@ abstract class AbstractGotoSEContributor @ApiStatus.Internal protected construct
     return suspend {
       val navigationOptions = NavigationOptions.defaultOptions()
         .openInRightSplit((modifiers and InputEvent.SHIFT_DOWN_MASK) != 0)
-        .preserveCaret(true)
+        .preserveCaret(true).forceFocus(true)
       if (extendedNavigatable == null) {
         if (file == null) {
           val navigatable = psiElement as? Navigatable

@@ -36,6 +36,9 @@ class KotlinFirRefactoringsSettings : PersistentStateComponent<KotlinFirRefactor
     
     var PUSH_DOWN_PREVIEW_USAGES: Boolean = false
 
+    var EXTRACT_INTERFACE_JAVADOC: Int = 0
+    var EXTRACT_SUPERCLASS_JAVADOC: Int = 0
+
     var INLINE_METHOD_THIS: Boolean = false
     var INLINE_LOCAL_THIS: Boolean = false
     var INLINE_TYPE_ALIAS_THIS: Boolean = false
@@ -43,9 +46,9 @@ class KotlinFirRefactoringsSettings : PersistentStateComponent<KotlinFirRefactor
     var INLINE_PROPERTY_KEEP: Boolean = false
     var INLINE_TYPE_ALIAS_KEEP: Boolean = false
 
-    override fun getState() = this
+    override fun getState(): KotlinFirRefactoringsSettings = this
 
-    override fun loadState(state: KotlinFirRefactoringsSettings) = XmlSerializerUtil.copyBean(state, this)
+    override fun loadState(state: KotlinFirRefactoringsSettings): Unit = XmlSerializerUtil.copyBean(state, this)
 
     companion object {
         @JvmStatic

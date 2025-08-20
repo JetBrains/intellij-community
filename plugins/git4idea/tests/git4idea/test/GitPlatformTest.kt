@@ -8,6 +8,7 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.*
@@ -275,7 +276,9 @@ abstract class GitPlatformTest : VcsPlatformTest() {
 
   protected fun updateUntrackedFiles(repo: GitRepository) {
     repo.untrackedFilesHolder.invalidate()
-    repo.untrackedFilesHolder.createWaiter().waitFor()
+    runBlockingMaybeCancellable {
+      repo.untrackedFilesHolder.awaitNotBusy()
+    }
   }
 
   protected data class ReposTrinity(val projectRepo: GitRepository, val parent: Path, val bro: Path)

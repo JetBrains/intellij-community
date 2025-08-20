@@ -9,6 +9,7 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.Service
@@ -16,10 +17,8 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
@@ -34,38 +33,33 @@ import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.VcsNotificationIdsHolder.Companion.IGNORED_TO_EXCLUDE_NOT_FOUND
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.changes.ChangeListManager
-import com.intellij.openapi.vcs.changes.VcsIgnoreManagerImpl
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
+import com.intellij.openapi.vcs.changes.VcsManagedFilesHolder
 import com.intellij.openapi.vcs.changes.ignore.lang.IgnoreFileType
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager
 import com.intellij.openapi.vcs.changes.ui.SelectFilesDialog
 import com.intellij.openapi.vcs.ignore.IgnoredToExcludedSynchronizerConstants.ASKED_MARK_IGNORED_FILES_AS_EXCLUDED_PROPERTY
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.ide.progress.withModalProgress
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.platform.workspace.jps.entities.SourceRootEntity
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
 import com.intellij.ui.EditorNotifications
 import com.intellij.util.Alarm
-import com.intellij.util.application
+import com.intellij.util.messages.impl.subscribeAsFlow
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.sync.Mutex
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 import java.util.function.Function
 import javax.swing.JComponent
 
 private val LOG = logger<IgnoredToExcludedSynchronizer>()
-
-private fun exclude(module: Module, dirs: Collection<VirtualFile>) {
-  runInEdt {
-    MarkRootsManager.modifyRoots(module, dirs.toTypedArray()) { vFile, entry ->
-      entry.addExcludeFolder(vFile)
-    }
-  }
-}
 
 /**
  * Shows [EditorNotifications] in .ignore files with a suggestion to exclude ignored directories.
@@ -74,7 +68,7 @@ private fun exclude(module: Module, dirs: Collection<VirtualFile>) {
  * Not internal service. Can be used directly in related modules.
  */
 @Service(Service.Level.PROJECT)
-class IgnoredToExcludedSynchronizer(project: Project, cs: CoroutineScope) : FilesProcessorImpl(project, project) {
+class IgnoredToExcludedSynchronizer(project: Project, private val cs: CoroutineScope) : FilesProcessorImpl(project, project) {
   private val queue = MergingUpdateQueue("IgnoredToExcludedSynchronizer", 1000, true, null, this, null, Alarm.ThreadToUse.POOLED_THREAD)
 
   init {
@@ -173,6 +167,43 @@ class IgnoredToExcludedSynchronizer(project: Project, cs: CoroutineScope) : File
       doActionOnChosenFiles(doFilterFiles(ignoredDirs))
     }
   }
+
+  private val ignoredToExcludeCheckMutex = Mutex()
+
+  internal fun checkIgnoredToExclude() {
+    cs.launch(Dispatchers.Default, CoroutineStart.UNDISPATCHED) {
+      // shouldn't be run in parallel
+      val canRun = ignoredToExcludeCheckMutex.tryLock()
+      if (!canRun) {
+        return@launch
+      }
+      yield()
+
+      try {
+        val dirsToExclude = withModalProgress(project, ActionsBundle.message("action.CheckIgnoredAndNotExcludedDirectories.progress")) {
+          awaitIgnoredFilesUpdate(project)
+          val ignoredFilePaths = ChangeListManager.getInstance(project).ignoredFilePaths
+          determineIgnoredDirsToExclude(project, ignoredFilePaths)
+        }
+
+        if (dirsToExclude.isEmpty()) {
+          VcsNotifier.getInstance(project)
+            .notifyMinorInfo(IGNORED_TO_EXCLUDE_NOT_FOUND, "", message("ignore.to.exclude.no.directories.found"))
+        }
+        else {
+          val userSelectedFiles = withContext(Dispatchers.EDT) {
+            selectFilesToExclude(project, dirsToExclude)
+          }
+          if (userSelectedFiles.isNotEmpty()) {
+            markIgnoredAsExcluded(project, userSelectedFiles)
+          }
+        }
+      }
+      finally {
+        ignoredToExcludeCheckMutex.unlock()
+      }
+    }
+  }
 }
 
 private fun markIgnoredAsExcluded(project: Project, files: Collection<VirtualFile>) {
@@ -184,7 +215,11 @@ private fun markIgnoredAsExcluded(project: Project, files: Collection<VirtualFil
   }
 
   for ((module, ignoredDirs) in ignoredDirsByModule) {
-    exclude(module!!, ignoredDirs)
+    runInEdt {
+      MarkRootsManager.modifyRoots(module!!, ignoredDirs.toTypedArray<VirtualFile>()) { vFile, entry ->
+        entry.addExcludeFolder(vFile)
+      }
+    }
   }
 }
 
@@ -195,6 +230,20 @@ private fun getProjectSourceRoots(project: Project): Set<VirtualFile> = runReadA
 private fun containsShelfDirectoryOrUnderIt(filePath: FilePath, shelfPath: String) =
   FileUtil.isAncestor(shelfPath, filePath.path, false) ||
   FileUtil.isAncestor(filePath.path, shelfPath, false)
+
+private suspend fun awaitIgnoredFilesUpdate(project: Project) {
+  withContext(Dispatchers.Default) {
+    project.messageBus.subscribeAsFlow(VcsManagedFilesHolder.TOPIC) {
+      send(Unit)
+      VcsManagedFilesHolder.VcsManagedFilesHolderListener {
+        trySend(Unit)
+      }
+    }.first {
+      val clm = ChangeListManagerImpl.getInstanceImpl(project)
+      !clm.isIgnoredInUpdateMode
+    }
+  }
+}
 
 private fun determineIgnoredDirsToExclude(project: Project, ignoredPaths: Collection<FilePath>): List<VirtualFile> {
   val sourceRoots = getProjectSourceRoots(project)
@@ -280,25 +329,8 @@ internal class CheckIgnoredToExcludeAction : DumbAwareAction() {
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val project = e.project!!
-
-    runModalTask(ActionsBundle.message("action.CheckIgnoredAndNotExcludedDirectories.progress"), project, true) {
-      VcsIgnoreManagerImpl.getInstanceImpl(project).awaitRefreshQueue()
-      val ignoredFilePaths = ChangeListManager.getInstance(project).ignoredFilePaths
-      val dirsToExclude = determineIgnoredDirsToExclude(project, ignoredFilePaths)
-      if (dirsToExclude.isEmpty()) {
-        VcsNotifier.getInstance(project)
-          .notifyMinorInfo(IGNORED_TO_EXCLUDE_NOT_FOUND, "", message("ignore.to.exclude.no.directories.found"))
-      }
-      else {
-        application.invokeAndWait {
-          val userSelectedFiles = selectFilesToExclude(project, dirsToExclude)
-          if (userSelectedFiles.isNotEmpty()) {
-            markIgnoredAsExcluded(project, userSelectedFiles)
-          }
-        }
-      }
-    }
+    val project = e.project ?: return
+    project.service<IgnoredToExcludedSynchronizer>().checkIgnoredToExclude()
   }
 }
 

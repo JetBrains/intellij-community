@@ -445,7 +445,7 @@ private class HyperlinkProcessor(
       mutableListOf<TerminalFilterResultInfoDto>().also { results ->
         filter.applyToLineRange(outputModel.document, startLine.toRelative(), endLine.toRelative()) { applyResult ->
           checkCanceled()
-          val hyperlinks = applyResult.filterResult?.resultItems?.mapNotNull { createHyperlinkOrHighlighting(outputModel, it) } ?: emptyList()
+          val hyperlinks = applyResult.filterResult?.resultItems?.flatMap { createHyperlinkOrHighlighting(outputModel, it) } ?: emptyList()
           results.addAll(hyperlinks)
         }
       }
@@ -454,17 +454,10 @@ private class HyperlinkProcessor(
   private fun createHyperlinkOrHighlighting(
     outputModel: FrozenTerminalOutputModel,
     resultItem: Filter.ResultItem,
-  ): TerminalFilterResultInfoDto? {
+  ): List<TerminalFilterResultInfoDto> {
     val hyperlinkInfo = resultItem.hyperlinkInfo
     val highlightAttributes = resultItem.highlightAttributes
-    val inlayProvider = resultItem as? InlayProvider
-    return when {
-      inlayProvider != null -> TerminalInlayInfoDto(
-        id = TerminalHyperlinkId(hyperlinkId.incrementAndGet()),
-        absoluteStartOffset = outputModel.relativeOffset(resultItem.highlightStartOffset).toAbsolute(),
-        absoluteEndOffset = outputModel.relativeOffset(resultItem.highlightEndOffset).toAbsolute(),
-        inlayProvider = inlayProvider,
-      )
+    val notInlayResult = when {
       hyperlinkInfo != null -> TerminalHyperlinkInfoDto(
         id = TerminalHyperlinkId(hyperlinkId.incrementAndGet()),
         hyperlinkInfo = hyperlinkInfo,
@@ -484,6 +477,15 @@ private class HyperlinkProcessor(
       )
       else -> null
     }
+    val inlayResult = (resultItem as? InlayProvider)?.let { inlayProvider ->
+      TerminalInlayInfoDto(
+        id = TerminalHyperlinkId(hyperlinkId.incrementAndGet()),
+        absoluteStartOffset = outputModel.relativeOffset(resultItem.highlightStartOffset).toAbsolute(),
+        absoluteEndOffset = outputModel.relativeOffset(resultItem.highlightEndOffset).toAbsolute(),
+        inlayProvider = inlayProvider,
+      )
+    }
+    return listOfNotNull(notInlayResult, inlayResult)
   }
 
 }

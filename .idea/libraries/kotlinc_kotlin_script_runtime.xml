@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinc.kotlin-script-runtime" type="repository">
-    <properties maven-id="org.jetbrains.kotlin:kotlin-script-runtime:2.3.0-dev-3276">
+    <properties maven-id="org.jetbrains.kotlin:kotlin-script-runtime:2.3.0-dev-4019">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-script-runtime/2.3.0-dev-3276/kotlin-script-runtime-2.3.0-dev-3276.jar">
-          <sha256sum>4ad2647c5c1319fffebbfdfee7233d8cf54a322666e34029c1fb9ebc6394aa5c</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-script-runtime/2.3.0-dev-4019/kotlin-script-runtime-2.3.0-dev-4019.jar">
+          <sha256sum>5eb086abeec4df454f88683e379a3610f8fef01c447bda3444d1cd834e612f9f</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-script-runtime/2.3.0-dev-3276/kotlin-script-runtime-2.3.0-dev-3276.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-script-runtime/2.3.0-dev-4019/kotlin-script-runtime-2.3.0-dev-4019.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-script-runtime/2.3.0-dev-3276/kotlin-script-runtime-2.3.0-dev-3276-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-script-runtime/2.3.0-dev-4019/kotlin-script-runtime-2.3.0-dev-4019-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

@@ -82,7 +82,7 @@ jvm_library(
 jvm_library(
   name = "java-guiForms-designer_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
   associates = [":java-guiForms-designer"],
   deps = [
     "//java/openapi:java",

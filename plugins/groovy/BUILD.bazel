@@ -60,7 +60,7 @@ jvm_library(
     "//plugins/copyright",
     "//plugins/IntelliLang:langInjection",
     "@lib//:guava",
-    "//plugins/IntelliLang/java-support:java-langInjection",
+    "//java/langInjection",
     "//jps/jps-builders:build",
     "//spellchecker",
     "//plugins/junit",
@@ -93,7 +93,7 @@ jvm_library(
 jvm_library(
   name = "groovy_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   associates = [":groovy"],
   deps = [
     "//platform/analysis-api:analysis",
@@ -140,8 +140,8 @@ jvm_library(
     "//plugins/ant:ant_test_lib",
     "@lib//:guava",
     "//java/testFramework",
-    "//plugins/IntelliLang/java-support:java-langInjection",
-    "//plugins/IntelliLang/xml-support:xml-langInjection",
+    "//java/langInjection",
+    "//xml/langInjection",
     "//jps/jps-builders:build",
     "//spellchecker",
     "//spellchecker:spellchecker_test_lib",

@@ -39,7 +39,7 @@ jvm_library(
 jvm_library(
   name = "copyright_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
   associates = [":copyright"],
   deps = [
     "//platform/analysis-api:analysis",

@@ -474,13 +474,6 @@
                      runForWholeFile="true"
                      key="inspection.member.visibility.can.be.private.display.name" bundle="messages.KotlinBundle"/>
 
-    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.FunctionNameInspection"
-                     language="kotlin"
-                     groupPath="Kotlin"
-                     groupBundle="messages.KotlinBundle" groupKey="group.names.naming.conventions"
-                     enabledByDefault="true"
-                     level="WEAK WARNING" key="inspection.function.name.display.name" bundle="messages.KotlinBundle"/>
-
     <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.FoldInitializerAndIfToElvisInspection"
                      language="kotlin"
                      groupPath="Kotlin"

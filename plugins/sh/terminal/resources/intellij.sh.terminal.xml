@@ -1,6 +1,8 @@
 <idea-plugin package="com.intellij.sh.run.terminal">
   <dependencies>
     <plugin id="org.jetbrains.plugins.terminal"/>
+    <module name="intellij.sh.core"/>
+    <module name="intellij.platform.backend"/>
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.sh.run.ShRunner" serviceImplementation="com.intellij.sh.run.terminal.ShTerminalRunner"/>
