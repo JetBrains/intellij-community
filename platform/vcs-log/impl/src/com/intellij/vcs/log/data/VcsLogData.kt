@@ -189,9 +189,9 @@ class VcsLogData @ApiStatus.Internal constructor(
       finally {
         try {
           withContext(NonCancellable) {
-            initJob.joinWithTimeout(1.minutes) { LOG.warn("Init job shutdown timed out", it) }
+            initJob.joinWithTimeout(1.minutes) { LOG.warn("Init job shutdown timed out") }
             topCommitsCache.clear()
-            indexDiagnosticJob.joinWithTimeout(10.milliseconds) { LOG.warn("Index diagnostic shutdown timed out", it) }
+            indexDiagnosticJob.joinWithTimeout(10.milliseconds) { LOG.warn("Index diagnostic shutdown timed out") }
 
             dataDisposableJob.join()
           }
