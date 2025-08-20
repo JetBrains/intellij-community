@@ -11,11 +11,13 @@ import org.jetbrains.plugins.gradle.testFramework.annotations.GradleTestSource
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.InternalBuildIdentifier
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.InternalProjectIdentifier
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.assertNotNull
 import org.junit.jupiter.params.ParameterizedTest
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.doThrow
 import org.mockito.kotlin.mock
+import org.mockito.kotlin.whenever
 import java.io.File
 
 class DefaultGradleLightBuildTest {
@@ -88,8 +90,7 @@ class DefaultGradleLightBuildTest {
     )
     val gradleIncludedBuild = mockGradleBuild(
       buildPath = "/rootBuild/includedBuild",
-      buildProjects = listOf(includedRootProject, includedSubproject),
-      parent = gradleRootBuild
+      buildProjects = listOf(includedRootProject, includedSubproject)
     )
 
     val deepIncludedRootProject = mockGradleProject(
@@ -106,9 +107,15 @@ class DefaultGradleLightBuildTest {
     )
     val gradleDeepIncludedBuild = mockGradleBuild(
       buildPath = "/rootBuild/includedBuild/deepIncludedBuild",
-      buildProjects = listOf(deepIncludedRootProject, deepIncludedSubproject),
-      parent = gradleIncludedBuild
+      buildProjects = listOf(deepIncludedRootProject, deepIncludedSubproject)
     )
+
+    // Set hierarchy
+    gradleRootBuild.mockIncludedBuilds(gradleIncludedBuild)
+    // Editable builds of the root contain all included builds transitively.
+    // However, the converted deep-included build should have a correct parent, not the root build.
+    gradleRootBuild.mockEditableBuildsForRoot(gradleIncludedBuild, gradleDeepIncludedBuild)
+    gradleIncludedBuild.mockIncludedBuilds(gradleDeepIncludedBuild)
 
     // WHEN
     val gradleBuilds = listOf(gradleRootBuild, gradleIncludedBuild, gradleDeepIncludedBuild)
@@ -144,7 +151,7 @@ class DefaultGradleLightBuildTest {
       build = deepIncludedBuild,
       buildPath = "/rootBuild/includedBuild/deepIncludedBuild",
       projectNames = listOf("deepIncludedBuild", "subproject"),
-      parent = includedBuild,
+      parent = includedBuild, // it shouldn't have a root build as a parent!
     )
     verifyProject(
       project = deepIncludedBuild.projects[0],
@@ -188,25 +195,48 @@ class DefaultGradleLightBuildTest {
     }
 
     if (parent != null) {
-      on { parent.children } doReturn ImmutableDomainObjectSet(listOf(it))
+      val subprojects = parent.children + it
+      on { parent.children } doReturn ImmutableDomainObjectSet(subprojects)
     }
   }
 
   private fun mockGradleBuild(
     buildPath: String,
     buildProjects: List<BasicGradleProject>,
-    parent: GradleBuild? = null,
   ): GradleBuild = mock {
     on { buildIdentifier } doReturn DefaultBuildIdentifier(File(buildPath))
     on { rootProject } doReturn buildProjects.first()
     on { projects } doReturn ImmutableDomainObjectSet(buildProjects)
     on { includedBuilds } doReturn ImmutableDomainObjectSet(emptyList())
     on { editableBuilds } doReturn ImmutableDomainObjectSet(emptyList())
+  }
 
-    if (parent != null) {
-      on { parent.includedBuilds } doReturn ImmutableDomainObjectSet(listOf(it))
-      on { parent.editableBuilds } doReturn ImmutableDomainObjectSet(listOf(it))
+  /**
+   * Only the root build could have editable builds. Those are included builds of it and all their included builds transitively.
+   * Since 7.2, it includes buildSrc of the root build and buildSrc of all its transitive included builds.
+   * `editableBuilds` doesn't contain included builds of a buildSrc belonging to a root or any included build.
+   *
+   * [Gradle documentation for `getEditableBuilds`](https://docs.gradle.org/current/javadoc/org/gradle/tooling/model/gradle/GradleBuild.html#getEditableBuilds())
+   */
+  private fun GradleBuild.mockEditableBuildsForRoot(
+    vararg editableBuildsMocks: GradleBuild,
+  ) {
+    whenever(this.editableBuilds) doReturn ImmutableDomainObjectSet(editableBuildsMocks.asList())
+  }
+
+  /** Use it to specify included builds only. For buildSrc, please use [mockEditableBuildsForRoot] */
+  private fun GradleBuild.mockIncludedBuilds(
+    vararg includedBuildsMocks: GradleBuild,
+  ) {
+    assertTrue(includedBuildsMocks.asList().none { it.isBuildSrcBuild() }) {
+      "`buildSrc` shouldn't be added in included builds. Gradle puts all buildSrc only in editable builds and only for the root build."
     }
+    whenever(this.includedBuilds) doReturn ImmutableDomainObjectSet(includedBuildsMocks.asList())
+  }
+
+  private fun GradleBuild.isBuildSrcBuild(): Boolean {
+    val buildDirectory = this.buildIdentifier.rootDir
+    return buildDirectory.name.equals("buildSrc", ignoreCase = true)
   }
 
   private fun verifyBuild(
