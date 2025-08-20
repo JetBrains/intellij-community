@@ -14,7 +14,6 @@ import com.intellij.ui.IconManager
 import com.intellij.ui.PlatformIcons
 import org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightBundle
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.isPropertyParameter
 
 open class KotlinStructureViewModel(ktFile: KtFile, editor: Editor?, rootElement : StructureViewTreeElement) :
