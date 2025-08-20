@@ -167,10 +167,6 @@ a:com.intellij.codeInsight.completion.CompletionConfidence
 - <init>():V
 - shouldSkipAutopopup(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiElement,com.intellij.psi.PsiFile,I):com.intellij.util.ThreeState
 - shouldSkipAutopopup(com.intellij.psi.PsiElement,com.intellij.psi.PsiFile,I):com.intellij.util.ThreeState
-f:com.intellij.codeInsight.completion.CompletionConfidenceEP
-- com.intellij.lang.LanguageExtensionPoint
-- <init>():V
-- s:forLanguage(com.intellij.lang.Language):java.util.List
 a:com.intellij.codeInsight.completion.CompletionContributor
 - com.intellij.openapi.project.PossiblyDumbAware
 - sf:EP:com.intellij.openapi.extensions.ExtensionPointName
