@@ -35,6 +35,7 @@ import com.intellij.openapi.editor.colors.ColorKey
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.event.*
 import com.intellij.openapi.editor.ex.*
+import com.intellij.openapi.editor.impl.event.MarkupModelListener
 import com.intellij.openapi.editor.impl.inspector.InspectionsGroup
 import com.intellij.openapi.editor.impl.inspector.RedesignedInspectionsManager
 import com.intellij.openapi.editor.markup.*
@@ -64,7 +65,7 @@ import com.intellij.util.Processor
 import com.intellij.util.cancelOnDispose
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.ThreadingAssertions
-import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.*
 import com.intellij.util.ui.JBValue.UIInteger
 import com.intellij.util.ui.update.MergingUpdateQueue
@@ -239,7 +240,7 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
       }
     })
 
-    errorStripeMarkersModel = ErrorStripeMarkersModel(editor, resourcesDisposable)
+    errorStripeMarkersModel = ErrorStripeMarkersModel(editor)
 
     val project = editor.project
     @Suppress("IfThenToSafeAccess")
@@ -642,7 +643,7 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
     return nearestMarker
   }
 
-  private fun getNearestHighlighters(y: Int): MutableSet<RangeHighlighter> {
+  private fun getNearestHighlighters(y: Int): Set<RangeHighlighter> {
     val highlighters = HashSet<RangeHighlighter>()
     addNearestHighlighters(this, y, highlighters)
     addNearestHighlighters(editor.filteredDocumentMarkupModel, y, highlighters)
@@ -722,7 +723,6 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
     else {
       editor.verticalScrollBar.setPersistentUI(JBScrollBar.createUI(null))
     }
-    errorStripeMarkersModel.setActive(value)
   }
 
   private val errorPanel: MyErrorPanel?
@@ -780,12 +780,9 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
     errorPanel?.uninstallListeners()
   }
 
-  fun rebuild() {
-    errorStripeMarkersModel.rebuild()
-  }
-
   // startOffset == -1 || endOffset == -1 means whole document
   @JvmOverloads
+  @RequiresEdt
   fun repaint(startOffset: Int = -1, endOffset: Int = -1) {
     val range = offsetsToYPositions(startOffset, endOffset)
     markDirtied(range)
@@ -983,61 +980,63 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
       val thinYStart = IntArray(1) // in range 0...yStart all spots are drawn
       val wideYStart = IntArray(1) // in range 0...yStart all spots are drawn
 
-      val iterator = errorStripeMarkersModel.highlighterIterator(startOffset, endOffset)
-      try {
-        ContainerUtil.process(iterator, Processor { highlighter ->
-          val isThin = highlighter.isThinErrorStripeMark()
-          val yStart = if (isThin) thinYStart else wideYStart
-          val stripes = if (isThin) thinStripes else wideStripes
-          val ends = if (isThin) thinEnds else wideEnds
-
-          val range = offsetsToYPositions(highlighter.getStartOffset(), highlighter.getEndOffset())
-          val ys = range.startOffset
-          var ye = range.endOffset
-          if (ye - ys < getMinMarkHeight()) ye = ys + getMinMarkHeight()
-
-          yStart[0] = drawStripesEndingBefore(ys, ends, stripes, g, yStart[0])
-
-          val layer = highlighter.getLayer()
-
-          var stripe: PositionedStripe? = null
-          var i = 0
-          while (i < stripes.size) {
-            val s = stripes.get(i)
-            if (s.layer == layer) {
-              stripe = s
-              break
+      MarkupIterator.mergeIterators(
+        (getEditor().getMarkupModel() as MarkupModelEx).overlappingErrorStripeIterator(startOffset, endOffset),
+        ((getEditor() as EditorEx).getFilteredDocumentMarkupModel() as EditorFilteringMarkupModelEx).getDelegate().overlappingErrorStripeIterator(startOffset, endOffset), RangeHighlighterEx.BY_AFFECTED_START_OFFSET)
+        .use { iterator ->
+          for (highlighter in iterator) {
+            if (!ErrorStripeMarkersModel.isErrorStripeHighlighter(highlighter, editor)) {
+              continue
             }
-            if (s.layer < layer) {
-              break
-            }
-            i++
-          }
-          val colorsScheme = editor.colorsScheme
-          val color = highlighter.getErrorStripeMarkColor(colorsScheme)
-          if (color == null) {
-            if (reportErrorStripeInconsistency) {
-              reportErrorStripeInconsistency = false
-              LOG.error("Error stripe marker has no color. highlighter: $highlighter, color scheme: $colorsScheme (${colorsScheme.javaClass})")
-            }
-            return@Processor true
-          }
+            val isThin = highlighter.isThinErrorStripeMark()
+            val yStart = if (isThin) thinYStart else wideYStart
+            val stripes = if (isThin) thinStripes else wideStripes
+            val ends = if (isThin) thinEnds else wideEnds
 
-          if (stripe == null) {
-            // started new stripe, draw previous above
-            if (i == 0 && yStart[0] != ys) {
-              if (!stripes.isEmpty()) {
-                val top = stripes.get(0)
-                drawSpot(g, top.thin, yStart[0], ys, top.color)
+            val range = offsetsToYPositions(highlighter.getStartOffset(), highlighter.getEndOffset())
+            val ys = range.startOffset
+            var ye = range.endOffset
+            if (ye - ys < getMinMarkHeight()) ye = ys + getMinMarkHeight()
+
+            yStart[0] = drawStripesEndingBefore(ys, ends, stripes, g, yStart[0])
+
+            val layer = highlighter.getLayer()
+
+            var stripe: PositionedStripe? = null
+            var i = 0
+            while (i < stripes.size) {
+              val s = stripes.get(i)
+              if (s.layer == layer) {
+                stripe = s
+                break
               }
-              yStart[0] = ys
+              if (s.layer < layer) {
+                break
+              }
+              i++
             }
-            stripe = PositionedStripe(color, ye, isThin, layer)
-            stripes.add(i, stripe)
-            ends.offer(stripe)
-          }
-          else {
-            if (stripe.yEnd < ye) {
+            val colorsScheme = editor.colorsScheme
+            val color = highlighter.getErrorStripeMarkColor(colorsScheme)
+            if (color == null) {
+              if (reportErrorStripeInconsistency) {
+                reportErrorStripeInconsistency = false
+                LOG.error("Error stripe marker has no color. highlighter: $highlighter, color scheme: $colorsScheme (${colorsScheme.javaClass})")
+              }
+            }
+            else if (stripe == null) {
+              // started new stripe, draw previous above
+              if (i == 0 && yStart[0] != ys) {
+                if (!stripes.isEmpty()) {
+                  val top = stripes.get(0)
+                  drawSpot(g, top.thin, yStart[0], ys, top.color)
+                }
+                yStart[0] = ys
+              }
+              stripe = PositionedStripe(color, ye, isThin, layer)
+              stripes.add(i, stripe)
+              ends.offer(stripe)
+            }
+            else if (stripe.yEnd < ye) {
               if (color != stripe.color) {
                 // paint previous stripe on this layer
                 if (i == 0 && yStart[0] != ys) {
@@ -1053,12 +1052,7 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
               ends.offer(stripe)
             }
           }
-          true
-        })
-      }
-      finally {
-        iterator.dispose()
-      }
+        }
 
       drawStripesEndingBefore(Int.MAX_VALUE, thinEnds, thinStripes, g, thinYStart[0])
       drawStripesEndingBefore(Int.MAX_VALUE, wideEnds, wideStripes, g, wideYStart[0])
@@ -1246,7 +1240,29 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
   }
 
   override fun addErrorMarkerListener(listener: ErrorStripeListener, parent: Disposable) {
-    errorStripeMarkersModel.addErrorMarkerListener(listener, parent)
+    val markupListener: MarkupModelListener = object: MarkupModelListener {
+      override fun afterAdded(highlighter: RangeHighlighterEx) {
+        if (ErrorStripeMarkersModel.isErrorStripeHighlighter(highlighter, editor)) {
+          listener.errorMarkerChanged(ErrorStripeEvent(editor, null, highlighter))
+        }
+      }
+
+      override fun afterRemoved(highlighter: RangeHighlighterEx) {
+        if (ErrorStripeMarkersModel.isErrorStripeHighlighter(highlighter, editor)) {
+          listener.errorMarkerChanged(ErrorStripeEvent(editor, null, highlighter))
+        }
+      }
+
+      override fun attributesChanged(highlighter: RangeHighlighterEx, renderersChanged: Boolean, fontStyleChanged: Boolean, foregroundColorChanged: Boolean) {
+        if (ErrorStripeMarkersModel.isErrorStripeHighlighter(highlighter, editor)) {
+          listener.errorMarkerChanged(ErrorStripeEvent(editor, null, highlighter))
+        }
+      }
+    }
+    addMarkupModelListener(parent, markupListener)
+    val documentMarkup = DocumentMarkupModel.forDocument(document, editor.project, true) as MarkupModelEx
+    documentMarkup.addMarkupModelListener(parent, markupListener)
+    errorStripeMarkersModel.addErrorMarkerClickListener(parent, listener)
   }
 
   private fun markDirtied(yPositions: ProperTextRange) {
@@ -1382,11 +1398,6 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
       val startCollapsed = foldingModel.getCollapsedRegionAtOffset(offset)
       return if (startCollapsed == null) offset else max(offset, startCollapsed.getEndOffset())
     }
-  }
-
-  @ApiStatus.Internal
-  fun errorStripeMarkersModelAttributesChanged(highlighter: RangeHighlighterEx) {
-    errorStripeMarkersModel.attributesChanged(highlighter, true)
   }
 
   private inner class TrafficLightAction : DumbAwareAction(), CustomComponentAction, ActionRemoteBehaviorSpecification.Frontend {

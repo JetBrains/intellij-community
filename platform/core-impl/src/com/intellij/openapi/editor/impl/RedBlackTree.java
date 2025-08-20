@@ -381,7 +381,7 @@ public abstract class RedBlackTree<K> {
     return nodeSize;
   }
 
-  void verifyProperties() {
+  protected void verifyProperties() {
     //if (true) return;
     if (VERIFY) {
       verifyProperty1(root);

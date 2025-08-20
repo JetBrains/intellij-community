@@ -385,6 +385,7 @@ public sealed class RangeHighlighterImpl extends RangeMarkerImpl implements Rang
     else {
       myModel.fireAttributesChanged(this, renderersChanged, fontStyleChanged, foregroundColorChanged);
     }
+    myNode.attributesChanged();
   }
 
   @Override

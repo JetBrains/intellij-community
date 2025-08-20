@@ -29,7 +29,7 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
     document.addDocumentListener(this);
   }
 
-  RangeMarkerTree() {
+  protected RangeMarkerTree() {
   }
 
   @Override

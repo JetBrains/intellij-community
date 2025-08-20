@@ -11,6 +11,8 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.WalkingState;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.VarHandleWrapper;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongSet;
 import org.jetbrains.annotations.ApiStatus;
@@ -22,7 +24,6 @@ import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Supplier;
 
@@ -40,16 +41,19 @@ public abstract class IntervalTreeImpl<T extends RangeMarkerEx> extends RedBlack
   @ApiStatus.Internal
   protected static class IntervalNode<E extends RangeMarkerEx> extends Node<E> implements MutableInterval {
     private volatile long myRange;
-    private static final byte ATTACHED_TO_TREE_FLAG = COLOR_MASK <<1; // true if the node is inserted to the tree
+    private static final byte ATTACHED_TO_TREE_FLAG = COLOR_MASK << 1; // true if the node is inserted to the tree
     protected final List<Supplier<? extends E>> intervals;
     int maxEnd; // max of all intervalEnd()s among all children.
     int delta;  // delta of startOffset. getStartOffset() = myStartOffset + Sum of deltas up to root
+    private boolean hasDeliciousnessBeneath; // including this node
+    private boolean hasDeliciousInterval; // some of the intervals are with isDelicious() property
 
-    private volatile long cachedDeltaUpToRoot; // field (packed to long for atomicity) containing deltaUpToRoot, node modCount and allDeltasUpAreNull flag
+    private volatile long cachedDeltaUpToRoot;
+      // field (packed to long for atomicity) containing deltaUpToRoot, node modCount and allDeltasUpAreNull flag
     // These fields are packed inside cachedDeltaUpToRoot, as follows, starting with LSB:
     //  private int modCount:32; // if it equals to the com.intellij.openapi.editor.impl.RedBlackTree.modCount then deltaUpToRoot can be used, otherwise it is expired
-    //  private int deltaUpToRoot:31; // sum of all deltas up to the root (including this node.delta). Has valid value only if modCount == IntervalTreeImpl.this.modCount
     //  private boolean allDeltasUpAreNull:1;  // true if all deltas up the tree (including this node) are 0. Has valid value only if modCount == IntervalTreeImpl.this.modCount
+    //  private int deltaUpToRoot:31; // sum of all deltas up to the root (including this node.delta). Has valid value only if modCount == IntervalTreeImpl.this.modCount
 
     private final @NotNull IntervalTreeImpl<E> myTree;
 
@@ -152,6 +156,31 @@ public abstract class IntervalTreeImpl<T extends RangeMarkerEx> extends RedBlack
         assert myTree.keySize > 0 : myTree.keySize;
         myTree.keySize--;
       }
+      updateHasDeliciousInterval();
+      updateDeliciousnessFromChildrenUp();
+    }
+
+    private void updateHasDeliciousBeneathFromChildren() {
+      hasDeliciousnessBeneath = hasDeliciousInterval || hasDeliciousnessBeneath(getLeft()) || hasDeliciousnessBeneath(getRight());
+    }
+
+    private void updateHasDeliciousInterval() {
+      hasDeliciousInterval = hasDeliciousInterval();
+    }
+
+    private void updateDeliciousnessFromChildrenUp() {
+      IntervalNode<E> n = this;
+      while (n != null) {
+        n.updateHasDeliciousBeneathFromChildren();
+        n = n.getParent();
+      }
+    }
+
+    private boolean hasDeliciousInterval() {
+      return ContainerUtil.exists(intervals, s->{
+        E interval = s.get();
+        return interval != null && myTree.isDelicious(interval);
+      });
     }
 
     @ApiStatus.Internal
@@ -171,6 +200,8 @@ public abstract class IntervalTreeImpl<T extends RangeMarkerEx> extends RedBlack
           addInterval(interval);
         }
       }
+      updateHasDeliciousInterval();
+      updateDeliciousnessFromChildrenUp();
     }
 
     int computeDeltaUpToRoot() {
@@ -293,11 +324,20 @@ public abstract class IntervalTreeImpl<T extends RangeMarkerEx> extends RedBlack
      * N        - 1bit flag. If set, then all deltas up to root are null
      * MMMMMMMM - 32bit int containing this node modification count
      */
-    private static final AtomicLongFieldUpdater<IntervalNode>
-      cachedDeltaUpdater = AtomicLongFieldUpdater.newUpdater(IntervalNode.class, "cachedDeltaUpToRoot");
+    private static final VarHandleWrapper
+      cachedDeltaHandler = VarHandleWrapper.getFactory().create(IntervalNode.class, "cachedDeltaUpToRoot", long.class);
 
     private void setCachedValues(int deltaUpToRoot, boolean allDeltaUpToRootAreNull, int modCount) {
       cachedDeltaUpToRoot = packValues(deltaUpToRoot, allDeltaUpToRootAreNull, modCount);
+    }
+
+    // attributes could change the deliciousness
+    protected void attributesChanged() {
+      myTree.runUnderWriteLock(() -> {
+        updateHasDeliciousInterval();
+        updateDeliciousnessFromChildrenUp();
+        return null;
+      });
     }
 
     private static long packValues(long deltaUpToRoot, boolean allDeltaUpToRootAreNull, int modCount) {
@@ -308,7 +348,7 @@ public abstract class IntervalTreeImpl<T extends RangeMarkerEx> extends RedBlack
       if (myTree.getModCount() != treeModCount) return false;
       long newValue = packValues(deltaUpToRoot, allDeltasUpAreNull, treeModCount);
       long oldValue = cachedDeltaUpToRoot;
-      return cachedDeltaUpdater.compareAndSet(this, oldValue, newValue);
+      return cachedDeltaHandler.compareAndSetLong(this, oldValue, newValue);
     }
 
     private static boolean allDeltasUpAreNull(long packedOffsets) {
@@ -612,13 +652,17 @@ public abstract class IntervalTreeImpl<T extends RangeMarkerEx> extends RedBlack
   @NotNull
   @ApiStatus.Internal
   protected MarkupIterator<T> overlappingIterator(@NotNull TextRange rangeInterval) {
+    return overlappingIterator(rangeInterval, false);
+  }
+
+  private @NotNull MarkupIterator<T> overlappingIterator(@NotNull TextRange rangeInterval, boolean deliciousOnly) {
     l.readLock().lock();
 
     try {
       int startOffset = rangeInterval.getStartOffset();
       int endOffset = rangeInterval.getEndOffset();
       int modCountBefore = getModCount();
-      IntervalNode<T> firstOverlap = findMinOverlappingWith(getRoot(), rangeInterval, 0);
+      IntervalNode<T> firstOverlap = findMinOverlappingWith(getRoot(), rangeInterval, 0, deliciousOnly);
       if (getModCount() != modCountBefore) {
         throw new ConcurrentModificationException();
       }
@@ -665,11 +709,14 @@ public abstract class IntervalTreeImpl<T extends RangeMarkerEx> extends RedBlack
         }
 
         private boolean nextIntervalInNode() {
+          if (deliciousOnly && !currentNode.hasDeliciousInterval) {
+            return false;
+          }
           List<Supplier<? extends T>> intervals = currentNode.intervals;
           while (indexInCurrentList < intervals.size()) {
             T t = intervals.get(indexInCurrentList).get();
             indexInCurrentList++;
-            if (t != null) {
+            if (t != null && (!deliciousOnly || isDelicious(t))) {
               current = t;
               return true;
             }
@@ -711,7 +758,7 @@ public abstract class IntervalTreeImpl<T extends RangeMarkerEx> extends RedBlack
 
           // try to go right down
           IntervalNode<T> right = root.getRight();
-          if (right != null) {
+          if (right != null && (!deliciousOnly || right.hasDeliciousnessBeneath)) {
             int rightMaxEnd = maxEndOf(right, delta);
             if (startOffset <= rightMaxEnd) {
               int rightDelta = delta + right.delta;
@@ -749,6 +796,14 @@ public abstract class IntervalTreeImpl<T extends RangeMarkerEx> extends RedBlack
       l.readLock().unlock();
       throw e;
     }
+  }
+
+  /**
+   * return an iterator containing only intervals marked with "delicious" flag, see {@link #isDelicious}
+   */
+  @ApiStatus.Internal
+  protected MarkupIterator<T> overlappingDeliciousIterator(@NotNull TextRange range) {
+    return overlappingIterator(range, true);
   }
 
   private boolean overlaps(@Nullable IntervalNode<T> root, @NotNull TextRange rangeInterval, int deltaUpToRootExclusive) {
@@ -805,6 +860,8 @@ public abstract class IntervalTreeImpl<T extends RangeMarkerEx> extends RedBlack
     keySize += node.intervals.size();
     insertCase1(node);
     node.setAttachedToTree(true);
+    node.updateHasDeliciousInterval();
+    node.updateDeliciousnessFromChildrenUp();
     verifyProperties();
 
     deleteNodes(gced);
@@ -818,6 +875,16 @@ public abstract class IntervalTreeImpl<T extends RangeMarkerEx> extends RedBlack
         removeNode(node);
       }
     });
+  }
+
+  /**
+   * Some intervals could be marked with this special flag.
+   * It's assumed the flag is remained constant after the marker is inserted into the tree (meaning this method will return the same value).
+   * This flag is maintained during the tree transformations, and allows for faster iteration of these marked intervals, see {@link #overlappingDeliciousIterator(TextRange)}.
+   * For example, this feature can be used to store highlighters (among all others) that are shown at the error stripe, and iterate them quickly during the editor redraw.
+   */
+  protected boolean isDelicious(@NotNull T interval) {
+    return false;
   }
 
   protected @NotNull IntervalNode<T> addInterval(@NotNull T interval, int start, int end,
@@ -838,6 +905,10 @@ public abstract class IntervalTreeImpl<T extends RangeMarkerEx> extends RedBlack
         // merged
         insertedNode.addInterval(interval);
       }
+      // call isDelicious as late as possible because it could depend on the (not-yet-set?)node attributes
+      boolean isDelicious = isDelicious(interval);
+      insertedNode.hasDeliciousInterval |= isDelicious;
+      insertedNode.updateDeliciousnessFromChildrenUp();
       checkMax(true);
       checkBelongsToTheTree(interval, true);
       return insertedNode;
@@ -1130,18 +1201,24 @@ public abstract class IntervalTreeImpl<T extends RangeMarkerEx> extends RedBlack
     n2.setLeft(l1 == n2 ? n1 : l1);
     if (l1 != null) {
       l1.setParent(n2 == l1 ? p1 : n2);
+      l1.updateHasDeliciousBeneathFromChildren();
     }
     if (r1 != null) {
       r1.setParent(n2);
+      r1.updateHasDeliciousBeneathFromChildren();
     }
     n1.setRight(r2);
     n2.setRight(r1);
     if (l2 != null) {
       l2.setParent(n1);
+      l2.updateHasDeliciousBeneathFromChildren();
     }
     if (r2 != null) {
       r2.setParent(n1);
+      r2.updateHasDeliciousBeneathFromChildren();
     }
+    n1.updateDeliciousnessFromChildrenUp();
+    n2.updateDeliciousnessFromChildrenUp();
   }
 
   // returns real max endOffset of all intervals below
@@ -1179,6 +1256,10 @@ public abstract class IntervalTreeImpl<T extends RangeMarkerEx> extends RedBlack
     assert delta == 0 : delta;
   }
 
+  private static <T extends RangeMarkerEx> boolean hasDeliciousnessBeneath(@Nullable IntervalNode<T> node) {
+    return node != null && node.hasDeliciousnessBeneath;
+  }
+
   @Override
   protected void rotateRight(@NotNull Node<T> n) {
     checkMax(false);
@@ -1202,6 +1283,11 @@ public abstract class IntervalTreeImpl<T extends RangeMarkerEx> extends RedBlack
     assertAllDeltasAreNull(node1);
     assertAllDeltasAreNull(node2);
     assertAllDeltasAreNull(node3);
+
+    // node2 is the root now
+    node1.updateHasDeliciousBeneathFromChildren();
+    node2.updateHasDeliciousBeneathFromChildren();
+
     checkMax(false);
   }
 
@@ -1229,21 +1315,27 @@ public abstract class IntervalTreeImpl<T extends RangeMarkerEx> extends RedBlack
     assertAllDeltasAreNull(node2);
     assertAllDeltasAreNull(node3);
 
+    // node3 is the root now
+    node1.updateHasDeliciousBeneathFromChildren();
+    node3.updateHasDeliciousBeneathFromChildren();
+
     checkMax(false);
   }
 
   @Override
-  protected void replaceNode(@NotNull Node<T> node, Node<T> child) {
-    IntervalNode<T> myNode = (IntervalNode<T>)node;
-    IntervalNode<T> myChild = (IntervalNode<T>)child;
+  protected void replaceNode(@NotNull Node<T> oldN, Node<T> newN) {
+    IntervalNode<T> myNode = (IntervalNode<T>)oldN;
+    IntervalNode<T> myChild = (IntervalNode<T>)newN;
     pushDelta(myNode);
     pushDelta(myChild);
 
-    super.replaceNode(node, child);
-    if (child != null && myNode.isValid()) {
+    super.replaceNode(oldN, newN);
+    if (newN != null && myNode.isValid()) {
       myChild.changeDelta(myNode.delta);
       //todo correct max up to root??
+      myChild.updateDeliciousnessFromChildrenUp();
     }
+    myNode.updateDeliciousnessFromChildrenUp();
   }
 
   private void assertAllDeltasAreNull(@Nullable IntervalNode<T> node) {
@@ -1256,18 +1348,20 @@ public abstract class IntervalTreeImpl<T extends RangeMarkerEx> extends RedBlack
 
   private IntervalNode<T> findMinOverlappingWith(@Nullable IntervalNode<T> root,
                                                  @NotNull TextRange interval,
-                                                 int deltaUpToRootExclusive) {
+                                                 int deltaUpToRootExclusive, boolean deliciousOnly) {
     if (root == null) {
       return null;
     }
     assert root.isValid();
-
+    if (deliciousOnly && !root.hasDeliciousnessBeneath) {
+      return null;
+    }
     int delta = deltaUpToRootExclusive + root.delta;
     if (interval.getStartOffset() > maxEndOf(root, deltaUpToRootExclusive)) {
       return null; // right of the rightmost interval in the subtree
     }
 
-    IntervalNode<T> inLeft = findMinOverlappingWith(root.getLeft(), interval, delta);
+    IntervalNode<T> inLeft = findMinOverlappingWith(root.getLeft(), interval, delta, deliciousOnly);
     if (inLeft != null) {
       return inLeft;
     }
@@ -1282,7 +1376,7 @@ public abstract class IntervalTreeImpl<T extends RangeMarkerEx> extends RedBlack
       return null; // left of the root, cant be in the right subtree
     }
 
-    return findMinOverlappingWith(root.getRight(), interval, delta);
+    return findMinOverlappingWith(root.getRight(), interval, delta, deliciousOnly);
   }
 
   void changeData(@NotNull T interval, int start, int end,
@@ -1429,9 +1523,10 @@ public abstract class IntervalTreeImpl<T extends RangeMarkerEx> extends RedBlack
     @NotNull TextRange tree1Range,
     @NotNull IntervalTreeImpl<T> tree2,
     @NotNull TextRange tree2Range,
+    boolean deliciousOnly,
     @NotNull Comparator<? super T> comparator) {
-    MarkupIterator<T> exact = tree1.overlappingIterator(tree1Range);
-    MarkupIterator<T> lines = tree2.overlappingIterator(tree2Range);
+    MarkupIterator<T> exact = deliciousOnly ? tree1.overlappingDeliciousIterator(tree1Range) : tree1.overlappingIterator(tree1Range);
+    MarkupIterator<T> lines = deliciousOnly ? tree2.overlappingDeliciousIterator(tree1Range) : tree2.overlappingIterator(tree2Range);
     return MarkupIterator.mergeIterators(exact, lines, comparator);
   }
 
@@ -1504,5 +1599,23 @@ public abstract class IntervalTreeImpl<T extends RangeMarkerEx> extends RedBlack
       return true;
     });
     return b.append("]").toString();
+  }
+
+  @Override
+  protected void verifyProperties() {
+    super.verifyProperties();
+    if (VERIFY) {
+      verifyDeliciousness((IntervalNode<T>)root);
+    }
+  }
+
+  // return true if found delicious
+  private boolean verifyDeliciousness(IntervalNode<T> root) {
+    if (root == null) return false;
+    assert root.hasDeliciousInterval == root.hasDeliciousInterval();
+    assert !root.hasDeliciousInterval || root.hasDeliciousnessBeneath;
+    boolean foundInChildren = verifyDeliciousness(root.getLeft()) || verifyDeliciousness(root.getRight());
+    assert root.hasDeliciousnessBeneath == foundInChildren || root.hasDeliciousInterval;
+    return root.hasDeliciousnessBeneath;
   }
 }

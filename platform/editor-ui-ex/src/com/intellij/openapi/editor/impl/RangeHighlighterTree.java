@@ -25,6 +25,11 @@ public final class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighter
     return false;
   }
 
+  @Override
+  protected boolean isDelicious(@NotNull RangeHighlighterEx highlighter) {
+    return highlighter.getErrorStripeMarkColor(null) != null;
+  }
+
   void updateRenderedFlags(@NotNull RangeHighlighterEx highlighter) {
     RHNode node = (RHNode)lookupNode(highlighter);
     if (node != null) node.recalculateRenderFlagsUp();

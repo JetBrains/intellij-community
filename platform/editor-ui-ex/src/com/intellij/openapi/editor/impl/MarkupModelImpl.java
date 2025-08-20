@@ -17,6 +17,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.TextRangeScalarUtil;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -197,8 +198,6 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   @Override
   public void removeHighlighter(@NotNull RangeHighlighter highlighter) {
     myCachedHighlighters = null;
-    if (!highlighter.isValid()) return;
-
     treeFor(highlighter).removeInterval((RangeHighlighterEx)highlighter);
   }
 
@@ -248,12 +247,18 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
         listener.attributesChanged(highlighter, renderersChanged, fontStyleChanged, foregroundColorChanged);
       }
     }
+    restoreDeliciousInvariants(highlighter); // after attribute change the highlighter can become error-stripe-visible, or vice versa
+  }
+
+  private static void restoreDeliciousInvariants(@NotNull RangeHighlighter highlighter) {
+    ((RangeMarkerImpl)highlighter).myNode.attributesChanged();
   }
 
   private void fireAfterAdded(@NotNull RangeHighlighterEx highlighter) {
     for (MarkupModelListener listener : myListeners) {
       listener.afterAdded(highlighter);
     }
+    restoreDeliciousInvariants(highlighter);
   }
 
   void fireBeforeRemoved(@NotNull RangeHighlighterEx highlighter) {
@@ -290,11 +295,21 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
 
   @Override
   public @NotNull MarkupIterator<RangeHighlighterEx> overlappingIterator(int startOffset, int endOffset) {
-    startOffset = Math.max(0,startOffset);
-    endOffset = Math.max(startOffset, endOffset);
+    return overlappingIterator(startOffset, endOffset, false);
+  }
+
+  private @NotNull MarkupIterator<RangeHighlighterEx> overlappingIterator(int startOffset, int endOffset, boolean deliciousOnly) {
+    startOffset = TextRangeScalarUtil.coerce(startOffset, 0, getDocument().getTextLength());
+    endOffset = TextRangeScalarUtil.coerce(endOffset, startOffset, getDocument().getTextLength());
     return IntervalTreeImpl
-      .mergingOverlappingIterator(myHighlighterTree, new ProperTextRange(startOffset, endOffset), myHighlighterTreeForLines,
-                                  roundToLineBoundaries(getDocument(), startOffset, endOffset), RangeHighlighterEx.BY_AFFECTED_START_OFFSET);
+      .mergingOverlappingIterator(myHighlighterTree, new ProperTextRange(startOffset, endOffset),
+                                  myHighlighterTreeForLines, roundToLineBoundaries(getDocument(), startOffset, endOffset),
+                                  deliciousOnly, RangeHighlighterEx.BY_AFFECTED_START_OFFSET);
+  }
+
+  @Override
+  public @NotNull MarkupIterator<RangeHighlighterEx> overlappingErrorStripeIterator(int startOffset, int endOffset) {
+    return overlappingIterator(startOffset, endOffset, true);
   }
 
   public static @NotNull TextRange roundToLineBoundaries(@NotNull Document document, int startOffset, int endOffset) {

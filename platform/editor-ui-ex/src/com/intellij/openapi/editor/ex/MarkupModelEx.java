@@ -4,6 +4,7 @@ package com.intellij.openapi.editor.ex;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.impl.FilteringMarkupIterator;
 import com.intellij.openapi.editor.impl.RangeMarkerImpl;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
@@ -56,6 +57,15 @@ public interface MarkupModelEx extends MarkupModel {
 
   @NotNull
   MarkupIterator<RangeHighlighterEx> overlappingIterator(int startOffset, int endOffset);
+
+  /**
+   * makes an iterator which enumerates only error-stripe {@link RangeHighlighterEx}s,
+   * i.e. those for which {@link com.intellij.openapi.editor.impl.ErrorStripeMarkersModel#isErrorStripeHighlighter} returns true
+   */
+  @NotNull
+  default MarkupIterator<RangeHighlighterEx> overlappingErrorStripeIterator(int startOffset, int endOffset) {
+    return new FilteringMarkupIterator<>(overlappingIterator(startOffset, endOffset), h->h.getErrorStripeMarkColor(null) != null);
+  }
 
   // optimization: creates highlighter and fires only one event: highlighterCreated
   @NotNull

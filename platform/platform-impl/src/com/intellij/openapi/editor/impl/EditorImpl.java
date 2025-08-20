@@ -692,7 +692,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     else {
       int start = highlighter.getAffectedAreaStartOffset();
       int end = highlighter.getAffectedAreaEndOffset();
-      myMarkupModel.repaint(start, end);
+      EdtInvocationManager.invokeLaterIfNeeded(() -> myMarkupModel.repaint(start, end));
     }
   }
   private record HighlighterChange(int affectedStart,
@@ -1108,8 +1108,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     myHighlighter.setColorScheme(myScheme);
-    myMarkupModel.rebuild();
-
     myGutterComponent.reinitSettings(updateGutterSize);
     myGutterComponent.revalidate();
 
@@ -3916,8 +3914,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         myMarkupModelListener.attributesChanged((RangeHighlighterEx)highlighter, true,
                                                 EditorUtil.attributesImpactFontStyle(attributes),
                                                 EditorUtil.attributesImpactForegroundColor(attributes));
-        myMarkupModel.errorStripeMarkersModelAttributesChanged((RangeHighlighterEx)highlighter);
-
         HighlightInfo fileLevelInfo = HighlightInfo.fromRangeHighlighter(highlighter);
         if (fileLevelInfo != null && fileLevelInfo.isFileLevelAnnotation()) {
           if (textEditor == null) {
