@@ -13828,6 +13828,35 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/quickfix/overridingIgnorableWithMustUse")
+    public static class OverridingIgnorableWithMustUse extends AbstractK1QuickFixTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("alreadyAnnotated.kt")
+        public void testAlreadyAnnotated() throws Exception {
+            runTest("testData/quickfix/overridingIgnorableWithMustUse/alreadyAnnotated.kt");
+        }
+
+        @TestMetadata("class.kt")
+        public void testClass() throws Exception {
+            runTest("testData/quickfix/overridingIgnorableWithMustUse/class.kt");
+        }
+
+        @TestMetadata("file.kt")
+        public void testFile() throws Exception {
+            runTest("testData/quickfix/overridingIgnorableWithMustUse/file.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/quickfix/platformClasses")
     public static class PlatformClasses extends AbstractK1QuickFixTest {
         @java.lang.Override

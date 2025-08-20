@@ -203,6 +203,7 @@ internal fun MutableTWorkspace.generateK2FixTests() {
             model("$idea/quickfix/wrapWithSafeLetCall", pattern = pattern)
             model("$idea/quickfix/wrongLongSuffix", pattern = pattern)
             model("$idea/quickfix/yieldUnsupported", pattern = pattern, isIgnored = true)
+            model("$idea/quickfix/overridingIgnorableWithMustUse", pattern = pattern)
         }
 
         testClass<AbstractHighLevelQuickFixMultiFileTest> {
