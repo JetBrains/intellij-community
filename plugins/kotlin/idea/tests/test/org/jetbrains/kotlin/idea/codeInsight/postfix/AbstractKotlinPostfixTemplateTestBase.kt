@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.postfix
 
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
@@ -8,6 +8,7 @@ import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.util.TextRange
 import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.PlatformTestUtil
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.KotlinJvmLightProjectDescriptor
@@ -17,6 +18,7 @@ import org.jetbrains.kotlin.idea.base.util.isInDumbMode
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.test.InTextDirectivesUtils
 import java.nio.file.Paths
+import java.util.concurrent.TimeUnit
 import kotlin.io.path.name
 import kotlin.io.path.relativeTo
 
@@ -59,6 +61,7 @@ abstract class AbstractKotlinPostfixTemplateTestBase : NewLightKotlinCodeInsight
                     myFixture.type("\t")
                 }
                 NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
+                PlatformTestUtil.waitForAllDocumentsCommitted(10, TimeUnit.SECONDS)
 
                 val allowMultipleExpressions = InTextDirectivesUtils.isDirectiveDefined(fileText, ALLOW_MULTIPLE_EXPRESSIONS)
                 val suggestedExpressions = with(KotlinPostfixTemplateInfo) { file.suggestedExpressions }
