@@ -66,6 +66,8 @@ public final class JavaExecutionUtil {
   /**
    * Returns the runtime-qualified (aka "binary") name of the specified class.
    * <p>
+   * Returns null if the class is local or anonymous (because those classes cannot be entrypoint to the program).
+   * <p>
    * Below is a case where the <i>fully qualified name</i> of the class {@code NestedMain} differs from its <i>binary name</i>:
    *
    * <pre>{@code
@@ -86,6 +88,8 @@ public final class JavaExecutionUtil {
    *   <li>JLS 6.7. Fully Qualified Names and Canonical Names</li>
    *   <li>JLS 13.1. The Form of a Binary</li>
    * </ul>
+   * @see ClassUtil#getJVMClassName(PsiClass)
+   * @see ClassUtil#getBinaryClassName(PsiClass)
    */
   public static @Nullable String getRuntimeQualifiedName(final @NotNull PsiClass aClass) {
     return ClassUtil.getJVMClassName(aClass);
