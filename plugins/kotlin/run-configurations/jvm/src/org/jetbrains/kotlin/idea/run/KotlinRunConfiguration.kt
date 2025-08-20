@@ -176,12 +176,6 @@ open class KotlinRunConfiguration(name: String?, runConfigurationModule: JavaRun
         options.alternativeJrePath = path
     }
 
-    fun findMainClassFile(): KtFile? {
-        val module = configurationModule?.module ?: return null
-        val mainClassName = options.mainClassName?.takeIf { !StringUtil.isEmpty(it) } ?: return null
-        return findMainClassFile(module, mainClassName)
-    }
-
     @Throws(RuntimeConfigurationException::class)
     override fun checkConfiguration() {
         JavaParametersUtil.checkAlternativeJRE(this)
