@@ -9,6 +9,18 @@ kotlinCompilerCliVersion = "2.3.0-dev-5493"
 kotlincKotlinJpsPluginTestsVersion = "2.2.0"
 
 download_file(
+  name = "kotlinx-serialization-core-1.3.3.jar",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-serialization-core/1.3.3/kotlinx-serialization-core-1.3.3.jar",
+  sha256 = "f84746221055327cd88bf210c801e49abc17c912ceb8209cac224ac4304b7fa1",
+)
+
+download_file(
+  name = "kotlinx-serialization-core-jvm-1.3.3.jar",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-serialization-core-jvm/1.3.3/kotlinx-serialization-core-jvm-1.3.3.jar",
+  sha256 = "7ef62d1a0114052608d0f541c17b25f1faac17a270d5e26217ac4329ea164752",
+)
+
+download_file(
   name = "kotlin-script-runtime-1.6.21.jar",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-script-runtime/1.6.21/kotlin-script-runtime-1.6.21.jar",
   sha256 = "606c34a7e6e8e439e9208765e7d75b1dbcf80f38353f3e29bb27456d7b371171",
