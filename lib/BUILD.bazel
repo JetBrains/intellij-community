@@ -2124,8 +2124,8 @@ jvm_import(
 
 jvm_import(
   name = "hash4j",
-  jar = "@hash4j-0_22_0_http//file",
-  source_jar = "@hash4j-0_22_0-sources_http//file",
+  jar = "@hash4j-0_25_0_http//file",
+  source_jar = "@hash4j-0_25_0-sources_http//file",
   visibility = ["//visibility:public"]
 )
 

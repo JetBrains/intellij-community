@@ -2758,17 +2758,17 @@ http_file(
 )
 
 http_file(
-  name = "hash4j-0_22_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/dynatrace/hash4j/hash4j/0.22.0/hash4j-0.22.0.jar",
-  sha256 = "23028a3fd006e530bf495f551083208187cafd8f80624d048eba56442f16a50e",
-  downloaded_file_path = "hash4j-0.22.0.jar"
+  name = "hash4j-0_25_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/dynatrace/hash4j/hash4j/0.25.0/hash4j-0.25.0.jar",
+  sha256 = "a9f1ebf6dab3fecfb36eed4e084ca587e5cdf9dcdd723b8adb7d17b6fc874862",
+  downloaded_file_path = "hash4j-0.25.0.jar"
 )
 
 http_file(
-  name = "hash4j-0_22_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/dynatrace/hash4j/hash4j/0.22.0/hash4j-0.22.0-sources.jar",
-  sha256 = "eae47daa9a783fdb4e811e03d62f841ad2272ba08e2df972da4bca95cdac8847",
-  downloaded_file_path = "hash4j-0.22.0-sources.jar"
+  name = "hash4j-0_25_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/dynatrace/hash4j/hash4j/0.25.0/hash4j-0.25.0-sources.jar",
+  sha256 = "8963022184c1a701ff3437ba782e8583a4c4b4943f59b8e0c17d5511225f20f8",
+  downloaded_file_path = "hash4j-0.25.0-sources.jar"
 )
 
 http_file(
