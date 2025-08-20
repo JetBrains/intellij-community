@@ -161,6 +161,44 @@ class JavaJunit5ImplicitUsageProviderTest : JUnit5ImplicitUsageProviderTestBase(
    """.trimIndent())
   }
 
+  fun `test implicit usage of method in parameterized test`() {
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
+    class MyTest {
+        @org.junit.jupiter.api.Nested
+        public class NewInnerTest extends InnerTest {
+            public static String[] test() { return new String[]{"NewInner"}; }
+        }
+    
+        @org.junit.jupiter.api.Nested
+        public class InnerTest {
+            @org.junit.jupiter.params.ParameterizedTest
+            @org.junit.jupiter.params.provider.MethodSource("test")
+            void myTest(String param) { System.out.println(param); }
+            public static String[] test() { return new String[]{"Inner"}; }
+        }
+    }
+    """.trimIndent())
+  }
+
+  fun `test implicit usage of field in parameterized test`() {
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
+    class MyTest {
+        @org.junit.jupiter.api.Nested
+        public class NewInnerTest extends InnerTest {
+            private static final String[] test = new String[]{"NewInner"};
+        }
+    
+        @org.junit.jupiter.api.Nested
+        public class InnerTest {
+            @org.junit.jupiter.params.ParameterizedTest
+            @org.junit.jupiter.params.provider.FieldSource("test")
+            void myTest(String param) { System.out.println(param); }
+            private static final String[] test = new String[]{"Inner"};
+        }
+    }
+    """.trimIndent())
+  }
+
   fun `test implicit usage of method source with implicit method name`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import java.util.stream.*;
