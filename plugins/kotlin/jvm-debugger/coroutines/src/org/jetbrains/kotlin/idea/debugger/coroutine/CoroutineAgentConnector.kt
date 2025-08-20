@@ -12,6 +12,7 @@ import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.search.GlobalSearchScope
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 import kotlin.sequences.mapNotNull
 
 @ApiStatus.Internal
@@ -22,7 +23,8 @@ object CoroutineAgentConnector {
     private const val KOTLINX_COROUTINES_DEBUG_PROBES_IMPL_FQN = "kotlinx.coroutines.debug.internal.DebugProbesImpl"
     private val MINIMAL_SUPPORTED_COROUTINES_VERSION = DefaultArtifactVersion("1.3.7-255")
     private const val KOTLINX_COROUTINES_CORE = "kotlinx-coroutines-core"
-    private val KOTLINX_COROUTINES_CORE_JVM_JAR_REGEX = Regex(""".+$KOTLINX_COROUTINES_CORE(-jvm)?-(\d[\w.\-]+)?\.jar""")
+    @VisibleForTesting
+    val KOTLINX_COROUTINES_CORE_JVM_JAR_REGEX: Regex = Regex(""".+$KOTLINX_COROUTINES_CORE(-jvm)?-(\d[\w.\-]+)?\.jar""")
 
     fun attachCoroutineAgent(project: Project, configuration: RunConfigurationBase<*>?,  params: JavaParameters): Boolean {
         val searchResult = findKotlinxCoroutinesCoreJar(project, configuration)
