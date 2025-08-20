@@ -202,12 +202,6 @@ f:org.jetbrains.jewel.foundation.code.MimeTypeKt
 - sf:isVersionCatalog-KcqRzx0(java.lang.String):Z
 - sf:isXml-KcqRzx0(java.lang.String):Z
 f:org.jetbrains.jewel.foundation.code.highlighting.CodeHighlighterKt
-- sf:getLocalCodeHighlighter():androidx.compose.runtime.ProvidableCompositionLocal
-f:org.jetbrains.jewel.foundation.code.highlighting.NoOpCodeHighlighter
-- org.jetbrains.jewel.foundation.code.highlighting.CodeHighlighter
-- sf:$stable:I
-- sf:INSTANCE:org.jetbrains.jewel.foundation.code.highlighting.NoOpCodeHighlighter
-- highlight-zTGadEY(java.lang.String,java.lang.String):kotlinx.coroutines.flow.Flow
 f:org.jetbrains.jewel.foundation.layout.BasicTableLayoutKt
 - sf:BasicTableLayout-yE4rkUQ(I,I,J,androidx.compose.ui.Modifier,F,java.util.List,androidx.compose.runtime.Composer,I,I):V
 c:org.jetbrains.jewel.foundation.lazy.DefaultMacOsSelectableColumnKeybindings
@@ -666,6 +660,7 @@ f:org.jetbrains.jewel.foundation.theme.JewelTheme$Companion
 - f:getEditorTextStyle(androidx.compose.runtime.Composer,I):androidx.compose.ui.text.TextStyle
 - f:getGlobalColors(androidx.compose.runtime.Composer,I):org.jetbrains.jewel.foundation.GlobalColors
 - f:getGlobalMetrics(androidx.compose.runtime.Composer,I):org.jetbrains.jewel.foundation.GlobalMetrics
+- f:getInstanceUuid(androidx.compose.runtime.Composer,I):java.util.UUID
 - f:getName(androidx.compose.runtime.Composer,I):java.lang.String
 - f:isDark(androidx.compose.runtime.Composer,I):Z
 - f:isSwingCompatMode(androidx.compose.runtime.Composer,I):Z
@@ -679,6 +674,7 @@ f:org.jetbrains.jewel.foundation.theme.JewelThemeKt
 - sf:getLocalEditorTextStyle():androidx.compose.runtime.ProvidableCompositionLocal
 - sf:getLocalIconData():androidx.compose.runtime.ProvidableCompositionLocal
 - sf:getLocalTextStyle():androidx.compose.runtime.ProvidableCompositionLocal
+- sf:getLocalThemeInstanceUuid():androidx.compose.runtime.ProvidableCompositionLocal
 - sf:getLocalThemeName():androidx.compose.runtime.ProvidableCompositionLocal
 f:org.jetbrains.jewel.foundation.theme.ThemeColorPalette
 - sf:$stable:I
