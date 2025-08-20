@@ -80,7 +80,7 @@ impl LaunchConfiguration for DefaultLaunchConfiguration {
         Ok(vm_options)
     }
 
-    fn get_properties_file(&self) -> Result<PathBuf> {
+    fn get_custom_properties_file(&self) -> Result<PathBuf> {
         let env_var_name = self.env_var_base_name.to_owned() + "_PROPERTIES";
         get_path_from_env_var(&env_var_name, false)
     }
