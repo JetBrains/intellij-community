@@ -3,27 +3,18 @@ package com.intellij.grazie.utils;
 import ai.grazie.nlp.langs.Language;
 import com.intellij.codeInspection.ex.InspectionProfileWrapper;
 import com.intellij.grazie.GrazieConfig;
-import com.intellij.grazie.detection.LangDetector;
 import com.intellij.grazie.ide.inspection.grammar.GrazieInspection;
 import com.intellij.grazie.jlanguage.Lang;
 import com.intellij.grazie.text.TextContent;
-import com.intellij.grazie.text.TextProblem;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.ui.CommitMessage;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.SyntaxTraverser;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.containers.ContainerUtil;
@@ -32,8 +23,9 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
-import java.util.function.Supplier;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 import static com.intellij.grazie.text.TextExtractor.findAllTextContents;
@@ -41,7 +33,6 @@ import static com.intellij.grazie.text.TextExtractor.findAllTextContents;
 
 public final class HighlightingUtil {
 
-  private static final Pattern COULD_BE_ENGLISH = Pattern.compile("([a-zA-Z]|[^\\p{L}])*+");
   public static final Comparator<TextContent> BY_TEXT_START = Comparator.comparing(tc -> tc.textOffsetToFile(0));
 
   //todo use a more decent API when it appears (https://youtrack.jetbrains.com/issue/IDEA-294972)
@@ -57,54 +48,12 @@ public final class HighlightingUtil {
     return false;
   }
 
-  public static boolean shouldEnableHighlighting(PsiFile file) {
-    return shouldEnableHighlighting(file.getProject(), file.getViewProvider().getVirtualFile());
-  }
-
-  public static boolean shouldEnableHighlighting(Project project, VirtualFile vFile) {
-    ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(project);
-    return !fileIndex.isExcluded(vFile) && !fileIndex.isInLibrary(vFile);
-  }
-
   public static Set<TextContent.TextDomain> checkedDomains() {
     return GrazieInspection.Companion.checkedDomains();
   }
 
-  public static List<TextRange> toFileRanges(TextContent text, TextRange rangeInText) {
-    return ContainerUtil.filter(text.intersection(text.textRangeToFile(rangeInText)), r -> !r.isEmpty());
-  }
-
-  public static List<TextRange> getFileHighlightRanges(TextProblem problem) {
-    return ContainerUtil.flatMap(problem.getHighlightRanges(), r -> toFileRanges(problem.getText(), r));
-  }
-
   public static TextRange selectionRange(Editor editor) {
     return new TextRange(editor.getSelectionModel().getSelectionStart(), editor.getSelectionModel().getSelectionEnd());
-  }
-
-  public static <T> Map<PsiElement, List<Pair<TextRange, T>>> analyzeForAnnotator(
-    TextContent text, Key<Pair<Long, Map<PsiElement, List<Pair<TextRange, T>>>>> key, Supplier<List<Pair<TextRange, T>>> supplier
-  ) {
-    long modCount = grazieConfigTracker().getModificationCount();
-    var cached = text.getUserData(key);
-    if (cached == null || !cached.first.equals(modCount)) {
-      text.putUserData(key, cached = Pair.create(modCount, distributeByMinimalLeaves(text, supplier.get())));
-    }
-    return cached.second;
-  }
-
-  private static <T> Map<PsiElement, List<Pair<TextRange, T>>> distributeByMinimalLeaves(
-    TextContent text, List<Pair<TextRange, T>> data
-  ) {
-    Map<PsiElement, List<Pair<TextRange, T>>> result = new HashMap<>();
-    for (Pair<TextRange, T> pair : data) {
-      TextRange range = pair.first;
-      PsiElement minimal = SyntaxTraverser.psiApi()
-        .parents(text.getContainingFile().findElementAt(range.getStartOffset()))
-        .find(e -> e.getTextRange().getEndOffset() >= range.getEndOffset());
-      result.computeIfAbsent(minimal, __ -> new ArrayList<>()).add(pair);
-    }
-    return result;
   }
 
   public static ModificationTracker grazieConfigTracker() {
@@ -121,21 +70,10 @@ public final class HighlightingUtil {
     }
   }
 
-  public static @Nullable Lang activeEnglish() {
-    return findInstalledLang(Language.ENGLISH);
-  }
-
   public static @Nullable Lang findInstalledLang(@NotNull Language language) {
     return StreamEx.of(GrazieConfig.Companion.get().getAvailableLanguages())
       .findFirst(lang -> lang.getIso() == language.getIso())
       .orElse(null);
-  }
-
-  @Nullable
-  public static Language detectPreferringEnglish(String text) {
-    var lang = LangDetector.INSTANCE.getLanguage(text);
-    if (lang != null && findInstalledLang(lang) == null) lang = null;
-    return lang == null && COULD_BE_ENGLISH.matcher(text).matches() ? Language.ENGLISH : lang;
   }
 
   private static final Pattern trackerIssuePrefix = Pattern.compile("\\s*([A-Z]\\w+-\\d+):?\\s+.*");

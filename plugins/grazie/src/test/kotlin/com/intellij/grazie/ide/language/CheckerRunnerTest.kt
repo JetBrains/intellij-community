@@ -2,16 +2,16 @@ package com.intellij.grazie.ide.language
 
 import com.intellij.grazie.text.*
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.TextRange
-import com.intellij.testFramework.UsefulTestCase
+import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.application
-import junit.framework.TestCase
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
 import java.util.*
@@ -35,13 +35,13 @@ class CheckerRunnerTest: BasePlatformTestCase() {
         fail("We should be already canceled")
         return emptyList()
       }
-
       override fun getRules(locale: Locale) = throw UnsupportedOperationException()
     }
+    maskChecker(checker)
     ProgressManager.getInstance().runProcess(
       {
-        UsefulTestCase.assertThrows(ProcessCanceledException::class.java) {
-          CheckerRunner(someText()).run(listOf(checker)) {}
+        assertThrows(ProcessCanceledException::class.java) {
+          CheckerRunner(someText()).run()
         }
       }, indicator)
   }
@@ -63,10 +63,11 @@ class CheckerRunnerTest: BasePlatformTestCase() {
 
       override fun getRules(locale: Locale) = throw UnsupportedOperationException()
     }
+    maskChecker(checker)
     ProgressManager.getInstance().runProcess(
       {
-        UsefulTestCase.assertThrows(ProcessCanceledException::class.java) {
-          CheckerRunner(someText()).run(listOf(checker)) {}
+        assertThrows(ProcessCanceledException::class.java) {
+          CheckerRunner(someText()).run()
         }
       }, indicator)
   }
@@ -91,13 +92,12 @@ class CheckerRunnerTest: BasePlatformTestCase() {
         return mutableListOf(problem)
       }
     }
+    maskChecker(checker)
     val collectedProblems = ArrayList<TextProblem>()
     val result = application.executeOnPooledThread(Callable {
       ProgressManager.getInstance().runProcess(Computable {
         runReadAction {
-          CheckerRunner(text).run(listOf(checker), consumer = {
-            collectedProblems.add(it)
-          })
+          collectedProblems.addAll(CheckerRunner(text).run())
         }
       }, indicator)
     })
@@ -106,7 +106,7 @@ class CheckerRunnerTest: BasePlatformTestCase() {
     indicator.cancel()
     result.get()
     // There should be no problems collected, since the processing should've been canceled
-    TestCase.assertTrue(collectedProblems.isEmpty())
+    assertTrue(collectedProblems.isEmpty())
   }
 
   private fun createFakeProblem(text: TextContent, range: TextRange): TextProblem {
@@ -140,5 +140,13 @@ class CheckerRunnerTest: BasePlatformTestCase() {
   private fun someText(): TextContent {
     val file = myFixture.configureByText("a.txt", "aaabbbccc")
     return TextExtractor.findTextAt(file, 0, TextContent.TextDomain.ALL)!!
+  }
+
+  private fun maskChecker(checker: TextChecker) {
+    ExtensionTestUtil.maskExtensions(
+      ExtensionPointName("com.intellij.grazie.textChecker"),
+      listOf(checker),
+      testRootDisposable
+    )
   }
 }

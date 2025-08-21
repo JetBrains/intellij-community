@@ -96,16 +96,16 @@
     <registryKey key="grazie.skip.precommit.checks"
                  defaultValue="true"
                  description="Controls whether expensive linguistic checks should be performed during pre-commit code analysis"/>
-    <grazie.problemFilter language="" implementationClass="com.intellij.grazie.style.LTStyleProblemFilter"/>
-    <annotator language="" implementationClass="com.intellij.grazie.style.StyleAnnotator"/>
     <localInspection groupKey="grazie.group.name" enabledByDefault="true" shortName="GrazieStyle"
                      implementationClass="com.intellij.grazie.style.StyleInspection"
-                     level="TYPO" key="grazie.style.inspection.display.name" language=""
+                     level="STYLE_SUGGESTION" key="grazie.style.inspection.display.name" language=""
                      bundle="messages.GrazieBundle"/>
 
     <grazie.textChecker implementation="com.intellij.grazie.text.AsyncTreeRuleChecker$Grammar" id="treeRules"
                         order="before languageTool"/>
     <grazie.textChecker implementation="com.intellij.grazie.text.AsyncTreeRuleChecker$GrammarLowPriority" id="grammarLowPriority"
+                        order="after languageTool"/>
+    <grazie.textChecker implementation="com.intellij.grazie.text.AsyncTreeRuleChecker$Style" id="styleTreeRules"
                         order="after languageTool"/>
 
     <grazie.problemFilter language="" implementationClass="com.intellij.grazie.text.TreeRuleChecker$DocProblemFilter"/>

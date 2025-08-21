@@ -15,7 +15,6 @@ import com.intellij.openapi.vcs.ui.CommitMessage;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 
@@ -34,17 +33,15 @@ final class CommitAnnotator implements Annotator {
   }
 
   private static void checkText(AnnotationHolder holder, TextContent text) {
-    List<TextChecker> checkers = new ArrayList<>(TextChecker.allCheckers());
-    checkers.add(new AsyncTreeRuleChecker.Style());
     CheckerRunner runner = new CheckerRunner(text);
-    runner.run(checkers, problem -> {
+    runner.run().forEach(problem -> {
       if (problem.fitsGroup(RuleGroup.UNDECORATED_SINGLE_SENTENCE) &&
           Text.isSingleSentence(Text.findParagraphRange(text, problem.getHighlightRanges().get(0)).subSequence(text))) {
-        return null;
+        return;
       }
 
       List<ProblemDescriptor> descriptors = runner.toProblemDescriptors(problem, true);
-      if (descriptors.isEmpty()) return null;
+      if (descriptors.isEmpty()) return;
 
       String message = problem.getDescriptionTemplate(true);
       String tooltip = problem.getTooltipTemplate();
@@ -62,7 +59,6 @@ final class CommitAnnotator implements Annotator {
         }
         annotation.create();
       }
-      return null;
     });
   }
 }

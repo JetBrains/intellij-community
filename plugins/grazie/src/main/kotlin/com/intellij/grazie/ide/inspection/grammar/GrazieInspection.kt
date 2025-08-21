@@ -8,7 +8,6 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.grazie.GrazieBundle
 import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.text.CheckerRunner
-import com.intellij.grazie.text.TextChecker
 import com.intellij.grazie.text.TextContent
 import com.intellij.grazie.text.TextExtractor
 import com.intellij.grazie.text.TextExtractor.findAllTextContents
@@ -34,7 +33,6 @@ class GrazieInspection : LocalInspectionTool(), DumbAware {
       return PsiElementVisitor.EMPTY_VISITOR
     }
 
-    val checkers = TextChecker.allCheckers()
     val checkedDomains = checkedDomains()
     val areChecksDisabled = getDisabledChecker(file)
 
@@ -47,9 +45,9 @@ class GrazieInspection : LocalInspectionTool(), DumbAware {
 
         for (extracted in sortByPriority(texts, session.priorityRange)) {
           val runner = CheckerRunner(extracted)
-          runner.run(checkers) { problem ->
-            runner.toProblemDescriptors(problem, isOnTheFly).forEach(holder::registerProblem)
-          }
+          runner.run()
+            .filterNot { it.isStyleLike }
+            .forEach { runner.toProblemDescriptors(it, isOnTheFly).forEach(holder::registerProblem) }
         }
       }
     }

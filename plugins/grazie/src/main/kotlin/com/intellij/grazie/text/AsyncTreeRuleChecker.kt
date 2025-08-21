@@ -4,7 +4,6 @@ import ai.grazie.nlp.langs.Language
 import com.intellij.grazie.rule.ParsedSentence
 import com.intellij.grazie.text.TreeRuleChecker.TreeProblem
 import com.intellij.grazie.utils.HighlightingUtil
-import com.intellij.grazie.utils.blockingContext
 import java.util.*
 
 sealed class AsyncTreeRuleChecker : ExternalTextChecker() {
@@ -15,7 +14,7 @@ sealed class AsyncTreeRuleChecker : ExternalTextChecker() {
     val sentences = ParsedSentence.getSentencesAsync(content)
     if (sentences.isEmpty()) return emptyList()
 
-    return blockingContext { TreeRuleChecker.check(content, sentences) }
+    return TreeRuleChecker.check(content, sentences)
   }
 
   class Grammar : AsyncTreeRuleChecker() {
