@@ -1,13 +1,14 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl.hotswap
 
+import com.intellij.configurationStore.saveSettingsForRemoteDevelopment
 import com.intellij.debugger.settings.DebuggerSettings
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.util.PlatformUtils
-import com.intellij.util.application
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.impl.hotswap.HotSwapUiExtension
 import icons.PlatformDebuggerImplIcons
@@ -28,10 +29,6 @@ private class ToggleShowButtonAction : DumbAwareToggleAction(XDebuggerBundle.mes
   override fun isSelected(e: AnActionEvent) = DebuggerSettings.getInstance().HOTSWAP_SHOW_FLOATING_BUTTON
   override fun setSelected(e: AnActionEvent, state: Boolean) {
     DebuggerSettings.getInstance().HOTSWAP_SHOW_FLOATING_BUTTON = state
-    // Temporary hack to force setting sync when triggered from frontend.
-    // Should be removed after IJPL-170114 is fixed.
-    if (PlatformUtils.isJetBrainsClient()) {
-      application.saveSettings()
-    }
+    saveSettingsForRemoteDevelopment(ApplicationManager.getApplication())
   }
 }
