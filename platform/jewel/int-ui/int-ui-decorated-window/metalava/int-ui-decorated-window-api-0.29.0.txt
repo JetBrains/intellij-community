@@ -1,0 +1,48 @@
+// Signature format: 4.0
+// [MANUAL CHANGE] Moved to decorated-window in 0.30.0
+//package org.jetbrains.jewel.intui.window {
+//
+//  public final class DecoratedWindowIconKeys {
+//    method public org.jetbrains.jewel.ui.icon.IconKey getClose();
+//    method public org.jetbrains.jewel.ui.icon.IconKey getMaximize();
+//    method public org.jetbrains.jewel.ui.icon.IconKey getMinimize();
+//    method public org.jetbrains.jewel.ui.icon.IconKey getRestore();
+//    property public org.jetbrains.jewel.ui.icon.IconKey close;
+//    property public org.jetbrains.jewel.ui.icon.IconKey maximize;
+//    property public org.jetbrains.jewel.ui.icon.IconKey minimize;
+//    property public org.jetbrains.jewel.ui.icon.IconKey restore;
+//    field public static final org.jetbrains.jewel.intui.window.DecoratedWindowIconKeys INSTANCE;
+//  }
+//
+//  public final class IntUiDecoratedWindowResourceResolverKt {
+//    method public static org.jetbrains.jewel.ui.painter.ResourcePainterProvider decoratedWindowPainterProvider(String path);
+//  }
+//
+//  public final class IntUiThemeKt {
+//    method public static org.jetbrains.jewel.ui.ComponentStyling decoratedWindow(org.jetbrains.jewel.ui.ComponentStyling, optional org.jetbrains.jewel.window.styling.DecoratedWindowStyle? windowStyle, optional org.jetbrains.jewel.window.styling.TitleBarStyle? titleBarStyle);
+//  }
+//
+//}
+//
+//package org.jetbrains.jewel.intui.window.styling {
+//
+//  public final class IntUiDecoratedWindowStylingKt {
+//    method public static org.jetbrains.jewel.window.styling.DecoratedWindowColors dark(org.jetbrains.jewel.window.styling.DecoratedWindowColors.Companion, optional long borderColor, optional long inactiveBorderColor);
+//    method public static org.jetbrains.jewel.window.styling.DecoratedWindowStyle dark(org.jetbrains.jewel.window.styling.DecoratedWindowStyle.Companion, optional org.jetbrains.jewel.window.styling.DecoratedWindowColors colors, optional org.jetbrains.jewel.window.styling.DecoratedWindowMetrics metrics);
+//    method public static org.jetbrains.jewel.window.styling.DecoratedWindowMetrics defaults(org.jetbrains.jewel.window.styling.DecoratedWindowMetrics.Companion, optional float borderWidth);
+//    method public static org.jetbrains.jewel.window.styling.DecoratedWindowColors light(org.jetbrains.jewel.window.styling.DecoratedWindowColors.Companion, optional long borderColor, optional long inactiveBorderColor);
+//    method public static org.jetbrains.jewel.window.styling.DecoratedWindowStyle light(org.jetbrains.jewel.window.styling.DecoratedWindowStyle.Companion, optional org.jetbrains.jewel.window.styling.DecoratedWindowColors colors, optional org.jetbrains.jewel.window.styling.DecoratedWindowMetrics metrics);
+//  }
+//
+//  public final class IntUiTitleBarStylingKt {
+//    method @androidx.compose.runtime.Composable public static org.jetbrains.jewel.window.styling.TitleBarColors dark(org.jetbrains.jewel.window.styling.TitleBarColors.Companion, optional long backgroundColor, optional long inactiveBackground, optional long fullscreenControlButtonsBackground, optional long contentColor, optional long borderColor, optional long titlePaneButtonHoveredBackground, optional long titlePaneButtonPressedBackground, optional long titlePaneCloseButtonHoveredBackground, optional long titlePaneCloseButtonPressedBackground, optional long iconButtonHoveredBackground, optional long iconButtonPressedBackground, optional long dropdownHoveredBackground, optional long dropdownPressedBackground);
+//    method @androidx.compose.runtime.Composable public static org.jetbrains.jewel.window.styling.TitleBarStyle dark(org.jetbrains.jewel.window.styling.TitleBarStyle.Companion, optional org.jetbrains.jewel.window.styling.TitleBarColors colors, optional org.jetbrains.jewel.window.styling.TitleBarMetrics metrics, optional org.jetbrains.jewel.window.styling.TitleBarIcons icons);
+//    method public static org.jetbrains.jewel.window.styling.TitleBarIcons defaults(org.jetbrains.jewel.window.styling.TitleBarIcons.Companion, optional org.jetbrains.jewel.ui.icon.IconKey minimizeButton, optional org.jetbrains.jewel.ui.icon.IconKey maximizeButton, optional org.jetbrains.jewel.ui.icon.IconKey restoreButton, optional org.jetbrains.jewel.ui.icon.IconKey closeButton);
+//    method public static org.jetbrains.jewel.window.styling.TitleBarMetrics defaults(org.jetbrains.jewel.window.styling.TitleBarMetrics.Companion, optional float height, optional float gradientStartX, optional float gradientEndX, optional long titlePaneButtonSize);
+//    method @androidx.compose.runtime.Composable public static org.jetbrains.jewel.window.styling.TitleBarColors light(org.jetbrains.jewel.window.styling.TitleBarColors.Companion, optional long backgroundColor, optional long inactiveBackground, optional long contentColor, optional long borderColor, optional long fullscreenControlButtonsBackground, optional long titlePaneButtonHoveredBackground, optional long titlePaneButtonPressedBackground, optional long titlePaneCloseButtonHoveredBackground, optional long titlePaneCloseButtonPressedBackground, optional long iconButtonHoveredBackground, optional long iconButtonPressedBackground, optional long dropdownHoveredBackground, optional long dropdownPressedBackground);
+//    method @androidx.compose.runtime.Composable public static org.jetbrains.jewel.window.styling.TitleBarStyle light(org.jetbrains.jewel.window.styling.TitleBarStyle.Companion, optional org.jetbrains.jewel.window.styling.TitleBarColors colors, optional org.jetbrains.jewel.window.styling.TitleBarMetrics metrics, optional org.jetbrains.jewel.window.styling.TitleBarIcons icons);
+//    method @androidx.compose.runtime.Composable public static org.jetbrains.jewel.window.styling.TitleBarColors lightWithLightHeader(org.jetbrains.jewel.window.styling.TitleBarColors.Companion, optional long backgroundColor, optional long inactiveBackground, optional long fullscreenControlButtonsBackground, optional long contentColor, optional long borderColor, optional long titlePaneButtonHoveredBackground, optional long titlePaneButtonPressedBackground, optional long titlePaneCloseButtonHoveredBackground, optional long titlePaneCloseButtonPressedBackground, optional long iconButtonHoveredBackground, optional long iconButtonPressedBackground, optional long dropdownHoveredBackground, optional long dropdownPressedBackground);
+//    method @androidx.compose.runtime.Composable public static org.jetbrains.jewel.window.styling.TitleBarStyle lightWithLightHeader(org.jetbrains.jewel.window.styling.TitleBarStyle.Companion, optional org.jetbrains.jewel.window.styling.TitleBarColors colors, optional org.jetbrains.jewel.window.styling.TitleBarMetrics metrics, optional org.jetbrains.jewel.window.styling.TitleBarIcons icons);
+//  }
+//
+//}

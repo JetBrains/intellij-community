@@ -62,7 +62,7 @@ fun requireGhTool() {
  * @param base The starting directory for the search. Defaults to the current working directory.
  * @return The canonical [File] of the "jewel" directory if found, otherwise `null`.
  */
-fun findJewelRoot(base: File = File("").canonicalFile): File? =
+fun findJewelRoot(base: File = File(".").canonicalFile): File? =
     findDir(base) {
         val marker = it.resolve(JEWEL_MARKER_FILE_NAME)
         marker.isFile
@@ -262,13 +262,14 @@ suspend fun runCommand(
     workingDir: File?,
     timeoutAmount: Duration = 60.seconds,
     exitOnError: Boolean = true,
+    inheritIO: Boolean = false,
 ): CmdResult {
     val result =
         withTimeout(timeoutAmount) {
             process(
                 command = command.split(" ").toTypedArray(),
-                stdout = Redirect.CAPTURE,
-                stderr = Redirect.CAPTURE,
+                stdout = if (inheritIO) Redirect.PRINT else Redirect.CAPTURE,
+                stderr = if (inheritIO) Redirect.PRINT else Redirect.CAPTURE,
                 directory = workingDir,
             )
         }

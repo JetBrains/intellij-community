@@ -10,6 +10,7 @@
   </component>
   <component name="com.nbadal.ktlint.KtlintProjectSettings">
     <ktlintMode>MANUAL</ktlintMode>
+    <ktlintRulesetVersion>DEFAULT</ktlintRulesetVersion>
     <attachToIntellijFormat>false</attachToIntellijFormat>
   </component>
 </project>

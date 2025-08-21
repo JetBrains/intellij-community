@@ -14,7 +14,15 @@ High-level steps:
 
 1. Bump the Jewel API version in [`gradle.properties`](../gradle.properties)
 2. Run the [version updater script](../scripts/jewel-version-updater.main.kts)
-3. Cherry-pick the changes to the target release branches (e.g., `252`)
+3. Run the Metalava validator against the previous release on the `master` branch, and fix any issues you find:
+   ```shell
+   ./scripts/metalava-signatures.main.kts validate --release <previous-release>
+   ```
+4. Generate the new Metalava signatures for the new release:
+   ```shell
+   ./scripts/metalava-signatures.main.kts update <new-release>
+   ```
+5. Cherry-pick the changes to the target release branches (e.g., `252`)
    1. Make sure you've not included IJP major release-specific changes
    2. Update the `ijp.target` entry in [`gradle.properties`](../gradle.properties)
    3. Update the Kotlin version in the [Gradle version catalog](../gradle/libs.versions.toml) to match the IJP's Kotlin version
@@ -24,8 +32,12 @@ High-level steps:
    7. Verify everything works in the Jewel Standalone sample (components, Markdown rendering)
    8. Verify everything works in the Jewel IDE samples (toolwindow, component showcase)
    9. Verify that the publishing works locally (including POMs, especially for newly added/changed modules — see below)
-   10. Open a MR for each cherry-pick branch on Space
-4. When both MRs are approved and merged, run the TeamCity job to publish the artefacts to Maven Central
+   10. Verify that the Metalava signatures are matching the ones on `master`:
+       ```shell
+       ./scripts/metalava-signatures.sh --validate --release <new-release>
+       ```
+   11. Open a MR for each cherry-pick branch on Space
+6. When both MRs are approved and merged, run the TeamCity job to publish the artefacts to Maven Central
 
 ## Testing publishing locally
 
