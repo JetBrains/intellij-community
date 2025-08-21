@@ -67,6 +67,10 @@ abstract class WelcomeScreenProjectProvider {
       return extension.doGetCreateNewFileProjectPrefix()
     }
 
+    fun getWelcomeScreenProjectPath(): Path? {
+      return getSingleExtension()?.getWelcomeScreenProjectPath()
+    }
+
     @JvmStatic
     suspend fun createOrOpenWelcomeScreenProject(): Project? {
       val extension = getSingleExtension() ?: return null
