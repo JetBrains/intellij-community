@@ -44,7 +44,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
   private static final Logger LOG = Logger.getInstance(PsiPackageImpl.class);
 
   private volatile CachedValue<PsiModifierList> myAnnotationList;
-  private volatile SoftReference<Map<String, PsiClass[]>> myClassCache;
+  private volatile SoftReference<Map<GlobalSearchScope, Map<String, PsiClass[]>>> myClassCache;
   private volatile CachedValue<Collection<PsiDirectory>> myDirectories;
   private volatile CachedValue<Collection<PsiDirectory>> myDirectoriesWithLibSources;
   private volatile CachedValue<Collection<PsiFile>> myFiles;
@@ -191,27 +191,33 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
       return getCachedClassesInDumbMode(name, scope);
     }
 
-    if (CodeInsightContexts.isSharedSourceSupportEnabled(getProject())) {
-      // todo IJPL-339 this line introduces performance degradation, see IDEA-367535
-      return findAllClasses(name, scope);
-    }
-    else {
-      Map<String, PsiClass[]> map = dereference(myClassCache);
-      if (map == null) {
-        myClassCache = new SoftReference<>(map = ContainerUtil.createConcurrentSoftValueMap());
-      }
-      PsiClass[] classes = map.get(name);
-      if (classes != null) {
-        return classes;
-      }
+    // if shared source support is enabled, we need to use the real scope,
+    // because we need to specify the proper context for files with several contexts
+    boolean sharedSourceSupportEnabled = CodeInsightContexts.isSharedSourceSupportEnabled(getProject());
+    GlobalSearchScope effectiveScope = sharedSourceSupportEnabled ? scope : GlobalSearchScope.everythingScope(getProject());
 
-      RecursionGuard.StackStamp stamp = RecursionManager.markStack();
-      classes = findAllClasses(name, GlobalSearchScope.everythingScope(getProject()));
-      if (stamp.mayCacheNow()) {
-        map.put(name, classes);
-      }
+    return getCachedClassesByNameImpl(name, effectiveScope);
+  }
+
+  private PsiClass @NotNull [] getCachedClassesByNameImpl(@NotNull String name, @NotNull GlobalSearchScope scope) {
+    Map<GlobalSearchScope, Map<String, PsiClass[]>> cache = dereference(myClassCache);
+    if (cache == null) {
+      cache = ContainerUtil.createConcurrentSoftValueMap();
+      myClassCache = new SoftReference<>(cache);
+    }
+
+    Map<String, PsiClass[]> map = cache.computeIfAbsent(scope, __ -> ContainerUtil.createConcurrentSoftValueMap());
+    PsiClass[] classes = map.get(name);
+    if (classes != null) {
       return classes;
     }
+
+    RecursionGuard.StackStamp stamp = RecursionManager.markStack();
+    classes = findAllClasses(name, scope);
+    if (stamp.mayCacheNow()) {
+      map.put(name, classes);
+    }
+    return classes;
   }
 
   private PsiClass @NotNull [] findAllClasses(@NotNull String shortName, @NotNull GlobalSearchScope scope) {
