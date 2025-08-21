@@ -1158,4 +1158,10 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
       ReplaceOnDemandImportIntention.replaceOnDemand(element);
     }
   }
+
+  @Override
+  public @Nullable IntentionAction createLiftThrowOutOfSwitchExpression(@NotNull PsiSwitchExpression psiSwitchExpression) {
+    LiftThrowOutOfSwitchExpressionFix fix = LiftThrowOutOfSwitchExpressionFix.create(psiSwitchExpression);
+    return fix != null ? fix.asIntention() : null;
+  }
 }

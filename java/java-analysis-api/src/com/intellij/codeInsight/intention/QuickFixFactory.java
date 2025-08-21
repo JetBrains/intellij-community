@@ -527,4 +527,5 @@ public abstract class QuickFixFactory {
 
   public abstract @Nullable ModCommandAction createRecordThisDelegateFix(PsiMethod psi);
 
+  public abstract @Nullable CommonIntentionAction createLiftThrowOutOfSwitchExpression(@NotNull PsiSwitchExpression psiSwitchExpression);
 }
