@@ -3156,6 +3156,43 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
     doMultiFileTest();
   }
 
+  // PY-76832
+  public void testTypeSelfAsTypeArg() {
+    doTestByText("""
+                   from typing import TypeAlias, Self
+                   TupleSelf: TypeAlias = tuple[<warning descr="Cannot use 'Self' outside class">Self</warning>]  # E
+                   class A[T]: ...
+                   a = A[<warning descr="Cannot use 'Self' outside class">Self</warning>]()  # E
+                   class B:
+                      def __init__(self):
+                          self.l: List[Self] = []  # OK
+                   """);
+  }
+
+  // PY-76832
+  public void testTypeSelfInBaseClassTypeArgs() {
+    doTestByText("""
+                   from typing import Self
+                   
+                   class Bar[T]: ...
+                   class Baz(Bar[<warning descr="Cannot use 'Self' in this context">Self</warning>]): ... # E
+                   """);
+  }
+
+  // PY-76832
+  public void testTypeSelfInMetaclass() {
+    doTestByText("""
+                   from typing import Self, Any
+                   
+                   class MyMetaclass(type):
+                       def __new__(cls, *args: Any) -> <warning descr="Type 'Self' cannot be used in a metaclass">Self</warning>:  # E
+                           ...
+                   
+                       def __mul__(cls, count: int) -> list[<warning descr="Type 'Self' cannot be used in a metaclass">Self</warning>]:  # E
+                           ...
+                   """);
+  }
+
 
   // PY-84289
   public void testExponentialAnalysisTimeWhenMapLookupKeyEqualsVariableName() {
