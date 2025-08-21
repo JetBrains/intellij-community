@@ -10,7 +10,6 @@ import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.ide.customization.ExternalProductResourceUrls
 import com.intellij.ui.BrowserHyperlinkListener
 import com.intellij.ui.JBColor
@@ -19,6 +18,7 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.FontUtil
+import com.intellij.util.system.OS
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
@@ -49,14 +49,16 @@ internal object UpdateInfoPanel {
   }
 
   @JvmStatic
-  fun create(newBuild: BuildInfo,
-             patches: UpdateChain?,
-             testPatch: Path?,
-             writeProtected: Boolean,
-             @NlsContexts.Label licenseInfo: String?,
-             licenseWarn: Boolean,
-             enableLink: Boolean,
-             updatedChannel: UpdateChannel): JPanel {
+  fun create(
+    newBuild: BuildInfo,
+    patches: UpdateChain?,
+    testPatch: Path?,
+    writeProtected: Boolean,
+    licenseInfo: @NlsContexts.Label String?,
+    licenseWarn: Boolean,
+    enableLink: Boolean,
+    updatedChannel: UpdateChannel,
+  ): JPanel {
     val appInfo = ApplicationInfo.getInstance()
     val appNames = ApplicationNamesInfo.getInstance()
 
@@ -112,8 +114,7 @@ internal object UpdateInfoPanel {
     return panel
   }
 
-  @NlsSafe
-  private fun textPaneContent(newBuild: BuildInfo, updatedChannel: UpdateChannel, appNames: ApplicationNamesInfo): String {
+  private fun textPaneContent(newBuild: BuildInfo, updatedChannel: UpdateChannel, appNames: ApplicationNamesInfo): @NlsSafe String {
     val style = UIUtil.getCssFontDeclaration(StartupUiUtil.labelFont)
 
     val message = newBuild.message
@@ -125,8 +126,7 @@ internal object UpdateInfoPanel {
     return """<html><head>${style}</head><body>${content}</body></html>"""
   }
 
-  @NlsContexts.DetailedDescription
-  private fun infoLabelText(newBuild: BuildInfo, patches: UpdateChain?, testPatch: Path?, appInfo: ApplicationInfo): String {
+  private fun infoLabelText(newBuild: BuildInfo, patches: UpdateChain?, testPatch: Path?, appInfo: ApplicationInfo): @NlsContexts.DetailedDescription String {
     val patchSize = when {
       testPatch != null -> max(Files.size(testPatch) shr 20, 1).toString()
       patches != null && !patches.size.isNullOrBlank() -> {
@@ -141,9 +141,9 @@ internal object UpdateInfoPanel {
     }
   }
 
-  private fun smallFont(font: Font): Font = when {
-    SystemInfo.isMac -> FontUtil.minusOne(font)
-    SystemInfo.isLinux -> FontUtil.minusOne(FontUtil.minusOne(font))
+  private fun smallFont(font: Font): Font = when (OS.CURRENT) {
+    OS.macOS -> FontUtil.minusOne(font)
+    OS.Linux -> FontUtil.minusOne(FontUtil.minusOne(font))
     else -> font
   }
 
