@@ -78,7 +78,7 @@ class NonIndexableFileSetTest {
       assertTrue(fileIndex.isInContent(file))
       assertFalse(fileIndex.isIndexable(root))
       assertTrue(projectFileIndex.isInProjectOrExcluded(file))
-      assertIteratedContent(projectModel.project, mustNotContain = listOf(root, file))
+      assertIteratedContent(projectModel.project, mustContain = listOf(root, file))
       val fileSet = fileIndex.findFileSet(file, true, true, true, true, true, true)
       assertNotNull(fileSet)
       assertEquals(WorkspaceFileKind.CONTENT_NON_INDEXABLE, fileSet!!.kind)

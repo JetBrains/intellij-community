@@ -134,16 +134,16 @@ class WorkspaceFileIndexImpl(private val project: Project, coroutineScope: Corou
     return ThreeState.NO
   }
 
-  override fun processIndexableFilesRecursively(
+  override fun processContentUnderDirectory(
     fileOrDir: VirtualFile,
     processor: ContentIteratorEx,
     customFilter: VirtualFileFilter?,
     fileSetFilter: (WorkspaceFileSetWithCustomData<*>) -> Boolean,
   ): Boolean {
-    return processIndexableFilesRecursively(fileOrDir, processor, customFilter, fileSetFilter, 0)
+    return processContentUnderDirectory(fileOrDir, processor, customFilter, fileSetFilter, 0)
   }
 
-  private fun processIndexableFilesRecursively(
+  private fun processContentUnderDirectory(
     fileOrDir: VirtualFile,
     processor: ContentIteratorEx,
     customFilter: VirtualFileFilter?,
@@ -156,7 +156,7 @@ class WorkspaceFileIndexImpl(private val project: Project, coroutineScope: Corou
           getFileInfo(file = file,
                       honorExclusion = true,
                       includeContentSets = true,
-                      includeContentNonIndexableSets = false,
+                      includeContentNonIndexableSets = true,
                       includeExternalSets = false,
                       includeExternalSourceSets = false,
                       includeCustomKindSets = false)
@@ -222,7 +222,7 @@ class WorkspaceFileIndexImpl(private val project: Project, coroutineScope: Corou
                     includeCustomKindSets = false) != null
       }
       return@processChildrenRecursively if (isChildInIndexableContent) {
-        if (processIndexableFilesRecursively(childFile, processor, customFilter, fileSetFilter, numberOfExcludedParentDirectories + 1)) {
+        if (processContentUnderDirectory(childFile, processor, customFilter, fileSetFilter, numberOfExcludedParentDirectories + 1)) {
           TreeNodeProcessingResult.SKIP_CHILDREN
         }
         else {
