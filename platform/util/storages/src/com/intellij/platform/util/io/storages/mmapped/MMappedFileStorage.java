@@ -568,6 +568,7 @@ public final class MMappedFileStorage implements Closeable, Unmappable, Cleanabl
       if (!buffer.isDirect()) {
         return;
       }
+      //TODO RC: use ByteBufferUtil.cleanBuffer(buffer) ?
       if (INVOKE_CLEANER_METHOD == null) {
         throw new IllegalStateException("No access to Unsafe.invokeCleaner() -- explicit mapped buffers unmapping is unavailable");
       }
