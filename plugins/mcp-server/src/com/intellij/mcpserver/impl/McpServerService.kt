@@ -370,7 +370,7 @@ private fun McpTool.mcpToolToRegisteredTool(server: Server, projectPathFromIniti
             result
           }
           catch (ce: CancellationException) {
-            val message = "MCP tool call has been cancelled: ${ce.message}"
+            val message = "MCP tool call has been cancelled likely by a user interaction: ${ce.message}"
             logger.traceThrowable { CancellationException(message, ce) }
             application.messageBus.syncPublisher(ToolCallListener.TOPIC).afterMcpToolCall(this@mcpToolToRegisteredTool.descriptor, sideEffectEvents, ce, additionalData)
             McpToolCallResult.error(message)
