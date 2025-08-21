@@ -110,9 +110,15 @@ internal class ScopesModelRemoteApiImpl : ScopeModelRemoteApi {
     return flow
   }
 
-  override suspend fun performScopeSelection(scopeId: String, modelId: String, projectId: ProjectId): Boolean {
-    val project = projectId.findProjectOrNullWithLogWarn(LOG) ?: return false
-    return ScopesStateService.getInstance(project).getScopeById(scopeId) != null
+  override suspend fun performScopeSelection(scopeId: String, modelId: String, projectId: ProjectId): Deferred<Unit> {
+    val project = projectId.findProjectOrNullWithLogWarn(LOG) ?: return CompletableDeferred(value = Unit)
+    val scopesStateService = ScopesStateService.getInstance(project)
+    val deferred = CompletableDeferred<Unit>()
+    ScopeModelService.getInstance(project).getCoroutineScope().launch {
+      scopesStateService.getScopeById(scopeId)
+      deferred.complete(Unit)
+    }
+    return deferred
   }
 }
 
