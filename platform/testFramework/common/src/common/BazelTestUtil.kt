@@ -56,9 +56,9 @@ object BazelTestUtil {
   @JvmStatic
   val bazelUndeclaredTestOutputsPath: Path by lazy {
     val value = System.getenv(TEST_UNDECLARED_OUTPUTS_DIR_ENV_NAME)
-    if (value == null) {
-      error("Not running under `bazel test` because $TEST_UNDECLARED_OUTPUTS_DIR_ENV_NAME env is not set. Check isUnderBazelTest first.")
-    }
+                ?: error("Not running under `bazel test` because " +
+                         "$TEST_UNDECLARED_OUTPUTS_DIR_ENV_NAME env is not set. " +
+                         "Check isUnderBazelTest first.")
     val path = Path.of(value).absolute()
     if (!path.isDirectory()) {
       error("Bazel test env '$TEST_UNDECLARED_OUTPUTS_DIR_ENV_NAME' points to non-directory: $path")
@@ -71,9 +71,10 @@ object BazelTestUtil {
     val repoEntry = bazelTestRepoMapping.getOrElse(label.repo) {
       error("Unable to determine dependency path '${label.asLabel}'")
     }
-    val file = bazelTestRunfilesPath.resolve(
-      repoEntry.runfilesRelativePath + "/${label.packageName}/${label.file}"
-    )
+    val file = bazelTestRunfilesPath
+      .resolve(repoEntry.runfilesRelativePath)
+      .let { if (label.packageName.isNotEmpty()) it.resolve(label.packageName) else it }
+      .resolve(label.target)
     return when {
       file.isRegularFile() || file.isDirectory() -> file.toAbsolutePath()
       else -> {
