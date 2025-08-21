@@ -69,9 +69,25 @@ class DefaultGradleLightProjectTest {
     verifyIdentityPath(":includedBuild:deepIncludedBuild:subproject", deepIncludedSubproject)
   }
 
+  /**
+   * identityPath calculation for buildSrc is wrong for versions below 8.0,
+   * because buildSrc build is synced separately and doesn't have a parent build
+   * TODO combine tests when IDEA-375500 is fixed
+   */
+  @IJIgnore(issue = "IDEA-375500")
   @ParameterizedTest
-  @GradleTestSource("7.6, 8.0")
-  fun `test DefaultGradleLightProject#getProjectIdentityPath for buildSrc`(gradleVersion: GradleVersion) {
+  @GradleTestSource("7.6")
+  fun `test identity path for buildSrc of the root build BEFORE 8,0`(gradleVersion: GradleVersion) {
+    testIdentityPathForBuildSrcOfRootBuild(gradleVersion)
+  }
+
+  @ParameterizedTest
+  @GradleTestSource("8.0")
+  fun `test identity path for buildSrc of the root build AFTER 8,0`(gradleVersion: GradleVersion) {
+    testIdentityPathForBuildSrcOfRootBuild(gradleVersion)
+  }
+
+  private fun testIdentityPathForBuildSrcOfRootBuild(gradleVersion: GradleVersion) {
     val rootBuild = mockLightBuild("project")
 
     val buildSrcBuild = mockLightBuild(
@@ -89,20 +105,20 @@ class DefaultGradleLightProjectTest {
   }
 
   /**
-   * identityPath calculation for buildSrc of an included build is wrong for versions below 8.0,
+   * identityPath calculation for buildSrc is wrong for versions below 8.0,
    * because buildSrc build is synced separately and doesn't have a parent build
    * TODO combine tests when IDEA-375500 is fixed
    */
   @IJIgnore(issue = "IDEA-375500")
   @ParameterizedTest
   @GradleTestSource("7.6")
-  fun `test DefaultGradleLightProject#getProjectIdentityPath for buildSrc of included build`(gradleVersion: GradleVersion) {
+  fun `test identity path for buildSrc of an included build BEFORE 8,0`(gradleVersion: GradleVersion) {
     testCalculationForBuildSrcOfIncluded(gradleVersion)
   }
 
   @ParameterizedTest
   @GradleTestSource("8.0")
-  fun `test DefaultGradleLightProject#getProjectIdentityPath for buildSrc of included build since Gradle 8`(gradleVersion: GradleVersion) {
+  fun `test identity path for buildSrc of an included build AFTER 8,0`(gradleVersion: GradleVersion) {
     testCalculationForBuildSrcOfIncluded(gradleVersion)
   }
 

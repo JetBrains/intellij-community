@@ -357,6 +357,12 @@ class DefaultGradleLightBuildTest {
       projectNames = listOf("includedBuild"),
       parent = rootBuild
     )
+    verifyProject(
+      project = includedBuild.rootProject,
+      projectPath = "/rootBuild/includedBuild",
+      identityPath = ":includedBuild",
+      build = includedBuild, path = ":",
+    )
 
     verifyBuild(
       build = buildSrcBuild,
@@ -367,7 +373,9 @@ class DefaultGradleLightBuildTest {
     verifyProject(
       project = buildSrcBuild.rootProject,
       projectPath = "/rootBuild/buildSrc",
-      identityPath = ":buildSrc",
+      // A correct identityPath would be `:buildSrc`. It has this value instead because buildSrc is synced separately until 8.0.
+      // However, Gradle provides the same in GradleProjectUtil.getProjectIdentityPath.
+      identityPath = ":",
       build = buildSrcBuild, path = ":",
     )
 
@@ -381,7 +389,9 @@ class DefaultGradleLightBuildTest {
     verifyProject(
       project = includedBuildVisibleToBuildSrc.rootProject,
       projectPath = "/rootBuild/includedBuild",
-      identityPath = ":buildSrc:includedBuild", // the identity path is incorrect because includedBuild is attached to buildSrc
+      // In this case, the identityPath seems correct, the same as when the included build is attached to the root build.
+      // That's because in this case buildSrc is synced separately for this sync it is like a "root" build.
+      identityPath = ":includedBuild",
       build = includedBuildVisibleToBuildSrc, path = ":",
     )
   }
