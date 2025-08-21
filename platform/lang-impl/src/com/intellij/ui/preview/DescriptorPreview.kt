@@ -16,8 +16,10 @@ import com.intellij.openapi.ui.Splitter
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiManager
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
 import kotlin.properties.Delegates.observable
 
+@ApiStatus.Experimental
 class DescriptorPreview(val splitter: Splitter, val editable: Boolean, val session: ClientProjectSession) {
 
   fun editor(): Editor? = editor

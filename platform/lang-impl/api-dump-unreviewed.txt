@@ -16718,14 +16718,6 @@ com.intellij.ui.popup.util.MasterDetailPopupBuilder$Delegate
 - a:handleMnemonic(java.awt.event.KeyEvent,com.intellij.openapi.project.Project,com.intellij.openapi.ui.popup.JBPopup):V
 - a:itemChosen(com.intellij.ui.popup.util.ItemWrapper,com.intellij.openapi.project.Project,com.intellij.openapi.ui.popup.JBPopup,Z):V
 - a:removeSelectedItemsInTree():V
-f:com.intellij.ui.preview.DescriptorPreview
-- <init>(com.intellij.openapi.ui.Splitter,Z,com.intellij.openapi.client.ClientProjectSession):V
-- f:close():V
-- f:editor():com.intellij.openapi.editor.Editor
-- f:getEditable():Z
-- f:getSession():com.intellij.openapi.client.ClientProjectSession
-- f:getSplitter():com.intellij.openapi.ui.Splitter
-- f:open(com.intellij.openapi.fileEditor.OpenFileDescriptor):V
 a:com.intellij.ui.tabs.ColorButtonBase
 - com.intellij.notification.impl.ui.StickyButton
 - p:myColor:java.awt.Color

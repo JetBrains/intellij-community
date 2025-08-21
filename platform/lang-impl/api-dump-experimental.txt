@@ -1125,6 +1125,14 @@ f:com.intellij.task.impl.ProjectTaskManagerImpl
 - a:getRequestedTasks(java.lang.Class):java.util.List
 f:com.intellij.testIntegration.TestFinderHelper
 - *s:navigateToTestImmediately(com.intellij.psi.PsiElement):Z
+*f:com.intellij.ui.preview.DescriptorPreview
+- <init>(com.intellij.openapi.ui.Splitter,Z,com.intellij.openapi.client.ClientProjectSession):V
+- f:close():V
+- f:editor():com.intellij.openapi.editor.Editor
+- f:getEditable():Z
+- f:getSession():com.intellij.openapi.client.ClientProjectSession
+- f:getSplitter():com.intellij.openapi.ui.Splitter
+- f:open(com.intellij.openapi.fileEditor.OpenFileDescriptor):V
 f:com.intellij.unscramble.AnalyzeStacktraceUtil
 - *sf:EP_CONTENT_PROVIDER:com.intellij.openapi.extensions.ProjectExtensionPointName
 *:com.intellij.unscramble.StacktraceTabContentProvider
