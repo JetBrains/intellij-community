@@ -25,9 +25,7 @@ directives_version_platform.py
 generics_base_class.py
 generics_paramspec_components.py
 generics_paramspec_semantics.py
-generics_self_advanced.py
 generics_self_attributes.py
-generics_self_basic.py
 generics_self_usage.py
 generics_syntax_infer_variance.py
 generics_typevartuple_basic.py

@@ -3408,4 +3408,78 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    _ = bar(1, <warning descr="Expected type 'int' (matched generic type 'T ≤: int'), got 'str' instead">"a"</warning>)
                    """);
   }
+
+  // PY-76860
+  public void testSelfVsSpecificClassInReturn() {
+    doTestByText("""
+                  from typing import Self
+                  class Shape:
+                     def method2(self) -> Self:
+                         # This should result in a type error.
+                         return <warning descr="Expected type 'Self', got 'Shape' instead">Shape()</warning>  # E
+                  
+                     def method3(self) -> Self:
+                         return self # OK
+                  """);
+  }
+
+  // PY-76860
+  public void testSelfVsSpecificClassInTargetExpr() {
+    doTestByText("""
+                  from typing import Self
+                  class Shape:
+                     def method2(self):
+                         my_instance: Self = <warning descr="Expected type 'Self', got 'Shape' instead">Shape()</warning> # E
+                         my_instance: Self = self # OK
+                  """);
+  }
+
+  // PY-76860
+  public void testSelfVsSpecificSuperClassInAncestor() {
+    doTestByText("""
+                  from typing import Self, override
+                  class Shape:
+                     def method2(self) -> Self:
+                         return self
+                  
+                  class Circle(Shape):
+                      @override
+                      def method2(self) -> Self:
+                          return <warning descr="Expected type 'Self', got 'Shape' instead">Shape()</warning>
+                  """);
+  }
+
+  // PY-76860
+  public void testSpecificClassInsteadOfSelfInCallExpr() {
+    doTestByText("""
+                  from typing import Self
+                  class Shape:
+                      def method2(self):
+                          self.method3(<warning descr="Expected type 'Self', got 'Shape' instead">Shape()</warning>) # E
+                          self.method3(self) # OK
+                          ...
+                  
+                      def method3(self, x: Self): ...
+                  """);
+  }
+
+  // PY-76886
+  public void testSelfInClassMethods() {
+    doTestByText("""
+                  from typing import Self
+                  class Shape:
+                      @classmethod
+                      def method1(cls) -> Self:
+                          return cls() # OK
+                      @classmethod
+                      def method2(cls) -> Self:
+                          return <warning descr="Expected type 'Self', got 'type[Shape]' instead">cls</warning> # E
+                      @classmethod
+                      def method3(cls) -> type[Self]:
+                          return <warning descr="Expected type 'Self', got 'Shape' instead">cls()</warning> # E
+                      @classmethod
+                      def method4(cls) -> type[Self]:
+                          return cls # OK
+                  """);
+  }
 }

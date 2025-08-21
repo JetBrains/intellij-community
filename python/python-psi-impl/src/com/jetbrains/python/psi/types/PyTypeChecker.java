@@ -142,12 +142,12 @@ public final class PyTypeChecker {
       return Optional.of(match(typeVarType, actual, context));
     }
 
-    if (expected instanceof PySelfType) {
-      return match(context.mySubstitutions.qualifierType, actual, context);
+    if (expected instanceof PySelfType selfType) {
+      return Optional.of(match(selfType, actual, context));
     }
 
-    if (actual instanceof PySelfType && context.reversedSubstitutions) {
-      return match(context.mySubstitutions.qualifierType, expected, context);
+    if (actual instanceof PySelfType selfType && context.reversedSubstitutions) {
+      return Optional.of(match(selfType, expected, context));
     }
 
     if (expected instanceof PyParamSpecType paramSpecType) {
@@ -356,6 +356,15 @@ public final class PyTypeChecker {
       );
       return result != null && result.orElse(false);
     }
+  }
+
+  private static boolean match(@NotNull PySelfType expected, @Nullable PyType actual, @NotNull MatchContext context) {
+    boolean matchedByQualifier = match(context.mySubstitutions.qualifierType, actual, context).orElse(true);
+    boolean matchedByScopeClass = true;
+    if (actual instanceof PyClassType actualClassType) {
+      matchedByScopeClass = actualClassType.isDefinition() == expected.isDefinition();
+    }
+    return matchedByQualifier && matchedByScopeClass;
   }
 
   private static @Nullable PyType toClass(@Nullable PyType type) {
