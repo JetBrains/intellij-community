@@ -1606,12 +1606,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public @NotNull Point2D offsetToPoint2D(int offset, boolean leanTowardsLargerOffsets, boolean beforeSoftWrap) {
-    return ReadAction.compute(() -> myView.offsetToXY(offset, leanTowardsLargerOffsets, beforeSoftWrap));
+    return EditorThreading.compute(() -> myView.offsetToXY(offset, leanTowardsLargerOffsets, beforeSoftWrap));
   }
 
   @Override
   public @NotNull Point offsetToXY(int offset, boolean leanForward, boolean beforeSoftWrap) {
-    return ReadAction.compute(() -> {
+    return EditorThreading.compute(() -> {
       Point2D point2D = offsetToPoint2D(offset, leanForward, beforeSoftWrap);
       return new Point((int)point2D.getX(), (int)point2D.getY());
     });
@@ -1666,7 +1666,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public @NotNull LogicalPosition xyToLogicalPosition(@NotNull Point p) {
-    return ReadAction.compute(() -> myView.xyToLogicalPosition(p));
+    return EditorThreading.compute(() -> myView.xyToLogicalPosition(p));
   }
 
   private int logicalToVisualLine(int logicalLine) {
@@ -5208,7 +5208,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     @Override
     public void layout() {
-      WriteIntentReadAction.run((Runnable)() -> {
+      EditorThreading.run(() -> {
         if (isInDistractionFreeMode()) {
           // re-calc gutter extra size after editor size is set
           // & layout once again to avoid blinking
