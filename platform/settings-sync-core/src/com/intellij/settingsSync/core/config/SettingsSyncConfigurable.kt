@@ -30,6 +30,8 @@ import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IntellijInternalApi
+import com.intellij.openapi.util.text.HtmlBuilder
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
@@ -45,10 +47,12 @@ import com.intellij.settingsSync.core.config.SettingsSyncEnabler.State
 import com.intellij.settingsSync.core.statistics.SettingsSyncEventsStatistics
 import com.intellij.ui.RelativeFont
 import com.intellij.ui.components.DropDownLink
+import com.intellij.ui.components.JBHtmlPane
 import com.intellij.ui.components.JBRadioButton
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.components.DslLabel
 import com.intellij.ui.dsl.builder.components.DslLabelType
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.ui.layout.and
 import com.intellij.ui.layout.not
@@ -83,7 +87,7 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
   private lateinit var enableCheckbox: JCheckBox
   private lateinit var cellDropDownLink: Cell<DropDownLink<UserProviderHolder?>>
   private lateinit var userDropDownLink: DropDownLink<UserProviderHolder?>
-  private lateinit var syncTypeLabel: JEditorPane
+  private lateinit var syncTypeLabel: JBHtmlPane
   private lateinit var syncConfigPanel: DialogPanel
 
 
@@ -206,35 +210,36 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
       rowsRange {
         group(message("enable.dialog.select.what.to.sync")) {
           row {
-            icon(AllIcons.General.BalloonWarning).applyToComponent {
-              isOpaque = true
-              background = JBUI.CurrentTheme.Banner.WARNING_BACKGROUND
-              border = JBUI.Borders.compound(
-                JBUI.Borders.customLine(JBUI.CurrentTheme.Banner.WARNING_BORDER_COLOR, 1, 1, 1, 0),
-                JBUI.Borders.empty(8)
-              )
-              verticalAlignment = SwingConstants.TOP
-            }.align(AlignY.FILL)
-            text("",
-                 action = {
-                   val syncTypeDialog = ChangeSyncTypeDialog(configPanel, enableSyncOption.get())
-                   if (syncTypeDialog.showAndGet()) {
-                     enableSyncOption.set(syncTypeDialog.option)
-                   }
-                 }).applyToComponent {
-              isOpaque = true
-              background = JBUI.CurrentTheme.Banner.WARNING_BACKGROUND
-              border = JBUI.Borders.compound(
-                JBUI.Borders.customLine(JBUI.CurrentTheme.Banner.WARNING_BORDER_COLOR, 1, 0, 1, 1),
-                JBUI.Borders.empty(8)
-              )
-            }.align(AlignX.FILL).resizableColumn().also {
-              syncTypeLabel = it.component
+            val icon = JLabel(AllIcons.General.BalloonWarning)
+            val textPanel = JBHtmlPane().apply {
+              text = ""
+              isEditable = false
+              isOpaque = false
+              addHyperlinkListener {
+                if (it.eventType == HyperlinkEvent.EventType.ACTIVATED) {
+                  val syncTypeDialog = ChangeSyncTypeDialog(configPanel, enableSyncOption.get())
+                  if (syncTypeDialog.showAndGet()) {
+                    enableSyncOption.set(syncTypeDialog.option)
+                  }
+                }
+              }
+            }.also {
+              syncTypeLabel = it
               enableSyncOption.afterChange {
                 updateSyncOptionText()
               }
             }
-            cell()
+            val panel = RoundedBorderLayoutPanel(
+              hgap = 8,
+              vgap = 0,
+              borderColor = JBUI.CurrentTheme.Banner.WARNING_BORDER_COLOR,
+              backgroundColor = JBUI.CurrentTheme.Banner.WARNING_BACKGROUND,
+              borderOffset = 8,
+            ).apply {
+              addToLeft(icon)
+              addToCenter(textPanel)
+            }
+            cell(panel).resizableColumn().align(AlignX.FILL).customize(UnscaledGaps(8))
           }.layout(RowLayout.PARENT_GRID).topGap(TopGap.SMALL).visibleIf(remoteSettingsExist)
 
           row {
@@ -488,7 +493,14 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
     } else {
       ""
     }
-    syncTypeLabel.text ="<div>$message</div> <div style='margin-top: 5px'><a>${message("enable.dialog.change")}</a></div>"
+    val html = HtmlBuilder().apply {
+      append(HtmlChunk.div().addText(message))
+      append(HtmlChunk.div()
+       .style("margin-top: 5px")
+       .child(HtmlChunk.link("", message("enable.dialog.change")))
+      )
+    }.wrapWithHtmlBody()
+    syncTypeLabel.text = html.toString()
   }
 
   private fun showAccounts(link: DropDownLink<UserProviderHolder?>?): JBPopup {
