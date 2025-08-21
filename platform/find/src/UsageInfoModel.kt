@@ -96,7 +96,7 @@ internal class UsageInfoModel private constructor(val project: Project, val mode
     if (model.usageInfos.isNotEmpty()) {
       cachedUsageInfos = model.usageInfos
       cachedPsiFile = cachedUsageInfos.firstOrNull()?.file
-      cachedMergedSmartRanges = cachedUsageInfos.map { it.psiFileRange }.sortedBy { it.range?.startOffset ?: 0 }
+      cachedMergedSmartRanges = cachedUsageInfos.mapNotNull { it.psiFileRange }.sortedBy { it.range?.startOffset ?: 0 }
       cachedSmartRange = cachedMergedSmartRanges.firstOrNull()
       isLoaded = true
     }
@@ -163,7 +163,7 @@ internal class UsageInfoModel private constructor(val project: Project, val mode
   }
 
   private fun getMergedRanges(): List<TextRange> {
-    return if (cachedMergedSmartRanges.isEmpty()) defaultMergedRanges
+    return if (cachedMergedSmartRanges.size < defaultMergedRanges.size) defaultMergedRanges
     else cachedMergedSmartRanges
       .mapNotNull { smartRange ->
         smartRange.range?.let { TextRange(it.startOffset, it.endOffset) }
