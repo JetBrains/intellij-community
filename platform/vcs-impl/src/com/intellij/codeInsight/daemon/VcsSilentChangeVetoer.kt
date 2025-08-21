@@ -8,8 +8,8 @@ import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.FileStatusManager
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
-import com.intellij.openapi.vcs.merge.MergeConflictManager
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.vcs.changes.ChangesUtil
 import com.intellij.util.ThreeState
 import com.intellij.vcsUtil.VcsUtil
 
@@ -23,7 +23,7 @@ internal class VcsSilentChangeVetoer : SilentChangeVetoer {
 
     val status = FileStatusManager.getInstance(project).getStatus(virtualFile)
     if (status === FileStatus.UNKNOWN) return ThreeState.UNSURE
-    if (status === FileStatus.MERGE || MergeConflictManager.isMergeConflict(status)) {
+    if (status === FileStatus.MERGE || ChangesUtil.isMergeConflict(status)) {
       return ThreeState.NO
     }
 

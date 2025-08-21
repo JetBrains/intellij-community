@@ -369,7 +369,7 @@
                         serviceInterface="com.intellij.openapi.vcs.changes.ChangesTreeCompatibilityProvider"/>
 
     <projectService
-      serviceInterface="com.intellij.platform.vcs.impl.shared.changes.ChangesViewModelBuilderService"
+      serviceInterface="com.intellij.platform.vcs.impl.shared.changes.TreeModelBuilderEx"
       serviceImplementation="com.intellij.openapi.vcs.changes.ui.BackendChangesViewModelBuilderService"/>
   </extensions>
 

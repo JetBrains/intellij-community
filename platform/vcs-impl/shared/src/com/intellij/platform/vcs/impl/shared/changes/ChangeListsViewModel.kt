@@ -4,8 +4,11 @@ package com.intellij.platform.vcs.impl.shared.changes
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vcs.changes.ChangeList
+import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.projectIdOrNull
+import com.intellij.platform.vcs.changes.ChangeListManagerState
 import com.intellij.platform.vcs.impl.shared.rpc.ChangeListsApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
@@ -17,19 +20,35 @@ class ChangeListsViewModel(
   private val project: Project,
   cs: CoroutineScope,
 ) {
-  val areChangeListsEnabled: StateFlow<Boolean> = flow {
-    val projectId = project.projectIdOrNull() ?: return@flow
-    emitAll(ChangeListsApi.getInstance().areChangeListsEnabled(projectId))
-  }.stateIn(cs, SharingStarted.Companion.Eagerly, false)
+  var initialized: Boolean = false
+    private set
 
-  val changes: StateFlow<List<Change>> = flow {
-    val projectId = project.projectIdOrNull() ?: return@flow
-    emitAll(ChangeListsApi.getInstance().getChangeLists(projectId).map { changeLists ->
-      changeLists.flatMap { it.getChangeList(project).changes }
+  val areChangeListsEnabled: StateFlow<Boolean> = changeListsApiFlow(checkRegistry = false) { api, projectId ->
+    emitAll(api.areChangeListsEnabled(projectId))
+  }.stateIn(cs, SharingStarted.Eagerly, false)
+
+  val changeListManagerState: StateFlow<ChangeListManagerState> = changeListsApiFlow(checkRegistry = false) { api, projectId ->
+    emitAll(api.getChangeListManagerState(projectId))
+  }.stateIn(cs, SharingStarted.Eagerly, ChangeListManagerState.Frozen(""))
+
+  val changeLists: StateFlow<ChangeLists> = changeListsApiFlow { api, projectId ->
+    emitAll(api.getChangeLists(projectId).map { changeLists ->
+      ChangeLists(changeLists.map { it.getChangeList(project) })
     })
-  }.stateIn(cs, SharingStarted.Companion.Eagerly, emptyList())
+  }.stateIn(cs, SharingStarted.Eagerly, ChangeLists(emptyList()))
+
+  private fun <T> changeListsApiFlow(checkRegistry: Boolean = true, flowProducer: suspend FlowCollector<T>.(ChangeListsApi, ProjectId) -> Unit): Flow<T> =
+    if (checkRegistry && !Registry.`is`("vcs.rd.local.changes.enabled")) emptyFlow()
+    else flow {
+      val projectId = project.projectIdOrNull() ?: return@flow
+      val api = ChangeListsApi.getInstance()
+      flowProducer(api, projectId)
+    }
 
   companion object {
+    @JvmStatic
     fun getInstance(project: Project): ChangeListsViewModel = project.service()
   }
+
+  class ChangeLists(val lists: List<ChangeList>)
 }

@@ -29,7 +29,7 @@ internal class LocalChangesViewContentProvider : FrontendChangesViewContentProvi
     content.component = tree
 
     project.service<ScopeProvider>().cs.launch {
-      ChangeListsViewModel.getInstance(project).changes.collect {
+      ChangeListsViewModel.getInstance(project).changeLists.collect {
         withContext(Dispatchers.UiWithModelAccess) {
           tree.rebuildTree()
         }
@@ -43,10 +43,9 @@ internal class LocalChangesViewContentProvider : FrontendChangesViewContentProvi
 
 private class SampleChangesTree(project: Project) : ChangesTree(project, false, false) {
   override fun rebuildTree() {
-    val changes = ChangeListsViewModel.getInstance(project).changes
-    // TODO changes lists are not yet supported
-    val newModel: DefaultTreeModel = TreeModelBuilder(project, grouping).setChanges(
-      changes.value, null
+    val changeLists = ChangeListsViewModel.getInstance(project).changeLists.value.lists
+    val newModel: DefaultTreeModel = TreeModelBuilder(project, grouping).setChangeLists(
+      changeLists, true, null
     ).build()
 
     updateTreeModel(newModel)

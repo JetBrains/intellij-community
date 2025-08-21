@@ -11,15 +11,16 @@ import com.intellij.openapi.vcs.changes.ui.ChangeNodeDecorator
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserUnversionedLoadingPendingNode
 import com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactory
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder
-import com.intellij.platform.vcs.impl.shared.changes.ChangesViewModelBuilderService
+import com.intellij.platform.vcs.impl.shared.changes.TreeModelBuilderEx
 import com.intellij.vcs.commit.PartialCommitChangeNodeDecorator
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.tree.DefaultTreeModel
 
+// TODO make shared
 @ApiStatus.Internal
 object ChangesViewUtil {
   private fun getChangeDecoratorProvider(project: Project, isAllowExcludeFromCommit: () -> Boolean): (ChangeNodeDecorator?) -> PartialCommitChangeNodeDecorator {
-    return  { baseDecorator: ChangeNodeDecorator? -> PartialCommitChangeNodeDecorator(project, baseDecorator!!, isAllowExcludeFromCommit) }
+    return  { baseDecorator: ChangeNodeDecorator? -> PartialCommitChangeNodeDecorator(project, baseDecorator, isAllowExcludeFromCommit) }
   }
 
   fun createTreeModel(
@@ -40,9 +41,7 @@ object ChangesViewUtil {
 
     val treeModelBuilder = TreeModelBuilder(project, grouping)
       .setChangeLists(changeLists, skipSingleDefaultChangeList, getChangeDecoratorProvider(project, isAllowExcludeFromCommit))
-      .apply {
-        with(ChangesViewModelBuilderService.getInstance(project)) { createNodes() }
-      }
+      .also { TreeModelBuilderEx.getInstanceOrNull(project)?.modifyTreeModelBuilder(it) }
       .setUnversioned(unversionedFiles)
 
     if (showIgnoredFiles) {

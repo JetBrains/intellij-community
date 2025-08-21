@@ -17,7 +17,7 @@ import com.intellij.openapi.vcs.changes.LocallyDeletedChange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.vcs.VcsUtil;
 import com.intellij.platform.vcs.changes.ChangesUtil;
-import com.intellij.platform.vcs.impl.shared.changes.ChangesViewModelBuilderService;
+import com.intellij.platform.vcs.impl.shared.changes.TreeModelBuilderEx;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
@@ -203,8 +203,45 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
                                                   @Nullable Function<? super ChangeNodeDecorator, ? extends ChangeNodeDecorator> changeDecoratorProvider) {
 
     assert myProject != null;
-    ChangesViewModelBuilderService.getInstance(myProject)
-      .setChangeList(this, changeLists, skipSingleDefaultChangeList, changeDecoratorProvider);
+    TreeModelBuilderEx modelBuilderEx = TreeModelBuilderEx.getInstanceOrNull(myProject);
+    boolean skipChangeListNode = skipSingleDefaultChangeList && isSingleBlankChangeList(changeLists);
+    ChangesBrowserConflictsNode conflictsRoot = null;
+
+    for (ChangeList list : changeLists) {
+      List<Change> changes = sorted(list.getChanges(), CHANGE_COMPARATOR);
+      ChangeListRemoteState listRemoteState = new ChangeListRemoteState();
+
+      ChangesBrowserNode<?> changesParent;
+      if (!skipChangeListNode) {
+        ChangesBrowserChangeListNode listNode = new ChangesBrowserChangeListNode(myProject, list, listRemoteState);
+        listNode.markAsHelperNode();
+
+        insertSubtreeRoot(listNode);
+        changesParent = listNode;
+      }
+      else {
+        changesParent = myRoot;
+      }
+
+      for (int i = 0; i < changes.size(); i++) {
+        Change change = changes.get(i);
+
+        ChangeNodeDecorator baseDecorator = modelBuilderEx != null ?
+                                            modelBuilderEx.getChangeNodeInChangelistBaseDecorator(listRemoteState, change, i) : null;
+        ChangeNodeDecorator decorator = changeDecoratorProvider != null ? changeDecoratorProvider.apply(baseDecorator) : baseDecorator;
+        if (ChangesUtil.isMergeConflict(change)) {
+          if (conflictsRoot == null) {
+            conflictsRoot = new ChangesBrowserConflictsNode(myProject);
+            conflictsRoot.markAsHelperNode();
+            myModel.insertNodeInto(conflictsRoot, myRoot, myModel.getChildCount(myRoot));
+          }
+          insertChangeNode(change, conflictsRoot, createChangeNode(change, decorator));
+        }
+        else {
+          insertChangeNode(change, changesParent, createChangeNode(change, decorator));
+        }
+      }
+    }
     return this;
   }
 

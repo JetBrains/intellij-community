@@ -389,6 +389,7 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
       myUpdater.pause();
       myFreezeName = reason;
       sem.up();
+      project.getMessageBus().syncPublisher(ChangesListManagerStateListener.TOPIC).changesListManagerFrozen();
     });
 
     awaitWithCheckCanceled(sem, ProgressManager.getInstance().getProgressIndicator());
@@ -398,6 +399,7 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
   public void unfreeze() {
     myUpdater.go();
     myFreezeName = null;
+    project.getMessageBus().syncPublisher(ChangesListManagerStateListener.TOPIC).changesListManagerUnfrozen();
   }
 
   @Override
@@ -595,6 +597,7 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
 
         myDelayedNotificator.changedFileStatusChanged(!isInUpdate());
         myDelayedNotificator.changeListUpdateDone();
+        project.getMessageBus().syncPublisher(ChangesListManagerStateListener.TOPIC).updateFinished();
         changesView.scheduleRefresh();
       }
       return true;
@@ -1559,6 +1562,7 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
   // (commit -> asynch synch VFS -> asynch vcs dirty scope)
   public void showLocalChangesInvalidated() {
     myShowLocalChangesInvalidated = true;
+    myWorker.getProject().getMessageBus().syncPublisher(ChangesListManagerStateListener.TOPIC).updateStarted();
   }
 
   @ApiStatus.Internal

@@ -151,9 +151,21 @@ a:com.intellij.openapi.vcs.changes.ui.BaseInclusionModel
 - addInclusionListener(com.intellij.openapi.vcs.changes.InclusionListener):V
 - pf:fireInclusionChanged():V
 - removeInclusionListener(com.intellij.openapi.vcs.changes.InclusionListener):V
+f:com.intellij.openapi.vcs.changes.ui.ChangeListRemoteState
+- <init>():V
+- f:allUpToDate():Z
+- f:report(I,Z):V
 com.intellij.openapi.vcs.changes.ui.ChangeNodeDecorator
 - a:decorate(com.intellij.openapi.vcs.changes.Change,com.intellij.ui.SimpleColoredComponent,Z):V
 - a:preDecorate(com.intellij.openapi.vcs.changes.Change,com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer,Z):V
+c:com.intellij.openapi.vcs.changes.ui.ChangesBrowserChangeListNode
+- com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
+- <init>(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.changes.ChangeList,com.intellij.openapi.vcs.changes.ui.ChangeListRemoteState):V
+- compareUserObjects(com.intellij.openapi.vcs.changes.ChangeList):I
+- getChangeListRemoteState():com.intellij.openapi.vcs.changes.ui.ChangeListRemoteState
+- getSortWeight():I
+- getTextPresentation():java.lang.String
+- render(com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer,Z,Z,Z):V
 c:com.intellij.openapi.vcs.changes.ui.ChangesBrowserChangeNode
 - com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 - com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener$HaveTooltip

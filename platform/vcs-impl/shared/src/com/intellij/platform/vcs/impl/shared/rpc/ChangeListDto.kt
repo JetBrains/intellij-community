@@ -11,12 +11,16 @@ import com.intellij.openapi.vcs.changes.LocalChangeListImpl
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.NonNls
 
 @Serializable
 @ApiStatus.Internal
 data class ChangeListDto(
-  private val name: String,
+  private val name: @Nls String,
   private val comment: @NlsSafe String?,
+  private val id: @NonNls String,
+  private val isDefault: Boolean,
   private val changes: List<ChangeDto>,
   @Transient private val localValue: ChangeList? = null,
 ) {
@@ -33,6 +37,8 @@ data class ChangeListDto(
       if (comment != null) {
         setComment(comment)
       }
+      setDefault(isDefault)
+      setId(id)
     }.setChanges(changes.map { it.change }).build()
   }
 }

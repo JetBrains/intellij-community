@@ -2215,10 +2215,6 @@ f:com.intellij.openapi.vcs.changes.ui.ChangeListChooserPanel
 - setSuggestedName(java.lang.String,java.lang.String,Z):V
 - setSuggestedName(java.lang.String,Z):V
 - updateEnabled():V
-f:com.intellij.openapi.vcs.changes.ui.ChangeListRemoteState
-- <init>():V
-- f:allUpToDate():Z
-- f:report(I,Z):V
 f:com.intellij.openapi.vcs.changes.ui.ChangeListViewerDialog
 - com.intellij.openapi.ui.DialogWrapper
 - sf:DIMENSION_SERVICE_KEY:java.lang.String
@@ -2281,13 +2277,6 @@ c:com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase$ShowStandaloneDiff
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - isActive(com.intellij.openapi.actionSystem.AnActionEvent):Z
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
-c:com.intellij.openapi.vcs.changes.ui.ChangesBrowserChangeListNode
-- com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
-- <init>(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.changes.ChangeList,com.intellij.openapi.vcs.changes.ui.ChangeListRemoteState):V
-- compareUserObjects(com.intellij.openapi.vcs.changes.ChangeList):I
-- getSortWeight():I
-- getTextPresentation():java.lang.String
-- render(com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer,Z,Z,Z):V
 c:com.intellij.openapi.vcs.changes.ui.ChangesBrowserModuleNode
 - com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 - com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode$NodeWithFilePath

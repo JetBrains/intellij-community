@@ -3,6 +3,7 @@ package com.intellij.platform.vcs.impl.shared.rpc
 
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.rpc.RemoteApiProviderService
+import com.intellij.platform.vcs.changes.ChangeListManagerState
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.remoteApiDescriptor
@@ -13,6 +14,8 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 interface ChangeListsApi : RemoteApi<Unit> {
   suspend fun areChangeListsEnabled(projectId: ProjectId): Flow<Boolean>
+
+  suspend fun getChangeListManagerState(projectId: ProjectId): Flow<ChangeListManagerState>
 
   suspend fun getChangeLists(projectId: ProjectId): Flow<List<ChangeListDto>>
 

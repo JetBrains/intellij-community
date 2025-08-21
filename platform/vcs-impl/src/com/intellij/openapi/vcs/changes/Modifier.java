@@ -102,6 +102,7 @@ public class Modifier {
 
   public void enterUpdate() {
     myInsideUpdate = true;
+    myWorker.getProject().getMessageBus().syncPublisher(ChangesListManagerStateListener.TOPIC).updateStarted();
   }
 
   public void finishUpdate(@Nullable ChangeListWorker updatedWorker) {

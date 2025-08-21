@@ -2,70 +2,30 @@
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.changes.*
-import com.intellij.openapi.vcs.merge.MergeConflictManager
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.vcs.impl.shared.changes.ChangesViewModelBuilderService
+import com.intellij.platform.vcs.impl.shared.changes.TreeModelBuilderEx
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.MultiMap
 import com.intellij.vcsUtil.VcsUtil
-import java.util.function.Function
 
-internal class BackendChangesViewModelBuilderService(private val project: Project) : ChangesViewModelBuilderService {
-  override fun TreeModelBuilder.setChangeList(
-    changeLists: Collection<ChangeList>,
-    skipSingleDefaultChangeList: Boolean,
-    changeDecoratorProvider: Function<in ChangeNodeDecorator, out ChangeNodeDecorator>?,
-  ) {
-    val resolvedUnchangedFiles = MergeConflictManager.getInstance(project).getResolvedConflictPaths().toMutableList()
-    val revisionsCache = RemoteRevisionsCache.getInstance(project)
-    val skipChangeListNode = skipSingleDefaultChangeList && TreeModelBuilder.isSingleBlankChangeList(changeLists)
-    var conflictsRoot: ChangesBrowserConflictsNode? = null
+internal class BackendChangesViewModelBuilderService(private val project: Project) : TreeModelBuilderEx {
+  private val revisionsCache = RemoteRevisionsCache.getInstance(project)
 
-    for (list in changeLists) {
-      val changes = list.getChanges().sortedWith(TreeModelBuilder.CHANGE_COMPARATOR)
-      val listRemoteState = ChangeListRemoteState()
+  override fun getChangeNodeInChangelistBaseDecorator(
+    listRemoteState: ChangeListRemoteState,
+    change: Change,
+    index: Int,
+  ): ChangeNodeDecorator =
+    RemoteStatusChangeNodeDecorator(revisionsCache, listRemoteState, index)
 
-      val changesParent =
-        if (skipChangeListNode) myRoot
-        else ChangesBrowserChangeListNode(project, list, listRemoteState).also { listNode ->
-          listNode.markAsHelperNode()
-          insertSubtreeRoot(listNode)
-        }
-
-      changes.forEachIndexed { i, change ->
-        val baseDecorator = RemoteStatusChangeNodeDecorator(revisionsCache, listRemoteState, i)
-        val decorator = changeDecoratorProvider?.apply(baseDecorator) ?: baseDecorator
-        val path = ChangesUtil.getFilePath(change)
-        if (MergeConflictManager.getInstance(project).isResolvedConflict(path)) {
-          resolvedUnchangedFiles.remove(path)
-          insertChangeNode(change, changesParent, createChangeNode(change, decorator))
-        }
-        else if (MergeConflictManager.isMergeConflict(change.fileStatus)) {
-          if (conflictsRoot == null) {
-            conflictsRoot = ChangesBrowserConflictsNode(project)
-            conflictsRoot.markAsHelperNode()
-            myModel.insertNodeInto(conflictsRoot, myRoot, myModel.getChildCount(myRoot))
-          }
-          insertChangeNode(change, conflictsRoot, createChangeNode(change, decorator))
-        }
-        else {
-          insertChangeNode(change, changesParent, createChangeNode(change, decorator))
-        }
-      }
-
-      insertResolvedUnchangedNodes(list, resolvedUnchangedFiles, changesParent)
-    }
-  }
-
-  override fun TreeModelBuilder.createNodes() {
+  override fun modifyTreeModelBuilder(modelBuilder: TreeModelBuilder) {
     val changeListManager = ChangeListManagerImpl.getInstanceImpl(project)
 
-    setLocallyDeletedPaths(changeListManager.deletedFiles)
+    modelBuilder.setLocallyDeletedPaths(changeListManager.deletedFiles)
       .setModifiedWithoutEditing(changeListManager.modifiedWithoutEditing)
       .setSwitchedFiles(changeListManager.switchedFilesMap)
       .setSwitchedRoots(changeListManager.switchedRoots)
@@ -140,19 +100,5 @@ internal class BackendChangesViewModelBuilderService(private val project: Projec
       insertChangeNode(file, subtreeRoot, ChangesBrowserLogicallyLockedFile(project, file, lock))
     }
     return this
-  }
-
-  private fun TreeModelBuilder.insertResolvedUnchangedNodes(
-    list: ChangeList,
-    resolvedUnchangedFilePaths: List<FilePath>,
-    changesParent: ChangesBrowserNode<*>,
-  ) {
-    if (resolvedUnchangedFilePaths.isEmpty()) return
-
-    if (list is LocalChangeList && list.isDefault()) {
-      for (resolvedConflictPath in resolvedUnchangedFilePaths) {
-        insertChangeNode(resolvedConflictPath, changesParent, ChangesBrowserNode.createFilePath(resolvedConflictPath, FileStatus.MERGE))
-      }
-    }
   }
 }
