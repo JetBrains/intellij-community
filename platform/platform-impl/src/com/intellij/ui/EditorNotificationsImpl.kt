@@ -256,12 +256,14 @@ class EditorNotificationsImpl(private val project: Project, coroutineScope: Coro
           } ?: continue
 
           val componentProvider = result.orElse(null)
-          withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+          withContext(Dispatchers.UiWithModelAccess + ModalityState.any().asContextElement()) {
             if (!file.isValid || project.isDisposed) {
               return@withContext
             }
             for (fileEditor in fileEditors) {
-              updateNotification(fileEditor = fileEditor, provider = provider, component = componentProvider?.apply(fileEditor))
+              runReadAction {
+                updateNotification(fileEditor = fileEditor, provider = provider, component = componentProvider?.apply(fileEditor))
+              }
             }
           }
         }

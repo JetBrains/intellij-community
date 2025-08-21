@@ -337,7 +337,7 @@ private suspend fun restoreEditors(project: Project, fileEditorManager: FileEdit
       editorComponent.createEditors(state = editorState)
     }
 
-    span("editor reopening post-processing", Dispatchers.EDT) {
+    span("editor reopening post-processing", Dispatchers.UI) {
       for (window in editorComponent.windows().toList()) {
         // clear empty splitters
         if (window.tabCount == 0) {

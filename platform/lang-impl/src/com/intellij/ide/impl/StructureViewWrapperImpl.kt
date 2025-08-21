@@ -114,9 +114,7 @@ class StructureViewWrapperImpl(
         val state = ModalityState.stateForComponent(component)
         if (!ModalityState.current().accepts(state)) return@withExplicitClientId
 
-        val successful = WriteIntentReadAction.compute<Boolean, Throwable> {
-          loggedRun("check if update needed") { checkUpdate() }
-        }
+        val successful = loggedRun("check if update needed") { checkUpdate() }
         if (successful) myActivityCount = count // to check on the next turn
       }
     }

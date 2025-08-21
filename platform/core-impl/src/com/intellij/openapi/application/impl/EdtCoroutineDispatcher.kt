@@ -87,7 +87,7 @@ internal sealed class EdtCoroutineDispatcher(
   val lockAccessViolationMessage = """The use of the RW lock is forbidden by `$this`. This dispatcher is intended for pure UI operations, which do not interact with the IntelliJ Platform model (PSI, VFS, etc.).
 The following solutions are available:
 1. Consider moving the model access outside `$this`. This would help to ensure that the UI is responsive.
-2. Consider using legacy `Dispatchers.EDT` that permits usage of the RW lock. In this case, you can wrap the model-accessing code in `Dispatchers.EDT`
+2. Consider using legacy `Dispatchers.UiWithModelAccess` that permits usage of the RW lock. In this case, you can wrap the model-accessing code in `Dispatchers.UiWithModelAccess`
 """
 }
 
