@@ -38,5 +38,34 @@ class PyAssertTypeInspectionTest : PyInspectionTestCase() {
     """.trimIndent())
   }
 
+  // PY-76860
+  fun `test assert self param and Self type`() {
+    doTestByText("""
+        from typing import Self
+        class Shape:
+           def set_scale(self, scale: float) -> Self:
+              assert_type(self, Self)
+              return self
+    """.trimIndent())
+  }
+
+  // PY-76860
+  fun `test type Self in class methods`() {
+    doTestByText("""
+        from typing import Self, assert_type
+        class Shape:
+             @classmethod
+             def from_config(cls, config: dict[str, float]) -> Self:
+                 assert_type(cls, type[Self])
+                 assert_type(<warning descr="Expected type 'Self', got 'type[Shape]' instead">cls</warning>, Self) # E
+                 ...
+             
+             def normal_method(self) -> Self:
+                 assert_type(<warning descr="Expected type 'Self', got 'Shape' instead">self</warning>, type[Self]) # E
+                 assert_type(self, Self) 
+                 ...
+    """.trimIndent())
+  }
+
   override fun getInspectionClass(): Class<out PyInspection> = PyAssertTypeInspection::class.java
 }
