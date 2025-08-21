@@ -1434,6 +1434,8 @@
 
     <registryKey key="show.last.visited.timestamps" defaultValue="true"
                  description="Shows recent files or code locations last visited timestamps"/>
+    <registryKey key="project.view.show.vfs.cached.children.count.limit" defaultValue="0"
+                 description="Shows the number of cached children in VFS"/>
 
     <editorFactoryDocumentListener implementation="com.intellij.openapi.command.impl.DocumentUndoProvider"/>
 
