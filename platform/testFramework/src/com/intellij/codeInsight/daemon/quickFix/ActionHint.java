@@ -102,8 +102,8 @@ public final class ActionHint {
    * @throws AssertionError if no action is found, but it should present, or if action is found, but it should not present.
    */
   public @Nullable IntentionAction findAndCheck(@NotNull Collection<? extends IntentionAction> actions,
-                                      @Nullable ActionContext context,
-                                      @NotNull Supplier<String> infoSupplier) {
+                                                @Nullable ActionContext context,
+                                                @NotNull Supplier<String> infoSupplier) {
     String[] steps = myExpectedText.split("\\|->");
     CommonIntentionAction found = null;
     Collection<? extends CommonIntentionAction> commonActions = actions;
@@ -137,18 +137,18 @@ public final class ActionHint {
     }
     IntentionAction result = found == null ? null : found.asIntention();
     String lastStep = steps[steps.length - 1];
-    if(myShouldPresent) {
-      if(result == null) {
+    if (myShouldPresent) {
+      if (result == null) {
         fail(exceptionHeader(lastStep) + " not found\nAvailable actions: " +
              commonActions.stream()
                .filter(ca -> !(ca instanceof ModCommandAction mca) || context != null && mca.getPresentation(context) != null)
                .map(ca -> {
-               return ca instanceof ModCommandAction mca ? Objects.requireNonNull(mca.getPresentation(context)).name() :
-                      ca.asIntention().getText();
-             }).collect(Collectors.joining(", ", "[", "]\n")) +
+                 return ca instanceof ModCommandAction mca ? Objects.requireNonNull(mca.getPresentation(context)).name() :
+                        ca.asIntention().getText();
+               }).collect(Collectors.joining(", ", "[", "]\n")) +
              infoSupplier.get());
       }
-      else if(myHighlightType != null) {
+      else if (myHighlightType != null) {
         result = IntentionActionDelegate.unwrap(result);
         ProblemHighlightType actualType = QuickFixWrapper.getHighlightType(result);
         if (actualType == null) {
@@ -156,7 +156,7 @@ public final class ActionHint {
                "\nExpected LocalQuickFix with ProblemHighlightType=" + myHighlightType + "\n" +
                infoSupplier.get());
         }
-        if(actualType != myHighlightType) {
+        if (actualType != myHighlightType) {
           fail(exceptionHeader(lastStep) + " has wrong ProblemHighlightType.\nExpected: " + myHighlightType +
                "\nActual: " + actualType + "\n" + infoSupplier.get());
         }
