@@ -129,8 +129,9 @@ def stop_on_unhandled_exception(py_db, thread, additional_info, arg):
     else:
         exception_breakpoint = None
 
-    original_excepthook(exctype, value, tb)
-    disable_excepthook()  # Avoid printing the exception for the second time.
+    if not sys.flags.inspect:
+        original_excepthook(exctype, value, tb)
+        disable_excepthook()  # Avoid printing the exception for the second time.
 
     if not exception_breakpoint:
         return
@@ -183,12 +184,14 @@ def _fallback_excepthook(exctype, value, tb):
             additional_info = getattr(thread, 'additional_info', None)
             if not thread or additional_info is None:
                 return
-            debugger.disable_tracing()
+            if not sys.flags.inspect:
+                debugger.disable_tracing()
             stop_on_unhandled_exception(debugger, thread, additional_info, (exctype, value, tb))
     finally:
         if sys.excepthook != dummy_excepthook:
             original_excepthook(exctype, value, tb)
-        sys.exit(1)
+        if not sys.flags.inspect:
+            sys.exit(1)
 
 
 def set_fallback_excepthook():
