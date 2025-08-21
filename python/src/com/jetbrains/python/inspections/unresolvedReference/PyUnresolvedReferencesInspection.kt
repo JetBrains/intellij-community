@@ -16,6 +16,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.psi.PsiElement
@@ -118,6 +119,9 @@ class PyUnresolvedReferencesInspection : PyUnresolvedReferencesInspectionBase() 
     }
 
     override fun getAddSourceRootQuickFix(node: PyElement): LocalQuickFix? {
+      if (!Registry.`is`("python.source.root.detection.enabled")) {
+        return null
+      }
       val importStatementBase = PsiTreeUtil.getParentOfType(node, PyAstImportStatementBase::class.java, true)
                                 ?: return null
 
@@ -159,6 +163,9 @@ class PyUnresolvedReferencesInspection : PyUnresolvedReferencesInspectionBase() 
         val resolveResult: List<PsiElement> = resolveInRoot(qname, containingDirectory, context)
         if (!resolveResult.isEmpty()) {
           project.getService(PySourceRootDetectionService::class.java).onSourceRootDetected(containingDirectory)
+          if (!Registry.`is`("python.source.root.suggest.quickfix") || !Registry.`is`("python.source.root.detection.enabled")) {
+            return null
+          }
           return PyMarkDirectoryAsSourceRootQuickFix(project, containingDirectory)
         }
       }

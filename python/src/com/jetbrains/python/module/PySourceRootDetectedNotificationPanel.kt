@@ -4,6 +4,7 @@ package com.jetbrains.python.module
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
@@ -14,10 +15,16 @@ import java.util.function.Function
 import javax.swing.JComponent
 
 internal class PySourceRootDetectedNotificationPanel : EditorNotificationProvider {
-  override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?> {
+  override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
+    val isEnabled = Registry.`is`("python.source.root.suggest.notification") && Registry.`is`("python.source.root.detection.enabled")
+    if (!isEnabled) {
+      return null
+    }
+    if (file.fileType != PythonFileType.INSTANCE) {
+      return null
+    }
     return Function { editor ->
       when  {
-        file.fileType != PythonFileType.INSTANCE -> return@Function null
         editor !is TextEditorImpl -> return@Function null
       }
       val pySourceRootDetectionService = project.getService(PySourceRootDetectionService::class.java)
