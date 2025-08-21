@@ -11,10 +11,14 @@ jvm_library(
   name = "compose-foundation-desktop",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  exports = ["@lib//:libraries-compose-foundation-desktop-compose-foundation-desktop"],
+  exports = [
+    "//libraries/compose-runtime-desktop",
+    "@lib//:libraries-compose-foundation-desktop-compose-foundation-desktop",
+  ],
   runtime_deps = [
     ":compose-foundation-desktop_resources",
     "//libraries/skiko",
+    "//libraries/compose-runtime-desktop",
     "@lib//:libraries-compose-foundation-desktop-compose-foundation-desktop",
   ]
 )

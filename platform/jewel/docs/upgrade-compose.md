@@ -61,8 +61,9 @@ extremely unpractical.
 8. Update the _org.jetbrains.compose.components.components.resources_ and
    _org.jetbrains.compose.components.components.resources.desktop_ dependencies to the same CMP version with the same
    procedure as above
-9. Now it's time to update the Skiko dependency. Go to the _intellij.libraries.skiko_ module
-10. If the Skiko version currently listed is different from the one CMP requires — which is usually the case — then
+9. Navigate to _intellij.libraries.compose.runtime.desktop_ module and update the _compose-runtime-desktop_ library the same way like with _compose-foundation-desktop_
+10. Now it's time to update the Skiko dependency. Go to the _intellij.libraries.skiko_ module
+11. If the Skiko version currently listed is different from the one CMP requires — which is usually the case — then
     follow the same procedure as above to upgrade Skiko to the required version. Note that the required Skiko version
     may not be the latest one.
 

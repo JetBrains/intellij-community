@@ -2,5 +2,6 @@
   <dependencies>
       <module name="intellij.libraries.skiko"/>
       <module name="intellij.libraries.compose.foundation.desktop"/>
+      <module name="intellij.libraries.compose.runtime.desktop"/>
   </dependencies>
 </idea-plugin>

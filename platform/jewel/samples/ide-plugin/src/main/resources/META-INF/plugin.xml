@@ -15,6 +15,7 @@ See the <a href="https://github.com/JetBrains/jewel">Jewel repository</a> for mo
         <module name="intellij.platform.jewel.ui"/>
         <module name="intellij.platform.jewel.ideLafBridge"/>
         <module name="intellij.libraries.compose.foundation.desktop"/>
+        <module name="intellij.libraries.compose.runtime.desktop"/>
         <module name="intellij.libraries.skiko"/>
         <module name="intellij.platform.jewel.markdown.core"/>
         <module name="intellij.platform.jewel.markdown.ideLafBridgeStyling"/>

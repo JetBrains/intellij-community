@@ -8,6 +8,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.libraries.skiko" />
+    <orderEntry type="module" module-name="intellij.libraries.compose.runtime.desktop" exported="" />
     <orderEntry type="module-library" exported="">
       <library name="compose-foundation-desktop" type="repository">
         <properties maven-id="org.jetbrains.compose.foundation:foundation-desktop:1.9.0-beta01">
@@ -32,15 +33,6 @@
             </artifact>
             <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/foundation/foundation-layout-desktop/1.9.0-beta01/foundation-layout-desktop-1.9.0-beta01.jar">
               <sha256sum>e186533dc5a14a28d8423744f7bedb700572496afe8100fdc86c613eeecfc03c</sha256sum>
-            </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/runtime/runtime-desktop/1.9.0-beta01/runtime-desktop-1.9.0-beta01.jar">
-              <sha256sum>dca95c9460b48fafa4fd1c9f6a79828603890c17b5053113fb8eff39ea5ec325</sha256sum>
-            </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/androidx/compose/runtime/runtime-desktop/1.9.0-beta02/runtime-desktop-1.9.0-beta02.jar">
-              <sha256sum>464f644e8935ea3e8b178746f0b22f0c784c8986302a7e34e4937697b54364ac</sha256sum>
-            </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/androidx/compose/runtime/runtime-annotation-jvm/1.9.0-beta02/runtime-annotation-jvm-1.9.0-beta02.jar">
-              <sha256sum>989b2da28bf5ba7966c08ca2db3f48a607e684e4ab4ff0de80e9cd5ec663c076</sha256sum>
             </artifact>
             <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-desktop/1.9.0-beta01/ui-desktop-1.9.0-beta01.jar">
               <sha256sum>275ce0b97c83effd513d29581bc26a2fe03ffd3d4cb0f67376695583a1a0242e</sha256sum>
@@ -105,8 +97,8 @@
           </verification>
           <exclude>
             <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
+            <dependency maven-id="org.jetbrains.compose.runtime:runtime-desktop" />
             <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core" />
-            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
             <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm" />
             <dependency maven-id="org.jetbrains.kotlinx:kotlinx-serialization-core-jvm" />
             <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8" />
@@ -121,9 +113,6 @@
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/animation/animation-core-desktop/1.9.0-beta01/animation-core-desktop-1.9.0-beta01.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-geometry-desktop/1.9.0-beta01/ui-geometry-desktop-1.9.0-beta01.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/foundation/foundation-layout-desktop/1.9.0-beta01/foundation-layout-desktop-1.9.0-beta01.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/runtime/runtime-desktop/1.9.0-beta01/runtime-desktop-1.9.0-beta01.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/androidx/compose/runtime/runtime-desktop/1.9.0-beta02/runtime-desktop-1.9.0-beta02.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/androidx/compose/runtime/runtime-annotation-jvm/1.9.0-beta02/runtime-annotation-jvm-1.9.0-beta02.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-desktop/1.9.0-beta01/ui-desktop-1.9.0-beta01.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/androidx/lifecycle/lifecycle-common-jvm/2.9.1/lifecycle-common-jvm-2.9.1.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar!/" />
@@ -151,7 +140,6 @@
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/animation/animation-core-desktop/1.9.0-beta01/animation-core-desktop-1.9.0-beta01-javadoc.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-geometry-desktop/1.9.0-beta01/ui-geometry-desktop-1.9.0-beta01-javadoc.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/foundation/foundation-layout-desktop/1.9.0-beta01/foundation-layout-desktop-1.9.0-beta01-javadoc.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/runtime/runtime-desktop/1.9.0-beta01/runtime-desktop-1.9.0-beta01-javadoc.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-desktop/1.9.0-beta01/ui-desktop-1.9.0-beta01-javadoc.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/jspecify/jspecify/1.0.0/jspecify-1.0.0-javadoc.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/androidx/lifecycle/lifecycle-runtime-compose-desktop/2.9.1/lifecycle-runtime-compose-desktop-2.9.1-javadoc.jar!/" />
@@ -172,9 +160,6 @@
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/animation/animation-core-desktop/1.9.0-beta01/animation-core-desktop-1.9.0-beta01-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-geometry-desktop/1.9.0-beta01/ui-geometry-desktop-1.9.0-beta01-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/foundation/foundation-layout-desktop/1.9.0-beta01/foundation-layout-desktop-1.9.0-beta01-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/runtime/runtime-desktop/1.9.0-beta01/runtime-desktop-1.9.0-beta01-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/androidx/compose/runtime/runtime-desktop/1.9.0-beta02/runtime-desktop-1.9.0-beta02-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/androidx/compose/runtime/runtime-annotation-jvm/1.9.0-beta02/runtime-annotation-jvm-1.9.0-beta02-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-desktop/1.9.0-beta01/ui-desktop-1.9.0-beta01-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/androidx/lifecycle/lifecycle-common-jvm/2.9.1/lifecycle-common-jvm-2.9.1-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/jspecify/jspecify/1.0.0/jspecify-1.0.0-sources.jar!/" />

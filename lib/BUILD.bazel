@@ -4642,9 +4642,6 @@ java_library(
     ":animation-core-desktop-1_9_0-beta01_http_import",
     ":ui-geometry-desktop-1_9_0-beta01_http_import",
     ":foundation-layout-desktop-1_9_0-beta01_http_import",
-    ":runtime-desktop-1_9_0-beta01_http_import",
-    ":runtime-desktop-1_9_0-beta02_http_import",
-    ":runtime-annotation-jvm-1_9_0-beta02_http_import",
     ":ui-desktop-1_9_0-beta01_http_import",
     ":lifecycle-common-jvm-2_9_1_http_import",
     ":jspecify-1_0_0_http_import",
@@ -4709,24 +4706,6 @@ jvm_import(
   name = "foundation-layout-desktop-1_9_0-beta01_http_import",
   jar = "@foundation-layout-desktop-1_9_0-beta01_http//file",
   source_jar = "@foundation-layout-desktop-1_9_0-beta01-sources_http//file"
-)
-
-jvm_import(
-  name = "runtime-desktop-1_9_0-beta01_http_import",
-  jar = "@runtime-desktop-1_9_0-beta01_http//file",
-  source_jar = "@runtime-desktop-1_9_0-beta01-sources_http//file"
-)
-
-jvm_import(
-  name = "runtime-desktop-1_9_0-beta02_http_import",
-  jar = "@runtime-desktop-1_9_0-beta02_http//file",
-  source_jar = "@runtime-desktop-1_9_0-beta02-sources_http//file"
-)
-
-jvm_import(
-  name = "runtime-annotation-jvm-1_9_0-beta02_http_import",
-  jar = "@runtime-annotation-jvm-1_9_0-beta02_http//file",
-  source_jar = "@runtime-annotation-jvm-1_9_0-beta02-sources_http//file"
 )
 
 jvm_import(
@@ -4960,6 +4939,36 @@ jvm_import(
   jar = "@ui-1_8_0-alpha04_http//file",
   source_jar = "@ui-1_8_0-alpha04-sources_http//file",
   visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "libraries-compose-runtime-desktop-jetbrains-compose-runtime-desktop",
+  exports = [
+    ":runtime-desktop-1_9_0-beta01_http_import",
+    ":runtime-desktop-1_9_0-beta02_http_import",
+    ":collection-jvm-1_5_0_http_import",
+    ":annotation-jvm-1_9_1_http_import",
+    ":runtime-annotation-jvm-1_9_0-beta02_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "runtime-desktop-1_9_0-beta01_http_import",
+  jar = "@runtime-desktop-1_9_0-beta01_http//file",
+  source_jar = "@runtime-desktop-1_9_0-beta01-sources_http//file"
+)
+
+jvm_import(
+  name = "runtime-desktop-1_9_0-beta02_http_import",
+  jar = "@runtime-desktop-1_9_0-beta02_http//file",
+  source_jar = "@runtime-desktop-1_9_0-beta02-sources_http//file"
+)
+
+jvm_import(
+  name = "runtime-annotation-jvm-1_9_0-beta02_http_import",
+  jar = "@runtime-annotation-jvm-1_9_0-beta02_http//file",
+  source_jar = "@runtime-annotation-jvm-1_9_0-beta02-sources_http//file"
 )
 
 java_library(

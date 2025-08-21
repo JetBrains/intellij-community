@@ -337,6 +337,7 @@ libraries/assertj-core
 libraries/coil
 libraries/compose-foundation-desktop
 libraries/compose-foundation-desktop-junit
+libraries/compose-runtime-desktop
 libraries/detekt-compose-rules
 libraries/dokka
 libraries/grpc

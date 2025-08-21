@@ -6433,27 +6433,6 @@ http_file(
 )
 
 http_file(
-  name = "runtime-desktop-1_9_0-beta01_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/runtime/runtime-desktop/1.9.0-beta01/runtime-desktop-1.9.0-beta01.jar",
-  sha256 = "dca95c9460b48fafa4fd1c9f6a79828603890c17b5053113fb8eff39ea5ec325",
-  downloaded_file_path = "runtime-desktop-1.9.0-beta01.jar"
-)
-
-http_file(
-  name = "runtime-desktop-1_9_0-beta02_http",
-  url = "https://cache-redirector.jetbrains.com/dl.google.com/dl/android/maven2/androidx/compose/runtime/runtime-desktop/1.9.0-beta02/runtime-desktop-1.9.0-beta02.jar",
-  sha256 = "464f644e8935ea3e8b178746f0b22f0c784c8986302a7e34e4937697b54364ac",
-  downloaded_file_path = "runtime-desktop-1.9.0-beta02.jar"
-)
-
-http_file(
-  name = "runtime-annotation-jvm-1_9_0-beta02_http",
-  url = "https://cache-redirector.jetbrains.com/dl.google.com/dl/android/maven2/androidx/compose/runtime/runtime-annotation-jvm/1.9.0-beta02/runtime-annotation-jvm-1.9.0-beta02.jar",
-  sha256 = "989b2da28bf5ba7966c08ca2db3f48a607e684e4ab4ff0de80e9cd5ec663c076",
-  downloaded_file_path = "runtime-annotation-jvm-1.9.0-beta02.jar"
-)
-
-http_file(
   name = "ui-desktop-1_9_0-beta01_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/ui/ui-desktop/1.9.0-beta01/ui-desktop-1.9.0-beta01.jar",
   sha256 = "275ce0b97c83effd513d29581bc26a2fe03ffd3d4cb0f67376695583a1a0242e",
@@ -6633,27 +6612,6 @@ http_file(
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/foundation/foundation-layout-desktop/1.9.0-beta01/foundation-layout-desktop-1.9.0-beta01-sources.jar",
   sha256 = "5644e9ba756367093391b3793b198d66dfaff4544382a6220dc715e2a8304a74",
   downloaded_file_path = "foundation-layout-desktop-1.9.0-beta01-sources.jar"
-)
-
-http_file(
-  name = "runtime-desktop-1_9_0-beta01-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/runtime/runtime-desktop/1.9.0-beta01/runtime-desktop-1.9.0-beta01-sources.jar",
-  sha256 = "6f27472e1e5fe26259f156b498f6745feb57b651b673d65fe9938a7fec2d9065",
-  downloaded_file_path = "runtime-desktop-1.9.0-beta01-sources.jar"
-)
-
-http_file(
-  name = "runtime-desktop-1_9_0-beta02-sources_http",
-  url = "https://cache-redirector.jetbrains.com/dl.google.com/dl/android/maven2/androidx/compose/runtime/runtime-desktop/1.9.0-beta02/runtime-desktop-1.9.0-beta02-sources.jar",
-  sha256 = "99cdd2af36d26af93535dd5616b94bc411283ac7bbf495297cee1b2247127a32",
-  downloaded_file_path = "runtime-desktop-1.9.0-beta02-sources.jar"
-)
-
-http_file(
-  name = "runtime-annotation-jvm-1_9_0-beta02-sources_http",
-  url = "https://cache-redirector.jetbrains.com/dl.google.com/dl/android/maven2/androidx/compose/runtime/runtime-annotation-jvm/1.9.0-beta02/runtime-annotation-jvm-1.9.0-beta02-sources.jar",
-  sha256 = "fb61a54502ea77472b8a2c751c5a62d0773389611b4987bdf63d1ad90f20209d",
-  downloaded_file_path = "runtime-annotation-jvm-1.9.0-beta02-sources.jar"
 )
 
 http_file(
@@ -6990,6 +6948,48 @@ http_file(
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/ui/ui-unit/1.8.0-alpha04/ui-unit-1.8.0-alpha04-sources.jar",
   sha256 = "b48428c4739e1e46d19ab93e8fdb8b36c0f0037a2d7fb166f5da5f09a267c73b",
   downloaded_file_path = "ui-unit-1.8.0-alpha04-sources.jar"
+)
+
+http_file(
+  name = "runtime-desktop-1_9_0-beta01_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/runtime/runtime-desktop/1.9.0-beta01/runtime-desktop-1.9.0-beta01.jar",
+  sha256 = "dca95c9460b48fafa4fd1c9f6a79828603890c17b5053113fb8eff39ea5ec325",
+  downloaded_file_path = "runtime-desktop-1.9.0-beta01.jar"
+)
+
+http_file(
+  name = "runtime-desktop-1_9_0-beta02_http",
+  url = "https://cache-redirector.jetbrains.com/dl.google.com/dl/android/maven2/androidx/compose/runtime/runtime-desktop/1.9.0-beta02/runtime-desktop-1.9.0-beta02.jar",
+  sha256 = "464f644e8935ea3e8b178746f0b22f0c784c8986302a7e34e4937697b54364ac",
+  downloaded_file_path = "runtime-desktop-1.9.0-beta02.jar"
+)
+
+http_file(
+  name = "runtime-annotation-jvm-1_9_0-beta02_http",
+  url = "https://cache-redirector.jetbrains.com/dl.google.com/dl/android/maven2/androidx/compose/runtime/runtime-annotation-jvm/1.9.0-beta02/runtime-annotation-jvm-1.9.0-beta02.jar",
+  sha256 = "989b2da28bf5ba7966c08ca2db3f48a607e684e4ab4ff0de80e9cd5ec663c076",
+  downloaded_file_path = "runtime-annotation-jvm-1.9.0-beta02.jar"
+)
+
+http_file(
+  name = "runtime-desktop-1_9_0-beta01-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/runtime/runtime-desktop/1.9.0-beta01/runtime-desktop-1.9.0-beta01-sources.jar",
+  sha256 = "6f27472e1e5fe26259f156b498f6745feb57b651b673d65fe9938a7fec2d9065",
+  downloaded_file_path = "runtime-desktop-1.9.0-beta01-sources.jar"
+)
+
+http_file(
+  name = "runtime-desktop-1_9_0-beta02-sources_http",
+  url = "https://cache-redirector.jetbrains.com/dl.google.com/dl/android/maven2/androidx/compose/runtime/runtime-desktop/1.9.0-beta02/runtime-desktop-1.9.0-beta02-sources.jar",
+  sha256 = "99cdd2af36d26af93535dd5616b94bc411283ac7bbf495297cee1b2247127a32",
+  downloaded_file_path = "runtime-desktop-1.9.0-beta02-sources.jar"
+)
+
+http_file(
+  name = "runtime-annotation-jvm-1_9_0-beta02-sources_http",
+  url = "https://cache-redirector.jetbrains.com/dl.google.com/dl/android/maven2/androidx/compose/runtime/runtime-annotation-jvm/1.9.0-beta02/runtime-annotation-jvm-1.9.0-beta02-sources.jar",
+  sha256 = "fb61a54502ea77472b8a2c751c5a62d0773389611b4987bdf63d1ad90f20209d",
+  downloaded_file_path = "runtime-annotation-jvm-1.9.0-beta02-sources.jar"
 )
 
 http_file(
