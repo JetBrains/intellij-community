@@ -4,13 +4,13 @@
 
 import com.github.pgreze.process.Redirect
 import com.github.pgreze.process.process
-import java.io.File
 import kotlin.system.exitProcess
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import org.intellij.lang.annotations.Language
+import java.io.File
 
 fun checkGhTool() = runBlocking { runCommand(command = "which gh", workingDir = null, exitOnError = false).isSuccess }
 
@@ -25,7 +25,7 @@ fun requireGhTool() {
     exitProcess(1)
 }
 
-fun findJewelRoot(base: File = File("").canonicalFile): File? {
+fun findJewelRoot(base: File = File(".").canonicalFile): File? {
     fun isJewelDir(file: File): Boolean = file.name == "jewel" && file.parentFile.name == "platform"
 
     var file = base
@@ -147,13 +147,14 @@ suspend fun runCommand(
     workingDir: File?,
     timeoutAmount: Duration = 60.seconds,
     exitOnError: Boolean = true,
+    inheritIO: Boolean = false,
 ): CmdResult {
     val result =
         withTimeout(timeoutAmount) {
             process(
                 command = command.split(" ").toTypedArray(),
-                stdout = Redirect.CAPTURE,
-                stderr = Redirect.CAPTURE,
+                stdout = if (inheritIO) Redirect.PRINT else Redirect.CAPTURE,
+                stderr = if (inheritIO) Redirect.PRINT else Redirect.CAPTURE,
                 directory = workingDir,
             )
         }
