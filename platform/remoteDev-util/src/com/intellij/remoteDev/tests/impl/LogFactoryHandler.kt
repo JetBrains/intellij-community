@@ -3,6 +3,7 @@ package com.intellij.remoteDev.tests.impl
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.remoteDev.tests.modelGenerated.RdTestSession
+import com.intellij.remoteDev.tests.modelGenerated.LambdaRdTestSession
 import com.jetbrains.rd.util.lifetime.Lifetime
 
 object LogFactoryHandler {
@@ -24,6 +25,26 @@ object LogFactoryHandler {
 
     agentTestLoggerFactory.testSession.set(session)
     lifetime.onTermination { agentTestLoggerFactory.testSession.set(null) }
+  }
+
+  inline fun <reified T : AgentTestLoggerFactory> bindSession(lifetime: Lifetime, session: LambdaRdTestSession) {
+    val logger = logger<T>()
+
+    val ideaLoggerFactory = Logger.getFactory()
+    val agentTestLoggerFactory = if (ideaLoggerFactory is T) {
+      logger.warn(T::class.simpleName + " is already registered")
+      ideaLoggerFactory
+    }
+    else {
+      val constructor = T::class.java.constructors.find { it.parameters.map { it.type } == listOf(Logger.Factory::class.java) }
+                        ?: error("Should have found a constructor")
+      val agentTestLoggerFactory = constructor.newInstance(ideaLoggerFactory) as T
+      Logger.setFactory(agentTestLoggerFactory)
+      agentTestLoggerFactory
+    }
+
+    agentTestLoggerFactory.lambdaTestSession.set(session)
+    lifetime.onTermination { agentTestLoggerFactory.lambdaTestSession.set(null) }
   }
 
   inline fun <reified T : AgentTestLoggerFactory> assertLoggerFactory() {
