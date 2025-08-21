@@ -50,7 +50,7 @@ class PyTestFixtureReference(pyElement: PsiElement, fixture: PyTestFixture, priv
     val func = PsiTreeUtil.getParentOfType(element, PyFunction::class.java)
 
     val fixtureNames: List<String> = if (func != null) {
-      // Use existing API that already filters fixtures applicable for a function and class context
+      // For function-level decorators
       getFixtures(module, func, context)
         .filterNot { fixture ->
           val fn = fixture.function ?: return@filterNot false
@@ -59,7 +59,7 @@ class PyTestFixtureReference(pyElement: PsiElement, fixture: PyTestFixture, priv
         .map { it.name }
     }
     else {
-      // Fallback: collect all top-level fixtures available in module scope
+      // For class-level decorators and module-level function calls
       findDecoratorsByName(module, TEST_FIXTURE_DECORATOR_NAMES)
         .filterNot { dec -> dec.target?.let { isFromPytestPackage(it) } == true }
         .mapNotNull { dec -> getTestFixtureName(dec) ?: dec.target?.name }
