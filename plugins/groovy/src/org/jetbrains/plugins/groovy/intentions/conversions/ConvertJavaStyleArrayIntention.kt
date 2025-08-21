@@ -4,9 +4,14 @@ package org.jetbrains.plugins.groovy.intentions.conversions
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.elementType
 import org.jetbrains.plugins.groovy.intentions.base.GrPsiUpdateIntention
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
+import org.jetbrains.plugins.groovy.lang.psi.api.GrArrayInitializer
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression
 
 class ConvertJavaStyleArrayIntention : GrPsiUpdateIntention() {
@@ -23,10 +28,21 @@ class ConvertJavaStyleArrayIntention : GrPsiUpdateIntention() {
   override fun processIntention(element: PsiElement, context: ActionContext, updater: ModPsiUpdater) {
     val expression = element as? GrNewExpression ?: return
     val initializer = expression.arrayInitializer ?: return
-    val start = initializer.lBrace.startOffsetInParent + 1
-    val finish = initializer.rBrace?.startOffsetInParent ?: return
-    val newText = "[${initializer.text.substring(start, finish)}]"
+    val newText = convertArrayInitializers(initializer)
     val newExpression = GroovyPsiElementFactory.getInstance(context.project).createExpressionFromText(newText)
     expression.replaceWithExpression(newExpression, true)
+  }
+
+  private fun convertArrayInitializers(initializer: GrExpression): String {
+    if (initializer !is GrArrayInitializer) return initializer.text
+    val expressionTexts = initializer.expressions.map { convertArrayInitializers(it) }
+    val postfix = if(endsWithTrailingComma(initializer)) ",]" else "]"
+    return expressionTexts.joinToString(", ", "[", postfix)
+  }
+
+  private fun endsWithTrailingComma(initializer: GrArrayInitializer): Boolean {
+    val rBrace = initializer.rBrace ?: return false
+    val candidate = PsiTreeUtil.skipWhitespacesBackward(rBrace)
+    return candidate != null && candidate.elementType == GroovyTokenTypes.mCOMMA
   }
 }
