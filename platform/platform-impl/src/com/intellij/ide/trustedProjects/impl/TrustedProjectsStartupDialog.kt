@@ -22,6 +22,8 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.platform.eel.isWindows
+import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.ui.MouseDragHelper
 import com.intellij.ui.PopupBorder
 import com.intellij.ui.WindowRoundedCornersManager
@@ -342,7 +344,7 @@ class TrustedProjectStartupDialog private constructor(
     }
 
     private suspend fun getDefenderExcludePaths(project: Project?, projectPath: Path): List<Path> {
-      if (SystemInfo.isWindows) {
+      if (isWindowsProject(projectPath)) {
         val checker = serviceAsync<WindowsDefenderChecker>()
         if (
           !checker.isUntrustworthyLocation(projectPath) &&
@@ -357,5 +359,8 @@ class TrustedProjectStartupDialog private constructor(
       }
       return emptyList()
     }
+
+    private fun isWindowsProject(projectPath: Path): Boolean =
+      SystemInfo.isWindows && projectPath.asEelPath().descriptor.osFamily.isWindows
   }
 }
