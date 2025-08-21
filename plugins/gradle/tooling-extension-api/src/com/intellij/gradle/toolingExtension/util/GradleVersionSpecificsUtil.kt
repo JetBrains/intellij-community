@@ -15,8 +15,21 @@ object GradleVersionSpecificsUtil {
   /**
    * In the 8.2 version, Gradle introduced BasicGradleProject#getBuildTreePath, which is used as an identity path for GradleLightProject.
    * Before Gradle 8.2, the identity path is calculated in IDEA in DefaultGradleLightProject#getProjectIdentityPath.
+   *
+   * [Gradle documentation for getBuildTreePath](https://docs.gradle.org/current/javadoc/org/gradle/tooling/model/gradle/BasicGradleProject.html#getBuildTreePath())
    */
   @JvmStatic
   fun isBuildTreePathAvailable(gradleVersion: GradleVersion): Boolean =
     GradleVersionUtil.isGradleAtLeast(gradleVersion, "8.2")
+
+  /**
+   * Since 7.2, Gradle adds `buildSrc` builds to `editableBuilds` of the root build:
+   * - `buildSrc` belonging to the root build
+   * - also, all `buildSrc` belonging to all transitive included builds of the root build
+   *
+   * [Gradle documentation for getEditableBuilds](https://docs.gradle.org/current/javadoc/org/gradle/tooling/model/gradle/GradleBuild.html#getEditableBuilds())
+   */
+  @JvmStatic
+  fun isBuildSrcAddedInEditableBuilds(gradleVersion: GradleVersion): Boolean =
+    GradleVersionUtil.isGradleAtLeast(gradleVersion, "7.2")
 }
