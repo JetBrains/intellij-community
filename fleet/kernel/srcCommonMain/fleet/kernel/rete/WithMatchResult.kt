@@ -31,6 +31,8 @@ inline fun <T, R> WithMatchResult<T>.flatMap(transformer: (T) -> WithMatchResult
 
 fun <T> WithMatchResult<WithMatchResult<T>>.flatten(): WithMatchResult<T> = flatMap { it }
 
+val <T> WithMatchResult<T>.isSuccess: Boolean get() = this is WithMatchResult.Success
+
 val <T : Any> WithMatchResult<T>.successOrNull: T? get() = (this as? WithMatchResult.Success)?.value
 
 class CancellationReason(val reason: String, val match: Match<*>?)
