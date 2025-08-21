@@ -42,9 +42,12 @@ public final class FileContentUtilCore {
       }
 
       BulkFileListener publisher = ApplicationManager.getApplication().getMessageBus().syncPublisher(VirtualFileManager.VFS_CHANGES);
+      BulkFileListener publisherBackgroundable = ApplicationManager.getApplication().getMessageBus().syncPublisher(VirtualFileManager.VFS_CHANGES_BG);
       List<VFileEvent> eventList = Collections.unmodifiableList(new ArrayList<>(events));
       publisher.before(eventList);
+      publisherBackgroundable.before(eventList);
       publisher.after(eventList);
+      publisherBackgroundable.after(eventList);
 
       ForcefulReparseModificationTracker.increment();
     });
