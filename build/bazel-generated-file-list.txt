@@ -637,6 +637,7 @@ platform/testFramework/extensions
 platform/testFramework/impl
 platform/testFramework/junit5
 platform/testFramework/junit5.jimfs
+platform/testFramework/junit5/codeInsight
 platform/testFramework/junit5/eel
 platform/testFramework/junit5/highlighting
 platform/testFramework/junit5/projectStructure
