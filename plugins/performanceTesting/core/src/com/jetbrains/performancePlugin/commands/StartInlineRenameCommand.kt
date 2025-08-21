@@ -5,6 +5,7 @@ import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.command.impl.UndoManagerImpl
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.playback.commands.AbstractCommand
 import com.intellij.openapi.wm.IdeFocusManager
@@ -30,6 +31,7 @@ class StartInlineRenameCommand(text: String, line: Int) : AbstractCommand(text, 
   override fun _execute(context: PlaybackContext): Promise<Any?> {
     val actionCallback = ActionCallbackProfilerStopper()
     val project = context.project
+    UndoManagerImpl.ourNeverAskUser = true
     ApplicationManager.getApplication().invokeAndWait(Context.current().wrap(Runnable {
       val focusedComponent = IdeFocusManager.findInstance().focusOwner
       val dataContext = DataManager.getInstance().getDataContext(focusedComponent)
