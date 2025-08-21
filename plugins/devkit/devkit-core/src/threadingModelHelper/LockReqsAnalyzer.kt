@@ -10,9 +10,9 @@ class LockReqsAnalyzer(private val detector: LockReqsDetector = LockReqsDetector
 
   private data class TraversalContext(
     val config: AnalysisConfig,
-    val paths: MutableList<ExecutionPath> = mutableListOf(),
     val currentPath: MutableList<MethodCall> = mutableListOf(),
     val visited: MutableSet<MethodSignature> = mutableSetOf(),
+    val paths: MutableSet<ExecutionPath> = mutableSetOf(),
     val messageBusTopics: MutableSet<String> = mutableSetOf(),
     val swingComponents: MutableSet<MethodSignature> = mutableSetOf(),
   )
@@ -33,7 +33,7 @@ class LockReqsAnalyzer(private val detector: LockReqsDetector = LockReqsDetector
     val annotationRequirements = detector.findAnnotationRequirements(method)
     annotationRequirements.forEach { context.paths.add(ExecutionPath(context.currentPath.toList(), it)) }
     processMethodBody(method, context)
-    context.currentPath.removeAt(context.currentPath.lastIndex)
+    context.currentPath.removeLast()
   }
 
 
@@ -46,16 +46,17 @@ class LockReqsAnalyzer(private val detector: LockReqsDetector = LockReqsDetector
         super.visitMethodCallExpression(expression)
 
         val resolvedMethod = expression.resolveMethod() ?: return
-        localRequirements += detector.findBodyRequirements(resolvedMethod, expression)
-        if (localRequirements.any { it.requirementReason == RequirementReason.SWING_COMPONENT }) context.swingComponents.add(MethodSignature.fromMethod(resolvedMethod))
-
+        localRequirements += detector.findBodyRequirements(resolvedMethod)
+        if (localRequirements.any { it.requirementReason == RequirementReason.SWING_COMPONENT }) {
+          context.swingComponents.add(MethodSignature.fromMethod(resolvedMethod))
+        }
         handleMethodCall(resolvedMethod, expression, context)
       }
 
       override fun visitMethodReferenceExpression(expression: PsiMethodReferenceExpression) {
         super.visitMethodReferenceExpression(expression)
         (expression.resolve() as? PsiMethod)?.let { resolvedMethod ->
-          localRequirements += detector.findBodyRequirements(resolvedMethod, expression)
+          localRequirements += detector.findBodyRequirements(resolvedMethod)
           if (!detector.isAsyncBoundary(resolvedMethod)) traverseMethod(resolvedMethod, context)
         }
       }
@@ -69,7 +70,8 @@ class LockReqsAnalyzer(private val detector: LockReqsDetector = LockReqsDetector
     })
 
     localRequirements.forEach { requirement ->
-      val path = ExecutionPath(context.currentPath.toList(), requirement, isSpeculative = context.currentPath.any { it.isPolymorphic || it.isMessageBusCall })
+      val path = ExecutionPath(context.currentPath.toList(), requirement,
+                               context.currentPath.any { it.isPolymorphic || it.isMessageBusCall })
       context.paths.add(path)
     }
   }

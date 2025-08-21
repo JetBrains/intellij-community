@@ -1,4 +1,3 @@
-package test;
 public class C {
   public void testMessageBusDetection() {
     com.intellij.util.messages.MessageBus mb = null;

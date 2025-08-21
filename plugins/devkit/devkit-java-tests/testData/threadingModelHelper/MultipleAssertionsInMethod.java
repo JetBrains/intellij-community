@@ -1,7 +1,5 @@
-import testutils.ThreadingAssertions;
-import testutils.ExpectedPath
+import com.intellij.util.concurrency.ThreadingAssertions;
 
-@ExpectedPath("MultipleAssertionsInMethod.testMethod -> ThreadingAssertions.assertReadAccess()")
 class MultipleAssertionsInMethod {
     void testMethod() {
         ThreadingAssertions.assertReadAccess();

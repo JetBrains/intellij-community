@@ -33,7 +33,7 @@ internal fun LockReqsToolWindow(project: Project) {
   Column(
     modifier = Modifier.fillMaxSize()
   ) {
-    val paths = analysisResult?.paths ?: emptyList()
+    val paths = analysisResult?.paths?.toList() ?: emptyList()
 
     ToolWindowHeader(
       pathsCount = paths.size,

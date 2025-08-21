@@ -1,8 +1,5 @@
-import testutils.RequiresReadLock;
-import testutils.ExpectedPath
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 
-@ExpectedPath("AnnotationInChain.testMethod -> AnnotationInChain.intermediateMethod -> " +
-              "AnnotationInChain.targetMethod -> @RequiresReadLock")
 class AnnotationInChain {
   void testMethod() {
     intermediateMethod();

@@ -1,9 +1,7 @@
-import testutils.ThreadingAssertions;
-import testutils.ExpectedPath
+import com.intellij.util.concurrency.ThreadingAssertions;
 import java.util.Arrays;
 import java.util.List;
 
-@ExpectedPath("LambdaWithMethodReference.testMethod -> LambdaWithMethodReference.processItem -> ThreadingAssertions.assertReadAccess()")
 class LambdaWithMethodReference {
   void testMethod() {
     List<String> items = Arrays.asList("a", "b", "c");

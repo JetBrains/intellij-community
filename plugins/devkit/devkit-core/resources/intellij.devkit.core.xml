@@ -741,7 +741,7 @@
 
     <toolWindow
       id="Locking Requirements"
-      factoryClass="org.jetbrains.idea.devkit.threadingModelHelper.LockReqsToolWindowFactoryCompose"
+      factoryClass="org.jetbrains.idea.devkit.threadingModelHelper.LockReqsToolWindowFactory"
       anchor="bottom"/>
 
     <!-- INTERNAL -->
@@ -934,6 +934,7 @@
       <action internal="true" class="org.jetbrains.idea.devkit.actions.ShowHelpPageByIdAction" id="ShowHelpPageById"/>
       <action id="AnalyzeUnloadablePlugins" internal="true" class="org.jetbrains.idea.devkit.internal.AnalyzeUnloadablePluginsAction"/>
       <action id="LockReqsAnalysis" internal="true" class="org.jetbrains.idea.devkit.threadingModelHelper.LockReqsAction"/>
+      <action id="BFLReqsAction" internal="true" class="org.jetbrains.idea.devkit.threadingModelHelper.bfl.BFLReqsAction"/>
       <add-to-group group-id="Internal" anchor="last"/>
     </group>
 

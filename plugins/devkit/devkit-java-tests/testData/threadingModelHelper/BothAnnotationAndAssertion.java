@@ -1,12 +1,9 @@
-import testutils.RequiresReadLock;
-import testutils.ThreadingAssertions;
-import test.ExpectedPath
+import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 
-@ExpectedPath("BothAnnotationAndAssertion.testMethod -> @RequiresReadLock")
-@ExpectedPath("BothAnnotationAndAssertion.testMethod -> ThreadingAssertions.assertReadAccess()")
 class BothAnnotationAndAssertion {
-    @RequiresReadLock
+    @RequiresWriteLock
     void testMethod() {
-        ThreadingAssertions.assertReadAccess();
+        ThreadingAssertions.assertBackgroundThread();
     }
 }

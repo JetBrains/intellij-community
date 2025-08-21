@@ -20,14 +20,14 @@ class LockReqsDetector(private val patterns: LockReqsPatterns = DefaultLockReqsP
     return requirements
   }
 
-  fun findBodyRequirements(method: PsiMethod, source: PsiElement): List<LockRequirement> {
+  fun findBodyRequirements(method: PsiMethod): List<LockRequirement> {
     val requirements = mutableListOf<LockRequirement>()
     val className = method.containingClass?.qualifiedName
     val methodName = method.name
     patterns.assertionMethods[className]?.get(methodName)?.let { lockType ->
-      requirements.add(LockRequirement(source, lockType, RequirementReason.ASSERTION))
+      requirements.add(LockRequirement(method, lockType, RequirementReason.ASSERTION))
     }
-    if (isSwingMethod(method)) requirements.add(LockRequirement(source, LockType.EDT, RequirementReason.SWING_COMPONENT))
+    if (isSwingMethod(method)) requirements.add(LockRequirement(method, LockType.EDT, RequirementReason.SWING_COMPONENT))
     return requirements
   }
 

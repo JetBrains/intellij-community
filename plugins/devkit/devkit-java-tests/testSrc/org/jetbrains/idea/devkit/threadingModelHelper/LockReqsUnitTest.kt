@@ -15,68 +15,120 @@ class LockReqsUnitTest : BasePlatformTestCase() {
   override fun setUp() {
     super.setUp()
     analyzer = LockReqsAnalyzer()
-    myFixture.addFileToProject("mock/RequiresReadLock.java", """
-        package mock;
+    myFixture.addFileToProject("com/intellij/util/concurrency/annotations.java", """
+        package com.intellij.util.concurrency.annotations;
         public @interface RequiresReadLock {}
+        public @interface RequiresWriteLock {}
+        public @interface RequiresEdt {}
+        public @interface RequiresBackgroundThread {}
+        public @interface RequiresReadLockAbsence {}
         """.trimIndent())
-    myFixture.addFileToProject("mock/ThreadingAssertions.java", """
-      package mock;
+    myFixture.addFileToProject("com/intellij/util/concurrency/ThreadingAssertions.java", """
+      package com.intellij.util.concurrency;
       public class ThreadingAssertions {
         public static void assertReadAccess() {}
+        public static void assertWriteAccess() {}
+        public static void assertWriteIntentReadAccess() {}
+        public static void assertEventDispatchThread() {}
+        public static void assertBackgroundThread() {}
+      }
+      """.trimIndent())
+    myFixture.addFileToProject("mock/MessageBus.java", """
+      package com.intellij.util.concurrency;
+      public interface MessageBus {
+        <L> L syncPublisher(Class<L> topic);
       }
       """.trimIndent())
   }
 
   override fun getBasePath() = DevkitJavaTestsUtil.TESTDATA_PATH + "threadingModelHelper/"
 
-  /*
   fun testNoLockRequirements() {
-    doTest("NoLockRequirements", "testMethod", emptyList())
-  }
-
-  fun testAnnotationInChain() {
-    doTest()
+    val result = doTest("NoLockRequirements", "testMethod")
+    val actualPaths = formatResult(result)
+    assertTrue(actualPaths.isEmpty())
   }
 
   fun testAssertionInNestedBlock() {
-    doTest()
+    val result = doTest("AssertionInNestedBlock", "testMethod")
+    val expectedPaths = listOf("AssertionInNestedBlock.testMethod => READ.ASSERTION")
+    val actualPaths = formatResult(result)
+    assertEquals(expectedPaths.sorted(), actualPaths.sorted())
+  }
+
+  fun testAnnotationInChain() {
+    val result = doTest("AnnotationInChain", "testMethod")
+    val expectedPaths = listOf("AnnotationInChain.testMethod -> AnnotationInChain.intermediateMethod" +
+                               " -> AnnotationInChain.targetMethod => READ.ANNOTATION")
+    val actualPaths = formatResult(result)
+    assertEquals(expectedPaths.sorted(), actualPaths.sorted())
   }
 
   fun testBothAnnotationAndAssertion() {
-    doTest()
+    val result = doTest("BothAnnotationAndAssertion", "testMethod")
+    val expectedPaths = listOf("BothAnnotationAndAssertion.testMethod => WRITE.ANNOTATION",
+                               "BothAnnotationAndAssertion.testMethod => BGT.ASSERTION")
+    val actualPaths = formatResult(result)
+    assertEquals(expectedPaths.sorted(), actualPaths.sorted())
   }
 
   fun testCyclicRecursiveCalls() {
-    doTest()
+    val result = doTest("CyclicRecursiveCalls", "testMethod")
+    val expectedPaths = listOf("CyclicRecursiveCalls.testMethod -> CyclicRecursiveCalls.methodB => READ.ANNOTATION")
+    val actualPaths = formatResult(result)
+    assertEquals(expectedPaths.sorted(), actualPaths.sorted())
   }
 
-  fun testMethodsInDifferentClasses() {
-    doTest()
+  fun testDifferentClassesMethods() {
+    val result = doTest("DifferentClassesMethods", "testMethod")
+    val expectedPaths = listOf("DifferentClassesMethods.testMethod -> Helper.helperMethod -> Service.serviceMethod => EDT.ANNOTATION",
+                               "DifferentClassesMethods.testMethod -> Helper.helperMethod -> Service.serviceMethod => WRITE.ASSERTION")
+    val actualPaths = formatResult(result)
+    assertEquals(expectedPaths.sorted(), actualPaths.sorted())
   }
 
   fun testMultipleAssertionsInMethod() {
-    doTest()
+    val result = doTest("MultipleAssertionsInMethod", "testMethod")
+    val expectedPaths = listOf("MultipleAssertionsInMethod.testMethod => READ.ASSERTION")
+    val actualPaths = formatResult(result)
+    assertEquals(1, actualPaths.size)
+    assertEquals(expectedPaths.sorted(), actualPaths.sorted())
   }
 
-  fun testLambdaWithMethodReference() {
-    doTest()
-  }*/
 
-  private fun doTest(className: String, methodName: String, expectedPaths: List<String>) {
+  fun testLambdaWithMethodReference() {
+    val result = doTest("LambdaWithMethodReference", "testMethod")
+    val expectedPaths = listOf("LambdaWithMethodReference.testMethod -> LambdaWithMethodReference.processItem => READ.ASSERTION")
+    val actualPaths = formatResult(result)
+    assertEquals(expectedPaths.sorted(), actualPaths.sorted())
+
+  }
+
+  fun testSubtypingPolymorphism() {
+    val result = doTest("SubtypingPolymorphism", "testMethod")
+    val expectedPaths = listOf(
+      "SubtypingPolymorphism.testMethod -> FileService.execute => READ.ANNOTATION",
+      "SubtypingPolymorphism.testMethod -> UIService.execute => EDT.ASSERTION",
+      "SubtypingPolymorphism.testMethod -> DBService.execute => READ.ASSERTION"
+    )
+    val actualPaths = formatResult(result)
+    assertEquals(expectedPaths.sorted(), actualPaths.sorted())
+  }
+
+  private fun doTest(className: String, methodName: String): AnalysisResult {
     val fileName = "${getTestName(false)}.java"
     val psiJavaFile = myFixture.configureByFile(fileName) as PsiJavaFile
     val targetClass = psiJavaFile.classes.find { it.name == className } ?: error("Could not find class $className")
-    val targetMethod = targetClass.methods.find { it.name == className } ?: error("Could not find method $methodName")
+    val targetMethod = targetClass.methods.find { it.name == methodName } ?: error("Could not find method $methodName")
+    return analyzer.analyzeMethod(targetMethod)
+  }
 
-    val result = analyzer.analyzeMethod(targetMethod)
+  private fun formatResult(result: AnalysisResult): List<String> {
     val actualPaths = result.paths.map { path ->
-      buildString {
-        path.methodChain.joinToString(separator = " -> ", postfix = " -> ") {
-          "${it.method.containingClass?.name}.${it.method.name}"
-        }
-        "@${path.lockRequirement.lockType}"
-      }
+      val chain = path.methodChain.joinToString(" -> ") { "${it.method.containingClass?.name}.${it.method.name}" }
+      val requirement = "${path.lockRequirement.lockType.name}.${path.lockRequirement.requirementReason.name}"
+      "$chain => $requirement"
     }
-    assertEquals(expectedPaths, actualPaths)
+    return actualPaths
   }
 }

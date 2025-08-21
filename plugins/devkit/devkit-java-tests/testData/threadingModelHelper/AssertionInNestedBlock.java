@@ -1,8 +1,6 @@
-import testutils.ThreadingAssertions;
-import testutils.ExpectedPath
+import com.intellij.util.concurrency.ThreadingAssertions;
 
-@ExpectedPath("AnnotationInChain.testMethod -> @RequiresReadLock")
-class AnnotationInChain {
+class AssertionInNestedBlock {
   void testMethod() {
     if (true) {
       for (int i = 0; i < 10; i++) {

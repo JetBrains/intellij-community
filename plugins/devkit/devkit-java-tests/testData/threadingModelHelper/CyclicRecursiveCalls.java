@@ -1,7 +1,6 @@
-import testutils.RequiresReadLock;
-import testutils.ExpectedPath
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
+import com.intellij.util.concurrency.ThreadingAssertions;
 
-@ExpectedPath("CyclicRecursiveCalls.testMethod -> CyclicRecursiveCalls.methodB -> @RequiresReadLock")
 class CyclicRecursiveCalls {
   void testMethod() {
     methodB();

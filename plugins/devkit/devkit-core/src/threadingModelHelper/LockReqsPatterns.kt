@@ -38,7 +38,6 @@ class DefaultLockReqsPatterns : LockReqsPatterns {
     "com.intellij.util.concurrency.annotations.RequiresEdt" to LockType.EDT,
     "com.intellij.util.concurrency.annotations.RequiresBackgroundThread" to LockType.BGT,
     "com.intellij.util.concurrency.annotations.RequiresReadLockAbsence" to LockType.NO_READ,
-    "org.jetbrains.annotations.RequiresEdt" to LockType.EDT
   )
 
   override val edtRequiredPackages: Set<String> = setOf(

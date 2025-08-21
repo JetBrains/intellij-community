@@ -46,7 +46,7 @@ data class ExecutionPath(
 
 data class AnalysisResult(
   val method: PsiMethod,
-  val paths: List<ExecutionPath>,
+  val paths: Set<ExecutionPath>,
   val messageBusTopics: Set<String> = emptySet(),
   val swingComponents: Set<MethodSignature> = emptySet(),
 )
