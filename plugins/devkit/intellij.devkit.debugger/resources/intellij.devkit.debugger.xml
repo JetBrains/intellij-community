@@ -21,6 +21,7 @@
             icon="AllIcons.General.Remove"
             use-shortcut-of="$Delete">
       <add-to-group group-id="XDebugger.Watches.Tree.Popup" anchor="after" relative-to-action="XDebugger.EditWatch"/>
+      <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Watches.Frontend" anchor="after" relative-to-action="XDebugger.EditWatch"/>
     </action>
   </actions>
   <projectListeners>
