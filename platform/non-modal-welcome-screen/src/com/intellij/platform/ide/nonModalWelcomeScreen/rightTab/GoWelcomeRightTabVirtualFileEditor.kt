@@ -1,6 +1,5 @@
 package com.intellij.platform.ide.nonModalWelcomeScreen.rightTab
 
-import com.goide.i18n.GoBundle
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.fileEditor.FileEditorState
@@ -8,6 +7,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.ide.nonModalWelcomeScreen.NonModalWelcomeScreenBundle
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.beans.PropertyChangeListener
@@ -30,7 +30,7 @@ internal class GoWelcomeRightTabVirtualFileEditor(private val newProjectFile: Go
   override fun getPreferredFocusedComponent(): JComponent? = null
 
   override fun getName(): @Nls(capitalization = Nls.Capitalization.Title) String =
-    GoBundle.message("go.non.modal.welcome.screen.editor.name")
+    NonModalWelcomeScreenBundle.message("go.non.modal.welcome.screen.editor.name")
 
   override fun setState(state: FileEditorState) = Unit
 

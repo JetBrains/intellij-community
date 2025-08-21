@@ -2,16 +2,11 @@ package com.intellij.platform.ide.nonModalWelcomeScreen.rightTab
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
-import com.goide.i18n.GoBundle
-import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.features.DATABASE_TOOLWINDOW_FEATURE_KEY
-import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.features.DOCKER_TOOLWINDOW_FEATURE_KEY
-import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.features.HTTP_CLIENT_SCRATCH_FEATURE_KEY
-import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.features.KUBERNETES_TOOLWINDOW_FEATURE_KEY
-import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.features.PLUGINS_SETTINGS_FEATURE_KEY
-import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.features.TERMINAL_TOOLWINDOW_FEATURE_KEY
 import com.goide.statistics.GoWelcomeScreenTabUsageCollector
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
+import com.intellij.platform.ide.nonModalWelcomeScreen.NonModalWelcomeScreenBundle
+import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.features.*
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.icon.IconKey
 import org.jetbrains.jewel.ui.theme.colorPalette
@@ -23,7 +18,7 @@ class GoWelcomeRightTabFeatures(private val project: Project) {
       getFeature(TERMINAL_TOOLWINDOW_FEATURE_KEY)?.let { feature ->
         FeatureButtonModel(
           feature = GoWelcomeScreenTabUsageCollector.Feature.Terminal,
-          text = GoBundle.message("go.non.modal.welcome.screen.right.tab.feature.terminal"),
+          text = NonModalWelcomeScreenBundle.message("go.non.modal.welcome.screen.right.tab.feature.terminal"),
           icon = feature.icon,
           tint = blueTint,
           onClick = { feature.invoke(project) }
@@ -32,7 +27,7 @@ class GoWelcomeRightTabFeatures(private val project: Project) {
       getFeature(DOCKER_TOOLWINDOW_FEATURE_KEY)?.let { feature ->
         FeatureButtonModel(
           feature = GoWelcomeScreenTabUsageCollector.Feature.Docker,
-          text = GoBundle.message("go.non.modal.welcome.screen.right.tab.feature.docker"),
+          text = NonModalWelcomeScreenBundle.message("go.non.modal.welcome.screen.right.tab.feature.docker"),
           icon = feature.icon,
           // TODO: Open the Docker section
           onClick = { feature.invoke(project) }
@@ -41,7 +36,7 @@ class GoWelcomeRightTabFeatures(private val project: Project) {
       getFeature(KUBERNETES_TOOLWINDOW_FEATURE_KEY)?.let { feature ->
         FeatureButtonModel(
           feature = GoWelcomeScreenTabUsageCollector.Feature.Kubernetes,
-          text = GoBundle.message("go.non.modal.welcome.screen.right.tab.feature.kubernetes"),
+          text = NonModalWelcomeScreenBundle.message("go.non.modal.welcome.screen.right.tab.feature.kubernetes"),
           icon = feature.icon,
           onClick = { feature.invoke(project) }
         )
@@ -49,7 +44,7 @@ class GoWelcomeRightTabFeatures(private val project: Project) {
       getFeature(HTTP_CLIENT_SCRATCH_FEATURE_KEY)?.let { feature ->
         FeatureButtonModel(
           feature = GoWelcomeScreenTabUsageCollector.Feature.HttpClient,
-          text = GoBundle.message("go.non.modal.welcome.screen.right.tab.feature.http.client"),
+          text = NonModalWelcomeScreenBundle.message("go.non.modal.welcome.screen.right.tab.feature.http.client"),
           icon = feature.icon,
           tint = blueTint,
           onClick = { feature.invoke(project) }
@@ -58,7 +53,7 @@ class GoWelcomeRightTabFeatures(private val project: Project) {
       getFeature(DATABASE_TOOLWINDOW_FEATURE_KEY)?.let { feature ->
         FeatureButtonModel(
           feature = GoWelcomeScreenTabUsageCollector.Feature.Database,
-          text = GoBundle.message("go.non.modal.welcome.screen.right.tab.feature.database"),
+          text = NonModalWelcomeScreenBundle.message("go.non.modal.welcome.screen.right.tab.feature.database"),
           icon = feature.icon,
           tint = blueTint,
           onClick = { feature.invoke(project) }
@@ -67,7 +62,7 @@ class GoWelcomeRightTabFeatures(private val project: Project) {
       getFeature(PLUGINS_SETTINGS_FEATURE_KEY)?.let { feature ->
         FeatureButtonModel(
           feature = GoWelcomeScreenTabUsageCollector.Feature.Plugins,
-          text = GoBundle.message("go.non.modal.welcome.screen.right.tab.feature.plugins"),
+          text = NonModalWelcomeScreenBundle.message("go.non.modal.welcome.screen.right.tab.feature.plugins"),
           icon = feature.icon,
           tint = blueTint,
           onClick = { feature.invoke(project) }

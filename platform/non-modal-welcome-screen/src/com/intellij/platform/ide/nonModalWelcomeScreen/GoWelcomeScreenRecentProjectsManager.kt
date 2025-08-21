@@ -1,6 +1,5 @@
 package com.intellij.platform.ide.nonModalWelcomeScreen
 
-import com.goide.ide.GoWelcomeScreenUtil.getWelcomeScreenProjectPath
 import com.intellij.diagnostic.WindowsDefenderChecker
 import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.ide.trustedProjects.TrustedProjects
@@ -9,7 +8,9 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.ModuleAttachProcessor
 import com.intellij.platform.PlatformProjectOpenProcessor
+import com.intellij.platform.ide.nonModalWelcomeScreen.GoWelcomeScreenUtil2.getWelcomeScreenProjectPath2
 import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.LinkOption
 import kotlin.io.path.createDirectories
 import kotlin.io.path.exists
@@ -26,10 +27,11 @@ class GoWelcomeScreenRecentProjectsManager(coroutineScope: CoroutineScope) : Rec
     return name ?: super.getProjectDisplayName(project)
   }
 
-  internal suspend fun createOrOpenWelcomeScreenGoLandProject() : Project? {
+  @ApiStatus.Internal
+  suspend fun createOrOpenWelcomeScreenGoLandProject() : Project? {
     LOG.info("Opening a GoLand welcome screen project")
 
-    val location = getWelcomeScreenProjectPath()
+    val location = getWelcomeScreenProjectPath2()
 
     if (!location.exists(LinkOption.NOFOLLOW_LINKS)) {
       location.createDirectories()

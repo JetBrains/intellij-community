@@ -1,21 +1,18 @@
 package com.intellij.platform.ide.nonModalWelcomeScreen.newFileDialog
 
-import com.goide.i18n.GoBundle
-import com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel.TemplateOption
 import com.intellij.ide.util.DirectoryUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.fileChooser.impl.FileChooserUtil
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.ComboBox
-import com.intellij.openapi.ui.ComponentWithBrowseButton
-import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.ui.TextComponentAccessor
+import com.intellij.openapi.ui.*
+import com.intellij.platform.ide.nonModalWelcomeScreen.NonModalWelcomeScreenBundle
+import com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel.TemplateOption
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiManager
-import com.intellij.ui.*
+import com.intellij.ui.DocumentAdapter
+import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.util.IncorrectOperationException
@@ -53,8 +50,8 @@ class GoWelcomeScreenNewFileDialog private constructor(
       setTextFieldPreferredWidth(MAX_PATH_LENGTH)
 
       val descriptor = FileChooserDescriptorFactory.singleDir()
-        .withTitle(GoBundle.message("go.non.modal.welcome.screen.create.file.dialog.select.target.directory"))
-        .withDescription(GoBundle.message("go.non.modal.welcome.screen.create.file.dialog.directory.chooser.description"))
+        .withTitle(NonModalWelcomeScreenBundle.message("go.non.modal.welcome.screen.create.file.dialog.select.target.directory"))
+        .withDescription(NonModalWelcomeScreenBundle.message("go.non.modal.welcome.screen.create.file.dialog.directory.chooser.description"))
 
       addBrowseFolderListener(project, descriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT)
     }
@@ -88,20 +85,20 @@ class GoWelcomeScreenNewFileDialog private constructor(
     }
 
     validateButtons()
-    setOKButtonText(GoBundle.message("go.non.modal.welcome.screen.create.file.dialog.create.button.label"))
+    setOKButtonText(NonModalWelcomeScreenBundle.message("go.non.modal.welcome.screen.create.file.dialog.create.button.label"))
   }
 
   override fun getPreferredFocusedComponent(): JComponent = if (builder.showNameField) nameField else targetDirectoryField
 
   override fun createCenterPanel(): JComponent = FormBuilder.createFormBuilder().apply {
     if (builder.showNameField) {
-      addLabeledComponent(GoBundle.message("go.non.modal.welcome.screen.create.file.dialog.create.file.name.label"), nameField)
+      addLabeledComponent(NonModalWelcomeScreenBundle.message("go.non.modal.welcome.screen.create.file.dialog.create.file.name.label"), nameField)
     }
     templateComboBox?.let {
-      addLabeledComponent(GoBundle.message("go.non.modal.welcome.screen.create.file.dialog.create.file.template.label"), it)
+      addLabeledComponent(NonModalWelcomeScreenBundle.message("go.non.modal.welcome.screen.create.file.dialog.create.file.template.label"), it)
     }
     addLabeledComponent(
-      GoBundle.message("go.non.modal.welcome.screen.create.file.dialog.create.file.directory.label"),
+      NonModalWelcomeScreenBundle.message("go.non.modal.welcome.screen.create.file.dialog.create.file.directory.label"),
       targetDirectoryField
     )
   }.panel
@@ -140,9 +137,9 @@ class GoWelcomeScreenNewFileDialog private constructor(
 
     if (builder.showNameField && newName.isEmpty()) {
       Messages.showErrorDialog(
-        project, 
-        GoBundle.message("go.non.modal.welcome.screen.create.file.dialog.no.name.specified"), 
-        GoBundle.message("go.non.modal.welcome.screen.create.file.dialog.error.title")
+        project,
+        NonModalWelcomeScreenBundle.message("go.non.modal.welcome.screen.create.file.dialog.no.name.specified"),
+        NonModalWelcomeScreenBundle.message("go.non.modal.welcome.screen.create.file.dialog.error.title")
       )
       return
     }
@@ -150,7 +147,7 @@ class GoWelcomeScreenNewFileDialog private constructor(
     if (builder.showNameField && !PathUtilRt.isValidFileName(newName, false)) {
       Messages.showErrorDialog(
         nameField,
-        GoBundle.message("go.non.modal.welcome.screen.create.file.dialog.invalid.file.name")
+        NonModalWelcomeScreenBundle.message("go.non.modal.welcome.screen.create.file.dialog.invalid.file.name")
       )
       return
     }
@@ -160,8 +157,8 @@ class GoWelcomeScreenNewFileDialog private constructor(
     if (targetDirectoryName.isEmpty()) {
       Messages.showErrorDialog(
         project, 
-        GoBundle.message("go.non.modal.welcome.screen.create.file.dialog.no.target.directory.specified"), 
-        GoBundle.message("go.non.modal.welcome.screen.create.file.dialog.error.title")
+        NonModalWelcomeScreenBundle.message("go.non.modal.welcome.screen.create.file.dialog.no.target.directory.specified"),
+        NonModalWelcomeScreenBundle.message("go.non.modal.welcome.screen.create.file.dialog.error.title")
       )
       return
     }
@@ -177,15 +174,15 @@ class GoWelcomeScreenNewFileDialog private constructor(
         catch (_: IncorrectOperationException) {
         }
       }
-    }, GoBundle.message("go.non.modal.welcome.screen.create.file.dialog.create.directory"), null)
+    }, NonModalWelcomeScreenBundle.message("go.non.modal.welcome.screen.create.file.dialog.create.directory"), null)
 
     val targetDirectory = targetDirectory
 
     if (targetDirectory == null) {
       Messages.showErrorDialog(
         project, 
-        GoBundle.message("go.non.modal.welcome.screen.create.file.dialog.cannot.create.directory"), 
-        GoBundle.message("go.non.modal.welcome.screen.create.file.dialog.error.title")
+        NonModalWelcomeScreenBundle.message("go.non.modal.welcome.screen.create.file.dialog.cannot.create.directory"),
+        NonModalWelcomeScreenBundle.message("go.non.modal.welcome.screen.create.file.dialog.error.title")
       )
       return
     }

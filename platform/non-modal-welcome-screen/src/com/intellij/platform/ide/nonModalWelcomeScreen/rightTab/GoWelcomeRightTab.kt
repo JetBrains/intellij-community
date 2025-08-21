@@ -15,12 +15,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.goide.i18n.GoBundle
 import com.goide.ide.GoWelcomeScreenPreventWelcomeTabFocusService
-import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.GoWelcomeRightTabComboBoxModel.KeymapModel
-import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.GoWelcomeRightTabComboBoxModel.ThemeModel
-import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.components.GoCustomButton
-import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.components.GoCustomListComboBox
 import com.goide.statistics.GoWelcomeScreenTabUsageCollector
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
@@ -29,18 +24,20 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
+import com.intellij.platform.ide.nonModalWelcomeScreen.NonModalWelcomeScreenBundle
+import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.GoWelcomeRightTabComboBoxModel.KeymapModel
+import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.GoWelcomeRightTabComboBoxModel.ThemeModel
+import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.components.GoCustomButton
+import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.components.GoCustomListComboBox
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.bridge.JewelComposePanel
 import org.jetbrains.jewel.bridge.createVerticalBrush
 import org.jetbrains.jewel.bridge.retrieveColorOrUnspecified
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.*
-import org.jetbrains.jewel.ui.component.styling.ButtonColors
-import org.jetbrains.jewel.ui.component.styling.ButtonMetrics
-import org.jetbrains.jewel.ui.component.styling.ButtonStyle
-import org.jetbrains.jewel.ui.component.styling.ComboBoxColors
-import org.jetbrains.jewel.ui.component.styling.ComboBoxStyle
+import org.jetbrains.jewel.ui.component.styling.*
 import org.jetbrains.jewel.ui.icon.IconKey
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
 import org.jetbrains.jewel.ui.theme.colorPalette
@@ -81,10 +78,10 @@ class GoWelcomeRightTab(val project: Project) {
           verticalArrangement = Arrangement.SpaceBetween
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-              Text(GoBundle.message("go.non.modal.welcome.screen.right.tab.header"),
+              Text(NonModalWelcomeScreenBundle.message("go.non.modal.welcome.screen.right.tab.header"),
                    fontSize = 20.sp, lineHeight = 24.sp, color = fontColor)
               Spacer(modifier = Modifier.height(8.dp))
-              Text(GoBundle.message("go.non.modal.welcome.screen.right.tab.secondary.header"),
+              Text(NonModalWelcomeScreenBundle.message("go.non.modal.welcome.screen.right.tab.secondary.header"),
                    fontSize = 13.sp, lineHeight = 16.sp, color = secondaryFontColor)
             }
             Spacer(modifier = Modifier.height(32.dp))
@@ -99,7 +96,7 @@ class GoWelcomeRightTab(val project: Project) {
                horizontalAlignment = Alignment.CenterHorizontally) {
           SwitchPanel()
 
-          CheckboxRow(text = GoBundle.message("go.non.modal.welcome.screen.right.tab.always.show.on.startup"),
+          CheckboxRow(text = NonModalWelcomeScreenBundle.message("go.non.modal.welcome.screen.right.tab.always.show.on.startup"),
                       textStyle = TextStyle(color = fontColor),
                       modifier = Modifier.padding(vertical = 12.dp),
                       checked = showOnStartup, onCheckedChange = {
@@ -150,10 +147,10 @@ class GoWelcomeRightTab(val project: Project) {
   fun SwitchPanel() {
     Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
       InfoPanelItem(themeIconKey,
-                    GoBundle.message("go.non.modal.welcome.screen.right.tab.theme.switch.prefix"),
+                    NonModalWelcomeScreenBundle.message("go.non.modal.welcome.screen.right.tab.theme.switch.prefix"),
                     ThemeModel())
       InfoPanelItem(AllIconsKeys.General.Keyboard,
-                    GoBundle.message("go.non.modal.welcome.screen.right.tab.keymap.switch.prefix"),
+                    NonModalWelcomeScreenBundle.message("go.non.modal.welcome.screen.right.tab.keymap.switch.prefix"),
                     KeymapModel())
     }
   }
@@ -322,7 +319,8 @@ class GoWelcomeRightTab(val project: Project) {
     }
 
   companion object {
-    internal suspend fun show(project: Project) {
+    @ApiStatus.Internal
+    suspend fun show(project: Project) {
       if (!isRightTabEnabled) return
       withContext(Dispatchers.EDT) {
         val settingsFile = GoWelcomeRightTabVirtualFile(GoWelcomeRightTab(project), project)

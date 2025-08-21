@@ -1,8 +1,5 @@
 package com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel
 
-import com.goide.GoIcons
-import com.goide.i18n.GoBundle
-import com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel.GoWelcomeLeftPanelActions.Companion.leftPanelActionButton
 import com.intellij.icons.AllIcons.Actions.Search
 import com.intellij.ide.SelectInTarget
 import com.intellij.ide.projectView.impl.ProjectViewPane
@@ -11,7 +8,11 @@ import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider.Companion.isWelco
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.ProjectCollectors
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectFilteringTree
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectPanelComponentFactory
+import com.intellij.platform.ide.nonModalWelcomeScreen.NonModalWelcomeScreenBundle
+import com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel.GoWelcomeLeftPanelActions.Companion.leftPanelActionButton
 import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.IconManager
+import com.intellij.ui.PlatformIcons
 import com.intellij.ui.ScrollPaneFactory.createScrollPane
 import com.intellij.ui.SearchTextField
 import com.intellij.ui.components.JBPanel
@@ -31,11 +32,11 @@ import javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED
 class GoWelcomeLeftPanel(private val project: Project) : ProjectViewPane(project) {
   private var recentProjectTreeComponent: JComponent? = null
 
-  override fun getTitle(): String = GoBundle.message("go.non.modal.welcome.screen.project.view.title")
+  override fun getTitle(): String = NonModalWelcomeScreenBundle.message("go.non.modal.welcome.screen.project.view.title")
 
   override fun getId(): String = ID
 
-  override fun getIcon(): Icon = GoIcons.DIRECTORY
+  override fun getIcon(): Icon = IconManager.getInstance().getPlatformIcon(PlatformIcons.Folder)
 
   override fun isInitiallyVisible(): Boolean = isWelcomeScreenProject(project)
 
@@ -101,7 +102,7 @@ class GoWelcomeLeftPanel(private val project: Project) : ProjectViewPane(project
     RecentProjectPanelComponentFactory.createComponent(
       this, ProjectCollectors.all, treeBackground = null
     ).apply {
-      tree.emptyText.text = GoBundle.message("go.non.modal.welcome.screen.no.recent.projects")
+      tree.emptyText.text = NonModalWelcomeScreenBundle.message("go.non.modal.welcome.screen.no.recent.projects")
       selectLastOpenedProject()
     }
 

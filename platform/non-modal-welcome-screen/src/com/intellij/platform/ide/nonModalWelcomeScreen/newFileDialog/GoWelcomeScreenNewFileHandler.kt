@@ -1,7 +1,5 @@
 package com.intellij.platform.ide.nonModalWelcomeScreen.newFileDialog
 
-import com.goide.i18n.GoBundle
-import com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel.GoWelcomeScreenFileTemplateOptionProvider
 import com.intellij.ide.actions.CreateFileAction
 import com.intellij.ide.fileTemplates.FileTemplateManager
 import com.intellij.ide.fileTemplates.FileTemplateUtil
@@ -14,6 +12,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.io.FileUtil.findSequentNonexistentFile
+import com.intellij.platform.ide.nonModalWelcomeScreen.NonModalWelcomeScreenBundle
+import com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel.GoWelcomeScreenFileTemplateOptionProvider
 import java.nio.file.Path
 
 object GoWelcomeScreenNewFileHandler {
@@ -30,7 +30,7 @@ object GoWelcomeScreenNewFileHandler {
 
   fun createEmptyFile(project: Project?) {
     if (project == null) return
-    val dialogBuilder = GoWelcomeScreenNewFileDialog.Builder(project, GoBundle.message("go.non.modal.welcome.screen.create.file.dialog.title.file"))
+    val dialogBuilder = GoWelcomeScreenNewFileDialog.Builder(project, NonModalWelcomeScreenBundle.message("go.non.modal.welcome.screen.create.file.dialog.title.file"))
     dialogBuilder.apply {
       defaultDirectory = getDefaultProjectPath()
     }
@@ -42,7 +42,7 @@ object GoWelcomeScreenNewFileHandler {
 
   fun createHttpRequestFile(project: Project?) {
     if (project == null) return
-    val dialogBuilder = GoWelcomeScreenNewFileDialog.Builder(project, GoBundle.message("go.non.modal.welcome.screen.create.file.dialog.title.http.request"))
+    val dialogBuilder = GoWelcomeScreenNewFileDialog.Builder(project, NonModalWelcomeScreenBundle.message("go.non.modal.welcome.screen.create.file.dialog.title.http.request"))
     dialogBuilder.apply {
       fixedExtension = "http"
       defaultDirectory = getDefaultProjectPath()
@@ -55,7 +55,7 @@ object GoWelcomeScreenNewFileHandler {
 
   fun createDockerfile(project: Project?) {
     if (project == null) return
-    val dialogBuilder = GoWelcomeScreenNewFileDialog.Builder(project, GoBundle.message("go.non.modal.welcome.screen.create.file.dialog.title.dockerfile"))
+    val dialogBuilder = GoWelcomeScreenNewFileDialog.Builder(project, NonModalWelcomeScreenBundle.message("go.non.modal.welcome.screen.create.file.dialog.title.dockerfile"))
     dialogBuilder.apply {
       defaultFileName = "Dockerfile"
       defaultDirectory = getDefaultProjectPath()
@@ -70,7 +70,7 @@ object GoWelcomeScreenNewFileHandler {
 
   fun createKubernetesResource(project: Project?) {
     if (project == null) return
-    val dialogBuilder = GoWelcomeScreenNewFileDialog.Builder(project, GoBundle.message("go.non.modal.welcome.screen.create.file.dialog.title.k8s.resource"))
+    val dialogBuilder = GoWelcomeScreenNewFileDialog.Builder(project, NonModalWelcomeScreenBundle.message("go.non.modal.welcome.screen.create.file.dialog.title.k8s.resource"))
     dialogBuilder.apply {
       fixedExtension = "yaml"
       defaultDirectory = getDefaultProjectPath()
@@ -110,13 +110,13 @@ object GoWelcomeScreenNewFileHandler {
       }
     }
     catch (e: Exception) {
-      showErrorMessage(project, GoBundle.message("go.non.modal.welcome.screen.error.dialog.message.cannot.create.file", fileName, e.message ?: "Unknown error"))
+      showErrorMessage(project, NonModalWelcomeScreenBundle.message("go.non.modal.welcome.screen.error.dialog.message.cannot.create.file", fileName, e.message ?: "Unknown error"))
     }
   }
 
   private fun showErrorMessage(project: Project, @NlsContexts.DialogMessage message: String) {
     ApplicationManager.getApplication().invokeLater{
-      Messages.showMessageDialog(project, message, GoBundle.message("go.non.modal.welcome.screen.error.dialog.title.cannot.create.file"), Messages.getErrorIcon())
+      Messages.showMessageDialog(project, message, NonModalWelcomeScreenBundle.message("go.non.modal.welcome.screen.error.dialog.title.cannot.create.file"), Messages.getErrorIcon())
     }
   }
 }

@@ -1,11 +1,5 @@
 package com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel
 
-import com.goide.i18n.GoBundle
-import com.intellij.platform.ide.nonModalWelcomeScreen.GoWelcomeScreenPluginIconProvider
-import com.intellij.platform.ide.nonModalWelcomeScreen.newFileDialog.GoWelcomeScreenNewFileHandler
-import com.intellij.platform.ide.nonModalWelcomeScreen.newFileDialog.GoWelcomeScreenNewFileHandler.createDockerfile
-import com.intellij.platform.ide.nonModalWelcomeScreen.newFileDialog.GoWelcomeScreenNewFileHandler.createHttpRequestFile
-import com.intellij.platform.ide.nonModalWelcomeScreen.newFileDialog.GoWelcomeScreenNewFileHandler.createKubernetesResource
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeView
@@ -25,6 +19,12 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.ui.popup.ListPopupStep
 import com.intellij.openapi.util.NlsActions.ActionText
+import com.intellij.platform.ide.nonModalWelcomeScreen.GoWelcomeScreenPluginIconProvider
+import com.intellij.platform.ide.nonModalWelcomeScreen.NonModalWelcomeScreenBundle.message
+import com.intellij.platform.ide.nonModalWelcomeScreen.newFileDialog.GoWelcomeScreenNewFileHandler
+import com.intellij.platform.ide.nonModalWelcomeScreen.newFileDialog.GoWelcomeScreenNewFileHandler.createDockerfile
+import com.intellij.platform.ide.nonModalWelcomeScreen.newFileDialog.GoWelcomeScreenNewFileHandler.createHttpRequestFile
+import com.intellij.platform.ide.nonModalWelcomeScreen.newFileDialog.GoWelcomeScreenNewFileHandler.createKubernetesResource
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
@@ -44,13 +44,13 @@ import javax.swing.JComponent
 internal class GoWelcomeLeftPanelActions(val project: Project) {
   internal val panelButtonModels: List<PanelButtonModel>
     get() = listOf(
-      PanelButtonModel(GoBundle.message("go.non.modal.welcome.screen.action.open"), AllIcons.Nodes.Folder,
+      PanelButtonModel(message ("go.non.modal.welcome.screen.action.open"), AllIcons.Nodes.Folder,
                        runPlatformAction("OpenFile")),
-      PanelButtonModel(GoBundle.message("go.non.modal.welcome.screen.action.new"), AllIcons.General.Add,
+      PanelButtonModel(message("go.non.modal.welcome.screen.action.new"), AllIcons.General.Add,
                        showNewActionGroupDropDown()),
-      PanelButtonModel(GoBundle.message("go.non.modal.welcome.screen.action.clone"), AllIcons.General.Vcs,
+      PanelButtonModel(message("go.non.modal.welcome.screen.action.clone"), AllIcons.General.Vcs,
                        runPlatformAction("Vcs.VcsClone")),
-      PanelButtonModel(GoBundle.message("go.non.modal.welcome.screen.action.remote.development"), AllIcons.Nodes.Plugin,
+      PanelButtonModel(message("go.non.modal.welcome.screen.action.remote.development"), AllIcons.Nodes.Plugin,
                        runPlatformAction("OpenRemoteDevelopment")),
     )
 
@@ -162,8 +162,8 @@ internal class GoWelcomeLeftPanelActions(val project: Project) {
 }
 
 private class CreateEmptyFileAction(private val project: Project) : DumbAwareAction(
-  GoBundle.message("go.non.modal.welcome.screen.create.file.empty"), 
-  "", 
+  message("go.non.modal.welcome.screen.create.file.empty"),
+  "",
   AllIcons.FileTypes.Text
 ) {
   override fun actionPerformed(e: AnActionEvent) = GoWelcomeScreenNewFileHandler.createEmptyFile(project)
@@ -172,7 +172,7 @@ private class CreateEmptyFileAction(private val project: Project) : DumbAwareAct
 private val HTTP_CLIENT_PLUGIN_ID = PluginId.getId("com.jetbrains.restClient")
 
 private class CreateHttpRequestFileAction(private val project: Project) : DumbAwareAction(
-  GoBundle.message("go.non.modal.welcome.screen.create.file.http.request"), 
+  message("go.non.modal.welcome.screen.create.file.http.request"),
   "",
   AllIcons.FileTypes.Http
 ) {
@@ -186,7 +186,7 @@ private class CreateHttpRequestFileAction(private val project: Project) : DumbAw
 private val DOCKER_PLUGIN_ID = PluginId.getId("Docker")
 
 private class CreateDockerfileAction(private val project: Project) : DumbAwareAction(
-  GoBundle.message("go.non.modal.welcome.screen.create.file.dockerfile"),
+  message("go.non.modal.welcome.screen.create.file.dockerfile"),
   "",
   GoWelcomeScreenPluginIconProvider.getDockerIcon()
 ) {
@@ -200,7 +200,7 @@ private class CreateDockerfileAction(private val project: Project) : DumbAwareAc
 private val KUBERNETES_PLUGIN_ID = PluginId.getId("com.intellij.kubernetes")
 
 private class CreateKubernetesResourceAction(private val project: Project) : DumbAwareAction(
-  GoBundle.message("go.non.modal.welcome.screen.create.file.kubernetes.resource"),
+  message("go.non.modal.welcome.screen.create.file.kubernetes.resource"),
   "",
   GoWelcomeScreenPluginIconProvider.getKubernetesIcon()
 ) {
