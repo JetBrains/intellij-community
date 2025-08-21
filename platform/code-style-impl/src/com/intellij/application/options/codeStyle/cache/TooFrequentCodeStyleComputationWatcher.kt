@@ -38,10 +38,9 @@ class TooFrequentCodeStyleComputationWatcher(val project: Project) {
 
   private fun calcCurrentCacheEvictionRate(): Double = 1.0 / rollingAvgBuffer.rollingAvg * 1000
 
-  @Synchronized
   fun beforeCacheEntryInserted(currentCacheSize: Int, maxCacheSize: Int) {
     if (Registry.`is`("code.style.cache.high.eviction.rate.automatic.recovery.enabled") && !isEvictionTrackingBlocked()) {
-      checkEvictionRate(currentCacheSize, maxCacheSize)
+      synchronized(this) { checkEvictionRate(currentCacheSize, maxCacheSize) }
     }
   }
 
