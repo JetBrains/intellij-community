@@ -1318,6 +1318,7 @@
 
     <group id="Internal" internal="true" popup="true" compact="true">
       <group id="Internal.Errors" popup="true">
+        <action class="com.intellij.internal.ExceptionShowCaseAction" internal="true" description="Show exception" text="Show Exception"/>
         <action id="DropAnError" internal="true" class="com.intellij.diagnostic.DropAnErrorAction"
                 text="Drop an Error" description="Hold down SHIFT for a sequence of exceptions"/>
         <action id="DropAnErrorWithAttachments" internal="true" class="com.intellij.diagnostic.DropAnErrorWithAttachmentsAction"

@@ -19,6 +19,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.application.impl.ExceptionsKt;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.ExceptionWithAttachments;
 import com.intellij.openapi.diagnostic.Logger;
@@ -336,6 +337,7 @@ public final class StartupErrorReporter {
     if (LoadingState.COMPONENTS_LOADED.isOccurred() && !(t instanceof StartupAbortedException)) {
       if (!(t instanceof ControlFlowException)) {
         PluginManagerCore.getLogger().error(t);
+        ExceptionsKt.processUnhandledException(t, null);
       }
       return;
     }
