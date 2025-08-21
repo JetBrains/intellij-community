@@ -271,7 +271,7 @@ class HighlightInfoB implements HighlightInfo.Builder {
                                            escapedToolTip, severity, isAfterEndOfLine != null && isAfterEndOfLine,
                                            isFileLevelAnnotation != null && isFileLevelAnnotation,
                                            getValueOrDefault(navigationShift),
-                                           problemGroup, null, gutterIconRenderer, getValueOrDefault(group), false, myLazyFixes);
+                                           problemGroup, null, gutterIconRenderer, getValueOrDefault(group), myLazyFixes);
     // fill IntentionActionDescriptor.problemGroup and IntentionActionDescriptor.severity - they can be null because .registerFix() might have been called before .problemGroup() and .severity()
     List<HighlightInfo.IntentionActionDescriptor> iads = ContainerUtil.map(fixes, fixInfo -> fixInfo.withProblemGroupAndSeverity(problemGroup, severity));
     info.registerFixes(iads, null);
