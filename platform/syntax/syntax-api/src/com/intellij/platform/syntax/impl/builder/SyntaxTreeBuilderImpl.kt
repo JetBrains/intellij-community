@@ -10,7 +10,6 @@ import com.intellij.platform.syntax.lexer.TokenList
 import com.intellij.platform.syntax.lexer.TokenListImpl
 import com.intellij.platform.syntax.parser.*
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilder.Production
-import com.intellij.util.fastutil.ints.isEmpty
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import kotlin.math.abs
