@@ -113,8 +113,8 @@ public class SuspendOtherThreadsRequestor implements FilteredRequestor {
     return false;
   }
 
-  private static void switchToSuspendAll(@NotNull SuspendContextImpl suspendContext,
-                                         @NotNull Function<@NotNull SuspendContextImpl, Boolean> performOnSuspendAll) {
+  static void switchToSuspendAll(@NotNull SuspendContextImpl suspendContext,
+                                 @NotNull Function<@NotNull SuspendContextImpl, Boolean> performOnSuspendAll) {
     DebugProcessImpl process = suspendContext.getDebugProcess();
     SuspendManager suspendManager = process.getSuspendManager();
     SuspendContextImpl newSuspendContext = suspendManager.pushSuspendContext(EventRequest.SUSPEND_ALL, 1);
