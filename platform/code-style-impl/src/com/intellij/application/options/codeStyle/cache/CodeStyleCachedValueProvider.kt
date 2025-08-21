@@ -282,7 +282,7 @@ internal class CodeStyleCachedValueProvider(val fileSupplier: Supplier<VirtualFi
          * if any TransientCodeStyleSettings dependencies change.
          */
         if (!TooFrequentCodeStyleComputationWatcher.getInstance(project).isTooHighEvictionRateDetected()
-            && !Registry.`is`("disable.codeStyleSettingsChanged.events.on.settings.cached")) {
+            && Registry.`is`("code.style.cache.enable.change.events.on.settings.cached")) {
           val eventSettings = if (Registry.`is`("code.style.cache.change.events.include.settings")) currentResult else null
           settingsManager.fireCodeStyleSettingsChanged(file, eventSettings)
         }

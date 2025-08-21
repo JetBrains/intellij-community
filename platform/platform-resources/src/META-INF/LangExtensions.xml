@@ -102,9 +102,9 @@
                  key="reformat.action.execute.on.frontend"
                  restartRequired="false"/>
     <!-- region IJPL-179136 -->
-    <registryKey defaultValue="false"
-                 description="Disable sending codeStyleSettingsChanged events when settings finish computing"
-                 key="disable.codeStyleSettingsChanged.events.on.settings.cached" />
+    <registryKey defaultValue="true"
+                 description="Enable sending codeStyleSettingsChanged events when settings finish computing"
+                 key="code.style.cache.enable.change.events.on.settings.cached" />
     <registryKey defaultValue="true"
                  description="Enable detection of and automatic recovery from too high eviction rate in code style settings cache."
                  key="code.style.cache.high.eviction.rate.automatic.recovery.enabled" />
