@@ -213,17 +213,10 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
   }
 
   private fun configureSdk(project: Project, builder: ModuleBuilder) {
-
-    if (context.isCreatingNewProject) {
-      val sdk = context.projectJdk
-      // New project with a single module: set project JDK
-      context.projectJdk = sdk
-    }
-    else {
-      val sdk = jdkIntent?.prepareJdk()
+    if (!context.isCreatingNewProject) {
       // New module in an existing project: set module JDK
-      val isSameSdk = ProjectRootManager.getInstance(project).projectSdk?.name == sdk?.name
-      builder.moduleJdk = if (isSameSdk) null else sdk
+      val isSameSdk = ProjectRootManager.getInstance(project).projectSdk?.name == jdkIntent?.name
+      builder.moduleJdk = if (isSameSdk) null else context.projectJdk
     }
   }
 

@@ -91,8 +91,10 @@ fun NewProjectWizardStep.projectWizardJdkComboBox(
     context.projectJdk,
     sdkFilter,
     jdkPredicate,
-    { jdk -> if (jdk != null && context.isCreatingNewProject) context.projectJdk = jdk }
   )
+    .onApply {
+      context.projectJdk = intentProperty?.get()?.prepareJdk()
+    }
 }
 
 /**
@@ -108,7 +110,6 @@ fun projectWizardJdkComboBox(
   projectJdk: Sdk? = null,
   sdkFilter: (Sdk) -> Boolean = { true },
   jdkPredicate: ProjectWizardJdkPredicate? = ProjectWizardJdkPredicate.IsJdkSupported(),
-  setProjectJdk: ((Sdk?) -> Unit)? = null,
 ): Cell<ProjectWizardJdkComboBox> {
   val combo = ProjectWizardJdkComboBox(projectJdk, disposable, sdkFilter)
 
@@ -165,7 +166,6 @@ fun projectWizardJdkComboBox(
         else -> Unit
       }
       PropertiesComponent.getInstance().setValue(selectedJdkProperty, intent.name)
-      setProjectJdk?.invoke(intent.prepareJdk())
     }
 }
 
