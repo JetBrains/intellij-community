@@ -7,6 +7,8 @@ import com.intellij.terminal.backend.TerminalDiscardedHistoryTracker
 import com.intellij.terminal.tests.reworked.util.scrollDown
 import com.intellij.terminal.tests.reworked.util.write
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.jediterm.core.util.CellPosition
+import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.model.StyleState
 import com.jediterm.terminal.model.TerminalTextBuffer
 import junit.framework.TestCase
@@ -173,6 +175,130 @@ internal class TerminalContentChangesTrackerTest : BasePlatformTestCase() {
 
     assertEquals("newFirst", update.text)
     TestCase.assertEquals(0, update.startLineLogicalIndex)
+  }
+
+  @Test
+  fun `check all text is reported after width increase`() {
+    val textBuffer = createTextBuffer(width = 10, height = 2, maxHistoryLinesCount = 2)
+    val contentChangesTracker = createChangesTracker(textBuffer)
+
+    // Prepare
+    textBuffer.write("first", 1, 0)
+    textBuffer.write("second", 2, 0)
+    textBuffer.scrollDown(1)
+    textBuffer.write("third", 2, 0)
+    textBuffer.scrollDown(1)
+    textBuffer.write("fourth", 2, 0)
+    contentChangesTracker.getContentUpdate()
+
+    textBuffer.resize(TermSize(12, 2), CellPosition(6, 2), null)
+    val update = contentChangesTracker.getContentUpdate() ?: error("Update is null")
+
+    val expectedText = """
+      first
+      second
+      third
+      fourth
+    """.trimIndent()
+    assertEquals(expectedText, update.text)
+    assertEquals(0, update.startLineLogicalIndex)
+  }
+
+  @Test
+  fun `check all text is reported after width decrease`() {
+    val textBuffer = createTextBuffer(width = 10, height = 2, maxHistoryLinesCount = 2)
+    val contentChangesTracker = createChangesTracker(textBuffer)
+
+    // Prepare
+    textBuffer.write("first", 1, 0)
+    textBuffer.write("second", 2, 0)
+    textBuffer.scrollDown(1)
+    textBuffer.write("third", 2, 0)
+    textBuffer.scrollDown(1)
+    textBuffer.write("fourth", 2, 0)
+    contentChangesTracker.getContentUpdate()
+
+    textBuffer.resize(TermSize(5, 2), CellPosition(6, 2), null)
+    val update = contentChangesTracker.getContentUpdate() ?: error("Update is null")
+
+    val expectedText = """
+      d
+      third
+      fourth
+    """.trimIndent()
+    assertEquals(expectedText, update.text)
+    assertEquals(0, update.startLineLogicalIndex)
+  }
+
+  @Test
+  fun `check update is flushed on history overflow after height decrease`() {
+    val textBuffer = createTextBuffer(width = 10, height = 3, maxHistoryLinesCount = 2)
+    val contentChangesTracker = createChangesTracker(textBuffer)
+
+    var update: TerminalContentUpdate? = null
+    contentChangesTracker.addHistoryOverflowListener {
+      update = it
+    }
+
+    textBuffer.write("first", 1, 0)
+    textBuffer.write("second", 2, 0)
+    textBuffer.write("third", 3, 0)
+    textBuffer.scrollDown(1)
+    textBuffer.write("fourth", 3, 0)
+    textBuffer.scrollDown(1)
+    textBuffer.write("fifth", 3, 0)
+
+    textBuffer.resize(TermSize(10, 2), CellPosition(5, 3), null)
+
+    update ?: error("Update is null")
+
+    val expectedText = """
+      first
+      second
+      third
+      fourth
+      fifth
+    """.trimIndent()
+    assertEquals(expectedText, update.text)
+    assertEquals(0, update.startLineLogicalIndex)
+  }
+
+  @Test
+  fun `check update is flushed on history overflow after width and height resize`() {
+    val textBuffer = createTextBuffer(width = 10, height = 3, maxHistoryLinesCount = 2)
+    val contentChangesTracker = createChangesTracker(textBuffer)
+
+    // Prepare
+    textBuffer.write("first", 1, 0)
+    textBuffer.write("second", 2, 0)
+    textBuffer.write("third", 3, 0)
+    textBuffer.scrollDown(1)
+    textBuffer.write("fourth", 3, 0)
+    textBuffer.scrollDown(1)
+    textBuffer.write("fifth", 3, 0)
+    contentChangesTracker.getContentUpdate()
+
+    var update: TerminalContentUpdate? = null
+    contentChangesTracker.addHistoryOverflowListener {
+      update = it
+    }
+
+    // Edit width first
+    textBuffer.resize(TermSize(12, 3), CellPosition(5, 3), null)
+    // Then edit height
+    textBuffer.resize(TermSize(12, 2), CellPosition(5, 3), null)
+
+    update ?: error("Update is null")
+
+    val expectedText = """
+      first
+      second
+      third
+      fourth
+      fifth
+    """.trimIndent()
+    assertEquals(expectedText, update.text)
+    assertEquals(0, update.startLineLogicalIndex)
   }
 
   @Suppress("SameParameterValue")

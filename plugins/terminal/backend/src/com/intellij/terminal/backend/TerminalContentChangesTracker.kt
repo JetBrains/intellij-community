@@ -69,6 +69,7 @@ class TerminalContentChangesTracker(
         // and it is not tracked now.
         // TODO: consider tracking of the discarded lines in case of resizing to not replace everything.
         lastChangedVisualLine = 0
+        anyLineChanged = true
       }
     })
   }
