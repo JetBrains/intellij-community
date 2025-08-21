@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.openapi.util.io.NioFiles;
@@ -35,6 +35,8 @@ public final class PlatformNioHelper {
 
   /**
    * A specialized alternative to {@link Files#newDirectoryStream} and {@link Files#walkFileTree}.
+   * Only children that names are in the filter set are passed to consumer.
+   * (filter == null) means 'no filter', i.e. all children must be passed to consumer, but filter={} (empty set) means 'do nothing'.
    *
    * @see NioFiles#readAttributes
    */
@@ -44,6 +46,9 @@ public final class PlatformNioHelper {
     @Nullable Set<String> filter,
     @NotNull BiPredicate<Path, Result<BasicFileAttributes>> consumer
   ) throws IOException, SecurityException {
+    if (filter != null && filter.isEmpty()) {
+      return;//nothing to read
+    }
     try (var dirStream = directory.getFileSystem().provider().newDirectoryStream(directory, FetchAttributesFilter.ACCEPT_ALL)) {
       for (var path : dirStream) {
         if (filter != null && !filter.contains(path.getFileName().toString())) {

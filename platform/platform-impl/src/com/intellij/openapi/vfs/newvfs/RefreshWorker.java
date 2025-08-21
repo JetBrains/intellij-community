@@ -354,14 +354,14 @@ final class RefreshWorker {
     List<String> wanted = snapshot.second;
 
     boolean dirIsCaseSensitive = dir.isCaseSensitive();
-    Set<String> names = createFilePathSet(wanted, dirIsCaseSensitive);
-    for (VirtualFile file : cached) names.add(file.getName());
+    Set<String> namesToRefresh = createFilePathSet(wanted, dirIsCaseSensitive);
+    for (VirtualFile file : cached) namesToRefresh.add(file.getName());
 
     Map<String, FileAttributes> childrenWithAttributes = null;
     if (fs instanceof BatchingFileSystem batchingFileSystem) {
       t = System.nanoTime();
       childrenWithAttributes = adjustCaseSensitivity(
-        computeAllChildrenAttributes(batchingFileSystem, dir, names),
+        computeAllChildrenAttributes(batchingFileSystem, dir, namesToRefresh),
         dirIsCaseSensitive
       );
       ioTime.addAndGet(System.nanoTime() - t);
