@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom.index;
 
 import com.intellij.openapi.module.Module;
@@ -14,7 +14,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.AstLoadingFilter;
-import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
@@ -31,6 +30,7 @@ import org.jetbrains.idea.devkit.dom.ExtensionPoint;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /**
@@ -138,7 +138,7 @@ public final class ExtensionPointIndex extends PluginXmlIndexBase<String, Intege
     for (DomElement points : getChildrenWithoutIncludes(plugin, "extensionPoints")) {
       for (DomElement point : getChildrenWithoutIncludes(points, "extensionPoint")) {
         ExtensionPoint extensionPoint = (ExtensionPoint)point;
-        consumer.consume(extensionPoint);
+        consumer.accept(extensionPoint);
       }
     }
   }
