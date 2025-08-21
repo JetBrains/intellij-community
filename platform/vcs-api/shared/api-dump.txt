@@ -26,6 +26,10 @@ f:com.intellij.openapi.vcs.changes.ChangeListChange
 - f:getChangeListName():java.lang.String
 f:com.intellij.openapi.vcs.changes.ChangeListChange$Companion
 - f:replaceChangeContents(com.intellij.openapi.vcs.changes.Change,com.intellij.openapi.vcs.changes.ContentRevision,com.intellij.openapi.vcs.changes.ContentRevision):com.intellij.openapi.vcs.changes.Change
+com.intellij.openapi.vcs.changes.ChangeListDecorator
+- sf:EP_NAME:com.intellij.openapi.extensions.ProjectExtensionPointName
+- a:decorateChangeList(com.intellij.openapi.vcs.changes.LocalChangeList,com.intellij.ui.ColoredTreeCellRenderer,Z,Z,Z):V
+- s:getDecorators(com.intellij.openapi.project.Project):java.util.List
 com.intellij.openapi.vcs.changes.FilePathIconProvider
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - getIcon(com.intellij.openapi.vcs.FilePath,com.intellij.openapi.project.Project):javax.swing.Icon

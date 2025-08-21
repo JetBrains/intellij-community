@@ -7,5 +7,10 @@
     <extensionPoint qualifiedName="com.intellij.openapi.vcs.changes.ui.filePathIconProvider"
                     interface="com.intellij.openapi.vcs.changes.FilePathIconProvider"
                     dynamic="true"/>
+
+    <extensionPoint name="vcs.changeListDecorator"
+                    interface="com.intellij.openapi.vcs.changes.ChangeListDecorator"
+                    area="IDEA_PROJECT"
+                    dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

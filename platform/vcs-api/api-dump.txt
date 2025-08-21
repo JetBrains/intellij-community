@@ -903,10 +903,6 @@ c:com.intellij.openapi.vcs.changes.ChangeListAdapter
 - changesMoved(java.util.Collection,com.intellij.openapi.vcs.changes.ChangeList,com.intellij.openapi.vcs.changes.ChangeList):V
 - changesRemoved(java.util.Collection,com.intellij.openapi.vcs.changes.ChangeList):V
 - defaultListChanged(com.intellij.openapi.vcs.changes.ChangeList,com.intellij.openapi.vcs.changes.ChangeList):V
-com.intellij.openapi.vcs.changes.ChangeListDecorator
-- sf:EP_NAME:com.intellij.openapi.extensions.ProjectExtensionPointName
-- a:decorateChangeList(com.intellij.openapi.vcs.changes.LocalChangeList,com.intellij.ui.ColoredTreeCellRenderer,Z,Z,Z):V
-- s:getDecorators(com.intellij.openapi.project.Project):java.util.List
 com.intellij.openapi.vcs.changes.ChangeListListener
 - java.util.EventListener
 - sf:TOPIC:com.intellij.util.messages.Topic

@@ -150,11 +150,6 @@
                     area="IDEA_PROJECT"
                     dynamic="true"/>
 
-    <extensionPoint name="vcs.changeListDecorator"
-                    interface="com.intellij.openapi.vcs.changes.ChangeListDecorator"
-                    area="IDEA_PROJECT"
-                    dynamic="true"/>
-
     <!--suppress PluginXmlValidity -->
     <extensionPoint name="openapi.vcs.changes.actions.diff.ChangeDiffRequestProvider"
                     interface="com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProvider"
