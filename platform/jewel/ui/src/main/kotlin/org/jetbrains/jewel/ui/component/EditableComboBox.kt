@@ -1,5 +1,3 @@
-@file:Suppress("ktlint:compose:parameter-naming")
-
 package org.jetbrains.jewel.ui.component
 
 import androidx.compose.foundation.background
@@ -76,6 +74,7 @@ import org.jetbrains.jewel.ui.focusOutline
 import org.jetbrains.jewel.ui.outline
 import org.jetbrains.jewel.ui.theme.comboBoxStyle
 
+@Suppress("UnavailableSymbol") // TODO(JEWEL-983) Address Metalava suppressions
 @Composable
 public fun EditableComboBox(
     textFieldState: TextFieldState,
@@ -89,7 +88,8 @@ public fun EditableComboBox(
     onArrowDownPress: () -> Unit = {},
     onArrowUpPress: () -> Unit = {},
     onEnterPress: () -> Unit = {},
-    popupManager: PopupManager = remember { PopupManager() },
+    // TODO(JEWEL-983) Address Metalava suppressions
+    @Suppress("HiddenTypeParameter", "ReferencesHidden") popupManager: PopupManager = remember { PopupManager() },
     popupContent: @Composable () -> Unit,
 ) {
     var chevronHovered by remember { mutableStateOf(false) }

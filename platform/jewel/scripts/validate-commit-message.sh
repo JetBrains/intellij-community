@@ -23,8 +23,10 @@ gh pr view "$PR_NUMBER" --json commits --jq '.commits[].messageHeadline' | while
   # 1. Validate commit message format.
   # The regex checks for a ticket ID like [JEWEL-123] followed by a space.
   # Using [[:space:]] is slightly more robust than a literal space ' '.
-  if [[ ! "$message" =~ ^\[(JEWEL-[0-9]+)\][[:space:]] ]]; then
-    fail_check "ERROR: Invalid commit message format: '$message'\n\nEach commit message must start with '[JEWEL-xxx] ', where xxx is a YouTrack issue number."
+  if ! echo "$message" | grep -qE '^\[(JEWEL-[0-9]+)(,\s*JEWEL-[0-9]+)*\][ ]'; then
+    echoerr "ERROR: Invalid commit message format: '$message'"
+    echoerr "Each commit message must start with '[JEWEL-xxx] ', where xxx is a YouTrack issue number."
+    echoerr "You can also have multiple, comma-separated issues. E.g.: '[JEWEL-xxx,JEWEL-yyy] '"
     echo "1" > "$fail_flag"
     break
   fi

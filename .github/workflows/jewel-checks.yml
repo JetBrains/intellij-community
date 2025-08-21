@@ -25,7 +25,7 @@ jobs:
           distribution: jetbrains
           cache: gradle
 
-      - name: Grant execute permission for gradlew
+      - name: Grant execute permission to gradlew
         run: chmod +x gradlew
 
       - name: Run :check task
@@ -87,7 +87,7 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
         name: Check out repository
 
-      - name: Grant execute permission for validation scripts
+      - name: Grant execute permission to validation scripts
         run: chmod +x ./scripts/validate-commit-message.sh && chmod +x ./scripts/validate-pr-commits.sh
 
       - name: Validate PR has single commit
@@ -103,8 +103,8 @@ jobs:
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: ./scripts/validate-commit-message.sh
 
-  breaking_api_changes:
-    name: Check for breaking API changes
+  annotate_breaking_api_changes:
+    name: Check for breaking API changes with IJP dumps
     runs-on: ubuntu-latest
 
     steps:
@@ -113,7 +113,7 @@ jobs:
           fetch-depth: '2'
         name: Check out repository
 
-      - name: Grant execute permission for validation script
+      - name: Grant execute permission to the validation script
         run: chmod +x ./scripts/validate-api-dump-changes.main.kts
 
       - name: Annotate breaking API changes
@@ -121,3 +121,32 @@ jobs:
           PR_NUMBER: ${{ github.event.pull_request.number }}
           GH_TOKEN: ${{ github.token }}
         run: ./scripts/validate-api-dump-changes.main.kts
+
+  metalava:
+    name: Check for breaking API changes with Metalava
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: '1'
+        name: Check out repository
+
+      - name: Set up JBR 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: 21
+          distribution: jetbrains
+          cache: gradle
+
+      - name: Grant execute permission to the Metalava script
+        run: chmod +x ./scripts/metalava-signatures.main.kts
+
+      - name: Grant execute permission to gradlew
+        run: chmod +x gradlew
+
+      - name: Annotate breaking API changes
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          GH_TOKEN: ${{ github.token }}
+        run: ./scripts/metalava-signatures.main.kts validate

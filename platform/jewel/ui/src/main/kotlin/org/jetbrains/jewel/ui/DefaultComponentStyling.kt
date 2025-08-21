@@ -107,7 +107,6 @@ public class DefaultComponentStyling(
     public val tooltipStyle: TooltipStyle,
     public val undecoratedDropdownStyle: DropdownStyle,
 ) : ComponentStyling {
-
     @Deprecated("Use the variant with transparentIconButtonStyle.", level = DeprecationLevel.ERROR)
     public constructor(
         checkboxStyle: CheckboxStyle,
@@ -298,8 +297,8 @@ public class DefaultComponentStyling(
         return result
     }
 
-    override fun toString(): String {
-        return "DefaultComponentStyling(" +
+    override fun toString(): String =
+        "DefaultComponentStyling(" +
             "checkboxStyle=$checkboxStyle, " +
             "chipStyle=$chipStyle, " +
             "circularProgressStyle=$circularProgressStyle, " +
@@ -334,5 +333,4 @@ public class DefaultComponentStyling(
             "tooltipStyle=$tooltipStyle, " +
             "undecoratedDropdownStyle=$undecoratedDropdownStyle" +
             ")"
-    }
 }

@@ -63,7 +63,7 @@ abstract class IntelliJThemeGeneratorTask : DefaultTask() {
 
         val outputFile = outputFile.get().asFile
         logger.lifecycle(
-            "Theme descriptor for ${themeDescriptor.name} parsed and " + "code generated into ${outputFile.path}"
+            "Theme descriptor for ${themeDescriptor.name} parsed and code generated into ${outputFile.path}"
         )
         outputFile.bufferedWriter().use { file.writeTo(it) }
     }

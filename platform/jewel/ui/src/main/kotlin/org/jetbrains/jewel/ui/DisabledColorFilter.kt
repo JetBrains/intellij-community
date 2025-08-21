@@ -26,5 +26,5 @@ private val disabledColorMatrixGammaEncoded =
         this[2, 2] = blueFactor
     }
 
-@Deprecated("Use Modifier.grayFilter() instead to get correct disabled colors.")
+@Deprecated("Use Modifier.disabledAppearance() instead to get correct disabled colors.")
 public fun ColorFilter.Companion.disabled(): ColorFilter = colorMatrix(disabledColorMatrixGammaEncoded)
