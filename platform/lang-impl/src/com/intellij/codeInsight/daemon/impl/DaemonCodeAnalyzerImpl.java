@@ -387,15 +387,14 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
       if (fileEditor instanceof TextEditor textEditor) {
         List<HighlightInfo> fileLevelInfos = getOrCreateFileLevelHighlights(fileEditor);
         // do not dispose highlighter if it needs to be reused
-        fileLevelInfos.removeIf(fileLevelInfo -> {
-          // todo does this check make any sense?
-          if (!fileLevelInfo.attributesEqual(fileLevelInfo)) {
+        fileLevelInfos.removeIf(oldFileLevelInfo -> {
+          if (!oldInfo.attributesEqual(oldFileLevelInfo)) {
             return false;
           }
-          doRemoveFileLevelInfoComponent(fileLevelInfo, fileEditor, getFileEditorManager());
-          RangeHighlighterEx highlighter = fileLevelInfo.getHighlighter();
-          if (highlighter != null && highlighter != toReuse) {
-            highlighter.dispose();
+          doRemoveFileLevelInfoComponent(oldFileLevelInfo, fileEditor, getFileEditorManager());
+          RangeHighlighterEx oldHighlighter = oldFileLevelInfo.getHighlighter();
+          if (oldHighlighter != null && oldHighlighter != toReuse) {
+            oldHighlighter.dispose();
           }
           return true;
         });
