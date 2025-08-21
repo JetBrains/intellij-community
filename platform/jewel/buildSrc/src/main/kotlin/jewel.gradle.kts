@@ -13,12 +13,10 @@ val gitHubRef: String? = System.getenv("GITHUB_REF")
 version =
     when {
         properties.containsKey("versionOverride") -> {
-            val rawVersion = (properties["versionOverride"] as String).trim()
-            if (!rawVersion.matches("^\\d\\.\\d{2,}\\.\\d+$".toRegex())) {
-                throw GradleException("Invalid versionOverride: $rawVersion")
-            }
-            logger.warn("Using version override: $rawVersion")
-            rawVersion
+            val jewelVersion = getJewelVersion()
+            validateJewelVersion(jewelVersion)
+            logger.warn("Using version override: $jewelVersion")
+            jewelVersion
         }
         gitHubRef?.startsWith("refs/tags/") == true -> {
             gitHubRef.substringAfter("refs/tags/").removePrefix("v")
@@ -58,9 +56,7 @@ kotlin {
 }
 
 tasks {
-    detektMain {
-        exclude { it.file.absolutePath.startsWith(layout.buildDirectory.asFile.get().absolutePath) }
-    }
+    detektMain { exclude { it.file.absolutePath.startsWith(layout.buildDirectory.asFile.get().absolutePath) } }
 
     formatKotlinMain { exclude { it.file.absolutePath.replace('\\', '/').contains("build/generated") } }
     withType<KtfmtBaseTask> { exclude { it.file.absolutePath.contains("build/generated") } }
