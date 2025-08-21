@@ -9,6 +9,10 @@
  * Use `gradle clean publish` to publish
  * 
  * You can find the uploaded artifact at https://packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/mockjdk/.
+ *
+ * Update (21/08/2025):
+ * For security reasons, it is no longer possible to upload artifacts directly to our internal Maven instance.
+ * Use the TeamCity service task instead: https://buildserver.labs.intellij.net/buildConfiguration/ijplatform_master_Idea_Mock_JDK_Publish
  */
 
 import java.nio.file.Files
@@ -17,8 +21,6 @@ plugins {
   id("java")
   `maven-publish`
 }
-val spaceUsername: String by project
-val spacePassword: String by project
 
 val javaVersion: String = Runtime.version().feature().toString()
 
@@ -78,8 +80,8 @@ publishing {
     maven {
       url = uri("https://packages.jetbrains.team/maven/p/ij/intellij-dependencies")
       credentials {
-        username = spaceUsername
-        password = spacePassword
+        username = System.getenv("INTELLIJ_DEPENDENCIES_BOT")
+        password = System.getenv("INTELLIJ_DEPENDENCIES_TOKEN")
       }
     }
   }
