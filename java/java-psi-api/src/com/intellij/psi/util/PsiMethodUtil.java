@@ -275,6 +275,10 @@ public final class PsiMethodUtil {
     }
   }
 
+  /**
+   * @deprecated Use {@link #getMainClassQualifiedName(PsiClass)} instead.
+   */
+  @Deprecated
   public static @Nullable String getMainJVMClassName(@NotNull PsiClass psiClass) {
     JavaMainMethodProvider mainMethodProvider = getApplicableMainMethodProvider(psiClass);
     if (mainMethodProvider != null) {
@@ -282,6 +286,15 @@ public final class PsiMethodUtil {
     }
 
     return ClassUtil.getJVMClassName(psiClass);
+  }
+
+  public static @Nullable String getMainClassQualifiedName(@NotNull PsiClass psiClass) {
+    JavaMainMethodProvider mainMethodProvider = getApplicableMainMethodProvider(psiClass);
+    if (mainMethodProvider != null) {
+      return mainMethodProvider.getMainClassQualifiedName(psiClass);
+    }
+
+    return psiClass.getQualifiedName();
   }
 
   public static @Nullable PsiMethod findMainInClass(final @NotNull PsiClass aClass) {

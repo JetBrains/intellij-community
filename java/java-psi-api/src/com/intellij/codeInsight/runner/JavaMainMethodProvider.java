@@ -52,11 +52,22 @@ public interface JavaMainMethodProvider extends PossiblyDumbAware {
 
   /**
    * @param clazz class to check
-   * @return a pretty class name. e.x. for Kotlin it allows to return `MyClass` instead of `MyClass.Companion`
+   * @return a pretty class name. e.x. for Kotlin it allows returning `MyClass` instead of `MyClass.Companion`
+   * @deprecated Use {@link #getMainClassQualifiedName(PsiClass)} instead.
    */
+  @Deprecated
   @Contract(pure = true)
   default @Nullable String getMainClassName(@NotNull PsiClass clazz) {
     return ClassUtil.getJVMClassName(clazz);
+  }
+
+  /**
+   * @param clazz class to check
+   * @return a "prettified" qualified class name. E.g., for Kotlin it allows returning `MyClass` instead of `MyClass.Companion`
+   */
+  @Contract(pure = true)
+  default @Nullable String getMainClassQualifiedName(@NotNull PsiClass clazz) {
+    return clazz.getQualifiedName();
   }
 
   /**
