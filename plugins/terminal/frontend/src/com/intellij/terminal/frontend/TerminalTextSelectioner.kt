@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
+import com.intellij.psi.impl.source.tree.LeafPsiElement
 import org.jetbrains.plugins.terminal.block.reworked.lang.TerminalOutputLanguage
 
 /**
@@ -59,6 +60,7 @@ internal class TerminalWordSelectionFilter : Condition<PsiElement> {
 }
 
 private fun isTerminalPsiElement(e: PsiElement): Boolean {
-  // e.language can be also used there, but it might be more expensive when the language is not terminal
-  return e.node?.elementType?.language == TerminalOutputLanguage
+  // the single `e.language` condition is enough, but it might be more expensive
+  // because psi element implementations may compute the language differently.
+  return e is LeafPsiElement && e.language == TerminalOutputLanguage
 }
