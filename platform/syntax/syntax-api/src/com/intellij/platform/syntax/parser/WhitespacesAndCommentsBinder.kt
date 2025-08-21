@@ -5,9 +5,10 @@ import com.intellij.platform.syntax.SyntaxElementType
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * Interface for defining custom element's edge processors for [PSI builder][PsiBuilder].
- * Each element has a pair of edge processors: for its left and right edge. Edge processors defines position
- * of element start and end in token stream with recognition of whitespace and comment tokens surrounding the element.
+ * Interface for defining custom element's edge processors for [SyntaxTreeBuilder.Marker].
+ *
+ * Each element has a pair of edge processors: for its left and right edge. An edge processor defines a position
+ * of the element start and end in token stream with recognition of whitespace and comment tokens surrounding the element.
  *
  * @see SyntaxTreeBuilder.Marker.setCustomEdgeTokenBinders
  */
@@ -45,5 +46,8 @@ interface WhitespacesAndCommentsBinder {
    */
   fun getEdgePosition(tokens: List<SyntaxElementType>, atStreamEdge: Boolean, getter: TokenTextGetter): Int
 
+  /**
+   * Recursive binder is allowed to adjust nested elements' positions.
+   */
   fun isRecursive(): Boolean = false
 }
