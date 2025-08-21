@@ -58,7 +58,7 @@ class JUnit5EditorFixtureTest {
   @Nested
   inner class FileWithCaretMarker {
     val inputWithCaretMarker = "abcde<caret>"
-    val project = projectFixture()
+    val project = projectFixture(openAfterCreation = true)
     val module = project.moduleFixture()
     val sourceRoot = module.sourceRootFixture()
 
@@ -73,7 +73,7 @@ class JUnit5EditorFixtureTest {
         Assertions.assertEquals(expectedOffset, actualOffset)
 
         val expectedText = inputWithCaretMarker.replace("<caret>", "")
-        val actualText = readAction { editor.get().document.text }
+        val actualText = readAction { fileWithMarker.get().text }
         Assertions.assertEquals(expectedText, actualText)
       }
     }

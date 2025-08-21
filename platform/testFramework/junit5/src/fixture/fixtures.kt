@@ -29,6 +29,7 @@ import com.intellij.platform.eel.fs.EelFileSystemApi.CreateTemporaryEntryOptions
 import com.intellij.platform.eel.getOrThrow
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.psi.PsiDirectory
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.common.EditorCaretTestUtil
@@ -244,7 +245,10 @@ fun TestFixture<PsiFile>.editorFixture(): TestFixture<Editor> = testFixture { _ 
       requireNotNull(editor)
 
       val caretAndSelection = EditorCaretTestUtil.extractCaretAndSelectionMarkers(editor.document)
-      EditorCaretTestUtil.setCaretsAndSelection(editor, caretAndSelection)
+      if (caretAndSelection.hasExplicitCaret()) {
+        EditorCaretTestUtil.setCaretsAndSelection(editor, caretAndSelection)
+        PsiDocumentManager.getInstance(project).commitDocument(editor.document)
+      }
       editor
     }
   }
