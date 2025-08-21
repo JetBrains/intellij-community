@@ -59,7 +59,7 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
     companion object {
         //language=RegExp
         const val MAVEN_DEPENDENCY_REGEX = """maven\(([a-zA-Z0-9_\-.]+):([a-zA-Z0-9_\-.]+):([a-zA-Z0-9_\-.]+)\)"""
-        const val BAZEL_DEPENDENCY_LABEL_REGEX = """(classes|sources)\((@[a-zA-Z0-9_\-]+//[a-z0-9_\-]+:[a-z0-9._\-]+)\)"""
+        const val BAZEL_DEPENDENCY_LABEL_REGEX = """(classes|sources)\((@[a-zA-Z0-9_\-]+//([a-z0-9_\-]+)?:[a-z0-9._\-]+)\)"""
     }
 
     private val dp: DebugProcessImpl

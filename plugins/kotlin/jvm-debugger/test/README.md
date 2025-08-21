@@ -42,7 +42,7 @@ For example,  `// ATTACH_LIBRARY: maven(org.jetbrains.kotlinx:kotlinx-coroutines
 
 Use `// ATTACH_LIBRARY_BY_LABEL: classes(<bazel-label>)` to add a library to the classpath.
 
-For example, `// ATTACH_LIBRARY_BY_LABEL: classes(@kotlin_test_deps_org_jetbrains_kotlinx_kotlinx_coroutines_core_1_10_2//file:kotlinx_coroutines_core_1_10_2.jar)`
+For example, `// ATTACH_LIBRARY_BY_LABEL: classes(@kotlin_test_deps//:kotlinx-coroutines-core-1.10.2.jar)`
 Note that it doesn't add transitive dependencies, and you have to attach all the required libs.
 
 ### Adding javaagent
