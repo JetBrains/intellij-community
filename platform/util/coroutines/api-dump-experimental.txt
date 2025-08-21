@@ -35,6 +35,8 @@ f:com.intellij.platform.util.coroutines.CoroutineScopeKt
 - f:forArrays(kotlinx.coroutines.channels.SendChannel):com.intellij.platform.util.coroutines.channel.ChannelOutputStream
 - f:forByteBuffers(kotlinx.coroutines.channels.SendChannel):com.intellij.platform.util.coroutines.channel.ChannelOutputStream
 f:com.intellij.platform.util.coroutines.flow.FlowKt
+- *sf:collectLatestCoalescedIn(kotlinx.coroutines.flow.Flow,kotlinx.coroutines.CoroutineScope,kotlin.jvm.functions.Function3):V
+- *sf:collectLatestCoalescedIn(kotlinx.coroutines.flow.Flow,kotlinx.coroutines.CoroutineScope,kotlin.jvm.functions.Function4):V
 - *sf:mapStateIn(kotlinx.coroutines.flow.StateFlow,kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.SharingStarted,kotlin.jvm.functions.Function1):kotlinx.coroutines.flow.StateFlow
 - *bs:mapStateIn$default(kotlinx.coroutines.flow.StateFlow,kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.SharingStarted,kotlin.jvm.functions.Function1,I,java.lang.Object):kotlinx.coroutines.flow.StateFlow
 *:com.intellij.platform.util.coroutines.sync.OverflowSemaphore

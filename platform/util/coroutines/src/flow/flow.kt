@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.util.coroutines.flow
 
 import kotlinx.coroutines.*
@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.ApiStatus
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration
 
 /**
@@ -171,4 +172,85 @@ fun <T, M> StateFlow<T>.mapStateIn(
   transform: (value: T) -> M
 ): StateFlow<M> {
   return map(transform).stateIn(coroutineScope, started = started, initialValue = transform(value))
+}
+
+/**
+ * For each distinct value of type [K], launches a coroutine on [scope] and executes [action] on it.
+ * The previous action for the same [K] gets canceled when the new one arrives.
+ * With each [K] there can be passed a value of type [V] which does not affect cancellation of previous computations,
+ * and acts as additional payload.
+ *
+ * Example:
+ * ```kotlin
+ * val flow: Flow<Pair<Int, String>>
+ *
+ * flow.collectLatestCoalescedIn(scope) { key, value ->
+ *   println("Started for: $key and $value")
+ *   doProcessingOfValue(key, value)
+ *   println("Finished for: $key and $value")
+ * }
+ *
+ * flow.tryEmit(1 to 42)
+ * flow.tryEmit(2 to 43)
+ * flow.tryEmit(1 to 44)
+ * ```
+ *
+ * Will print:
+ * ```text
+ * Started for: 1 and 42
+ * Started for: 2 and 43
+ * Started for: 1 and 44
+ * Finished for: 2 and 43
+ * Finished for: 1 and 44
+ * ```
+ */
+@ApiStatus.Experimental
+fun <K : Any, V> Flow<Pair<K, V>>.collectLatestCoalescedIn(scope: CoroutineScope, action: suspend CoroutineScope.(key: K, value: V) -> Unit) {
+  val map = ConcurrentHashMap<K, Job>()
+  scope.launch(start = CoroutineStart.UNDISPATCHED) {
+    collect { (key, value) ->
+      val newJob = scope.launch(start = CoroutineStart.LAZY) {
+        action(key, value)
+      }
+      val existingJob = map.put(key, newJob)
+      newJob.invokeOnCompletion {
+        map.remove(key, newJob)
+      }
+      existingJob?.cancel()
+      newJob.start()
+    }
+  }
+}
+
+/**
+ * For each distinct value of type [K], launches a coroutine on [scope] and executes [action] on it.
+ * The previous action for the same [K] gets canceled when the new one arrives.
+ *
+ * Example:
+ * ```kotlin
+ * val flow: Flow<Int>
+ *
+ * flow.collectLatestCoalescedIn(scope) { key ->
+ *   println("Started for: $key")
+ *   doProcessingOfValue(key)
+ *   println("Finished for: $key")
+ * }
+ *
+ * flow.tryEmit(1)
+ * flow.tryEmit(2)
+ * flow.tryEmit(1)
+ * ```
+ *
+ * Will print:
+ * ```text
+ * Started for: 1
+ * Started for: 2
+ * Started for: 1
+ * Finished for: 2
+ * Finished for: 1
+ * ```
+ */
+@ApiStatus.Experimental
+fun <K : Any> Flow<K>.collectLatestCoalescedIn(scope: CoroutineScope, action: suspend CoroutineScope.(key: K) -> Unit) {
+  return map { it to Unit }.collectLatestCoalescedIn(scope) { key, _ -> action(key) }
 }
