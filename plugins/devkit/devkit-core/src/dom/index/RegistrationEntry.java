@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom.index;
 
 import com.intellij.util.xml.DomElement;
@@ -6,7 +6,7 @@ import org.jetbrains.idea.devkit.dom.ActionOrGroup;
 import org.jetbrains.idea.devkit.dom.Component;
 import org.jetbrains.idea.devkit.dom.Listeners;
 
-class RegistrationEntry {
+public class RegistrationEntry {
 
   private final RegistrationType myRegistrationType;
   private final int myOffset;
