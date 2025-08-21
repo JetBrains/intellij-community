@@ -194,6 +194,7 @@ def get_inspection_outliers(table):
     result = {}
     try:
         result[InspectionResultsDict.KEY_STATUS] = InspectionResultsDict.VALUE_STATUS_SUCCESS
+        # TODO: old versions
         from pandas.api.types import is_numeric_dtype
         results_details_per_column = []
         for col in table.columns:
@@ -226,6 +227,32 @@ def get_inspection_outliers(table):
         result[InspectionResultsDict.KEY_STATUS] = InspectionResultsDict.VALUE_STATUS_FAILED
         result[InspectionResultsDict.KEY_IS_TRIGGERED] = InspectionResultsDict.VALUE_TRIGGERED_NO
     return __serialize_in_json(result, "Outliers")
+
+
+def get_inspection_constant_columns(table):
+    result = {}
+    try:
+        result[InspectionResultsDict.KEY_STATUS] = InspectionResultsDict.VALUE_STATUS_SUCCESS
+        results_details_per_column = []
+        for col in table.columns:
+            if table[col].nunique(dropna=False) == 1:
+                results_details_per_column.append({
+                    "columnName": col,
+                    "value": str(table[col].iloc[0])
+                })
+        if len(results_details_per_column) == 0:
+            result[InspectionResultsDict.KEY_IS_TRIGGERED] = InspectionResultsDict.VALUE_TRIGGERED_NO
+        else:
+            result[InspectionResultsDict.KEY_IS_TRIGGERED] = InspectionResultsDict.VALUE_TRIGGERED_YES
+            result[InspectionResultsDict.KEY_DETAILS] = {
+                InspectionResultsDict.KEY_DETAILS_TYPE: InspectionResultsDict.VALUE_DETAILS_TYPE_PER_COLUMN,
+                InspectionResultsDict.KEY_DETAILS_VALUE: results_details_per_column
+            }
+
+    except:
+        result[InspectionResultsDict.KEY_STATUS] = InspectionResultsDict.VALUE_STATUS_FAILED
+        result[InspectionResultsDict.KEY_IS_TRIGGERED] = InspectionResultsDict.VALUE_TRIGGERED_NO
+    return __serialize_in_json(result, "Constant Columns")
 
 
 def __get_data_slice(table, start, end):
