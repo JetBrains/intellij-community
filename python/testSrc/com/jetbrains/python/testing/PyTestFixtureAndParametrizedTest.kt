@@ -56,6 +56,28 @@ class PyTestFixtureAndParametrizedTest : PyTestCase() {
     assertFalse(variants.contains("tmp_path"))
   }
 
+  fun testUsefixturesCompletionSuggestsFixtureOnClass() {
+    myFixture.copyDirectoryToProject(".", ".")
+    myFixture.configureByFile("test_usefixtures_completion_class.py")
+    myFixture.completeBasic()
+    val variants = myFixture.lookupElementStrings
+    assertNotNull(variants)
+    assertTrue(variants!!.contains("my_fixture"))
+    // Built-in pytest fixtures should not be suggested
+    assertFalse(variants.contains("tmp_path"))
+  }
+
+  fun testUsefixturesCompletionSuggestsFixtureAtModule() {
+    myFixture.copyDirectoryToProject(".", ".")
+    myFixture.configureByFile("test_usefixtures_completion_module.py")
+    myFixture.completeBasic()
+    val variants = myFixture.lookupElementStrings
+    assertNotNull(variants)
+    assertTrue(variants!!.contains("my_fixture"))
+    // Built-in pytest fixtures should not be suggested
+    assertFalse(variants.contains("tmp_path"))
+  }
+
   fun testRename() {
     myFixture.configureByFile("test_for_rename.py")
     myFixture.renameElementAtCaret("spam")
