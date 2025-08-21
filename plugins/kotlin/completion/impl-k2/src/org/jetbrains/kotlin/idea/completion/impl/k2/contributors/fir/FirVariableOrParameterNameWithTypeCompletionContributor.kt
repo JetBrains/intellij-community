@@ -100,9 +100,11 @@ internal class FirVariableOrParameterNameWithTypeCompletionContributor(
                 element !is KtExpression || element is KtDeclaration
             },
             predicate = { parameter ->
-                parameter.name != null
-                        && variableOrParameterInOriginal != parameter
-                        && prefixMatcher.isStartMatch(parameter.name)
+                parameter.name.let { parameterName ->
+                    parameterName != null
+                            && variableOrParameterInOriginal != parameter
+                            && prefixMatcher.isStartMatch(parameterName)
+                }
             }
         )
 
