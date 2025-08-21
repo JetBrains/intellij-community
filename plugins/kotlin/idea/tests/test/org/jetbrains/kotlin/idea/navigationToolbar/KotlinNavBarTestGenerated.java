@@ -45,6 +45,11 @@ public class KotlinNavBarTestGenerated extends AbstractKotlinNavBarTest {
         runTest("testData/navigationToolbar/ClassProperty.kt");
     }
 
+    @TestMetadata("ConstructorParameter.kt")
+    public void testConstructorParameter() throws Exception {
+        runTest("testData/navigationToolbar/ConstructorParameter.kt");
+    }
+
     @TestMetadata("fileNameDoesntMatchClassName.kt")
     public void testFileNameDoesntMatchClassName() throws Exception {
         runTest("testData/navigationToolbar/fileNameDoesntMatchClassName.kt");

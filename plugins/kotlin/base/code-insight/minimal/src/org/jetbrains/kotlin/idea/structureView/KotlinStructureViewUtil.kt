@@ -11,7 +11,7 @@ fun isStructureViewNode(element: PsiElement?): Boolean =
     element is KtDeclaration &&
             element !is KtPropertyAccessor &&
             element !is KtFunctionLiteral &&
-            element !is KtParameter &&
+            !(element is KtParameter && !element.hasValOrVar()) &&
             !((element is KtProperty || element is KtFunction) && !element.topLevelDeclaration && element.containingClassOrObject !is KtNamedDeclaration)
 
 private val KtDeclaration.topLevelDeclaration: Boolean
