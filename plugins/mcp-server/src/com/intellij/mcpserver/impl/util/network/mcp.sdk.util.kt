@@ -72,6 +72,9 @@ internal fun ServerSSESession.mcpSseTransport(
   transports: ConcurrentMap<String, SseServerTransport>,
 ): SseServerTransport {
   val transport = SseServerTransport(postEndpoint, this)
+  transport.onError {
+    logger.error("Error in SSE connection", it)
+  }
   transports[transport.sessionId] = transport
 
   logger.trace { "New SSE connection established and stored with sessionId: ${transport.sessionId}" }
