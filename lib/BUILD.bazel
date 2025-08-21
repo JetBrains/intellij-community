@@ -142,13 +142,6 @@ jvm_import(
   source_jar = "@stax2-api-4_2_2-sources_http//file"
 )
 
-java_library(
-  name = "aalto-xml-provided",
-  exports = [":aalto-xml"],
-  neverlink = True,
-  visibility = ["//visibility:public"]
-)
-
 jvm_import(
   name = "aapt-proto",
   jar = "@aapt2-proto-8_1_0-10154469_http//file",
@@ -741,13 +734,6 @@ jvm_import(
 )
 
 java_library(
-  name = "asm-provided",
-  exports = [":asm"],
-  neverlink = True,
-  visibility = ["//visibility:public"]
-)
-
-java_library(
   name = "asm-tools",
   exports = [
     ":asm-analysis-9_8_http_import",
@@ -849,13 +835,6 @@ jvm_import(
   name = "caffeine",
   jar = "@caffeine-3_2_1_http//file",
   source_jar = "@caffeine-3_2_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_library(
-  name = "caffeine-provided",
-  exports = [":caffeine"],
-  neverlink = True,
   visibility = ["//visibility:public"]
 )
 
@@ -1528,13 +1507,6 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
-java_library(
-  name = "fastutil-min-provided",
-  exports = [":fastutil-min"],
-  neverlink = True,
-  visibility = ["//visibility:public"]
-)
-
 jvm_import(
   name = "file_prediction-file-prediction-model",
   jar = "@file-prediction-model-0_3_0_http//file",
@@ -2074,13 +2046,6 @@ jvm_import(
 )
 
 java_library(
-  name = "gson-provided",
-  exports = [":gson"],
-  neverlink = True,
-  visibility = ["//visibility:public"]
-)
-
-java_library(
   name = "guava",
   exports = [
     ":guava-33_4_8-jre_http_import",
@@ -2099,13 +2064,6 @@ jvm_import(
   name = "failureaccess-1_0_3_http_import",
   jar = "@failureaccess-1_0_3_http//file",
   source_jar = "@failureaccess-1_0_3-sources_http//file"
-)
-
-java_library(
-  name = "guava-provided",
-  exports = [":guava"],
-  neverlink = True,
-  visibility = ["//visibility:public"]
 )
 
 jvm_import(
@@ -2162,13 +2120,6 @@ jvm_import(
   name = "httpcore-4_4_16_http_import",
   jar = "@httpcore-4_4_16_http//file",
   source_jar = "@httpcore-4_4_16-sources_http//file"
-)
-
-java_library(
-  name = "http-client-provided",
-  exports = [":http-client"],
-  neverlink = True,
-  visibility = ["//visibility:public"]
 )
 
 jvm_import(
@@ -2395,13 +2346,6 @@ jvm_import(
 )
 
 java_library(
-  name = "jackson-provided",
-  exports = [":jackson"],
-  neverlink = True,
-  visibility = ["//visibility:public"]
-)
-
-java_library(
   name = "jackson-databind",
   exports = [
     ":jackson-databind-2_19_0_http_import",
@@ -2420,13 +2364,6 @@ jvm_import(
   name = "jackson-annotations-2_19_0_http_import",
   jar = "@jackson-annotations-2_19_0_http//file",
   source_jar = "@jackson-annotations-2_19_0-sources_http//file"
-)
-
-java_library(
-  name = "jackson-databind-provided",
-  exports = [":jackson-databind"],
-  neverlink = True,
-  visibility = ["//visibility:public"]
 )
 
 jvm_import(
@@ -2468,13 +2405,6 @@ jvm_import(
   name = "jackson-jr-objects",
   jar = "@jackson-jr-objects-2_19_0_http//file",
   source_jar = "@jackson-jr-objects-2_19_0-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_library(
-  name = "jackson-jr-objects-provided",
-  exports = [":jackson-jr-objects"],
-  neverlink = True,
   visibility = ["//visibility:public"]
 )
 
@@ -2747,13 +2677,6 @@ jvm_import(
   name = "jcef",
   jar = "@jcef-137_0_17-gf354b0e-chromium-137_0_7151_104-api-1_19-253-b9_http//file",
   source_jar = "@jcef-137_0_17-gf354b0e-chromium-137_0_7151_104-api-1_19-253-b9-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_library(
-  name = "jcef-provided",
-  exports = [":jcef"],
-  neverlink = True,
   visibility = ["//visibility:public"]
 )
 
@@ -3435,13 +3358,6 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
-java_library(
-  name = "kotlin-reflect-provided",
-  exports = [":kotlin-reflect"],
-  neverlink = True,
-  visibility = ["//visibility:public"]
-)
-
 jvm_import(
   name = "kotlin-script-runtime",
   jar = "@kotlin-script-runtime-2_2_20-RC_http//file",
@@ -3531,13 +3447,6 @@ jvm_import(
   name = "kotlinc-allopen-compiler-plugin",
   jar = "@allopen-compiler-plugin-for-ide-2_3_0-dev-4019_http//file",
   source_jar = "@allopen-compiler-plugin-for-ide-2_3_0-dev-4019-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_library(
-  name = "kotlinc-allopen-compiler-plugin-provided",
-  exports = [":kotlinc-allopen-compiler-plugin"],
-  neverlink = True,
   visibility = ["//visibility:public"]
 )
 
@@ -3835,13 +3744,6 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
-java_library(
-  name = "kotlinc-kotlin-scripting-common-provided",
-  exports = [":kotlinc-kotlin-scripting-common"],
-  neverlink = True,
-  visibility = ["//visibility:public"]
-)
-
 jvm_import(
   name = "kotlinc-kotlin-scripting-compiler-impl",
   jar = "@kotlin-scripting-compiler-impl-2_3_0-dev-4019_http//file",
@@ -3867,13 +3769,6 @@ jvm_import(
   name = "kotlinc-kotlin-scripting-jvm",
   jar = "@kotlin-scripting-jvm-2_3_0-dev-4019_http//file",
   source_jar = "@kotlin-scripting-jvm-2_3_0-dev-4019-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_library(
-  name = "kotlinc-kotlin-scripting-jvm-provided",
-  exports = [":kotlinc-kotlin-scripting-jvm"],
-  neverlink = True,
   visibility = ["//visibility:public"]
 )
 
@@ -3919,24 +3814,10 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
-java_library(
-  name = "kotlinc-noarg-compiler-plugin-provided",
-  exports = [":kotlinc-noarg-compiler-plugin"],
-  neverlink = True,
-  visibility = ["//visibility:public"]
-)
-
 jvm_import(
   name = "kotlinc-parcelize-compiler-plugin",
   jar = "@parcelize-compiler-plugin-for-ide-2_3_0-dev-4019_http//file",
   source_jar = "@parcelize-compiler-plugin-for-ide-2_3_0-dev-4019-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_library(
-  name = "kotlinc-parcelize-compiler-plugin-provided",
-  exports = [":kotlinc-parcelize-compiler-plugin"],
-  neverlink = True,
   visibility = ["//visibility:public"]
 )
 
@@ -4025,13 +3906,6 @@ jvm_import(
 )
 
 java_library(
-  name = "kotlinx-datetime-jvm-provided",
-  exports = [":kotlinx-datetime-jvm"],
-  neverlink = True,
-  visibility = ["//visibility:public"]
-)
-
-java_library(
   name = "kotlinx-document-store-mvstore",
   exports = [
     ":kotlinx-document-store-mvstore-0_0_4_http_import",
@@ -4095,25 +3969,10 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
-kt_jvm_library(
-  name = "kotlinx-serialization-core-provided",
-  exports = [":kotlinx-serialization-core"],
-  neverlink = True,
-  exported_compiler_plugins = ["@lib//:kotlin-serialization-plugin"],
-  visibility = ["//visibility:public"]
-)
-
 jvm_import(
   name = "kotlinx-serialization-json",
   jar = "@kotlinx-serialization-json-jvm-1_8_1_http//file",
   source_jar = "@kotlinx-serialization-json-jvm-1_8_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_library(
-  name = "kotlinx-serialization-json-provided",
-  exports = [":kotlinx-serialization-json"],
-  neverlink = True,
   visibility = ["//visibility:public"]
 )
 
@@ -7440,13 +7299,6 @@ jvm_import(
 )
 
 java_library(
-  name = "miglayout-swing-provided",
-  exports = [":miglayout-swing"],
-  neverlink = True,
-  visibility = ["//visibility:public"]
-)
-
-java_library(
   name = "mockito",
   exports = [
     ":mockito-core-5_18_0_http_import",
@@ -7836,13 +7688,6 @@ jvm_import(
   name = "opentelemetry-exporter-common-1_48_0_http_import",
   jar = "@opentelemetry-exporter-common-1_48_0_http//file",
   source_jar = "@opentelemetry-exporter-common-1_48_0-sources_http//file"
-)
-
-java_library(
-  name = "opentelemetry-exporter-otlp-common-provided",
-  exports = [":opentelemetry-exporter-otlp-common"],
-  neverlink = True,
-  visibility = ["//visibility:public"]
 )
 
 jvm_import(
@@ -9381,13 +9226,6 @@ jvm_import(
   name = "docker-java-transport-3_4_0_http_import",
   jar = "@docker-java-transport-3_4_0_http//file",
   source_jar = "@docker-java-transport-3_4_0-sources_http//file"
-)
-
-java_library(
-  name = "testcontainers-provided",
-  exports = [":testcontainers"],
-  neverlink = True,
-  visibility = ["//visibility:public"]
 )
 
 jvm_import(
