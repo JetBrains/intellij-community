@@ -437,12 +437,12 @@ internal class SyntaxTreeBuilderImpl(
     val size = myProduction.size - 1
     for (i in 1 until size) {
       val id = myProduction[i]
-      val starting = if (id > 0) pool.get(id) else null
+      val starting = if (id > 0) pool[id] else null
       if (starting is CompositeMarker && !starting.isDone) {
         logger.error(prepareUnbalancedMarkerMessage(starting))
       }
       val done = starting == null
-      val item = starting ?: pool.get(-id)
+      val item = starting ?: pool[-id]
 
       val binder = if (item is ErrorMarker) {
         check(!done)
@@ -457,7 +457,7 @@ internal class SyntaxTreeBuilderImpl(
       val prevProductionLexIndex: Int = if (recursive) 0
       else {
         val prevId = myProduction[i - 1]
-        pool.get(abs(prevId)).getLexemeIndex(prevId < 0)
+        pool[abs(prevId)].getLexemeIndex(prevId < 0)
       }
       var wsStartIndex = max(lexemeIndex, lastIndex)
       while (wsStartIndex > prevProductionLexIndex && isWhitespaceOrComment(lexType(wsStartIndex - 1))) wsStartIndex--
