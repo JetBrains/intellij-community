@@ -60,9 +60,7 @@ public final class PluginIdDependenciesIndex extends PluginXmlIndexBase<String, 
       ids.add(PLUGIN_ID_KEY_PREFIX + pluginId);
     }
 
-    //noinspection unchecked
-    final List<Dependency> dependencies = (List<Dependency>)getChildrenWithoutIncludes(plugin, "depends");
-    for (Dependency dependency : dependencies) {
+    for (Dependency dependency : plugin.getDepends()) {
       ContainerUtil.addIfNotNull(ids, dependency.getStringValue());
 
       final String configFile = dependency.getConfigFile().getStringValue();

@@ -27,6 +27,7 @@ import com.intellij.util.xml.DomManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
+import org.jetbrains.idea.devkit.dom.ExtensionPoints;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 
 import java.util.*;
@@ -135,9 +136,8 @@ public final class ExtensionPointIndex extends PluginXmlIndexBase<String, Intege
   }
 
   static void indexExtensionPoints(IdeaPlugin plugin, Consumer<? super ExtensionPoint> consumer) {
-    for (DomElement points : getChildrenWithoutIncludes(plugin, "extensionPoints")) {
-      for (DomElement point : getChildrenWithoutIncludes(points, "extensionPoint")) {
-        ExtensionPoint extensionPoint = (ExtensionPoint)point;
+    for (ExtensionPoints extensionPoints : plugin.getExtensionPoints()) {
+      for (ExtensionPoint extensionPoint : extensionPoints.getExtensionPoints()) {
         consumer.accept(extensionPoint);
       }
     }
