@@ -429,13 +429,115 @@ internal class SyntaxTreeBuilderImpl(
   }
 
   private fun balanceWhiteSpaces() {
+    WhitespaceBalancer().balance()
     myTokenTypeChecked = true
-    val wsTokens = RelativeTokenTypesView()
-    val tokenTextGetter = RelativeTokenTextView()
-    var lastIndex = 0
+  }
 
-    val size = myProduction.size - 1
-    for (i in 1 until size) {
+  private inner class WhitespaceBalancer {
+    private var lastIndex = 0
+
+    fun balance() {
+      val size = myProduction.size - 1
+      for (i in 1 until size) {
+        lastIndex = balanceMarkerAndReturnNewIndex(i)
+      }
+    }
+
+    /**
+     * Processes production marker at the given index.
+     * Note that a marker can be either a start(`isDone=false`) or an end marker(`isDone=true`) of Composite, or an Error marker (which is always considered a start).
+     *
+     * Generally speaking, we do the following:
+     * 1. Find the current marker
+     * 2. Find the previous marker
+     * 3. Find the whitespace/comment tokens between them
+     * 4. Ask the [WhitespacesAndCommentsBinder] to infer a new index for the current marker. This index can be anything between the previous marker's end index and the next marker's start index.
+     *
+     * @return new token index for the marker.
+     */
+    private fun balanceMarkerAndReturnNewIndex(i: Int): Int {
+      // current marker
+      val (isDone, marker) = getMarker(i)
+      val lexemeIndex = marker.getLexemeIndex(isDone)
+
+      // binder
+      val binder = getBinder(marker, isDone)
+      val recursive = binder.isRecursive()
+
+      // prev marker
+      val prevProductionLexIndex: Int = getPrevProductionLexIndex(i, recursive)
+
+      // whitespace or comment
+      val wsStartIndex = getWhitespaceStartIndex(lexemeIndex, prevProductionLexIndex)
+      val wsEndIndex = shiftOverWhitespaceForward(lexemeIndex)
+
+      when {
+        // there's a whitespace or a comment on the edge, let's run binder
+        wsStartIndex != wsEndIndex -> {
+          val newLexemeIndex = binder.inferNewLexemeIndex(wsStartIndex, wsEndIndex)
+          marker.setLexemeIndex(newLexemeIndex, isDone)
+          if (recursive) {
+            myProduction.confineMarkersToMaxLexeme(i, newLexemeIndex)
+          }
+          return newLexemeIndex
+        }
+
+        /** This can happen if [lastIndex] is bigger than [lexemeIndex]. See [getWhitespaceStartIndex] */
+        lexemeIndex < wsStartIndex -> {
+          val newLexemeIndex = wsStartIndex
+          marker.setLexemeIndex(newLexemeIndex, isDone)
+          return newLexemeIndex
+        }
+
+        // nothing changed
+        else -> {
+          return lexemeIndex
+        }
+      }
+    }
+
+    /**
+     * Prepares a view for [WhitespacesAndCommentsBinder] and asks it to infer a new index for the lexeme.
+     * @return the new lexeme index
+     */
+    private fun WhitespacesAndCommentsBinder.inferNewLexemeIndex(
+      wsStartIndex: Int,
+      wsEndIndex: Int,
+    ): Int {
+      val wsTokens = RelativeTokenTypesView(wsStartIndex, wsEndIndex - wsStartIndex)
+      val tokenTextGetter = RelativeTokenTextView(wsStartIndex)
+      val atEnd = wsStartIndex == 0 || wsEndIndex == lexemeCount
+      val edgePosition = this.getEdgePosition(wsTokens, atEnd, tokenTextGetter)
+      return wsStartIndex + edgePosition
+    }
+
+    /**
+     * Determines the starting index of the whitespace or comment tokens that precede the given lexeme index,
+     * considering the provided previous production lexeme index as a boundary.
+     *
+     * @param lexemeIndex the index of the current lexeme.
+     * @param prevProductionLexIndex the index of the previous production lexeme, used as a lower boundary for the search.
+     * @return the index of the first whitespace/comment token before lexemeIndex, or lexemeIndex otherwise.
+     */
+    private fun getWhitespaceStartIndex(lexemeIndex: Int, prevProductionLexIndex: Int): Int {
+      var wsStartIndex = max(lexemeIndex, lastIndex)
+      while (wsStartIndex > prevProductionLexIndex && isWhitespaceOrComment(lexType(wsStartIndex - 1))) {
+        wsStartIndex--
+      }
+      return wsStartIndex
+    }
+
+    private fun getPrevProductionLexIndex(i: Int, isBinderRecursive: Boolean): Int {
+      if (isBinderRecursive) {
+        return 0
+      }
+
+      val prevId = myProduction[i - 1]
+      val marker = pool[abs(prevId)]
+      return marker.getLexemeIndex(prevId < 0)
+    }
+
+    private fun getMarker(i: Int): Pair<Boolean, ProductionMarker> {
       val id = myProduction[i]
       val starting = if (id > 0) pool[id] else null
       if (starting is CompositeMarker && !starting.isDone) {
@@ -443,43 +545,20 @@ internal class SyntaxTreeBuilderImpl(
       }
       val done = starting == null
       val item = starting ?: pool[-id]
+      return Pair(done, item)
+    }
 
-      val binder = if (item is ErrorMarker) {
-        check(!done)
-        WhitespacesBinders.defaultRightBinder()
+    private fun getBinder(
+      item: ProductionMarker,
+      done: Boolean,
+    ): WhitespacesAndCommentsBinder {
+      if (item is ErrorMarker) {
+        check(!done) { "Error markers don't have a done counter-part" }
+        return WhitespacesBinders.defaultRightBinder()
       }
       else {
-        myOptionalData.getBinder(item.markerId, done)
+        return myOptionalData.getBinder(item.markerId, done)
       }
-      var lexemeIndex = item.getLexemeIndex(done)
-
-      val recursive = binder.isRecursive()
-      val prevProductionLexIndex: Int = if (recursive) 0
-      else {
-        val prevId = myProduction[i - 1]
-        pool[abs(prevId)].getLexemeIndex(prevId < 0)
-      }
-      var wsStartIndex = max(lexemeIndex, lastIndex)
-      while (wsStartIndex > prevProductionLexIndex && isWhitespaceOrComment(lexType(wsStartIndex - 1))) wsStartIndex--
-
-      val wsEndIndex = shiftOverWhitespaceForward(lexemeIndex)
-
-      if (wsStartIndex != wsEndIndex) {
-        wsTokens.configure(wsStartIndex, wsEndIndex)
-        tokenTextGetter.configure(wsStartIndex)
-        val atEnd = wsStartIndex == 0 || wsEndIndex == lexemeCount
-        lexemeIndex = wsStartIndex + binder.getEdgePosition(wsTokens, atEnd, tokenTextGetter)
-        item.setLexemeIndex(lexemeIndex, done)
-        if (recursive) {
-          myProduction.confineMarkersToMaxLexeme(i, lexemeIndex)
-        }
-      }
-      else if (lexemeIndex < wsStartIndex) {
-        lexemeIndex = wsStartIndex
-        item.setLexemeIndex(wsStartIndex, done)
-      }
-
-      lastIndex = lexemeIndex
     }
   }
 
@@ -499,27 +578,19 @@ internal class SyntaxTreeBuilderImpl(
       """.trimIndent()
   }
 
-  private inner class RelativeTokenTypesView : AbstractList<SyntaxElementType>() {
-    private var myStart = 0
-    override var size = 0
-
-    fun configure(start: Int, end: Int) {
-      myStart = start
-      size = end - start
-    }
+  private inner class RelativeTokenTypesView(
+    private val myStart: Int,
+    override val size: Int,
+  ) : AbstractList<SyntaxElementType>() {
 
     override fun get(index: Int): SyntaxElementType {
       return lexType(myStart + index)
     }
   }
 
-  private inner class RelativeTokenTextView : WhitespacesAndCommentsBinder.TokenTextGetter {
-    private var myStart = 0
-
-    fun configure(start: Int) {
-      myStart = start
-    }
-
+  private inner class RelativeTokenTextView(
+    private val myStart: Int
+  ) : WhitespacesAndCommentsBinder.TokenTextGetter {
     override fun get(i: Int): CharSequence {
       return CharSequenceSubSequence(text, lexStart(myStart + i), lexStart(myStart + i + 1))
     }
