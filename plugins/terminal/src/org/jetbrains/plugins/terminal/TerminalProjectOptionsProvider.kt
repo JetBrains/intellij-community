@@ -22,6 +22,7 @@ import com.intellij.platform.eel.fs.stat
 import com.intellij.platform.eel.isMac
 import com.intellij.platform.eel.isWindows
 import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.path.EelPathException
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.util.text.nullize
@@ -176,11 +177,15 @@ class TerminalProjectOptionsProvider(val project: Project) : PersistentStateComp
     return candidates.firstOrNull { isFile(it, eelApi) } ?: "/bin/sh"
   }
 
+  /**
+   * Tests whether a file is a regular file, symlinks are followed.
+   * Similar to `Files.isRegularFile(Path.of(absoluteFilePath))`.
+   */
   private suspend fun isFile(absoluteFilePath: String, eelApi: EelApi): Boolean {
     val path = try {
       EelPath.parse(absoluteFilePath, eelApi.descriptor)
     }
-    catch (_: Exception) {
+    catch (_: EelPathException) {
       return false
     }
     return when (val result = eelApi.fs.stat(path).resolveAndFollow().eelIt()) {
