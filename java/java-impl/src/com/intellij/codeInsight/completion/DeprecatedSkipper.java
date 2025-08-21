@@ -11,9 +11,9 @@ public final class DeprecatedSkipper extends CompletionPreselectSkipper {
 
   @Override
   public boolean skipElement(@NotNull LookupElement element, @NotNull CompletionLocation location) {
-    PsiElement e = element.getPsiElement();
     if (!isCompletionFromJavaFile(location)) return false;
 
+    PsiElement e = element.getPsiElement();
     return e != null && JavaDeprecationUtils.isDeprecated(e, location.getCompletionParameters().getPosition());  }
 
   private static boolean isCompletionFromJavaFile(CompletionLocation location) {
