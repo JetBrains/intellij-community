@@ -18,7 +18,7 @@ OBJECT_SAMPLE_LIMIT = 10
 
 
 class InspectionResultsDict:
-    KEY_INSPECTION_NAME = "inspectionName"
+    KEY_INSPECTION_NAME = "inspection"
 
     KEY_STATUS = "executionStatus"
     VALUE_STATUS_SUCCESS = "SUCCESS"
@@ -166,7 +166,7 @@ def get_inspection_none_count(table):
     except:
         result[InspectionResultsDict.KEY_STATUS] = InspectionResultsDict.VALUE_STATUS_FAILED
         result[InspectionResultsDict.KEY_IS_TRIGGERED] = InspectionResultsDict.VALUE_TRIGGERED_NO
-    return __serialize_in_json(result, "None Count")
+    return __serialize_in_json(result, "NONE_COUNT")
 
 
 def get_inspection_duplicate_rows(table):
@@ -187,7 +187,7 @@ def get_inspection_duplicate_rows(table):
     except:
         result[InspectionResultsDict.KEY_STATUS] = InspectionResultsDict.VALUE_STATUS_FAILED
         result[InspectionResultsDict.KEY_IS_TRIGGERED] = InspectionResultsDict.VALUE_TRIGGERED_NO
-    return __serialize_in_json(result, "Duplicate Rows")
+    return __serialize_in_json(result, "DUPLICATE_ROWS")
 
 
 def get_inspection_outliers(table):
@@ -226,7 +226,7 @@ def get_inspection_outliers(table):
     except:
         result[InspectionResultsDict.KEY_STATUS] = InspectionResultsDict.VALUE_STATUS_FAILED
         result[InspectionResultsDict.KEY_IS_TRIGGERED] = InspectionResultsDict.VALUE_TRIGGERED_NO
-    return __serialize_in_json(result, "Outliers")
+    return __serialize_in_json(result, "OUTLIERS")
 
 
 def get_inspection_constant_columns(table):
@@ -252,7 +252,7 @@ def get_inspection_constant_columns(table):
     except:
         result[InspectionResultsDict.KEY_STATUS] = InspectionResultsDict.VALUE_STATUS_FAILED
         result[InspectionResultsDict.KEY_IS_TRIGGERED] = InspectionResultsDict.VALUE_TRIGGERED_NO
-    return __serialize_in_json(result, "Constant Columns")
+    return __serialize_in_json(result, "CONSTANT_COLUMNS")
 
 
 def __get_data_slice(table, start, end):
