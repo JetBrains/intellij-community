@@ -68,6 +68,7 @@ data class JdkProduct(
 data class JdkItem(
   val product: JdkProduct,
 
+  /** Whether the JDK should be shown/selected by default (true for OpenJDK) */
   val isDefaultItem: Boolean = false,
 
   /** there are some JdkList items that are not shown in the downloader but suggested for JdkAuto **/
