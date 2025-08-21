@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.IdeCoreBundle;
@@ -202,6 +202,9 @@ public class WizardContext extends UserDataHolderBase {
     myProjectJdk = jdk;
   }
 
+  /**
+   * The sdk to be setup for the project (or module).
+   */
   public Sdk getProjectJdk() {
     return myProjectJdk;
   }
