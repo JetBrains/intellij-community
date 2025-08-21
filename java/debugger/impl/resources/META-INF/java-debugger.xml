@@ -259,9 +259,6 @@
       <action id="Debugger.ShowRelatedStack" class="com.intellij.debugger.actions.ShowRelatedStackAction">
         <add-to-group group-id="XDebugger.ValueGroup" anchor="first"/>
       </action>
-      <action id="Debugger.ShowTypes" class="com.intellij.debugger.actions.ShowTypesAction">
-        <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
-      </action>
       <action id="Debugger.ResumeThread" class="com.intellij.debugger.actions.ResumeThreadAction"/>
       <action id="Debugger.FreezeThread" class="com.intellij.debugger.actions.FreezeThreadAction"/>
       <action id="Debugger.InterruptThread" class="com.intellij.debugger.actions.InterruptThreadAction"/>

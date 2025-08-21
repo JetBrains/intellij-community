@@ -66,9 +66,14 @@
       <override-text place="XDebuggerTreePopup"/>
     </action>
     <action id="Debugger.AutoRenderer" class="com.intellij.java.debugger.impl.shared.actions.AutoRendererAction"/>
-    <action id="Debugger.MuteRenderers" class="com.intellij.java.debugger.impl.shared.actions.MuteRenderersAction">
+    <action id="Debugger.ShowTypes" class="com.intellij.java.debugger.impl.shared.actions.ShowTypesAction">
       <add-to-group group-id="XDebugger.ValueGroup" anchor="after" relative-to-action="Debugger.ViewAsGroup"/>
-      <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Bottom.Section.Frontend" anchor="after" relative-to-action="Debugger.ViewAsGroup"/>
+      <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Bottom.Section.Frontend" anchor="after"
+                    relative-to-action="Debugger.ViewAsGroup"/>
+    </action>
+    <action id="Debugger.MuteRenderers" class="com.intellij.java.debugger.impl.shared.actions.MuteRenderersAction">
+      <add-to-group group-id="XDebugger.ValueGroup" anchor="after" relative-to-action="Debugger.ShowTypes"/>
+      <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Bottom.Section.Frontend" anchor="after" relative-to-action="Debugger.ShowTypes"/>
     </action>
   </actions>
 </idea-plugin>

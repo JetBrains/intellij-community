@@ -1,19 +1,22 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.debugger.actions;
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.java.debugger.impl.shared.actions;
 
-import com.intellij.debugger.engine.JavaDebugProcess;
+import com.intellij.configurationStore.StoreUtilKt;
 import com.intellij.debugger.settings.DebuggerSettings;
+import com.intellij.java.debugger.impl.shared.SharedJavaDebuggerSession;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAwareToggleAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.impl.frame.XDebugSessionProxy;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
 import org.jetbrains.annotations.NotNull;
 
-public class ShowTypesAction extends DumbAwareToggleAction {
+class ShowTypesAction extends DumbAwareToggleAction implements ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
   @Override
   public boolean isSelected(@NotNull AnActionEvent e) {
     return DebuggerSettings.getInstance().SHOW_TYPES;
@@ -22,10 +25,7 @@ public class ShowTypesAction extends DumbAwareToggleAction {
   @Override
   public void setSelected(@NotNull AnActionEvent e, boolean state) {
     DebuggerSettings.getInstance().SHOW_TYPES = state;
-    doWhenDone(e);
-  }
-
-  public void doWhenDone(AnActionEvent e) {
+    StoreUtilKt.saveSettingsForRemoteDevelopment(ApplicationManager.getApplication());
     Project project = e.getProject();
     if (project != null) {
       if (DebuggerUIUtil.isInDetachedTree(e)) {
@@ -34,7 +34,7 @@ public class ShowTypesAction extends DumbAwareToggleAction {
           tree.rebuildAndRestore(XDebuggerTreeState.saveState(tree));
         }
       }
-      XDebugSession session = DebuggerUIUtil.getSession(e);
+      XDebugSessionProxy session = DebuggerUIUtil.getSessionProxy(e);
       if (session != null) {
         session.rebuildViews();
       }
@@ -45,8 +45,8 @@ public class ShowTypesAction extends DumbAwareToggleAction {
   public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project != null) {
-      XDebugSession session = DebuggerUIUtil.getSession(e);
-      if (session != null && session.getDebugProcess() instanceof JavaDebugProcess) {
+      SharedJavaDebuggerSession javaSession = SharedJavaDebuggerSession.findSession(e);
+      if (javaSession != null) {
         e.getPresentation().setEnabledAndVisible(true);
         super.update(e);
         return;

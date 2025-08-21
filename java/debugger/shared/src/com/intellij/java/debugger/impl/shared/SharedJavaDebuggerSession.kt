@@ -42,6 +42,7 @@ class SharedJavaDebuggerSession(dto: JavaDebuggerSessionDto, private val cs: Cor
   }
 
   companion object {
+    @JvmStatic
     fun findSession(e: AnActionEvent): SharedJavaDebuggerSession? {
       val project = e.project ?: return null
       val sessionProxy = DebuggerUIUtil.getSessionProxy(e) ?: return null
