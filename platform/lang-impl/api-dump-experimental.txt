@@ -1129,9 +1129,6 @@ f:com.intellij.testIntegration.TestFinderHelper
 - <init>(com.intellij.openapi.ui.Splitter,Z,com.intellij.openapi.client.ClientProjectSession):V
 - f:close():V
 - f:editor():com.intellij.openapi.editor.Editor
-- f:getEditable():Z
-- f:getSession():com.intellij.openapi.client.ClientProjectSession
-- f:getSplitter():com.intellij.openapi.ui.Splitter
 - f:open(com.intellij.openapi.fileEditor.OpenFileDescriptor):V
 f:com.intellij.unscramble.AnalyzeStacktraceUtil
 - *sf:EP_CONTENT_PROVIDER:com.intellij.openapi.extensions.ProjectExtensionPointName

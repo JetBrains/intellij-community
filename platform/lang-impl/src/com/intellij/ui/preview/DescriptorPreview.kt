@@ -20,7 +20,7 @@ import org.jetbrains.annotations.ApiStatus
 import kotlin.properties.Delegates.observable
 
 @ApiStatus.Experimental
-class DescriptorPreview(val splitter: Splitter, val editable: Boolean, val session: ClientProjectSession) {
+class DescriptorPreview(private val splitter: Splitter, private val editable: Boolean, private val session: ClientProjectSession) {
 
   fun editor(): Editor? = editor
   fun close(): Unit = open(null)
