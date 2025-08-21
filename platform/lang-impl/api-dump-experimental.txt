@@ -1130,6 +1130,7 @@ f:com.intellij.testIntegration.TestFinderHelper
 - f:close():V
 - f:editor():com.intellij.openapi.editor.Editor
 - f:open(com.intellij.openapi.fileEditor.OpenFileDescriptor):V
+- f:showEmptyText(java.lang.String):V
 f:com.intellij.unscramble.AnalyzeStacktraceUtil
 - *sf:EP_CONTENT_PROVIDER:com.intellij.openapi.extensions.ProjectExtensionPointName
 *:com.intellij.unscramble.StacktraceTabContentProvider
