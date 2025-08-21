@@ -53,7 +53,8 @@ internal class LocalHistoryEventDispatcher(private val facade: LocalHistoryFacad
     val projectIndexes = IdeaGateway.getVersionedFilterData().myProjectFileIndices
     var containingProjectIndex: ProjectFileIndex? = null
     for (projectIndex in projectIndexes) {
-      if (!projectIndex.isInProjectOrExcluded(dir)) continue
+      val isProjectRelated = projectIndex.isInProjectOrExcluded(dir) || projectIndex.isUnderIgnored(dir)
+      if (!isProjectRelated) continue
       if (containingProjectIndex != null) return false // more than 1 project contains this dir
 
       containingProjectIndex = projectIndex
