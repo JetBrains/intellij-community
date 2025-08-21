@@ -2,9 +2,8 @@
 package com.intellij.openapi.vfs.newvfs.persistent
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.contextModality
+import com.intellij.openapi.application.*
+import com.intellij.openapi.application.impl.AsyncExecutionServiceImpl
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.AsyncFileListener
@@ -13,26 +12,21 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.BulkFileListenerBackgroundable
 import com.intellij.openapi.vfs.newvfs.RefreshQueue
+import com.intellij.openapi.vfs.newvfs.RefreshQueueImpl
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.openapi.vfs.writeText
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
-import com.intellij.openapi.vfs.newvfs.RefreshQueueImpl
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Semaphore
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.util.application
 import com.intellij.util.io.delete
 import com.intellij.util.io.write
 import com.intellij.util.ui.EDT
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancelAndJoin
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.job
+import kotlinx.coroutines.*
+import kotlinx.coroutines.sync.Semaphore
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.util.concurrent.ConcurrentHashMap
@@ -40,6 +34,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReferenceArray
 import kotlin.io.path.createTempFile
+import kotlin.test.assertEquals
 
 @TestApplication
 class VfsRefreshTest {
@@ -218,4 +213,22 @@ class VfsRefreshTest {
     }, refresh, { counter ->
       assertThat(counter.get()).isEqualTo(4)
     })
+
+  @Test
+  fun `no write action if file was not changed`() = timeoutRunBlocking {
+    val file = createTempFile()
+    val virtualFile = VirtualFileManager.getInstance().findFileByNioPath(file)!!
+    writeAction {
+      virtualFile.writeText("42")
+    }
+    virtualFile.refresh(false, false)
+    val currentCounter = readAction {
+      AsyncExecutionServiceImpl.getWriteActionCounter()
+    }
+    RefreshQueue.getInstance().refresh(false, listOf(virtualFile))
+    val newCounter = readAction {
+      AsyncExecutionServiceImpl.getWriteActionCounter()
+    }
+    assertEquals(currentCounter, newCounter, "There should be no write action if there was nothing to refresh")
+  }
 }
