@@ -20,7 +20,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.platform.project.module.ModulesStateService;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.dsl.gridLayout.builders.RowBuilder;
@@ -107,19 +106,6 @@ final class FindPopupScopeUIImpl implements FindPopupScopeUI {
     String selection = ObjectUtils.coalesce(myHelper.getModel().getCustomScopeName(), FindSettings.getInstance().getDefaultScopeName());
     if (FindKey.isEnabled()) {
       newScopeCombo = new FrontendScopeChooser(myProject, selection, ScopesFilterConditionType.FIND);
-      ScopeChooserCombo.BrowseListener browseListener = new ScopeChooserCombo.BrowseListener() {
-        @Override
-        public void onBeforeBrowseStarted() {
-          myFindPopupPanel.getCanClose().set(false);
-        }
-
-        @Override
-        public void onAfterBrowseFinished() {
-          myFindPopupPanel.getCanClose().set(true);
-          IdeFocusManager.getInstance(myProject).requestFocus(getScopeCombo(), true);
-        }
-      };
-      newScopeCombo.setBrowseListener(browseListener);
       Disposer.register(myFindPopupPanel.getDisposable(), newScopeCombo);
     }
     else {

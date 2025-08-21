@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.scopes.backend
 
+import com.intellij.ide.ui.WindowFocusFrontendService
 import com.intellij.ide.util.scopeChooser.*
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.logger
@@ -10,23 +11,24 @@ import com.intellij.packageDependencies.DependencyValidationManager
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProjectOrNullWithLogWarn
 import com.intellij.platform.rpc.backend.RemoteApiProvider
-import com.intellij.platform.scopes.ScopeModelApi
+import com.intellij.platform.scopes.ScopeModelRemoteApi
 import com.intellij.platform.scopes.SearchScopeData
 import com.intellij.platform.scopes.SearchScopesInfo
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager
 import fleet.rpc.remoteApiDescriptor
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
-private val LOG = logger<ScopesModelApiImpl>()
+private val LOG = logger<ScopesModelRemoteApiImpl>()
 
-internal class ScopesModelApiImpl : ScopeModelApi {
+internal class ScopesModelRemoteApiImpl : ScopeModelRemoteApi {
   private val modelIdToModel = ConcurrentHashMap<String, AbstractScopeModel>()
   private var selectedScopeName: String? = null
     get() {
@@ -55,18 +57,25 @@ internal class ScopesModelApiImpl : ScopeModelApi {
     return flow
   }
 
-  override suspend fun openEditScopesDialog(projectId: ProjectId, selectedScopeId: String?): String? {
-    val project = projectId.findProjectOrNullWithLogWarn(LOG) ?: return null
-    return withContext(Dispatchers.EDT) {
-      val dialog = EditScopesDialog.showDialog(project, selectedScopeName)
-      if (dialog.isOK) {
-        val scopeName = dialog.selectedScope?.scopeId
-        val scopeId = scopeName?.let { ScopesStateService.getInstance(project).getIdByScopeName(it) }
-         if (scopeId == null) selectedScopeName = scopeName
-        return@withContext scopeId
+  override suspend fun openEditScopesDialog(projectId: ProjectId, selectedScopeId: String?): Deferred<String?> {
+    val project = projectId.findProjectOrNullWithLogWarn(LOG) ?: return CompletableDeferred(value = null)
+    selectedScopeName = selectedScopeId
+    val deferred = CompletableDeferred<String?>()
+    val coroutineScope = ScopeModelService.getInstance(project).getCoroutineScope()
+    coroutineScope.launch(Dispatchers.EDT) {
+      WindowFocusFrontendService.getInstance().performActionWithFocus(true) {
+        val dialog = EditScopesDialog.showDialog(project, selectedScopeName)
+        if (dialog.isOK) {
+          val scopeName = dialog.selectedScope?.scopeId
+          val scopeId = scopeName?.let { ScopesStateService.getInstance(project).getIdByScopeName(it) }
+          if (scopeId == null) selectedScopeName = scopeName
+          deferred.complete(scopeId)
+        } else {
+          deferred.complete(null)
+        }
       }
-      return@withContext null
     }
+    return deferred
   }
 
   private fun subscribeToModelUpdates(model: AbstractScopeModel, modelId: String, project: Project): Flow<SearchScopesInfo> {
@@ -109,8 +118,8 @@ internal class ScopesModelApiImpl : ScopeModelApi {
 
 private class ScopesStateApiProvider : RemoteApiProvider {
   override fun RemoteApiProvider.Sink.remoteApis() {
-    remoteApi(remoteApiDescriptor<ScopeModelApi>()) {
-      ScopesModelApiImpl()
+    remoteApi(remoteApiDescriptor<ScopeModelRemoteApi>()) {
+      ScopesModelRemoteApiImpl()
     }
   }
 }

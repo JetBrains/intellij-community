@@ -23,6 +23,7 @@ jvm_library(
     "//platform/ide-core",
     "//platform/platform-api:ide",
     "//platform/analysis-api:analysis",
+    "//platform/platform-impl/rpc",
   ],
   runtime_deps = [
     ":backend_resources",

@@ -5,12 +5,13 @@ import com.intellij.platform.rpc.RemoteApiProviderService
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.remoteApiDescriptor
+import kotlinx.coroutines.Deferred
 import org.jetbrains.annotations.ApiStatus
 
 @Rpc
 @ApiStatus.Internal
 interface OpenFileChooserApi : RemoteApi<Unit> {
-  suspend fun chooseDirectory(projectId: ProjectId, initialDirectory: String): String?
+  suspend fun chooseDirectory(projectId: ProjectId, initialDirectory: String): Deferred<String?>
 
   companion object {
     @JvmStatic
