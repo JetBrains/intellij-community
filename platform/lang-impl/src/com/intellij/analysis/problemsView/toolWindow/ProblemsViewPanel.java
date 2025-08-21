@@ -14,6 +14,7 @@ import com.intellij.openapi.client.ClientProjectSession;
 import com.intellij.openapi.client.ClientSessionsUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
@@ -51,6 +52,7 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
+import static com.intellij.analysis.problemsView.toolWindow.ProblemsViewBundle.message;
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static com.intellij.openapi.application.ModalityState.stateForComponent;
 import static com.intellij.openapi.fileEditor.FileEditorManagerKeys.OPEN_IN_PREVIEW_TAB;
@@ -469,8 +471,30 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, U
   }
 
   protected void updatePreview() {
-    Node node = isNotNullAndSelected(getShowPreview()) ? getSelectedNode() : null;
-    myPreview.open(node == null ? null : node.getDescriptor());
+    if (!isNotNullAndSelected(getShowPreview())) {
+      myPreview.close();
+      return;
+    }
+    var nodes = getSelectedNodes();
+    if (nodes.length == 0) {
+      myPreview.close();
+      return;
+    }
+    @Nullable OpenFileDescriptor firstDescriptor = null;
+    for (Node node : nodes) {
+      var descriptor = node.getDescriptor();
+      if (descriptor == null) continue;
+      if (firstDescriptor == null) {
+        firstDescriptor = descriptor;
+      }
+      else {
+        if (!Objects.equals(firstDescriptor.getFile(), descriptor.getFile())) {
+          myPreview.showEmptyText(message("problems.view.preview.several.files"));
+          return;
+        }
+      }
+    }
+    myPreview.open(firstDescriptor);
   }
 
   private void invokeLater(@NotNull Runnable runnable) {
