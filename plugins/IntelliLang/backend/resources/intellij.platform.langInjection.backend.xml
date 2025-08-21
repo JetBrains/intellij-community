@@ -24,15 +24,6 @@
                          dynamic="true" id="IntelliLang.Configuration" instance="org.intellij.plugins.intelliLang.InjectionsSettingsUI"
                          nonDefaultProject="true"/>
 
-    <languageInjectionContributor id="TemporaryPlacesInjector"
-                                  implementationClass="org.intellij.plugins.intelliLang.inject.TemporaryPlacesInjector" language=""
-                                  order="before CommentLanguageInjector"/>
-    <languageInjectionContributor id="CommentLanguageInjector"
-                                  implementationClass="org.intellij.plugins.intelliLang.inject.CommentLanguageInjector"
-                                  order="before Default" language=""/>
-    <languageInjectionContributor id="Default" implementationClass="org.intellij.plugins.intelliLang.inject.DefaultLanguageInjector"
-                                  order="last" language=""/>
-
     <intentionAction>
       <className>org.intellij.plugins.intelliLang.inject.InjectLanguageAction</className>
       <bundleName>messages.LangBundle</bundleName>

@@ -26,6 +26,15 @@
     <applicationService serviceInterface="com.intellij.psi.impl.source.tree.injected.FallbackInjectionPerformer"
                         serviceImplementation="org.intellij.plugins.intelliLang.inject.DefaultLanguageInjectionPerformer"/>
 
+    <languageInjectionContributor id="TemporaryPlacesInjector"
+                                  implementationClass="org.intellij.plugins.intelliLang.inject.TemporaryPlacesInjector" language=""
+                                  order="before CommentLanguageInjector"/>
+    <languageInjectionContributor id="CommentLanguageInjector"
+                                  implementationClass="org.intellij.plugins.intelliLang.inject.CommentLanguageInjector"
+                                  order="before Default" language=""/>
+    <languageInjectionContributor id="Default" implementationClass="org.intellij.plugins.intelliLang.inject.DefaultLanguageInjector"
+                                  order="last" language=""/>
+
     <applicationService serviceInterface="org.intellij.plugins.intelliLang.Configuration"
                         serviceImplementation="org.intellij.plugins.intelliLang.Configuration$App"/>
     <projectService serviceInterface="org.intellij.plugins.intelliLang.Configuration"
