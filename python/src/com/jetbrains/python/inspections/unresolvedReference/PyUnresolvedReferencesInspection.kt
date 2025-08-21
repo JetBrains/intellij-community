@@ -38,6 +38,7 @@ import com.jetbrains.python.getEffectiveLanguageLevel
 import com.jetbrains.python.inspections.PyInspectionVisitor
 import com.jetbrains.python.inspections.PyUnresolvedReferenceQuickFixProvider
 import com.jetbrains.python.inspections.quickfix.*
+import com.jetbrains.python.module.PySourceRootDetectionService
 import com.jetbrains.python.packaging.PyPackageUtil
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.isNotInstalledAndCanBeInstalled
@@ -139,6 +140,10 @@ class PyUnresolvedReferencesInspection : PyUnresolvedReferencesInspectionBase() 
           continue
         }
 
+        if (isAlreadyHiddenSourceRoot(project, containingDirectory)) {
+          continue
+        }
+
         val context = fromModule(module)
           .copyWithoutStubs()
           .copyWithoutRoots()
@@ -153,7 +158,8 @@ class PyUnresolvedReferencesInspection : PyUnresolvedReferencesInspectionBase() 
         
         val resolveResult: List<PsiElement> = resolveInRoot(qname, containingDirectory, context)
         if (!resolveResult.isEmpty()) {
-          return PyMarkDirectoryAsSourceRootQuickFix(project, containingDirectory, module)
+          project.getService(PySourceRootDetectionService::class.java).onSourceRootDetected(containingDirectory)
+          return PyMarkDirectoryAsSourceRootQuickFix(project, containingDirectory)
         }
       }
       return null
@@ -163,6 +169,10 @@ class PyUnresolvedReferencesInspection : PyUnresolvedReferencesInspectionBase() 
       val model = ModuleRootManager.getInstance(module).modifiableModel
       val entry = MarkRootsManager.findContentEntry(model, virtualFile) ?: return false
       return entry.getSourceFolders().any { it.file == virtualFile }
+    }
+
+    private fun isAlreadyHiddenSourceRoot(project: Project, virtualFile: VirtualFile): Boolean {
+      return project.getService(PySourceRootDetectionService::class.java).isSourceRootHidden(virtualFile)
     }
 
     override fun getAddIgnoredIdentifierQuickFixes(qualifiedNames: List<QualifiedName>): List<LocalQuickFix> {

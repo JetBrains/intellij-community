@@ -621,7 +621,8 @@
     <statistics.notificationIdsHolder implementation="com.jetbrains.python.statistics.PythonInterpreterInstallationIdsHolder"/>
 
     <notificationGroup id="Python source root detection" displayType="STICKY_BALLOON" isLogByDefault="true" bundle="messages.PyBundle"
-                       key="python.source.root.detection.notification.group"/>
+                       key="python.source.root.detection.confirm.notification.group"/>
+    <editorNotificationProvider implementation="com.jetbrains.python.module.PySourceRootDetectedNotificationPanel"/>
 
     <toolWindow id="Python Packages" anchor="bottom"
                 icon="com.jetbrains.python.icons.PythonIcons.Python.PythonPackages"
