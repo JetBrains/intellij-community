@@ -352,7 +352,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private boolean myNeedToSelectPreviousChar;
 
   boolean myDocumentChangeInProgress;
-  private boolean myErrorStripeNeedsRepaint;
+  /**
+   * A text range of the current repaint request for {@link #myMarkupModel}.{@link EditorMarkupModelImpl#repaint(int, int)}.
+   * Offsets are packed into a long for atomicity, because range highlighters can be changed in BGT.
+   * (see {@link TextRangeScalarUtil} for how to unpack).
+   * -1 means repaint is not needed.
+   * */
+  private volatile long myErrorStripeNeedsRepaintRange = -1;
 
   private final List<EditorPopupHandler> myPopupHandlers = new ArrayList<>();
 
@@ -675,25 +681,16 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     fireFocusLost(e);
   }
 
+  private void queueErrorStipeRepaintRequest(int start, int end) {
+    long range = myErrorStripeNeedsRepaintRange;
+    long requested = TextRangeScalarUtil.toScalarRange(start, end);
+    // merge existing request with the new
+    myErrorStripeNeedsRepaintRange = TextRangeScalarUtil.union(range == -1 ? requested : range, requested);
+  }
   private void errorStripeMarkerChanged(@NotNull RangeHighlighterEx highlighter) {
-    if (myDocument.isInBulkUpdate() || myInlayModel.isInBatchMode()) return; // will be repainted later
-
-    if (myDocumentChangeInProgress) {
-      // postpone repaint request, as folding model can be in inconsistent state and so coordinate
-      // conversions might give incorrect results
-      myErrorStripeNeedsRepaint = true;
-      return;
-    }
-
-    // optimization: there is no need to repaint error stripe if the highlighter is invisible on it
-    if (myFoldingModel.isInBatchFoldingOperation()) {
-      myErrorStripeNeedsRepaint = true;
-    }
-    else {
-      int start = highlighter.getAffectedAreaStartOffset();
-      int end = highlighter.getAffectedAreaEndOffset();
-      EdtInvocationManager.invokeLaterIfNeeded(() -> myMarkupModel.repaint(start, end));
-    }
+    int start = highlighter.getAffectedAreaStartOffset();
+    int end = highlighter.getAffectedAreaEndOffset();
+    queueErrorStipeRepaintRequest(start, end);
   }
   private record HighlighterChange(int affectedStart,
                                    int affectedEnd,
@@ -1904,10 +1901,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
+  @RequiresEdt
   void invokeDelayedErrorStripeRepaint() {
-    if (myErrorStripeNeedsRepaint) {
-      myMarkupModel.repaint();
-      myErrorStripeNeedsRepaint = false;
+    long range = myErrorStripeNeedsRepaintRange;
+    if (range != -1) {
+      myMarkupModel.repaint(TextRangeScalarUtil.startOffset(range), TextRangeScalarUtil.endOffset(range));
+      myErrorStripeNeedsRepaintRange = -1;
     }
   }
 
@@ -1915,9 +1914,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myDocumentChangeInProgress = false;
     if (myDocument.isInBulkUpdate()) return;
 
-    if (myErrorStripeNeedsRepaint) {
-      myMarkupModel.repaint(e.getOffset(), e.getOffset() + e.getNewLength());
-      myErrorStripeNeedsRepaint = false;
+    if (myErrorStripeNeedsRepaintRange != -1) {
+      queueErrorStipeRepaintRequest(e.getOffset(), e.getOffset() + e.getNewLength());
+      invokeDelayedErrorStripeRepaint();
     }
 
     setMouseSelectionState(MOUSE_SELECTION_STATE_NONE);
