@@ -33,7 +33,9 @@ fun KCallable<*>.parametersSchema(): McpToolSchema {
   val definitions = mutableMapOf<String, JsonElement>()
   val requiredParameters = mutableSetOf<String>()
 
-  for (parameter in this.parameters) {
+  // probably passthrough something like `additionalImplicitParameters` from outsise
+  // but it isn't neccessary right now
+  for (parameter in this.parameters + projectPathParameter) {
     if (parameter.kind != KParameter.Kind.VALUE) continue
 
     val parameterName = parameter.name ?: error("Parameter has no name: ${parameter.name} in $this")
@@ -57,6 +59,15 @@ fun KCallable<*>.parametersSchema(): McpToolSchema {
   }
   return McpToolSchema.ofPropertiesMap(properties = parameterSchemas, requiredProperties = requiredParameters, definitions = definitions, definitionsPath = McpToolSchema.DEFAULT_DEFINITIONS_PATH)
 }
+
+private fun projectPathParameterStub(
+  @McpDescription("""
+    | The project path. Pass this value ALWAYS if you are aware of it. It reduces numbers of ambiguous calls. 
+    | In the case you know only the current working directory you can use it as the project path.
+    | If you're not aware about the project path you can ask user about it.""")
+  projectPath: String? = null) {}
+private val projectPathParameter: KParameter get() = ::projectPathParameterStub.parameters.single()
+internal val projectPathParameterName: String get() = projectPathParameter.name ?: error("Parameter has no name: ${projectPathParameter.name}")
 
 fun KCallable<*>.returnTypeSchema(): McpToolSchema? {
   val type = this.returnType

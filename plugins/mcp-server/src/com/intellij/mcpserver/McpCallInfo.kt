@@ -1,9 +1,14 @@
 package com.intellij.mcpserver
 
 import com.intellij.concurrency.IntelliJContextElement
+import com.intellij.mcpserver.impl.util.projectPathParameterName
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
-import org.jetbrains.ide.RestService.Companion.getLastFocusedOrOpenedProject
+import kotlinx.serialization.json.encodeToJsonElement
+import kotlinx.serialization.json.jsonObject
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
 
@@ -41,26 +46,44 @@ val CoroutineContext.clientInfo: ClientInfo get() = mcpCallInfo.clientInfo
 val CoroutineContext.currentToolDescriptor: McpToolDescriptor get() = mcpCallInfo.mcpToolDescriptor
 
 /**
- * MCP tool can resolve a project with this extension property. In the case of running some MCP clients (like Claude) by IJ infrastructure
- * the project path can be specified by some ways (env or headers), then it can be resolved when calling MCP tool
- *
- * If a project is not specified, it will try to get the last focused or opened project
- */
-val CoroutineContext.projectOrNull: Project?
-  get() = getProjectOrNull(lookForAnyProject = true)
-
-/**
  * The same as [projectOrNull], but throws an McpExpectedError if no project is open.
  */
 val CoroutineContext.project: Project
   get() = projectOrNull ?: throw McpExpectedError("No project opened")
 
-/**
- * The same as [projectOrNull], but allows to specify whether to look for any/last focused project or take only the one from the context element
+/*
+ * The project path can be specified by the several ways: env, headers or as via the implicit tool parameter `projectPathParameterName`
+ *
+ * If a project is not specified and the only project is opened it will be returned.
+ * If a project is not specified and multiple projects are opened it will throw an McpExpectedError with a list of open projects to suggest them to an LLM
  */
-fun CoroutineContext.getProjectOrNull(lookForAnyProject: Boolean): Project? {
-  val projectFromContext = mcpCallInfo.project
-  if (projectFromContext != null) return projectFromContext
-  if (!lookForAnyProject) return null
-  return getLastFocusedOrOpenedProject()
+val CoroutineContext.projectOrNull: Project?
+  get() {
+    val projectFromContext = mcpCallInfo.project
+    if (projectFromContext != null) return projectFromContext
+    val openProjects = ProjectManager.getInstance().openProjects
+    when (openProjects.size) {
+      0 -> return null
+      1 -> return openProjects[0]
+      else -> {
+        throw noSuitableProjectError("No exact project is specified while multiple projects are opened.")
+      }
+    }
+  }
+
+fun noSuitableProjectError(messagePrefix: String): McpExpectedError {
+  val openProjects = ProjectManager.getInstance().openProjects
+  val projects = OpenProjects(openProjects.mapNotNull { project -> project.basePath?.let { ProjectInfo(project.basePath.toString()) } })
+
+  return McpExpectedError(mcpErrorText = """$messagePrefix
+              | You may specify the project path via `$projectPathParameterName` parameter when calling a tool. 
+              | If you're aware of the current working directory you may pass it as `$projectPathParameterName`. 
+              | In the case when it's unobvious which project to use you have to ASK the USER about a project providing him a numbered list of the projects.
+              | Currently open projects: ${Json.encodeToString(projects)}""".trimMargin(),
+                         mcpErrorStructureContent = Json.encodeToJsonElement(projects).jsonObject)
 }
+
+@Serializable
+data class ProjectInfo(val path: String)
+@Serializable
+data class OpenProjects(val projects: List<ProjectInfo>)
