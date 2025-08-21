@@ -36,7 +36,8 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.atomic.AtomicReference
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
@@ -141,11 +142,14 @@ class AutoImportProjectTracker(
     }
   }
 
-  private val currentActivity = AtomicReference<ProjectInitializationDiagnosticService.ActivityTracker?>()
+  private val currentActivityLock = ReentrantLock()
+  private var currentActivity: ProjectInitializationDiagnosticService.ActivityTracker? = null
 
   private fun schedule(priority: Int, dispatchIterations: Int, action: () -> Unit) {
-    currentActivity.updateAndGet {
-      it ?: ProjectInitializationDiagnosticService.registerTracker(project, "AutoImportProjectTracker.schedule")
+    currentActivityLock.withLock { 
+      if (currentActivity == null) {
+        currentActivity = ProjectInitializationDiagnosticService.registerTracker(project, "AutoImportProjectTracker.schedule")
+      }
     }
     dispatcher.queueTracked(PriorityEatUpdate(priority) {
       project.trackActivityBlocking(ExternalSystemActivityKey) {
@@ -155,7 +159,10 @@ class AutoImportProjectTracker(
         else {
           action()
           if (dispatcher.isEmpty) {
-            currentActivity.getAndSet(null)?.activityFinished()
+            currentActivityLock.withLock {
+              currentActivity?.activityFinished()
+              currentActivity = null
+            }
           }
         }
       }
