@@ -35,6 +35,7 @@ jvm_library(
     "//platform/xdebugger-impl/rpc",
     "//platform/projectModel-api:projectModel",
     "//platform/util/jdom",
+    "//platform/project/shared:project",
   ],
   runtime_deps = [":backend_resources"]
 )

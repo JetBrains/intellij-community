@@ -34,6 +34,7 @@ jvm_library(
     "//platform/util/coroutines",
     "//platform/xdebugger-impl/rpc",
     "//platform/xdebugger-impl/shared",
+    "//platform/project/shared:project",
   ],
   runtime_deps = [":shared_resources"]
 )

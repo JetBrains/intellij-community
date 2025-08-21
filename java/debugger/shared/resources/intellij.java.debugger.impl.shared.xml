@@ -75,5 +75,10 @@
       <add-to-group group-id="XDebugger.ValueGroup" anchor="after" relative-to-action="Debugger.ShowTypes"/>
       <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Bottom.Section.Frontend" anchor="after" relative-to-action="Debugger.ShowTypes"/>
     </action>
+    <action id="Debugger.CustomizeContextView" class="com.intellij.java.debugger.impl.shared.actions.CustomizeContextViewAction">
+      <add-to-group group-id="XDebugger.Variables.Tree.Popup" anchor="last"/>
+      <add-to-group group-id="XDebugger.Watches.Tree.Popup" anchor="last"/>
+      <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Bottom.Section.Frontend" anchor="last"/>
+    </action>
   </actions>
 </idea-plugin>

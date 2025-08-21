@@ -2,6 +2,7 @@
 package com.intellij.java.debugger.impl.backend
 
 import com.intellij.debugger.actions.CreateRendererActionUtils
+import com.intellij.debugger.actions.CustomizeContextViewActionUtils
 import com.intellij.debugger.engine.JavaDebugProcess
 import com.intellij.debugger.engine.JavaValue
 import com.intellij.debugger.memory.action.CalculateRetainedSizeActionUtil
@@ -10,6 +11,8 @@ import com.intellij.debugger.memory.filtering.ClassInstancesProvider
 import com.intellij.debugger.memory.ui.InstancesWindow
 import com.intellij.java.debugger.impl.shared.rpc.JavaDebuggerLuxActionsApi
 import com.intellij.openapi.application.EDT
+import com.intellij.platform.project.ProjectId
+import com.intellij.platform.project.findProject
 import com.intellij.xdebugger.impl.rpc.XValueId
 import com.intellij.xdebugger.impl.rpc.models.BackendXValueModel
 import com.sun.jdi.ReferenceType
@@ -43,6 +46,13 @@ internal class BackendJavaDebuggerLuxActionsApi : JavaDebuggerLuxActionsApi {
     val javaValue = xValueModel.xValue as? JavaValue ?: return
     withContext(Dispatchers.EDT) {
       CreateRendererActionUtils.showCreateRendererDialog(javaValue)
+    }
+  }
+
+  override suspend fun showCustomizeDataViewsDialog(projectId: ProjectId) {
+    val project = projectId.findProject()
+    withContext(Dispatchers.EDT) {
+      CustomizeContextViewActionUtils.showDialog(project)
     }
   }
 }
