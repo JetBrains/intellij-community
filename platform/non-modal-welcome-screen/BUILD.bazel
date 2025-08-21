@@ -1,0 +1,18 @@
+### auto-generated section `build intellij.platform.ide.nonModalWelcomeScreen` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "non-modal-welcome-screen_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "non-modal-welcome-screen",
+  module_name = "intellij.platform.ide.nonModalWelcomeScreen",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  runtime_deps = [":non-modal-welcome-screen_resources"],
+  plugins = ["@lib//:compose-plugin"]
+)
+### auto-generated section `build intellij.platform.ide.nonModalWelcomeScreen` end

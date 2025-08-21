@@ -532,6 +532,7 @@ platform/navbar/shared
 platform/navbar/testFramework
 platform/new-ui-onboarding
 platform/new-users-onboarding
+platform/non-modal-welcome-screen
 platform/object-serializer
 platform/observable
 platform/platform-api
