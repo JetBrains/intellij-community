@@ -1327,7 +1327,9 @@ public final class PyTypeChecker {
           return selfType;
         }
         return PyTypeUtil.toStream(qualifierType)
-          .filter(memberType -> match(selfScopeClassType, memberType, context))
+          // Hack! Qualifier type is always an instance now. Needed to support type[Self]
+          .filter(memberType -> match(selfScopeClassType.toInstance(), memberType, context))
+          .map(qType -> qType instanceof PyClassType qualifierClassType && selfType.isDefinition() ? qualifierClassType.toClass() : qType)
           .collect(PyTypeUtil.toUnion(qualifierType));
       }
 

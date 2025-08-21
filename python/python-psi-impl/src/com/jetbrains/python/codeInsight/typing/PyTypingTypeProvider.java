@@ -1053,7 +1053,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
       PyClassType scopeClassType = as(containingClass.getType(context.getTypeContext()), PyClassType.class);
       if (scopeClassType == null) return null;
 
-      return Ref.create(new PySelfType(scopeClassType));
+      return Ref.create(new PySelfType((PyClassType)scopeClassType.toInstance()));
     }
     return null;
   }
@@ -1124,6 +1124,10 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
     final PyTypeVarType typeVar = as(type, PyTypeVarType.class);
     if (typeVar != null && !typeVar.isDefinition()) {
       return Ref.create(typeVar.toClass());
+    }
+    final PySelfType selfType = as(type, PySelfType.class);
+    if (selfType != null) {
+      return Ref.create(new PySelfType((PyClassType)selfType.getScopeClassType().toClass()));
     }
     // Represent Type[Union[str, int]] internally as Union[Type[str], Type[int]]
     if (type instanceof PyUnionType unionType &&

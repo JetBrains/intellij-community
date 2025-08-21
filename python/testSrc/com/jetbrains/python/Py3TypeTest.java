@@ -4337,6 +4337,19 @@ public class Py3TypeTest extends PyTestCase {
       """);
   }
 
+  // PY-82945
+  public void testTypeSelf() {
+    doTest("type[Test]", """
+      from typing import Self, classmethod
+      class Test:
+          @classmethod
+          def foo(cls) -> type[Self]:
+              return cls
+      
+      expr = Test.foo()
+      """);
+  }
+
   private void doTest(final String expectedType, final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);

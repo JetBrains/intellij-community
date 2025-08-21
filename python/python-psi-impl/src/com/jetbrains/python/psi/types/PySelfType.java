@@ -17,7 +17,7 @@ public final class PySelfType implements PyTypeParameterType {
   private final @NotNull PyClassType myScopeClassType;
 
   public PySelfType(@NotNull PyClassType scopeClassType) {
-    myScopeClassType = (PyClassType)scopeClassType.toInstance();
+    myScopeClassType = scopeClassType;
   }
 
   @Override
@@ -47,6 +47,13 @@ public final class PySelfType implements PyTypeParameterType {
 
   public @NotNull PyClassLikeType getScopeClassType() {
     return myScopeClassType;
+  }
+
+  /**
+   * @return true if type[Self], false otherwise
+   */
+  public boolean isDefinition() {
+    return myScopeClassType.isDefinition();
   }
 
   @Override
