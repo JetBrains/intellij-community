@@ -2229,85 +2229,85 @@ jvm_import(
 java_library(
   name = "io-mockk",
   exports = [
-    ":mockk-1_13_12_http_import",
-    ":mockk-dsl-1_13_12_http_import",
-    ":mockk-agent-1_13_12_http_import",
-    ":mockk-agent-api-1_13_12_http_import",
-    ":mockk-core-1_13_12_http_import",
+    ":mockk-1_14_5_http_import",
+    ":mockk-dsl-1_14_5_http_import",
+    ":mockk-agent-1_14_5_http_import",
+    ":mockk-agent-api-1_14_5_http_import",
+    ":mockk-core-1_14_5_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "mockk-1_13_12_http_import",
-  jar = "@mockk-1_13_12_http//file",
-  source_jar = "@mockk-1_13_12-sources_http//file"
+  name = "mockk-1_14_5_http_import",
+  jar = "@mockk-1_14_5_http//file",
+  source_jar = "@mockk-1_14_5-sources_http//file"
 )
 
 jvm_import(
-  name = "mockk-dsl-1_13_12_http_import",
-  jar = "@mockk-dsl-1_13_12_http//file",
-  source_jar = "@mockk-dsl-1_13_12-sources_http//file"
+  name = "mockk-dsl-1_14_5_http_import",
+  jar = "@mockk-dsl-1_14_5_http//file",
+  source_jar = "@mockk-dsl-1_14_5-sources_http//file"
 )
 
 jvm_import(
-  name = "mockk-agent-1_13_12_http_import",
-  jar = "@mockk-agent-1_13_12_http//file",
-  source_jar = "@mockk-agent-1_13_12-sources_http//file"
+  name = "mockk-agent-1_14_5_http_import",
+  jar = "@mockk-agent-1_14_5_http//file",
+  source_jar = "@mockk-agent-1_14_5-sources_http//file"
 )
 
 jvm_import(
-  name = "mockk-agent-api-1_13_12_http_import",
-  jar = "@mockk-agent-api-1_13_12_http//file",
-  source_jar = "@mockk-agent-api-1_13_12-sources_http//file"
+  name = "mockk-agent-api-1_14_5_http_import",
+  jar = "@mockk-agent-api-1_14_5_http//file",
+  source_jar = "@mockk-agent-api-1_14_5-sources_http//file"
 )
 
 jvm_import(
-  name = "mockk-core-1_13_12_http_import",
-  jar = "@mockk-core-1_13_12_http//file",
-  source_jar = "@mockk-core-1_13_12-sources_http//file"
+  name = "mockk-core-1_14_5_http_import",
+  jar = "@mockk-core-1_14_5_http//file",
+  source_jar = "@mockk-core-1_14_5-sources_http//file"
 )
 
 java_library(
   name = "io-mockk-jvm",
   exports = [
-    ":mockk-jvm-1_13_12_http_import",
-    ":mockk-dsl-jvm-1_13_12_http_import",
-    ":mockk-agent-jvm-1_13_12_http_import",
-    ":mockk-agent-api-jvm-1_13_12_http_import",
-    ":mockk-core-jvm-1_13_12_http_import",
+    ":mockk-jvm-1_14_5_http_import",
+    ":mockk-dsl-jvm-1_14_5_http_import",
+    ":mockk-agent-jvm-1_14_5_http_import",
+    ":mockk-agent-api-jvm-1_14_5_http_import",
+    ":mockk-core-jvm-1_14_5_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "mockk-jvm-1_13_12_http_import",
-  jar = "@mockk-jvm-1_13_12_http//file",
-  source_jar = "@mockk-jvm-1_13_12-sources_http//file"
+  name = "mockk-jvm-1_14_5_http_import",
+  jar = "@mockk-jvm-1_14_5_http//file",
+  source_jar = "@mockk-jvm-1_14_5-sources_http//file"
 )
 
 jvm_import(
-  name = "mockk-dsl-jvm-1_13_12_http_import",
-  jar = "@mockk-dsl-jvm-1_13_12_http//file",
-  source_jar = "@mockk-dsl-jvm-1_13_12-sources_http//file"
+  name = "mockk-dsl-jvm-1_14_5_http_import",
+  jar = "@mockk-dsl-jvm-1_14_5_http//file",
+  source_jar = "@mockk-dsl-jvm-1_14_5-sources_http//file"
 )
 
 jvm_import(
-  name = "mockk-agent-jvm-1_13_12_http_import",
-  jar = "@mockk-agent-jvm-1_13_12_http//file",
-  source_jar = "@mockk-agent-jvm-1_13_12-sources_http//file"
+  name = "mockk-agent-jvm-1_14_5_http_import",
+  jar = "@mockk-agent-jvm-1_14_5_http//file",
+  source_jar = "@mockk-agent-jvm-1_14_5-sources_http//file"
 )
 
 jvm_import(
-  name = "mockk-agent-api-jvm-1_13_12_http_import",
-  jar = "@mockk-agent-api-jvm-1_13_12_http//file",
-  source_jar = "@mockk-agent-api-jvm-1_13_12-sources_http//file"
+  name = "mockk-agent-api-jvm-1_14_5_http_import",
+  jar = "@mockk-agent-api-jvm-1_14_5_http//file",
+  source_jar = "@mockk-agent-api-jvm-1_14_5-sources_http//file"
 )
 
 jvm_import(
-  name = "mockk-core-jvm-1_13_12_http_import",
-  jar = "@mockk-core-jvm-1_13_12_http//file",
-  source_jar = "@mockk-core-jvm-1_13_12-sources_http//file"
+  name = "mockk-core-jvm-1_14_5_http_import",
+  jar = "@mockk-core-jvm-1_14_5_http//file",
+  source_jar = "@mockk-core-jvm-1_14_5-sources_http//file"
 )
 
 jvm_import(
