@@ -10,7 +10,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.project.projectId
 import com.intellij.platform.project.projectIdOrNullWithLogError
-import com.intellij.platform.scopes.ScopeModelApi
+import com.intellij.platform.scopes.ScopeModelRemoteApi
 import com.intellij.platform.util.coroutines.childScope
 import fleet.rpc.client.RpcTimeoutException
 import kotlinx.coroutines.CoroutineScope
@@ -31,7 +31,7 @@ private class ScopeModelServiceImpl(private val project: Project, private val co
     itemsLoadingJob = coroutineScope.childScope("ScopesStateService.subscribeToScopeStates").launch {
       LOG.performRpcWithRetries {
         val scopesFlow =
-          ScopeModelApi.getInstance().createModelAndSubscribe(project.projectId(), modelId, filterConditionType)
+          ScopeModelRemoteApi.getInstance().createModelAndSubscribe(project.projectId(), modelId, filterConditionType)
         if (scopesFlow == null) {
           LOG.error("Failed to subscribe to model updates for modelId: $modelId")
           onScopesUpdate(null, null)
@@ -60,15 +60,19 @@ private class ScopeModelServiceImpl(private val project: Project, private val co
   override fun openEditScopesDialog(selectedScopeId: String?, onFinish: (selectedScopeId: String?) -> Unit) {
     val projectId = project.projectIdOrNullWithLogError(LOG) ?: return
     editScopesJob = coroutineScope.launch {
-      try {
+      val deferred = try {
         val selectedScopeName = selectedScopeId?.let { ScopesStateService.getInstance(project).getScopeNameById(selectedScopeId) }
-        val scopeId = ScopeModelApi.getInstance().openEditScopesDialog(projectId, selectedScopeName)
-        onFinish(scopeId)
+        ScopeModelRemoteApi.getInstance().openEditScopesDialog(projectId, selectedScopeName)
       }
       catch (e: RpcTimeoutException) {
         LOG.warn("Failed to edit scopes", e)
-        onFinish(null)
+        null
       }
+      onFinish(deferred?.await())
     }
+  }
+
+  override fun getCoroutineScope(): CoroutineScope {
+    return coroutineScope
   }
 }

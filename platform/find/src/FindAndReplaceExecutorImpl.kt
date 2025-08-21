@@ -21,7 +21,7 @@ import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.platform.project.projectId
-import com.intellij.platform.scopes.ScopeModelApi
+import com.intellij.platform.scopes.ScopeModelRemoteApi
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.usages.FindUsagesProcessPresentation
 import com.intellij.usages.UsageInfo2UsageAdapter
@@ -149,7 +149,7 @@ open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : Find
   override fun performScopeSelection(scopeId: String, scopesModelId: String, project: Project) {
     selectScopeJob = coroutineScope.launch {
       try {
-       ScopeModelApi.getInstance().performScopeSelection(scopeId, scopesModelId,project.projectId())
+       ScopeModelRemoteApi.getInstance().performScopeSelection(scopeId, scopesModelId, project.projectId())
       }
       catch (e: RpcTimeoutException) {
         LOG.warn("Failed to select scope", e)

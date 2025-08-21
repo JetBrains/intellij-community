@@ -73,6 +73,7 @@ public final class FindPopupDirectoryChooser extends JPanel {
     myDirectoryComboBox.addActionListener(restartSearchListener);
 
     FixedSizeButton mySelectDirectoryButton = new FixedSizeButton(myDirectoryComboBox);
+    mySelectDirectoryButton.setFocusable(true);
     TextFieldWithBrowseButton.MyDoClickAction.addTo(mySelectDirectoryButton, myDirectoryComboBox);
     mySelectDirectoryButton.setMargin(JBInsets.emptyInsets());
 
@@ -106,10 +107,8 @@ public final class FindPopupDirectoryChooser extends JPanel {
       });
     } else {
       mySelectDirectoryButton.addActionListener(__ -> {
-        myFindPopupPanel.getCanClose().set(false);
         OpenFileChooserService.getInstance().chooseDirectory(myProject, getDirectory(), (result) -> {
           ApplicationManager.getApplication().invokeLater(() -> {
-            myFindPopupPanel.getCanClose().set(true);
             IdeFocusManager.getInstance(myProject).requestFocus(myDirectoryComboBox.getEditor().getEditorComponent(), true);
             if (result == null) return;
             myHelper.getModel().setDirectoryName(result);

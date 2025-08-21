@@ -7,22 +7,23 @@ import com.intellij.platform.rpc.RemoteApiProviderService
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.remoteApiDescriptor
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 @Rpc
-interface ScopeModelApi : RemoteApi<Unit> {
+interface ScopeModelRemoteApi : RemoteApi<Unit> {
   suspend fun createModelAndSubscribe(projectId: ProjectId, modelId: String, filterConditionType: ScopesFilterConditionType): Flow<SearchScopesInfo>?
 
-  suspend fun openEditScopesDialog(projectId: ProjectId, selectedScopeId: String?): String?
+  suspend fun openEditScopesDialog(projectId: ProjectId, selectedScopeId: String?): Deferred<String?>
 
   suspend fun performScopeSelection(scopeId: String, modelId: String, projectId: ProjectId): Boolean
 
   companion object {
     @JvmStatic
-    suspend fun getInstance(): ScopeModelApi {
-      return RemoteApiProviderService.resolve(remoteApiDescriptor<ScopeModelApi>())
+    suspend fun getInstance(): ScopeModelRemoteApi {
+      return RemoteApiProviderService.resolve(remoteApiDescriptor<ScopeModelRemoteApi>())
     }
   }
 }

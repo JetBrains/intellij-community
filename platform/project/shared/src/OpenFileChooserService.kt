@@ -21,15 +21,15 @@ class OpenFileChooserService(val coroutineScope: CoroutineScope) {
 
   fun chooseDirectory(project: Project, initialDirectory: String, onResult: (@NlsSafe String?) -> Any?) {
     chooseDirectoryJob = coroutineScope.launch {
-      try {
-        val result = OpenFileChooserApi.getInstance().chooseDirectory(project.projectId(), initialDirectory)
-        onResult(result)
+      val deferred = try {
+         OpenFileChooserApi.getInstance().chooseDirectory(project.projectId(), initialDirectory)
       }
       catch (e: RpcTimeoutException) {
         LOG.warn("Directory selection failed", e)
-        onResult(null)
         chooseDirectoryJob?.cancel()
+        null
       }
+      onResult(deferred?.await())
     }
   }
 
