@@ -26,8 +26,8 @@ sealed interface McpToolCallResultContent {
 
 class McpToolCallResult(val content: Array<McpToolCallResultContent>, val structuredContent: JsonObject? = null, val isError: Boolean = false) {
   companion object {
-    fun error(errorMessage: String): McpToolCallResult = McpToolCallResult(content = arrayOf(McpToolCallResultContent.Text(errorMessage)),
-                                                                           structuredContent = null,
+    fun error(errorMessage: String, structuredContent: JsonObject? = null): McpToolCallResult = McpToolCallResult(content = arrayOf(McpToolCallResultContent.Text(errorMessage)),
+                                                                           structuredContent = structuredContent,
                                                                            isError = true)
     fun text(text: String, structuredContent: JsonObject? = null): McpToolCallResult = McpToolCallResult(content = arrayOf(McpToolCallResultContent.Text(text)),
                                                                                                          structuredContent = structuredContent)
@@ -39,11 +39,11 @@ class McpToolCallResult(val content: Array<McpToolCallResultContent>, val struct
   }
 }
 
-open class McpExpectedError(val mcpErrorText: String) : Exception(mcpErrorText)
+open class McpExpectedError(val mcpErrorText: String, val mcpErrorStructureContent: JsonObject? = null) : Exception(mcpErrorText)
 
 /**
  * Throws [McpExpectedError] with [message]
  *
  * The exception is caught by MCP server and returned to client as a well-rendered error
  */
-fun mcpFail(message: String): Nothing = throw McpExpectedError(message)
+fun mcpFail(message: String, mcpErrorStructureContent: JsonObject? = null): Nothing = throw McpExpectedError(message, mcpErrorStructureContent)
