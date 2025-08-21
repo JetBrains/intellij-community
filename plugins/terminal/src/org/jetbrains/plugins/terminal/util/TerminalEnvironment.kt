@@ -59,10 +59,8 @@ object TerminalEnvironment {
     userDefinedEnvData: EnvironmentVariablesData?,
     envs: MutableMap<String, String>,
   ) {
-    val envNamesToPass = mutableListOf<String>().apply {
-      if (userDefinedEnvData != null) {
-        addAll(userDefinedEnvData.envs.keys)
-      }
+    val envNamesToPass = buildList {
+      addAll(userDefinedEnvData?.envs?.keys.orEmpty())
       add(TERMINAL_EMULATOR)
       add(TERM_SESSION_ID)
     }.distinctBy { it.lowercase() }
