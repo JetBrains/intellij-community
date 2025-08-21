@@ -42,6 +42,16 @@ class McpToolCallResult(val content: Array<McpToolCallResultContent>, val struct
 open class McpExpectedError(val mcpErrorText: String) : Exception(mcpErrorText)
 
 /**
+ * Exception thrown when a project with the specified name is not found
+ */
+class ProjectNotFoundException(message: String) : McpExpectedError(message)
+
+/**
+ * Exception thrown when multiple projects have the same name, making resolution ambiguous
+ */
+class AmbiguousProjectNameException(message: String) : McpExpectedError(message)
+
+/**
  * Throws [McpExpectedError] with [message]
  *
  * The exception is caught by MCP server and returned to client as a well-rendered error

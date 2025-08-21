@@ -201,9 +201,13 @@ class FileToolset : McpToolset {
   suspend fun open_file_in_editor(
     @McpDescription(Constants.RELATIVE_PATH_IN_PROJECT_DESCRIPTION)
     filePath: String,
+    @McpDescription(Constants.PROJECT_NAME_DESCRIPTION)
+    projectName: String? = null,
+    @McpDescription(Constants.PROJECT_PATH_DESCRIPTION)
+    projectPath: String? = null,
   ) {
     currentCoroutineContext().reportToolActivity(McpServerBundle.message("tool.activity.opening.file", filePath))
-    val project = currentCoroutineContext().project
+    val project = currentCoroutineContext().getProjectByNameOrPath(projectName, projectPath)
     val resolvedPath = project.resolveInProject(filePath)
 
     val file = LocalFileSystem.getInstance().findFileByNioFile(resolvedPath)
@@ -253,9 +257,13 @@ class FileToolset : McpToolset {
     text: String? = null,
     @McpDescription("Whether to overwrite an existing file if exists. If false, an exception is thrown in case of a conflict.")
     overwrite: Boolean = false,
+    @McpDescription(Constants.PROJECT_NAME_DESCRIPTION)
+    projectName: String? = null,
+    @McpDescription(Constants.PROJECT_PATH_DESCRIPTION)
+    projectPath: String? = null,
   ) {
     currentCoroutineContext().reportToolActivity(McpServerBundle.message("tool.activity.creating.file", pathInProject))
-    val project = currentCoroutineContext().project
+    val project = currentCoroutineContext().getProjectByNameOrPath(projectName, projectPath)
 
     val path = project.resolveInProject(pathInProject)
     try {

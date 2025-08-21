@@ -39,9 +39,14 @@ class ExecutionToolset : McpToolset {
     |
     |Use this tool to query the list of available run configurations in the current project.
   """)
-  suspend fun get_run_configurations(): RunConfigurationsList {
+  suspend fun get_run_configurations(
+    @McpDescription(Constants.PROJECT_NAME_DESCRIPTION)
+    projectName: String? = null,
+    @McpDescription(Constants.PROJECT_PATH_DESCRIPTION)
+    projectPath: String? = null,
+  ): RunConfigurationsList {
     currentCoroutineContext().reportToolActivity(McpServerBundle.message("tool.activity.getting.run.configurations"))
-    val project = currentCoroutineContext().project
+    val project = currentCoroutineContext().getProjectByNameOrPath(projectName, projectPath)
     val runManager = RunManager.getInstance(project)
 
     val configurations = readAction {
@@ -75,9 +80,13 @@ class ExecutionToolset : McpToolset {
     maxLinesCount: Int = Constants.MAX_LINES_COUNT_VALUE,
     @McpDescription(Constants.TRUNCATE_MODE_DESCRIPTION)
     truncateMode: TruncateMode = Constants.TRUCATE_MODE_VALUE,
+    @McpDescription(Constants.PROJECT_NAME_DESCRIPTION)
+    projectName: String? = null,
+    @McpDescription(Constants.PROJECT_PATH_DESCRIPTION)
+    projectPath: String? = null,
     ): RunConfigurationResult {
     currentCoroutineContext().reportToolActivity(McpServerBundle.message("tool.activity.executing.run.configuration", configurationName))
-    val project = currentCoroutineContext().project
+    val project = currentCoroutineContext().getProjectByNameOrPath(projectName, projectPath)
     val runManager = RunManager.getInstance(project)
 
     val runnerAndConfigurationSettings = readAction { runManager.allSettings.find { it.name == configurationName } } ?: mcpFail("Run configuration with name '$configurationName' not found.")
