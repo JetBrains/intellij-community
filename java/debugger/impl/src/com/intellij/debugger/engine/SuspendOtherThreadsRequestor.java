@@ -214,6 +214,10 @@ public class SuspendOtherThreadsRequestor implements FilteredRequestor {
   private static boolean processSuspendAll(@NotNull SuspendContextImpl suspendContext,
                                            @NotNull SuspendContextImpl originalContext,
                                            @NotNull Function<@NotNull SuspendContextImpl, Boolean> performOnSuspendAll) {
+    if (suspendContext.getSuspendPolicy() != EventRequest.SUSPEND_ALL) {
+      suspendContext.getDebugProcess().logError("Expected here suspend all context, but got " + suspendContext);
+    }
+
     // Need to 'replace' the originalContext (single-thread suspend context which passed filtering) with this one.
     suspendContext.resetThread(Objects.requireNonNull(originalContext.getEventThread()));
 

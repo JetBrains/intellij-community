@@ -807,8 +807,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
     }
 
     boolean noStandardSuspendNeeded;
-    List<SuspendContextImpl> suspendAllContexts =
-      ContainerUtil.filter(suspendManager.getEventContexts(), c -> c.getSuspendPolicy() == EventRequest.SUSPEND_ALL);
+    List<SuspendContextImpl> suspendAllContexts = suspendManager.getSuspendAllContexts();
     if (!suspendAllContexts.isEmpty()) {
       logSuspendContext(suspendContext, () -> "join with suspend-all context");
       if (suspendAllContexts.size() > 1) {
@@ -820,17 +819,18 @@ public class DebugProcessEvents extends DebugProcessImpl {
       if (suspendManager.myExplicitlyResumedThreads.contains(threadProxy)) {
         for (SuspendContextImpl context : suspendManager.getEventContexts()) {
           if (context.getSuspendPolicy() == EventRequest.SUSPEND_ALL && !context.suspends(threadProxy)) {
+      SuspendContextImpl firstSuspendAllContext = suspendAllContexts.get(0);
             suspendManager.suspendThread(context, threadProxy);
           }
         }
         suspendManager.myExplicitlyResumedThreads.remove(threadProxy);
         suspendManager.scheduleResume(suspendContext);
-        SuspendManagerUtil.switchToThreadInSuspendAllContext(suspendAllContexts.get(0), threadProxy);
+        SuspendManagerUtil.switchToThreadInSuspendAllContext(firstSuspendAllContext, threadProxy);
       }
       else {
         // Already stopped, so this is "remaining" event. Need to resume the event.
         List<SuspendContextImpl> suspendAllSwitchContexts =
-          ContainerUtil.filter(suspendManager.getEventContexts(), c -> c.mySuspendAllSwitchedContext);
+          ContainerUtil.filter(suspendAllContexts, c -> c.mySuspendAllSwitchedContext);
         if (suspendAllSwitchContexts.size() != 1) {
           debugProcess.logError("Requires just one suspend all switch context, but have: " + suspendAllSwitchContexts);
         }
