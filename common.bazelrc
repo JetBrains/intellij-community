@@ -6,6 +6,12 @@
 
 ### --- ###
 
+# Disk cache
+common --experimental_disk_cache_gc_max_size=32G --experimental_disk_cache_gc_max_age=28d
+common:macos --disk_cache=~/Library/Caches/JetBrains/monorepo-bazel-cache
+common:linux --disk_cache=~/.cache/JetBrains/monorepo-bazel-cache
+common:windows --disk_cache=~/AppData/Local/Temp/JetBrains/monorepo-bazel-cache
+
 ### NOTE on --experimental_sibling_repository_layout
 ### The option was removed due to https://github.com/bazelbuild/bazel/issues/26361
 ### One experimental option less and also it looks like it won't enabled by default in the future
