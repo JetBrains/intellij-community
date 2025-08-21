@@ -22,15 +22,24 @@ abstract class KotlinGradleGotoDeclarationTest : AbstractKotlinGradleNavigationT
         super.setUp()
     }
 
-    override fun tearDown() {
-        Registry.get("kotlin.scripting.index.dependencies.sources").resetToDefault()
+    override fun tearDown() = try {
         super.tearDown()
+    } finally {
+        Registry.get("kotlin.scripting.index.dependencies.sources").resetToDefault()
     }
 
     @ParameterizedTest
     @BaseGradleVersionSource
     @TestMetadata("projectDependency.test")
     fun testProjectDependency(gradleVersion: GradleVersion) {
+        verifyNavigationFromCaretToExpected(gradleVersion)
+    }
+
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    @TestMetadata("sdkDependencySources.test")
+    fun testSdkDependencySources(gradleVersion: GradleVersion) {
         verifyNavigationFromCaretToExpected(gradleVersion)
     }
 

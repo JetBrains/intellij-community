@@ -22,6 +22,8 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <highlightVisitor implementation="org.jetbrains.kotlin.idea.core.script.k2.highlighting.KotlinScriptHighlightingVisitor"/>
+    <psi.clsCustomNavigationPolicy
+            implementation="org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptDependencySourceNavigationPolicyForJavaClasses"/>
 
     <useScopeEnlarger implementation="org.jetbrains.kotlin.idea.core.script.k2.navigation.KotlinScriptUseScopeEnlarger"/>
 
