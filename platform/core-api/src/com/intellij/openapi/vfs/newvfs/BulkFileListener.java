@@ -30,10 +30,10 @@ import java.util.List;
  */
 public interface BulkFileListener {
   @RequiresWriteLock
-  // currently executed on EDT
+  // depending on its registration, can be executed either only on EDT or on any thread
   default void before(@NotNull List<? extends @NotNull VFileEvent> events) { }
 
   @RequiresWriteLock
-  // currently executed on EDT
+  // depending on its registration, can be executed either only on EDT or on any thread
   default void after(@NotNull List<? extends @NotNull VFileEvent> events) { }
 }
