@@ -58,6 +58,10 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
             "Missing 'kotlinPluginVersionParam'"
         }.version
 
+    override var gradleVersion: String
+        get() = super.gradleVersion
+        set(_) {}
+
     override fun setUp() {
         super.setUp()
         setupSystemProperties()

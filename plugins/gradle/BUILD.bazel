@@ -168,6 +168,8 @@ jvm_library(
     "//platform/smRunner:smRunner_test_lib",
     "@lib//:gson",
     "@lib//:guava",
+    "//platform/eel",
+    "//platform/eel-provider",
   ],
   exports = ["//platform/external-system-api/testFramework"],
   runtime_deps = [
