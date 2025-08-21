@@ -116,11 +116,6 @@ class GradleIdeaModelHolder(
     return deserializedModel
   }
 
-  fun <T : Any> addProjectModel(project: ProjectModel, modelClass: Class<T>, model: T) {
-    val modelId = getProjectModelId(project, modelClass)
-    models[modelId] = model
-  }
-
   fun addState(state: GradleModelHolderState) {
     val rootBuild = state.rootBuild
     val nestedBuilds = state.nestedBuilds
