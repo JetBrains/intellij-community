@@ -137,7 +137,7 @@ class GoWelcomeScreenNewFileDialog private constructor(
 
     if (builder.showNameField && newName.isEmpty()) {
       Messages.showErrorDialog(
-        project,
+        project, 
         NonModalWelcomeScreenBundle.message("go.non.modal.welcome.screen.create.file.dialog.no.name.specified"),
         NonModalWelcomeScreenBundle.message("go.non.modal.welcome.screen.create.file.dialog.error.title")
       )

@@ -2,14 +2,20 @@ package com.intellij.platform.ide.nonModalWelcomeScreen.rightTab
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
-import com.goide.statistics.GoWelcomeScreenTabUsageCollector
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
+import com.intellij.platform.ide.nonModalWelcomeScreen.GoWelcomeScreenTabUsageCollector
 import com.intellij.platform.ide.nonModalWelcomeScreen.NonModalWelcomeScreenBundle
-import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.features.*
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.icon.IconKey
 import org.jetbrains.jewel.ui.theme.colorPalette
+
+internal const val DOCKER_TOOLWINDOW_FEATURE_KEY = "docker.toolwindow"
+internal const val DATABASE_TOOLWINDOW_FEATURE_KEY = "database.toolwindow"
+internal const val KUBERNETES_TOOLWINDOW_FEATURE_KEY = "kubernetes.toolwindow"
+internal const val TERMINAL_TOOLWINDOW_FEATURE_KEY = "terminal.toolwindow"
+internal const val HTTP_CLIENT_SCRATCH_FEATURE_KEY = "http.client.scratch"
+internal const val PLUGINS_SETTINGS_FEATURE_KEY = "plugins.settings"
 
 class GoWelcomeRightTabFeatures(private val project: Project) {
   @get:Composable

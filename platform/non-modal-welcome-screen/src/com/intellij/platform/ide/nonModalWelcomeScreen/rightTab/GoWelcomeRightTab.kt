@@ -15,10 +15,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.goide.ide.GoWelcomeScreenPreventWelcomeTabFocusService
-import com.goide.statistics.GoWelcomeScreenTabUsageCollector
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
@@ -127,7 +124,7 @@ class GoWelcomeRightTab(val project: Project) {
     GoCustomButton(
       onClick = {
         model.onClick()
-        GoWelcomeScreenTabUsageCollector.logWelcomeScreenTabButtonClicked(model.feature)
+        //GoWelcomeScreenTabUsageCollector.logWelcomeScreenTabButtonClicked(model.feature)
       },
       style = CustomButtonStyle(),
       modifier = Modifier.size(112.dp, 87.dp),
@@ -325,15 +322,16 @@ class GoWelcomeRightTab(val project: Project) {
       withContext(Dispatchers.EDT) {
         val settingsFile = GoWelcomeRightTabVirtualFile(GoWelcomeRightTab(project), project)
         val fileEditorManager = FileEditorManager.getInstance(project) as FileEditorManagerEx
-        val preventWelcomeTabFocusService = project.service<GoWelcomeScreenPreventWelcomeTabFocusService>()
+        //val preventWelcomeTabFocusService = project.service<GoWelcomeScreenPreventWelcomeTabFocusService>()
         val options = FileEditorOpenOptions(reuseOpen = true, isSingletonEditorInWindow = true,
-                                            selectAsCurrent = preventWelcomeTabFocusService.isAllowedFocusOnWelcomeTab())
+                                            selectAsCurrent = true)
         fileEditorManager.openFile(settingsFile, options)
-        GoWelcomeScreenTabUsageCollector.logWelcomeScreenTabOpened()
+        //GoWelcomeScreenTabUsageCollector.logWelcomeScreenTabOpened()
       }
     }
 
-    internal const val ADVANCED_SETTINGS_ID = "go.non.modal.welcome.screen.right.tab.enabled"
+    @ApiStatus.Internal
+    const val ADVANCED_SETTINGS_ID = "go.non.modal.welcome.screen.right.tab.enabled"
 
     private var isRightTabEnabled: Boolean
       get() = AdvancedSettings.getBoolean(ADVANCED_SETTINGS_ID)
