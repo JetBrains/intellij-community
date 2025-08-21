@@ -84,12 +84,9 @@ internal fun BuildFile.generateMavenLib(
     return
   }
 
-  var exportedCompilerPlugins = emptyList<String>()
   if (lib.jars.size == 1) {
     val jar = lib.jars.single()
-    @Suppress("UnnecessaryVariable")
-    val libName = targetName
-    if (!labelTracker.add(libName)) {
+    if (!labelTracker.add(targetName)) {
       return
     }
 
@@ -102,8 +99,7 @@ internal fun BuildFile.generateMavenLib(
         option("source_jar", "@${fileToHttpRuleFile(sourceJar.path)}")
       }
       if (targetName == "kotlinx-serialization-core") {
-        exportedCompilerPlugins = listOf("@lib//:kotlin-serialization-plugin")
-        option("exported_compiler_plugins", exportedCompilerPlugins)
+        option("exported_compiler_plugins", listOf("@lib//:kotlin-serialization-plugin"))
       }
 
       libVisibility?.let {
@@ -140,25 +136,51 @@ internal fun BuildFile.generateMavenLib(
   }
 
   if (isLibraryProvided(lib)) {
-    if (exportedCompilerPlugins.isEmpty()) {
-      target("java_library") {
-        option("name", targetName + PROVIDED_SUFFIX)
-        option("exports", listOf(":$targetName"))
-        option("neverlink", true)
-        libVisibility?.let {
-          visibility(arrayOf(it))
-        }
+    generateProvidedMavenLib(lib = lib, libVisibility = libVisibility)
+  }
+}
+
+internal fun BuildFile.generateProvidedMavenLib(
+  lib: MavenLibrary,
+  libVisibility: String?,
+  targetContainer: LibraryContainer? = null,
+) {
+  val targetName = lib.target.targetName
+  @Suppress("SpellCheckingInspection")
+  if (targetName == "bifurcan" || targetName == "kotlinx-collections-immutable-jvm") {
+    return
+  }
+
+  val exportedCompilerPlugins = when (targetName) {
+    "kotlinx-serialization-core" -> listOf("@lib//:kotlin-serialization-plugin")
+    else -> emptyList()
+  }
+
+  val exportsLabel = if (targetContainer == null) {
+    ":$targetName"
+  }
+  else {
+    "${targetContainer.repoLabel}//:$targetName"
+  }
+
+  if (exportedCompilerPlugins.isEmpty()) {
+    target("java_library") {
+      option("name", targetName + PROVIDED_SUFFIX)
+      option("exports", listOf(exportsLabel))
+      option("neverlink", true)
+      libVisibility?.let {
+        visibility(arrayOf(it))
       }
     }
-    else {
-      target("kt_jvm_library") {
-        option("name", targetName + PROVIDED_SUFFIX)
-        option("exports", listOf(":$targetName"))
-        option("neverlink", true)
-        option("exported_compiler_plugins", exportedCompilerPlugins)
-        libVisibility?.let {
-          visibility(arrayOf(it))
-        }
+  }
+  else {
+    target("kt_jvm_library") {
+      option("name", targetName + PROVIDED_SUFFIX)
+      option("exports", listOf(exportsLabel))
+      option("neverlink", true)
+      option("exported_compiler_plugins", exportedCompilerPlugins)
+      libVisibility?.let {
+        visibility(arrayOf(it))
       }
     }
   }

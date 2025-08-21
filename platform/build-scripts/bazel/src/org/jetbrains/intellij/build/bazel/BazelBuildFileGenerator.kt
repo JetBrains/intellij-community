@@ -4,6 +4,7 @@
 package org.jetbrains.intellij.build.bazel
 
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.util.containers.MultiMap
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.java.JavaResourceRootProperties
@@ -25,10 +26,8 @@ import org.jetbrains.kotlin.jps.model.JpsKotlinFacetModuleExtension
 import java.nio.file.Path
 import java.util.IdentityHashMap
 import java.util.TreeMap
-import kotlin.io.path.extension
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.relativeTo
-import kotlin.io.path.walk
 import kotlin.reflect.KProperty1
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.jvm.javaField
@@ -162,9 +161,9 @@ internal class BazelBuildFileGenerator(
 
   private val providedLibraries: ProvidedLibraries = ProvidedLibraries()
   class ProvidedLibraries() {
-    private val providedLibraries: MutableSet<Library> = mutableSetOf()
-    fun isProvided(library: Library): Boolean = providedLibraries.contains(library)
-    fun markAsProvided(library: Library) { providedLibraries.add(library) }
+    private val providedLibraries: MultiMap<Library, LibraryContainer> = MultiMap()
+    fun getProvidedContexts(library: Library): Collection<LibraryContainer> = providedLibraries[library]
+    fun markAsProvided(library: Library, container: LibraryContainer) { providedLibraries.putValue(library, container) }
   }
 
   private val generated = IdentityHashMap<ModuleDescriptor, Boolean>()
@@ -201,7 +200,7 @@ internal class BazelBuildFileGenerator(
   ) {
     val fileToLabelTracker = LinkedHashMap<Path, MutableSet<String>>()
     val fileToUpdater = LinkedHashMap<Path, BazelFileUpdater>()
-    for ((owner, list) in mavenLibraries
+    for ((libraryContainer, list) in mavenLibraries
       .values
       .groupByTo(
       destination = TreeMap(
@@ -212,7 +211,7 @@ internal class BazelBuildFileGenerator(
       ),
       keySelector = { it.target.container },
     )) {
-      val bazelFileUpdater = fileToUpdater.computeIfAbsent(owner.buildFile) {
+      val bazelFileUpdater = fileToUpdater.computeIfAbsent(libraryContainer.buildFile) {
         val updater = BazelFileUpdater(it)
         updater.removeSections("maven-libs")
         updater.removeSections("maven libs")
@@ -223,8 +222,8 @@ internal class BazelBuildFileGenerator(
 
       val groupedByTargetName = sortedList.groupBy { it.target.targetName }
 
-      val labelTracker = fileToLabelTracker.computeIfAbsent(owner.moduleFile) { HashSet() }
-      buildFile(out = bazelFileUpdater, sectionName = owner.sectionName) {
+      val labelTracker = fileToLabelTracker.computeIfAbsent(libraryContainer.moduleFile) { HashSet() }
+      buildFile(out = bazelFileUpdater, sectionName = libraryContainer.sectionName) {
         load("@rules_jvm//:jvm.bzl", "jvm_import")
 
         for (entry in groupedByTargetName) {
@@ -232,13 +231,38 @@ internal class BazelBuildFileGenerator(
           if (libs.size > 1) {
             throw IllegalStateException("More than one versions: $entry")
           }
-          generateMavenLib(lib = libs.single(), labelTracker = labelTracker, isLibraryProvided = providedLibraries::isProvided, libVisibility = owner.visibility)
+          generateMavenLib(
+            lib = libs.single(),
+            labelTracker = labelTracker,
+            isLibraryProvided = { providedLibraries.getProvidedContexts(it).contains(libraryContainer) },
+            libVisibility = libraryContainer.visibility,
+          )
+        }
+
+        // provided libraries which are defined in community
+        // but used as provided libraries in the ultimate part
+        if (libraryContainer == ultimateLibraries) {
+          val communityLibrariesWithProvidedUsagesInUltimate = mavenLibraries
+            .values
+            .filter {
+              it.target.container == communityLibraries &&
+              providedLibraries.getProvidedContexts(it).contains(ultimateLibraries)
+            }
+            .sortedBy { it.target.targetName }
+
+          for (lib in communityLibrariesWithProvidedUsagesInUltimate) {
+            generateProvidedMavenLib(
+              lib = lib,
+              libVisibility = libraryContainer.visibility,
+              targetContainer = communityLibraries,
+            )
+          }
         }
       }
 
       generateBazelModuleSectionsForLibs(
         list = sortedList,
-        owner = owner,
+        owner = libraryContainer,
         jarRepositories = jarRepositories,
         m2Repo = m2Repo,
         urlCache = urlCache,
@@ -247,7 +271,15 @@ internal class BazelBuildFileGenerator(
       )
     }
 
-    generateLocalLibs(libs = localLibraries.values, isLibraryProvided = providedLibraries::isProvided, fileToUpdater = fileToUpdater)
+    generateLocalLibs(
+      libs = localLibraries.values,
+      isLibraryProvided = { lib ->
+        providedLibraries
+          .getProvidedContexts(lib)
+          .contains(lib.target.container)
+      },
+      fileToUpdater = fileToUpdater,
+    )
 
     for (updater in fileToUpdater.values) {
       updater.save()
@@ -259,7 +291,7 @@ internal class BazelBuildFileGenerator(
       val communityLibrary = mavenLibraries[LibraryKey(communityLibraries, lib.target.targetName)]
       if (communityLibrary != null) {
         if (isProvided) {
-          providedLibraries.markAsProvided(communityLibrary)
+          providedLibraries.markAsProvided(communityLibrary, ultimateLibraries)
         }
         return communityLibrary
       }
@@ -267,7 +299,7 @@ internal class BazelBuildFileGenerator(
 
     val internedLib = mavenLibraries.computeIfAbsent(LibraryKey(lib.target.container, lib.target.targetName)) { lib }
     if (isProvided) {
-      providedLibraries.markAsProvided(internedLib)
+      providedLibraries.markAsProvided(internedLib, internedLib.target.container)
     }
     return internedLib
   }
@@ -275,7 +307,7 @@ internal class BazelBuildFileGenerator(
   fun addLocalLibrary(lib: LocalLibrary, isProvided: Boolean): LocalLibrary {
     val internedLib = localLibraries.computeIfAbsent(LibraryKey(lib.target.container, lib.target.targetName)) { lib }
     if (isProvided) {
-      providedLibraries.markAsProvided(internedLib)
+      providedLibraries.markAsProvided(internedLib, internedLib.target.container)
     }
     return internedLib
   }

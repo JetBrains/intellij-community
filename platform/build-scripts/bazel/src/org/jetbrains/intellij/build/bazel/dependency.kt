@@ -239,7 +239,17 @@ internal fun generateDeps(
             isProvided = isProvided,
           ).target.container
 
-          val libLabel = BazelLabel("${libraryContainer.repoLabel}//:$targetName$targetNameSuffix", module = null)
+          val containerForLabel = if (isProvided) {
+            // provided libraries for ultimate are defined in ultimate
+            // provided libraries for community are defined in community
+            context.getLibraryContainer(module.isCommunity)
+          }
+          else {
+            // libraries (not provided) used both in ultimate & community are defined in community
+            libraryContainer
+          }
+
+          val libLabel = BazelLabel("${containerForLabel.repoLabel}//:$targetName$targetNameSuffix", module = null)
 
           addDep(
             isTest = isTest,
