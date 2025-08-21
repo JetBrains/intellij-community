@@ -58,15 +58,15 @@ class GradleIdeaModelHolder(
 
   fun <T> getBuildModel(buildModel: BuildModel, modelClass: Class<T>): T? {
     val modelId = getBuildModelId(buildModel, modelClass)
-    return getRootModel(modelId, modelClass)
+    return getModel(modelId, modelClass)
   }
 
   fun <T> getProjectModel(projectModel: ProjectModel, modelClass: Class<T>): T? {
     val modelId = getProjectModelId(projectModel, modelClass)
-    return getRootModel(modelId, modelClass)
+    return getModel(modelId, modelClass)
   }
 
-  private fun <T> getRootModel(modelId: GradleModelId, modelClass: Class<T>): T? {
+  private fun <T> getModel(modelId: GradleModelId, modelClass: Class<T>): T? {
     val model = models[modelId]
     if (model == null) {
       return null
