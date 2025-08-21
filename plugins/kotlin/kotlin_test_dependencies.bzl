@@ -5,7 +5,7 @@ load("@bazel_features//:features.bzl", "bazel_features")
 # do not forget to call `bazel mod tidy` in community directory
 # to automatically update repositories list in community/MODULE.bazel
 def _kotlin_test_deps_impl(ctx):
-    kotlinCompilerCliVersion = "2.3.0-dev-3276"
+    kotlinCompilerCliVersion = "2.3.255-dev-255"
     kotlincKotlinJpsPluginTestsVersion = "2.2.0"
 
     http_file(

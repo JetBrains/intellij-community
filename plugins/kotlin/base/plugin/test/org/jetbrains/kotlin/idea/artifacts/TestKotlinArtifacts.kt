@@ -124,8 +124,26 @@ object TestKotlinArtifacts {
         } ?: error("Unable to find URL for '${label.asLabel}'")
     }
 
+    private val cooperativeRepoRoot = PathManager.getHomeDir().parent.resolve("build/repo")
+
     private fun downloadFile(label: BazelLabel): Path {
-        val fileInCache = BuildDependenciesDownloader.downloadFileToCacheLocation(communityRoot, findUrl(label))
+        val labelUrl = findUrl(label)
+        // Kotlin plugin team use special workflow for simultaneous development Kotlin compiler and IDEA plugin.
+        // In this scenario maven libraries with complier artifacts are replaced on locally deployed jars in the Kotlin repo folder.
+        // To support test in this scenario, we need special handling urls with a custom hardcoded version.
+        // See docs about this process:
+        // https://github.com/JetBrains/intellij-community/blob/master/plugins/kotlin/docs/cooperative-development/environment-setup.md
+        val fileInCache = if (labelUrl.toString().contains("255-dev-255")) {
+            val relativePath = labelUrl.path.substringAfter("/intellij-dependencies/")
+            val file = cooperativeRepoRoot.resolve(relativePath)
+            if (!Files.exists(file)) {
+                error("File $file doesn't exist in cooperative repo $cooperativeRepoRoot. " +
+                              "Please run 'Kotlin Coop: Publish compiler-for-ide JARs' run configuration in IntelliJ.")
+            }
+            file
+        } else {
+            BuildDependenciesDownloader.downloadFileToCacheLocation(communityRoot, labelUrl)
+        }
         val target = communityRoot.communityRoot.resolve("out/kotlin-from-sources-deps/${label.file}")
         if (!Files.exists(target.parent)) {
             target.createParentDirectories()

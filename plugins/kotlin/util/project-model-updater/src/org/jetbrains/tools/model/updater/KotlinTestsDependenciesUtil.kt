@@ -163,6 +163,11 @@ object KotlinTestsDependenciesUtil {
         for (block in findHttpFileBlocks(content)) {
             val sha256 = sha256Regex.find(block)?.groupValues?.get(1)
             val url = findUrl(block, versions)
+            // We should not update checksum for a special compiler version which used for Kotlin cooperative development.
+            // https://github.com/JetBrains/intellij-community/blob/master/plugins/kotlin/docs/cooperative-development/environment-setup.md
+            if (url.contains("255-dev-255")) {
+                continue
+            }
             if (sha256 == null) {
                 error("cannot find sha256 in '$block'")
             }
