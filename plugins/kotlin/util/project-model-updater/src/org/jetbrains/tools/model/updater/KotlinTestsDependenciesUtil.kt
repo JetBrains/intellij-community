@@ -18,7 +18,9 @@ object KotlinTestsDependenciesUtil {
     private const val COMMUNITY_MARKER = ".community.root.marker"
     private const val ULTIMATE_MARKER = ".ultimate.root.marker"
     private const val PROPERTY_HOME_PATH = "idea.home.path"
+    private val isUnderTeamcity = System.getenv("TEAMCITY_VERSION") != null
 
+    // We cannot reference PathManager or build scripts here because we call this code from Gradle in TeamCity
     val communityRoot: Path by lazy {
         val possibleHomePaths = mutableListOf<Path>()
         System.getProperty(PROPERTY_HOME_PATH)?.let { possibleHomePaths.add(Path(it)) }
@@ -73,6 +75,7 @@ object KotlinTestsDependenciesUtil {
         val content = kotlinDepsFile.readText()
         val nameRegex = Regex("""name\s*=\s*["']([^"']+)["']""")
         val filenameRegex = Regex("""downloaded_file_path\s*=\s*["']([^"']+)["']""")
+        val sha256Regex = Regex("""sha256\s*=\s*["']([^"']+)["']""")
         val versions = loadVersions(content)
 
         val errors = mutableListOf<String>()
@@ -80,8 +83,9 @@ object KotlinTestsDependenciesUtil {
             val name = nameRegex.find(block)?.groupValues?.get(1)
             val url = findUrl(block, versions)
             val filename = filenameRegex.find(block)?.groupValues?.get(1)
-            if (name != null && filename != null) {
-                HttpFile(filename, name, url)
+            val sha256 = sha256Regex.find(block)?.groupValues?.get(1)
+            if (name != null && filename != null && sha256 != null) {
+                HttpFile(filename, name, url, sha256)
             } else {
                 errors += buildString {
                     appendLine("Unable to parse http_file block:\n")
@@ -97,7 +101,7 @@ object KotlinTestsDependenciesUtil {
         return@lazy result
     }
 
-    data class HttpFile(val downloadFilePath: String, val name: String, val url: String)
+    data class HttpFile(val downloadFilePath: String, val name: String, val url: String, val sha256: String)
 
     private fun findUrl(string: String, versions: Map<String, String>): String {
         val urlRegex = Regex("""url\s*=\s*["'](.+)["']""")
@@ -201,6 +205,16 @@ object KotlinTestsDependenciesUtil {
             .GET()
         val response = httpClient.send(requestBuilder.build(), HttpResponse.BodyHandlers.ofInputStream())
             .followRedirectsIfNeeded()
+        // Handle special case for kt-master.
+        // On TeamCity compilation and tests use Kotlin compiler dependencies from a build chain placed into the agent .m2 folder.
+        if (response.statusCode() == 404 && isUnderTeamcity) {
+            val fileInTeamcityM2Folder = teamcityM2Location.resolve(url.substringAfterLast("/intellij-dependencies/"))
+            if (fileInTeamcityM2Folder.exists()) {
+                println("File not found in by URL, but found in teamcity m2 folder: $fileInTeamcityM2Folder")
+                digest.update(fileInTeamcityM2Folder.readBytes())
+                return digest.digest().joinToString("") { "%02x".format(it) }
+            }
+        }
         if (response.statusCode() != 200) {
             val body = response.body().use { it.readAllBytes() }.decodeToString()
             error("cannot download $url: ${response.statusCode()}\n$body")
@@ -252,4 +266,6 @@ object KotlinTestsDependenciesUtil {
             else -> false
         }
     }
+
+    private val teamcityM2Location = Path("${System.getProperty("user.home")}/.m2/repository/")
 }

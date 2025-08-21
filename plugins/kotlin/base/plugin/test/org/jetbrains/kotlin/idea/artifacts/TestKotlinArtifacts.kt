@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.base.plugin.artifacts
 
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.testFramework.common.BazelTestUtil
 import com.intellij.util.io.createParentDirectories
 import kotlinx.coroutines.Dispatchers
@@ -9,6 +10,7 @@ import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader.extractFile
+import org.jetbrains.jps.model.serialization.JpsMavenSettings
 import org.jetbrains.kotlin.idea.artifacts.KotlinNativeHostSupportDetector
 import org.jetbrains.kotlin.idea.artifacts.KotlinNativePrebuiltDownloader.downloadFile
 import org.jetbrains.kotlin.idea.artifacts.KotlinNativePrebuiltDownloader.unpackPrebuildArchive
@@ -24,6 +26,7 @@ import java.net.URI
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
+import java.security.MessageDigest
 import java.util.zip.Deflater
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
@@ -33,6 +36,7 @@ import kotlin.io.path.deleteIfExists
 import kotlin.io.path.exists
 import kotlin.io.path.moveTo
 import kotlin.io.path.name
+import kotlin.io.path.readBytes
 import kotlin.system.exitProcess
 
 @OptIn(ExperimentalPathApi::class)
@@ -40,6 +44,8 @@ object TestKotlinArtifacts {
     private val communityRoot by lazy {
         BuildDependenciesCommunityRoot(Path.of(PathManager.getCommunityHomePath()))
     }
+
+    private val LOG = logger<TestKotlinArtifacts>()
 
     private fun areFilesEquals(source: File, destination: File): Boolean {
         if (!destination.exists()) {
@@ -118,16 +124,18 @@ object TestKotlinArtifacts {
         }
     }
 
-    private fun findUrl(label: BazelLabel): URI {
+    private fun findHttpFile(label: BazelLabel): KotlinTestsDependenciesUtil.HttpFile {
         return KotlinTestsDependenciesUtil.kotlinTestDependenciesHttpFiles.find { it.name == label.repo && it.downloadFilePath == label.file }?.let {
-            URI(it.url)
+            it
         } ?: error("Unable to find URL for '${label.asLabel}'")
     }
 
     private val cooperativeRepoRoot = PathManager.getHomeDir().parent.resolve("build/repo")
 
     private fun downloadFile(label: BazelLabel): Path {
-        val labelUrl = findUrl(label)
+        val httpFile = findHttpFile(label)
+        val labelUrl = URI(httpFile.url)
+        val hash = httpFile.sha256
         // Kotlin plugin team use special workflow for simultaneous development Kotlin compiler and IDEA plugin.
         // In this scenario maven libraries with complier artifacts are replaced on locally deployed jars in the Kotlin repo folder.
         // To support test in this scenario, we need special handling urls with a custom hardcoded version.
@@ -142,6 +150,16 @@ object TestKotlinArtifacts {
             }
             file
         } else {
+            val relativePath = labelUrl.path.substringAfter("/intellij-dependencies/")
+            val fileInM2Folder = Path.of(JpsMavenSettings.getMavenRepositoryPath()).resolve(relativePath)
+            if (Files.exists(fileInM2Folder)) {
+                val digest = MessageDigest.getInstance("SHA-256")
+                digest.update(fileInM2Folder.readBytes())
+                val hash = digest.digest().joinToString("") { "%02x".format(it) }
+                if (hash == httpFile.sha256) {
+                    return fileInM2Folder
+                }
+            }
             BuildDependenciesDownloader.downloadFileToCacheLocation(communityRoot, labelUrl)
         }
         val target = communityRoot.communityRoot.resolve("out/kotlin-from-sources-deps/${label.file}")
@@ -164,16 +182,20 @@ object TestKotlinArtifacts {
     private fun getKotlinDepsByLabel(label: BazelLabel): File {
         // Why it is different
         val dependency = if (BazelTestUtil.isUnderBazelTest) {
-            getFileFromBazelRuntime(label)
+            getFileFromBazelRuntime(label).also {
+                LOG.info("Found dependency in Bazel runtime ${label.asLabel} at '$it'")
+            }
         } else {
-            downloadFile(label)
+            downloadFile(label).also {
+                LOG.info("Found dependency download dependency ${label.asLabel} at '$it'")
+            }
         }
 
         // some tests for code require that files should be under $COMMUNITY_HOME_PATH/out
         val target = File(PathManager.getCommunityHomePath())
             .resolve("out")
             .resolve("kotlin-from-sources-deps")
-            .resolve(dependency.name)
+            .resolve(label.file)
 
         // we could have a file from some previous launch, but with different content
         // it is a valid scenario when file it is JAR without a version and url changed
@@ -191,6 +213,7 @@ object TestKotlinArtifacts {
         } finally {
             tempFile.deleteIfExists()
         }
+        LOG.info("Dependency ${label.asLabel} resolved to '$target'")
         return target
     }
 
