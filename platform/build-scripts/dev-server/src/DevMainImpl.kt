@@ -63,10 +63,19 @@ fun buildDevImpl(): BuildDevInfo {
   var mainClassName: String? = null
   val environment = mutableMapOf<String, String>()
   withTracer(serviceName = "builder") {
+    val platformPrefix = System.getProperty("idea.platform.prefix", "idea")
+    val isFrontendProcess = platformPrefix == "JetBrainsClient"
+    val baseIdeForFrontendPropertyName = "dev.build.base.ide.platform.prefix.for.frontend"
+    val baseIdePlatformPrefixForFrontend = System.getProperty(baseIdeForFrontendPropertyName)
+    if (isFrontendProcess && baseIdePlatformPrefixForFrontend == null) {
+      //todo make it error 
+      println("Warning: property '$baseIdeForFrontendPropertyName' must be specified in VM Options of the run configuration to select which variant of JetBrains Client should be started")
+    }
+    
     buildProductInProcess(
       BuildRequest(
-        platformPrefix = System.getProperty("idea.platform.prefix", "idea"),
-        baseIdePlatformPrefixForFrontend = System.getProperty("dev.build.base.ide.platform.prefix.for.frontend"),
+        platformPrefix = platformPrefix,
+        baseIdePlatformPrefixForFrontend = baseIdePlatformPrefixForFrontend,
         additionalModules = getAdditionalPluginMainModules(),
         projectDir = ideaProjectRoot,
         keepHttpClient = false,

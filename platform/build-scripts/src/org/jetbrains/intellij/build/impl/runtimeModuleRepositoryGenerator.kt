@@ -81,18 +81,12 @@ internal suspend fun generateRuntimeModuleRepository(entries: Sequence<Distribut
 @ApiStatus.Internal
 suspend fun generateRuntimeModuleRepositoryForDevBuild(entries: Sequence<DistributionFileEntry>, targetDirectory: Path, context: BuildContext) {
   val compiledModulesDescriptors = context.getOriginalModuleRepository().rawRepositoryData
-  val actualEntries = entries.mapNotNull { entry ->
-    if (entry.path.startsWith(targetDirectory)) {
-      RuntimeModuleRepositoryEntry(
-        distribution = null,
-        relativePath = targetDirectory.relativize(entry.path).invariantSeparatorsPathString,
-        origin = entry,
-      )
-    }
-    else {
-      context.messages.warning("${entry.path} entry is not under $targetDirectory")
-      null
-    }
+  val actualEntries = entries.map { entry ->
+    RuntimeModuleRepositoryEntry(
+      distribution = null,
+      relativePath = targetDirectory.relativize(entry.path).invariantSeparatorsPathString,
+      origin = entry,
+    )
   }
   generateRepositoryForDistribution(
     targetDirectory = targetDirectory,
