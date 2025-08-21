@@ -60,21 +60,34 @@ internal class TestFixtureExtension : BeforeAllCallback,
     super.interceptTestTemplateMethod(invocation, invocationContext, extensionContext)
   }
 
+  private fun collectTestInstances(context: ExtensionContext): Map<Class<*>, Any> {
+    val allTestInstances = context.testInstances.getOrNull()?.allInstances.orEmpty()
+    return allTestInstances.associateBy { it.javaClass }
+  }
+
   private fun before(context: ExtensionContext, static: Boolean, eelApi: EelApi? = null, instance: Any? = null) {
     val testClass: Class<*> = context.testClass.getOrNull() ?: return
-    val testInstance = instance ?: context.testInstance.getOrNull()
 
     @OptIn(DelicateCoroutinesApi::class)
     val testScope = GlobalScope.childScope(context.displayName)
     val pendingFixtures = ArrayList<Deferred<*>>()
-    val fields = ReflectionSupport.findFields(testClass, Predicate { field ->
-      TestFixture::class.java.isAssignableFrom(field.type) && Modifier.isStatic(field.modifiers) == static
-    }, HierarchyTraversalMode.TOP_DOWN)
-    for (field in fields) {
-      field.isAccessible = true
-      val fixture = field.get(testInstance) as TestFixtureImpl<*>
-      pendingFixtures.add(fixture.init(testScope, TestContextImpl(context, eelApi)))
+
+    val classToTestInstance = collectTestInstances(context)
+    // start with the outermost one, in case the inner ones depend on them
+    val classes = context.enclosingTestClasses + listOf(testClass)
+    for (clazz in classes) {
+      val testInstance = classToTestInstance[clazz] ?: instance
+      val fieldsForDeclaringClass = ReflectionSupport.findFields(clazz, Predicate { field ->
+        TestFixture::class.java.isAssignableFrom(field.type) && Modifier.isStatic(field.modifiers) == static
+      }, HierarchyTraversalMode.TOP_DOWN)
+
+      for (field in fieldsForDeclaringClass) {
+        field.isAccessible = true
+        val fixture = field.get(testInstance) as TestFixtureImpl<*>
+        pendingFixtures.add(fixture.init(testScope, TestContextImpl(context, eelApi)))
+      }
     }
+
     awaitFixtureInitialization(testScope, pendingFixtures)
     context.getStore(ExtensionContext.Namespace.GLOBAL).put("TestFixtureExtension_$static", testScope)
   }
