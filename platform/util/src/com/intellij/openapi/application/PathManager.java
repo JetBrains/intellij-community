@@ -206,25 +206,81 @@ public final class PathManager {
   @ApiStatus.Internal
   @TestOnly
   public static @Nullable Path getHomeDirFor(@NotNull Class<?> aClass) {
-    Path result = null;
     String rootPath = getResourceRoot(aClass, '/' + aClass.getName().replace('.', '/') + ".class");
-    if (rootPath != null) {
-      String relevantJarsRoot = getArchivedCompliedClassesLocation();
-      if (relevantJarsRoot != null && rootPath.startsWith(relevantJarsRoot)) {
-        String home = System.getProperty(PROPERTY_HOME_PATH);
-        if (home != null) {
-          Path path = Paths.get(home).toAbsolutePath();
-          if (isIdeaHome(path)) {
-            return path;
+    if (rootPath == null) {
+      return null;
+    }
+
+    // classes compiled to .jar and passed as archived compiled classes
+    String relevantJarsRoot = getArchivedCompliedClassesLocation();
+    if (relevantJarsRoot != null && rootPath.startsWith(relevantJarsRoot)) {
+      String home = System.getProperty(PROPERTY_HOME_PATH);
+      if (home != null) {
+        Path path = Paths.get(home).toAbsolutePath();
+        if (isIdeaHome(path)) {
+          return path;
+        }
+      }
+    }
+
+    Path root = Paths.get(rootPath);
+
+    // classes compiled to .class files and under checkout root
+    Path ideaHomeUpwards = getIdeaHomeUpwards(root);
+    if (ideaHomeUpwards != null) {
+      return ideaHomeUpwards;
+    }
+
+    // classes compiled to .jar files with Bazel
+    // but we're running not under Bazel, like with delegating compilation to Bazel
+    // (monorepo.devkit.use.bazel.compile=true)
+    try {
+      Path ideaHomeFromBazelOut = getIdeaHomeFromBazelExecRoot(root);
+      if (ideaHomeFromBazelOut != null) {
+        return ideaHomeFromBazelOut;
+      }
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+
+    return null;
+  }
+
+  @Nullable
+  private static Path getIdeaHomeUpwards(Path start) {
+    Path root = start.toAbsolutePath();
+    do root = root.getParent();
+    while (root != null && !isIdeaHome(root));
+    return root;
+  }
+
+  /**
+   * classes compiled to .jar files with Bazel,
+   * but we're running not under Bazel, like with delegating compilation to Bazel
+   * (monorepo.devkit.use.bazel.compile=true)
+   * this is a temporary solution while we're still using JPS model for ultimate monorepo
+   */
+  @Nullable
+  private static Path getIdeaHomeFromBazelExecRoot(Path start) throws IOException {
+    String workspacePrefix = "WORKSPACE: ";
+
+    Path root = start.toAbsolutePath();
+    while (root != null && root.getParent() != null) {
+      Path readme = root.getParent().resolve("README");
+      Path fileName = root.getFileName();
+      if (fileName != null && fileName.toString().equals("execroot") && Files.isRegularFile(readme)) {
+        String firstLine = Files.readAllLines(readme).get(0);
+        if (firstLine.startsWith(workspacePrefix)) {
+          Path workspaceLocation = Paths.get(firstLine.substring(workspacePrefix.length()));
+          if (isIdeaHome(workspaceLocation)) {
+            return workspaceLocation;
           }
         }
       }
-      Path root = Paths.get(rootPath).toAbsolutePath();
-      do root = root.getParent();
-      while (root != null && !isIdeaHome(root));
-      result = root;
+      root = root.getParent();
     }
-    return result;
+    return null;
   }
 
   private static boolean isIdeaHome(Path root) {
