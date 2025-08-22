@@ -2,7 +2,7 @@ package com.intellij.cce.workspace.filter
 
 import com.intellij.cce.core.Lookup
 
-class RemoveSuccessfulCacheHitsFilter(override val name: String) : LookupFilter {
+class RemoveSuccessfulCacheHitsFilter() : LookupFilter {
   override fun shouldRemove(lookup: Lookup): Boolean =
     lookup.rawFilteredList.isEmpty() && lookup.suggestions.any { it.isRelevant }
 

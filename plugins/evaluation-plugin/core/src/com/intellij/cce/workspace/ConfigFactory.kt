@@ -200,7 +200,7 @@ object ConfigFactory {
     val lookupFiltersList = map.getIfExists<List<Map<String, Any>>>("lookupFilters")
     val lookupFilters = mutableListOf<LookupFilter>()
     lookupFiltersList?.forEach {
-      lookupFilters.add(LookupFilter.create(it.getAs("filterType"), it.getAs("name")))
+      lookupFilters.add(LookupFilter.create(it.getAs("filterType")))
     }
     builder.mergeLookupFilters(lookupFilters)
   }
