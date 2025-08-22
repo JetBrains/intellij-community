@@ -4,7 +4,6 @@ package org.jetbrains.plugins.gradle.testFramework.assertions
 import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.externalSystem.impl.workspaceModel.ExternalProjectEntityId
-import com.intellij.platform.testFramework.assertion.collectionAssertion.CollectionAssertions
 import com.intellij.platform.testFramework.assertion.collectionAssertion.CollectionAssertions.assertEqualsUnordered
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.plugins.gradle.model.projectModel.GradleBuildEntityId
@@ -14,12 +13,12 @@ import org.junit.jupiter.api.Assertions.assertNotNull
 
 internal fun assertGradleBuildEntity(
   project: Project,
-  buildId: GradleBuildEntityId,
-  externalProjectId: ExternalProjectEntityId,
   buildUrl: VirtualFileUrl,
+  externalProjectId: ExternalProjectEntityId,
   projectIds: List<GradleProjectEntityId>,
   name: String? = buildUrl.fileName,
 ) {
+  val buildId = GradleBuildEntityId(externalProjectId, buildUrl)
   val buildEntity = project.workspaceModel.currentSnapshot.resolve(buildId)
   assertNotNull(buildEntity) {
     "GradleBuildEntity with symbolic ID = $buildId should be available in the storage."
@@ -40,7 +39,6 @@ internal fun assertGradleBuildEntity(
 
 internal fun assertGradleProjectEntity(
   project: Project,
-  projectId: GradleProjectEntityId,
   projectUrl: VirtualFileUrl,
   buildId: GradleBuildEntityId,
   path: String,
@@ -48,6 +46,7 @@ internal fun assertGradleProjectEntity(
   identityPath: String,
   name: String? = projectUrl.fileName,
 ) {
+  val projectId = GradleProjectEntityId(buildId, projectUrl)
   val projectEntity = project.workspaceModel.currentSnapshot.resolve(projectId)
   assertNotNull(projectEntity) {
     "GradleProjectEntity with symbolic ID = $projectId should be available in the storage."
