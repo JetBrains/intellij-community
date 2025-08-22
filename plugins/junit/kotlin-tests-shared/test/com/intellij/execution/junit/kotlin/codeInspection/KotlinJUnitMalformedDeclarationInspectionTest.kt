@@ -543,6 +543,24 @@ abstract class KotlinJUnitMalformedDeclarationInspectionTestLatest : KotlinJUnit
         """.trimIndent())
   }
 
+  fun `test malformed parameterized class method source should not be static`() {
+    myFixture.testHighlighting(
+      JvmLanguage.KOTLIN, """
+        @org.junit.jupiter.params.ParameterizedClass
+        @org.junit.jupiter.params.provider.MethodSource("a")
+        @org.junit.jupiter.api.TestInstance(org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS)
+        class TestMethodSource {
+          @org.junit.jupiter.params.Parameter
+          lateinit var param: String
+
+          @org.junit.jupiter.api.Test
+          fun test() { }
+          
+          fun a(): Array<String> { return arrayOf("a", "b") }          
+        }        
+        """.trimIndent())
+  }
+
   /* Malformed parameterized */
   fun `test malformed parameterized @ValueSourcesTest no highlighting`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """

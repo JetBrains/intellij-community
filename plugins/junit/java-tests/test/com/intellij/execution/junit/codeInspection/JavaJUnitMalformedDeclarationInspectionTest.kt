@@ -650,6 +650,23 @@ class JavaJUnitMalformedDeclarationInspectionTest {
         """.trimIndent())
     }
 
+    fun `test malformed parameterized class method source should not be static highlighting`() {
+      myFixture.testHighlighting(JvmLanguage.JAVA, """
+        @org.junit.jupiter.params.ParameterizedClass
+        @org.junit.jupiter.params.provider.MethodSource("a")
+        @org.junit.jupiter.api.TestInstance(org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS)
+        class TestMethodSource {
+          @org.junit.jupiter.params.Parameter
+          String param;
+
+          @org.junit.jupiter.api.Test
+          void test() { }
+          
+          String[] a() { return new String[] {"a", "b"}; }
+        }
+        """.trimIndent())
+    }
+
     fun `test malformed parameterized class method source should have no parameters highlighting`() {
       myFixture.testHighlighting(JvmLanguage.JAVA, """
         @org.junit.jupiter.params.ParameterizedClass
