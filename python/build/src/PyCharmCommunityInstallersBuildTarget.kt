@@ -24,6 +24,7 @@ object PyCharmCommunityInstallersBuildTarget {
           BuildOptions.MAC_SIGN_STEP,
           PyCharmBuildUtils.SKELETONS_COPY_STEP,
           BuildOptions.CROSS_PLATFORM_DISTRIBUTION_STEP,
+          BuildOptions.WINDOWS_ZIP_STEP,
         )
       }
       val context = BuildContextImpl.createContext(
