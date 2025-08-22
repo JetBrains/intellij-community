@@ -6,10 +6,8 @@ import com.intellij.terminal.completion.spec.ShellCommandResult
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class TestGeneratorCommandsRunner {
-  companion object {
-    val DUMMY: ShellCommandExecutor = ShellCommandExecutor {
-      ShellCommandResult.Companion.create("", 0)
-    }
+object DummyShellCommandExecutor : ShellCommandExecutor {
+  override suspend fun runShellCommand(command: String): ShellCommandResult {
+    return ShellCommandResult.create("", 0)
   }
 }

@@ -5,7 +5,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 @ApiStatus.NonExtendable
-fun interface ShellCommandExecutor {
+interface ShellCommandExecutor {
   /**
    * Simple basic interface to
    * Runs the command in Shell and returns the result.
