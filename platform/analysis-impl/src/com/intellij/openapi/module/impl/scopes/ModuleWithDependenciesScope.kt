@@ -1,425 +1,387 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.module.impl.scopes;
 
-import com.intellij.codeInsight.multiverse.CodeInsightContext;
-import com.intellij.codeInsight.multiverse.CodeInsightContexts;
-import com.intellij.codeInsight.multiverse.ModuleContext;
-import com.intellij.codeInsight.multiverse.ProjectModelContextBridge;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkContext;
-import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.impl.*;
-import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.libraries.LibraryContext;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.VirtualFileWithId;
-import com.intellij.psi.search.*;
-import com.intellij.psi.search.impl.VirtualFileEnumeration;
-import com.intellij.psi.search.impl.VirtualFileEnumerationAware;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.BitUtil;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.SmartHashSet;
-import com.intellij.util.indexing.IndexingBundle;
-import it.unimi.dsi.fastutil.ints.IntList;
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
-import it.unimi.dsi.fastutil.ints.IntSet;
-import it.unimi.dsi.fastutil.objects.Object2IntMap;
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
-import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+@file:ApiStatus.Internal
 
-import java.util.*;
+package com.intellij.openapi.module.impl.scopes
 
-public final class ModuleWithDependenciesScope extends GlobalSearchScope implements VirtualFileEnumerationAware,
-                                                                                    CodeInsightContextAwareSearchScope,
-                                                                                    ActualCodeInsightContextInfo {
+import com.intellij.codeInsight.multiverse.CodeInsightContext
+import com.intellij.codeInsight.multiverse.ModuleContext
+import com.intellij.codeInsight.multiverse.ProjectModelContextBridge
+import com.intellij.codeInsight.multiverse.isSharedSourceSupportEnabled
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.projectRoots.SdkContext
+import com.intellij.openapi.roots.*
+import com.intellij.openapi.roots.impl.*
+import com.intellij.openapi.roots.libraries.LibraryContext
+import com.intellij.openapi.util.Comparing
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.VirtualFileWithId
+import com.intellij.psi.search.*
+import com.intellij.psi.search.impl.VirtualFileEnumeration
+import com.intellij.psi.search.impl.VirtualFileEnumerationAware
+import com.intellij.util.ArrayUtil
+import com.intellij.util.BitUtil.isSet
+import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.SmartHashSet
+import com.intellij.util.indexing.IndexingBundle
+import it.unimi.dsi.fastutil.ints.IntList
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet
+import it.unimi.dsi.fastutil.ints.IntSet
+import it.unimi.dsi.fastutil.objects.Object2IntMap
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
+import org.intellij.lang.annotations.MagicConstant
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
+import java.util.*
+import kotlin.concurrent.Volatile
 
-  private static final Logger LOG = Logger.getInstance(ModuleWithDependenciesScope.class);
+@Suppress("EqualsOrHashCode")
+class ModuleWithDependenciesScope internal constructor(
+  val module: Module,
+  @field:ScopeConstant
+  @param:ScopeConstant
+  private val myOptions: Int
+) : GlobalSearchScope(module.getProject()), VirtualFileEnumerationAware, CodeInsightContextAwareSearchScope, ActualCodeInsightContextInfo {
 
-  public static final int COMPILE_ONLY = 0x01;
-  public static final int LIBRARIES = 0x02;
-  public static final int MODULES = 0x04;
-  public static final int TESTS = 0x08;
-  private volatile VirtualFileEnumeration myVirtualFileEnumeration;
-  private volatile long myVFSModificationCount;
+  @Volatile
+  private var myVirtualFileEnumeration: VirtualFileEnumeration? = null
+  @Volatile
+  private var myVFSModificationCount: Long = 0
 
-  @MagicConstant(flags = {COMPILE_ONLY, LIBRARIES, MODULES, TESTS})
-  @interface ScopeConstant {}
+  @Volatile
+  private var myModules: Set<Module>? = null // lazy calculated, use `getModules()` instead!
 
-  private final Module myModule;
-  @ScopeConstant
-  private final int myOptions;
-  private final ProjectFileIndexImpl myProjectFileIndex;
+  private val myProjectFileIndex: ProjectFileIndexImpl = ProjectRootManager.getInstance(module.getProject()).getFileIndex() as ProjectFileIndexImpl
 
-  private volatile Set<Module> myModules; // lazy calculated, use `getModules()` instead!
-  private final RootContainer myRoots;
-  private final SingleFileSourcesTracker mySingleFileSourcesTracker;
-
-  ModuleWithDependenciesScope(@NotNull Module module, @ScopeConstant int options) {
-    super(module.getProject());
-    myModule = module;
-    myOptions = options;
-    myProjectFileIndex = (ProjectFileIndexImpl)ProjectRootManager.getInstance(module.getProject()).getFileIndex();
-    if (isSharedSourceSupportEnabled()) {
-      myRoots = new MultiverseRootContainer(calcRootsMultiverse());
-    }
-    else {
-      myRoots = new ClassicRootContainer(calcRoots());
-    }
-    mySingleFileSourcesTracker = SingleFileSourcesTracker.getInstance(module.getProject());
+  private val myRoots: RootContainer = if (this.isSharedSourceSupportEnabled) {
+    MultiverseRootContainer(calcRootsMultiverse())
+  }
+  else {
+    ClassicRootContainer(calcRoots())
   }
 
-  private @NotNull Object2IntMap<VirtualFile> calcRoots() {
-    OrderRootsEnumerator en = getOrderEnumeratorForOptions().roots(entry -> {
-      if (entry instanceof ModuleOrderEntry || entry instanceof ModuleSourceOrderEntry) return OrderRootType.SOURCES;
-      return OrderRootType.CLASSES;
-    });
-    Set<VirtualFile> roots = new LinkedHashSet<>();
-    Collections.addAll(roots, en.getRoots());
+  private val mySingleFileSourcesTracker: SingleFileSourcesTracker = SingleFileSourcesTracker.getInstance(module.getProject())
 
-    int i = 1;
-    Object2IntMap<VirtualFile> map = new Object2IntOpenHashMap<>(roots.size());
-    for (VirtualFile root : roots) {
-      map.put(root, i++);
+  private fun calcRoots(): Object2IntMap<VirtualFile> {
+    val en = this.orderEnumeratorForOptions.roots { entry ->
+      if (entry is ModuleOrderEntry || entry is ModuleSourceOrderEntry) return@roots OrderRootType.SOURCES
+      OrderRootType.CLASSES
     }
-    return map;
-  }
+    val roots = LinkedHashSet<VirtualFile>()
+    Collections.addAll(roots, *en.getRoots())
 
-  private @NotNull Map<VirtualFile, ScopeRootDescriptor> calcRootsMultiverse() {
-    OrderRootsEnumerator en = getOrderEnumeratorForOptions().roots(entry -> {
-      if (entry instanceof ModuleOrderEntry || entry instanceof ModuleSourceOrderEntry) return OrderRootType.SOURCES;
-      return OrderRootType.CLASSES;
-    });
-    Collection<RootEntry> entries = en.getRootEntries();
-
-    int i = 1;
-    Map<VirtualFile, ScopeRootDescriptor> map = new HashMap<>(entries.size());
-    for (RootEntry root : entries) {
-      map.put(root.root(), ScopeRootDescriptors.ScopeRootDescriptor(root.root(), root.orderEntry(), i++));
+    var i = 1
+    val map = Object2IntOpenHashMap<VirtualFile>(roots.size)
+    for (root in roots) {
+      map.put(root, i++)
     }
-    return map;
+    return map
   }
 
+  private fun calcRootsMultiverse(): Map<VirtualFile, ScopeRootDescriptor> {
+    val en = this.orderEnumeratorForOptions.roots { entry ->
+      if (entry is ModuleOrderEntry || entry is ModuleSourceOrderEntry) OrderRootType.SOURCES else OrderRootType.CLASSES
+    }
+    val entries = en.getRootEntries()
 
-  private @NotNull OrderEnumerator getOrderEnumeratorForOptions() {
-    OrderEnumerator en = ModuleRootManager.getInstance(myModule).orderEntries();
-    en.recursively();
-    if (hasOption(COMPILE_ONLY)) en.exportedOnly().compileOnly();
-    if (!hasOption(LIBRARIES)) en.withoutLibraries().withoutSdk();
-    if (!hasOption(MODULES)) en.withoutDepModules();
-    if (!hasOption(TESTS)) en.productionOnly();
-    return en;
+    var i = 1
+    val map = HashMap<VirtualFile, ScopeRootDescriptor>(entries.size)
+    for (root in entries) {
+      map[root.root] = ScopeRootDescriptor(root.root, root.orderEntry, i++)
+    }
+    return map
   }
 
-  private @NotNull Set<Module> calcModules() {
-    Set<Module> modules = new HashSet<>();
-    OrderEnumerator en = getOrderEnumeratorForOptions();
-    en.forEach(each -> {
-      if (each instanceof ModuleOrderEntry moduleOrderEntry) {
-        ContainerUtil.addIfNotNull(modules, moduleOrderEntry.getModule());
+  private val orderEnumeratorForOptions: OrderEnumerator
+    get() {
+      val en = ModuleRootManager.getInstance(this.module).orderEntries()
+      en.recursively()
+      if (hasOption(COMPILE_ONLY)) en.exportedOnly().compileOnly()
+      if (!hasOption(LIBRARIES)) en.withoutLibraries().withoutSdk()
+      if (!hasOption(MODULES)) en.withoutDepModules()
+      if (!hasOption(TESTS)) en.productionOnly()
+      return en
+    }
+
+  private fun calcModules(): Set<Module> {
+    val modules = HashSet<Module>()
+    val en = this.orderEnumeratorForOptions
+    en.forEach { each ->
+      if (each is ModuleOrderEntry) {
+        ContainerUtil.addIfNotNull(modules, each.getModule())
       }
-      else if (each instanceof ModuleSourceOrderEntry) {
-        ContainerUtil.addIfNotNull(modules, each.getOwnerModule());
+      else if (each is ModuleSourceOrderEntry) {
+        ContainerUtil.addIfNotNull(modules, each.getOwnerModule())
       }
-      return true;
-    });
-    return modules;
-  }
-
-  public @NotNull Module getModule() {
-    return myModule;
-  }
-
-  private boolean hasOption(@ScopeConstant int option) {
-    return BitUtil.isSet(myOptions, option);
-  }
-
-  @Override
-  public @NotNull String getDisplayName() {
-    return hasOption(COMPILE_ONLY) ? IndexingBundle.message("search.scope.module", myModule.getName())
-                                   : IndexingBundle.message("search.scope.module.runtime", myModule.getName());
-  }
-
-  @Override
-  public boolean isSearchInModuleContent(@NotNull Module aModule) {
-    Set<Module> allModules = getModules();
-    return allModules.contains(aModule);
-  }
-
-  private @NotNull Set<Module> getModules() {
-    Set<Module> allModules = myModules;
-    if (allModules == null) {
-      myModules = allModules = new HashSet<>(calcModules());
+      true
     }
-    return allModules;
+    return modules
   }
 
-  @Override
-  public boolean isSearchInModuleContent(@NotNull Module aModule, boolean testSources) {
-    return isSearchInModuleContent(aModule) && (hasOption(TESTS) || !testSources);
+  private fun hasOption(@ScopeConstant option: Int): Boolean {
+    return isSet(myOptions, option)
   }
 
-  @Override
-  public boolean isSearchInLibraries() {
-    return hasOption(LIBRARIES);
+  override fun getDisplayName(): String {
+    return if (hasOption(COMPILE_ONLY))
+      IndexingBundle.message("search.scope.module", module.getName())
+    else
+      IndexingBundle.message("search.scope.module.runtime", module.getName())
   }
+
+  override fun isSearchInModuleContent(aModule: Module): Boolean {
+    val allModules = this.modules
+    return allModules.contains(aModule)
+  }
+
+  private val modules: Set<Module>
+    get() {
+      var allModules = myModules
+      if (allModules == null) {
+        allModules = HashSet(calcModules())
+        myModules = allModules
+      }
+      return allModules
+    }
+
+  override fun isSearchInModuleContent(aModule: Module, testSources: Boolean): Boolean {
+    return isSearchInModuleContent(aModule) && (hasOption(TESTS) || !testSources)
+  }
+
+  override fun isSearchInLibraries(): Boolean {
+    return hasOption(LIBRARIES)
+  }
+
+  @get:ApiStatus.Experimental
+  override val codeInsightContextInfo: CodeInsightContextInfo
+    get() = this
 
   @ApiStatus.Experimental
-  @Override
-  public @NotNull CodeInsightContextInfo getCodeInsightContextInfo() {
-    return this;
-  }
-
-  @ApiStatus.Experimental
-  @Override
-  public @NotNull CodeInsightContextFileInfo getFileInfo(@NotNull VirtualFile file) {
-     //in case of single file source
-    if (mySingleFileSourcesTracker.isSourceDirectoryInModule(file, myModule)) {
+  override fun getFileInfo(file: VirtualFile): CodeInsightContextFileInfo {
+    //in case of single file source
+    if (mySingleFileSourcesTracker.isSourceDirectoryInModule(file, this.module)) {
       // todo IJPL-339 support bazel in search scopes???
-      return CodeInsightContextAwareSearchScopes.NoContextFileInfo();
+      return NoContextFileInfo()
     }
 
-    Collection<RootDescriptor> roots = myProjectFileIndex.getModuleSourceOrLibraryClassesRoots(file);
-    if (roots.isEmpty()) return CodeInsightContextAwareSearchScopes.DoesNotContainFileInfo();
+    val roots = myProjectFileIndex.getModuleSourceOrLibraryClassesRoots(file)
+    if (roots.isEmpty()) return DoesNotContainFileInfo()
 
-    Set<CodeInsightContext> result = new SmartHashSet<>();
-    for (RootDescriptor rootDescriptor : roots) {
-      ScopeRootDescriptor descriptor = myRoots.getRootDescriptor(rootDescriptor);
+    val result = SmartHashSet<CodeInsightContext>()
+    for (rootDescriptor in roots) {
+      val descriptor = myRoots.getRootDescriptor(rootDescriptor)
       if (descriptor != null) {
-        CodeInsightContext context = convertToContext(descriptor);
+        val context = convertToContext(descriptor)
         if (context != null) {
-          result.add(context);
+          result.add(context)
         }
       }
     }
-    return CodeInsightContextAwareSearchScopes.createContainingContextFileInfo(result);
+    return createContainingContextFileInfo(result)
   }
 
-  @Override
-  public boolean contains(@NotNull VirtualFile file) {
+  override fun contains(file: VirtualFile): Boolean {
     // in case of single file source
-    if (mySingleFileSourcesTracker.isSourceDirectoryInModule(file, myModule)) return true;
+    if (mySingleFileSourcesTracker.isSourceDirectoryInModule(file, this.module)) return true
 
-    if (isSharedSourceSupportEnabled()) {
-      Collection<RootDescriptor> roots = myProjectFileIndex.getModuleSourceOrLibraryClassesRoots(file);
-      return ContainerUtil.exists(roots, root -> myRoots.getRootDescriptor(root) != null);
+    if (this.isSharedSourceSupportEnabled) {
+      val roots = myProjectFileIndex.getModuleSourceOrLibraryClassesRoots(file)
+      return roots.any { root -> myRoots.getRootDescriptor(root) != null }
     }
     else {
-      VirtualFile root = myProjectFileIndex.getModuleSourceOrLibraryClassesRoot(file);
-      return root != null && myRoots.containsRoot(root);
+      val root = myProjectFileIndex.getModuleSourceOrLibraryClassesRoot(file)
+      return root != null && myRoots.containsRoot(root)
     }
   }
 
   @ApiStatus.Experimental
-  @Override
-  public boolean contains(@NotNull VirtualFile file, @NotNull CodeInsightContext context) {
-    if (!isSharedSourceSupportEnabled()) {
-      return contains(file);
+  override fun contains(file: VirtualFile, context: CodeInsightContext): Boolean {
+    if (!this.isSharedSourceSupportEnabled) {
+      return contains(file)
     }
 
     // in case of single file source
-    if (mySingleFileSourcesTracker.isSourceDirectoryInModule(file, myModule)) {
+    if (mySingleFileSourcesTracker.isSourceDirectoryInModule(file, this.module)) {
       // todo IJPL-339 is it correct???
-      if (context instanceof ModuleContext moduleContext && moduleContext.getModule() == myModule) {
-        return true;
+      if (context is ModuleContext && context.getModule() === this.module) {
+        return true
       }
     }
 
-    RootDescriptor rootDescriptor = convertContextToRootDescriptor(file, context);
-    if (rootDescriptor == null) return false;
-
-    VirtualFile root = myProjectFileIndex.getModuleSourceOrLibraryClassesRoot(file);
-    if (root == null) return false;
-
-    ScopeRootDescriptor existingDescriptor = myRoots.getRootDescriptor(root);
-    if (existingDescriptor == null) return false;
-
-    boolean result = existingDescriptor.correspondTo(rootDescriptor);
+    val rootDescriptor = convertContextToRootDescriptor(file, context) ?: return false
+    val root = myProjectFileIndex.getModuleSourceOrLibraryClassesRoot(file) ?: return false
+    val existingDescriptor = myRoots.getRootDescriptor(root) ?: return false
+    val result = existingDescriptor.correspondTo(rootDescriptor)
 
     // don't change order of checks!
     if (!result && LOG.isDebugEnabled() && contains(file)) {
-      LOG.debug("File " + file + " is in scope, but not with " + context);
+      LOG.debug("File $file is in scope, but not with $context")
     }
 
-    return result;
+    return result
   }
 
-  private static @Nullable RootDescriptor convertContextToRootDescriptor(
-    @NotNull VirtualFile root,
-    @NotNull CodeInsightContext context
-  ) {
-    if (context instanceof ModuleContext moduleContext) {
-      Module module = moduleContext.getModule();
-      if (module == null) return null;
-      return new ModuleRootDescriptor(root, module);
+  private fun convertToContext(descriptor: ScopeRootDescriptor): CodeInsightContext? {
+    val entry = descriptor.orderEntry
+    if (entry is ModuleSourceOrderEntry) {
+      val module = entry.getRootModel().getModule()
+      val bridge = ProjectModelContextBridge.getInstance(module.getProject())
+      return bridge.getContext(module)
     }
 
-    if (context instanceof LibraryContext libraryContext) {
-      Library library = libraryContext.getLibrary();
-      if (library == null) return null;
-      return new LibraryRootDescriptor(root, library);
+    if (entry is LibraryOrderEntry) {
+      val library = entry.getLibrary() ?: return null
+      val bridge = ProjectModelContextBridge.getInstance(module.getProject())
+      return bridge.getContext(library)
     }
 
-    if (context instanceof SdkContext sdkContext) {
-      Sdk sdk = sdkContext.getSdk();
-      if (sdk == null) return null;
-      return new SdkRootDescriptor(root, sdk);
+    if (entry is JdkOrderEntry) {
+      val sdk = entry.getJdk() ?: return null
+      val bridge = ProjectModelContextBridge.getInstance(module.getProject())
+      return bridge.getContext(sdk)
     }
 
-    return null;
+    return null
   }
 
-  private @Nullable CodeInsightContext convertToContext(@NotNull ScopeRootDescriptor descriptor) {
-    OrderEntry entry = descriptor.getOrderEntry();
-    if (entry instanceof ModuleSourceOrderEntry moduleSourceOrderEntry) {
-      Module module = moduleSourceOrderEntry.getRootModel().getModule();
-      ProjectModelContextBridge bridge = ProjectModelContextBridge.getInstance(myModule.getProject());
-      return bridge.getContext(module);
-    }
+  override fun compare(file1: VirtualFile, file2: VirtualFile): Int {
+    val r1 = myProjectFileIndex.getModuleSourceOrLibraryClassesRoot(file1)
+    val r2 = myProjectFileIndex.getModuleSourceOrLibraryClassesRoot(file2)
+    if (Comparing.equal(r1, r2)) return 0
 
-    if (entry instanceof LibraryOrderEntry libraryOrderEntry) {
-      Library library = libraryOrderEntry.getLibrary();
-      if (library == null) return null;
-      ProjectModelContextBridge bridge = ProjectModelContextBridge.getInstance(myModule.getProject());
-      return bridge.getContext(library);
-    }
+    if (r1 == null) return -1
+    if (r2 == null) return 1
 
-    if (entry instanceof JdkOrderEntry jdkOrderEntry) {
-      Sdk sdk = jdkOrderEntry.getJdk();
-      if (sdk == null) return null;
-      ProjectModelContextBridge bridge = ProjectModelContextBridge.getInstance(myModule.getProject());
-      return bridge.getContext(sdk);
-    }
-
-    return null;
+    val roots = myRoots
+    val i1 = roots.getPriority(r1)
+    val i2 = roots.getPriority(r2)
+    if (i1 == 0 && i2 == 0) return 0
+    if (i1 > 0 && i2 > 0) return i2 - i1
+    return if (i1 > 0) 1 else -1
   }
 
-  @Override
-  public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
-    VirtualFile r1 = myProjectFileIndex.getModuleSourceOrLibraryClassesRoot(file1);
-    VirtualFile r2 = myProjectFileIndex.getModuleSourceOrLibraryClassesRoot(file2);
-    if (Comparing.equal(r1, r2)) return 0;
+  @get:TestOnly
+  val roots: Collection<VirtualFile>
+    get() = myRoots.getSortedRoots()
 
-    if (r1 == null) return -1;
-    if (r2 == null) return 1;
-
-    RootContainer roots = myRoots;
-    int i1 = roots.getPriority(r1);
-    int i2 = roots.getPriority(r2);
-    if (i1 == 0 && i2 == 0) return 0;
-    if (i1 > 0 && i2 > 0) return i2 - i1;
-    return i1 > 0 ? 1 : -1;
-  }
-
-  @TestOnly
-  public @NotNull Collection<VirtualFile> getRoots() {
-    return myRoots.getSortedRoots();
-  }
-
-  @Override
-  public @Nullable VirtualFileEnumeration extractFileEnumeration() {
-    VirtualFileEnumeration enumeration = myVirtualFileEnumeration;
-    long currentVFSStamp = VirtualFileManager.VFS_STRUCTURE_MODIFICATIONS.getModificationCount();
+  override fun extractFileEnumeration(): VirtualFileEnumeration? {
+    var enumeration = myVirtualFileEnumeration
+    val currentVFSStamp = VirtualFileManager.VFS_STRUCTURE_MODIFICATIONS.getModificationCount()
     if (currentVFSStamp != myVFSModificationCount) {
-      myVirtualFileEnumeration = enumeration = doExtractFileEnumeration();
-      myVFSModificationCount = currentVFSStamp;
+      enumeration = doExtractFileEnumeration()
+      myVirtualFileEnumeration = enumeration
+      myVFSModificationCount = currentVFSStamp
     }
-    return enumeration == VirtualFileEnumeration.EMPTY ? null : enumeration;
+    return if (enumeration === VirtualFileEnumeration.EMPTY) null else enumeration
   }
 
-  private @NotNull VirtualFileEnumeration doExtractFileEnumeration() {
-    Set<Module> modules = getModules();
+  private fun doExtractFileEnumeration(): VirtualFileEnumeration {
+    val modules = this.modules
     // todo might be not cheap
-    if (myRoots.getSize() > 1 && (hasOption(MODULES) && modules.size() > 1 || hasOption(LIBRARIES))) {
-      return VirtualFileEnumeration.EMPTY;
+    if (myRoots.size > 1 && (hasOption(MODULES) && modules.size > 1 || hasOption(LIBRARIES))) {
+      return VirtualFileEnumeration.EMPTY
     }
 
-    return getFileEnumerationUnderRoots(myRoots.getRoots());
+    return getFileEnumerationUnderRoots(myRoots.getRoots())
   }
 
-  private boolean isSharedSourceSupportEnabled() {
-    return CodeInsightContexts.isSharedSourceSupportEnabled(Objects.requireNonNull(getProject()));
+  private val isSharedSourceSupportEnabled: Boolean
+    get() = isSharedSourceSupportEnabled(requireNotNull(project))
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other == null || javaClass != other.javaClass) return false
+
+    val that = other as ModuleWithDependenciesScope
+    return myOptions == that.myOptions && this.module == that.module
   }
 
-  /**
-   * Compute a set of ids of all files under {@code roots}
-   */
-  public static @NotNull VirtualFileEnumeration getFileEnumerationUnderRoots(@NotNull Collection<? extends VirtualFile> roots) {
-    IntSet result = new IntOpenHashSet();
-    for (VirtualFile file : roots) {
-      if (file instanceof VirtualFileWithId id) {
-        int[] children = VirtualFileManager.getInstance().listAllChildIds(id.getId());
-        result.addAll(IntList.of(children));
-      }
-    }
-
-    return new MyVirtualFileEnumeration(result);
+  override fun calcHashCode(): Int {
+    return 31 * module.hashCode() + myOptions
   }
 
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-
-    ModuleWithDependenciesScope that = (ModuleWithDependenciesScope)o;
-    return myOptions == that.myOptions && myModule.equals(that.myModule);
-  }
-
-  @Override
-  public int calcHashCode() {
-    return 31 * myModule.hashCode() + myOptions;
-  }
-
-  @Override
-  public String toString() {
-    return "Module-with-dependencies:" + myModule.getName() +
+  override fun toString(): String {
+    return "Module-with-dependencies:" + module.getName() +
            " compile-only:" + hasOption(COMPILE_ONLY) +
            " include-libraries:" + hasOption(LIBRARIES) +
            " include-other-modules:" + hasOption(MODULES) +
-           " include-tests:" + hasOption(TESTS);
+           " include-tests:" + hasOption(TESTS)
   }
 
-  private static class MyVirtualFileEnumeration implements VirtualFileEnumeration {
-    private final @NotNull IntSet myIds;
-
-    MyVirtualFileEnumeration(@NotNull IntSet ids) {
-      myIds = ids;
+  private fun convertContextToRootDescriptor(
+    root: VirtualFile,
+    context: CodeInsightContext,
+  ): RootDescriptor? {
+    if (context is ModuleContext) {
+      val module = context.getModule()
+      if (module == null) return null
+      return ModuleRootDescriptor(root, module)
     }
 
-    @Override
-    public boolean contains(int fileId) {
-      return myIds.contains(fileId);
+    if (context is LibraryContext) {
+      val library = context.getLibrary()
+      if (library == null) return null
+      return LibraryRootDescriptor(root, library)
     }
 
-    @Override
-    public int @NotNull [] asArray() {
-      return myIds.toArray(ArrayUtil.EMPTY_INT_ARRAY);
+    if (context is SdkContext) {
+      val sdk = context.getSdk()
+      if (sdk == null) return null
+      return SdkRootDescriptor(root, sdk)
     }
 
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      MyVirtualFileEnumeration that = (MyVirtualFileEnumeration)o;
-      return myIds.equals(that.myIds);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(myIds);
-    }
-
-    @Override
-    public String toString() {
-      return Arrays.toString(myIds.toIntArray());
-    }
+    return null
   }
 }
+
+private val LOG = Logger.getInstance(ModuleWithDependenciesScope::class.java)
+
+/**
+ * Compute a set of ids of all files under `roots`
+ */
+fun getFileEnumerationUnderRoots(roots: Collection<VirtualFile>): VirtualFileEnumeration {
+  val result: IntSet = IntOpenHashSet()
+  for (file in roots) {
+    if (file is VirtualFileWithId) {
+      val children = VirtualFileManager.getInstance().listAllChildIds(file.getId())
+      result.addAll(IntList.of(*children))
+    }
+  }
+
+  return MyVirtualFileEnumeration(result)
+}
+
+private class MyVirtualFileEnumeration(private val myIds: IntSet) : VirtualFileEnumeration {
+  override fun contains(fileId: Int): Boolean {
+    return myIds.contains(fileId)
+  }
+
+  override fun asArray(): IntArray {
+    return myIds.toArray(ArrayUtil.EMPTY_INT_ARRAY)
+  }
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other == null || javaClass != other.javaClass) return false
+    val that: MyVirtualFileEnumeration = other as MyVirtualFileEnumeration
+    return myIds == that.myIds
+  }
+
+  override fun hashCode(): Int {
+    return Objects.hash(myIds)
+  }
+
+  override fun toString(): String {
+    return myIds.toIntArray().contentToString()
+  }
+}
+
+@MagicConstant(flags = [COMPILE_ONLY.toLong(), LIBRARIES.toLong(), MODULES.toLong(), TESTS.toLong()])
+private annotation class ScopeConstant
+
+const val COMPILE_ONLY: Int = 0x01
+const val LIBRARIES: Int = 0x02
+const val MODULES: Int = 0x04
+const val TESTS: Int = 0x08

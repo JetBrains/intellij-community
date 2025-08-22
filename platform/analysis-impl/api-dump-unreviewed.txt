@@ -2913,19 +2913,13 @@ a:com.intellij.openapi.module.impl.scopes.LibraryScopeBase
 - isSearchInModuleContent(com.intellij.openapi.module.Module):Z
 f:com.intellij.openapi.module.impl.scopes.ModuleWithDependenciesScope
 - com.intellij.psi.search.GlobalSearchScope
-- sf:COMPILE_ONLY:I
-- sf:LIBRARIES:I
-- sf:MODULES:I
-- sf:TESTS:I
-- calcHashCode():I
 - compare(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vfs.VirtualFile):I
 - contains(com.intellij.openapi.vfs.VirtualFile):Z
 - equals(java.lang.Object):Z
 - extractFileEnumeration():com.intellij.psi.search.impl.VirtualFileEnumeration
 - getDisplayName():java.lang.String
-- s:getFileEnumerationUnderRoots(java.util.Collection):com.intellij.psi.search.impl.VirtualFileEnumeration
-- getModule():com.intellij.openapi.module.Module
-- getRoots():java.util.Collection
+- f:getModule():com.intellij.openapi.module.Module
+- f:getRoots():java.util.Collection
 - isSearchInLibraries():Z
 - isSearchInModuleContent(com.intellij.openapi.module.Module):Z
 - isSearchInModuleContent(com.intellij.openapi.module.Module,Z):Z

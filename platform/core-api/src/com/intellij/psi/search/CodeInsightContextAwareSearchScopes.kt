@@ -100,7 +100,7 @@ sealed interface NoContextInformation : CodeInsightContextInfo
  * @see CodeInsightContextAwareSearchScope
  */
 @ApiStatus.Experimental
-sealed interface ActualCodeInsightContextInfo : CodeInsightContextInfo {
+interface ActualCodeInsightContextInfo : CodeInsightContextInfo {
   /**
    * @return true if scope contains [file] in the context of [context].
    */
