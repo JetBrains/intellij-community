@@ -9,6 +9,7 @@ import com.intellij.platform.project.projectId
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy
 import com.intellij.xdebugger.impl.breakpoints.XDependentBreakpointManagerProxy
 import com.intellij.xdebugger.impl.rpc.XBreakpointId
+import fleet.rpc.client.durable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
@@ -24,7 +25,9 @@ internal class FrontendXDependentBreakpointManagerProxy(
 
   init {
     cs.launch {
-      val breakpointsDependencies = XDependentBreakpointManagerApi.getInstance().breakpointDependencies(project.projectId())
+      val breakpointsDependencies = durable {
+        XDependentBreakpointManagerApi.getInstance().breakpointDependencies(project.projectId())
+      }
       for (dto in breakpointsDependencies.initialDependencies) {
         dependantBreakpoints[dto.child] = dto
       }

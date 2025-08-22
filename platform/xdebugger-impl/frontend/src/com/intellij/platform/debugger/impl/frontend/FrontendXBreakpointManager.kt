@@ -23,6 +23,7 @@ import com.intellij.xdebugger.impl.breakpoints.*
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy.Companion.useFeLineBreakpointProxy
 import com.intellij.xdebugger.impl.rpc.XBreakpointId
+import fleet.rpc.client.durable
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
@@ -71,7 +72,9 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
   init {
     cs.launch {
       FrontendXBreakpointTypesManager.getInstance(project).typesInitialized().await()
-      val (initialBreakpoints, breakpointEvents) = XDebuggerManagerApi.getInstance().getBreakpoints(project.projectId())
+      val (initialBreakpoints, breakpointEvents) = durable {
+        XDebuggerManagerApi.getInstance().getBreakpoints(project.projectId())
+      }
       for (breakpointDto in initialBreakpoints) {
         try {
           addBreakpoint(breakpointDto, updateUI = false)
