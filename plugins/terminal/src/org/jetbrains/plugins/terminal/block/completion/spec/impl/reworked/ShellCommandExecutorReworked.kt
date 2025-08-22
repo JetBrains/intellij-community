@@ -11,6 +11,7 @@ import com.intellij.platform.eel.spawnProcess
 import com.intellij.terminal.completion.spec.ShellCommandExecutor
 import com.intellij.terminal.completion.spec.ShellCommandResult
 import com.intellij.util.execution.ParametersListUtil
+import kotlinx.coroutines.coroutineScope
 import kotlin.coroutines.cancellation.CancellationException
 
 internal class ShellCommandExecutorReworked(private val eelDescriptor: EelDescriptor) : ShellCommandExecutor {
@@ -25,21 +26,24 @@ internal class ShellCommandExecutorReworked(private val eelDescriptor: EelDescri
     directory: String,
     commandName: String,
     arguments: List<String>,
-  ): ShellCommandResult {
+  ): ShellCommandResult = coroutineScope {
+    val scope = this
+
     val eelDirectory = try {
       EelPath.parse(directory, eelDescriptor)
     }
     catch (e: Exception) {
       LOG.error("Failed to parse directory as EelPath: '$directory'", e)
-      return emptyResult()
+      return@coroutineScope emptyResult()
     }
 
-    return try {
+    try {
       val eel = eelDescriptor.toEelApi()
       val process = eel.exec
         .spawnProcess(commandName)
         .args(arguments)
         .workingDirectory(eelDirectory)
+        .scope(scope) // Terminate the process if the coroutine was canceled
         .eelIt()
       val result = process.awaitProcessResult()
       ShellCommandResult.create(result.stdoutString, result.exitCode)
