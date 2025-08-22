@@ -90,6 +90,7 @@ public final class ThreadLeakTracker {
       "HttpClient-",  // JRE's HttpClient thread pool is not supposed to be disposed - to reuse connections
       ProcessIOExecutorService.POOLED_THREAD_PREFIX,
       "IDEA Test Case Thread",
+      "IjentThreadPool-",  // Many tests use global IJents that start lazily on the first request but exit when the whole application exits.
       "Image Fetcher ",
       "InnocuousThreadGroup",
       "Java2D Disposer",
