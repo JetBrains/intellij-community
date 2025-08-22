@@ -28,7 +28,7 @@ val KOTLIN_CONSOLE_KEY = Key.create<Boolean>("kotlin.console")
  * Tested in [OutOfBlockModificationTestGenerated]
  */
 @Service(Service.Level.PROJECT)
-class KotlinCodeBlockModificationListener(project: Project) : PsiTreeChangePreprocessor, Disposable {
+class KotlinCodeBlockModificationListener(project: Project) : PsiTreeChangePreprocessor, Disposable.Default {
     private val modificationTrackerImpl: PsiModificationTracker =
         PsiModificationTracker.getInstance(project)
 
@@ -100,6 +100,4 @@ class KotlinCodeBlockModificationListener(project: Project) : PsiTreeChangePrepr
     fun incModificationCount() {
         kotlinOutOfCodeBlockTrackerImpl.incModificationCount()
     }
-
-    override fun dispose() = Unit
 }
