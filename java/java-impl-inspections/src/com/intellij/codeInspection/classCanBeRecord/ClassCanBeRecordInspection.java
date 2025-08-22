@@ -38,7 +38,7 @@ import static com.intellij.codeInspection.options.OptPane.*;
 public final class ClassCanBeRecordInspection extends BaseInspection implements CleanupLocalInspectionTool {
   private static final List<String> IGNORED_ANNOTATIONS = List.of("io.micronaut.*", "jakarta.*", "javax.*", "org.springframework.*");
 
-  public @NotNull ConversionStrategy myConversionStrategy = SHOW_AFFECTED_MEMBERS;
+  public @NotNull ConversionStrategy myConversionStrategy = DO_NOT_SUGGEST;
   public boolean suggestAccessorsRenaming = true;
 
   public final List<@NlsSafe String> myIgnoredAnnotations = new ArrayList<>();
