@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.diagnostic.Attachment
+import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.*
@@ -397,10 +398,10 @@ class PushedFilePropertiesUpdaterImpl(private val myProject: Project) : PushedFi
         try {
           session.visitFile(fileOrDir)
         }
-        catch (e: ProcessCanceledException) {
-          throw e
-        }
         catch (e: Exception) {
+          if (e is ControlFlowException) {
+            throw e
+          }
           LOG.error("Failed to visit file", e, Attachment("filePath.txt", fileOrDir.path))
         }
       }
