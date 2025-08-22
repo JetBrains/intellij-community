@@ -94,7 +94,7 @@ object EelTunnelsApiHelpers {
   class GetAcceptorForRemotePort(
     private val owner: EelTunnelsApi,
   ) : OwnedBuilder<EelTunnelsApi.ConnectionAcceptor> {
-    private var configureServerSocket: @ExtensionFunctionType Function1<ConfigurableSocket, Unit> = {}
+    private var configureServerSocket: ConfigurableSocket.() -> Unit = {}
 
     private var hostname: String = "localhost"
 
@@ -104,7 +104,7 @@ object EelTunnelsApiHelpers {
 
     private var timeout: Duration = 10.seconds
 
-    fun configureServerSocket(arg: @ExtensionFunctionType Function1<ConfigurableSocket, Unit>): GetAcceptorForRemotePort = apply {
+    fun configureServerSocket(arg: ConfigurableSocket.() -> Unit): GetAcceptorForRemotePort = apply {
       this.configureServerSocket = arg
     }
 
@@ -169,7 +169,7 @@ object EelTunnelsApiHelpers {
   class GetConnectionToRemotePort(
     private val owner: EelTunnelsApi,
   ) : OwnedBuilder<Connection> {
-    private var configureSocketBeforeConnection: @ExtensionFunctionType Function1<ConfigurableClientSocket, Unit> = {}
+    private var configureSocketBeforeConnection: ConfigurableClientSocket.() -> Unit = {}
 
     private var hostname: String = "localhost"
 
@@ -180,10 +180,9 @@ object EelTunnelsApiHelpers {
     private var timeout: Duration = 10.seconds
 
     @ApiStatus.Internal
-    fun configureSocketBeforeConnection(arg: @ExtensionFunctionType Function1<ConfigurableClientSocket, Unit>): GetConnectionToRemotePort =
-      apply {
-        this.configureSocketBeforeConnection = arg
-      }
+    fun configureSocketBeforeConnection(arg: ConfigurableClientSocket.() -> Unit): GetConnectionToRemotePort = apply {
+      this.configureSocketBeforeConnection = arg
+    }
 
     @ApiStatus.Experimental
     fun hostname(arg: String): GetConnectionToRemotePort = apply {

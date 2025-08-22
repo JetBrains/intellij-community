@@ -25,8 +25,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.project.rootManager
-import com.intellij.openapi.roots.DependencyScope
-import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.projectRoots.JavaSdk
+import com.intellij.openapi.projectRoots.ProjectJdkTable
+import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VfsUtil
@@ -61,13 +62,17 @@ import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsLibraryDependency
 import org.jetbrains.jps.model.module.JpsModuleDependency
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
+import org.jetbrains.kotlin.asJava.elements.KtLightField
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.*
 import org.jetbrains.kotlin.idea.test.UseK2PluginMode
 import org.jetbrains.kotlin.kdoc.psi.api.KDoc
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
+import org.jetbrains.kotlin.types.Variance
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.assertEquals
 import java.nio.file.Files
@@ -108,6 +113,7 @@ import kotlin.text.RegexOption
 import kotlin.text.buildString
 import kotlin.text.endsWith
 import kotlin.text.isBlank
+import kotlin.text.isNotBlank
 import kotlin.text.isNotEmpty
 import kotlin.text.lines
 import kotlin.text.lowercase
@@ -332,8 +338,6 @@ class BuildersGeneratorTest {
       }
 
       UpdateCopyrightProcessor(tempProject, module, psiFile).run()
-
-      CodeStyleManager.getInstance(tempProject).reformat(psiFile)
     }
   }
 
@@ -350,6 +354,13 @@ class BuildersGeneratorTest {
       val projectModel = ModuleManager.getInstance(tempProject).getModifiableModel()
 
       val jpsModuleQueue = mutableListOf(ultimateProject.findModuleByName(moduleName)!!)
+
+      val jdkName = "jbr-17"
+      val projectJdkTable = ProjectJdkTable.getInstance(tempProject)
+      val projectJdk = JavaSdk.getInstance().createJdk("jbr-17", System.getProperty("java.home"))
+      projectJdkTable.addJdk(projectJdk)
+      ProjectRootManager.getInstance(tempProject).setProjectSdkName(jdkName, JavaSdk.getInstance().name)
+
       // TODO Dependencies don't work well. Kotlin can't resolve types from them.
       run {
         var i = 0
@@ -381,6 +392,7 @@ class BuildersGeneratorTest {
 
         val rootModel = module.rootManager.modifiableModel
 
+        rootModel.sdk = projectJdk
         rootModel.addLibraryEntries(platformLibs, DependencyScope.COMPILE, false)
 
         for (sourceRoot in jpsModule.sourceRoots) {
@@ -487,7 +499,7 @@ private fun findBuilders(psiFile: PsiFile, methods: MutableList<BuilderRequest>)
               .flatMap { it.annotationEntries }
               .filter {
                 analyze(it) {
-                  it.typeReference?.getFqn()?.matches(annotationsToCopyRegex) == true
+                  it.typeReference?.renderWithFqnTypes()?.matches(annotationsToCopyRegex) == true
                 }
               }
               .map { it.text.trim() }
@@ -558,7 +570,7 @@ private suspend fun writeBuilderFiles(
               iface.getSuperTypeList()
                 ?.entries
                 ?.mapNotNull { superTypeListEntry -> superTypeListEntry.typeReference }
-                ?.map(KtTypeReference::getFqn)
+                ?.map(KtTypeReference::renderWithFqnTypes)
                 ?.map { fqn ->
                   val cls = getKtClassFromKtLightClass(javaPsiFacade.findClass(fqn, projectScope))
                   check(cls != null) { "PsiClass for $fqn not found" }
@@ -576,7 +588,7 @@ private suspend fun writeBuilderFiles(
           .map { property ->
             RequiredArgument(
               name = property.name!!,
-              typeFqn = property.typeReference!!.getFqn(),
+              typeFqn = property.typeReference!!.renderWithFqnTypes(),
               kdoc = property.docComment?.extractText() ?: "",
             )
           }
@@ -589,7 +601,7 @@ private suspend fun writeBuilderFiles(
           .map { property ->
             OptionalArgument(
               name = property.name!!,
-              typeFqn = property.typeReference!!.getFqn(),
+              typeFqn = property.typeReference!!.renderWithFqnTypes(),
               body = property.getter!!.bodyExpression!!.renderWithFqnTypes(),
               kdoc = property.docComment?.extractText() ?: "",
             )
@@ -619,8 +631,10 @@ private suspend fun writeBuilderFiles(
           .sortedBy { it.name }
 
         for (fullTypeFqn in requiredArguments.map { it.typeFqn } + optionalArguments.map { it.typeFqn }) {
-          for (singleTypeFqn in fullTypeFqn.split(Regex("[<>,?]"))) {
-            imports += singleTypeFqn.trim()
+          for (singleTypeFqn in fullTypeFqn.split(Regex("[<>,?()-]"))) {
+            if (singleTypeFqn.isNotBlank()) {
+              imports += singleTypeFqn.trim()
+            }
           }
         }
 
@@ -639,7 +653,7 @@ private suspend fun writeBuilderFiles(
        */
       package $sourcePackage
       
-      ${imports.joinToString("\n") { "import $it" }}
+      ${imports.filter(String::isNotEmpty).joinToString("\n") { "import $it" }}
       
       """
 
@@ -833,13 +847,15 @@ private fun renderPropertyInBuilder(
   val psiClass = JavaPsiFacade.getInstance(tempProject).findClass(typeFqn, GlobalSearchScope.allScope(tempProject))
 
   if (psiClass?.isEnum == true) {
-    val fields = psiClass.allFields.associateByTo(sortedMapOf()) { field ->
-      Regex("(?:^|_)[a-z0-9]+").findAll(field.name.lowercase())
-        .joinToString("") { match ->
-          match.value.trimStart('_').replaceFirstChar(Char::uppercase)
-        }
-        .replaceFirstChar(Char::lowercase)
-    }
+    val fields = psiClass.allFields
+      .filterIsInstance<KtLightField>()  // It filters out default methods like `name`, `order`. Also, on some JDKS enums have methods `hash`.
+      .associateByTo(sortedMapOf()) { field ->
+        Regex("(?:^|_)[a-z0-9]+").findAll(field.name.lowercase())
+          .joinToString("") { match ->
+            match.value.trimStart('_').replaceFirstChar(Char::uppercase)
+          }
+          .replaceFirstChar(Char::lowercase)
+      }
 
     for ((enumMethodName, field) in fields) {
       append("""
@@ -849,25 +865,30 @@ private fun renderPropertyInBuilder(
   }
 }
 
-private fun PsiElement.renderWithFqnTypes(): String = buildString {
-  accept(object : PsiRecursiveElementWalkingVisitor() {
-    override fun visitElement(element: PsiElement) {
-      var written = false
-      when (element) {
-        is KtTypeReference -> {
-          val fqn = element.getFqn()
-          append(fqn.javaToKotlinTypes())
-          written = true
+/**
+ * Renders some PSI element into a string, but all type references are specified with their full qualified names.
+ */
+@OptIn(KaExperimentalApi::class)
+private fun PsiElement.renderWithFqnTypes(): String {
+  return buildString {
+    accept(object : PsiRecursiveElementWalkingVisitor() {
+      override fun visitElement(element: PsiElement) {
+        when {
+          element is KtTypeReference -> {
+            analyze(element) {
+              append(element.type.render(KaTypeRendererForSource.WITH_QUALIFIED_NAMES, Variance.INVARIANT))
+            }
+          }
+          element.firstChild == null -> {
+            append(element.text)
+          }
+          else -> {
+            super.visitElement(element)
+          }
         }
       }
-      if (!written && element.firstChild == null) {
-        append(element.text)
-      }
-      if (!written) {
-        super.visitElement(element)
-      }
-    }
-  })
+    })
+  }
 }
 
 private fun KDoc.extractText(): String =
@@ -892,26 +913,12 @@ private fun String.surroundWithNewlinesIfNotBlank(): String =
   if (isBlank()) ""
   else "\n${trim()}\n"
 
-private fun KtTypeReference.getFqn(): String =
-  analyze(this) { this@getFqn.type }.toString().replace("/", ".")
-
 private fun getKtClassFromKtLightClass(lightClass: PsiClass?): KtClass? {
   return when (val originalElement = (lightClass as? KtLightClass)?.kotlinOrigin) {
     is KtClass -> originalElement
     else -> null
   }
 }
-
-private fun String.javaToKotlinTypes(): String =
-  replace("java.lang.String", "String")
-    .replace("java.lang.Integer", "Int")
-    .replace("java.lang.Boolean", "Boolean")
-    .replace("java.lang.Float", "Float")
-    .replace("java.lang.Double", "Double")
-    .replace("java.lang.Long", "Long")
-    .replace("java.lang.Object", "Any")
-    .replace("java.util.List", "List")
-    .replace("java.util.Map", "Map")
 
 private class RequiredArgument(val name: String, val typeFqn: String, val kdoc: String)
 private class OptionalArgument(val name: String, val typeFqn: String, val kdoc: String, val body: String)

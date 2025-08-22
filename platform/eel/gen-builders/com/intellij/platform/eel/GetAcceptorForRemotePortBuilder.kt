@@ -13,7 +13,7 @@ import kotlin.time.Duration.Companion.seconds
 @GeneratedBuilder.Result
 @ApiStatus.Internal
 class GetAcceptorForRemotePortBuilder() {
-  private var configureServerSocket: @ExtensionFunctionType Function1<ConfigurableSocket, Unit> = {}
+  private var configureServerSocket: ConfigurableSocket.() -> Unit = {}
 
   private var hostname: String = "localhost"
 
@@ -23,7 +23,7 @@ class GetAcceptorForRemotePortBuilder() {
 
   private var timeout: Duration = 10.seconds
 
-  fun configureServerSocket(arg: @ExtensionFunctionType Function1<ConfigurableSocket, Unit>): GetAcceptorForRemotePortBuilder = apply {
+  fun configureServerSocket(arg: ConfigurableSocket.() -> Unit): GetAcceptorForRemotePortBuilder = apply {
     this.configureServerSocket = arg
   }
 
@@ -74,7 +74,7 @@ class GetAcceptorForRemotePortBuilder() {
 
 @GeneratedBuilder.Result
 internal class GetAcceptorForRemotePortImpl(
-  override val configureServerSocket: @ExtensionFunctionType Function1<ConfigurableSocket, Unit>,
+  override val configureServerSocket: ConfigurableSocket.() -> Unit,
   override val hostname: String,
   override val port: UShort,
   override val protocolPreference: EelIpPreference,
