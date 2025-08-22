@@ -40,4 +40,58 @@ public class EnvVariablesTableTest {
     var parsed = EnvVariablesTable.parseEnvsFromText(stringification);
     assertEquals(data, parsed);
   }
+
+  @Test
+  public void parseNewFormatEnvsFromText() {
+    assertEquals(3, EnvVariablesTable.parseNewEnvsFormatFromText("t1=val1;t2=val2;t3=val3;").size());
+    assertEquals(4, EnvVariablesTable.parseNewEnvsFormatFromText("t1=val1;t2=val2;t3=val3;;empty=;").size());
+    assertEquals(3, EnvVariablesTable.parseNewEnvsFormatFromText("t1=val1;t2=val2;t3=val3;;").size());
+    assertEquals(3, EnvVariablesTable.parseNewEnvsFormatFromText("t1=val1;t2=val2;t3=val3;;;").size());
+    assertEquals(4, EnvVariablesTable.parseNewEnvsFormatFromText("t1=val1;t2=val2;t3=val3;;noise;").size());
+    assertEquals(3, EnvVariablesTable.parseNewEnvsFormatFromText("t1=val1;t2=val2;t3=val3").size());
+    assertEquals("", EnvVariablesTable.parseNewEnvsFormatFromText("key").get("key"));
+
+    var jsonMap = EnvVariablesTable.parseNewEnvsFormatFromText("key=\"value\"blah;");
+    assertEquals(1, jsonMap.size());
+    assertEquals("valueblah", jsonMap.get("key"));
+
+    jsonMap = EnvVariablesTable.parseNewEnvsFormatFromText("key=\"value\"\"blah\";");
+    assertEquals(1, jsonMap.size());
+    assertEquals("value\"blah\"", jsonMap.get("key"));
+
+    jsonMap = EnvVariablesTable.parseNewEnvsFormatFromText("key=\"value\\");
+    assertEquals(1, jsonMap.size());
+    assertEquals("value\\", jsonMap.get("key"));
+
+    jsonMap = EnvVariablesTable.parseNewEnvsFormatFromText("key=\"value;");
+    assertEquals(1, jsonMap.size());
+    assertEquals("value;", jsonMap.get("key"));
+
+    jsonMap = EnvVariablesTable.parseNewEnvsFormatFromText("key={\"key\" : \"value\"}");
+    assertEquals(1, jsonMap.size());
+    assertEquals("{\"key\" : \"value\"}", jsonMap.get("key"));
+
+    jsonMap = EnvVariablesTable.parseNewEnvsFormatFromText("key={\"key\" : \"val;ue\"}");
+    assertEquals(2, jsonMap.size());
+    assertEquals("{\"key\" : \"val", jsonMap.get("key"));
+    assertEquals("", jsonMap.get("ue\"}"));
+
+    var map = EnvVariablesTable.parseNewEnvsFormatFromText("t1=val1;t2=val2;t3=val\\;3");
+    assertEquals(4, map.size());
+    assertEquals("val\\", map.get("t3"));
+
+    assertEquals(1, EnvVariablesTable.parseNewEnvsFormatFromText("test=test").size());
+
+    map = EnvVariablesTable.parseNewEnvsFormatFromText("var1=ffff;var2=C:\\CRM\\files\\;\"va\\\"=;r3\"=aaaa;var4=\"C:\\\\CRM\\\\files\\\\\"");
+    assertEquals(4, map.size());
+    assertEquals("ffff", map.get("var1"));
+    assertEquals("C:\\CRM\\files\\", map.get("var2"));
+    assertEquals("C:\\CRM\\files\\", map.get("var4"));
+    assertEquals("aaaa", map.get("va\"=;r3"));
+  }
+
+  @Test
+  public void testEscape() {
+    Map<String, String> map3 = EnvVariablesTable.parseNewEnvsFormatFromText("var1=ffff;var2=C:\\CRM\\files\\;\"va\\\"=;r3\"=aaaa;var4=\"C:\\\\CRM\\\\files\\\\\"");
+  }
 }

@@ -24,6 +24,10 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable> {
   private CopyPasteProviderPanel myPanel;
@@ -239,7 +243,7 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
       if (StringUtil.isEmpty(content)) {
         return;
       }
-      Map<String, String> map = parseEnvsFromText(content);
+      Map<String, String> map = parseNewEnvsFormatFromText(content);
       TableView<EnvironmentVariable> view = getTableView();
       if ((view.isEditing() || map.isEmpty())) {
         int row = view.getEditingRow();
@@ -289,6 +293,7 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
     return new AnAction[]{copyButton, pasteButton};
   }
 
+  @Deprecated
   public static @NotNull Map<String, String> parseEnvsFromText(String content) {
     Map<String, String> result = new LinkedHashMap<>();
     if (content != null && content.contains("=")) {
@@ -323,6 +328,104 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
           StringUtil.unescapeStringCharacters(pair.substring(pos + 1)));
       }
     }
+    return result;
+  }
+
+  public static @NotNull Map<String, String> parseNewEnvsFormatFromText(String content) {
+    Map<String, String> result = new LinkedHashMap<>();
+    if (content == null) {
+      return result;
+    }
+
+    for (var index = new AtomicInteger(0); index.get() < content.length(); index.incrementAndGet()) {
+      Function<Boolean, String> readItem = (endOnEqualSign) -> {
+        if (index.get() >= content.length()) {
+          return "";
+        }
+
+        var buffer = new StringBuilder();
+
+        var firstCharacter = content.charAt(index.get());
+        if (firstCharacter == '"') {
+          while (index.incrementAndGet() < content.length()) {
+            var c = content.charAt(index.get());
+            if (c == '\\') {
+              if (index.incrementAndGet() >= content.length()) {
+                // Escape character is present but there's no escaped character. Add slash and exit.
+                buffer.append('\\');
+                break;
+              }
+
+              var next = content.charAt(index.get());
+              buffer.append(next);
+              continue;
+            }
+
+            if (c == '"') {
+              // We found the closing quote.
+              if (index.incrementAndGet() >= content.length()) break;
+              var next = content.charAt(index.get());
+              if ((endOnEqualSign && next == '=') || next == ';') {
+                break;
+              }
+
+              // At this point, we found the closing quote, but next to it there are some characters other than = or ;
+              // Means we should treat the remaining text literally as the fallback.
+              while (index.get() < content.length()) {
+                c = content.charAt(index.get());
+                if ((endOnEqualSign && c == '=') || c == ';') break;
+                buffer.append(c);
+                index.incrementAndGet();
+              }
+
+              break;
+            }
+
+            buffer.append(c);
+          }
+        } else {
+          while (index.get() < content.length()) {
+            var c = content.charAt(index.get());
+            if ((endOnEqualSign && c == '=') || c == ';') break;
+            buffer.append(c);
+            index.incrementAndGet();
+          }
+        }
+
+        return buffer.toString();
+      };
+
+      Supplier<String> readKey = () -> { return readItem.apply(true); };
+      Supplier<String> readValue = () -> { return readItem.apply(false); };
+
+      var key = readKey.get();
+      if (index.get() >= content.length()) {
+        if (!key.equals("")) {
+          result.put(key, "");
+        }
+        break;
+      }
+
+      switch (content.charAt(index.get())) {
+        case '=': {
+          index.incrementAndGet(); // eat '='
+
+          var value = readValue.get();
+          result.put(key, value);
+          break;
+        }
+        case ';': {
+          if (!key.equals("")) {
+            result.put(key, "");
+          }
+          break;
+        }
+        default: {
+          throw new RuntimeException("Parse error at " + index);
+        }
+      }
+    }
+
     return result;
   }
 }

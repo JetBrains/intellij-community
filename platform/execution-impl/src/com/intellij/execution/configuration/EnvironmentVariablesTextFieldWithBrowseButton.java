@@ -43,7 +43,7 @@ public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWith
     addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(final ActionEvent e) {
-        setEnvs(EnvVariablesTable.parseEnvsFromText(getText()));
+        setEnvs(EnvVariablesTable.parseNewEnvsFormatFromText(getText()));
         createDialog().show();
       }
     });
@@ -51,7 +51,7 @@ public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWith
       @Override
       protected void textChanged(@NotNull DocumentEvent e) {
         if (!StringUtil.equals(getEnvText(), getText())) {
-          Map<String, String> textEnvs = EnvVariablesTable.parseEnvsFromText(getText());
+          Map<String, String> textEnvs = EnvVariablesTable.parseNewEnvsFormatFromText(getText());
           myData = myData.with(textEnvs);
           updateEnvFilesFromText();
           fireStateChanged();
@@ -164,11 +164,18 @@ public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWith
       if (!buf.isEmpty()) {
         buf.append(";");
       }
-      buf.append(StringUtil.escapeChar(entry.getKey(), ';'))
+      buf.append(tryEscapeKeyOrValue(entry.getKey()))
         .append("=")
-        .append(StringUtil.escapeChar(entry.getValue(), ';'));
+        .append(tryEscapeKeyOrValue(entry.getValue()));
     }
     return buf.toString();
+  }
+
+  private static @NotNull String tryEscapeKeyOrValue(@NotNull String keyOrValue) {
+    if(keyOrValue.contains(";") || keyOrValue.contains("=") || keyOrValue.contains("\"")) {
+      return StringUtil.wrapWithDoubleQuote(StringUtil.escapeChars(keyOrValue,  '\\', '"'));
+    }
+    else return keyOrValue;
   }
 
   public boolean isPassParentEnvs() {
