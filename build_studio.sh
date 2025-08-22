@@ -44,6 +44,10 @@ declare -ar BUILD_PROPERTIES=(
   "-Dintellij.build.incremental.compilation=${INCREMENTAL}"
   "-Dintellij.build.incremental.compilation.fallback.rebuild=false"
   "-Dintellij.build.store.git.revision=false"
+  # Set the "major-version release date" to nil. This field is unused in
+  # Android Studio, but the platform build scripts complain if it is missing.
+  # Note that this field is required to conform to the date format 'uuuuMMdd'.
+  "-Dintellij.build.override.application.version.majorReleaseDate=00000101"
 )
 
 "${PROG_DIR}/platform/jps-bootstrap/jps-bootstrap.sh" "${BUILD_PROPERTIES[@]}" "${PROG_DIR}" intellij.idea.community.build AndroidStudioBuildTarget

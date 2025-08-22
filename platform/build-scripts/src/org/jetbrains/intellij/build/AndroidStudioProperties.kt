@@ -49,13 +49,7 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
       "intellij.cidr.clangFormat.plugin",
     )
 
-    // EAP-only plugins are generally intended for JetBrains' products only. We always exclude them from Android Studio.
-    private val EAP_PLUGINS = COMMUNITY_REPOSITORY_PLUGINS
-      .filter { plugin -> plugin.bundlingRestrictions.includeInDistribution == PluginDistribution.NOT_FOR_RELEASE }
-      .map(PluginLayout::mainModule)
-      .filter(INHERITED_PLUGINS::contains)
-
-    private val EXCLUDED_PLUGINS = EAP_PLUGINS + listOf(
+    private val EXCLUDED_PLUGINS = listOf(
       "intellij.settingsSync", // Not supported yet in Studio (b/267070185).
       "intellij.android.gradle.dsl",
       "intellij.android.gradle.declarative.lang.ide",
