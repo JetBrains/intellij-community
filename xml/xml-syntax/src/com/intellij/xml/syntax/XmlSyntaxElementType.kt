@@ -2,6 +2,7 @@
 package com.intellij.xml.syntax
 
 import com.intellij.platform.syntax.SyntaxElementType
+import kotlin.jvm.JvmField
 
 object XmlSyntaxElementType {
   @JvmField val XML_DOCUMENT: SyntaxElementType = SyntaxElementType("XML_DOCUMENT")

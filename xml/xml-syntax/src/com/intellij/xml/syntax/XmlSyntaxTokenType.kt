@@ -5,6 +5,7 @@ import com.intellij.platform.syntax.SyntaxElementType
 import com.intellij.platform.syntax.SyntaxElementTypeSet
 import com.intellij.platform.syntax.element.SyntaxTokenTypes
 import com.intellij.platform.syntax.syntaxElementTypeSetOf
+import kotlin.jvm.JvmField
 
 /**
  * Specifies XML token types.

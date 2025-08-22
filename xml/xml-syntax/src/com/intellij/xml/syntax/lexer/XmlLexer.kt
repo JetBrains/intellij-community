@@ -8,6 +8,7 @@ import com.intellij.platform.syntax.util.lexer.FlexAdapter
 import com.intellij.platform.syntax.util.lexer.MergingLexerAdapter
 import com.intellij.xml.syntax.XmlSyntaxTokenType
 import org.jetbrains.annotations.ApiStatus
+import kotlin.jvm.JvmOverloads
 
 class XmlLexer(baseLexer: Lexer) : MergingLexerAdapter(baseLexer, TOKENS_TO_MERGE) {
 

@@ -6,6 +6,7 @@ import com.intellij.platform.syntax.element.SyntaxTokenTypes
 import com.intellij.platform.syntax.lexer.Lexer
 import com.intellij.platform.syntax.syntaxElementTypeSetOf
 import com.intellij.xml.syntax.lexer.XmlLexer
+import kotlin.jvm.JvmStatic
 
 object XmlSyntaxDefinition {
   val WHITESPACES: SyntaxElementTypeSet = syntaxElementTypeSetOf(SyntaxTokenTypes.WHITE_SPACE)

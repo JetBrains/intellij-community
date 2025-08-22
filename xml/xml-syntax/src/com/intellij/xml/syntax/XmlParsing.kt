@@ -42,6 +42,7 @@ import com.intellij.xml.syntax.XmlSyntaxTokenType.XML_REAL_WHITE_SPACE
 import com.intellij.xml.syntax.XmlSyntaxTokenType.XML_START_TAG_START
 import com.intellij.xml.syntax.XmlSyntaxTokenType.XML_TAG_CHARACTERS
 import com.intellij.xml.syntax.XmlSyntaxTokenType.XML_TAG_END
+import kotlin.jvm.JvmField
 
 open class XmlParsing(
   @JvmField protected val myBuilder: SyntaxTreeBuilder,
