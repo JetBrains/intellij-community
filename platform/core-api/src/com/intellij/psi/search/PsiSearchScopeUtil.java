@@ -47,11 +47,10 @@ public final class PsiSearchScopeUtil {
       FileViewProvider viewProvider = file.getOriginalFile().getViewProvider();
       VirtualFile backed = BackedVirtualFile.getOriginFileIfBacked(viewProvider.getVirtualFile());
       if (CodeInsightContexts.isSharedSourceSupportEnabled(element.getProject())) {
-        // todo IJPL-339 invent a way to avoid inferring the context here.
-        //               by default, the file does not have an assigned context before the context is really requested.
-        //               And once we request it here, it's assigned to "something".
-        //               But we could try assign it to the context which the scope wants to avoid building addition psi
 
+        // by default, the file does not have an assigned context before the context is really requested.
+        // And once we request it, it gets stuck to the file.
+        // So let's try assigning it to the context which the scope wants to avoid building addition psi
         CodeInsightContext context = CodeInsightContextAwareSearchScopes.getAnyCorrespondingContext(globalScope, backed);
         CodeInsightContext codeInsightContext = CodeInsightContextManager.getInstance(element.getProject()).getOrSetContext(viewProvider, context);
         if (CodeInsightContextAwareSearchScopes.contains(globalScope, backed, codeInsightContext)) {
