@@ -59,5 +59,6 @@
     <orderEntry type="module" module-name="intellij.platform.ide.codeinsight.inline" />
     <orderEntry type="module" module-name="intellij.platform.inline.completion" />
     <orderEntry type="module" module-name="intellij.terminal.completion" />
+    <orderEntry type="module" module-name="intellij.platform.eel.provider" />
   </component>
 </module>

@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.terminal.completion.ShellCommandSpecCompletion
 import com.intellij.terminal.completion.ShellDataGeneratorsExecutor
 import com.intellij.terminal.completion.ShellRuntimeContextProvider
@@ -38,8 +39,6 @@ internal class TerminalCommandSpecCompletionContributorGen2 : CompletionContribu
   override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
     if (!parameters.editor.isReworkedTerminalEditor) return
     val sessionModel = parameters.editor.getUserData(TerminalSessionModel.KEY) ?: return
-    val runtimeContextProvider = ShellRuntimeContextProviderReworkedImpl(parameters.editor.project!!, sessionModel)
-    val generatorsExecutor = ShellDataGeneratorsExecutorReworkedImpl()
     val blocksModel = parameters.editor.getUserData(TerminalBlocksModel.KEY) ?: return
     val lastBlock = blocksModel.blocks.lastOrNull() ?: return
 
@@ -57,6 +56,10 @@ internal class TerminalCommandSpecCompletionContributorGen2 : CompletionContribu
       return
     }
     val shellSupport = TerminalShellSupport.findByShellType(ShellType.ZSH) ?: return
+
+    val eelDescriptor = LocalEelDescriptor // TODO: it should be determined by where shell is running to work properly in WSL and Docker
+    val runtimeContextProvider = ShellRuntimeContextProviderReworkedImpl(parameters.editor.project!!, sessionModel, eelDescriptor)
+    val generatorsExecutor = ShellDataGeneratorsExecutorReworkedImpl()
     val context = TerminalCompletionContext(runtimeContextProvider, generatorsExecutor, shellSupport, parameters, ShellType.ZSH)
 
     val document = parameters.editor.document

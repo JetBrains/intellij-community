@@ -2,12 +2,8 @@
 package org.jetbrains.plugins.terminal.block.completion.spec.impl.reworked
 
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.util.io.NioFiles
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.path.EelPath
-import com.intellij.platform.eel.provider.LocalEelDescriptor
-import com.intellij.platform.eel.provider.asEelPath
-import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.utils.awaitProcessResult
 import com.intellij.platform.eel.provider.utils.stdoutString
 import com.intellij.platform.eel.spawnProcess
@@ -15,9 +11,8 @@ import com.intellij.terminal.completion.spec.ShellCommandExecutor
 import com.intellij.terminal.completion.spec.ShellCommandResult
 import com.intellij.util.execution.ParametersListUtil
 import kotlin.coroutines.cancellation.CancellationException
-import kotlin.io.path.Path
 
-internal class ShellCommandExecutorReworked : ShellCommandExecutor {
+internal class ShellCommandExecutorReworked(private val eelDescriptor: EelDescriptor) : ShellCommandExecutor {
   override suspend fun runShellCommand(directory: String, command: String): ShellCommandResult {
     val commandList = ParametersListUtil.parse(command)
     val commandName = commandList.firstOrNull() ?: return ShellCommandResult.create("{}", 0)
@@ -27,9 +22,8 @@ internal class ShellCommandExecutorReworked : ShellCommandExecutor {
 
   private suspend fun executeCommandViaEel(directory: String, commandName: String, arguments: List<String>): ShellCommandResult {
     try {
-      val eelDescriptor: EelDescriptor = NioFiles.toPath(directory)?.getEelDescriptor() ?: LocalEelDescriptor
       val eel = eelDescriptor.toEelApi()
-      val eelDirectory: EelPath = Path(directory).asEelPath()
+      val eelDirectory = EelPath.parse(directory, eelDescriptor)
       val processResult = eel.exec.spawnProcess(commandName).args(arguments).workingDirectory(eelDirectory).eelIt()
       val result = processResult.awaitProcessResult()
       return ShellCommandResult.create(result.stdoutString, result.exitCode)

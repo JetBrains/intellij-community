@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.terminal.block.completion.spec.impl.reworked
 
 import com.intellij.openapi.project.Project
+import com.intellij.platform.eel.EelDescriptor
 import com.intellij.terminal.completion.ShellRuntimeContextProvider
 import com.intellij.terminal.completion.spec.ShellRuntimeContext
 import org.jetbrains.annotations.ApiStatus
@@ -16,8 +17,9 @@ import org.jetbrains.plugins.terminal.util.ShellType
 class ShellRuntimeContextProviderReworkedImpl(
   private val project: Project,
   private val sessionModel: TerminalSessionModel,
+  eelDescriptor: EelDescriptor,
 ) : ShellRuntimeContextProvider {
-  private val shellCommandExecutor = ShellCommandExecutorReworked()
+  private val shellCommandExecutor = ShellCommandExecutorReworked(eelDescriptor)
 
   override fun getContext(typedPrefix: String): ShellRuntimeContext {
     return ShellRuntimeContextImpl(
