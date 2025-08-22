@@ -1,196 +1,177 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.psi.search;
+package com.intellij.psi.search
 
-import com.intellij.core.CoreBundle;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.UnloadedModuleDescription;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.search.impl.VirtualFileEnumeration;
-import com.intellij.psi.search.impl.VirtualFileEnumerationAware;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
+import com.intellij.core.CoreBundle
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.UnloadedModuleDescription
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.search.impl.VirtualFileEnumeration
+import com.intellij.psi.search.impl.VirtualFileEnumerationAware
+import com.intellij.util.ArrayUtil
+import com.intellij.util.Processor
+import com.intellij.util.SmartList
+import com.intellij.util.containers.ContainerUtil
+import org.jetbrains.annotations.NonNls
 
-import java.util.*;
+/** @see GlobalSearchScope.union */
+@Suppress("EqualsOrHashCode")
+internal class UnionScope private constructor(
+  project: Project?,
+  val myScopes: Array<GlobalSearchScope>
+) : GlobalSearchScope(project), VirtualFileEnumerationAware, CodeInsightContextAwareSearchScope {
 
-/** @see GlobalSearchScope#union(GlobalSearchScope...) */
-final class UnionScope extends GlobalSearchScope implements VirtualFileEnumerationAware, CodeInsightContextAwareSearchScope {
-  final GlobalSearchScope @NotNull [] myScopes;
+  init {
+    require(myScopes.size >= 2) { "expected >= 2 scopes but got: ${myScopes.contentToString()}" }
+  }
 
-  @Override
-  public @Nullable VirtualFileEnumeration extractFileEnumeration() {
-    List<VirtualFileEnumeration> fileEnumerations = new SmartList<>();
-    for (GlobalSearchScope scope : myScopes) {
-      VirtualFileEnumeration fileEnumeration = VirtualFileEnumeration.extract(scope);
+  override fun extractFileEnumeration(): VirtualFileEnumeration? {
+    val fileEnumerations: MutableList<VirtualFileEnumeration?> = SmartList<VirtualFileEnumeration?>()
+    for (scope in myScopes) {
+      val fileEnumeration = VirtualFileEnumeration.extract(scope)
       if (fileEnumeration == null) {
-        return null;
+        return null
       }
-      fileEnumerations.add(fileEnumeration);
+      fileEnumerations.add(fileEnumeration)
     }
-    return new UnionFileEnumeration(fileEnumerations);
+    return UnionFileEnumeration(fileEnumerations)
   }
 
-  static @NotNull GlobalSearchScope create(GlobalSearchScope @NotNull [] scopes) {
-    if (scopes.length == 2) {
-      GlobalSearchScope unionScope = tryCreateUnionFor2Scopes(scopes);
-      if (unionScope != null) return unionScope;
-    }
-    Set<GlobalSearchScope> result = new HashSet<>(scopes.length);
-    Project project = null;
-    for (GlobalSearchScope scope : scopes) {
-      if (scope == EMPTY_SCOPE) continue;
-      Project scopeProject = scope.getProject();
-      if (scopeProject != null) project = scopeProject;
-      if (scope instanceof UnionScope) {
-        ContainerUtil.addAll(result, ((UnionScope)scope).myScopes);
-      }
-      else {
-        result.add(scope);
-      }
-    }
-    if (result.isEmpty()) return EMPTY_SCOPE;
-    if (result.size() == 1) return result.iterator().next();
-    return new UnionScope(project, result.toArray(EMPTY_ARRAY));
+  override fun getDisplayName(): String {
+    return CoreBundle.message("psi.search.scope.union", myScopes[0].displayName, myScopes[1].displayName)
   }
 
-  private static @Nullable GlobalSearchScope tryCreateUnionFor2Scopes(GlobalSearchScope @NotNull [] scopes) {
-    assert scopes.length == 2;
-    GlobalSearchScope scope0 = scopes[0];
-    GlobalSearchScope scope1 = scopes[1];
-    if (scope0 == EMPTY_SCOPE) return scope1;
-    if (scope1 == EMPTY_SCOPE) return scope0;
-    if (scope0 instanceof UnionScope && scope1 instanceof UnionScope) return null;
-    Project project = ObjectUtils.chooseNotNull(scope0.getProject(), scope1.getProject());
-
-    if (scope0 instanceof UnionScope) {
-      return unionWithUnionScope(scope0, scope1, project);
-    }
-
-    if (scope1 instanceof UnionScope) {
-      return unionWithUnionScope(scope1, scope0, project);
-    }
-
-    return new UnionScope(project, scopes);
-  }
-
-  private static @NotNull GlobalSearchScope unionWithUnionScope(GlobalSearchScope scope0, GlobalSearchScope scope1, Project project) {
-    GlobalSearchScope[] scopes0 = ((UnionScope)scope0).myScopes;
-    if (ArrayUtil.contains(scope1, scopes0)) {
-      return scope0;
-    }
-    else {
-      return new UnionScope(project, ArrayUtil.append(scopes0, scope1));
+  override fun contains(file: VirtualFile): Boolean {
+    return myScopes.any { scope ->
+      ProgressManager.checkCanceled()
+      scope.contains(file)
     }
   }
 
-  private UnionScope(Project project, GlobalSearchScope @NotNull [] scopes) {
-    super(project);
-    myScopes = scopes;
-    if (scopes.length < 2) {
-      throw new IllegalArgumentException("expected >= 2 scopes but got: " + Arrays.toString(scopes));
-    }
-  }
+  override val codeInsightContextInfo: CodeInsightContextInfo
+    get() = createCodeInsightContextInfoUnion(myScopes)
 
-  @Override
-  public @NotNull String getDisplayName() {
-    return CoreBundle.message("psi.search.scope.union", myScopes[0].getDisplayName(), myScopes[1].getDisplayName());
-  }
+  override fun getUnloadedModulesBelongingToScope(): Collection<UnloadedModuleDescription> =
+    myScopes.flatMapTo(mutableSetOf()) { it.unloadedModulesBelongingToScope }
 
-  @Override
-  public boolean contains(final @NotNull VirtualFile file) {
-    return ContainerUtil.find(myScopes, scope -> {
-      ProgressManager.checkCanceled();
-      return scope.contains(file);
-    }) != null;
-  }
+  override fun compare(file1: VirtualFile, file2: VirtualFile): Int {
+    var result = 0
 
-  @Override
-  public @NotNull CodeInsightContextInfo getCodeInsightContextInfo() {
-    return CodeInsightContextInfoUnionKt.createCodeInsightContextInfoUnion(myScopes);
-  }
-
-  @Override
-  public @NotNull @Unmodifiable Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
-    Set<UnloadedModuleDescription> result = new LinkedHashSet<>();
-    for (GlobalSearchScope scope : myScopes) {
-      result.addAll(scope.getUnloadedModulesBelongingToScope());
-    }
-    return result;
-  }
-
-  @Override
-  public int compare(final @NotNull VirtualFile file1, final @NotNull VirtualFile file2) {
-    final int[] result = {0};
-    ContainerUtil.process(myScopes, scope -> {
+    ContainerUtil.process(myScopes, Processor { scope ->
       // ignore irrelevant scopes - they don't know anything about the files
-      if (!scope.contains(file1) || !scope.contains(file2)) return true;
-      int cmp = scope.compare(file1, file2);
-      if (result[0] == 0) {
-        result[0] = cmp;
-        return true;
+      if (!scope.contains(file1) || !scope.contains(file2)) return@Processor true
+      val cmp = scope.compare(file1, file2)
+      if (result == 0) {
+        result = cmp
+        return@Processor true
       }
       if (cmp == 0) {
-        return true;
+        return@Processor true
       }
-      if (result[0] > 0 == cmp > 0) {
-        return true;
+      if (result > 0 == cmp > 0) {
+        return@Processor true
       }
       // scopes disagree about the order - abort the voting
-      result[0] = 0;
-      return false;
-    });
-    return result[0];
+      result = 0
+      false
+    })
+    return result
   }
 
-  @Override
-  public boolean isSearchInModuleContent(final @NotNull Module module) {
-    return ContainerUtil.find(myScopes, scope -> scope.isSearchInModuleContent(module)) != null;
-  }
-
-  @Override
-  public boolean isSearchInModuleContent(final @NotNull Module module, final boolean testSources) {
-    return ContainerUtil.find(myScopes, scope -> scope.isSearchInModuleContent(module, testSources)) != null;
-  }
-
-  @Override
-  public boolean isSearchInLibraries() {
-    return ContainerUtil.find(myScopes, GlobalSearchScope::isSearchInLibraries) != null;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (!(o instanceof UnionScope)) return false;
-
-    UnionScope that = (UnionScope)o;
-
-    return ContainerUtil.newHashSet(myScopes).equals(ContainerUtil.newHashSet(that.myScopes));
-  }
-
-  @Override
-  public int calcHashCode() {
-    return Arrays.hashCode(myScopes);
-  }
-
-  @Override
-  public @NonNls String toString() {
-    return "Union: (" + StringUtil.join(Arrays.asList(myScopes), ",") + ")";
-  }
-
-  @Override
-  public @NotNull GlobalSearchScope uniteWith(@NotNull GlobalSearchScope scope) {
-    if (scope instanceof UnionScope) {
-      GlobalSearchScope[] newScopes = ArrayUtil.mergeArrays(myScopes, ((UnionScope)scope).myScopes);
-      return create(newScopes);
+  override fun isSearchInModuleContent(module: Module): Boolean {
+    return myScopes.any { scope ->
+      scope.isSearchInModuleContent(module)
     }
-    return super.uniteWith(scope);
+  }
+
+  override fun isSearchInModuleContent(module: Module, testSources: Boolean): Boolean {
+    return myScopes.any { scope ->
+      scope.isSearchInModuleContent(module, testSources)
+    }
+  }
+
+  override fun isSearchInLibraries(): Boolean {
+    return myScopes.any { obj -> obj.isSearchInLibraries() }
+  }
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is UnionScope) return false
+
+    return hashSetOf(*myScopes) == hashSetOf(*other.myScopes)
+  }
+
+  override fun calcHashCode(): Int {
+    return myScopes.contentHashCode()
+  }
+
+  override fun toString(): @NonNls String {
+    return myScopes.joinToString(prefix = "Union: (", separator = ",", postfix = ")")
+  }
+
+  override fun uniteWith(scope: GlobalSearchScope): GlobalSearchScope {
+    if (scope is UnionScope) {
+      val newScopes = ArrayUtil.mergeArrays(myScopes, scope.myScopes)
+      return create(newScopes)
+    }
+    return super.uniteWith(scope)
+  }
+
+  companion object {
+    @JvmStatic
+    fun create(scopes: Array<GlobalSearchScope>): GlobalSearchScope {
+      if (scopes.size == 2) {
+        val unionScope = tryCreateUnionFor2Scopes(scopes)
+        if (unionScope != null) {
+          return unionScope
+        }
+      }
+
+      val project = scopes.firstNotNullOfOrNull(GlobalSearchScope::getProject)
+
+      val flattened = scopes.flatMapTo(destination = hashSetOf()) { scope ->
+        when {
+          scope is UnionScope -> listOf(*scope.myScopes)
+          scope === EMPTY_SCOPE -> emptyList()
+          else -> listOf(scope)
+        }
+      }
+
+      if (flattened.isEmpty()) return EMPTY_SCOPE
+      if (flattened.size == 1) return flattened.single()
+
+      return UnionScope(project, flattened.toArray(EMPTY_ARRAY))
+    }
+
+    private fun tryCreateUnionFor2Scopes(scopes: Array<GlobalSearchScope>): GlobalSearchScope? {
+      assert(scopes.size == 2)
+
+      val scope0 = scopes[0]
+      val scope1 = scopes[1]
+
+      if (scope0 === EMPTY_SCOPE) return scope1
+      if (scope1 === EMPTY_SCOPE) return scope0
+
+      if (scope0 is UnionScope && scope1 is UnionScope) return null
+
+      val project = scope0.project ?: scope1.project
+
+      fun unionWithUnionScope(unionScope: UnionScope, otherScope: GlobalSearchScope, project: Project?): GlobalSearchScope {
+        val scopes = unionScope.myScopes
+        return if (otherScope in scopes) {
+          unionScope
+        }
+        else {
+          UnionScope(project, scopes + otherScope)
+        }
+      }
+
+      return when {
+        scope0 is UnionScope -> unionWithUnionScope(scope0, scope1, project)
+        scope1 is UnionScope -> unionWithUnionScope(scope1, scope0, project)
+        else -> UnionScope(project, scopes)
+      }
+    }
   }
 }
