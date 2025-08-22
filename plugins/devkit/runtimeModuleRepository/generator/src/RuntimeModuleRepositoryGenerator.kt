@@ -14,6 +14,11 @@ import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleDependency
+import org.jetbrains.jps.model.serialization.JpsMavenSettings
+import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
+import java.nio.file.Path
+import kotlin.io.path.Path
+import kotlin.io.path.invariantSeparatorsPathString
 
 object RuntimeModuleRepositoryGenerator {
   const val JAR_REPOSITORY_FILE_NAME: String = "module-descriptors.jar"
@@ -23,17 +28,19 @@ object RuntimeModuleRepositoryGenerator {
   /**
    * Generates the runtime module descriptors for all modules and libraries in [project].
    */
-  fun generateRuntimeModuleDescriptors(project: JpsProject, relativizer: (String) -> String): List<RawRuntimeModuleDescriptor> {
+  fun generateRuntimeModuleDescriptors(project: JpsProject): List<RawRuntimeModuleDescriptor> {
     val descriptors = ArrayList<RawRuntimeModuleDescriptor>()
     generateDescriptorsForModules(descriptors, project)
     val libraries = LinkedHashSet<JpsLibrary>()
     for (module in project.modules) {
       libraries.addAll(enumerateRuntimeDependencies(module).libraries)
     }
+    val resourcePathShortener = ResourcePathShortener(project)
     for (library in libraries) {
       val moduleId = getLibraryId(library)
-      val files = library.getFiles(JpsOrderRootType.COMPILED)
-      descriptors.add(RawRuntimeModuleDescriptor.create(moduleId.stringId, files.map { relativizer(it.absolutePath) }, emptyList()))
+      val files = library.getPaths(JpsOrderRootType.COMPILED)
+      val resourcePaths = files.map { resourcePathShortener.shortenPathUsingMacros(it) }
+      descriptors.add(RawRuntimeModuleDescriptor.create(moduleId.stringId, resourcePaths, emptyList()))
     }
     return descriptors
   }
@@ -91,6 +98,24 @@ private fun generateDescriptorsForModules(descriptors: MutableList<RawRuntimeMod
     }
   }
 }
+
+private class ResourcePathShortener(project: JpsProject) {
+  private val baseProjectDir = JpsModelSerializationDataService.getBaseDirectoryPath(project) 
+                               ?: error("Project wasn't loaded from .idea so its base directory cannot be determined")
+  private val mavenRepositoryPath = Path(JpsMavenSettings.getMavenRepositoryPath())
+  
+  /**
+   * Shortens the given path by replacing absolute paths with macros from [com.intellij.platform.runtime.repository.impl.ResourcePathMacros].
+   */
+  fun shortenPathUsingMacros(path: Path): String {
+    return when {
+      path.startsWith(baseProjectDir) -> $$"$PROJECT_DIR$/$${baseProjectDir.relativize(path).invariantSeparatorsPathString}"
+      path.startsWith(mavenRepositoryPath) -> $$"$MAVEN_REPOSITORY$/$${mavenRepositoryPath.relativize(path).invariantSeparatorsPathString}"
+      else -> path.invariantSeparatorsPathString
+    }
+  }
+}
+
 
 private val JpsModule.hasTestSources
   get() = sourceRoots.any { it.rootType in JavaModuleSourceRootTypes.TESTS }

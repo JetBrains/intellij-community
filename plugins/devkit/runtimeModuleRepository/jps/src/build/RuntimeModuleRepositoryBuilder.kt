@@ -46,7 +46,7 @@ internal class RuntimeModuleRepositoryBuilder
     val descriptors: List<RawRuntimeModuleDescriptor>
     context.processMessage(ProgressMessage(DevkitRuntimeModuleRepositoryJpsBundle.message("progress.message.generating.intellij.modules.repository"), BuildTargetChunk(setOf(target))))
     val timeToCreateDescriptors = measureTimeMillis {
-      descriptors = RuntimeModuleRepositoryGenerator.generateRuntimeModuleDescriptors(project, { context.projectDescriptor.dataManager.relativizer.toRelative(it) } )
+      descriptors = RuntimeModuleRepositoryGenerator.generateRuntimeModuleDescriptors(project)
     }
     LOG.info("${descriptors.size} descriptors are created in ${timeToCreateDescriptors}ms")
     
