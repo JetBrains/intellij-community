@@ -111,7 +111,7 @@ internal class BlockTerminalTest(private val shellPath: Path) {
         // Create generator and context each time, because default implementations are caching
         val generatorsExecutor = ShellDataGeneratorsExecutorImpl(session)
         val commandExecutor = object : ShellCommandExecutor {
-          override suspend fun runShellCommand(command: String): ShellCommandResult {
+          override suspend fun runShellCommand(directory: String, command: String): ShellCommandResult {
             return session.commandExecutionManager.runGeneratorAsync(command).await()
           }
         }

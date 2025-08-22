@@ -7,7 +7,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 object DummyShellCommandExecutor : ShellCommandExecutor {
-  override suspend fun runShellCommand(command: String): ShellCommandResult {
+  override suspend fun runShellCommand(directory: String, command: String): ShellCommandResult {
     return ShellCommandResult.create("", 0)
   }
 }

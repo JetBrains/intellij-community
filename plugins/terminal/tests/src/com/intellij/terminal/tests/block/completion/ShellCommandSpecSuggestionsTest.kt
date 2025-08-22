@@ -404,7 +404,7 @@ internal class ShellCommandSpecSuggestionsTest {
   ): ShellCommandSpecCompletion {
     // Mock fileSuggestionsGenerator result
     val generatorCommandsRunner = object : ShellCommandExecutor {
-      override suspend fun runShellCommand(command: String): ShellCommandResult {
+      override suspend fun runShellCommand(directory: String, command: String): ShellCommandResult {
         val output = mockFiles.joinToString("\n")
         return ShellCommandResult.create(output, exitCode = 0)
       }

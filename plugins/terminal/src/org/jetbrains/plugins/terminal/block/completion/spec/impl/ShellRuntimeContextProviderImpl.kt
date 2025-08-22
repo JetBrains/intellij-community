@@ -28,7 +28,7 @@ class ShellRuntimeContextProviderImpl(
   private val tracer = TelemetryManager.getTracer(TerminalCompletionScope)
 
   private val realGeneratorRunner: ShellCommandExecutor = object : ShellCommandExecutor {
-    override suspend fun runShellCommand(command: String): ShellCommandResult {
+    override suspend fun runShellCommand(directory: String, command: String): ShellCommandResult {
       return tracer.spanBuilder("terminal-completion-run-generator-command")
         .setAttribute("terminal.command", command)
         .useWithScope {

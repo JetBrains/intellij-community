@@ -368,7 +368,7 @@ internal class ShellCommandTreeBuilderTest {
   private suspend fun doTestImpl(arguments: List<String>, assertions: ShellCommandTreeAssertions.() -> Unit) {
     // Mock fileSuggestionsGenerator result
     val generatorCommandsRunner = object : ShellCommandExecutor {
-      override suspend fun runShellCommand(command: String): ShellCommandResult {
+      override suspend fun runShellCommand(directory: String, command: String): ShellCommandResult {
         return if (command.startsWith(GET_DIRECTORY_FILES.functionName)) {
           val path = command.removePrefix(GET_DIRECTORY_FILES.functionName).trim()
           val files = filePathSuggestions[path]

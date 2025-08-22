@@ -123,7 +123,7 @@ internal class ShellBaseGeneratorsTest(private val shellPath: Path) {
   ) = runBlocking {
     val executor = ShellDataGeneratorsExecutorImpl(session)
     val commandExecutor = object : ShellCommandExecutor {
-      override suspend fun runShellCommand(command: String): ShellCommandResult {
+      override suspend fun runShellCommand(directory: String, command: String): ShellCommandResult {
         return session.commandExecutionManager.runGeneratorAsync(command).await()
       }
     }

@@ -17,7 +17,7 @@ class ShellRuntimeContextImpl(
 ) : ShellRuntimeContext, UserDataHolderBase() {
 
   override suspend fun runShellCommand(command: String): ShellCommandResult {
-    return generatorCommandsRunner.runShellCommand(command)
+    return generatorCommandsRunner.runShellCommand(currentDirectory, command)
   }
 
   override fun toString(): String {

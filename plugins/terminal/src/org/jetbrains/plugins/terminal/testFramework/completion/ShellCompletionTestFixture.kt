@@ -104,7 +104,7 @@ class ShellCompletionTestFixture private constructor(
      */
     fun mockShellCommandResults(mock: suspend (command: String) -> ShellCommandResult): Builder {
       generatorCommandsRunner = object : ShellCommandExecutor {
-        override suspend fun runShellCommand(command: String): ShellCommandResult = mock(command)
+        override suspend fun runShellCommand(directory: String, command: String): ShellCommandResult = mock(command)
       }
       return this
     }
