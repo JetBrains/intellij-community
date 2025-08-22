@@ -365,11 +365,20 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
     afterChange(true);
   }
 
+  @ApiStatus.Internal
+  @Override
+  public void addTreeChangePreprocessor(@NotNull PsiTreeChangePreprocessor preprocessor, @NotNull Disposable parentDisposable) {
+    myTreeChangePreprocessors.add(preprocessor);
+    Disposer.register(parentDisposable, () -> myTreeChangePreprocessors.remove(preprocessor));
+  }
+
+  @Deprecated
   @Override
   public void addTreeChangePreprocessor(@NotNull PsiTreeChangePreprocessor preprocessor) {
     myTreeChangePreprocessors.add(preprocessor);
   }
-  
+
+  @Deprecated
   @Override
   public void removeTreeChangePreprocessor(@NotNull PsiTreeChangePreprocessor preprocessor) {
     myTreeChangePreprocessors.remove(preprocessor);

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.Disposable;
@@ -9,9 +9,9 @@ import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.file.impl.FileManagerEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.annotations.ApiStatus;
 
 public abstract class PsiManagerEx extends PsiManager {
   @TestOnly
@@ -72,9 +72,19 @@ public abstract class PsiManagerEx extends PsiManager {
   public abstract void propertyChanged(@NotNull PsiTreeChangeEventImpl event);
 
   @ApiStatus.Internal
+  public abstract void addTreeChangePreprocessor(@NotNull PsiTreeChangePreprocessor preprocessor, @NotNull Disposable parentDisposable);
+
+  /**
+   * @deprecated use {@link #addTreeChangePreprocessor(PsiTreeChangePreprocessor, Disposable)} instead
+   */
+  @ApiStatus.Internal
   public abstract void addTreeChangePreprocessor(@NotNull PsiTreeChangePreprocessor preprocessor);
 
+  /**
+   * @deprecated use {@link #addTreeChangePreprocessor(PsiTreeChangePreprocessor, Disposable)} instead
+   */
   @ApiStatus.Internal
+  @Deprecated
   public abstract void removeTreeChangePreprocessor(@NotNull PsiTreeChangePreprocessor preprocessor);
 
   public abstract void beforeChange(boolean isPhysical);

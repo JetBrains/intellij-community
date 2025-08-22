@@ -1,6 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi.impl.file.impl;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -10,6 +11,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -752,7 +754,9 @@ public class PsiEventsTest extends JavaPsiTestCase {
           throw new NullPointerException();
         }
       };
-      ((PsiManagerEx)getPsiManager()).addTreeChangePreprocessor(preprocessor);
+
+      Disposable disposable = Disposer.newDisposable();
+      ((PsiManagerEx)getPsiManager()).addTreeChangePreprocessor(preprocessor, disposable);
       try {
         WriteCommandAction.runWriteCommandAction(myProject, () -> document.insertString(0, " "));
         PsiDocumentManager.getInstance(myProject).commitAllDocuments();
@@ -762,7 +766,7 @@ public class PsiEventsTest extends JavaPsiTestCase {
         assertInstanceOf(e.getCause(), NullPointerException.class);
       }
       finally {
-        ((PsiManagerEx)getPsiManager()).removeTreeChangePreprocessor(preprocessor);
+        Disposer.dispose(disposable);
       }
 
       WriteCommandAction.runWriteCommandAction(myProject, () -> document.insertString(0, " "));
