@@ -1226,6 +1226,11 @@ public final class AllIconsKeys {
     /** 16x16 */ public static final @NotNull IntelliJIconKey Yugabyte = new IntelliJIconKey("providers/yugabyte.svg", "providers/yugabyte.svg", AllIconsKeys.class);
   }
 
+  public static final class RemoteServers {
+    /** 16x16 */ public static final @NotNull IntelliJIconKey ResumeScaled = new IntelliJIconKey("expui/remoteServers/resumeScaled.svg", "expui/remoteServers/resumeScaled.svg", AllIconsKeys.class);
+    /** 16x16 */ public static final @NotNull IntelliJIconKey SuspendScaled = new IntelliJIconKey("expui/remoteServers/suspendScaled.svg", "expui/remoteServers/suspendScaled.svg", AllIconsKeys.class);
+  }
+
   public static final class Run {
     /** 16x16 */ public static final @NotNull IntelliJIconKey Restart = new IntelliJIconKey("expui/run/restart.svg", "expui/run/restart.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey ShowIgnored = new IntelliJIconKey("expui/run/showIgnored.svg", "expui/run/showIgnored.svg", AllIconsKeys.class);

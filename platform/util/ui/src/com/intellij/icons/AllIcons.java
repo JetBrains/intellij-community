@@ -1233,6 +1233,11 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Yugabyte = load("providers/yugabyte.svg", -644567085, 2);
   }
 
+  public static final class RemoteServers {
+    /** 16x16 */ public static final @NotNull Icon ResumeScaled = load("expui/remoteServers/resumeScaled.svg", -397781337, 0);
+    /** 16x16 */ public static final @NotNull Icon SuspendScaled = load("expui/remoteServers/suspendScaled.svg", 1727665128, 0);
+  }
+
   public static final class Run {
     /** 16x16 */ public static final @NotNull Icon Restart = load("expui/run/restart.svg", -275136128, 2);
     /** 16x16 */ public static final @NotNull Icon ShowIgnored = load("expui/run/showIgnored.svg", 766664095, 2);
