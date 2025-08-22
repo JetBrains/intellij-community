@@ -475,11 +475,9 @@ private fun runPostAppInitTasks(scope: CoroutineScope) {
     createAppLocatorFile()
   }
 
-  if (!AppMode.isLightEdit()) {
-    // this functionality should be used only by plugin functionality used after start-up
-    scope.launch(CoroutineName("system properties setting")) {
-      SystemPropertyBean.initSystemProperties()
-    }
+  // this functionality should be used only by plugin functionality used after start-up
+  scope.launch(CoroutineName("system properties setting")) {
+    SystemPropertyBean.initSystemProperties()
   }
 }
 

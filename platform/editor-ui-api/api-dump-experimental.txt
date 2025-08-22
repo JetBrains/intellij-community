@@ -41,6 +41,7 @@
 - a:isAutosaveMode():Z
 - a:isForceOpenInLightEditMode():Z
 - a:isLightEditEnabled():Z
+- a:isLightEditProject(com.intellij.openapi.project.Project):Z
 - a:isPreferProjectMode():Z
 - a:isTabNavigationAvailable(com.intellij.openapi.actionSystem.AnAction):Z
 - a:navigateToTab(com.intellij.openapi.actionSystem.AnAction):V

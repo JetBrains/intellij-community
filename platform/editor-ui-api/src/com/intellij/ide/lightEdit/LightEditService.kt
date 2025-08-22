@@ -69,5 +69,7 @@ interface LightEditService {
 
   fun isLightEditEnabled(): Boolean
 
+  fun isLightEditProject(project: Project): Boolean
+
   fun isForceOpenInLightEditMode(): Boolean
 }

@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.idea;
 
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,6 +38,14 @@ public final class AppMode {
     return dontReopenProjects;
   }
 
+  /**
+   * Disable some speculative service initializations to speed up Light Edit startup
+   * <p>
+   * This DOES NOT guarantee that the IDE will be run in Light Edit mode.
+   *
+   * @see com.intellij.ide.lightEdit.LightEditService#isLightEditProject(Project)
+   */
+  @ApiStatus.Obsolete
   public static boolean isLightEdit() {
     return isLightEdit;
   }
@@ -92,7 +101,7 @@ public final class AppMode {
     isRemoteDevHost = knownCommand != null && knownCommand.isRemoteDevHost();
 
     isLightEdit = Boolean.parseBoolean(System.getProperty("idea.force.light.edit.mode")) ||
-                  (knownCommand == null && !isHeadless && isFileAfterOptions(args));
+                  (knownCommand == null && !isHeadless && mayHappenToBeAFile(args));
 
     for (String arg : args) {
       if (DISABLE_NON_BUNDLED_PLUGINS.equalsIgnoreCase(arg)) {
@@ -104,7 +113,7 @@ public final class AppMode {
     }
   }
 
-  private static boolean isFileAfterOptions(@NotNull List<String> args) {
+  private static boolean mayHappenToBeAFile(@NotNull List<String> args) {
     for (String arg : args) {
       // If not an option
       if (!arg.startsWith("-")) {

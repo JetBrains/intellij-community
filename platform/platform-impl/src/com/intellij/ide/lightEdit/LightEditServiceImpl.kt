@@ -3,6 +3,7 @@ package com.intellij.ide.lightEdit
 
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.lightEdit.intentions.openInProject.LightEditOpenInProjectIntention
+import com.intellij.ide.lightEdit.project.LightEditProjectImpl
 import com.intellij.ide.lightEdit.project.LightEditProjectManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
@@ -426,6 +427,10 @@ class LightEditServiceImpl(private val coroutineScope: CoroutineScope)
 
   override fun isLightEditEnabled(): Boolean {
     return LightEditUtil.isLightEditEnabled()
+  }
+
+  override fun isLightEditProject(project: Project): Boolean {
+    return project is LightEditProjectImpl
   }
 
   override fun openFile(path: Path, suggestSwitchToProject: Boolean): Project? {

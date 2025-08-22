@@ -19,7 +19,6 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.*
-import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.getOrLogException
@@ -91,7 +90,7 @@ open class IdeStarter : ModernApplicationStarter() {
         openProjectBlock()
       }
       else {
-        if ((app as ApplicationEx).isLightEditMode) {
+        if (AppMode.isLightEdit()) {
           FUSProjectHotStartUpMeasurer.lightEditProjectFound()
         }
         withContext(starter, openProjectBlock)
