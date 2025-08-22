@@ -4,6 +4,8 @@ package com.intellij.platform.testFramework.junit5.codeInsight.fixture
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
+import com.intellij.openapi.util.io.toNioPathOrNull
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
@@ -13,8 +15,8 @@ import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
 import com.intellij.testFramework.junit5.fixture.TestFixture
 import com.intellij.testFramework.junit5.fixture.testFixture
 import org.jetbrains.annotations.TestOnly
-import java.io.File
 import java.nio.file.Path
+import kotlin.io.path.pathString
 
 /**
  * Use for JUnit5 tests to set the path to the test data on the method level.
@@ -70,15 +72,16 @@ fun codeInsightFixture(
   }
 
   val codeInsightFixture = CodeInsightTestFixtureImpl(projectFixture, tempDirFixture)
-  val rootPath = context.findAnnotation(TestDataPath::class.java)?.value?.removePrefix($$"$PROJECT_ROOT") ?: ""
+  val rootPath = context.findAnnotation(TestDataPath::class.java)?.value?.removePrefix($$"$PROJECT_ROOT/") ?: ""
   val subPath = context.findAnnotation(TestSubPath::class.java)?.value
-                ?: context.testName.removePrefix("test").replaceFirstChar { it.lowercase() }
-  codeInsightFixture.testDataPath = buildString {
-    append(IdeaTestExecutionPolicy.getHomePathWithPolicy().replace(File.separatorChar, '/'))
-    append(rootPath)
-    append('/')
-    append(subPath)
+                ?: PlatformTestUtil.getTestName(context.testName, true)
+  val homeDir = IdeaTestExecutionPolicy.getHomePathWithPolicy().toNioPathOrNull()
+  check(homeDir != null) {
+    "Couldn't create nio.Path from ${IdeaTestExecutionPolicy.getHomePathWithPolicy()}"
   }
+
+  codeInsightFixture.testDataPath = homeDir.resolve(rootPath).resolve(subPath).pathString
+
   codeInsightFixture.setUp()
   initialized(codeInsightFixture) {
     codeInsightFixture.tearDown()
