@@ -773,15 +773,6 @@ public final class AllIconsKeys {
       /** 18x14 */ public static final @NotNull IntelliJIconKey TopRight = new IntelliJIconKey("ide/roundShadow/topRight.svg", "ide/roundShadow/topRight.svg", AllIconsKeys.class);
     }
 
-    public static final class RunAnything {
-
-      /** @deprecated to be removed without replacement */
-      @SuppressWarnings("unused")
-      @Deprecated
-      @ScheduledForRemoval
-      public static final @NotNull IntelliJIconKey OpenRecentProject = new IntelliJIconKey("ide/runAnything/openRecentProject.svg", "ide/runAnything/openRecentProject.svg", AllIconsKeys.class);
-    }
-
     public static final class Shadow {
       /** 4x14 */ public static final @NotNull IntelliJIconKey Bottom = new IntelliJIconKey("ide/shadow/bottom.svg", "ide/shadow/bottom.svg", AllIconsKeys.class);
       /** 18x22 */ public static final @NotNull IntelliJIconKey BottomLeft = new IntelliJIconKey("ide/shadow/bottomLeft.svg", "ide/shadow/bottomLeft.svg", AllIconsKeys.class);
@@ -964,16 +955,6 @@ public final class AllIconsKeys {
     /** 16x16 */ public static final @NotNull IntelliJIconKey JarDirectory = new IntelliJIconKey("nodes/jarDirectory.svg", "nodes/jarDirectory.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey JavaDocFolder = new IntelliJIconKey("nodes/javaDocFolder.svg", "nodes/javaDocFolder.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey JavaModule = new IntelliJIconKey("nodes/javaModule.svg", "expui/nodes/moduleJava.svg", AllIconsKeys.class);
-
-    public static final class Jsf {
-
-      /** @deprecated to be removed (Use AllIcons.Actions.Edit instead) */
-      @SuppressWarnings("unused")
-      @Deprecated
-      @ScheduledForRemoval
-      public static final @NotNull IntelliJIconKey Renderer = new IntelliJIconKey("nodes/jsf/renderer.svg", "nodes/jsf/renderer.svg", AllIconsKeys.class);
-    }
-
     /** 16x16 */ public static final @NotNull IntelliJIconKey JunitTestMark = new IntelliJIconKey("nodes/junitTestMark.svg", "expui/nodes/junitTestMark.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey KeymapAnt = new IntelliJIconKey("nodes/keymapAnt.svg", "expui/nodes/folder.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey KeymapEditor = new IntelliJIconKey("nodes/keymapEditor.svg", "expui/nodes/folder.svg", AllIconsKeys.class);
@@ -1070,18 +1051,6 @@ public final class AllIconsKeys {
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval
-    public static final @NotNull IntelliJIconKey Cvs_global = new IntelliJIconKey("nodes/cvs_global.svg", "nodes/cvs_global.svg", AllIconsKeys.class);
-
-    /** @deprecated to be removed without replacement */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval
-    public static final @NotNull IntelliJIconKey Cvs_roots = new IntelliJIconKey("nodes/cvs_roots.svg", "nodes/cvs_roots.svg", AllIconsKeys.class);
-
-    /** @deprecated to be removed without replacement */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval
     public static final @NotNull IntelliJIconKey InspectionResults = new IntelliJIconKey("nodes/inspectionResults.svg", "nodes/inspectionResults.svg", AllIconsKeys.class);
 
     /** @deprecated to be removed (Use AllIcons.Nodes.ClassInitializer instead) */
@@ -1089,12 +1058,6 @@ public final class AllIconsKeys {
     @Deprecated
     @ScheduledForRemoval
     public static final @NotNull IntelliJIconKey J2eeParameter = new IntelliJIconKey("nodes/j2eeParameter.svg", "nodes/j2eeParameter.svg", AllIconsKeys.class);
-
-    /** @deprecated to be removed without replacement */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval
-    public static final @NotNull IntelliJIconKey PluginLogo = new IntelliJIconKey("nodes/pluginLogo.svg", "nodes/pluginLogo.svg", AllIconsKeys.class);
 
     /** @deprecated to be removed without replacement */
     @SuppressWarnings("unused")
@@ -1439,12 +1402,6 @@ public final class AllIconsKeys {
     @Deprecated
     @ScheduledForRemoval
     public static final @NotNull IntelliJIconKey ToolWindowFavorites = new IntelliJIconKey("toolwindows/toolWindowFavorites.svg", "toolwindows/toolWindowFavorites.svg", AllIconsKeys.class);
-
-    /** @deprecated to be removed without replacement */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval
-    public static final @NotNull IntelliJIconKey ToolWindowUIDesigner = new IntelliJIconKey("toolwindows/toolWindowUIDesigner.svg", "toolwindows/toolWindowUIDesigner.svg", AllIconsKeys.class);
   }
 
   public static final class TransferSettings {

@@ -2997,9 +2997,6 @@ f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Ide$RoundShadow
 - sf:TopLeft:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:TopRight:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - <init>():V
-f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Ide$RunAnything
-- sf:OpenRecentProject:org.jetbrains.jewel.ui.icon.IntelliJIconKey
-- <init>():V
 f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Ide$Shadow
 - sf:Bottom:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:BottomLeft:org.jetbrains.jewel.ui.icon.IntelliJIconKey
@@ -3131,8 +3128,6 @@ f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Nodes
 - sf:Controller:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:CopyOfFolder:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:CustomRegion:org.jetbrains.jewel.ui.icon.IntelliJIconKey
-- sf:Cvs_global:org.jetbrains.jewel.ui.icon.IntelliJIconKey
-- sf:Cvs_roots:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:DataColumn:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:DataSchema:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:DataTables:org.jetbrains.jewel.ui.icon.IntelliJIconKey
@@ -3198,7 +3193,6 @@ f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Nodes
 - sf:Parameter:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Plugin:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:PluginJB:org.jetbrains.jewel.ui.icon.IntelliJIconKey
-- sf:PluginLogo:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:PluginRestart:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Pluginnotinstalled:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Pluginobsolete:org.jetbrains.jewel.ui.icon.IntelliJIconKey
@@ -3261,9 +3255,6 @@ f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Nodes
 - sf:Word:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Workspace:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:WriteAccess:org.jetbrains.jewel.ui.icon.IntelliJIconKey
-- <init>():V
-f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Nodes$Jsf
-- sf:Renderer:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - <init>():V
 f:org.jetbrains.jewel.ui.icons.AllIconsKeys$ObjectBrowser
 - sf:AbbreviatePackageNames:org.jetbrains.jewel.ui.icon.IntelliJIconKey
@@ -3573,7 +3564,6 @@ f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Toolwindows
 - sf:ToolWindowServices:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:ToolWindowStructure:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:ToolWindowTodo:org.jetbrains.jewel.ui.icon.IntelliJIconKey
-- sf:ToolWindowUIDesigner:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:ToolWindowVariableView:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:WarningEvents:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:WebToolWindow:org.jetbrains.jewel.ui.icon.IntelliJIconKey

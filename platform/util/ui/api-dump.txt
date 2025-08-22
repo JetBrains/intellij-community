@@ -739,9 +739,6 @@ f:com.intellij.icons.AllIcons$Ide$RoundShadow
 - sf:TopLeft:javax.swing.Icon
 - sf:TopRight:javax.swing.Icon
 - <init>():V
-f:com.intellij.icons.AllIcons$Ide$RunAnything
-- sf:OpenRecentProject:javax.swing.Icon
-- <init>():V
 f:com.intellij.icons.AllIcons$Ide$Shadow
 - sf:Bottom:javax.swing.Icon
 - sf:BottomLeft:javax.swing.Icon
@@ -873,8 +870,6 @@ f:com.intellij.icons.AllIcons$Nodes
 - sf:Controller:javax.swing.Icon
 - sf:CopyOfFolder:javax.swing.Icon
 - sf:CustomRegion:javax.swing.Icon
-- sf:Cvs_global:javax.swing.Icon
-- sf:Cvs_roots:javax.swing.Icon
 - sf:DataColumn:javax.swing.Icon
 - sf:DataSchema:javax.swing.Icon
 - sf:DataTables:javax.swing.Icon
@@ -940,7 +935,6 @@ f:com.intellij.icons.AllIcons$Nodes
 - sf:Parameter:javax.swing.Icon
 - sf:Plugin:javax.swing.Icon
 - sf:PluginJB:javax.swing.Icon
-- sf:PluginLogo:javax.swing.Icon
 - sf:PluginRestart:javax.swing.Icon
 - sf:Pluginnotinstalled:javax.swing.Icon
 - sf:Pluginobsolete:javax.swing.Icon
@@ -1003,9 +997,6 @@ f:com.intellij.icons.AllIcons$Nodes
 - sf:Word:javax.swing.Icon
 - sf:Workspace:javax.swing.Icon
 - sf:WriteAccess:javax.swing.Icon
-- <init>():V
-f:com.intellij.icons.AllIcons$Nodes$Jsf
-- sf:Renderer:javax.swing.Icon
 - <init>():V
 f:com.intellij.icons.AllIcons$ObjectBrowser
 - sf:AbbreviatePackageNames:javax.swing.Icon
@@ -1315,7 +1306,6 @@ f:com.intellij.icons.AllIcons$Toolwindows
 - sf:ToolWindowServices:javax.swing.Icon
 - sf:ToolWindowStructure:javax.swing.Icon
 - sf:ToolWindowTodo:javax.swing.Icon
-- sf:ToolWindowUIDesigner:javax.swing.Icon
 - sf:ToolWindowVariableView:javax.swing.Icon
 - sf:WarningEvents:javax.swing.Icon
 - sf:WebToolWindow:javax.swing.Icon

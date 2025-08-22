@@ -16,6 +16,7 @@ import com.intellij.ui.content.ContentManager;
 import com.intellij.uiDesigner.AbstractToolWindowManager;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
+import icons.UIDesignerIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,7 +56,7 @@ public class DesignerToolWindowManager extends AbstractToolWindowManager impleme
 
     myToolWindow = ToolWindowManager.getInstance(myProject).registerToolWindow(UIDesignerBundle.message("toolwindow.ui.designer.name"),
                                                                                false, getAnchor(), this, true);
-    myToolWindow.setIcon(AllIcons.Toolwindows.ToolWindowUIDesigner);
+    myToolWindow.setIcon(UIDesignerIcons.ToolWindowUIDesigner);
 
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
       myToolWindow.getComponent().putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, "true");
@@ -99,7 +100,7 @@ public class DesignerToolWindowManager extends AbstractToolWindowManager impleme
     return createContent(designer,
                          toolWindowContent,
                          UIDesignerBundle.message("toolwindow.ui.designer.title"),
-                         AllIcons.Toolwindows.ToolWindowUIDesigner,
+                         UIDesignerIcons.ToolWindowUIDesigner,
                          toolWindowContent.getToolWindowPanel(),
                          toolWindowContent.getComponentTree(),
                          320,

@@ -1,6 +1,3 @@
 deprecated: j2eeParameter.svg; to be removed (Use AllIcons.Nodes.ClassInitializer instead)
-deprecated: cvs_global.svg; to be removed without replacement
-deprecated: cvs_roots.svg; to be removed without replacement
 deprecated: inspectionResults.svg; to be removed without replacement
-deprecated: pluginLogo.svg; to be removed without replacement
 deprecated: weblistener.svg; to be removed without replacement

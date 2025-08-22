@@ -780,15 +780,6 @@ public class AllIcons {
       /** 18x14 */ public static final @NotNull Icon TopRight = load("ide/roundShadow/topRight.svg", 2056222615, 0);
     }
 
-    public static final class RunAnything {
-
-      /** @deprecated to be removed without replacement */
-      @SuppressWarnings("unused")
-      @Deprecated
-      @ScheduledForRemoval
-      public static final @NotNull Icon OpenRecentProject = load("ide/runAnything/openRecentProject.svg", 0, 0);
-    }
-
     public static final class Shadow {
       /** 4x14 */ public static final @NotNull Icon Bottom = load("ide/shadow/bottom.svg", 840768513, 0);
       /** 18x22 */ public static final @NotNull Icon BottomLeft = load("ide/shadow/bottomLeft.svg", -1321651824, 0);
@@ -971,16 +962,6 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon JarDirectory = load("nodes/jarDirectory.svg", -692661187, 0);
     /** 16x16 */ public static final @NotNull Icon JavaDocFolder = load("nodes/javaDocFolder.svg", 135532303, 0);
     /** 16x16 */ public static final @NotNull Icon JavaModule = load("expui/nodes/moduleJava.svg", "nodes/javaModule.svg", 2003423238, 0);
-
-    public static final class Jsf {
-
-      /** @deprecated to be removed (Use AllIcons.Actions.Edit instead) */
-      @SuppressWarnings("unused")
-      @Deprecated
-      @ScheduledForRemoval
-      public static final @NotNull Icon Renderer = load("nodes/jsf/renderer.svg", 0, 0);
-    }
-
     /** 16x16 */ public static final @NotNull Icon JunitTestMark = load("expui/nodes/junitTestMark.svg", "nodes/junitTestMark.svg", -1344036663, 0);
     /** 16x16 */ public static final @NotNull Icon KeymapAnt = load("expui/nodes/folder.svg", "nodes/keymapAnt.svg", 1301975081, 0);
     /** 16x16 */ public static final @NotNull Icon KeymapEditor = load("expui/nodes/folder.svg", "nodes/keymapEditor.svg", 1477064864, 0);
@@ -1077,18 +1058,6 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval
-    public static final @NotNull Icon Cvs_global = load("nodes/cvs_global.svg", 0, 0);
-
-    /** @deprecated to be removed without replacement */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval
-    public static final @NotNull Icon Cvs_roots = load("nodes/cvs_roots.svg", 0, 0);
-
-    /** @deprecated to be removed without replacement */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval
     public static final @NotNull Icon InspectionResults = load("nodes/inspectionResults.svg", 0, 0);
 
     /** @deprecated to be removed (Use AllIcons.Nodes.ClassInitializer instead) */
@@ -1096,12 +1065,6 @@ public class AllIcons {
     @Deprecated
     @ScheduledForRemoval
     public static final @NotNull Icon J2eeParameter = load("nodes/j2eeParameter.svg", 0, 0);
-
-    /** @deprecated to be removed without replacement */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval
-    public static final @NotNull Icon PluginLogo = load("nodes/pluginLogo.svg", 0, 0);
 
     /** @deprecated to be removed without replacement */
     @SuppressWarnings("unused")
@@ -1446,12 +1409,6 @@ public class AllIcons {
     @Deprecated
     @ScheduledForRemoval
     public static final @NotNull Icon ToolWindowFavorites = load("toolwindows/toolWindowFavorites.svg", 0, 0);
-
-    /** @deprecated to be removed without replacement */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval
-    public static final @NotNull Icon ToolWindowUIDesigner = load("toolwindows/toolWindowUIDesigner.svg", 0, 0);
   }
 
   public static final class TransferSettings {
