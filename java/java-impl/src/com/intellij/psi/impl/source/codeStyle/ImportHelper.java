@@ -171,9 +171,9 @@ public final class ImportHelper extends ImportHelperBase {
    * (individually imported) or implicitly imported.
    *
    * @param onDemand a map of package or class names (keys) and boolean values associating them with on-demand imports.
-   * @param allList a list of Import objects representing all current imports in the file.
-   * @param singles a set of individual imports to retain.
-   * @param checker an ImplicitImportChecker used to determine if a name is implicitly imported.
+   * @param allList  a list of Import objects representing all current imports in the file.
+   * @param singles  a set of individual imports to retain.
+   * @param checker  an ImplicitImportChecker used to determine if a name is implicitly imported.
    */
   private static void deleteOnDemandIfAllIsSingle(@NotNull Map<String, Boolean> onDemand,
                                                   @NotNull List<Import> allList,
@@ -510,13 +510,13 @@ public final class ImportHelper extends ImportHelperBase {
   }
 
   private @NotNull StringBuilder buildImportListText(@NotNull List<Import> imports,
-                                                            @NotNull Set<String> packagesOrClassesToImportOnDemand,
-                                                            @NotNull Set<String> namesToUseSingle,
-                                                            @NotNull ImportUtils.ImplicitImportChecker implicitImportContext,
-                                                            @NotNull Map<String, PsiImportModuleStatement> moduleStatementMap,
-                                                            @NotNull List<PsiImportModuleStatement> previousModuleStatements,
-                                                            boolean onDemandImportsFirst,
-                                                            int moduleIndex) {
+                                                     @NotNull Set<String> packagesOrClassesToImportOnDemand,
+                                                     @NotNull Set<String> namesToUseSingle,
+                                                     @NotNull ImportUtils.ImplicitImportChecker implicitImportContext,
+                                                     @NotNull Map<String, PsiImportModuleStatement> moduleStatementMap,
+                                                     @NotNull List<PsiImportModuleStatement> previousModuleStatements,
+                                                     boolean onDemandImportsFirst,
+                                                     int moduleIndex) {
     Set<String> importedPackagesOrClasses = new HashSet<>();
     @NonNls StringBuilder buffer = new StringBuilder();
 
@@ -975,6 +975,7 @@ public final class ImportHelper extends ImportHelperBase {
         String shortName = StringUtil.getShortName(anImport.name());
         String prefix = StringUtil.getPackageName(anImport.name());
         if (prefix.isEmpty()) continue;
+
         PsiField field = psiClass.findFieldByName(shortName, true);
         if (field != null &&
             field.hasModifierProperty(PsiModifier.STATIC) &&
@@ -983,24 +984,22 @@ public final class ImportHelper extends ImportHelperBase {
             return true;
           }
         }
-        else {
-          PsiClass inner = psiClass.findInnerClassByName(shortName, true);
-          if (inner != null &&
-              inner.hasModifierProperty(PsiModifier.STATIC) &&
-              checkMemberAccessibility(inner, resolveHelper, file, psiClass, prefix)) {
-            if (isOnDemandStaticImported(file, anImport)) {
-              return true;
-            }
+
+        PsiClass inner = psiClass.findInnerClassByName(shortName, true);
+        if (inner != null &&
+            inner.hasModifierProperty(PsiModifier.STATIC) &&
+            checkMemberAccessibility(inner, resolveHelper, file, psiClass, prefix)) {
+          if (isOnDemandStaticImported(file, anImport)) {
+            return true;
           }
-          else {
-            PsiMethod[] methods = psiClass.findMethodsByName(shortName, true);
-            if (ContainerUtil.exists(methods, psiMethod ->
-              psiMethod.hasModifierProperty(PsiModifier.STATIC) &&
-              checkMemberAccessibility(psiMethod, resolveHelper, file, psiClass, prefix))) {
-              if (isOnDemandStaticImported(file, anImport)) {
-                return true;
-              }
-            }
+        }
+
+        PsiMethod[] methods = psiClass.findMethodsByName(shortName, true);
+        if (ContainerUtil.exists(methods, psiMethod ->
+          psiMethod.hasModifierProperty(PsiModifier.STATIC) &&
+          checkMemberAccessibility(psiMethod, resolveHelper, file, psiClass, prefix))) {
+          if (isOnDemandStaticImported(file, anImport)) {
+            return true;
           }
         }
       }
