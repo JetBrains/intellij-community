@@ -2,6 +2,7 @@
 package com.intellij.devkit.runtimeModuleRepository.jps.build
 
 import com.intellij.devkit.runtimeModuleRepository.generator.RuntimeModuleRepositoryGenerator
+import com.intellij.devkit.runtimeModuleRepository.generator.RuntimeModuleRepositoryValidator
 import com.intellij.devkit.runtimeModuleRepository.jps.build.RuntimeModuleRepositoryBuildConstants.COMPACT_REPOSITORY_FILE_NAME
 import com.intellij.devkit.runtimeModuleRepository.jps.build.RuntimeModuleRepositoryBuildConstants.GENERATOR_VERSION
 import com.intellij.devkit.runtimeModuleRepository.jps.build.RuntimeModuleRepositoryBuildConstants.JAR_REPOSITORY_FILE_NAME
@@ -52,7 +53,12 @@ internal class RuntimeModuleRepositoryBuilder
     }
     LOG.info("${descriptors.size} descriptors are created in ${timeToCreateDescriptors}ms")
     
-    RuntimeModuleRepositoryValidator.validate(descriptors) { context.reportError(it) } 
+    val errorReporter = object : RuntimeModuleRepositoryValidator.ErrorReporter {
+      override fun reportDuplicatingId(moduleId: String) {
+        context.reportError(DevkitRuntimeModuleRepositoryJpsBundle.message("error.message.duplicating.id.0.is.found", moduleId))
+      }
+    }
+    RuntimeModuleRepositoryValidator.validate(descriptors, errorReporter) 
     
     val outputUrl = JpsJavaExtensionService.getInstance().getProjectExtension(project)?.outputUrl
     if (outputUrl.isNullOrEmpty()) {
