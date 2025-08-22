@@ -2,11 +2,15 @@
 
 package org.jetbrains.kotlin.idea.codeInsight.intentions.shared
 
-import com.intellij.codeInsight.intention.LowPriorityAction
-import com.intellij.openapi.editor.Editor
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import com.intellij.codeInsight.intention.PriorityAction
+import com.intellij.codeInspection.util.IntentionFamilyName
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.Presentation
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.psi.copied
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.util.PsiPrecedences
 import org.jetbrains.kotlin.lexer.KtSingleValueToken
 import org.jetbrains.kotlin.lexer.KtTokens.*
@@ -16,30 +20,30 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
 
-internal class SwapBinaryExpressionIntention : SelfTargetingIntention<KtBinaryExpression>(
-    KtBinaryExpression::class.java,
-    KotlinBundle.lazyMessage("flip.binary.expression")
-), LowPriorityAction {
-    override fun isApplicableTo(element: KtBinaryExpression, caretOffset: Int): Boolean {
+internal class SwapBinaryExpressionIntention : KotlinPsiUpdateModCommandAction.ClassBased<KtBinaryExpression, Unit>(KtBinaryExpression::class) {
+    override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("flip.binary.expression")
+
+    override fun getPresentation(context: ActionContext, element: KtBinaryExpression): Presentation? {
         val opRef = element.operationReference
-        if (!opRef.textRange.containsOffset(caretOffset)) return false
+        if (!opRef.textRange.containsOffset(context.offset)) return null
 
         if (leftSubject(element) == null || rightSubject(element) == null) {
-            return false
+            return null
         }
 
         val operationToken = element.operationToken
         val operationTokenText = opRef.text
-        if (operationToken in SUPPORTED_OPERATIONS
+        return if (operationToken in SUPPORTED_OPERATIONS
             || operationToken == IDENTIFIER && operationTokenText in SUPPORTED_OPERATION_NAMES
         ) {
-            setTextGetter(KotlinBundle.lazyMessage("flip.0", operationTokenText))
-            return true
+            Presentation.of(KotlinBundle.message("flip.0", operationTokenText))
+                .withPriority(PriorityAction.Priority.LOW)
+        } else {
+            null
         }
-        return false
     }
 
-    override fun applyTo(element: KtBinaryExpression, editor: Editor?) {
+    override fun invoke(actionContext: ActionContext, element: KtBinaryExpression, elementContext: Unit, updater: ModPsiUpdater) {
         // Have to use text here to preserve names like "plus"
         val convertedOperator = when (val operator = element.operationReference.text!!) {
             ">" -> "<"
@@ -77,6 +81,9 @@ internal class SwapBinaryExpressionIntention : SelfTargetingIntention<KtBinaryEx
         }
 
         return expression
+    }
+
+    override fun KaSession.prepareContext(element: KtBinaryExpression) {
     }
 }
 
