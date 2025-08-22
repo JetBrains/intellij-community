@@ -1867,4 +1867,8 @@
       <add-to-group group-id="EditorContextBarMenu" anchor="last"/>
     </group>
   </actions>
+  <applicationListeners>
+    <listener class="com.intellij.ide.projectView.impl.ProjectViewVfsInfoListener"
+              topic="com.intellij.openapi.util.registry.RegistryValueListener"/>
+  </applicationListeners>
 </idea-plugin>
