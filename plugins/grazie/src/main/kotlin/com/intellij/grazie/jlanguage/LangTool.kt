@@ -26,6 +26,9 @@ import java.util.concurrent.ConcurrentHashMap
 object LangTool : GrazieStateLifecycle {
   private val langs: MutableMap<Lang, JLanguageTool> = Collections.synchronizedMap(ContainerUtil.createSoftValueMap())
   private val rulesEnabledByDefault = ConcurrentHashMap<Lang, Set<String>>()
+  private val inappropriateExamples = mapOf(
+    "DT_NNS_AGREEMENT" to setOf("small children and their mothers", "eternal rest")
+  )
 
   init {
     JLanguageTool.useCustomPasswordAuthenticator(false)
@@ -119,7 +122,7 @@ object LangTool : GrazieStateLifecycle {
         ProgressManager.checkCanceled()
         rule.correctExamples = emptyList()
         rule.errorTriggeringExamples = emptyList()
-        rule.incorrectExamples = removeVerySimilarExamples(rule.incorrectExamples)
+        rule.incorrectExamples = removeVerySimilarExamples(rule)
         if (Lang.shouldDisableChunker(jLanguage)) {
           prepareForNoChunkTags(rule)
         }
@@ -158,9 +161,9 @@ object LangTool : GrazieStateLifecycle {
     rule.antiPatterns.forEach { it.patternTokens?.forEach { token -> relaxChunkConditions(token, positive = false) } }
   }
 
-  private fun removeVerySimilarExamples(examples: List<IncorrectExample>): List<IncorrectExample> {
+  private fun removeVerySimilarExamples(rule: Rule): List<IncorrectExample> {
     val accepted = ArrayList<IncorrectExample>()
-    for (example in examples) {
+    for (example in removeInappropriateExamples(rule)) {
       if (accepted.none { it.example.isSimilarTo(example.example) }) {
         val corrections = example.corrections.filter { it.isNotBlank() }.take(3)
         accepted.add(IncorrectExample(example.example, corrections))
@@ -168,6 +171,15 @@ object LangTool : GrazieStateLifecycle {
       }
     }
     return accepted
+  }
+
+  private fun removeInappropriateExamples(rule: Rule): List<IncorrectExample> {
+    val inappropriateExamples = inappropriateExamples[rule.id]
+    if (inappropriateExamples != null) {
+      return rule.incorrectExamples
+        .filterNot { example -> inappropriateExamples.any { example.example.contains(it)} }
+    }
+    return rule.incorrectExamples
   }
 
   private const val MINIMUM_EXAMPLE_SIMILARITY = 0.2
