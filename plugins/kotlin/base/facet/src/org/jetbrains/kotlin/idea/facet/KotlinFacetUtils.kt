@@ -15,12 +15,15 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import org.jetbrains.kotlin.idea.base.util.isAndroidModule
 import org.jetbrains.kotlin.cli.common.arguments.*
 import org.jetbrains.kotlin.compilerRunner.toArgumentStrings
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.idea.base.platforms.IdePlatformKindProjectStructure
-import org.jetbrains.kotlin.idea.compiler.configuration.*
+import org.jetbrains.kotlin.idea.base.util.isAndroidModule
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
+import org.jetbrains.kotlin.idea.compiler.configuration.Kotlin2JvmCompilerArgumentsHolder
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettings
 import org.jetbrains.kotlin.idea.defaultSubstitutors
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.kotlin.idea.serialization.updateCompilerArguments
@@ -232,6 +235,8 @@ fun applyCompilerArgumentsToFacetSettings(
 
             val additionalArgumentsString = with(this::class.java.getDeclaredConstructor().newInstance()) {
                 copyFieldsSatisfying(this@updateCompilerArguments, this) { exposeAsAdditionalArgument(it) }
+                val internalArguments = internalArguments.map(InternalArgument::stringRepresentation).toSet()
+                freeArgs = freeArgs.filterNot { it in internalArguments }
                 toArgumentStrings().joinToString(separator = " ") {
                     if (StringUtil.containsWhitespaces(it) || it.startsWith('"')) {
                         StringUtil.wrapWithDoubleQuote(StringUtil.escapeQuotes(it))
