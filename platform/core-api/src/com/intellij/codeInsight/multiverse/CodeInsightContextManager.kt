@@ -45,6 +45,15 @@ interface CodeInsightContextManager {
   fun getCodeInsightContext(fileViewProvider: FileViewProvider): CodeInsightContext
 
   /**
+   * Internal API, use with care
+   *
+   * @return the context associated with [fileViewProvider] or [anyContext] if it's not *yet* associated with any context
+   */
+  @Internal
+  @RequiresReadLock
+  fun getCodeInsightContextRaw(fileViewProvider: FileViewProvider): CodeInsightContext
+
+  /**
    * Tries to assign context of [fileViewProvider] to [context] if it's not yet assigned to something else.
    *
    * @return the context assigned to [fileViewProvider]

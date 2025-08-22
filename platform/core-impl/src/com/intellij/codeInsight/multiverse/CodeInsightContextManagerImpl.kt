@@ -213,7 +213,7 @@ class CodeInsightContextManagerImpl(
   /**
    * does not infer the substitution for `anyContext`
    */
-  fun getCodeInsightContextRaw(fileViewProvider: FileViewProvider): CodeInsightContext =
+  override fun getCodeInsightContextRaw(fileViewProvider: FileViewProvider): CodeInsightContext =
     fileViewProvider.getUserData(codeInsightContextKey) ?: defaultContext()
 
   fun setCodeInsightContext(fileViewProvider: FileViewProvider, context: CodeInsightContext) {

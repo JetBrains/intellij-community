@@ -5,8 +5,11 @@
 package com.intellij.psi.search
 
 import com.intellij.codeInsight.multiverse.CodeInsightContext
+import com.intellij.codeInsight.multiverse.CodeInsightContextManager
 import com.intellij.codeInsight.multiverse.anyContext
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.FileViewProvider
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -45,16 +48,6 @@ fun SearchScope.getFileContextInfo(file: VirtualFile): CodeInsightContextFileInf
         DoesNotContainFileInfo()
     }
     is ActualCodeInsightContextInfo -> info.getFileInfo(file)
-  }
-}
-
-// todo IJPL-339 does not support case when this scope contains a file in several contexts
-@ApiStatus.Experimental
-fun SearchScope.getAnyCorrespondingContext(file: VirtualFile): CodeInsightContext {
-  val contextInfo = getFileContextInfo(file)
-  return when (contextInfo) {
-    is ActualContextFileInfo -> contextInfo.contexts.first()
-    else -> anyContext()
   }
 }
 
@@ -223,6 +216,47 @@ fun createContainingContextFileInfo(contexts: Collection<CodeInsightContext>): C
  */
 @ApiStatus.Experimental
 fun NoContextFileInfo(): NoContextFileInfo = NoContextFileInfoImpl
+
+/**
+ * @param file must be unwrapped by [com.intellij.notebook.editor.BackedVirtualFile.getOriginFileIfBacked] already
+ */
+@ApiStatus.Internal
+fun tryCheckingFileInScope(
+  file: VirtualFile,
+  viewProvider: FileViewProvider,
+  globalScope: GlobalSearchScope,
+  project: Project,
+): Boolean {
+  val contextManager = CodeInsightContextManager.getInstance(project)
+  val cachedContext = contextManager.getCodeInsightContextRaw(viewProvider)
+  if (cachedContext !== anyContext()) {
+    // the file has an assigned context, so we can check it right away
+    return globalScope.contains(file, cachedContext)
+  }
+
+  // By default, the file does not have an assigned context before the context is really requested.
+  // And once we request it, it gets stuck to the file.
+  // So let's try assigning it to the context which the scope wants to avoid building addition psi
+  when (val contextInfo = globalScope.getFileContextInfo(file)) {
+    is ActualContextFileInfo -> {
+      val context = contextInfo.contexts.first()
+      val actualCodeInsightContext = contextManager.getOrSetContext(viewProvider, context)
+      if (actualCodeInsightContext === context) {
+        return true
+      }
+      else {
+        return globalScope.contains(file, actualCodeInsightContext)
+      }
+    }
+    is NoContextFileInfo -> {
+      // scope is not aware of contexts, so we don't care as well.
+      return globalScope.contains(file)
+    }
+    is DoesNotContainFileInfo -> {
+      return false
+    }
+  }
+}
 
 // -------------------------------- implementation --------------------------------
 
