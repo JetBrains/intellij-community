@@ -61,6 +61,9 @@
                         implementationClass="org.jetbrains.idea.devkit.dom.impl.ExtensionPointImpl"/>
     <dom.implementation interfaceClass="org.jetbrains.idea.devkit.dom.Extensions"
                         implementationClass="org.jetbrains.idea.devkit.dom.impl.ExtensionsImpl"/>
+    <xml.xmlExtension implementation="org.jetbrains.idea.devkit.dom.xml.PluginXmlExtension"/>
+    <completion.contributor language="XML" implementationClass="org.jetbrains.idea.devkit.dom.xml.PluginXmlCompletionContributor"
+                            order="before xmlNonFirst"/>
 
     <fileBasedIndex implementation="org.jetbrains.idea.devkit.dom.index.IdeaPluginRegistrationIndex"/>
     <fileBasedIndex implementation="org.jetbrains.idea.devkit.dom.index.PluginIdModuleIndex"/>

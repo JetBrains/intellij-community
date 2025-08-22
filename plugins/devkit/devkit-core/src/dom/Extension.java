@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom;
 
 import com.intellij.ide.presentation.Presentation;
@@ -51,5 +51,12 @@ public interface Extension extends DomElement {
            fieldName.equals("class") ||
            fieldName.endsWith("ClassName") ||
            (fieldName.endsWith("Class") && !fieldName.equals("forClass"));
+  }
+
+  /**
+   * @return whether the field is any known class name field.
+   */
+  static boolean isClassNameField(@NotNull @NonNls String fieldName) {
+    return isClassField(fieldName) || fieldName.equals("forClass");
   }
 }

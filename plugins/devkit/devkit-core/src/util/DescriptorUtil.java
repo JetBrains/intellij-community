@@ -88,8 +88,14 @@ public final class DescriptorUtil {
   }
 
   public static boolean isPluginXml(@Nullable PsiFile file) {
-    if (!(file instanceof XmlFile)) return false;
-    return getIdeaPluginFileElement((XmlFile)file) != null;
+    return getIdeaPluginTag(file) != null;
+  }
+
+  private static @Nullable XmlTag getIdeaPluginTag(PsiFile file) {
+    if (!(file instanceof XmlFile xmlFile)) return null;
+    XmlTag rootTag = xmlFile.getRootTag();
+    if (rootTag == null) return null;
+    return rootTag.getName().equals(IdeaPlugin.TAG_NAME) ? rootTag : null;
   }
 
   public static @Nullable DomFileElement<IdeaPlugin> getIdeaPluginFileElement(@NotNull XmlFile file) {
@@ -122,11 +128,9 @@ public final class DescriptorUtil {
   }
 
   public static boolean isPluginModuleFile(@NotNull PsiFile file) {
-    if (!(file instanceof XmlFile xmlFile)) return false;
-    XmlTag rootTag = xmlFile.getRootTag();
-    if (rootTag == null) return false;
-    if (!rootTag.getName().equals("idea-plugin")) return false;
-    if (rootTag.findFirstSubTag("id") != null) return false;
+    XmlTag ideaPlugin = getIdeaPluginTag(file);
+    if (ideaPlugin == null) return false;
+    if (ideaPlugin.findFirstSubTag("id") != null) return false;
     PsiDirectory parent = file.getParent();
     if (parent == null) return false;
     String parentDirName = parent.getName();
