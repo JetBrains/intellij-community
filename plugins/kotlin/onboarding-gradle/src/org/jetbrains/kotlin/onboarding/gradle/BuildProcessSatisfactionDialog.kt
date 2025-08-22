@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.onboarding.gradle
 
+import com.intellij.icons.AllIcons
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.project.Project
@@ -153,10 +155,19 @@ internal class BuildProcessSatisfactionDialog(
     override val myBlocks: List<FeedbackBlock> = listOf(
         TopLabelBlock(GradleFeedbackBundle.message("dialog.build.process.gradle.satisfaction.title")),
         DescriptionBlock(GradleFeedbackBundle.message("dialog.build.process.gradle.satisfaction.description")),
-        RatingBlock(
-            GradleFeedbackBundle.message("dialog.build.process.gradle.satisfaction.rating.label"),
-            "rating"
-        ),
+        SegmentedButtonBlock(GradleFeedbackBundle.message("dialog.build.process.gradle.satisfaction.rating.label",ApplicationInfo.getInstance().versionName),
+                             List(5) { (it + 1).toString() },
+                             "csat_rating",
+                             listOf(
+                                 AllIcons.Survey.VeryDissatisfied,
+                                 AllIcons.Survey.Dissatisfied,
+                                 AllIcons.Survey.Neutral,
+                                 AllIcons.Survey.Satisfied,
+                                 AllIcons.Survey.VerySatisfied
+                             ))
+            .addLeftBottomLabel(GradleFeedbackBundle.message("dialog.rating.leftHint"))
+            .addMiddleBottomLabel(GradleFeedbackBundle.message("dialog.rating.middleHint"))
+            .addRightBottomLabel(GradleFeedbackBundle.message("dialog.rating.rightHint")),
         TextAreaBlock(
             GradleFeedbackBundle.message("dialog.build.process.gradle.satisfaction.improve.label"),
             "improvements"
