@@ -340,7 +340,8 @@ internal class WorkspaceFileIndexDataImpl(
         is DependencyDescription.OnReference<*, *> -> processOnReference(dependency,
                                                                          event,
                                                                          removedEntities as MutableSet<WorkspaceEntity>,
-                                                                         addedEntities as MutableSet<WorkspaceEntity>,)
+                                                                         addedEntities as MutableSet<WorkspaceEntity>,
+                                                                         contributor.entityClass as Class<WorkspaceEntity>,)
       }
     }
 
@@ -361,9 +362,13 @@ internal class WorkspaceFileIndexDataImpl(
     event: VersionedStorageChange,
     removedEntities: MutableSet<WorkspaceEntity>,
     addedEntities: MutableSet<WorkspaceEntity>,
+    entityClass: Class<WorkspaceEntity>,
   ) {
     val previousDependencies = mutableSetOf<SymbolicEntityId<R>>()
     val actualDependencies = mutableSetOf<SymbolicEntityId<R>>()
+
+    val entitiesInStorageAfter by lazy(LazyThreadSafetyMode.NONE) { event.storageAfter.entities(entityClass).toSet() }
+    val entitiesInStorageBefore by lazy(LazyThreadSafetyMode.NONE) { event.storageBefore.entities(entityClass).toSet() }
 
     event.getChanges(dependencyDescription.referenceHolderClass).asSequence().forEach { change ->
       change.oldEntity?.let {
@@ -374,18 +379,17 @@ internal class WorkspaceFileIndexDataImpl(
       }
     }
 
-    // everything in actual dependencies but not in previous is considered new
-    // everything in previous but not in actual dependencies is considered removed
-
     (actualDependencies - previousDependencies)
       // We want to filter out entities that were already referenced by any reference holder
       .filter { event.storageBefore.referrers(it, dependencyDescription.referenceHolderClass).none() }
       .mapNotNull { it.resolve(event.storageAfter) }
       .forEach {
-        if (event.storageBefore.contains(it.symbolicId)) {
+        addedEntities.add(it)
+        // We might register a file set for an entity that is already having registered file sets.
+        // in that case we need to remove its file sets first to avoid duplication
+        if (entitiesInStorageBefore.contains(it)) {
           removedEntities.add(it)
         }
-        addedEntities.add(it)
       }
 
     (previousDependencies - actualDependencies)
@@ -394,7 +398,9 @@ internal class WorkspaceFileIndexDataImpl(
       .mapNotNull { it.resolve(event.storageBefore) }
       .forEach {
         removedEntities.add(it)
-        if (event.storageAfter.contains(it.symbolicId)) {
+        // We might remove a file set for an entity that is still in the workspace model
+        // in that case we want to register its file sets
+        if (entitiesInStorageAfter.contains(it)) {
           addedEntities.add(it)
         }
       }

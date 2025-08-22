@@ -19,6 +19,7 @@ import com.intellij.util.indexing.testEntities.WithReferenceTestEntity
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
 import io.kotest.common.runBlocking
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
@@ -74,7 +75,7 @@ class WorkspaceFileIndexContributorOnReferenceDependenciesTest {
       }
     }
 
-    assertEquals(2, referredTestEntityContributor.numberOfCalls.get())
+    assertEquals(1, referredTestEntityContributor.numberOfCalls.get())
     readAction {
       assertTrue(WorkspaceFileIndex.getInstance(projectModel.project).isInWorkspace(entityRoot))
     }
@@ -88,10 +89,11 @@ class WorkspaceFileIndexContributorOnReferenceDependenciesTest {
         references = mutableListOf(DependencyItem(referredTestEntity.symbolicId))
       }
     }
-    assertEquals(2, referredTestEntityContributor.numberOfCalls.get())
+    assertEquals(1, referredTestEntityContributor.numberOfCalls.get())
     readAction {
       assertTrue(WorkspaceFileIndex.getInstance(projectModel.project).isInWorkspace(entityRoot))
     }
+    referredTestEntityContributor.numberOfCalls.set(0)
 
     // modify an existing WithReferenceTestEntity entity
     WorkspaceModel.getInstance(projectModel.project).update("Create reference between entities") {
@@ -99,7 +101,7 @@ class WorkspaceFileIndexContributorOnReferenceDependenciesTest {
         references = mutableListOf(*references.toTypedArray(), DependencyItem(referredTestEntity.symbolicId))
       }
     }
-    assertEquals(2, referredTestEntityContributor.numberOfCalls.get())
+    assertEquals(0, referredTestEntityContributor.numberOfCalls.get())
   }
 
   @Test
@@ -110,13 +112,15 @@ class WorkspaceFileIndexContributorOnReferenceDependenciesTest {
         references = mutableListOf(DependencyItem(referredTestEntity.symbolicId))
       }
     }
-    assertEquals(2, referredTestEntityContributor.numberOfCalls.get())
+    assertEquals(1, referredTestEntityContributor.numberOfCalls.get())
+    referredTestEntityContributor.numberOfCalls.set(0)
 
     // add new WithReferenceTestEntity
     WorkspaceModel.getInstance(projectModel.project).update("Add one more reference") {
       it.addEntity(WithReferenceTestEntity("Another reference", listOf(DependencyItem(referredTestEntity.symbolicId)), NonPersistentEntitySource))
     }
-    assertEquals(2, referredTestEntityContributor.numberOfCalls.get())
+    // it is not called because its the seconds reference
+    assertEquals(0, referredTestEntityContributor.numberOfCalls.get())
   }
 
   @Test
@@ -163,10 +167,10 @@ class WorkspaceFileIndexContributorOnReferenceDependenciesTest {
       }
     }
     readAction {
-      // entity is still in the WorkspaceModel, so its fileset must be in the index
-      assertTrue(WorkspaceFileIndex.getInstance(projectModel.project).isInWorkspace(entityRoot))
+      // entity is in the WorkspaceModel, but its not referenced by any other entity, so it is not in the workspace
+      assertFalse(WorkspaceFileIndex.getInstance(projectModel.project).isInWorkspace(entityRoot))
     }
-    assertEquals(2, referredTestEntityContributor.numberOfCalls.get())
+    assertEquals(1, referredTestEntityContributor.numberOfCalls.get())
   }
 
   // we need SkipAddingToWatchedRoots to pass filter WorkspaceIndexingRootsBuilder.Companion.registerEntitiesFromContributors()
@@ -184,8 +188,10 @@ class WorkspaceFileIndexContributorOnReferenceDependenciesTest {
       )
 
     override fun registerFileSets(entity: ReferredTestEntity, registrar: WorkspaceFileSetRegistrar, storage: EntityStorage) {
-      registrar.registerFileSet(entity.file, WorkspaceFileKind.CUSTOM, entity, null)
-      numberOfCalls.incrementAndGet()
+      if (storage.referrers(entity.symbolicId, WithReferenceTestEntity::class.java).any()) {
+        registrar.registerFileSet(entity.file, WorkspaceFileKind.CUSTOM, entity, null)
+        numberOfCalls.incrementAndGet()
+      }
     }
   }
 }
