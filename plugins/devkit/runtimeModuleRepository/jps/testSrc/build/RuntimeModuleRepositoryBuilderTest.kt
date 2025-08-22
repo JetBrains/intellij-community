@@ -6,7 +6,9 @@ import org.jetbrains.jps.model.java.JpsJavaDependencyScope
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.java.JpsJavaLibraryType
 import org.jetbrains.jps.model.library.JpsOrderRootType
+import org.jetbrains.jps.model.serialization.JpsMavenSettings
 import org.jetbrains.jps.util.JpsPathUtil
+import kotlin.io.path.Path
 
 class RuntimeModuleRepositoryBuilderTest : RuntimeModuleRepositoryTestCase() {
   fun `test module with tests`() {
@@ -153,11 +155,10 @@ class RuntimeModuleRepositoryBuilderTest : RuntimeModuleRepositoryTestCase() {
     val a = addModule("a", withTests = false)
     val lib = a.libraryCollection.addLibrary("lib", JpsJavaLibraryType.INSTANCE)
     a.dependenciesList.addLibraryDependency(lib)
-    val libraryRoot = getUrl("lib")
-    lib.addRoot(libraryRoot, JpsOrderRootType.COMPILED)
+    lib.addRoot(getUrl("project/lib"), JpsOrderRootType.COMPILED)
     buildAndCheck { 
       descriptor("a", "lib.a.lib")
-      descriptor("lib.a.lib", listOf(JpsPathUtil.urlToPath(libraryRoot)), emptyList())
+      descriptor("lib.a.lib", listOf($$"$PROJECT_DIR$/lib"), emptyList())
     }
   }
   
@@ -165,11 +166,23 @@ class RuntimeModuleRepositoryBuilderTest : RuntimeModuleRepositoryTestCase() {
     val a = addModule("a", withTests = false)
     val lib = myProject.libraryCollection.addLibrary("lib", JpsJavaLibraryType.INSTANCE)
     a.dependenciesList.addLibraryDependency(lib)
-    val libraryRoot = getUrl("lib")
-    lib.addRoot(libraryRoot, JpsOrderRootType.COMPILED)
+    lib.addRoot(getUrl("project/lib"), JpsOrderRootType.COMPILED)
     buildAndCheck { 
       descriptor("a", "lib.lib")
-      descriptor("lib.lib", listOf(JpsPathUtil.urlToPath(libraryRoot)), emptyList())
+      descriptor("lib.lib", listOf($$"$PROJECT_DIR$/lib"), emptyList())
+    }
+  }
+  
+  fun `test library with roots from Maven repository`() {
+    val a = addModule("a", withTests = false)
+    val lib = myProject.libraryCollection.addLibrary("lib", JpsJavaLibraryType.INSTANCE)
+    a.dependenciesList.addLibraryDependency(lib)
+    val mavenRepoRoot = Path(JpsMavenSettings.getMavenRepositoryPath())
+    val relativeLibPath = "org/jetbrains/annotations/26.0.2/annotations-26.0.2.jar"
+    lib.addRoot(JpsPathUtil.getLibraryRootUrl(mavenRepoRoot.resolve(relativeLibPath)), JpsOrderRootType.COMPILED)
+    buildAndCheck { 
+      descriptor("a", "lib.lib")
+      descriptor("lib.lib", listOf($$"$MAVEN_REPOSITORY$/$$relativeLibPath"), emptyList())
     }
   }
   
@@ -178,12 +191,11 @@ class RuntimeModuleRepositoryBuilderTest : RuntimeModuleRepositoryTestCase() {
     val lib = myProject.libraryCollection.addLibrary("lib", JpsJavaLibraryType.INSTANCE)
     val dependency = a.dependenciesList.addLibraryDependency(lib)
     JpsJavaExtensionService.getInstance().getOrCreateDependencyExtension(dependency).scope = JpsJavaDependencyScope.TEST
-    val libraryRoot = getUrl("lib")
-    lib.addRoot(libraryRoot, JpsOrderRootType.COMPILED)
+    lib.addRoot(getUrl("project/lib"), JpsOrderRootType.COMPILED)
     buildAndCheck { 
       descriptor("a")
       testDescriptor("a.tests", "a", "lib.lib")
-      descriptor("lib.lib", listOf(JpsPathUtil.urlToPath(libraryRoot)), emptyList())
+      descriptor("lib.lib", listOf($$"$PROJECT_DIR$/lib"), emptyList())
     }
   }
 }
