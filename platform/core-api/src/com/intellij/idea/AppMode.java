@@ -14,8 +14,6 @@ import java.util.List;
 
 @ApiStatus.Internal
 public final class AppMode {
-  public static final String DISABLE_NON_BUNDLED_PLUGINS = "disableNonBundledPlugins";
-  public static final String DONT_REOPEN_PROJECTS = "dontReopenProjects";
   public static final String FORCE_PLUGIN_UPDATES = "idea.force.plugin.updates";
 
   public static final String HELP_OPTION = "--help";
@@ -104,10 +102,10 @@ public final class AppMode {
                   (knownCommand == null && !isHeadless && mayHappenToBeAFile(args));
 
     for (String arg : args) {
-      if (DISABLE_NON_BUNDLED_PLUGINS.equalsIgnoreCase(arg)) {
+      if (ApplicationStartArguments.DISABLE_NON_BUNDLED_PLUGINS.isSet(args)) {
         disableNonBundledPlugins = true;
       }
-      else if (DONT_REOPEN_PROJECTS.equalsIgnoreCase(arg)) {
+      else if (ApplicationStartArguments.DONT_REOPEN_PROJECTS.isSet(args)) {
         dontReopenProjects = true;
       }
     }

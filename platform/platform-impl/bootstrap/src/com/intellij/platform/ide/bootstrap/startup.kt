@@ -11,6 +11,7 @@ import com.intellij.ide.bootstrap.InitAppContext
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.idea.AppExitCodes
 import com.intellij.idea.AppMode
+import com.intellij.idea.ApplicationStartArguments
 import com.intellij.idea.LoggerFactory
 import com.intellij.jna.JnaLoader
 import com.intellij.openapi.application.*
@@ -301,7 +302,7 @@ fun startApplication(
       ApplicationImpl(CoroutineScope(mainScope.coroutineContext.job + kernelStarted.await().coroutineContext).childScope("Application"), isInternal)
     }
 
-    val args = args.filterNot { CommandLineArgs.isKnownArgument(it) }
+    val args = ApplicationStartArguments.stripKnownArguments(args)
     loadApp(
       app = app,
       pluginSetDeferred = pluginSetDeferred,

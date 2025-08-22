@@ -12,6 +12,7 @@ import com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil.OpenPlace
 import com.intellij.ide.lightEdit.LightEditService
 import com.intellij.ide.lightEdit.LightEditUtil
 import com.intellij.ide.util.PsiNavigationSupport
+import com.intellij.idea.ApplicationStartArguments
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.*
@@ -34,7 +35,6 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.platform.CommandLineProjectOpenProcessor
 import com.intellij.platform.FolderProjectOpenProcessor
 import com.intellij.platform.PlatformProjectOpenProcessor.Companion.configureToOpenDotIdeaOrCreateNewIfNotExists
-import com.intellij.platform.ide.bootstrap.CommandLineArgs
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
 import com.intellij.ui.AppIcon
 import com.intellij.util.PlatformUtils
@@ -244,6 +244,9 @@ object CommandLineProcessor {
     for (arg in args) logMessage.append(arg).append('\n')
     logMessage.append("-----")
     LOG.info(logMessage.toString())
+
+    val args = ApplicationStartArguments.stripKnownArguments(args)
+
     if (args.isEmpty()) {
       FUSProjectHotStartUpMeasurer.noProjectFound()
       if (focusApp) {
@@ -411,7 +414,7 @@ object CommandLineProcessor {
     var i = 0
     while (i < args.size) {
       var arg = args[i]
-      if (CommandLineArgs.isKnownArgument(arg) || OPTION_WAIT == arg) {
+      if (OPTION_WAIT == arg) {
         i++
         continue
       }
