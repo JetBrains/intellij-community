@@ -480,6 +480,18 @@ c:com.intellij.psi.search.DelegatingGlobalSearchScope
 - com.intellij.psi.search.CodeInsightContextInfo
 f:com.intellij.psi.search.PsiSearchScopeUtil
 - *s:restrictScopeToFileLanguage(com.intellij.openapi.project.Project,com.intellij.psi.search.SearchScope,com.intellij.lang.LanguageMatcher):com.intellij.psi.search.SearchScope
+*:com.intellij.psi.search.UnionCapableScope
+- a:uniteWith(java.util.Collection):com.intellij.psi.search.UnionCapableScope$UnionResult
+*f:com.intellij.psi.search.UnionCapableScope$UnionResult
+- <init>(com.intellij.psi.search.GlobalSearchScope,java.util.Set):V
+- f:component1():com.intellij.psi.search.GlobalSearchScope
+- f:component2():java.util.Set
+- f:copy(com.intellij.psi.search.GlobalSearchScope,java.util.Set):com.intellij.psi.search.UnionCapableScope$UnionResult
+- bs:copy$default(com.intellij.psi.search.UnionCapableScope$UnionResult,com.intellij.psi.search.GlobalSearchScope,java.util.Set,I,java.lang.Object):com.intellij.psi.search.UnionCapableScope$UnionResult
+- equals(java.lang.Object):Z
+- f:getSkippedScopes():java.util.Set
+- f:getUnitedScope():com.intellij.psi.search.GlobalSearchScope
+- hashCode():I
 com.intellij.psi.stubs.BinaryFileStubBuilder
 - *:getFileFilter():com.intellij.openapi.vfs.VirtualFileFilter
 *:com.intellij.psi.stubs.LanguageStubDefinition

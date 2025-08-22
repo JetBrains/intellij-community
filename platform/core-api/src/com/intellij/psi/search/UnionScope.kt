@@ -13,6 +13,7 @@ import com.intellij.util.ArrayUtil
 import com.intellij.util.Processor
 import com.intellij.util.SmartList
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.toArray
 import org.jetbrains.annotations.NonNls
 
 /** @see GlobalSearchScope.union */
@@ -141,7 +142,10 @@ internal class UnionScope private constructor(
       if (flattened.isEmpty()) return EMPTY_SCOPE
       if (flattened.size == 1) return flattened.single()
 
-      return UnionScope(project, flattened.toArray(EMPTY_ARRAY))
+      val united = tryUniting(flattened)
+      if (united.size == 1) return united.single()
+
+      return UnionScope(project, united.toArray(EMPTY_ARRAY))
     }
 
     private fun tryCreateUnionFor2Scopes(scopes: Array<GlobalSearchScope>): GlobalSearchScope? {
@@ -163,7 +167,12 @@ internal class UnionScope private constructor(
           unionScope
         }
         else {
-          UnionScope(project, scopes + otherScope)
+          val toUnite = buildSet { addAll(scopes); add(otherScope) }
+
+          val united = tryUniting(toUnite)
+          if (united.size == 1) return united.single()
+
+          UnionScope(project, united.toArray(EMPTY_ARRAY))
         }
       }
 
@@ -172,6 +181,25 @@ internal class UnionScope private constructor(
         scope1 is UnionScope -> unionWithUnionScope(scope1, scope0, project)
         else -> UnionScope(project, scopes)
       }
+    }
+
+    private fun tryUniting(scopes: Set<GlobalSearchScope>): Collection<GlobalSearchScope> {
+      require(scopes.size >= 2)
+
+      val unionCapable = scopes.asSequence().filterIsInstance<UnionCapableScope>()
+      for (scope in unionCapable) {
+        val others = scopes - (scope as GlobalSearchScope)
+
+        val (united, leftScopes) = scope.uniteWith(others) ?: continue
+
+        if (leftScopes.isEmpty()) {
+          return listOf(united)
+        }
+
+        return listOf(united) + tryUniting(leftScopes)
+      }
+
+      return scopes
     }
   }
 }
