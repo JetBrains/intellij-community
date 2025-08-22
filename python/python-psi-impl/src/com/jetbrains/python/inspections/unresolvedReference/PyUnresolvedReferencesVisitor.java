@@ -365,7 +365,7 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
       isAddedToInstallAllFix = true;
     }
 
-    ContainerUtil.addAll(fixes, getAddSourceRootQuickFix(node));
+    ContainerUtil.addIfNotNull(fixes, getAddSourceRootQuickFix(node));
 
     if (reference instanceof PySubstitutionChunkReference) {
       return;
