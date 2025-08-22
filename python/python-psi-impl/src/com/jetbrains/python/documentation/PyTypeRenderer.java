@@ -18,6 +18,7 @@ import com.jetbrains.python.highlighting.PyHighlighter;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyQualifiedNameOwner;
+import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.types.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
@@ -524,6 +525,27 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
     HtmlBuilder result = new HtmlBuilder();
     result.append("[");
     result.append(renderList(ContainerUtil.map(callableParameterListType.getParameters(), this::visitPyCallableParameter)));
+    result.append("]");
+    return result.toFragment();
+  }
+
+  @Override
+  public @NotNull HtmlChunk visitPyLiteralType(@NotNull PyLiteralType literalType) {
+    HtmlBuilder result = new HtmlBuilder();
+    result.append(HtmlChunk.raw(isRenderingFqn() ? "typing.Literal" : "Literal")); //NON-NLS
+    result.append("[");
+    @Nullable String classQName = literalType.getClassQName();
+    if (isRenderingFqn() && classQName != null && literalType.getExpression() instanceof PyReferenceExpression refExpr) {
+      result.append(classQName);
+      if (refExpr.getName() != null) {
+        result.append(".");
+        result.append(refExpr.getName());
+      }
+    }
+    else {
+      String enumOrLiteral = StringUtil.notNullize(literalType.getExpression().getText()).trim();
+      result.appendRaw(enumOrLiteral); // append raw since the literal can include quotes: Literal["foo"]
+    }
     result.append("]");
     return result.toFragment();
   }

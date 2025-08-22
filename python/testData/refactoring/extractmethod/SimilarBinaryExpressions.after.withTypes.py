@@ -1,3 +1,6 @@
+from typing import Any
+
+
 def compound_duplicate(p1, p2):
     print(bar(p1))
     print(bar(p2))

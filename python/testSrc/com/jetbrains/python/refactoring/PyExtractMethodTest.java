@@ -349,6 +349,31 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
     doTest("body");
   }
 
+  // PY-83066
+  public void testExtractAddsImport1() {
+    doTest("body");
+  }
+
+  // PY-83066
+  public void testExtractAddsImport2() {
+    doTest("body");
+  }
+
+  // PY-83066
+  public void testExtractAddsImport3() {
+    doTest("body");
+  }
+
+  // PY-83066
+  public void testExtractAddsImport4() {
+    doTest("body");
+  }
+
+  // PY-83066
+  public void testExtractAddsImport5() {
+    doTest("body");
+  }
+
   // PY-35287
   public void testTypedStatements() {
     doTest("greeting");

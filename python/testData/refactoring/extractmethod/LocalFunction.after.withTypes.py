@@ -1,3 +1,6 @@
+from typing import Any, Callable
+
+
 def foo():
     def f(x):
         return x

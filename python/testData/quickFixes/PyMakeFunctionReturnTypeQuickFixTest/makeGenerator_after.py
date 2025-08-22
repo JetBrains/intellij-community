@@ -1,4 +1,4 @@
-from typing import AsyncGenerator, Any
+from typing import Any, AsyncGenerator
 
 
 async def gen() -> AsyncGenerator[str | float, Any]:

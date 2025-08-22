@@ -13,6 +13,7 @@ import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -38,15 +39,21 @@ import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
+import com.jetbrains.python.codeInsight.intentions.PyTypeHintGenerationUtil;
+import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFunctionBuilder;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.refactoring.PyRefactoringUiService;
 import com.jetbrains.python.refactoring.PyReplaceExpressionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+
+import static com.jetbrains.python.psi.types.PyTypeUtil.collectTypeComponentsFromType;
 
 public final class PyExtractMethodUtil {
   public static final String NAME = "extract.method.name";
@@ -170,21 +177,16 @@ public final class PyExtractMethodUtil {
       final List<SimpleMatch> duplicates = collectDuplicates(finder, statement1, insertedMethod);
 
       // replace statements with call
-      PsiElement insertedCallElement = WriteAction.compute(() -> replaceElements(elementsRange, callElement));
-      insertedCallElement = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(insertedCallElement);
+      PsiElement insertedCallElement = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(WriteAction.compute(
+        () -> replaceElements(elementsRange, callElement)));
 
       SmartPointerManager pointerManager = SmartPointerManager.getInstance(project);
       if (processDuplicates) {
         pointers.addAll(ContainerUtil.map(duplicates, p -> pointerManager.createSmartPsiFileRangePointer(file, p.getStartElement().getTextRange())));
       }
 
-      if (insertedCallElement != null) {
-        pointers.add(0, pointerManager.createSmartPsiFileRangePointer(file, insertedMethod.getNameIdentifier().getTextRange()));
-        pointers.add(pointerManager.createSmartPsiFileRangePointer(file, insertedCallElement.getTextRange()));
-        if (processDuplicates) {
-          processDuplicates(duplicates, insertedCallElement, editor);
-        }
-      }
+      processDuplicatesAndAddImports(project, editor, processDuplicates, pointers, methodSettings, insertedMethod,
+                                     duplicates, insertedCallElement, file, pointerManager);
 
       // Set editor
       setSelectionAndCaret(editor, insertedCallElement);
@@ -381,19 +383,52 @@ public final class PyExtractMethodUtil {
         }
         if (callElement != null) {
           insertedCallElement = WriteAction.compute(() -> PyReplaceExpressionUtil.replaceExpression(expression, callElement));
-          if (insertedCallElement != null) {
-            pointers.add(0, pointerManager.createSmartPsiFileRangePointer(file, insertedMethod.getNameIdentifier().getTextRange()));
-            pointers.add(pointerManager.createSmartPsiFileRangePointer(file, insertedCallElement.getTextRange()));
-            if (processDuplicates) {
-              processDuplicates(duplicates, insertedCallElement, editor);
-            }
-          }
+          processDuplicatesAndAddImports(project, editor, processDuplicates, pointers, methodSettings, insertedMethod,
+                                         duplicates, insertedCallElement, file, pointerManager);
         }
         setSelectionAndCaret(editor, insertedCallElement);
         // Set editor
       }, PyPsiBundle.message("refactoring.extract.method"), null);
     }
     return pointers;
+  }
+
+  private static void processDuplicatesAndAddImports(@NotNull Project project,
+                                                     @NotNull Editor editor,
+                                                     @NotNull Boolean processDuplicates,
+                                                     @NotNull List<SmartPsiFileRange> pointers,
+                                                     @NotNull PyExtractMethodSettings methodSettings,
+                                                     @NotNull PyFunction insertedMethod,
+                                                     @NotNull List<SimpleMatch> duplicates,
+                                                     PsiElement insertedCallElement,
+                                                     @NotNull PsiFile file,
+                                                     @NotNull SmartPointerManager pointerManager) {
+
+    if (insertedCallElement == null) {
+      return;
+    }
+    pointers.add(0, pointerManager.createSmartPsiFileRangePointer(file, insertedMethod.getNameIdentifier().getTextRange()));
+    pointers.add(pointerManager.createSmartPsiFileRangePointer(file, insertedCallElement.getTextRange()));
+    if (processDuplicates) {
+      processDuplicates(duplicates, insertedCallElement, editor);
+    }
+    if (getAddTypeAnnotations(project)) {
+      TypeEvalContext context = TypeEvalContext.userInitiated(project, file);
+      Set<String> allTypesAsStrings = new HashSet<>();
+      for (PyType type : methodSettings.getAllTypes()) {
+        for (PyType type2 : collectTypeComponentsFromType(type, context)) {
+          if (type2 == null || type2.getDeclarationElement() == null || type2.getDeclarationElement().isValid()) {
+            String typeFqn = PythonDocumentationProvider.getFullyQualifiedTypeHint(type2, context);
+            if (Strings.isNotEmpty(typeFqn)) {
+              allTypesAsStrings.add(typeFqn);
+            }
+          }
+        }
+      }
+      WriteAction.run(() -> {
+        PyTypeHintGenerationUtil.addImportsForTypeAnnotations(allTypesAsStrings, insertedMethod);
+      });
+    }
   }
 
   private static void setSelectionAndCaret(@NotNull Editor editor, final @Nullable PsiElement callElement) {
@@ -631,11 +666,12 @@ public final class PyExtractMethodUtil {
         d.name = in + "_new";
         d.originalName = in;
         d.passAsParameter = true;
-        d.typeName = fragment.getInputTypes().get(in);
+        d.typeName = fragment.getInputTypeName(in);
+        d.type = fragment.getInputType(in);
         data.add(d);
       }
       return new PyExtractMethodSettings(name, data.toArray(new PyVariableData[0]), fragment.getOutputType(),
-                                         getAddTypeAnnotations(project));
+                                         fragment.getOutputTypes(), getAddTypeAnnotations(project));
     }
 
     final boolean isMethod = PyPsiUtils.isMethodContext(element);
@@ -727,4 +763,5 @@ public final class PyExtractMethodUtil {
     boolean selected = PropertiesComponent.getInstance(project).getBoolean(ADD_TYPE_ANNOTATIONS_VALUE_KEY, ADD_TYPE_ANNOTATIONS_DEFAULT);
     return selected;
   }
+
 }

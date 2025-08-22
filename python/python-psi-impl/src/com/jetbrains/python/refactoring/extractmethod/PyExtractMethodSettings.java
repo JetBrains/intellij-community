@@ -1,37 +1,50 @@
 package com.jetbrains.python.refactoring.extractmethod;
 
 import com.intellij.refactoring.extractMethod.ExtractMethodSettings;
-import org.jetbrains.annotations.NotNull;
+import com.jetbrains.python.psi.types.PyType;
+import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+
+@NotNullByDefault
 public class PyExtractMethodSettings implements ExtractMethodSettings<Object> {
   private final String myMethodName;
-  private final PyVariableData @NotNull [] myVariableData;
-  private final String myReturnTypeName;
+  private final PyVariableData[] myVariableData;
+  private final @Nullable String myReturnTypeName;
+  private final Set<PyType> myReturnTypes;
   private final boolean myUseTypeAnnotations;
 
-  public PyExtractMethodSettings(@NotNull String methodName,
-                                 PyVariableData @NotNull [] variableData,
-                                 String returnTypeName,
+  public PyExtractMethodSettings(String methodName,
+                                 PyVariableData[] variableData,
+                                 @Nullable String returnTypeName,
+                                 Set<PyType> returnTypes,
                                  boolean useTypeAnnotations) {
     myMethodName = methodName;
     myVariableData = variableData;
     myReturnTypeName = returnTypeName;
+    myReturnTypes = returnTypes;
     myUseTypeAnnotations = useTypeAnnotations;
   }
 
   @Override
-  public @NotNull String getMethodName() {
+  public String getMethodName() {
     return myMethodName;
   }
 
   @Override
-  public PyVariableData @NotNull [] getAbstractVariableData() {
+  public PyVariableData[] getAbstractVariableData() {
     return myVariableData;
   }
 
-  public String getReturnTypeName() {
+  public @Nullable String getReturnTypeName() {
     return myReturnTypeName;
+  }
+
+  public Set<PyType> getReturnTypeFqns() {
+    return myReturnTypes;
   }
 
   public boolean isUseTypeAnnotations() {
@@ -41,5 +54,16 @@ public class PyExtractMethodSettings implements ExtractMethodSettings<Object> {
   @Override
   public @Nullable Object getVisibility() {
     return null;
+  }
+
+  List<PyType> getAllTypes() {
+    List<PyType> result = new ArrayList<>();
+    for (PyVariableData variableData : myVariableData) {
+      if (variableData.type != null) {
+        result.add(variableData.type);
+      }
+    }
+    result.addAll(myReturnTypes);
+    return result;
   }
 }

@@ -56,20 +56,27 @@ public final class PyCodeFragmentUtil {
     final Set<String> nonlocalWrites = getNonlocalWrites(subGraph, owner);
 
     final TypeEvalContext context = TypeEvalContext.userInitiated(startInScope.getProject(), startInScope.getContainingFile());
-    final Set<String> inputNames = new HashSet<>();
-    final Map<String, String> inputTypeNames = new HashMap<>();
+    final Set<String> inputNames = new LinkedHashSet<>();
+    final Map<String, Pair<String, PyType>> inputTypes = new HashMap<>();
     for (PsiElement element : filterElementsInScope(getInputElements(subGraph, graph), owner)) {
       // Ignore "self" and "cls", they are generated automatically when extracting any method fragment
       if (resolvesToBoundMethodParameter(element)) {
         continue;
       }
-      addNameReturnType(globalWrites, nonlocalWrites, element, inputNames, inputTypeNames, null, context);
+      Pair<String, PyType> variable = getVariable(globalWrites, nonlocalWrites, element, inputNames, context);
+      if (variable != null && variable.second != null) {
+        String typeName = PythonDocumentationProvider.getTypeHint(variable.second, context);
+        inputTypes.put(variable.first, Pair.create(typeName, variable.second));
+      }
     }
 
-    final Set<String> outputNames = new HashSet<>();
+    final Set<String> outputNames = new LinkedHashSet<>();
     final List<PyType> outputTypes = new ArrayList<>();
     for (PsiElement element : getOutputElements(subGraph, graph)) {
-      addNameReturnType(globalWrites, nonlocalWrites, element, outputNames, null, outputTypes, context);
+      Pair<String, PyType> variable = getVariable(globalWrites, nonlocalWrites, element, outputNames, context);
+      if (variable != null) {
+        outputTypes.add(variable.second);
+      }
     }
     if (singleExpression != null) {
       PyType returnType = getType(singleExpression, context);
@@ -88,30 +95,22 @@ public final class PyCodeFragmentUtil {
     }
     final boolean isAsync = owner instanceof PyFunction && ((PyFunction)owner).isAsync();
 
-    return new PyCodeFragment(inputNames, outputNames, inputTypeNames, outputTypeName, globalWrites, nonlocalWrites,
-                              subGraphAnalysis.returns > 0, yieldsFound, isAsync);
+    return new PyCodeFragment(inputNames, outputNames, inputTypes, outputTypeName, new LinkedHashSet<>(outputTypes),
+                              globalWrites, nonlocalWrites, subGraphAnalysis.returns > 0, yieldsFound, isAsync);
   }
 
-  private static void addNameReturnType(@NotNull Set<String> globalWrites,
-                                        @NotNull Set<String> nonlocalWrites,
-                                        @NotNull PsiElement element,
-                                        @NotNull Set<String> varNames,
-                                        @Nullable Map<String, String> varTypeNames,
-                                        @Nullable List<PyType> outputTypes,
-                                        @NotNull TypeEvalContext context) {
+  private static @Nullable Pair<String, PyType> getVariable(@NotNull Set<String> globalWrites,
+                                                            @NotNull Set<String> nonlocalWrites,
+                                                            @NotNull PsiElement element,
+                                                            @NotNull Set<String> variableNames,
+                                                            @NotNull TypeEvalContext context) {
     String name = getName(element);
-    if (name == null || globalWrites.contains(name) || nonlocalWrites.contains(name) || varNames.contains(name)) {
-      return;
+    if (name == null || globalWrites.contains(name) || nonlocalWrites.contains(name) || variableNames.contains(name)) {
+      return null;
     }
-    varNames.add(name);
     PyType type = getType(element, context);
-    if (varTypeNames != null) {
-      String typeName = type == null ? null : PythonDocumentationProvider.getTypeHint(type, context);
-      varTypeNames.put(name, typeName);
-    }
-    if (outputTypes != null) {
-      outputTypes.add(type);
-    }
+    variableNames.add(name);
+    return Pair.create(name, type);
   }
 
   private static @Nullable PyType getType(@NotNull PsiElement element, @NotNull TypeEvalContext context) {

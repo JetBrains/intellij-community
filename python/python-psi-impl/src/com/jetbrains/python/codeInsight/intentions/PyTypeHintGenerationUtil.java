@@ -272,8 +272,10 @@ public final class PyTypeHintGenerationUtil {
     }
   }
 
-  public static void addImportsForTypeAnnotations(@NotNull List<String> types, @NotNull PsiElement anchor) {
-    final Set<PsiNamedElement> symbols = new LinkedHashSet<>();
+  /** Adds imports for type annotations. Sorts imports by name. */
+  public static void addImportsForTypeAnnotations(@NotNull Collection<String> types, @NotNull PsiElement anchor) {
+    final Set<PsiNamedElement> symbols =
+      new TreeSet<>(Comparator.comparing(PsiNamedElement::getName, Comparator.nullsFirst(Comparator.naturalOrder())));
 
     for (String type : types) {
       collectImportTargetsFromTypeExpression(type, anchor, symbols);
@@ -287,7 +289,7 @@ public final class PyTypeHintGenerationUtil {
 
   private static void collectImportTargetsFromTypeExpression(@NotNull String typeExpressionText,
                                                              @NotNull PsiElement anchor,
-                                                             @NotNull Set<PsiNamedElement> symbols) {
+                                                             @NotNull Set<@NotNull PsiNamedElement> symbols) {
     PyExpression typeExpression = PyUtil.createExpressionFromFragment(typeExpressionText, anchor);
     assert typeExpression != null;
     PyQualifiedNameResolveContext qNameResolveContext = PyResolveImportUtil.fromFoothold(anchor);

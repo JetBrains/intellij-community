@@ -1,3 +1,6 @@
+from typing import Any
+
+
 def foo(some_var):
     if bar(some_var):
         print('w00t')
