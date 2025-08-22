@@ -132,6 +132,9 @@ public final class LocalOptionsConfigurer {
         envs.putAll(fetchLoginShellEnvVariables(eelDescriptor));
       }
       EnvironmentRestorer.restoreOverriddenVars(envs);
+      if (envs.isEmpty()) {
+        LOG.warn("Empty parent environment for " + shellCommand + " on (" + eelDescriptor.getMachine().getName() + ")");
+      }
       if (LOG.isDebugEnabled()) {
         LOG.debug("Parent environment for " + shellCommand + " on (" + eelDescriptor.getMachine().getName() + ")" + ": " + envs);
       }
