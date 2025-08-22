@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.java.stubs.index;
 
 import com.intellij.openapi.project.Project;
@@ -33,7 +33,11 @@ public final class JavaAnnotationIndex extends StringStubIndexExtension<PsiAnnot
     return getAnnotations(s, project, scope);
   }
 
-  public Collection<PsiAnnotation> getAnnotations(final @NotNull String s, final @NotNull Project project, final @NotNull GlobalSearchScope scope) {
-    return StubIndex.getElements(getKey(), s, project, new JavaSourceFilterScope(scope), PsiAnnotation.class);
+  public Collection<PsiAnnotation> getAnnotations(
+    @NotNull String shortName,
+    @NotNull Project project,
+    @NotNull GlobalSearchScope scope
+  ) {
+    return StubIndex.getElements(getKey(), shortName, project, new JavaSourceFilterScope(scope), PsiAnnotation.class);
   }
 }
