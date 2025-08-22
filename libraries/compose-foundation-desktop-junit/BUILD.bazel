@@ -12,15 +12,10 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   exports = [
-    "//libraries/compose-foundation-desktop",
-    "@lib//:libraries-compose-foundation-desktop-junit-org-jetbrains-compose-ui-ui-test-junit4",
     "@lib//:libraries-compose-foundation-desktop-junit-org-jetbrains-compose-ui-ui-test-junit4-desktop",
-    "@lib//:libraries-compose-foundation-desktop-junit-org-hamcrest-hamcrest-core",
-    "@lib//:libraries-compose-foundation-desktop-junit-org-jetbrains-compose-ui-ui-test",
-    "@lib//:libraries-compose-foundation-desktop-junit-org-jetbrains-compose-ui-ui-test-desktop",
-    "//libraries/junit4",
     "@lib//:kotlinx-coroutines-test",
-    "//libraries/skiko",
+    "//libraries/junit4",
+    "//libraries/hamcrest",
   ],
   runtime_deps = [":compose-foundation-desktop-junit_resources"]
 )
