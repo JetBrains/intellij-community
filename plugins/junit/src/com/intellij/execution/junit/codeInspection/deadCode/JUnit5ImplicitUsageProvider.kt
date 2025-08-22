@@ -107,6 +107,10 @@ private fun fieldSourceIsImplicitlyUsed(element: PsiField): Boolean {
   }
 }
 
+private fun nestedClassIsImplicitlyUsed(element: PsiClass): Boolean {
+  return MetaAnnotationUtil.isMetaAnnotated(element, setOf(ORG_JUNIT_JUPITER_API_NESTED))
+}
+
 private fun isAnnotationMemberContainsName(name: String, method: PsiMethod, annotationFqn: String): Boolean {
   val annotation = method.getAnnotation(annotationFqn) ?: return false
   val value = annotation.findAttributeValue(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME)
@@ -126,11 +130,13 @@ private fun isAnnotationMemberContainsName(name: String, method: PsiMethod, anno
 }
 
 class JUnit5ImplicitUsageProvider : ImplicitUsageProvider {
-  override fun isImplicitUsage(element: PsiElement): Boolean {
-    return (element is PsiParameter && parameterIsUsedByParameterizedTest(element))
-           || (element is PsiEnumConstant && enumReferenceIsUsedByParameterizedTest(element))
-           || (element is PsiMethod && methodSourceIsImplicitlyUsed(element))
-           || (element is PsiField && fieldSourceIsImplicitlyUsed(element))
+  override fun isImplicitUsage(element: PsiElement): Boolean = when (element) {
+    is PsiParameter -> parameterIsUsedByParameterizedTest(element)
+    is PsiEnumConstant -> enumReferenceIsUsedByParameterizedTest(element)
+    is PsiMethod -> methodSourceIsImplicitlyUsed(element)
+    is PsiField -> fieldSourceIsImplicitlyUsed(element)
+    is PsiClass -> nestedClassIsImplicitlyUsed(element)
+    else -> false
   }
 
   override fun isImplicitRead(element: PsiElement): Boolean {

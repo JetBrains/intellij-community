@@ -434,4 +434,27 @@ class JavaJunit5ImplicitUsageProviderTest : JUnit5ImplicitUsageProviderTestBase(
     myFixture.configureFromExistingVirtualFile(clazz.containingFile.virtualFile)
     myFixture.checkHighlighting()
   }
+
+  fun `test malformed nested should be used highlighting`() {
+    myFixture.addClass("""
+      package org.example;
+      import org.junit.jupiter.api.Nested;
+      import org.junit.jupiter.api.Test;
+
+      public class RootTest {
+        @Test public void test1() {}
+        public class NestedTestsImpl extends NestedTests {}
+      }
+      
+      abstract class NestedTests {
+          @Test public void test2() {}
+          @Nested
+          public class DoubleNestedTestsImpl extends DoubleNestedTests {}
+      }
+      
+      abstract class DoubleNestedTests {
+          @Test public void test3() {}
+      }
+    """.trimIndent())
+  }
 }

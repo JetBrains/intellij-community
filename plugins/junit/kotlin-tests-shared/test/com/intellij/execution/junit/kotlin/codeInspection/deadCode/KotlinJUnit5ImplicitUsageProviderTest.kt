@@ -203,4 +203,30 @@ abstract class KotlinJUnit5ImplicitUsageProviderTest : JUnit5ImplicitUsageProvid
       
     """.trimIndent())
   }
+
+  fun `test malformed nested should be used highlighting`() {
+    myFixture.testHighlighting(
+      JvmLanguage.KOTLIN, """
+        import org.junit.jupiter.api.Nested
+        import org.junit.jupiter.api.Test
+        
+        class RootTest {
+            @Test fun test1() {}
+        
+            @Nested
+            inner class NestedTestsImpl : NestedTests()
+        }
+        
+        abstract class NestedTests {
+            @Test fun test2() {}
+        
+            @Nested
+            inner class DoubleNestedTestsImpl : DoubleNestedTests()
+        }
+        
+        abstract class DoubleNestedTests {
+            @Test fun test3() {}
+        }
+        """.trimIndent())
+  }
 }
