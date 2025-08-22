@@ -66,7 +66,7 @@ Var control_fields
 Var max_fields
 Var bottom_position
 Var max_length
-Var line_width
+Var line_height
 Var extra_space
 
 ; position of controls for Installation Options dialog
@@ -432,195 +432,151 @@ continue:
 FunctionEnd
 
 
-Function uninstallOldVersion
-  ;uninstallation mode
-  !insertmacro INSTALLOPTIONS_READ $9 "UninstallOldVersions.ini" "Field 2" "State"
-  ${LogText} ""
-  ${LogText} "Uninstall old installation: $3"
-
-  ;do copy for unistall.exe
-  CopyFiles "$3\bin\Uninstall.exe" "$LOCALAPPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe"
-
-  ${If} $9 == "1"
-    ExecWait '"$LOCALAPPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe" /S /NO_UNINSTALL_FEEDBACK=true _?=$3\bin'
-  ${else}
-    ExecWait '"$LOCALAPPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe" /NO_UNINSTALL_FEEDBACK=true _?=$3\bin'
-  ${EndIf}
-  IfFileExists $3\bin\${PRODUCT_EXE_FILE} 0 uninstall
-  goto complete
-uninstall:
-  ;previous installation has been removed
-  ;customer has decided to keep properties?
-  Delete "$LOCALAPPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe"
-complete:
-FunctionEnd
-
-
-Function checkProductVersion
-;$8 - count of already added fields to the dialog
-;$3 - an old version which will be checked if the one should be added too
-  StrCpy $7 $control_fields
-  StrCpy $6 ""
-loop:
-  IntOp $7 $7 + 1
-  ${If} $8 >= $7
-    !insertmacro INSTALLOPTIONS_READ $6 "UninstallOldVersions.ini" "Field $7" "Text"
-    ${If} $6 == $3
-      ;found the same value in list of installations
-      StrCpy $6 "duplicated"
-      Goto finish
-    ${EndIf}
-    Goto loop
-  ${EndIf}
-finish:
-FunctionEnd
-
-
 Function getUninstallOldVersionVars
   !insertmacro INSTALLOPTIONS_READ $max_fields "UninstallOldVersions.ini" "Settings" "NumFields"
   !insertmacro INSTALLOPTIONS_READ $control_fields "UninstallOldVersions.ini" "Settings" "ControlFields"
   !insertmacro INSTALLOPTIONS_READ $bottom_position "UninstallOldVersions.ini" "Settings" "BottomPosition"
   !insertmacro INSTALLOPTIONS_READ $max_length "UninstallOldVersions.ini" "Settings" "MaxLength"
-  !insertmacro INSTALLOPTIONS_READ $line_width "UninstallOldVersions.ini" "Settings" "LineWidth"
+  !insertmacro INSTALLOPTIONS_READ $line_height "UninstallOldVersions.ini" "Settings" "LineHeight"
   !insertmacro INSTALLOPTIONS_READ $extra_space "UninstallOldVersions.ini" "Settings" "ExtraSpace"
 FunctionEnd
 
-
-Function getPosition
-; return:
-;    0 if it is first checkbox which do not require special position
-;    Bottom position of previous checkbox which equals for Top position of current one.
-  IntOp $R8 $8 - 1
-  !insertmacro INSTALLOPTIONS_READ $R7 "UninstallOldVersions.ini" "Field $R8" "Bottom"
-  !insertmacro INSTALLOPTIONS_READ $7  "UninstallOldVersions.ini" "Field $8"  "Top"
-  StrCmp $R8 $control_fields noCheckboxesFound 0
-    Push $R7
-    Goto done
-noCheckboxesFound:
-    Push $7
-done:
-FunctionEnd
-
-
-Function getAdditionalSpaceForCheckbox
-; $3 - a path to an old installation
-; return
-;   - 0 for 1-line checkbox
-;   - a value for additional space for multi-line checkbox
-  StrLen $9 $3
-  ${If} $9 >= $max_length
-    ; installation path is long
-    Push $extra_space
-    Goto done
-  ${Else}
-    Push 0
-  ${EndIf}
-done:
-FunctionEnd
-
-
-Function haveSpaceForTheCheckbox
-  ; check if dialog has space for current checkbox
-  !insertmacro INSTALLOPTIONS_READ $7 "UninstallOldVersions.ini" "Field $8" "Bottom"
-  IntOp $7 $bottom_position - $7
-  ${If} $7 >= 0
-    Push 0
-    Goto done
-  ${Else}
-    IntOp $8 $8 - 1
-    Push 1
-  ${EndIf}
-done:
-FunctionEnd
-
-
 Function uninstallOldVersionDialog
-  StrCpy $0 "HKLM"
-  StrCpy $4 0
-  StrCpy $8 $control_fields
+  StrCpy $R8 $control_fields
   !insertmacro INSTALLOPTIONS_WRITE "UninstallOldVersions.ini" "Field 2" "State" "0"
 
-get_installation_info:
-  StrCpy $1 "Software\${MANUFACTURER}\${MUI_PRODUCT}"
-  StrCpy $2 ""
-  Call getInstallationPath
-  StrCmp $3 "complete" next_registry_root
-  ;check if the old installation could be uninstalled
-  IfFileExists $3\bin\Uninstall.exe uninstall_dialog get_next_key
-uninstall_dialog:
-  Call checkProductVersion
-  ${If} $6 != "duplicated"
-    IntOp $8 $8 + 1
-    Call getPosition
-    Pop $7
-    !insertmacro INSTALLOPTIONS_WRITE "UninstallOldVersions.ini" "Field $8" "Top" "$7"
-    IntOp $R7 $7 + $line_width
-    Call getAdditionalSpaceForCheckbox
-    Pop $R9
-    IntOp $R7 $R7 + $R9
-    !insertmacro INSTALLOPTIONS_WRITE "UninstallOldVersions.ini" "Field $8" "Bottom" "$R7"
-    !insertmacro INSTALLOPTIONS_WRITE "UninstallOldVersions.ini" "Field $8" "State" "0"
-    !insertmacro INSTALLOPTIONS_WRITE "UninstallOldVersions.ini" "Field $8" "Text" "$3"
-    Call haveSpaceForTheCheckbox
-    Pop $9
-    StrCmp $9 0 0 complete
-  ${EndIf}
-get_next_key:
-  IntOp $4 $4 + 1 ;next record from registry
-  goto get_installation_info
+  StrCpy $R0 0  ; HKLM
+  StrCpy $R1 "Software"
+  Call enumerateInstalledVersions
 
-next_registry_root:
-  ${If} $0 == "HKLM"
-    StrCpy $0 "HKCU"
-    StrCpy $4 0
-    Goto get_installation_info
-  ${EndIf}
+  StrCpy $R0 0  ; HKLM
+  StrCpy $R1 "Software\Wow6432Node"
+  Call enumerateInstalledVersions
 
-complete:
-  !insertmacro INSTALLOPTIONS_WRITE "UninstallOldVersions.ini" "Settings" "NumFields" "$8"
-  ${If} $8 > $control_fields
-    ;$2 used in prompt text
-    StrCpy $2 "s"
-    StrCpy $7 $control_fields
-    IntOp $7 $7 + 1
-    StrCmp $8 $7 0 +2
-    StrCpy $2 ""
+  StrCpy $R0 1  ; HKCU
+  StrCpy $R1 "Software"
+  Call enumerateInstalledVersions
+
+  !insertmacro INSTALLOPTIONS_WRITE "UninstallOldVersions.ini" "Settings" "NumFields" "$R8"
+  ${If} $R8 > $control_fields
     !insertmacro MUI_HEADER_TEXT "$(uninstall_previous_installations_title)" ""
     !insertmacro INSTALLOPTIONS_WRITE "UninstallOldVersions.ini" "Field 1" "Text" "$(uninstall_previous_installations_prompt)"
     !insertmacro INSTALLOPTIONS_WRITE "UninstallOldVersions.ini" "Field 2" "Text" "$(uninstall_previous_installations_silent)"
     !insertmacro INSTALLOPTIONS_WRITE "UninstallOldVersions.ini" "Field 3" "Flags" "FOCUS"
     !insertmacro INSTALLOPTIONS_DISPLAY_RETURN "UninstallOldVersions.ini"
-    Pop $9
-    ${If} $9 == "success"
-    loop:
-      ;uninstall chosen installation(s)
-      !insertmacro INSTALLOPTIONS_READ $0 "UninstallOldVersions.ini" "Field $8" "State"
-      !insertmacro INSTALLOPTIONS_READ $3 "UninstallOldVersions.ini" "Field $8" "Text"
-      ${If} $0 == "1"
-        Call uninstallOldVersion
-      ${EndIf}
-      IntOp $8 $8 - 1
-      StrCmp $8 $control_fields finish loop
+    Pop $R9
+    ${If} $R9 == "success"
+      ; uninstall chosen installation in the chosen mode
+      !insertmacro INSTALLOPTIONS_READ $R1 "UninstallOldVersions.ini" "Field 2" "State"
+      ${DoWhile} $R8 > $control_fields
+        !insertmacro INSTALLOPTIONS_READ $R9 "UninstallOldVersions.ini" "Field $R8" "State"
+        ${If} $R9 == "1"
+          !insertmacro INSTALLOPTIONS_READ $R0 "UninstallOldVersions.ini" "Field $R8" "Text"
+          Call uninstallOldVersion
+        ${EndIf}
+        IntOp $R8 $R8 - 1
+      ${Loop}
     ${EndIf}
   ${EndIf}
-finish:
 FunctionEnd
 
-Function getInstallationPath
-loop:
-  Call OMEnumRegKey
-  StrCmp $3 "" 0 getPath
-  StrCpy $3 "complete"
-  goto done
-getPath:
-  Push $1
-  StrCpy $1 "$1\$3"
-  Call OMReadRegStr
-  Pop $1
-  IfFileExists "$3\bin\${PRODUCT_EXE_FILE}" done 0
-  IntOp $4 $4 + 1
-  goto loop
-done:
+; $R0 - root key (`0` = HKLM, `1` = HKCU)
+; $R1 - subkey
+; $R8(in,out) - a counter of fields added to the dialog
+Function enumerateInstalledVersions
+  StrCpy $R2 0
+
+  ${Do}
+    ${If} $R0 = 0
+      EnumRegKey $R3 HKLM "$R1\${MANUFACTURER}\${MUI_PRODUCT}" $R2
+    ${Else}
+      EnumRegKey $R3 HKCU "$R1\${MANUFACTURER}\${MUI_PRODUCT}" $R2
+    ${EndIf}
+    ${If} $R3 == ""
+      ${Break}
+    ${EndIf}
+
+    ${If} $R0 = 0
+      ReadRegStr $R3 HKLM "$R1\${MANUFACTURER}\${MUI_PRODUCT}\$R3" ""
+    ${Else}
+      ReadRegStr $R3 HKCU "$R1\${MANUFACTURER}\${MUI_PRODUCT}\$R3" ""
+    ${EndIf}
+    ${If} $R3 != ""
+    ${AndIf} ${FileExists} "$R3\bin\${PRODUCT_EXE_FILE}"
+    ${AndIf} ${FileExists} "$R3\bin\Uninstall.exe"
+      Call checkProductVersion
+
+      ${If} $R6 != "duplicated"
+        IntOp $R8 $R8 + 1
+        Call getTopPosition
+
+        IntOp $R7 $R6 + $line_height
+        StrLen $R9 $R3
+        ${If} $R9 >= $max_length
+          IntOp $R7 $R7 + $extra_space
+        ${EndIf}
+        ${If} $R7 > $bottom_position
+          ; the dialog is full
+          IntOp $R8 $R8 - 1
+          ${Break}
+        ${EndIf}
+
+        !insertmacro INSTALLOPTIONS_WRITE "UninstallOldVersions.ini" "Field $R8" "Top" "$R6"
+        !insertmacro INSTALLOPTIONS_WRITE "UninstallOldVersions.ini" "Field $R8" "Bottom" "$R7"
+        !insertmacro INSTALLOPTIONS_WRITE "UninstallOldVersions.ini" "Field $R8" "State" "0"
+        !insertmacro INSTALLOPTIONS_WRITE "UninstallOldVersions.ini" "Field $R8" "Text" "$R3"
+      ${EndIf}
+    ${EndIf}
+
+    IntOp $R2 $R2 + 1
+  ${Loop}
+FunctionEnd
+
+; $R3 - a path to the version to be checked
+; $R8 - a counter of fields added to the dialog
+; $R6(out) - "duplicated" if the path is already added
+Function checkProductVersion
+  StrCpy $R6 ""
+  StrCpy $R7 $control_fields
+  IntOp $R7 $R7 + 1
+  ${DoWhile} $R7 <= $R8
+    !insertmacro INSTALLOPTIONS_READ $R6 "UninstallOldVersions.ini" "Field $R7" "Text"
+    ${If} $R6 == $R3
+      ; found the same path in the list of installations
+      StrCpy $R6 "duplicated"
+      Return
+    ${EndIf}
+    IntOp $R7 $R7 + 1
+  ${Loop}
+FunctionEnd
+
+; $R8 - a counter of fields added to the dialog
+; $R6(out) - the 'Top' position for the new checkbox
+Function getTopPosition
+  IntOp $R9 $R8 - 1
+  ${If} $R9 = $control_fields 
+    !insertmacro INSTALLOPTIONS_READ $R6 "UninstallOldVersions.ini" "Field $R8" "Top"
+  ${Else}
+    !insertmacro INSTALLOPTIONS_READ $R6 "UninstallOldVersions.ini" "Field $R9" "Bottom"
+  ${EndIf}
+FunctionEnd
+
+; $R0 - a path to the version to uninstall
+; $R1 - mode ("1" = silent)
+Function uninstallOldVersion
+  ${LogText} ""
+  ${LogText} "Uninstalling: $R0"
+
+  StrCpy $R9 "$LOCALAPPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe"
+  CopyFiles "$R0\bin\Uninstall.exe" $R9
+
+  ${If} $R1 == "1"
+    ExecWait '"$R9" /S /NO_UNINSTALL_FEEDBACK=true _?=$R0\bin'
+  ${Else}
+    ExecWait '"$R9" /NO_UNINSTALL_FEEDBACK=true _?=$R0\bin'
+  ${EndIf}
+
+  Delete $R9
 FunctionEnd
 
 
