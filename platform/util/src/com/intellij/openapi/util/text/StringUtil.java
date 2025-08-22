@@ -271,13 +271,16 @@ public class StringUtil {
     return Strings.toLowerCase(str);
   }
 
+  /**
+   * @see #getPackageName(String, char)
+   */
   @Contract(pure = true)
   public static @NlsSafe @NotNull String getPackageName(@NotNull String fqName) {
     return getPackageName(fqName, '.');
   }
 
   /**
-   * Given a fqName returns the package name for the type or the containing type.
+   * Given a fqName returns the package name for the type <i>or the containing type</i>.
    * <p/>
    * <ul>
    * <li>{@code java.lang.String} -> {@code java.lang}</li>
@@ -2902,11 +2905,26 @@ public class StringUtil {
     return StringUtilRt.getShortName(aClass);
   }
 
+  /**
+   * @see #getShortName(String, char)
+   */
   @Contract(pure = true)
   public static @NotNull @NlsSafe String getShortName(@NotNull @NonNls String fqName) {
     return StringUtilRt.getShortName(fqName);
   }
 
+    /**
+   * Given a fqName returns the short class name.
+   * <p/>
+   * <ul>
+   * <li>{@code java.lang.String} -> {@code String}</li>
+   * <li>{@code java.util.Map.Entry} -> {@code Entry}</li>
+   * </ul>
+   *
+   * @param fqName    a fully qualified type name. Not supposed to contain any type arguments
+   * @param separator the separator to use. Typically, '.'
+   * @return the short class name of the type. If fqName is unqualified, it is returned as-is.
+   */
   @Contract(pure = true)
   public static @NotNull @NlsSafe String getShortName(@NotNull @NonNls String fqName, char separator) {
     return StringUtilRt.getShortName(fqName, separator);
