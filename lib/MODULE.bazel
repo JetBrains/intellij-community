@@ -6629,73 +6629,220 @@ http_file(
 )
 
 http_file(
-  name = "hamcrest-core-1_3_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar",
-  sha256 = "66fdef91e9739348df7a096aa384a5685f4e875584cce89386a7a47251c4d8e9",
-  downloaded_file_path = "hamcrest-core-1.3.jar"
+  name = "ui-test-junit4-desktop-1_9_0-beta03_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/ui/ui-test-junit4-desktop/1.9.0-beta03/ui-test-junit4-desktop-1.9.0-beta03.jar",
+  sha256 = "7d1244618abff60a17ba0c596cb13addeff74664acc8400d2b785bbd8ee66b52",
+  downloaded_file_path = "ui-test-junit4-desktop-1.9.0-beta03.jar"
 )
 
 http_file(
-  name = "hamcrest-core-1_3-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3-sources.jar",
-  sha256 = "e223d2d8fbafd66057a8848cc94222d63c3cedd652cc48eddc0ab5c39c0f84df",
-  downloaded_file_path = "hamcrest-core-1.3-sources.jar"
+  name = "truth-1_0_1_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/truth/truth/1.0.1/truth-1.0.1.jar",
+  sha256 = "1ccf4334e7a94cf00a20a619b5462b53acf3274e00b70498bf5b28a3bc1be9b1",
+  downloaded_file_path = "truth-1.0.1.jar"
 )
 
 http_file(
-  name = "ui-test-1_8_0-alpha04_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/ui/ui-test/1.8.0-alpha04/ui-test-1.8.0-alpha04.jar",
-  sha256 = "59800a701fa24b4e972148db89babe95c6f38b9abf67799b28a2dde995499304",
-  downloaded_file_path = "ui-test-1.8.0-alpha04.jar"
+  name = "guava-28_1-android_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/guava/guava/28.1-android/guava-28.1-android.jar",
+  sha256 = "e112ce92c0f0733965eede73d94589c59a72128b06b08bba5ebe2f9ea672ef60",
+  downloaded_file_path = "guava-28.1-android.jar"
 )
 
 http_file(
-  name = "ui-test-1_8_0-alpha04-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/ui/ui-test/1.8.0-alpha04/ui-test-1.8.0-alpha04-sources.jar",
-  sha256 = "cb1e0c525fbc72668a8919b555afbb70d6aa2f5f2c0d338c78304eca5b932dc0",
-  downloaded_file_path = "ui-test-1.8.0-alpha04-sources.jar"
+  name = "failureaccess-1_0_1_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/guava/failureaccess/1.0.1/failureaccess-1.0.1.jar",
+  sha256 = "a171ee4c734dd2da837e4b16be9df4661afab72a41adaf31eb84dfdaf936ca26",
+  downloaded_file_path = "failureaccess-1.0.1.jar"
 )
 
 http_file(
-  name = "ui-test-desktop-1_8_0-alpha04_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/ui/ui-test-desktop/1.8.0-alpha04/ui-test-desktop-1.8.0-alpha04.jar",
-  sha256 = "f20c0c3dd83ff8fef72d131d9d86dddbd432aa0f133c56aaf548783202a7c0f3",
-  downloaded_file_path = "ui-test-desktop-1.8.0-alpha04.jar"
+  name = "listenablefuture-9999_0-empty-to-avoid-conflict-with-guava_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/guava/listenablefuture/9999.0-empty-to-avoid-conflict-with-guava/listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar",
+  sha256 = "b372a037d4230aa57fbeffdef30fd6123f9c0c2db85d0aced00c91b974f33f99",
+  downloaded_file_path = "listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar"
 )
 
 http_file(
-  name = "ui-test-desktop-1_8_0-alpha04-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/ui/ui-test-desktop/1.8.0-alpha04/ui-test-desktop-1.8.0-alpha04-sources.jar",
-  sha256 = "d7b39026bd6f5603d6d5d809fef273ff8fb54fa2703c680782e38fa220694b77",
-  downloaded_file_path = "ui-test-desktop-1.8.0-alpha04-sources.jar"
+  name = "j2objc-annotations-1_3_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/j2objc/j2objc-annotations/1.3/j2objc-annotations-1.3.jar",
+  sha256 = "21af30c92267bd6122c0e0b4d20cccb6641a37eaf956c6540ec471d584e64a7b",
+  downloaded_file_path = "j2objc-annotations-1.3.jar"
 )
 
 http_file(
-  name = "ui-test-junit4-1_8_0-alpha04_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/ui/ui-test-junit4/1.8.0-alpha04/ui-test-junit4-1.8.0-alpha04.jar",
-  sha256 = "8fcad9fc0ae84479092715a9fe2c06077df9f79f4b1547c1835800813ef4441c",
-  downloaded_file_path = "ui-test-junit4-1.8.0-alpha04.jar"
+  name = "animal-sniffer-annotations-1_18_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/codehaus/mojo/animal-sniffer-annotations/1.18/animal-sniffer-annotations-1.18.jar",
+  sha256 = "47f05852b48ee9baefef80fa3d8cea60efa4753c0013121dd7fe5eef2e5c729d",
+  downloaded_file_path = "animal-sniffer-annotations-1.18.jar"
 )
 
 http_file(
-  name = "ui-test-junit4-1_8_0-alpha04-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/ui/ui-test-junit4/1.8.0-alpha04/ui-test-junit4-1.8.0-alpha04-sources.jar",
-  sha256 = "5baf948b6a5e37699ac82adef54731f6604c721ccaf87eef06726eac7aaad90f",
-  downloaded_file_path = "ui-test-junit4-1.8.0-alpha04-sources.jar"
+  name = "checker-compat-qual-2_5_5_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/checkerframework/checker-compat-qual/2.5.5/checker-compat-qual-2.5.5.jar",
+  sha256 = "11d134b245e9cacc474514d2d66b5b8618f8039a1465cdc55bbc0b34e0008b7a",
+  downloaded_file_path = "checker-compat-qual-2.5.5.jar"
 )
 
 http_file(
-  name = "ui-test-junit4-desktop-1_8_0-alpha04_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/ui/ui-test-junit4-desktop/1.8.0-alpha04/ui-test-junit4-desktop-1.8.0-alpha04.jar",
-  sha256 = "dcaa6f6c4ac510333c99919151a5da37ec5959905634143ce35d232d5df432a8",
-  downloaded_file_path = "ui-test-junit4-desktop-1.8.0-alpha04.jar"
+  name = "diffutils-1_3_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/googlecode/java-diff-utils/diffutils/1.3.0/diffutils-1.3.0.jar",
+  sha256 = "61ba4dc49adca95243beaa0569adc2a23aedb5292ae78aa01186fa782ebdc5c2",
+  downloaded_file_path = "diffutils-1.3.0.jar"
 )
 
 http_file(
-  name = "ui-test-junit4-desktop-1_8_0-alpha04-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/ui/ui-test-junit4-desktop/1.8.0-alpha04/ui-test-junit4-desktop-1.8.0-alpha04-sources.jar",
-  sha256 = "560e5460a5930a810c425efe74a823b92c8e36ac3344408c58d0e2f1d9c0065d",
-  downloaded_file_path = "ui-test-junit4-desktop-1.8.0-alpha04-sources.jar"
+  name = "auto-value-annotations-1_6_3_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/auto/value/auto-value-annotations/1.6.3/auto-value-annotations-1.6.3.jar",
+  sha256 = "0e951fee8c31f60270bc46553a8586001b7b93dbb12aec06373aa99a150392c0",
+  downloaded_file_path = "auto-value-annotations-1.6.3.jar"
+)
+
+http_file(
+  name = "error_prone_annotations-2_3_3_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/errorprone/error_prone_annotations/2.3.3/error_prone_annotations-2.3.3.jar",
+  sha256 = "ec59f1b702d9afc09e8c3929f5c42777dec623a6ea2731ac694332c7d7680f5a",
+  downloaded_file_path = "error_prone_annotations-2.3.3.jar"
+)
+
+http_file(
+  name = "ui-test-desktop-1_9_0-beta03_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/ui/ui-test-desktop/1.9.0-beta03/ui-test-desktop-1.9.0-beta03.jar",
+  sha256 = "f25e0e5b778c6cb67c66f5bbb4c327f103ebddeac6ddf09a6f48bc900577e672",
+  downloaded_file_path = "ui-test-desktop-1.9.0-beta03.jar"
+)
+
+http_file(
+  name = "kotlinx-serialization-core-jvm-1_7_3_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-serialization-core-jvm/1.7.3/kotlinx-serialization-core-jvm-1.7.3.jar",
+  sha256 = "f0adde45864144475385cf4aa7e0b7feb27f61fcf9472665ed98cc971b06b1eb",
+  downloaded_file_path = "kotlinx-serialization-core-jvm-1.7.3.jar"
+)
+
+http_file(
+  name = "kotlin-stdlib-jdk8-2_1_21_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-stdlib-jdk8/2.1.21/kotlin-stdlib-jdk8-2.1.21.jar",
+  sha256 = "87b4f956de27401446227e474ac7a31acff0d0a8087160c54288c1e6f46a67e6",
+  downloaded_file_path = "kotlin-stdlib-jdk8-2.1.21.jar"
+)
+
+http_file(
+  name = "kotlin-stdlib-jdk7-2_1_21_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-stdlib-jdk7/2.1.21/kotlin-stdlib-jdk7-2.1.21.jar",
+  sha256 = "966846172e1052cb5b34d7b34647a64799b33f6da816509f7825c56f55895234",
+  downloaded_file_path = "kotlin-stdlib-jdk7-2.1.21.jar"
+)
+
+http_file(
+  name = "kotlinx-coroutines-test-jvm-1_8_1_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-coroutines-test-jvm/1.8.1/kotlinx-coroutines-test-jvm-1.8.1.jar",
+  sha256 = "c4ef1deb31be3f81ed82ecf237220cc95886868a7ec527a418599dfff159dedb",
+  downloaded_file_path = "kotlinx-coroutines-test-jvm-1.8.1.jar"
+)
+
+http_file(
+  name = "ui-test-junit4-desktop-1_9_0-beta03-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/ui/ui-test-junit4-desktop/1.9.0-beta03/ui-test-junit4-desktop-1.9.0-beta03-sources.jar",
+  sha256 = "4e902e5ac4e02a33101830c34f884feeba340ed01c4197bc80c0ccffd5eb97d3",
+  downloaded_file_path = "ui-test-junit4-desktop-1.9.0-beta03-sources.jar"
+)
+
+http_file(
+  name = "truth-1_0_1-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/truth/truth/1.0.1/truth-1.0.1-sources.jar",
+  sha256 = "d5ec9dc068a822cce7c428cb2e97248311dc9d4dcb7559067ff571adc422fff2",
+  downloaded_file_path = "truth-1.0.1-sources.jar"
+)
+
+http_file(
+  name = "guava-28_1-android-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/guava/guava/28.1-android/guava-28.1-android-sources.jar",
+  sha256 = "7048029c5488142e8697eab2f7cd6ddcd1c5098843d6a6818e9c58db86b5549d",
+  downloaded_file_path = "guava-28.1-android-sources.jar"
+)
+
+http_file(
+  name = "failureaccess-1_0_1-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/guava/failureaccess/1.0.1/failureaccess-1.0.1-sources.jar",
+  sha256 = "092346eebbb1657b51aa7485a246bf602bb464cc0b0e2e1c7e7201fadce1e98f",
+  downloaded_file_path = "failureaccess-1.0.1-sources.jar"
+)
+
+http_file(
+  name = "j2objc-annotations-1_3-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/j2objc/j2objc-annotations/1.3/j2objc-annotations-1.3-sources.jar",
+  sha256 = "ba4df669fec153fa4cd0ef8d02c6d3ef0702b7ac4cabe080facf3b6e490bb972",
+  downloaded_file_path = "j2objc-annotations-1.3-sources.jar"
+)
+
+http_file(
+  name = "animal-sniffer-annotations-1_18-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/codehaus/mojo/animal-sniffer-annotations/1.18/animal-sniffer-annotations-1.18-sources.jar",
+  sha256 = "ee078a91bf7136ee1961abd612b54d1cd9877352b960a7e1e7e3e4c17ceafcf1",
+  downloaded_file_path = "animal-sniffer-annotations-1.18-sources.jar"
+)
+
+http_file(
+  name = "checker-compat-qual-2_5_5-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/checkerframework/checker-compat-qual/2.5.5/checker-compat-qual-2.5.5-sources.jar",
+  sha256 = "7c63a4a46b2ef903f941aeac63da87dd345be3243b472796aa945fa715bf3ca9",
+  downloaded_file_path = "checker-compat-qual-2.5.5-sources.jar"
+)
+
+http_file(
+  name = "diffutils-1_3_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/googlecode/java-diff-utils/diffutils/1.3.0/diffutils-1.3.0-sources.jar",
+  sha256 = "7f4d40e97827f8a3285c3e47e8d28797ecfd45fb2ff94bd12cb6a83760a5f427",
+  downloaded_file_path = "diffutils-1.3.0-sources.jar"
+)
+
+http_file(
+  name = "auto-value-annotations-1_6_3-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/auto/value/auto-value-annotations/1.6.3/auto-value-annotations-1.6.3-sources.jar",
+  sha256 = "254d55ea959608a833fa07056710488c1f4978875f86f6a106b8d937b29b1170",
+  downloaded_file_path = "auto-value-annotations-1.6.3-sources.jar"
+)
+
+http_file(
+  name = "error_prone_annotations-2_3_3-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/errorprone/error_prone_annotations/2.3.3/error_prone_annotations-2.3.3-sources.jar",
+  sha256 = "f58446b80b5f1e98bcb74dae5c0710ed8e52baafe5a4bb315f769f306d85634a",
+  downloaded_file_path = "error_prone_annotations-2.3.3-sources.jar"
+)
+
+http_file(
+  name = "ui-test-desktop-1_9_0-beta03-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/ui/ui-test-desktop/1.9.0-beta03/ui-test-desktop-1.9.0-beta03-sources.jar",
+  sha256 = "e05af8ed3ebd06b2a482adfc64ed7f2db7764d4af6e73f606b9ae3778b5b8150",
+  downloaded_file_path = "ui-test-desktop-1.9.0-beta03-sources.jar"
+)
+
+http_file(
+  name = "kotlinx-serialization-core-jvm-1_7_3-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-serialization-core-jvm/1.7.3/kotlinx-serialization-core-jvm-1.7.3-sources.jar",
+  sha256 = "d084ce9bf130919d4b899db09896531440d1e330919187c7932d7fe0fa5257b8",
+  downloaded_file_path = "kotlinx-serialization-core-jvm-1.7.3-sources.jar"
+)
+
+http_file(
+  name = "kotlin-stdlib-jdk8-2_1_21-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-stdlib-jdk8/2.1.21/kotlin-stdlib-jdk8-2.1.21-sources.jar",
+  sha256 = "3cb6895054a0985bba591c165503fe4dd63a215af53263b67a071ccdc242bf6e",
+  downloaded_file_path = "kotlin-stdlib-jdk8-2.1.21-sources.jar"
+)
+
+http_file(
+  name = "kotlin-stdlib-jdk7-2_1_21-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-stdlib-jdk7/2.1.21/kotlin-stdlib-jdk7-2.1.21-sources.jar",
+  sha256 = "2534c8908432e06de73177509903d405b55f423dd4c2f747e16b92a2162611e6",
+  downloaded_file_path = "kotlin-stdlib-jdk7-2.1.21-sources.jar"
+)
+
+http_file(
+  name = "kotlinx-coroutines-test-jvm-1_8_1-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-coroutines-test-jvm/1.8.1/kotlinx-coroutines-test-jvm-1.8.1-sources.jar",
+  sha256 = "bea89f1396fcb311f672d6f82ea6504c5bf60b426d97611473ad04ffaf4253ba",
+  downloaded_file_path = "kotlinx-coroutines-test-jvm-1.8.1-sources.jar"
 )
 
 http_file(
@@ -12369,6 +12516,13 @@ http_file(
 )
 
 http_file(
+  name = "hamcrest-core-1_3_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar",
+  sha256 = "66fdef91e9739348df7a096aa384a5685f4e875584cce89386a7a47251c4d8e9",
+  downloaded_file_path = "hamcrest-core-1.3.jar"
+)
+
+http_file(
   name = "assertj-core-3_17_2_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/assertj/assertj-core/3.17.2/assertj-core-3.17.2.jar",
   sha256 = "d9a978d559d0b52a87f419b3d8f5bb137b97c661f7be2134e0498b454e4b980e",
@@ -12485,6 +12639,13 @@ http_file(
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/junit/junit/4.12/junit-4.12-sources.jar",
   sha256 = "9f43fea92033ad82bcad2ae44cec5c82abc9d6ee4b095cab921d11ead98bf2ff",
   downloaded_file_path = "junit-4.12-sources.jar"
+)
+
+http_file(
+  name = "hamcrest-core-1_3-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3-sources.jar",
+  sha256 = "e223d2d8fbafd66057a8848cc94222d63c3cedd652cc48eddc0ab5c39c0f84df",
+  downloaded_file_path = "hamcrest-core-1.3-sources.jar"
 )
 
 http_file(
@@ -13398,24 +13559,10 @@ http_file(
 )
 
 http_file(
-  name = "diffutils-1_3_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/googlecode/java-diff-utils/diffutils/1.3.0/diffutils-1.3.0.jar",
-  sha256 = "61ba4dc49adca95243beaa0569adc2a23aedb5292ae78aa01186fa782ebdc5c2",
-  downloaded_file_path = "diffutils-1.3.0.jar"
-)
-
-http_file(
   name = "truth-0_42-sources_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/truth/truth/0.42/truth-0.42-sources.jar",
   sha256 = "8cd0b42e58406ad1a4554235035d4d98f1897d182a1e4d064d6a3dab047f55f9",
   downloaded_file_path = "truth-0.42-sources.jar"
-)
-
-http_file(
-  name = "diffutils-1_3_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/googlecode/java-diff-utils/diffutils/1.3.0/diffutils-1.3.0-sources.jar",
-  sha256 = "7f4d40e97827f8a3285c3e47e8d28797ecfd45fb2ff94bd12cb6a83760a5f427",
-  downloaded_file_path = "diffutils-1.3.0-sources.jar"
 )
 
 http_file(

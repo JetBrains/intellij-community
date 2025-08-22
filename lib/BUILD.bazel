@@ -4815,39 +4815,148 @@ jvm_import(
   source_jar = "@atomicfu-jvm-0_23_2-sources_http//file"
 )
 
-jvm_import(
-  name = "libraries-compose-foundation-desktop-junit-org-hamcrest-hamcrest-core",
-  jar = "@hamcrest-core-1_3_http//file",
-  source_jar = "@hamcrest-core-1_3-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "libraries-compose-foundation-desktop-junit-org-jetbrains-compose-ui-ui-test",
-  jar = "@ui-test-1_8_0-alpha04_http//file",
-  source_jar = "@ui-test-1_8_0-alpha04-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "libraries-compose-foundation-desktop-junit-org-jetbrains-compose-ui-ui-test-desktop",
-  jar = "@ui-test-desktop-1_8_0-alpha04_http//file",
-  source_jar = "@ui-test-desktop-1_8_0-alpha04-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "libraries-compose-foundation-desktop-junit-org-jetbrains-compose-ui-ui-test-junit4",
-  jar = "@ui-test-junit4-1_8_0-alpha04_http//file",
-  source_jar = "@ui-test-junit4-1_8_0-alpha04-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
+java_library(
   name = "libraries-compose-foundation-desktop-junit-org-jetbrains-compose-ui-ui-test-junit4-desktop",
-  jar = "@ui-test-junit4-desktop-1_8_0-alpha04_http//file",
-  source_jar = "@ui-test-junit4-desktop-1_8_0-alpha04-sources_http//file",
+  exports = [
+    ":ui-test-junit4-desktop-1_9_0-beta03_http_import",
+    ":truth-1_0_1_http_import",
+    ":guava-28_1-android_http_import",
+    ":failureaccess-1_0_1_http_import",
+    ":listenablefuture-9999_0-empty-to-avoid-conflict-with-guava_http_import",
+    ":jsr305-3_0_2_http_import",
+    ":j2objc-annotations-1_3_http_import",
+    ":animal-sniffer-annotations-1_18_http_import",
+    ":checker-compat-qual-2_5_5_http_import",
+    ":diffutils-1_3_0_http_import",
+    ":auto-value-annotations-1_6_3_http_import",
+    ":error_prone_annotations-2_3_3_http_import",
+    ":ui-test-desktop-1_9_0-beta03_http_import",
+    ":ui-desktop-1_9_0-beta03_http_import",
+    ":lifecycle-common-jvm-2_9_2_http_import",
+    ":jspecify-1_0_0_http_import",
+    ":lifecycle-runtime-desktop-2_9_2_http_import",
+    ":core-common-2_2_0_http_import",
+    ":annotation-1_1_0_http_import",
+    ":lifecycle-viewmodel-desktop-2_9_2_http_import",
+    ":lifecycle-viewmodel-savedstate-desktop-2_9_2_http_import",
+    ":kotlinx-serialization-core-jvm-1_7_3_http_import",
+    ":savedstate-desktop-1_3_1_http_import",
+    ":lifecycle-runtime-compose-desktop-2_9_2_http_import",
+    ":runtime-saveable-desktop-1_9_0-beta03_http_import",
+    ":savedstate-compose-desktop-1_3_2_http_import",
+    ":ui-backhandler-desktop-1_9_0-beta03_http_import",
+    ":ui-geometry-desktop-1_9_0-beta03_http_import",
+    ":ui-graphics-desktop-1_9_0-beta03_http_import",
+    ":kotlin-stdlib-jdk8-2_1_21_http_import",
+    ":kotlin-stdlib-jdk7-2_1_21_http_import",
+    ":ui-text-desktop-1_9_0-beta03_http_import",
+    ":ui-unit-desktop-1_9_0-beta03_http_import",
+    ":ui-util-desktop-1_9_0-beta03_http_import",
+    ":atomicfu-jvm-0_23_2_http_import",
+    ":kotlinx-coroutines-test-jvm-1_8_1_http_import",
+  ],
   visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "ui-test-junit4-desktop-1_9_0-beta03_http_import",
+  jar = "@ui-test-junit4-desktop-1_9_0-beta03_http//file",
+  source_jar = "@ui-test-junit4-desktop-1_9_0-beta03-sources_http//file"
+)
+
+jvm_import(
+  name = "truth-1_0_1_http_import",
+  jar = "@truth-1_0_1_http//file",
+  source_jar = "@truth-1_0_1-sources_http//file"
+)
+
+jvm_import(
+  name = "guava-28_1-android_http_import",
+  jar = "@guava-28_1-android_http//file",
+  source_jar = "@guava-28_1-android-sources_http//file"
+)
+
+jvm_import(
+  name = "failureaccess-1_0_1_http_import",
+  jar = "@failureaccess-1_0_1_http//file",
+  source_jar = "@failureaccess-1_0_1-sources_http//file"
+)
+
+jvm_import(
+  name = "listenablefuture-9999_0-empty-to-avoid-conflict-with-guava_http_import",
+  jar = "@listenablefuture-9999_0-empty-to-avoid-conflict-with-guava_http//file"
+)
+
+jvm_import(
+  name = "jsr305-3_0_2_http_import",
+  jar = "@jsr305-3_0_2_http//file",
+  source_jar = "@jsr305-3_0_2-sources_http//file"
+)
+
+jvm_import(
+  name = "j2objc-annotations-1_3_http_import",
+  jar = "@j2objc-annotations-1_3_http//file",
+  source_jar = "@j2objc-annotations-1_3-sources_http//file"
+)
+
+jvm_import(
+  name = "animal-sniffer-annotations-1_18_http_import",
+  jar = "@animal-sniffer-annotations-1_18_http//file",
+  source_jar = "@animal-sniffer-annotations-1_18-sources_http//file"
+)
+
+jvm_import(
+  name = "checker-compat-qual-2_5_5_http_import",
+  jar = "@checker-compat-qual-2_5_5_http//file",
+  source_jar = "@checker-compat-qual-2_5_5-sources_http//file"
+)
+
+jvm_import(
+  name = "diffutils-1_3_0_http_import",
+  jar = "@diffutils-1_3_0_http//file",
+  source_jar = "@diffutils-1_3_0-sources_http//file"
+)
+
+jvm_import(
+  name = "auto-value-annotations-1_6_3_http_import",
+  jar = "@auto-value-annotations-1_6_3_http//file",
+  source_jar = "@auto-value-annotations-1_6_3-sources_http//file"
+)
+
+jvm_import(
+  name = "error_prone_annotations-2_3_3_http_import",
+  jar = "@error_prone_annotations-2_3_3_http//file",
+  source_jar = "@error_prone_annotations-2_3_3-sources_http//file"
+)
+
+jvm_import(
+  name = "ui-test-desktop-1_9_0-beta03_http_import",
+  jar = "@ui-test-desktop-1_9_0-beta03_http//file",
+  source_jar = "@ui-test-desktop-1_9_0-beta03-sources_http//file"
+)
+
+jvm_import(
+  name = "kotlinx-serialization-core-jvm-1_7_3_http_import",
+  jar = "@kotlinx-serialization-core-jvm-1_7_3_http//file",
+  source_jar = "@kotlinx-serialization-core-jvm-1_7_3-sources_http//file"
+)
+
+jvm_import(
+  name = "kotlin-stdlib-jdk8-2_1_21_http_import",
+  jar = "@kotlin-stdlib-jdk8-2_1_21_http//file",
+  source_jar = "@kotlin-stdlib-jdk8-2_1_21-sources_http//file"
+)
+
+jvm_import(
+  name = "kotlin-stdlib-jdk7-2_1_21_http_import",
+  jar = "@kotlin-stdlib-jdk7-2_1_21_http//file",
+  source_jar = "@kotlin-stdlib-jdk7-2_1_21-sources_http//file"
+)
+
+jvm_import(
+  name = "kotlinx-coroutines-test-jvm-1_8_1_http_import",
+  jar = "@kotlinx-coroutines-test-jvm-1_8_1_http//file",
+  source_jar = "@kotlinx-coroutines-test-jvm-1_8_1-sources_http//file"
 )
 
 java_library(
@@ -5877,12 +5986,6 @@ jvm_import(
   name = "guava-25_1-android_http_import",
   jar = "@guava-25_1-android_http//file",
   source_jar = "@guava-25_1-android-sources_http//file"
-)
-
-jvm_import(
-  name = "jsr305-3_0_2_http_import",
-  jar = "@jsr305-3_0_2_http//file",
-  source_jar = "@jsr305-3_0_2-sources_http//file"
 )
 
 jvm_import(
@@ -9306,12 +9409,6 @@ jvm_import(
   name = "truth-0_42_http_import",
   jar = "@truth-0_42_http//file",
   source_jar = "@truth-0_42-sources_http//file"
-)
-
-jvm_import(
-  name = "diffutils-1_3_0_http_import",
-  jar = "@diffutils-1_3_0_http//file",
-  source_jar = "@diffutils-1_3_0-sources_http//file"
 )
 
 jvm_import(
