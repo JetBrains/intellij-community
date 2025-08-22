@@ -334,6 +334,7 @@ com.intellij.lang.parser.GeneratedParserUtilBase$Parser
 f:com.intellij.openapi.module.impl.scopes.ModuleWithDependenciesScope
 - com.intellij.psi.search.ActualCodeInsightContextInfo
 - com.intellij.psi.search.CodeInsightContextAwareSearchScope
+- com.intellij.psi.search.UnionCapableScope
 c:com.intellij.openapi.module.impl.scopes.ModulesScope
 - com.intellij.psi.search.ActualCodeInsightContextInfo
 - com.intellij.psi.search.CodeInsightContextAwareSearchScope

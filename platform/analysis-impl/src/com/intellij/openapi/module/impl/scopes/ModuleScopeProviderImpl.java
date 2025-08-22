@@ -31,22 +31,22 @@ public class ModuleScopeProviderImpl implements ModuleScopeProvider {
 
   @Override
   public final @NotNull GlobalSearchScope getModuleScope() {
-    return getCachedScope(ModuleWithDependenciesScopeKt.COMPILE_ONLY | ModuleWithDependenciesScopeKt.TESTS);
+    return getCachedScope(ModuleScopeUtil.COMPILE_ONLY | ModuleScopeUtil.TESTS);
   }
 
   @Override
   public final @NotNull GlobalSearchScope getModuleScope(boolean includeTests) {
-    return getCachedScope(ModuleWithDependenciesScopeKt.COMPILE_ONLY | (includeTests ? ModuleWithDependenciesScopeKt.TESTS : 0));
+    return getCachedScope(ModuleScopeUtil.COMPILE_ONLY | (includeTests ? ModuleScopeUtil.TESTS : 0));
   }
 
   @Override
   public final @NotNull GlobalSearchScope getModuleWithLibrariesScope() {
-    return getCachedScope(ModuleWithDependenciesScopeKt.COMPILE_ONLY | ModuleWithDependenciesScopeKt.TESTS | ModuleWithDependenciesScopeKt.LIBRARIES);
+    return getCachedScope(ModuleScopeUtil.COMPILE_ONLY | ModuleScopeUtil.TESTS | ModuleScopeUtil.LIBRARIES);
   }
 
   @Override
   public final @NotNull GlobalSearchScope getModuleWithDependenciesScope() {
-    return getCachedScope(ModuleWithDependenciesScopeKt.COMPILE_ONLY | ModuleWithDependenciesScopeKt.TESTS | ModuleWithDependenciesScopeKt.MODULES);
+    return getCachedScope(ModuleScopeUtil.COMPILE_ONLY | ModuleScopeUtil.TESTS | ModuleScopeUtil.MODULES);
   }
 
   @Override
@@ -66,9 +66,9 @@ public class ModuleScopeProviderImpl implements ModuleScopeProvider {
 
   @Override
   public final @NotNull GlobalSearchScope getModuleWithDependenciesAndLibrariesScope(boolean includeTests) {
-    return getCachedScope(ModuleWithDependenciesScopeKt.COMPILE_ONLY |
-                          ModuleWithDependenciesScopeKt.MODULES |
-                          ModuleWithDependenciesScopeKt.LIBRARIES | (includeTests ? ModuleWithDependenciesScopeKt.TESTS : 0));
+    return getCachedScope(ModuleScopeUtil.COMPILE_ONLY |
+                          ModuleScopeUtil.MODULES |
+                          ModuleScopeUtil.LIBRARIES | (includeTests ? ModuleScopeUtil.TESTS : 0));
   }
 
   @Override
@@ -89,7 +89,7 @@ public class ModuleScopeProviderImpl implements ModuleScopeProvider {
   @Override
   public final @NotNull GlobalSearchScope getModuleRuntimeScope(boolean includeTests) {
     return getCachedScope(
-      ModuleWithDependenciesScopeKt.MODULES | ModuleWithDependenciesScopeKt.LIBRARIES | (includeTests ? ModuleWithDependenciesScopeKt.TESTS : 0));
+      ModuleScopeUtil.MODULES | ModuleScopeUtil.LIBRARIES | (includeTests ? ModuleScopeUtil.TESTS : 0));
   }
 
   @Override
@@ -99,7 +99,7 @@ public class ModuleScopeProviderImpl implements ModuleScopeProvider {
 
   @Override
   public final @NotNull GlobalSearchScope getModuleTestSourceScope() {
-    return getCachedScope(ModuleWithDependenciesScopeKt.TESTS);
+    return getCachedScope(ModuleScopeUtil.TESTS);
   }
 
   @Override

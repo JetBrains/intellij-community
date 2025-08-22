@@ -4,6 +4,7 @@ package com.intellij.openapi.module.impl.scopes
 import com.intellij.openapi.roots.impl.RootDescriptor
 import com.intellij.openapi.vfs.VirtualFile
 import it.unimi.dsi.fastutil.objects.Object2IntMap
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import org.jetbrains.annotations.TestOnly
 
 internal sealed interface RootContainer {
@@ -25,6 +26,22 @@ internal sealed interface RootContainer {
   val size: Int
 
   @TestOnly fun getSortedRoots(): Collection<VirtualFile>
+
+  companion object {
+    fun Collection<RootContainer>.merge(): RootContainer {
+      require(size > 1) { "Expected more than one container" }
+
+      val first = this.first()
+
+      @Suppress("UNCHECKED_CAST")
+      return if (first is ClassicRootContainer) {
+        ClassicRootContainer.merge(this as List<ClassicRootContainer>)
+      }
+      else {
+        MultiverseRootContainer.merge(this as List<MultiverseRootContainer>)
+      }
+    }
+  }
 }
 
 internal class ClassicRootContainer(private val roots: Object2IntMap<VirtualFile>) : RootContainer {
@@ -52,6 +69,31 @@ internal class ClassicRootContainer(private val roots: Object2IntMap<VirtualFile
       files.sortBy { root -> roots.getInt(root) }
     }
     return files
+  }
+
+  companion object {
+    internal fun merge(containers: List<ClassicRootContainer>): ClassicRootContainer {
+      val result = Object2IntOpenHashMap<VirtualFile>()
+
+      var maxPriority = 0
+      for (container in containers) {
+        val map = container.roots
+        val entrySet = map.object2IntEntrySet()
+        var curMax = 0
+
+        for (entry in entrySet) {
+          val root = entry.key
+          val priority = entry.intValue + maxPriority
+          curMax = maxOf(curMax, priority)
+
+          result.putIfAbsent(root, priority)
+        }
+
+        maxPriority = maxOf(maxPriority, curMax)
+      }
+
+      return ClassicRootContainer(result)
+    }
   }
 }
 
@@ -82,4 +124,27 @@ internal class MultiverseRootContainer(
 
   override fun getSortedRoots(): Collection<VirtualFile> =
     roots.keys.sortedBy { root -> roots[root]!!.orderIndex }
+
+  companion object {
+    // todo multiple modules per root file are not supported yet
+    internal fun merge(containers: List<MultiverseRootContainer>): MultiverseRootContainer {
+      val result = mutableMapOf<VirtualFile, ScopeRootDescriptor>()
+
+      var maxPriority = 0
+      for (container in containers) {
+        val map = container.roots
+        val entrySet = map.entries
+        var curMax = 0
+        for ((root, descriptor) in entrySet) {
+          val priority = descriptor.orderIndex + maxPriority
+          curMax = maxOf(curMax, priority)
+          result.putIfAbsent(root, ScopeRootDescriptor(root, descriptor.orderEntry, priority))
+        }
+
+        maxPriority = maxOf(maxPriority, curMax)
+      }
+
+      return MultiverseRootContainer(result)
+    }
+  }
 }
