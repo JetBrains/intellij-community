@@ -19,7 +19,7 @@ jvm_library(
   name = "util",
   module_name = "intellij.platform.syntax.util",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
   kotlinc_opts = ":custom_util",
   deps = [
     "@lib//:kotlin-stdlib",
