@@ -9,6 +9,7 @@
     <extensionPoint name="moduleService" beanClass="com.intellij.openapi.components.ServiceDescriptor" dynamic="true"/>
     <extensionPoint name="virtualFileManagerListener" interface="com.intellij.openapi.vfs.VirtualFileManagerListener" dynamic="true"/>
     <extensionPoint name="vfs.asyncListener" interface="com.intellij.openapi.vfs.AsyncFileListener" dynamic="true"/>
+    <extensionPoint name="vfs.asyncListenerBackgroundable" interface="com.intellij.openapi.vfs.AsyncFileListener" dynamic="true"/>
 
     <!-- only bundled plugin can define initProjectActivity -->
     <extensionPoint name="initProjectActivity" interface="com.intellij.openapi.startup.InitProjectActivity" dynamic="false"/>

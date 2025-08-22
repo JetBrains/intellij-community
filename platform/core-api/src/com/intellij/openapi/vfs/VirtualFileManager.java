@@ -199,9 +199,18 @@ public abstract class VirtualFileManager implements ModificationTracker {
   public abstract void removeVirtualFileListener(@NotNull VirtualFileListener listener);
 
   /**
+   * The listeners registered this way will run on EDT. Consider using {@link VirtualFileManager#addAsyncFileListenerBackgroundable}
+   *
    * Consider using extension point {@code vfs.asyncListener}.
    */
   public abstract void addAsyncFileListener(@NotNull AsyncFileListener listener, @NotNull Disposable parentDisposable);
+
+  /**
+   * Consider using extension point {@code vfs.asyncListenerBackgroundable}.
+   * The listeners registered this way will be able to run on background threads.
+   */
+  @ApiStatus.Experimental
+  public abstract void addAsyncFileListenerBackgroundable(@NotNull AsyncFileListener listener, @NotNull Disposable parentDisposable);
 
   public abstract void addAsyncFileListener(@NotNull CoroutineScope coroutineScope, @NotNull AsyncFileListener listener);
 

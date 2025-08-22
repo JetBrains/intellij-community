@@ -4,7 +4,6 @@ package com.intellij.openapi.vfs;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
-import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
@@ -16,8 +15,8 @@ import java.util.List;
 /**
  * An alternative to {@link com.intellij.openapi.vfs.newvfs.BulkFileListener} that allows
  * for moving parts of VFS event processing to background thread and thus reduce the duration
- * of UI freezes. Asynchronous listeners should preferably be registered as {@code com.intellij.vfs.asyncListener} extensions.
- * If that's too inconvenient, manual registration via {@link VirtualFileManager#addAsyncFileListener} is possible.<p></p>
+ * of UI freezes. Asynchronous listeners should preferably be registered as {@code com.intellij.vfs.asyncListenerBackgroundable} extensions.
+ * If that's too inconvenient, manual registration via {@link VirtualFileManager#addAsyncFileListenerBackgroundable} is possible.<p></p>
  *
  * <h3>Migration of synchronous listeners:</h3>
  *
@@ -76,7 +75,6 @@ public interface AsyncFileListener {
   /**
    * Consider using {@link ChangeApplierBackgroundable} to allow running your listener in background threads
    */
-  @ApiStatus.Obsolete
   interface ChangeApplier {
     /**
      * This method is called in write action before the VFS events are delivered and applied, and allows
@@ -88,7 +86,7 @@ public interface AsyncFileListener {
      * it can be changed by this moment as well.
      */
     @RequiresWriteLock
-    // currently executed on EDT
+    // can be executed on any thread
     default void beforeVfsChange() {}
 
     /**
@@ -106,35 +104,7 @@ public interface AsyncFileListener {
      * {@link com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent} may be already outdated, etc.
      */
     @RequiresWriteLock
-    // currently executed on EDT
+    // can be executed on any thread
     default void afterVfsChange() {}
-  }
-
-  /**
-   * Indicates that this {@link ChangeApplier} can be executed in <b>background</b> write action. This is opposed to {@link ChangeApplier}
-   * which historically must run only in EDT.
-   */
-  @ApiStatus.Experimental
-  interface ChangeApplierBackgroundable extends ChangeApplier {
-
-    /**
-     * Can be executed in a background thread or on EDT.
-     * <p>
-     * {@inheritDoc}
-     */
-    @RequiresWriteLock
-    @Override
-    default void beforeVfsChange() { }
-
-    /**
-     * Can be executed in a background thread or on EDT.
-     * Guaranteed to be executed in the same thread as the preceding {@link ChangeApplierBackgroundable#beforeVfsChange()}
-     * <p>
-     * {@inheritDoc}
-     */
-    @RequiresEdt
-    @Override
-    default void afterVfsChange() {
-    }
   }
 }

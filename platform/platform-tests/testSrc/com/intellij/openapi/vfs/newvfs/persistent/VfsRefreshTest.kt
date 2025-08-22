@@ -195,9 +195,9 @@ class VfsRefreshTest {
             }
           }
         }, disposable)
-      VirtualFileManager.getInstance().addAsyncFileListener(
+      VirtualFileManager.getInstance().addAsyncFileListenerBackgroundable(
         {
-          object : AsyncFileListener.ChangeApplierBackgroundable {
+          object : AsyncFileListener.ChangeApplier {
             override fun beforeVfsChange() {
               assertThat(EDT.isCurrentThreadEdt()).isEqualTo(bgListenersShouldRunOnEdt)
               counter.incrementAndGet()
