@@ -3,11 +3,14 @@ package org.jetbrains.plugins.gradle.service.syncAction.impl
 
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase
 import com.intellij.openapi.externalSystem.autolink.forEachExtensionSafeAsync
+import com.intellij.openapi.externalSystem.autolink.forEachExtensionSafeOrdered
+import com.intellij.openapi.externalSystem.autolink.mapExtensionSafe
 import com.intellij.openapi.externalSystem.util.ExternalSystemTelemetryUtil
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
+import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.toBuilder
 import com.intellij.util.application
 import io.opentelemetry.api.trace.Tracer
@@ -19,6 +22,7 @@ import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncExtension
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncListener
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase
 import org.jetbrains.plugins.gradle.util.GradleConstants
+import java.util.*
 
 private val TELEMETRY: Tracer
   get() = ExternalSystemTelemetryUtil.getTracer(GradleConstants.SYSTEM_ID)
@@ -31,11 +35,8 @@ object GradleSyncProjectConfigurator {
 
   @JvmStatic
   fun onResolveProjectInfoStarted(context: ProjectResolverContext) {
-    require(!application.isWriteAccessAllowed) {
-      "Must not execute inside write action"
-    }
-    runBlockingCancellable {
-      GradleSyncContributorRunner().performSyncContributors(context) { it is GradleSyncPhase.Static }
+    GradleSyncActionRunner().performSyncContributorsBlocking(context) {
+      it is GradleSyncPhase.Static
     }
   }
 
@@ -43,24 +44,24 @@ object GradleSyncProjectConfigurator {
   fun createModelFetchResultHandler(context: ProjectResolverContext): GradleModelFetchActionListener {
     return object : GradleModelFetchActionListener {
 
-      private val runner = GradleSyncContributorRunner()
+      private val syncRunner = GradleSyncActionRunner()
 
       override suspend fun onModelFetchPhaseCompleted(phase: GradleModelFetchPhase) {
-        runner.performSyncContributors(context) {
+        syncRunner.performSyncContributors(context) {
           it is GradleSyncPhase.Dynamic && it.modelFetchPhase <= phase
         }
         SYNC_LISTENER.onModelFetchPhaseCompleted(context, phase)
       }
 
       override suspend fun onProjectLoadedActionCompleted() {
-        runner.performSyncContributors(context) {
+        syncRunner.performSyncContributors(context) {
           it is GradleSyncPhase.Dynamic && it.modelFetchPhase is GradleModelFetchPhase.ProjectLoaded
         }
         SYNC_LISTENER.onProjectLoadedActionCompleted(context)
       }
 
       override suspend fun onModelFetchCompleted() {
-        runner.performSyncContributors(context) {
+        syncRunner.performSyncContributors(context) {
           it is GradleSyncPhase.Dynamic && it.modelFetchPhase is GradleModelFetchPhase.BuildFinished
         }
         SYNC_LISTENER.onModelFetchCompleted(context)
@@ -73,19 +74,34 @@ object GradleSyncProjectConfigurator {
   }
 }
 
-private class GradleSyncContributorRunner {
+private class GradleSyncActionRunner {
 
   private var lastCompletedPhase: GradleSyncPhase? = null
   private var storage = ImmutableEntityStorage.empty()
+
+  fun performSyncContributorsBlocking(
+    context: ProjectResolverContext,
+    predicate: (GradleSyncPhase) -> Boolean,
+  ) {
+    require(!application.isWriteAccessAllowed) {
+      "Must not execute inside write action"
+    }
+    runBlockingCancellable {
+      performSyncContributors(context, predicate)
+    }
+  }
 
   suspend fun performSyncContributors(
     context: ProjectResolverContext,
     predicate: (GradleSyncPhase) -> Boolean,
   ) {
-    GradleSyncContributor.EP_NAME.forEachExtensionSafeAsync { contributor ->
-      if (predicate(contributor.phase)) {
-        performSyncContributors(context, contributor.phase)
-      }
+    val phases = GradleSyncContributor.EP_NAME.mapExtensionSafe { it.phase }
+      .filterTo(TreeSet(), predicate)
+    for (phase in phases) {
+      if (lastCompletedPhase.let { it != null && it >= phase }) continue
+      lastCompletedPhase = phase
+
+      performSyncContributors(context, phase)
     }
   }
 
@@ -93,51 +109,37 @@ private class GradleSyncContributorRunner {
     context: ProjectResolverContext,
     phase: GradleSyncPhase,
   ) {
-    if (lastCompletedPhase.let { it != null && it >= phase }) return
-    lastCompletedPhase = phase
-
     TELEMETRY.spanBuilder(phase.name).use {
-      storage = createProjectModel(context, storage, phase)
-        .also { updateProjectModel(context, it, phase) }
-        .also { SYNC_LISTENER.onSyncPhaseCompleted(context, phase) }
-    }
-  }
-
-  private suspend fun createProjectModel(
-    context: ProjectResolverContext,
-    storage: ImmutableEntityStorage,
-    phase: GradleSyncPhase,
-  ): ImmutableEntityStorage {
-    var result = storage
-    GradleSyncContributor.EP_NAME.forEachExtensionSafeAsync { contributor ->
-      if (contributor.phase == phase) {
-        TELEMETRY.spanBuilder(contributor.name).use {
-          result = contributor.createProjectModel(context, result)
+      GradleSyncContributor.EP_NAME.forEachExtensionSafeAsync { contributor ->
+        if (contributor.phase == phase) {
+          TELEMETRY.spanBuilder(contributor.name).use {
+            storage = contributor.createProjectModel(context, storage)
+          }
         }
       }
+      updateWorkspaceModel(context, phase) { projectBuilder ->
+        val syncBuilder = storage.toBuilder()
+        GradleSyncExtension.EP_NAME.forEachExtensionSafeOrdered { extension ->
+          extension.updateProjectModel(context, syncBuilder, projectBuilder, phase)
+        }
+      }
+      GradleSyncExtension.EP_NAME.forEachExtensionSafeOrdered { extension ->
+        extension.updateBridgeModel(context, phase)
+      }
+      SYNC_LISTENER.onSyncPhaseCompleted(context, phase)
     }
-    return result
   }
 
-  private suspend fun updateProjectModel(
+  private suspend fun updateWorkspaceModel(
     context: ProjectResolverContext,
-    storage: ImmutableEntityStorage,
     phase: GradleSyncPhase,
+    updater: (MutableEntityStorage) -> Unit,
   ) {
-    val configuratorDescription = """
+    context.project.workspaceModel.update("""
       |The Gradle project sync
       |  phase = $phase
       |  taskId = ${context.taskId}
       |  projectPath = ${context.projectPath}
-    """.trimMargin()
-    context.project.workspaceModel.update(configuratorDescription) { projectBuilder ->
-      val syncBuilder = storage.toBuilder()
-      GradleSyncExtension.EP_NAME.forEachExtensionSafeAsync { extension ->
-        extension.updateProjectModel(context, syncBuilder, projectBuilder, phase)
-      }
-    }
-    GradleSyncExtension.EP_NAME.forEachExtensionSafeAsync { extension ->
-      extension.updateBridgeModel(context, phase)
-    }
+    """.trimMargin(), updater)
   }
 }
