@@ -36,19 +36,13 @@ import java.util.*;
  */
 public abstract class GoToSymbolProvider implements ChooseByNameContributor {
   // non-static to store modules accepted by different providers separately
-  private final Key<CachedValue<Collection<Module>>> ACCEPTABLE_MODULES = Key.create("ACCEPTABLE_MODULES_" + toString());
+  private final Key<CachedValue<Collection<Module>>> ACCEPTABLE_MODULES = Key.create("ACCEPTABLE_MODULES_" + this);
 
   protected abstract void addNames(@NotNull Module module, Set<String> result);
 
   protected abstract void addItems(@NotNull Module module, String name, List<NavigationItem> result);
 
   protected abstract boolean acceptModule(final Module module);
-
-  protected static void addNewNames(final @NotNull List<? extends DomElement> elements, final Set<? super String> existingNames) {
-    for (DomElement name : elements) {
-      existingNames.add(name.getGenericInfo().getElementName(name));
-    }
-  }
 
   private Collection<Module> getAcceptableModules(final Project project) {
     return CachedValuesManager.getManager(project).getCachedValue(project, ACCEPTABLE_MODULES, () ->
