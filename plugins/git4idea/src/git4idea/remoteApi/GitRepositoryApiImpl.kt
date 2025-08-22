@@ -14,7 +14,6 @@ import com.intellij.vcs.git.ref.GitFavoriteRefs
 import com.intellij.vcs.git.ref.GitReferenceName
 import com.intellij.vcs.git.rpc.GitRepositoryApi
 import com.intellij.vcs.git.rpc.GitRepositoryEvent
-import git4idea.GitDisposable
 import git4idea.branch.GitRefType
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
@@ -45,10 +44,9 @@ class GitRepositoryApiImpl : GitRepositoryApi {
         }
 
         val synchronizer = Synchronizer(project, this@callbackFlow)
-        val coroutineScope = GitDisposable.getInstance(project).coroutineScope
         // Sending of the initial state should be delayed until initialization is complete
         ProjectLevelVcsManager.getInstance(project).runAfterInitialization {
-          coroutineScope.launch {
+          launch {
             val allRepositories = getAllRepositories(project)
             allRepositories.forEach { repository -> synchronizer.sendDeletedEventOnDispose(repository) }
             send(GitRepositoryEvent.ReloadState(allRepositories.map { GitRepositoryToDtoConverter.convertToDto(it) }))
@@ -59,7 +57,7 @@ class GitRepositoryApiImpl : GitRepositoryApi {
           }
         }
 
-        project.messageBus.connect(coroutineScope).also {
+        project.messageBus.connect().also {
           it.subscribe(GitRepositoryFrontendSynchronizer.TOPIC, synchronizer)
         }
       }

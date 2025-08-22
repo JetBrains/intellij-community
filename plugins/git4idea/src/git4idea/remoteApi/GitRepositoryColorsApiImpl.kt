@@ -14,7 +14,6 @@ import com.intellij.vcs.git.repo.GitRepositoryColor
 import com.intellij.vcs.git.repo.GitRepositoryColorsState
 import com.intellij.vcs.git.rpc.GitRepositoryColorsApi
 import com.intellij.vcs.log.ui.VcsLogColorManagerFactory
-import git4idea.GitDisposable
 import git4idea.repo.GitRepository
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.BufferOverflow
@@ -41,8 +40,7 @@ internal class GitRepositoryColorsApiImpl : GitRepositoryColorsApi {
           return@readAction null
         }
 
-        val coroutineScope = GitDisposable.getInstance(project).coroutineScope
-        coroutineScope.launch {
+        launch {
           send(calcColorsState(project))
           notifier.debounce(100.milliseconds).collectLatest {
             LOG.debug("Sending new colors")
@@ -50,7 +48,7 @@ internal class GitRepositoryColorsApiImpl : GitRepositoryColorsApi {
           }
         }
 
-        project.messageBus.connect(coroutineScope).also {
+        project.messageBus.connect().also {
           it.subscribe(VcsRepositoryManager.VCS_REPOSITORY_MAPPING_UPDATED, VcsRepositoryMappingListener {
             LOG.debug("VCS mapping changed")
             notifier.tryEmit(Unit)

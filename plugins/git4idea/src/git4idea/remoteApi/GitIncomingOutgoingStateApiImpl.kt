@@ -7,7 +7,6 @@ import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProjectOrNull
 import com.intellij.vcs.git.branch.GitInOutProjectState
 import com.intellij.vcs.git.rpc.GitIncomingOutgoingStateApi
-import git4idea.GitDisposable
 import git4idea.branch.GitBranchIncomingOutgoingManager
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.BufferOverflow
@@ -32,8 +31,7 @@ internal class GitIncomingOutgoingStateApiImpl : GitIncomingOutgoingStateApi {
           return@readAction null
         }
 
-        val coroutineScope = GitDisposable.getInstance(project).coroutineScope
-        coroutineScope.launch {
+        launch {
           val inOutManager = GitBranchIncomingOutgoingManager.getInstance(project)
           send(inOutManager.state)
           notifier.debounce(IN_OUT_SYNC_DEBOUNCE).collectLatest {
@@ -43,7 +41,7 @@ internal class GitIncomingOutgoingStateApiImpl : GitIncomingOutgoingStateApi {
           }
         }
 
-        project.messageBus.connect(coroutineScope).also {
+        project.messageBus.connect().also {
           it.subscribe(
             GitBranchIncomingOutgoingManager.GIT_INCOMING_OUTGOING_CHANGED,
             GitBranchIncomingOutgoingManager.GitIncomingOutgoingListener {

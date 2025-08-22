@@ -15,12 +15,10 @@ import com.intellij.openapi.vcs.ex.VcsActivationListener
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProjectOrNull
-import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.messages.SimpleMessageBusConnection
 import com.intellij.vcs.git.rpc.GitWidgetApi
 import com.intellij.vcs.git.rpc.GitWidgetState
-import git4idea.GitDisposable
 import git4idea.GitVcs
 import git4idea.branch.GitBranchIncomingOutgoingManager
 import git4idea.branch.GitBranchIncomingOutgoingManager.GitIncomingOutgoingListener
@@ -33,7 +31,6 @@ import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryIdCache
 import git4idea.repo.GitRepositoryStateChangeListener
 import git4idea.ui.branch.GitCurrentBranchPresenter
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.channels.awaitClose
@@ -49,23 +46,21 @@ internal class GitWidgetApiImpl : GitWidgetApi {
 
     val notifier = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
     return callbackFlow {
-      val scope = readAction {
+      val messageBusConnection = readAction {
         if (project.isDisposed) {
           close()
           return@readAction null
         }
-        GitDisposable.getInstance(project).coroutineScope.childScope("GitWidgetApiImpl#getWidgetState").also { scope ->
-          scope.launch {
-            trySendNewState(project, file)
-            notifier.collectLatest { trySendNewState(project, file) }
-          }
-          subscribeOnUpdates(project.messageBus.connect(scope), notifier)
+        launch {
+          trySendNewState(project, file)
+          notifier.collectLatest { trySendNewState(project, file) }
         }
+        project.messageBus.connect().also { subscribeOnUpdates(it, notifier) }
       }
 
       awaitClose {
         LOG.debug("Connection closed")
-        scope?.cancel()
+        messageBusConnection?.disconnect()
       }
     }
   }
