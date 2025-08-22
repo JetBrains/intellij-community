@@ -228,7 +228,7 @@ final class AccessibleGutterLine extends JPanel {
     if (myGutter.isLineMarkersShown()) {
       int firstVisibleOffset = editor.visualLineStartOffset(myVisualLineNum);
       int lastVisibleOffset = editor.visualLineStartOffset(myVisualLineNum + 1);
-      myGutter.processRangeHighlighters(firstVisibleOffset, lastVisibleOffset, highlighter -> {
+      myGutter.processGutterRangeHighlighters(firstVisibleOffset, lastVisibleOffset, highlighter -> {
         LineMarkerRenderer renderer = highlighter.getLineMarkerRenderer();
         if (renderer instanceof ActiveGutterRenderer) {
           Rectangle rect = myGutter.getLineRendererRectangle(highlighter);
@@ -239,6 +239,7 @@ final class AccessibleGutterLine extends JPanel {
             }
           }
         }
+        return true;
       });
     }
 
