@@ -375,6 +375,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     if (parentType == JavaElementType.EXPRESSION_STATEMENT) return Indent.getNoneIndent();
     if (parentType == JavaElementType.IMPLICIT_CLASS) return Indent.getNoneIndent();
     if (parentType == JavaElementType.RECORD_COMPONENT) return Indent.getNoneIndent();
+    if (parentType == JavaElementType.PACKAGE_STATEMENT) return Indent.getNoneIndent();
     if (SourceTreeToPsiMap.treeElementToPsi(parent) instanceof PsiFile) {
       return Indent.getNoneIndent();
     }
