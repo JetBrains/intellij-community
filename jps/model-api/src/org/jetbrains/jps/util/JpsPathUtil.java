@@ -68,6 +68,13 @@ public final class JpsPathUtil {
     return FILE_URL_PREFIX + path;
   }
 
+  public static @NotNull String getLibraryRootUrl(@NotNull Path path) {
+    Path absolutePath = path.toAbsolutePath();
+    String fileName = absolutePath.getFileName().toString();
+    String pathString = FileUtilRt.toSystemIndependentName(absolutePath.toString());
+    return fileName.endsWith(".jar") || fileName.endsWith(".zip") ? JAR_URL_PREFIX + pathString + "!/" : FILE_URL_PREFIX + pathString;
+  }
+  
   public static @NotNull String getLibraryRootUrl(File file) {
     String path = FileUtilRt.toSystemIndependentName(file.getAbsolutePath());
     return file.isDirectory() ? FILE_URL_PREFIX + path : JAR_URL_PREFIX + path + "!/";

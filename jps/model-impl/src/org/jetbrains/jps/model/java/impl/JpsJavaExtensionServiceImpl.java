@@ -170,7 +170,7 @@ public class JpsJavaExtensionServiceImpl extends JpsJavaExtensionService {
     JpsTypedLibrary<JpsSdk<JpsDummyElement>> sdk = global.addSdk(name, homePath, version, JpsJavaSdkType.INSTANCE);
     List<Path> roots = JavaSdkUtil.getJdkClassesRoots(Path.of(homePath), false);
     for (Path root : roots) {
-      sdk.addRoot(root.toFile(), JpsOrderRootType.COMPILED);
+      sdk.addRoot(root, JpsOrderRootType.COMPILED);
     }
     return sdk;
   }

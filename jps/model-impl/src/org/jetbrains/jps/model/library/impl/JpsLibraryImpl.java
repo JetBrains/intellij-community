@@ -63,8 +63,8 @@ public final class JpsLibraryImpl<P extends JpsElement> extends JpsNamedComposit
   }
 
   @Override
-  public void addRoot(@NotNull File file, @NotNull JpsOrderRootType rootType) {
-    addRoot(JpsPathUtil.getLibraryRootUrl(file), rootType);
+  public void addRoot(@NotNull Path path, @NotNull JpsOrderRootType rootType) {
+    addRoot(JpsPathUtil.getLibraryRootUrl(path), rootType);
   }
 
   @Override
