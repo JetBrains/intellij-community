@@ -15,6 +15,9 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 object MonolithUtils {
+  @JvmStatic
+  fun isMonolith(): Boolean = FrontendApplicationInfo.getFrontendType() is FrontendType.Monolith
+
   /**
    * Provides access to the backend debug session by its ID.
    * This method will return null in RemDev mode.
@@ -22,7 +25,7 @@ object MonolithUtils {
    */
   @JvmStatic
   fun findSessionById(sessionId: XDebugSessionId): XDebugSessionImpl? {
-    if (FrontendApplicationInfo.getFrontendType() !is FrontendType.Monolith) return null
+    if (!isMonolith()) return null
     return sessionId.findValue()
   }
 
@@ -32,6 +35,7 @@ object MonolithUtils {
    * Use this method only for components that should be available in monolith only.
    */
   fun findXValueById(xValueId: XValueId): XValue? {
+    if (!isMonolith()) return null
     return BackendXValueModel.findById(xValueId)?.xValue
   }
 
@@ -41,7 +45,7 @@ object MonolithUtils {
    * Use this method only for components that should be available in monolith only.
    */
   fun findBreakpointTypeById(id: String): XBreakpointType<*, *>? {
-    if (FrontendApplicationInfo.getFrontendType() !is FrontendType.Monolith) return null
+    if (!isMonolith()) return null
     return XBreakpointUtil.findType(id)
   }
 }

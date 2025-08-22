@@ -7,6 +7,7 @@ import com.intellij.debugger.engine.JavaValue;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
+import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.settings.ArrayRendererConfigurable;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
@@ -17,7 +18,11 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.frame.XValue;
+import com.intellij.xdebugger.impl.frame.XDebugSessionProxy;
+import com.intellij.xdebugger.impl.frame.XDebugSessionProxyKeeperKt;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +35,7 @@ import java.util.List;
 public abstract class ArrayAction extends DebuggerAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    DebuggerContextImpl debuggerContext = DebuggerAction.getDebuggerContext(e.getDataContext());
+    DebuggerContextImpl debuggerContext = getDebuggerContext(e.getDataContext());
 
     DebugProcessImpl debugProcess = debuggerContext.getDebugProcess();
     if (debugProcess == null) {
@@ -42,7 +47,12 @@ public abstract class ArrayAction extends DebuggerAction {
       return;
     }
 
-    ArrayRenderer renderer = getArrayRenderer(node.getValueContainer());
+    XDebugSessionProxy sessionProxy = DebuggerUIUtil.getSessionProxy(e);
+    if (sessionProxy == null) {
+      return;
+    }
+
+    ArrayRenderer renderer = getArrayRenderer(node.getValueContainer(), sessionProxy);
     if (renderer == null) {
       return;
     }
@@ -66,8 +76,9 @@ public abstract class ArrayAction extends DebuggerAction {
   public void update(@NotNull AnActionEvent e) {
     boolean enable = false;
     List<JavaValue> values = ViewAsGroup.getSelectedValues(e);
-    if (values.size() == 1) {
-      enable = getArrayRenderer(values.get(0)) != null;
+    XDebugSessionProxy sessionProxy = DebuggerUIUtil.getSessionProxy(e);
+    if (values.size() == 1 && sessionProxy != null) {
+      enable = getArrayRenderer(values.get(0), sessionProxy) != null;
     }
     e.getPresentation().setEnabledAndVisible(enable);
   }
@@ -77,35 +88,41 @@ public abstract class ArrayAction extends DebuggerAction {
     return ActionUpdateThread.BGT;
   }
 
-  public static @Nullable ArrayRenderer getArrayRenderer(XValue value) {
-    if (value instanceof JavaValue) {
-      ValueDescriptorImpl descriptor = ((JavaValue)value).getDescriptor();
+  public static @Nullable ArrayRenderer getArrayRenderer(XValue value, XDebugSessionProxy sessionProxy) {
+    JavaValue javaValue = MonolithJavaValueUtilsKt.findJavaValue(value, sessionProxy);
+    if (javaValue != null) {
+      ValueDescriptorImpl descriptor = javaValue.getDescriptor();
       Renderer lastRenderer = descriptor.getLastRenderer();
-      if (lastRenderer instanceof CompoundReferenceRenderer) {
-        ChildrenRenderer childrenRenderer = ((CompoundReferenceRenderer)lastRenderer).getChildrenRenderer();
-        if (childrenRenderer instanceof ExpressionChildrenRenderer) {
+      if (lastRenderer instanceof CompoundReferenceRenderer compoundReferenceRenderer) {
+        ChildrenRenderer childrenRenderer = compoundReferenceRenderer.getChildrenRenderer();
+        if (childrenRenderer instanceof ExpressionChildrenRenderer expressionChildrenRenderer) {
           lastRenderer = ExpressionChildrenRenderer.getLastChildrenRenderer(descriptor);
           if (lastRenderer == null) {
-            lastRenderer = ((ExpressionChildrenRenderer)childrenRenderer).getPredictedRenderer();
+            lastRenderer = expressionChildrenRenderer.getPredictedRenderer();
           }
         }
       }
-      if (lastRenderer instanceof ArrayRenderer) {
-        return (ArrayRenderer)lastRenderer;
+      if (lastRenderer instanceof ArrayRenderer arrayRenderer) {
+        return arrayRenderer;
       }
     }
     return null;
   }
 
   public static void setArrayRenderer(ArrayRenderer newRenderer, @NotNull XValueNodeImpl node, @NotNull DebuggerContextImpl debuggerContext) {
+    XDebugSessionProxy sessionProxy = findProxyFromContext(debuggerContext);
+    if (sessionProxy == null) return;
+
     XValue container = node.getValueContainer();
 
-    ArrayRenderer renderer = getArrayRenderer(container);
+    ArrayRenderer renderer = getArrayRenderer(container, sessionProxy);
     if (renderer == null) {
       return;
     }
 
-    ValueDescriptorImpl descriptor = ((JavaValue)container).getDescriptor();
+    JavaValue javaValue = MonolithJavaValueUtilsKt.findJavaValue(container, sessionProxy);
+    assert javaValue != null;
+    ValueDescriptorImpl descriptor = javaValue.getDescriptor();
 
     DebuggerManagerThreadImpl managerThread = debuggerContext.getManagerThread();
     if (managerThread != null) {
@@ -114,19 +131,27 @@ public abstract class ArrayAction extends DebuggerAction {
         public void contextAction(@NotNull SuspendContextImpl suspendContext) {
           final Renderer lastRenderer = descriptor.getLastRenderer();
           if (lastRenderer instanceof ArrayRenderer) {
-            ((JavaValue)container).setRenderer(newRenderer, node);
+            javaValue.setRenderer(newRenderer, node);
             node.invokeNodeUpdate(() -> node.getTree().expandPath(node.getPath()));
           }
           else if (lastRenderer instanceof CompoundReferenceRenderer compoundRenderer) {
             final ChildrenRenderer childrenRenderer = compoundRenderer.getChildrenRenderer();
             if (childrenRenderer instanceof ExpressionChildrenRenderer) {
               ExpressionChildrenRenderer.setPreferableChildrenRenderer(descriptor, newRenderer);
-              ((JavaValue)container).reBuild(node);
+              javaValue.reBuild(node);
             }
           }
         }
       });
     }
+  }
+
+  private static @Nullable XDebugSessionProxy findProxyFromContext(@NotNull DebuggerContextImpl debuggerContext) {
+    DebuggerSession javaSession = debuggerContext.getDebuggerSession();
+    if (javaSession == null) return null;
+    XDebugSession debugSession = javaSession.getXDebugSession();
+    if (debugSession == null) return null;
+    return XDebugSessionProxyKeeperKt.asProxy(debugSession);
   }
 
   private static String createNodeTitle(String prefix, DebuggerTreeNodeImpl node) {
@@ -183,7 +208,9 @@ public abstract class ArrayAction extends DebuggerAction {
                                                                 ArrayRenderer original,
                                                                 @NotNull DebuggerContextImpl debuggerContext,
                                                                 String title) {
-      ArrayFilterInplaceEditor.editParent(node);
+      XDebugSessionProxy sessionProxy = findProxyFromContext(debuggerContext);
+      if (sessionProxy == null) return Promises.rejectedPromise();
+      ArrayFilterInplaceEditor.editParent(node, sessionProxy);
       return Promises.rejectedPromise();
     }
   }
