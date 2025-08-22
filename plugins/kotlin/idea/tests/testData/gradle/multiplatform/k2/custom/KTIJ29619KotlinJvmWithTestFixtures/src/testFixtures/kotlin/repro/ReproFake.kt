@@ -3,6 +3,6 @@
 //endregion
 package org.example.repro
 
-internal fun String.repro(): String {
-    return this.reversed()
-}
+import org.example.internalMainProperty
+
+internal val internalTestFixtureProperty = internalMainProperty

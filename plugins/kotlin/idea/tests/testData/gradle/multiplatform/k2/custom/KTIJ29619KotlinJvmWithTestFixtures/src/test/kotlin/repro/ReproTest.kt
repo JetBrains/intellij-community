@@ -3,12 +3,14 @@
 //endregion
 package org.example.repro
 
+import org.example.internalMainProperty
 import org.junit.jupiter.api.Test
 
 class ReproTest {
 
     @Test
     fun test() {
-        "Hello World!".repro()
+        println(internalMainProperty)
+        println(internalTestFixtureProperty)
     }
 }

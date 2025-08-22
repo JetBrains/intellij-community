@@ -3,6 +3,4 @@
 //endregion
 package org.example
 
-fun main() {
-    println("Hello World!")
-}
+internal val internalMainProperty = ""
