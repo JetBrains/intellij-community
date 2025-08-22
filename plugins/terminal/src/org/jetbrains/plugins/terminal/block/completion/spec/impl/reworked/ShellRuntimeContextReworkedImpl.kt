@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.terminal.block.completion.spec.impl
+package org.jetbrains.plugins.terminal.block.completion.spec.impl.reworked
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
@@ -22,7 +22,7 @@ import kotlin.io.path.Path
 
 private val LOG: Logger = logger<ShellRuntimeContextReworkedImpl>()
 
-class ShellRuntimeContextReworkedImpl(
+internal class ShellRuntimeContextReworkedImpl(
   override val currentDirectory: String,
   override val typedPrefix: String,
   override val shellName: ShellName,

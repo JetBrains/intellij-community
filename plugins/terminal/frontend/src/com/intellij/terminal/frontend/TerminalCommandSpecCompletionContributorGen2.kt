@@ -22,8 +22,8 @@ import org.jetbrains.plugins.terminal.block.completion.ShellCommandSpecsManagerI
 import org.jetbrains.plugins.terminal.block.completion.TerminalCommandCompletionShowingMode
 import org.jetbrains.plugins.terminal.block.completion.TerminalCompletionUtil
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators
-import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellDataGeneratorsExecutorReworkedImpl
-import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellRuntimeContextProviderReworkedImpl
+import org.jetbrains.plugins.terminal.block.completion.spec.impl.reworked.ShellDataGeneratorsExecutorReworkedImpl
+import org.jetbrains.plugins.terminal.block.completion.spec.impl.reworked.ShellRuntimeContextProviderReworkedImpl
 import org.jetbrains.plugins.terminal.block.reworked.TerminalAliasesStorage
 import org.jetbrains.plugins.terminal.block.reworked.TerminalBlocksModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
