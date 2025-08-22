@@ -14,6 +14,7 @@ import org.jetbrains.jps.model.serialization.module.JpsModuleSerializationDataEx
 import org.jetbrains.jps.service.JpsServiceManager;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -52,6 +53,15 @@ public final class JpsModelSerializationDataService {
     return project.getContainer().getChild(JpsProjectSerializationDataExtensionImpl.ROLE);
   }
 
+  public static @Nullable Path getBaseDirectoryPath(@NotNull JpsProject project) {
+    JpsProjectSerializationDataExtension extension = getProjectExtension(project);
+    return extension == null ? null : extension.getBaseDirectoryPath();
+  }
+
+  /**
+   * Use {@link #getBaseDirectoryPath(JpsProject)} instead
+   */
+  @ApiStatus.Obsolete
   public static @Nullable File getBaseDirectory(@NotNull JpsProject project) {
     JpsProjectSerializationDataExtension extension = getProjectExtension(project);
     return extension == null ? null : extension.getBaseDirectory();
@@ -62,6 +72,15 @@ public final class JpsModelSerializationDataService {
     return project.getContainer().getChild(JpsModuleSerializationDataExtensionImpl.ROLE);
   }
 
+  public static @Nullable Path getBaseDirectoryPath(@NotNull JpsModule module) {
+    JpsModuleSerializationDataExtension extension = getModuleExtension(module);
+    return extension == null ? null : extension.getBaseDirectoryPath();
+  }
+  
+  /**
+   * Use {@link #getBaseDirectoryPath(JpsModule)} instead
+   */
+  @ApiStatus.Obsolete
   public static @Nullable File getBaseDirectory(@NotNull JpsModule module) {
     JpsModuleSerializationDataExtension extension = getModuleExtension(module);
     return extension == null ? null : extension.getBaseDirectory();

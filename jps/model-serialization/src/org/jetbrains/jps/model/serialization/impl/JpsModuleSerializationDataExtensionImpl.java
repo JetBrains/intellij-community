@@ -28,4 +28,9 @@ public final class JpsModuleSerializationDataExtensionImpl extends JpsElementBas
   public @NotNull File getBaseDirectory() {
     return myBaseDirectory.toFile();
   }
+
+  @Override
+  public @NotNull Path getBaseDirectoryPath() {
+    return myBaseDirectory;
+  }
 }
