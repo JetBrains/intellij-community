@@ -2,9 +2,7 @@
 package fleet.rpc.core
 
 import fleet.rpc.RemoteApi
-import fleet.rpc.Rpc
 
-@Rpc
 @Deprecated("use fleet.rpc.core.RemoteResource")
 interface RemoteObject : RemoteApi<Unit> {
   /**
