@@ -2344,7 +2344,6 @@ f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Actions
 - sf:Install:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:IntentionBulb:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:IntentionBulbGrey:org.jetbrains.jewel.ui.icon.IntelliJIconKey
-- sf:Learn:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Lightning:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:ListChanges:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:ListFiles:org.jetbrains.jewel.ui.icon.IntelliJIconKey
@@ -2457,7 +2456,6 @@ f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Actions
 - sf:StepOutCodeBlock:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:StopAndRestart:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:StopRefresh:org.jetbrains.jewel.ui.icon.IntelliJIconKey
-- sf:StopWatch:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Stub:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:SuggestedRefactoringBulb:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Suspend:org.jetbrains.jewel.ui.icon.IntelliJIconKey
@@ -2677,7 +2675,6 @@ f:org.jetbrains.jewel.ui.icons.AllIconsKeys$FileTypes
 - sf:Hprof:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Htaccess:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Html:org.jetbrains.jewel.ui.icon.IntelliJIconKey
-- sf:Http:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:I18n:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Idl:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Image:org.jetbrains.jewel.ui.icon.IntelliJIconKey
@@ -2709,7 +2706,6 @@ f:org.jetbrains.jewel.ui.icons.AllIconsKeys$General
 - sf:ActualZoom:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Add:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:AddJdk:org.jetbrains.jewel.ui.icon.IntelliJIconKey
-- sf:Add_20x20:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Alpha:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:ArrowDown:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:ArrowDownSmall:org.jetbrains.jewel.ui.icon.IntelliJIconKey
@@ -2763,11 +2759,9 @@ f:org.jetbrains.jewel.ui.icons.AllIconsKeys$General
 - sf:GearPlain:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:GreenCheckmark:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Groups:org.jetbrains.jewel.ui.icon.IntelliJIconKey
-- sf:Hashtag:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:HideToolWindow:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:History:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:ImplementingMethod:org.jetbrains.jewel.ui.icon.IntelliJIconKey
-- sf:IndentDetected:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Information:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:InformationDialog:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:InheritedMethod:org.jetbrains.jewel.ui.icon.IntelliJIconKey
@@ -2927,7 +2921,6 @@ f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Ide
 - sf:External_link_arrow:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:FatalError:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:FatalErrorRead:org.jetbrains.jewel.ui.icon.IntelliJIconKey
-- sf:Feedback:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:FeedbackRating:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:FeedbackRatingFocused:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:FeedbackRatingFocusedOn:org.jetbrains.jewel.ui.icon.IntelliJIconKey
@@ -3152,7 +3145,6 @@ f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Nodes
 - sf:FilePrivate:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:FinalMark:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Folder:org.jetbrains.jewel.ui.icon.IntelliJIconKey
-- sf:FolderGithub:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Function:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Gvariable:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:HomeFolder:org.jetbrains.jewel.ui.icon.IntelliJIconKey
@@ -3345,6 +3337,9 @@ f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Profiler
 - sf:ExpandNode:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Rec:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - <init>():V
+f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Promo
+- sf:JavaDuke:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- <init>():V
 f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Providers
 - sf:ActiveMQ:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Apache:org.jetbrains.jewel.ui.icon.IntelliJIconKey
@@ -3369,8 +3364,6 @@ f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Providers
 - sf:Elasticsearch:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Exasol:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Firebird:org.jetbrains.jewel.ui.icon.IntelliJIconKey
-- sf:GaussDB:org.jetbrains.jewel.ui.icon.IntelliJIconKey
-- sf:GeminiDb:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:GoogleCloudSpanner:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Greenplum:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:H2:org.jetbrains.jewel.ui.icon.IntelliJIconKey
@@ -3379,7 +3372,6 @@ f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Providers
 - sf:Hsqldb:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Ibm:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Impala:org.jetbrains.jewel.ui.icon.IntelliJIconKey
-- sf:InfluxDB:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Informix:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:IntersystemCache:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Kafka:org.jetbrains.jewel.ui.icon.IntelliJIconKey
@@ -3404,14 +3396,11 @@ f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Providers
 - sf:Sqlite:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Sun:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Sybase:org.jetbrains.jewel.ui.icon.IntelliJIconKey
-- sf:Tair:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Tarantool:org.jetbrains.jewel.ui.icon.IntelliJIconKey
-- sf:TaurusDB:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Teradata:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Tibero:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Tidb:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Trino:org.jetbrains.jewel.ui.icon.IntelliJIconKey
-- sf:Turso:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Vertica:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Yugabyte:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - <init>():V
@@ -3524,7 +3513,6 @@ f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Toolwindows
 - sf:Documentation:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:ErrorEvents:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:InfoEvents:org.jetbrains.jewel.ui.icon.IntelliJIconKey
-- sf:Learn:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:MeetNewUi:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:NoEvents:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Notifications:org.jetbrains.jewel.ui.icon.IntelliJIconKey
@@ -3605,7 +3593,6 @@ f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Vcs
 - sf:CommitNode:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Equal:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Fetch:org.jetbrains.jewel.ui.icon.IntelliJIconKey
-- sf:Fetch_20x20:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Folders:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:FromVCSDialog:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:History:org.jetbrains.jewel.ui.icon.IntelliJIconKey
@@ -3618,13 +3605,11 @@ f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Vcs
 - sf:Patch_applied:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Patch_file:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Push:org.jetbrains.jewel.ui.icon.IntelliJIconKey
-- sf:Push_20x20:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Remove:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:ShelveSilent:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:ShowUnversionedFiles:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Unshelve:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:UnshelveSilent:org.jetbrains.jewel.ui.icon.IntelliJIconKey
-- sf:Update_20x20:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - <init>():V
 f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Vcs$Vendors
 - sf:Github:org.jetbrains.jewel.ui.icon.IntelliJIconKey
@@ -3648,7 +3633,6 @@ f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Welcome$LearnTab
 - sf:JetBrainsAcademy:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - <init>():V
 f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Welcome$RecentProjects
-- sf:RemoteProject:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Remove:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:RemoveDisabled:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:RemoveDisabledHover:org.jetbrains.jewel.ui.icon.IntelliJIconKey
