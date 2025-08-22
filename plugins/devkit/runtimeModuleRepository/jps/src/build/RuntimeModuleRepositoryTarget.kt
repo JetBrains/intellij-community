@@ -4,6 +4,7 @@
 package com.intellij.devkit.runtimeModuleRepository.jps.build
 
 import com.dynatrace.hash4j.hashing.HashSink
+import com.intellij.devkit.runtimeModuleRepository.generator.RuntimeModuleRepositoryGenerator
 import com.intellij.devkit.runtimeModuleRepository.jps.build.RuntimeModuleRepositoryBuildConstants.COMPACT_REPOSITORY_FILE_NAME
 import com.intellij.devkit.runtimeModuleRepository.jps.build.RuntimeModuleRepositoryBuildConstants.JAR_REPOSITORY_FILE_NAME
 import com.intellij.devkit.runtimeModuleRepository.jps.impl.DevkitRuntimeModuleRepositoryJpsBundle
@@ -100,7 +101,7 @@ internal class RuntimeModuleRepositoryTarget(
       hash.putInt(sourceRoots.size)
 
       var counter = 0
-      RuntimeModuleRepositoryBuilder.enumerateRuntimeDependencies(module).processModuleAndLibraries(
+      RuntimeModuleRepositoryGenerator.enumerateRuntimeDependencies(module).processModuleAndLibraries(
         {
           hash.putString(it.name)
           counter++

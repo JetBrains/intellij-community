@@ -30,6 +30,7 @@ jvm_library(
     "//platform/runtime/repository",
     "@lib//:kotlin-stdlib",
     "//jps/model-serialization",
+    "//plugins/devkit/runtimeModuleRepository/generator",
     "@lib//:hash4j",
   ],
   runtime_deps = [":jps_resources"]
@@ -51,6 +52,7 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "//jps/jps-builders:build-tests_test_lib",
     "//jps/model-serialization",
+    "//plugins/devkit/runtimeModuleRepository/generator",
     "@lib//:hash4j",
   ],
   runtime_deps = [":jps_resources"]

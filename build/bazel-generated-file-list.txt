@@ -779,6 +779,7 @@ plugins/devkit/intellij.kotlin.devkit
 plugins/devkit/intellij.kotlin.devkit/k1
 plugins/devkit/intellij.kotlin.devkit/k2
 plugins/devkit/jps-plugin
+plugins/devkit/runtimeModuleRepository/generator
 plugins/devkit/runtimeModuleRepository/jps
 plugins/eclipse
 plugins/eclipse/common-eclipse-util

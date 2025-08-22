@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.runtimeModuleRepository.jps.build
 
+import com.intellij.devkit.runtimeModuleRepository.generator.RuntimeModuleRepositoryGenerator
 import com.intellij.platform.runtime.repository.RuntimeModuleId
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDescriptor
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleRepositoryData
@@ -40,7 +41,7 @@ class RawDescriptorListBuilder {
   fun testDescriptor(id: String,
                      vararg dependencies: String,
                      resourceDirName: String = id.removeSuffix(RuntimeModuleId.TESTS_NAME_SUFFIX)) {
-    if (RuntimeModuleRepositoryBuilder.GENERATE_DESCRIPTORS_FOR_TEST_MODULES) {
+    if (RuntimeModuleRepositoryGenerator.GENERATE_DESCRIPTORS_FOR_TEST_MODULES) {
       descriptor(id, listOf("test/$resourceDirName"), dependencies.asList())
     }
   }
