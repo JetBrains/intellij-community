@@ -64,7 +64,7 @@ publishing {
     create<MavenPublication>("maven") {
       groupId = "org.jetbrains.mockjdk"
       artifactId = "mockjdk-base-java"
-      version = "${javaVersion}.0"
+      version = "${javaVersion}.0.0"
       from(components["java"])
       pom {
         licenses {
