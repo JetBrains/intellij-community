@@ -9,17 +9,15 @@ import com.intellij.ide.DataManager
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.AbstractVcsHelper
 import com.intellij.openapi.vcs.VcsConfiguration
-import com.intellij.openapi.vcs.changes.ChangeListListener
-import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
-import com.intellij.openapi.vcs.changes.DiffPreview
+import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.DiffPreview.Companion.setPreviewVisible
-import com.intellij.openapi.vcs.changes.InclusionListener
 import com.intellij.openapi.vcs.changes.actions.ShowDiffPreviewAction
 import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.Companion.REPOSITORY_GROUPING
@@ -171,6 +169,9 @@ internal class GitStagePanel(
     val busConnection = project.messageBus.connect(this)
     busConnection.subscribe(GitRefreshListener.TOPIC, MyGitChangeProviderListener())
     busConnection.subscribe(ChangeListListener.TOPIC, MyChangeListListener())
+    busConnection.subscribe(VcsManagedFilesHolder.TOPIC, VcsManagedFilesHolder.VcsManagedFilesHolderListener {
+      runInEdt(disposableFlag) { updateProgressState() }
+    })
     commitWorkflowHandler.workflow.addListener(MyCommitWorkflowListener(), this)
 
     if (isRefreshInProgress()) {
@@ -186,10 +187,14 @@ internal class GitStagePanel(
   }
 
   private fun isRefreshInProgress(): Boolean {
-    if (GitVcs.getInstance(project).changeProvider!!.isRefreshInProgress) return true
+    if (GitVcs.getInstance(project).changeProvider!!.isRefreshInProgress) {
+      LOG.trace("Change provider is refreshing")
+      return true
+    }
     return GitRepositoryManager.getInstance(project).repositories.any {
-      it.untrackedFilesHolder.isInUpdateMode ||
-      it.ignoredFilesHolder.isInUpdateMode()
+      val updateModeForFilesHolder = it.untrackedFilesHolder.isInUpdateMode || it.ignoredFilesHolder.isInUpdateMode()
+      LOG.trace("Repository $it files holder update state - $updateModeForFilesHolder")
+      updateModeForFilesHolder
     }
   }
 
@@ -501,17 +506,6 @@ internal class GitStagePanel(
         updateProgressState()
       }
     }
-
-    private fun updateProgressState() {
-      if (isRefreshInProgress()) {
-        tree.setEmptyText(message("stage.loading.status"))
-        progressStripe.startLoading()
-      }
-      else {
-        progressStripe.stopLoading()
-        tree.setDefaultEmptyText()
-      }
-    }
   }
 
   private inner class MyChangeListListener : ChangeListListener {
@@ -538,11 +532,24 @@ internal class GitStagePanel(
     }
   }
 
+  private fun updateProgressState() {
+    if (isRefreshInProgress()) {
+      tree.setEmptyText(message("stage.loading.status"))
+      progressStripe.startLoading()
+    }
+    else {
+      progressStripe.stopLoading()
+      tree.setDefaultEmptyText()
+    }
+  }
+
   companion object {
     @NonNls
     private const val GROUPING_PROPERTY_NAME = "GitStage.ChangesTree.GroupingKeys"
     private const val GIT_STAGE_PANEL_PLACE = "GitStagePanelPlace"
     internal const val HELP_ID = "reference.VersionControl.Git.StagingArea"
+
+    private val LOG = Logger.getInstance(GitStagePanel::class.java)
   }
 }
 
