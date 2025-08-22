@@ -72,6 +72,7 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
         return;
       }
     }
+    prepareForFormatting(document, formattingContext);
     FormattingRequestImpl formattingRequest = new FormattingRequestImpl(formattingContext, document, formattingRanges,
                                                                          canChangeWhiteSpaceOnly, quickFormat);
     FormattingTask formattingTask = createFormattingTask(formattingRequest);
@@ -135,6 +136,14 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
   protected abstract @NotNull @NlsSafe String getName();
 
   /**
+   * Hook called before creating a formatting request. Default implementation saves the document
+   * to ensure external formatters working with IO files see the latest content.
+   */
+  protected void prepareForFormatting(@NotNull Document document, @NotNull FormattingContext formattingContext) {
+    FileDocumentManager.getInstance().saveDocument(document);
+  }
+
+  /**
    * @return A duration to wait for the service to respond (call either {@code onTextReady()} or {@code onError()}).
    */
   protected Duration getTimeout() {
@@ -177,7 +186,6 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
       myRanges = ranges;
       myCanChangeWhitespaceOnly = canChangeWhitespaceOnly;
       myQuickFormat = quickFormat;
-      FileDocumentManager.getInstance().saveDocument(myDocument);
       myInitialModificationStamp = document.getModificationStamp();
     }
 
