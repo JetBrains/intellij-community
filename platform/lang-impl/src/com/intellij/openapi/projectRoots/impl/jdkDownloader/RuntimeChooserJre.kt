@@ -30,9 +30,9 @@ internal interface RuntimeChooserJreValidatorCallback<R> {
 }
 
 internal object RuntimeChooserJreValidator {
-  @ReviseWhenPortedToJDK("12")
+  @ReviseWhenPortedToJDK("22")
   private val minJdkFeatureVersion
-    get() = 11
+    get() = 21
 
   fun isSupportedSdkItem(item: JdkItem): Boolean {
     // TODO Introduce EelApi here.
@@ -107,7 +107,7 @@ internal object RuntimeChooserJreValidator {
 
     if (info.version == null || info.version.feature < minJdkFeatureVersion) {
       if (!hideLogs) LOG.warn("Failed to scan JDK for boot runtime: ${homeDir}. The version $info is less than $minJdkFeatureVersion")
-      return callback.onError(LangBundle.message("dialog.message.choose.ide.runtime.set.version.error", homeDir, "11",
+      return callback.onError(LangBundle.message("dialog.message.choose.ide.runtime.set.version.error", homeDir, minJdkFeatureVersion,
                                                  info.version.toString()))
     }
 
