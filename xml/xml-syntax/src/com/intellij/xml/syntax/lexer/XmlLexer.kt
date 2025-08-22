@@ -67,7 +67,7 @@ class _XmlLexer @JvmOverloads constructor(
     private val STATE_MASK = (1 shl STATE_SHIFT) - 1
 
     init {
-      assert((STATE_MASK shl 1) <= HtmlLexerConstants.BASE_STATE_MASK)
+      require((STATE_MASK shl 1) <= HtmlLexerConstants.BASE_STATE_MASK)
     }
   }
 }

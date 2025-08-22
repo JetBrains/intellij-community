@@ -8,6 +8,7 @@ import com.intellij.platform.syntax.SyntaxElementType
 import com.intellij.platform.syntax.util.lexer.FlexLexer
 import com.intellij.xml.syntax.XmlSyntaxTokenType
 import com.intellij.xml.syntax.XmlSyntaxElementType
+import kotlin.jvm.JvmStatic
 
 class __XmlLexer : FlexLexer {
 companion object {

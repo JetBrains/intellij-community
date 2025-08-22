@@ -2,11 +2,7 @@
 package com.intellij.xml.syntax
 
 import com.intellij.platform.syntax.i18n.ResourceBundle
-import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.Nls
-import org.jetbrains.annotations.NonNls
-import org.jetbrains.annotations.PropertyKey
-import org.jetbrains.annotations.VisibleForTesting
+import org.jetbrains.annotations.*
 import kotlin.jvm.JvmStatic
 
 object XmlSyntaxBundle {
@@ -37,5 +33,5 @@ object XmlSyntaxBundle {
 @ApiStatus.Internal
 object DefaultXmlSyntaxResourcesTestAccessor {
   val mappings: Map<String, String> get() = DefaultXmlSyntaxResources.mappings
-  val defaultJavaSyntaxResourcesName: String get() = DefaultXmlSyntaxResources::class.qualifiedName!!
+  val defaultJavaSyntaxResourcesName: String get() = "com.intellij.xml.syntax.DefaultXmlSyntaxResources"
 }
