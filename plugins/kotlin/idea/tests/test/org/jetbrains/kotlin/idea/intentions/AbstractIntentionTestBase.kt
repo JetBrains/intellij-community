@@ -215,12 +215,13 @@ abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase
         val isApplicableOnPooled: Boolean = project.computeOnBackground {
             runReadAction { intentionAction.isAvailable(project, editor, file) }
         }
+
+        val modCommandAction: ModCommandAction? = intentionAction.asModCommandAction()
         Assert.assertTrue(
-            "isAvailable() for " + intentionAction.javaClass + " should return " + isApplicableExpected,
+            "isAvailable() for " + (modCommandAction ?: intentionAction).javaClass + " should return " + isApplicableExpected,
             isApplicableExpected == isApplicableOnPooled
         )
 
-        val modCommandAction: ModCommandAction? = intentionAction.asModCommandAction()
         if (modCommandAction == null) {
             val isApplicableOnEdt = intentionAction.isAvailable(project, editor, file)
 

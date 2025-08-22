@@ -35,7 +35,8 @@ sealed class KotlinPsiUpdateModCommandAction<E : PsiElement, C : Any>(
         context: ActionContext,
         element: E,
     ): ModCommand = try {
-        ModCommand.psiUpdate(element) { e, updater ->
+        ModCommand.psiUpdate(context) { updater ->
+            val e = updater.getWritable(element)
             val elementContext = getElementContext(context, e)
                                  ?: throw NoContextException()
             invoke(context, e, elementContext, updater)

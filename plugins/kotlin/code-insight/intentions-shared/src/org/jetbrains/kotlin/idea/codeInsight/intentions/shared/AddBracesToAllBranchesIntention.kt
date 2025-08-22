@@ -2,14 +2,18 @@
 
 package org.jetbrains.kotlin.idea.codeInsight.intentions.shared
 
-import com.intellij.openapi.editor.Editor
+import com.intellij.codeInspection.util.IntentionFamilyName
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.Presentation
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.elementType
 import com.intellij.psi.util.endOffset
 import com.intellij.util.containers.addIfNotNull
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeInsight.intentions.shared.AddBracesToAllBranchesIntention.Util.allBranchExpressions
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.utils.AddBracesUtils
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -19,25 +23,35 @@ import org.jetbrains.kotlin.psi.psiUtil.siblings
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.util.match
 
-internal class AddBracesToAllBranchesIntention : SelfTargetingIntention<KtExpression>(
-    KtExpression::class.java,
-    KotlinBundle.lazyMessage("add.braces.to.all.branches")
-) {
-    override fun isApplicableTo(element: KtExpression, caretOffset: Int): Boolean {
+internal class AddBracesToAllBranchesIntention : KotlinPsiUpdateModCommandAction.ClassBased<KtExpression, Unit>(KtExpression::class) {
+    override fun getFamilyName(): @IntentionFamilyName String =
+        KotlinBundle.message("add.braces.to.all.branches")
+
+    override fun isElementApplicable(element: KtExpression, context: ActionContext): Boolean {
         val targetIfOrWhenExpression = Util.targetIfOrWhenExpression(element) ?: return false
 
         val targetBranchExpressions = targetIfOrWhenExpression.targetBranchExpressions()
         if (targetBranchExpressions.isEmpty()) return false
-        if (caretIsOnSingleTargetBranch(targetIfOrWhenExpression, targetBranchExpressions, caretOffset)) return false
+        if (caretIsOnSingleTargetBranch(targetIfOrWhenExpression, targetBranchExpressions, context.offset)) return false
 
-        when (targetIfOrWhenExpression) {
-            is KtIfExpression -> setTextGetter(KotlinBundle.lazyMessage("add.braces.to.if.all.statements"))
-            is KtWhenExpression -> setTextGetter(KotlinBundle.lazyMessage("add.braces.to.when.all.entries"))
-        }
-        return true
+        return targetIfOrWhenExpression is KtIfExpression || targetIfOrWhenExpression is KtWhenExpression
     }
 
-    override fun applyTo(element: KtExpression, editor: Editor?) {
+    override fun getPresentation(context: ActionContext, element: KtExpression): Presentation? {
+        val targetIfOrWhenExpression = Util.targetIfOrWhenExpression(element) ?: return null
+
+        val targetBranchExpressions = targetIfOrWhenExpression.targetBranchExpressions()
+        if (targetBranchExpressions.isEmpty()) return null
+        if (caretIsOnSingleTargetBranch(targetIfOrWhenExpression, targetBranchExpressions, context.offset)) return null
+
+        return when (targetIfOrWhenExpression) {
+            is KtIfExpression -> Presentation.of(KotlinBundle.message("add.braces.to.if.all.statements"))
+            is KtWhenExpression -> Presentation.of(KotlinBundle.message("add.braces.to.when.all.entries"))
+            else -> null
+        }
+    }
+
+    override fun invoke(actionContext: ActionContext, element: KtExpression, elementContext: Unit, updater: ModPsiUpdater) {
         val targetIfOrWhenExpression = Util.targetIfOrWhenExpression(element) ?: return
         val branches = targetIfOrWhenExpression.targetBranchExpressions()
         for (branch in branches) {
@@ -104,5 +118,8 @@ internal class AddBracesToAllBranchesIntention : SelfTargetingIntention<KtExpres
             is KtWhenExpression -> entries.mapNotNull { it.expression }
             else -> emptyList()
         }
+    }
+
+    override fun KaSession.prepareContext(element: KtExpression) {
     }
 }
