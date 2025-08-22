@@ -21,7 +21,6 @@ import org.jetbrains.plugins.github.api.data.pullrequest.mapToRightSideLine
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.threadsComputationFlow
-import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRThreadsViewModels.ThreadIdAndPosition
 import org.jetbrains.plugins.github.pullrequest.ui.editor.GHPRReviewNewCommentEditorViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.editor.GHPRReviewNewCommentEditorViewModelImpl
 import java.time.Instant.EPOCH
@@ -42,12 +41,6 @@ internal interface GHPRThreadsViewModels {
 
   fun requestNewComment(position: GHPRReviewCommentPosition): GHPRReviewNewCommentEditorViewModel
   fun cancelNewComment(change: RefComparisonChange, side: Side, lineIdx: Int)
-
-  data class ThreadIdAndPosition(
-    val id: String?,
-    val createdAt: Date,
-    val positionInDiff: UnifiedCodeReviewItemPosition,
-  )
 
   data class ThreadMappingData(
     val threadData: GHPullRequestReviewThread,
@@ -269,3 +262,9 @@ internal class GHPRThreadsViewModelsImpl(
     }
   }
 }
+
+private data class ThreadIdAndPosition(
+  val id: String?,
+  val createdAt: Date,
+  val positionInDiff: UnifiedCodeReviewItemPosition,
+)
