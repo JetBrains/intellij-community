@@ -5,11 +5,8 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.workspace.WorkspaceModel
-import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
-import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.entities
 import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -19,8 +16,8 @@ import java.nio.file.Path
 suspend fun registerProjectRoot(project: Project, projectDir: VirtualFileUrl) {
   val entity = ProjectRootEntity(projectDir, ProjectRootEntitySource)
   val workspaceModel = project.serviceAsync<WorkspaceModel>()
-  workspaceModel.update("Add project root the project creation") { storage ->
-    storage.addEntity(entity)
+  workspaceModel.update("Add project root ${projectDir.presentableUrl} to project ${project.name}") { storage ->
+    if (storage.entities<ProjectRootEntity>().none { it.root == entity.root }) storage.addEntity(entity)
   }
 }
 
@@ -28,10 +25,7 @@ suspend fun registerProjectRoot(project: Project, projectDir: VirtualFileUrl) {
 suspend fun registerProjectRoot(project: Project, projectDir: Path) {
   val workspaceModel = project.serviceAsync<WorkspaceModel>()
   val projectBaseDirUrl = projectDir.toVirtualFileUrl(workspaceModel.getVirtualFileUrlManager())
-  val entity = ProjectRootEntity(projectBaseDirUrl, ProjectRootEntitySource)
-  workspaceModel.update("Add project root $projectDir to project ${project.name}") { storage ->
-    storage.addEntity(entity)
-  }
+  registerProjectRoot(project, projectBaseDirUrl)
 }
 
 /**
@@ -44,7 +38,7 @@ fun registerProjectRootBlocking(project: Project, projectDir: Path) {
   val entity = ProjectRootEntity(projectBaseDirUrl, ProjectRootEntitySource)
   ApplicationManager.getApplication().runWriteAction {
     workspaceModel.updateProjectModel("Add project root $projectDir to project ${project.name}") { storage ->
-      storage.addEntity(entity)
+      if (storage.entities<ProjectRootEntity>().none { it.root == entity.root }) storage.addEntity(entity)
     }
   }
 }
@@ -56,7 +50,7 @@ object ProjectRootEntitySource : EntitySource
  * Used for creating initial state for Files view. [root] will be the root that Files view display
  */
 @Internal
-interface ProjectRootEntity: WorkspaceEntity {
+interface ProjectRootEntity : WorkspaceEntity {
   val root: VirtualFileUrl
 
   //region generated code
