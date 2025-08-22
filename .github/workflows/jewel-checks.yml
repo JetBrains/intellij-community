@@ -47,9 +47,9 @@ jobs:
           path: '**/build/test-results/test/TEST-*.xml'
           retention-days: 7
 
-      - name: Run detektMain and detektTest tasks
+      - name: Run detekt tasks
         # Run detekt checks for all modules except the IDE plugin sample, as that is bound to have missing APIs issues
-        run: ./gradlew detektMain detektTest -x :samples:ide-plugin:detektMain -x :samples:ide-plugin:detektTest --continue --no-daemon
+        run: ./gradlew detekt detektMain detektTest -x :samples:ide-plugin:detektMain -x :samples:ide-plugin:detektTest --continue --no-daemon
 
       - name: Run ktfmt and ktlint checks on IDE plugin
         # We can only use static analysis that doesn't depend on compilation in the IDE plugin
