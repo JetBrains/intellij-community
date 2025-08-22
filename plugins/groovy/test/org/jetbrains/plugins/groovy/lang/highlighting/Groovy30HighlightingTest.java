@@ -251,7 +251,12 @@ public class Groovy30HighlightingTest extends GroovyVersionBasedTest {
   }
 
   public void testIncompatibleTypeOfArrayInitializer() {
+    addCompileStatic();
     highlightingTest("""
+                       import groovy.transform.CompileStatic
+                       
+                       class A {}
+                       
                        static void main(String[] args) {
                           def a = <error descr="Multi-dimensional array initializer is available in Groovy 5.0 or later">new String[]{
                           {"a"},
@@ -259,15 +264,43 @@ public class Groovy30HighlightingTest extends GroovyVersionBasedTest {
                           "foo"
                           }</error>
                        
-                          def b = new String[][]{<warning descr="Cannot assign 'String' to 'String[]'">"a"</warning>}
+                          def b = new A[][]{<warning descr="Cannot assign 'String' to 'A[]'">"a"</warning>}
                        
-                          def c = new String[]{
-                          <warning descr="Cannot assign 'Integer' to 'String'">1</warning>
+                          def c = new A[]{
+                          <warning descr="Cannot assign 'Integer' to 'A'">1</warning>
                           }
                        
-                          def d = <error descr="Multi-dimensional array initializer is available in Groovy 5.0 or later">new String[][]{
+                          def d = <error descr="Multi-dimensional array initializer is available in Groovy 5.0 or later">new A[][]{
                           {},
-                          {<warning descr="Cannot assign 'Object' to 'String'">new Object()</warning>}
+                          {<warning descr="Cannot assign 'Object' to 'A'">new Object()</warning>}
+                          }</error>
+                       
+                          def e = <error descr="Multi-dimensional array initializer is available in Groovy 5.0 or later">new String[][]{"str", 1, {"strInsideInitializer"}}</error>
+                       }
+                       
+                       @CompileStatic
+                       void anotherMain() {
+                          def a = <error descr="Multi-dimensional array initializer is available in Groovy 5.0 or later">new String[]{
+                          {"a"},
+                          {},
+                          "foo"
+                          }</error>
+                       
+                          def b = new A[][]{<error descr="Cannot assign 'String' to 'A[]'">"a"</error>}
+                       
+                          def c = new A[]{
+                          <error descr="Cannot assign 'Integer' to 'A'">1</error>
+                          }
+                       
+                          def d = <error descr="Multi-dimensional array initializer is available in Groovy 5.0 or later">new A[][]{
+                          {},
+                          {<error descr="Cannot assign 'Object' to 'A'">new Object()</error>}
+                          }</error>
+                       
+                          def e = <error descr="Multi-dimensional array initializer is available in Groovy 5.0 or later">new String[][]{
+                          <error descr="Cannot assign 'String' to 'String[]'">"str"</error>,
+                          <error descr="Cannot assign 'Integer' to 'String[]'">1</error>,
+                          {"strInsideInitializer"}
                           }</error>
                        }
                        """, GroovyAssignabilityCheckInspection.class);

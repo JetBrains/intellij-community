@@ -406,14 +406,13 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
     if (initializerType == null) {
       registerError(
         expression,
-        GroovyBundle.message("illegal.array.initializer", componentType.getInternalCanonicalText()),
+        GroovyBundle.message("illegal.array.initializer", componentType.getPresentableText()),
         LocalQuickFix.EMPTY_ARRAY,
         ProblemHighlightType.GENERIC_ERROR
       );
     }
     else {
-      ConversionResult result =
-        TypesUtil.isAssignableWithoutConversions(componentType, initializerType) ? ConversionResult.OK : ConversionResult.ERROR;
+      ConversionResult result = TypesUtil.canAssign(componentType, initializerType, expression, Position.ASSIGNMENT);
       processResult(result, expression, componentType, initializerType, LocalQuickFix.EMPTY_ARRAY);
     }
   }

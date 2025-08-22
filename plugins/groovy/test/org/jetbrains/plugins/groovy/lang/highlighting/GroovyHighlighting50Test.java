@@ -40,23 +40,56 @@ public class GroovyHighlighting50Test extends LightGroovyTestCase implements Hig
   }
 
   public void testIncompatibleTypeOfArrayInitializer() {
+    addCompileStatic();
     highlightingTest("""
+                       import groovy.transform.CompileStatic
+                       
+                       class A {}
+                       
                        static void main(String[] args) {
                           def a = new String[]{
-                          <warning descr="Illegal initializer for 'java.lang.String'">{"a"}</warning>,
-                          <warning descr="Illegal initializer for 'java.lang.String'">{}</warning>,
+                          <warning descr="Illegal initializer for 'String'">{"a"}</warning>,
+                          <warning descr="Illegal initializer for 'String'">{}</warning>,
                           "foo"
                           }
                        
-                          def b = new String[][]{<warning descr="Cannot assign 'String' to 'String[]'">"a"</warning>}
+                          def b = new A[][]{<warning descr="Cannot assign 'String' to 'A[]'">"a"</warning>}
                        
-                          def c = new String[]{
-                          <warning descr="Cannot assign 'Integer' to 'String'">1</warning>
+                          def c = new A[]{
+                          <warning descr="Cannot assign 'Integer' to 'A'">1</warning>
                           }
                        
-                          def d = new String[][]{
+                          def d = new A[][]{
                           {},
-                          {<warning descr="Cannot assign 'Object' to 'String'">new Object()</warning>}
+                          {<warning descr="Cannot assign 'Object' to 'A'">new Object()</warning>}
+                          }
+                       
+                          def e = new String[][]{"str", 1, {"strInsideInitializer"}}
+                       }
+                       
+                       @CompileStatic
+                       void anotherMain() {
+                          def a = new String[]{
+                          <error descr="Illegal initializer for 'String'">{"a"}</error>,
+                          <error descr="Illegal initializer for 'String'">{}</error>,
+                          "foo"
+                          }
+                       
+                          def b = new A[][]{<error descr="Cannot assign 'String' to 'A[]'">"a"</error>}
+                       
+                          def c = new A[]{
+                          <error descr="Cannot assign 'Integer' to 'A'">1</error>
+                          }
+                       
+                          def d = new A[][]{
+                          {},
+                          {<error descr="Cannot assign 'Object' to 'A'">new Object()</error>}
+                          }
+                       
+                          def e = new String[][]{
+                          <error descr="Cannot assign 'String' to 'String[]'">"str"</error>,
+                          <error descr="Cannot assign 'Integer' to 'String[]'">1</error>,
+                          {"strInsideInitializer"}
                           }
                        }
                        """, GroovyAssignabilityCheckInspection.class);
