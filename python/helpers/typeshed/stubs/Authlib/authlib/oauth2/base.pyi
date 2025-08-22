@@ -2,6 +2,8 @@ from _typeshed import Incomplete
 
 from authlib.common.errors import AuthlibHTTPError
 
+def invalid_error_characters(text: str) -> list[str]: ...
+
 class OAuth2Error(AuthlibHTTPError):
     state: Incomplete
     redirect_uri: Incomplete

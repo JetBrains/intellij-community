@@ -9,7 +9,7 @@ __all__ = ["attribute_mixing_matrix", "attribute_mixing_dict", "degree_mixing_ma
 @_dispatchable
 def attribute_mixing_dict(
     G: Graph[_Node], attribute: str, nodes: Iterable[Incomplete] | None = None, normalized: bool = False
-): ...
+) -> dict[Incomplete, Incomplete]: ...
 @_dispatchable
 def attribute_mixing_matrix(
     G: Graph[_Node],
@@ -21,7 +21,7 @@ def attribute_mixing_matrix(
 @_dispatchable
 def degree_mixing_dict(
     G: Graph[_Node], x: str = "out", y: str = "in", weight: str | None = None, nodes=None, normalized: bool = False
-): ...
+) -> dict[Incomplete, Incomplete]: ...
 @_dispatchable
 def degree_mixing_matrix(
     G: Graph[_Node],
@@ -33,4 +33,4 @@ def degree_mixing_matrix(
     mapping: SupportsGetItem[Incomplete, Incomplete] | None = None,
 ): ...
 @_dispatchable
-def mixing_dict(xy, normalized: bool = False): ...
+def mixing_dict(xy, normalized: bool = False) -> dict[Incomplete, Incomplete]: ...

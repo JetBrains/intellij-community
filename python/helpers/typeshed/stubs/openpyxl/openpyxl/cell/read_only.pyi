@@ -12,6 +12,7 @@ from openpyxl.workbook.child import _WorkbookChild
 from openpyxl.worksheet._read_only import ReadOnlyWorksheet
 
 class ReadOnlyCell:
+    __slots__ = ("parent", "row", "column", "_value", "data_type", "_style_id")
     parent: _WorkbookChild | ReadOnlyWorksheet
     row: Incomplete
     column: Incomplete
@@ -58,6 +59,7 @@ class ReadOnlyCell:
     def value(self, value: None) -> None: ...
 
 class EmptyCell:
+    __slots__ = ()
     value: Incomplete
     is_date: bool
     font: Incomplete

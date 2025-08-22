@@ -3,6 +3,7 @@ from weakref import ref
 
 @final
 class ValuedWeakRef(ref):
+    __slots__ = ("value",)
     value: Any
 
 @final

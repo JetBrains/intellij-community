@@ -1,6 +1,9 @@
 from _typeshed import Incomplete
+from logging import Logger
 
 from authlib.oidc.core import OpenIDImplicitGrant
+
+log: Logger
 
 class OpenIDHybridGrant(OpenIDImplicitGrant):
     AUTHORIZATION_CODE_LENGTH: int

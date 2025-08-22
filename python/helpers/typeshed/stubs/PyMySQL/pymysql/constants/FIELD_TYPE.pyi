@@ -1,30 +1,32 @@
-DECIMAL: int
-TINY: int
-SHORT: int
-LONG: int
-FLOAT: int
-DOUBLE: int
-NULL: int
-TIMESTAMP: int
-LONGLONG: int
-INT24: int
-DATE: int
-TIME: int
-DATETIME: int
-YEAR: int
-NEWDATE: int
-VARCHAR: int
-BIT: int
-JSON: int
-NEWDECIMAL: int
-ENUM: int
-SET: int
-TINY_BLOB: int
-MEDIUM_BLOB: int
-LONG_BLOB: int
-BLOB: int
-VAR_STRING: int
-STRING: int
-GEOMETRY: int
-CHAR: int
-INTERVAL: int
+from typing import Final
+
+DECIMAL: Final = 0
+TINY: Final = 1
+SHORT: Final = 2
+LONG: Final = 3
+FLOAT: Final = 4
+DOUBLE: Final = 5
+NULL: Final = 6
+TIMESTAMP: Final = 7
+LONGLONG: Final = 8
+INT24: Final = 9
+DATE: Final = 10
+TIME: Final = 11
+DATETIME: Final = 12
+YEAR: Final = 13
+NEWDATE: Final = 14
+VARCHAR: Final = 15
+BIT: Final = 16
+JSON: Final = 245
+NEWDECIMAL: Final = 246
+ENUM: Final = 247
+SET: Final = 248
+TINY_BLOB: Final = 249
+MEDIUM_BLOB: Final = 250
+LONG_BLOB: Final = 251
+BLOB: Final = 252
+VAR_STRING: Final = 253
+STRING: Final = 254
+GEOMETRY: Final = 255
+CHAR: Final = TINY
+INTERVAL: Final = ENUM

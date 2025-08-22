@@ -1,9 +1,11 @@
 from _typeshed import Incomplete
+from collections.abc import Iterable
+from typing import ClassVar
 
 from authlib.jose.rfc7516 import JWEAlgorithmWithTagAwareKeyAgreement
 
 class ECDH1PUAlgorithm(JWEAlgorithmWithTagAwareKeyAgreement):
-    EXTRA_HEADERS: Incomplete
+    EXTRA_HEADERS: ClassVar[Iterable[str]]
     ALLOWED_KEY_CLS: Incomplete
     name: str
     description: str

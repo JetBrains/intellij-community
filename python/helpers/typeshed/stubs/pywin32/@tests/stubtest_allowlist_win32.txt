@@ -22,9 +22,6 @@ win32com.makegw.*
 (win32.lib.)?pywintypes.__import_pywin32_system_module__
 
 # COM object servers scripts
-win32com.server.factory
-win32com.server.localserver
-win32com.server.register
 win32com.servers.*
 # Active X Scripts
 win32com(ext)?.axscript.client.pyscript_rexec

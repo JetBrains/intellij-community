@@ -17,6 +17,24 @@ PRODUCT: str
 LOGGER: Logger
 
 class Parameters:
+    __slots__ = (
+        "_blocked_connection_timeout",
+        "_channel_max",
+        "_client_properties",
+        "_connection_attempts",
+        "_credentials",
+        "_frame_max",
+        "_heartbeat",
+        "_host",
+        "_locale",
+        "_port",
+        "_retry_delay",
+        "_socket_timeout",
+        "_stack_timeout",
+        "_ssl_options",
+        "_virtual_host",
+        "_tcp_options",
+    )
     DEFAULT_USERNAME: str
     DEFAULT_PASSWORD: str
     DEFAULT_BLOCKED_CONNECTION_TIMEOUT: None
@@ -106,6 +124,7 @@ class Parameters:
     def tcp_options(self, value: dict[Incomplete, Incomplete] | None) -> None: ...
 
 class ConnectionParameters(Parameters):
+    __slots__ = ()
     def __init__(
         self,
         host: str = ...,
@@ -127,9 +146,11 @@ class ConnectionParameters(Parameters):
     ) -> None: ...
 
 class URLParameters(Parameters):
+    __slots__ = ("_all_url_query_values",)
     def __init__(self, url: str) -> None: ...
 
 class SSLOptions:
+    __slots__ = ("context", "server_hostname")
     context: ssl.SSLContext
     server_hostname: str | None
     def __init__(self, context: ssl.SSLContext, server_hostname: str | None = None) -> None: ...

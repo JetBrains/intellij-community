@@ -1,5 +1,6 @@
 from typing import Final
 
+__docformat__: Final = "reStructuredText"
 document_template: Final[str]
 
 def blahtexml(math_code: str, as_block: bool = False) -> str: ...

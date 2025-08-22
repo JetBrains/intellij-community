@@ -3,13 +3,14 @@ from _typeshed import Unused
 from collections import OrderedDict
 from collections.abc import Generator
 from re import Match, Pattern
-from typing import Any, Final, Generic, Literal, Protocol, TypeVar, overload
+from typing import Any, Final, Generic, Literal, Protocol, TypeVar, overload, type_check_only
 from typing_extensions import Never, Self, TypeAlias
 
 _R_co = TypeVar("_R_co", float, datetime.datetime, default=float, covariant=True)
 _R2_co = TypeVar("_R2_co", float, datetime.datetime, covariant=True)
 _Expressions: TypeAlias = list[str]  # fixed-length list of 5 or 6 strings
 
+@type_check_only
 class _AllIter(Protocol[_R_co]):
     @overload
     def __call__(
@@ -188,7 +189,7 @@ class croniter(Generic[_R_co]):
     @overload
     def get_next(
         self, ret_type: type[_R2_co], start_time: float | datetime.datetime | None = None, update_current: bool = True
-    ) -> _R_co: ...
+    ) -> _R2_co: ...
     @overload
     def get_next(
         self, ret_type: None = None, start_time: float | datetime.datetime | None = None, update_current: bool = True

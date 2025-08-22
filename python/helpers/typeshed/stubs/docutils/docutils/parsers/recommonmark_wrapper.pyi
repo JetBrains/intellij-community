@@ -1,15 +1,18 @@
 from types import ModuleType
 from typing import ClassVar
+from typing_extensions import deprecated
 
 from docutils import nodes
 from docutils.transforms import Transform
 
+@deprecated("The `recommonmark` package is unmaintained and deprecated; will be removed in Docutils 1.0.")
 class pending_xref(nodes.Inline, nodes.Element): ...
 
 sphinx: ModuleType
 
+@deprecated("The `recommonmark` package is unmaintained and deprecated; will be removed in Docutils 1.0.")
 def is_literal(node: nodes.Node) -> bool: ...
-
+@deprecated("The `recommonmark` package is unmaintained and deprecated; will be removed in Docutils 1.0.")
 class _CommonMarkParser:
     default_config: ClassVar[dict[str, None]]
     def __init__(self) -> None: ...
@@ -40,6 +43,7 @@ class _CommonMarkParser:
     def add_section(self, section, level): ...
     def is_section_level(self, level, section): ...
 
+@deprecated("The `recommonmark` package is unmaintained and deprecated; will be removed in Docutils 1.0.")
 class Parser(_CommonMarkParser):
     supported: ClassVar[tuple[str, ...]]
     config_section: ClassVar[str]

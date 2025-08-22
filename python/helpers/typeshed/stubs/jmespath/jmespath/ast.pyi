@@ -1,4 +1,4 @@
-from typing import Literal, TypedDict
+from typing import Literal, TypedDict, type_check_only
 from typing_extensions import NotRequired, TypeAlias
 
 _NodeType: TypeAlias = Literal[
@@ -26,6 +26,7 @@ _NodeType: TypeAlias = Literal[
     "value_projection",
 ]
 
+@type_check_only
 class _ASTNode(TypedDict):
     type: _NodeType
     children: list[_ASTNode]
@@ -52,4 +53,4 @@ def pipe(left: _ASTNode, right: _ASTNode) -> _ASTNode: ...
 def projection(left: _ASTNode, right: _ASTNode) -> _ASTNode: ...
 def subexpression(children: list[_ASTNode]) -> _ASTNode: ...
 def slice(start: _ASTNode, end: _ASTNode, step: _ASTNode) -> _ASTNode: ...
-def value_projection(left, right) -> _ASTNode: ...
+def value_projection(left: _ASTNode, right: _ASTNode) -> _ASTNode: ...

@@ -28,12 +28,11 @@ from ts_utils.utils import (
     print_info,
     print_success_msg,
     print_time,
+    print_warning,
 )
 
 
-def run_stubtest(
-    dist: Path, *, verbose: bool = False, specified_platforms_only: bool = False, keep_tmp_dir: bool = False
-) -> bool:
+def run_stubtest(dist: Path, *, verbose: bool = False, ci_platforms_only: bool = False, keep_tmp_dir: bool = False) -> bool:
     """Run stubtest for a single distribution."""
 
     dist_name = dist.name
@@ -44,14 +43,16 @@ def run_stubtest(
 
     stubtest_settings = metadata.stubtest_settings
     if stubtest_settings.skip:
-        print(colored("skipping", "yellow"))
+        print(colored("skipping (skip = true)", "yellow"))
         return True
 
-    if sys.platform not in stubtest_settings.platforms:
-        if specified_platforms_only:
-            print(colored("skipping (platform not specified in METADATA.toml)", "yellow"))
-            return True
-        print(colored(f"Note: {dist_name} is not currently tested on {sys.platform} in typeshed's CI.", "yellow"))
+    if stubtest_settings.supported_platforms is not None and sys.platform not in stubtest_settings.supported_platforms:
+        print(colored("skipping (platform not supported)", "yellow"))
+        return True
+
+    if ci_platforms_only and sys.platform not in stubtest_settings.ci_platforms:
+        print(colored("skipping (platform skipped in CI)", "yellow"))
+        return True
 
     if not metadata.requires_python.contains(PYTHON_VERSION):
         print(colored(f"skipping (requires Python {metadata.requires_python})", "yellow"))
@@ -107,6 +108,7 @@ def run_stubtest(
                 "mypy.stubtest",
                 "--mypy-config-file",
                 temp.name,
+                "--show-traceback",
                 # Use --custom-typeshed-dir in case we make linked changes to stdlib or _typeshed
                 "--custom-typeshed-dir",
                 str(dist.parent.parent),
@@ -189,8 +191,13 @@ def run_stubtest(
             else:
                 print_time(time() - t)
                 print_success_msg()
+
+                if sys.platform not in stubtest_settings.ci_platforms:
+                    print_warning(f"Note: {dist_name} is not currently tested on {sys.platform} in typeshed's CI")
+
                 if keep_tmp_dir:
                     print_info(f"Virtual environment kept at: {venv_dir}")
+
     finally:
         if not keep_tmp_dir:
             rmtree(venv_dir)
@@ -398,9 +405,9 @@ def main() -> NoReturn:
     parser.add_argument("--num-shards", type=int, default=1)
     parser.add_argument("--shard-index", type=int, default=0)
     parser.add_argument(
-        "--specified-platforms-only",
+        "--ci-platforms-only",
         action="store_true",
-        help="skip the test if the current platform is not specified in METADATA.toml/tool.stubtest.platforms",
+        help="skip the test if the current platform is not specified in METADATA.toml/tool.stubtest.ci-platforms",
     )
     parser.add_argument("--keep-tmp-dir", action="store_true", help="keep the temporary virtualenv")
     parser.add_argument("dists", metavar="DISTRIBUTION", type=str, nargs=argparse.ZERO_OR_MORE)
@@ -417,7 +424,7 @@ def main() -> NoReturn:
             continue
         try:
             if not run_stubtest(
-                dist, verbose=args.verbose, specified_platforms_only=args.specified_platforms_only, keep_tmp_dir=args.keep_tmp_dir
+                dist, verbose=args.verbose, ci_platforms_only=args.ci_platforms_only, keep_tmp_dir=args.keep_tmp_dir
             ):
                 result = 1
         except NoSuchStubError as e:

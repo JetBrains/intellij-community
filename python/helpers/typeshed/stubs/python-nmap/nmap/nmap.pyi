@@ -1,28 +1,33 @@
 from collections.abc import Callable, Iterable, Iterator
-from typing import Any, TypedDict, TypeVar
+from typing import Any, TypedDict, TypeVar, type_check_only
 from typing_extensions import TypeAlias
 
 _T = TypeVar("_T")
 _Callback: TypeAlias = Callable[[str, _Result], object]
 
+@type_check_only
 class _Result(TypedDict):
     nmap: _ResultNmap
     scan: dict[str, PortScannerHostDict]
 
+@type_check_only
 class _ResultNmap(TypedDict):
     command_line: str
     scaninfo: _ResultNmapInfo
     scanstats: _ResultNampStats
 
+@type_check_only
 class _ResultNmapInfo(TypedDict, total=False):
     error: str
     warning: str
     protocol: _ResultNampInfoProtocol
 
+@type_check_only
 class _ResultNampInfoProtocol(TypedDict):
     method: str
     services: str
 
+@type_check_only
 class _ResultNampStats(TypedDict):
     timestr: str
     elapsed: str
@@ -30,14 +35,17 @@ class _ResultNampStats(TypedDict):
     downhosts: str
     totalhosts: str
 
+@type_check_only
 class _ResulHostUptime(TypedDict):
     seconds: str
     lastboot: str
 
+@type_check_only
 class _ResultHostNames(TypedDict):
     type: str
     name: str
 
+@type_check_only
 class _ResultHostPort(TypedDict):
     conf: str
     cpe: str

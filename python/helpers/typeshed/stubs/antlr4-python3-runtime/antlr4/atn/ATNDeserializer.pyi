@@ -11,6 +11,7 @@ from antlr4.Token import Token as Token
 SERIALIZED_VERSION: int
 
 class ATNDeserializer:
+    __slots__ = ("deserializationOptions", "data", "pos")
     deserializationOptions: Incomplete
     def __init__(self, options: ATNDeserializationOptions | None = None) -> None: ...
     data: Incomplete

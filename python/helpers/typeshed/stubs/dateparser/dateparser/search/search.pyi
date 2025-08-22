@@ -1,3 +1,4 @@
+from collections.abc import Collection
 from typing import Any
 
 from ..date import _DetectLanguagesFunction
@@ -33,3 +34,4 @@ class DateSearchWithDetection:
     def search_dates(
         self, text, languages=None, settings=None, detect_languages_function: _DetectLanguagesFunction | None = None
     ): ...
+    def preprocess_text(self, text: str, languages: Collection[str]) -> str: ...

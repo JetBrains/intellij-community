@@ -1,5 +1,5 @@
 import datetime
-from typing import Literal, TypedDict
+from typing import Literal, TypedDict, type_check_only
 from typing_extensions import TypeAlias
 
 from .date import DateDataParser, _DetectLanguagesFunction
@@ -11,6 +11,7 @@ _default_parser: DateDataParser
 _Part: TypeAlias = Literal["day", "month", "year"]
 _ParserKind: TypeAlias = Literal["timestamp", "relative-time", "custom-formats", "absolute-time", "no-spaces-time"]
 
+@type_check_only
 class _Settings(TypedDict, total=False):
     DATE_ORDER: str
     PREFER_LOCALE_DATE_ORDER: bool

@@ -1,14 +1,14 @@
 import io
 import os
 from _typeshed import Incomplete, SupportsGetItem, SupportsLenAndGetItem, SupportsRead, SupportsWrite
-from collections.abc import Callable, Container, Hashable, Iterable, Iterator, Mapping
+from collections.abc import Callable, Container, Hashable, Iterable, Iterator, Mapping, Sequence
 from json import JSONEncoder
 from typing import Any, Literal, overload
 from typing_extensions import Self
 
 import pandas as pd
 from numpy.typing import ArrayLike
-from pandas._typing import AggFuncTypeFrame, AstypeArg, Axes, Axis, Dtype, GroupByObject, IndexLabel, Scalar
+from pandas._typing import AggFuncTypeFrame, Axes, Axis, Dtype, GroupByObject, IndexLabel, Scalar
 from pyproj import CRS
 
 from ._decorator import doc
@@ -160,7 +160,9 @@ class GeoDataFrame(GeoPandasBase, pd.DataFrame):  # type: ignore[misc]
         chunksize: None = None,
     ) -> GeoDataFrame: ...
     @classmethod
-    def from_arrow(cls, table, geometry: str | None = None) -> GeoDataFrame: ...  # table: pyarrow.Table
+    def from_arrow(
+        cls, table, geometry: str | None = None, to_pandas_kwargs: Mapping[str, Incomplete] | None = None
+    ) -> GeoDataFrame: ...  # TODO: `table: pyarrow.Table | table-like`
     def to_json(  # type: ignore[override]
         self,
         na: str = "null",
@@ -306,16 +308,11 @@ class GeoDataFrame(GeoPandasBase, pd.DataFrame):  # type: ignore[misc]
         sort: bool = True,
         observed: bool = False,
         dropna: bool = True,
-        method: Literal["coverage", "unary"] = "unary",
+        method: Literal["coverage", "unary", "disjoint_subset"] = "unary",
+        grid_size: float | None = None,
         **kwargs,
     ) -> GeoDataFrame: ...
     def explode(self, column: IndexLabel | None = None, ignore_index: bool = False, index_parts: bool = False) -> Self: ...
-    def astype(
-        self,
-        dtype: AstypeArg | Mapping[Any, Dtype] | pd.Series[Any],  # any because of mapping invariance and series typevar bounds
-        copy: bool | None = None,
-        errors: Literal["ignore", "raise"] = "raise",
-    ) -> GeoDataFrame: ...
     def to_postgis(
         self,
         name: str,
@@ -334,12 +331,15 @@ class GeoDataFrame(GeoPandasBase, pd.DataFrame):  # type: ignore[misc]
     def sjoin(
         self,
         df: GeoDataFrame,
-        # *args, **kwargs passed to geopandas.sjoin
         how: Literal["left", "right", "inner"] = "inner",
         predicate: str = "intersects",
         lsuffix: str = "left",
         rsuffix: str = "right",
+        *,
+        # **kwargs passed to geopandas.sjoin
         distance: float | ArrayLike | None = None,
+        on_attribute: str | Sequence[str] | None = None,
+        **kwargs,
     ) -> GeoDataFrame: ...
     def sjoin_nearest(
         self,

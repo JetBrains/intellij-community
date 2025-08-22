@@ -80,23 +80,26 @@ jobs:
 
           if [ "${{ runner.os }}" = "Linux" ]; then
             if [ -n "$PACKAGES" ]; then
+              printf "Installing APT packages:\n  $(echo $PACKAGES | sed 's/ /\n  /g')\n"
               sudo apt-get update -q && sudo apt-get install -qy $PACKAGES
             fi
 
             PYTHON_EXECUTABLE="xvfb-run python"
           else
             if [ "${{ runner.os }}" = "macOS" ] && [ -n "$PACKAGES" ]; then
+              printf "Installing Homebrew packages:\n  $(echo $PACKAGES | sed 's/ /\n  /g')\n"
               brew install -q $PACKAGES
             fi
 
             if [ "${{ runner.os }}" = "Windows" ] && [ -n "$PACKAGES" ]; then
+              printf "Installing Chocolatey packages:\n  $(echo $PACKAGES | sed 's/ /\n  /g')\n"
               choco install -y $PACKAGES
             fi
 
             PYTHON_EXECUTABLE="python"
           fi
 
-          $PYTHON_EXECUTABLE tests/stubtest_third_party.py --specified-platforms-only --num-shards 4 --shard-index ${{ matrix.shard-index }}
+          $PYTHON_EXECUTABLE tests/stubtest_third_party.py --ci-platforms-only --num-shards 4 --shard-index ${{ matrix.shard-index }}
 
   stub-uploader:
     name: stub_uploader tests
@@ -117,6 +120,8 @@ jobs:
           # Keep in sync with stub_uploader's check_scripts.yml workflow.
           python-version: "3.13"
       - uses: astral-sh/setup-uv@v6
+        with:
+          version-file: "typeshed/requirements-tests.txt"
       - name: Run tests
         run: |
           cd stub_uploader

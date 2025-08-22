@@ -84,7 +84,7 @@ def simrank_similarity(
     importance_factor: float = 0.9,
     max_iterations: int = 1000,
     tolerance: float = 0.0001,
-): ...
+) -> float | dict[Incomplete, Incomplete]: ...
 @_dispatchable
 def panther_similarity(
     G: Graph[_Node],
@@ -95,7 +95,7 @@ def panther_similarity(
     delta: float = 0.1,
     eps=None,
     weight: str | None = "weight",
-): ...
+) -> dict[bytes, bytes]: ...
 @_dispatchable
 def generate_random_paths(
     G: Graph[_Node],

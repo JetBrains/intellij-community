@@ -5,6 +5,7 @@ At present the active maintainers are (alphabetically):
 * Ivan Levkivskyi (@ilevkivskyi)
 * Sebastian Rittau (@srittau)
 * Guido van Rossum (@gvanrossum)
+* Brian Schubert (@brianschubert)
 * Shantanu (@hauntsaninja)
 * Nikita Sobolev (@sobolevn)
 * Samuel Therrien (@Avasam)

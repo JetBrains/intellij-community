@@ -1,5 +1,5 @@
 from collections.abc import Iterator
-from typing import Any, Generic, TypeVar
+from typing import Any, Generic, TypeVar, type_check_only
 
 from google.protobuf.descriptor import FieldDescriptor
 from google.protobuf.internal.containers import RepeatedCompositeFieldContainer, RepeatedScalarFieldContainer
@@ -11,6 +11,7 @@ _ExtenderMessageT = TypeVar(
     bound=Message | RepeatedScalarFieldContainer[Any] | RepeatedCompositeFieldContainer[Any] | bool | float | str | bytes,
 )
 
+@type_check_only
 class _ExtensionFieldDescriptor(FieldDescriptor, Generic[_ContainerMessageT, _ExtenderMessageT]): ...
 
 class _ExtensionDict(Generic[_ContainerMessageT]):

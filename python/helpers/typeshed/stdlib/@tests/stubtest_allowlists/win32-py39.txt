@@ -1,6 +1,6 @@
-# ===========
-# 3.9 to 3.11
-# ===========
+# =======
+# <= 3.11
+# =======
 
 # Incompatible changes introduced in Python 3.9.20
 # (Remove once 3.9.20 becomes available for Windows)
@@ -51,7 +51,7 @@ xml.etree.cElementTree.XMLPullParser.flush
 xml.parsers.expat.XMLParserType.GetReparseDeferralEnabled
 xml.parsers.expat.XMLParserType.SetReparseDeferralEnabled
 xml.sax.expatreader.ExpatParser.flush
-
+zipfile.ZipInfo.__slots__
 
 # =============================================================
 # Allowlist entries that cannot or should not be fixed; <= 3.12

@@ -1,6 +1,9 @@
 from _typeshed import Incomplete
+from logging import Logger
 
 from authlib.oauth2.rfc6749 import AuthorizationEndpointMixin, BaseGrant
+
+log: Logger
 
 class ImplicitGrant(BaseGrant, AuthorizationEndpointMixin):
     AUTHORIZATION_ENDPOINT: bool

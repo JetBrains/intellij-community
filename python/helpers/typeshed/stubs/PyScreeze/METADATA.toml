@@ -4,7 +4,7 @@ requires = ["Pillow>=10.3.0"]
 
 [tool.stubtest]
 # Linux has extra constants, win32 has different definitions
-platforms = ["linux", "win32"]
+ci_platforms = ["linux", "win32"]
 # PyScreeze has an odd setup.py file
 # that doesn't list Pillow as a dependency for py312+ yet:
 # https://github.com/asweigart/pyscreeze/blob/eeca245a135cf171c163b3691300138518efa64e/setup.py#L38-L46

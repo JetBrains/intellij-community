@@ -2,7 +2,7 @@ import sys
 import types
 from collections.abc import Callable, Iterator
 from opcode import *  # `dis` re-exports it as a part of public API
-from typing import IO, Any, NamedTuple
+from typing import IO, Any, Final, NamedTuple
 from typing_extensions import Self, TypeAlias
 
 __all__ = [
@@ -178,7 +178,7 @@ class Bytecode:
     def info(self) -> str: ...
     def dis(self) -> str: ...
 
-COMPILER_FLAG_NAMES: dict[int, str]
+COMPILER_FLAG_NAMES: Final[dict[int, str]]
 
 def findlabels(code: _HaveCodeType) -> list[int]: ...
 def findlinestarts(code: _HaveCodeType) -> Iterator[tuple[int, int]]: ...

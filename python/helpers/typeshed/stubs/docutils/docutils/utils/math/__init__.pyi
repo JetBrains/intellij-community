@@ -1,6 +1,8 @@
-from typing import Literal
+from typing import Final, Literal
 
 from docutils.nodes import Node
+
+__docformat__: Final = "reStructuredText"
 
 class MathError(ValueError):
     details: list[Node]

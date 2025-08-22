@@ -1,9 +1,10 @@
-from _typeshed import SupportsRead
+from _typeshed import Incomplete, SupportsRead
 from codecs import CodecInfo
-from typing import Any, Protocol, overload
+from typing import Protocol, overload, type_check_only
 from typing_extensions import TypeAlias
 
 # Is actually webencodings.Encoding
+@type_check_only
 class _Encoding(Protocol):
     name: str
     codec_info: CodecInfo
@@ -13,20 +14,20 @@ _UnicodeInputStream: TypeAlias = str | SupportsRead[str]
 _BinaryInputStream: TypeAlias = bytes | SupportsRead[bytes]
 _InputStream: TypeAlias = _UnicodeInputStream | _BinaryInputStream  # noqa: Y047  # used in other files
 
-spaceCharactersBytes: Any
-asciiLettersBytes: Any
-asciiUppercaseBytes: Any
-spacesAngleBrackets: Any
+spaceCharactersBytes: Incomplete
+asciiLettersBytes: Incomplete
+asciiUppercaseBytes: Incomplete
+spacesAngleBrackets: Incomplete
 invalid_unicode_no_surrogate: str
-invalid_unicode_re: Any
-non_bmp_invalid_codepoints: Any
-ascii_punctuation_re: Any
-charsUntilRegEx: Any
+invalid_unicode_re: Incomplete
+non_bmp_invalid_codepoints: Incomplete
+ascii_punctuation_re: Incomplete
+charsUntilRegEx: Incomplete
 
 class BufferedStream:
-    stream: Any
-    buffer: Any
-    position: Any
+    stream: Incomplete
+    buffer: Incomplete
+    position: Incomplete
     def __init__(self, stream) -> None: ...
     def tell(self): ...
     def seek(self, pos) -> None: ...
@@ -47,10 +48,10 @@ def HTMLInputStream(
 ) -> HTMLBinaryInputStream: ...
 
 class HTMLUnicodeInputStream:
-    reportCharacterErrors: Any
-    newLines: Any
+    reportCharacterErrors: Incomplete
+    newLines: Incomplete
     charEncoding: tuple[_Encoding, str]
-    dataStream: Any
+    dataStream: Incomplete
     def __init__(self, source: _UnicodeInputStream) -> None: ...
     chunk: str
     chunkSize: int
@@ -69,14 +70,14 @@ class HTMLUnicodeInputStream:
     def unget(self, char) -> None: ...
 
 class HTMLBinaryInputStream(HTMLUnicodeInputStream):
-    rawStream: Any
+    rawStream: Incomplete
     numBytesMeta: int
     numBytesChardet: int
-    override_encoding: Any
-    transport_encoding: Any
-    same_origin_parent_encoding: Any
-    likely_encoding: Any
-    default_encoding: Any
+    override_encoding: Incomplete
+    transport_encoding: Incomplete
+    same_origin_parent_encoding: Incomplete
+    likely_encoding: Incomplete
+    default_encoding: Incomplete
     charEncoding: tuple[_Encoding, str]
     def __init__(
         self,
@@ -88,7 +89,7 @@ class HTMLBinaryInputStream(HTMLUnicodeInputStream):
         default_encoding: str = "windows-1252",
         useChardet: bool = True,
     ) -> None: ...
-    dataStream: Any
+    dataStream: Incomplete
     def reset(self) -> None: ...
     def openStream(self, source): ...
     def determineEncoding(self, chardet: bool = True): ...
@@ -105,7 +106,7 @@ class EncodingBytes(bytes):
     def previous(self): ...
     def setPosition(self, position) -> None: ...
     def getPosition(self): ...
-    position: Any
+    position: Incomplete
     def getCurrentByte(self): ...
     @property
     def currentByte(self): ...
@@ -115,8 +116,8 @@ class EncodingBytes(bytes):
     def jumpTo(self, bytes): ...
 
 class EncodingParser:
-    data: Any
-    encoding: Any
+    data: Incomplete
+    encoding: Incomplete
     def __init__(self, data) -> None: ...
     def getEncoding(self): ...
     def handleComment(self): ...
@@ -128,7 +129,7 @@ class EncodingParser:
     def getAttribute(self): ...
 
 class ContentAttrParser:
-    data: Any
+    data: Incomplete
     def __init__(self, data) -> None: ...
     def parse(self): ...
 

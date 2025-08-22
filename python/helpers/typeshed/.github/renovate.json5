@@ -24,15 +24,15 @@
     {
       groupName: "most test/lint dependencies",
       matchManagers: ["pip_requirements", "pre-commit"],
-      matchPackageNames: ["!pytype", "!pyright"],
+      matchPackageNames: ["!pyright"],
       description: "Quarterly update of most test dependencies",
       schedule: ["every 3 months on the first day of the month"]
     },
     {
-      "groupName": "pytype and pyright",
+      "groupName": "pyright",
       "matchManagers": ["pip_requirements"],
-      "matchPackageNames": ["pytype", "pyright"],
-      "description": "Daily update of pyright and pytype",
+      "matchPackageNames": ["pyright"],
+      "description": "Daily update of pyright",
       "schedule": ["before 4am"]
     }
   ]

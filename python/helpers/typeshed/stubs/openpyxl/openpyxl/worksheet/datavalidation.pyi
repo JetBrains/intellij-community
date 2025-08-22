@@ -1,5 +1,5 @@
 from _typeshed import ConvertibleToInt, Incomplete
-from typing import ClassVar, Literal, Protocol
+from typing import ClassVar, Literal, Protocol, type_check_only
 from typing_extensions import TypeAlias
 
 from openpyxl.descriptors.base import (
@@ -36,6 +36,7 @@ _DataValidationOperator: TypeAlias = Literal[
     "between", "notBetween", "equal", "notEqual", "lessThan", "lessThanOrEqual", "greaterThan", "greaterThanOrEqual"
 ]
 
+@type_check_only
 class _HasCoordinate(Protocol):
     coordinate: str | CellRange
 

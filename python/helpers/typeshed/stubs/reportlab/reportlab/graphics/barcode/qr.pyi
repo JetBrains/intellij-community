@@ -1,4 +1,5 @@
 from _typeshed import Incomplete
+from typing import type_check_only
 
 from reportlab.graphics.shapes import Rect
 from reportlab.graphics.widgetbase import Widget
@@ -7,11 +8,13 @@ from reportlab.platypus.flowables import Flowable
 
 __all__ = ["QrCodeWidget"]
 
+@type_check_only
 class _isLevel(Validator):
     def test(self, x): ...
 
 isLevel: _isLevel
 
+@type_check_only
 class _isUnicodeOrQRList(Validator):
     def test(self, x): ...
     def normalize(self, x): ...

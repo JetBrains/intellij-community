@@ -6,6 +6,7 @@ from oauthlib.oauth2.rfc6749.tokens import TokenBase as TokenBase
 from .request_validator import RequestValidator
 
 class JWTToken(TokenBase):
+    __slots__ = ("request_validator", "token_generator", "refresh_token_generator", "expires_in")
     request_validator: RequestValidator
     token_generator: Callable[[Request], str] | Callable[[Request, bool], str]
     refresh_token_generator: Callable[[Request], str] | Callable[[Request, bool], str]

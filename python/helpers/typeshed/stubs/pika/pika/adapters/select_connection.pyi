@@ -23,6 +23,7 @@ class SelectConnection(BaseConnection):
     def create_connection(cls, connection_configs, on_done, custom_ioloop=None, workflow=None): ...
 
 class _Timeout:
+    __slots__ = ("deadline", "callback")
     deadline: Incomplete
     callback: Incomplete
     def __init__(self, deadline, callback) -> None: ...

@@ -46,11 +46,13 @@ def signed_token_generator(private_pem: str, **kwargs) -> Callable[[Request], st
 def get_token_from_header(request: Request) -> str | None: ...
 
 class TokenBase:
+    __slots__ = ()
     def __call__(self, request: Request, refresh_token: bool = False) -> None: ...
     def validate_request(self, request: Request) -> bool: ...
     def estimate_type(self, request: Request) -> int: ...
 
 class BearerToken(TokenBase):
+    __slots__ = ("request_validator", "token_generator", "refresh_token_generator", "expires_in")
     request_validator: RequestValidator | None
     token_generator: Callable[[Request], str]
     refresh_token_generator: Callable[[Request], str]

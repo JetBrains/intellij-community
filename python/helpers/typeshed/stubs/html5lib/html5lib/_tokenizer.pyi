@@ -1,20 +1,20 @@
-from typing import Any
+from _typeshed import Incomplete
 
 from ._inputstream import _InputStream
 
-entitiesTrie: Any
+entitiesTrie: Incomplete
 attributeMap = dict
 
 class HTMLTokenizer:
-    stream: Any
-    parser: Any
+    stream: Incomplete
+    parser: Incomplete
     escapeFlag: bool
-    lastFourChars: Any
-    state: Any
+    lastFourChars: Incomplete
+    state: Incomplete
     escape: bool
-    currentToken: Any
+    currentToken: Incomplete
     def __init__(self, stream: _InputStream, parser=None, **kwargs) -> None: ...
-    tokenQueue: Any
+    tokenQueue: Incomplete
     def __iter__(self): ...
     def consumeNumberEntity(self, isHex): ...
     def consumeEntity(self, allowedChar=None, fromAttribute: bool = False) -> None: ...

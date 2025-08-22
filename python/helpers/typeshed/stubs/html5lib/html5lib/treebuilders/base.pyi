@@ -1,15 +1,15 @@
-from typing import Any
+from _typeshed import Incomplete
 
-Marker: Any
-listElementsMap: Any
+Marker: Incomplete
+listElementsMap: dict[str | None, tuple[frozenset[tuple[str, str]], bool]]
 
 class Node:
-    name: Any
-    parent: Any
-    value: Any
-    attributes: Any
-    childNodes: Any
-    def __init__(self, name) -> None: ...
+    name: str
+    parent: Incomplete
+    value: Incomplete
+    attributes: Incomplete
+    childNodes: Incomplete
+    def __init__(self, name: str) -> None: ...
     def appendChild(self, node) -> None: ...
     def insertText(self, data, insertBefore=None) -> None: ...
     def insertBefore(self, node, refNode) -> None: ...
@@ -18,24 +18,24 @@ class Node:
     def cloneNode(self) -> None: ...
     def hasContent(self) -> None: ...
 
-class ActiveFormattingElements(list[Any]):
+class ActiveFormattingElements(list[Incomplete]):
     def append(self, node) -> None: ...
-    def nodesEqual(self, node1, node2): ...
+    def nodesEqual(self, node1, node2) -> bool: ...
 
 class TreeBuilder:
-    documentClass: Any
-    elementClass: Any
-    commentClass: Any
-    doctypeClass: Any
-    fragmentClass: Any
-    defaultNamespace: str
-    def __init__(self, namespaceHTMLElements) -> None: ...
-    openElements: Any
-    activeFormattingElements: Any
-    headPointer: Any
-    formPointer: Any
+    documentClass: Incomplete
+    elementClass: Incomplete
+    commentClass: Incomplete
+    doctypeClass: Incomplete
+    fragmentClass: Incomplete
+    defaultNamespace: str | None
+    def __init__(self, namespaceHTMLElements: bool | None) -> None: ...
+    openElements: Incomplete
+    activeFormattingElements: Incomplete
+    headPointer: Incomplete
+    formPointer: Incomplete
     insertFromTable: bool
-    document: Any
+    document: Incomplete
     def reset(self) -> None: ...
     def elementInScope(self, target, variant=None): ...
     def reconstructActiveFormattingElements(self) -> None: ...
@@ -52,4 +52,4 @@ class TreeBuilder:
     def generateImpliedEndTags(self, exclude=None) -> None: ...
     def getDocument(self): ...
     def getFragment(self): ...
-    def testSerializer(self, node) -> None: ...
+    def testSerializer(self, node): ...

@@ -12,6 +12,7 @@ STUBS_PATH: Final = TS_BASE_PATH / "stubs"
 PYPROJECT_PATH: Final = TS_BASE_PATH / "pyproject.toml"
 REQUIREMENTS_PATH: Final = TS_BASE_PATH / "requirements-tests.txt"
 GITIGNORE_PATH: Final = TS_BASE_PATH / ".gitignore"
+PYRIGHT_CONFIG: Final = TS_BASE_PATH / "pyrightconfig.stricter.json"
 
 TESTS_DIR: Final = "@tests"
 TEST_CASES_DIR: Final = "test_cases"

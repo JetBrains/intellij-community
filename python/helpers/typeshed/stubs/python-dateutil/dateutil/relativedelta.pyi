@@ -17,6 +17,8 @@ FR: weekday
 SA: weekday
 SU: weekday
 
+__all__ = ["relativedelta", "MO", "TU", "WE", "TH", "FR", "SA", "SU"]
+
 class relativedelta:
     years: int
     months: int

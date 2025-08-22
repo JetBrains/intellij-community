@@ -1,8 +1,9 @@
 from collections.abc import Callable
-from typing import Protocol
+from typing import Protocol, type_check_only
 
 from authlib.oauth2.rfc6749 import ClientMixin
 
+@type_check_only
 class _TokenGenerator(Protocol):
     def __call__(self, *, client: ClientMixin, grant_type: str, user, scope: str) -> str: ...
 

@@ -4,6 +4,7 @@ from collections.abc import Iterable
 from typing import ClassVar, Final, SupportsIndex, overload
 from typing_extensions import Self
 
+__docformat__: Final = "reStructuredText"
 GLOBAL_ATTRIBUTES: Final[tuple[str, ...]]
 
 class MathElement(ET.Element):

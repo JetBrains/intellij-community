@@ -1,4 +1,7 @@
 from _typeshed import Incomplete
+from logging import Logger
+
+log: Logger
 
 class BaseApp:
     client_cls: Incomplete

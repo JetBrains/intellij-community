@@ -9,7 +9,7 @@ from typing_extensions import Required, TypeAlias
 
 from . import Filter, Filterer, Formatter, Handler, Logger, _FilterType, _FormatStyle, _Level
 
-DEFAULT_LOGGING_CONFIG_PORT: int
+DEFAULT_LOGGING_CONFIG_PORT: Final = 9030
 RESET_ERROR: Final[int]  # undocumented
 IDENTIFIER: Final[Pattern[str]]  # undocumented
 
@@ -106,7 +106,7 @@ class ConvertingTuple(tuple[Any, ...], ConvertingMixin):  # undocumented
     @overload
     def __getitem__(self, key: slice) -> Any: ...
 
-class BaseConfigurator:  # undocumented
+class BaseConfigurator:
     CONVERT_PATTERN: Pattern[str]
     WORD_PATTERN: Pattern[str]
     DOT_PATTERN: Pattern[str]
@@ -114,6 +114,8 @@ class BaseConfigurator:  # undocumented
     DIGIT_PATTERN: Pattern[str]
     value_converters: dict[str, str]
     importer: Callable[..., Any]
+
+    config: dict[str, Any]  # undocumented
 
     def __init__(self, config: _DictConfigArgs | dict[str, Any]) -> None: ...
     def resolve(self, s: str) -> Any: ...

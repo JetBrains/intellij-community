@@ -1,10 +1,11 @@
 from collections.abc import Callable, Iterable
-from typing import Any, TypedDict, TypeVar
+from typing import Any, TypedDict, TypeVar, type_check_only
 from typing_extensions import NotRequired
 
 TYPES_MAP: dict[str, str]
 REVERSE_TYPES_MAP: dict[str, tuple[str, ...]]
 
+@type_check_only
 class _Signature(TypedDict):
     types: list[str]
     variadic: NotRequired[bool]

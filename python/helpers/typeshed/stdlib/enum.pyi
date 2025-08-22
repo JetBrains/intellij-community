@@ -4,7 +4,7 @@ import types
 from _typeshed import SupportsKeysAndGetItem, Unused
 from builtins import property as _builtins_property
 from collections.abc import Callable, Iterable, Iterator, Mapping
-from typing import Any, Generic, Literal, TypeVar, overload
+from typing import Any, Final, Generic, Literal, TypeVar, overload
 from typing_extensions import Self, TypeAlias
 
 __all__ = ["EnumMeta", "Enum", "IntEnum", "Flag", "IntFlag", "auto", "unique"]
@@ -219,6 +219,11 @@ class Enum(metaclass=EnumMeta):
     if sys.version_info >= (3, 12) and sys.version_info < (3, 14):
         @classmethod
         def __signature__(cls) -> str: ...
+    if sys.version_info >= (3, 13):
+        # Value may be any type, even in special enums. Enabling Enum parsing from
+        # multiple value types
+        def _add_value_alias_(self, value: Any) -> None: ...
+        def _add_alias_(self, name: str) -> None: ...
 
 if sys.version_info >= (3, 11):
     class ReprEnum(Enum): ...
@@ -272,9 +277,9 @@ if sys.version_info >= (3, 11):
         NAMED_FLAGS = "multi-flag aliases may not contain unnamed flags"
         UNIQUE = "one name per value"
 
-    CONTINUOUS = EnumCheck.CONTINUOUS
-    NAMED_FLAGS = EnumCheck.NAMED_FLAGS
-    UNIQUE = EnumCheck.UNIQUE
+    CONTINUOUS: Final = EnumCheck.CONTINUOUS
+    NAMED_FLAGS: Final = EnumCheck.NAMED_FLAGS
+    UNIQUE: Final = EnumCheck.UNIQUE
 
     class verify:
         def __init__(self, *checks: EnumCheck) -> None: ...
@@ -286,10 +291,10 @@ if sys.version_info >= (3, 11):
         EJECT = "eject"
         KEEP = "keep"
 
-    STRICT = FlagBoundary.STRICT
-    CONFORM = FlagBoundary.CONFORM
-    EJECT = FlagBoundary.EJECT
-    KEEP = FlagBoundary.KEEP
+    STRICT: Final = FlagBoundary.STRICT
+    CONFORM: Final = FlagBoundary.CONFORM
+    EJECT: Final = FlagBoundary.EJECT
+    KEEP: Final = FlagBoundary.KEEP
 
     def global_str(self: Enum) -> str: ...
     def global_enum(cls: _EnumerationT, update_str: bool = False) -> _EnumerationT: ...

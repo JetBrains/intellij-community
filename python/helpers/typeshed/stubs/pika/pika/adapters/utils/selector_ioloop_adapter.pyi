@@ -55,6 +55,7 @@ class SelectorIOServicesAdapter(
     def remove_writer(self, fd): ...
 
 class _FileDescriptorCallbacks:
+    __slots__ = ("reader", "writer")
     reader: Incomplete
     writer: Incomplete
     def __init__(self, reader=None, writer=None) -> None: ...

@@ -4,7 +4,6 @@ from typing import Any
 from typing_extensions import Self
 
 from ..dist import Distribution
-from ..warnings import SetuptoolsWarning
 from . import expand
 
 def load_file(filepath: StrPath) -> dict[Incomplete, Incomplete]: ...
@@ -45,6 +44,3 @@ class _EnsurePackagesDiscovered(expand.EnsurePackagesDiscovered):
     def __exit__(
         self, exc_type: type[BaseException] | None, exc_value: BaseException | None, traceback: TracebackType | None
     ) -> None: ...
-
-class _BetaConfiguration(SetuptoolsWarning): ...
-class _InvalidFile(SetuptoolsWarning): ...

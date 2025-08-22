@@ -1,25 +1,5 @@
 # TODO: check these entries
-authlib.jose.ECKey.PRIVATE_KEY_CLS
-authlib.jose.ECKey.PUBLIC_KEY_CLS
-authlib.jose.RSAKey.PRIVATE_KEY_CLS
-authlib.jose.RSAKey.PUBLIC_KEY_CLS
-authlib.jose.drafts._jwe_algorithms.ECDH1PUAlgorithm.description
-authlib.jose.drafts._jwe_algorithms.ECDH1PUAlgorithm.name
 authlib.jose.drafts._jwe_enc_cryptodome
-authlib.jose.drafts._jwe_enc_cryptography.C20PEncAlgorithm.description
-authlib.jose.drafts._jwe_enc_cryptography.C20PEncAlgorithm.name
-authlib.jose.rfc7518.ECDHESAlgorithm.description
-authlib.jose.rfc7518.ECDHESAlgorithm.name
-authlib.jose.rfc7518.ECKey.PRIVATE_KEY_CLS
-authlib.jose.rfc7518.ECKey.PUBLIC_KEY_CLS
-authlib.jose.rfc7518.RSAKey.PRIVATE_KEY_CLS
-authlib.jose.rfc7518.RSAKey.PUBLIC_KEY_CLS
-authlib.jose.rfc7518.ec_key.ECKey.PRIVATE_KEY_CLS
-authlib.jose.rfc7518.ec_key.ECKey.PUBLIC_KEY_CLS
-authlib.jose.rfc7518.jwe_algs.ECDHESAlgorithm.description
-authlib.jose.rfc7518.jwe_algs.ECDHESAlgorithm.name
-authlib.jose.rfc7518.rsa_key.RSAKey.PRIVATE_KEY_CLS
-authlib.jose.rfc7518.rsa_key.RSAKey.PUBLIC_KEY_CLS
 authlib.oauth2.OAuth2Client.client_auth_class
 authlib.oauth2.OAuth2Client.oauth_error_class
 authlib.oauth2.OAuth2Client.token_auth_class
@@ -30,10 +10,67 @@ authlib.oauth2.rfc7521.AssertionClient.oauth_error_class
 authlib.oauth2.rfc7521.client.AssertionClient.oauth_error_class
 authlib.oauth2.rfc7523.JWTBearerTokenValidator.token_cls
 authlib.oauth2.rfc7523.validator.JWTBearerTokenValidator.token_cls
-authlib.oauth2.rfc9068.claims.JWTAccessTokenClaims.validate
+
+# Are set to `None` by default, initialized later:
+authlib.jose.drafts._jwe_algorithms.ECDH1PUAlgorithm.description
+authlib.jose.drafts._jwe_algorithms.ECDH1PUAlgorithm.name
+authlib.jose.drafts._jwe_enc_cryptography.C20PEncAlgorithm.description
+authlib.jose.drafts._jwe_enc_cryptography.C20PEncAlgorithm.name
+authlib.jose.rfc7518.AESAlgorithm.description
+authlib.jose.rfc7518.AESAlgorithm.name
+authlib.jose.rfc7518.ECDHESAlgorithm.description
+authlib.jose.rfc7518.ECDHESAlgorithm.name
+authlib.jose.rfc7518.jwe_algs.AESAlgorithm.description
+authlib.jose.rfc7518.jwe_algs.AESAlgorithm.name
+authlib.jose.rfc7518.jwe_algs.AESGCMAlgorithm.description
+authlib.jose.rfc7518.jwe_algs.AESGCMAlgorithm.name
+authlib.jose.rfc7518.jwe_algs.ECDHESAlgorithm.description
+authlib.jose.rfc7518.jwe_algs.ECDHESAlgorithm.name
+authlib.jose.rfc7518.jwe_algs.RSAAlgorithm.description
+authlib.jose.rfc7518.jwe_algs.RSAAlgorithm.name
 
 # Re-exports of hashlib functions whose signatures changed in Python 3.13.4.
 # (Remove once 3.13.4 is consistently available)
 (authlib.jose.rfc7518.jws_algs.HMACAlgorithm.SHA256)?
 (authlib.jose.rfc7518.jws_algs.HMACAlgorithm.SHA384)?
 (authlib.jose.rfc7518.jws_algs.HMACAlgorithm.SHA512)?
+
+# Methods whose *args and **kwargs arguments are added dynamically due to the @hooked decorator:
+authlib.oauth2.rfc6749.AuthorizationCodeGrant.create_token_response
+authlib.oauth2.rfc6749.AuthorizationCodeGrant.validate_token_request
+authlib.oauth2.rfc6749.AuthorizationEndpointMixin.validate_consent_request
+authlib.oauth2.rfc6749.ClientCredentialsGrant.create_token_response
+authlib.oauth2.rfc6749.ImplicitGrant.validate_authorization_request
+authlib.oauth2.rfc6749.RefreshTokenGrant.create_token_response
+authlib.oauth2.rfc6749.ResourceOwnerPasswordCredentialsGrant.create_token_response
+authlib.oauth2.rfc6749.grants.AuthorizationCodeGrant.create_token_response
+authlib.oauth2.rfc6749.grants.AuthorizationCodeGrant.validate_token_request
+authlib.oauth2.rfc6749.grants.AuthorizationEndpointMixin.validate_consent_request
+authlib.oauth2.rfc6749.grants.ClientCredentialsGrant.create_token_response
+authlib.oauth2.rfc6749.grants.ImplicitGrant.validate_authorization_request
+authlib.oauth2.rfc6749.grants.RefreshTokenGrant.create_token_response
+authlib.oauth2.rfc6749.grants.ResourceOwnerPasswordCredentialsGrant.create_token_response
+authlib.oauth2.rfc6749.grants.authorization_code.AuthorizationCodeGrant.create_token_response
+authlib.oauth2.rfc6749.grants.authorization_code.AuthorizationCodeGrant.validate_token_request
+authlib.oauth2.rfc6749.grants.base.AuthorizationEndpointMixin.validate_consent_request
+authlib.oauth2.rfc6749.grants.client_credentials.ClientCredentialsGrant.create_token_response
+authlib.oauth2.rfc6749.grants.implicit.ImplicitGrant.validate_authorization_request
+authlib.oauth2.rfc6749.grants.refresh_token.RefreshTokenGrant.create_token_response
+authlib.oauth2.rfc6749.grants.resource_owner_password_credentials.ResourceOwnerPasswordCredentialsGrant.create_token_response
+authlib.oauth2.rfc8628.DeviceCodeGrant.create_token_response
+authlib.oauth2.rfc8628.device_code.DeviceCodeGrant.create_token_response
+authlib.oidc.core.OpenIDImplicitGrant.validate_consent_request
+authlib.oidc.core.grants.OpenIDImplicitGrant.validate_consent_request
+authlib.oidc.core.grants.implicit.OpenIDImplicitGrant.validate_consent_request
+
+# Exclude integrations dirs:
+authlib.integrations.django_client
+authlib.integrations.django_oauth1
+authlib.integrations.django_oauth2
+authlib.integrations.flask_client
+authlib.integrations.flask_oauth1
+authlib.integrations.flask_oauth2
+authlib.integrations.httpx_client
+authlib.integrations.requests_client
+authlib.integrations.sqla_oauth2
+authlib.integrations.starlette_client

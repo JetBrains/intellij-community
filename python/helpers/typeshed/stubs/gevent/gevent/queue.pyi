@@ -21,6 +21,7 @@ else:
 _T = TypeVar("_T")
 
 class SimpleQueue(Generic[_T]):
+    __slots__ = ("_maxsize", "getters", "putters", "hub", "_event_unlock", "queue", "__weakref__", "is_shutdown")
     @property
     def hub(self) -> Hub: ...  # readonly in Cython
     @property
@@ -53,6 +54,7 @@ class SimpleQueue(Generic[_T]):
     next = __next__
 
 class Queue(SimpleQueue[_T]):
+    __slots__ = ("_cond", "unfinished_tasks")
     @property
     def unfinished_tasks(self) -> int: ...  # readonly in Cython
     @overload
@@ -69,6 +71,7 @@ JoinableQueue = Queue
 
 @final
 class UnboundQueue(Queue[_T]):
+    __slots__ = ()
     @overload
     def __init__(self, maxsize: None = None) -> None: ...
     @overload
@@ -76,10 +79,14 @@ class UnboundQueue(Queue[_T]):
     @overload
     def __init__(self, maxsize: None = None, *, items: Iterable[_T]) -> None: ...
 
-class PriorityQueue(Queue[_T]): ...
-class LifoQueue(Queue[_T]): ...
+class PriorityQueue(Queue[_T]):
+    __slots__ = ()
+
+class LifoQueue(Queue[_T]):
+    __slots__ = ()
 
 class Channel(Generic[_T]):
+    __slots__ = ("getters", "putters", "hub", "_event_unlock", "__weakref__")
     @property
     def getters(self) -> deque[Waiter[Any]]: ...  # readonly in Cython
     @property

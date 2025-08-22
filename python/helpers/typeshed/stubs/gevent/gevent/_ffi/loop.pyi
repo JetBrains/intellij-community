@@ -2,7 +2,7 @@ import sys
 from _typeshed import FileDescriptor
 from collections.abc import Callable, Sequence
 from types import TracebackType
-from typing import Protocol
+from typing import Protocol, type_check_only
 from typing_extensions import TypeAlias, TypeVarTuple, Unpack
 
 from gevent._types import _AsyncWatcher, _Callback, _ChildWatcher, _IoWatcher, _StatWatcher, _TimerWatcher, _Watcher
@@ -12,13 +12,14 @@ _ErrorHandlerFunc: TypeAlias = Callable[
     [object | None, type[BaseException] | None, BaseException | None, TracebackType | None], object
 ]
 
+@type_check_only
 class _SupportsHandleError(Protocol):
     handle_error: _ErrorHandlerFunc
 
 _ErrorHandler: TypeAlias = _ErrorHandlerFunc | _SupportsHandleError
 
 def assign_standard_callbacks(
-    ffi: object, lib: object, callbacks_class: Callable[[object], object], extras: Sequence[tuple[object, object]] = ...
+    ffi: object, lib: object, callbacks_class: Callable[[object], object], extras: Sequence[tuple[object, object]] = ()
 ) -> object: ...
 
 class AbstractLoop:
@@ -27,7 +28,7 @@ class AbstractLoop:
     starting_timer_may_update_loop_time: bool
     # internal API, this __init__ will only be called from subclasses
     def __init__(
-        self, ffi: object, lib: object, watchers: object, flags: int | None = ..., default: bool | None = ...
+        self, ffi: object, lib: object, watchers: object, flags: int | None = None, default: bool | None = None
     ) -> None: ...
     def destroy(self) -> bool | None: ...
     @property
@@ -77,10 +78,10 @@ class AbstractLoop:
         def install_sigchld(self) -> None: ...
 
     def async_(self, ref: bool = True, priority: int | None = None) -> _AsyncWatcher: ...
-    def stat(self, path: str, interval: float = 0.0, ref: bool = True, priority: bool | None = ...) -> _StatWatcher: ...
+    def stat(self, path: str, interval: float = 0.0, ref: bool = True, priority: bool | None = None) -> _StatWatcher: ...
     def run_callback(self, func: Callable[[Unpack[_Ts]], object], *args: Unpack[_Ts]) -> _Callback: ...
     def run_callback_threadsafe(self, func: Callable[[Unpack[_Ts]], object], *args: Unpack[_Ts]) -> _Callback: ...
-    def callback(self, priority: float | None = ...) -> _Callback: ...
+    def callback(self, priority: float | None = None) -> _Callback: ...
     def fileno(self) -> FileDescriptor | None: ...
 
 __all__ = ["AbstractLoop", "assign_standard_callbacks"]

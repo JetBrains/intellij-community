@@ -47,11 +47,11 @@ if sys.version_info >= (3, 14):
         with InterpreterPoolExecutor(initializer=_initializer, initargs=("x",)):  # type: ignore
             ...
 
-        context = InterpreterPoolExecutor.prepare_context(initializer=_initializer, initargs=(1,), shared={})
+        context = InterpreterPoolExecutor.prepare_context(initializer=_initializer, initargs=(1,))
         worker_context = context[0]()
         assert_type(worker_context, concurrent.futures.interpreter.WorkerContext)
         resolve_task = context[1]
-        # Function should enfore that the arguments are correct.
+        # Function should enforce that the arguments are correct.
         res = resolve_task(_initializer, 1)
         assert_type(res, tuple[bytes, Literal["function"]])
         # When the function is a script, the arguments should be a string.

@@ -1,6 +1,8 @@
+from logging import Logger
 from typing import Final
 
 ASSERTION_TYPE: Final[str]
+log: Logger
 
 class JWTBearerClientAssertion:
     CLIENT_ASSERTION_TYPE: Final[str]

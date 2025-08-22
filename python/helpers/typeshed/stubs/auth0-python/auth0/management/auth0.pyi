@@ -24,6 +24,7 @@ from .resource_servers import ResourceServers
 from .roles import Roles
 from .rules import Rules
 from .rules_configs import RulesConfigs
+from .self_service_profiles import SelfServiceProfiles
 from .stats import Stats
 from .tenants import Tenants
 from .tickets import Tickets
@@ -56,6 +57,7 @@ class Auth0:
     roles: Roles
     rules_configs: RulesConfigs
     rules: Rules
+    self_service_profiles: SelfServiceProfiles
     stats: Stats
     tenants: Tenants
     tickets: Tickets

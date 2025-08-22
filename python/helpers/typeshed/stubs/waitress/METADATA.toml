@@ -3,4 +3,4 @@ upstream_repository = "https://github.com/Pylons/waitress"
 
 [tool.stubtest]
 # linux and darwin are equivalent
-platforms = ["linux", "win32"]
+ci_platforms = ["linux", "win32"]

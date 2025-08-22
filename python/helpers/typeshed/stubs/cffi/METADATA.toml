@@ -4,4 +4,4 @@ requires = ["types-setuptools"]
 
 [tool.stubtest]
 # linux and darwin are mostly equivalent, except for a single `RTLD_DEEPBIND` variable
-platforms = ["linux", "win32"]
+ci_platforms = ["linux", "win32"]

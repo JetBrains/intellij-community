@@ -1,10 +1,12 @@
 from _typeshed import Incomplete
 from abc import ABCMeta
+from collections.abc import Iterable
+from typing import ClassVar
 
 class JWEAlgorithmBase(metaclass=ABCMeta):
-    EXTRA_HEADERS: Incomplete
-    name: Incomplete
-    description: Incomplete
+    EXTRA_HEADERS: ClassVar[Iterable[str] | None]
+    name: str | None
+    description: str | None
     algorithm_type: str
     algorithm_location: str
     def prepare_key(self, raw_data) -> None: ...
@@ -21,8 +23,8 @@ class JWEAlgorithmWithTagAwareKeyAgreement(JWEAlgorithmBase, metaclass=ABCMeta):
     def unwrap(self, enc_alg, ek, headers, key, sender_key, tag=None) -> None: ...
 
 class JWEEncAlgorithm:
-    name: Incomplete
-    description: Incomplete
+    name: str | None
+    description: str | None
     algorithm_type: str
     algorithm_location: str
     IV_SIZE: Incomplete

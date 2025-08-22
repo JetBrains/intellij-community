@@ -7,7 +7,7 @@ from typing_extensions import TypeAlias
 
 from fpdf import FPDF
 
-from .enums import TextEmphasis
+from .enums import Align, TextEmphasis
 from .fonts import FontFace
 from .table import Row, Table
 
@@ -17,8 +17,10 @@ __copyright__: Final[str]
 _OLType: TypeAlias = Literal["1", "a", "A", "I", "i"]
 
 LOGGER: Logger
-BULLET_WIN1252: Final[str]
-DEGREE_WIN1252: Final[str]
+MESSAGE_WAITING_WIN1252: Final = "\x95"
+BULLET_UNICODE: Final = "•"
+DEGREE_SIGN_WIN1252: Final = "\xb0"
+RING_OPERATOR_UNICODE: Final = "∘"
 HEADING_TAGS: Final[tuple[str, ...]]
 DEFAULT_TAG_STYLES: Final[dict[str, FontFace]]
 INLINE_TAGS: Final[tuple[str, ...]]
@@ -49,10 +51,10 @@ class HTML2FPDF(HTMLParser):
     follows_trailing_space: bool
     follows_heading: bool
     href: str
-    align: str
+    align: float | Align | None
     indent: int
     line_height_stack: list[Incomplete]
-    ol_type: list[_OLType]
+    ol_type: dict[int, _OLType]
     bullet: list[Incomplete]
     heading_level: Incomplete | None
     render_title_tag: bool
@@ -71,7 +73,7 @@ class HTML2FPDF(HTMLParser):
         li_tag_indent: int | None = None,
         dd_tag_indent: int | None = None,
         table_line_separators: bool = False,
-        ul_bullet_char: str = "\x95",
+        ul_bullet_char: str = "disc",
         li_prefix_color: tuple[int, int, int] = (190, 0, 0),
         heading_sizes: SupportsKeysAndGetItem[str, int] | Iterable[tuple[str, int]] | None = None,
         pre_code_font: str | None = None,
@@ -88,7 +90,7 @@ class HTML2FPDF(HTMLParser):
     def render_toc(self, pdf, outline) -> None: ...
     def error(self, message: str) -> None: ...
 
-def ul_prefix(ul_type: str) -> str: ...
+def ul_prefix(ul_type: str, is_ttf_font: bool | None) -> str: ...
 def ol_prefix(ol_type: _OLType, index: int) -> str: ...
 
 class HTMLMixin:

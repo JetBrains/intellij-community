@@ -58,3 +58,8 @@ from .rfc6749.request_validator import RequestValidator as RequestValidator
 from .rfc6749.tokens import BearerToken as BearerToken, OAuth2Token as OAuth2Token
 from .rfc6749.utils import is_secure_transport as is_secure_transport
 from .rfc8628.clients import DeviceClient as DeviceClient
+from .rfc8628.endpoints import (
+    DeviceApplicationServer as DeviceApplicationServer,
+    DeviceAuthorizationEndpoint as DeviceAuthorizationEndpoint,
+)
+from .rfc8628.grant_types import DeviceCodeGrant as DeviceCodeGrant

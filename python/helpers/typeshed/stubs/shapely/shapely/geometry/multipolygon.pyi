@@ -8,6 +8,7 @@ from .polygon import Polygon, _PolygonHolesLike, _PolygonShellLike
 __all__ = ["MultiPolygon"]
 
 class MultiPolygon(BaseMultipartGeometry[Polygon]):
+    __slots__: list[str] = []
     def __new__(
         self,
         polygons: (

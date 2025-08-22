@@ -1,6 +1,6 @@
 from _typeshed import Incomplete, SupportsRead, Unused
 from collections.abc import Callable, Iterable, Sequence
-from typing import Any, Literal, NoReturn, Protocol
+from typing import Any, Literal, NoReturn, Protocol, type_check_only
 from typing_extensions import Self, TypeAlias
 
 from reportlab.lib.colors import Color
@@ -64,6 +64,7 @@ _FlowableSublist: TypeAlias = Flowable | list[Flowable] | tuple[Flowable, ...]
 # NOTE: Technically can only be list or tuple, but would be annoying for variance
 _NestedFlowable: TypeAlias = Flowable | Sequence[_NestedFlowable]
 
+@type_check_only
 class _StyledFlowableFactory(Protocol):
     # NOTE: We leave style at Any so people can specify a specifc property set
     def __call__(self, value: str, /, *, style: Any) -> Flowable: ...

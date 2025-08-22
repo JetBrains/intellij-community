@@ -37,7 +37,7 @@ def main() -> None:
     # version installed into the virtual environment, due to failures on some
     # platforms. https://github.com/python/typeshed/issues/11614
     os.environ["PYRIGHT_PYTHON_FORCE_VERSION"] = pyright_version
-    command = [npx, f"pyright@{pyright_version}"] + sys.argv[1:]
+    command = [npx, f"pyright@{pyright_version}", *sys.argv[1:]]
     print_command(command)
 
     ret = subprocess.run(command, check=False).returncode

@@ -14,10 +14,6 @@ geopandas\.(geodataframe\.)?GeoDataFrame\.plot
 geopandas\.io\._geoarrow
 geopandas\._exports
 
-# Not present in stub OK (do not work at runtime, to be removed from geopandas)
-geopandas\.(geoseries\.)?GeoSeries\.append # https://github.com/geopandas/geopandas/pull/3460
-geopandas\.(geoseries\.)?GeoSeries\.select # https://github.com/geopandas/geopandas/pull/3394
-
 # Inconsistent (TODO)
 geopandas\.(geoseries\.)?GeoSeries\.apply
 geopandas\.(geoseries\.)?GeoSeries\.fillna

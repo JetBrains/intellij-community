@@ -5,7 +5,7 @@ from http.client import HTTPMessage
 from io import BufferedIOBase, BufferedReader
 from logging import Logger
 from types import TracebackType
-from typing import Any, ClassVar, Literal, Protocol, TypeVar, overload
+from typing import Any, ClassVar, Literal, Protocol, TypeVar, overload, type_check_only
 from typing_extensions import Self
 
 from gevent.baseserver import _Spawner
@@ -17,11 +17,22 @@ __all__ = ["WSGIServer", "WSGIHandler", "LoggingLogAdapter", "Environ", "SecureE
 
 _T = TypeVar("_T")
 
+@type_check_only
 class _LogOutputStream(SupportsWrite[str], Protocol):
     def writelines(self, lines: Iterable[str], /) -> None: ...
     def flush(self) -> None: ...
 
 class Input:
+    __slots__ = (
+        "rfile",
+        "content_length",
+        "socket",
+        "position",
+        "chunked_input",
+        "chunk_length",
+        "_chunked_input_error",
+        "send_100_continue_enabled",
+    )
     rfile: BufferedReader
     content_length: int | None
     socket: _GeventSocket | None
@@ -102,6 +113,7 @@ class WSGIHandler:
     def get_environ(self) -> WSGIEnvironment: ...
 
 class LoggingLogAdapter:
+    __slots__ = ("_logger", "_level")
     def __init__(self, logger: Logger, level: int = 20) -> None: ...
     def write(self, msg: str) -> None: ...
     def flush(self) -> None: ...
@@ -110,9 +122,11 @@ class LoggingLogAdapter:
     def __setattr__(self, name: str, value: object) -> None: ...
     def __delattr__(self, name: str) -> None: ...
 
-class Environ(WSGIEnvironment): ...
+class Environ(WSGIEnvironment):
+    __slots__ = ()
 
 class SecureEnviron(Environ):
+    __slots__ = ("secure_repr", "whitelist_keys", "print_masked_keys")
     default_secure_repr: ClassVar[bool]
     default_whitelist_keys: ClassVar[Container[str]]
     default_print_masked_keys: ClassVar[bool]

@@ -1,11 +1,12 @@
 from collections.abc import Sequence
-from typing import TypedDict
+from typing import TypedDict, type_check_only
 
 from gevent._types import _Watcher
 from gevent.hub import Hub
 from gevent.resolver import AbstractResolver
 from gevent.resolver.cares import channel
 
+@type_check_only
 class _ChannelArgs(TypedDict):
     flags: str | int | None
     timeout: str | float | None

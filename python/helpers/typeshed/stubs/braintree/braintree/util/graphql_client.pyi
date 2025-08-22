@@ -1,24 +1,28 @@
 from _typeshed import Incomplete
 from collections.abc import Iterable
-from typing import TypedDict
+from typing import TypedDict, type_check_only
 
 from braintree.configuration import Configuration
 from braintree.environment import Environment
 from braintree.util.http import Http
 
+@type_check_only
 class _Extension(TypedDict):
     errorClass: Incomplete
     legacyCode: int | None
 
+@type_check_only
 class _Error(TypedDict):
     attribute: str | None
     code: int | None
     message: str | None
     extensions: _Extension | None
 
+@type_check_only
 class _ValidationErrors(TypedDict):
     errors: Iterable[_Error]
 
+@type_check_only
 class _Response(TypedDict):
     errors: Iterable[_Error] | None
 

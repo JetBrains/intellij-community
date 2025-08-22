@@ -8,14 +8,19 @@ _T = TypeVar("_T")
 WRAPPER_ASSIGNMENTS: tuple[str, ...]
 WRAPPER_UPDATES: tuple[str, ...]
 
-def update_wrapper(wrapper: _T, wrapped: object, assigned: Sequence[str] = ..., updated: Sequence[str] = ...) -> _T: ...
+def update_wrapper(
+    wrapper: _T,
+    wrapped: object,
+    assigned: Sequence[str] = ("__module__", "__name__", "__qualname__", "__doc__", "__annotations__"),
+    updated: Sequence[str] = ("__dict__",),
+) -> _T: ...
 def copy_globals(
     source: ModuleType,
     globs: MutableMapping[str, Any],
     only_names: Iterable[str] | None = None,
     ignore_missing_names: bool = False,
-    names_to_ignore: Sequence[str] = ...,
-    dunder_names_to_keep: Sequence[str] = ...,
+    names_to_ignore: Sequence[str] = (),
+    dunder_names_to_keep: Sequence[str] = ("__implements__", "__all__", "__imports__"),
     cleanup_globs: bool = True,
 ) -> list[str]: ...
 def import_c_accel(globs: MutableMapping[str, Any], cname: str) -> None: ...

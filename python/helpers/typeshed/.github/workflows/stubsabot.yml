@@ -27,7 +27,9 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
-      - run: curl -LsSf https://astral.sh/uv/install.sh | sh
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version-file: "requirements-tests.txt"
       - name: git config
         run: |
           git config --global user.name stubsabot

@@ -1,6 +1,6 @@
 from _typeshed import FileDescriptorOrPath
 from collections.abc import Iterable, Mapping
-from typing import NoReturn, Protocol
+from typing import NoReturn, Protocol, type_check_only
 
 from paramiko.auth_strategy import AuthStrategy
 from paramiko.channel import Channel, ChannelFile, ChannelStderrFile, ChannelStdinFile
@@ -10,6 +10,7 @@ from paramiko.sftp_client import SFTPClient
 from paramiko.transport import Transport, _SocketLike
 from paramiko.util import ClosingContextManager
 
+@type_check_only
 class _TransportFactory(Protocol):
     def __call__(
         self,

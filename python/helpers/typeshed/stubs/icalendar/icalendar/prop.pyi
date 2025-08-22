@@ -3,7 +3,7 @@ from _typeshed import ConvertibleToFloat, ConvertibleToInt, SupportsKeysAndGetIt
 from collections.abc import Iterable, Iterator
 from enum import Enum
 from re import Pattern
-from typing import Any, ClassVar, Final, Literal, Protocol, SupportsIndex, overload
+from typing import Any, ClassVar, Final, Literal, Protocol, SupportsIndex, overload, type_check_only
 from typing_extensions import Self, TypeAlias
 
 from .caselessdict import CaselessDict
@@ -47,6 +47,7 @@ _PropType: TypeAlias = type[Any]  # any of the v* classes in this file
 _PeriodTuple: TypeAlias = tuple[datetime.datetime, datetime.datetime | datetime.timedelta]
 _AnyTimeType: TypeAlias = datetime.datetime | datetime.date | datetime.timedelta | datetime.time | _PeriodTuple
 
+@type_check_only
 class _vType(Protocol):
     def to_ical(self) -> bytes | str: ...
 

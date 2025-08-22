@@ -7,7 +7,6 @@
 # >= 3.11
 # =======
 
-enum.Enum.__init__
 typing.NewType.__mro_entries__
 
 
@@ -70,12 +69,13 @@ importlib.metadata._meta.SimplePath.__truediv__  # Runtime definition of protoco
 # =======
 
 _?bz2.BZ2Decompressor.__init__  # function does not accept parameters but C signature is set
-configparser.ParsingError.filename
 enum.Enum._generate_next_value_
 importlib.abc.Finder.find_module
 urllib.request.HTTPPasswordMgrWithPriorAuth.__init__  # Args are passed as is to super, so super args are specified
 xml.etree.ElementTree.Element.__bool__  # Doesn't really exist; see comments in stub
 xml.etree.cElementTree.Element.__bool__  # Doesn't really exist; see comments in stub
+
+platform.platform  # runtime default is 0, we pretend it's a bool
 
 
 # =======
@@ -126,11 +126,7 @@ tkinter.tix.TkVersion
 # because it's not an ABC that makes any sense and was deprecated in 3.12
 _collections_abc.ByteString
 
-ast.Bytes.__new__  # runtime is *args, **kwargs due to a wrapper, but we have more accurate signatures in the stubs
-ast.Ellipsis.__new__  # runtime is *args, **kwargs due to a wrapper, but we have more accurate signatures in the stubs
-ast.NameConstant.__new__  # runtime is *args, **kwargs due to a wrapper, but we have more accurate signatures in the stubs
-ast.Num.__new__  # runtime is *args, **kwargs due to a wrapper, but we have more accurate signatures in the stubs
-ast.Str.__new__  # runtime is *args, **kwargs due to a wrapper, but we have more accurate signatures in the stubs
+ast.Ellipsis.__new__  # Implementation has *args, but shouldn't allow any
 
 _?hashlib.scrypt  # Raises TypeError if salt, n, r or p are None
 
@@ -143,11 +139,17 @@ typing\.ByteString
 typing_extensions.TypeAliasType.__call__
 
 
+# ============
+# 3.11 to 3.13
+# ============
+
+enum.Enum.__init__
+
+
 # =============================================================
 # Allowlist entries that cannot or should not be fixed; >= 3.11
 # =============================================================
 
-argparse._MutuallyExclusiveGroup.add_mutually_exclusive_group  # deprecated, forwards arguments to super
 enum.auto.__init__  # The stub for enum.auto is nothing like the implementation
 enum.auto.value  # The stub for enum.auto is nothing like the implementation
 http.HTTPMethod.description  # mutable instance attribute at runtime but we pretend it's a property
@@ -201,11 +203,11 @@ importlib.metadata.DeprecatedList.sort
 typing.ParamSpec(Args|Kwargs).__origin__
 
 
-# =================================================================
-# Allowlist entries that cannot or should not be fixed; 3.9 to 3.12
-# =================================================================
+# ==================================================================
+# Allowlist entries that cannot or should not be fixed; 3.11 to 3.13
+# ==================================================================
 
-typing\.Annotated  # Super-special typing primitive
+argparse._MutuallyExclusiveGroup.add_mutually_exclusive_group  # deprecated, forwards arguments to super
 
 
 # =============================================================
@@ -235,6 +237,11 @@ typing_extensions\.TypeAliasType\.__(parameters|type_params|name|module|value)__
 
 unittest.test  # Modules that exist at runtime, but shouldn't be added to typeshed
 unittest\.test\..+  # Modules that exist at runtime, but shouldn't be added to typeshed
+
+# Incompatible changes introduced in Python 3.11.12
+# (Remove once 3.11.12 becomes available for all platforms)
+(email._header_value_parser.get_encoded_word)?
+(email._header_value_parser.make_quoted_pairs)?
 
 
 # =============================================================
@@ -280,11 +287,7 @@ sunau.Au_write.initfp
 threading.Lock  # Factory function at runtime, but that wouldn't let us use it in type hints
 types.SimpleNamespace.__init__  # class doesn't accept positional arguments but has default C signature
 typing_extensions\.Annotated  # Undocumented implementation details
-
-# Incompatible changes introduced in Python 3.11.12
-# (Remove once 3.11.12 becomes available for all platforms)
-(email._header_value_parser.get_encoded_word)?
-(email._header_value_parser.make_quoted_pairs)?
+typing\.Annotated  # Super-special typing primitive
 
 # These methods have no default implementation for Python < 3.13.
 _pickle.Pickler.persistent_id

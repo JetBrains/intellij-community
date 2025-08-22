@@ -1,10 +1,14 @@
 from __future__ import annotations
 
+import sys
 from collections.abc import Generator, Iterable
 from contextlib import contextmanager
 from typing import Any, NamedTuple
 
-import tomli
+if sys.version_info >= (3, 11):
+    import tomllib
+else:
+    import tomli as tomllib
 
 from ts_utils.metadata import StubtestSettings, metadata_path
 from ts_utils.utils import NamedTemporaryFile, TemporaryFileWrapper
@@ -26,7 +30,7 @@ class MypyDistConf(NamedTuple):
 
 def mypy_configuration_from_distribution(distribution: str) -> list[MypyDistConf]:
     with metadata_path(distribution).open("rb") as f:
-        data = tomli.load(f)
+        data = tomllib.load(f)
 
     # TODO: This could be added to ts_utils.metadata
     mypy_tests_conf: dict[str, dict[str, Any]] = data.get("mypy-tests", {})

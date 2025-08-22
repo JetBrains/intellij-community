@@ -66,26 +66,26 @@ jobs:
 
             if [ "${{ runner.os }}" = "Linux" ]; then
               if [ -n "$PACKAGES" ]; then
-                echo "Installing apt packages: $PACKAGES"
+                printf "Installing APT packages:\n  $(echo $PACKAGES | sed 's/ /\n  /g')\n"
                 sudo apt-get update -q && sudo apt-get install -qy $PACKAGES
               fi
 
               PYTHON_EXECUTABLE="xvfb-run python"
             else
               if [ "${{ runner.os }}" = "macOS" ] && [ -n "$PACKAGES" ]; then
-                echo "Installing Homebrew packages: $PACKAGES"
+                printf "Installing Homebrew packages:\n  $(echo $PACKAGES | sed 's/ /\n  /g')\n"
                 brew install -q $PACKAGES
               fi
 
               if [ "${{ runner.os }}" = "Windows" ] && [ -n "$PACKAGES" ]; then
-                echo "Installing Chocolatey packages: $PACKAGES"
+                printf "Installing Chocolatey packages:\n  $(echo $PACKAGES | sed 's/ /\n  /g')\n"
                 choco install -y $PACKAGES
               fi
 
               PYTHON_EXECUTABLE="python"
             fi
 
-            $PYTHON_EXECUTABLE tests/stubtest_third_party.py --specified-platforms-only $STUBS
+            $PYTHON_EXECUTABLE tests/stubtest_third_party.py --ci-platforms-only $STUBS
           else
             echo "Nothing to test"
           fi

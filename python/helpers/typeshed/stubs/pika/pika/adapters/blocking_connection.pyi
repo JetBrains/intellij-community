@@ -13,6 +13,7 @@ from ..spec import BasicProperties
 LOGGER: Logger
 
 class _CallbackResult:
+    __slots__ = ("_value_class", "_ready", "_values")
     def __init__(self, value_class=None) -> None: ...
     def reset(self) -> None: ...
     def __bool__(self) -> bool: ...
@@ -37,11 +38,13 @@ class _IoloopTimerContext:
     def is_ready(self): ...
 
 class _TimerEvt:
+    __slots__ = ("timer_id", "_callback")
     timer_id: Incomplete
     def __init__(self, callback) -> None: ...
     def dispatch(self) -> None: ...
 
 class _ConnectionBlockedUnblockedEvtBase:
+    __slots__ = ("_callback", "_method_frame")
     def __init__(self, callback, method_frame) -> None: ...
     def dispatch(self) -> None: ...
 
@@ -91,18 +94,21 @@ class BlockingConnection:
 class _ChannelPendingEvt: ...
 
 class _ConsumerDeliveryEvt(_ChannelPendingEvt):
+    __slots__ = ("method", "properties", "body")
     method: Incomplete
     properties: Incomplete
     body: Incomplete
     def __init__(self, method, properties, body) -> None: ...
 
 class _ConsumerCancellationEvt(_ChannelPendingEvt):
+    __slots__ = ("method_frame",)
     method_frame: Incomplete
     def __init__(self, method_frame) -> None: ...
     @property
     def method(self): ...
 
 class _ReturnedMessageEvt(_ChannelPendingEvt):
+    __slots__ = ("callback", "channel", "method", "properties", "body")
     callback: Incomplete
     channel: Incomplete
     method: Incomplete
@@ -112,12 +118,14 @@ class _ReturnedMessageEvt(_ChannelPendingEvt):
     def dispatch(self) -> None: ...
 
 class ReturnedMessage:
+    __slots__ = ("method", "properties", "body")
     method: Incomplete
     properties: Incomplete
     body: Incomplete
     def __init__(self, method, properties, body) -> None: ...
 
 class _ConsumerInfo:
+    __slots__ = ("consumer_tag", "auto_ack", "on_message_callback", "alternate_event_sink", "state")
     SETTING_UP: int
     ACTIVE: int
     TEARING_DOWN: int
@@ -138,6 +146,7 @@ class _ConsumerInfo:
     def cancelled_by_broker(self): ...
 
 class _QueueConsumerGeneratorInfo:
+    __slots__ = ("params", "consumer_tag", "pending_events")
     params: Incomplete
     consumer_tag: Incomplete
     pending_events: Incomplete

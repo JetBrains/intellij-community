@@ -1,9 +1,9 @@
 import optparse
-from _typeshed import StrPath, SupportsWrite, Unused
-from collections.abc import Callable, Iterable, Mapping
+from _typeshed import StrPath, SupportsWrite
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from re import Pattern
 from typing import Any, Final, Literal, TypeVar
-from typing_extensions import TypeAlias
+from typing_extensions import TypeAlias, deprecated
 
 from docutils import ApplicationError, DataError, nodes
 from docutils.frontend import Values
@@ -27,13 +27,14 @@ class DependencyList:
 class SystemMessagePropagation(ApplicationError): ...
 
 class Reporter:
-    levels: list[str]
+    get_source_and_line: Callable[[int | None], tuple[StrPath | None, int | None]]
+    levels: Final[Sequence[str]]
 
-    DEBUG_LEVEL: Literal[0]
-    INFO_LEVEL: Literal[1]
-    WARNING_LEVEL: Literal[2]
-    ERROR_LEVEL: Literal[3]
-    SEVERE_LEVEL: Literal[4]
+    DEBUG_LEVEL: Final = 0
+    INFO_LEVEL: Final = 1
+    WARNING_LEVEL: Final = 2
+    ERROR_LEVEL: Final = 3
+    SEVERE_LEVEL: Final = 4
 
     stream: ErrorOutput
     encoding: str
@@ -55,14 +56,6 @@ class Reporter:
     debug_flag: bool
     report_level: _SystemMessageLevel
     halt_level: int
-    def set_conditions(
-        self,
-        category: Unused,
-        report_level: int,
-        halt_level: int,
-        stream: SupportsWrite[str] | SupportsWrite[bytes] | None = None,
-        debug: bool = False,
-    ) -> None: ...
     def attach_observer(self, observer: _Observer) -> None: ...
     def detach_observer(self, observer: _Observer) -> None: ...
     def notify_observers(self, message: nodes.system_message) -> None: ...
@@ -113,11 +106,13 @@ def assemble_option_dict(
 
 class NameValueError(DataError): ...
 
+@deprecated("Deprecated and will be removed in Docutils 1.0.")
 def decode_path(path: str) -> str: ...
 def extract_name_value(line: str) -> list[tuple[str, str]]: ...
 def clean_rcs_keywords(paragraph: nodes.paragraph, keyword_substitutions: Iterable[tuple[Pattern[str], str]]) -> None: ...
 def relative_path(source: StrPath | None, target: StrPath) -> str: ...
-def get_stylesheet_reference(settings: Values, relative_to: str | None = None) -> str: ...
+@deprecated("Deprecated and will be removed in Docutils 1.0. Use `get_stylesheet_list()` instead.")
+def get_stylesheet_reference(settings: Values, relative_to: StrPath | None = None) -> str: ...
 def get_stylesheet_list(settings: Values) -> list[str]: ...
 def find_file_in_dirs(path: StrPath, dirs: Iterable[StrPath]) -> str: ...
 def get_trim_footnote_ref_space(settings: Values) -> bool: ...
@@ -134,7 +129,3 @@ def column_width(text: str) -> int: ...
 def uniq(L: list[_T]) -> list[_T]: ...
 def normalize_language_tag(tag: str) -> list[str]: ...
 def xml_declaration(encoding: str | None = None) -> str: ...
-
-release_level_abbreviations: dict[str, str]
-
-def version_identifier(version_info: tuple[int, int, int, str, int, bool] | None = None) -> str: ...

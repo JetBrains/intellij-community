@@ -1,6 +1,8 @@
+import pathlib
 import re
 from collections.abc import Generator
 from datetime import datetime, timedelta, tzinfo
+from typing import Final
 
 class StaticTzInfo(tzinfo):
     def __init__(self, name: str, offset: timedelta) -> None: ...
@@ -17,3 +19,6 @@ def build_tz_offsets(search_regex_parts: list[str]) -> Generator[tuple[str, dict
 def get_local_tz_offset() -> timedelta: ...
 
 local_tz_offset: timedelta
+
+CACHE_PATH: Final[pathlib.Path]
+current_hash: int | None

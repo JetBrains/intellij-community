@@ -14,6 +14,6 @@ def biadjacency_matrix(
     dtype=None,
     weight: str | None = "weight",
     format="csr",
-): ...
+): ...  # Return is a complex union of scipy classes depending on the format param
 @_dispatchable
 def from_biadjacency_matrix(A, create_using: Graph[_Node] | None = None, edge_attribute: str = "weight"): ...

@@ -120,10 +120,6 @@ gevent._config._PositiveValueMixin.validate
 # internal API implementation detail we don't care about
 gevent._ffi.watcher.AbstractWatcherType.__new__
 
-# these are inconsistent due to the ParamSpec hack for positional only callables
-gevent.baseserver.BaseServer.do_close
-gevent.baseserver.BaseServer.do_handle
-
 # we don't care about write/writeall allowing a named parameter
 gevent._fileobjectcommon.FlushingBufferedWriter.write
 gevent._fileobjectcommon.WriteIsWriteallMixin.write
@@ -174,6 +170,7 @@ gevent.socket.getnameinfo
 gevent.socket.socket.closed
 gevent.socket.wait_readwrite
 gevent.socket.wait_write
+gevent.socket.socket.__slots__
 
 # we have punted on ssl, the gevent version of these functions have an additional
 # argument for timeouts/blocking and there are some with different default values

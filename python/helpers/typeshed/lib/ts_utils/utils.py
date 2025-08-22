@@ -50,6 +50,10 @@ def print_info(message: str) -> None:
     print(colored(message, "blue"))
 
 
+def print_warning(message: str) -> None:
+    print(colored(message, "yellow"))
+
+
 def print_error(error: str, end: str = "\n", fix_path: tuple[str, str] = ("", "")) -> None:
     error_split = error.split("\n")
     old, new = fix_path

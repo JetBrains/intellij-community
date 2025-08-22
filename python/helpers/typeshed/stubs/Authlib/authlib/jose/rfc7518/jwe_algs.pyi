@@ -1,4 +1,6 @@
 from _typeshed import Incomplete
+from collections.abc import Iterable
+from typing import ClassVar, Final
 
 from authlib.jose.rfc7516 import JWEAlgorithm
 
@@ -12,8 +14,8 @@ class DirectAlgorithm(JWEAlgorithm):
 
 class RSAAlgorithm(JWEAlgorithm):
     key_size: int
-    name: Incomplete
-    description: Incomplete
+    name: str
+    description: str
     padding: Incomplete
     def __init__(self, name, description, pad_fn) -> None: ...
     def prepare_key(self, raw_data): ...
@@ -22,8 +24,8 @@ class RSAAlgorithm(JWEAlgorithm):
     def unwrap(self, enc_alg, ek, headers, key): ...
 
 class AESAlgorithm(JWEAlgorithm):
-    name: Incomplete
-    description: Incomplete
+    name: str
+    description: str
     key_size: Incomplete
     def __init__(self, key_size) -> None: ...
     def prepare_key(self, raw_data): ...
@@ -33,9 +35,9 @@ class AESAlgorithm(JWEAlgorithm):
     def unwrap(self, enc_alg, ek, headers, key): ...
 
 class AESGCMAlgorithm(JWEAlgorithm):
-    EXTRA_HEADERS: Incomplete
-    name: Incomplete
-    description: Incomplete
+    EXTRA_HEADERS: ClassVar[Iterable[str]]
+    name: str
+    description: str
     key_size: Incomplete
     def __init__(self, key_size) -> None: ...
     def prepare_key(self, raw_data): ...
@@ -44,7 +46,7 @@ class AESGCMAlgorithm(JWEAlgorithm):
     def unwrap(self, enc_alg, ek, headers, key): ...
 
 class ECDHESAlgorithm(JWEAlgorithm):
-    EXTRA_HEADERS: Incomplete
+    EXTRA_HEADERS: ClassVar[Iterable[str]]
     ALLOWED_KEY_CLS = Incomplete
     name: str
     description: str
@@ -61,4 +63,4 @@ class ECDHESAlgorithm(JWEAlgorithm):
 
 def u32be_len_input(s, base64: bool = False): ...
 
-JWE_ALG_ALGORITHMS: Incomplete
+JWE_ALG_ALGORITHMS: Final[list[JWEAlgorithm]]

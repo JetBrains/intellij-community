@@ -74,5 +74,10 @@ gdb.Progspace.xmethods
 # stubtest thinks this can't be sub-classed at runtime, but it is
 gdb.disassembler.DisassemblerPart
 
-# incomplete modules
-gdb\.dap\.[a-z_]+\.[A-Za-z_]+
+gdb.TuiEnabledEvent
+gdb.events.tui_enabled
+
+gdb.Progspace.missing_debug_handlers
+gdb.missing_debug_handlers
+gdb.missing_files
+gdb.missing_objfile

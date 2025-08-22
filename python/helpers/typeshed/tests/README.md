@@ -1,8 +1,6 @@
 This directory contains several tests:
 - `tests/mypy_test.py`
 tests the stubs with [mypy](https://github.com/python/mypy/)
-- `tests/pytype_test.py` tests the stubs with
-[pytype](https://github.com/google/pytype/).
 - `tests/pyright_test.py` tests the stubs with
 [pyright](https://github.com/microsoft/pyright).
 - `tests/regr_test.py` runs mypy against the test cases for typeshed's
@@ -19,7 +17,7 @@ in the `tests` and `scripts` directories.
 To run the tests, follow the [setup instructions](../CONTRIBUTING.md#preparing-the-environment)
 in the `CONTRIBUTING.md` document. In particular, you have to run with Python 3.9+.
 
-In order for `pytype_test` and `pyright_test` to work correctly, some third-party stubs
+In order for `pyright_test` to work correctly, some third-party stubs
 may require extra dependencies external to typeshed to be installed in your virtual environment
 prior to running the test.
 You can list or install all of a stubs package's external dependencies using the following script:
@@ -66,18 +64,6 @@ imported but doesn't check whether stubs match their implementation
 
 Run `python tests/mypy_test.py --help` for information on the various configuration options
 for this script.
-
-## pytype\_test.py
-
-Note: This test cannot be run on Python version < 3.13 as pytype does not yet support
-Python 3.13 and above.
-
-Run using:
-```bash
-(.venv3)$ python3 tests/pytype_test.py
-```
-
-This test works similarly to `mypy_test.py`, except it uses `pytype`.
 
 ## pyright\_test.py
 

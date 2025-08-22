@@ -25,7 +25,7 @@ extension_descriptions = {".pyi": "stub", ".py": ".py"}
 
 # These type checkers and linters must have exact versions in the requirements file to ensure
 # consistent CI runs.
-linters = {"mypy", "pyright", "pytype", "ruff"}
+linters = {"mypy", "pyright", "ruff"}
 
 ALLOWED_PY_FILES_IN_TESTS_DIR = {
     "django_settings.py"  # This file contains Django settings used by the mypy_django_plugin during stubtest execution.

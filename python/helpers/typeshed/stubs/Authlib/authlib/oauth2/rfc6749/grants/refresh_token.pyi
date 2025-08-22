@@ -1,8 +1,11 @@
+from logging import Logger
 from typing_extensions import TypeAlias
 
 from authlib.oauth2.rfc6749 import BaseGrant, TokenEndpointMixin, TokenMixin
 
 _ServerResponse: TypeAlias = tuple[int, str, list[tuple[str, str]]]
+
+log: Logger
 
 class RefreshTokenGrant(BaseGrant, TokenEndpointMixin):
     GRANT_TYPE: str

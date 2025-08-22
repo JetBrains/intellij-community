@@ -42,6 +42,7 @@ cellty_from_fmtty: Final[dict[int, int]]
 ctype_text: Final[dict[int, str]]
 
 class Cell(BaseObject):
+    __slots__ = ["ctype", "value", "xf_index"]
     ctype: int
     value: str
     xf_index: int | None
@@ -58,6 +59,18 @@ class Colinfo(BaseObject):
     collapsed: int
 
 class Rowinfo(BaseObject):
+    __slots__ = (
+        "height",
+        "has_default_height",
+        "outline_level",
+        "outline_group_starts_ends",
+        "hidden",
+        "height_mismatch",
+        "has_default_xf_index",
+        "xf_index",
+        "additional_space_above",
+        "additional_space_below",
+    )
     height: int | None
     has_default_height: int | None
     outline_level: int | None

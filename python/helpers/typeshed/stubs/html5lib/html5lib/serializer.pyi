@@ -1,6 +1,9 @@
 from _typeshed import Incomplete
 from collections.abc import Generator
-from typing import Any, overload
+from typing import overload
+
+k: str
+v: str | int
 
 def htmlentityreplace_errors(exc: Exception) -> tuple[str | bytes, int]: ...
 @overload
@@ -25,14 +28,14 @@ class HTMLSerializer:
     inject_meta_charset: bool
     strip_whitespace: bool
     sanitize: bool
-    options: Any
-    errors: Any
+    options: Incomplete
+    errors: Incomplete
     strict: bool
     def __init__(self, **kwargs) -> None: ...
     def encode(self, string): ...
     def encodeStrict(self, string): ...
-    encoding: Any
-    def serialize(self, treewalker, encoding=None) -> Generator[Incomplete, None, None]: ...
+    encoding: Incomplete
+    def serialize(self, treewalker, encoding=None) -> Generator[Incomplete]: ...
     def render(self, treewalker, encoding=None): ...
     def serializeError(self, data: str = "XXX ERROR MESSAGE NEEDED") -> None: ...
 

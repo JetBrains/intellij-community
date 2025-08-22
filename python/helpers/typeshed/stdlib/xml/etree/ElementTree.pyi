@@ -78,10 +78,8 @@ def canonicalize(
 ) -> None: ...
 
 # The tag for Element can be set to the Comment or ProcessingInstruction
-# functions defined in this module. _ElementCallable could be a recursive
-# type, but defining it that way uncovered a bug in pytype.
-_ElementCallable: TypeAlias = Callable[..., Element[Any]]
-_CallableElement: TypeAlias = Element[_ElementCallable]
+# functions defined in this module.
+_ElementCallable: TypeAlias = Callable[..., Element[_ElementCallable]]
 
 _Tag = TypeVar("_Tag", default=str, bound=str | _ElementCallable)
 _OtherTag = TypeVar("_OtherTag", default=str, bound=str | _ElementCallable)
@@ -138,8 +136,8 @@ class Element(Generic[_Tag]):
     def __bool__(self) -> bool: ...
 
 def SubElement(parent: Element, tag: str, attrib: dict[str, str] = ..., **extra: str) -> Element: ...
-def Comment(text: str | None = None) -> _CallableElement: ...
-def ProcessingInstruction(target: str, text: str | None = None) -> _CallableElement: ...
+def Comment(text: str | None = None) -> Element[_ElementCallable]: ...
+def ProcessingInstruction(target: str, text: str | None = None) -> Element[_ElementCallable]: ...
 
 PI = ProcessingInstruction
 
@@ -182,7 +180,7 @@ class ElementTree(Generic[_Root]):
     ) -> None: ...
     def write_c14n(self, file: _FileWriteC14N) -> None: ...
 
-HTML_EMPTY: set[str]
+HTML_EMPTY: Final[set[str]]
 
 def register_namespace(prefix: str, uri: str) -> None: ...
 @overload
@@ -335,6 +333,7 @@ class C14NWriterTarget:
 # The target type is tricky, because the implementation doesn't
 # require any particular attribute to be present. This documents the attributes
 # that can be present, but uncommenting any of them would require them.
+@type_check_only
 class _Target(Protocol):
     # start: Callable[str, dict[str, str], Any] | None
     # end: Callable[[str], Any] | None

@@ -1,7 +1,7 @@
 import sys
 from collections.abc import Callable, Mapping, Sequence
 from types import ModuleType
-from typing import Any, Protocol, TypeVar
+from typing import Any, Protocol, TypeVar, type_check_only
 from typing_extensions import TypeAlias
 
 from gevent.hub import Hub
@@ -30,6 +30,7 @@ else:
 
 subscribers: list[Callable[[Any], object]]
 
+@type_check_only
 class _PeriodicMonitorThread(Protocol):
     def add_monitoring_function(self, function: Callable[[Hub], object], period: float | None) -> object: ...
 

@@ -1,6 +1,6 @@
 from _typeshed import SupportsItems
 from collections.abc import Iterable, Iterator, Mapping, Sequence
-from typing import Any, ClassVar, Protocol, TypeVar, overload
+from typing import Any, ClassVar, Protocol, TypeVar, overload, type_check_only
 from typing_extensions import TypeAlias
 
 from wtforms.fields.core import Field, UnboundField
@@ -12,6 +12,7 @@ _FormErrors: TypeAlias = dict[str, Sequence[str] | _FormErrors]
 # _unbound_fields will always be a list on an instance, but on a
 # class it might be None, if it never has been instantiated, or
 # not instantianted after a new field had been added/removed
+@type_check_only
 class _UnboundFields(Protocol):
     @overload
     def __get__(self, obj: None, owner: type[object] | None = None, /) -> list[tuple[str, UnboundField[Any]]] | None: ...

@@ -4,6 +4,7 @@ from typing_extensions import Self
 from gevent.hub import Hub
 
 class AbstractLinkable:
+    __slots__ = ("hub", "_links", "_notifier", "_notify_all", "__weakref__")
     @property
     def hub(self) -> Hub | None: ...
     def __init__(self, hub: Hub | None = None) -> None: ...

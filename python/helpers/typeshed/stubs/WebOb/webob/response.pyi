@@ -2,7 +2,7 @@ from _typeshed import SupportsItems, SupportsRead
 from _typeshed.wsgi import StartResponse, WSGIApplication, WSGIEnvironment
 from collections.abc import Iterable, Iterator, Sequence
 from datetime import timedelta
-from typing import IO, Any, Literal, Protocol, TypedDict, TypeVar, overload
+from typing import IO, Any, Literal, Protocol, TypedDict, TypeVar, overload, type_check_only
 from typing_extensions import Self, TypeAlias
 
 from webob._types import AsymmetricProperty, AsymmetricPropertyWithDelete, SymmetricProperty, SymmetricPropertyWithDelete
@@ -18,6 +18,7 @@ __all__ = ["Response"]
 _ResponseT = TypeVar("_ResponseT", bound=Response)
 _ResponseCacheControl: TypeAlias = CacheControl[Literal["response"]]
 
+@type_check_only
 class _ResponseCacheExpires(Protocol):
     def __call__(
         self,
@@ -37,6 +38,7 @@ class _ResponseCacheExpires(Protocol):
         stale_if_error: int = ...,
     ) -> None: ...
 
+@type_check_only
 class _ResponseCacheControlDict(TypedDict, total=False):
     public: bool
     private: Literal[True] | str

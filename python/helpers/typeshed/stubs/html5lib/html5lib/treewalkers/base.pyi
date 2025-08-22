@@ -1,15 +1,18 @@
-from typing import Any
+from _typeshed import Incomplete
 
-DOCUMENT: Any
-DOCTYPE: Any
-TEXT: Any
-ELEMENT: Any
-COMMENT: Any
-ENTITY: Any
+__all__ = ["DOCUMENT", "DOCTYPE", "TEXT", "ELEMENT", "COMMENT", "ENTITY", "UNKNOWN", "TreeWalker", "NonRecursiveTreeWalker"]
+
+DOCUMENT: int
+DOCTYPE: int
+TEXT: int
+ELEMENT: int
+COMMENT: int
+ENTITY: int
 UNKNOWN: str
+spaceCharacters: str
 
 class TreeWalker:
-    tree: Any
+    tree: Incomplete
     def __init__(self, tree) -> None: ...
     def __iter__(self): ...
     def error(self, msg): ...

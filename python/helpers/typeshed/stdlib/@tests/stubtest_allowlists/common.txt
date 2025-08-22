@@ -195,6 +195,10 @@ _frozen_importlib_external.FileLoader.get_filename
 _frozen_importlib_external.FileLoader.get_resource_reader
 _frozen_importlib_external.FileLoader.load_module
 
+# Mismatch of default values of `report` parameter:
+_markupbase.ParserBase.parse_comment
+_markupbase.ParserBase.parse_marked_section
+
 _pydecimal.*  # See comments in file
 _typeshed.*  # Utility types for typeshed, doesn't exist at runtime
 argparse.ArgumentParser.__init__  # stubtest doesn't recognise the runtime default (a class) as being compatible with a callback protocol (the stub annotation)
@@ -307,6 +311,7 @@ functools._lru_cache_wrapper.cache_parameters  # Cannot be detected statically
 functools.cached_property.__set__  # doesn't exist, but cached_property is settable by another mechanism
 
 hmac.new  # Raises TypeError if optional argument digestmod is not provided
+html.parser.HTMLParser.parse_bogus_comment  # default values mismatch
 http.HTTPStatus.description  # set in __new__; work-around for enum wierdness
 http.HTTPStatus.phrase  # set in __new__; work-around for enum wierdness
 imaplib.IMAP4_SSL.ssl  # Depends on the existence and flags of SSL
@@ -461,11 +466,9 @@ typing._Final.__init_subclass__
 typing\.Protocol
 typing(_extensions)?\._TypedDict
 typing(_extensions)?\.Any.*
-typing(_extensions)?\.Generic
 typing(_extensions)?\.TypedDict
 typing_extensions\.ParamSpec.*
 typing_extensions\.TypeVar.*
-typing_extensions\._SpecialForm.*
 
 # Special primitives
 typing(_extensions)?\.AbstractSet
@@ -494,7 +497,6 @@ typing(_extensions)?\.Reversible
 typing(_extensions)?\.Sequence
 typing(_extensions)?\.Sized
 typing(_extensions)?\.ValuesView
-typing_extensions\.Final
 typing_extensions\.LiteralString
 
 # Typing-related weirdness

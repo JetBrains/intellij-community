@@ -4,6 +4,10 @@ import os
 from typing import Any, Dict, Generic, Iterable, Mapping, TypeVar, Union
 from typing_extensions import Self, assert_type
 
+###################################################################
+# Note: tests for `dict.update()` are in `check_MutableMapping.py`.
+###################################################################
+
 # These do follow `__init__` overloads order:
 # mypy and pyright have different opinions about this one:
 # mypy raises: 'Need type annotation for "bad"'

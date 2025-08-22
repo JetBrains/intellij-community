@@ -36,6 +36,7 @@ def get_type(t: type, value: object) -> Literal["n", "s", "d", "f"] | None: ...
 def get_time_format(t: _TimeTypes) -> str: ...
 
 class Cell(StyleableObject):
+    __slots__ = ("row", "column", "_value", "data_type", "parent", "_hyperlink", "_comment")
     row: int
     column: int
     data_type: str
@@ -82,6 +83,7 @@ class Cell(StyleableObject):
     def comment(self, value: Comment | None) -> None: ...
 
 class MergedCell(StyleableObject):
+    __slots__ = ("row", "column")
     data_type: str
     comment: Comment | None
     hyperlink: Hyperlink | None

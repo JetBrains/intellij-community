@@ -1,7 +1,7 @@
 from _socket import _Address as _StrictAddress
 from _typeshed import ReadableBuffer, StrOrBytesPath
 from collections.abc import Callable
-from typing import Any, ClassVar, TypedDict, overload
+from typing import Any, ClassVar, TypedDict, overload, type_check_only
 from typing_extensions import TypeAlias
 
 from gevent.baseserver import BaseServer, _Spawner
@@ -12,6 +12,7 @@ from gevent.ssl import SSLContext, wrap_socket as ssl_wrap_socket
 # from the stdlib _socket.pyi. But that would exclude some potentially valid handlers.
 _Address: TypeAlias = Any
 
+@type_check_only
 class _SSLArguments(TypedDict, total=False):
     keyfile: StrOrBytesPath
     certfile: StrOrBytesPath
@@ -23,7 +24,7 @@ class _SSLArguments(TypedDict, total=False):
     do_handshake_on_connect: bool
     ciphers: str
 
-class StreamServer(BaseServer[[_GeventSocket, _Address]]):
+class StreamServer(BaseServer[_GeventSocket, _Address]):
     backlog: int
     reuse_addr: ClassVar[int | None]
     wrap_socket = ssl_wrap_socket
@@ -67,7 +68,7 @@ class StreamServer(BaseServer[[_GeventSocket, _Address]]):
     def do_close(self, sock: _GeventSocket, address: _Address) -> None: ...
     def wrap_socket_and_handle(self, client_socket: _GeventSocket, address: _StrictAddress) -> Any: ...
 
-class DatagramServer(BaseServer[[_GeventSocket, _Address]]):
+class DatagramServer(BaseServer[_GeventSocket, _Address]):
     reuse_addr: ClassVar[int | None]
     def __init__(
         self,

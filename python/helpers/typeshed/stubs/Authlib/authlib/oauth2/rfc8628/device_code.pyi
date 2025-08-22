@@ -1,7 +1,9 @@
 from _typeshed import Incomplete
+from logging import Logger
 
 from authlib.oauth2.rfc6749 import BaseGrant, TokenEndpointMixin
 
+log: Logger
 DEVICE_CODE_GRANT_TYPE: str
 
 class DeviceCodeGrant(BaseGrant, TokenEndpointMixin):

@@ -1,6 +1,6 @@
-from _typeshed import Incomplete
+from typing import Final, Literal
 
-__docformat__: str
-labels: Incomplete
-bibliographic_fields: Incomplete
-author_separators: Incomplete
+__docformat__: Final = "reStructuredText"
+labels: dict[str, str]
+bibliographic_fields: dict[str, str]
+author_separators: list[Literal[";", ","]]

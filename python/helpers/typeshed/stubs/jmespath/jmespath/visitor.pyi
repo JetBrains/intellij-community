@@ -1,6 +1,6 @@
 from _typeshed import Unused
 from collections.abc import Callable, MutableMapping
-from typing import Any, ClassVar, NoReturn, TypedDict, TypeVar
+from typing import Any, ClassVar, NoReturn, TypedDict, TypeVar, type_check_only
 
 from jmespath.functions import Functions
 
@@ -17,13 +17,17 @@ class _Expression:
     expression: str
     interpreter: Visitor
     def __init__(self, expression: str, interpreter: Visitor) -> None: ...
-    def visit(self, node: _TreeNode, *args, **kwargs) -> Any: ...
+    # `args` and `kwargs` are passed to the appropriate `visit_*` method.
+    def visit(self, node: _TreeNode, *args: Any, **kwargs: Any) -> Any: ...
 
 class Visitor:
     def __init__(self) -> None: ...
-    def visit(self, node: _TreeNode, *args, **kwargs) -> Any: ...
+    # `args` and `kwargs` are passed to the appropriate `visit_*` method.
+    # Its return value is returned from visit.
+    def visit(self, node: _TreeNode, *args: Any, **kwargs: Any) -> Any: ...
     def default_visit(self, node: _TreeNode, *args: Unused, **kwargs: Unused) -> NoReturn: ...
 
+@type_check_only
 class _TreeNode(TypedDict):
     type: str
     value: Any
@@ -59,4 +63,4 @@ class TreeInterpreter(Visitor):
 
 class GraphvizVisitor(Visitor):
     def __init__(self) -> None: ...
-    def visit(self, node: _TreeNode, *args, **kwargs) -> str: ...
+    def visit(self, node: _TreeNode, *args: Unused, **kwargs: Unused) -> str: ...

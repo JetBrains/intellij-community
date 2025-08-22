@@ -1,5 +1,5 @@
 from _typeshed import Incomplete
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 
 from networkx.classes.graph import Graph, _Node
 from networkx.utils.backends import _dispatchable
@@ -7,7 +7,7 @@ from networkx.utils.backends import _dispatchable
 __all__ = ["contracted_edge", "contracted_nodes", "equivalence_classes", "identified_nodes", "quotient_graph"]
 
 @_dispatchable
-def equivalence_classes(iterable, relation): ...
+def equivalence_classes(iterable: Iterable[_Node], relation: Callable[[_Node, _Node], bool]) -> set[frozenset[_Node]]: ...
 @_dispatchable
 def quotient_graph(
     G: Graph[_Node],

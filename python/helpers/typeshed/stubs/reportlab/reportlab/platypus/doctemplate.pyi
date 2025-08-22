@@ -1,7 +1,7 @@
 from _typeshed import Incomplete
 from abc import abstractmethod
 from collections.abc import Callable
-from typing import IO, Any, Literal, Protocol
+from typing import IO, Any, Literal, Protocol, type_check_only
 from typing_extensions import Self, TypeAlias
 
 from reportlab.pdfgen.canvas import Canvas
@@ -33,6 +33,7 @@ __all__ = (
 #       type vars didn't seem to work for this one
 _PageCallback: TypeAlias = Callable[[Canvas, Any], object]
 
+@type_check_only
 class _CanvasMaker(Protocol):
     # NOTE: This matches a subset of Canvas.__init__
     def __call__(

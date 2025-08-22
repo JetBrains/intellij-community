@@ -19,6 +19,7 @@ from antlr4.RuleContext import RuleContext as RuleContext
 from antlr4.Token import Token as Token
 
 class LL1Analyzer:
+    __slots__ = "atn"
     HIT_PRED: Incomplete
     atn: Incomplete
     def __init__(self, atn: ATN) -> None: ...

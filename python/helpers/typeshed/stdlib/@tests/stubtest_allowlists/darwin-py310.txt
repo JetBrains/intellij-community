@@ -1,6 +1,6 @@
-# ===========
-# 3.9 to 3.11
-# ===========
+# =======
+# <= 3.11
+# =======
 
 # Added in Python 3.10.15
 email._header_value_parser.NLSET
@@ -41,6 +41,7 @@ xml.etree.cElementTree.XMLPullParser.flush
 xml.parsers.expat.XMLParserType.GetReparseDeferralEnabled
 xml.parsers.expat.XMLParserType.SetReparseDeferralEnabled
 xml.sax.expatreader.ExpatParser.flush
+zipfile.ZipInfo.__slots__
 
 
 # =============================================================

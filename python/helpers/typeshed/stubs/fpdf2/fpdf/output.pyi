@@ -102,6 +102,21 @@ class PDFXmpMetadata(PDFContentStream):
     def __init__(self, contents: bytes) -> None: ...
 
 class PDFXObject(PDFContentStream):
+    __slots__ = (
+        "_id",
+        "_contents",
+        "filter",
+        "length",
+        "type",
+        "subtype",
+        "width",
+        "height",
+        "color_space",
+        "bits_per_component",
+        "decode",
+        "decode_parms",
+        "s_mask",
+    )
     type: Name
     subtype: Name
     width: Incomplete
@@ -126,11 +141,13 @@ class PDFXObject(PDFContentStream):
     ) -> None: ...
 
 class PDFICCProfile(PDFContentStream):
+    __slots__ = ("_id", "_contents", "filter", "length", "n", "alternate")
     n: Incomplete
     alternate: Name
     def __init__(self, contents: bytes, n, alternate: str) -> None: ...
 
 class PDFPageLabel:
+    __slots__ = ("_style", "_prefix", "st")
     st: int
     def __init__(self, label_style: PageLabelStyle, label_prefix: str, label_start: int) -> None: ...
     @property
@@ -143,6 +160,24 @@ class PDFPageLabel:
     def get_start(self) -> int: ...
 
 class PDFPage(PDFObject):
+    __slots__ = (
+        "_id",
+        "type",
+        "contents",
+        "dur",
+        "trans",
+        "annots",
+        "group",
+        "media_box",
+        "struct_parents",
+        "resources",
+        "parent",
+        "_index",
+        "_width_pt",
+        "_height_pt",
+        "_page_label",
+        "_text_substitution_fragments",
+    )
     type: Name
     contents: Incomplete
     dur: Incomplete | None
@@ -184,6 +219,7 @@ class PDFXrefAndTrailer(ContentWithoutID):
     def serialize(self, _security_handler: StandardSecurityHandler | None = None) -> str: ...
 
 class OutputIntentDictionary:
+    __slots__ = ("type", "s", "output_condition_identifier", "output_condition", "registry_name", "dest_output_profile", "info")
     type: Name
     s: Name
     output_condition_identifier: PDFString | None

@@ -1,23 +1,27 @@
 import datetime
 import sys
+import winreg
 from _typeshed import Incomplete
+from typing import Any, SupportsIndex
 
 if sys.platform == "win32":
-    handle: Incomplete
-    tzparent: Incomplete
-    parentsize: Incomplete
-    localkey: Incomplete
-    WEEKS: Incomplete
-    def list_timezones(): ...
+    handle: winreg.HKEYType
+    tzparent: winreg.HKEYType
+    parentsize: int
+    localkey: winreg.HKEYType
+    WEEKS: datetime.timedelta
+    def list_timezones() -> list[str]: ...
 
     class win32tz(datetime.tzinfo):
-        data: Incomplete
-        def __init__(self, name) -> None: ...
-        def utcoffset(self, dt): ...
-        def dst(self, dt): ...
-        def tzname(self, dt): ...
+        data: win32tz_data
+        def __init__(self, name: str | None) -> None: ...
+        def utcoffset(self, dt: datetime.datetime) -> datetime.timedelta: ...  # type: ignore[override]
+        def dst(self, dt: datetime.datetime) -> datetime.timedelta: ...  # type: ignore[override]
+        def tzname(self, dt: datetime.datetime) -> str | None: ...  # type: ignore[override]
 
-    def pickNthWeekday(year, month, dayofweek, hour, minute, whichweek): ...
+    def pickNthWeekday(
+        year: SupportsIndex, month: SupportsIndex, dayofweek: int, hour: SupportsIndex, minute: SupportsIndex, whichweek: int
+    ) -> datetime.datetime | None: ...
 
     class win32tz_data:
         display: Incomplete
@@ -35,6 +39,6 @@ if sys.platform == "win32":
         dstweeknumber: Incomplete
         dsthour: Incomplete
         dstminute: Incomplete
-        def __init__(self, path) -> None: ...
+        def __init__(self, path: str | None) -> None: ...
 
-    def valuesToDict(key): ...
+    def valuesToDict(key: winreg._KeyType) -> dict[str, Any]: ...

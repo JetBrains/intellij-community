@@ -5,6 +5,7 @@ from antlr4.Lexer import TokenSource as TokenSource
 from antlr4.Token import Token as Token
 
 class ListTokenSource(TokenSource):
+    __slots__ = ("tokens", "sourceName", "pos", "eofToken", "_factory")
     tokens: Incomplete
     sourceName: Incomplete
     pos: int

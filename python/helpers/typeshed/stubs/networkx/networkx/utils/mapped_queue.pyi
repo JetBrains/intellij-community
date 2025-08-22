@@ -4,6 +4,7 @@ from collections.abc import Iterator
 __all__ = ["MappedQueue"]
 
 class _HeapElement:
+    __slots__ = ["priority", "element", "_hash"]
     priority: Incomplete
     element: Incomplete
     def __init__(self, priority, element) -> None: ...

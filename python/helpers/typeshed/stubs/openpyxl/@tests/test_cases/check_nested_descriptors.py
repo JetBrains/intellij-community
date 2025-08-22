@@ -222,15 +222,13 @@ with_descriptors.set_tuple_none = 0
 with_descriptors.set_tuple_none = 0.0
 with_descriptors.set_tuple_none = None
 with_descriptors.set_tuple_none = "none"  # pyright: ignore[reportAttributeAccessIssue] # false negative in mypy
-with_descriptors.set_tuple_none = object()  # pyright: ignore[reportAttributeAccessIssue] # false negative in mypy
+with_descriptors.set_tuple_none = object()  # type: ignore
 with_descriptors.set_tuple_none = cast(_HasTagAndGet[Literal["a"]], _)
 with_descriptors.set_tuple_none = cast(  # pyright: ignore[reportAttributeAccessIssue] # false negative in mypy
     _HasTagAndGet[str], _
 )
 with_descriptors.set_tuple_none = cast(_HasTagAndGet[None], _)
-with_descriptors.set_tuple_none = cast(  # pyright: ignore[reportAttributeAccessIssue] # false negative in mypy
-    _HasTagAndGet[object], _
-)
+with_descriptors.set_tuple_none = cast(_HasTagAndGet[object], _)  # type: ignore
 
 
 with_descriptors.noneset_tuple = "a"

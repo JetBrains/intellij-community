@@ -10,6 +10,7 @@ from antlr4.PredictionContext import (
 )
 
 class ATNSimulator:
+    __slots__ = ("atn", "sharedContextCache", "__dict__")
     ERROR: Incomplete
     atn: Incomplete
     sharedContextCache: Incomplete

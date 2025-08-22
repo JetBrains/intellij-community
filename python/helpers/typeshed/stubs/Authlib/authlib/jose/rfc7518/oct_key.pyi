@@ -1,12 +1,13 @@
 from _typeshed import Incomplete
+from typing import ClassVar, Final
 
 from authlib.jose.rfc7517 import Key
 
-POSSIBLE_UNSAFE_KEYS: Incomplete
+POSSIBLE_UNSAFE_KEYS: Final[tuple[bytes, ...]]
 
 class OctKey(Key):
     kty: str
-    REQUIRED_JSON_FIELDS: Incomplete
+    REQUIRED_JSON_FIELDS: ClassVar[list[str]]
     raw_key: Incomplete
     def __init__(self, raw_key=None, options=None) -> None: ...
     @property

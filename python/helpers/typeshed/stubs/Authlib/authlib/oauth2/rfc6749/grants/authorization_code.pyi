@@ -1,10 +1,13 @@
 from collections.abc import Collection
+from logging import Logger
 from typing_extensions import TypeAlias
 
 from authlib.oauth2 import OAuth2Request
 from authlib.oauth2.rfc6749 import AuthorizationEndpointMixin, BaseGrant, ClientMixin, TokenEndpointMixin
 
 _ServerResponse: TypeAlias = tuple[int, str, list[tuple[str, str]]]
+
+log: Logger
 
 class AuthorizationCodeGrant(BaseGrant, AuthorizationEndpointMixin, TokenEndpointMixin):
     TOKEN_ENDPOINT_AUTH_METHODS: Collection[str]

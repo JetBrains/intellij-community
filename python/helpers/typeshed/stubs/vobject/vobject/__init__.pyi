@@ -1,6 +1,5 @@
-from .base import VERSION as VERSION, Component
-
-__version__ = VERSION
+from . import icalendar as icalendar, vcard as vcard
+from .base import VERSION as VERSION, Component, readComponents as readComponents, readOne as readOne
 
 def iCalendar() -> Component: ...
 def vCard() -> Component: ...

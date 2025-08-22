@@ -1,7 +1,8 @@
 import datetime as dt
-from _typeshed import Incomplete, StrOrBytesPath
-from collections.abc import Callable, Mapping
-from typing import ClassVar, Literal, Protocol, TypeVar, type_check_only
+from _typeshed import Incomplete, StrOrBytesPath, Unused
+from collections.abc import Callable, Iterable, Mapping
+from decimal import Decimal
+from typing import Any, ClassVar, Literal, Protocol, TypeVar, overload, type_check_only
 from typing_extensions import TypeAlias
 
 from m3u8.mixins import BasePathMixin, GroupedBasePathMixin
@@ -27,7 +28,7 @@ _PlaylistAnyT = TypeVar("_PlaylistAnyT", bound=_PlaylistProtocol)
 class MalformedPlaylistError(Exception): ...
 
 class M3U8:
-    simple_attributes: list[tuple[str, str]]
+    simple_attributes: tuple[tuple[str, str], ...]
     data: dict[str, Incomplete]
     keys: list[Key]
     segment_map: list[InitializationSection]
@@ -54,7 +55,7 @@ class M3U8:
     is_i_frames_only: bool | None
     target_duration: float | None
     media_sequence: int | None
-    program_date_time: str | None
+    program_date_time: dt.datetime | None
     is_independent_segments: bool | None
     version: str | None
     allow_cache: str | None
@@ -118,29 +119,29 @@ class Segment(BasePathMixin):
         uri: str | None = None,
         base_uri: str | None = None,
         program_date_time: dt.datetime | None = None,
-        current_program_date_time=None,
+        current_program_date_time: dt.datetime | None = None,
         duration: float | None = None,
         title: str | None = None,
-        bitrate=None,
-        byterange=None,
+        bitrate: int | None = None,
+        byterange: str | None = None,
         cue_out: bool = False,
         cue_out_start: bool = False,
         cue_out_explicitly_duration: bool = False,
         cue_in: bool = False,
         discontinuity: bool = False,
-        key=None,
-        scte35=None,
+        key: Unused = None,
+        scte35: str | None = None,
         oatcls_scte35: str | None = None,
-        scte35_duration=None,
+        scte35_duration: float | None = None,
         scte35_elapsedtime=None,
         asset_metadata: Mapping[str, str] | None = None,
         keyobject: Key | None = None,
-        parts: list[Mapping[str, Incomplete]] | None = None,
+        parts: Iterable[Mapping[str, Incomplete]] | None = None,
         init_section: Mapping[str, Incomplete] | None = None,
-        dateranges=None,
+        dateranges: Iterable[Mapping[str, Incomplete]] | None = None,
         gap_tag: list[Mapping[str, Incomplete]] | None = None,
         media_sequence: int | None = None,
-        custom_parser_values=None,
+        custom_parser_values: dict[str, Incomplete] | None = None,
     ) -> None: ...
     def add_part(self, part: PartialSegment) -> None: ...
     def dumps(self, last_segment: PartialSegment | None, timespec: str = "milliseconds", infspec: str = "auto") -> str: ...
@@ -177,11 +178,11 @@ class PartialSegment(BasePathMixin):
         uri: str | None,
         duration: float | None,
         program_date_time: dt.datetime | None = None,
-        current_program_date_time=None,
-        byterange=None,
+        current_program_date_time: dt.datetime | None = None,
+        byterange: str | None = None,
         independent=None,
         gap=None,
-        dateranges: list[Mapping[str, Incomplete]] | None = None,
+        dateranges: Iterable[Mapping[str, Incomplete]] | None = None,
         gap_tag=None,
     ) -> None: ...
     def dumps(self, last_segment) -> str: ...
@@ -251,7 +252,25 @@ class StreamInfo:
     pathway_id: str | None
     stable_variant_id: str | None
     req_video_layout: str | None
-    def __init__(self, **kwargs) -> None: ...
+    def __init__(
+        self,
+        *,
+        bandwidth: int | None = None,
+        closed_captions=None,
+        average_bandwidth: int | None = None,
+        program_id: int | None = None,
+        resolution: tuple[int, int] | None = None,
+        codecs: str | None = None,
+        audio: str | None = None,
+        video: str | None = None,
+        subtitles: str | None = None,
+        frame_rate: float | None = None,
+        video_range: str | None = None,
+        hdcp_level: str | None = None,
+        pathway_id: str | None = None,
+        stable_variant_id: str | None = None,
+        req_video_layout: str | None = None,
+    ) -> None: ...
 
 class Media(BasePathMixin):
     base_uri: str | None
@@ -328,7 +347,7 @@ class ServerControl:
         part_hold_back: float | None = None,
         can_skip_dateranges: str | None = None,
     ) -> None: ...
-    def __getitem__(self, item: str): ...
+    def __getitem__(self, item: str) -> str | float | None: ...
     def dumps(self) -> str: ...
 
 class Skip:
@@ -356,7 +375,7 @@ class PreloadHint(BasePathMixin):
         byterange_start: int | None = None,
         byterange_length: int | None = None,
     ) -> None: ...
-    def __getitem__(self, item: str) -> str: ...
+    def __getitem__(self, item: str) -> str | int | None: ...
     def dumps(self) -> str: ...
 
 class SessionData:
@@ -381,7 +400,21 @@ class DateRange:
     scte35_in: str | None
     end_on_next: Incomplete
     x_client_attrs: list[tuple[str, str]]
-    def __init__(self, **kwargs) -> None: ...
+    def __init__(
+        self,
+        *,
+        id: str,
+        start_date: str | None = None,
+        class_: str | None = None,  # actually passing as `class` argument
+        end_date: str | None = None,
+        duration: float | None = None,
+        planned_duration: float | None = None,
+        scte35_cmd: str | None = None,
+        scte35_out: str | None = None,
+        scte35_in: str | None = None,
+        end_on_next=None,
+        **kwargs: str,  # for arguments with `x_` prefix
+    ) -> None: ...
     def dumps(self) -> str: ...
 
 class ContentSteering(BasePathMixin):
@@ -404,3 +437,11 @@ class Tiles(BasePathMixin):  # this is unused in runtime, so this is (temporary)
     duration: Incomplete
     def __init__(self, resolution, layout, duration) -> None: ...
     def dumps(self) -> str: ...
+
+@overload
+def find_key(keydata: None, keylist: Iterable[Key | None]) -> None: ...
+@overload
+def find_key(keydata: Mapping[str, Any], keylist: Iterable[Key | None]) -> Key: ...  # keydata can contain any values
+def denormalize_attribute(attribute: str) -> str: ...
+def quoted(string: str | None) -> str: ...
+def number_to_string(number: str | float | Decimal) -> str: ...

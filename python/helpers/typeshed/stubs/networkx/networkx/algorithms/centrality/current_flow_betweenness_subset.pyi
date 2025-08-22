@@ -1,3 +1,4 @@
+from _typeshed import Incomplete
 from collections.abc import Iterable
 
 from networkx.classes.graph import Graph, _Node
@@ -14,7 +15,7 @@ def current_flow_betweenness_centrality_subset(
     weight: str | None = None,
     dtype: type = ...,
     solver: str = "lu",
-): ...
+) -> dict[Incomplete, float]: ...
 @_dispatchable
 def edge_current_flow_betweenness_centrality_subset(
     G: Graph[_Node],
@@ -24,4 +25,4 @@ def edge_current_flow_betweenness_centrality_subset(
     weight: str | None = None,
     dtype: type = ...,
     solver: str = "lu",
-): ...
+) -> dict[tuple[Incomplete, Incomplete], float]: ...

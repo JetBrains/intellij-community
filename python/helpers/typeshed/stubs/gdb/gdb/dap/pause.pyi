@@ -1,1 +1,3 @@
-def __getattr__(name: str): ...  # incomplete module
+from _typeshed import Unused
+
+def pause(**args: Unused) -> None: ...

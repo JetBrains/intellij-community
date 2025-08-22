@@ -5,7 +5,7 @@ from _typeshed import StrPath, SupportsFlush, SupportsKeysAndGetItem, SupportsWr
 from argparse import Namespace
 from collections.abc import Callable, Iterable, Sequence
 from logging import Logger
-from typing import Any, Protocol, TypeVar
+from typing import Any, Protocol, TypeVar, type_check_only
 from typing_extensions import ParamSpec, TypeAlias
 
 import flask
@@ -20,6 +20,7 @@ _AlembicConfigValue: TypeAlias = Any
 alembic_version: tuple[int, int, int]
 log: Logger
 
+@type_check_only
 class _SupportsWriteAndFlush(SupportsWrite[_T_contra], SupportsFlush, Protocol): ...
 
 class Config:  # should inherit from alembic.config.Config which is not possible yet

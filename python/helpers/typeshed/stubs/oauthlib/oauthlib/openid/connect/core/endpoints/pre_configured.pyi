@@ -18,6 +18,7 @@ from oauthlib.oauth2.rfc6749.grant_types import (
 )
 from oauthlib.oauth2.rfc6749.request_validator import RequestValidator as OAuth2RequestValidator
 from oauthlib.oauth2.rfc6749.tokens import BearerToken
+from oauthlib.oauth2.rfc8628.grant_types import DeviceCodeGrant
 
 from ..grant_types import AuthorizationCodeGrant, HybridGrant, ImplicitGrant
 from ..grant_types.dispatchers import (
@@ -37,6 +38,7 @@ class Server(AuthorizationEndpoint, IntrospectEndpoint, TokenEndpoint, ResourceE
     openid_connect_auth: AuthorizationCodeGrant
     openid_connect_implicit: ImplicitGrant
     openid_connect_hybrid: HybridGrant
+    device_code_grant: DeviceCodeGrant
     bearer: BearerToken
     jwt: JWTToken
     auth_grant_choice: AuthorizationCodeGrantDispatcher

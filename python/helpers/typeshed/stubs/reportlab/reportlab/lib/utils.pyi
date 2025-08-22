@@ -4,7 +4,7 @@ from _typeshed import Incomplete, SupportsItems
 from collections.abc import Generator, Iterable
 from os import PathLike
 from types import TracebackType
-from typing import AnyStr, Final, Literal, TypeVar, overload
+from typing import AnyStr, Final, Literal, TypeVar, overload, type_check_only
 
 from reportlab.lib.rltempfile import get_rl_tempdir as get_rl_tempdir, get_rl_tempfile as get_rl_tempfile
 
@@ -19,6 +19,7 @@ _VT = TypeVar("_VT")
 
 __version__: Final[str]
 
+@type_check_only
 class _UNSET_:
     @staticmethod
     def __bool__() -> Literal[False]: ...

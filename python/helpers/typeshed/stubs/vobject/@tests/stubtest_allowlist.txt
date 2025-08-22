@@ -9,8 +9,6 @@ vobject.win32tz
 # python2 compat
 vobject.base.basestring
 vobject.base.str_
-vobject.base.to_unicode
-vobject.base.to_basestring
 vobject.base.unicode_type
 
 # implementation details that users shouldn't depend on

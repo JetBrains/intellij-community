@@ -1,7 +1,7 @@
 import datetime
 from _typeshed import Incomplete
 from collections.abc import Iterable, Mapping
-from typing import Literal, NamedTuple, TypedDict, overload
+from typing import Literal, NamedTuple, TypedDict, overload, type_check_only
 from typing_extensions import NotRequired
 
 from docker._types import ContainerWeightDevice, WaitContainerResponse
@@ -13,6 +13,7 @@ from docker.types.services import Mount
 from .images import Image
 from .resource import Collection, Model
 
+@type_check_only
 class _RestartPolicy(TypedDict):
     MaximumRetryCount: NotRequired[int]
     Name: NotRequired[Literal["always", "on-failure"]]

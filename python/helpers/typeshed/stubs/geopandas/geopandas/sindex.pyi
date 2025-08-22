@@ -21,7 +21,7 @@ class SpatialIndex:
         predicate: str | None = None,
         sort: bool = False,
         distance: float | ArrayLike | None = None,
-        output_format: Literal["tuple"] = "tuple",
+        output_format: Literal["indices"] = "indices",
     ) -> NDArray[np.int64]: ...
     @overload
     def query(

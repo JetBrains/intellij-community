@@ -1,5 +1,5 @@
 from _typeshed import StrPath, SupportsRead, SupportsWrite
-from typing import IO, Literal, Protocol
+from typing import IO, Literal, Protocol, type_check_only
 from typing_extensions import TypeAlias
 
 from openpyxl.compat.numbers import NUMPY as NUMPY
@@ -27,5 +27,6 @@ _VisibilityType: TypeAlias = Literal["visible", "hidden", "veryHidden"]  # noqa:
 _ZipFileFileProtocol: TypeAlias = StrPath | IO[bytes] | SupportsRead[bytes]  # noqa: Y047
 _ZipFileFileWriteProtocol: TypeAlias = StrPath | IO[bytes] | SupportsWrite[bytes]  # noqa: Y047
 
+@type_check_only
 class _Decodable(Protocol):  # noqa: Y046
     def decode(self, encoding: str, /) -> str: ...

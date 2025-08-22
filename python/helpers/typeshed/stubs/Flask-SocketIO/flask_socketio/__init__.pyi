@@ -2,7 +2,7 @@ from _typeshed import Incomplete
 from collections.abc import Callable
 from logging import Logger
 from threading import Thread
-from typing import Any, Literal, Protocol, TypedDict, TypeVar, overload
+from typing import Any, Literal, Protocol, TypedDict, TypeVar, overload, type_check_only
 from typing_extensions import ParamSpec, TypeAlias, Unpack
 
 from flask import Flask
@@ -16,12 +16,15 @@ _R_co = TypeVar("_R_co", covariant=True)
 _ExceptionHandler: TypeAlias = Callable[[BaseException], _R_co]
 _Handler: TypeAlias = Callable[_P, _R_co]
 
+@type_check_only
 class _HandlerDecorator(Protocol):
     def __call__(self, handler: _Handler[_P, _R_co]) -> _Handler[_P, _R_co]: ...
 
+@type_check_only
 class _ExceptionHandlerDecorator(Protocol):
     def __call__(self, exception_handler: _ExceptionHandler[_R_co]) -> _ExceptionHandler[_R_co]: ...
 
+@type_check_only
 class _SocketIOServerOptions(TypedDict, total=False):
     client_manager: Incomplete
     logger: Logger | bool
@@ -29,6 +32,7 @@ class _SocketIOServerOptions(TypedDict, total=False):
     async_handlers: bool
     always_connect: bool
 
+@type_check_only
 class _EngineIOServerConfig(TypedDict, total=False):
     async_mode: Literal["threading", "eventlet", "gevent", "gevent_uwsgi"]
     ping_interval: float | tuple[float, float]  # seconds
@@ -43,6 +47,7 @@ class _EngineIOServerConfig(TypedDict, total=False):
     monitor_clients: bool
     engineio_logger: Logger | bool
 
+@type_check_only
 class _SocketIOKwargs(_SocketIOServerOptions, _EngineIOServerConfig): ...
 
 class SocketIO:

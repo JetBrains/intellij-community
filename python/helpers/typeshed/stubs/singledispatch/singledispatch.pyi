@@ -1,9 +1,10 @@
 from collections.abc import Callable, Mapping
-from typing import Any, Generic, TypeVar, overload
+from typing import Any, Generic, TypeVar, overload, type_check_only
 
 _T = TypeVar("_T")
 _S = TypeVar("_S")
 
+@type_check_only
 class _SingleDispatchCallable(Generic[_T]):
     registry: Mapping[Any, Callable[..., _T]]
     def dispatch(self, cls: Any) -> Callable[..., _T]: ...

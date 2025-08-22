@@ -2,7 +2,7 @@ import sqlite3
 from _typeshed import Incomplete, SupportsLenAndGetItem
 from collections.abc import Container, Iterator, Mapping
 from contextlib import AbstractContextManager
-from typing import Any, Protocol, overload
+from typing import Any, Protocol, overload, type_check_only
 from typing_extensions import TypeAlias
 
 from pandas._typing import Scalar
@@ -16,6 +16,7 @@ from ..geodataframe import GeoDataFrame
 # isinstance checks. However to avoid a dependency on SQLAlchemy, we use "good-enough"
 # protocols that match as much as possible the SQLAlchemy implementation. This makes it
 # very hard for someone to pass in the wrong object.
+@type_check_only
 class _SqlalchemyTransactionLike(Protocol):
     # is_active: bool
     # connection: _SqlalchemyConnectionLike
@@ -27,9 +28,11 @@ class _SqlalchemyTransactionLike(Protocol):
     def commit(self) -> None: ...
 
 # `Any` is used in places where it would require to copy a lot of types from sqlalchemy
+@type_check_only
 class _SqlAlchemyEventTarget(Protocol):
     dispatch: Any
 
+@type_check_only
 class _SqlalchemyConnectionLike(_SqlAlchemyEventTarget, Protocol):
     engine: Any
     @property
@@ -52,6 +55,7 @@ class _SqlalchemyConnectionLike(_SqlAlchemyEventTarget, Protocol):
     def in_nested_transaction(self) -> bool: ...
     def close(self) -> None: ...
 
+@type_check_only
 class _SqlalchemyEngineLike(_SqlAlchemyEventTarget, Protocol):
     dialect: Any
     pool: Any

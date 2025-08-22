@@ -1,16 +1,3 @@
-# ====================================================================
-# TODO: New errors in Python 3.14 that need to be fixed or moved below
-# ====================================================================
-
-_winapi.COPY_FILE_DIRECTORY
-compression.zlib.ZLIBNG_VERSION
-encodings.win32_code_page_search_function
-nt.readinto
-pathlib.Path.group
-pathlib.Path.owner
-zlib.ZLIBNG_VERSION
-
-
 # =======
 # >= 3.12
 # =======

@@ -429,60 +429,79 @@ def voronoi_polygons(
     ordered: bool = False,
     **kwargs,
 ) -> GeometryCollection[Polygon] | LineString | MultiLineString | None: ...
-@overload
+@overload  # `geometry` as sequence-like
 def voronoi_polygons(
     geometry: OptGeoArrayLikeSeq,
     tolerance: ArrayLike[float] = 0.0,
     extend_to: OptGeoArrayLike = None,
     only_edges: ArrayLike[bool] = False,
-    ordered: bool = False,
+    ordered: ArrayLike[bool] = False,
     **kwargs,
 ) -> GeoArray: ...
-@overload
+@overload  # `tolerance` as sequence-like
 def voronoi_polygons(
     geometry: OptGeoArrayLike,
     tolerance: ArrayLikeSeq[float],
     extend_to: OptGeoArrayLike = None,
     only_edges: ArrayLike[bool] = False,
-    ordered: bool = False,
+    ordered: ArrayLike[bool] = False,
     **kwargs,
 ) -> GeoArray: ...
 @overload
-def voronoi_polygons(
+def voronoi_polygons(  # `extend_to` as positional sequence-like
     geometry: OptGeoArrayLike,
     tolerance: ArrayLike[float],
     extend_to: OptGeoArrayLikeSeq,
     only_edges: ArrayLike[bool] = False,
-    ordered: bool = False,
+    ordered: ArrayLike[bool] = False,
     **kwargs,
 ) -> GeoArray: ...
-@overload
+@overload  # `extend_to` as keyword sequence-like
 def voronoi_polygons(
     geometry: OptGeoArrayLike,
     tolerance: ArrayLike[float] = 0.0,
     *,
     extend_to: OptGeoArrayLikeSeq,
     only_edges: ArrayLike[bool] = False,
-    ordered: bool = False,
+    ordered: ArrayLike[bool] = False,
     **kwargs,
 ) -> GeoArray: ...
 @overload
-def voronoi_polygons(
+def voronoi_polygons(  # `only_edges` as positional sequence-like
     geometry: OptGeoArrayLike,
     tolerance: ArrayLike[float],
     extend_to: OptGeoArrayLike,
     only_edges: ArrayLikeSeq[bool],
-    ordered: bool = False,
+    ordered: ArrayLike[bool] = False,
     **kwargs,
 ) -> GeoArray: ...
 @overload
-def voronoi_polygons(
+def voronoi_polygons(  # `only_edges` as keyword sequence-like
     geometry: OptGeoArrayLike,
     tolerance: ArrayLike[float] = 0.0,
     extend_to: OptGeoArrayLike = None,
     *,
     only_edges: ArrayLikeSeq[bool],
-    ordered: bool = False,
+    ordered: ArrayLike[bool] = False,
+    **kwargs,
+) -> GeoArray: ...
+@overload  # `ordered` as positional sequence-like
+def voronoi_polygons(
+    geometry: OptGeoArrayLike,
+    tolerance: ArrayLike[float],
+    extend_to: OptGeoArrayLike,
+    only_edges: ArrayLike[bool],
+    ordered: ArrayLikeSeq[bool],
+    **kwargs,
+) -> GeoArray: ...
+@overload  # `ordered` as keyword sequence-like
+def voronoi_polygons(
+    geometry: OptGeoArrayLike,
+    tolerance: ArrayLike[float] = 0.0,
+    extend_to: OptGeoArrayLike = None,
+    *,
+    only_edges: ArrayLike[bool] = False,
+    ordered: ArrayLikeSeq[bool],
     **kwargs,
 ) -> GeoArray: ...
 @overload
@@ -511,26 +530,18 @@ def minimum_bounding_circle(geometry: Geometry | None, **kwargs) -> Polygon | Po
 @overload
 def minimum_bounding_circle(geometry: OptGeoArrayLikeSeq, **kwargs) -> GeoArray: ...
 @overload
-def maximum_inscribed_circle(geometry: Point, tolerance: float | None = None, **kwargs) -> Point: ...
-@overload
-def maximum_inscribed_circle(
-    geometry: LineString | Polygon | BaseMultipartGeometry, tolerance: float | None = None, **kwargs
-): ...
-@overload
-def maximum_inscribed_circle(geometry: Geometry, tolerance: float | None = None, **kwargs) -> Polygon | Point: ...
+def maximum_inscribed_circle(geometry: Polygon | MultiPolygon, tolerance: float | None = None, **kwargs) -> LineString: ...
 @overload
 def maximum_inscribed_circle(geometry: None, tolerance: float | None = None, **kwargs) -> None: ...
 @overload
-def maximum_inscribed_circle(geometry: Geometry | None, tolerance: float | None = None, **kwargs) -> Polygon | Point | None: ...
+def maximum_inscribed_circle(
+    geometry: Polygon | MultiPolygon | None, tolerance: float | None = None, **kwargs
+) -> LineString | None: ...
 @overload
 def maximum_inscribed_circle(geometry: OptGeoArrayLikeSeq, tolerance: ArrayLike[float] | None = None, **kwargs) -> GeoArray: ...
 @overload
-def orient_polygons(geometry: Point, *, exterior_cw: bool = False, **kwargs) -> Point: ...
+def maximum_inscribed_circle(geometry: OptGeoArrayLike, tolerance: ArrayLikeSeq[float], **kwargs) -> GeoArray: ...
 @overload
-def orient_polygons(geometry: Geometry, *, exterior_cw: bool = False, **kwargs) -> BaseGeometry: ...
-@overload
-def orient_polygons(geometry: None, *, exterior_cw: bool = False, **kwargs) -> None: ...
-@overload
-def orient_polygons(geometry: Geometry | None, *, exterior_cw: bool = False, **kwargs) -> BaseGeometry | None: ...
+def orient_polygons(geometry: OptGeoT, *, exterior_cw: bool = False, **kwargs) -> OptGeoT: ...
 @overload
 def orient_polygons(geometry: OptGeoArrayLikeSeq, *, exterior_cw: bool = False, **kwargs) -> GeoArray: ...

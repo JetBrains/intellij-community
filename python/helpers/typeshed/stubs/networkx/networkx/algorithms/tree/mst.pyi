@@ -1,8 +1,9 @@
 from _typeshed import Incomplete
-from collections.abc import Callable, Generator, Iterator
+from collections.abc import Callable, Generator
 from dataclasses import dataclass
 from enum import Enum
 from typing import Final, Literal
+from typing_extensions import Self
 
 from networkx.classes.graph import Graph, _Node
 from networkx.utils.backends import _dispatchable
@@ -81,7 +82,7 @@ class SpanningTreeIterator:
     def __init__(self, G, weight: str = "weight", minimum: bool = True, ignore_nan: bool = False) -> None: ...
     partition_queue: Incomplete
 
-    def __iter__(self) -> Iterator[Incomplete]: ...
+    def __iter__(self) -> Self: ...
     def __next__(self): ...
 
 @_dispatchable

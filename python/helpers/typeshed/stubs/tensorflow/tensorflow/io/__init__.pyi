@@ -48,19 +48,16 @@ class TFRecordWriter:
         self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: TracebackType | None
     ) -> None: ...
 
-# Also defaults are missing here because pytype crashes when a default is present reported
-# in this [issue](https://github.com/google/pytype/issues/1410#issue-1669793588). After
-# next release the defaults can be added back.
 class FixedLenFeature(NamedTuple):
     shape: ShapeLike
     dtype: DTypeLike
-    default_value: TensorCompatible | None = ...
+    default_value: TensorCompatible | None = None
 
 class FixedLenSequenceFeature(NamedTuple):
     shape: ShapeLike
     dtype: DTypeLike
-    allow_missing: bool = ...
-    default_value: TensorCompatible | None = ...
+    allow_missing: bool = False
+    default_value: TensorCompatible | None = None
 
 class VarLenFeature(NamedTuple):
     dtype: DTypeLike
@@ -70,7 +67,7 @@ class SparseFeature(NamedTuple):
     value_key: str
     dtype: DTypeLike
     size: int | list[int]
-    already_sorted: bool = ...
+    already_sorted: bool = False
 
 class RaggedFeature(NamedTuple):
     # Mypy doesn't support nested NamedTuples, but at runtime they actually do use
@@ -94,12 +91,12 @@ class RaggedFeature(NamedTuple):
         length: int
 
     dtype: DTypeLike
-    value_key: str | None = ...
+    value_key: str | None = None
     partitions: tuple[  # type: ignore[name-defined]
         RowSplits | RowLengths | RowStarts | RowLimits | ValueRowIds | UniformRowLength, ...
-    ] = ...
+    ] = ()
     row_splits_dtype: DTypeLike = ...
-    validate: bool = ...
+    validate: bool = False
 
 def parse_example(
     serialized: TensorCompatible, features: _FeatureSpecs, example_names: Iterable[str] | None = None, name: str | None = None

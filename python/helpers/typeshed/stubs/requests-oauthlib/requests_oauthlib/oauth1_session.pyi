@@ -1,6 +1,6 @@
 from _typeshed import Incomplete
 from logging import Logger
-from typing import TypedDict
+from typing import TypedDict, type_check_only
 from typing_extensions import TypeAlias
 
 import requests
@@ -11,6 +11,7 @@ from . import OAuth1
 # should be dict[str, str] but could look different
 _ParsedToken: TypeAlias = dict[str, Incomplete]
 
+@type_check_only
 class _TokenDict(TypedDict, total=False):
     oauth_token: Incomplete  # oauthlib.oauth1.Client.resource_owner_key
     oauth_token_secret: Incomplete  # oauthlib.oauth1.Client.resource_token_secret

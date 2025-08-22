@@ -25,11 +25,11 @@ def dfs_tree(
 @_dispatchable
 def dfs_predecessors(
     G: Graph[_Node], source: _Node | None = None, depth_limit=None, *, sort_neighbors: Callable[..., Incomplete] | None = None
-): ...
+) -> dict[Incomplete, Incomplete]: ...
 @_dispatchable
 def dfs_successors(
     G: Graph[_Node], source: _Node | None = None, depth_limit=None, *, sort_neighbors: Callable[..., Incomplete] | None = None
-): ...
+) -> dict[Incomplete, list[Incomplete]]: ...
 @_dispatchable
 def dfs_postorder_nodes(
     G: Graph[_Node], source: _Node | None = None, depth_limit=None, *, sort_neighbors: Callable[..., Incomplete] | None = None

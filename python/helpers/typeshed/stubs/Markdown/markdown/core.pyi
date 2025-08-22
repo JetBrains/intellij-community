@@ -1,5 +1,6 @@
 from codecs import _ReadableStream, _WritableStream
 from collections.abc import Callable, Mapping, Sequence
+from logging import Logger
 from typing import Any, ClassVar, Literal
 from typing_extensions import Self
 from xml.etree.ElementTree import Element
@@ -7,6 +8,10 @@ from xml.etree.ElementTree import Element
 from . import blockparser, inlinepatterns, postprocessors, preprocessors, treeprocessors
 from .extensions import Extension
 from .util import HtmlStash, Registry
+
+__all__ = ["Markdown", "markdown", "markdownFromFile"]
+
+logger: Logger
 
 class Markdown:
     preprocessors: Registry[preprocessors.Preprocessor]

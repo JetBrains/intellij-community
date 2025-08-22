@@ -1,14 +1,14 @@
 import io
 import json
 import os
-from _typeshed import Incomplete, SupportsRead, Unused
+from _typeshed import Incomplete, SupportsRead
 from collections.abc import Callable, Hashable
 from typing import Any, Literal, final, overload
 from typing_extensions import Self
 
 import pandas as pd
 from numpy.typing import ArrayLike
-from pandas._typing import Axes, AxisIndex, Dtype
+from pandas._typing import Axes, Dtype
 from pyproj import CRS
 from shapely.geometry.base import BaseGeometry
 
@@ -55,6 +55,8 @@ class GeoSeries(GeoPandasBase, pd.Series[BaseGeometry]):  # type: ignore[type-va
     def y(self) -> pd.Series[float]: ...
     @property
     def z(self) -> pd.Series[float]: ...
+    @property
+    def m(self) -> pd.Series[float]: ...
     # Keep inline with GeoDataFrame.from_file and geopandas.io.file._read_file
     @classmethod
     def from_file(
@@ -76,7 +78,7 @@ class GeoSeries(GeoPandasBase, pd.Series[BaseGeometry]):  # type: ignore[type-va
         data: ArrayLike,  # array-like of bytes handled by shapely.from_wkb(data)
         index: Axes | None = None,
         crs: _ConvertibleToCRS | None = None,
-        on_invalid: Literal["raise", "warn", "ignore"] = "raise",
+        on_invalid: Literal["raise", "warn", "ignore", "fix"] = "raise",
         *,
         dtype: Dtype | None = None,
         name: Hashable = None,
@@ -89,7 +91,7 @@ class GeoSeries(GeoPandasBase, pd.Series[BaseGeometry]):  # type: ignore[type-va
         data: ArrayLike,  # array-like of str handled by shapely.from_wkt(data)
         index: Axes | None = None,
         crs: _ConvertibleToCRS | None = None,
-        on_invalid: Literal["raise", "warn", "ignore"] = "raise",
+        on_invalid: Literal["raise", "warn", "ignore", "fix"] = "raise",
         *,
         dtype: Dtype | None = None,
         name: Hashable = None,
@@ -145,11 +147,7 @@ class GeoSeries(GeoPandasBase, pd.Series[BaseGeometry]):  # type: ignore[type-va
         overwrite: bool | None = ...,
         **kwargs,  # engine and driver dependent
     ) -> None: ...
-    # *** TODO: compare `__getitem__` with pandas-stubs ***
-    # def __getitem__(self, key): ...
-    # *** `sort_index` is annotated with `-> Self` in pandas-stubs; no need to override it ***
-    # def sort_index(self, *args, **kwargs): ...
-    def take(self, indices: ArrayLike, axis: AxisIndex = 0, **kwargs: Unused) -> GeoSeries: ...
+    # *** `__getitem__`, `sort_index` and `take` are annotated with `-> Self` in pandas-stubs; no need to override them ***
     # *** `apply` annotation in pandas-stubs is compatible except for deprecated `convert_dtype` argument ***
     # def apply(self, func, convert_dtype: bool | None = None, args=(), **kwargs): ...
     def isna(self) -> pd.Series[bool]: ...

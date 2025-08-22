@@ -23,7 +23,7 @@ class TokenEndpoint(BaseEndpoint):
         self,
         uri: str,
         http_method: _HTTPMethod = "POST",
-        body: str | None = None,
+        body: str | dict[str, str] | list[tuple[str, str]] | None = None,
         headers: dict[str, str] | None = None,
         credentials=None,
         grant_type_for_scope=None,

@@ -1,6 +1,6 @@
-# ===========
-# 3.9 to 3.11
-# ===========
+# =======
+# <= 3.11
+# =======
 
 # Incompatible changes introduced in Python 3.11.10
 # (Remove once 3.11.10 becomes available for Windows)

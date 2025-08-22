@@ -3,7 +3,7 @@ from _typeshed import SupportsWrite, TraceFunction
 from collections.abc import Callable
 from pdb import Pdb
 from types import FrameType
-from typing import Any, Literal, Protocol, TypeVar
+from typing import Any, Literal, Protocol, TypeVar, type_check_only
 from typing_extensions import TypeAlias
 
 from .watch_element import WatchElement
@@ -51,7 +51,7 @@ class Watch:
         self,
         *,
         callback: Callable[[FrameType, WatchElement, tuple[str, str, int | None]], None] = ...,
-        pdb: Literal[True] = ...,
+        pdb: Literal[True] = True,
         file: str | SupportsWrite[str] = ...,
         stack_limit: int | None = 5,
         custom_printer: Callable[[Any], None] = ...,  # User-defined printing callback
@@ -64,5 +64,6 @@ class Watch:
     def uninstall(self, func: _Identifier = "watch") -> None: ...
     def unwatch(self, *args: object) -> None: ...
 
+@type_check_only
 class _TraceFunc(Protocol):
     def __call__(self, frame: FrameType, event: str, arg: object) -> _TraceFunc: ...

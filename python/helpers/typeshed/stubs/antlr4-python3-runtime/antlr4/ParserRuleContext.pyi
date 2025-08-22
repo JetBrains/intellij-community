@@ -13,6 +13,7 @@ from antlr4.tree.Tree import (
 )
 
 class ParserRuleContext(RuleContext):
+    __slots__ = ("children", "start", "stop", "exception")
     children: Incomplete
     start: Incomplete
     stop: Incomplete

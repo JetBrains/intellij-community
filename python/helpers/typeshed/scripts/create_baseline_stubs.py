@@ -23,9 +23,7 @@ from pathlib import Path
 import aiohttp
 import termcolor
 
-from ts_utils.paths import STDLIB_PATH, STUBS_PATH
-
-PYRIGHT_CONFIG = Path("pyrightconfig.stricter.json")
+from ts_utils.paths import PYRIGHT_CONFIG, STDLIB_PATH, STUBS_PATH
 
 
 def search_pip_freeze_output(project: str, output: str) -> tuple[str, str] | None:

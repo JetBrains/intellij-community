@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Union
+from typing import Any, Hashable, Sequence, Union
 from typing_extensions import assert_type
 
 
@@ -28,6 +28,15 @@ def check_update_method__str_key() -> None:
     d.update({"": ""})  # type: ignore
     d.update([(1, 3)])  # type: ignore
     d.update([("", "")])  # type: ignore
+
+
+def test_keywords_allowed_on_dict_update_where_key_type_is_str_supertype(
+    a: dict[object, Any], b: dict[Hashable, Any], c: dict[Sequence[str], Any], d: dict[str, Any]
+) -> None:
+    a.update(keyword_args_are_accepted="whatever")
+    b.update(here_too="whooo")
+    c.update(and_here="hooray")
+    d.update(also_here="yay")
 
 
 def check_setdefault_method() -> None:

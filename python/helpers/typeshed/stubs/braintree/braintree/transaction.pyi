@@ -32,6 +32,7 @@ from braintree.sepa_direct_debit_account import SepaDirectDebitAccount
 from braintree.status_event import StatusEvent
 from braintree.subscription_details import SubscriptionDetails
 from braintree.three_d_secure_info import ThreeDSecureInfo
+from braintree.transfer import Transfer
 from braintree.us_bank_account import UsBankAccount
 from braintree.venmo_account import VenmoAccount
 from braintree.visa_checkout_card import VisaCheckoutCard
@@ -174,6 +175,7 @@ class Transaction(Resource):
     facilitator_details: FacilitatorDetails
     network_transaction_id: Incomplete
     payment_facilitator: PaymentFacilitator
+    transfer: Transfer
     def __init__(self, gateway, attributes) -> None: ...
     @property
     def vault_billing_address(self): ...

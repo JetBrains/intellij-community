@@ -16,8 +16,8 @@ class WatchPrint:
     def __init__(
         self,
         file: str | SupportsWrite[str] | None = ...,
-        stack_limit: int | None = ...,
-        custom_printer: Callable[[Any], None] | None = ...,  # User-defined printing callback
+        stack_limit: int | None = None,
+        custom_printer: Callable[[Any], None] | None = None,  # User-defined printing callback
     ) -> None: ...
     def __call__(self, frame: FrameType, elem: WatchElement, exec_info: tuple[str, str, int | None]) -> None: ...
     def getsourceline(self, exec_info: tuple[str, str, int | None]) -> str: ...

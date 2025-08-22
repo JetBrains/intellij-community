@@ -16,6 +16,17 @@ _TaskItem: TypeAlias = tuple[Callable[..., Any], tuple[Any, ...], dict[str, Any]
 _Receiver: TypeAlias = Callable[[_ValueSource[_T]], object]
 
 class ThreadPool(GroupMappingMixin):
+    __slots__ = (
+        "hub",
+        "_maxsize",
+        "manager",
+        "pid",
+        "fork_watcher",
+        "_available_worker_threads_greenlet_sem",
+        "_worker_greenlets",
+        "task_queue",
+        "_idle_task_timeout",
+    )
     hub: Hub
     pid: int
     manager: Greenlet[..., Any] | None
@@ -37,6 +48,7 @@ class ThreadPool(GroupMappingMixin):
     def spawn(self, func: Callable[_P, _T], *args: _P.args, **kwargs: _P.kwargs) -> AsyncResult[_T]: ...  # type: ignore[override]
 
 class ThreadResult(Generic[_T]):
+    __slots__ = ("exc_info", "async_watcher", "_call_when_ready", "value", "context", "hub", "receiver")
     receiver: _Receiver[_T]
     hub: Hub
     context: object | None

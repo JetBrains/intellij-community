@@ -1,9 +1,10 @@
 from _typeshed import Incomplete
-from typing import Any, TypedDict
+from typing import Any, TypedDict, type_check_only
 
 from flask import Flask
 from flask.testing import FlaskClient
 
+@type_check_only
 class _Packet(TypedDict):
     name: str
     args: Any

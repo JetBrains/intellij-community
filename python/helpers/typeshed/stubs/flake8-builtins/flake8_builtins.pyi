@@ -18,6 +18,9 @@ class BuiltinsChecker:
     module_name_msg: ClassVar[str]
     lambda_argument_msg: ClassVar[str]
 
+    default_line_number: ClassVar[int]
+    default_column_offset: ClassVar[int]
+
     names: ClassVar[list[str]]
     ignore_list: ClassVar[set[str]]
     ignored_module_names: ClassVar[set[str]]

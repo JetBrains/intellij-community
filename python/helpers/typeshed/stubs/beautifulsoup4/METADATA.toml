@@ -1,9 +1,0 @@
-version = "4.12.*"
-upstream_repository = "https://git.launchpad.net/beautifulsoup/tree"
-requires = ["types-html5lib"]
-partial_stub = true
-obsolete_since = "4.13.0" # Released on 2025-02-02
-
-[tool.stubtest]
-ignore_missing_stub = true
-extras = ["html5lib", "lxml"]

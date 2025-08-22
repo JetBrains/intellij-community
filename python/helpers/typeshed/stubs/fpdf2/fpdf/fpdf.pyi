@@ -109,7 +109,7 @@ _FontStyles: TypeAlias = Literal[
 ]
 
 FPDF_VERSION: Final[str]
-PAGE_FORMATS: dict[_Format, tuple[float, float]]
+PAGE_FORMATS: Final[dict[_Format, tuple[float, float]]]
 
 class ToCPlaceholder(NamedTuple):
     render_function: Callable[[FPDF, list[OutlineSection]], object]

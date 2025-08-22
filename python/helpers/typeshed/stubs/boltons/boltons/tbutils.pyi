@@ -4,6 +4,7 @@ from typing import Any, Generic, Literal, TypeVar
 from typing_extensions import Self
 
 class Callpoint:
+    __slots__ = ("func_name", "lineno", "module_name", "module_path", "lasti", "line")
     func_name: str
     lineno: int
     module_name: str

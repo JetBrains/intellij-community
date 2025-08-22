@@ -1,5 +1,6 @@
-version = "310.*"
+version = "311.*"
 upstream_repository = "https://github.com/mhammond/pywin32"
 
 [tool.stubtest]
-platforms = ["win32"]
+supported_platforms = ["win32"]
+ci_platforms = ["win32"]

@@ -1,8 +1,14 @@
+from abc import ABC, abstractmethod
+from collections.abc import Sequence
+from dataclasses import dataclass
 from enum import Enum, Flag, IntEnum, IntFlag
-from typing import Literal
+from typing import Final, Literal
 from typing_extensions import Self, TypeAlias
 
+from .drawing import DeviceCMYK, DeviceGray, DeviceRGB
 from .syntax import Name
+
+_Color: TypeAlias = str | int | Sequence[int] | DeviceCMYK | DeviceGray | DeviceRGB
 
 class SignatureFlag(IntEnum):
     SIGNATURES_EXIST = 1
@@ -68,15 +74,6 @@ class MethodReturnValue(CoerciveIntFlag):
     LINES = 2
     HEIGHT = 4
 
-class TableBordersLayout(CoerciveEnum):
-    ALL = "ALL"
-    NONE = "NONE"
-    INTERNAL = "INTERNAL"
-    MINIMAL = "MINIMAL"
-    HORIZONTAL_LINES = "HORIZONTAL_LINES"
-    NO_HORIZONTAL_LINES = "NO_HORIZONTAL_LINES"
-    SINGLE_TOP_LINE = "SINGLE_TOP_LINE"
-
 class CellBordersLayout(CoerciveIntFlag):
     NONE = 0
     LEFT = 1
@@ -85,6 +82,90 @@ class CellBordersLayout(CoerciveIntFlag):
     BOTTOM = 8
     ALL = 15
     INHERIT = 16
+
+@dataclass
+class TableBorderStyle:
+    thickness: float | None = None
+    color: int | tuple[int, int, int] | None = None
+    dash: float | None = None
+    gap: float = 0.0
+    phase: float = 0.0
+
+    @staticmethod
+    def from_bool(should_draw: TableBorderStyle | bool | None) -> TableBorderStyle: ...
+    @property
+    def dash_dict(self) -> dict[str, float | None]: ...
+    def changes_stroke(self, pdf) -> bool: ...
+    def should_render(self) -> bool: ...
+    def get_change_stroke_commands(self, scale: float) -> list[str]: ...
+    @staticmethod
+    def get_line_command(x1: float, y1: float, x2: float, y2: float) -> list[str]: ...
+    def get_draw_commands(self, pdf, x1: float, y1: float, x2: float, y2: float) -> list[str]: ...
+
+@dataclass
+class TableCellStyle:
+    left: bool | TableBorderStyle = False
+    bottom: bool | TableBorderStyle = False
+    right: bool | TableBorderStyle = False
+    top: bool | TableBorderStyle = False
+
+    @staticmethod
+    def get_change_fill_color_command(color: _Color | None) -> list[str]: ...
+    def get_draw_commands(
+        self, pdf, x1: float, y1: float, x2: float, y2: float, fill_color: _Color | None = None
+    ) -> list[str]: ...
+    def override_cell_border(self, cell_border: CellBordersLayout) -> Self: ...
+    def draw_cell_border(self, pdf, x1: float, y1: float, x2: float, y2: float, fill_color: _Color | None = None) -> None: ...
+
+class TableBordersLayout(ABC):
+    ALL: Final[TableBordersLayoutAll]
+    NONE: Final[TableBordersLayoutNone]
+    INTERNAL: Final[TableBordersLayoutInternal]
+    MINIMAL: Final[TableBordersLayoutMinimal]
+    HORIZONTAL_LINES: Final[TableBordersLayoutHorizontalLines]
+    NO_HORIZONTAL_LINES: Final[TableBordersLayoutNoHorizontalLines]
+    SINGLE_TOP_LINE: Final[TableBordersLayoutSingleTopLine]
+    @abstractmethod
+    def cell_style_getter(
+        self, row_idx: int, col_idx: int, col_pos: int, num_heading_rows: int, num_rows: int, num_col_idx: int, num_col_pos: int
+    ) -> TableCellStyle: ...
+    @classmethod
+    def coerce(cls, value: Self | str) -> Self: ...
+
+class TableBordersLayoutAll(TableBordersLayout):
+    def cell_style_getter(
+        self, row_idx: int, col_idx: int, col_pos: int, num_heading_rows: int, num_rows: int, num_col_idx: int, num_col_pos: int
+    ) -> TableCellStyle: ...
+
+class TableBordersLayoutNone(TableBordersLayout):
+    def cell_style_getter(
+        self, row_idx: int, col_idx: int, col_pos: int, num_heading_rows: int, num_rows: int, num_col_idx: int, num_col_pos: int
+    ) -> TableCellStyle: ...
+
+class TableBordersLayoutInternal(TableBordersLayout):
+    def cell_style_getter(
+        self, row_idx: int, col_idx: int, col_pos: int, num_heading_rows: int, num_rows: int, num_col_idx: int, num_col_pos: int
+    ) -> TableCellStyle: ...
+
+class TableBordersLayoutMinimal(TableBordersLayout):
+    def cell_style_getter(
+        self, row_idx: int, col_idx: int, col_pos: int, num_heading_rows: int, num_rows: int, num_col_idx: int, num_col_pos: int
+    ) -> TableCellStyle: ...
+
+class TableBordersLayoutHorizontalLines(TableBordersLayout):
+    def cell_style_getter(
+        self, row_idx: int, col_idx: int, col_pos: int, num_heading_rows: int, num_rows: int, num_col_idx: int, num_col_pos: int
+    ) -> TableCellStyle: ...
+
+class TableBordersLayoutNoHorizontalLines(TableBordersLayout):
+    def cell_style_getter(
+        self, row_idx: int, col_idx: int, col_pos: int, num_heading_rows: int, num_rows: int, num_col_idx: int, num_col_pos: int
+    ) -> TableCellStyle: ...
+
+class TableBordersLayoutSingleTopLine(TableBordersLayout):
+    def cell_style_getter(
+        self, row_idx: int, col_idx: int, col_pos: int, num_heading_rows: int, num_rows: int, num_col_idx: int, num_col_pos: int
+    ) -> TableCellStyle: ...
 
 class TableCellFillMode(CoerciveEnum):
     NONE = "NONE"

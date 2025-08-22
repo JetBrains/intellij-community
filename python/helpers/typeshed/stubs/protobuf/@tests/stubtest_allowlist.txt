@@ -31,3 +31,7 @@ google.protobuf.descriptor.OneofDescriptor
 
 # Runtime does not have __iter__ (yet...): hack in spirit of https://github.com/python/typeshed/issues/7813
 google.protobuf.internal.well_known_types.ListValue.__iter__
+
+# It's a list at runtime, but if we do that pyright complains about incompatible overrides
+# in subclasses that use a tuple for __slots__.
+google.protobuf.message.Message.__slots__

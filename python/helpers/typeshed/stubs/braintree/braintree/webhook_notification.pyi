@@ -61,6 +61,7 @@ class WebhookNotification(Resource):
         SubscriptionWentActive: Final = "subscription_went_active"
         SubscriptionWentPastDue: Final = "subscription_went_past_due"
         TransactionDisbursed: Final = "transaction_disbursed"
+        TransactionRetried: Final = "transaction_retried"
         TransactionReviewed: Final = "transaction_reviewed"
         TransactionSettled: Final = "transaction_settled"
         TransactionSettlementDeclined: Final = "transaction_settlement_declined"

@@ -16,7 +16,7 @@ def pagerank(
     nstart: SupportsGetItem[Incomplete, Incomplete] | None = None,
     weight: str | None = "weight",
     dangling: SupportsGetItem[Incomplete, Incomplete] | None = None,
-): ...
+) -> dict[Incomplete, float]: ...
 @_dispatchable
 def google_matrix(
     G: Graph[_Node],

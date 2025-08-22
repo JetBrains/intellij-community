@@ -15,6 +15,8 @@ singleQuoteStartRe: str
 doubleQuoteStartRe: str
 doubleQuoteSetsRe: str
 singleQuoteSetsRe: str
+doubleQuoteSetsRe2: str
+singleQuoteSetsRe2: str
 decadeAbbrRe: str
 openingDoubleQuotesRegex: str
 closingDoubleQuotesRegex: str

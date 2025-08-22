@@ -1,4 +1,3 @@
-from _typeshed import Incomplete
 from collections.abc import Generator
 
 from networkx.classes.graph import Graph, _Node
@@ -9,7 +8,7 @@ __all__ = ["generate_edgelist", "write_edgelist", "parse_edgelist", "read_edgeli
 @_dispatchable
 def write_edgelist(G, path, comments: str = "#", delimiter: str = " ", data: bool = True, encoding: str = "utf-8") -> None: ...
 @_dispatchable
-def generate_edgelist(G, delimiter: str = " ", data: bool = True) -> Generator[Incomplete, None, None]: ...
+def generate_edgelist(G, delimiter: str = " ", data: bool = True) -> Generator[str]: ...
 @_dispatchable
 def parse_edgelist(
     lines,

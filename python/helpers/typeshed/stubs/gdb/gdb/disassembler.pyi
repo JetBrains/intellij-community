@@ -1,40 +1,41 @@
-from _typeshed import Incomplete
+from collections.abc import Sequence
 from typing import Final, final
 
 import gdb
+from gdb import Architecture, Progspace
 
 class Disassembler:
     def __init__(self, name: str) -> None: ...
     def __call__(self, info): ...
 
 class DisassembleInfo:
-    address: Incomplete
-    architecture: Incomplete
-    progspace: Incomplete
-    def __init__(self, /, *args, **kwargs) -> None: ...
-    def address_part(self, address) -> DisassemblerAddressPart: ...
+    address: int
+    architecture: Architecture
+    progspace: Progspace
+    def __init__(self, info: DisassembleInfo) -> None: ...
+    def address_part(self, address: int) -> DisassemblerAddressPart: ...
     def is_valid(self) -> bool: ...
-    def read_memory(self, len, offset: int = 0): ...
-    def text_part(self, string, style) -> DisassemblerTextPart: ...
+    def read_memory(self, len: int, offset: int = 0): ...
+    def text_part(self, style: int, string: str) -> DisassemblerTextPart: ...
 
 class DisassemblerPart:
     def __init__(self, /, *args, **kwargs) -> None: ...
 
 @final
 class DisassemblerAddressPart(DisassemblerPart):
-    address: Incomplete
+    address: int
     string: str
 
 @final
 class DisassemblerTextPart(DisassemblerPart):
     string: str
-    style: Incomplete
+    style: int
 
 @final
 class DisassemblerResult:
-    def __init__(self, /, *args, **kwargs) -> None: ...
-    length: Incomplete
-    parts: Incomplete
+    def __init__(self, length: int, string: str | None = None, parts: Sequence[DisassemblerPart] | None = None) -> None: ...
+    length: int
+    parts: Sequence[DisassemblerPart]
     string: str
 
 STYLE_TEXT: Final = 0
@@ -48,7 +49,7 @@ STYLE_ADDRESS_OFFSET: Final = 7
 STYLE_SYMBOL: Final = 8
 STYLE_COMMENT_START: Final = 9
 
-def builtin_disassemble(INFO: DisassembleInfo, MEMORY_SOURCE=None) -> None: ...
+def builtin_disassemble(info: DisassembleInfo) -> None: ...
 
 class maint_info_py_disassemblers_cmd(gdb.Command):
     def __init__(self) -> None: ...

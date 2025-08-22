@@ -1,39 +1,41 @@
-from typing import Any
+import re
+from _typeshed import Incomplete
+from collections.abc import Iterable
 
 baseChar: str
 ideographic: str
 combiningCharacter: str
 digit: str
 extender: str
-letter: Any
-name: Any
-nameFirst: Any
-reChar: Any
-reCharRange: Any
+letter: str
+name: str
+nameFirst: str
+reChar: re.Pattern[str]
+reCharRange: re.Pattern[str]
 
-def charStringToList(chars): ...
-def normaliseCharList(charList): ...
+def charStringToList(chars: str) -> list[str]: ...
+def normaliseCharList(charList: Iterable[str]) -> list[str]: ...
 
-max_unicode: Any
+max_unicode: int
 
-def missingRanges(charList): ...
+def missingRanges(charList: Iterable[str]) -> list[str]: ...
 def listToRegexpStr(charList): ...
-def hexToInt(hex_str): ...
-def escapeRegexp(string): ...
+def hexToInt(hex_str: str | bytes | bytearray) -> int: ...
+def escapeRegexp(string: str) -> str: ...
 
-nonXmlNameBMPRegexp: Any
-nonXmlNameFirstBMPRegexp: Any
-nonPubidCharRegexp: Any
+nonXmlNameBMPRegexp: re.Pattern[str]
+nonXmlNameFirstBMPRegexp: re.Pattern[str]
+nonPubidCharRegexp: re.Pattern[str]
 
 class InfosetFilter:
-    replacementRegexp: Any
-    dropXmlnsLocalName: Any
-    dropXmlnsAttrNs: Any
-    preventDoubleDashComments: Any
-    preventDashAtCommentEnd: Any
-    replaceFormFeedCharacters: Any
-    preventSingleQuotePubid: Any
-    replaceCache: Any
+    replacementRegexp: re.Pattern[str]
+    dropXmlnsLocalName: Incomplete
+    dropXmlnsAttrNs: Incomplete
+    preventDoubleDashComments: Incomplete
+    preventDashAtCommentEnd: Incomplete
+    replaceFormFeedCharacters: Incomplete
+    preventSingleQuotePubid: Incomplete
+    replaceCache: Incomplete
     def __init__(
         self,
         dropXmlnsLocalName: bool = False,

@@ -30,30 +30,11 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
-      - run: curl -LsSf https://astral.sh/uv/install.sh | sh
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version-file: "requirements-tests.txt"
       - run: uv pip install -r requirements-tests.txt --system
       - run: python ./tests/check_typeshed_structure.py
-
-  pytype:
-    name: "pytype: Check stubs"
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          # Max supported Python version as of pytype 2024.10.11
-          python-version: "3.12"
-      - uses: astral-sh/setup-uv@v6
-      - run: uv pip install -r requirements-tests.txt --system
-      - name: Install external dependencies for 3rd-party stubs
-        run: |
-          DEPENDENCIES=$( python tests/get_external_stub_requirements.py )
-          if [ -n "$DEPENDENCIES" ]; then
-              printf "Installing packages:\n  $(echo $DEPENDENCIES | sed 's/ /\n  /g')\n"
-              uv pip install --system $DEPENDENCIES
-          fi
-      - run: uv pip freeze
-      - run: ./tests/pytype_test.py --print-stderr
 
   mypy:
     name: "mypy: Check stubs"
@@ -69,15 +50,16 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-      - run: curl -LsSf https://astral.sh/uv/install.sh | sh
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version-file: "requirements-tests.txt"
       - run: uv pip install -r requirements-tests.txt --system
       - name: Install required APT packages
         run: |
-          sudo apt-get update -qy
-          DEPENDENCIES=$( python tests/get_external_apt_dependencies.py )
-          if [ -n "$DEPENDENCIES" ]; then
-              printf "Installing APT packages:\n  $(echo $DEPENDENCIES | sed 's/ /\n  /g')\n"
-              sudo apt-get install -qy $DEPENDENCIES
+          PACKAGES=$(python tests/get_stubtest_system_requirements.py)
+          if [ -n "$PACKAGES" ]; then
+            printf "Installing APT packages:\n  $(echo $PACKAGES | sed 's/ /\n  /g')\n"
+            sudo apt-get update -q && sudo apt-get install -qy $PACKAGES
           fi
       - name: Run mypy_test.py
         run: |
@@ -102,7 +84,9 @@ jobs:
           # Use py311 for now, as py312 seems to be around 30s slower in CI
           # TODO: figure out why that is (#11590)
           python-version: "3.11"
-      - run: curl -LsSf https://astral.sh/uv/install.sh | sh
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version-file: "requirements-tests.txt"
       - run: uv pip install -r requirements-tests.txt --system
       - run: python ./tests/regr_test.py --all --verbosity QUIET
 
@@ -120,25 +104,26 @@ jobs:
         with:
           python-version: "3.13"
       - uses: astral-sh/setup-uv@v6
+        with:
+          version-file: "requirements-tests.txt"
       - name: Install typeshed test-suite requirements
-        # Install these so we can run `get_external_stub_requirements.py`
+        # Install these so we can run `get_*_requirements.py`
         run: uv pip install -r requirements-tests.txt --system
       - name: Install required APT packages
         run: |
-          sudo apt-get update -qy
-          DEPENDENCIES=$( python tests/get_external_apt_dependencies.py )
-          if [ -n "$DEPENDENCIES" ]; then
-              printf "Installing APT packages:\n  $(echo $DEPENDENCIES | sed 's/ /\n  /g')\n"
-              sudo apt-get install -qy $DEPENDENCIES
+          PACKAGES=$(python tests/get_stubtest_system_requirements.py)
+          if [ -n "$PACKAGES" ]; then
+            printf "Installing APT packages:\n  $(echo $PACKAGES | sed 's/ /\n  /g')\n"
+            sudo apt-get update -q && sudo apt-get install -qy $PACKAGES
           fi
       - name: Create an isolated venv for testing
         run: uv venv .venv
       - name: Install 3rd-party stub dependencies
         run: |
-          DEPENDENCIES=$( python tests/get_external_stub_requirements.py )
-          if [ -n "$DEPENDENCIES" ]; then
-              printf "Installing packages:\n  $(echo $DEPENDENCIES | sed 's/ /\n  /g')\n"
-              uv pip install --python-version ${{ matrix.python-version }} $DEPENDENCIES
+          PACKAGES=$(python tests/get_external_stub_requirements.py)
+          if [ -n "$PACKAGES" ]; then
+              printf "Installing python packages:\n  $(echo $PACKAGES | sed 's/ /\n  /g')\n"
+              uv pip install --python-version ${{ matrix.python-version }} $PACKAGES
           fi
       - name: Activate the isolated venv for the rest of the job
         run: echo "$PWD/.venv/bin" >> $GITHUB_PATH
@@ -186,6 +171,8 @@ jobs:
           # Keep in sync with stub_uploader's check_scripts.yml workflow.
           python-version: "3.13"
       - uses: astral-sh/setup-uv@v6
+        with:
+          version-file: "typeshed/requirements-tests.txt"
       - name: Run tests
         run: |
           cd stub_uploader

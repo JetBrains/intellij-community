@@ -1,10 +1,11 @@
 from _typeshed import Incomplete
 from collections.abc import Callable
-from typing import Any, Protocol, TypeVar
+from typing import Any, Protocol, TypeVar, type_check_only
 
 _T = TypeVar("_T")
 
 # at runtime, socketio.namespace.BaseNamespace, but socketio isn't py.typed
+@type_check_only
 class _BaseNamespace(Protocol):
     def is_asyncio_based(self) -> bool: ...
     def trigger_event(self, event: str, *args): ...

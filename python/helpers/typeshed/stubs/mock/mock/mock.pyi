@@ -2,7 +2,7 @@ from _typeshed import Incomplete
 from collections.abc import Callable, Coroutine, Iterable, Mapping, Sequence
 from contextlib import AbstractContextManager
 from types import TracebackType
-from typing import Any, ClassVar, Generic, Literal, TypeVar, overload
+from typing import Any, ClassVar, Generic, Literal, TypeVar, overload, type_check_only
 from typing_extensions import ParamSpec, Self
 
 _F = TypeVar("_F", bound=Callable[..., Any])
@@ -211,6 +211,7 @@ class _patch_dict:
     start: Any
     stop: Any
 
+@type_check_only
 class _patcher:
     TEST_PREFIX: str
     dict: type[_patch_dict]

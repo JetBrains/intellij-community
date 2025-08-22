@@ -2,6 +2,8 @@ from _typeshed import Incomplete
 
 from networkx.utils.backends import _dispatchable
 
+from ..classes.digraph import DiGraph
+
 __all__ = [
     "prefix_tree",
     "prefix_tree_recursive",
@@ -14,9 +16,9 @@ __all__ = [
 ]
 
 @_dispatchable
-def prefix_tree(paths): ...
+def prefix_tree(paths) -> DiGraph[Incomplete]: ...
 @_dispatchable
-def prefix_tree_recursive(paths): ...
+def prefix_tree_recursive(paths) -> DiGraph[Incomplete]: ...
 @_dispatchable
 def random_labeled_tree(n, *, seed=None): ...
 @_dispatchable

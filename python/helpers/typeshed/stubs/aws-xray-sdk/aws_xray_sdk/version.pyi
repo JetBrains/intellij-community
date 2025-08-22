@@ -1,1 +1,3 @@
-VERSION: str
+from typing import Final
+
+VERSION: Final[str]

@@ -2,7 +2,7 @@ from collections.abc import Iterable
 from datetime import timedelta
 from logging import Logger
 from re import Match, Pattern
-from typing import Any, Final, Literal, TypedDict, TypeVar, overload
+from typing import Any, Final, Literal, TypedDict, TypeVar, overload, type_check_only
 from typing_extensions import TypeAlias
 
 import flask
@@ -11,6 +11,7 @@ _IterableT = TypeVar("_IterableT", bound=Iterable[Any])
 _T = TypeVar("_T")
 _MultiDict: TypeAlias = Any  # werkzeug is not part of typeshed
 
+@type_check_only
 class _Options(TypedDict, total=False):
     resources: dict[str, dict[str, Any]] | list[str] | str | None
     origins: str | list[str] | None

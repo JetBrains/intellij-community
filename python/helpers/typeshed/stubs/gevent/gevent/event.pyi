@@ -1,5 +1,5 @@
 from types import TracebackType
-from typing import Generic, Literal, Protocol, TypeVar, overload
+from typing import Generic, Literal, Protocol, TypeVar, overload, type_check_only
 from typing_extensions import TypeAlias
 
 from gevent._abstract_linkable import AbstractLinkable
@@ -11,6 +11,7 @@ _T_co = TypeVar("_T_co", covariant=True)
 _ExcInfo: TypeAlias = tuple[type[BaseException], BaseException, TracebackType | None]
 _OptExcInfo: TypeAlias = _ExcInfo | tuple[None, None, None]
 
+@type_check_only
 class _ValueSource(Protocol[_T_co]):
     def successful(self) -> bool: ...
     @property
@@ -19,6 +20,7 @@ class _ValueSource(Protocol[_T_co]):
     def exception(self) -> BaseException | None: ...
 
 class Event(AbstractLinkable):
+    __slots__ = ("_flag",)
     def __init__(self) -> None: ...
     def is_set(self) -> bool: ...
     def isSet(self) -> bool: ...
@@ -31,6 +33,7 @@ class Event(AbstractLinkable):
     def wait(self, timeout: float) -> bool: ...
 
 class AsyncResult(AbstractLinkable, Generic[_T]):
+    __slots__ = ("_value", "_exc_info", "_imap_task_index")
     def __init__(self) -> None: ...
     @property
     def value(self) -> _T | None: ...

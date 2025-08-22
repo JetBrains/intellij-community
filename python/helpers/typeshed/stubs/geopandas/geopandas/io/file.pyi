@@ -1,7 +1,7 @@
 import os
 from _typeshed import Incomplete, SupportsRead
 from collections import OrderedDict
-from typing import Literal, TypedDict, overload
+from typing import Literal, TypedDict, overload, type_check_only
 
 import pandas as pd
 from pandas._typing import Axes
@@ -38,7 +38,7 @@ def _read_file(
     encoding: str | None = None,
     **kwargs,  # depend on engine
 ) -> pd.DataFrame: ...
-
+@type_check_only
 class _Schema(TypedDict):
     geometry: str | list[str]
     properties: OrderedDict[str, str]

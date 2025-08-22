@@ -17,7 +17,7 @@ _T = TypeVar("_T")
 _P = ParamSpec("_P")
 _Mode: TypeAlias = Literal["inline", "cli"]
 
-line_prefix: str  # undocumented
+line_prefix: Final[str]  # undocumented
 
 class Restart(Exception): ...
 

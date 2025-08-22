@@ -12,18 +12,18 @@ from .geometry import GeometryCollection, LinearRing, LineString, MultiLineStrin
 from .lib import Geometry
 
 __all__ = [
-    "points",
-    "linestrings",
-    "linearrings",
-    "polygons",
-    "multipoints",
-    "multilinestrings",
-    "multipolygons",
-    "geometrycollections",
     "box",
-    "prepare",
     "destroy_prepared",
     "empty",
+    "geometrycollections",
+    "linearrings",
+    "linestrings",
+    "multilinestrings",
+    "multipoints",
+    "multipolygons",
+    "points",
+    "polygons",
+    "prepare",
 ]
 
 class HandleNaN(ParamEnum):
@@ -31,7 +31,7 @@ class HandleNaN(ParamEnum):
     skip = 1
     error = 2
 
-_HandleNaN: TypeAlias = Literal[0, 1, 2] | HandleNaN
+_HandleNaN: TypeAlias = Literal["allow", "skip", "error"] | HandleNaN
 
 @overload
 def points(
@@ -40,7 +40,7 @@ def points(
     z: float | None = None,
     indices: None = None,
     *,
-    handle_nan: _HandleNaN = 0,
+    handle_nan: _HandleNaN = ...,
     out: None = None,
     **kwargs,  # acts as x
 ) -> Point: ...
@@ -51,7 +51,7 @@ def points(
     z: None = None,
     indices: None = None,
     *,
-    handle_nan: _HandleNaN = 0,
+    handle_nan: _HandleNaN = ...,
     out: None = None,
     **kwargs,  # acts as x, y[, z]
 ) -> Point: ...
@@ -62,7 +62,7 @@ def points(
     z: Sequence[float] | None = None,
     indices: ArrayLikeSeq[int] | None = None,
     *,
-    handle_nan: _HandleNaN = 0,
+    handle_nan: _HandleNaN = ...,
     out: NDArray[np.object_] | None = None,
     **kwargs,
 ) -> GeoArray: ...
@@ -73,7 +73,7 @@ def points(
     z: None = None,
     indices: ArrayLikeSeq[int] | None = None,
     *,
-    handle_nan: _HandleNaN = 0,
+    handle_nan: _HandleNaN = ...,
     out: NDArray[np.object_] | None = None,
     **kwargs,
 ) -> GeoArray: ...
@@ -84,7 +84,7 @@ def points(
     z: ArrayLike[float] | None = None,
     indices: ArrayLikeSeq[int] | None = None,
     *,
-    handle_nan: _HandleNaN = 0,
+    handle_nan: _HandleNaN = ...,
     out: NDArray[np.object_] | None = None,
     **kwargs,
 ) -> Point | GeoArray: ...
@@ -95,7 +95,7 @@ def points(
     z: ArrayLike[float] | None = None,
     indices: ArrayLikeSeq[int] | None = None,
     *,
-    handle_nan: _HandleNaN = 0,
+    handle_nan: _HandleNaN = ...,
     out: NDArray[np.object_] | None = None,
     **kwargs,
 ) -> Point | GeoArray: ...
@@ -106,7 +106,7 @@ def linestrings(
     z: Sequence[float] | None = None,
     indices: None = None,
     *,
-    handle_nan: _HandleNaN = 0,
+    handle_nan: _HandleNaN = ...,
     out: None = None,
     **kwargs,
 ) -> LineString: ...
@@ -117,7 +117,7 @@ def linestrings(
     z: None = None,
     indices: None = None,
     *,
-    handle_nan: _HandleNaN = 0,
+    handle_nan: _HandleNaN = ...,
     out: None = None,
     **kwargs,
 ) -> LineString: ...
@@ -128,7 +128,7 @@ def linestrings(
     z: None = None,
     indices: ArrayLikeSeq[int] | None = None,
     *,
-    handle_nan: _HandleNaN = 0,
+    handle_nan: _HandleNaN = ...,
     out: NDArray[np.object_] | None = None,
     **kwargs,
 ) -> GeoArray: ...
@@ -139,7 +139,7 @@ def linestrings(
     z: ArrayLikeSeq[float] | None = None,
     indices: ArrayLikeSeq[int] | None = None,
     *,
-    handle_nan: _HandleNaN = 0,
+    handle_nan: _HandleNaN = ...,
     out: NDArray[np.object_] | None = None,
     **kwargs,
 ) -> LineString | GeoArray: ...
@@ -150,7 +150,7 @@ def linearrings(
     z: Sequence[float] | None = None,
     indices: None = None,
     *,
-    handle_nan: _HandleNaN = 0,
+    handle_nan: _HandleNaN = ...,
     out: None = None,
     **kwargs,
 ) -> LinearRing: ...
@@ -161,7 +161,7 @@ def linearrings(
     z: None = None,
     indices: None = None,
     *,
-    handle_nan: _HandleNaN = 0,
+    handle_nan: _HandleNaN = ...,
     out: None = None,
     **kwargs,
 ) -> LinearRing: ...
@@ -172,7 +172,7 @@ def linearrings(
     z: None = None,
     indices: ArrayLikeSeq[int] | None = None,
     *,
-    handle_nan: _HandleNaN = 0,
+    handle_nan: _HandleNaN = ...,
     out: NDArray[np.object_] | None = None,
     **kwargs,
 ) -> GeoArray: ...
@@ -183,7 +183,7 @@ def linearrings(
     z: ArrayLikeSeq[float] | None = None,
     indices: ArrayLikeSeq[int] | None = None,
     *,
-    handle_nan: _HandleNaN = 0,
+    handle_nan: _HandleNaN = ...,
     out: NDArray[np.object_] | None = None,
     **kwargs,
 ) -> LinearRing | GeoArray: ...

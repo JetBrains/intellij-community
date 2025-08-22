@@ -236,7 +236,7 @@ with_descriptors.set_tuple_none = 0
 with_descriptors.set_tuple_none = 0.0
 with_descriptors.set_tuple_none = None
 with_descriptors.set_tuple_none = "none"  # pyright: ignore[reportAttributeAccessIssue] # false negative in mypy
-with_descriptors.set_tuple_none = object()  # pyright: ignore[reportAttributeAccessIssue] # false negative in mypy
+with_descriptors.set_tuple_none = object()  # type: ignore
 
 
 with_descriptors.noneset_tuple = "a"

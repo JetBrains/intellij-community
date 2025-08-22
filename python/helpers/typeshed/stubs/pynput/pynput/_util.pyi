@@ -3,13 +3,14 @@ from _typeshed import OptExcInfo
 from collections.abc import Callable
 from queue import Queue
 from types import ModuleType, TracebackType
-from typing import Any, ClassVar, Generic, TypedDict, TypeVar
+from typing import Any, ClassVar, Generic, TypedDict, TypeVar, type_check_only
 from typing_extensions import ParamSpec, Self
 
 _T = TypeVar("_T")
 _AbstractListenerT = TypeVar("_AbstractListenerT", bound=AbstractListener)
 _P = ParamSpec("_P")
 
+@type_check_only
 class _RESOLUTIONS(TypedDict):
     darwin: str
     uinput: str

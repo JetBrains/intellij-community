@@ -9,6 +9,7 @@ bytechr: Callable[[float], bytes]
 class CTypesType(type): ...
 
 class CTypesData:
+    __slots__ = ["__weakref__"]
     __metaclass__: Incomplete
     __name__: str
     def __init__(self, *args) -> None: ...
@@ -23,17 +24,21 @@ class CTypesData:
     def __repr__(self, c_name: str | None = None): ...
 
 class CTypesGenericPrimitive(CTypesData):
+    __slots__: list[str] = []
     def __hash__(self) -> int: ...
 
 class CTypesGenericArray(CTypesData):
+    __slots__: list[str] = []
     def __iter__(self): ...
 
 class CTypesGenericPtr(CTypesData):
+    __slots__ = ["_address", "_as_ctype_ptr"]
     kind: str
     def __nonzero__(self) -> bool: ...
     def __bool__(self) -> bool: ...
 
-class CTypesBaseStructOrUnion(CTypesData): ...
+class CTypesBaseStructOrUnion(CTypesData):
+    __slots__ = ["_blob"]
 
 class CTypesBackend:
     PRIMITIVE_TYPES: Incomplete

@@ -15,7 +15,7 @@ def katz_centrality(
     nstart: SupportsGetItem[Incomplete, Incomplete] | None = None,
     normalized: bool | None = True,
     weight: str | None = None,
-): ...
+) -> dict[Incomplete, Incomplete]: ...
 @_dispatchable
 def katz_centrality_numpy(
     G: Graph[_Node],
@@ -23,4 +23,4 @@ def katz_centrality_numpy(
     beta: float | SupportsGetItem[Incomplete, Incomplete] | None = 1.0,
     normalized: bool = True,
     weight: str | None = None,
-): ...
+) -> dict[Incomplete, Incomplete]: ...

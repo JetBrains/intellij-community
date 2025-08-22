@@ -1,7 +1,9 @@
 from _typeshed import Incomplete
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from logging import Logger
 from typing import Any, Final
+
+from oauthlib.common import _HTTPMethod
 
 log: Logger
 SIGNATURE_HMAC_SHA1: Final[str]
@@ -56,4 +58,11 @@ class Client:
     ): ...
     def get_oauth_signature(self, request): ...
     def get_oauth_params(self, request): ...
-    def sign(self, uri, http_method: str = "GET", body: str | None = None, headers: dict[str, str] | None = None, realm=None): ...
+    def sign(
+        self,
+        uri: str,
+        http_method: _HTTPMethod = "GET",
+        body: str | dict[str, str] | list[tuple[str, str]] | None = None,
+        headers: Mapping[str, str] | None = None,
+        realm=None,
+    ): ...

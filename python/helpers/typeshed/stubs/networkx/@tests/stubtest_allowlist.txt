@@ -4,7 +4,6 @@
 networkx\.(algorithms\.)?(boundary\.)?edge_boundary
 networkx\.(algorithms\.)?(bridges\.)?local_bridges
 networkx\.(algorithms\.)?(clique\.)?node_clique_number
-networkx\.(algorithms\.)?(shortest_paths\.)?(generic\.)?shortest_path
 networkx\.(convert_matrix\.)?from_numpy_array
 networkx\.(convert_matrix\.)?from_pandas_adjacency
 networkx\.(convert_matrix\.)?from_pandas_edgelist
@@ -31,6 +30,9 @@ networkx\.(utils\.)?(backends\.)?_dispatchable\.__call__
 # Tests are excluded
 networkx.conftest
 networkx(\..+?)?\.tests(\..+?)?
+
+# Stub-only module
+networkx\._typing
 
 # "..._DT is not present at runtime" but we don't set it in stubs, I don't understand this one
 networkx(\.algorithms)?(\.tree)?(\.mst)?\.SpanningTreeIterator\.Partition\._DT

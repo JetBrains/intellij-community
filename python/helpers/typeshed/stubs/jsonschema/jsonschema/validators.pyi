@@ -1,7 +1,7 @@
 from _typeshed import Incomplete, SupportsKeysAndGetItem
 from collections.abc import Callable, Generator, Iterable, Iterator, Mapping
 from contextlib import contextmanager
-from typing import Any, ClassVar, overload
+from typing import Any, ClassVar, overload, type_check_only
 from typing_extensions import TypeAlias, deprecated
 
 from referencing.jsonschema import Schema, SchemaRegistry
@@ -20,7 +20,8 @@ _ValidatorCallback: TypeAlias = Callable[[Any, Any, _JsonValue, _JsonObject], It
 
 # This class does not exist at runtime. Compatible classes are created at
 # runtime by create().
-class _Validator:
+@type_check_only
+class _Validator(Validator):
     VALIDATORS: ClassVar[dict[Incomplete, Incomplete]]
     META_SCHEMA: ClassVar[dict[Incomplete, Incomplete]]
     TYPE_CHECKER: ClassVar[Incomplete]
@@ -31,12 +32,11 @@ class _Validator:
     format_checker: FormatChecker | None
     def __init__(
         self,
-        schema: Schema,
-        resolver=None,
+        schema: Mapping[Incomplete, Incomplete] | bool,
+        resolver: Any = None,  # deprecated
         format_checker: FormatChecker | None = None,
         *,
         registry: SchemaRegistry = ...,
-        _resolver=None,
     ) -> None: ...
     @classmethod
     def check_schema(cls, schema: Schema, format_checker: FormatChecker | Unset = ...) -> None: ...
@@ -54,7 +54,7 @@ class _Validator:
     def iter_errors(self, instance, _schema: Schema | None) -> Generator[Incomplete]: ...
     def descend(
         self, instance, schema: Schema, path: Incomplete | None = ..., schema_path: Incomplete | None = ..., resolver=None
-    ) -> Generator[Incomplete, None, None]: ...
+    ) -> Generator[Incomplete]: ...
     def validate(self, *args, **kwargs) -> None: ...
     def is_type(self, instance, type) -> bool: ...
     @overload
@@ -63,7 +63,7 @@ class _Validator:
     @deprecated("Passing a schema to Validator.is_valid is deprecated and will be removed in a future release.")
     def is_valid(self, instance, _schema: Schema | None) -> bool: ...
 
-def validates(version: str) -> Callable[..., Incomplete]: ...
+def validates(version: str) -> Callable[[_Validator], _Validator]: ...
 def create(
     meta_schema: Schema,
     validators: Mapping[str, _ValidatorCallback] | tuple[()] = (),
@@ -76,12 +76,23 @@ def create(
 def extend(validator, validators=(), version=None, type_checker=None, format_checker=None): ...
 
 # At runtime these are fields that are assigned the return values of create() calls.
-class Draft3Validator(_Validator): ...
-class Draft4Validator(_Validator): ...
-class Draft6Validator(_Validator): ...
-class Draft7Validator(_Validator): ...
-class Draft201909Validator(_Validator): ...
-class Draft202012Validator(_Validator): ...
+class Draft3Validator(_Validator):
+    __slots__ = ("_validators", "schema", "_ref_resolver", "format_checker", "_registry", "_resolver", "__weakref__")
+
+class Draft4Validator(_Validator):
+    __slots__ = ("_validators", "schema", "_ref_resolver", "format_checker", "_registry", "_resolver", "__weakref__")
+
+class Draft6Validator(_Validator):
+    __slots__ = ("_validators", "schema", "_ref_resolver", "format_checker", "_registry", "_resolver", "__weakref__")
+
+class Draft7Validator(_Validator):
+    __slots__ = ("_validators", "schema", "_ref_resolver", "format_checker", "_registry", "_resolver", "__weakref__")
+
+class Draft201909Validator(_Validator):
+    __slots__ = ("_validators", "schema", "_ref_resolver", "format_checker", "_registry", "_resolver", "__weakref__")
+
+class Draft202012Validator(_Validator):
+    __slots__ = ("_validators", "schema", "_ref_resolver", "format_checker", "_registry", "_resolver", "__weakref__")
 
 _Handler: TypeAlias = Callable[[str], Incomplete]
 

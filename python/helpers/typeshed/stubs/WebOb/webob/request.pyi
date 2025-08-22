@@ -4,7 +4,7 @@ from _typeshed import OptExcInfo, SupportsKeysAndGetItem, SupportsNoArgReadline,
 from _typeshed.wsgi import WSGIApplication, WSGIEnvironment
 from collections.abc import Iterable, Mapping
 from re import Pattern
-from typing import IO, Any, ClassVar, Literal, Protocol, TypedDict, TypeVar, overload
+from typing import IO, Any, ClassVar, Literal, Protocol, TypedDict, TypeVar, overload, type_check_only
 from typing_extensions import Self, TypeAlias
 
 from webob._types import AsymmetricProperty, AsymmetricPropertyWithDelete, SymmetricProperty, SymmetricPropertyWithDelete
@@ -27,8 +27,10 @@ _HTTPMethod: TypeAlias = Literal["GET", "HEAD", "POST", "PUT", "DELETE", "CONNEC
 _ListOrTuple: TypeAlias = list[_T] | tuple[_T, ...]
 _RequestCacheControl: TypeAlias = CacheControl[Literal["request"]]
 
+@type_check_only
 class _SupportsReadAndNoArgReadline(SupportsRead[str | bytes], SupportsNoArgReadline[str | bytes], Protocol): ...
 
+@type_check_only
 class _RequestCacheControlDict(TypedDict, total=False):
     max_stale: int
     min_stale: int

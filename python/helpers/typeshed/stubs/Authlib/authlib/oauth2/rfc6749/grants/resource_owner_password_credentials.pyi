@@ -1,4 +1,8 @@
+from logging import Logger
+
 from authlib.oauth2.rfc6749 import BaseGrant, TokenEndpointMixin
+
+log: Logger
 
 class ResourceOwnerPasswordCredentialsGrant(BaseGrant, TokenEndpointMixin):
     GRANT_TYPE: str

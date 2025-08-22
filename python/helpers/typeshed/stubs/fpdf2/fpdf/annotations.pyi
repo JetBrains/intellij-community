@@ -55,6 +55,26 @@ class AnnotationMixin:
 class PDFAnnotation(AnnotationMixin, PDFObject): ...
 
 class AnnotationDict(AnnotationMixin):
+    __slots__ = (
+        "type",
+        "subtype",
+        "rect",
+        "border",
+        "f_t",
+        "v",
+        "f",
+        "contents",
+        "a",
+        "dest",
+        "c",
+        "t",
+        "quad_points",
+        "p",
+        "name",
+        "ink_list",
+        "f_s",
+        "d_a",
+    )
     def serialize(self) -> str: ...
 
 class PDFEmbeddedFile(PDFContentStream):

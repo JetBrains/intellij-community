@@ -13,6 +13,17 @@ from antlr4.Utils import str_list as str_list
 ATNSimulator: Incomplete
 
 class ATNConfigSet:
+    __slots__ = (
+        "configLookup",
+        "fullCtx",
+        "readonly",
+        "configs",
+        "uniqueAlt",
+        "conflictingAlts",
+        "hasSemanticContext",
+        "dipsIntoOuterContext",
+        "cachedHashCode",
+    )
     configLookup: Incomplete
     fullCtx: Incomplete
     readonly: bool

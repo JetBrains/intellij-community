@@ -4,6 +4,7 @@ from typing import ClassVar, Final, TextIO, TypeVar
 
 _T = TypeVar("_T")
 
+__docformat__: Final = "reStructuredText"
 __version__: Final[str]
 
 class Trace:
@@ -51,6 +52,8 @@ class FormulaConfig:
     symbolfunctions: ClassVar[dict[str, str]]
     textfunctions: ClassVar[dict[str, str]]
     unmodified: ClassVar[dict[str, list[str]]]
+    key: str
+    value: str
 
 class CommandLineParser:
     options: Incomplete
@@ -86,7 +89,7 @@ class ContainerExtractor:
     extracted: Incomplete
     def __init__(self, config) -> None: ...
     def extract(self, container): ...
-    def process(self, container, list) -> None: ...
+    def process(self, container, lst) -> None: ...
     def safeclone(self, container): ...
 
 class Parser:

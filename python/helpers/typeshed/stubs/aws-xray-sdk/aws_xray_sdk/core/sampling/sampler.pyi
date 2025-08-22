@@ -1,13 +1,6 @@
-from typing import Any
+from logging import Logger
 
-from .connector import ServiceConnector as ServiceConnector
-from .local.sampler import LocalSampler as LocalSampler
-from .reservoir import ReservoirDecision as ReservoirDecision
-from .rule_cache import RuleCache as RuleCache
-from .rule_poller import RulePoller as RulePoller
-from .target_poller import TargetPoller as TargetPoller
-
-log: Any
+log: Logger
 
 class DefaultSampler:
     def __init__(self) -> None: ...

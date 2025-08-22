@@ -18,6 +18,16 @@ from antlr4.PredictionContext import PredictionContextCache as PredictionContext
 from antlr4.Token import Token as Token
 
 class ParserInterpreter(Parser):
+    __slots__ = (
+        "grammarFileName",
+        "atn",
+        "tokenNames",
+        "ruleNames",
+        "decisionToDFA",
+        "sharedContextCache",
+        "_parentContextStack",
+        "pushRecursionContextStates",
+    )
     grammarFileName: Incomplete
     atn: Incomplete
     tokenNames: Incomplete

@@ -1,4 +1,4 @@
-from typing import Literal, TypedDict
+from typing import Literal, TypedDict, type_check_only
 from typing_extensions import TypeAlias
 
 import numpy as np
@@ -9,6 +9,7 @@ from .coco import COCO
 _NDFloatArray: TypeAlias = npt.NDArray[np.float64]
 _TIOU: TypeAlias = Literal["segm", "bbox", "keypoints"]
 
+@type_check_only
 class _ImageEvaluationResult(TypedDict):
     image_id: int
     category_id: int
@@ -22,6 +23,7 @@ class _ImageEvaluationResult(TypedDict):
     gtIgnore: _NDFloatArray
     dtIgnore: _NDFloatArray
 
+@type_check_only
 class _EvaluationResult(TypedDict):
     params: Params
     counts: list[int]
