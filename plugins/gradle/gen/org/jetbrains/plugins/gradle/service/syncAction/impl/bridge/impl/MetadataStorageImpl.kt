@@ -3,7 +3,7 @@ package org.jetbrains.plugins.gradle.service.syncAction.impl.bridge.impl
 
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
 import com.intellij.platform.workspace.storage.metadata.MetadataStorageBridge
-import org.jetbrains.plugins.gradle.service.syncAction.impl.MetadataStorageImpl
+import org.jetbrains.plugins.gradle.model.projectModel.impl.MetadataStorageImpl
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal object MetadataStorageImpl: MetadataStorageBridge(MetadataStorageImpl)

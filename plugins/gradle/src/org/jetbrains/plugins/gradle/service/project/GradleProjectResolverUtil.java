@@ -416,6 +416,26 @@ public final class GradleProjectResolverUtil {
     return moduleId;
   }
 
+  public static @NotNull String getModuleId(
+    @NotNull ProjectResolverContext context,
+    @NotNull GradleLightProject projectModel
+  ) {
+    if (!StringUtil.isEmpty(context.getBuildSrcGroup())) {
+      return context.getBuildSrcGroup() + ":" + getModuleId(projectModel);
+    }
+    return getModuleId(projectModel);
+  }
+
+  private static @NotNull String getModuleId(
+    @NotNull GradleLightProject projectModel
+  ) {
+    String identityPath = projectModel.getIdentityPath();
+    if (":".equals(identityPath)) {
+      return projectModel.getName();
+    }
+    return identityPath;
+  }
+
   public static @Nullable String getSourceSetName(final Module module) {
     if (!ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) return null;
     if (!GradleConstants.GRADLE_SOURCE_SET_MODULE_TYPE_KEY.equals(ExternalSystemApiUtil.getExternalModuleType(module))) return null;
