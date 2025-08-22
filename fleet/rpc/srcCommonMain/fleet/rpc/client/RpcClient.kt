@@ -1,31 +1,33 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.rpc.client
 
+import fleet.multiplatform.shims.ConcurrentHashMap
+import fleet.multiplatform.shims.newSingleThreadCoroutineDispatcher
 import fleet.rpc.RemoteApiDescriptor
 import fleet.rpc.RemoteKind
 import fleet.rpc.client.proxy.*
 import fleet.rpc.core.*
 import fleet.rpc.serializer
 import fleet.util.UID
-import fleet.util.async.resource
-import fleet.util.async.use
-import fleet.util.async.withSupervisor
+import fleet.util.async.*
 import fleet.util.causeOfType
 import fleet.util.channels.consumeAll
 import fleet.util.channels.isFull
 import fleet.util.logging.KLoggers
 import kotlinx.collections.immutable.toPersistentSet
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.*
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.ChannelResult
+import kotlinx.coroutines.channels.ClosedSendChannelException
+import kotlinx.coroutines.channels.consumeEach
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.selects.whileSelect
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
-import fleet.multiplatform.shims.ConcurrentHashMap
-import fleet.multiplatform.shims.newSingleThreadCoroutineDispatcher
-import fleet.util.async.Resource
-import fleet.util.async.onContext
-import kotlin.coroutines.*
+import kotlin.coroutines.Continuation
+import kotlin.coroutines.coroutineContext
+import kotlin.coroutines.resumeWithException
+import kotlin.coroutines.startCoroutine
 
 internal const val RPC_TIMEOUT = 60_000L
 
@@ -410,11 +412,11 @@ private class RpcClient(
   private fun resumeAllOngoingCallsWithThrowable(throwable: Throwable) {
     logger.debug(throwable) { "resumeAllOngoingCallsWithThrowable" }
 
-    for (key in outgoingRpc.keys) {
-      outgoingRpc.remove(key)?.let {
-        logger.trace { "resumeAllOngoingCallsWithThrowable: resume request $key" }
-        it.request.continuation.resumeWithException(throwable)
-      }
+    val outgoingRpcIterator = outgoingRpc.iterator()
+    for ((key, value) in outgoingRpcIterator) {
+      outgoingRpcIterator.remove()
+      logger.trace { "resumeAllOngoingCallsWithThrowable: resume request $key" }
+      value.request.continuation.resumeWithException(throwable)
     }
     streams.values.removeAll {
       it.closeStream(throwable)
@@ -425,11 +427,11 @@ private class RpcClient(
 
   private fun resumeWithRouteClosed(route: UID) {
     val message = "Route $route closed"
-    for ((key, value) in outgoingRpc) {
+    val outgoingRpcIterator = outgoingRpc.iterator()
+    for ((_, value) in outgoingRpcIterator) {
       if (value.request.route == route) {
-        outgoingRpc.remove(key)?.let {
-          it.request.continuation.resumeWithException(RouteClosedException(route, rpcCallFailureMessage(it.request.call, message)))
-        }
+        outgoingRpcIterator.remove()
+        value.request.continuation.resumeWithException(RouteClosedException(route, rpcCallFailureMessage(value.request.call, message)))
       }
     }
     streams.values.removeAll {
