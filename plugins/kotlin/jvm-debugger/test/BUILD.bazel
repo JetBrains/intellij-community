@@ -4,6 +4,26 @@ filegroup(
     visibility = ["//visibility:public"],
 )
 
+load("@community//build:tests-options.bzl", "jps_test")
+load("@community//plugins/kotlin:kotlin_test_dependencies.bzl", "all_test_dep_targets")
+
+jps_test(
+  name = "test_test",
+  runtime_deps = [
+    ":test_test_lib",
+    "//:main_test_lib",
+  ],
+  data = [
+    "@debugger_test_deps_debugger_agent//file:debugger-agent.jar",
+    "@community//plugins/kotlin/jvm-debugger/test:testData",
+  ] + all_test_dep_targets,
+  tags = [
+    "block-network",
+  ],
+)
+
+### skip generation section `test kotlin.jvm-debugger.test`
+
 ### auto-generated section `build kotlin.jvm-debugger.test` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
@@ -101,15 +121,3 @@ jvm_library(
   ]
 )
 ### auto-generated section `build kotlin.jvm-debugger.test` end
-
-### auto-generated section `test kotlin.jvm-debugger.test` start
-load("@community//build:tests-options.bzl", "jps_test")
-
-jps_test(
-  name = "test_test",
-  runtime_deps = [
-    ":test_test_lib",
-    "//:main_test_lib",
-  ]
-)
-### auto-generated section `test kotlin.jvm-debugger.test` end
