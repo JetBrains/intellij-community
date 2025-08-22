@@ -8,6 +8,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.completion.TerminalCompletionUtil.toShellName
 import org.jetbrains.plugins.terminal.block.completion.spec.IS_REWORKED_KEY
 import org.jetbrains.plugins.terminal.block.completion.spec.PROJECT_KEY
+import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellRuntimeContextImpl
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
 import org.jetbrains.plugins.terminal.util.ShellType
 
@@ -16,12 +17,14 @@ class ShellRuntimeContextProviderReworkedImpl(
   private val project: Project,
   private val sessionModel: TerminalSessionModel,
 ) : ShellRuntimeContextProvider {
+  private val shellCommandExecutor = ShellCommandExecutorReworked()
 
   override fun getContext(typedPrefix: String): ShellRuntimeContext {
-    return ShellRuntimeContextReworkedImpl(
+    return ShellRuntimeContextImpl(
       sessionModel.terminalState.value.currentDirectory,
       typedPrefix,
-      ShellType.ZSH.toShellName()
+      ShellType.ZSH.toShellName(),
+      shellCommandExecutor,
     ).apply {
       putUserData(PROJECT_KEY, project)
       putUserData(IS_REWORKED_KEY, true)

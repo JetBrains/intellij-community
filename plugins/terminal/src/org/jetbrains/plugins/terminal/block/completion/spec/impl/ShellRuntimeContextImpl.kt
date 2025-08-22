@@ -21,6 +21,6 @@ class ShellRuntimeContextImpl(
   }
 
   override fun toString(): String {
-    return "IJShellRuntimeContext(currentDirectory='$currentDirectory', typedPrefix='$typedPrefix')"
+    return "ShellRuntimeContextImpl(currentDirectory='$currentDirectory', typedPrefix='$typedPrefix')"
   }
 }
