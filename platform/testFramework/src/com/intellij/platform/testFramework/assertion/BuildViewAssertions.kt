@@ -3,15 +3,18 @@ package com.intellij.platform.testFramework.assertion
 
 import com.intellij.build.BuildTreeConsoleView
 import com.intellij.build.BuildView
-import com.intellij.build.ExecutionNode
+import com.intellij.build.SUCCESSFUL_STEPS_FILTER
+import com.intellij.build.WARNINGS_FILTER
 import com.intellij.execution.impl.ConsoleViewImpl
 import com.intellij.execution.ui.ExecutionConsole
 import com.intellij.platform.testFramework.assertion.treeAssertion.SimpleTreeAssertion
 import com.intellij.platform.testFramework.assertion.treeAssertion.buildTree
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.common.waitUntilAssertSucceedsBlocking
 import com.intellij.testFramework.runInEdtAndGet
 import com.intellij.util.ui.tree.TreeUtil
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assertions.assertNotNull
 import javax.swing.JTree
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreeNode
@@ -32,7 +35,19 @@ object BuildViewAssertions {
   }
 
   fun assertBuildViewNodeConsole(buildView: BuildView, nodeText: String, assert: (ExecutionConsole) -> Unit) {
-    assert(getBuildViewNodeConsole(buildView, nodeText))
+    val treeConsoleView = getBuildViewTreeConsoleView(buildView)
+    selectTreeNode(treeConsoleView.tree, nodeText)
+    waitUntilAssertSucceedsBlocking {
+      val nodeConsole = runInEdtAndGet {
+        PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
+        treeConsoleView.selectedNodeConsole
+      }
+      assertNotNull(nodeConsole) {
+        "Cannot find console of the '$nodeText' node in tree:\n" +
+        getTreeStringPresentation(treeConsoleView.tree) + "\n"
+      }
+      assert(nodeConsole!!)
+    }
   }
 
   fun assertBuildViewNodeConsoleText(buildView: BuildView, nodeText: String, assert: (String) -> Unit) {
@@ -55,22 +70,14 @@ object BuildViewAssertions {
     return getTreeStringPresentation(eventView.tree)
   }
 
-  private fun getBuildViewNodeConsole(buildView: BuildView, nodeText: String): ExecutionConsole {
-    val treeConsoleView = getBuildViewTreeConsoleView(buildView)
-    selectTreeNode(treeConsoleView.tree, nodeText)
-    val nodeConsole = runInEdtAndGet {
-      treeConsoleView.selectedNodeConsole
-    }
-    Assertions.assertNotNull(nodeConsole) {
-      "Cannot find console of the '$nodeText' node in tree:\n" +
-      getTreeStringPresentation(treeConsoleView.tree) + "\n"
-    }
-    return nodeConsole!!
+  fun showAllNodes(treeView: BuildTreeConsoleView) {
+    treeView.addFilter(SUCCESSFUL_STEPS_FILTER)
+    treeView.addFilter(WARNINGS_FILTER)
   }
 
   private fun getBuildViewTreeConsoleView(buildView: BuildView): BuildTreeConsoleView {
     val treeView = buildView.getView(BuildTreeConsoleView::class.java.name, BuildTreeConsoleView::class.java)!!
-    treeView.addFilter { true }
+    showAllNodes(treeView)
     return treeView
   }
 
@@ -80,8 +87,7 @@ object BuildViewAssertions {
       PlatformTestUtil.waitWhileBusy(tree)
 
       TreeUtil.findNode(tree.model.root as DefaultMutableTreeNode) {
-        val userObject = it.userObject
-        userObject is ExecutionNode && userObject.name == nodeText
+        it.userObject.toString() == nodeText
       }
     }
     Assertions.assertNotNull(node) {

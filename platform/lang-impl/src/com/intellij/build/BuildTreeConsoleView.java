@@ -1042,7 +1042,13 @@ public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, 
 
   @ApiStatus.Internal
   public JTree getTree() {
-    return myTree;
+    if (mySplitImplementation) {
+      // won't work on rem dev backend
+      return UIUtil.findComponentOfType(mySplitComponent.getComponent(), JTree.class);
+    }
+    else {
+      return myTree;
+    }
   }
 
   @ApiStatus.Internal
