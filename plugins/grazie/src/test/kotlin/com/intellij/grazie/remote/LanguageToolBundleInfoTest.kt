@@ -2,6 +2,7 @@ package com.intellij.grazie.remote
 
 import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.GrazieDynamic
+import com.intellij.grazie.GrazieTestBase
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.text.TextChecker
 import com.intellij.openapi.diagnostic.Logger
@@ -19,6 +20,11 @@ import java.nio.file.Path
 class LanguageToolBundleInfoTest : BasePlatformTestCase() {
   @get:Rule
   val temporaryDirectory = TemporaryDirectory()
+
+  override fun setUp() {
+    super.setUp()
+    GrazieTestBase.maskSaxParserFactory(testRootDisposable)
+  }
 
   /**
    * Test basically doing the same stuff as [com.jetbrains.resharper.external.services.grazie.resources.GrazieResourceBuilder]

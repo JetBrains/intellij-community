@@ -9,6 +9,7 @@ import com.intellij.codeInsight.intention.impl.config.IntentionManagerImpl
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.grazie.GrazieBundle
+import com.intellij.grazie.GrazieTestBase
 import com.intellij.grazie.ide.inspection.grammar.GrazieInspection
 import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieReplaceTypoQuickFix
 import com.intellij.grazie.text.*
@@ -24,6 +25,12 @@ import com.intellij.util.text.StringOperation
 import java.util.*
 
 class ReportingTest : BasePlatformTestCase() {
+
+  override fun setUp() {
+    super.setUp()
+    GrazieTestBase.maskSaxParserFactory(testRootDisposable)
+  }
+
   fun `test tooltip and description texts in inspection`() {
     val inspection = GrazieInspection()
     myFixture.enableInspections(inspection)

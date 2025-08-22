@@ -1081,6 +1081,7 @@ Three members of our team needs (need) LanguageTool
 Tiflis
 TikTok
 To whom it may concern
+Tom left early, (delete comma) so he could arrive at the office on time.
 Tom like (likes|liked) the sun
 Touch point (Touchpoint)
 Translation error: a gesture of greeting
@@ -1635,6 +1636,7 @@ decree vs. degree
 deep-seeded (deep-seated)
 deer/dear
 delivery vs deliver
+dentists (dentist's) appointment
 departure vs depart
 depend on
 descend down (descend)
@@ -2444,6 +2446,7 @@ nut (not)
 o (to)
 objective case after with(out)/at/to/...
 obtain (get)
+odn't (don't)
 oedometer (odometer)
 of any of → of
 off hand (offhand)

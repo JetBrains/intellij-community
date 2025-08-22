@@ -15,10 +15,12 @@ import com.intellij.grazie.text.TextExtractor
 import com.intellij.grazie.text.TextProblem
 import com.intellij.grazie.utils.filterFor
 import com.intellij.lang.Language
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiPlainText
@@ -44,8 +46,18 @@ abstract class GrazieTestBase : BasePlatformTestCase() {
      * Please use [enableProofreadingFor] if a test requires a specific language
      */
     val enabledLanguages = setOf(Lang.AMERICAN_ENGLISH)
-    val enabledRules = setOf("LanguageTool.EN.COMMA_WHICH", "LanguageTool.EN.UPPERCASE_SENTENCE_START")
+    val enabledRules = setOf("LanguageTool.EN.COMMA_WHICH", "LanguageTool.EN.UPPERCASE_SENTENCE_START", "LanguageTool.DE.MANNSTUNDE")
     val hunspellLangs: Set<Lang> = setOf(Lang.GERMANY_GERMAN, Lang.AUSTRIAN_GERMAN, Lang.SWISS_GERMAN, Lang.RUSSIAN, Lang.UKRAINIAN)
+
+    @JvmStatic
+    fun maskSaxParserFactory(disposable: Disposable) {
+      val saxParserKey = "javax.xml.parsers.SAXParserFactory"
+      val oldSaxParserFactory = System.setProperty(saxParserKey, "com.sun.org.apache.xerces.internal.jaxp.SAXParserFactoryImpl")
+      Disposer.register(disposable) {
+        if (oldSaxParserFactory != null) System.setProperty(saxParserKey, oldSaxParserFactory)
+        else System.clearProperty(saxParserKey)
+      }
+    }
 
     fun loadLangs(langs: Collection<Lang>, project: Project) {
       langs.filter { it in hunspellLangs }.forEach { loadLang(it, project) }
@@ -93,6 +105,7 @@ abstract class GrazieTestBase : BasePlatformTestCase() {
 
   override fun setUp() {
     super.setUp()
+    maskSaxParserFactory(testRootDisposable)
     if (enableGrazieChecker) Registry.get("spellchecker.grazie.enabled").setValue(true, testRootDisposable)
     myFixture.enableInspections(*inspectionTools)
 

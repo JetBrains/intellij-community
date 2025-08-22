@@ -41,7 +41,7 @@ open class LanguageToolChecker : TextChecker() {
 
   override fun getRules(locale: Locale): Collection<Rule> {
     val language = Languages.getLanguageForLocale(locale)
-    val lang = Lang.values().find { it.jLanguage == language } ?: return emptyList()
+    val lang = Lang.entries.find { it.jLanguage == language } ?: return emptyList()
     return grammarRules(LangTool.getTool(lang), lang)
   }
 
@@ -109,7 +109,7 @@ open class LanguageToolChecker : TextChecker() {
       Predicate { om ->
         ProgressManager.checkCanceled()
         quotedMatches.none { qm ->
-          qm.rule == om.rule &&
+          qm.rule.id == om.rule.id &&
           quotedText.offsetToOriginal(qm.fromPos) == om.fromPos &&
           quotedText.offsetToOriginal(qm.toPos) == om.toPos
         }
