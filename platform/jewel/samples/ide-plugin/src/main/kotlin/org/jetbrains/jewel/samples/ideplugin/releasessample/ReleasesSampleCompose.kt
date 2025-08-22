@@ -102,7 +102,7 @@ internal fun ReleasesSampleCompose(project: Project) {
 }
 
 @Composable
-private fun LeftColumn(project: Project, modifier: Modifier = Modifier, onSelectedItemChange: (ContentItem?) -> Unit) {
+private fun LeftColumn(project: Project, onSelectedItemChange: (ContentItem?) -> Unit, modifier: Modifier = Modifier) {
     val service = remember(project) { project.service<ReleasesSampleService>() }
     val currentContentSource by service.content.collectAsState()
 
@@ -341,7 +341,7 @@ private fun OverflowMenu(currentContentSource: ContentSource<*>, onContentSource
 }
 
 @Composable
-private fun RightColumn(selectedItem: ContentItem?, modifier: Modifier) {
+private fun RightColumn(selectedItem: ContentItem?, modifier: Modifier = Modifier) {
     if (selectedItem == null) {
         Box(modifier, contentAlignment = Alignment.Center) {
             Text("Nothing to see here", color = JBUI.CurrentTheme.Label.disabledForeground().toComposeColor())
@@ -435,18 +435,22 @@ private fun ItemDetailsText(selectedItem: ContentItem) {
 
 @Composable
 private fun AndroidReleaseDetails(item: ContentItem.AndroidRelease) {
-    TextWithLabel("Codename:", item.codename ?: "N/A")
-    TextWithLabel("Version:", item.versionName)
-    TextWithLabel("API level:", item.apiLevel.toString())
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        TextWithLabel("Codename:", item.codename ?: "N/A")
+        TextWithLabel("Version:", item.versionName)
+        TextWithLabel("API level:", item.apiLevel.toString())
+    }
 }
 
 @Composable
 private fun AndroidStudioReleaseDetails(item: ContentItem.AndroidStudio) {
-    TextWithLabel("Channel:", item.channel.name)
-    TextWithLabel("Version:", item.versionName)
-    TextWithLabel("IntelliJ Platform version:", item.platformVersion)
-    TextWithLabel("IntelliJ Platform build:", item.platformBuild)
-    TextWithLabel("Full build number:", item.build)
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        TextWithLabel("Channel:", item.channel.name)
+        TextWithLabel("Version:", item.versionName)
+        TextWithLabel("IntelliJ Platform version:", item.platformVersion)
+        TextWithLabel("IntelliJ Platform build:", item.platformBuild)
+        TextWithLabel("Full build number:", item.build)
+    }
 }
 
 @Composable
