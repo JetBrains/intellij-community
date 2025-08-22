@@ -8,18 +8,21 @@ import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecificat
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
+import com.intellij.xdebugger.impl.frame.XDebugSessionProxy;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 @ApiStatus.Internal
-public class SortValuesToggleAction extends ToggleAction implements DumbAware, ActionRemoteBehaviorSpecification.Frontend {
+public class SortValuesToggleAction extends ToggleAction implements DumbAware, ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
-    XDebugSession session = e.getData(XDebugSession.DATA_KEY);
-    e.getPresentation().setEnabledAndVisible(session != null && !session.getDebugProcess().isValuesCustomSorted());
+
+    XDebugSessionProxy sessionProxy = DebuggerUIUtil.getSessionProxy(e);
+    e.getPresentation().setEnabledAndVisible(sessionProxy != null && !sessionProxy.isValuesCustomSorted());
   }
 
   @Override

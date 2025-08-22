@@ -124,6 +124,8 @@ class FrontendXDebuggerSession private constructor(
 
   override val isLibraryFrameFilterSupported: Boolean = sessionDto.isLibraryFrameFilterSupported
 
+  override val isValuesCustomSorted: Boolean = sessionDto.isValuesCustomSorted
+
   override val valueMarkers: XValueMarkers<FrontendXValue, XValueMarkerId> = FrontendXValueMarkers(project)
 
   private val sessionTabDeferred = CompletableDeferred<XDebugSessionTab>()

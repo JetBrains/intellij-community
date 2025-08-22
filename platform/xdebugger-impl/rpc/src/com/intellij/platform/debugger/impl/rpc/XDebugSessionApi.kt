@@ -96,6 +96,7 @@ data class XDebugSessionDto(
   val processHandlerDto: ProcessHandlerDto,
   val smartStepIntoHandlerDto: XSmartStepIntoHandlerDto?,
   val isLibraryFrameFilterSupported: Boolean,
+  val isValuesCustomSorted: Boolean,
   val activeNonLineBreakpointIdFlow: RpcFlow<XBreakpointId?>,
 )
 
