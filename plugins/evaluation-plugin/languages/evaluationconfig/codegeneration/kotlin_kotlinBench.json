@@ -1,0 +1,34 @@
+{
+  "projectPath": "../ml-eval/kotlinx-coroutines",
+  "repository": "https://github.com/Kotlin/kotlinx.coroutines",
+  "revision": "1ed19c872e3c283354349ced921d5f039048d4e1",
+  "outputDir": "bin/ml-eval-code-generation-kotlin-kotlinBench-output",
+  "strategy": {
+    "instanceId": "Kotlin__kotlinx.coroutines-3639"
+  },
+  "fileDataset": {
+    "url": "remote:https://huggingface.co/datasets/JetBrains/eval_plugin/resolve/main/code-generation-swe/kotlin/Kotlin-Bench.json"
+  },
+  "interpret": {
+    "saveLogs": true,
+    "sessionProbability": 1.0,
+    "sessionSeed": null,
+    "sessionsLimit": 400,
+    "filesLimit": 100,
+    "order": "LINEAR",
+    "trainTestSplit": 70,
+    "registry": "",
+    "iterationCount": 1
+  },
+  "reports": {
+    "evaluationTitle": "Default",
+    "sessionsFilters": [],
+    "comparisonFilters": []
+  },
+  "language": "Java",
+  "actions": {
+    "evaluationRoots": [
+      "."
+    ]
+  }
+}
