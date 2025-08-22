@@ -22,7 +22,7 @@ class ScopesStateService(val project: Project) {
     return WindowFocusFrontendService.getInstance().performActionWithFocus(true) {
       val descriptor = scopesState.getScopeDescriptorById(scopeId) ?: return@performActionWithFocus null
       return@performActionWithFocus coroutineScope {
-       return@coroutineScope withContext(Dispatchers.EDT) {
+        return@coroutineScope withContext(Dispatchers.EDT) {
           descriptor.scope
         }
       }
@@ -33,16 +33,16 @@ class ScopesStateService(val project: Project) {
     return scopesState.getScopeDescriptorById(scopeId)?.displayName
   }
 
+  fun getIdByScopeName(scopeName: String): String? {
+    return scopesState.getIdByScopeName(scopeName)
+  }
+
   fun getScopesState(): ScopesState {
     return scopesState
   }
 
   fun getCachedScopeDescriptors(): List<ScopeDescriptor> {
-    return scopesState.scopeIdToDescriptor.values.toList()
-  }
-
-  fun getIdByScopeName(scopeName: String): String? {
-    return scopesState.scopeIdToDescriptor.entries.find { it.value.displayName == scopeName }?.key
+    return scopesState.getScopeDescriptors()
   }
 
   companion object {
@@ -55,31 +55,51 @@ class ScopesStateService(val project: Project) {
 
 @ApiStatus.Internal
 class ScopesState internal constructor(val project: Project) {
-  internal val scopeIdToDescriptor: MutableMap<String, ScopeDescriptor> = Collections.synchronizedMap(LinkedHashMap())
+  private val scopeIdToDescriptor: MutableMap<String, ScopeDescriptor> = LinkedHashMap()
 
   fun addScope(scopeDescriptor: ScopeDescriptor): String {
-    val existingIdToDescriptor = scopeIdToDescriptor.entries.find { it.value.displayName == scopeDescriptor.displayName }
-    val id = existingIdToDescriptor?.key ?: UUID.randomUUID().toString()
-    scopeIdToDescriptor[id] = scopeDescriptor
-    return id
+    synchronized(scopeIdToDescriptor) {
+      val existingIdToDescriptor = scopeIdToDescriptor.entries.find { it.value.displayName == scopeDescriptor.displayName }
+      val id = existingIdToDescriptor?.key ?: UUID.randomUUID().toString()
+      scopeIdToDescriptor[id] = scopeDescriptor
+      return id
+    }
   }
 
   fun updateScopes(scopesStateMap: Map<String, ScopeDescriptor>) {
-    scopeIdToDescriptor.clear()
-    scopeIdToDescriptor.putAll(scopesStateMap)
+    synchronized(scopeIdToDescriptor) {
+      scopeIdToDescriptor.clear()
+      scopeIdToDescriptor.putAll(scopesStateMap)
+    }
   }
 
   // This function is primarily used on the frontend to maintain actual scope IDs with placeholder descriptors (without a SearchScope).
   // It helps prevent overriding values in monolithic environments.
   fun updateIfNotExists(scopesStateMap: Map<String, ScopeDescriptor>) {
-    for ((id, descriptor) in scopesStateMap) {
-      if (!scopeIdToDescriptor.containsKey(id)) {
-        scopeIdToDescriptor[id] = descriptor
+    synchronized(scopeIdToDescriptor) {
+      for ((id, descriptor) in scopesStateMap) {
+        if (!scopeIdToDescriptor.containsKey(id)) {
+          scopeIdToDescriptor[id] = descriptor
+        }
       }
     }
   }
 
+  fun getScopeDescriptors(): List<ScopeDescriptor> {
+    synchronized(scopeIdToDescriptor) {
+      return scopeIdToDescriptor.values.toList()
+    }
+  }
+
   fun getScopeDescriptorById(scopeId: String): ScopeDescriptor? {
-    return scopeIdToDescriptor[scopeId]
+    synchronized(scopeIdToDescriptor) {
+      return scopeIdToDescriptor[scopeId]
+    }
+  }
+
+  fun getIdByScopeName(scopeName: String): String? {
+    synchronized(scopeIdToDescriptor) {
+      return scopeIdToDescriptor.firstNotNullOfOrNull { if (it.value.displayName == scopeName) it.key else null }
+    }
   }
 }
