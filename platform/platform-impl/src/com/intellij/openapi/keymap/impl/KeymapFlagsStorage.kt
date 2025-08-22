@@ -55,7 +55,7 @@ internal class KeymapFlagsStorage : SimplePersistentStateComponent<KeymapFlagsSt
 
     LOG.info("Added flag $flag for keymap=${keymap.name};actionId=${actionId};shortcut=${shortcut};lifetime=${lifetime}")
 
-    state.addModificationCount(1)
+    state.intIncrementModificationCount()
   }
 
   fun getFlags(keymap: Keymap): Set<String?> = forKeymap(keymap).map { it.flag }.toSet()
@@ -86,14 +86,14 @@ internal class KeymapFlagsStorage : SimplePersistentStateComponent<KeymapFlagsSt
 
     if (result) {
       LOG.info("Several flags were deleted as a part of cleanup keymap=${keymap.name};actionId=${actionId}")
-      state.addModificationCount(1)
+      state.intIncrementModificationCount()
     }
   }
 
   internal fun removeFlagsForKeymap(keymap: Keymap) {
     if (state.keymapToDescriptor.remove(keymap.name) != null) {
       LOG.info("Flags were deleted for keymap=${keymap.name}")
-      state.addModificationCount(1)
+      state.intIncrementModificationCount()
     }
   }
 
