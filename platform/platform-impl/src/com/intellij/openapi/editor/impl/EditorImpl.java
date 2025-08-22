@@ -286,6 +286,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private final SingleEdtTaskScheduler mouseSelectionStateAlarm = SingleEdtTaskScheduler.createSingleEdtTaskScheduler();
   private Runnable mouseSelectionStateResetRunnable;
+  private final SingleEdtTaskScheduler errorStripeDelayedRepaintAlarm = SingleEdtTaskScheduler.createSingleEdtTaskScheduler();
 
   private int myDragOnGutterSelectionStartLine = -1;
   private RangeMarker myDraggedRange;
@@ -686,7 +687,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     long requested = TextRangeScalarUtil.toScalarRange(start, end);
     // merge existing request with the new
     myErrorStripeNeedsRepaintRange = TextRangeScalarUtil.union(range == -1 ? requested : range, requested);
+    errorStripeDelayedRepaintAlarm.cancelAndRequest(50, ()->invokeDelayedErrorStripeRepaint()); // in case nobody called repaint
   }
+
   private void errorStripeMarkerChanged(@NotNull RangeHighlighterEx highlighter) {
     int start = highlighter.getAffectedAreaStartOffset();
     int end = highlighter.getAffectedAreaEndOffset();
@@ -1201,6 +1204,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       // clear error panel's cached image
       // replace UI with default to release resources (e.g. coroutines) of a custom UI correctly
       myVerticalScrollBar.setPersistentUI(JBScrollBar.createDefaultUI());
+      mouseSelectionStateAlarm.dispose();
+      errorStripeDelayedRepaintAlarm.dispose();
     });
   }
 
@@ -1905,6 +1910,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   void invokeDelayedErrorStripeRepaint() {
     long range = myErrorStripeNeedsRepaintRange;
     if (range != -1) {
+      errorStripeDelayedRepaintAlarm.cancel();
       myMarkupModel.repaint(TextRangeScalarUtil.startOffset(range), TextRangeScalarUtil.endOffset(range));
       myErrorStripeNeedsRepaintRange = -1;
     }
