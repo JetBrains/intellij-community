@@ -122,7 +122,6 @@ internal class KaSourceModuleDependenciesProvider(private val project: Project) 
                     val productionModule = additionalVisibleModule.toKaSourceModuleForProduction()
                     if (productionModule != null) {
                         result.add(productionModule)
-                        continue
                     }
                     val originalModuleHasTestRoot = openapiModule.toKaSourceModuleForTest() != null
                     if (originalModuleHasTestRoot) {
