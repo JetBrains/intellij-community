@@ -43,17 +43,7 @@ abstract class AbstractDecompiledTextTest(baseDirectory: String) : AbstractDecom
 
         val fileStub = KotlinClsStubBuilder().buildFileStub(FileContentImpl.createByFile(file))!!
         val actual = fileStub.serializeToString()
-        val adjustedActual = if (actual.startsWith("FILE[kind=MultifileClass")) {
-            // Workaround for KT-79780
-            actual.replace(
-                "FILE[kind=MultifileClass[packageFqName=test, facadeFqName=test.MultifileClass, facadePartSimpleNames=[MultifileClass__AndSomeMoreKt, MultifileClass__MultifileClassKt]]]",
-                "FILE[kind=Facade[packageFqName=test, facadeFqName=test.MultifileClass]]",
-            )
-        } else {
-            actual
-        }
-
-        Assert.assertEquals(expectedText, adjustedActual)
+        Assert.assertEquals(expectedText, actual)
     }
 
     override fun checkPsiFile(psiFile: PsiFile) =
