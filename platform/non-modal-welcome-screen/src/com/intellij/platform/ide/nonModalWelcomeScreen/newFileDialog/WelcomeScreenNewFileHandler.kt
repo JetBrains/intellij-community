@@ -13,10 +13,10 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.io.FileUtil.findSequentNonexistentFile
 import com.intellij.platform.ide.nonModalWelcomeScreen.NonModalWelcomeScreenBundle
-import com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel.GoWelcomeScreenFileTemplateOptionProvider
+import com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel.WelcomeScreenFileTemplateOptionProvider
 import java.nio.file.Path
 
-object GoWelcomeScreenNewFileHandler {
+object WelcomeScreenNewFileHandler {
 
   private object TemplateNames {
     const val GENERIC_EMPTY_FILE: String = "Generic Empty File"
@@ -30,7 +30,7 @@ object GoWelcomeScreenNewFileHandler {
 
   fun createEmptyFile(project: Project?) {
     if (project == null) return
-    val dialogBuilder = GoWelcomeScreenNewFileDialog.Builder(project, NonModalWelcomeScreenBundle.message("go.non.modal.welcome.screen.create.file.dialog.title.file"))
+    val dialogBuilder = WelcomeScreenNewFileDialog.Builder(project, NonModalWelcomeScreenBundle.message("go.non.modal.welcome.screen.create.file.dialog.title.file"))
     dialogBuilder.apply {
       defaultDirectory = getDefaultProjectPath()
     }
@@ -42,7 +42,7 @@ object GoWelcomeScreenNewFileHandler {
 
   fun createHttpRequestFile(project: Project?) {
     if (project == null) return
-    val dialogBuilder = GoWelcomeScreenNewFileDialog.Builder(project, NonModalWelcomeScreenBundle.message("go.non.modal.welcome.screen.create.file.dialog.title.http.request"))
+    val dialogBuilder = WelcomeScreenNewFileDialog.Builder(project, NonModalWelcomeScreenBundle.message("go.non.modal.welcome.screen.create.file.dialog.title.http.request"))
     dialogBuilder.apply {
       fixedExtension = "http"
       defaultDirectory = getDefaultProjectPath()
@@ -55,7 +55,7 @@ object GoWelcomeScreenNewFileHandler {
 
   fun createDockerfile(project: Project?) {
     if (project == null) return
-    val dialogBuilder = GoWelcomeScreenNewFileDialog.Builder(project, NonModalWelcomeScreenBundle.message("go.non.modal.welcome.screen.create.file.dialog.title.dockerfile"))
+    val dialogBuilder = WelcomeScreenNewFileDialog.Builder(project, NonModalWelcomeScreenBundle.message("go.non.modal.welcome.screen.create.file.dialog.title.dockerfile"))
     dialogBuilder.apply {
       defaultFileName = "Dockerfile"
       defaultDirectory = getDefaultProjectPath()
@@ -70,11 +70,11 @@ object GoWelcomeScreenNewFileHandler {
 
   fun createKubernetesResource(project: Project?) {
     if (project == null) return
-    val dialogBuilder = GoWelcomeScreenNewFileDialog.Builder(project, NonModalWelcomeScreenBundle.message("go.non.modal.welcome.screen.create.file.dialog.title.k8s.resource"))
+    val dialogBuilder = WelcomeScreenNewFileDialog.Builder(project, NonModalWelcomeScreenBundle.message("go.non.modal.welcome.screen.create.file.dialog.title.k8s.resource"))
     dialogBuilder.apply {
       fixedExtension = "yaml"
       defaultDirectory = getDefaultProjectPath()
-      templateOptions = GoWelcomeScreenFileTemplateOptionProvider.getForTemplateKey(KUBERNETES_RESOURCE_TEMPLATE_KEY)?.getTemplateOptions()
+      templateOptions = WelcomeScreenFileTemplateOptionProvider.getForTemplateKey(KUBERNETES_RESOURCE_TEMPLATE_KEY)?.getTemplateOptions()
                         ?: emptyList()
     }
     showDialogAndCreateFile(project, dialogBuilder.build()) { it }
@@ -82,7 +82,7 @@ object GoWelcomeScreenNewFileHandler {
 
   private fun showDialogAndCreateFile(
     project: Project,
-    dialog: GoWelcomeScreenNewFileDialog,
+    dialog: WelcomeScreenNewFileDialog,
     templateNameProvider: (String?) -> String?,
   ) {
     if (!dialog.showAndGet()) return

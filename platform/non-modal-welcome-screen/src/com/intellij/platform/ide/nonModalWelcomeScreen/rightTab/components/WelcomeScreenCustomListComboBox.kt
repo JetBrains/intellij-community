@@ -25,11 +25,11 @@ import org.jetbrains.jewel.ui.theme.comboBoxStyle
  * A customized version of org/jetbrains/jewel/ui/component/ListComboBox.kt
  * Displays an icon alongside the text using the [iconKey] parameter
  * Adds a text prefix to all displayed items using the [itemPrefix] parameter
- * Uses [GoCustomComboBox] as its underlying implementation instead of the standard ComboBox
+ * Uses [WelcomeScreenCustomComboBox] as its underlying implementation instead of the standard ComboBox
  */
 @OptIn(ExperimentalJewelApi::class)
 @Composable
-internal fun GoCustomListComboBox(
+internal fun WelcomeScreenCustomListComboBox(
   iconKey: IconKey,
   itemPrefix: String,
   items: List<String>,
@@ -88,7 +88,7 @@ internal fun GoCustomListComboBox(
             maxPopupHeight
         }
 
-  GoCustomComboBox(
+  WelcomeScreenCustomComboBox(
     modifier =
       modifier
         .onPreviewKeyEvent {

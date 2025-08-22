@@ -71,7 +71,7 @@ import org.jetbrains.jewel.ui.theme.comboBoxStyle
  */
 @OptIn(ExperimentalFoundationApi::class, ExperimentalJewelApi::class)
 @Composable
-internal fun GoCustomComboBox(
+internal fun WelcomeScreenCustomComboBox(
   iconKey: IconKey,
   labelText: String,
   modifier: Modifier = Modifier,

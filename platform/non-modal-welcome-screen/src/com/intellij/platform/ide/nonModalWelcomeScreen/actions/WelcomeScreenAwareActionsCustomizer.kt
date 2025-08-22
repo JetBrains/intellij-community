@@ -9,9 +9,9 @@ import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecificat
 import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider.Companion.isWelcomeScreenProject
 import org.intellij.lang.annotations.Language
 
-class GoWelcomeScreenAwareActionsCustomizer : ActionConfigurationCustomizer, ActionConfigurationCustomizer.LightCustomizeStrategy {
+class WelcomeScreenAwareActionsCustomizer : ActionConfigurationCustomizer, ActionConfigurationCustomizer.LightCustomizeStrategy {
   override suspend fun customize(actionRegistrar: ActionRuntimeRegistrar) {
-    replaceActionCopyPresentation("CloseProject", GoWelcomeScreenAwareCloseProjectAction(), actionRegistrar)
+    replaceActionCopyPresentation("CloseProject", WelcomeScreenAwareCloseProjectAction(), actionRegistrar)
 
     wrapExistingActionAndReplace("RenameProject", isFrontendAction = false, actionRegistrar)
 
@@ -39,17 +39,17 @@ private fun wrapExistingActionAndReplace(@Language("devkit-action-id") actionId:
   val existingAction = actionRegistrar.getUnstubbedAction(actionId) ?: return
   val actionWrapper =
     if (isFrontendAction) {
-      GoWelcomeScreenFrontendActionWrapper(existingAction)
+      WelcomeScreenFrontendActionWrapper(existingAction)
     } else {
-      GoWelcomeScreenActionWrapper(existingAction)
+      WelcomeScreenActionWrapper(existingAction)
     }
   replaceActionCopyPresentation(actionId, actionWrapper, actionRegistrar)
 }
 
-private class GoWelcomeScreenFrontendActionWrapper(action: AnAction) : GoWelcomeScreenActionWrapper(action),
-                                                                       ActionRemoteBehaviorSpecification.Frontend
+private class WelcomeScreenFrontendActionWrapper(action: AnAction) : WelcomeScreenActionWrapper(action),
+                                                                     ActionRemoteBehaviorSpecification.Frontend
 
-private open class GoWelcomeScreenActionWrapper(action: AnAction) : AnActionWrapper(action) {
+private open class WelcomeScreenActionWrapper(action: AnAction) : AnActionWrapper(action) {
   override fun update(e: AnActionEvent) {
     val project = e.project
     if (project != null && isWelcomeScreenProject(project)) {

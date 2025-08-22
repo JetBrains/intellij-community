@@ -22,10 +22,10 @@ import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.platform.ide.nonModalWelcomeScreen.NonModalWelcomeScreenBundle
-import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.GoWelcomeRightTabComboBoxModel.KeymapModel
-import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.GoWelcomeRightTabComboBoxModel.ThemeModel
-import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.components.GoCustomButton
-import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.components.GoCustomListComboBox
+import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenRightTabComboBoxModel.KeymapModel
+import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenRightTabComboBoxModel.ThemeModel
+import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.components.WelcomeScreenCustomButton
+import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.components.WelcomeScreenCustomListComboBox
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -43,15 +43,15 @@ import org.jetbrains.jewel.ui.theme.defaultButtonStyle
 import org.jetbrains.jewel.ui.theme.scrollbarStyle
 import javax.swing.JComponent
 
-class GoWelcomeRightTab(val project: Project) {
+class WelcomeScreenRightTab(val project: Project) {
   val component: JComponent by lazy {
     JewelComposePanel {
-      GoLandWelcomeScreen()
+      WelcomeScreen()
     }
   }
 
   @Composable
-  fun GoLandWelcomeScreen() {
+  fun WelcomeScreen() {
     Box(
       modifier = Modifier.fillMaxSize().background(color = panelBackgroundColor)
     ) {
@@ -86,7 +86,7 @@ class GoWelcomeRightTab(val project: Project) {
             FeatureGrid(modifier = Modifier.wrapContentSize(Alignment.Center))
             Spacer(modifier = Modifier.height(24.dp))
 
-            GoWelcomeRightTabBannerProvider.SingleBanner(project, modifier = Modifier.wrapContentSize(Alignment.Center))
+            WelcomeScreenRightTabBannerProvider.SingleBanner(project, modifier = Modifier.wrapContentSize(Alignment.Center))
         }
         var showOnStartup by remember { mutableStateOf(isRightTabEnabled) }
         Column(modifier = Modifier.align(Alignment.BottomCenter),
@@ -121,7 +121,7 @@ class GoWelcomeRightTab(val project: Project) {
 
   @Composable
   private fun FeatureButton(model: GoWelcomeRightTabFeatures.FeatureButtonModel) {
-    GoCustomButton(
+    WelcomeScreenCustomButton(
       onClick = {
         model.onClick()
         //GoWelcomeScreenTabUsageCollector.logWelcomeScreenTabButtonClicked(model.feature)
@@ -153,9 +153,9 @@ class GoWelcomeRightTab(val project: Project) {
   }
 
   @Composable
-  internal fun InfoPanelItem(iconKey: IconKey, itemPrefix: String, model: GoWelcomeRightTabComboBoxModel<out Any>) {
+  internal fun InfoPanelItem(iconKey: IconKey, itemPrefix: String, model: WelcomeScreenRightTabComboBoxModel<out Any>) {
     Box {
-      GoCustomListComboBox(
+      WelcomeScreenCustomListComboBox(
         iconKey = iconKey,
         itemPrefix = itemPrefix,
         items = model.itemNames(),
@@ -320,7 +320,7 @@ class GoWelcomeRightTab(val project: Project) {
     suspend fun show(project: Project) {
       if (!isRightTabEnabled) return
       withContext(Dispatchers.EDT) {
-        val settingsFile = GoWelcomeRightTabVirtualFile(GoWelcomeRightTab(project), project)
+        val settingsFile = WelcomeScreenRightTabVirtualFile(WelcomeScreenRightTab(project), project)
         val fileEditorManager = FileEditorManager.getInstance(project) as FileEditorManagerEx
         //val preventWelcomeTabFocusService = project.service<GoWelcomeScreenPreventWelcomeTabFocusService>()
         val options = FileEditorOpenOptions(reuseOpen = true, isSingletonEditorInWindow = true,

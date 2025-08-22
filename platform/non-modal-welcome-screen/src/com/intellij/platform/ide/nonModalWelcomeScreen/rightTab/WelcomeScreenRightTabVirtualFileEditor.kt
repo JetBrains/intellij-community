@@ -14,7 +14,7 @@ import java.beans.PropertyChangeListener
 import javax.swing.JComponent
 
 @ApiStatus.Internal
-internal class GoWelcomeRightTabVirtualFileEditor(private val newProjectFile: GoWelcomeRightTabVirtualFile) : FileEditor {
+internal class WelcomeScreenRightTabVirtualFileEditor(private val newProjectFile: WelcomeScreenRightTabVirtualFile) : FileEditor {
   private val userDataHolder: UserDataHolder = UserDataHolderBase()
 
   init {

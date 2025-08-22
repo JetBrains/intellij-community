@@ -21,10 +21,10 @@ import com.intellij.openapi.ui.popup.ListPopupStep
 import com.intellij.openapi.util.NlsActions.ActionText
 import com.intellij.platform.ide.nonModalWelcomeScreen.GoWelcomeScreenPluginIconProvider
 import com.intellij.platform.ide.nonModalWelcomeScreen.NonModalWelcomeScreenBundle.message
-import com.intellij.platform.ide.nonModalWelcomeScreen.newFileDialog.GoWelcomeScreenNewFileHandler
-import com.intellij.platform.ide.nonModalWelcomeScreen.newFileDialog.GoWelcomeScreenNewFileHandler.createDockerfile
-import com.intellij.platform.ide.nonModalWelcomeScreen.newFileDialog.GoWelcomeScreenNewFileHandler.createHttpRequestFile
-import com.intellij.platform.ide.nonModalWelcomeScreen.newFileDialog.GoWelcomeScreenNewFileHandler.createKubernetesResource
+import com.intellij.platform.ide.nonModalWelcomeScreen.newFileDialog.WelcomeScreenNewFileHandler
+import com.intellij.platform.ide.nonModalWelcomeScreen.newFileDialog.WelcomeScreenNewFileHandler.createDockerfile
+import com.intellij.platform.ide.nonModalWelcomeScreen.newFileDialog.WelcomeScreenNewFileHandler.createHttpRequestFile
+import com.intellij.platform.ide.nonModalWelcomeScreen.newFileDialog.WelcomeScreenNewFileHandler.createKubernetesResource
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
@@ -41,7 +41,7 @@ import java.util.function.Supplier
 import javax.swing.Icon
 import javax.swing.JComponent
 
-internal class GoWelcomeLeftPanelActions(val project: Project) {
+internal class WelcomeScreenLeftPanelActions(val project: Project) {
   internal val panelButtonModels: List<PanelButtonModel>
     get() = listOf(
       PanelButtonModel(message ("go.non.modal.welcome.screen.action.open"), AllIcons.Nodes.Folder,
@@ -166,7 +166,7 @@ private class CreateEmptyFileAction(private val project: Project) : DumbAwareAct
   "",
   AllIcons.FileTypes.Text
 ) {
-  override fun actionPerformed(e: AnActionEvent) = GoWelcomeScreenNewFileHandler.createEmptyFile(project)
+  override fun actionPerformed(e: AnActionEvent) = WelcomeScreenNewFileHandler.createEmptyFile(project)
 }
 
 private val HTTP_CLIENT_PLUGIN_ID = PluginId.getId("com.jetbrains.restClient")

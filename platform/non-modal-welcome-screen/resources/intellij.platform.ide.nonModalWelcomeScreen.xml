@@ -6,23 +6,23 @@
   <resource-bundle>messages.NonModalWelcomeScreenBundle</resource-bundle>
 
   <extensionPoints>
-    <extensionPoint qualifiedName="com.goide.welcomeScreenFeatureProvider"
-                    interface="com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.GoWelcomeScreenFeatureProvider" dynamic="true"/>
-    <extensionPoint qualifiedName="com.goide.templateOptionProvider"
-                    interface="com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel.GoWelcomeScreenFileTemplateOptionProvider" dynamic="true"/>
-    <extensionPoint qualifiedName="com.goide.welcomeScreenFileIconProvider"
-                    interface="com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel.GoWelcomeScreenFileIconProvider" dynamic="true"/>
-    <extensionPoint qualifiedName="com.goide.welcomeScreenRightTabBannerProvider"
-                    interface="com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.GoWelcomeRightTabBannerProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.platform.ide.nonModalWelcomeScreen.welcomeScreenFeatureProvider"
+                    interface="com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenFeatureProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.platform.ide.nonModalWelcomeScreen.templateOptionProvider"
+                    interface="com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel.WelcomeScreenFileTemplateOptionProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.platform.ide.nonModalWelcomeScreen.welcomeScreenFileIconProvider"
+                    interface="com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel.WelcomeScreenFileIconProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.platform.ide.nonModalWelcomeScreen.welcomeScreenRightTabBannerProvider"
+                    interface="com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenRightTabBannerProvider" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <actionConfigurationCustomizer implementation="com.intellij.platform.ide.nonModalWelcomeScreen.actions.GoWelcomeScreenAwareActionsCustomizer" />
+    <actionConfigurationCustomizer implementation="com.intellij.platform.ide.nonModalWelcomeScreen.actions.WelcomeScreenAwareActionsCustomizer" />
 
-    <fileEditorProvider id="settingsWindow" implementation="com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.GoWelcomeRightTabVirtualFileEditorProvider"/>
-    <projectViewPane implementation="com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel.GoWelcomeLeftPanel"/>
+    <fileEditorProvider id="settingsWindow" implementation="com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenRightTabVirtualFileEditorProvider"/>
+    <projectViewPane implementation="com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel.WelcomeScreenLeftPanel"/>
 
-    <applicationService serviceImplementation="com.intellij.platform.ide.nonModalWelcomeScreen.GoWelcomeScreenRecentProjectsManager"
+    <applicationService serviceImplementation="com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenRecentProjectsManager"
                         serviceInterface="com.intellij.ide.RecentProjectsManager"
                         overrides="true"/>
   </extensions>

@@ -2,7 +2,7 @@ package com.intellij.platform.ide.nonModalWelcomeScreen
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel.GoWelcomeScreenFileIconProvider
+import com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel.WelcomeScreenFileIconProvider
 import javax.swing.Icon
 
 object GoWelcomeScreenPluginIconProvider {
@@ -15,5 +15,5 @@ object GoWelcomeScreenPluginIconProvider {
   fun getKubernetesIcon(): Icon = getPluginIcon(GO_KUBERNETES_PLUGIN_ID, AllIcons.Actions.AddDirectory)
 
   private fun getPluginIcon(pluginId: PluginId, fallbackIcon: Icon): Icon =
-    GoWelcomeScreenFileIconProvider.getForPluginId(pluginId)?.fileIcon ?: fallbackIcon
+    WelcomeScreenFileIconProvider.getForPluginId(pluginId)?.fileIcon ?: fallbackIcon
 }

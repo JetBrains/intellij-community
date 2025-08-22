@@ -84,8 +84,8 @@ class GoWelcomeRightTabFeatures(private val project: Project) {
     val onClick: () -> Unit,
   )
 
-  private fun getFeature(featureKey: String): GoWelcomeScreenFeatureProvider? {
-    val provider = GoWelcomeScreenFeatureProvider.getForFeatureKey(featureKey)
+  private fun getFeature(featureKey: String): WelcomeScreenFeatureProvider? {
+    val provider = WelcomeScreenFeatureProvider.getForFeatureKey(featureKey)
     if (provider == null) {
       thisLogger().warn("Feature provider for the feature key $featureKey not found")
     }
@@ -94,7 +94,7 @@ class GoWelcomeRightTabFeatures(private val project: Project) {
 
   @get:Composable
   private val blueTint: Color
-    get() = GoWelcomeRightTab.color(dark = JewelTheme.colorPalette.blueOrNull(8),
-                                    light = JewelTheme.colorPalette.blueOrNull(4),
-                                    fallback = Color(0xFF548AF7))
+    get() = WelcomeScreenRightTab.color(dark = JewelTheme.colorPalette.blueOrNull(8),
+                                        light = JewelTheme.colorPalette.blueOrNull(4),
+                                        fallback = Color(0xFF548AF7))
 }

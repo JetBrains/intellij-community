@@ -9,7 +9,7 @@ import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.ProjectCollecto
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectFilteringTree
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectPanelComponentFactory
 import com.intellij.platform.ide.nonModalWelcomeScreen.NonModalWelcomeScreenBundle
-import com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel.GoWelcomeLeftPanelActions.Companion.leftPanelActionButton
+import com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel.WelcomeScreenLeftPanelActions.Companion.leftPanelActionButton
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.IconManager
 import com.intellij.ui.PlatformIcons
@@ -29,7 +29,7 @@ import javax.swing.JComponent
 import javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
 import javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED
 
-class GoWelcomeLeftPanel(private val project: Project) : ProjectViewPane(project) {
+class WelcomeScreenLeftPanel(private val project: Project) : ProjectViewPane(project) {
   private var recentProjectTreeComponent: JComponent? = null
 
   override fun getTitle(): String = NonModalWelcomeScreenBundle.message("go.non.modal.welcome.screen.project.view.title")
@@ -44,7 +44,7 @@ class GoWelcomeLeftPanel(private val project: Project) : ProjectViewPane(project
 
   override fun getWeight(): Int = -10 // TODO: Increase weight?
 
-  override fun createSelectInTarget(): SelectInTarget = GoWelcomeLeftPanelSelectInTarget()
+  override fun createSelectInTarget(): SelectInTarget = WelcomeScreenLeftPanelSelectInTarget()
 
   override fun createComponent(): JComponent {
 
@@ -80,7 +80,7 @@ class GoWelcomeLeftPanel(private val project: Project) : ProjectViewPane(project
   }
 
   private fun actionButtons() = panel {
-    GoWelcomeLeftPanelActions(project).panelButtonModels.forEach { model ->
+    WelcomeScreenLeftPanelActions(project).panelButtonModels.forEach { model ->
       row {
         leftPanelActionButton(model)
           .align(AlignX.FILL)
@@ -118,6 +118,6 @@ class GoWelcomeLeftPanel(private val project: Project) : ProjectViewPane(project
   }
 
   companion object {
-    internal const val ID = "GoNewProjectProjectPane"
+    internal const val ID = "NonModalWelcomeScreenProjectPane"
   }
 }

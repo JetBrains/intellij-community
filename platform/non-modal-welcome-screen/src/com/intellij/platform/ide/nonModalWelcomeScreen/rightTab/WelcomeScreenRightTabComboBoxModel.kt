@@ -11,7 +11,7 @@ import com.intellij.openapi.keymap.impl.KeymapManagerImpl
 import com.intellij.openapi.keymap.impl.keymapComparator
 import com.intellij.openapi.keymap.impl.ui.KeymapSchemeManager
 
-internal abstract class GoWelcomeRightTabComboBoxModel<T> {
+internal abstract class WelcomeScreenRightTabComboBoxModel<T> {
   abstract val items: List<T>
 
   abstract var currentItem: T
@@ -29,7 +29,7 @@ internal abstract class GoWelcomeRightTabComboBoxModel<T> {
     }
   }
 
-  class KeymapModel() : GoWelcomeRightTabComboBoxModel<Keymap>() {
+  class KeymapModel() : WelcomeScreenRightTabComboBoxModel<Keymap>() {
     override val items: List<Keymap> = getKeymaps()
 
     override var currentItem: Keymap
@@ -52,7 +52,7 @@ internal abstract class GoWelcomeRightTabComboBoxModel<T> {
       get() = KeymapManager.getInstance() as KeymapManagerImpl
   }
 
-  class ThemeModel() : GoWelcomeRightTabComboBoxModel<LafReference>() {
+  class ThemeModel() : WelcomeScreenRightTabComboBoxModel<LafReference>() {
     override val items: List<LafReference>
       get() = getThemes()
 

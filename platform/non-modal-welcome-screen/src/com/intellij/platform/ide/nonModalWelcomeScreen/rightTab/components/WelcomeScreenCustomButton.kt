@@ -25,7 +25,7 @@ import org.jetbrains.jewel.ui.focusOutline
 import org.jetbrains.jewel.ui.theme.defaultButtonStyle
 
 @Composable
-fun GoCustomButton(
+fun WelcomeScreenCustomButton(
   onClick: () -> Unit,
   modifier: Modifier = Modifier,
   enabled: Boolean = true,

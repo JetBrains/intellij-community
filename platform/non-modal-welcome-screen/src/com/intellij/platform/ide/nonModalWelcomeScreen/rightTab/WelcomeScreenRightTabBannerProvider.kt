@@ -8,9 +8,9 @@ import androidx.compose.ui.unit.dp
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 
-interface GoWelcomeRightTabBannerProvider {
+interface WelcomeScreenRightTabBannerProvider {
   companion object {
-    private val EP_NAME = ExtensionPointName<GoWelcomeRightTabBannerProvider>("com.goide.welcomeScreenRightTabBannerProvider")
+    private val EP_NAME = ExtensionPointName<WelcomeScreenRightTabBannerProvider>("com.intellij.platform.ide.nonModalWelcomeScreen.welcomeScreenRightTabBannerProvider")
 
     @Composable
     fun SingleBanner(project: Project, modifier: Modifier) {

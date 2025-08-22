@@ -27,7 +27,7 @@ import javax.swing.JComponent
 import javax.swing.JList
 import javax.swing.event.DocumentEvent
 
-class GoWelcomeScreenNewFileDialog private constructor(
+class WelcomeScreenNewFileDialog private constructor(
   private val project: Project,
   private val builder: Builder,
 ) : DialogWrapper(project, true) {
@@ -199,6 +199,6 @@ class GoWelcomeScreenNewFileDialog private constructor(
     var defaultDirectory: String? = null
     var templateOptions: List<TemplateOption> = emptyList()
 
-    fun build(): GoWelcomeScreenNewFileDialog = GoWelcomeScreenNewFileDialog(project, this)
+    fun build(): WelcomeScreenNewFileDialog = WelcomeScreenNewFileDialog(project, this)
   }
 }

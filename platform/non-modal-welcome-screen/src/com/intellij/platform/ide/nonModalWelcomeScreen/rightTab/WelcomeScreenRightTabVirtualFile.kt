@@ -12,7 +12,7 @@ import com.intellij.testFramework.LightVirtualFile
 import org.jetbrains.annotations.NonNls
 import javax.swing.Icon
 
-class GoWelcomeRightTabVirtualFile(val window: GoWelcomeRightTab, val project: Project) :
+class WelcomeScreenRightTabVirtualFile(val window: WelcomeScreenRightTab, val project: Project) :
   LightVirtualFile("Welcome to GoLand", GoNewProjectWindowFileType(), "") {
 
   init {
@@ -32,7 +32,7 @@ class GoWelcomeRightTabVirtualFile(val window: GoWelcomeRightTab, val project: P
     override fun getIcon(): Icon? = AllIcons.General.Settings
 
     override fun isMyFileType(file: VirtualFile): Boolean {
-      return file is GoWelcomeRightTabVirtualFile
+      return file is WelcomeScreenRightTabVirtualFile
     }
   }
 }

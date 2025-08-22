@@ -8,18 +8,18 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.NonNls
 
-class GoWelcomeRightTabVirtualFileEditorProvider : FileEditorProvider, DumbAware {
+class WelcomeScreenRightTabVirtualFileEditorProvider : FileEditorProvider, DumbAware {
   companion object {
     const val ID: String = "GoNewProjectWindowFileEditor"
   }
 
   override fun accept(project: Project, file: VirtualFile): Boolean {
-    return file is GoWelcomeRightTabVirtualFile
+    return file is WelcomeScreenRightTabVirtualFile
   }
 
   override fun createEditor(project: Project, file: VirtualFile): FileEditor {
-    val file = file as GoWelcomeRightTabVirtualFile
-    return GoWelcomeRightTabVirtualFileEditor(file)
+    val file = file as WelcomeScreenRightTabVirtualFile
+    return WelcomeScreenRightTabVirtualFileEditor(file)
   }
 
   override fun getEditorTypeId(): @NonNls String = ID

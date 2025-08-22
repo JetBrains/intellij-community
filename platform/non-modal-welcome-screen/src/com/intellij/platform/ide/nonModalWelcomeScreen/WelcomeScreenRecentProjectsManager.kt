@@ -18,7 +18,7 @@ import kotlin.io.path.exists
 /**
  * Similar to DataSpellRecentProjectManager
  */
-class GoWelcomeScreenRecentProjectsManager(coroutineScope: CoroutineScope) : RecentProjectsManagerBase(coroutineScope) {
+class WelcomeScreenRecentProjectsManager(coroutineScope: CoroutineScope) : RecentProjectsManagerBase(coroutineScope) {
   /**
    * See [com.intellij.ide.AttachedModuleAwareRecentProjectsManager.getProjectDisplayName]
    */
@@ -50,7 +50,7 @@ class GoWelcomeScreenRecentProjectsManager(coroutineScope: CoroutineScope) : Rec
   }
 
   companion object {
-    private val LOG = logger<GoWelcomeScreenRecentProjectsManager>()
+    private val LOG = logger<WelcomeScreenRecentProjectsManager>()
 
   }
 }

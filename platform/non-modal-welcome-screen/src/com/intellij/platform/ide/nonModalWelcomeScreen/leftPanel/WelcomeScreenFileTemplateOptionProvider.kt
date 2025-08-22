@@ -16,12 +16,12 @@ data class TemplateOption(
  * This extension point enables dynamic contribution of template options
  * without hardcoding them in the Welcome Screen handler.
  */
-abstract class GoWelcomeScreenFileTemplateOptionProvider {
+abstract class WelcomeScreenFileTemplateOptionProvider {
   companion object {
-    private val EP_NAME: ExtensionPointName<GoWelcomeScreenFileTemplateOptionProvider> =
-      ExtensionPointName.create("com.goide.templateOptionProvider")
+    private val EP_NAME: ExtensionPointName<WelcomeScreenFileTemplateOptionProvider> =
+      ExtensionPointName.create("com.intellij.platform.ide.nonModalWelcomeScreen.templateOptionProvider")
 
-    fun getForTemplateKey(templateKey: String): GoWelcomeScreenFileTemplateOptionProvider? {
+    fun getForTemplateKey(templateKey: String): WelcomeScreenFileTemplateOptionProvider? {
       return EP_NAME.lazySequence().firstOrNull { it.templateKey == templateKey }
     }
   }
