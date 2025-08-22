@@ -43,7 +43,7 @@ internal class EditorCellActionsToolbarController(
   }
 
   private val targetComponent: JComponent?
-    get() = (cell.view?.controllers?.firstOrNull { it is DataProviderComponent } as? DataProviderComponent)?.retrieveDataProvider()
+    get() = cell.view?.controllers?.filterIsInstance<DataProviderComponent>()?.firstOrNull()?.retrieveDataProvider()
 
   init {
     coroutineScope.launch {
