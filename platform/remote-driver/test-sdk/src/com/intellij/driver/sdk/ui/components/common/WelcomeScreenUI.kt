@@ -21,7 +21,7 @@ fun Driver.welcomeScreen(action: WelcomeScreenUI.() -> Unit = {}): WelcomeScreen
 open class WelcomeScreenUI(data: ComponentData) : UiComponent(data) {
   open val createNewProjectButton: UiComponent = x("//div[(@accessiblename='New Project' and @class='JButton') or (@visible_text='New Project' and @class!='JBLabel')]")
   open val openProjectButton: UiComponent = x("//div[(@accessiblename='Open' and @class='JButton')  or (@visible_text='Open' and @class!='JBLabel')]")
-  val fromVcsButton: UiComponent = x("//div[(@accessiblename='Clone Repository' and @class='JButton') or (@visible_text='Clone Repository' and @class!='JBLabel')]")
+  val fromVcsButton: UiComponent = x("//div[@accessiblename='Clone Repository' and @class='JButton']")
 
   val leftItems: JTreeUiComponent = tree("//div[@class='Tree']")
 
@@ -60,16 +60,4 @@ open class WelcomeScreenUI(data: ComponentData) : UiComponent(data) {
   fun clickRecentProject(projectName: String) {
     x { byClass("CardLayoutPanel") }.waitOneText(projectName).click()
   }
-}
-
-private fun Finder.cloneRepositoryDialog(action: CloneRepositoryDialogUi.() -> Unit): CloneRepositoryDialogUi {
-  return x(CloneRepositoryDialogUi::class.java) { byTitle("Clone Repository") }.apply(action)
-}
-
-fun Driver.cloneRepositoryDialog(action: CloneRepositoryDialogUi.() -> Unit = {}): CloneRepositoryDialogUi {
-  return this.ui.cloneRepositoryDialog(action)
-}
-
-class CloneRepositoryDialogUi(data: ComponentData) : UiComponent(data) {
-  val cloneButton = x("//div[(@accessiblename='Clone' and @class='JButton') or (@visible_text='Clone' and @class!='JBLabel')]")
 }
