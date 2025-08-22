@@ -1878,14 +1878,6 @@ a:com.intellij.psi.filters.position.PositionElementFilter
 - getFilter():com.intellij.psi.filters.ElementFilter
 - isClassAcceptable(java.lang.Class):Z
 - setFilter(com.intellij.psi.filters.ElementFilter):V
-a:com.intellij.psi.impl.AbstractModificationTracker
-- com.intellij.psi.impl.PsiTreeChangePreprocessor
-- <init>(com.intellij.psi.impl.PsiManagerEx):V
-- getPsiManager():com.intellij.psi.impl.PsiManagerEx
-- p:initTracker():V
-- pa:isInsideCodeBlock(com.intellij.psi.PsiElement):Z
-- p:processOutOfCodeBlockModification(com.intellij.psi.impl.PsiTreeChangeEventImpl):V
-- treeChanged(com.intellij.psi.impl.PsiTreeChangeEventImpl):V
 a:com.intellij.psi.impl.AbstractPsiCachedValue
 - com.intellij.psi.util.CachedValue
 - com.intellij.util.CachedValueBase
