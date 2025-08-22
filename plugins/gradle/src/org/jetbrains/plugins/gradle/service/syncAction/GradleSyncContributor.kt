@@ -10,6 +10,7 @@ import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
  * The [GradleSyncContributor] is used for the IDE project configuration in the [com.intellij.platform.backend.workspace.WorkspaceModel].
  */
 @ApiStatus.Experimental
+@ApiStatus.OverrideOnly
 interface GradleSyncContributor {
 
   val name: String

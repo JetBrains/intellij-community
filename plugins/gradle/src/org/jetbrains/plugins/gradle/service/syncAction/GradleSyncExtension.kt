@@ -15,6 +15,7 @@ import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
  * The [com.intellij.openapi.externalSystem.util.Order] annotation defines the extensions' execution order.
  */
 @ApiStatus.Experimental
+@ApiStatus.OverrideOnly
 interface GradleSyncExtension {
 
   /**
@@ -50,6 +51,7 @@ interface GradleSyncExtension {
    *
    * @param context the unified container for sync settings, parameters, models, etc.
    */
+  @ApiStatus.Obsolete
   suspend fun updateBridgeModel(
     context: ProjectResolverContext,
     phase: GradleSyncPhase,

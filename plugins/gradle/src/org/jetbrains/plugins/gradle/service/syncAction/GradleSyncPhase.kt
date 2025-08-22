@@ -6,6 +6,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase.Dynamic.Companion.asSyncPhase
 
 @ApiStatus.Experimental
+@ApiStatus.NonExtendable
 sealed interface GradleSyncPhase : Comparable<GradleSyncPhase> {
 
   /**
