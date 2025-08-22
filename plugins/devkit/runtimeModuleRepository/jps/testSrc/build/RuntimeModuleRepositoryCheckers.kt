@@ -11,9 +11,9 @@ import java.nio.file.Path
 
 fun checkRuntimeModuleRepository(outputDir: Path,
                                  expected: RawDescriptorListBuilder.() -> Unit) {
-  val jarPath = outputDir.resolve(RuntimeModuleRepositoryBuildConstants.JAR_REPOSITORY_FILE_NAME)
+  val jarPath = outputDir.resolve(RuntimeModuleRepositoryGenerator.JAR_REPOSITORY_FILE_NAME)
   checkRuntimeModuleRepository(RuntimeModuleRepositorySerialization.loadFromJar(jarPath), expected)
-  val compactPath = outputDir.resolve(RuntimeModuleRepositoryBuildConstants.COMPACT_REPOSITORY_FILE_NAME)
+  val compactPath = outputDir.resolve(RuntimeModuleRepositoryGenerator.COMPACT_REPOSITORY_FILE_NAME)
   checkRuntimeModuleRepository(RuntimeModuleRepositorySerialization.loadFromCompactFile(compactPath), expected)
 }
 

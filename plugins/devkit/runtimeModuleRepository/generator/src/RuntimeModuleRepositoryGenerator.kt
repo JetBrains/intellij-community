@@ -16,6 +16,10 @@ import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleDependency
 
 object RuntimeModuleRepositoryGenerator {
+  const val JAR_REPOSITORY_FILE_NAME: String = "module-descriptors.jar"
+  const val COMPACT_REPOSITORY_FILE_NAME: String = "module-descriptors.dat"
+  const val GENERATOR_VERSION: Int = 2
+
   /**
    * Generates the runtime module descriptors for all modules and libraries in [project].
    */
