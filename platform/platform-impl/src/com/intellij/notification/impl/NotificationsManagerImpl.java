@@ -176,8 +176,9 @@ public final class NotificationsManagerImpl extends NotificationsManager {
   @IntellijInternalApi
   public void resumeNotifications() {
     if (myPostponedNotifications != null) {
-      myPostponedNotifications.forEach(pair -> showNotificationWithSpan(pair.first, pair.second));
+      List<Pair<Notification, @Nullable Project>> postponedNotifications = myPostponedNotifications;
       myPostponedNotifications = null;
+      postponedNotifications.forEach(pair -> showNotificationWithSpan(pair.first, pair.second));
     }
   }
 
