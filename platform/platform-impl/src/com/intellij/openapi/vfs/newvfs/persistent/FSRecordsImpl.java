@@ -1854,14 +1854,14 @@ public final class FSRecordsImpl implements Closeable {
   @VisibleForTesting
   public static @NotNull Supplier<@NotNull InvertedNameIndex> asyncFillInvertedNameIndex(@NotNull PersistentFSRecordsStorage recordsStorage) {
     CompletableFuture<InvertedNameIndex> fillUpInvertedNameIndexTask = PersistentFsConnectorHelper.INSTANCE.executor().async(() -> {
-      InvertedNameIndex invertedNameIndex = new InvertedNameIndex();
+      InvertedNameIndex invertedNameIndex = new DefaultInMemoryInvertedNameIndex();
       // fill up nameId->fileId index:
       int maxAllocatedID = recordsStorage.maxAllocatedID();
       for (int fileId = FSRecords.ROOT_FILE_ID; fileId <= maxAllocatedID; fileId++) {
         int flags = recordsStorage.getFlags(fileId);
         int nameId = recordsStorage.getNameId(fileId);
         if (!hasDeletedFlag(flags) && nameId != NULL_NAME_ID) {
-          invertedNameIndex.updateDataInner(fileId, nameId);
+          invertedNameIndex.updateFileName(fileId, nameId, NULL_NAME_ID);
         }
       }
       LOG.info("VFS scanned: file-by-name index was populated");
