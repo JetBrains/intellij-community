@@ -190,6 +190,7 @@ private class ProjectProblemFileSelectionListenerStartupActivity : ProjectActivi
       override fun editorReleased(event: EditorFactoryEvent) {
         val virtualFile = FileDocumentManager.getInstance().getFile(event.editor.document) ?: return
         ReadAction.nonBlocking<Any> {
+          if (!virtualFile.isValid) return@nonBlocking null
           val psiFile = PsiManager.getInstance(project).findFile(virtualFile) ?: return@nonBlocking null
           if (psiFile.viewProvider.isPhysical) return@nonBlocking null // will already be removed by the vfs file listener
           removeState(psiFile)
