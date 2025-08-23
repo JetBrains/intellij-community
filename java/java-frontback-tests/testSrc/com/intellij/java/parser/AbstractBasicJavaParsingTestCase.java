@@ -2,9 +2,11 @@
 package com.intellij.java.parser;
 
 import com.intellij.PathJavaTestUtil;
+import com.intellij.java.frontback.psi.impl.syntax.JavaSyntaxDefinitionExtension;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.lang.java.parser.BasicJavaParserUtil;
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics;
 import com.intellij.platform.syntax.psi.LanguageSyntaxDefinitions;
@@ -27,7 +29,7 @@ public abstract class AbstractBasicJavaParsingTestCase extends ParsingTestCase {
   }
 
   public AbstractBasicJavaParsingTestCase(String dataPath, String fileExt, AbstractBasicJavaParsingTestConfigurator configurator) {
-    super("psi/" + dataPath, fileExt, configurator.getJavaParserDefinition());
+    super("psi/" + dataPath, fileExt, new JavaParserDefinition());
     myConfigurator = configurator;
   }
 
@@ -35,7 +37,7 @@ public abstract class AbstractBasicJavaParsingTestCase extends ParsingTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     getProject().registerService(WorkspaceModelTopics.class, new WorkspaceModelTopics());
-    addExplicit(LanguageSyntaxDefinitions.getINSTANCE(), JavaLanguage.INSTANCE, myConfigurator.getJavaSyntaxDefinition());
+    addExplicit(LanguageSyntaxDefinitions.getINSTANCE(), JavaLanguage.INSTANCE, new JavaSyntaxDefinitionExtension());
     myConfigurator.setUp(this);
   }
 

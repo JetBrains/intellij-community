@@ -2,16 +2,12 @@
 package com.intellij.java.parser
 
 import com.intellij.ide.highlighter.JavaFileType
-import com.intellij.java.frontback.psi.impl.syntax.JavaSyntaxDefinitionExtension
 import com.intellij.lang.ASTNode
 import com.intellij.lang.LanguageASTFactory
-import com.intellij.lang.ParserDefinition
 import com.intellij.lang.java.JavaLanguage
-import com.intellij.lang.java.JavaParserDefinition
 import com.intellij.lang.java.parser.BasicJavaParserUtil
 import com.intellij.lang.java.parser.JavaParserUtil
 import com.intellij.lang.java.syntax.JavaElementTypeConverterExtension
-import com.intellij.platform.syntax.LanguageSyntaxDefinition
 import com.intellij.platform.syntax.SyntaxElementType
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilder
 import com.intellij.platform.syntax.psi.*
@@ -41,10 +37,6 @@ abstract class JavaParsingTestConfiguratorBase(
       testCase.clearCachesOfLanguageExtension(java, languageASTFactory)
     }
   }
-
-  override fun getJavaParserDefinition(): ParserDefinition = JavaParserDefinition()
-
-  override fun getJavaSyntaxDefinition(): LanguageSyntaxDefinition = JavaSyntaxDefinitionExtension()
 
 
   override fun setLanguageLevel(level: LanguageLevel) {
