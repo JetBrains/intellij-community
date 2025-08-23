@@ -162,6 +162,8 @@ class KmpSyntaxNode internal constructor(
         isChameleon() -> (chameleonSyntaxNode?.firstChild() as KmpSyntaxNode?)
           ?.copy(parent = this)
 
+        ast.collapsed(markerIndex) -> null // this is a collapsed non-lazy-parseable node, meaning it's a leaf
+
         else -> {
           val childMarkerIndex = ast.firstChild(markerIndex)
           when {
