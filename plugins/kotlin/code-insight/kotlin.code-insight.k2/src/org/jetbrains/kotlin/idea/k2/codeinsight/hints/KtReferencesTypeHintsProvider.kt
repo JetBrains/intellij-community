@@ -8,6 +8,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.*
@@ -266,6 +267,7 @@ private fun isMultilineLocalProperty(element: PsiElement): Boolean {
     return false
 }
 
+@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun renderKtTypeHint(element: KtCallableDeclaration, multilineLocalProperty: Boolean): KaType? =
     calculateAllTypes<KaType>(element) { declarationType, allTypes, cannotBeNull ->
@@ -291,7 +293,7 @@ private fun renderKtTypeHint(element: KtCallableDeclaration, multilineLocalPrope
             }
 
             else -> declarationType
-        }
+        }?.augmentedByWarningLevelAnnotations
 
         if (ktType != null && isUnclearType(ktType, element)) {
             ktType
