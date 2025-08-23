@@ -64,6 +64,7 @@
     <orderEntry type="module" module-name="intellij.platform.structureView.impl" />
     <orderEntry type="module" module-name="intellij.platform.syntax" />
     <orderEntry type="module" module-name="intellij.platform.syntax.psi" />
+    <orderEntry type="module" module-name="intellij.platform.syntax.util" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.common" exported="" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.core" exported="" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
