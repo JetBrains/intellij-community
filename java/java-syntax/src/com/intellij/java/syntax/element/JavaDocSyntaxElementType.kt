@@ -2,6 +2,7 @@
 package com.intellij.java.syntax.element
 
 import com.intellij.java.syntax.element.lazyParser.JavaDocCommentParser
+import com.intellij.java.syntax.element.lazyParser.JavaDocReferenceHolderParser
 import com.intellij.java.syntax.element.lazyParser.JavaDocTypeParser
 import com.intellij.platform.syntax.SyntaxElementType
 import kotlin.jvm.JvmField
@@ -22,7 +23,7 @@ object JavaDocSyntaxElementType {
   @JvmField val DOC_SNIPPET_ATTRIBUTE_LIST: SyntaxElementType = SyntaxElementType("DOC_SNIPPET_ATTRIBUTE_LIST")
   @JvmField val DOC_SNIPPET_ATTRIBUTE_VALUE: SyntaxElementType = SyntaxElementType("DOC_SNIPPET_ATTRIBUTE_VALUE")
 
-  @JvmField val DOC_REFERENCE_HOLDER: SyntaxElementType = SyntaxElementType("DOC_REFERENCE_HOLDER")
+  @JvmField val DOC_REFERENCE_HOLDER: SyntaxElementType = SyntaxElementType("DOC_REFERENCE_HOLDER", lazyParser = JavaDocReferenceHolderParser())
 
   @JvmField val DOC_TYPE_HOLDER: SyntaxElementType = SyntaxElementType("DOC_TYPE_HOLDER", lazyParser = JavaDocTypeParser())
 
