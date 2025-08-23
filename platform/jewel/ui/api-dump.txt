@@ -3629,7 +3629,6 @@ f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Webreferences
 - sf:WebSocket:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - <init>():V
 f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Welcome
-- sf:CreateNewProject:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:CreateNewProjectTab:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:CreateNewProjectTabSelected:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:FromVCSTab:org.jetbrains.jewel.ui.icon.IntelliJIconKey

@@ -1371,7 +1371,6 @@ f:com.intellij.icons.AllIcons$Webreferences
 - sf:WebSocket:javax.swing.Icon
 - <init>():V
 f:com.intellij.icons.AllIcons$Welcome
-- sf:CreateNewProject:javax.swing.Icon
 - sf:CreateNewProjectTab:javax.swing.Icon
 - sf:CreateNewProjectTabSelected:javax.swing.Icon
 - sf:FromVCSTab:javax.swing.Icon

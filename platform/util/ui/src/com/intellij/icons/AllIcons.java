@@ -1496,12 +1496,6 @@ public class AllIcons {
       /** 10x10 */ public static final @NotNull Icon RemoveDisabledHover = load("welcome/recentProjects/removeDisabled-hover.svg", -1439591680, 2);
       /** 10x10 */ public static final @NotNull Icon RemoveDisabled = load("welcome/recentProjects/removeDisabled.svg", -760582353, 2);
     }
-
-    /** @deprecated to be removed */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval
-    public static final @NotNull Icon CreateNewProject = load("welcome/createNewProject.svg", 0, 0);
   }
 
   public static final class Windows {

@@ -1489,12 +1489,6 @@ public final class AllIconsKeys {
       /** 10x10 */ public static final @NotNull IntelliJIconKey RemoveDisabledHover = new IntelliJIconKey("welcome/recentProjects/removeDisabled-hover.svg", "welcome/recentProjects/removeDisabled-hover.svg", AllIconsKeys.class);
       /** 10x10 */ public static final @NotNull IntelliJIconKey RemoveDisabled = new IntelliJIconKey("welcome/recentProjects/removeDisabled.svg", "welcome/recentProjects/removeDisabled.svg", AllIconsKeys.class);
     }
-
-    /** @deprecated to be removed */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval
-    public static final @NotNull IntelliJIconKey CreateNewProject = new IntelliJIconKey("welcome/createNewProject.svg", "welcome/createNewProject.svg", AllIconsKeys.class);
   }
 
   public static final class Windows {
