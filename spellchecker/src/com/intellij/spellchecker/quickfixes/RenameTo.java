@@ -8,10 +8,9 @@ import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.PsiNamedElementWithCustomPresentation;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.spellchecker.SpellCheckerManager;
@@ -21,15 +20,26 @@ import com.intellij.spellchecker.util.SpellCheckerBundle;
 import icons.SpellcheckerIcons;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.ArrayList;
 import java.util.List;
 
 public class RenameTo extends PsiUpdateModCommandQuickFix implements Iconable, EventTrackingIntentionAction {
 
+  private final String typo;
+  private final TextRange range;
+  private final SmartPsiElementPointer<PsiElement> pointer;
   private final SpellcheckerRateTracker tracker;
+  private final List<String> suggestions = new ArrayList<>();
 
-  public RenameTo(SpellcheckerRateTracker tracker) { this.tracker = tracker; }
+  public RenameTo(String typo, TextRange range, PsiElement psi, SpellcheckerRateTracker tracker) {
+    this.typo = typo;
+    this.range = range;
+    this.pointer = SmartPointerManager.getInstance(psi.getProject()).createSmartPsiElementPointer(psi, psi.getContainingFile());
+    this.tracker = tracker;
+  }
 
   @Override
   public @NotNull String getFamilyName() {
@@ -38,17 +48,12 @@ public class RenameTo extends PsiUpdateModCommandQuickFix implements Iconable, E
 
   @Override
   protected void applyFix(@NotNull Project project, @NotNull PsiElement psiElement, @NotNull ModPsiUpdater updater) {
-    PsiNamedElement named = PsiTreeUtil.getNonStrictParentOfType(psiElement, PsiNamedElement.class);
-    if (named == null) return;
-    String name = named instanceof PsiNamedElementWithCustomPresentation custom ? custom.getPresentationName() : named.getName();
+    var name = getPresentationName(psiElement);
     if (name == null) return;
-    List<String> names = SpellCheckerManager.getInstance(project).getSuggestions(name)
-      .stream()
-      .filter(suggestion -> RenameUtil.isValidName(project, psiElement, suggestion))
-      .toList();
-    updater.rename(named, psiElement, names);
+    generateSuggestions(name.second, psiElement);
+    updater.rename(name.first, psiElement, suggestions);
     if (!IntentionPreviewUtils.isIntentionPreviewActive()) {
-      SpellcheckerActionStatistics.renameToPerformed(tracker, names.size());
+      SpellcheckerActionStatistics.renameToPerformed(tracker, suggestions.size());
     }
   }
 
@@ -66,5 +71,26 @@ public class RenameTo extends PsiUpdateModCommandQuickFix implements Iconable, E
   @Override
   public Icon getIcon(int flags) {
     return SpellcheckerIcons.Spellcheck;
+  }
+
+  @Nullable
+  private static Pair<PsiNamedElement, String> getPresentationName(PsiElement element) {
+    PsiNamedElement namedElement = PsiTreeUtil.getNonStrictParentOfType(element, PsiNamedElement.class);
+    if (namedElement == null) return null;
+    String name =
+      namedElement instanceof PsiNamedElementWithCustomPresentation custom ? custom.getPresentationName() : namedElement.getName();
+    if (name == null) return null;
+    return new Pair<>(namedElement, name);
+  }
+
+  private void generateSuggestions(String name, PsiElement element) {
+    if (suggestions.isEmpty()) {
+      TextRange range = this.range.shiftLeft(element.getText().indexOf(name));
+      SpellCheckerManager.getInstance(pointer.getProject()).getSuggestions(typo)
+        .stream()
+        .map(suggestion -> range.replace(name, suggestion))
+        .filter(suggestion -> RenameUtil.isValidName(element.getProject(), element, suggestion))
+        .forEach(suggestions::add);
+    }
   }
 }

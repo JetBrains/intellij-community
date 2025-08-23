@@ -35,7 +35,7 @@ public interface NameSuggestionProvider {
       SuggestedNameInfo info = provider.getSuggestedNames(psiElement, nameSuggestionContext, result);
       if (info != null) {
         resultInfo = info;
-        if (provider instanceof PreferrableNameSuggestionProvider && !((PreferrableNameSuggestionProvider)provider).shouldCheckOthers()) {
+        if (provider instanceof PreferrableNameSuggestionProvider preferableProvider && !preferableProvider.shouldCheckOthers()) {
           break;
         }
       }

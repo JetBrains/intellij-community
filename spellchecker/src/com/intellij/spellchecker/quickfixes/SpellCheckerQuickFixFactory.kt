@@ -19,8 +19,8 @@ abstract class SpellCheckerQuickFixFactory {
 
     @JvmStatic
     @JvmOverloads
-    fun rename(element: PsiElement, tracker: SpellcheckerRateTracker? = null): LocalQuickFix {
-      return EP_NAME.extensionList.firstNotNullOfOrNull { it.createRename(element) } ?: RenameTo(tracker)
+    fun rename(typo: String, range: TextRange, element: PsiElement, tracker: SpellcheckerRateTracker? = null): LocalQuickFix {
+      return EP_NAME.extensionList.firstNotNullOfOrNull { it.createRename(element) } ?: RenameTo(typo, range, element, tracker)
     }
 
     @JvmStatic

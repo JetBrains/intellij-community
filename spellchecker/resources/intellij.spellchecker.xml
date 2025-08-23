@@ -34,7 +34,7 @@
                      language=""
                      implementationClass="com.intellij.spellchecker.inspections.SpellCheckingInspection"/>
 
-    <nameSuggestionProvider id="DictionarySuggestionProvider" implementation="com.intellij.spellchecker.quickfixes.DictionarySuggestionProvider" order="first"/>
+    <nameSuggestionProvider id="SpellcheckingSuggestionProvider" implementation="com.intellij.spellchecker.quickfixes.SpellcheckingNameSuggestionProvider" order="first"/>
     <severitiesProvider implementation="com.intellij.spellchecker.SpellCheckerSeveritiesProvider"/>
 
     <spellchecker.support language="TEXT" implementationClass="com.intellij.spellchecker.tokenizer.VmOptionsSpellcheckingStrategy"/>

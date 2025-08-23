@@ -159,7 +159,7 @@ public class SpellcheckingStrategy implements PossiblyDumbAware {
     SpellcheckerRateTracker tracker = new SpellcheckerRateTracker(element);
 
     if (useRename && PsiTreeUtil.getNonStrictParentOfType(element, PsiNamedElement.class) != null) {
-      result.add(SpellCheckerQuickFixFactory.rename(element, tracker));
+      result.add(SpellCheckerQuickFixFactory.rename(typo, range, element, tracker));
     } else {
       List<LocalQuickFix> fixes = SpellCheckerQuickFixFactory.changeToVariants(element, range, typo, tracker);
       result.addAll(fixes);

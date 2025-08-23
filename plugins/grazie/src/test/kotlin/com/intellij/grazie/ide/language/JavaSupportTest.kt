@@ -116,6 +116,26 @@ class JavaSupportTest : GrazieTestBase() {
     )
   }
 
+  fun `test meaningful suggestions in RenameTo action`() {
+    myFixture.configureByText("a.java", """
+      class A {
+        void foo() {
+          int <TYPO descr="Typo: In word 'tagret'">tag<caret>ret</TYPO>Dir = 1;
+        }
+      }
+    """)
+    myFixture.checkHighlighting()
+    val intention = myFixture.findSingleIntention("Typo: Rename to…")
+    myFixture.launchAction(intention)
+    myFixture.checkResult("""
+      class A {
+        void foo() {
+          int targetDir = 1;
+        }
+      }
+    """)
+  }
+
   private fun doTest(beforeText: String, afterText: String, hint: String) {
     myFixture.configureByText("a.java", beforeText)
     val intentionAction = myFixture.findSingleIntention(hint)
