@@ -271,6 +271,9 @@ c:com.intellij.openapi.editor.markup.TextAttributes
 - *sf:Companion:com.intellij.openapi.fileEditor.FileDocumentManagerListenerBackgroundable$Companion
 - sf:TOPIC:com.intellij.util.messages.Topic
 *f:com.intellij.openapi.fileEditor.FileDocumentManagerListenerBackgroundable$Companion
+com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile
+- com.intellij.openapi.fileTypes.FileType
+- *:isAvailableForOverride():Z
 *:com.intellij.openapi.module.LoadedModuleDescription
 - com.intellij.openapi.module.ModuleDescription
 - a:getModule():com.intellij.openapi.module.Module

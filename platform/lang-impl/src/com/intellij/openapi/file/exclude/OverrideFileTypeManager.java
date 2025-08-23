@@ -2,7 +2,10 @@
 package com.intellij.openapi.file.exclude;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.RoamingType;
+import com.intellij.openapi.components.SettingsCategory;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.ex.FakeFileType;
 import com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile;
@@ -13,7 +16,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Storage for file types user selected in "Override File Type" action
+ * Storage for file types user selected in the "Override File Type" action.
  */
 @State(name = "OverrideFileTypeManager",
   category = SettingsCategory.TOOLS,
@@ -39,7 +42,7 @@ public final class OverrideFileTypeManager extends PersistentFileSetManager {
   @ApiStatus.Internal
   @Override
   public boolean addFile(@NotNull VirtualFile file, @NotNull FileType type) {
-    if (!isOverridable(file.getFileType()) || !isOverridable(type) || !(file instanceof VirtualFileWithId)) {
+    if (!isOverridable(file.getFileType()) || !isAvailableForOverride(type) || !(file instanceof VirtualFileWithId)) {
       //@formatter:off
       throw new IllegalArgumentException("Cannot override filetype for file " + file + " from " + file.getFileType() + " to " + type + " because the " + (isOverridable(type) ? "former" : "latter") + " is not overridable");
     }
@@ -64,9 +67,21 @@ public final class OverrideFileTypeManager extends PersistentFileSetManager {
     if (type instanceof DirectoryFileType) return false;
     if (type instanceof UnknownFileType) return false;
     if (type instanceof FakeFileType) return false;
-    // FileTypeIdentifiableByVirtualFile has hard-coded isMyFileType() which we can't change, so we shouldn't override this,
+    // FileTypeIdentifiableByVirtualFile may have hard-coded isMyFileType() which we can't change, so we shouldn't override this,
     // or we will risk creating an inconsistency otherwise (see com.intellij.openapi.fileTypes.impl.FileTypesUltimateTest.testFileTypesIdentifiableByFileHaveConsistentIsMyFile)
     if (type instanceof FileTypeIdentifiableByVirtualFile) return false;
+    return true;
+  }
+
+  /**
+   * @return {@code true} if the specified file type can be used to override another file type via the "Override File Type" action.
+   */
+  static boolean isAvailableForOverride(@NotNull FileType type) {
+    if (type instanceof InternalFileType) return false;
+    if (type instanceof DirectoryFileType) return false;
+    if (type instanceof UnknownFileType) return false;
+    if (type instanceof FakeFileType) return false;
+    if (type instanceof FileTypeIdentifiableByVirtualFile ftByFile) return ftByFile.isAvailableForOverride();
     return true;
   }
 }
