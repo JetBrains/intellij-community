@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.renderer.render
 
 internal class RenameClassToContainingFileNameIntention : SelfTargetingRangeIntention<KtClassOrObject>(
-    KtClassOrObject::class.java, KotlinBundle.lazyMessage("rename.class.to.containing.file.name")
+    KtClassOrObject::class.java, KotlinBundle.messagePointer("rename.class.to.containing.file.name")
 ) {
     override fun startInWriteAction() = false
 
@@ -27,7 +27,7 @@ internal class RenameClassToContainingFileNameIntention : SelfTargetingRangeInte
             || Name.identifier(fileName).render() != fileName
             || element.containingKtFile.declarations.any { it is KtClassOrObject && it.name == fileName }
         ) return null
-        setTextGetter(KotlinBundle.lazyMessage("rename.class.to.0", fileName))
+        setTextGetter(KotlinBundle.messagePointer("rename.class.to.0", fileName))
         return element.nameIdentifier?.textRange
     }
 

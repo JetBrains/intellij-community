@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.types.TypeUtils
 
 class ConvertUnsafeCastToUnsafeCastCallIntention : SelfTargetingIntention<KtBinaryExpressionWithTypeRHS>(
     KtBinaryExpressionWithTypeRHS::class.java,
-    KotlinBundle.lazyMessage("convert.to.unsafecast.call"),
+    KotlinBundle.messagePointer("convert.to.unsafecast.call"),
 ) {
     override fun isApplicableTo(element: KtBinaryExpressionWithTypeRHS, caretOffset: Int): Boolean {
         if (!element.platform.isJs()) return false
@@ -30,7 +30,7 @@ class ConvertUnsafeCastToUnsafeCastCallIntention : SelfTargetingIntention<KtBina
         val type = context[BindingContext.TYPE, right] ?: return false
         if (TypeUtils.isNullableType(type)) return false
 
-        setTextGetter(KotlinBundle.lazyMessage("convert.to.0.unsafecast.1", element.left.text, right.text))
+        setTextGetter(KotlinBundle.messagePointer("convert.to.0.unsafecast.1", element.left.text, right.text))
         return true
     }
 

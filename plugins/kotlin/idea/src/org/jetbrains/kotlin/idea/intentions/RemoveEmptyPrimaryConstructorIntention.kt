@@ -17,9 +17,8 @@ class RemoveEmptyPrimaryConstructorInspection : IntentionBasedInspection<KtPrima
 
 class RemoveEmptyPrimaryConstructorIntention : SelfTargetingOffsetIndependentIntention<KtPrimaryConstructor>(
     KtPrimaryConstructor::class.java,
-    KotlinBundle.lazyMessage("remove.empty.primary.constructor")
+    KotlinBundle.messagePointer("remove.empty.primary.constructor")
 ) {
-
     override fun applyTo(element: KtPrimaryConstructor, editor: Editor?) {
         element.delete()
     }

@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 internal class InsertCurlyBracesToTemplateIntention : SelfTargetingOffsetIndependentIntention<KtSimpleNameStringTemplateEntry>(
-  KtSimpleNameStringTemplateEntry::class.java, KotlinBundle.lazyMessage("insert.curly.braces.around.variable")
+  KtSimpleNameStringTemplateEntry::class.java, KotlinBundle.messagePointer("insert.curly.braces.around.variable")
 ), LowPriorityAction {
 
     override fun isApplicableTo(element: KtSimpleNameStringTemplateEntry): Boolean = true

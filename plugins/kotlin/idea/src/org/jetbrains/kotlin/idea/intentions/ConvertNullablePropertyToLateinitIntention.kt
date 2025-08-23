@@ -24,7 +24,7 @@ import org.jetbrains.kotlin.types.TypeUtils
 import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
 
 class ConvertNullablePropertyToLateinitIntention : SelfTargetingIntention<KtProperty>(
-    KtProperty::class.java, KotlinBundle.lazyMessage("convert.to.lateinit.var")
+    KtProperty::class.java, KotlinBundle.messagePointer("convert.to.lateinit.var")
 ) {
     override fun isApplicableTo(element: KtProperty, caretOffset: Int): Boolean {
         if (element.hasModifier(KtTokens.LATEINIT_KEYWORD) || element.hasModifier(KtTokens.ABSTRACT_KEYWORD)) return false

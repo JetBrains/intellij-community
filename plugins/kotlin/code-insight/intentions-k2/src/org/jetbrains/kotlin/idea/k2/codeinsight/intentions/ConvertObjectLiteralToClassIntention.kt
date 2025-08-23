@@ -42,7 +42,7 @@ import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 
 internal class ConvertObjectLiteralToClassIntention : SelfTargetingRangeIntention<KtObjectLiteralExpression>(
     KtObjectLiteralExpression::class.java,
-    KotlinBundle.lazyMessage("convert.object.literal.to.class")
+    KotlinBundle.messagePointer("convert.object.literal.to.class")
 ) {
     override fun applicabilityRange(element: KtObjectLiteralExpression): TextRange? = element.objectDeclaration.getObjectKeyword()?.textRange
 

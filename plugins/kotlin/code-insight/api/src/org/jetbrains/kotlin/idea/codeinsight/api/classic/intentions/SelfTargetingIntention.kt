@@ -15,7 +15,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.IntentionBasedInspection
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.CREATE_BY_PATTERN_MAY_NOT_REFORMAT
@@ -23,31 +22,49 @@ import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.containsInside
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
+import java.util.function.Supplier
 
 @Suppress("EqualsOrHashCode")
 abstract class SelfTargetingIntention<TElement : PsiElement>(
     val elementType: Class<TElement>,
     @FileModifier.SafeFieldForPreview // should not depend on the file and affect fix behavior
-    private var textGetter: () -> @IntentionName String,
+    private var textGetter: Supplier<@IntentionName String>,
     @FileModifier.SafeFieldForPreview // should not depend on the file and affect fix behavior
-    private var familyNameGetter: () -> @IntentionFamilyName String = textGetter,
+    private var familyNameGetter: Supplier<@IntentionFamilyName String> = textGetter,
 ) : IntentionAction {
 
-    protected val defaultText: @IntentionName String get() = defaultTextGetter()
+    protected val defaultText: @IntentionName String get() = defaultTextGetter.get()
     @FileModifier.SafeFieldForPreview // should not depend on the file and affect fix behavior
-    protected val defaultTextGetter: () -> @IntentionName String = textGetter
+    protected val defaultTextGetter: Supplier<@IntentionName String> = textGetter
 
+    @Deprecated("Replace with primary constructor")
+    @Suppress("HardCodedStringLiteral")
+    constructor(
+        elementType: Class<TElement>,
+        textGetter: () -> @IntentionName String,
+        familyNameGetter: () -> @IntentionFamilyName String = textGetter,
+        ) : this(elementType, Supplier { textGetter() }, Supplier { familyNameGetter() }) {
+    }
+
+    @Deprecated("Replace with the overloaded method")
+    @Suppress("HardCodedStringLiteral")
     protected fun setTextGetter(textGetter: () -> @IntentionName String) {
+        this.textGetter = Supplier { textGetter() }
+    }
+
+    protected fun setTextGetter(textGetter: Supplier<@IntentionName String>) {
         this.textGetter = textGetter
     }
 
-    final override fun getText(): @IntentionName String = textGetter()
+    @Suppress("HardCodedStringLiteral")
+    final override fun getText(): @IntentionName String = textGetter.get()
 
     // Not final because `KotlinApplicableIntentionBase` redefines `getFamilyName` as an abstract function and disregards
     // `familyNameGetter`.
-    override fun getFamilyName(): @IntentionFamilyName String = familyNameGetter()
+    @Suppress("HardCodedStringLiteral")
+    override fun getFamilyName(): @IntentionFamilyName String = familyNameGetter.get()
 
-    protected fun setFamilyNameGetter(@Nls familyNameGetter: () -> String) {
+    protected fun setFamilyNameGetter(familyNameGetter: Supplier<@IntentionFamilyName String>) {
         this.familyNameGetter = familyNameGetter
     }
 

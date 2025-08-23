@@ -14,12 +14,12 @@
   <resource-bundle>messages.KotlinBundle</resource-bundle>
 
   <actions>
-    <action id="Kotlin.RunScratch" class="org.jetbrains.kotlin.idea.jvm.k2.scratch.RunScratchActionK2">
+    <action id="Kotlin.RunScratch" class="org.jetbrains.kotlin.idea.jvm.k2.scratch.RunScratchActionK2" icon="AllIcons.Actions.Execute">
       <keyboard-shortcut first-keystroke="control alt W" keymap="$default"/>
       <add-to-group group-id="RunContextPopupGroup" anchor="last"/>
     </action>
-    <action id="Kotlin.ClearScratch" class="org.jetbrains.kotlin.idea.jvm.shared.scratch.actions.ClearScratchAction"/>
-    <action id="Kotlin.StopScratch" class="org.jetbrains.kotlin.idea.jvm.shared.scratch.actions.StopScratchAction"/>
+    <action id="Kotlin.ClearScratch" class="org.jetbrains.kotlin.idea.jvm.shared.scratch.actions.ClearScratchAction" icon="AllIcons.Actions.GC"/>
+    <action id="Kotlin.StopScratch" class="org.jetbrains.kotlin.idea.jvm.shared.scratch.actions.StopScratchAction" icon="AllIcons.Actions.Suspend"/>
   </actions>
 
 </idea-plugin>

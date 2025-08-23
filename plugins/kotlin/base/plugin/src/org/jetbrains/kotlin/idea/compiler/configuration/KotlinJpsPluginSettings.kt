@@ -290,7 +290,7 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
 
         private fun downloadKotlinJpsInBackground(project: Project, version: String) {
             ProgressManager.getInstance().run(
-                object : Task.Backgroundable(project, KotlinBasePluginBundle.getMessage("progress.text.downloading.kotlinc.dist"), true) {
+                object : Task.Backgroundable(project, KotlinBasePluginBundle.message("progress.text.downloading.kotlinc.dist"), true) {
                     override fun isHeadless(): Boolean {
                         return false
                     }

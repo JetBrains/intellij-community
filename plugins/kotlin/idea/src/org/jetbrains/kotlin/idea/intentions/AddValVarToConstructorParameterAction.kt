@@ -53,7 +53,7 @@ interface AddValVarToConstructorParameterAction {
 
     class Intention : SelfTargetingRangeIntention<KtParameter>(
         KtParameter::class.java,
-        KotlinBundle.lazyMessage("add.val.var.to.primary.constructor.parameter")
+        KotlinBundle.messagePointer("add.val.var.to.primary.constructor.parameter")
     ), AddValVarToConstructorParameterAction {
         override fun applicabilityRange(element: KtParameter): TextRange? {
             if (!canInvoke(element)) return null
@@ -62,7 +62,7 @@ interface AddValVarToConstructorParameterAction {
                 // this case is handled by a separate quickfix below
                 return null
             }
-            setTextGetter(KotlinBundle.lazyMessage("add.val.var.to.parameter.0", element.name ?: ""))
+            setTextGetter(KotlinBundle.messagePointer("add.val.var.to.parameter.0", element.name ?: ""))
             return element.nameIdentifier?.textRange
         }
 

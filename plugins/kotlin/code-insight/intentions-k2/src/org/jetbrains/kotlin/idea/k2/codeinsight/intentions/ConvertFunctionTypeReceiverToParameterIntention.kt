@@ -46,7 +46,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getOrCreateParameterList
 import org.jetbrains.kotlin.psi.typeRefHelpers.setReceiverTypeReference
 
 class ConvertFunctionTypeReceiverToParameterIntention : SelfTargetingRangeIntention<KtTypeReference>(
-    KtTypeReference::class.java, KotlinBundle.lazyMessage("convert.function.type.receiver.to.parameter")
+    KtTypeReference::class.java, KotlinBundle.messagePointer("convert.function.type.receiver.to.parameter")
 ) {
 
     override fun startInWriteAction(): Boolean = false
@@ -64,7 +64,7 @@ class ConvertFunctionTypeReceiverToParameterIntention : SelfTargetingRangeIntent
             setReceiverTypeReference(null)
         }
 
-        setTextGetter(KotlinBundle.lazyMessage("convert.0.to.1", functionType.text, elementAfter.text))
+        setTextGetter(KotlinBundle.messagePointer("convert.0.to.1", functionType.text, elementAfter.text))
         return element.textRange
     }
 

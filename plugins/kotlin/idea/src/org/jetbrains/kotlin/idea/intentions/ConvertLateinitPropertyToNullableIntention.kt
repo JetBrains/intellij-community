@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.typeUtil.makeNullable
 
 class ConvertLateinitPropertyToNullableIntention : SelfTargetingIntention<KtProperty>(
-    KtProperty::class.java, KotlinBundle.lazyMessage("convert.to.nullable.var")
+    KtProperty::class.java, KotlinBundle.messagePointer("convert.to.nullable.var")
 ) {
     override fun isApplicableTo(element: KtProperty, caretOffset: Int): Boolean = element.hasModifier(KtTokens.LATEINIT_KEYWORD)
             && element.isVar

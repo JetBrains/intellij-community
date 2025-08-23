@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.LOG as log
 
 class RunScratchAction : ScratchAction(
-    KotlinJvmBundle.getLazyMessage("scratch.run.button"), AllIcons.Actions.Execute
+    KotlinJvmBundle.messagePointer("scratch.run.button"), AllIcons.Actions.Execute
 ) {
     init {
         KeymapManager.getInstance().activeKeymap.getShortcuts("Kotlin.RunScratch").firstOrNull()?.let {

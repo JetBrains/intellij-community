@@ -27,9 +27,9 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 class ReplaceUnderscoreWithParameterNameIntention : SelfTargetingOffsetIndependentIntention<KtCallableDeclaration>(
     KtCallableDeclaration::class.java,
-    KotlinBundle.lazyMessage("replace.with.parameter.name")
+    KotlinBundle.messagePointer("replace.with.parameter.name")
 ) {
-    override fun isApplicableTo(element: KtCallableDeclaration) =
+    override fun isApplicableTo(element: KtCallableDeclaration): Boolean =
         element.name == "_" && (element is KtDestructuringDeclarationEntry || element is KtParameter)
 
     override fun applyTo(element: KtCallableDeclaration, editor: Editor?) {

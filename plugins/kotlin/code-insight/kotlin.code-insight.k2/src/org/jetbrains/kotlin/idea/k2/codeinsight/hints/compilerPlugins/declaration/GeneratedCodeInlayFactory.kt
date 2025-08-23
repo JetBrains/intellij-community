@@ -118,7 +118,7 @@ private fun InlayPresentation.withContextMenu(): InlayPresentation {
     return MenuOnClickPresentation(this, factory.project) {
         getDefaultInlayHintsProviderPopupActions(
             KtCompilerPluginGeneratedDeclarationsInlayHintsProviderSettings.KEY,
-            KotlinBundle.lazyMessage("hints.settings.compiler.plugins.declarations")
+            KotlinBundle.messagePointer("hints.settings.compiler.plugins.declarations")
         )
     }
 }

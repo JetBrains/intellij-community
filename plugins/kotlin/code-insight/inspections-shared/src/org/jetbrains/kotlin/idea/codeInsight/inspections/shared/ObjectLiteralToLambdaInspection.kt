@@ -70,8 +70,8 @@ internal class ObjectLiteralToLambdaInspection : IntentionBasedInspection<KtObje
 
 class ObjectLiteralToLambdaIntention : SelfTargetingRangeIntention<KtObjectLiteralExpression>(
     KtObjectLiteralExpression::class.java,
-    KotlinBundle.lazyMessage("convert.to.lambda"),
-    KotlinBundle.lazyMessage("convert.object.literal.to.lambda")
+    KotlinBundle.messagePointer("convert.to.lambda"),
+    KotlinBundle.messagePointer("convert.object.literal.to.lambda")
 ) {
     @OptIn(KaAllowAnalysisOnEdt::class, KaAllowAnalysisFromWriteAction::class)
     override fun applicabilityRange(element: KtObjectLiteralExpression): TextRange? {

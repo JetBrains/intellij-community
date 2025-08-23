@@ -9,8 +9,8 @@ import org.jetbrains.kotlin.idea.jvm.shared.KotlinJvmBundle
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.actions.ScratchAction
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.actions.ScratchCompilationSupport
 
-class RunScratchActionK2 : ScratchAction(
-  KotlinJvmBundle.getLazyMessage("scratch.run.button"), AllIcons.Actions.Execute
+internal class RunScratchActionK2 : ScratchAction(
+  KotlinJvmBundle.messagePointer("scratch.run.button"), AllIcons.Actions.Execute
 ) {
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return

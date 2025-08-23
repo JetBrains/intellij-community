@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.psi.KtReferenceExpression
 
 class HighlightReceiverUsagesIntention : SelfTargetingOffsetIndependentIntention<KtElement>(
     KtElement::class.java,
-    KotlinBundle.lazyMessage("highlight.usages.of.receiver")
+    KotlinBundle.messagePointer("highlight.usages.of.receiver")
 ), LowPriorityAction {
     override fun isApplicableTo(element: KtElement): Boolean =
         findReceiverInfo(element) != null

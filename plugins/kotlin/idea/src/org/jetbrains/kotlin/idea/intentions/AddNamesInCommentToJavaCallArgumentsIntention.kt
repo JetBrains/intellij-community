@@ -28,7 +28,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class AddNamesInCommentToJavaCallArgumentsIntention : SelfTargetingIntention<KtCallElement>(
     KtCallElement::class.java,
-    KotlinBundle.lazyMessage("add.names.in.comment.to.call.arguments")
+    KotlinBundle.messagePointer("add.names.in.comment.to.call.arguments")
 ) {
     override fun isApplicableTo(element: KtCallElement, caretOffset: Int): Boolean =
         Holder.resolveValueParameterDescriptors(element, canAddNameComments = true) != null

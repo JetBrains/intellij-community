@@ -14,13 +14,13 @@ import org.jetbrains.kotlin.psi.KtClassOrObject
 
 internal class RenameFileToMatchClassIntention : SelfTargetingRangeIntention<KtClassOrObject>(
     KtClassOrObject::class.java,
-    KotlinBundle.lazyMessage("rename.file.to.match.top.level.class.name")
+    KotlinBundle.messagePointer("rename.file.to.match.top.level.class.name")
 ) {
     override fun applicabilityRange(element: KtClassOrObject): TextRange? {
         if (!element.isTopLevel()) return null
         val fileName = element.containingKtFile.name
         if (FileUtil.getNameWithoutExtension(fileName) == element.name) return null
-        setTextGetter(KotlinBundle.lazyMessage("rename.file.to.0.1", element.name.toString(), FileUtilRt.getExtension(fileName)))
+        setTextGetter(KotlinBundle.messagePointer("rename.file.to.0.1", element.name.toString(), FileUtilRt.getExtension(fileName)))
         return element.nameIdentifier?.textRange
     }
 

@@ -2,8 +2,12 @@
 
 package org.jetbrains.kotlin.idea.intentions
 
+import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.editor.Editor
-import org.jetbrains.kotlin.builtins.*
+import org.jetbrains.kotlin.builtins.getReceiverTypeFromFunctionType
+import org.jetbrains.kotlin.builtins.isExtensionFunctionType
+import org.jetbrains.kotlin.builtins.isFunctionType
+import org.jetbrains.kotlin.builtins.isSuspendFunctionType
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.descriptors.*
@@ -61,14 +65,15 @@ import org.jetbrains.kotlin.types.isDynamic
 import org.jetbrains.kotlin.types.isError
 import org.jetbrains.kotlin.types.typeUtil.isTypeParameter
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
+import java.util.function.Supplier
 
 @Suppress("DEPRECATION")
 class ConvertLambdaToReferenceInspection : IntentionBasedInspection<KtLambdaExpression>(
     ConvertLambdaToReferenceIntention::class,
-    problemText = KotlinBundle.message("convert.lambda.to.reference.before.text")
+    problemText = KotlinBundle.message("convert.lambda.to.reference.before.text") // todo message pointer
 )
 
-open class ConvertLambdaToReferenceIntention(textGetter: () -> String) : SelfTargetingOffsetIndependentIntention<KtLambdaExpression>(
+internal open class ConvertLambdaToReferenceIntention(textGetter: Supplier<@IntentionName String>) : SelfTargetingOffsetIndependentIntention<KtLambdaExpression>(
     KtLambdaExpression::class.java,
     textGetter
 ) {

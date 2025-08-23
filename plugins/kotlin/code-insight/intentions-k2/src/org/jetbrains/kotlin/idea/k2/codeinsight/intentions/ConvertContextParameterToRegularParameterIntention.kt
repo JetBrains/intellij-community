@@ -34,7 +34,7 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
 
 class ConvertContextParameterToRegularParameterIntention : SelfTargetingIntention<KtParameter>(
-    KtParameter::class.java, KotlinBundle.lazyMessage("convert.context.parameter.to.regular.parameter")
+    KtParameter::class.java, KotlinBundle.messagePointer("convert.context.parameter.to.regular.parameter")
 ), LowPriorityAction {
     override fun startInWriteAction(): Boolean = false
 

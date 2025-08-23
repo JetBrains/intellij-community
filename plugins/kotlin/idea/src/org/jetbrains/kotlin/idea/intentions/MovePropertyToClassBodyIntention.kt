@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 class MovePropertyToClassBodyIntention : SelfTargetingIntention<KtParameter>(
     KtParameter::class.java,
-    KotlinBundle.lazyMessage("move.to.class.body")
+    KotlinBundle.messagePointer("move.to.class.body")
 ) {
     override fun isApplicableTo(element: KtParameter, caretOffset: Int): Boolean {
         if (!element.isPropertyParameter()) return false

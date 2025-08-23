@@ -29,7 +29,7 @@ class ConvertToStringTemplateInspection : IntentionBasedInspection<KtBinaryExpre
 
 open class ConvertToStringTemplateIntention : SelfTargetingOffsetIndependentIntention<KtBinaryExpression>(
     KtBinaryExpression::class.java,
-    KotlinBundle.lazyMessage("convert.concatenation.to.template")
+    KotlinBundle.messagePointer("convert.concatenation.to.template")
 ) {
     override fun isApplicableTo(element: KtBinaryExpression): Boolean {
         if (!isApplicableToNoParentCheck(element)) return false

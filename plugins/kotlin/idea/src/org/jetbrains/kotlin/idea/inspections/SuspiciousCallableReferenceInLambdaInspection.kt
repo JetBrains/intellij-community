@@ -105,8 +105,8 @@ class SuspiciousCallableReferenceInLambdaInspection : AbstractKotlinInspection()
         return functionParameterType == lambdaParameterType
     }
 
-    class MoveIntoParenthesesIntention : ConvertLambdaToReferenceIntention(
-        KotlinBundle.lazyMessage("move.reference.into.parentheses")
+    internal class MoveIntoParenthesesIntention : ConvertLambdaToReferenceIntention(
+        KotlinBundle.messagePointer("move.reference.into.parentheses")
     ) {
         override fun buildReferenceText(lambdaExpression: KtLambdaExpression): String? {
             val callableReferenceExpression =
