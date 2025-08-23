@@ -188,10 +188,13 @@ class KmpSyntaxNode internal constructor(
       }
     }
 
-    isChameleon() && !isCopyOfParent() -> (chameleonSyntaxNode?.firstChild() as KmpSyntaxNode?)
-      ?.copy(parent = this)
+    isChameleon() && !isCopyOfParent() -> {
+      (chameleonSyntaxNode?.firstChild() as KmpSyntaxNode?)?.copy(parent = this)
+    }
 
-    else -> null
+    else -> {
+      null
+    }
   }
 
   private fun isCopyOfParent(): Boolean =
