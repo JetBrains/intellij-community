@@ -69,3 +69,14 @@ class SpringMavenKotlinCompilerPluginProjectConfigurator(coroutineScope: Corouti
     override val compilerId: String = "kotlin-spring"
 
 }
+
+class JpaMavenKotlinCompilerPluginProjectConfigurator(coroutineScope: CoroutineScope): AbstractMavenKotlinCompilerPluginProjectConfigurator(coroutineScope) {
+    override val kotlinPluginName: String
+        get() = "jpa"
+
+    override val pluginDependencyMavenId: MavenId
+        get() = MavenId(GROUP_ID, "kotlin-maven-noarg", $$"${$$KOTLIN_VERSION_PROPERTY}")
+
+    override val compilerId: String = "kotlin-jpa"
+
+}

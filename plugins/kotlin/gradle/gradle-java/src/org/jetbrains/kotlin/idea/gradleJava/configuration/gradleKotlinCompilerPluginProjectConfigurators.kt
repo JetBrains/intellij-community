@@ -106,3 +106,14 @@ class SpringGradleKotlinCompilerPluginProjectConfigurator(coroutineScope: Corout
     override val compilerId: String = "kotlin-spring"
 
 }
+
+class JpaGradleKotlinCompilerPluginProjectConfigurator(coroutineScope: CoroutineScope): AbstractGradleKotlinCompilerPluginProjectConfigurator(coroutineScope) {
+    override val kotlinPluginName: String
+        get() = "kotlin.jpa"
+
+    override fun getKotlinPluginExpression(forKotlinDsl: Boolean): String =
+        if (forKotlinDsl) "kotlin(\"plugin.jpa\")" else "id \"org.jetbrains.kotlin.plugin.jpa\""
+
+    override val compilerId: String = "kotlin-jpa"
+
+}
