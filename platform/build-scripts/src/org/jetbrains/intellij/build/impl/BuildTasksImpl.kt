@@ -36,6 +36,7 @@ import org.jetbrains.intellij.build.LocalDistFileContent
 import org.jetbrains.intellij.build.MacLibcImpl
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.SoftwareBillOfMaterials
+import org.jetbrains.intellij.build.VmProperties
 import org.jetbrains.intellij.build.WindowsLibcImpl
 import org.jetbrains.intellij.build.buildSearchableOptions
 import org.jetbrains.intellij.build.executeStep
@@ -380,8 +381,12 @@ internal suspend fun createDistributionState(context: BuildContext): Distributio
     val builtinModuleData = spanBuilder("build provided module list").use {
       Files.deleteIfExists(providedModuleFile)
       // start the product in headless mode using com.intellij.ide.plugins.BundledPluginsLister
-      // it's necessary to use the dev build to get correct paths in 'layout' data 
-      context.createProductRunner(forceUseDevBuild = true).runProduct(listOf("listBundledPlugins", providedModuleFile.toString()))
+      // it's necessary to use the dev build to get correct paths in 'layout' data
+
+      context.createProductRunner(forceUseDevBuild = true).runProduct(
+        listOf("listBundledPlugins", providedModuleFile.toString()),
+        additionalVmProperties = additionalProperties()
+      )
 
       context.productProperties.customizeBuiltinModules(context = context, builtinModulesFile = providedModuleFile)
       try {
@@ -410,6 +415,15 @@ internal suspend fun createDistributionState(context: BuildContext): Distributio
     }
   }
 }
+
+/**
+ JDK17 falls back to `?` which is normal dir name. But JDK21 falls back to the `$HOME` which is `/` making all paths absolute causing permission
+ problems. The script we start have a proper home directory passed via property, but it is not implicitly passed to the subprocesses, so we need to
+ do this explicitly.
+
+ @see https://youtrack.jetbrains.com/issue/IJPL-203604
+**/
+internal fun additionalProperties(): VmProperties = VmProperties(mapOf("user.home" to System.getProperty("user.home")))
 
 private suspend fun distributionState(
   pluginsToPublish: Set<PluginLayout>,
@@ -1070,7 +1084,9 @@ internal suspend fun buildAdditionalAuthoringArtifacts(productRunner: IntellijPr
     for (command in commands) {
       launch(CoroutineName("build ${command.first}")) {
         val targetPath = temporaryBuildDirectory.resolve(command.first).resolve(command.second)
-        productRunner.runProduct(args = listOf(command.first, targetPath.toString()), timeout = DEFAULT_TIMEOUT)
+        productRunner.runProduct(args = listOf(command.first, targetPath.toString()),
+                                 additionalVmProperties = additionalProperties(),
+                                 timeout = DEFAULT_TIMEOUT)
 
         val targetFile = context.paths.artifactDir.resolve("${command.second}.zip")
         zipWithCompression(
