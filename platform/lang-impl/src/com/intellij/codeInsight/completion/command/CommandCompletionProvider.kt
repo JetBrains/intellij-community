@@ -12,9 +12,11 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.codeInsight.lookup.LookupElementWeigher
 import com.intellij.icons.AllIcons.Actions.IntentionBulbGrey
 import com.intellij.icons.AllIcons.Actions.Lightning
+import com.intellij.idea.AppMode
 import com.intellij.injected.editor.DocumentWindow
 import com.intellij.injected.editor.EditorWindow
 import com.intellij.lang.injection.InjectedLanguageManager
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.*
@@ -23,6 +25,7 @@ import com.intellij.openapi.editor.impl.ImaginaryEditor
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.patterns.PatternCondition
 import com.intellij.patterns.StandardPatterns
@@ -57,6 +60,8 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
     context: ProcessingContext,
     resultSet: CompletionResultSet,
   ) {
+    if (!AppMode.isRemoteDevHost() && AppMode.isHeadless() &&
+        !(ApplicationManager.getApplication().isUnitTestMode() && Registry.`is`("ide.completion.command.force.enabled", false))) return
     if (!ApplicationCommandCompletionService.getInstance().commandCompletionEnabled()) return
     if (parameters.completionType != CompletionType.BASIC) return
     if (parameters.position is PsiComment) return

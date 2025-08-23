@@ -6,6 +6,7 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.PlatformUtils
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 
 
 /**
@@ -31,6 +32,10 @@ internal class ApplicationCommandCompletionService : PersistentStateComponent<Ap
   fun commandCompletionEnabled(): Boolean {
     return myState.isEnabled()
   }
+
+  fun useGroupEnabled(): Boolean {
+    return myState.useGroup
+  }
 }
 
 @ApiStatus.Internal
@@ -44,12 +49,23 @@ class CommandCompletionSettingsService {
   fun commandCompletionEnabled(): Boolean {
     return ApplicationCommandCompletionService.getInstance().commandCompletionEnabled()
   }
+
+  fun groupEnabled(): Boolean {
+    return ApplicationCommandCompletionService.getInstance().useGroupEnabled()
+  }
+
+  @TestOnly
+  fun groupEnabled(enabled: Boolean) {
+    val service = ApplicationCommandCompletionService.getInstance()
+    service.state.useGroup = enabled
+  }
 }
 
 @ApiStatus.Internal
 internal class AppCommandCompletionSettings(
   var showCounts: Int = 0,
   var myEnabled: CommandCompletionEnabled = CommandCompletionEnabled.FROM_REGISTRY,
+  var useGroup: Boolean = true
 ) {
 
   fun isEnabled(): Boolean {

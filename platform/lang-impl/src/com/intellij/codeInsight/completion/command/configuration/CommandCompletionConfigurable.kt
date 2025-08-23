@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.completion.command.configuration
 
 import com.intellij.codeInsight.CodeInsightBundle
+import com.intellij.codeInsight.completion.group.GroupedCompletionContributor
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurableProvider
@@ -39,6 +40,16 @@ class CommandCompletionConfigurableProvider : ConfigurableProvider() {
           contextHelp(CodeInsightBundle.message("options.command.completion.display.comment"))
             .gap(RightGap.SMALL)
           icon(AllIcons.General.Beta)
+        }
+        if (GroupedCompletionContributor.isGroupEnabledInApp()) {
+          indent {
+            row {
+              checkBox(CodeInsightBundle.message("options.command.completion.show.group"))
+                .bindSelected({ settings.state.useGroup },
+                              { r -> settings.state.useGroup = r })
+                .gap(RightGap.SMALL)
+            }
+          }
         }
       }
     }

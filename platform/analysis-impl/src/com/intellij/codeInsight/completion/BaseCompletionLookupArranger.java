@@ -24,6 +24,7 @@ import com.intellij.util.ProcessingContext;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
@@ -73,7 +74,8 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
     myProcess = process;
   }
 
-  private MultiMap<CompletionSorterImpl, LookupElement> groupItemsBySorter(Iterable<? extends LookupElement> source) {
+  @ApiStatus.Internal
+  protected MultiMap<CompletionSorterImpl, LookupElement> groupItemsBySorter(Iterable<? extends LookupElement> source) {
     MultiMap<CompletionSorterImpl, LookupElement> inputBySorter = MultiMap.createLinked();
     for (LookupElement element : source) {
       inputBySorter.putValue(obtainSorter(element), element);
@@ -357,21 +359,76 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
     return TraceKt.use(TelemetryManager.getInstance().getTracer(CodeCompletion).spanBuilder("arrangeItems"),
                        span -> {
                          List<LookupElement> items = getMatchingItems();
-                         Iterable<? extends LookupElement> sortedByRelevance = sortByRelevance(groupItemsBySorter(items));
+                         Iterable<LookupElement> filteredIterableItems;
+                         if (!hasCustomElements()) {
+                           filteredIterableItems = items;
+                         }
+                         else {
+                           filteredIterableItems = JBIterable.from(items)
+                             .filter(item -> !isCustomElements(item));
+                         }
+
+                         Iterable<? extends LookupElement> sortedByRelevance = sortByRelevance(groupItemsBySorter(filteredIterableItems));
 
                          sortedByRelevance = applyFinalSorter(sortedByRelevance);
+
+                         sortedByRelevance = combineCustomElements(sortedByRelevance);
 
                          LookupElement relevantSelection = findMostRelevantItem(sortedByRelevance);
                          List<LookupElement> listModel = isAlphaSorted() ?
                                                          sortByPresentation(items) :
                                                          fillModelByRelevance(lookup, new ReferenceOpenHashSet<>(items), sortedByRelevance,
                                                                               relevantSelection);
-
+                         customizeListModel(listModel);
                          int toSelect = getItemToSelect(lookup, listModel, onExplicitAction, relevantSelection);
                          LOG.assertTrue(toSelect >= 0);
 
                          return new Pair<>(listModel, toSelect);
                        });
+  }
+
+  /**
+   * Customizes the provided list model of lookup elements.
+   * This method is called after sorting and creating a list for lookup
+   *
+   * @param model the list of {@link LookupElement} instances to modify and customize.
+   */
+  @ApiStatus.Internal
+  protected void customizeListModel(@NotNull List<LookupElement> model) {
+  }
+
+  /**
+   * Combines and returns a customized set of lookup elements based on the given main input.
+   * This method is called after sorting and before creating a list for lookup
+   *
+   * @param main an iterable collection of {@link LookupElement} items representing
+   *             the primary input elements to be combined.
+   * @return an iterable collection of {@link LookupElement} items representing the combined result.
+   */
+  @ApiStatus.Internal
+  protected @NotNull Iterable<? extends LookupElement> combineCustomElements(@NotNull Iterable<? extends LookupElement> main) {
+    return main;
+  }
+
+  /**
+   * Determines whether there are any custom elements present.
+   *
+   * @return true if custom elements are present, false otherwise.
+   */
+  @ApiStatus.Internal
+  protected boolean hasCustomElements() {
+    return false;
+  }
+
+  /**
+   * Determines whether the specified lookup element matches custom elements.
+   *
+   * @param item the {@link LookupElement} to be checked for custom elements.
+   * @return true if the lookup element represents custom elements, false otherwise.
+   */
+  @ApiStatus.Internal
+  protected boolean isCustomElements(@NotNull LookupElement item) {
+    return false;
   }
 
   // visible for plugins, see https://intellij-support.jetbrains.com/hc/en-us/community/posts/360008625980-Sorting-completions-in-provider
@@ -452,10 +509,10 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
     ContainerUtil.addAll(model, sortByRelevance(groupItemsBySorter(getPrefixItems(false))));
   }
 
-  private static void addCurrentlySelectedItemToTop(LookupElementListPresenter lookup, Set<? extends LookupElement> items, LinkedHashSet<? super LookupElement> model) {
+  private void addCurrentlySelectedItemToTop(LookupElementListPresenter lookup, Set<? extends LookupElement> items, LinkedHashSet<? super LookupElement> model) {
     if (!lookup.isSelectionTouched()) {
       LookupElement lastSelection = lookup.getCurrentItem();
-      if (items.contains(lastSelection)) {
+      if (items.contains(lastSelection) && lastSelection!=null && !isCustomElements(lastSelection)) {
         model.add(lastSelection);
       }
     }
@@ -471,8 +528,9 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
     }
   }
 
+  @ApiStatus.Internal
   // thread safe
-  private Iterable<LookupElement> sortByRelevance(MultiMap<CompletionSorterImpl, LookupElement> inputBySorter) {
+  protected Iterable<LookupElement> sortByRelevance(MultiMap<CompletionSorterImpl, LookupElement> inputBySorter) {
     if (inputBySorter.isEmpty()) return Collections.emptyList();
 
     List<Map.Entry<CompletionSorterImpl, Classifier<LookupElement>>> entries = new ArrayList<>(myClassifiers.entrySet());

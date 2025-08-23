@@ -840,6 +840,7 @@ com.intellij.ui.ExpandableItemsHandler
 - a:getExpandedItems():java.util.Collection
 - a:isEnabled():Z
 - a:setEnabled(Z):V
+c:com.intellij.ui.GroupHeaderSeparator
 com.intellij.ui.RowEditableTableModel
 - javax.swing.table.TableModel
 - a:addRow():V

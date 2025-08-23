@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup.impl
 
+import com.intellij.codeInsight.completion.PrefixMatcher
 import com.intellij.codeInsight.lookup.*
 import com.intellij.codeInsight.lookup.LookupElementPresentation.DecoratedTextRange
 import com.intellij.codeInsight.lookup.LookupElementPresentation.LookupItemDecoration
@@ -19,6 +20,7 @@ import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry
 import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.openapi.editor.markup.TextAttributesEffectsBuilder
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
@@ -234,6 +236,8 @@ class LookupCellRenderer(lookup: LookupImpl, editorComponent: JComponent) : List
     isSelected: Boolean,
     cellHasFocus: Boolean,
   ): Component {
+    val separator = tryToCreateSeparator(item, index)
+    if (separator != null) return separator
     @Suppress("NAME_SHADOWING")
     var isSelected = isSelected
     val nonFocusedSelection = isSelected && lookup.lookupFocusDegree == LookupFocusDegree.SEMI_FOCUSED
@@ -321,6 +325,30 @@ class LookupCellRenderer(lookup: LookupImpl, editorComponent: JComponent) : List
 
     AccessibleContextUtil.setCombinedName(panel, nameComponent, "", tailComponent, " - ", typeLabel)
     AccessibleContextUtil.setCombinedDescription(panel, nameComponent, "", tailComponent, " - ", typeLabel)
+    return panel
+  }
+
+  private fun tryToCreateSeparator(item: LookupElement, index: Int): JComponent? {
+    val separatorLookupElement = item.`as`(SeparatorLookupElement::class.java)
+    if (separatorLookupElement == null) {
+      return null
+    }
+    val insets = getIconInsets()
+    val labelInsets = if (index != 0) {
+      val separatorLabelInsets = JBUI.CurrentTheme.Popup.separatorLabelInsets()
+      insets.set(separatorLabelInsets.top, insets.left, separatorLabelInsets.bottom, insets.right)
+      insets
+    }
+    else {
+      val separatorLabelInsets = JBUI.CurrentTheme.Popup.separatorLabelInsets()
+      insets.set(3, insets.left, separatorLabelInsets.bottom + separatorLabelInsets.top - 3, insets.right)
+      insets
+    }
+    val res = GroupHeaderSeparator(labelInsets)
+    res.caption = separatorLookupElement.title
+    res.isHideLine = index == 0
+    val panel = LookupPanel()
+    panel.add(res)
     return panel
   }
 
@@ -516,8 +544,8 @@ class LookupCellRenderer(lookup: LookupImpl, editorComponent: JComponent) : List
 
     var maxWidth = if (shrinkLookup) 0 else lookupTextWidth
     for (item in visibleItems) {
+      if(item.isSeparator()) continue
       val presentation = asyncRendering.getLastComputed(item)
-
       item.putUserData(CUSTOM_NAME_FONT, getFontAbleToDisplay(presentation.itemText))
       item.putUserData(CUSTOM_TAIL_FONT, getFontAbleToDisplay(presentation.tailText))
       item.putUserData(CUSTOM_TYPE_FONT, getFontAbleToDisplay(presentation.typeText))
@@ -888,8 +916,10 @@ private fun getCustomFont(item: LookupElement, bold: Boolean, key: Key<Font>): F
 }
 
 private fun setIconInsets(component: SimpleColoredComponent) {
-  component.ipad = JBUI.insetsLeft(6)
+  component.ipad = getIconInsets()
 }
+
+private fun getIconInsets(): JBInsets = JBUI.insetsLeft(6)
 
 private fun selectionInsets(): Insets {
   val innerInsets = JBUI.CurrentTheme.CompletionPopup.selectionInnerInsets()
@@ -940,3 +970,29 @@ private fun getStyle(strikeout: Boolean, underlined: Boolean, italic: Boolean): 
   }
   return style
 }
+
+@ApiStatus.Internal
+fun createSeparator(@NlsContexts.Separator title: String): LookupElement {
+  return SeparatorLookupElement(title)
+}
+
+internal class SeparatorLookupElement(
+  @NlsContexts.Separator val title: String,
+) : LookupElement() {
+  override fun getLookupString(): String {
+    return title
+  }
+}
+
+internal class AlwaysSeparatorMatcher : PrefixMatcher(""){
+  override fun prefixMatches(name: String): Boolean {
+    return true
+  }
+
+  override fun cloneWithPrefix(prefix: String): PrefixMatcher {
+    return AlwaysSeparatorMatcher()
+  }
+}
+
+@ApiStatus.Internal
+fun LookupElement.isSeparator(): Boolean = this.`as`(SeparatorLookupElement::class.java) != null

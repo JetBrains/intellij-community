@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion
 
+import com.intellij.codeInsight.completion.group.GroupedCompletionContributor
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.IndexNotReadyException
@@ -11,7 +12,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 class FilteringResultSet(
   private val base: CompletionResultSet,
-  private val filter: (CompletionContributor) -> Boolean
+  private val filter: (CompletionContributor) -> Boolean,
 ) : CompletionResultSet(base.prefixMatcher, base.consumer, base.contributor) {
   override fun addElement(element: LookupElement) {
     base.addElement(element)
@@ -45,10 +46,17 @@ class FilteringResultSet(
     base.restartCompletionWhenNothingMatches()
   }
 
-  override fun runRemainingContributors(parameters: CompletionParameters,
-                                        consumer: Consumer<in CompletionResult>,
-                                        stop: Boolean,
-                                        customSorter: CompletionSorter?) {
+  override fun runRemainingContributors(
+    parameters: CompletionParameters,
+    consumer: Consumer<in CompletionResult>,
+    stop: Boolean,
+    customSorter: CompletionSorter?,
+  ) {
+    if (GroupedCompletionContributor.isGroupEnabledInApp() &&
+        (contributor as? GroupedCompletionContributor)?.groupIsEnabled(parameters) == true) {
+      return
+    }
+
     if (stop) {
       stopHere()
     }
@@ -69,12 +77,14 @@ class FilteringResultSet(
   }
 
   companion object {
-    private fun CompletionService.getVariantsFromContributors(parameters: CompletionParameters,
-                                                              from: CompletionContributor,
-                                                              matcher: PrefixMatcher,
-                                                              consumer: Consumer<in CompletionResult?>,
-                                                              customSorter: CompletionSorter?,
-                                                              filter: (CompletionContributor) -> Boolean) {
+    private fun CompletionService.getVariantsFromContributors(
+      parameters: CompletionParameters,
+      from: CompletionContributor,
+      matcher: PrefixMatcher,
+      consumer: Consumer<in CompletionResult?>,
+      customSorter: CompletionSorter?,
+      filter: (CompletionContributor) -> Boolean,
+    ) {
       val contributors = CompletionContributor.forParameters(parameters)
       for (i in contributors.indexOf(from) + 1 until contributors.size) {
         ProgressManager.checkCanceled()

@@ -144,7 +144,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     cellRenderer = new LookupCellRenderer(this, this.editor.getContentComponent());
     cellRenderer.itemAdded(myDummyItem, LookupElementPresentation.renderElement(myDummyItem));
     list.setCellRenderer(cellRenderer);
-
+    list.setSelectionModel(new NonSelectableListSelectionModel(list));
     list.setFocusable(false);
     list.setFixedCellWidth(50);
     list.setBorder(null);
@@ -482,6 +482,9 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
     CollectionListModelWithBatchUpdate<LookupElement> listModel = getListModel();
 
+    if (myPresentableArranger instanceof LookupGroupArranger lookupGroupArranger) {
+      lookupGroupArranger.synchronizeGroupSupport(myPresentation.getMostRelevantOnTop());
+    }
     Pair<List<LookupElement>, Integer> pair = myPresentableArranger.arrangeItems(this, onExplicitAction || reused);
     List<LookupElement> items = pair.first;
     Integer toSelect = pair.second;
@@ -572,8 +575,14 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   }
 
   private void updateListHeight(ListModel<LookupElement> model) {
+    int index = 0;
+    LookupElement element = model.getElementAt(0);
+    if (element.as(SeparatorLookupElement.class) != null && model.getSize() > 1) {
+      index = 1;
+      element = model.getElementAt(index);
+    }
     list.setFixedCellHeight(
-      cellRenderer.getListCellRendererComponent(list, model.getElementAt(0), 0, false, false).getPreferredSize().height);
+      cellRenderer.getListCellRendererComponent(list, element, index, false, false).getPreferredSize().height);
     list.setVisibleRowCount(Math.min(model.getSize(), myPresentation.getMaxVisibleItemsCount()));
   }
 
@@ -1435,6 +1444,55 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     @Override
     public @NotNull Component getPermanentComponent() {
       return editor.getContentComponent();
+    }
+  }
+
+
+  private static class NonSelectableListSelectionModel extends DefaultListSelectionModel implements
+                                                                                         ScrollingUtil.ImpossibleListSelectionModel {
+    private final JList<?> list;
+
+    private NonSelectableListSelectionModel(JList<?> list) {
+      this.list = list;
+    }
+
+    @Override
+    public void setSelectionInterval(int index0, int index1) {
+      // If either endpoint is a separator, do not select
+      if (isSeparator(index0)) {
+        int next = findNextSelectable(index0, 1);
+        if (next != -1) {
+          super.setSelectionInterval(next, next);
+        }
+        return;
+      }
+      super.setSelectionInterval(index0, index1);
+    }
+
+    private boolean isSeparator(int index) {
+      ListModel<?> model = list.getModel();
+      if (model.getSize() <= index || index < 0) return false;
+      Object value = model.getElementAt(index);
+      if (value instanceof LookupElement lookupElement && LookupCellRendererKt.isSeparator(lookupElement)) {
+        return true;
+      }
+      return false;
+    }
+
+    private int findNextSelectable(int start, int direction) {
+      ListModel<?> model = list.getModel();
+      int size = model.getSize();
+      int i = start + direction;
+      while (i >= 0 && i < size) {
+        if (!isSeparator(i)) return i;
+        i += direction;
+      }
+      return -1;
+    }
+
+    @Override
+    public boolean canBeSelected(int index) {
+      return !isSeparator(index);
     }
   }
 }

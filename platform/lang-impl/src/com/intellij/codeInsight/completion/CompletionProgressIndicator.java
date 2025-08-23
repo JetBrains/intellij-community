@@ -5,6 +5,7 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.codeInsight.completion.group.GroupedCompletionContributor;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.codeInsight.completion.impl.CompletionSorterImpl;
 import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler;
@@ -174,7 +175,7 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
 
     myAdvertiserChanges.offer(() -> this.lookup.getAdvertiser().clearAdvertisements());
 
-    myArranger = new CompletionLookupArrangerImpl(this);
+    myArranger = GroupedCompletionContributor.isGroupEnabledInApp() ? new GroupCompletionLookupArrangerImpl(this) : new CompletionLookupArrangerImpl(this);
     this.lookup.setArranger(myArranger);
 
     this.lookup.addLookupListener(myLookupListener);

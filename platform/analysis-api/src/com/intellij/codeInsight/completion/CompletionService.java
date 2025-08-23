@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.completion.group.CompletionGroup;
+import com.intellij.codeInsight.completion.group.GroupedCompletionContributor;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.WeighingContext;
@@ -19,6 +21,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import static com.intellij.codeInsight.completion.group.CompletionGroup.COMPLETION_GROUP_KEY;
 
 /**
  * For completion FAQ, see {@link CompletionContributor}.
@@ -58,18 +62,65 @@ public abstract class CompletionService {
     getVariantsFromContributors(parameters, from, matcher, consumer, null);
   }
 
+
+  /**
+   * Invokes completion contributors that belong to a specific group, collects their completion variants,
+   * and passes the results to a specified consumer. Only contributors with their group enabled are processed.
+   *
+   * @param parameters Specifies the current completion parameters, containing context information
+   *                   about the target element and environment where completion is requested.
+   * @param matcher    A prefix matcher that filters suggestions based on the provided input prefix.
+   * @param consumer   A consumer to handle the completion results produced by active contributors in the group.
+   */
+  @ApiStatus.Experimental
+  protected void getVariantsFromGroupContributors(@NotNull CompletionParameters parameters,
+                                                  PrefixMatcher matcher,
+                                                  Consumer<? super CompletionResult> consumer) {
+    if (!GroupedCompletionContributor.isGroupEnabledInApp()) {
+      return;
+    }
+    final List<CompletionContributor> contributors = CompletionContributor.forParameters(parameters);
+    for (int i = 0; i < contributors.size(); i++) {
+      CompletionContributor contributor = contributors.get(i);
+      if (!(contributor instanceof GroupedCompletionContributor groupedCompletionContributor &&
+            groupedCompletionContributor.groupIsEnabled(parameters))) {
+        continue;
+      }
+      CompletionGroup completionGroup = new CompletionGroup(i, groupedCompletionContributor.getGroupDisplayName());
+      CompletionResultSet result = createResultSet(parameters,
+                                                   r -> {
+                                                     r.getLookupElement().putUserData(COMPLETION_GROUP_KEY, completionGroup);
+                                                     consumer.consume(r);
+                                                   }, contributor,
+                                                   matcher);
+      try {
+        getVariantsFromContributor(parameters, contributor, result);
+      }
+      catch (IndexNotReadyException ignore) {
+      }
+      if (result.isStopped()) {
+        return;
+      }
+    }
+  }
+
   protected void getVariantsFromContributors(@NotNull CompletionParameters parameters,
                                              @Nullable CompletionContributor from,
                                              PrefixMatcher matcher,
                                              Consumer<? super CompletionResult> consumer,
                                              @Nullable CompletionSorter customSorter) {
     List<CompletionContributor> contributors = CompletionContributor.forParameters(parameters);
+    boolean groupEnabledInApp = GroupedCompletionContributor.isGroupEnabledInApp();
 
     int startingIndex = from != null ? contributors.indexOf(from) + 1 : 0;
     for (int i = startingIndex; i < contributors.size(); i++) {
       ProgressManager.checkCanceled();
       CompletionContributor contributor = contributors.get(i);
-
+      if (groupEnabledInApp &&
+          contributor instanceof GroupedCompletionContributor groupedCompletionContributor &&
+          groupedCompletionContributor.groupIsEnabled(parameters)) {
+        continue;
+      }
       CompletionResultSet result = createResultSet(parameters, consumer, contributor, matcher);
       if (customSorter != null) {
         result = result.withRelevanceSorter(customSorter);
@@ -140,9 +191,11 @@ public abstract class CompletionService {
     };
     String prefix = suggestPrefix(parameters);
     getVariantsFromContributors(parameters, null, createMatcher(prefix, false), batchConsumer);
+    getVariantsFromGroupContributors(parameters, createMatcher(prefix, false), batchConsumer);
     if (lookupSet.isEmpty() && prefix.length() > 2) {
       typoTolerant.set(true);
       getVariantsFromContributors(parameters, null, createMatcher(prefix, true), batchConsumer);
+      getVariantsFromGroupContributors(parameters, createMatcher(prefix, true), batchConsumer);
     }
   }
 

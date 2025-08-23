@@ -4,6 +4,7 @@ com.intellij.codeInsight.completion.BatchConsumer
 - startBatch():V
 com.intellij.codeInsight.completion.CompletionProcess
 - a:isAutopopupCompletion():Z
+a:com.intellij.codeInsight.completion.CompletionService
 a:com.intellij.codeInsight.completion.CompletionWeigher
 - com.intellij.psi.Weigher
 com.intellij.codeInsight.completion.InsertHandler

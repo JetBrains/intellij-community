@@ -1575,6 +1575,10 @@
                  description="Enable experimental support command completion for internal mode" restartRequired="false"/>
     <registryKey key="ide.completion.command.support.read.only.files" defaultValue="false"
                  description="Enable experimental support command completion for read-only files" restartRequired="false"/>
+    <registryKey key="ide.completion.group.enabled" defaultValue="true"
+                 description="Enable groups in completions" restartRequired="false"/>
+    <registryKey key="ide.completion.group.mode.enabled" defaultValue="false"
+                 description="Enable groups in completions for any mode. ide.completion.group.enabled should be enabled" restartRequired="false"/>
 
     <indexableIteratorBuilderHandler implementation="com.intellij.util.indexing.roots.builders.SyntheticLibraryIndexableIteratorHandler"/>
     <indexableIteratorBuilderHandler implementation="com.intellij.util.indexing.roots.builders.ExternalEntityIndexableIteratorHandler"/>

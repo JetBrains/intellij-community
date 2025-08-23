@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.completion.group.GroupedCompletionContributor;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.NlsContexts;
@@ -152,6 +153,12 @@ public abstract class CompletionResultSet implements Consumer<LookupElement> {
 
   public void runRemainingContributors(CompletionParameters parameters, Consumer<? super CompletionResult> consumer, final boolean stop,
                                        CompletionSorter customSorter) {
+    //grouped contributors are not allowed to be used in runRemainingContributors from other contributors
+    if (GroupedCompletionContributor.isGroupEnabledInApp() &&
+        contributor instanceof GroupedCompletionContributor groupedCompletionContributor &&
+        groupedCompletionContributor.groupIsEnabled(parameters)) {
+      return;
+    }
     if (stop) {
       stopHere();
     }
