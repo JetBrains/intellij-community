@@ -1568,13 +1568,6 @@ f:com.intellij.codeInsight.actions.onSave.OptimizeImportsOnSaveOptions
 - <init>(com.intellij.openapi.project.Project):V
 - clone():com.intellij.codeInsight.actions.onSave.OptimizeImportsOnSaveOptions
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.codeInsight.actions.onSave.OptimizeImportsOnSaveOptions
-f:com.intellij.codeInsight.codeVision.CodeVisionBundle
-- com.intellij.DynamicBundle
-- sf:Companion:com.intellij.codeInsight.codeVision.CodeVisionBundle$Companion
-- <init>():V
-f:com.intellij.codeInsight.codeVision.CodeVisionBundle$Companion
-- f:message(java.lang.String,java.lang.Object[]):java.lang.String
-- f:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier
 c:com.intellij.codeInsight.codeVision.CodeVisionContextProvider
 - <init>(com.intellij.openapi.project.Project):V
 - createCodeVisionContext(com.intellij.openapi.editor.Editor):com.intellij.codeInsight.codeVision.EditorCodeVisionContext

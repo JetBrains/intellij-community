@@ -322,7 +322,7 @@ public final class WslFileWatcher extends PluggableFileWatcher {
         }
       }
       else if (myLastOp == WatcherOp.MESSAGE) {
-        String localized = Objects.requireNonNullElse(IdeCoreBundle.INSTANCE.messageOrNull(line), line); //NON-NLS
+        String localized = Objects.requireNonNullElse(IdeCoreBundle.messageOrNull(line), line); //NON-NLS
         myVm.logger.warn(localized);
         notifyOnFailure(myVm.name, localized, NotificationListener.URL_OPENING_LISTENER);
         myLastOp = null;

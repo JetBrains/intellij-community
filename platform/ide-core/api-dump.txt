@@ -9,6 +9,12 @@ com.intellij.ide.AppLifecycleListener
 - projectFrameClosed():V
 - projectOpenFailed():V
 - welcomeScreenDisplayed():V
+f:com.intellij.ide.IdeCoreBundle
+- sf:BUNDLE:java.lang.String
+- <init>():V
+- s:message(java.lang.String,java.lang.Object[]):java.lang.String
+- s:messageOrNull(java.lang.String,java.lang.Object[]):java.lang.String
+- s:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier
 com.intellij.ide.RecentProjectsManager
 - sf:Companion:com.intellij.ide.RecentProjectsManager$Companion
 - addGroup(com.intellij.ide.ProjectGroup):V

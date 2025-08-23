@@ -31,8 +31,10 @@ sealed interface SearchEverywhereSpellCheckResult {
 
 private const val TYPO_FIXING_BUNDLE_PATH = "messages.TypoFixingBundle"
 
-private object TypoFixingBundle : DynamicBundle(TYPO_FIXING_BUNDLE_PATH) {
+private object TypoFixingBundle {
+  private val instance = DynamicBundle(TypoFixingBundle::class.java, TYPO_FIXING_BUNDLE_PATH)
+
   fun message(key: @PropertyKey(resourceBundle = TYPO_FIXING_BUNDLE_PATH) String, vararg params: Any): @Nls String {
-    return getMessage(key, *params)
+    return instance.getMessage(key, *params)
   }
 }

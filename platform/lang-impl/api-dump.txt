@@ -81,6 +81,13 @@ com.intellij.codeInsight.actions.ReformatFilesOptions
 com.intellij.codeInsight.actions.onSave.FormatOnSaveOptionsBase$DefaultsProvider
 - getFileTypesFormattedOnSaveByDefault():java.util.Collection
 - getFileTypesWithOptimizeImportsOnSaveByDefault():java.util.Collection
+f:com.intellij.codeInsight.codeVision.CodeVisionBundle
+- com.intellij.DynamicBundle
+- sf:Companion:com.intellij.codeInsight.codeVision.CodeVisionBundle$Companion
+- <init>():V
+f:com.intellij.codeInsight.codeVision.CodeVisionBundle$Companion
+- f:message(java.lang.String,java.lang.Object[]):java.lang.String
+- f:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier
 com.intellij.codeInsight.codeVision.CodeVisionProviderFactory
 - sf:Companion:com.intellij.codeInsight.codeVision.CodeVisionProviderFactory$Companion
 - sf:EP_NAME:java.lang.String

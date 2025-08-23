@@ -11,20 +11,19 @@ import java.util.function.Supplier;
  * some external plugins. It isn't supposed to be used by plugins directly.
  */
 @ApiStatus.Internal
-public class CoreDeprecatedMessagesBundle extends DynamicBundle {
+public final class CoreDeprecatedMessagesBundle {
   private static final @NonNls String BUNDLE = "messages.CoreDeprecatedMessagesBundle";
-  private static final CoreDeprecatedMessagesBundle INSTANCE = new CoreDeprecatedMessagesBundle();
+  private static final DynamicBundle bundle = new DynamicBundle(CoreDeprecatedMessagesBundle.class, BUNDLE);
 
   private CoreDeprecatedMessagesBundle() {
-    super(BUNDLE);
   }
 
   public static @NotNull @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
-    return INSTANCE.getMessage(key, params);
+    return bundle.getMessage(key, params);
   }
 
   public static @NotNull Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key,
                                                               Object @NotNull ... params) {
-    return INSTANCE.getLazyMessage(key, params);
+    return bundle.getLazyMessage(key, params);
   }
 }
