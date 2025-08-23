@@ -1,10 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.parser;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.frontback.psi.impl.syntax.JavaSyntaxDefinitionExtension;
-import com.intellij.lang.*;
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.LanguageASTFactory;
+import com.intellij.lang.LanguageExtension;
+import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.lang.java.parser.BasicJavaParserUtil;
@@ -74,19 +77,16 @@ public class JavaParsingTestConfigurator implements AbstractBasicJavaParsingTest
   private static LanguageLevel LANGUAGE_LEVEL;
 
   @Override
-  public @NotNull PsiFile createPsiFile(@NotNull AbstractBasicJavaParsingTestCase thinJavaParsingTestCase, @NotNull String name, @NotNull String text, BasicJavaParserUtil.@NotNull ParserWrapper parser) {
+  public @NotNull PsiFile createPsiFile(@NotNull AbstractBasicJavaParsingTestCase thinJavaParsingTestCase,
+                                        @NotNull String name,
+                                        @NotNull String text,
+                                        BasicJavaParserUtil.@NotNull ParserWrapper parser) {
     TEST_PARSER = parser;
 
     LightVirtualFile virtualFile = new LightVirtualFile(name + '.' + "java", JavaFileType.INSTANCE, text, -1);
-    FileViewProvider viewProvider =
-      new SingleRootFileViewProvider(PsiManager.getInstance(thinJavaParsingTestCase.getProject()), virtualFile, true);
-    PsiJavaFileImpl file = new PsiJavaFileImpl(viewProvider) {
-      @NotNull
-      @Override
-      protected FileElement createFileElement(@NotNull CharSequence text) {
-        return new FileElement(myTestFileElementType, text);
-      }
-    };
+    PsiManager psiManager = PsiManager.getInstance(thinJavaParsingTestCase.getProject());
+    FileViewProvider viewProvider = new SingleRootFileViewProvider(psiManager, virtualFile, true);
+    PsiJavaFileImpl file = new MyTestPsiJavaFileImpl(viewProvider);
     configure(file);
     return file;
   }
@@ -107,7 +107,7 @@ public class JavaParsingTestConfigurator implements AbstractBasicJavaParsingTest
     return builder;
   }
 
-  private static class MyIFileElementType extends IFileElementType {
+  private static final class MyIFileElementType extends IFileElementType {
     MyIFileElementType() {
       super("test.java.file", JavaLanguage.INSTANCE);
     }
@@ -130,13 +130,23 @@ public class JavaParsingTestConfigurator implements AbstractBasicJavaParsingTest
     }
   }
 
-  private static class JavaTestElementTypeConverterExtension implements ElementTypeConverterFactory {
+  private static final class JavaTestElementTypeConverterExtension implements ElementTypeConverterFactory {
     private static final @NotNull ElementTypeConverter CONVERTER =
       ElementTypeConverterKt.elementTypeConverterOf(new Pair<>(mySyntaxElementType, myTestFileElementType));
 
     @Override
     public @NotNull ElementTypeConverter getElementTypeConverter() {
       return CONVERTER;
+    }
+  }
+
+  private static final class MyTestPsiJavaFileImpl extends PsiJavaFileImpl {
+    private MyTestPsiJavaFileImpl(@NotNull FileViewProvider viewProvider) { super(viewProvider); }
+
+    @NotNull
+    @Override
+    protected FileElement createFileElement(@NotNull CharSequence text) {
+      return new FileElement(myTestFileElementType, text);
     }
   }
 }

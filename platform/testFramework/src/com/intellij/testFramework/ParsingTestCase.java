@@ -304,7 +304,8 @@ public abstract class ParsingTestCase extends UsefulTestCase {
   protected void doTest(boolean checkResult, boolean ensureNoErrorElements) {
     String name = getTestName();
     try {
-      parseFile(name, loadFile(name + "." + myFileExt));
+      String text = loadFile(name + "." + myFileExt);
+      parseFile(name, text);
       if (checkResult) {
         checkResult(name, myFile);
         if (ensureNoErrorElements) {
@@ -320,7 +321,7 @@ public abstract class ParsingTestCase extends UsefulTestCase {
     }
   }
 
-  protected PsiFile parseFile(String name, String text) {
+  protected @NotNull PsiFile parseFile(@NotNull String name, @NotNull String text) {
     myFile = createPsiFile(name, text);
     assertEquals("light virtual file text mismatch", text, ((LightVirtualFile)myFile.getVirtualFile()).getContent().toString());
     assertEquals("virtual file text mismatch", text, LoadTextUtil.loadText(myFile.getVirtualFile()));
@@ -546,14 +547,14 @@ public abstract class ParsingTestCase extends UsefulTestCase {
 
   public static void doCheckResult(@NotNull String fullPath, @NotNull String targetDataName, @NotNull String actual) {
     String expectedFileName = fullPath + File.separatorChar + targetDataName;
-    UsefulTestCase.assertSameLinesWithFile(expectedFileName, actual);
+    assertSameLinesWithFile(expectedFileName, actual);
   }
 
   protected static String toParseTreeText(@NotNull PsiElement file,  boolean skipSpaces, boolean printRanges) {
     return DebugUtil.psiToString(file, !skipSpaces, printRanges);
   }
 
-  protected String loadFile(@NotNull @TestDataFile String name) throws IOException {
+  protected @NotNull String loadFile(@NotNull @TestDataFile String name) throws IOException {
     return loadFileDefault(myFullDataPath, name);
   }
 
