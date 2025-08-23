@@ -56,6 +56,7 @@ class PluginVerifier internal constructor(
     ide: VerifierIdeInfo,
     errFile: Path?,
     outFile: Path?,
+    runtimeDir: Path? = null,
   ): Boolean {
     val java = JdkDownloader.getJavaExecutable(JdkDownloader.getJdkHomeAndLog(COMMUNITY_ROOT))
 
@@ -71,6 +72,8 @@ class PluginVerifier internal constructor(
         "-verification-reports-dir",
         reportDir.pathString,
         "-offline"
+      ).plus(
+        if (runtimeDir != null) listOf("-runtime-dir", runtimeDir.pathString) else emptyList()
       ),
       workingDir = reportDir,
       additionalEnvVariables = emptyMap(),
