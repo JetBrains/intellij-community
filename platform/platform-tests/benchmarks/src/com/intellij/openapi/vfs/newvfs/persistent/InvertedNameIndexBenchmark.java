@@ -12,6 +12,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 
+import static com.intellij.openapi.vfs.newvfs.persistent.InvertedNameIndex.NULL_NAME_ID;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 /**
@@ -44,7 +45,7 @@ public class InvertedNameIndexBenchmark {
       IntArrays.shuffle(this.fileIds, ThreadLocalRandom.current());
 
       for (int fileId : this.fileIds) {
-        invertedNameIndex.updateFileName(fileId, nameId, InvertedNameIndex.NULL_NAME_ID);
+        invertedNameIndex.updateFileName(fileId, NULL_NAME_ID, nameId);
       }
     }
   }
@@ -55,7 +56,7 @@ public class InvertedNameIndexBenchmark {
     final int nameId = context.nameId;
     final InvertedNameIndex invertedNameIndex = context.invertedNameIndex;
     for (int fileId : fileIdsToRemove) {
-      invertedNameIndex.updateFileName(fileId, InvertedNameIndex.NULL_NAME_ID, nameId);
+      invertedNameIndex.updateFileName(fileId, nameId, NULL_NAME_ID);
     }
   }
 

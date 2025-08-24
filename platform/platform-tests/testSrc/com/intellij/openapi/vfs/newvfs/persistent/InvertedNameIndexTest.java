@@ -44,7 +44,7 @@ public class InvertedNameIndexTest {
   public void singleFileIdMappedToNameIdCouldBeListedBack() {
     final int fileId = 1;
     final int nameId = 42;
-    invertedNameIndex.updateFileName(fileId, nameId, NULL_NAME_ID);
+    invertedNameIndex.updateFileName(fileId, NULL_NAME_ID, nameId);
 
     final IntArraySet fileIds = fileIdsByNameId(nameId);
     assertTrue(
@@ -58,7 +58,7 @@ public class InvertedNameIndexTest {
     final int[] fileIds = new int[]{1, 2, 3, 4, 5};
     final int nameId = 42;
     for (int fileId : fileIds) {
-      invertedNameIndex.updateFileName(fileId, nameId, NULL_NAME_ID);
+      invertedNameIndex.updateFileName(fileId, NULL_NAME_ID, nameId);
     }
 
     final IntArraySet fileIdsReported = fileIdsByNameId(nameId);
@@ -75,9 +75,9 @@ public class InvertedNameIndexTest {
     final int fileId = 1;
     final int nameId = 11;
     //add fileId -> nameId mapping
-    invertedNameIndex.updateFileName(fileId, nameId, NULL_NAME_ID);
-    //remove fileId -> nameId mapping
     invertedNameIndex.updateFileName(fileId, NULL_NAME_ID, nameId);
+    //remove fileId -> nameId mapping
+    invertedNameIndex.updateFileName(fileId, nameId, NULL_NAME_ID);
 
     final IntArraySet fileIds = fileIdsByNameId(nameId);
 
@@ -100,7 +100,7 @@ public class InvertedNameIndexTest {
           "It should be no fileId(" + fileId + ")->nameId(" + nameId + ") mapping yet",
           fileIdsByNameId(nameId).contains(fileId));
 
-        invertedNameIndex.updateFileName(fileId, nameId, NULL_NAME_ID);
+        invertedNameIndex.updateFileName(fileId, NULL_NAME_ID, nameId);
 
         assertTrue(
           "It should be fileId(" + fileId + ")->nameId(" + nameId + ") mapping now",

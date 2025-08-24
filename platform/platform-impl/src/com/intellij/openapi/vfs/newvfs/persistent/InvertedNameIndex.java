@@ -3,7 +3,6 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.util.io.DataEnumerator;
 import it.unimi.dsi.fastutil.ints.IntCollection;
-import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
@@ -24,12 +23,12 @@ public interface InvertedNameIndex {
   /** id=0 used as NULL (i.e. absent) value */
   int NULL_NAME_ID = DataEnumerator.NULL_ID;
 
-  //TODO RC: replace with forEachFileId() -- more explicit
-  default boolean processFilesWithNames(@NotNull IntList namesIds,
-                                        @NotNull IntPredicate fileIdProcessor) {
-    return forEachFileIds(namesIds, fileIdProcessor);
-  }
-
+  /**
+   * Iterates through all the fileIds associated with nameId from nameIds collection, and passes each fileId to fileIdProcessor.
+   *
+   * @return if fileIdProcessor returns false -> stop eagerly, and return false, otherwise return true (even if there were no fileId
+   * to process!)
+   */
   @VisibleForTesting
   boolean forEachFileIds(@NotNull IntCollection nameIds,
                          @NotNull IntPredicate fileIdProcessor);
@@ -40,14 +39,16 @@ public interface InvertedNameIndex {
    * with newNameId.<p/>
    * Old/new nameId could be {@link #NULL_NAME_ID}:
    * <pre>
-   * updateFileName(fileId, nameId, NULL_NAME_ID); //inserts _new_ [nameId->fileId] mapping
-   * updateFileName(fileId, NULL_NAME_ID, nameId); //removes fileId mapping
+   * updateFileName(fileId, NULL_NAME_ID, nameId);        //inserts _new_ [nameId->fileId] mapping
+   * updateFileName(fileId, nameId,       NULL_NAME_ID);  //removes fileId mapping
    * </pre>
    */
-  void updateFileName(int fileId, int newNameId, int oldNameId);
+  void updateFileName(int fileId, int oldNameId, int newNameId);
 
+  /** Clears all the mappings */
   void clear();
 
+  /** To be called in tests: checks internal invariants, if any, are held */
   @VisibleForTesting
   void checkConsistency();
 }

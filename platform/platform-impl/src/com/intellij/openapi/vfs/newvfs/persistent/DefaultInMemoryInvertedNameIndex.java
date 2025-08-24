@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.Arrays;
+import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.IntPredicate;
@@ -45,29 +46,23 @@ public final class DefaultInMemoryInvertedNameIndex implements InvertedNameIndex
   private final Int2ObjectMap<int[]> multiMapping = new Int2ObjectOpenHashMap<>();
 
 
-  @Override
-  public boolean processFilesWithNames(@NotNull IntList namesIds,
-                                       @NotNull IntPredicate fileIdProcessor) {
-    rwLock.readLock().lock();
-    try {
-      return processData(namesIds, fileIdProcessor);
-    }
-    finally {
-      rwLock.readLock().unlock();
-    }
-  }
-
   /**
    * Iterates through all the fileIds associated with nameId from nameIds collection, and passes each fileId to fileIdProcessor.
    *
-   * @return if fileIdProcessor return false -> stop eagerly, and return false, otherwise return true (even if there were no fileId
+   * @return if fileIdProcessor returns false -> stop eagerly, and return false, otherwise return true (even if there were no fileId
    * to process!)
    */
   @Override
   @VisibleForTesting
   public boolean forEachFileIds(@NotNull IntCollection nameIds,
                                 @NotNull IntPredicate fileIdProcessor) {
-    return processData(nameIds, fileIdProcessor);
+    rwLock.readLock().lock();
+    try {
+      return processData(nameIds, fileIdProcessor);
+    }
+    finally {
+      rwLock.readLock().unlock();
+    }
   }
 
   private boolean processData(@NotNull IntCollection nameIds,
@@ -95,8 +90,12 @@ public final class DefaultInMemoryInvertedNameIndex implements InvertedNameIndex
   }
 
   @Override
-  public void updateFileName(int fileId, int newNameId, int oldNameId) {
-    rwLock.writeLock().lock();
+  public void updateFileName(int fileId, int oldNameId, int newNameId) {
+    if (oldNameId == newNameId) {
+      return;
+    }
+    Lock writeLock = rwLock.writeLock();
+    writeLock.lock();
     try {
       if (oldNameId != NULL_NAME_ID) {
         deleteDataInner(fileId, oldNameId);
@@ -106,7 +105,7 @@ public final class DefaultInMemoryInvertedNameIndex implements InvertedNameIndex
       }
     }
     finally {
-      rwLock.writeLock().unlock();
+      writeLock.unlock();
     }
   }
 
