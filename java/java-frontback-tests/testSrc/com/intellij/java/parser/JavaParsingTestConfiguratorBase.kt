@@ -2,15 +2,19 @@
 package com.intellij.java.parser
 
 import com.intellij.ide.highlighter.JavaFileType
+import com.intellij.java.syntax.JavaSyntaxDefinition
+import com.intellij.java.syntax.element.JavaLanguageLevelProvider
 import com.intellij.lang.ASTNode
 import com.intellij.lang.LanguageASTFactory
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.lang.java.parser.BasicJavaParserUtil
 import com.intellij.lang.java.parser.JavaParserUtil
 import com.intellij.lang.java.syntax.JavaElementTypeConverterExtension
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.platform.syntax.SyntaxElementType
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilder
 import com.intellij.platform.syntax.psi.*
+import com.intellij.platform.syntax.tree.SyntaxNode
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.PsiJavaFileImpl
@@ -36,8 +40,12 @@ abstract class JavaParsingTestConfiguratorBase(
       testCase.addExplicit(languageASTFactory, java, JavaASTFactory())
       testCase.clearCachesOfLanguageExtension(java, languageASTFactory)
     }
-  }
 
+    ExtensionPointName<JavaLanguageLevelProvider>("com.intellij.java.syntax.languageLevelProvider").let { ep ->
+      testCase.addExtensionPoint(ep, JavaLanguageLevelProvider::class.java)
+      testCase.addExplicit(ep, JavaLanguageLevelProvider { this.languageLevel })
+    }
+  }
 
   override fun setLanguageLevel(level: LanguageLevel) {
     this.level = level
@@ -50,6 +58,18 @@ abstract class JavaParsingTestConfiguratorBase(
   override fun configure(file: PsiFile) {
     file.putUserData(LanguageLevelKey.FILE_LANGUAGE_LEVEL_KEY, languageLevel)
     ourLanguageLevel = languageLevel
+  }
+
+  override fun createFileSyntaxNode(text: String, parserWrapper: BasicJavaParserUtil.ParserWrapper?): SyntaxNode {
+    ourLanguageLevel = languageLevel
+    return parseForSyntaxTree(text) { builder ->
+      if (parserWrapper != null) {
+        parseWithWrapper(builder, parserWrapper)
+      }
+      else {
+        JavaSyntaxDefinition.parse(ourLanguageLevel, builder)
+      }
+    }
   }
 
   override fun createPsiFile(

@@ -8,8 +8,11 @@ import com.intellij.lang.LanguageExtension;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.lang.java.parser.BasicJavaParserUtil;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics;
 import com.intellij.platform.syntax.psi.LanguageSyntaxDefinitions;
+import com.intellij.platform.syntax.tree.SyntaxNode;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.DebugUtil;
@@ -17,11 +20,14 @@ import com.intellij.testFramework.ParsingTestCase;
 import com.intellij.testFramework.TestDataFile;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 public abstract class AbstractBasicJavaParsingTestCase extends ParsingTestCase {
 
   private final AbstractBasicJavaParsingTestConfigurator myConfigurator;
+  private SyntaxNode myKmpTree;
 
   @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
   public AbstractBasicJavaParsingTestCase(String dataPath, AbstractBasicJavaParsingTestConfigurator configurator) {
@@ -48,6 +54,14 @@ public abstract class AbstractBasicJavaParsingTestCase extends ParsingTestCase {
 
   public final <T> void addExplicit(@NotNull LanguageExtension<T> collector, @NotNull Language language, @NotNull T object) {
     addExplicitExtension(collector, language, object);
+  }
+
+  public final <T> void addExplicit(@NotNull ExtensionPointName<T> extensionPointName, @NotNull T extension) {
+    registerExtension(extensionPointName, extension);
+  }
+
+  public final <T> void addExtensionPoint(@NotNull ExtensionPointName<T> extensionPointName, @NotNull Class<T> extensionClass) {
+    super.registerExtensionPoint(extensionPointName, extensionClass);
   }
 
   @Override
@@ -81,13 +95,42 @@ public abstract class AbstractBasicJavaParsingTestCase extends ParsingTestCase {
     }
 
     String treeDump = DebugUtil.nodeTreeAsElementTypeToString(file.getNode(), !skipSpaces()).trim();
-    doCheckResult(myFullDataPath, targetDataName + "_node.txt", treeDump);
+    assertSameLinesWithFile(getExpectedFileName(targetDataName), treeDump);
+
+    checkKmpTree(targetDataName);
+  }
+
+  private void checkKmpTree(@NotNull String targetDataName) {
+    String kmpTreeDump = JavaTestSyntaxParsingUtil.dumpTree(myKmpTree);
+
+    String expectedFileName = getExpectedFileName(targetDataName);
+    String expectedText;
+    try {
+      expectedText = FileUtil.loadFile(new File(expectedFileName), StandardCharsets.UTF_8);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+
+    String normalizedExpected = JavaTestSyntaxParsingUtil.removeEmptyListLines(expectedText);
+    assertSameLines(normalizedExpected, kmpTreeDump);
+  }
+
+  private @NotNull String getExpectedFileName(@NotNull String targetDataName) {
+    return myFullDataPath + File.separatorChar + targetDataName + "_node.txt";
+  }
+
+  @Override
+  protected @NotNull PsiFile parseFile(@NotNull String name, @NotNull String text) {
+    myKmpTree = myConfigurator.createFileSyntaxNode(text, null);
+    return super.parseFile(name, text);
   }
 
   protected void doParserTest(@NotNull String text,
                               BasicJavaParserUtil.@NotNull ParserWrapper parser) {
     String name = getTestName(false);
     myFile = myConfigurator.createPsiFile(this, name, text, parser);
+    myKmpTree = myConfigurator.createFileSyntaxNode(text, parser);
     try {
       checkResult(name, myFile);
     }

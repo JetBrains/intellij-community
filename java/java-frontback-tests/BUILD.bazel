@@ -37,6 +37,7 @@ jvm_library(
     "//java/testFramework/shared",
     "//platform/syntax/syntax-psi:psi",
     "//java/java-syntax:syntax",
+    "//platform/syntax/syntax-tree:tree",
   ],
   exports = [
     "@lib//:easymock",
