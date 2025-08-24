@@ -84,7 +84,7 @@ private class ProjectProblemFileFileEditorManagerListener : FileEditorManagerLis
     setPreviousState(newJavaFile)
     val isInSplitEditorMode = event.manager.selectedEditors.size > 1
     if (isInSplitEditorMode) {
-      InlayHintsPassFactoryInternal.Companion.restartDaemonUpdatingHints(project, "ProjectProblemFileFileEditorManagerListener.selectionChanged")
+      InlayHintsPassFactoryInternal.restartDaemonUpdatingHints(project, "ProjectProblemFileFileEditorManagerListener.selectionChanged")
     }
   }
 }
@@ -125,7 +125,7 @@ internal class ProjectProblemFileRefactoringEventListener(private val project: P
 
 @OptIn(FlowPreview::class)
 @Service(Service.Level.PROJECT)
-private class ProjectPsiChangesProcessor(private val scope: CoroutineScope) {
+private class ProjectPsiChangesProcessor(scope: CoroutineScope) {
   private val psiChanges = ConcurrentCollectionFactory.createConcurrentSet<PsiFile>()
   private val psiChangesProcessor = MutableSharedFlow<Unit?>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
