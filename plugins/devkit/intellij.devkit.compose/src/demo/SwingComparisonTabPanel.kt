@@ -11,6 +11,7 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import com.intellij.devkit.compose.DevkitComposeBundle
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
 import com.intellij.openapi.editor.colors.EditorFontType
@@ -64,12 +65,12 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
   private fun Panel.linksRow() {
     val jewelReadmeLink = "https://github.com/JetBrains/intellij-community/tree/master/platform/jewel/#readme"
 
-    row("Links:") {
+    row(DevkitComposeBundle.message("jewel.swing.links")) {
       cell(
         component =
           BrowserLink(
             icon = AllIcons.Ide.External_link_arrow,
-            text = "Enabled link",
+            text = DevkitComposeBundle.message("jewel.swing.enabled.link"),
             tooltip = null,
             url = "",
           )
@@ -82,7 +83,7 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
         component =
           BrowserLink(
             icon = IconLoader.getDisabledIcon(AllIcons.Ide.External_link_arrow),
-            text = "Disabled link",
+            text = DevkitComposeBundle.message("jewel.swing.disabled.link"),
             tooltip = null,
             url = jewelReadmeLink,
           )
@@ -110,11 +111,11 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
   }
 
   private fun Panel.buttonsRow() {
-    row("Buttons:") {
-      button("Swing Button") {}.align(AlignY.CENTER)
+    row(DevkitComposeBundle.message("jewel.swing.buttons")) {
+      button(DevkitComposeBundle.message("jewel.swing.button.swing.button")) {}.align(AlignY.CENTER)
       compose { OutlinedButton({}) { Text("Compose Button") } }
 
-      button("Default Swing Button") {}
+      button(DevkitComposeBundle.message("jewel.swing.button.default.swing.button")) {}
         .align(AlignY.CENTER)
         .applyToComponent { putClientProperty(DarculaButtonUI.DEFAULT_STYLE_KEY, true) }
       compose { DefaultButton({}) { Text("Default Compose Button") } }
@@ -123,14 +124,14 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
   }
 
   private fun Panel.labelsRows() {
-    row("Labels:") {
-      label("Swing label").align(AlignY.CENTER)
+    row(DevkitComposeBundle.message("jewel.swing.labels")) {
+      label(DevkitComposeBundle.message("jewel.swing.label.swing.label")).align(AlignY.CENTER)
       compose { Text("Compose label") }
     }
       .layout(RowLayout.PARENT_GRID)
 
-    row("Comments:") {
-      comment("Swing comment").align(AlignY.CENTER)
+    row(DevkitComposeBundle.message("jewel.swing.comments")) {
+      comment(DevkitComposeBundle.message("jewel.swing.text.swing.comment")).align(AlignY.CENTER)
       compose {
         Text(
           "Compose comment",
@@ -141,9 +142,9 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
     }
       .layout(RowLayout.PARENT_GRID)
 
-    val longText = "WordWrapInsideWordsIsSupported:" + ("NoSpace".repeat(20) + " ").repeat(5) + "End"
-    row("Long text (Swing)") { text(longText, maxLineLength = 100) }
-    row("Long text (Compose)") {
+    @Suppress("HardCodedStringLiteral") val longText = "WordWrapInsideWordsIsSupported:" + ("NoSpace".repeat(20) + " ").repeat(5) + "End"
+    row(DevkitComposeBundle.message("jewel.swing.long.text.swing")) { text(longText, maxLineLength = 100) }
+    row(DevkitComposeBundle.message("jewel.swing.long.text.compose")) {
       compose {
         Box {
           Text(
@@ -161,12 +162,12 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
       }
     }
 
-    row("Long editor text (Swing)") {
+    row(DevkitComposeBundle.message("jewel.swing.long.editor.text.swing")) {
       text(longText, maxLineLength = 100).applyToComponent {
         font = retrieveEditorColorScheme().getFont(EditorFontType.PLAIN)
       }
     }
-    row("Long editor text (Compose)") {
+    row(DevkitComposeBundle.message("jewel.swing.long.editor.text.compose")) {
       compose {
         Box {
           Text(
@@ -185,10 +186,10 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
       }
     }
 
-    row("Titles (Swing)") {
-      text("This will wrap over a couple rows", maxLineLength = 30).component.font = JBFont.h1()
+    row(DevkitComposeBundle.message("jewel.swing.titles.swing")) {
+      text(DevkitComposeBundle.message("jewel.swing.label.this.will.wrap.over.couple.rows"), maxLineLength = 30).component.font = JBFont.h1()
     }
-    row("Titles (Compose)") {
+    row(DevkitComposeBundle.message("jewel.swing.titles.compose")) {
       compose {
         Box {
           val style = JewelTheme.typography.h1TextStyle
@@ -210,7 +211,7 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
   }
 
   private fun Panel.iconsRow() {
-    row("Icons:") {
+    row(DevkitComposeBundle.message("jewel.swing.icons")) {
       cell(JBLabel(JewelIcons.ToolWindowIcon).apply { border = JBUI.Borders.customLine(JBColor.RED) })
         .align(AlignY.CENTER)
 
@@ -224,15 +225,15 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
 
       panel {
         row {
-          label("Swing").widthGroup("swing disabled")
-          label("Compose").widthGroup("compose disabled")
-          label("Swing").widthGroup("swing enabled")
-          label("Compose").widthGroup("compose enabled")
+          label(SWING).widthGroup("swing disabled")
+          label(COMPOSE).widthGroup("compose disabled")
+          label(SWING).widthGroup("swing enabled")
+          label(COMPOSE).widthGroup("compose enabled")
 
-          label("Swing").widthGroup("swing disabled")
-          label("Compose").widthGroup("compose disabled")
-          label("Swing").widthGroup("swing enabled")
-          label("Compose").widthGroup("compose enabled")
+          label(SWING).widthGroup("swing disabled")
+          label(COMPOSE).widthGroup("compose disabled")
+          label(SWING).widthGroup("swing enabled")
+          label(COMPOSE).widthGroup("compose enabled")
         }
         row {
           icon(icon = IconLoader.getDisabledIcon(AllIcons.Actions.CheckOut)).widthGroup("swing disabled")
@@ -279,7 +280,7 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
   }
 
   private fun Panel.textFieldsRow() {
-    row("Text fields:") {
+    row(DevkitComposeBundle.message("jewel.swing.text.fields")) {
       textField().align(AlignY.CENTER)
 
       compose {
@@ -291,14 +292,14 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
   }
 
   private fun Panel.comboBoxesRow() {
-    row("Combo Boxes:") {
+    row(DevkitComposeBundle.message("jewel.swing.combo.boxes")) {
       // Swing ComboBoxes
       val zoomLevels = arrayOf("100%", "125%", "150%", "175%", "200%", "300%")
 
       JPanel()
         .apply {
           layout = BoxLayout(this, BoxLayout.Y_AXIS)
-          add(JLabel("Not editable").apply { alignmentX = LEFT_ALIGNMENT })
+          add(JLabel(DevkitComposeBundle.message("jewel.swing.not.editable")).apply { alignmentX = LEFT_ALIGNMENT })
           add(
             ComboBox(DefaultComboBoxModel(zoomLevels)).apply {
               isEditable = false
@@ -310,7 +311,7 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
       JPanel()
         .apply {
           layout = BoxLayout(this, BoxLayout.Y_AXIS)
-          add(JLabel("Not editable + disabled").apply { alignmentX = LEFT_ALIGNMENT })
+          add(JLabel(DevkitComposeBundle.message("jewel.swing.not.editable.disabled")).apply { alignmentX = LEFT_ALIGNMENT })
           add(
             ComboBox(DefaultComboBoxModel(zoomLevels)).apply {
               isEditable = false
@@ -325,7 +326,7 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
       JPanel()
         .apply {
           layout = BoxLayout(this, BoxLayout.Y_AXIS)
-          add(JLabel("Editable").apply { alignmentX = LEFT_ALIGNMENT })
+          add(JLabel(DevkitComposeBundle.message("jewel.swing.editable")).apply { alignmentX = LEFT_ALIGNMENT })
           add(
             ComboBox(DefaultComboBoxModel(itemsComboBox)).apply {
               isEditable = true
@@ -338,7 +339,7 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
       JPanel()
         .apply {
           layout = BoxLayout(this, BoxLayout.Y_AXIS)
-          add(JLabel("Editable + Disabled").apply { alignmentX = LEFT_ALIGNMENT })
+          add(JLabel(DevkitComposeBundle.message("jewel.swing.editable.disabled")).apply { alignmentX = LEFT_ALIGNMENT })
           add(
             ComboBox(DefaultComboBoxModel(itemsComboBox)).apply {
               isEditable = true
@@ -435,7 +436,7 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
   }
 
   private fun Panel.textAreasRow() {
-    row("Text areas:") {
+    row(DevkitComposeBundle.message("jewel.swing.text.areas")) {
       textArea().align(AlignY.CENTER).applyToComponent { rows = 3 }
 
       compose {

@@ -60,6 +60,7 @@ internal fun ScrollbarsShowcaseTab() {
   }
 }
 
+@Suppress("SpellCheckingInspection")
 private const val ANDROID_IPSUM =
   "Jetpack Compose dolor sit amet, viewBinding consectetur adipiscing elit, sed do eiusmod tempor incididunt" +
   " ut unitTest et dolore magna aliqua. Dependency injection enim ad minim veniam, quis nostrud Dagger-Hilt " +

@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.intellij.devkit.compose.DevkitComposeBundle
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.EDT
@@ -38,7 +39,7 @@ internal class JewelWizardDialogAction : DumbAwareAction() {
     currentThreadCoroutineScope().launch(Dispatchers.EDT) {
       WizardDialogWrapper(
         project = project,
-        title = "Jewel Demo wizard",
+        title = DevkitComposeBundle.message("jewel.demo.wizard.title"),
         pages = listOf(FirstPage(project), SecondPage()),
       )
         .showAndGet()

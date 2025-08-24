@@ -66,7 +66,7 @@ private class MyDialog(project: Project?, dialogTitle: String) :
     init()
   }
 
-  override fun createCenterPanel(): JComponent? {
+  override fun createCenterPanel(): JComponent {
     initCentralPanel()
     return centerPanelWrapper
   }

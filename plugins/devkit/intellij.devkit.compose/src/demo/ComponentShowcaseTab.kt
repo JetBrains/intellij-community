@@ -98,8 +98,8 @@ private fun RowScope.ColumnOne() {
         state = state,
         modifier =
           Modifier.width(200.dp).provideData {
-            set(ActionSystemTestAction.COMPONENT_DATA_KEY.name, "TextField")
-            lazy(ActionSystemTestAction.COMPONENT_DATA_KEY.name) { Math.random().toString() }
+            set(JEWEL_COMPONENT_DATA_KEY.name, "TextField")
+            lazy(JEWEL_COMPONENT_DATA_KEY.name) { Math.random().toString() }
           },
         placeholder = { Text("Write something...") },
       )
@@ -116,7 +116,7 @@ private fun RowScope.ColumnOne() {
         checked = checked,
         onCheckedChange = { checked = it },
         outline = outline,
-        modifier = Modifier.provideData { set(ActionSystemTestAction.COMPONENT_DATA_KEY.name, "Checkbox") },
+        modifier = Modifier.provideData { set(JEWEL_COMPONENT_DATA_KEY.name, "Checkbox") },
       ) {
         Text("Hello, I am a themed checkbox")
       }
@@ -174,8 +174,7 @@ private fun RowScope.ColumnOne() {
         1 -> {
           DefaultErrorBanner(text = "This is an error banner in Compose")
           InlineErrorBanner(
-            text =
-              "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt",
+            text = LOREM_IPSUM_SHORT,
             iconActions = {
               iconAction(AllIconsKeys.General.Close, "Close button", "Close") {
                 clickLabel = "Error Inline Action Icon clicked"
@@ -188,13 +187,7 @@ private fun RowScope.ColumnOne() {
         0 -> {
           DefaultSuccessBanner(text = "This is a success banner in Compose")
           InlineSuccessBanner(
-            text =
-              "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor " +
-              "incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, " +
-              "quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. " +
-              "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu " +
-              "fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in " +
-              "culpa qui officia deserunt mollit anim id est laborum.",
+            text = LOREM_IPSUL_TEXT,
             linkActions = {
               action("Action A", onClick = { clickLabel = "Success Inline Action A clicked" })
               action("Action B", onClick = { clickLabel = "Success Inline Action B clicked" })

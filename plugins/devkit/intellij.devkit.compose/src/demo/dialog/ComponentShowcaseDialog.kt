@@ -5,6 +5,7 @@ import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.unit.dp
+import com.intellij.devkit.compose.DevkitComposeBundle
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
@@ -27,7 +28,7 @@ import javax.swing.JComponent
 
 internal class ComponentShowcaseDialog(project: Project) : DialogWrapper(project) {
   init {
-    title = "Jewel Components Showcase"
+    title = DevkitComposeBundle.message("dialog.title.jewel.components.showcase")
     init()
     contentPanel.border = JBUI.Borders.empty()
     rootPane.border = JBUI.Borders.empty()

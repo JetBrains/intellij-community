@@ -3,8 +3,9 @@ package com.intellij.devkit.compose.demo.dialog
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import com.intellij.devkit.compose.DevkitComposeBundle
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.util.ui.JBDimension
@@ -19,22 +20,22 @@ import javax.swing.Action
 import javax.swing.JComponent
 import kotlin.coroutines.CoroutineContext
 
+private val logger = logger<WizardDialogWrapper>()
+
 internal class WizardDialogWrapper(
   project: Project,
   @Nls title: String,
   private val pages: List<WizardPage>,
   private val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) : DialogWrapper(project), CoroutineScope {
-  private val logger = thisLogger()
-
   override val coroutineContext: CoroutineContext = SupervisorJob() + Dispatchers.EDT + CoroutineName("ComposeWizard")
 
   private val currentPageIndex = mutableIntStateOf(0)
 
   private val cancelAction = CancelAction()
-  private val backAction = WizardAction("Back") { onBackClick() }
-  private val nextAction = WizardAction("Next") { onNextClick() }
-  private val finishAction = WizardAction("Finish") { onFinishClick() }
+  private val backAction = WizardAction(DevkitComposeBundle.message("jewel.wizard.back")) { onBackClick() }
+  private val nextAction = WizardAction(DevkitComposeBundle.message("jewel.wizard.next")) { onNextClick() }
+  private val finishAction = WizardAction(DevkitComposeBundle.message("jewel.wizard.finish")) { onFinishClick() }
 
   private var pageScope: CoroutineScope? = null
 
@@ -111,14 +112,14 @@ internal class WizardDialogWrapper(
     close(OK_EXIT_CODE)
   }
 
-  private inner class CancelAction : DialogWrapperAction("Cancel") {
+  private inner class CancelAction : DialogWrapperAction(DevkitComposeBundle.message("jewel.wizard.button.cancel")) {
     override fun doAction(e: ActionEvent?) {
       logger.debug("Cancel clicked")
       doCancelAction()
     }
   }
 
-  private inner class WizardAction(@Nls name: String, private val onAction: () -> Unit) : DialogWrapperAction(name) {
+  private class WizardAction(@Nls name: String, private val onAction: () -> Unit) : DialogWrapperAction(name) {
     override fun doAction(e: ActionEvent?) {
       onAction()
     }

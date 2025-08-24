@@ -1,5 +1,6 @@
 package com.intellij.devkit.compose.demo.releasessample
 
+import com.intellij.openapi.util.NlsSafe
 import kotlinx.datetime.LocalDate
 import org.jetbrains.annotations.Nls
 
@@ -24,7 +25,7 @@ internal sealed class ContentItem {
   ) : ContentItem()
 
   data class AndroidRelease(
-    @Nls override val displayText: String,
+    override val displayText: @NlsSafe String,
     override val imagePath: String?,
     override val versionName: String,
     val codename: String?,
