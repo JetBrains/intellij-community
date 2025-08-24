@@ -9,7 +9,7 @@ import kotlin.jvm.JvmField
  * @see com.intellij.psi.impl.source.tree.JavaElementType
  */
 object JavaSyntaxElementType {
-  @JvmField val JAVA_FILE: SyntaxElementType = SyntaxElementType("JAVA_FILE")
+  @JvmField val JAVA_FILE: SyntaxElementType = SyntaxElementType("java.FILE")
   @JvmField val CLASS: SyntaxElementType = SyntaxElementType("CLASS")
   @JvmField val IMPLICIT_CLASS: SyntaxElementType = SyntaxElementType("IMPLICIT_CLASS")
   @JvmField val ANONYMOUS_CLASS: SyntaxElementType = SyntaxElementType("ANONYMOUS_CLASS")
