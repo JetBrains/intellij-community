@@ -12,7 +12,7 @@ import org.jetbrains.annotations.ApiStatus
  * Implement this extension point to provide the custom language level for Java lazy parsers.
  */
 @ApiStatus.OverrideOnly
-interface JavaLanguageLevelProvider {
+fun interface JavaLanguageLevelProvider {
   fun getLanguageLevel(node: SyntaxNode): LanguageLevel
 }
 
