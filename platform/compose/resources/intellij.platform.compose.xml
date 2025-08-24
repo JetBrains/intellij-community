@@ -1,16 +1,10 @@
 <idea-plugin>
-  <actions>
-    <action id="ComposeShowcaseAction" internal="true" class="com.intellij.platform.compose.showcase.ComposeShowcaseAction"
-            text="Compose Components Showcase"/>
-    <action id="ComposePerformanceDemoAction" internal="true" class="com.intellij.platform.compose.showcase.ComposePerformanceDemoAction"
-            text="Compose Rendering Performance Demo"/>
-  </actions>
   <extensions defaultExtensionNs="com.intellij">
     <registryKey defaultValue="true"
                  description="Allows changing how ComposePanel is rendered using rendering on Graphics (when `true`, it provides smooth Swing interop) or on native AWT texture (when `false`). Works only in internal mode"
-                 key="compose.swing.render.on.graphics"
-    />
+                 key="compose.swing.render.on.graphics"/>
   </extensions>
+
   <dependencies>
     <module name="intellij.platform.jewel.foundation" />
     <module name="intellij.platform.jewel.ui" />

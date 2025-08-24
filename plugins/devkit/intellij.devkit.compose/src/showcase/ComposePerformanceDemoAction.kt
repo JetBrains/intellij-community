@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.compose.showcase
+package com.intellij.devkit.compose.showcase
 
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
@@ -33,7 +33,7 @@ import java.util.*
 import javax.swing.*
 import kotlin.math.*
 
-private class ComposePerformanceDemoAction : DumbAwareAction() {
+internal class ComposePerformanceDemoAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val dialog = MyDialog(e.project, e.presentation.text)
     dialog.show()

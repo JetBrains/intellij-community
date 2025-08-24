@@ -44,6 +44,11 @@ jvm_library(
     "//libraries/compose-foundation-desktop",
     "//platform/editor-ui-ex:editor-ex",
   ],
+  exports = [
+    "//platform/jewel/foundation",
+    "//platform/jewel/ui",
+    "//libraries/compose-foundation-desktop",
+  ],
   runtime_deps = [":ide-laf-bridge_resources"],
   plugins = ["@lib//:compose-plugin"]
 )
@@ -74,6 +79,13 @@ jvm_library(
     "//libraries/compose-foundation-desktop",
     "//platform/editor-ui-ex:editor-ex",
     "//libraries/compose-foundation-desktop-junit",
+  ],
+  exports = [
+    "//platform/jewel/foundation",
+    "//platform/jewel/foundation:foundation_test_lib",
+    "//platform/jewel/ui",
+    "//platform/jewel/ui:ui_test_lib",
+    "//libraries/compose-foundation-desktop",
   ],
   runtime_deps = [":ide-laf-bridge_resources"],
   plugins = ["@lib//:compose-plugin"]
