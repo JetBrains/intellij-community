@@ -188,6 +188,7 @@ private class ProjectProblemFileSelectionListenerStartupActivity : ProjectActivi
     // Remove fragments from the cache once the editor gets released
     EditorFactory.getInstance().addEditorFactoryListener(object : EditorFactoryListener {
       override fun editorReleased(event: EditorFactoryEvent) {
+        if (event.editor.project != project) return
         val virtualFile = FileDocumentManager.getInstance().getFile(event.editor.document) ?: return
         ReadAction.nonBlocking<Any> {
           if (!virtualFile.isValid) return@nonBlocking null
