@@ -146,8 +146,6 @@ val SUPPORTED_DISTRIBUTIONS: List<SupportedDistribution> = listOf(
   SupportedDistribution(OsFamily.MACOS, JvmArchitecture.aarch64, MacLibcImpl.DEFAULT),
   SupportedDistribution(OsFamily.LINUX, JvmArchitecture.x64, LinuxLibcImpl.GLIBC),
   SupportedDistribution(OsFamily.LINUX, JvmArchitecture.aarch64, LinuxLibcImpl.GLIBC),
-  SupportedDistribution(OsFamily.LINUX, JvmArchitecture.x64, LinuxLibcImpl.MUSL),
-  SupportedDistribution(OsFamily.LINUX, JvmArchitecture.aarch64, LinuxLibcImpl.MUSL),
 )
 
 fun createIdeaPropertyFile(context: BuildContext): CharSequence {
