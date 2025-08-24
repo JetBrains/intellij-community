@@ -6,9 +6,20 @@
   <vendor>JetBrains</vendor>
 
   <description><![CDATA[
-    Supports development of plugins for IntelliJ IDEA and other products based on the IntelliJ Platform.
+    <p>Provides a powerful foundation for developing plugins for JetBrains IDEs and other products based on the
+      <a href="https://www.jetbrains.com/opensource/idea?from=DevKit&utm_source=product&utm_campaign=devkit">IntelliJ Platform.</a></p>
+
+    <b>Features:</b>
+    <ul>
+      <li>Built-in support for extension points, actions, and services</li>
+      <li>Easy way to bootstrap a project via New Project wizard</li>
+      <li>Tools for UI development and plugin configuration</li>
+      <li>Quick navigation to extension declarations and implementations</li>
+      <li>Enhanced coding assistance, inspections, and code generation</li>
+    </ul>
+
     <br>
-    <a href="https://plugins.jetbrains.com/docs/intellij/?from=DevkitPluginDescription">IntelliJ Platform SDK Docs</a>
+    <a href="https://plugins.jetbrains.com/docs/intellij/welcome.html?from=DevKit&utm_source=product&utm_campaign=devkit">Learn More!</a></p>
   ]]></description>
 
   <dependencies>
