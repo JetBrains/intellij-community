@@ -17,7 +17,7 @@ internal object DevkitComposeBundle {
   }
 
   @JvmStatic
-  fun lazyMessage(@PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any?): Supplier<@Nls String> {
+  fun messagePointer(@PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any?): Supplier<@Nls String> {
     return instance.getLazyMessage(key, *params)
   }
 }

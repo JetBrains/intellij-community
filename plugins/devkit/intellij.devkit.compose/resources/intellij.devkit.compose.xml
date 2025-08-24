@@ -1,20 +1,33 @@
 <idea-plugin>
   <dependencies>
-    <module name="intellij.platform.compose"/>
-  </dependencies>
+    <module name="intellij.devkit.core"/>
 
-  <extensions defaultExtensionNs="com.intellij">
-  </extensions>
+    <module name="intellij.platform.compose"/>
+    <module name="intellij.platform.jewel.samples.showcase"/>
+
+    <!-- For Markdown demos -->
+    <module name="intellij.platform.compose.markdown"/>
+    <module name="intellij.platform.jewel.markdown.extensions.images"/>
+  </dependencies>
 
   <resource-bundle>messages.DevkitComposeBundle</resource-bundle>
 
   <actions>
     <group id="ComposeToolsGroup" searchable="false">
-      <action id="ComposeShowcaseAction" class="com.intellij.devkit.compose.showcase.ComposeShowcaseAction"/>
-      <action id="ComposePerformanceDemoAction" class="com.intellij.devkit.compose.showcase.ComposePerformanceDemoAction"/>
+      <action id="JewelToolwindow" class="com.intellij.devkit.compose.demo.dialog.JewelToolwindowAction"
+              icon="com.intellij.devkit.compose.demo.JewelIcons.ToolWindowIcon"/>
+      <action id="JewelComponentShowcaseDialog" class="com.intellij.devkit.compose.demo.dialog.ComponentShowcaseDialogAction"
+              icon="org.jetbrains.idea.devkit.DevKitIcons.Items"/>
+      <action id="JewelWizardDialog" class="com.intellij.devkit.compose.demo.dialog.JewelWizardDialogAction"/>
+      <action id="JewelActionSystemTest" class="com.intellij.devkit.compose.demo.ActionSystemTestAction"/>
+      <action id="ComposeSandbox" class="com.intellij.devkit.compose.showcase.ComposeShowcaseAction" icon="AllIcons.FileTypes.UiForm"/>
+      <action id="ComposePerformanceDemo" class="com.intellij.devkit.compose.showcase.ComposePerformanceDemoAction"/>
       <separator/>
 
       <add-to-group group-id="ToolsMenu" relative-to-action="Dev.PsiViewerActions" anchor="after"/>
     </group>
+
+    <!-- Legacy action, only available from Search Everywhere -->
+    <action id="ComposeShowcase" class="com.intellij.devkit.compose.showcase.ComposeShowcaseAction"/>
   </actions>
 </idea-plugin>

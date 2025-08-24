@@ -47,6 +47,8 @@
     <module name="intellij.devkit.apiDump.lang"/>
     <module name="intellij.devkit.scaffolding"/>
     <module name="intellij.devkit.modules"/>
+
+    <module name="intellij.platform.jewel.samples.showcase"/>
   </content>
 
   <extensions defaultExtensionNs="com.intellij">

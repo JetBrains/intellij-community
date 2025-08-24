@@ -46,7 +46,6 @@ include(
     ":markdown:extensions:images",
     ":markdown:int-ui-standalone-styling",
     ":markdown:ide-laf-bridge-styling",
-    ":samples:ide-plugin",
     ":samples:showcase",
     ":samples:standalone",
     ":ui",

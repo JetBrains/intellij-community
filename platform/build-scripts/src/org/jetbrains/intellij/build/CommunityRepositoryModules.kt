@@ -214,9 +214,6 @@ object CommunityRepositoryModules {
       spec.withProjectLibrary("package-search-api-client")
       spec.withProjectLibrary("ktor-client-logging")
       spec.withProjectLibrary("kotlinx-document-store-mvstore")
-    },
-    pluginAuto("intellij.platform.jewel.samples.idePlugin") { spec ->
-      spec.withModule("intellij.platform.jewel.samples.showcase")
     }
   )
 
