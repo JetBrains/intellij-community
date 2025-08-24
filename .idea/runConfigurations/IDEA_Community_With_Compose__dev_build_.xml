@@ -8,7 +8,7 @@
     <option name="MAIN_CLASS_NAME" value="org.jetbrains.intellij.build.devServer.DevMainKt" />
     <module name="intellij.platform.bootstrap.dev" />
     <shortenClasspath name="ARGS_FILE" />
-    <option name="VM_PARAMETERS" value="-Didea.platform.prefix=community -Didea.kotlin.plugin.use.k2=true -Dadditional.modules=&quot;intellij.platform.jewel.samples.idePlugin&quot;" />
+    <option name="VM_PARAMETERS" value="-Didea.platform.prefix=community -Didea.kotlin.plugin.use.k2=true -Dadditional.modules=&quot;intellij.devkit&quot;" />
     <method v="2">
       <option name="MakeProject" enabled="true" />
     </method>
