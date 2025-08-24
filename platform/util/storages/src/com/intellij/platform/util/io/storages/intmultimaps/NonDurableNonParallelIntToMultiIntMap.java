@@ -15,7 +15,16 @@ import java.io.UncheckedIOException;
  */
 @ApiStatus.Internal
 public final class NonDurableNonParallelIntToMultiIntMap implements DurableIntToMultiIntMap {
-  private final Int2IntMultimap multimap = new Int2IntMultimap();
+  private final Int2IntMultimap multimap;
+
+  public NonDurableNonParallelIntToMultiIntMap() {
+    multimap = new Int2IntMultimap();
+  }
+
+  public NonDurableNonParallelIntToMultiIntMap(int capacity,
+                                               float loadFactor) {
+    multimap = new Int2IntMultimap(capacity, loadFactor);
+  }
 
   @Override
   public synchronized boolean put(int key,

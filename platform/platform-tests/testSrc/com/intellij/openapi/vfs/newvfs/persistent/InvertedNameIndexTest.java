@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
+import com.intellij.openapi.vfs.newvfs.persistent.dev.InvertedNameIndexOverIntToIntMultimap;
+import com.intellij.platform.util.io.storages.intmultimaps.NonDurableNonParallelIntToMultiIntMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArraySet;
@@ -8,6 +10,8 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 import java.util.Arrays;
 import java.util.Map;
@@ -17,19 +21,28 @@ import static com.intellij.openapi.vfs.newvfs.persistent.InvertedNameIndex.NULL_
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-/**
- *
- */
+@RunWith(Parameterized.class)
 public class InvertedNameIndexTest {
 
   private static final int ENOUGH_MAPPINGS = 100_000;
 
   private InvertedNameIndex invertedNameIndex;
 
+  private final boolean useLegacyIndex;
+
+  @Parameterized.Parameters(name = "legacy: {0}")
+  public static Boolean[] parameters() {
+    return new Boolean[]{true, false};
+  }
+
+  public InvertedNameIndexTest(boolean index) { useLegacyIndex = index; }
+
 
   @Before
   public void setUp() throws Exception {
-    invertedNameIndex = new DefaultInMemoryInvertedNameIndex();
+    invertedNameIndex = useLegacyIndex ?
+                        new DefaultInMemoryInvertedNameIndex() :
+                        new InvertedNameIndexOverIntToIntMultimap(new NonDurableNonParallelIntToMultiIntMap());
   }
 
   @After
@@ -119,7 +132,7 @@ public class InvertedNameIndexTest {
           fileIdsByNameId(nameId).contains(fileId));
 
         //remove mapping (map fileId -> NULL instead of nameId)
-        invertedNameIndex.updateFileName(fileId, NULL_NAME_ID, nameId);
+        invertedNameIndex.updateFileName(fileId, nameId, NULL_NAME_ID);
 
         assertFalse(
           "It should be NO fileId(" + fileId + ")->nameId(" + nameId + ") mapping in the index anymore",
