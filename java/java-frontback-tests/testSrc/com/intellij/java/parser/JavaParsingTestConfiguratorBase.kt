@@ -49,7 +49,7 @@ abstract class JavaParsingTestConfiguratorBase(
 
   override fun configure(file: PsiFile) {
     file.putUserData(LanguageLevelKey.FILE_LANGUAGE_LEVEL_KEY, languageLevel)
-    LANGUAGE_LEVEL = languageLevel
+    ourLanguageLevel = languageLevel
   }
 
   override fun createPsiFile(
@@ -58,12 +58,12 @@ abstract class JavaParsingTestConfiguratorBase(
     text: String,
     parser: BasicJavaParserUtil.ParserWrapper,
   ): PsiFile {
-    TEST_PARSER = parser
+    ourTestParser = parser
 
     val virtualFile = LightVirtualFile("$name.java", JavaFileType.INSTANCE, text, -1)
     val psiManager = PsiManager.getInstance(thinJavaParsingTestCase.getProject())
     val viewProvider: FileViewProvider = SingleRootFileViewProvider(psiManager, virtualFile, true)
-    val file: PsiJavaFileImpl = MyTestPsiJavaFileImpl(viewProvider)
+    val file: PsiJavaFileImpl = JavaTestPsiJavaFileImpl(viewProvider)
     configure(file)
     return file
   }
@@ -74,7 +74,7 @@ private class MyIFileElementType : IFileElementType("test.java.file", JavaLangua
   override fun parseContents(chameleon: ASTNode): ASTNode? {
     val psiBuilder: PsiSyntaxBuilder = createBuilder(chameleon)
     val builder = psiBuilder.getSyntaxTreeBuilder()
-    doParse(builder, TEST_PARSER!!)
+    parseWithWrapper(builder, ourTestParser!!)
 
     val rootNode = psiBuilder.getTreeBuilt()
     return rootNode.getFirstChildNode()
@@ -87,31 +87,30 @@ private fun createBuilder(chameleon: ASTNode?): PsiSyntaxBuilder {
   return builder
 }
 
-private fun doParse(builder: SyntaxTreeBuilder, parser: BasicJavaParserUtil.ParserWrapper) {
+private fun parseWithWrapper(builder: SyntaxTreeBuilder, parser: BasicJavaParserUtil.ParserWrapper) {
   val root = builder.mark()
-  parser.parse(builder, LANGUAGE_LEVEL!!)
+  parser.parse(builder, ourLanguageLevel)
   if (!builder.eof()) {
     val unparsed = builder.mark()
     while (!builder.eof()) builder.advanceLexer()
     unparsed.error("Unparsed tokens")
   }
-  root.done(mySyntaxElementType)
+  root.done(ourSyntaxElementType)
 }
 
-private var LANGUAGE_LEVEL: LanguageLevel? = null
-private val mySyntaxElementType = SyntaxElementType("test.java.file")
-val myTestFileElementType: IFileElementType = MyIFileElementType()
+private lateinit var ourLanguageLevel: LanguageLevel
+private val ourSyntaxElementType = SyntaxElementType("test.java.file")
+private val ourTestFileElementType: IFileElementType = MyIFileElementType()
+private var ourTestParser: BasicJavaParserUtil.ParserWrapper? = null
 
-private var TEST_PARSER: BasicJavaParserUtil.ParserWrapper? = null
-
-private val CONVERTER = elementTypeConverterOf(mySyntaxElementType to myTestFileElementType)
+private val converter = elementTypeConverterOf(ourSyntaxElementType to ourTestFileElementType)
 
 private class JavaTestElementTypeConverterExtension : ElementTypeConverterFactory {
-  override fun getElementTypeConverter(): ElementTypeConverter = CONVERTER
+  override fun getElementTypeConverter(): ElementTypeConverter = converter
 }
 
-private class MyTestPsiJavaFileImpl(viewProvider: FileViewProvider) : PsiJavaFileImpl(viewProvider) {
+private class JavaTestPsiJavaFileImpl(viewProvider: FileViewProvider) : PsiJavaFileImpl(viewProvider) {
   override fun createFileElement(text: CharSequence): FileElement {
-    return FileElement(myTestFileElementType, text)
+    return FileElement(ourTestFileElementType, text)
   }
 }
