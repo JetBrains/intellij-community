@@ -1,13 +1,22 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.compiler;
 
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.incremental.groovy.JpsGroovycRunner;
 
+import java.util.List;
+
 public final class GroovycForkedJava8Test extends Groovyc25Test {
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    CompilerConfiguration.getInstance(getProject()).setAdditionalOptions(List.of("-Xlint:-options"));
+  }
 
   @Override
   protected JavaSdkVersion getJdkVersion() {
