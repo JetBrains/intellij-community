@@ -20,6 +20,9 @@ import com.intellij.platform.syntax.syntaxElementTypeSetOf
 import com.intellij.pom.java.LanguageLevel
 import kotlin.jvm.JvmStatic
 
+/**
+ * [com.intellij.java.frontback.psi.impl.syntax.JavaSyntaxDefinitionExtension] is used to register this syntax definition.
+ */
 object JavaSyntaxDefinition : LanguageSyntaxDefinition {
   val language: SyntaxLanguage = SyntaxLanguage("com.intellij.java")
 

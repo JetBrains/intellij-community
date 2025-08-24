@@ -25,6 +25,9 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.lang.java.syntax.JavaElementTypeConverterKt.getJavaElementTypeConverter;
 
+/**
+ * @deprecated Use {@link JavaSyntaxDefinition} instead.
+ */
 public class JavaParserDefinition implements ParserDefinition {
   public static final IFileElementType JAVA_FILE = new JavaFileElementType();
 
