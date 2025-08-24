@@ -145,9 +145,9 @@ class LookupFixtureExtension : BeforeAllCallback, BeforeEachCallback, AfterAllCa
       store.remove(LookupFixtureManager::class.java)
     }
 
-    suspend fun ExtensionContext.registerImplicitFixtures(implicitFixtures: List<LookupFixture>) {
+    suspend fun ExtensionContext.registerImplicitFixtures(implicitFixtures: List<LookupFixture>, static: Boolean) {
       val scopeStore = getStore(Namespace.GLOBAL)
-      val testScope = scopeStore.get("TestFixtureExtension") as CoroutineScope
+      val testScope = (scopeStore.get("TestFixtureExtension_$static")) as CoroutineScope
       val pendingFixtures = implicitFixtures.map { (it.implementation as TestFixtureImpl<*>).init(testScope, TestContextImpl(this, null)) }
 
       pendingFixtures.awaitAll()

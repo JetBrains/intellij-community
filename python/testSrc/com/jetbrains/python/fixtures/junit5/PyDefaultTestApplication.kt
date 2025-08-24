@@ -76,7 +76,7 @@ private class PyWithDefaultFixturesExtension : BeforeAllCallback, BeforeEachCall
     }
 
     runBlocking {
-      context.registerImplicitFixtures(implicitFixtures)
+      context.registerImplicitFixtures(implicitFixtures, static = true)
     }
 
     IndexingTestUtil.waitUntilIndexesAreReady(project.get())
@@ -107,7 +107,7 @@ private class PyWithDefaultFixturesExtension : BeforeAllCallback, BeforeEachCall
     }
 
     runBlocking {
-      context.registerImplicitFixtures(implicitFixtures)
+      context.registerImplicitFixtures(implicitFixtures, static = false)
     }
 
     val project = classLevelManager.getRequired<Project>().get()
