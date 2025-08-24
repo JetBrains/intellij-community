@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalLayoutApi::class)
+
 package com.intellij.devkit.compose.demo.dialog
 
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -52,7 +54,6 @@ internal class ComponentShowcaseDialog(project: Project) : DialogWrapper(project
   }
 
   @Suppress("ViewModelForwarding")
-  @OptIn(ExperimentalLayoutApi::class)
   @Composable
   private fun RootLayout(viewModel: ComponentsViewModel, uiSettings: UISettings) {
     ComponentsView(

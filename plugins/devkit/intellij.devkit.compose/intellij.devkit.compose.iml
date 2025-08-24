@@ -41,5 +41,6 @@
     <orderEntry type="module" module-name="intellij.platform.jewel.samples.showcase" />
     <orderEntry type="module" module-name="intellij.platform.compose.markdown" />
     <orderEntry type="module" module-name="intellij.devkit.core" />
+    <orderEntry type="module" module-name="intellij.platform.analysis" />
   </component>
 </module>

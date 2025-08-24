@@ -12,6 +12,12 @@
 
   <resource-bundle>messages.DevkitComposeBundle</resource-bundle>
 
+  <extensions defaultExtensionNs="com.intellij">
+    <fileEditorProvider implementation="com.intellij.devkit.compose.sandbox.ComposeSandboxFileEditorProvider"/>
+    <postStartupActivity implementation="com.intellij.devkit.compose.sandbox.ComposeSandboxStartupActivity"/>
+    <fileIconProvider implementation="com.intellij.devkit.compose.sandbox.ComposeSandboxFileIconProvider"/>
+  </extensions>
+
   <actions>
     <group id="ComposeToolsGroup" searchable="false">
       <action id="JewelToolwindow" class="com.intellij.devkit.compose.demo.dialog.JewelToolwindowAction"
@@ -20,7 +26,7 @@
               icon="org.jetbrains.idea.devkit.DevKitIcons.Items"/>
       <action id="JewelWizardDialog" class="com.intellij.devkit.compose.demo.dialog.JewelWizardDialogAction"/>
       <action id="JewelActionSystemTest" class="com.intellij.devkit.compose.demo.ActionSystemTestAction"/>
-      <action id="ComposeSandbox" class="com.intellij.devkit.compose.showcase.ComposeShowcaseAction" icon="AllIcons.FileTypes.UiForm"/>
+      <action id="ComposeSandbox" class="com.intellij.devkit.compose.sandbox.ComposeSandboxAction" icon="AllIcons.FileTypes.UiForm"/>
       <action id="ComposePerformanceDemo" class="com.intellij.devkit.compose.showcase.ComposePerformanceDemoAction"/>
       <separator/>
 

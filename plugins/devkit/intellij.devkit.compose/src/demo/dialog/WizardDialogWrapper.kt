@@ -119,7 +119,8 @@ internal class WizardDialogWrapper(
     }
   }
 
-  private class WizardAction(@Nls name: String, private val onAction: () -> Unit) : DialogWrapperAction(name) {
+  // todo report false-positive unused in Kotlin
+  private inner class WizardAction(@Nls name: String, private val onAction: () -> Unit) : DialogWrapperAction(name) {
     override fun doAction(e: ActionEvent?) {
       onAction()
     }

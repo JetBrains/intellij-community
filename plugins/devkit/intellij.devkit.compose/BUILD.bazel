@@ -7,7 +7,6 @@ create_kotlinc_options(
   opt_in = [
     "androidx.compose.foundation.ExperimentalFoundationApi",
     "kotlinx.coroutines.ExperimentalCoroutinesApi",
-    "org.jetbrains.jewel.foundation.ExperimentalJewelApi",
   ]
 )
 
@@ -36,6 +35,7 @@ jvm_library(
     "//platform/jewel/samples/showcase",
     "//platform/compose/markdown",
     "//plugins/devkit/devkit-core:core",
+    "//platform/analysis-api:analysis",
   ],
   runtime_deps = [":compose_resources"],
   plugins = ["@lib//:compose-plugin"]
