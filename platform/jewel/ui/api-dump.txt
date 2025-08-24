@@ -3409,6 +3409,10 @@ f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Providers
 - sf:Vertica:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Yugabyte:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - <init>():V
+f:org.jetbrains.jewel.ui.icons.AllIconsKeys$RemoteServers
+- sf:ResumeScaled:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:SuspendScaled:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- <init>():V
 f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Run
 - sf:Restart:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:ShowIgnored:org.jetbrains.jewel.ui.icon.IntelliJIconKey

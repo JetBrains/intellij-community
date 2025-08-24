@@ -1151,6 +1151,10 @@ f:com.intellij.icons.AllIcons$Providers
 - sf:Vertica:javax.swing.Icon
 - sf:Yugabyte:javax.swing.Icon
 - <init>():V
+f:com.intellij.icons.AllIcons$RemoteServers
+- sf:ResumeScaled:javax.swing.Icon
+- sf:SuspendScaled:javax.swing.Icon
+- <init>():V
 f:com.intellij.icons.AllIcons$Run
 - sf:Restart:javax.swing.Icon
 - sf:ShowIgnored:javax.swing.Icon
