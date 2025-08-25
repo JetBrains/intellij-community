@@ -6,10 +6,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.editor.ex.MarkupIterator;
-import com.intellij.openapi.editor.ex.MarkupModelEx;
-import com.intellij.openapi.editor.ex.RangeHighlighterEx;
+import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -251,7 +248,10 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   }
 
   private static void restoreDeliciousInvariants(@NotNull RangeHighlighter highlighter) {
-    ((RangeMarkerImpl)highlighter).myNode.attributesChanged();
+    RangeMarkerTree.RMNode<RangeMarkerEx> node = ((RangeMarkerImpl)highlighter).myNode;
+    if (node != null) {
+      node.attributesChanged();
+    }
   }
 
   private void fireAfterAdded(@NotNull RangeHighlighterEx highlighter) {
