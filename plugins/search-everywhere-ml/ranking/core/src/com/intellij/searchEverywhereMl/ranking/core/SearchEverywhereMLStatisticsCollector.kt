@@ -197,8 +197,7 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
   @VisibleForTesting
   val ID_KEY: IntEventField = EventFields.Int("id")
 
-  @Suppress("DEPRECATION")
-  internal val ACTION_ID_KEY = ActionsEventLogGroup.ActioID("action_id")
+  internal val ACTION_ID_KEY = ActionsEventLogGroup.ACTION_ID
 
   @VisibleForTesting
   val FEATURES_DATA_KEY: ObjectEventField = createFeaturesEventObject()

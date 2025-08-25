@@ -10,7 +10,6 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.openapi.project.IncompleteDependenciesService.DependenciesState
 import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.NonNls
 
 @ApiStatus.Internal
 object ActionsEventLogGroup : CounterUsagesCollector() {
@@ -23,12 +22,6 @@ object ActionsEventLogGroup : CounterUsagesCollector() {
 
   @JvmField
   val ACTION_ID: PrimitiveEventField<String?> = ActionIdEventField("action_id")
-
-  @Deprecated("Introduced only for MLSE. Do not use.",
-              ReplaceWith("com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup.ACTION_ID"))
-  @Suppress("FunctionName")
-  @JvmStatic
-  fun ActioID(@NonNls name: String): PrimitiveEventField<String?> = ActionIdEventField(name)
 
   private data class ActionIdEventField(override val name: String) : PrimitiveEventField<String?>() {
 
