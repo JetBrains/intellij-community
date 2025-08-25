@@ -696,10 +696,9 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
                                         int prefixLength) {
     String lookupString = LookupUtil.getCaseCorrectedLookupString(item, matcher, itemPattern);
 
-    final Editor hostEditor = editor;
-    hostEditor.getCaretModel().runForEachCaret(__ -> {
-      EditorModificationUtilEx.deleteSelectedText(hostEditor);
-      final int caretOffset = hostEditor.getCaretModel().getOffset();
+    editor.getCaretModel().runForEachCaret(__ -> {
+      EditorModificationUtilEx.deleteSelectedText(editor);
+      int caretOffset = editor.getCaretModel().getOffset();
       LookupElementInsertStopper element = item.as(LookupElementInsertStopper.class);
       if (element == null || !element.shouldStopLookupInsertion()) {
         int offset;
@@ -713,9 +712,9 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
           LOG.error("When completing " + item + " (" + classes + ")", ae);
           return;
         }
-        hostEditor.getCaretModel().moveToOffset(offset);
+        editor.getCaretModel().moveToOffset(offset);
       }
-      hostEditor.getSelectionModel().removeSelection();
+      editor.getSelectionModel().removeSelection();
     });
 
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
