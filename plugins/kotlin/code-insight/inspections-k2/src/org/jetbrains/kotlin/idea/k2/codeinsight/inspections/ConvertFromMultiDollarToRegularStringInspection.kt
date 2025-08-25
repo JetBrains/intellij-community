@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
-import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.editor.Editor
@@ -15,8 +14,6 @@ import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractApp
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.convertToStringWithoutPrefix
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.simplifyDollarEntries
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
-import org.jetbrains.kotlin.psi.KtVisitor
-import org.jetbrains.kotlin.psi.KtVisitorVoid
 
 /**
  * Intention-like inspection with [com.intellij.codeInspection.ProblemHighlightType.INFORMATION] level to allow applying the conversion for the whole project.
@@ -54,15 +51,6 @@ internal class ConvertFromMultiDollarToRegularStringInspection :
                 val stringWithoutPrefix = convertToStringWithoutPrefix(element)
                 simplifyDollarEntries(stringWithoutPrefix)
             }
-        }
-    }
-
-    override fun buildVisitor(
-        holder: ProblemsHolder,
-        isOnTheFly: Boolean
-    ): KtVisitor<*, *> = object : KtVisitorVoid() {
-        override fun visitStringTemplateExpression(expression: KtStringTemplateExpression) {
-            visitTargetElement(expression, holder, isOnTheFly)
         }
     }
 }
