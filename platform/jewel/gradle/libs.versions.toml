@@ -18,6 +18,7 @@ kotlinterGradlePlugin = "5.0.1"
 kotlinxSerialization = "1.8.0"
 ktfmtGradlePlugin = "0.23.0"
 jbr = "1.6.0"
+mockk = "1.14.5"
 
 [libraries]
 assertj-core = { module = "org.assertj:assertj-core", version.ref = "assertJ"}
@@ -42,6 +43,7 @@ junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "jup
 intellijPlatform-util-ui = { module = "com.jetbrains.intellij.platform:util-ui", version.ref = "intelliJPlatformBuild" }
 intellijPlatform-icons = { module = "com.jetbrains.intellij.platform:icons", version.ref = "intelliJPlatformBuild" }
 jbr-api = { module = "org.jetbrains.runtime:jbr-api", version.ref = "jbr" }
+mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 
 # Plugin libraries for build-logic's convention plugins to use to resolve the types/tasks coming from these plugins
 detekt-gradlePlugin = { module = "io.gitlab.arturbosch.detekt:detekt-gradle-plugin", version.ref = "detekt" }
