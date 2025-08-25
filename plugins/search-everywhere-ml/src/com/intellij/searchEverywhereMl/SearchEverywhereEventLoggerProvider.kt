@@ -4,9 +4,10 @@ import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.searchEverywhereMl.log.MLSE_RECORDER_ID
 import com.intellij.util.PlatformUtils
 import java.util.concurrent.TimeUnit
+
+const val MLSE_RECORDER_ID: String = "MLSE"
 
 private class SearchEverywhereEventLoggerProvider : StatisticsEventLoggerProvider(
   MLSE_RECORDER_ID,

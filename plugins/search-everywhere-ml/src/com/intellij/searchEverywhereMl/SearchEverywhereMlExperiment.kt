@@ -4,7 +4,6 @@ import com.intellij.internal.statistic.eventLog.EventLogConfiguration
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.searchEverywhereMl.SearchEverywhereMlExperiment.VERSION
-import com.intellij.searchEverywhereMl.log.MLSE_RECORDER_ID
 import com.intellij.util.MathUtil
 import org.jetbrains.annotations.TestOnly
 import kotlin.contracts.ExperimentalContracts

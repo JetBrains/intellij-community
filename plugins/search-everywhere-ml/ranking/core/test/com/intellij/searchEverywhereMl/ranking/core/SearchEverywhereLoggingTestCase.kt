@@ -10,7 +10,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.searchEverywhereMl.log.MLSE_RECORDER_ID
+import com.intellij.searchEverywhereMl.MLSE_RECORDER_ID
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.PlatformTestUtil
 import com.jetbrains.fus.reporting.model.lion3.LogEvent
