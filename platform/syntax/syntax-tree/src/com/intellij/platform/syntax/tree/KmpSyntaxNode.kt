@@ -579,7 +579,7 @@ fun interface TokenizationPolicy {
   fun tokenize(
     text: CharSequence,
     lexer: Lexer,
-    cancellationProvider: CancellationProvider,
+    cancellationProvider: CancellationProvider?,
   ): TokenList
 }
 
