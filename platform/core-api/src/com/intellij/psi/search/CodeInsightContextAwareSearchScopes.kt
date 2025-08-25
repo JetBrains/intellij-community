@@ -194,7 +194,9 @@ fun ActualContextFileInfo(contexts: Collection<CodeInsightContext>): ActualConte
 
 /**
  * Constructs an [CodeInsightContextFileInfo] with the given [contexts].
- * If the [contexts] are empty, then [DoesNotContainFileInfo] is returned.
+ * Should be used if the [GlobalSearchScope] contains the file.
+ *
+ * If the [contexts] are empty, then [NoContextFileInfo] is returned.
  * Otherwise, [ActualContextFileInfo] is returned.
  *
  * @see CodeInsightContextFileInfo
