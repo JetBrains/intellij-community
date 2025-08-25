@@ -54,20 +54,14 @@ class BuildMessagesImpl private constructor(
 
   override fun getDebugLog(): String = debugLogger.getOutput()
 
-  override fun error(message: String) {
-    throw BuildScriptsLoggedError(message)
-  }
+  override fun error(message: String): Unit = errorImpl(message, cause = null)
+  override fun error(message: String, cause: Throwable): Unit = errorImpl(message, cause)
 
-  override fun error(message: String, cause: Throwable) {
-    val writer = StringWriter()
-    PrintWriter(writer).use(cause::printStackTrace)
+  private fun errorImpl(message: String, cause: Throwable? = null) {
     processMessage(
       LogMessage(
         kind = LogMessage.Kind.ERROR,
-        text = """
-         $message
-         $writer
-       """.trimIndent()
+        text = message + if (cause == null) "" else "\n${cause.stackTraceToString()}",
       )
     )
     throw BuildScriptsLoggedError(message, cause)
