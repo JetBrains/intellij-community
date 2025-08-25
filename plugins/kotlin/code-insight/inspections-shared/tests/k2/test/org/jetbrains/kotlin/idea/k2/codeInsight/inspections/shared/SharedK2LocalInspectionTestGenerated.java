@@ -4496,6 +4496,40 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/inspectionsLocal/replaceToStringWithStringTemplate")
+    public static class ReplaceToStringWithStringTemplate extends AbstractSharedK2LocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("callExpression.kt")
+        public void testCallExpression() throws Exception {
+            runTest("../testData/inspectionsLocal/replaceToStringWithStringTemplate/callExpression.kt");
+        }
+
+        @TestMetadata("nonReference.kt")
+        public void testNonReference() throws Exception {
+            runTest("../testData/inspectionsLocal/replaceToStringWithStringTemplate/nonReference.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../testData/inspectionsLocal/replaceToStringWithStringTemplate/simple.kt");
+        }
+
+        @TestMetadata("stringTemplate.kt")
+        public void testStringTemplate() throws Exception {
+            runTest("../testData/inspectionsLocal/replaceToStringWithStringTemplate/stringTemplate.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/setterBackingFieldAssignment")
     public static class SetterBackingFieldAssignment extends AbstractSharedK2LocalInspectionTest {
         @java.lang.Override
