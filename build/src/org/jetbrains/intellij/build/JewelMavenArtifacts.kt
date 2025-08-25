@@ -11,6 +11,9 @@ import org.jetbrains.intellij.build.dependencies.DependenciesProperties
 import org.jetbrains.intellij.build.impl.libraries.isLibraryModule
 import org.jetbrains.intellij.build.impl.maven.*
 import org.jetbrains.jps.model.java.JavaSourceRootType
+import org.jetbrains.jps.model.java.JpsJavaDependencyScope
+import org.jetbrains.jps.model.java.JpsJavaExtensionService
+import org.jetbrains.jps.model.module.JpsDependencyElement
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleDependency
 import kotlin.io.path.exists
@@ -114,6 +117,9 @@ internal object JewelMavenArtifacts {
           // Add Coil 3 dependencies as "compile" dependencies when present
           add(dependency.withTransitiveDependencies(DependencyScope.COMPILE))
         }
+        coordinates.groupId == "org.jetbrains.compose.components" -> {
+          add(dependency.withTransitiveDependencies(DependencyScope.COMPILE))
+        }
 
         // else -> ignore the dependency, as it comes through transitively, usually from Compose.
 
@@ -160,10 +166,18 @@ internal object JewelMavenArtifacts {
   }
 
   private fun JpsModule.modulesTree(): Sequence<JpsModule> {
-    return sequenceOf(this) + dependenciesList.dependencies.asSequence()
+    return sequenceOf(this) + dependenciesList
+      .dependencies
+      .asSequence()
       .filterIsInstance<JpsModuleDependency>()
+      .filter { isProductionDependency(it) }
       .mapNotNull { it.module }
       .flatMap { it.modulesTree() }
+  }
+
+  private fun isProductionDependency(dep: JpsDependencyElement): Boolean {
+    val scope = JpsJavaExtensionService.getInstance().getDependencyExtension(dep)?.scope ?: return false
+    return (scope == JpsJavaDependencyScope.COMPILE || scope == JpsJavaDependencyScope.PROVIDED)
   }
 
   fun validate(context: BuildContext, mavenArtifacts: Collection<GeneratedMavenArtifacts>) {
