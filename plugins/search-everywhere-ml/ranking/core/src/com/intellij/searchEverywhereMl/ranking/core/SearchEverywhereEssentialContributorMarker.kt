@@ -82,6 +82,10 @@ internal class SearchEverywhereEssentialContributorMlMarker : SearchEverywhereEs
     }
   }
 
+  fun getCachedPredictionsForState(searchState: SearchEverywhereMlSearchState): Map<SearchEverywhereContributor<*>, Float> {
+    return contributorPredictionCache[searchState]?.toMap() ?: emptyMap()
+  }
+
   private fun getFeatures(contributor: SearchEverywhereContributor<*>): List<EventPair<*>> {
     val searchSession = getSearchSession()
     val searchState = getSearchState()

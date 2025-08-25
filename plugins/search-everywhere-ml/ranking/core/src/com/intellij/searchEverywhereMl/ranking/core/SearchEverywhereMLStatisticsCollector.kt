@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.searchEverywhereMl.ranking.core
 
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereEssentialContributorMarker
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereMixedListInfo
 import com.intellij.ide.actions.searcheverywhere.SearchRestartReason
 import com.intellij.ide.util.gotoByName.GotoActionModel
@@ -65,7 +66,17 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
   ) {
     if (!isLoggingEnabled) return
 
-    val contributorFeatures = searchResults.map { it.contributor }.distinct()
+    // If ML essential contributor marker is available, we will get the list of contributors from it,
+    // based on the predictions it has made.
+    // Otherwise, we will take it from the list of results
+    val contributors = SearchEverywhereEssentialContributorMarker.getInstanceOrNull()
+                         ?.let { it as SearchEverywhereEssentialContributorMlMarker }
+                         ?.getCachedPredictionsForState(searchState)
+                         ?.keys
+                       ?: searchResults.map { it.contributor }.distinct()
+
+
+    val contributorFeatures = contributors
       .map { contributor ->
         val contributorFeatures = SearchEverywhereContributorFeaturesProvider.getFeatures(contributor, mixedListInfo, searchState.sessionStartTime)
         val essentialnessFeatures = SearchEverywhereContributorFeaturesProvider.getEssentialContributorFeatures(searchState, contributor)
