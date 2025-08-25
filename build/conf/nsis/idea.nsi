@@ -1080,9 +1080,9 @@ Function un.onInit
     StrCpy $R0 "$LOCALAPPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe"
     CopyFiles "$OUTDIR\Uninstall.exe" "$R0"
     ${If} ${Silent}
-      ExecWait '$R0 /S _?=$INSTDIR'
+      ExecWait '"$R0" /S _?=$INSTDIR'
     ${Else}
-      ExecWait '$R0 _?=$INSTDIR'
+      ExecWait '"$R0" _?=$INSTDIR'
     ${EndIf}
     Delete "$R0"
     RMDir "$INSTDIR\bin"
