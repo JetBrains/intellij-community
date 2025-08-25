@@ -165,6 +165,11 @@ public class KotlinReferenceTypeHintsProviderTestGenerated extends AbstractKotli
         runTest("testData/codeInsight/hints/types/JavaNonNullableArray.kt");
     }
 
+    @TestMetadata("JavaTypeWithWarningLevelNullability.kt")
+    public void testJavaTypeWithWarningLevelNullability() throws Exception {
+        runTest("testData/codeInsight/hints/types/JavaTypeWithWarningLevelNullability.kt");
+    }
+
     @TestMetadata("LambdaReturnType.kt")
     public void testLambdaReturnType() throws Exception {
         runTest("testData/codeInsight/hints/types/LambdaReturnType.kt");
