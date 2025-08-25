@@ -54,8 +54,8 @@ class BuildMessagesImpl private constructor(
 
   override fun getDebugLog(): String = debugLogger.getOutput()
 
-  override fun error(message: String): Unit = errorImpl(message, cause = null)
-  override fun error(message: String, cause: Throwable): Unit = errorImpl(message, cause)
+  override fun logErrorAndThrow(message: String): Unit = errorImpl(message, cause = null)
+  override fun logErrorAndThrow(message: String, cause: Throwable): Unit = errorImpl(message, cause)
 
   private fun errorImpl(message: String, cause: Throwable? = null) {
     processMessage(

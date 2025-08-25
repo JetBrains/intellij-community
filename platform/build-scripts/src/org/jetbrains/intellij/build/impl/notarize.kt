@@ -8,7 +8,6 @@ import com.jetbrains.notary.extensions.notarize
 import com.jetbrains.notary.models.SubmissionResponse
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions.Companion.MAC_NOTARIZE_STEP
@@ -66,10 +65,10 @@ internal suspend fun notarize(sitFile: Path, context: BuildContext) {
         context.messages.info("Notarization of $sitFile successful")
       }
       SubmissionResponse.Status.IN_PROGRESS, null -> {
-        context.messages.error("Notarization of $sitFile timed out")
+        context.messages.logErrorAndThrow("Notarization of $sitFile timed out")
       }
       SubmissionResponse.Status.INVALID, SubmissionResponse.Status.REJECTED -> {
-        context.messages.error("Notarization of $sitFile failed, see logs above")
+        context.messages.logErrorAndThrow("Notarization of $sitFile failed, see logs above")
       }
     }
     context.notifyArtifactBuilt(logFile)

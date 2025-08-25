@@ -54,7 +54,7 @@ private fun verifyJsonBySchema(jsonData: String, jsonSchemaFile: Path, messages:
   val schema = JsonSchemaFactory.getInstance(SpecVersion.VersionFlag.V7).getSchema(Files.readString(jsonSchemaFile))
   val errors = schema.validate(ObjectMapper().readTree(jsonData))
   if (!errors.isEmpty()) {
-    messages.error("Unable to validate JSON against ${jsonSchemaFile}:\n${errors.joinToString("\n")}\nfile content:\n${jsonData}")
+    messages.logErrorAndThrow("Unable to validate JSON against ${jsonSchemaFile}:\n${errors.joinToString("\n")}\nfile content:\n${jsonData}")
   }
 }
 

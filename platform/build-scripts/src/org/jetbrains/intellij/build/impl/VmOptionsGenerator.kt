@@ -55,7 +55,7 @@ object VmOptionsGenerator {
       val builtinPluginsRepoUrl = artifactsServer.urlToArtifact(context, "${context.nonBundledPlugins.name}/plugins.xml")
       if (builtinPluginsRepoUrl != null) {
         if (builtinPluginsRepoUrl.startsWith("http:")) {
-          context.messages.error("Insecure artifact server: ${builtinPluginsRepoUrl}")
+          context.messages.logErrorAndThrow("Insecure artifact server: ${builtinPluginsRepoUrl}")
         }
         return builtinPluginsRepoUrl
       }

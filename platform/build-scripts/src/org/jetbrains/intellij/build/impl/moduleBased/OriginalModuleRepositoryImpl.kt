@@ -30,13 +30,13 @@ internal class OriginalModuleRepositoryImpl(private val context: CompilationCont
 
   init {
     if (Files.notExists(repositoryPath)) {
-      context.messages.error("Runtime module repository wasn't generated during compilation: $repositoryPath doesn't exist. If you run scripts from the IDE, please make sure that DevKit plugin is installed and enabled.")
+      context.messages.logErrorAndThrow("Runtime module repository wasn't generated during compilation: $repositoryPath doesn't exist. If you run scripts from the IDE, please make sure that DevKit plugin is installed and enabled.")
     }
     val rawData = try {
       RuntimeModuleRepositorySerialization.loadFromCompactFile(repositoryPath)
     }
     catch (e: MalformedRepositoryException) {
-      context.messages.error("Failed to load runtime module repository: ${e.message}", e)
+      context.messages.logErrorAndThrow("Failed to load runtime module repository: ${e.message}", e)
       throw e
     }
     rawRepositoryData = if (mapping != null) withRemappedPaths(rawData, mapping) else rawData

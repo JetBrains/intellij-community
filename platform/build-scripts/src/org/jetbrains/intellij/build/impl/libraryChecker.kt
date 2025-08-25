@@ -37,7 +37,7 @@ internal suspend fun checkLibraryUrls(context: BuildContext, licenses: List<Libr
       errors += "Unhandled exception: ${e.message}"
     }
     if (errors.isNotEmpty()) {
-      context.messages.error("Library URLs check failed. Errors:\n${errors.joinToString("\n")}")
+      context.messages.logErrorAndThrow("Library URLs check failed. Errors:\n${errors.joinToString("\n")}")
     }
   }
 }

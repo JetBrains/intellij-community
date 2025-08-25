@@ -13,9 +13,9 @@ interface BuildMessages {
   /**
    * Report an error and stop the build process
    */
-  fun error(message: String)
+  fun logErrorAndThrow(message: String)
 
-  fun error(message: String, cause: Throwable)
+  fun logErrorAndThrow(message: String, cause: Throwable)
 
   fun compilationErrors(compilerName: String, messages: List<String>)
 

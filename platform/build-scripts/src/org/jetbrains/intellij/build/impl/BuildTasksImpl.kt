@@ -552,7 +552,7 @@ private suspend fun checkProductProperties(context: BuildContext) {
   properties.embeddedFrontendRootModule?.let { embeddedFrontendRootModule ->
     checkModule(embeddedFrontendRootModule, "productProperties.embeddedFrontendRootModule", context)
     if (findProductModulesFile(context, embeddedFrontendRootModule) == null) {
-      context.messages.error(
+      context.messages.logErrorAndThrow(
         "Cannot find product-modules.xml file in sources of '$embeddedFrontendRootModule' module specified as " +
         "'productProperties.embeddedFrontendRootModule'."
       )
@@ -561,7 +561,7 @@ private suspend fun checkProductProperties(context: BuildContext) {
   properties.rootModuleForModularLoader?.let { rootModule ->
     checkModule(rootModule, "productProperties.rootModuleForModularLoader", context)
     if (properties.productLayout.bundledPluginModules.isNotEmpty()) {
-      context.messages.error(
+      context.messages.logErrorAndThrow(
         """
         |'${properties.javaClass.name}' uses module-based loader, so the following bundled plugins must be specified in product-modules.xml file 
         |located in '$rootModule', not via 'productLayout.bundledPluginModules' property: 
@@ -717,7 +717,7 @@ private fun checkModules(modules: Collection<String?>?, fieldName: String, conte
 
 private fun checkModule(moduleName: String?, fieldName: String, context: CompilationContext) {
   if (moduleName != null && context.findModule(moduleName) == null) {
-    context.messages.error("Module '$moduleName' from $fieldName isn't found in the project")
+    context.messages.logErrorAndThrow("Module '$moduleName' from $fieldName isn't found in the project")
   }
 }
 
@@ -1053,7 +1053,7 @@ private suspend fun lookForJunkFiles(context: BuildContext, paths: List<Path>) {
   }
 
   if (result.isNotEmpty()) {
-    context.messages.error(result.joinToString("\n", prefix = "Junk files:\n"))
+    context.messages.logErrorAndThrow(result.joinToString("\n", prefix = "Junk files:\n"))
   }
 }
 

@@ -347,7 +347,7 @@ class MavenCentralPublication(
             parseDeploymentState(response)
           })
           when (deploymentState) {
-            DeploymentState.FAILED -> context.messages.error("$deploymentId status is $deploymentState")
+            DeploymentState.FAILED -> context.messages.logErrorAndThrow("$deploymentId status is $deploymentState")
             DeploymentState.VALIDATED if type == PublishingType.USER_MANAGED -> break
             DeploymentState.PUBLISHED if type == PublishingType.AUTOMATIC -> {
               artifacts.forEach {
