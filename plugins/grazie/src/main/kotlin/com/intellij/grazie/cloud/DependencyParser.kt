@@ -34,6 +34,7 @@ import org.languagetool.language.English
 
 object DependencyParser {
   private val LOG = Logger.getInstance(DependencyParser::class.java)
+  private val cachedTrees = ContainerUtil.createSoftKeySoftValueMap<String, Tree>()
 
   @JvmStatic
   fun getParser(text: TextContent, minimal: Boolean): AsyncBatchParser<Tree>? {
@@ -62,7 +63,11 @@ object DependencyParser {
         val support = obtainSupport(language)
         if (support != null) {
           @Suppress("UNCHECKED_CAST")
-          return sentences.associateWith { Tree.createFlatTree(support, it.sentence) } as LinkedHashMap<SentenceWithExclusions, Tree?>
+          return sentences.associateWith {
+            cachedTrees.getOrPut(it.sentence) {
+              Tree.createFlatTree(support, it.sentence)
+            }
+          } as LinkedHashMap<SentenceWithExclusions, Tree?>
         }
 
         return LinkedHashMap()
