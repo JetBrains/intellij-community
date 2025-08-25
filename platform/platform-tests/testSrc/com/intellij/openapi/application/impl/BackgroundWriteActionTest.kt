@@ -3,6 +3,7 @@ package com.intellij.openapi.application.impl
 
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.runBlockingCancellable
@@ -749,6 +750,33 @@ class BackgroundWriteActionTest {
     }
     finally {
       threadingSupport.removeWriteActionListener(listener)
+    }
+  }
+
+  @Test
+  fun `rogue read action during reacquisition of write lock of writeAction`(): Unit = timeoutRunBlocking {
+    val job = Job(coroutineContext.job)
+    withContext(Dispatchers.EDT) {
+      edtWriteAction {
+        (application as ApplicationImpl).executeSuspendingWriteAction(null, "") {
+          launch(Dispatchers.Default) {
+            readAction {
+              job.asCompletableFuture().join()
+            }
+          }
+          Thread.sleep(50)
+          launch(Dispatchers.Default) {
+            delay(100)
+            launch {
+              readAction {
+              }
+            }
+            delay(50)
+            job.complete()
+            assertTrue(ApplicationManagerEx.getApplicationEx().isWriteActionPending)
+          }
+        }
+      }
     }
   }
 }
