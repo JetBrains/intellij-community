@@ -41,6 +41,9 @@ object McpClientDetector {
     runCatching {
       globalClients.addIfNotNull(detectWindsurf())
     }
+    runCatching {
+      globalClients.addIfNotNull(detectGoose())
+    }
 
     return globalClients
   }
@@ -159,6 +162,23 @@ object McpClientDetector {
 
     if (looksLikeMcpJson(claudeCodeConfigPath)) {
       return McpClient(MCPClientNames.CLAUDE_CODE_PROJECT, claudeCodeConfigPath)
+    }
+    return null
+  }
+
+  private fun detectGoose(): McpClient? {
+    val configPath = when {
+      SystemInfo.isMac -> "~/.config/goose/config.yaml"
+      SystemInfo.isWindows -> System.getenv("APPDATA")?.let { "$it/goose/config.yaml" }
+      SystemInfo.isLinux -> "~/.config/goose/config.yaml"
+      else -> null
+    }
+    if (configPath == null) return null
+    val path = Paths.get(FileUtil.expandUserHome(configPath))
+    
+    // Check if Goose config directory exists (parent of config.yaml)
+    if (path.parent.exists() && path.parent.toFile().isDirectory()) {
+      return GooseClient(path)
     }
     return null
   }
