@@ -3,7 +3,7 @@ import com.intellij.util.concurrency.ThreadingAssertions;
 
 public class SubtypingPolymorphism {
   public void testMethod() {
-    Service[] services = {new FileService(), new NetworkService(), new DatabaseService()};
+    Service[] services = {new FileService(), new UIService(), new DatabaseService()};
     for (Service service : services) {
       service.execute();
     }

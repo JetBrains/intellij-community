@@ -1,12 +1,14 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.threadingModelHelper
 
+import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiMethodCallExpression
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiModifier
+import com.intellij.psi.search.searches.ClassInheritorsSearch
 import com.intellij.psi.util.InheritanceUtil
+import com.intellij.util.Processor
 
 class LockReqsDetector(private val patterns: LockReqsPatterns = DefaultLockReqsPatterns()) {
 
@@ -27,13 +29,10 @@ class LockReqsDetector(private val patterns: LockReqsPatterns = DefaultLockReqsP
     patterns.assertionMethods[className]?.get(methodName)?.let { lockType ->
       requirements.add(LockRequirement(method, lockType, RequirementReason.ASSERTION))
     }
-    if (isSwingMethod(method)) requirements.add(LockRequirement(method, LockType.EDT, RequirementReason.SWING_COMPONENT))
+    if (isSwingMethod(method)) {
+      requirements.add(LockRequirement(method, LockType.EDT, RequirementReason.SWING_COMPONENT))
+    }
     return requirements
-  }
-
-  private fun isSwingComponent(className: String): Boolean {
-    return patterns.edtRequiredClasses.contains(className) ||
-           patterns.edtRequiredPackages.any { className.startsWith("$it.") }
   }
 
   private fun isSwingMethod(method: PsiMethod): Boolean {
@@ -45,24 +44,13 @@ class LockReqsDetector(private val patterns: LockReqsPatterns = DefaultLockReqsP
     }
   }
 
-  fun isAsyncBoundary(method: PsiMethod): Boolean {
-    return method.name in patterns.asyncMethods || method.containingClass?.qualifiedName in patterns.asyncClasses
+  private fun isSwingComponent(className: String): Boolean {
+    return patterns.edtRequiredClasses.contains(className) ||
+           patterns.edtRequiredPackages.any { className.startsWith("$it.") }
   }
 
-  fun isMessageBusCall(expression: PsiMethodCallExpression): Boolean {
-    val method = expression.resolveMethod() ?: return false
-    val containingClass = method.containingClass?.qualifiedName ?: return false
-    return patterns.messageBusClasses.contains(containingClass) && method.name in patterns.messageBusMethods
-  }
-
-  fun extractMessageBusTopic(expression: PsiMethodCallExpression): String? {
-    val method = expression.resolveMethod() ?: return null
-    if (method.name == "syncPublisher") {
-      val returnType = method.returnType as? PsiClassType ?: return null
-      val resolvedTopicInterface = returnType.resolve() ?: return null
-      return resolvedTopicInterface.qualifiedName
-    }
-    return null
+  fun isAsyncDispatch(method: PsiMethod): Boolean {
+    return method.name in patterns.asyncMethods && method.containingClass?.qualifiedName in patterns.asyncClasses
   }
 
   fun isPolymorphicCall(method: PsiMethod): Boolean {
@@ -71,5 +59,29 @@ class LockReqsDetector(private val patterns: LockReqsPatterns = DefaultLockReqsP
       }) return false
     val containingClass = method.containingClass ?: return false
     return !containingClass.hasModifierProperty(PsiModifier.FINAL)
+  }
+
+  fun isMessageBusCall(method: PsiMethod): Boolean {
+    val containingClass = method.containingClass?.qualifiedName ?: return false
+    return patterns.messageBusClasses.contains(containingClass) && method.name in patterns.messageBusSyncMethods
+  }
+
+  fun extractMessageBusTopic(method: PsiMethod): PsiClass? {
+    if (method.name in patterns.messageBusSyncMethods) {
+      val returnType = method.returnType as? PsiClassType ?: return null
+      val resolvedTopicInterface = returnType.resolve() ?: return null
+      return resolvedTopicInterface
+    }
+    return null
+  }
+
+  fun findTopicListeners(topicInterface: PsiClass, config: AnalysisConfig): List<PsiClass> {
+    val listeners = mutableListOf<PsiClass>()
+    val query = ClassInheritorsSearch.search(topicInterface, config.scope, true)
+    query.forEach(Processor {
+      if (listeners.size > config.maxImplementations) return@Processor false
+      listeners.add(it)
+    })
+    return listeners
   }
 }

@@ -10,11 +10,11 @@ import org.jetbrains.idea.devkit.DevkitJavaTestsUtil
 @TestDataPath($$"$CONTENT_ROOT/testData/threadingModelHelper/")
 class LockReqsUnitTest : BasePlatformTestCase() {
 
-  private lateinit var analyzer: LockReqsAnalyzer
+  private lateinit var analyzer: LockReqsAnalyzerDFS
 
   override fun setUp() {
     super.setUp()
-    analyzer = LockReqsAnalyzer()
+    analyzer = LockReqsAnalyzerDFS()
     myFixture.addFileToProject("com/intellij/util/concurrency/annotations.java", """
         package com.intellij.util.concurrency.annotations;
         public @interface RequiresReadLock {}
@@ -44,20 +44,20 @@ class LockReqsUnitTest : BasePlatformTestCase() {
   override fun getBasePath() = DevkitJavaTestsUtil.TESTDATA_PATH + "threadingModelHelper/"
 
   fun testNoLockRequirements() {
-    val result = doTest("NoLockRequirements", "testMethod")
+    val result = doTest("NoLockRequirements")
     val actualPaths = formatResult(result)
     assertTrue(actualPaths.isEmpty())
   }
 
   fun testAssertionInNestedBlock() {
-    val result = doTest("AssertionInNestedBlock", "testMethod")
+    val result = doTest("AssertionInNestedBlock")
     val expectedPaths = listOf("AssertionInNestedBlock.testMethod => READ.ASSERTION")
     val actualPaths = formatResult(result)
     assertEquals(expectedPaths.sorted(), actualPaths.sorted())
   }
 
   fun testAnnotationInChain() {
-    val result = doTest("AnnotationInChain", "testMethod")
+    val result = doTest("AnnotationInChain")
     val expectedPaths = listOf("AnnotationInChain.testMethod -> AnnotationInChain.intermediateMethod" +
                                " -> AnnotationInChain.targetMethod => READ.ANNOTATION")
     val actualPaths = formatResult(result)
@@ -65,7 +65,7 @@ class LockReqsUnitTest : BasePlatformTestCase() {
   }
 
   fun testBothAnnotationAndAssertion() {
-    val result = doTest("BothAnnotationAndAssertion", "testMethod")
+    val result = doTest("BothAnnotationAndAssertion")
     val expectedPaths = listOf("BothAnnotationAndAssertion.testMethod => WRITE.ANNOTATION",
                                "BothAnnotationAndAssertion.testMethod => BGT.ASSERTION")
     val actualPaths = formatResult(result)
@@ -73,22 +73,22 @@ class LockReqsUnitTest : BasePlatformTestCase() {
   }
 
   fun testCyclicRecursiveCalls() {
-    val result = doTest("CyclicRecursiveCalls", "testMethod")
+    val result = doTest("CyclicRecursiveCalls")
     val expectedPaths = listOf("CyclicRecursiveCalls.testMethod -> CyclicRecursiveCalls.methodB => READ.ANNOTATION")
     val actualPaths = formatResult(result)
     assertEquals(expectedPaths.sorted(), actualPaths.sorted())
   }
 
   fun testDifferentClassesMethods() {
-    val result = doTest("DifferentClassesMethods", "testMethod")
+    val result = doTest("DifferentClassesMethods")
     val expectedPaths = listOf("DifferentClassesMethods.testMethod -> Helper.helperMethod -> Service.serviceMethod => EDT.ANNOTATION",
-                               "DifferentClassesMethods.testMethod -> Helper.helperMethod -> Service.serviceMethod => WRITE.ASSERTION")
+                               "DifferentClassesMethods.testMethod -> Helper.helperMethod => WRITE.ASSERTION")
     val actualPaths = formatResult(result)
     assertEquals(expectedPaths.sorted(), actualPaths.sorted())
   }
 
   fun testMultipleAssertionsInMethod() {
-    val result = doTest("MultipleAssertionsInMethod", "testMethod")
+    val result = doTest("MultipleAssertionsInMethod")
     val expectedPaths = listOf("MultipleAssertionsInMethod.testMethod => READ.ASSERTION")
     val actualPaths = formatResult(result)
     assertEquals(1, actualPaths.size)
@@ -97,7 +97,7 @@ class LockReqsUnitTest : BasePlatformTestCase() {
 
 
   fun testLambdaWithMethodReference() {
-    val result = doTest("LambdaWithMethodReference", "testMethod")
+    val result = doTest("LambdaWithMethodReference")
     val expectedPaths = listOf("LambdaWithMethodReference.testMethod -> LambdaWithMethodReference.processItem => READ.ASSERTION")
     val actualPaths = formatResult(result)
     assertEquals(expectedPaths.sorted(), actualPaths.sorted())
@@ -105,7 +105,7 @@ class LockReqsUnitTest : BasePlatformTestCase() {
   }
 
   fun testSubtypingPolymorphism() {
-    val result = doTest("SubtypingPolymorphism", "testMethod")
+    val result = doTest("SubtypingPolymorphism")
     val expectedPaths = listOf(
       "SubtypingPolymorphism.testMethod -> FileService.execute => READ.ANNOTATION",
       "SubtypingPolymorphism.testMethod -> UIService.execute => EDT.ASSERTION",
@@ -115,11 +115,11 @@ class LockReqsUnitTest : BasePlatformTestCase() {
     assertEquals(expectedPaths.sorted(), actualPaths.sorted())
   }
 
-  private fun doTest(className: String, methodName: String): AnalysisResult {
+  private fun doTest(className: String): AnalysisResult {
     val fileName = "${getTestName(false)}.java"
     val psiJavaFile = myFixture.configureByFile(fileName) as PsiJavaFile
     val targetClass = psiJavaFile.classes.find { it.name == className } ?: error("Could not find class $className")
-    val targetMethod = targetClass.methods.find { it.name == methodName } ?: error("Could not find method $methodName")
+    val targetMethod = targetClass.methods.find { it.name == testMethodName } ?: error("Could not find method $testMethodName")
     return analyzer.analyzeMethod(targetMethod)
   }
 
@@ -130,5 +130,9 @@ class LockReqsUnitTest : BasePlatformTestCase() {
       "$chain => $requirement"
     }
     return actualPaths
+  }
+
+  companion object {
+    private const val testMethodName = "testMethod"
   }
 }

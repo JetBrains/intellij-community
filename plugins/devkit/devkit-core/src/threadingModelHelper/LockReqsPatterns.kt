@@ -9,7 +9,7 @@ interface LockReqsPatterns {
   val asyncClasses: Set<String>
   val asyncMethods: Set<String>
   val messageBusClasses: Set<String>
-  val messageBusMethods: Set<String>
+  val messageBusSyncMethods: Set<String>
   val safeSwingMethods: Set<String>
 }
 
@@ -66,12 +66,11 @@ class DefaultLockReqsPatterns : LockReqsPatterns {
   )
 
   override val messageBusClasses: Set<String> = setOf(
-    "com.intellij.util.messages.MessageBus",
-    "com.intellij.util.messages.MessageBusConnection"
+    "com.intellij.util.messages.MessageBus"
   )
 
-  override val messageBusMethods: Set<String> = setOf(
-    "syncPublisher", "connect", "simpleConnect"
+  override val messageBusSyncMethods: Set<String> = setOf(
+    "syncPublisher"
   )
 
   override val safeSwingMethods: Set<String> = setOf()

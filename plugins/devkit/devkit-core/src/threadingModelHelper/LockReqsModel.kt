@@ -2,6 +2,7 @@
 package org.jetbrains.idea.devkit.threadingModelHelper
 
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.search.GlobalSearchScope
@@ -47,7 +48,7 @@ data class ExecutionPath(
 data class AnalysisResult(
   val method: PsiMethod,
   val paths: Set<ExecutionPath>,
-  val messageBusTopics: Set<String> = emptySet(),
+  val messageBusTopics: Set<PsiClass> = emptySet(),
   val swingComponents: Set<MethodSignature> = emptySet(),
 )
 

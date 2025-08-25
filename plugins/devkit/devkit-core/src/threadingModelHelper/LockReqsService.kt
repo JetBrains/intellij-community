@@ -20,7 +20,7 @@ class LockReqsService(private val project: Project) {
   var onResultsUpdated: ((AnalysisResult?) -> Unit)? = null
 
   fun updateResults(method: PsiMethod) {
-    val analyzer = LockReqsAnalyzer()
+    val analyzer = LockReqsAnalyzerDFS()
     _currentResult = analyzer.analyzeMethod(method)
     onResultsUpdated?.invoke(_currentResult)
 

@@ -11,14 +11,13 @@ class DifferentClassesMethods {
     void helperMethod() {
       Service service = new Service();
       service.serviceMethod();
+      ThreadingAssertions.assertWriteAccess();
     }
   }
 
   class Service {
     @RequiresEdt
-    void serviceMethod() {
-      ThreadingAssertions.assertWriteAccess();
-    }
+    void serviceMethod() {}
   }
 }
 
