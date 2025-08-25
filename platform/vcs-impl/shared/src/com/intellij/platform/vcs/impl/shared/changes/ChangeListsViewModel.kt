@@ -34,7 +34,8 @@ class ChangeListsViewModel(
 
   val changeListManagerState: StateFlow<ChangeListManagerState> = changeListsApiFlow(checkRegistry = false) { api, projectId ->
     emitAll(api.getChangeListManagerState(projectId))
-  }.stateIn(cs, SharingStarted.Eagerly, ChangeListManagerState.Frozen(""))
+  }.stateIn(cs, SharingStarted.Eagerly,
+            ChangeListManagerState.Updating(ChangeListManagerState.FileHoldersState(true, true)))
 
   val changeLists: StateFlow<ChangeLists> = changeListsApiFlow { api, projectId ->
     emitAll(api.getChangeLists(projectId).map { changeLists ->

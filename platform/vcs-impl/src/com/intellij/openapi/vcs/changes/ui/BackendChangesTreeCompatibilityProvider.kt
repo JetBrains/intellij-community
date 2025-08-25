@@ -49,16 +49,8 @@ internal class BackendChangesTreeCompatibilityProvider : ChangesTreeCompatibilit
     if (!project.isDisposed) IgnoredViewDialog(project).show()
   }
 
-  override fun isIgnoredInUpdateMode(project: Project): Boolean {
-    return ChangeListManagerImpl.getInstanceImpl(project).isIgnoredInUpdateMode
-  }
-
   override fun showUnversionedViewDialog(project: Project) {
     if (!project.isDisposed) UnversionedViewDialog(project).show()
-  }
-
-  override fun isUnversionedInUpdateMode(project: Project): Boolean {
-    return ChangeListManagerImpl.getInstanceImpl(project).isUnversionedInUpdateMode
   }
 
   override fun resolveLocalFile(path: String): VirtualFile? = LocalFileSystem.getInstance().findFileByPath(path)

@@ -1638,13 +1638,20 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
   @Override
   public @NotNull ChangeListManagerState getChangeListManagerState() {
     String freezeReason = isFreezed();
+    ChangeListManagerState.FileHoldersState fileHoldersState = getFileHoldersState();
     if (freezeReason != null) {
-      return new ChangeListManagerState.Frozen(freezeReason);
+      return new ChangeListManagerState.Frozen(freezeReason, fileHoldersState);
     } else if (isInUpdate()) {
-      return ChangeListManagerState.Updating.INSTANCE;
+      return new ChangeListManagerState.Updating(fileHoldersState);
     } else {
-      return ChangeListManagerState.Default.INSTANCE;
+      return new ChangeListManagerState.Default(fileHoldersState);
     }
+  }
+
+  private @NotNull ChangeListManagerState.FileHoldersState getFileHoldersState() {
+    boolean ignoredInUpdateMode = myComposite.getIgnoredFileHolder().isInUpdatingMode();
+    boolean unversionedInUpdateMode = myComposite.getUnversionedFileHolder().isInUpdatingMode();
+    return new ChangeListManagerState.FileHoldersState(unversionedInUpdateMode, ignoredInUpdateMode);
   }
 
   public void replaceCommitMessage(@NotNull String oldMessage, @NotNull String newMessage) {

@@ -6,10 +6,23 @@ import org.jetbrains.annotations.Nls
 
 @Serializable
 sealed class ChangeListManagerState {
+  abstract val fileHoldersState: FileHoldersState
+
   @Serializable
-  data object Default : ChangeListManagerState()
+  data class Default(override val fileHoldersState: FileHoldersState) : ChangeListManagerState()
+
   @Serializable
-  data object Updating : ChangeListManagerState()
+  data class Updating(override val fileHoldersState: FileHoldersState) : ChangeListManagerState()
+
   @Serializable
-  data class Frozen(val reason: @Nls(capitalization = Nls.Capitalization.Sentence) String) : ChangeListManagerState()
+  data class Frozen(
+    val reason: @Nls(capitalization = Nls.Capitalization.Sentence) String,
+    override val fileHoldersState: FileHoldersState,
+  ) : ChangeListManagerState()
+
+  @Serializable
+  data class FileHoldersState(
+    val unversionedInUpdateMode: Boolean,
+    val ignoredInUpdateMode: Boolean,
+  )
 }

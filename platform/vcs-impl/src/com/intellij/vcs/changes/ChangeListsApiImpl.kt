@@ -43,6 +43,9 @@ internal class ChangeListsApiImpl : ChangeListsApi {
         ChangeListManager.getInstance(project).changeListManagerState
 
       override fun initMessageBusConnection(scope: ProducerScope<ChangeListManagerState>, connection: SimpleMessageBusConnection, project: Project) {
+        connection.subscribe(VcsManagedFilesHolder.TOPIC, VcsManagedFilesHolder.VcsManagedFilesHolderListener {
+          scope.trySend(ChangeListManager.getInstance(project).changeListManagerState)
+        })
         connection.subscribe(ChangesListManagerStateListener.TOPIC, ChangesListManagerStateListener.adapter {
           scope.trySend(ChangeListManager.getInstance(project).changeListManagerState)
         })
