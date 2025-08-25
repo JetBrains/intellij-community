@@ -125,9 +125,8 @@ object TestKotlinArtifacts {
     }
 
     private fun findHttpFile(label: BazelLabel): KotlinTestsDependenciesUtil.HttpFile {
-        return KotlinTestsDependenciesUtil.kotlinTestDependenciesHttpFiles.find { it.name == label.repo && it.downloadFilePath == label.file }?.let {
-            it
-        } ?: error("Unable to find URL for '${label.asLabel}'")
+        return KotlinTestsDependenciesUtil.kotlinTestDependenciesHttpFiles.find { it.name == label.repo && it.downloadFilePath == label.file }
+            ?: error("Unable to find URL for '${label.asLabel}'")
     }
 
     private val cooperativeRepoRoot = PathManager.getHomeDir().parent.resolve("build/repo")
@@ -135,7 +134,6 @@ object TestKotlinArtifacts {
     private fun downloadFile(label: BazelLabel): Path {
         val httpFile = findHttpFile(label)
         val labelUrl = URI(httpFile.url)
-        val hash = httpFile.sha256
         // Kotlin plugin team use special workflow for simultaneous development Kotlin compiler and IDEA plugin.
         // In this scenario maven libraries with complier artifacts are replaced on locally deployed jars in the Kotlin repo folder.
         // To support test in this scenario, we need special handling urls with a custom hardcoded version.
@@ -198,7 +196,7 @@ object TestKotlinArtifacts {
             .resolve(label.file)
 
         // we could have a file from some previous launch, but with different content
-        // it is a valid scenario when file it is JAR without a version and url changed
+        // it is a valid scenario when the file is JAR without a version and url changed
         // we have to verify content
         @Suppress("IO_FILE_USAGE")
         if (target.exists() && areFilesEquals(dependency.toFile(), target)) {
