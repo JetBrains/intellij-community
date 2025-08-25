@@ -908,6 +908,7 @@ fun isProductWithTheOnlyDescriptor(platformPrefix: String): Boolean =
   platformPrefix == PlatformUtils.IDEA_PREFIX ||
   platformPrefix == PlatformUtils.WEB_PREFIX ||
   platformPrefix == PlatformUtils.DBE_PREFIX ||
+  platformPrefix == PlatformUtils.DATASPELL_PREFIX ||
   platformPrefix == PlatformUtils.GATEWAY_PREFIX ||
   platformPrefix == PlatformUtils.GIT_CLIENT_PREFIX
 
