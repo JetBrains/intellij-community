@@ -106,7 +106,7 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
     runCell()
     waitFor(timeout = timeout) {
       // TODO: what if the cell we ran doesn't have an execution label yet, and we are waiting for the previous one?
-      notebookCellExecutionInfos.last().getParent().x {
+      notebookCellExecutionInfos.isNotEmpty() && notebookCellExecutionInfos.last().getParent().x {
         contains(byAttribute("defaulticon", "greenCheckmark.svg"))
       }.present()
     }
