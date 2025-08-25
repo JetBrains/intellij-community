@@ -3,6 +3,8 @@ package org.jetbrains.plugins.terminal.block.completion.spec.impl.reworked
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.EelExecApi.RedirectStdErr
+import com.intellij.platform.eel.EelExecApi.RedirectTo
 import com.intellij.platform.eel.ExecuteProcessException
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.utils.awaitProcessResult
@@ -43,6 +45,7 @@ internal class ShellCommandExecutorReworked(private val eelDescriptor: EelDescri
         .spawnProcess(commandName)
         .args(arguments)
         .workingDirectory(eelDirectory)
+        .interactionOptions(RedirectStdErr(RedirectTo.STDOUT))
         .scope(scope) // Terminate the process if the coroutine was canceled
         .eelIt()
       val result = process.awaitProcessResult()
