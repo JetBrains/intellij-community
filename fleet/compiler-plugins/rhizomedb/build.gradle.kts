@@ -30,6 +30,7 @@ version = pluginVersion
 repositories {
   mavenCentral()
   if ("SNAPSHOT" in KOTLIN_VERSION || "dev" in KOTLIN_VERSION) {
+    maven("https://packages.jetbrains.team/maven/p/kt/bootstrap")
     mavenLocal()
   }
 }
