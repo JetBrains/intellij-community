@@ -220,7 +220,12 @@ class ReworkedTerminalView(
     }
 
     configureInlineCompletion(outputEditor, outputModel, coroutineScope, parentDisposable = this)
-    configureCommandCompletion(outputEditor, sessionModel)
+    configureCommandCompletion(
+      outputEditor,
+      sessionModel,
+      controller,
+      coroutineScope.childScope("TerminalCommandCompletion")
+    )
 
     terminalPanel = TerminalPanel(initialContent = outputEditor)
 
@@ -447,12 +452,17 @@ class ReworkedTerminalView(
     })
   }
 
-  private fun configureCommandCompletion(editor: Editor, sessionModel: TerminalSessionModel) {
+  private fun configureCommandCompletion(
+    editor: Editor,
+    sessionModel: TerminalSessionModel,
+    controller: TerminalSessionController,
+    coroutineScope: CoroutineScope,
+  ) {
     val eelDescriptor = LocalEelDescriptor // TODO: it should be determined by where shell is running to work properly in WSL and Docker
     val services = TerminalCommandCompletionServices(
       commandSpecsManager = ShellCommandSpecsManagerImpl.getInstance(),
       runtimeContextProvider = ShellRuntimeContextProviderReworkedImpl(project, sessionModel, eelDescriptor),
-      dataGeneratorsExecutor = ShellDataGeneratorsExecutorReworkedImpl()
+      dataGeneratorsExecutor = ShellDataGeneratorsExecutorReworkedImpl(controller, coroutineScope.childScope("ShellDataGeneratorsExecutorReworkedImpl"))
     )
     editor.putUserData(TerminalCommandCompletionServices.KEY, services)
   }

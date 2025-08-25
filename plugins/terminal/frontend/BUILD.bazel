@@ -40,6 +40,7 @@ jvm_library(
     "//platform/inline-completion/shared:inline-completion",
     "//plugins/terminal/completion",
     "//platform/eel-provider",
+    "@lib//:caffeine",
   ],
   runtime_deps = [":frontend_resources"]
 )
