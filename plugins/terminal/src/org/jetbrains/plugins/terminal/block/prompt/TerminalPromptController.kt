@@ -3,14 +3,17 @@ package org.jetbrains.plugins.terminal.block.prompt
 
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.TerminalCommandExecutor
+import org.jetbrains.plugins.terminal.block.completion.ShellCommandSpecsManagerImpl
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellDataGeneratorsExecutorImpl
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellRuntimeContextProviderImpl
+import org.jetbrains.plugins.terminal.block.completion.spec.impl.TerminalCommandCompletionServices
 import org.jetbrains.plugins.terminal.block.history.CommandHistoryManager
 import org.jetbrains.plugins.terminal.block.session.BlockTerminalSession
 import org.jetbrains.plugins.terminal.block.ui.invokeLater
@@ -21,9 +24,9 @@ import kotlin.properties.Delegates
 
 @ApiStatus.Internal
 class TerminalPromptController(
-  project: Project,
+  private val project: Project,
   private val editor: EditorEx,
-  session: BlockTerminalSession,
+  private val session: BlockTerminalSession,
   private val commandExecutor: TerminalCommandExecutor,
 ) {
   private val commandHistoryManager: CommandHistoryManager
@@ -47,10 +50,7 @@ class TerminalPromptController(
     editor.virtualFile!!.putUserData(TerminalPromptModel.KEY, model)
     editor.virtualFile!!.putUserData(ShellType.KEY, session.shellIntegration.shellType)
 
-    val shellRuntimeContextProvider = ShellRuntimeContextProviderImpl(project, session)
-    editor.putUserData(ShellRuntimeContextProviderImpl.KEY, shellRuntimeContextProvider)
-    val shellGeneratorsExecutor = ShellDataGeneratorsExecutorImpl(session)
-    editor.putUserData(ShellDataGeneratorsExecutorImpl.KEY, shellGeneratorsExecutor)
+    configureCommandCompletion(editor)
 
     commandHistoryManager = CommandHistoryManager(session, model)
 
@@ -66,6 +66,15 @@ class TerminalPromptController(
     }
 
     session.addCommandListener(bufferReporting, session)
+  }
+
+  private fun configureCommandCompletion(editor: Editor) {
+    val services = TerminalCommandCompletionServices(
+      commandSpecsManager = ShellCommandSpecsManagerImpl.getInstance(),
+      runtimeContextProvider = ShellRuntimeContextProviderImpl(project, session),
+      dataGeneratorsExecutor = ShellDataGeneratorsExecutorImpl(session)
+    )
+    editor.putUserData(TerminalCommandCompletionServices.KEY, services)
   }
 
   fun addListener(listener: PromptStateListener) {

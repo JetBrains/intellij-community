@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.terminal.block.completion.spec.impl
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Key
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.terminal.completion.ShellRuntimeContextProvider
@@ -63,9 +62,5 @@ class ShellRuntimeContextProviderImpl(
     ).apply {
       putUserData(PROJECT_KEY, project)
     }
-  }
-
-  companion object {
-    val KEY: Key<ShellRuntimeContextProviderImpl> = Key.create("IJShellRuntimeContextProvider")
   }
 }

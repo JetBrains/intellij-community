@@ -18,6 +18,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.isFocusAncestor
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.actions.TerminalActionUtil
@@ -36,6 +37,10 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.terminal.TerminalPanelMarker
 import org.jetbrains.plugins.terminal.block.TerminalContentView
+import org.jetbrains.plugins.terminal.block.completion.ShellCommandSpecsManagerImpl
+import org.jetbrains.plugins.terminal.block.completion.spec.impl.TerminalCommandCompletionServices
+import org.jetbrains.plugins.terminal.block.completion.spec.impl.reworked.ShellDataGeneratorsExecutorReworkedImpl
+import org.jetbrains.plugins.terminal.block.completion.spec.impl.reworked.ShellRuntimeContextProviderReworkedImpl
 import org.jetbrains.plugins.terminal.block.output.TerminalOutputEditorInputMethodSupport
 import org.jetbrains.plugins.terminal.block.output.TerminalTextHighlighter
 import org.jetbrains.plugins.terminal.block.reworked.*
@@ -215,6 +220,7 @@ class ReworkedTerminalView(
     }
 
     configureInlineCompletion(outputEditor, outputModel, coroutineScope, parentDisposable = this)
+    configureCommandCompletion(outputEditor, sessionModel)
 
     terminalPanel = TerminalPanel(initialContent = outputEditor)
 
@@ -439,6 +445,16 @@ class ReworkedTerminalView(
         }
       }
     })
+  }
+
+  private fun configureCommandCompletion(editor: Editor, sessionModel: TerminalSessionModel) {
+    val eelDescriptor = LocalEelDescriptor // TODO: it should be determined by where shell is running to work properly in WSL and Docker
+    val services = TerminalCommandCompletionServices(
+      commandSpecsManager = ShellCommandSpecsManagerImpl.getInstance(),
+      runtimeContextProvider = ShellRuntimeContextProviderReworkedImpl(project, sessionModel, eelDescriptor),
+      dataGeneratorsExecutor = ShellDataGeneratorsExecutorReworkedImpl()
+    )
+    editor.putUserData(TerminalCommandCompletionServices.KEY, services)
   }
 
   private inner class TerminalPanel(initialContent: Editor) : BorderLayoutPanel(), UiDataProvider, TerminalPanelMarker {

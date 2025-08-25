@@ -11,23 +11,20 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.terminal.completion.ShellCommandSpecCompletion
+import com.intellij.terminal.completion.ShellCommandSpecsManager
 import com.intellij.terminal.completion.ShellDataGeneratorsExecutor
 import com.intellij.terminal.completion.ShellRuntimeContextProvider
 import com.intellij.terminal.completion.spec.ShellCompletionSuggestion
 import com.intellij.terminal.completion.spec.ShellSuggestionType
 import org.jetbrains.plugins.terminal.LocalBlockTerminalRunner
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
-import org.jetbrains.plugins.terminal.block.completion.ShellCommandSpecsManagerImpl
 import org.jetbrains.plugins.terminal.block.completion.TerminalCommandCompletionShowingMode
 import org.jetbrains.plugins.terminal.block.completion.TerminalCompletionUtil
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators
-import org.jetbrains.plugins.terminal.block.completion.spec.impl.reworked.ShellDataGeneratorsExecutorReworkedImpl
-import org.jetbrains.plugins.terminal.block.completion.spec.impl.reworked.ShellRuntimeContextProviderReworkedImpl
+import org.jetbrains.plugins.terminal.block.completion.spec.impl.TerminalCommandCompletionServices
 import org.jetbrains.plugins.terminal.block.reworked.TerminalAliasesStorage
 import org.jetbrains.plugins.terminal.block.reworked.TerminalBlocksModel
-import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isReworkedTerminalEditor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isSuppressCompletion
 import org.jetbrains.plugins.terminal.exp.completion.TerminalShellSupport
@@ -38,7 +35,6 @@ internal class TerminalCommandSpecCompletionContributorGen2 : CompletionContribu
 
   override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
     if (!parameters.editor.isReworkedTerminalEditor) return
-    val sessionModel = parameters.editor.getUserData(TerminalSessionModel.KEY) ?: return
     val blocksModel = parameters.editor.getUserData(TerminalBlocksModel.KEY) ?: return
     val lastBlock = blocksModel.blocks.lastOrNull() ?: return
 
@@ -55,12 +51,17 @@ internal class TerminalCommandSpecCompletionContributorGen2 : CompletionContribu
       result.stopHere()
       return
     }
-    val shellSupport = TerminalShellSupport.findByShellType(ShellType.ZSH) ?: return
 
-    val eelDescriptor = LocalEelDescriptor // TODO: it should be determined by where shell is running to work properly in WSL and Docker
-    val runtimeContextProvider = ShellRuntimeContextProviderReworkedImpl(parameters.editor.project!!, sessionModel, eelDescriptor)
-    val generatorsExecutor = ShellDataGeneratorsExecutorReworkedImpl()
-    val context = TerminalCompletionContext(runtimeContextProvider, generatorsExecutor, shellSupport, parameters, ShellType.ZSH)
+    val shellSupport = TerminalShellSupport.findByShellType(ShellType.ZSH) ?: return
+    val completionServices = parameters.editor.getUserData(TerminalCommandCompletionServices.KEY) ?: return
+    val context = TerminalCompletionContext(
+      completionServices.commandSpecsManager,
+      completionServices.runtimeContextProvider,
+      completionServices.dataGeneratorsExecutor,
+      shellSupport,
+      parameters,
+      ShellType.ZSH
+    )
 
     val document = parameters.editor.document
     val caretOffset = parameters.editor.caretModel.offset
@@ -120,8 +121,11 @@ internal class TerminalCommandSpecCompletionContributorGen2 : CompletionContribu
     }
 
     val runtimeContext = context.runtimeContextProvider.getContext(tokens.last())
-    val completion = ShellCommandSpecCompletion(ShellCommandSpecsManagerImpl.getInstance(), context.generatorsExecutor,
-                                                context.runtimeContextProvider)
+    val completion = ShellCommandSpecCompletion(
+      context.commandSpecsManager,
+      context.generatorsExecutor,
+      context.runtimeContextProvider
+    )
     val commandExecutable = tokens.first()
     val commandArguments = tokens.subList(1, tokens.size)
 
@@ -272,6 +276,7 @@ internal class TerminalCommandSpecCompletionContributorGen2 : CompletionContribu
   }
 
   private class TerminalCompletionContext(
+    val commandSpecsManager: ShellCommandSpecsManager,
     val runtimeContextProvider: ShellRuntimeContextProvider,
     val generatorsExecutor: ShellDataGeneratorsExecutor,
     val shellSupport: TerminalShellSupport,
