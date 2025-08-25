@@ -23,9 +23,13 @@ class GroovyAvoidDependencyNamedArgumentsNotationInspectionVisitor(val holder: P
     val arguments = call.argumentList.expressionArguments
     val namedArguments = call.namedArguments
     if (arguments.isNotEmpty()) return
-    // check that there are only group, name and version named arguments
-    if (namedArguments.size != 3) return
-    if (namedArguments.map { it.labelName }.intersect(listOf("group", "name", "version")).size != 3) return
+    // check that there are only group, name and (optionally) version named arguments
+    val namedArgumentsNames = namedArguments.map { it.labelName }
+    when (namedArgumentsNames.size) {
+      2 -> if (!namedArgumentsNames.containsAll(setOf("group", "name"))) return
+      3 -> if (!namedArgumentsNames.containsAll(setOf("group", "name", "version"))) return
+      else -> return
+    }
     // check that all named arguments are string literals
     for (argument in namedArguments.map { it.expression }) {
       if (argument !is GrLiteral) return
