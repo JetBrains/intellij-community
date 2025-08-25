@@ -12,6 +12,7 @@ import java.nio.ByteOrder;
  * Implementation of {@link VarHandleWrapper} based on {@link Unsafe}, when the {@link java.lang.invoke.VarHandle} is not available in the classpath
  */
 @ReviseWhenPortedToJDK("11") // get rid of unsafe
+@ApiStatus.Obsolete
 @ApiStatus.Internal
 class VarHandleWrapperUnsafe extends VarHandleWrapper implements VarHandleWrapper.VarHandleWrapperFactory {
   private final long OFFSET;
