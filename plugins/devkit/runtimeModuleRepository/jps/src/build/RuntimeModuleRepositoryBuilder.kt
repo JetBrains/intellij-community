@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.runtimeModuleRepository.jps.build
 
+import com.intellij.devkit.runtimeModuleRepository.generator.JpsCompilationResourcePathsSchema
 import com.intellij.devkit.runtimeModuleRepository.generator.RuntimeModuleRepositoryGenerator
 import com.intellij.devkit.runtimeModuleRepository.generator.RuntimeModuleRepositoryValidator
 import com.intellij.devkit.runtimeModuleRepository.jps.impl.DevkitRuntimeModuleRepositoryJpsBundle
@@ -46,7 +47,8 @@ internal class RuntimeModuleRepositoryBuilder
     val descriptors: List<RawRuntimeModuleDescriptor>
     context.processMessage(ProgressMessage(DevkitRuntimeModuleRepositoryJpsBundle.message("progress.message.generating.intellij.modules.repository"), BuildTargetChunk(setOf(target))))
     val timeToCreateDescriptors = measureTimeMillis {
-      descriptors = RuntimeModuleRepositoryGenerator.generateRuntimeModuleDescriptors(project)
+      val resourcePathsSchema = JpsCompilationResourcePathsSchema(project)
+      descriptors = RuntimeModuleRepositoryGenerator.generateRuntimeModuleDescriptors(project, resourcePathsSchema)
     }
     LOG.info("${descriptors.size} descriptors are created in ${timeToCreateDescriptors}ms")
     

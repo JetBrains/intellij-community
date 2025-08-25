@@ -14,11 +14,6 @@ import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleDependency
-import org.jetbrains.jps.model.serialization.JpsMavenSettings
-import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
-import java.nio.file.Path
-import kotlin.io.path.Path
-import kotlin.io.path.invariantSeparatorsPathString
 
 object RuntimeModuleRepositoryGenerator {
   const val JAR_REPOSITORY_FILE_NAME: String = "module-descriptors.jar"
@@ -28,19 +23,16 @@ object RuntimeModuleRepositoryGenerator {
   /**
    * Generates the runtime module descriptors for all modules and libraries in [project].
    */
-  fun generateRuntimeModuleDescriptors(project: JpsProject): List<RawRuntimeModuleDescriptor> {
+  fun generateRuntimeModuleDescriptors(project: JpsProject, resourcePathsSchema: ResourcePathsSchema): List<RawRuntimeModuleDescriptor> {
     val descriptors = ArrayList<RawRuntimeModuleDescriptor>()
-    generateDescriptorsForModules(descriptors, project)
+    generateDescriptorsForModules(descriptors, resourcePathsSchema, project)
     val libraries = LinkedHashSet<JpsLibrary>()
     for (module in project.modules) {
       libraries.addAll(enumerateRuntimeDependencies(module).libraries)
     }
-    val resourcePathShortener = ResourcePathShortener(project)
     for (library in libraries) {
       val moduleId = getLibraryId(library)
-      val files = library.getPaths(JpsOrderRootType.COMPILED)
-      val resourcePaths = files.map { resourcePathShortener.shortenPathUsingMacros(it) }
-      descriptors.add(RawRuntimeModuleDescriptor.create(moduleId.stringId, resourcePaths, emptyList()))
+      descriptors.add(RawRuntimeModuleDescriptor.create(moduleId.stringId, resourcePathsSchema.libraryPaths(library), emptyList()))
     }
     return descriptors
   }
@@ -55,7 +47,7 @@ object RuntimeModuleRepositoryGenerator {
   const val GENERATE_DESCRIPTORS_FOR_TEST_MODULES: Boolean = true
 }
 
-private fun generateDescriptorsForModules(descriptors: MutableList<RawRuntimeModuleDescriptor>, project: JpsProject) {
+private fun generateDescriptorsForModules(descriptors: MutableList<RawRuntimeModuleDescriptor>, resourcePathsSchema: ResourcePathsSchema, project: JpsProject) {
   //it's better to get rid of such modules, but until it's done, we need to have this workaround to avoid duplicating IDs 
   val productionModulesWithTestRoots = HashSet<String>()
   val testModulesWithProductionRoots = HashSet<String>()
@@ -91,31 +83,13 @@ private fun generateDescriptorsForModules(descriptors: MutableList<RawRuntimeMod
   for (module in project.modules) {
     //if a module doesn't have production sources, it still makes sense to generate a descriptor for it, because it may be used from code
     if (!module.name.endsWith(RuntimeModuleId.TESTS_NAME_SUFFIX) || module.hasProductionSources) {
-      descriptors.add(createProductionPartDescriptor(module, ::getRuntimeModuleName))
+      descriptors.add(createProductionPartDescriptor(module, ::getRuntimeModuleName, resourcePathsSchema))
     }
     if (GENERATE_DESCRIPTORS_FOR_TEST_MODULES && module.hasTestSources) {
-      descriptors.add(createTestPartDescriptor(module, ::getRuntimeModuleName))
+      descriptors.add(createTestPartDescriptor(module, ::getRuntimeModuleName, resourcePathsSchema))
     }
   }
 }
-
-private class ResourcePathShortener(project: JpsProject) {
-  private val baseProjectDir = JpsModelSerializationDataService.getBaseDirectoryPath(project) 
-                               ?: error("Project wasn't loaded from .idea so its base directory cannot be determined")
-  private val mavenRepositoryPath = Path(JpsMavenSettings.getMavenRepositoryPath())
-  
-  /**
-   * Shortens the given path by replacing absolute paths with macros from [com.intellij.platform.runtime.repository.impl.ResourcePathMacros].
-   */
-  fun shortenPathUsingMacros(path: Path): String {
-    return when {
-      path.startsWith(baseProjectDir) -> $$"$PROJECT_DIR$/$${baseProjectDir.relativize(path).invariantSeparatorsPathString}"
-      path.startsWith(mavenRepositoryPath) -> $$"$MAVEN_REPOSITORY$/$${mavenRepositoryPath.relativize(path).invariantSeparatorsPathString}"
-      else -> path.invariantSeparatorsPathString
-    }
-  }
-}
-
 
 private val JpsModule.hasTestSources
   get() = sourceRoots.any { it.rootType in JavaModuleSourceRootTypes.TESTS }
@@ -123,13 +97,13 @@ private val JpsModule.hasTestSources
 private val JpsModule.hasProductionSources
   get() = sourceRoots.any { it.rootType in JavaModuleSourceRootTypes.PRODUCTION }
 
-private fun createProductionPartDescriptor(module: JpsModule, runtimeModuleNameGenerator: (JpsModule, Boolean) -> String): RawRuntimeModuleDescriptor {
+private fun createProductionPartDescriptor(module: JpsModule, runtimeModuleNameGenerator: (JpsModule, Boolean) -> String, resourcePathsSchema: ResourcePathsSchema): RawRuntimeModuleDescriptor {
   val dependencies = LinkedHashSet<String>()
   enumerateRuntimeDependencies(module).productionOnly().processModuleAndLibraries(
     { dependencies.add(runtimeModuleNameGenerator(it, false)) },
     { dependencies.add(getLibraryId(it).stringId) }
   )
-  val resourcePaths = if (module.hasProductionSources) listOf("production/${module.name}") else emptyList()
+  val resourcePaths = if (module.hasProductionSources) resourcePathsSchema.moduleOutputPaths(module) else emptyList()
   return RawRuntimeModuleDescriptor.create(runtimeModuleNameGenerator(module, false), resourcePaths, dependencies.toList())
 }
 
@@ -141,7 +115,7 @@ private fun createProductionPartDescriptor(module: JpsModule, runtimeModuleNameG
  * will increase a lot. So here we add such transitive test dependencies directly to the module descriptors. To avoid adding too many
  * dependencies, we add only those which aren't already available as transitive dependencies of explicitly added dependencies.
  */
-private fun createTestPartDescriptor(module: JpsModule, runtimeModuleNameGenerator: (JpsModule, Boolean) -> String): RawRuntimeModuleDescriptor {
+private fun createTestPartDescriptor(module: JpsModule, runtimeModuleNameGenerator: (JpsModule, Boolean) -> String, resourcePathsSchema: ResourcePathsSchema): RawRuntimeModuleDescriptor {
   val addedTransitiveModuleDependencies = HashSet<JpsModule>()
   val addedTransitiveLibraryDependencies = HashSet<JpsLibrary>()
 
@@ -177,7 +151,7 @@ private fun createTestPartDescriptor(module: JpsModule, runtimeModuleNameGenerat
     },
     { dependencies.add(getLibraryId(it).stringId) }
   )
-  val resourcePaths = if (module.hasTestSources) listOf("test/${module.name}") else emptyList()
+  val resourcePaths = if (module.hasTestSources) resourcePathsSchema.moduleTestOutputPaths(module) else emptyList()
   return RawRuntimeModuleDescriptor.create(runtimeModuleNameGenerator(module, true), resourcePaths, dependencies.toList())
 }
 
