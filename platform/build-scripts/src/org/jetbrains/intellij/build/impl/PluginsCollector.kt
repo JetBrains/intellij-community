@@ -198,6 +198,12 @@ suspend fun collectPluginDescriptors(
       continue
     }
 
+    // Even though Database plugin does not depend on Ultimate anymore,
+    // we do not include it in the Community IDEs
+    if (id == "com.intellij.database" && !allBundledPlugins.contains("com.intellij.modules.ultimate")) {
+      continue
+    }
+
     val declaredModules = HashSet<String>()
     fun addAliases(element: Element) {
       for (moduleElement in element.getChildren("module")) {
