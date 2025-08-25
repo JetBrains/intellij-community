@@ -779,7 +779,7 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
   }
 
   open fun runRestartButton(component: Component) {
-    coroutineScope.launch(Dispatchers.EDT + ModalityState.stateForComponent(component).asContextElement()) {
+    service<CoreUiCoroutineScopeHolder>().coroutineScope.launch(Dispatchers.EDT + ModalityState.stateForComponent(component).asContextElement()) {
       if (PluginManagerConfigurable.showRestartDialog() == Messages.YES) {
         needRestart = true
         createShutdownCallback = false
