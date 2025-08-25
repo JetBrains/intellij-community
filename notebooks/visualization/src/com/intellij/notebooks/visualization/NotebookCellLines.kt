@@ -3,8 +3,10 @@ package com.intellij.notebooks.visualization
 import com.intellij.lang.Language
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.EventDispatcher
 import com.intellij.util.keyFMap.KeyFMap
 import java.util.*
@@ -98,6 +100,12 @@ interface NotebookCellLines {
 
     fun getContentText(editor: Editor): String {
       val document = editor.document
+      return getContentText(document).toString()
+    }
+
+    fun getContentText(file: VirtualFile): String {
+
+      val document = FileDocumentManager.getInstance().getDocument(file)!!
       return getContentText(document).toString()
     }
 

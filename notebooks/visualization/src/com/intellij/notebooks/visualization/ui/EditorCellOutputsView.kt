@@ -155,7 +155,7 @@ class EditorCellOutputsView(
     for ((idx, pair1) in newOutputsIterator.zip(oldComponentsWithFactories).withIndex()) {
       val (output, pair2) = pair1
       val (oldComponent: JComponent, oldFactory: NotebookOutputComponentFactory<*, *>) = pair2
-      val outputDataKey = output.dataKey.get()
+      val outputDataKey = output.dataKey
       isFilled =
         when (oldFactory.matchWithTypes(oldComponent, outputDataKey)) {
           NotebookOutputComponentFactory.Match.NONE -> {
@@ -201,7 +201,7 @@ class EditorCellOutputsView(
   }
 
   private fun createOutputGuessingFactory(output: EditorCellOutput): NotebookOutputComponentFactory.CreatedComponent<*>? {
-    val outputDataKey = output.dataKey.get()
+    val outputDataKey = output.dataKey
     val createdComponent = NotebookOutputComponentFactoryGetter.instance.list.asSequence()
       .filter { factory ->
         factory.outputDataKeyClass.isAssignableFrom(outputDataKey.javaClass)
