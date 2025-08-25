@@ -801,7 +801,9 @@ public class WSLDistribution implements AbstractWslDistribution {
     return getVersion() == 1 ? InetAddress.getLoopbackAddress().getHostAddress() : null;
   }
 
-  public @NonNls @Nullable String getEnvironmentVariable(String name) {
+  @ApiStatus.Internal
+  @RequiresBackgroundThread(generateAssertion = false)
+  public final @NonNls @Nullable String getEnvironmentVariable(@NotNull String name) {
     if (WslIjentAvailabilityService.getInstance().runWslCommandsViaIjent()) {
       Map<String, String> map = WslIjentUtil.fetchLoginShellEnv(WslIjentManager.getInstance(), this, null, false);
       return map.get(name);

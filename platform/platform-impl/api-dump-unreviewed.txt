@@ -1151,7 +1151,6 @@ c:com.intellij.execution.wsl.WSLDistribution
 - executeOnWsl(java.util.List,com.intellij.execution.wsl.WSLCommandLineOptions,I,com.intellij.util.Consumer):com.intellij.execution.process.ProcessOutput
 - s:findWslExe():java.nio.file.Path
 - getEnvironment():java.util.Map
-- getEnvironmentVariable(java.lang.String):java.lang.String
 - getExecutablePath():java.nio.file.Path
 - f:getHostIpAddress():java.net.InetAddress
 - getId():java.lang.String
