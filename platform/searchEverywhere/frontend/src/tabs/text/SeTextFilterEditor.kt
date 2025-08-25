@@ -26,7 +26,7 @@ class SeTextFilterEditor(
   registerShortcut: (AnAction) -> Unit,
 ) : SeFilterEditorBase<SeTextFilter>(
   SeTextFilter(selectedScopeId = scopesInfo?.selectedScopeId,
-               selectedType = null,
+               selectedType = FindSettings.getInstance().fileMask,
                isCaseSensitive = initialTextSearchOptions?.isCaseSensitive ?: false,
                isWholeWordsOnly = initialTextSearchOptions?.isWholeWordsOnly ?: false,
                isRegex = initialTextSearchOptions?.isRegex ?: false)

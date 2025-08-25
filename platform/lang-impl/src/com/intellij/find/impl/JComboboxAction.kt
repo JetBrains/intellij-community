@@ -97,8 +97,8 @@ class JComboboxAction(val project: Project, private val disposable: Disposable, 
       prototypeDisplayValue = emptyText
       isOpaque = false
       insertItemAt(emptyText, 0)
-      selectedItem = FindSettings.getInstance().fileMask ?: emptyText
-      findModel.fileFilter = FindSettings.getInstance().fileMask
+      selectedItem = latestMaskProperty.get() ?: emptyText
+      findModel.fileFilter = latestMaskProperty.get()
       addItemListener(itemListener)
 
       findModel.addObserver(findModelObserver)
