@@ -58,6 +58,12 @@ abstract class LowLevelDebuggerTestBase : ExecutionTestCase(),
         setUpWithKotlinPlugin { super.setUp() }
     }
 
+    override fun compileProject() {
+        // Do nothing.
+        // skip com.intellij.execution.ExecutionTestCase.compileProject
+        // as we are going to compile by org.jetbrains.kotlin.idea.debugger.test.LowLevelDebuggerTestBase.doTest(java.lang.String)
+    }
+
     override fun setUpModule() {
         super.setUpModule()
         attachStdlib()
