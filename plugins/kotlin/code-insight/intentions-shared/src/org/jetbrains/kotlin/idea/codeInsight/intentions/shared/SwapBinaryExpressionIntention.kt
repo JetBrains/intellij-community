@@ -7,7 +7,6 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
-import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
@@ -20,7 +19,7 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
 
-internal class SwapBinaryExpressionIntention : KotlinPsiUpdateModCommandAction.ClassBased<KtBinaryExpression, Unit>(KtBinaryExpression::class) {
+internal class SwapBinaryExpressionIntention : KotlinPsiUpdateModCommandAction.Simple<KtBinaryExpression>(KtBinaryExpression::class) {
     override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("flip.binary.expression")
 
     override fun getPresentation(context: ActionContext, element: KtBinaryExpression): Presentation? {
@@ -81,9 +80,6 @@ internal class SwapBinaryExpressionIntention : KotlinPsiUpdateModCommandAction.C
         }
 
         return expression
-    }
-
-    override fun KaSession.prepareContext(element: KtBinaryExpression) {
     }
 }
 

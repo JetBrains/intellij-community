@@ -6,7 +6,6 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
-import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
@@ -19,7 +18,7 @@ import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-internal class AddJvmOverloadsIntention : KotlinPsiUpdateModCommandAction.ClassBased<KtModifierListOwner, Unit>(KtModifierListOwner::class) {
+internal class AddJvmOverloadsIntention : KotlinPsiUpdateModCommandAction.Simple<KtModifierListOwner>(KtModifierListOwner::class) {
 
     override fun getFamilyName(): @IntentionFamilyName String =
         KotlinBundle.message("add.jvmoverloads.annotation")
@@ -125,8 +124,5 @@ internal class AddJvmOverloadsIntention : KotlinPsiUpdateModCommandAction.ClassB
         } else {
             element.addAnnotation(JvmStandardClassIds.JVM_OVERLOADS_CLASS_ID)
         }
-    }
-
-    override fun KaSession.prepareContext(element: KtModifierListOwner) {
     }
 }

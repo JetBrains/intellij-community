@@ -11,7 +11,6 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.kotlin.KtNodeTypes
-import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.utils.getControlFlowElementDescription
@@ -20,7 +19,7 @@ import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.siblings
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
-internal class RemoveBracesIntention: KotlinApplicableModCommandAction<KtElement, Unit>(KtElement::class) {
+internal class RemoveBracesIntention: KotlinApplicableModCommandAction.Simple<KtElement>(KtElement::class) {
     override fun getFamilyName(): @IntentionFamilyName String =
         KotlinBundle.message("remove.braces")
 
@@ -144,6 +143,4 @@ internal class RemoveBracesIntention: KotlinApplicableModCommandAction<KtElement
         }
 
     }
-
-    override fun KaSession.prepareContext(element: KtElement) {}
 }
