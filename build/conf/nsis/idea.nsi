@@ -583,144 +583,66 @@ FunctionEnd
 Function ProductRegistration
   ${LogText} ""
   ${LogText} "Do registration ${MUI_PRODUCT} ${VER_BUILD}"
-  StrCmp "${PRODUCT_WITH_VER}" "${MUI_PRODUCT} ${VER_BUILD}" eapInfo releaseInfo
-eapInfo:
-  StrCpy $3 "${PRODUCT_WITH_VER}(EAP)"
-  goto createRegistration
-releaseInfo:
-  StrCpy $3 "${PRODUCT_WITH_VER}"
-createRegistration:
-  StrCpy $0 "HKCR"
-  StrCpy $1 "Applications\${PRODUCT_EXE_FILE}\shell\open"
-  StrCpy $2 "FriendlyAppName"
-  call OMWriteRegStr
-  StrCpy $1 "Applications\${PRODUCT_EXE_FILE}\shell\open\command"
-  StrCpy $2 ""
-  StrCpy $3 '"$productLauncher" "%1"'
-  call OMWriteRegStr
+
+  ${If} "${PRODUCT_WITH_VER}" == "${MUI_PRODUCT} ${VER_BUILD}"
+    StrCpy $3 "${PRODUCT_WITH_VER}(EAP)"
+  ${Else}
+    StrCpy $3 "${PRODUCT_WITH_VER}"
+  ${EndIf}
+  WriteRegStr SHCTX "Software\Classes\Applications\${PRODUCT_EXE_FILE}\shell\open" "FriendlyAppName" "$3"
+
+  WriteRegStr SHCTX "Software\Classes\Applications\${PRODUCT_EXE_FILE}\shell\open\command" "" '"$productLauncher" "%1"'
 FunctionEnd
 
 
 Function UpdateContextMenu
   ${LogText} ""
-  ${LogText} "Update Context Menu - Open with PRODUCT action for folders"
+  ${LogText} "Update Context Menu - 'Open with ...' action for folders"
 
-; add "Open with PRODUCT" action for folders to Windows context menu
-  StrCpy $0 "SHCTX"
-  StrCpy $1 "Software\Classes\Directory\shell\${MUI_PRODUCT}"
-  StrCpy $2 ""
-  StrCpy $3 "Open Folder as ${MUI_PRODUCT} Project"
-  call OMWriteRegStr
+  StrCpy $0 ""Software\Classes\Directory\shell\${MUI_PRODUCT}"
+  WriteRegStr SHCTX $0 "" "Open Folder as ${MUI_PRODUCT} Project"
+  WriteRegStr SHCTX $0 "Icon" "$productLauncher"
+  WriteRegStr SHCTX "$0\command" "" '"$productLauncher" "%1"'
 
-  StrCpy $1 "Software\Classes\Directory\shell\${MUI_PRODUCT}"
-  StrCpy $2 "Icon"
-  StrCpy $3 "$productLauncher"
-  call OMWriteRegStr
+  StrCpy $0 "Software\Classes\Directory\Background\shell\${MUI_PRODUCT}"
+  WriteRegStr SHCTX $0 "" "Open Folder as ${MUI_PRODUCT} Project"
+  WriteRegStr SHCTX $0 "Icon" "$productLauncher"
+  WriteRegStr SHCTX "$0\command" "" '"$productLauncher" "%V"'
 
-  StrCpy $1 "Software\Classes\Directory\shell\${MUI_PRODUCT}\command"
-  StrCpy $2 ""
-  StrCpy $3 '"$productLauncher" "%1"'
-  call OMWriteRegStr
+  ${LogText} "Update Context Menu - 'Edit with ...' action for files"
 
-  StrCpy $1 "Software\Classes\Directory\Background\shell\${MUI_PRODUCT}"
-  StrCpy $2 ""
-  StrCpy $3 "Open Folder as ${MUI_PRODUCT} Project"
-  call OMWriteRegStr
-
-  StrCpy $1 "Software\Classes\Directory\Background\shell\${MUI_PRODUCT}"
-  StrCpy $2 "Icon"
-  StrCpy $3 "$productLauncher"
-  call OMWriteRegStr
-
-  StrCpy $1 "Software\Classes\Directory\Background\shell\${MUI_PRODUCT}\command"
-  StrCpy $2 ""
-  StrCpy $3 '"$productLauncher" "%V"'
-  call OMWriteRegStr
+  StrCpy $0 "Software\Classes\*\shell\Open with ${MUI_PRODUCT}"
+  WriteRegStr SHCTX $0 "" "Edit with ${MUI_PRODUCT}"
+  WriteRegStr SHCTX $0 "Icon" "$productLauncher"
+  WriteRegStr SHCTX "$0\command" "" '"$productLauncher" "%1"'
 FunctionEnd
 
 
+; $R0 - extension
+; $R1 - association key
+; $R2 - association display name
 Function ProductAssociation
   ${LogText} ""
-  ${LogText} "Do associations ${MUI_PRODUCT} ${VER_BUILD}"
-  push $0
-  push $1
-  push $2
-  push $3
-  StrCpy $2 ""
-  StrCmp $baseRegKey "HKLM" admin user
-admin:
-  StrCpy $0 HKCR
-  StrCpy $R5 ${PRODUCT_PATHS_SELECTOR}
-  goto back_up
-user:
-  StrCpy $0 HKCU
-  StrCpy $R4 "Software\Classes\$R4"
-  StrCpy $R5 "Software\Classes\${PRODUCT_PATHS_SELECTOR}"
-back_up:
- ; back up old value of an association
-  StrCpy $1 $R4
-call OMReadRegStr
-  StrCmp $3 "" skip_backup
-  StrCmp $3 ${PRODUCT_PATHS_SELECTOR} skip_backup
-  StrCpy $2 "backup_val"
-  Call OMWriteRegStr
-skip_backup:
-  StrCpy $2 ""
-  StrCpy $3 ${PRODUCT_PATHS_SELECTOR}
-  Call OMWriteRegStr
-  StrCpy $1 $R5
-  StrCpy $2 ""
-  Call OMReadRegStr
-  StrCmp $3 "" 0 command_exists
-  StrCpy $2 ""
-  StrCpy $3 "${PRODUCT_FULL_NAME}"
-  Call OMWriteRegStr
-  StrCpy $1 "$R5\shell"
-  StrCpy $2 ""
-  StrCpy $3 "open"
-  Call OMWriteRegStr
-  StrCpy $1 "$R5\DefaultIcon"
-  StrCpy $2 ""
-  StrCpy $3 "$productLauncher,0"
-  Call OMWriteRegStr
-command_exists:
-  StrCpy $1 "$R5\DefaultIcon"
-  StrCpy $2 ""
-  StrCpy $3 "$productLauncher,0"
-  Call OMWriteRegStr
-  StrCpy $1 "$R5\shell\open\command"
-  StrCpy $2 ""
-  StrCpy $3 '"$productLauncher" "%1"'
-  Call OMWriteRegStr
+  ${LogText} "Associating '${MUI_PRODUCT} ${VER_BUILD}' with $R0 files"
 
-  ; add "Edit with PRODUCT" action for files to Windows context menu
-  ${LogText} ""
-  ${LogText} "Update Context Menu - Edit with PRODUCT"
+  StrCpy $0 "Software\Classes\$R0"
+  StrCpy $1 "Software\Classes\$R1"
 
-  StrCpy $0 "SHCTX"
-  StrCpy $1 "Software\Classes\*\shell\Open with ${MUI_PRODUCT}"
-  StrCpy $2 "Icon"
-  StrCpy $3 "$productLauncher"
-  call OMWriteRegStr
+  ReadRegStr $2 SHCTX $0 ""
+  ${If} $2 != ""
+  ${AndIf} $2 != $R1
+    WriteRegStr SHCTX $0 "backup_val" $2
+  ${EndIf}
+  WriteRegStr SHCTX $0 "" $R1
 
-  StrCpy $1 "Software\Classes\*\shell\Open with ${MUI_PRODUCT}\command"
-  StrCpy $2 ""
-  StrCpy $3 '"$productLauncher" "%1"'
-  call OMWriteRegStr
-
-  StrCpy $1 "Software\Classes\*\shell\Open with ${MUI_PRODUCT}"
-  StrCpy $2 ""
-  StrCpy $3 "Edit with ${MUI_PRODUCT}"
-  call OMWriteRegStr
-
-  pop $3
-  pop $2
-  pop $1
-  pop $0
+  WriteRegStr SHCTX $1 "" $R2
+  WriteRegStr SHCTX "$1\DefaultIcon" "" "$productLauncher,0"
+  WriteRegStr SHCTX "$1\shell" "" "open"
+  WriteRegStr SHCTX "$1\shell\open\command" "" '"$productLauncher" "%1"'
 FunctionEnd
 
 
-Function updatePathEnvVar
+Function UpdatePathEnvVar
   Var /GLOBAL pathEnvVar
 
   ClearErrors
@@ -774,7 +696,7 @@ Section "IDEA Files" CopyIdeaFiles
   !insertmacro INSTALLOPTIONS_READ $R0 "Desktop.ini" "Field $addToPath" "State"
   ${If} $R0 == 1
     ${LogText} "Updating the 'Path' env var"
-    CALL updatePathEnvVar
+    Call UpdatePathEnvVar
   ${EndIf}
 
   ${If} $updateContextMenu > 0
@@ -784,39 +706,28 @@ Section "IDEA Files" CopyIdeaFiles
     ${EndIf}
   ${EndIf}
 
-  !insertmacro INSTALLOPTIONS_READ $R1 "Desktop.ini" "Settings" "NumFields"
-  IntCmp $R1 ${INSTALL_OPTION_ELEMENTS} do_association done do_association
-do_association:
-  StrCpy $R2 ${INSTALL_OPTION_ELEMENTS}
-get_user_choice:
-  !insertmacro INSTALLOPTIONS_READ $R3 "Desktop.ini" "Field $R2" "State"
-  StrCmp $R3 1 "" next_association
-  !insertmacro INSTALLOPTIONS_READ $R4 "Desktop.ini" "Field $R2" "Text"
-  call ProductAssociation
-next_association:
-  IntOp $R2 $R2 + 1
-  IntCmp $R1 $R2 get_user_choice done get_user_choice
-done:
-  StrCmp ${IPR} "false" skip_ipr
+  !insertmacro INSTALLOPTIONS_READ $R9 "Desktop.ini" "Settings" "NumFields"
+  ${If} $R9 > ${INSTALL_OPTION_ELEMENTS}
+    StrCpy $R8 ${INSTALL_OPTION_ELEMENTS}
+    StrCpy $R1 "${PRODUCT_PATHS_SELECTOR}"
+    StrCpy $R2 "${PRODUCT_FULL_NAME}"
+    ${DoWhile} $R8 < $R9
+      !insertmacro INSTALLOPTIONS_READ $R3 "Desktop.ini" "Field $R8" "State"
+      ${If} $R3 == 1
+        !insertmacro INSTALLOPTIONS_READ $R0 "Desktop.ini" "Field $R8" "Text"
+        Call ProductAssociation
+      ${EndIf}
+      IntOp $R8 $R8 + 1
+    ${Loop}
+  ${EndIf}
 
-  ; back up old value of .ipr
-  !define Index "Line${__LINE__}"
-  ReadRegStr $1 HKCR ".ipr" ""
-  StrCmp $1 "" "${Index}-NoBackup"
-    StrCmp $1 "IntelliJIdeaProjectFile" "${Index}-NoBackup"
-    WriteRegStr HKCR ".ipr" "backup_val" $1
-"${Index}-NoBackup:"
-  WriteRegStr HKCR ".ipr" "" "IntelliJIdeaProjectFile"
-  ReadRegStr $0 HKCR "IntelliJIdeaProjectFile" ""
-  StrCmp $0 "" 0 "${Index}-Skip"
-	WriteRegStr HKCR "IntelliJIdeaProjectFile" "" "IntelliJ IDEA Project File"
-	WriteRegStr HKCR "IntelliJIdeaProjectFile\shell" "" "open"
-"${Index}-Skip:"
-  WriteRegStr HKCR "IntelliJIdeaProjectFile\DefaultIcon" "" "$productLauncher,0"
-  WriteRegStr HKCR "IntelliJIdeaProjectFile\shell\open\command" "" '"$productLauncher" "%1"'
-!undef Index
+  ${If} ${IPR} == "true"
+    StrCpy $R0 ".ipr"
+    StrCpy $R1 "IntelliJIdeaProjectFile"
+    StrCpy $R2 "IntelliJ IDEA Project File"
+    Call ProductAssociation
+  ${EndIf}
 
-skip_ipr:
   ; readonly section
   ${LogText} ""
   ${LogText} "Copy files to $INSTDIR"
@@ -843,11 +754,7 @@ skip_ipr:
     !insertmacro MUI_STARTMENU_WRITE_BEGIN Application
     CreateDirectory "$SMPROGRAMS\$startMenuFolder"
     CreateShortCut "$SMPROGRAMS\$startMenuFolder\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk" "$productLauncher" "" "" "" SW_SHOWNORMAL
-    StrCpy $0 $baseRegKey
-    StrCpy $1 "Software\${MANUFACTURER}\${PRODUCT_REG_VER}"
-    StrCpy $2 "MenuFolder"
-    StrCpy $3 "$startMenuFolder"
-    Call OMWriteRegStr
+    WriteRegStr SHCTX "Software\${MANUFACTURER}\${PRODUCT_REG_VER}" "MenuFolder" "$startMenuFolder"
     !insertmacro MUI_STARTMENU_WRITE_END
   ${Else}
     DetailPrint "Skipping start menu shortcut."
@@ -873,11 +780,7 @@ skip_ipr:
 
   Call customPostInstallActions
 
-  StrCpy $0 $baseRegKey
-  StrCpy $1 "Software\${MANUFACTURER}\${PRODUCT_REG_VER}"
-  StrCpy $2 ""
-  StrCpy $3 "$INSTDIR"
-  Call OMWriteRegStr
+  WriteRegStr SHCTX "Software\${MANUFACTURER}\${PRODUCT_REG_VER}" "" "$INSTDIR"
 
   ; writing the uninstaller & creating the uninstall record
   WriteUninstaller "$INSTDIR\bin\Uninstall.exe"
