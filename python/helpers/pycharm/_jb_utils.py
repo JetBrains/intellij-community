@@ -3,6 +3,7 @@
 __author__ = 'Ilya.Kazakevich'
 import fnmatch
 import os
+import re
 import sys
 
 
@@ -138,3 +139,33 @@ class _Py3KUtils(VersionAgnosticUtils):
             assert isinstance(option, OptionDescription)
             parser.add_argument(option.name, help=option.description, action=option.action)
         return parser.parse_args()
+
+
+def _parse_parametrized(part):
+    """
+
+    Support nose generators / pytest parameters and other functions that provides names like foo(1,2)
+    Until https://github.com/JetBrains/teamcity-messages/issues/121, all such tests are provided
+    with parentheses.
+
+    Tests with docstring are reported in similar way but they have space before parenthesis and should be ignored
+    by this function
+
+    """
+    match = re.match("^([^\\s)(]+)(\\(.+\\))$", part)
+    if not match:
+        return [part]
+    else:
+        return [match.group(1), match.group(2)]
+
+
+def test_to_list(test_name):
+    """
+    Splits test name to parts to use it as list.
+    It most cases dot is used, but runner may provide custom function
+    """
+    parts = test_name.split(".")
+    result = []
+    for part in parts:
+        result += _parse_parametrized(part)
+    return result
