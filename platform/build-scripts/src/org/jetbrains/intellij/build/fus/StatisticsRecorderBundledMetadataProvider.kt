@@ -38,8 +38,18 @@ internal fun CoroutineScope.createStatisticsRecorderBundledMetadataProviderTask(
           path = "resources/event-log-metadata/$recorderId/events-scheme.json",
           content = download(metadataServiceUri(featureUsageStatisticsProperties, context))
         )
-        val dictionariesListJson = JsonParser.parseString(String(download(dictionaryServiceUri(featureUsageStatisticsProperties, context, "dictionaries.json"))))
+        val dictionaryListBytes = download(dictionaryServiceUri(featureUsageStatisticsProperties, context, "dictionaries.json"))
+        val dictionariesListJson = JsonParser.parseString(String(dictionaryListBytes))
         val dictionariesList = dictionariesListJson.asJsonObject.get("dictionaries").asJsonArray
+
+        if (!dictionariesList.isEmpty) {
+          moduleOutputPatcher.patchModuleOutput(
+            moduleName = "intellij.platform.ide.impl",
+            path = "resources/event-log-metadata/$recorderId/dictionaries/dictionaries.json",
+            content = dictionaryListBytes
+          )
+        }
+
         for (dictionary in dictionariesList) {
           val dictionaryName = dictionary.asString
           moduleOutputPatcher.patchModuleOutput(
