@@ -82,7 +82,11 @@ def _normalize_runtime_dep(dep):
         return "@community//platform/util:util-tests_test_lib"
     return dep
 
-def jps_test(name, jvm_flags = [], runtime_deps = [], args = [], data = [], tags = [], **kwargs):
+def jps_test(name, jvm_flags = [], runtime_deps = [], args = [], data = [], tags = [], ignored = True, **kwargs):
+    # Temporary workaround not to generate a lot of *.repo_mapping (waiting for --incompatible_compact_repo_mapping_manifest)
+    if ignored:
+        return
+
     # Merge user-provided args with our default ones
     all_jvm_flags = JAVA_TEST_FLAGS + ADD_OPENS_FLAGS + jvm_flags
     all_args = JAVA_TEST_ARGS + args
