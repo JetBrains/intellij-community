@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.base.fir.projectStructure.provider
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.entities.SourceRootEntity
@@ -92,9 +91,6 @@ internal object CandidateCollector {
       originalVirtualFileForOutsider: VirtualFile?,
       workspaceModel: WorkspaceModel
     ): ModuleCandidate? {
-        if (!Registry.`is`("ide.workspace.model.sdk.remove.custom.processing")) {
-            WorkspaceFileSetRecognizer.getSdkId(fileSet)?.let { return ModuleCandidate.Sdk(it) }
-        }
         val storage = workspaceModel.currentSnapshot
         val entityPointer: EntityPointer<*> = WorkspaceFileSetRecognizer.getEntityPointer(fileSet) ?: return null
         val entity: WorkspaceEntity = entityPointer.resolve(storage) ?: return null

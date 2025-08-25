@@ -3,7 +3,6 @@ package com.intellij.workspaceModel.core.fileIndex.impl
 
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.workspace.jps.entities.LibraryId
 import com.intellij.platform.workspace.jps.entities.SdkId
 import com.intellij.platform.workspace.storage.EntityPointer
@@ -13,7 +12,6 @@ import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData
 import com.intellij.workspaceModel.core.fileIndex.impl.SdkEntityFileIndexContributor.SdkRootFileSetData
-import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryId
 
 object WorkspaceFileSetRecognizer {
 
@@ -25,7 +23,6 @@ object WorkspaceFileSetRecognizer {
   fun getEntityPointer(fileSet: WorkspaceFileSet): EntityPointer<*>? {
     val entityReference = fileSet.asSafely<WorkspaceFileSetImpl>()?.entityPointer
     if (entityReference == null) return null
-    if (!Registry.`is`("ide.workspace.model.sdk.remove.custom.processing") && LibrariesAndSdkContributors.isPlaceholderReference(entityReference)) return null
     if (NonIncrementalContributors.isPlaceholderReference(entityReference)) return null
     return entityReference
   }
@@ -36,17 +33,6 @@ object WorkspaceFileSetRecognizer {
 
     val libraryRootFileSetData = fileSetImpl.data as? LibraryRootFileSetData
     if (libraryRootFileSetData == null) return null
-
-    if (!Registry.`is`("ide.workspace.model.sdk.remove.custom.processing")) {
-      if (LibrariesAndSdkContributors.getSdk(fileSet) != null) return null
-
-      val globalLibraryId = LibrariesAndSdkContributors.getGlobalLibrary(fileSetImpl)?.let {
-        findLibraryId(library = it)
-      }
-      if (globalLibraryId != null) {
-        return globalLibraryId
-      }
-    }
 
     val libraryId = LibraryRootFileIndexContributor.Util.getLibraryId(fileSetImpl.data)
     if (libraryId != null) {
@@ -61,12 +47,7 @@ object WorkspaceFileSetRecognizer {
   }
 
   fun getSdkId(fileSet: WorkspaceFileSet): SdkId? {
-    return if (Registry.`is`("ide.workspace.model.sdk.remove.custom.processing")) {
-      fileSet.asSafely<WorkspaceFileSetImpl>()?.data?.asSafely<SdkRootFileSetData>()?.sdkId
-    }
-    else {
-      LibrariesAndSdkContributors.getSdk(fileSet)?.let { SdkId(it.name, it.sdkType.name) }
-    }
+    return fileSet.asSafely<WorkspaceFileSetImpl>()?.data?.asSafely<SdkRootFileSetData>()?.sdkId
   }
 
   fun isFromAdditionalLibraryRootsProvider(fileSet: WorkspaceFileSet): Boolean {

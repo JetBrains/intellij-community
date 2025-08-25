@@ -6,15 +6,10 @@ package com.intellij.workspaceModel.core.fileIndex.impl
 import com.intellij.ide.highlighter.ArchiveFileType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.readActionBlocking
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ProjectRootManager
-import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.roots.impl.PackageDirectoryCacheImpl
-import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.*
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer
@@ -38,7 +33,6 @@ import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 @Suppress("DuplicatedCode")
 internal suspend fun initWorkspaceFileIndexData(
   project: Project,
-  parentDisposable: Disposable,
   contributorList: List<WorkspaceFileIndexContributor<*>>,
 ): WorkspaceFileIndexDataImpl {
   val fileSets = Object2ObjectOpenHashMap<VirtualFile, StoredFileSetCollection>()
@@ -46,19 +40,6 @@ internal suspend fun initWorkspaceFileIndexData(
 
   val workspaceModel = project.serviceAsync<WorkspaceModel>() as WorkspaceModelInternal
   val nonExistingFilesRegistry = NonExistingWorkspaceRootsRegistry(project, workspaceModel.getVirtualFileUrlManager())
-
-  val librariesAndSdkContributors: LibrariesAndSdkContributors? = if (Registry.`is`("ide.workspace.model.sdk.remove.custom.processing")) {
-    null
-  }
-  else {
-    LibrariesAndSdkContributors(
-      project = project,
-      fileSets = fileSets,
-      fileSetsByPackagePrefix = fileSetsByPackagePrefix,
-      projectRootManager = project.serviceAsync<ProjectRootManager>() as ProjectRootManagerEx,
-      parentDisposable = parentDisposable,
-    )
-  }
 
   val contributors = getContributors(contributorList, EntityStorageKind.MAIN)
 
@@ -84,15 +65,6 @@ internal suspend fun initWorkspaceFileIndexData(
       storage = workspaceModel.currentSnapshotOfUnloadedEntities,
       contributorMap = getContributors(contributorList, EntityStorageKind.UNLOADED),
     )
-  }
-
-  if (librariesAndSdkContributors != null) {
-    WorkspaceFileIndexDataMetrics.registerFileSetsTimeNanosec.addMeasuredTime {
-      val libraryTablesRegistrar = serviceAsync<LibraryTablesRegistrar>()
-      readActionBlocking {
-        librariesAndSdkContributors.registerFileSets(libraryTablesRegistrar)
-      }
-    }
   }
 
   WorkspaceFileIndexDataMetrics.initTimeNanosec.addElapsedTime(start)
@@ -135,19 +107,6 @@ internal fun blockingInitWorkspaceFileIndexData(
   val workspaceModel = WorkspaceModel.getInstance(project) as WorkspaceModelInternal
   val nonExistingFilesRegistry = NonExistingWorkspaceRootsRegistry(project, workspaceModel.getVirtualFileUrlManager())
 
-  val librariesAndSdkContributors: LibrariesAndSdkContributors? = if (Registry.`is`("ide.workspace.model.sdk.remove.custom.processing")) {
-    null
-  }
-  else {
-    LibrariesAndSdkContributors(
-      project = project,
-      fileSets = fileSets,
-      fileSetsByPackagePrefix = fileSetsByPackagePrefix,
-      projectRootManager = ProjectRootManagerEx.getInstanceEx(project),
-      parentDisposable = parentDisposable,
-    )
-  }
-
   val contributors = getContributors(contributorList, EntityStorageKind.MAIN)
 
   WorkspaceFileIndexDataMetrics.instancesCounter.incrementAndGet()
@@ -163,15 +122,6 @@ internal fun blockingInitWorkspaceFileIndexData(
     storage = workspaceModel.currentSnapshotOfUnloadedEntities,
     contributorMap = getContributors(contributorList, EntityStorageKind.UNLOADED),
   )
-
-  if (librariesAndSdkContributors != null) {
-    WorkspaceFileIndexDataMetrics.registerFileSetsTimeNanosec.addMeasuredTime {
-      val libraryTablesRegistrar = LibraryTablesRegistrar.getInstance()
-      ApplicationManager.getApplication().runReadAction {
-        librariesAndSdkContributors.registerFileSets(libraryTablesRegistrar)
-      }
-    }
-  }
 
   WorkspaceFileIndexDataMetrics.initTimeNanosec.addElapsedTime(start)
 
