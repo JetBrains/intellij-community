@@ -279,7 +279,8 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     if (showNextStepLabel) {
       myNextStepLabel.setVisible(isSelectable);
       myNextStepLabel.setIcon(isSelectable && isSelected ? AllIcons.Icons.Ide.MenuArrowSelected : AllIcons.Icons.Ide.MenuArrow);
-      myNextStepLabel.getAccessibleContext().setAccessibleName(IdeBundle.message("popup.list.item.renderer.next.step.label.accessible.name"));
+      myNextStepLabel.getAccessibleContext()
+        .setAccessibleName(isSelectable ? IdeBundle.message("popup.list.item.renderer.next.step.label.accessible.name") : null);
       if (ExperimentalUI.isNewUI()) {
         myNextStepLabel.setBorder(JBUI.Borders.emptyLeft(20));
       }
