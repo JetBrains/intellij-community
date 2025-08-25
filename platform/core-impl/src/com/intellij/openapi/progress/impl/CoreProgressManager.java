@@ -24,10 +24,10 @@ import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.platform.diagnostic.telemetry.TracerLevel;
 import com.intellij.platform.diagnostic.telemetry.helpers.TraceKt;
 import com.intellij.util.ExceptionUtil;
-import com.intellij.util.containers.Java11Shim;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ConcurrentLongObjectMap;
+import com.intellij.util.containers.Java11Shim;
 import com.intellij.util.ui.EDT;
 import io.opentelemetry.api.trace.Span;
 import org.jetbrains.annotations.*;
@@ -154,29 +154,60 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   @Override
   protected void doCheckCanceled() throws ProcessCanceledException {
     if (isInNonCancelableSection()) {
-      CheckCanceledBehavior behavior = ourCheckCanceledBehavior;
-      if (behavior != CheckCanceledBehavior.NONE) {
-        ProgressIndicator indicator = behavior == CheckCanceledBehavior.INDICATOR_PLUS_HOOKS ? getProgressIndicator() : null;
-        runCheckCanceledHooks(indicator);
+      try {
+        CheckCanceledBehavior behavior = ourCheckCanceledBehavior;
+        if (behavior != CheckCanceledBehavior.NONE) {
+          ProgressIndicator indicator = behavior == CheckCanceledBehavior.INDICATOR_PLUS_HOOKS ? getProgressIndicator() : null;
+          runCheckCanceledHooks(indicator);
+        }
+      }
+      finally {
+        fireNonCancellableEvent();
       }
       return;
     }
 
-    Cancellation.ensureActive();
+    try {
+      Cancellation.ensureActive();
+    }
+    catch (ProcessCanceledException e) {
+      fireCanceledByJobEvent();
+      throw e;
+    }
 
     CheckCanceledBehavior behavior = ourCheckCanceledBehavior;
-    if (behavior == CheckCanceledBehavior.NONE) return;
+    if (behavior == CheckCanceledBehavior.NONE) {
+      fireCheckCanceledNone();
+      return;
+    }
 
     if (behavior == CheckCanceledBehavior.INDICATOR_PLUS_HOOKS) {
       ProgressIndicator progress = getProgressIndicator();
+      fireCanceledByIndicatorEvent(progress);
       if (progress != null) {
         progress.checkCanceled();
       }
     }
     else {
       runCheckCanceledHooks(null);
+      fireCheckCanceledOnlyHooks();
     }
   }
+
+  @ApiStatus.Internal
+  protected void fireNonCancellableEvent() { }
+
+  @ApiStatus.Internal
+  protected void fireCanceledByJobEvent() { }
+
+  @ApiStatus.Internal
+  protected void fireCanceledByIndicatorEvent(@Nullable ProgressIndicator indicator) { }
+
+  @ApiStatus.Internal
+  protected void fireCheckCanceledNone() { }
+
+  @ApiStatus.Internal
+  protected void fireCheckCanceledOnlyHooks() { }
 
   @Override
   public boolean hasProgressIndicator() {
