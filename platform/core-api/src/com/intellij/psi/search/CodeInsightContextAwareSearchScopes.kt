@@ -236,13 +236,15 @@ fun tryCheckingFileInScope(
     return globalScope.contains(file, cachedContext)
   }
 
-  // By default, the file does not have an assigned context before the context is really requested.
-  // And once we request it, it gets stuck to the file.
-  // So let's try assigning it to the context which the scope wants to avoid building addition psi
+  // The file has "anyContext".
+  // It means the file does not really have an assigned context yet, i.e., nobody has cared about the context of this file yet.
+  // So let's try assigning the context which the scope wants to avoid building additional psi.
+  // This is correct as far as there's no guaranty on the context of a file that is requested via `PsiManager.findFile(vFile)`.
   when (val contextInfo = globalScope.getFileContextInfo(file)) {
     is ActualContextFileInfo -> {
       // todo IJPL-203835 does not support case when this scope contains a file in several contexts
       val context = contextInfo.contexts.first()
+      @Suppress("DEPRECATION")
       val actualCodeInsightContext = contextManager.getOrSetContext(viewProvider, context)
       if (actualCodeInsightContext === context) {
         return true

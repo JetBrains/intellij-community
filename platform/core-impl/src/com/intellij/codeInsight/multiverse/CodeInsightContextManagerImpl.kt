@@ -136,6 +136,7 @@ class CodeInsightContextManagerImpl(
     return context
   }
 
+  @Deprecated("DANGEROUS API, AUTHORIZED PERSONNEL ONLY")
   override fun getOrSetContext(fileViewProvider: FileViewProvider, context: CodeInsightContext): CodeInsightContext {
     log.trace { "requested getOrSet context of FileViewProvider ${fileViewProvider.virtualFile.path}" }
 
