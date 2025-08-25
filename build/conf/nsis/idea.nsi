@@ -867,9 +867,7 @@ skip_ipr:
     ${If} ${FileExists} "$INSTDIR\jbr\bin\WindowsAccessBridge-64.dll"
     ${AndIfNot} ${FileExists} "$SYSDIR\WindowsAccessBridge-64.dll"
       ${LogText} "Copying '$INSTDIR\jbr\bin\WindowsAccessBridge-64.dll' into '$SYSDIR'"
-      ${DisableX64FSRedirection}
       CopyFiles /SILENT "$INSTDIR\jbr\bin\WindowsAccessBridge-64.dll" "$SYSDIR"
-      ${EnableX64FSRedirection}
     ${EndIf}
   ${EndIf}
 
@@ -903,6 +901,7 @@ SectionEnd
 
 Function .onInit
   SetRegView 64
+  ${DisableX64FSRedirection}
   Call createLog
 
   ${GetNativeMachineArchitecture} $R0
@@ -1058,6 +1057,7 @@ FunctionEnd
 
 Function un.onInit
   SetRegView 64
+  ${DisableX64FSRedirection}
 
   ; checking that the uninstaller is in the expected location ("...\bin" subdirectory)
   ${IfNot} ${FileExists} "$INSTDIR\fsnotifier.exe"
