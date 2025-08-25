@@ -26,7 +26,6 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.NlsContexts.PopupTitle;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.TextWithMnemonic;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
@@ -42,11 +41,7 @@ import com.intellij.util.ui.Html;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkListener;
@@ -60,6 +55,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static java.lang.Math.abs;
 import static java.lang.Math.min;
@@ -505,12 +501,9 @@ public class PopupFactoryImpl extends JBPopupFactory {
     ActionUiKind uiKind = event.getUiKind();
     ActionToolbar toolbar = uiKind instanceof ActualActionUiKind.Toolbar o ? o.getToolbar() :
                             event.getInputEvent() != null &&
-                            event.getInputEvent().getSource() instanceof JComponent oo ? ActionToolbar.findToolbarBy(oo) : null;
-    Component component = event.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
-    if (!(component instanceof JComponent)) {
-      throw new AssertionError("Component is null for " + action.getClass().getName() + "@" + event.getPlace() +
-                               "(" + event.getPresentation().getText() + "): " + component);
-    }
+                            event.getInputEvent().getSource() instanceof JComponent o ? ActionToolbar.findToolbarBy(o) : null;
+    var component = getNonNullPopupTarget(event.getDataContext(), () ->
+      action.getClass().getName() + "@" + event.getPlace() + "(" + event.getPresentation().getText() + ")");
     var point = CommonActionsPanel.getPreferredPopupPoint(action, toolbar != null ? toolbar.getComponent() : component);
     if (point != null) return point;
     if (event.getInputEvent() instanceof MouseEvent me &&
@@ -522,31 +515,41 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
   @Override
   public @NotNull RelativePoint guessBestPopupLocation(@NotNull DataContext dataContext) {
-    Component component = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(dataContext);
-    JComponent focusOwner = component instanceof JComponent ? (JComponent)component : null;
-
-    if (focusOwner == null || !UIUtil.isShowing(focusOwner)) {
-      Project project = CommonDataKeys.PROJECT.getData(dataContext);
-      JFrame frame = project == null ? WindowManager.getInstance().findVisibleFrame() : WindowManager.getInstance().getFrame(project);
-      focusOwner = frame == null ? null : frame.getRootPane();
-      if (focusOwner == null) {
-        throw new IllegalArgumentException("focusOwner cannot be null:\n" +
-                                           "  contextComponent: " + component + "\n" +
-                                           "  project: " + project + "\n" +
-                                           "  frame: " + frame);
-      }
-    }
-
-    final Point point = PlatformDataKeys.CONTEXT_MENU_POINT.getData(dataContext);
+    JComponent component = getNonNullPopupTarget(dataContext, () -> "dataContext");
+    Point point = PlatformDataKeys.CONTEXT_MENU_POINT.getData(dataContext);
     if (point != null) {
-      return new RelativePoint(focusOwner, point);
+      return new RelativePoint(component, point);
     }
 
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
-    if (editor != null && focusOwner == editor.getContentComponent()) {
+    if (editor != null && component == editor.getContentComponent()) {
       return guessBestPopupLocation(editor);
     }
-    return guessBestPopupLocation(focusOwner);
+    return guessBestPopupLocation(component);
+  }
+
+  private static @NotNull JComponent getNonNullPopupTarget(
+    @NotNull DataContext dataContext,
+    @NotNull Supplier<String> errorInfoSupplier
+  ) {
+    Component component = dataContext.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
+    if (component == null) {
+      // For legacy compatibility.
+      // Outer code must already do its best to provide a component
+      Project project = CommonDataKeys.PROJECT.getData(dataContext);
+      component = AbstractPopup.getFocusedParent(project);
+    }
+    if (component instanceof JComponent c) {
+      return c;
+    }
+    JRootPane rootPane = component instanceof RootPaneContainer o ? o.getRootPane() : null;
+    if (rootPane != null) {
+      return rootPane;
+    }
+    else {
+      String componentClass = component == null ? null : component.getClass().getName();
+      throw new AssertionError("Unexpected component for " + errorInfoSupplier.get() + ": " + componentClass);
+    }
   }
 
   @Override
