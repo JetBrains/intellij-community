@@ -169,8 +169,12 @@ public final class PyDefUseUtil {
 
     visited[startInstruction] = true;
     stack.push(startInstruction);
+    int count = 0;
     while (!stack.isEmpty()) {
-      ProgressManager.checkCanceled();
+      count++;
+      if (count % 512 == 0) {
+        ProgressManager.checkCanceled();
+      }
       final int num = stack.popInt();
       final Instruction instr = instructions[num];
       final ControlFlowUtil.Operation nextOperation = closure.apply(instr);
