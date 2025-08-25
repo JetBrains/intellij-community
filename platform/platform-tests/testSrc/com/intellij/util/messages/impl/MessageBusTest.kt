@@ -8,7 +8,6 @@ import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.use
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.LoggedErrorProcessorEnabler
-import com.intellij.testFramework.createSimpleMessageBusOwner
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.messages.MessageBus
@@ -379,7 +378,7 @@ class MessageBusTest : MessageBusOwner {
     Benchmark.newBenchmark("Child bus creation/deletion") {
       val children = ArrayList<MessageBus>()
       val count = 10000
-      for (i in 0 until count) {
+      repeat(count) {
         children.add(MessageBusFactoryImpl().createMessageBus(this, bus))
       }
       // reverse iteration to avoid O(n^2) while deleting from list's beginning
@@ -400,7 +399,7 @@ class MessageBusTest : MessageBusOwner {
     Disposer.register(parentDisposable!!, parentBus)
     val threads = ArrayList<Future<*>>()
     val iterationsNumber = 100
-    for (i in 0 until threadsNumber) {
+    repeat(threadsNumber) {
       val thread = AppExecutorUtil.getAppScheduledExecutorService().submit {
         try {
           var remains = iterationsNumber
@@ -499,7 +498,7 @@ class MessageBusTest : MessageBusOwner {
     assertThat(compactionIterationCount).isEqualTo(1)
 
     // now compaction task is blocked in slow remove, schedule more compaction requests:
-    for (i in 0 until 10 * callCountToTriggerRemoval) {
+    repeat(callCountToTriggerRemoval) {
       bus.scheduleEmptyConnectionRemoving()
     }
 
@@ -548,7 +547,7 @@ class MessageBusTest : MessageBusOwner {
   @Test
   fun twoHandlersBothDisconnecting() {
     val disposable = Disposer.newCheckedDisposable()
-    for (i in 0..1) {
+    repeat(2) {
       bus.connect(disposable).subscribe(RUNNABLE_TOPIC, Runnable { Disposer.dispose(disposable) })
     }
     bus.syncPublisher(RUNNABLE_TOPIC).run()
@@ -643,7 +642,7 @@ class MessageBusTest : MessageBusOwner {
     val latch = CountDownLatch(threadsNumber)
     val threads = ArrayList<Future<*>>()
     val eventCounter = AtomicInteger()
-    for (i in 0 until threadsNumber) {
+    repeat(threadsNumber) {
       val thread = AppExecutorUtil.getAppScheduledExecutorService().submit {
         try {
           val connection = bus.connect()
@@ -699,5 +698,15 @@ private class DoNoRethrowMessageBusErrors : LoggedErrorProcessorEnabler {
         return super.processError(category, message, details, t)
       }
     }
+  }
+}
+
+private fun createSimpleMessageBusOwner(owner: String): MessageBusOwner {
+  return object : MessageBusOwner {
+    override fun createListener(descriptor: PluginListenerDescriptor) = throw UnsupportedOperationException()
+
+    override fun isDisposed() = false
+
+    override fun toString() = owner
   }
 }
