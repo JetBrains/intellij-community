@@ -8,7 +8,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.platform.vcs.impl.shared.changes.ChangesViewDataKeys
+import com.intellij.platform.vcs.impl.shared.ui.ToolWindowLazyContent
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsLogFilterCollection
@@ -161,7 +161,7 @@ internal class IdeVcsLogManager(
     if (selectedUi?.id != MAIN_LOG_ID) {
       val mainLogContent = VcsLogContentUtil.findMainLog(window.contentManager)
       if (mainLogContent != null) {
-        ChangesViewDataKeys.initLazyContent(mainLogContent)
+        ToolWindowLazyContent.initLazyContent(mainLogContent)
 
         val mainLogUi = mainUiState.filterNotNull().first()
         mainLogUi.refresher.setValid(true, false) // since the main ui is not visible, it needs to be validated to find the commit

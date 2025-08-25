@@ -21,11 +21,9 @@ import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ToolWindowType
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
-import com.intellij.platform.vcs.impl.shared.changes.ChangesViewDataKeys
+import com.intellij.platform.vcs.impl.shared.ui.ToolWindowLazyContent
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentManager
-import com.intellij.ui.content.ContentManagerEvent
-import com.intellij.ui.content.ContentManagerListener
 import com.intellij.util.IJSwingUtilities
 import com.intellij.util.ObjectUtils.tryCast
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -112,10 +110,7 @@ class ChangesViewContentManager private constructor(private val project: Project
 
   private fun initContentManager(toolWindow: ToolWindow) {
     val contentManager = toolWindow.contentManager
-    val listener = ContentProvidersListener(toolWindow)
-    contentManager.addContentManagerListener(listener)
-    Disposer.register(this, Disposable { contentManager.removeContentManagerListener(listener) })
-    project.messageBus.connect(this).subscribe(ToolWindowManagerListener.TOPIC, listener)
+    ToolWindowLazyContent.installInitializer(toolWindow)
 
     val contents = addedContents.filter { it.resolveContentManager() === contentManager }
     for (content in contents) {
@@ -213,21 +208,6 @@ class ChangesViewContentManager private constructor(private val project: Project
   private fun getContentToolWindowId(tabName: String): String? {
     val content = findContent(tabName) ?: return null
     return content.resolveToolWindowId()
-  }
-
-  private inner class ContentProvidersListener(val toolWindow: ToolWindow) : ContentManagerListener, ToolWindowManagerListener {
-    override fun stateChanged(toolWindowManager: ToolWindowManager) {
-      if (toolWindow.isVisible) {
-        val content = toolWindow.contentManager.selectedContent ?: return
-        ChangesViewDataKeys.initLazyContent(content)
-      }
-    }
-
-    override fun selectionChanged(event: ContentManagerEvent) {
-      if (toolWindow.isVisible) {
-        ChangesViewDataKeys.initLazyContent(event.content)
-      }
-    }
   }
 
   enum class TabOrderWeight(val tabName: String?, val weight: Int) {
