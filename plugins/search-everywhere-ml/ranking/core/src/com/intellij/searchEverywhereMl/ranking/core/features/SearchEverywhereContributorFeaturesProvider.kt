@@ -15,13 +15,13 @@ import com.intellij.searchEverywhereMl.ranking.core.features.statistician.Contri
 import com.intellij.searchEverywhereMl.ranking.core.features.statistician.getContributorStatistics
 
 internal object SearchEverywhereContributorFeaturesProvider {
-  val CONTRIBUTOR_INFO_ID = EventFields.String("contributorId", ALLOWED_CONTRIBUTOR_ID_LIST)
-  val CONTRIBUTOR_PRIORITY = EventFields.Int("contributorPriority")
-  val CONTRIBUTOR_WEIGHT = EventFields.Int("contributorWeight")
-  val CONTRIBUTOR_IS_MOST_POPULAR = EventFields.Boolean("contributorIsMostPopular")
-  val CONTRIBUTOR_POPULARITY_INDEX = EventFields.Int("contributorPopularityIndex")
-  val IS_ESSENTIAL_CONTRIBUTOR = EventFields.Boolean("contributorIsEssential")
-  val ESSENTIAL_CONTRIBUTOR_PREDICTION = EventFields.Float("contributorIsEssentialPrediction")
+  val CONTRIBUTOR_INFO_ID = EventFields.String("contributor_id", ALLOWED_CONTRIBUTOR_ID_LIST)
+  val CONTRIBUTOR_PRIORITY = EventFields.Int("contributor_priority")
+  val CONTRIBUTOR_WEIGHT = EventFields.Int("contributor_weight")
+  val CONTRIBUTOR_IS_MOST_POPULAR = EventFields.Boolean("contributor_is_most_popular")
+  val CONTRIBUTOR_POPULARITY_INDEX = EventFields.Int("contributor_popularity_index")
+  val IS_ESSENTIAL_CONTRIBUTOR = EventFields.Boolean("contributor_is_essential")
+  val ESSENTIAL_CONTRIBUTOR_PREDICTION = EventFields.Float("contributor_is_essential_prediction")
 
   private val LOCAL_STATISTICS = ContributorsLocalStatisticsFields()
   private val GLOBAL_STATISTICS = ContributorsGlobalStatisticsFields()

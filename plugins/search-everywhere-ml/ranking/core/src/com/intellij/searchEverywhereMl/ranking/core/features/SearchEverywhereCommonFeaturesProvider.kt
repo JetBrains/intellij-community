@@ -17,14 +17,14 @@ import com.intellij.searchEverywhereMl.ranking.core.features.statistician.Search
 
 internal class SearchEverywhereCommonFeaturesProvider : SearchEverywhereElementFeaturesProvider() {
   object Fields {
-    internal val PRIORITY_DATA_KEY = EventFields.Int("heuristicPriority")
+    internal val PRIORITY_DATA_KEY = EventFields.Int("heuristic_priority")
 
-    internal val STATISTICIAN_USE_COUNT_DATA_KEY = EventFields.Int("statUseCount")
-    internal val STATISTICIAN_IS_MOST_POPULAR_DATA_KEY = EventFields.Boolean("statIsMostPopular")
-    internal val STATISTICIAN_RECENCY_DATA_KEY = EventFields.Int("statRecency")
-    internal val STATISTICIAN_IS_MOST_RECENT_DATA_KEY = EventFields.Boolean("statIsMostRecent")
-    internal val IS_SPELL_CHECKED_DATA_KEY = EventFields.Boolean("isSpellChecked")
-    internal val CORRECTION_CONFIDENCE_DATA_KEY = EventFields.Double("correctionConfidence")
+    internal val STATISTICIAN_USE_COUNT_DATA_KEY = EventFields.Int("stat_use_count")
+    internal val STATISTICIAN_IS_MOST_POPULAR_DATA_KEY = EventFields.Boolean("stat_is_most_popular")
+    internal val STATISTICIAN_RECENCY_DATA_KEY = EventFields.Int("stat_recency")
+    internal val STATISTICIAN_IS_MOST_RECENT_DATA_KEY = EventFields.Boolean("stat_is_most_recent")
+    internal val IS_SPELL_CHECKED_DATA_KEY = EventFields.Boolean("is_spell_checked")
+    internal val CORRECTION_CONFIDENCE_DATA_KEY = EventFields.Double("correction_confidence")
   }
 
   override fun isContributorSupported(contributorId: String): Boolean = true

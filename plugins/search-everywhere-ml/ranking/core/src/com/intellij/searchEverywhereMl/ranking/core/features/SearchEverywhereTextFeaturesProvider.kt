@@ -46,6 +46,6 @@ internal class SearchEverywhereTextFeaturesProvider : SearchEverywhereElementFea
 
 
   private object Fields {
-    val IS_IN_COMMENT = EventFields.Boolean("isInComment")
+    val IS_IN_COMMENT = EventFields.Boolean("is_in_comment")
   }
 }

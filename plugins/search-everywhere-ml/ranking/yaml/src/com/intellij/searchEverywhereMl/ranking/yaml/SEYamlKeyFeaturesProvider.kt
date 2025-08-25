@@ -29,17 +29,17 @@ import org.jetbrains.yaml.navigation.YAMLKeysSearchEverywhereContributor
 
 private class SEYamlKeyFeaturesProvider : SearchEverywhereElementFeaturesProvider(YAMLKeysSearchEverywhereContributor::class.java) {
   object Fields {
-    val KEY_IS_MOST_RECENTLY_USED = EventFields.Boolean("yamlKeyIsMostRecentlyUsed")
-    val KEY_IS_IN_TOP_5_RECENTLY_USED = EventFields.Boolean("yamlKeyIsInTop5RecentlyUsed")
-    val KEY_NEVER_USED = EventFields.Boolean("yamlKeyNeverUsed")
-    val KEY_IS_MOST_POPULAR = EventFields.Boolean("yamlKeyIsMostPopular")
+    val KEY_IS_MOST_RECENTLY_USED = EventFields.Boolean("yaml_key_is_most_recently_used")
+    val KEY_IS_IN_TOP_5_RECENTLY_USED = EventFields.Boolean("yaml_key_is_in_top_5_recently_used")
+    val KEY_NEVER_USED = EventFields.Boolean("yaml_key_never_used")
+    val KEY_IS_MOST_POPULAR = EventFields.Boolean("yaml_key_is_most_popular")
 
-    val FILE_RECENCY_INDEX = EventFields.Int("yamlFileRecencyIndex")
-    val FILE_TIME_SINCE_LAST_MODIFICATION = EventFields.Long("yamlTimeSinceLastModification")
-    val FILE_MODIFIED_IN_LAST_HOUR = EventFields.Boolean("yamlFileModifiedInLastHour")
-    val FILE_MODIFIED_IN_LAST_DAY = EventFields.Boolean("yamlFileModifiedInLastDay")
-    val FILE_MODIFIED_IN_LAST_WEEK = EventFields.Boolean("yamlFileModifiedInLastWeek")
-    val FILE_MODIFIED_IN_LAST_MONTH = EventFields.Boolean("yamlFileModifiedInLastMonth")
+    val FILE_RECENCY_INDEX = EventFields.Int("yaml_file_recency_index")
+    val FILE_TIME_SINCE_LAST_MODIFICATION = EventFields.Long("yaml_time_since_last_modification")
+    val FILE_MODIFIED_IN_LAST_HOUR = EventFields.Boolean("yaml_file_modified_in_last_hour")
+    val FILE_MODIFIED_IN_LAST_DAY = EventFields.Boolean("yaml_file_modified_in_last_day")
+    val FILE_MODIFIED_IN_LAST_WEEK = EventFields.Boolean("yaml_file_modified_in_last_week")
+    val FILE_MODIFIED_IN_LAST_MONTH = EventFields.Boolean("yaml_file_modified_in_last_month")
   }
 
   override fun getFeaturesDeclarations(): List<EventField<*>> {

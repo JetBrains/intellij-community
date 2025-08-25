@@ -14,6 +14,7 @@ import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMLStatistics
 import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMLStatisticsCollector.GROUP
 import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMLStatisticsCollector.ITEM_SELECTED
 import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMLStatisticsCollector.REBUILD_REASON_KEY
+import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMLStatisticsCollector.SEARCH_INDEX_DATA_KEY
 import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMLStatisticsCollector.SESSION_DURATION
 import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMLStatisticsCollector.SESSION_FINISHED
 import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMLStatisticsCollector.SESSION_ID
@@ -184,7 +185,7 @@ class SearchEverywhereMlStatisticsCollectorTest : SearchEverywhereLoggingTestCas
     // Check that search index is incremented for each search restart
     var previousIndex = -1
     for (event in searchRestartedEvents) {
-      val currentIndex = event.event.data["searchIndex"] as Int
+      val currentIndex = event.event.data[SEARCH_INDEX_DATA_KEY.name] as Int
       assertTrue("Search index should be incremented", currentIndex > previousIndex)
       previousIndex = currentIndex
     }
@@ -213,13 +214,49 @@ class SearchEverywhereMlStatisticsCollectorTest : SearchEverywhereLoggingTestCas
     }
   }
 
+  @Test
+  fun `all EventField names are snake_case`() {
+    val snakeCase = Regex("^[a-z0-9]+(?:_[a-z0-9]+)*$")
+    val errors = mutableListOf<String>()
+
+    GROUP.events.forEach { event ->
+      event.getFields()
+        .getFieldsRecursively()
+        .forEach { field ->
+          if (!snakeCase.matches(field.name)) {
+            errors.add("Event ${event.eventId} has non-snake_case field name '${field.name}'")
+          }
+        }
+    }
+
+    if (errors.isNotEmpty()) {
+      fail(errors.joinToString("\n"))
+    }
+  }
+
+  @Test
+  fun `all event ids are lowercase dot separated words`() {
+    val dotSeparatedLower = Regex("^[a-z0-9]+(?:\\.[a-z0-9]+)*$")
+    val errors = mutableListOf<String>()
+
+    GROUP.events.forEach { event ->
+      if (!dotSeparatedLower.matches(event.eventId)) {
+        errors.add("Event id '${event.eventId}' is not lowercase dot-separated words")
+      }
+    }
+
+    if (errors.isNotEmpty()) {
+      fail(errors.joinToString("\n"))
+    }
+  }
+
   private fun List<EventField<*>>.getFieldsRecursively(): List<EventField<*>> {
     return fold(emptyList()) { acc, field ->
       when (field) {
         is PrimitiveEventField<*> -> acc + field
         is ListEventField<*> -> acc + field
-        is ObjectEventField -> acc + field.fields.toList().getFieldsRecursively()
-        is ObjectListEventField -> acc + field.fields.toList().getFieldsRecursively()
+        is ObjectEventField -> acc + field + field.fields.toList().getFieldsRecursively()
+        is ObjectListEventField -> acc + field + field.fields.toList().getFieldsRecursively()
       }
     }
   }

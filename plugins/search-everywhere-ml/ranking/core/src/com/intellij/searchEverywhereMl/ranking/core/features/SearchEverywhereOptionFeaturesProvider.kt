@@ -23,11 +23,11 @@ import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereOpt
 internal class SearchEverywhereOptionFeaturesProvider :
   SearchEverywhereElementFeaturesProvider(ActionSearchEverywhereContributor::class.java, TopHitSEContributor::class.java) {
   object Fields {
-    internal val IS_OPTION = EventFields.Boolean("isOption")
-    internal val IS_BOOLEAN_OPTION = EventFields.Boolean("isBooleanOption")
-    internal val IS_REGISTRY_OPTION = EventFields.Boolean("isRegistryOption")
-    internal val IS_NOT_DEFAULT = EventFields.Boolean("isNotDefault")
-    internal val FROM_CONFIGURABLE = EventFields.Boolean("fromConfigurable")
+    internal val IS_OPTION = EventFields.Boolean("is_option")
+    internal val IS_BOOLEAN_OPTION = EventFields.Boolean("is_boolean_option")
+    internal val IS_REGISTRY_OPTION = EventFields.Boolean("is_registry_option")
+    internal val IS_NOT_DEFAULT = EventFields.Boolean("is_not_default")
+    internal val FROM_CONFIGURABLE = EventFields.Boolean("from_configurable")
   }
 
   override fun getFeaturesDeclarations(): List<EventField<*>> {

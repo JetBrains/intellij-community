@@ -31,21 +31,21 @@ import com.intellij.usages.impl.ScopeRuleValidator
 
 internal class CoreStateFeaturesProvider : SearchEverywhereStateFeaturesProvider {
   object Fields {
-    val QUERY_LENGTH_DATA_KEY = EventFields.Int("queryLength")
-    val IS_EMPTY_QUERY_DATA_KEY = EventFields.Boolean("isEmptyQuery")
-    val QUERY_CONTAINS_PATH_DATA_KEY = EventFields.Boolean("queryContainsPath")
-    val QUERY_CONTAINS_COMMAND_CHAR_DATA_KEY = EventFields.Boolean("queryContainsCommandChar")
-    val QUERY_CONTAINS_SPACES_DATA_KEY = EventFields.Boolean("queryContainsSpaces")
-    val QUERY_IS_CAMEL_CASE_DATA_KEY = EventFields.Boolean("queryIsCamelCase")
-    val QUERY_CONTAINS_ABBREVIATIONS_DATA_KEY = EventFields.Boolean("queryContainsAbbreviations")
-    val QUERY_IS_ALL_UPPERCASE_DATA_KEY = EventFields.Boolean("queryIsAllUppercase")
-    val IS_DUMB_MODE = EventFields.Boolean("isDumbMode")
-    val SEARCH_SCOPE_DATA_KEY = EventFields.StringValidatedByCustomRule("searchScope", ScopeRuleValidator::class.java)
-    val IS_SEARCH_EVERYWHERE_DATA_KEY = EventFields.Boolean("isSearchEverywhere")
+    val QUERY_LENGTH_DATA_KEY = EventFields.Int("query_length")
+    val IS_EMPTY_QUERY_DATA_KEY = EventFields.Boolean("is_empty_query")
+    val QUERY_CONTAINS_PATH_DATA_KEY = EventFields.Boolean("query_contains_path")
+    val QUERY_CONTAINS_COMMAND_CHAR_DATA_KEY = EventFields.Boolean("query_contains_command_char")
+    val QUERY_CONTAINS_SPACES_DATA_KEY = EventFields.Boolean("query_contains_spaces")
+    val QUERY_IS_CAMEL_CASE_DATA_KEY = EventFields.Boolean("query_is_camel_case")
+    val QUERY_CONTAINS_ABBREVIATIONS_DATA_KEY = EventFields.Boolean("query_contains_abbreviations")
+    val QUERY_IS_ALL_UPPERCASE_DATA_KEY = EventFields.Boolean("query_is_all_uppercase")
+    val IS_DUMB_MODE = EventFields.Boolean("is_dumb_mode")
+    val SEARCH_SCOPE_DATA_KEY = EventFields.StringValidatedByCustomRule("search_scope", ScopeRuleValidator::class.java)
+    val IS_SEARCH_EVERYWHERE_DATA_KEY = EventFields.Boolean("is_search_everywhere")
 
-    val IS_CASE_SENSITIVE = EventFields.Boolean("isCaseSensitive")
-    val IS_WHOLE_WORDS_ONLY = EventFields.Boolean("isWholeWordsOnly")
-    val IS_REGULAR_EXPRESSIONS = EventFields.Boolean("isRegularExpressions")
+    val IS_CASE_SENSITIVE = EventFields.Boolean("is_case_sensitive")
+    val IS_WHOLE_WORDS_ONLY = EventFields.Boolean("is_whole_words_only")
+    val IS_REGULAR_EXPRESSIONS = EventFields.Boolean("is_regular_expressions")
   }
 
   override val fields: List<EventField<*>> = listOf(

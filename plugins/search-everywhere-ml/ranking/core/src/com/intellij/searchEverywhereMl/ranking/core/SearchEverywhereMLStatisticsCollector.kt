@@ -159,49 +159,50 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
     }
   }
 
-  internal val GROUP = EventLogGroup("mlse.log", 126, MLSE_RECORDER_ID)
+  internal val GROUP = EventLogGroup("mlse.log", 127, MLSE_RECORDER_ID,
+                                     "ML in Search Everywhere Log Group")
 
-  internal val IS_INTERNAL = EventFields.Boolean("isInternal")
-  private val ORDER_BY_ML_GROUP = EventFields.Boolean("orderByMl")
-  internal val EXPERIMENT_GROUP = EventFields.Int("experimentGroup")
-  internal val EXPERIMENT_VERSION = EventFields.Int("experimentVersion")
-  private val FORCE_EXPERIMENT_GROUP = EventFields.Boolean("isForceExperiment")
+  internal val IS_INTERNAL = EventFields.Boolean("is_internal")
+  private val ORDER_BY_ML_GROUP = EventFields.Boolean("order_by_ml")
+  internal val EXPERIMENT_GROUP = EventFields.Int("experiment_group")
+  internal val EXPERIMENT_VERSION = EventFields.Int("experiment_version")
+  private val FORCE_EXPERIMENT_GROUP = EventFields.Boolean("is_force_experiment")
 
   @VisibleForTesting
-  internal val SESSION_DURATION = EventFields.Int("sessionDuration", "Duration of the Search Everywhere session in ms")
-  private val TIME_TO_FIRST_RESULT_DATA_KEY = EventFields.Int("timeToFirstResult")
+  internal val SESSION_DURATION = EventFields.Int("session_duration", "Duration of the Search Everywhere session in ms")
+  private val TIME_TO_FIRST_RESULT_DATA_KEY = EventFields.Int("time_to_first_result")
 
   // context fields
-  private val IS_PROJECT_OPEN = EventFields.Boolean("isProjectOpen")
-  private val IS_PROJECT_DISPOSED_KEY = EventFields.Boolean("projectDisposed")
-  internal val SE_TAB_ID_KEY = EventFields.String("seTabId", ALLOWED_CONTRIBUTOR_ID_LIST)
-  internal val SEARCH_START_TIME_KEY = EventFields.Long("startTime")
-  internal val REBUILD_REASON_KEY = EventFields.Enum<SearchRestartReason>("rebuildReason")
-  internal val SESSION_ID = EventFields.Int("sessionId")
-  internal val SEARCH_INDEX_DATA_KEY = EventFields.Int("searchIndex")
+  private val IS_PROJECT_OPEN = EventFields.Boolean("is_project_open")
+  private val IS_PROJECT_DISPOSED_KEY = EventFields.Boolean("project_disposed")
+  internal val SE_TAB_ID_KEY = EventFields.String("se_tab_id", ALLOWED_CONTRIBUTOR_ID_LIST)
+  internal val SEARCH_START_TIME_KEY = EventFields.Long("start_time")
+  internal val REBUILD_REASON_KEY = EventFields.Enum<SearchRestartReason>("rebuild_reason")
+  internal val SESSION_ID = EventFields.Int("session_id")
+  internal val SEARCH_INDEX_DATA_KEY = EventFields.Int("search_index")
 
-  private val TOTAL_NUMBER_OF_ITEMS_DATA_KEY = EventFields.Int("totalItems")
+  private val TOTAL_NUMBER_OF_ITEMS_DATA_KEY = EventFields.Int("total_items")
 
-  internal val SELECTED_INDEX = EventFields.Int("selectedIndex", "Selected index (0-based) of the item")
+  internal val SELECTED_INDEX = EventFields.Int("selected_index", "Selected index (0-based) of the item")
 
   @VisibleForTesting
-  val SELECTED_ELEMENTS_DATA_KEY: IntListEventField = EventFields.IntList("selectedIds")
+  val SELECTED_ELEMENTS_DATA_KEY: IntListEventField = EventFields.IntList("selected_ids")
 
-  private val IS_MIXED_LIST = EventFields.Boolean("isMixedList")
+  private val IS_MIXED_LIST = EventFields.Boolean("is_mixed_list")
 
   // item fields
   private val SEARCH_STATE_FEATURES_DATA_KEY =
-    ObjectEventField("searchStateFeatures", *SearchEverywhereStateFeaturesProvider.getFields().toTypedArray())
+    ObjectEventField("search_state_features", *SearchEverywhereStateFeaturesProvider.getFields().toTypedArray())
 
   @VisibleForTesting
   val ID_KEY: IntEventField = EventFields.Int("id")
 
   @Suppress("DEPRECATION")
-  internal val ACTION_ID_KEY = ActionsEventLogGroup.ActioID("actionId")
+  internal val ACTION_ID_KEY = ActionsEventLogGroup.ActioID("action_id")
 
   @VisibleForTesting
   val FEATURES_DATA_KEY: ObjectEventField = createFeaturesEventObject()
-  internal val ML_WEIGHT_KEY: DoubleEventField = EventFields.Double("mlWeight")
+  internal val ML_WEIGHT_KEY: DoubleEventField = EventFields.Double("ml_weight")
   internal val PRIORITY_KEY: IntEventField = EventFields.Int("priority", "The final priority used for sorting elements")
   internal val CONTRIBUTOR_FEATURES_LIST = ObjectListEventField(
     "contributors",
@@ -218,7 +219,7 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
                                                         "Contributor name that provided the element")
 
   val COLLECTED_RESULTS_DATA_KEY: ObjectListEventField = ObjectListEventField(
-    "collectedItems",
+    "collected_items",
     ID_KEY, ELEMENT_CONTRIBUTOR, ACTION_ID_KEY,
     FEATURES_DATA_KEY, ML_WEIGHT_KEY, PRIORITY_KEY,
   )
@@ -226,7 +227,7 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
   private val CLASSES_WITHOUT_KEY_PROVIDERS_FIELD = ClassListEventField("unsupported_classes")
 
   // region Events
-  internal val SESSION_STARTED: VarargEventId = GROUP.registerVarargEvent("sessionStarted",
+  internal val SESSION_STARTED: VarargEventId = GROUP.registerVarargEvent("session.started",
                                                                           "An event denoting a start of Search Everywhere session",
                                                                           SESSION_ID, IS_PROJECT_OPEN,
                                                                           SE_TAB_ID_KEY, EXPERIMENT_GROUP, EXPERIMENT_VERSION,
@@ -236,7 +237,7 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
                                                                           IS_MIXED_LIST,
                                                                           *SearchEverywhereContextFeaturesProvider.getContextFields().toTypedArray())
 
-  internal val STATE_CHANGED: VarargEventId = GROUP.registerVarargEvent("stateChanged",
+  internal val STATE_CHANGED: VarargEventId = GROUP.registerVarargEvent("state.changed",
                                                                         "An event denoting change of the search state",
                                                                         SESSION_ID, SEARCH_INDEX_DATA_KEY,
                                                                         ORDER_BY_ML_GROUP,
@@ -244,13 +245,13 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
                                                                         TIME_TO_FIRST_RESULT_DATA_KEY, REBUILD_REASON_KEY,
                                                                         SEARCH_STATE_FEATURES_DATA_KEY, COLLECTED_RESULTS_DATA_KEY,
                                                                         CONTRIBUTOR_FEATURES_LIST)
-  internal val ITEM_SELECTED: VarargEventId = GROUP.registerVarargEvent("itemSelected",
+  internal val ITEM_SELECTED: VarargEventId = GROUP.registerVarargEvent("item.selected",
                                                                         "An event denoting selection of an item from search results",
                                                                         SESSION_ID, SEARCH_INDEX_DATA_KEY,
                                                                         SELECTED_INDEX)
 
   @VisibleForTesting
-  val SESSION_FINISHED: VarargEventId = GROUP.registerVarargEvent("sessionFinished",
+  val SESSION_FINISHED: VarargEventId = GROUP.registerVarargEvent("session.finished",
                                                                   "An event denoting finish of a session and closing of a popup",
                                                                   SESSION_ID,
                                                                   SESSION_DURATION, SE_TAB_ID_KEY)

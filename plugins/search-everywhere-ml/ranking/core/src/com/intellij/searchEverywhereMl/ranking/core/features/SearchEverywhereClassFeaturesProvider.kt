@@ -15,7 +15,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 class SearchEverywhereClassFeaturesProvider : SearchEverywhereElementFeaturesProvider(ClassSearchEverywhereContributor::class.java) {
   object Fields {
-    val IS_DEPRECATED = EventFields.Boolean("isDeprecated")
+    val IS_DEPRECATED = EventFields.Boolean("is_deprecated")
   }
 
   override fun getFeaturesDeclarations(): List<EventField<*>> {
