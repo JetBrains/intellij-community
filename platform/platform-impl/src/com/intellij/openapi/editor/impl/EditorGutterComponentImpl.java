@@ -1073,20 +1073,15 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
     Int2ObjectMap<List<GutterMark>> lineToGutterRenderers = new Int2ObjectOpenHashMap<>();
     processGutterRangeHighlighters(0, myEditor.getDocument().getTextLength(), highlighter -> {
       GutterMark renderer = highlighter.getGutterIconRenderer();
-      if (!shouldBeShown(renderer)) {
-        return true;
+      if (shouldBeShown(renderer) && isHighlighterVisible(highlighter)) {
+        int line = myEditor.offsetToVisualLine(highlighter.getStartOffset());
+        List<GutterMark> renderers = lineToGutterRenderers.get(line);
+        if (renderers == null) {
+          renderers = new SmartList<>();
+          lineToGutterRenderers.put(line, renderers);
+        }
+        renderers.add(renderer);
       }
-      if (!isHighlighterVisible(highlighter)) {
-        return true;
-      }
-      int line = myEditor.offsetToVisualLine(highlighter.getStartOffset());
-      List<GutterMark> renderers = lineToGutterRenderers.get(line);
-      if (renderers == null) {
-        renderers = new SmartList<>();
-        lineToGutterRenderers.put(line, renderers);
-      }
-
-      renderers.add(renderer);
       return true;
     });
 
@@ -1240,25 +1235,24 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
   }
 
   @VisibleForTesting
-  public @Nullable Rectangle getActiveGutterRendererRectangle(int lineNum, String accessibleName) {
+  public @Nullable Rectangle getActiveGutterRendererRectangle(int lineNum, @NotNull String accessibleName) {
     int firstVisibleOffset = myEditor.visualLineStartOffset(lineNum);
     int lastVisibleOffset = EditorUtil.getVisualLineEndOffset(myEditor, lineNum);
     Rectangle[] rectangle = {null};
     processGutterRangeHighlighters(firstVisibleOffset, lastVisibleOffset, highlighter -> {
       LineMarkerRenderer renderer = highlighter.getLineMarkerRenderer();
-      if (renderer instanceof ActiveGutterRenderer activeRenderer) {
-        if (!activeRenderer.getAccessibleName().equals(accessibleName) || rectangle[0] != null) return true;
-        Rectangle rect = getLineRendererRectangle(highlighter);
-        if (rect != null) {
-          Rectangle bounds = activeRenderer.calcBounds(myEditor, lineNum, rect);
-          if (bounds != null) {
-            int[] lineToYRange = myEditor.visualLineToYRange(lineNum);
-            boolean isAtLine =
-              lineToYRange[0] >= bounds.y && lineToYRange[1] <= (bounds.y + bounds.height);
-            if (isAtLine) {
-              rectangle[0] = bounds;
-            }
-          }
+      Rectangle rect;
+      Rectangle bounds;
+      if (renderer instanceof ActiveGutterRenderer activeRenderer &&
+          activeRenderer.getAccessibleName().equals(accessibleName) &&
+          rectangle[0] == null &&
+          (rect = getLineRendererRectangle(highlighter)) != null &&
+          (bounds = activeRenderer.calcBounds(myEditor, lineNum, rect)) != null) {
+        int[] lineToYRange = myEditor.visualLineToYRange(lineNum);
+        boolean isAtLine = lineToYRange[0] >= bounds.y && lineToYRange[1] <= (bounds.y + bounds.height);
+        if (isAtLine) {
+          rectangle[0] = bounds;
+          return false;
         }
       }
       return true;
