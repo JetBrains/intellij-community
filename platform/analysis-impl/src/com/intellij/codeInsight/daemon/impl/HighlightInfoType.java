@@ -111,6 +111,9 @@ public interface HighlightInfoType {
       attributeKey = new TextAttributesKey(element);
     }
 
+    /**
+     * Do not call from static initializer during component loading, which can overlap with HighlightInfoType initialization because of the possible deadlock
+     */
     public HighlightInfoTypeImpl(@NotNull HighlightSeverity severity, @NotNull TextAttributesKey attributesKey) {
       mySeverity = severity;
       attributeKey = attributesKey;
