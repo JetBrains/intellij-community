@@ -243,14 +243,3 @@ private fun <T> Sequence<T>.appendIfEmpty(item: T) = sequence {
     yield(item)
   }
 }
-
-internal sealed interface SetContextResult {
-  /** the context was successfully installed */
-  object Success : SetContextResult
-
-  /** the context was not installed because of a concurrent context update */
-  class ConcurrentlyUpdated(val newContext: CodeInsightContext) : SetContextResult
-
-  /** the context was not installed because the file view provider is missing in the file manager storage */
-  object ProviderIsMissing : SetContextResult
-}
