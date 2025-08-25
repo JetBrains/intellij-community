@@ -26,7 +26,7 @@ internal val ShellRuntimeContext.repository: GitRepository?
 
 // Find remote generators in the git.json file by searching for scripts doing:
 // remote -v
-private val remotesGenerator: ShellRuntimeDataGenerator<List<ShellCompletionSuggestion>> = ShellRuntimeDataGenerator { context ->
+private val remotesGenerator: ShellRuntimeDataGenerator<List<ShellCompletionSuggestion>> = ShellRuntimeDataGenerator("git-remotes") { context ->
   val repository = context.repository
 
   if (repository != null) {
@@ -81,7 +81,7 @@ private fun postProcessBranchesFromCommandLine(lines: List<String>, insertWithou
   }.distinctBy { it.name }
 
 // git --no-optional-locks branch --no-color --sort=-committerdate
-private val localBranchesGenerator: ShellRuntimeDataGenerator<List<ShellCompletionSuggestion>> = ShellRuntimeDataGenerator { context ->
+private val localBranchesGenerator: ShellRuntimeDataGenerator<List<ShellCompletionSuggestion>> = ShellRuntimeDataGenerator("git-local-branches") { context ->
   val repository = context.repository
 
   if (repository != null) {
@@ -104,7 +104,7 @@ private val localBranchesGenerator: ShellRuntimeDataGenerator<List<ShellCompleti
 }
 
 // git --no-optional-locks branch -a --no-color --sort=-committerdate
-private val allBranchesGenerator: ShellRuntimeDataGenerator<List<ShellCompletionSuggestion>> = ShellRuntimeDataGenerator { context ->
+private val allBranchesGenerator: ShellRuntimeDataGenerator<List<ShellCompletionSuggestion>> = ShellRuntimeDataGenerator("git-all-branches") { context ->
   val repository = context.repository
 
   if (repository != null) {
@@ -127,7 +127,7 @@ private val allBranchesGenerator: ShellRuntimeDataGenerator<List<ShellCompletion
 }
 
 // git --no-optional-locks branch -r --no-color --sort=-committerdate
-private val remoteBranchesGenerator: ShellRuntimeDataGenerator<List<ShellCompletionSuggestion>> = ShellRuntimeDataGenerator { context ->
+private val remoteBranchesGenerator: ShellRuntimeDataGenerator<List<ShellCompletionSuggestion>> = ShellRuntimeDataGenerator("git-remote-branches") { context ->
   val repository = context.repository
 
   if (repository != null) {
@@ -152,7 +152,7 @@ private val remoteBranchesGenerator: ShellRuntimeDataGenerator<List<ShellComplet
 // TODO: Fix this after there's some 'parsedOptions' or something in context to check for here.
 // TODO: Maybe show all branches for the time being?
 // Problem is that completion for 'git branch -d -r {caret}' will not know about '-r'
-private val localOrRemoteBranchesGenerator: ShellRuntimeDataGenerator<List<ShellCompletionSuggestion>> = ShellRuntimeDataGenerator { context ->
+private val localOrRemoteBranchesGenerator: ShellRuntimeDataGenerator<List<ShellCompletionSuggestion>> = ShellRuntimeDataGenerator("git-local-or-remote-branches") { context ->
   if (context.typedPrefix.contains("-r") || context.typedPrefix.contains("--remotes")) {
     remoteBranchesGenerator.generate(context)
   }
