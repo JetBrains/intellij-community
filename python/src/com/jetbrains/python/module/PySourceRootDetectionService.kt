@@ -8,6 +8,7 @@ import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.Service
@@ -41,7 +42,7 @@ import java.io.File
 )
 internal class PySourceRootDetectionService(
   private val project: Project,
-  cs: CoroutineScope
+  private val cs: CoroutineScope
 ) : ModuleRootListener, PersistentStateComponent<PySourceRootDetectionService.HiddenSourcesState> {
   private val mutableState = MutableStateFlow(State())
 
@@ -86,15 +87,17 @@ internal class PySourceRootDetectionService(
     }
   }
 
-  fun markAsSourceRoot(sourceRoot: VirtualFile, showNotification: Boolean = true) {
-    val module = ModuleUtil.findModuleForFile(sourceRoot, project) ?: return
-    val model = ModuleRootManager.getInstance(module).modifiableModel
-    val entry = MarkRootsManager.findContentEntry(model, sourceRoot) ?: return
-    entry.addSourceFolder(sourceRoot, JavaSourceRootType.SOURCE)
-    model.commit()
+  fun markAsSourceRoot(sourceRoot: VirtualFile, showNotification: Boolean = true) = cs.launch {
+    writeAction {
+      val module = ModuleUtil.findModuleForFile(sourceRoot, project) ?: return@writeAction
+      val model = ModuleRootManager.getInstance(module).modifiableModel
+      val entry = MarkRootsManager.findContentEntry(model, sourceRoot) ?: return@writeAction
+      entry.addSourceFolder(sourceRoot, JavaSourceRootType.SOURCE)
+      model.commit()
 
-    if (showNotification) {
-      showNotification(sourceRoot)
+      if (showNotification) {
+        showNotification(sourceRoot)
+      }
     }
   }
 
