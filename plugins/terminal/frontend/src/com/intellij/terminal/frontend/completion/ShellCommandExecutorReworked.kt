@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.terminal.frontend.completion
 
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelExecApi.RedirectStdErr
@@ -39,6 +40,8 @@ internal class ShellCommandExecutorReworked(private val eelDescriptor: EelDescri
       return@coroutineScope emptyResult()
     }
 
+    LOG.debug { "Executing command '$commandName' with arguments $arguments in directory '$directory'" }
+
     try {
       val eel = eelDescriptor.toEelApi()
       val process = eel.exec
@@ -49,9 +52,11 @@ internal class ShellCommandExecutorReworked(private val eelDescriptor: EelDescri
         .scope(scope) // Terminate the process if the coroutine was canceled
         .eelIt()
       val result = process.awaitProcessResult()
+      LOG.debug { "Finished command '$commandName' with arguments $arguments in directory '$directory' with exit code ${result.exitCode}" }
       ShellCommandResult.create(result.stdoutString, result.exitCode)
     }
     catch (ce: CancellationException) {
+      LOG.debug { "Cancelled command '$commandName' with arguments $arguments in directory '$directory'" }
       throw ce
     }
     catch (e: ExecuteProcessException) {

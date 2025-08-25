@@ -4,15 +4,14 @@ package com.intellij.terminal.frontend.completion
 import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.benmanes.caffeine.cache.Scheduler
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.terminal.completion.ShellDataGeneratorsExecutor
 import com.intellij.terminal.completion.spec.ShellRuntimeContext
 import com.intellij.terminal.completion.spec.ShellRuntimeDataGenerator
 import com.intellij.terminal.frontend.TerminalSessionController
 import com.intellij.util.asDisposable
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.async
-import kotlinx.coroutines.cancelChildren
+import kotlinx.coroutines.*
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellCacheableDataGenerator
 import org.jetbrains.plugins.terminal.block.reworked.TerminalShellIntegrationEventsListener
 import java.time.Duration
@@ -58,7 +57,10 @@ internal class ShellDataGeneratorsExecutorReworkedImpl(
 
     val deferred: Deferred<Any> = cache.get(key) {
       coroutineScope.async {
-        generator.generate(context)
+        LOG.debug { "Executing cacheable generator with key '$key' in context: $context" }
+        generator.generate(context).also {
+          LOG.debug { "Finished executing generator with key '$key'" }
+        }
       }
     }
     val result: Any = deferred.await()
@@ -72,6 +74,12 @@ internal class ShellDataGeneratorsExecutorReworkedImpl(
   /** Clears the stored results and cancels all running generators */
   private fun reset() {
     cache.invalidateAll()
+    val runningGeneratorsCount = coroutineScope.coroutineContext.job.children.count()
     coroutineScope.coroutineContext.cancelChildren()
+    LOG.debug { "Cache was cleared and $runningGeneratorsCount running generators were canceled" }
+  }
+
+  companion object {
+    private val LOG = logger<ShellDataGeneratorsExecutorReworkedImpl>()
   }
 }
