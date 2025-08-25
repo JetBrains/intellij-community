@@ -5,7 +5,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
 interface PinToTopMemberValue : PinToTopValue {
-    fun canBePinned() : Boolean
+    override fun canBePinned() : Boolean
 
     /**
      * When not null the name will be used as member name in PinToTop instead of node name. May be useful in a case when

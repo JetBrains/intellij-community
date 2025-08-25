@@ -4,4 +4,8 @@ package com.intellij.xdebugger.impl.pinned.items
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
-interface PinToTopValue
+interface PinToTopValue {
+  fun canBePinned() : Boolean {
+    return true
+  }
+}

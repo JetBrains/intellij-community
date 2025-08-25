@@ -116,6 +116,7 @@ a:com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint
 - com.intellij.xdebugger.impl.pinned.items.PinToTopValue
 - a:getTag():java.lang.String
 *:com.intellij.xdebugger.impl.pinned.items.PinToTopValue
+- canBePinned():Z
 *:com.intellij.xdebugger.impl.pinned.items.XDebuggerPinToTopListener
 - a:onPinnedItemAdded(com.intellij.xdebugger.impl.pinned.items.PinnedItemInfo):V
 - a:onPinnedItemRemoved(com.intellij.xdebugger.impl.pinned.items.PinnedItemInfo):V
