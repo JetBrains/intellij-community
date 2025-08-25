@@ -1,43 +1,35 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.xdebugger.impl.ui.tree.actions;
+package com.intellij.xdebugger.impl.ui.tree.actions
 
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.ToggleAction;
-import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
-import com.intellij.openapi.project.DumbAware;
-import com.intellij.xdebugger.XDebugSession;
-import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
-import com.intellij.xdebugger.impl.frame.XDebugSessionProxy;
-import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
-import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.ToggleAction
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend
+import com.intellij.openapi.project.DumbAware
+import com.intellij.xdebugger.impl.XDebuggerUtilImpl
+import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
+import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-public class SortValuesToggleAction extends ToggleAction implements DumbAware, ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
+class SortValuesToggleAction : ToggleAction(), DumbAware, FrontendOtherwiseBackend {
+  override fun update(e: AnActionEvent) {
+    super.update(e)
 
-  @Override
-  public void update(@NotNull AnActionEvent e) {
-    super.update(e);
-
-    XDebugSessionProxy sessionProxy = DebuggerUIUtil.getSessionProxy(e);
-    e.getPresentation().setEnabledAndVisible(sessionProxy != null && !sessionProxy.isValuesCustomSorted());
+    val sessionProxy = DebuggerUIUtil.getSessionProxy(e)
+    e.presentation.isEnabledAndVisible = sessionProxy != null && !sessionProxy.isValuesCustomSorted
   }
 
-  @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.BGT;
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 
-  @Override
-  public boolean isSelected(@NotNull AnActionEvent e) {
-    return XDebuggerSettingManagerImpl.getInstanceImpl().getDataViewSettings().isSortValues();
+  override fun isSelected(e: AnActionEvent): Boolean {
+    return XDebuggerSettingManagerImpl.getInstanceImpl().dataViewSettings.isSortValues
   }
 
-  @Override
-  public void setSelected(@NotNull AnActionEvent e, boolean state) {
-    XDebuggerSettingManagerImpl.getInstanceImpl().getDataViewSettings().setSortValues(state);
-    XDebuggerUtilImpl.rebuildAllSessionsViews(e.getProject());
+  override fun setSelected(e: AnActionEvent, state: Boolean) {
+    XDebuggerSettingManagerImpl.getInstanceImpl().dataViewSettings.isSortValues = state
+    XDebuggerUtilImpl.rebuildAllSessionsViews(e.project)
   }
 }

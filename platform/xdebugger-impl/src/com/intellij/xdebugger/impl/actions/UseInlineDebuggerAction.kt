@@ -13,36 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.xdebugger.impl.actions;
+package com.intellij.xdebugger.impl.actions
 
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.ToggleAction;
-import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
-import com.intellij.openapi.project.DumbAware;
-import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
-import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.ToggleAction
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
+import com.intellij.openapi.project.DumbAware
+import com.intellij.xdebugger.impl.XDebuggerUtilImpl
+import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl
+import org.jetbrains.annotations.ApiStatus
+import java.util.*
 
 /**
  * @author Konstantin Bulenkov
  */
 @ApiStatus.Internal
-public class UseInlineDebuggerAction extends ToggleAction implements DumbAware, ActionRemoteBehaviorSpecification.Frontend {
-  @Override
-  public boolean isSelected(@NotNull AnActionEvent e) {
-    return XDebuggerSettingManagerImpl.getInstanceImpl().getDataViewSettings().isShowValuesInline();
+class UseInlineDebuggerAction : ToggleAction(), DumbAware, ActionRemoteBehaviorSpecification.Frontend {
+  override fun isSelected(e: AnActionEvent): Boolean {
+    return XDebuggerSettingManagerImpl.getInstanceImpl().dataViewSettings.isShowValuesInline
   }
 
-  @Override
-  public void setSelected(@NotNull AnActionEvent e, boolean state) {
-    XDebuggerSettingManagerImpl.getInstanceImpl().getDataViewSettings().setShowValuesInline(state);
-    XDebuggerUtilImpl.rebuildAllSessionsViews(e.getProject());
+  override fun setSelected(e: AnActionEvent, state: Boolean) {
+    XDebuggerSettingManagerImpl.getInstanceImpl().dataViewSettings.isShowValuesInline = state
+    XDebuggerUtilImpl.rebuildAllSessionsViews(e.project)
   }
 
-  @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.BGT;
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 }
