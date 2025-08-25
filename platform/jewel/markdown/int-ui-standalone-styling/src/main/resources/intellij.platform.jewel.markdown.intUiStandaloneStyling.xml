@@ -5,5 +5,6 @@
         <module name="intellij.platform.jewel.foundation"/>
         <module name="intellij.platform.jewel.intUi.standalone"/>
         <module name="intellij.platform.jewel.markdown.extensions.gfmAlerts"/>
+        <module name="intellij.platform.jewel.markdown.extensions.gfmTables"/>
     </dependencies>
 </idea-plugin>
