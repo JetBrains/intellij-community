@@ -25,7 +25,8 @@ public final class SearchEverywhereUsageTriggerCollector extends CounterUsagesCo
   @ApiStatus.Internal
   public static final String NOT_REPORTABLE_ID = "third.party";
 
-  public static final StringEventField CONTRIBUTOR_ID_FIELD = EventFields.String("contributorID", Arrays.asList(
+  @ApiStatus.Internal
+  public static final List<String> ALLOWED_CONTRIBUTOR_ID_LIST = Arrays.asList(
     "FileSearchEverywhereContributor",
     "SearchEverywhereContributor.All",
     "ClassSearchEverywhereContributor",
@@ -44,7 +45,9 @@ public final class SearchEverywhereUsageTriggerCollector extends CounterUsagesCo
     "RiderOnboardingSearchEverywhereContributor",
     "CalculatorSEContributor",
     "DbObjectsSEContributor"
-  ));
+  );
+
+  public static final StringEventField CONTRIBUTOR_ID_FIELD = EventFields.String("contributorID", ALLOWED_CONTRIBUTOR_ID_LIST);
 
   private static final List<String> ourTabs = Arrays.asList("FileSearchEverywhereContributor",
                                                             "SearchEverywhereContributor.All",

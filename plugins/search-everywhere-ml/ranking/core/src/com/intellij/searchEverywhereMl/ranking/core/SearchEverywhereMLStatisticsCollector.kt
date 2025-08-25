@@ -4,6 +4,7 @@ package com.intellij.searchEverywhereMl.ranking.core
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereEssentialContributorMarker
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereMixedListInfo
 import com.intellij.ide.actions.searcheverywhere.SearchRestartReason
+import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector.ALLOWED_CONTRIBUTOR_ID_LIST
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup
 import com.intellij.internal.statistic.eventLog.EventLogGroup
@@ -20,7 +21,6 @@ import com.intellij.searchEverywhereMl.features.SearchEverywhereStateFeaturesPro
 import com.intellij.searchEverywhereMl.log.MLSE_RECORDER_ID
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereContextFeaturesProvider
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereContributorFeaturesProvider
-import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereContributorFeaturesProvider.SE_CONTRIBUTORS
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereElementFeaturesProvider
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
@@ -174,7 +174,7 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
   // context fields
   private val IS_PROJECT_OPEN = EventFields.Boolean("isProjectOpen")
   private val IS_PROJECT_DISPOSED_KEY = EventFields.Boolean("projectDisposed")
-  internal val SE_TAB_ID_KEY = EventFields.String("seTabId", SE_CONTRIBUTORS)
+  internal val SE_TAB_ID_KEY = EventFields.String("seTabId", ALLOWED_CONTRIBUTOR_ID_LIST)
   internal val SEARCH_START_TIME_KEY = EventFields.Long("startTime")
   internal val REBUILD_REASON_KEY = EventFields.Enum<SearchRestartReason>("rebuildReason")
   internal val SESSION_ID = EventFields.Int("sessionId")
@@ -214,7 +214,7 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
    * within the context of a Search Everywhere action.
    */
   internal val ELEMENT_CONTRIBUTOR = EventFields.String("contributor",
-                                                        SearchEverywhereContributorFeaturesProvider.SE_CONTRIBUTORS,
+                                                        ALLOWED_CONTRIBUTOR_ID_LIST,
                                                         "Contributor name that provided the element")
 
   val COLLECTED_RESULTS_DATA_KEY: ObjectListEventField = ObjectListEventField(

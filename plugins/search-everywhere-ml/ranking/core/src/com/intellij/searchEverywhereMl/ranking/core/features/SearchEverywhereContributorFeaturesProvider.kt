@@ -4,6 +4,7 @@ import com.intellij.ide.actions.searcheverywhere.EssentialContributor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereEssentialContributorMarker
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereMixedListInfo
+import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector.ALLOWED_CONTRIBUTOR_ID_LIST
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
@@ -14,18 +15,7 @@ import com.intellij.searchEverywhereMl.ranking.core.features.statistician.Contri
 import com.intellij.searchEverywhereMl.ranking.core.features.statistician.getContributorStatistics
 
 internal object SearchEverywhereContributorFeaturesProvider {
-  val SE_CONTRIBUTORS = listOf(
-    "SearchEverywhereContributor.All", "ClassSearchEverywhereContributor",
-    "FileSearchEverywhereContributor", "RecentFilesSEContributor",
-    "SymbolSearchEverywhereContributor", "ActionSearchEverywhereContributor",
-    "RunConfigurationsSEContributor", "CommandsContributor",
-    "TopHitSEContributor", "com.intellij.ide.actions.searcheverywhere.CalculatorSEContributor",
-    "TmsSearchEverywhereContributor", "YAMLKeysSearchEverywhereContributor",
-    "UrlSearchEverywhereContributor", "Vcs.Git", "AutocompletionContributor",
-    "TextSearchContributor", "DbSETablesContributor", "third.party"
-  )
-
-  val CONTRIBUTOR_INFO_ID = EventFields.String("contributorId", SE_CONTRIBUTORS)
+  val CONTRIBUTOR_INFO_ID = EventFields.String("contributorId", ALLOWED_CONTRIBUTOR_ID_LIST)
   val CONTRIBUTOR_PRIORITY = EventFields.Int("contributorPriority")
   val CONTRIBUTOR_WEIGHT = EventFields.Int("contributorWeight")
   val CONTRIBUTOR_IS_MOST_POPULAR = EventFields.Boolean("contributorIsMostPopular")
