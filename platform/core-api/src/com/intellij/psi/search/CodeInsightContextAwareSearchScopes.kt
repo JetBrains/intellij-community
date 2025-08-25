@@ -7,6 +7,7 @@ package com.intellij.psi.search
 import com.intellij.codeInsight.multiverse.CodeInsightContext
 import com.intellij.codeInsight.multiverse.CodeInsightContextManager
 import com.intellij.codeInsight.multiverse.anyContext
+import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.FileViewProvider
@@ -250,6 +251,8 @@ fun tryCheckingFileInScope(
         return true
       }
       else {
+        fileLogger().warn("Unexpected context $actualCodeInsightContext for $context for $viewProvider", Throwable())
+
         return globalScope.contains(file, actualCodeInsightContext)
       }
     }
