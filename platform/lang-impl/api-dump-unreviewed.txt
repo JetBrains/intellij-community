@@ -8200,7 +8200,6 @@ a:com.intellij.ide.actions.searcheverywhere.AbstractGotoSEContributor
 - getElementPriority(java.lang.Object,java.lang.String):I
 - getElementsRenderer():javax.swing.ListCellRenderer
 - getItemDescription(java.lang.Object):java.lang.String
-- psf:getLineAndColumn(java.lang.String):com.intellij.util.IntPair
 - pf:getProject():com.intellij.openapi.project.Project
 - getScope():com.intellij.ide.util.scopeChooser.ScopeDescriptor
 - getSearchProviderId():java.lang.String
@@ -8213,7 +8212,6 @@ a:com.intellij.ide.actions.searcheverywhere.AbstractGotoSEContributor
 - processSelectedItem(java.lang.Object,I,java.lang.String):Z
 - setScope(com.intellij.ide.util.scopeChooser.ScopeDescriptor):V
 - showInFindResults():Z
-- p:triggerLineOrColumnFeatureUsed(com.intellij.pom.Navigatable,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.ide.actions.searcheverywhere.AbstractGotoSEContributor$Companion
 - f:createContext(com.intellij.openapi.project.Project,com.intellij.psi.SmartPsiElementPointer):com.intellij.openapi.actionSystem.DataContext
 - f:getElement(com.intellij.psi.PsiElement,java.lang.String):com.intellij.psi.PsiElement
@@ -8270,7 +8268,6 @@ c:com.intellij.ide.actions.searcheverywhere.ClassSearchEverywhereContributor
 - createExtendedInfo():com.intellij.ide.actions.searcheverywhere.ExtendedInfo
 - sf:createLanguageFilter(com.intellij.openapi.project.Project):com.intellij.ide.actions.searcheverywhere.PersistentSearchEverywhereContributorFilter
 - p:createModel(com.intellij.openapi.project.Project):com.intellij.ide.util.gotoByName.FilteringGotoByModel
-- p:createSourceNavigationRequest(com.intellij.psi.PsiElement,com.intellij.openapi.vfs.VirtualFile,java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
 - filterControlSymbols(java.lang.String):java.lang.String
 - getActions(java.lang.Runnable):java.util.List
 - getElementPriority(java.lang.Object,java.lang.String):I
@@ -8303,7 +8300,6 @@ c:com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor
 - createExtendedInfo():com.intellij.ide.actions.searcheverywhere.ExtendedInfo
 - sf:createFileTypeFilter(com.intellij.openapi.project.Project):com.intellij.ide.actions.searcheverywhere.PersistentSearchEverywhereContributorFilter
 - p:createModel(com.intellij.openapi.project.Project):com.intellij.ide.util.gotoByName.FilteringGotoByModel
-- p:createSourceNavigationRequest(com.intellij.psi.PsiElement,com.intellij.openapi.vfs.VirtualFile,java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
 - getActions(java.lang.Runnable):java.util.List
 - getDataForItem(java.lang.Object,java.lang.String):java.lang.Object
 - getElementPriority(java.lang.Object,java.lang.String):I
@@ -8313,7 +8309,6 @@ c:com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor
 - getSortWeight():I
 - isEmptyPatternSupported():Z
 - pf:processElement(com.intellij.openapi.progress.ProgressIndicator,com.intellij.util.Processor,com.intellij.ide.util.gotoByName.FilteringGotoByModel,java.lang.Object,I):Z
-- pf:triggerLineOrColumnFeatureUsed(com.intellij.pom.Navigatable,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor$Companion
 - f:createFileTypeFilter(com.intellij.openapi.project.Project):com.intellij.ide.actions.searcheverywhere.PersistentSearchEverywhereContributorFilter
 a:com.intellij.ide.actions.searcheverywhere.FixedTabsListCustomizationStrategy

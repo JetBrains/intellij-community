@@ -22,13 +22,19 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.backend.navigation.NavigationRequest
+import com.intellij.platform.backend.navigation.NavigationRequests
+import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.reference.SoftReference
@@ -65,6 +71,15 @@ open class TextSearchContributor(val event: AnActionEvent) : WeightedSearchEvery
   private var psiContext = getPsiContext()
 
   private lateinit var onDispose: () -> Unit
+
+  private val navigationHandler = object : SearchEverywhereNavigationHandler(project) {
+    override suspend fun createSourceNavigationRequest(project: Project, element: PsiElement, file: VirtualFile, searchText: String, offset: Int): NavigationRequest? {
+      val navigationRequests = serviceAsync<NavigationRequests>()
+      return readAction {
+        navigationRequests.sourceNavigationRequest(project = project, file = file, offset = offset, elementRange = null)
+      }
+    }
+  }
 
   init {
     val scopes = createScopes()
@@ -123,11 +138,14 @@ open class TextSearchContributor(val event: AnActionEvent) : WeightedSearchEvery
   override fun getElementsRenderer(): ListCellRenderer<in SearchEverywhereItem> = TextSearchRenderer()
 
   override fun processSelectedItem(selected: SearchEverywhereItem, modifiers: Int, searchText: String): Boolean {
-    // TODO async navigation
     val info = selected.usage
     if (!info.canNavigate()) return false
 
-    info.navigate(true)
+    val psiElement = info.usageInfo.element
+    if (psiElement == null) return false
+
+    navigationHandler.gotoSelectedItem(psiElement, modifiers, searchText, info.navigationOffset)
+
     return true
   }
 
