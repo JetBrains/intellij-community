@@ -4,9 +4,9 @@ package org.jetbrains.plugins.github.pullrequest.comment.action
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewNavigableEditorViewModel
 import com.intellij.diff.tools.util.DiffDataKeys
 import com.intellij.openapi.actionSystem.ActionUpdateThread
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.project.DumbAwareAction
 import org.jetbrains.plugins.github.pullrequest.ui.diff.GHPRReviewDiffEditorModel
 
 internal class GHPRDiffReviewPreviousCommentAction : GHPRDiffReviewPreviousNextCommentActionBase(
@@ -28,7 +28,7 @@ internal sealed class GHPRDiffReviewPreviousNextCommentActionBase(
   private val canGotoLineComment: CodeReviewNavigableEditorViewModel.(Int) -> Boolean,
   private val gotoThreadComment: CodeReviewNavigableEditorViewModel.(String) -> Unit,
   private val gotoLineComment: CodeReviewNavigableEditorViewModel.(Int) -> Unit,
-) : AnAction() {
+) : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   override fun update(e: AnActionEvent) {
