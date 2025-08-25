@@ -69,13 +69,16 @@ class WorkspaceFileIndexContributorOnReferenceDependenciesTest {
   @Test
   fun `check referred test entity contributor called after reference is created`() = runBlocking {
     referredTestEntityContributor.numberOfCalls.set(0)
+    readAction {
+      assertFalse(WorkspaceFileIndex.getInstance(projectModel.project).isInWorkspace(entityRoot))
+    }
     WorkspaceModel.getInstance(projectModel.project).update("Create reference between entities") {
       it.modifyEntity(WithReferenceTestEntity.Builder::class.java, referenceTestEntity) {
         references = mutableListOf(DependencyItem(referredTestEntity.symbolicId))
       }
     }
 
-    assertEquals(1, referredTestEntityContributor.numberOfCalls.get())
+    assertEquals(2, referredTestEntityContributor.numberOfCalls.get())
     readAction {
       assertTrue(WorkspaceFileIndex.getInstance(projectModel.project).isInWorkspace(entityRoot))
     }
@@ -84,12 +87,15 @@ class WorkspaceFileIndexContributorOnReferenceDependenciesTest {
   @Test
   fun `check referred test entity contributor called only once`() = runBlocking {
     referredTestEntityContributor.numberOfCalls.set(0)
+    readAction {
+      assertFalse(WorkspaceFileIndex.getInstance(projectModel.project).isInWorkspace(entityRoot))
+    }
     WorkspaceModel.getInstance(projectModel.project).update("Create reference between entities") {
       it.modifyEntity(WithReferenceTestEntity.Builder::class.java, referenceTestEntity) {
         references = mutableListOf(DependencyItem(referredTestEntity.symbolicId))
       }
     }
-    assertEquals(1, referredTestEntityContributor.numberOfCalls.get())
+    assertEquals(2, referredTestEntityContributor.numberOfCalls.get())
     readAction {
       assertTrue(WorkspaceFileIndex.getInstance(projectModel.project).isInWorkspace(entityRoot))
     }
@@ -112,7 +118,7 @@ class WorkspaceFileIndexContributorOnReferenceDependenciesTest {
         references = mutableListOf(DependencyItem(referredTestEntity.symbolicId))
       }
     }
-    assertEquals(1, referredTestEntityContributor.numberOfCalls.get())
+    assertEquals(2, referredTestEntityContributor.numberOfCalls.get())
     referredTestEntityContributor.numberOfCalls.set(0)
 
     // add new WithReferenceTestEntity
@@ -126,7 +132,9 @@ class WorkspaceFileIndexContributorOnReferenceDependenciesTest {
   @Test
   fun `check referred test entity contributor does not called if we have at least one reference`() = runBlocking {
     val model = WorkspaceModel.getInstance(projectModel.project)
-
+    readAction {
+      assertFalse(WorkspaceFileIndex.getInstance(projectModel.project).isInWorkspace(entityRoot))
+    }
     model.update("Create reference between entities") {
       it.modifyEntity(WithReferenceTestEntity.Builder::class.java, referenceTestEntity) {
         references = mutableListOf(DependencyItem(referredTestEntity.symbolicId))
@@ -139,6 +147,9 @@ class WorkspaceFileIndexContributorOnReferenceDependenciesTest {
       it.addEntity(WithReferenceTestEntity("Another reference", listOf(DependencyItem(referredTestEntity.symbolicId)), NonPersistentEntitySource))
     }
 
+    readAction {
+      assertTrue(WorkspaceFileIndex.getInstance(projectModel.project).isInWorkspace(entityRoot))
+    }
     model.update("Remove reference between entities") {
       it.modifyEntity(WithReferenceTestEntity.Builder::class.java, referenceTestEntity) {
         references = mutableListOf()
@@ -153,7 +164,9 @@ class WorkspaceFileIndexContributorOnReferenceDependenciesTest {
   @Test
   fun `check referred test entity contributor called after reference is removed`() = runBlocking {
     val model = WorkspaceModel.getInstance(projectModel.project)
-
+    readAction {
+      assertFalse(WorkspaceFileIndex.getInstance(projectModel.project).isInWorkspace(entityRoot))
+    }
     model.update("Create reference between entities") {
       it.modifyEntity(WithReferenceTestEntity.Builder::class.java, referenceTestEntity) {
         references = mutableListOf(DependencyItem(referredTestEntity.symbolicId))
@@ -161,6 +174,9 @@ class WorkspaceFileIndexContributorOnReferenceDependenciesTest {
     }
     referredTestEntityContributor.numberOfCalls.set(0)
 
+    readAction {
+      assertTrue(WorkspaceFileIndex.getInstance(projectModel.project).isInWorkspace(entityRoot))
+    }
     model.update("Remove reference between entities") {
       it.modifyEntity(WithReferenceTestEntity.Builder::class.java, referenceTestEntity) {
         references = mutableListOf()
@@ -170,7 +186,29 @@ class WorkspaceFileIndexContributorOnReferenceDependenciesTest {
       // entity is in the WorkspaceModel, but its not referenced by any other entity, so it is not in the workspace
       assertFalse(WorkspaceFileIndex.getInstance(projectModel.project).isInWorkspace(entityRoot))
     }
-    assertEquals(1, referredTestEntityContributor.numberOfCalls.get())
+    assertEquals(2, referredTestEntityContributor.numberOfCalls.get())
+  }
+
+  @Test
+  fun `check contributor is called on referred entity rename`() = runBlocking {
+    val model = WorkspaceModel.getInstance(projectModel.project)
+    model.update("Create reference between entities") {
+      it.modifyEntity(WithReferenceTestEntity.Builder::class.java, referenceTestEntity) {
+        references = mutableListOf(DependencyItem(referredTestEntity.symbolicId))
+      }
+
+    }
+    referredTestEntityContributor.numberOfCalls.set(0)
+    model.update("Rename entity and update reference") {
+      it.modifyEntity(ReferredTestEntity.Builder::class.java, referredTestEntity) {
+        name = "New Name"
+      }
+    }
+    assertEquals(4, referredTestEntityContributor.numberOfCalls.get())
+    readAction {
+      // entity is in the WorkspaceModel, but its not referenced by any other entity, so it is not in the workspace
+      assertTrue(WorkspaceFileIndex.getInstance(projectModel.project).isInWorkspace(entityRoot))
+    }
   }
 
   // we need SkipAddingToWatchedRoots to pass filter WorkspaceIndexingRootsBuilder.Companion.registerEntitiesFromContributors()
@@ -188,9 +226,9 @@ class WorkspaceFileIndexContributorOnReferenceDependenciesTest {
       )
 
     override fun registerFileSets(entity: ReferredTestEntity, registrar: WorkspaceFileSetRegistrar, storage: EntityStorage) {
+      numberOfCalls.incrementAndGet()
       if (storage.referrers(entity.symbolicId, WithReferenceTestEntity::class.java).any()) {
         registrar.registerFileSet(entity.file, WorkspaceFileKind.CUSTOM, entity, null)
-        numberOfCalls.incrementAndGet()
       }
     }
   }
