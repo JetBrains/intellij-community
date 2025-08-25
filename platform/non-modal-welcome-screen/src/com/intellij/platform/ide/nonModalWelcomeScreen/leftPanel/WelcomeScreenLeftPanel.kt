@@ -2,12 +2,17 @@ package com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel
 
 import com.intellij.icons.AllIcons.Actions.Search
 import com.intellij.ide.SelectInTarget
+import com.intellij.ide.dnd.DnDEvent
+import com.intellij.ide.dnd.DnDNativeTarget
+import com.intellij.ide.dnd.DnDSupport
+import com.intellij.ide.dnd.FileCopyPasteUtil
 import com.intellij.ide.projectView.impl.ProjectViewPane
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider.Companion.isWelcomeScreenProject
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.ProjectCollectors
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectFilteringTree
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectPanelComponentFactory
+import com.intellij.platform.ide.nonModalWelcomeScreen.GoFileDragAndDropHandler
 import com.intellij.platform.ide.nonModalWelcomeScreen.NonModalWelcomeScreenBundle
 import com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel.WelcomeScreenLeftPanelActions.Companion.leftPanelActionButton
 import com.intellij.ui.ExperimentalUI
@@ -46,6 +51,31 @@ internal class WelcomeScreenLeftPanel(private val project: Project) : ProjectVie
 
   override fun createSelectInTarget(): SelectInTarget = WelcomeScreenLeftPanelSelectInTarget()
 
+  private fun setupDragAndDrop(component: JComponent) {
+    val target = object : DnDNativeTarget {
+      override fun update(event: DnDEvent): Boolean {
+        if (!FileCopyPasteUtil.isFileListFlavorAvailable(event)) {
+          return false
+        }
+        event.isDropPossible = true
+        return false
+      }
+
+      override fun drop(event: DnDEvent) {
+        val files = FileCopyPasteUtil.getFileListFromAttachedObject(event.attachedObject)
+          .map { file -> file.toPath() }
+        GoFileDragAndDropHandler.openFiles(project, files)
+      }
+    }
+
+    DnDSupport.createBuilder(component)
+      .enableAsNativeTarget()
+      .setTargetChecker(target)
+      .setDropHandler(target)
+      .setDisposableParent(this)
+      .install()
+  }
+
   override fun createComponent(): JComponent {
 
     val mainPanel = JBPanel<JBPanel<*>>(BorderLayout()).apply {
@@ -53,6 +83,7 @@ internal class WelcomeScreenLeftPanel(private val project: Project) : ProjectVie
     }
 
     val projectFilteringTree = createRecentProjectTree()
+    setupDragAndDrop(projectFilteringTree.component)
 
     val topPanel =  JBPanel<JBPanel<*>>().apply {
       layout = BoxLayout(this, BoxLayout.Y_AXIS)

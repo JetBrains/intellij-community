@@ -2,11 +2,13 @@ package com.intellij.platform.ide.nonModalWelcomeScreen.rightTab
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.draganddrop.dragAndDropTarget
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.Color
@@ -15,12 +17,18 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.draganddrop.DragAndDropTarget
+import androidx.compose.ui.draganddrop.DragAndDropEvent
+import androidx.compose.ui.draganddrop.awtTransferable
+import com.intellij.ide.dnd.FileCopyPasteUtil
+import java.awt.datatransfer.DataFlavor
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
+import com.intellij.platform.ide.nonModalWelcomeScreen.GoFileDragAndDropHandler
 import com.intellij.platform.ide.nonModalWelcomeScreen.NON_MODAL_WELCOME_SCREEN_SETTING_ID
 import com.intellij.platform.ide.nonModalWelcomeScreen.NonModalWelcomeScreenBundle
 import com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenTabUsageCollector
@@ -56,10 +64,28 @@ class WelcomeScreenRightTab(
     }
   }
 
+  @OptIn(ExperimentalComposeUiApi::class)
   @Composable
   fun WelcomeScreen() {
+    val dragAndDropTarget = remember {
+      object : DragAndDropTarget {
+        override fun onDrop(event: DragAndDropEvent): Boolean {
+          val files = FileCopyPasteUtil.getFiles(event.awtTransferable)
+          return GoFileDragAndDropHandler.openFiles(project, files)
+        }
+      }
+    }
+
     Box(
-      modifier = Modifier.fillMaxSize().background(color = panelBackgroundColor)
+      modifier = Modifier
+        .fillMaxSize()
+        .background(color = panelBackgroundColor)
+        .dragAndDropTarget(
+          shouldStartDragAndDrop = { event ->
+            event.awtTransferable.isDataFlavorSupported(DataFlavor.javaFileListFlavor)
+          },
+          target = dragAndDropTarget
+        )
     ) {
       Image(
         imageVector = backgroundImageVector,
