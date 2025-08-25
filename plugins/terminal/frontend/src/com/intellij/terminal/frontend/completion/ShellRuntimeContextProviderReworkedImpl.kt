@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.terminal.block.completion.spec.impl.reworked
+package com.intellij.terminal.frontend.completion
 
 import com.intellij.openapi.project.Project
 import com.intellij.platform.eel.EelDescriptor
@@ -13,8 +13,7 @@ import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellRuntimeCon
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
 import org.jetbrains.plugins.terminal.util.ShellType
 
-@ApiStatus.Internal
-class ShellRuntimeContextProviderReworkedImpl(
+internal class ShellRuntimeContextProviderReworkedImpl(
   private val project: Project,
   private val sessionModel: TerminalSessionModel,
   eelDescriptor: EelDescriptor,

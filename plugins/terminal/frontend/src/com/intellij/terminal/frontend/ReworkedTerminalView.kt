@@ -22,6 +22,8 @@ import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.actions.TerminalActionUtil
+import com.intellij.terminal.frontend.completion.ShellDataGeneratorsExecutorReworkedImpl
+import com.intellij.terminal.frontend.completion.ShellRuntimeContextProviderReworkedImpl
 import com.intellij.terminal.frontend.fus.TerminalFusCursorPainterListener
 import com.intellij.terminal.frontend.fus.TerminalFusFirstOutputListener
 import com.intellij.terminal.frontend.hyperlinks.FrontendTerminalHyperlinkFacade
@@ -39,8 +41,6 @@ import org.jetbrains.plugins.terminal.TerminalPanelMarker
 import org.jetbrains.plugins.terminal.block.TerminalContentView
 import org.jetbrains.plugins.terminal.block.completion.ShellCommandSpecsManagerImpl
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.TerminalCommandCompletionServices
-import org.jetbrains.plugins.terminal.block.completion.spec.impl.reworked.ShellDataGeneratorsExecutorReworkedImpl
-import org.jetbrains.plugins.terminal.block.completion.spec.impl.reworked.ShellRuntimeContextProviderReworkedImpl
 import org.jetbrains.plugins.terminal.block.output.TerminalOutputEditorInputMethodSupport
 import org.jetbrains.plugins.terminal.block.output.TerminalTextHighlighter
 import org.jetbrains.plugins.terminal.block.reworked.*

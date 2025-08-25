@@ -21,7 +21,8 @@ val PROJECT_KEY: Key<Project> = Key.create("Project")
 val ShellRuntimeContext.isReworkedTerminal: Boolean
   get() = getUserData(IS_REWORKED_KEY) ?: false
 
-internal val IS_REWORKED_KEY: Key<Boolean> = Key.create("isReworked")
+@ApiStatus.Internal
+val IS_REWORKED_KEY: Key<Boolean> = Key.create("isReworked")
 
 /**
  * Returns the list of [path] child file names.
