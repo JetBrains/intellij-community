@@ -239,6 +239,7 @@ fun tryCheckingFileInScope(
   // So let's try assigning it to the context which the scope wants to avoid building addition psi
   when (val contextInfo = globalScope.getFileContextInfo(file)) {
     is ActualContextFileInfo -> {
+      // todo IJPL-203835 does not support case when this scope contains a file in several contexts
       val context = contextInfo.contexts.first()
       val actualCodeInsightContext = contextManager.getOrSetContext(viewProvider, context)
       if (actualCodeInsightContext === context) {
