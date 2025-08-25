@@ -108,14 +108,14 @@ open class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroduc
                     val symbol = element.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol
 
                     val parameter = (symbol?.symbol as? KaParameterSymbol)?.psi as? KtParameter
-                    if (parameter != null && !parameter.hasValOrVar()) {
+                    if (parameter != null && !parameter.hasValOrVar() && parameter.ownerDeclaration == targetParent) {
                         usages.putValue(parameter, element)
                     }
 
                     symbol?.contextArguments?.forEach { arg ->
                         val contextParameterSymbol = (arg.unwrapSmartCasts() as? KaImplicitReceiverValue)?.symbol as? KaContextParameterSymbol
                         val targetParameter = contextParameterSymbol?.psi as? KtParameter
-                        if (targetParameter != null) {
+                        if (targetParameter != null && targetParameter.ownerDeclaration == targetParent) {
                             usages.putValue(targetParameter, element)
                         }
                     }
