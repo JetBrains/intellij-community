@@ -74,22 +74,22 @@ public abstract class IntervalTreeImpl<T extends RangeMarkerEx> extends RedBlack
     }
 
     @Override
-    public IntervalNode<E> getLeft() {
+    protected IntervalNode<E> getLeft() {
       return (IntervalNode<E>)left;
     }
 
     @Override
-    public IntervalNode<E> getRight() {
+    protected IntervalNode<E> getRight() {
       return (IntervalNode<E>)right;
     }
 
     @Override
-    public IntervalNode<E> getParent() {
+    protected IntervalNode<E> getParent() {
       return (IntervalNode<E>)parent;
     }
 
     @Override
-    public boolean processAliveKeys(@NotNull Processor<? super E> processor) {
+    protected boolean processAliveKeys(@NotNull Processor<? super E> processor) {
       //noinspection ForLoopReplaceableByForEach
       for (int i = 0; i < intervals.size(); i++) {
         Supplier<? extends E> interval = intervals.get(i);
@@ -102,7 +102,7 @@ public abstract class IntervalTreeImpl<T extends RangeMarkerEx> extends RedBlack
     }
 
     @Override
-    public boolean hasAliveKey(boolean purgeAllDead) {
+    protected boolean hasAliveKey(boolean purgeAllDead) {
       boolean hasAliveInterval = false;
       for (int i = intervals.size() - 1; i >= 0; i--) {
         Supplier<? extends E> interval = intervals.get(i);
@@ -1131,7 +1131,7 @@ public abstract class IntervalTreeImpl<T extends RangeMarkerEx> extends RedBlack
   }
 
   @Override
-  public int size() {
+  protected int size() {
     return keySize;
   }
 
@@ -1444,7 +1444,7 @@ public abstract class IntervalTreeImpl<T extends RangeMarkerEx> extends RedBlack
   }
 
   @Override
-  public void clear() {
+  protected void clear() {
     List<T> toRemove = new ArrayList<>();
     processAll(t -> toRemove.add(t));
     for (T t : toRemove) {
@@ -1527,14 +1527,6 @@ public abstract class IntervalTreeImpl<T extends RangeMarkerEx> extends RedBlack
     public IntervalNode<T> getParent(@NotNull IntervalNode<T> element) {
       return element.getParent();
     }
-  }
-
-  public int maxHeight() {
-    return maxHeight(root);
-  }
-
-  private int maxHeight(@Nullable Node<T> root) {
-    return root == null ? 0 : 1 + Math.max(maxHeight(root.left), maxHeight(root.right));
   }
 
   // combines iterators for two trees in one using the specified comparator
