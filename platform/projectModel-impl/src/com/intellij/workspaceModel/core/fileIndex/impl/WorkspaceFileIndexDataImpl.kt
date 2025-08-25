@@ -33,6 +33,7 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.containers.ConcurrentBitSet
 import com.intellij.workspaceModel.core.fileIndex.*
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 
 @Suppress("DuplicatedCode")
 internal suspend fun initWorkspaceFileIndexData(
@@ -364,13 +365,13 @@ internal class WorkspaceFileIndexDataImpl(
     addedEntities: MutableSet<WorkspaceEntity>,
     entityClass: Class<WorkspaceEntity>,
   ) {
-    val previousDependencies = mutableSetOf<SymbolicEntityId<R>>()
-    val actualDependencies = mutableSetOf<SymbolicEntityId<R>>()
+    val previousDependencies = ObjectOpenHashSet<SymbolicEntityId<R>>()
+    val actualDependencies = ObjectOpenHashSet<SymbolicEntityId<R>>()
 
     val entitiesInStorageAfter by lazy(LazyThreadSafetyMode.NONE) { event.storageAfter.entities(entityClass).toSet() }
     val entitiesInStorageBefore by lazy(LazyThreadSafetyMode.NONE) { event.storageBefore.entities(entityClass).toSet() }
 
-    event.getChanges(dependencyDescription.referenceHolderClass).asSequence().forEach { change ->
+    event.getChanges(dependencyDescription.referenceHolderClass).forEach { change ->
       change.oldEntity?.let {
         dependencyDescription.referencedEntitiesGetter(it).toCollection(previousDependencies)
       }
@@ -415,7 +416,7 @@ internal class WorkspaceFileIndexDataImpl(
     val dependantEntitiesInStorageAfter by lazy(LazyThreadSafetyMode.NONE) { event.storageAfter.entities(dependantClass).toSet() }
     val dependantEntitiesInStorageBefore by lazy(LazyThreadSafetyMode.NONE) { event.storageBefore.entities(dependantClass).toSet() }
 
-    event.getChanges(dependency.entityClass).asSequence().forEach { change ->
+    event.getChanges(dependency.entityClass).forEach { change ->
       change.oldEntity?.let {
         val dependantEntities = dependency.dependantEntitiesGetter(it)
         for (entity in dependantEntities) {
