@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.config.CompilerSettings
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettings
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettingsListener
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
-import org.jetbrains.kotlin.idea.core.script.shared.definition.loadDefinitionsFromTemplatesByPaths
+import org.jetbrains.kotlin.idea.core.script.shared.definition.loadDefinitionsFromTemplates
 import org.jetbrains.kotlin.idea.util.application.executeOnPooledThread
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
@@ -40,7 +40,7 @@ class ScriptTemplatesFromCompilerSettingsProvider(
             if (project.isDisposed) return emptySequence()
             return KotlinCompilerSettings.getInstance(project).settings.let { kotlinSettings ->
                 if (kotlinSettings.scriptTemplates.isBlank()) emptySequence()
-                else loadDefinitionsFromTemplatesByPaths(
+                else loadDefinitionsFromTemplates(
                     templateClassNames = kotlinSettings.scriptTemplates.split(',', ' '),
                     templateClasspath = kotlinSettings.scriptTemplatesClasspath.split(File.pathSeparator).map(::Path),
                     baseHostConfiguration = ScriptingHostConfiguration(defaultJvmScriptingHostConfiguration) {
@@ -50,7 +50,7 @@ class ScriptTemplatesFromCompilerSettingsProvider(
                             )
                         }
                     }
-                ).asSequence()
+                )
             }
         }
 }

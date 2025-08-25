@@ -12,7 +12,7 @@ import com.intellij.psi.search.FilenameIndex
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.kotlin.idea.base.util.allScope
-import org.jetbrains.kotlin.idea.core.script.shared.definition.loadDefinitionsFromTemplatesByPaths
+import org.jetbrains.kotlin.idea.core.script.shared.definition.loadDefinitionsFromTemplates
 import org.jetbrains.kotlin.idea.core.script.v1.scriptingDebugLog
 import org.jetbrains.kotlin.idea.core.script.shared.definition.ScriptDefinitionMarkerFileType
 import org.jetbrains.kotlin.scripting.definitions.SCRIPT_DEFINITION_MARKERS_EXTENSION_WITH_DOT
@@ -84,13 +84,13 @@ class ScriptTemplatesFromDependenciesDefinitionSource(
             }
         }
 
-        val newDefinitions = loadDefinitionsFromTemplatesByPaths(
+        val newDefinitions = loadDefinitionsFromTemplates(
             templateClassNames = newTemplates.templates,
             templateClasspath = newTemplates.classpath.map { Path.of(it) },
             baseHostConfiguration = hostConfiguration,
         ).map {
             it.apply { order = Int.MIN_VALUE }
-        }
+        }.toList()
 
         scriptingDebugLog { "Script definitions found: ${newDefinitions.joinToString()}" }
 

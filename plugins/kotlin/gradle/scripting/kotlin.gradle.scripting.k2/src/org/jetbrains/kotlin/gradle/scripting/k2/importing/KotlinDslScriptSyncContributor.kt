@@ -76,7 +76,7 @@ internal class KotlinDslScriptSyncContributor : GradleSyncContributor {
             .flatMap { it.projects.asSequence() }
             .mapNotNull { context.getProjectModel(it, GradleBuildScriptClasspathModel::class.java) }
             .mapNotNull { it.gradleHomeDir?.absolutePath }
-            .firstOrNull() ?: context.settings.gradleHome
+            .firstOrNull() ?: context.settings.gradleHome ?: return storage
 
         GradleScriptDefinitionsStorage.getInstance(project).loadDefinitions(
             params = GradleDefinitionsParams(
@@ -88,6 +88,7 @@ internal class KotlinDslScriptSyncContributor : GradleSyncContributor {
                 context.settings.env
             )
         )
+
         val gradleScripts = sync.models.mapNotNullTo(mutableSetOf()) {
             val virtualFile = VirtualFileManager.getInstance().findFileByNioPath(Path.of(it.file)) ?: return@mapNotNullTo null
             GradleScriptModel(
