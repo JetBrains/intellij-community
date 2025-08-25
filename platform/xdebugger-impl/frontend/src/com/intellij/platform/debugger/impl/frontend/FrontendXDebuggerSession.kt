@@ -349,7 +349,8 @@ class FrontendXDebuggerSession private constructor(
   }
 
   override fun registerAdditionalActions(leftToolbar: DefaultActionGroup, topLeftToolbar: DefaultActionGroup, settings: DefaultActionGroup) {
-    // TODO
+    // TODO: addittional actions are not registered in RemDev
+    MonolithUtils.findSessionById(id)?.debugProcess?.registerAdditionalActions(leftToolbar, topLeftToolbar, settings)
   }
 
   override fun putKey(sink: DataSink) {
