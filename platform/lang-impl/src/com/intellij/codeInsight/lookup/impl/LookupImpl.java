@@ -1264,6 +1264,10 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       LOG.error(ClientId.getCurrent() + " tries to hide lookup of " + mySession.getClientId());
     }
     else {
+      if (LOG.isTraceEnabled()) {
+        LOG.trace(new Throwable("Lookup hide: " + this + "; fireCanceled=" + fireCanceled + "; explicitly=" + explicitly));
+      }
+
       myHidden = true;
 
       try {
