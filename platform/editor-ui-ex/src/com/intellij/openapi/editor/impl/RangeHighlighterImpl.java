@@ -197,12 +197,8 @@ public sealed class RangeHighlighterImpl extends RangeMarkerImpl implements Rang
 
   @Override
   public void setLineMarkerRenderer(LineMarkerRenderer renderer) {
-    boolean oldRenderedInGutter = isRenderedInGutter();
     LineMarkerRenderer old = myLineMarkerRenderer;
     myLineMarkerRenderer = renderer;
-    if (isRenderedInGutter() != oldRenderedInGutter) {
-      myModel.treeFor(this).updateRenderedFlags(this);
-    }
     if (!Objects.equals(old, renderer)) {
       fireChanged(true, false, false);
     }
@@ -229,12 +225,8 @@ public sealed class RangeHighlighterImpl extends RangeMarkerImpl implements Rang
 
   @Override
   public void setGutterIconRenderer(GutterIconRenderer renderer) {
-    boolean oldRenderedInGutter = isRenderedInGutter();
     GutterMark old = myGutterIconRenderer;
     myGutterIconRenderer = renderer;
-    if (isRenderedInGutter() != oldRenderedInGutter) {
-      myModel.treeFor(this).updateRenderedFlags(this);
-    }
     if (!Objects.equals(old, renderer)) {
       fireChanged(true, false, false);
       if (old instanceof Disposable oldDisposableRenderer) {
@@ -479,12 +471,6 @@ public sealed class RangeHighlighterImpl extends RangeMarkerImpl implements Rang
   public int getLayer() {
     RangeHighlighterTree.RHNode node = (RangeHighlighterTree.RHNode)(Object)myNode;
     return node == null ? -1 : node.myLayer;
-  }
-
-  @Override
-  public boolean isRenderedInGutter() {
-    RangeHighlighterTree.RHNode node = (RangeHighlighterTree.RHNode)(Object)myNode;
-    return node != null && node.isRenderedInGutter() || RangeHighlighterEx.super.isRenderedInGutter();
   }
 
   @Override

@@ -5,10 +5,10 @@ import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.function.Supplier;
-
 @ApiStatus.Internal
 public final class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighterEx> {
+  static final byte ERROR_STRIPE_FLAG = nextAvailableTasteFlag();
+  static final byte RENDER_IN_GUTTER_FLAG = nextAvailableTasteFlag();
   private final MarkupModelImpl myMarkupModel;
 
   RangeHighlighterTree(@NotNull MarkupModelImpl markupModel) {
@@ -26,38 +26,14 @@ public final class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighter
   }
 
   @Override
-  protected boolean isDelicious(@NotNull RangeHighlighterEx highlighter) {
-    return highlighter.getErrorStripeMarkColor(null) != null;
-  }
-
-  void updateRenderedFlags(@NotNull RangeHighlighterEx highlighter) {
-    RHNode node = (RHNode)lookupNode(highlighter);
-    if (node != null) node.recalculateRenderFlagsUp();
-  }
-
-  @Override
-  @ApiStatus.Internal
-  protected void correctMax(@NotNull IntervalNode<RangeHighlighterEx> node, int deltaUpToRoot) {
-    super.correctMax(node, deltaUpToRoot);
-    ((RHNode)node).recalculateRenderFlags();
+  protected byte getTasteFlags(@NotNull RangeHighlighterEx highlighter) {
+    return (byte)((highlighter.getErrorStripeMarkColor(null) != null ? ERROR_STRIPE_FLAG : 0) |
+                 (highlighter.isRenderedInGutter() ? RENDER_IN_GUTTER_FLAG : 0));
   }
 
   @Override
   protected int compareEqualStartIntervals(@NotNull IntervalNode<RangeHighlighterEx> i1, @NotNull IntervalNode<RangeHighlighterEx> i2) {
-    RHNode o1 = (RHNode)i1;
-    RHNode o2 = (RHNode)i2;
-    int d = o2.myLayer - o1.myLayer;
-    if (d != 0) {
-      return d;
-    }
-    int result = super.compareEqualStartIntervals(i1, i2);
-    if (result != 0) {
-      return result;
-    }
-
-    boolean persistent1 = o1.isFlagSet(RHNode.IS_PERSISTENT);
-    boolean persistent2 = o2.isFlagSet(RHNode.IS_PERSISTENT);
-    return persistent1 == persistent2 ? 0 : persistent1 ? -1 : 1;
+    return ((RHNode)i1).compareTo((RHNode)i2);
   }
 
   @Override
@@ -67,10 +43,8 @@ public final class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighter
   }
 
   @ApiStatus.Internal
-  protected static final class RHNode extends RMNode<RangeHighlighterEx> {
-    private static final byte RENDERED_IN_GUTTER_FLAG = STICK_TO_RIGHT_FLAG << 1;
-    protected static final byte IS_PERSISTENT = (byte)(RENDERED_IN_GUTTER_FLAG << 1);
-
+  static final class RHNode extends RMNode<RangeHighlighterEx> implements Comparable<RMNode<?>> {
+    private static final byte IS_PERSISTENT = (byte)(STICK_TO_RIGHT_FLAG << 1);
     final int myLayer;
 
     RHNode(@NotNull RangeHighlighterTree rangeMarkerTree,
@@ -86,55 +60,22 @@ public final class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighter
       setFlag(IS_PERSISTENT, key.isPersistent());
     }
 
-    private void recalculateRenderFlags() {
-      boolean renderedInGutter = false;
-      for (Supplier<? extends RangeHighlighterEx> getter : intervals) {
-        RangeHighlighterEx h = getter.get();
-        renderedInGutter |= h.isRenderedInGutter();
-      }
-      RHNode left = (RHNode)getLeft();
-      if (left != null) {
-        renderedInGutter |= left.isRenderedInGutter();
-      }
-      RHNode right = (RHNode)getRight();
-      if (right != null) {
-        renderedInGutter |= right.isRenderedInGutter();
-      }
-      setFlag(RENDERED_IN_GUTTER_FLAG, renderedInGutter);
-    }
-
-    private void recalculateRenderFlagsUp() {
-      getTree().runUnderWriteLock(()->{
-        RHNode n = this;
-        while (n != null) {
-          boolean prevInGutter = n.isRenderedInGutter();
-          n.recalculateRenderFlags();
-          if (n.isRenderedInGutter() == prevInGutter) break;
-          n = (RHNode)n.getParent();
-        }
-      });
-    }
-
     @Override
-    protected void addInterval(@NotNull RangeHighlighterEx h) {
-      super.addInterval(h);
-      if (!isRenderedInGutter() && h.isRenderedInGutter()) {
-        recalculateRenderFlagsUp();
+    public int compareTo(@NotNull RMNode o) {
+      RHNode o1 = this;
+      RHNode o2 = (RHNode)o;
+      int d = o2.myLayer - o1.myLayer;
+      if (d != 0) {
+        return d;
       }
-    }
-
-    boolean isRenderedInGutter() {
-      return isFlagSet(RENDERED_IN_GUTTER_FLAG);
-    }
-
-    @Override
-    protected void removeIntervalInternal(int i) {
-      RangeHighlighterEx h = intervals.get(i).get();
-      boolean recalculateFlags = h.isRenderedInGutter();
-      super.removeIntervalInternal(i);
-      if (recalculateFlags) {
-        recalculateRenderFlagsUp();
+      int result = super.compareTo(o2);
+      if (result != 0) {
+        return result;
       }
+
+      boolean persistent1 = o1.isFlagSet(RHNode.IS_PERSISTENT);
+      boolean persistent2 = o2.isFlagSet(RHNode.IS_PERSISTENT);
+      return persistent1 == persistent2 ? 0 : persistent1 ? -1 : 1;
     }
   }
 

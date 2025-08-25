@@ -886,60 +886,11 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
 
   boolean processGutterRangeHighlighters(int startOffset, int endOffset, @NotNull Processor<? super RangeHighlighterEx> processor) {
     // we limit highlighters to process to between line starting at startOffset and line ending at endOffset
-    try (MarkupIterator<RangeHighlighterEx> docHighlighters =
-           new FilteringMarkupIterator<>(myEditor.getFilteredDocumentMarkupModel().overlappingIterator(startOffset, endOffset),
-                                         h -> h.isRenderedInGutter());
-         MarkupIterator<RangeHighlighterEx> editorHighlighters =
-           new FilteringMarkupIterator<>(myEditor.getMarkupModel().overlappingIterator(startOffset, endOffset), h -> h.isRenderedInGutter())) {
-
-      RangeHighlighterEx lastDocHighlighter = null;
-      RangeHighlighterEx lastEditorHighlighter = null;
-      while (true) {
-        if (lastDocHighlighter == null && docHighlighters.hasNext()) {
-          lastDocHighlighter = docHighlighters.next();
-          if (lastDocHighlighter.getAffectedAreaStartOffset() > endOffset) {
-            lastDocHighlighter = null;
-            continue;
-          }
-          if (lastDocHighlighter.getAffectedAreaEndOffset() < startOffset) {
-            lastDocHighlighter = null;
-            continue;
-          }
-        }
-
-        if (lastEditorHighlighter == null && editorHighlighters.hasNext()) {
-          lastEditorHighlighter = editorHighlighters.next();
-          if (lastEditorHighlighter.getAffectedAreaStartOffset() > endOffset) {
-            lastEditorHighlighter = null;
-            continue;
-          }
-          if (lastEditorHighlighter.getAffectedAreaEndOffset() < startOffset) {
-            lastEditorHighlighter = null;
-            continue;
-          }
-        }
-
-        if (lastDocHighlighter == null && lastEditorHighlighter == null) return true;
-
-        RangeHighlighterEx lowerHighlighter;
-        if (less(lastDocHighlighter, lastEditorHighlighter)) {
-          lowerHighlighter = lastDocHighlighter;
-          lastDocHighlighter = null;
-        }
-        else {
-          lowerHighlighter = lastEditorHighlighter;
-          lastEditorHighlighter = null;
-        }
-
-        if (!processor.process(lowerHighlighter)) {
-          return false;
-        }
-      }
+    MarkupIterator<RangeHighlighterEx> docHighlighters = myEditor.getFilteredDocumentMarkupModel().overlappingGutterIterator(startOffset, endOffset);
+    MarkupIterator<RangeHighlighterEx> editorHighlighters = myEditor.getMarkupModel().overlappingGutterIterator(startOffset, endOffset);
+    try (MarkupIterator<RangeHighlighterEx> iterator = MarkupIterator.mergeIterators(docHighlighters, editorHighlighters, RangeHighlighterEx.BY_AFFECTED_START_OFFSET)) {
+      return ContainerUtil.process(iterator, processor);
     }
-  }
-
-  private static boolean less(RangeHighlighter h1, RangeHighlighter h2) {
-    return h1 != null && (h2 == null || h1.getStartOffset() < h2.getStartOffset());
   }
 
   boolean canImpactSize(@NotNull RangeHighlighterEx highlighter) {

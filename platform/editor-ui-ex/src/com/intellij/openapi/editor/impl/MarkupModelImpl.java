@@ -295,21 +295,26 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
 
   @Override
   public @NotNull MarkupIterator<RangeHighlighterEx> overlappingIterator(int startOffset, int endOffset) {
-    return overlappingIterator(startOffset, endOffset, false);
+    return overlappingIterator(startOffset, endOffset, (byte)0);
   }
 
-  private @NotNull MarkupIterator<RangeHighlighterEx> overlappingIterator(int startOffset, int endOffset, boolean deliciousOnly) {
+  private @NotNull MarkupIterator<RangeHighlighterEx> overlappingIterator(int startOffset, int endOffset, byte tastePreference) {
     startOffset = TextRangeScalarUtil.coerce(startOffset, 0, getDocument().getTextLength());
     endOffset = TextRangeScalarUtil.coerce(endOffset, startOffset, getDocument().getTextLength());
     return IntervalTreeImpl
       .mergingOverlappingIterator(myHighlighterTree, new ProperTextRange(startOffset, endOffset),
                                   myHighlighterTreeForLines, roundToLineBoundaries(getDocument(), startOffset, endOffset),
-                                  deliciousOnly, RangeHighlighterEx.BY_AFFECTED_START_OFFSET);
+                                  tastePreference, RangeHighlighterEx.BY_AFFECTED_START_OFFSET);
   }
 
   @Override
   public @NotNull MarkupIterator<RangeHighlighterEx> overlappingErrorStripeIterator(int startOffset, int endOffset) {
-    return overlappingIterator(startOffset, endOffset, true);
+    return overlappingIterator(startOffset, endOffset, RangeHighlighterTree.ERROR_STRIPE_FLAG);
+  }
+
+  @Override
+  public @NotNull MarkupIterator<RangeHighlighterEx> overlappingGutterIterator(int startOffset, int endOffset) {
+    return overlappingIterator(startOffset, endOffset, RangeHighlighterTree.RENDER_IN_GUTTER_FLAG);
   }
 
   public static @NotNull TextRange roundToLineBoundaries(@NotNull Document document, int startOffset, int endOffset) {
