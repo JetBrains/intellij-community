@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.highlighting
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil
 import com.intellij.codeInsight.daemon.impl.quickfix.RenameElementFix
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
+import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase
 import com.intellij.codeInspection.ex.EntryPointsManager
 import com.intellij.codeInspection.ex.EntryPointsManagerBase
@@ -735,28 +735,28 @@ object K2UnusedSymbolUtil {
         return hasTextUsages
     }
 
-    fun createQuickFixes(declaration: KtNamedDeclaration): Array<LocalQuickFixAndIntentionActionOnPsiElement> {
+    fun createQuickFixes(declaration: KtNamedDeclaration): List<IntentionAction> {
         if (declaration is KtParameter) {
             if (declaration.isLoopParameter) {
-                return emptyArray()
+                return emptyList()
             }
             if (declaration.isCatchParameter) {
                 return if (declaration.name == "_") {
-                    emptyArray()
+                    emptyList()
                 } else {
-                    arrayOf(RenameElementFix(declaration, "_"))
+                    listOf(RenameElementFix(declaration, "_"))
                 }
             }
             val ownerFunction = declaration.ownerFunction
             if (ownerFunction is KtPropertyAccessor && ownerFunction.isSetter) {
-                return emptyArray()
+                return emptyList()
             }
             if (ownerFunction is KtFunctionLiteral) {
-                return arrayOf(RenameElementFix(declaration, "_"))
+                return listOf(RenameElementFix(declaration, "_"))
             }
         }
         // TODO: Implement K2 counterpart of `createAddToDependencyInjectionAnnotationsFix` and use it for `element` with annotations here.
-        return arrayOf(SafeDeleteFix(declaration))
+        return listOf(SafeDeleteFix(declaration))
     }
 
     context(_: KaSession)
