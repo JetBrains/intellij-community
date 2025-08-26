@@ -2,6 +2,7 @@
 package org.jetbrains.tools.model.updater
 
 import org.jdom.Document
+import org.jetbrains.tools.model.updater.KotlinTestsDependenciesUtil
 import org.jetbrains.tools.model.updater.impl.*
 import java.io.File
 import java.util.*
@@ -52,8 +53,13 @@ fun main(args: Array<String>) {
 
     val resolverSettings = readJpsResolverSettings(communityRoot, monorepoRoot)
 
-    communityRoot.resolve("plugins/kotlin/base/plugin/testResources/kotlincKotlinCompilerCliVersion.txt")
-        .writeText(preferences.kotlincArtifactVersion)
+    val kotlinDependenciesBazelFile = communityRoot.resolve("plugins/kotlin/kotlin_test_dependencies.bzl")
+    val kotlinCompilerCliVersionRegex = Regex("""kotlinCompilerCliVersion\s*=\s*"(\S+)"""")
+    kotlinDependenciesBazelFile.writeText(
+        kotlinDependenciesBazelFile.readText()
+            .replace(kotlinCompilerCliVersionRegex, "kotlinCompilerCliVersion = \"${preferences.kotlincVersion}\"")
+    )
+    KotlinTestsDependenciesUtil.updateChecksum(isUpToDateCheck = false)
 
     fun processRoot(root: File, isCommunity: Boolean) {
         println("Processing kotlinc libraries in root: $root")

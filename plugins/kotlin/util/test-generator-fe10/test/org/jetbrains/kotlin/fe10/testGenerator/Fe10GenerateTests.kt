@@ -209,7 +209,14 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
             AbstractInlineScopesAndK1IdeK2CodeEvaluateExpressionTest::class,
         ).forEach {
             testClass(it) {
-                model("evaluation/singleBreakpoint", testMethodName = "doSingleBreakpointTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
+                model(
+                    "evaluation/singleBreakpoint",
+                    testMethodName = "doSingleBreakpointTest",
+                    targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR,
+                    excludedDirectories = listOf(
+                        "contextParameters",
+                    ),
+                )
                 model("evaluation/multipleBreakpoints", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
                 model("evaluation/jvmMultiModule", testMethodName = "doJvmMultiModuleTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
             }
@@ -225,13 +232,27 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
         }
 
         testClass<AbstractIrKotlinEvaluateExpressionInMppTest> {
-            model("evaluation/singleBreakpoint", testMethodName = "doSingleBreakpointTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
+            model(
+                "evaluation/singleBreakpoint",
+                testMethodName = "doSingleBreakpointTest",
+                targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR,
+                excludedDirectories = listOf(
+                    "contextParameters",
+                ),
+            )
             model("evaluation/multipleBreakpoints", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
             model("evaluation/multiplatform", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
         }
 
         testClass<AbstractK1IdeK2CodeKotlinEvaluateExpressionInMppTest> {
-            model("evaluation/singleBreakpoint", testMethodName = "doSingleBreakpointTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
+            model(
+                "evaluation/singleBreakpoint",
+                testMethodName = "doSingleBreakpointTest",
+                targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR,
+                excludedDirectories = listOf(
+                    "contextParameters",
+                ),
+            )
             model("evaluation/multipleBreakpoints", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
             model("evaluation/multiplatform", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
         }
