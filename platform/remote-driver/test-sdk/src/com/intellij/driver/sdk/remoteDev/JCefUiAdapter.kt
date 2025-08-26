@@ -6,7 +6,7 @@ import com.intellij.driver.sdk.ui.components.common.JcefComponentWrapper
 class JCefUiAdapter(component: BeControlComponentBase) :
   BeControlComponentBase(component.driver, component.frontendComponent, component.backendComponent),
   JcefComponentWrapper {
-  val fixture = onFrontend(JCefUI::class) { byType("com.intellij.ui.jcef.JBCefBrowser${"$"}MyPanel") }.jcefWorker
+  private val fixture = onFrontend(JCefUI::class) { byType("com.intellij.ui.jcef.JBCefBrowser${"$"}MyPanel") }.jcefWorker
 
   override fun runJs(js: String) {
     fixture.runJs(js)
