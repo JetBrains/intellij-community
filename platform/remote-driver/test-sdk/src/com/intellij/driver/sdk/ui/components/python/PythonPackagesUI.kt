@@ -3,7 +3,6 @@ package com.intellij.driver.sdk.ui.components.python
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
-import com.intellij.driver.sdk.ui.components.elements.JTableUiComponent
 import org.intellij.lang.annotations.Language
 
 fun Finder.pythonPackagesToolWindow(@Language("xpath") xpath: String? = null) =
@@ -12,14 +11,12 @@ fun Finder.pythonPackagesToolWindow(@Language("xpath") xpath: String? = null) =
 
 class PythonPackagesToolWindowUiComponent(data: ComponentData) : UiComponent(data) {
   val packagesTable
-    get() = x("//div[@class='PyPackagesTable']", JTableUiComponent::class.java)
+    get() = x("//div[@class='JPanel'][div[@class='JPanel'][div[@class='JBLabel' and contains(@accessiblename, 'Installed')]]]", UiComponent::class.java)
 
   val searchField
-    get() = x("//div[@class='TextFieldWithProcessing']", UiComponent::class.java)
+    get() = x("//div[@class='PyPackageSearchTextField']", UiComponent::class.java)
 
-  val installButton
-    get() = x("//div[@class='JBOptionButton']", UiComponent::class.java)
+  val installButton = x { and((byClass("JBOptionButton")), (byAccessibleName("Install"))) }
 
-  val uninstallButton
-    get() = x("//div[@accessiblename='Uninstall']", UiComponent::class.java)
+  val uninstallButton = x { byAccessibleName("Uninstall") }
 }
