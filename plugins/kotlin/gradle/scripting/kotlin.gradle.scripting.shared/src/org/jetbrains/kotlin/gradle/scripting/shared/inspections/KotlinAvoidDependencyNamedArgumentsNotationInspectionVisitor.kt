@@ -14,10 +14,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.KtCallExpression
-import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.psi.KtValueArgumentList
-import org.jetbrains.kotlin.psi.KtVisitorVoid
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_ARTIFACTS_EXTERNAL_MODULE_DEPENDENCY
 
@@ -29,15 +26,14 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionVisitor(val holder: P
         val argList = expression.valueArgumentList ?: return
         if (!argList.isPhysical) return
         val args = argList.arguments
+        // check that there are only 2-3 arguments and the named ones are among group, name or version
+        // group and name arguments are always required and the third has to be named unless it's version
+        if (args.size !in 2..3) return
         val ids = args.mapNotNull { it.getArgumentName()?.asName?.identifier }
-        // check that there are only 3 arguments and the named ones are among group, name or version
-        if (args.size !in 2..3 || !setOf("group", "name", "version").containsAll(ids)) return
+        if (!setOf("group", "name", "version").containsAll(ids)) return
         // check that all values are string literals
-        val values = args.map { it.getArgumentExpression()?.text }
-        for (value in values) {
-            if (value == null) continue
-            if (!value.startsWith("\"") || !value.endsWith("\"")) continue
-        }
+        val values = args.map { it.getArgumentExpression() }
+        if (values.any { it !is KtStringTemplateExpression }) return
         holder.registerProblem(
             argList,
             GradleInspectionBundle.message("inspection.message.avoid.dependency.named.arguments.notation.descriptor"),
