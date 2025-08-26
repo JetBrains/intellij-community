@@ -28,13 +28,14 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.nio.file.Path;
 import java.util.*;
 
 public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWithBrowseButton.NoPathCompletion implements UserActivityProviderComponent {
   protected EnvironmentVariablesData myData = EnvironmentVariablesData.DEFAULT;
   protected final Map<String, String> myParentDefaults = new LinkedHashMap<>();
   private final List<ChangeListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-  private @NotNull List<String> myEnvFilePaths = new ArrayList<>();
+  private @NotNull List<String> myEnvFilePaths = new ArrayList<>(); // TODO: Do we need to keep this? Maybe we should use the EnvironmentVariablesData?
   private ExtendableTextComponent.Extension myEnvFilesExtension;
   private final List<ChangeListener> myEnvFilePathsChangeListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
@@ -43,7 +44,7 @@ public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWith
     addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(final ActionEvent e) {
-        setEnvs(EnvVariablesTable.parseNewEnvsFormatFromText(getText()));
+        setEnvs(EnvVariablesTable.parseEnvsFromText(getText()));
         createDialog().show();
       }
     });
@@ -51,9 +52,9 @@ public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWith
       @Override
       protected void textChanged(@NotNull DocumentEvent e) {
         if (!StringUtil.equals(getEnvText(), getText())) {
-          Map<String, String> textEnvs = EnvVariablesTable.parseNewEnvsFormatFromText(getText());
-          myData = myData.with(textEnvs);
-          updateEnvFilesFromText();
+          var parsedEnvsAndFiles = EnvVariablesTable.parseEnvsAndFilesFromText(getText());
+          myData = myData.with(parsedEnvsAndFiles.getFirst());
+          updateEnvFiles(parsedEnvsAndFiles.getSecond());
           fireStateChanged();
         }
       }
@@ -227,12 +228,10 @@ public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWith
     return myEnvFilePaths;
   }
 
-  private void updateEnvFilesFromText() {
-    String text = StringUtil.trimStart(getText(), stringifyEnvs(myData));
-    if (myEnvFilePaths.isEmpty() || text.isEmpty()) return;
-    List<String> paths = ContainerUtil.filter(ContainerUtil.map(text.split(";"), s -> s.trim()), s -> !s.isEmpty());
-    for (int i = 0; i < Math.min(myEnvFilePaths.size(), paths.size()); i++) {
-      myEnvFilePaths.set(i, paths.get(i));
+  private void updateEnvFiles(List<Path> files) {
+    if (myEnvFilePaths.isEmpty() || files.isEmpty()) return; //TODO: ensure that this check makes sense
+    for (int i = 0; i < Math.min(myEnvFilePaths.size(), files.size()); i++) {
+      myEnvFilePaths.set(i, files.get(i).toString());
     }
     fireEnvFilePathsChanged();
   }

@@ -1651,12 +1651,8 @@ c:com.intellij.execution.util.EnvVariablesTable
 - p:createElement():com.intellij.execution.util.EnvironmentVariable
 - p:createExtraToolbarActions():com.intellij.openapi.actionSystem.AnAction[]
 - p:createListModel():com.intellij.util.ui.ListTableModel
-- editVariableName(com.intellij.execution.util.EnvironmentVariable):V
 - getComponent():javax.swing.JComponent
-- getEnvironmentVariables():java.util.List
 - p:isEmpty(com.intellij.execution.util.EnvironmentVariable):Z
-- s:parseEnvsFromText(java.lang.String):java.util.Map
-- setPasteActionEnabled(Z):V
 - setValues(java.util.List):V
 pc:com.intellij.execution.util.EnvVariablesTable$NameColumnInfo
 - com.intellij.execution.util.ListTableWithButtons$ElementsColumnInfoBase
