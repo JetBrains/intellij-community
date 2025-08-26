@@ -101,8 +101,6 @@ interface SeRemoteApi : RemoteApi<Unit> {
     providerIds: List<SeProviderId>,
   ): Map<SeProviderId, @Nls String>
 
-  suspend fun getTextSearchOptions(projectId: ProjectId): SeTextSearchOptions?
-
   suspend fun getUpdatedPresentation(projectId: ProjectId, item: SeItemData): SeItemPresentation?
 
   companion object {

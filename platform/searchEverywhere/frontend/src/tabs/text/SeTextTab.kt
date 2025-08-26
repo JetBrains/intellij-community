@@ -2,11 +2,11 @@
 package com.intellij.platform.searchEverywhere.frontend.tabs.text
 
 import com.intellij.find.FindBundle
+import com.intellij.find.FindManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.util.Disposer
-import com.intellij.platform.project.projectId
 import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeParams
 import com.intellij.platform.searchEverywhere.SeResultEvent
@@ -54,10 +54,12 @@ class SeTextTab(private val delegate: SeTabDelegate, registerShortcut: (AnAction
     return delegate.openInFindToolWindow(sessionRef, params, initEvent, false)
   }
 
-  private suspend fun getTextSearchOptions(): SeTextSearchOptions? {
+  private fun getTextSearchOptions(): SeTextSearchOptions? {
     val project = delegate.project
     if (project == null) return null
-    return SeRemoteApi.getInstance().getTextSearchOptions(project.projectId())
+
+    val findModel = FindManager.getInstance(project).findInProjectModel
+    return SeTextSearchOptions(findModel.isCaseSensitive, findModel.isWholeWordsOnly, findModel.isRegularExpressions)
   }
 
   override fun dispose() {
