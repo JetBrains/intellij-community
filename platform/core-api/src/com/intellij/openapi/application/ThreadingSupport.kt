@@ -272,6 +272,23 @@ interface ThreadingSupport {
   fun transferWriteActionAndBlock(blockingExecutor: (RunnableWithTransferredWriteAction) -> Unit, action: Runnable)
 
   /**
+   * This function allows to conditionally execute [action] under write lock while checking a condition provided by [shouldProceedWithWriteAction].
+   *
+   * The function works in the following steps:
+   * 1. Acquire write-intent lock;
+   * 2. Execute [shouldProceedWithWriteAction];
+   * 3. If true, proceed with [action] under write lock which was atomically upgraded from the previously acquired write-intent;
+   * 4. If false, return without executing [action];
+   * 5. Release all acquired locks.
+   *
+   * Normally, write actions are heavy -- they need to terminate all existing read actions and cancel pending ones.
+   * Sometimes it is possible to avoid the execution of write action, but the decision needs to be taken with a consistent worldview.
+   * This function can be useful when the client is able to take this decision, for example, in `readAndWriteAction` group of functions
+   */
+  @ApiStatus.Internal
+  suspend fun <T : Any> runWriteActionWithCheckInWriteIntent(shouldProceedWithWriteAction: () -> Boolean, action: () -> T): T?
+
+  /**
    * Executes write action while suspending for lock acquisition.
    */
   suspend fun <T> runWriteAction(action: () -> T): T

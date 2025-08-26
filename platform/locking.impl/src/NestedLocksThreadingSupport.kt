@@ -962,12 +962,17 @@ class NestedLocksThreadingSupport : ThreadingSupport {
   override suspend fun <T> runWriteAction(action: () -> T): T {
     val computationState = getComputationState()
     val writeIntentInitResult = prepareWriteIntentAcquiredBeforeWriteSuspending(computationState)
+    return proceedWithSuspendWriteLockAcquisitionFromWriteIntent(computationState, writeIntentInitResult, action)
+  }
+
+  private suspend inline fun <T> proceedWithSuspendWriteLockAcquisitionFromWriteIntent(computationState: ComputationState, writeIntentInitResult: PreparatoryWriteIntent, action: () -> T): T {
     try {
       val writeInitResult = prepareWriteFromWriteIntentSuspending(computationState, writeIntentInitResult)
       return writeInitResult.applyThreadLocalActions().use {
         action()
       }
-    } finally {
+    }
+    finally {
       // we have an assymetry with the blocking case here: `prepareWriteIntentAcquiredBeforeWriteSuspending` does not install the thread-local permit,
       // because there are no guarantees that the thread will be preserved between suspensions.
       // However, at the moment of `applyThreadLocalActions` we know that the thread will not change (i.e., there are no suspensions)
@@ -980,6 +985,47 @@ class NestedLocksThreadingSupport : ThreadingSupport {
       }
     }
   }
+
+  override suspend fun <T : Any> runWriteActionWithCheckInWriteIntent(shouldProceedWithWriteAction: () -> Boolean, action: () -> T): T? {
+    val computationState = getComputationState()
+    val existingPermit = computationState.getThisThreadPermit()
+
+    val (actualPermit, toRelease) = when (existingPermit) {
+      null -> {
+        val writeIntent = computationState.acquireWriteIntentPermitSuspending()
+        writeIntent to true
+      }
+      is ParallelizablePermit.Read -> error("Cannot execute `runWriteActionWithCheckInWriteIntent` from read action")
+      is ParallelizablePermit.Write -> existingPermit.writePermit to false
+      is ParallelizablePermit.WriteIntent -> existingPermit.writeIntentPermit to false
+    }
+    val previousValue = myWriteIntentAcquired.get()
+    myWriteIntentAcquired.set(true)
+    hack_setThisLevelPermit(actualPermit)
+    fun cleanup() {
+      if (toRelease) {
+        actualPermit.release()
+      }
+    }
+    try {
+      if (!shouldProceedWithWriteAction()) {
+        cleanup()
+        return null
+      }
+    }
+    catch (e: Throwable) {
+      cleanup()
+      throw e
+    }
+    finally {
+      myWriteIntentAcquired.set(previousValue)
+      hack_setThisLevelPermit(null)
+    }
+    val frozenListeners = prepareWriteIntentForWriteLockAcquisition(computationState, Any::class.java)
+    val writeIntentInitResult = PreparatoryWriteIntent(actualPermit, toRelease, computationState, frozenListeners)
+    return proceedWithSuspendWriteLockAcquisitionFromWriteIntent(computationState, writeIntentInitResult, action)
+  }
+
 
   /**
    * The process of obtaining pure WA happens in two steps:
