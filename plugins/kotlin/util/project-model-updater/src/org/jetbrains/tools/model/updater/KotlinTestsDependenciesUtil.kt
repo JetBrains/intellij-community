@@ -67,41 +67,47 @@ object KotlinTestsDependenciesUtil {
 
     private val httpClient = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NEVER).build()
 
-    val kotlinTestDependenciesHttpFiles: List<HttpFile> by lazy {
+    data class DownloadFile(
+        val fileName: String,
+        val url: String,
+        val sha256: String,
+    )
+
+    val kotlinTestDependenciesHttpFiles: List<DownloadFile> by lazy {
         val kotlinDepsFile = communityRoot.resolve("plugins/kotlin/kotlin_test_dependencies.bzl")
         if (!Files.isRegularFile(kotlinDepsFile)) {
             error("Unable to find test dependency file '$kotlinDepsFile'")
         }
         val content = kotlinDepsFile.readText()
-        val nameRegex = Regex("""name\s*=\s*["']([^"']+)["']""")
-        val filenameRegex = Regex("""downloaded_file_path\s*=\s*["']([^"']+)["']""")
-        val sha256Regex = Regex("""sha256\s*=\s*["']([^"']+)["']""")
         val versions = loadVersions(content)
-
+        val httpFileRegex = Regex("""(?<!def )download_file\s*\((.*?)\)""", RegexOption.DOT_MATCHES_ALL)
+        val nameRegex = Regex("""name\s*=\s*["']([^"']+)["']""")
+        val sha256Regex = Regex("""sha256\s*=\s*["']([^"']+)["']""")
         val errors = mutableListOf<String>()
-        val result = findHttpFileBlocks(content).mapNotNull { block ->
+        val result =  findDownloadFileBlocks(content).mapNotNull { block ->
             val name = nameRegex.find(block)?.groupValues?.get(1)
             val url = findUrl(block, versions)
-            val filename = filenameRegex.find(block)?.groupValues?.get(1)
             val sha256 = sha256Regex.find(block)?.groupValues?.get(1)
-            if (name != null && filename != null && sha256 != null) {
-                HttpFile(filename, name, url, sha256)
+
+            if (name != null && sha256 != null) {
+                DownloadFile(
+                    fileName = name,
+                    url = url,
+                    sha256 = sha256,
+                )
             } else {
                 errors += buildString {
-                    appendLine("Unable to parse http_file block:\n")
+                    appendLine("Unable to parse http_file block:\n$block")
                     appendLine(block.trim())
                 }
                 null
             }
         }.toList()
-
         if (errors.isNotEmpty()) {
-            error("${errors.size} http_file blocks were not parsed correctly:\n${errors.joinToString("\n\n")}")
+            error("${errors.size} download_file blocks were not parsed correctly:\n${errors.joinToString("\n\n")}")
         }
         return@lazy result
     }
-
-    data class HttpFile(val downloadFilePath: String, val name: String, val url: String, val sha256: String)
 
     private fun findUrl(string: String, versions: Map<String, String>): String {
         val urlRegex = Regex("""url\s*=\s*["'](.+)["']""")
@@ -117,9 +123,9 @@ object KotlinTestsDependenciesUtil {
         }
     }
 
-    private fun findHttpFileBlocks(content: String): List<String> {
+    private fun findDownloadFileBlocks(content: String): List<String> {
         val blocks = mutableListOf<String>()
-        val regex = Regex("""http_file\s*\(""")
+        val regex = Regex("""download_file\s*\(""")
 
         regex.findAll(content).forEach { match ->
             val startPos = match.range.last + 1
@@ -139,7 +145,7 @@ object KotlinTestsDependenciesUtil {
             }
         }
 
-        return blocks
+        return blocks.filter { it.contains("=") }
     }
 
     private fun loadVersions(content: String): Map<String, String> {
@@ -164,7 +170,7 @@ object KotlinTestsDependenciesUtil {
         var result: String? = null
         val sha256Regex = Regex("""sha256\s*=\s*["']([^"']+)["']""")
         val errors = mutableListOf<String>()
-        for (block in findHttpFileBlocks(content)) {
+        for (block in findDownloadFileBlocks(content)) {
             val sha256 = sha256Regex.find(block)?.groupValues?.get(1)
             val url = findUrl(block, versions)
             // We should not update checksum for a special compiler version which used for Kotlin cooperative development.
