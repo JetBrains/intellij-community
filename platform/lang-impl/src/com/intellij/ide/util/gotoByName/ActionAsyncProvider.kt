@@ -83,7 +83,16 @@ class ActionAsyncProvider(private val model: GotoActionModel) {
     pattern: String,
     consumer: suspend (MatchedValue) -> Boolean,
   ) {
-    if (pattern.isEmpty()) return
+    return filterElementsSuspend(presentationProvider, pattern, false, consumer)
+  }
+
+  suspend fun filterElementsSuspend(
+    presentationProvider: suspend (AnAction) -> Presentation,
+    pattern: String,
+    allowEmpty: Boolean,
+    consumer: suspend (MatchedValue) -> Boolean,
+  ) {
+    if (!allowEmpty && pattern.isEmpty()) return
 
     LOG.debug { "Start actions searching ($pattern) from suspend function" }
 
