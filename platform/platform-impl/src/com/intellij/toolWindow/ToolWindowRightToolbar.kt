@@ -4,7 +4,10 @@ package com.intellij.toolWindow
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.impl.AbstractDroppableStripe
 import com.intellij.ui.UIBundle
-import com.intellij.util.ui.JBUI
+import com.intellij.ui.border.CustomLineBorder
+import com.intellij.util.ui.JBInsets
+import java.awt.Component
+import java.awt.Insets
 import javax.swing.border.Border
 
 internal class ToolWindowRightToolbar(paneId: String, isPrimary: Boolean) : ToolWindowToolbar(isPrimary, ToolWindowAnchor.RIGHT) {
@@ -24,5 +27,11 @@ internal class ToolWindowRightToolbar(paneId: String, isPrimary: Boolean) : Tool
     }
   }
 
-  override fun createBorder(): Border = JBUI.Borders.customLineLeft(getBorderColor())
+  override fun createBorder(): Border {
+    return object : CustomLineBorder(getBorderColor(), JBInsets(0, 1, 0, 0)) {
+      override fun getBorderInsets(c: Component?): Insets {
+        return if (hasButtons()) super.getBorderInsets(c) else JBInsets.emptyInsets()
+      }
+    }
+  }
 }
