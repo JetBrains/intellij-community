@@ -10,6 +10,7 @@ import com.intellij.collaboration.ui.setContentPreservingFocus
 import com.intellij.collaboration.ui.setHtmlBody
 import com.intellij.collaboration.ui.setItems
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.UiWithModelAccessImmediate
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.editor.Document
@@ -31,6 +32,7 @@ import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.util.asDisposable
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.launchOnShow
 import com.intellij.util.ui.showingScope
 import com.intellij.util.ui.update.Activatable
@@ -292,6 +294,7 @@ fun Document.bindTextIn(cs: CoroutineScope, textFlow: StateFlow<String>, setter:
     }
   }
 
+  @RequiresEdt
   fun doSetText(newText: String) {
     WriteIntentReadAction.run {
       if (text != newText) {
@@ -302,19 +305,16 @@ fun Document.bindTextIn(cs: CoroutineScope, textFlow: StateFlow<String>, setter:
       }
     }
   }
-
-  cs.launchNow(CoroutineName("Text binding for $this")) {
-    withContext(Dispatchers.EDT) {
-      addDocumentListener(listener)
-      textFlow.collectScoped { newText ->
+  cs.launch(Dispatchers.UiWithModelAccessImmediate + CoroutineName("Text binding for $this")) {
+    val listenerDisposable = Disposer.newDisposable()
+    addDocumentListener(listener, listenerDisposable)
+    try {
+      textFlow.collect { newText ->
         doSetText(newText)
       }
-      try {
-        awaitCancellation()
-      }
-      finally {
-        removeDocumentListener(listener)
-      }
+    }
+    finally {
+      Disposer.dispose(listenerDisposable)
     }
   }
 }

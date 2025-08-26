@@ -6,6 +6,7 @@ import com.intellij.collaboration.ui.LoadingLabel
 import com.intellij.collaboration.ui.layout.SizeRestrictedSingleComponentLayout
 import com.intellij.collaboration.ui.util.DimensionRestrictions
 import com.intellij.collaboration.ui.util.bindTextIn
+import com.intellij.openapi.application.UiWithModelAccessImmediate
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.colors.EditorColorsManager
@@ -15,10 +16,7 @@ import com.intellij.toolWindow.InternalDecoratorImpl
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.SingleComponentCenteringLayout
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.NonCancellable
-import kotlinx.coroutines.awaitCancellation
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import java.awt.BorderLayout
 import java.awt.Component
 import javax.swing.JPanel
@@ -70,7 +68,7 @@ object CodeReviewTitleDescriptionComponentFactory {
   fun createTitleEditorIn(project: Project, cs: CoroutineScope, vm: CodeReviewTitleDescriptionViewModel, titlePlaceholder: String): Editor {
     return CodeReviewCreateReviewUIUtil.createTitleEditor(project, titlePlaceholder).apply {
       margins = JBUI.insets(EDITOR_MARGINS, EDITOR_MARGINS, 0, EDITOR_MARGINS)
-      cs.launchNow {
+      cs.launch(Dispatchers.UiWithModelAccessImmediate, CoroutineStart.ATOMIC) {
         try {
           document.bindTextIn(this, vm.titleText, vm::setTitle)
           awaitCancellation()
@@ -87,7 +85,7 @@ object CodeReviewTitleDescriptionComponentFactory {
   fun createDescriptionEditorIn(project: Project, cs: CoroutineScope, vm: CodeReviewTitleDescriptionViewModel, descriptionPlaceholder: String): Editor {
     return CodeReviewCreateReviewUIUtil.createDescriptionEditor(project, descriptionPlaceholder).apply {
       margins = JBUI.insets(0, EDITOR_MARGINS)
-      cs.launchNow {
+      cs.launch(Dispatchers.UiWithModelAccessImmediate, CoroutineStart.ATOMIC) {
         try {
           document.bindTextIn(this, vm.descriptionText, vm::setDescription)
           awaitCancellation()
