@@ -34,6 +34,7 @@ jvm_library(
     "//plugins/kotlin/jvm-debugger/coroutines",
     "//platform/statistics",
     "//plugins/kotlin/base/facet",
+    "//platform/xdebugger-impl/shared",
   ],
   runtime_deps = [":evaluation_resources"]
 )

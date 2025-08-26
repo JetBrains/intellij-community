@@ -17,8 +17,8 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.getOrCreateUserData
 import com.intellij.openapi.util.registry.Registry.Companion.`is`
 import com.intellij.rt.debugger.BatchEvaluatorServer
-import com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationOrigin
-import com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationOrigin.Companion.computeWithOrigin
+import com.intellij.xdebugger.impl.evaluate.XEvaluationOrigin
+import com.intellij.xdebugger.impl.evaluate.XEvaluationOrigin.Companion.computeWithOrigin
 import com.sun.jdi.*
 import java.io.ByteArrayInputStream
 import java.io.DataInputStream
