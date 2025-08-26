@@ -297,7 +297,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
       ValueDescriptorImpl other = (ValueDescriptorImpl)oldDescriptor;
       if (other.isValueReady()) {
         myValue = other.getValue();
-        myInitFuture.complete(null);
+        // Do not mark myInitFuture as completed until the correct value is computed in #setContext
       }
     }
   }
