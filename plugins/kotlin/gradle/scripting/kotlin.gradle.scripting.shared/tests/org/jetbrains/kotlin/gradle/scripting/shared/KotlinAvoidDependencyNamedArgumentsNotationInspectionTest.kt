@@ -14,7 +14,7 @@ import org.junit.jupiter.api.assertNotNull
 import org.junit.jupiter.params.ParameterizedTest
 
 class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : GradleCodeInsightTestCase() {
-
+    
     private val CUSTOM_PROJECT = GradleTestFixtureBuilder.create("avoid_named_arguments") {
         withSettingsFile(gradleVersion, gradleDsl = GradleDsl.KOTLIN) {
             setProjectName("java-plugin-project")
@@ -39,14 +39,18 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : GradleCodeInsi
 
             // if there is a warning, check that an intention exists and can be applied
             if (textForHighlighting.contains("<weak_warning>")) {
-                assertNotNull(textBeforeIntention) { "Provide 'textBeforeIntention' text, text with a warning should have a quick fix available" }
-                assertNotNull(textAfterIntention) { "Provide 'textAfterIntention' text, text with a warning should have a quick fix available" }
+                assertNotNull(textBeforeIntention) {
+                    "Internal assert failure: provide 'textBeforeIntention' text, text with a warning should have a quick fix available"
+                }
+                assertNotNull(textAfterIntention) {
+                    "Internal assert failure: provide 'textAfterIntention' text, text with a warning should have a quick fix available"
+                }
 
                 val textForHighlightingStripped = textForHighlighting.replace("<weak_warning>", "").replace("</weak_warning>", "")
                 val textBeforeIntentionStripped = textBeforeIntention.replace("<caret>", "")
                 // assert that the text used to check highlighting and the text used to apply the intention on are equal just in case
                 Assertions.assertEquals(textForHighlightingStripped, textBeforeIntentionStripped) {
-                    "textForHighlighting and textBeforeIntention should be similar"
+                    "Internal assert failure: textForHighlighting and textBeforeIntention should be similar"
                 }
 
                 testIntention("build.gradle.kts", textBeforeIntention, textAfterIntention, "Simplify")
