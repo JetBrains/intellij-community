@@ -41,6 +41,8 @@ interface Document {
   fun getText(): String
   fun setText(text: String)
   fun getLineNumber(offset: Int): Int
+  fun getLineStartOffset(line: Int): Int
+  fun getLineEndOffset(line: Int): Int
 }
 
 @Remote("com.intellij.openapi.editor.CaretModel")
@@ -49,11 +51,13 @@ interface CaretModel {
   fun moveToVisualPosition(pos: VisualPosition)
   fun getLogicalPosition(): LogicalPosition
   fun moveToOffset(offset: Int)
+  fun getOffset(): Int
 }
 
 @Remote("com.intellij.openapi.editor.InlayModel")
 interface InlayModel {
   fun getInlineElementsInRange(startOffset: Int, endOffset: Int): List<Inlay>
+  fun getAfterLineEndElementsForLogicalLine(logicalLine: Int): List<Inlay>
 }
 
 @Remote("com.intellij.openapi.editor.Inlay")
@@ -76,6 +80,21 @@ interface EditorCustomElementRenderer {
 @Remote("com.intellij.codeInsight.hints.declarative.impl.inlayRenderer.DeclarativeInlayRenderer")
 interface DeclarativeInlayRenderer {
   fun getPresentationList(): InlayPresentationList
+}
+
+@Remote("com.intellij.codeInsight.daemon.impl.HintRenderer")
+interface HintRenderer {
+  fun getText(): String
+}
+
+@Remote("com.intellij.codeInsight.inline.completion.render.InlineCompletionLineRenderer")
+interface InlineCompletionLineRenderer {
+  fun getBlocks(): List<InlineCompletionRenderTextBlock>
+}
+
+@Remote("com.intellij.codeInsight.inline.completion.render.InlineCompletionRenderTextBlock")
+interface InlineCompletionRenderTextBlock {
+  val text: String
 }
 
 @Remote("com.intellij.codeInsight.hints.declarative.impl.views.InlayPresentationList")

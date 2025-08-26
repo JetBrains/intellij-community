@@ -210,6 +210,31 @@ open class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
               checker = { it.contains(expectedText) })
     }
   }
+
+  fun getInlineCompletion(line: Int? = null): List<InlayHint> {
+    val startOffset = line?.let { editor.getDocument().getLineStartOffset(it - 1) } ?: 0
+    val endOffset = line?.let { editor.getDocument().getLineEndOffset(it - 1) } ?: Int.MAX_VALUE
+    val offsetToInlay: List<Pair<Int, String>> = this.editor.getInlayModel().getInlineElementsInRange(startOffset, endOffset).mapNotNull { element ->
+      try {
+        val text = driver.cast(element.getRenderer(), InlineCompletionLineRenderer::class).getBlocks().joinToString { it.text }
+        element.getOffset() to text
+      }
+      catch (_: DriverCallException) {
+        return@mapNotNull null
+      }
+    }
+    return offsetToInlay.map { InlayHint(it.first, it.second) }
+  }
+
+  fun getAfterLineHints(line: Int): List<String> = editor.getInlayModel().getAfterLineEndElementsForLogicalLine(line - 1)
+    .mapNotNull {
+      try {
+        driver.cast(it.getRenderer(), HintRenderer::class).getText()
+      }
+      catch (_: DriverCallException) {
+        return@mapNotNull null
+      }
+    }
 }
 
 @Remote("com.jetbrains.performancePlugin.utils.IntentionActionUtils", plugin = "com.jetbrains.performancePlugin")
