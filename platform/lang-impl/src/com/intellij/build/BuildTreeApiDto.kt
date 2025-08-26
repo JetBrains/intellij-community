@@ -45,6 +45,11 @@ data class BuildTreeNode(
     const val ROOT_ID: Int = 0
     const val BUILD_PROGRESS_ROOT_ID: Int = 1
   }
+
+  // used in tests
+  override fun toString(): String {
+    return name.toString()
+  }
 }
 
 @Internal

@@ -63,7 +63,7 @@ internal class BuildTreeView(parentScope: CoroutineScope, private val buildViewI
 
   private val rootNode = MyNode(
     BuildTreeNode(BuildTreeNode.ROOT_ID, BuildTreeNode.NO_ID,
-                  null, null, null, null, null, emptyList(), false, false, false, false, false))
+                  null, null, "", null, null, emptyList(), false, false, false, false, false))
   private val buildProgressRootNode = MyNode(
     BuildTreeNode(BuildTreeNode.BUILD_PROGRESS_ROOT_ID, BuildTreeNode.ROOT_ID,
                   AnimatedIcon.Default.INSTANCE.rpcId(), null, "", null, null, emptyList(), true, false, true, false, false))
