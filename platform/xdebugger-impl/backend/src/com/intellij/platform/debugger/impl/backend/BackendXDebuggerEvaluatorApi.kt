@@ -20,6 +20,7 @@ import com.intellij.xdebugger.frame.XValue
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerDocumentOffsetEvaluator
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
+import com.intellij.xdebugger.impl.pinned.items.PinToTopValue
 import com.intellij.xdebugger.impl.rpc.XStackFrameId
 import com.intellij.xdebugger.impl.rpc.models.*
 import com.intellij.xdebugger.impl.ui.XValueTextProvider
@@ -136,6 +137,7 @@ internal suspend fun BackendXValueModel.toXValueDto(): XValueDto {
     xValueModel.getEvaluatorDtoFlow().toRpc(),
     (xValue as? XNamedValue)?.name,
     textProvider?.toRpc(),
+    (xValue as? PinToTopValue)?.pinToTopDataFuture?.asDeferred(),
   )
 }
 

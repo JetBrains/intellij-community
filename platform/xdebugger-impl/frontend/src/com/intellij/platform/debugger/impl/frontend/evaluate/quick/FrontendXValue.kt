@@ -17,6 +17,8 @@ import com.intellij.xdebugger.Obsolescent
 import com.intellij.xdebugger.XExpression
 import com.intellij.xdebugger.frame.*
 import com.intellij.xdebugger.frame.presentation.XValuePresentation
+import com.intellij.xdebugger.impl.pinned.items.PinToTopMemberValue
+import com.intellij.xdebugger.impl.pinned.items.PinToTopParentValue
 import com.intellij.xdebugger.impl.ui.XValueTextProvider
 import com.intellij.xdebugger.impl.ui.tree.XValueExtendedPresentation
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeEx
@@ -37,17 +39,23 @@ class FrontendXValue private constructor(
   val xValueDto: XValueDto,
   hasParentValue: Boolean,
   private val presentation: StateFlow<XValueSerializedPresentation>,
-) : XValue(), XValueTextProvider {
+) : XValue(), XValueTextProvider, PinToTopParentValue, PinToTopMemberValue {
 
   init {
     cs.launch {
       val descriptor = xValueDto.descriptor?.await() ?: return@launch
       FrontendDescriptorStateManager.getInstance(project).registerDescriptor(descriptor, cs)
     }
+    cs.launch {
+      pinToTopData = xValueDto.pinToTopData?.await()
+    }
   }
 
   @Volatile
   private var modifier: XValueModifier? = null
+
+  @Volatile
+  private var pinToTopData: XPinToTopData? = null
 
   var markerDto: XValueMarkerDto? = null
 
@@ -217,6 +225,16 @@ class FrontendXValue private constructor(
     return "FrontendXValue(id=${xValueDto.id}, value=${presentation.value.rawText()})"
   }
 
+  override val tag: String? get() = pinToTopData?.tag
+
+  override fun canBePinned(): Boolean = pinToTopData?.canBePinned ?: false
+
+  override val isPinned: Boolean? get() = pinToTopData?.pinned
+
+  override val customMemberName: String? get() = pinToTopData?.customMemberName
+
+  override val customParentTag: String? get() = pinToTopData?.customParentTag
+
   private class FrontendXValuePresentation(private val advancedPresentation: XValueSerializedPresentation.AdvancedPresentation) : XValuePresentation() {
     override fun renderValue(renderer: XValueTextRenderer) {
       renderAdvancedPresentation(renderer, advancedPresentation)
@@ -362,7 +380,7 @@ private fun XValueSerializedPresentation.rawText(): String = when (this) {
 private class FrontendXNamedValue(
   val delegate: FrontendXValue,
   name: String,
-) : XNamedValue(name), XValueTextProvider {
+) : XNamedValue(name), XValueTextProvider, PinToTopParentValue, PinToTopMemberValue {
   override fun computePresentation(node: XValueNode, place: XValuePlace) {
     delegate.computePresentation(node, place)
   }
@@ -419,6 +437,16 @@ private class FrontendXNamedValue(
   override fun getValueText(): String? {
     return delegate.valueText
   }
+
+  override val tag: String? get() = delegate.tag
+
+  override fun canBePinned(): Boolean = delegate.canBePinned()
+
+  override val isPinned: Boolean? get() = delegate.isPinned
+
+  override val customMemberName: String? get() = delegate.customMemberName
+
+  override val customParentTag: String? get() = delegate.customParentTag
 
   override fun toString(): String {
     return "FrontendXNamedValue(name=$name, delegate=$delegate)"

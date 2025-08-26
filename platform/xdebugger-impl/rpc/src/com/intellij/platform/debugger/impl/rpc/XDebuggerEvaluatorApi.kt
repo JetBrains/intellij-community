@@ -11,6 +11,7 @@ import com.intellij.xdebugger.evaluation.ExpressionInfo
 import com.intellij.xdebugger.impl.evaluate.XEvaluationOrigin
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink
 import com.intellij.xdebugger.frame.XDescriptor
+import com.intellij.xdebugger.frame.XPinToTopData
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
 import com.intellij.xdebugger.impl.rpc.XStackFrameId
 import com.intellij.xdebugger.impl.rpc.XValueGroupId
@@ -110,6 +111,7 @@ data class XValueDto(
   val fullValueEvaluator: RpcFlow<XFullValueEvaluatorDto?>,
   val name: String?,
   val textProvider: RpcFlow<XValueTextProviderDto>?,
+  @Serializable(with = DeferredSerializer::class) val pinToTopData: Deferred<XPinToTopData>?,
 )
 
 @ApiStatus.Internal

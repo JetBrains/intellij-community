@@ -22,8 +22,6 @@ import com.intellij.debugger.ui.impl.watch.*;
 import com.intellij.debugger.ui.tree.*;
 import com.intellij.debugger.ui.tree.render.*;
 import com.intellij.debugger.ui.tree.render.Renderer;
-import com.intellij.java.debugger.impl.shared.engine.JavaValueDescriptor;
-import com.intellij.java.debugger.impl.shared.engine.JavaValueObjectReferenceInfo;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -73,6 +71,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
   private final NodeManagerImpl myNodeManager;
   private final boolean myContextSet;
   private final CompletableFuture<XDescriptor> myXDescriptorFuture;
+  private final CompletableFuture<XPinToTopData> myPinToTopDataFuture;
 
   protected JavaValue(JavaValue parent,
                       @NotNull ValueDescriptorImpl valueDescriptor,
@@ -96,13 +95,22 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
     myContextSet = contextSet;
     myCanBePinned = doComputeCanBePinned();
     myXDescriptorFuture = myValueDescriptor.getInitFuture()
-      .thenCompose(__ -> JavaValueUtilsKt.getJavaValueXDescriptor(this));
+      .thenCompose(__ -> {
+        return JavaValueUtilsKt.getJavaValueXDescriptor(this);
+      });
+    myPinToTopDataFuture = myValueDescriptor.getInitFuture()
+      .thenApply(__ -> new XPinToTopData(canBePinned(), getTag(), null, null, null));
   }
 
   @Override
   public @Nullable String getTag() {
     Type type = myValueDescriptor.getType();
     return type == null ? null : type.name();
+  }
+
+  @Override
+  public @Nullable CompletableFuture<XPinToTopData> getPinToTopDataFuture() {
+    return myPinToTopDataFuture;
   }
 
   @Override
