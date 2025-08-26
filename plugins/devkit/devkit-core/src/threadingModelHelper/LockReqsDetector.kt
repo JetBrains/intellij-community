@@ -2,14 +2,9 @@
 package org.jetbrains.idea.devkit.threadingModelHelper
 
 import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiMethod
-import com.intellij.psi.PsiModifier
-import com.intellij.psi.search.searches.ClassInheritorsSearch
-import com.intellij.psi.util.InheritanceUtil
-import com.intellij.util.Processor
 
-class LockReqsDetector(private val patterns: LockReqsPatterns = DefaultLockReqsPatterns()) {
+class LockReqsDetector(private val patterns: LockReqsRules = DefaultLockReqsRules()) {
 
   fun findAnnotationRequirements(method: PsiMethod): List<LockRequirement> {
     val requirements = mutableListOf<LockRequirement>()
@@ -37,50 +32,30 @@ class LockReqsDetector(private val patterns: LockReqsPatterns = DefaultLockReqsP
   private fun isSwingMethod(method: PsiMethod): Boolean {
     val containingClass = method.containingClass ?: return false
     val className = containingClass.qualifiedName ?: return false
-    if (isSwingComponent(className)) return method.name !in patterns.safeSwingMethods
-    return patterns.edtRequiredClasses.any { edtClass ->
-      InheritanceUtil.isInheritor(containingClass, edtClass)
-    }
+    if (isSwingClass(className)) return method.name !in patterns.safeSwingMethods
+    return LockReqsPsiOps.inheritsFromAny(containingClass, patterns.edtRequiredClasses)
   }
 
-  private fun isSwingComponent(className: String): Boolean {
+  private fun isSwingClass(className: String): Boolean {
     return patterns.edtRequiredClasses.contains(className) ||
-           patterns.edtRequiredPackages.any { className.startsWith("$it.") }
+           LockReqsPsiOps.isInPackages(className, patterns.edtRequiredPackages)
   }
 
   fun isAsyncDispatch(method: PsiMethod): Boolean {
-    return method.name in patterns.asyncMethods && method.containingClass?.qualifiedName in patterns.asyncClasses
-  }
-
-  fun isPolymorphicCall(method: PsiMethod): Boolean {
-    if (listOf(PsiModifier.FINAL, PsiModifier.STATIC, PsiModifier.PRIVATE).any {
-        method.hasModifierProperty(it)
-      }) return false
-    val containingClass = method.containingClass ?: return false
-    return !containingClass.hasModifierProperty(PsiModifier.FINAL)
+    return method.name in patterns.asyncMethods &&
+           method.containingClass?.qualifiedName in patterns.asyncClasses
   }
 
   fun isMessageBusCall(method: PsiMethod): Boolean {
     val containingClass = method.containingClass?.qualifiedName ?: return false
-    return patterns.messageBusClasses.contains(containingClass) && method.name in patterns.messageBusSyncMethods
+    return patterns.messageBusClasses.contains(containingClass) &&
+           method.name in patterns.messageBusSyncMethods
   }
 
   fun extractMessageBusTopic(method: PsiMethod): PsiClass? {
     if (method.name in patterns.messageBusSyncMethods) {
-      val returnType = method.returnType as? PsiClassType ?: return null
-      val resolvedTopicInterface = returnType.resolve() ?: return null
-      return resolvedTopicInterface
+      return LockReqsPsiOps.resolveReturnType(method)
     }
     return null
-  }
-
-  fun findTopicListeners(topicInterface: PsiClass, config: AnalysisConfig): List<PsiClass> {
-    val listeners = mutableListOf<PsiClass>()
-    val query = ClassInheritorsSearch.search(topicInterface, config.scope, true)
-    query.forEach(Processor {
-      if (listeners.size > config.maxImplementations) return@Processor false
-      listeners.add(it)
-    })
-    return listeners
   }
 }

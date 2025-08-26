@@ -24,8 +24,10 @@ class BFLReqsChecker(private val analyzer: LockReqsAnalyzerDFS = LockReqsAnalyze
     private const val PARENT_CLASS_NAME = "com.intellij.openapi.vfs.newvfs.BulkFileListener"
     private const val BEFORE_METHOD_NAME = "before"
     private const val AFTER_METHOD_NAME = "after"
-    private const val MAX_IMPLEMENTATIONS = 50
+    private const val MAX_IMPLEMENTATIONS = 10
+    private const val TARGET_CLASS_NAME = "com.intellij.codeInsight.ExternalAnnotationsManagerImpl"
   }
+
 
   fun runChecker(project: Project): List<CheckResult> {
     return findAllImplementations(project).map { implementation ->
@@ -33,6 +35,12 @@ class BFLReqsChecker(private val analyzer: LockReqsAnalyzerDFS = LockReqsAnalyze
          checkImplementation(implementation)
       }.executeSynchronously()
     }
+  }
+
+  fun findTargetImplementation(project: Project, scope: GlobalSearchScope = GlobalSearchScope.projectScope(project)): List<PsiClass> {
+    val javaPsiFacade = JavaPsiFacade.getInstance(project)
+    val targetClass = javaPsiFacade.findClass(TARGET_CLASS_NAME, scope)!!
+    return listOf(targetClass)
   }
 
   fun findAllImplementations(project: Project, scope: GlobalSearchScope = GlobalSearchScope.projectScope(project)): List<PsiClass> {

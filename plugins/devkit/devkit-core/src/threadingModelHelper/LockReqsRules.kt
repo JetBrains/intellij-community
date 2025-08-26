@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.threadingModelHelper
 
-interface LockReqsPatterns {
+interface LockReqsRules {
   val assertionMethods: Map<String, Map<String, LockType>>
   val lockAnnotations: Map<String, LockType>
   val edtRequiredPackages: Set<String>
@@ -13,7 +13,7 @@ interface LockReqsPatterns {
   val safeSwingMethods: Set<String>
 }
 
-class DefaultLockReqsPatterns : LockReqsPatterns {
+class DefaultLockReqsRules : LockReqsRules {
 
   override val assertionMethods: Map<String, Map<String, LockType>> = mapOf(
     "com.intellij.util.concurrency.ThreadingAssertions" to mapOf(

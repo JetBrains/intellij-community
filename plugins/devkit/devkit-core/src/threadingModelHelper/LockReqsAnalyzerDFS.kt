@@ -7,11 +7,7 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiMethodCallExpression
 import com.intellij.psi.PsiMethodReferenceExpression
-import com.intellij.psi.PsiModifier
 import com.intellij.psi.PsiNewExpression
-import com.intellij.psi.search.searches.OverridingMethodsSearch
-import com.intellij.util.Processor
-
 
 class LockReqsAnalyzerDFS(private val detector: LockReqsDetector = LockReqsDetector()) {
 
@@ -31,7 +27,7 @@ class LockReqsAnalyzerDFS(private val detector: LockReqsDetector = LockReqsDetec
   }
 
   private fun traverseMethod(method: PsiMethod, context: TraversalContext) {
-    println("Traversing ${method.containingClass?.qualifiedName}.${method.name}")
+    println("Traversing method ${method.containingClass?.qualifiedName}.${method.name}, ${context.currentPath.size} steps deep")
     val signature = MethodSignature.fromMethod(method)
     if (context.currentPath.size >= context.config.maxDepth || signature in context.visited) return
     context.visited.add(signature)
@@ -39,32 +35,9 @@ class LockReqsAnalyzerDFS(private val detector: LockReqsDetector = LockReqsDetec
 
     val annotationRequirement = detector.findAnnotationRequirements(method)
     annotationRequirement.forEach { context.paths.add(ExecutionPath(context.currentPath.toList(), it)) }
-    getMethodCallees(method).forEach { processCallee(it, context) }
+    LockReqsPsiOps.getMethodCallees(method).forEach { processCallee(it, context) }
 
     context.currentPath.removeLast()
-  }
-
-  private fun getMethodCallees(method: PsiMethod): List<PsiMethod> {
-    val callees = mutableListOf<PsiMethod>()
-
-    method.body?.accept(object : JavaRecursiveElementVisitor() {
-      override fun visitMethodCallExpression(expression: PsiMethodCallExpression) {
-        super.visitMethodCallExpression(expression)
-        expression.resolveMethod()?.let { callees.add(it) }
-      }
-
-      override fun visitMethodReferenceExpression(expression: PsiMethodReferenceExpression) {
-        super.visitMethodReferenceExpression(expression)
-        (expression.resolve() as? PsiMethod)?.let { callees.add(it) }
-      }
-
-      override fun visitNewExpression(expression: PsiNewExpression) {
-        super.visitNewExpression(expression)
-        expression.resolveMethod()?.let { callees.add(it) }
-      }
-    })
-
-    return callees
   }
 
   private fun processCallee(callee: PsiMethod, context: TraversalContext) {
@@ -74,41 +47,21 @@ class LockReqsAnalyzerDFS(private val detector: LockReqsDetector = LockReqsDetec
     if (!detector.isAsyncDispatch(callee)) {
       when {
         detector.isMessageBusCall(callee) -> handleMessageBusCall(callee, context)
-        detector.isPolymorphicCall(callee) -> handlePolymorphic(callee, context)
+        LockReqsPsiOps.canBeOverridden(callee) -> handlePolymorphic(callee, context)
         else -> traverseMethod(callee, context)
       }
     }
   }
 
   private fun handlePolymorphic(method: PsiMethod, context: TraversalContext) {
-    val implementations = findImplementations(method, context.config)
-    implementations.forEach { traverseMethod(it, context) }
-  }
-
-  private fun findImplementations(method: PsiMethod, config: AnalysisConfig): List<PsiMethod> {
-    val implementations = mutableListOf<PsiMethod>()
-    if (method.body != null) {
-      implementations.add(method)
-    }
-    if (method.hasModifierProperty(PsiModifier.ABSTRACT) || method.containingClass?.isInterface == true) {
-      val query = OverridingMethodsSearch.search(method, config.scope, true)
-      query.forEach(Processor<PsiMethod> {
-        if (implementations.size >= config.maxImplementations) return@Processor false
-        implementations.add(it)
-      })
-    }
-    return implementations
+    val overrides = LockReqsPsiOps.findOverriding(method, context.config.scope, context.config.maxImplementations)
+    overrides.forEach { traverseMethod(it, context) }
   }
 
   private fun handleMessageBusCall(method: PsiMethod, context: TraversalContext) {
-    detector.extractMessageBusTopic(method)?.let { context.messageBusTopics.add(it) }
-
-    val topicType = method.returnType as? PsiClassType ?: return
-    val topicInterface = topicType.resolve() ?: return
-    if (!topicInterface.isInterface) return
-
-    detector.findTopicListeners(topicInterface, context.config).forEach { listener ->
-      listener.methods.forEach { method -> traverseMethod(method, context) }
-    }
+    val topicClass = detector.extractMessageBusTopic(method) ?: return
+    context.messageBusTopics.add(topicClass)
+    val listeners = LockReqsPsiOps.findImplementations(topicClass, context.config.scope, context.config.maxImplementations)
+    listeners.forEach { it.methods.forEach { method -> traverseMethod(method, context) } }
   }
 }

@@ -9,10 +9,6 @@ import com.intellij.psi.PsiMethod
 @Service(Service.Level.PROJECT)
 class LockReqsService(private val project: Project) {
 
-  companion object {
-    const val TOOL_WINDOW_ID: String = "Lock Requirements"
-  }
-
   private var _currentResult: AnalysisResult? = null
   val currentResult: AnalysisResult?
     get() = _currentResult
@@ -26,4 +22,9 @@ class LockReqsService(private val project: Project) {
 
     ToolWindowManager.getInstance(project).getToolWindow(TOOL_WINDOW_ID)?.show()
   }
+  
+  companion object {
+    const val TOOL_WINDOW_ID: String = "Lock Requirements"
+  }
+
 }
