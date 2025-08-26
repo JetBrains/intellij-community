@@ -2,6 +2,7 @@
 package com.intellij.platform.searchEverywhere.backend.providers.text
 
 import com.intellij.find.FindManager
+import com.intellij.find.impl.JComboboxAction
 import com.intellij.find.impl.SearchEverywhereItem
 import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor
 import com.intellij.ide.ui.colors.rpcId
@@ -56,6 +57,11 @@ class SeTextItemsProvider(project: Project, private val contributorWrapper: SeAs
       textFilter.selectedScopeId
     }
     applyScope(scopeToApply)
+
+    // When `TextSearchContributor` disposes in local mode with the new SE,
+    // it updates `FindSettings.getInstance().fileMask` after `SeTextFilterEditor` sets it, so the value remains unchanged.
+    contributorWrapper.contributor.getActions { }.filterIsInstance<JComboboxAction>().firstOrNull()?.onMaskChanged(textFilter.selectedType)
+    // Apply type for the correct search
     findModel.fileFilter = textFilter.selectedType
 
     findModel.isCaseSensitive = SeTextFilter.isCaseSensitive(params.filter) ?: false
