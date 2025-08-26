@@ -6,7 +6,6 @@ import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Predicates;
-import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.impl.source.DummyHolder;
@@ -96,44 +95,18 @@ public final class ControlFlowUtil {
    */
   public static boolean isEffectivelyFinal(@NotNull PsiVariable variable, @NotNull PsiElement scope, 
                                            @Nullable PsiJavaCodeReferenceElement context) {
-    boolean effectivelyFinal;
     if (variable instanceof PsiParameter) {
-      effectivelyFinal = !variableIsAssigned(variable, ((PsiParameter)variable).getDeclarationScope());
+      return !variableIsAssigned(variable, ((PsiParameter)variable).getDeclarationScope());
     }
     else {
       PsiElement codeBlock = PsiUtil.getVariableCodeBlock(variable, context);
       if (codeBlock == null) return true;
-      ControlFlow controlFlow = getControlFlow(codeBlock);
-      if (controlFlow == null) return true;
-
-      Collection<VariableInfo> initializedTwice = getInitializedTwice(controlFlow);
-      effectivelyFinal = !initializedTwice.contains(new VariableInfo(variable, null));
-      if (effectivelyFinal) {
-        for (PsiReferenceExpression expression : getReadBeforeWriteLocals(controlFlow)) {
-          if (expression.resolve() == variable) {
-            return PsiUtil.isAccessedForReading(expression);
-          }
-        }
-        effectivelyFinal = !variableIsAssigned(variable, scope);
-        if (effectivelyFinal) {
-          // TODO: check; probably this traversal is redundant
-          Ref<Boolean> stopped = new Ref<>(false);
-          codeBlock.accept(new JavaRecursiveElementWalkingVisitor() {
-            @Override
-            public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
-              if (expression.isReferenceTo(variable) &&
-                  PsiUtil.isAccessedForWriting(expression) &&
-                  isVariableAssignedInLoop(expression, variable)) {
-                stopWalking();
-                stopped.set(true);
-              }
-            }
-          });
-          return !stopped.get();
-        }
-      }
+      ControlFlow flow = getControlFlow(codeBlock);
+      if (flow == null) return true;
+      
+      Collection<VariableInfo> initializedTwice = addReassignedInLoopProblems(getInitializedTwice(flow), flow);
+      return !initializedTwice.contains(new VariableInfo(variable, null)) && !variableIsAssigned(variable, scope);
     }
-    return effectivelyFinal;
   }
 
   private static @Nullable ControlFlow getControlFlow(PsiElement codeBlock) {
