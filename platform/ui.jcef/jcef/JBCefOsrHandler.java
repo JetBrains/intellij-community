@@ -18,12 +18,16 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 import java.awt.image.VolatileImage;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.IntBuffer;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -56,6 +60,10 @@ class JBCefOsrHandler implements CefRenderHandler {
 
   private final @NotNull AtomicReference<Point> myLocationOnScreenRef = new AtomicReference<>(new Point());
 
+  private @Nullable Timer myResizePusherAlarm = null;
+  private @Nullable Instant resizePushStarted = null;
+  private final Duration RESIZE_PUSHER_TIMEOUT = Duration.ofSeconds(2);
+
   JBCefOsrHandler(@NotNull JComponent component, @NotNull Function<? super JComponent, ? extends Rectangle> screenBoundsProvider) {
     myComponent = component;
     myScreenBoundsProvider = screenBoundsProvider;
@@ -77,6 +85,15 @@ class JBCefOsrHandler implements CefRenderHandler {
 
   @Override
   public void onPaint(CefBrowser browser, boolean popup, Rectangle[] dirtyRects, ByteBuffer buffer, int width, int height) {
+    Rectangle rect = getViewRect(browser);
+    double w = rect.width * getPixelDensity();
+    double h = rect.height * getPixelDensity();
+    if (w != width || h != height) {
+      startResizePusher(browser, /* resetTimeout = */ false);
+    } else {
+      stopResizePusher();
+    }
+
     myFpsMeter.onPaintStarted();
     JBHiDPIScaledImage image = popup ? myPopupImage : myImage;
 
@@ -178,9 +195,9 @@ class JBCefOsrHandler implements CefRenderHandler {
   public Rectangle getViewRect(CefBrowser browser) {
     Component component = browser.getUIComponent();
     double scale = getScaleFactor();
-    double value = component.getWidth() / scale;
-    double value1 = component.getHeight() / scale;
-    return new Rectangle(0, 0, (int)Math.ceil(value), (int)Math.ceil(value1));
+    double width = component.getWidth() / scale;
+    double height = component.getHeight() / scale;
+    return new Rectangle(0, 0, (int)Math.ceil(width), (int)Math.ceil(height));
   }
 
   @Override
@@ -323,5 +340,41 @@ class JBCefOsrHandler implements CefRenderHandler {
     }
     if (x >= bi.getWidth() || y >= bi.getHeight() || x < 0 || y < 0) return null;
     return new Color(bi.getRGB(x, y), true);
+  }
+
+  void startResizePusher(CefBrowser browser, boolean resetTimeout) {
+    UIUtil.invokeLaterIfNeeded(() -> { startResizePusherImpl(browser, resetTimeout); });
+  }
+
+  private void startResizePusherImpl(CefBrowser browser, boolean resetTimeout) {
+    if (myResizePusherAlarm != null) {
+      if (resetTimeout) {
+        resizePushStarted = Instant.now();
+      }
+      return;
+    }
+
+    myResizePusherAlarm = new Timer(20, new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        if (resizePushStarted == null || resizePushStarted.plus(RESIZE_PUSHER_TIMEOUT).isBefore(Instant.now())) {
+          stopResizePusher();
+          return;
+        }
+        browser.invalidate();
+      }
+    });
+    myResizePusherAlarm.setRepeats(true);
+    myResizePusherAlarm.start();
+    resizePushStarted = Instant.now();
+  }
+
+  void stopResizePusher() {
+    UIUtil.invokeLaterIfNeeded(() -> {
+      if (myResizePusherAlarm == null) {return;}
+      myResizePusherAlarm.stop();
+      myResizePusherAlarm = null;
+      resizePushStarted = null;
+    });
   }
 }

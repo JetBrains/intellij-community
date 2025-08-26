@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="jcef" type="repository">
-    <properties maven-id="org.jetbrains.intellij.deps.jcef:jcef:137.0.17-gf354b0e-chromium-137.0.7151.104-api-1.19-253-b9">
+    <properties maven-id="org.jetbrains.intellij.deps.jcef:jcef:137.0.17-gf354b0e-chromium-137.0.7151.104-api-1.20-253-b12">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jcef/jcef/137.0.17-gf354b0e-chromium-137.0.7151.104-api-1.19-253-b9/jcef-137.0.17-gf354b0e-chromium-137.0.7151.104-api-1.19-253-b9.jar">
-          <sha256sum>4dd3689687e600238b6ffc3c1a9cfaf86c55bf3bf88ce11aea345089c32ea5d7</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jcef/jcef/137.0.17-gf354b0e-chromium-137.0.7151.104-api-1.20-253-b12/jcef-137.0.17-gf354b0e-chromium-137.0.7151.104-api-1.20-253-b12.jar">
+          <sha256sum>ea1f2107955815765e96e4db5c2f0772c4779724dedff357bfba4c112e96aeb8</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jcef/jcef/137.0.17-gf354b0e-chromium-137.0.7151.104-api-1.19-253-b9/jcef-137.0.17-gf354b0e-chromium-137.0.7151.104-api-1.19-253-b9.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jcef/jcef/137.0.17-gf354b0e-chromium-137.0.7151.104-api-1.20-253-b12/jcef-137.0.17-gf354b0e-chromium-137.0.7151.104-api-1.20-253-b12.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jcef/jcef/137.0.17-gf354b0e-chromium-137.0.7151.104-api-1.19-253-b9/jcef-137.0.17-gf354b0e-chromium-137.0.7151.104-api-1.19-253-b9-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jcef/jcef/137.0.17-gf354b0e-chromium-137.0.7151.104-api-1.20-253-b12/jcef-137.0.17-gf354b0e-chromium-137.0.7151.104-api-1.20-253-b12-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

@@ -159,12 +159,15 @@ class JBCefOsrComponent extends JPanel {
       if (myResizeAlarm.isEmpty())
         myScheduleResizeMs.set(timeMs);
       myResizeAlarm.cancelAllRequests();
-      if (timeMs - myScheduleResizeMs.get() > RESIZE_DELAY_MS)
+      if (timeMs - myScheduleResizeMs.get() >= RESIZE_DELAY_MS) {
         myBrowser.wasResized(0, 0);
+        myRenderHandler.startResizePusher(myBrowser, true);
+      }
       else
         myResizeAlarm.addRequest(() -> {
           // In OSR width and height are ignored. The view size will be requested from CefRenderHandler.
           myBrowser.wasResized(0, 0);
+          myRenderHandler.startResizePusher(myBrowser, true);
         }, RESIZE_DELAY_MS);
     }
   }
