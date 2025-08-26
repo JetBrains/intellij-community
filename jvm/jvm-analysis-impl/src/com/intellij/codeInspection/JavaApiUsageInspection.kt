@@ -11,6 +11,7 @@ import com.intellij.codeInspection.options.OptPane
 import com.intellij.codeInspection.options.OptPane.*
 import com.intellij.codeInspection.options.OptionController
 import com.intellij.java.JavaBundle
+import com.intellij.java.codeserver.core.JavaPreviewFeatureUtil
 import com.intellij.lang.Language
 import com.intellij.openapi.module.JdkApiCompatibilityService
 import com.intellij.openapi.module.LanguageLevelUtil
@@ -191,7 +192,7 @@ class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
         languageLevel = sourcePsi.containingFile.getUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY)
       }
       if (languageLevel == null) return
-      val firstCompatibleLanguageLevel = JdkApiCompatibilityService.getInstance().firstCompatibleLanguageLevel(target, languageLevel)
+      var firstCompatibleLanguageLevel = JdkApiCompatibilityService.getInstance().firstCompatibleLanguageLevel(target, languageLevel)
       if (firstCompatibleLanguageLevel != null) {
         val psiClass = if (qualifier != null) {
           PsiUtil.resolveClassInType(qualifier.getExpressionType())
@@ -205,6 +206,15 @@ class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
             if (isIgnored(superClass)) return
           }
         }
+
+        if (sourcePsi is PsiJavaCodeReferenceElement) {
+          val previewFeatureUsage = JavaPreviewFeatureUtil.getPreviewFeatureUsage(sourcePsi, target)
+          val previewLevel = firstCompatibleLanguageLevel.getPreviewLevel()
+          if (previewFeatureUsage != null && previewLevel != null) {
+            firstCompatibleLanguageLevel = previewLevel
+          }
+        }
+
         registerError(sourcePsi, firstCompatibleLanguageLevel, holder, isOnTheFly)
       }
       else if (target is PsiClass && !languageLevel.isAtLeast(LanguageLevel.JDK_1_7)) {
@@ -240,9 +250,13 @@ class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
 
   private fun registerError(reference: PsiElement, sinceLanguageLevel: LanguageLevel, holder: ProblemsHolder, isOnTheFly: Boolean) {
     if (reference.getUastParentOfType<UComment>() != null) return
-    val message = JvmAnalysisBundle.message(
-      "jvm.inspections.1.5.problem.descriptor", sinceLanguageLevel.toJavaVersion().toFeatureString()
-    )
+    val message = if (sinceLanguageLevel.isPreview) {
+      JvmAnalysisBundle.message("jvm.inspections.1.5.problem.descriptor.preview", sinceLanguageLevel.toJavaVersion().toFeatureString())
+    }
+    else {
+      JvmAnalysisBundle.message("jvm.inspections.1.5.problem.descriptor", sinceLanguageLevel.toJavaVersion().toFeatureString())
+    }
+
     val fix = if (isOnTheFly) {
       QuickFixFactory.getInstance().createIncreaseLanguageLevelFix(sinceLanguageLevel) as LocalQuickFix
     }
