@@ -707,8 +707,9 @@ public class PsiEventsTest extends JavaPsiTestCase {
     assertTrue("Event '" + beforeText + "' must be fired. Events so far: " + eventsFired, i >= 0);
   }
   private void doTestEvents(String newText) {
+    Disposable disposable = Disposer.newDisposable();
     try {
-      getPsiManager().addPsiTreeChangeListener(listener);
+      getPsiManager().addPsiTreeChangeListener(listener, disposable);
       eventsFired = "";
       original = getFile().getText();
       Document document = PsiDocumentManager.getInstance(getProject()).getDocument(getFile());
@@ -721,7 +722,7 @@ public class PsiEventsTest extends JavaPsiTestCase {
       PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     }
     finally {
-      getPsiManager().removePsiTreeChangeListener(listener);
+      Disposer.dispose(disposable);
     }
   }
 

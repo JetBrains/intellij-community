@@ -1,26 +1,23 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.inline.codeInliner
 
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiTreeChangeAdapter
 import com.intellij.psi.PsiTreeChangeEvent
+import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.idea.base.psi.*
 import org.jetbrains.kotlin.idea.codeinsight.utils.ConvertToBlockBodyUtils
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.PsiChildRange
-import org.jetbrains.kotlin.psi.psiUtil.canPlaceAfterSimpleNameEntry
-import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
-import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
-import org.jetbrains.kotlin.psi.psiUtil.parents
-import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
+import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
@@ -210,12 +207,12 @@ class ExpressionReplacementPerformer(
             }
         }
 
-        val listener = replaced?.let { TrackExpressionListener(it) }
-        listener?.attach()
+        val disposable = Disposer.newDisposable()
+        val listener = replaced?.let { TrackExpressionListener(it, disposable) }
         try {
             range = postProcessing(range)
         } finally {
-            listener?.detach()
+            Disposer.dispose(disposable)
         }
 
         val resultExpression = listener?.result
@@ -306,16 +303,12 @@ class ExpressionReplacementPerformer(
         return result
     }
 
-    private class TrackExpressionListener(expression: KtExpression) : PsiTreeChangeAdapter() {
+    private class TrackExpressionListener(expression: KtExpression, disposable: Disposable) : PsiTreeChangeAdapter() {
         private var expression: KtExpression? = expression
         private val manager = expression.manager
 
-        fun attach() {
-            manager.addPsiTreeChangeListener(this)
-        }
-
-        fun detach() {
-            manager.removePsiTreeChangeListener(this)
+        init {
+            manager.addPsiTreeChangeListener(this, disposable)
         }
 
         val result: KtExpression?
