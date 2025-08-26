@@ -799,6 +799,9 @@ c:com.intellij.ide.util.scopeChooser.ScopeDescriptor
 *f:com.intellij.microservices.utils.UsagesNavigationGutterIconBuilder$Companion
 - f:create(javax.swing.Icon,com.intellij.util.NotNullFunction):com.intellij.microservices.utils.UsagesNavigationGutterIconBuilder
 - f:create(javax.swing.Icon,com.intellij.util.NotNullFunction,com.intellij.util.NotNullFunction):com.intellij.microservices.utils.UsagesNavigationGutterIconBuilder
+f:com.intellij.mock.MockPsiManager
+- com.intellij.psi.impl.PsiManagerEx
+- *:addPsiTreeChangeListenerBackgroundable(com.intellij.psi.PsiTreeChangeListener,com.intellij.openapi.Disposable):V
 *:com.intellij.openapi.editor.actions.lists.ListSplitJoinContext
 - *sf:Companion:com.intellij.openapi.editor.actions.lists.ListSplitJoinContext$Companion
 - a:extractData(com.intellij.psi.PsiElement):com.intellij.openapi.editor.actions.lists.ListWithElements

@@ -437,6 +437,7 @@ com.intellij.psi.PsiElement
 - *:getOwnReferences():java.util.Collection
 a:com.intellij.psi.PsiManager
 - com.intellij.openapi.util.UserDataHolderBase
+- *a:addPsiTreeChangeListenerBackgroundable(com.intellij.psi.PsiTreeChangeListener,com.intellij.openapi.Disposable):V
 - *a:findFile(com.intellij.openapi.vfs.VirtualFile,com.intellij.codeInsight.multiverse.CodeInsightContext):com.intellij.psi.PsiFile
 - *a:findViewProvider(com.intellij.openapi.vfs.VirtualFile,com.intellij.codeInsight.multiverse.CodeInsightContext):com.intellij.psi.FileViewProvider
 *:com.intellij.psi.PsiNamedElementWithCustomPresentation

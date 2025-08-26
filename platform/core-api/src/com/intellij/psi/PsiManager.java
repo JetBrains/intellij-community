@@ -95,6 +95,7 @@ public abstract class PsiManager extends UserDataHolderBase {
 
   /**
    * Adds a listener for receiving notifications about all changes in the PSI tree of the project.
+   * This listener will be invoked on EDT.
    *
    * @param listener the listener instance
    * @deprecated Please use the overload with specified parent disposable
@@ -104,11 +105,25 @@ public abstract class PsiManager extends UserDataHolderBase {
 
   /**
    * Adds a listener for receiving notifications about all changes in the PSI tree of the project.
+   * This listener will be invoked <b>on EDT</b>.
+   *
+   * Obsolescence notice: consider using {@link #addPsiTreeChangeListenerBackgroundable(PsiTreeChangeListener, Disposable)} instead.
    *
    * @param listener         the listener instance
    * @param parentDisposable object, after whose disposing the listener should be removed
    */
   public abstract void addPsiTreeChangeListener(@NotNull PsiTreeChangeListener listener, @NotNull Disposable parentDisposable);
+
+  /**
+   * Adds a listener for receiving notifications about all changes in the PSI tree of the project.
+   * This listener can be invoked on any thread.
+   *
+   * @param listener         the listener instance
+   * @param parentDisposable object, after whose disposing the listener should be removed
+   */
+  @ApiStatus.Experimental
+  public abstract void addPsiTreeChangeListenerBackgroundable(@NotNull PsiTreeChangeListener listener,
+                                                              @NotNull Disposable parentDisposable);
 
   /**
    * Removes a listener for receiving notifications about all changes in the PSI tree of the project.

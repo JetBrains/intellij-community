@@ -91,6 +91,11 @@ public final /* not final for Android Studio tests */ class MockPsiManager exten
   }
 
   @Override
+  @ApiStatus.Experimental
+  public void addPsiTreeChangeListenerBackgroundable(@NotNull PsiTreeChangeListener listener, @NotNull Disposable parentDisposable) {
+  }
+
+  @Override
   public void removePsiTreeChangeListener(@NotNull PsiTreeChangeListener listener) {
   }
 

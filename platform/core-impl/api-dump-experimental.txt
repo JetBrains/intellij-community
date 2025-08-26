@@ -88,6 +88,7 @@ com.intellij.psi.impl.PsiFileEx
 f:com.intellij.psi.impl.PsiManagerImpl
 - com.intellij.psi.impl.PsiManagerEx
 - com.intellij.openapi.Disposable
+- *:addPsiTreeChangeListenerBackgroundable(com.intellij.psi.PsiTreeChangeListener,com.intellij.openapi.Disposable):V
 - *:findFile(com.intellij.openapi.vfs.VirtualFile,com.intellij.codeInsight.multiverse.CodeInsightContext):com.intellij.psi.PsiFile
 f:com.intellij.psi.impl.PsiModificationTrackerImpl
 - com.intellij.psi.impl.PsiTreeChangePreprocessor
