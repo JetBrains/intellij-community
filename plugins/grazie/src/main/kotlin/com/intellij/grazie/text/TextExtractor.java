@@ -144,7 +144,8 @@ public abstract class TextExtractor {
 
   private static Cache obtainCache(PsiElement psi, Key<CachedValue<Cache>> key) {
     var provider = TextContentModificationTrackerProvider.EP_NAME.forLanguage(psi.getLanguage());
-    var tracker = provider == null ? PsiModificationTracker.MODIFICATION_COUNT : provider.getModificationTracker(psi);
+    var providedTracker = provider != null ? provider.getModificationTracker(psi) : null;
+    var tracker = providedTracker != null ? providedTracker : PsiModificationTracker.MODIFICATION_COUNT;
     
     CachedValue<Cache> cache = CachedValuesManager.getManager(psi.getProject()).createCachedValue(
       () -> CachedValueProvider.Result.create(new Cache(), tracker));
