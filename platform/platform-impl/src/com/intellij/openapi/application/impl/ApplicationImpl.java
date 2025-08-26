@@ -276,14 +276,21 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
     return myImpatientReader.get();
   }
 
-  @TestOnly
+  @VisibleForTesting
   public void disposeContainer() {
-    cancelAndJoinBlocking(this);
-    runWriteAction(() -> {
-      startDispose();
-      Disposer.dispose(this);
-    });
-    Disposer.assertIsEmpty();
+    // NonCancellable will override context Job
+    CoroutineContext coroutineContext = ThreadContext.currentThreadContext();
+    try (var ignored = Cancellation.withNonCancelableSection()) {
+      cancelAndJoinBlocking(this, coroutineContext);
+      runWriteAction(() -> {
+        startDispose();
+        Disposer.dispose(this);
+      });
+      Disposer.assertIsEmpty();
+    }
+    catch (Throwable t) {
+      logErrorDuringExit("Failed to dispose the container", t);
+    }
   }
 
   @Override
@@ -820,15 +827,17 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
           logErrorDuringExit("Failed to close and dispose all projects", e);
         }
       }
-      try (var ignored = Cancellation.withNonCancelableSection()) {
+
+      try {
+        // can't report OT after the container disposal
         scope.close();
         exitSpan.end();
-        //noinspection TestOnlyProblems
-        disposeContainer();
       }
-      catch (Throwable t) {
-        logErrorDuringExit("Failed to dispose the container", t);
+      catch (Throwable e) {
+        logErrorDuringExit("Failed to report the telemtetry", e);
       }
+
+      disposeContainer();
 
       if (!success || isUnitTestMode()) {
         return null;
