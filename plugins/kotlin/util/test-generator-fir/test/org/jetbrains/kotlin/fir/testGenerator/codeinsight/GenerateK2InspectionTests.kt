@@ -121,6 +121,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspectionsLocal/redundantCompanionReference")
             model("${idea}/inspectionsLocal/replacePutWithAssignment")
             model("${idea}/inspectionsLocal/replaceRangeStartEndInclusiveWithFirstLast")
+            model("${idea}/inspectionsLocal/replaceStringFormatWithLiteral")
             model("${idea}/inspectionsLocal/removeRedundantSpreadOperator")
             model("${idea}/inspectionsLocal/convertPairConstructorToToFunction")
             model("${idea}/inspectionsLocal/removeEmptyParenthesesFromAnnotationEntry")
