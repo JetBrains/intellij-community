@@ -5811,6 +5811,75 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/removeEmptyPrimaryConstructor")
+    public static class RemoveEmptyPrimaryConstructor extends AbstractK2IntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("annotation.kt")
+        public void testAnnotation() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeEmptyPrimaryConstructor/annotation.kt");
+        }
+
+        @TestMetadata("dataClass.kt")
+        public void testDataClass() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeEmptyPrimaryConstructor/dataClass.kt");
+        }
+
+        @TestMetadata("expectClassExplicitConstructor.kt")
+        public void testExpectClassExplicitConstructor() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeEmptyPrimaryConstructor/expectClassExplicitConstructor.kt");
+        }
+
+        @TestMetadata("expectClassPrimaryConstructor.kt")
+        public void testExpectClassPrimaryConstructor() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeEmptyPrimaryConstructor/expectClassPrimaryConstructor.kt");
+        }
+
+        @TestMetadata("inlineClass.kt")
+        public void testInlineClass() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeEmptyPrimaryConstructor/inlineClass.kt");
+        }
+
+        @TestMetadata("keyword.kt")
+        public void testKeyword() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeEmptyPrimaryConstructor/keyword.kt");
+        }
+
+        @TestMetadata("modifier.kt")
+        public void testModifier() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeEmptyPrimaryConstructor/modifier.kt");
+        }
+
+        @TestMetadata("nestedExpectClassPrimaryConstructor.kt")
+        public void testNestedExpectClassPrimaryConstructor() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeEmptyPrimaryConstructor/nestedExpectClassPrimaryConstructor.kt");
+        }
+
+        @TestMetadata("secondary.kt")
+        public void testSecondary() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeEmptyPrimaryConstructor/secondary.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeEmptyPrimaryConstructor/simple.kt");
+        }
+
+        @TestMetadata("valueClass.kt")
+        public void testValueClass() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeEmptyPrimaryConstructor/valueClass.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/intentions/convertPropertyGetterToInitializer")
     public static class ConvertPropertyGetterToInitializer extends AbstractK2IntentionTest {
         @java.lang.Override

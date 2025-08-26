@@ -53,6 +53,7 @@ internal fun MutableTWorkspace.generateK2IntentionTests() {
             model("${idea}intentions/convertUnsafeCastCallToUnsafeCast", pattern = pattern)
             model("${idea}intentions/expandBooleanExpression", pattern = pattern)
             model("${idea}intentions/removeAllArgumentNames", pattern = pattern)
+            model("${idea}intentions/removeEmptyPrimaryConstructor", pattern = pattern)
             model("${idea}intentions/convertPropertyGetterToInitializer", pattern = pattern)
             model("${idea}intentions/convertToRawStringTemplate", pattern = pattern)
             model("${idea}intentions/toRawStringLiteral", pattern = pattern)
