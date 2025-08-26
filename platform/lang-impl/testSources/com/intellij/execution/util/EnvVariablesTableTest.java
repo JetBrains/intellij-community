@@ -1,11 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.util;
 
+import com.intellij.execution.configuration.EnvironmentVariablesData;
+import com.intellij.execution.configuration.EnvironmentVariablesTextFieldWithBrowseButton;
 import org.junit.Test;
 
+import java.util.HashMap;
 import java.util.Map;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 public class EnvVariablesTableTest {
 
@@ -24,11 +27,17 @@ public class EnvVariablesTableTest {
 
     assertEquals(0, EnvVariablesTable.parseEnvsFromText("test").size());
     assertEquals(1, EnvVariablesTable.parseEnvsFromText("test=test").size());
+  }
 
-    Map<String, String> map3 = EnvVariablesTable.parseEnvsFromText("var1=ffff;var2=C:\\CRM\\files\\;var3=aaaa");
-    assertEquals(3, map3.size());
-    assertEquals("ffff", map3.get("var1"));
-    assertEquals("C:\\CRM\\files\\", map3.get("var2"));
-    assertEquals("aaaa", map3.get("var3"));
+  @Test // IJPL-200754: Run/Dialog environment variables with semicolon values are broken when pasted in 2025.2
+  public void envVarTableRoundtrip() {
+    var data = new HashMap<String, String>();
+    data.put("var1", "value1");
+    data.put("var2", "value2;value2");
+    var stringification = EnvironmentVariablesTextFieldWithBrowseButton.stringifyEnvironment(
+      EnvironmentVariablesData.create(data, false, null)
+    );
+    var parsed = EnvVariablesTable.parseEnvsFromText(stringification);
+    assertEquals(data, parsed);
   }
 }
