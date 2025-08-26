@@ -557,6 +557,9 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     public boolean removeContent(final @NotNull Content content, final boolean dispose) {
       boolean wasSelected = mySelected == content;
       int oldIndex = myContents.indexOf(content);
+      if (!fireContentRemoveQuery(content, oldIndex) || !content.isValid()) {
+        return false;
+      }
       if (wasSelected) {
         removeFromSelection(content);
       }
@@ -668,4 +671,16 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     public @NotNull ContentFactory getFactory() {
       return ContentFactory.getInstance();
     }
-  }}
+
+    private boolean fireContentRemoveQuery(@NotNull Content content, int oldIndex) {
+      ContentManagerEvent event = new ContentManagerEvent(this, content, oldIndex, ContentManagerEvent.ContentOperation.undefined);
+      for (ContentManagerListener listener : myDispatcher.getListeners()) {
+        listener.contentRemoveQuery(event);
+        if (event.isConsumed()) {
+          return false;
+        }
+      }
+      return true;
+    }
+  }
+}
