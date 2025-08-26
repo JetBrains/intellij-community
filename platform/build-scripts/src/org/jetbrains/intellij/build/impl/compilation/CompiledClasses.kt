@@ -36,30 +36,30 @@ internal fun checkCompilationOptions(context: CompilationContext) {
       options.incrementalCompilation = false
     }
     else {
-      messages.error(message)
+      messages.logErrorAndThrow(message)
     }
   }
   if (options.pathToCompiledClassesArchive != null && isPortableCompilationCacheEnabled) {
-    messages.error("JPS Cache is enabled so '${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVE}' cannot be used")
+    messages.logErrorAndThrow("JPS Cache is enabled so '${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVE}' cannot be used")
   }
   val pathToCompiledClassArchiveMetadata = options.pathToCompiledClassesArchivesMetadata
   if (pathToCompiledClassArchiveMetadata != null && isPortableCompilationCacheEnabled) {
-    messages.error("JPS Cache is enabled " +
-                   "so '${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVES_METADATA}' cannot be used to fetch compile output")
+    messages.logErrorAndThrow("JPS Cache is enabled " +
+                              "so '${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVES_METADATA}' cannot be used to fetch compile output")
   }
   if (options.pathToCompiledClassesArchive != null && options.incrementalCompilation) {
-    messages.error("'${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVE}' is specified, so 'incremental compilation' option cannot be enabled")
+    messages.logErrorAndThrow("'${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVE}' is specified, so 'incremental compilation' option cannot be enabled")
   }
 
   if (options.useCompiledClassesFromProjectOutput) {
     if (options.pathToCompiledClassesArchive != null) {
-      messages.error(
+      messages.logErrorAndThrow(
         "'${BuildOptions.USE_COMPILED_CLASSES_PROPERTY}' is specified, " +
         "so '${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVE}' cannot be used"
       )
     }
     if (pathToCompiledClassArchiveMetadata != null) {
-      messages.error(
+      messages.logErrorAndThrow(
         "'${BuildOptions.USE_COMPILED_CLASSES_PROPERTY}' is specified, " +
         "so '${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVES_METADATA}' cannot be used to fetch compile output"
       )
@@ -67,13 +67,13 @@ internal fun checkCompilationOptions(context: CompilationContext) {
   }
 
   if (pathToCompiledClassArchiveMetadata != null && options.incrementalCompilation) {
-    messages.error("'${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVES_METADATA}' is specified, " +
-                     "so 'incremental compilation' option cannot be used")
+    messages.logErrorAndThrow("'${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVES_METADATA}' is specified, " +
+                              "so 'incremental compilation' option cannot be used")
   }
 
   if (options.pathToCompiledClassesArchive != null && pathToCompiledClassArchiveMetadata != null) {
-    messages.error("'${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVE}' is specified, " +
-                   "so '${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVES_METADATA}' cannot be used to fetch compile output")
+    messages.logErrorAndThrow("'${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVE}' is specified, " +
+                              "so '${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVES_METADATA}' cannot be used to fetch compile output")
   }
   if (options.forceRebuild && options.incrementalCompilation) {
     messages.warning("'${BuildOptions.FORCE_REBUILD_PROPERTY}' is specified, so 'incremental compilation' option will be ignored")
@@ -86,17 +86,17 @@ internal fun checkCompilationOptions(context: CompilationContext) {
       options.incrementalCompilation = false
     }
     else {
-      messages.error(message)
+      messages.logErrorAndThrow(message)
     }
   }
   if (options.forceRebuild && options.pathToCompiledClassesArchive != null) {
-    messages.error("Both '${BuildOptions.FORCE_REBUILD_PROPERTY}' and '${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVE}' options are specified")
+    messages.logErrorAndThrow("Both '${BuildOptions.FORCE_REBUILD_PROPERTY}' and '${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVE}' options are specified")
   }
   if (options.forceRebuild && pathToCompiledClassArchiveMetadata != null) {
-    messages.error("Both '${BuildOptions.FORCE_REBUILD_PROPERTY}' and '${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVES_METADATA}' options are specified")
+    messages.logErrorAndThrow("Both '${BuildOptions.FORCE_REBUILD_PROPERTY}' and '${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVES_METADATA}' options are specified")
   }
   if (options.isInDevelopmentMode && ProjectStamps.PORTABLE_CACHES && !System.getProperty("jps.cache.test").toBoolean()) {
-    messages.error("${ProjectStamps.PORTABLE_CACHES_PROPERTY} is not expected to be enabled in development mode due to performance penalty")
+    messages.logErrorAndThrow("${ProjectStamps.PORTABLE_CACHES_PROPERTY} is not expected to be enabled in development mode due to performance penalty")
   }
   if (!options.useCompiledClassesFromProjectOutput) {
     Span.current().addEvent("incremental compilation", Attributes.of(AttributeKey.booleanKey("options.incrementalCompilation"), options.incrementalCompilation))

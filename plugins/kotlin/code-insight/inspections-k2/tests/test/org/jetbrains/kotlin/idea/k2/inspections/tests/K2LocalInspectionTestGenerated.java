@@ -217,6 +217,70 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/recursiveEqualsCall")
+    public static class RecursiveEqualsCall extends AbstractK2LocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("recursive.kt")
+        public void testRecursive() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/recursiveEqualsCall/recursive.kt");
+        }
+
+        @TestMetadata("recursiveDirect.kt")
+        public void testRecursiveDirect() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/recursiveEqualsCall/recursiveDirect.kt");
+        }
+
+        @TestMetadata("recursiveDirectFake.kt")
+        public void testRecursiveDirectFake() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/recursiveEqualsCall/recursiveDirectFake.kt");
+        }
+
+        @TestMetadata("recursiveDirectSafe.kt")
+        public void testRecursiveDirectSafe() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/recursiveEqualsCall/recursiveDirectSafe.kt");
+        }
+
+        @TestMetadata("recursiveFake.kt")
+        public void testRecursiveFake() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/recursiveEqualsCall/recursiveFake.kt");
+        }
+
+        @TestMetadata("recursiveFakeNested.kt")
+        public void testRecursiveFakeNested() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/recursiveEqualsCall/recursiveFakeNested.kt");
+        }
+
+        @TestMetadata("recursiveFakeNoOther.kt")
+        public void testRecursiveFakeNoOther() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/recursiveEqualsCall/recursiveFakeNoOther.kt");
+        }
+
+        @TestMetadata("recursiveImplicit.kt")
+        public void testRecursiveImplicit() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/recursiveEqualsCall/recursiveImplicit.kt");
+        }
+
+        @TestMetadata("recursiveNested.kt")
+        public void testRecursiveNested() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/recursiveEqualsCall/recursiveNested.kt");
+        }
+
+        @TestMetadata("recursiveNot.kt")
+        public void testRecursiveNot() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/recursiveEqualsCall/recursiveNot.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/inspectionsLocal/redundantWith")
     public static class RedundantWith extends AbstractK2LocalInspectionTest {
         @java.lang.Override

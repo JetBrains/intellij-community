@@ -70,6 +70,9 @@ public final class ClasspathBootstrap {
   };
 
   private static final String[] REFLECTION_OPEN_PACKAGES = {
+    "java.base/sun.nio.ch=ALL-UNNAMED",
+    "java.base/jdk.internal.ref=ALL-UNNAMED",
+
     // needed for jps core functioning
     "jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED",
     "jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED",
@@ -160,6 +163,8 @@ public final class ClasspathBootstrap {
     // intellij.platform.util
     addToClassPath(cp, ClassPathUtil.getUtilClasses());
     addToClassPath(cp, HashMapZipFile.class); // intellij.platform.util.zip
+    // intellij.platform.concurrency
+    //addToClassPath(cp, VarHandleWrapperImpl.class);
 
     ClassPathUtil.addKotlinStdlib(cp);
     addToClassPath(cp, Deferred.class);  // kotlinx.coroutines, used intellij.platform.util, EnvironmentUtil

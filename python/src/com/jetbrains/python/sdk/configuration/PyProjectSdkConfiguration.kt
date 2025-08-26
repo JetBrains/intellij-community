@@ -16,6 +16,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.use
 import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.PythonPluginDisposable
@@ -81,12 +82,12 @@ object PyProjectSdkConfiguration {
   }
 
   suspend fun setReadyToUseSdk(project: Project, module: Module, sdk: Sdk) {
-    withContext(Dispatchers.EDT) {
-      if (module.isDisposed) {
-        return@withContext
-      }
+    if (module.isDisposed) {
+      return
+    }
 
-      configurePythonSdk(project, module, sdk)
+    configurePythonSdk(project, module, sdk)
+    withContext(Dispatchers.EDT) {
       notifyAboutConfiguredSdk(project, module, sdk)
     }
   }
@@ -107,6 +108,7 @@ object PyProjectSdkConfiguration {
     return lifetime
   }
 
+  @RequiresEdt
   private fun notifyAboutConfiguredSdk(project: Project, module: Module, sdk: Sdk) {
     if (isNotificationSilentMode(project)) return
     NotificationGroupManager.getInstance().getNotificationGroup("ConfiguredPythonInterpreter")

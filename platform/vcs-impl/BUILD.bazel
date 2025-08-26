@@ -74,6 +74,7 @@ jvm_library(
     "//platform/platform-impl/concurrency",
     "//platform/project/shared:project",
     "//platform/kernel/backend",
+    "//platform/platform-impl/rpc",
   ],
   runtime_deps = [":vcs-impl_resources"]
 )
@@ -154,6 +155,7 @@ jvm_library(
     "//platform/platform-impl/concurrency",
     "//platform/project/shared:project",
     "//platform/kernel/backend",
+    "//platform/platform-impl/rpc",
   ],
   runtime_deps = [":vcs-impl_resources"]
 )

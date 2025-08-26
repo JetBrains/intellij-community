@@ -8,9 +8,7 @@ import com.intellij.mcpserver.settings.McpServerSettings
 import com.intellij.mcpserver.statistics.McpServerCounterUsagesCollector
 import com.intellij.mcpserver.stdio.IJ_MCP_SERVER_PROJECT_PATH
 import com.intellij.mcpserver.util.findMostRelevantProject
-import com.intellij.openapi.application.ApplicationInfo
-import com.intellij.openapi.application.ApplicationNamesInfo
-import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.*
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
@@ -406,6 +404,13 @@ private fun McpTool.mcpToolToRegisteredTool(server: Server, projectPathFromIniti
             McpToolCallResult.error(errorMessage)
           }
           finally {
+            if (sideEffectEvents.isNotEmpty()) {
+              withContext(Dispatchers.EDT) {
+                writeIntentReadAction {
+                  FileDocumentManager.getInstance().saveAllDocuments()
+                }
+              }
+            }
             McpServerCounterUsagesCollector.reportMcpCall(descriptor)
           }
         }

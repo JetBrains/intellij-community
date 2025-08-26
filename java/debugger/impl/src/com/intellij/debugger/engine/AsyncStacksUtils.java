@@ -19,6 +19,7 @@ import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.idea.AppMode;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.PathManager;
@@ -364,16 +365,11 @@ public final class AsyncStacksUtils {
 
   @NativePath
   private static @Nullable String getAgentArtifactPath(@Nullable Project project, @Nullable Disposable disposable) {
-    String relevantJarsRoot = PathManager.getArchivedCompliedClassesLocation();
-    Path classesRoot = Path.of(PathUtil.getJarPathForClass(DebuggerManagerImpl.class));
-    // isDirectory(classesRoot) is used instead of `PluginManagerCore.isRunningFromSources()`
-    // because we want to use installer's layout when running "IDEA (dev build)" run configuration
-    // where the layout is quite the same as in installers.
-    // but `PluginManagerCore.isRunningFromSources()` still returns `true` in this case
-    if (Files.isDirectory(classesRoot) || (relevantJarsRoot != null && classesRoot.startsWith(relevantJarsRoot))) {
+    if (PluginManagerCore.isRunningFromSources() && !AppMode.isDevServer()) {
       return getArtifactPathForDownloadedAgent(project, disposable);
     }
     else {
+      Path classesRoot = Path.of(PathUtil.getJarPathForClass(DebuggerManagerImpl.class));
       return getArtifactPathForBundledAgent(classesRoot, project, disposable);
     }
   }

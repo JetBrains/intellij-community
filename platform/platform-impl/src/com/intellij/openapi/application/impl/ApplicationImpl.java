@@ -220,6 +220,20 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
     myLastDisposable = null;
   }
 
+  private final SynchronizedClearableLazy<IComponentStore> componentStoreValue = new SynchronizedClearableLazy<>(() -> {
+    return getService(IComponentStore.class);
+  });
+
+  @Override
+  public @NotNull IComponentStore getComponentStore() {
+    return componentStoreValue.get();
+  }
+
+  @TestOnly
+  public void componentStoreImplChanged() {
+    componentStoreValue.drop();
+  }
+
   private static void registerFakeServices(ApplicationImpl app) {
     app.registerServiceInstance(TransactionGuard.class, app.myTransactionGuard, fakeCorePluginDescriptor);
     app.registerServiceInstance(Application.class, app, fakeCorePluginDescriptor);
@@ -429,7 +443,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
     //noinspection deprecation
     myDispatcher.getMulticaster().applicationExiting();
 
-    IComponentStore componentStore = getServiceIfCreated(IComponentStore.class);
+    IComponentStore componentStore = componentStoreValue.getValueIfInitialized();
     super.dispose();
     if (componentStore != null) {
       try {

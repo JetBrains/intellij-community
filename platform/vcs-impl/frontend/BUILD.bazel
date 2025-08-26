@@ -33,6 +33,8 @@ jvm_library(
     "@lib//:kotlinx-serialization-json",
     "//platform/recentFiles/frontend",
     "//platform/analysis-api:analysis",
+    "//platform/vcs-api/shared",
+    "//platform/vcs-api/vcs-api-core:vcs-core",
   ],
   runtime_deps = [":frontend_resources"]
 )

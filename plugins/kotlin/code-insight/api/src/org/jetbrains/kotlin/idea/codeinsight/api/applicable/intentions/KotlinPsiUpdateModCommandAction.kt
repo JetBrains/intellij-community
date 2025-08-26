@@ -100,4 +100,10 @@ sealed class KotlinPsiUpdateModCommandAction<E : PsiElement, C : Any>(
             getElementContext(element)
         }
     }
+
+    abstract class Simple<E : KtElement>(
+        elementClass: KClass<E>,
+    ) : KotlinPsiUpdateModCommandAction<E, Unit>(null, elementClass) {
+        final override fun getElementContext(actionContext: ActionContext, element: E) {}
+    }
 }

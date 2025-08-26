@@ -79,14 +79,6 @@ public final class PyCompatibilityInspectionAdvertiser implements Annotator {
             showStalePython3VersionWarning(pyFile, project, pyVersion);
           }
         }
-        else if (containsFutureImports(pyFile)) {
-          showSingletonNotification(
-            project, PyBundle.message("python.compatibility.inspection.advertiser.using.future.imports.warning.message"), USING_FUTURE_IMPORTS);
-        }
-        else if (PyPsiUtils.containsImport(pyFile, "six")) {
-          showSingletonNotification(
-            project, PyBundle.message("python.compatibility.inspection.advertiser.using.six.warning.message"), USING_SIX_PACKAGE);
-        }
       }
     }
   }
@@ -192,15 +184,6 @@ public final class PyCompatibilityInspectionAdvertiser implements Annotator {
         }
       })
       .notify(project);
-  }
-
-  private static boolean containsFutureImports(@NotNull PyFile file) {
-    for (PyFromImportStatement importStatement : file.getFromImports()) {
-      if (importStatement.isFromFuture()) {
-        return true;
-      }
-    }
-    return false;
   }
 
   private static boolean isCompatibilityInspectionEnabled(@NotNull PsiElement anchor) {

@@ -134,6 +134,10 @@ internal class SmoothRobot @JvmOverloads constructor(
     click(c, MouseButton.LEFT_BUTTON, 2)
   }
 
+  fun tripleClick(c: Component) {
+    click(c, MouseButton.LEFT_BUTTON, 3)
+  }
+
   fun pressMouse(mouseButton: RemoteMouseButton) {
     pressMouse(mouseButton.toAssertJ())
   }

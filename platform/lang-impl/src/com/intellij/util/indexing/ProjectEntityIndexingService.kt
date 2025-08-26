@@ -14,10 +14,7 @@ import com.intellij.openapi.project.RootsChangeRescanningInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.backend.workspace.WorkspaceModel
-import com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
-import com.intellij.platform.workspace.jps.entities.LibraryRoot
-import com.intellij.platform.workspace.jps.entities.LibraryTableId
 import com.intellij.platform.workspace.storage.EntityChange
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
@@ -33,7 +30,6 @@ import com.intellij.util.indexing.roots.IndexableEntityProvider.*
 import com.intellij.util.indexing.roots.IndexableFilesIterator
 import com.intellij.util.indexing.roots.WorkspaceIndexingRootsBuilder
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders
-import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders.forLibraryEntity
 import com.intellij.util.indexing.roots.kind.LibraryOrigin
 import com.intellij.util.indexing.roots.origin.LibraryOriginImpl
 import com.intellij.workspaceModel.core.fileIndex.*
@@ -388,38 +384,6 @@ class ProjectEntityIndexingService(
       }
 
       collectIEPIteratorsOnChange(change, oldEntity, newEntity, project, builders, entityClass)
-
-      if (change != Change.Removed && isLibraryIgnoredByLibraryRootFileIndexContributor(newEntity!!)) {
-        if (change == Change.Added) {
-          // Sure, we are interested only in libraries used in the project, but in case a registered library is downloaded,
-          // no change in dependencies happens, only Added event on LibraryEntity.
-          // For debug see com.intellij.roots.libraries.LibraryTest
-          builders.addAll(forLibraryEntity((newEntity as LibraryEntity).symbolicId, false))
-        }
-        else if (change == Change.Replaced && hasSomethingToIndex(oldEntity as LibraryEntity, newEntity as LibraryEntity)) {
-          builders.addAll(forLibraryEntity((newEntity as LibraryEntity).symbolicId, false))
-        }
-      }
-    }
-
-    private fun hasSomethingToIndex(oldEntity: LibraryEntity, newEntity: LibraryEntity): Boolean {
-      if (newEntity.roots.size > oldEntity.roots.size) return true
-      if (oldEntity.excludedRoots.size > newEntity.excludedRoots.size) return true
-      val oldEntityRoots = oldEntity.roots
-      for (root: LibraryRoot in newEntity.roots) {
-        if (!oldEntityRoots.contains(root)) return true
-      }
-      val newEntityExcludedRoots: List<ExcludeUrlEntity> = newEntity.excludedRoots
-      for (excludedRoot: ExcludeUrlEntity in oldEntity.excludedRoots) {
-        if (!newEntityExcludedRoots.contains(excludedRoot)) return true
-      }
-      return false
-    }
-
-    private fun <E : WorkspaceEntity> isLibraryIgnoredByLibraryRootFileIndexContributor(newEntity: E): Boolean {
-      return newEntity is LibraryEntity &&
-             (newEntity as LibraryEntity).symbolicId.tableId is LibraryTableId.GlobalLibraryTableId &&
-             !Registry.`is`("ide.workspace.model.sdk.remove.custom.processing")
     }
 
     private fun <E : WorkspaceEntity, C : WorkspaceEntity> handleDependencies(

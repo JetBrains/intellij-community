@@ -23,9 +23,7 @@ class RedundantLambdaOrAnonymousFunctionInspection : KotlinApplicableInspectionB
     else
         KotlinBundle.message("inspection.redundant.lambda.description")
 
-    override fun KaSession.prepareContext(element: KtFunction) {
-        return Unit
-    }
+    override fun KaSession.prepareContext(element: KtFunction) {}
 
     override fun isApplicableByPsi(element: KtFunction): Boolean {
         return element.hasBody() && KotlinInlineAnonymousFunctionProcessor.findCallExpression(element) != null

@@ -24,9 +24,13 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Key
 import com.intellij.platform.util.progress.RawProgressReporter
+import com.intellij.psi.PsiFile
+import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.application
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.ContainerUtil.createConcurrentSoftKeySoftValueMap
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -34,17 +38,18 @@ import org.languagetool.language.English
 
 object DependencyParser {
   private val LOG = Logger.getInstance(DependencyParser::class.java)
+  private val cachedTreesKey = Key.create<MutableMap<String, Tree>>("DependencyParser tree cache")
 
   @JvmStatic
   fun getParser(text: TextContent, minimal: Boolean): AsyncBatchParser<Tree>? {
     val stripPrefixLength = HighlightingUtil.stripPrefix(text)
     val language = getLanguageIfAvailable(text.toString().substring(stripPrefixLength)) ?: return null
+    val file = text.containingFile
 
     if (!GrazieCloudConnector.seemsCloudConnected()) {
-      return getLocalParser(language)
+      return getLocalParser(file, language)
     }
     val batcher = getBatcher(language) ?: return null
-    val file = text.containingFile
     val cloud = when {
       minimal -> batcher.minimal(file.project)
       else -> batcher.forFile(file.viewProvider)
@@ -52,17 +57,22 @@ object DependencyParser {
     return CloudOrLocalBatchParser(
       project = file.project,
       cloud = cloud,
-      local = { getLocalParser(language) }
+      local = { getLocalParser(file, language) }
     )
   }
 
-  private fun getLocalParser(language: Language): AsyncBatchParser<Tree> {
+  private fun getLocalParser(psiFile: PsiFile, language: Language): AsyncBatchParser<Tree> {
     return object : AsyncBatchParser<Tree> {
       override suspend fun parseAsync(sentences: List<SentenceWithExclusions>): LinkedHashMap<SentenceWithExclusions, Tree?> {
         val support = obtainSupport(language)
         if (support != null) {
           @Suppress("UNCHECKED_CAST")
-          return sentences.associateWith { Tree.createFlatTree(support, it.sentence) } as LinkedHashMap<SentenceWithExclusions, Tree?>
+          return sentences.associateWith {
+            val cachedTrees = ConcurrencyUtil.computeIfAbsent(psiFile, cachedTreesKey) { createConcurrentSoftKeySoftValueMap() }
+            cachedTrees.getOrPut(it.sentence) {
+              Tree.createFlatTree(support, it.sentence)
+            }
+          } as LinkedHashMap<SentenceWithExclusions, Tree?>
         }
 
         return LinkedHashMap()

@@ -30,7 +30,7 @@ jobs:
 
       - name: Run :check task
         # Run checks for all modules except the IDE plugin sample, as that is bound to have missing APIs issues
-        run: ./gradlew check -x :samples:ide-plugin:check --continue --no-daemon
+        run: ./gradlew check --continue --no-daemon
 
       - name: Annotate JUnit test failures
         uses: mikepenz/action-junit-report@v5

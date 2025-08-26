@@ -7,6 +7,7 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModCommand
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.startOffset
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.permissions.forbidAnalysis
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.ApplicableRangesProvider
 import org.jetbrains.kotlin.psi.KtBlockExpression
@@ -59,5 +60,12 @@ abstract class KotlinApplicableModCommandAction<E : KtElement, C : Any>(
         }
 
         return super.generatePreview(context, element)
+    }
+
+    abstract class Simple<E : KtElement>(
+        elementClass: KClass<E>,
+    ) : KotlinApplicableModCommandAction<E, Unit>(elementClass) {
+        final override fun KaSession.prepareContext(element: E) {
+        }
     }
 }

@@ -61,6 +61,11 @@ class KotlinMppRegressionTests : AbstractKotlinMppGradleImportingTest() {
         }
     }
 
+    /**
+     * Relevant tickets:
+     * - KTIJ-35244 for K2 Mode
+     * - KTIJ-29619 for K1 Mode
+     */
     @Test
     fun testKTIJ29619KotlinJvmWithTestFixtures() {
         doTest {

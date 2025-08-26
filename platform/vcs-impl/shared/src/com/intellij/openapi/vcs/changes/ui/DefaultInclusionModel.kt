@@ -74,7 +74,7 @@ class DefaultInclusionModel(
 
   override fun removeInclusion(items: Collection<Any>) {
     val wasChanged = lock.write {
-      items.fold(false) { acc, element -> acc || inclusion.remove(element) }
+      items.fold(false) { acc, element -> acc or inclusion.remove(element) }
     }
     if (wasChanged) fireInclusionChanged()
   }

@@ -147,7 +147,7 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
 
   @Override
   public String getName() {
-    return getVisibleName();
+    return PyImportElement.super.getName();
   }
 
   @Override

@@ -9,7 +9,6 @@ import com.intellij.modcommand.Presentation
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus.Internal
-import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.utils.AddBracesUtils
@@ -19,7 +18,7 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 @Internal
 @IntellijInternalApi
-class AddBracesIntention : KotlinPsiUpdateModCommandAction.ClassBased<KtElement, Unit>(KtElement::class) {
+class AddBracesIntention : KotlinPsiUpdateModCommandAction.Simple<KtElement>(KtElement::class) {
     override fun getFamilyName(): @IntentionFamilyName String =
         KotlinBundle.message("add.braces")
 
@@ -79,6 +78,4 @@ class AddBracesIntention : KotlinPsiUpdateModCommandAction.ClassBased<KtElement,
             else -> null
         }
     }
-
-    override fun KaSession.prepareContext(element: KtElement) {}
 }

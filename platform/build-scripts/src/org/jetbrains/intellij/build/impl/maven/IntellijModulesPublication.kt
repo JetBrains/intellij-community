@@ -161,7 +161,7 @@ class IntellijModulesPublication(
         .start()
       val exitCode = process.waitFor()
       if (exitCode != 0) {
-        context.messages.error("Upload of ${file.name} failed with exit code $exitCode")
+        context.messages.logErrorAndThrow("Upload of ${file.name} failed with exit code $exitCode")
       }
     }
   }

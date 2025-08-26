@@ -1,0 +1,29 @@
+<html>
+<body>
+<p>Reports calls to `typing.cast` where no possible value of the source type can be assignable to the target type. We can refer to this as "non overlapping" types</p>
+<p>This usually indicates a mistake. If the conversion is intentional, first convert the expression to the common parent type to make the intent explicit.</p>
+<p><b>Example:</b></p>
+<pre><code>
+from typing import cast
+
+# Non-overlapping types — likely a mistake
+<b>cast(int, "a")</b>          # 'str' -> 'int'
+<b>cast(list[int], ["a"])</b>  # 'list[str]' -> 'list[int]'
+
+# Recommended explicit escape hatch is to use a "double cast"
+cast(int, <b>cast(object, "a")</b>)  # ok
+
+# Legitimate overlapping cases
+cast(int, object())    # a valid down cast
+cast(object, 1)        # a valid up cast
+
+# While the following is an invalid cast, as <code>list</code> is invariant. It's not currently supported by this inspection
+int_list = [1, 2, 3]
+cast(list[object], int_list)
+</code></pre>
+<!-- tooltip end -->
+<p>The inspection relies on static type information; when a type is unknown, no warning is reported.
+
+  Variance of generic types is not yet considered.</p>
+</body>
+</html>

@@ -13,6 +13,7 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.icons.icon
 import com.intellij.ide.ui.icons.rpcId
 import com.intellij.ide.util.treeView.NodeRenderer
+import com.intellij.ide.util.treeView.PathElementIdProvider
 import com.intellij.ide.util.treeView.TreeState
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
@@ -62,7 +63,7 @@ internal class BuildTreeView(parentScope: CoroutineScope, private val buildViewI
 
   private val rootNode = MyNode(
     BuildTreeNode(BuildTreeNode.ROOT_ID, BuildTreeNode.NO_ID,
-                  null, null, null, null, null, emptyList(), false, false, false, false, false))
+                  null, null, "", null, null, emptyList(), false, false, false, false, false))
   private val buildProgressRootNode = MyNode(
     BuildTreeNode(BuildTreeNode.BUILD_PROGRESS_ROOT_ID, BuildTreeNode.ROOT_ID,
                   AnimatedIcon.Default.INSTANCE.rpcId(), null, "", null, null, emptyList(), true, false, true, false, false))
@@ -342,9 +343,9 @@ internal class BuildTreeView(parentScope: CoroutineScope, private val buildViewI
     override fun getPreviousOccurenceActionName() = ""
   }
 
-  private inner class MyNode(content: BuildTreeNode) : DefaultMutableTreeNode(content) {
-    private var cachedVisibleChildren: MutableList<MyNode>? = null
-    private var cachedFilteringState: BuildTreeFilteringState? = null
+  private inner class MyNode(content: BuildTreeNode) : DefaultMutableTreeNode(content), PathElementIdProvider {
+    val id = content.id
+    val elementId = content.id.toString()
 
     var content: BuildTreeNode
       get() = userObject as BuildTreeNode
@@ -352,8 +353,8 @@ internal class BuildTreeView(parentScope: CoroutineScope, private val buildViewI
         updateContent(newContent)
       }
 
-    val id: Int
-      get() = content.id
+    private var cachedVisibleChildren: MutableList<MyNode>? = null
+    private var cachedFilteringState: BuildTreeFilteringState? = null
 
     val occurrenceNavigatable: NavigatableId?
       get() = if (content.hasProblems && childCount == 0) content.navigatables.firstOrNull() else null
@@ -406,7 +407,7 @@ internal class BuildTreeView(parentScope: CoroutineScope, private val buildViewI
     }
 
     fun reload() {
-      val state = TreeState.createOn(tree)
+      val state = TreeState.createOn(tree, true, true)
       treeModel.nodeStructureChanged(this)
       state.applyTo(tree)
     }
@@ -502,6 +503,11 @@ internal class BuildTreeView(parentScope: CoroutineScope, private val buildViewI
       return with(content) {
         name ?: ((if (title.isNullOrEmpty()) "" else "${title}: ") + (hint ?: ""))
       }
+    }
+
+    // required for correct TreeState operation in case there are nodes with identical presentation
+    override fun getPathElementId(): String {
+      return elementId
     }
   }
 

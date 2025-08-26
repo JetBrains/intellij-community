@@ -22,7 +22,6 @@ import com.intellij.util.ui.tree.TreeUtil
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 import java.io.File
-import java.util.function.Function
 import javax.swing.Icon
 import javax.swing.JButton
 import javax.swing.JComponent
@@ -136,20 +135,12 @@ class BuildViewTest : LightPlatformTestCase() {
     val buildTreeConsoleView = buildView!!.getView(BuildTreeConsoleView::class.java.name, BuildTreeConsoleView::class.java)
     val visitor = runInEdtAndGet {
       val tree = buildTreeConsoleView!!.tree
-      return@runInEdtAndGet CollectingTreeVisitor().also {
+      return@runInEdtAndGet CollectingTreeVisitor(tree).also {
         TreeUtil.visitVisibleRows(tree, it)
       }
     }
-    assertThat(visitor.userObjects)
-      .extracting(Function<Any?, String?> { node ->
-        val presentation = (node as ExecutionNode).presentation
-        if (presentation.coloredText.isEmpty()) {
-          presentation.presentableText
-        }
-        else {
-          presentation.coloredText.joinToString(separator = " =>") { it.text }
-        }
-      })
+    assertThat(visitor.presentations)
+      .extracting("completeText")
       .containsOnlyOnce(
         "aFile1.java =>  1 warning",
         "message 1 => :1",

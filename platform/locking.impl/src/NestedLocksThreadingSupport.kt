@@ -14,7 +14,6 @@ import com.intellij.platform.locking.impl.listeners.ErrorHandler
 import com.intellij.platform.locking.impl.listeners.LegacyProgressIndicatorProvider
 import com.intellij.platform.locking.impl.listeners.LockAcquisitionListener
 import com.intellij.util.ReflectionUtil
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.intellij.IntellijCoroutines
 import org.jetbrains.annotations.ApiStatus
@@ -1212,15 +1211,22 @@ class NestedLocksThreadingSupport : ThreadingSupport {
       action()
     }
     finally {
-      myWriteLockReacquisitionListener?.beforeWriteLockReacquired()
-      val newWritePermit = runSuspendMaybeConsuming(false) {
-        rootWriteIntentPermit.acquireWriteActionPermit()
-      }
-      hack_setThisLevelPermit(newWritePermit)
-      val newWritePermits = Array(exposedPermitData.writeIntentStack.size) {
-        runSuspendMaybeConsuming(false) {
-          exposedPermitData.writeIntentStack[it].acquireWriteActionPermit()
+      myWriteActionPending.get()[state.level()].incrementAndGet()
+      val (newWritePermits, newWritePermit) = try {
+        myWriteLockReacquisitionListener?.beforeWriteLockReacquired()
+        val newWritePermit = runSuspendMaybeConsuming(false) {
+          rootWriteIntentPermit.acquireWriteActionPermit()
         }
+        hack_setThisLevelPermit(newWritePermit)
+        val newWritePermits = Array(exposedPermitData.writeIntentStack.size) {
+          runSuspendMaybeConsuming(false) {
+            exposedPermitData.writeIntentStack[it].acquireWriteActionPermit()
+          }
+        }
+        newWritePermits to newWritePermit
+      }
+      finally {
+        myWriteActionPending.get()[state.level()].decrementAndGet()
       }
       hack_setPublishedPermitData(exposedPermitData.copy(writePermitStack = newWritePermits, finalWritePermit = newWritePermit))
       myWriteAcquired = Thread.currentThread()

@@ -142,22 +142,19 @@ public final class LeakHunter {
   @TestOnly
   private static void waitForIndicesToUpdate() {
     ProjectManager projectManager = ApplicationManager.getApplication() == null ? null : ProjectManager.getInstance();
-    if (SwingUtilities.isEventDispatchThread()) {
-      UIUtil.dispatchAllInvocationEvents();
-      for (Project project : projectManager == null ? new Project[0] : projectManager.getOpenProjects()) {
+    for (Project project : projectManager == null ? new Project[0] : projectManager.getOpenProjects()) {
+      if (SwingUtilities.isEventDispatchThread()) {
+        UIUtil.dispatchAllInvocationEvents();
         while (DumbService.getInstance(project).isDumb()) {
           DumbService.getInstance(project).waitForSmartMode(100L);
           UIUtil.dispatchAllInvocationEvents();
         }
-        FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, project, GlobalSearchScope.allScope(project));
       }
-    }
-    else {
-      for (Project project : projectManager == null ? new Project[0] : projectManager.getOpenProjects()) {
+      else {
         DumbService.getInstance(project).waitForSmartMode();
-        FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, project, GlobalSearchScope.allScope(project));
+        UIUtil.pump();
       }
-      UIUtil.pump();
+      FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, project, GlobalSearchScope.allScope(project));
     }
   }
 

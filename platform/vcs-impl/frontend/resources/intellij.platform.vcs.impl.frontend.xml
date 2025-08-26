@@ -8,10 +8,15 @@
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">
-    <ui.content.impl.toolWindowContentPostprocessor implementation="com.intellij.platform.vcs.impl.frontend.shelf.ShelveContentReplacer"/>
+    <ui.content.impl.toolWindowContentPostprocessor implementation="com.intellij.platform.vcs.impl.frontend.toolwindow.VcsToolWindowContentReplacer"/>
+
+    <frontendChangesViewContentProvider implementation="com.intellij.platform.vcs.impl.frontend.shelf.ShelveChangesViewContentProvider"/>
+    <frontendChangesViewContentProvider implementation="com.intellij.platform.vcs.impl.frontend.changes.LocalChangesViewContentProvider"/>
+
     <recentFiles.navigator implementation="com.intellij.platform.vcs.impl.frontend.diff.DiffRecentFilesNavigator"/>
     <recentFiles.excluder implementation="com.intellij.platform.vcs.impl.frontend.diff.DiffRecentFilesExcluder"/>
   </extensions>
+
   <actions>
     <group id="Frontend.Shelve.KeymapGroup" searchable="false">
       <add-to-group group-id="Vcs.KeymapGroup" anchor="first"/>
@@ -62,4 +67,11 @@
     </group>
     <action id="Frontend.EditSource" class="com.intellij.platform.vcs.impl.frontend.navigation.FrontendNavigateToSourceAction" use-shortcut-of="EditSource"/>
   </actions>
+
+  <extensionPoints>
+    <extensionPoint name="frontendChangesViewContentProvider"
+                    interface="com.intellij.platform.vcs.impl.frontend.changes.FrontendChangesViewContentProvider"
+                    dynamic="true">
+    </extensionPoint>
+  </extensionPoints>
 </idea-plugin>

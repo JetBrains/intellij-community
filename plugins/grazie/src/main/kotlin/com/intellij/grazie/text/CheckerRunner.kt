@@ -34,6 +34,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.util.parents
 import com.intellij.psi.util.startOffset
+import com.intellij.util.progress.withLockCancellable
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
@@ -41,7 +42,6 @@ import kotlinx.coroutines.yield
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReentrantLock
-import kotlin.concurrent.withLock
 
 private val problemsKey = Key.create<CachedResults>("grazie.text.problems")
 private val lockKey = Key.create<Lock>("grazie.text.lock")
@@ -67,13 +67,13 @@ class CheckerRunner(val text: TextContent) {
     var cachedProblems = getCachedProblems(configStamp)
     if (cachedProblems != null) return cachedProblems
     val lock = text.getOrCreateUserData(lockKey) { ReentrantLock() }
-    lock.withLock {
+    return lock.withLockCancellable {
       cachedProblems = getCachedProblems(configStamp)
-      if (cachedProblems != null) return cachedProblems
+      if (cachedProblems != null) return@withLockCancellable cachedProblems
       cachedProblems = doRun(TextChecker.allCheckers())
-      text.putUserData(problemsKey, CachedResults(configStamp, cachedProblems))
-      return cachedProblems
-    }
+      text.putUserData(problemsKey, CachedResults(configStamp, cachedProblems!!))
+      return@withLockCancellable cachedProblems
+    } ?: emptyList()
   }
 
   private fun getCachedProblems(configStamp: Long): List<TextProblem>? {

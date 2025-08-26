@@ -40,6 +40,16 @@ internal class BackendXBreakpointApi : XBreakpointApi {
     }
   }
 
+  override suspend fun getDefaultGroup(project: ProjectId): String? {
+    val project = project.findProject()
+    return (XDebuggerManager.getInstance(project).breakpointManager as XBreakpointManagerImpl).defaultGroup
+  }
+
+  override suspend fun setDefaultGroup(project: ProjectId, group: String?) {
+    val project = project.findProject()
+    (XDebuggerManager.getInstance(project).breakpointManager as XBreakpointManagerImpl).defaultGroup = group
+  }
+
   override suspend fun setConditionEnabled(breakpointId: XBreakpointId, requestId: Long, enabled: Boolean) {
     val breakpoint = breakpointId.findValue() ?: return
     edtWriteAction {

@@ -62,6 +62,7 @@ interface XDebugSessionProxy {
   val isReadOnly: Boolean
   val isPauseActionSupported: Boolean
   val isLibraryFrameFilterSupported: Boolean
+  val isValuesCustomSorted: Boolean
 
   val environmentProxy: ExecutionEnvironmentProxy?
 
@@ -160,6 +161,8 @@ interface XDebugSessionProxy {
       get() = (session as? XDebugSessionImpl)?.isPauseActionSupported() ?: false
     override val isLibraryFrameFilterSupported: Boolean
       get() = session.debugProcess.isLibraryFrameFilterSupported
+    override val isValuesCustomSorted: Boolean
+      get() = session.debugProcess.isValuesCustomSorted
 
     override val currentStateHyperlinkListener: HyperlinkListener?
       get() = session.debugProcess.currentStateHyperlinkListener

@@ -136,10 +136,7 @@ internal class GitToolbarWidgetAction : ExpandableComboAction(), ActionRemoteBeh
   }
 
   private fun getPopupForRepoSetup(trustedProject: Boolean, event: AnActionEvent): ListPopup {
-    val group = if (trustedProject) {
-      ActionManager.getInstance().getAction("Vcs.ToolbarWidget.CreateRepository") as ActionGroup
-    }
-    else {
+    val group = if (trustedProject) getCreateRepoActionGroup() else {
       @Suppress("DialogTitleCapitalization")
       val separator = Separator(GitBundle.message("action.main.toolbar.git.project.not.trusted.separator.text"))
       val trustProjectAction = ActionManager.getInstance().getAction("ShowTrustProjectDialog")
@@ -148,6 +145,14 @@ internal class GitToolbarWidgetAction : ExpandableComboAction(), ActionRemoteBeh
     val place = ActionPlaces.getPopupPlace(ActionPlaces.VCS_TOOLBAR_WIDGET)
     return JBPopupFactory.getInstance()
       .createActionGroupPopup(null, group, event.dataContext, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true, place)
+  }
+
+  /**
+   * Action group is registered on the backend and is "eventually available" in RD mode
+   */
+  private fun getCreateRepoActionGroup(): ActionGroup {
+    return ActionManager.getInstance().getAction("Vcs.ToolbarWidget.CreateRepository") as? ActionGroup
+           ?: DefaultActionGroup()
   }
 
   private fun getInAndOutIcons(presentation: GitWidgetState.RepositoryPresentation): RowIcon? {

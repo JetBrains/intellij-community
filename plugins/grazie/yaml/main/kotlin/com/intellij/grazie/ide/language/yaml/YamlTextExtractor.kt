@@ -12,6 +12,7 @@ import com.intellij.psi.util.elementType
 import org.jetbrains.yaml.YAMLSpellcheckerStrategy.JsonSchemaSpellcheckerClientForYaml
 import org.jetbrains.yaml.YAMLTokenTypes.*
 import org.jetbrains.yaml.psi.YAMLScalar
+import org.jetbrains.yaml.psi.impl.YAMLAnchorImpl
 
 private class YamlTextExtractor : TextExtractor() {
   private val commentBuilder = TextContentBuilder.FromPsi.removingIndents(" \t#")
@@ -21,10 +22,13 @@ private class YamlTextExtractor : TextExtractor() {
       val siblings = getNotSoDistantSimilarSiblings(root, TokenSet.create(WHITESPACE, INDENT, EOL)) { it.elementType == COMMENT }
       return TextContent.joinWithWhitespace('\n', siblings.mapNotNull { commentBuilder.build(it, TextContent.TextDomain.COMMENTS) })
     }
-    if (root is YAMLScalar) {
+    if (root is YAMLScalar || (root.node != null && root.node.elementType == SCALAR_KEY)) {
       if (JsonSchemaSpellcheckerClientForYaml(root).matchesNameFromSchema()) {
         return null
       }
+      return TextContentBuilder.FromPsi.excluding { isStealth(it) }.build(root, TextContent.TextDomain.LITERALS)
+    }
+    if (root is YAMLAnchorImpl && root.parent !is YAMLScalar) {
       return TextContentBuilder.FromPsi.excluding { isStealth(it) }.build(root, TextContent.TextDomain.LITERALS)
     }
     return null

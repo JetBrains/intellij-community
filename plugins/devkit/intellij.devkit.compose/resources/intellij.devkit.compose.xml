@@ -25,7 +25,6 @@
       <action id="JewelComponentShowcaseDialog" class="com.intellij.devkit.compose.demo.dialog.ComponentShowcaseDialogAction"
               icon="org.jetbrains.idea.devkit.DevKitIcons.Items"/>
       <action id="JewelWizardDialog" class="com.intellij.devkit.compose.demo.dialog.JewelWizardDialogAction"/>
-      <action id="JewelActionSystemTest" class="com.intellij.devkit.compose.demo.ActionSystemTestAction"/>
       <action id="ComposeSandbox" class="com.intellij.devkit.compose.sandbox.ComposeSandboxAction" icon="AllIcons.FileTypes.UiForm"/>
       <action id="ComposePerformanceDemo" class="com.intellij.devkit.compose.showcase.ComposePerformanceDemoAction"/>
       <separator/>
@@ -33,7 +32,8 @@
       <add-to-group group-id="ToolsMenu" relative-to-action="Dev.PsiViewerActions" anchor="after"/>
     </group>
 
-    <!-- Legacy action, only available from Search Everywhere -->
+    <!-- Legacy actions, only available from Search Everywhere -->
     <action id="ComposeShowcase" class="com.intellij.devkit.compose.showcase.ComposeShowcaseAction"/>
+    <action id="JewelActionSystemTest" class="com.intellij.devkit.compose.demo.ActionSystemTestAction"/>
   </actions>
 </idea-plugin>

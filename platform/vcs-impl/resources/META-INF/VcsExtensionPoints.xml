@@ -213,9 +213,6 @@
     <extensionPoint qualifiedName="com.intellij.openapi.vcs.ui.commitOptionsDialogExtension"
                     interface="com.intellij.openapi.vcs.ui.CommitOptionsDialogExtension"
                     dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.openapi.vcs.changes.ui.filePathIconProvider"
-                    interface="com.intellij.openapi.vcs.changes.FilePathIconProvider"
-                    dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.openapi.vcs.changes.ui.shareProjectAction"
                     interface="com.intellij.openapi.vcs.changes.ui.ShareProjectActionProvider"
                     dynamic="true"/>

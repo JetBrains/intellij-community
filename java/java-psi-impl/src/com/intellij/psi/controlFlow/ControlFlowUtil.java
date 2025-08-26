@@ -2624,16 +2624,14 @@ public final class ControlFlowUtil {
   }
 
   public static @NotNull Collection<VariableInfo> getInitializedTwice(@NotNull ControlFlow flow, int startOffset, int endOffset) {
+    Collection<VariableInfo> result = new HashSet<>();
     while (startOffset < endOffset) {
       InitializedTwiceClientVisitor visitor = new InitializedTwiceClientVisitor(flow, startOffset);
       depthFirstSearch(flow, visitor, startOffset, endOffset);
-      Collection<VariableInfo> result = visitor.getResult();
-      if (!result.isEmpty()) {
-        return result;
-      }
+      result.addAll(visitor.getResult());
       startOffset = findUnprocessed(startOffset, endOffset, visitor);
     }
-    return Collections.emptyList();
+    return result;
   }
 
   private static class InitializedTwiceClientVisitor extends InstructionClientVisitor<Collection<VariableInfo>> {

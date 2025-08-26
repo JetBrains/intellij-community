@@ -6,7 +6,6 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
-import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeInsight.intentions.shared.AddBracesToAllBranchesIntention.Util.allBranchExpressions
 import org.jetbrains.kotlin.idea.codeInsight.intentions.shared.AddBracesToAllBranchesIntention.Util.targetIfOrWhenExpression
@@ -15,7 +14,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
-internal class RemoveBracesFromAllBranchesIntention  : KotlinPsiUpdateModCommandAction.ClassBased<KtExpression, Unit>(KtExpression::class) {
+internal class RemoveBracesFromAllBranchesIntention  : KotlinPsiUpdateModCommandAction.Simple<KtExpression>(KtExpression::class) {
     override fun getFamilyName(): @IntentionFamilyName String =
         KotlinBundle.message("remove.braces.from.all.branches")
 
@@ -68,9 +67,5 @@ internal class RemoveBracesFromAllBranchesIntention  : KotlinPsiUpdateModCommand
             else -> null
         }?.startOffset ?: return false
         return caretOffset in startOffset..singleBranchExpression.endOffset
-    }
-
-
-    override fun KaSession.prepareContext(element: KtExpression) {
     }
 }

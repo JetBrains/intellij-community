@@ -160,6 +160,15 @@ class ForLoop {
       break;
     }
   }
+  
+  void x() {
+    final int a, b;
+    <error descr="Variable 'a' might already have been assigned to">a</error> = a = 0;
+    for (;; b = 0) {
+      <error descr="Variable 'b' might already have been assigned to">b</error> = 1;
+      break;
+    }
+  }
 }
 // IDEA-186305
 class Asserts {

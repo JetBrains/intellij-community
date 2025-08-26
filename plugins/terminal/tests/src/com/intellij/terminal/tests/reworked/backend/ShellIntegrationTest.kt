@@ -312,6 +312,14 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
     val zdotdir = Files.createTempDirectory("zsh-custom-zdotdir")
     // Use .zlogin, because it's loaded last in the Zsh startup files.
     zdotdir.resolve(".zlogin").writeText("$customVariableName='$customVariableValue'")
+    zdotdir.resolve(".zshrc").writeText("""
+      # Emulate Powerlevel10k precmd hook
+      function my_hook() {
+        $customVariableName='overwritten_value'
+      }
+      builtin typeset -ga precmd_functions
+      precmd_functions+=(my_hook)
+    """.trimIndent())
 
     val customizer = object : LocalTerminalCustomizer() {
       override fun customizeCommandAndEnvironment(project: Project,

@@ -11,9 +11,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangeListDragBean
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.application
 import org.jetbrains.annotations.ApiStatus
-import java.awt.Color
 import java.awt.event.MouseEvent
-import javax.swing.Icon
 
 /**
  * Temporary interface to allow moving changes tree code to the shared module.
@@ -22,15 +20,13 @@ import javax.swing.Icon
 @ApiStatus.Obsolete
 @ApiStatus.Internal
 interface ChangesTreeCompatibilityProvider {
-  fun getBackgroundColorFor(project: Project, obj: Any?): Color?
+  fun getScopeVirtualFileFor(filePath: FilePath): VirtualFile?
 
   fun getPresentablePath(project: Project?, path: VirtualFile, useRelativeRootPaths: Boolean, acceptEmptyPath: Boolean): @NlsSafe String
 
   fun getPresentablePath(project: Project?, path: FilePath, useRelativeRootPaths: Boolean, acceptEmptyPath: Boolean): @NlsSafe String
 
   fun getFileStatus(project: Project, file: VirtualFile): FileStatus
-
-  fun getIcon(project: Project?, filePath: FilePath, isDirectory: Boolean): Icon?
 
   fun logInclusionToggle(project: Project, exclude: Boolean, event: MouseEvent)
 

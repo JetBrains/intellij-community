@@ -9,6 +9,7 @@ import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaSeverity
+import org.jetbrains.kotlin.idea.base.highlighting.shouldHighlightFile
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtVisitor
 
@@ -21,6 +22,7 @@ internal class KotlinGoodCodeRedVisitor : GoodCodeRedVisitor {
         super.visitFile(file)
         try {
           analyze(file as KtFile) {
+            if (!file.shouldHighlightFile()) return
             val diagnostics = file.collectDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
             for (diagnostic in diagnostics) {
               if (diagnostic.severity == KaSeverity.ERROR) {

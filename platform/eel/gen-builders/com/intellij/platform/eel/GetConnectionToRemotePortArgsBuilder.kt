@@ -13,7 +13,7 @@ import kotlin.time.Duration.Companion.seconds
 @GeneratedBuilder.Result
 @ApiStatus.Experimental
 class GetConnectionToRemotePortArgsBuilder() {
-  private var configureSocketBeforeConnection: @ExtensionFunctionType Function1<ConfigurableClientSocket, Unit> = {}
+  private var configureSocketBeforeConnection: ConfigurableClientSocket.() -> Unit = {}
 
   private var hostname: String = "localhost"
 
@@ -24,10 +24,9 @@ class GetConnectionToRemotePortArgsBuilder() {
   private var timeout: Duration = 10.seconds
 
   @ApiStatus.Internal
-  fun configureSocketBeforeConnection(arg: @ExtensionFunctionType Function1<ConfigurableClientSocket, Unit>): GetConnectionToRemotePortArgsBuilder =
-    apply {
-      this.configureSocketBeforeConnection = arg
-    }
+  fun configureSocketBeforeConnection(arg: ConfigurableClientSocket.() -> Unit): GetConnectionToRemotePortArgsBuilder = apply {
+    this.configureSocketBeforeConnection = arg
+  }
 
   @ApiStatus.Experimental
   fun hostname(arg: String): GetConnectionToRemotePortArgsBuilder = apply {
@@ -76,7 +75,7 @@ class GetConnectionToRemotePortArgsBuilder() {
 
 @GeneratedBuilder.Result
 internal class GetConnectionToRemotePortArgsImpl(
-  override val configureSocketBeforeConnection: @ExtensionFunctionType Function1<ConfigurableClientSocket, Unit>,
+  override val configureSocketBeforeConnection: ConfigurableClientSocket.() -> Unit,
   override val hostname: String,
   override val port: UShort,
   override val protocolPreference: EelIpPreference,

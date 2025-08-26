@@ -4,7 +4,6 @@ package com.intellij.workspaceModel.core.fileIndex.impl
 import com.intellij.ide.highlighter.ArchiveFileType
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
@@ -28,17 +27,10 @@ class LibraryRootFileIndexContributor : WorkspaceFileIndexContributor<LibraryEnt
   override val entityClass: Class<LibraryEntity> get() = LibraryEntity::class.java
 
   override fun registerFileSets(entity: LibraryEntity, registrar: WorkspaceFileSetRegistrar, storage: EntityStorage) {
-    val libraryId = if (Registry.`is`("ide.workspace.model.sdk.remove.custom.processing")) {
-      entity.symbolicId
-    } else {
-      if (entity.symbolicId.tableId is LibraryTableId.GlobalLibraryTableId) return
-      entity.symbolicId.takeIf { it.tableId == LibraryTableId.ProjectLibraryTableId }
-    }
-    if (Registry.`is`("ide.workspace.model.sdk.remove.custom.processing") && libraryId != null) {
-      if (libraryId.tableId !is LibraryTableId.ModuleLibraryTableId &&
-          storage.referrers(libraryId, ModuleEntity::class.java).none()) {
-        return
-      }
+    val libraryId = entity.symbolicId
+    if (libraryId.tableId !is LibraryTableId.ModuleLibraryTableId &&
+        storage.referrers(libraryId, ModuleEntity::class.java).none()) {
+      return
     }
     val compiledRootsData = LibraryRootFileSetData(libraryId)
     val sourceRootFileSetData = LibrarySourceRootFileSetData(libraryId)
@@ -67,7 +59,12 @@ class LibraryRootFileIndexContributor : WorkspaceFileIndexContributor<LibraryEnt
   override val dependenciesOnOtherEntities: List<DependencyDescription<LibraryEntity>>
     get() = listOf(
       DependencyDescription.OnReference(ModuleEntity::class.java) { moduleEntity ->
-        moduleEntity.dependencies.asSequence().filterIsInstance<LibraryDependency>().map { it.library }
+        val result = mutableListOf<LibraryId>()
+        for (dep in moduleEntity.dependencies) {
+          if (dep !is LibraryDependency) continue
+          result.add(dep.library)
+        }
+        result.asSequence()
       }
     )
 

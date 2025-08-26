@@ -13,7 +13,8 @@ jps_test(
   ] + all_test_dep_targets,
   tags = [
     "block-network",
-  ]
+  ],
+  ignored = False,
 )
 
 ### skip generation section `test kotlin.jvm-debugger.test.parcelize.k2`

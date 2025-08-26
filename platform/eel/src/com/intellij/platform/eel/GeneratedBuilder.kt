@@ -4,7 +4,7 @@ package com.intellij.platform.eel
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * `com.intellij.platform.eel.codegen.BuildersGenerator` generates builders for all methods
+ * `com.intellij.platform.eel.codegen.BuildersGeneratorTest` generates builders for all methods
  * that have a single argument with this annotation.
  */
 @Retention(AnnotationRetention.SOURCE)

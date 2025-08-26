@@ -136,6 +136,7 @@ class CodeInsightContextManagerImpl(
     return context
   }
 
+  @Deprecated("DANGEROUS API, AUTHORIZED PERSONNEL ONLY")
   override fun getOrSetContext(fileViewProvider: FileViewProvider, context: CodeInsightContext): CodeInsightContext {
     log.trace { "requested getOrSet context of FileViewProvider ${fileViewProvider.virtualFile.path}" }
 
@@ -242,15 +243,4 @@ private fun <T> Sequence<T>.appendIfEmpty(item: T) = sequence {
   if (isEmpty) {
     yield(item)
   }
-}
-
-internal sealed interface SetContextResult {
-  /** the context was successfully installed */
-  object Success : SetContextResult
-
-  /** the context was not installed because of a concurrent context update */
-  class ConcurrentlyUpdated(val newContext: CodeInsightContext) : SetContextResult
-
-  /** the context was not installed because the file view provider is missing in the file manager storage */
-  object ProviderIsMissing : SetContextResult
 }

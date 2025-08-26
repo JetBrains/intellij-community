@@ -40,6 +40,7 @@ import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
+import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
 import com.intellij.usages.UsageTargetUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -54,6 +55,7 @@ import org.jetbrains.idea.maven.dom.references.MavenPsiElementWrapper
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.junit.ComparisonFailure
+import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.Callable
 import java.util.function.Function
@@ -69,7 +71,11 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
   override fun setUpFixtures() {
     testFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(name).fixture
 
-    myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(testFixture)
+    myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(testFixture, object: TempDirTestFixtureImpl() {
+      override fun doCreateTempDirectory(): Path {
+        return Path.of(testFixture.project.basePath).parent
+      }
+    })
     fixture.setUp()
 
     // org.jetbrains.idea.maven.utils.MavenRehighlighter

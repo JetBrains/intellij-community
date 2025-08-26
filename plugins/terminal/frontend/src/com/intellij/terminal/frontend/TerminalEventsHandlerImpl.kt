@@ -22,7 +22,9 @@ import com.jediterm.terminal.emulator.mouse.MouseButtonCodes
 import com.jediterm.terminal.emulator.mouse.MouseButtonModifierFlags
 import com.jediterm.terminal.emulator.mouse.MouseFormat
 import com.jediterm.terminal.emulator.mouse.MouseMode
+import org.jetbrains.plugins.terminal.block.completion.TerminalCommandCompletionShowingMode
 import org.jetbrains.plugins.terminal.LocalBlockTerminalRunner.Companion.REWORKED_TERMINAL_COMPLETION_POPUP
+import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalUsageLocalStorage
@@ -102,7 +104,8 @@ internal open class TerminalEventsHandlerImpl(
     val project = editor.project
     if (project != null && typeAhead?.isDisabled() == false &&
         (Character.isLetterOrDigit(charTyped) || charTyped == '-' || charTyped == File.separatorChar) &&
-        Registry.`is`(REWORKED_TERMINAL_COMPLETION_POPUP)) {
+        Registry.`is`(REWORKED_TERMINAL_COMPLETION_POPUP) &&
+        TerminalOptionsProvider.instance.commandCompletionShowingMode != TerminalCommandCompletionShowingMode.NEVER) {
       // Added guarantee that psiFile is synchronized after type-ahead before autoPopUp
       PsiDocumentManager.getInstance(project).commitDocument(editor.document)
       AutoPopupController.getInstance(project).scheduleAutoPopup(editor)

@@ -11,6 +11,7 @@ import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.paint.RectanglePainter2D;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,7 +48,7 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
 
   private JButton myShowHiddenTabsButton;
   private ArrayList<Component> myHiddenArrowButtons;
-  private int hoverTab = -1;
+  @ApiStatus.Internal protected int hoverTab = -1;
   private boolean tabsOverlapBorder;
   private boolean useSelectedRectBackup = false;
   private Color myTabHoverColor;

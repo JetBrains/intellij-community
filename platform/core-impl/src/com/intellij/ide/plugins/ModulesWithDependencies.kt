@@ -5,7 +5,6 @@ package com.intellij.ide.plugins
 
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.util.containers.Java11Shim
-import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
 private val VCS_ALIAS_ID = PluginId.getId("com.intellij.modules.vcs")
@@ -170,15 +169,6 @@ internal fun toCoreAwareComparator(comparator: Comparator<PluginModuleDescriptor
 }
 
 /**
- * No new entries should be added to this set; if a plugin modules depends on content modules extracted from the core plugin, explicit dependencies on them should be added.
- * There is no need to fully convert the plugin to v2 for that.
- */
-@ApiStatus.Obsolete
-private val knownNotFullyMigratedPluginIds: Set<String> = hashSetOf(
-  "com.jetbrains.pycharm.ds.customization", //todo remove this: DS-7102
-)
-
-/**
  * Specifies the list of content modules which was recently extracted from the main module of the core plugin and may have external usages.
  * Since such modules were loaded by the core classloader before, it wasn't necessary to specify any dependencies to use classes from them.
  * To avoid breaking compatibility, dependencies on these modules are automatically added to plugins which define dependency on the platform using 
@@ -236,10 +226,6 @@ private fun collectDirectDependenciesInOldFormat(
         // Add an edge to the main module of the plugin. This is needed to ensure that this plugin is processed after it's decided whether to enable the referenced plugin or not.
         additionalEdges.add(dependencyPluginDescriptor)
       }
-    }
-
-    if (knownNotFullyMigratedPluginIds.contains(rootDescriptor.pluginId.idString)) {
-      dependenciesCollector.addAll(idMap.get(PluginManagerCore.CORE_ID.idString)!!.contentModules)
     }
 
     dependency.subDescriptor?.let {

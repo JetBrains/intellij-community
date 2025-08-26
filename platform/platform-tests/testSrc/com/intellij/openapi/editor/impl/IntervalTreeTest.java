@@ -10,6 +10,7 @@ import com.intellij.util.TimeoutUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class IntervalTreeTest extends LightPlatformTestCase {
   private final DocumentImpl document = new DocumentImpl(" ".repeat(1000));
@@ -20,8 +21,8 @@ public class IntervalTreeTest extends LightPlatformTestCase {
     }
 
     @Override
-    protected boolean isDelicious(@NotNull RangeMarkerEx interval) {
-      return ((RangeMarkerImpl)interval).isStickingToRight();
+    protected byte getTasteFlags(@NotNull RangeMarkerEx interval) {
+      return ((RangeMarkerImpl)interval).isStickingToRight() ? MY_TASTE_FLAG : 0;
     }
   };
 
@@ -41,7 +42,7 @@ public class IntervalTreeTest extends LightPlatformTestCase {
     RangeMarkerImpl r23 = create(2, 3);
     create(3, 4);
 
-    try (MarkupIterator<RangeMarkerEx> iterator = tree.overlappingDeliciousIterator(new TextRange(0, 4))) {
+    try (MarkupIterator<RangeMarkerEx> iterator = tree.overlappingDeliciousIterator(new TextRange(0, 4), MY_TASTE_FLAG)) {
       assertOrderedEquals(()->iterator, r01, r23);
     }
   }
@@ -80,29 +81,29 @@ public class IntervalTreeTest extends LightPlatformTestCase {
       int end = start + 1;
       //System.out.println("m = " + start);
       RangeMarkerImpl m = create(start, end);
-      if (tree.isDelicious(m)) {
+      if (tree.getTasteFlags(m) == MY_TASTE_FLAG) {
         delicis++;
       }
     }
 
-    try (MarkupIterator<RangeMarkerEx> iterator = tree.overlappingDeliciousIterator(new TextRange(0, N))) {
+    try (MarkupIterator<RangeMarkerEx> iterator = tree.overlappingDeliciousIterator(new TextRange(0, N), MY_TASTE_FLAG)) {
       int c = 0;
       while (iterator.hasNext()) {
         RangeMarkerEx next = iterator.next();
-        assertTrue(tree.isDelicious(next));
+        assertEquals(MY_TASTE_FLAG, tree.getTasteFlags(next));
         c++;
       }
       assertEquals(delicis, c);
     }
   }
-
+  private static final byte MY_TASTE_FLAG = 1; // IntervalTreeImpl.nextAvailableTasteFlag(); do not waste precious bits for tests
   public void testDeliciousIterationMustBeFastStress() {
-    int N = 500_000;
+    int N = 5000000;
     int delicis=0;
     Random r = new Random();
     for (int i=0;i<N;i++) {
       int start = r.nextInt(document.getTextLength());
-      if (i%100 == 0) {
+      if (i%100000 == 0) {
         // every 100th is delicious
         start = start / 2 * 2;
       }
@@ -111,40 +112,85 @@ public class IntervalTreeTest extends LightPlatformTestCase {
       }
       int end = start + 1;
       RangeMarkerImpl m = create(start, end);
-      if (tree.isDelicious(m)) {
+      if (tree.getTasteFlags(m) == MY_TASTE_FLAG) {
         delicis++;
       }
     }
+    assertEquals(N, tree.size());
 
     //System.out.println("delicis = " + delicis);
 
     for (int i=0;i<10;i++) {
       int finalDelicis = delicis;
       long dt = TimeoutUtil.measureExecutionTime(() -> {
-        try (MarkupIterator<RangeMarkerEx> iterator = tree.overlappingDeliciousIterator(new TextRange(0, N))) {
+        try (MarkupIterator<RangeMarkerEx> iterator = tree.overlappingDeliciousIterator(new TextRange(0, document.getTextLength()), MY_TASTE_FLAG)) {
           int c = 0;
           while (iterator.hasNext()) {
             RangeMarkerEx next = iterator.next();
-            assertTrue(tree.isDelicious(next));
+            assertEquals(MY_TASTE_FLAG, tree.getTasteFlags(next));
             c++;
           }
           assertEquals(finalDelicis, c);
         }
       });
+      AtomicInteger all = new AtomicInteger();
       long t = TimeoutUtil.measureExecutionTime(() -> {
-        try (MarkupIterator<RangeMarkerEx> iterator = new FilteringMarkupIterator<>(tree.overlappingIterator(new TextRange(0, N)),
-                                                                                    h -> tree.isDelicious(h))) {
+        try (MarkupIterator<RangeMarkerEx> iterator = new FilteringMarkupIterator<>(tree.overlappingIterator(new TextRange(0, document.getTextLength())),
+                                                                                    h -> all.incrementAndGet() >= 0 && tree.getTasteFlags(h) == MY_TASTE_FLAG)) {
           int c = 0;
           while (iterator.hasNext()) {
             RangeMarkerEx next = iterator.next();
-            assertTrue(tree.isDelicious(next));
+            assertEquals(MY_TASTE_FLAG, tree.getTasteFlags(next));
             c++;
           }
           assertEquals(finalDelicis, c);
         }
+        assertEquals(N, all.get());
       });
-      //System.out.println("dt = " + dt+"; t = " + t);
+      System.out.println("dt = " + dt+"; t = " + t);
       assertTrue("dt = " + dt+"; t = " + t, dt*10 < t);
+    }
+  }
+
+  public void testSeveralTastes() {
+    final DocumentImpl document = new DocumentImpl(" ".repeat(1000));
+    byte MY_OTHER_FLAG = 2;
+    final RangeMarkerTree<RangeMarkerEx> tree = new RangeMarkerTree<>() {
+      @Override
+      protected boolean keepIntervalOnWeakReference(@NotNull RangeMarkerEx interval) {
+        return false;
+      }
+
+      @Override
+      protected byte getTasteFlags(@NotNull RangeMarkerEx interval) {
+        return interval.isGreedyToRight() ? MY_TASTE_FLAG : interval.isGreedyToLeft() ? MY_OTHER_FLAG : 0;
+      }
+    };
+
+    int N = 100;
+    for (int i=0; i<N; i++) {
+      RangeMarkerImpl marker = new RangeMarkerImpl(document, i, i+1, false, false);
+      tree.addInterval(marker, i, i+1, i%2==0, i%2==1, false, 0);
+      tree.verifyProperties();
+    }
+
+    try (MarkupIterator<RangeMarkerEx> iterator = tree.overlappingDeliciousIterator(new TextRange(0, document.getTextLength()), MY_TASTE_FLAG)) {
+      int c = 0;
+      while (iterator.hasNext()) {
+        RangeMarkerEx next = iterator.next();
+        assertEquals(MY_TASTE_FLAG, tree.getTasteFlags(next));
+        c++;
+      }
+      assertEquals(N/2, c);
+    }
+    try (MarkupIterator<RangeMarkerEx> iterator = tree.overlappingDeliciousIterator(new TextRange(0, document.getTextLength()), MY_OTHER_FLAG)) {
+      int c = 0;
+      while (iterator.hasNext()) {
+        RangeMarkerEx next = iterator.next();
+        assertEquals(MY_OTHER_FLAG, tree.getTasteFlags(next));
+        c++;
+      }
+      assertEquals(N/2, c);
     }
   }
 }

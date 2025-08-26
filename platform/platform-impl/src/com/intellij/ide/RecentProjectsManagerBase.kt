@@ -23,6 +23,7 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
@@ -437,7 +438,10 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
   }
 
   override fun setActivationTimestamp(project: Project, timestamp: Long) {
+    LOG.trace { "setActivationTimestamp: project=$project, timestamp=$timestamp" }
+
     if (disableUpdatingRecentInfo.get()) {
+      LOG.trace { "setActivationTimestamp: updating recent info is disabled" }
       return
     }
 
@@ -466,7 +470,10 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
   }
 
   internal fun projectOpened(project: Project, openTimestamp: Long) {
+    LOG.trace { "projectOpened: project=$project, openTimestamp=$openTimestamp" }
+
     if (disableUpdatingRecentInfo.get() || LightEdit.owns(project)) {
+      LOG.trace { "projectOpened: updating recent info is disabled" }
       return
     }
 
@@ -576,6 +583,8 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
   }
 
   override suspend fun reopenLastProjectsOnStart(): Boolean {
+    LOG.trace { "reopenLastProjectsOnStart" }
+
     // Do not reopen, because previously opened projects will open in new instances
     // TODO alternative behaviour?
     if (ProjectManagerEx.IS_PER_PROJECT_INSTANCE_ENABLED) {
@@ -628,6 +637,8 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
     index: Int,
     someProjectWasOpened: Boolean,
   ): Boolean {
+    LOG.trace { "openOneByOne: openPaths=$openPaths index=$index someProjectWasOpened=$someProjectWasOpened" }
+
     val (key, value) = openPaths.get(index)
     EelInitialization.runEelInitialization(key)
     val project = openProject(projectFile = Path.of(key), options = OpenProjectTask {
@@ -650,6 +661,8 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
 
   // toOpen - no non-existent project paths and every info has a frame
   private suspend fun openMultiple(toOpen: List<Pair<Path, RecentProjectMetaInfo>>): Boolean {
+    LOG.trace { "openMultiple: toOpen=$toOpen" }
+
     val activeInfo = (toOpen.maxByOrNull { it.second.activationTimestamp } ?: return false).second
 
     data class Setup(val path: Path, val elementToPass: CoroutineContext?, val task: OpenProjectTask)

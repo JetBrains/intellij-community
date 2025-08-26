@@ -4387,6 +4387,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/introduceParameter/overrideFunction.kt");
             }
 
+            @TestMetadata("parametersInExtraction.kt")
+            public void testParametersInExtraction() throws Exception {
+                runTest("testData/refactoring/introduceParameter/parametersInExtraction.kt");
+            }
+
             @TestMetadata("partialSubstitution.kt")
             public void testPartialSubstitution() throws Exception {
                 runTest("testData/refactoring/introduceParameter/partialSubstitution.kt");

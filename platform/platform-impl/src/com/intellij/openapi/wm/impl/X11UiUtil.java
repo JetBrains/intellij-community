@@ -7,7 +7,6 @@ import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ReflectionUtil;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UnixDesktopEnv;
@@ -128,7 +127,7 @@ public final class X11UiUtil {
 
         // reflect on Xlib method wrappers and important structures
         Class<?> XlibWrapper = Class.forName("sun.awt.X11.XlibWrapper");
-        x11.unsafe = (Unsafe)ReflectionUtil.getUnsafe();
+        x11.unsafe = (Unsafe)com.intellij.util.containers.Unsafe.getUnsafeImplDeprecated();
         x11.XGetWindowProperty = method(XlibWrapper, "XGetWindowProperty", 12);
         x11.XFree = method(XlibWrapper, "XFree", 1);
         x11.RootWindow = method(XlibWrapper, "RootWindow", 2);

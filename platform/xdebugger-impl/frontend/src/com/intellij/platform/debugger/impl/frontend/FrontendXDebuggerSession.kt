@@ -124,6 +124,8 @@ class FrontendXDebuggerSession private constructor(
 
   override val isLibraryFrameFilterSupported: Boolean = sessionDto.isLibraryFrameFilterSupported
 
+  override val isValuesCustomSorted: Boolean = sessionDto.isValuesCustomSorted
+
   override val valueMarkers: XValueMarkers<FrontendXValue, XValueMarkerId> = FrontendXValueMarkers(project)
 
   private val sessionTabDeferred = CompletableDeferred<XDebugSessionTab>()
@@ -349,7 +351,8 @@ class FrontendXDebuggerSession private constructor(
   }
 
   override fun registerAdditionalActions(leftToolbar: DefaultActionGroup, topLeftToolbar: DefaultActionGroup, settings: DefaultActionGroup) {
-    // TODO
+    // TODO: addittional actions are not registered in RemDev
+    MonolithUtils.findSessionById(id)?.debugProcess?.registerAdditionalActions(leftToolbar, topLeftToolbar, settings)
   }
 
   override fun putKey(sink: DataSink) {

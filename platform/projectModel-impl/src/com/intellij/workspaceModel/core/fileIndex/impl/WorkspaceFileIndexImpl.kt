@@ -286,7 +286,6 @@ class WorkspaceFileIndexImpl(private val project: Project, coroutineScope: Corou
       indexData = initWorkspaceFileIndexData(
         contributorList = contributors,
         project = project,
-        parentDisposable = this,
       )
     }
   }

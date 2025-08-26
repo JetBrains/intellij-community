@@ -7,7 +7,6 @@ import com.intellij.grazie.GrazieConfig.State.Processing
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.TextRange
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
@@ -29,9 +28,9 @@ interface GrazieCloudConnector {
   fun isAfterRecentGecError(): Boolean
 
   /**
-   * Rephrases the given [text] at the given [ranges] in the given [language].
+   * Rephrases the given [text] in the given [language].
    */
-  fun rephrase(text: String, ranges: List<TextRange>, language: Language, project: Project): List<String>?
+  fun rephrase(text: String, language: Language, project: Project): List<String>?
 
   /**
    * Marks [sentences] with Named Entity Recognition Annotations for the given [language].

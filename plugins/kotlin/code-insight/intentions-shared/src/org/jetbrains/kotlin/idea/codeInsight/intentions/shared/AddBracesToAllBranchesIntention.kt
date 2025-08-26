@@ -10,7 +10,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.elementType
 import com.intellij.psi.util.endOffset
 import com.intellij.util.containers.addIfNotNull
-import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeInsight.intentions.shared.AddBracesToAllBranchesIntention.Util.allBranchExpressions
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
@@ -23,7 +22,7 @@ import org.jetbrains.kotlin.psi.psiUtil.siblings
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.util.match
 
-internal class AddBracesToAllBranchesIntention : KotlinPsiUpdateModCommandAction.ClassBased<KtExpression, Unit>(KtExpression::class) {
+internal class AddBracesToAllBranchesIntention : KotlinPsiUpdateModCommandAction.Simple<KtExpression>(KtExpression::class) {
     override fun getFamilyName(): @IntentionFamilyName String =
         KotlinBundle.message("add.braces.to.all.branches")
 
@@ -118,8 +117,5 @@ internal class AddBracesToAllBranchesIntention : KotlinPsiUpdateModCommandAction
             is KtWhenExpression -> entries.mapNotNull { it.expression }
             else -> emptyList()
         }
-    }
-
-    override fun KaSession.prepareContext(element: KtExpression) {
     }
 }

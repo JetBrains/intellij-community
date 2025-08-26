@@ -12,6 +12,7 @@ import com.intellij.execution.process.LocalPtyOptions
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.eel.EelExecApi
@@ -37,7 +38,7 @@ fun fetchLoginShellEnv(
   project: Project?,
   rootUser: Boolean,
 ): Map<String, String> =
-  runBlockingCancellable {
+  runBlockingMaybeCancellable {
     wslIjentManager.getIjentApi(null, wslDistribution, project, rootUser).exec.fetchLoginShellEnvVariables()
   }
 

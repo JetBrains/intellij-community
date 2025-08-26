@@ -17,7 +17,9 @@ import com.intellij.terminal.completion.ShellRuntimeContextProvider
 import com.intellij.terminal.completion.spec.ShellCompletionSuggestion
 import com.intellij.terminal.completion.spec.ShellSuggestionType
 import org.jetbrains.plugins.terminal.LocalBlockTerminalRunner
+import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.block.completion.ShellCommandSpecsManagerImpl
+import org.jetbrains.plugins.terminal.block.completion.TerminalCommandCompletionShowingMode
 import org.jetbrains.plugins.terminal.block.completion.TerminalCompletionUtil
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellDataGeneratorsExecutorReworkedImpl
@@ -94,7 +96,7 @@ internal class TerminalCommandSpecCompletionContributorGen2 : CompletionContribu
     // This approach makes the pop-up discoverable while being less disruptive.
     // The pop-up is triggered only when entering a command's argument
     // (e.g., file after `ls`, folder after `cd`, branch after `git checkout`).
-    if (isAutoPopup) {
+    if (isAutoPopup && TerminalOptionsProvider.instance.commandCompletionShowingMode == TerminalCommandCompletionShowingMode.ONLY_PARAMETERS) {
       val containsShellCommand = suggestions.any { it.type == ShellSuggestionType.COMMAND }
       if (containsShellCommand) {
         return

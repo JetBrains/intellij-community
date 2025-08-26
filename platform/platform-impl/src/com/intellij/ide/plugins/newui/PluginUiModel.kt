@@ -12,11 +12,14 @@ import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSou
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.ui.LicensingFacade
 import com.intellij.util.PlatformUtils
+import com.intellij.util.containers.ContainerUtil
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import java.text.DecimalFormat
 import java.util.*
+import kotlin.text.startsWith
 
 /**
  * A lightweight model for representing plugin information in the UI.
@@ -234,9 +237,7 @@ fun PluginUiModel.presentableSize(): String? {
 
 @ApiStatus.Internal
 fun PluginUiModel.calculateTags(): List<String> {
-  val result = this.getDescriptor().getTags()
-  val customization = PluginInstallationCustomization.findPluginInstallationCustomization(pluginId)
-  return customization?.customizeTags(result) ?: result
+  return this.getDescriptor().getTags().customizeIfNeeded(pluginId)
 }
 
 @ApiStatus.Internal
@@ -253,7 +254,12 @@ fun PluginUiModel.calculateTags(sessionId: String): List<String> {
       }
     }
   }
-  return result
+  return result.customizeIfNeeded(pluginId)
+}
+
+private fun List<String>.customizeIfNeeded(pluginId: PluginId): List<String> {
+  val customization = PluginInstallationCustomization.findPluginInstallationCustomization(pluginId) ?: return this
+  return customization.customizeTags(this)
 }
 
 @NlsSafe

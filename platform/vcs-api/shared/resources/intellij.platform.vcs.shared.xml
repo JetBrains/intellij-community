@@ -2,4 +2,10 @@
   <dependencies>
     <module name="intellij.platform.vcs.core"/>
   </dependencies>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.openapi.vcs.changes.ui.filePathIconProvider"
+                    interface="com.intellij.openapi.vcs.changes.FilePathIconProvider"
+                    dynamic="true"/>
+  </extensionPoints>
 </idea-plugin>

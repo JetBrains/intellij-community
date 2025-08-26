@@ -26,9 +26,9 @@ import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.io.*
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.platform.testFramework.eelJava.EelTestJdkProvider
-import com.intellij.platform.testFramework.eelJava.EelTestRootProvider
 import com.intellij.testFramework.*
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
@@ -66,7 +66,6 @@ abstract class MavenTestCase : UsefulTestCase() {
     private set
   private var myPathTransformer: RemotePathTransformerFactory.Transformer? = null
 
-  private lateinit var ourTempDir: Path
   private lateinit var myDir: Path
 
   private var myTestFixture: IdeaProjectTestFixture? = null
@@ -129,9 +128,8 @@ abstract class MavenTestCase : UsefulTestCase() {
     myProject = myTestFixture!!.project
     myPathTransformer = RemotePathTransformerFactory.createForProject(project)
     setupCustomJdk()
-    ourTempDir = EelTestRootProvider.getTestRoot("mavenTests")
 
-    myDir = ourTempDir.resolve(getTestName(false))
+    myDir = Path.of(myProject!!.basePath).parent
     myDir.ensureExists()
 
     mavenProgressIndicator = MavenProgressIndicator(project, EmptyProgressIndicator(ModalityState.nonModal()), null)
@@ -260,7 +258,7 @@ abstract class MavenTestCase : UsefulTestCase() {
   }
 
   protected open fun setUpFixtures() {
-    val fixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(name, useDirectoryBasedProjectFormat()).fixture
+    val fixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder("project", useDirectoryBasedProjectFormat()).fixture
     myTestFixture = fixture
     fixture.setUp()
   }
@@ -271,9 +269,9 @@ abstract class MavenTestCase : UsefulTestCase() {
   }
 
   protected open fun setUpInWriteAction() {
-    val projectDir = myDir.resolve("project")
-    projectDir.createDirectories()
-    myProjectRoot = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(projectDir)
+    val projectRoot = Path.of(myProject!!.basePath)
+    projectRoot.ensureExists()
+    myProjectRoot = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(projectRoot)
   }
 
   protected open fun tearDownFixtures() {
@@ -345,6 +343,7 @@ abstract class MavenTestCase : UsefulTestCase() {
   protected fun updateSettingsXmlFully(@Language("XML") content: @NonNls String): VirtualFile {
     val ioFile = myDir.resolve("settings.xml")
     ioFile.findOrCreateFile()
+    VfsRootAccess.allowRootAccess(myProject!!, ioFile.toString())
     val f = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(ioFile)!!
     setFileContent(f, content)
     refreshFiles(listOf(f))

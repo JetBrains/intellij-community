@@ -264,6 +264,7 @@ com.intellij.openapi.editor.ex.MarkupModelEx
 - a:containsHighlighter(com.intellij.openapi.editor.markup.RangeHighlighter):Z
 - a:dispose():V
 - overlappingErrorStripeIterator(I,I):com.intellij.openapi.editor.ex.MarkupIterator
+- overlappingGutterIterator(I,I):com.intellij.openapi.editor.ex.MarkupIterator
 - a:overlappingIterator(I,I):com.intellij.openapi.editor.ex.MarkupIterator
 - a:processRangeHighlightersOutside(I,I,com.intellij.util.Processor):Z
 - a:processRangeHighlightersOverlappingWith(I,I,com.intellij.util.Processor):Z
@@ -479,6 +480,7 @@ c:com.intellij.openapi.editor.impl.MarkupModelImpl
 - getAllHighlighters():com.intellij.openapi.editor.markup.RangeHighlighter[]
 - getDocument():com.intellij.openapi.editor.Document
 - overlappingErrorStripeIterator(I,I):com.intellij.openapi.editor.ex.MarkupIterator
+- overlappingGutterIterator(I,I):com.intellij.openapi.editor.ex.MarkupIterator
 - overlappingIterator(I,I):com.intellij.openapi.editor.ex.MarkupIterator
 - processRangeHighlightersOutside(I,I,com.intellij.util.Processor):Z
 - processRangeHighlightersOverlappingWith(I,I,com.intellij.util.Processor):Z

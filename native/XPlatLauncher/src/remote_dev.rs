@@ -57,9 +57,8 @@ impl LaunchConfiguration for RemoteDevLaunchConfiguration {
         Ok(vm_options)
     }
 
-    fn get_properties_file(&self) -> Result<PathBuf> {
-        let remote_dev_properties = self.get_remote_dev_properties();
-        let remote_dev_properties_file = self.write_merged_properties_file(&remote_dev_properties?[..])
+    fn get_custom_properties_file(&self) -> Result<PathBuf> {
+        let remote_dev_properties_file = self.write_merged_properties_file()
             .context("Failed to write remote dev IDE properties file")?;
 
         Ok(remote_dev_properties_file)
@@ -252,7 +251,7 @@ impl RemoteDevLaunchConfiguration {
         Ok(result)
     }
 
-    fn write_merged_properties_file(&self, remote_dev_properties: &[IdeProperty]) -> Result<PathBuf> {
+    fn write_merged_properties_file(&self) -> Result<PathBuf> {
         let pid = std::process::id();
         let filename = format!("pid.{pid}.temp.remote-dev.properties");
         let path = get_ide_temp_directory(&self.default)?.join(filename);
@@ -265,17 +264,7 @@ impl RemoteDevLaunchConfiguration {
         let file = File::create(&path)?;
         let mut writer = BufWriter::new(file);
 
-        // TODO: maybe check the user-set properties file?
-        // let default_properties = self.default.get_properties_file();
-
-        // TODO: use IDE-specific properties file
-        let dist_properties_path = self.default.ide_home.join("bin").join("idea.properties");
-        let dist_properties_file = File::open(dist_properties_path).context("Failed to open IDE properties file")?;
-
-        for l in BufReader::new(dist_properties_file).lines() {
-            writeln!(&mut writer, "{}", l.context("Failed to read IDE properties file")?)?;
-        }
-
+        let remote_dev_properties = self.get_remote_dev_properties()?;
         for p in remote_dev_properties {
             let key = p.key.as_str();
             let value = p.value.as_str();

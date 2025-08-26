@@ -109,7 +109,7 @@ internal fun generateCrossPlatformRepository(distAllPath: Path, osSpecificDistPa
   val repositories = osSpecificDistPaths.map { osSpecificDistPath ->
     val repositoryFile = osSpecificDistPath.resolve(MODULE_DESCRIPTORS_COMPACT_PATH)
     if (!repositoryFile.exists()) {
-      context.messages.error("Cannot generate runtime module repository for cross-platform distribution: $repositoryFile doesn't exist")
+      context.messages.logErrorAndThrow("Cannot generate runtime module repository for cross-platform distribution: $repositoryFile doesn't exist")
     }
     RuntimeModuleRepositorySerialization.loadFromCompactFile(repositoryFile)
   }
@@ -121,7 +121,7 @@ internal fun generateCrossPlatformRepository(distAllPath: Path, osSpecificDistPa
     val commonDependencies = descriptors.first().dependencies
     for (descriptor in descriptors) {
       if (descriptor.dependencies != commonDependencies) {
-        context.messages.error("Cannot generate runtime module repository for cross-platform distribution: different dependencies for module '$moduleId', ${descriptor.dependencies} and $commonDependencies")
+        context.messages.logErrorAndThrow("Cannot generate runtime module repository for cross-platform distribution: different dependencies for module '$moduleId', ${descriptor.dependencies} and $commonDependencies")
       }
     }
     commonDescriptors.add(RawRuntimeModuleDescriptor.create(moduleId, commonResourcePaths.toList(), commonDependencies))

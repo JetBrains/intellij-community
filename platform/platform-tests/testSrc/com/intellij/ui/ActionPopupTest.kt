@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui
 
+import com.intellij.ide.ui.IdeUiService
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
@@ -13,7 +14,13 @@ import com.intellij.ui.popup.ActionPopupStep
 import com.intellij.ui.popup.list.ListPopupImpl
 import com.intellij.ui.popup.list.PopupListElementRenderer
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertNotNull
+import java.awt.Component
+import java.awt.Container
 import java.util.function.Supplier
+import javax.swing.JLayeredPane
+import javax.swing.JRootPane
+import javax.swing.RootPaneContainer
 import kotlin.test.assertEquals
 
 @RunInEdt
@@ -36,6 +43,14 @@ class ActionPopupTest {
         }
       }
     }
+  }
+
+  @Test
+  fun testNonJComponentDataContextPopupLocation() {
+    val component: Component = HeadlessRootPaneContainer()
+    val context = IdeUiService.getInstance().createUiDataContext(component)
+    val point = JBPopupFactory.getInstance().guessBestPopupLocation(context)
+    assertNotNull(point)
   }
 
   private fun testActionPresentation(textWithMnemonic: TextWithMnemonic, expectedText: String, options: ActionPopupOptions) {
@@ -66,3 +81,18 @@ private class DumbAction(textWithMnemonic: TextWithMnemonic) : AnAction() {
 private fun createOptions(showNumbers: Boolean, useAlphaAsNumbers: Boolean, honorActionMnemonics: Boolean): ActionPopupOptions {
   return ActionPopupOptions.forStepAndItems(showNumbers, useAlphaAsNumbers, true, honorActionMnemonics, false, null, 0)
 }
+
+private class HeadlessRootPaneContainer : Component(), RootPaneContainer {
+  private val rootPane: JRootPane = JRootPane()
+  override fun getRootPane(): JRootPane = rootPane
+
+  override fun setContentPane(contentPane: Container?) = Unit
+  override fun getContentPane(): Container? = rootPane.getContentPane()
+
+  override fun setLayeredPane(layeredPane: JLayeredPane?) = Unit
+  override fun getLayeredPane(): JLayeredPane? = rootPane.getLayeredPane()
+
+  override fun setGlassPane(glassPane: Component?) = Unit
+  override fun getGlassPane(): Component? = rootPane.glassPane
+}
+

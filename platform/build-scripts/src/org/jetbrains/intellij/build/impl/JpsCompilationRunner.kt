@@ -202,7 +202,7 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
     }
     for (artifact in artifacts) {
       if (artifact.outputFilePath?.let(Path::of)?.let(Files::exists) == false) {
-        context.messages.error("${artifact.name} is expected to be built at ${artifact.outputFilePath}")
+        context.messages.logErrorAndThrow("${artifact.name} is expected to be built at ${artifact.outputFilePath}")
       }
     }
   }

@@ -1510,7 +1510,7 @@ public final class BuildManager implements Disposable {
         //-Djava.endorsed.dirs is not supported in JDK 9+, may result in abnormal process termination
         cmdLine.addParameter("-Djava.endorsed.dirs=\"\""); // turn off all jre customizations for predictable behaviour
       }
-      if (sdkVersion.isAtLeast(JavaSdkVersion.JDK_16)) {
+      if (sdkVersion.isAtLeast(JavaSdkVersion.JDK_11)) {
         // enable javac-related reflection tricks in JPS
         ClasspathBootstrap.configureReflectionOpenPackages(cmdLine::addParameter);
       }

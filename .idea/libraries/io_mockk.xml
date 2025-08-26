@@ -1,21 +1,21 @@
 <component name="libraryTable">
   <library name="io.mockk" type="repository">
-    <properties maven-id="io.mockk:mockk:1.13.12">
+    <properties maven-id="io.mockk:mockk:1.14.5">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/mockk/mockk/1.13.12/mockk-1.13.12.jar">
-          <sha256sum>f634a6723d70211de75070491bc7062b042f8dc01bcd3b88487fcb1a5b6d1c1c</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/mockk/mockk/1.14.5/mockk-1.14.5.jar">
+          <sha256sum>089e24417bf9f6c34eec5720eebb2cbcc82ea2855ecef90133eb17e1079d5868</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/mockk/mockk-dsl/1.13.12/mockk-dsl-1.13.12.jar">
-          <sha256sum>fbc64f5c44a7added8b6eab517cf7d70555e25153bf5d44a6ed9b0e5312f7de9</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/mockk/mockk-dsl/1.14.5/mockk-dsl-1.14.5.jar">
+          <sha256sum>089e24417bf9f6c34eec5720eebb2cbcc82ea2855ecef90133eb17e1079d5868</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/mockk/mockk-agent/1.13.12/mockk-agent-1.13.12.jar">
-          <sha256sum>b5a3d62e5446d89a2a8ede3a05664f3f90e9d1373305fcd046e706dd9fae3c00</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/mockk/mockk-agent/1.14.5/mockk-agent-1.14.5.jar">
+          <sha256sum>089e24417bf9f6c34eec5720eebb2cbcc82ea2855ecef90133eb17e1079d5868</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/mockk/mockk-agent-api/1.13.12/mockk-agent-api-1.13.12.jar">
-          <sha256sum>fbc64f5c44a7added8b6eab517cf7d70555e25153bf5d44a6ed9b0e5312f7de9</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/mockk/mockk-agent-api/1.14.5/mockk-agent-api-1.14.5.jar">
+          <sha256sum>089e24417bf9f6c34eec5720eebb2cbcc82ea2855ecef90133eb17e1079d5868</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/mockk/mockk-core/1.13.12/mockk-core-1.13.12.jar">
-          <sha256sum>fbc64f5c44a7added8b6eab517cf7d70555e25153bf5d44a6ed9b0e5312f7de9</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/mockk/mockk-core/1.14.5/mockk-core-1.14.5.jar">
+          <sha256sum>089e24417bf9f6c34eec5720eebb2cbcc82ea2855ecef90133eb17e1079d5868</sha256sum>
         </artifact>
       </verification>
       <exclude>
@@ -23,19 +23,19 @@
       </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/mockk/mockk/1.13.12/mockk-1.13.12.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/mockk/mockk-dsl/1.13.12/mockk-dsl-1.13.12.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/mockk/mockk-agent/1.13.12/mockk-agent-1.13.12.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/mockk/mockk-agent-api/1.13.12/mockk-agent-api-1.13.12.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/mockk/mockk-core/1.13.12/mockk-core-1.13.12.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/mockk/mockk/1.14.5/mockk-1.14.5.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/mockk/mockk-dsl/1.14.5/mockk-dsl-1.14.5.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/mockk/mockk-agent/1.14.5/mockk-agent-1.14.5.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/mockk/mockk-agent-api/1.14.5/mockk-agent-api-1.14.5.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/mockk/mockk-core/1.14.5/mockk-core-1.14.5.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/mockk/mockk/1.13.12/mockk-1.13.12-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/mockk/mockk-dsl/1.13.12/mockk-dsl-1.13.12-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/mockk/mockk-agent/1.13.12/mockk-agent-1.13.12-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/mockk/mockk-agent-api/1.13.12/mockk-agent-api-1.13.12-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/mockk/mockk-core/1.13.12/mockk-core-1.13.12-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/mockk/mockk/1.14.5/mockk-1.14.5-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/mockk/mockk-dsl/1.14.5/mockk-dsl-1.14.5-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/mockk/mockk-agent/1.14.5/mockk-agent-1.14.5-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/mockk/mockk-agent-api/1.14.5/mockk-agent-api-1.14.5-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/mockk/mockk-core/1.14.5/mockk-core-1.14.5-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

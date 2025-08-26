@@ -1,10 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress;
 
 import com.intellij.concurrency.ThreadContext;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.DebugAttachDetectorArgs;
+import com.intellij.util.progress.JfrCancellationEventsCallbackHolder;
 import kotlin.coroutines.CoroutineContext;
 import kotlinx.coroutines.Job;
 import kotlinx.coroutines.JobKt;
@@ -32,10 +33,18 @@ public final class Cancellation {
 
   public static void checkCancelled() {
     if (isInNonCancelableSection()) {
+      JfrCancellationEventsCallbackHolder.nonCancellableSectionInvoked();
       return;
     }
 
-    ensureActive();
+    try {
+      ensureActive();
+      JfrCancellationEventsCallbackHolder.cancellableSectionInvoked(false);
+    }
+    catch (ProcessCanceledException e) {
+      JfrCancellationEventsCallbackHolder.cancellableSectionInvoked(true);
+      throw e;
+    }
   }
 
   /**

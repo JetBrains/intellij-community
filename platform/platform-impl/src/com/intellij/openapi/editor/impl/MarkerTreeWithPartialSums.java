@@ -92,17 +92,17 @@ public class MarkerTreeWithPartialSums<T extends RangeMarkerImpl & IntSupplier> 
     }
 
     @Override
-    public Node<T> getLeft() {
+    protected Node<T> getLeft() {
       return (Node<T>)super.getLeft();
     }
 
     @Override
-    public Node<T> getRight() {
+    protected Node<T> getRight() {
       return (Node<T>)super.getRight();
     }
 
     @Override
-    public Node<T> getParent() {
+    protected Node<T> getParent() {
       return (Node<T>)super.getParent();
     }
 

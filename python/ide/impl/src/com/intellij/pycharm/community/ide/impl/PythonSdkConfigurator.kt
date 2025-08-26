@@ -94,9 +94,6 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
     if (searchPreviousUsed(module, existingSdks, project))
       return@withContext
 
-    if (findRelatedSdk(module, existingSdks, context))
-      return@withContext
-
     if (extension != null) {
       val isExtensionSetup = setSdkUsingExtension(module, extension) {
         withContext(Dispatchers.Default) {
@@ -175,19 +172,6 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
     val preferred = mostPreferred(sharedCondaEnvs) ?: return@reportRawProgress false
     setReadyToUseSdk(project, module, preferred)
     return@reportRawProgress false
-  }
-
-  private suspend fun findRelatedSdk(
-    module: Module,
-    existingSdks: List<Sdk>,
-    context: UserDataHolderBase,
-  ): Boolean = reportRawProgress { indicator ->
-    indicator.text(PyBundle.message("looking.for.related.venv"))
-    thisLogger().debug("Looking for a virtual environment related to the project")
-    val env = detectAssociatedEnvironments(module, existingSdks, context).firstOrNull() ?: return@reportRawProgress false
-
-    env.setupSdk(module, existingSdks, true)
-    true
   }
 
   private suspend fun searchPreviousUsed(

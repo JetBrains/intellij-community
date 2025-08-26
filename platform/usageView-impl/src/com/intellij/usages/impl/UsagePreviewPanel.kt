@@ -9,6 +9,7 @@ import com.intellij.find.findUsages.similarity.MostCommonUsagePatternsComponent
 import com.intellij.find.findUsages.similarity.MostCommonUsagePatternsComponent.Companion.findClusteringSessionInUsageView
 import com.intellij.ide.IdeTooltipManager
 import com.intellij.lang.injection.InjectedLanguageManager
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.UiCompatibleDataProvider
@@ -16,9 +17,16 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.*
 import com.intellij.openapi.editor.colors.EditorColors
+import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.openapi.editor.event.DocumentListener
+import com.intellij.openapi.editor.event.EditorFactoryEvent
+import com.intellij.openapi.editor.event.EditorFactoryListener
 import com.intellij.openapi.editor.event.VisibleAreaEvent
 import com.intellij.openapi.editor.event.VisibleAreaListener
+import com.intellij.openapi.editor.ex.DocumentEx
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.ex.FocusChangeListener
+import com.intellij.openapi.editor.ex.RangeMarkerEx
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.highlighter.EditorHighlighter
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory
@@ -46,6 +54,7 @@ import com.intellij.ui.Gray
 import com.intellij.ui.JBColor
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBLabel
+import com.intellij.usageView.StickyUsageInfoOnRangeMarker
 import com.intellij.usageView.UsageInfo
 import com.intellij.usageView.UsageViewBundle
 import com.intellij.usages.UsageContextPanel
@@ -464,6 +473,43 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
                                                           highlightLayer,
                                                           HighlighterTargetArea.EXACT_RANGE)
         highlighter.putUserData(IN_PREVIEW_USAGE_FLAG, true)
+        if (info is StickyUsageInfoOnRangeMarker) {
+          val disposables = editor.document.getOrCreateUserDataUnsafe(StickyUsageInfoOnRangeMarker.STICKY_SUBSCRIPTION_DISPOSABLES, { mutableMapOf() })
+          if (disposables[info] == null) {
+            val documentRangeMarker = editor.document.createRangeMarker(highlighter.startOffset, highlighter.endOffset, true) as? RangeMarkerEx
+            if (documentRangeMarker != null) {
+              info.bindToRangeMarker(documentRangeMarker)
+
+              val listenerDisposable = Disposer.newDisposable()
+              disposables[info] = listenerDisposable
+
+              editor.document.addDocumentListener(object : DocumentListener {
+                override fun documentChanged(event: DocumentEvent) {
+                  info.rememberRanges()
+                }
+              }, listenerDisposable)
+
+              EditorFactory.getInstance().addEditorFactoryListener(object : EditorFactoryListener {
+                override fun editorReleased(event: EditorFactoryEvent) {
+                  if (event.editor === editor) {
+                    Disposer.dispose(listenerDisposable)
+                  }
+                }
+              }, listenerDisposable)
+
+              Disposer.register(listenerDisposable, object : Disposable {
+                override fun dispose() {
+                  (editor.document as? DocumentEx)?.removeRangeMarker(documentRangeMarker)
+                  disposables.remove(info)
+                }
+
+                override fun toString(): String {
+                  return "DocumentRangeMarkerDisposer ${documentRangeMarker.textRange}"
+                }
+              })
+            }
+          }
+        }
         if (infoRange != null && findModel != null && findModel.isReplaceState) {
           val boxHighlighter = markupModel.addRangeHighlighter(
             infoRange.startOffset,
