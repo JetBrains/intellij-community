@@ -10,6 +10,7 @@ import com.intellij.diagnostic.PluginException
 import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.idea.AppMode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
@@ -183,7 +184,7 @@ class EditorNotificationsImpl(private val project: Project, coroutineScope: Coro
   override fun scheduleUpdateNotifications(editor: TextEditor) {
     ((editor as? TextEditorImpl)?.asyncLoader?.coroutineScope ?: coroutineScope).launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
       if (editor.isValid) {
-        if (ApplicationManager.getApplication().isHeadlessEnvironment || UIUtil.isShowing(editor.component)) {
+        if (ApplicationManager.getApplication().isHeadlessEnvironment || AppMode.isRemoteDevHost() || UIUtil.isShowing(editor.component)) {
           updateEditors(file = editor.file, fileEditors = listOf(editor))
         }
         else {
