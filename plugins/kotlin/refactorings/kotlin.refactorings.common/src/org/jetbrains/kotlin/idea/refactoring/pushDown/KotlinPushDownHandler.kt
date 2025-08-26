@@ -67,11 +67,12 @@ class KotlinPushDownHandler : AbstractPullPushMembersHandler(
             // Previously, org.jetbrains.kotlin.idea.core.isInheritable was used.
 
             val containingClass = classOrObject.containingClass()
-            return if (containingClass != null) {
+            if (containingClass != null) {
                 invoke(project, editor, classOrObject = containingClass, member = classOrObject, dataContext)
             } else {
                 reportFinalClassOrObject(project, editor, classOrObject)
             }
+            return
         }
 
         val members = allowAnalysisOnEdt { KotlinMemberInfoStorage(classOrObject).getClassMemberInfos(classOrObject).filter { it.member !is KtParameter } }
