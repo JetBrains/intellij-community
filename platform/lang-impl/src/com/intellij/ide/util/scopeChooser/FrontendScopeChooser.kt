@@ -53,7 +53,7 @@ class FrontendScopeChooser(private val project: Project, private val preselected
     comboBox.whenItemSelected {
       val scopeId = getSelectedScopeId() ?: return@whenItemSelected
       if (it.needsUserInputForScope()) {
-        FindAndReplaceExecutor.getInstance().performScopeSelection(scopeId, modelId, project)
+        FindAndReplaceExecutor.getInstance().performScopeSelection(scopeId, project)
       }
     }
 
@@ -134,7 +134,7 @@ class FrontendScopeChooser(private val project: Project, private val preselected
 
   private fun editScopes() {
     val selection = getSelectedScopeId()
-    ScopeModelService.getInstance(project).openEditScopesDialog(selection) { scopeId ->
+    ScopeModelService.getInstance(project).openEditScopesDialog(selection, modelId) { scopeId ->
       ApplicationManager.getApplication().invokeLater {
         scopeId?.let { selectedItem = scopesMap[it] }
       }
