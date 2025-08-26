@@ -646,6 +646,13 @@ com.intellij.ide.util.PsiElementRenderingInfo
 com.intellij.ide.util.TypeVisibilityStateHolder
 - a:isVisible(java.lang.Object):Z
 - a:setVisible(java.lang.Object,Z):V
+com.intellij.ide.util.gotoByName.ChooseByNameContributorWithDisposableCleanup
+- com.intellij.navigation.ChooseByNameContributorEx2
+- processElementsWithName(java.lang.String,com.intellij.util.Processor,com.intellij.util.indexing.FindSymbolParameters):V
+- a:processElementsWithNameWithDisposable(com.intellij.openapi.Disposable,java.lang.String,com.intellij.util.Processor,com.intellij.util.indexing.FindSymbolParameters):V
+- processNames(com.intellij.util.Processor,com.intellij.psi.search.GlobalSearchScope,com.intellij.util.indexing.IdFilter):V
+- processNames(com.intellij.util.Processor,com.intellij.util.indexing.FindSymbolParameters):V
+- a:processNamesWithDisposable(com.intellij.openapi.Disposable,com.intellij.util.Processor,com.intellij.util.indexing.FindSymbolParameters):V
 com.intellij.ide.util.gotoByName.ChooseByNameItem
 - a:getDescription():java.lang.String
 - a:getName():java.lang.String
@@ -669,6 +676,18 @@ com.intellij.ide.util.gotoByName.ChooseByNameWeightedItemProvider
 - a:filterElementsWithWeights(com.intellij.ide.util.gotoByName.ChooseByNameViewModel,java.lang.String,Z,com.intellij.openapi.progress.ProgressIndicator,com.intellij.util.Processor):Z
 com.intellij.ide.util.gotoByName.CustomMatcherModel
 - a:matches(java.lang.String,java.lang.String):Z
+a:com.intellij.ide.util.gotoByName.DisposableGotoModelWithPersistentFilter
+- com.intellij.ide.util.gotoByName.FilteringGotoByModel
+- com.intellij.openapi.Disposable$Default
+- <init>(com.intellij.openapi.project.Project,java.util.List):V
+- p:doProcessContributorForName(com.intellij.navigation.ChooseByNameContributor,java.lang.String,com.intellij.util.indexing.FindSymbolParameters,com.intellij.openapi.progress.ProgressIndicator,java.util.List,I[],Z):V
+- p:doProcessContributorNames(com.intellij.navigation.ChooseByNameContributor,com.intellij.util.indexing.FindSymbolParameters,com.intellij.util.Processor):V
+c:com.intellij.ide.util.gotoByName.GotoClassModel2
+- com.intellij.ide.util.gotoByName.DisposableGotoModelWithPersistentFilter
+c:com.intellij.ide.util.gotoByName.GotoFileModel
+- com.intellij.ide.util.gotoByName.DisposableGotoModelWithPersistentFilter
+c:com.intellij.ide.util.gotoByName.GotoSymbolModel2
+- com.intellij.ide.util.gotoByName.DisposableGotoModelWithPersistentFilter
 com.intellij.ide.util.gotoByName.ModelDiff$Cmd
 - a:apply():V
 - a:translateSelection(I):I

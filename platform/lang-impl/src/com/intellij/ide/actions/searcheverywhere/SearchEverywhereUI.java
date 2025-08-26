@@ -1480,6 +1480,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
       presentation.setTargetsNodeText(IdeBundle.message("searcheverywhere.found.targets.title", searchText, contributorsString));
       presentation.setTabName(tabCaptionText);
       presentation.setTabText(tabCaptionText);
+      presentation.setSearchString(searchText);
 
       Collection<Usage> usages = new LinkedHashSet<>();
       Collection<PsiElement> targets = new LinkedHashSet<>();

@@ -98,11 +98,15 @@ internal class SearchEverywherePreviewGenerator(val project: Project,
           return UsageInfo(file, 0, 0, true)
         }
       }
+      for (finder in SearchEverywherePreviewPrimaryUsageFinder.EP_NAME.extensionList) {
+        val elementForUsageInfo = finder.tryFindPsiElementForUsageInfo(project, psiElement)
+        if (elementForUsageInfo != null) return UsageInfo(elementForUsageInfo)
+      }
       return UsageInfo(psiElement)
     }
 
     for (finder in SearchEverywherePreviewPrimaryUsageFinder.EP_NAME.extensionList) {
-      val resultPair = finder.findPrimaryUsageInfo(psiFile)
+      val resultPair = finder.tryFindPrimaryUsageInfo(psiFile)
       if (resultPair != null) {
         val usageInfo = resultPair.first
         val disposable = resultPair.second

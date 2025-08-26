@@ -3,7 +3,6 @@ package com.intellij.ide.actions.searcheverywhere
 
 import com.intellij.frontend.FrontendApplicationInfo
 import com.intellij.frontend.FrontendType
-import com.intellij.ide.actions.SearchEverywhereSplitIncompatible
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.PlatformUtils
 import org.jetbrains.annotations.ApiStatus
@@ -11,7 +10,7 @@ import org.jetbrains.annotations.TestOnly
 
 @ApiStatus.Internal
 object SearchEverywhereFeature {
-  val isSplit: Boolean get() = Registry.`is`(registryKey, false) && SearchEverywhereSplitIncompatible.EP_NAME.extensionList.isEmpty()
+  val isSplit: Boolean get() = Registry.`is`(registryKey, false)
 
   private val isGuest: Boolean get() {
     val frontendType = FrontendApplicationInfo.getFrontendType()

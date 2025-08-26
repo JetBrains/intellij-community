@@ -10917,7 +10917,6 @@ e:com.intellij.ide.util.gotoByName.GotoActionModel$MatchedValueType
 - s:valueOf(java.lang.String):com.intellij.ide.util.gotoByName.GotoActionModel$MatchedValueType
 - s:values():com.intellij.ide.util.gotoByName.GotoActionModel$MatchedValueType[]
 c:com.intellij.ide.util.gotoByName.GotoClassModel2
-- com.intellij.ide.util.gotoByName.FilteringGotoByModel
 - <init>(com.intellij.openapi.project.Project):V
 - p:filterValueFor(com.intellij.navigation.NavigationItem):com.intellij.ide.util.gotoByName.LanguageRef
 - getCheckBoxName():java.lang.String
@@ -10956,7 +10955,6 @@ com.intellij.ide.util.gotoByName.GotoFileCustomizer
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:createItemProvider(com.intellij.openapi.project.Project,com.intellij.psi.PsiElement,com.intellij.ide.util.gotoByName.GotoFileModel):com.intellij.ide.actions.GotoFileItemProvider
 c:com.intellij.ide.util.gotoByName.GotoFileModel
-- com.intellij.ide.util.gotoByName.FilteringGotoByModel
 - com.intellij.openapi.project.DumbAware
 - java.util.Comparator
 - sf:DIRECTORY_FILE_TYPE_REF:com.intellij.ide.util.gotoByName.FileTypeRef
@@ -10982,7 +10980,6 @@ c:com.intellij.ide.util.gotoByName.GotoFileModel
 - saveInitialCheckBoxState(Z):V
 - willOpenEditor():Z
 c:com.intellij.ide.util.gotoByName.GotoSymbolModel2
-- com.intellij.ide.util.gotoByName.FilteringGotoByModel
 - <init>(com.intellij.openapi.project.Project):V
 - <init>(com.intellij.openapi.project.Project,com.intellij.openapi.Disposable):V
 - <init>(com.intellij.openapi.project.Project,java.util.List,com.intellij.openapi.Disposable):V
