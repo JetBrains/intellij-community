@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.rw
 
 import com.intellij.diagnostic.ThreadDumper
@@ -62,10 +62,11 @@ internal class PlatformReadWriteActionSupport : ReadWriteActionSupport {
   override suspend fun <X> executeReadAndWriteAction(
     constraints: Array<out ReadConstraint>,
     runWriteActionOnEdt: Boolean,
+    undispatched: Boolean,
     action: ReadAndWriteScope.() -> ReadResult<X>,
   ): X {
     while (true) {
-      val (readResult: ReadResult<X>, stamp: Long) = constrainedReadAction(*constraints) {
+      val (readResult: ReadResult<X>, stamp: Long) = executeReadAction(constraints.toList(), undispatched = undispatched, blocking = false) {
         Pair(ReadResult.Companion.action(), AsyncExecutionServiceImpl.getWriteActionCounter())
       }
       when (readResult) {

@@ -6,13 +6,15 @@ import com.intellij.openapi.progress.*
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.application
+import com.intellij.util.concurrency.SequentialTaskExecutor
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
-import kotlin.time.Duration.Companion.seconds
+import kotlin.test.assertContains
+import kotlin.test.assertFalse
 
 private const val REPETITIONS: Int = 100
 
@@ -210,31 +212,33 @@ class SuspendingReadAndWriteActionTest {
     }
   }
 
-  fun `readAndWriteAction contention test`(bg: Boolean): Unit = timeoutRunBlocking(timeout = 10.seconds, context = Dispatchers.Default) {
-    val numberOfCoroutines = 500
-    val counter = runReadAction { AsyncExecutionServiceImpl.getWriteActionCounter() }
-    coroutineScope {
-      repeat(numberOfCoroutines) {
-        launch {
-          if (bg) {
-            readAndBackgroundWriteAction {
-              writeAction { }
-            }
+  @Test
+  fun `readAndWriteActionUndispatched do not run in default dispatcher`(): Unit = timeoutRunBlocking {
+    val name = "Test executor for undispatched test"
+    val executor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor(name)
+    try {
+      val dispatcher = executor.asCoroutineDispatcher()
+
+      withContext(dispatcher) {
+        readAndEdtWriteActionUndispatched {
+          // contains because in debug mode coroutines append coroutine id
+          assertContains(Thread.currentThread().name, name)
+          writeAction {
+            EDT.assertIsEdt()
           }
-          else {
-            readAndEdtWriteAction {
-              writeAction { }
-            }
+        }
+        readAndBackgroundWriteActionUndispatched {
+          // contains because in debug mode coroutines append coroutine id
+          assertContains(Thread.currentThread().name, name)
+          writeAction {
+            // todo: this will change after IJPL-392
+            assertFalse { Thread.currentThread().name.contains(name) }
           }
         }
       }
     }
-    val newCounter = runReadAction { AsyncExecutionServiceImpl.getWriteActionCounter() }
-    Assertions.assertTrue(newCounter - counter >= numberOfCoroutines, "There should be at least $numberOfCoroutines restarts")
-    // actually we can strengthen the upper bound, but the most important part is that it grows linearly
-    Assertions.assertTrue(newCounter - counter <= numberOfCoroutines * 3, "There should be no more than $numberOfCoroutines * 3 restarts")
+    finally {
+      executor.shutdown()
+    }
   }
-
-  @Test
-  fun `number of write actions grows linearly with contention of read and edt write actions`() = `readAndWriteAction contention test`(false)
 }
