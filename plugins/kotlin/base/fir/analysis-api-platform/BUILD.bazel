@@ -117,6 +117,8 @@ jvm_library(
     "//java/java-psi-impl:psi-impl",
     "//plugins/kotlin/base/fir/project-structure",
     "//plugins/kotlin/base/fir/project-structure:project-structure_test_lib",
+    "//plugins/kotlin/base/indices",
+    "//plugins/kotlin/base/indices/tests:tests_test_lib",
   ],
   runtime_deps = [":analysis-api-platform_resources"]
 )
