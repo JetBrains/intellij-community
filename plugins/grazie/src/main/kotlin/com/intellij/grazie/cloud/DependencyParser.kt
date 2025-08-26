@@ -34,7 +34,7 @@ import org.languagetool.language.English
 
 object DependencyParser {
   private val LOG = Logger.getInstance(DependencyParser::class.java)
-  private val cachedTrees = ContainerUtil.createSoftKeySoftValueMap<String, Tree>()
+  private val cachedTrees = ContainerUtil.createConcurrentSoftKeySoftValueMap<String, Tree>()
 
   @JvmStatic
   fun getParser(text: TextContent, minimal: Boolean): AsyncBatchParser<Tree>? {
