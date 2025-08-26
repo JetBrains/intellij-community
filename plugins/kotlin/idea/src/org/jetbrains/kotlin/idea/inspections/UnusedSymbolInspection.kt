@@ -700,12 +700,12 @@ class UnusedSymbolInspection : AbstractKotlinInspection() {
             val fqName = resolvedName.fqName?.asString() ?: continue
 
             // checks taken from com.intellij.codeInspection.util.SpecialAnnotationsUtilBase.createAddToSpecialAnnotationFixes
-            if (fqName.startsWith("kotlin.")
-                || fqName.startsWith("java.")
-                || fqName.startsWith("javax.")
-                || fqName.startsWith("org.jetbrains.annotations.")
-            )
-                continue
+            if (
+                fqName.startsWith("kotlin.") || 
+                fqName.startsWith("java.") || 
+                fqName.startsWith("javax.") || 
+                fqName.startsWith("org.jetbrains.annotations.")
+            ) continue
 
             val intentionAction = QuickFixFactory.getInstance().createAddToDependencyInjectionAnnotationsFix(declaration.project, fqName)
 

@@ -29,7 +29,9 @@ class UnusedSymbolInspection : LocalInspectionTool() {
                 if (!K2UnusedSymbolUtil.isApplicableByPsi(element) || K2UnusedSymbolUtil.isLocalDeclaration(element)) return
                 val message = element.describe()?.let { KotlinBaseHighlightingBundle.message("inspection.message.never.used", it) } ?: return
                 val psiToReportProblem = analyze(element) { K2UnusedSymbolUtil.getPsiToReportProblem(element, javaInspection) } ?: return
-                val quickFixes = K2UnusedSymbolUtil.createQuickFixes(element).map { IntentionWrapper.wrapToQuickFix(it, holder.file) }
+                val quickFixes = analyze(element) {
+                    K2UnusedSymbolUtil.createQuickFixes(element).map { IntentionWrapper.wrapToQuickFix(it, holder.file) } 
+                }
                 holder.registerProblem(psiToReportProblem, message, *quickFixes.toTypedArray())
             }
         }

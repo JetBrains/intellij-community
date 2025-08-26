@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.highlighting
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil
 import com.intellij.codeInsight.daemon.impl.quickfix.RenameElementFix
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInsight.intention.QuickFixFactory
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase
 import com.intellij.codeInspection.ex.EntryPointsManager
 import com.intellij.codeInspection.ex.EntryPointsManagerBase
@@ -28,6 +29,7 @@ import org.jetbrains.kotlin.analysis.api.components.importableFqName
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbols
+import org.jetbrains.kotlin.analysis.api.resolution.singleConstructorCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.successfulVariableAccessCall
@@ -735,6 +737,7 @@ object K2UnusedSymbolUtil {
         return hasTextUsages
     }
 
+    context(_: KaSession)
     fun createQuickFixes(declaration: KtNamedDeclaration): List<IntentionAction> {
         if (declaration is KtParameter) {
             if (declaration.isLoopParameter) {
@@ -755,8 +758,27 @@ object K2UnusedSymbolUtil {
                 return listOf(RenameElementFix(declaration, "_"))
             }
         }
-        // TODO: Implement K2 counterpart of `createAddToDependencyInjectionAnnotationsFix` and use it for `element` with annotations here.
-        return listOf(SafeDeleteFix(declaration))
+
+        val fixes = mutableListOf<IntentionAction>()
+        
+        fixes += SafeDeleteFix(declaration)
+
+        for (annotationEntry in declaration.annotationEntries) {
+            val annotationClassId = annotationEntry.resolveToCall()?.singleConstructorCallOrNull()?.symbol?.containingClassId ?: continue
+            val fqName = annotationClassId.asSingleFqName().asString()
+
+            // checks taken from com.intellij.codeInspection.util.SpecialAnnotationsUtilBase.createAddToSpecialAnnotationFixes
+            if (
+                fqName.startsWith("kotlin.") || 
+                fqName.startsWith("java.") || 
+                fqName.startsWith("javax.") || 
+                fqName.startsWith("org.jetbrains.annotations.")
+            ) continue
+
+            fixes += QuickFixFactory.getInstance().createAddToDependencyInjectionAnnotationsFix(declaration.project, fqName)
+        }
+
+        return fixes
     }
 
     context(_: KaSession)
