@@ -24,7 +24,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.Version;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PyLanguageFacadeKt;
 import com.jetbrains.python.codeInsight.controlflow.*;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
@@ -34,7 +33,6 @@ import com.jetbrains.python.psi.types.PyNarrowedType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Function;
@@ -96,7 +94,6 @@ public final class PyDefUseUtil {
                       if (callInstruction.isNoReturnCall(newContext)) return ControlFlowUtil.Operation.CONTINUE;
                     }
                   }
-                  final PsiElement element = instruction.getElement();
                   if (instruction.num() < startNum
                       && acceptTypeAssertions && instruction instanceof ConditionalInstruction conditionalInstruction) {
                     if (conditionalInstruction.getCondition() instanceof PyTypedElement typedElement && context.getOrigin() == typedElement.getContainingFile()) {
@@ -114,8 +111,7 @@ public final class PyDefUseUtil {
                     final ReadWriteInstruction.ACCESS access = rwInstruction.getAccess();
                     if (access.isWriteAccess() ||
                         acceptTypeAssertions && access.isAssertTypeAccess() && instruction.num() < startNum) {
-                      final String name = elementName(element);
-                      if (Comparing.strEqual(name, varName)) {
+                      if (Comparing.strEqual(rwInstruction.getName(), varName)) {
                         if (isReachableWithVersionChecks(rwInstruction, languageLevel)) {
                           result.add(rwInstruction);
                         }
@@ -123,7 +119,7 @@ public final class PyDefUseUtil {
                       }
                     }
                   }
-                  else if (acceptImplicitImports && element instanceof PyImplicitImportNameDefiner implicit) {
+                  else if (acceptImplicitImports && instruction.getElement() instanceof PyImplicitImportNameDefiner implicit) {
                     if (!implicit.multiResolveName(varName).isEmpty()) {
                       if (isReachableWithVersionChecks(instruction, languageLevel)) {
                         result.add(instruction);
@@ -206,19 +202,6 @@ public final class PyDefUseUtil {
     return evaluateVersionsForElement(element).contains(version);
   }
 
-  private static @Nullable String elementName(PsiElement element) {
-    if (element instanceof PyImportElement) {
-      return ((PyImportElement) element).getVisibleName();
-    }
-    if (element instanceof PyReferenceExpression || element instanceof PyTargetExpression) {
-      final QualifiedName qname = ((PyQualifiedExpression)element).asQualifiedName();
-      if (qname != null) {
-        return qname.toString();
-      }
-    }
-    return element instanceof PyElement ? ((PyElement)element).getName() : null;
-  }
-
   public static PsiElement @NotNull [] getPostRefs(@NotNull ScopeOwner block, @NotNull PyTargetExpression var, PyExpression anchor) {
     final ControlFlow controlFlow = ControlFlowCache.getControlFlow(block);
     final Instruction[] instructions = controlFlow.getInstructions();
@@ -243,9 +226,7 @@ public final class PyDefUseUtil {
     if (visited[instr]) return;
     visited[instr] = true;
     if (instructions[instr] instanceof ReadWriteInstruction instruction) {
-      final PsiElement element = instruction.getElement();
-      String name = elementName(element);
-      if (Comparing.strEqual(name, var.getName())) {
+      if (Comparing.strEqual(instruction.getName(), var.getName())) {
         final ReadWriteInstruction.ACCESS access = instruction.getAccess();
         if (access.isWriteAccess()) {
           return;
