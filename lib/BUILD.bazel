@@ -1382,27 +1382,6 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
-java_library(
-  name = "devkit-runtime-module-repository-jps",
-  exports = [
-    ":devkit-runtime-module-repository-jps-252_21158_http_import",
-    ":runtime-repository-252_21158_http_import",
-  ],
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "devkit-runtime-module-repository-jps-252_21158_http_import",
-  jar = "@devkit-runtime-module-repository-jps-252_21158_http//file",
-  source_jar = "@devkit-runtime-module-repository-jps-252_21158-sources_http//file"
-)
-
-jvm_import(
-  name = "runtime-repository-252_21158_http_import",
-  jar = "@runtime-repository-252_21158_http//file",
-  source_jar = "@runtime-repository-252_21158-sources_http//file"
-)
-
 jvm_import(
   name = "download-pgp-verifier",
   jar = "@download-pgp-verifier-1_1_4_http//file",

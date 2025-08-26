@@ -302,6 +302,7 @@ class CompilationContextImpl private constructor(
     spanBuilder("resolve dependencies and compile modules").use { span ->
       compileMutex.withReentrantLock {
         resolveProjectDependencies(this@CompilationContextImpl)
+        generateRuntimeModuleRepository(this@CompilationContextImpl)
         reuseOrCompile(context = this@CompilationContextImpl, moduleNames, includingTestsInModules, span)
       }
     }

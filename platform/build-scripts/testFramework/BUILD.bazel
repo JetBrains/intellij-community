@@ -41,7 +41,6 @@ jvm_library(
     "//tools/reproducibleBuilds.diff",
     "//jps/jps-builders:build",
     "//platform/runtime/product",
-    "@lib//:devkit-runtime-module-repository-jps",
     "@lib//:aalto-xml",
     "//platform/platform-impl/bootstrap",
     "//platform/core-impl",

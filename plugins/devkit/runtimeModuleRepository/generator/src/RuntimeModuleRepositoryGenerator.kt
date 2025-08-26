@@ -5,6 +5,7 @@ import com.intellij.devkit.runtimeModuleRepository.generator.RuntimeModuleReposi
 import com.intellij.devkit.runtimeModuleRepository.generator.RuntimeModuleRepositoryGenerator.enumerateRuntimeDependencies
 import com.intellij.platform.runtime.repository.RuntimeModuleId
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDescriptor
+import com.intellij.platform.runtime.repository.serialization.RuntimeModuleRepositorySerialization
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.ex.JpsElementBase
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
@@ -14,6 +15,9 @@ import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleDependency
+import java.io.IOException
+import java.nio.file.Path
+import kotlin.io.path.createDirectories
 
 object RuntimeModuleRepositoryGenerator {
   const val JAR_REPOSITORY_FILE_NAME: String = "module-descriptors.jar"
@@ -36,6 +40,19 @@ object RuntimeModuleRepositoryGenerator {
     }
     return descriptors
   }
+
+  fun saveModuleRepository(descriptors: List<RawRuntimeModuleDescriptor>, targetDirectory: Path) {
+    try {
+      val bootstrapModuleName = "intellij.platform.bootstrap"
+      targetDirectory.createDirectories()
+      RuntimeModuleRepositorySerialization.saveToCompactFile(descriptors, bootstrapModuleName, targetDirectory.resolve(COMPACT_REPOSITORY_FILE_NAME), GENERATOR_VERSION)
+      RuntimeModuleRepositorySerialization.saveToJar(descriptors, bootstrapModuleName, targetDirectory.resolve(JAR_REPOSITORY_FILE_NAME), GENERATOR_VERSION)
+    }
+    catch (e: IOException) {
+      throw RuntimeException("Failed to save runtime module repository: ${e.message}", e)
+    }
+  }
+
 
   fun enumerateRuntimeDependencies(module: JpsModule): JpsJavaDependenciesEnumerator {
     return JpsJavaExtensionService.dependencies(module).withoutSdk().withoutModuleSourceEntries().runtimeOnly()

@@ -1,10 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.devkit.runtimeModuleRepository.jps.build.RuntimeModuleRepositoryBuildConstants.COMPACT_REPOSITORY_FILE_NAME
-import com.intellij.devkit.runtimeModuleRepository.jps.build.RuntimeModuleRepositoryBuildConstants.GENERATOR_VERSION
-import com.intellij.devkit.runtimeModuleRepository.jps.build.RuntimeModuleRepositoryBuildConstants.JAR_REPOSITORY_FILE_NAME
-import com.intellij.devkit.runtimeModuleRepository.jps.build.RuntimeModuleRepositoryValidator
+import com.intellij.devkit.runtimeModuleRepository.generator.RuntimeModuleRepositoryGenerator
+import com.intellij.devkit.runtimeModuleRepository.generator.RuntimeModuleRepositoryGenerator.COMPACT_REPOSITORY_FILE_NAME
+import com.intellij.devkit.runtimeModuleRepository.generator.RuntimeModuleRepositoryGenerator.JAR_REPOSITORY_FILE_NAME
+import com.intellij.devkit.runtimeModuleRepository.generator.RuntimeModuleRepositoryValidator
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.runtime.repository.RuntimeModuleId
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDescriptor
@@ -23,10 +23,8 @@ import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleOutputEnt
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleTestOutputEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectLibraryEntry
 import org.jetbrains.jps.model.library.JpsOrderRootType
-import java.io.IOException
 import java.nio.file.Path
 import kotlin.io.path.Path
-import kotlin.io.path.createDirectories
 import kotlin.io.path.exists
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.name
@@ -127,7 +125,7 @@ internal fun generateCrossPlatformRepository(distAllPath: Path, osSpecificDistPa
     commonDescriptors.add(RawRuntimeModuleDescriptor.create(moduleId, commonResourcePaths.toList(), commonDependencies))
   }
   val targetDir = context.paths.tempDir.resolve("cross-platform-module-repository")
-  saveModuleRepository(commonDescriptors, targetDir)
+  RuntimeModuleRepositoryGenerator.saveModuleRepository(commonDescriptors, targetDir)
   return targetDir
 }
 
@@ -198,24 +196,17 @@ private suspend fun generateRepositoryForDistribution(
   }
 
   val errors = ArrayList<String>()
-  RuntimeModuleRepositoryValidator.validate(distDescriptors) { errors.add(it) }
+  val errorReporter = object : RuntimeModuleRepositoryValidator.ErrorReporter {
+    override fun reportDuplicatingId(moduleId: String) {
+      errors.add("Module '$moduleId' is included several times in the runtime module repository")
+    }
+  }
+  RuntimeModuleRepositoryValidator.validate(distDescriptors, errorReporter)
   require(errors.isEmpty()) {
     "Runtime module repository has ${errors.size} ${StringUtil.pluralize("error", errors.size)}:\n" + errors.joinToString("\n")
   }
   withContext(Dispatchers.IO) {
-    saveModuleRepository(distDescriptors = distDescriptors, targetDirectory = targetDirectory.resolve(RUNTIME_REPOSITORY_MODULES_DIR_NAME))
-  }
-}
-
-private fun saveModuleRepository(distDescriptors: List<RawRuntimeModuleDescriptor>, targetDirectory: Path) {
-  try {
-    val bootstrapModuleName = "intellij.platform.bootstrap"
-    targetDirectory.createDirectories()
-    RuntimeModuleRepositorySerialization.saveToCompactFile(distDescriptors, bootstrapModuleName, targetDirectory.resolve(COMPACT_REPOSITORY_FILE_NAME), GENERATOR_VERSION)
-    RuntimeModuleRepositorySerialization.saveToJar(distDescriptors, bootstrapModuleName, targetDirectory.resolve(JAR_REPOSITORY_FILE_NAME), GENERATOR_VERSION)
-  }
-  catch (e: IOException) {
-    throw RuntimeException("Failed to save runtime module repository: ${e.message}", e)
+    RuntimeModuleRepositoryGenerator.saveModuleRepository(descriptors = distDescriptors, targetDirectory = targetDirectory.resolve(RUNTIME_REPOSITORY_MODULES_DIR_NAME))
   }
 }
 
