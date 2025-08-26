@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.debugger.impl.rpc.XBreakpointApi
 import com.intellij.platform.debugger.impl.rpc.XBreakpointDto
 import com.intellij.platform.debugger.impl.rpc.XBreakpointEvent
 import com.intellij.platform.debugger.impl.rpc.XBreakpointTypeApi
@@ -54,6 +55,8 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
 
   private var lastRemovedBreakpoint: XBreakpointProxy? = null
 
+  private var defaultGroup: String? = null
+
   // TODO[IJPL-160384]: support persistance between sessions
   override val breakpointsDialogSettings: XBreakpointsDialogState?
     get() = _breakpointsDialogSettings
@@ -87,6 +90,10 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
         }
       }
       lineBreakpointManager.queueAllBreakpointsUpdate()
+
+      defaultGroup = durable {
+        XBreakpointApi.getInstance().getDefaultGroup(project.projectId())
+      }
 
       breakpointEvents.toFlow().collect { event ->
         try {
@@ -244,8 +251,17 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
     _breakpointsDialogSettings = settings
   }
 
-  override fun setDefaultGroup(group: String) {
-    // TODO: implement groups
+  override fun getDefaultGroup(): String? {
+    return defaultGroup
+  }
+
+  override fun setDefaultGroup(group: String?) {
+    if (group == defaultGroup) return
+
+    defaultGroup = group
+    cs.launch {
+      XBreakpointApi.getInstance().setDefaultGroup(project.projectId(), group)
+    }
   }
 
   override fun getAllBreakpointItems(): List<BreakpointItem> {

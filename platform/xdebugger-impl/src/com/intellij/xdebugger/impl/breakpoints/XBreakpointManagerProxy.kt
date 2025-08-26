@@ -23,7 +23,9 @@ interface XBreakpointManagerProxy {
 
   fun setBreakpointsDialogSettings(settings: XBreakpointsDialogState)
 
-  fun setDefaultGroup(group: String)
+  fun getDefaultGroup(): String?
+
+  fun setDefaultGroup(group: String?)
 
   suspend fun awaitBreakpointCreation(breakpointId: XBreakpointId): XBreakpointProxy?
 
@@ -62,7 +64,11 @@ interface XBreakpointManagerProxy {
       breakpointManager.breakpointsDialogSettings = settings
     }
 
-    override fun setDefaultGroup(group: String) {
+    override fun getDefaultGroup(): String? {
+      return breakpointManager.defaultGroup
+    }
+
+    override fun setDefaultGroup(group: String?) {
       breakpointManager.defaultGroup = group
     }
 

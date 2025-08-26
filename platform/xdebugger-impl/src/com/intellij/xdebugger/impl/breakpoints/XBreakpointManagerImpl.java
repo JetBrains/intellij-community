@@ -67,7 +67,7 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
   @NotNull private final CoroutineScope myCoroutineScope;
   private final BackendBreakpointRequestCounter myRequestCounter = new BackendBreakpointRequestCounter();
   private long myTime;
-  private volatile String myDefaultGroup;
+  private volatile @Nullable String myDefaultGroup;
   private RemovedBreakpointData myLastRemovedBreakpoint = null;
   private volatile boolean myFirstLoadDone = false;
 
@@ -610,11 +610,11 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
     myBreakpointsDialogSettings = breakpointsDialogSettings;
   }
 
-  public String getDefaultGroup() {
+  public @Nullable String getDefaultGroup() {
     return myDefaultGroup;
   }
 
-  public void setDefaultGroup(String defaultGroup) {
+  public void setDefaultGroup(@Nullable String defaultGroup) {
     myDefaultGroup = defaultGroup;
   }
 
