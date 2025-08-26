@@ -10,9 +10,12 @@ import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.ex.JpsElementBase
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 import org.jetbrains.jps.model.java.JpsJavaDependenciesEnumerator
+import org.jetbrains.jps.model.java.JpsJavaDependencyScope
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsOrderRootType
+import org.jetbrains.jps.model.module.JpsDependencyElement
+import org.jetbrains.jps.model.module.JpsLibraryDependency
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleDependency
 import java.io.IOException
@@ -98,15 +101,28 @@ private fun generateDescriptorsForModules(descriptors: MutableList<RawRuntimeMod
   }
 
   for (module in project.modules) {
-    //if a module doesn't have production sources, it still makes sense to generate a descriptor for it, because it may be used from code
-    if (!module.name.endsWith(RuntimeModuleId.TESTS_NAME_SUFFIX) || module.hasProductionSources) {
+    if (module.hasDescriptorForProduction) {
       descriptors.add(createProductionPartDescriptor(module, ::getRuntimeModuleName, resourcePathsSchema))
     }
-    if (GENERATE_DESCRIPTORS_FOR_TEST_MODULES && module.hasTestSources) {
-      descriptors.add(createTestPartDescriptor(module, ::getRuntimeModuleName, resourcePathsSchema))
+  }
+  if (GENERATE_DESCRIPTORS_FOR_TEST_MODULES) {
+    val additionalDependenciesForTestsCache = HashMap<JpsModule, Set<RuntimeModuleId>>()
+    val productionDependenciesCache = HashMap<JpsModule, Set<RuntimeModuleId>>()
+    for (module in project.modules) {
+      if (module.hasTestSources) {
+        descriptors.add(createTestPartDescriptor(module = module,
+                                                 runtimeModuleNameGenerator = ::getRuntimeModuleName,
+                                                 additionalDependenciesForTestsCache = additionalDependenciesForTestsCache,
+                                                 productionDependenciesCache = productionDependenciesCache,
+                                                 resourcePathsSchema = resourcePathsSchema))
+      }
     }
   }
 }
+
+//if a module doesn't have production sources, it still makes sense to generate a descriptor for it, because it may be used from code
+private val JpsModule.hasDescriptorForProduction: Boolean
+  get() = !name.endsWith(RuntimeModuleId.TESTS_NAME_SUFFIX) || hasProductionSources
 
 private val JpsModule.hasTestSources
   get() = sourceRoots.any { it.rootType in JavaModuleSourceRootTypes.TESTS }
@@ -129,76 +145,99 @@ private fun createProductionPartDescriptor(module: JpsModule, runtimeModuleNameG
  * In JPS, tests are added to classpath transitively. For example, if module 'a' depends on 'b', and 'b' depends on 'c', then tests of
  * module 'c' will be added to test classpath of module 'a', even if module 'b' has no test sources.
  * If we generate synthetic descriptors for tests of each module, even if it doesn't have test sources, the size of the module repository
- * will increase a lot. So here we add such transitive test dependencies directly to the module descriptors. To avoid adding too many
- * dependencies, we add only those which aren't already available as transitive dependencies of explicitly added dependencies.
+ * will increase a lot. So here we add such transitive test dependencies directly to the module descriptors.
  */
-private fun createTestPartDescriptor(module: JpsModule, runtimeModuleNameGenerator: (JpsModule, Boolean) -> String, resourcePathsSchema: ResourcePathsSchema): RawRuntimeModuleDescriptor {
-  val addedTransitiveModuleDependencies = HashSet<JpsModule>()
-  val addedTransitiveLibraryDependencies = HashSet<JpsLibrary>()
-
-  fun JpsJavaDependenciesEnumerator.collectTransitiveDependencies() {
-    recursively().satisfying { dependency ->
-      (dependency as? JpsModuleDependency)?.module !in addedTransitiveModuleDependencies
-    }.processModuleAndLibraries(
-      { addedTransitiveModuleDependencies.add(it) },
-      { addedTransitiveLibraryDependencies.add(it) }
-    )
-  }
-
-  JpsJavaExtensionService.dependencies(module).runtimeOnly().processModules { directDependency ->
-    if (directDependency.hasTestSources) {
-      JpsJavaExtensionService.dependencies(module).withoutSdk().runtimeOnly().collectTransitiveDependencies()
-    }
-  }
-  JpsJavaExtensionService.dependencies(module).withoutSdk().runtimeOnly().productionOnly().collectTransitiveDependencies()
-  addedTransitiveModuleDependencies.remove(module)
-
-  val dependencies = LinkedHashSet<String>()
-  val processedDummyTestDependencies = HashSet<String>()
-  if (module.hasProductionSources) {
-    dependencies.add(runtimeModuleNameGenerator(module, false))
-  }
-  enumerateRuntimeDependencies(module).processModuleAndLibraries(
-    { dependency ->
-      if (dependency.hasProductionSources) {
-        dependencies.add(runtimeModuleNameGenerator(dependency, false))
-      }
-      addTestDependency(dependencies, dependency, processedDummyTestDependencies, addedTransitiveModuleDependencies,
-                        addedTransitiveLibraryDependencies, runtimeModuleNameGenerator)
-    },
-    { dependencies.add(getLibraryId(it).stringId) }
-  )
-  val resourcePaths = if (module.hasTestSources) resourcePathsSchema.moduleTestOutputPaths(module) else emptyList()
-  return RawRuntimeModuleDescriptor.create(runtimeModuleNameGenerator(module, true), resourcePaths, dependencies.toList())
-}
-
-private fun addTestDependency(
-  result: MutableCollection<String>,
+private fun createTestPartDescriptor(
   module: JpsModule,
-  processedDummyTestDependencies: HashSet<String>,
-  addedTransitiveModuleDependencies: MutableSet<JpsModule>,
-  addedTransitiveLibraryDependencies: MutableSet<JpsLibrary>,
-  runtimeModuleNameGenerator: (JpsModule, Boolean) -> String
-) {
-  if (module.hasTestSources) {
-    result.add(runtimeModuleNameGenerator(module, true))
-    return
+  runtimeModuleNameGenerator: (JpsModule, Boolean) -> String,
+  additionalDependenciesForTestsCache: MutableMap<JpsModule, Set<RuntimeModuleId>>,
+  productionDependenciesCache: MutableMap<JpsModule, Set<RuntimeModuleId>>,
+  resourcePathsSchema: ResourcePathsSchema,
+): RawRuntimeModuleDescriptor {
+  val dependencies = LinkedHashSet<RuntimeModuleId>()
+  dependencies.addAll(collectProductionDependenciesForModule(module, productionDependenciesCache, runtimeModuleNameGenerator))
+  dependencies.addAll(collectAdditionalRuntimeDependenciesForTests(module, productionDependenciesCache, additionalDependenciesForTestsCache, runtimeModuleNameGenerator))
+  val resourcePaths = if (module.hasTestSources) resourcePathsSchema.moduleTestOutputPaths(module) else emptyList()
+  return RawRuntimeModuleDescriptor.create(runtimeModuleNameGenerator(module, true), resourcePaths, dependencies.map { it.stringId })
+}
+
+/**
+ * Returns IDs of descriptors which should be used as production runtime dependencies of [module].
+ */
+private fun collectProductionDependenciesForModule(
+  module: JpsModule,
+  productionDependenciesCache: MutableMap<JpsModule, Set<RuntimeModuleId>>,
+  runtimeModuleNameGenerator: (JpsModule, Boolean) -> String,
+): Set<RuntimeModuleId> {
+  val cached = productionDependenciesCache[module]
+  if (cached != null) {
+    return cached
   }
-  if (!processedDummyTestDependencies.add(module.name)) {
-    return
+  if (module.hasDescriptorForProduction) {
+    val result = setOf(RuntimeModuleId.raw(runtimeModuleNameGenerator(module, false)))
+    productionDependenciesCache[module] = result
+    return result
   }
-  enumerateRuntimeDependencies(module).processModuleAndLibraries(
-    {
-      addTestDependency(result, it, processedDummyTestDependencies, addedTransitiveModuleDependencies,
-                        addedTransitiveLibraryDependencies, runtimeModuleNameGenerator)
+  
+  //if a module doesn't have its own descriptor, its dependencies should be added instead
+  productionDependenciesCache[module] = emptySet() //to prevent StackOverflowError in case of circular dependencies
+  val result = LinkedHashSet<RuntimeModuleId>()
+  enumerateRuntimeDependencies(module).productionOnly().processModuleAndLibraries(
+    { dependency ->
+      result.addAll(collectProductionDependenciesForModule(dependency, productionDependenciesCache, runtimeModuleNameGenerator))
     },
-    {
-      if (addedTransitiveLibraryDependencies.add(it)) {
-        result.add(getLibraryId(it).stringId)
+    { result.add(getLibraryId(it)) }
+  )
+  productionDependenciesCache[module] = result
+  return result
+}
+
+
+/**
+ * Returns IDs of descriptors which should be added to tests dependencies of [module] in addition to production dependencies. 
+ */
+private fun collectAdditionalRuntimeDependenciesForTests(
+  module: JpsModule,
+  productionDependenciesCache: MutableMap<JpsModule, Set<RuntimeModuleId>>,
+  additionalDependenciesForTestsCache: MutableMap<JpsModule, Set<RuntimeModuleId>>,
+  runtimeModuleNameGenerator: (JpsModule, Boolean) -> String
+): Collection<RuntimeModuleId> {
+  val cached = additionalDependenciesForTestsCache[module]
+  if (cached != null) {
+    return cached
+  }
+  additionalDependenciesForTestsCache[module] = emptySet() ////to prevent StackOverflowError in case of circular dependencies 
+  val result = LinkedHashSet<RuntimeModuleId>()
+  for (dependency in module.dependenciesList.dependencies) {
+    when (dependency) {
+      is JpsModuleDependency -> {
+        val dependencyModule = dependency.module ?: continue
+        val scope = dependency.scope
+        if (scope == JpsJavaDependencyScope.PROVIDED) continue
+
+        if (dependencyModule.hasTestSources) {
+          result.add(RuntimeModuleId.raw(runtimeModuleNameGenerator(dependencyModule, true)))
+        }
+        else {
+          if (scope == JpsJavaDependencyScope.TEST) {
+            result.addAll(collectProductionDependenciesForModule(dependencyModule, productionDependenciesCache, runtimeModuleNameGenerator))
+          }
+          result.addAll(collectAdditionalRuntimeDependenciesForTests(dependencyModule, productionDependenciesCache, additionalDependenciesForTestsCache, runtimeModuleNameGenerator))
+        }
+      }
+      is JpsLibraryDependency -> {
+        if (dependency.scope == JpsJavaDependencyScope.TEST) {
+          dependency.library?.let { result.add(getLibraryId(it)) }
+        }
       }
     }
-  )
+  }
+  additionalDependenciesForTestsCache[module] = result
+  return result
 }
+
+private val JpsDependencyElement.scope: JpsJavaDependencyScope?
+  get() = JpsJavaExtensionService.getInstance().getDependencyExtension(this)?.scope
 
 private fun getLibraryId(library: JpsLibrary): RuntimeModuleId {
   var name = library.name

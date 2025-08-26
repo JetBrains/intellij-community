@@ -61,7 +61,7 @@ class RuntimeModuleRepositoryBuilderTest : RuntimeModuleRepositoryTestCase() {
       descriptor("a")
       testDescriptor("a.tests", "a")
       descriptor("b", "a")
-      testDescriptor("b.tests", "b", "a", "a.tests")
+      testDescriptor("b.tests", "b", "a.tests")
     }
   }
   
@@ -72,7 +72,7 @@ class RuntimeModuleRepositoryBuilderTest : RuntimeModuleRepositoryTestCase() {
     JpsJavaExtensionService.getInstance().getOrCreateDependencyExtension(dependency).scope = JpsJavaDependencyScope.TEST
     buildAndCheck {
       descriptor("a.test", resourceDirName = null)
-      testDescriptor("a.test.tests", resourceDirName = "a.test")
+      testDescriptor("a.test.tests", "a.test", resourceDirName = "a.test")
       descriptor("b")
       testDescriptor("b.tests", "b", "a.test.tests")
     }
@@ -87,7 +87,7 @@ class RuntimeModuleRepositoryBuilderTest : RuntimeModuleRepositoryTestCase() {
       descriptor("b", "a")
       descriptor("c", "b")
       testDescriptor("a.tests", "a")
-      testDescriptor("c.tests", "c", "b", "a.tests")
+      testDescriptor("c.tests", "c", "a.tests")
     }
   }
   
@@ -102,7 +102,7 @@ class RuntimeModuleRepositoryBuilderTest : RuntimeModuleRepositoryTestCase() {
       descriptor("c", "a", "b")
       descriptor("d", "c")
       testDescriptor("a.tests", "a")
-      testDescriptor("d.tests", "d", "c", "a.tests")
+      testDescriptor("d.tests", "d", "a.tests")
     }
   }
 
@@ -113,9 +113,9 @@ class RuntimeModuleRepositoryBuilderTest : RuntimeModuleRepositoryTestCase() {
     JpsJavaExtensionService.getInstance().getOrCreateDependencyExtension(dependency).scope = JpsJavaDependencyScope.RUNTIME
     buildAndCheck {
       descriptor("a", "b")
-      testDescriptor("a.tests", "a", "b", "b.tests")
+      testDescriptor("a.tests", "a", "b.tests")
       descriptor("b", "a")
-      testDescriptor("b.tests", "b", "a", "a.tests")
+      testDescriptor("b.tests", "b", "a.tests")
     }
   }
   
@@ -129,7 +129,7 @@ class RuntimeModuleRepositoryBuilderTest : RuntimeModuleRepositoryTestCase() {
       descriptor("a", "b")
       descriptor("b", "a")
       descriptor("c", "b")
-      testDescriptor("c.tests", "c", "b")
+      testDescriptor("c.tests", "c")
     }
   }
 
