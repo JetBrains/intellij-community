@@ -20,7 +20,7 @@
   <company name="Google" url="http://developer.android.com"/>
   <build number="AI-__BUILD__" date="__BUILD_DATE__"/>
   <logo url="/artwork/studio_splash.png"/>
-  <icon svg="/artwork/androidstudio.svg" svg-small="/artwork/androidstudio-small.svg" ico="artwork/androidstudio.ico"/>
+  <icon svg="/artwork/androidstudio.svg" svg-small="/artwork/androidstudio-small.svg"/>
   <icon-eap svg="/artwork/preview/androidstudio.svg" svg-small="/artwork/preview/androidstudio-small.svg"/>
   <names product="Studio" fullname="Android Studio" script="studio"/> <!-- fullname is used by NPW to show default folder for projects as -->
   <essential-plugin>com.intellij.java</essential-plugin>
