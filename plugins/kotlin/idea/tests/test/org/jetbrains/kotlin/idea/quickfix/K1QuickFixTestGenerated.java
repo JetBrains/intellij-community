@@ -9737,6 +9737,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             runTest("testData/quickfix/explicitlyIgnoreReturnValue/parentheses.kt");
         }
 
+        @TestMetadata("parenthesesInIfBranch.kt")
+        public void testParenthesesInIfBranch() throws Exception {
+            runTest("testData/quickfix/explicitlyIgnoreReturnValue/parenthesesInIfBranch.kt");
+        }
+
         @TestMetadata("simple.kt")
         public void testSimple() throws Exception {
             runTest("testData/quickfix/explicitlyIgnoreReturnValue/simple.kt");

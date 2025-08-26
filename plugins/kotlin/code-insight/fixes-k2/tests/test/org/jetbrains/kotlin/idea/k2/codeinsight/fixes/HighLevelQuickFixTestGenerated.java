@@ -7910,6 +7910,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/explicitlyIgnoreReturnValue/parentheses.kt");
         }
 
+        @TestMetadata("parenthesesInIfBranch.kt")
+        public void testParenthesesInIfBranch() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/explicitlyIgnoreReturnValue/parenthesesInIfBranch.kt");
+        }
+
         @TestMetadata("simple.kt")
         public void testSimple() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/explicitlyIgnoreReturnValue/simple.kt");
