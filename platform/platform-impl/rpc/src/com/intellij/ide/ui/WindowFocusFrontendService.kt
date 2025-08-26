@@ -3,6 +3,7 @@ package com.intellij.ide.ui
 
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
@@ -13,10 +14,11 @@ class WindowFocusFrontendService {
   /**
    * Performs the given [action] while marking all dialogs created during its execution
    * with `isFrontendWindowFocused`. When such a dialog is luxed to the frontend, an
-   * [LxNonLuxWindowRef] is provided as its parent, so that focus returns to the previous
-   * dialog when the new one is closed.
+   * [LxNonLuxWindowRef] is provided as its parent, which means the latest focused window
+   * will be used as a parent for newly appearing Lux-ed windows.
    */
-  suspend fun <T> performActionWithFocus(frontendFocused: Boolean, action: (suspend () -> T?)? = null): T? {
+  @RequiresEdt
+  fun <T> performActionWithFocus(frontendFocused: Boolean, action: (() -> T?)? = null): T? {
     val previousValue = isFrontendWindowFocused
     isFrontendWindowFocused = frontendFocused
     try {
@@ -27,6 +29,7 @@ class WindowFocusFrontendService {
     }
   }
 
+  @RequiresEdt
   fun isFrontendFocused(): Boolean = isFrontendWindowFocused
 
   companion object {
