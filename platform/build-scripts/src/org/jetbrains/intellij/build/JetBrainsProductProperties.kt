@@ -6,6 +6,7 @@ import com.jetbrains.plugin.structure.base.plugin.PluginCreationResult
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.problems.InvalidDescriptorProblem
 import com.jetbrains.plugin.structure.base.problems.InvalidPluginIDProblem
+import com.jetbrains.plugin.structure.base.problems.InvalidPluginName
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.problems.ForbiddenPluginIdPrefix
@@ -87,6 +88,13 @@ abstract class JetBrainsProductProperties : ProductProperties() {
         pluginId == "CFML Support" ||
         pluginId == "Error-prone plugin" ||
         pluginId == "Lombook Plugin"
+      is InvalidPluginName ->
+        // those plugins are already published
+        pluginId == "org.jetbrains.plugins.localization" || // GNU GetText Files Support (*.po)
+        pluginId == "com.jetbrains.php.joomla" || // Joomla!
+        pluginId == "com.intellij.zh" || // Chinese (Simplified) Language Pack / 中文语言包
+        pluginId == "com.intellij.ko" || // Korean Language Pack / 한국어 언어 팩
+        pluginId == "com.intellij.ja" // Japanese Language Pack / 日本語言語パック
       /**
        * According to https://plugins.jetbrains.com/docs/marketplace/add-required-parameters.html:
        * > Please make sure the `release-version` and the `version` parameters match.
