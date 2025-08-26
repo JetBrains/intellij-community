@@ -26,6 +26,7 @@ import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.io.*
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.platform.testFramework.eelJava.EelTestJdkProvider
 import com.intellij.testFramework.*
@@ -342,6 +343,7 @@ abstract class MavenTestCase : UsefulTestCase() {
   protected fun updateSettingsXmlFully(@Language("XML") content: @NonNls String): VirtualFile {
     val ioFile = myDir.resolve("settings.xml")
     ioFile.findOrCreateFile()
+    VfsRootAccess.allowRootAccess(myProject!!, ioFile.toString())
     val f = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(ioFile)!!
     setFileContent(f, content)
     refreshFiles(listOf(f))
