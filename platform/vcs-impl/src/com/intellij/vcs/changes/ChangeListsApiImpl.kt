@@ -30,8 +30,8 @@ internal class ChangeListsApiImpl : ChangeListsApi {
 
       override fun initMessageBusConnection(scope: ProducerScope<Boolean>, connection: SimpleMessageBusConnection, project: Project) {
         connection.subscribe(ChangeListAvailabilityListener.TOPIC, object : ChangeListAvailabilityListener {
-          override fun onAfter() {
-            scope.trySend(ChangeListManager.getInstance(project).areChangeListsEnabled())
+          override fun onAfter(newState: Boolean) {
+            scope.trySend(newState)
           }
         })
       }

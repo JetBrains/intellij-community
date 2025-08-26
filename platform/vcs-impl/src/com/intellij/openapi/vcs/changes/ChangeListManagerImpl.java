@@ -1512,7 +1512,7 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
       if (enabled == myWorker.areChangeListsEnabled()) return;
     }
 
-    project.getMessageBus().syncPublisher(ChangeListAvailabilityListener.TOPIC).onBefore();
+    project.getMessageBus().syncPublisher(ChangeListAvailabilityListener.TOPIC).onBefore(!enabled);
 
     synchronized (myDataLock) {
       assert enabled != myWorker.areChangeListsEnabled();
@@ -1534,7 +1534,7 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
       }
     }
 
-    project.getMessageBus().syncPublisher(ChangeListAvailabilityListener.TOPIC).onAfter();
+    project.getMessageBus().syncPublisher(ChangeListAvailabilityListener.TOPIC).onAfter(enabled);
   }
 
   private boolean shouldEnableChangeLists() {

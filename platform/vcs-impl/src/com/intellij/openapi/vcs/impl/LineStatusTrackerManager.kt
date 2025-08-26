@@ -888,8 +888,8 @@ class LineStatusTrackerManager(
   }
 
   private inner class MyChangeListAvailabilityListener : ChangeListAvailabilityListener {
-    override fun onBefore() {
-      if (ChangeListManager.getInstance(project).areChangeListsEnabled()) {
+    override fun onBefore(currentState: Boolean) {
+      if (currentState) {
         val fileStates = getInstanceImpl(project).collectPartiallyChangedFilesStates()
         if (fileStates.isNotEmpty()) {
           PartialLineStatusTrackerManagerState.saveCurrentState(project, fileStates)
@@ -897,11 +897,11 @@ class LineStatusTrackerManager(
       }
     }
 
-    override fun onAfter() {
+    override fun onAfter(newState: Boolean) {
       updatePartialChangeListsAvailability()
       onEverythingChanged()
 
-      if (ChangeListManager.getInstance(project).areChangeListsEnabled()) {
+      if (newState) {
         PartialLineStatusTrackerManagerState.restoreState(project)
       }
     }
