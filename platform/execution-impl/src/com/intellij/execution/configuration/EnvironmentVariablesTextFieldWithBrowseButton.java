@@ -15,6 +15,7 @@ import com.intellij.ui.UserActivityProviderComponent;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.util.containers.ContainerUtil;
+import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
@@ -74,7 +75,7 @@ public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWith
         myEnvFilePaths.add(s);
         updateText();
         fireEnvFilePathsChanged();
-        return null;
+        return Unit.INSTANCE;
       });
     }
     else {
