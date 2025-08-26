@@ -28,7 +28,6 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.containers.ConcurrentBitSet
 import com.intellij.workspaceModel.core.fileIndex.*
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 
 @Suppress("DuplicatedCode")
 internal suspend fun initWorkspaceFileIndexData(
@@ -315,46 +314,39 @@ internal class WorkspaceFileIndexDataImpl(
     addedEntities: MutableSet<WorkspaceEntity>,
     entityClass: Class<WorkspaceEntity>,
   ) {
-    val previousDependencies = ObjectOpenHashSet<SymbolicEntityId<R>>()
-    val actualDependencies = ObjectOpenHashSet<SymbolicEntityId<R>>()
 
     val entitiesInStorageAfter by lazy(LazyThreadSafetyMode.NONE) { event.storageAfter.entities(entityClass).toSet() }
     val entitiesInStorageBefore by lazy(LazyThreadSafetyMode.NONE) { event.storageBefore.entities(entityClass).toSet() }
 
     event.getChanges(dependencyDescription.referenceHolderClass).forEach { change ->
-      change.oldEntity?.let {
-        dependencyDescription.referencedEntitiesGetter(it).toCollection(previousDependencies)
+      change.oldEntity?.let { changedEntity ->
+        dependencyDescription.referencedEntitiesGetter(changedEntity).forEach { referencedEntityId ->
+          // no entity in the new storage has a reference to the referenced entity of removed entity => last reference removed
+          if (event.storageAfter.referrers(referencedEntityId, dependencyDescription.referenceHolderClass).none()) {
+            referencedEntityId.resolve(event.storageBefore)?.let {
+              removedEntities.add(it)
+              if (entitiesInStorageAfter.contains(it)) {
+                addedEntities.add(it)
+              }
+            }
+          }
+        }
       }
-      change.newEntity?.let {
-        dependencyDescription.referencedEntitiesGetter(it).toCollection(actualDependencies)
+
+      change.newEntity?.let { changedEntity ->
+        dependencyDescription.referencedEntitiesGetter(changedEntity).forEach { referencedEntityId ->
+          // no entity in the old storage has a reference to the referenced entity of added entity => first reference added
+          if (event.storageBefore.referrers(referencedEntityId, dependencyDescription.referenceHolderClass).none()) {
+            referencedEntityId.resolve(event.storageAfter)?.let { referencedEntity ->
+              addedEntities.add(referencedEntity)
+              if (entitiesInStorageBefore.contains(referencedEntity)) {
+                removedEntities.add(referencedEntity)
+              }
+            }
+          }
+        }
       }
     }
-
-    (actualDependencies - previousDependencies)
-      // We want to filter out entities that were already referenced by any reference holder
-      .filter { event.storageBefore.referrers(it, dependencyDescription.referenceHolderClass).none() }
-      .mapNotNull { it.resolve(event.storageAfter) }
-      .forEach {
-        addedEntities.add(it)
-        // We might register a file set for an entity that is already having registered file sets.
-        // in that case we need to remove its file sets first to avoid duplication
-        if (entitiesInStorageBefore.contains(it)) {
-          removedEntities.add(it)
-        }
-      }
-
-    (previousDependencies - actualDependencies)
-      // we want to filter out references that are still referenced by any reference holder
-      .filter { event.storageAfter.referrers(it, dependencyDescription.referenceHolderClass).none() }
-      .mapNotNull { it.resolve(event.storageBefore) }
-      .forEach {
-        removedEntities.add(it)
-        // We might remove a file set for an entity that is still in the workspace model
-        // in that case we want to register its file sets
-        if (entitiesInStorageAfter.contains(it)) {
-          addedEntities.add(it)
-        }
-      }
   }
 
   private fun <R: WorkspaceEntity, E: WorkspaceEntity> processOnArbitraryEntityDependency(dependency: DependencyDescription.OnArbitraryEntity<R, E>,
