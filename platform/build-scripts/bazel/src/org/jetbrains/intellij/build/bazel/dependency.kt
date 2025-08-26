@@ -25,7 +25,7 @@ import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.name
 import kotlin.io.path.nameWithoutExtension
 import kotlin.io.path.readBytes
-import kotlin.io.path.relativeToOrNull
+import kotlin.io.path.relativeTo
 
 internal data class BazelLabel(
   val label: String,
@@ -133,7 +133,11 @@ internal fun generateDeps(
             isModuleLibrary = false,
           )
           context.addLocalLibrary(
-            lib = LocalLibrary(files = localFilesWithChecksum, target = libraryTarget),
+            lib = LocalLibrary(
+              files = localFilesWithChecksum,
+              target = libraryTarget,
+              bazelBuildFileDir = libSnapshotsDir,
+            ),
             isProvided = isProvided,
           )
 
@@ -162,22 +166,32 @@ internal fun generateDeps(
           val isCommunityLib = firstFile.startsWith(context.communityRoot)
           val libraryContainer = context.getLibraryContainer(isCommunityLib)
 
-          val communityOrUltimateRoot = libraryContainer.moduleFile.parent.parent
-          val libBuildFileDir = firstFile
-            .relativeToOrNull(communityOrUltimateRoot)
-            ?.parent?.invariantSeparatorsPathString
-            ?: error("Unable to get relative path for $firstFile under $communityOrUltimateRoot" +
-                     " for library ${jpsLibrary.name} from module ${module.module.name}" +
-                     " (isCommunityLib=$isCommunityLib)")
-          val targetName = camelToSnakeCase(escapeBazelLabel(firstFile.nameWithoutExtension))
+          val targetName = if (underKotlinSnapshotLibRoot(firstFile, communityRoot = context.communityRoot)) {
+            // name the same way as maven library, so there will be minimal changes
+            // migrating from kotlin from maven to kotlin from a snapshot
+            escapeBazelLabel(jpsLibrary.name)
+          }
+          else {
+            camelToSnakeCase(escapeBazelLabel(firstFile.nameWithoutExtension))
+          }
+
           val libraryTarget = LibraryTarget(
             targetName = targetName,
             container = libraryContainer,
             jpsName = jpsLibrary.name,
             isModuleLibrary = isModuleLibrary,
           )
+
+          val bazelFileDir = getLocalLibBazelFileDir(files, communityRoot = context.communityRoot)
+          check(files.all { file -> file.startsWith(bazelFileDir) }) {
+            "Local (non-maven) library files must be under the same directory as the BUILD.bazel file. " +
+            "Expected: ${bazelFileDir}, " +
+            "got: ${files.map { it.relativeTo(bazelFileDir).invariantSeparatorsPathString }}. " +
+            "Absolute paths:\n${files.joinToString("\n") { it.invariantSeparatorsPathString }}"
+          }
+
           context.addLocalLibrary(
-            lib = LocalLibrary(files = files, target = libraryTarget),
+            lib = LocalLibrary(files = files, target = libraryTarget, bazelBuildFileDir = bazelFileDir),
             isProvided = isProvided,
           )
 
@@ -188,10 +202,22 @@ internal fun generateDeps(
             }
           }
 
+          val communityLibsRoot = context.communityRoot.resolve("lib")
+          val ultimateLibsRoot = context.ultimateRoot?.resolve("lib")
           val prefix = when {
-            libBuildFileDir == "lib" -> if (isCommunityLib) "@lib//" else "@ultimate_lib//"
-            libBuildFileDir.startsWith("lib/") -> libBuildFileDir.replace("lib/", if (isCommunityLib) "@lib//" else "@ultimate_lib//")
-          else -> "${if (module.isCommunity || !isCommunityLib) "//" else "@community//"}${libBuildFileDir.removePrefix("community/")}"
+            // separate Bazel module 'lib'
+            bazelFileDir.startsWith(communityLibsRoot) ->
+              "@lib//${bazelFileDir.relativeTo(communityLibsRoot).invariantSeparatorsPathString}"
+            // separate Bazel module 'ultimate_lib'
+            ultimateLibsRoot != null && bazelFileDir.startsWith(ultimateLibsRoot) ->
+              "@ultimate_lib//${bazelFileDir.relativeTo(ultimateLibsRoot).invariantSeparatorsPathString}"
+            // Bazel module 'community'
+            bazelFileDir.startsWith(context.communityRoot) ->
+              "${if (module.isCommunity) "//" else "@community//"}${bazelFileDir.relativeTo(context.communityRoot).invariantSeparatorsPathString}"
+            // Bazel module 'ultimate'
+            context.ultimateRoot != null && bazelFileDir.startsWith(context.ultimateRoot) ->
+              "//${bazelFileDir.relativeTo(context.ultimateRoot).invariantSeparatorsPathString}"
+            else -> error("Unknown library root location: $bazelFileDir (community=${context.communityRoot}, ultimate=${context.ultimateRoot})")
           }
 
           addDep(
@@ -312,6 +338,21 @@ internal fun generateDeps(
 
   return ModuleDeps(deps = deps, associates = associates, runtimeDeps = runtimeDeps, exports = exports, provided = provided, plugins = plugins.toList())
 }
+
+private fun getLocalLibBazelFileDir(files: List<Path>, communityRoot: Path): Path {
+  val dir = files.first().parent
+
+  // Special case, kt-master development places all snapshot kotlin libraries
+  // as a maven repo under community/lib/kotlin
+  if (underKotlinSnapshotLibRoot(dir, communityRoot)) {
+    return communityRoot.resolve("lib")
+  }
+
+  return dir
+}
+
+private fun underKotlinSnapshotLibRoot(dir: Path, communityRoot: Path) =
+  dir.startsWith(communityRoot.resolve("lib").resolve("kotlin-snapshot"))
 
 private fun getFileMavenFileDescription(lib: JpsTypedLibrary<JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor>>, jar: Path): MavenFileDescription {
   require(jar.isAbsolute) {

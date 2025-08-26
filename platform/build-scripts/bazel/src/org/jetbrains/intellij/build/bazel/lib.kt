@@ -44,7 +44,8 @@ internal data class MavenFileDescription(
 )
 
 internal data class LocalLibrary(
-  @JvmField val files: List<Path>,
+  val files: List<Path>,
+  val bazelBuildFileDir: Path,
   override val target: LibraryTarget,
 ) : Library
 
@@ -248,7 +249,7 @@ private fun fileToHttpRuleRepoName(jar: Path): String = bazelLabelBadCharsPatter
 private fun fileToHttpRuleFile(jar: Path): String = fileToHttpRuleRepoName(jar) + "//file"
 
 internal fun generateLocalLibs(libs: Collection<LocalLibrary>, isLibraryProvided: (Library) -> Boolean, fileToUpdater: MutableMap<Path, BazelFileUpdater>) {
-  for ((dir, libs) in libs.asSequence().sortedBy { it.target.targetName }.groupBy { it.files.first().parent }) {
+  for ((dir, libs) in libs.sortedBy { it.target.targetName }.groupBy { it.bazelBuildFileDir }) {
     val bazelFileUpdater = fileToUpdater.computeIfAbsent(dir.resolve("BUILD.bazel")) { BazelFileUpdater(it) }
     bazelFileUpdater.removeSections("local-libraries")
     buildFile(bazelFileUpdater, "local-libs") {
@@ -257,7 +258,9 @@ internal fun generateLocalLibs(libs: Collection<LocalLibrary>, isLibraryProvided
         val targetName = lib.target.targetName
         target("java_import") {
           option("name", targetName)
-          option("jars", lib.files.map { it.fileName.toString() })
+          option("jars", lib.files.map {
+            it.relativeTo(dir).invariantSeparatorsPathString
+          })
           option("visibility", listOf("//visibility:public"))
         }
 

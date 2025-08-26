@@ -16,6 +16,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.copyToRecursively
+import kotlin.io.path.createParentDirectories
 import kotlin.io.path.deleteExisting
 import kotlin.io.path.deleteRecursively
 import kotlin.io.path.isDirectory
@@ -31,6 +32,7 @@ class BazelGeneratorIntegrationTests {
   @InjectSoftAssertions
   lateinit var softly: SoftAssertions
 
+  @Test fun kotlinSnapshotLibrary() = doTest("kotlin-snapshot-library")
   @Test fun snapshotRepositoryLibrary() = doTest("snapshot-repository-library")
   @Test fun snapshotLibrary() = doTest("snapshot-library")
   @Test fun snapshotLibraryInTree() = doTest("snapshot-library-in-tree")
@@ -121,7 +123,7 @@ class BazelGeneratorIntegrationTests {
         compareDirectories(expectedChildPath, actualChildPath)
       }
       else {
-        actualChildPath.writeText("")
+        actualChildPath.createParentDirectories().writeText("")
         softly.collectAssertionError(
           FileComparisonFailedError(
             message = "Expected file $expectedChildPath is missing at $actualChildPath",
