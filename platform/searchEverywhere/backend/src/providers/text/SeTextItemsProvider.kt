@@ -49,24 +49,26 @@ class SeTextItemsProvider(project: Project, private val contributorWrapper: SeAs
     val inputQuery = params.inputQuery
 
     val textFilter = SeTextFilter.from(params.filter)
-    val scopeToApply: String? = SeEverywhereFilter.isEverywhere(params.filter)?.let { isEverywhere ->
-      scopeProviderDelegate.searchScopesInfo.getValue()?.let { searchScopesInfo ->
-        if (isEverywhere) searchScopesInfo.everywhereScopeId else searchScopesInfo.projectScopeId
+    if (textFilter != null) {
+      val scopeToApply: String? = SeEverywhereFilter.isEverywhere(params.filter)?.let { isEverywhere ->
+        scopeProviderDelegate.searchScopesInfo.getValue()?.let { searchScopesInfo ->
+          if (isEverywhere) searchScopesInfo.everywhereScopeId else searchScopesInfo.projectScopeId
+        }
+      } ?: run {
+        textFilter.selectedScopeId
       }
-    } ?: run {
-      textFilter.selectedScopeId
+      applyScope(scopeToApply)
+
+      // When `TextSearchContributor` disposes in local mode with the new SE,
+      // it updates `FindSettings.getInstance().fileMask` after `SeTextFilterEditor` sets it, so the value remains unchanged.
+     contributorWrapper.contributor.getActions { }.filterIsInstance<JComboboxAction>().firstOrNull()?.onMaskChanged(textFilter.selectedType)
+      // Apply type for the correct search
+     findModel.fileFilter = textFilter.selectedType
+
+      findModel.isCaseSensitive = SeTextFilter.isCaseSensitive(params.filter) ?: false
+      findModel.isWholeWordsOnly = SeTextFilter.isWholeWordsOnly(params.filter) ?: false
+      findModel.isRegularExpressions = SeTextFilter.isRegularExpressions(params.filter) ?: false
     }
-    applyScope(scopeToApply)
-
-    // When `TextSearchContributor` disposes in local mode with the new SE,
-    // it updates `FindSettings.getInstance().fileMask` after `SeTextFilterEditor` sets it, so the value remains unchanged.
-    contributorWrapper.contributor.getActions { }.filterIsInstance<JComboboxAction>().firstOrNull()?.onMaskChanged(textFilter.selectedType)
-    // Apply type for the correct search
-    findModel.fileFilter = textFilter.selectedType
-
-    findModel.isCaseSensitive = SeTextFilter.isCaseSensitive(params.filter) ?: false
-    findModel.isWholeWordsOnly = SeTextFilter.isWholeWordsOnly(params.filter) ?: false
-    findModel.isRegularExpressions = SeTextFilter.isRegularExpressions(params.filter) ?: false
 
     coroutineToIndicator {
       val indicator = DelegatingProgressIndicator(ProgressManager.getGlobalProgressIndicator())
