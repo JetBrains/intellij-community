@@ -65,8 +65,11 @@ abstract class NioExternalSystemTestCase : UsefulTestCase() {
   val projectPath: String
     get() = projectRoot!!.getPath()
 
-  val myProjectRoot: VirtualFile
+  var myProjectRoot: VirtualFile
     get() = projectRoot!!
+    set(value) {
+      projectRoot = value
+    }
 
   private var allConfigs: MutableList<VirtualFile?> = ArrayList<VirtualFile?>()
 
