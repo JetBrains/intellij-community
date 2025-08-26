@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.TextRange
 import org.jetbrains.jps.model.java.JdkVersionDetector
 import java.io.File
 
@@ -53,18 +54,31 @@ public data class AsdfReleaseData(val name: String, val vendor: String, val vers
 
     // Check vendor
     val variantName = variant.displayName
-    return variantName != null && versionString.contains(variantName)
+    return versionString.contains(variantName)
   }
 }
 
+private const val TOOL_VERSIONS = ".tool-versions"
+
 public class ToolVersionsConfigurationProvider : ExternalJavaConfigurationProvider<AsdfReleaseData> {
-  override fun getConfigurationFile(project: Project): File = File(project.basePath, ".tool-versions")
+  override fun isConfigurationFile(fileName: String): Boolean = fileName == TOOL_VERSIONS
+
+  override fun getConfigurationFile(project: Project): File = File(project.basePath, TOOL_VERSIONS)
 
   override fun getReleaseData(text: String): AsdfReleaseData? {
     val releaseDataText = text.lines()
       .find { it.split(" ").firstOrNull() == "java" }
       ?.substringAfter(" ") ?: return null
     return AsdfReleaseData.parse(releaseDataText.trim())
+  }
+
+  override fun getReleaseDataOffset(text: String): TextRange? {
+    val releaseData = getReleaseData(text) ?: return null
+    val range = Regex("^java (.*)$", RegexOption.MULTILINE)
+                  .findAll(text)
+                  .firstOrNull { it.groupValues.getOrNull(1)?.contains(releaseData.name) == true }
+                  ?.range ?: return null
+    return TextRange(range.first, range.last)
   }
 
   override fun matchAgainstSdk(releaseData: AsdfReleaseData, sdk: Sdk): Boolean {
@@ -75,5 +89,9 @@ public class ToolVersionsConfigurationProvider : ExternalJavaConfigurationProvid
   override fun matchAgainstPath(releaseData: AsdfReleaseData, path: String): Boolean {
     val info = SdkVersionUtil.getJdkVersionInfo(path) ?: return false
     return releaseData.matchVersionString(info.displayVersionString())
+  }
+
+  override fun getDownloadCommandFor(releaseData: AsdfReleaseData): String {
+    return "asdf install java ${releaseData.name}"
   }
 }
