@@ -310,4 +310,66 @@ class JavaJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
       }
     """.trimIndent())
   }
+
+  fun `test language level 24 preview with JDK 25`() {
+    myFixture.setLanguageLevel(LanguageLevel.JDK_24)
+
+    // This code is copied from JDK sources
+    myFixture.addClass("""
+      package jdk.internal.javac;
+      
+      import java.lang.annotation.*;
+      
+      @Target({ElementType.METHOD,
+               ElementType.CONSTRUCTOR,
+               ElementType.FIELD,
+               ElementType.PACKAGE,
+               ElementType.TYPE})
+       // CLASS retention will hopefully be sufficient for the purposes at hand
+      @Retention(RetentionPolicy.RUNTIME)
+      // *Not* @Documented
+      public @interface PreviewFeature {
+          /**
+           * Name of the preview feature the annotated API is associated
+           * with.
+           */
+          public Feature feature();
+      
+          public enum Feature {
+            PEM_API,
+            STABLE_VALUES
+          }
+      }
+    """.trimIndent())
+
+    myFixture.addClass("""
+      package java.lang;
+      
+      import jdk.internal.javac.PreviewFeature;
+      
+      /**
+       * @since 25
+       */
+      @PreviewFeature(feature = PreviewFeature.Feature.STABLE_VALUES)
+      public class StableValue<T> {
+        private StableValue(T value) {}
+        public static <X> StableValue<X> of(X value) {
+          return new StableValue<>(value);
+        }
+      }
+    """.trimIndent())
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
+      import java.util.concurrent.StructuredTaskScope;
+
+        class Main {
+          static void main() {
+              StructuredTaskScope a; // JEP 505
+              <error descr="Usage of preview API documented as @since 25+"><error descr="java.lang.StableValue is a preview API and is disabled by default">StableValue<String></error></error> b = <error descr="Usage of preview API documented as @since 25+"><error descr="java.lang.StableValue is a preview API and is disabled by default">StableValue</error></error>.<caret>of("foo");
+          }
+      }
+    """.trimIndent())
+
+    val intention = myFixture.getAvailableIntention("Set language level to 25 (Preview) - Primitive Types in Patterns, etc.")
+    myFixture.launchAction(intention!!)
+  }
 }
