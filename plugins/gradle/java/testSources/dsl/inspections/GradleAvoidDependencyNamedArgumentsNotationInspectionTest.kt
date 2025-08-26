@@ -238,6 +238,19 @@ class GradleAvoidDependencyNamedArgumentsNotationInspectionTest : GradleCodeInsi
 
   @ParameterizedTest
   @BaseGradleVersionSource
+  fun testNoVersionButAnotherArgument(gradleVersion: GradleVersion) {
+    runTest(
+      gradleVersion,
+      """
+      dependencies { 
+        implementation group: 'org.gradle', name: 'gradle-core', configuration: 'someConf'
+      }
+      """.trimIndent()
+    )
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
   fun testWithBlock(gradleVersion: GradleVersion) {
     runTest(
       gradleVersion,
