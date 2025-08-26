@@ -288,26 +288,36 @@ fun Document.bindTextIn(cs: CoroutineScope, textFlow: MutableStateFlow<String>) 
 }
 
 fun Document.bindTextIn(cs: CoroutineScope, textFlow: StateFlow<String>, setter: (String) -> Unit) {
-  val listener = object : DocumentListener {
+  val backSyncListener = object : DocumentListener {
+    var isActive = true
+
     override fun documentChanged(event: DocumentEvent) {
-      setter(text)
+      if (isActive) {
+        setter(text)
+      }
     }
   }
 
   @RequiresEdt
   fun doSetText(newText: String) {
-    WriteIntentReadAction.run {
-      if (text != newText) {
-        val noCr = newText.filter { it != '\r' }
-        WriteAction.run<Throwable> {
-          setText(noCr)
+    backSyncListener.isActive = false
+    try {
+      WriteIntentReadAction.run {
+        if (text != newText) {
+          val noCr = newText.filter { it != '\r' }
+          WriteAction.run<Throwable> {
+            setText(noCr)
+          }
         }
       }
+    }
+    finally {
+      backSyncListener.isActive = true
     }
   }
   cs.launch(Dispatchers.UiWithModelAccessImmediate + CoroutineName("Text binding for $this")) {
     val listenerDisposable = Disposer.newDisposable()
-    addDocumentListener(listener, listenerDisposable)
+    addDocumentListener(backSyncListener, listenerDisposable)
     try {
       textFlow.collect { newText ->
         doSetText(newText)
