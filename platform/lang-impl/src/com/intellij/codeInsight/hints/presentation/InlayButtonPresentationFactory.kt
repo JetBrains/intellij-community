@@ -30,7 +30,6 @@ open class InlayButtonPresentationFactory(
     private const val ICON_TEXT_LEFT_PADDING = 4
     private const val HINT_LEFT_PADDING = 8
     private const val CLOSE_LEFT_PADDING = 8
-    private const val ADDITIONAL_SPACING_BETWEEN_COMPONENTS = 2
     private const val DEFAULT_BORDER_WIDTH = 1
 
     val onePixelBorderProvider: InsetValueProvider = object : InsetValueProvider {
@@ -142,12 +141,9 @@ open class InlayButtonPresentationFactory(
       return this
     }
 
-    fun build(): InlayPresentation = factory.createPaddedPresentation(
-      factory.delegate.withCursorOnHover(
+    fun build(): InlayPresentation = factory.delegate.withCursorOnHover(
         withInlayAttributes(border(), factory.defaultAttributesKey), Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
-      ),
-      left = ADDITIONAL_SPACING_BETWEEN_COMPONENTS
-    )
+      )
 
     fun buildFocused(): InlayPresentation = factory.delegate.withCursorOnHover(
       withInlayAttributes(border(2), factory.focusedAttributesKey), Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
