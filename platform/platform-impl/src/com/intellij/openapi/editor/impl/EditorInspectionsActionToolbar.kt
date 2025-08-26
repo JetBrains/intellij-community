@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
@@ -76,7 +77,14 @@ open class EditorInspectionsActionToolbar(
     if (RedesignedInspectionsManager.isAvailable()) {
       return super.canReuseActionButton(oldActionButton, newPresentation)
     }
-    return oldActionButton.javaClass == ToolbarActionButton::class.java
+
+    val shouldHaveText = newPresentation.getClientProperty(ActionUtil.SHOW_TEXT_IN_TOOLBAR) == true
+    if (shouldHaveText) {
+      return oldActionButton.javaClass == ActionButtonWithText::class.java
+    }
+    else {
+      return oldActionButton.javaClass == ToolbarActionButton::class.java
+    }
   }
 
   override fun doLayout() {
