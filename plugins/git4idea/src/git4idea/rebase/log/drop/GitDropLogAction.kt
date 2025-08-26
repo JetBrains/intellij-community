@@ -62,7 +62,7 @@ internal class GitDropLogAction : GitMultipleCommitEditingAction() {
       val branchPresentation = GitBranchPopupActions.getSelectedBranchFullPresentation(branch.name)
       GitBundle.message("rebase.log.drop.action.confirmation.message", commitsCount, branchPresentation)
     }  else {
-      GitBundle.message("rebase.log.drop.action.confirmation.message.detached", commitsCount)
+      GitBundle.message("rebase.log.drop.action.confirmation.message.detached.head", commitsCount)
     }
 
     return MessageDialogBuilder
