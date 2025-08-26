@@ -19,15 +19,15 @@ class ScopesStateService(val project: Project) {
   private val scopesState: ScopesState = ScopesState(project)
 
   suspend fun getScopeById(scopeId: String): SearchScope? {
-    return WindowFocusFrontendService.getInstance().performActionWithFocus(true) {
-      val descriptor = scopesState.getScopeDescriptorById(scopeId) ?: return@performActionWithFocus null
-      return@performActionWithFocus coroutineScope {
+    val descriptor = scopesState.getScopeDescriptorById(scopeId) ?: return null
+      return coroutineScope {
         return@coroutineScope withContext(Dispatchers.EDT) {
-          descriptor.scope
+          WindowFocusFrontendService.getInstance().performActionWithFocus(true) {
+            descriptor.scope
+          }
         }
       }
     }
-  }
 
   fun getScopeNameById(scopeId: String): String? {
     return scopesState.getScopeDescriptorById(scopeId)?.displayName
