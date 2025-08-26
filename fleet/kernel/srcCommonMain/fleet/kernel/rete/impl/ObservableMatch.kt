@@ -6,7 +6,6 @@ import fleet.util.causeOfType
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.*
 import kotlin.concurrent.atomics.AtomicBoolean
-import kotlin.coroutines.coroutineContext
 
 internal class ObservableMatch<T>(
   internal val observerId: NodeId,
@@ -48,7 +47,7 @@ internal suspend fun <U> withObservableMatches(
   matches: Sequence<ObservableMatch<*>>,
   body: suspend CoroutineScope.() -> U,
 ): WithMatchResult<U> {
-  val contextMatches = coroutineContext[ContextMatches]?.matches ?: persistentListOf()
+  val contextMatches = currentCoroutineContext()[ContextMatches]?.matches ?: persistentListOf()
 
   @Suppress("NAME_SHADOWING")
   val matches = run {
