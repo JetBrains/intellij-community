@@ -131,6 +131,7 @@ interface FileEditorManager {
   fun getSelectedTextEditor(): Editor?
   fun setSelectedEditor(editor: FileEditor)
   fun getAllEditors(): Array<FileEditor>
+  fun getCurrentFile(): VirtualFile
 }
 
 @Remote("com.intellij.openapi.editor.colors.EditorColorsScheme")
@@ -151,7 +152,7 @@ fun Driver.openEditor(file: VirtualFile, project: Project? = null): Array<FileEd
   }
 }
 
-fun Driver.openFile(relativePath: String, project: Project = singleProject(), waitForCodeAnalysis: Boolean = true) {
+fun Driver.openFile(relativePath: String, project: Project = singleProject(), waitForCodeAnalysis: Boolean = true, isTextEditor: Boolean = true) {
   step("Open file $relativePath") {
     val openedFile = if (!isRemDevMode) {
       val fileToOpen = findFile(relativePath = relativePath, project = project)
@@ -167,7 +168,8 @@ fun Driver.openFile(relativePath: String, project: Project = singleProject(), wa
         service.navigateViaBackend(relativePath, 0)
         waitFor(message = "File is opened: $relativePath", timeout = 30.seconds,
                 getter = {
-                  service<FileEditorManager>(project).getSelectedTextEditor()?.getVirtualFile()
+                  if (isTextEditor) service<FileEditorManager>(project).getSelectedTextEditor()?.getVirtualFile()
+                  else service<FileEditorManager>(project).getCurrentFile()
                 },
                 checker = { virtualFile ->
                   virtualFile != null &&
