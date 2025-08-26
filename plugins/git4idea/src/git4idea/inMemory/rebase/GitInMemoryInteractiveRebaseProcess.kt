@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.inMemory.rebase
 
+import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsNotifier
@@ -9,6 +10,7 @@ import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsCommitMetadata
 import git4idea.GitNotificationIdsHolder
+import git4idea.GitOperationsCollector
 import git4idea.i18n.GitBundle
 import git4idea.inMemory.GitObjectRepository
 import git4idea.inMemory.MergeConflictException
@@ -24,6 +26,7 @@ import git4idea.rebase.log.notifySuccess
 import git4idea.repo.GitRepository
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.reflect.KClass
 
 internal class GitInMemoryInteractiveRebaseProcess(
@@ -146,9 +149,10 @@ internal suspend fun performInMemoryRebase(
   val showFailureNotification = Registry.`is`("git.in.memory.interactive.rebase.notify.errors")
 
   val rebaseData = createRebaseData(model, entries, repository, showFailureNotification) ?: return false
-  val operationResult = executeRebase(repository, rebaseData, showFailureNotification) ?: return false
+  val rebaseActivity = GitOperationsCollector.startInMemoryInteractiveRebase(repository.project)
+  val operationResult = executeRebase(repository, rebaseData, showFailureNotification, rebaseActivity) ?: return false
 
-  return handleRebaseResult(operationResult)
+  return handleRebaseResult(operationResult, rebaseActivity)
 }
 
 private fun createRebaseData(
@@ -178,6 +182,7 @@ private suspend fun executeRebase(
   repository: GitRepository,
   rebaseData: GitInMemoryRebaseData,
   showFailureNotification: Boolean,
+  rebaseActivity: StructuredIdeActivity
 ): GitCommitEditingOperationResult? {
   return try {
     withBackgroundProgress(repository.project, GitBundle.message("rebase.progress.indicator.title"), true) {
@@ -186,15 +191,25 @@ private suspend fun executeRebase(
     }
   }
   catch (e: MergeConflictException) {
+    GitOperationsCollector.endInMemoryInteractiveRebase(rebaseActivity, InMemoryRebaseResult.CONFLICT)
     if (showFailureNotification) {
       notifyMergeConflict(repository, e)
     }
     null
   }
+  catch (e: CancellationException) {
+    GitOperationsCollector.endInMemoryInteractiveRebase(rebaseActivity, InMemoryRebaseResult.CANCELED)
+    throw e
+  }
+  catch (e: Exception) {
+    GitOperationsCollector.endInMemoryInteractiveRebase(rebaseActivity, InMemoryRebaseResult.ERROR)
+    throw e
+  }
 }
 
-private fun handleRebaseResult(operationResult: GitCommitEditingOperationResult): Boolean {
+private fun handleRebaseResult(operationResult: GitCommitEditingOperationResult, rebaseActivity: StructuredIdeActivity): Boolean {
   if (operationResult is GitCommitEditingOperationResult.Complete) {
+    GitOperationsCollector.endInMemoryInteractiveRebase(rebaseActivity, InMemoryRebaseResult.SUCCESS)
     operationResult.notifySuccess(
       GitBundle.message("in.memory.rebase.log.interactive.action.notification.successful"),
       null,
@@ -204,6 +219,7 @@ private fun handleRebaseResult(operationResult: GitCommitEditingOperationResult)
     )
     return true
   }
+  GitOperationsCollector.endInMemoryInteractiveRebase(rebaseActivity, InMemoryRebaseResult.ERROR)
   return false
 }
 
@@ -289,3 +305,10 @@ internal class GitRebaseRewordEntryWithMessage(
   commitDetails: VcsCommitMetadata,
   val newMessage: String,
 ) : GitRebaseEntryWithDetails(entry, commitDetails)
+
+internal enum class InMemoryRebaseResult {
+  SUCCESS,
+  CONFLICT,
+  CANCELED,
+  ERROR
+}

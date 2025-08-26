@@ -16,6 +16,8 @@ import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.util.VcsLogUtil
 import git4idea.DialogManager
 import git4idea.GitOperationsCollector
+import git4idea.GitOperationsCollector.logCantRebaseUsingLog
+import git4idea.GitOperationsCollector.logRebaseStartUsingLog
 import git4idea.branch.GitRebaseParams
 import git4idea.config.GitConfigUtil.isRebaseUpdateRefsEnabledCached
 import git4idea.history.GitHistoryTraverser
@@ -86,6 +88,7 @@ internal suspend fun interactivelyRebaseUsingLog(repository: GitRepository, comm
   }
   catch (e: CantRebaseUsingLogException) {
     LOG.warn("Couldn't use log for rebasing: ${e.message}")
+    logCantRebaseUsingLog(repository.project, e.reason)
     startInteractiveRebase(repository, commit)
     return
   }
@@ -101,6 +104,7 @@ internal suspend fun interactivelyRebaseUsingLog(repository: GitRepository, comm
     val hasEditActions = model.elements.any { entry ->
       entry.type.command == GitRebaseEntry.Action.EDIT
     }
+    logRebaseStartUsingLog(repository.project, model.elements.map { it.type.command })
     val shouldTryInMemory = Registry.`is`("git.in.memory.commit.editing.operations.enabled")
     if (!hasEditActions && shouldTryInMemory && performInMemoryRebase(repository, generatedEntries, model)) {
       return
@@ -119,7 +123,16 @@ internal suspend fun startInteractiveRebase(
     coroutineToIndicator { indicator ->
       val base = getRebaseUpstreamFor(commit)
       val params = GitRebaseParams.editCommits(repository.vcs.version, base, editorHandler, false)
-      GitRebaseUtils.rebase(repository.project, listOf(repository), params, indicator)
+
+      val rebaseActivity = GitOperationsCollector.startInteractiveRebase(repository.project)
+      try {
+        val wasSuccessful = GitRebaseUtils.rebaseWithResult(repository.project, listOf(repository), params, indicator)
+        GitOperationsCollector.endInteractiveRebase(rebaseActivity, wasSuccessful)
+      }
+      catch (e: Exception) {
+        GitOperationsCollector.endInteractiveRebase(rebaseActivity, false)
+        throw e
+      }
     }
   }
 }
@@ -179,7 +192,6 @@ private class GitInteractiveRebaseUsingLogEditorHandler(
     joinToString(", ", prefix = "[", postfix = "]") { "${it.commit} (${it.action.command})" }
 }
 
-@VisibleForTesting
 internal class CantRebaseUsingLogException(val reason: Reason) : Exception(reason.toString()) {
   enum class Reason {
     MERGE,

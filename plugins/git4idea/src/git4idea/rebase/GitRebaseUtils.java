@@ -48,6 +48,16 @@ public final class GitRebaseUtils {
     new GitRebaseProcess(project, GitRebaseSpec.forNewRebase(project, params, repositories, indicator), null).rebase();
   }
 
+  public static boolean rebaseWithResult(final @NotNull Project project,
+                                         final @NotNull List<? extends GitRepository> repositories,
+                                         final @NotNull GitRebaseParams params,
+                                         final @NotNull ProgressIndicator indicator) {
+    if (!isRebaseAllowed(project, repositories)) return false;
+    var process = new GitRebaseProcess(project, GitRebaseSpec.forNewRebase(project, params, repositories, indicator), null);
+    process.rebase();
+    return process.isSuccessful();
+  }
+
   public static void continueRebase(@NotNull Project project) {
     continueRebase(project, true);
   }

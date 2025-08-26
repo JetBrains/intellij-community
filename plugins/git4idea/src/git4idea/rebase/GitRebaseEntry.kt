@@ -50,9 +50,10 @@ internal open class GitRebaseEntry(val action: Action, val commit: String, val s
   }
 
   companion object {
+    val knownActions: List<KnownAction> = listOf(Action.PICK, Action.EDIT, Action.DROP, Action.REWORD, Action.SQUASH, Action.FIXUP(), Action.UPDATE_REF)
+
     @JvmStatic
     fun parseAction(action: String): Action {
-      val knownActions = listOf(Action.PICK, Action.EDIT, Action.DROP, Action.REWORD, Action.SQUASH, Action.FIXUP(), Action.UPDATE_REF)
       return knownActions.find { it.command == action || it.synonyms.contains(action) } ?: Action.Other(action)
     }
   }
