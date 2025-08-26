@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
+import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.jetbrains.python.codeInsight.completion.PyModuleNameCompletionContributor;
 import com.jetbrains.python.fixtures.PyTestCase;
@@ -309,7 +310,12 @@ public class PythonKeywordCompletionTest extends PyTestCase {
 
   // PY-48039
   public void testNoCaseOutsideMatchStatement() {
-    doTest();
+    CodeInsightSettings.runWithTemporarySettings(settings -> {
+      settings.AUTOCOMPLETE_ON_CODE_COMPLETION = false;
+      List<String> variants = doTestByTestName();
+      assertDoesntContain(variants, PyNames.CASE);
+      return null;
+    });
   }
 
   // PY-49728

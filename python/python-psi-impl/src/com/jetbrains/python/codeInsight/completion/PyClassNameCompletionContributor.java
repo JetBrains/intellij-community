@@ -52,7 +52,6 @@ public final class PyClassNameCompletionContributor extends PyImportableNameComp
   // See https://plugins.jetbrains.com/plugin/18465-sputnik
   private static final boolean TRACING_WITH_SPUTNIK_ENABLED = false;
   private static final Logger LOG = Logger.getInstance(PyClassNameCompletionContributor.class);
-  private static final int NAME_TOO_SHORT_FOR_BASIC_COMPLETION_THRESHOLD = 5;
   // See PY-73964, IJPL-265
   private static final boolean RECURSIVE_INDEX_ACCESS_ALLOWED = false;
 
@@ -129,10 +128,6 @@ public final class PyClassNameCompletionContributor extends PyImportableNameComp
       forEachPublicNameFromIndex(scope, elementName -> {
         ProgressManager.checkCanceled();
         counters.scannedNames++;
-        if (elementName.length() < NAME_TOO_SHORT_FOR_BASIC_COMPLETION_THRESHOLD && !isExtendedCompletion) {
-          counters.tooShortNames++;
-          return true;
-        }
         if (!result.getPrefixMatcher().isStartMatch(elementName)) return true;
         return stubIndex.processElements(PyExportedModuleAttributeIndex.KEY, elementName, project, scope, PyElement.class, exported -> {
           ProgressManager.checkCanceled();
@@ -330,7 +325,6 @@ public final class PyClassNameCompletionContributor extends PyImportableNameComp
   private static class Counters {
     int scannedNames;
     int privateNames;
-    int tooShortNames;
     int notApplicableInContextNames;
     int totalVariants;
 
@@ -339,7 +333,6 @@ public final class PyClassNameCompletionContributor extends PyImportableNameComp
       return "Counters{" +
              "scannedNames=" + scannedNames +
              ", privateNames=" + privateNames +
-             ", tooShortNames=" + tooShortNames +
              ", notApplicableInContextNames=" + notApplicableInContextNames +
              ", totalVariants=" + totalVariants +
              '}';
