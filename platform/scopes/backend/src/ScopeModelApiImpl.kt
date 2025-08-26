@@ -4,12 +4,11 @@ package com.intellij.platform.scopes.backend
 import com.intellij.ide.ui.WindowFocusFrontendService
 import com.intellij.ide.util.scopeChooser.*
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.packageDependencies.DependencyValidationManager
 import com.intellij.platform.project.ProjectId
-import com.intellij.platform.project.findProjectOrNullWithLogWarn
+import com.intellij.platform.project.findProjectOrNull
 import com.intellij.platform.rpc.backend.RemoteApiProvider
 import com.intellij.platform.scopes.ScopeModelRemoteApi
 import com.intellij.platform.scopes.SearchScopeData
@@ -26,8 +25,6 @@ import kotlinx.coroutines.launch
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
-private val LOG = logger<ScopesModelRemoteApiImpl>()
-
 internal class ScopesModelRemoteApiImpl : ScopeModelRemoteApi {
   private val modelIdToModel = ConcurrentHashMap<String, AbstractScopeModel>()
   private var selectedScopeName: String? = null
@@ -38,7 +35,7 @@ internal class ScopesModelRemoteApiImpl : ScopeModelRemoteApi {
     }
 
   override suspend fun createModelAndSubscribe(projectId: ProjectId, modelId: String, filterConditionType: ScopesFilterConditionType): Flow<SearchScopesInfo>? {
-    val project = projectId.findProjectOrNullWithLogWarn(LOG) ?: return null
+    val project = projectId.findProjectOrNull() ?: return null
     val model = project.getService(ScopeService::class.java)
       .createModel(EnumSet.of(
         ScopeOption.FROM_SELECTION,
@@ -58,7 +55,7 @@ internal class ScopesModelRemoteApiImpl : ScopeModelRemoteApi {
   }
 
   override suspend fun openEditScopesDialog(projectId: ProjectId, selectedScopeId: String?): Deferred<String?> {
-    val project = projectId.findProjectOrNullWithLogWarn(LOG) ?: return CompletableDeferred(value = null)
+    val project = projectId.findProjectOrNull() ?: return CompletableDeferred(value = null)
     selectedScopeName = selectedScopeId
     val deferred = CompletableDeferred<String?>()
     val coroutineScope = ScopeModelService.getInstance(project).getCoroutineScope()
@@ -111,7 +108,7 @@ internal class ScopesModelRemoteApiImpl : ScopeModelRemoteApi {
   }
 
   override suspend fun performScopeSelection(scopeId: String, modelId: String, projectId: ProjectId): Deferred<Unit> {
-    val project = projectId.findProjectOrNullWithLogWarn(LOG) ?: return CompletableDeferred(value = Unit)
+    val project = projectId.findProjectOrNull() ?: return CompletableDeferred(value = Unit)
     val scopesStateService = ScopesStateService.getInstance(project)
     val deferred = CompletableDeferred<Unit>()
     ScopeModelService.getInstance(project).getCoroutineScope().launch {

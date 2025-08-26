@@ -9,7 +9,6 @@ import com.intellij.ide.util.scopeChooser.ScopesStateService
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.project.projectId
-import com.intellij.platform.project.projectIdOrNullWithLogError
 import com.intellij.platform.scopes.ScopeModelRemoteApi
 import com.intellij.platform.util.coroutines.childScope
 import fleet.rpc.client.RpcTimeoutException
@@ -58,7 +57,7 @@ private class ScopeModelServiceImpl(private val project: Project, private val co
   }
 
   override fun openEditScopesDialog(selectedScopeId: String?, onFinish: (selectedScopeId: String?) -> Unit) {
-    val projectId = project.projectIdOrNullWithLogError(LOG) ?: return
+    val projectId = project.projectId()
     editScopesJob = coroutineScope.launch {
       val deferred = try {
         val selectedScopeName = selectedScopeId?.let { ScopesStateService.getInstance(project).getScopeNameById(selectedScopeId) }

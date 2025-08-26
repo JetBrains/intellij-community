@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.project
 
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -129,15 +128,6 @@ fun Project.projectId(): ProjectId {
   return projectIdOrNull() ?: error("Project ID is not set for $this")
 }
 
-@ApiStatus.Experimental
-fun Project.projectIdOrNullWithLogError(log: Logger): ProjectId? {
-  val projectId = projectIdOrNull()
-  if (projectId == null) {
-    log.error("Project ID is not set for $this")
-  }
-  return projectId
-}
-
 /**
  * Provides [Project] for the given [ProjectId].
  *
@@ -149,24 +139,13 @@ fun Project.projectIdOrNullWithLogError(log: Logger): ProjectId? {
  * - May return null if the project was closed or unregistered after the ProjectId was obtained
  *
  * @return The [Project] instance associated with the provided [ProjectId],
- *         or null if there is no project with the given [ProjectId]
+ *         or null if there is no project with the given [ProjectId] and logs with debug level
  */
 @ApiStatus.Experimental
 fun ProjectId.findProjectOrNull(): Project? {
-  return ProjectIdsStorage.getInstance().findProject(this)
-}
-
-/**
- * Provides [Project] for the given [ProjectId].
- *
- * @return The [Project] instance associated with the provided [ProjectId],
- * or null if there is no project with the given [ProjectId] and logs an error.
- */
-@ApiStatus.Experimental
-fun ProjectId.findProjectOrNullWithLogWarn(log: Logger): Project? {
   val project = ProjectIdsStorage.getInstance().findProject(this)
   if (project == null) {
-    log.warn("Project is not found for $this. Opened projects: ${ProjectManager.getInstance().openProjects.joinToString { it.projectId().toString() }}")
+    LOG.debug("Project is not found for $this. Opened projects: ${ProjectManager.getInstance().openProjects.joinToString { it.projectId().toString() }}")
   }
   return project
 }
