@@ -88,6 +88,7 @@ fun defaultTokenizationPolicy(logger: Logger?): TokenizationPolicy = Tokenizatio
   performLexing(text, lexer, cancellation, logger)
 }
 
+@Deprecated("to be moved to Fleet codebase")
 fun fleetTokenizationPolicy(logger: Logger?): TokenizationPolicy = TokenizationPolicy { text, lexer, cancellation ->
   val result = performLexing(text, lexer, cancellation, logger)
   val isEmpty = result.tokenCount == 0
