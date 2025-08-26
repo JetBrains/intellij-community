@@ -36,21 +36,24 @@ fun isTestClass(clazz: PyClass, context: TypeEvalContext): Boolean {
     return false
   }
 
-  object : Processor<PyFunction> {
-    var hasTestFunction: Boolean = false
-      private set
-
+  // Check if any method is a test method or setUp
+  var hasTestMethod = false
+  clazz.visitMethods(object : Processor<PyFunction> {
     override fun process(function: PyFunction): Boolean {
       if (isTestFunction(function) || function.name?.equals("setUp") == true) {
-        hasTestFunction = true
+        hasTestMethod = true
         return false
       }
       return true
     }
-  }.apply {
-    clazz.visitMethods(this, true, context)
-    return hasTestFunction
-  }
+  }, true, context)
+
+  // Check nested classes
+  val hasTestInNested = clazz.statementList.statements?.any { stmt ->
+    stmt is PyClass && isTestClass(stmt, context)
+  } ?: false
+
+  return hasTestMethod || hasTestInNested
 }
 
 fun isTestFile(file: PyFile,
