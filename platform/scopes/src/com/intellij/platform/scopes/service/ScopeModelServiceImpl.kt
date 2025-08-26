@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.project.projectId
 import com.intellij.platform.scopes.ScopeModelRemoteApi
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.util.cancelOnDispose
 import fleet.rpc.client.RpcTimeoutException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -66,6 +67,12 @@ private class ScopeModelServiceImpl(private val project: Project, private val co
       catch (e: RpcTimeoutException) {
         LOG.warn("Failed to edit scopes", e)
         null
+      }
+      deferred?.cancelOnDispose(project)
+      deferred?.invokeOnCompletion { cause ->
+        if (cause != null) {
+          onFinish(null)
+        }
       }
       onFinish(deferred?.await())
     }

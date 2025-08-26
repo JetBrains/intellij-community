@@ -28,6 +28,14 @@ f:com.intellij.ide.rpc.DataContextIdKt
 f:com.intellij.ide.rpc.DocumentIdKt
 - *sf:document(com.intellij.ide.rpc.DocumentId):com.intellij.openapi.editor.Document
 - *sf:rpcId(com.intellij.openapi.editor.Document):com.intellij.ide.rpc.DocumentId
+*f:com.intellij.ide.ui.WindowFocusFrontendService
+- *sf:Companion:com.intellij.ide.ui.WindowFocusFrontendService$Companion
+- <init>():V
+- f:isFrontendFocused():Z
+- f:performActionWithFocus(Z,kotlin.jvm.functions.Function0):java.lang.Object
+- bs:performActionWithFocus$default(com.intellij.ide.ui.WindowFocusFrontendService,Z,kotlin.jvm.functions.Function0,I,java.lang.Object):java.lang.Object
+*f:com.intellij.ide.ui.WindowFocusFrontendService$Companion
+- f:getInstance():com.intellij.ide.ui.WindowFocusFrontendService
 *f:com.intellij.ide.ui.colors.ColorId
 - *sf:Companion:com.intellij.ide.ui.colors.ColorId$Companion
 - <init>():V
