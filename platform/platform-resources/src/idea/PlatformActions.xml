@@ -1135,6 +1135,9 @@
     <group id="WelcomeScreen.QuickStart.ProjectsState">
     </group>
 
+    <group id="NonModalWelcomeScreen.RemoteDevelopmentActions">
+    </group>
+
     <group id="WelcomeScreen.QuickStart">
       <group id="WelcomeScreen.QuickStart.Platform"/>
       <add-to-group group-id="WelcomeScreen.QuickStart.EmptyState"/>

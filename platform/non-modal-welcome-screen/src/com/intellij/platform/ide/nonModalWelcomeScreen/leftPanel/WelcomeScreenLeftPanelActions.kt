@@ -21,9 +21,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import java.awt.Dimension
 import java.awt.Rectangle
-import java.awt.event.ActionEvent
 import java.util.function.Supplier
-import javax.swing.AbstractAction
 import javax.swing.JComponent
 
 internal class WelcomeScreenLeftPanelActions(val project: Project) {
@@ -35,7 +33,7 @@ internal class WelcomeScreenLeftPanelActions(val project: Project) {
     actionManager.getAction("WelcomeScreen.OpenDirectoryProject")?.let { group.add(it) }
     actionManager.getAction("NonModalWelcomeScreen.LeftTabActions.New.Action")?.let { group.add(it) }
     actionManager.getAction("ProjectFromVersionControl")?.let { group.add(it) }
-    actionManager.getAction("OpenRemoteDevelopment")?.let { group.add(it) }
+    actionManager.getAction("NonModalWelcomeScreen.RemoteDevelopmentActions")?.let { group.add(it) }
 
     val toolbar = ActionToolbarImpl(ActionPlaces.WELCOME_SCREEN, LeftPanelActionGroupWrapper(group), false, false, false)
     toolbar.isOpaque = false
@@ -83,14 +81,9 @@ private class LeftPanelDisclosureButtonAction(private val actionDelegate: AnActi
     val button = DisclosureButton()
     button.arrowIcon = null
 
-    button.text = presentation.text
-    button.icon = presentation.icon
+    button.addActionListener { performAction(button, presentation) }
 
-    button.action = object : AbstractAction() {
-      override fun actionPerformed(e: ActionEvent?) {
-        performAction(button, presentation)
-      }
-    }
+    updateCustomComponent(button, presentation)
 
     return button
   }
@@ -100,6 +93,7 @@ private class LeftPanelDisclosureButtonAction(private val actionDelegate: AnActi
 
     component.text = presentation.text
     component.icon = presentation.icon ?: EmptyIcon.ICON_16
+
     UIUtil.setEnabled(component, presentation.isEnabled, true)
   }
 
