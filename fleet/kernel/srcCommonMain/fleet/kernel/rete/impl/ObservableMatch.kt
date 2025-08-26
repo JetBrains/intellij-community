@@ -5,16 +5,29 @@ import fleet.kernel.rete.*
 import fleet.util.causeOfType
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.*
-import kotlin.concurrent.atomics.AtomicBoolean
+import kotlin.concurrent.atomics.AtomicInt
 
-internal class ObservableMatch<T>(
+enum class InvalidationReason {
+  Unsatisfied,
+  Disposed
+}
+
+private object MatchState {
+  const val ACTIVE = 0
+  const val BEFORE_UNSTATISFIED = 1
+  const val BEFORE_DISPOSED = 2
+  const val UNSATISFIED = 3
+  const val DISPOSED = 4
+}
+
+class ObservableMatch<T> internal constructor(
   internal val observerId: NodeId,
   internal val match: Match<T>,
 ) : Match<T> {
 
   private val validity: CompletableJob = Job()
 
-  private val invalidated: AtomicBoolean = AtomicBoolean(false)
+  private val state: AtomicInt = AtomicInt(MatchState.ACTIVE)
 
   override val value: T
     get() = match.value
@@ -22,16 +35,30 @@ internal class ObservableMatch<T>(
   /*
    * Rete network has already marked this match as invalidated in one of the snapshots it observed
    */
-  val wasInvalidated: Boolean get() = invalidated.load()
+  val wasInvalidated: Boolean get() = state.load().let { it == MatchState.UNSATISFIED || it == MatchState.DISPOSED }
 
-  internal fun onInvalidation(handler: () -> Unit): DisposableHandle =
+  internal fun beforeInvalidation(handler: (InvalidationReason) -> Unit): DisposableHandle =
     validity.invokeOnCompletion {
-      handler()
+      val reason = when (val state = state.load()) {
+        MatchState.BEFORE_DISPOSED, MatchState.DISPOSED -> InvalidationReason.Disposed
+        MatchState.BEFORE_UNSTATISFIED, MatchState.UNSATISFIED -> InvalidationReason.Unsatisfied
+        else -> error("unexpected state $state")
+      }
+      handler(reason)
     }
 
-  internal fun invalidate() {
+  internal fun invalidate(reason: InvalidationReason) {
+    val beforeState = when (reason) {
+      InvalidationReason.Unsatisfied -> MatchState.BEFORE_UNSTATISFIED
+      InvalidationReason.Disposed -> MatchState.BEFORE_DISPOSED
+    }
+    state.store(beforeState)
     validity.complete()
-    invalidated.store(true)
+    val afterState = when (reason) {
+      InvalidationReason.Unsatisfied -> MatchState.UNSATISFIED
+      InvalidationReason.Disposed -> MatchState.DISPOSED
+    }
+    state.store(afterState)
   }
 
   override fun validate(): ValidationResultEnum =
@@ -50,26 +77,31 @@ internal suspend fun <U> withObservableMatches(
   val contextMatches = currentCoroutineContext()[ContextMatches]?.matches ?: persistentListOf()
 
   @Suppress("NAME_SHADOWING")
-  val matches = run {
+  val addedMatches = run {
     val set = contextMatches.toSet()
     matches.filter { it !in set }.toList()
   }
   return when {
-    matches.isEmpty() -> WithMatchResult.Success(coroutineScope(body))
+    addedMatches.isEmpty() -> WithMatchResult.Success(coroutineScope(body))
     else ->
       withReteDbSource {
         var handles: List<DisposableHandle>? = null
-        val def = async(context = ContextMatches(contextMatches.addAll(matches)),
+        val def = async(context = ContextMatches(contextMatches.addAll(addedMatches)),
                         start = CoroutineStart.UNDISPATCHED) {
           val self = this
           // setup invalidation handles before launching [body]
           // if any of the matches is invalidated, [body] might catch a poison, the job should not be active at this point
-          handles = matches.map { m ->
-            m.onInvalidation {
-              val reason = CancellationReason("match terminated by rete", m)
-              self.cancel(UnsatisfiedMatchException(reason))
+          handles = addedMatches.map { m ->
+            m.beforeInvalidation { reason ->
+              val ex = when (reason) {
+                InvalidationReason.Unsatisfied -> UnsatisfiedMatchException(CancellationReason("match terminated by rete", m))
+                InvalidationReason.Disposed -> SubscriptionDisposedException(m)
+              }
+              self.cancel(ex)
             }
           }
+          // in case beforeInvalidation synchronously cancelled [self]
+          currentCoroutineContext().ensureActive()
           WithMatchResult.Success(body())
         }.apply {
           invokeOnCompletion {
@@ -80,9 +112,11 @@ internal suspend fun <U> withObservableMatches(
           def.await()
         }
         catch (ex: CancellationException) {
-          val cause = ex.causeOfType<UnsatisfiedMatchException>()
+          val unsatisfied = ex.causeOfType<UnsatisfiedMatchException>()
+          val disposed = ex.causeOfType<SubscriptionDisposedException>()
           when {
-            cause != null && cause.reason.match in matches -> WithMatchResult.Failure(cause.reason)
+            disposed != null && disposed.m in addedMatches -> throw disposed
+            unsatisfied != null && unsatisfied.reason.match in addedMatches -> WithMatchResult.Failure(unsatisfied.reason)
             else -> throw ex
           }
         }
@@ -96,7 +130,7 @@ internal fun <T> Query<*, T>.observable(terminalId: NodeId): Query<*, T> =
     onDispose {
       // when the terminal is retracted from the network for other reasons, make sure jobs of Matches served by the terminal are cancelled:
       observableMatches.forEach { (_, a) ->
-        a.invalidate()
+        a.invalidate(InvalidationReason.Disposed)
       }
     }
     producer().transform { token, emit ->
@@ -114,7 +148,7 @@ internal fun <T> Query<*, T>.observable(terminalId: NodeId): Query<*, T> =
               }
             }
             else -> {
-              observableMatch.invalidate()
+              observableMatch.invalidate(InvalidationReason.Unsatisfied)
               emit(Token(false, observableMatch))
             }
           }

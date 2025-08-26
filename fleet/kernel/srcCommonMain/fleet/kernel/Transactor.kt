@@ -94,9 +94,9 @@ suspend fun waitForDbSourceToCatchUpWithTimestamp(timestamp: Long) {
  * @return the result of [f]
  * */
 suspend fun <T> change(f: ChangeScope.() -> T): T {
-  val currentCoroutineContext = currentCoroutineContext()
-  val kernel = currentCoroutineContext.transactor
-  val interceptor = currentCoroutineContext[ChangeInterceptor] ?: ChangeInterceptor.Identity
+  val context = currentCoroutineContext()
+  val kernel = context.transactor
+  val interceptor = context[ChangeInterceptor] ?: ChangeInterceptor.Identity
   var res: T? = null
   val change = interceptor.change(
     {
@@ -105,12 +105,13 @@ suspend fun <T> change(f: ChangeScope.() -> T): T {
   ) { changeFn ->
     kernel.changeSuspend(changeFn)
   }
-  waitForDbSourceToCatchUpWithTimestamp(change.dbAfter.timestamp)
+  context.dbSource.catchUp(change.dbAfter.timestamp)
+  @Suppress("UNCHECKED_CAST")
   return res as T
 }
 
 
-suspend fun db(): DB =
+fun db(): DB =
   DbContext.threadBound.impl as DB
 
 suspend fun transactor(): Transactor {
@@ -507,7 +508,7 @@ suspend fun <T> withTransactor(
                 }
               }
             }
-          }  
+          }
         }
       }.apply {
         invokeOnCompletion { x ->
@@ -563,9 +564,6 @@ private fun checkDuration(
     }
   }
 }
-
-@DslMarker
-annotation class KernelDSL
 
 typealias SlowChangeReporter = (CoroutineContext, Long, String) -> Unit
 
