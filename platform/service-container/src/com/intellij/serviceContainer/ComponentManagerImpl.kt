@@ -7,9 +7,7 @@ package com.intellij.serviceContainer
 
 import com.intellij.codeWithMe.ClientIdContextElement
 import com.intellij.codeWithMe.ClientIdContextElementPrecursor
-import com.intellij.concurrency.currentTemporaryThreadContextOrNull
-import com.intellij.concurrency.resetThreadContext
-import com.intellij.concurrency.withThreadLocal
+import com.intellij.concurrency.*
 import com.intellij.configurationStore.ProjectIdManager
 import com.intellij.configurationStore.SettingsSavingComponent
 import com.intellij.diagnostic.ActivityCategory
@@ -50,6 +48,7 @@ import com.intellij.util.messages.Topic
 import com.intellij.util.messages.impl.*
 import com.intellij.util.runSuppressing
 import kotlinx.coroutines.*
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.internal.intellij.IntellijCoroutines
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
@@ -874,8 +873,13 @@ abstract class ComponentManagerImpl(
 
   final override fun <T : Any> instantiateClass(aClass: Class<T>, pluginId: PluginId): T {
     checkCanceledIfNotInClassInit()
+    val external = currentThreadContext().fold<CoroutineContext>(EmptyCoroutineContext) { acc, element ->
+      if (element is ExternalIntelliJContextElement) acc + element else acc
+    }
     return resetThreadContext {
-      doInstantiateClass(aClass, pluginId)
+      installThreadContext(external) {
+        doInstantiateClass(aClass, pluginId)
+      }
     }
   }
 
@@ -1649,8 +1653,12 @@ private fun throwAlreadyDisposedIfNotUnderIndicatorOrJob(cause: Throwable) {
 private fun <X> runBlockingInitialization(action: suspend CoroutineScope.() -> X): X {
   return prepareThreadContext { ctx -> // reset thread context
     val (lockPermitContext, cleanup) = getLockPermitContext(ctx, false)
+    val external = ctx.fold<CoroutineContext>(EmptyCoroutineContext) { acc, element ->
+      if (element is ExternalIntelliJContextElement) acc + element else acc
+    }
     try {
       val contextForInitializer =
+        external +
         (ctx.contextModality()?.asContextElement() ?: EmptyCoroutineContext) + // leak modality state into initialization coroutine
         (ctx[Job] ?: EmptyCoroutineContext) + // bind to caller Job
         lockPermitContext + // capture whether the caller holds the read lock
