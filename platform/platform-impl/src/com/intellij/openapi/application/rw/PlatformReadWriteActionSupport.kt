@@ -3,12 +3,15 @@ package com.intellij.openapi.application.rw
 
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.openapi.application.*
-import com.intellij.openapi.application.ReadResult
 import com.intellij.openapi.application.impl.AsyncExecutionServiceImpl
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.util.ObjectUtils
+import com.intellij.util.application
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 internal class PlatformReadWriteActionSupport : ReadWriteActionSupport {
 
@@ -70,7 +73,7 @@ internal class PlatformReadWriteActionSupport : ReadWriteActionSupport {
             }
           }
           val writeResult = if (runWriteActionOnEdt) {
-            edtWriteAction(action)
+            executeWriteActionOnEdt(stamp, readResult.action)
           }
           else {
             backgroundWriteAction(action)
@@ -80,6 +83,20 @@ internal class PlatformReadWriteActionSupport : ReadWriteActionSupport {
             return writeResult as X
           }
         }
+      }
+    }
+  }
+
+  private suspend fun <T> executeWriteActionOnEdt(originalStamp: Long, action: () -> T): /*T or retryMarker */ Any? {
+    return withContext(Dispatchers.EDT) {
+      val writeStamp = AsyncExecutionServiceImpl.getWriteActionCounter()
+      if (originalStamp == writeStamp) {
+        application.runWriteAction(Computable {
+          action()
+        })
+      }
+      else {
+        retryMarker
       }
     }
   }
