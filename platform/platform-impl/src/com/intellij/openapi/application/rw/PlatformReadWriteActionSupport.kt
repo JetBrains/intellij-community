@@ -1,27 +1,24 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.rw
 
-import com.intellij.concurrency.currentThreadContext
 import com.intellij.diagnostic.ThreadDumper
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.openapi.application.*
-import com.intellij.openapi.application.ReadResult
 import com.intellij.openapi.application.impl.AsyncExecutionServiceImpl
 import com.intellij.openapi.application.impl.InternalThreading
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.util.ObjectUtils
+import com.intellij.util.application
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.IOException
 import java.nio.file.Files
-import kotlin.coroutines.CoroutineContext
 import kotlin.io.path.writeText
 import kotlin.math.absoluteValue
 import kotlin.random.Random
@@ -87,7 +84,7 @@ internal class PlatformReadWriteActionSupport : ReadWriteActionSupport {
             }
           }
           val writeResult = if (runWriteActionOnEdt) {
-            edtWriteAction(action)
+            executeWriteActionOnEdt(stamp, readResult.action)
           }
           else {
             backgroundWriteAction(action)
@@ -100,6 +97,21 @@ internal class PlatformReadWriteActionSupport : ReadWriteActionSupport {
       }
     }
   }
+
+  private suspend fun <T> executeWriteActionOnEdt(originalStamp: Long, action: () -> T): /*T or retryMarker */ Any? {
+    return withContext(Dispatchers.EDT) {
+      val writeStamp = AsyncExecutionServiceImpl.getWriteActionCounter()
+      if (originalStamp == writeStamp) {
+        application.runWriteAction(Computable {
+          action()
+        })
+      }
+      else {
+        retryMarker
+      }
+    }
+  }
+
 
   override suspend fun <T> runWriteAction(action: () -> T): T {
     val context = if (useBackgroundWriteAction) {
