@@ -31,7 +31,6 @@ import com.intellij.spellchecker.inspections.SpellcheckingExtension
 import com.intellij.spellchecker.inspections.SpellcheckingExtension.SpellCheckingResult
 import com.intellij.spellchecker.inspections.SpellcheckingExtension.SpellingTypo
 import com.intellij.spellchecker.tokenizer.SpellcheckingStrategy
-import com.intellij.spellchecker.tokenizer.SpellcheckingStrategy.EMPTY_TOKENIZER
 import com.intellij.util.containers.ContainerUtil
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
@@ -46,13 +45,12 @@ class GrazieSpellcheckingExtension : SpellcheckingExtension {
   override fun spellcheck(element: PsiElement, session: LocalInspectionToolSession, consumer: Consumer<SpellingTypo>): SpellCheckingResult {
     val strategy = getSpellcheckingStrategy(element)
     if (!strategy.useTextLevelSpellchecking()) return SpellCheckingResult.Ignored
-    
+
     if (element is PsiWhiteSpace) return SpellCheckingResult.Checked
     ProgressManager.checkCanceled()
 
     val texts = sortByPriority(TextExtractor.findTextsExactlyAt(element, DOMAINS), session.priorityRange)
     if (texts.isEmpty()) {
-      if (strategy.getTokenizer(element) == EMPTY_TOKENIZER) return SpellCheckingResult.Ignored
       if (hasTextAround(element, strategy)) return SpellCheckingResult.Checked
       return SpellCheckingResult.Ignored
     }
@@ -118,8 +116,7 @@ class GrazieSpellcheckingExtension : SpellcheckingExtension {
   }
 
   private fun hasTextAround(element: PsiElement, strategy: SpellcheckingStrategy): Boolean =
-    parentHasText(element) ||
-    (strategy.elementFitsScope(element, setOf(Literals, Comments)) && childHasText(element))
+    strategy.elementFitsScope(element, setOf(Literals, Comments)) && childHasText(element)
 
   private fun childHasText(root: PsiElement): Boolean {
     if (root.firstChild == null) return false
@@ -129,10 +126,6 @@ class GrazieSpellcheckingExtension : SpellcheckingExtension {
       }
     }
     return false
-  }
-
-  private fun parentHasText(element: PsiElement): Boolean {
-    return TextExtractor.findTextsAt(element, DOMAINS).isNotEmpty()
   }
 }
 

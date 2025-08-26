@@ -43,8 +43,8 @@ ship-to:  *id001
 'Chapter 1': [Introduction, Event Types, It <GRAMMAR_ERROR descr="IT_VBZ">are</GRAMMAR_ERROR> error]
 'Chapter 2': [Introduction, Helpers]
 
-'symfony 1.0': { PHP: 5.0, Propel: 1.2 }
-'symfony 1.2': { PHP: 5.2, Propel: 1.3 }
+'Symfony 1.0': { PHP: 5.0, Propel: 1.2 }
+'<TYPO descr="Typo: In word 'symfony'">symfony</TYPO> 1.2': { PHP: 5.2, Propel: 1.3 }
 
 # it <GRAMMAR_ERROR descr="IT_VBZ">are</GRAMMAR_ERROR> bad <TYPO descr="Typo: In word 'eror'">eror</TYPO> in comments
 specialDelivery:  >
