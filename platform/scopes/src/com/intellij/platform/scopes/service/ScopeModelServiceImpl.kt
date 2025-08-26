@@ -57,12 +57,11 @@ private class ScopeModelServiceImpl(private val project: Project, private val co
     return null
   }
 
-  override fun openEditScopesDialog(selectedScopeId: String?, onFinish: (selectedScopeId: String?) -> Unit) {
+  override fun openEditScopesDialog(selectedScopeId: String?, modelId: String, onFinish: (selectedScopeId: String?) -> Unit) {
     val projectId = project.projectId()
     editScopesJob = coroutineScope.launch {
       val deferred = try {
-        val selectedScopeName = selectedScopeId?.let { ScopesStateService.getInstance(project).getScopeNameById(selectedScopeId) }
-        ScopeModelRemoteApi.getInstance().openEditScopesDialog(projectId, selectedScopeName)
+        ScopeModelRemoteApi.getInstance().openEditScopesDialog(projectId, selectedScopeId, modelId)
       }
       catch (e: RpcTimeoutException) {
         LOG.warn("Failed to edit scopes", e)

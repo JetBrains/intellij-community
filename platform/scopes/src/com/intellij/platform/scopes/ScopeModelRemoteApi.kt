@@ -16,9 +16,9 @@ import org.jetbrains.annotations.ApiStatus
 interface ScopeModelRemoteApi : RemoteApi<Unit> {
   suspend fun createModelAndSubscribe(projectId: ProjectId, modelId: String, filterConditionType: ScopesFilterConditionType): Flow<SearchScopesInfo>?
 
-  suspend fun openEditScopesDialog(projectId: ProjectId, selectedScopeId: String?): Deferred<String?>
+  suspend fun openEditScopesDialog(projectId: ProjectId, selectedScopeId: String?, modelId: String): Deferred<String?>
 
-  suspend fun performScopeSelection(scopeId: String, modelId: String, projectId: ProjectId): Deferred<Unit>
+  suspend fun performScopeSelection(scopeId: String, projectId: ProjectId): Deferred<Unit>
 
   companion object {
     @JvmStatic

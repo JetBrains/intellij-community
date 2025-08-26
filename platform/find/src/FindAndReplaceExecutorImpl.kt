@@ -147,10 +147,10 @@ open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : Find
     }
   }
 
-  override fun performScopeSelection(scopeId: String, scopesModelId: String, project: Project) {
+  override fun performScopeSelection(scopeId: String, project: Project) {
     selectScopeJob = coroutineScope.launch {
       val deferred = try {
-       ScopeModelRemoteApi.getInstance().performScopeSelection(scopeId, scopesModelId, project.projectId())
+       ScopeModelRemoteApi.getInstance().performScopeSelection(scopeId, project.projectId())
       }
       catch (e: RpcTimeoutException) {
         LOG.warn("Failed to select scope", e)

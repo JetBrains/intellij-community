@@ -18,7 +18,7 @@ interface ScopeModelService {
 
   fun getScopeDescriptorById(scopeId: String): ScopeDescriptor?
 
-  fun openEditScopesDialog(selectedScopeId: String?, onFinish: (selectedScopeId: String?) -> Unit)
+  fun openEditScopesDialog(selectedScopeId: String?, modelId: String, onFinish: (selectedScopeId: String?) -> Unit)
 
   fun getCoroutineScope(): CoroutineScope
 

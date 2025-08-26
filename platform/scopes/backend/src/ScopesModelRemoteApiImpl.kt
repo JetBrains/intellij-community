@@ -28,12 +28,15 @@ import java.util.concurrent.ConcurrentHashMap
 
 internal class ScopesModelRemoteApiImpl : ScopeModelRemoteApi {
   private val modelIdToModel = ConcurrentHashMap<String, AbstractScopeModel>()
-  private var selectedScopeName: String? = null
-    get() {
-      val result = field
-      field = null
-      return result
-    }
+  /**
+   * Tracks newly created scope names by model ID for deferred selection.
+   *
+   * This is necessary because when a scope is created or renamed using EditScopeDialog,
+   * the scope isn't immediately available in the scopes list. The dialog only sends an event
+   * for the scope change. After scopes update asynchronously, we can then select the newly
+   * created/renamed scope using its name.
+   */
+  private val modelIdToSelectedScopeName = ConcurrentHashMap<String, String>()
 
   override suspend fun createModelAndSubscribe(projectId: ProjectId, modelId: String, filterConditionType: ScopesFilterConditionType): Flow<SearchScopesInfo>? {
     val project = projectId.findProjectOrNull() ?: return null
@@ -55,19 +58,22 @@ internal class ScopesModelRemoteApiImpl : ScopeModelRemoteApi {
     return flow
   }
 
-  override suspend fun openEditScopesDialog(projectId: ProjectId, selectedScopeId: String?): Deferred<String?> {
+  override suspend fun openEditScopesDialog(projectId: ProjectId, selectedScopeId: String?, modelId: String): Deferred<String?> {
     val project = projectId.findProjectOrNull() ?: return CompletableDeferred(value = null)
-    selectedScopeName = selectedScopeId
     val deferred = CompletableDeferred<String?>()
     deferred.cancelOnDispose(project)
     val coroutineScope = ScopeModelService.getInstance(project).getCoroutineScope()
     coroutineScope.launch(Dispatchers.EDT) {
       WindowFocusFrontendService.getInstance().performActionWithFocus(true) {
-        val dialog = EditScopesDialog.showDialog(project, selectedScopeName)
+        val dialog = EditScopesDialog.showDialog(project, selectedScopeId?.let { ScopesStateService.getInstance(project).getScopeNameById(it) })
         if (dialog.isOK) {
           val scopeName = dialog.selectedScope?.scopeId
           val scopeId = scopeName?.let { ScopesStateService.getInstance(project).getIdByScopeName(it) }
-          if (scopeId == null) selectedScopeName = scopeName
+
+          // If the scope was created/renamed but not yet registered with an ID,
+          // store its name for selection after the next scope refresh
+          if (scopeId == null && scopeName != null) modelIdToSelectedScopeName[modelId] = scopeName
+
           deferred.complete(scopeId)
         } else {
           deferred.complete(null)
@@ -91,7 +97,8 @@ internal class ScopesModelRemoteApiImpl : ScopeModelRemoteApi {
           }
           scopesState.updateScopes(scopesStateMap)
 
-          val currentScopeName = selectedScopeName
+          val currentScopeName = modelIdToSelectedScopeName[modelId]
+          if (currentScopeName != null) { modelIdToSelectedScopeName.remove(modelId) }
           val currentScopeId = currentScopeName?.let { name -> scopesStateMap.entries.find { it.value.displayName == name }?.key }
           val searchScopesInfo = SearchScopesInfo(scopesData, currentScopeId, null, null)
           launch {
@@ -109,7 +116,7 @@ internal class ScopesModelRemoteApiImpl : ScopeModelRemoteApi {
     return flow
   }
 
-  override suspend fun performScopeSelection(scopeId: String, modelId: String, projectId: ProjectId): Deferred<Unit> {
+  override suspend fun performScopeSelection(scopeId: String, projectId: ProjectId): Deferred<Unit> {
     val project = projectId.findProjectOrNull() ?: return CompletableDeferred(value = Unit)
     val scopesStateService = ScopesStateService.getInstance(project)
     val deferred = CompletableDeferred<Unit>()
