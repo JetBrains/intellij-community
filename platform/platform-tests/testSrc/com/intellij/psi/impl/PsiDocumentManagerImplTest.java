@@ -1027,4 +1027,70 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
       }
     });
   }
+
+  private static @NotNull String genRandomString(int length) {
+    int leftLimit = 48; // numeral '0'
+    int rightLimit = 122; // letter 'z'
+
+    return new Random().ints(leftLimit, rightLimit + 1)
+      .filter(i -> (i <= 57 || i >= 65) && (i <= 90 || i >= 97))
+      .limit(length)
+      .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
+      .toString();
+  }
+  public void testHugeAmountOfChangedDocumentsMustBeNotHardRetainedByTheCommitQueue() throws IOException {
+    LoggedErrorProcessor.executeWith(new LoggedErrorProcessor() {
+      @Override
+      public @NotNull Set<Action> processError(@NotNull String category, @NotNull String message, String @NotNull [] details, Throwable t) {
+        if (message.contains("Too many uncommitted documents")) {
+          return Action.NONE;
+        }
+        return super.processError(category, message, details, t);
+      }
+    }, () -> {
+      PsiDocumentManagerImpl psiDocumentManager = getPsiDocumentManager();
+      psiDocumentManager.myUnitTestMode = false; // test the prod behaviour
+      AtomicInteger committed = new AtomicInteger();
+      try {
+        Key<Boolean> MY_DOC_KEY = Key.create("MY_DOC_TEST_KEY");
+
+        File dir = createTempDir("myFiles");
+        // batch creating is faster
+        int N = 5000;
+        String randomText = genRandomString(100_000);
+        for (int i = 0; i < N; i++) {
+          FileUtil.writeToFile(new File(dir, i + "x.java"), randomText);
+        }
+        VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir);
+        assertEquals(N, vDir.getChildren().length);
+        for (VirtualFile vFile : vDir.getChildren()) {
+          PsiFile mainFile = findFile(vFile);
+          Document doc = getDocument(mainFile);
+          doc.putUserData(MY_DOC_KEY, true);
+
+          psiDocumentManager.addRunOnCommit(doc, d -> {
+            assertFalse(ApplicationManager.getApplication().isWriteAccessAllowed());
+            committed.incrementAndGet();
+            //System.out.println("committed "+d);
+          });
+          PsiFile psiFile = psiDocumentManager.getPsiFile(doc);
+          WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+            doc.insertString(0," ");
+          });
+          Reference.reachabilityFence(psiFile); // retain PSI to not call "handleCommitWithoutPsi" accidentally
+        }
+        FileDocumentManager.getInstance().saveAllDocuments();
+        LeakHunter.checkLeak(DocumentCommitThread.getInstance(), DocumentImpl.class, d -> d.getUserData(MY_DOC_KEY) == Boolean.TRUE);
+        GCUtil.tryGcSoftlyReachableObjects();
+        DocumentCommitThread.getInstance().waitForAllCommits(1, TimeUnit.MINUTES);
+        LeakHunter.checkLeak(DocumentCommitThread.getInstance(), DocumentImpl.class, d -> d.getUserData(MY_DOC_KEY) == Boolean.TRUE);
+        System.out.println("committed = " + committed);
+        assertTrue(committed.get() < N); // some documents should be gced
+      }
+      finally {
+        psiDocumentManager.myUnitTestMode = true;
+        psiDocumentManager.clearUncommittedDocuments();
+      }
+    });
+  }
 }
