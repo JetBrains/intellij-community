@@ -61,6 +61,10 @@ abstract class AbstractChangesBrowserFilePathNode<U>(
     if (!isLeaf) {
       appendCount(renderer)
     }
+    setIcon(renderer, path)
+  }
+
+  protected open fun setIcon(renderer: ChangesBrowserNodeRenderer, path: FilePath) {
     renderer.setIcon(path, path.isDirectory || !isLeaf)
   }
 

@@ -129,6 +129,7 @@ a:com.intellij.openapi.vcs.changes.ui.AbstractChangesBrowserFilePathNode
 - p:originPath(java.lang.Object):com.intellij.openapi.vcs.FilePath
 - render(com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer,Z,Z,Z):V
 - sf:safeCastToFilePath(com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode):com.intellij.openapi.vcs.FilePath
+- p:setIcon(com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer,com.intellij.openapi.vcs.FilePath):V
 f:com.intellij.openapi.vcs.changes.ui.AbstractChangesBrowserFilePathNode$Companion
 - f:safeCastToFilePath(com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode):com.intellij.openapi.vcs.FilePath
 a:com.intellij.openapi.vcs.changes.ui.BaseChangesGroupingPolicy
