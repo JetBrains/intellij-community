@@ -14,6 +14,7 @@ import com.intellij.platform.scopes.ScopeModelRemoteApi
 import com.intellij.platform.scopes.SearchScopeData
 import com.intellij.platform.scopes.SearchScopesInfo
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager
+import com.intellij.util.cancelOnDispose
 import fleet.rpc.remoteApiDescriptor
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
@@ -58,6 +59,7 @@ internal class ScopesModelRemoteApiImpl : ScopeModelRemoteApi {
     val project = projectId.findProjectOrNull() ?: return CompletableDeferred(value = null)
     selectedScopeName = selectedScopeId
     val deferred = CompletableDeferred<String?>()
+    deferred.cancelOnDispose(project)
     val coroutineScope = ScopeModelService.getInstance(project).getCoroutineScope()
     coroutineScope.launch(Dispatchers.EDT) {
       WindowFocusFrontendService.getInstance().performActionWithFocus(true) {
@@ -111,6 +113,7 @@ internal class ScopesModelRemoteApiImpl : ScopeModelRemoteApi {
     val project = projectId.findProjectOrNull() ?: return CompletableDeferred(value = Unit)
     val scopesStateService = ScopesStateService.getInstance(project)
     val deferred = CompletableDeferred<Unit>()
+    deferred.cancelOnDispose(project)
     ScopeModelService.getInstance(project).getCoroutineScope().launch {
       scopesStateService.getScopeById(scopeId)
       deferred.complete(Unit)

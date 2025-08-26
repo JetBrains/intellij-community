@@ -13,6 +13,7 @@ import com.intellij.platform.project.OpenFileChooserService
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProjectOrNull
 import com.intellij.platform.rpc.backend.RemoteApiProvider
+import com.intellij.util.cancelOnDispose
 import fleet.rpc.remoteApiDescriptor
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
@@ -26,8 +27,9 @@ internal class OpenFileChooserApiImpl : OpenFileChooserApi {
     val descriptor: FileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
     descriptor.isForcedToUseIdeaFileChooser = true
     val deferred = CompletableDeferred<String?>()
+    deferred.cancelOnDispose(project)
 
-    OpenFileChooserService.getInstance().coroutineScope.launch(Dispatchers.EDT) {
+    OpenFileChooserService.getInstance(project).coroutineScope.launch(Dispatchers.EDT) {
       WindowFocusFrontendService.getInstance().performActionWithFocus(true) {
         FileChooser.chooseFiles(descriptor, project, null, VfsUtil.findFileByIoFile(File(initialDirectory), true), object : FileChooser.FileChooserConsumer {
           override fun consume(files: MutableList<VirtualFile?>) {

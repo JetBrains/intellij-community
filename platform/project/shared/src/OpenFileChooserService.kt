@@ -6,6 +6,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.util.cancelOnDispose
 import fleet.rpc.client.RpcTimeoutException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -15,19 +16,24 @@ import org.jetbrains.annotations.ApiStatus
 private val LOG = logger<OpenFileChooserService>()
 
 @ApiStatus.Internal
-@Service(Service.Level.APP)
-class OpenFileChooserService(val coroutineScope: CoroutineScope) {
+@Service(Service.Level.PROJECT)
+class OpenFileChooserService(private val project: Project, val coroutineScope: CoroutineScope) {
   private var chooseDirectoryJob: Job? = null
 
-  fun chooseDirectory(project: Project, initialDirectory: String, onResult: (@NlsSafe String?) -> Any?) {
+  fun chooseDirectory(initialDirectory: String, onResult: (@NlsSafe String?) -> Any?) {
     chooseDirectoryJob = coroutineScope.launch {
       val deferred = try {
          OpenFileChooserApi.getInstance().chooseDirectory(project.projectId(), initialDirectory)
       }
       catch (e: RpcTimeoutException) {
         LOG.warn("Directory selection failed", e)
-        chooseDirectoryJob?.cancel()
         null
+      }
+      deferred?.cancelOnDispose(project)
+      deferred?.invokeOnCompletion { cause ->
+        if (cause != null) {
+          onResult(null)
+        }
       }
       onResult(deferred?.await())
     }
@@ -35,6 +41,6 @@ class OpenFileChooserService(val coroutineScope: CoroutineScope) {
 
   companion object {
     @JvmStatic
-    fun getInstance(): OpenFileChooserService = service()
+    fun getInstance(project: Project): OpenFileChooserService = project.service()
   }
 }

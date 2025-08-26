@@ -26,6 +26,7 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.usages.FindUsagesProcessPresentation
 import com.intellij.usages.UsageInfo2UsageAdapter
 import com.intellij.usages.UsageInfoAdapter
+import com.intellij.util.cancelOnDispose
 import fleet.rpc.client.RpcTimeoutException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -155,6 +156,7 @@ open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : Find
         LOG.warn("Failed to select scope", e)
         null
       }
+      deferred?.cancelOnDispose(project)
       deferred?.await()
     }
   }
