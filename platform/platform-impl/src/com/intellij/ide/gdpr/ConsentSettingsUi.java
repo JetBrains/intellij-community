@@ -15,6 +15,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.SwingHelper;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -101,7 +102,8 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
     return viewer;
   }
 
-  static @NotNull ConsentUi getConsentUi(Consent consent) {
+  @ApiStatus.Internal
+  public static @NotNull ConsentUi getConsentUi(Consent consent) {
     if (ConsentOptions.condUsageStatsConsent().test(consent)) {
       return new UsageStatisticsConsentUi(consent);
     }
@@ -111,7 +113,8 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
     return new DefaultConsentUi(consent);
   }
 
-  static @Nullable ConsentGroupUi getConsentGroupUi(ConsentGroup consentGroup) {
+  @ApiStatus.Internal
+  public static @Nullable ConsentGroupUi getConsentGroupUi(ConsentGroup consentGroup) {
     if (DATA_COLLECTION_GROUP_ID.equals(consentGroup.getId())) {
       return new DataCollectionConsentGroupUI(ContainerUtil.map(consentGroup.getConsents(), ConsentSettingsUi::getConsentUi));
     }
