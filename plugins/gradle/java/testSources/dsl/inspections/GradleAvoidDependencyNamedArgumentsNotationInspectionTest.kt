@@ -14,20 +14,6 @@ import org.junit.jupiter.params.ParameterizedTest
 
 class GradleAvoidDependencyNamedArgumentsNotationInspectionTest : GradleCodeInsightTestCase() {
 
-  private val CUSTOM_PROJECT = GradleTestFixtureBuilder.create("avoid_named_arguments") {
-    withSettingsFile(gradleVersion) {
-      setProjectName("java-plugin-project")
-    }
-    withBuildFile(gradleVersion) {
-      withJavaPlugin()
-      withPrefix {
-        call("configurations") {
-          code("customConf")
-        }
-      }
-    }
-  }
-
   private fun runTest(
     gradleVersion: GradleVersion,
     textForHighlighting: String,
@@ -39,7 +25,7 @@ class GradleAvoidDependencyNamedArgumentsNotationInspectionTest : GradleCodeInsi
       testHighlighting(textForHighlighting)
 
       // if there is a warning, check that an intention exists and can be applied
-      if (textForHighlighting.contains("<weak_warning>")) {
+      if (textForHighlighting.contains(WARNING_START)) {
         assertNotNull(textBeforeIntention) {
           "Internal assert failure: provide 'textBeforeIntention' text, text with a warning should have a quick fix available"
         }
@@ -47,7 +33,7 @@ class GradleAvoidDependencyNamedArgumentsNotationInspectionTest : GradleCodeInsi
           "Internal assert failure: provide 'textAfterIntention' text, text with a warning should have a quick fix available"
         }
 
-        val textForHighlightingStripped = textForHighlighting.replace("<weak_warning>", "").replace("</weak_warning>", "")
+        val textForHighlightingStripped = textForHighlighting.replace(WARNING_START, "").replace(WARNING_END, "")
         val textBeforeIntentionStripped = textBeforeIntention.replace("<caret>", "")
         // assert that the text used to check highlighting and the text used to apply the intention on are equal just in case
         Assertions.assertEquals(textForHighlightingStripped, textBeforeIntentionStripped) {
@@ -79,7 +65,7 @@ class GradleAvoidDependencyNamedArgumentsNotationInspectionTest : GradleCodeInsi
       gradleVersion,
       """
       dependencies { 
-        implementation <weak_warning>group: 'org.gradle', name: 'gradle-core', version: '1.0'</weak_warning>
+        implementation ${WARNING_START}group: 'org.gradle', name: 'gradle-core', version: '1.0'$WARNING_END
       }
       """.trimIndent(),
       """
@@ -102,7 +88,7 @@ class GradleAvoidDependencyNamedArgumentsNotationInspectionTest : GradleCodeInsi
       gradleVersion,
       """
       dependencies { 
-        implementation<weak_warning>(group: 'org.gradle', name: 'gradle-core', version: '1.0')</weak_warning>
+        implementation$WARNING_START(group: 'org.gradle', name: 'gradle-core', version: '1.0')$WARNING_END
       }
       """.trimIndent(),
       """
@@ -125,7 +111,7 @@ class GradleAvoidDependencyNamedArgumentsNotationInspectionTest : GradleCodeInsi
       gradleVersion,
       """
       dependencies { 
-        implementation <weak_warning>group: "org.gradle", name: "gradle-core", version: "1.0"</weak_warning>
+        implementation ${WARNING_START}group: "org.gradle", name: "gradle-core", version: "1.0"$WARNING_END
       }
       """.trimIndent(),
       """
@@ -162,7 +148,7 @@ class GradleAvoidDependencyNamedArgumentsNotationInspectionTest : GradleCodeInsi
       gradleVersion,
       """
       dependencies { 
-        customConf <weak_warning>group: 'org.gradle', name: 'gradle-core', version: '1.0'</weak_warning>
+        customConf ${WARNING_START}group: 'org.gradle', name: 'gradle-core', version: '1.0'$WARNING_END
       }
       """.trimIndent(),
       """
@@ -186,7 +172,7 @@ class GradleAvoidDependencyNamedArgumentsNotationInspectionTest : GradleCodeInsi
       $$"""
       var verRef = '1.0'
       dependencies { 
-        implementation <weak_warning>group: 'org.gradle', name: 'gradle-core', version: "$verRef"</weak_warning>
+        implementation $${WARNING_START}group: 'org.gradle', name: 'gradle-core', version: "$verRef"$$WARNING_END
       }
       """.trimIndent(),
       $$"""
@@ -224,7 +210,7 @@ class GradleAvoidDependencyNamedArgumentsNotationInspectionTest : GradleCodeInsi
       gradleVersion,
       """
       dependencies { 
-        implementation <weak_warning>group: 'org.gradle', name: 'gradle-core'</weak_warning>
+        implementation ${WARNING_START}group: 'org.gradle', name: 'gradle-core'$WARNING_END
       }
       """.trimIndent(),
       """
@@ -260,7 +246,7 @@ class GradleAvoidDependencyNamedArgumentsNotationInspectionTest : GradleCodeInsi
       gradleVersion,
       """
       dependencies { 
-        implementation<weak_warning>(group: 'org.gradle', name: 'gradle-core', version: '1.0')</weak_warning> {
+        implementation$WARNING_START(group: 'org.gradle', name: 'gradle-core', version: '1.0')$WARNING_END {
           exclude(group: 'com.google.guava', module: 'guava')
         }
       }
@@ -289,7 +275,7 @@ class GradleAvoidDependencyNamedArgumentsNotationInspectionTest : GradleCodeInsi
       gradleVersion,
       """
       dependencies { 
-        implementation <weak_warning>version: '1.0', group: 'org.gradle', name: 'gradle-core'</weak_warning>
+        implementation ${WARNING_START}version: '1.0', group: 'org.gradle', name: 'gradle-core'$WARNING_END
       }
       """.trimIndent(),
       """
@@ -303,5 +289,23 @@ class GradleAvoidDependencyNamedArgumentsNotationInspectionTest : GradleCodeInsi
       }
       """.trimIndent()
     )
+  }
+
+  companion object {
+    private const val WARNING_START = "<weak_warning>"
+    private const val WARNING_END = "</weak_warning>"
+    private val CUSTOM_PROJECT = GradleTestFixtureBuilder.create("avoid_named_arguments") { gradleVersion ->
+      withSettingsFile(gradleVersion) {
+        setProjectName("java-plugin-project")
+      }
+      withBuildFile(gradleVersion) {
+        withJavaPlugin()
+        withPrefix {
+          call("configurations") {
+            code("customConf")
+          }
+        }
+      }
+    }
   }
 }
