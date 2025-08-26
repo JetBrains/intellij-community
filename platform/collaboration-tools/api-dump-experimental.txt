@@ -522,13 +522,6 @@ f:com.intellij.collaboration.api.json.JsonHttpApiHelperKt
 - sf:INSTANCE:com.intellij.collaboration.ui.codereview.changes.CodeReviewChangeListComponentFactory
 - f:createIn(kotlinx.coroutines.CoroutineScope,com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeListViewModel,com.intellij.collaboration.ui.codereview.CodeReviewProgressTreeModel,java.lang.String):com.intellij.openapi.vcs.changes.ui.AsyncChangesTree
 - f:getSELECTED_CHANGES():com.intellij.openapi.actionSystem.DataKey
-*f:com.intellij.collaboration.ui.codereview.changes.CodeReviewChangesTreeFactory
-- *sf:Companion:com.intellij.collaboration.ui.codereview.changes.CodeReviewChangesTreeFactory$Companion
-- <init>(com.intellij.openapi.project.Project,com.intellij.collaboration.ui.SingleValueModel):V
-- f:create(java.lang.String,Z):com.intellij.openapi.vcs.changes.ui.AsyncChangesTree
-- bs:create$default(com.intellij.collaboration.ui.codereview.changes.CodeReviewChangesTreeFactory,java.lang.String,Z,I,java.lang.Object):com.intellij.openapi.vcs.changes.ui.AsyncChangesTree
-*f:com.intellij.collaboration.ui.codereview.changes.CodeReviewChangesTreeFactory$Companion
-- f:createTreeToolbar(com.intellij.openapi.actionSystem.ActionManager,java.lang.String,javax.swing.JComponent):javax.swing.JComponent
 *f:com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentTextFieldFactory
 - sf:INSTANCE:com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentTextFieldFactory
 - f:createIn(kotlinx.coroutines.CoroutineScope,com.intellij.collaboration.ui.codereview.comment.CodeReviewSubmittableTextViewModel,com.intellij.collaboration.ui.codereview.comment.CommentInputActionsComponentFactory$Config,com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory$IconConfig):javax.swing.JComponent
