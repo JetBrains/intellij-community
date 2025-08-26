@@ -14,7 +14,7 @@ import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import kotlin.test.assertContains
-import kotlin.test.assertFalse
+import kotlin.time.Duration.Companion.seconds
 
 private const val REPETITIONS: Int = 100
 
@@ -231,8 +231,7 @@ class SuspendingReadAndWriteActionTest {
           // contains because in debug mode coroutines append coroutine id
           assertContains(Thread.currentThread().name, name)
           writeAction {
-            // todo: this will change after IJPL-392
-            assertFalse { Thread.currentThread().name.contains(name) }
+            assertContains(Thread.currentThread().name, name)
           }
         }
       }
@@ -241,4 +240,35 @@ class SuspendingReadAndWriteActionTest {
       executor.shutdown()
     }
   }
+
+  fun `readAndWriteAction contention test`(bg: Boolean): Unit = timeoutRunBlocking(timeout = 10.seconds, context = Dispatchers.Default) {
+    val numberOfCoroutines = 500
+    val counter = runReadAction { AsyncExecutionServiceImpl.getWriteActionCounter() }
+    coroutineScope {
+      repeat(numberOfCoroutines) {
+        launch {
+          if (bg) {
+            readAndBackgroundWriteAction {
+              writeAction { }
+            }
+          }
+          else {
+            readAndEdtWriteAction {
+              writeAction { }
+            }
+          }
+        }
+      }
+    }
+    val newCounter = runReadAction { AsyncExecutionServiceImpl.getWriteActionCounter() }
+    Assertions.assertTrue(newCounter - counter >= numberOfCoroutines, "There should be at least $numberOfCoroutines restarts")
+    // actually we can strengthen the upper bound, but the most important part is that it grows linearly
+    Assertions.assertTrue(newCounter - counter <= numberOfCoroutines * 3, "There should be no more than $numberOfCoroutines * 3 restarts")
+  }
+
+  @Test
+  fun `number of write actions grows linearly with contention of read and edt write actions`() = `readAndWriteAction contention test`(false)
+
+  @Test
+  fun `number of write actions grows linearly with contention of read and bg write actions`() = `readAndWriteAction contention test`(true)
 }
