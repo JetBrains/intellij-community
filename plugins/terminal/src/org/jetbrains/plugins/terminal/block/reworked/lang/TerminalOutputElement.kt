@@ -1,77 +1,54 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.block.reworked.lang
 
-import com.intellij.lang.*
-import com.intellij.navigation.ItemPresentation
+import com.intellij.lang.ASTNode
+import com.intellij.lang.Language
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.UserDataHolderBase
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
-import com.intellij.psi.impl.source.CharTableImpl
 import com.intellij.psi.scope.PsiScopeProcessor
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.search.PsiElementProcessor
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
-import com.intellij.util.CharTable
 import com.intellij.util.IncorrectOperationException
+import com.intellij.util.text.CharArrayUtil
 import org.jetbrains.annotations.NonNls
 import javax.swing.Icon
 
 /**
- * Custom PSI implementation for the Terminal output.
- * The main purpose of it is to make it possible to determine the underlying language of the editor
- * and provide some features for the terminal specifically (like popup-completion, inline completion).
- *
- * This class overrides the [PsiFile] and [FileASTNode] interfaces manually
- * to always represent the state of the terminal [com.intellij.openapi.editor.Document].
- * This way, when the document changes, it is not detected as uncommitted in [com.intellij.psi.impl.PsiDocumentManagerBase].
- * And since we don't need to commit it, we avoid the write action, which benefits the terminal performance.
+ * Represents the content of the [TerminalOutputPsiFile].
+ * Which is always the current state of the terminal output [com.intellij.openapi.editor.Document].
  *
  * Since the terminal document is modified on EDT without write action,
- * this PSI file can be changed even under read action when accessed in the background thread.
+ * this PSI element can be changed even under read action when accessed in the background thread.
  * But all methods are implemented in a way that they always get the current snapshot of the document that is thread-safe.
  */
-internal class TerminalOutputPsiFile(
-  viewProvider: FileViewProvider,
-) : PsiFile, FileASTNode, UserDataHolderBase() {
-  private val viewProvider: AbstractFileViewProvider = viewProvider as AbstractFileViewProvider
-  private val contentElement = TerminalOutputElement(this)
-  private val charTable = CharTableImpl()
+internal class TerminalOutputElement(private val parent: PsiFile) : PsiElement, ASTNode, UserDataHolderBase() {
+  private val charsSequence: CharSequence
+    get() = parent.viewProvider.document.immutableCharSequence
 
-  private var originalFile: PsiFile? = null
-
-  override fun getFileType(): FileType {
-    return TerminalOutputFileType
+  override fun getProject(): Project {
+    return parent.project
   }
 
   override fun getLanguage(): Language {
     return TerminalOutputLanguage
   }
 
-  override fun getViewProvider(): FileViewProvider {
-    return viewProvider
+  override fun getManager(): PsiManager? {
+    return parent.manager
   }
 
-  override fun getVirtualFile(): VirtualFile {
-    return viewProvider.virtualFile
+  override fun getParent(): PsiElement {
+    return parent
   }
 
-  override fun getModificationStamp(): Long {
-    return viewProvider.modificationStamp
-  }
-
-  override fun getProject(): Project {
-    return viewProvider.manager.project
-  }
-
-  override fun getManager(): PsiManager {
-    return viewProvider.manager
+  override fun getContainingFile(): PsiFile {
+    return parent
   }
 
   override fun isValid(): Boolean {
@@ -86,66 +63,20 @@ internal class TerminalOutputPsiFile(
     return false
   }
 
-  override fun getOriginalFile(): PsiFile {
-    return originalFile ?: this
-  }
-
-  private fun setOriginalFile(originalFile: PsiFile) {
-    val newOriginal = originalFile.originalFile
-    this.originalFile = newOriginal
-
-    val originalViewProvider = newOriginal.viewProvider as AbstractFileViewProvider
-    originalViewProvider.registerAsCopy(viewProvider)
-  }
-
-  override fun copy(): PsiElement {
-    val copy = clone()
-    copy.setOriginalFile(this)
-    return copy
-  }
-
-  override fun clone(): TerminalOutputPsiFile {
-    return TerminalOutputPsiFile(viewProvider.clone())
-  }
-
-  override fun findElementAt(offset: Int): PsiElement? {
-    val element = contentElement
-    return if (element.textRange.contains(offset)) {
-      element
-    }
-    else null
-  }
-
-  override fun getNode(): FileASTNode {
+  override fun getNode(): ASTNode {
     return this
   }
 
-  override fun getChildren(): Array<out PsiElement> {
-    return arrayOf(contentElement)
+  override fun copy(): TerminalOutputElement {
+    return clone()
   }
 
-  override fun getFirstChild(): PsiElement {
-    return contentElement
-  }
-
-  override fun getLastChild(): PsiElement {
-    return contentElement
-  }
-
-  override fun getNextSibling(): PsiElement? {
-    return null
-  }
-
-  override fun getPrevSibling(): PsiElement? {
-    return null
-  }
-
-  override fun getContainingFile(): PsiFile {
-    return this
+  override fun clone(): TerminalOutputElement {
+    return TerminalOutputElement(parent)
   }
 
   override fun getTextRange(): TextRange {
-    return contentElement.textRange
+    return TextRange(0, charsSequence.length)
   }
 
   override fun getStartOffsetInParent(): Int {
@@ -153,11 +84,7 @@ internal class TerminalOutputPsiFile(
   }
 
   override fun getTextLength(): Int {
-    return contentElement.textLength
-  }
-
-  override fun findReferenceAt(offset: Int): PsiReference? {
-    return null
+    return charsSequence.length
   }
 
   override fun getTextOffset(): Int {
@@ -165,35 +92,39 @@ internal class TerminalOutputPsiFile(
   }
 
   override fun getText(): @NlsSafe String {
-    return contentElement.text
+    return charsSequence.toString()
   }
 
   override fun textToCharArray(): CharArray {
-    return contentElement.textToCharArray()
+    return CharArrayUtil.fromSequence(charsSequence)
   }
 
   override fun textMatches(text: @NonNls CharSequence): Boolean {
-    return contentElement.textMatches(text)
+    return charsSequence == text
   }
 
   override fun textMatches(element: PsiElement): Boolean {
-    return contentElement.textMatches(element)
+    return textMatches(element.text)
   }
 
   override fun textContains(c: Char): Boolean {
-    return contentElement.textContains(c)
+    val sequence = charsSequence
+    val chars = CharArrayUtil.fromSequenceWithoutCopying(sequence)
+    if (chars != null) {
+      for (aChar in chars) {
+        if (aChar == c) return true
+      }
+      return false
+    }
+    return sequence.contains(c)
   }
 
-  override fun accept(visitor: PsiElementVisitor) {
-    visitor.visitFile(this)
+  override fun findElementAt(offset: Int): PsiElement {
+    return this
   }
 
-  override fun acceptChildren(visitor: PsiElementVisitor) {
-    visitor.visitElement(contentElement)
-  }
-
-  override fun subtreeChanged() {
-    // do nothing
+  override fun findReferenceAt(offset: Int): PsiReference? {
+    return null
   }
 
   override fun getNavigationElement(): PsiElement? {
@@ -204,6 +135,13 @@ internal class TerminalOutputPsiFile(
     return this
   }
 
+  override fun accept(visitor: PsiElementVisitor) {
+    visitor.visitElement(this)
+  }
+
+  override fun acceptChildren(visitor: PsiElementVisitor) {
+  }
+
   override fun getReference(): PsiReference? {
     return null
   }
@@ -212,16 +150,12 @@ internal class TerminalOutputPsiFile(
     return emptyArray()
   }
 
-  override fun processChildren(processor: PsiElementProcessor<in PsiFileSystemItem>): Boolean {
-    return true
-  }
-
   override fun processDeclarations(processor: PsiScopeProcessor, state: ResolveState, lastParent: PsiElement?, place: PsiElement): Boolean {
     return true
   }
 
-  override fun getContext(): PsiElement? {
-    return null
+  override fun getContext(): PsiElement {
+    return parent
   }
 
   override fun getResolveScope(): GlobalSearchScope {
@@ -236,33 +170,28 @@ internal class TerminalOutputPsiFile(
     return this === another
   }
 
-  override fun getContainingDirectory(): PsiDirectory? {
-    return null
-  }
-
-  override fun isDirectory(): Boolean {
-    return false
-  }
-
-  override fun getName(): @NlsSafe String {
-    return "TerminalOutput"
-  }
-
-  override fun getParent(): PsiDirectory? {
-    return null
-  }
-
   override fun getIcon(flags: Int): Icon? {
     return null
   }
 
-  override fun getPresentation(): ItemPresentation? {
+  override fun getChildren(): Array<out PsiElement> {
+    return emptyArray()
+  }
+
+  override fun getFirstChild(): PsiElement? {
     return null
   }
 
-  @Deprecated("Deprecated in PsiFile interface")
-  override fun getPsiRoots(): Array<out PsiFile> {
-    return arrayOf(this)
+  override fun getLastChild(): PsiElement? {
+    return null
+  }
+
+  override fun getNextSibling(): PsiElement? {
+    return null
+  }
+
+  override fun getPrevSibling(): PsiElement? {
+    return null
   }
 
   override fun add(element: PsiElement): PsiElement {
@@ -311,38 +240,18 @@ internal class TerminalOutputPsiFile(
     throw IncorrectOperationException()
   }
 
-  override fun checkSetName(name: String?) {
-    throw IncorrectOperationException()
-  }
-
-  override fun setName(name: @NlsSafe String): PsiElement {
-    throw IncorrectOperationException()
-  }
-
-  //--------------------------------- FileASTNode implementation ---------------------------------
+  //--------------------------------- ASTNode implementation ---------------------------------
 
   override fun getChildren(filter: TokenSet?): Array<out ASTNode> {
-    return if (filter == null || filter.contains(contentElement.elementType)) arrayOf(contentElement) else emptyArray()
-  }
-
-  override fun getCharTable(): CharTable {
-    return charTable
-  }
-
-  override fun isParsed(): Boolean {
-    return true
-  }
-
-  override fun getLighterAST(): LighterAST {
-    return TreeBackedLighterAST(this)
+    return emptyArray()
   }
 
   override fun getElementType(): IElementType {
-    return TerminalOutputTokenTypes.FILE
+    return TerminalOutputTokenTypes.TEXT
   }
 
   override fun getChars(): CharSequence {
-    return contentElement.chars
+    return charsSequence
   }
 
   override fun getStartOffset(): Int {
@@ -350,15 +259,15 @@ internal class TerminalOutputPsiFile(
   }
 
   override fun getTreeParent(): ASTNode? {
+    return parent.node
+  }
+
+  override fun getFirstChildNode(): ASTNode? {
     return null
   }
 
-  override fun getFirstChildNode(): ASTNode {
-    return contentElement
-  }
-
-  override fun getLastChildNode(): ASTNode {
-    return contentElement
+  override fun getLastChildNode(): ASTNode? {
+    return null
   }
 
   override fun getTreeNext(): ASTNode? {
@@ -402,39 +311,27 @@ internal class TerminalOutputPsiFile(
   }
 
   override fun copyElement(): ASTNode {
-    return copy().node
+    return clone()
   }
 
-  override fun findLeafElementAt(offset: Int): ASTNode? {
-    val element = contentElement
-    return if (element.textRange.contains(offset)) {
-      element
-    }
-    else null
+  override fun findLeafElementAt(offset: Int): ASTNode {
+    return this
   }
 
   override fun findChildByType(type: IElementType): ASTNode? {
-    if (contentElement.elementType == type) {
-      return contentElement
-    }
     return null
   }
 
   override fun findChildByType(type: IElementType, anchor: ASTNode?): ASTNode? {
-    if (anchor != null) return null
-    return findChildByType(type)
+    return null
   }
 
   override fun findChildByType(typesSet: TokenSet): ASTNode? {
-    if (typesSet.contains(contentElement.elementType)) {
-      return contentElement
-    }
     return null
   }
 
   override fun findChildByType(typesSet: TokenSet, anchor: ASTNode?): ASTNode? {
-    if (anchor != null) return null
-    return findChildByType(typesSet)
+    return null
   }
 
   override fun getPsi(): PsiElement {
