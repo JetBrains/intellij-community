@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.debugger.impl.backend
 
+import com.intellij.ide.rpc.rpcId
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.impl.EditorId
 import com.intellij.openapi.editor.impl.findEditorOrNull
@@ -64,6 +65,7 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
       if (it !is XBreakpointBase<*, *, *>) return@map null
       it.breakpointId
     }.toRpc()
+    val cs = currentSession.coroutineScope
     return XDebugSessionDto(
       currentSession.id,
       debugProcess.editorsProvider.toRpc(),
@@ -73,11 +75,14 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
       createSessionEvents(currentSession, initialSessionState).toRpc(),
       sessionDataDto,
       consoleView,
-      createProcessHandlerDto(currentSession.coroutineScope, currentSession.debugProcess.processHandler),
+      createProcessHandlerDto(cs, currentSession.debugProcess.processHandler),
       debugProcess.smartStepIntoHandler?.let { XSmartStepIntoHandlerDto(it.popupTitle) },
       currentSession.debugProcess.isLibraryFrameFilterSupported,
       currentSession.debugProcess.isValuesCustomSorted,
       activeBreakpointFlow,
+      currentSession.restartActions.map { it.rpcId(cs) },
+      currentSession.extraActions.map { it.rpcId(cs) },
+      currentSession.extraStopActions.map { it.rpcId(cs) },
     )
   }
 

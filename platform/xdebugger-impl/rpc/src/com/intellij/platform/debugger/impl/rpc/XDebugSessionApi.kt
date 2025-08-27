@@ -2,6 +2,7 @@
 package com.intellij.platform.debugger.impl.rpc
 
 import com.intellij.execution.rpc.ProcessHandlerDto
+import com.intellij.ide.rpc.AnActionId
 import com.intellij.ide.rpc.FrontendDocumentId
 import com.intellij.ide.ui.icons.IconId
 import com.intellij.ide.vfs.VirtualFileId
@@ -92,6 +93,9 @@ data class XDebugSessionDto(
   val isLibraryFrameFilterSupported: Boolean,
   val isValuesCustomSorted: Boolean,
   val activeNonLineBreakpointIdFlow: RpcFlow<XBreakpointId?>,
+  val restartActions: List<AnActionId>,
+  val extraActions: List<AnActionId>,
+  val extraStopActions: List<AnActionId>,
 )
 
 @ApiStatus.Internal

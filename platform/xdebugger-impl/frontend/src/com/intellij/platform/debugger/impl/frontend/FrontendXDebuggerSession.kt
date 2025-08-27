@@ -4,6 +4,7 @@ package com.intellij.platform.debugger.impl.frontend
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.runners.ExecutionEnvironmentProxy
 import com.intellij.execution.ui.ConsoleView
+import com.intellij.ide.rpc.action
 import com.intellij.ide.ui.icons.icon
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
@@ -55,7 +56,7 @@ class FrontendXDebuggerSession private constructor(
   override val project: Project,
   scope: CoroutineScope,
   private val manager: FrontendXDebuggerManager,
-  sessionDto: XDebugSessionDto,
+  private val sessionDto: XDebugSessionDto,
   override val processHandler: ProcessHandler,
   override val consoleView: ConsoleView?,
 ) : XDebugSessionProxy {
@@ -139,11 +140,11 @@ class FrontendXDebuggerSession private constructor(
                                                                           cs, id, sessionStateFlow)
 
   override val restartActions: List<AnAction>
-    get() = emptyList() // TODO
+    get() = sessionDto.restartActions.mapNotNull { it.action() }
   override val extraActions: List<AnAction>
-    get() = emptyList() // TODO
+    get() = sessionDto.extraActions.mapNotNull { it.action() }
   override val extraStopActions: List<AnAction>
-    get() = emptyList() // TODO
+    get() = sessionDto.extraStopActions.mapNotNull { it.action() }
   override val coroutineScope: CoroutineScope = cs
   override val currentStateMessage: String
     get() = if (isStopped) XDebuggerBundle.message("debugger.state.message.disconnected") else XDebuggerBundle.message("debugger.state.message.connected") // TODO
