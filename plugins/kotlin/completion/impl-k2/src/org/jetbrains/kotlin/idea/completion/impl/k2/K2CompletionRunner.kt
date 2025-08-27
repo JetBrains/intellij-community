@@ -25,17 +25,8 @@ import org.jetbrains.kotlin.idea.completion.lookups.factories.ClassifierLookupOb
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext.Companion.getAnnotationLiteralExpectedType
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext.Companion.getEqualityExpectedType
-import org.jetbrains.kotlin.idea.util.positionContext.KotlinCallableReferencePositionContext
-import org.jetbrains.kotlin.idea.util.positionContext.KotlinExpressionNameReferencePositionContext
-import org.jetbrains.kotlin.idea.util.positionContext.KotlinNameReferencePositionContext
-import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
-import org.jetbrains.kotlin.idea.util.positionContext.KotlinSimpleNameReferencePositionContext
-import org.jetbrains.kotlin.psi.KtBinaryExpression
-import org.jetbrains.kotlin.psi.KtCollectionLiteralExpression
-import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
-import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.KtNameReferenceExpression
-import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.idea.util.positionContext.*
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.renderer.render
 import java.util.*
 
@@ -132,14 +123,15 @@ internal interface K2CompletionRunner {
                         .flatMap { contributor ->
                             // This cast is safe because the contributor is not used except for extracting the name when debugging
                             @Suppress("UNCHECKED_CAST")
-                            val completionContributor = contributor as? K2CompletionContributor<KotlinExpressionNameReferencePositionContext>
-                                ?: return@flatMap emptySequence()
+                            val completionContributor =
+                                contributor as? K2CompletionContributor<KotlinExpressionNameReferencePositionContext>
+                                    ?: return@flatMap emptySequence()
                             val sectionContext = K2CompletionSectionContext(
                                 commonData = commonData,
                                 sink = sink,
                                 contributor = completionContributor,
                                 addLaterSection = { section ->
-                                    throw IllegalStateException("Chain completion sections cannot add later sections yet")
+                                    error("Chain completion sections cannot add later sections yet")
                                 }
                             )
                             contributor.createChainedLookupElements(sectionContext, receiverExpression, importingStrategy)
@@ -337,6 +329,8 @@ private class SequentialCompletionRunner : K2CompletionRunner {
 }
 
 
+private typealias K2ParallelCompletionEntry<P> = Pair<K2CompletionSection<P>, K2AccumulatingLookupElementSink>
+
 /**
  * This completion runner executes sections in parallel within up to [MAX_CONCURRENT_COMPLETION_THREADS]
  * independent analysis sessions/threads.
@@ -378,95 +372,101 @@ private class ParallelCompletionRunner : K2CompletionRunner {
         is AccumulatingSinkMessage.RegisterLaterSectionSink -> registeredSinks.addLocal(currentSection to element.sink)
     }
 
-    private class WeighingContextCreationImpossibleException : Exception()
+    private class WeighingContextCreationImpossibleException : RuntimeException()
+
+    private fun <P : KotlinRawPositionContext> performCompletion(
+        completionContext: K2CompletionContext<P>,
+        remainingSectionsQueue: SharedPriorityQueue<K2ParallelCompletionEntry<P>, K2ContributorSectionPriority>,
+    ) = analyze(completionContext.parameters.completionFile) {
+        // We need to create one common data (containing weighing context and similar constructs) per session
+        val commonData = createCommonSectionData(completionContext)
+            ?: throw WeighingContextCreationImpossibleException()
+        val localQueueInstance = remainingSectionsQueue.createLocalInstance()
+
+        while (true) {
+            val entry = localQueueInstance.popFirst()
+            if (entry == null) break
+            @Suppress("ForbiddenInSuspectContextMethod")
+            ProgressManager.checkCanceled()
+
+            val (currentSection, sectionSink) = entry
+
+            // We need an individual context for each section because the sink of each section is different.
+            val sectionContext = K2CompletionSectionContext(
+                commonData = commonData,
+                sink = sectionSink,
+                contributor = currentSection.contributor,
+                addLaterSection = { section ->
+                    val laterSectionSink = K2AccumulatingLookupElementSink()
+                    localQueueInstance.addLocal(section to laterSectionSink)
+                    sectionSink.registerLaterSection(section.priority, laterSectionSink)
+                },
+            )
+
+            try {
+                currentSection.executeIfAllowed(sectionContext)
+            } finally {
+                sectionSink.close()
+            }
+        }
+    }
+
+    private suspend fun <P : KotlinRawPositionContext> collectCompletions(
+        sectionsWithSinks: List<K2ParallelCompletionEntry<P>>,
+        resultSet: CompletionResultSet,
+    ): K2CompletionRunnerResult {
+        var addedElements = 0
+        val registeredSinks = SharedPriorityQueue(sectionsWithSinks) { it.first.priority }.createLocalInstance()
+
+        val registeredChainContributors = mutableListOf<K2ChainCompletionContributor>()
+        while (true) {
+            val entry = registeredSinks.popFirst()
+            if (entry == null) break
+
+            val (currentSection, sectionSink) = entry
+
+            sectionSink.consumeElements { element ->
+                handleElement(
+                    currentSection = currentSection,
+                    resultSet = resultSet,
+                    registeredChainContributors = registeredChainContributors,
+                    registeredSinks = registeredSinks,
+                    element = element
+                )
+            }
+            addedElements += sectionSink.addedElementCount
+        }
+
+        return K2CompletionRunnerResult(
+            addedElements = addedElements,
+            registeredChainContributors = registeredChainContributors,
+        )
+    }
 
     override fun <P : KotlinRawPositionContext> runCompletion(
         completionContext: K2CompletionContext<P>,
         sections: List<K2CompletionSection<P>>,
     ): K2CompletionRunnerResult {
-        val parameters = completionContext.parameters
-        val resultSet = completionContext.resultSet
-
         // Each section gets its own sink which is then later collected by the main thread in the same order as the sections
         val sectionsWithSinks = sections.map { it to K2AccumulatingLookupElementSink() }
-        // This is the queue of all remaining sections ordered by their priority. Each thread will pick the
-        // remaining section with the highest priority when choosing a new section to run.
+        // This is the queue of all remaining sections ordered by their priority.
+        // Each thread will pick the remaining section with the highest priority when choosing a new section to run.
         val remainingSectionsQueue = SharedPriorityQueue(sectionsWithSinks) { it.first.priority }
 
         // If this block is canceled, so are all the threads launched inside the scope.
-        return runBlockingCancellable {
-            try {
+        return try {
+            runBlockingCancellable {
                 repeat(maxCompletionThreads.coerceAtMost(sectionsWithSinks.size)) { _ ->
                     launch(Dispatchers.Default) {
-                        // Each thread gets its own analysis session, which also requires creating
-                        // associated utility objects like the visibility checker per thread.
-                        analyze(parameters.completionFile) {
-                            // We need to create one common data (containing weighing context and similar constructs) per session
-                            val commonData = createCommonSectionData(completionContext)
-                                ?: throw WeighingContextCreationImpossibleException()
-                            val localQueueInstance = remainingSectionsQueue.createLocalInstance()
-
-                            while (true) {
-                                val entry = localQueueInstance.popFirst()
-                                if (entry == null) break
-                                @Suppress("ForbiddenInSuspectContextMethod")
-                                ProgressManager.checkCanceled()
-
-                                val (currentSection, sectionSink) = entry
-
-                                // We need an individual context for each section because the sink of each section is different.
-                                val sectionContext = K2CompletionSectionContext(
-                                    commonData = commonData,
-                                    sink = sectionSink,
-                                    contributor = currentSection.contributor,
-                                    addLaterSection = { section ->
-                                        val laterSectionSink = K2AccumulatingLookupElementSink()
-                                        localQueueInstance.addLocal(section to laterSectionSink)
-                                        sectionSink.registerLaterSection(section.priority, laterSectionSink)
-                                    },
-                                )
-
-                                try {
-                                    currentSection.executeIfAllowed(sectionContext)
-                                } finally {
-                                    sectionSink.close()
-                                }
-                            }
-                        }
+                        performCompletion(completionContext, remainingSectionsQueue)
                     }
                 }
-
-                var addedElements = 0
-                val registeredSinks = SharedPriorityQueue(sectionsWithSinks) { it.first.priority }.createLocalInstance()
-
-                val registeredChainContributors = mutableListOf<K2ChainCompletionContributor>()
-                while (true) {
-                    val entry = registeredSinks.popFirst()
-                    if (entry == null) break
-
-                    val (currentSection, sectionSink) = entry
-
-                    sectionSink.consumeElements { element ->
-                        handleElement(
-                            currentSection = currentSection,
-                            resultSet = resultSet,
-                            registeredChainContributors = registeredChainContributors,
-                            registeredSinks = registeredSinks,
-                            element = element
-                        )
-                    }
-                    addedElements += sectionSink.addedElementCount
-                }
-
-                K2CompletionRunnerResult(
-                    addedElements = addedElements,
-                    registeredChainContributors = registeredChainContributors,
-                )
-            } catch (_: WeighingContextCreationImpossibleException) {
-                K2CompletionRunnerResult(0, emptyList())
-            } finally {
-                sectionsWithSinks.forEach { it.second.cancel() }
+                collectCompletions(sectionsWithSinks, completionContext.resultSet)
             }
+        } catch (_: WeighingContextCreationImpossibleException) {
+            K2CompletionRunnerResult(0, emptyList())
+        } finally {
+            sectionsWithSinks.forEach { it.second.cancel() }
         }
     }
 }
