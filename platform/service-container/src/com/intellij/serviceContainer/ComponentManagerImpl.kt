@@ -52,6 +52,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.internal.intellij.IntellijCoroutines
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.annotations.VisibleForTesting
 import org.picocontainer.ComponentAdapter
 import java.lang.invoke.MethodHandle
 import java.lang.invoke.MethodHandles
@@ -644,9 +645,19 @@ abstract class ComponentManagerImpl(
 
   @Deprecated("Deprecated in interface")
   final override fun <T : Any> getComponent(key: Class<T>): T? {
+    return getComponentOrService(key, createServiceIfNeeded = true)
+  }
+
+  /**
+   * Retrieve the component or a service from the container
+   *
+   * @param key the component/service interface
+   * @param createServiceIfNeeded whether to create a service if it wasn't created
+   */
+  private fun <T : Any> getComponentOrService(key: Class<T>, createServiceIfNeeded: Boolean): T? {
     checkState()
 
-    val adapter = getComponentAdapter(key)
+    val adapter = getComponentOrServiceAdapter(key)
     if (adapter == null) {
       checkCanceledIfNotInClassInit()
       if (containerState.get() == ContainerState.DISPOSE_COMPLETED) {
@@ -655,16 +666,19 @@ abstract class ComponentManagerImpl(
       return null
     }
 
-    when (adapter) {
-      is HolderAdapter -> {
-        // TODO asserts
-        @Suppress("UNCHECKED_CAST")
-        return getOrCreateInstanceBlocking(holder = adapter.holder, debugString = key.name, keyClass = key) as T
+    @Suppress("UNCHECKED_CAST")
+    if (!createServiceIfNeeded) {
+      try {
+        return adapter.holder.tryGetInstance() as T?
       }
-      else -> {
+      catch (_: CancellationException) {
         return null
       }
     }
+
+    @Suppress("UNCHECKED_CAST")
+    // TODO asserts
+    return getOrCreateInstanceBlocking(holder = adapter.holder, debugString = key.name, keyClass = key) as T
   }
 
   final override fun <T : Any> getService(serviceClass: Class<T>): T? {
@@ -746,15 +760,21 @@ abstract class ComponentManagerImpl(
       throw PluginException.createByClass("Light service class $serviceClass must be final", null, serviceClass)
     }
 
-    @Suppress("DEPRECATION")
-    val result = getComponent(serviceClass) ?: return null
-    LOG.error(PluginException.createByClass(
-      "$key requested as a service, but it is a component - " +
-      "convert it to a service or change call to " +
-      if (parent == null) "ApplicationManager.getApplication().getComponent()" else "project.getComponent()",
-      null, serviceClass
-    ))
-    return result
+    return getComponentAsServiceFallback(serviceClass, createIfNeeded)
+  }
+
+  @VisibleForTesting
+  fun <T : Any> getComponentAsServiceFallback(serviceClass: Class<T>, createIfNeeded: Boolean, emitError: Boolean = true): T? {
+    val fallback = getComponentOrService(serviceClass, createIfNeeded)
+    if (fallback != null && emitError) {
+      LOG.error(PluginException.createByClass(
+        "${serviceClass.name} requested as a service, but it is a component - " +
+        "convert it to a service or change call to " +
+        if (parent == null) "ApplicationManager.getApplication().getComponent()" else "project.getComponent()",
+        null, serviceClass
+      ))
+    }
+    return fallback
   }
 
   @Synchronized
@@ -1277,11 +1297,11 @@ abstract class ComponentManagerImpl(
            ?: parent?.getInstanceHolder(keyClass)
   }
 
-  internal fun getComponentAdapter(keyClass: Class<*>): ComponentAdapter? {
+  internal fun getComponentOrServiceAdapter(keyClass: Class<*>): HolderAdapter? {
     return ignoreDisposal {
       componentContainer.getInstanceHolder(keyClass)?.let { HolderAdapter(keyClass, it) }
       ?: serviceContainer.getInstanceHolder(keyClass)?.let { HolderAdapter(keyClass.name, it) }
-    } ?: parent?.getComponentAdapter(keyClass)
+    } ?: parent?.getComponentOrServiceAdapter(keyClass)
   }
 
   final override fun unregisterComponent(componentKey: Class<*>): ComponentAdapter? {

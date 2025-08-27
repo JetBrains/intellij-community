@@ -8,6 +8,9 @@ import com.intellij.openapi.util.Disposer
 import kotlinx.coroutines.CoroutineScope
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
+import org.junit.jupiter.api.assertNotNull
+import org.junit.jupiter.api.assertNull
+import org.junit.jupiter.api.assertThrows
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
@@ -78,6 +81,67 @@ class ServiceContainerTest {
     }
   }
 
+  @Test
+  fun `service created by getService`() {
+    val service = TestComponentManager().apply {
+      registerService(SimpleService::class.java, SimpleService::class.java, testPluginDescriptor, false)
+    }.run {
+      getService(SimpleService::class.java)
+    }
+    assertNotNull(service)
+  }
+
+  @Test
+  fun `service not created by getServiceIfCreated`() {
+    val service = TestComponentManager().apply {
+      registerService(SimpleService::class.java, SimpleService::class.java, testPluginDescriptor, false)
+    }.run {
+      getServiceIfCreated(SimpleService::class.java)
+    }
+    assertNull(service)
+  }
+
+  @Test
+  fun `service created by component fallback`() {
+    val service = TestComponentManager().apply {
+      registerService(SimpleService::class.java, SimpleService::class.java, testPluginDescriptor, false)
+    }.run {
+      getComponentAsServiceFallback(SimpleService::class.java, createIfNeeded = true, emitError = false)
+    }
+    assertNotNull(service)
+  }
+
+  @Test
+  fun `service not created by component fallback`() {
+    val service = TestComponentManager().apply {
+      registerService(SimpleService::class.java, SimpleService::class.java, testPluginDescriptor, false)
+    }.run {
+      getComponentAsServiceFallback(SimpleService::class.java, createIfNeeded = false, emitError = false)
+    }
+    assertNull(service)
+  }
+
+  @Test
+  fun `service component fallback emits error`() {
+    assertThrows<AssertionError> {
+      TestComponentManager().apply {
+        registerService(SimpleService::class.java, SimpleService::class.java, testPluginDescriptor, false)
+      }.run {
+        getComponentAsServiceFallback(SimpleService::class.java, createIfNeeded = true)
+      }
+    }
+  }
+
+  @Test
+  fun `service created by getComponent`() {
+    val service = TestComponentManager().apply {
+      registerService(SimpleService::class.java, SimpleService::class.java, testPluginDescriptor, false)
+    }.run {
+      getComponent(SimpleService::class.java)
+    }
+    assertNotNull(service)
+  }
+
   private fun publishComponentManager(componentManager: ComponentManager, action: () -> Unit): Unit {
     componentManagerHolder.set(componentManager)
     try {
@@ -88,6 +152,8 @@ class ServiceContainerTest {
     }
   }
 }
+
+private class SimpleService
 
 private class C1(componentManager: ComponentManager) {
   init {

@@ -163,7 +163,8 @@ internal abstract class LazyInstanceHolder(
       //  the instance will be initialized even if the container scope is already cancelled.
       withContext(NonCancellable) {
         try {
-          complete(finalState = initializer.createInstance(parentScope, instanceClass))
+          val instance = initializer.createInstance(parentScope, instanceClass)
+          complete(finalState = instance)
         }
         catch (t: Throwable) {
           complete(finalState = CannotInitialize(instanceClass = instanceClass, t))
