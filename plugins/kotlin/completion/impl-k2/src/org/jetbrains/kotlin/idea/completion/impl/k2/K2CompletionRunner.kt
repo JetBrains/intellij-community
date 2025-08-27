@@ -224,24 +224,30 @@ private fun <P : KotlinRawPositionContext> KaSession.createCommonSectionData(
 /**
  * A basic priority queue that maintains two internal queues for managing a queue of [initialElements].
  * - The first queue contains all the [initialElements] and can potentially be shared between multiple elements.
- * - The second queue contains only elements that have been added to the local instance obtained via [getLocalInstance].
+ * - The second queue contains only elements that have been added to the local instance obtained via [createLocalInstance].
  *
  * The purpose of this class is to model a priority queue of elements between different threads, where each thread
  * may add elements to its own local queue that should not affect other threads.
  */
-private class SharedPriorityQueue<P, C : Comparable<C>>(
+private class SharedPriorityQueue<P : Any, C : Comparable<C>>(
     initialElements: Collection<P>,
     comparatorSelector: (P) -> Comparable<C>
 ) {
     private val comparator = compareBy(comparatorSelector)
-    private val globalQueue: LinkedList<P> = LinkedList(initialElements)
-
-    init {
-        globalQueue.sortWith(comparator)
-    }
+    private val globalQueue: ArrayDeque<P> = ArrayDeque(initialElements.sortedWith(comparator))
 
     inner class LocalInstance {
-        private val localQueue: LinkedList<P> = LinkedList()
+        private var insertionCounter: Int = 0
+
+        private inner class LocalQueueEntry(val element: P, val insertionOrder: Int) : Comparable<LocalQueueEntry> {
+            override fun compareTo(other: LocalQueueEntry): Int {
+                val compareValue = comparator.compare(this.element, other.element)
+                if (compareValue != 0) return compareValue
+                return this.insertionOrder - other.insertionOrder
+            }
+        }
+
+        private val localQueue: PriorityQueue<LocalQueueEntry> = PriorityQueue()
 
         /**
          * Pops the first element from the global queue or from the local queue.
@@ -251,14 +257,14 @@ private class SharedPriorityQueue<P, C : Comparable<C>>(
          * - Elements from the local queue are preferred if there is a tie from the comparator.
          */
         fun popFirst(): P? = synchronized(globalQueue) {
-            val localFirst = localQueue.peek()
+            val localFirst = localQueue.peek()?.element
             val globalFirst = globalQueue.peek()
             if (localFirst == null && globalFirst == null) return null
             if (globalFirst != null && (localFirst == null || comparator.compare(globalFirst, localFirst) < 0)) {
                 globalQueue.pop()
                 return globalFirst
             } else {
-                localQueue.pop()
+                localQueue.remove()
                 return localFirst
             }
         }
@@ -268,14 +274,11 @@ private class SharedPriorityQueue<P, C : Comparable<C>>(
          * The element will be added according to the [comparator] but added after existing elements in case of a tie from the comparator.
          */
         fun addLocal(element: P) {
-            localQueue.addLast(element)
-            // Performance here could be optimized but is unlikely to be a problem in practice because the lists we are dealing
-            // with are very small (<20 elements)
-            localQueue.sortWith(comparator)
+            localQueue.add(LocalQueueEntry(element, insertionCounter++))
         }
     }
 
-    fun getLocalInstance(): LocalInstance = LocalInstance()
+    fun createLocalInstance(): LocalInstance = LocalInstance()
 }
 
 context(KaSession)
@@ -301,7 +304,7 @@ private class SequentialCompletionRunner : K2CompletionRunner {
         val remainingSections = LinkedList(sections.toMutableList())
         remainingSections.sortBy { it.priority }
 
-        val globalAndLocalQueue = SharedPriorityQueue(remainingSections) { it.priority }.getLocalInstance()
+        val globalAndLocalQueue = SharedPriorityQueue(remainingSections) { it.priority }.createLocalInstance()
 
         analyze(parameters.completionFile) {
             val commonData = createCommonSectionData(completionContext) ?: return@analyze
@@ -401,7 +404,7 @@ private class ParallelCompletionRunner : K2CompletionRunner {
                             // We need to create one common data (containing weighing context and similar constructs) per session
                             val commonData = createCommonSectionData(completionContext)
                                 ?: throw WeighingContextCreationImpossibleException()
-                            val localQueueInstance = remainingSectionsQueue.getLocalInstance()
+                            val localQueueInstance = remainingSectionsQueue.createLocalInstance()
 
                             while (true) {
                                 val entry = localQueueInstance.popFirst()
@@ -434,7 +437,7 @@ private class ParallelCompletionRunner : K2CompletionRunner {
                 }
 
                 var addedElements = 0
-                val registeredSinks = SharedPriorityQueue(sectionsWithSinks) { it.first.priority }.getLocalInstance()
+                val registeredSinks = SharedPriorityQueue(sectionsWithSinks) { it.first.priority }.createLocalInstance()
 
                 val registeredChainContributors = mutableListOf<K2ChainCompletionContributor>()
                 while (true) {
