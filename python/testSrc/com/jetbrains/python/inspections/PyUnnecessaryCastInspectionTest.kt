@@ -14,7 +14,7 @@ class PyUnnecessaryCastInspectionTest : PyInspectionTestCase() {
         from typing import cast
 
         def f(a: int):
-            <warning descr="Unnecessary cast; type is already 'int'">cast(int,</warning>a)
+            <weak_warning descr="Unnecessary cast; type is already 'int'">cast(int,</weak_warning>a)
       """.trimIndent()
     )
   }
@@ -26,7 +26,7 @@ class PyUnnecessaryCastInspectionTest : PyInspectionTestCase() {
   
         one: Literal[1] = 1
         cast(int, one)
-        <warning descr="Unnecessary cast; type is already 'Literal[1]'">cast(Literal[1],</warning> one)
+        <weak_warning descr="Unnecessary cast; type is already 'Literal[1]'">cast(Literal[1],</weak_warning> one)
       """.trimIndent()
     )
   }
@@ -62,7 +62,7 @@ from typing import cast
         from typing import cast
 
         def f(a: int):
-            <warning descr="Unnecessary cast; type is already 'int'"><caret>cast(int,</warning> a)
+            <weak_warning descr="Unnecessary cast; type is already 'int'"><caret>cast(int,</weak_warning> a)
       """.trimIndent()
     myFixture.configureByText(PythonFileType.INSTANCE, text)
     configureInspection()
