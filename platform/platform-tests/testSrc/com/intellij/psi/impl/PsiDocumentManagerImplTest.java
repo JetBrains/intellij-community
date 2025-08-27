@@ -1058,7 +1058,8 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
       .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
       .toString();
   }
-  public void testHugeAmountOfChangedDocumentsMustBeNotHardRetainedByTheCommitQueue() throws IOException {
+
+  public void testHugeAmountOfChangedDocumentsMustNotBeHardRetainedByAnybody() throws IOException {
     LoggedErrorProcessor.executeWith(new LoggedErrorProcessor() {
       @Override
       public @NotNull Set<Action> processError(@NotNull String category, @NotNull String message, String @NotNull [] details, Throwable t) {
@@ -1098,11 +1099,13 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
           Reference.reachabilityFence(psiFile); // retain PSI to not call "handleCommitWithoutPsi" accidentally
         }
         FileDocumentManager.getInstance().saveAllDocuments();
-        LeakHunter.checkLeak(DocumentCommitThread.getInstance(), DocumentImpl.class, d -> d.getUserData(MY_DOC_KEY) == Boolean.TRUE);
+        PlatformTestUtil.dispatchAllEventsInIdeEventQueue(); // ok, a listener is allowed to process modified documents in invokelater
+        LeakHunter.checkLeak(LeakHunter.allRoots(), DocumentImpl.class, d -> d.getUserData(MY_DOC_KEY) == Boolean.TRUE);
         GCUtil.tryGcSoftlyReachableObjects();
         DocumentCommitThread.getInstance().waitForAllCommits(1, TimeUnit.MINUTES);
-        LeakHunter.checkLeak(DocumentCommitThread.getInstance(), DocumentImpl.class, d -> d.getUserData(MY_DOC_KEY) == Boolean.TRUE);
-        System.out.println("committed = " + committed);
+        PlatformTestUtil.dispatchAllEventsInIdeEventQueue(); // ok, a (psi) listener is allowed to process modified documents in invokelater
+        LeakHunter.checkLeak(LeakHunter.allRoots(), DocumentImpl.class, d -> d.getUserData(MY_DOC_KEY) == Boolean.TRUE);
+        LOG.debug("committed = " + committed);
         assertTrue(committed.get() < N); // some documents should be gced
       }
       finally {
