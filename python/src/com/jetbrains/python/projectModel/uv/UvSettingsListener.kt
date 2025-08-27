@@ -5,7 +5,7 @@ import com.intellij.util.messages.Topic
 import java.nio.file.Path
 
 // TODO Actions for linking/unlinking pyproject.toml files
-interface UvSettingsListener {
+internal interface UvSettingsListener {
   companion object {
     @Topic.ProjectLevel
     val TOPIC: Topic<UvSettingsListener> = Topic(UvSettingsListener::class.java, Topic.BroadcastDirection.NONE)

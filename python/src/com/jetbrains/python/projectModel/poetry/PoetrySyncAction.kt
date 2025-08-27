@@ -19,7 +19,7 @@ import org.jetbrains.annotations.Nls
 /**
  * Forcibly syncs all *already linked* Poetry projects, overriding their workspace models.
  */
-class PoetrySyncAction : AnAction() {
+internal class PoetrySyncAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     project.trackActivityBlocking(PoetryActivityKey) {

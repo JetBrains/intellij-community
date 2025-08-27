@@ -12,7 +12,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import java.nio.file.Path
 
-class UvUnlinkedProjectAware : ExternalSystemUnlinkedProjectAware {
+internal class UvUnlinkedProjectAware : ExternalSystemUnlinkedProjectAware {
   private val openProvider = UvProjectOpenProvider()
   
   override val systemId: ProjectSystemId = UvConstants.SYSTEM_ID

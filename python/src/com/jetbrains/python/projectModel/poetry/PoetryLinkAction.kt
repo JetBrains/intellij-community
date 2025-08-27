@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nls
  * Discovers and links as managed by Poetry all relevant project roots and saves them in `.idea/poetry.xml`.
  * For a tree of nested poetry projects, only the topmost directories are linked.
  */
-class PoetryLinkAction : AnAction() {
+internal class PoetryLinkAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     val basePath = project.basePath ?: return

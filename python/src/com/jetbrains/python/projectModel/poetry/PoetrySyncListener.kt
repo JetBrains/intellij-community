@@ -5,7 +5,7 @@ import com.intellij.util.messages.Topic
 import com.jetbrains.python.projectModel.ProjectModelSyncListener
 import java.nio.file.Path
 
-interface PoetrySyncListener : ProjectModelSyncListener {
+internal interface PoetrySyncListener : ProjectModelSyncListener {
   companion object {
     @Topic.ProjectLevel
     val TOPIC: Topic<PoetrySyncListener> = Topic(PoetrySyncListener::class.java, Topic.BroadcastDirection.NONE)

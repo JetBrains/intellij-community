@@ -20,18 +20,18 @@ import kotlin.reflect.KClass
  * Syncs the project model described in pyproject.toml files with the IntelliJ project model.
  */
 abstract class BaseProjectModelService<E : EntitySource, P : ExternalProject> {
-  abstract val systemName: @NlsSafe String
+  internal abstract val systemName: @NlsSafe String
 
-  abstract val projectModelResolver: PythonProjectModelResolver<P>
+  internal abstract val projectModelResolver: PythonProjectModelResolver<P>
 
-  abstract fun getSettings(project: Project): ProjectModelSettings
+  internal abstract fun getSettings(project: Project): ProjectModelSettings
 
   protected abstract fun getSyncListener(project: Project): ProjectModelSyncListener
 
   protected abstract fun createEntitySource(project: Project, singleProjectRoot: Path): EntitySource
 
   protected abstract fun getEntitySourceClass(): KClass<out EntitySource>
-  
+
   suspend fun linkAllProjectModelRoots(project: Project, basePath: @SystemIndependent @NonNls String) {
     val allProjectRoots = withBackgroundProgress(project = project, title = PyBundle.message("python.project.model.progress.title.discovering.projects", systemName)) {
       projectModelResolver.discoverIndependentProjectGraphs(Path.of(basePath)).map { it.root }
@@ -48,19 +48,19 @@ abstract class BaseProjectModelService<E : EntitySource, P : ExternalProject> {
     }
   }
 
-  suspend fun syncProjectModelRoot(project: Project, projectModelRoot: Path) {
+  internal suspend fun syncProjectModelRoot(project: Project, projectModelRoot: Path) {
     withBackgroundProgress(project = project, title = PyBundle.message("python.project.model.progress.title.syncing.projects.at", systemName, projectModelRoot)) {
       syncProjectModelRootImpl(project, projectModelRoot)
     }
   }
 
-  suspend fun forgetProjectModelRoot(project: Project, projectModelRoot: Path) {
+  internal suspend fun forgetProjectModelRoot(project: Project, projectModelRoot: Path) {
     withBackgroundProgress(project = project, title = PyBundle.message("python.project.model.progress.title.unlinking.projects.at", systemName, projectModelRoot)) {
       getSettings(project).removeLinkedProject(projectModelRoot)
       forgetProjectModelRootImpl(project, projectModelRoot)
     }
   }
-  
+
   private suspend fun forgetProjectModelRootImpl(project: Project, projectModelRoot: Path) {
     val source = createEntitySource(project, projectModelRoot)
     project.workspaceModel.update("Forgetting a $systemName project at $projectModelRoot") { storage ->
@@ -123,7 +123,7 @@ abstract class BaseProjectModelService<E : EntitySource, P : ExternalProject> {
           }
         })
         exModuleOptions = ExternalSystemModuleOptionsEntity(source) {
-          externalSystem = systemName          
+          externalSystem = systemName
           linkedProjectId = extProject.fullName
         }
       }
@@ -132,12 +132,12 @@ abstract class BaseProjectModelService<E : EntitySource, P : ExternalProject> {
   }
 
   /**
-   * Removes the default IJ module created for the root of the project 
+   * Removes the default IJ module created for the root of the project
    * (that's going to be replaced with a module belonging to a specific project management system).
    *
    * @see com.intellij.platform.PlatformProjectConfigurator
    */
-  fun removeFakeModuleEntity(project: Project, storage: MutableEntityStorage) {
+  internal fun removeFakeModuleEntity(project: Project, storage: MutableEntityStorage) {
     val virtualFileUrlManager = project.workspaceModel.getVirtualFileUrlManager()
     val basePathUrl = project.baseNioPath?.toVirtualFileUrl(virtualFileUrlManager) ?: return
     val contentRoots = storage
@@ -150,10 +150,10 @@ abstract class BaseProjectModelService<E : EntitySource, P : ExternalProject> {
       storage.removeEntity(entity)
     }
   }
-  
+
   private val Project.baseNioPath: Path?
     get() = basePath?.let { Path.of(it) }
-  
+
   companion object {
     // For the time being mark them as java-sources to indicate that in the Project tool window
     val PYTHON_SOURCE_ROOT_TYPE: SourceRootTypeId = SourceRootTypeId("java-source")
