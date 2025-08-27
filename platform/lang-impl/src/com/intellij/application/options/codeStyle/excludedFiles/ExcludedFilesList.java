@@ -41,8 +41,20 @@ public final class ExcludedFilesList extends JBList<FileSetDescriptor> {
           public void run(AnActionButton button) {
             removeDescriptor();
           }
-        })
-      .disableUpDownActions();
+        });
+
+    if (ExcludedScopesPanelKt.isScopeBasedFormattingUI()) {
+      myFileListDecorator.setAddAction(new AnActionButtonRunnable() {
+        @Override
+        public void run(AnActionButton button) {
+          myModel.addElement(new NamedScopeDescriptor("testScope" + myModel.size()));
+        }
+      });
+    }
+    else {
+      myFileListDecorator.disableUpDownActions();
+    }
+
     addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent e) {
