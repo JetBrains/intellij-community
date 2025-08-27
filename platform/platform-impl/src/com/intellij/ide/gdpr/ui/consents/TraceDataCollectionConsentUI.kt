@@ -2,7 +2,6 @@
 
 package com.intellij.ide.gdpr.ui.consents
 
-import com.intellij.ide.IdeBundle
 import com.intellij.ide.gdpr.Consent
 import com.intellij.ide.gdpr.DataCollectionAgreement
 import com.intellij.openapi.util.NlsSafe
@@ -20,7 +19,7 @@ internal class TraceDataCollectionConsentUI(
     return when (dataCollectionAgreement) {
       DataCollectionAgreement.YES -> ConsentForcedState.AlwaysEnabled(null)
       DataCollectionAgreement.NOT_SET -> null
-      DataCollectionAgreement.NO -> ConsentForcedState.ExternallyDisabled(IdeBundle.message("gdpr.data.collection.consent.group.setting.disabled.warning.text"))
+      DataCollectionAgreement.NO -> ConsentForcedState.ExternallyDisabled(null)
     }
   }
 }
