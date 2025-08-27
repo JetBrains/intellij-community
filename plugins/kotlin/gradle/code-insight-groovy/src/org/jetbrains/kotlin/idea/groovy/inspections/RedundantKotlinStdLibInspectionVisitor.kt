@@ -11,10 +11,10 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import org.jetbrains.kotlin.idea.base.util.substringAfterLastOrNull
-import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
+import com.intellij.psi.PsiMethod
 import org.jetbrains.kotlin.idea.configuration.KOTLIN_GROUP_ID
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.native.KotlinGradleCodeInsightCommonBundle
+import org.jetbrains.kotlin.idea.groovy.inspections.DifferentStdlibGradleVersionInspection.Companion.getResolvedLibVersion
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypesAndPredicate
 import org.jetbrains.kotlin.utils.PathUtil.KOTLIN_JAVA_STDLIB_NAME
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames
@@ -29,7 +29,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression
 import org.jetbrains.plugins.groovy.lang.psi.impl.booleanValue
-import org.jetbrains.plugins.groovy.lang.psi.impl.stringValue
 import org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyMethodCallPattern
 import org.jetbrains.plugins.groovy.lang.psi.patterns.psiMethod
 import org.jetbrains.plugins.groovy.lang.psi.patterns.withKind
@@ -130,11 +129,11 @@ private class DependenciesVisitor(val holder: ProblemsHolder) : GroovyRecursiveE
             || callExpressionText.getOrNull(index + KOTLIN_JAVA_STDLIB_NAME.length) == '-'
         ) return
         val gradlePluginVersion = findResolvedKotlinGradleVersion(callExpression.containingFile) ?: return
-        val stdlibVersion = extractVersionStatic(callExpression)
+        val stdlibVersion = getResolvedLibVersion(callExpression.containingFile, KOTLIN_GROUP_ID, listOf(KOTLIN_JAVA_STDLIB_NAME))
         LOG.debug("Kotlin Plugin Version: $gradlePluginVersion, kotlin-stdlib Version: $stdlibVersion")
 
         // do nothing if the stdlib version is different from the plugin version
-        if (stdlibVersion != null && stdlibVersion != gradlePluginVersion) return
+        if (stdlibVersion != gradlePluginVersion) return
         holder.registerProblem(
             callExpression,
             KotlinGradleCodeInsightCommonBundle.message("inspection.message.redundant.kotlin.std.lib.dependency.descriptor"),
@@ -142,18 +141,6 @@ private class DependenciesVisitor(val holder: ProblemsHolder) : GroovyRecursiveE
             RemoveDependencyFix(callExpression)
         )
     }
-}
-
-private fun extractVersionStatic(callExpression: GrCallExpression): IdeKotlinVersion? {
-    val rawVersion = if (callExpression.namedArguments.isNotEmpty()) {
-        val versionArgument = callExpression.namedArguments.firstOrNull { it.labelName == "version" } ?: return null
-        versionArgument.expression.let { it as? GrLiteral }.stringValue()
-    } else {
-        val argument = callExpression.expressionArguments.firstOrNull() ?: return null
-        val coordinate = (argument as? GrLiteral).stringValue() ?: return null
-        coordinate.substringAfterLastOrNull(":")
-    } ?: return null
-    return IdeKotlinVersion.opt(rawVersion)
 }
 
 private class RemoveDependencyFix(element: PsiElement) : LocalQuickFixOnPsiElement(element) {
