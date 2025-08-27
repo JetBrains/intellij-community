@@ -48,12 +48,12 @@ abstract class AbstractFindUsagesWithCompilerReferenceIndexTest : KotlinCompiler
             )
         }.fold(
             onSuccess = {
-                if (isFir && shouldIgnore(path)) {
+                if (shouldIgnore(path)) {
                     error("FIR_CRI_IGNORE directive is redundant")
                 }
             },
             onFailure = {
-                if (!isFir || !shouldIgnore(path)) {
+                if (!shouldIgnore(path)) {
                     throw it
                 }
             },
