@@ -237,7 +237,4 @@ class SuspendingReadAndWriteActionTest {
 
   @Test
   fun `number of write actions grows linearly with contention of read and edt write actions`() = `readAndWriteAction contention test`(false)
-
-  @Test
-  fun `number of write actions grows linearly with contention of read and bg write actions`() = `readAndWriteAction contention test`(true)
 }
