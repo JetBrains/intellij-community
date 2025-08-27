@@ -41,9 +41,7 @@ class RawDescriptorListBuilder {
   fun testDescriptor(id: String,
                      vararg dependencies: String,
                      resourceDirName: String = id.removeSuffix(RuntimeModuleId.TESTS_NAME_SUFFIX)) {
-    if (RuntimeModuleRepositoryGenerator.GENERATE_DESCRIPTORS_FOR_TEST_MODULES) {
-      descriptor(id, listOf("test/$resourceDirName"), dependencies.asList())
-    }
+    descriptor(id, listOf("test/$resourceDirName"), dependencies.asList())
   }
 
   fun descriptor(id: String, resources: List<String>, dependencies: List<String>) {

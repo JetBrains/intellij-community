@@ -48,7 +48,7 @@ internal class RuntimeModuleRepositoryBuilder
     context.processMessage(ProgressMessage(DevkitRuntimeModuleRepositoryJpsBundle.message("progress.message.generating.intellij.modules.repository"), BuildTargetChunk(setOf(target))))
     val timeToCreateDescriptors = measureTimeMillis {
       val resourcePathsSchema = JpsCompilationResourcePathsSchema(project)
-      descriptors = RuntimeModuleRepositoryGenerator.generateRuntimeModuleDescriptors(project, resourcePathsSchema)
+      descriptors = RuntimeModuleRepositoryGenerator.generateRuntimeModuleDescriptorsForWholeProject(project, resourcePathsSchema)
     }
     LOG.info("${descriptors.size} descriptors are created in ${timeToCreateDescriptors}ms")
     

@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.runtimeModuleRepository.generator
 
-import com.intellij.devkit.runtimeModuleRepository.generator.RuntimeModuleRepositoryGenerator.GENERATE_DESCRIPTORS_FOR_TEST_MODULES
 import com.intellij.devkit.runtimeModuleRepository.generator.RuntimeModuleRepositoryGenerator.enumerateRuntimeDependencies
 import com.intellij.platform.runtime.repository.RuntimeModuleId
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDescriptor
@@ -30,14 +29,30 @@ object RuntimeModuleRepositoryGenerator {
   /**
    * Generates the runtime module descriptors for all modules and libraries in [project].
    */
-  fun generateRuntimeModuleDescriptors(project: JpsProject, resourcePathsSchema: ResourcePathsSchema): List<RawRuntimeModuleDescriptor> {
-    val descriptors = ArrayList<RawRuntimeModuleDescriptor>()
-    generateDescriptorsForModules(descriptors, resourcePathsSchema, project)
+  fun generateRuntimeModuleDescriptorsForWholeProject(project: JpsProject, resourcePathsSchema: ResourcePathsSchema): List<RawRuntimeModuleDescriptor> {
     val libraries = LinkedHashSet<JpsLibrary>()
     for (module in project.modules) {
       libraries.addAll(enumerateRuntimeDependencies(module).libraries)
     }
-    for (library in libraries) {
+    return generateRuntimeModuleDescriptors(
+      includedProduction = project.modules,
+      includedTests = project.modules,
+      includedLibraries = libraries,
+      resourcePathsSchema = resourcePathsSchema
+    )
+  }
+
+  /**
+   * Generates the runtime module descriptors for production parts of [includedProduction], test parts of [includedTests] and 
+   * [includedLibraries]. 
+   */
+  fun generateRuntimeModuleDescriptors(includedProduction: Collection<JpsModule>,
+                                       includedTests: Collection<JpsModule>,
+                                       includedLibraries: Collection<JpsLibrary>,
+                                       resourcePathsSchema: ResourcePathsSchema): List<RawRuntimeModuleDescriptor> {
+    val descriptors = ArrayList<RawRuntimeModuleDescriptor>()
+    generateDescriptorsForModules(descriptors, includedProduction, includedTests, resourcePathsSchema)
+    for (library in includedLibraries) {
       val moduleId = getLibraryId(library)
       descriptors.add(RawRuntimeModuleDescriptor.create(moduleId.stringId, resourcePathsSchema.libraryPaths(library), emptyList()))
     }
@@ -56,31 +71,29 @@ object RuntimeModuleRepositoryGenerator {
     }
   }
 
-
   fun enumerateRuntimeDependencies(module: JpsModule): JpsJavaDependenciesEnumerator {
     return JpsJavaExtensionService.dependencies(module).withoutSdk().withoutModuleSourceEntries().runtimeOnly()
   }
-
-  /**
-   * Specifies whether descriptors for 'tests' parts of modules should be generated.
-   */
-  const val GENERATE_DESCRIPTORS_FOR_TEST_MODULES: Boolean = true
 }
 
-private fun generateDescriptorsForModules(descriptors: MutableList<RawRuntimeModuleDescriptor>, resourcePathsSchema: ResourcePathsSchema, project: JpsProject) {
+private fun generateDescriptorsForModules(
+  descriptors: MutableList<RawRuntimeModuleDescriptor>,
+  includedProduction: Collection<JpsModule>,
+  includedTests: Collection<JpsModule>,
+  resourcePathsSchema: ResourcePathsSchema,
+) {
   //it's better to get rid of such modules, but until it's done, we need to have this workaround to avoid duplicating IDs 
   val productionModulesWithTestRoots = HashSet<String>()
   val testModulesWithProductionRoots = HashSet<String>()
-  val allModuleNames = project.modules.mapTo(HashSet()) { it.name }
-  for (module in project.modules) {
+  val allIncludedTestModuleNames = includedTests.mapTo(HashSet()) { it.name }
+  for (module in includedTests) {
     if (module.name.endsWith(RuntimeModuleId.TESTS_NAME_SUFFIX) && module.hasProductionSources) {
       testModulesWithProductionRoots.add(module.name)
     }
-    if ((module.name + RuntimeModuleId.TESTS_NAME_SUFFIX) in allModuleNames && module.hasTestSources) {
+    if ((module.name + RuntimeModuleId.TESTS_NAME_SUFFIX) in allIncludedTestModuleNames && module.hasTestSources) {
       productionModulesWithTestRoots.add(module.name)
     }
   }
-
 
   fun getRuntimeModuleName(module: JpsModule, tests: Boolean): String {
     val moduleName = module.name
@@ -100,15 +113,15 @@ private fun generateDescriptorsForModules(descriptors: MutableList<RawRuntimeMod
     return moduleName
   }
 
-  for (module in project.modules) {
+  for (module in includedProduction) {
     if (module.hasDescriptorForProduction) {
       descriptors.add(createProductionPartDescriptor(module, ::getRuntimeModuleName, resourcePathsSchema))
     }
   }
-  if (GENERATE_DESCRIPTORS_FOR_TEST_MODULES) {
+  if (includedTests.isNotEmpty()) {
     val additionalDependenciesForTestsCache = HashMap<JpsModule, Set<RuntimeModuleId>>()
     val productionDependenciesCache = HashMap<JpsModule, Set<RuntimeModuleId>>()
-    for (module in project.modules) {
+    for (module in includedTests) {
       if (module.hasTestSources) {
         descriptors.add(createTestPartDescriptor(module = module,
                                                  runtimeModuleNameGenerator = ::getRuntimeModuleName,

@@ -55,7 +55,7 @@ internal suspend fun generateRuntimeModuleRepository(context: CompilationContext
     spanBuilder("generate runtime module repository").use {
       try {
         val resourcePathsSchema = JpsCompilationResourcePathsSchema(context.project)
-        val moduleDescriptors = RuntimeModuleRepositoryGenerator.generateRuntimeModuleDescriptors(context.project, resourcePathsSchema)
+        val moduleDescriptors = RuntimeModuleRepositoryGenerator.generateRuntimeModuleDescriptorsForWholeProject(context.project, resourcePathsSchema)
         withContext(Dispatchers.IO) {
           RuntimeModuleRepositoryGenerator.saveModuleRepository(moduleDescriptors, context.classesOutputDirectory)
         }
