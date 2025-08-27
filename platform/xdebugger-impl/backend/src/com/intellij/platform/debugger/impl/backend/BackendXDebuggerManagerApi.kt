@@ -17,12 +17,10 @@ import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl.reshowInlayRunToCursor
-import com.intellij.xdebugger.impl.XSteppingSuspendContext
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy.Companion.useFeProxy
 import com.intellij.xdebugger.impl.rpc.XDebugSessionId
 import com.intellij.xdebugger.impl.rpc.models.findValue
-import com.intellij.xdebugger.impl.rpc.models.getOrStoreGlobally
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl
 import fleet.rpc.core.toRpc
 import kotlinx.coroutines.*
@@ -89,19 +87,7 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
   private fun createSessionEvents(currentSession: XDebugSessionImpl, initialSessionState: XDebugSessionState): Flow<XDebuggerSessionEvent> = channelFlow {
     val listener = object : XDebugSessionListener {
       override fun sessionPaused() {
-        val suspendContext = currentSession.suspendContext ?: return
-        val suspendScope = currentSession.currentSuspendCoroutineScope ?: return
-        val data = async {
-          val suspendContextId = coroutineScope {
-            suspendContext.getOrStoreGlobally(suspendScope, currentSession)
-          }
-          val suspendContextDto = XSuspendContextDto(suspendContextId, suspendContext is XSteppingSuspendContext)
-          val executionStackDto = suspendContext.activeExecutionStack?.toRpc(suspendScope, currentSession)
-          val stackTraceDto = currentSession.currentStackFrame?.toRpc(suspendScope, currentSession)
-          SuspendData(suspendContextDto,
-                      executionStackDto,
-                      stackTraceDto)
-        }
+        val data = async { currentSession.suspendData() }
         trySend(XDebuggerSessionEvent.SessionPaused(data))
       }
 

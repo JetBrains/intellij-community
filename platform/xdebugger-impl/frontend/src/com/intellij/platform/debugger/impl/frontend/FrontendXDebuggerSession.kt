@@ -17,7 +17,6 @@ import com.intellij.platform.debugger.impl.frontend.frame.FrontendDropFrameHandl
 import com.intellij.platform.debugger.impl.frontend.frame.FrontendXExecutionStack
 import com.intellij.platform.debugger.impl.frontend.frame.FrontendXStackFrame
 import com.intellij.platform.debugger.impl.frontend.frame.FrontendXSuspendContext
-import com.intellij.platform.debugger.impl.frontend.storage.FrontendXStackFramesStorage
 import com.intellij.platform.debugger.impl.frontend.storage.getOrCreateStackFrame
 import com.intellij.platform.debugger.impl.rpc.*
 import com.intellij.platform.execution.impl.frontend.createFrontendProcessHandler
@@ -226,10 +225,9 @@ class FrontendXDebuggerSession private constructor(
     val (suspendContextDto, executionStackDto, stackFrameDto) = this
     val oldSuspendContext = suspendContext.value
     if (oldSuspendContext == null || suspendContextDto.id != oldSuspendContext.id) {
-      val suspendContextLifetimeScope = cs.childScope("${cs.coroutineContext[CoroutineName]} (context ${suspendContextDto.id})",
-                                                      FrontendXStackFramesStorage())
-      val currentSuspendContext = FrontendXSuspendContext(suspendContextDto, project, suspendContextLifetimeScope)
-      suspendContext.getAndUpdate { currentSuspendContext }?.cancel()
+      val newSuspendContext = FrontendXSuspendContext(suspendContextDto, project, cs)
+      val previousSuspendContext = suspendContext.getAndUpdate { newSuspendContext }
+      previousSuspendContext?.cancel()
     }
     val suspendContextLifetimeScope = suspendContext.value?.lifetimeScope ?: return
 

@@ -42,7 +42,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.future.asDeferred
 import kotlinx.coroutines.withContext
@@ -288,15 +287,13 @@ internal suspend fun createBackendDocument(
   }
 }
 
-internal suspend fun XDebugSessionImpl.suspendData(): SuspendData? {
+internal fun XDebugSessionImpl.suspendData(): SuspendData? {
   val suspendContext = suspendContext ?: return null
   val suspendScope = currentSuspendCoroutineScope ?: return null
-  val suspendContextId = coroutineScope {
-    suspendContext.getOrStoreGlobally(suspendScope, this@suspendData)
-  }
+  val suspendContextId = suspendContext.getOrStoreGlobally(suspendScope, this)
   val suspendContextDto = XSuspendContextDto(suspendContextId, suspendContext is XSteppingSuspendContext)
-  val executionStackDto = suspendContext.activeExecutionStack?.toRpc(suspendScope, this@suspendData)
-  val stackTraceDto = currentStackFrame?.toRpc(suspendScope, this@suspendData)
+  val executionStackDto = suspendContext.activeExecutionStack?.toRpc(suspendScope, this)
+  val stackTraceDto = currentStackFrame?.toRpc(suspendScope, this)
 
   return SuspendData(suspendContextDto,
                      executionStackDto,
@@ -305,8 +302,7 @@ internal suspend fun XDebugSessionImpl.suspendData(): SuspendData? {
 
 internal fun XStackFrame.toRpc(coroutineScope: CoroutineScope, session: XDebugSessionImpl): XStackFrameDto {
   val id = getOrStoreGlobally(coroutineScope, session)
-  val equalityObject = equalityObject
-  val serializedEqualityObject = when (equalityObject) {
+  val serializedEqualityObject = when (val equalityObject = equalityObject) {
     is String -> XStackFrameStringEqualityObject(equalityObject)
     else -> null // TODO support other types
   }
