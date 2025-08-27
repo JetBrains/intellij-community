@@ -2,32 +2,61 @@
 
 package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 
-import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.psi.PsiElementVisitor
-import org.jetbrains.kotlin.analysis.api.analyze
+import com.intellij.codeInspection.*
+import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.utils.callExpression
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections.JavaCollectionsStaticMethodInspectionUtils.Utils
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtValueArgument
+import org.jetbrains.kotlin.psi.KtVisitor
 import org.jetbrains.kotlin.psi.dotQualifiedExpressionVisitor
 
-class JavaCollectionsStaticMethodOnImmutableListInspection : AbstractKotlinInspection() {
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
-        return dotQualifiedExpressionVisitor(fun(expression) {
-            val (methodName, firstArg) = getTargetMethodOnImmutableList(expression) ?: return
-            holder.registerProblem(
-                expression.callExpression?.calleeExpression ?: expression,
-                KotlinBundle.message("call.of.java.mutator.0.on.immutable.kotlin.collection.1", methodName, firstArg.text)
-            )
-        })
+internal class JavaCollectionsStaticMethodOnImmutableListInspection :
+    KotlinApplicableInspectionBase<KtDotQualifiedExpression, JavaCollectionsStaticMethodOnImmutableListInspection.Context>() {
+
+    internal class Context(
+        val methodName: String,
+        val firstArg: KtValueArgument
+    )
+
+    override fun InspectionManager.createProblemDescriptor(
+        element: KtDotQualifiedExpression,
+        context: Context,
+        rangeInElement: TextRange?,
+        onTheFly: Boolean
+    ): ProblemDescriptor = createProblemDescriptor(
+        /* psiElement = */ element,
+        /* rangeInElement = */
+        rangeInElement,
+        /* descriptionTemplate = */
+        KotlinBundle.message("call.of.java.mutator.0.on.immutable.kotlin.collection.1", context.methodName, context.firstArg.text),
+        /* highlightType = */
+        ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+        /* onTheFly = */
+        false,
+        /* ...fixes = */
+        *LocalQuickFix.EMPTY_ARRAY
+    )
+
+    override fun KaSession.prepareContext(element: KtDotQualifiedExpression): Context? {
+        val (methodName, firstArg) = getTargetMethodOnImmutableList(element) ?: return null
+        return Context(methodName, firstArg)
     }
 
+    context(_: KaSession)
     private fun getTargetMethodOnImmutableList(expression: KtDotQualifiedExpression): Pair<String, KtValueArgument>? =
         Utils.getTargetMethod(expression) { type ->
-            analyze(expression) {
-                Utils.isListOrSubtype(type) && Utils.isMutableListOrSubtype(type)
-            }
+            Utils.isListOrSubtype(type) && !Utils.isMutableListOrSubtype(type)
         }
+
+    override fun getApplicableRanges(element: KtDotQualifiedExpression): List<TextRange> =
+        ApplicabilityRange.single(element) { it.callExpression?.calleeExpression }
+
+    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): KtVisitor<*, *> = dotQualifiedExpressionVisitor {
+        visitTargetElement(it, holder, isOnTheFly)
+    }
 }
