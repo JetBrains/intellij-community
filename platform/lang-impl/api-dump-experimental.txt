@@ -66,8 +66,6 @@ c:com.intellij.build.BuildView
 c:com.intellij.build.BuildViewManager
 - com.intellij.build.AbstractViewManager
 - *s:createBuildProgress(com.intellij.openapi.project.Project):com.intellij.build.progress.BuildProgress
-*:com.intellij.build.BuildViewSettingsProvider
-- a:isExecutionViewHidden():Z
 c:com.intellij.build.DefaultBuildDescriptor
 - com.intellij.build.BuildDescriptor
 - *:getActions():java.util.List
@@ -89,29 +87,6 @@ c:com.intellij.build.ExecutionNode
 c:com.intellij.build.SyncViewManager
 - com.intellij.build.AbstractViewManager
 - *s:createBuildProgress(com.intellij.openapi.project.Project):com.intellij.build.progress.BuildProgress
-*:com.intellij.build.events.BuildEventPresentationData
-- a:consoleToolbarActions():com.intellij.openapi.actionSystem.ActionGroup
-- a:getExecutionConsole():com.intellij.execution.ui.ExecutionConsole
-- a:getNodeIcon():javax.swing.Icon
-*:com.intellij.build.events.PresentableBuildEvent
-- com.intellij.build.events.BuildEvent
-- a:getPresentationData():com.intellij.build.events.BuildEventPresentationData
-*f:com.intellij.build.events.impl.BuildIssueEventImpl
-- com.intellij.build.events.impl.AbstractBuildEvent
-- com.intellij.build.events.BuildIssueEvent
-- <init>(java.lang.Object,com.intellij.build.issue.BuildIssue,com.intellij.build.events.MessageEvent$Kind):V
-- getDescription():java.lang.String
-- getGroup():java.lang.String
-- getIssue():com.intellij.build.issue.BuildIssue
-- getKind():com.intellij.build.events.MessageEvent$Kind
-- getNavigatable(com.intellij.openapi.project.Project):com.intellij.pom.Navigatable
-- getResult():com.intellij.build.events.MessageEventResult
-f:com.intellij.build.events.impl.StartBuildEventImpl
-- com.intellij.build.events.impl.StartEventImpl
-- com.intellij.build.events.StartBuildEvent
-- *:getBuildDescriptor():com.intellij.build.DefaultBuildDescriptor
-- *:getBuildViewSettingsProvider():com.intellij.build.BuildViewSettingsProvider
-- *:withBuildViewSettingsProvider(com.intellij.build.BuildViewSettingsProvider):com.intellij.build.events.impl.StartBuildEventImpl
 *f:com.intellij.build.issue.quickfix.OpenFileQuickFix
 - com.intellij.build.issue.BuildIssueQuickFix
 - *sf:Companion:com.intellij.build.issue.quickfix.OpenFileQuickFix$Companion
@@ -137,14 +112,20 @@ c:com.intellij.build.output.BuildOutputInstantReaderImpl
 - a:fileMessage(java.lang.String,java.lang.String,com.intellij.build.events.MessageEvent$Kind,com.intellij.build.FilePosition):com.intellij.build.progress.BuildProgress
 - a:finish():com.intellij.build.progress.BuildProgress
 - a:finish(J):com.intellij.build.progress.BuildProgress
+- a:finish(J,java.lang.String,com.intellij.build.events.EventResult):com.intellij.build.progress.BuildProgress
 - a:finish(J,Z,java.lang.String):com.intellij.build.progress.BuildProgress
+- a:finish(com.intellij.build.events.EventResult):com.intellij.build.progress.BuildProgress
+- a:finish(java.lang.String,com.intellij.build.events.EventResult):com.intellij.build.progress.BuildProgress
 - a:finish(Z):com.intellij.build.progress.BuildProgress
 - a:getId():java.lang.Object
 - a:message(java.lang.String,java.lang.String,com.intellij.build.events.MessageEvent$Kind,com.intellij.pom.Navigatable):com.intellij.build.progress.BuildProgress
-- a:output(java.lang.String,Z):com.intellij.build.progress.BuildProgress
+- a:output(java.lang.String,com.intellij.execution.process.ProcessOutputType):com.intellij.build.progress.BuildProgress
+- output(java.lang.String,Z):com.intellij.build.progress.BuildProgress
+- a:presentable(java.lang.String,com.intellij.build.events.BuildEventPresentationData):com.intellij.build.progress.BuildProgress
 - a:progress(java.lang.String):com.intellij.build.progress.BuildProgress
 - a:progress(java.lang.String,J,J,java.lang.String):com.intellij.build.progress.BuildProgress
 - a:start(com.intellij.build.progress.BuildProgressDescriptor):com.intellij.build.progress.BuildProgress
+- a:start(java.lang.String,com.intellij.build.progress.BuildProgressDescriptor):com.intellij.build.progress.BuildProgress
 - a:startChildProgress(java.lang.String):com.intellij.build.progress.BuildProgress
 *:com.intellij.build.progress.BuildProgressDescriptor
 - a:getBuildDescriptor():com.intellij.build.BuildDescriptor

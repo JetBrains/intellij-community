@@ -1,15 +1,15 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.build.events;
 
+import com.intellij.build.events.BuildEventsNls.Message;
 import com.intellij.execution.process.ProcessOutputType;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-@ApiStatus.NonExtendable
-public interface OutputBuildEvent {
-  @NotNull
-  @BuildEventsNls.Message
-  String getMessage();
+public interface OutputBuildEvent extends BuildEvent {
+
+  @Override
+  @Message
+  @NotNull String getMessage();
 
   /**
    * @return type of the output (stdout, stderr, or system)

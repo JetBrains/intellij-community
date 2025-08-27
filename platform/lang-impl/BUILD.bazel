@@ -54,6 +54,7 @@ jvm_library(
     "//jps/model-impl",
     "//platform/analysis-impl",
     "//platform/structure-view-impl:structureView-impl",
+    "@lib//:commons-lang3",
     "@lib//:commons-logging",
     "//platform/diff-impl",
     "//platform/built-in-server-api:builtInServer",

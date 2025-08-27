@@ -3,8 +3,11 @@ package com.intellij.openapi.externalSystem.service.execution
 
 import com.intellij.build.BuildProgressListener
 import com.intellij.build.DefaultBuildDescriptor
-import com.intellij.build.events.impl.*
+import com.intellij.build.events.impl.BuildEventsImpl
+import com.intellij.build.events.impl.SuccessResultImpl
 import com.intellij.build.output.BuildOutputParser
+import com.intellij.build.progress.BuildProgressDescriptorImpl
+import com.intellij.build.progress.BuildRootProgressImpl
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
@@ -15,10 +18,17 @@ import org.assertj.core.api.Assertions.assertThat
 
 class ExternalSystemEventDispatcherTest : LightPlatformTestCase() {
 
+  private val buildEvents = BuildEventsImpl()
+
   fun `test invokeOnCompletion`() {
     val parsers = listOf(
       BuildOutputParser { line, reader, messageConsumer ->
-        messageConsumer.accept(OutputBuildEventImpl(reader.parentEventId, line, true))
+        messageConsumer.accept(
+          buildEvents.output()
+            .withParentId(reader.parentEventId)
+            .withMessage(line)
+            .build()
+        )
         return@BuildOutputParser true
       }
     )
@@ -30,7 +40,12 @@ class ExternalSystemEventDispatcherTest : LightPlatformTestCase() {
     val parsers = listOf(
       BuildOutputParser { _, _, _ -> throw RuntimeException("Bad parser") },
       BuildOutputParser { line, reader, messageConsumer ->
-        messageConsumer.accept(OutputBuildEventImpl(reader.parentEventId, line, true))
+        messageConsumer.accept(
+          buildEvents.output()
+            .withParentId(reader.parentEventId)
+            .withMessage(line)
+            .build()
+        )
         return@BuildOutputParser true
       }
     )
@@ -42,21 +57,23 @@ class ExternalSystemEventDispatcherTest : LightPlatformTestCase() {
     val eventMessages = mutableListOf<String>()
     ExtensionTestUtil.maskExtensions(ExternalSystemOutputParserProvider.EP_NAME, listOf(TestParserProvider(parsers)), testRootDisposable)
     val semaphore = Semaphore(1)
+    val buildDescriptor = DefaultBuildDescriptor(taskId, "test task", "/path", System.currentTimeMillis())
     val dispatcher = ExternalSystemEventDispatcher(taskId, BuildProgressListener { _, event -> eventMessages += event.message })
     dispatcher.use {
-      it.onEvent(1, StartBuildEventImpl(DefaultBuildDescriptor(taskId, "test task", "/path", System.currentTimeMillis()), "Build started"))
-      it.invokeOnCompletion { eventMessages += "completion message 1" }
-      it.onEvent(1, StartEventImpl(2, 1, System.currentTimeMillis(), "sub task1 started"))
-      it.appendLine("Task output line 1")
-      it.onEvent(1, StartEventImpl(3, 1, System.currentTimeMillis(), "sub task2 started"))
-      it.appendLine("Task output line 2")
-      it.onEvent(1, FinishEventImpl(3, 1, System.currentTimeMillis(), "sub task2 finished", SuccessResultImpl()))
-      it.onEvent(1, FinishEventImpl(2, 1, System.currentTimeMillis(), "sub task1 finished", SuccessResultImpl()))
-      it.onEvent(1, FinishBuildEventImpl(taskId, null, System.currentTimeMillis(), "Build finished", SuccessResultImpl()))
-      it.invokeOnCompletion { throw RuntimeException("Bad happens") }
-      it.invokeOnCompletion { eventMessages += "completion message 2" }
-      it.invokeOnCompletion { semaphore.up() }
-      it.appendLine("Task output line 3")
+      val buildRootProgress = BuildRootProgressImpl(buildEvents, dispatcher)
+      buildRootProgress.start("Build started", BuildProgressDescriptorImpl(buildDescriptor))
+      dispatcher.invokeOnCompletion { eventMessages += "completion message 1" }
+      val task1Progress = buildRootProgress.startChildProgress("sub task1 started")
+      dispatcher.appendLine("Task output line 1")
+      val task2Progress = buildRootProgress.startChildProgress("sub task2 started")
+      dispatcher.appendLine("Task output line 2")
+      task2Progress.finish("sub task2 finished", SuccessResultImpl())
+      task1Progress.finish("sub task1 finished", SuccessResultImpl())
+      buildRootProgress.finish("Build finished", SuccessResultImpl())
+      dispatcher.invokeOnCompletion { throw RuntimeException("Bad happens") }
+      dispatcher.invokeOnCompletion { eventMessages += "completion message 2" }
+      dispatcher.invokeOnCompletion { semaphore.up() }
+      dispatcher.appendLine("Task output line 3")
     }
     dispatcher.invokeOnCompletion { eventMessages += "Late completion message" }
 

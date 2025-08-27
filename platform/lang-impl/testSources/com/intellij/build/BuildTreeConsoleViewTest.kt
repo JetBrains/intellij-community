@@ -2,7 +2,12 @@
 package com.intellij.build
 
 import com.intellij.build.events.MessageEvent
-import com.intellij.build.events.impl.*
+import com.intellij.build.events.impl.BuildEventsImpl
+import com.intellij.build.events.impl.DerivedResultImpl
+import com.intellij.build.events.impl.FailureResultImpl
+import com.intellij.build.events.impl.SuccessResultImpl
+import com.intellij.build.progress.BuildProgressDescriptorImpl
+import com.intellij.build.progress.BuildRootProgressImpl
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.testFramework.assertion.BuildViewAssertions.showAllNodes
@@ -33,19 +38,16 @@ class BuildTreeConsoleViewTest : LightPlatformTestCase() {
 
   override fun setUp() {
     super.setUp()
-    buildDescriptor = DefaultBuildDescriptor(Object(),
-                                             "test descriptor",
-                                             "fake path",
-                                             1L)
+    buildDescriptor = DefaultBuildDescriptor(Any(), "test descriptor", "fake path", 1L)
     treeConsoleView = BuildTreeConsoleView(project, buildDescriptor, null)
   }
 
   @Test
   fun `test tree console handles event`() {
     val tree = treeConsoleView.tree
-    val buildId = Object()
     val message = "build Started"
-    treeConsoleView.onEvent(buildId, StartBuildEventImpl(buildDescriptor, message))
+    BuildRootProgressImpl(BuildEventsImpl(), treeConsoleView)
+      .start(message, BuildProgressDescriptorImpl(buildDescriptor))
 
     waitUntilAssertSucceedsBlocking {
       PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
@@ -64,17 +66,15 @@ class BuildTreeConsoleViewTest : LightPlatformTestCase() {
   fun `test build level of tree console view are auto-expanded`() {
     val tree = treeConsoleView.tree
     showAllNodes(treeConsoleView)
-    val buildId = Object()
-    listOf(
-      StartBuildEventImpl(buildDescriptor, "build started"),
-      StartEventImpl("event_id", buildDescriptor.id, 1000, "build event"),
-      StartEventImpl("sub_event_id", "event_id", 1100, "build nested event"),
-      FinishEventImpl("sub_event_id", "event_id", 1200, "build nested event", SuccessResultImpl(true)),
-      FinishEventImpl("event_id", buildDescriptor.id, 1500, "build event", SuccessResultImpl(true)),
-      FinishBuildEventImpl(buildDescriptor.id, null, 2000, "build finished", SuccessResultImpl(true))
-    ).forEach {
-      treeConsoleView.onEvent(buildId, it)
-    }
+    // @formatter:off
+    BuildRootProgressImpl(BuildEventsImpl(), treeConsoleView)
+      .start("build started", BuildProgressDescriptorImpl(buildDescriptor))
+        .startChildProgress("build event")
+          .startChildProgress("build nested event")
+          .finish(SuccessResultImpl(true))
+        .finish(SuccessResultImpl(true))
+      .finish("build finished", SuccessResultImpl(true))
+    // @formatter:on
 
     waitUntilAssertSucceedsBlocking {
       PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
@@ -94,29 +94,22 @@ class BuildTreeConsoleViewTest : LightPlatformTestCase() {
   fun `test first message node is auto-expanded`() {
     val tree = treeConsoleView.tree
     showAllNodes(treeConsoleView)
-    val buildId = Object()
-    listOf(
-      StartBuildEventImpl(buildDescriptor, "build started"),
-
-      StartEventImpl("event_id_1", buildDescriptor.id, 1000, "build event 1"),
-      FileMessageEventImpl("event_id_1", MessageEvent.Kind.WARNING, null, "file message", null, FilePosition(File("a.file"), 0, 0)),
-      FinishEventImpl("event_id_1", buildDescriptor.id, 1500, "build event 1", SuccessResultImpl(true)),
-
-      StartEventImpl("event_id_2", buildDescriptor.id, 1000, "build event 2"),
-      FileMessageEventImpl("event_id_2", MessageEvent.Kind.WARNING, null, "file message 1", null, FilePosition(File("a1.file"), 0, 0)),
-      FileMessageEventImpl("event_id_2", MessageEvent.Kind.WARNING, null, "file message 2", null, FilePosition(File("a2.file"), 0, 0)),
-      FinishEventImpl("event_id_2", buildDescriptor.id, 1500, "build event 2", SuccessResultImpl(true)),
-
-      StartEventImpl("event_id_3", buildDescriptor.id, 1000, "build event 3"),
-      FileMessageEventImpl("event_id_3", MessageEvent.Kind.WARNING, null, "file message 3", null, FilePosition(File("a3.file"), 0, 0)),
-      FileMessageEventImpl("event_id_3", MessageEvent.Kind.ERROR, null, "file message with error", null,
-                           FilePosition(File("a4.file"), 5, 0)),
-      FinishEventImpl("event_id_3", buildDescriptor.id, 1500, "build event 3", FailureResultImpl()),
-
-      FinishBuildEventImpl(buildDescriptor.id, null, 2000, "build failed", FailureResultImpl())
-    ).forEach {
-      treeConsoleView.onEvent(buildId, it)
-    }
+    // @formatter:off
+    BuildRootProgressImpl(BuildEventsImpl(), treeConsoleView)
+      .start("build started", BuildProgressDescriptorImpl(buildDescriptor))
+        .startChildProgress("build event 1")
+          .fileMessage("file message", "file detailed message", MessageEvent.Kind.WARNING, FilePosition(File("a.file"), 0, 0))
+        .finish(true)
+        .startChildProgress("build event 2")
+          .fileMessage("file message 1", "file detailed message 1", MessageEvent.Kind.WARNING, FilePosition(File("a1.file"), 0, 0))
+          .fileMessage("file message 2", "file detailed message 2", MessageEvent.Kind.WARNING, FilePosition(File("a2.file"), 0, 0))
+        .finish(true)
+        .startChildProgress("build event 3")
+          .fileMessage("file message 3", "file detailed message 3", MessageEvent.Kind.WARNING, FilePosition(File("a3.file"), 0, 0))
+          .fileMessage("file message with error", "file detailed message with error", MessageEvent.Kind.ERROR, FilePosition(File("a4.file"), 5, 0))
+        .finish(FailureResultImpl())
+      .finish("build failed", FailureResultImpl())
+    // @formatter:on
 
     waitUntilAssertSucceedsBlocking {
       PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
@@ -145,18 +138,16 @@ class BuildTreeConsoleViewTest : LightPlatformTestCase() {
   @Test
   fun `test derived result depend on child result - fail case`() {
     showAllNodes(treeConsoleView)
-    val buildId = Object()
-    listOf(
-      StartBuildEventImpl(buildDescriptor, "build started"),
-      StartEventImpl("event_id", buildDescriptor.id, 1000, "build event"),
-      StartEventImpl("sub_event_id", "event_id", 1100, "build nested event"),
-      MessageEventImpl("event_id", MessageEvent.Kind.ERROR, "Error", "error message", "error message"),
-      FinishEventImpl("sub_event_id", "event_id", 1200, "build nested event", FailureResultImpl()),
-      FinishEventImpl("event_id", buildDescriptor.id, 1500, "build event", DerivedResultImpl()),
-      FinishBuildEventImpl(buildDescriptor.id, null, 2000, "build finished", DerivedResultImpl())
-    ).forEach {
-      treeConsoleView.onEvent(buildId, it)
-    }
+    // @formatter:off
+    BuildRootProgressImpl(BuildEventsImpl(), treeConsoleView)
+      .start("build started", BuildProgressDescriptorImpl(buildDescriptor))
+        .startChildProgress("build event")
+          .startChildProgress( "build nested event")
+            .message("error message", "detailed error message", MessageEvent.Kind.ERROR, null)
+          .finish(FailureResultImpl())
+        .finish(DerivedResultImpl())
+      .finish("build finished", DerivedResultImpl())
+    // @formatter:on
 
     val tree = treeConsoleView.tree
 
@@ -165,8 +156,8 @@ class BuildTreeConsoleViewTest : LightPlatformTestCase() {
       PlatformTestUtil.assertTreeEqual(tree, "-\n" +
                                              " -build finished\n" +
                                              "  -build event\n" +
-                                             "   build nested event\n" +
-                                             "   error message")
+                                             "   -build nested event\n" +
+                                             "    error message")
     }
 
     val visitor = CollectingTreeVisitor(tree)
@@ -181,17 +172,15 @@ class BuildTreeConsoleViewTest : LightPlatformTestCase() {
   @Test
   fun `test derived result depend on child result - success case`() {
     showAllNodes(treeConsoleView)
-    val buildId = Object()
-    listOf(
-      StartBuildEventImpl(buildDescriptor, "build started"),
-      StartEventImpl("event_id", buildDescriptor.id, 1000, "build event"),
-      StartEventImpl("sub_event_id", "event_id", 1100, "build nested event"),
-      FinishEventImpl("sub_event_id", "event_id", 1200, "build nested event", SuccessResultImpl()),
-      FinishEventImpl("event_id", buildDescriptor.id, 1500, "build event", DerivedResultImpl()),
-      FinishBuildEventImpl(buildDescriptor.id, null, 2000, "build finished", DerivedResultImpl())
-    ).forEach {
-      treeConsoleView.onEvent(buildId, it)
-    }
+    // @formatter:off
+    BuildRootProgressImpl(BuildEventsImpl(), treeConsoleView)
+      .start("build started", BuildProgressDescriptorImpl(buildDescriptor))
+        .startChildProgress("build event")
+          .startChildProgress("build nested event")
+          .finish(SuccessResultImpl())
+        .finish(DerivedResultImpl())
+      .finish("build finished", DerivedResultImpl())
+    // @formatter:on
 
     val tree = treeConsoleView.tree
 

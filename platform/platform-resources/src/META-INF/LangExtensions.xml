@@ -1403,6 +1403,8 @@
                     testServiceImplementation="com.intellij.build.internal.DummySyncViewManager"/>
     <projectService serviceInterface="com.intellij.build.BuildWorkspaceConfiguration"
                     serviceImplementation="com.intellij.build.BuildWorkspaceConfigurationImpl"/>
+    <applicationService serviceInterface="com.intellij.build.events.BuildEvents"
+                        serviceImplementation="com.intellij.build.events.impl.BuildEventsImpl"/>
 
     <moveLeftRightHandler language=""
                           implementationClass="com.intellij.codeInsight.editorActions.moveLeftRight.DefaultMoveElementLeftRightHandler"
