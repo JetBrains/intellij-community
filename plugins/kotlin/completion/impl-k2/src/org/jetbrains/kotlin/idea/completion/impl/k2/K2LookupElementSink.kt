@@ -108,10 +108,18 @@ internal class K2AccumulatingLookupElementSink() : K2LookupElementSink {
     override val addedElementCount: Int
         get() = addedElementCounter.get()
 
+    /**
+     * Used by the producer to indicate that no more elements will be added to this sink.
+     * See [Channel.close].
+     */
     fun close() {
         elementChannel.close()
     }
 
+    /**
+     * Used by the consumer to cancel producing new elements and to indicate to stop the producer.
+     * See [Channel.cancel].
+     */
     fun cancel() {
         elementChannel.cancel()
     }
