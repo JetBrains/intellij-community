@@ -13,7 +13,6 @@ import com.intellij.openapi.util.BuildNumber
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.idea.devkit.DevKitBundle
@@ -35,8 +34,8 @@ private val PENDING = Instant.MAX
 /**
  * Utility class that updates external annotations of IntelliJ SDK.
  */
-@Service
-internal class IntelliJSdkExternalAnnotationsUpdater(@JvmField internal val coroutineScope: CoroutineScope) {
+@Service(Service.Level.APP)
+internal class IntelliJSdkExternalAnnotationsUpdater {
   private val buildNumberLastFailedUpdateInstant = ConcurrentHashMap<BuildNumber, Instant>()
 
   suspend fun updateIdeaJdkAnnotationsIfNecessary(project: Project, ideaJdk: Sdk) {
