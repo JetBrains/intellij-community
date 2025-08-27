@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
 import com.intellij.diagnostic.VMOptions.MemoryKind
@@ -73,16 +73,17 @@ private class IdeHeartbeatEventReporterService(cs: CoroutineScope) {
   private suspend fun heartBeatRoutine() {
     delay(Registry.intValue("ide.heartbeat.delay").toLong())
 
-    var lastCpuTime: Long = 0
-    var lastGcTime: Long = -1
+    //durations are in milliseconds by default:
+    var previousAccumulatedCpuTimeNs: Long = 0
+    var previousAccumulatedGcDuration: Long = -1
     var lastTimeToSafepoint: Long = 0
     var lastTimeAtSafepoint: Long = 0
     var lastSafepointsCount: Long = 0
     val gcBeans = ManagementFactory.getGarbageCollectorMXBeans()
+    val mxBean = ManagementFactory.getOperatingSystemMXBean() as OperatingSystemMXBean
     while (true) {
-      val mxBean = ManagementFactory.getOperatingSystemMXBean() as OperatingSystemMXBean
       val cpuLoad: Double = mxBean.cpuLoad
-      val cpuLoadInt = if (cpuLoad in 0.0..1.0) {
+      val cpuLoadPercent = if (cpuLoad in 0.0..1.0) {
         (cpuLoad * 100).roundToInt()
       }
       else {
@@ -91,18 +92,25 @@ private class IdeHeartbeatEventReporterService(cs: CoroutineScope) {
       val swapSize = mxBean.totalSwapSpaceSize.toDouble()
       val swapLoad = if (swapSize > 0) ((1 - mxBean.freeSwapSpaceSize / swapSize) * 100).toInt() else 0
 
-      val totalGcTime = gcBeans.sumOf { it.collectionTime }
-      val thisGcTime = if (lastGcTime == -1L) 0 else totalGcTime - lastGcTime
-      lastGcTime = thisGcTime
-
-      val totalCpuTime = mxBean.processCpuTime
-      val thisCpuTime: Long
-      if (totalCpuTime < 0) {
-        thisCpuTime = -1
+      val accumulatedGcDuration = gcBeans.sumOf { Math.max(it.collectionTime, 0) }
+      val gcDurationInPeriod: Long
+      if (previousAccumulatedGcDuration == -1L) {
+        gcDurationInPeriod = 0
       }
       else {
-        thisCpuTime = totalCpuTime - lastCpuTime
-        lastCpuTime = thisCpuTime
+        gcDurationInPeriod = accumulatedGcDuration - previousAccumulatedGcDuration
+      }
+      previousAccumulatedGcDuration = accumulatedGcDuration
+
+
+      val accumulatedCpuTimeNs = mxBean.processCpuTime
+      val cpuTimeInPeriodNs: Long
+      if (accumulatedCpuTimeNs < 0) {
+        cpuTimeInPeriodNs = -1
+      }
+      else {
+        cpuTimeInPeriodNs = accumulatedCpuTimeNs - previousAccumulatedCpuTimeNs
+        previousAccumulatedCpuTimeNs = cpuTimeInPeriodNs
       }
 
       val timeToSafepointMs = SafepointBean.totalTimeToSafepointMs()?.let { totalTimeToSafepointMs ->
@@ -123,11 +131,11 @@ private class IdeHeartbeatEventReporterService(cs: CoroutineScope) {
 
       // don't report total GC time in the first 5 minutes of IJ execution
       UILatencyLogger.HEARTBEAT.log(
-        UILatencyLogger.SYSTEM_CPU_LOAD.with(cpuLoadInt),
+        UILatencyLogger.SYSTEM_CPU_LOAD.with(cpuLoadPercent),
         UILatencyLogger.SWAP_LOAD.with(swapLoad),
-        UILatencyLogger.CPU_TIME.with(TimeUnit.NANOSECONDS.toMillis(thisCpuTime).toInt()),
+        UILatencyLogger.CPU_TIME.with(TimeUnit.NANOSECONDS.toMillis(cpuTimeInPeriodNs).toInt()),
 
-        UILatencyLogger.GC_TIME.with(thisGcTime.toInt()),
+        UILatencyLogger.GC_TIME.with(gcDurationInPeriod.toInt()),
 
         UILatencyLogger.TIME_TO_SAFEPOINT.with(timeToSafepointMs),
         UILatencyLogger.TIME_AT_SAFEPOINT.with(timeAtSafepointMs),
