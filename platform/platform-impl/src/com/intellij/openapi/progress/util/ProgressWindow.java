@@ -216,7 +216,6 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
 
   @Override
   public void startBlocking(@NotNull Runnable init, boolean isSynchronousHeadlessExecution, @NotNull CompletableFuture<?> stopCondition) {
-    ApplicationEx app = ApplicationManagerEx.getApplicationEx();
     ThreadingAssertions.assertEventDispatchThread();
     synchronized (getLock()) {
       LOG.assertTrue(!isRunning());
@@ -468,7 +467,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
 
   private static class WindowState extends State {
     private final String myTitle;
-    protected WindowState(String title, @NotNull State delegate) {
+    WindowState(String title, @NotNull State delegate) {
       super(delegate);
       myTitle = title;
     }

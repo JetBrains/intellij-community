@@ -76,7 +76,7 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
   private volatile ProgressIndicator myModalityProgress;
   private volatile ModalityState myModalityState = ModalityState.nonModal();
   private volatile int myNonCancelableSectionCount;
-  @SuppressWarnings("SpellCheckingInspection") private final Object lock = ObjectUtils.sentinel("APIB lock");
+  private final Object lock = ObjectUtils.sentinel("APIB lock");
 
   @Obsolete
   public AbstractProgressIndicatorBase() {
@@ -137,7 +137,7 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
   }
 
   @ApiStatus.Internal
-  public void stopSystemActivity() {
+  protected void stopSystemActivity() {
     Runnable macActivity = myMacActivity;
     if (macActivity != null) {
       macActivity.run();

@@ -178,12 +178,10 @@ public final class PotemkinProgress extends ProgressWindow implements PingProgre
   private void ensureBackgroundThreadStarted(@NotNull Runnable action) {
     Semaphore started = new Semaphore();
     started.down();
-    AppExecutorUtil.getAppExecutorService().execute(() -> {
-      ProgressManager.getInstance().runProcess(() -> {
-        started.up();
-        action.run();
-      }, this);
-    });
+    AppExecutorUtil.getAppExecutorService().execute(() -> ProgressManager.getInstance().runProcess(() -> {
+      started.up();
+      action.run();
+    }, this));
 
     started.waitFor();
   }
