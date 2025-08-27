@@ -295,6 +295,11 @@ public abstract class IdeCompiledLightClassesByFqNameTestGenerated extends Abstr
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/AnnotatedPropertyWithSites.kt"));
         }
 
+        @TestMetadata("annotatedReturnType.kt")
+        public void testAnnotatedReturnType() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/annotatedReturnType.kt"));
+        }
+
         @TestMetadata("annotationBinaryRetention.kt")
         public void testAnnotationBinaryRetention() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/annotationBinaryRetention.kt"));
@@ -603,6 +608,21 @@ public abstract class IdeCompiledLightClassesByFqNameTestGenerated extends Abstr
         @TestMetadata("SubstitutionOverride.kt")
         public void testSubstitutionOverride() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/SubstitutionOverride.kt"));
+        }
+
+        @TestMetadata("SuperTypeWithBound.kt")
+        public void testSuperTypeWithBound() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/SuperTypeWithBound.kt"));
+        }
+
+        @TestMetadata("SuperTypeWithBound2.kt")
+        public void testSuperTypeWithBound2() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/SuperTypeWithBound2.kt"));
+        }
+
+        @TestMetadata("SuperTypeWithBoundKotlinCollection.kt")
+        public void testSuperTypeWithBoundKotlinCollection() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/SuperTypeWithBoundKotlinCollection.kt"));
         }
 
         @TestMetadata("Throws.kt")
