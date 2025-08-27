@@ -1,23 +1,53 @@
 @file:DependsOn("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.1")
 @file:DependsOn("com.github.pgreze:kotlin-process:1.5.1")
-@file:Suppress("RAW_RUN_BLOCKING")
+@file:Suppress("RAW_RUN_BLOCKING", "VariableNaming")
 
 import com.github.pgreze.process.Redirect
 import com.github.pgreze.process.process
-import java.io.File
 import kotlin.system.exitProcess
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import org.intellij.lang.annotations.Language
+import java.io.File
 
+private val JEWEL_MARKER_FILE_NAME = "JEWEL_MARKER"
+private val COMMUNITY_ROOT_MARKER_FILE_NAME = ".community.root.marker"
+private val COMMUNITY_IML_FILE_NAME = "intellij.idea.community.main.iml"
+
+private val CONTROL_CODE = '\u001b'
+private val CODE_ERR = "$CONTROL_CODE[0;31m"
+private val CODE_WARN = "$CONTROL_CODE[0;33m"
+private val CODE_BOLD = "$CONTROL_CODE[1m"
+private val CODE_CLEAR = "$CONTROL_CODE[0m"
+
+/**
+ * Checks if the GitHub CLI tool (`gh`) is present on the system's PATH.
+ *
+ * @return `true` if the `gh` tool is found, `false` otherwise.
+ */
 fun checkGhTool() = runBlocking { runCommand(command = "which gh", workingDir = null, exitOnError = false).isSuccess }
 
+/**
+ * Checks if the PR number environment variable (`PR_NUMBER`) is set and is a valid integer.
+ *
+ * @return `true` if `PR_NUMBER` is set and is an integer, `false` otherwise.
+ */
 fun checkPrNumber() = System.getenv("PR_NUMBER")?.trim()?.toIntOrNull() != null
 
+/**
+ * Gets the value of the PR number environment variable (`PR_NUMBER`).
+ *
+ * @return The PR number as a string.
+ * @throws IllegalStateException if the `PR_NUMBER` environment variable is not set.
+ */
 fun getPrNumber() = checkNotNull(System.getenv("PR_NUMBER")?.trim()) { "PR number not set" }
 
+/**
+ * Requires the GitHub CLI tool (`gh`) to be present on the system's PATH. Exits the process with an error code if the
+ * tool is not found.
+ */
 fun requireGhTool() {
     if (checkGhTool()) return
 
@@ -25,18 +55,50 @@ fun requireGhTool() {
     exitProcess(1)
 }
 
-fun findJewelRoot(base: File = File("").canonicalFile): File? {
-    fun isJewelDir(file: File): Boolean = file.name == "jewel" && file.parentFile.name == "platform"
+/**
+ * Recursively searches upwards from a given base directory to find the "jewel" directory indicated by the presence of
+ * the [JEWEL_MARKER_FILE_NAME].
+ *
+ * @param base The starting directory for the search. Defaults to the current working directory.
+ * @return The canonical [File] of the "jewel" directory if found, otherwise `null`.
+ */
+fun findJewelRoot(base: File = File("").canonicalFile): File? =
+    findDir(base) {
+        val marker = it.resolve(JEWEL_MARKER_FILE_NAME)
+        marker.isFile
+    } ?: findCommunityRoot(base)?.resolve("platform/jewel")?.takeIf { it.isDirectory }
 
-    var file = base
-    while (file.isDirectory) {
-        if (isJewelDir(file)) return file.canonicalFile
-        if (file.parentFile == null) break
-        file = file.parentFile
+/**
+ * Finds the root directory of the IntelliJ Community project by recursively searching upwards from a given base
+ * directory, verifying it contains the community marker file ([COMMUNITY_ROOT_MARKER_FILE_NAME]) and the community iml
+ * file ([COMMUNITY_IML_FILE_NAME]).
+ *
+ * @param base The starting directory for the search. Defaults to the current working directory.
+ * @return The [File] of the community directory if found, otherwise `null`.
+ */
+fun findCommunityRoot(base: File = File("").canonicalFile): File? =
+    findDir(base) { it.resolve(COMMUNITY_ROOT_MARKER_FILE_NAME).isFile && it.resolve(COMMUNITY_IML_FILE_NAME).isFile }
+
+private fun findDir(base: File, isDesiredDir: (File) -> Boolean): File? {
+    var current = base
+    while (true) {
+        if (!current.canRead()) {
+            printlnErr("Directory is not readable, stopping search: ${current.absolutePath}")
+            return null
+        }
+
+        if (isDesiredDir(current)) {
+            return current.canonicalFile
+        }
+
+        current = current.parentFile ?: return null
     }
-    return null
 }
 
+/**
+ * Requires the PR number environment variable (`PR_NUMBER`) to be set and be a valid integer. Exits the process with an
+ * error code if the variable is not set or is not an integer.
+ */
 fun requirePrNumber() {
     if (checkPrNumber()) return
 
@@ -44,21 +106,44 @@ fun requirePrNumber() {
     exitProcess(2)
 }
 
-private val CODE_ERR = "\u001b[0;31m"
-private val CODE_WARN = "\u001b[0;33m"
-private val CODE_CLEAR = "\u001b[0m"
-
+/**
+ * Prints an error message to the standard error stream with error formatting.
+ *
+ * @param message The error message to print.
+ */
 fun printlnErr(message: String) {
     System.err.println(message.asError())
 }
 
+/**
+ * Prints a warning message to the standard error stream with warning formatting.
+ *
+ * @param message The warning message to print.
+ */
 fun printlnWarn(message: String) {
     System.err.println(message.asWarning())
 }
 
-fun String.asWarning() = "$CODE_WARN$this$CODE_CLEAR"
+/**
+ * Formats a string as a warning message with ANSI escape codes.
+ *
+ * @return The formatted text, or the text itself if the terminal does not support styling.
+ */
+fun String.asWarning() = if (stylingSupported) "$CODE_WARN$this$CODE_CLEAR" else this
 
-fun String.asError() = "$CODE_ERR$this$CODE_CLEAR"
+/**
+ * Formats a string as an error message with ANSI escape codes if the terminal supports it.
+ *
+ * @return The formatted text, or the text itself if the terminal does not support styling.
+ */
+fun String.asError() = if (stylingSupported) "$CODE_ERR$this$CODE_CLEAR" else this
+
+/**
+ * Formats a string as a bold text with ANSI escape codes if the terminal supports it.
+ *
+ * @return The formatted text, or the text itself if the terminal does not support styling.
+ */
+fun String.asBold(): String = if (stylingSupported) "$CODE_BOLD$this$CODE_CLEAR" else this
 
 /**
  * Detects if the current terminal likely supports OSC 8 hyperlinks by checking for known environment variables.
@@ -94,12 +179,26 @@ private fun doesTerminalSupportHyperlinks(): Boolean {
     return false
 }
 
+private val stylingSupported = doesTerminalSupportStyling()
+
+/**
+ * Detects if the current terminal supports styling (colors, bold, etc.).
+ *
+ * @return `true` if a compatible terminal is detected, `false` otherwise.
+ */
+private fun doesTerminalSupportStyling(): Boolean =
+    System.getenv("TERM")?.startsWith("xterm") ?: (System.getenv("COLORTERM") != null)
+
+/**
+ * Formats a string as a hyperlink using OSC 8 escape codes if the terminal supports it.
+ *
+ * @param url The URL for the hyperlink.
+ * @return The formatted string with the hyperlink, or the original string if hyperlinks are not supported.
+ */
 fun String.asLink(url: String): String {
     if (!doesTerminalSupportHyperlinks()) return this
-
-    val esc = '\u001B' // Escape character
     val bell = '\u0007' // Bell character (acts as separator)
-    return "$esc]8;;$url$bell$this$esc]8;;$bell"
+    return "$CONTROL_CODE]8;;$url$bell$this$CONTROL_CODE]8;;$bell"
 }
 
 /**
@@ -124,6 +223,13 @@ fun getTerminalWidth(): Int {
 
 val isVerbose = args.contains("--verbose") || args.contains("-v")
 
+/**
+ * Gets the value of a command-line argument by name or short name.
+ *
+ * @param name The full name of the argument (e.g., "verbose").
+ * @param shortName The short name of the argument (e.g., "v").
+ * @return The value of the argument if found, otherwise `null`.
+ */
 fun getArg(name: String, shortName: String? = null): String? {
     val nameFlag = "--$name"
     val shortNameFlag = shortName?.let { "-$it" }
@@ -142,6 +248,15 @@ fun getArg(name: String, shortName: String? = null): String? {
     return values.firstOrNull()
 }
 
+/**
+ * Runs a shell command and captures its output and exit code.
+ *
+ * @param command The command to run.
+ * @param workingDir The working directory for the command. Can be `null` to use the current directory.
+ * @param timeoutAmount The maximum duration to wait for the command to complete. Defaults to 60 seconds.
+ * @param exitOnError If `true`, the process will exit if the command returns a non-zero exit code. Defaults to `true`.
+ * @return A [CmdResult] object containing the output and exit code of the command.
+ */
 suspend fun runCommand(
     @Language("shell") command: String,
     workingDir: File?,
@@ -180,6 +295,7 @@ sealed interface CmdResult {
     val isFailure: Boolean
         get() = this is Failure
 
+    /** Gets the output of the command if it was successful, otherwise throws an exception. */
     fun getOrThrow(): String =
         if (isSuccess) {
             output
@@ -187,7 +303,44 @@ sealed interface CmdResult {
             throw UnsupportedOperationException("Command failed with output $output")
         }
 
+    /**
+     * Represents a successful command execution.
+     *
+     * @param output The standard output of the command.
+     */
     data class Success(override val output: String) : CmdResult
 
+    /**
+     * Represents a failed command execution.
+     *
+     * @param output The standard error of the command.
+     */
     data class Failure(override val output: String) : CmdResult
+}
+
+/**
+ * Gets the date of the latest release from the "RELEASE NOTES.md" file.
+ *
+ * @return The latest release date in "yyyy-mm-dd" format if found, otherwise `null`.
+ */
+fun getLatestReleaseDate(baseDir: File = File(".").canonicalFile): String? {
+    val releaseNotesFile = File(baseDir, "RELEASE NOTES.md")
+    if (!releaseNotesFile.exists()) {
+        printlnWarn(
+            "⚠️ Release notes file not found at '${releaseNotesFile.absolutePath}', can't determine start date."
+        )
+        return null
+    }
+
+    val releaseHeaderRegex = """## v\d+\.\d+ \((....-..-..)\)""".toRegex()
+    releaseNotesFile.useLines { lines ->
+        for (line in lines) {
+            val match = releaseHeaderRegex.find(line)
+            if (match != null) {
+                return match.groupValues[1]
+            }
+        }
+    }
+    printlnWarn("⚠️ Could not find any release date in RELEASE NOTES.md.")
+    return null
 }
