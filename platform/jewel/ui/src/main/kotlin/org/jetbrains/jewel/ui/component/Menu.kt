@@ -35,6 +35,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -214,7 +215,16 @@ public fun MenuContent(
                 .onHover { localMenuController.onHoveredChange(it) }
     ) {
         Column(Modifier.verticalScroll(scrollState).padding(style.metrics.contentPadding)) {
-            items.forEach { MenuItem(it, anyItemHasIcon, anyItemHasKeybinding) }
+            var selectedSubMenu by remember { mutableStateOf<SubmenuItem?>(null) }
+            items.forEach { item ->
+                MenuItem(
+                    item = item,
+                    showIcons = anyItemHasIcon,
+                    showKeybindings = anyItemHasKeybinding,
+                    selectedSubMenu = selectedSubMenu,
+                    setSelectedSubMenu = { selectedSubMenu = it },
+                )
+            }
         }
 
         Box(modifier = Modifier.matchParentSize()) {
@@ -227,7 +237,23 @@ public fun MenuContent(
 }
 
 @Composable
-private fun MenuItem(item: MenuItem, showIcons: Boolean, showKeybindings: Boolean) {
+private fun MenuItem(
+    item: MenuItem,
+    showIcons: Boolean,
+    showKeybindings: Boolean,
+    selectedSubMenu: SubmenuItem?,
+    setSelectedSubMenu: (SubmenuItem?) -> Unit,
+) {
+    val currentSetSelectedSubMenu by rememberUpdatedState(setSelectedSubMenu)
+
+    fun deselectSubmenu() {
+        currentSetSelectedSubMenu(null)
+    }
+
+    fun selectSubmenu(item: SubmenuItem) {
+        currentSetSelectedSubMenu(item)
+    }
+
     when (item) {
         is MenuSelectableItem ->
             if (item.itemOptionAction != null) {
@@ -239,7 +265,10 @@ private fun MenuItem(item: MenuItem, showIcons: Boolean, showKeybindings: Boolea
                     canShowIcon = showIcons,
                     canShowKeybinding = showKeybindings,
                     enabled = item.isEnabled,
-                    content = item.content,
+                    content = {
+                        LaunchedEffect(it.isHovered) { if (it.isHovered) deselectSubmenu() }
+                        item.content()
+                    },
                 )
             } else {
                 MenuItem(
@@ -250,17 +279,24 @@ private fun MenuItem(item: MenuItem, showIcons: Boolean, showKeybindings: Boolea
                     canShowIcon = showIcons,
                     canShowKeybinding = showKeybindings,
                     enabled = item.isEnabled,
-                    content = item.content,
+                    content = {
+                        LaunchedEffect(it.isHovered) { if (it.isHovered) deselectSubmenu() }
+                        item.content()
+                    },
                 )
             }
 
         is SubmenuItem ->
             MenuSubmenuItem(
                 showIcons,
+                selected = item == selectedSubMenu,
                 enabled = item.isEnabled,
                 submenu = item.submenu,
                 iconKey = item.iconKey,
-                content = item.content,
+                content = {
+                    LaunchedEffect(it.isHovered) { if (it.isHovered) selectSubmenu(item) }
+                    item.content()
+                },
             )
 
         else -> item.content()
@@ -558,7 +594,7 @@ private fun MenuItem(
     enabled: Boolean = true,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     style: MenuStyle = JewelTheme.menuStyle,
-    content: @Composable () -> Unit,
+    @Suppress("DEPRECATION") content: @Composable (itemState: MenuItemState) -> Unit,
 ) {
     val shortcutHintProvider = LocalMenuItemShortcutHintProvider.current
 
@@ -589,7 +625,7 @@ private fun MenuItem(
     enabled: Boolean = true,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     style: MenuStyle = JewelTheme.menuStyle,
-    content: @Composable () -> Unit,
+    @Suppress("DEPRECATION") content: @Composable (itemState: MenuItemState) -> Unit,
 ) {
     MenuItemBase(
         selected = selected,
@@ -623,7 +659,7 @@ internal fun MenuItemBase(
     enabled: Boolean = true,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     style: MenuStyle = JewelTheme.menuStyle,
-    content: @Composable () -> Unit,
+    @Suppress("DEPRECATION") content: @Composable (itemState: MenuItemState) -> Unit,
 ) {
     var itemState by
         remember(interactionSource) {
@@ -704,7 +740,7 @@ internal fun MenuItemBase(
                     }
                 }
 
-                Box(modifier = Modifier.weight(1f, true)) { content() }
+                Box(modifier = Modifier.weight(1f, true)) { content(itemState) }
 
                 if (canShowKeybinding) {
                     Text(
@@ -731,23 +767,26 @@ public fun MenuSubmenuItem(
     submenu: MenuScope.() -> Unit,
     content: @Composable () -> Unit,
 ) {
-    MenuSubmenuItem(canShowIcon, submenu, modifier, enabled, iconKey, interactionSource, style, content)
+    MenuSubmenuItem(canShowIcon, selected = false, submenu, modifier, enabled, iconKey, interactionSource, style) {
+        content()
+    }
 }
 
 @Composable
 internal fun MenuSubmenuItem(
     showIcon: Boolean,
+    selected: Boolean,
     submenu: MenuScope.() -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     iconKey: IconKey? = null,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     style: MenuStyle = JewelTheme.menuStyle,
-    content: @Composable () -> Unit,
+    @Suppress("DEPRECATION") content: @Composable (itemState: MenuItemState) -> Unit,
 ) {
     var itemState by
         remember(interactionSource) {
-            @Suppress("DEPRECATION") mutableStateOf(MenuItemState.of(selected = false, enabled = enabled))
+            @Suppress("DEPRECATION") mutableStateOf(MenuItemState.of(selected = selected, enabled = enabled))
         }
 
     remember(enabled) { itemState = itemState.copy(selected = false, enabled = enabled) }
@@ -761,17 +800,16 @@ internal fun MenuSubmenuItem(
                 is PressInteraction.Cancel,
                 is PressInteraction.Release -> itemState = itemState.copy(pressed = false)
 
-                is HoverInteraction.Enter -> {
-                    itemState = itemState.copy(hovered = true, selected = true)
-                    focusRequester.requestFocus()
-                }
-
+                is HoverInteraction.Enter -> itemState = itemState.copy(hovered = true)
                 is HoverInteraction.Exit -> itemState = itemState.copy(hovered = false)
                 is FocusInteraction.Focus -> itemState = itemState.copy(focused = true)
                 is FocusInteraction.Unfocus -> itemState = itemState.copy(focused = false)
             }
         }
     }
+
+    remember(selected) { itemState = itemState.copy(selected = selected) }
+    LaunchedEffect(itemState.isSelected) { if (itemState.isSelected) focusRequester.requestFocus() }
 
     val itemColors = style.colors.itemColors
     val menuMetrics = style.metrics
@@ -812,7 +850,7 @@ internal fun MenuSubmenuItem(
                     }
                 }
 
-                Box(Modifier.weight(1f)) { content() }
+                Box(Modifier.weight(1f)) { content(itemState) }
 
                 Icon(
                     key = style.icons.submenuChevron,
@@ -897,9 +935,10 @@ internal fun Submenu(
         onDismissRequest = { menuController.closeAll(InputMode.Touch, false) },
         properties = PopupProperties(focusable = true),
         onPreviewKeyEvent = { false },
+        cornerSize = style.metrics.cornerSize,
         onKeyEvent = {
-            val currentFocusManager = checkNotNull(focusManager) { "FocusManager must not be null" }
-            val currentInputModeManager = checkNotNull(inputModeManager) { "InputModeManager must not be null" }
+            val currentFocusManager = focusManager ?: return@Popup false
+            val currentInputModeManager = inputModeManager ?: return@Popup false
             handlePopupMenuOnKeyEvent(it, currentFocusManager, currentInputModeManager, menuController)
         },
     ) {
