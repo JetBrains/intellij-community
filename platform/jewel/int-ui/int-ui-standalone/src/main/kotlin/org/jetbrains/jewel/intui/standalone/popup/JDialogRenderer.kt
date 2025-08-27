@@ -296,7 +296,11 @@ private fun JPopupImpl(
                     }
                 }
                 is WindowEvent -> {
-                    if (event.id == WindowEvent.WINDOW_LOST_FOCUS && event.window == dialog) {
+                    if (
+                        event.id == WindowEvent.WINDOW_LOST_FOCUS &&
+                            event.window == dialog &&
+                            !dialog.isAncestorOf(event.oppositeWindow)
+                    ) {
                         currentOnDismissRequest?.invoke()
                     }
                 }

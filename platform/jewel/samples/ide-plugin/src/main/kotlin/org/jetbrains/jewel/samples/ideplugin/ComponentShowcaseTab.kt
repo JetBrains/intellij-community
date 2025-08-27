@@ -46,6 +46,7 @@ import org.jetbrains.jewel.foundation.modifier.trackActivation
 import org.jetbrains.jewel.foundation.modifier.trackComponentActivation
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.foundation.theme.LocalContentColor
+import org.jetbrains.jewel.foundation.util.JewelLogger
 import org.jetbrains.jewel.intui.markdown.bridge.ProvideMarkdownStyling
 import org.jetbrains.jewel.markdown.Markdown
 import org.jetbrains.jewel.ui.Orientation
@@ -56,6 +57,7 @@ import org.jetbrains.jewel.ui.component.CircularProgressIndicatorBig
 import org.jetbrains.jewel.ui.component.DefaultButton
 import org.jetbrains.jewel.ui.component.DefaultErrorBanner
 import org.jetbrains.jewel.ui.component.DefaultInformationBanner
+import org.jetbrains.jewel.ui.component.DefaultSplitButton
 import org.jetbrains.jewel.ui.component.DefaultSuccessBanner
 import org.jetbrains.jewel.ui.component.DefaultWarningBanner
 import org.jetbrains.jewel.ui.component.Divider
@@ -69,6 +71,7 @@ import org.jetbrains.jewel.ui.component.InlineSuccessBanner
 import org.jetbrains.jewel.ui.component.InlineWarningBanner
 import org.jetbrains.jewel.ui.component.LazyTree
 import org.jetbrains.jewel.ui.component.ListComboBox
+import org.jetbrains.jewel.ui.component.MenuScope
 import org.jetbrains.jewel.ui.component.OutlinedButton
 import org.jetbrains.jewel.ui.component.RadioButtonRow
 import org.jetbrains.jewel.ui.component.Slider
@@ -76,6 +79,8 @@ import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.TextField
 import org.jetbrains.jewel.ui.component.Tooltip
 import org.jetbrains.jewel.ui.component.VerticallyScrollableContainer
+import org.jetbrains.jewel.ui.component.items
+import org.jetbrains.jewel.ui.component.separator
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
 import org.jetbrains.jewel.ui.painter.badge.DotBadgeShape
 import org.jetbrains.jewel.ui.painter.hints.Badge
@@ -235,11 +240,11 @@ private fun RowScope.ColumnOne() {
                     InlineSuccessBanner(
                         text =
                             "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor " +
-                                "incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, " +
-                                "quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. " +
-                                "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu " +
-                                "fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in " +
-                                "culpa qui officia deserunt mollit anim id est laborum.",
+                            "incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, " +
+                            "quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. " +
+                            "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu " +
+                            "fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in " +
+                            "culpa qui officia deserunt mollit anim id est laborum.",
                         linkActions = {
                             action("Action A", onClick = { clickLabel = "Success Inline Action A clicked" })
                             action("Action B", onClick = { clickLabel = "Success Inline Action B clicked" })
@@ -267,6 +272,48 @@ private fun RowScope.ColumnOne() {
                 }
             }
         }
+
+        DefaultSplitButton(
+            onClick = { JewelLogger.getInstance("Jewel").warn("Outlined split button clicked") },
+            secondaryOnClick = { JewelLogger.getInstance("Jewel").warn("Outlined split button chevron clicked") },
+            content = { Text("Sub menus") },
+            menuContent = {
+                fun MenuScope.buildSubmenus(stack: List<Int>) {
+                    val stackStr = stack.joinToString(".").let { if (stack.isEmpty()) it else "$it." }
+
+                    repeat(5) {
+                        val number = it + 1
+                        val itemStr = "$stackStr$number"
+
+                        if (stack.size == 4) {
+                            selectableItem(
+                                selected = false,
+                                onClick = {
+                                    JewelLogger.getInstance("Jewel").warn("Item clicked: $itemStr") },
+                            ) {
+                                Text("Item $itemStr")
+                            }
+                        } else {
+                            submenu(
+                                submenu = { buildSubmenus(stack + number) },
+                                content = { Text("Submenu $itemStr") },
+                            )
+                        }
+                    }
+
+                    separator()
+
+                    items(
+                        10,
+                        isSelected = { false },
+                        onItemClick = { JewelLogger.getInstance("Jewel").warn("Item clicked: $it") },
+                        content = { Text("Other Item ${it + 1}") },
+                    )
+                }
+
+                buildSubmenus(emptyList())
+            },
+        )
     }
 }
 
