@@ -40,8 +40,6 @@ private val LOG = logger<RedundantKotlinStdLibInspectionVisitor>()
 
 class RedundantKotlinStdLibInspectionVisitor(val holder: ProblemsHolder) : KotlinGradleInspectionVisitor() {
 
-    private val KOTLIN_JVM_PLUGIN_ID = "$KOTLIN_GROUP_ID.jvm"
-
     override fun visitCallExpression(callExpression: GrCallExpression) {
         // first check if org.jetbrains.kotlin.jvm plugin is applied before searching for kotlin-stdlib dependencies
         if (!isPluginIdOfKotlinJvm(callExpression) && !isPluginAliasOfKotlinJvm(callExpression)) return
@@ -80,11 +78,7 @@ class RedundantKotlinStdLibInspectionVisitor(val holder: ProblemsHolder) : Kotli
         )
         if (!pluginAliasPattern.accepts(callExpression) || !isPluginCallApplied(callExpression)) return false
 
-        val catalogReference = callExpression.expressionArguments.firstOrNull() as? GrReferenceElement<*> ?: return false
-        val resolved = catalogReference.resolve()
-        if (resolved !is PsiMethod || !isInVersionCatalogAccessor(resolved)) return false
-        val origin = findOriginInTomlFile(resolved, catalogReference) as? TomlKeyValue ?: return false
-
+        val origin = getOriginInVersionCatalog(callExpression) ?: return false
         val pluginIdLiteral = when (val originValue = origin.value) {
             is TomlLiteral -> originValue
             is TomlInlineTable -> {
@@ -97,8 +91,7 @@ class RedundantKotlinStdLibInspectionVisitor(val holder: ProblemsHolder) : Kotli
             else -> return false
         }
 
-        val idRaw = pluginIdLiteral.text.removeSurrounding("\"").removeSurrounding("'")
-            .split(":").firstOrNull() ?: return false
+        val idRaw = pluginIdLiteral.text.cleanRawString().split(":").firstOrNull() ?: return false
         if (idRaw != KOTLIN_JVM_PLUGIN_ID) return false
         LOG.debug(
             """
@@ -108,6 +101,10 @@ class RedundantKotlinStdLibInspectionVisitor(val holder: ProblemsHolder) : Kotli
         )
         return true
     }
+
+    companion object {
+        private const val KOTLIN_JVM_PLUGIN_ID = "$KOTLIN_GROUP_ID.jvm"
+    }
 }
 
 private class DependenciesVisitor(val holder: ProblemsHolder) : GroovyRecursiveElementVisitor() {
@@ -115,19 +112,13 @@ private class DependenciesVisitor(val holder: ProblemsHolder) : GroovyRecursiveE
         val dependencyPattern = GroovyMethodCallPattern.resolvesTo(
             psiMethod(GRADLE_API_DEPENDENCY_HANDLER).withKind(dependencyMethodKind)
         )
-        if (!dependencyPattern.accepts(callExpression)) {
-            // proceed recursively if it's not a dependency declaration
+        if (!dependencyPattern.accepts(callExpression)) { // proceed recursively if it's not a dependency declaration
             visitElement(callExpression)
             return
         }
 
-        val callExpressionText = callExpression.text
-        val index = callExpressionText.indexOf(KOTLIN_JAVA_STDLIB_NAME)
-        if (index == -1
-            || !callExpressionText.contains(KOTLIN_GROUP_ID)
-            // This prevents detecting kotlin-stdlib inside kotlin-stdlib-common, -jdk8, etc.
-            || callExpressionText.getOrNull(index + KOTLIN_JAVA_STDLIB_NAME.length) == '-'
-        ) return
+        if (!isKotlinStdLibDependencyRegular(callExpression) && !isKotlinStdLibDependencyVersionCatalog(callExpression)) return
+
         val gradlePluginVersion = findResolvedKotlinGradleVersion(callExpression.containingFile) ?: return
         val stdlibVersion = getResolvedLibVersion(callExpression.containingFile, KOTLIN_GROUP_ID, listOf(KOTLIN_JAVA_STDLIB_NAME))
         LOG.debug("Kotlin Plugin Version: $gradlePluginVersion, kotlin-stdlib Version: $stdlibVersion")
@@ -141,6 +132,55 @@ private class DependenciesVisitor(val holder: ProblemsHolder) : GroovyRecursiveE
             RemoveDependencyFix(callExpression)
         )
     }
+
+    private fun isKotlinStdLibDependencyRegular(callExpression: GrCallExpression): Boolean {
+        val callExpressionText = callExpression.text
+        val index = callExpressionText.indexOf(KOTLIN_JAVA_STDLIB_NAME)
+        return index != -1 && callExpressionText.contains(KOTLIN_GROUP_ID) // This prevents detecting kotlin-stdlib inside kotlin-stdlib-common, -jdk8, etc.
+                && callExpressionText.getOrNull(index + KOTLIN_JAVA_STDLIB_NAME.length) != '-'
+    }
+
+    private fun isKotlinStdLibDependencyVersionCatalog(callExpression: GrCallExpression): Boolean {
+        val origin = getOriginInVersionCatalog(callExpression) ?: return false
+        val (dependencyGroup, dependencyName) = when (val originValue = origin.value) {
+            is TomlLiteral -> originValue.text.cleanRawString().split(":").let { it[0] to it[1] }
+            is TomlInlineTable -> {
+                val module = originValue.entries.find { it.key.segments.size == 1 && it.key.segments.firstOrNull()?.name == "module" }
+                if (module != null) {
+                    val moduleValue = module.value
+                    if (moduleValue !is TomlLiteral) return false
+                    moduleValue.text.cleanRawString().split(":").let { it[0] to it[1] }
+                } else {
+                    val group = originValue.entries.find { it.key.segments.size == 1 && it.key.segments.firstOrNull()?.name == "group" }
+                    val name = originValue.entries.find { it.key.segments.size == 1 && it.key.segments.firstOrNull()?.name == "name" }
+                    if (group == null || name == null) return false
+                    val groupValue = group.value
+                    val nameValue = name.value
+                    if (groupValue !is TomlLiteral || nameValue !is TomlLiteral) return false
+                    groupValue.text.cleanRawString() to nameValue.text.cleanRawString()
+                }
+            }
+
+            else -> return false
+        }
+        return (dependencyGroup == KOTLIN_GROUP_ID && dependencyName == KOTLIN_JAVA_STDLIB_NAME)
+    }
+}
+
+private fun getOriginInVersionCatalog(callExpression: GrCallExpression): TomlKeyValue? {
+    val catalogReference = callExpression.expressionArguments.firstOrNull() as? GrReferenceElement<*> ?: return null
+    val resolved = catalogReference.resolve()
+    if (resolved !is PsiMethod || !isInVersionCatalogAccessor(resolved)) return null
+    return findOriginInTomlFile(resolved, catalogReference) as? TomlKeyValue
+}
+
+private fun String.cleanRawString(): String {
+    return this.removeSurrounding("\"\"\"")
+        .removeSurrounding("'''")
+        .removeSurrounding("\"")
+        .removeSurrounding("'")
+        .replace("\r", "")
+        .replace("\n", "")
 }
 
 private class RemoveDependencyFix(element: PsiElement) : LocalQuickFixOnPsiElement(element) {
@@ -148,12 +188,7 @@ private class RemoveDependencyFix(element: PsiElement) : LocalQuickFixOnPsiEleme
         return CommonQuickFixBundle.message("fix.remove.title", "dependency")
     }
 
-    override fun invoke(
-        project: Project,
-        psiFile: PsiFile,
-        startElement: PsiElement,
-        endElement: PsiElement
-    ) {
+    override fun invoke(project: Project, psiFile: PsiFile, startElement: PsiElement, endElement: PsiElement) {
         startElement.delete()
     }
 
