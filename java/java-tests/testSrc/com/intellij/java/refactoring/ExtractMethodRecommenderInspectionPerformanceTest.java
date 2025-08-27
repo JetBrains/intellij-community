@@ -2,18 +2,14 @@
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.analysis.AnalysisScope;
-import com.intellij.codeInspection.ex.InspectionToolWrapper;
-import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.extractMethod.ExtractMethodRecommenderInspection;
-import com.intellij.testFramework.InspectionTestUtil;
-import com.intellij.testFramework.InspectionsKt;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
-import com.intellij.testFramework.fixtures.impl.GlobalInspectionContextForTests;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
-
-import java.util.Collections;
 
 /**
  * @author Bas Leijdekkers
@@ -29,14 +25,15 @@ public final class ExtractMethodRecommenderInspectionPerformanceTest extends Lig
     ExtractMethodRecommenderInspection inspection = new ExtractMethodRecommenderInspection();
     inspection.minLength = 100;
     myFixture.enableInspections(inspection);
-    
+
     // reuse test data source from com.intellij.java.codeInsight.psi.ControlFlowPerformanceTest.testManyLocalVariables()
     PsiFile file = myFixture.configureByFile("/psi/controlFlowPerf/ManyLocalVariables.java");
-    AnalysisScope scope = new AnalysisScope(file);
-    LocalInspectionToolWrapper toolWrapper = new LocalInspectionToolWrapper(inspection);
-    GlobalInspectionContextForTests globalContext =
-      InspectionsKt.createGlobalContextForTool(scope, getProject(), Collections.<InspectionToolWrapper<?, ?>>singletonList(toolWrapper));
-
-    Benchmark.newBenchmark(getTestName(false), () -> InspectionTestUtil.runTool(toolWrapper, scope, globalContext)).start();
+    PsiElementVisitor visitor =
+      inspection.buildVisitor(new ProblemsHolder(InspectionManager.getInstance(getProject()), file, false), false);
+    Benchmark.newBenchmark(getTestName(false), 
+                           () -> PsiTreeUtil.processElements(file, element -> {
+                             element.accept(visitor);
+                             return true;
+                           })).start();
   }
 }
