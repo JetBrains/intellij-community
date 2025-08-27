@@ -2113,6 +2113,10 @@ public final class PluginManagerConfigurable
           ApplicationManager.getApplication().invokeLater(() -> {
             myPluginModelFacade.closeSession();
             if (ApplicationManager.getApplication().isExitInProgress()) return; // already shutting down
+            if(myPluginManagerCustomizer != null) {
+              myPluginManagerCustomizer.requestRestart(myPluginModelFacade, myTabHeaderComponent);
+              return;
+            }
             shutdownOrRestartApp();
           });
         });

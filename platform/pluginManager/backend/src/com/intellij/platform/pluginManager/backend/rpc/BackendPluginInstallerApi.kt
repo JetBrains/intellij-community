@@ -88,6 +88,10 @@ internal class BackendPluginInstallerApi : PluginInstallerApi {
     }
   }
 
+  override suspend fun isRestartRequired(sessionId: String): Boolean {
+    return DefaultUiPluginManagerController.isRestartRequired(sessionId)
+  }
+
   private suspend fun installPlugin(sessionId: String, projectId: ProjectId, installOperation: suspend (PluginEnabler, Project) -> InstallPluginResult): InstallPluginResult {
     val session = PluginManagerSessionService.getInstance().getSession(sessionId) ?: return InstallPluginResult.FAILED
     val project = projectId.findProjectOrNull() ?: return InstallPluginResult.FAILED

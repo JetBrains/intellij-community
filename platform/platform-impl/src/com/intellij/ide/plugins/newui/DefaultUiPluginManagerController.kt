@@ -660,6 +660,10 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     return pluginIds.associateWith { pluginRequiresUltimatePluginButItsDisabled(it, idMap, contentModuleIdMap) }
   }
 
+  override suspend fun isRestartRequired(sessionId: String): Boolean {
+    return findSession(sessionId)?.needRestart ?: false
+  }
+
   override fun isPluginRequiresUltimateButItIsDisabled(sessionId: String, pluginId: PluginId): Boolean {
     val idMap = buildPluginIdMap()
     val contentModuleIdMap = getPluginSet().buildContentModuleIdMap()

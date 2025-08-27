@@ -41,7 +41,10 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.SystemProperties
 import com.intellij.util.ui.accessibility.AccessibleAnnouncerUtil
 import com.intellij.xml.util.XmlStringUtil
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -104,8 +107,9 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
     }
   }
 
+  @OptIn(DelicateCoroutinesApi::class)
   fun applyWithCallback(parent: JComponent?, callback: Consumer<Boolean>) {
-    service<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
+    GlobalScope.launch(CoroutineName("Plugins application")) {
       val installedWithoutRestart = applyAsync(parent)
       withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
         callback.accept(installedWithoutRestart)
@@ -780,23 +784,41 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
 
   open fun runRestartButton(component: Component) {
     service<CoreUiCoroutineScopeHolder>().coroutineScope.launch(Dispatchers.EDT + ModalityState.stateForComponent(component).asContextElement()) {
-      if (PluginManagerConfigurable.showRestartDialog() == Messages.YES) {
-        needRestart = true
-        createShutdownCallback = false
+      if (myPluginManagerCustomizer != null && component is JComponent) {
+        myPluginManagerCustomizer.requestRestart(PluginModelFacade(this@MyPluginModel), component)
+        return@launch
+      }
+      doRestart(component)
+    }
+  }
 
-        val settings = DialogWrapper.findInstance(component)
-        if (settings is SettingsDialog) {
-          settings.applyAndClose(false /* will be saved on app exit */)
-        }
-        else if (isModified()) {
-          try {
-            applyAsync(null)
-          }
-          catch (e: ConfigurationException) {
-            LOG.error(e)
-          }
-        }
-        ApplicationManagerEx.getApplicationEx().restart(true)
+  private suspend fun doRestart(component: Component) {
+    if (PluginManagerConfigurable.showRestartDialog() == Messages.YES) {
+      needRestart = true
+      createShutdownCallback = false
+      closeDialogAndApplyIfNeeded(component)
+      ApplicationManagerEx.getApplicationEx().restart(true)
+    }
+  }
+
+  suspend fun closeDialogAndApplyIfNeeded(component: Component? = null) {
+    if (component == null) return
+    val settings = DialogWrapper.findInstance(component) ?: return
+    if (settings is SettingsDialog) {
+      if (component is JComponent) {
+        applyAsync(component)
+        settings.close(DialogWrapper.CANCEL_EXIT_CODE)
+      }
+      else {
+        settings.applyAndClose(false /* will be saved on app exit */)
+      }
+    }
+    else if (isModified()) {
+      try {
+        applyAsync(null)
+      }
+      catch (e: ConfigurationException) {
+        LOG.error(e)
       }
     }
   }

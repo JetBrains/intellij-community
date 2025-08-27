@@ -43,6 +43,7 @@ interface PluginInstallerApi : RemoteApi<Unit> {
   suspend fun installPluginFromDisk(projectId: ProjectId?): PluginInstalledFromDiskResult
   suspend fun installOrUpdatePlugin(sessionId: String, projectId: ProjectId, descriptor: PluginDto, updateDescriptor: PluginDto?, installSource: FUSEventSource?): InstallPluginResult
   suspend fun continueInstallation(sessionId: String, pluginId: PluginId, projectId: ProjectId, enableRequiredPlugins: Boolean, allowInstallWithoutRestart: Boolean): InstallPluginResult
+  suspend fun isRestartRequired(sessionId: String): Boolean
 
   companion object {
     suspend fun getInstance(): PluginInstallerApi {

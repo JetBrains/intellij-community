@@ -9,6 +9,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
+import java.awt.Component
 import javax.swing.JComponent
 
 @ApiStatus.Internal
@@ -49,6 +50,8 @@ interface PluginManagerCustomizer {
   fun ensurePluginStatesLoaded()
 
   fun customRepositoriesUpdated(repoUrls: List<String>)
+
+  fun requestRestart(pluginModelFacade: PluginModelFacade, parentComponent: JComponent? = null)
 
   companion object {
     @JvmField
