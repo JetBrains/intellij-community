@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("ThreadContext")
 @file:Experimental
 
@@ -9,6 +9,7 @@ import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.Cancellation
 import com.intellij.util.Processor
+import com.intellij.util.SmartList
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.captureCallableThreadContext
 import com.intellij.util.concurrency.capturePropagationContext
@@ -17,6 +18,7 @@ import com.intellij.util.concurrency.isCheckContextAssertions
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.Runnable
+import kotlinx.coroutines.ThreadContextElement
 import kotlinx.coroutines.internal.intellij.IntellijCoroutines
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
@@ -311,7 +313,10 @@ fun <T> installThreadContext(coroutineContext: CoroutineContext, replace: Boolea
  */
 @Deprecated("Use higher-order function for installation of thread context")
 fun installThreadContext(coroutineContext: CoroutineContext, replace: Boolean = false): AccessToken {
-  return withThreadLocal(tlCoroutineContext) { previousContext ->
+  val token = applyThreadContextElements(coroutineContext)
+  return withThreadLocal(tlCoroutineContext, {
+    token.finish()
+  }) { previousContext ->
     @OptIn(InternalCoroutinesApi::class)
     val currentSnapshot = IntellijCoroutines.currentThreadCoroutineContext()
     if (!replace && previousContext.snapshot === currentSnapshot && previousContext.context != null) {
@@ -324,6 +329,27 @@ fun installThreadContext(coroutineContext: CoroutineContext, replace: Boolean = 
       })
     }
     InstalledThreadContext(currentSnapshot, coroutineContext)
+  }
+}
+
+private fun applyThreadContextElements(context: CoroutineContext): AccessToken {
+  val threadLocalValues: MutableList<Any?> = SmartList()
+  val flatElements = context.fold(mutableListOf<CoroutineContext.Element>()) { list, elem -> list.apply { add(elem) } }
+  for (elem in flatElements) {
+    if (elem is ThreadContextElement<*>) {
+      threadLocalValues.add(elem.updateThreadContext(context))
+    }
+  }
+  return object : AccessToken() {
+    override fun finish() {
+      for (elem in flatElements.asReversed()) {
+        if (elem is ThreadContextElement<*>) {
+          val topPayload = threadLocalValues.removeLast()
+          @Suppress("MEMBER_PROJECTED_OUT")
+          elem.restoreThreadContext(context, topPayload)
+        }
+      }
+    }
   }
 }
 
@@ -372,8 +398,14 @@ fun installTemporaryThreadContext(coroutineContext: CoroutineContext): AccessTok
  *
  * TODO ? move to more appropriate package before removing `@Internal`
  */
+
 @Internal
 fun <T> withThreadLocal(variable: ThreadLocal<T>, update: (value: T) -> T): AccessToken {
+  return withThreadLocal(variable, { }, update)
+}
+
+@Internal
+inline fun <T> withThreadLocal(variable: ThreadLocal<T>, crossinline additionalRollback: () -> Unit, update: (value: T) -> T): AccessToken {
   val previousValue = variable.get()
   val newValue = update(previousValue)
   if (newValue === previousValue) {
@@ -384,6 +416,7 @@ fun <T> withThreadLocal(variable: ThreadLocal<T>, update: (value: T) -> T): Acce
     override fun finish() {
       val currentValue = variable.get()
       variable.set(previousValue)
+      additionalRollback()
       check(currentValue === newValue) {
         "Value was not reset correctly. Expected: $newValue, actual: $currentValue"
       }
