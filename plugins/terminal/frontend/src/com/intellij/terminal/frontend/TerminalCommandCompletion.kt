@@ -69,6 +69,7 @@ internal class TerminalCommandCompletion(
     val initCmd = Runnable {
       val file = PsiDocumentManager.getInstance(project).getPsiFile(editor.document)!!
       val context = CompletionInitializationContextImpl(editor, editor.caretModel.currentCaret, file, completionType, invocationCount)
+      context.dummyIdentifier = ""
       doComplete(context, hasModifiers, true, startingTime)
     }
     try {
