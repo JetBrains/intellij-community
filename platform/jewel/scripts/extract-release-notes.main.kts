@@ -71,7 +71,6 @@ class ExtractReleaseNotesCommand : CliktCommand() {
         "Extracts release notes from PRs merged within a specified date range."
 
     override fun run() {
-        // --- Main Entry Point ---
         if (workingDir.name != "jewel" || workingDir.parentFile.name != "platform") {
             printlnErr("This script must be run from the 'jewel' directory.")
             exitProcess(1)
