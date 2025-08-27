@@ -17,7 +17,9 @@ import com.intellij.psi.util.PsiTreeUtil
 internal object JavaFormatterAnnotationUtil {
   private val KNOWN_TYPE_ANNOTATIONS: Set<String> = setOf(
     "org.jetbrains.annotations.NotNull",
-    "org.jetbrains.annotations.Nullable"
+    "org.jetbrains.annotations.Nullable",
+    "org.jspecify.annotations.NonNull",
+    "org.jspecify.annotations.Nullable",
   )
 
   /**

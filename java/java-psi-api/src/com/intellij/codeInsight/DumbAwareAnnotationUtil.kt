@@ -19,7 +19,9 @@ object DumbAwareAnnotationUtil {
   private val KNOWN_ANNOTATIONS = setOf(
     AnnotationUtil.NOT_NULL,
     AnnotationUtil.NULLABLE,
-    AnnotationUtil.NON_NLS
+    AnnotationUtil.NON_NLS,
+    AnnotationUtil.J_SPECIFY_NON_NULL,
+    AnnotationUtil.J_SPECIFY_NULLABLE
   )
 
   /**
