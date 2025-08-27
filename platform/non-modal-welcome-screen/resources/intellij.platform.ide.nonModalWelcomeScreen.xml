@@ -17,7 +17,7 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <postStartupActivity implementation="com.intellij.platform.ide.nonModalWelcomeScreen.GoWelcomeScreenProjectActivity"/>
+    <postStartupActivity implementation="com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenProjectActivity"/>
 
     <actionConfigurationCustomizer implementation="com.intellij.platform.ide.nonModalWelcomeScreen.actions.WelcomeScreenAwareActionsCustomizer" />
 

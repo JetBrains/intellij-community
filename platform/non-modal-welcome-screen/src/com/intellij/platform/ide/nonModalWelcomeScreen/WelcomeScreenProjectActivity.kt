@@ -15,7 +15,7 @@ import com.intellij.util.application
 import com.intellij.util.asSafely
 import kotlinx.coroutines.coroutineScope
 
-class GoWelcomeScreenProjectActivity : ProjectActivity {
+internal class WelcomeScreenProjectActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
     if (application.isHeadlessEnvironment) return
     if (isWelcomeScreenProject(project)) {
