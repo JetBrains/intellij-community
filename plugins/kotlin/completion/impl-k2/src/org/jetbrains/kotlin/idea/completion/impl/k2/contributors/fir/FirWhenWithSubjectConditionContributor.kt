@@ -1,16 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir
 
-import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.completion.PrefixMatcher
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
-import com.intellij.openapi.util.TextRange
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.applyIf
-import it.unimi.dsi.fastutil.Hash
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet
-import kotlinx.serialization.Serializable
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
@@ -19,22 +15,18 @@ import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.resolveToExpandedSymbol
-import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinIconProvider.getIconFor
-import org.jetbrains.kotlin.idea.base.serialization.names.KotlinFqNameSerializer
 import org.jetbrains.kotlin.idea.base.util.letIf
-import org.jetbrains.kotlin.idea.completion.InsertionHandlerBase
-import org.jetbrains.kotlin.idea.base.serialization.names.KotlinNameSerializer
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierProvider.getAvailableClassifiers
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierProvider.getAvailableClassifiersFromIndex
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOrigin
-import org.jetbrains.kotlin.idea.completion.contributors.helpers.addTypeArguments
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.createStarTypeArgumentsList
-import org.jetbrains.kotlin.idea.completion.contributors.helpers.insertString
 import org.jetbrains.kotlin.idea.completion.createKeywordElement
 import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.FirCompletionContributorBase
-import org.jetbrains.kotlin.idea.completion.lookups.KotlinLookupObject
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.KaNamedClassOrObjectSymbolTObjectHashingStrategy
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.WhenConditionInsertionHandler
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.WhenConditionLookupObject
 import org.jetbrains.kotlin.idea.completion.reference
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighs
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
@@ -42,9 +34,7 @@ import org.jetbrains.kotlin.idea.util.positionContext.KotlinWithSubjectEntryPosi
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.renderer.render
 
 internal class FirWhenWithSubjectConditionContributor(
     sink: LookupElementSink,
@@ -119,7 +109,7 @@ internal class FirWhenWithSubjectConditionContributor(
         context: WeighingContext,
         type: KaType?,
     ): LookupElement? {
-        if (type?.canBeNull != true) return null
+        if (type?.isNullable != true) return null
 
         return createKeywordElement(keyword = KtTokens.NULL_KEYWORD.value)
             .applyWeighs(context)
@@ -332,60 +322,6 @@ internal class FirWhenWithSubjectConditionContributor(
     }
 }
 
-@Serializable
-internal data class WhenConditionLookupObject(
-    @Serializable(with = KotlinNameSerializer::class) override val shortName: Name,
-    @Serializable(with = KotlinFqNameSerializer::class) val fqName: FqName?,
-    val needIsPrefix: Boolean,
-    val isSingleCondition: Boolean,
-    val typeArgumentsCount: Int,
-) : KotlinLookupObject
-
-
-@Serializable
-internal object WhenConditionInsertionHandler : InsertionHandlerBase<WhenConditionLookupObject>(WhenConditionLookupObject::class) {
-    override fun handleInsert(context: InsertionContext, item: LookupElement, ktFile: KtFile, lookupObject: WhenConditionLookupObject) {
-        context.insertName(lookupObject, ktFile)
-        context.addTypeArguments(lookupObject.typeArgumentsCount)
-        context.addArrow(lookupObject)
-    }
-
-    private fun InsertionContext.addArrow(
-        lookupObject: WhenConditionLookupObject
-    ) {
-        if (lookupObject.isSingleCondition && completionChar != ',') {
-            insertString(" -> ")
-            commitDocument()
-        }
-    }
-
-    private fun InsertionContext.insertName(
-        lookupObject: WhenConditionLookupObject,
-        ktFile: KtFile
-    ) {
-        if (lookupObject.fqName != null) {
-            val fqName = lookupObject.fqName
-            document.replaceString(
-                startOffset,
-                tailOffset,
-                getIsPrefix(lookupObject.needIsPrefix) + fqName.render()
-            )
-            commitDocument()
-
-            shortenReferencesInRange(ktFile, TextRange(startOffset, tailOffset))
-        }
-    }
-}
-
 private fun getIsPrefix(prefixNeeded: Boolean): String {
     return if (prefixNeeded) "is " else ""
-}
-
-@Suppress("AnalysisApiMissingLifetimeControlOnCallable")
-private object KaNamedClassOrObjectSymbolTObjectHashingStrategy : Hash.Strategy<KaNamedClassSymbol> {
-    override fun equals(p0: KaNamedClassSymbol?, p1: KaNamedClassSymbol?): Boolean {
-        return p0?.classId == p1?.classId
-    }
-
-    override fun hashCode(p0: KaNamedClassSymbol?): Int = p0?.classId?.hashCode() ?: 0
 }

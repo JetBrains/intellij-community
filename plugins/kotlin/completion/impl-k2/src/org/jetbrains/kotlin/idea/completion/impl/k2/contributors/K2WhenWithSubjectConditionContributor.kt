@@ -135,7 +135,7 @@ internal class K2WhenWithSubjectConditionContributor : K2SimpleCompletionContrib
         context: WeighingContext,
         type: KaType?,
     ): LookupElement? {
-        if (type?.canBeNull != true) return null
+        if (type?.isNullable != true) return null
 
         return createKeywordElement(keyword = KtTokens.NULL_KEYWORD.value)
             .applyWeighs(context)
@@ -402,7 +402,7 @@ private fun getIsPrefix(prefixNeeded: Boolean): String {
 }
 
 @Suppress("AnalysisApiMissingLifetimeControlOnCallable")
-private object KaNamedClassOrObjectSymbolTObjectHashingStrategy : Hash.Strategy<KaNamedClassSymbol> {
+internal object KaNamedClassOrObjectSymbolTObjectHashingStrategy : Hash.Strategy<KaNamedClassSymbol> {
     override fun equals(p0: KaNamedClassSymbol?, p1: KaNamedClassSymbol?): Boolean {
         return p0?.classId == p1?.classId
     }

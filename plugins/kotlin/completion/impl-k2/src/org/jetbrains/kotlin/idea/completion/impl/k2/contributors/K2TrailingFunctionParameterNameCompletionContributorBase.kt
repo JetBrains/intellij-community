@@ -364,7 +364,7 @@ private val NoAnnotationsTypeRenderer: KaTypeRenderer = KaTypeRendererForSource.
 
 private const val TailText: @NlsSafe String = " -> "
 
-private fun LookupElementBuilder.withTailTextInsertHandler() = this
+internal fun LookupElementBuilder.withTailTextInsertHandler() = this
     .withTailText(TailText, true)
     .withInsertHandler(TailTextInsertHandler)
 
@@ -377,7 +377,7 @@ internal object TailTextInsertHandler : SerializableInsertHandler {
     }
 }
 
-private fun LookupElementBuilder.withChainedInsertHandler(
+internal fun LookupElementBuilder.withChainedInsertHandler(
     delegate: SerializableInsertHandler,
 ): LookupElementBuilder {
     return when (val insertHandler = insertHandler?.ensureSerializable()) {
