@@ -59,12 +59,7 @@ class LibraryRootFileIndexContributor : WorkspaceFileIndexContributor<LibraryEnt
   override val dependenciesOnOtherEntities: List<DependencyDescription<LibraryEntity>>
     get() = listOf(
       DependencyDescription.OnReference(ModuleEntity::class.java) { moduleEntity ->
-        val result = mutableListOf<LibraryId>()
-        for (dep in moduleEntity.dependencies) {
-          if (dep !is LibraryDependency) continue
-          result.add(dep.library)
-        }
-        result.asSequence()
+        moduleEntity.dependencies.asSequence().filterIsInstance<LibraryDependency>().map { it.library }
       }
     )
 

@@ -28,6 +28,7 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.containers.ConcurrentBitSet
 import com.intellij.workspaceModel.core.fileIndex.*
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 
 @Suppress("DuplicatedCode")
 internal suspend fun initWorkspaceFileIndexData(
@@ -318,32 +319,55 @@ internal class WorkspaceFileIndexDataImpl(
     val entitiesInStorageAfter by lazy(LazyThreadSafetyMode.NONE) { event.storageAfter.entities(entityClass).toSet() }
     val entitiesInStorageBefore by lazy(LazyThreadSafetyMode.NONE) { event.storageBefore.entities(entityClass).toSet() }
 
-    event.getChanges(dependencyDescription.referenceHolderClass).forEach { change ->
-      change.oldEntity?.let { changedEntity ->
-        dependencyDescription.referencedEntitiesGetter(changedEntity).forEach { referencedEntityId ->
-          // no entity in the new storage has a reference to the referenced entity of removed entity => last reference removed
-          if (event.storageAfter.referrers(referencedEntityId, dependencyDescription.referenceHolderClass).none()) {
-            referencedEntityId.resolve(event.storageBefore)?.let {
-              removedEntities.add(it)
-              if (entitiesInStorageAfter.contains(it)) {
-                addedEntities.add(it)
-              }
-            }
+    fun processAddedSymbolicEntityId(symbolicEntityId: SymbolicEntityId<R>) {
+      // no entity in the old storage has a reference to the referenced entity of added entity => first reference added
+      if (!event.storageBefore.hasReferrers(symbolicEntityId, dependencyDescription.referenceHolderClass)) {
+        symbolicEntityId.resolve(event.storageAfter)?.let { referencedEntity ->
+          addedEntities.add(referencedEntity)
+          if (entitiesInStorageBefore.contains(referencedEntity)) {
+            removedEntities.add(referencedEntity)
           }
         }
       }
+    }
 
-      change.newEntity?.let { changedEntity ->
-        dependencyDescription.referencedEntitiesGetter(changedEntity).forEach { referencedEntityId ->
-          // no entity in the old storage has a reference to the referenced entity of added entity => first reference added
-          if (event.storageBefore.referrers(referencedEntityId, dependencyDescription.referenceHolderClass).none()) {
-            referencedEntityId.resolve(event.storageAfter)?.let { referencedEntity ->
-              addedEntities.add(referencedEntity)
-              if (entitiesInStorageBefore.contains(referencedEntity)) {
-                removedEntities.add(referencedEntity)
-              }
-            }
+    fun processRemovedSymbolicEntityId(symbolicEntityId: SymbolicEntityId<R>) {
+      // no entity in the new storage has a reference to the referenced entity of removed entity => last reference removed
+      if (!event.storageAfter.hasReferrers(symbolicEntityId, dependencyDescription.referenceHolderClass)) {
+        symbolicEntityId.resolve(event.storageBefore)?.let {
+          removedEntities.add(it)
+          if (entitiesInStorageAfter.contains(it)) {
+            addedEntities.add(it)
           }
+        }
+      }
+    }
+
+    fun processChangedEntity(oldEntity: E, newEntity: E) {
+      val previousDependencies = ObjectOpenHashSet<SymbolicEntityId<R>>()
+      val actualDependencies = ObjectOpenHashSet<SymbolicEntityId<R>>()
+
+      dependencyDescription.referencedEntitiesGetter(oldEntity).toCollection(previousDependencies)
+      dependencyDescription.referencedEntitiesGetter(newEntity).toCollection(actualDependencies)
+
+      (actualDependencies - previousDependencies).forEach { processAddedSymbolicEntityId(it) }
+      (previousDependencies - actualDependencies).forEach { processRemovedSymbolicEntityId(it) }
+    }
+
+    event.getChanges(dependencyDescription.referenceHolderClass).forEach { change ->
+      when (change) {
+        is EntityChange.Added<E> -> {
+          dependencyDescription.referencedEntitiesGetter(change.newEntity).forEach { referencedEntityId ->
+            processAddedSymbolicEntityId(referencedEntityId)
+          }
+        }
+        is EntityChange.Removed<E> -> {
+          dependencyDescription.referencedEntitiesGetter(change.oldEntity).forEach { referencedEntityId ->
+            processRemovedSymbolicEntityId(referencedEntityId)
+          }
+        }
+        is EntityChange.Replaced<E> -> {
+          processChangedEntity(change.oldEntity, change.newEntity)
         }
       }
     }

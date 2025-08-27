@@ -206,7 +206,6 @@ class WorkspaceFileIndexContributorOnReferenceDependenciesTest {
     }
     assertEquals(4, referredTestEntityContributor.numberOfCalls.get())
     readAction {
-      // entity is in the WorkspaceModel, but its not referenced by any other entity, so it is not in the workspace
       assertTrue(WorkspaceFileIndex.getInstance(projectModel.project).isInWorkspace(entityRoot))
     }
   }
