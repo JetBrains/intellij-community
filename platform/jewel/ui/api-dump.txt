@@ -547,6 +547,7 @@ f:org.jetbrains.jewel.ui.component.MenuKt
 - sf:MenuSeparator(androidx.compose.ui.Modifier,org.jetbrains.jewel.ui.component.styling.MenuItemMetrics,org.jetbrains.jewel.ui.component.styling.MenuItemColors,androidx.compose.runtime.Composer,I,I):V
 - sf:MenuSubmenuItem(androidx.compose.ui.Modifier,Z,Z,org.jetbrains.jewel.ui.icon.IconKey,androidx.compose.foundation.interaction.MutableInteractionSource,org.jetbrains.jewel.ui.component.styling.MenuStyle,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I):V
 - sf:PopupMenu(kotlin.jvm.functions.Function1,androidx.compose.ui.Alignment$Horizontal,androidx.compose.ui.Modifier,org.jetbrains.jewel.ui.component.styling.MenuStyle,androidx.compose.ui.window.PopupProperties,kotlin.jvm.functions.Function1,androidx.compose.runtime.Composer,I,I):V
+- sf:PopupMenu(kotlin.jvm.functions.Function1,androidx.compose.ui.window.PopupPositionProvider,androidx.compose.ui.Modifier,org.jetbrains.jewel.ui.component.styling.MenuStyle,androidx.compose.ui.window.PopupProperties,kotlin.jvm.functions.Function1,androidx.compose.runtime.Composer,I,I):V
 - sf:items(org.jetbrains.jewel.ui.component.MenuScope,I,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function3):V
 - sf:items(org.jetbrains.jewel.ui.component.MenuScope,java.util.List,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function3):V
 - sf:separator(org.jetbrains.jewel.ui.component.MenuScope):V
