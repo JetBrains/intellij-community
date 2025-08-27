@@ -5,6 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.ReferenceQueue;
+import java.lang.ref.SoftReference;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -100,18 +101,22 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
     throw RefValueHashMapUtil.pointlessContainsValue();
   }
 
-  private static class HardKey<K> implements KeyReference<K> {
-    private K myKey;
+  private static class HardKey<K> extends SoftReference<K> implements KeyReference<K> {
+    private HardKey() {
+      super(null, null);
+    }
+
+    private K referent;
     private int myHash;
 
     void setKey(K key, int hash) {
-      myKey = key;
+      referent = key;
       myHash = hash;
     }
 
     @Override
     public K get() {
-      return myKey;
+      return referent;
     }
 
     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
@@ -125,7 +130,8 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
       return myHash;
     }
 
-    private void clear() {
+    @Override
+    public void clear() {
       setKey(null, 0);
     }
   }
