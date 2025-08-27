@@ -17,6 +17,7 @@ import com.intellij.python.community.execService.impl.Arg
 import com.intellij.python.community.execService.impl.ExecServiceImpl
 import com.intellij.python.community.execService.impl.PyExecBundle
 import com.intellij.python.community.execService.impl.transformerToHandler
+import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.ExecError
 import com.jetbrains.python.errorProcessing.PyResult
@@ -54,6 +55,7 @@ data class BinOnTarget(internal val configureTargetCmdLine: (TargetedCommandLine
   constructor(exePath: FullPathOnTarget, target: TargetEnvironmentConfiguration?) : this({ it.setExePath(exePath) }, target)
 }
 
+fun PythonBinary.asBinToExec(): BinaryToExec = BinOnEel(this)
 
 /**
  * Execute [binary] right directly on the eel it resides on.

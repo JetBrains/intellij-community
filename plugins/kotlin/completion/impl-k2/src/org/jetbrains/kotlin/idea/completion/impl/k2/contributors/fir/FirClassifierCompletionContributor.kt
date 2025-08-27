@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
+package org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir
 
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
@@ -24,6 +24,8 @@ import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOri
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.getAliasNameIfExists
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.staticScope
 import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.ChainCompletionContributor
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.FirCompletionContributorBase
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
 import org.jetbrains.kotlin.idea.completion.lookups.factories.KotlinFirLookupElementFactory
 import org.jetbrains.kotlin.idea.completion.lookups.factories.shortenCommand

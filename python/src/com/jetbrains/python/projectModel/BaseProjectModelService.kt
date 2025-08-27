@@ -11,6 +11,8 @@ import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
 import com.jetbrains.python.PyBundle
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.SystemIndependent
 import java.nio.file.Path
@@ -92,11 +94,11 @@ abstract class BaseProjectModelService<E : EntitySource, P : ExternalProject> {
     }
   }
 
-  private fun createProjectModel(
+  private suspend fun createProjectModel(
     project: Project,
     graph: List<ExternalProject>,
     source: EntitySource,
-  ): EntityStorage {
+  ): EntityStorage = withContext(Dispatchers.Default) {
     val fileUrlManager = project.workspaceModel.getVirtualFileUrlManager()
     val storage = MutableEntityStorage.create()
     for (extProject in graph) {
@@ -128,7 +130,7 @@ abstract class BaseProjectModelService<E : EntitySource, P : ExternalProject> {
         }
       }
     }
-    return storage
+    return@withContext storage
   }
 
   /**

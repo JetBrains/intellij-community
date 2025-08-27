@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.completion.impl.k2
 
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.CompletionType
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.psi.PsiErrorElement
 import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
@@ -18,6 +19,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.completion.findValueArgument
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.*
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.*
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
 import org.jetbrains.kotlin.idea.completion.lookups.factories.ClassifierLookupObject
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
@@ -30,6 +32,7 @@ import org.jetbrains.kotlin.renderer.render
 import java.util.concurrent.CopyOnWriteArrayList
 
 internal object Completions {
+
     /**
      * Returns whether any elements were added to the [resultSet].
      */
@@ -37,57 +40,138 @@ internal object Completions {
         parameters: KotlinFirCompletionParameters,
         positionContext: KotlinRawPositionContext,
         resultSet: CompletionResultSet,
-        before: KaSession.() -> Boolean = { true },
-        after: KaSession.() -> Boolean = { true },
-    ): Boolean = analyze(parameters.completionFile) {
-        try {
-            if (!before()) return@analyze false
-
-            val weighingContext = when (positionContext) {
-                is KotlinNameReferencePositionContext -> {
-                    val nameExpression = positionContext.nameExpression
-                    val expectedType = when {
-                        // during the sorting of completion suggestions expected type from position and actual types of suggestions are compared;
-                        // see `org.jetbrains.kotlin.idea.completion.weighers.ExpectedTypeWeigher`;
-                        // currently in case of callable references actual types are calculated incorrectly, which is why we don't use information
-                        // about expected type at all
-                        // TODO: calculate actual types for callable references correctly and use information about expected type
-                        positionContext is KotlinCallableReferencePositionContext -> null
-                        nameExpression.expectedType != null -> nameExpression.expectedType
-                        nameExpression.parent is KtBinaryExpression -> getEqualityExpectedType(nameExpression)
-                        nameExpression.parent is KtCollectionLiteralExpression -> getAnnotationLiteralExpectedType(nameExpression)
-                        else -> null
-                    }
-                    if (parameters.completionType == CompletionType.SMART
-                        && expectedType == null
-                    ) return@analyze false // todo move out
-
-                    WeighingContext.create(parameters, positionContext, expectedType)
-                }
-
-                else -> WeighingContext.create(parameters, elementInCompletionFile = positionContext.position)
-            }
-
-            val contributors = CopyOnWriteArrayList<ChainCompletionContributor>() // if needed for the multithreaded completion
-            val sink = LookupElementSink(resultSet, parameters) {
-                contributors.addIfAbsent(it)
-            }
-            complete(positionContext, sink, weighingContext)
-
-            if (positionContext is KotlinNameReferencePositionContext
-                && contributors.isNotEmpty()
-                && RegistryManager.getInstance().`is`("kotlin.k2.chain.completion.enabled")) {
-                runChainCompletion(positionContext, sink, contributors)
-            }
-
-            sink.addedElementCount > 0
-        } finally {
-            after()
+    ): Boolean {
+        return if (Registry.`is`("kotlin.k2.parallel.completion.enabled", false)) {
+            completeInParallel(parameters, positionContext, resultSet)
+        } else {
+            completeSequentially(parameters, positionContext, resultSet)
         }
     }
 
+    private val contributors: List<K2CompletionContributor<*>> = listOf(
+        K2ClassifierCompletionContributor(),
+        K2ClassReferenceCompletionContributor(),
+        K2KDocParameterNameContributor(),
+        K2DeclarationFromOverridableMembersContributor(),
+        K2ActualDeclarationContributor(),
+        K2WhenWithSubjectConditionContributor(),
+        K2SuperEntryContributor(),
+        K2OperatorNameCompletionContributor(),
+        K2TypeParameterConstraintNameInWhereClauseCompletionContributor(),
+        K2SameAsFileClassifierNameCompletionContributor(),
+        K2PackageCompletionContributor(),
+        K2NamedArgumentCompletionContributor(),
+        K2DeclarationFromUnresolvedNameContributor(),
+        K2KeywordCompletionContributor(),
+        K2ImportDirectivePackageMembersCompletionContributor(),
+        K2SuperMemberCompletionContributor(),
+        K2TrailingFunctionParameterNameCompletionContributorBase.All(),
+        K2TrailingFunctionParameterNameCompletionContributorBase.Missing(),
+        K2CallableCompletionContributor(),
+        K2CallableReferenceCompletionContributor(),
+        K2InfixCallableCompletionContributor(),
+        K2KDocCallableCompletionContributor(),
+        K2VariableOrParameterNameWithTypeCompletionContributor(),
+    )
+
+    /**
+     * Completes using the new structure and the new K2 contributor structure
+     */
+    private fun <T : KotlinRawPositionContext> completeInParallel(
+        parameters: KotlinFirCompletionParameters,
+        positionContext: T,
+        resultSet: CompletionResultSet,
+    ): Boolean {
+        @Suppress("UNCHECKED_CAST")
+        val matchingContributors =
+            contributors.filter { it.positionContextClass.isInstance(positionContext) } as List<K2CompletionContributor<T>>
+
+        val sections = mutableListOf<K2CompletionSection<T>>()
+        val completionContext = K2CompletionContext(parameters, resultSet, positionContext)
+        for (contributor in matchingContributors) {
+            // We make sure the type parameters match before, so this cast is safe.
+
+            val setupScope = K2CompletionSetupScope(completionContext, contributor, sections)
+            with(contributor) {
+                if (setupScope.isAppropriatePosition()) {
+                    setupScope.registerCompletions()
+                }
+            }
+        }
+
+        val completionRunner = K2CompletionRunner.getInstance(sections.size)
+
+        // We make sure the type parameters match before, so this cast is safe.
+        val completionRunnerResult = completionRunner.runCompletion(completionContext, sections)
+
+        val chainCompletionContributors = completionRunnerResult.registeredChainContributors
+        if (positionContext is KotlinNameReferencePositionContext
+            && chainCompletionContributors.isNotEmpty()
+            && RegistryManager.getInstance().`is`("kotlin.k2.chain.completion.enabled")
+        ) {
+            K2CompletionRunner.runChainCompletion(
+                originalPositionContext = positionContext,
+                completionResultSet = resultSet,
+                parameters = parameters,
+                chainCompletionContributors = chainCompletionContributors,
+            )
+        }
+
+        return completionRunnerResult.addedElements > 0
+    }
+
+
+    /**
+     * Completes using the old structure using the Fir contributors.
+     */
+    private fun completeSequentially(
+        parameters: KotlinFirCompletionParameters,
+        positionContext: KotlinRawPositionContext,
+        resultSet: CompletionResultSet,
+    ): Boolean = analyze(parameters.completionFile) {
+        val weighingContext = when (positionContext) {
+            is KotlinNameReferencePositionContext -> {
+                val nameExpression = positionContext.nameExpression
+                val expectedType = when {
+                    // during the sorting of completion suggestions expected type from position and actual types of suggestions are compared;
+                    // see `org.jetbrains.kotlin.idea.completion.weighers.ExpectedTypeWeigher`;
+                    // currently in case of callable references actual types are calculated incorrectly, which is why we don't use information
+                    // about expected type at all
+                    // TODO: calculate actual types for callable references correctly and use information about expected type
+                    positionContext is KotlinCallableReferencePositionContext -> null
+                    nameExpression.expectedType != null -> nameExpression.expectedType
+                    nameExpression.parent is KtBinaryExpression -> getEqualityExpectedType(nameExpression)
+                    nameExpression.parent is KtCollectionLiteralExpression -> getAnnotationLiteralExpectedType(nameExpression)
+                    else -> null
+                }
+                if (parameters.completionType == CompletionType.SMART
+                    && expectedType == null
+                ) return@analyze false // todo move out
+
+                WeighingContext.create(parameters, positionContext, expectedType)
+            }
+
+            else -> WeighingContext.create(parameters, elementInCompletionFile = positionContext.position)
+        }
+
+        val contributors = CopyOnWriteArrayList<ChainCompletionContributor>() // if needed for the multithreaded completion
+        val sink = LookupElementSink(resultSet, parameters) {
+            contributors.addIfAbsent(it)
+        }
+        completeSequentially(positionContext, sink, weighingContext)
+
+        if (positionContext is KotlinNameReferencePositionContext
+            && contributors.isNotEmpty()
+            && RegistryManager.getInstance().`is`("kotlin.k2.chain.completion.enabled")
+        ) {
+            runChainCompletion(positionContext, sink, contributors)
+        }
+
+        sink.addedElementCount > 0
+    }
+
     context(KaSession)
-    private fun complete(
+    private fun completeSequentially(
         positionContext: KotlinRawPositionContext,
         sink: LookupElementSink,
         weighingContext: WeighingContext,
@@ -143,7 +227,7 @@ internal object Completions {
                     .complete(positionContext, weighingContext)
                 FirDeclarationFromOverridableMembersContributor(sink, priority = 1)
                     .complete(positionContext, weighingContext)
-                K2ActualDeclarationContributor(sink, priority = 1)
+                FirActualDeclarationContributor(sink, priority = 1)
                     .complete(positionContext, weighingContext)
                 FirVariableOrParameterNameWithTypeCompletionContributor(sink)
                     .complete(positionContext, weighingContext)
@@ -326,7 +410,7 @@ internal object Completions {
     }
 }
 
-private fun KotlinUnknownPositionContext.isAfterRangeToken(): Boolean {
+internal fun KotlinUnknownPositionContext.isAfterRangeToken(): Boolean {
     val errorParent = position.parent as? PsiErrorElement
         ?: return false
 
@@ -345,7 +429,8 @@ private fun KotlinUnknownPositionContext.isAfterRangeToken(): Boolean {
  *         otherwise `false`.
  */
 context(KaSession)
-private fun KotlinExpressionNameReferencePositionContext.isAfterRangeOperator(): Boolean {
+internal fun KotlinRawPositionContext.isAfterRangeOperator(): Boolean {
+    if (this !is KotlinExpressionNameReferencePositionContext) return false
     val binaryExpression = nameExpression.parent as? KtBinaryExpression
         ?: return false
 
@@ -362,7 +447,8 @@ private fun KotlinExpressionNameReferencePositionContext.isAfterRangeOperator():
 }
 
 context(KaSession)
-private fun KotlinExpressionNameReferencePositionContext.allowsOnlyNamedArguments(): Boolean {
+internal fun KotlinRawPositionContext.allowsOnlyNamedArguments(): Boolean {
+    if (this !is KotlinExpressionNameReferencePositionContext) return false
     if (explicitReceiver != null) return false
 
     val valueArgument = findValueArgument(nameExpression) ?: return false
@@ -390,7 +476,7 @@ private fun KotlinExpressionNameReferencePositionContext.allowsOnlyNamedArgument
     return with(valueArgumentList.arguments) { indexOf(valueArgument) >= indexOf(firstArgumentInNamedMode) }
 }
 
-private fun KotlinTypeNameReferencePositionContext.hasNoExplicitReceiver(): Boolean {
+internal fun KotlinTypeNameReferencePositionContext.hasNoExplicitReceiver(): Boolean {
     val declaration = typeReference?.parent
         ?: return false
 

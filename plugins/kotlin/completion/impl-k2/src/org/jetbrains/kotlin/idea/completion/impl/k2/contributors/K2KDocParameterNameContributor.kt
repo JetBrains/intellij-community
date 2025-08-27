@@ -1,14 +1,20 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 
 import com.intellij.codeInsight.lookup.LookupElement
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.typeParameters
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtOutsideTowerScopeKinds
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOrigin
-import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
+import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSectionContext
+import org.jetbrains.kotlin.idea.completion.impl.k2.K2SimpleCompletionContributor
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionStrategy
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
@@ -16,17 +22,15 @@ import org.jetbrains.kotlin.idea.completion.lookups.factories.TypeParameterLooku
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighs
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.util.positionContext.KDocNameReferencePositionContext
+import kotlin.collections.orEmpty
+import kotlin.sequences.forEach
 
-internal open class FirKDocParameterNameContributor(
-    sink: LookupElementSink,
-    priority: Int = 0,
-) : FirCompletionContributorBase<KDocNameReferencePositionContext>(sink, priority) {
-
-    context(KaSession)
-    override fun complete(
-        positionContext: KDocNameReferencePositionContext,
-        weighingContext: WeighingContext,
-    ) {
+internal class K2KDocParameterNameContributor : K2SimpleCompletionContributor<KDocNameReferencePositionContext>(
+    KDocNameReferencePositionContext::class
+) {
+    override fun KaSession.complete(context: K2CompletionSectionContext<KDocNameReferencePositionContext>) {
+        val positionContext = context.positionContext
+        val weighingContext = context.weighingContext
         if (positionContext.explicitReceiver != null) return
 
         val section = positionContext.nameExpression.getContainingSection()
@@ -36,12 +40,13 @@ internal open class FirKDocParameterNameContributor(
 
         getParametersForKDoc(ownerDeclaration.symbol)
             .filter { (it as KaNamedSymbol).name.asString() !in alreadyDocumentedParameters }
-            .flatMap { createLookupElements(it, weighingContext) }
-            .forEach(sink::addElement)
+            .flatMap { createLookupElements(context, it,  weighingContext) }
+            .forEach { context.addElement(it) }
     }
 
     context(KaSession)
     private fun createLookupElements(
+        context: K2CompletionSectionContext<KDocNameReferencePositionContext>,
         declarationSymbol: KaDeclarationSymbol,
         weighingContext: WeighingContext,
     ): Sequence<LookupElement> = when (declarationSymbol) {
@@ -56,6 +61,7 @@ internal open class FirKDocParameterNameContributor(
 
         is KaValueParameterSymbol -> createCallableLookupElements(
             context = weighingContext,
+            parameters = context.parameters,
             signature = @OptIn(KaExperimentalApi::class) (declarationSymbol.asSignature()),
             options = CallableInsertionOptions(ImportStrategy.DoNothing, CallableInsertionStrategy.AsIdentifier),
             scopeKind = KtOutsideTowerScopeKinds.LocalScope,

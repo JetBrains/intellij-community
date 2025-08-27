@@ -1,5 +1,5 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir
 
 import com.intellij.codeInsight.completion.PrefixMatcher
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher
@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierPr
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOrigin
 import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
 import org.jetbrains.kotlin.idea.completion.impl.k2.context.getOriginalElementOfSelf
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.FirCompletionContributorBase
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.TypeLookupObject
 import org.jetbrains.kotlin.idea.completion.lookups.factories.KotlinFirLookupElementFactory
 import org.jetbrains.kotlin.idea.completion.weighers.VariableOrParameterNameWithTypeWeigher.nameWithTypePriority
@@ -101,8 +102,8 @@ internal class FirVariableOrParameterNameWithTypeCompletionContributor(
             predicate = { parameter ->
                 parameter.name.let { parameterName ->
                     parameterName != null
-                        && variableOrParameterInOriginal != parameter
-                        && prefixMatcher.isStartMatch(parameterName)
+                            && variableOrParameterInOriginal != parameter
+                            && prefixMatcher.isStartMatch(parameterName)
                 }
             }
         )

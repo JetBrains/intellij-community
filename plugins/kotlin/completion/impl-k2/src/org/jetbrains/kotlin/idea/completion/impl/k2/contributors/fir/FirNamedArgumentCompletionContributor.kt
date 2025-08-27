@@ -2,7 +2,7 @@
  * Copyright 2010-2022 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
-package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
+package org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir
 
 import com.intellij.codeInsight.lookup.LookupElement
 import org.jetbrains.kotlin.analysis.api.KaSession
@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.CallParameterInfoProvid
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.collectCallCandidates
 import org.jetbrains.kotlin.idea.completion.findValueArgument
 import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.FirCompletionContributorBase
 import org.jetbrains.kotlin.idea.completion.lookups.factories.KotlinFirLookupElementFactory
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighs
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext

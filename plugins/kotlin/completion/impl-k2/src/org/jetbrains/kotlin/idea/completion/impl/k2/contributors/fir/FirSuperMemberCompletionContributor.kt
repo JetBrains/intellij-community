@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
+package org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir
 
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.psi.util.parentsOfType
@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtOutsideTowerS
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.collectNonExtensionsForType
 import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
 import org.jetbrains.kotlin.idea.completion.impl.k2.context.getOriginalDeclarationOrSelf
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.FirCompletionContributorBase
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionStrategy
 import org.jetbrains.kotlin.idea.completion.priority

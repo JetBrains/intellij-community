@@ -1,9 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
+package org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir
 
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.FirCompletionContributorBase
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinClassifierNamePositionContext
 import org.jetbrains.kotlin.name.Name
