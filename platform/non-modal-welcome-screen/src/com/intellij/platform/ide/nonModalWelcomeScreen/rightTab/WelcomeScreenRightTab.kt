@@ -11,7 +11,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -21,6 +20,7 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
+import com.intellij.platform.ide.nonModalWelcomeScreen.NON_MODAL_WELCOME_SCREEN_SETTING_ID
 import com.intellij.platform.ide.nonModalWelcomeScreen.NonModalWelcomeScreenBundle
 import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenRightTabComboBoxModel.KeymapModel
 import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenRightTabComboBoxModel.ThemeModel
@@ -43,7 +43,10 @@ import org.jetbrains.jewel.ui.theme.defaultButtonStyle
 import org.jetbrains.jewel.ui.theme.scrollbarStyle
 import javax.swing.JComponent
 
-class WelcomeScreenRightTab(val project: Project) {
+internal class WelcomeScreenRightTab(
+  val project: Project,
+  private val contentProvider: WelcomeRightTabContentProvider
+) {
   val component: JComponent by lazy {
     JewelComposePanel {
       WelcomeScreen()
@@ -56,8 +59,7 @@ class WelcomeScreenRightTab(val project: Project) {
       modifier = Modifier.fillMaxSize().background(color = panelBackgroundColor)
     ) {
       Image(
-        // Valkyrie IDEA plugin was used to generate the ImageVector
-        imageVector = backgroundImageVector,
+        imageVector = contentProvider.getBackgroundImageVectorLight(),
         contentDescription = null,
         alignment = Alignment.TopCenter,
         // ImageVector has very sharp boundaries, apply the blur to soften them
@@ -75,10 +77,10 @@ class WelcomeScreenRightTab(val project: Project) {
           verticalArrangement = Arrangement.SpaceBetween
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-              Text(NonModalWelcomeScreenBundle.message("go.non.modal.welcome.screen.right.tab.header"),
+              Text(contentProvider.title,
                    fontSize = 20.sp, lineHeight = 24.sp, color = fontColor)
               Spacer(modifier = Modifier.height(8.dp))
-              Text(NonModalWelcomeScreenBundle.message("go.non.modal.welcome.screen.right.tab.secondary.header"),
+              Text(contentProvider.secondaryTitle,
                    fontSize = 13.sp, lineHeight = 16.sp, color = secondaryFontColor)
             }
             Spacer(modifier = Modifier.height(32.dp))
@@ -302,13 +304,6 @@ class WelcomeScreenRightTab(val project: Project) {
     }
 
   @get:Composable
-  private val backgroundImageVector: ImageVector
-    get() = when (JewelTheme.isDark) {
-      true -> GoWelcomeRightTabDarkBackground
-      false -> GoWelcomeRightTabLightBackground
-    }
-
-  @get:Composable
   private val themeIconKey: IconKey
     get() = when (JewelTheme.isDark) {
       true -> AllIconsKeys.MeetNewUi.DarkTheme
@@ -319,8 +314,9 @@ class WelcomeScreenRightTab(val project: Project) {
     @ApiStatus.Internal
     suspend fun show(project: Project) {
       if (!isRightTabEnabled) return
+      val contentProvider = WelcomeRightTabContentProvider.getSingleExtension() ?: return
       withContext(Dispatchers.EDT) {
-        val settingsFile = WelcomeScreenRightTabVirtualFile(WelcomeScreenRightTab(project), project)
+        val settingsFile = WelcomeScreenRightTabVirtualFile(WelcomeScreenRightTab(project, contentProvider), project)
         val fileEditorManager = FileEditorManager.getInstance(project) as FileEditorManagerEx
         //val preventWelcomeTabFocusService = project.service<GoWelcomeScreenPreventWelcomeTabFocusService>()
         val options = FileEditorOpenOptions(reuseOpen = true, isSingletonEditorInWindow = true,
@@ -330,12 +326,9 @@ class WelcomeScreenRightTab(val project: Project) {
       }
     }
 
-    @ApiStatus.Internal
-    const val ADVANCED_SETTINGS_ID: String = "welcome.screen.non.modal.enabled"
-
     private var isRightTabEnabled: Boolean
-      get() = AdvancedSettings.getBoolean(ADVANCED_SETTINGS_ID)
-      set(value) = AdvancedSettings.setBoolean(ADVANCED_SETTINGS_ID, value)
+      get() = AdvancedSettings.getBoolean(NON_MODAL_WELCOME_SCREEN_SETTING_ID)
+      set(value) = AdvancedSettings.setBoolean(NON_MODAL_WELCOME_SCREEN_SETTING_ID, value)
 
     @Composable
     internal fun color(dark: Color?, light: Color?, fallback: Color): Color {

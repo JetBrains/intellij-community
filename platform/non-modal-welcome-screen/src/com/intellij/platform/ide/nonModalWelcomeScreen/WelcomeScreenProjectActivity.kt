@@ -43,7 +43,7 @@ private suspend fun subscribeToSettingsChanges(project: Project) {
                        val welcomeScreenEnabled = newValue.asSafely<Boolean>() ?: return
                        CloseProjectWindowHelper.SHOW_WELCOME_FRAME_FOR_PROJECT.set(project, !welcomeScreenEnabled)
                      }
-                     if (id == WelcomeScreenRightTab.ADVANCED_SETTINGS_ID) {
+                     if (id == NON_MODAL_WELCOME_SCREEN_SETTING_ID) {
                        val welcomeScreenTabEnabled = newValue.asSafely<Boolean>() ?: return
                        if (!welcomeScreenTabEnabled) {
                          GoWelcomeScreenTabUsageCollector.logWelcomeScreenTabDisabled()

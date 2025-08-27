@@ -6,6 +6,8 @@
   <resource-bundle>messages.NonModalWelcomeScreenBundle</resource-bundle>
 
   <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.platform.ide.nonModalWelcomeScreen.welcomeScreenContentProvider"
+                    interface="com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeRightTabContentProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.platform.ide.nonModalWelcomeScreen.welcomeScreenFeatureProvider"
                     interface="com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenFeatureProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.platform.ide.nonModalWelcomeScreen.templateOptionProvider"
