@@ -8,7 +8,6 @@ import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
 import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
-import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.assertNotNull
 import org.junit.jupiter.params.ParameterizedTest
@@ -296,9 +295,6 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : GradleCodeInsi
         private const val WARNING_START = "<weak_warning>"
         private const val WARNING_END = "</weak_warning>"
         private val CUSTOM_PROJECT = GradleTestFixtureBuilder.create("avoid_named_arguments") { gradleVersion ->
-            withSettingsFile(gradleVersion, gradleDsl = GradleDsl.KOTLIN) {
-                setProjectName("java-plugin-project")
-            }
             withBuildFile(gradleVersion, gradleDsl = GradleDsl.KOTLIN) {
                 withJavaPlugin()
                 withPrefix {
