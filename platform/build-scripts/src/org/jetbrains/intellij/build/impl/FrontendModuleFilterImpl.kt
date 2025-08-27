@@ -7,6 +7,9 @@ import com.intellij.platform.runtime.product.impl.ProductModeMatcher
 import com.intellij.platform.runtime.repository.RuntimeModuleId
 import com.intellij.platform.runtime.repository.RuntimeModuleRepository
 import org.jetbrains.intellij.build.FrontendModuleFilter
+import org.jetbrains.jps.model.JpsNamedElement
+import org.jetbrains.jps.model.library.JpsLibrary
+import org.jetbrains.jps.model.module.JpsModule
 
 internal class FrontendModuleFilterImpl(private val moduleRepository: RuntimeModuleRepository, productModules: ProductModules): FrontendModuleFilter {
   private val includedModules: Set<RuntimeModuleId> = (sequenceOf(productModules.mainModuleGroup) + productModules.bundledPluginModuleGroups.asSequence())
@@ -46,6 +49,12 @@ val PROJECT_LIBRARIES_SCRAMBLED_WITH_FRONTEND: Set<String> = setOf(
 val MODULES_SCRAMBLED_WITH_FRONTEND: Set<RuntimeModuleId> by lazy {
   setOf(RuntimeModuleId.module(PLATFORM_MODULE_SCRAMBLED_WITH_FRONTEND)) + 
   PROJECT_LIBRARIES_SCRAMBLED_WITH_FRONTEND.map { RuntimeModuleId.projectLibrary(it) }
+}
+
+fun isScrambledWithFrontend(element: JpsNamedElement): Boolean = when (element) {
+  is JpsModule -> element.name == PLATFORM_MODULE_SCRAMBLED_WITH_FRONTEND
+  is JpsLibrary -> element.name in PROJECT_LIBRARIES_SCRAMBLED_WITH_FRONTEND
+  else -> false
 }
 
 internal object EmptyFrontendModuleFilter : FrontendModuleFilter {
