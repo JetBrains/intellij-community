@@ -82,6 +82,8 @@ class SeTabVm(
       }
     }
 
+  internal var lastNotFoundString: String? = null
+
   init {
     coroutineScope.launch {
       isActiveFlow.combine(dumbModeStateFlow) { isActive, _ ->
@@ -94,7 +96,12 @@ class SeTabVm(
 
         val searchPatternWithAutoToggle = searchPattern.onEach {
           withContext(Dispatchers.EDT) {
-            (getSearchEverywhereToggleAction() as? AutoToggleAction)?.autoToggle(false)
+            if (lastNotFoundString != null) {
+              val newPatternContainsPrevious = lastNotFoundString!!.length > 1 && it.contains(lastNotFoundString!!)
+              if (!newPatternContainsPrevious) {
+                (getSearchEverywhereToggleAction() as? AutoToggleAction)?.autoToggle(false)
+              }
+            }
           }
         }
 
