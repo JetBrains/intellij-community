@@ -128,6 +128,7 @@ public final class MarkdownCodeFenceHtmlCache implements Disposable {
 
   @Override
   public void dispose() {
+    clearCache();
     Disposer.dispose(myAlarm);
   }
 }
