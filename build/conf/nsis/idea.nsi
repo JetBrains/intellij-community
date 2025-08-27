@@ -794,9 +794,7 @@ Section "IDEA Files" CopyIdeaFiles
   WriteRegDWORD SHCTX "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_WITH_VER}" "NoModify" 1
   WriteRegDWORD SHCTX "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_WITH_VER}" "NoRepair" 1
 
-  ; reset icon cache
-  ${LogText} "Reset icon cache"
-  System::Call 'shell32::SHChangeNotify(i 0x08000000, i 0, i 0, i 0) v'
+  ${RefreshShellIcons}
 SectionEnd
 
 
@@ -1198,6 +1196,8 @@ Section "Uninstall"
   ${If} $productRegKey != ""
     DeleteRegKey SHCTX $productRegKey
   ${EndIf}
+
+  ${RefreshShellIcons}
 
   ; opening the uninstall feedback page
   ${IfNot} ${Silent}
