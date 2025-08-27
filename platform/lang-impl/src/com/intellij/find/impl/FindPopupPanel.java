@@ -1727,12 +1727,7 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
     for (int i = rows.length - 1; i >= 0; i--) {
       int row = rows[i];
       Object valueAt;
-      try {
-        valueAt = myResultsPreviewTable.getModel().getValueAt(row, 0);
-      } catch (ArrayIndexOutOfBoundsException e) {
-        LOG.debug("Error getting value at row " + row, e);
-        return result;
-      }
+      valueAt = myResultsPreviewTable.getModel().getValueAt(row, 0);
       if (valueAt instanceof FindPopupItem) {
         if (result == null) result = new LinkedHashMap<>();
         result.put(row, ((FindPopupItem)valueAt).getUsage());
