@@ -127,7 +127,6 @@ class WelcomeScreenRightTab(
     WelcomeScreenCustomButton(
       onClick = {
         model.onClick()
-        //GoWelcomeScreenTabUsageCollector.logWelcomeScreenTabButtonClicked(model.feature)
       },
       style = CustomButtonStyle(),
       modifier = Modifier.size(112.dp, 87.dp),
