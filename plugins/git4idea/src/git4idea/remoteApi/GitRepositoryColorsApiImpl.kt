@@ -4,21 +4,22 @@ package git4idea.remoteApi
 import com.intellij.dvcs.repo.VcsRepositoryManager
 import com.intellij.dvcs.repo.VcsRepositoryMappingListener
 import com.intellij.ide.ui.LafManagerListener
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.project.ProjectId
-import com.intellij.platform.project.findProjectOrNull
 import com.intellij.platform.vcs.impl.shared.rpc.RepositoryId
 import com.intellij.vcs.git.repo.GitRepositoryColor
 import com.intellij.vcs.git.repo.GitRepositoryColorsState
 import com.intellij.vcs.git.rpc.GitRepositoryColorsApi
 import com.intellij.vcs.log.ui.VcsLogColorManagerFactory
+import com.intellij.vcs.rpc.ProjectScopeRpcHelper.projectScopedCallbackFlow
 import git4idea.repo.GitRepository
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -26,45 +27,27 @@ import kotlin.time.Duration.Companion.milliseconds
 internal class GitRepositoryColorsApiImpl : GitRepositoryColorsApi {
 
   @OptIn(FlowPreview::class)
-  override suspend fun syncColors(projectId: ProjectId): Flow<GitRepositoryColorsState> {
-    requireOwner()
-
-    val project = projectId.findProjectOrNull() ?: return emptyFlow()
-
-    return callbackFlow {
+  override suspend fun syncColors(projectId: ProjectId): Flow<GitRepositoryColorsState> =
+    projectScopedCallbackFlow(projectId) { project, messageBusConnection ->
+      requireOwner()
       val notifier = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-
-      val messageBusConnection = readAction {
-        if (project.isDisposed) {
-          close()
-          return@readAction null
-        }
-
-        launch {
+      launch {
+        notifier.debounce(100.milliseconds).collectLatest {
+          LOG.debug("Sending new colors")
           send(calcColorsState(project))
-          notifier.debounce(100.milliseconds).collectLatest {
-            LOG.debug("Sending new colors")
-            send(calcColorsState(project))
-          }
         }
+      }
+      send(calcColorsState(project))
 
-        project.messageBus.connect().also {
-          it.subscribe(VcsRepositoryManager.VCS_REPOSITORY_MAPPING_UPDATED, VcsRepositoryMappingListener {
-            LOG.debug("VCS mapping changed")
-            notifier.tryEmit(Unit)
-          })
-          it.subscribe(LafManagerListener.TOPIC, LafManagerListener {
-            LOG.debug("LAF changed")
-            notifier.tryEmit(Unit)
-          })
-        }
-      }
-      awaitClose {
-        LOG.debug("Connection closed")
-        messageBusConnection?.disconnect()
-      }
+      messageBusConnection.subscribe(VcsRepositoryManager.VCS_REPOSITORY_MAPPING_UPDATED, VcsRepositoryMappingListener {
+        LOG.debug("VCS mapping changed")
+        notifier.tryEmit(Unit)
+      })
+      messageBusConnection.subscribe(LafManagerListener.TOPIC, LafManagerListener {
+        LOG.debug("LAF changed")
+        notifier.tryEmit(Unit)
+      })
     }
-  }
 
   private fun calcColorsState(project: Project): GitRepositoryColorsState {
     val allRepos = VcsRepositoryManager.getInstance(project).getRepositories()

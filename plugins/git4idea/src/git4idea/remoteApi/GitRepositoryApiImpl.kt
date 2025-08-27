@@ -1,85 +1,65 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.remoteApi
 
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.platform.project.ProjectId
-import com.intellij.platform.project.findProjectOrNull
 import com.intellij.platform.vcs.impl.shared.rpc.RepositoryId
 import com.intellij.vcs.git.ref.GitFavoriteRefs
+import com.intellij.vcs.git.ref.GitRefUtil
 import com.intellij.vcs.git.ref.GitReferenceName
 import com.intellij.vcs.git.rpc.GitRepositoryApi
 import com.intellij.vcs.git.rpc.GitRepositoryEvent
+import com.intellij.vcs.rpc.ProjectScopeRpcHelper.projectScoped
+import com.intellij.vcs.rpc.ProjectScopeRpcHelper.projectScopedCallbackFlow
 import git4idea.branch.GitRefType
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import git4idea.ui.branch.GitBranchManager
 import kotlinx.coroutines.channels.SendChannel
-import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.seconds
 
-private typealias SharedRefUtil = com.intellij.vcs.git.ref.GitRefUtil
+private typealias SharedRefUtil = GitRefUtil
 
 class GitRepositoryApiImpl : GitRepositoryApi {
-  override suspend fun getRepositoriesEvents(projectId: ProjectId): Flow<GitRepositoryEvent> {
-    requireOwner()
-
-    val project = projectId.findProjectOrNull() ?: return emptyFlow()
-
-    return callbackFlow {
-      val messageBusConnection = readAction {
-        if (project.isDisposed) {
-          close()
-          return@readAction null
-        }
-
-        val synchronizer = Synchronizer(project, this@callbackFlow)
-        // Sending of the initial state should be delayed until initialization is complete
-        ProjectLevelVcsManager.getInstance(project).runAfterInitialization {
-          launch {
-            val allRepositories = getAllRepositories(project)
-            allRepositories.forEach { repository -> synchronizer.sendDeletedEventOnDispose(repository) }
-            send(GitRepositoryEvent.ReloadState(allRepositories.map { GitRepositoryToDtoConverter.convertToDto(it) }))
-            while (isActive) {
-              delay(SYNC_INTERVAL)
-              send(GitRepositoryEvent.RepositoriesSync(getAllRepositories(project).map { it.rpcId }))
-            }
+  override suspend fun getRepositoriesEvents(projectId: ProjectId): Flow<GitRepositoryEvent> =
+    projectScopedCallbackFlow(projectId) { project, messageBusConnection ->
+      val synchronizer = Synchronizer(project, this)
+      // Sending of the initial state should be delayed until initialization is complete
+      ProjectLevelVcsManager.getInstance(project).runAfterInitialization {
+        launch {
+          val allRepositories = getAllRepositories(project)
+          allRepositories.forEach { repository -> synchronizer.sendDeletedEventOnDispose(repository) }
+          send(GitRepositoryEvent.ReloadState(allRepositories.map { GitRepositoryToDtoConverter.convertToDto(it) }))
+          while (isActive) {
+            delay(SYNC_INTERVAL)
+            send(GitRepositoryEvent.RepositoriesSync(getAllRepositories(project).map { it.rpcId }))
           }
         }
-
-        project.messageBus.connect().also {
-          it.subscribe(GitRepositoryFrontendSynchronizer.TOPIC, synchronizer)
-        }
       }
 
-      awaitClose {
-        LOG.debug("Connection closed")
-        messageBusConnection?.disconnect()
-      }
+      messageBusConnection.subscribe(GitRepositoryFrontendSynchronizer.TOPIC, synchronizer)
     }
-  }
 
-  override suspend fun forceSync(projectId: ProjectId) {
+  override suspend fun forceSync(projectId: ProjectId): Unit = projectScoped(projectId) { project ->
     requireOwner()
-
-    val project = projectId.findProjectOrNull() ?: return
     project.messageBus.syncPublisher(GitRepositoryFrontendSynchronizer.TOPIC).forceSync()
   }
 
-  override suspend fun toggleFavorite(projectId: ProjectId, repositories: List<RepositoryId>, reference: GitReferenceName, favorite: Boolean) {
+  override suspend fun toggleFavorite(
+    projectId: ProjectId,
+    repositories: List<RepositoryId>,
+    reference: GitReferenceName,
+    favorite: Boolean,
+  ): Unit = projectScoped(projectId) { project ->
     requireOwner()
-
-    val project = projectId.findProjectOrNull() ?: return
 
     val resolvedRepositories = resolveRepositories(project, repositories)
 

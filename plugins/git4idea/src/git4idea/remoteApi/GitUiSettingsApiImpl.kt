@@ -6,32 +6,29 @@ import com.intellij.dvcs.branch.DvcsBranchSyncPolicyUpdateNotifier
 import com.intellij.dvcs.branch.GroupingKey
 import com.intellij.openapi.progress.withCurrentThreadCoroutineScope
 import com.intellij.platform.project.ProjectId
-import com.intellij.platform.project.findProjectOrNull
 import com.intellij.vcs.git.rpc.GitUiSettingsApi
+import com.intellij.vcs.rpc.ProjectScopeRpcHelper.projectScoped
 import git4idea.config.GitVcsSettings
 import git4idea.repo.GitRepositoryManager
 
 internal class GitUiSettingsApiImpl : GitUiSettingsApi {
-  override suspend fun setGroupingByPrefix(projectId: ProjectId, groupByPrefix: Boolean) {
+  override suspend fun setGroupingByPrefix(projectId: ProjectId, groupByPrefix: Boolean) = projectScoped(projectId) { project ->
     requireOwner()
-    val project = projectId.findProjectOrNull() ?: return
     GitVcsSettings.getInstance(project).setBranchGroupingSettings(GroupingKey.GROUPING_BY_DIRECTORY, groupByPrefix)
     withCurrentThreadCoroutineScope {
       saveSettingsForRemoteDevelopment(project)
     }
   }
 
-  override suspend fun initBranchSyncPolicyIfNotInitialized(projectId: ProjectId) {
+  override suspend fun initBranchSyncPolicyIfNotInitialized(projectId: ProjectId) = projectScoped(projectId) { project ->
     requireOwner()
-    val project = projectId.findProjectOrNull() ?: return
-
     DvcsBranchSyncPolicyUpdateNotifier(project,
                                        GitVcsSettings.getInstance(project),
                                        GitRepositoryManager.getInstance(project)).initBranchSyncPolicyIfNotInitialized()
   }
 
-  override suspend fun setShowTags(projectId: ProjectId, showTags: Boolean) {
-    val project = projectId.findProjectOrNull() ?: return
+  override suspend fun setShowTags(projectId: ProjectId, showTags: Boolean) = projectScoped(projectId) { project ->
+    requireOwner()
     GitVcsSettings.getInstance(project).setShowTags(showTags)
     withCurrentThreadCoroutineScope {
       saveSettingsForRemoteDevelopment(project)

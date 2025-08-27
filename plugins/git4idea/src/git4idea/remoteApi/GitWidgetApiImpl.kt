@@ -5,7 +5,6 @@ import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.ide.ui.icons.rpcId
 import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.ide.vfs.virtualFile
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
@@ -14,11 +13,11 @@ import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx
 import com.intellij.openapi.vcs.ex.VcsActivationListener
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.project.ProjectId
-import com.intellij.platform.project.findProjectOrNull
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.messages.SimpleMessageBusConnection
 import com.intellij.vcs.git.rpc.GitWidgetApi
 import com.intellij.vcs.git.rpc.GitWidgetState
+import com.intellij.vcs.rpc.ProjectScopeRpcHelper.projectScopedCallbackFlow
 import git4idea.GitVcs
 import git4idea.branch.GitBranchIncomingOutgoingManager
 import git4idea.branch.GitBranchIncomingOutgoingManager.GitIncomingOutgoingListener
@@ -33,37 +32,26 @@ import git4idea.repo.GitRepositoryStateChangeListener
 import git4idea.ui.branch.GitCurrentBranchPresenter
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.ProducerScope
-import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 internal class GitWidgetApiImpl : GitWidgetApi {
-  override suspend fun getWidgetState(projectId: ProjectId, selectedFile: VirtualFileId?): Flow<GitWidgetState> {
-    requireOwner()
+  override suspend fun getWidgetState(projectId: ProjectId, selectedFile: VirtualFileId?): Flow<GitWidgetState> =
+    projectScopedCallbackFlow(projectId) { project, messageBusConnection ->
+      requireOwner()
 
-    val project = projectId.findProjectOrNull() ?: return emptyFlow()
-    val file = selectedFile?.virtualFile()
+      val file = selectedFile?.virtualFile()
+      val notifier = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
-    val notifier = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-    return callbackFlow {
-      val messageBusConnection = readAction {
-        if (project.isDisposed) {
-          close()
-          return@readAction null
-        }
-        launch {
-          trySendNewState(project, file)
-          notifier.collectLatest { trySendNewState(project, file) }
-        }
-        project.messageBus.connect().also { subscribeOnUpdates(it, notifier) }
+      launch {
+        trySendNewState(project, file)
+        notifier.collectLatest { trySendNewState(project, file) }
       }
 
-      awaitClose {
-        LOG.debug("Connection closed")
-        messageBusConnection?.disconnect()
-      }
+      subscribeOnUpdates(messageBusConnection, notifier)
     }
-  }
 
   private fun subscribeOnUpdates(connection: SimpleMessageBusConnection, notifier: MutableSharedFlow<Unit>) {
     connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, VcsMappingListener {
