@@ -41,22 +41,19 @@ object LockReqsPsiOps {
     return callees
   }
 
-
-  fun findOverriding(method: PsiMethod, scope: GlobalSearchScope, maxImplementations: Int): List<PsiMethod> {
-
-    val implementations = mutableListOf<PsiMethod>()
+  fun findInheritors(method: PsiMethod, scope: GlobalSearchScope, maxImplementations: Int): List<PsiMethod> {
+    val inheritors = mutableListOf<PsiMethod>()
     if (method.body != null) {
-      implementations.add(method)
+      inheritors.add(method)
     }
     if (canBeOverridden(method)) {
       val query = OverridingMethodsSearch.search(method, scope, true)
       query.forEach { override ->
-        if (implementations.size >= maxImplementations) return@forEach
-        implementations.add(override)
+        if (inheritors.size >= maxImplementations) return@forEach
+        inheritors.add(override)
       }
     }
-    return implementations
-
+    return inheritors
   }
 
   fun findImplementations(interfaceClass: PsiClass, scope: GlobalSearchScope, maxImplementations: Int): List<PsiClass> {
@@ -68,7 +65,6 @@ object LockReqsPsiOps {
     }
     return implementations
   }
-
 
   fun canBeOverridden(method: PsiMethod): Boolean {
     if (method.isConstructor) return false
@@ -86,9 +82,7 @@ object LockReqsPsiOps {
   }
 
   fun isInPackages(className: String, packagePrefixes: Collection<String>): Boolean {
-    return packagePrefixes.any { prefix ->
-      className.startsWith("$prefix.")
-    }
+    return packagePrefixes.any { prefix -> className.startsWith("$prefix.") }
   }
 
   fun resolveReturnType(method: PsiMethod): PsiClass? {

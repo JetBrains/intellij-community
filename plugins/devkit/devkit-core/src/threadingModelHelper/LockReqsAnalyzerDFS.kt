@@ -2,12 +2,7 @@
 package org.jetbrains.idea.devkit.threadingModelHelper
 
 import com.intellij.psi.PsiMethod
-import com.intellij.psi.JavaRecursiveElementVisitor
 import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiClassType
-import com.intellij.psi.PsiMethodCallExpression
-import com.intellij.psi.PsiMethodReferenceExpression
-import com.intellij.psi.PsiNewExpression
 
 class LockReqsAnalyzerDFS(private val detector: LockReqsDetector = LockReqsDetector()) {
 
@@ -20,13 +15,15 @@ class LockReqsAnalyzerDFS(private val detector: LockReqsDetector = LockReqsDetec
     val swingComponents: MutableSet<MethodSignature> = mutableSetOf(),
   )
 
+  private lateinit var context: TraversalContext
+
   fun analyzeMethod(method: PsiMethod, config: AnalysisConfig = AnalysisConfig.forProject(method.project)): AnalysisResult {
-    val context = TraversalContext(config)
-    traverseMethod(method, context)
+    context = TraversalContext(config)
+    traverseMethod(method)
     return AnalysisResult(method, context.paths, context.messageBusTopics, context.swingComponents)
   }
 
-  private fun traverseMethod(method: PsiMethod, context: TraversalContext) {
+  private fun traverseMethod(method: PsiMethod) {
     println("Traversing method ${method.containingClass?.qualifiedName}.${method.name}, ${context.currentPath.size} steps deep")
     val signature = MethodSignature.fromMethod(method)
     if (context.currentPath.size >= context.config.maxDepth || signature in context.visited) return
@@ -35,33 +32,33 @@ class LockReqsAnalyzerDFS(private val detector: LockReqsDetector = LockReqsDetec
 
     val annotationRequirement = detector.findAnnotationRequirements(method)
     annotationRequirement.forEach { context.paths.add(ExecutionPath(context.currentPath.toList(), it)) }
-    LockReqsPsiOps.getMethodCallees(method).forEach { processCallee(it, context) }
+    LockReqsPsiOps.getMethodCallees(method).forEach { processCallee(it) }
 
     context.currentPath.removeLast()
   }
 
-  private fun processCallee(callee: PsiMethod, context: TraversalContext) {
+  private fun processCallee(callee: PsiMethod) {
     detector.findBodyRequirements(callee).forEach { requirement ->
       context.paths.add(ExecutionPath(context.currentPath.toList(), requirement))
     }
     if (!detector.isAsyncDispatch(callee)) {
       when {
-        detector.isMessageBusCall(callee) -> handleMessageBusCall(callee, context)
-        LockReqsPsiOps.canBeOverridden(callee) -> handlePolymorphic(callee, context)
-        else -> traverseMethod(callee, context)
+        detector.isMessageBusCall(callee) -> handleMessageBusCall(callee)
+        LockReqsPsiOps.canBeOverridden(callee) -> handlePolymorphic(callee)
+        else -> traverseMethod(callee)
       }
     }
   }
 
-  private fun handlePolymorphic(method: PsiMethod, context: TraversalContext) {
-    val overrides = LockReqsPsiOps.findOverriding(method, context.config.scope, context.config.maxImplementations)
-    overrides.forEach { traverseMethod(it, context) }
+  private fun handlePolymorphic(method: PsiMethod) {
+    val overrides = LockReqsPsiOps.findInheritors(method, context.config.scope, context.config.maxImplementations)
+    overrides.forEach { traverseMethod(it) }
   }
 
-  private fun handleMessageBusCall(method: PsiMethod, context: TraversalContext) {
+  private fun handleMessageBusCall(method: PsiMethod) {
     val topicClass = detector.extractMessageBusTopic(method) ?: return
     context.messageBusTopics.add(topicClass)
     val listeners = LockReqsPsiOps.findImplementations(topicClass, context.config.scope, context.config.maxImplementations)
-    listeners.forEach { it.methods.forEach { method -> traverseMethod(method, context) } }
+    listeners.forEach { it.methods.forEach { method -> traverseMethod(method) } }
   }
 }
