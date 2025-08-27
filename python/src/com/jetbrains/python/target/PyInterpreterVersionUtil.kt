@@ -3,83 +3,28 @@
 
 package com.jetbrains.python.target
 
-import com.intellij.execution.process.CapturingProcessHandler
-import com.intellij.execution.target.TargetProgressIndicatorAdapter
-import com.intellij.execution.target.TargetedCommandLineBuilder
-import com.intellij.execution.target.getTargetEnvironmentRequest
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.Task
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.util.Ref
+import com.intellij.python.community.execService.BinOnTarget
+import com.intellij.python.community.execService.python.validatePythonAndGetVersion
 import com.intellij.remote.RemoteSdkException
-import com.intellij.util.ui.UIUtil
-import com.jetbrains.python.PYTHON_VERSION_ARG
-import com.jetbrains.python.PyBundle
-import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
+import com.jetbrains.python.Result
+import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.ui.pyMayBeModalBlocking
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
+suspend fun PyTargetAwareAdditionalData.getInterpreterVersion(): PyResult<LanguageLevel> =
+  BinOnTarget(interpreterPath, targetEnvironmentConfiguration).validatePythonAndGetVersion()
+
+
+@ApiStatus.Internal
 @Throws(RemoteSdkException::class)
-fun PyTargetAwareAdditionalData.getInterpreterVersion(project: Project?, nullForUnparsableVersion: Boolean = true): String? {
-  return getInterpreterVersion(project, interpreterPath, nullForUnparsableVersion)
-}
-
-@Throws(RemoteSdkException::class)
-fun PyTargetAwareAdditionalData.getInterpreterVersion(
-  project: Project?,
-  interpreterPath: String,
-  nullForUnparsableVersion: Boolean = true,
-): String? {
-  val targetEnvironmentRequest = getTargetEnvironmentRequest(project ?: ProjectManager.getInstance().defaultProject)
-                                 ?: throw IllegalStateException("Unable to get target configuration from Python SDK data")
-  val result = Ref.create<String>()
-  val exception = Ref.create<RemoteSdkException>()
-  val task: Task.Modal = object : Task.Modal(project, PyBundle.message("python.sdk.getting.remote.interpreter.version"), true) {
-    override fun run(indicator: ProgressIndicator) {
-      try {
-        val targetedCommandLineBuilder = TargetedCommandLineBuilder(targetEnvironmentRequest)
-        targetedCommandLineBuilder.setExePath(interpreterPath)
-        targetedCommandLineBuilder.addParameter(PYTHON_VERSION_ARG)
-        val targetEnvironment = targetEnvironmentRequest.prepareEnvironment(TargetProgressIndicatorAdapter(indicator))
-        val targetedCommandLine = targetedCommandLineBuilder.build()
-
-        val process = targetEnvironment.createProcess(targetedCommandLine, indicator)
-        val commandLineString = targetedCommandLine.collectCommandsSynchronously().joinToString(separator = " ")
-        val capturingProcessHandler = CapturingProcessHandler(process, Charsets.UTF_8, commandLineString)
-        val processOutput = capturingProcessHandler.runProcess()
-
-        if (processOutput.exitCode == 0) {
-          val version = PythonSdkFlavor.getVersionStringFromOutput(processOutput)
-          if (version != null || nullForUnparsableVersion) {
-            result.set(version)
-            return
-          }
-          else {
-            throw RemoteSdkException(PyBundle.message("python.sdk.empty.version.string"), processOutput.stdout, processOutput.stderr)
-          }
-        }
-        else {
-          throw RemoteSdkException(
-            PyBundle.message("python.sdk.non.zero.exit.code", processOutput.exitCode), processOutput.stdout, processOutput.stderr)
-        }
-      }
-      catch (e: RemoteSdkException) {
-        exception.set(e)
-      }
-    }
+fun PyTargetAwareAdditionalData.getInterpreterVersionForJava(): LanguageLevel {
+  val r = pyMayBeModalBlocking {
+    getInterpreterVersion()
   }
-
-  if (!ProgressManager.getInstance().hasProgressIndicator()) {
-    UIUtil.invokeAndWaitIfNeeded(Runnable { ProgressManager.getInstance().run(task) })
-    //invokeAndWaitIfNeeded(ModalityState.defaultModalityState()) { ProgressManager.getInstance().run(task) }
+  return when (r) {
+    is Result.Failure -> throw RemoteSdkException(r.error.message)
+    is Result.Success -> r.result
   }
-  else {
-    task.run(ProgressManager.getInstance().progressIndicator)
-  }
-
-  if (!exception.isNull) {
-    throw exception.get()
-  }
-
-  return result.get()
 }

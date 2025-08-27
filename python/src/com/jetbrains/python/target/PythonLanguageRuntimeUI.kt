@@ -12,14 +12,17 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList
 import com.jetbrains.python.target.ui.PyAddTargetBasedSdkPanel
 import java.util.function.Supplier
 
-class PythonLanguageRuntimeUI(project: Project,
-                              config: PythonLanguageRuntimeConfiguration,
-                              targetSupplier: Supplier<TargetEnvironmentConfiguration>)
+class PythonLanguageRuntimeUI(
+  project: Project,
+  config: PythonLanguageRuntimeConfiguration,
+  targetSupplier: Supplier<TargetEnvironmentConfiguration>,
+)
   : BoundConfigurable(PyBundle.message("configurable.name.python.language")), CustomToolLanguageConfigurable<Sdk> {
   private val existingSdks: List<Sdk> = PyConfigurableInterpreterList.getInstance(project).model.sdks.asList()
 
@@ -28,7 +31,7 @@ class PythonLanguageRuntimeUI(project: Project,
   private val panel: PyAddTargetBasedSdkPanel by lazy {
     PyAddTargetBasedSdkPanel(project = project, module = null, existingSdks = existingSdks, targetSupplier = targetSupplier,
                              config = config, introspectable = introspectable).apply {
-                               disposable?.let { Disposer.register(it, this) }
+      disposable?.let { Disposer.register(it, this) }
     }
   }
 
@@ -47,6 +50,7 @@ class PythonLanguageRuntimeUI(project: Project,
     this.introspectable = introspectable
   }
 
+  @RequiresEdt
   override fun createCustomTool(): Sdk? {
     return panel.getOrCreateSdk()
   }

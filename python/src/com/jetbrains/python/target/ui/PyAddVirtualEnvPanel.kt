@@ -6,8 +6,8 @@ import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.execution.target.joinTargetPaths
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.ui.DialogPanel
@@ -19,6 +19,7 @@ import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.ui.layout.not
 import com.intellij.util.PathUtil
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.getOrThrow
@@ -38,6 +39,7 @@ import com.jetbrains.python.sdk.flavors.PyFlavorData
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import com.jetbrains.python.target.PythonLanguageRuntimeConfiguration
 import com.jetbrains.python.target.createDetectedSdk
+import com.jetbrains.python.util.runWithModalBlockingOrInBackground
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import java.awt.BorderLayout
 import java.util.function.Supplier
@@ -179,6 +181,7 @@ internal class PyAddVirtualEnvPanel(
     }
   }
 
+  @RequiresEdt
   override fun getOrCreateSdk(): Sdk {
     // applies components' states for bound properties (e.g. selected radio button to `isCreateNewVirtualenv` field)
     contentPanel.apply()
@@ -190,7 +193,7 @@ internal class PyAddVirtualEnvPanel(
 
     val item = interpreterCombobox.selectedItem as ExistingPySdkComboBoxItem
     // there should *not* be other items other than `ExistingPySdkComboBoxItem`
-    return runBlockingMaybeCancellable {
+    return runWithModalBlockingOrInBackground(project ?: ProjectManager.getInstance().defaultProject, "...") {
       configureExistingVirtualenvSdk(targetEnvironmentConfiguration, item.sdk)
     }
   }
