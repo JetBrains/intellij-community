@@ -58,5 +58,6 @@
     <orderEntry type="module" module-name="intellij.platform.debugger" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.hamcrest" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.eelJava" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.eel.provider" scope="TEST" />
   </component>
 </module>

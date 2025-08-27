@@ -75,6 +75,7 @@ jvm_library(
     "//platform/xdebugger-api:debugger",
     "//libraries/hamcrest",
     "//platform/testFramework/eelJava",
+    "//platform/eel-provider",
   ],
   runtime_deps = [":maven-tests_test_resources"]
 )
