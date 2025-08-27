@@ -382,9 +382,11 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
 
       if (JUnitUtil.hasPackageWithDirectories(psiFacade, "org.junit.platform.suite.api", globalSearchScope)) {
         if (!JUnitUtil.hasPackageWithDirectories(psiFacade, SUITE_ENGINE_NAME, globalSearchScope)) {
-          String suiteVersion = ObjectUtils.notNull(getLibraryVersion("org.junit.platform.suite.engine.SuiteTestEngine", globalSearchScope, project), launcherVersion);
-          downloadDependenciesWhenRequired(project, additionalDependencies,
-                                           new RepositoryLibraryProperties("org.junit.platform", "junit-platform-suite-engine", suiteVersion));
+          String suiteVersion = getLibraryVersion("org.junit.platform.suite.api.Suite", globalSearchScope, project);
+          if (suiteVersion != null && VersionComparatorUtil.compare(suiteVersion, "1.8.0") >= 0) {
+            downloadDependenciesWhenRequired(project, additionalDependencies,
+                                             new RepositoryLibraryProperties("org.junit.platform", "junit-platform-suite-engine", suiteVersion));
+          }
         }
         else if (isModularized) {
           ensureSpecifiedModuleOnModulePath(javaParameters, globalSearchScope, psiFacade, SUITE_ENGINE_NAME);
