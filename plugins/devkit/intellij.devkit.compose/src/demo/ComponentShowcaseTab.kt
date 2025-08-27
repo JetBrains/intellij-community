@@ -26,6 +26,7 @@ import org.jetbrains.jewel.foundation.modifier.trackActivation
 import org.jetbrains.jewel.foundation.modifier.trackComponentActivation
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.foundation.theme.LocalContentColor
+import org.jetbrains.jewel.foundation.util.JewelLogger
 import org.jetbrains.jewel.intui.markdown.bridge.ProvideMarkdownStyling
 import org.jetbrains.jewel.markdown.Markdown
 import org.jetbrains.jewel.ui.Orientation
@@ -215,6 +216,48 @@ private fun RowScope.ColumnOne() {
         }
       }
     }
+
+    DefaultSplitButton(
+      onClick = { JewelLogger.getInstance("Jewel").warn("Outlined split button clicked") },
+      secondaryOnClick = { JewelLogger.getInstance("Jewel").warn("Outlined split button chevron clicked") },
+      content = { Text("Sub menus") },
+      menuContent = {
+        fun MenuScope.buildSubmenus(stack: List<Int>) {
+          val stackStr = stack.joinToString(".").let { if (stack.isEmpty()) it else "$it." }
+
+          repeat(5) {
+            val number = it + 1
+            val itemStr = "$stackStr$number"
+
+            if (stack.size == 4) {
+              selectableItem(
+                selected = false,
+                onClick = {
+                  JewelLogger.getInstance("Jewel").warn("Item clicked: $itemStr") },
+              ) {
+                Text("Item $itemStr")
+              }
+            } else {
+              submenu(
+                submenu = { buildSubmenus(stack + number) },
+                content = { Text("Submenu $itemStr") },
+              )
+            }
+          }
+
+          separator()
+
+          items(
+            10,
+            isSelected = { false },
+            onItemClick = { JewelLogger.getInstance("Jewel").warn("Item clicked: $it") },
+            content = { Text("Other Item ${it + 1}") },
+          )
+        }
+
+        buildSubmenus(emptyList())
+      },
+    )
   }
 }
 
