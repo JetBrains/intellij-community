@@ -331,7 +331,7 @@ class WelcomeScreenRightTab(val project: Project) {
     }
 
     @ApiStatus.Internal
-    const val ADVANCED_SETTINGS_ID = "go.non.modal.welcome.screen.right.tab.enabled"
+    const val ADVANCED_SETTINGS_ID: String = "welcome.screen.non.modal.enabled"
 
     private var isRightTabEnabled: Boolean
       get() = AdvancedSettings.getBoolean(ADVANCED_SETTINGS_ID)
