@@ -233,6 +233,7 @@ public final class ConsentOptions implements ModificationTracker {
     return getPermission(AI_DATA_COLLECTION_OPTION_ID);
   }
 
+  @TestOnly
   public void setAiDataCollectionPermission(boolean permitted) {
     setPermission(AI_DATA_COLLECTION_OPTION_ID, permitted);
   }
