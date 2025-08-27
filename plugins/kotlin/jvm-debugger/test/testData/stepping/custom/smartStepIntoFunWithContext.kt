@@ -1,5 +1,5 @@
+// ENABLED_LANGUAGE_FEATURE: ContextReceivers
 package smartStepIntoFunWithContext
-
 context(Double)
 fun funWithContext(lambda: (Int) -> Unit) = lambda(42)
 

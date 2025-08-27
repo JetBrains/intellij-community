@@ -2,15 +2,18 @@
 package org.jetbrains.kotlin.idea.base.plugin.artifacts
 
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.testFramework.common.BazelTestUtil
-import com.intellij.util.io.DigestUtil
+import com.intellij.testFramework.common.BazelTestUtil.getFileFromBazelRuntime
 import com.intellij.testFramework.common.bazel.BazelLabel
+import com.intellij.util.io.DigestUtil
 import com.intellij.util.io.createParentDirectories
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader.extractFile
+import org.jetbrains.jps.model.serialization.JpsMavenSettings
 import org.jetbrains.kotlin.idea.artifacts.KotlinNativeHostSupportDetector
 import org.jetbrains.kotlin.idea.artifacts.KotlinNativePrebuiltDownloader.downloadFile
 import org.jetbrains.kotlin.idea.artifacts.KotlinNativePrebuiltDownloader.unpackPrebuildArchive
@@ -19,17 +22,18 @@ import org.jetbrains.kotlin.idea.artifacts.NATIVE_PREBUILT_DEV_CDN_URL
 import org.jetbrains.kotlin.idea.artifacts.NATIVE_PREBUILT_RELEASE_CDN_URL
 import org.jetbrains.kotlin.konan.target.HostManager
 import org.jetbrains.kotlin.konan.target.TargetSupportException
+import org.jetbrains.tools.model.updater.KotlinTestsDependenciesUtil
 import java.io.File
 import java.io.IOException
 import java.net.URI
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
 import java.util.zip.Deflater
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 import kotlin.io.path.*
+import kotlin.reflect.KVisibility
 
 @OptIn(ExperimentalPathApi::class)
 object TestKotlinArtifacts {
@@ -38,6 +42,9 @@ object TestKotlinArtifacts {
     private val communityRoot by lazy {
         BuildDependenciesCommunityRoot(Path.of(PathManager.getCommunityHomePath()))
     }
+
+    private val LOG = logger<TestKotlinArtifacts>()
+
     private fun areFilesEquals(source: File, destination: File): Boolean {
         if (!destination.exists()) {
             return false
@@ -78,75 +85,57 @@ object TestKotlinArtifacts {
         listOf(getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-jps-plugin-classpath.jar").toPath())
     }
 
-    private data class DownloadFile(
-        val fileName: String,
-        val url: String,
-        val sha256: String,
-    )
-
-    private val kotlinTestDependenciesHttpFiles by lazy {
-        val kotlinDepsFile = Paths
-            .get(PathManager.getCommunityHomePath()).resolve("plugins/kotlin/kotlin_test_dependencies.bzl")
-        if (!Files.isRegularFile(kotlinDepsFile)) {
-            error("Unable to find test dependency file '$kotlinDepsFile'")
-        }
-        val content = kotlinDepsFile.readText()
-        val httpFileRegex = Regex("""(?<!def )download_file\s*\((.*?)\)""", RegexOption.DOT_MATCHES_ALL)
-        val nameRegex = Regex("""name\s*=\s*["']([^"']+)["']""")
-        val urlRegex = Regex("""url\s*=\s*["']([^"']+)["']""")
-        val sha256Regex = Regex("""sha256\s*=\s*["']([^"']+)["']""")
-        val errors = mutableListOf<String>()
-        val result =  httpFileRegex.findAll(content).mapNotNull { match ->
-            val block = match.groupValues[1]
-
-            val name = nameRegex.find(block)?.groupValues?.get(1)
-            val url = urlRegex.find(block)?.groupValues?.get(1)
-            val sha256 = sha256Regex.find(block)?.groupValues?.get(1)
-
-            if (name != null && url != null && sha256 != null) {
-                DownloadFile(
-                    fileName = name,
-                    url = url,
-                    sha256 = sha256,
-                )
-            } else {
-                errors += buildString {
-                    appendLine("Unable to parse http_file block at offset ${match.range.first}:")
-                    appendLine(block.trim())
-                }
-                null
-            }
-        }.toList()
-        if (errors.isNotEmpty()) {
-            error("${errors.size} download_file blocks were not parsed correctly:\n${errors.joinToString("\n\n")}")
-        }
-        return@lazy result
-    }
-
-    private fun findDownloadFile(label: BazelLabel): DownloadFile {
+    private fun findDownloadFile(label: BazelLabel): KotlinTestsDependenciesUtil.DownloadFile {
         if (label.repo != KOTLIN_DEPS_REPO) {
             error("Only $KOTLIN_DEPS_REPO repo is supported, but got '${label.repo}' from: ${label.asLabel}")
         }
-
-        return kotlinTestDependenciesHttpFiles.find { it.fileName == label.target }
+        return KotlinTestsDependenciesUtil.kotlinTestDependenciesHttpFiles.find { it.fileName == label.target }
             ?: error("Unable to find URL for '${label.asLabel}'")
     }
 
+    private val cooperativeRepoRoot = PathManager.getHomeDir().parent.resolve("build/repo")
+
     private fun downloadFile(label: BazelLabel): Path {
         val downloadFile = findDownloadFile(label)
-        val fileInCache = BuildDependenciesDownloader.downloadFileToCacheLocation(communityRoot, URI.create(downloadFile.url))
-        val fileBytes = fileInCache.readBytes()
-
-        val onDiskSha256 = DigestUtil.sha256Hex(fileBytes)
-        if (onDiskSha256 != downloadFile.sha256) {
-            error("SHA-256 checksum mismatch for '${label.asLabel}': expected '${downloadFile.sha256}', got '$onDiskSha256' at $fileInCache")
+        val labelUrl = URI(downloadFile.url)
+        // Kotlin plugin team use special workflow for simultaneous development Kotlin compiler and IDEA plugin.
+        // In this scenario maven libraries with complier artifacts are replaced on locally deployed jars in the Kotlin repo folder.
+        // To support test in this scenario, we need special handling urls with a custom hardcoded version.
+        // See docs about this process:
+        // https://github.com/JetBrains/intellij-community/blob/master/plugins/kotlin/docs/cooperative-development/environment-setup.md
+        val fileInCache = if (labelUrl.toString().contains("255-dev-255")) {
+            val relativePath = labelUrl.path.substringAfter("/intellij-dependencies/")
+            val file = cooperativeRepoRoot.resolve(relativePath)
+            if (!Files.exists(file)) {
+                error("File $file doesn't exist in cooperative repo $cooperativeRepoRoot. " +
+                              "Please run 'Kotlin Coop: Publish compiler-for-ide JARs' run configuration in IntelliJ.")
+            }
+            file
+        } else {
+            val relativePath = labelUrl.path.substringAfter("/intellij-dependencies/")
+            val fileInM2Folder = Path.of(JpsMavenSettings.getMavenRepositoryPath()).resolve(relativePath)
+            if (Files.exists(fileInM2Folder)) {
+                val onDiskSha256 = DigestUtil.sha256Hex(fileInM2Folder.readBytes())
+                if (onDiskSha256 != downloadFile.sha256) {
+                    error("SHA-256 checksum mismatch for '${label.asLabel}': expected '${downloadFile.sha256}', got '$onDiskSha256' at $fileInM2Folder")
+                }
+                return fileInM2Folder
+            }
+            val fileInCache = BuildDependenciesDownloader.downloadFileToCacheLocation(communityRoot, labelUrl)
+            val onDiskSha256 = DigestUtil.sha256Hex(fileInCache.readBytes())
+            if (onDiskSha256 != downloadFile.sha256) {
+                error("SHA-256 checksum mismatch for '${label.asLabel}': expected '${downloadFile.sha256}', got '$onDiskSha256' at $fileInCache")
+            }
+            fileInCache
         }
-
         val target = communityRoot.communityRoot.resolve("out/kotlin-from-sources-deps/${label.target}")
-        if (!target.exists() || !target.readBytes().contentEquals(fileBytes)) {
-            Files.copy(fileInCache, target.createParentDirectories(), StandardCopyOption.REPLACE_EXISTING)
+        if (!Files.exists(target.parent)) {
+            target.createParentDirectories()
         }
-
+        @Suppress("IO_FILE_USAGE")
+        if (!areFilesEquals(fileInCache.toFile(), target.toFile())) {
+            Files.copy(fileInCache, target, StandardCopyOption.REPLACE_EXISTING)
+        }
         return target
     }
 
@@ -157,21 +146,26 @@ object TestKotlinArtifacts {
     }
 
     private fun getKotlinDepsByLabel(label: BazelLabel): File {
-        // Why it is different
+        // Bazel will download and provide all dependencies externally.
+        // We should manually download dependencies when test are running not from Bazel.
         val dependency = if (BazelTestUtil.isUnderBazelTest) {
-            BazelTestUtil.getFileFromBazelRuntime(label)
+            getFileFromBazelRuntime(label).also {
+                LOG.info("Found dependency in Bazel runtime ${label.asLabel} at '$it'")
+            }
         } else {
-            downloadFile(label)
+            downloadFile(label).also {
+                LOG.info("Found dependency download dependency ${label.asLabel} at '$it'")
+            }
         }
 
         // some tests for code require that files should be under $COMMUNITY_HOME_PATH/out
         val target = File(PathManager.getCommunityHomePath())
             .resolve("out")
             .resolve("kotlin-from-sources-deps")
-            .resolve(dependency.name)
+            .resolve(label.target)
 
         // we could have a file from some previous launch, but with different content
-        // it is a valid scenario when file it is JAR without a version and url changed
+        // it is a valid scenario when the file is JAR without a version and url changed
         // we have to verify content
         @Suppress("IO_FILE_USAGE")
         if (target.exists() && areFilesEquals(dependency.toFile(), target)) {
@@ -186,6 +180,7 @@ object TestKotlinArtifacts {
         } finally {
             tempFile.deleteIfExists()
         }
+        LOG.info("Dependency ${label.asLabel} resolved to '$target'")
         return target
     }
 
@@ -286,10 +281,14 @@ object TestKotlinArtifacts {
         // prints all available test artifacts for DEBUGGING ONLY
         for (member in TestKotlinArtifacts::class.members) {
             if (member.name == "kotlinJvmDebuggerTestData") continue
+            if (member.visibility != KVisibility.PUBLIC) continue
             if (member.parameters.size != 1) continue
-
             if (member.returnType.classifier == File::class || member.returnType.classifier == Path::class) {
-                println("${member.name} = ${member.call(TestKotlinArtifacts)}")
+                try {
+                    println("${member.name} = ${member.call(TestKotlinArtifacts)}")
+                } catch (e: Exception) {
+                    error("cannot call member '${member.name}': $e")
+                }
             }
         }
         println("Done")

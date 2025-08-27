@@ -5,5 +5,3 @@ foo                          // RESULT: res1: kotlin.Int = 1
 bar                          // RESULT: res2: kotlin.String = 2
 val (_, baz) = 3 to "4"
 baz                          // RESULT: res4: kotlin.String = 4
-/** warning: flag is not supported by this version of the compiler: -Xrepl
- */

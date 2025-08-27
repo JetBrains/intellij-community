@@ -1,5 +1,5 @@
+// ENABLED_LANGUAGE_FEATURE: ContextReceivers
 package functionBreakpoints
-
 //FunctionBreakpoint!
 class A
 
