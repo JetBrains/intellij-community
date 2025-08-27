@@ -17,6 +17,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyTypeProvider;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
+import com.jetbrains.python.pyi.PyiLanguageDialect;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -68,15 +69,15 @@ public sealed class TypeEvalContext {
   }
 
   public boolean allowDataFlow(PsiElement element) {
-    return myConstraints.myAllowDataFlow || inOrigin(element);
+    return myConstraints.myAllowDataFlow && !inPyiFile(element) || inOrigin(element);
   }
 
   public boolean allowReturnTypes(PsiElement element) {
-    return myConstraints.myAllowDataFlow || inOrigin(element);
+    return myConstraints.myAllowDataFlow && !inPyiFile(element) || inOrigin(element);
   }
 
   public boolean allowCallContext(@NotNull PsiElement element) {
-    return myConstraints.myAllowCallContext && inOrigin(element);
+    return myConstraints.myAllowCallContext && !inPyiFile(element) && inOrigin(element);
   }
 
   /**
@@ -316,7 +317,7 @@ public sealed class TypeEvalContext {
   }
 
   public boolean maySwitchToAST(@NotNull PsiElement element) {
-    return myConstraints.myAllowStubToAST || inOrigin(element);
+    return myConstraints.myAllowStubToAST && !inPyiFile(element) || inOrigin(element);
   }
 
   public @Nullable PsiFile getOrigin() {
@@ -356,6 +357,14 @@ public sealed class TypeEvalContext {
     return myConstraints.myOrigin == element.getContainingFile() || myConstraints.myOrigin == getContextFile(element);
   }
 
+  private static boolean inPyiFile(@NotNull PsiElement element) {
+    if (isPyiFile(element.getContainingFile())) {
+      return true;
+    }
+    PsiFile contextFile = getContextFile(element);
+    return contextFile != null && isPyiFile(contextFile);
+  }
+
   private static PsiFile getContextFile(@NotNull PsiElement element) {
     PsiFile file = element.getContainingFile();
     if (file == null) return null;
@@ -366,6 +375,10 @@ public sealed class TypeEvalContext {
     else {
       return getContextFile(context);
     }
+  }
+
+  private static boolean isPyiFile(@NotNull PsiFile file) {
+    return file.getLanguage().equals(PyiLanguageDialect.getInstance());
   }
 
   private static class PyNullType implements PyType {
