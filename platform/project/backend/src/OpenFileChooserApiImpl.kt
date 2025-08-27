@@ -7,7 +7,6 @@ import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.project.OpenFileChooserApi
 import com.intellij.platform.project.OpenFileChooserService
 import com.intellij.platform.project.ProjectId
@@ -31,15 +30,8 @@ internal class OpenFileChooserApiImpl : OpenFileChooserApi {
 
     OpenFileChooserService.getInstance(project).coroutineScope.launch(Dispatchers.EDT) {
       WindowFocusFrontendService.getInstance().performActionWithFocus(true) {
-        FileChooser.chooseFiles(descriptor, project, null, VfsUtil.findFileByIoFile(File(initialDirectory), true), object : FileChooser.FileChooserConsumer {
-          override fun consume(files: MutableList<VirtualFile?>) {
-            deferred.complete(files[0]?.presentableUrl)
-          }
-
-          override fun cancelled() {
-            deferred.complete(null)
-          }
-        })
+        val files = FileChooser.chooseFiles(descriptor, project, VfsUtil.findFileByIoFile(File(initialDirectory), true))
+        deferred.complete(files.firstOrNull()?.presentableUrl)
       }
     }
     return deferred

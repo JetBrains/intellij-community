@@ -111,6 +111,7 @@ internal class ScopesModelRemoteApiImpl : ScopeModelRemoteApi {
         val model = modelIdToModel[modelId]
         model?.let { Disposer.dispose(it) }
         modelIdToModel.remove(modelId)
+        modelIdToSelectedScopeName.remove(modelId)
       }
     }
     return flow
