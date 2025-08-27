@@ -160,14 +160,6 @@ public class InlineWatchNodeImpl extends WatchNodeImpl implements InlineWatchNod
              textValue.shouldShowTextValue();
     }
 
-    @Override
-    public @NotNull CompletableFuture<@NotNull XValueTextProvider> getValueTextProviderAsync() {
-      if (myValue != null && myValue instanceof XValueTextProvider textValue) {
-        return textValue.getValueTextProviderAsync();
-      }
-      return CompletableFuture.completedFuture(this);
-    }
-
     private class MyEvaluationCallback extends XEvaluationCallbackBase implements XEvaluationCallbackWithOrigin, Obsolescent {
       private final @NotNull XValueNode myNode;
       private final @NotNull XValuePlace myPlace;

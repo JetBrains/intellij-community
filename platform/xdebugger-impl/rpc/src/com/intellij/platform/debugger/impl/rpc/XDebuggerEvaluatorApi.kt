@@ -108,7 +108,7 @@ data class XValueDto(
   val presentation: RpcFlow<XValueSerializedPresentation>,
   val fullValueEvaluator: RpcFlow<XFullValueEvaluatorDto?>,
   val name: String?,
-  @Serializable(with = DeferredSerializer::class) val textProvider: Deferred<XValueTextProviderDto>?,
+  val textProvider: RpcFlow<XValueTextProviderDto>?,
 )
 
 @ApiStatus.Internal

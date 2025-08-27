@@ -66,6 +66,9 @@ class FrontendXValue private constructor(
     FrontendXFullValueEvaluator(cs, xValueDto.id, evaluatorDto)
   }.stateIn(cs, SharingStarted.Eagerly, null)
 
+  private val textProvider = xValueDto.textProvider?.toFlow()
+    ?.stateIn(cs, SharingStarted.Eagerly, null)
+
   init {
     cs.launch {
       val canBeModified = xValueDto.canBeModified.await()
@@ -206,12 +209,9 @@ class FrontendXValue private constructor(
     return MonolithUtils.findXValueById(xValueDto.id)?.referrersProvider
   }
 
-  private fun getTextProviderDto(): XValueTextProviderDto? =
-    xValueDto.textProvider?.asCompletableFuture()?.getNow(null)
+  override fun shouldShowTextValue(): Boolean = textProvider?.value?.shouldShowTextValue ?: false
 
-  override fun shouldShowTextValue(): Boolean = getTextProviderDto()?.shouldShowTextValue ?: false
-
-  override fun getValueText(): String? = getTextProviderDto()?.textValue
+  override fun getValueText(): String? = textProvider?.value?.textValue
 
   override fun toString(): String {
     return "FrontendXValue(id=${xValueDto.id}, value=${presentation.value.rawText()})"

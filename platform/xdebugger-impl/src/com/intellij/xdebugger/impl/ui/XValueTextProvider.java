@@ -13,14 +13,4 @@ public interface XValueTextProvider {
 
   @ApiStatus.Experimental
   boolean shouldShowTextValue();
-
-  /**
-   * Async version of the same provider, which is completed when data is ready to be provided.
-   * Original methods might return conservative results.
-   */
-  @ApiStatus.Internal
-  default @NotNull CompletableFuture<@NotNull XValueTextProvider> getValueTextProviderAsync() {
-    return CompletableFuture.completedFuture(this);
-  }
-
 }

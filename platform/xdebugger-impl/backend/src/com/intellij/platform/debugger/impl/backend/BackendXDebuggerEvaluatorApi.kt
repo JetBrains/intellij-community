@@ -26,6 +26,7 @@ import fleet.rpc.core.RpcFlow
 import fleet.rpc.core.toRpc
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.future.asDeferred
 import kotlinx.coroutines.future.await
@@ -110,12 +111,13 @@ internal suspend fun BackendXValueModel.toXValueDto(): XValueDto {
   val valueMarkupFlow: RpcFlow<XValueMarkerDto?> = xValueModel.marker.toRpc()
 
   val textProvider = (xValue as? XValueTextProvider)
-    ?.valueTextProviderAsync
-    ?.thenApply {
-      XValueTextProviderDto(
-        it.shouldShowTextValue(),
-        it.valueText,
-      )
+    ?.let {
+      xValueModel.presentation.map {
+        XValueTextProviderDto(
+          xValue.shouldShowTextValue(),
+          xValue.valueText,
+        )
+      }.distinctUntilChanged()
     }
 
   return XValueDto(
@@ -128,7 +130,7 @@ internal suspend fun BackendXValueModel.toXValueDto(): XValueDto {
     xValueModel.presentation.toRpc(),
     xValueModel.getEvaluatorDtoFlow().toRpc(),
     (xValue as? XNamedValue)?.name,
-    textProvider?.asDeferred(),
+    textProvider?.toRpc(),
   )
 }
 
