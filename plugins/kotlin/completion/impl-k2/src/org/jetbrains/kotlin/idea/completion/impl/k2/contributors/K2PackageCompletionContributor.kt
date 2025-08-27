@@ -46,7 +46,7 @@ internal class K2PackageCompletionContributor : K2SimpleCompletionContributor<Ko
             }.forEach { context.addElement(it) }
     }
 
-    override fun K2CompletionSetupScope<KotlinRawPositionContext>.isAppropriateContext(): Boolean = when (position) {
+    override fun K2CompletionSetupScope<KotlinRawPositionContext>.isAppropriatePosition(): Boolean = when (position) {
         is KotlinTypeNameReferencePositionContext -> {
             position.allowsClassifiersAndPackagesForPossibleExtensionCallables(
                 parameters = completionContext.parameters,

@@ -72,7 +72,7 @@ internal class K2VariableOrParameterNameWithTypeCompletionContributor : K2Simple
             )
         }
 
-        context.completeLaterInSameSession("Classes From Indices", priority = K2ContributorSectionPriority.INDEX) { innerContext ->
+        context.completeLaterInSameSession("Classes From Indices", priority = K2ContributorSectionPriority.FROM_INDEX) { innerContext ->
             completeClassesFromIndices(
                 context = innerContext,
                 variableOrParameter = variableOrParameter,
@@ -331,7 +331,7 @@ internal class K2VariableOrParameterNameWithTypeCompletionContributor : K2Simple
         else -> false
     }
 
-    override fun K2CompletionSetupScope<KotlinRawPositionContext>.isAppropriateContext(): Boolean = when (position) {
+    override fun K2CompletionSetupScope<KotlinRawPositionContext>.isAppropriatePosition(): Boolean = when (position) {
         is KotlinTypeNameReferencePositionContext,
         is KotlinSimpleParameterPositionContext,
         is KotlinPrimaryConstructorParameterPositionContext -> true

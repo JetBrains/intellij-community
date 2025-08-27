@@ -5,6 +5,7 @@ import com.intellij.codeInsight.completion.PrefixMatcher
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementDecorator
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaCompletionExtensionCandidateChecker
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
@@ -33,7 +34,7 @@ internal class K2CompletionSection<P : KotlinRawPositionContext>(
     val runnable: K2CompletionSectionRunnable<P>,
 )
 
-internal class K2CompletionSectionCommonData<P: KotlinRawPositionContext>(
+internal class K2CompletionSectionCommonData<P : KotlinRawPositionContext>(
     val completionContext: K2CompletionContext<P>,
     val weighingContext: WeighingContext,
     val prefixMatcher: PrefixMatcher,
@@ -80,12 +81,14 @@ internal class K2CompletionSectionContext<out P : KotlinRawPositionContext>(
             context: K2CompletionSectionContext<P>
         ) -> Unit
     ) {
-        addLaterSection(K2CompletionSection(
-            priority = priority,
-            contributor = contributor,
-            name = name,
-            runnable = runnable
-        ))
+        addLaterSection(
+            K2CompletionSection(
+                priority = priority,
+                contributor = contributor,
+                name = name,
+                runnable = runnable
+            )
+        )
     }
 }
 
@@ -95,6 +98,9 @@ internal typealias K2CompletionSectionRunnable<P> = KaSession.(context: K2Comple
  * The priority of a completion section determines the order in which the sections are executed.
  * The order only determines the order in which the sections are _started_ to be executed and
  * the order in which elements are added to the [com.intellij.codeInsight.completion.CompletionResultSet].
+ *
+ * The priorities are ordered by the natural ordering of their respective [value]s.
+ * That is to say, smaller values have priority over larger values.
  */
 class K2ContributorSectionPriority private constructor(private val value: Double) : Comparable<K2ContributorSectionPriority> {
 
@@ -102,6 +108,7 @@ class K2ContributorSectionPriority private constructor(private val value: Double
         /**
          * This priority should be used for sections that offer results that are very likely to be important to the user
          * based on the context _and_ can be executed quickly.
+         *
          */
         val HEURISTIC: K2ContributorSectionPriority = K2ContributorSectionPriority(10.0)
 
@@ -114,7 +121,7 @@ class K2ContributorSectionPriority private constructor(private val value: Double
          * This priority should be used for sections that offer results that are less likely
          * to be useful to the user _and_ may take a long time to be executed.
          */
-        val INDEX: K2ContributorSectionPriority = K2ContributorSectionPriority(100.0)
+        val FROM_INDEX: K2ContributorSectionPriority = K2ContributorSectionPriority(100.0)
     }
 
     override fun compareTo(other: K2ContributorSectionPriority): Int = value.compareTo(other.value)
@@ -129,12 +136,12 @@ class K2ContributorSectionPriority private constructor(private val value: Double
 internal class K2CompletionSetupScope<P : KotlinRawPositionContext> internal constructor(
     val completionContext: K2CompletionContext<P>,
     private val contributor: K2CompletionContributor<P>,
-    private val registeredCompletions: MutableList<K2CompletionSection<*>>
+    private val registeredCompletions: MutableList<K2CompletionSection<P>>
 ) {
     val position: P = completionContext.positionContext
 
-    fun complete(
-        name: String,
+    fun completion(
+        @NonNls name: String,
         priority: K2ContributorSectionPriority = K2ContributorSectionPriority.DEFAULT,
         runnable: K2CompletionSectionRunnable<P>,
     ) {
@@ -162,10 +169,11 @@ internal abstract class K2CompletionContributor<P : KotlinRawPositionContext>(
     /**
      * Can be changed to not run in certain specific positions that are of type [P] but should still not execute.
      */
-    open fun K2CompletionSetupScope<P>.isAppropriateContext(): Boolean = true
+    open fun K2CompletionSetupScope<P>.isAppropriatePosition(): Boolean = true
 
     /**
-     * Same as [isAppropriateContext] but will be executed with a [KaSession] right before execution of the runnable.
+     * If this method returns false, the execution of the section is skipped.
+     * Similar to [isAppropriatePosition], but is executed within the analysis session right before execution of the section.
      */
     open fun KaSession.shouldExecute(context: K2CompletionSectionContext<P>): Boolean = true
 
@@ -178,6 +186,13 @@ internal abstract class K2CompletionContributor<P : KotlinRawPositionContext>(
         sink.addElements(decoratedElements)
     }
 
+    /**
+     * Returns the group priority of the completion section that will be applied as weight to the [LookupElement]s
+     * from within the [org.jetbrains.kotlin.idea.completion.weighers.CompletionContributorGroupWeigher].
+     *
+     * Note: this priority only affects the order of the elements displayed to the user.
+     *  It does not affect the order in which the sections are executed.
+     */
     protected open fun K2CompletionSectionContext<P>.getGroupPriority(): Int = 0
 
     private fun K2CompletionSectionContext<P>.decorateLookupElement(
@@ -215,7 +230,7 @@ internal abstract class K2SimpleCompletionContributor<P : KotlinRawPositionConte
     private val name = nameOverride ?: this::class.simpleName ?: "Unknown"
 
     final override fun K2CompletionSetupScope<P>.registerCompletions() {
-        complete(
+        completion(
             name = name,
             priority = priority,
         ) { complete(it) }

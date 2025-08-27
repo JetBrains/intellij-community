@@ -151,7 +151,7 @@ internal class K2DeclarationFromUnresolvedNameContributor : K2SimpleCompletionCo
         }
     }
 
-    override fun K2CompletionSetupScope<KotlinRawPositionContext>.isAppropriateContext(): Boolean = when (position) {
+    override fun K2CompletionSetupScope<KotlinRawPositionContext>.isAppropriatePosition(): Boolean = when (position) {
         is KotlinTypeNameReferencePositionContext,
         is KotlinClassifierNamePositionContext,
         is KotlinSimpleParameterPositionContext,

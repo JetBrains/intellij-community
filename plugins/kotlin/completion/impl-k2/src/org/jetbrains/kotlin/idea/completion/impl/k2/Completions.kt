@@ -19,30 +19,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.completion.findValueArgument
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.*
-import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirActualDeclarationContributor
-import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirAnnotationCompletionContributor
-import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirCallableCompletionContributor
-import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirCallableReferenceCompletionContributor
-import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirClassReferenceCompletionContributor
-import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirClassifierCompletionContributor
-import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirDeclarationFromOverridableMembersContributor
-import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirKDocParameterNameContributor
-import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirClassifierReferenceCompletionContributor
-import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirDeclarationFromUnresolvedNameContributor
-import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirImportDirectivePackageMembersCompletionContributor
-import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirInfixCallableCompletionContributor
-import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirKDocCallableCompletionContributor
-import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirKeywordCompletionContributor
-import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirNamedArgumentCompletionContributor
-import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirOperatorNameCompletionContributor
-import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirPackageCompletionContributor
-import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirWhenWithSubjectConditionContributor
-import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirSuperEntryContributor
-import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirTypeParameterConstraintNameInWhereClauseCompletionContributor
-import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirSameAsFileClassifierNameCompletionContributor
-import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirSuperMemberCompletionContributor
-import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirTrailingFunctionParameterNameCompletionContributorBase
-import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.FirVariableOrParameterNameWithTypeCompletionContributor
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir.*
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
 import org.jetbrains.kotlin.idea.completion.lookups.factories.ClassifierLookupObject
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
@@ -100,23 +77,23 @@ internal object Completions {
     /**
      * Completes using the new structure and the new K2 contributor structure
      */
-    private fun completeInParallel(
+    private fun <T : KotlinRawPositionContext> completeInParallel(
         parameters: KotlinFirCompletionParameters,
-        positionContext: KotlinRawPositionContext,
+        positionContext: T,
         resultSet: CompletionResultSet,
     ): Boolean {
-        val matchingContributors = contributors.filter { it.positionContextClass.isInstance(positionContext) }
+        @Suppress("UNCHECKED_CAST")
+        val matchingContributors =
+            contributors.filter { it.positionContextClass.isInstance(positionContext) } as List<K2CompletionContributor<T>>
 
-        val sections = mutableListOf<K2CompletionSection<*>>()
+        val sections = mutableListOf<K2CompletionSection<T>>()
         val completionContext = K2CompletionContext(parameters, resultSet, positionContext)
         for (contributor in matchingContributors) {
             // We make sure the type parameters match before, so this cast is safe.
-            @Suppress("UNCHECKED_CAST")
-            val castContributor = contributor as K2CompletionContributor<KotlinRawPositionContext>
 
-            val setupScope = K2CompletionSetupScope(completionContext, castContributor, sections)
-            with(castContributor) {
-                if (setupScope.isAppropriateContext()) {
+            val setupScope = K2CompletionSetupScope(completionContext, contributor, sections)
+            with(contributor) {
+                if (setupScope.isAppropriatePosition()) {
                     setupScope.registerCompletions()
                 }
             }
@@ -125,16 +102,13 @@ internal object Completions {
         val completionRunner = K2CompletionRunner.getInstance(sections.size)
 
         // We make sure the type parameters match before, so this cast is safe.
-        @Suppress("UNCHECKED_CAST")
-        val completionRunnerResult =
-            completionRunner.runCompletion(completionContext, sections as List<K2CompletionSection<KotlinRawPositionContext>>)
+        val completionRunnerResult = completionRunner.runCompletion(completionContext, sections)
 
         val chainCompletionContributors = completionRunnerResult.registeredChainContributors
         if (positionContext is KotlinNameReferencePositionContext
             && chainCompletionContributors.isNotEmpty()
             && RegistryManager.getInstance().`is`("kotlin.k2.chain.completion.enabled")
         ) {
-            @Suppress("UNCHECKED_CAST")
             K2CompletionRunner.runChainCompletion(
                 originalPositionContext = positionContext,
                 completionResultSet = resultSet,

@@ -60,7 +60,7 @@ internal class K2DeclarationFromOverridableMembersContributor : K2SimpleCompleti
         else -> 0
     }
 
-    override fun K2CompletionSetupScope<KotlinRawPositionContext>.isAppropriateContext(): Boolean = when (position) {
+    override fun K2CompletionSetupScope<KotlinRawPositionContext>.isAppropriatePosition(): Boolean = when (position) {
         is KotlinTypeNameReferencePositionContext,
         is KotlinPrimaryConstructorParameterPositionContext -> true
 

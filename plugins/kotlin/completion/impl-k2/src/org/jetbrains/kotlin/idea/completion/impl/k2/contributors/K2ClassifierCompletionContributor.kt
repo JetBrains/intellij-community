@@ -25,7 +25,6 @@ import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOri
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.getAliasNameIfExists
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.staticScope
 import org.jetbrains.kotlin.idea.completion.impl.k2.*
-import org.jetbrains.kotlin.idea.completion.impl.k2.K2ContributorSectionPriority.Companion.INDEX
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
 import org.jetbrains.kotlin.idea.completion.lookups.factories.KotlinFirLookupElementFactory
 import org.jetbrains.kotlin.idea.completion.lookups.factories.shortenCommand
@@ -90,15 +89,15 @@ internal open class K2ClassifierCompletionContributor : K2CompletionContributor<
     override fun K2CompletionSetupScope<KotlinNameReferencePositionContext>.registerCompletions() {
         val explicitReceiver = position.explicitReceiver
         if (explicitReceiver != null) {
-            complete("With Receiver") {
+            completion("With Receiver") {
                 completeWithReceiver(explicitReceiver, it)
             }
         } else {
-            complete("Without Receiver") {
+            completion("Without Receiver") {
                 completeWithoutReceiverFromScopes(it)
             }
 
-            complete("Without Receiver From index", priority = INDEX) {
+            completion("Without Receiver From index", priority = K2ContributorSectionPriority.FROM_INDEX) {
                 completeWithoutReceiverFromIndex(it)
             }
         }
@@ -316,7 +315,7 @@ internal open class K2ClassifierCompletionContributor : K2CompletionContributor<
         else -> 0
     }
 
-    override fun K2CompletionSetupScope<KotlinNameReferencePositionContext>.isAppropriateContext(): Boolean {
+    override fun K2CompletionSetupScope<KotlinNameReferencePositionContext>.isAppropriatePosition(): Boolean {
         if (position is KotlinPackageDirectivePositionContext ||
             position is KotlinImportDirectivePositionContext ||
             position is KotlinSuperTypeCallNameReferencePositionContext

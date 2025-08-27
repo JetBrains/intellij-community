@@ -172,7 +172,7 @@ internal class K2WhenWithSubjectConditionContributor : K2SimpleCompletionContrib
             }.forEach { context.addElement(it) }
 
         if (prefixMatcher.prefix.isNotEmpty()) {
-            context.completeLaterInSameSession("Index", priority = K2ContributorSectionPriority.INDEX) { innerContext ->
+            context.completeLaterInSameSession("Index", priority = K2ContributorSectionPriority.FROM_INDEX) { innerContext ->
                 getAvailableClassifiersFromIndex(
                     positionContext = positionContext,
                     parameters = innerContext.parameters,

@@ -875,10 +875,10 @@ internal abstract class K2AbstractCallableCompletionContributor<P : KotlinNameRe
         context.completeLaterInSameSession("Local Completion") {
             completeFromLocalScope(it, shadowedCallablesFilter)
         }
-        context.completeLaterInSameSession("Enums from Index", K2ContributorSectionPriority.INDEX) {
+        context.completeLaterInSameSession("Enums from Index", K2ContributorSectionPriority.FROM_INDEX) {
             completeEnumEntriesFromIndex(it, shadowedCallablesFilter)
         }
-        context.completeLaterInSameSession("Index Completion", K2ContributorSectionPriority.INDEX) {
+        context.completeLaterInSameSession("Index Completion", K2ContributorSectionPriority.FROM_INDEX) {
             completeFromIndex(it, shadowedCallablesFilter)
         }
     }
@@ -887,7 +887,7 @@ internal abstract class K2AbstractCallableCompletionContributor<P : KotlinNameRe
 internal class K2CallableCompletionContributor : K2AbstractCallableCompletionContributor<KotlinNameReferencePositionContext>(
     KotlinNameReferencePositionContext::class
 ), K2ChainCompletionContributor {
-    override fun K2CompletionSetupScope<KotlinNameReferencePositionContext>.isAppropriateContext(): Boolean = when (position) {
+    override fun K2CompletionSetupScope<KotlinNameReferencePositionContext>.isAppropriatePosition(): Boolean = when (position) {
         is KotlinExpressionNameReferencePositionContext,
         is KotlinWithSubjectEntryPositionContext -> true
 

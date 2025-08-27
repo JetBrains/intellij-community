@@ -85,7 +85,7 @@ internal class K2KeywordCompletionContributor : K2SimpleCompletionContributor<Ko
     private fun getExpressionWithLabel(label: KtLabelReferenceExpression): KtExpressionWithLabel? =
         label.parents(withSelf = false).match(KtContainerNode::class, last = KtExpressionWithLabel::class)
 
-    override fun K2CompletionSetupScope<KotlinRawPositionContext>.isAppropriateContext(): Boolean = when (position) {
+    override fun K2CompletionSetupScope<KotlinRawPositionContext>.isAppropriatePosition(): Boolean = when (position) {
         is KotlinUnknownPositionContext -> !position.isAfterRangeToken()
 
         is KotlinExpressionNameReferencePositionContext,
