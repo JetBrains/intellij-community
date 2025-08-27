@@ -18,6 +18,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.fileChooser.impl.FileChooserUtil
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
@@ -488,8 +489,15 @@ object ProjectUtil {
   @JvmStatic
   @RequiresEdt
   fun focusProjectWindow(project: Project?, stealFocusIfAppInactive: Boolean = false) {
-    val frame = WindowManager.getInstance().getFrame(project) ?: return
+    LOG.trace { "focusProjectWindow: project=$project stealFocusIfAppInactive=$stealFocusIfAppInactive" }
+
+    val frame = WindowManager.getInstance().getFrame(project) ?: run {
+      LOG.trace { "focusProjectWindow: unable to get frame for project" }
+      return
+    }
     val appIsActive = getActiveWindow() != null
+
+    LOG.trace { "focusProjectWindow: appIsActive=$appIsActive" }
 
     // On macOS, `j.a.Window#toFront` restores the frame if needed.
     // On X Window, restoring minimized frame can steal focus from an active application, so we do it only when the IDE is active.
@@ -765,6 +773,10 @@ fun <T> runUnderModalProgressIfIsEdt(task: suspend CoroutineScope.() -> T): T {
 
 private fun getActiveWindow(): Window? {
   val window = KeyboardFocusManager.getCurrentKeyboardFocusManager().activeWindow
-  if (window is DisposableWindow && window.isWindowDisposed) return null
+  LOG.trace { "getActiveWindow: active window is $window" }
+  if (window is DisposableWindow && window.isWindowDisposed) {
+    LOG.trace { "getActiveWindow: return null since window is already disposed" }
+    return null
+  }
   return window
 }
