@@ -3,6 +3,7 @@ package com.intellij.ide.ui
 
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
 
@@ -19,6 +20,7 @@ class WindowFocusFrontendService {
    */
   @RequiresEdt
   fun <T> performActionWithFocus(frontendFocused: Boolean, action: (() -> T?)? = null): T? {
+    ThreadingAssertions.assertEventDispatchThread()
     val previousValue = isFrontendWindowFocused
     isFrontendWindowFocused = frontendFocused
     try {
@@ -30,7 +32,10 @@ class WindowFocusFrontendService {
   }
 
   @RequiresEdt
-  fun isFrontendFocused(): Boolean = isFrontendWindowFocused
+  fun isFrontendFocused(): Boolean {
+    ThreadingAssertions.assertEventDispatchThread()
+    return isFrontendWindowFocused
+  }
 
   companion object {
     fun getInstance(): WindowFocusFrontendService = service()
