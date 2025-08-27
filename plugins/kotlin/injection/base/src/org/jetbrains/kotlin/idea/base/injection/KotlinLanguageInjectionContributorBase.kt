@@ -52,6 +52,7 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.parents
+import org.jetbrains.kotlin.resolve.calls.util.getCalleeExpressionIfAny
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
 import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.utils.addIfNotNull
@@ -254,16 +255,19 @@ abstract class KotlinLanguageInjectionContributorBase : LanguageInjectionContrib
         val qualifiedExpression = host.parent as? KtDotQualifiedExpression ?: return null
         if (qualifiedExpression.receiverExpression != host) return null
 
-        val callExpression = qualifiedExpression.selectorExpression as? KtCallExpression ?: return null
-        val callee = callExpression.calleeExpression ?: return null
+        val callee = qualifiedExpression.getCalleeExpressionIfAny() ?: return null
 
         val kotlinInjections: List<BaseInjection> = configuration.getInjections(KOTLIN_SUPPORT_ID)
 
         for (reference in callee.references) {
             ProgressManager.checkCanceled()
 
-            val resolvedTo = reference.resolve() as? KtFunction ?: continue
-            resolvedTo.receiverTypeReference?.findInjection(configuration, kotlinInjections)?.let { return it }
+            if (reference !is KtReference) continue
+
+            val resolvedTo = reference.resolve() as? KtCallableDeclaration ?: continue
+            val injectionInfo = resolvedTo.receiverTypeReference?.findInjection(configuration, kotlinInjections)
+                ?: injectionInfoByExtensionReceiverParameter(resolvedTo)
+            injectionInfo?.let { return it }
         }
 
         return null
