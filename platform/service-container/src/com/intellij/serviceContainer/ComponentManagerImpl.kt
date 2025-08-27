@@ -645,35 +645,25 @@ abstract class ComponentManagerImpl(
 
   @Deprecated("Deprecated in interface")
   final override fun <T : Any> getComponent(key: Class<T>): T? {
-    return getComponentOrService(key, createServiceIfNeeded = true)
+    return getComponent(key, lookupService = true)
   }
 
   /**
-   * Retrieve the component or a service from the container
+   * Retrieve the component from the container
    *
    * @param key the component/service interface
-   * @param createServiceIfNeeded whether to create a service if it wasn't created
+   * @param lookupService if true, a matching service will be retrieved or created instead
    */
-  private fun <T : Any> getComponentOrService(key: Class<T>, createServiceIfNeeded: Boolean): T? {
+  private fun <T : Any> getComponent(key: Class<T>, lookupService: Boolean): T? {
     checkState()
 
-    val adapter = getComponentOrServiceAdapter(key)
+    val adapter = getComponentOrServiceAdapter(key, lookupService)
     if (adapter == null) {
       checkCanceledIfNotInClassInit()
       if (containerState.get() == ContainerState.DISPOSE_COMPLETED) {
         throwAlreadyDisposedError(key.name, this)
       }
       return null
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    if (!createServiceIfNeeded) {
-      try {
-        return adapter.holder.tryGetInstance() as T?
-      }
-      catch (_: CancellationException) {
-        return null
-      }
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -760,13 +750,13 @@ abstract class ComponentManagerImpl(
       throw PluginException.createByClass("Light service class $serviceClass must be final", null, serviceClass)
     }
 
-    return getComponentAsServiceFallback(serviceClass, createIfNeeded)
+    return getComponentAsServiceFallback(serviceClass)
   }
 
   @VisibleForTesting
-  fun <T : Any> getComponentAsServiceFallback(serviceClass: Class<T>, createIfNeeded: Boolean, emitError: Boolean = true): T? {
-    val fallback = getComponentOrService(serviceClass, createIfNeeded)
-    if (fallback != null && emitError) {
+  fun <T : Any> getComponentAsServiceFallback(serviceClass: Class<T>): T? {
+    val fallback = getComponent(serviceClass, lookupService = false)
+    if (fallback != null) {
       LOG.error(PluginException.createByClass(
         "${serviceClass.name} requested as a service, but it is a component - " +
         "convert it to a service or change call to " +
@@ -1297,11 +1287,18 @@ abstract class ComponentManagerImpl(
            ?: parent?.getInstanceHolder(keyClass)
   }
 
-  internal fun getComponentOrServiceAdapter(keyClass: Class<*>): HolderAdapter? {
+  internal fun getComponentOrServiceAdapter(keyClass: Class<*>, lookupService: Boolean): HolderAdapter? {
     return ignoreDisposal {
-      componentContainer.getInstanceHolder(keyClass)?.let { HolderAdapter(keyClass, it) }
-      ?: serviceContainer.getInstanceHolder(keyClass)?.let { HolderAdapter(keyClass.name, it) }
-    } ?: parent?.getComponentOrServiceAdapter(keyClass)
+      doGetComponentOrServiceAdapter(keyClass, lookupService)
+    } ?: parent?.getComponentOrServiceAdapter(keyClass, lookupService)
+  }
+
+  private fun doGetComponentOrServiceAdapter(keyClass: Class<*>, lookupService: Boolean): HolderAdapter? {
+    val componentAdapter = componentContainer.getInstanceHolder(keyClass)?.let { HolderAdapter(keyClass, it) }
+    if (componentAdapter == null && lookupService) {
+      return serviceContainer.getInstanceHolder(keyClass)?.let { HolderAdapter(keyClass.name, it) }
+    }
+    return componentAdapter
   }
 
   final override fun unregisterComponent(componentKey: Class<*>): ComponentAdapter? {
@@ -1312,7 +1309,8 @@ abstract class ComponentManagerImpl(
 
   @TestOnly
   final override fun registerComponentInstance(key: Class<*>, instance: Any) {
-    check(getApplication()!!.isUnitTestMode)
+    val app = getApplication()
+    check(app == null || app.isUnitTestMode)
     @Suppress("UNCHECKED_CAST")
     componentContainer.registerInstance(key as Class<Any>, instance)
   }

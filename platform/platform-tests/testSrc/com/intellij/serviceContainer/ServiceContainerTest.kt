@@ -2,19 +2,22 @@
 package com.intellij.serviceContainer
 
 import com.intellij.concurrency.currentThreadContext
+import com.intellij.diagnostic.PluginException
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.openapi.util.Disposer
+import com.intellij.testFramework.LoggedErrorProcessor
 import kotlinx.coroutines.CoroutineScope
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.Test
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertInstanceOf
 import org.junit.jupiter.api.assertNotNull
 import org.junit.jupiter.api.assertNull
-import org.junit.jupiter.api.assertThrows
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.test.assertContains
 
 class ServiceContainerTest {
   @Test
@@ -102,34 +105,28 @@ class ServiceContainerTest {
   }
 
   @Test
-  fun `service created by component fallback`() {
+  fun `service not returned by component fallback`() {
     val service = TestComponentManager().apply {
       registerService(SimpleService::class.java, SimpleService::class.java, testPluginDescriptor, false)
     }.run {
-      getComponentAsServiceFallback(SimpleService::class.java, createIfNeeded = true, emitError = false)
-    }
-    assertNotNull(service)
-  }
-
-  @Test
-  fun `service not created by component fallback`() {
-    val service = TestComponentManager().apply {
-      registerService(SimpleService::class.java, SimpleService::class.java, testPluginDescriptor, false)
-    }.run {
-      getComponentAsServiceFallback(SimpleService::class.java, createIfNeeded = false, emitError = false)
+      getComponentAsServiceFallback(SimpleService::class.java)
     }
     assertNull(service)
   }
 
   @Test
-  fun `service component fallback emits error`() {
-    assertThrows<AssertionError> {
-      TestComponentManager().apply {
-        registerService(SimpleService::class.java, SimpleService::class.java, testPluginDescriptor, false)
+  fun `service component fallback`() {
+    val error = LoggedErrorProcessor.executeAndReturnLoggedError {
+      val component = TestComponentManager().apply {
+        registerComponentInstance(SimpleService::class.java, SimpleService())
       }.run {
-        getComponentAsServiceFallback(SimpleService::class.java, createIfNeeded = true)
+        getService(SimpleService::class.java)
       }
+      assertNotNull(component)
     }
+    assertNotNull(error)
+    assertInstanceOf<PluginException>(error)
+    assertContains(error.message, "requested as a service, but it is a component")
   }
 
   @Test

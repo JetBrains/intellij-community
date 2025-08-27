@@ -294,7 +294,7 @@ private fun findTargetAdapter(componentManager: ComponentManagerImpl,
                               requestorClass: Class<*>,
                               requestorConstructor: Constructor<*>,
                               pluginId: PluginId): ComponentAdapter? {
-  val byKey = componentManager.getComponentOrServiceAdapter(expectedType)
+  val byKey = componentManager.getComponentOrServiceAdapter(expectedType, lookupService = true)
   if (byKey != null && requestorKey != byKey.componentKey) {
     return byKey
   }
