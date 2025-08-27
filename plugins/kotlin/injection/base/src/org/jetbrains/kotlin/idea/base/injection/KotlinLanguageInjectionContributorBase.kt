@@ -70,6 +70,8 @@ abstract class KotlinLanguageInjectionContributorBase : LanguageInjectionContrib
     abstract fun injectionInfoByAnnotation(callableDeclaration: KtCallableDeclaration): InjectionInfo?
 
     abstract fun injectionInfoByParameterAnnotation(functionReference: KtReference, argumentName: Name?, argumentIndex: Int): InjectionInfo?
+    
+    abstract fun injectionInfoByExtensionReceiverParameter(callableDeclaration: KtCallableDeclaration): InjectionInfo?
 
     private val absentKotlinInjection: BaseInjection = BaseInjection("ABSENT_KOTLIN_BASE_INJECTION")
 
@@ -401,8 +403,8 @@ abstract class KotlinLanguageInjectionContributorBase : LanguageInjectionContrib
                       )
                       injectionForKotlinInfixCallParameter?.let { return it }
                   } else {
-                      val injectionInfo =
-                          ktFunction.receiverTypeReference?.findInjection(configuration) ?: injectionInfoByAnnotation(ktFunction)
+                      val injectionInfo = ktFunction.receiverTypeReference?.findInjection(configuration)
+                          ?: injectionInfoByExtensionReceiverParameter(ktFunction)
                       injectionInfo?.let { return it }
                   }
               }

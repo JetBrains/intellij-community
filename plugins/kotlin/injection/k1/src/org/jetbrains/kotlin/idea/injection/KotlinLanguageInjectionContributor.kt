@@ -8,6 +8,7 @@ import org.intellij.plugins.intelliLang.inject.InjectorUtils
 import org.jetbrains.kotlin.base.fe10.analysis.findAnnotation
 import org.jetbrains.kotlin.base.fe10.analysis.getStringValue
 import org.jetbrains.kotlin.builtins.StandardNames
+import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.annotations.Annotated
 import org.jetbrains.kotlin.idea.base.injection.InjectionInfo
@@ -64,6 +65,15 @@ internal class KotlinLanguageInjectionContributor : KotlinLanguageInjectionContr
             functionDescriptor.valueParameters.getOrNull(argumentIndex)
         } ?: return null
         return injectionInfoByAnnotation(parameterDescriptor)
+    }
+
+    override fun injectionInfoByExtensionReceiverParameter(callableDeclaration: KtCallableDeclaration): InjectionInfo? {
+        if (callableDeclaration.receiverTypeReference == null) return null
+        
+        val callableDescriptor = allowResolveInDispatchThread { callableDeclaration.descriptor as? CallableDescriptor } ?: return null
+        val extensionReceiverParameter = callableDescriptor.extensionReceiverParameter ?: return null
+        
+        return injectionInfoByAnnotation(extensionReceiverParameter)
     }
 
     private fun injectionInfoByAnnotation(annotated: Annotated): InjectionInfo? {
