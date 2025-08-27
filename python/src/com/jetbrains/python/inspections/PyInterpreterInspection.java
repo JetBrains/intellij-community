@@ -127,19 +127,26 @@ public final class PyInterpreterInspection extends PyInspection {
       }
       else {
         final @NlsSafe String associatedModulePath = PySdkExtKt.getAssociatedModulePath(sdk);
-        if (module != null && !PlatformUtils.isFleetBackend() &&
-            (associatedModulePath == null || PySdkExtKt.isAssociatedWithAnotherModule(sdk, module)) &&
-            !(Registry.is("python.project.model.uv", false) && isAssociatedWithUvWorkspaceRootModule(associatedModulePath, module))) {
-          final PyInterpreterInspectionQuickFixData fixData = PySdkProvider.EP_NAME.getExtensionList().stream()
-            .map(ext -> ext.createEnvironmentAssociationFix(module, sdk, pyCharm, associatedModulePath))
-            .filter(it -> it != null)
-            .findFirst()
-            .orElse(null);
+        if (module != null && !PlatformUtils.isFleetBackend()) {
+          boolean isAlreadyUsedByModule = (PySdkExtKt.getPythonSdk(module) == sdk);
+          boolean isAssociatedWithThisModule = associatedModulePath != null && associatedModulePath.equals(BasePySdkExtKt.getBasePath(module));
+          // TODO: this logic should be generalized via the workspace manager
+          boolean isAssociatedWithUvRoot = associatedModulePath != null && Registry.is("python.project.model.uv", false) &&
+                                           isAssociatedWithUvWorkspaceRootModule(associatedModulePath, module);
 
-          if (fixData != null) {
-            fixes.add(fixData.getQuickFix());
-            registerProblemWithCommonFixes(node, fixData.getMessage(), module, sdk, fixes, pyCharm);
-            return;
+          if (!isAlreadyUsedByModule && !isAssociatedWithThisModule && !isAssociatedWithUvRoot &&
+              (associatedModulePath == null || PySdkExtKt.isAssociatedWithAnotherModule(sdk, module))) {
+            final PyInterpreterInspectionQuickFixData fixData = PySdkProvider.EP_NAME.getExtensionList().stream()
+              .map(ext -> ext.createEnvironmentAssociationFix(module, sdk, pyCharm, associatedModulePath))
+              .filter(it -> it != null)
+              .findFirst()
+              .orElse(null);
+
+            if (fixData != null) {
+              fixes.add(fixData.getQuickFix());
+              registerProblemWithCommonFixes(node, fixData.getMessage(), module, sdk, fixes, pyCharm);
+              return;
+            }
           }
         }
 
@@ -383,7 +390,7 @@ public final class PyInterpreterInspection extends PyInspection {
 
     private final @Nullable Module myModule;
 
-    public InterpreterSettingsQuickFix(@Nullable Module module) {
+    public  InterpreterSettingsQuickFix(@Nullable Module module) {
       myModule = module;
     }
 
