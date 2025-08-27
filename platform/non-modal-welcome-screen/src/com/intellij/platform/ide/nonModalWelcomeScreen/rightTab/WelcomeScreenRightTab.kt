@@ -43,7 +43,8 @@ import org.jetbrains.jewel.ui.theme.defaultButtonStyle
 import org.jetbrains.jewel.ui.theme.scrollbarStyle
 import javax.swing.JComponent
 
-internal class WelcomeScreenRightTab(
+@ApiStatus.Internal
+class WelcomeScreenRightTab(
   val project: Project,
   private val contentProvider: WelcomeRightTabContentProvider
 ) {
@@ -110,7 +111,7 @@ internal class WelcomeScreenRightTab(
   @Composable
   fun FeatureGrid(modifier: Modifier = Modifier) {
     Column(modifier = modifier.wrapContentSize(Alignment.Center), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-      val featureModels = GoWelcomeRightTabFeatures(project).featureButtonModels
+      val featureModels = contentProvider.getFeatureButtonModels(project)
       for (row in featureModels.chunked(3)) {
         Row(modifier = Modifier.wrapContentSize(Alignment.Center), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
           for (model in row) {
@@ -122,7 +123,7 @@ internal class WelcomeScreenRightTab(
   }
 
   @Composable
-  private fun FeatureButton(model: GoWelcomeRightTabFeatures.FeatureButtonModel) {
+  private fun FeatureButton(model: WelcomeRightTabContentProvider.FeatureButtonModel) {
     WelcomeScreenCustomButton(
       onClick = {
         model.onClick()
@@ -331,7 +332,7 @@ internal class WelcomeScreenRightTab(
       set(value) = AdvancedSettings.setBoolean(NON_MODAL_WELCOME_SCREEN_SETTING_ID, value)
 
     @Composable
-    internal fun color(dark: Color?, light: Color?, fallback: Color): Color {
+    fun color(dark: Color?, light: Color?, fallback: Color): Color {
       val themeColor = if (JewelTheme.isDark) dark else light
       return themeColor ?: fallback
     }

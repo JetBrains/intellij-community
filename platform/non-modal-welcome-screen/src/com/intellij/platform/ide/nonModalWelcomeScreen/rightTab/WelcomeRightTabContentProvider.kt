@@ -1,10 +1,14 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.nonModalWelcomeScreen.rightTab
 
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.jewel.ui.icon.IconKey
 
 @ApiStatus.Internal
 interface WelcomeRightTabContentProvider {
@@ -14,6 +18,16 @@ interface WelcomeRightTabContentProvider {
 
   val title: String
   val secondaryTitle: String
+
+  @Composable
+  fun getFeatureButtonModels(project: Project): List<FeatureButtonModel>
+
+  data class FeatureButtonModel(
+    val text: String,
+    val icon: IconKey,
+    val tint: Color = Color.Unspecified,
+    val onClick: () -> Unit,
+  )
 
   companion object {
     private val EP_NAME: ExtensionPointName<WelcomeRightTabContentProvider> = ExtensionPointName("com.intellij.platform.ide.nonModalWelcomeScreen.welcomeScreenContentProvider")
@@ -26,6 +40,14 @@ interface WelcomeRightTabContentProvider {
         return null
       }
       return providers.first()
+    }
+
+    fun getPluginProvidedFeature(featureKey: String): WelcomeScreenFeatureProvider? {
+      val provider = WelcomeScreenFeatureProvider.getForFeatureKey(featureKey)
+      if (provider == null) {
+        thisLogger().warn("Feature provider for the feature key $featureKey not found")
+      }
+      return provider
     }
   }
 }
