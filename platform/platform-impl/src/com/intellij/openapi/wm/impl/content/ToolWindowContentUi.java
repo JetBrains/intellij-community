@@ -860,7 +860,7 @@ public final class ToolWindowContentUi implements ContentUI, UiCompatibleDataPro
     public Dimension getPreferredSize() {
       Dimension size = new Dimension();
       size.height = 0;
-      size.width = TabContentLayout.getTabLayoutStart() + getInsets().left + getInsets().right;
+      size.width = getTabLayoutStart() + getInsets().left + getInsets().right;
       for (int i = 0; i < getComponentCount(); i++) {
         final Component each = getComponent(i);
         if (each.isVisible() || tabToolbar != null && each == tabToolbar.getComponent()) {
@@ -871,6 +871,13 @@ public final class ToolWindowContentUi implements ContentUI, UiCompatibleDataPro
 
       size.width = Math.max(size.width, getMinimumSize().width);
       return size;
+    }
+
+    private int getTabLayoutStart() {
+      if (type == ToolWindowContentUiType.TABBED) {
+        return tabsLayout.getTabLayoutStart();
+      }
+      return TabContentLayout.defaultTabLayoutStart();
     }
   }
 }
