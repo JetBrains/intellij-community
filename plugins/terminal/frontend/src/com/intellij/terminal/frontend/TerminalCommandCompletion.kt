@@ -1,19 +1,20 @@
 package com.intellij.terminal.frontend
 
 import com.intellij.codeInsight.CodeInsightBundle
-import com.intellij.codeInsight.completion.*
+import com.intellij.codeInsight.completion.CodeCompletionHandlerBase
+import com.intellij.codeInsight.completion.CompletionInitializationContextImpl
+import com.intellij.codeInsight.completion.CompletionPhase
+import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils.withTimeout
 import com.intellij.openapi.project.DumbModeBlockedFunctionality
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Computable
-import com.intellij.psi.util.PsiUtilBase
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.terminal.frontend.action.TerminalFrontendDataContextUtils.terminalOutputModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.terminalEditor
@@ -66,17 +67,9 @@ internal class TerminalCommandCompletion(
 
     val startingTime = System.currentTimeMillis()
     val initCmd = Runnable {
-      var context: CompletionInitializationContextImpl? =
-        withTimeout<CompletionInitializationContextImpl?>(calcSyncTimeOut(startingTime).toLong(), Computable {
-          CompletionInitializationUtil.createCompletionInitializationContext(project, editor, caret, invocationCount, completionType)
-        })
-      val hasValidContext = context != null
-      if (!hasValidContext) {
-        val psiFile = PsiUtilBase.getPsiFileInEditor(caret, project)!!
-        context = CompletionInitializationContextImpl(editor, caret, psiFile, completionType, invocationCount)
-      }
-
-      doComplete(context, hasModifiers, hasValidContext, startingTime)
+      val file = PsiDocumentManager.getInstance(project).getPsiFile(editor.document)!!
+      val context = CompletionInitializationContextImpl(editor, editor.caretModel.currentCaret, file, completionType, invocationCount)
+      doComplete(context, hasModifiers, true, startingTime)
     }
     try {
       CommandProcessor.getInstance().executeCommand(project, initCmd, null, null, editor.getDocument())
