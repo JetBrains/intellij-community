@@ -138,9 +138,9 @@ public class PluginUpdateDialog extends DialogWrapper {
         @SuppressWarnings("unchecked") ListPluginComponent component = new ListPluginComponent(new PluginModelFacade(myPluginModel), model, group, listPluginModel, LinkListener.NULL, scope, true);
         PluginModelAsyncOperationsExecutor.INSTANCE.findPlugin(myPluginModel.getCoroutineScope(), model.getPluginId(), foundPlugin -> {
           component.setOnlyUpdateMode(foundPlugin);
+          component.getChooseUpdateButton().addActionListener(e -> updateButtons());
           return null;
         });
-        component.getChooseUpdateButton().addActionListener(e -> updateButtons());
         return component;
       }
     };

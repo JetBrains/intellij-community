@@ -171,6 +171,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   private val pluginManagerCustomizer: PluginManagerCustomizer?
   private val notificationsUpdateSemaphore = OverflowSemaphore(overflow = BufferOverflow.DROP_OLDEST)
   private val coroutineScope = pluginModel.getModel().coroutineScope
+  private val showPluginSemaphore = OverflowSemaphore(overflow = BufferOverflow.DROP_OLDEST)
 
   init {
     nameAndButtons = BaselinePanel(12, false)
@@ -744,14 +745,18 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
   fun showPlugins(selection: List<ListPluginComponent?>) {
     coroutineScope.launch(Dispatchers.EDT + ModalityState.stateForComponent(this).asContextElement()) {
-      val size = selection.size
-      showPlugin(if (size == 1) selection[0] else null, size > 1)
+      showPluginSemaphore.withPermit {
+        val size = selection.size
+        showPlugin(if (size == 1) selection[0] else null, size > 1)
+      }
     }
   }
 
   fun showPlugin(component: ListPluginComponent?) {
     coroutineScope.launch(Dispatchers.EDT + ModalityState.stateForComponent(this).asContextElement()) {
-      showPlugin(component, false)
+      showPluginSemaphore.withPermit {
+        showPlugin(component, false)
+      }
     }
   }
 
