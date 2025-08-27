@@ -13,17 +13,14 @@ import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
-import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.intentions.callExpression
-import org.jetbrains.kotlin.load.java.descriptors.JavaMethodDescriptor
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
-import org.jetbrains.kotlin.resolve.calls.util.getType
-import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
-import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
-import org.jetbrains.kotlin.types.KotlinType
 
 // TODO merge with ReplaceJavaStaticMethodWithKotlinAnalogInspection
 class JavaCollectionsStaticMethodInspection : AbstractKotlinInspection() {
@@ -41,25 +38,27 @@ class JavaCollectionsStaticMethodInspection : AbstractKotlinInspection() {
 
     object Util {
         fun getTargetMethodOnImmutableList(expression: KtDotQualifiedExpression): Pair<String, KtValueArgument>? =
-            getTargetMethod(expression) { isListOrSubtype() && !isMutableListOrSubtype() }
+            getTargetMethod(expression) { session, type -> isListOrSubtype(type, session) && !isMutableListOrSubtype(type, session) }
     }
 }
 
 private fun getTargetMethodOnMutableList(expression: KtDotQualifiedExpression) =
-    getTargetMethod(expression) { isMutableListOrSubtype() }
+    getTargetMethod(expression) { session, type -> isMutableListOrSubtype(type, session) }
 
 private fun getTargetMethod(
     expression: KtDotQualifiedExpression,
-    isValidFirstArgument: KotlinType.() -> Boolean
+    isValidFirstArgument: (KaSession, KaType?) -> Boolean
 ): Pair<String, KtValueArgument>? {
     val callExpression = expression.callExpression ?: return null
     val args = callExpression.valueArguments
     val firstArg = args.firstOrNull() ?: return null
-    val context = expression.safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL)
-    if (firstArg.getArgumentExpression()?.getType(context)?.isValidFirstArgument() != true) return null
-
-    val descriptor = expression.getResolvedCall(context)?.resultingDescriptor as? JavaMethodDescriptor ?: return null
-    val fqName = descriptor.importableFqName?.asString() ?: return null
+    val fqName: String = analyze(expression) {
+        val firstArgType = firstArg.getArgumentExpression()?.expressionType
+        if (!isValidFirstArgument(this, firstArgType)) return@analyze null
+        val call = callExpression.resolveToCall()?.singleFunctionCallOrNull() ?: return@analyze null
+        val callableId = call.partiallyAppliedSymbol.symbol.callableId ?: return@analyze null
+        callableId.asSingleFqName().asString()
+    } ?: return null
     if (!canReplaceWithStdLib(expression, fqName, args)) return null
 
     val methodName = fqName.split(".").last()
@@ -86,18 +85,30 @@ private fun checkApiVersion(requiredVersion: ApiVersion, expression: KtDotQualif
     return module.languageVersionSettings.apiVersion >= requiredVersion
 }
 
-private fun KotlinType.isMutableList() =
-    constructor.declarationDescriptor?.fqNameSafe == StandardNames.FqNames.mutableList
-
-private fun KotlinType.isMutableListOrSubtype(): Boolean {
-    return isMutableList() || constructor.supertypes.reversed().any { it.isMutableList() }
+private fun isMutableListOrSubtype(type: KaType?, session: KaSession): Boolean {
+    return isListOrSubtype(type, isMutable = true, session)
 }
 
-private fun KotlinType.isList() =
-    constructor.declarationDescriptor?.fqNameSafe == StandardNames.FqNames.list
+private fun isListOrSubtype(type: KaType?, session: KaSession): Boolean {
+    return isListOrSubtype(type, isMutable = false, session)
+}
 
-private fun KotlinType.isListOrSubtype(): Boolean {
-    return isList() || constructor.supertypes.reversed().any { it.isList() }
+private fun isListOrSubtype(type: KaType?, isMutable: Boolean, session: KaSession): Boolean {
+    val classSymbol = session.run { type?.expandedSymbol } ?: return false
+    val fqName = classSymbol.classId?.asSingleFqName() ?: return false
+
+    val qualifiedName = if (isMutable) {
+        if (fqName == StandardNames.FqNames.mutableList) return true
+        StandardNames.FqNames.mutableList
+    } else {
+        if (fqName == StandardNames.FqNames.list) return true
+        StandardNames.FqNames.list
+    }
+    return classSymbol.superTypes.reversed().any { superType ->
+        val expandedSymbol = session.run { superType.expandedSymbol }
+        val fqNameOfExpandedSymbol = expandedSymbol?.classId?.asSingleFqName()
+        fqNameOfExpandedSymbol == qualifiedName
+    }
 }
 
 private class ReplaceWithStdLibFix(private val methodName: String, private val receiver: String) : LocalQuickFix {
