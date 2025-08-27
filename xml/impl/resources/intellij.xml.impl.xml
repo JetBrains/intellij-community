@@ -13,10 +13,6 @@
   </dependencies>
 
   <extensionPoints>
-    <extensionPoint qualifiedName="com.intellij.html.compatibleLanguage"
-                    beanClass="com.intellij.lang.html.HtmlCompatibleMetaLanguage$HtmlCompatibleLanguageEP"
-                    dynamic="true"/>
-
     <extensionPoint name="completion.htmlInTextCompletionEnabler"
                     interface="com.intellij.codeInsight.completion.HtmlInTextCompletionEnabler"
                     dynamic="true"/>
@@ -129,8 +125,6 @@
     </projectConfigurable>
     <codeCompletionConfigurable instance="com.intellij.application.options.XmlCodeCompletionConfigurable"/>
 
-    <metaLanguage implementation="com.intellij.lang.html.HtmlCompatibleMetaLanguage"/>
-    <html.compatibleLanguage language="HTML"/>
     <completion.htmlInTextCompletionEnabler implementation="com.intellij.codeInsight.completion.HtmlNoBracketCompletionEnablerImpl"/>
 
     <renameHandler id="xmlTagRenameHandler" implementation="com.intellij.xml.refactoring.XmlTagRenameHandler"/>
@@ -182,8 +176,6 @@
     <customLiveTemplate implementation="com.intellij.codeInsight.template.emmet.ZenCodingTemplate"/>
     <editorTypedHandler implementationClass="com.intellij.codeInsight.template.emmet.EmmetPreviewTypedHandler" id="emmetPreview"/>
     <lookup.actionProvider implementation="com.intellij.codeInsight.template.emmet.completion.EmmetLookupActionProvider"/>
-
-    <preFormatProcessor implementation="com.intellij.lang.html.HtmlQuotesFormatPreprocessor"/>
 
     <lang.documentationProvider language="XML" implementationClass="com.intellij.xml.util.documentation.XmlDocumentationProvider"
                                 order="last"/>

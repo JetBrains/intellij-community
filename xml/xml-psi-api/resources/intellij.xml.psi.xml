@@ -4,6 +4,9 @@
   </dependencies>
 
   <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.html.compatibleLanguage"
+                    beanClass="com.intellij.lang.html.HtmlCompatibleMetaLanguage$HtmlCompatibleLanguageEP"
+                    dynamic="true"/>
     <extensionPoint name="xml.schemaProvider" interface="com.intellij.xml.XmlSchemaProvider" dynamic="true"/>
     <extensionPoint name="xml.xmlTypedHandlersAdditionalSupport" interface="com.intellij.openapi.editor.XmlTypedHandlersAdditionalSupport" dynamic="true"/>
     <extensionPoint name="xml.xmlCustomTagHighlightingStrategy" interface="com.intellij.openapi.editor.XmlCustomTagHighlightingStrategy" dynamic="true"/>
@@ -23,6 +26,9 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <metaLanguage implementation="com.intellij.lang.html.HtmlCompatibleMetaLanguage"/>
+    <html.compatibleLanguage language="HTML"/>
+
     <patterns.patternClass className="com.intellij.patterns.XmlPatterns" alias="xml"/>
     <inspection.basicVisitor class="com.intellij.psi.XmlElementVisitor"/>
 
