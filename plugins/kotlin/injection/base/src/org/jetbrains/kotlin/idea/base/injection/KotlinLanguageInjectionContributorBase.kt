@@ -76,8 +76,6 @@ abstract class KotlinLanguageInjectionContributorBase : LanguageInjectionContrib
     private val absentKotlinInjection: BaseInjection = BaseInjection("ABSENT_KOTLIN_BASE_INJECTION")
 
     companion object {
-        private val STRING_LITERALS_REGEXP: Regex = "\"([^\"]*)\"".toRegex()
-
         private val trimIndentName = Name.identifier("trimIndent")
         private val trimMarginName = Name.identifier("trimMargin")
     }
@@ -261,13 +259,6 @@ abstract class KotlinLanguageInjectionContributorBase : LanguageInjectionContrib
 
         val kotlinInjections: List<BaseInjection> = configuration.getInjections(KOTLIN_SUPPORT_ID)
 
-        val calleeName = callee.text
-        val possibleNames = collectPossibleNames(kotlinInjections)
-
-        if (calleeName !in possibleNames) {
-            return null
-        }
-
         for (reference in callee.references) {
             ProgressManager.checkCanceled()
 
@@ -276,21 +267,6 @@ abstract class KotlinLanguageInjectionContributorBase : LanguageInjectionContrib
         }
 
         return null
-    }
-
-    private fun collectPossibleNames(injections: List<BaseInjection>): Set<String> {
-        val result = HashSet<String>()
-
-        for (injection in injections) {
-            val injectionPlaces = injection.injectionPlaces
-            for (place in injectionPlaces) {
-                val placeStr = place.toString()
-                val literals = STRING_LITERALS_REGEXP.findAll(placeStr).map { it.groupValues[1] }
-                result.addAll(literals)
-            }
-        }
-
-        return result
     }
 
     private fun injectWithVariableUsage(host: KtElement, containingFile: PsiFile, configuration: Configuration, originalHost: Boolean): InjectionInfo? {
