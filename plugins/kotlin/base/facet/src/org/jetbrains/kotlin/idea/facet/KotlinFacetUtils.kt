@@ -235,7 +235,7 @@ fun applyCompilerArgumentsToFacetSettings(
 
             val additionalArgumentsString = with(this::class.java.getDeclaredConstructor().newInstance()) {
                 copyFieldsSatisfying(this@updateCompilerArguments, this) { exposeAsAdditionalArgument(it) }
-                val internalArguments = internalArguments.map(InternalArgument::stringRepresentation).toSet()
+                val internalArguments = internalArguments.map(ManualLanguageFeatureSetting::stringRepresentation).toSet()
                 freeArgs = freeArgs.filterNot { it in internalArguments }
                 toArgumentStrings().joinToString(separator = " ") {
                     if (StringUtil.containsWhitespaces(it) || it.startsWith('"')) {
