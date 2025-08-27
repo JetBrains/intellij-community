@@ -10,7 +10,7 @@
 
   <actions>
     <action id="WorkspaceModelGeneration" class="com.intellij.devkit.workspaceModel.WorkspaceModelGenerationAction">
-      <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
+      <add-to-group group-id="ToolsMenu" anchor="last"/>
     </action>
     <action id="WorkspaceModelGenerateAllModulesAction" class="com.intellij.devkit.workspaceModel.WorkspaceModelGenerateAllModulesAction"/>
   </actions>
