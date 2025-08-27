@@ -60,6 +60,7 @@ import androidx.compose.ui.platform.LocalInputModeManager
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.PopupProperties
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.GenerateDataFunctions
@@ -121,13 +122,45 @@ public fun PopupMenu(
     val density = LocalDensity.current
 
     val popupPositionProvider =
-        AnchorVerticalMenuPositionProvider(
-            contentOffset = style.metrics.offset,
-            contentMargin = style.metrics.menuMargin,
-            alignment = horizontalAlignment,
-            density = density,
-        )
+        remember(style.metrics.offset, style.metrics.menuMargin, horizontalAlignment, density) {
+            AnchorVerticalMenuPositionProvider(
+                contentOffset = style.metrics.offset,
+                contentMargin = style.metrics.menuMargin,
+                alignment = horizontalAlignment,
+                density = density,
+            )
+        }
 
+    PopupMenu(onDismissRequest, popupPositionProvider, modifier, style, popupProperties, content)
+}
+
+/**
+ * A popup menu component that follows the standard visual styling with customizable content.
+ *
+ * Provides a floating menu that can be used for context menus, dropdown menus, and other popup menu scenarios. The menu
+ * supports keyboard navigation, icons, keybindings, and nested submenus.
+ *
+ * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/popups-and-menus.html)
+ *
+ * **Swing equivalent:** [`JPopupMenu`](https://docs.oracle.com/javase/tutorial/uiswing/components/menu.html#popup)
+ *
+ * @param onDismissRequest Called when the menu should be dismissed, returns true if the dismissal was handled
+ * @param popupPositionProvider Determines the position of the popup menu on the screen.
+ * @param modifier Modifier to be applied to the menu container
+ * @param style The visual styling configuration for the menu and its items
+ * @param popupProperties Properties controlling the popup window behavior
+ * @param content The menu content builder using [MenuScope]
+ * @see javax.swing.JPopupMenu
+ */
+@Composable
+public fun PopupMenu(
+    onDismissRequest: (InputMode) -> Boolean,
+    popupPositionProvider: PopupPositionProvider,
+    modifier: Modifier = Modifier,
+    style: MenuStyle = JewelTheme.menuStyle,
+    popupProperties: PopupProperties = PopupProperties(focusable = true),
+    content: MenuScope.() -> Unit,
+) {
     var focusManager: FocusManager? by remember { mutableStateOf(null) }
     var inputModeManager: InputModeManager? by remember { mutableStateOf(null) }
     val menuController = remember(onDismissRequest) { DefaultMenuController(onDismissRequest = onDismissRequest) }
