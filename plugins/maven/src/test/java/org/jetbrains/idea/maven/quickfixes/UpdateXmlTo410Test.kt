@@ -13,16 +13,9 @@ import org.jetbrains.idea.maven.model.MavenConstants.MAVEN_4_XLMNS
 import org.jetbrains.idea.maven.model.MavenConstants.MAVEN_4_XSD
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
+import org.mockito.internal.progress.ThreadSafeMockingProgress
 
 class UpdateXmlsTo410Test : LightJavaCodeInsightFixtureTestCase() {
-
-  private lateinit var quickFix: UpdateXmlsTo410
-
-  override fun setUp() {
-    super.setUp()
-    quickFix = UpdateXmlsTo410()
-  }
-
   override fun runInDispatchThread(): Boolean {
     return false
   }
@@ -40,9 +33,11 @@ class UpdateXmlsTo410Test : LightJavaCodeInsightFixtureTestCase() {
 
     val descriptor = mock(ProblemDescriptor::class.java)
     `when`(descriptor.psiElement).thenReturn(projectTag)
+    val quickFix = UpdateXmlsTo410()
 
     writeCommandAction(project, quickFix.name) {
       quickFix.applyFix(project, descriptor)
+      ThreadSafeMockingProgress.mockingProgress().resetOngoingStubbing()
     }
 
     readAction {
