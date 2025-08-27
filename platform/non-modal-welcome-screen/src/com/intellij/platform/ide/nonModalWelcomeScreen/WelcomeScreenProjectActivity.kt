@@ -46,7 +46,7 @@ private suspend fun subscribeToSettingsChanges(project: Project) {
                      if (id == NON_MODAL_WELCOME_SCREEN_SETTING_ID) {
                        val welcomeScreenTabEnabled = newValue.asSafely<Boolean>() ?: return
                        if (!welcomeScreenTabEnabled) {
-                         GoWelcomeScreenTabUsageCollector.logWelcomeScreenTabDisabled()
+                         WelcomeScreenTabUsageCollector.logWelcomeScreenTabDisabled()
                        }
                      }
                    }
@@ -63,7 +63,7 @@ private suspend fun subscribeToWelcomeScreenTabClose(project: Project) {
                  object : FileEditorManagerListener {
                    override fun fileClosed(source: FileEditorManager, file: VirtualFile) {
                      if (file is WelcomeScreenRightTabVirtualFile) {
-                       GoWelcomeScreenTabUsageCollector.logWelcomeScreenTabClosed()
+                       WelcomeScreenTabUsageCollector.logWelcomeScreenTabClosed()
                      }
                    }
                  })

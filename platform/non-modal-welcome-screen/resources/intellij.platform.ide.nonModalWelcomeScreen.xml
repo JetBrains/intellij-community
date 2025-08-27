@@ -30,5 +30,7 @@
                      groupKey="group.advanced.settings.welcome.screen"/>
     <advancedSetting id="welcome.screen.non.modal.right.tab.enabled" default="true"
                      groupKey="group.advanced.settings.welcome.screen"/>
+    <statistics.counterUsagesCollector
+      implementationClass="com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenTabUsageCollector"/>
   </extensions>
 </idea-plugin>

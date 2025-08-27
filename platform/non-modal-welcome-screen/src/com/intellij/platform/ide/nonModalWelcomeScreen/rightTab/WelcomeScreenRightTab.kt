@@ -22,6 +22,7 @@ import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.platform.ide.nonModalWelcomeScreen.NON_MODAL_WELCOME_SCREEN_SETTING_ID
 import com.intellij.platform.ide.nonModalWelcomeScreen.NonModalWelcomeScreenBundle
+import com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenTabUsageCollector
 import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenRightTabComboBoxModel.KeymapModel
 import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenRightTabComboBoxModel.ThemeModel
 import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.components.WelcomeScreenCustomButton
@@ -322,7 +323,7 @@ class WelcomeScreenRightTab(
         val options = FileEditorOpenOptions(reuseOpen = true, isSingletonEditorInWindow = true,
                                             selectAsCurrent = true)
         fileEditorManager.openFile(settingsFile, options)
-        //GoWelcomeScreenTabUsageCollector.logWelcomeScreenTabOpened()
+        WelcomeScreenTabUsageCollector.logWelcomeScreenTabOpened()
       }
     }
 
