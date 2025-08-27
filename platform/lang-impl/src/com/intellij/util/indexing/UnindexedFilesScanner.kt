@@ -2,7 +2,6 @@
 package com.intellij.util.indexing
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
@@ -249,11 +248,8 @@ class UnindexedFilesScanner (
           .collectIndexableFilesConcurrently(orderedProviders)
       }
       finally {
-        ReadAction.run<Throwable> {
-          // read action ensures that service won't be disposed and storage inside won't be closed
-          myProject.getServiceIfCreated(ProjectIndexingDependenciesService::class.java)
-            ?.completeToken(scanningRequest, scanningIterators.isFullIndexUpdate())
-        }
+        myProject.getServiceIfCreated(ProjectIndexingDependenciesService::class.java)
+          ?.completeToken(scanningRequest, scanningIterators.isFullIndexUpdate())
       }
     }
 
