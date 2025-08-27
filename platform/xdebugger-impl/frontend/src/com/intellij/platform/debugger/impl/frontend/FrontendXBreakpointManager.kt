@@ -75,47 +75,48 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
   init {
     cs.launch {
       FrontendXBreakpointTypesManager.getInstance(project).typesInitialized().await()
-      val (initialBreakpoints, breakpointEvents) = durable {
-        XDebuggerManagerApi.getInstance().getBreakpoints(project.projectId())
-      }
-      for (breakpointDto in initialBreakpoints) {
-        try {
-          addBreakpoint(breakpointDto, updateUI = false)
-        }
-        catch (e: CancellationException) {
-          throw e
-        }
-        catch (e: Throwable) {
-          log.error("Error during initial breakpoints creation from backend $breakpointDto", e)
-        }
-      }
-      lineBreakpointManager.queueAllBreakpointsUpdate()
+      initializeBreakpoints()
+      defaultGroup = durable { XBreakpointApi.getInstance().getDefaultGroup(project.projectId()) }
+    }
+  }
 
-      defaultGroup = durable {
-        XBreakpointApi.getInstance().getDefaultGroup(project.projectId())
+  private suspend fun initializeBreakpoints() {
+    val (initialBreakpoints, breakpointEvents) = durable {
+      XDebuggerManagerApi.getInstance().getBreakpoints(project.projectId())
+    }
+    for (breakpointDto in initialBreakpoints) {
+      try {
+        addBreakpoint(breakpointDto, updateUI = false)
       }
+      catch (e: CancellationException) {
+        throw e
+      }
+      catch (e: Throwable) {
+        log.error("Error during initial breakpoints creation from backend $breakpointDto", e)
+      }
+    }
+    lineBreakpointManager.queueAllBreakpointsUpdate()
 
-      breakpointEvents.toFlow().collect { event ->
-        try {
-          when (event) {
-            is XBreakpointEvent.BreakpointAdded -> {
-              log.info("Breakpoint add request from backend: ${event.breakpointDto.id}")
-              addBreakpoint(event.breakpointDto, updateUI = true)
-            }
-            is XBreakpointEvent.BreakpointRemoved -> {
-              log.info("Breakpoint removal request from backend: ${event.breakpointId}")
-              removeBreakpointLocally(event.breakpointId)
-              // breakpointRemoved event happened on the server, so we can remove id from the frontend
-              breakpointIdsRemovedLocally.remove(event.breakpointId)
-            }
+    breakpointEvents.toFlow().collect { event ->
+      try {
+        when (event) {
+          is XBreakpointEvent.BreakpointAdded -> {
+            log.info("Breakpoint add request from backend: ${event.breakpointDto.id}")
+            addBreakpoint(event.breakpointDto, updateUI = true)
+          }
+          is XBreakpointEvent.BreakpointRemoved -> {
+            log.info("Breakpoint removal request from backend: ${event.breakpointId}")
+            removeBreakpointLocally(event.breakpointId)
+            // breakpointRemoved event happened on the server, so we can remove id from the frontend
+            breakpointIdsRemovedLocally.remove(event.breakpointId)
           }
         }
-        catch (e: CancellationException) {
-          throw e
-        }
-        catch (e: Throwable) {
-          log.error("Error during breakpoint event processing from backend: $event", e)
-        }
+      }
+      catch (e: CancellationException) {
+        throw e
+      }
+      catch (e: Throwable) {
+        log.error("Error during breakpoint event processing from backend: $event", e)
       }
     }
   }
