@@ -90,7 +90,7 @@ internal class GitWidgetApiImpl : GitWidgetApi {
     })
   }
 
-  fun ProducerScope<GitWidgetState>.trySendNewState(project: Project, file: VirtualFile?) {
+  suspend fun ProducerScope<GitWidgetState>.trySendNewState(project: Project, file: VirtualFile?) {
     val widgetState = getWidgetState(project, file)
     if (widgetState is GitWidgetState.OnRepository) {
       val rootPath = GitRepositoryIdCache.getInstance(project).get(widgetState.repository)?.root
@@ -99,7 +99,7 @@ internal class GitWidgetApiImpl : GitWidgetApi {
       }
     }
 
-    trySend(widgetState)
+    send(widgetState)
   }
 
   companion object {

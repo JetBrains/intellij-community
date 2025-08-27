@@ -11,8 +11,10 @@ import com.intellij.platform.vcs.impl.shared.rpc.VcsMappingsApi
 import com.intellij.platform.vcs.impl.shared.rpc.VcsMappingsDto
 import com.intellij.vcs.toDto
 import com.intellij.vcsUtil.VcsUtil
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.launch
@@ -44,7 +46,7 @@ internal class VcsMappingsApiImpl : VcsMappingsApi {
       awaitClose {
         messageBusConnection?.disconnect()
       }
-    }
+    }.buffer(onBufferOverflow = BufferOverflow.DROP_OLDEST)
   }
 
   private fun getMappingsDto(vcsManager: ProjectLevelVcsManager): VcsMappingsDto {

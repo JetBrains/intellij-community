@@ -9,10 +9,11 @@ import com.intellij.platform.vcs.impl.shared.rpc.ChangeDto
 import com.intellij.platform.vcs.impl.shared.rpc.ChangeListDto
 import com.intellij.platform.vcs.impl.shared.rpc.ChangeListsApi
 import com.intellij.platform.vcs.impl.shared.rpc.ContentRevisionDto
-import com.intellij.vcs.VcsDisposable
 import com.intellij.vcs.toDto
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.launch
@@ -28,7 +29,7 @@ internal class ChangeListsApiImpl : ChangeListsApi {
           return@readAction null
         }
 
-        VcsDisposable.getInstance(project).coroutineScope.launch {
+        launch {
           send(ChangeListManager.getInstance(project).areChangeListsEnabled())
         }
 
@@ -44,7 +45,7 @@ internal class ChangeListsApiImpl : ChangeListsApi {
       awaitClose {
         messageBusConnection?.disconnect()
       }
-    }
+    }.buffer(onBufferOverflow = BufferOverflow.DROP_OLDEST)
   }
 
   override suspend fun getChangeLists(projectId: ProjectId): Flow<List<ChangeListDto>> {
@@ -57,7 +58,7 @@ internal class ChangeListsApiImpl : ChangeListsApi {
           return@readAction null
         }
 
-        VcsDisposable.getInstance(project).coroutineScope.launch {
+        launch {
           send(ChangeListManager.getInstance(project).changeLists.map { changeList -> changeList.toDto() })
         }
 
@@ -76,7 +77,7 @@ internal class ChangeListsApiImpl : ChangeListsApi {
       awaitClose {
         messageBusConnection?.disconnect()
       }
-    }
+    }.buffer(onBufferOverflow = BufferOverflow.DROP_OLDEST)
   }
 
   private fun ChangeList.toDto(): ChangeListDto = ChangeListDto(
