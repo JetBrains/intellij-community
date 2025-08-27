@@ -154,7 +154,7 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
       tmpData.append("\r\n")
     }
 
-    tmpData.append(commandPrefix).append(batParams.list.joinToString("^\r\n ") { CommandLineUtil.escapeParameterOnWindows(it, true) })
+    tmpData.append(commandPrefix).append(batParams.list.joinToString(" ") { CommandLineUtil.escapeParameterOnWindows(it, true) })
 
     val tempDirectory = FileUtilRt.getTempDirectory()
     val tmpBat = FileUtil.createTempFile(File(tempDirectory), "mvn-idea-exec", ".bat", false, true)
