@@ -169,6 +169,7 @@ internal fun MutableTWorkspace.generateK2FixTests() {
             model("$idea/quickfix/replaceWithSafeCall", pattern = pattern)
             model("$idea/quickfix/restrictedRetentionForExpressionAnnotation", pattern = pattern)
             model("$idea/quickfix/runBlockingInSuspendFunction", pattern = pattern)
+            model("$idea/quickfix/addVarianceModifier", pattern = pattern)
             model("$idea/quickfix/simplifyComparison", pattern = pattern)
             model("$idea/quickfix/simplifyExpression", pattern = pattern)
             model("$idea/quickfix/smartCastImpossibleInIfThen", pattern = pattern)
