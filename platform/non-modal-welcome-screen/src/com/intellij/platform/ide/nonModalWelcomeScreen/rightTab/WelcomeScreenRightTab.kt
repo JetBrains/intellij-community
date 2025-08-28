@@ -319,7 +319,6 @@ class WelcomeScreenRightTab(
       withContext(Dispatchers.EDT) {
         val settingsFile = WelcomeScreenRightTabVirtualFile(WelcomeScreenRightTab(project, contentProvider), project)
         val fileEditorManager = FileEditorManager.getInstance(project) as FileEditorManagerEx
-        //val preventWelcomeTabFocusService = project.service<GoWelcomeScreenPreventWelcomeTabFocusService>()
         val options = FileEditorOpenOptions(reuseOpen = true, isSingletonEditorInWindow = true,
                                             selectAsCurrent = true)
         fileEditorManager.openFile(settingsFile, options)

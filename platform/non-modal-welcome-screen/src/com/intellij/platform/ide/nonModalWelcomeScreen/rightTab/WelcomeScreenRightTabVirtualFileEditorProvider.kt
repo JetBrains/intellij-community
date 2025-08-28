@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NonNls
 
 class WelcomeScreenRightTabVirtualFileEditorProvider : FileEditorProvider, DumbAware {
   companion object {
-    const val ID: String = "GoNewProjectWindowFileEditor"
+    const val ID: String = "NewProjectWindowFileEditor"
   }
 
   override fun accept(project: Project, file: VirtualFile): Boolean {

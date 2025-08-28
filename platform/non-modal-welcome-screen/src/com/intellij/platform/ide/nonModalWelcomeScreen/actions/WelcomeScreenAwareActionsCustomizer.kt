@@ -12,17 +12,9 @@ import org.intellij.lang.annotations.Language
 class WelcomeScreenAwareActionsCustomizer : ActionConfigurationCustomizer, ActionConfigurationCustomizer.LightCustomizeStrategy {
   override suspend fun customize(actionRegistrar: ActionRuntimeRegistrar) {
     replaceActionCopyPresentation("CloseProject", WelcomeScreenAwareCloseProjectAction(), actionRegistrar)
-
     wrapExistingActionAndReplace("RenameProject", isFrontendAction = false, actionRegistrar)
 
-    disableCreatingFilesInWelcomeProject(actionRegistrar)
     hideProjectToolbarActionsInWelcomeScreenProject(actionRegistrar)
-  }
-
-  private fun disableCreatingFilesInWelcomeProject(actionRegistrar: ActionRuntimeRegistrar) {
-    wrapExistingActionAndReplace("NewFile", isFrontendAction = false, actionRegistrar)
-    wrapExistingActionAndReplace("Go.NewGoFile", isFrontendAction = false, actionRegistrar)
-    wrapExistingActionAndReplace("NewDir", isFrontendAction = false, actionRegistrar)
   }
 
   private fun hideProjectToolbarActionsInWelcomeScreenProject(actionRegistrar: ActionRuntimeRegistrar) {
