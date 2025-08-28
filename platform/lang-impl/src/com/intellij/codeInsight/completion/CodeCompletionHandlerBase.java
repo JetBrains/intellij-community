@@ -394,6 +394,7 @@ public class CodeCompletionHandlerBase {
 
     ApplicationManager.getApplication().getMessageBus().syncPublisher(CompletionContributorListener.TOPIC)
       .beforeCompletionContributorThreadStarted(indicator, initContext);
+
     return indicator.getCompletionThreading()
       .startThread(indicator, Context.current().wrap(() -> {
         CompletionThreadingKt.tryReadOrCancel(indicator, Context.current().wrap(() -> {
