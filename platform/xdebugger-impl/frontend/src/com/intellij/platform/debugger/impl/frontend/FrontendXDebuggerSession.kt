@@ -172,11 +172,9 @@ class FrontendXDebuggerSession private constructor(
       }
     }
     cs.launch {
-      XDebugSessionTabApi.getInstance().sessionTabInfo(id).collectLatest { tabDto ->
-        if (tabDto == null) return@collectLatest
-        initTabInfo(tabDto)
-        this.cancel() // Only one tab expected
-      }
+      val tabDto = XDebugSessionTabApi.getInstance().sessionTabInfo(id)
+                     .firstOrNull() ?: return@launch
+      initTabInfo(tabDto)
     }
   }
 

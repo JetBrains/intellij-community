@@ -136,7 +136,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
   private val myStopped = MutableStateFlow(false)
   private val myReadOnly = MutableStateFlow(false)
   private val myShowToolWindowOnSuspendOnly: Boolean = showToolWindowOnSuspendOnly
-  private val myTabInitDataFlow = createMutableStateFlow<XDebuggerSessionTabAbstractInfo?>(null)
+  private val myTabInitDataFlow = MutableStateFlow<XDebuggerSessionTabAbstractInfo?>(null)
   val restartActions: MutableList<AnAction> = SmartList<AnAction>()
   val extraStopActions: MutableList<AnAction> = SmartList<AnAction>()
   val extraActions: MutableList<AnAction> = SmartList<AnAction>()
@@ -193,8 +193,8 @@ class XDebugSessionImpl @JvmOverloads constructor(
   }
 
   @get:ApiStatus.Internal
-  val tabInitDataFlow: Flow<XDebuggerSessionTabAbstractInfo?>
-    get() = myTabInitDataFlow
+  val tabInitDataFlow: Flow<XDebuggerSessionTabAbstractInfo>
+    get() = myTabInitDataFlow.filterNotNull()
 
   override fun getRunContentDescriptor(): RunContentDescriptor {
     if (useFeProxy() && showFeWarnings()) {
