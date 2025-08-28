@@ -1921,7 +1921,6 @@ a:com.intellij.codeInsight.completion.CompletionPhase
 - sf:AUTO_POPUP_TYPED_EVENT:com.intellij.openapi.util.Key
 - sf:NoCompletion:com.intellij.codeInsight.completion.CompletionPhase
 - f:indicator:com.intellij.codeInsight.completion.CompletionProgressIndicator
-- p:<init>(com.intellij.codeInsight.completion.CompletionProgressIndicator):V
 - dispose():V
 - a:newCompletionStarted(I,Z):I
 f:com.intellij.codeInsight.completion.CompletionPhase$BgCalculation
