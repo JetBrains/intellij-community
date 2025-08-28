@@ -7672,35 +7672,6 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/inspectionsLocal/migrateDiagnosticSuppression")
-    public static class MigrateDiagnosticSuppression extends AbstractLocalInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K1;
-        }
-
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("base.kt")
-        public void testBase() throws Exception {
-            runTest("testData/inspectionsLocal/migrateDiagnosticSuppression/base.kt");
-        }
-
-        @TestMetadata("multiple.kt")
-        public void testMultiple() throws Exception {
-            runTest("testData/inspectionsLocal/migrateDiagnosticSuppression/multiple.kt");
-        }
-
-        @TestMetadata("new.kt")
-        public void testNew() throws Exception {
-            runTest("testData/inspectionsLocal/migrateDiagnosticSuppression/new.kt");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/moveLambdaOutsideParentheses")
     public static class MoveLambdaOutsideParentheses extends AbstractLocalInspectionTest {
         @java.lang.Override
