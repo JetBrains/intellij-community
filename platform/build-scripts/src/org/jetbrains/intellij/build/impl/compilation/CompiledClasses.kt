@@ -14,7 +14,7 @@ import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.impl.JpsCompilationRunner
 import org.jetbrains.intellij.build.impl.cleanOutput
-import org.jetbrains.intellij.build.impl.generateRuntimeModuleRepository
+import org.jetbrains.intellij.build.impl.generateRuntimeModuleRepositoryForCompiledClasses
 import org.jetbrains.intellij.build.impl.isBazelTestRun
 import org.jetbrains.intellij.build.jpsCache.isForceDownloadJpsCache
 import org.jetbrains.intellij.build.jpsCache.isPortableCompilationCacheEnabled
@@ -205,7 +205,7 @@ internal suspend fun reuseOrCompile(context: CompilationContext, moduleNames: Co
     context.compilationData.runtimeModuleRepositoryGenerated = true
   }
   else {
-    generateRuntimeModuleRepository(context)
+    generateRuntimeModuleRepositoryForCompiledClasses(context)
     context.options.useCompiledClassesFromProjectOutput = true
   }
 }

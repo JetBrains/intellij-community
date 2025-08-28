@@ -39,7 +39,7 @@ class ArchivedCompilationContext(
     get() = storage.archivedOutputDirectory
 
   override suspend fun getOriginalModuleRepository(): OriginalModuleRepository {
-    generateRuntimeModuleRepository(this)
+    generateRuntimeModuleRepositoryForCompiledClasses(this)
     return OriginalModuleRepositoryImpl(this, this@ArchivedCompilationContext.storage.getMappingMap().entries.associate { it.key.toString() to it.value.toString() })
   }
 

@@ -39,7 +39,7 @@ internal class CompilationTasksImpl(private val context: CompilationContext) : C
   }
 
   override suspend fun generateRuntimeModuleRepository() {
-    generateRuntimeModuleRepository(context)
+    generateRuntimeModuleRepositoryForCompiledClasses(context)
   }
 
   override suspend fun compileAllModulesAndTests() {
@@ -47,7 +47,7 @@ internal class CompilationTasksImpl(private val context: CompilationContext) : C
   }
 }
 
-internal suspend fun generateRuntimeModuleRepository(context: CompilationContext) {
+internal suspend fun generateRuntimeModuleRepositoryForCompiledClasses(context: CompilationContext) {
   if (context.compilationData.runtimeModuleRepositoryGenerated) {
     Span.current().addEvent("runtime module repository is already generated")
   }

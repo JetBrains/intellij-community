@@ -62,7 +62,7 @@ class BazelCompilationContext(
     get() = delegate.classesOutputDirectory
 
   override suspend fun getOriginalModuleRepository(): OriginalModuleRepository {
-    generateRuntimeModuleRepository(this)
+    generateRuntimeModuleRepositoryForCompiledClasses(this)
     return OriginalModuleRepositoryImpl(this)
   }
 

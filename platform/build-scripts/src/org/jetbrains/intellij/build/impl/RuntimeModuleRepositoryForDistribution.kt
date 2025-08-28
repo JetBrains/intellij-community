@@ -41,7 +41,7 @@ import kotlin.io.path.pathString
  * (along with information from plugin.xml files and other files describing custom layouts of plugins if necessary) to determine which
  * resources should be included in the distribution, instead of taking this information from the project model.
  */
-internal suspend fun generateRuntimeModuleRepository(entries: Sequence<DistributionFileEntry>, context: BuildContext) {
+internal suspend fun generateRuntimeModuleRepositoryForDistribution(entries: Sequence<DistributionFileEntry>, context: BuildContext) {
   val repositoryEntries = ArrayList<RuntimeModuleRepositoryEntry>()
   val osSpecificDistPaths = listOf(null to context.paths.distAllDir) +
                             SUPPORTED_DISTRIBUTIONS.map { it to getOsAndArchSpecificDistDirectory(osFamily = it.os, arch = it.arch, libc = it.libcImpl, context = context) }
@@ -73,7 +73,7 @@ internal suspend fun generateRuntimeModuleRepository(entries: Sequence<Distribut
 }
 
 /**
- * A variant of [generateRuntimeModuleRepository] which should be used for 'dev build', when all [entries] correspond to the current OS,
+ * A variant of [generateRuntimeModuleRepositoryForDistribution] which should be used for 'dev build', when all [entries] correspond to the current OS,
  * and distribution files are generated under [targetDirectory].
  */
 @ApiStatus.Internal
