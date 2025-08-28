@@ -61,11 +61,13 @@ Navigation item file #0: kotlin-stdlib.jar!/kotlin/annotation/AnnotationTarget.c
      ExperimentalStdlibApi
      ExperimentalSubclassOptIn
      ExperimentalUnsignedTypes
+     ExperimentalVersionOverloading
      ExposedCopyVisibility
      ExtensionFunctionType
      Function
      IgnorableReturnValue
      InitializedLazyImpl
+     IntroducedAt
      kotlin.kotlin_builtins
      KotlinNothingValueException
      KotlinNullPointerException
