@@ -15,8 +15,10 @@ import com.jetbrains.python.getOrLogException
 import com.jetbrains.python.hatch.sdk.createSdk
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
 import com.jetbrains.python.util.runWithModalBlockingOrInBackground
+import org.jetbrains.annotations.ApiStatus
 
-internal class PyHatchSdkConfiguration : PyProjectSdkConfigurationExtension {
+@ApiStatus.Internal
+class PyHatchSdkConfiguration : PyProjectSdkConfigurationExtension {
   companion object {
     private val LOGGER = Logger.getInstance(PyHatchSdkConfiguration::class.java)
   }

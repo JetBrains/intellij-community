@@ -19,8 +19,10 @@ import com.jetbrains.python.sdk.uv.setupNewUvSdkAndEnv
 import com.jetbrains.python.venvReader.tryResolvePath
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
+@ApiStatus.Internal
 class PyUvSdkConfiguration : PyProjectSdkConfigurationExtension {
   override suspend fun getIntention(module: Module): @IntentionName String? {
     return PyProjectToml.findFile(module)?.let { toml ->
