@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.decompiler.stubBuilder
 
@@ -14,7 +14,10 @@ import org.jetbrains.kotlin.analysis.decompiler.stub.file.KotlinClsStubBuilder
 import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.stubs.AbstractStubBuilderTest
-import org.jetbrains.kotlin.idea.test.*
+import org.jetbrains.kotlin.idea.test.KotlinCompilerStandalone
+import org.jetbrains.kotlin.idea.test.KotlinJdkAndLibraryProjectDescriptor
+import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.psi.stubs.elements.KtFileStubBuilder
 import org.jetbrains.kotlin.utils.addIfNotNull
 import org.junit.Assert
@@ -55,7 +58,7 @@ abstract class AbstractClsStubBuilderTest : KotlinLightCodeInsightFixtureTestCas
     }
 
     protected fun testClsStubsForFile(classFile: VirtualFile, txtFile: File?) {
-        val stubTreeFromCls = KotlinClsStubBuilder().buildFileStub(FileContentImpl.createByFile(classFile))!!
+        val stubTreeFromCls = KotlinClsStubBuilder.buildFileStub(FileContentImpl.createByFile(classFile))!!
         myFixture.configureFromExistingVirtualFile(classFile)
         val psiFile = myFixture.file
         val stubTreeFromDecompiledText = KtFileStubBuilder().buildStubTree(psiFile)
