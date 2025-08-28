@@ -7,6 +7,12 @@
   margin: 0 -0.3em 0 -2.3em;
 }
 
+.run-icon-line > img {
+  max-width: 1em;
+  vertical-align: text-top;
+  margin-right: 0.3em;
+}
+
 .code-block {
   position: absolute;
   left: 1em;
