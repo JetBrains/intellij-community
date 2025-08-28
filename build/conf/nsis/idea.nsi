@@ -742,14 +742,32 @@ Function .onInit
   ${DisableX64FSRedirection}
   Call createLog
 
+  ${IfNot} ${AtLeastBuild} 14393  ; Windows 10 1607 / Windows Server 2016
+    MessageBox MB_OK "$(unsupported_win_version)"
+    Abort
+  ${EndIf}
+
   ${GetNativeMachineArchitecture} $R0
-  ${IfNot} $R0 == ${INSTALLER_ARCH}
-  ${OrIfNot} ${AtLeastBuild} 14393  ; Windows 10 1607 / Windows Server 2016
-    ${LogText} "Architecture: expected=${INSTALLER_ARCH} actual=$R0"
-    ReadEnvStr $R0 "TEAMCITY_VERSION"
-    ${If} $R0 == ""
-      MessageBox MB_OK "$(unsupported_win_version)"
-      Abort
+  ${If} $R0 <> ${INSTALLER_ARCH}
+    IntFmt $R0 "0x%04X" $R0
+    IntFmt $R1 "0x%04X" ${INSTALLER_ARCH}
+    ${LogText} "Architecture: expected=$R1 actual=$R0"
+    ReadEnvStr $0 "TEAMCITY_VERSION"
+    ${If} $0 == ""
+      ${GetParameters} $0
+      ClearErrors
+      ${GetOptions} $0 "/IGNORE_ARCH" $1
+      ${If} ${Errors}
+        ${If} ${INSTALLER_ARCH} = 0x8664
+          StrCpy $R1 "x64"
+        ${ElseIf} ${INSTALLER_ARCH} = 0xAA64
+          StrCpy $R1 "ARM64"
+        ${EndIf}
+        MessageBox MB_OK "$(arch_mismatch)"
+        Abort
+      ${Else}
+        ${LogText} "  ... overridden"
+      ${EndIf}
     ${Else}
       ${LogText} "  ... ignored on TeamCity"
     ${EndIf}
