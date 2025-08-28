@@ -44,6 +44,7 @@ import java.util.concurrent.ExecutorService;
 
 public abstract class CompletionPhase implements Disposable {
   public static final Key<TypedEvent> AUTO_POPUP_TYPED_EVENT = Key.create("AutoPopupTypedEvent");
+
   @ApiStatus.Internal
   public static final Key<String> CUSTOM_CODE_COMPLETION_ACTION_ID = Key.create("CodeCompletionActionID");
 
@@ -76,12 +77,14 @@ public abstract class CompletionPhase implements Disposable {
 
   public static final class CommittingDocuments extends CompletionPhase {
     private static final ExecutorService ourExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Completion Preparation", 1);
+
     boolean replaced;
-    private final ActionTracker myTracker;
+    private final @NotNull ActionTracker myTracker;
     private final @Nullable TypedEvent myEvent;
     private int myRequestCount = 1;
 
-    CommittingDocuments(@Nullable CompletionProgressIndicator prevIndicator, @NotNull Editor editor,
+    CommittingDocuments(@Nullable CompletionProgressIndicator prevIndicator,
+                        @NotNull Editor editor,
                         @Nullable TypedEvent event) {
       super(prevIndicator);
       myTracker = new ActionTracker(editor, this);
@@ -200,7 +203,7 @@ public abstract class CompletionPhase implements Disposable {
     }
 
     private static @NotNull CommittingDocuments getCompletionPhase(@Nullable CompletionProgressIndicator prevIndicator,
-                                                                   Editor topLevelEditor,
+                                                                   @NotNull Editor topLevelEditor,
                                                                    @Nullable TypedEvent event) {
       if (event != null) {
         CompletionPhase currentPhase = CompletionServiceImpl.getCompletionPhase();
@@ -218,12 +221,12 @@ public abstract class CompletionPhase implements Disposable {
     }
 
     @ApiStatus.Internal
-    public static void loadContributorsOutsideEdt(Editor editor, PsiFile file) {
+    public static void loadContributorsOutsideEdt(@NotNull Editor editor, @NotNull PsiFile file) {
       CompletionContributor.forLanguage(PsiUtilCore.getLanguageAtOffset(file, editor.getCaretModel().getOffset()));
     }
 
     @ApiStatus.Internal
-    public static boolean shouldSkipAutoPopup(Editor editor, PsiFile psiFile) {
+    public static boolean shouldSkipAutoPopup(@NotNull Editor editor, @NotNull PsiFile psiFile) {
       int offset = editor.getCaretModel().getOffset();
       int psiOffset = Math.max(0, offset - 1);
 
@@ -287,11 +290,11 @@ public abstract class CompletionPhase implements Disposable {
         }
       }, this);
       if (indicator.isAutopopupCompletion()) {
-        // lookup is not visible, we have to check ourselves if editor retains focus
+        // lookup is not visible, we have to check ourselves if the editor retains focus
         ((EditorEx)indicator.getEditor()).addFocusListener(new FocusChangeListener() {
           @Override
           public void focusLost(@NotNull Editor editor, @NotNull FocusEvent event) {
-            // When ScreenReader is active the lookup gets focus on show and we should not close it.
+            // When ScreenReader is active, the lookup gets focus on show, and we should not close it.
             if (ScreenReader.isActive() &&
                 event.getOppositeComponent() != null &&
                 // Check the opposite is in the lookup ancestor
