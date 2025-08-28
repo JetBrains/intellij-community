@@ -280,7 +280,7 @@ public class CodeCompletionHandlerBase {
   }
 
   @ApiStatus.Internal
-  protected void doComplete(CompletionInitializationContextImpl initContext,
+  protected void doComplete(@NotNull CompletionInitializationContextImpl initContext,
                             boolean hasModifiers,
                             boolean isValidContext,
                             long startingTime) {
@@ -320,8 +320,8 @@ public class CodeCompletionHandlerBase {
     scheduleContributorsAfterAsyncCommit(initContext, indicator, hasModifiers);
   }
 
-  private void scheduleContributorsAfterAsyncCommit(CompletionInitializationContextImpl initContext,
-                                                    CompletionProgressIndicator indicator,
+  private void scheduleContributorsAfterAsyncCommit(@NotNull CompletionInitializationContextImpl initContext,
+                                                    @NotNull CompletionProgressIndicator indicator,
                                                     boolean hasModifiers) {
     CompletionPhase phase;
     if (synchronous) {
@@ -352,7 +352,8 @@ public class CodeCompletionHandlerBase {
   private void trySynchronousCompletion(CompletionInitializationContextImpl initContext,
                                         boolean hasModifiers,
                                         long startingTime,
-                                        CompletionProgressIndicator indicator, OffsetsInFile hostCopyOffsets) {
+                                        CompletionProgressIndicator indicator,
+                                        OffsetsInFile hostCopyOffsets) {
     CompletionServiceImpl.setCompletionPhase(new CompletionPhase.Synchronous(indicator));
 
     var future = startContributorThread(initContext, indicator, hostCopyOffsets, hasModifiers);
@@ -363,6 +364,7 @@ public class CodeCompletionHandlerBase {
     int timeout = calcSyncTimeOut(startingTime);
     if (indicator.blockingWaitForFinish(timeout)) {
       if (ApplicationManager.getApplication().isUnitTestMode()) {
+        //noinspection TestOnlyProblems
         checkForExceptions(future);
       }
       try {
@@ -805,7 +807,7 @@ public class CodeCompletionHandlerBase {
     return settings.AUTOCOMPLETE_ON_CODE_COMPLETION;
   }
 
-  private static Runnable rememberDocumentState(final Editor _editor) {
+  private static @NotNull Runnable rememberDocumentState(final Editor _editor) {
     final Editor editor = InjectedLanguageEditorUtil.getTopLevelEditor(_editor);
     final String documentText = editor.getDocument().getText();
     final int caret = editor.getCaretModel().getOffset();

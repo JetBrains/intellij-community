@@ -273,7 +273,7 @@ public abstract class CompletionPhase implements Disposable {
     boolean modifiersChanged = false;
     private final @NotNull ClientId ownerId = ClientId.getCurrent();
 
-    public BgCalculation(final CompletionProgressIndicator indicator) {
+    public BgCalculation(@NotNull CompletionProgressIndicator indicator) {
       super(indicator);
       ApplicationManager.getApplication().addApplicationListener(new ApplicationListener() {
         @Override
@@ -361,9 +361,9 @@ public abstract class CompletionPhase implements Disposable {
   }
 
   public static final class InsertedSingleItem extends ZombiePhase {
-    public final Runnable restorePrefix;
+    public final @NotNull Runnable restorePrefix;
 
-    InsertedSingleItem(CompletionProgressIndicator indicator, Runnable restorePrefix) {
+    InsertedSingleItem(@NotNull CompletionProgressIndicator indicator, @NotNull Runnable restorePrefix) {
       super(indicator);
       this.restorePrefix = restorePrefix;
       expireOnAnyEditorChange(indicator.getEditor());
@@ -380,7 +380,7 @@ public abstract class CompletionPhase implements Disposable {
   }
 
   public static final class NoSuggestionsHint extends ZombiePhase {
-    NoSuggestionsHint(@Nullable LightweightHint hint, CompletionProgressIndicator indicator) {
+    NoSuggestionsHint(@Nullable LightweightHint hint, @NotNull CompletionProgressIndicator indicator) {
       super(indicator);
       expireOnAnyEditorChange(indicator.getEditor());
       if (hint != null) {
@@ -402,7 +402,8 @@ public abstract class CompletionPhase implements Disposable {
     private final Editor myEditor;
     private final Set<? extends Pair<Integer, ElementPattern<String>>> myRestartingPrefixConditions;
 
-    EmptyAutoPopup(Editor editor, Set<? extends Pair<Integer, ElementPattern<String>>> restartingPrefixConditions) {
+    EmptyAutoPopup(@NotNull Editor editor,
+                   @NotNull Set<? extends Pair<Integer, ElementPattern<String>>> restartingPrefixConditions) {
       super(null);
       myTracker = new ActionTracker(editor, this);
       myEditor = editor;

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.completion;
 
@@ -157,9 +157,14 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
    */
   private volatile int myUnfreezeAfterNItems = -1;
 
-  CompletionProgressIndicator(Editor editor, @NotNull Caret caret, int invocationCount,
-                              CodeCompletionHandlerBase handler, @NotNull OffsetMap offsetMap, @NotNull OffsetsInFile hostOffsets,
-                              boolean hasModifiers, @NotNull LookupImpl lookup) {
+  CompletionProgressIndicator(@NotNull Editor editor,
+                              @NotNull Caret caret,
+                              int invocationCount,
+                              @NotNull CodeCompletionHandlerBase handler,
+                              @NotNull OffsetMap offsetMap,
+                              @NotNull OffsetsInFile hostOffsets,
+                              boolean hasModifiers,
+                              @NotNull LookupImpl lookup) {
     myEditor = editor;
     myCaret = caret;
     this.handler = handler;
