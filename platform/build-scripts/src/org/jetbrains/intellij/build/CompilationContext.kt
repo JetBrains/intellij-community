@@ -24,8 +24,7 @@ interface CompilationContext {
   fun isStepSkipped(step: String): Boolean = options.buildStepsToSkip.contains(step)
 
   /**
-   * Stable java executable from Java SDK used to compile a project and do other stuff,
-   * not a JBR to assert compatibility with a standard Java Runtime.
+   * Stable java executable from Java SDK used to compile a project and do other stuff
    */
   val stableJavaExecutable: Path
 
