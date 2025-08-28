@@ -999,31 +999,29 @@ class NestedLocksThreadingSupport : ThreadingSupport {
       is ParallelizablePermit.Write -> existingPermit.writePermit to false
       is ParallelizablePermit.WriteIntent -> existingPermit.writeIntentPermit to false
     }
-    val previousValue = myWriteIntentAcquired.get()
-    myWriteIntentAcquired.set(true)
-    hack_setThisLevelPermit(actualPermit)
-    fun cleanup() {
+    try {
+      val previousValue = myWriteIntentAcquired.get()
+      myWriteIntentAcquired.set(true)
+      hack_setThisLevelPermit(actualPermit)
+      try {
+        if (!shouldProceedWithWriteAction()) {
+          return null
+        }
+      }
+      finally {
+        hack_setThisLevelPermit(null)
+        myWriteIntentAcquired.set(previousValue)
+      }
+      val frozenListeners = prepareWriteIntentForWriteLockAcquisition(computationState, Any::class.java)
+      val writeIntentInitResult = PreparatoryWriteIntent(actualPermit, false, computationState, frozenListeners)
+      return proceedWithSuspendWriteLockAcquisitionFromWriteIntent(computationState, writeIntentInitResult, action)
+    }
+    finally {
       if (toRelease) {
+        hack_setThisLevelPermit(null)
         actualPermit.release()
       }
     }
-    try {
-      if (!shouldProceedWithWriteAction()) {
-        cleanup()
-        return null
-      }
-    }
-    catch (e: Throwable) {
-      cleanup()
-      throw e
-    }
-    finally {
-      myWriteIntentAcquired.set(previousValue)
-      hack_setThisLevelPermit(null)
-    }
-    val frozenListeners = prepareWriteIntentForWriteLockAcquisition(computationState, Any::class.java)
-    val writeIntentInitResult = PreparatoryWriteIntent(actualPermit, toRelease, computationState, frozenListeners)
-    return proceedWithSuspendWriteLockAcquisitionFromWriteIntent(computationState, writeIntentInitResult, action)
   }
 
 
