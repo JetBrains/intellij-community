@@ -39,6 +39,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.FocusEvent;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 
@@ -317,13 +318,13 @@ public abstract class CompletionPhase implements Disposable {
 
   public static final class ItemsCalculated extends CompletionPhase {
 
-    public ItemsCalculated(CompletionProgressIndicator indicator) {
+    public ItemsCalculated(@NotNull CompletionProgressIndicator indicator) {
       super(indicator);
     }
 
     @Override
     public int newCompletionStarted(int time, boolean repeated) {
-      indicator.closeAndFinish(false);
+      Objects.requireNonNull(indicator, "`ItemsCalculated#indicator` is not-null as its constructor accepts not-null `indicator`").closeAndFinish(false);
       return indicator.nextInvocationCount(time, repeated);
     }
   }
