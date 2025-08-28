@@ -18,6 +18,37 @@ import java.util.Map;
 public class Py3TypeTest extends PyTestCase {
   public static final String TEST_DIRECTORY = "/types/";
 
+  /** 
+  Overload signatures for dict.get and dict.pop in builtins.pyi differ slightly,
+  dict.get has default value for "default" parameter. This affect the logic of overload resolution.
+  Therefore it makes sense to test both.
+  <p>
+   <pre>{@code
+  @overload
+  def get(self, key: _KT, default: None = None, /) -> _VT | None: ...
+  # mode overloads...
+   }</pre>
+   <p>
+   <pre>{@code
+  @overload
+  def pop(self, key: _KT, /) -> _VT: ...
+  # mode overloads...
+   }</pre>
+   */
+  // PY-82818
+  public void testGetFromDictWithDefaultNoneValue() {
+    doTest("Any | None", """
+             d = {}
+             expr = d.get("abc", None)""");
+  }
+
+  // PY-82818
+  public void testPopFromDictWithDefaultNoneValue() {
+    doTest("Any", """
+             d = {}
+             expr = d.pop("abc", None)""");
+  }
+
   public void testYieldInsideLambda() {
     // Checks that foo is not a generator
     doTest("int", """
