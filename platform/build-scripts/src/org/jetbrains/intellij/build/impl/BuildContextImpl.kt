@@ -5,6 +5,10 @@ import com.intellij.platform.ijent.community.buildConstants.IJENT_WSL_FILE_SYSTE
 import com.intellij.platform.ijent.community.buildConstants.MULTI_ROUTING_FILE_SYSTEM_VMOPTIONS
 import com.intellij.platform.ijent.community.buildConstants.isMultiRoutingFileSystemEnabledForProduct
 import com.intellij.platform.runtime.product.ProductMode
+import com.intellij.platform.runtime.product.serialization.ProductModulesSerialization
+import com.intellij.platform.runtime.product.serialization.RawProductModules
+import com.intellij.platform.runtime.product.serialization.ResourceFileResolver
+import com.intellij.platform.runtime.repository.RuntimeModuleId
 import com.intellij.util.containers.with
 import com.intellij.util.text.SemVer
 import io.opentelemetry.api.common.AttributeKey
@@ -46,6 +50,7 @@ import org.jetbrains.intellij.build.productRunner.ModuleBasedProductRunner
 import org.jetbrains.intellij.build.productRunner.createDevModeProductRunner
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.module.JpsModule
+import java.io.InputStream
 import java.nio.file.Files
 import java.nio.file.Path
 import java.time.Instant
@@ -54,7 +59,9 @@ import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.io.path.inputStream
 import kotlin.io.path.invariantSeparatorsPathString
+import kotlin.io.path.pathString
 import kotlin.time.Duration
 
 class BuildContextImpl internal constructor(
@@ -227,7 +234,7 @@ class BuildContextImpl internal constructor(
 
   private val bundledPluginModulesForModularLoader = asyncLazy("bundled plugin modules for modular loader") {
     productProperties.rootModuleForModularLoader?.let { rootModule ->
-      getOriginalModuleRepository().loadRawProductModules(rootModule, productProperties.productMode).bundledPluginMainModules.map {
+      loadRawProductModules(rootModule, productProperties.productMode).bundledPluginMainModules.map {
         it.stringId
       }
     }
@@ -253,8 +260,7 @@ class BuildContextImpl internal constructor(
   private val _frontendModuleFilter = asyncLazy("JetBrains client module filter") {
     val rootModule = productProperties.embeddedFrontendRootModule
     if (rootModule != null && options.enableEmbeddedFrontend) {
-      val moduleRepository = getOriginalModuleRepository()
-      val productModules = moduleRepository.loadRawProductModules(rootModule, ProductMode.FRONTEND)
+      val productModules = loadRawProductModules(rootModule, ProductMode.FRONTEND)
       FrontendModuleFilterImpl.create(project, productModules, jarPackagerDependencyHelper)
     }
     else {
@@ -423,6 +429,21 @@ class BuildContextImpl internal constructor(
     computeAppInfoXml(context = this, applicationInfo)
   }
 
+  override fun loadRawProductModules(rootModuleName: String, productMode: ProductMode): RawProductModules {
+    val productModulesFile = findProductModulesFile(this, rootModuleName)
+                             ?: error("Cannot find product-modules.xml file in $rootModuleName")
+    val resolver = object : ResourceFileResolver {
+      override fun readResourceFile(moduleId: RuntimeModuleId, relativePath: String): InputStream? {
+        return findFileInModuleSources(findRequiredModule(moduleId.stringId), relativePath)?.inputStream()
+      }
+
+      override fun toString(): String {
+        return "source file based resolver for '${paths.projectHome}' project"
+      }
+    }
+    return ProductModulesSerialization.readProductModulesAndMergeIncluded(productModulesFile.inputStream(), productModulesFile.pathString, resolver)
+  }
+
   private val devModeProductRunner = asyncLazy("dev mode product runner") {
     createDevModeProductRunner(this@BuildContextImpl)
   }
@@ -459,6 +480,10 @@ class BuildContextImpl internal constructor(
   override suspend fun distributionState(): DistributionBuilderState {
     return distributionState.await()
   }
+}
+
+internal fun findProductModulesFile(context: CompilationContext, clientMainModuleName: String): Path? {
+  return findFileInModuleSources(context.findRequiredModule(clientMainModuleName), "META-INF/$clientMainModuleName/product-modules.xml")
 }
 
 private fun createBuildOutputRootEvaluator(projectHome: Path, productProperties: ProductProperties, buildOptions: BuildOptions): (JpsProject) -> Path = { project ->

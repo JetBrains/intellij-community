@@ -283,10 +283,10 @@ private suspend fun checkKeymapPluginsAreBundledWithFrontend(
   context: BuildContext,
   softly: SoftAssertions,
 ) {
-  val productModules = context.getOriginalModuleRepository().loadProductModules(jetBrainsClientMainModule, ProductMode.FRONTEND)
+  val productModules = context.loadRawProductModules(jetBrainsClientMainModule, ProductMode.FRONTEND)
   val keymapPluginModulePrefix = "intellij.keymap."
-  val keymapPluginsBundledWithFrontend = productModules.bundledPluginModuleGroups
-    .map { it.mainModule.moduleId.stringId }
+  val keymapPluginsBundledWithFrontend = productModules.bundledPluginMainModules
+    .map { it.stringId }
     .filter { it.startsWith(keymapPluginModulePrefix) }
   val keymapPluginsBundledWithMonolith = context.getBundledPluginModules().filter { it.startsWith(keymapPluginModulePrefix) }
   softly.assertThat(keymapPluginsBundledWithFrontend)
