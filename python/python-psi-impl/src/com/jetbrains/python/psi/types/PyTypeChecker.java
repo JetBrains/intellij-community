@@ -359,12 +359,9 @@ public final class PyTypeChecker {
   }
 
   private static boolean match(@NotNull PySelfType expected, @Nullable PyType actual, @NotNull MatchContext context) {
-    boolean matchedByQualifier = match(context.mySubstitutions.qualifierType, actual, context).orElse(true);
-    boolean matchedByScopeClass = true;
-    if (actual instanceof PyClassType actualClassType) {
-      matchedByScopeClass = actualClassType.isDefinition() == expected.isDefinition();
-    }
-    return matchedByQualifier && matchedByScopeClass;
+    if (!(actual instanceof PySelfType actualSelf)) return false;
+    return expected.isDefinition() == actualSelf.isDefinition() &&
+           match(expected.getScopeClassType(), actualSelf.getScopeClassType(), context).orElse(false);
   }
 
   private static @Nullable PyType toClass(@Nullable PyType type) {
@@ -1552,6 +1549,15 @@ public final class PyTypeChecker {
                                                      @NotNull GenericSubstitutions substitutions,
                                                      @NotNull TypeEvalContext context) {
     if (paramWrapper.isSelf()) {
+      if (expectedType instanceof PySelfType selfType) {
+        final PyCollectionType genericType = findGenericDefinitionType(selfType.getScopeClassType().getPyClass(), context);
+        if (genericType != null) {
+          expectedType = selfType.isDefinition() ? genericType.toClass() : genericType;
+        }
+        else {
+          expectedType = selfType.getScopeClassType();
+        }
+      }
       actualType = processSelfParameter(paramWrapper, expectedType, actualType, substitutions, context);
       if (actualType == null) {
         return false;

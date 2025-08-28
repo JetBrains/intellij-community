@@ -57,11 +57,11 @@ class PyAssertTypeInspectionTest : PyInspectionTestCase() {
              @classmethod
              def from_config(cls, config: dict[str, float]) -> Self:
                  assert_type(cls, type[Self])
-                 assert_type(<warning descr="Expected type 'Self', got 'type[Shape]' instead">cls</warning>, Self) # E
+                 assert_type(<warning descr="Expected type 'Self', got 'type[Self]' instead">cls</warning>, Self) # E
                  ...
              
              def normal_method(self) -> Self:
-                 assert_type(<warning descr="Expected type 'Self', got 'Shape' instead">self</warning>, type[Self]) # E
+                 assert_type(<warning descr="Expected type 'type[Self]', got 'Self' instead">self</warning>, type[Self]) # E
                  assert_type(self, Self) 
                  ...
     """.trimIndent())

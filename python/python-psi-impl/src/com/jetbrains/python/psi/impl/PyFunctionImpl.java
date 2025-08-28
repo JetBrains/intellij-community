@@ -247,6 +247,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
         type = null;
       }
     }
+    // TODO Is it still needed if we infer Self as a return type?
     else if (receiver != null) {
       type = replaceSelf(type, receiver, context);
     }

@@ -128,13 +128,6 @@ public class PyTypeCheckerInspection extends PyInspection {
 
           PyType actual = returnExpr != null ? tryPromotingType(returnExpr, expected) : PyBuiltinCache.getInstance(node).getNoneType();
 
-          if (expected instanceof PySelfType selfType && returnExpr != null) {
-            if (!validateSelfType(selfType, actual, returnExpr)) {
-              reportSelfTypeMismatch(selfType, actual, returnExpr);
-              return;
-            }
-          }
-
           if (!PyTypeChecker.match(expected, actual, myTypeEvalContext)) {
             final String expectedName = PythonDocumentationProvider.getVerboseTypeName(expected, myTypeEvalContext);
             final String actualName = PythonDocumentationProvider.getTypeName(actual, myTypeEvalContext);
@@ -284,14 +277,6 @@ public class PyTypeCheckerInspection extends PyInspection {
       }
 
       final PyType actual = tryPromotingType(value, expected);
-
-      if (expected instanceof PySelfType selfType) {
-        if (!validateSelfType(selfType, actual, value)) {
-          reportSelfTypeMismatch(selfType, actual, value);
-          return;
-        }
-      }
-
       if (!PyTypeChecker.match(expected, actual, myTypeEvalContext)) {
         String expectedName = PythonDocumentationProvider.getVerboseTypeName(expected, myTypeEvalContext);
         String actualName = PythonDocumentationProvider.getTypeName(actual, myTypeEvalContext);
@@ -525,11 +510,6 @@ public class PyTypeCheckerInspection extends PyInspection {
 
           break;
         }
-        else if (expected instanceof PySelfType selfType && PyTypeChecker.match(expected, actual, myTypeEvalContext, substitutions)) {
-          if (!validateSelfType(selfType, actual, argument)) {
-            result.add(new AnalyzeArgumentResult(argument, expected, null, actual, false));
-          }
-        }
         else {
           final boolean matched = matchParameterAndArgument(expected, actual, argument, substitutions);
           result.add(new AnalyzeArgumentResult(argument, expected, substituteGenerics(expected, substitutions), actual, matched));
@@ -572,41 +552,6 @@ public class PyTypeCheckerInspection extends PyInspection {
                                       unfilledParameterFromParamSpecs,
                                       unfilledPositionalVarargs);
     }
-
-
-    private boolean validateSelfType(@NotNull PySelfType expectedSelfType,
-                                     @Nullable PyType actualType,
-                                     @NotNull PyExpression actualExpr) {
-      if (!PyTypeChecker.match(expectedSelfType, actualType, myTypeEvalContext)) {
-        return false;
-      }
-      if (actualType instanceof PyClassType actualClassType) {
-        PyReferenceExpression refExpr = null;
-        if (actualExpr instanceof PyReferenceExpression actualRef) {
-          refExpr = actualRef;
-        }
-        else if (actualExpr instanceof PyCallExpression) {
-          PyExpression callee = ((PyCallExpression)actualExpr).getCallee();
-          if (callee instanceof PyReferenceExpression calleeRef) {
-            refExpr = calleeRef;
-          }
-        }
-        if (refExpr != null) {
-          boolean referenceToSpecificClass =
-            refExpr.getReference(PyResolveContext.defaultContext(myTypeEvalContext)).resolve() instanceof PyClass pyClass &&
-            pyClass.equals(actualClassType.getPyClass());
-          return !referenceToSpecificClass;
-        }
-      }
-      return true;
-    }
-
-    private void reportSelfTypeMismatch(@NotNull PySelfType selfType, @Nullable PyType actualType, @NotNull PsiElement element) {
-      String expectedName = PythonDocumentationProvider.getVerboseTypeName(selfType, myTypeEvalContext);
-      String actualName = PythonDocumentationProvider.getTypeName(actualType, myTypeEvalContext);
-      registerProblem(element, PyPsiBundle.message("INSP.type.checker.expected.type.got.type.instead", expectedName, actualName));
-    }
-
 
 
     private void analyzeParamSpec(@NotNull PyParamSpecType paramSpec, @NotNull List<PyExpression> arguments,

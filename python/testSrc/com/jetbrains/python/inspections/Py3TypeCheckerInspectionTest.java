@@ -3473,10 +3473,10 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                           return cls() # OK
                       @classmethod
                       def method2(cls) -> Self:
-                          return <warning descr="Expected type 'Self', got 'type[Shape]' instead">cls</warning> # E
+                          return <warning descr="Expected type 'Self', got 'type[Self]' instead">cls</warning> # E
                       @classmethod
                       def method3(cls) -> type[Self]:
-                          return <warning descr="Expected type 'Self', got 'Shape' instead">cls()</warning> # E
+                          return <warning descr="Expected type 'type[Self]', got 'Shape' instead">cls()</warning> # E
                       @classmethod
                       def method4(cls) -> type[Self]:
                           return cls # OK

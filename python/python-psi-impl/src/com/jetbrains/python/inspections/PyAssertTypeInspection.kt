@@ -91,17 +91,7 @@ private fun isSame(type1: PyType?, type2: PyType?, context: TypeEvalContext): Bo
     }
     return keywordOnlyParameters2.isEmpty()
   }
-  val promotedType1 = promote(type1, context)
-  val promotedType2 = promote(type2, context)
-  return promotedType1 == promotedType2
-}
-
-private fun promote(type: PyType?, context: TypeEvalContext): PyType? {
-  return PyCloningTypeVisitor.clone(type, object: PyCloningTypeVisitor(context) {
-    override fun visitPySelfType(selfType: PySelfType): PyType {
-      return selfType.scopeClassType
-    }
-  })
+  return type1 == type2
 }
 
 private fun getCallableParameters(callableType: PyCallableType, context: TypeEvalContext): CallableParameters? {
