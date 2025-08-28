@@ -13,87 +13,40 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.io.FileUtil.findSequentNonexistentFile
 import com.intellij.platform.ide.nonModalWelcomeScreen.NonModalWelcomeScreenBundle
-import com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel.WelcomeScreenFileTemplateOptionProvider
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
+@ApiStatus.Internal
 object WelcomeScreenNewFileHandler {
-
-  private object TemplateNames {
-    const val GENERIC_EMPTY_FILE: String = "Generic Empty File"
-    const val HTTP_REQUEST: String = "HTTP Request.http"
-    const val DOCKERFILE: String = "Dockerfile"
-  }
-
-  fun getDefaultProjectPath(): String {
+  private fun getDefaultProjectPath(): String {
     return findSequentNonexistentFile(Path.of(getBaseDir()).toFile(), "awesomeProject", "").absolutePath
   }
 
-  fun createEmptyFile(project: Project?) {
-    if (project == null) return
-    val dialogBuilder = WelcomeScreenNewFileDialog.Builder(project, NonModalWelcomeScreenBundle.message("non.modal.welcome.screen.create.file.dialog.title.file"))
-    dialogBuilder.apply {
-      defaultDirectory = getDefaultProjectPath()
-    }
-
-    showDialogAndCreateFile(project, dialogBuilder.build()) {
-      TemplateNames.GENERIC_EMPTY_FILE
-    }
-  }
-
-  fun createHttpRequestFile(project: Project?) {
-    if (project == null) return
-    val dialogBuilder = WelcomeScreenNewFileDialog.Builder(project, NonModalWelcomeScreenBundle.message("non.modal.welcome.screen.create.file.dialog.title.http.request"))
-    dialogBuilder.apply {
-      fixedExtension = "http"
-      defaultDirectory = getDefaultProjectPath()
-    }
-
-    showDialogAndCreateFile(project, dialogBuilder.build()) {
-      TemplateNames.HTTP_REQUEST
-    }
-  }
-
-  fun createDockerfile(project: Project?) {
-    if (project == null) return
-    val dialogBuilder = WelcomeScreenNewFileDialog.Builder(project, NonModalWelcomeScreenBundle.message("go.non.modal.welcome.screen.create.file.dialog.title.dockerfile"))
-    dialogBuilder.apply {
-      defaultFileName = "Dockerfile"
-      defaultDirectory = getDefaultProjectPath()
-    }
-
-    showDialogAndCreateFile(project, dialogBuilder.build()) {
-      TemplateNames.DOCKERFILE
-    }
-  }
-
-  private const val KUBERNETES_RESOURCE_TEMPLATE_KEY = "kubernetes.resource.template"
-
-  fun createKubernetesResource(project: Project?) {
-    if (project == null) return
-    val dialogBuilder = WelcomeScreenNewFileDialog.Builder(project, NonModalWelcomeScreenBundle.message("go.non.modal.welcome.screen.create.file.dialog.title.k8s.resource"))
-    dialogBuilder.apply {
-      fixedExtension = "yaml"
-      defaultDirectory = getDefaultProjectPath()
-      templateOptions = WelcomeScreenFileTemplateOptionProvider.getForTemplateKey(KUBERNETES_RESOURCE_TEMPLATE_KEY)?.getTemplateOptions()
-                        ?: emptyList()
-    }
-    showDialogAndCreateFile(project, dialogBuilder.build()) { it }
+  fun showNewFileDialog(project: Project,
+                        @NlsContexts.DialogTitle dialogTitle: String,
+                        templateName: String,
+                        dialogBuilderBlock: WelcomeScreenNewFileDialog.Builder.() -> Unit = {}) {
+    val dialogBuilder = WelcomeScreenNewFileDialog.Builder(project, dialogTitle)
+    dialogBuilder.defaultDirectory = getDefaultProjectPath()
+    dialogBuilder.dialogBuilderBlock()
+    showDialogAndCreateFile(dialogBuilder.build(), templateName)
   }
 
   private fun showDialogAndCreateFile(
-    project: Project,
     dialog: WelcomeScreenNewFileDialog,
-    templateNameProvider: (String?) -> String?,
+    templateName: String,
   ) {
     if (!dialog.showAndGet()) return
 
     val directory = dialog.getTargetDirectory() ?: return
-    val templateName = templateNameProvider(dialog.getSelectedTemplateName()) ?: return
     val fileName = dialog.getFileName()
+
+    val project = dialog.project
 
     try {
       val mkdirs = CreateFileAction.MkDirs(fileName, directory)
-      val template = FileTemplateManager.getInstance(project).getInternalTemplate(templateName)
+      val selectedTemplateName = dialog.getSelectedTemplateName() ?: templateName
+      val template = FileTemplateManager.getInstance(project).getInternalTemplate(selectedTemplateName)
       val templateProperties = FileTemplateManager.getInstance(project).getDefaultProperties()
       val psiFile = FileTemplateUtil.createFromTemplate(template, mkdirs.newName, templateProperties, mkdirs.directory).getContainingFile()
       val virtualFile = psiFile.getVirtualFile()

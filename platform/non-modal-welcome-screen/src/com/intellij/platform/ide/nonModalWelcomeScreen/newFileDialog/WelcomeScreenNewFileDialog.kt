@@ -7,6 +7,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.fileChooser.impl.FileChooserUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.*
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.ide.nonModalWelcomeScreen.NonModalWelcomeScreenBundle
 import com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel.TemplateOption
 import com.intellij.psi.PsiDirectory
@@ -28,7 +29,7 @@ import javax.swing.JList
 import javax.swing.event.DocumentEvent
 
 class WelcomeScreenNewFileDialog private constructor(
-  private val project: Project,
+  internal val project: Project,
   private val builder: Builder,
 ) : DialogWrapper(project, true) {
 
@@ -192,7 +193,7 @@ class WelcomeScreenNewFileDialog private constructor(
     super.doOKAction()
   }
 
-  class Builder(val project: Project, @Nls val title: String) {
+  class Builder(val project: Project, @NlsContexts.DialogTitle val title: String) {
     var showNameField: Boolean = true
     var fixedExtension: String? = null
     var defaultFileName: String = ""

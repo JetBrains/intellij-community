@@ -19,9 +19,8 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.ui.popup.ListPopupStep
 import com.intellij.openapi.util.NlsActions.ActionText
-import com.intellij.platform.ide.nonModalWelcomeScreen.NonModalWelcomeScreenBundle.message
+import com.intellij.platform.ide.nonModalWelcomeScreen.NonModalWelcomeScreenBundle
 import com.intellij.platform.ide.nonModalWelcomeScreen.newFileDialog.WelcomeScreenNewFileHandler
-import com.intellij.platform.ide.nonModalWelcomeScreen.newFileDialog.WelcomeScreenNewFileHandler.createHttpRequestFile
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
@@ -42,13 +41,13 @@ import javax.swing.JComponent
 internal class WelcomeScreenLeftPanelActions(val project: Project) {
   internal val panelButtonModels: List<PanelButtonModel>
     get() = listOf(
-      PanelButtonModel(message ("non.modal.welcome.screen.action.open"), AllIcons.Nodes.Folder,
+      PanelButtonModel(NonModalWelcomeScreenBundle.message ("non.modal.welcome.screen.action.open"), AllIcons.Nodes.Folder,
                        runPlatformAction("OpenFile")),
-      PanelButtonModel(message("non.modal.welcome.screen.action.new"), AllIcons.General.Add,
+      PanelButtonModel(NonModalWelcomeScreenBundle.message("non.modal.welcome.screen.action.new"), AllIcons.General.Add,
                        showNewActionGroupDropDown()),
-      PanelButtonModel(message("non.modal.welcome.screen.action.clone"), AllIcons.General.Vcs,
+      PanelButtonModel(NonModalWelcomeScreenBundle.message("non.modal.welcome.screen.action.clone"), AllIcons.General.Vcs,
                        runPlatformAction("Vcs.VcsClone")),
-      PanelButtonModel(message("non.modal.welcome.screen.action.remote.development"), AllIcons.Nodes.Plugin,
+      PanelButtonModel(NonModalWelcomeScreenBundle.message("non.modal.welcome.screen.action.remote.development"), AllIcons.Nodes.Plugin,
                        runPlatformAction("OpenRemoteDevelopment")),
     )
 
@@ -154,7 +153,11 @@ internal class WelcomeScreenLeftPanelActions(val project: Project) {
 internal class CreateEmptyFileAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
-    WelcomeScreenNewFileHandler.createEmptyFile(project)
+    WelcomeScreenNewFileHandler.showNewFileDialog(
+      project = project,
+      dialogTitle = NonModalWelcomeScreenBundle.message("non.modal.welcome.screen.create.file.dialog.title.file"),
+      templateName = "Generic Empty File"
+    )
   }
 }
 
@@ -164,11 +167,18 @@ internal class CreateHttpRequestFileAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     invokeOrShowPluginPage(project, HTTP_CLIENT_PLUGIN_ID) {
-      createHttpRequestFile(project)
+      WelcomeScreenNewFileHandler.showNewFileDialog(
+        project = project,
+        dialogTitle = NonModalWelcomeScreenBundle.message("non.modal.welcome.screen.create.file.dialog.title.http.request"),
+        templateName = "HTTP Request.http"
+      ) {
+        fixedExtension = "http"
+      }
     }
   }
 }
 
+// TODO consider to use showPluginConfigurable and override the action in the plugin code
 @ApiStatus.Internal
 fun invokeOrShowPluginPage(project: Project, pluginId: PluginId, runnable: () -> Unit) {
   if (!isDisabled(pluginId)) {
