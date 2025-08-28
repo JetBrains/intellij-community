@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.formatter.java
 
+import com.intellij.codeInsight.AnnotationUtil
 import com.intellij.codeInsight.DumbAwareAnnotationUtil
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.roots.LanguageLevelProjectExtension
@@ -16,10 +17,10 @@ import com.intellij.psi.util.PsiTreeUtil
 
 internal object JavaFormatterAnnotationUtil {
   private val KNOWN_TYPE_ANNOTATIONS: Set<String> = setOf(
-    "org.jetbrains.annotations.NotNull",
-    "org.jetbrains.annotations.Nullable",
-    "org.jspecify.annotations.NonNull",
-    "org.jspecify.annotations.Nullable",
+    AnnotationUtil.NOT_NULL,
+    AnnotationUtil.NULLABLE,
+    AnnotationUtil.J_SPECIFY_NON_NULL,
+    AnnotationUtil.J_SPECIFY_NULLABLE,
   )
 
   /**

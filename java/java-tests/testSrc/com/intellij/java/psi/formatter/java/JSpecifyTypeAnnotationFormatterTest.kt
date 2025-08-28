@@ -62,6 +62,32 @@ class JSpecifyTypeAnnotationFormatterTest : LightJavaCodeInsightFixtureTestCase(
     doTest()
   }
 
+  fun testModuleImport() {
+    IdeaTestUtil.setProjectLanguageLevel(myFixture.project, LanguageLevel.JDK_25)
+    doTest()
+  }
+
+  fun testModuleImportWithSpaces() {
+    IdeaTestUtil.setProjectLanguageLevel(myFixture.project, LanguageLevel.JDK_25)
+    doTest()
+  }
+
+  fun testModuleImportMixedWithPackageImport() {
+    IdeaTestUtil.setProjectLanguageLevel(myFixture.project, LanguageLevel.JDK_25)
+    doTest()
+  }
+
+  fun testModuleImportMixedWithFqn() {
+    IdeaTestUtil.setProjectLanguageLevel(myFixture.project, LanguageLevel.JDK_25)
+    doTest()
+  }
+
+
+  fun testLowLanguageLevelForModuleImport() {
+    IdeaTestUtil.setProjectLanguageLevel(myFixture.project, LanguageLevel.JDK_24)
+    doTest()
+  }
+
   private fun doTest() {
     val testName = getTestName(false)
     myFixture.configureByFile("$testName.java")
