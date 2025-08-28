@@ -5,7 +5,6 @@ import com.intellij.compiler.CompilerTestUtil
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory
 import com.intellij.execution.RunManagerEx
 import com.intellij.execution.process.ProcessOutputType
-import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.WriteAction
@@ -36,6 +35,7 @@ import com.intellij.openapi.util.text.Strings
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.testFramework.eelJava.EelTestJdkProvider
 import com.intellij.platform.testFramework.io.ExternalResourcesChecker.reportUnavailability
 import com.intellij.testFramework.ExtensionTestUtil.maskExtensions
 import com.intellij.testFramework.IdeaTestUtil
@@ -44,8 +44,10 @@ import com.intellij.util.SmartList
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.currentJavaVersion
 import com.intellij.util.io.copyRecursively
+import com.intellij.util.io.createDirectories
 import com.intellij.util.io.createParentDirectories
 import com.intellij.util.io.delete
+import com.intellij.util.lang.JavaVersion
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.jps.model.java.JdkVersionDetector
@@ -74,7 +76,7 @@ import org.junit.runners.Parameterized
 import java.io.IOException
 import java.nio.file.Path
 import java.util.function.Consumer
-import kotlin.io.path.exists
+import kotlin.io.path.*
 
 @RunWith(Parameterized::class)
 abstract class GradleImportingTestCase : JavaExternalSystemImportingTestCase() {
@@ -415,14 +417,6 @@ abstract class GradleImportingTestCase : JavaExternalSystemImportingTestCase() {
     GradleSystemSettings.getInstance().gradleVmOptions = ""
   }
 
-  private fun requireWslJdkHome(distribution: WSLDistribution): String {
-    var jdkPath = System.getProperty("wsl.jdk.path")
-    if (jdkPath == null) {
-      jdkPath = "/usr/lib/jvm/java-11-openjdk-amd64"
-    }
-    return distribution.getWindowsPath(jdkPath)
-  }
-
   private fun installExecutionDeprecationChecker() {
     val notificationManager = ExternalSystemProgressNotificationManager.getInstance()
     val notificationListener: ExternalSystemTaskNotificationListener = object : ExternalSystemTaskNotificationListener {
@@ -446,9 +440,6 @@ abstract class GradleImportingTestCase : JavaExternalSystemImportingTestCase() {
   }
 
   private fun requireRealJdkHome(): String {
-    if (myWSLDistribution != null) {
-      return requireWslJdkHome(myWSLDistribution!!)
-    }
     return requireJdkHome()
   }
 
@@ -484,6 +475,20 @@ abstract class GradleImportingTestCase : JavaExternalSystemImportingTestCase() {
       gradleVersion: GradleVersion,
       javaVersionRestriction: JavaVersionRestriction,
     ): String {
+      val eelJdkPath = EelTestJdkProvider.getJdkPath()
+      if (eelJdkPath != null) {
+        val eelJdkPathString = eelJdkPath.toString()
+        val eelJdk = JavaSdk.getInstance().createJdk("Gradle Test JDK", eelJdkPathString)
+        val eelJdkVersion = JavaVersion.parse(eelJdk.versionString!!)
+        assertTrue(
+          """
+          Unable to run the test on Java $eelJdkVersion installed at $eelJdk.
+          Please fix the JDK version of the test environment or adjust the Gradle version according to the Gradle compatibility matrix!
+        """.trimIndent(),
+          isSupported(gradleVersion, eelJdkVersion) && !javaVersionRestriction.isRestricted(gradleVersion, eelJdkVersion)
+        )
+        return eelJdkPathString
+      }
       if (isSupported(gradleVersion, currentJavaVersion()) &&
           !javaVersionRestriction.isRestricted(gradleVersion, currentJavaVersion())
       ) {

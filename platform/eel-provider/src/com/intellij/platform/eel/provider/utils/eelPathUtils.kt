@@ -332,7 +332,7 @@ object EelPathUtils {
 
   /**
    * Temporary solution: caches are scoped per EelApi instance using WeakIdentityMap.
-   * 
+   *
    * TODO: Ideally, TransferredContentHolder should be bound to the IJent instance (or its CoroutineScope)
    * instead of being an application-level service. This would provide cleaner lifecycle management
    * and explicit cache invalidation on IJent restart.
