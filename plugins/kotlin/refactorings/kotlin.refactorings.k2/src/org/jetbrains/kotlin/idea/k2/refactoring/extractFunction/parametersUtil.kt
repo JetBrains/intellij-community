@@ -155,8 +155,10 @@ internal fun ExtractionData.inferParametersInfo(
                 }
             }
             if (call is KaErrorCallInfo) {
-                val diagnostic = call.diagnostic
-                if (diagnostic is KaFirDiagnostic.NoContextArgument) {
+                val diagnostics = (referenceExpression.parent as? KtCallExpression ?: referenceExpression).diagnostics(
+                        KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS
+                    ).takeIf { it.isNotEmpty() } ?: listOf(call.diagnostic)
+                diagnostics.filterIsInstance<KaFirDiagnostic.NoContextArgument>().forEach { diagnostic ->
                     val parameter = (diagnostic.symbol as? KaContextParameterSymbol)?.psi as? KtParameter
                     if (parameter != null) {
                         val implicitContextParameterType = substitutions.substitute(parameter.returnType)
