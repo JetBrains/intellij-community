@@ -6,7 +6,6 @@ project.consumer
 project.consumer.androidTest
     consumer/src/androidAndroidTest/kotlin (Java, Test)
     consumer/src/androidAndroidTestDebug/kotlin (Java, Test)
-    consumer/src/androidDebugAndroidTest/kotlin (Java, Test)
     consumer/src/androidTest/java (Java, Test)
     consumer/src/androidTestDebug/java (Java, Test)
 
@@ -47,7 +46,6 @@ project.producer
 project.producer.androidTest
     producer/src/androidAndroidTest/kotlin (Java, Test)
     producer/src/androidAndroidTestDebug/kotlin (Java, Test)
-    producer/src/androidDebugAndroidTest/kotlin (Java, Test)
     producer/src/androidTest/java (Java, Test)
     producer/src/androidTestDebug/java (Java, Test)
 
