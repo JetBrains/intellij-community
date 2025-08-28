@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -8,7 +9,6 @@ import org.jetbrains.annotations.NotNull;
  * <p>
  * <p>It is called "Hash", because in DVCSs it is represented by a SHA-hash value.</p>
  * <p>
- * TODO move to intellij.platform.vcs
  *
  * @author Kirill Likhodedov
  * @author erokhins

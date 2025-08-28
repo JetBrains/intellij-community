@@ -25,6 +25,8 @@ jvm_library(
     "//platform/vcs-log/api:vcs-log",
     "//platform/vcs-log/impl",
     "//platform/vcs-log/graph:vcs-log-graph-impl",
+    "//platform/vcs-api/shared",
+    "//platform/vcs-impl/shared",
   ],
   runtime_deps = [":vcs-git-coverage_resources"]
 )
@@ -53,6 +55,8 @@ jvm_library(
     "//platform/vcs-log/impl:impl_test_lib",
     "//platform/vcs-log/graph:vcs-log-graph-impl",
     "//platform/vcs-log/graph:vcs-log-graph-impl_test_lib",
+    "//platform/vcs-api/shared",
+    "//platform/vcs-impl/shared",
   ],
   runtime_deps = [":vcs-git-coverage_resources"]
 )

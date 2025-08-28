@@ -179,6 +179,9 @@ bf:com.intellij.platform.vcs.changes.ChangeListManagerState$Updating$$serializer
 - f:serialize(kotlinx.serialization.encoding.Encoder,com.intellij.platform.vcs.changes.ChangeListManagerState$Updating):V
 f:com.intellij.platform.vcs.changes.ChangeListManagerState$Updating$Companion
 - f:serializer():kotlinx.serialization.KSerializer
+com.intellij.vcs.log.Hash
+- a:asString():java.lang.String
+- a:toShortString():java.lang.String
 com.intellij.vcs.log.VcsUser
 - a:getEmail():java.lang.String
 - a:getName():java.lang.String

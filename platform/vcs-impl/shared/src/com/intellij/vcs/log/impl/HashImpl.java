@@ -1,9 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.impl;
 
+import com.intellij.platform.vcs.VcsUtil;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.util.VcsLogUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
@@ -110,6 +110,6 @@ public final class HashImpl implements Hash {
 
   @Override
   public @NotNull String toShortString() {
-    return VcsLogUtil.getShortHash(asString());
+    return VcsUtil.getShortHash(asString());
   }
 }

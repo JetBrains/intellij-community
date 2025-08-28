@@ -3,6 +3,7 @@ package com.intellij.platform.vcs
 
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.actions.VcsContextFactory
 import com.intellij.openapi.vfs.VirtualFile
@@ -12,6 +13,8 @@ import javax.swing.Icon
 
 @ApiStatus.Internal
 object VcsUtil {
+  const val SHORT_HASH_LENGTH: Int = 8
+
   /**
    * Interaction with [VirtualFile] is not supported in the Split mode
    */
@@ -28,4 +31,10 @@ object VcsUtil {
     return if (virtualFile != null) getIcon(virtualFile, 0, project)
     else FileTypeManager.getInstance().getFileTypeByFileName(filePath.getName()).getIcon()
   }
+
+  @JvmStatic
+  fun getShortHash(hashString: String): @NlsSafe String = hashString.take(SHORT_HASH_LENGTH)
+
+  @JvmStatic
+  fun getShortHash(hashString: String, shortHashLength: Int): @NlsSafe String = hashString.take(shortHashLength)
 }
