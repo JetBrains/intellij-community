@@ -41,7 +41,7 @@ abstract class AbstractDecompiledTextTest(baseDirectory: String) : AbstractDecom
         val stubTreeFromDecompiledText = KtFileStubBuilder().buildStubTree(decompiledFile)
         val expectedText = stubTreeFromDecompiledText.serializeToString()
 
-        val fileStub = KotlinClsStubBuilder().buildFileStub(FileContentImpl.createByFile(file))!!
+        val fileStub = KotlinClsStubBuilder.buildFileStub(FileContentImpl.createByFile(file))!!
         val actual = fileStub.serializeToString()
         Assert.assertEquals(expectedText, actual)
     }

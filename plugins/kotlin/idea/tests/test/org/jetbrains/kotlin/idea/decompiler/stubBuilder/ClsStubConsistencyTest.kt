@@ -27,7 +27,7 @@ class ClsStubConsistencyTest : KotlinLightCodeInsightFixtureTestCase() {
         val stubTreeFromDecompiledText = fileWithDecompiledText.calcStubTree().root
         val expectedText = stubTreeFromDecompiledText.serializeToString()
 
-        val fileStub = KotlinClsStubBuilder().buildFileStub(FileContentImpl.createByFile(packageFile))!!
+        val fileStub = KotlinClsStubBuilder.buildFileStub(FileContentImpl.createByFile(packageFile))!!
         val actualText = fileStub.serializeToString()
 
         Assert.assertEquals(expectedText, actualText)

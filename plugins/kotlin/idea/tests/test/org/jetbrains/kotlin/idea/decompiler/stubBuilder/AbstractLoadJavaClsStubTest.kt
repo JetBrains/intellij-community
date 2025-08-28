@@ -88,7 +88,7 @@ abstract class AbstractLoadJavaClsStubTest : KotlinLightCodeInsightFixtureTestCa
             }
 
             val fileContent = FileContentImpl.createByFile(lightFile)
-            val stubTreeFromCls = KotlinClsStubBuilder().buildFileStub(fileContent) ?: continue
+            val stubTreeFromCls = KotlinClsStubBuilder.buildFileStub(fileContent) ?: continue
 
             val decompiledProvider = KotlinDecompiledFileViewProvider(psiManager, lightFile, false, ::KtClsFile)
             val stubsFromDeserializedDescriptors = KtFileStubBuilder().buildStubTree(KtClsFile(decompiledProvider))
