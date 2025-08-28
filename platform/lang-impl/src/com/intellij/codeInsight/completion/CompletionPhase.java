@@ -257,7 +257,7 @@ public abstract class CompletionPhase implements Disposable {
   }
 
   public static final class Synchronous extends CompletionPhase {
-    Synchronous(CompletionProgressIndicator indicator) {
+    Synchronous(@NotNull CompletionProgressIndicator indicator) {
       super(indicator);
     }
 
@@ -334,7 +334,7 @@ public abstract class CompletionPhase implements Disposable {
 
   public abstract static class ZombiePhase extends CompletionPhase {
 
-    ZombiePhase(CompletionProgressIndicator indicator) {
+    ZombiePhase(@Nullable CompletionProgressIndicator indicator) {
       super(indicator);
     }
 
