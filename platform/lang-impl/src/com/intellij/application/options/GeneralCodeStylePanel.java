@@ -139,7 +139,7 @@ public final class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     generalTab.myRightMarginField.validateContent();
     settings.setDefaultSoftMargins(generalTab.myVisualGuides.getValue());
     formatterTab.excludedScopesPanel.apply(settings);
-    formatterTab.excludedPatternsPanel.apply(settings);
+    formatterTab.apply(settings);
 
     settings.LINE_SEPARATOR = generalTab.getLineSeparator();
 
@@ -186,7 +186,7 @@ public final class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     if (!generalTab.myVisualGuides.getValue().equals(settings.getDefaultSoftMargins())) return true;
 
     if (formatterTab.excludedScopesPanel.isModified(settings)) return true;
-    if (formatterTab.excludedPatternsPanel.isModified(settings)) return true;
+    if (formatterTab.isModified(settings)) return true;
 
     if (!Objects.equals(generalTab.getLineSeparator(), settings.LINE_SEPARATOR)) {
       return true;
@@ -226,7 +226,7 @@ public final class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     generalTab.myVisualGuides.setValue(settings.getDefaultSoftMargins());
 
     formatterTab.excludedScopesPanel.reset(settings);
-    formatterTab.excludedPatternsPanel.reset(settings);
+    formatterTab.reset(settings);
 
     generalTab.setLineSeparator(settings.LINE_SEPARATOR);
     generalTab.myRightMarginField.setValue(settings.getDefaultRightMargin());

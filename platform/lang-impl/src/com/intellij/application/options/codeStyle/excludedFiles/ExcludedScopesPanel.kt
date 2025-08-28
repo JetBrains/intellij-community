@@ -27,7 +27,7 @@ internal class ExcludedScopesPanel(parentPanel: Panel) {
           .label(CodeStyleBundle.message("excluded.files.do.not.format.scope"), position = LabelPosition.TOP)
           .comment(CodeStyleBundle.message("excluded.files.deprecation.label.text"))
           .align(AlignX.FILL)
-      }.bottomGap(BottomGap.SMALL)
+      }.topGap(TopGap.SMALL)
     }
   }
 

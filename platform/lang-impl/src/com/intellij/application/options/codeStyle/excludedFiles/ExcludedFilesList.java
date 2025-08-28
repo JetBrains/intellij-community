@@ -47,6 +47,10 @@ public final class ExcludedFilesList extends JBList<FileSetDescriptor> {
       myFileListDecorator.setAddAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
+          // Just for testing purposes
+          NamedScopeDescriptor descriptor = new NamedScopeDescriptor("testScopeWithPattern" + myModel.size());
+          descriptor.setPattern("*.test");
+          myModel.addElement(descriptor);
           myModel.addElement(new NamedScopeDescriptor("testScope" + myModel.size()));
         }
       });
