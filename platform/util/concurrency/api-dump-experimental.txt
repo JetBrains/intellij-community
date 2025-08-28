@@ -1,3 +1,5 @@
 *f:com.intellij.util.ConcatenationQuery
 - com.intellij.util.AbstractQuery
 - <init>(java.util.List):V
+*f:com.intellij.virtualThreads.IntelliJVirtualThreads
+- s:ofVirtual():java.lang.Thread$Builder
