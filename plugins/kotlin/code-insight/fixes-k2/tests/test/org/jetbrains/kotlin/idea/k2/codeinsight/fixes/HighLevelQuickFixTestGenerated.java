@@ -2512,7 +2512,49 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         }
     }
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/addSuspend")
+    public static class AddSuspend extends AbstractHighLevelQuickFixTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("fakeOverride.kt")
+        public void testFakeOverride() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addSuspend/fakeOverride.kt");
+        }
+
+        @TestMetadata("fakeOverride2.kt")
+        public void testFakeOverride2() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addSuspend/fakeOverride2.kt");
+        }
+
+        @TestMetadata("middleClass.kt")
+        public void testMiddleClass() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addSuspend/middleClass.kt");
+        }
+
+        @TestMetadata("middleClass2.kt")
+        public void testMiddleClass2() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addSuspend/middleClass2.kt");
+        }
+
+        @TestMetadata("nonOverridden.kt")
+        public void testNonOverridden() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addSuspend/nonOverridden.kt");
+        }
+
+        @TestMetadata("nonOverridden2.kt")
+        public void testNonOverridden2() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addSuspend/nonOverridden2.kt");
+        }
+    }
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/quickfix/addTypeAnnotationToValueParameter")
@@ -11439,7 +11481,49 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
 
 
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/removeSuspend")
+    public static class RemoveSuspend extends AbstractHighLevelQuickFixTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("fakeOverride.kt")
+        public void testFakeOverride() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeSuspend/fakeOverride.kt");
+        }
+
+        @TestMetadata("fakeOverride2.kt")
+        public void testFakeOverride2() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeSuspend/fakeOverride2.kt");
+        }
+
+        @TestMetadata("middleClass.kt")
+        public void testMiddleClass() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeSuspend/middleClass.kt");
+        }
+
+        @TestMetadata("middleClass2.kt")
+        public void testMiddleClass2() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeSuspend/middleClass2.kt");
+        }
+
+        @TestMetadata("nonOverridden.kt")
+        public void testNonOverridden() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeSuspend/nonOverridden.kt");
+        }
+
+        @TestMetadata("nonOverridden2.kt")
+        public void testNonOverridden2() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeSuspend/nonOverridden2.kt");
+        }
+    }
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/quickfix/removeToStringInStringTemplate")
