@@ -231,6 +231,8 @@ internal class TerminalCommandSpecCompletionContributorGen2 : CompletionContribu
       .withPresentableText(displayName ?: name)
       .withTailText(nextSuggestions, true)
       .withIcon(actualIcon)
+    // Actual insertion logic is performed in TerminalLookupListener
+    element.putUserData(CodeCompletionHandlerBase.DIRECT_INSERTION, true)
 
     val adjustedPriority = priority.coerceIn(0, 100)
     return PrioritizedLookupElement.withPriority(element, adjustedPriority / 100.0)
