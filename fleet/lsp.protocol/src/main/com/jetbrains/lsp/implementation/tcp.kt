@@ -21,7 +21,7 @@ suspend fun tcpServer(config: TcpConnectionConfig.Server, server: suspend Corout
           val clientAddress = client.remoteAddress
           hadClient = true
           LOG.info("A new client connected at ${clientAddress}")
-          launch(Dispatchers.IO) {
+          launch(start = CoroutineStart.ATOMIC) {
             try {
               client.use { clientSocket ->
                 coroutineScope { server(KtorSocketConnection(clientSocket)) }
@@ -66,21 +66,17 @@ sealed interface TcpConnectionConfig {
 
   val isMultiClient: Boolean
 
-  val isScoped: Boolean
-
   data class Client(
     override val host: String,
     override val port: Int,
   ) : TcpConnectionConfig {
     override val isMultiClient: Boolean = false
-    override val isScoped: Boolean = false
   }
 
   data class Server(
     override val host: String,
     override val port: Int,
     override val isMultiClient: Boolean,
-    override val isScoped: Boolean = false,
   ) : TcpConnectionConfig
 }
 

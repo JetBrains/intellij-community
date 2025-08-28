@@ -33,7 +33,8 @@ import org.jetbrains.kotlin.config.KOTLIN_SOURCE_ROOT_TYPE_ID
 import org.jetbrains.kotlin.config.KOTLIN_TEST_ROOT_TYPE_ID
 import org.jetbrains.kotlin.idea.base.facet.implementingModules
 import org.jetbrains.kotlin.idea.base.fir.projectStructure.FirKaModuleFactory
-import org.jetbrains.kotlin.idea.base.fir.projectStructure.modules.KaNotUnderContentRootModuleWithProjectDeps
+import org.jetbrains.kotlin.idea.base.fir.projectStructure.KaNotUnderContentRootModuleFactory
+import org.jetbrains.kotlin.idea.base.fir.projectStructure.modules.KaNotUnderContentRootModuleImpl
 import org.jetbrains.kotlin.idea.base.fir.projectStructure.modules.library.KaLibraryEntityBasedLibraryModuleBase
 import org.jetbrains.kotlin.idea.base.fir.projectStructure.modules.library.KaLibraryModuleImpl
 import org.jetbrains.kotlin.idea.base.fir.projectStructure.modules.library.KaLibrarySdkModuleImpl
@@ -58,7 +59,7 @@ class K2IDEProjectStructureProvider(private val project: Project) : IDEProjectSt
     }
 
     override fun getNotUnderContentRootModule(project: Project): KaNotUnderContentRootModule {
-        return KaNotUnderContentRootModuleWithProjectDeps(file = null, project)
+        return getKaNotUnderContentRootModule(project, null)
     }
 
     override fun getModule(element: PsiElement, useSiteModule: KaModule?): KaModule {
@@ -71,12 +72,6 @@ class K2IDEProjectStructureProvider(private val project: Project) : IDEProjectSt
         virtualFile?.analysisContextModule?.let { return it }
 
         if (useSiteModule is KaSourceModuleForOutsider || useSiteModule is KaScriptDependencyModule) {
-            if (virtualFile != null && virtualFile in useSiteModule.contentScope) {
-                return useSiteModule
-            }
-        }
-
-        if (useSiteModule is KaDanglingFileModule) {
             if (virtualFile != null && virtualFile in useSiteModule.contentScope) {
                 return useSiteModule
             }
@@ -101,7 +96,7 @@ class K2IDEProjectStructureProvider(private val project: Project) : IDEProjectSt
             .filter { virtualFile == null || virtualFile in it.contentScope }
 
         ModuleChooser.chooseModule(candidates, useSiteModule)?.let { return it }
-        return KaNotUnderContentRootModuleWithProjectDeps(psiFile, project)
+        return getKaNotUnderContentRootModule(project, psiFile)
     }
 
     private fun createKaModules(data: ModuleCandidate): List<KaModule> = when (data) {
@@ -350,3 +345,7 @@ private fun <T> cachedKaModule(
         withEntry("contextualModule", useSiteModule.toString())
     }
 }
+
+private fun getKaNotUnderContentRootModule(project: Project, psiFile: PsiFile?): KaNotUnderContentRootModule =
+    KaNotUnderContentRootModuleFactory.EP_NAME.extensionList.firstNotNullOfOrNull { factory -> factory.create(project, psiFile) }
+        ?: KaNotUnderContentRootModuleImpl(project =  project, file = psiFile)
