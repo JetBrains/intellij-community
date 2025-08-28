@@ -76,13 +76,15 @@ internal class SyncCompletion : CompletionThreadingBase() {
 }
 
 internal fun tryReadOrCancel(indicator: ProgressIndicator, runnable: Runnable) {
-  if (!ApplicationManagerEx.getApplicationEx().tryRunReadAction {
-      indicator.checkCanceled()
-      runnable.run()
-    }) {
-    indicator.cancel()
+  val wasReadActionStarted = ApplicationManagerEx.getApplicationEx().tryRunReadAction {
     indicator.checkCanceled()
+    runnable.run()
   }
+
+  if (wasReadActionStarted) return
+
+  indicator.cancel()
+  indicator.checkCanceled()
 }
 
 internal class AsyncCompletion(project: Project?) : CompletionThreadingBase() {
