@@ -1079,6 +1079,7 @@ Section "Uninstall"
 
   Call un.UpdateContextMenu
   Call un.ProductAssociation
+  Call un.ProductRegistration
   Call un.UninstallRecord
 
   ${RefreshShellIcons}
@@ -1223,6 +1224,14 @@ Function un.ProductAssociation
       WriteRegStr SHCTX "Software\Classes\.ipr" "" ""
     ${EndIf}
     DeleteRegKey SHCTX "Software\Classes\IntelliJIdeaProjectFile"
+  ${EndIf}
+FunctionEnd
+
+Function un.ProductRegistration
+  ReadRegStr $0 SHCTX "Software\Classes\Applications\${PRODUCT_EXE_FILE}\shell\open\command" ""
+  ${If} $0 == '"$INSTDIR\bin\${PRODUCT_EXE_FILE}" "%1"'
+    DetailPrint "Unregistering '${PRODUCT_EXE_FILE}' from the application list"
+    DeleteRegKey SHCTX "Software\Classes\Applications\${PRODUCT_EXE_FILE}"
   ${EndIf}
 FunctionEnd
 
