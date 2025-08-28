@@ -10,7 +10,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.actions.VirtualFileDeleteProvider;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsDataKeys;
@@ -262,8 +261,7 @@ public abstract class ChangesListView extends ChangesTree implements DnDAware {
     if (node == null) return null;
 
     ChangesBrowserNode<?> parent;
-    if (Registry.is("vcs.skip.single.default.changelist") ||
-        !ChangeListManager.getInstance(myProject).areChangeListsEnabled()) {
+    if (!ChangeListManager.getInstance(myProject).areChangeListsEnabled()) {
       parent = getRoot();
     }
     else {

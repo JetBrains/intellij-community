@@ -5,7 +5,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.InitialVfsRefreshService
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.ui.ChangeNodeDecorator
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserUnversionedLoadingPendingNode
@@ -36,8 +35,7 @@ object ChangesViewUtil {
     val shouldShowUntrackedLoading = unversionedFiles.isEmpty() &&
                                      !project.getService(InitialVfsRefreshService::class.java).isInitialVfsRefreshFinished() &&
                                      changeListManager.isUnversionedInUpdateMode
-    val skipSingleDefaultChangeList = Registry.`is`("vcs.skip.single.default.changelist") ||
-                                      !changeListManager.areChangeListsEnabled()
+    val skipSingleDefaultChangeList = !changeListManager.areChangeListsEnabled()
 
     val treeModelBuilder = TreeModelBuilder(project, grouping)
       .setChangeLists(changeLists, skipSingleDefaultChangeList, getChangeDecoratorProvider(project, isAllowExcludeFromCommit))

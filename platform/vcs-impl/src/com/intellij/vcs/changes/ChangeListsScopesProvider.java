@@ -2,7 +2,6 @@
 package com.intellij.vcs.changes;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
@@ -42,12 +41,8 @@ public final class ChangeListsScopesProvider extends CustomScopesProviderEx {
 
     if (ChangesUtil.hasMeaningfulChangelists(myProject)) {
       List<LocalChangeList> changeLists = changeListManager.getChangeLists();
-      boolean skipSingleDefaultCL = Registry.is("vcs.skip.single.default.changelist") &&
-                                    changeLists.size() == 1 && changeLists.get(0).isBlank();
-      if (!skipSingleDefaultCL) {
-        for (ChangeList list : changeLists) {
-          result.add(new ChangeListScope(changeListManager, list.getName()));
-        }
+      for (ChangeList list : changeLists) {
+        result.add(new ChangeListScope(changeListManager, list.getName()));
       }
     }
     return result;
