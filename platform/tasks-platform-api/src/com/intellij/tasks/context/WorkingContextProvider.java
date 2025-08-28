@@ -38,4 +38,8 @@ public abstract class WorkingContextProvider {
 
   public void clearContext(@NotNull Project project) {
   }
+
+  public boolean isEnabled() {
+    return true;
+  }
 }
