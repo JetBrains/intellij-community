@@ -108,7 +108,7 @@ private fun mavenSearchUrl(
     )
         .filter { it.second != null }.joinToString(separator = " AND ") { "${it.first}:\"${it.second}\"" }
 
-    return "https://search.maven.org/solrsearch/select?q=${q.encodeURL()}&core=gav&rows=$rowsLimit&wt=json"
+    return "https://central.sonatype.com/solrsearch/select?q=${q.encodeURL()}&core=gav&rows=$rowsLimit&wt=json"
 }
 
 private fun String.encodeURL(): String = URLEncoder.encode(this, "UTF-8")
