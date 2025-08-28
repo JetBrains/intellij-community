@@ -31,7 +31,7 @@ public class XDebugSessionData extends UserDataHolderBase {
    * @deprecated Use {@link XDebugSessionData#XDebugSessionData(Project, String)} instead
    */
   @Deprecated
-  public XDebugSessionData(@NotNull List<XExpression> watchExpressions,
+  public XDebugSessionData(@NotNull List<XExpression> ignoredWatchExpressions,
                            @NotNull String configurationName) {
     myProject = null;
     myConfigurationName = configurationName;
@@ -79,11 +79,6 @@ public class XDebugSessionData extends UserDataHolderBase {
 
   public @NotNull String getConfigurationName() {
     return myConfigurationName;
-  }
-
-  @ApiStatus.Internal
-  public StateFlow<Boolean> getPauseSupportedFlow() {
-    return myPauseSupported;
   }
 
   @ApiStatus.Internal

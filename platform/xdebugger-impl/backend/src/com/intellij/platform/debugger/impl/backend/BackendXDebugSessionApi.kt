@@ -42,22 +42,15 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.buffer
+import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.future.asDeferred
 import kotlinx.coroutines.withContext
 import org.jetbrains.concurrency.await
 
 internal class BackendXDebugSessionApi : XDebugSessionApi {
-  override suspend fun currentSessionState(sessionId: XDebugSessionId): Flow<XDebugSessionState> {
-    val session = sessionId.findValue() ?: return emptyFlow()
-
-    return combine(
-      session.isPausedState, session.isStoppedState, session.isReadOnlyState, session.isPauseActionSupportedState, session.isSuspendedState
-    ) { isPaused, isStopped, isReadOnly, isPauseActionSupported, isSuspended ->
-      XDebugSessionState(isPaused, isStopped, isReadOnly, isPauseActionSupported, isSuspended)
-    }
-  }
-
   override suspend fun createDocument(frontendDocumentId: FrontendDocumentId, sessionId: XDebugSessionId, expression: XExpressionDto, sourcePosition: XSourcePositionDto?, evaluationMode: EvaluationMode): XExpressionDocumentDto? {
     val session = sessionId.findValue() ?: return null
     val project = session.project

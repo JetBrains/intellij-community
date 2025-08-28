@@ -32,8 +32,6 @@ import org.jetbrains.annotations.Nls
 @ApiStatus.Internal
 @Rpc
 interface XDebugSessionApi : RemoteApi<Unit> {
-  suspend fun currentSessionState(sessionId: XDebugSessionId): Flow<XDebugSessionState>
-
   suspend fun createDocument(frontendDocumentId: FrontendDocumentId, sessionId: XDebugSessionId, expression: XExpressionDto, sourcePosition: XSourcePositionDto?, evaluationMode: EvaluationMode): XExpressionDocumentDto?
 
   suspend fun resume(sessionId: XDebugSessionId)

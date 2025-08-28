@@ -75,24 +75,37 @@ sealed interface XDebuggerManagerSessionEvent {
 @Serializable
 sealed interface XDebuggerSessionEvent {
   @Serializable
+  sealed interface EventWithState : XDebuggerSessionEvent {
+    val state: XDebugSessionState
+  }
+
+  @Serializable
   class SessionPaused(
+    override val state: XDebugSessionState,
     @Serializable(with = DeferredSerializer::class) val suspendData: Deferred<SuspendData?>,
-  ) : XDebuggerSessionEvent
+  ) : EventWithState
 
   @Serializable
-  object SessionResumed : XDebuggerSessionEvent
+  class SessionResumed(
+    override val state: XDebugSessionState,
+  ) : EventWithState
 
   @Serializable
-  object SessionStopped : XDebuggerSessionEvent
+  class SessionStopped(
+    override val state: XDebugSessionState,
+  ) : EventWithState
 
   @Serializable
   class StackFrameChanged(
+    override val state: XDebugSessionState,
     val sourcePosition: XSourcePositionDto?,
     @Serializable(with = DeferredSerializer::class) val stackFrame: Deferred<XStackFrameDto>?,
-    ) : XDebuggerSessionEvent
+  ) : EventWithState
 
   @Serializable
-  object BeforeSessionResume : XDebuggerSessionEvent
+  class BeforeSessionResume(
+    override val state: XDebugSessionState,
+  ) : EventWithState
 
   @Serializable
   object SettingsChanged : XDebuggerSessionEvent

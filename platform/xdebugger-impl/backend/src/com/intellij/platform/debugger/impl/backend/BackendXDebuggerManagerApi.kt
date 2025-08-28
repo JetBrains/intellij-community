@@ -47,9 +47,7 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
 
   private suspend fun createSessionDto(currentSession: XDebugSessionImpl, debugProcess: XDebugProcess): XDebugSessionDto {
     currentSession.sessionInitializedDeferred().await()
-    val initialSessionState = XDebugSessionState(
-      currentSession.isPaused, currentSession.isStopped, currentSession.isReadOnly, currentSession.isPauseActionSupported(), currentSession.isSuspended,
-    )
+    val initialSessionState = currentSession.state()
     val sessionDataDto = XDebugSessionDataDto(
       currentSession.sessionData.configurationName,
       currentSession.areBreakpointsMuted(),
@@ -83,24 +81,28 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
     )
   }
 
+  private fun XDebugSessionImpl.state(): XDebugSessionState = XDebugSessionState(
+    isPaused, isStopped, isReadOnly, isPauseActionSupported(), isSuspended,
+  )
+
   @OptIn(ExperimentalCoroutinesApi::class)
   private fun createSessionEvents(currentSession: XDebugSessionImpl, initialSessionState: XDebugSessionState): Flow<XDebuggerSessionEvent> = channelFlow {
     val listener = object : XDebugSessionListener {
       override fun sessionPaused() {
         val data = async { currentSession.suspendData() }
-        trySend(XDebuggerSessionEvent.SessionPaused(data))
+        trySend(XDebuggerSessionEvent.SessionPaused(currentSession.state(), data))
       }
 
       override fun sessionResumed() {
-        trySend(XDebuggerSessionEvent.SessionResumed)
+        trySend(XDebuggerSessionEvent.SessionResumed(currentSession.state()))
       }
 
       override fun sessionStopped() {
-        trySend(XDebuggerSessionEvent.SessionStopped)
+        trySend(XDebuggerSessionEvent.SessionStopped(currentSession.state()))
       }
 
       override fun beforeSessionResume() {
-        trySend(XDebuggerSessionEvent.BeforeSessionResume)
+        trySend(XDebuggerSessionEvent.BeforeSessionResume(currentSession.state()))
       }
 
       override fun stackFrameChanged() {
@@ -111,6 +113,7 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
           }
         }
         trySend(XDebuggerSessionEvent.StackFrameChanged(
+          currentSession.state(),
           currentSession.currentPosition?.toRpc(),
           stackFrameDto,
         ))

@@ -65,16 +65,7 @@ class FrontendXDebuggerSession private constructor(
 
   private val sourcePositionFlow = MutableStateFlow<XSourcePosition?>(null)
   private val topSourcePositionFlow = MutableStateFlow<XSourcePosition?>(null)
-
-  // TODO merge sessionState with suspendContext flow
-  // TODO to be sure that the state is not out of sync
-  private val sessionState: StateFlow<XDebugSessionState> =
-    channelFlow {
-      XDebugSessionApi.getInstance().currentSessionState(id).collectLatest { sessionState ->
-        send(sessionState)
-      }
-    }.stateIn(cs, SharingStarted.Eagerly, sessionDto.initialSessionState)
-
+  private val sessionStateFlow = MutableStateFlow(sessionDto.initialSessionState)
   private val suspendContext = MutableStateFlow<FrontendXSuspendContext?>(null)
   private val currentExecutionStack = MutableStateFlow<FrontendXExecutionStack?>(null)
   private val currentStackFrame = MutableStateFlow<FrontendXStackFrame?>(null)
@@ -95,22 +86,22 @@ class FrontendXDebuggerSession private constructor(
     get() = currentStackFrame.value?.evaluator
 
   override val isStopped: Boolean
-    get() = sessionState.value.isStopped
+    get() = sessionStateFlow.value.isStopped
 
   override val isPaused: Boolean
-    get() = sessionState.value.isPaused
+    get() = sessionStateFlow.value.isPaused
 
   override val environmentProxy: ExecutionEnvironmentProxy?
     get() = null // TODO: implement!
 
   override val isReadOnly: Boolean
-    get() = sessionState.value.isReadOnly
+    get() = sessionStateFlow.value.isReadOnly
 
   override val isPauseActionSupported: Boolean
-    get() = sessionState.value.isPauseActionSupported
+    get() = sessionStateFlow.value.isPauseActionSupported
 
   override val isSuspended: Boolean
-    get() = sessionState.value.isSuspended
+    get() = sessionStateFlow.value.isSuspended
 
   override val editorsProvider: XDebuggerEditorsProvider = getEditorsProvider(
     cs, sessionDto.editorsProviderDto, documentIdProvider = { frontendDocumentId, expression, position, mode ->
@@ -136,7 +127,7 @@ class FrontendXDebuggerSession private constructor(
   // TODO pass in DTO?
   override val sessionName: String = sessionDto.sessionName
   override val sessionData: XDebugSessionData = FrontendXDebugSessionData(project, sessionDto.sessionDataDto,
-                                                                          cs, id, sessionState)
+                                                                          cs, id, sessionStateFlow)
 
   override val restartActions: List<AnAction>
     get() = emptyList() // TODO
@@ -192,24 +183,33 @@ class FrontendXDebuggerSession private constructor(
   private suspend fun XDebuggerSessionEvent.updateCurrents() {
     when (this) {
       is XDebuggerSessionEvent.SessionPaused -> {
+        updateState()
         suspendData.await()?.applyToCurrents()
       }
       is XDebuggerSessionEvent.SessionResumed, is XDebuggerSessionEvent.BeforeSessionResume -> {
+        updateState()
         clearSuspendContext()
       }
       is XDebuggerSessionEvent.SessionStopped -> {
         cs.cancel()
+        updateState()
         clearSuspendContext()
       }
       is XDebuggerSessionEvent.StackFrameChanged -> {
+        updateState()
         sourcePositionFlow.value = sourcePosition?.sourcePosition()
         stackFrame?.await()?.let {
           val suspendContext = suspendContext.value ?: return
           currentStackFrame.value = suspendContext.getOrCreateStackFrame(it)
         }
       }
-      else -> {}
+      is XDebuggerSessionEvent.BreakpointsMuted -> {}
+      XDebuggerSessionEvent.SettingsChanged -> {}
     }
+  }
+
+  private fun XDebuggerSessionEvent.EventWithState.updateState() {
+    sessionStateFlow.value = state
   }
 
   private fun clearSuspendContext() {

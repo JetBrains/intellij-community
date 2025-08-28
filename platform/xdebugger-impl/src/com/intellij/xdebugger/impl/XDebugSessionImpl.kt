@@ -151,11 +151,6 @@ class XDebugSessionImpl @JvmOverloads constructor(
   private val suspendContextFlow = MutableStateFlow<XSuspendContext?>(null)
   private val sessionInitializedDeferred = CompletableDeferred<Unit>()
 
-  @get:ApiStatus.Internal
-  val isSuspendedState: StateFlow<Boolean> = combine(myPaused, suspendContextFlow) { paused, suspendContext ->
-    paused && suspendContext != null
-  }.stateIn(coroutineScope, SharingStarted.Eagerly, myPaused.value && suspendContext != null)
-
   @Volatile
   private var breakpointsInitialized = false
   private var myUserRequestStart: Long = 0
@@ -226,9 +221,6 @@ class XDebugSessionImpl @JvmOverloads constructor(
     sessionData.isPauseSupported = isSupported
   }
 
-  val isReadOnlyState: StateFlow<Boolean>
-    get() = myReadOnly
-
   var isReadOnly: Boolean
     get() = myReadOnly.value
     set(readOnly) {
@@ -257,9 +249,6 @@ class XDebugSessionImpl @JvmOverloads constructor(
     return if (this.executionEnvironment != null) executionEnvironment.runProfile else null
   }
 
-  val isPauseActionSupportedState: StateFlow<Boolean>
-    get() = sessionData.pauseSupportedFlow
-
   @JvmName("isPauseActionSupported")
   fun isPauseActionSupported(): Boolean {
     return sessionData.isPauseSupported
@@ -274,12 +263,8 @@ class XDebugSessionImpl @JvmOverloads constructor(
   }
 
   override fun isSuspended(): Boolean {
-    return isSuspendedState.value
+    return isPaused && suspendContext != null
   }
-
-  @get:ApiStatus.Internal
-  val isPausedState: StateFlow<Boolean>
-    get() = myPaused
 
   @ApiStatus.Internal
   fun getPausedEventsFlow(): Flow<XDebugSessionPausedInfo?> {
@@ -297,11 +282,6 @@ class XDebugSessionImpl @JvmOverloads constructor(
 
   override fun getCurrentStackFrame(): XStackFrame? {
     return myCurrentStackFrameManager.getCurrentStackFrame()
-  }
-
-  @ApiStatus.Internal
-  fun getCurrentStackFrameFlow(): Flow<XStackFrame?> {
-    return myCurrentStackFrameManager.getCurrentStackFrameFlow().map { it.get() }
   }
 
   override fun getSuspendContext(): XSuspendContext? {
@@ -1050,10 +1030,6 @@ class XDebugSessionImpl @JvmOverloads constructor(
   override fun sessionResumed() {
     doResume()
   }
-
-  @get:ApiStatus.Internal
-  val isStoppedState: StateFlow<Boolean>
-    get() = myStopped
 
   override fun isStopped(): Boolean {
     return myStopped.value
