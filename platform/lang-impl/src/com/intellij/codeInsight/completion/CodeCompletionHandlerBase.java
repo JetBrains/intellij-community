@@ -353,7 +353,7 @@ public class CodeCompletionHandlerBase {
                                         boolean hasModifiers,
                                         long startingTime,
                                         @NotNull CompletionProgressIndicator indicator,
-                                        OffsetsInFile hostCopyOffsets) {
+                                        @NotNull OffsetsInFile hostCopyOffsets) {
     CompletionServiceImpl.setCompletionPhase(new CompletionPhase.Synchronous(indicator));
 
     var future = startContributorThread(initContext, indicator, hostCopyOffsets, hasModifiers);
