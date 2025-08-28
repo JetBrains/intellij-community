@@ -44,6 +44,7 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 
 public abstract class CompletionPhase implements Disposable {
+  @ApiStatus.Internal
   public static final Key<TypedEvent> AUTO_POPUP_TYPED_EVENT = Key.create("AutoPopupTypedEvent");
 
   @ApiStatus.Internal
