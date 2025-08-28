@@ -2,33 +2,84 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.platform.runtime.product.ProductMode
-import com.intellij.platform.runtime.product.ProductModules
-import com.intellij.platform.runtime.product.impl.ProductModeMatcher
-import com.intellij.platform.runtime.repository.RuntimeModuleId
-import com.intellij.platform.runtime.repository.RuntimeModuleRepository
+import com.intellij.platform.runtime.product.serialization.RawProductModules
 import org.jetbrains.intellij.build.FrontendModuleFilter
+import org.jetbrains.intellij.build.JarPackagerDependencyHelper
+import org.jetbrains.intellij.build.impl.moduleBased.JpsProductModeMatcher
 import org.jetbrains.jps.model.JpsNamedElement
+import org.jetbrains.jps.model.JpsProject
+import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.module.JpsModule
+import org.jetbrains.jps.model.module.JpsModuleReference
 
-internal class FrontendModuleFilterImpl(private val moduleRepository: RuntimeModuleRepository, productModules: ProductModules): FrontendModuleFilter {
-  private val includedModules: Set<RuntimeModuleId> = (sequenceOf(productModules.mainModuleGroup) + productModules.bundledPluginModuleGroups.asSequence())
-    .flatMap { it.includedModules.asSequence() }
-    .filter { included -> included.moduleDescriptor.moduleId !in MODULES_SCRAMBLED_WITH_FRONTEND }
-    .mapTo(HashSet()) { it.moduleDescriptor.moduleId }
-  private val frontendModeMatcher = ProductModeMatcher(ProductMode.FRONTEND)
+internal class FrontendModuleFilterImpl private constructor(
+  private val project: JpsProject,
+  private val frontendModeMatcher: JpsProductModeMatcher,
+  private val includedModuleNames: Set<String>,
+  private val includedProjectLibraryNames: Set<String>,
+): FrontendModuleFilter {
+  companion object {
+    suspend fun create(project: JpsProject, productModules: RawProductModules, jarPackagerDependencyHelper: JarPackagerDependencyHelper): FrontendModuleFilter {
+      val frontendModeMatcher = JpsProductModeMatcher(ProductMode.FRONTEND)
+      val includedModuleNames = LinkedHashSet<String>()
+      val includedProjectLibraryNames = LinkedHashSet<String>()
+
+      for (rootModuleName in productModules.mainGroupModules) {
+        val rootModule = project.findModuleByName(rootModuleName.moduleId.stringId) ?: continue
+        collectTransitiveDependenciesCompatibleWithFrontend(rootModule, frontendModeMatcher, includedModuleNames, includedProjectLibraryNames)
+      }
+      
+      for (mainModuleId in productModules.bundledPluginMainModules) {
+        val module = project.findModuleByName(mainModuleId.stringId) ?: continue
+        if (frontendModeMatcher.matches(module)) {
+          includedModuleNames.add(module.name)
+          jarPackagerDependencyHelper.readPluginContentFromDescriptor(module, ModuleOutputPatcher())
+            .mapNotNull { project.findModuleByName(it.first) }
+            .filter { frontendModeMatcher.matches(it) }
+            .mapTo(includedModuleNames) { it.name }
+        }
+      }
+      
+      return FrontendModuleFilterImpl(project, frontendModeMatcher, includedModuleNames, includedProjectLibraryNames)
+    }
+
+    private fun collectTransitiveDependenciesCompatibleWithFrontend(
+      module: JpsModule,
+      frontendModeMatcher: JpsProductModeMatcher,
+      includedModuleNames: MutableSet<String>,
+      includedProjectLibraryNames: MutableSet<String>,
+    ) {
+      if (isScrambledWithFrontend(module) || !frontendModeMatcher.matches(module)) {
+        return
+      }
+      if (!includedModuleNames.add(module.name)) {
+        return
+      }
+      JpsJavaExtensionService.dependencies(module).productionOnly().runtimeOnly().processModuleAndLibraries(
+        { depModule ->
+          collectTransitiveDependenciesCompatibleWithFrontend(depModule, frontendModeMatcher, includedModuleNames, includedProjectLibraryNames)
+        },
+        { depLibrary ->
+          if (!isScrambledWithFrontend(depLibrary) && depLibrary.createReference().parentReference !is JpsModuleReference) {
+            includedProjectLibraryNames.add(depLibrary.name)
+          }
+        }
+      )
+    }
+  }
 
   override fun isModuleIncluded(moduleName: String): Boolean {
-    return RuntimeModuleId.module(moduleName) in includedModules
+    return moduleName in includedModuleNames
   }
 
   override fun isProjectLibraryIncluded(libraryName: String): Boolean {
-    return RuntimeModuleId.projectLibrary(libraryName) in includedModules
+    return libraryName in includedProjectLibraryNames
   }
 
   override fun isModuleCompatibleWithFrontend(moduleName: String): Boolean {
-    val moduleDescriptor = moduleRepository.getModule(RuntimeModuleId.module(moduleName))
-    return frontendModeMatcher.matches(moduleDescriptor)
+    val module = project.findModuleByName(moduleName)
+    return module != null && frontendModeMatcher.matches(module)
   }
 }
 
@@ -42,15 +93,9 @@ val PROJECT_LIBRARIES_SCRAMBLED_WITH_FRONTEND: Set<String> = setOf(
 )
 
 /**
- * Contains a set of runtime modules from the platform part which are also included in the frontend JARs and scrambled (differently) there.
- * It's important not to include JARs for these modules in the platform part to the classpath of the frontend process, because they may 
- * cause clashes.
+ * Returns `true` if the module or library [element] from the platform part which are also included in the frontend JARs and scrambled (differently) there.
+ * It's important not to include JARs for these modules and libraries in the platform part to the classpath of the frontend process, because they may cause clashes.
  */
-val MODULES_SCRAMBLED_WITH_FRONTEND: Set<RuntimeModuleId> by lazy {
-  setOf(RuntimeModuleId.module(PLATFORM_MODULE_SCRAMBLED_WITH_FRONTEND)) + 
-  PROJECT_LIBRARIES_SCRAMBLED_WITH_FRONTEND.map { RuntimeModuleId.projectLibrary(it) }
-}
-
 fun isScrambledWithFrontend(element: JpsNamedElement): Boolean = when (element) {
   is JpsModule -> element.name == PLATFORM_MODULE_SCRAMBLED_WITH_FRONTEND
   is JpsLibrary -> element.name in PROJECT_LIBRARIES_SCRAMBLED_WITH_FRONTEND

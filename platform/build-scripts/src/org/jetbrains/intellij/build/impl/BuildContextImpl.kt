@@ -254,8 +254,8 @@ class BuildContextImpl internal constructor(
     val rootModule = productProperties.embeddedFrontendRootModule
     if (rootModule != null && options.enableEmbeddedFrontend) {
       val moduleRepository = getOriginalModuleRepository()
-      val productModules = moduleRepository.loadProductModules(rootModule, ProductMode.FRONTEND)
-      FrontendModuleFilterImpl(moduleRepository.repository, productModules)
+      val productModules = moduleRepository.loadRawProductModules(rootModule, ProductMode.FRONTEND)
+      FrontendModuleFilterImpl.create(project, productModules, jarPackagerDependencyHelper)
     }
     else {
       EmptyFrontendModuleFilter
@@ -276,7 +276,7 @@ class BuildContextImpl internal constructor(
 
     return asyncLazy("Content Modules Filter") {
       val bundledPluginModules = getBundledPluginModules()
-      ContentModuleByProductModeFilter(getOriginalModuleRepository().repository, bundledPluginModules, productProperties.productMode)
+      ContentModuleByProductModeFilter(project, bundledPluginModules, productProperties.productMode)
     }
   }
 
