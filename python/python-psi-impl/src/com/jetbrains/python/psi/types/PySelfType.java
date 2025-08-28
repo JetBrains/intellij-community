@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Objects;
 
-public final class PySelfType implements PyTypeParameterType {
+public final class PySelfType implements PyTypeParameterType, PyInstantiableType<PySelfType> {
   private final @NotNull PyClassType myScopeClassType;
 
   public PySelfType(@NotNull PyClassType scopeClassType) {
@@ -52,8 +52,19 @@ public final class PySelfType implements PyTypeParameterType {
   /**
    * @return true if type[Self], false otherwise
    */
+  @Override
   public boolean isDefinition() {
     return myScopeClassType.isDefinition();
+  }
+
+  @Override
+  public @NotNull PySelfType toInstance() {
+    return new PySelfType((PyClassType)myScopeClassType.toInstance());
+  }
+
+  @Override
+  public @NotNull PySelfType toClass() {
+    return new PySelfType((PyClassType)myScopeClassType.toClass());
   }
 
   @Override
