@@ -1,10 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.ide.konan
 
 import com.intellij.openapi.components.service
-import org.jetbrains.kotlin.analysis.decompiler.konan.CachingIdeKlibMetadataLoader
 import org.jetbrains.kotlin.analyzer.*
+import org.jetbrains.kotlin.base.fe10.analysis.decompiler.konan.CachingIdeKlibMetadataLoader
 import org.jetbrains.kotlin.builtins.DefaultBuiltIns
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.functions.functionInterfacePackageFragmentProvider
