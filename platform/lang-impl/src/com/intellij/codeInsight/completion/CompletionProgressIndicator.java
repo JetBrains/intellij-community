@@ -839,9 +839,13 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
                                                 @NotNull String toAppend) {
     int caretOffset = editor.getCaretModel().getOffset();
     CharSequence text = editor.getDocument().getCharsSequence();
+    if (caretOffset > text.length()) {
+      return false;
+    }
+
     for (Pair<Integer, ElementPattern<String>> pair : restartingPrefixConditions) {
       int start = pair.first;
-      if (caretOffset >= start && start >= 0 && caretOffset <= text.length()) {
+      if (caretOffset >= start && start >= 0) {
         String newPrefix = text.subSequence(start, caretOffset) + toAppend;
         if (pair.second.accepts(newPrefix)) {
           return true;
