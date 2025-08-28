@@ -376,6 +376,11 @@ open class FileEditorManagerImpl(
     return mainSplitters to state.getAndSet(null)
   }
 
+  @Internal
+  suspend fun waitInitialization() {
+    initJob.join()
+  }
+
   companion object {
     @JvmField
     @Deprecated("Prefer using FileEditorManagerKeys.CLOSING_TO_REOPEN",
