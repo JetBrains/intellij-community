@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.io.FileUtil.findSequentNonexistentFile
+import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
 import com.intellij.platform.ide.nonModalWelcomeScreen.NonModalWelcomeScreenBundle
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
@@ -19,7 +20,8 @@ import java.nio.file.Path
 @ApiStatus.Internal
 object WelcomeScreenNewFileHandler {
   private fun getDefaultProjectPath(): String {
-    return findSequentNonexistentFile(Path.of(getBaseDir()).toFile(), "awesomeProject", "").absolutePath
+    val filePrefix = WelcomeScreenProjectProvider.getCreateNewFileProjectPrefix()
+    return findSequentNonexistentFile(Path.of(getBaseDir()).toFile(), filePrefix, "").absolutePath
   }
 
   fun showNewFileDialog(project: Project,

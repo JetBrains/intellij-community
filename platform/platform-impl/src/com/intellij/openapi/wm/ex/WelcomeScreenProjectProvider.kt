@@ -41,9 +41,17 @@ abstract class WelcomeScreenProjectProvider {
       val extension = getSingleExtension() ?: return false
       return extension.doIsForceDisabledFileColors()
     }
+
+    @JvmStatic
+    fun getCreateNewFileProjectPrefix(): String {
+      val extension = getSingleExtension() ?: return ""
+      return extension.doGetCreateNewFileProjectPrefix()
+    }
   }
 
   protected abstract fun doIsWelcomeScreenProject(project: Project): Boolean
 
   protected abstract fun doIsForceDisabledFileColors(): Boolean
+
+  protected abstract fun doGetCreateNewFileProjectPrefix(): String
 }
