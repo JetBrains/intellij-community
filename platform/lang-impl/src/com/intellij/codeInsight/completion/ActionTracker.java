@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.injected.editor.EditorWindow;
@@ -23,6 +23,11 @@ import java.util.List;
 
 import static com.intellij.codeWithMe.ClientIdKt.isOnGuest;
 
+/**
+ * Tracks changes and actions performed on an editor instance.
+ *
+ * @see #hasAnythingHappened
+ */
 final class ActionTracker {
   private final @NotNull MessageBusConnection myConnection;
   private @NotNull List<Integer> myCaretOffsets;
@@ -45,6 +50,10 @@ final class ActionTracker {
         myActionsHappened = true;
       }
     });
+    setDocumentState();
+  }
+
+  private void setDocumentState() {
     myStartDocStamp = docStamp();
     myCaretOffsets = caretOffsets();
   }
@@ -64,12 +73,12 @@ final class ActionTracker {
 
     myConnection.subscribe(CommandListener.TOPIC, new CommandListener() {
       boolean insideCommand = true;
+
       @Override
       public void commandFinished(@NotNull CommandEvent event) {
         if (insideCommand) {
           insideCommand = false;
-          myStartDocStamp = docStamp();
-          myCaretOffsets = caretOffsets();
+          setDocumentState();
         }
       }
     });
@@ -77,8 +86,9 @@ final class ActionTracker {
 
   boolean hasAnythingHappened() {
     boolean hasDocumentOrCaretChanged = myStartDocStamp != docStamp() ||
-                !myCaretOffsets.equals(caretOffsets());
-    return myActionsHappened || myIsDumb != DumbService.getInstance(myProject).isDumb() ||
+                                        !myCaretOffsets.equals(caretOffsets());
+    return myActionsHappened ||
+           myIsDumb != DumbService.getInstance(myProject).isDumb() ||
            myEditor.isDisposed() ||
            (myEditor instanceof EditorWindow && !((EditorWindow)myEditor).isValid()) ||
            (hasDocumentOrCaretChanged && !isOnGuest()); //do not track speculative changes on thin client
