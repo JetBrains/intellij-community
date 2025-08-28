@@ -9,7 +9,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.indexing.FileContentImpl
 import org.jetbrains.kotlin.analysis.decompiler.psi.BuiltInDefinitionFile
-import org.jetbrains.kotlin.analysis.decompiler.psi.KotlinBuiltInDecompiler
+import org.jetbrains.kotlin.analysis.decompiler.psi.KotlinBuiltInMetadataStubBuilder
 import org.jetbrains.kotlin.analysis.decompiler.psi.KotlinClassFileDecompiler
 import org.jetbrains.kotlin.analysis.decompiler.stub.file.ClsKotlinBinaryClassCache
 import org.jetbrains.kotlin.analysis.decompiler.stub.file.KotlinMetadataStubBuilder
@@ -66,14 +66,13 @@ class BuiltInDecompilerConsistencyTest : KotlinLightCodeInsightFixtureTestCase()
         classNameForDirectorySearch: String? = null, // workaround for KTIJ-28858
     ) {
         val classFileDecompiler = KotlinClassFileDecompiler()
-        val builtInsDecompiler = KotlinBuiltInDecompiler()
         val dir = findDir(packageFqName, project, classNameForDirectorySearch)
         val groupedByExtension = dir.children.groupBy { it.extension }
         val builtInsFile = groupedByExtension.getValue(BuiltInSerializerProtocol.BUILTINS_FILE_EXTENSION).single()
 
         // do not compare commonized classes
         // proper fix is to get `expect` modifier from stub rather from bytecode metadata: https://youtrack.jetbrains.com/issue/KT-45534
-        val expectClassNames = builtInsDecompiler.readFile(builtInsFile)?.let { metadata ->
+        val expectClassNames = KotlinBuiltInMetadataStubBuilder.readFileSafely(builtInsFile)?.let { metadata ->
             return@let if (metadata is KotlinMetadataStubBuilder.FileWithMetadata.Compatible) {
                  metadata.proto.class_List.filter { Flags.IS_EXPECT_CLASS.get(it.flags) }
                     .map { metadata.nameResolver.getClassId(it.fqName).shortClassName.asString() }.toSet()
@@ -83,7 +82,7 @@ class BuiltInDecompilerConsistencyTest : KotlinLightCodeInsightFixtureTestCase()
         val classFiles = groupedByExtension.getValue(JavaClassFileType.INSTANCE.defaultExtension)
             .map { it.nameWithoutExtension }.filterNot { it in expectClassNames || it in excludedClasses }
 
-        val builtInFileStub = builtInsDecompiler.stubBuilder.buildFileStub(FileContentImpl.createByFile(builtInsFile))!!
+        val builtInFileStub = KotlinBuiltInMetadataStubBuilder.buildFileStub(FileContentImpl.createByFile(builtInsFile))!!
 
         val classesEncountered = arrayListOf<FqName>()
 

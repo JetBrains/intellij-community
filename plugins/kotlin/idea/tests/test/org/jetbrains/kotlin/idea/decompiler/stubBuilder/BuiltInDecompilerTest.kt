@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.decompiler.stubBuilder
 
 import com.intellij.psi.stubs.PsiFileStub
 import com.intellij.util.indexing.FileContentImpl
-import org.jetbrains.kotlin.analysis.decompiler.psi.KotlinBuiltInDecompiler
+import org.jetbrains.kotlin.analysis.decompiler.psi.KotlinBuiltInMetadataStubBuilder
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
@@ -42,7 +42,7 @@ class BuiltInDecompilerTest : AbstractBuiltInDecompilerTest() {
         val dirInRuntime = findDir(packageFqName, project, classNameForDirectorySearch)
         val kotlinBuiltInsVirtualFile = dirInRuntime.children.single { it.extension == BuiltInSerializerProtocol.BUILTINS_FILE_EXTENSION }
         myFixture.configureFromExistingVirtualFile(kotlinBuiltInsVirtualFile)
-        return KotlinBuiltInDecompiler().stubBuilder.buildFileStub(FileContentImpl.createByFile(kotlinBuiltInsVirtualFile))!!
+        return KotlinBuiltInMetadataStubBuilder.buildFileStub(FileContentImpl.createByFile(kotlinBuiltInsVirtualFile))!!
     }
 
     fun testBuiltInStubTreeEqualToStubTreeFromDecompiledText() {
@@ -58,7 +58,7 @@ class BuiltInDecompilerForWrongMetadataVersionTest : AbstractBuiltInDecompilerTe
 
     override fun configureAndBuildFileStub(packageFqName: String, classNameForDirectorySearch: String?): PsiFileStub<*> {
         myFixture.configureByFile(BuiltInSerializerProtocol.getBuiltInsFilePath(FqName(packageFqName)))
-        return KotlinBuiltInDecompiler().stubBuilder.buildFileStub(FileContentImpl.createByFile(myFixture.file.virtualFile))!!
+        return KotlinBuiltInMetadataStubBuilder.buildFileStub(FileContentImpl.createByFile(myFixture.file.virtualFile))!!
     }
 
     fun testStubTreesEqualForIncompatibleAbiVersion() {
