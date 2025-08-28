@@ -2,6 +2,7 @@
 package com.intellij.psi.impl;
 
 import com.intellij.diagnostic.ThreadDumper;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.FileASTNode;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.mock.MockDocument;
@@ -25,7 +26,6 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -52,7 +52,6 @@ import com.intellij.util.TestTimeOut;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
-import com.intellij.util.ref.GCUtil;
 import com.intellij.util.ref.GCWatcher;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.Language;
@@ -68,12 +67,10 @@ import java.lang.ref.Reference;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.IntStream;
 
 public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
   private static final int TIMEOUT_MS = 30_000;
@@ -308,7 +305,7 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
 
     waitForCommits();
 
-    assertEquals(StdFileTypes.JAVA.getLanguage(), file.getLanguage());
+    assertEquals(JavaFileType.INSTANCE.getLanguage(), file.getLanguage());
 
     for (int i = 0; i < 30; i++) {
       assertCommitted(document, true, "");
@@ -1029,37 +1026,39 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
       }
     }, () -> {
       PsiDocumentManagerImpl psiDocumentManager = getPsiDocumentManager();
-      psiDocumentManager.myUnitTestMode = false; // test the prod behaviour
-      try {
-        for (int i=0;i<5_000;i++) {
-          PsiFile mainFile = findFile(createFile());
-          Document doc = getDocument(mainFile);
-          psiDocumentManager.addRunOnCommit(doc, d ->{
-            assertFalse(ApplicationManager.getApplication().isWriteAccessAllowed()); // sync commit runs in write action
-          });
-          WriteCommandAction.runWriteCommandAction(getProject(), () -> doc.insertString(0, " "));
+      psiDocumentManager.executeTestInProductionMode(() -> {
+        try {
+          for (int i=0;i<5_000;i++) {
+            PsiFile mainFile = findFile(createFile());
+            Document doc = getDocument(mainFile);
+            psiDocumentManager.addRunOnCommit(doc, d ->{
+              assertFalse(ApplicationManager.getApplication().isWriteAccessAllowed()); // sync commit runs in write action
+            });
+            WriteCommandAction.runWriteCommandAction(getProject(), () -> doc.insertString(0, " "));
+          }
+          DocumentCommitThread.getInstance().waitForAllCommits(1, TimeUnit.MINUTES);
         }
-        DocumentCommitThread.getInstance().waitForAllCommits(1, TimeUnit.MINUTES);
-      }
-      finally {
-        psiDocumentManager.myUnitTestMode = true;
-        psiDocumentManager.clearUncommittedDocuments();
-      }
+        finally {
+          psiDocumentManager.clearUncommittedDocuments();
+        }
+      });
     });
   }
 
-  private static @NotNull String genRandomString(int length) {
+  private static @NotNull String genRandomWords(int length) {
     int leftLimit = 48; // numeral '0'
     int rightLimit = 122; // letter 'z'
 
-    return new Random().ints(leftLimit, rightLimit + 1)
+    Random random = new Random();
+    return IntStream.range(0, length / 10).flatMap(__->IntStream.concat(random.ints(leftLimit, rightLimit + 1)
       .filter(i -> (i <= 57 || i >= 65) && (i <= 90 || i >= 97))
-      .limit(length)
+      .limit(10), IntStream.of(32)))
       .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
       .toString();
   }
 
-  public void testHugeAmountOfChangedDocumentsMustNotBeHardRetainedByAnybody() throws IOException {
+  public void testHugeAmountOfChangedDocumentsMustNotBeHardRetainedByDocumentCommitThreadQueue() throws Exception {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     LoggedErrorProcessor.executeWith(new LoggedErrorProcessor() {
       @Override
       public @NotNull Set<Action> processError(@NotNull String category, @NotNull String message, String @NotNull [] details, Throwable t) {
@@ -1070,48 +1069,123 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
       }
     }, () -> {
       PsiDocumentManagerImpl psiDocumentManager = getPsiDocumentManager();
-      psiDocumentManager.myUnitTestMode = false; // test the prod behaviour
-      AtomicInteger committed = new AtomicInteger();
-      try {
-        Key<Boolean> MY_DOC_KEY = Key.create("MY_DOC_TEST_KEY");
-
-        File dir = createTempDir("myFiles");
-        // batch creating is faster
-        int N = 5000;
-        String randomText = genRandomString(100_000);
-        for (int i = 0; i < N; i++) {
-          FileUtil.writeToFile(new File(dir, i + "x.java"), randomText);
-        }
-        VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir);
-        assertEquals(N, vDir.getChildren().length);
-        for (VirtualFile vFile : vDir.getChildren()) {
-          PsiFile mainFile = findFile(vFile);
-          Document doc = getDocument(mainFile);
-          doc.putUserData(MY_DOC_KEY, true);
-
-          psiDocumentManager.addRunOnCommit(doc, d -> {
-            assertFalse(ApplicationManager.getApplication().isWriteAccessAllowed());
-            committed.incrementAndGet();
-            //System.out.println("committed "+d);
+      psiDocumentManager.executeTestInProductionMode(() -> {
+        AtomicInteger addRunOnCommitEntered = new AtomicInteger();
+        AtomicInteger committed = new AtomicInteger();
+        CountDownLatch allowToCommit = new CountDownLatch(1);
+        try {
+          // batch creating is faster
+          int N = 100;
+          List<PsiFile> psiFiles = createTempFiles(N);
+          for (PsiFile psiFile : psiFiles) {
+            psiDocumentManager.addRunOnCommit(psiFile.getFileDocument(), d -> {
+              System.out.println("addrunoncommit "+d);
+              addRunOnCommitEntered.incrementAndGet();
+              try {
+                allowToCommit.await();
+              }
+              catch (InterruptedException e) {
+                throw new RuntimeException(e);
+              }
+              committed.incrementAndGet();
+              System.out.println("committed "+d);
+            });
+          }
+          psiFiles.clear();
+          FileDocumentManager.getInstance().saveAllDocuments(); // unsaved documents are hard-retained by FDMI
+          Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
+            try {
+              while (addRunOnCommitEntered.get() == 0) {
+                Thread.onSpinWait();
+              }
+              GCWatcher.tracking(Arrays.asList(ReadAction.compute(()->getPsiDocumentManager().getUncommittedDocuments()))).ensureCollected();
+              assertEquals(0, committed.get());
+            }
+            finally {
+              allowToCommit.countDown();
+            }
           });
-          PsiFile psiFile = psiDocumentManager.getPsiFile(doc);
-          WriteCommandAction.runWriteCommandAction(getProject(), () -> doc.insertString(0, " "));
-          Reference.reachabilityFence(psiFile); // retain PSI to not call "handleCommitWithoutPsi" accidentally
+          while (!future.isDone()) {
+            UIUtil.dispatchAllInvocationEvents();
+          }
+          future.get();
         }
-        FileDocumentManager.getInstance().saveAllDocuments();
-        PlatformTestUtil.dispatchAllEventsInIdeEventQueue(); // ok, a listener is allowed to process modified documents in invokelater
-        LeakHunter.checkLeak(LeakHunter.allRoots(), DocumentImpl.class, d -> d.getUserData(MY_DOC_KEY) == Boolean.TRUE);
-        GCUtil.tryGcSoftlyReachableObjects();
-        DocumentCommitThread.getInstance().waitForAllCommits(1, TimeUnit.MINUTES);
-        PlatformTestUtil.dispatchAllEventsInIdeEventQueue(); // ok, a (psi) listener is allowed to process modified documents in invokelater
-        LeakHunter.checkLeak(LeakHunter.allRoots(), DocumentImpl.class, d -> d.getUserData(MY_DOC_KEY) == Boolean.TRUE);
-        LOG.debug("committed = " + committed);
-        assertTrue(committed.get() < N); // some documents should be gced
+        finally {
+          psiDocumentManager.clearUncommittedDocuments();
+        }
+      });
+    });
+  }
+
+  private static final Key<Boolean> MY_DOC_KEY = Key.create("MY_DOC_TEST_KEY");
+  public void testChangedDocumentMustNotBeHardRetainedByDocumentCommit2() throws Exception {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    LoggedErrorProcessor.executeWith(new LoggedErrorProcessor() {
+      @Override
+      public @NotNull Set<Action> processError(@NotNull String category, @NotNull String message, String @NotNull [] details, Throwable t) {
+        if (message.contains("Too many uncommitted documents")) {
+          return Action.NONE;
+        }
+        return super.processError(category, message, details, t);
       }
-      finally {
-        psiDocumentManager.myUnitTestMode = true;
-        psiDocumentManager.clearUncommittedDocuments();
+    }, () -> {
+      PsiDocumentManagerImpl psiDocumentManager = getPsiDocumentManager();
+      psiDocumentManager.executeTestInProductionMode(() -> {
+        try {
+          VirtualFile virtualFile = createTempFiles(1).get(0).getVirtualFile();
+          FileDocumentManager.getInstance().saveAllDocuments();
+          TimeoutUtil.sleep(10); // make future running
+          int N = 100;
+          for (int i=0;i<N;i++) {
+            modifyAndSaveDocument(virtualFile);
+
+            // no dispatching here, to ensure the doc is not committed but stored in some queue in DCT
+            GCWatcher.tracking(FileDocumentManager.getInstance().getDocument(virtualFile)).ensureCollected();
+
+            while (!psiDocumentManager.isCommitted(FileDocumentManager.getInstance().getDocument(virtualFile))) {
+              UIUtil.dispatchAllInvocationEvents();
+              GCWatcher.tracking(FileDocumentManager.getInstance().getDocument(virtualFile)).ensureCollected();
+            }
+          }
+        }
+        finally {
+          psiDocumentManager.clearUncommittedDocuments();
+        }
+      });
+    });
+  }
+
+  private void modifyAndSaveDocument(VirtualFile virtualFile) {
+    PsiFile psiFile = findFile(virtualFile);
+    Document document = psiFile.getFileDocument();
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> document.insertString(0, " "));
+
+    FileDocumentManager.getInstance().saveAllDocuments();
+    Reference.reachabilityFence(psiFile); // retain PSI to not call "handleCommitWithoutPsi" accidentally
+  }
+
+  private @NotNull List<PsiFile> createTempFiles(int N) throws IOException {
+    File dir = createTempDir("myFiles");
+    String randomText = genRandomWords(10000);
+    for (int i = 0; i < N; i++) {
+      FileUtil.writeToFile(new File(dir, i + "x.java"), randomText);
+    }
+    VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir);
+    assertEquals(N, vDir.getChildren().length);
+    List<PsiFile> psiFiles = new ArrayList<>(Arrays.stream(vDir.getChildren()).parallel().map(vFile -> ReadAction.compute(() -> {
+      PsiFile psiFile = findFile(vFile);
+      Document doc = getDocument(psiFile);
+      doc.putUserData(MY_DOC_KEY, true);
+      return getPsiDocumentManager().getPsiFile(doc);
+    })).toList());
+    assertEquals(N, psiFiles.size());
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+      for (PsiFile psiFile : psiFiles) {
+        Document doc = psiFile.getFileDocument();
+        doc.insertString(0, " ");
+        Reference.reachabilityFence(psiFile); // retain PSI to not call "handleCommitWithoutPsi" accidentally
       }
     });
+    return psiFiles;
   }
 }

@@ -2039,7 +2039,6 @@ a:com.intellij.psi.impl.PsiDocumentManagerBase
 - bulkUpdateStarting(com.intellij.openapi.editor.Document):V
 - cancelAndRunWhenAllCommitted(java.lang.Object,java.lang.Runnable):Z
 - s:checkConsistency(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Document):Z
-- clearUncommittedDocuments():V
 - commitAllDocuments():V
 - commitAllDocumentsUnderProgress():Z
 - commitAndRunReadAction(com.intellij.openapi.util.Computable):java.lang.Object
