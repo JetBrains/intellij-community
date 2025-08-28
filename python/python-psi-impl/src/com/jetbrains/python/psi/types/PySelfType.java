@@ -45,7 +45,7 @@ public final class PySelfType implements PyTypeParameterType, PyInstantiableType
     return myScopeClassType.getPyClass();
   }
 
-  public @NotNull PyClassLikeType getScopeClassType() {
+  public @NotNull PyClassType getScopeClassType() {
     return myScopeClassType;
   }
 
