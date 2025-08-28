@@ -88,13 +88,14 @@ object K2UnusedSymbolUtil {
             // functional type params like `fun foo(u: (usedParam: Type) -> Unit)` shouldn't be highlighted because they could be implicitly used by lambda arguments
             if (declaration.isFunctionTypeParameter) return false
             val ownerFunction = declaration.ownerDeclaration
+            if (ownerFunction?.hasModifier(KtTokens.EXTERNAL_KEYWORD) == true) return false
+            var containingClass = ownerFunction?.containingClassOrObject
             if (ownerFunction is KtConstructor<*>) {
                 // constructor parameters of data class are considered used because they are implicitly used in equals() (???)
-                val containingClass = declaration.containingClass()
                 if (containingClass != null) {
                     if (containingClass.isData()) return false
                     // constructor parameters-fields of value class are considered used because they are implicitly used in equals() (???)
-                    if (containingClass.isValue() && declaration.hasValOrVar()) return false
+                    if ((containingClass as KtClass).isValue() && declaration.hasValOrVar()) return false
                     // constructor parameters-fields of inline class are considered used because they are implicitly used in equals() (???)
                     if (containingClass.isInline() && declaration.hasValOrVar()) return false
                     if (isExpectedOrActual(containingClass)) return false
@@ -108,10 +109,16 @@ object K2UnusedSymbolUtil {
                     return false
                 }
 
-                val containingClass = ownerFunction.containingClassOrObject
                 if (containingClass != null && isExpectedOrActual(containingClass)) {
                     return false
                 }
+            }
+
+            while (containingClass != null) {
+                if (containingClass.hasModifier(KtTokens.EXTERNAL_KEYWORD)) {
+                    return false
+                }
+                containingClass = containingClass.containingClassOrObject
             }
         }
         val owner: KtNamedDeclaration
@@ -169,9 +176,6 @@ object K2UnusedSymbolUtil {
     context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     fun getPsiToReportProblem(declaration: KtNamedDeclaration, isJavaEntryPointInspection: UnusedDeclarationInspectionBase): PsiElement? {
-        if (((declaration as? KtParameter)?.parent?.parent as? KtModifierListOwner)?.hasModifier(KtTokens.EXTERNAL_KEYWORD) == true) {
-            return null
-        }
         val symbol = declaration.symbol
         if (declaration.languageVersionSettings.getFlag(
                 AnalysisFlags.explicitApiMode

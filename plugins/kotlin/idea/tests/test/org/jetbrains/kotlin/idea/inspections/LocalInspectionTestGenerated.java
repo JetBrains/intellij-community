@@ -17386,9 +17386,19 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/unusedSymbol/expectFunctionParameter.kt");
             }
 
+            @TestMetadata("externalConstructor.kt")
+            public void testExternalConstructor() throws Exception {
+                runTest("testData/inspectionsLocal/unusedSymbol/externalConstructor.kt");
+            }
+
             @TestMetadata("externalFunWithUnusedParameter.kt")
             public void testExternalFunWithUnusedParameter() throws Exception {
                 runTest("testData/inspectionsLocal/unusedSymbol/externalFunWithUnusedParameter.kt");
+            }
+
+            @TestMetadata("externalMembers.kt")
+            public void testExternalMembers() throws Exception {
+                runTest("testData/inspectionsLocal/unusedSymbol/externalMembers.kt");
             }
 
             @TestMetadata("functionCall.kt")

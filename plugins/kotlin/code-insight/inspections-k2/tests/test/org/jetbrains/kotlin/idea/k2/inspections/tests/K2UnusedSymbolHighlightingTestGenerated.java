@@ -342,9 +342,19 @@ public abstract class K2UnusedSymbolHighlightingTestGenerated extends AbstractK2
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/expectFunctionParameter.kt");
         }
 
+        @TestMetadata("externalConstructor.kt")
+        public void testExternalConstructor() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/externalConstructor.kt");
+        }
+
         @TestMetadata("externalFunWithUnusedParameter.kt")
         public void testExternalFunWithUnusedParameter() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/externalFunWithUnusedParameter.kt");
+        }
+
+        @TestMetadata("externalMembers.kt")
+        public void testExternalMembers() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/externalMembers.kt");
         }
 
         @TestMetadata("functionCall.kt")
