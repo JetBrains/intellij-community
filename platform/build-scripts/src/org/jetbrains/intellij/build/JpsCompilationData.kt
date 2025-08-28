@@ -24,8 +24,6 @@ class JpsCompilationData(
   var statisticsReported: Boolean = false
   @JvmField
   var projectDependenciesResolved: Boolean = false
-  @JvmField
-  var runtimeModuleRepositoryGenerated: Boolean = false
 
   internal fun isIncrementalCompilationDataAvailable(): Boolean {
     val productionClasses = classesOutputDirectory.resolve("production")

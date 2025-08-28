@@ -6,8 +6,8 @@ import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleRe
 import java.nio.file.Path
 
 /**
- * Provide access to the original runtime module repository generated during compilation.
- * Module descriptors point to output directories with class-files and library JARs in the local Maven repository.
+ * Provide access to the original runtime module repository describing the structure of modules before they are packed to JARs in the distribution.
+ * Module descriptors point to output directories (or JARs) with class-files and library JARs in the local Maven repository.
  */
 interface OriginalModuleRepository {
   val repositoryPath: Path

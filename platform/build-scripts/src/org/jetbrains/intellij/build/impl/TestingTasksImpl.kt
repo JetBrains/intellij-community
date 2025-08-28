@@ -66,6 +66,7 @@ import kotlin.io.path.exists
 import kotlin.io.path.extension
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.outputStream
+import kotlin.io.path.pathString
 import kotlin.io.path.readLines
 import kotlin.random.Random
 
@@ -193,6 +194,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
       }
     }
 
+    val systemProperties = LinkedHashMap<String, String>(additionalSystemProperties)
     try {
       val compilationTasks = CompilationTasks.create(context)
       options.beforeRunProjectArtifacts?.splitToSequence(';')?.filterNotTo(HashSet(), String::isEmpty)?.let {
@@ -208,6 +210,8 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
         compilationTasks.compileModules(listOf("intellij.tools.testsBootstrap"),
                                         listOfNotNull(mainModule, "intellij.platform.buildScripts"))
       }
+      val runtimeModuleRepository = context.getOriginalModuleRepository()
+      systemProperties["intellij.platform.runtime.repository.path"] = runtimeModuleRepository.repositoryPath.pathString
     }
     catch (e: Exception) {
       if (options.isCancelBuildOnTestPreparationFailure) {
@@ -223,7 +227,6 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
       })
     }
     else {
-      val systemProperties = LinkedHashMap<String, String>(additionalSystemProperties)
       val effectiveAdditionalJvmOptions = additionalJvmOptions.toMutableList()
       if (options.isTestDiscoveryEnabled) {
         loadTestDiscovery(effectiveAdditionalJvmOptions, systemProperties)

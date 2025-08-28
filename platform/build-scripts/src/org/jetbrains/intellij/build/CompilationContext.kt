@@ -108,6 +108,4 @@ interface CompilationTasks {
   suspend fun buildProjectArtifacts(artifactNames: Set<String>)
 
   suspend fun resolveProjectDependencies()
-  
-  suspend fun generateRuntimeModuleRepository()
 }

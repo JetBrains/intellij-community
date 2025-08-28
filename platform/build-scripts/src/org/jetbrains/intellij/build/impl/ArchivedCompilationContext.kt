@@ -11,7 +11,7 @@ import org.jetbrains.intellij.build.BuildPaths
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.TestingOptions
 import org.jetbrains.intellij.build.impl.compilation.ArchivedCompilationOutputStorage
-import org.jetbrains.intellij.build.impl.moduleBased.OriginalModuleRepositoryImpl
+import org.jetbrains.intellij.build.impl.moduleBased.buildOriginalModuleRepository
 import org.jetbrains.intellij.build.io.ZipEntryProcessorResult
 import org.jetbrains.intellij.build.io.readZipFile
 import org.jetbrains.intellij.build.moduleBased.OriginalModuleRepository
@@ -38,10 +38,11 @@ class ArchivedCompilationContext(
   val archivesLocation: Path
     get() = storage.archivedOutputDirectory
 
-  override suspend fun getOriginalModuleRepository(): OriginalModuleRepository {
-    generateRuntimeModuleRepositoryForCompiledClasses(this)
-    return OriginalModuleRepositoryImpl(this, this@ArchivedCompilationContext.storage.getMappingMap().entries.associate { it.key.toString() to it.value.toString() })
+  private val originalModuleRepository = asyncLazy("Build original module repository") {
+    buildOriginalModuleRepository(this@ArchivedCompilationContext)
   }
+
+  override suspend fun getOriginalModuleRepository(): OriginalModuleRepository = originalModuleRepository.await()
 
   override suspend fun getModuleOutputRoots(module: JpsModule, forTests: Boolean): List<Path> {
     return delegate.getModuleOutputRoots(module, forTests).map { replaceWithCompressedIfNeeded(it) }
