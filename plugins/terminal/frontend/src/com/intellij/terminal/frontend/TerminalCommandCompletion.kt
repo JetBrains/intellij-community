@@ -51,7 +51,7 @@ internal class TerminalCommandCompletion(
   ) {
     var time = time
 
-    val phase = CompletionServiceImpl.Companion.completionPhase
+    val phase = CompletionServiceImpl.completionPhase
     val repeated = phase.indicator != null && phase.indicator.isRepeatedInvocation(completionType, editor)
 
     val newTime = phase.newCompletionStarted(time, repeated)
@@ -59,10 +59,10 @@ internal class TerminalCommandCompletion(
       time = newTime
     }
     val invocationCount = time
-    if (CompletionServiceImpl.Companion.isPhase(CompletionPhase.InsertedSingleItem::class.java)) {
-      CompletionServiceImpl.Companion.setCompletionPhase(CompletionPhase.NoCompletion)
+    if (CompletionServiceImpl.isPhase(CompletionPhase.InsertedSingleItem::class.java)) {
+      CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion)
     }
-    CompletionServiceImpl.Companion.assertPhase(CompletionPhase.NoCompletion.javaClass, CompletionPhase.CommittingDocuments::class.java)
+    CompletionServiceImpl.assertPhase(CompletionPhase.NoCompletion.javaClass, CompletionPhase.CommittingDocuments::class.java)
 
     val startingTime = System.currentTimeMillis()
     val initCmd = Runnable {
@@ -82,7 +82,7 @@ internal class TerminalCommandCompletion(
       CommandProcessor.getInstance().executeCommand(project, initCmd, null, null, editor.getDocument())
     }
     catch (e: IndexNotReadyException) {
-      DumbService.Companion.getInstance(project).showDumbModeNotificationForFunctionality(
+      DumbService.getInstance(project).showDumbModeNotificationForFunctionality(
         CodeInsightBundle.message("completion.not.available.during.indexing"),
         DumbModeBlockedFunctionality.CodeCompletion)
       throw e
