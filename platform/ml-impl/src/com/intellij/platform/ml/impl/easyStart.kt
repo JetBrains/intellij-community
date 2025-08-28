@@ -2,7 +2,9 @@
 package com.intellij.platform.ml.impl
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.observable.util.whenDisposed
+import com.intellij.openapi.util.Disposer
 import com.intellij.platform.ml.*
 import com.intellij.platform.ml.environment.Environment
 import com.intellij.platform.ml.impl.logs.ComponentAsFusEventRegister
@@ -19,10 +21,11 @@ fun <M : MLModel<P>, P : Any> EventLogGroup.registerMLTaskLogging(
   loggingStrategy: MLSessionLoggingStrategy<P>,
   analysisMethods: AnalysisMethods<M, P> = AnalysisMethods.none(),
   apiPlatform: MLApiPlatform = ReplaceableIJPlatform,
+  disposable: Disposable
 ) {
   val componentRegister = ComponentAsFusEventRegister(this)
   val listenerController = componentRegister.registerMLTaskLogging(eventName, task, loggingStrategy, analysisMethods, apiPlatform)
-  application.whenDisposed { listenerController.remove() }
+  Disposer.register(disposable) { listenerController.remove() }
 }
 
 @ApiStatus.Internal
