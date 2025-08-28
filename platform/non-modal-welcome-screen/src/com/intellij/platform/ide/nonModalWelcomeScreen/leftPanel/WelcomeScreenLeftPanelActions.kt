@@ -19,7 +19,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.ui.popup.ListPopupStep
 import com.intellij.openapi.util.NlsActions.ActionText
-import com.intellij.platform.ide.nonModalWelcomeScreen.GoWelcomeScreenPluginIconProvider
 import com.intellij.platform.ide.nonModalWelcomeScreen.NonModalWelcomeScreenBundle.message
 import com.intellij.platform.ide.nonModalWelcomeScreen.newFileDialog.WelcomeScreenNewFileHandler
 import com.intellij.platform.ide.nonModalWelcomeScreen.newFileDialog.WelcomeScreenNewFileHandler.createDockerfile
@@ -87,23 +86,15 @@ internal class WelcomeScreenLeftPanelActions(val project: Project) {
     return result
   }
 
-  // TODO: Migrate to the action group mechanism and move to an .xml file
   private fun showNewActionGroupDropDown(): (JComponent) -> Unit {
-    val actionGroup = DefaultActionGroup().apply {
-      add(platformAction("GoIdeNewProjectAction"))
-      add(platformAction("GoIdeNewEmptyProjectAction"))
-      add(Separator.create())
-      add(CreateEmptyFileAction(project))
-      add(CreateHttpRequestFileAction(project))
-      add(CreateDockerfileAction(project))
-      add(CreateKubernetesResourceAction(project))
-      add(platformAction("NewScratchFile"))
-    }
+    val actionGroup = ActionManager.getInstance().getAction("NonModalWelcomeScreen.LeftTabActions.New") as ActionGroup
 
     return { component ->
       val dataContext = createDataContext(project, component)
       val step = createStep(actionGroup, dataContext, component)
-      createPopup(step).show(RelativePoint(component, Point(0, component.height + JBUI.scale(4))))
+      createPopup(step).show(
+        RelativePoint(component, Point(0, component.height + JBUI.scale(4)))
+      )
     }
   }
 
@@ -161,22 +152,18 @@ internal class WelcomeScreenLeftPanelActions(val project: Project) {
   }
 }
 
-private class CreateEmptyFileAction(private val project: Project) : DumbAwareAction(
-  message("go.non.modal.welcome.screen.create.file.empty"),
-  "",
-  AllIcons.FileTypes.Text
-) {
-  override fun actionPerformed(e: AnActionEvent) = WelcomeScreenNewFileHandler.createEmptyFile(project)
+class CreateEmptyFileAction : DumbAwareAction() {
+  override fun actionPerformed(e: AnActionEvent) {
+    val project = e.project ?: return
+    WelcomeScreenNewFileHandler.createEmptyFile(project)
+  }
 }
 
 private val HTTP_CLIENT_PLUGIN_ID = PluginId.getId("com.jetbrains.restClient")
 
-private class CreateHttpRequestFileAction(private val project: Project) : DumbAwareAction(
-  message("go.non.modal.welcome.screen.create.file.http.request"),
-  "",
-  AllIcons.FileTypes.Http
-) {
+class CreateHttpRequestFileAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
+    val project = e.project ?: return
     invokeOrShowPluginPage(project, HTTP_CLIENT_PLUGIN_ID) {
       createHttpRequestFile(project)
     }
@@ -185,12 +172,9 @@ private class CreateHttpRequestFileAction(private val project: Project) : DumbAw
 
 private val DOCKER_PLUGIN_ID = PluginId.getId("Docker")
 
-private class CreateDockerfileAction(private val project: Project) : DumbAwareAction(
-  message("go.non.modal.welcome.screen.create.file.dockerfile"),
-  "",
-  GoWelcomeScreenPluginIconProvider.getDockerIcon()
-) {
+class CreateDockerfileAction() : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
+    val project = e.project ?: return
     invokeOrShowPluginPage(project, DOCKER_PLUGIN_ID) {
       createDockerfile(project)
     }
@@ -199,13 +183,9 @@ private class CreateDockerfileAction(private val project: Project) : DumbAwareAc
 
 private val KUBERNETES_PLUGIN_ID = PluginId.getId("com.intellij.kubernetes")
 
-private class CreateKubernetesResourceAction(private val project: Project) : DumbAwareAction(
-  message("go.non.modal.welcome.screen.create.file.kubernetes.resource"),
-  "",
-  GoWelcomeScreenPluginIconProvider.getKubernetesIcon()
-) {
-
+class CreateKubernetesResourceAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
+    val project = e.project ?: return
     invokeOrShowPluginPage(project, KUBERNETES_PLUGIN_ID) {
       createKubernetesResource(project)
     }
