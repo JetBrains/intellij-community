@@ -83,16 +83,16 @@ import static com.intellij.codeInsight.completion.CompletionPhase.CUSTOM_CODE_CO
 public final class CompletionProgressIndicator extends ProgressIndicatorBase implements CompletionProcessEx, Disposable {
   private static final int TEST_COMPLETION_TIMEOUT = 100 * 1000;
   private static final Logger LOG = Logger.getInstance(CompletionProgressIndicator.class);
-  private final Editor myEditor;
+  private final @NotNull Editor myEditor;
   private final @NotNull Caret myCaret;
   private @Nullable CompletionParameters myParameters;
-  private final CodeCompletionHandlerBase handler;
-  private final CompletionLookupArrangerImpl myArranger;
-  private final CompletionType myCompletionType;
+  private final @NotNull CodeCompletionHandlerBase handler;
+  private final @NotNull CompletionLookupArrangerImpl myArranger;
+  private final @NotNull CompletionType myCompletionType;
   private final int myInvocationCount;
-  private OffsetsInFile myHostOffsets;
-  private final LookupImpl lookup;
-  private final MergingUpdateQueue queue;
+  private @NotNull OffsetsInFile myHostOffsets;
+  private final @NotNull LookupImpl lookup;
+  private final @NotNull MergingUpdateQueue queue;
   private final Update myUpdate = new Update("update") {
     @Override
     public void run() {
