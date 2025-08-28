@@ -66,7 +66,7 @@ internal open class TerminalEventsHandlerImpl(
   override fun keyTyped(e: TimedKeyEvent) {
     LOG.trace { "Key typed event received: ${e.original}" }
     val charTyped = e.original.keyChar
-    updateLookupOnTyping(charTyped)
+
     val selectionModel = editor.selectionModel
     if (selectionModel.hasSelection()) {
       selectionModel.removeSelection()
@@ -88,6 +88,9 @@ internal open class TerminalEventsHandlerImpl(
         LOG.error("Error sending typed key to emulator", ex)
       }
     }
+
+    updateLookupOnTyping(charTyped)
+
     val lookup = LookupManager.getActiveLookup(editor)
     // Added to guarantee that the carets are synchronized after type-ahead.
     // Essential for correct lookup behavior.
@@ -102,6 +105,7 @@ internal open class TerminalEventsHandlerImpl(
     }
     val project = editor.project
     if (project != null && typeAhead?.isDisabled() == false &&
+        lookup == null &&
         (Character.isLetterOrDigit(charTyped) || charTyped == '-' || charTyped == File.separatorChar) &&
         Registry.`is`(REWORKED_TERMINAL_COMPLETION_POPUP) &&
         TerminalOptionsProvider.instance.commandCompletionShowingMode != TerminalCommandCompletionShowingMode.NEVER) {
@@ -427,6 +431,9 @@ internal open class TerminalEventsHandlerImpl(
     return command.toByteArray(Charset.forName(charset))
   }
 
+  /**
+   * Should be called after typeahead is updated the document.
+   */
   private fun updateLookupOnTyping(charTyped: Char) {
     val project = editor.project ?: return
     val lookup = LookupManager.getActiveLookup(editor)
