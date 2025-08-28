@@ -44,6 +44,21 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 
+/**
+ * Code completion lifecycle within an IntelliJ-based IDE.
+ *
+ * <p>
+ *
+ * Phases:
+ *  <li> {@link #NoCompletion} - no completion is running
+ *  <li> {@link CommittingDocuments} - preparing the document for completion including committing all the project documents
+ *  <li> {@link Synchronous} - completion is computing candidates synchronously.
+ *  <li> {@link BgCalculation} - inferring candidates on background
+ *  <li> {@link ItemsCalculated} - completion items have been calculated
+ *  <li> {@link EmptyAutoPopup} -  completion was triggered by typing, but no completion items were found, and the lookup is not shown
+ *  <li> {@link InsertedSingleItem} - a single item was found, and it was inserted into the document
+ *  <li> {@link NoSuggestionsHint} - candidate inference has finished, but no candidates were found and a warning "no suggestions found" is shown.
+ */
 public abstract class CompletionPhase implements Disposable {
   @ApiStatus.Internal
   public static final Key<TypedEvent> AUTO_POPUP_TYPED_EVENT = Key.create("AutoPopupTypedEvent");
