@@ -275,6 +275,11 @@ public abstract class CompletionPhase implements Disposable {
 
     BgCalculation(@NotNull CompletionProgressIndicator indicator) {
       super(indicator);
+      restartOnWriteAction();
+      cancelOnEditorLoseFocus(indicator);
+    }
+
+    private void restartOnWriteAction() {
       ApplicationManager.getApplication().addApplicationListener(new ApplicationListener() {
         @Override
         public void beforeWriteActionStart(@NotNull Object action) {
@@ -293,6 +298,9 @@ public abstract class CompletionPhase implements Disposable {
           }
         }
       }, this);
+    }
+
+    private void cancelOnEditorLoseFocus(@NotNull CompletionProgressIndicator indicator) {
       if (indicator.isAutopopupCompletion()) {
         // lookup is not visible, we have to check ourselves if the editor retains focus
         ((EditorEx)indicator.getEditor()).addFocusListener(new FocusChangeListener() {
