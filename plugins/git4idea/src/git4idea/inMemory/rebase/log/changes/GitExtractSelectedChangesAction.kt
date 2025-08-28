@@ -22,7 +22,7 @@ internal class GitExtractSelectedChangesAction : GitSingleCommitEditingAction() 
   )
 
   override fun update(e: AnActionEvent, commitEditingData: SingleCommitEditingData) {
-    if (!Registry.`is`("git.in.memory.extract.selected.changes.enabled") || commitEditingData.selectedChanges.isEmpty()) {
+    if (!Registry.`is`("git.in.memory.commit.editing.operations.enabled") || commitEditingData.selectedChanges.isEmpty()) {
       e.presentation.isEnabledAndVisible = false
       return
     }

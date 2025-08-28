@@ -44,7 +44,7 @@ internal class GitSquashLogAction : GitMultipleCommitEditingAction() {
   ) {
     GitDisposable.getInstance(commitEditingData.project).coroutineScope.launch {
       val operationResult = withBackgroundProgress(commitEditingData.project, GitBundle.message("rebase.log.squash.progress.indicator.title")) {
-        if (Registry.`is`("git.in.memory.squash.consecutive.enabled") && GitRebaseUtils.areConsecutiveCommits(selectedCommitsDetails)) {
+        if (Registry.`is`("git.in.memory.commit.editing.operations.enabled") && GitRebaseUtils.areConsecutiveCommits(selectedCommitsDetails)) {
           GitInMemorySquashConsecutiveOperation(GitObjectRepository(commitEditingData.repository),
                                                 selectedCommitsDetails,
                                                 newMessage).execute()

@@ -626,12 +626,6 @@
                  description="Show actions for a tracked branch as a sub-popup in the local branch actions popup in Git branches popup."/>
     <registryKey key="git.drop.selected.changes.enabled" defaultValue="true"
                  description="Enables the 'Drop Selected Changes' action in Git log changes tree context menu."/>
-    <registryKey key="git.in.memory.reword.commit.enabled" defaultValue="false"
-                 description="Enables the 'Edit Commit Message… (In-Memory)' action in the Git log"/>
-    <registryKey key="git.in.memory.extract.selected.changes.enabled" defaultValue="false"
-                 description="Enables the 'Extract Selected Changes to a separate commit… (In-Memory)' action in the Git log"/>
-    <registryKey key="git.in.memory.squash.consecutive.enabled" defaultValue="false"
-                 description="When enabled squash for consecutive commits action in log will call a faster in-memory operation"/>
     <registryKey key="git.in.memory.commit.editing.operations.enabled" defaultValue="false"
                  description="Starts in-memory variants of interactive rebase operations in suitable scenarios, leading to better performance"/>
     <registryKey key="git.in.memory.interactive.rebase.notify.errors" defaultValue="false"
