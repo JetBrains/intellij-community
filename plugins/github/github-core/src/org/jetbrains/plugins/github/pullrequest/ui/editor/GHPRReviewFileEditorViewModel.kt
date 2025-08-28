@@ -132,12 +132,12 @@ internal class GHPRReviewFileEditorViewModelImpl(
 
   override val linesWithComments: StateFlow<Set<Int>> =
     mappedThreads.map {
-      it.values.mapNotNullTo(mutableSetOf()) { (isVisible, _, location) -> location?.takeIf { isVisible } }
+      it.values.mapNotNullTo(mutableSetOf()) { (isVisible, _, location) -> location?.last.takeIf { isVisible } }
     }.stateInNow(cs, emptySet())
 
   private val newCommentsContainer =
     MappingScopedItemsContainer.byIdentity<GHPRReviewNewCommentEditorViewModel, GHPRReviewFileEditorNewCommentViewModel>(cs) {
-      GHPRReviewFileEditorNewCommentViewModelImpl(it.position.location.lineIdx, it)
+      GHPRReviewFileEditorNewCommentViewModelImpl(it.position.location, it)
     }
   override val newComments: StateFlow<Collection<GHPRReviewFileEditorNewCommentViewModel>> =
     newCommentsContainer.mappingState.mapState { it.values }

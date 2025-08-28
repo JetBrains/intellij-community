@@ -21,8 +21,8 @@ import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
+import org.jetbrains.plugins.github.api.data.pullrequest.getCommentRange
 import org.jetbrains.plugins.github.api.data.pullrequest.isVisible
-import org.jetbrains.plugins.github.api.data.pullrequest.mapToLocation
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
@@ -145,9 +145,8 @@ internal class GHPRDiffViewModelImpl(
                          ?: return@associateBy GHPRReviewThreadDiffViewModel.MappingData(isVisible, null, null)
             val diffData = allChanges.patchesByChange[change]
                            ?: return@associateBy GHPRReviewThreadDiffViewModel.MappingData(isVisible, change, null)
-
-            val location = threadData.mapToLocation(diffData)
-            GHPRReviewThreadDiffViewModel.MappingData(isVisible, change, location)
+            val commentRange = threadData.getCommentRange(diffData)
+            GHPRReviewThreadDiffViewModel.MappingData(isVisible, change, commentRange)
           }
         }
       }.map { it.getOrNull().orEmpty() }.stateInNow(cs, emptyMap())
