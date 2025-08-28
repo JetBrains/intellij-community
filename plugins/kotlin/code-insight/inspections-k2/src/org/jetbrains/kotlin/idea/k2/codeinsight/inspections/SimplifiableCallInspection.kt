@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.analysis.api.types.KaStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.collections.isIterable
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.SimplifiableCallInspection.Context
@@ -199,23 +200,14 @@ private fun KtExpression.isNameReferenceTo(name: String): Boolean =
 private fun KtExpression.isNull(): Boolean =
     this is KtConstantExpression && this.node.elementType == KtNodeTypes.NULL
 
+context(_: KaSession)
 private val KaType.isPrimitiveArray: Boolean
-    get() {
-        return this is KaClassType && StandardClassIds.elementTypeByPrimitiveArrayType.containsKey(classId)
-    }
-private val KaType.isArray: Boolean
-    get() {
-        return this is KaClassType && StandardClassIds.Array == classId
-    }
+    get() = this is KaClassType && StandardClassIds.elementTypeByPrimitiveArrayType.containsKey(classId)
 
 context(_: KaSession)
-private val KaType.isIterable: Boolean
-    get() {
-        return this is KaClassType && (classId == StandardClassIds.Iterable || isSubtypeOf(StandardClassIds.Iterable))
-    }
+private val KaType.isArray: Boolean
+    get() = this is KaClassType && StandardClassIds.Array == classId
 
 context(_: KaSession)
 private val KaType.isMap: Boolean
-    get() {
-        return this is KaClassType && (classId == StandardClassIds.Map || isSubtypeOf(StandardClassIds.Map))
-    }
+    get() = this is KaClassType && (classId == StandardClassIds.Map || isSubtypeOf(StandardClassIds.Map))
