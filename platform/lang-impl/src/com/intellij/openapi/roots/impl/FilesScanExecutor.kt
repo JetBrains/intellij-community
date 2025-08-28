@@ -31,6 +31,7 @@ import com.intellij.util.indexing.roots.kind.LibraryOrigin
 import com.intellij.util.indexing.roots.kind.SdkOrigin
 import com.intellij.util.indexing.roots.kind.SyntheticLibraryOrigin
 import com.intellij.util.indexing.roots.origin.ExternalEntityOrigin
+import kotlinx.coroutines.CancellationException
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.concurrent.Future
@@ -110,47 +111,54 @@ object FilesScanExecutor {
     runOnAllThreads {
       runnersCount.incrementAndGet()
       var idle = false
-      while (!stopped.get()) {
-        ProgressManager.checkCanceled()
-        if (deque.peek() == null) {
-          if (!idle) {
-            idle = true
-            idleCount.incrementAndGet()
+      try {
+        while (!stopped.get()) {
+          ProgressManager.checkCanceled()
+          if (deque.peek() == null) {
+            if (!idle) {
+              idle = true
+              idleCount.incrementAndGet()
+            }
+          }
+          else if (idle) {
+            idle = false
+            idleCount.decrementAndGet()
+          }
+          if (idle) {
+            if (idleCount.get() == runnersCount.get() && deque.isEmpty()) break
+            TimeoutUtil.sleep(1L)
+            continue
+          }
+          val item = deque.poll() ?: continue
+          try {
+            if (!processor(item)) {
+              stopped.set(true)
+            }
+            if (exited.get() && !stopped.get()) {
+              throw AssertionError("early exit")
+            }
+          }
+          catch (ex: StopWorker) {
+            deque.addFirst(item)
+            return@runOnAllThreads
+          }
+          catch (ex: ProcessCanceledException) {
+            deque.addFirst(item)
+          }
+          catch (ex: Throwable) {
+            error.compareAndSet(null, ex)
           }
         }
-        else if (idle) {
-          idle = false
-          idleCount.decrementAndGet()
-        }
-        if (idle) {
-          if (idleCount.get() == runnersCount.get() && deque.isEmpty()) break
-          TimeoutUtil.sleep(1L)
-          continue
-        }
-        val item = deque.poll() ?: continue
-        try {
-          if (!processor(item)) {
-            stopped.set(true)
-          }
-          if (exited.get() && !stopped.get()) {
-            throw AssertionError("early exit")
-          }
-        }
-        catch (ex: StopWorker) {
-          deque.addFirst(item)
-          runnersCount.decrementAndGet()
-          return@runOnAllThreads
-        }
-        catch (ex: ProcessCanceledException) {
-          deque.addFirst(item)
-        }
-        catch (ex: Throwable) {
-          error.compareAndSet(null, ex)
+        exited.set(true)
+        if (!deque.isEmpty() && !stopped.get()) {
+          throw AssertionError("early exit")
         }
       }
-      exited.set(true)
-      if (!deque.isEmpty() && !stopped.get()) {
-        throw AssertionError("early exit")
+      finally {
+        if (idle) {
+          idleCount.decrementAndGet()
+        }
+        runnersCount.decrementAndGet()
       }
     }
     ExceptionUtil.rethrowAllAsUnchecked(error.get())
