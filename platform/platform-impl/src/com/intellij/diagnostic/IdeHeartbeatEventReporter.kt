@@ -26,7 +26,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.lang.management.ManagementFactory
-import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeUnit.NANOSECONDS
 import kotlin.math.roundToInt
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -73,69 +73,54 @@ private class IdeHeartbeatEventReporterService(cs: CoroutineScope) {
   private suspend fun heartBeatRoutine() {
     delay(Registry.intValue("ide.heartbeat.delay").toLong())
 
-    //durations are in milliseconds by default:
-    var previousAccumulatedCpuTimeNs: Long = 0
-    var previousAccumulatedGcDuration: Long = -1
-    var lastTimeToSafepoint: Long = 0
-    var lastTimeAtSafepoint: Long = 0
-    var lastSafepointsCount: Long = 0
+    val cpuTimeDiffer = LongDiffer(0)//cpu time is in nanoseconds
+    //other durations are in milliseconds by default:
+    val gcDurationDiffer = LongDiffer(0)
+    val timeToSafepointDiffer = LongDiffer(0)
+    val timeAtSafepointDiffer = LongDiffer(0)
+    val safepointsCountDiffer = LongDiffer(0)
+
     val gcBeans = ManagementFactory.getGarbageCollectorMXBeans()
     val mxBean = ManagementFactory.getOperatingSystemMXBean() as OperatingSystemMXBean
     while (true) {
       val cpuLoad: Double = mxBean.cpuLoad
-      val cpuLoadPercent = if (cpuLoad in 0.0..1.0) {
+      val cpuLoadInPercents = if (cpuLoad in 0.0..1.0) {
         (cpuLoad * 100).roundToInt()
       }
       else {
         -1
       }
       val swapSize = mxBean.totalSwapSpaceSize.toDouble()
-      val swapLoad = if (swapSize > 0) ((1 - mxBean.freeSwapSpaceSize / swapSize) * 100).toInt() else 0
+      val swapLoadInPercents = if (swapSize > 0) ((1 - mxBean.freeSwapSpaceSize / swapSize) * 100).toInt() else 0
 
-      val accumulatedGcDuration = gcBeans.sumOf { Math.max(it.collectionTime, 0) }
-      val gcDurationInPeriod: Long
-      if (previousAccumulatedGcDuration == -1L) {
-        gcDurationInPeriod = 0
-      }
-      else {
-        gcDurationInPeriod = accumulatedGcDuration - previousAccumulatedGcDuration
-      }
-      previousAccumulatedGcDuration = accumulatedGcDuration
-
+      val accumulatedGcDuration = gcBeans.sumOf { it.collectionTime.coerceAtLeast(0) }
+      val gcDurationInPeriodMs = gcDurationDiffer.toDiff(accumulatedGcDuration)
 
       val accumulatedCpuTimeNs = mxBean.processCpuTime
-      val cpuTimeInPeriodNs: Long
-      if (accumulatedCpuTimeNs < 0) {
-        cpuTimeInPeriodNs = -1
+      val cpuTimeInPeriodMs = if (accumulatedCpuTimeNs < 0) {
+        -1 //marker 'metric is not available'
       }
       else {
-        cpuTimeInPeriodNs = accumulatedCpuTimeNs - previousAccumulatedCpuTimeNs
-        previousAccumulatedCpuTimeNs = cpuTimeInPeriodNs
+        NANOSECONDS.toMillis(cpuTimeDiffer.toDiff(accumulatedCpuTimeNs)).toInt()
       }
 
       val timeToSafepointMs = SafepointBean.totalTimeToSafepointMs()?.let { totalTimeToSafepointMs ->
-        val currentTimeToSafepoint = (totalTimeToSafepointMs - lastTimeToSafepoint).toInt()
-        lastTimeToSafepoint = totalTimeToSafepointMs
-        currentTimeToSafepoint
+        timeToSafepointDiffer.toDiff(totalTimeToSafepointMs).toInt()
       } ?: -1
       val timeAtSafepointMs = SafepointBean.totalTimeAtSafepointMs()?.let { totalTimeAtSafepointMs ->
-        val currentTimeAtSafepoint = (totalTimeAtSafepointMs - lastTimeAtSafepoint).toInt()
-        lastTimeAtSafepoint = totalTimeAtSafepointMs
-        currentTimeAtSafepoint
+        timeAtSafepointDiffer.toDiff(totalTimeAtSafepointMs).toInt()
       } ?: -1
       val safepointsCount = SafepointBean.safepointCount()?.let { totalSafepointCount ->
-        val currentSafepointsCount = (totalSafepointCount - lastSafepointsCount).toInt()
-        lastSafepointsCount = totalSafepointCount
-        currentSafepointsCount
+        safepointsCountDiffer.toDiff(totalSafepointCount).toInt()
       } ?: -1
 
       // don't report total GC time in the first 5 minutes of IJ execution
       UILatencyLogger.HEARTBEAT.log(
-        UILatencyLogger.SYSTEM_CPU_LOAD.with(cpuLoadPercent),
-        UILatencyLogger.SWAP_LOAD.with(swapLoad),
-        UILatencyLogger.CPU_TIME.with(TimeUnit.NANOSECONDS.toMillis(cpuTimeInPeriodNs).toInt()),
+        UILatencyLogger.SYSTEM_CPU_LOAD.with(cpuLoadInPercents),
+        UILatencyLogger.SWAP_LOAD.with(swapLoadInPercents),
+        UILatencyLogger.CPU_TIME.with(cpuTimeInPeriodMs),
 
-        UILatencyLogger.GC_TIME.with(gcDurationInPeriod.toInt()),
+        UILatencyLogger.GC_TIME.with(gcDurationInPeriodMs.toInt()),
 
         UILatencyLogger.TIME_TO_SAFEPOINT.with(timeToSafepointMs),
         UILatencyLogger.TIME_AT_SAFEPOINT.with(timeAtSafepointMs),
@@ -483,5 +468,20 @@ internal object UILatencyLogger : CounterUsagesCollector() {
     private fun newHistogram(): FusHistogramBuilder {
       return FusHistogramBuilder(MEM_HISTOGRAM_BUCKETS, FusHistogramBuilder.RoundingDirection.UP)
     }
+  }
+}
+
+/** Converts accumulated value into diff-value */
+internal class LongDiffer(var previousAccumulatedValue: Long = 0){
+
+  /** @return diff between newAccumulatedValue and previous accumulated value, and updates the previous accumulated value */
+  fun toDiff(newAccumulatedValue: Long): Long {
+    val diff = newAccumulatedValue - previousAccumulatedValue
+    previousAccumulatedValue = newAccumulatedValue
+    return diff
+  }
+
+  override fun toString(): String {
+    return "LongDiffer[accumulated: $previousAccumulatedValue]"
   }
 }

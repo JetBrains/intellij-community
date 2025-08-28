@@ -174,6 +174,7 @@ public final class LowMemoryWatcherManager {
      * last {@link #WINDOW_SIZE_MS}
      */
     public synchronized long trackGcAndGetRecentTime(long currentGcDurationMs) {
+      //MAYBE RC: use EMA instead of WMA?
       long nowMs = System.currentTimeMillis();
 
       long previousGcDurationMs = lastGcDurationMs;
