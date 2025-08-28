@@ -1,10 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.indices.names
 
 import com.intellij.util.indexing.FileContent
 import com.intellij.util.indexing.ID
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.decompiler.konan.FileWithMetadata
+import org.jetbrains.kotlin.analysis.decompiler.stub.file.KotlinMetadataStubBuilder
 import org.jetbrains.kotlin.load.kotlin.KotlinJvmBinaryClass
 import org.jetbrains.kotlin.load.kotlin.header.KotlinClassHeader
 import org.jetbrains.kotlin.metadata.ProtoBuf
@@ -35,7 +35,7 @@ class KotlinTopLevelCallableByPackageShortNameIndex : NameByPackageShortNameInde
         }
     }
 
-    override fun getDeclarationNamesByMetadata(kotlinJvmBinaryClass: KotlinJvmBinaryClass): List<Name> {
+    override fun getDeclarationNamesByClassFile(kotlinJvmBinaryClass: KotlinJvmBinaryClass): List<Name> {
         if (kotlinJvmBinaryClass.classHeader.kind == KotlinClassHeader.Kind.CLASS) return emptyList()
         if (kotlinJvmBinaryClass.classHeader.kind == KotlinClassHeader.Kind.SYNTHETIC_CLASS) return emptyList()
         if (kotlinJvmBinaryClass.classHeader.kind == KotlinClassHeader.Kind.MULTIFILE_CLASS) {
@@ -54,9 +54,9 @@ class KotlinTopLevelCallableByPackageShortNameIndex : NameByPackageShortNameInde
         return mapOf(metadata.packageFqName to metadata.proto.`package`.functionOrBuilderList.map { metadata.nameResolver.getName(it.name) })
     }
 
-    override fun getDeclarationNamesByKnm(kotlinNativeMetadata: FileWithMetadata.Compatible): List<Name> {
-        val nameResolver = kotlinNativeMetadata.nameResolver
-        val packageProto = kotlinNativeMetadata.proto.`package`
+    override fun getDeclarationNamesByKnm(metadata: KotlinMetadataStubBuilder.FileWithMetadata.Compatible): List<Name> {
+        val nameResolver = metadata.nameResolver
+        val packageProto = metadata.proto.`package`
 
         return getTopLevelDeclarationNamesFromProto(packageProto, nameResolver)
     }
