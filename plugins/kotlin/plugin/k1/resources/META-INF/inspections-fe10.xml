@@ -1464,7 +1464,7 @@
                      cleanupTool="true" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      language="kotlin" key="inspection.remove.redundant.qualifier.name.display.name" bundle="messages.KotlinBundle"/>
 
-    <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.MigrateDiagnosticSuppressionInspection"
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.MigrateDiagnosticSuppressionInspection"
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.other.problems"
                      enabledByDefault="true"
@@ -1768,14 +1768,6 @@
                      level="ERROR"
                      language="kotlin"
                      key="inspection.do.not.propagate.method.deprecation.through.overrides" bundle="messages.KotlinBundle"/>
-
-    <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.migration.NoConstructorMigrationInspection"
-                     groupPath="Kotlin"
-                     groupBundle="messages.KotlinBundle" groupKey="group.names.migration"
-                     enabledByDefault="false"
-                     level="ERROR"
-                     language="kotlin"
-                     key="inspection.this.class.does.not.have.a.constructor" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.migration.DeclaringClassMigrationInspection"
                      groupPath="Kotlin"

@@ -1,44 +1,43 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-package org.jetbrains.kotlin.idea.inspections
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 
 import com.intellij.codeInsight.FileModificationService
-import com.intellij.codeInspection.*
+import com.intellij.codeInspection.CleanupLocalInspectionTool
+import com.intellij.codeInspection.LocalQuickFix
+import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.builtins.StandardNames
-import org.jetbrains.kotlin.diagnostics.Errors.*
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 import org.jetbrains.kotlin.psi.annotationEntryVisitor
-import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 class MigrateDiagnosticSuppressionInspection : AbstractKotlinInspection(), CleanupLocalInspectionTool {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
         return annotationEntryVisitor(fun(annotationEntry) {
-            if (annotationEntry.calleeExpression?.text != "Suppress") return
-            val context = annotationEntry.analyze(BodyResolveMode.PARTIAL)
-            val descriptor = context[BindingContext.ANNOTATION, annotationEntry] ?: return
-            if (descriptor.fqName != StandardNames.FqNames.suppress) return
+          if (annotationEntry.calleeExpression?.text != "Suppress") return
+          val context = annotationEntry.analyze(BodyResolveMode.PARTIAL)
+          val descriptor = context[BindingContext.ANNOTATION, annotationEntry] ?: return
+          if (descriptor.fqName != StandardNames.FqNames.suppress) return
 
-            for (argument in annotationEntry.valueArguments) {
-                val expression = argument.getArgumentExpression() as? KtStringTemplateExpression ?: continue
-                val text = expression.text
-                if (text.firstOrNull() != '\"' || text.lastOrNull() != '\"') continue
-                val newDiagnosticFactory = Holder.MIGRATION_MAP[StringUtil.unquoteString(text)] ?: continue
+          for (argument in annotationEntry.valueArguments) {
+            val expression = argument.getArgumentExpression() as? KtStringTemplateExpression ?: continue
+            val text = expression.text
+            if (text.firstOrNull() != '\"' || text.lastOrNull() != '\"') continue
+            val newDiagnosticFactory = Holder.MIGRATION_MAP[StringUtil.unquoteString(text)] ?: continue
 
-                holder.registerProblem(
-                    expression,
-                    KotlinBundle.message("diagnostic.name.should.be.replaced.by.the.new.one"),
-                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                    ReplaceDiagnosticNameFix(newDiagnosticFactory.name)
-                )
-            }
+            holder.registerProblem(
+              expression,
+              KotlinBundle.message("diagnostic.name.should.be.replaced.by.the.new.one"),
+              ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+              ReplaceDiagnosticNameFix(newDiagnosticFactory.name)
+            )
+          }
         })
     }
 
