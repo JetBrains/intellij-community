@@ -10184,6 +10184,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 runTest("../../../idea/tests/testData/quickfix/nullables/removeRedundantNullable.kt");
             }
 
+            @TestMetadata("removeRedundantNullable1.kt")
+            public void testRemoveRedundantNullable1() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/nullables/removeRedundantNullable1.kt");
+            }
+
             @TestMetadata("removeSupertypeNullable1.kt")
             public void testRemoveSupertypeNullable1() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/nullables/removeSupertypeNullable1.kt");

@@ -12398,6 +12398,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 runTest("testData/quickfix/nullables/removeRedundantNullable.kt");
             }
 
+            @TestMetadata("removeRedundantNullable1.kt")
+            public void testRemoveRedundantNullable1() throws Exception {
+                runTest("testData/quickfix/nullables/removeRedundantNullable1.kt");
+            }
+
             @TestMetadata("removeSupertypeNullable1.kt")
             public void testRemoveSupertypeNullable1() throws Exception {
                 runTest("testData/quickfix/nullables/removeSupertypeNullable1.kt");
