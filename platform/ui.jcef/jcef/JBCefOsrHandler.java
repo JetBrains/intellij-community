@@ -343,7 +343,11 @@ class JBCefOsrHandler implements CefRenderHandler {
   }
 
   void startResizePusher(CefBrowser browser, boolean resetTimeout) {
-    UIUtil.invokeLaterIfNeeded(() -> { startResizePusherImpl(browser, resetTimeout); });
+    UIUtil.invokeLaterIfNeeded(() -> {
+      if (myComponent.isShowing()) {
+        startResizePusherImpl(browser, resetTimeout);
+      }
+    });
   }
 
   private void startResizePusherImpl(CefBrowser browser, boolean resetTimeout) {
@@ -371,7 +375,9 @@ class JBCefOsrHandler implements CefRenderHandler {
 
   void stopResizePusher() {
     UIUtil.invokeLaterIfNeeded(() -> {
-      if (myResizePusherAlarm == null) {return;}
+      if (myResizePusherAlarm == null) {
+        return;
+      }
       myResizePusherAlarm.stop();
       myResizePusherAlarm = null;
       resizePushStarted = null;

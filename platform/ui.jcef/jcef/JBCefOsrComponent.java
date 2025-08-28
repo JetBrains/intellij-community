@@ -141,6 +141,8 @@ class JBCefOsrComponent extends JPanel {
     Disposer.dispose(myDisposable);
 
     myGraphicsConfigurationAlarm.cancelAllRequests();
+    myRenderHandler.stopResizePusher();
+
     myScaleInitialized.set(false);
   }
 
