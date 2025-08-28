@@ -8,6 +8,7 @@ import jdk.jfr.*;
 @Label("ProgressManager.checkCanceled")
 @Description("Event indicating that progress cancellation was checked")
 @Category("IntelliJ Platform")
+@StackTrace(false)
 class CheckCanceledEvent extends Event {
 
   @Label("Non-cancellable section")
