@@ -538,6 +538,7 @@ Function UninstallRecord
   ${If} $startMenuFolder != ""
     WriteRegStr SHCTX "Software\${MANUFACTURER}\${PRODUCT_REG_VER}" "MenuFolder" "$startMenuFolder"
   ${EndIf}
+  WriteRegStr SHCTX "Software\${MANUFACTURER}\${PRODUCT_REG_VER}" "AssociationKey" "${PRODUCT_PATHS_SELECTOR}"
 
   StrCpy $0 "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_WITH_VER}"
   WriteRegStr SHCTX $0 "DisplayName" "${INSTALL_DIR_AND_SHORTCUT_NAME}"
@@ -1181,19 +1182,24 @@ FunctionEnd
 Function un.ProductAssociation
   ; looking for the product association key
   StrCpy $R0 ""
-  StrCpy $9 0
-  ${Do}
-    EnumRegKey $0 SHCTX "Software\Classes" $9
-    ${If} $0 == ""
-      ${Break}
-    ${EndIf}
-    ReadRegStr $1 SHCTX "Software\Classes\$0\DefaultIcon" ""
-    ${If} $1 == "$INSTDIR\bin\${PRODUCT_EXE_FILE},0"
-      StrCpy $R0 $0
-      ${Break}
-    ${EndIf}
-    IntOp $9 $9 + 1
-  ${Loop}
+  ${If} $productRegKey != ""
+    ReadRegStr $R0 SHCTX $productRegKey "AssociationKey"
+  ${EndIf}
+  ${If} $R0 == ""
+    StrCpy $9 0
+    ${Do}
+      EnumRegKey $0 SHCTX "Software\Classes" $9
+      ${If} $0 == ""
+        ${Break}
+      ${EndIf}
+      ReadRegStr $1 SHCTX "Software\Classes\$0\DefaultIcon" ""
+      ${If} $1 == "$INSTDIR\bin\${PRODUCT_EXE_FILE},0"
+        StrCpy $R0 $0
+        ${Break}
+      ${EndIf}
+      IntOp $9 $9 + 1
+    ${Loop}
+  ${EndIf}
 
   ; deleting all associations for the key
   ${If} $R0 != ""
