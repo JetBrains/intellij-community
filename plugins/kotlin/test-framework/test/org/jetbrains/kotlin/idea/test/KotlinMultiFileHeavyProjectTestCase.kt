@@ -15,7 +15,7 @@ import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.directoryContent
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
+import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
 import java.nio.file.Path
 import kotlin.io.path.*
 

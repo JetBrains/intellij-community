@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.parcelize.k2.debugger.test.cases
 
 import com.intellij.jarRepository.RemoteRepositoryDescription
 import org.jetbrains.kotlin.config.JvmTarget
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
+import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.codegen.googleMavenRepository
 import org.jetbrains.kotlin.idea.debugger.test.DebuggerTestCompilerFacility
 import org.jetbrains.kotlin.idea.debugger.test.TestCompileConfiguration

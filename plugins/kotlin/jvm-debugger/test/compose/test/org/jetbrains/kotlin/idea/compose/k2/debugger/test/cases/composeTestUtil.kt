@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.idea.compose.k2.debugger.test.cases
 
 import com.intellij.jarRepository.RemoteRepositoryDescription
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
+import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.codegen.googleMavenRepository
 import java.nio.file.Path
 

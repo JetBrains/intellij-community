@@ -25,7 +25,7 @@ import junit.framework.TestCase
 import kotlinx.coroutines.Job
 import org.jetbrains.kotlin.idea.base.platforms.KotlinCommonLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
+import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.junit.jupiter.api.Test
 import org.junitpioneer.jupiter.RetryingTest

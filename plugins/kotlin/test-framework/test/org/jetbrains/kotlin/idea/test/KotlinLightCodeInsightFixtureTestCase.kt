@@ -47,8 +47,8 @@ import org.jetbrains.kotlin.idea.base.facet.hasKotlinFacet
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.fe10.highlighting.suspender.KotlinHighlightingSuspender
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts.coroutineContext
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts.kotlinxCoroutines
+import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts.coroutineContext
+import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts.kotlinxCoroutines
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion

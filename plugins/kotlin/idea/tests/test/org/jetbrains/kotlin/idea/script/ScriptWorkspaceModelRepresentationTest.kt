@@ -13,10 +13,10 @@ import com.intellij.util.io.createParentDirectories
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.contains
 import org.hamcrest.Matchers.`is`
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts.jetbrainsAnnotations
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts.kotlinScriptingCommon
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts.kotlinScriptingJvm
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts.kotlinTestJs
+import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts.jetbrainsAnnotations
+import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts.kotlinScriptingCommon
+import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts.kotlinScriptingJvm
+import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts.kotlinTestJs
 import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.core.script.k1.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.k1.ucache.KotlinScriptEntity

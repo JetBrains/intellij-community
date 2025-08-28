@@ -41,7 +41,7 @@ import org.jetbrains.kotlin.config.CommonConfigurationKeys;
 import org.jetbrains.kotlin.config.CompilerConfiguration;
 import org.jetbrains.kotlin.config.JVMConfigurationKeys;
 import org.jetbrains.kotlin.idea.KotlinLanguage;
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts;
+import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts;
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot;
 import org.jetbrains.kotlin.idea.test.kmp.KMPTest;
 import org.jetbrains.kotlin.idea.test.kmp.KMPTestRunner;

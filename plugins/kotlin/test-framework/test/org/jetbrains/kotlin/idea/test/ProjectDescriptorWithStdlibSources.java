@@ -8,7 +8,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.VfsUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts;
+import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts;
 
 public class ProjectDescriptorWithStdlibSources extends KotlinWithJdkAndRuntimeLightProjectDescriptor {
 

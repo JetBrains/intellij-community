@@ -30,7 +30,7 @@ import com.intellij.xdebugger.impl.XSourcePositionImpl
 import junit.framework.AssertionFailedError
 import org.jetbrains.idea.maven.aether.ArtifactKind
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
+import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils.areLogErrorsIgnored
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils.isIgnoredTarget
 import org.jetbrains.kotlin.idea.debugger.KotlinPositionManager

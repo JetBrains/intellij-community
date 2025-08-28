@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.idea.codegen.forTestCompile;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts;
+import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts;
 import org.jetbrains.kotlin.utils.ExceptionUtilsKt;
 
 import java.io.File;

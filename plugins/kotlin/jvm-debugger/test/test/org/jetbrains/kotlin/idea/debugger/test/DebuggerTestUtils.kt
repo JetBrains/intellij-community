@@ -8,7 +8,7 @@ import com.intellij.jarRepository.RemoteRepositoryDescription
 import com.intellij.testFramework.common.BazelTestUtil
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.config.isStableOrReadyForPreview
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
+import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import kotlin.io.path.pathString
 
