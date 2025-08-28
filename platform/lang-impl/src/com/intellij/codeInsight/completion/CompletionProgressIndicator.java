@@ -842,7 +842,7 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
     for (Pair<Integer, ElementPattern<String>> pair : restartingPrefixConditions) {
       int start = pair.first;
       if (caretOffset >= start && start >= 0 && caretOffset <= text.length()) {
-        String newPrefix = text.subSequence(start, caretOffset).toString() + toAppend;
+        String newPrefix = text.subSequence(start, caretOffset) + toAppend;
         if (pair.second.accepts(newPrefix)) {
           return true;
         }
