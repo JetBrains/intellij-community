@@ -21,9 +21,7 @@ import com.intellij.openapi.ui.popup.ListPopupStep
 import com.intellij.openapi.util.NlsActions.ActionText
 import com.intellij.platform.ide.nonModalWelcomeScreen.NonModalWelcomeScreenBundle.message
 import com.intellij.platform.ide.nonModalWelcomeScreen.newFileDialog.WelcomeScreenNewFileHandler
-import com.intellij.platform.ide.nonModalWelcomeScreen.newFileDialog.WelcomeScreenNewFileHandler.createDockerfile
 import com.intellij.platform.ide.nonModalWelcomeScreen.newFileDialog.WelcomeScreenNewFileHandler.createHttpRequestFile
-import com.intellij.platform.ide.nonModalWelcomeScreen.newFileDialog.WelcomeScreenNewFileHandler.createKubernetesResource
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
@@ -33,6 +31,7 @@ import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.popup.list.ListPopupImpl
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.Dimension
 import java.awt.Point
@@ -152,7 +151,7 @@ internal class WelcomeScreenLeftPanelActions(val project: Project) {
   }
 }
 
-class CreateEmptyFileAction : DumbAwareAction() {
+internal class CreateEmptyFileAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     WelcomeScreenNewFileHandler.createEmptyFile(project)
@@ -161,7 +160,7 @@ class CreateEmptyFileAction : DumbAwareAction() {
 
 private val HTTP_CLIENT_PLUGIN_ID = PluginId.getId("com.jetbrains.restClient")
 
-class CreateHttpRequestFileAction : DumbAwareAction() {
+internal class CreateHttpRequestFileAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     invokeOrShowPluginPage(project, HTTP_CLIENT_PLUGIN_ID) {
@@ -170,29 +169,8 @@ class CreateHttpRequestFileAction : DumbAwareAction() {
   }
 }
 
-private val DOCKER_PLUGIN_ID = PluginId.getId("Docker")
-
-class CreateDockerfileAction() : DumbAwareAction() {
-  override fun actionPerformed(e: AnActionEvent) {
-    val project = e.project ?: return
-    invokeOrShowPluginPage(project, DOCKER_PLUGIN_ID) {
-      createDockerfile(project)
-    }
-  }
-}
-
-private val KUBERNETES_PLUGIN_ID = PluginId.getId("com.intellij.kubernetes")
-
-class CreateKubernetesResourceAction : DumbAwareAction() {
-  override fun actionPerformed(e: AnActionEvent) {
-    val project = e.project ?: return
-    invokeOrShowPluginPage(project, KUBERNETES_PLUGIN_ID) {
-      createKubernetesResource(project)
-    }
-  }
-}
-
-private fun invokeOrShowPluginPage(project: Project, pluginId: PluginId, runnable: () -> Unit) {
+@ApiStatus.Internal
+fun invokeOrShowPluginPage(project: Project, pluginId: PluginId, runnable: () -> Unit) {
   if (!isDisabled(pluginId)) {
     runnable.invoke()
   } else {

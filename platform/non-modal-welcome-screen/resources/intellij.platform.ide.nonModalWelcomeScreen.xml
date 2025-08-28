@@ -44,12 +44,6 @@
       <action id="welcome.screen.left.tab.new.http.request"
               class="com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel.CreateHttpRequestFileAction"
               icon="AllIcons.FileTypes.Http"/>
-      <action id="welcome.screen.left.tab.new.docker.file"
-              class="com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel.CreateDockerfileAction"
-              icon="AllIcons.Actions.AddDirectory"/>
-      <action id="welcome.screen.left.tab.new.kubernetes.resource"
-              class="com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel.CreateKubernetesResourceAction"
-              icon="AllIcons.Actions.AddDirectory"/>
       <reference ref="NewScratchFile"/>
     </group>
   </actions>
