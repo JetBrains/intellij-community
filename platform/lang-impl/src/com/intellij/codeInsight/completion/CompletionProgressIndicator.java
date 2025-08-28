@@ -100,8 +100,13 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
       queue.setMergingTimeSpan(ourShowPopupGroupingTime);
     }
   };
+
+  /** this semaphore gets up as soon as the lookup is shown  */
   private final Semaphore freezeSemaphore = new Semaphore(1);
+
+  /** this semaphore gets up as soon as all candidates are computed  */
   private final Semaphore finishSemaphore = new Semaphore(1);
+
   private final @NotNull OffsetMap myOffsetMap;
   private final Set<Pair<Integer, ElementPattern<String>>> myRestartingPrefixConditions = ConcurrentHashMap.newKeySet();
   private final LookupListener myLookupListener = new LookupListener() {
@@ -658,6 +663,9 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
     StatisticsUpdate.cancelLastCompletionStatisticsUpdate();
   }
 
+  /**
+   * Waits for the lookup to be shown (usually it happens when the first item comes) and then checks if processing all candidates is finished.
+   */
   boolean blockingWaitForFinish(int timeoutMs) {
     if (handler.isTestingMode() && !TestModeFlags.is(CompletionAutoPopupHandler.ourTestingAutopopup)) {
       if (!finishSemaphore.waitFor(TEST_COMPLETION_TIMEOUT)) {
