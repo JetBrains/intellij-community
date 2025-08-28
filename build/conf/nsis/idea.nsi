@@ -862,7 +862,7 @@ uac_admin:
   StrCpy $rootRegKey 0
 
 check_install_dir:
-  ${If} $rootRegKey = 0
+  ${If} $rootRegKey = 1
   ${AndIf} "$INSTDIR" == "${DEFAULT_INST_DIR}"
     StrCpy $INSTDIR "$LOCALAPPDATA\Programs\${INSTALL_DIR_AND_SHORTCUT_NAME}"
   ${EndIf}
