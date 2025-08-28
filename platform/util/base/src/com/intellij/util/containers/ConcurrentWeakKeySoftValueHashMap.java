@@ -182,9 +182,13 @@ public class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K,
       return referent;
     }
 
+    /**
+     * @see WeakKey#equals(Object)
+     */
+    @SuppressWarnings("EqualsDoesntCheckParameterClass")
     @Override
     public boolean equals(Object o) {
-      return o.equals(this); // see WeakKey.equals()
+      return o.equals(this);
     }
 
     @Override

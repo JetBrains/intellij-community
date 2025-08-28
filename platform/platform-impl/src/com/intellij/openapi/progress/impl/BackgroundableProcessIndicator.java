@@ -60,8 +60,8 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
   @VisibleForTesting
   @ApiStatus.Internal
   public BackgroundableProcessIndicator(@Nullable Project project,
-                                 @NotNull TaskInfo info,
-                                 @Nullable StatusBarEx statusBarOverride) {
+                                        @NotNull TaskInfo info,
+                                        @Nullable StatusBarEx statusBarOverride) {
     super(info.isCancellable(), true, project, null, info.getCancelText());
     setOwnerTask(info);
     myInfo = info;

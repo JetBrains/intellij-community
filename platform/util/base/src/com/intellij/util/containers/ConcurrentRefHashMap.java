@@ -119,10 +119,14 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
       return referent;
     }
 
-    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
+    /**
+     * @see ConcurrentSoftHashMap.SoftKey#equals(Object)
+     * @see ConcurrentWeakHashMap.WeakKey#equals(Object)
+     */
+    @SuppressWarnings("EqualsDoesntCheckParameterClass")
     @Override
     public boolean equals(Object o) {
-      return o.equals(this); // see com.intellij.util.containers.ConcurrentSoftHashMap.SoftKey or com.intellij.util.containers.ConcurrentWeakHashMap.WeakKey
+      return o.equals(this);
     }
 
     @Override
