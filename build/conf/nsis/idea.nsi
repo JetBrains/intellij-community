@@ -24,8 +24,9 @@ RequestExecutionLevel user
 
 ; `StrFunc.nsh` requires priming the commands which actually get used later
 ${StrStr}
-${UnStrStr}
+${StrTok}
 ${UnStrRep}
+${UnStrStr}
 
 !include "log.nsi"
 !include "config.nsi"
@@ -84,80 +85,6 @@ ReserveFile "UninstallOldVersions.ini"
 !define MUI_HEADERIMAGE
 !define MUI_HEADERIMAGE_BITMAP "${IMAGES_LOCATION}\${PRODUCT_HEADER_FILE}"
 !define MUI_WELCOMEFINISHPAGE_BITMAP "${IMAGES_LOCATION}\${PRODUCT_LOGO_FILE}"
-
-
-!macro INST_UNINST_SWITCH un
-  Function ${un}SplitStr
-    Exch $0 ; str
-    Push $1 ; inQ
-    Push $3 ; idx
-    Push $4 ; tmp
-    StrCpy $1 0
-    StrCpy $3 0
-  loop:
-    StrCpy $4 $0 1 $3
-    ${If} $4 == '"'
-      ${If} $1 <> 0
-        StrCpy $0 $0 "" 1
-        IntOp $3 $3 - 1
-      ${EndIf}
-      IntOp $1 $1 !
-    ${EndIf}
-    ${If} $4 == '' ; The end?
-      StrCpy $1 0
-      StrCpy $4 ','
-    ${EndIf}
-    ${If} $4 == ','
-    ${AndIf} $1 = 0
-      StrCpy $4 $0 $3
-      StrCpy $1 $4 "" -1
-      ${IfThen} $1 == '"' ${|} StrCpy $4 $4 -1 ${|}
-  killspace:
-      IntOp $3 $3 + 1
-      StrCpy $0 $0 "" $3
-      StrCpy $1 $0 1
-      StrCpy $3 0
-      StrCmp $1 ',' killspace
-      Push $0 ; Remaining
-      Exch 4
-      Pop $0
-      ${If} $4 == ""
-        Pop $4
-        Pop $3
-        Pop $1
-        Return
-      ${EndIf}
-      Exch $4
-      Exch 2
-      Pop $1
-      Pop $3
-      Return
-    ${EndIf}
-    IntOp $3 $3 + 1
-    Goto loop
-  FunctionEnd
-
-  Function ${un}adjustLanguage
-    ${If} $Language == ${LANG_SIMPCHINESE}
-      System::Call 'kernel32::GetUserDefaultUILanguage() h .r10'
-      ${If} $R0 != ${LANG_SIMPCHINESE}
-        ${LogText} "Language override: $R0 != ${LANG_SIMPCHINESE}"
-        StrCpy $Language ${LANG_ENGLISH}
-      ${EndIf}
-    ${EndIf}
-  FunctionEnd
-
-  Function ${un}postEnvChangeEvent
-    DetailPrint "Notifying applications about environment changes..."
-    ; SendMessageTimeout(HWND_BROADCAST, WM_SETTINGCHANGE, 0, (LPARAM)"Environment", SMTO_ABORTIFHUNG, 5000, &dwResult)
-    System::Call 'user32::SendMessageTimeout(i 0xFFFF, i 0x1A, i 0, t "Environment", i 0x2, i 1000, *i .r1) i .r0'
-    IntFmt $0 "0x%x" $0
-    DetailPrint "  SendMessageTimeout(): $0, $1"
-  FunctionEnd
-!macroend
-
-!insertmacro INST_UNINST_SWITCH ""
-!insertmacro INST_UNINST_SWITCH "un."
 
 
 ; checking whether there are files in the $INSTDIR
@@ -228,43 +155,42 @@ Function ConfirmDesktopShortcut
 
   Call customPreInstallActions
 
-  StrCmp "${ASSOCIATION}" "NoAssociation" skip_association
-  StrCpy $R0 ${INSTALL_OPTION_ELEMENTS}
-  ; start position for association checkboxes
-  StrCpy $R1 0
-  ; space between checkboxes
-  StrCpy $R3 5
-  ; space for one symbol
-  StrCpy $R5 4
-  push "${ASSOCIATION}"
-loop:
-  ; get an association from list of associations
-  call SplitStr
-  Pop $0
-  StrCmp $0 "" done
-  ; get length of an association text
-  StrLen $R4 $0
-  IntOp $R4 $R4 * $R5
-  IntOp $R4 $R4 + 20
-  ; increase field number
-  IntOp $R0 $R0 + 1
-  StrCmp $R1 0 first_association 0
-  ; calculate  start position for next checkbox of an association using end of previous one.
-  IntOp $R1 $R1 + $R3
-  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $R0" "Left" "$R1"
-  Goto calculate_shift
-first_association:
-  !insertmacro INSTALLOPTIONS_READ $R2 "Desktop.ini" "Field $R0" "Left"
-  StrCpy $R1 $R2
-calculate_shift:
-  IntOp $R1 $R1 + $R4
-  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $R0" "Right" "$R1"
-  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $R0" "Text" "$0"
-  goto loop
-skip_association:
-  IntOp $R0 ${INSTALL_OPTION_ELEMENTS} - 1
-done:
+  ${If} "${ASSOCIATION}" == "NoAssociation"
+    IntOp $R0 ${INSTALL_OPTION_ELEMENTS} - 1
+  ${Else}
+    StrCpy $R0 ${INSTALL_OPTION_ELEMENTS}
+    StrCpy $R1 0  ; start position for association checkboxes
+    StrCpy $R3 5  ; space between checkboxes
+    StrCpy $R5 4  ; space for one symbol
+
+    StrCpy $9 0
+    ${Do}
+      ${StrTok} $0 "${ASSOCIATION}" "," $9 1
+      ${If} $0 == ""
+        ${Break}
+      ${EndIf}
+      ; get length of an association text
+      StrLen $R4 $0
+      IntOp $R4 $R4 * $R5
+      IntOp $R4 $R4 + 20
+      ; calculate the start position for next checkbox of an association using end of previous one
+      IntOp $R0 $R0 + 1
+      ${If} $R1 = 0
+        !insertmacro INSTALLOPTIONS_READ $R2 "Desktop.ini" "Field $R0" "Left"
+        StrCpy $R1 $R2
+      ${Else}
+        IntOp $R1 $R1 + $R3
+        !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $R0" "Left" "$R1"
+      ${EndIf}
+      IntOp $R1 $R1 + $R4
+      !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $R0" "Right" "$R1"
+      !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $R0" "Text" "$0"
+
+      IntOp $9 $9 + 1
+    ${Loop}
+  ${EndIf}
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Settings" "NumFields" "$R0"
+
   !insertmacro INSTALLOPTIONS_DISPLAY "Desktop.ini"
 FunctionEnd
 
@@ -313,9 +239,6 @@ Function PageFinishRun
   ${EndIf}
 FunctionEnd
 
-;------------------------------------------------------------------------------
-; languages
-;------------------------------------------------------------------------------
 !insertmacro MUI_LANGUAGE "English"
 !insertmacro MUI_LANGUAGE "SimpChinese"
 !insertmacro MUI_LANGUAGE "Japanese"
@@ -388,10 +311,9 @@ Function silentConfigReader
 
   ${If} "${ASSOCIATION}" != "NoAssociation"
     !insertmacro INSTALLOPTIONS_READ $R0 "Desktop.ini" "Settings" "NumFields"
-    Push "${ASSOCIATION}"
+    StrCpy $9 0
     ${Do}
-      Call SplitStr
-      Pop $0
+      ${StrTok} $0 "${ASSOCIATION}" "," $9 1
       ${If} $0 == ""
         ${Break}
       ${EndIf}
@@ -404,6 +326,7 @@ Function silentConfigReader
       !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $R0" "State" $R3
       !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $R0" "Text" "$0"
       ${LogText} "  association: $0, state: $R3"
+      IntOp $9 $9 + 1
     ${Loop}
     !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Settings" "NumFields" "$R0"
   ${EndIf}
@@ -1325,3 +1248,31 @@ Function un.DoUninstallRecord
     IntOp $9 $9 + 1
   ${Loop}
 FunctionEnd
+
+
+;------------------------------------------------------------------------------
+; shared code
+;------------------------------------------------------------------------------
+
+!macro BLOCK_SWITCH un
+  Function ${un}adjustLanguage
+    ${If} $Language == ${LANG_SIMPCHINESE}
+      System::Call 'kernel32::GetUserDefaultUILanguage() h .r10'
+      ${If} $R0 != ${LANG_SIMPCHINESE}
+        ${LogText} "Language override: $R0 != ${LANG_SIMPCHINESE}"
+        StrCpy $Language ${LANG_ENGLISH}
+      ${EndIf}
+    ${EndIf}
+  FunctionEnd
+
+  Function ${un}postEnvChangeEvent
+    DetailPrint "Notifying applications about environment changes"
+    ; SendMessageTimeout(HWND_BROADCAST, WM_SETTINGCHANGE, 0, (LPARAM)"Environment", SMTO_ABORTIFHUNG, 5000, &dwResult)
+    System::Call 'user32::SendMessageTimeout(i 0xFFFF, i 0x1A, i 0, t "Environment", i 0x2, i 1000, *i .r1) i .r0'
+    IntFmt $0 "0x%x" $0
+    DetailPrint "  SendMessageTimeout(): $0, $1"
+  FunctionEnd
+!macroend
+
+!insertmacro BLOCK_SWITCH ""
+!insertmacro BLOCK_SWITCH "un."
