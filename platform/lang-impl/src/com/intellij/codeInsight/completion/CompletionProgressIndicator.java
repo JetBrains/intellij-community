@@ -233,7 +233,7 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
     return myHostOffsets;
   }
 
-  private void duringCompletion(CompletionInitializationContext initContext, CompletionParameters parameters) {
+  private void duringCompletion(@NotNull CompletionInitializationContext initContext, @NotNull CompletionParameters parameters) {
     PsiUtilCore.ensureValid(parameters.getPosition());
     if (isAutopopupCompletion() && shouldPreselectFirstSuggestion(parameters)) {
       LookupFocusDegree degree = CodeInsightSettings.getInstance().isSelectAutopopupSuggestionsByChars()
@@ -279,7 +279,7 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
   }
 
 
-  private void addDefaultAdvertisements(CompletionParameters parameters) {
+  private void addDefaultAdvertisements(@NotNull CompletionParameters parameters) {
     if (DumbService.isDumb(getProject())) {
       addAdvertisement(IdeBundle.message("dumb.mode.results.might.be.incomplete"), AllIcons.General.Warning);
       return;
@@ -298,7 +298,7 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
     }
   }
 
-  private void advertiseTabReplacement(CompletionParameters parameters) {
+  private void advertiseTabReplacement(@NotNull CompletionParameters parameters) {
     if (CompletionUtil.shouldShowFeature(parameters, CodeCompletionFeatures.EDITING_COMPLETION_REPLACE) &&
       myOffsetMap.getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET) != myOffsetMap.getOffset(CompletionInitializationContext.SELECTION_END_OFFSET)) {
       String shortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_REPLACE);
@@ -334,7 +334,7 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
   public void dispose() {
   }
 
-  private static int findReplacementOffset(int selectionEndOffset, PsiReference reference) {
+  private static int findReplacementOffset(int selectionEndOffset, @NotNull PsiReference reference) {
     final List<TextRange> ranges = ReferenceRange.getAbsoluteRanges(reference);
     for (TextRange range : ranges) {
       if (range.contains(selectionEndOffset)) {
@@ -345,8 +345,7 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
     return selectionEndOffset;
   }
 
-
-  void scheduleAdvertising(CompletionParameters parameters) {
+  void scheduleAdvertising(@NotNull CompletionParameters parameters) {
     if (lookup.isAvailableToUser()) {
       return;
     }
@@ -381,7 +380,7 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
     CommandProcessor.getInstance().setCurrentCommandGroupId(getCompletionCommandName());
   }
 
-  private @NonNls String getCompletionCommandName() {
+  private @NonNls @NotNull String getCompletionCommandName() {
     return "Completion" + hashCode();
   }
 
@@ -436,7 +435,7 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
       .invokeLater(this::showLookup, obj -> lookup.getShownTimestampMillis() != 0L || lookup.isLookupDisposed());
   }
 
-  void withSingleUpdate(Runnable action) {
+  void withSingleUpdate(@NotNull Runnable action) {
     myArranger.batchUpdate(action);
   }
 
@@ -491,7 +490,7 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
     return true;
   }
 
-  void addItem(CompletionResult item) {
+  void addItem(@NotNull CompletionResult item) {
     if (!isRunning()) return;
     ProgressManager.checkCanceled();
 
@@ -755,7 +754,7 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
     return true;
   }
 
-  private boolean isAlreadyInTheEditor(LookupElement item) {
+  private boolean isAlreadyInTheEditor(@NotNull LookupElement item) {
     Editor editor = lookup.getEditor();
     int start = editor.getCaretModel().getOffset() - lookup.itemPattern(item).length();
     Document document = editor.getDocument();
@@ -785,7 +784,7 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
   }
 
   @ApiStatus.Internal
-  public boolean isRepeatedInvocation(CompletionType completionType, Editor editor) {
+  public boolean isRepeatedInvocation(@NotNull CompletionType completionType, @NotNull Editor editor) {
     if (completionType != myCompletionType || editor != myEditor) {
       return false;
     }
@@ -812,7 +811,7 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
   }
 
   @Override
-  public void addWatchedPrefix(int startOffset, ElementPattern<String> restartCondition) {
+  public void addWatchedPrefix(int startOffset, @NotNull ElementPattern<String> restartCondition) {
     myRestartingPrefixConditions.add(Pair.create(startOffset, restartCondition));
   }
 
@@ -915,7 +914,7 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
     CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
   }
 
-  private @HintText String getNoSuggestionsMessage(CompletionParameters parameters) {
+  private @HintText String getNoSuggestionsMessage(@NotNull CompletionParameters parameters) {
     return DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
       return CompletionContributor.forParameters(parameters)
         .stream()
@@ -926,7 +925,7 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
     });
   }
 
-  private LightweightHint showErrorHint(Project project, Editor editor, @HintText String text) {
+  private LightweightHint showErrorHint(@NotNull Project project, @NotNull Editor editor, @HintText String text) {
     LightweightHint[] result = {null};
     EditorHintListener listener = new EditorHintListener() {
       @Override
@@ -946,7 +945,7 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
     return result[0];
   }
 
-  public static boolean shouldPreselectFirstSuggestion(CompletionParameters parameters) {
+  public static boolean shouldPreselectFirstSuggestion(@NotNull CompletionParameters parameters) {
     if (Registry.is("ide.completion.lookup.element.preselect.depends.on.context")) {
       for (CompletionPreselectionBehaviourProvider provider : CompletionPreselectionBehaviourProvider.EP_NAME.getExtensionList()) {
         if (!provider.shouldPreselectFirstSuggestion(parameters)) {
@@ -977,7 +976,9 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
     }
   }
 
-  private void calculateItems(CompletionInitializationContext initContext, WeighingDelegate weigher, CompletionParameters parameters) {
+  private void calculateItems(@NotNull CompletionInitializationContext initContext,
+                              @NotNull WeighingDelegate weigher,
+                              @NotNull CompletionParameters parameters) {
     DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
       duringCompletion(initContext, parameters);
       ProgressManager.checkCanceled();
@@ -1014,9 +1015,9 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
   }
 
   private static final class ModifierTracker extends KeyAdapter {
-    private final JComponent myContentComponent;
+    private final @NotNull JComponent myContentComponent;
 
-    ModifierTracker(JComponent contentComponent) {
+    ModifierTracker(@NotNull JComponent contentComponent) {
       myContentComponent = contentComponent;
     }
 

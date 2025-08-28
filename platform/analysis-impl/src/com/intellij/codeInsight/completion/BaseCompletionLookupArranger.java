@@ -198,7 +198,7 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
   private final List<Pair<LookupElement, LookupElementPresentation>> batchItems = new ArrayList<>();
 
   @ApiStatus.Internal
-  public void batchUpdate(Runnable runnable) {
+  public void batchUpdate(@NotNull Runnable runnable) {
     if (Boolean.TRUE.equals(isInBatchUpdate.get())) {
       runnable.run();
     } else {
