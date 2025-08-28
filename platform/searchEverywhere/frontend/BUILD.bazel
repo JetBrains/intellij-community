@@ -36,6 +36,8 @@ jvm_library(
     "//platform/refactoring",
     "//platform/scopes",
     "//platform/observable",
+    "//platform/usageView-impl",
+    "//platform/analysis-api:analysis",
   ],
   exports = ["//platform/searchEverywhere/shared:searchEverywhere"]
 )

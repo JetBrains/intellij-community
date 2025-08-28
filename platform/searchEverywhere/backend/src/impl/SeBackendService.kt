@@ -32,6 +32,7 @@ import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.collections.any
 
 @ApiStatus.Internal
 @Service(Service.Level.PROJECT)
@@ -100,14 +101,14 @@ class SeBackendService(val project: Project, private val coroutineScope: Corouti
 
   suspend fun getAvailableProviderIds(
     session: SeSession,
-    dataContextId: DataContextId
-  ) : SeSortedProviderIds? {
+    dataContextId: DataContextId,
+  ): SeSortedProviderIds? {
     val providersHolder = getProvidersHolder(session, dataContextId) ?: return null
     val allProviderIds = SeItemsProviderFactory.EP_NAME.extensionList.map { it.id.toProviderId() } + providersHolder.legacyAllTabContributors.map { it.key }
     return SeSortedProviderIds.create(allProviderIds, providersHolder, session)
   }
 
-  fun tryGetProvider(id: SeProviderId, isAllTab: Boolean, session: SeSession) : SeItemsProvider? {
+  fun tryGetProvider(id: SeProviderId, isAllTab: Boolean, session: SeSession): SeItemsProvider? {
     return session.asRef().derefOrNull()?.eid?.let {
       sessionIdToProviderHolders[it]?.get(id, isAllTab)?.provider
     }
@@ -235,6 +236,27 @@ class SeBackendService(val project: Project, private val coroutineScope: Corouti
   suspend fun performExtendedAction(session: SeSession, itemData: SeItemData, isAllTab: Boolean): Boolean {
     val provider = getProvidersHolder(session, null)?.get(itemData.providerId, isAllTab) ?: return false
     return provider.performExtendedAction(itemData)
+  }
+
+  suspend fun getPreviewInfo(
+    session: SeSession,
+    itemData: SeItemData,
+    isAllTab: Boolean, project: Project,
+  ): SePreviewInfo? {
+    val provider = getProvidersHolder(session, null)?.get(itemData.providerId, isAllTab) ?: return null
+    return provider.getPreviewInfo(itemData, project)
+  }
+
+  suspend fun isPreviewEnabled(
+    session: SeSession,
+    dataContextId: DataContextId,
+    providerIds: List<SeProviderId>,
+    isAllTab: Boolean,
+  ): Boolean {
+    return providerIds.any { providerId ->
+      val provider = getProvidersHolder(session, dataContextId)?.get(providerId, isAllTab)
+      provider?.isPreviewEnabled() ?: false
+    }
   }
 
   companion object {

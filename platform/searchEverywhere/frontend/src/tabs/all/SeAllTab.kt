@@ -64,7 +64,7 @@ class SeAllTab(private val delegate: SeTabDelegate) : SeTab {
 
   override suspend fun openInFindToolWindow(session: SeSession, params: SeParams, initEvent: AnActionEvent): Boolean {
     val allTabFilter = SeEverywhereFilter.from(params.filter)
-    return delegate.openInFindToolWindow(session, params, initEvent, true,allTabFilter.disabledProviderIds)
+    return delegate.openInFindToolWindow(session, params, initEvent, true, allTabFilter.disabledProviderIds)
   }
 
   override suspend fun getUpdatedPresentation(item: SeItemData): SeItemPresentation? {
@@ -73,6 +73,12 @@ class SeAllTab(private val delegate: SeTabDelegate) : SeTab {
 
   override suspend fun performExtendedAction(item: SeItemData): Boolean {
     return delegate.performExtendedAction(item)
+  }
+
+  override suspend fun isPreviewEnabled(): Boolean = true
+
+  override suspend fun getPreviewInfo(itemData: SeItemData): SePreviewInfo? {
+    return delegate.getPreviewInfo(itemData, true)
   }
 
   override fun dispose() {

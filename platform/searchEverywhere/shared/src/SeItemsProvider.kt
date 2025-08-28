@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nls
 
 @ApiStatus.Experimental
 @ApiStatus.Internal
-interface SeItemsProvider: Disposable {
+interface SeItemsProvider : Disposable {
   val id: String
   val displayName: @Nls String
 

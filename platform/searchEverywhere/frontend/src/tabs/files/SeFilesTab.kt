@@ -5,6 +5,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.searchEverywhere.SePreviewInfo
 import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeParams
 import com.intellij.platform.searchEverywhere.SeResultEvent
@@ -56,6 +57,14 @@ class SeFilesTab(private val delegate: SeTabDelegate) : SeTab {
 
   override suspend fun performExtendedAction(item: SeItemData): Boolean {
     return delegate.performExtendedAction(item)
+  }
+
+  override suspend fun isPreviewEnabled(): Boolean {
+    return delegate.isPreviewEnabled()
+  }
+
+  override suspend fun getPreviewInfo(itemData: SeItemData): SePreviewInfo? {
+    return delegate.getPreviewInfo(itemData, false)
   }
 
   override fun dispose() {

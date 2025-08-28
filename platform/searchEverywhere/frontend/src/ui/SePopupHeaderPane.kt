@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.frontend.ui
 
+import com.intellij.ide.actions.searcheverywhere.PreviewAction
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereTabsShortcutsUtils
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector
 import com.intellij.openapi.Disposable
@@ -36,8 +37,8 @@ class SePopupHeaderPane(
   selectedTabState: MutableStateFlow<Int>,
   private val coroutineScope: CoroutineScope,
   private val showInFindToolWindowAction: AnAction,
-  private val resizeIfNecessary: () -> Unit
-): NonOpaquePanel() {
+  private val resizeIfNecessary: () -> Unit,
+) : NonOpaquePanel() {
   private lateinit var tabbedPane: JBTabbedPane
   private val tabInfos = mutableListOf<Tab>().apply { addAll(tabs) }
   private val tabShortcuts = SearchEverywhereTabsShortcutsUtils.createShortcutsMap()
@@ -69,7 +70,7 @@ class SePopupHeaderPane(
           }
           .component
 
-        setFilterActions(emptyList())
+        setFilterActions(emptyList(), false)
         cell(tabFilterContainer).align(AlignY.FILL + AlignX.RIGHT).resizableColumn()
       }
 
@@ -102,12 +103,15 @@ class SePopupHeaderPane(
     super.removeNotify()
   }
 
-  fun setFilterActions(actions: List<AnAction>) {
+  fun setFilterActions(actions: List<AnAction>, isPreviewEnabled: Boolean) {
     toolbarListenerDisposable?.let { Disposer.dispose(it) }
     val toolbarListenerDisposable = Disposer.newDisposable()
     this.toolbarListenerDisposable = toolbarListenerDisposable
 
     val actionGroup = DefaultActionGroup(actions)
+    if (isPreviewEnabled) {
+      actionGroup.add(PreviewAction())
+    }
     actionGroup.add(showInFindToolWindowAction)
     toolbar = ActionManager.getInstance().createActionToolbar("search.everywhere.toolbar", actionGroup, true)
     toolbar.setLayoutStrategy(ToolbarLayoutStrategy.NOWRAP_STRATEGY)

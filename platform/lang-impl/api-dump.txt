@@ -585,6 +585,7 @@ com.intellij.ide.actions.searcheverywhere.SearchEverywhereManager
 - a:setSelectedTabID(java.lang.String):V
 - a:show(java.lang.String,java.lang.String,com.intellij.openapi.actionSystem.AnActionEvent):V
 - a:toggleEverywhereFilter():V
+f:com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
 com.intellij.ide.actions.searcheverywhere.SearchEverywherePreviewProvider
 com.intellij.ide.fileTemplates.CreateFromTemplateActionReplacer
 - sf:CREATE_FROM_TEMPLATE_REPLACER:com.intellij.openapi.extensions.ExtensionPointName

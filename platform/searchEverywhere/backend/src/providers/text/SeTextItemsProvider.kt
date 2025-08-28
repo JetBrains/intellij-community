@@ -7,6 +7,7 @@ import com.intellij.find.impl.SearchEverywhereItem
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.ide.ui.colors.rpcId
 import com.intellij.ide.ui.toSerializableTextChunk
+import com.intellij.ide.vfs.rpcId
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -25,7 +26,8 @@ class SeTextSearchItem(
   override val contributor: SearchEverywhereContributor<*>,
   private val weight: Int,
   val extendedInfo: SeExtendedInfo,
-  val isMultiSelectionSupported: Boolean) : SeLegacyItem {
+  val isMultiSelectionSupported: Boolean,
+) : SeLegacyItem {
   override val rawObject: Any get() = item
   override fun weight(): Int = weight
 
@@ -41,7 +43,9 @@ class SeTextSearchItem(
 }
 
 @ApiStatus.Internal
-class SeTextItemsProvider(project: Project, private val contributorWrapper: SeAsyncContributorWrapper<Any>) : SeWrappedLegacyContributorItemsProvider(), SeSearchScopesProvider {
+class SeTextItemsProvider(project: Project, private val contributorWrapper: SeAsyncContributorWrapper<Any>) : SeWrappedLegacyContributorItemsProvider(),
+                                                                                                              SeSearchScopesProvider,
+                                                                                                              SeItemsPreviewProvider{
   override val id: String get() = SeProviderIdUtils.TEXT_ID
   override val displayName: @Nls String
     get() = contributor.fullGroupName
@@ -106,6 +110,13 @@ class SeTextItemsProvider(project: Project, private val contributorWrapper: SeAs
     return withContext(Dispatchers.EDT) {
       contributor.processSelectedItem(legacyItem, InputEvent.SHIFT_DOWN_MASK, "")
     }
+  }
+
+  override suspend fun getPreviewInfo(item: SeItem, project: Project): SePreviewInfo? {
+    val legacyItem = (item as? SeTextSearchItem)?.item ?: return null
+    val navigationOffsets = legacyItem.usage.mergedInfos.map { it.navigationRange.startOffset to it.navigationRange.endOffset }
+
+    return SePreviewInfo(legacyItem.usage.file.rpcId(), navigationOffsets)
   }
 
   override fun dispose() {

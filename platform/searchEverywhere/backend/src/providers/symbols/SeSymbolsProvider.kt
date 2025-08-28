@@ -3,6 +3,7 @@ package com.intellij.platform.searchEverywhere.backend.providers.symbols
 
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.ide.util.gotoByName.LanguageRef
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.scopes.SearchScopesInfo
 import com.intellij.platform.searchEverywhere.*
@@ -16,13 +17,14 @@ import org.jetbrains.annotations.Nls
 @ApiStatus.Internal
 class SeSymbolsProvider(private val contributorWrapper: SeAsyncContributorWrapper<Any>) : SeWrappedLegacyContributorItemsProvider(),
                                                                                           SeSearchScopesProvider,
-                                                                                          SeTypeVisibilityStateProvider {
+                                                                                          SeTypeVisibilityStateProvider,
+                                                                                          SeItemsPreviewProvider{
   override val id: String get() = SeProviderIdUtils.SYMBOLS_ID
   override val displayName: @Nls String
     get() = contributorWrapper.contributor.fullGroupName
   override val contributor: SearchEverywhereContributor<*> get() = contributorWrapper.contributor
 
-  private val targetsProviderDelegate = SeTargetsProviderDelegate(contributorWrapper)
+  private val targetsProviderDelegate = SeTargetsProviderDelegate(contributorWrapper, this)
 
   override suspend fun collectItems(params: SeParams, collector: SeItemsProvider.Collector) {
     targetsProviderDelegate.collectItems<LanguageRef>(params, collector)
@@ -40,12 +42,16 @@ class SeSymbolsProvider(private val contributorWrapper: SeAsyncContributorWrappe
     return targetsProviderDelegate.performExtendedAction(item)
   }
 
-  override fun dispose() {
-    Disposer.dispose(contributorWrapper)
+  override suspend fun getPreviewInfo(item: SeItem, project: Project): SePreviewInfo? {
+    return targetsProviderDelegate.getPreviewInfo(item, project)
   }
 
   override suspend fun getSearchScopesInfo(): SearchScopesInfo? = targetsProviderDelegate.getSearchScopesInfo()
 
   override suspend fun getTypeVisibilityStates(index: Int): List<SeTypeVisibilityStatePresentation> =
     targetsProviderDelegate.getTypeVisibilityStates<LanguageRef>(index)
+
+  override fun dispose() {
+    Disposer.dispose(contributorWrapper)
+  }
 }

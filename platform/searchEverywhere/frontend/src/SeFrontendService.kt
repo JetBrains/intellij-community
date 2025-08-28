@@ -3,6 +3,7 @@ package com.intellij.platform.searchEverywhere.frontend
 
 import com.intellij.ide.actions.SearchEverywhereManagerFactory
 import com.intellij.ide.actions.searcheverywhere.*
+import com.intellij.ide.actions.searcheverywhere.PreviewExperiment.isExperimentEnabled
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.EDT
@@ -118,7 +119,7 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
     initEvent: AnActionEvent,
     popupScope: CoroutineScope,
     session: SeSession,
-    availableLegacyContributors: Map<SeProviderId, SearchEverywhereContributor<Any>>
+    availableLegacyContributors: Map<SeProviderId, SearchEverywhereContributor<Any>>,
   ): CompletableDeferred<Unit> {
     val startTime = System.currentTimeMillis()
     val tabInitializationTimoutMillis: Long = 50
@@ -185,7 +186,8 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
           removeSessionRef.set(false)
           try {
             popupVm.openInFindWindow(session, initEvent)
-          } finally {
+          }
+          finally {
             change {
               shared {
                 session.asRef().derefOrNull()?.delete()
@@ -320,6 +322,11 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
 
   @ApiStatus.Internal
   override fun isSplit(): Boolean = true
+
+  @ApiStatus.Internal
+  override fun isPreviewEnabled(): Boolean {
+    return isExperimentEnabled
+  }
 
   companion object {
     @JvmStatic

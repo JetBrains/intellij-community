@@ -38,6 +38,14 @@ class SeTabMock(
     return false
   }
 
+  override suspend fun getPreviewInfo(itemData: SeItemData): SePreviewInfo? {
+    return delegate.getPreviewInfo(itemData, false)
+  }
+
+  override suspend fun isPreviewEnabled(): Boolean {
+    return delegate.isPreviewEnabled()
+  }
+
   override fun dispose() {
     Disposer.dispose(delegate)
   }

@@ -21,6 +21,7 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.mapLatest
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.function.BiConsumer
 import java.util.function.Consumer
@@ -28,12 +29,17 @@ import kotlin.time.Duration
 import kotlin.time.measureTimedValue
 
 @OptIn(ExperimentalCoroutinesApi::class)
-internal class SearchEverywherePreviewGenerator(val project: Project,
-                                                private val updatePreviewPanel: Consumer<List<UsageInfo>?>,
-                                                private val publishPreviewTime: BiConsumer<Any, Duration>): Disposable {
+@ApiStatus.Internal
+class SearchEverywherePreviewGenerator(
+  val project: Project,
+  private val updatePreviewPanel: Consumer<List<UsageInfo>?>? = null,
+  private val publishPreviewTime: BiConsumer<Any, Duration>,
+) : Disposable {
   private val usagePreviewDisposableList = ConcurrentLinkedQueue<Disposable>()
-  private val requestSharedFlow = MutableSharedFlow<Any>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  private val requestSharedFlow = MutableSharedFlow<Any?>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
   private val previewFetchingScope: CoroutineScope?
+
+  val resultsFlow: MutableSharedFlow<List<UsageInfo>?> = MutableSharedFlow(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   init {
     val seCoroutineScope = project.serviceOrNull<SearchEverywhereCoroutineScopeService>()?.coroutineScope
@@ -41,16 +47,14 @@ internal class SearchEverywherePreviewGenerator(val project: Project,
 
     previewFetchingScope?.launch {
       requestSharedFlow.mapLatest { selectedValue ->
-        val (collectedUsages, duration) = measureTimedValue {
-          fetchPreview(selectedValue).ifEmpty { null }
-        }
-
-        publishPreviewTime.accept(selectedValue, duration)
-
-        collectedUsages
+        fetchPreview(selectedValue)
       }.collectLatest { usageInfos ->
-        withContext(Dispatchers.EDT) {
-          updatePreviewPanel.accept(usageInfos)
+        resultsFlow.emit(usageInfos)
+
+        updatePreviewPanel?.let {
+          withContext(Dispatchers.EDT) {
+            updatePreviewPanel.accept(usageInfos)
+          }
         }
       }
     }?.invokeOnCompletion {
@@ -58,13 +62,33 @@ internal class SearchEverywherePreviewGenerator(val project: Project,
     }
   }
 
+  suspend fun fetchPreview(selectedValue: Any?): List<UsageInfo>? = coroutineScope {
+    val (collectedUsages, duration) = measureTimedValue {
+      (selectedValue as? List<*>)?.filterIsInstance<UsageInfo>() ?: selectedValue?.let { doFetchPreview(it).ifEmpty { null } }
+    }
+
+    if (selectedValue != null) publishPreviewTime.accept(selectedValue, duration)
+
+    return@coroutineScope collectedUsages
+  }
+
   fun schedulePreview(selectedValue: Any) {
     check(requestSharedFlow.tryEmit(selectedValue))
   }
 
-  private suspend fun fetchPreview(selectedValue: Any): List<UsageInfo> {
+  fun schedulePreview(selectedValues: List<UsageInfo>) {
+    check(requestSharedFlow.tryEmit(selectedValues))
+  }
+
+  fun cancelPreview() {
+    check(requestSharedFlow.tryEmit(null))
+  }
+
+  private suspend fun doFetchPreview(selectedValue: Any): List<UsageInfo> {
     val usageInfo = readAction {
-      findFirstChild(selectedValue)
+      findFirstChild(selectedValue, project) {
+        usagePreviewDisposableList.add(it)
+      }
     }
 
     val usages: MutableList<UsageInfo2UsageAdapter> = ArrayList()
@@ -85,43 +109,45 @@ internal class SearchEverywherePreviewGenerator(val project: Project,
     }.getOrLogException(logger<SearchEverywhereUI>()) ?: emptyList()
   }
 
-  private fun findFirstChild(selectedValue: Any): UsageInfo? {
-    val psiElement = PSIPresentationBgRendererWrapper.toPsi(selectedValue)
-    if (psiElement == null || !psiElement.isValid) return null
-
-    val psiFile = if (psiElement is PsiFile) psiElement else null
-    if (psiFile == null) {
-      if (psiElement is PsiFileSystemItem) {
-        val vFile = psiElement.virtualFile
-        val file = if (vFile == null) null else psiElement.getManager().findFile(vFile)
-        if (file != null) {
-          return UsageInfo(file, 0, 0, true)
-        }
-      }
-      for (finder in SearchEverywherePreviewPrimaryUsageFinder.EP_NAME.extensionList) {
-        val elementForUsageInfo = finder.tryFindPsiElementForUsageInfo(project, psiElement)
-        if (elementForUsageInfo != null) return UsageInfo(elementForUsageInfo)
-      }
-      return UsageInfo(psiElement)
-    }
-
-    for (finder in SearchEverywherePreviewPrimaryUsageFinder.EP_NAME.extensionList) {
-      val resultPair = finder.tryFindPrimaryUsageInfo(psiFile)
-      if (resultPair != null) {
-        val usageInfo = resultPair.first
-        val disposable = resultPair.second
-
-        if (disposable != null) {
-          usagePreviewDisposableList.add(disposable)
-        }
-
-        return usageInfo
-      }
-    }
-    return UsageInfo(psiFile)
-  }
-
   override fun dispose() {
     previewFetchingScope?.cancel("SearchEverywherePreviewGenerator disposed")
+  }
+
+  companion object {
+    fun findFirstChild(selectedValue: Any, project: Project, disposableHandler: (Disposable) -> Unit = {}): UsageInfo? {
+      val psiElement = PSIPresentationBgRendererWrapper.toPsi(selectedValue)
+      if (psiElement == null || !psiElement.isValid) return null
+
+      val psiFile = psiElement as? PsiFile
+      if (psiFile == null) {
+        if (psiElement is PsiFileSystemItem) {
+          val vFile = psiElement.virtualFile
+          val file = if (vFile == null) null else psiElement.getManager().findFile(vFile)
+          if (file != null) {
+            return UsageInfo(file, 0, 0, true)
+          }
+        }
+        for (finder in SearchEverywherePreviewPrimaryUsageFinder.EP_NAME.extensionList) {
+          val elementForUsageInfo = finder.tryFindPsiElementForUsageInfo(project, psiElement)
+          if (elementForUsageInfo != null) return UsageInfo(elementForUsageInfo)
+        }
+        return UsageInfo(psiElement)
+      }
+
+      for (finder in SearchEverywherePreviewPrimaryUsageFinder.EP_NAME.extensionList) {
+        val resultPair = finder.tryFindPrimaryUsageInfo(psiFile)
+        if (resultPair != null) {
+          val usageInfo = resultPair.first
+          val disposable = resultPair.second
+
+          if (disposable != null) {
+            disposableHandler.invoke(disposable)
+          }
+
+          return usageInfo
+        }
+      }
+      return UsageInfo(psiFile)
+    }
   }
 }

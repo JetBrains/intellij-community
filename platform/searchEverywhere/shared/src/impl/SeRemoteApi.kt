@@ -51,16 +51,20 @@ interface SeRemoteApi : RemoteApi<Unit> {
   /**
    * Defines if results can be shown in <i>Find</i> toolwindow.
    */
-  suspend fun canBeShownInFindResults(projectId: ProjectId,
-                                      session: SeSession,
-                                      dataContextId: DataContextId,
-                                      providerIds: List<SeProviderId>,
-                                      isAllTab: Boolean): Boolean
+  suspend fun canBeShownInFindResults(
+    projectId: ProjectId,
+    session: SeSession,
+    dataContextId: DataContextId,
+    providerIds: List<SeProviderId>,
+    isAllTab: Boolean,
+  ): Boolean
 
-  suspend fun isShownInSeparateTab(projectId: ProjectId,
-                                   session: SeSession,
-                                   dataContextId: DataContextId,
-                                   providerId: SeProviderId): Boolean
+  suspend fun isShownInSeparateTab(
+    projectId: ProjectId,
+    session: SeSession,
+    dataContextId: DataContextId,
+    providerId: SeProviderId,
+  ): Boolean
 
   suspend fun openInFindToolWindow(
     projectId: ProjectId,
@@ -68,14 +72,14 @@ interface SeRemoteApi : RemoteApi<Unit> {
     dataContextId: DataContextId?,
     providerIds: List<SeProviderId>,
     params: SeParams,
-    isAllTab: Boolean
+    isAllTab: Boolean,
   ): Boolean
 
   @ApiStatus.Internal
   suspend fun getAvailableProviderIds(
     projectId: ProjectId,
     session: SeSession,
-    dataContextId: DataContextId
+    dataContextId: DataContextId,
   ): SeSortedProviderIds?
 
   suspend fun getSearchScopesInfoForProviders(
@@ -104,10 +108,28 @@ interface SeRemoteApi : RemoteApi<Unit> {
 
   suspend fun getUpdatedPresentation(projectId: ProjectId, item: SeItemData): SeItemPresentation?
 
-  suspend fun performExtendedAction(projectId: ProjectId,
-                                    session: SeSession,
-                                    itemData: SeItemData,
-                                    isAllTab: Boolean): Boolean
+  suspend fun performExtendedAction(
+    projectId: ProjectId,
+    session: SeSession,
+    itemData: SeItemData,
+    isAllTab: Boolean,
+  ): Boolean
+
+  suspend fun getPreviewInfo(
+    projectId: ProjectId,
+    session: SeSession,
+    itemData: SeItemData,
+    isAllTab: Boolean,
+  ): SePreviewInfo?
+
+
+  suspend fun isPreviewEnabled(
+    projectId: ProjectId,
+    session: SeSession,
+    dataContextId: DataContextId,
+    providerIds: List<SeProviderId>,
+    isAllTab: Boolean,
+  ): Boolean
 
   companion object {
     @JvmStatic

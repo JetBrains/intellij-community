@@ -2,8 +2,10 @@
 package com.intellij.ide.actions.searcheverywhere
 
 import com.intellij.openapi.util.registry.Registry
+import org.jetbrains.annotations.ApiStatus
 
-internal object PreviewExperiment {
+@ApiStatus.Internal
+object PreviewExperiment {
   @JvmStatic
   val isExperimentEnabled: Boolean
     get() = Registry.`is`("search.everywhere.preview")

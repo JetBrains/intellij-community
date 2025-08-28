@@ -2,12 +2,15 @@
 package com.intellij.platform.searchEverywhere.frontend.vm
 
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.actions.searcheverywhere.HistoryIterator
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
-import com.intellij.ide.actions.searcheverywhere.SearchHistoryList
+import com.intellij.ide.actions.searcheverywhere.*
+import com.intellij.ide.actions.searcheverywhere.SEHeaderActionListener.Companion.SE_HEADER_ACTION_TOPIC
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI.PREVIEW_EVENTS
+import com.intellij.ide.ui.UISettings
+import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.DumbService
@@ -20,6 +23,8 @@ import com.intellij.platform.searchEverywhere.SeProviderId
 import com.intellij.platform.searchEverywhere.SeSession
 import com.intellij.platform.searchEverywhere.frontend.SeTab
 import com.intellij.platform.searchEverywhere.utils.SuspendLazyProperty
+import com.intellij.psi.PsiManager
+import com.intellij.usageView.UsageInfo
 import com.intellij.util.SystemProperties
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -66,6 +71,16 @@ class SePopupVm(
       return field
     }
 
+  val previewConfigurationFlow: Flow<SePreviewConfiguration?>
+  private val showPreviewSetting = MutableStateFlow(UISettings.getInstance().showPreviewInSearchEverywhere)
+
+  private val previewGenerator =
+    if (project == null) null
+    else SearchEverywherePreviewGenerator(project = project, publishPreviewTime = { selectedItem, duration ->
+      previewTopicPublisher.onPreviewDataReady(project, selectedItem, duration)
+    })
+  private val previewTopicPublisher = ApplicationManager.getApplication().getMessageBus().syncPublisher(PREVIEW_EVENTS)
+
   init {
     check(tabVms.isNotEmpty()) { "Search Everywhere tabs must not be empty" }
 
@@ -81,8 +96,8 @@ class SePopupVm(
       // History could be suppressed by the user for some reason (creating promo video, conference demo etc.)
       // or could be suppressed just for All tab in the registry.
       val suppressHistory = SystemProperties.getBooleanProperty("idea.searchEverywhere.noHistory", false) ||
-                            (SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID == currentTab.tabId &&
-                             Registry.`is`("search.everywhere.disable.history.for.all"))
+                            SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID == currentTab.tabId &&
+                            Registry.`is`("search.everywhere.disable.history.for.all")
       if (!suppressHistory) historyIterator.next() else ""
     }
 
@@ -126,6 +141,36 @@ class SePopupVm(
       }.distinctUntilChanged().collect {
         _searchFieldWarning.value = it
       }
+    }
+
+    ApplicationManager.getApplication().messageBus.connect(coroutineScope).subscribe(
+      SE_HEADER_ACTION_TOPIC,
+      object : SEHeaderActionListener {
+        override fun performed(event: SEHeaderActionListener.SearchEverywhereActionEvent) {
+          if (event.actionID == PREVIEW_ACTION_ID) {
+            showPreviewSetting.value = UISettings.getInstance().showPreviewInSearchEverywhere
+          }
+        }
+      }
+    )
+
+    if (PreviewExperiment.isExperimentEnabled && previewGenerator != null) {
+      previewConfigurationFlow = combine(currentTabFlow, showPreviewSetting) { tabVm, previewSetting ->
+        tabVm.isPreviewEnabled() to previewSetting
+      }.mapLatest { (tabPreviewEnabled, previewSetting) ->
+        previewGenerator.cancelPreview()
+
+        if (tabPreviewEnabled) {
+          if (previewSetting) SePreviewConfiguration(previewGenerator.project, this::fetchPreview)
+          else SePreviewConfiguration(previewGenerator.project, null)
+        }
+        else {
+          SePreviewConfiguration(previewGenerator.project, null)
+        }
+      }
+    }
+    else {
+      previewConfigurationFlow = flowOf(null)
     }
   }
 
@@ -175,7 +220,7 @@ class SePopupVm(
     }
   }
 
-  fun getHistoryItem(next: Boolean) : String {
+  fun getHistoryItem(next: Boolean): String {
     val searchText = if (next) historyIterator.next() else historyIterator.prev()
     return searchText
   }
@@ -188,8 +233,25 @@ class SePopupVm(
     _searchPattern.value = text
   }
 
+  private suspend fun fetchPreview(newValue: SeItemData?): List<UsageInfo>? {
+    if (project == null || newValue == null) return null
+    val usageInfo = currentTab.getPreviewInfo(newValue) ?: return null
+
+    val virtualFile = usageInfo.fileUrl.virtualFile() ?: return null
+
+    val usages = readAction {
+      val psiElement = PsiManager.getInstance(project).findFile(virtualFile) ?: return@readAction null
+
+      usageInfo.navigationRanges.map { (start, end) ->
+        UsageInfo(psiElement, start, end, false)
+      }
+    } ?: return null
+
+    return previewGenerator?.fetchPreview(usages)
+  }
+
   inner class ShowInFindToolWindowAction(private val onShowFindToolWindow: () -> Unit) : DumbAwareAction(IdeBundle.messagePointer("show.in.find.window.button.name"),
-                                                                   IdeBundle.messagePointer("show.in.find.window.button.description")) {
+                                                                                                         IdeBundle.messagePointer("show.in.find.window.button.description")) {
     override fun actionPerformed(e: AnActionEvent) {
       onShowFindToolWindow()
       closePopup()
@@ -217,3 +279,7 @@ private fun <T> Flow<T>.withPrevious(): Flow<Pair<T?, T>> = flow {
     previous = current
   }
 }
+
+@ApiStatus.Internal
+class SePreviewConfiguration(val project: Project,
+                             val fetchPreview: (suspend (SeItemData?) -> (List<UsageInfo>?))?)

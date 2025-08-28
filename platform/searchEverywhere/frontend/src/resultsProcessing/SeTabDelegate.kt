@@ -40,6 +40,7 @@ class SeTabDelegate(
   private val providers = initAsync(scope) {
     initializeProviders(project, providerIds, initEvent, session, logLabel)
   }
+
   suspend fun getProvidersIdToName(): Map<SeProviderId, @Nls String> = providers.getValue().getProvidersIdToName()
 
   fun getItems(params: SeParams, disabledProviders: List<SeProviderId>? = null): Flow<SeResultEvent> {
@@ -127,7 +128,7 @@ class SeTabDelegate(
     params: SeParams,
     initEvent: AnActionEvent,
     isAllTab: Boolean,
-    disabledProviders: List<SeProviderId>? = null
+    disabledProviders: List<SeProviderId>? = null,
   ): Boolean {
     if (project == null) return false
 
@@ -147,6 +148,19 @@ class SeTabDelegate(
    */
   suspend fun performExtendedAction(item: SeItemData): Boolean {
     return providers.getValue().performExtendedAction(item)
+  }
+
+  suspend fun getPreviewInfo(itemData: SeItemData, isAllTab: Boolean): SePreviewInfo? {
+    if (project == null) return null
+
+    return SeRemoteApi.getInstance().getPreviewInfo(project.projectId(),
+                                                    session,
+                                                    itemData,
+                                                    isAllTab)
+  }
+
+  suspend fun isPreviewEnabled(): Boolean {
+    return providers.getValue().isPreviewEnabled()
   }
 
   override fun dispose() {}
@@ -247,6 +261,10 @@ class SeTabDelegate(
       return localProviders[item.providerId]?.performExtendedAction(item) ?: run {
         frontendProvidersFacade?.performExtendedAction(item) ?: false
       }
+    }
+
+    suspend fun isPreviewEnabled(): Boolean {
+      return localProviders.values.any { it.isPreviewEnabled() } || frontendProvidersFacade?.isPreviewEnabled() == true
     }
   }
 

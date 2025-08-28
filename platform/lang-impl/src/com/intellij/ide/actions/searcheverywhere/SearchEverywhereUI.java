@@ -79,7 +79,6 @@ import com.intellij.usages.*;
 import com.intellij.usages.impl.UsagePreviewPanel;
 import com.intellij.usages.impl.UsageViewManagerImpl;
 import com.intellij.util.Alarm;
-import com.intellij.util.PlatformUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
@@ -155,7 +154,8 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
 
   private UsagePreviewPanel myUsagePreviewPanel;
   private UsageViewPresentation myUsageViewPresentation;
-  private static final String SPLITTER_SERVICE_KEY = "search.everywhere.splitter";
+  @ApiStatus.Internal
+  public static final String SPLITTER_SERVICE_KEY = "search.everywhere.splitter";
 
   private static final Logger LOG = Logger.getInstance(SearchEverywhereUI.class);
 
@@ -1075,8 +1075,8 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
     return Registry.is("search.everywhere.footer.extended.info") || ApplicationManager.getApplication().isInternal();
   }
 
-  static boolean isPreviewEnabled() {
-    return PreviewExperiment.isExperimentEnabled() && !PlatformUtils.isJetBrainsClient();
+  private boolean isPreviewEnabled() {
+    return SearchEverywhereManager.getInstance(myProject).isPreviewEnabled();
   }
 
   private static boolean isPreviewActive() {

@@ -25,6 +25,7 @@ import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.SearchTextField;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.AbstractPopup;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
@@ -278,6 +279,12 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
   @Override
   public boolean isSplit() {
     return false;
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public boolean isPreviewEnabled() {
+    return PreviewExperiment.isExperimentEnabled() && !PlatformUtils.isJetBrainsClient();
   }
 
   @Override

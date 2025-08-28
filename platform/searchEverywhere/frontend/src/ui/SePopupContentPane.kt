@@ -17,8 +17,11 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.OnePixelDivider
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter
 import com.intellij.openapi.util.NlsContexts
@@ -45,6 +48,8 @@ import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 import com.intellij.ui.popup.list.GroupedItemsListRenderer
 import com.intellij.ui.scale.JBUIScale.scale
+import com.intellij.usages.UsageViewPresentation
+import com.intellij.usages.impl.UsagePreviewPanel
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil.isWaylandToolkit
@@ -67,11 +72,13 @@ import kotlin.math.roundToInt
 
 @OptIn(ExperimentalAtomicApi::class, ExperimentalCoroutinesApi::class)
 @Internal
-class SePopupContentPane(private val project: Project?, private val vm: SePopupVm,
-                         private val resizePopupHandler: (Dimension) -> Unit,
-                         private val searchStatePublisher: SeSearchStatePublisher,
-                         initPopupExtendedSize: Dimension?,
-                         onShowFindToolWindow: () -> Unit) : JPanel(), Disposable, UiDataProvider {
+class SePopupContentPane(
+  private val project: Project?, private val vm: SePopupVm,
+  private val resizePopupHandler: (Dimension) -> Unit,
+  private val searchStatePublisher: SeSearchStatePublisher,
+  initPopupExtendedSize: Dimension?,
+  onShowFindToolWindow: () -> Unit,
+) : JPanel(), Disposable, UiDataProvider {
   val preferableFocusedComponent: JComponent get() = textField
   val searchFieldDocument: Document get() = textField.document
 
@@ -97,6 +104,8 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
   private val resultListModel = SeResultListModel(searchStatePublisher) { resultList.selectionModel }
   private val resultList: JBList<SeResultListRow> = JBList(resultListModel)
   private val resultsScrollPane = createListPane(resultList)
+  private val usagePreviewPanel = createUsagePreviewPanel()
+  private val splitter = createSplitter()
 
   private val extendedInfoContainer: JComponent = JPanel(BorderLayout())
   private var extendedInfoComponent: ExtendedInfoComponent? = null
@@ -149,7 +158,7 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
     RowsGridBuilder(this)
       .row().cell(headerPane, horizontalAlign = HorizontalAlign.FILL, resizableColumn = true)
       .row().cell(textField, horizontalAlign = HorizontalAlign.FILL, resizableColumn = true)
-      .row(resizable = true).cell(resultsScrollPane, horizontalAlign = HorizontalAlign.FILL, verticalAlign = VerticalAlign.FILL, resizableColumn = true)
+      .row(resizable = true).cell(splitter, horizontalAlign = HorizontalAlign.FILL, verticalAlign = VerticalAlign.FILL, resizableColumn = true)
       .row().cell(extendedInfoContainer, horizontalAlign = HorizontalAlign.FILL, resizableColumn = true)
 
     textField.text = vm.searchPattern.value
@@ -254,11 +263,11 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
     }
 
     vm.coroutineScope.launch {
-      vm.currentTabFlow.collectLatest {
-        val filterEditor = it.filterEditor.getValue()
+      vm.currentTabFlow.collectLatest { tabVm ->
+        val filterEditor = tabVm.filterEditor.getValue()
         filterEditor?.let { filterEditor ->
           withContext(Dispatchers.EDT) {
-            headerPane.setFilterActions(filterEditor.getHeaderActions())
+            headerPane.setFilterActions(filterEditor.getHeaderActions(), tabVm.isPreviewEnabled())
             hintHelper.removeRightExtensions()
             val rightActions = filterEditor.getSearchFieldActions()
             if (rightActions.isNotEmpty()) {
@@ -317,6 +326,37 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
       vm.searchFieldWarning.collect { warning ->
         withContext(Dispatchers.EDT) {
           hintHelper.setLoadingText(warning)
+        }
+      }
+    }
+
+    val selectedItemDataStateFlow = MutableStateFlow<SeItemData?>(null)
+
+    resultList.addListSelectionListener {
+      selectedItemDataStateFlow.value = (resultList.selectedValue as? SeResultListItemRow)?.item
+    }
+
+    val selectedItemDataFlow = selectedItemDataStateFlow.distinctUntilChanged { old, new ->
+      if (new == null && old == null) true
+      else old?.presentation?.contentEquals(new?.presentation) == true
+    }
+
+    vm.coroutineScope.launch {
+      vm.previewConfigurationFlow.collectLatest { configuration ->
+        val isVisible = configuration?.fetchPreview != null
+
+        withContext(Dispatchers.EDT) {
+          usagePreviewPanel?.isVisible = isVisible
+        }
+
+        if (isVisible) {
+          selectedItemDataFlow.mapLatest {
+            configuration.fetchPreview(it)
+          }.collectLatest { usageInfos ->
+            withContext(Dispatchers.EDT) {
+              usagePreviewPanel?.updateLayout(configuration.project, usageInfos)
+            }
+          }
         }
       }
     }
@@ -384,7 +424,7 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
         val hasSecondStroke = shortcut.secondKeyStroke != null
         val originalStroke = if (hasSecondStroke) shortcut.secondKeyStroke!! else shortcut.firstKeyStroke
 
-        if ((originalStroke.modifiers and modifiers) != 0) continue
+        if (originalStroke.modifiers and modifiers != 0) continue
 
         val newStroke = KeyStroke.getKeyStroke(originalStroke.keyCode, originalStroke.modifiers or modifiers)
         newShortcuts.add(if (hasSecondStroke)
@@ -420,7 +460,7 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
       it to resultListModel[it]
     }.mapNotNull { (originalIndex, row) ->
       if (row is SeResultListItemRow) {
-        (originalIndex - nonItemDataCount) to row.item
+        originalIndex - nonItemDataCount to row.item
       }
       else {
         nonItemDataCount++
@@ -470,6 +510,7 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
     ScrollingUtil.installMoveDownAction(resultList, textField)
 
     resultList.selectionMode = ListSelectionModel.MULTIPLE_INTERVAL_SELECTION
+
     resultList.addListSelectionListener { _: ListSelectionEvent ->
       val selectedIndices = resultList.selectedIndices
       if (selectedIndices.size > 1) {
@@ -487,6 +528,8 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
       if (firstSelectedIndex != -1) {
         extendedInfoComponent?.updateElement(resultList.selectedValue, this@SePopupContentPane)
       }
+
+      updatePreviewVisibility()
     }
   }
 
@@ -714,7 +757,7 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
             }
           }
         }.apply {
-          if (extendedInfo?.keyCode != null && extendedInfo.modifiers != null ) {
+          if (extendedInfo?.keyCode != null && extendedInfo.modifiers != null) {
             val shortcutSet = CustomShortcutSet(KeyStroke.getKeyStroke(extendedInfo.keyCode!!, extendedInfo.modifiers!!))
             registerCustomShortcutSet(shortcutSet, resultList, this@SePopupContentPane)
           }
@@ -855,6 +898,44 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
       resultList.selectedIndex = newIndex
       ScrollingUtil.ensureIndexIsVisible(resultList, newIndex, -1)
     }
+  }
+
+  private fun createUsagePreviewPanel(): UsagePreviewPanel? {
+    if (project == null) return null
+
+    val usageViewPresentation = UsageViewPresentation()
+    val usagePreviewPanel = object : UsagePreviewPanel(project, usageViewPresentation, true) {
+      override fun getPreferredSize(): Dimension {
+        return Dimension(headerPane.width, this.height.coerceAtLeast(lineHeight * 10))
+      }
+
+      override fun onEditorCreated(editor: Editor) {
+        if (editor is EditorEx) {
+          editor.setRendererMode(true)
+        }
+
+        editor.getContentComponent().addFocusListener(object : FocusAdapter() {
+          override fun focusLost(e: FocusEvent) {
+            onFocusLost(e)
+          }
+        })
+
+        // todo (rider statistics): myPreviewTopicPublisher.onPreviewEditorCreated(this@SePopupContentPane, editor)
+      }
+    }
+
+    usagePreviewPanel.background = JBUI.CurrentTheme.Popup.BACKGROUND
+
+    return usagePreviewPanel
+  }
+
+  private fun createSplitter() : OnePixelSplitter {
+    val splitter = OnePixelSplitter(true, .33f)
+    splitter.splitterProportionKey = SearchEverywhereUI.SPLITTER_SERVICE_KEY
+    splitter.divider.setBackground(OnePixelDivider.BACKGROUND)
+    splitter.setFirstComponent(resultsScrollPane)
+    splitter.setSecondComponent(usagePreviewPanel)
+    return splitter
   }
 
   @TestOnly

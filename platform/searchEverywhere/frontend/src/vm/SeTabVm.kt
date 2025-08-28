@@ -40,7 +40,7 @@ class SeTabVm(
   coroutineScope: CoroutineScope,
   private val tab: SeTab,
   private val searchPattern: StateFlow<String>,
-  private val availableLegacyContributors: Map<SeProviderId, SearchEverywhereContributor<Any>>
+  private val availableLegacyContributors: Map<SeProviderId, SearchEverywhereContributor<Any>>,
 ) {
   val searchResults: StateFlow<SeSearchContext?> get() = _searchResults.asStateFlow()
   val name: String get() = tab.name
@@ -214,7 +214,7 @@ class SeTabVm(
 
   suspend fun openInFindWindow(session: SeSession, initEvent: AnActionEvent): Boolean {
     val params = SeParams(searchPattern.value,
-                          (filterEditor.getValue()?.resultFlow?.value ?: SeFilterState.Empty))
+                          filterEditor.getValue()?.resultFlow?.value ?: SeFilterState.Empty)
     return tab.openInFindToolWindow(session, params, initEvent)
   }
 
@@ -232,9 +232,15 @@ class SeTabVm(
   /**
    * @return true if the popup should be closed, false otherwise
    */
-  suspend fun performExtendedAction(item: SeItemData) : Boolean {
+  suspend fun performExtendedAction(item: SeItemData): Boolean {
     return tab.performExtendedAction(item)
   }
+
+  suspend fun isPreviewEnabled(): Boolean {
+    return tab.isPreviewEnabled()
+  }
+
+  suspend fun getPreviewInfo(itemData: SeItemData): SePreviewInfo? = tab.getPreviewInfo(itemData)
 }
 
 private const val ESSENTIALS_THROTTLE_DELAY: Long = 100
@@ -245,7 +251,7 @@ private fun Flow<SeResultEvent>.throttleUntilEssentialsArrive(essentialProviderI
   val essentialProvidersCounts = essentialProviderIds.associateWith { 0 }.toMutableMap()
   val essentialWaitingTimeout: Long = AdvancedSettings.getInt("search.everywhere.contributors.wait.timeout").toLong()
 
-  SeLog.log(SeLog.THROTTLING) { "Will start throttle with essential providers: $essentialProviderIds"}
+  SeLog.log(SeLog.THROTTLING) { "Will start throttle with essential providers: $essentialProviderIds" }
 
   return throttledWithAccumulation(
     resultThrottlingMs = essentialWaitingTimeout,
@@ -269,12 +275,10 @@ private fun Flow<SeResultEvent>.throttleUntilEssentialsArrive(essentialProviderI
       }
     }
 
-    return@throttledWithAccumulation (
-      if (essentialProvidersCounts.isEmpty()) 0
-      else if (essentialProvidersCounts.values.all { it >= ESSENTIALS_ENOUGH_COUNT }) 0
-      else if (essentialProvidersCounts.values.all { it > 0 }) ESSENTIALS_THROTTLE_DELAY
-      else null
-    )
+    return@throttledWithAccumulation if (essentialProvidersCounts.isEmpty()) 0
+    else if (essentialProvidersCounts.values.all { it >= ESSENTIALS_ENOUGH_COUNT }) 0
+    else if (essentialProvidersCounts.values.all { it > 0 }) ESSENTIALS_THROTTLE_DELAY
+    else null
   }
 }
 
@@ -291,7 +295,7 @@ private fun SeResultEvent.itemDataOrNull(): SeItemData? = when (this) {
 }
 
 private fun SeProviderId.shouldIgnoreThrottling(): Boolean =
-  AdvancedSettings.getBoolean("search.everywhere.recent.at.top") && (this.value == SeProviderIdUtils.RECENT_FILES_ID)
+  AdvancedSettings.getBoolean("search.everywhere.recent.at.top") && this.value == SeProviderIdUtils.RECENT_FILES_ID
 
 @ApiStatus.Internal
 class SeSearchContext(val searchId: String, val tabId: String, val searchPattern: String, val resultsFlow: Flow<ThrottledItems<SeResultEvent>>)

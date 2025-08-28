@@ -16,13 +16,15 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
 @ApiStatus.Internal
-class SeRemoteApiImpl: SeRemoteApi {
-  override suspend fun itemSelected(projectId: ProjectId,
-                                    session: SeSession,
-                                    itemData: SeItemData,
-                                    modifiers: Int,
-                                    searchText: String,
-                                    isAllTab: Boolean): Boolean {
+class SeRemoteApiImpl : SeRemoteApi {
+  override suspend fun itemSelected(
+    projectId: ProjectId,
+    session: SeSession,
+    itemData: SeItemData,
+    modifiers: Int,
+    searchText: String,
+    isAllTab: Boolean,
+  ): Boolean {
     val project = projectId.findProjectOrNull() ?: return false
     return SeBackendService.getInstance(project).itemSelected(session, itemData, modifiers, searchText, isAllTab)
   }
@@ -44,7 +46,7 @@ class SeRemoteApiImpl: SeRemoteApi {
     dataContextId: DataContextId?,
     providerIds: List<SeProviderId>,
     params: SeParams,
-    isAllTab: Boolean
+    isAllTab: Boolean,
   ): Boolean {
     val project = projectId.findProjectOrNull() ?: return false
     return SeBackendService.getInstance(project)
@@ -73,8 +75,8 @@ class SeRemoteApiImpl: SeRemoteApi {
   override suspend fun getAvailableProviderIds(
     projectId: ProjectId,
     session: SeSession,
-    dataContextId: DataContextId
-  ) : SeSortedProviderIds? {
+    dataContextId: DataContextId,
+  ): SeSortedProviderIds? {
     val project = projectId.findProjectOrNull() ?: return null
     return SeBackendService.getInstance(project).getAvailableProviderIds(session, dataContextId)
   }
@@ -125,5 +127,26 @@ class SeRemoteApiImpl: SeRemoteApi {
   ): Boolean {
     val project = projectId.findProjectOrNull() ?: return false
     return SeBackendService.getInstance(project).performExtendedAction(session, itemData, isAllTab)
+  }
+
+  override suspend fun getPreviewInfo(
+    projectId: ProjectId,
+    session: SeSession,
+    itemData: SeItemData,
+    isAllTab: Boolean,
+  ): SePreviewInfo? {
+    val project = projectId.findProjectOrNull() ?: return null
+    return SeBackendService.getInstance(project).getPreviewInfo(session, itemData, isAllTab, project)
+  }
+
+  override suspend fun isPreviewEnabled(
+    projectId: ProjectId,
+    session: SeSession,
+    dataContextId: DataContextId,
+    providerIds: List<SeProviderId>,
+    isAllTab: Boolean,
+  ): Boolean {
+    val project = projectId.findProjectOrNull() ?: return false
+    return SeBackendService.getInstance(project).isPreviewEnabled(session, dataContextId, providerIds, isAllTab)
   }
 }
