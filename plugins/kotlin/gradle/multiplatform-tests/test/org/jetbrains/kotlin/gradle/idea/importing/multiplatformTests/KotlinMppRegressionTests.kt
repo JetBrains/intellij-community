@@ -67,6 +67,7 @@ class KotlinMppRegressionTests : AbstractKotlinMppGradleImportingTest() {
      * - KTIJ-29619 for K1 Mode
      */
     @Test
+    @PluginTargetVersions(pluginVersion = "1.9.20-RC2+")
     fun testKTIJ29619KotlinJvmWithTestFixtures() {
         doTest {
             onlyCheckers(HighlightingChecker)
