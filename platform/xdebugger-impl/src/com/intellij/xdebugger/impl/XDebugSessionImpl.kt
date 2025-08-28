@@ -11,6 +11,7 @@ import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.rpc.toDto
 import com.intellij.execution.runners.BackendExecutionEnvironmentProxy
 import com.intellij.execution.runners.ExecutionEnvironment
+import com.intellij.execution.runners.RunTab
 import com.intellij.execution.ui.ConsoleView
 import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.execution.ui.RunContentDescriptor
@@ -35,6 +36,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.platform.kernel.ids.storeValueGlobally
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.ui.AppUIUtil.invokeLaterIfProjectAlive
 import com.intellij.ui.AppUIUtil.invokeOnEdt
 import com.intellij.util.EventDispatcher
@@ -68,6 +70,7 @@ import com.intellij.xdebugger.impl.inline.InlineDebugRenderer
 import com.intellij.xdebugger.impl.mixedmode.XMixedModeCombinedDebugProcess
 import com.intellij.xdebugger.impl.rpc.*
 import com.intellij.xdebugger.impl.rpc.models.XDebugSessionValueIdType
+import com.intellij.xdebugger.impl.rpc.models.storeGlobally
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl
 import com.intellij.xdebugger.impl.ui.XDebugSessionData
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab
@@ -86,7 +89,6 @@ import org.jetbrains.annotations.Nls
 import java.util.*
 import java.util.function.Consumer
 import javax.swing.Icon
-import javax.swing.JLabel
 import javax.swing.event.HyperlinkEvent
 import javax.swing.event.HyperlinkListener
 import kotlin.concurrent.Volatile
@@ -446,23 +448,39 @@ class XDebugSessionImpl @JvmOverloads constructor(
     val defaultFramesViewKey: String? = debugProcess.getDefaultFramesViewKey()
 
     if (useFeProxy()) {
-      val environmentCoroutineScope = debuggerManager.coroutineScope.childScope("ExecutionEnvironmentDto")
+      val tabCoroutineScope = debuggerManager.coroutineScope.childScope("ExecutionEnvironmentDto")
       val tabClosedChannel = Channel<Unit>(capacity = 1)
-      val additionalTabComponentManager = XDebugSessionAdditionalTabComponentManager(project, environmentCoroutineScope)
+      val additionalTabComponentManager = XDebugSessionAdditionalTabComponentManager(project, tabCoroutineScope)
+      val runContentDescriptorId = CompletableDeferred<RunContentDescriptorId>()
+      val executionEnvironmentId = executionEnvironment?.storeGlobally(tabCoroutineScope)
       val tabInfo = XDebuggerSessionTabInfo(myIcon?.rpcId(), forceNewDebuggerUi, withFramesCustomization, defaultFramesViewKey,
-                                            contentToReuse, executionEnvironment?.toDto(environmentCoroutineScope),
-                                            additionalTabComponentManager.id, tabClosedChannel)
+                                            contentToReuse,
+                                            executionEnvironmentId, executionEnvironment?.toDto(tabCoroutineScope),
+                                            additionalTabComponentManager.id, tabClosedChannel,
+                                            runContentDescriptorId)
       if (myTabInitDataFlow.compareAndSet(null, tabInfo)) {
         addAdditionalTabsToManager(additionalTabComponentManager)
-        // TODO: take contentToReuse into account
+        // This is a mock tab used in backend only
+        // Using a RunTab as a mock component let us reuse context reusing,
+        // e.g. execution environment is present in the context of the mock descriptor
+        val runTab = object : RunTab(project, GlobalSearchScope.allScope(project),
+                                     "Debug", "Debug", sessionName) {
+          init {
+            myEnvironment = executionEnvironment
+          }
+
+          val component get() = myUi.component
+        }
         // This is a mock descriptor used in backend only
-        val mockDescriptor = object : RunContentDescriptor(myConsoleView, debugProcess.getProcessHandler(), JLabel(),
+        val mockDescriptor = object : RunContentDescriptor(myConsoleView, debugProcess.getProcessHandler(), runTab.component,
                                                            sessionName, myIcon, null) {
           override fun isHiddenContent(): Boolean = true
         }
+        val descriptorId = mockDescriptor.storeGlobally(tabCoroutineScope)
+        runContentDescriptorId.complete(descriptorId)
         debuggerManager.coroutineScope.launch(Dispatchers.EDT) {
           tabClosedChannel.consumeEach {
-            environmentCoroutineScope.cancel()
+            tabCoroutineScope.cancel()
             Disposer.dispose(mockDescriptor)
           }
         }
@@ -470,7 +488,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
         myDebugProcess!!.sessionInitialized()
       }
       else {
-        environmentCoroutineScope.cancel()
+        tabCoroutineScope.cancel()
         tabClosedChannel.close()
       }
     }

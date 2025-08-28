@@ -39,6 +39,7 @@ import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy
 import com.intellij.xdebugger.impl.frame.*
 import com.intellij.xdebugger.impl.inline.DebuggerInlayListener
 import com.intellij.xdebugger.impl.rpc.*
+import com.intellij.xdebugger.impl.ui.SplitDebuggerUIUtil
 import com.intellij.xdebugger.impl.ui.XDebugSessionData
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab
 import com.intellij.xdebugger.impl.util.MonolithUtils
@@ -270,10 +271,19 @@ class FrontendXDebuggerSession private constructor(
     cs.launch {
       if (tabInfo !is XDebuggerSessionTabInfo) return@launch
 
+      val backendRunContentDescriptorId = tabInfo.backendRunContendDescriptorId.await()
+      val executionEnvironmentId = tabInfo.executionEnvironmentId
+
       val proxy = this@FrontendXDebuggerSession
       withContext(Dispatchers.EDT) {
         XDebugSessionTab.create(proxy, tabInfo.iconId?.icon(), tabInfo.executionEnvironmentProxyDto?.executionEnvironment(project, cs), tabInfo.contentToReuse,
                                 tabInfo.forceNewDebuggerUi, tabInfo.withFramesCustomization, tabInfo.defaultFramesViewKey).apply {
+          setAdditionalKeysProvider { sink ->
+            sink[SplitDebuggerUIUtil.SPLIT_RUN_CONTENT_DESCRIPTOR_KEY] = backendRunContentDescriptorId
+            if (executionEnvironmentId != null) {
+              sink[SplitDebuggerUIUtil.SPLIT_EXECUTION_ENVIRONMENT_KEY] = executionEnvironmentId
+            }
+          }
           sessionTabDeferred.complete(this)
           proxy.onTabInitialized(this)
           showTab()

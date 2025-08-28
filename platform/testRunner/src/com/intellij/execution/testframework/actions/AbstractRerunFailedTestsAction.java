@@ -26,6 +26,7 @@ import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.xdebugger.impl.ui.SplitDebuggerUIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -127,7 +128,7 @@ public abstract class AbstractRerunFailedTestsAction extends AnAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    ExecutionEnvironment environment = e.getData(ExecutionDataKeys.EXECUTION_ENVIRONMENT);
+    ExecutionEnvironment environment = SplitDebuggerUIUtil.getExecutionEnvironment(e.getDataContext());
     if (environment == null) {
       return;
     }
