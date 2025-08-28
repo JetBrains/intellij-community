@@ -3,3 +3,6 @@
 - <init>(java.util.List):V
 *f:com.intellij.virtualThreads.IntelliJVirtualThreads
 - s:ofVirtual():java.lang.Thread$Builder
+*f:com.intellij.virtualThreads.VirtualThreads
+- sf:virtualThread(Z,java.lang.String,java.lang.ClassLoader,kotlin.jvm.functions.Function0):java.lang.Thread
+- bs:virtualThread$default(Z,java.lang.String,java.lang.ClassLoader,kotlin.jvm.functions.Function0,I,java.lang.Object):java.lang.Thread
