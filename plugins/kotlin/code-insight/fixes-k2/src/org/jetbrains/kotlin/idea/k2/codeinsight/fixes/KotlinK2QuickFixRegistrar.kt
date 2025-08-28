@@ -637,6 +637,18 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(SurroundWithNullCheckFixFactory.unsafeOperatorCallFactory)
     }
 
+    private val removeAnnotation = KtQuickFixesListBuilder.registerPsiQuickFix {
+        registerPsiQuickFixes(KaFirDiagnostic.OverloadsAbstract::class, RemoveAnnotationFix.JvmOverloads)
+        registerPsiQuickFixes(KaFirDiagnostic.OverloadsInterface::class, RemoveAnnotationFix.JvmOverloads)
+        registerPsiQuickFixes(KaFirDiagnostic.OverloadsPrivate::class, RemoveAnnotationFix.JvmOverloads)
+        registerPsiQuickFixes(KaFirDiagnostic.OverloadsLocal::class, RemoveAnnotationFix.JvmOverloads)
+        registerPsiQuickFixes(KaFirDiagnostic.OverloadsWithoutDefaultArguments::class, RemoveAnnotationFix.JvmOverloads)
+        registerPsiQuickFixes(KaFirDiagnostic.OverloadsAnnotationClassConstructorError::class, RemoveAnnotationFix.JvmOverloads)
+
+        registerPsiQuickFixes(KaFirDiagnostic.WrongExtensionFunctionType::class, RemoveAnnotationFix.ExtensionFunctionType)
+        registerPsiQuickFixes(KaFirDiagnostic.WrongExtensionFunctionTypeWarning::class, RemoveAnnotationFix.ExtensionFunctionType)
+    }
+
     override val list: KotlinQuickFixesList = KotlinQuickFixesList.createCombined(
         keywords,
         addAbstract,
@@ -664,6 +676,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         optIn,
         multiplatform,
         superType,
+        removeAnnotation,
     )
 
     override val lazyList: KotlinQuickFixesList = KotlinQuickFixesList.createCombined(
