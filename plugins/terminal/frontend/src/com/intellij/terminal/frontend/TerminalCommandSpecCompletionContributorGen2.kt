@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.terminal.frontend
 
-import com.google.common.base.Ascii
 import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
@@ -29,7 +28,6 @@ import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isRewo
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isSuppressCompletion
 import org.jetbrains.plugins.terminal.exp.completion.TerminalShellSupport
 import org.jetbrains.plugins.terminal.util.ShellType
-import java.io.File
 
 internal class TerminalCommandSpecCompletionContributorGen2 : CompletionContributor(), DumbAware {
 
@@ -229,50 +227,13 @@ internal class TerminalCommandSpecCompletionContributorGen2 : CompletionContribu
     val nextSuggestions = TerminalCompletionUtil.getNextSuggestionsString(this).takeIf { it.isNotEmpty() }
     val escapedInsertValue = StringUtil.escapeChar(realInsertValue ?: name, ' ')
 
-    // Remove path separator from insert value, so there will be an exact match
-    // if the prefix is the same string, but without path separator.
-    // It is needed, for example, to place the './' item in the first place when '.' is typed.
-    // It is a hack, because generally this logic should be solved by overriding LookupArranger#isPrefixItem.
-    // But there is no API to substitute our own implementation of LookupArranger.
-    val (lookupString, appendPathSeparator) = if (escapedInsertValue.endsWith(File.separatorChar)) {
-      escapedInsertValue.removeSuffix(File.separator) to true
-    }
-    else {
-      escapedInsertValue to false
-    }
-
-    val element = LookupElementBuilder.create(this, lookupString)
+    val element = LookupElementBuilder.create(this, escapedInsertValue)
       .withPresentableText(displayName ?: name)
       .withTailText(nextSuggestions, true)
       .withIcon(actualIcon)
-      .withInsertHandler(MyInsertHandler(this, appendPathSeparator, shellType))
 
     val adjustedPriority = priority.coerceIn(0, 100)
     return PrioritizedLookupElement.withPriority(element, adjustedPriority / 100.0)
-  }
-
-  private class MyInsertHandler(
-    private val suggestion: ShellCompletionSuggestion,
-    private val appendPathSeparator: Boolean,
-    private val shellType: ShellType,
-  ) : InsertHandler<LookupElement> {
-    override fun handleInsert(context: InsertionContext, item: LookupElement) {
-      // PowerShell consider both slash and backslash as valid path separators.
-      // But after suggestion insertion, it is replacing wrong path separators with OS path separators.
-      // Here we are emulating the same behavior.
-      val terminalInput = context.editor.getUserData(TerminalInput.KEY)
-      if (shellType == ShellType.POWERSHELL && (suggestion.type == ShellSuggestionType.FOLDER || suggestion.type == ShellSuggestionType.FILE)) {
-        val pathStartOffset = context.startOffset - suggestion.prefixReplacementIndex
-        val pathText = context.document.immutableCharSequence.substring(pathStartOffset, context.tailOffset)
-        val wrongSeparator = if (File.separatorChar == '/') '\\' else '/'
-        val adjustedPathText = pathText.replace(wrongSeparator, File.separatorChar)
-        terminalInput?.sendBytes(ByteArray(pathText.length) { Ascii.BS })
-        terminalInput?.sendString(adjustedPathText)
-      }
-      if (appendPathSeparator) {
-        terminalInput?.sendString(File.separator)
-      }
-    }
   }
 
   private class TerminalCompletionContext(

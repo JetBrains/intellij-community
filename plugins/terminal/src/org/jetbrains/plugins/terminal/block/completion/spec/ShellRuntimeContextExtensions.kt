@@ -58,8 +58,8 @@ private suspend fun ShellRuntimeContext.getChildFilesReworked(path: String, only
   return result.output.splitToSequence("\n")
     .filter { it.isNotBlank() }
     .filter { !onlyDirectories || it.endsWith(separator) }
-    // do not suggest './' and '../' directories if the user already typed some path
-    .filter { path.isEmpty() || (it != ".$separator" && it != "..$separator") }
+    // do not suggest './' and '../' choices, there is no need to show them in the completion popup.
+    .filter { it != ".$separator" && it != "..$separator" }
     .toList()
 }
 
