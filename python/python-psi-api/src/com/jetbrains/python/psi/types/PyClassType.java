@@ -25,4 +25,10 @@ public interface PyClassType extends PyClassLikeType, UserDataHolder {
   default <T> T acceptTypeVisitor(@NotNull PyTypeVisitor<T> visitor) {
     return visitor.visitPyClassType(this);
   }
+
+  @Override
+  @NotNull PyClassType toInstance();
+
+  @Override
+  @NotNull PyClassType toClass();
 }

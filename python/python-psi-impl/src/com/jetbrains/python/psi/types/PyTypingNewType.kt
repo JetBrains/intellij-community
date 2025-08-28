@@ -25,20 +25,12 @@ class PyTypingNewType(
     }
   }
 
-  override fun toClass(): PyClassLikeType {
-    return if (isDefinition) this
-    else {
-      val definition = classType.toClass()
-      if (definition is PyClassType) PyTypingNewType(definition, name, declaration) else definition
-    }
+  override fun toClass(): PyTypingNewType {
+    return if (isDefinition) this else PyTypingNewType(classType.toClass(), name, declaration)
   }
 
-  override fun toInstance(): PyClassLikeType {
-    return if (isDefinition) {
-      val instance = classType.toInstance()
-      if (instance is PyClassType) PyTypingNewType(instance, name, declaration) else instance
-    }
-    else this
+  override fun toInstance(): PyTypingNewType {
+    return if (isDefinition) PyTypingNewType(classType.toInstance(), name, declaration) else this
   }
 
   override fun isBuiltin(): Boolean = false

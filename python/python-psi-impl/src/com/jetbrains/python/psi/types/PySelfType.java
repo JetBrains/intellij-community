@@ -59,12 +59,12 @@ public final class PySelfType implements PyTypeParameterType, PyInstantiableType
 
   @Override
   public @NotNull PySelfType toInstance() {
-    return new PySelfType((PyClassType)myScopeClassType.toInstance());
+    return new PySelfType(myScopeClassType.toInstance());
   }
 
   @Override
   public @NotNull PySelfType toClass() {
-    return new PySelfType((PyClassType)myScopeClassType.toClass());
+    return new PySelfType(myScopeClassType.toClass());
   }
 
   @Override
