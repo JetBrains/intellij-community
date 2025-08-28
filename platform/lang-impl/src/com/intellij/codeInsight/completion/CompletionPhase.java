@@ -257,7 +257,7 @@ public abstract class CompletionPhase implements Disposable {
   }
 
   public static final class Synchronous extends CompletionPhase {
-    public Synchronous(CompletionProgressIndicator indicator) {
+    Synchronous(CompletionProgressIndicator indicator) {
       super(indicator);
     }
 
@@ -273,7 +273,7 @@ public abstract class CompletionPhase implements Disposable {
     boolean modifiersChanged = false;
     private final @NotNull ClientId ownerId = ClientId.getCurrent();
 
-    public BgCalculation(@NotNull CompletionProgressIndicator indicator) {
+    BgCalculation(@NotNull CompletionProgressIndicator indicator) {
       super(indicator);
       ApplicationManager.getApplication().addApplicationListener(new ApplicationListener() {
         @Override
@@ -321,7 +321,7 @@ public abstract class CompletionPhase implements Disposable {
 
   public static final class ItemsCalculated extends CompletionPhase {
 
-    public ItemsCalculated(@NotNull CompletionProgressIndicator indicator) {
+    ItemsCalculated(@NotNull CompletionProgressIndicator indicator) {
       super(indicator);
     }
 

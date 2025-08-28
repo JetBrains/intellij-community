@@ -1924,7 +1924,6 @@ a:com.intellij.codeInsight.completion.CompletionPhase
 - a:newCompletionStarted(I,Z):I
 f:com.intellij.codeInsight.completion.CompletionPhase$BgCalculation
 - com.intellij.codeInsight.completion.CompletionPhase
-- <init>(com.intellij.codeInsight.completion.CompletionProgressIndicator):V
 - newCompletionStarted(I,Z):I
 f:com.intellij.codeInsight.completion.CompletionPhase$CommittingDocuments
 - com.intellij.codeInsight.completion.CompletionPhase
@@ -1941,14 +1940,12 @@ f:com.intellij.codeInsight.completion.CompletionPhase$InsertedSingleItem
 - newCompletionStarted(I,Z):I
 f:com.intellij.codeInsight.completion.CompletionPhase$ItemsCalculated
 - com.intellij.codeInsight.completion.CompletionPhase
-- <init>(com.intellij.codeInsight.completion.CompletionProgressIndicator):V
 - newCompletionStarted(I,Z):I
 f:com.intellij.codeInsight.completion.CompletionPhase$NoSuggestionsHint
 - com.intellij.codeInsight.completion.CompletionPhase$ZombiePhase
 - newCompletionStarted(I,Z):I
 f:com.intellij.codeInsight.completion.CompletionPhase$Synchronous
 - com.intellij.codeInsight.completion.CompletionPhase
-- <init>(com.intellij.codeInsight.completion.CompletionProgressIndicator):V
 - newCompletionStarted(I,Z):I
 a:com.intellij.codeInsight.completion.CompletionPhase$ZombiePhase
 - com.intellij.codeInsight.completion.CompletionPhase
