@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.impl
 
 import com.intellij.codeInsight.completion.*
@@ -287,5 +287,8 @@ private fun reportPhase(phaseHolder: CompletionPhaseHolder) {
   LOG.error("${phaseHolder.phase}; $current$traceText")
 }
 
-private data class CompletionPhaseHolder(@JvmField val phase: CompletionPhase, @JvmField val phaseTrace: Throwable?)
+private data class CompletionPhaseHolder(
+  @JvmField val phase: CompletionPhase,
+  @JvmField val phaseTrace: Throwable?
+)
 
