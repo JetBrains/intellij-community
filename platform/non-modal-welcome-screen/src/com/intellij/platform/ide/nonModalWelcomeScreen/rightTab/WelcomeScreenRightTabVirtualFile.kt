@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NonNls
 import javax.swing.Icon
 
 class WelcomeScreenRightTabVirtualFile(val window: WelcomeScreenRightTab, val project: Project) :
-  LightVirtualFile("Welcome to GoLand", GoNewProjectWindowFileType(), "") {
+  LightVirtualFile("Welcome Screen", GoNewProjectWindowFileType(), "") {
 
   init {
     putUserData(FileEditorManagerKeys.FORBID_TAB_SPLIT, true)
@@ -24,12 +24,12 @@ class WelcomeScreenRightTabVirtualFile(val window: WelcomeScreenRightTab, val pr
   override fun getPath(): String = name
 
   private class GoNewProjectWindowFileType : FakeFileType() {
-    override fun getName(): @NonNls String = "Welcome to GoLand"
+    override fun getName(): @NonNls String = "Welcome Screen"
 
     override fun getDescription(): @NlsContexts.Label String =
-      NonModalWelcomeScreenBundle.message("go.non.modal.welcome.screen.virtual.file.type.description")
+      NonModalWelcomeScreenBundle.message("non.modal.welcome.screen.virtual.file.type.description")
 
-    override fun getIcon(): Icon? = AllIcons.General.Settings
+    override fun getIcon(): Icon = AllIcons.General.Settings
 
     override fun isMyFileType(file: VirtualFile): Boolean {
       return file is WelcomeScreenRightTabVirtualFile

@@ -30,7 +30,7 @@ object WelcomeScreenNewFileHandler {
 
   fun createEmptyFile(project: Project?) {
     if (project == null) return
-    val dialogBuilder = WelcomeScreenNewFileDialog.Builder(project, NonModalWelcomeScreenBundle.message("go.non.modal.welcome.screen.create.file.dialog.title.file"))
+    val dialogBuilder = WelcomeScreenNewFileDialog.Builder(project, NonModalWelcomeScreenBundle.message("non.modal.welcome.screen.create.file.dialog.title.file"))
     dialogBuilder.apply {
       defaultDirectory = getDefaultProjectPath()
     }
@@ -42,7 +42,7 @@ object WelcomeScreenNewFileHandler {
 
   fun createHttpRequestFile(project: Project?) {
     if (project == null) return
-    val dialogBuilder = WelcomeScreenNewFileDialog.Builder(project, NonModalWelcomeScreenBundle.message("go.non.modal.welcome.screen.create.file.dialog.title.http.request"))
+    val dialogBuilder = WelcomeScreenNewFileDialog.Builder(project, NonModalWelcomeScreenBundle.message("non.modal.welcome.screen.create.file.dialog.title.http.request"))
     dialogBuilder.apply {
       fixedExtension = "http"
       defaultDirectory = getDefaultProjectPath()
@@ -110,13 +110,13 @@ object WelcomeScreenNewFileHandler {
       }
     }
     catch (e: Exception) {
-      showErrorMessage(project, NonModalWelcomeScreenBundle.message("go.non.modal.welcome.screen.error.dialog.message.cannot.create.file", fileName, e.message ?: "Unknown error"))
+      showErrorMessage(project, NonModalWelcomeScreenBundle.message("non.modal.welcome.screen.error.dialog.message.cannot.create.file", fileName, e.message ?: "Unknown error"))
     }
   }
 
   private fun showErrorMessage(project: Project, @NlsContexts.DialogMessage message: String) {
     ApplicationManager.getApplication().invokeLater{
-      Messages.showMessageDialog(project, message, NonModalWelcomeScreenBundle.message("go.non.modal.welcome.screen.error.dialog.title.cannot.create.file"), Messages.getErrorIcon())
+      Messages.showMessageDialog(project, message, NonModalWelcomeScreenBundle.message("non.modal.welcome.screen.error.dialog.title.cannot.create.file"), Messages.getErrorIcon())
     }
   }
 }
