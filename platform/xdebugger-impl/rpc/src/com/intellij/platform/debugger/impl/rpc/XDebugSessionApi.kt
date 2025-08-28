@@ -136,6 +136,9 @@ data class XDebugSessionState(
   val isReadOnly: Boolean,
   val isPauseActionSupported: Boolean,
   val isSuspended: Boolean,
+  val isStepOverActionAllowed: Boolean,
+  val isStepOutActionAllowed: Boolean,
+  val isRunToCursorActionAllowed: Boolean,
 )
 
 @ApiStatus.Internal

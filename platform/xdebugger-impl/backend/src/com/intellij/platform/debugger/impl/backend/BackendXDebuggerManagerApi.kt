@@ -82,7 +82,14 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
   }
 
   private fun XDebugSessionImpl.state(): XDebugSessionState = XDebugSessionState(
-    isPaused, isStopped, isReadOnly, isPauseActionSupported(), isSuspended,
+    isPaused = isPaused,
+    isStopped = isStopped,
+    isReadOnly = isReadOnly,
+    isPauseActionSupported = isPauseActionSupported(),
+    isSuspended = isSuspended,
+    isStepOverActionAllowed = isStepOverActionAllowed,
+    isStepOutActionAllowed = isStepOutActionAllowed,
+    isRunToCursorActionAllowed = isRunToCursorActionAllowed,
   )
 
   @OptIn(ExperimentalCoroutinesApi::class)

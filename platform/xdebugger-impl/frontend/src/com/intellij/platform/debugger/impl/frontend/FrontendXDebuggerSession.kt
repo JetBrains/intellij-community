@@ -100,6 +100,15 @@ class FrontendXDebuggerSession private constructor(
   override val isPauseActionSupported: Boolean
     get() = sessionStateFlow.value.isPauseActionSupported
 
+  override val isStepOverActionAllowed: Boolean
+    get() = sessionStateFlow.value.isStepOverActionAllowed
+
+  override val isStepOutActionAllowed: Boolean
+    get() = sessionStateFlow.value.isStepOutActionAllowed
+
+  override val isRunToCursorActionAllowed: Boolean
+    get() = sessionStateFlow.value.isRunToCursorActionAllowed
+
   override val isSuspended: Boolean
     get() = sessionStateFlow.value.isSuspended
 

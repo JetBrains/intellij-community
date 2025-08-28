@@ -135,6 +135,10 @@ class XDebugSessionImpl @JvmOverloads constructor(
 
   private val myStopped = MutableStateFlow(false)
   private val myReadOnly = MutableStateFlow(false)
+  private val myStepOverActionAllowed = MutableStateFlow(true)
+  private val myStepOutActionAllowed = MutableStateFlow(true)
+  private val myRunToCursorActionAllowed = MutableStateFlow(true)
+
   private val myShowToolWindowOnSuspendOnly: Boolean = showToolWindowOnSuspendOnly
   private val myTabInitDataFlow = MutableStateFlow<XDebuggerSessionTabAbstractInfo?>(null)
   val restartActions: MutableList<AnAction> = SmartList<AnAction>()
@@ -225,6 +229,30 @@ class XDebugSessionImpl @JvmOverloads constructor(
     get() = myReadOnly.value
     set(readOnly) {
       myReadOnly.value = readOnly
+    }
+
+  @get:ApiStatus.Internal
+  @set:ApiStatus.Internal
+  var isStepOverActionAllowed: Boolean
+    get() = myStepOverActionAllowed.value
+    set(value) {
+      myStepOverActionAllowed.value = value
+    }
+
+  @get:ApiStatus.Internal
+  @set:ApiStatus.Internal
+  var isStepOutActionAllowed: Boolean
+    get() = myStepOutActionAllowed.value
+    set(value) {
+      myStepOutActionAllowed.value = value
+    }
+
+  @get:ApiStatus.Internal
+  @set:ApiStatus.Internal
+  var isRunToCursorActionAllowed: Boolean
+    get() = myRunToCursorActionAllowed.value
+    set(value) {
+      myRunToCursorActionAllowed.value = value
     }
 
   fun addRestartActions(vararg restartActions: AnAction?) {

@@ -61,6 +61,9 @@ interface XDebugSessionProxy {
   val isSuspended: Boolean
   val isReadOnly: Boolean
   val isPauseActionSupported: Boolean
+  val isStepOverActionAllowed: Boolean
+  val isStepOutActionAllowed: Boolean
+  val isRunToCursorActionAllowed: Boolean
   val isLibraryFrameFilterSupported: Boolean
   val isValuesCustomSorted: Boolean
 
@@ -159,6 +162,12 @@ interface XDebugSessionProxy {
       get() = session.isSuspended
     override val isPauseActionSupported: Boolean
       get() = (session as? XDebugSessionImpl)?.isPauseActionSupported() ?: false
+    override val isStepOverActionAllowed: Boolean
+      get() = (session as? XDebugSessionImpl)?.isStepOverActionAllowed ?: true
+    override val isStepOutActionAllowed: Boolean
+      get() = (session as? XDebugSessionImpl)?.isStepOutActionAllowed ?: true
+    override val isRunToCursorActionAllowed: Boolean
+      get() = (session as? XDebugSessionImpl)?.isRunToCursorActionAllowed ?: true
     override val isLibraryFrameFilterSupported: Boolean
       get() = session.debugProcess.isLibraryFrameFilterSupported
     override val isValuesCustomSorted: Boolean
