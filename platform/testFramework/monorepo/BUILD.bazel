@@ -32,7 +32,9 @@ jvm_library(
     "//jps/model-serialization",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
+    "//plugins/devkit/runtimeModuleRepository/generator",
     "//java/java-runtime:rt",
+    "//platform/runtime/repository",
   ]
 )
 ### auto-generated section `build intellij.platform.testFramework.monorepo` end

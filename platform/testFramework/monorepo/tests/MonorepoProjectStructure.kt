@@ -49,3 +49,19 @@ fun <T> JpsModule.processProductionOutput(processor: (outputRoot: Path) -> T): T
     }
   }
 }
+
+val JpsModule.productionOutputPaths: List<Path>
+  get() {
+    val archivedCompiledClassesMapping = PathManager.getArchivedCompiledClassesMapping()
+    val outputJarPath = archivedCompiledClassesMapping?.get("production/$name")
+    return outputJarPath?.let { listOf(Path(it)) } ?: listOf(JpsJavaExtensionService.getInstance().getOutputDirectoryPath(this, false)
+                                                             ?: error("Output directory is not specified for '$name'"))
+  }
+
+val JpsModule.testOutputPaths: List<Path>
+  get() {
+    val archivedCompiledClassesMapping = PathManager.getArchivedCompiledClassesMapping()
+    val outputJarPath = archivedCompiledClassesMapping?.get("test/$name")
+    return outputJarPath?.let { listOf(Path(it)) } ?: listOf(JpsJavaExtensionService.getInstance().getOutputDirectoryPath(this, true)
+                                                             ?: error("Test output directory is not specified for '$name'"))
+  }
