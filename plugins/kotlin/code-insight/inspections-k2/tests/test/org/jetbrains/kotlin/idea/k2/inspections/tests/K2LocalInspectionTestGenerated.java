@@ -13037,6 +13037,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("compareToFloat.kt")
+            public void testCompareToFloat() throws Exception {
+                runTest("testData/inspectionsLocal/replaceCallWithBinaryOperator/compareToFloat.kt");
+            }
+
             @TestMetadata("compareToFromJava.kt")
             public void testCompareToFromJava() throws Exception {
                 runTest("testData/inspectionsLocal/replaceCallWithBinaryOperator/compareToFromJava.kt");
@@ -13045,6 +13050,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             @TestMetadata("divSanityTest.kt")
             public void testDivSanityTest() throws Exception {
                 runTest("testData/inspectionsLocal/replaceCallWithBinaryOperator/divSanityTest.kt");
+            }
+
+            @TestMetadata("doubleCompareTo.kt")
+            public void testDoubleCompareTo() throws Exception {
+                runTest("testData/inspectionsLocal/replaceCallWithBinaryOperator/doubleCompareTo.kt");
             }
 
             @TestMetadata("doubleFloat.kt")
