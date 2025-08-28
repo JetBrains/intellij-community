@@ -1,32 +1,33 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.codeInsight.completion;
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.codeInsight.completion
 
-import com.intellij.openapi.progress.ProgressManager;
-import org.jetbrains.annotations.ApiStatus;
-
-import java.util.Objects;
+import com.intellij.openapi.progress.ProgressManager
+import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-public abstract class CompletionThreadingBase implements CompletionThreading {
-  protected static final ThreadLocal<Boolean> isInBatchUpdate = ThreadLocal.withInitial(() -> Boolean.FALSE);
+abstract class CompletionThreadingBase : CompletionThreading {
+  protected abstract fun flushBatchResult(indicator: CompletionProgressIndicator)
 
-  public static void withBatchUpdate(Runnable runnable, CompletionProcess process) {
-    if (isInBatchUpdate.get().booleanValue() || !(process instanceof CompletionProgressIndicator)) {
-      runnable.run();
-      return;
-    }
+  companion object {
+    internal val isInBatchUpdate: ThreadLocal<Boolean> = ThreadLocal.withInitial { false }
 
-    try {
-      isInBatchUpdate.set(Boolean.TRUE);
-      runnable.run();
-      ProgressManager.checkCanceled();
-      CompletionProgressIndicator currentIndicator = (CompletionProgressIndicator)process;
-      CompletionThreadingBase threading = Objects.requireNonNull(currentIndicator.getCompletionThreading());
-      threading.flushBatchResult(currentIndicator);
-    } finally {
-      isInBatchUpdate.set(Boolean.FALSE);
+    @JvmStatic
+    fun withBatchUpdate(runnable: Runnable, process: CompletionProcess?) {
+      if (isInBatchUpdate.get() || process !is CompletionProgressIndicator) {
+        runnable.run()
+        return
+      }
+
+      try {
+        isInBatchUpdate.set(true)
+        runnable.run()
+        ProgressManager.checkCanceled()
+        val threading = process.completionThreading
+        threading.flushBatchResult(process)
+      }
+      finally {
+        isInBatchUpdate.set(false)
+      }
     }
   }
-
-  protected abstract void flushBatchResult(CompletionProgressIndicator indicator);
 }
