@@ -20,11 +20,14 @@ private class JavaValueTextModificationPreparatorProvider : XValueTextModificati
     if (value.xValueDescriptorAsync?.getNow(null)?.kind == JAVA_VALUE_KIND &&
         (value as? XValueTextProvider)?.shouldShowTextValue() == true &&
         value.modifier != null) {
-
-      return object : XValueTextModificationPreparator {
-        override fun convertToStringLiteral(text: String) = convertToJavaStringLiteral(text)
-      }
+      return JavaPreparator
     }
     return null
+  }
+
+  private object JavaPreparator : XValueTextModificationPreparator {
+    override fun convertToStringLiteral(text: String): String {
+      return convertToJavaStringLiteral(text)
+    }
   }
 }

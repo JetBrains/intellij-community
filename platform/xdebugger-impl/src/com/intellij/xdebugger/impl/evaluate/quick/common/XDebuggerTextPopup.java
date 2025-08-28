@@ -310,7 +310,7 @@ public class XDebuggerTextPopup<D> extends XDebuggerPopupPanel {
     return value instanceof XValueTextProvider textProvider &&
            textProvider.shouldShowTextValue() &&
            value.getModifier() != null
-           ? XValueTextModificationPreparatorProviders.INSTANCE.getPreparator(value)
+           ? XValueTextModificationPreparatorProviders.getPreparator(value)
            : null;
   }
 

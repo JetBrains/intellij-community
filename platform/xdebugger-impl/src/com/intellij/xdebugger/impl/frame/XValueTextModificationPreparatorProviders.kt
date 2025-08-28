@@ -9,6 +9,7 @@ import com.intellij.xdebugger.frame.XValueTextModificationPreparatorProvider
 internal object XValueTextModificationPreparatorProviders {
   private val EP_NAME = ExtensionPointName<XValueTextModificationPreparatorProvider>("com.intellij.xdebugger.xTextValueModificationPreparatorProvider")
 
+  @JvmStatic
   fun getPreparator(value: XValue): XValueTextModificationPreparator? {
     return EP_NAME.extensionList.firstNotNullOfOrNull { it.getTextValuePreparator(value) }
   }
