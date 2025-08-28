@@ -302,7 +302,10 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     refreshUi(true, true);
   }
 
-  public boolean addItem(LookupElement item, PrefixMatcher matcher) {
+  /**
+   * @return true if the item was added
+   */
+  public boolean addItem(@NotNull LookupElement item, @NotNull PrefixMatcher matcher) {
     LookupElementPresentation presentation = LookupElementPresentation.renderElement(item);
     if (containsDummyIdentifier(presentation.getItemText()) ||
         containsDummyIdentifier(presentation.getTailText()) ||
