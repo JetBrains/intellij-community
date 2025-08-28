@@ -10,7 +10,6 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.debugger.impl.frontend.evaluate.quick.FrontendXValue
 import com.intellij.platform.debugger.impl.frontend.frame.FrontendDropFrameHandler
@@ -64,14 +63,11 @@ class FrontendXDebuggerSession private constructor(
   private val eventsDispatcher = EventDispatcher.create(XDebugSessionListener::class.java)
   override val id: XDebugSessionId = sessionDto.id
 
-  // TODO merge sourcePosition, topSourcePosition, sessionState with suspendContext flow
+  private val sourcePositionFlow = MutableStateFlow<XSourcePosition?>(null)
+  private val topSourcePositionFlow = MutableStateFlow<XSourcePosition?>(null)
+
+  // TODO merge sessionState with suspendContext flow
   // TODO to be sure that the state is not out of sync
-  private val sourcePosition: StateFlow<XSourcePosition?> =
-    cs.createPositionFlow { XDebugSessionApi.getInstance().currentSourcePosition(id) }
-
-  private val topSourcePosition: StateFlow<XSourcePosition?> =
-    cs.createPositionFlow { XDebugSessionApi.getInstance().topSourcePosition(id) }
-
   private val sessionState: StateFlow<XDebugSessionState> =
     channelFlow {
       XDebugSessionApi.getInstance().currentSessionState(id).collectLatest { sessionState ->
@@ -198,20 +194,15 @@ class FrontendXDebuggerSession private constructor(
       is XDebuggerSessionEvent.SessionPaused -> {
         suspendData.await()?.applyToCurrents()
       }
-      is XDebuggerSessionEvent.SessionResumed,
-      is XDebuggerSessionEvent.BeforeSessionResume,
-        -> {
-        suspendContext.getAndUpdate { null }?.cancel()
-        currentExecutionStack.value = null
-        currentStackFrame.value = null
+      is XDebuggerSessionEvent.SessionResumed, is XDebuggerSessionEvent.BeforeSessionResume -> {
+        clearSuspendContext()
       }
       is XDebuggerSessionEvent.SessionStopped -> {
         cs.cancel()
-        suspendContext.value = null
-        currentExecutionStack.value = null
-        currentStackFrame.value = null
+        clearSuspendContext()
       }
       is XDebuggerSessionEvent.StackFrameChanged -> {
+        sourcePositionFlow.value = sourcePosition?.sourcePosition()
         stackFrame?.await()?.let {
           val suspendContext = suspendContext.value ?: return
           currentStackFrame.value = suspendContext.getOrCreateStackFrame(it)
@@ -221,8 +212,16 @@ class FrontendXDebuggerSession private constructor(
     }
   }
 
+  private fun clearSuspendContext() {
+    suspendContext.getAndUpdate { null }?.cancel()
+    sourcePositionFlow.value = null
+    topSourcePositionFlow.value = null
+    currentExecutionStack.value = null
+    currentStackFrame.value = null
+  }
+
   private fun SuspendData.applyToCurrents() {
-    val (suspendContextDto, executionStackDto, stackFrameDto) = this
+    val (suspendContextDto, executionStackDto, stackFrameDto, sourcePositionDto, topSourcePositionDto) = this
     val oldSuspendContext = suspendContext.value
     if (oldSuspendContext == null || suspendContextDto.id != oldSuspendContext.id) {
       val newSuspendContext = FrontendXSuspendContext(suspendContextDto, project, cs)
@@ -239,6 +238,8 @@ class FrontendXDebuggerSession private constructor(
     stackFrameDto?.let {
       currentStackFrame.value = suspendContextLifetimeScope.getOrCreateStackFrame(it, project)
     }
+    sourcePositionFlow.value = sourcePositionDto?.sourcePosition()
+    topSourcePositionFlow.value = topSourcePositionDto?.sourcePosition()
   }
 
   private fun XDebuggerSessionEvent.dispatch() {
@@ -288,9 +289,9 @@ class FrontendXDebuggerSession private constructor(
     }
   }
 
-  override fun getCurrentPosition(): XSourcePosition? = sourcePosition.value
+  override fun getCurrentPosition(): XSourcePosition? = sourcePositionFlow.value
 
-  override fun getTopFramePosition(): XSourcePosition? = topSourcePosition.value
+  override fun getTopFramePosition(): XSourcePosition? = topSourcePositionFlow.value
 
   override fun getFrameSourcePosition(frame: XStackFrame): XSourcePosition? {
     // TODO Support XSourceKind
@@ -395,7 +396,6 @@ class FrontendXDebuggerSession private constructor(
   }
 
   companion object {
-    private val LOG = thisLogger()
 
     suspend fun create(
       project: Project,
@@ -410,19 +410,6 @@ class FrontendXDebuggerSession private constructor(
     }
   }
 }
-
-private fun CoroutineScope.createPositionFlow(dtoFlow: suspend () -> Flow<XSourcePositionDto?>): StateFlow<XSourcePosition?> = channelFlow {
-  dtoFlow().collectLatest { sourcePositionDto ->
-    if (sourcePositionDto == null) {
-      send(null)
-      return@collectLatest
-    }
-    supervisorScope {
-      send(sourcePositionDto.sourcePosition())
-      awaitCancellation()
-    }
-  }
-}.stateIn(this, SharingStarted.Eagerly, null)
 
 /**
  * Note that data added to [com.intellij.openapi.util.UserDataHolder] is not synced with backend.

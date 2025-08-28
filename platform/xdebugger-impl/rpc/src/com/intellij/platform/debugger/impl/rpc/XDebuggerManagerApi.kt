@@ -86,7 +86,10 @@ sealed interface XDebuggerSessionEvent {
   object SessionStopped : XDebuggerSessionEvent
 
   @Serializable
-  class StackFrameChanged(@Serializable(with = DeferredSerializer::class) val stackFrame: Deferred<XStackFrameDto>?) : XDebuggerSessionEvent
+  class StackFrameChanged(
+    val sourcePosition: XSourcePositionDto?,
+    @Serializable(with = DeferredSerializer::class) val stackFrame: Deferred<XStackFrameDto>?,
+    ) : XDebuggerSessionEvent
 
   @Serializable
   object BeforeSessionResume : XDebuggerSessionEvent
@@ -104,6 +107,8 @@ data class SuspendData(
   val suspendContextDto: XSuspendContextDto,
   val executionStack: XExecutionStackDto?,
   val stackFrame: XStackFrameDto?,
+  val sourcePosition: XSourcePositionDto?,
+  val topSourcePosition: XSourcePositionDto?,
 )
 
 @ApiStatus.Internal

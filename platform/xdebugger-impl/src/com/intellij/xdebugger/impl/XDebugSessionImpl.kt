@@ -32,7 +32,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.platform.kernel.ids.storeValueGlobally
 import com.intellij.platform.util.coroutines.childScope
@@ -144,17 +143,11 @@ class XDebugSessionImpl @JvmOverloads constructor(
   private var myConsoleView: ConsoleView? = null
   private val myIcon: Icon? = icon
   private val myCurrentStackFrameManager = XDebugSessionCurrentStackFrameManager()
-  private val executionStackFlow = MutableStateFlow<Ref<XExecutionStack?>>(Ref.create(null))
 
   @get:ApiStatus.Internal
   val fileColorsComputer: FileColorsComputer = FileColorsComputer(project, coroutineScope)
 
-  var currentExecutionStack: XExecutionStack?
-    get() = executionStackFlow.value.get()
-    private set(value) {
-      if (executionStackFlow.value.get() === value) return
-      executionStackFlow.value = Ref.create(value)
-    }
+  var currentExecutionStack: XExecutionStack? = null
   private val suspendContextFlow = MutableStateFlow<XSuspendContext?>(null)
   private val sessionInitializedDeferred = CompletableDeferred<Unit>()
 
@@ -207,10 +200,6 @@ class XDebugSessionImpl @JvmOverloads constructor(
   @get:ApiStatus.Internal
   val tabInitDataFlow: Flow<XDebuggerSessionTabAbstractInfo?>
     get() = myTabInitDataFlow
-
-  @get:ApiStatus.Internal
-  val topFrameFlow: Flow<XStackFrame?>
-    get() = myTopStackFrame
 
   override fun getRunContentDescriptor(): RunContentDescriptor {
     if (useFeProxy() && showFeWarnings()) {
@@ -323,13 +312,6 @@ class XDebugSessionImpl @JvmOverloads constructor(
     return getFrameSourcePosition(currentStackFrame)
   }
 
-  @ApiStatus.Internal
-  fun getCurrentPositionFlow(): Flow<XSourcePosition?> {
-    return getCurrentStackFrameFlow().map {
-      getFrameSourcePosition(it)
-    }
-  }
-
   override fun getTopFramePosition(): XSourcePosition? {
     return getFrameSourcePosition(myTopStackFrame.value)
   }
@@ -388,7 +370,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
   fun reset() {
     breakpointsInitialized = false
     removeBreakpointListeners()
-    unsetPaused()
+    myPaused.value = false
     clearPausedData()
     rebuildViews()
   }
@@ -1003,10 +985,6 @@ class XDebugSessionImpl @JvmOverloads constructor(
       }
       myConsoleView!!.print("\n", ConsoleViewContentType.SYSTEM_OUTPUT)
     })
-  }
-
-  fun unsetPaused() {
-    myPaused.value = false
   }
 
   private fun positionReachedInternal(suspendContext: XSuspendContext, attract: Boolean) {

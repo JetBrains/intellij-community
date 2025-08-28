@@ -48,20 +48,6 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.concurrency.await
 
 internal class BackendXDebugSessionApi : XDebugSessionApi {
-  override suspend fun currentSourcePosition(sessionId: XDebugSessionId): Flow<XSourcePositionDto?> {
-    val session = sessionId.findValue() ?: return emptyFlow()
-    return session.getCurrentPositionFlow().map { sourcePosition ->
-      sourcePosition?.toRpc()
-    }
-  }
-
-  override suspend fun topSourcePosition(sessionId: XDebugSessionId): Flow<XSourcePositionDto?> {
-    val session = sessionId.findValue() ?: return emptyFlow()
-    return session.topFrameFlow.map {
-      session.topFramePosition?.toRpc()
-    }
-  }
-
   override suspend fun currentSessionState(sessionId: XDebugSessionId): Flow<XDebugSessionState> {
     val session = sessionId.findValue() ?: return emptyFlow()
 
@@ -293,11 +279,17 @@ internal fun XDebugSessionImpl.suspendData(): SuspendData? {
   val suspendContextId = suspendContext.getOrStoreGlobally(suspendScope, this)
   val suspendContextDto = XSuspendContextDto(suspendContextId, suspendContext is XSteppingSuspendContext)
   val executionStackDto = suspendContext.activeExecutionStack?.toRpc(suspendScope, this)
-  val stackTraceDto = currentStackFrame?.toRpc(suspendScope, this)
+  val stackFrameDto = currentStackFrame?.toRpc(suspendScope, this)
+  val sourcePositionDto = currentPosition?.toRpc()
+  val topSourcePositionDto = topFramePosition?.toRpc()
 
-  return SuspendData(suspendContextDto,
-                     executionStackDto,
-                     stackTraceDto)
+  return SuspendData(
+    suspendContextDto,
+    executionStackDto,
+    stackFrameDto,
+    sourcePositionDto,
+    topSourcePositionDto,
+  )
 }
 
 internal fun XStackFrame.toRpc(coroutineScope: CoroutineScope, session: XDebugSessionImpl): XStackFrameDto {

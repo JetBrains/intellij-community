@@ -105,12 +105,15 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
 
       override fun stackFrameChanged() {
         val suspendScope = currentSession.currentSuspendCoroutineScope ?: return
-        val stackTraceDto = currentSession.currentStackFrame?.let {
+        val stackFrameDto = currentSession.currentStackFrame?.let {
           async {
             it.toRpc(suspendScope, currentSession)
           }
         }
-        trySend(XDebuggerSessionEvent.StackFrameChanged(stackTraceDto))
+        trySend(XDebuggerSessionEvent.StackFrameChanged(
+          currentSession.currentPosition?.toRpc(),
+          stackFrameDto,
+        ))
       }
 
       override fun stackFrameChanged(changedByUser: Boolean) {
