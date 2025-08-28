@@ -246,6 +246,12 @@
                      enabledByDefault="true" level="WARNING" cleanupTool="true"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UseJBColorInspection"
                      key="inspection.use.JB.color.display.name"/>
+    <localInspection language="UAST"
+                     projectType="INTELLIJ_PLUGIN"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.code"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.UseIntelliJVirtualThreadsInspection"
+                     key="inspection.use.intellij.virtual.threads.display.name"/>
     <localInspection language="UAST" shortName="UseDPIAwareInsets"
                      projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
