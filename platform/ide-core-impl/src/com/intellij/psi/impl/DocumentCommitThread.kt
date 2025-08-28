@@ -75,7 +75,7 @@ class DocumentCommitThread : DocumentCommitProcessor, Disposable {
     val task = CommitTask(project, document, reason, modality)
     ReadAction
       .nonBlocking(Callable { commitUnderProgress(task, synchronously = false, documentManager) })
-      .expireWhen { isDisposed || project.isDisposed() || task.stillValidDocument().let { document -> document == null || !documentManager.isInUncommittedSet(document) || FileDocumentManager.getInstance().getFile(document)?.isValid != true } }
+      .expireWhen { isDisposed || task.isExpired(documentManager) }
       .coalesceBy(task)
       .finishOnUiThread(modality) { it() }
       .submit(myExecutor)
@@ -111,7 +111,7 @@ class DocumentCommitThread : DocumentCommitProcessor, Disposable {
     val virtualFile = FileDocumentManager.getInstance().getFile(document)
     val viewProvider = if (virtualFile == null) null else psiManager.findViewProvider(virtualFile)
     if (viewProvider == null) {
-      finishProcessors.add(handleCommitWithoutPsi(task, document, documentManager))
+      finishProcessors.add(handleCommitWithoutPsi(task, documentManager))
     }
     else {
       // While we were messing around transferring things to background thread, the ViewProvider can become obsolete
@@ -143,6 +143,9 @@ class DocumentCommitThread : DocumentCommitProcessor, Disposable {
       if (project.isDisposed()) {
         return@task
       }
+
+      // this document was not referenced by anyone, hence we don't need to perform a write action
+      val document = task.myDocumentRef.get() ?: return@task
 
       val success = documentManager.finishCommit(document, finishProcessors, reparseInjectedProcessors, synchronously, task.myReason)
       if (synchronously) {
@@ -237,6 +240,14 @@ class DocumentCommitThread : DocumentCommitProcessor, Disposable {
         null
       }
     }
+    fun isExpired(documentManager: PsiDocumentManagerBase): Boolean {
+      val document = stillValidDocument()
+      val expired = myProject.isDisposed() ||
+                    document == null ||
+                    !documentManager.isInUncommittedSet(document) ||
+                    FileDocumentManager.getInstance().getFile(document)?.isValid != true
+      return expired
+    }
   }
 
   // returns runnable to execute under the write action in AWT to finish the commit
@@ -291,6 +302,7 @@ class DocumentCommitThread : DocumentCommitProcessor, Disposable {
     }
 
     return BooleanRunnable {
+      val document = task.myDocumentRef.get() ?: return@BooleanRunnable false
       val viewProvider = psiFile.getViewProvider() //todo IJPL-339 figure out correct check here
       if (task.stillValidDocument() == null || viewProvider !in documentManager.getCachedViewProviders(document)) { // optimistic locking failed
         return@BooleanRunnable false
@@ -311,10 +323,10 @@ class DocumentCommitThread : DocumentCommitProcessor, Disposable {
 
   private fun handleCommitWithoutPsi(
     task: CommitTask,
-    document: Document,
     documentManager: PsiDocumentManagerBase,
   ): BooleanRunnable {
     return BooleanRunnable {
+      val document = task.myDocumentRef.get() ?: return@BooleanRunnable false
       if (task.stillValidDocument() != null && documentManager.getCachedViewProviders(document).isEmpty()) {
         documentManager.handleCommitWithoutPsi(document)
         true
