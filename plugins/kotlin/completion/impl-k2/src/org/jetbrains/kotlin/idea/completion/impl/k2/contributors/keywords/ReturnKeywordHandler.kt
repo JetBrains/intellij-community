@@ -91,7 +91,7 @@ internal object ReturnKeywordHandler : CompletionKeywordHandler<KaSession>(KtTok
 
     context(KaSession)
     private fun getExpressionsToReturnByType(returnType: KaType): List<ExpressionTarget> = buildList {
-        if (returnType.canBeNull) {
+        if (returnType.isNullable) {
             add(ExpressionTarget("null", addToLookupElementTail = false))
         }
 

@@ -94,7 +94,7 @@ object AddExclExclCallFixFactories {
         val expression = diagnostic.psi
         val type = expression.expressionType
             ?: return@ModCommandBased emptyList()
-        if (!type.canBeNull)
+        if (!type.isNullable)
             return@ModCommandBased emptyList()
 
         // NOTE: This is different from FE1.0 in that we offer the fix even if the function does NOT have the `operator` modifier.

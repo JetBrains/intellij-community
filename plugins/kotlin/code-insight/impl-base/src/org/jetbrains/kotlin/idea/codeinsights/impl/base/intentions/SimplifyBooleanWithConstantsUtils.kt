@@ -180,7 +180,7 @@ object SimplifyBooleanWithConstantsUtils {
     private fun hasNotNullableBooleanType(expression: KtExpression): Boolean {
         analyze(expression) {
             val ktType = expression.expressionType ?: return false
-            return ktType.isBooleanType && !ktType.canBeNull
+            return ktType.isBooleanType && !ktType.isNullable
         }
     }
 }
