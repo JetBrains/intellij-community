@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.utils.callExpression
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections.JavaCollectionsStaticMethodInspectionUtils.Utils
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections.JavaCollectionsStaticMethodInspectionUtils.getMethodIfItsArgumentIsImmutableList
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.KtVisitor
@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.psi.dotQualifiedExpressionVisitor
 internal class JavaCollectionsStaticMethodOnImmutableListInspection :
     KotlinApplicableInspectionBase<KtDotQualifiedExpression, JavaCollectionsStaticMethodOnImmutableListInspection.Context>() {
 
-    internal class Context(
+    class Context(
         val methodName: String,
         val firstArg: KtValueArgument
     )
@@ -43,15 +43,9 @@ internal class JavaCollectionsStaticMethodOnImmutableListInspection :
     )
 
     override fun KaSession.prepareContext(element: KtDotQualifiedExpression): Context? {
-        val (methodName, firstArg) = getTargetMethodOnImmutableList(element) ?: return null
+        val (methodName, firstArg) = getMethodIfItsArgumentIsImmutableList(element) ?: return null
         return Context(methodName, firstArg)
     }
-
-    context(_: KaSession)
-    private fun getTargetMethodOnImmutableList(expression: KtDotQualifiedExpression): Pair<String, KtValueArgument>? =
-        Utils.getTargetMethod(expression) { type ->
-            Utils.isListOrSubtype(type) && !Utils.isMutableListOrSubtype(type)
-        }
 
     override fun getApplicableRanges(element: KtDotQualifiedExpression): List<TextRange> =
         ApplicabilityRange.single(element) { it.callExpression?.calleeExpression }

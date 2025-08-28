@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinAp
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.utils.callExpression
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections.JavaCollectionsStaticMethodInspectionUtils.Utils
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections.JavaCollectionsStaticMethodInspectionUtils.getMethodIfItsArgumentIsMutableList
 import org.jetbrains.kotlin.psi.*
 
 // In K2, it's ReplaceJavaStaticMethodWithKotlinAnalogInspection
@@ -52,16 +52,12 @@ internal class JavaCollectionsStaticMethodInspection :
     }
 
     override fun KaSession.prepareContext(element: KtDotQualifiedExpression): Context? {
-        val (methodName, firstArg) = getTargetMethodOnMutableList(element) ?: return null
+        val (methodName, firstArg) = getMethodIfItsArgumentIsMutableList(element) ?: return null
         return Context(methodName, firstArg)
     }
 
     override fun getApplicableRanges(element: KtDotQualifiedExpression): List<TextRange> =
         ApplicabilityRange.self(element)
-
-    context(_: KaSession)
-    private fun getTargetMethodOnMutableList(expression: KtDotQualifiedExpression): Pair<String, KtValueArgument>? =
-        Utils.getTargetMethod(expression) { type -> Utils.isMutableListOrSubtype(type) }
 
     private class ReplaceWithStdLibFix(private val methodName: String, private val receiver: String) :
         KotlinModCommandQuickFix<KtDotQualifiedExpression>() {
