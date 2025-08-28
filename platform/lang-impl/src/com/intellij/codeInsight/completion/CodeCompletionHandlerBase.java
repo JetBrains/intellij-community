@@ -468,7 +468,7 @@ public class CodeCompletionHandlerBase {
            offsetMap.getOffset(CompletionInitializationContext.SELECTION_END_OFFSET);
   }
 
-  protected void completionFinished(final CompletionProgressIndicator indicator, boolean hasModifiers) {
+  protected void completionFinished(@NotNull CompletionProgressIndicator indicator, boolean hasModifiers) {
     List<LookupElement> items = indicator.getLookup().getItems();
     if (items.isEmpty()) {
       LookupManager.hideActiveLookup(indicator.getProject());

@@ -521,13 +521,13 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
     }
   }
 
-  private void addItemToLookup(CompletionResult item) {
-    Ref<Boolean> stopRef = new Ref<>(Boolean.FALSE);
+  private void addItemToLookup(@NotNull CompletionResult item) {
+    Ref<Boolean> wasAdded = new Ref<>(Boolean.FALSE);
     DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
-      stopRef.set(lookup.isLookupDisposed() || !lookup.addItem(item.getLookupElement(), item.getPrefixMatcher()));
+      wasAdded.set(!lookup.isLookupDisposed() && lookup.addItem(item.getLookupElement(), item.getPrefixMatcher()));
     });
 
-    if (stopRef.get()) {
+    if (!wasAdded.get()) {
       return;
     }
 
