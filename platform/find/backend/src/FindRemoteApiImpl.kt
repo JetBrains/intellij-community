@@ -18,7 +18,9 @@ import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil
 import com.intellij.platform.find.FindInFilesResult
 import com.intellij.platform.find.FindRemoteApi
@@ -30,6 +32,7 @@ import com.intellij.usages.UsageViewPresentation
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.channelFlow
+import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -94,6 +97,10 @@ internal class FindRemoteApiImpl : FindRemoteApi {
             usageInfos = adapter.mergedInfos.toList()
           )
 
+        BeforeSendFindResultListener.EP_NAME.extensionList.forEach { listener ->
+          listener.beforeSend(virtualFile)
+        }
+
         val sent = trySend(result)
         if (sent.isSuccess) {
           sentItems.incrementAndGet()
@@ -134,5 +141,18 @@ internal class FindRemoteApiImpl : FindRemoteApi {
         findModel.customScope = it
       }
     }
+  }
+}
+
+
+@ApiStatus.Internal
+fun interface BeforeSendFindResultListener {
+
+  fun beforeSend(virtualFile: VirtualFile)
+
+  companion object {
+    @JvmField
+    val EP_NAME: ExtensionPointName<BeforeSendFindResultListener> =
+      ExtensionPointName.Companion.create("com.intellij.beforeSendFindResultListener")
   }
 }
