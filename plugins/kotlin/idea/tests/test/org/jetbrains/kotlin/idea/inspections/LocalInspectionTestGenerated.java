@@ -15711,6 +15711,80 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath")
+    public static class SuspiciousCallOnCollectionToAddOrRemovePath extends AbstractLocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("minusListOfPath.kt")
+        public void testMinusListOfPath() throws Exception {
+            runTest("testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/minusListOfPath.kt");
+        }
+
+        @TestMetadata("minusListOfPathConvertPathToCollectionFix.kt")
+        public void testMinusListOfPathConvertPathToCollectionFix() throws Exception {
+            runTest("testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/minusListOfPathConvertPathToCollectionFix.kt");
+        }
+
+        @TestMetadata("minusListOfPathNonOperator.kt")
+        public void testMinusListOfPathNonOperator() throws Exception {
+            runTest("testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/minusListOfPathNonOperator.kt");
+        }
+
+        @TestMetadata("minusMutableCollectionOfPath.kt")
+        public void testMinusMutableCollectionOfPath() throws Exception {
+            runTest("testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/minusMutableCollectionOfPath.kt");
+        }
+
+        @TestMetadata("minusSequenceOfPath.kt")
+        public void testMinusSequenceOfPath() throws Exception {
+            runTest("testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/minusSequenceOfPath.kt");
+        }
+
+        @TestMetadata("minusSetOfAny.kt")
+        public void testMinusSetOfAny() throws Exception {
+            runTest("testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/minusSetOfAny.kt");
+        }
+
+        @TestMetadata("plusListOfPath.kt")
+        public void testPlusListOfPath() throws Exception {
+            runTest("testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/plusListOfPath.kt");
+        }
+
+        @TestMetadata("plusListOfPathConvertPathToCollectionFix.kt")
+        public void testPlusListOfPathConvertPathToCollectionFix() throws Exception {
+            runTest("testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/plusListOfPathConvertPathToCollectionFix.kt");
+        }
+
+        @TestMetadata("plusListOfPathNonOperator.kt")
+        public void testPlusListOfPathNonOperator() throws Exception {
+            runTest("testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/plusListOfPathNonOperator.kt");
+        }
+
+        @TestMetadata("plusMutableCollectionOfPath.kt")
+        public void testPlusMutableCollectionOfPath() throws Exception {
+            runTest("testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/plusMutableCollectionOfPath.kt");
+        }
+
+        @TestMetadata("plusSequenceOfPath.kt")
+        public void testPlusSequenceOfPath() throws Exception {
+            runTest("testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/plusSequenceOfPath.kt");
+        }
+
+        @TestMetadata("plusSetOfAny.kt")
+        public void testPlusSetOfAny() throws Exception {
+            runTest("testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/plusSetOfAny.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/suspiciousCallableReferenceInLambda")
     public static class SuspiciousCallableReferenceInLambda extends AbstractLocalInspectionTest {
         @java.lang.Override

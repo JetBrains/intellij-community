@@ -54,6 +54,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspectionsLocal/scopeFunctions")
             model("${idea}/inspectionsLocal/whenWithOnlyElse")
             model("${idea}/inspectionsLocal/redundantRequireNotNullCall")
+            model("${idea}/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath")
             model("${idea}/inspectionsLocal/suspiciousCascadingIf")
             model("${idea}/inspectionsLocal/equalsOrHashCode")
             model("${idea}/inspectionsLocal/removeRedundantQualifierName")

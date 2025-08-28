@@ -4073,6 +4073,80 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath")
+    public static class SuspiciousCallOnCollectionToAddOrRemovePath extends AbstractK2LocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("minusListOfPath.kt")
+        public void testMinusListOfPath() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/minusListOfPath.kt");
+        }
+
+        @TestMetadata("minusListOfPathConvertPathToCollectionFix.kt")
+        public void testMinusListOfPathConvertPathToCollectionFix() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/minusListOfPathConvertPathToCollectionFix.kt");
+        }
+
+        @TestMetadata("minusListOfPathNonOperator.kt")
+        public void testMinusListOfPathNonOperator() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/minusListOfPathNonOperator.kt");
+        }
+
+        @TestMetadata("minusMutableCollectionOfPath.kt")
+        public void testMinusMutableCollectionOfPath() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/minusMutableCollectionOfPath.kt");
+        }
+
+        @TestMetadata("minusSequenceOfPath.kt")
+        public void testMinusSequenceOfPath() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/minusSequenceOfPath.kt");
+        }
+
+        @TestMetadata("minusSetOfAny.kt")
+        public void testMinusSetOfAny() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/minusSetOfAny.kt");
+        }
+
+        @TestMetadata("plusListOfPath.kt")
+        public void testPlusListOfPath() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/plusListOfPath.kt");
+        }
+
+        @TestMetadata("plusListOfPathConvertPathToCollectionFix.kt")
+        public void testPlusListOfPathConvertPathToCollectionFix() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/plusListOfPathConvertPathToCollectionFix.kt");
+        }
+
+        @TestMetadata("plusListOfPathNonOperator.kt")
+        public void testPlusListOfPathNonOperator() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/plusListOfPathNonOperator.kt");
+        }
+
+        @TestMetadata("plusMutableCollectionOfPath.kt")
+        public void testPlusMutableCollectionOfPath() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/plusMutableCollectionOfPath.kt");
+        }
+
+        @TestMetadata("plusSequenceOfPath.kt")
+        public void testPlusSequenceOfPath() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/plusSequenceOfPath.kt");
+        }
+
+        @TestMetadata("plusSetOfAny.kt")
+        public void testPlusSetOfAny() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/plusSetOfAny.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/inspectionsLocal/suspiciousCascadingIf")
     public static class SuspiciousCascadingIf extends AbstractK2LocalInspectionTest {
         @java.lang.Override
