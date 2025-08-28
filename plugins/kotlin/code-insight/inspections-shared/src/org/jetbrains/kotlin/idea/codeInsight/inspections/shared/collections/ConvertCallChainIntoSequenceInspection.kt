@@ -2,14 +2,15 @@
 
 package org.jetbrains.kotlin.idea.codeInsight.inspections.shared.collections
 
-import com.intellij.codeInspection.LocalQuickFix
-import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.options.OptPane
 import com.intellij.codeInspection.options.OptPane.number
 import com.intellij.codeInspection.options.OptPane.pane
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaSession
@@ -17,15 +18,12 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.fullyExpandedType
 import org.jetbrains.kotlin.analysis.api.components.isClassType
 import org.jetbrains.kotlin.analysis.api.components.isSubtypeOf
-import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
-import org.jetbrains.kotlin.idea.base.analysis.api.utils.allowAnalysisFromWriteActionInEdt
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
@@ -73,15 +71,18 @@ class ConvertCallChainIntoSequenceInspection : AbstractKotlinInspection() {
         pane(number("callChainLength", KotlinBundle.message("call.chain.length.to.transform"), 1, 100))
 }
 
-private class ConvertCallChainIntoSequenceFix : LocalQuickFix {
-    override fun getName() = KotlinBundle.message("convert.call.chain.into.sequence.fix.text")
+private class ConvertCallChainIntoSequenceFix : PsiUpdateModCommandQuickFix() {
+    override fun getName(): String = KotlinBundle.message("convert.call.chain.into.sequence.fix.text")
 
-    override fun getFamilyName() = name
+    override fun getFamilyName(): String = name
 
-    @OptIn(KaAllowAnalysisOnEdt::class, KaAllowAnalysisFromWriteAction::class)
-    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-        val expression = descriptor.psiElement as? KtQualifiedExpression ?: return
-        val calls = allowAnalysisFromWriteActionInEdt(expression) { expression.collectCallExpression().reversed() }
+    override fun applyFix(
+        project: Project,
+        element: PsiElement,
+        updater: ModPsiUpdater
+    ) {
+        val expression = element as? KtQualifiedExpression ?: return
+        val calls = collectCallExpression(expression).reversed()
         val firstCall = calls.firstOrNull() ?: return
         val lastCall = calls.lastOrNull() ?: return
         val first = firstCall.getQualifiedExpressionForSelector() ?: firstCall
@@ -135,16 +136,17 @@ private data class CallChain(
 private fun KtQualifiedExpression.findCallChain(): CallChain? {
     if (parent is KtQualifiedExpression) return null
 
-    val calls = collectCallExpression()
-    if (calls.isEmpty()) return null
-
+    val calls = collectCallExpression(this).ifEmpty { return null }
     val lastCall = calls.last()
     val firstCall = calls.first()
-    val qualified = firstCall.getQualifiedExpressionForSelector() ?: firstCall.getQualifiedExpressionForReceiver() ?: return null
+    val qualified =
+        firstCall.getQualifiedExpressionForSelector() ?:
+        firstCall.getQualifiedExpressionForReceiver() ?:
+        return null
     return CallChain(qualified, lastCall, calls.size)
 }
 
-private fun KtQualifiedExpression.collectCallExpression(): List<KtCallExpression> {
+private fun collectCallExpression(expression: KtQualifiedExpression): List<KtCallExpression> {
     val calls = mutableListOf<KtCallExpression>()
 
     fun KaSession.collect(qualified: KtQualifiedExpression) {
@@ -166,7 +168,6 @@ private fun KtQualifiedExpression.collectCallExpression(): List<KtCallExpression
         if (receiver is KtQualifiedExpression) collect(receiver)
     }
 
-    val expression = this
     return analyze(expression) {
         collect(expression)
 
