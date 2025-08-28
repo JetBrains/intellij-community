@@ -129,6 +129,11 @@ public final class WebEditorOptions implements PersistentStateComponent<WebEdito
     XmlSerializerUtil.copyBean(state, this);
   }
 
+  @Override
+  public void noStateLoaded() {
+    loadState(new WebEditorOptions());
+  }
+
   public boolean isSelectWholeCssIdentifierOnDoubleClick() {
     return mySelectWholeCssIdentifierOnDoubleClick;
   }

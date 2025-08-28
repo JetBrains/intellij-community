@@ -110,5 +110,7 @@
     <lang.syntaxHighlighterFactory language="DTD" implementationClass="com.intellij.lang.dtd.DtdSyntaxHighlighterFactory"/>
 
     <applicationService serviceImplementation="com.intellij.application.options.editor.WebEditorOptions"/>
+    <applicationSettings service="com.intellij.application.options.editor.WebEditorOptions"/>
+    <rdct.remoteSettingProvider implementation="com.intellij.application.options.editor.WebEditorOptionsRemoteSettingInfoProvider"/>
   </extensions>
 </idea-plugin>
