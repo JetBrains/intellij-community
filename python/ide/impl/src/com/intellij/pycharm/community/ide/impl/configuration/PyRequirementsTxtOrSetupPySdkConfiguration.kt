@@ -5,6 +5,7 @@ import com.intellij.CommonBundle
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.execution.ExecutionException
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.fileTypes.FileTypeRegistry
@@ -104,6 +105,9 @@ class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigurationExte
 
   private suspend fun askForEnvData(module: Module, existingSdks: List<Sdk>, source: Source): PyAddNewVirtualEnvFromFilePanel.Data? {
     val requirementsTxtOrSetupPy = getRequirementsTxtOrSetupPy(module) ?: return null
+    if (ApplicationManagerEx.isInIntegrationTest()) {
+      return null
+    }
 
     var permitted = false
     var envData: PyAddNewVirtualEnvFromFilePanel.Data? = null
