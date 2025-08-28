@@ -3,7 +3,7 @@ import java.lang.Thread;
 
 class UseIntelliJVirtualThreads {
   java.lang.Thread.Builder m() {
-    return <warning descr="Use 'IntelliJVirtualThreads.ofVirtual()' instead of 'Thread.ofVirtual()'">java.lang.Thread.ofVirtual()<caret></warning>;
+    return IntelliJVirtualThreads.ofVirtual();
   }
   void ok() {
     IntelliJVirtualThreads.ofVirtual();
