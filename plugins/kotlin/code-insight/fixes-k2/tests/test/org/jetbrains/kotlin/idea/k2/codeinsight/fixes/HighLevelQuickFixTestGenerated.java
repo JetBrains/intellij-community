@@ -4753,6 +4753,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 runTest("../../../idea/tests/testData/quickfix/createFromUsage/createFunction/call/member/innerClass.kt");
             }
 
+            @TestMetadata("propertyLikeCall.kt")
+            public void testPropertyLikeCall() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/createFromUsage/createFunction/call/member/propertyLikeCall.kt");
+            }
+
             @TestMetadata("propertyOnUserType.kt")
             public void testPropertyOnUserType() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/createFromUsage/createFunction/call/member/propertyOnUserType.kt");

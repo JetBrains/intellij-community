@@ -5764,6 +5764,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                         runTest("testData/quickfix/createFromUsage/createFunction/call/member/innerClass.kt");
                     }
 
+                    @TestMetadata("propertyLikeCall.kt")
+                    public void testPropertyLikeCall() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/member/propertyLikeCall.kt");
+                    }
+
                     @TestMetadata("propertyOnUserType.kt")
                     public void testPropertyOnUserType() throws Exception {
                         runTest("testData/quickfix/createFromUsage/createFunction/call/member/propertyOnUserType.kt");
