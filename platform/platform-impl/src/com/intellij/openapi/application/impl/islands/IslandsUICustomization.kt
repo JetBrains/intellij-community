@@ -151,6 +151,7 @@ internal class IslandsUICustomization : InternalUICustomization() {
 
   private fun enableManyIslands() {
     editorTabPainterAdapter.isEnabled = true
+    commonTabPainterAdapter.isEnabled = true
 
     // XXX: dialogs
 
@@ -191,6 +192,7 @@ internal class IslandsUICustomization : InternalUICustomization() {
 
   private fun disableManyIslands() {
     editorTabPainterAdapter.isEnabled = false
+    commonTabPainterAdapter.isEnabled = false
 
     // XXX: dialogs
 
@@ -419,9 +421,9 @@ internal class IslandsUICustomization : InternalUICustomization() {
     }
   }
 
-  override val editorTabPainterAdapter: IslandsTabPainterAdapter = IslandsTabPainterAdapter(isManyIslandEnabled)
+  override val editorTabPainterAdapter: IslandsTabPainterAdapter = IslandsTabPainterAdapter(false, isManyIslandEnabled)
 
-  override val toolWindowTabPainter: IslandsTabPainter = object : IslandsTabPainter() {
+  override val toolWindowTabPainter: IslandsTabPainter = object : IslandsTabPainter(false) {
     private val defaultPainter = JBTabPainter.TOOL_WINDOW
 
     override fun paintTab(position: JBTabsPosition, g: Graphics2D, rect: Rectangle, borderThickness: Int, tabColor: Color?, active: Boolean, hovered: Boolean) {
@@ -448,6 +450,8 @@ internal class IslandsUICustomization : InternalUICustomization() {
       super.paintTab(g, rect, tabColor, active, hovered, selected)
     }
   }
+
+  override val commonTabPainterAdapter: IslandsTabPainterAdapter = IslandsTabPainterAdapter(true, isManyIslandEnabled)
 
   override fun paintTab(g: Graphics, rect: Rectangle, hovered: Boolean, selected: Boolean): Boolean {
     if (isManyIslandEnabled) {

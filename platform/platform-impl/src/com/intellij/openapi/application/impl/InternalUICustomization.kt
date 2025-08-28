@@ -53,6 +53,8 @@ open class InternalUICustomization {
 
   open val editorTabPainterAdapter: TabPainterAdapter = EditorTabPainterAdapter()
 
+  open val commonTabPainterAdapter: TabPainterAdapter? = null
+
   open val shouldPaintEditorFadeout: Boolean = true
 
   open val toolWindowUIDecorator: ToolWindowUIDecorator = ToolWindowUIDecorator()
