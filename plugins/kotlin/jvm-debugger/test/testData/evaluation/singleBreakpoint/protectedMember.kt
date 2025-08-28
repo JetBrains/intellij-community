@@ -23,4 +23,3 @@ class MyClass {
 // EXPRESSION: MyClass.ProtectedClass().a
 // RESULT: 1: I
 
-// IGNORE_K2
