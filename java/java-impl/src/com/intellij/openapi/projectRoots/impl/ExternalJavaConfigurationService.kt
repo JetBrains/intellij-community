@@ -26,6 +26,8 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.terminal.ui.TerminalWidget
+import com.intellij.util.asDisposable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -177,5 +179,9 @@ public class ExternalJavaConfigurationService(public val project: Project, priva
         updateFromConfig(extension)
       }
     })
+  }
+
+  public fun <T> addTerminationCallback(session: TerminalWidget, configProvider: ExternalJavaConfigurationProvider<T>) {
+    session.addTerminationCallback({ updateFromConfig(configProvider) }, scope.asDisposable())
   }
 }

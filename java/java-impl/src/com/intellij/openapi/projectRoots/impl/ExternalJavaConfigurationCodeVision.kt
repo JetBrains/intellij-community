@@ -6,7 +6,9 @@ import com.intellij.codeInsight.codeVision.ui.model.ClickableTextCodeVisionEntry
 import com.intellij.codeInsight.codeVision.ui.model.TextCodeVisionEntry
 import com.intellij.codeInsight.hints.InlayHintsUtils
 import com.intellij.icons.AllIcons
+import com.intellij.ide.DataManager
 import com.intellij.java.JavaBundle
+import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -14,10 +16,15 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.impl.ExternalJavaConfigurationService.JavaConfigurationStatus
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService
+import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
+import com.intellij.ui.awt.RelativePoint
 import java.awt.event.MouseEvent
+
+private val FAKE_DATA_KEY: Key<Boolean> = Key.create("external.java.configuration.fake.key")
 
 /**
  * Code Vision for external Java configuration files (e.g., .sdkmanrc, .tool-versions).
@@ -35,7 +42,7 @@ public class ExternalJavaConfigurationCodeVision : CodeVisionProvider<Unit> {
   override fun precomputeOnUiThread(editor: Editor) {}
 
   override fun preparePreview(editor: Editor, file: PsiFile) {
-
+    editor.putUserData(FAKE_DATA_KEY, true)
   }
 
   override val name: String
@@ -46,9 +53,13 @@ public class ExternalJavaConfigurationCodeVision : CodeVisionProvider<Unit> {
     get() = CodeVisionAnchorKind.Default
   override val id: String
     get() = ID
+  override val groupId: String
+    get() = ExternalJavaConfigurationGroupSettingProvider.GROUP_ID
 
   override fun computeCodeVision(editor: Editor, uiData: Unit): CodeVisionState {
     val project = editor.project ?: return CodeVisionState.READY_EMPTY
+
+    if (editor.getUserData(FAKE_DATA_KEY) == true) return fakeUserData()
 
     return InlayHintsUtils.computeCodeVisionUnderReadAction {
       val document = editor.document
@@ -72,6 +83,13 @@ public class ExternalJavaConfigurationCodeVision : CodeVisionProvider<Unit> {
 
       CodeVisionState.Ready(listOf(TextRange(range.startOffset, range.endOffset) to entry))
     }
+  }
+
+  private fun fakeUserData(): CodeVisionState {
+    val text = JavaBundle.message("external.java.configuration.inlay.already.configured", "temurin-11")
+    return CodeVisionState.Ready(listOf(
+      TextRange(13, 28) to ClickableTextCodeVisionEntry(text, ID, onClick = { _, _ -> }, icon = AllIcons.General.GreenCheckmark)
+    ))
   }
 
   private fun <T> buildEntry(project: Project,
@@ -105,19 +123,35 @@ public class ExternalJavaConfigurationCodeVision : CodeVisionProvider<Unit> {
       is JavaConfigurationStatus.Missing<*> -> {
         @Suppress("UNCHECKED_CAST")
         val missing = status as JavaConfigurationStatus.Missing<T>
-        val command = provider.getDownloadCommandFor(missing.releaseData)
-        if (command != null) {
-          val text = JavaBundle.message("external.java.configuration.inlay.download", command)
-          val onClick: (MouseEvent?, Editor) -> Unit = { _, _ ->
-              // TODO: Open terminal session with the [command]
+
+        val actions = ExternalJavaConfigurationMissingAction.EP_NAME.extensionList.mapNotNull { it.createAction(project, provider, missing.releaseData) }
+
+        val onClick: (MouseEvent?, Editor) -> Unit = { event, editor ->
+          if (actions.isNotEmpty()) {
+            val group = DefaultActionGroup(actions)
+            val dataContext = DataManager.getInstance().getDataContext(event?.component ?: editor.component)
+            val popup = JBPopupFactory.getInstance().createActionGroupPopup(
+              null,
+              group,
+              dataContext,
+              JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
+              true
+            )
+            if (event != null) {
+              popup.show(RelativePoint(event))
+            } else {
+              popup.showInBestPositionFor(editor)
+            }
           }
-          ClickableTextCodeVisionEntry(text, ID, onClick = onClick, icon = AllIcons.Actions.Download)
         }
-        else {
-          val text = JavaBundle.message("external.java.configuration.inlay.missing")
-          TextCodeVisionEntry(text, ID, icon = AllIcons.General.Warning).apply {
-            showInMorePopup = false
-          }
+
+        val text = when {
+          actions.isNotEmpty() -> JavaBundle.message("external.java.configuration.inlay.missing.actions")
+          else -> JavaBundle.message("external.java.configuration.inlay.missing")
+        }
+
+        ClickableTextCodeVisionEntry(text, ID, onClick = onClick).apply {
+          showInMorePopup = actions.isNotEmpty()
         }
       }
     }

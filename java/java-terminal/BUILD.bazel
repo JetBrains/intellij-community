@@ -15,10 +15,14 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib-provided",
     "//plugins/terminal",
-    "//platform/core-api:core",
-    "//java/execution/impl",
     "//plugins/terminal/completion",
+    "//java/execution/impl",
+    "//java/java-impl:impl",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/execution-impl",
     "//platform/lang-impl",
+    "//platform/util:util-ui",
   ],
   runtime_deps = [":terminal_resources"]
 )
