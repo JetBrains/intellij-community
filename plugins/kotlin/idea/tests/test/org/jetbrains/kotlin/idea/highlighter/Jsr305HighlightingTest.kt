@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.test.TestMetadata
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
+import kotlin.io.path.exists
 
 @TestRoot("idea/tests")
 @TestMetadata("testData/highlighterJsr305/project")
@@ -21,11 +22,11 @@ import org.junit.runner.RunWith
 class Jsr305HighlightingTest : KotlinLightCodeInsightFixtureTestCase() {
     override fun getProjectDescriptor(): LightProjectDescriptor {
         val foreignAnnotationsJar = TestKotlinArtifacts.jsr305
-        check(foreignAnnotationsJar.exists()) { "${foreignAnnotationsJar.path} does not exist" }
+        check(foreignAnnotationsJar.exists()) { "$foreignAnnotationsJar does not exist" }
         val libraryJar = KotlinCompilerStandalone(
             listOf(IDEA_TEST_DATA_DIR.resolve("highlighterJsr305/library")),
-            classpath = listOf(foreignAnnotationsJar)
-        ).compile()
+            classpath = listOf(foreignAnnotationsJar.toFile())
+        ).compile().toPath()
 
         return object : KotlinJdkAndLibraryProjectDescriptor(listOf(TestKotlinArtifacts.kotlinStdlib, foreignAnnotationsJar, libraryJar)) {
             override fun configureModule(module: Module, model: ModifiableRootModel) {

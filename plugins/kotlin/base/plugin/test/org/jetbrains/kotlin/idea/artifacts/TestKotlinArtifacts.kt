@@ -23,7 +23,6 @@ import org.jetbrains.kotlin.idea.artifacts.NATIVE_PREBUILT_RELEASE_CDN_URL
 import org.jetbrains.kotlin.konan.target.HostManager
 import org.jetbrains.kotlin.konan.target.TargetSupportException
 import org.jetbrains.tools.model.updater.KotlinTestsDependenciesUtil
-import java.io.File
 import java.io.IOException
 import java.net.URI
 import java.nio.file.Files
@@ -64,7 +63,7 @@ object TestKotlinArtifacts {
 
         val targetDirectory = KotlinArtifactConstants.KOTLIN_DIST_LOCATION_PREFIX.toPath().resolve(artifact.nameWithoutExtension)
         runBlocking(Dispatchers.IO) {
-            extractFile(artifact.toPath(), targetDirectory, communityRoot)
+            extractFile(artifact, targetDirectory, communityRoot)
         }
 
         targetDirectory
@@ -75,14 +74,14 @@ object TestKotlinArtifacts {
         val artifact = getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-dist-for-ide-increment-compilation-2.2.0.jar")
         val targetDirectory = KotlinArtifactConstants.KOTLIN_DIST_LOCATION_PREFIX.toPath().resolve(artifact.nameWithoutExtension)
         runBlocking(Dispatchers.IO) {
-            extractFile(artifact.toPath(), targetDirectory, communityRoot)
+            extractFile(artifact, targetDirectory, communityRoot)
         }
 
         targetDirectory
     }
 
     internal val jpsPluginClasspath: List<Path> by lazy {
-        listOf(getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-jps-plugin-classpath.jar").toPath())
+        listOf(getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-jps-plugin-classpath.jar"))
     }
 
     private fun findDownloadFile(label: BazelLabel): KotlinTestsDependenciesUtil.DownloadFile {
@@ -139,12 +138,12 @@ object TestKotlinArtifacts {
     }
 
     // @kotlin_test_deps//:kotlin-stdlib.jar
-    fun getKotlinDepsByLabel(bazelLabel: String): File {
+    fun getKotlinDepsByLabel(bazelLabel: String): Path {
         val label = BazelLabel.fromString(bazelLabel)
         return getKotlinDepsByLabel(label = label)
     }
 
-    private fun getKotlinDepsByLabel(label: BazelLabel): File {
+    private fun getKotlinDepsByLabel(label: BazelLabel): Path {
         // Bazel will download and provide all dependencies externally.
         // We should manually download dependencies when test are running not from Bazel.
         val dependency = if (BazelTestUtil.isUnderBazelTest) {
@@ -167,8 +166,7 @@ object TestKotlinArtifacts {
         // it is a valid scenario when the file is JAR without a version and url changed
         // we have to verify content
         if (target.exists() && areFilesEquals(dependency, target)) {
-            @Suppress("IO_FILE_USAGE")
-            return target.toFile()
+            return target
         }
         target.createParentDirectories()
         val tempFile = Files.createTempFile(target.parent, target.name, ".tmp")
@@ -180,100 +178,97 @@ object TestKotlinArtifacts {
             tempFile.deleteIfExists()
         }
         LOG.info("Dependency ${label.asLabel} resolved to '$target'")
-        @Suppress("IO_FILE_USAGE")
-        return target.toFile()
+        return target
     }
 
     @JvmStatic
-    val kotlinAnnotationsJvm: File by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-annotations-jvm.jar") }
+    val kotlinAnnotationsJvm: Path by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-annotations-jvm.jar") }
     @JvmStatic
-    val kotlinCompiler: File by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-compiler.jar") }
+    val kotlinCompiler: Path by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-compiler.jar") }
     @JvmStatic
-    val kotlinDaemon: File by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-daemon.jar") }
+    val kotlinDaemon: Path by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-daemon.jar") }
     @JvmStatic
-    val kotlinReflect: File by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-reflect.jar") }
+    val kotlinReflect: Path by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-reflect.jar") }
     @JvmStatic
-    val kotlinReflectSources: File by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-reflect-sources.jar") }
+    val kotlinReflectSources: Path by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-reflect-sources.jar") }
     @JvmStatic
-    val kotlinScriptRuntime: File by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-script-runtime.jar") }
+    val kotlinScriptRuntime: Path by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-script-runtime.jar") }
     @JvmStatic
-    val kotlinScriptingCommon: File by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-scripting-common.jar") }
+    val kotlinScriptingCommon: Path by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-scripting-common.jar") }
     @JvmStatic
-    val kotlinScriptingCompiler: File by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-scripting-compiler.jar") }
+    val kotlinScriptingCompiler: Path by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-scripting-compiler.jar") }
     @JvmStatic
-    val kotlinScriptingCompilerImpl: File by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-scripting-compiler-impl.jar") }
+    val kotlinScriptingCompilerImpl: Path by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-scripting-compiler-impl.jar") }
     @JvmStatic
-    val kotlinScriptingJvm: File by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-scripting-jvm.jar") }
+    val kotlinScriptingJvm: Path by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-scripting-jvm.jar") }
     @JvmStatic
-    val kotlinStdlib: File by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-stdlib.jar") }
+    val kotlinStdlib: Path by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-stdlib.jar") }
     @JvmStatic
-    val kotlinStdlib170: File by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-stdlib-1.7.0.jar") }
+    val kotlinStdlib170: Path by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-stdlib-1.7.0.jar") }
     @JvmStatic
-    val kotlinStdlib170Sources: File by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-stdlib-1.7.0-sources.jar") }
+    val kotlinStdlib170Sources: Path by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-stdlib-1.7.0-sources.jar") }
     @JvmStatic
-    val kotlinStdlibCommon170Sources: File by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-stdlib-common-1.7.0-sources.jar") }
+    val kotlinStdlibCommon170Sources: Path by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-stdlib-common-1.7.0-sources.jar") }
 
     @JvmStatic
-    val kotlinStdlibCommon: File by lazy {
+    val kotlinStdlibCommon: Path by lazy {
         val artifact = getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-stdlib-all.jar")
         val ourDir = Path.of(PathManager.getCommunityHomePath()).resolve("out")
         val expandedDir = ourDir.resolve("kotlin-stdlib-all")
         val target = ourDir.resolve("kotlin-stdlib-common.klib")
         runBlocking {
-            extractFile(artifact.toPath(), expandedDir, communityRoot)
+            extractFile(artifact, expandedDir, communityRoot)
         }
         val unpackedCommonMain = expandedDir.resolve("commonMain")
-        @Suppress("IO_FILE_USAGE")
-        unpackedCommonMain.toFile().compressDirectoryToZip(target.toFile())
-        @Suppress("IO_FILE_USAGE")
-        return@lazy target.toFile()
+        unpackedCommonMain.compressDirectoryToZip(target)
+        return@lazy target
     }
     @JvmStatic
-    val kotlinStdlibCommonSources: File by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-stdlib-common-sources.jar") }
+    val kotlinStdlibCommonSources: Path by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-stdlib-common-sources.jar") }
     @JvmStatic
-    val kotlinStdlibJdk7: File by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-stdlib-jdk7.jar") }
+    val kotlinStdlibJdk7: Path by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-stdlib-jdk7.jar") }
     @JvmStatic
-    val kotlinStdlibJdk7Sources: File by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-stdlib-jdk7-sources.jar") }
+    val kotlinStdlibJdk7Sources: Path by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-stdlib-jdk7-sources.jar") }
     @JvmStatic
-    val kotlinStdlibJdk8: File by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-stdlib-jdk8.jar") }
+    val kotlinStdlibJdk8: Path by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-stdlib-jdk8.jar") }
     @JvmStatic
-    val kotlinStdlibJdk8Sources: File by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-stdlib-jdk8-sources.jar") }
+    val kotlinStdlibJdk8Sources: Path by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-stdlib-jdk8-sources.jar") }
     @JvmStatic
-    val kotlinStdlibJs: File by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-stdlib-js.klib") }
+    val kotlinStdlibJs: Path by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-stdlib-js.klib") }
 
     // The latest published kotlin-stdlib-js with both .knm and .kjsm roots
     @JvmStatic
-    val kotlinStdlibJsLegacyJar: File by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-stdlib-js-1.9.22.jar") }
+    val kotlinStdlibJsLegacyJar: Path by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-stdlib-js-1.9.22.jar") }
     @JvmStatic
-    val kotlinDomApiCompat: File by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-dom-api-compat.klib") }
+    val kotlinDomApiCompat: Path by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-dom-api-compat.klib") }
     @JvmStatic
-    val kotlinStdlibWasmJs: File by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-stdlib-wasm-js.klib") }
+    val kotlinStdlibWasmJs: Path by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-stdlib-wasm-js.klib") }
     @JvmStatic
-    val kotlinStdlibWasmWasi: File by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-stdlib-wasm-wasi.klib") }
+    val kotlinStdlibWasmWasi: Path by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-stdlib-wasm-wasi.klib") }
     @JvmStatic
-    val kotlinStdlibSources: File by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-stdlib-sources.jar") }
+    val kotlinStdlibSources: Path by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-stdlib-sources.jar") }
     @JvmStatic
-    val kotlinStdlibLegacy1922: File by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-stdlib-1.9.22.jar") }
+    val kotlinStdlibLegacy1922: Path by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-stdlib-1.9.22.jar") }
     @JvmStatic
-    val kotlinStdLibProjectWizardDefault: File by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-stdlib-project-wizard-default.jar") }
+    val kotlinStdLibProjectWizardDefault: Path by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-stdlib-project-wizard-default.jar") }
 
     // In 1.x, `kotlin-stdlib-common` still contained `.kotlin_metadata` files. 2.x versions of the library contain `.knm` files, since it's
     // now a klib.
     @JvmStatic
-    val kotlinStdlibCommonLegacy1922: File by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-stdlib-common.jar") }
+    val kotlinStdlibCommonLegacy1922: Path by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-stdlib-common.jar") }
     @JvmStatic
-    val kotlinTest: File by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-test.jar") }
+    val kotlinTest: Path by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-test.jar") }
     @JvmStatic
-    val kotlinTestJs: File by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-test-js.klib") }
+    val kotlinTestJs: Path by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-test-js.klib") }
     @JvmStatic
-    val kotlinTestJunit: File by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-test-junit.jar") }
+    val kotlinTestJunit: Path by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-test-junit.jar") }
     @JvmStatic
-    val parcelizeRuntime: File by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:parcelize-compiler-plugin-for-ide.jar") }
+    val parcelizeRuntime: Path by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:parcelize-compiler-plugin-for-ide.jar") }
     @JvmStatic
-    val composeCompilerPluginForIde: File by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:compose-compiler-plugin-for-ide.jar") }
+    val composeCompilerPluginForIde: Path by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:compose-compiler-plugin-for-ide.jar") }
 
     @JvmStatic
-    val kotlinJvmDebuggerTestData: File by lazy { getKotlinDepsByLabel("@community//plugins/kotlin/jvm-debugger/test:testData") }
+    val kotlinJvmDebuggerTestData: Path by lazy { getKotlinDepsByLabel("@community//plugins/kotlin/jvm-debugger/test:testData") }
 
     @Suppress("NO_REFLECTION_IN_CLASS_PATH")
     @JvmStatic
@@ -283,7 +278,7 @@ object TestKotlinArtifacts {
             if (member.name == "kotlinJvmDebuggerTestData") continue
             if (member.visibility != KVisibility.PUBLIC) continue
             if (member.parameters.size != 1) continue
-            if (member.returnType.classifier == File::class || member.returnType.classifier == Path::class) {
+            if (member.returnType.classifier == Path::class) {
                 try {
                     println("${member.name} = ${member.call(TestKotlinArtifacts)}")
                 } catch (e: Exception) {
@@ -295,25 +290,22 @@ object TestKotlinArtifacts {
     }
 
     @JvmStatic
-    val trove4j: File by lazy {
-        @Suppress("IO_FILE_USAGE")
-        PathManager.getJarForClass(TestKotlinArtifacts::class.java.classLoader.loadClass("gnu.trove.THashMap"))!!.toFile()
+    val trove4j: Path by lazy {
+        PathManager.getJarForClass(TestKotlinArtifacts::class.java.classLoader.loadClass("gnu.trove.THashMap"))!!
     }
     @JvmStatic
-    val jetbrainsAnnotations: File by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:annotations.jar") }
+    val jetbrainsAnnotations: Path by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:annotations.jar") }
     @JvmStatic
-    val jsr305: File by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:jsr305.jar") }
+    val jsr305: Path by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:jsr305.jar") }
     @JvmStatic
-    val junit3: File by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:junit.jar") }
+    val junit3: Path by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:junit.jar") }
     @JvmStatic
-    val kotlinxCoroutines: File by lazy {
-        @Suppress("IO_FILE_USAGE")
-        PathManager.getJarForClass(TestKotlinArtifacts::class.java.classLoader.loadClass("kotlinx.coroutines.CoroutineScope"))!!.toFile()
+    val kotlinxCoroutines: Path by lazy {
+        PathManager.getJarForClass(TestKotlinArtifacts::class.java.classLoader.loadClass("kotlinx.coroutines.CoroutineScope"))!!
     }
     @JvmStatic
-    val coroutineContext: File by lazy {
-        @Suppress("IO_FILE_USAGE")
-        PathManager.getJarForClass(TestKotlinArtifacts::class.java.classLoader.loadClass("kotlin.coroutines.CoroutineContext"))!!.toFile()
+    val coroutineContext: Path by lazy {
+        PathManager.getJarForClass(TestKotlinArtifacts::class.java.classLoader.loadClass("kotlin.coroutines.CoroutineContext"))!!
     }
 
     /**
@@ -321,41 +313,39 @@ object TestKotlinArtifacts {
      * See KT-36871, KTIJ-28066.
      */
     @JvmStatic
-    val kotlinStdlibNative: File by lazy { getNativeLib(library = "klib/common/stdlib") }
+    val kotlinStdlibNative: Path by lazy { getNativeLib(library = "klib/common/stdlib") }
 
     @JvmStatic
-    val compilerTestDataDir: File by lazy {
+    val compilerTestDataDir: Path by lazy {
         val artifact = getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-compiler-testdata-for-ide.jar")
         val targetDir = Path.of(PathManager.getCommunityHomePath()).resolve("out").resolve("kotlinc-testdata-2")
         runBlocking {
-            extractFile(artifact.toPath(), targetDir, communityRoot)
+            extractFile(artifact, targetDir, communityRoot)
         }
-        @Suppress("IO_FILE_USAGE")
-        return@lazy targetDir.toFile()
+        return@lazy targetDir
     }
 
     @JvmStatic
     fun compilerTestData(compilerTestDataPath: String): String {
-        return compilerTestDataDir.resolve(compilerTestDataPath).canonicalPath
+        return compilerTestDataDir.resolve(compilerTestDataPath).pathString
     }
 
     @JvmStatic
-    val jpsPluginTestDataDir: File by lazy {
+    val jpsPluginTestDataDir: Path by lazy {
         val artifact = getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-jps-plugin-testdata-for-ide.jar")
         val targetDir = Path.of(PathManager.getCommunityHomePath()).resolve("out").resolve("kotlinc-jps-testdata")
         runBlocking {
-            extractFile(artifact.toPath(), targetDir, communityRoot)
+            extractFile(artifact, targetDir, communityRoot)
         }
-        @Suppress("IO_FILE_USAGE")
-        return@lazy targetDir.toFile()
+        return@lazy targetDir
     }
 
     @JvmStatic
-    val jsIrRuntimeDir: File by lazy { return@lazy getKotlinDepsByLabel("@kotlin_test_deps//:js-ir-runtime-for-ide.klib") }
+    val jsIrRuntimeDir: Path by lazy { return@lazy getKotlinDepsByLabel("@kotlin_test_deps//:js-ir-runtime-for-ide.klib") }
 
     @JvmStatic
-    fun jpsPluginTestData(jpsTestDataPath: String): String {
-        return jpsPluginTestDataDir.resolve(jpsTestDataPath).canonicalPath
+    fun jpsPluginTestData(jpsTestDataPath: String): Path {
+        return jpsPluginTestDataDir.resolve(jpsTestDataPath)
     }
 
     @Throws(TargetSupportException::class)
@@ -363,54 +353,43 @@ object TestKotlinArtifacts {
         version: String = KotlinNativeVersion.resolvedKotlinNativeVersion,
         platform: String = HostManager.platformName(),
         library: String
-    ): File {
+    ): Path {
         if (!KotlinNativeHostSupportDetector.isNativeHostSupported() && platform == HostManager.platformName())
             throw TargetSupportException("kotlin-native-prebuilt can't be downloaded as it doesn't exist for the host: ${platform}")
 
-        val baseDir = File(PathManager.getCommunityHomePath()).resolve("out")
-        if (!baseDir.exists()) {
-            baseDir.mkdirs()
-        }
+        val baseDir = communityRoot.communityRoot.resolve("out").createDirectories()
         val prebuilt = "kotlin-native-prebuilt-$platform-$version"
         val archiveName = if (HostManager.hostIsMingw) "$prebuilt.zip" else "$prebuilt.tar.gz"
         val cdnUrl = if ("dev" in version) NATIVE_PREBUILT_DEV_CDN_URL else NATIVE_PREBUILT_RELEASE_CDN_URL
         val downloadUrl = "$cdnUrl/$version/$platform/$archiveName"
-        val downloadOut = "${baseDir.absolutePath}/$archiveName"
-        val libPath = "${baseDir.absolutePath}/$prebuilt/$prebuilt/$library"
-        val libFile = File(libPath)
-
+        val archiveFilePath = baseDir.resolve(archiveName)
+        val libFile = baseDir.resolve(prebuilt).resolve(library)
         if (!libFile.exists()) {
-            val archiveFilePath = Path.of(downloadOut)
             Files.deleteIfExists(archiveFilePath)
             downloadFile(downloadUrl, archiveFilePath)
             unpackPrebuildArchive(archiveFilePath, Path.of("$baseDir/$prebuilt"))
             Files.deleteIfExists(archiveFilePath)
         }
         return if (libFile.exists()) libFile else
-            throw IOException("Library doesn't exist: $libPath")
+            throw IOException("Library doesn't exist: $libFile")
     }
 
-    private fun File.compressDirectoryToZip(targetZipFile: File) {
-        targetZipFile.parentFile.mkdirs()
-        targetZipFile.createNewFile()
+    private fun Path.compressDirectoryToZip(targetZipFile: Path) {
+        targetZipFile.createParentDirectories()
 
         val sourceFolder = this
 
         ZipOutputStream(targetZipFile.outputStream().buffered()).use { zip ->
             zip.setLevel(Deflater.NO_COMPRESSION)
             sourceFolder
-                .walkTopDown()
-                .filter { file -> !file.isDirectory }
+                .walk()
+                .filter { file -> !file.isDirectory() }
                 .forEach { file ->
-                    val suffix = if (file.isDirectory) "/" else ""
-                    val entry = ZipEntry(file.relativeTo(sourceFolder).invariantSeparatorsPath + suffix)
+                    val entry = ZipEntry(file.relativeTo(sourceFolder).invariantSeparatorsPathString)
                     zip.putNextEntry(entry)
-                    if (!file.isDirectory) {
-                        file.inputStream().buffered().use { it.copyTo(zip) }
-                    }
+                    file.inputStream().buffered().use { it.copyTo(zip) }
                     zip.closeEntry()
                 }
-            zip.flush()
         }
     }
 }

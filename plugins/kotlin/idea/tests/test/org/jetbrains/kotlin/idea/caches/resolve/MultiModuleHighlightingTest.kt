@@ -236,7 +236,7 @@ open class MultiModuleHighlightingTest : AbstractMultiModuleHighlightingTest() {
         val sourceModule = module("sourceModule")
 
         val sourceDependentLibraryName = "sourceDependentLibrary"
-        sourceModule.addMultiJarLibrary(listOf(stdlibJarForCompositeLibrary, jarForCompositeLibrary), "compositeLibrary")
+        sourceModule.addMultiJarLibrary(listOf(stdlibJarForCompositeLibrary.toFile(), jarForCompositeLibrary), "compositeLibrary")
         sourceModule.addLibrary(jarForSourceDependentLibrary, sourceDependentLibraryName)
         anchorModule.addDependency(dependencyModule)
 

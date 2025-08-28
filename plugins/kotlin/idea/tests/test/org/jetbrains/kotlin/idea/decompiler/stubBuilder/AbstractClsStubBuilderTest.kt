@@ -79,7 +79,7 @@ abstract class AbstractClsStubBuilderTest : KotlinLightCodeInsightFixtureTestCas
             sources = listOf(File(sourcePath)),
             target = outDir,
             options = extraOptions,
-            classpath = listOf(TestKotlinArtifacts.kotlinAnnotationsJvm)
+            classpath = listOf(TestKotlinArtifacts.kotlinAnnotationsJvm.toFile())
         ).compile()
 
         val root = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(outDir)!!

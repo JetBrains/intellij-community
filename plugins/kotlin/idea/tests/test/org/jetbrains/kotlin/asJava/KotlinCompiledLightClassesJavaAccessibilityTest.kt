@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
+import kotlin.io.path.name
 
 @RunWith(JUnit38ClassRunner::class)
 class KotlinCompiledLightClassesJavaAccessibilityTest : KotlinLightCodeInsightFixtureTestCase() {

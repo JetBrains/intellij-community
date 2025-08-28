@@ -111,8 +111,8 @@ abstract class AbstractScratchRunActionTest : FileEditorManagerTestCase(),
             listOf(baseDir),
             target = outputDir,
             classpath = listOf(
-                TestKotlinArtifacts.kotlinScriptRuntime,
-                TestKotlinArtifacts.jetbrainsAnnotations
+                TestKotlinArtifacts.kotlinScriptRuntime.toFile(),
+                TestKotlinArtifacts.jetbrainsAnnotations.toFile(),
             ),
             options = options
         ).compile()

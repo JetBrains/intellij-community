@@ -22,9 +22,9 @@ public final class ForTestCompileRuntime {
         ClassLoader loader = runtimeJarClassLoader.get();
         if (loader == null) {
             loader = createClassLoader(
-                    TestKotlinArtifacts.getKotlinStdlib(),
-                    TestKotlinArtifacts.getKotlinScriptRuntime(),
-                    TestKotlinArtifacts.getKotlinTest()
+                    TestKotlinArtifacts.getKotlinStdlib().toFile(),
+                    TestKotlinArtifacts.getKotlinScriptRuntime().toFile(),
+                    TestKotlinArtifacts.getKotlinTest().toFile()
             );
             runtimeJarClassLoader = new SoftReference<>(loader);
         }

@@ -43,7 +43,7 @@ class KotlinFirPluginXmlFunctionalTest : JavaCodeInsightFixtureTestCase(), Expec
     //include kotlin in the same library as java annotations
     //otherwise annotation targets are not converted, see `buildEnumCall` at `org/jetbrains/kotlin/fir/java/javaAnnotationsMapping.kt:144`
     //because kotlin builtins are not found in library session
-    moduleBuilder.addLibrary("annotations", TestKotlinArtifacts.kotlinStdlib.canonicalPath, PathUtil.getJarPathForClass(XCollection::class.java))
+    moduleBuilder.addLibrary("annotations", TestKotlinArtifacts.kotlinStdlib.toFile().canonicalPath, PathUtil.getJarPathForClass(XCollection::class.java))
     moduleBuilder.addJdk(IdeaTestUtil.getMockJdk18Path().getPath())
     moduleBuilder.addLibrary("platform-core", PathUtil.getJarPathForClass(RegistryManager::class.java))
     moduleBuilder.addLibrary("platform-ide", PathUtil.getJarPathForClass(JBList::class.java))

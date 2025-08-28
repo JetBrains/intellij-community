@@ -15,5 +15,5 @@ internal fun jarRepositoriesForCompose(): List<RemoteRepositoryDescription> = li
  * We're looking up the 'compose compiler' from the IntelliJ dependencies provided by kotlinc
  */
 internal val composeCompilerJars: List<Path> by lazy {
-    listOf(TestKotlinArtifacts.composeCompilerPluginForIde.toPath())
+    listOf(TestKotlinArtifacts.composeCompilerPluginForIde)
 }

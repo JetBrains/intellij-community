@@ -21,9 +21,9 @@ fun VirtualFile.compileScriptsIntoDirectory(scripts: List<File>, additionalOptio
         scripts,
         target = outputDirectory,
         classpath = listOf(
-            TestKotlinArtifacts.kotlinScriptRuntime,
-            TestKotlinArtifacts.kotlinScriptingJvm,
-            TestKotlinArtifacts.kotlinScriptingCommon
+            TestKotlinArtifacts.kotlinScriptRuntime.toFile(),
+            TestKotlinArtifacts.kotlinScriptingJvm.toFile(),
+            TestKotlinArtifacts.kotlinScriptingCommon.toFile(),
         ),
         options = optionsSet.toList()
     ).compile()

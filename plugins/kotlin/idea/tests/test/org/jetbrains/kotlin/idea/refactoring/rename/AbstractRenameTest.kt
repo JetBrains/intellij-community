@@ -49,6 +49,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.junit.Assert
 import java.io.File
+import java.nio.file.Path
 
 enum class RenameType {
     JAVA_CLASS,
@@ -86,10 +87,10 @@ abstract class AbstractRenameTest : KotlinLightCodeInsightFixtureTestCase() {
         if (libraryInfos != null) {
             val jarPaths = listOf(TestKotlinArtifacts.kotlinStdlib) + libraryInfos.map { libraryInfo ->
                 if ("@" in libraryInfo) {
-                    File(PlatformTestUtil.getCommunityPath(), libraryInfo.substringAfter("@"))
+                    Path.of(PlatformTestUtil.getCommunityPath(), libraryInfo.substringAfter("@"))
                 }
                 else {
-                    ConfigLibraryUtil.ATTACHABLE_LIBRARIES[libraryInfo]
+                    ConfigLibraryUtil.ATTACHABLE_LIBRARIES[libraryInfo]?.toPath()
                 }
             }
             return KotlinWithJdkAndRuntimeLightProjectDescriptor(jarPaths, listOf(TestKotlinArtifacts.kotlinStdlibSources))

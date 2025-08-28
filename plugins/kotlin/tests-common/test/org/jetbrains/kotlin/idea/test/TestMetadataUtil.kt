@@ -93,7 +93,7 @@ object TestMetadataUtil {
         val jvmDebuggerTestData = Path("jvm-debugger", "test", "testData")
         if (normalizedPathToResolve.startsWith(jvmDebuggerTestData)) {
             val pathToResolveRelativeTestData = jvmDebuggerTestData.relativize(normalizedPathToResolve);
-            return TestKotlinArtifacts.kotlinJvmDebuggerTestData.resolve(pathToResolveRelativeTestData.toString())
+            return TestKotlinArtifacts.kotlinJvmDebuggerTestData.resolve(pathToResolveRelativeTestData.toString()).toFile()
         } else {
             val resolvedFrom = "TestRoot='${testRoot.value}' + path='${pathToResolve}' => '$normalizedPathToResolve'"
             val supportedRoot = jvmDebuggerTestData.toString()

@@ -36,6 +36,6 @@ abstract class AbstractK2ParcelizeDebuggerEvaluationTest : AbstractK2IdeK2CodeKo
      * We're looking up the 'parcelize compiler plugin' from the IntelliJ dependencies provided by kotlinc
      */
     private val parcelizeCompilerJars: List<Path> by lazy {
-        listOf(TestKotlinArtifacts.parcelizeRuntime.toPath())
+        listOf(TestKotlinArtifacts.parcelizeRuntime)
     }
 }

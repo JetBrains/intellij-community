@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction
 import org.jetbrains.kotlin.utils.addToStdlib.cast
+import kotlin.io.path.pathString
 
 abstract class KotlinCompilerReferenceTestBase : CompilerReferencesTestBase(),
                                                  ExpectedPluginModeProvider {
@@ -30,7 +31,7 @@ abstract class KotlinCompilerReferenceTestBase : CompilerReferencesTestBase(),
     override fun tuneFixture(moduleBuilder: JavaModuleFixtureBuilder<*>) {
         super.tuneFixture(moduleBuilder)
         if (withK2Compiler) {
-            moduleBuilder.addLibrary(KotlinArtifactNames.KOTLIN_STDLIB, TestKotlinArtifacts.kotlinStdlib.path)
+            moduleBuilder.addLibrary(KotlinArtifactNames.KOTLIN_STDLIB, TestKotlinArtifacts.kotlinStdlib.pathString)
         } else {
             // For the K1 tests we want to use a Kotlin 1.x library because Kotlin 2 libraries might not be able to
             // be consumed by the K1 compiler.

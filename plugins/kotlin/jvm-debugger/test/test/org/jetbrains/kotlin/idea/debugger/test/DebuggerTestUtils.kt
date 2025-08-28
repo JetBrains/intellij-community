@@ -10,11 +10,12 @@ import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.config.isStableOrReadyForPreview
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
+import kotlin.io.path.pathString
 
 @JvmField
 val DEBUGGER_TESTDATA_PATH_BASE: String =
     if (BazelTestUtil.isUnderBazelTest) {
-        TestKotlinArtifacts.kotlinJvmDebuggerTestData.path
+        TestKotlinArtifacts.kotlinJvmDebuggerTestData.pathString
     } else {
         KotlinRoot.DIR.resolve("jvm-debugger").resolve("test").resolve("testData").path
     }

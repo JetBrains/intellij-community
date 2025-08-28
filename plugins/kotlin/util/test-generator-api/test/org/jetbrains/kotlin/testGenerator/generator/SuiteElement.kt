@@ -16,6 +16,7 @@ import org.junit.runner.RunWith
 import java.io.File
 import java.util.*
 import javax.lang.model.element.Modifier
+import kotlin.io.path.name
 
 fun File.toRelativeStringSystemIndependent(base: File): String = toRelativeString(base).toStringSystemIndependent()
 

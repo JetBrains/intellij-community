@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.idea.debugger.test.preference.DebuggerPreferences
 import org.jetbrains.kotlin.idea.test.KotlinCliCompilerFacade
 import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
+import kotlin.io.path.absolutePathString
 
 abstract class AbstractIrKotlinScriptEvaluateExpressionTest : AbstractIrKotlinEvaluateExpressionTest() {
 
@@ -39,13 +40,15 @@ abstract class AbstractIrKotlinScriptEvaluateExpressionTest : AbstractIrKotlinEv
     override fun createJavaParameters(mainClass: String?): JavaParameters {
         return super.createJavaParameters(mainClass).apply {
             val artifactsForCompiler = KotlinCliCompilerFacade.getTestArtifactsNeededForCLICompiler()
-            artifactsForCompiler.forEach(classPath::add)
+            for (path in artifactsForCompiler) {
+                classPath.add(path.toFile())
+            }
 
             val artifactsForScriptFile = listOf(
                 TestKotlinArtifacts.kotlinStdlib,
                 TestKotlinArtifacts.kotlinScriptRuntime
             )
-            val classpath = artifactsForScriptFile.joinToString(File.pathSeparator) { it.absolutePath }
+            val classpath = artifactsForScriptFile.joinToString(File.pathSeparator) { it.absolutePathString() }
             programParametersList.addAll(
                 "-script", getScriptKtFile().virtualFilePath,
                 "-classpath", classpath,

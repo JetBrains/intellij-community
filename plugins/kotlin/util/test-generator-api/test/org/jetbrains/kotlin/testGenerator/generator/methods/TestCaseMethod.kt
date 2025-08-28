@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.testGenerator.generator.appendBlock
 import org.jetbrains.kotlin.testGenerator.model.TAnnotation
 import org.jetbrains.kotlin.testGenerator.model.makeJavaIdentifier
 import java.io.File
+import kotlin.io.path.name
 
 data class TestCaseMethod(
     private val methodNameBase: String,

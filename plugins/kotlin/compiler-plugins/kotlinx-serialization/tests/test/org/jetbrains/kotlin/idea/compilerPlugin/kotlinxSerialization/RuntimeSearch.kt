@@ -6,7 +6,7 @@ import junit.framework.TestCase
 import org.jetbrains.kotlin.utils.PathUtil
 import org.jetbrains.kotlinx.serialization.compiler.diagnostic.VersionReader
 import org.junit.Test
-import java.io.File
+import java.nio.file.Path
 import kotlin.test.assertTrue
 
 class RuntimeLibraryInClasspathTest {
@@ -22,20 +22,20 @@ class RuntimeLibraryInClasspathTest {
 
     @Test
     fun testRuntimeHasSufficientVersion() {
-        val version = VersionReader.getVersionsFromManifest(runtimeLibraryPath!!)
+        val version = VersionReader.getVersionsFromManifest(runtimeLibraryPath!!.toFile())
         assertTrue(version.currentCompilerMatchRequired(), "Runtime version too high")
         assertTrue(version.implementationVersionMatchSupported(), "Runtime version too low")
     }
 }
 
-internal fun getSerializationCoreLibraryJar(): File? = try {
-    PathUtil.getResourcePathForClass(Class.forName("kotlinx.serialization.KSerializer"))
+internal fun getSerializationCoreLibraryJar(): Path? = try {
+    PathUtil.getResourcePathForClass(Class.forName("kotlinx.serialization.KSerializer")).toPath()
 } catch (e: ClassNotFoundException) {
     null
 }
 
-internal fun getSerializationJsonLibraryJar(): File? = try {
-    PathUtil.getResourcePathForClass(Class.forName("kotlinx.serialization.json.Json"))
+internal fun getSerializationJsonLibraryJar(): Path? = try {
+    PathUtil.getResourcePathForClass(Class.forName("kotlinx.serialization.json.Json")).toPath()
 } catch (e: ClassNotFoundException) {
     null
 }

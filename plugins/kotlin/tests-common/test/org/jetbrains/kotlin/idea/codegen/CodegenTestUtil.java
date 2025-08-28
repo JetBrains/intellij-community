@@ -40,9 +40,9 @@ public final class CodegenTestUtil {
             @NotNull File outDirectory
     ) {
         List<String> classpath = new ArrayList<>();
-        classpath.add(TestKotlinArtifacts.getKotlinStdlib().getPath());
-        classpath.add(TestKotlinArtifacts.getKotlinReflect().getPath());
-        classpath.add(TestKotlinArtifacts.getJetbrainsAnnotations().getPath());
+        classpath.add(TestKotlinArtifacts.getKotlinStdlib().toString());
+        classpath.add(TestKotlinArtifacts.getKotlinReflect().toString());
+        classpath.add(TestKotlinArtifacts.getJetbrainsAnnotations().toString());
         classpath.addAll(additionalClasspath);
 
         List<String> options = new ArrayList<>(Arrays.asList(

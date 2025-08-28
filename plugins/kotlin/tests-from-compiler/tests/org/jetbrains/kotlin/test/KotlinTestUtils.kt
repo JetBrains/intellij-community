@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.jps.build.withSystemProperty
 import org.jetbrains.kotlin.test.util.KtTestUtil
 import java.io.File
+import kotlin.io.path.absolutePathString
 
 
 object KotlinTestUtils {
@@ -33,7 +34,7 @@ object KotlinTestUtils {
     @JvmStatic
     fun runTest(test: DoTest, testCase: TestCase, @TestDataFile testDataFile: String) {
         KotlinPluginLayout.kotlinc // to initialize dist
-        withSystemProperty("jps.testData.js-ir-runtime", TestKotlinArtifacts.jsIrRuntimeDir.absolutePath) {
+        withSystemProperty("jps.testData.js-ir-runtime", TestKotlinArtifacts.jsIrRuntimeDir.absolutePathString()) {
             KotlinTestUtils.runTest(test, testCase, testDataFile)
         }
     }

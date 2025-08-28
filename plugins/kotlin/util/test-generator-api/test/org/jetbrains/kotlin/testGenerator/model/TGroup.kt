@@ -82,7 +82,7 @@ fun MutableTWorkspace.testGroup(
             get() = category
 
         override val isCompilerTestData: Boolean =
-            testDataPath.startsWith(TestKotlinArtifacts.compilerTestDataDir.canonicalPath)
+            testDataPath.startsWith(TestKotlinArtifacts.compilerTestDataDir.toFile().canonicalPath)
 
         override val kotlinRoot: File
             get() = KotlinRoot.DIR

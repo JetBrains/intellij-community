@@ -17,6 +17,7 @@ import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.Locale
+import kotlin.io.path.copyTo
 
 abstract class AbstractConfigureKotlinInTempDirTest : AbstractConfigureKotlinTest() {
     companion object {
@@ -56,7 +57,7 @@ abstract class AbstractConfigureKotlinInTempDirTest : AbstractConfigureKotlinTes
             val originalPath = originalDir.resolve(stdlibPath)
             if (Files.exists(originalPath.toPath())) error(originalPath)
             val kotlinStdlib = projectRoot.resolve(stdlibPath)
-            originalStdlibFile.copyTo(kotlinStdlib.toFile(), overwrite = true)
+            originalStdlibFile.copyTo(kotlinStdlib, overwrite = true)
         }
         // Needed, so the index knows that there are Kotlin files in the project
         VfsUtil.markDirtyAndRefresh(false, true, true, this.projectRoot.toPath().refreshAndFindVirtualDirectory())

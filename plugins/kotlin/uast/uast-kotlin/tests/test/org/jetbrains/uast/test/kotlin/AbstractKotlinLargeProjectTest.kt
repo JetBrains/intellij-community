@@ -6,5 +6,5 @@ import com.intellij.platform.uast.testFramework.env.AbstractLargeProjectTest
 
 abstract class AbstractKotlinLargeProjectTest : AbstractLargeProjectTest() {
     override val projectLibraries
-        get() = listOf(Pair("KotlinStdlibTestArtifacts", listOf(TestKotlinArtifacts.kotlinStdlib)))
+        get() = listOf(Pair("KotlinStdlibTestArtifacts", listOf(TestKotlinArtifacts.kotlinStdlib.toFile())))
 }

@@ -123,7 +123,7 @@ class KotlinModuleStateModificationTest : AbstractKotlinModuleModificationEventT
         val trackerB = createTracker(moduleB, "module B", allowedEventKinds)
         val trackerC = createTracker(moduleC, "module C", allowedEventKinds)
 
-        moduleA.addLibrary(TestKotlinArtifacts.kotlinTestJunit)
+        moduleA.addLibrary(TestKotlinArtifacts.kotlinTestJunit.toFile())
 
         trackerA.assertModifiedOnce()
         trackerB.assertNotModified()
@@ -135,7 +135,7 @@ class KotlinModuleStateModificationTest : AbstractKotlinModuleModificationEventT
         val moduleB = createModuleInTmpDir("b")
         val moduleC = createModuleInTmpDir("c")
 
-        moduleA.addLibrary(TestKotlinArtifacts.kotlinTestJunit, name = "junit")
+        moduleA.addLibrary(TestKotlinArtifacts.kotlinTestJunit.toFile(), name = "junit")
 
         val trackerA = createTracker(moduleA, "module A with a removed library dependency")
         val trackerB = createTracker(moduleB, "module B")

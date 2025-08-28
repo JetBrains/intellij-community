@@ -94,7 +94,7 @@ public final class KotlinTestUtils {
             @NotNull TestJdkKind jdkKind
     ) {
         return KotlinCoreEnvironment.createForTests(
-                disposable, newConfiguration(configurationKind, jdkKind, TestKotlinArtifacts.getJetbrainsAnnotations()),
+                disposable, newConfiguration(configurationKind, jdkKind, TestKotlinArtifacts.getJetbrainsAnnotations().toFile()),
                 EnvironmentConfigFiles.JVM_CONFIG_FILES
         );
     }
@@ -273,21 +273,21 @@ public final class KotlinTestUtils {
         }
 
         if (configurationKind.getKotlinStdlib()) {
-            JvmContentRootsKt.addJvmClasspathRoot(configuration, TestKotlinArtifacts.getKotlinStdlib());
-            JvmContentRootsKt.addJvmClasspathRoot(configuration, TestKotlinArtifacts.getKotlinScriptRuntime());
-            JvmContentRootsKt.addJvmClasspathRoot(configuration, TestKotlinArtifacts.getKotlinTest());
-            configuration.put(CLIConfigurationKeys.PATH_TO_KOTLIN_COMPILER_JAR, TestKotlinArtifacts.getKotlinCompiler());
+            JvmContentRootsKt.addJvmClasspathRoot(configuration, TestKotlinArtifacts.getKotlinStdlib().toFile());
+            JvmContentRootsKt.addJvmClasspathRoot(configuration, TestKotlinArtifacts.getKotlinScriptRuntime().toFile());
+            JvmContentRootsKt.addJvmClasspathRoot(configuration, TestKotlinArtifacts.getKotlinTest().toFile());
+            configuration.put(CLIConfigurationKeys.PATH_TO_KOTLIN_COMPILER_JAR, TestKotlinArtifacts.getKotlinCompiler().toFile());
         }
 
         if (configurationKind.getKotlinReflect()) {
-            JvmContentRootsKt.addJvmClasspathRoot(configuration, TestKotlinArtifacts.getKotlinReflect());
+            JvmContentRootsKt.addJvmClasspathRoot(configuration, TestKotlinArtifacts.getKotlinReflect().toFile());
         }
 
         JvmContentRootsKt.addJvmClasspathRoots(configuration, classpath);
 
         configuration.put(
                 CLIConfigurationKeys.INTELLIJ_PLUGIN_ROOT,
-                TestKotlinArtifacts.getKotlinCompiler().getAbsolutePath()
+                TestKotlinArtifacts.getKotlinCompiler().toFile().getAbsolutePath()
         );
 
         setupIdeaStandaloneExecution();
@@ -552,7 +552,7 @@ public final class KotlinTestUtils {
             if (BazelTestUtil.isUnderBazelTest()) {
                 absoluteTestDataFilePath = TestMetadataUtil.resolvePathInBazelProvidedTestData(testCase.getClass(), testDataFilePath).toString();
             } else if ("true".equals(System.getProperty("kombo.compiler.tests.mode", "false"))) {
-                absoluteTestDataFilePath = new File(TestKotlinArtifacts.jpsPluginTestData(testDataFilePath)).getAbsolutePath();
+                absoluteTestDataFilePath = TestKotlinArtifacts.jpsPluginTestData(testDataFilePath).toFile().getAbsolutePath();
             } else {
                 File testRoot = TestMetadataUtil.getTestRoot(testCase.getClass());
                 if (testRoot == null) {

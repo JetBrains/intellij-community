@@ -662,7 +662,7 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase(),
                     classPath.add(output)
                 }
             }
-            classPath.add(TestKotlinArtifacts.kotlinStdlib)
+            classPath.add(TestKotlinArtifacts.kotlinStdlib.toFile())
             classPath.add(libraryOutputDirectory)
         }
     }
@@ -674,8 +674,8 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase(),
             try {
                 attachLibrary(
                   model, KOTLIN_LIBRARY_NAME,
-                  listOf(TestKotlinArtifacts.kotlinStdlib, TestKotlinArtifacts.jetbrainsAnnotations),
-                  listOf(TestKotlinArtifacts.kotlinStdlibSources, TestKotlinArtifacts.kotlinStdlibCommonSources)
+                  listOf(TestKotlinArtifacts.kotlinStdlib.toFile(), TestKotlinArtifacts.jetbrainsAnnotations.toFile()),
+                  listOf(TestKotlinArtifacts.kotlinStdlibSources.toFile(), TestKotlinArtifacts.kotlinStdlibCommonSources.toFile())
                 )
 
                 attachLibrary(model, TEST_LIBRARY_NAME, listOf(libraryOutputDirectory), listOf(librarySrcDirectory))
