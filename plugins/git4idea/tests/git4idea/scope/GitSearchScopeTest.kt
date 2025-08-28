@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.psi.search.SearchScopeProvider
 import com.intellij.testFramework.common.waitUntil
 import com.intellij.vfs.AsyncVfsEventsPostProcessorImpl
+import git4idea.repo.GitRepositoryManager
 import git4idea.search.GitIgnoreSearchScope
 import git4idea.search.GitSearchScopeProvider
 import git4idea.search.GitTrackedSearchScope
@@ -30,13 +31,12 @@ class GitSearchScopeTest : GitSingleRepoTest() {
 internal fun GitSingleRepoTest.awaitEvents() {
   AsyncVfsEventsPostProcessorImpl.waitEventsProcessed()
   runBlocking {
-    repo.untrackedFilesHolder.apply {
-      invalidate()
-      awaitNotBusy()
-    }
+    val repositories = GitRepositoryManager.getInstance(project).repositories
+    repositories.forEach { it.untrackedFilesHolder.invalidate() }
+    repositories.forEach { it.untrackedFilesHolder.awaitNotBusy() }
 
     waitUntil("Untracked and ignored holders initialized", timeout = 5.seconds, condition = {
-      repo.untrackedFilesHolder.isInitialized && repo.ignoredFilesHolder.initialized
+      repositories.all { it.untrackedFilesHolder.isInitialized && it.ignoredFilesHolder.initialized }
     })
   }
 }
