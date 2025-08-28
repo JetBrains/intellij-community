@@ -69,12 +69,6 @@ fun <T : Any> ComponentManager.registerComponentInstance(componentInterface: Cla
 }
 
 @TestOnly
-@JvmOverloads
-fun ComponentManager.registerComponentImplementation(key: Class<*>, implementation: Class<*>, shouldBeRegistered: Boolean = false) {
-  (this as ComponentManagerEx).registerComponentImplementation(key, implementation, shouldBeRegistered)
-}
-
-@TestOnly
 fun <T : Any> ComponentManager.registerExtension(name: BaseExtensionPointName<*>, instance: T, parentDisposable: Disposable) {
   extensionArea.getExtensionPoint<T>(name.name).registerExtension(instance, parentDisposable)
 }
