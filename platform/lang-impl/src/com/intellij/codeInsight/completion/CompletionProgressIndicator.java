@@ -950,7 +950,7 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
     return true;
   }
 
-  void runContributors(CompletionInitializationContext initContext) {
+  void runContributors(@NotNull CompletionInitializationContext initContext) {
     CompletionParameters parameters = Objects.requireNonNull(myParameters);
     threading.startThread(ProgressWrapper.wrap(this), () -> {
       CompletionThreadingKt.tryReadOrCancel(this, () -> scheduleAdvertising(parameters));
