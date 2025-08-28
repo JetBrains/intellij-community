@@ -10,8 +10,6 @@
                     interface="com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeRightTabContentProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.platform.ide.nonModalWelcomeScreen.welcomeScreenFeatureProvider"
                     interface="com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenFeatureProvider" dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.platform.ide.nonModalWelcomeScreen.templateOptionProvider"
-                    interface="com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel.WelcomeScreenFileTemplateOptionProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.platform.ide.nonModalWelcomeScreen.welcomeScreenFileIconProvider"
                     interface="com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel.WelcomeScreenFileIconProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.platform.ide.nonModalWelcomeScreen.welcomeScreenRightTabBannerProvider"

@@ -9,7 +9,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.*
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.ide.nonModalWelcomeScreen.NonModalWelcomeScreenBundle
-import com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel.TemplateOption
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiManager
 import com.intellij.ui.DocumentAdapter
@@ -20,7 +19,6 @@ import com.intellij.util.IncorrectOperationException
 import com.intellij.util.PathUtilRt
 import com.intellij.util.asSafely
 import com.intellij.util.ui.FormBuilder
-import org.jetbrains.annotations.Nls
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
 import java.nio.file.Path
@@ -39,7 +37,7 @@ class WelcomeScreenNewFileDialog private constructor(
 
   private val targetDirectoryField: ComponentWithBrowseButton<JBTextField> = ComponentWithBrowseButton(ExtendableTextField(), null)
   private val nameField = JBTextField()
-  private val templateComboBox: ComboBox<TemplateOption>? = builder.templateOptions.takeIf { it.isNotEmpty() }?.let { ComboBox() }
+  private val templateComboBox: ComboBox<WelcomeScreenNewFileTemplateOption>? = builder.templateOptions.takeIf { it.isNotEmpty() }?.let { ComboBox() }
   private var targetDirectory: PsiDirectory? = null
   private val fileExtension: String? = builder.fixedExtension
 
@@ -77,8 +75,8 @@ class WelcomeScreenNewFileDialog private constructor(
     templateComboBox?.apply {
       builder.templateOptions.forEach { addItem(it) }
 
-      renderer = object : SimpleListCellRenderer<TemplateOption>() {
-        override fun customize(list: JList<out TemplateOption>, value: TemplateOption, index: Int, selected: Boolean, hasFocus: Boolean) {
+      renderer = object : SimpleListCellRenderer<WelcomeScreenNewFileTemplateOption>() {
+        override fun customize(list: JList<out WelcomeScreenNewFileTemplateOption>, value: WelcomeScreenNewFileTemplateOption, index: Int, selected: Boolean, hasFocus: Boolean) {
           setText(value.displayName)
           value.icon?.let { setIcon(it) }
         }
@@ -118,7 +116,7 @@ class WelcomeScreenNewFileDialog private constructor(
 
   fun getTargetDirectory(): PsiDirectory? = targetDirectory
 
-  fun getSelectedTemplateName(): String? = templateComboBox?.selectedItem?.asSafely<TemplateOption>()?.templateName
+  fun getSelectedTemplateName(): String? = templateComboBox?.selectedItem?.asSafely<WelcomeScreenNewFileTemplateOption>()?.templateName
 
   private fun isValid(): Boolean {
     if (!builder.showNameField) {
@@ -198,7 +196,7 @@ class WelcomeScreenNewFileDialog private constructor(
     var fixedExtension: String? = null
     var defaultFileName: String = ""
     var defaultDirectory: String? = null
-    var templateOptions: List<TemplateOption> = emptyList()
+    var templateOptions: List<WelcomeScreenNewFileTemplateOption> = emptyList()
 
     fun build(): WelcomeScreenNewFileDialog = WelcomeScreenNewFileDialog(project, this)
   }
