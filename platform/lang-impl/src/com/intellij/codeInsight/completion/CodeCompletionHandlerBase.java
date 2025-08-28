@@ -349,10 +349,10 @@ public class CodeCompletionHandlerBase {
       .submit(AppExecutorUtil.getAppExecutorService());
   }
 
-  private void trySynchronousCompletion(CompletionInitializationContextImpl initContext,
+  private void trySynchronousCompletion(@NotNull CompletionInitializationContextImpl initContext,
                                         boolean hasModifiers,
                                         long startingTime,
-                                        CompletionProgressIndicator indicator,
+                                        @NotNull CompletionProgressIndicator indicator,
                                         OffsetsInFile hostCopyOffsets) {
     CompletionServiceImpl.setCompletionPhase(new CompletionPhase.Synchronous(indicator));
 
@@ -383,9 +383,9 @@ public class CodeCompletionHandlerBase {
     indicator.showLookup();
   }
 
-  private @Nullable Deferred<?> startContributorThread(CompletionInitializationContextImpl initContext,
-                                                       CompletionProgressIndicator indicator,
-                                                       OffsetsInFile hostCopyOffsets,
+  private @Nullable Deferred<?> startContributorThread(@NotNull CompletionInitializationContextImpl initContext,
+                                                       @NotNull CompletionProgressIndicator indicator,
+                                                       @NotNull OffsetsInFile hostCopyOffsets,
                                                        boolean hasModifiers) {
     if (!hostCopyOffsets.getFile().isValid()) {
       completionFinished(indicator, hasModifiers);
