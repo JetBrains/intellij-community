@@ -84,6 +84,7 @@ internal fun appendVfsInfo(node: ProjectViewNode<*>, appender: InplaceCommentApp
     count++
     count < showCachedChildrenLimit
   }
+  count-- // don't count the directory itself
   val countString = if (count <= showCachedChildrenLimit) count.toString() else "$count+"
   appender.append(" $countString VFS ${if (count == 1) "file" else "files"}", SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
 }

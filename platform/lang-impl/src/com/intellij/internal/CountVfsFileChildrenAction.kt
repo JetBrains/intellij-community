@@ -49,6 +49,7 @@ internal class CountVfsFileChildrenAction : AnAction(), DumbAware {
               return true
             }
           })
+          filesOnDiskCount-- // don't count the directory itself
           val message = "Under <i>${root.path}</i><br/>" +
                         "there are $filesOnDiskCount files on <b>disk</b>"
           Notification("System Messages", message, NotificationType.INFORMATION)
@@ -75,6 +76,7 @@ internal class CountVfsFileChildrenAction : AnAction(), DumbAware {
           }
           true
         }
+        vfsFilesCount-- // don't count the directory itself
         val message = "Under <i>${root.path}</i><br/>" +
                       "there are $vfsFilesCount files in <b>VFS</b>:<br/>" +
                       "$contentFilesCount content files<br/>" +
