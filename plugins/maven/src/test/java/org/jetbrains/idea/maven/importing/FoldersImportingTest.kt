@@ -128,6 +128,8 @@ class FoldersImportingTest : FoldersImportingTestCase() {
 
   @Test
   fun testClearParentAndSubFoldersOfNewlyImportedFolders() = runBlocking {
+    assumeOnLocalEnvironmentOnly("IDEA-378277")
+
     createStdProjectFolders()
     importProjectAsync("""
                     <groupId>test</groupId>
@@ -158,6 +160,8 @@ class FoldersImportingTest : FoldersImportingTestCase() {
 
   @Test
   fun testSourceFoldersOnReimport() = runBlocking {
+    assumeOnLocalEnvironmentOnly("IDEA-378277")
+
     createProjectSubDirs("src1", "src2")
     importProjectAsync("""
                     <groupId>test</groupId>
@@ -398,6 +402,8 @@ class FoldersImportingTest : FoldersImportingTestCase() {
 
   @Test
   fun testContentRootOutsideOfModuleDirInPerSourceTypeImport() = runBlocking {
+    assumeOnLocalEnvironmentOnly("IDEA-378277")
+
     createModulePom("m1",
                     """
                       <groupId>test</groupId>
@@ -439,6 +445,8 @@ class FoldersImportingTest : FoldersImportingTestCase() {
 
   @Test
   fun testAddingExistingGeneratedSources2() = runBlocking {
+    assumeOnLocalEnvironmentOnly("IDEA-378277")
+
     createStdProjectFolders()
     createProjectSubFile("target/generated-sources/com/A.java", "package com; class A {}")
     importProjectAsync("""
@@ -489,6 +497,8 @@ class FoldersImportingTest : FoldersImportingTestCase() {
 
   @Test
   fun testOverrideAnnotationSourcesWhenAutodetect() = runBlocking {
+    assumeOnLocalEnvironmentOnly("IDEA-378277")
+
     createStdProjectFolders()
     MavenProjectsManager.getInstance(project).importingSettings.setGeneratedSourcesFolder(
       MavenImportingSettings.GeneratedSourcesFolder.AUTODETECT)
@@ -507,6 +517,8 @@ class FoldersImportingTest : FoldersImportingTestCase() {
 
   @Test
   fun testOverrideTestAnnotationSourcesWhenAutodetect() = runBlocking {
+    assumeOnLocalEnvironmentOnly("IDEA-378277")
+
     createStdProjectFolders()
     MavenProjectsManager.getInstance(project).importingSettings.setGeneratedSourcesFolder(
       MavenImportingSettings.GeneratedSourcesFolder.AUTODETECT)
@@ -542,6 +554,8 @@ class FoldersImportingTest : FoldersImportingTestCase() {
 
   @Test
   fun testAddingExistingGeneratedSources4() = runBlocking {
+    assumeOnLocalEnvironmentOnly("IDEA-378277")
+
     createStdProjectFolders()
     createProjectSubFile("target/generated-sources/A1/B1/com/A1.java", "package com; class A1 {}")
     createProjectSubFile("target/generated-sources/A1/B2/com/A2.java", "package com; class A2 {}")
@@ -561,6 +575,8 @@ class FoldersImportingTest : FoldersImportingTestCase() {
 
   @Test
   fun testAddingExistingGeneratedSources5() = runBlocking {
+    assumeOnLocalEnvironmentOnly("IDEA-378277")
+
     createStdProjectFolders()
     createProjectSubFile("target/generated-sources/A1/B1/com/A1.java", "package com; class A1 {}")
     createProjectSubFile("target/generated-sources/A2.java", "class A2 {}")
@@ -1048,6 +1064,8 @@ class FoldersImportingTest : FoldersImportingTestCase() {
 
   @Test
   fun testUnexcludeNewSourcesUnderCompilerOutputDir() = runBlocking {
+    assumeOnLocalEnvironmentOnly("IDEA-378277")
+
     createProjectSubDirs("target/classes/src")
     importProjectAsync("""
                     <groupId>test</groupId>

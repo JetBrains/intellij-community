@@ -27,6 +27,8 @@ import com.intellij.openapi.util.io.*
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
+import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.platform.testFramework.eelJava.EelTestJdkProvider
 import com.intellij.testFramework.*
@@ -52,6 +54,7 @@ import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator.MavenProgressTracker
 import org.jetbrains.idea.maven.utils.MavenUtil
+import org.junit.Assume.assumeTrue
 import java.awt.HeadlessException
 import java.io.IOException
 import java.nio.charset.StandardCharsets
@@ -129,8 +132,8 @@ abstract class MavenTestCase : UsefulTestCase() {
     myPathTransformer = RemotePathTransformerFactory.createForProject(project)
     setupCustomJdk()
 
-    myDir = Path.of(myProject!!.basePath).parent
-    myDir.ensureExists()
+    myDir = Path.of(myProject!!.basePath!!).parent
+    myDir.ensureFolderExists()
 
     mavenProgressIndicator = MavenProgressIndicator(project, EmptyProgressIndicator(ModalityState.nonModal()), null)
 
@@ -270,7 +273,7 @@ abstract class MavenTestCase : UsefulTestCase() {
 
   protected open fun setUpInWriteAction() {
     val projectRoot = Path.of(myProject!!.basePath)
-    projectRoot.ensureExists()
+    projectRoot.ensureFolderExists()
     myProjectRoot = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(projectRoot)
   }
 
@@ -446,12 +449,12 @@ abstract class MavenTestCase : UsefulTestCase() {
 
   protected fun createProjectSubDir(relativePath: String): VirtualFile {
     val f = projectPath.resolve(relativePath)
-    f.createDirectories()
+    f.ensureFolderExists()
     return LocalFileSystem.getInstance().refreshAndFindFileByNioFile(f)!!
   }
 
   protected fun createFile(path: Path): VirtualFile {
-    path.parent.createDirectories()
+    path.parent.ensureFolderExists()
     path.createFile()
     return LocalFileSystem.getInstance().refreshAndFindFileByNioFile(path)!!
   }
@@ -730,10 +733,13 @@ abstract class MavenTestCase : UsefulTestCase() {
     return file1Bytes.contentEquals(file2Bytes)
   }
 
-  private fun Path.ensureExists() {
+  private fun Path.ensureFolderExists() {
+    if (!parent.exists()) {
+      createParentDirectories()
+    }
     if (!exists()) {
       try {
-        createDirectories()
+        createDirectory()
       }
       catch (e: Exception) {
         throw IOException(UtilBundle.message("exception.directory.can.not.create", this), e)
@@ -748,6 +754,10 @@ abstract class MavenTestCase : UsefulTestCase() {
   @Language("XML")
   fun createPomXml(@Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: @NonNls String?): @NonNls String {
     return createPomXml(modelVersion, xml)
+  }
+
+  protected fun assumeOnLocalEnvironmentOnly(cause: String) {
+    assumeTrue("Unable to run the test in non-local environment: $cause", LocalEelDescriptor == project.getEelDescriptor())
   }
 
   companion object {
