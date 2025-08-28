@@ -33,7 +33,13 @@ interface XDebugManagerProxy {
 
   fun getBreakpointManagerProxy(project: Project): XBreakpointManagerProxy
 
-  fun canShowInlineDebuggerData(xValue: XValue): Boolean
+  /**
+   * Returns `true` if the given [xValue] is presented on BE.
+   * In monolith mode, this method always returns `true`;
+   * in split mode, it returns `true` if the given [xValue]
+   * has an access to ID used to find the relevant backend counterpart.
+   */
+  fun hasBackendCounterpart(xValue: XValue): Boolean
 
   fun findSessionProxy(project: Project, sessionId: XDebugSessionId): XDebugSessionProxy? {
     return getSessions(project).firstOrNull { it.id == sessionId }

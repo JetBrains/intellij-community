@@ -68,7 +68,7 @@ private class MonolithXDebugManagerProxy : XDebugManagerProxy {
     return XBreakpointManagerProxy.Monolith(XDebuggerManager.getInstance(project).breakpointManager as XBreakpointManagerImpl)
   }
 
-  override fun canShowInlineDebuggerData(xValue: XValue): Boolean {
+  override fun hasBackendCounterpart(xValue: XValue): Boolean {
     return true
   }
 }
