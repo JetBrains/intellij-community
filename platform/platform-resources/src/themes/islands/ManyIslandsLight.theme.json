@@ -44,7 +44,8 @@
     "MainWindow.Tab": {
       "selectedBackground": "BackgroundMid",
       "hoverBackground": "#0000000D",
-      "separatorColor": "#00000012"
+      "separatorColor": "#00000012",
+      "foreground": "#818594"
     },
 
     "MainToolbar": {
