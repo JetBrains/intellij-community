@@ -45,11 +45,11 @@ object TestKotlinArtifacts {
 
     private val LOG = logger<TestKotlinArtifacts>()
 
-    private fun areFilesEquals(source: File, destination: File): Boolean {
+    private fun areFilesEquals(source: Path, destination: Path): Boolean {
         if (!destination.exists()) {
             return false
         }
-        if (source.length() != destination.length()) {
+        if (source.fileSize() != destination.fileSize()) {
             return false
         }
         return source.readBytes().contentEquals(destination.readBytes())
@@ -132,8 +132,7 @@ object TestKotlinArtifacts {
         if (!Files.exists(target.parent)) {
             target.createParentDirectories()
         }
-        @Suppress("IO_FILE_USAGE")
-        if (!areFilesEquals(fileInCache.toFile(), target.toFile())) {
+        if (!areFilesEquals(fileInCache, target)) {
             Files.copy(fileInCache, target, StandardCopyOption.REPLACE_EXISTING)
         }
         return target
@@ -159,7 +158,7 @@ object TestKotlinArtifacts {
         }
 
         // some tests for code require that files should be under $COMMUNITY_HOME_PATH/out
-        val target = File(PathManager.getCommunityHomePath())
+        val target = Path.of(PathManager.getCommunityHomePath())
             .resolve("out")
             .resolve("kotlin-from-sources-deps")
             .resolve(label.target)
@@ -167,21 +166,22 @@ object TestKotlinArtifacts {
         // we could have a file from some previous launch, but with different content
         // it is a valid scenario when the file is JAR without a version and url changed
         // we have to verify content
-        @Suppress("IO_FILE_USAGE")
-        if (target.exists() && areFilesEquals(dependency.toFile(), target)) {
-            return target
+        if (target.exists() && areFilesEquals(dependency, target)) {
+            @Suppress("IO_FILE_USAGE")
+            return target.toFile()
         }
-        val tempFile = Files.createTempFile(dependency.name, ".tmp")
+        target.createParentDirectories()
+        val tempFile = Files.createTempFile(target.parent, target.name, ".tmp")
         try {
-            dependency.copyToRecursively(tempFile, overwrite = true, followLinks = true)
-            target.parentFile.mkdirs()
+            dependency.copyTo(tempFile, overwrite = true)
             // in the case of parallel access target will be overwritten by one of the threads
-            tempFile.moveTo(target.toPath(), StandardCopyOption.ATOMIC_MOVE)
+            tempFile.moveTo(target, StandardCopyOption.ATOMIC_MOVE)
         } finally {
             tempFile.deleteIfExists()
         }
         LOG.info("Dependency ${label.asLabel} resolved to '$target'")
-        return target
+        @Suppress("IO_FILE_USAGE")
+        return target.toFile()
     }
 
     @JvmStatic
