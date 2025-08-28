@@ -26,7 +26,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
-import org.jetbrains.idea.devkit.util.PsiUtil
 import org.jetbrains.jewel.bridge.compose
 import org.jetbrains.jewel.ui.component.Slider
 import org.jetbrains.jewel.ui.component.Text
@@ -38,10 +37,6 @@ import kotlin.math.*
 internal class ComposePerformanceDemoAction : DumbAwareAction() {
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
-
-  override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = e.project != null && PsiUtil.isPluginProject(e.project!!)
-  }
 
   override fun actionPerformed(e: AnActionEvent) {
     val dialog = MyDialog(e.project, e.presentation.text)

@@ -25,6 +25,7 @@ internal class ComposeSandboxAction : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
+    // only needed when we develop a plugin, hide from unrelated projects
     e.presentation.isEnabledAndVisible = e.project != null && PsiUtil.isPluginProject(e.project!!)
   }
 

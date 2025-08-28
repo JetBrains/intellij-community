@@ -9,13 +9,12 @@ import com.intellij.openapi.progress.currentThreadCoroutineScope
 import com.intellij.openapi.project.DumbAwareAction
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import org.jetbrains.idea.devkit.util.PsiUtil
 
 internal class ComponentShowcaseDialogAction : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = e.project != null && PsiUtil.isPluginProject(e.project!!)
+    e.presentation.isEnabledAndVisible = e.project != null
   }
 
   override fun actionPerformed(event: AnActionEvent) {

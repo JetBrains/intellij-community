@@ -26,7 +26,9 @@
               icon="org.jetbrains.idea.devkit.DevKitIcons.Items"/>
       <action id="JewelWizardDialog" class="com.intellij.devkit.compose.demo.dialog.JewelWizardDialogAction"/>
       <action id="ComposeSandbox" class="com.intellij.devkit.compose.sandbox.ComposeSandboxAction" icon="AllIcons.FileTypes.UiForm"/>
-      <action id="ComposePerformanceDemo" class="com.intellij.devkit.compose.showcase.ComposePerformanceDemoAction"/>
+
+      <action id="ComposePerformanceDemo" class="com.intellij.devkit.compose.showcase.ComposePerformanceDemoAction"
+              internal="true"/> <!-- only needed for the JetBrains team -->
       <separator/>
 
       <add-to-group group-id="ToolsMenu" relative-to-action="Dev.PsiViewerActions" anchor="after"/>

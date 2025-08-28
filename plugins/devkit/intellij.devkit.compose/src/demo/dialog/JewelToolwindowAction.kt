@@ -10,7 +10,6 @@ import com.intellij.openapi.wm.RegisterToolWindowTask
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowManager
-import org.jetbrains.idea.devkit.util.PsiUtil
 
 private const val TOOLWINDOW_ID = "JewelDemo"
 
@@ -19,7 +18,7 @@ internal class JewelToolwindowAction : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = e.project != null && PsiUtil.isPluginProject(e.project!!)
+    e.presentation.isEnabledAndVisible = e.project != null
   }
 
   override fun actionPerformed(e: AnActionEvent) {
