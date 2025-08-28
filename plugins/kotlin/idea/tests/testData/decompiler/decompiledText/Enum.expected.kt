@@ -17,7 +17,7 @@ public final enum class Enum private constructor() : kotlin.Enum<test.Enum> {
     F;
 
     public companion object {
-        public final val c: kotlin.Int /* compiled code */ /* hasBackingField: true */
+        public final val c: kotlin.Int /* compiled code */
     }
 
     public open fun f(): kotlin.Int { /* compiled code */ }
