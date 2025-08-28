@@ -349,6 +349,12 @@ public class CodeCompletionHandlerBase {
       .submit(AppExecutorUtil.getAppExecutorService());
   }
 
+  /**
+   * Tries to perform completion synchronously:
+   * 1. It starts inferencing candidates (synchornously or asynchronously)
+   * 2. It waits for them to be computed for the given timeout.
+   * 3. If candidates are computed until timeout, the UI is updated immediately, otherwise computation continues and the phase is set to BgCalculation.
+   */
   private void trySynchronousCompletion(@NotNull CompletionInitializationContextImpl initContext,
                                         boolean hasModifiers,
                                         long startingTime,
