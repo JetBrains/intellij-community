@@ -235,6 +235,10 @@ open class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
         return@mapNotNull null
       }
     }
+
+  fun getAllHighlights(): List<HighlightInfo> = editor.getMarkupModel().getAllHighlighters().mapNotNull {
+    driver.utility(HighlightInfo::class).fromRangeHighlighter(it)
+  } + driver.getHighlights(editor.getDocument())
 }
 
 @Remote("com.jetbrains.performancePlugin.utils.IntentionActionUtils", plugin = "com.jetbrains.performancePlugin")

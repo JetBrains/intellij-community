@@ -28,7 +28,16 @@ interface Editor {
   fun getSelectionModel(): SelectionModel
   fun getSoftWrapModel(): SoftWrapModel
   fun visualLineToY(visualLine: Int): Int
+  fun getMarkupModel(): MarkupModel
 }
+
+@Remote("com.intellij.openapi.editor.markup.MarkupModel")
+interface MarkupModel {
+  fun getAllHighlighters(): Array<RangeHighlighter>
+}
+
+@Remote("com.intellij.openapi.editor.markup.RangeHighlighter")
+interface RangeHighlighter
 
 @Remote("com.intellij.openapi.editor.VisualPosition")
 interface VisualPosition {
