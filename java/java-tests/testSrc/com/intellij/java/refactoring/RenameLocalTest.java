@@ -147,6 +147,10 @@ public class RenameLocalTest extends LightRefactoringTestCase {
     doTestInplaceRename("s");
   }
 
+  public void testUnnamedVariableInLambda() {
+    doTestInplaceRename("pp");
+  }
+
   public void testUndoAfterEditingOutsideOfTemplate() {
     configureByFile();
     TemplateManagerImpl.setTemplateTesting(getTestRootDisposable());
