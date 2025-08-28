@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion
 
 import com.intellij.codeWithMe.ClientId
@@ -16,6 +16,13 @@ import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
 
+/**
+ * There are two implementations of completion threading:
+ * - [SyncCompletion] - runs [startThread] in the current thread
+ * - [AsyncCompletion] - runs [startThread] in a coroutine
+ *
+ * @see CompletionProgressIndicator.getCompletionThreading
+ */
 internal sealed interface CompletionThreading {
   // Deferred and not Job - client should get error
   fun startThread(progressIndicator: ProgressIndicator?, runnable: Runnable): Deferred<*>
