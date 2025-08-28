@@ -300,19 +300,21 @@ fun TargetedCommandLine.execute(env: TargetEnvironment, indicator: ProgressIndic
  * Checks whether the base directory of [project] is registered in [this] request. Adds it if it is not.
  * You can also provide [modules] to add its content roots and [Sdk] for which user added custom paths
  */
-fun TargetEnvironmentRequest.ensureProjectSdkAndModuleDirsAreOnTarget(project: Project, vararg modules: Module) {
+fun TargetEnvironmentRequest.ensureProjectSdkAndModuleDirsAreOnTarget(project: Project, vararg modules: Module?) {
   fun TargetEnvironmentRequest.addPathToVolume(basePath: Path) {
     if (uploadVolumes.none { basePath.startsWith(it.localRootPath) }) {
       uploadVolumes += UploadRoot(localRootPath = basePath, targetRootPath = TargetPath.Temporary())
     }
   }
   for (module in modules) {
-    ModuleRootManager.getInstance(module).contentRoots.forEach {
-      try {
-        addPathToVolume(it.toNioPath())
-      }
-      catch (_: UnsupportedOperationException) {
-        // VirtualFile.toNioPath throws UOE if VirtualFile has no associated path which is common case for JupyterRemoteVirtualFile
+    if (module != null) {
+      ModuleRootManager.getInstance(module).contentRoots.forEach {
+        try {
+          addPathToVolume(it.toNioPath())
+        }
+        catch (_: UnsupportedOperationException) {
+          // VirtualFile.toNioPath throws UOE if VirtualFile has no associated path which is common case for JupyterRemoteVirtualFile
+        }
       }
     }
   }
