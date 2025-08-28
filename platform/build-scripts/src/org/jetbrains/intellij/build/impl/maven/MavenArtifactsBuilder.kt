@@ -373,7 +373,7 @@ private fun generatePomXmlData(artifactData: MavenArtifactData, file: Path, cont
   val pomModel = Model()
   pomModel.organization = Organization().apply {
     name = "JetBrains"
-    url = "https://jetbrains.team"
+    url = "https://www.jetbrains.com"
   }
   pomModel.addDeveloper(Developer().apply {
     id = "JetBrains"
