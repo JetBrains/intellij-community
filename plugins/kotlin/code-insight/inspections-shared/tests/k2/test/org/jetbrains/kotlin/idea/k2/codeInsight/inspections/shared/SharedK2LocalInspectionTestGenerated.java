@@ -1784,6 +1784,11 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
         public void testReverseImmutableList() throws Exception {
             runTest("../testData/inspectionsLocal/javaCollectionsStaticMethodOnImmutableList/reverseImmutableList.kt");
         }
+
+        @TestMetadata("reverseMutableList.kt")
+        public void testReverseMutableList() throws Exception {
+            runTest("../testData/inspectionsLocal/javaCollectionsStaticMethodOnImmutableList/reverseMutableList.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
