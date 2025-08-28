@@ -16263,6 +16263,105 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/useWithIndex")
+    public static class UseWithIndex extends AbstractHighLevelQuickFixTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("alreadyWithIndex.kt")
+        public void testAlreadyWithIndex() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/useWithIndex/alreadyWithIndex.kt");
+        }
+
+        @TestMetadata("chooseCorrectIndex.kt")
+        public void testChooseCorrectIndex() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/useWithIndex/chooseCorrectIndex.kt");
+        }
+
+        @TestMetadata("continueInLoop.kt")
+        public void testContinueInLoop() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/useWithIndex/continueInLoop.kt");
+        }
+
+        @TestMetadata("customTypeWithIterator.kt")
+        public void testCustomTypeWithIterator() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/useWithIndex/customTypeWithIterator.kt");
+        }
+
+        @TestMetadata("destructuringDeclaration.kt")
+        public void testDestructuringDeclaration() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/useWithIndex/destructuringDeclaration.kt");
+        }
+
+        @TestMetadata("doubleVariableInitialization.kt")
+        public void testDoubleVariableInitialization() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/useWithIndex/doubleVariableInitialization.kt");
+        }
+
+        @TestMetadata("indexDeclarationWithInitialization.kt")
+        public void testIndexDeclarationWithInitialization() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/useWithIndex/indexDeclarationWithInitialization.kt");
+        }
+
+        @TestMetadata("indexIncrementedTwice.kt")
+        public void testIndexIncrementedTwice() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/useWithIndex/indexIncrementedTwice.kt");
+        }
+
+        @TestMetadata("indexUsedAfterIncrement.kt")
+        public void testIndexUsedAfterIncrement() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/useWithIndex/indexUsedAfterIncrement.kt");
+        }
+
+        @TestMetadata("indexUsedInLocalFun.kt")
+        public void testIndexUsedInLocalFun() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/useWithIndex/indexUsedInLocalFun.kt");
+        }
+
+        @TestMetadata("indexUsedOutsideFor.kt")
+        public void testIndexUsedOutsideFor() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/useWithIndex/indexUsedOutsideFor.kt");
+        }
+
+        @TestMetadata("iterateArray.kt")
+        public void testIterateArray() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/useWithIndex/iterateArray.kt");
+        }
+
+        @TestMetadata("iterateIntArray.kt")
+        public void testIterateIntArray() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/useWithIndex/iterateIntArray.kt");
+        }
+
+        @TestMetadata("nonZeroStartingIndex.kt")
+        public void testNonZeroStartingIndex() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/useWithIndex/nonZeroStartingIndex.kt");
+        }
+
+        @TestMetadata("prefixPlusPlus.kt")
+        public void testPrefixPlusPlus() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/useWithIndex/prefixPlusPlus.kt");
+        }
+
+        @TestMetadata("returnBeforeAndAfter.kt")
+        public void testReturnBeforeAndAfter() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/useWithIndex/returnBeforeAndAfter.kt");
+        }
+
+        @TestMetadata("separateIndexDeclarationAndInitialization.kt")
+        public void testSeparateIndexDeclarationAndInitialization() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/useWithIndex/separateIndexDeclarationAndInitialization.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/quickfix/variables")
     public abstract static class Variables extends AbstractHighLevelQuickFixTest {
         @RunWith(JUnit3RunnerWithInners.class)

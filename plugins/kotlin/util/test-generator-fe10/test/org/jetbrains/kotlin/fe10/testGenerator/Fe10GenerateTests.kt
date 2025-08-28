@@ -472,6 +472,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
                     "addInterpolationPrefixUnresolvedReference", // K2-only multi-dollar interpolation
                     "unsupportedFeature", // K2-related features only
                     "namedLambdaContextParameter",
+                    "useWithIndex", // Intention-based inspection in K1, covered by the intention tests
                 )
             )
         }
