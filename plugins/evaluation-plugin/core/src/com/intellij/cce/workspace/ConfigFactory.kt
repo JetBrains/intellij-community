@@ -13,7 +13,8 @@ import com.intellij.cce.workspace.filter.LookupFilter
 import com.intellij.cce.workspace.filter.SpanFilter
 import com.intellij.cce.workspace.filter.SessionsFilter
 import com.intellij.openapi.diagnostic.logger
-import org.apache.commons.lang3.text.StrSubstitutor
+import org.apache.commons.text.StringSubstitutor
+import org.apache.commons.text.lookup.StringLookup
 import java.lang.reflect.Type
 import java.nio.file.Files
 import java.nio.file.Path
@@ -205,8 +206,8 @@ object ConfigFactory {
     builder.mergeLookupFilters(lookupFilters)
   }
 
-  private fun Map<String, *>.handleEnv(key: String): String = StrSubstitutor.replaceSystemProperties(getAs(key))
-  private fun String.handleEnv(): String = StrSubstitutor.replaceSystemProperties(this)
+  private fun Map<String, *>.handleEnv(key: String): String = resolveVariables(getAs(key))
+  private fun String.handleEnv(): String = resolveVariables(this)
 
   private class SessionFiltersSerializer : JsonSerializer<SessionsFilter> {
     override fun serialize(src: SessionsFilter, typeOfSrc: Type, context: JsonSerializationContext): JsonObject {
@@ -218,4 +219,22 @@ object ConfigFactory {
       return jsonObject
     }
   }
+}
+
+fun resolveVariables(source: Any): String {
+  val lookup = object : StringLookup {
+    override fun lookup(key: String): String? {
+      val property = System.getProperty(key)
+      if (property?.isNotBlank() == true) {
+        return property
+      }
+      val env = System.getenv(key)
+      if (env?.isNotBlank() == true) {
+        return env
+      }
+      throw IllegalArgumentException("No value for $key found")
+    }
+  }
+
+  return StringSubstitutor(lookup).replace(source)
 }
