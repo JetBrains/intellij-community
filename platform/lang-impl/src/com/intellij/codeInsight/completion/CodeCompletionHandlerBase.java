@@ -86,22 +86,22 @@ public class CodeCompletionHandlerBase {
 
   private final Tracer completionTracer = TelemetryManager.getInstance().getTracer(CodeCompletion);
 
-  public static CodeCompletionHandlerBase createHandler(@NotNull CompletionType completionType) {
+  public static @NotNull CodeCompletionHandlerBase createHandler(@NotNull CompletionType completionType) {
     return createHandler(completionType, true, false, true);
   }
 
-  public static CodeCompletionHandlerBase createHandler(@NotNull CompletionType completionType,
-                                                        boolean invokedExplicitly,
-                                                        boolean autopopup,
-                                                        boolean synchronous) {
+  public static @NotNull CodeCompletionHandlerBase createHandler(@NotNull CompletionType completionType,
+                                                                 boolean invokedExplicitly,
+                                                                 boolean autopopup,
+                                                                 boolean synchronous) {
     return createHandler(completionType, invokedExplicitly, autopopup, synchronous, "CodeCompletion");
   }
 
-  public static CodeCompletionHandlerBase createHandler(@NotNull CompletionType completionType,
-                                                        boolean invokedExplicitly,
-                                                        boolean autopopup,
-                                                        boolean synchronous,
-                                                        String actionId) {
+  public static @NotNull CodeCompletionHandlerBase createHandler(@NotNull CompletionType completionType,
+                                                                 boolean invokedExplicitly,
+                                                                 boolean autopopup,
+                                                                 boolean synchronous,
+                                                                 @NotNull String actionId) {
     AnAction codeCompletionAction = ActionManager.getInstance().getAction(actionId);
     if (codeCompletionAction instanceof OverridingAction) {
       codeCompletionAction = ((ActionManagerImpl)ActionManager.getInstance()).getBaseAction((OverridingAction)codeCompletionAction);
