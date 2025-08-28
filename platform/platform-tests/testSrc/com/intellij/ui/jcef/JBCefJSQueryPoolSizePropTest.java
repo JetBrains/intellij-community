@@ -1,13 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.jcef;
 
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.ApplicationRule;
+import com.intellij.testFramework.DisposableRule;
 import com.intellij.ui.jcef.JBCefClient.Properties;
 import com.intellij.ui.scale.TestScaleHelper;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -29,6 +30,9 @@ public class JBCefJSQueryPoolSizePropTest {
 
   @ClassRule public static final ApplicationRule appRule = new ApplicationRule();
 
+  @Rule
+  public DisposableRule myDisposableRule = new DisposableRule();
+
   @Before
   public void before() {
     TestScaleHelper.assumeStandalone();
@@ -39,7 +43,7 @@ public class JBCefJSQueryPoolSizePropTest {
     test(client -> {
       client.setProperty(Properties.JS_QUERY_POOL_SIZE, 1);
       return null;
-    });
+    }, myDisposableRule.getDisposable());
   }
 
   @Test
@@ -47,10 +51,10 @@ public class JBCefJSQueryPoolSizePropTest {
     JBCefJSQueryPoolSizePropTest.test(client -> {
       client.setProperty(Properties.JS_QUERY_POOL_SIZE, Integer.MAX_VALUE); // stress test
       return null;
-    });
+    }, myDisposableRule.getDisposable());
   }
 
-  public static void test(@NotNull Function<? super JBCefClient, Void> setProperty) {
+  public static void test(@NotNull Function<? super JBCefClient, Void> setProperty, Disposable disposable) {
     CountDownLatch latchBefore = new CountDownLatch(1);
     CountDownLatch latchAfter = new CountDownLatch(1);
 
@@ -66,6 +70,7 @@ public class JBCefJSQueryPoolSizePropTest {
 
     invokeAndWaitForLoad(browser, () -> {
       JFrame frame = new JFrame(JBCefLoadHtmlTest.class.getName());
+      Disposer.register(disposable, () -> frame.removeNotify());
       frame.setSize(640, 480);
       frame.setLocationRelativeTo(null);
       frame.add(browser.getComponent(), BorderLayout.CENTER);

@@ -1,12 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.ApplicationRule;
+import com.intellij.testFramework.DisposableRule;
 import com.intellij.ui.scale.TestScaleHelper;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -24,6 +24,9 @@ import static com.intellij.ui.jcef.JBCefTestHelper.invokeAndWaitForLoad;
 public class IDEA246306Test {
   @ClassRule public static final ApplicationRule appRule = new ApplicationRule();
 
+  @Rule
+  public DisposableRule myDisposableRule = new DisposableRule();
+
   @Before
   public void before() {
     TestScaleHelper.assumeStandalone();
@@ -37,8 +40,8 @@ public class IDEA246306Test {
 
   @Test
   public void test() {
-    new MyBrowser();
-    new MyBrowser();
+    new MyBrowser(myDisposableRule.getDisposable());
+    new MyBrowser(myDisposableRule.getDisposable());
   }
 
   static class MyBrowser extends JBCefBrowser {
@@ -46,10 +49,12 @@ public class IDEA246306Test {
 
     final JBCefJSQuery myQuery = JBCefJSQuery.create((JBCefBrowserBase)this);
     final CountDownLatch latch = new CountDownLatch(1);
+    private final Disposable myDisposable;
 
     @SuppressWarnings("ObjectToString")
-    MyBrowser() {
+    MyBrowser(Disposable disposable) {
       super(createBuilder().setClient(ourClient).setUrl("chrome:version"));
+      myDisposable = disposable;
       myQuery.addHandler(result -> {
         System.out.println("query: result " + result + ", on " + this);
         if (!result.equals(this.toString())) {
@@ -61,6 +66,7 @@ public class IDEA246306Test {
 
       invokeAndWaitForLoad(this, () -> {
         JFrame frame = new JFrame(JBCefLoadHtmlTest.class.getName());
+        Disposer.register(myDisposable, () -> frame.removeNotify());
         frame.setSize(640, 480);
         frame.setLocationRelativeTo(null);
         frame.add(getComponent(), BorderLayout.CENTER);

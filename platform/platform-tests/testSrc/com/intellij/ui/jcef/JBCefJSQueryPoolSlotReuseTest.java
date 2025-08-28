@@ -3,12 +3,10 @@ package com.intellij.ui.jcef;
 
 import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.ApplicationRule;
+import com.intellij.testFramework.DisposableRule;
 import com.intellij.ui.scale.TestScaleHelper;
 import org.jetbrains.annotations.NotNull;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.*;
 
 import java.util.concurrent.CountDownLatch;
 
@@ -29,6 +27,10 @@ public class JBCefJSQueryPoolSlotReuseTest {
 
   @ClassRule public static final ApplicationRule appRule = new ApplicationRule();
 
+  @Rule
+  public DisposableRule myDisposableRule = new DisposableRule();
+
+
   @Before
   public void before() {
     TestScaleHelper.assumeStandalone();
@@ -45,7 +47,7 @@ public class JBCefJSQueryPoolSlotReuseTest {
     client.setProperty(JBCefClient.Properties.JS_QUERY_POOL_SIZE, 1);
 
     var browser = new JBCefBrowserBuilder().setUrl("about:blank").setClient(client).build();
-    showAndWaitForLoad(browser, JBCefJSQueryPoolSlotReuseTest.class.getSimpleName());
+    showAndWaitForLoad(browser, JBCefJSQueryPoolSlotReuseTest.class.getSimpleName(), myDisposableRule.getDisposable());
 
     /*
      * Create and use a JS query.

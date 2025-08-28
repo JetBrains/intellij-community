@@ -1,16 +1,15 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
+import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.ApplicationRule;
+import com.intellij.testFramework.DisposableRule;
 import com.intellij.ui.scale.TestScaleHelper;
 import org.cef.browser.CefBrowser;
 import org.cef.browser.CefFrame;
 import org.cef.handler.CefLoadHandler;
 import org.cef.network.CefRequest;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.*;
 
 import javax.swing.*;
 import java.awt.event.WindowAdapter;
@@ -51,6 +50,9 @@ public class JBCefLoadHtmlTest {
   static volatile boolean testPassed;
 
   JBCefBrowser browser;
+
+  @Rule
+  public DisposableRule myDisposableRule = new DisposableRule();
 
   @Before
   public void before() {
@@ -104,6 +106,7 @@ public class JBCefLoadHtmlTest {
 
     invokeAndWaitForLatch(LATCH, "loadHTML -> wait js callback", () -> {
       JFrame frame = new JFrame(JBCefLoadHtmlTest.class.getName());
+      Disposer.register(myDisposableRule.getDisposable(), () -> frame.removeNotify());
       frame.setSize(640, 480);
       frame.setLocationRelativeTo(null);
       frame.add(browser.getComponent());

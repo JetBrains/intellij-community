@@ -1,16 +1,15 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
+import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.ApplicationRule;
+import com.intellij.testFramework.DisposableRule;
 import com.intellij.ui.scale.TestScaleHelper;
 import org.cef.browser.CefBrowser;
 import org.cef.browser.CefFrame;
 import org.cef.handler.CefLoadHandlerAdapter;
 import org.intellij.lang.annotations.Language;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.jupiter.api.Disabled;
 
 import javax.swing.*;
@@ -65,6 +64,9 @@ public class JBCefInputMethodTest {
 
   JBCefBrowser browser;
 
+  @Rule
+  public DisposableRule myDisposableRule = new DisposableRule();
+
   @Before
   public void before() {
     TestScaleHelper.setRegistryProperty("ide.browser.jcef.osr.enabled", "true");
@@ -108,6 +110,7 @@ public class JBCefInputMethodTest {
         return null;
       });
       JFrame frame = new JFrame(JBCefLoadHtmlTest.class.getName());
+      Disposer.register(myDisposableRule.getDisposable(), () -> frame.removeNotify());
       frame.setSize(640, 480);
       frame.setLocationRelativeTo(null);
       frame.add(browser.getComponent());

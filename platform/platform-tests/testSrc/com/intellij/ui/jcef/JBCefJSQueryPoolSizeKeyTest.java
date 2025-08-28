@@ -2,11 +2,9 @@
 package com.intellij.ui.jcef;
 
 import com.intellij.testFramework.ApplicationRule;
+import com.intellij.testFramework.DisposableRule;
 import com.intellij.ui.scale.TestScaleHelper;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.*;
 
 /**
  * Tests "ide.browser.jcef.jsQueryPoolSize" reg key.
@@ -19,6 +17,9 @@ public class JBCefJSQueryPoolSizeKeyTest {
   }
 
   @ClassRule public static final ApplicationRule appRule = new ApplicationRule();
+
+  @Rule
+  public DisposableRule myDisposableRule = new DisposableRule();
 
   @Before
   public void before() {
@@ -33,6 +34,6 @@ public class JBCefJSQueryPoolSizeKeyTest {
 
   @Test
   public void test1() {
-    JBCefJSQueryPoolSizePropTest.test(b -> null);
+    JBCefJSQueryPoolSizePropTest.test(b -> null, myDisposableRule.getDisposable());
   }
 }
