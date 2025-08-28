@@ -62,7 +62,6 @@ com.intellij.platform.workspace.storage.EntityStorage
 - a:entitiesBySource(kotlin.jvm.functions.Function1):kotlin.sequences.Sequence
 - a:getExternalMapping(com.intellij.platform.workspace.storage.ExternalMappingKey):com.intellij.platform.workspace.storage.ExternalEntityMapping
 - a:getVirtualFileUrlIndex():com.intellij.platform.workspace.storage.url.VirtualFileUrlIndex
-- a:hasReferrers(com.intellij.platform.workspace.storage.SymbolicEntityId,java.lang.Class):Z
 - a:referrers(com.intellij.platform.workspace.storage.SymbolicEntityId,java.lang.Class):kotlin.sequences.Sequence
 - a:resolve(com.intellij.platform.workspace.storage.SymbolicEntityId):com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
 f:com.intellij.platform.workspace.storage.EntityStorageKt

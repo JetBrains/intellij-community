@@ -24,7 +24,9 @@ public interface EntityStorage {
 
   /**
    * Returns `true` if there is at least one entity of type [entityClass] which contains a [SymbolicEntityId] property equal to the given [id].
+   * It works faster than [referrers].
    */
+  @ApiStatus.Experimental
   public fun <E: WorkspaceEntityWithSymbolicId, R : WorkspaceEntity> hasReferrers(id: SymbolicEntityId<E>, entityClass: Class<R>): Boolean
 
   /**
