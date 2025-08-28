@@ -31,6 +31,7 @@ import com.intellij.ui.HintListener;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.ApiStatus;
@@ -223,6 +224,7 @@ public abstract class CompletionPhase implements Disposable {
     }
 
     @ApiStatus.Internal
+    @RequiresBackgroundThread
     public static void loadContributorsOutsideEdt(@NotNull Editor editor, @NotNull PsiFile file) {
       CompletionContributor.forLanguage(PsiUtilCore.getLanguageAtOffset(file, editor.getCaretModel().getOffset()));
     }
