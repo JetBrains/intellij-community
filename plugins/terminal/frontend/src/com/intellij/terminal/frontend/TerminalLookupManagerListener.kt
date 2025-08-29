@@ -1,19 +1,35 @@
 package com.intellij.terminal.frontend
 
 import com.google.common.base.Ascii
-import com.intellij.codeInsight.lookup.Lookup
-import com.intellij.codeInsight.lookup.LookupEvent
-import com.intellij.codeInsight.lookup.LookupListener
-import com.intellij.codeInsight.lookup.LookupManagerListener
+import com.intellij.codeInsight.lookup.*
 import com.intellij.codeInsight.lookup.impl.EmptyLookupItem
 import com.intellij.codeInsight.lookup.impl.LookupImpl
+import com.intellij.terminal.TerminalUiSettingsManager
+import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isOutputModelEditor
+import kotlin.math.max
+import kotlin.properties.ReadWriteProperty
+import kotlin.reflect.KProperty
 
 class TerminalLookupManagerListener : LookupManagerListener {
   override fun activeLookupChanged(oldLookup: Lookup?, newLookup: Lookup?) {
-    newLookup ?: return
-    val editor = newLookup.editor
-    editor.getUserData(TerminalInput.KEY) ?: return
+    if (newLookup == null || newLookup !is LookupEx || !newLookup.editor.isOutputModelEditor) {
+      return
+    }
+
+    newLookup.presentation = LookupPresentation.Builder()
+      .withMaxVisibleItemsCount(MaxVisibleItemsProperty())
+      .build()
     newLookup.addLookupListener(TerminalLookupListener())
+  }
+
+  private class MaxVisibleItemsProperty : ReadWriteProperty<LookupPresentation, Int> {
+    override fun getValue(thisRef: LookupPresentation, property: KProperty<*>): Int {
+      return TerminalUiSettingsManager.getInstance().maxVisibleCompletionItemsCount
+    }
+
+    override fun setValue(thisRef: LookupPresentation, property: KProperty<*>, value: Int) {
+      TerminalUiSettingsManager.getInstance().maxVisibleCompletionItemsCount = max(5, value)
+    }
   }
 }
 
