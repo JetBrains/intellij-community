@@ -47,7 +47,7 @@ import javax.swing.JComponent
 @ApiStatus.Internal
 class WelcomeScreenRightTab(
   val project: Project,
-  private val contentProvider: WelcomeRightTabContentProvider
+  val contentProvider: WelcomeRightTabContentProvider
 ) {
   val component: JComponent by lazy {
     JewelComposePanel {
