@@ -765,7 +765,9 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   @Override
   public boolean vetoesHiding() {
     // the second condition means that the Lookup belongs to another connected client
-    return myGuardedChanges > 0 || mySession != ClientSessionsUtil.getCurrentSessionOrNull(mySession.getProject()) || LookupImplVetoPolicy.anyVetoesHiding(this);
+    return myGuardedChanges > 0 ||
+           mySession != ClientSessionsUtil.getCurrentSessionOrNull(mySession.getProject()) ||
+           LookupImplVetoPolicy.anyVetoesHiding(this);
   }
 
   public boolean isAvailableToUser() {
