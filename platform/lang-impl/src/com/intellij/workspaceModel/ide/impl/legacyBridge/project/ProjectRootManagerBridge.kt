@@ -31,7 +31,7 @@ class ProjectRootManagerBridge(project: Project, coroutineScope: CoroutineScope)
     get() {
       return Runnable {
         super.actionToRunWhenProjectJdkChanges.run()
-        if (moduleDependencyIndex.hasProjectSdkDependency()) {
+        if (!useWsm && moduleDependencyIndex.hasProjectSdkDependency()) {
           val info = BuildableRootsChangeRescanningInfo.newInstance().addInheritedSdk().buildInfo()
           fireRootsChanged(info)
         }

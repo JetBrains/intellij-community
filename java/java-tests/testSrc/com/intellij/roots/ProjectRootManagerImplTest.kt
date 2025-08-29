@@ -3,98 +3,128 @@ package com.intellij.roots
 
 import com.intellij.idea.TestFor
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
-import com.intellij.openapi.roots.impl.ProjectRootManagerImpl.Companion.getInstanceImpl
-import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vfs.writeText
+import com.intellij.testFramework.ApplicationRule
+import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.common.waitUntil
-import com.intellij.testFramework.junit5.TestApplication
-import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.intellij.testFramework.createOrLoadProject
+import com.intellij.testFramework.writeChild
 import com.intellij.util.concurrency.ThreadingAssertions
-import kotlinx.coroutines.delay
 import org.assertj.core.api.Assertions
-import org.junit.jupiter.api.Test
+import org.junit.ClassRule
+import org.junit.Rule
+import org.junit.Test
+import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicInteger
-import kotlin.time.Duration.Companion.seconds
+import kotlin.time.Duration.Companion.minutes
 
-@TestApplication
 class ProjectRootManagerImplTest {
+  companion object {
+    @JvmField
+    @ClassRule
+    val appRule = ApplicationRule()
+  }
 
-  val project = projectFixture(openAfterCreation = true)
+  @JvmField
+  @Rule
+  val tempDirManager = TemporaryDirectory()
 
   @Test
   @TestFor(issues = ["IDEA-232634"])
-  fun testLoadStateFiresJdkChange(): Unit = timeoutRunBlocking {
-    val project = project.get()
-    val count = AtomicInteger(0)
-    ProjectRootManagerEx.getInstanceEx(project).addProjectJdkListener {
-      ThreadingAssertions.assertWriteAccess()
-      count.incrementAndGet()
+  fun testMiscFileChangeFiresJdkChangeEvent(): Unit = timeoutRunBlocking(100.minutes) {
+    createOrLoadProject(tempDirManager, {
+      it.writeChild("${Project.DIRECTORY_STORE_FOLDER}/misc.xml", $$"""
+        <?xml version="1.0" encoding="UTF-8"?>
+        <project version="4">
+          <component name="ProjectRootManager" version="2" languageLevel="JDK_11" default="true" project-jdk-name="corretto-11" project-jdk-type="JavaSDK">
+            <output url="file://$PROJECT_DIR$/out" />
+          </component>
+        </project>
+        """.trimIndent())
+      Path.of(it.path)
+    }, directoryBased = true, loadComponentState = false) { project ->
+      val count = AtomicInteger(0)
+      ProjectRootManagerEx.getInstanceEx(project).addProjectJdkListener {
+        ThreadingAssertions.assertWriteAccess()
+        count.incrementAndGet()
+      }
+
+      Assertions.assertThat(count).hasValue(0)
+      Assertions.assertThat(ProjectRootManagerEx.getInstanceEx(project).projectSdkName).isEqualTo("corretto-11")
+
+      val projectFile = project.projectFile!!
+      writeAction {
+        // change: different JDK, same compiler output => should generate JDK change event
+        projectFile.writeText($$"""
+          <?xml version="1.0" encoding="UTF-8"?>
+          <project version="4">
+            <component name="ProjectRootManager" version="2" languageLevel="JDK_11" default="true" project-jdk-name="corretto-17" project-jdk-type="JavaSDK">
+              <output url="file://$PROJECT_DIR$/out" />
+            </component>
+          </project>
+          """.trimIndent())
+      }
+
+      waitUntil {
+        "corretto-17" == ProjectRootManagerEx.getInstanceEx(project).projectSdkName
+      }
+
+      if (!Registry.`is`("project.root.manager.over.wsm")) {
+        // In legacy mode, ProjectJdkListener will be invoked in WA, but not the same WA where the change occurred.
+        // Wait for yet another WA to occur.
+        awaitWriteActions()
+      }
+
+      Assertions.assertThat(count).hasValue(1)
     }
-
-    val impl = getInstanceImpl(project)
-    val firstLoad = JDOMUtil.load("""
-                                   <component name="ProjectRootManager" version="2" languageLevel="JDK_11" default="true" project-jdk-name="corretto-11" project-jdk-type="JavaSDK">
-                                     <output url="file://${'$'}PROJECT_DIR${'$'}/out" />
-                                   </component>
-                                   """.trimIndent())
-    val secondLoad = JDOMUtil.load("""
-                                   <component name="ProjectRootManager" version="2" languageLevel="JDK_11" default="true" project-jdk-name="corretto-11" project-jdk-type="JavaSDK">
-                                     <output url="file://${'$'}PROJECT_DIR${'$'}/out2" />
-                                   </component>
-                                   """.trimIndent())
-    impl.loadState(firstLoad)
-    awaitWriteActions()
-
-    impl.loadState(secondLoad)
-    awaitWriteActions()
-
-    Assertions.assertThat(count).hasValueGreaterThanOrEqualTo(2)
   }
 
   @Test
   @TestFor(issues = ["IDEA-330499"])
   fun testNoEventsIfNothingChanged() = timeoutRunBlocking {
-    val project = project.get()
-    val count = AtomicInteger(0)
-    ProjectRootManagerEx.getInstanceEx(project).addProjectJdkListener {
-      ThreadingAssertions.assertWriteAccess()
-      count.incrementAndGet()
-    }
+    createOrLoadProject(tempDirManager, {
+      it.writeChild("${Project.DIRECTORY_STORE_FOLDER}/misc.xml", $$"""
+        <?xml version="1.0" encoding="UTF-8"?>
+        <project version="4">
+          <component name="ProjectRootManager" version="2" languageLevel="JDK_11" default="true" project-jdk-name="corretto-11" project-jdk-type="JavaSDK">
+            <output url="file://$PROJECT_DIR$/out" />
+          </component>
+        </project>
+        """.trimIndent())
+      Path.of(it.path)
+    }, directoryBased = true, loadComponentState = false) { project ->
+      val count = AtomicInteger(0)
+      ProjectRootManagerEx.getInstanceEx(project).addProjectJdkListener {
+        ThreadingAssertions.assertWriteAccess()
+        count.incrementAndGet()
+      }
 
-    val impl = getInstanceImpl(project)
-    val firstLoad = JDOMUtil.load("""
-                                        <component name="ProjectRootManager" version="2" languageLevel="JDK_11" default="true" project-jdk-name="corretto-11" project-jdk-type="JavaSDK">
-                                          <output url="file://${'$'}PROJECT_DIR${'$'}/out" />
-                                        </component>
-                                        """.trimIndent())
-    val secondLoad = JDOMUtil.load("""
-                                         <component name="ProjectRootManager" version="2" languageLevel="JDK_11" default="true" project-jdk-name="corretto-11" project-jdk-type="JavaSDK">
-                                           <output url="file://${'$'}PROJECT_DIR${'$'}/out2" />
-                                         </component>
-                                         """.trimIndent())
-    impl.loadState(firstLoad)
-    waitUntil {
-      1 == count.get()
-    }
+      Assertions.assertThat(count).hasValue(0)
+      Assertions.assertThat(ProjectRootManagerEx.getInstanceEx(project).projectSdkName).isEqualTo("corretto-11")
 
-    impl.loadState(secondLoad)
-    awaitWriteActions()
-    waitUntil {
-      2 == count.get()
-    }
+      val projectFile = project.projectFile!!
+      writeAction {
+        // change: same JDK, different compiler output => should be no JDK change event
+        projectFile.writeText($$"""
+          <?xml version="1.0" encoding="UTF-8"?>
+          <project version="4">
+            <component name="ProjectRootManager" version="2" languageLevel="JDK_11" default="true" project-jdk-name="corretto-11" project-jdk-type="JavaSDK">
+              <output url="file://$PROJECT_DIR$/out2" />
+            </component>
+          </project>
+          """.trimIndent())
+      }
 
-    impl.loadState(secondLoad)
-    awaitWriteActions()
-    repeat(5) {
-      org.junit.jupiter.api.Assertions.assertEquals(2, count.get())
-      delay(1.seconds)
+      Assertions.assertThat(count).hasValue(0)
     }
   }
 
   private suspend fun awaitWriteActions() {
-    delay(100)
     readAction { } // custom read action in order to dispatch pending WAs; it will execute after all pending WAs
   }
-
 }

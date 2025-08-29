@@ -21,6 +21,7 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.VcsIgnoreManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -227,7 +228,14 @@ public class RootsChangedTest extends JavaModuleTestCase {
       myModuleRootListener.assertNoEvents();
 
       ProjectRootManager.getInstance(myProject).setProjectSdk(jdkBBB);
-      myModuleRootListener.assertNoEvents(true);
+
+      if (Registry.is("project.root.manager.over.wsm")) {
+        // don't care if there are references from modules to project SDK or not: change in the "project sdk" always generates events
+        myModuleRootListener.assertEventsCount(1);
+      }
+      else {
+        myModuleRootListener.assertNoEvents(true);
+      }
 
       final ModifiableRootModel rootModelA = ModuleRootManager.getInstance(moduleA).getModifiableModel();
       final ModifiableRootModel rootModelB = ModuleRootManager.getInstance(moduleB).getModifiableModel();
