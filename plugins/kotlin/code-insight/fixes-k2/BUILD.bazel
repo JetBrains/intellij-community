@@ -66,6 +66,7 @@ jvm_library(
     "//plugins/kotlin/base/kdoc",
     "//plugins/kotlin/code-insight/kotlin.code-insight.k2:kotlin-code-insight-k2",
     "//java/java-impl:impl",
+    "//plugins/kotlin/kotlin.searching:searching-k2",
   ],
   runtime_deps = [":kotlin-code-insight-fixes-k2_resources"]
 )

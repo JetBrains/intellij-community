@@ -279,6 +279,8 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(ChangeSuperTypeListEntryTypeArgumentFixFactory.changeSuperTypeListEntryTypeArgumentReturnTypeFixFactory)
         registerFactory(AddMemberToSupertypeFixFactory.addMemberToSupertypeFixFactory)
         registerFactory(RenameParameterToMatchOverriddenMethodFixFactory.renameParameterToMatchOverriddenMethod)
+        registerFactory(ChangeSuspendInHierarchyFixFactory.suspendOverriddenByNonSuspend)
+        registerFactory(ChangeSuspendInHierarchyFixFactory.nonSuspendOverriddenBySuspend)
     }
 
     /**
