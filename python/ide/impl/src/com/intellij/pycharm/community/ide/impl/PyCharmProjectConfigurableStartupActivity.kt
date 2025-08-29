@@ -5,6 +5,7 @@ import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.pycharm.community.ide.impl.settings.PythonMainConfigurable
+import com.intellij.pycharm.community.ide.impl.settings.PythonToolsConfigurable
 
 class PyCharmProjectConfigurableStartupActivity : ProjectActivity {
 
@@ -37,10 +38,14 @@ class PyCharmProjectConfigurableStartupActivity : ProjectActivity {
           ep.groupWeight = 40
         }
         "com.jetbrains.python.configuration.PyIntegratedToolsModulesConfigurable" -> {
-          ep.groupId = PythonMainConfigurable.ID
+          ep.groupId = PythonToolsConfigurable.ID
           ep.key = "configurable.PyIntegratedToolsModulesConfigurable.pycharm.display.name"
           ep.bundle="messages.PyBundle"
           ep.groupWeight = 20
+        }
+        "com.jetbrains.python.black.configuration.BlackFormatterConfigurable" -> {
+          ep.groupId = PythonToolsConfigurable.ID
+          ep.groupWeight = 30
         }
       }
     }

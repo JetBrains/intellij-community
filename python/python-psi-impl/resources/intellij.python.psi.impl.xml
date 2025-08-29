@@ -551,6 +551,8 @@
                  description="Enables incremental reparse for statement lists"/>
     <registryKey key="python.strict.type.narrow" defaultValue="false"
                  description="Allows narrowing types exhaustively to Never"/>
+    <registryKey key="python.lsp.tools.enabled" defaultValue="true" restartRequired="true"
+                 description="Enables lsp tools"/>
 
     <virtualFileCustomDataProvider implementation="com.jetbrains.python.formatter.PyCodeStyleSettingsProvider"/>
   </extensions>
