@@ -18,9 +18,7 @@ import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil
 import com.intellij.platform.find.FindInFilesResult
 import com.intellij.platform.find.FindRemoteApi
@@ -29,16 +27,20 @@ import com.intellij.platform.project.findProjectOrNull
 import com.intellij.usages.FindUsagesProcessPresentation
 import com.intellij.usages.UsageInfo2UsageAdapter
 import com.intellij.usages.UsageViewPresentation
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.buffer
-import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 
 private val LOG: Logger = logger<FindRemoteApiImpl>()
 
+
 internal class FindRemoteApiImpl : FindRemoteApi {
+
+  override suspend fun fileContentReady(): Flow<String> {
+    return FileContentReadyBus.newFlow()
+  }
 
   override suspend fun findByModel(findModel: FindModel, projectId: ProjectId, filesToScanInitially: List<VirtualFileId>, maxUsagesCount: Int): Flow<FindInFilesResult> {
     val sentItems = AtomicInteger(0)
@@ -79,27 +81,28 @@ internal class FindRemoteApiImpl : FindRemoteApi {
         val bgColor = VfsPresentationUtil.getFileBackgroundColor(project, virtualFile)?.rpcId()
         val presentablePath = getPresentableFilePath(project, scope, virtualFile)
 
-          val result = FindInFilesResult(
-            presentation = textChunks,
-            line = adapter.line,
-            navigationOffset = adapter.navigationOffset,
-            mergedOffsets = adapter.mergedInfos.map { it.navigationOffset },
-            length = adapter.navigationRange.endOffset - adapter.navigationRange.startOffset,
-            fileId = virtualFile.rpcId(),
-            presentablePath =
-              if (virtualFile.parent == null) FindPopupPanel.getPresentablePath(project, virtualFile) ?: virtualFile.presentableUrl
-              else FindPopupPanel.getPresentablePath(project, virtualFile.parent) + File.separator + virtualFile.name,
-            shortenPresentablePath = presentablePath,
-            backgroundColor = bgColor,
-            tooltipText = adapter.tooltipText,
-            iconId = adapter.icon?.rpcId(),
-            fileLength = virtualFile.length.toInt(),
-            usageInfos = adapter.mergedInfos.toList()
-          )
+        val isUpdateRequired = FindResultPreparationService.getInstance().shouldWaitForUpdate(virtualFile)
 
-        BeforeSendFindResultListener.EP_NAME.extensionList.forEach { listener ->
-          listener.beforeSend(virtualFile)
-        }
+        val result = FindInFilesResult(
+          presentation = textChunks,
+          line = adapter.line,
+          navigationOffset = adapter.navigationOffset,
+          mergedOffsets = adapter.mergedInfos.map { it.navigationOffset },
+          length = adapter.navigationRange.endOffset - adapter.navigationRange.startOffset,
+          fileId = virtualFile.rpcId(),
+          isUpdateRequired = isUpdateRequired,
+          fullFilePath = virtualFile.path,
+          presentablePath =
+            if (virtualFile.parent == null) FindPopupPanel.getPresentablePath(project, virtualFile) ?: virtualFile.presentableUrl
+            else FindPopupPanel.getPresentablePath(project, virtualFile.parent) + File.separator + virtualFile.name,
+          shortenPresentablePath = presentablePath,
+          backgroundColor = bgColor,
+          tooltipText = adapter.tooltipText,
+          iconId = adapter.icon?.rpcId(),
+          fileLength = virtualFile.length.toInt(),
+          usageInfos = adapter.mergedInfos.toList()
+        )
+
 
         val sent = trySend(result)
         if (sent.isSuccess) {
@@ -144,15 +147,30 @@ internal class FindRemoteApiImpl : FindRemoteApi {
   }
 }
 
-
 @ApiStatus.Internal
-fun interface BeforeSendFindResultListener {
+object FileContentReadyBus {
+  private data class Subscriber(
+    val flow: MutableSharedFlow<String>,
+    val signaled: MutableSet<String>,
+  )
 
-  fun beforeSend(virtualFile: VirtualFile)
+  private val subscribers = ConcurrentHashMap.newKeySet<Subscriber>()
 
-  companion object {
-    @JvmField
-    val EP_NAME: ExtensionPointName<BeforeSendFindResultListener> =
-      ExtensionPointName.Companion.create("com.intellij.beforeSendFindResultListener")
+  fun newFlow(): Flow<String> {
+    val flow = MutableSharedFlow<String>(extraBufferCapacity = 64)
+    val signaled = ConcurrentHashMap.newKeySet<String>()
+    val subscriber = Subscriber(flow, signaled)
+    subscribers.add(subscriber)
+    return flow.onCompletion {
+      subscribers.remove(subscriber)
+    }
+  }
+
+  fun emit(filePath: String) {
+    subscribers.forEach { sub ->
+      if (sub.signaled.add(filePath)) {
+        sub.flow.tryEmit(filePath)
+      }
+    }
   }
 }

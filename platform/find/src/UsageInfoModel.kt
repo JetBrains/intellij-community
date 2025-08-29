@@ -50,6 +50,7 @@ internal class UsageInfoModel private constructor(val project: Project, val mode
     virtualFile
   }
 
+  private var isUpdateRequired: Boolean = model.isUpdateRequired
   private var cachedPsiFile: PsiFile? = null
   private var document: Document? = null
   private var cachedSmartRange: SmartPsiFileRange? = null
@@ -87,10 +88,6 @@ internal class UsageInfoModel private constructor(val project: Project, val mode
     (document as? DocumentEx)?.removeFullUpdateListener(fullUpdateListener)
   }
 
-  init {
-    initialize()
-  }
-
   private fun initialize() {
     //local IDE case
     if (model.usageInfos.isNotEmpty()) {
@@ -102,6 +99,10 @@ internal class UsageInfoModel private constructor(val project: Project, val mode
     }
     //RemDev case - we need to load psi elements
     else {
+      if (isUpdateRequired) {
+        LOG.debug("Update is required for ${model.presentablePath}")
+        return
+      }
       if (initializationJob?.isActive == true) {
         LOG.debug("Initialization job is already in progress ${model.presentablePath}")
         return
@@ -181,6 +182,9 @@ internal class UsageInfoModel private constructor(val project: Project, val mode
   }
 
   override fun isValid(): Boolean {
+    if (isUpdateRequired) {
+      return false
+    }
     if (virtualFile?.isValid != true) {
       return false
     }
@@ -292,6 +296,11 @@ internal class UsageInfoModel private constructor(val project: Project, val mode
         doc
       }
     }
+  }
+
+  fun setReadyToInitialize() {
+    isUpdateRequired = false
+    initialize()
   }
 
   private class UsageInfoModelPresentation(val model: FindInFilesResult) : UsagePresentation {

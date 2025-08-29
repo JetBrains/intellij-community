@@ -66,7 +66,7 @@ open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : Find
         selectScopeJob?.join()
         val filesToScanInitially = previousUsages.mapNotNull { (it as? UsageInfoModel)?.model?.fileId?.virtualFile() }.toSet()
         currentSearchDisposable?.let { Disposer.dispose(it) }
-        currentSearchDisposable = Disposer.newCheckedDisposable( "Find in Project Search").also {
+        currentSearchDisposable = Disposer.newCheckedDisposable("Find in Project Search").also {
           if (!Disposer.tryRegister(disposableParent, it)) {
             Disposer.dispose(it)
             LOG.warn("Failed to register disposable for search. Looks like FindPopup is already closed. Search will be canceled.")
@@ -81,32 +81,66 @@ open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : Find
           }
         }
         val maxUsagesCount = ShowUsagesAction.getUsagesPageSize()
-        FindRemoteApi.getInstance().findByModel(
-          findModel = findModel,
-          projectId = project.projectId(),
-          filesToScanInitially = filesToScanInitially.map { it.rpcId() },
-          maxUsagesCount = maxUsagesCount
-        ).let {
-          if (shouldThrottle) it.throttledWithAccumulation()
-          else it.map { event -> ThrottledOneItem(event) }
-        }.take(maxUsagesCount).collect { throttledItems ->
-          if (searchDisposable?.isDisposed == true) {
-            return@collect
-          }
-          throttledItems.items.forEach { item ->
-            val usage = UsageInfoModel.createUsageInfoModel(project, item, initScope, onUpdateModelCallback)
-            if (searchDisposable == null || !Disposer.tryRegister(searchDisposable, usage)) {
-              Disposer.dispose(usage)
+        val toUpdateUsages = mutableListOf<UsageInfoModel>()
+        val updatedFiles = mutableSetOf<String>()
+        val findRemoteApi = FindRemoteApi.getInstance()
+        val fileContentReadyFlow = findRemoteApi.fileContentReady()
+        childScope("FindAndReplaceExecutorImpl.findByModel").launch {
+          findRemoteApi.findByModel(
+            findModel = findModel,
+            projectId = project.projectId(),
+            filesToScanInitially = filesToScanInitially.map { it.rpcId() },
+            maxUsagesCount = maxUsagesCount
+          ).let {
+            if (shouldThrottle) it.throttledWithAccumulation()
+            else it.map { event -> ThrottledOneItem(event) }
+          }.take(maxUsagesCount).collect { throttledItems ->
+            if (searchDisposable?.isDisposed == true) {
               return@collect
             }
+            throttledItems.items.forEach { item ->
+              val usage = UsageInfoModel.createUsageInfoModel(project, item, initScope, onUpdateModelCallback)
+              if (searchDisposable == null || !Disposer.tryRegister(searchDisposable, usage)) {
+                Disposer.dispose(usage)
+                return@collect
+              }
 
-            val shouldContinue = onResult(usage)
-            if (!shouldContinue) {
-              return@collect
+              if (item.isUpdateRequired) {
+                synchronized(toUpdateUsages) {
+                  if (updatedFiles.contains(item.fullFilePath)) {
+                    usage.setReadyToInitialize()
+                  }
+                  else {
+                    toUpdateUsages.add(usage)
+                  }
+                }
+              }
+              val shouldContinue = onResult(usage)
+              if (!shouldContinue) {
+                return@collect
+              }
+            }
+          }
+          onFinish()
+        }
+        val fileReadyScope = childScope("FindAndReplaceExecutorImpl.FileContentReady")
+        if (searchDisposable != null && !searchDisposable.isDisposed) {
+          Disposer.register(searchDisposable) {
+            fileReadyScope.cancel("search disposed")
+          }
+          fileReadyScope.launch {
+            fileContentReadyFlow.collect { filePath ->
+              synchronized(toUpdateUsages) {
+                updatedFiles.add(filePath)
+                toUpdateUsages.filter { it.model.fullFilePath == filePath }
+                .forEach {
+                  it.setReadyToInitialize()
+                  toUpdateUsages.remove(it)
+                }
+              }
             }
           }
         }
-        onFinish()
       }
     }
     else {
@@ -150,7 +184,7 @@ open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : Find
   override fun performScopeSelection(scopeId: String, project: Project) {
     selectScopeJob = coroutineScope.launch {
       val deferred = try {
-       ScopeModelRemoteApi.getInstance().performScopeSelection(scopeId, project.projectId())
+        ScopeModelRemoteApi.getInstance().performScopeSelection(scopeId, project.projectId())
       }
       catch (e: RpcTimeoutException) {
         LOG.warn("Failed to select scope", e)
