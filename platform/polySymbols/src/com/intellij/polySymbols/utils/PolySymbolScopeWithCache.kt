@@ -91,13 +91,13 @@ abstract class PolySymbolScopeWithCache<T : UserDataHolder, K>(
     val manager = CachedValuesManager.getManager(project)
     return if (key == Unit) {
       manager.getCachedValue(dataHolder, manager.getKeyForClass(this::class.java), {
-        CachedValueProvider.Result(NamesProviderToMapCache(), PsiModificationTracker.NEVER_CHANGED)
+        CachedValueProvider.Result(NamesProviderToMapCache(project), PsiModificationTracker.NEVER_CHANGED)
       }, false)
     }
     else {
       manager.getCachedValue(dataHolder, manager.getKeyForClass(this::class.java), {
         CachedValueProvider.Result(ConcurrentHashMap<K, NamesProviderToMapCache>(), ModificationTracker.NEVER_CHANGED)
-      }, false).getOrPut(key) { NamesProviderToMapCache() }
+      }, false).getOrPut(key) { NamesProviderToMapCache(project) }
     }
   }
 
@@ -158,8 +158,8 @@ abstract class PolySymbolScopeWithCache<T : UserDataHolder, K>(
   private fun getMap(queryExecutor: PolySymbolQueryExecutor): PolySymbolSearchMap =
     getNamesProviderToMapCache().getOrCreateMap(queryExecutor.namesProvider, this::createCachedSearchMap)
 
-  private class NamesProviderToMapCache {
-    private val cache: ConcurrentMap<PolySymbolNamesProvider, CachedValue<PolySymbolSearchMap>> = ContainerUtil.createConcurrentSoftKeySoftValueMap()
+  private class NamesProviderToMapCache(private val project: Project) {
+    private val cache: ConcurrentMap<List<Any?>, CachedValue<PolySymbolSearchMap>> = ContainerUtil.createConcurrentSoftKeySoftValueMap()
     private var cacheMisses = 0
 
     fun getOrCreateMap(
@@ -171,7 +171,7 @@ abstract class PolySymbolScopeWithCache<T : UserDataHolder, K>(
         cacheMisses = 0
         cache.clear()
       }
-      return cache.getOrPut(namesProvider) {
+      return cache.getOrPut(PolySymbolThreadLocalCacheKeyProvider.getCacheKeys(namesProvider, project)) {
         cacheMisses++
         createCachedSearchMap(namesProvider)
       }.value
