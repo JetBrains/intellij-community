@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbService;
@@ -19,6 +20,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.intellij.codeWithMe.ClientIdKt.isOnGuest;
@@ -29,6 +31,8 @@ import static com.intellij.codeWithMe.ClientIdKt.isOnGuest;
  * @see #hasAnythingHappened
  */
 final class ActionTracker {
+  private static final Logger LOG = Logger.getInstance(ActionTracker.class);
+
   private final @NotNull MessageBusConnection myConnection;
   private @NotNull List<Integer> myCaretOffsets;
   private long myStartDocStamp;
@@ -36,6 +40,8 @@ final class ActionTracker {
   private final Editor myEditor;
   private final Project myProject;
   private final boolean myIsDumb;
+
+  private final List<String> happenedActions = new ArrayList<>();
 
   ActionTracker(@NotNull Editor editor, @NotNull Disposable parentDisposable) {
     myEditor = editor;
@@ -48,6 +54,9 @@ final class ActionTracker {
       @Override
       public void beforeActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event) {
         myActionsHappened = true;
+        if (LOG.isTraceEnabled()) {
+          happenedActions.add("Action class = " + action.getClass() + ", action = " + action);
+        }
       }
     });
     setDocumentState();
@@ -96,12 +105,35 @@ final class ActionTracker {
 
 
   @NotNull String describeChangeEvent() {
-    if (myActionsHappened) return "Actions were performed";
-    if (myIsDumb != DumbService.getInstance(myProject).isDumb()) return "DumbMode state changed";
-    if (myEditor.isDisposed()) return "Editor was disposed";
-    if (myEditor instanceof EditorWindow && !((EditorWindow)myEditor).isValid()) return "Editor window became invalid";
-    if (myStartDocStamp != docStamp()) return "Document was modified; myStartDocStamp =" + myStartDocStamp + ", docStamp()=" + docStamp();
-    if (!myCaretOffsets.equals(caretOffsets())) return "Caret position changed; myCaretOffsets = " + myCaretOffsets + ", caretOffsets()=" + caretOffsets();
+    if (myActionsHappened) {
+      if (LOG.isTraceEnabled()) {
+        return "The following actions were performed: " + happenedActions;
+      }
+      else {
+        return "Actions were performed";
+      }
+    }
+
+    if (myIsDumb != DumbService.getInstance(myProject).isDumb()) {
+      return "DumbMode state changed";
+    }
+
+    if (myEditor.isDisposed()) {
+      return "Editor was disposed";
+    }
+
+    if (myEditor instanceof EditorWindow && !((EditorWindow)myEditor).isValid()) {
+      return "Editor window became invalid";
+    }
+
+    if (myStartDocStamp != docStamp()) {
+      return "Document was modified; myStartDocStamp =" + myStartDocStamp + ", docStamp()=" + docStamp();
+    }
+
+    if (!myCaretOffsets.equals(caretOffsets())) {
+      return "Caret position changed; myCaretOffsets = " + myCaretOffsets + ", caretOffsets()=" + caretOffsets();
+    }
+
     return "No changes detected";
   }
 }
