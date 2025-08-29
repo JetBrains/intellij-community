@@ -1,15 +1,16 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.vcs.changes
+package com.intellij.platform.vcs
 
 import com.intellij.openapi.ListSelection
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.ChangeList
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-object ChangesDataKeys {
+object VcsSharedDataKeys {
   @JvmField
   val CHANGES: DataKey<Array<Change>> = DataKey.create("vcs.Change")
 
@@ -21,6 +22,9 @@ object ChangesDataKeys {
 
   @JvmField
   val CHANGES_SELECTION: DataKey<ListSelection<Change>> = DataKey.create("vcs.ChangesSelection")
+
+  @JvmField
+  val CHANGE_LISTS: DataKey<Array<ChangeList>> = DataKey.create("vcs.ChangeList")
 
   @JvmField
   val CHANGE_LEAD_SELECTION: DataKey<Array<Change>> = DataKey.create("ChangeListView.ChangeLeadSelection")

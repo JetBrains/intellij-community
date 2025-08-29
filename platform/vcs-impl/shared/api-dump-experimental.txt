@@ -1,5 +1,9 @@
 *:com.intellij.openapi.vcs.LinkDescriptor
 - a:getRange():com.intellij.openapi.util.TextRange
+*:com.intellij.openapi.vcs.changes.ChangesViewNodeAction
+- sf:EP_NAME:com.intellij.openapi.extensions.ProjectExtensionPointName
+- a:createNodeHoverIcon(com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode):com.intellij.openapi.vcs.changes.ui.HoverIcon
+- handleDoubleClick(com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode):Z
 c:com.intellij.openapi.vcs.changes.ui.TreeModelBuilder
 - com.intellij.openapi.vcs.changes.ui.ChangesViewModelBuilder
 - *:build(Z):javax.swing.tree.DefaultTreeModel

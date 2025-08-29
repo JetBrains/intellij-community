@@ -66,10 +66,6 @@
                     interface="com.intellij.openapi.vcs.changes.ChangesViewModifier"
                     area="IDEA_PROJECT"
                     dynamic="true"/>
-    <extensionPoint name="vcs.changes.changesViewNodeAction"
-                    interface="com.intellij.openapi.vcs.changes.ChangesViewNodeAction"
-                    area="IDEA_PROJECT"
-                    dynamic="true"/>
     <extensionPoint name="vcs.changes.changesViewConflictsBannerCustomizer"
                     interface="com.intellij.openapi.vcs.merge.ChangesViewConflictsBannerCustomizer"
                     area="IDEA_PROJECT"

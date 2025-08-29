@@ -12,7 +12,7 @@ import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.history.VcsHistorySession;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.platform.vcs.changes.ChangesDataKeys;
+import com.intellij.platform.vcs.VcsSharedDataKeys;
 import com.intellij.util.Consumer;
 import com.intellij.vcs.commit.CommitWorkflowHandler;
 import com.intellij.vcs.commit.CommitWorkflowUi;
@@ -34,29 +34,29 @@ public interface VcsDataKeys {
   DataKey<VirtualFile> VCS_VIRTUAL_FILE = DataKey.create("VCS_VIRTUAL_FILE");
   DataKey<FilePath> FILE_PATH = DataKey.create("FILE_PATH");
 
-  @ApiStatus.Internal DataKey<Iterable<FilePath>> FILE_PATHS = ChangesDataKeys.FILE_PATHS;
+  @ApiStatus.Internal DataKey<Iterable<FilePath>> FILE_PATHS = VcsSharedDataKeys.FILE_PATHS;
   /**
    * Lazily iterable {@link com.intellij.openapi.actionSystem.CommonDataKeys#VIRTUAL_FILE_ARRAY}.
    *
    * @see com.intellij.openapi.vcs.VcsVirtualFilesRule
    */
-  DataKey<Iterable<VirtualFile>> VIRTUAL_FILES = ChangesDataKeys.VIRTUAL_FILES;
+  DataKey<Iterable<VirtualFile>> VIRTUAL_FILES = VcsSharedDataKeys.VIRTUAL_FILES;
 
-  DataKey<ChangeList[]> CHANGE_LISTS = DataKey.create("vcs.ChangeList");
+  DataKey<ChangeList[]> CHANGE_LISTS = VcsSharedDataKeys.CHANGE_LISTS;
   /**
    * Selected changes. In some cases, may return all changes if selection is empty.
    *
    * @see #SELECTED_CHANGES
    */
-  DataKey<Change[]> CHANGES = ChangesDataKeys.CHANGES;
+  DataKey<Change[]> CHANGES = VcsSharedDataKeys.CHANGES;
   /**
    * Selected changes only.
    */
-  DataKey<Change[]> SELECTED_CHANGES = ChangesDataKeys.SELECTED_CHANGES;
+  DataKey<Change[]> SELECTED_CHANGES = VcsSharedDataKeys.SELECTED_CHANGES;
   /**
    * Same as {@link #SELECTED_CHANGES}.
    */
-  DataKey<Change[]> SELECTED_CHANGES_IN_DETAILS = ChangesDataKeys.SELECTED_CHANGES_IN_DETAILS;
+  DataKey<Change[]> SELECTED_CHANGES_IN_DETAILS = VcsSharedDataKeys.SELECTED_CHANGES_IN_DETAILS;
   /**
    * For multiple selection, return selected changes.
    * For singular selection, return all changes and set selected index.
@@ -65,7 +65,7 @@ public interface VcsDataKeys {
    * @see com.intellij.openapi.vcs.changes.VcsChangesSelectionRule
    * @see com.intellij.openapi.vcs.changes.ui.VcsTreeModelData#getListSelectionOrAll
    */
-  DataKey<ListSelection<Change>> CHANGES_SELECTION = ChangesDataKeys.CHANGES_SELECTION;
+  DataKey<ListSelection<Change>> CHANGES_SELECTION = VcsSharedDataKeys.CHANGES_SELECTION;
   /**
    * Explicitly selected changes.
    * <p>
@@ -73,7 +73,7 @@ public interface VcsDataKeys {
    * This key will return selected nodes only.
    * This difference might be important when {@link AbstractVcs#areDirectoriesVersionedItems()} is {@code true}.
    */
-  DataKey<Change[]> CHANGE_LEAD_SELECTION = ChangesDataKeys.CHANGE_LEAD_SELECTION;
+  DataKey<Change[]> CHANGE_LEAD_SELECTION = VcsSharedDataKeys.CHANGE_LEAD_SELECTION;
 
   DataKey<Change> CURRENT_CHANGE = DataKey.create("vcs.CurrentChange");
   DataKey<VirtualFile> CURRENT_UNVERSIONED = DataKey.create("ChangeListView.CurrentUnversionedFile");

@@ -27,5 +27,10 @@
     <extensionPoint name="changesGroupingPolicy" beanClass="com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactoryEPBean" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactory"/>
     </extensionPoint>
+
+    <extensionPoint name="vcs.changes.changesViewNodeAction"
+                    interface="com.intellij.openapi.vcs.changes.ChangesViewNodeAction"
+                    area="IDEA_PROJECT"
+                    dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

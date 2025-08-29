@@ -11,15 +11,14 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.actions.VirtualFileDeleteProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.vcs.VcsSharedDataKeys;
+import com.intellij.platform.vcs.impl.shared.changes.ChangeListsViewModel;
 import com.intellij.platform.vcs.impl.shared.commit.EditedCommitNode;
 import com.intellij.ui.PopupHandler;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -35,15 +34,16 @@ import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.Objects;
 
-import static com.intellij.openapi.vcs.changes.ChangesUtil.getNavigatableArray;
 import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.*;
 import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserResolvedConflictsNodeKt.RESOLVED_CONFLICTS_NODE_TAG;
+import static com.intellij.platform.vcs.changes.ChangesUtil.getNavigatableArray;
 
 // TODO: Check if we could extend DnDAwareTree here instead of directly implementing DnDAware
 public abstract class ChangesListView extends ChangesTree implements DnDAware {
   private static final Logger LOG = Logger.getInstance(ChangesListView.class);
 
   public static final @NonNls String HELP_ID = "ideaInterface.changes";
+  // FIXME IJPL-173924 should be replaced with an RD-friendly version
   public static final @NonNls DataKey<ChangesListView> DATA_KEY
     = DataKey.create("ChangeListView");
   public static final @NonNls DataKey<Iterable<FilePath>> UNVERSIONED_FILE_PATHS_DATA_KEY
@@ -144,15 +144,15 @@ public abstract class ChangesListView extends ChangesTree implements DnDAware {
   public void uiDataSnapshot(@NotNull DataSink sink) {
     super.uiDataSnapshot(sink);
     sink.set(DATA_KEY, this);
-    sink.set(VcsDataKeys.CHANGES, getSelectedChanges()
+    sink.set(VcsSharedDataKeys.CHANGES, getSelectedChanges()
       .toArray(Change.EMPTY_CHANGE_ARRAY));
-    sink.set(VcsDataKeys.CHANGE_LEAD_SELECTION, VcsTreeModelData.exactlySelected(this)
+    sink.set(VcsSharedDataKeys.CHANGE_LEAD_SELECTION, VcsTreeModelData.exactlySelected(this)
       .iterateUserObjects(Change.class)
       .toArray(Change.EMPTY_CHANGE_ARRAY));
-    sink.set(VcsDataKeys.CHANGE_LISTS, VcsTreeModelData.exactlySelected(this)
+    sink.set(VcsSharedDataKeys.CHANGE_LISTS, VcsTreeModelData.exactlySelected(this)
       .iterateRawUserObjects(ChangeList.class)
       .toList().toArray(ChangeList[]::new));
-    sink.set(VcsDataKeys.FILE_PATHS, VcsTreeModelData.mapToFilePath(VcsTreeModelData.selected(this)));
+    sink.set(VcsSharedDataKeys.FILE_PATHS, VcsTreeModelData.mapToFilePath(VcsTreeModelData.selected(this)));
     // don't try to delete files when only a changelist node is selected
     sink.set(PlatformDataKeys.DELETE_ELEMENT_PROVIDER,
              VcsTreeModelData.exactlySelected(this)
@@ -184,7 +184,7 @@ public abstract class ChangesListView extends ChangesTree implements DnDAware {
       return VcsTreeModelData.mapToVirtualFile(treeSelection)
         .toArray(VirtualFile.EMPTY_ARRAY);
     });
-    sink.lazy(VcsDataKeys.VIRTUAL_FILES, () -> {
+    sink.lazy(VcsSharedDataKeys.VIRTUAL_FILES, () -> {
       return VcsTreeModelData.mapToVirtualFile(treeSelection);
     });
     sink.lazy(CommonDataKeys.NAVIGATABLE, () -> {
@@ -233,12 +233,7 @@ public abstract class ChangesListView extends ChangesTree implements DnDAware {
   }
 
   public static @Nullable Change toHijackedChange(@NotNull Project project, @NotNull VirtualFile file) {
-    VcsCurrentRevisionProxy before = VcsCurrentRevisionProxy.create(file, project);
-    if (before != null) {
-      ContentRevision afterRevision = new CurrentContentRevision(VcsUtil.getFilePath(file));
-      return new Change(before, afterRevision, FileStatus.HIJACKED);
-    }
-    return null;
+    return ChangesTreeCompatibilityProvider.getInstance().toHijackedChange(project, file);
   }
 
   private @NotNull JBIterable<LocallyDeletedChange> getSelectedLocallyDeletedChanges() {
@@ -251,7 +246,7 @@ public abstract class ChangesListView extends ChangesTree implements DnDAware {
     if (node == null) return null;
 
     ChangesBrowserNode<?> parent;
-    if (!ChangeListManager.getInstance(myProject).areChangeListsEnabled()) {
+    if (!ChangeListsViewModel.getInstance(myProject).getAreChangeListsEnabled().getValue()) {
       parent = getRoot();
     }
     else {

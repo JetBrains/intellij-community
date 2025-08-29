@@ -17,6 +17,7 @@ import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.vcs.commit.CommitSessionCollector
 import com.intellij.vcsUtil.VcsImplUtil
+import com.intellij.vcsUtil.VcsUtil
 import com.intellij.vcsUtil.VcsUtil.getVcsFor
 import java.awt.event.MouseEvent
 import javax.swing.tree.TreePath
@@ -54,6 +55,12 @@ internal class BackendChangesTreeCompatibilityProvider : ChangesTreeCompatibilit
   }
 
   override fun resolveLocalFile(path: String): VirtualFile? = LocalFileSystem.getInstance().findFileByPath(path)
+
+  override fun toHijackedChange(project: Project, file: VirtualFile): Change? {
+    val before = VcsCurrentRevisionProxy.create(file, project) ?: return null
+    val after = CurrentContentRevision(VcsUtil.getFilePath(file))
+    return Change(before, after, FileStatus.HIJACKED)
+  }
 
   override fun getScopeVirtualFileFor(filePath: FilePath): VirtualFile? {
     if (filePath.isNonLocal()) return null
