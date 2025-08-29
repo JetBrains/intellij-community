@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
+import com.intellij.find.ngrams.TrigramIndex;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ProhibitAWTEvents;
 import com.intellij.openapi.application.AccessToken;
@@ -17,6 +18,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
+import com.intellij.psi.impl.cache.impl.id.IdIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.StubUpdatingIndex;
 import com.intellij.testFramework.common.DumpKt;
@@ -123,7 +125,7 @@ public final class LeakHunter {
 
     Computable<Boolean> runnable = () -> {
       try (AccessToken ignored = ProhibitAWTEvents.start("checking for leaks")) {
-        return DebugReflectionUtil.walkObjects(10000, 10_000_000, rootsSupplier.get(), suspectClass, __ -> true, (leaked, backLink) -> {
+        return DebugReflectionUtil.walkObjects(1_000, 1_000_000, rootsSupplier.get(), suspectClass, __ -> true, (leaked, backLink) -> {
           if (leakBackLinkProcessor != null && leakBackLinkProcessor.test(backLink)) {
             return true;
           }
@@ -155,6 +157,8 @@ public final class LeakHunter {
         UIUtil.pump();
       }
       FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, project, GlobalSearchScope.allScope(project));
+      FileBasedIndex.getInstance().ensureUpToDate(IdIndex.NAME, project, GlobalSearchScope.allScope(project));
+      FileBasedIndex.getInstance().ensureUpToDate(TrigramIndex.INDEX_ID, project, GlobalSearchScope.allScope(project));
     }
   }
 
