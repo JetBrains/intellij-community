@@ -9,7 +9,6 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
-import com.intellij.openapi.vfs.newvfs.ManagingFS
 import groovy.transform.Internal
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -24,7 +23,6 @@ internal class ProjectViewVfsInfoUpdater(val project: Project, val scope: Corout
   val requests = Channel<Unit>()
 
   init {
-    var modCount = ManagingFS.getInstance().structureModificationCount
     scope.launch(CoroutineName("VFS project view info updater timer")) {
       while (true) {
         delay(5.seconds)
@@ -37,11 +35,7 @@ internal class ProjectViewVfsInfoUpdater(val project: Project, val scope: Corout
         if (Registry.intValue("project.view.show.vfs.cached.children.count.limit") <= 0) {
           continue
         }
-        val newModCount = ManagingFS.getInstance().structureModificationCount
-        if (newModCount != modCount) {
-          modCount = newModCount
-          ProjectView.getInstance(project)?.currentProjectViewPane?.updateFromRoot(true)
-        }
+        ProjectView.getInstance(project)?.currentProjectViewPane?.updateFromRoot(true)
       }
     }
   }
