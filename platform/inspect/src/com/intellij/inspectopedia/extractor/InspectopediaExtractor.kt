@@ -80,9 +80,14 @@ private class InspectopediaExtractor : ModernApplicationStarter() {
       val inspectionExtraState = serviceAsync<InspectionMetaInformationService>().getState()
 
       for (scopeToolState in scopeToolStates) {
+
         val wrapper = scopeToolState.tool
         val extension = wrapper.extension
+
         val pluginId = extension?.pluginDescriptor?.pluginId?.idString ?: ideName
+        val plugin = availablePlugins.get(pluginId)
+        if (plugin == null) continue
+
         val description = wrapper.loadDescription()?.split("<!-- tooltip end -->")?.map { it.trim() }?.filter { it.isNotEmpty() }?.toList()
                           ?: emptyList()
 
@@ -102,7 +107,7 @@ private class InspectopediaExtractor : ModernApplicationStarter() {
         try {
           val language = wrapper.language
           val extraState = inspectionExtraState.inspections.get(wrapper.id)
-          availablePlugins.get(pluginId)!!.inspections.add(Inspection(
+          plugin.inspections.add(Inspection(
             id = wrapper.tool.alternativeID ?: wrapper.id,
             name = wrapper.displayName,
             severity = wrapper.defaultLevel.name,
