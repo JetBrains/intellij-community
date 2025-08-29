@@ -120,6 +120,11 @@ internal fun keepCompilationState(options: BuildOptions): Boolean {
 }
 
 internal suspend fun reuseOrCompile(context: CompilationContext, moduleNames: Collection<String>?, includingTestsInModules: List<String>?, span: Span) {
+  if (context.compilationData.outputForAllModulesIsAvailable) {
+    span.addEvent("Output for all modules was already provided in this compilation session, skipping compilation")
+    return
+  }
+  
   val pathToCompiledClassArchiveMetadata = context.options.pathToCompiledClassesArchivesMetadata
   when {
     context.options.useCompiledClassesFromProjectOutput -> {
@@ -134,10 +139,12 @@ internal suspend fun reuseOrCompile(context: CompilationContext, moduleNames: Co
         span.addEvent(msg)
       }
       span.addEvent("compiled classes reused", Attributes.of(AttributeKey.stringKey("dir"), context.classesOutputDirectory.toString()))
+      context.compilationData.outputForAllModulesIsAvailable = true
     }
     context.options.pathToCompiledClassesArchive != null -> {
       span.addEvent("compilation skipped", Attributes.of(AttributeKey.stringKey("reuseFrom"), context.options.pathToCompiledClassesArchive.toString()))
       unpackCompiledClasses(classOutput = context.classesOutputDirectory, context = context)
+      context.compilationData.outputForAllModulesIsAvailable = true
     }
     pathToCompiledClassArchiveMetadata != null -> {
       span.addEvent("compilation skipped", Attributes.of(AttributeKey.stringKey("reuseFrom"), pathToCompiledClassArchiveMetadata.toString()))
@@ -153,6 +160,7 @@ internal suspend fun reuseOrCompile(context: CompilationContext, moduleNames: Co
            */
           saveHash = !forInstallers,
         )
+        context.compilationData.outputForAllModulesIsAvailable = true
       }
     }
     else -> {
