@@ -6,6 +6,7 @@ import com.intellij.externalDependencies.ExternalDependenciesManager
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.impl.ProjectUtil.getActiveFrameOrWelcomeScreen
 import com.intellij.ide.plugins.*
+import com.intellij.ide.plugins.marketplace.ApplyPluginsStateResult
 import com.intellij.ide.plugins.marketplace.CheckErrorsResult
 import com.intellij.ide.plugins.marketplace.InstallPluginResult
 import com.intellij.ide.plugins.newui.PluginLogo.getDefault
@@ -125,7 +126,7 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
     }
     applyResult.pluginsToEnable.forEach { id -> super.setEnabled(id, PluginEnabledState.ENABLED) }
     myUninstalled.clear()
-    updateButtons()
+    updateButtons(applyResult)
     myPluginManagerCustomizer?.updateAfterModification { }
     return !applyResult.needRestart
   }
@@ -797,11 +798,26 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
     myCancelInstallCallback = callback
   }
 
-  private fun updateButtons() {
-    PluginModelAsyncOperationsExecutor.updateButtons(coroutineScope,
-                                                     myInstalledPluginComponents,
-                                                     myMarketplacePluginComponentMap,
-                                                     myDetailPanels)
+  private suspend fun updateButtons(applyResult: ApplyPluginsStateResult) {
+    for (component in myInstalledPluginComponents) {
+      val pluginId = component.pluginModel.pluginId
+      val installedPlugin = applyResult.visiblePlugins.firstOrNull { it.pluginId == pluginId } ?: continue
+      val installationState = applyResult.installationStates[pluginId] ?: continue
+      component.updateButtons(installedPlugin, installationState)
+    }
+    for (plugins in myMarketplacePluginComponentMap.values) {
+      for (plugin in plugins) {
+        if (plugin.myInstalledDescriptorForMarketplace != null) {
+          val pluginId = plugin.pluginModel.pluginId
+          val installedPlugin = applyResult.visiblePlugins.firstOrNull { it.pluginId == pluginId } ?: continue
+          val installationState = applyResult.installationStates[pluginId] ?: continue
+          plugin.updateButtons(installedPlugin, installationState)
+        }
+      }
+    }
+    for (detailPanel in myDetailPanels) {
+      detailPanel.updateAll()
+    }
   }
 
   private fun applyChangedStates(changedStates: Map<PluginId, Boolean>) {

@@ -381,7 +381,9 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
       }
 
       session.isUiDisposedWithApply = true
-      return@withContext ApplyPluginsStateResult(pluginsToEnable, needRestart)
+      val pluginInstallationStates = getPluginInstallationStates()
+      val visiblePlugins = getVisiblePlugins(false)
+      return@withContext ApplyPluginsStateResult(pluginsToEnable, needRestart, null, visiblePlugins.map { PluginDto.fromModel(it) }, pluginInstallationStates)
     }
   }
 

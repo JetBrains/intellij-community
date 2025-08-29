@@ -521,7 +521,8 @@ public final class PluginManagerConfigurable
           try {
             try {
               if (project != null) {
-                addSuggestedGroup(groups, model.getErrors(), model.getSuggestedPlugins(), model.getInstalledPlugins(), model.getInstallationStates());
+                addSuggestedGroup(groups, model.getErrors(), model.getSuggestedPlugins(), model.getInstalledPlugins(),
+                                  model.getInstallationStates());
               }
               PluginsViewCustomizer.PluginsGroupDescriptor internalPluginsGroupDescriptor = model.getInternalPluginsGroupDescriptor();
               if (internalPluginsGroupDescriptor != null) {
@@ -1093,9 +1094,14 @@ public final class PluginManagerConfigurable
         //noinspection ConstantConditions
         ((SearchUpDownPopupController)myInstalledSearchPanel.controller).setEventHandler(eventHandler);
         myInstalledPanel.startLoading();
+
+        PluginsGroup downloaded =
+          new PluginsGroup(IdeBundle.message("plugins.configurable.downloaded"), PluginsGroupType.INSTALLED);
+
+        PluginsGroup installing = new PluginsGroup(IdeBundle.message("plugins.configurable.installing"), PluginsGroupType.INSTALLING);
+        myPluginModelFacade.getModel().setDownloadedGroup(myInstalledPanel, downloaded, installing);
         PluginManagerPanelFactory.INSTANCE.createInstalledPanel(myCoroutineScope, myPluginModelFacade.getModel(), model -> {
           try {
-            PluginsGroup installing = new PluginsGroup(IdeBundle.message("plugins.configurable.installing"), PluginsGroupType.INSTALLING);
             installing.getPreloadedModel().setErrors(model.getErrors());
             installing.getPreloadedModel().setPluginInstallationStates(model.getInstallationStates());
             installing.addModels(MyPluginModel.getInstallingPlugins());
@@ -1105,8 +1111,6 @@ public final class PluginManagerConfigurable
               myInstalledPanel.addGroup(installing);
             }
 
-            PluginsGroup downloaded =
-              new PluginsGroup(IdeBundle.message("plugins.configurable.downloaded"), PluginsGroupType.INSTALLED);
             downloaded.getPreloadedModel().setErrors(model.getErrors());
             downloaded.getPreloadedModel().setPluginInstallationStates(model.getInstallationStates());
             downloaded.addModels(model.getInstalledPlugins());
@@ -1481,7 +1485,7 @@ public final class PluginManagerConfigurable
 
   private void addSuggestedGroup(@NotNull List<? super PluginsGroup> groups,
                                  @NotNull Map<@NotNull PluginId,
-                                 @NotNull List<@NotNull HtmlChunk>> errors,
+                                   @NotNull List<@NotNull HtmlChunk>> errors,
                                  @NotNull List<@NotNull PluginUiModel> plugins,
                                  @NotNull Map<@NotNull PluginId, @NotNull PluginUiModel> installedPlugins,
                                  @NotNull Map<@NotNull PluginId, @NotNull PluginInstallationState> installationStates) {
@@ -2113,7 +2117,7 @@ public final class PluginManagerConfigurable
           ApplicationManager.getApplication().invokeLater(() -> {
             myPluginModelFacade.closeSession();
             if (ApplicationManager.getApplication().isExitInProgress()) return; // already shutting down
-            if(myPluginManagerCustomizer != null) {
+            if (myPluginManagerCustomizer != null) {
               myPluginManagerCustomizer.requestRestart(myPluginModelFacade, myTabHeaderComponent);
               return;
             }

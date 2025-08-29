@@ -140,7 +140,7 @@ public final class ListPluginComponent extends JPanel {
     createTag();
 
     if (myIsAvailable) {
-      doCreateButtons(pluginInstallationState, listModel.getInstalledModels().get(pluginId));
+      createButtons(listModel.getInstalledModels().get(pluginId), pluginInstallationState);
       createMetricsPanel();
       createLicensePanel();
     }
@@ -250,16 +250,7 @@ public final class ListPluginComponent extends JPanel {
     ColorButton.setWidth72(myInstallButton);
   }
 
-  private void createButtons() {
-    PluginModelAsyncOperationsExecutor.INSTANCE.createButtons(myCoroutineScope, this, myPlugin.getPluginId(), myMarketplace,
-                                                              (state, model) -> {
-                                                                doCreateButtons(state, model);
-                                                                fullRepaint();
-                                                                return null;
-                                                              });
-  }
-
-  private void doCreateButtons(PluginInstallationState installationState, PluginUiModel installedModel) {
+  private void createButtons(PluginUiModel installedModel, PluginInstallationState installationState) {
     installationState = installationState == null ? new PluginInstallationState(false, null) : installationState;
     if (myMarketplace) {
       if (installationState.getStatus() == PluginStatus.INSTALLED_AND_REQUIRED_RESTART) {
@@ -783,7 +774,7 @@ public final class ListPluginComponent extends JPanel {
   }
 
   public void hideProgress(boolean success, boolean restartRequired, PluginUiModel installedPlugin) {
-    if(succesefullyFinishedOnce) return;
+    if (succesefullyFinishedOnce) return;
     myIndicator = null;
     myLayout.removeProgressComponent();
 
@@ -809,7 +800,7 @@ public final class ListPluginComponent extends JPanel {
               else {
                 myPlugin = myInstalledDescriptorForMarketplace;
                 myInstalledDescriptorForMarketplace = null;
-                updateButtons();
+                updateButtons(installedPlugin, new PluginInstallationState(true, PluginStatus.INSTALLED_WITHOUT_RESTART));
               }
               return;
             }
@@ -865,7 +856,7 @@ public final class ListPluginComponent extends JPanel {
     PluginsViewCustomizerKt.getListPluginComponentCustomizer().processRemoveButtons(this);
   }
 
-  public void updateButtons() {
+  public void updateButtons(PluginUiModel installedPlugin, PluginInstallationState state) {
     if (myIsAvailable) {
       removeButtons(false);
       if (myRestartButton != null) {
@@ -877,7 +868,7 @@ public final class ListPluginComponent extends JPanel {
         myAlignButton = null;
       }
       myAfterUpdate = false;
-      createButtons();
+      createButtons(installedPlugin, state);
       if (myUpdateDescriptor != null) {
         setUpdateDescriptor(myUpdateDescriptor);
       }
