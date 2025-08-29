@@ -19,6 +19,7 @@ import com.intellij.openapi.client.ClientKind
 import com.intellij.openapi.client.currentSessionOrNull
 import com.intellij.openapi.client.forEachSession
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.util.Disposer
@@ -72,7 +73,7 @@ open class CompletionServiceImpl : BaseCompletionService() {
     // Keep the function for compatibility with external plugins
     @JvmStatic
     fun setCompletionPhase(phase: CompletionPhase) {
-      LOG.trace("Set completion phase :: phase=$phase")
+      LOG.trace { "Set completion phase :: phase=$phase" }
       val clientCompletionService = tryGetClientCompletionService(application.currentSessionOrNull) ?: return
       clientCompletionService.completionPhase = phase
     }
@@ -252,7 +253,7 @@ private class ClientCompletionService(private val appSession: ClientAppSession) 
           .completionPhaseChanged(isCompletionRunning)
       }
 
-      LOG.trace("Dispose old phase :: oldPhase=$oldPhase, newPhase=$phase, indicator=${if (phase.indicator != null) phase.indicator.hashCode() else -1}")
+      LOG.trace { "Dispose old phase :: oldPhase=$oldPhase, newPhase=$phase, indicator=${if (phase.indicator != null) phase.indicator.hashCode() else -1}" }
       Disposer.dispose(oldPhase)
       completionPhaseHolder = CompletionPhaseHolder(phase = phase, phaseTrace = Throwable())
     }
