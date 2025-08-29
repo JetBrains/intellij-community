@@ -11056,6 +11056,55 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/receiverShadowedByContextParameter")
+    public static class ReceiverShadowedByContextParameter extends AbstractHighLevelQuickFixTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("anonymousType.kt")
+        public void testAnonymousType() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/receiverShadowedByContextParameter/anonymousType.kt");
+        }
+
+        @TestMetadata("memberExtensionAddContextOf.kt")
+        public void testMemberExtensionAddContextOf() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/receiverShadowedByContextParameter/memberExtensionAddContextOf.kt");
+        }
+
+        @TestMetadata("memberExtensionAddContextParameterName.kt")
+        public void testMemberExtensionAddContextParameterName() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/receiverShadowedByContextParameter/memberExtensionAddContextParameterName.kt");
+        }
+
+        @TestMetadata("memberExtensionAddThis.kt")
+        public void testMemberExtensionAddThis() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/receiverShadowedByContextParameter/memberExtensionAddThis.kt");
+        }
+
+        @TestMetadata("simpleAddContextOf.kt")
+        public void testSimpleAddContextOf() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/receiverShadowedByContextParameter/simpleAddContextOf.kt");
+        }
+
+        @TestMetadata("simpleAddContextParameterName.kt")
+        public void testSimpleAddContextParameterName() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/receiverShadowedByContextParameter/simpleAddContextParameterName.kt");
+        }
+
+        @TestMetadata("simpleAddThis.kt")
+        public void testSimpleAddThis() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/receiverShadowedByContextParameter/simpleAddThis.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/quickfix/redundantConst")
     public static class RedundantConst extends AbstractHighLevelQuickFixTest {
         @java.lang.Override
