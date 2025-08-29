@@ -14,10 +14,12 @@ import com.intellij.ui.popup.ActionPopupStep
 import com.intellij.ui.popup.list.ListPopupImpl
 import com.intellij.ui.popup.list.PopupListElementRenderer
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertNotNull
 import java.awt.Component
 import java.awt.Container
 import java.util.function.Supplier
+import javax.swing.JComponent
 import javax.swing.JLayeredPane
 import javax.swing.JRootPane
 import javax.swing.RootPaneContainer
@@ -51,6 +53,29 @@ class ActionPopupTest {
     val context = IdeUiService.getInstance().createUiDataContext(component)
     val point = JBPopupFactory.getInstance().guessBestPopupLocation(context)
     assertNotNull(point)
+  }
+
+  @Test
+  fun testListRendererWithoutIconLabel() {
+    val group = DefaultActionGroup()
+    group.add(object : AnAction("text") {
+      override fun actionPerformed(e: AnActionEvent) {}
+    })
+    val step = ActionPopupStep.createActionsStep(null, group, SimpleDataContext.EMPTY_CONTEXT, ActionPlaces.PROJECT_WIDGET_POPUP,
+                                                 PresentationFactory(), Supplier { SimpleDataContext.EMPTY_CONTEXT },
+                                                 createOptions(false, false, false))
+    val popup = object : ListPopupImpl(null, step) {
+      override fun getListElementRenderer() = object : PopupListElementRenderer<Object>(this) {
+        override fun createItemComponent(): JComponent? {
+          // Intentionally not creating myIconLabel here, similar to com.intellij.openapi.vcs.ui.PopupListElementRendererWithIcon
+          myTextLabel = ErrorLabel()
+          return layoutComponent(myTextLabel)
+        }
+      }
+    }
+    assertDoesNotThrow {
+      popup.list.cellRenderer.getListCellRendererComponent(popup.list, popup.list.model.getElementAt(0), 0, true, false)
+    }
   }
 
   private fun testActionPresentation(textWithMnemonic: TextWithMnemonic, expectedText: String, options: ActionPopupOptions) {
