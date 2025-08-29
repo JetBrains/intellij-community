@@ -36,13 +36,6 @@
     <group id="NonModalWelcomeScreen.LeftTabActions.New">
       <reference ref="NewProjectOrModuleGroup"/>
       <separator/>
-      <action id="welcome.screen.left.tab.new.empty.file"
-              class="com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel.CreateEmptyFileAction"
-              icon="AllIcons.FileTypes.Text"/>
-      <action id="welcome.screen.left.tab.new.http.request"
-              class="com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel.CreateHttpRequestFileAction"
-              icon="AllIcons.FileTypes.Http"/>
-      <reference ref="NewScratchFile"/>
     </group>
   </actions>
 </idea-plugin>

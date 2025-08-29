@@ -3,16 +3,12 @@ package com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeView
-import com.intellij.ide.plugins.PluginManagerConfigurable.showPluginConfigurable
-import com.intellij.ide.plugins.PluginManagerCore.isDisabled
 import com.intellij.ide.projectView.ProjectView
 import com.intellij.ide.projectView.impl.IdeViewForProjectViewPane
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
-import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -20,7 +16,6 @@ import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.ui.popup.ListPopupStep
 import com.intellij.openapi.util.NlsActions.ActionText
 import com.intellij.platform.ide.nonModalWelcomeScreen.NonModalWelcomeScreenBundle
-import com.intellij.platform.ide.nonModalWelcomeScreen.newFileDialog.WelcomeScreenNewFileHandler
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
@@ -30,7 +25,6 @@ import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.popup.list.ListPopupImpl
 import com.intellij.util.ui.JBUI
-import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.Dimension
 import java.awt.Point
@@ -131,8 +125,6 @@ internal class WelcomeScreenLeftPanelActions(val project: Project) {
     }
   }
 
-  fun platformAction(id: String): AnAction = ActionManager.getInstance().getAction(id)
-
   companion object {
     /**
      * See com.jetbrains.ds.toolwindow.DataSpellDataPanelService.createEmptyStatePanel
@@ -147,43 +139,5 @@ internal class WelcomeScreenLeftPanelActions(val project: Project) {
           addActionListener { model.onClick(this) }
         }
     }
-  }
-}
-
-internal class CreateEmptyFileAction : DumbAwareAction() {
-  override fun actionPerformed(e: AnActionEvent) {
-    val project = e.project ?: return
-    WelcomeScreenNewFileHandler.showNewFileDialog(
-      project = project,
-      dialogTitle = NonModalWelcomeScreenBundle.message("non.modal.welcome.screen.create.file.dialog.title.file"),
-      templateName = "Generic Empty File"
-    )
-  }
-}
-
-private val HTTP_CLIENT_PLUGIN_ID = PluginId.getId("com.jetbrains.restClient")
-
-internal class CreateHttpRequestFileAction : DumbAwareAction() {
-  override fun actionPerformed(e: AnActionEvent) {
-    val project = e.project ?: return
-    invokeOrShowPluginPage(project, HTTP_CLIENT_PLUGIN_ID) {
-      WelcomeScreenNewFileHandler.showNewFileDialog(
-        project = project,
-        dialogTitle = NonModalWelcomeScreenBundle.message("non.modal.welcome.screen.create.file.dialog.title.http.request"),
-        templateName = "HTTP Request.http"
-      ) {
-        fixedExtension = "http"
-      }
-    }
-  }
-}
-
-// TODO consider to use showPluginConfigurable and override the action in the plugin code
-@ApiStatus.Internal
-fun invokeOrShowPluginPage(project: Project, pluginId: PluginId, runnable: () -> Unit) {
-  if (!isDisabled(pluginId)) {
-    runnable.invoke()
-  } else {
-    showPluginConfigurable(project, listOf(pluginId))
   }
 }
