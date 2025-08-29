@@ -1,13 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.polySymbols.html.attributes.impl
 
-import com.intellij.polySymbols.html.attributes.HtmlAttributeSymbolInfo
-import com.intellij.polySymbols.html.attributes.HtmlAttributeValueSymbolTypeSupport
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolModifier
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.html.HTML_ATTRIBUTE_VALUES
 import com.intellij.polySymbols.html.PolySymbolHtmlAttributeValue
+import com.intellij.polySymbols.html.attributes.HtmlAttributeSymbolInfo
+import com.intellij.polySymbols.html.attributes.HtmlAttributeValueSymbolTypeSupport
 import com.intellij.polySymbols.html.htmlAttributeValue
 import com.intellij.polySymbols.query.PolySymbolQueryExecutor
 import com.intellij.psi.PsiElement
@@ -102,7 +102,7 @@ internal data class HtmlAttributeSymbolInfoImpl(
       val priority = symbol.priority ?: PolySymbol.Priority.NORMAL
       val icon = symbol.icon
       val defaultValue = attrValue?.default
-      val langType = if (typeSupport != null)
+      val langType = typeSupport?.withEvaluationLocation(context) {
         when (type) {
           PolySymbolHtmlAttributeValue.Type.STRING -> typeSupport.createStringType(symbol)
           PolySymbolHtmlAttributeValue.Type.BOOLEAN -> typeSupport.createBooleanType(symbol)
@@ -119,13 +119,15 @@ internal data class HtmlAttributeSymbolInfoImpl(
           PolySymbolHtmlAttributeValue.Type.OF_MATCH -> typeSupport.typeProperty?.let { symbol[it] }
           PolySymbolHtmlAttributeValue.Type.COMPLEX -> attrValue?.langType
         }
-      else null
+      }
 
       val isHtmlBoolean = if (kind == PolySymbolHtmlAttributeValue.Kind.PLAIN)
         if (type == PolySymbolHtmlAttributeValue.Type.BOOLEAN)
           ThreeState.YES
         else
-          typeSupport?.isBoolean(symbol, langType, context) ?: ThreeState.YES
+          typeSupport?.withEvaluationLocation(context) {
+            typeSupport.isBoolean(symbol, langType)
+          } ?: ThreeState.YES
       else
         ThreeState.NO
       val valueRequired = attrValue?.required != false && isHtmlBoolean == ThreeState.NO && kind != PolySymbolHtmlAttributeValue.Kind.NO_VALUE
@@ -147,13 +149,18 @@ internal data class HtmlAttributeSymbolInfoImpl(
             }
             PolySymbolHtmlAttributeValue.Type.COMPLEX,
             PolySymbolHtmlAttributeValue.Type.OF_MATCH,
-              -> typeSupport?.getEnumValues(symbol, langType)
+              -> typeSupport?.withEvaluationLocation(context) {
+              typeSupport.getEnumValues(symbol, langType)
+            }
             else -> null
           }
         }
         else null
 
-      val strictEnumValues = type == PolySymbolHtmlAttributeValue.Type.ENUM || typeSupport?.strictEnumValues(symbol, langType) == true
+      val strictEnumValues = type == PolySymbolHtmlAttributeValue.Type.ENUM ||
+                             typeSupport?.withEvaluationLocation(context) {
+                               typeSupport.strictEnumValues(symbol, langType)
+                             } == true
 
       return HtmlAttributeSymbolInfoImpl(name, symbol, acceptsNoValue, acceptsValue,
                                          enumValues, strictEnumValues, langType, icon, isRequired,
