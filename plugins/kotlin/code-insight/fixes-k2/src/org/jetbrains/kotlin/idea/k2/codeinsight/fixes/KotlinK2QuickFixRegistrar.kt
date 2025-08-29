@@ -119,6 +119,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(AddReturnExpressionFixFactory.addReturnExpressionFixFactory)
         registerFactory(RemoveArgumentFixFactory.removeArgumentFixFactory)
         registerFactory(RemoveReturnLabelFixFactory.removeReturnLabelFixFactory)
+        registerFactory(RemoveRedundantReturnFixFactory.removeRedundantReturnFixFactory)
         registerFactory(AddJvmInlineAnnotationFixFactory.addJvmInlineAnnotationFixFactory)
         registerFactory(RemoveNoConstructorFixFactory.removeNoConstructorFixFactory)
         registerFactory(ArgumentTypeMismatchFactory.addArrayOfTypeFixFactory)

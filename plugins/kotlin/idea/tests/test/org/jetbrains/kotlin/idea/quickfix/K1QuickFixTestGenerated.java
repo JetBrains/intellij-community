@@ -14728,6 +14728,30 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/quickfix/removeRedundantReturn")
+    public static class RemoveRedundantReturn extends AbstractK1QuickFixTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("lambda.kt")
+        public void testLambda() throws Exception {
+            runTest("testData/quickfix/removeRedundantReturn/lambda.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("testData/quickfix/removeRedundantReturn/simple.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/quickfix/removeRedundantSpreadOperator")
     public static class RemoveRedundantSpreadOperator extends AbstractK1QuickFixTest {
         @java.lang.Override
