@@ -351,7 +351,7 @@ public final class CachedIntentions implements IntentionContainer {
   public @NotNull IntentionGroup getGroup(@NotNull IntentionActionWithTextCaching action) {
     if (myErrorFixes.contains(action)) {
       TextRange problemRange = action.getFixRange();
-      return problemRange == null || problemRange.contains(getOffset()) ? IntentionGroup.ERROR : IntentionGroup.REMOTE_ERROR;
+      return problemRange == null || problemRange.containsOffset(getOffset()) ? IntentionGroup.ERROR : IntentionGroup.REMOTE_ERROR;
     }
     if (myInspectionFixes.contains(action)) {
       return IntentionGroup.INSPECTION;
