@@ -706,7 +706,7 @@ object ProjectUtil {
   fun getProjectForComponent(component: Component?): Project? = getProjectForWindow(ComponentUtil.getWindow(component))
 
   @JvmStatic
-  fun getActiveProject(): Project? = getProjectForWindow(getActiveWindow())
+  fun getActiveProject(): Project? = getProjectForWindow(getActiveWindow())?.takeIf { !it.isDisposed }
 
   @JvmStatic
   fun getOpenProjects(): Array<Project> = ProjectUtilCore.getOpenProjects()
@@ -774,9 +774,5 @@ fun <T> runUnderModalProgressIfIsEdt(task: suspend CoroutineScope.() -> T): T {
 private fun getActiveWindow(): Window? {
   val window = KeyboardFocusManager.getCurrentKeyboardFocusManager().activeWindow
   LOG.trace { "getActiveWindow: active window is $window" }
-  if (window is DisposableWindow && window.isWindowDisposed) {
-    LOG.trace { "getActiveWindow: return null since window is already disposed" }
-    return null
-  }
   return window
 }
