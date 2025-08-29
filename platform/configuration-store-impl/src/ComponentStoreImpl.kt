@@ -431,7 +431,9 @@ abstract class ComponentStoreImpl : IComponentStore {
           featureUsageSettingManager.logConfigurationChanged(effectiveComponentName, state)
         }
 
-        setStateToSaveSessionProducer(state, info, effectiveComponentName, sessionProducer)
+        if (state !== HandledByWSM) {
+          setStateToSaveSessionProducer(state, info, effectiveComponentName, sessionProducer)
+        } // else: WSM will call setStateToSaveSessionProducer by itself
       }
     }
   }

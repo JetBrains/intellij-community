@@ -4,6 +4,7 @@ package com.intellij.configurationStore
 import com.fasterxml.aalto.UncheckedStreamException
 import com.intellij.diagnostic.PluginException
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.HandledByWSM
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.PathMacroSubstitutor
 import com.intellij.openapi.components.PersistentStateComponent
@@ -455,7 +456,7 @@ private class StateGetterImpl<S : Any>(
       null
     }
 
-    val serializedStateAfterLoad = if (stateAfterLoad == null) {
+    val serializedStateAfterLoad = if (stateAfterLoad == null || stateAfterLoad == HandledByWSM) {
       serializedState
     }
     else {

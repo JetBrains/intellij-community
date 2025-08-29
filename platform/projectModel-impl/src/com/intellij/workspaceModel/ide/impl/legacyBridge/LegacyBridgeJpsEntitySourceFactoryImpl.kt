@@ -4,13 +4,11 @@ package com.intellij.workspaceModel.ide.impl.legacyBridge
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.isExternalStorageEnabled
 import com.intellij.openapi.roots.ProjectModelExternalSource
-import com.intellij.platform.workspace.jps.JpsEntitySourceFactory
-import com.intellij.platform.workspace.jps.JpsFileEntitySource
-import com.intellij.platform.workspace.jps.JpsImportedEntitySource
-import com.intellij.platform.workspace.jps.JpsProjectFileEntitySource
+import com.intellij.platform.workspace.jps.*
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.serialization.impl.FileInDirectorySourceNames
+import com.intellij.platform.workspace.storage.DummyParentEntitySource
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
@@ -74,6 +72,27 @@ class LegacyBridgeJpsEntitySourceFactoryImpl(val project: Project) : LegacyBridg
   override fun createEntitySourceForProjectLibrary(externalSource: ProjectModelExternalSource?): EntitySource {
     return createEntitySourceForProjectLibrary(externalSource, null, null)
   }
+
+  override fun createEntitySourceForProjectSettings(): EntitySource? {
+    if (project.isDefault) {
+      return null
+    }
+
+    val configLocation = getJpsProjectConfigLocation(project)
+    return when (configLocation) {
+      is JpsProjectConfigLocation.FileBased ->
+        JpsProjectFileEntitySource.ExactFile(configLocation.iprFile, configLocation)
+      is JpsProjectConfigLocation.DirectoryBased -> {
+        val miscFile = configLocation.ideaFolder.append("misc.xml")
+        JpsProjectFileEntitySource.ExactFile(miscFile, configLocation)
+      }
+      // This is to support com.intellij.openapi.project.impl.ServerProject which is not-directory-based, but has no project file
+      // We store changes in the memory until the project is closed, allowing to adopt settings entity if needed.
+      else -> DummyParentEntitySourceForProjectSettings
+    }
+  }
+
+  private object DummyParentEntitySourceForProjectSettings : DummyParentEntitySource
 
   private fun createInternalEntitySourceForProjectLibrary(project: Project): JpsFileEntitySource? {
     val location = getJpsProjectConfigLocation(project) ?: return null
