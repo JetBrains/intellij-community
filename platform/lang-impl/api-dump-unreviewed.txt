@@ -1928,11 +1928,11 @@ f:com.intellij.codeInsight.completion.CompletionPhase$BgCalculation
 f:com.intellij.codeInsight.completion.CompletionPhase$CommittingDocuments
 - com.intellij.codeInsight.completion.CompletionPhase
 - dispose():V
-- ignoreCurrentDocumentChange():V
+- f:ignoreCurrentDocumentChange():V
 - newCompletionStarted(I,Z):I
 f:com.intellij.codeInsight.completion.CompletionPhase$EmptyAutoPopup
 - com.intellij.codeInsight.completion.CompletionPhase$ZombiePhase
-- allowsSkippingNewAutoPopup(com.intellij.openapi.editor.Editor,C):Z
+- f:allowsSkippingNewAutoPopup(com.intellij.openapi.editor.Editor,C):Z
 - newCompletionStarted(I,Z):I
 f:com.intellij.codeInsight.completion.CompletionPhase$InsertedSingleItem
 - com.intellij.codeInsight.completion.CompletionPhase$ZombiePhase

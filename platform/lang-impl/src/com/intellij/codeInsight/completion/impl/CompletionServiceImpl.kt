@@ -3,6 +3,7 @@ package com.intellij.codeInsight.completion.impl
 
 import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.completion.CompletionPhase.*
+import com.intellij.codeInsight.completion.CompletionPhase.Companion.NoCompletion
 import com.intellij.codeInsight.completion.StatisticsWeigher.LookupStatisticsWeigher
 import com.intellij.codeInsight.lookup.Classifier
 import com.intellij.codeInsight.lookup.ClassifierFactory

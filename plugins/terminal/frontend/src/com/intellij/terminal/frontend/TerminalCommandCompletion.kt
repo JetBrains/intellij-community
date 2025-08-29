@@ -52,7 +52,7 @@ internal class TerminalCommandCompletion(
     var time = time
 
     val phase = CompletionServiceImpl.completionPhase
-    val repeated = phase.indicator != null && phase.indicator.isRepeatedInvocation(completionType, editor)
+    val repeated = phase.indicator?.isRepeatedInvocation(completionType, editor) == true
 
     val newTime = phase.newCompletionStarted(time, repeated)
     if (invokedExplicitly) {

@@ -1,452 +1,400 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.codeInsight.completion;
+package com.intellij.codeInsight.completion
 
-import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
-import com.intellij.codeWithMe.ClientId;
-import com.intellij.lang.Language;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationListener;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.event.*;
-import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.ex.FocusChangeListener;
-import com.intellij.openapi.project.IndexNotReadyException;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
-import com.intellij.patterns.ElementPattern;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
-import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.ui.HintListener;
-import com.intellij.ui.LightweightHint;
-import com.intellij.util.ThreeState;
-import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
-import com.intellij.util.ui.EDT;
-import com.intellij.util.ui.accessibility.ScreenReader;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
-import java.awt.event.FocusEvent;
-import java.util.Objects;
-import java.util.Set;
-import java.util.concurrent.ExecutorService;
+import com.intellij.codeInsight.completion.impl.CompletionServiceImpl
+import com.intellij.codeInsight.completion.impl.CompletionServiceImpl.Companion.assertPhase
+import com.intellij.codeWithMe.ClientId
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationListener
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.event.*
+import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.ex.FocusChangeListener
+import com.intellij.openapi.project.IndexNotReadyException
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Condition
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.Pair
+import com.intellij.patterns.ElementPattern
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiFile
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil
+import com.intellij.psi.util.PsiUtilCore
+import com.intellij.ui.HintListener
+import com.intellij.ui.LightweightHint
+import com.intellij.util.ThreeState
+import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.ui.EDT
+import com.intellij.util.ui.accessibility.ScreenReader
+import org.jetbrains.annotations.ApiStatus
+import java.awt.event.FocusEvent
+import java.util.concurrent.Callable
+import java.util.function.Consumer
+import javax.swing.SwingUtilities
+import kotlin.math.max
 
 /**
  * Code completion lifecycle within an IntelliJ-based IDE.
  *
- * <p>
- *
  * Phases:
- *  <li> {@link #NoCompletion} - no completion is running
- *  <li> {@link CommittingDocuments} - preparing the document for completion including committing all the project documents
- *  <li> {@link Synchronous} - completion is computing candidates synchronously.
- *  <li> {@link BgCalculation} - inferring candidates on background
- *  <li> {@link ItemsCalculated} - completion items have been calculated
- *  <li> {@link EmptyAutoPopup} -  completion was triggered by typing, but no completion items were found, and the lookup is not shown
- *  <li> {@link InsertedSingleItem} - a single item was found, and it was inserted into the document
- *  <li> {@link NoSuggestionsHint} - candidate inference has finished, but no candidates were found and a warning "no suggestions found" is shown.
+ *  *  [NoCompletion] - no completion is running
+ *  *  [CommittingDocuments] - preparing the document for completion including committing all the project documents
+ *  *  [Synchronous] - completion is computing candidates synchronously.
+ *  *  [BgCalculation] - inferring candidates on background
+ *  *  [ItemsCalculated] - completion items have been calculated
+ *  *  [EmptyAutoPopup] -  completion was triggered by typing, but no completion items were found, and the lookup is not shown
+ *  *  [InsertedSingleItem] - a single item was found, and it was inserted into the document
+ *  *  [NoSuggestionsHint] - candidate inference has finished, but no candidates were found and a warning "no suggestions found" is shown.
  */
-public abstract class CompletionPhase implements Disposable {
-  @ApiStatus.Internal
-  public static final Key<TypedEvent> AUTO_POPUP_TYPED_EVENT = Key.create("AutoPopupTypedEvent");
+abstract class CompletionPhase @ApiStatus.Internal protected constructor(
+  @JvmField
+  val indicator: CompletionProgressIndicator?
+) : Disposable {
 
-  @ApiStatus.Internal
-  public static final Key<String> CUSTOM_CODE_COMPLETION_ACTION_ID = Key.create("CodeCompletionActionID");
+  abstract fun newCompletionStarted(time: Int, repeated: Boolean): Int
 
-  private static final Logger LOG = Logger.getInstance(CompletionPhase.class);
+  override fun dispose() {}
 
-  public static final CompletionPhase NoCompletion = new CompletionPhase(null) {
-    @Override
-    public int newCompletionStarted(int time, boolean repeated) {
-      return time;
+  class CommittingDocuments internal constructor(
+    prevIndicator: CompletionProgressIndicator?,
+    editor: Editor,
+    private val event: TypedEvent?
+  ) : CompletionPhase(prevIndicator) {
+    @JvmField
+    internal var replaced: Boolean = false
+
+    private val myTracker: ActionTracker = ActionTracker(editor, this)
+    private var myRequestCount = 1
+
+    fun ignoreCurrentDocumentChange() {
+      myTracker.ignoreCurrentDocumentChange()
     }
 
-    @Override
-    public String toString() {
-      return "NoCompletion";
-    }
-  };
+    @get:ApiStatus.Internal
+    val isExpired: Boolean
+      get() = myTracker.hasAnythingHappened() || myRequestCount <= 0
 
-  public final CompletionProgressIndicator indicator;
-
-  @ApiStatus.Internal
-  protected CompletionPhase(@Nullable CompletionProgressIndicator indicator) {
-    this.indicator = indicator;
-  }
-
-  @Override
-  public void dispose() {
-  }
-
-  public abstract int newCompletionStarted(int time, boolean repeated);
-
-  public static final class CommittingDocuments extends CompletionPhase {
-    private static final ExecutorService ourExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Completion Preparation", 1);
-
-    boolean replaced;
-    private final @NotNull ActionTracker myTracker;
-    private final @Nullable TypedEvent myEvent;
-    private int myRequestCount = 1;
-
-    CommittingDocuments(@Nullable CompletionProgressIndicator prevIndicator,
-                        @NotNull Editor editor,
-                        @Nullable TypedEvent event) {
-      super(prevIndicator);
-      myTracker = new ActionTracker(editor, this);
-      myEvent = event;
+    internal fun incrementRequestCount() {
+      myRequestCount++
+      LOG.trace("Increment request count :: new myRequestCount=$myRequestCount")
     }
 
-    public void ignoreCurrentDocumentChange() {
-      myTracker.ignoreCurrentDocumentChange();
+    private fun decrementRequestCount() {
+      myRequestCount--
+      LOG.trace("Decrement request count :: new myRequestCount=$myRequestCount")
     }
 
-    @ApiStatus.Internal
-    public boolean isExpired() {
-      return myTracker.hasAnythingHappened() || myRequestCount <= 0;
+    private fun requestCompleted() {
+      LOG.trace("Request completed")
+      myRequestCount = 0
     }
 
-    private @Nullable TypedEvent getEvent() {
-      return myEvent;
+    override fun newCompletionStarted(time: Int, repeated: Boolean): Int {
+      return time
     }
 
-    void incrementRequestCount() {
-      myRequestCount++;
-      LOG.trace("Increment request count :: new myRequestCount=" + myRequestCount);
-    }
-
-    private void decrementRequestCount() {
-      myRequestCount--;
-      LOG.trace("Decrement request count :: new myRequestCount=" + myRequestCount);
-    }
-
-    private void requestCompleted() {
-      LOG.trace("Request completed");
-      myRequestCount = 0;
-    }
-
-    @Override
-    public int newCompletionStarted(int time, boolean repeated) {
-      return time;
-    }
-
-    @Override
-    public void dispose() {
-      LOG.trace("Dispose completion phase: " + this);
-      myRequestCount = 0;
+    override fun dispose() {
+      LOG.trace("Dispose completion phase: $this")
+      myRequestCount = 0
       if (!replaced && indicator != null) {
-        indicator.closeAndFinish(true);
+        indicator.closeAndFinish(true)
       }
     }
 
-    @Override
-    public String toString() {
-      return "CommittingDocuments{hasIndicator=" + (indicator != null) + '}';
+    override fun toString(): String {
+      return "CommittingDocuments{hasIndicator=${indicator != null}}"
     }
 
     @ApiStatus.Internal
-    public static void scheduleAsyncCompletion(@NotNull Editor _editor,
-                                               @NotNull CompletionType completionType,
-                                               @Nullable Condition<? super PsiFile> condition,
-                                               @NotNull Project project,
-                                               @Nullable CompletionProgressIndicator prevIndicator) {
-      LOG.trace("Schedule async completion");
-      Editor topLevelEditor = InjectedLanguageEditorUtil.getTopLevelEditor(_editor);
-      int offset = topLevelEditor.getCaretModel().getOffset();
+    companion object {
+      private val ourExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Completion Preparation", 1)
 
-      CommittingDocuments phase = getCompletionPhase(prevIndicator, topLevelEditor, _editor.getUserData(AUTO_POPUP_TYPED_EVENT));
+      @ApiStatus.Internal
+      @JvmStatic
+      fun scheduleAsyncCompletion(
+        _editor: Editor,
+        completionType: CompletionType,
+        condition: Condition<in PsiFile?>?,
+        project: Project,
+        prevIndicator: CompletionProgressIndicator?
+      ) {
+        LOG.trace("Schedule async completion")
+        val topLevelEditor = InjectedLanguageEditorUtil.getTopLevelEditor(_editor)
+        val offset = topLevelEditor.getCaretModel().offset
 
-      boolean autopopup = prevIndicator == null || prevIndicator.isAutopopupCompletion();
+        val phase = getCompletionPhase(prevIndicator, topLevelEditor, _editor.getUserData(AUTO_POPUP_TYPED_EVENT))
 
-      ReadAction
-        .nonBlocking(() -> {
-          if (phase.isExpired()) {
-            LOG.trace("Phase is expired");
-            return null;
-          }
+        val autopopup = prevIndicator == null || prevIndicator.isAutopopupCompletion
 
-          LOG.trace("Start non-blocking read action :: phase=" + phase.replaced);
-          // retrieve the injected file from scratch since our typing might have destroyed the old one completely
-          PsiFile topLevelFile = PsiDocumentManager.getInstance(project).getPsiFile(topLevelEditor.getDocument());
-          Editor completionEditor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(topLevelEditor, topLevelFile, offset);
-          PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(completionEditor.getDocument());
-          if (file == null ||
-              autopopup && shouldSkipAutoPopup(completionEditor, file) ||
-              condition != null && !condition.value(file)) {
-            LOG.trace("File is null or should skip auto popup or condition is not met :: file=" + file + ", condition=" + condition);
-            return null;
-          }
-
-          loadContributorsOutsideEdt(completionEditor, file);
-
-          return completionEditor;
-        })
-        .withDocumentsCommitted(project)
-        .expireWith(phase)
-        .finishOnUiThread(ModalityState.current(), completionEditor -> {
-          LOG.trace("Finish on UI thread :: completionEditor=" + completionEditor);
-          if (completionEditor != null && !phase.isExpired()) {
-            LOG.trace("Starting completion phase :: completionEditor=" + completionEditor);
-            phase.requestCompleted();
-            int time = prevIndicator == null ? 0 : prevIndicator.getInvocationCount();
-
-            String customId = completionEditor.getUserData(CUSTOM_CODE_COMPLETION_ACTION_ID);
-            if (customId == null) {
-              customId = "CodeCompletion";
+        ReadAction
+          .nonBlocking(Callable {
+            if (phase.isExpired) {
+              LOG.trace("Phase is expired")
+              return@Callable null
             }
-            CodeCompletionHandlerBase handler = CodeCompletionHandlerBase.createHandler(completionType, false, autopopup, false, customId);
-            handler.invokeCompletion(project, completionEditor, time, false);
+            LOG.trace("Start non-blocking read action :: phase=" + phase.replaced)
+            // retrieve the injected file from scratch since our typing might have destroyed the old one completely
+            val topLevelFile = PsiDocumentManager.getInstance(project).getPsiFile(topLevelEditor.getDocument())
+            val completionEditor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(topLevelEditor, topLevelFile, offset)
+            val file = PsiDocumentManager.getInstance(project).getPsiFile(completionEditor.getDocument())
+            if (file == null || autopopup && shouldSkipAutoPopup(completionEditor, file) || condition != null && !condition.value(file)) {
+              LOG.trace("File is null or should skip auto popup or condition is not met :: file=$file, condition=$condition")
+              return@Callable null
+            }
+
+            loadContributorsOutsideEdt(completionEditor, file)
+            completionEditor
+          })
+          .withDocumentsCommitted(project)
+          .expireWith(phase)
+          .finishOnUiThread(ModalityState.current(), Consumer { completionEditor: Editor? ->
+            LOG.trace("Finish on UI thread :: completionEditor=$completionEditor")
+            if (completionEditor != null && !phase.isExpired) {
+              LOG.trace("Starting completion phase :: completionEditor=$completionEditor")
+              phase.requestCompleted()
+              val time = prevIndicator?.invocationCount ?: 0
+
+              val customId = completionEditor.getUserData(CUSTOM_CODE_COMPLETION_ACTION_ID) ?: "CodeCompletion"
+              val handler = CodeCompletionHandlerBase.createHandler(completionType, false, autopopup, false, customId)
+              handler.invokeCompletion(project, completionEditor, time, false)
+            }
+            else if (phase == CompletionServiceImpl.completionPhase) {
+              LOG.trace("Setting NoCompletion phase :: completionEditor=" + completionEditor + ", isExpired=" + phase.isExpired)
+              phase.decrementRequestCount()
+              if (phase.isExpired) {
+                CompletionServiceImpl.setCompletionPhase(NoCompletion)
+              }
+            }
+          })
+          .submit(ourExecutor)
+      }
+
+      private fun getCompletionPhase(
+        prevIndicator: CompletionProgressIndicator?,
+        topLevelEditor: Editor,
+        event: TypedEvent?
+      ): CommittingDocuments {
+        if (event != null) {
+          val currentPhase = CompletionServiceImpl.completionPhase
+          if (currentPhase is CommittingDocuments && !currentPhase.isExpired && event == currentPhase.event) {
+            currentPhase.incrementRequestCount()
+            return currentPhase
           }
-          else if (phase == CompletionServiceImpl.getCompletionPhase()) {
-            LOG.trace("Setting NoCompletion phase :: completionEditor=" + completionEditor + ", isExpired=" + phase.isExpired());
-            phase.decrementRequestCount();
-            if (phase.isExpired()) {
-              CompletionServiceImpl.setCompletionPhase(NoCompletion);
+        }
+        val phase = CommittingDocuments(prevIndicator, topLevelEditor, event)
+        CompletionServiceImpl.setCompletionPhase(phase)
+        phase.ignoreCurrentDocumentChange()
+        return phase
+      }
+
+      @ApiStatus.Internal
+      @RequiresBackgroundThread
+      @JvmStatic
+      fun loadContributorsOutsideEdt(editor: Editor, file: PsiFile) {
+        CompletionContributor.forLanguage(PsiUtilCore.getLanguageAtOffset(file, editor.getCaretModel().offset))
+      }
+
+      @ApiStatus.Internal
+      @JvmStatic
+      fun shouldSkipAutoPopup(editor: Editor, psiFile: PsiFile): Boolean {
+        val offset = editor.getCaretModel().offset
+        val psiOffset = max(0, offset - 1)
+
+        val elementAt = psiFile.findElementAt(psiOffset) ?: return true
+
+        val language = PsiUtilCore.findLanguageFromElement(elementAt)
+
+        for (confidence in CompletionConfidenceEP.forLanguage(language)) {
+          try {
+            val result = confidence.shouldSkipAutopopup(editor, elementAt, psiFile, offset)
+            if (result != ThreeState.UNSURE) {
+              LOG.debug("$confidence has returned shouldSkipAutopopup=$result")
+              return result == ThreeState.YES
             }
           }
-        })
-        .submit(ourExecutor);
-    }
-
-    private static @NotNull CommittingDocuments getCompletionPhase(@Nullable CompletionProgressIndicator prevIndicator,
-                                                                   @NotNull Editor topLevelEditor,
-                                                                   @Nullable TypedEvent event) {
-      if (event != null) {
-        CompletionPhase currentPhase = CompletionServiceImpl.getCompletionPhase();
-        if (currentPhase instanceof CommittingDocuments committingPhase &&
-            !committingPhase.isExpired() &&
-            event.equals(committingPhase.getEvent())) {
-          committingPhase.incrementRequestCount();
-          return committingPhase;
-        }
-      }
-      CommittingDocuments phase = new CommittingDocuments(prevIndicator, topLevelEditor, event);
-      CompletionServiceImpl.setCompletionPhase(phase);
-      phase.ignoreCurrentDocumentChange();
-      return phase;
-    }
-
-    @ApiStatus.Internal
-    @RequiresBackgroundThread
-    public static void loadContributorsOutsideEdt(@NotNull Editor editor, @NotNull PsiFile file) {
-      CompletionContributor.forLanguage(PsiUtilCore.getLanguageAtOffset(file, editor.getCaretModel().getOffset()));
-    }
-
-    @ApiStatus.Internal
-    public static boolean shouldSkipAutoPopup(@NotNull Editor editor, @NotNull PsiFile psiFile) {
-      int offset = editor.getCaretModel().getOffset();
-      int psiOffset = Math.max(0, offset - 1);
-
-      PsiElement elementAt = psiFile.findElementAt(psiOffset);
-      if (elementAt == null) return true;
-
-      Language language = PsiUtilCore.findLanguageFromElement(elementAt);
-
-      for (CompletionConfidence confidence : CompletionConfidenceEP.forLanguage(language)) {
-        try {
-          ThreeState result = confidence.shouldSkipAutopopup(editor, elementAt, psiFile, offset);
-          if (result != ThreeState.UNSURE) {
-            LOG.debug(confidence + " has returned shouldSkipAutopopup=" + result);
-            return result == ThreeState.YES;
+          catch (e: IndexNotReadyException) {
+            LOG.debug(e)
+            return true
           }
         }
-        catch (IndexNotReadyException e) {
-          LOG.debug(e);
-          return true;
-        }
+        return false
       }
-      return false;
     }
   }
 
-  public static final class Synchronous extends CompletionPhase {
-    Synchronous(@NotNull CompletionProgressIndicator indicator) {
-      super(indicator);
-    }
-
-    @Override
-    public int newCompletionStarted(int time, boolean repeated) {
-      CompletionServiceImpl.assertPhase(NoCompletion.getClass()); // will fail and log valuable info
-      CompletionServiceImpl.setCompletionPhase(NoCompletion);
-      return time;
+  class Synchronous internal constructor(indicator: CompletionProgressIndicator) : CompletionPhase(indicator) {
+    override fun newCompletionStarted(time: Int, repeated: Boolean): Int {
+      assertPhase(NoCompletion.javaClass) // will fail and log valuable info
+      CompletionServiceImpl.setCompletionPhase(NoCompletion)
+      return time
     }
   }
 
-  public static final class BgCalculation extends CompletionPhase {
-    boolean modifiersChanged = false;
-    private final @NotNull ClientId ownerId = ClientId.getCurrent();
+  class BgCalculation internal constructor(indicator: CompletionProgressIndicator) : CompletionPhase(indicator) {
+    @JvmField
+    internal var modifiersChanged: Boolean = false
+    private val ownerId = ClientId.current
 
-    BgCalculation(@NotNull CompletionProgressIndicator indicator) {
-      super(indicator);
-      restartOnWriteAction();
-      cancelOnEditorLoseFocus(indicator);
+    init {
+      restartOnWriteAction()
+      cancelOnEditorLoseFocus(indicator)
     }
 
-    private void restartOnWriteAction() {
-      ApplicationManager.getApplication().addApplicationListener(new ApplicationListener() {
-        @Override
-        public void beforeWriteActionStart(@NotNull Object action) {
-          if (!indicator.getLookup().isLookupDisposed() && !indicator.isCanceled() && ownerId.equals(ClientId.getCurrent())) {
-            indicator.cancel();
+    private fun restartOnWriteAction() {
+      ApplicationManager.getApplication().addApplicationListener(object : ApplicationListener {
+        override fun beforeWriteActionStart(action: Any) {
+          if (!indicator!!.lookup.isLookupDisposed && !indicator.isCanceled && ownerId == ClientId.current) {
+            indicator.cancel()
             if (EDT.isCurrentThreadEdt()) {
-              indicator.scheduleRestart();
-            } else {
+              indicator.scheduleRestart()
+            }
+            else {
               // this branch is possible because completion can be canceled on background write action
               ApplicationManager.getApplication().invokeLater(
-                indicator::scheduleRestart,
-                // since we break the synchronous execution here, it is possible that some other EDT event finishes completion before us
+                /* runnable = */ Runnable { indicator.scheduleRestart() },  // since we break the synchronous execution here, it is possible that some other EDT event finishes completion before us
+
                 // in this case, the current indicator becomes obsolete, and we don't need to reschedule the session anymore
-                (__) -> CompletionServiceImpl.getCurrentCompletionProgressIndicator() != indicator);
+                /* expired = */ Condition<Any?> { CompletionServiceImpl.currentCompletionProgressIndicator != indicator })
             }
           }
         }
-      }, this);
+      }, this)
     }
 
-    private void cancelOnEditorLoseFocus(@NotNull CompletionProgressIndicator indicator) {
-      if (indicator.isAutopopupCompletion()) {
+    private fun cancelOnEditorLoseFocus(indicator: CompletionProgressIndicator) {
+      if (indicator.isAutopopupCompletion) {
         // lookup is not visible, we have to check ourselves if the editor retains focus
-        ((EditorEx)indicator.getEditor()).addFocusListener(new FocusChangeListener() {
-          @Override
-          public void focusLost(@NotNull Editor editor, @NotNull FocusEvent event) {
+        (indicator.editor as EditorEx).addFocusListener(object : FocusChangeListener {
+          override fun focusLost(editor: Editor, event: FocusEvent) {
             // When ScreenReader is active, the lookup gets focus on show, and we should not close it.
             if (ScreenReader.isActive() &&
-                event.getOppositeComponent() != null &&
-                // Check the opposite is in the lookup ancestor
-                SwingUtilities.getWindowAncestor(event.getOppositeComponent()) ==
-                SwingUtilities.getWindowAncestor(indicator.getLookup().getComponent())) {
-              return;
+                event.getOppositeComponent() != null &&  // Check the opposite is in the lookup ancestor
+                SwingUtilities.getWindowAncestor(event.getOppositeComponent()) === SwingUtilities.getWindowAncestor(indicator.lookup.component)
+            ) {
+              return
             }
-            indicator.closeAndFinish(true);
+            indicator.closeAndFinish(true)
           }
-        }, this);
+        }, this)
       }
     }
 
-    @Override
-    public int newCompletionStarted(int time, boolean repeated) {
-      indicator.closeAndFinish(false);
-      return indicator.nextInvocationCount(time, repeated);
+    override fun newCompletionStarted(time: Int, repeated: Boolean): Int {
+      indicator!!.closeAndFinish(false)
+      return indicator.nextInvocationCount(time, repeated)
     }
   }
 
-  public static final class ItemsCalculated extends CompletionPhase {
-
-    ItemsCalculated(@NotNull CompletionProgressIndicator indicator) {
-      super(indicator);
-    }
-
-    @Override
-    public int newCompletionStarted(int time, boolean repeated) {
-      Objects.requireNonNull(indicator, "`ItemsCalculated#indicator` is not-null as its constructor accepts not-null `indicator`").closeAndFinish(false);
-      return indicator.nextInvocationCount(time, repeated);
+  class ItemsCalculated internal constructor(indicator: CompletionProgressIndicator) : CompletionPhase(indicator) {
+    override fun newCompletionStarted(time: Int, repeated: Boolean): Int {
+      requireNotNull(indicator) { "`ItemsCalculated#indicator` is not-null as its constructor accepts not-null `indicator`" }.closeAndFinish(false)
+      return indicator.nextInvocationCount(time, repeated)
     }
   }
 
-  public abstract static class ZombiePhase extends CompletionPhase {
-
-    ZombiePhase(@Nullable CompletionProgressIndicator indicator) {
-      super(indicator);
-    }
-
-    void expireOnAnyEditorChange(@NotNull Editor editor) {
-      editor.getDocument().addDocumentListener(new DocumentListener() {
-        @Override
-        public void beforeDocumentChange(@NotNull DocumentEvent e) {
-          CompletionServiceImpl.setCompletionPhase(NoCompletion);
+  abstract class ZombiePhase internal constructor(indicator: CompletionProgressIndicator?) : CompletionPhase(indicator) {
+    internal fun expireOnAnyEditorChange(editor: Editor) {
+      editor.getDocument().addDocumentListener(object : DocumentListener {
+        override fun beforeDocumentChange(e: DocumentEvent) {
+          CompletionServiceImpl.setCompletionPhase(NoCompletion)
         }
-      }, this);
-      editor.getSelectionModel().addSelectionListener(new SelectionListener() {
-        @Override
-        public void selectionChanged(@NotNull SelectionEvent e) {
-          CompletionServiceImpl.setCompletionPhase(NoCompletion);
+      }, this)
+      editor.getSelectionModel().addSelectionListener(object : SelectionListener {
+        override fun selectionChanged(e: SelectionEvent) {
+          CompletionServiceImpl.setCompletionPhase(NoCompletion)
         }
-      }, this);
-      editor.getCaretModel().addCaretListener(new CaretListener() {
-        @Override
-        public void caretPositionChanged(@NotNull CaretEvent e) {
-          CompletionServiceImpl.setCompletionPhase(NoCompletion);
+      }, this)
+      editor.getCaretModel().addCaretListener(object : CaretListener {
+        override fun caretPositionChanged(e: CaretEvent) {
+          CompletionServiceImpl.setCompletionPhase(NoCompletion)
         }
-      }, this);
+      }, this)
     }
   }
 
-  public static final class InsertedSingleItem extends ZombiePhase {
-    public final @NotNull Runnable restorePrefix;
-
-    InsertedSingleItem(@NotNull CompletionProgressIndicator indicator, @NotNull Runnable restorePrefix) {
-      super(indicator);
-      this.restorePrefix = restorePrefix;
-      expireOnAnyEditorChange(indicator.getEditor());
+  class InsertedSingleItem internal constructor(
+    indicator: CompletionProgressIndicator,
+    @JvmField
+    val restorePrefix: Runnable
+  ) : ZombiePhase(indicator) {
+    init {
+      expireOnAnyEditorChange(indicator.editor)
     }
 
-    @Override
-    public int newCompletionStarted(int time, boolean repeated) {
-      CompletionServiceImpl.setCompletionPhase(NoCompletion);
+    override fun newCompletionStarted(time: Int, repeated: Boolean): Int {
+      CompletionServiceImpl.setCompletionPhase(NoCompletion)
       if (repeated) {
-        indicator.restorePrefix(restorePrefix);
+        indicator!!.restorePrefix(restorePrefix)
       }
-      return indicator.nextInvocationCount(time, repeated);
+      return indicator!!.nextInvocationCount(time, repeated)
     }
   }
 
-  public static final class NoSuggestionsHint extends ZombiePhase {
-    NoSuggestionsHint(@Nullable LightweightHint hint, @NotNull CompletionProgressIndicator indicator) {
-      super(indicator);
-      expireOnAnyEditorChange(indicator.getEditor());
+  class NoSuggestionsHint internal constructor(hint: LightweightHint?, indicator: CompletionProgressIndicator) : ZombiePhase(indicator) {
+    init {
+      expireOnAnyEditorChange(indicator.editor)
       if (hint != null) {
-        HintListener hintListener = event -> CompletionServiceImpl.setCompletionPhase(NoCompletion);
-        hint.addHintListener(hintListener);
-        Disposer.register(this, () -> hint.removeHintListener(hintListener));
+        val hintListener = HintListener { CompletionServiceImpl.setCompletionPhase(NoCompletion) }
+        hint.addHintListener(hintListener)
+        Disposer.register(this, Disposable { hint.removeHintListener(hintListener) })
       }
     }
 
-    @Override
-    public int newCompletionStarted(int time, boolean repeated) {
-      CompletionServiceImpl.setCompletionPhase(NoCompletion);
-      return indicator.nextInvocationCount(time, repeated);
+    override fun newCompletionStarted(time: Int, repeated: Boolean): Int {
+      CompletionServiceImpl.setCompletionPhase(NoCompletion)
+      return indicator!!.nextInvocationCount(time, repeated)
     }
   }
 
-  public static final class EmptyAutoPopup extends ZombiePhase {
-    private final ActionTracker myTracker;
-    private final Editor myEditor;
-    private final Set<? extends Pair<Integer, ElementPattern<String>>> myRestartingPrefixConditions;
+  class EmptyAutoPopup internal constructor(
+    editor: Editor,
+    private val restartingPrefixConditions: Set<Pair<Int, ElementPattern<String>>>
+  ) : ZombiePhase(null) {
+    private val myTracker: ActionTracker = ActionTracker(editor, this)
+    private val myEditor: Editor = editor
 
-    EmptyAutoPopup(@NotNull Editor editor,
-                   @NotNull Set<? extends Pair<Integer, ElementPattern<String>>> restartingPrefixConditions) {
-      super(null);
-      myTracker = new ActionTracker(editor, this);
-      myEditor = editor;
-      myRestartingPrefixConditions = restartingPrefixConditions;
-    }
-
-    public boolean allowsSkippingNewAutoPopup(@NotNull Editor editor, char toType) {
-      if (myEditor == editor &&
-          !myTracker.hasAnythingHappened() &&
-          !CompletionProgressIndicator.shouldRestartCompletion(editor, myRestartingPrefixConditions, String.valueOf(toType))) {
-        myTracker.ignoreCurrentDocumentChange();
-        return true;
+    fun allowsSkippingNewAutoPopup(editor: Editor, toType: Char): Boolean {
+      if (myEditor === editor && !myTracker.hasAnythingHappened() && !CompletionProgressIndicator.shouldRestartCompletion(editor, restartingPrefixConditions, toType.toString())) {
+        myTracker.ignoreCurrentDocumentChange()
+        return true
       }
-      return false;
+      return false
     }
 
-    @Override
-    public int newCompletionStarted(int time, boolean repeated) {
-      CompletionServiceImpl.setCompletionPhase(NoCompletion);
-      return time;
+    override fun newCompletionStarted(time: Int, repeated: Boolean): Int {
+      CompletionServiceImpl.setCompletionPhase(NoCompletion)
+      return time
+    }
+  }
+
+  @ApiStatus.Internal
+  companion object {
+    @ApiStatus.Internal
+    @JvmField
+    internal val AUTO_POPUP_TYPED_EVENT: Key<TypedEvent> = Key.create("AutoPopupTypedEvent")
+
+    @ApiStatus.Internal
+    @JvmField
+    val CUSTOM_CODE_COMPLETION_ACTION_ID: Key<String> = Key.create("CodeCompletionActionID")
+
+    @JvmField
+    val NoCompletion: CompletionPhase = object : CompletionPhase(null) {
+      override fun newCompletionStarted(time: Int, repeated: Boolean): Int {
+        return time
+      }
+
+      override fun toString(): String {
+        return "NoCompletion"
+      }
     }
   }
 }
+
+private val LOG = Logger.getInstance(CompletionPhase::class.java)
