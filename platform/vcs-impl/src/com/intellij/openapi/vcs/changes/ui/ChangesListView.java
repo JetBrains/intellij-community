@@ -14,7 +14,6 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.*;
-import com.intellij.openapi.vcs.merge.MergeConflictManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.vcs.impl.shared.commit.EditedCommitNode;
 import com.intellij.ui.PopupHandler;
@@ -94,15 +93,6 @@ public abstract class ChangesListView extends ChangesTree implements DnDAware {
     if (subtreeRootObject instanceof LocalChangeList localChangeList) return !localChangeList.getChanges().isEmpty();
     if (subtreeRootObject == UNVERSIONED_FILES_TAG && subtreeRoot.getChildCount() > 0) return true;
     return false;
-  }
-
-  @Override
-  protected boolean isInclusionEnabled(@NotNull ChangesBrowserNode<?> node) {
-    if (MergeConflictManager.isForceIncludeResolvedConflicts()) {
-      if (isUnderResolvedConflicts(node)) return false;
-    }
-
-    return super.isInclusionEnabled(node);
   }
 
   @Override
