@@ -575,15 +575,28 @@ public final class PyExtractMethodUtil {
     if (isAsync) {
       builder.makeAsync();
     }
-    final String text;
-    if (expression instanceof PyYieldExpression) {
-      text = String.format("(%s)", expression.getText());
-    }
-    else {
-      text = expression.getText();
-    }
+    final String originalText = expression.getText();
+
+    boolean needsParens =
+      (expression instanceof PyYieldExpression) ||
+      (expression instanceof PyGeneratorExpression) ||
+      ((originalText.contains("\n") || originalText.contains("\r")) && !isBracketedExpression((PyExpression)expression));
+
+    final String text = needsParens ? "(" + originalText + ")" : originalText;
+
     builder.statement("return " + text);
     return builder.buildFunction();
+  }
+
+  private static boolean isBracketedExpression(@NotNull PyExpression e) {
+    return e instanceof PyParenthesizedExpression
+        || e instanceof PyListLiteralExpression
+        || e instanceof PyDictLiteralExpression
+        || e instanceof PySetLiteralExpression
+        || e instanceof PyTupleExpression
+        || e instanceof PyListCompExpression
+        || e instanceof PyDictCompExpression
+        || e instanceof PySetCompExpression;
   }
 
   private static @NotNull PyFunction generateMethodFromElements(final @NotNull PyExtractMethodSettings methodSettings,
