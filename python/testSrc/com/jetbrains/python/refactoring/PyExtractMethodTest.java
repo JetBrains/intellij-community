@@ -384,4 +384,19 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
   public void testPreserveWhitespaceBetweenStatements() {
     doTest("extracted");
   }
+
+  // PY-54512
+  public void testMultilineGeneratorInCall() {
+    doTest("extracted");
+  }
+
+  // PY-54512
+  public void testMultilineExpressionInCall() {
+    doTest("extracted");
+  }
+
+  // PY-54512
+  public void testBracketedLiteralMultiline() {
+    doTest("extracted");
+  }
 }
