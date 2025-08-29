@@ -153,6 +153,8 @@ class GradleBuildScriptBuilderTest : GradleBuildScriptBuilderTestCase() {
       }
     """.trimIndent()) {
       withJavaPlugin()
+      withJavaPlugin()
+      withMavenCentral()
       withMavenCentral()
       withPostfix {
         call("block", "name") {
