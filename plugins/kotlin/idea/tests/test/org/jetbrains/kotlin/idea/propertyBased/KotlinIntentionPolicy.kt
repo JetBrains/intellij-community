@@ -30,7 +30,14 @@ internal class KotlinIntentionPolicy : IntentionPolicy() {
           action.familyName == "Create from usage" || // Starts template but may also perform modifications before that; thus not so easy to support
           unwrapped is ConvertToScopeIntention || // Performs reference search which must be run under progress. Probably we can generate diff excluding references?..
           unwrapped is CreateCallableFromUsageFixBase<*> || // Performs too much of complex stuff. Not sure whether it should start in write action...
-          unwrapped is ChangePackageIntention // Just starts the template; no reasonable preview could be displayed
+          unwrapped is ChangePackageIntention || // Just starts the template; no reasonable preview could be displayed
+          unwrapped.javaClass.name in skipPreviewIntentionClassNames
         return !skipPreview
     }
+
+    private val skipPreviewIntentionClassNames =
+        setOf(
+            "org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ChangePackageIntention",
+            "org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ImportQuickFix"
+        )
 }

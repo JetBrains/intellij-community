@@ -17,10 +17,13 @@ import com.intellij.usageView.UsageInfo
 import com.intellij.util.IncorrectOperationException
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.asJava.toLightElements
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.allowAnalysisFromWriteActionInEdt
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.analysis.canAddRootPrefix
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -189,9 +192,10 @@ sealed class K2MoveRenameUsageInfo(
         internal var KtElement.nonUpdatableUsageInfo: K2MoveRenameUsageInfo? by CopyablePsiUserDataProperty(
           Key.create("NON_UPDATABLE_INTERNAL_USAGE_INFO"))
 
-        fun PsiElement.internalUsageElements() = collectDescendantsOfType<KDocName>() +
-                                                 collectDescendantsOfType<KtReferenceExpression>() +
-                                                 collectDescendantsOfType<KtForExpression>()
+        fun PsiElement.internalUsageElements(): List<KtElement> =
+            collectDescendantsOfType<KDocName>() +
+                    collectDescendantsOfType<KtReferenceExpression>() +
+                    collectDescendantsOfType<KtForExpression>()
 
         /**
          * Finds any usage inside [containing].
@@ -231,6 +235,7 @@ sealed class K2MoveRenameUsageInfo(
             }
         }
 
+        @OptIn(KaAllowAnalysisOnEdt::class, KaAllowAnalysisFromWriteAction::class)
         private fun KtReferenceExpression.markInternalUsageInfo(topLevelMoved: KtElement) {
             val expr = this
             val mainReference = expr.mainReference
@@ -244,10 +249,10 @@ sealed class K2MoveRenameUsageInfo(
             if (mainReference is KtConstructorDelegationReference) return
             val resolved = mainReference.resolve() as? PsiNamedElement ?: return
             val isExtensionReference = if (resolved is KtCallableDeclaration) {
-              analyze(resolved) {
-                val symbol = resolved.symbol
-                if (symbol is KaCallableSymbol) symbol.isExtensionDecl() else false
-              }
+                allowAnalysisFromWriteActionInEdt(resolved) {
+                    val symbol = resolved.symbol
+                    if (symbol is KaCallableSymbol) symbol.isExtensionDecl() else false
+                }
             } else false
             if (resolved is KtParameter) return
             if (resolved is KtNamedDeclaration && resolved.isDeclaredInContainingContext(expr, topLevelMoved)) return
@@ -272,7 +277,7 @@ sealed class K2MoveRenameUsageInfo(
 
         context(_: KaSession)
         private fun KaCallableSymbol.isExtensionDecl(): Boolean {
-            if (isExtension == true) return true
+            if (isExtension) return true
             return if (this is KaPropertySymbol) {
                 val returnType = returnType
                 returnType is KaFunctionType && returnType.receiverType != null
@@ -296,14 +301,16 @@ sealed class K2MoveRenameUsageInfo(
             }.last()
         }
 
-        fun unMarkAllUsages(containing: KtElement) = containing.internalUsageElements().forEach { refExpr ->
-            refExpr.updatableUsageInfo = null
-            refExpr.nonUpdatableUsageInfo = null
+        fun unMarkAllUsages(containing: KtElement) {
+            containing.internalUsageElements().forEach { refExpr ->
+                refExpr.updatableUsageInfo = null
+                refExpr.nonUpdatableUsageInfo = null
+            }
         }
 
         /**
          *
-         * [org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveRenameUsageInfo]
+         * [org.jetbrains.kotlin.idea.k2.refactoring.move.processor.usages.K2MoveRenameUsageInfo]
          * After moving, internal usages might have become invalid, this method restores these usage infos.
          * @see updatableUsageInfo
          */
@@ -461,7 +468,7 @@ sealed class K2MoveRenameUsageInfo(
         }
 
         /**
-         * Adds the [org.jetbrains.kotlin.resolve.ROOT_PREFIX_FOR_IDE_RESOLUTION_MODE] qualifier prefix to this dot qualified expression if it is not there already.
+         * Adds the [ROOT_PREFIX_FOR_IDE_RESOLUTION_MODE] qualifier prefix to this dot qualified expression if it is not there already.
          * This prefix ensures that when we qualify an expression, we do not accidentally capture local variable names that have
          * the same name as the package prefix we are located in.
          *

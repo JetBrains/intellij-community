@@ -161,7 +161,7 @@ abstract class SelfTargetingIntention<TElement : PsiElement>(
         return FileModificationService.getInstance().preparePsiElementForWrite(target)
     }
 
-    override fun startInWriteAction() = true
+    override fun startInWriteAction(): Boolean = true
 
     override fun toString(): String = text
 

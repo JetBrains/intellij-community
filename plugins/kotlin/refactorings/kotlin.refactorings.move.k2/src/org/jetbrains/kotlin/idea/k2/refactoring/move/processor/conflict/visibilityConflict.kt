@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.analysis.api.components.containingSymbol
 import org.jetbrains.kotlin.analysis.api.components.createUseSiteVisibilityChecker
 import org.jetbrains.kotlin.analysis.api.components.isSubClassOf
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
@@ -26,6 +27,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.asJava.toLightElements
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.allowAnalysisFromWriteActionInEdt
 import org.jetbrains.kotlin.idea.base.projectStructure.getKaModuleOfTypeSafe
 import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleContainingElement
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -70,7 +72,7 @@ private fun MoveRenameUsageInfo.isVisibleBeforeMove(): Boolean {
 @ApiStatus.Internal
 fun PsiNamedElement.isVisibleTo(usage: PsiElement): Boolean {
     return if (usage is KtElement) {
-        analyze(usage) { isVisibleTo(usage) }
+        allowAnalysisFromWriteActionInEdt(usage) { isVisibleTo(usage) }
     } else {
         lightIsVisibleTo(usage)
     }
@@ -196,6 +198,7 @@ private fun KaSymbol.isProtectedVisibleFrom(refererSymbol: KaSymbol): Boolean {
 /**
  * Check whether the moved internal usages are still visible towards their physical declaration.
  */
+@OptIn(KaAllowAnalysisOnEdt::class)
 fun checkVisibilityConflictsForInternalUsages(
     topLevelDeclarationsToMove: Collection<KtNamedDeclaration>,
     allDeclarationsToMove: Collection<KtNamedDeclaration>,
@@ -214,7 +217,7 @@ fun checkVisibilityConflictsForInternalUsages(
                 val usageElement = usageInfo.element as? KtElement ?: return@tryFindConflict null
                 val referencedDeclaration = usageInfo.upToDateReferencedElement as? PsiNamedElement ?: return@tryFindConflict null
                 val isVisible = if (referencedDeclaration is KtNamedDeclaration) {
-                    analyze(usageElement) {
+                    allowAnalysisFromWriteActionInEdt(usageElement) {
                         val referencedDeclarationKaModule = referencedDeclaration.getKaModuleOfTypeSafe<KaSourceModule>(
                             referencedDeclaration.project,
                             useSiteModule = null,
