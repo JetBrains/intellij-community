@@ -942,7 +942,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
         if (otherRegion.mySizeBeforeUpdate > region.mySizeBeforeUpdate) {
           setNode(region, null);
           removeRegionFromGroup(region);
-          removeIntervalInternal(0);
+          removeIntervalInternal(0, region);
           super.addIntervalsFrom(otherNode);
         }
         else {

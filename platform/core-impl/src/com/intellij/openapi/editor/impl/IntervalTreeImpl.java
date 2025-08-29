@@ -90,6 +90,7 @@ public abstract class IntervalTreeImpl<T extends RangeMarkerEx> extends RedBlack
 
     @Override
     protected boolean processAliveKeys(@NotNull Processor<? super E> processor) {
+      List<Supplier<? extends E>> intervals = this.intervals;
       //noinspection ForLoopReplaceableByForEach
       for (int i = 0; i < intervals.size(); i++) {
         Supplier<? extends E> interval = intervals.get(i);
@@ -104,12 +105,13 @@ public abstract class IntervalTreeImpl<T extends RangeMarkerEx> extends RedBlack
     @Override
     protected boolean hasAliveKey(boolean purgeAllDead) {
       boolean hasAliveInterval = false;
+      List<Supplier<? extends E>> intervals = this.intervals;
       for (int i = intervals.size() - 1; i >= 0; i--) {
         Supplier<? extends E> interval = intervals.get(i);
         if (interval.get() == null) {
           if (purgeAllDead) {
             myTree.assertUnderWriteLock();
-            removeIntervalInternal(i);
+            removeIntervalInternal(i, null);
           }
         }
         else {
@@ -127,11 +129,12 @@ public abstract class IntervalTreeImpl<T extends RangeMarkerEx> extends RedBlack
     private boolean removeInterval(@NotNull E key) {
       myTree.checkBelongsToTheTree(key, true);
       myTree.assertUnderWriteLock();
+      List<Supplier<? extends E>> intervals = this.intervals;
       for (int i = intervals.size() - 1; i >= 0; i--) {
         Supplier<? extends E> interval = intervals.get(i);
         E t = interval.get();
         if (t == key) {
-          removeIntervalInternal(i);
+          removeIntervalInternal(i, t);
           if (intervals.isEmpty()) {
             myTree.removeNode(this);
             return true;
@@ -139,7 +142,7 @@ public abstract class IntervalTreeImpl<T extends RangeMarkerEx> extends RedBlack
           return false;
         }
       }
-      assert false: "interval not found: "+key +"; "+ intervals;
+      assert false: "interval not found: " + key + "; " + intervals;
       return false;
     }
     private boolean isAttachedToTree() {
@@ -150,13 +153,16 @@ public abstract class IntervalTreeImpl<T extends RangeMarkerEx> extends RedBlack
     }
 
     @ApiStatus.Internal
-    protected void removeIntervalInternal(int i) {
+    protected void removeIntervalInternal(int i, @Nullable E oldInterval) {
       intervals.remove(i);
       if (isAttachedToTree()) {   // for detached node, do not update tree node count
         assert myTree.keySize > 0 : myTree.keySize;
         myTree.keySize--;
       }
-      updateTaste();
+      byte oldTaste = oldInterval == null ? -1 : myTree.getTasteFlags(oldInterval);
+      if (oldTaste != 0) {
+        updateTaste();
+      }
       updateTasteFromChildrenUp();
     }
 
@@ -178,7 +184,10 @@ public abstract class IntervalTreeImpl<T extends RangeMarkerEx> extends RedBlack
 
     private byte computeTaste() {
       byte r = 0;
-      for (Supplier<? extends E> interval : intervals) {
+      List<Supplier<? extends E>> intervals = this.intervals;
+      //noinspection ForLoopReplaceableByForEach
+      for (int i = 0; i < intervals.size(); i++) {
+        Supplier<? extends E> interval = intervals.get(i);
         E e = interval.get();
         if (e != null) {
           r |= myTree.getTasteFlags(e);
@@ -986,22 +995,23 @@ public abstract class IntervalTreeImpl<T extends RangeMarkerEx> extends RedBlack
       assert IntervalNode.deltaUpToRoot(packedOffsets) == root.delta + deltaUpToRootExclusive;
     }
     T liveInterval = null;
-    for (int i = root.intervals.size() - 1; i >= 0; i--) {
-      T t = root.intervals.get(i).get();
+    List<Supplier<? extends T>> intervals = root.intervals;
+    for (int i = intervals.size() - 1; i >= 0; i--) {
+      T t = intervals.get(i).get();
       if (t == null) continue;
       liveInterval = t;
       checkBelongsToTheTree(t, false);
       if (t.isValid()) {
         long id = t.getId();
         boolean added = ids.add(id);
-        assert added : t +"\nids:"+ids+"; id="+id+"\n; root.intervals="+root.intervals;
+        assert added : t + "\nids:" + ids + "; id=" + id + "\n; root.intervals=" + intervals;
       }
     }
     if (assertInvalid && liveInterval != null) {
       checkBelongsToTheTree(liveInterval, true);
     }
 
-    keyCounter[0]+= root.intervals.size();
+    keyCounter[0]+= intervals.size();
     nodeCounter[0]++;
     int delta = deltaUpToRootExclusive + (root.isValid() ? root.delta : 0);
     IntTrinity l = checkMax(root.getLeft(), delta, assertInvalid, allValid, keyCounter, nodeCounter, ids, root.delta == 0 && allDeltasUpAreNull);
@@ -1055,10 +1065,11 @@ public abstract class IntervalTreeImpl<T extends RangeMarkerEx> extends RedBlack
                                     "; this: "+this + "("+getClass()+")";
     if (VERIFY) {
       if (assertInvalid) {
-        assert !root.intervals.isEmpty();
+        List<Supplier<? extends T>> intervals = root.intervals;
+        assert !intervals.isEmpty();
         boolean contains = false;
-        for (int i = root.intervals.size() - 1; i >= 0; i--) {
-          T key = root.intervals.get(i).get();
+        for (int i = intervals.size() - 1; i >= 0; i--) {
+          T key = intervals.get(i).get();
           if (key == null) continue;
           contains |= key == interval;
           IntervalNode<T> node = lookupNode(key);
@@ -1067,7 +1078,7 @@ public abstract class IntervalTreeImpl<T extends RangeMarkerEx> extends RedBlack
           assert node.getTree() == this : node;
         }
 
-        assert contains : root.intervals + "; " + interval;
+        assert contains : intervals + "; " + interval;
       }
 
       IntervalNode<T> e = root;

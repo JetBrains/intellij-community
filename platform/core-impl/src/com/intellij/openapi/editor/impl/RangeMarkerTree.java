@@ -293,7 +293,7 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
       if (marker != null) {
         if (marker.isValid()) return marker;
         // marker can become invalid on its own, e.g., FoldRegion
-        node.removeIntervalInternal(i);
+        node.removeIntervalInternal(i, t);
         invalidated.add(t);
       }
     }

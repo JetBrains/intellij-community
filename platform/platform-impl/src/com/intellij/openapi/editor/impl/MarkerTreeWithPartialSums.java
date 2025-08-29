@@ -137,8 +137,8 @@ public class MarkerTreeWithPartialSums<T extends RangeMarkerImpl & IntSupplier> 
     }
 
     @Override
-    public void removeIntervalInternal(int i) {
-      super.removeIntervalInternal(i);
+    public void removeIntervalInternal(int i, T oldInterval) {
+      super.removeIntervalInternal(i, oldInterval);
       recalculateSubTreeSumUp();
     }
   }
