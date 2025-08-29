@@ -62,7 +62,7 @@ public class BaseCompletionService extends CompletionService {
   }
 
   @Override
-  protected String suggestPrefix(@NotNull CompletionParameters parameters) {
+  protected @NotNull String suggestPrefix(@NotNull CompletionParameters parameters) {
     final PsiElement position = parameters.getPosition();
     final int offset = parameters.getOffset();
     TextRange range = position.getTextRange();
@@ -82,10 +82,10 @@ public class BaseCompletionService extends CompletionService {
 
   @Override
   @ApiStatus.Internal
-  public @NotNull CompletionResultSet createResultSet(CompletionParameters parameters,
-                                                      Consumer<? super CompletionResult> consumer,
+  public @NotNull CompletionResultSet createResultSet(@NotNull CompletionParameters parameters,
+                                                      @NotNull Consumer<? super CompletionResult> consumer,
                                                       @NotNull CompletionContributor contributor,
-                                                      PrefixMatcher matcher) {
+                                                      @NotNull PrefixMatcher matcher) {
     return new BaseCompletionResultSet(consumer, matcher, contributor, parameters, null, null);
   }
 
@@ -100,10 +100,10 @@ public class BaseCompletionService extends CompletionService {
     protected final @Nullable BaseCompletionService.BaseCompletionResultSet myOriginal;
     private int itemCounter = 0;
 
-    protected BaseCompletionResultSet(java.util.function.Consumer<? super CompletionResult> consumer,
-                                      PrefixMatcher prefixMatcher,
-                                      CompletionContributor contributor,
-                                      CompletionParameters parameters,
+    protected BaseCompletionResultSet(@NotNull java.util.function.Consumer<? super CompletionResult> consumer,
+                                      @NotNull PrefixMatcher prefixMatcher,
+                                      @Nullable CompletionContributor contributor,
+                                      @NotNull CompletionParameters parameters,
                                       @Nullable CompletionSorter sorter,
                                       @Nullable BaseCompletionService.BaseCompletionResultSet original) {
       super(prefixMatcher, consumer, contributor);
@@ -200,7 +200,7 @@ public class BaseCompletionService extends CompletionService {
   }
 
   @Override
-  public CompletionSorter defaultSorter(CompletionParameters parameters, PrefixMatcher matcher) {
+  public @NotNull CompletionSorter defaultSorter(@NotNull CompletionParameters parameters, @NotNull PrefixMatcher matcher) {
 
     CompletionLocation location = new CompletionLocation(parameters);
     CompletionSorterImpl sorter = emptySorter();
@@ -235,7 +235,7 @@ public class BaseCompletionService extends CompletionService {
   }
 
   @Override
-  public CompletionSorterImpl emptySorter() {
+  public @NotNull CompletionSorterImpl emptySorter() {
     return new CompletionSorterImpl(new ArrayList<>());
   }
 }

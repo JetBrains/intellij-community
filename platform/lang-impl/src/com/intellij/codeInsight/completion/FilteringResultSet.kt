@@ -79,7 +79,7 @@ class FilteringResultSet(
   companion object {
     private fun CompletionService.getVariantsFromContributors(
       parameters: CompletionParameters,
-      from: CompletionContributor,
+      from: CompletionContributor?,
       matcher: PrefixMatcher,
       consumer: Consumer<in CompletionResult?>,
       customSorter: CompletionSorter?,

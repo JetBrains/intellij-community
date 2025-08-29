@@ -51,14 +51,14 @@ public abstract class CompletionService {
    */
   public void getVariantsFromContributors(@NotNull CompletionParameters parameters,
                                           @Nullable CompletionContributor from,
-                                          Consumer<? super CompletionResult> consumer) {
+                                          @NotNull Consumer<? super CompletionResult> consumer) {
     getVariantsFromContributors(parameters, from, createMatcher(suggestPrefix(parameters), false), consumer);
   }
 
   protected void getVariantsFromContributors(@NotNull CompletionParameters parameters,
                                              @Nullable CompletionContributor from,
-                                             PrefixMatcher matcher,
-                                             Consumer<? super CompletionResult> consumer) {
+                                             @NotNull PrefixMatcher matcher,
+                                             @NotNull Consumer<? super CompletionResult> consumer) {
     getVariantsFromContributors(parameters, from, matcher, consumer, null);
   }
 
@@ -106,8 +106,8 @@ public abstract class CompletionService {
 
   protected void getVariantsFromContributors(@NotNull CompletionParameters parameters,
                                              @Nullable CompletionContributor from,
-                                             PrefixMatcher matcher,
-                                             Consumer<? super CompletionResult> consumer,
+                                             @NotNull PrefixMatcher matcher,
+                                             @NotNull Consumer<? super CompletionResult> consumer,
                                              @Nullable CompletionSorter customSorter) {
     List<CompletionContributor> contributors = CompletionContributor.forParameters(parameters);
     boolean groupEnabledInApp = GroupedCompletionContributor.isGroupEnabledInApp();
@@ -137,17 +137,19 @@ public abstract class CompletionService {
   }
 
   @ApiStatus.Internal
-  public void getVariantsFromContributor(CompletionParameters params, CompletionContributor contributor, CompletionResultSet result) {
+  public void getVariantsFromContributor(@NotNull CompletionParameters params,
+                                         @NotNull CompletionContributor contributor,
+                                         @NotNull CompletionResultSet result) {
     contributor.fillCompletionVariants(params, result);
   }
 
   @ApiStatus.Internal
-  public abstract @NotNull CompletionResultSet createResultSet(CompletionParameters parameters,
-                                                               Consumer<? super CompletionResult> consumer,
+  public abstract @NotNull CompletionResultSet createResultSet(@NotNull CompletionParameters parameters,
+                                                               @NotNull Consumer<? super CompletionResult> consumer,
                                                                @NotNull CompletionContributor contributor,
-                                                               PrefixMatcher matcher);
+                                                               @NotNull PrefixMatcher matcher);
 
-  protected abstract String suggestPrefix(CompletionParameters parameters);
+  protected abstract @NotNull String suggestPrefix(@NotNull CompletionParameters parameters);
 
   protected abstract @NotNull PrefixMatcher createMatcher(String prefix, boolean typoTolerant);
 
@@ -199,17 +201,17 @@ public abstract class CompletionService {
     }
   }
 
-  public abstract CompletionSorter defaultSorter(CompletionParameters parameters, PrefixMatcher matcher);
+  public abstract @NotNull CompletionSorter defaultSorter(@NotNull CompletionParameters parameters, @NotNull PrefixMatcher matcher);
 
-  public abstract CompletionSorter emptySorter();
+  public abstract @NotNull CompletionSorter emptySorter();
 
   @ApiStatus.Internal
-  public static boolean isStartMatch(LookupElement element, WeighingContext context) {
+  public static boolean isStartMatch(@NotNull LookupElement element, @NotNull WeighingContext context) {
     return getItemMatcher(element, context).isStartMatch(element);
   }
 
   @ApiStatus.Internal
-  public static PrefixMatcher getItemMatcher(LookupElement element, WeighingContext context) {
+  public static PrefixMatcher getItemMatcher(@NotNull LookupElement element, @NotNull WeighingContext context) {
     PrefixMatcher itemMatcher = context.itemMatcher(element);
     String pattern = context.itemPattern(element);
     if (!pattern.equals(itemMatcher.getPrefix())) {

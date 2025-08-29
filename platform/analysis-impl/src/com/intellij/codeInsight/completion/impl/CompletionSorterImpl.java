@@ -60,7 +60,7 @@ public class CompletionSorterImpl extends CompletionSorter {
     return enhanced(classifierFactory, myMembers.size());
   }
 
-  public CompletionSorterImpl withClassifier(@NotNull String anchorId,
+  public @NotNull CompletionSorterImpl withClassifier(@NotNull String anchorId,
                                              boolean beforeAnchor, ClassifierFactory<LookupElement> classifierFactory) {
     final int i = idIndex(anchorId);
     return enhanced(classifierFactory, beforeAnchor ? Math.max(0, i) : i + 1);
@@ -70,12 +70,11 @@ public class CompletionSorterImpl extends CompletionSorter {
     return new CompletionSorterImpl(ContainerUtil.filter(myMembers, t -> !removeCondition.test(t)));
   }
 
-  private CompletionSorterImpl enhanced(ClassifierFactory<LookupElement> classifierFactory, int index) {
+  private @NotNull CompletionSorterImpl enhanced(ClassifierFactory<LookupElement> classifierFactory, int index) {
     final List<ClassifierFactory<LookupElement>> copy = new ArrayList<>(myMembers);
     copy.add(index, classifierFactory);
     return new CompletionSorterImpl(copy);
   }
-
 
   private int idIndex(final String id) {
     return ContainerUtil.indexOf(myMembers, factory -> id.equals(factory.getId()));

@@ -31,12 +31,12 @@ public abstract class CompletionResultSet implements Consumer<LookupElement> {
   private final java.util.function.Consumer<? super CompletionResult> consumer;
   protected final CompletionService myCompletionService = CompletionService.getCompletionService();
   @ApiStatus.Internal
-  public final CompletionContributor contributor;
+  public final @Nullable CompletionContributor contributor;
   private boolean myStopped;
 
   protected CompletionResultSet(@NotNull PrefixMatcher prefixMatcher,
-                                java.util.function.Consumer<? super CompletionResult> consumer,
-                                CompletionContributor contributor) {
+                                @NotNull java.util.function.Consumer<? super CompletionResult> consumer,
+                                @Nullable CompletionContributor contributor) {
     this.prefixMatcher = prefixMatcher;
     this.consumer = consumer;
     this.contributor = contributor;

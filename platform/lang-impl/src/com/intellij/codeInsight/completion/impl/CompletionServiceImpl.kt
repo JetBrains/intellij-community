@@ -136,10 +136,10 @@ open class CompletionServiceImpl : BaseCompletionService() {
     return if (isCurrentlyUnderLocalId) apiCompletionProcess else null
   }
 
-  private class CompletionResultSetImpl(consumer: java.util.function.Consumer<in CompletionResult>?,
-                                        prefixMatcher: PrefixMatcher?,
+  private class CompletionResultSetImpl(consumer: java.util.function.Consumer<in CompletionResult>,
+                                        prefixMatcher: PrefixMatcher,
                                         contributor: CompletionContributor?,
-                                        parameters: CompletionParameters?,
+                                        parameters: CompletionParameters,
                                         sorter: CompletionSorter?,
                                         original: CompletionResultSetImpl?) :
     BaseCompletionResultSet(consumer, prefixMatcher, contributor, parameters, sorter, original) {
