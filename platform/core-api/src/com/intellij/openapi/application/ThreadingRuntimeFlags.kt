@@ -8,7 +8,7 @@ import org.jetbrains.annotations.ApiStatus
  * - `true` means that [backgroundWriteAction] will perform write actions in and old way (on EDT)
  */
 @ApiStatus.Internal
-val useBackgroundWriteAction: Boolean = System.getProperty("idea.background.write.action.enabled", "true").toBoolean()
+val useBackgroundWriteAction: Boolean = Runtime.getRuntime().availableProcessors() >= 3 && System.getProperty("idea.background.write.action.enabled", "true").toBoolean()
 
 
 /**
