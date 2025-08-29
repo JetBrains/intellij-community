@@ -53,7 +53,7 @@ import kotlin.math.max
  *  *  [InsertedSingleItem] - a single item was found, and it was inserted into the document
  *  *  [NoSuggestionsHint] - candidate inference has finished, but no candidates were found and a warning "no suggestions found" is shown.
  */
-abstract class CompletionPhase @ApiStatus.Internal protected constructor(
+sealed class CompletionPhase @ApiStatus.Internal constructor(
   @JvmField
   val indicator: CompletionProgressIndicator?
 ) : Disposable {
@@ -374,6 +374,16 @@ abstract class CompletionPhase @ApiStatus.Internal protected constructor(
     }
   }
 
+  private object NoCompletionImpl: CompletionPhase(null) {
+    override fun newCompletionStarted(time: Int, repeated: Boolean): Int {
+      return time
+    }
+
+    override fun toString(): String {
+      return "NoCompletion"
+    }
+  }
+
   @ApiStatus.Internal
   companion object {
     @ApiStatus.Internal
@@ -385,15 +395,7 @@ abstract class CompletionPhase @ApiStatus.Internal protected constructor(
     val CUSTOM_CODE_COMPLETION_ACTION_ID: Key<String> = Key.create("CodeCompletionActionID")
 
     @JvmField
-    val NoCompletion: CompletionPhase = object : CompletionPhase(null) {
-      override fun newCompletionStarted(time: Int, repeated: Boolean): Int {
-        return time
-      }
-
-      override fun toString(): String {
-        return "NoCompletion"
-      }
-    }
+    val NoCompletion: CompletionPhase = NoCompletionImpl
   }
 }
 
