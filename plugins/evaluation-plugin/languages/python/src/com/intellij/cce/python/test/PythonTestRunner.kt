@@ -16,7 +16,7 @@ class PythonTestRunner : TestRunner {
 
   override suspend fun runTests(request: TestRunRequest): TestRunResult {
     // TODO unify with JavaTestRunner
-    val testCommand = System.getenv("EVALUATION_TEST_COMMAND")
+    val testCommand = request.testCommand
     requireNotNull(testCommand) { "Only test running via command is supported" }
 
     val testCommandParts = testCommand.split(" ")
