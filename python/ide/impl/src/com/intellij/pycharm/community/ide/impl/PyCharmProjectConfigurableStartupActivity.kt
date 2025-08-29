@@ -43,6 +43,10 @@ class PyCharmProjectConfigurableStartupActivity : ProjectActivity {
           ep.bundle="messages.PyBundle"
           ep.groupWeight = 20
         }
+        "com.intellij.python.ty.TyConfigurable" -> {
+          ep.groupId = PythonToolsConfigurable.ID
+          ep.groupWeight = 40
+        }
         "com.jetbrains.python.black.configuration.BlackFormatterConfigurable" -> {
           ep.groupId = PythonToolsConfigurable.ID
           ep.groupWeight = 30
