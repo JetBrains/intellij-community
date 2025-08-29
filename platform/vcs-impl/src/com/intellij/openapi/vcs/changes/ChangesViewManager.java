@@ -43,6 +43,7 @@ import com.intellij.openapi.vcs.telemetry.VcsBackendTelemetrySpan.ChangesView;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
+import com.intellij.platform.vcs.impl.shared.changes.ChangeListsViewModel;
 import com.intellij.platform.vcs.impl.shared.changes.PreviewDiffSplitterComponent;
 import com.intellij.platform.vcs.impl.shared.telemetry.VcsScopeKt;
 import com.intellij.problems.ProblemListener;
@@ -503,6 +504,7 @@ public class ChangesViewManager implements ChangesViewEx,
           myView.repaint();
         });
       });
+      ChangeListsViewModel.getInstance(project).updateUiOnStateUpdate(this, () -> myView.repaint());
 
       scheduleRefresh();
     }
