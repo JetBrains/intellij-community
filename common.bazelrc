@@ -109,3 +109,7 @@ common:ci --show_progress_rate_limit=30
 
 # avoid creating a runfiles tree for binaries or tests until it is needed
 build --nobuild_runfile_links
+
+# detailed tests output by default
+# https://bazel.build/reference/command-line-reference?utm_source=chatgpt.com#build-flag--test_summary
+test --test_summary=detailed
