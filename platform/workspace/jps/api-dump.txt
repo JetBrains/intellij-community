@@ -365,6 +365,37 @@ f:com.intellij.java.workspace.entities.JavaModuleSettingsKt
 - sf:getJavaSettings(com.intellij.platform.workspace.jps.entities.ModuleEntity):com.intellij.java.workspace.entities.JavaModuleSettingsEntity
 - sf:modifyJavaModuleSettingsEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.java.workspace.entities.JavaModuleSettingsEntity,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.JavaModuleSettingsEntity
 - sf:setJavaSettings(com.intellij.platform.workspace.jps.entities.ModuleEntity$Builder,com.intellij.java.workspace.entities.JavaModuleSettingsEntity$Builder):V
+com.intellij.java.workspace.entities.JavaProjectSettingsEntity
+- com.intellij.platform.workspace.storage.WorkspaceEntity
+- sf:Companion:com.intellij.java.workspace.entities.JavaProjectSettingsEntity$Companion
+- s:create(com.intellij.platform.workspace.storage.EntitySource):com.intellij.java.workspace.entities.JavaProjectSettingsEntity$Builder
+- s:create(com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.JavaProjectSettingsEntity$Builder
+- a:getCompilerOutput():com.intellij.platform.workspace.storage.url.VirtualFileUrl
+- a:getLanguageLevelDefault():java.lang.Boolean
+- a:getLanguageLevelId():java.lang.String
+- a:getProjectSettings():com.intellij.platform.workspace.jps.entities.ProjectSettingsEntity
+com.intellij.java.workspace.entities.JavaProjectSettingsEntity$Builder
+- com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
+- a:getCompilerOutput():com.intellij.platform.workspace.storage.url.VirtualFileUrl
+- a:getEntitySource():com.intellij.platform.workspace.storage.EntitySource
+- a:getLanguageLevelDefault():java.lang.Boolean
+- a:getLanguageLevelId():java.lang.String
+- a:getProjectSettings():com.intellij.platform.workspace.jps.entities.ProjectSettingsEntity$Builder
+- a:setCompilerOutput(com.intellij.platform.workspace.storage.url.VirtualFileUrl):V
+- a:setEntitySource(com.intellij.platform.workspace.storage.EntitySource):V
+- a:setLanguageLevelDefault(java.lang.Boolean):V
+- a:setLanguageLevelId(java.lang.String):V
+- a:setProjectSettings(com.intellij.platform.workspace.jps.entities.ProjectSettingsEntity$Builder):V
+f:com.intellij.java.workspace.entities.JavaProjectSettingsEntity$Companion
+- com.intellij.platform.workspace.storage.EntityType
+- f:create(com.intellij.platform.workspace.storage.EntitySource):com.intellij.java.workspace.entities.JavaProjectSettingsEntity$Builder
+- f:create(com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.JavaProjectSettingsEntity$Builder
+- bs:create$default(com.intellij.java.workspace.entities.JavaProjectSettingsEntity$Companion,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.java.workspace.entities.JavaProjectSettingsEntity$Builder
+f:com.intellij.java.workspace.entities.JavaProjectSettingsEntityKt
+- sf:getJavaProjectSettings(com.intellij.platform.workspace.jps.entities.ProjectSettingsEntity$Builder):com.intellij.java.workspace.entities.JavaProjectSettingsEntity$Builder
+- sf:getJavaProjectSettings(com.intellij.platform.workspace.jps.entities.ProjectSettingsEntity):com.intellij.java.workspace.entities.JavaProjectSettingsEntity
+- sf:modifyJavaProjectSettingsEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.java.workspace.entities.JavaProjectSettingsEntity,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.JavaProjectSettingsEntity
+- sf:setJavaProjectSettings(com.intellij.platform.workspace.jps.entities.ProjectSettingsEntity$Builder,com.intellij.java.workspace.entities.JavaProjectSettingsEntity$Builder):V
 com.intellij.java.workspace.entities.JavaResourceRootPropertiesEntity
 - com.intellij.platform.workspace.storage.WorkspaceEntity
 - sf:Companion:com.intellij.java.workspace.entities.JavaResourceRootPropertiesEntity$Companion
@@ -972,6 +1003,25 @@ f:com.intellij.platform.workspace.jps.entities.ModuleTypeId
 - equals(java.lang.Object):Z
 - f:getName():java.lang.String
 - hashCode():I
+com.intellij.platform.workspace.jps.entities.ProjectSettingsEntity
+- com.intellij.platform.workspace.storage.WorkspaceEntity
+- sf:Companion:com.intellij.platform.workspace.jps.entities.ProjectSettingsEntity$Companion
+- s:create(com.intellij.platform.workspace.storage.EntitySource):com.intellij.platform.workspace.jps.entities.ProjectSettingsEntity$Builder
+- s:create(com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.platform.workspace.jps.entities.ProjectSettingsEntity$Builder
+- a:getProjectSdk():com.intellij.platform.workspace.jps.entities.SdkId
+com.intellij.platform.workspace.jps.entities.ProjectSettingsEntity$Builder
+- com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
+- a:getEntitySource():com.intellij.platform.workspace.storage.EntitySource
+- a:getProjectSdk():com.intellij.platform.workspace.jps.entities.SdkId
+- a:setEntitySource(com.intellij.platform.workspace.storage.EntitySource):V
+- a:setProjectSdk(com.intellij.platform.workspace.jps.entities.SdkId):V
+f:com.intellij.platform.workspace.jps.entities.ProjectSettingsEntity$Companion
+- com.intellij.platform.workspace.storage.EntityType
+- f:create(com.intellij.platform.workspace.storage.EntitySource):com.intellij.platform.workspace.jps.entities.ProjectSettingsEntity$Builder
+- f:create(com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.platform.workspace.jps.entities.ProjectSettingsEntity$Builder
+- bs:create$default(com.intellij.platform.workspace.jps.entities.ProjectSettingsEntity$Companion,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.platform.workspace.jps.entities.ProjectSettingsEntity$Builder
+f:com.intellij.platform.workspace.jps.entities.ProjectSettingsEntityKt
+- sf:modifyProjectSettingsEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.platform.workspace.jps.entities.ProjectSettingsEntity,kotlin.jvm.functions.Function1):com.intellij.platform.workspace.jps.entities.ProjectSettingsEntity
 f:com.intellij.platform.workspace.jps.entities.RootsKt
 - sf:getContentRoot(com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity):com.intellij.platform.workspace.jps.entities.ContentRootEntity
 - sf:modifyContentRootEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.platform.workspace.jps.entities.ContentRootEntity,kotlin.jvm.functions.Function1):com.intellij.platform.workspace.jps.entities.ContentRootEntity
