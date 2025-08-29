@@ -1,9 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.build
 
-import com.intellij.ide.rpc.navigatable
 import com.intellij.ide.rpc.weakRpcId
-import com.intellij.ide.ui.icons.icon
 import com.intellij.ide.ui.icons.rpcId
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.debug
@@ -86,7 +84,7 @@ class BuildTreeViewModel(private val consoleView: BuildTreeConsoleView, private 
         }
         val id = getOrCreateNodeId(node)
         val dto = entry.value.copy(id = id, parentId = parentId)
-        if (nodeStates[id]?.sameAs(dto) == true) {
+        if (nodeStates[id] == dto) {
           LOG.debug { "State not changed for id=$id, skipping update" }
           null
         }
@@ -266,22 +264,4 @@ class BuildTreeViewModel(private val consoleView: BuildTreeConsoleView, private 
    override fun dispose() {
     isDisposed.value = true
   }
-}
-
-// difference from 'equals' is in handling of icon and navigatable references
-private fun BuildTreeNode.sameAs(other: BuildTreeNode): Boolean {
-  return id == other.id &&
-         parentId == other.parentId &&
-         title == other.title &&
-         name == other.name &&
-         hint == other.hint &&
-         duration == other.duration &&
-         autoExpand == other.autoExpand &&
-         hasProblems == other.hasProblems &&
-         visibleAlways == other.visibleAlways &&
-         visibleAsSuccessful == other.visibleAsSuccessful &&
-         visibleAsWarning == other.visibleAsWarning &&
-         icon?.icon() === other.icon?.icon() &&
-         navigatables.size == other.navigatables.size &&
-         navigatables.indices.all { navigatables[it].navigatable() === other.navigatables[it].navigatable() }
 }
