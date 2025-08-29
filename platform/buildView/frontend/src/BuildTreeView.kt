@@ -114,11 +114,18 @@ internal class BuildTreeView(parentScope: CoroutineScope, private val buildViewI
       }
     }
     uiScope.launch {
-      BuildTreeApi.getInstance().getShutdownStateFlow(buildViewId).collect {
-        if (it) {
-          LOG.debug { "Disposing BuildTreeView(id=$buildViewId)" }
-          Disposer.dispose(this@BuildTreeView)
+      try {
+        BuildTreeApi.getInstance().getShutdownStateFlow(buildViewId).collect {
+          if (it) {
+            LOG.debug { "Disposing BuildTreeView(id=$buildViewId)" }
+            Disposer.dispose(this@BuildTreeView)
+          }
         }
+      }
+      finally {
+        // on application shutdown the scope is canceled before we receive the shutdown event
+        LOG.debug { "Disposing BuildTreeView(id=$buildViewId) on shutdown" }
+        Disposer.dispose(this@BuildTreeView)
       }
     }
   }
