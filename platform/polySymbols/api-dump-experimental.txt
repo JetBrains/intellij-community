@@ -1174,6 +1174,7 @@
 *:com.intellij.polySymbols.utils.PolySymbolTypeSupport
 - a:getTypeProperty():com.intellij.polySymbols.PolySymbolProperty
 - a:resolve(java.util.List):java.lang.Object
+- a:withEvaluationLocation(com.intellij.psi.PsiElement,kotlin.jvm.functions.Function0):java.lang.Object
 *:com.intellij.polySymbols.utils.PolySymbolTypeSupport$TypeReference
 - *sf:Companion:com.intellij.polySymbols.utils.PolySymbolTypeSupport$TypeReference$Companion
 - a:getModule():java.lang.String
