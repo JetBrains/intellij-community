@@ -121,6 +121,14 @@
                      language="kotlin" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      key="inspection.redundant.suspend.modifier.display.name" bundle="messages.KotlinBundle"/>
 
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.RedundantUpperBoundInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
+                     enabledByDefault="true"
+                     level="WARNING" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
+                     language="kotlin"
+                     key="inspection.redundant.upper.bound.problem" bundle="messages.KotlinBundle"/>
+
     <localInspection
             implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.SimplifyNegatedBinaryExpressionInspection"
             groupPath="Kotlin"
