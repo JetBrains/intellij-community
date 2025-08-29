@@ -7,16 +7,17 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.currentCompositionLocalContext
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.InternalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.Measurable
 import androidx.compose.ui.layout.MeasurePolicy
@@ -87,7 +88,9 @@ private fun JBPopup(
     content: @Composable () -> Unit,
 ) {
     val currentContent = rememberUpdatedState(content)
-    val currentPopupPositionProvider = rememberUpdatedState(popupPositionProvider)
+    val currentPopupPositionProvider by rememberUpdatedState(popupPositionProvider)
+    val currentOnDismissRequest by rememberUpdatedState(onDismissRequest)
+    val currentProperties by rememberUpdatedState(properties)
 
     val owner = LocalComponent.current
     val compositionLocalContext = currentCompositionLocalContext
@@ -114,54 +117,46 @@ private fun JBPopup(
                     preferredSize = Dimension(1, 1)
                 },
                 content = {
-                    ProvideValuesFromOtherContext(compositionLocalContext) {
-                        val focusRequester = remember { FocusRequester() }
-                        val positionProvider = currentPopupPositionProvider.value
-                        val parentBounds = parentBoundsInRoot.value ?: return@ProvideValuesFromOtherContext
+                    val parentBounds = parentBoundsInRoot.value ?: return@compose
 
-                        Layout(
-                            modifier = Modifier.focusRequester(focusRequester).semantics { popup() },
-                            content = {
-                                currentContent.value()
-
-                                LaunchedEffect(Unit) {
-                                    if (properties.focusable) {
-                                        focusRequester.requestFocus()
-                                    }
-                                }
+                    Layout(
+                        modifier = Modifier.semantics { popup() },
+                        content = { ProvideValuesFromOtherContext(compositionLocalContext) { currentContent.value() } },
+                        measurePolicy =
+                            remember(currentPopupPositionProvider, parentBounds) {
+                                JBPopupMeasurePolicy(
+                                    popupPositionProvider = currentPopupPositionProvider,
+                                    screenSize = IntSize.fromScreenSize(owner),
+                                    parentBoundsInWindow = parentBounds,
+                                    onMeasure = { position, size ->
+                                        popupRectangle.value =
+                                            Rectangle(position.x, position.y, size.width, size.height)
+                                    },
+                                )
                             },
-                            measurePolicy =
-                                remember(positionProvider, parentBounds) {
-                                    JBPopupMeasurePolicy(
-                                        popupPositionProvider = positionProvider,
-                                        screenSize = IntSize.fromScreenSize(owner),
-                                        parentBoundsInWindow = parentBounds,
-                                        onMeasure = { position, size ->
-                                            popupRectangle.value =
-                                                Rectangle(position.x, position.y, size.width, size.height)
-                                        },
-                                    )
-                                },
-                        )
-                    }
+                    )
                 },
             )
                 as JewelComposePanelWrapper
 
         JBPopupFactory.getInstance()
             .createComponentPopupBuilder(jewelComposePanelWrapper, jewelComposePanelWrapper.composePanel)
-            .setFocusable(properties.focusable)
-            .setRequestFocus(properties.focusable)
-            .setCancelOnClickOutside(properties.dismissOnClickOutside)
-            .setCancelOnWindowDeactivation(true)
+            .setFocusable(currentProperties.focusable)
+            .setRequestFocus(currentProperties.focusable)
+            .setCancelOnClickOutside(currentProperties.dismissOnClickOutside)
+            .setCancelOnWindowDeactivation(currentProperties.dismissOnClickOutside)
             .setLocateWithinScreenBounds(false)
             .setKeyEventHandler { event ->
                 val composeEvent = event.toComposeKeyEvent()
-                onPreviewKeyEvent?.invoke(composeEvent) == true || onKeyEvent?.invoke(composeEvent) == true
-            }
-            .setCancelCallback {
-                onDismissRequest?.invoke()
-                true
+                val consumed =
+                    onPreviewKeyEvent?.invoke(composeEvent) == true || onKeyEvent?.invoke(composeEvent) == true
+
+                if (!consumed && composeEvent.isDismissRequest()) {
+                    currentOnDismissRequest?.invoke()
+                    true
+                } else {
+                    consumed
+                }
             }
             .createPopup()
     }
@@ -286,6 +281,8 @@ private fun Component.locationOnDisplay(): Point {
 
     return Point(relativeX, relativeY)
 }
+
+private fun KeyEvent.isDismissRequest() = type == KeyEventType.KeyDown && key == Key.Escape
 
 private val java.awt.event.KeyEvent.keyLocationForCompose
     get() = if (keyLocation == KEY_LOCATION_UNKNOWN) KEY_LOCATION_STANDARD else keyLocation
