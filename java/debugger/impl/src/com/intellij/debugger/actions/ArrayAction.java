@@ -1,13 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.actions;
 
+import com.intellij.debugger.JvmDebuggerUtils;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.JavaValue;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
-import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.settings.ArrayRendererConfigurable;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
@@ -18,10 +18,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy;
-import com.intellij.xdebugger.impl.frame.XDebugSessionProxyKeeperKt;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
@@ -110,7 +108,7 @@ public abstract class ArrayAction extends DebuggerAction {
   }
 
   public static void setArrayRenderer(ArrayRenderer newRenderer, @NotNull XValueNodeImpl node, @NotNull DebuggerContextImpl debuggerContext) {
-    XDebugSessionProxy sessionProxy = findProxyFromContext(debuggerContext);
+    XDebugSessionProxy sessionProxy = JvmDebuggerUtils.findProxyFromContext(debuggerContext);
     if (sessionProxy == null) return;
 
     XValue container = node.getValueContainer();
@@ -144,14 +142,6 @@ public abstract class ArrayAction extends DebuggerAction {
         }
       });
     }
-  }
-
-  private static @Nullable XDebugSessionProxy findProxyFromContext(@NotNull DebuggerContextImpl debuggerContext) {
-    DebuggerSession javaSession = debuggerContext.getDebuggerSession();
-    if (javaSession == null) return null;
-    XDebugSession debugSession = javaSession.getXDebugSession();
-    if (debugSession == null) return null;
-    return XDebugSessionProxyKeeperKt.asProxy(debugSession);
   }
 
   private static String createNodeTitle(String prefix, DebuggerTreeNodeImpl node) {
@@ -208,7 +198,7 @@ public abstract class ArrayAction extends DebuggerAction {
                                                                 ArrayRenderer original,
                                                                 @NotNull DebuggerContextImpl debuggerContext,
                                                                 String title) {
-      XDebugSessionProxy sessionProxy = findProxyFromContext(debuggerContext);
+      XDebugSessionProxy sessionProxy = JvmDebuggerUtils.findProxyFromContext(debuggerContext);
       if (sessionProxy == null) return Promises.rejectedPromise();
       ArrayFilterInplaceEditor.editParent(node, sessionProxy);
       return Promises.rejectedPromise();
