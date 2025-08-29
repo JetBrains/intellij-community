@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.ProgressWrapper
 import com.intellij.openapi.project.Project
+import com.intellij.util.Consumer
 import com.intellij.util.concurrency.Semaphore
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.TestOnly
@@ -31,7 +32,7 @@ internal sealed interface CompletionThreading {
 }
 
 @Suppress("UsagesOfObsoleteApi")
-internal interface WeighingDelegate : com.intellij.util.Consumer<CompletionResult> {
+internal interface WeighingDelegate : Consumer<CompletionResult> {
   fun waitFor()
 }
 
