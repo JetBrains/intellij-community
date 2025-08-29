@@ -233,25 +233,53 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
         return@withContext null
       }
       val bgProgressIndicator = BgProgressIndicator()
-      val projectNotNull = tryToFindProject() ?: return@withContext null
-      val (installResult, info) = withContext(Dispatchers.IO) {
-        withBackgroundProgress(projectNotNull, IdeBundle.message("progress.title.loading.plugin.details")) {
-          jobToIndicator(coroutineContext.job, bgProgressIndicator) {
-            val installPluginInfo = InstallPluginInfo(bgProgressIndicator, descriptor, this@MyPluginModel, updateDescriptor == null)
-            return@jobToIndicator runBlockingCancellable {
-              prepareToInstall(installPluginInfo)
-              val result = controller.installOrUpdatePlugin(sessionId, projectNotNull, parentComponent, descriptor, updateDescriptor, myInstallSource, modalityState, null)
-              if (result.disabledPlugins.isEmpty() || result.disabledDependants.isEmpty()) {
-                return@runBlockingCancellable result
-              }
-              val enableDependencies = PluginManagerMain.askToEnableDependencies(1, result.disabledPlugins, result.disabledDependants)
-              return@runBlockingCancellable controller.continueInstallation(sessionId, actionDescriptor.pluginId, projectNotNull, enableDependencies, result.allowInstallWithoutRestart, null, modalityState, parentComponent)
-            } to installPluginInfo
-          }
-        }
-      }
+      val projectNotNull = tryToFindProject()
+
+      val info = InstallPluginInfo(bgProgressIndicator, descriptor, this@MyPluginModel, updateDescriptor == null)
+      val installResult = runPluginInstallation(projectNotNull, bgProgressIndicator, descriptor, updateDescriptor, controller, parentComponent, modalityState, actionDescriptor, info)
       applyInstallResult(installResult, info, actionDescriptor, controller)
     }
+  }
+
+  private suspend fun runPluginInstallation(
+    project: Project?,
+    bgProgressIndicator: BgProgressIndicator,
+    descriptor: PluginUiModel,
+    updateDescriptor: PluginUiModel?,
+    controller: UiPluginManagerController,
+    parentComponent: JComponent?,
+    modalityState: ModalityState,
+    actionDescriptor: PluginUiModel,
+    installPluginInfo: InstallPluginInfo,
+  ): InstallPluginResult = withContext(Dispatchers.IO) {
+    if (project == null) {
+      return@withContext installOrUpdatePlugin(installPluginInfo, controller, parentComponent, descriptor, updateDescriptor, modalityState, actionDescriptor)
+    }
+    return@withContext withBackgroundProgress(project, IdeBundle.message("progress.title.loading.plugin.details")) {
+      jobToIndicator(coroutineContext.job, bgProgressIndicator) {
+        return@jobToIndicator runBlockingCancellable {
+          return@runBlockingCancellable installOrUpdatePlugin(installPluginInfo, controller, parentComponent, descriptor, updateDescriptor, modalityState, actionDescriptor)
+        }
+      }
+    }
+  }
+
+  private suspend fun installOrUpdatePlugin(
+    installPluginInfo: InstallPluginInfo,
+    controller: UiPluginManagerController,
+    parentComponent: JComponent?,
+    descriptor: PluginUiModel,
+    updateDescriptor: PluginUiModel?,
+    modalityState: ModalityState,
+    actionDescriptor: PluginUiModel,
+  ): InstallPluginResult {
+    prepareToInstall(installPluginInfo)
+    val result = controller.installOrUpdatePlugin(sessionId, parentComponent, descriptor, updateDescriptor, myInstallSource, modalityState, null)
+    if (result.disabledPlugins.isEmpty() || result.disabledDependants.isEmpty()) {
+      return result
+    }
+    val enableDependencies = PluginManagerMain.askToEnableDependencies(1, result.disabledPlugins, result.disabledDependants)
+    return controller.continueInstallation(sessionId, actionDescriptor.pluginId, enableDependencies, result.allowInstallWithoutRestart, null, modalityState, parentComponent)
   }
 
   suspend fun applyInstallResult(result: InstallPluginResult, info: InstallPluginInfo, descriptor: PluginUiModel, controller: UiPluginManagerController): InstallPluginResult {

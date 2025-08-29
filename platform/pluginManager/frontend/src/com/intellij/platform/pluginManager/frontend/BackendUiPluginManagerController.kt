@@ -90,12 +90,12 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
     return PluginInstallerApi.getInstance().performUninstall(sessionId, pluginId)
   }
 
-  override suspend fun installOrUpdatePlugin(sessionId: String, project: Project, parentComponent: JComponent?, descriptor: PluginUiModel, updateDescriptor: PluginUiModel?, installSource: FUSEventSource?, modalityState: ModalityState?, pluginEnabler: PluginEnabler?): InstallPluginResult {
-    return PluginInstallerApi.getInstance().installOrUpdatePlugin(sessionId, project.projectId(), PluginDto.fromModel(descriptor), updateDescriptor?.let { PluginDto.fromModel(it) }, installSource)
+  override suspend fun installOrUpdatePlugin(sessionId: String, parentComponent: JComponent?, descriptor: PluginUiModel, updateDescriptor: PluginUiModel?, installSource: FUSEventSource?, modalityState: ModalityState?, pluginEnabler: PluginEnabler?): InstallPluginResult {
+    return PluginInstallerApi.getInstance().installOrUpdatePlugin(sessionId, PluginDto.fromModel(descriptor), updateDescriptor?.let { PluginDto.fromModel(it) }, installSource)
   }
 
-  override suspend fun continueInstallation(sessionId: String, pluginId: PluginId, project: Project, enableRequiredPlugins: Boolean, allowInstallWithoutRestart: Boolean, pluginEnabler: PluginEnabler?, modalityState: ModalityState?, parentComponent: JComponent?): InstallPluginResult {
-    return PluginInstallerApi.getInstance().continueInstallation(sessionId, pluginId, project.projectId(), enableRequiredPlugins, allowInstallWithoutRestart)
+  override suspend fun continueInstallation(sessionId: String, pluginId: PluginId, enableRequiredPlugins: Boolean, allowInstallWithoutRestart: Boolean, pluginEnabler: PluginEnabler?, modalityState: ModalityState?, parentComponent: JComponent?): InstallPluginResult {
+    return PluginInstallerApi.getInstance().continueInstallation(sessionId, pluginId, enableRequiredPlugins, allowInstallWithoutRestart)
   }
 
   override suspend fun getCustomRepoTags(): Set<String> {

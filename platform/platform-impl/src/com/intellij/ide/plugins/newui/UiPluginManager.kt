@@ -183,10 +183,6 @@ class UiPluginManager {
     return getController().findPlugin(pluginId)
   }
 
-  suspend fun continueInstallation(sessionId: String, pluginId: PluginId, project: Project, enableRequiredPlugins: Boolean, allowInstallWithoutRestart: Boolean, pluginEnabler: PluginEnabler?, modalityState: ModalityState?, parentComponent: JComponent?): InstallPluginResult {
-    return getController().continueInstallation(sessionId, pluginId, project, enableRequiredPlugins, allowInstallWithoutRestart, pluginEnabler, modalityState, parentComponent)
-  }
-
   suspend fun getLastCompatiblePluginUpdateModel(pluginId: PluginId, buildNumber: String? = null, indicator: ProgressIndicator? = null): PluginUiModel? {
     return getController().getLastCompatiblePluginUpdateModel(pluginId, buildNumber, indicator)
   }

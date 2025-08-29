@@ -131,7 +131,6 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
 
   override suspend fun installOrUpdatePlugin(
     sessionId: String,
-    project: Project,
     parentComponent: JComponent?,
     descriptor: PluginUiModel,
     updateDescriptor: PluginUiModel?,
@@ -226,7 +225,6 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
   override suspend fun continueInstallation(
     sessionId: String,
     pluginId: PluginId,
-    project: Project,
     enableRequiredPlugins: Boolean,
     allowInstallWithoutRestart: Boolean,
     pluginEnabler: PluginEnabler?,

@@ -62,10 +62,9 @@ internal class BackendPluginInstallerApi : PluginInstallerApi {
     }
   }
 
-  override suspend fun installOrUpdatePlugin(sessionId: String, projectId: ProjectId, descriptor: PluginDto, updateDescriptor: PluginDto?, installSource: FUSEventSource?): InstallPluginResult {
-    return installPlugin(sessionId, projectId) { enabler, project ->
+  override suspend fun installOrUpdatePlugin(sessionId: String, descriptor: PluginDto, updateDescriptor: PluginDto?, installSource: FUSEventSource?): InstallPluginResult {
+    return installPlugin(sessionId) { enabler ->
       DefaultUiPluginManagerController.installOrUpdatePlugin(sessionId,
-                                                             project,
                                                              null,
                                                              descriptor,
                                                              updateDescriptor,
@@ -75,11 +74,10 @@ internal class BackendPluginInstallerApi : PluginInstallerApi {
     }
   }
 
-  override suspend fun continueInstallation(sessionId: String, pluginId: PluginId, projectId: ProjectId, enableRequiredPlugins: Boolean, allowInstallWithoutRestart: Boolean): InstallPluginResult {
-    return installPlugin(sessionId, projectId) { enabler, project ->
+  override suspend fun continueInstallation(sessionId: String, pluginId: PluginId, enableRequiredPlugins: Boolean, allowInstallWithoutRestart: Boolean): InstallPluginResult {
+    return installPlugin(sessionId) { enabler ->
       DefaultUiPluginManagerController.continueInstallation(sessionId,
                                                             pluginId,
-                                                            project,
                                                             enableRequiredPlugins,
                                                             allowInstallWithoutRestart,
                                                             enabler,
@@ -92,11 +90,10 @@ internal class BackendPluginInstallerApi : PluginInstallerApi {
     return DefaultUiPluginManagerController.isRestartRequired(sessionId)
   }
 
-  private suspend fun installPlugin(sessionId: String, projectId: ProjectId, installOperation: suspend (PluginEnabler, Project) -> InstallPluginResult): InstallPluginResult {
+  private suspend fun installPlugin(sessionId: String, installOperation: suspend (PluginEnabler) -> InstallPluginResult): InstallPluginResult {
     val session = PluginManagerSessionService.getInstance().getSession(sessionId) ?: return InstallPluginResult.FAILED
-    val project = projectId.findProjectOrNull() ?: return InstallPluginResult.FAILED
     val enabler = SessionStatePluginEnabler(session)
-    val result = installOperation(enabler, project)
+    val result = installOperation(enabler)
     return result.apply { pluginsToDisable = enabler.pluginsToDisable }
   }
 
