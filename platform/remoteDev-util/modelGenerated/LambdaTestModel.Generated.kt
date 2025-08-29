@@ -55,7 +55,7 @@ class LambdaTestModel private constructor(
         
         private val __LambdaRdTestSessionNullableSerializer = LambdaRdTestSession.nullable()
         
-        const val serializationHash = -7986310599856038914L
+        const val serializationHash = 6458896133684569706L
         
     }
     override val serializersOwner: ISerializersOwner get() = LambdaTestModel
@@ -175,7 +175,8 @@ data class LambdaRdIdeInfo (
  */
 enum class LambdaRdIdeType {
     BACKEND, 
-    FRONTEND;
+    FRONTEND, 
+    MONOLITH;
     
     companion object : IMarshaller<LambdaRdIdeType> {
         val marshaller = FrameworkMarshallers.enum<LambdaRdIdeType>()

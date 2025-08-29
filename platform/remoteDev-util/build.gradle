@@ -21,7 +21,7 @@ rdgen {
   generator {
     language = "kotlin"
     transform = "symmetric"
-    root = "com.intellij.remoteDev.tests.modelSources.DistributedTestRoot"
+    root = "com.intellij.remoteDev.tests.modelSources.TestRoot"
     namespace = "com.intellij.remoteDev.tests.modelGenerated"
     directory = "$projectDir/modelGenerated"
   }

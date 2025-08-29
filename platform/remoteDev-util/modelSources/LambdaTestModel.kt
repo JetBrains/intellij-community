@@ -20,6 +20,7 @@ object LambdaTestModel : Ext(LambdaTestRoot) {
   private val LambdaRdIdeType = enum {
     +"BACKEND"
     +"FRONTEND"
+    +"MONOLITH"
   }
 
   private val LambdaRdTestSessionStackTraceElement = structdef {

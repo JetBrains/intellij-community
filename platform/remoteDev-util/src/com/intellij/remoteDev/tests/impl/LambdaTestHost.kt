@@ -21,10 +21,7 @@ import com.intellij.openapi.rd.util.setSuspend
 import com.intellij.openapi.ui.isFocusAncestor
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.WindowManager
-import com.intellij.remoteDev.tests.LambdaBackendContext
-import com.intellij.remoteDev.tests.LambdaFrontendContext
-import com.intellij.remoteDev.tests.LambdaIdeContext
-import com.intellij.remoteDev.tests.LambdaTestsConstants
+import com.intellij.remoteDev.tests.*
 import com.intellij.remoteDev.tests.impl.utils.getArtifactsFileName
 import com.intellij.remoteDev.tests.impl.utils.runLogged
 import com.intellij.remoteDev.tests.impl.utils.waitSuspending
@@ -126,14 +123,15 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
   }
 
   private fun createProtocol(hostAddress: InetAddress, port: Int) {
-    LOG.info("Creating protocol...")
     enableCoroutineDump()
 
     // EternalLifetime.createNested() is used intentionally to make sure logger session's lifetime is not terminated before the actual application stop.
     val lifetime = EternalLifetime.createNested()
+    val protocolName = LambdaTestsConstants.protocolName
+    LOG.info("Creating protocol '$protocolName' ...")
 
-    val wire = SocketWire.Client(lifetime, LambdaTestIdeScheduler, port, LambdaTestsConstants.protocolName, hostAddress)
-    val protocol = Protocol(name = LambdaTestsConstants.protocolName,
+    val wire = SocketWire.Client(lifetime, LambdaTestIdeScheduler, port, protocolName, hostAddress)
+    val protocol = Protocol(name = protocolName,
                             serializers = Serializers(),
                             identity = Identities(IdKind.Client),
                             scheduler = LambdaTestIdeScheduler,
@@ -169,8 +167,9 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
         val testClassCompanionObject = testClass.companionObject
 
         val ideContext = when (session.rdIdeInfo.ideType) {
-          LambdaRdIdeType.BACKEND -> LambdaBackendContext()
-          LambdaRdIdeType.FRONTEND -> LambdaFrontendContext()
+          LambdaRdIdeType.BACKEND -> LambdaBackendContextClass()
+          LambdaRdIdeType.FRONTEND -> LambdaFrontendContextClass()
+          LambdaRdIdeType.MONOLITH -> LambdaMonolithContextClass()
         }
 
         val namedLambdas = testClassCompanionObject
