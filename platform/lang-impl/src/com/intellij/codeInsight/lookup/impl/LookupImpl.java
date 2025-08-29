@@ -733,7 +733,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   }
 
   @Override
-  public boolean performGuardedChange(Runnable change) {
+  public boolean performGuardedChange(@NotNull Runnable change) {
     checkValid();
 
     editor.getDocument().startGuardedBlockChecking();
@@ -1025,18 +1025,18 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   }
 
   @Override
-  public void setCurrentItem(LookupElement item) {
+  public void setCurrentItem(@Nullable LookupElement item) {
     markSelectionTouched();
     list.setSelectedValue(item, false);
   }
 
   @Override
-  public void addLookupListener(LookupListener listener) {
+  public void addLookupListener(@NotNull LookupListener listener) {
     myListeners.add(listener);
   }
 
   @Override
-  public void removeLookupListener(LookupListener listener) {
+  public void removeLookupListener(@NotNull LookupListener listener) {
     myListeners.remove(listener);
   }
 
