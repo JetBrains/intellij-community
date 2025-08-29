@@ -36,7 +36,7 @@ private object Config {
     const val RELEASE_NOTES_FILE = "RELEASE NOTES.md"
 }
 
-class ExtractReleaseNotesCommand : CliktCommand() {
+private class ExtractReleaseNotesCommand : CliktCommand() {
     private val startDate: String by
         option(
                 "--start-date",
@@ -105,7 +105,7 @@ class ExtractReleaseNotesCommand : CliktCommand() {
 
         val elapsed = mark.elapsedNow()
 
-        println(" DONE")
+        printlnSuccess(" DONE")
 
         println("  ℹ️ Found ${allCommitHashes.size} commits in $elapsed")
 
@@ -138,7 +138,7 @@ class ExtractReleaseNotesCommand : CliktCommand() {
 
         val uniquePrCommits = prCommits.distinctBy { it.prId }.sortedBy { it.issueId }
 
-        println(" DONE")
+        printlnSuccess(" DONE")
 
         println(
             "  ℹ️ Found ${uniquePrCommits.size} unique PRs to process. " +

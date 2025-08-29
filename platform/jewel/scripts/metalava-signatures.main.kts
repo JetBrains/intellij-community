@@ -4,9 +4,10 @@
 @file:Import("utils.main.kts")
 @file:Suppress("RAW_RUN_BLOCKING")
 
-import kotlinx.coroutines.runBlocking
+import com.github.pgreze.process.Redirect
 import kotlin.system.exitProcess
 import kotlin.time.Duration.Companion.minutes
+import kotlinx.coroutines.runBlocking
 
 private fun printHelp() {
     println(
@@ -145,7 +146,7 @@ private val commands = buildList {
 println("⏳ Executing: ${commands.joinToString(" ")}")
 
 private val result = runBlocking {
-    runCommand(commands.joinToString(" "), jewelDir, inheritIO = true, timeoutAmount = 60.minutes)
+    runCommand(commands.joinToString(" "), jewelDir, timeoutAmount = 60.minutes, outputRedirect = Redirect.PRINT)
 }
 
 if (result.isSuccess) {

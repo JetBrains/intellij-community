@@ -20,11 +20,19 @@ On buildserver it's not easy to output something correctly, the output is interc
 ## Running build scripts via jps-bootstrap
 
 ### Locally
- * just run CLASS_NAME from IDEA
- * run any main class (written in Java/Kotlin) from intellij project via\
-`./jps-bootstrap.cmd PROJECT_HOME MODULE_NAME CLASS_NAME ARGS`
- 
-Example: `./community/platform/jps-bootstrap/jps-bootstrap.sh ./community intellij.idea.ultimate.build DownloadLibrariesBuildTarget`
+ * Run the CLASS_NAME from IDEA from the gutter ▶️ icon, or
+ * Run any main class (written in Java/Kotlin) from the IntelliJ project from CLI via:
+   ```shell
+   ./jps-bootstrap.cmd PROJECT_HOME MODULE_NAME CLASS_NAME ARGS
+   ```
+   Where `PROJECT_HOME` is the path where the `.idea` folder is (either the ultimate or community root), the `MODULE_NAME` is the name of
+   the JPS module that contains the class, and `CLASS_NAME` is the FQN of the class that contains the `main()` to run.
+    
+   Example: 
+   
+   ```shell
+   ./community/platform/jps-bootstrap/jps-bootstrap.sh . intellij.idea.ultimate.build DownloadLibrariesBuildTarget
+   ```
 
 Special wrappers could be written to make scripts easier, see e.g. `build/downloadLibraries.cmd`
 
