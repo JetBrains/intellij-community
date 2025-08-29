@@ -93,4 +93,15 @@ final class ActionTracker {
            (myEditor instanceof EditorWindow && !((EditorWindow)myEditor).isValid()) ||
            (hasDocumentOrCaretChanged && !isOnGuest()); //do not track speculative changes on thin client
   }
+
+
+  @NotNull String describeChangeEvent() {
+    if (myActionsHappened) return "Actions were performed";
+    if (myIsDumb != DumbService.getInstance(myProject).isDumb()) return "DumbMode state changed";
+    if (myEditor.isDisposed()) return "Editor was disposed";
+    if (myEditor instanceof EditorWindow && !((EditorWindow)myEditor).isValid()) return "Editor window became invalid";
+    if (myStartDocStamp != docStamp()) return "Document was modified; myStartDocStamp =" + myStartDocStamp + ", docStamp()=" + docStamp();
+    if (!myCaretOffsets.equals(caretOffsets())) return "Caret position changed; myCaretOffsets = " + myCaretOffsets + ", caretOffsets()=" + caretOffsets();
+    return "No changes detected";
+  }
 }

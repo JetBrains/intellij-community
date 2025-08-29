@@ -10,6 +10,8 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.*
 import com.intellij.openapi.editor.ex.EditorEx
@@ -81,18 +83,21 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
     val isExpired: Boolean
       get() = myTracker.hasAnythingHappened() || myRequestCount <= 0
 
+    private val expirationReason: String
+      get() = myTracker.describeChangeEvent() + "; myRequestCount = $myRequestCount"
+
     internal fun incrementRequestCount() {
       myRequestCount++
-      LOG.trace("Increment request count :: new myRequestCount=$myRequestCount")
+      LOG.trace { "Increment request count :: new myRequestCount=$myRequestCount" }
     }
 
     private fun decrementRequestCount() {
       myRequestCount--
-      LOG.trace("Decrement request count :: new myRequestCount=$myRequestCount")
+      LOG.trace { "Decrement request count :: new myRequestCount=$myRequestCount" }
     }
 
     private fun requestCompleted() {
-      LOG.trace("Request completed")
+      LOG.trace { "Request completed" }
       myRequestCount = 0
     }
 
@@ -101,7 +106,7 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
     }
 
     override fun dispose() {
-      LOG.trace("Dispose completion phase: $this")
+      LOG.trace { "Dispose completion phase: $this" }
       myRequestCount = 0
       if (!replaced && indicator != null) {
         indicator.closeAndFinish(true)
@@ -139,13 +144,13 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
               LOG.trace("Phase is expired")
               return@Callable null
             }
-            LOG.trace("Start non-blocking read action :: phase=" + phase.replaced)
+            LOG.trace { "Start non-blocking read action :: phase=${phase.replaced}" }
             // retrieve the injected file from scratch since our typing might have destroyed the old one completely
             val topLevelFile = PsiDocumentManager.getInstance(project).getPsiFile(topLevelEditor.getDocument())
             val completionEditor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(topLevelEditor, topLevelFile, offset)
             val file = PsiDocumentManager.getInstance(project).getPsiFile(completionEditor.getDocument())
             if (file == null || autopopup && shouldSkipAutoPopup(completionEditor, file) || condition != null && !condition.value(file)) {
-              LOG.trace("File is null or should skip auto popup or condition is not met :: file=$file, condition=$condition")
+              LOG.trace { "File is null or should skip auto popup or condition is not met :: file=$file, condition=$condition" }
               return@Callable null
             }
 
@@ -155,9 +160,9 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
           .withDocumentsCommitted(project)
           .expireWith(phase)
           .finishOnUiThread(ModalityState.current(), Consumer { completionEditor: Editor? ->
-            LOG.trace("Finish on UI thread :: completionEditor=$completionEditor")
+            LOG.trace { "Finish on UI thread :: completionEditor=$completionEditor" }
             if (completionEditor != null && !phase.isExpired) {
-              LOG.trace("Starting completion phase :: completionEditor=$completionEditor")
+              LOG.trace { "Starting completion phase :: completionEditor=$completionEditor" }
               phase.requestCompleted()
               val time = prevIndicator?.invocationCount ?: 0
 
@@ -166,7 +171,7 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
               handler.invokeCompletion(project, completionEditor, time, false)
             }
             else if (phase == CompletionServiceImpl.completionPhase) {
-              LOG.trace("Setting NoCompletion phase :: completionEditor=" + completionEditor + ", isExpired=" + phase.isExpired)
+              LOG.trace { "Setting NoCompletion phase :: completionEditor=$completionEditor, expirationReason=${phase.expirationReason}" }
               phase.decrementRequestCount()
               if (phase.isExpired) {
                 CompletionServiceImpl.setCompletionPhase(NoCompletion)
@@ -215,7 +220,7 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
           try {
             val result = confidence.shouldSkipAutopopup(editor, elementAt, psiFile, offset)
             if (result != ThreeState.UNSURE) {
-              LOG.debug("$confidence has returned shouldSkipAutopopup=$result")
+              LOG.debug { "$confidence has returned shouldSkipAutopopup=$result" }
               return result == ThreeState.YES
             }
           }
