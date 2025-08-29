@@ -13,7 +13,7 @@ internal interface BorderPainter {
   fun isPaintingOrigin(component: JComponent): Boolean
 }
 
-internal class DefaultBorderPainter : BorderPainter {
+internal open class DefaultBorderPainter : BorderPainter {
   override fun paintAfterChildren(component: JComponent, g: Graphics) {
   }
 

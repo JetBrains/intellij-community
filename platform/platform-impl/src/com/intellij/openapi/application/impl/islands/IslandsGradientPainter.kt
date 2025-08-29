@@ -72,8 +72,6 @@ internal class IslandsGradientPainter(private val frame: IdeFrame, private val m
     g.color = mainColor
     g.fillRect(0, 0, component.width, component.height)
 
-    // TODO: check UISettings.getInstance().differentiateProjects
-
     g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY)
 
     alignTxToInt(g, null, true, false, PaintUtil.RoundingMode.FLOOR)
