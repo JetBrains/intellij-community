@@ -313,41 +313,45 @@ fun <T> installThreadContext(coroutineContext: CoroutineContext, replace: Boolea
  */
 @Deprecated("Use higher-order function for installation of thread context")
 fun installThreadContext(coroutineContext: CoroutineContext, replace: Boolean = false): AccessToken {
-  val token = applyThreadContextElements(coroutineContext)
-  return withThreadLocal(tlCoroutineContext, {
-    token.finish()
-  }) { previousContext ->
+  val applyToken = applyThreadContextElements(coroutineContext)
+  val tlToken = withThreadLocal(tlCoroutineContext) { previousContext ->
     @OptIn(InternalCoroutinesApi::class)
     val currentSnapshot = IntellijCoroutines.currentThreadCoroutineContext()
     if (!replace && previousContext.snapshot === currentSnapshot && previousContext.context != null) {
       LOG.error(Throwable("Thread context was already set: $previousContext. \n " +
-                "Most likely, you are using 'runBlocking' instead of 'runBlockingCancellable' somewhere in the asynchronous stack. \n" +
-                "Also, if you have any kind of manual event queue draining/pumping/flushing/etc \n" +
-                "you have to wrap the loop with `resetThreadContext().use { // your queue draining code }`. \n" +
-                "See usages of resetThreadContext().").apply {
+                          "Most likely, you are using 'runBlocking' instead of 'runBlockingCancellable' somewhere in the asynchronous stack. \n" +
+                          "Also, if you have any kind of manual event queue draining/pumping/flushing/etc \n" +
+                          "you have to wrap the loop with `resetThreadContext().use { // your queue draining code }`. \n" +
+                          "See usages of resetThreadContext().").apply {
         addSuppressed(previousContext.creationTrace ?: tracingHint())
       })
     }
     InstalledThreadContext(currentSnapshot, coroutineContext)
   }
+  return object : AccessToken() {
+    override fun finish() {
+      tlToken.finish()
+      applyToken.finish()
+    }
+  }
 }
 
 private fun applyThreadContextElements(context: CoroutineContext): AccessToken {
-  val threadLocalValues: MutableList<Any?> = SmartList()
-  val flatElements = context.fold(mutableListOf<CoroutineContext.Element>()) { list, elem -> list.apply { add(elem) } }
-  for (elem in flatElements) {
-    if (elem is ThreadContextElement<*>) {
-      threadLocalValues.add(elem.updateThreadContext(context))
+  val threadLocalValues: MutableList<Pair<ThreadContextElement<*>, Any?>> = SmartList()
+  context.fold(Unit) { _, elem ->
+    // CoroutineId uses expensive Thread.setName in its updateThreadContext
+    // this is visible in our benchmarks, and it is pretty useless
+    // so we explicitly ignore this context element
+    @Suppress("INVISIBLE_REFERENCE")
+    if (elem is ThreadContextElement<*> && elem !is kotlinx.coroutines.CoroutineId) {
+      threadLocalValues.add(elem to elem.updateThreadContext(context))
     }
   }
   return object : AccessToken() {
     override fun finish() {
-      for (elem in flatElements.asReversed()) {
-        if (elem is ThreadContextElement<*>) {
-          val topPayload = threadLocalValues.removeLast()
-          @Suppress("MEMBER_PROJECTED_OUT")
-          elem.restoreThreadContext(context, topPayload)
-        }
+      for ((elem, previousValue) in threadLocalValues.asReversed()) {
+        @Suppress("MEMBER_PROJECTED_OUT")
+        elem.restoreThreadContext(context, previousValue)
       }
     }
   }
@@ -401,11 +405,6 @@ fun installTemporaryThreadContext(coroutineContext: CoroutineContext): AccessTok
 
 @Internal
 fun <T> withThreadLocal(variable: ThreadLocal<T>, update: (value: T) -> T): AccessToken {
-  return withThreadLocal(variable, { }, update)
-}
-
-@Internal
-inline fun <T> withThreadLocal(variable: ThreadLocal<T>, crossinline additionalRollback: () -> Unit, update: (value: T) -> T): AccessToken {
   val previousValue = variable.get()
   val newValue = update(previousValue)
   if (newValue === previousValue) {
@@ -416,7 +415,6 @@ inline fun <T> withThreadLocal(variable: ThreadLocal<T>, crossinline additionalR
     override fun finish() {
       val currentValue = variable.get()
       variable.set(previousValue)
-      additionalRollback()
       check(currentValue === newValue) {
         "Value was not reset correctly. Expected: $newValue, actual: $currentValue"
       }
