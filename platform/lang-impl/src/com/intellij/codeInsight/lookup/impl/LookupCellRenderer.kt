@@ -339,11 +339,14 @@ class LookupCellRenderer(lookup: LookupImpl, editorComponent: JComponent) : List
     else {
       insets.set(3, insets.left, separatorLabelInsets.bottom + separatorLabelInsets.top - 3, insets.right)
     }
+
     val res = GroupHeaderSeparator(insets)
     res.caption = separatorLookupElement.title
     res.isHideLine = index == 0
+
     val panel = LookupPanel()
     panel.add(res)
+
     return panel
   }
 
