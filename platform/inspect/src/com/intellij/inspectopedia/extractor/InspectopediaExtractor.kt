@@ -30,10 +30,15 @@ import kotlin.system.exitProcess
 private class InspectopediaExtractor : ModernApplicationStarter() {
   override suspend fun start(args: List<String>) {
     val size = args.size
-    if (size != 2) {
-      LOG.error("Usage: inspectopedia-generator <output directory>")
+    if (size < 2) {
+      LOG.error("Usage: inspectopedia-generator <output directory> [plugin-id,plugin-id,...]")
       exitProcess(-1)
     }
+
+    val pluginIdFilter = if (args.size < 3) {
+      Collections.emptySet()
+    }
+    else args[2].split(",").map { it.trim() }.toSet()
 
     val appInfo = ApplicationInfo.getInstance()
     val ideCode = appInfo.build.productCode.lowercase(Locale.getDefault())
@@ -65,6 +70,7 @@ private class InspectopediaExtractor : ModernApplicationStarter() {
       val scopeToolStates = project.serviceAsync<InspectionProjectProfileManager>().currentProfile.allTools
 
       val availablePlugins = getPluginSet().allPlugins.asSequence()
+        .filter { pluginIdFilter.isEmpty() || pluginIdFilter.contains(it.pluginId.idString) }
         .map { Plugin(id = it.pluginId.idString, name = it.name, version = it.version) }
         .distinct()
         .associateByTo(HashMap()) { it.id }
