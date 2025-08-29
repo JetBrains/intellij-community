@@ -329,10 +329,8 @@ class LookupCellRenderer(lookup: LookupImpl, editorComponent: JComponent) : List
   }
 
   private fun tryToCreateSeparator(item: LookupElement, index: Int): JComponent? {
-    val separatorLookupElement = item.`as`(SeparatorLookupElement::class.java)
-    if (separatorLookupElement == null) {
-      return null
-    }
+    val separatorLookupElement = item.`as`(SeparatorLookupElement::class.java) ?: return null
+
     val insets = getIconInsets()
     val separatorLabelInsets = JBUI.CurrentTheme.Popup.separatorLabelInsets()
     if (index != 0) {
