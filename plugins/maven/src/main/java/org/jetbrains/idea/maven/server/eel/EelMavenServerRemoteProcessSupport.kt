@@ -2,11 +2,7 @@
 package org.jetbrains.idea.maven.server.eel
 
 import com.intellij.execution.Executor
-import com.intellij.execution.configurations.CompositeParameterTargetedValue
-import com.intellij.execution.configurations.ParameterTargetValuePart
-import com.intellij.execution.configurations.ParametersList
-import com.intellij.execution.configurations.RunProfileState
-import com.intellij.execution.configurations.SimpleJavaParameters
+import com.intellij.execution.configurations.*
 import com.intellij.execution.process.KillableColoredProcessHandler
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.openapi.components.Service
@@ -42,6 +38,7 @@ import java.nio.file.Path
 import java.rmi.server.RMIClientSocketFactory
 import java.rmi.server.RMISocketFactory
 import kotlin.io.path.Path
+import kotlin.io.path.isSymbolicLink
 import kotlin.time.Duration.Companion.seconds
 
 private val logger = logger<EelMavenServerRemoteProcessSupport>()
@@ -163,8 +160,12 @@ private class EelMavenCmdState(
     eelParams.charset = parameters.charset
     eelParams.vmParametersList.add("-classpath")
     eelParams.vmParametersList.add(parameters.classPath.pathList.mapNotNull {
+      var sourcePath = Path(it)
+      if (sourcePath.isSymbolicLink()) {
+        sourcePath = sourcePath.toRealPath()
+      }
       transferLocalContentToRemote(
-        source = Path(it),
+        source = sourcePath,
         target = EelPathUtils.TransferTarget.Temporary(eel.descriptor)
       ).asEelPath().toString()
     }.joinToString(eel.fs.pathSeparator))
