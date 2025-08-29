@@ -7,6 +7,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginNode;
 import com.intellij.ide.plugins.PluginStateListener;
 import com.intellij.ide.plugins.PluginStateManager;
+import com.intellij.ide.plugins.newui.PluginModelAsyncOperationsExecutor;
 import com.intellij.ide.plugins.newui.PluginUiModel;
 import com.intellij.ide.plugins.newui.PluginUpdatesService;
 import com.intellij.ide.util.PropertiesComponent;
@@ -24,6 +25,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -329,14 +331,20 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
         }
 
         @Override
+        @SuppressWarnings("unchecked")
         public void actionPerformed(@NotNull AnActionEvent e) {
-          PluginUpdateDialog dialog = new PluginUpdateDialog(e.getProject(), myUpdatesForPlugins, myCustomRepositoryPlugins);
-          dialog.setFinishCallback(() -> setEnableUpdateAction(true));
-          setEnableUpdateAction(false);
+          Set<PluginId> pluginIds = StreamEx.of(myUpdatesForPlugins).map(it -> it.getId()).toSet();
+          PluginModelAsyncOperationsExecutor.INSTANCE.findPlugins(pluginIds, plugins -> {
+            PluginUpdateDialog dialog =
+              new PluginUpdateDialog(e.getProject(), myUpdatesForPlugins, myCustomRepositoryPlugins, (Map<PluginId, PluginUiModel>)plugins);
+            dialog.setFinishCallback(() -> setEnableUpdateAction(true));
+            setEnableUpdateAction(false);
 
-          if (!dialog.showAndGet()) {
-            setEnableUpdateAction(true);
-          }
+            if (!dialog.showAndGet()) {
+              setEnableUpdateAction(true);
+            }
+            return null;
+          });
         }
       });
     }

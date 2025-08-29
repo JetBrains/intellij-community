@@ -6,6 +6,8 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.nls.NlsMessages;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.newui.PluginModelAsyncOperationsExecutor;
+import com.intellij.ide.plugins.newui.PluginUiModel;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
@@ -13,6 +15,7 @@ import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -26,6 +29,7 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.system.OS;
 import com.intellij.util.ui.JBUI;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,7 +52,8 @@ public final class PlatformUpdateDialog extends AbstractUpdateDialog {
   private final @Nullable LicenseInfo myLicenseInfo;
   private final @Nullable Path myTestPatch;
 
-  private record LicenseInfo(@NlsContexts.Label String licenseNote, boolean warning) { }
+  private record LicenseInfo(@NlsContexts.Label String licenseNote, boolean warning) {
+  }
 
   public PlatformUpdateDialog(
     @Nullable Project project,
@@ -174,9 +179,14 @@ public final class PlatformUpdateDialog extends AbstractUpdateDialog {
       var name = IdeBundle.message(canRestart ? "updates.download.and.restart.button" : "updates.apply.manually.button");
       updateButton = new AbstractAction(name) {
         @Override
+        @SuppressWarnings({"unchecked", "DataFlowIssue"})
         public void actionPerformed(ActionEvent e) {
           close(OK_EXIT_CODE);
-          downloadPatchAndRestart();
+          PluginModelAsyncOperationsExecutor.INSTANCE
+            .findPlugins(StreamEx.of(myUpdatesForPlugins).map(it -> it.getId()).toSet(), plugins -> {
+              downloadPatchAndRestart((Map<PluginId, PluginUiModel>)plugins);
+              return null;
+            });
         }
       };
       updateButton.setEnabled(!myWriteProtected);
@@ -207,8 +217,8 @@ public final class PlatformUpdateDialog extends AbstractUpdateDialog {
     return IdeBundle.message("updates.remind.later.button");
   }
 
-  private void downloadPatchAndRestart() {
-    if (!ContainerUtil.isEmpty(myUpdatesForPlugins) && !new PluginUpdateDialog(myProject, myUpdatesForPlugins).showAndGet()) {
+  private void downloadPatchAndRestart(Map<PluginId, PluginUiModel> installedPlugins) {
+    if (!ContainerUtil.isEmpty(myUpdatesForPlugins) && !new PluginUpdateDialog(myProject, myUpdatesForPlugins, installedPlugins).showAndGet()) {
       return;  // update cancelled
     }
 
@@ -237,7 +247,8 @@ public final class PlatformUpdateDialog extends AbstractUpdateDialog {
           var message = IdeBundle.message("update.downloading.patch.error", e.getMessage());
           UpdateChecker.getNotificationGroupForIdeUpdateResults()
             .createNotification(title, message, NotificationType.ERROR)
-            .addAction(NotificationAction.createSimpleExpiring(IdeBundle.message("update.downloading.patch.open"), () -> BrowserUtil.browse(downloadUrl)))
+            .addAction(NotificationAction.createSimpleExpiring(IdeBundle.message("update.downloading.patch.open"),
+                                                               () -> BrowserUtil.browse(downloadUrl)))
             .setDisplayId("ide.patch.download.failed")
             .notify(myProject);
 
@@ -257,7 +268,8 @@ public final class PlatformUpdateDialog extends AbstractUpdateDialog {
             var message = IdeBundle.message("update.ready.message");
             UpdateChecker.getNotificationGroupForIdeUpdateResults()
               .createNotification(title, message, NotificationType.INFORMATION)
-              .addAction(NotificationAction.createSimpleExpiring(IdeBundle.message("update.ready.restart"), () -> restartLaterAndRunCommand(command)))
+              .addAction(NotificationAction.createSimpleExpiring(IdeBundle.message("update.ready.restart"),
+                                                                 () -> restartLaterAndRunCommand(command)))
               .setDisplayId("ide.update.suggest.restart")
               .notify(myProject);
           }

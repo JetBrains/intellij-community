@@ -13,6 +13,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -66,20 +67,24 @@ public class PluginUpdateDialog extends DialogWrapper {
   private @Nullable Runnable myFinishCallback;
 
   public PluginUpdateDialog(@Nullable Project project,
-                     @NotNull Collection<PluginDownloader> downloaders,
-                     @Nullable Collection<PluginUiModel> customRepositoryPlugins) {
-    this(project, downloaders, customRepositoryPlugins, false);
+                            @NotNull Collection<PluginDownloader> downloaders,
+                            @Nullable Collection<PluginUiModel> customRepositoryPlugins,
+                            Map<PluginId, PluginUiModel> installedPlugins) {
+    this(project, downloaders, customRepositoryPlugins, installedPlugins, false);
     setTitle(IdeBundle.message("dialog.title.plugin.updates"));
   }
 
-  public PluginUpdateDialog(@Nullable Project project, @NotNull Collection<PluginDownloader> updatesForPlugins) {
-    this(project, updatesForPlugins, null, true);
+  public PluginUpdateDialog(@Nullable Project project,
+                            @NotNull Collection<PluginDownloader> updatesForPlugins,
+                            Map<PluginId, PluginUiModel> installedPlugins) {
+    this(project, updatesForPlugins, null, Collections.emptyMap(), true);
     setTitle(IdeBundle.message("updates.dialog.title", ApplicationNamesInfo.getInstance().getFullProductName()));
   }
 
   private PluginUpdateDialog(@Nullable Project project,
                              Collection<PluginDownloader> downloaders,
                              @Nullable Collection<PluginUiModel> customRepositoryPlugins,
+                             Map<PluginId, PluginUiModel> installedPlugins,
                              boolean platformUpdate) {
     super(project, true);
 
@@ -135,12 +140,11 @@ public class PluginUpdateDialog extends DialogWrapper {
           model = new PluginUiModelAdapter(node);
         }
         CoroutineScope scope = ApplicationManager.getApplication().getService(CoreUiCoroutineScopeHolder.class).coroutineScope;
-        @SuppressWarnings("unchecked") ListPluginComponent component = new ListPluginComponent(new PluginModelFacade(myPluginModel), model, group, listPluginModel, LinkListener.NULL, scope, true);
-        PluginModelAsyncOperationsExecutor.INSTANCE.findPlugin(myPluginModel.getCoroutineScope(), model.getPluginId(), foundPlugin -> {
-          component.setOnlyUpdateMode(foundPlugin);
-          component.getChooseUpdateButton().addActionListener(e -> updateButtons());
-          return null;
-        });
+        @SuppressWarnings("unchecked") ListPluginComponent component =
+          new ListPluginComponent(new PluginModelFacade(myPluginModel), model, group, listPluginModel, LinkListener.NULL, scope, true);
+        PluginUiModel plugin = installedPlugins.get(model.getPluginId());
+        component.setOnlyUpdateMode(plugin);
+        component.getChooseUpdateButton().addActionListener(e -> updateButtons());
         return component;
       }
     };
