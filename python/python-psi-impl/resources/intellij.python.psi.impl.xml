@@ -128,6 +128,7 @@
     <completion.contributor language="Python"
                             implementationClass="com.jetbrains.python.codeInsight.completion.PySuperMethodCompletionContributor"/>
     <completion.contributor language="Python"
+                            id="PyDocstringCompletionContributor"
                             implementationClass="com.jetbrains.python.codeInsight.completion.PyDocstringCompletionContributor"/>
     <completion.contributor language="Python" implementationClass="com.jetbrains.python.documentation.docstrings.DocStringTagCompletionContributor"/>
     <completion.contributor language="Python" implementationClass="com.jetbrains.python.documentation.docstrings.DocStringSectionHeaderCompletionContributor"/>

@@ -47,6 +47,10 @@ class PyCharmProjectConfigurableStartupActivity : ProjectActivity {
           ep.groupId = PythonToolsConfigurable.ID
           ep.groupWeight = 40
         }
+        "com.intellij.python.ruff.RuffConfigurable" -> {
+          ep.groupId = PythonToolsConfigurable.ID
+          ep.groupWeight = 40
+        }
         "com.intellij.python.pyright.PyrightConfigurable" -> {
           ep.groupId = PythonToolsConfigurable.ID
           ep.groupWeight = 40
