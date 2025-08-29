@@ -1393,6 +1393,8 @@
                              implementationClass="com.intellij.codeInsight.generation.surroundWith.JavaStatementsSurroundDescriptor"/>
     <lang.surroundDescriptor language="JAVA"
                              implementationClass="com.intellij.codeInsight.intention.impl.SurroundAutoCloseableAction$Template"/>
+    <lang.surroundDescriptor language="JAVA"
+                             implementationClass="com.intellij.codeInsight.generation.surroundWith.JavaCommentsSurroundDescriptor"/>
     <lang.psiElementExternalizer language="JAVA" implementationClass="com.intellij.lang.java.JavaPsiElementExternalizer"/>
     <lang.importOptimizer language="JAVA" implementationClass="com.intellij.lang.java.JavaImportOptimizer"/>
     <lang.documentationFixer language="JAVA" implementationClass="com.intellij.codeInsight.documentation.JavaDocCommentFixer"/>
