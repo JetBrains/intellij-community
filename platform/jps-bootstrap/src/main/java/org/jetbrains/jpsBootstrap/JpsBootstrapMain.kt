@@ -88,6 +88,7 @@ class JpsBootstrapMain(args: Array<String>?) {
       jarFileTarget = null
     }
     else {
+      println("!!! ARGS: $freeArgs")
       moduleNameToRun = freeArgs[1]
       classNameToRun = freeArgs[2]
       mainArgsToRun = freeArgs.subList(3, freeArgs.size)
@@ -431,7 +432,7 @@ class JpsBootstrapMain(args: Array<String>?) {
     private fun showUsagesAndExit() {
       val formatter = HelpFormatter()
       formatter.width = 1000
-      formatter.printHelp("./jps-bootstrap.sh [jps-bootstrap options] MODULE_NAME CLASS_NAME [arguments_passed_to_CLASS_NAME's_main]", createCliOptions())
+      formatter.printHelp("./jps-bootstrap.sh [jps-bootstrap options] PROJECT_ROOT MODULE_NAME CLASS_NAME [arguments_passed_to_CLASS_NAME's_main]", createCliOptions())
       exitProcess(1)
     }
 
