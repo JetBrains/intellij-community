@@ -14,7 +14,7 @@ internal class FirOperatorNameCompletionContributor(
     sink: LookupElementSink,
     priority: Int = 0,
 ) : FirCompletionContributorBase<KotlinTypeNameReferencePositionContext>(sink, priority) {
-    context(KaSession)
+    context(_: KaSession)
     override fun complete(
         positionContext: KotlinTypeNameReferencePositionContext,
         weighingContext: WeighingContext

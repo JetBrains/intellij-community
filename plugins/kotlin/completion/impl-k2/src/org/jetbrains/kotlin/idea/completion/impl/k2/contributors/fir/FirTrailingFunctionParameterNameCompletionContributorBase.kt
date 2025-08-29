@@ -11,6 +11,15 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaCompletionCandidateChecker
 import org.jetbrains.kotlin.analysis.api.components.KaCompletionExtensionCandidateChecker
 import org.jetbrains.kotlin.analysis.api.components.KaExtensionApplicabilityResult
+import org.jetbrains.kotlin.analysis.api.components.canBeAnalysed
+import org.jetbrains.kotlin.analysis.api.components.createSubstitutor
+import org.jetbrains.kotlin.analysis.api.components.expandedSymbol
+import org.jetbrains.kotlin.analysis.api.components.isSubClassOf
+import org.jetbrains.kotlin.analysis.api.components.lowerBoundIfFlexible
+import org.jetbrains.kotlin.analysis.api.components.memberScope
+import org.jetbrains.kotlin.analysis.api.components.render
+import org.jetbrains.kotlin.analysis.api.components.resolveToCallCandidates
+import org.jetbrains.kotlin.analysis.api.components.substitute
 import org.jetbrains.kotlin.analysis.api.impl.base.components.KaBaseIllegalPsiException
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
 import org.jetbrains.kotlin.analysis.api.renderer.types.KaTypeRenderer
@@ -20,6 +29,7 @@ import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
+import org.jetbrains.kotlin.analysis.api.symbols.findClass
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.builtins.StandardNames
@@ -54,7 +64,7 @@ internal sealed class FirTrailingFunctionParameterNameCompletionContributorBase<
         priority: Int = 0,
     ) : FirTrailingFunctionParameterNameCompletionContributorBase<KotlinExpressionNameReferencePositionContext>(sink, priority) {
 
-        context(KaSession)
+        context(_: KaSession)
         override fun complete(
             positionContext: KotlinExpressionNameReferencePositionContext,
             weighingContext: WeighingContext,
@@ -80,7 +90,7 @@ internal sealed class FirTrailingFunctionParameterNameCompletionContributorBase<
         priority: Int = 0,
     ) : FirTrailingFunctionParameterNameCompletionContributorBase<KotlinSimpleParameterPositionContext>(sink, priority) {
 
-        context(KaSession)
+        context(_: KaSession)
         override fun complete(
             positionContext: KotlinSimpleParameterPositionContext,
             weighingContext: WeighingContext,
@@ -104,7 +114,7 @@ internal sealed class FirTrailingFunctionParameterNameCompletionContributorBase<
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     protected fun complete(
         position: KtElement,
         existingParameterNames: Set<String>,
@@ -142,7 +152,7 @@ internal sealed class FirTrailingFunctionParameterNameCompletionContributorBase<
             }.forEach(sink::addElement)
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun createLookupElements(
         trailingFunctionDescriptor: TrailingFunctionDescriptor,
         candidateChecker: KaCompletionExtensionCandidateChecker,
@@ -169,7 +179,7 @@ internal sealed class FirTrailingFunctionParameterNameCompletionContributorBase<
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun createLookupElements(
         trailingFunctionDescriptor: TrailingFunctionDescriptor,
         candidateChecker: KaCompletionExtensionCandidateChecker,
@@ -251,7 +261,7 @@ internal sealed class FirTrailingFunctionParameterNameCompletionContributorBase<
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun KaNamedClassSymbol.getSignatures(
         candidateChecker: KaCompletionExtensionCandidateChecker,
@@ -283,7 +293,7 @@ internal sealed class FirTrailingFunctionParameterNameCompletionContributorBase<
         else emptyList()
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun KaNamedClassSymbol.getComponents(
         receiverTypes: List<KaClassType>,
     ): Collection<KaNamedFunctionSymbol> {
@@ -329,7 +339,7 @@ private val NoAnnotationsTypeRenderer: KaTypeRenderer = KaTypeRendererForSource.
     }
 }
 
-context(KaSession)
+context(_: KaSession)
 private fun createCompoundLookupElement(
     suggestedNames: Collection<Pair<KaType, String>>,
     isDestructuring: Boolean = false,
@@ -357,7 +367,7 @@ private fun createCompoundLookupElement(
         .withTailTextInsertHandler()
         .withChainedInsertHandler(CompoundInsertionHandler(presentableText))
 }
-context(KaSession)
+context(_: KaSession)
 @OptIn(KaExperimentalApi::class)
 private val KaType.text: String
     get() = render(
@@ -365,7 +375,7 @@ private val KaType.text: String
         position = Variance.INVARIANT,
     )
 
-context(KaCompletionCandidateChecker)
+context(_: KaCompletionCandidateChecker)
 private fun createExtensionCandidateChecker(
     bodyExpression: KtBlockExpression,
 ): KtCompletionExtensionCandidateChecker? {

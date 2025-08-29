@@ -16,7 +16,7 @@ internal class FirSuperEntryContributor(
     priority: Int = 0,
 ) : FirCompletionContributorBase<KotlinSuperTypeCallNameReferencePositionContext>(sink, priority) {
 
-    context(KaSession)
+    context(_: KaSession)
     override fun complete(
         positionContext: KotlinSuperTypeCallNameReferencePositionContext,
         weighingContext: WeighingContext,

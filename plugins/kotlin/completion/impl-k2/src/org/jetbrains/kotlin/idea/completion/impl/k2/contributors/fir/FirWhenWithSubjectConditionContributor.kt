@@ -10,6 +10,12 @@ import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
+import org.jetbrains.kotlin.analysis.api.components.expressionType
+import org.jetbrains.kotlin.analysis.api.components.isNullable
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
+import org.jetbrains.kotlin.analysis.api.components.scopeContext
+import org.jetbrains.kotlin.analysis.api.components.sealedClassInheritors
+import org.jetbrains.kotlin.analysis.api.components.staticDeclaredMemberScope
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
@@ -51,7 +57,7 @@ internal class FirWhenWithSubjectConditionContributor(
         super.prefixMatcher
             .applyIf(onTypingIsKeyword) { cloneWithPrefix("") }
 
-    context(KaSession)
+    context(_: KaSession)
     override fun complete(
         positionContext: KotlinWithSubjectEntryPositionContext,
         weighingContext: WeighingContext,
@@ -98,13 +104,13 @@ internal class FirWhenWithSubjectConditionContributor(
             ?.let(sink::addElement)
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun getClassSymbol(subjectType: KaType): KaNamedClassSymbol? {
         val classType = subjectType as? KaClassType
         return classType?.symbol as? KaNamedClassSymbol
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun createNullBranchLookupElement(
         context: WeighingContext,
         type: KaType?,
@@ -115,7 +121,7 @@ internal class FirWhenWithSubjectConditionContributor(
             .applyWeighs(context)
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun completeAllTypes(
         positionContext: KotlinWithSubjectEntryPositionContext,
         context: WeighingContext,
@@ -162,7 +168,7 @@ internal class FirWhenWithSubjectConditionContributor(
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun isPrefixNeeded(symbol: KaNamedSymbol): Boolean {
         return when (symbol) {
             is KaAnonymousObjectSymbol -> return false
@@ -176,7 +182,7 @@ internal class FirWhenWithSubjectConditionContributor(
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun completeSubClassesOfSealedClass(
         positionContext: KotlinWithSubjectEntryPositionContext,
         context: WeighingContext,
@@ -215,7 +221,7 @@ internal class FirWhenWithSubjectConditionContributor(
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun getHandledClassIds(conditions: List<KtWhenCondition>): Set<ClassId> =
         conditions.mapNotNullTo(hashSetOf()) { condition ->
             val reference = when (condition) {
@@ -227,7 +233,7 @@ internal class FirWhenWithSubjectConditionContributor(
             resolvesTo?.classId
         }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun getAllSealedInheritors(classSymbol: KaNamedClassSymbol): Collection<KaNamedClassSymbol> {
 
         fun getAllSealedInheritorsTo(
@@ -246,7 +252,7 @@ internal class FirWhenWithSubjectConditionContributor(
             .apply { getAllSealedInheritorsTo(classSymbol, this) }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun createElseBranchLookupElement(
         context: WeighingContext,
         whenCondition: KtWhenCondition,
@@ -262,7 +268,7 @@ internal class FirWhenWithSubjectConditionContributor(
     }
 
 
-    context(KaSession)
+    context(_: KaSession)
     private fun completeEnumEntries(
         positionContext: KotlinWithSubjectEntryPositionContext,
         context: WeighingContext,
@@ -297,7 +303,7 @@ internal class FirWhenWithSubjectConditionContributor(
         return entry.conditions.size == 1
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun createLookupElement(
         context: WeighingContext,
         lookupString: String,

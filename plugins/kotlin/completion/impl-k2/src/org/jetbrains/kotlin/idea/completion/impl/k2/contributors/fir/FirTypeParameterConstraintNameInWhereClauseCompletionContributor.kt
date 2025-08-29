@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.typeParameters
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinIconProvider.getIconFor
 import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
@@ -18,7 +19,7 @@ internal class FirTypeParameterConstraintNameInWhereClauseCompletionContributor(
     priority: Int = 0,
 ) : FirCompletionContributorBase<KotlinTypeConstraintNameInWhereClausePositionContext>(sink, priority) {
 
-    context(KaSession)
+    context(_: KaSession)
     override fun complete(
         positionContext: KotlinTypeConstraintNameInWhereClausePositionContext,
         weighingContext: WeighingContext,

@@ -16,7 +16,7 @@ internal class FirSameAsFileClassifierNameCompletionContributor(
     priority: Int = 0,
 ) : FirCompletionContributorBase<KotlinClassifierNamePositionContext>(sink, priority) {
 
-    context(KaSession)
+    context(_: KaSession)
     override fun complete(
         positionContext: KotlinClassifierNamePositionContext,
         weighingContext: WeighingContext,

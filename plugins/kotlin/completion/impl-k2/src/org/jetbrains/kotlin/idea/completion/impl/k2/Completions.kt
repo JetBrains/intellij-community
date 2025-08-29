@@ -9,6 +9,8 @@ import com.intellij.psi.PsiErrorElement
 import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.components.resolveToCallCandidates
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.resolution.KaApplicableCallCandidateInfo
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
@@ -170,7 +172,7 @@ internal object Completions {
         sink.addedElementCount > 0
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun completeSequentially(
         positionContext: KotlinRawPositionContext,
         sink: LookupElementSink,
@@ -428,7 +430,7 @@ internal fun KotlinUnknownPositionContext.isAfterRangeToken(): Boolean {
  * @return `true` if the context is after a double dot (`..`) not associated with a `rangeTo` operation,
  *         otherwise `false`.
  */
-context(KaSession)
+context(_: KaSession)
 internal fun KotlinRawPositionContext.isAfterRangeOperator(): Boolean {
     if (this !is KotlinExpressionNameReferencePositionContext) return false
     val binaryExpression = nameExpression.parent as? KtBinaryExpression
@@ -446,7 +448,7 @@ internal fun KotlinRawPositionContext.isAfterRangeOperator(): Boolean {
         }
 }
 
-context(KaSession)
+context(_: KaSession)
 internal fun KotlinRawPositionContext.allowsOnlyNamedArguments(): Boolean {
     if (this !is KotlinExpressionNameReferencePositionContext) return false
     if (explicitReceiver != null) return false

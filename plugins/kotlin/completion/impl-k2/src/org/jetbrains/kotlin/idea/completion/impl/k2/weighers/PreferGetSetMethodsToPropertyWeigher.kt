@@ -15,7 +15,7 @@ internal object PreferGetSetMethodsToPropertyWeigher {
     const val WEIGHER_ID = "kotlin.preferGetSetMethodsToProperty"
     private var LookupElement.propertyName by UserDataProperty(Key<Name>("KOTLIN_PROPERTY_NAME"))
 
-    context(KaSession)
+    context(_: KaSession)
 fun addWeight(lookupElement: LookupElement, symbol: KaSymbol) {
         lookupElement.propertyName = (symbol as? KaPropertySymbol)?.name
     }

@@ -4,6 +4,8 @@ package org.jetbrains.kotlin.idea.completion.impl.k2.contributors.fir
 import com.intellij.codeInsight.lookup.LookupElement
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.asSignature
+import org.jetbrains.kotlin.analysis.api.components.declaredMemberScope
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtOutsideTowerScopeKinds
@@ -23,7 +25,7 @@ internal open class FirKDocParameterNameContributor(
     priority: Int = 0,
 ) : FirCompletionContributorBase<KDocNameReferencePositionContext>(sink, priority) {
 
-    context(KaSession)
+    context(_: KaSession)
     override fun complete(
         positionContext: KDocNameReferencePositionContext,
         weighingContext: WeighingContext,
@@ -41,7 +43,7 @@ internal open class FirKDocParameterNameContributor(
             .forEach(sink::addElement)
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun createLookupElements(
         declarationSymbol: KaDeclarationSymbol,
         weighingContext: WeighingContext,
@@ -65,7 +67,7 @@ internal open class FirKDocParameterNameContributor(
         else -> emptySequence()
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun getParametersForKDoc(
         ownerDeclarationSymbol: KaDeclarationSymbol
     ): Sequence<KaDeclarationSymbol> = sequence {

@@ -11,11 +11,13 @@ import com.intellij.codeInsight.template.TextResult
 import kotlinx.serialization.Serializable
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.render
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
 import org.jetbrains.kotlin.analysis.api.renderer.types.KaTypeRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.useSiteModule
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.completion.api.serialization.SerializableInsertHandler
 import org.jetbrains.kotlin.name.Name
@@ -82,7 +84,7 @@ internal class TrailingLambdaInsertionHandler private constructor(
          * Returns the [TrailingLambdaInsertionHandler] if the project supports using templates, null otherwise.
          */
         @OptIn(KaExperimentalApi::class)
-        context(KaSession)
+        context(_: KaSession)
         fun create(functionType: KaFunctionType): TrailingLambdaInsertionHandler? {
             if (TemplateManager.getInstance(useSiteModule.project) == null) return null
             val parameterNames = functionType.parameters.map { it.name }
@@ -99,7 +101,7 @@ private data class TrailingLambdaParameterData(
     val typeText: String,
 )
 
-context(KaSession)
+context(_: KaSession)
 @OptIn(KaExperimentalApi::class)
 private fun buildTrailingLambdaParameterData(
     trailingFunctionType: KaFunctionType,

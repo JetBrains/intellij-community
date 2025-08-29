@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.psi.KtEnumEntry
 
 internal object FirClassifierProvider {
 
-    context(KaSession)
+    context(_: KaSession)
     fun KaScopeWithKind.getAvailableClassifiers(
         positionContext: KotlinRawPositionContext,
         scopeNameFilter: (Name) -> Boolean,
@@ -29,7 +29,7 @@ internal object FirClassifierProvider {
         .filter { visibilityChecker.isVisible(it, positionContext) }
         .map { KtSymbolWithOrigin(it, kind) }
 
-    context(KaSession)
+    context(_: KaSession)
     fun getAvailableClassifiersFromIndex(
         positionContext: KotlinRawPositionContext,
         parameters: KotlinFirCompletionParameters,
@@ -44,7 +44,7 @@ internal object FirClassifierProvider {
     }
 }
 
-context(KaSession)
+context(_: KaSession)
 private fun completeKotlinClasses(
     symbolProvider: KtSymbolFromIndexProvider,
     scopeNameFilter: (Name) -> Boolean,
@@ -58,7 +58,7 @@ private fun completeKotlinClasses(
     }
 )
 
-context(KaSession)
+context(_: KaSession)
 private fun completeJavaClasses(
     parameters: KotlinFirCompletionParameters,
     symbolProvider: KtSymbolFromIndexProvider,

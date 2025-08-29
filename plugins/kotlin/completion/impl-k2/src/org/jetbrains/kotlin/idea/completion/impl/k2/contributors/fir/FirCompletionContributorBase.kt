@@ -13,6 +13,7 @@ import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
+import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
@@ -99,7 +100,7 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     protected fun createOperatorLookupElement(
         context: WeighingContext,
         signature: KaFunctionSignature<*>,
@@ -121,7 +122,7 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
         )
     }
 
-    context(KaSession)
+    context(_: KaSession)
     protected fun createCallableLookupElements(
         context: WeighingContext,
         signature: KaCallableSignature<*>,
@@ -253,7 +254,7 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
 @ApiStatus.Experimental // todo reconsider
 internal interface ChainCompletionContributor : FirCompletionContributor<KotlinNameReferencePositionContext> {
 
-    context(KaSession)
+    context(_: KaSession)
     fun createChainedLookupElements(
         positionContext: KotlinNameReferencePositionContext,
         receiverExpression: KtDotQualifiedExpression,

@@ -5,6 +5,7 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.psi.util.parentsOfType
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
+import org.jetbrains.kotlin.analysis.api.components.allOverriddenSymbols
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeOwner
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
@@ -12,6 +13,7 @@ import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaIntersectionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaUsualClassType
@@ -82,7 +84,7 @@ internal class K2SuperMemberCompletionContributor : K2SimpleCompletionContributo
         ).forEach { context.addElement(it) }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun getSymbolsAndNamesNeedDisambiguation(
         context: K2CompletionSectionContext<KotlinSuperReceiverNameReferencePositionContext>,
         superTypes: List<KaType>,
@@ -118,7 +120,7 @@ internal class K2SuperMemberCompletionContributor : K2SimpleCompletionContributo
         return Pair(allSymbols, nameNeedDisambiguation)
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun getNonExtensionsMemberSymbols(
         context: K2CompletionSectionContext<KotlinSuperReceiverNameReferencePositionContext>,
         receiverType: KaType,
@@ -135,7 +137,7 @@ internal class K2SuperMemberCompletionContributor : K2SimpleCompletionContributo
         )
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun collectCallToSuperMember(
         context: K2CompletionSectionContext<KotlinSuperReceiverNameReferencePositionContext>,
         callableInfo: CallableInfo,
@@ -161,13 +163,13 @@ internal class K2SuperMemberCompletionContributor : K2SimpleCompletionContributo
         )
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun getInsertionStrategy(signature: KaCallableSignature<*>): CallableInsertionStrategy = when (signature) {
         is KaFunctionSignature<*> -> CallableInsertionStrategy.AsCall
         else -> CallableInsertionStrategy.AsIdentifier
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun collectDelegateCallToSuperMember(
         context: K2CompletionSectionContext<KotlinSuperReceiverNameReferencePositionContext>,
         superReceiver: KtSuperExpression,
@@ -245,7 +247,7 @@ internal class K2SuperMemberCompletionContributor : K2SimpleCompletionContributo
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun wrapWithDisambiguationIfNeeded(
         insertionStrategy: CallableInsertionStrategy,
         superType: KaType,

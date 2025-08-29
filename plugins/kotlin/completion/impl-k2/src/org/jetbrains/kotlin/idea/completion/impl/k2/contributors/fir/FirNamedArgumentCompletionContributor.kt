@@ -33,7 +33,7 @@ internal class FirNamedArgumentCompletionContributor(
     priority: Int = 0,
 ) : FirCompletionContributorBase<KotlinExpressionNameReferencePositionContext>(sink, priority) {
 
-    context(KaSession)
+    context(_: KaSession)
     override fun complete(
         positionContext: KotlinExpressionNameReferencePositionContext,
         weighingContext: WeighingContext,
@@ -100,7 +100,7 @@ internal class FirNamedArgumentCompletionContributor(
         val indexedTypes: List<IndexedValue<KaType>>
     )
 
-    context(KaSession)
+    context(_: KaSession)
     private fun collectNamedArgumentInfos(
         callElement: KtCallElement,
         argumentsBeforeCurrent: List<KtValueArgument>,
@@ -118,7 +118,7 @@ internal class FirNamedArgumentCompletionContributor(
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun collectNotUsedIndexedParameterCandidates(
         callElement: KtCallElement,
         candidate: KaFunctionCall<*>,

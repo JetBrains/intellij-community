@@ -10,6 +10,8 @@ import com.intellij.psi.codeStyle.NameUtil
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaScopeContext
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
+import org.jetbrains.kotlin.analysis.api.components.compositeScope
+import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.scopes.KaScope
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
@@ -82,7 +84,7 @@ internal class K2VariableOrParameterNameWithTypeCompletionContributor : K2Simple
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun completeFromParametersInFile(
         context: K2CompletionSectionContext<KotlinRawPositionContext>,
         variableOrParameter: KtCallableDeclaration,
@@ -141,7 +143,7 @@ internal class K2VariableOrParameterNameWithTypeCompletionContributor : K2Simple
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun completeClassesFromScopeContext(
         context: K2CompletionSectionContext<KotlinRawPositionContext>,
         variableOrParameter: KtCallableDeclaration,
@@ -169,7 +171,7 @@ internal class K2VariableOrParameterNameWithTypeCompletionContributor : K2Simple
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun completeClassesFromIndices(
         context: K2CompletionSectionContext<KotlinRawPositionContext>,
         variableOrParameter: KtCallableDeclaration,
@@ -196,7 +198,7 @@ internal class K2VariableOrParameterNameWithTypeCompletionContributor : K2Simple
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun addSuggestions(
         context: K2CompletionSectionContext<KotlinRawPositionContext>,
         variableOrParameter: KtCallableDeclaration,
@@ -297,7 +299,7 @@ internal class K2VariableOrParameterNameWithTypeCompletionContributor : K2Simple
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun getAvailableTypeParameters(scopes: KaScope): Sequence<KaTypeParameterSymbol> =
         scopes.classifiers.filterIsInstance<KaTypeParameterSymbol>()
 
@@ -305,7 +307,7 @@ internal class K2VariableOrParameterNameWithTypeCompletionContributor : K2Simple
         return (typeReference.parent as? KtCallableDeclaration)?.takeIf { it.receiverTypeReference == typeReference }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun typeIsVisible(
         context: K2CompletionSectionContext<KotlinRawPositionContext>,
         type: KaType,

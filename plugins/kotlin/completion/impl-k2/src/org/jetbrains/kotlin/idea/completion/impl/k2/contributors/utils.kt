@@ -8,6 +8,7 @@ import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
+import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
@@ -35,7 +36,7 @@ import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
-context(KaSession)
+context(_: KaSession)
 internal fun createCallableLookupElements(
     context: WeighingContext,
     parameters: KotlinFirCompletionParameters,
@@ -119,7 +120,7 @@ private fun LookupElementBuilder.applyKindToPresentation(): LookupElementBuilder
     else -> this
 }
 
-context(KaSession)
+context(_: KaSession)
 internal fun createOperatorLookupElement(
     context: WeighingContext,
     signature: KaFunctionSignature<*>,

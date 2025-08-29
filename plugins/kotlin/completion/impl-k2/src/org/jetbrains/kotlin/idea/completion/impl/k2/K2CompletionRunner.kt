@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KaCompletionExtensionCandidateChecker
+import org.jetbrains.kotlin.analysis.api.components.expectedType
 import org.jetbrains.kotlin.analysis.api.impl.base.components.KaBaseIllegalPsiException
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
@@ -143,7 +144,7 @@ internal interface K2CompletionRunner {
     }
 }
 
-context(KaSession)
+context(_: KaSession)
 private fun createWeighingContext(
     positionContext: KotlinRawPositionContext,
     parameters: KotlinFirCompletionParameters
@@ -174,7 +175,7 @@ private fun createWeighingContext(
     }
 }
 
-context(KaSession)
+context(_: KaSession)
 private fun createExtensionChecker(
     positionContext: KotlinRawPositionContext,
     originalFile: KtFile,
@@ -273,12 +274,12 @@ private class SharedPriorityQueue<P : Any, C : Comparable<C>>(
     fun createLocalInstance(): LocalInstance = LocalInstance()
 }
 
-context(KaSession)
+context(session: KaSession)
 private fun <P : KotlinRawPositionContext> K2CompletionSection<P>.executeIfAllowed(context: K2CompletionSectionContext<P>) {
     with(contributor) {
-        if (!this@KaSession.shouldExecute(context)) return
+        if (!session.shouldExecute(context)) return
     }
-    runnable(this@KaSession, context)
+    runnable(session, context)
 }
 
 /**

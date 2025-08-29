@@ -11,6 +11,9 @@ import com.intellij.psi.util.*
 import kotlinx.serialization.Serializable
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.deprecationStatus
+import org.jetbrains.kotlin.analysis.api.components.getterDeprecationStatus
+import org.jetbrains.kotlin.analysis.api.components.setterDeprecationStatus
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
@@ -37,7 +40,7 @@ import org.jetbrains.kotlin.psi.KtSuperExpression
 import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.psi.psiUtil.getReceiverExpression
 
-context(KaSession)
+context(_: KaSession)
 internal fun withClassifierSymbolInfo(
     symbol: KaClassifierSymbol,
     elementBuilder: LookupElementBuilder
@@ -47,7 +50,7 @@ internal fun withClassifierSymbolInfo(
     .withTypeText(getTypeTextForClassifier(symbol))
     .withStrikeoutness(symbol.requireStrikeoutness())
 
-context(KaSession)
+context(_: KaSession)
 internal fun withCallableSignatureInfo(
     signature: KaCallableSignature<*>,
     elementBuilder: LookupElementBuilder
@@ -57,7 +60,7 @@ internal fun withCallableSignatureInfo(
     .withTypeText(getTypeTextForCallable(signature, treatAsFunctionCall = elementBuilder.`object` is FunctionCallLookupObject))
     .withStrikeoutness(signature.symbol.requireStrikeoutness())
 
-context(KaSession)
+context(_: KaSession)
 @OptIn(KaExperimentalApi::class)
 private fun KaDeclarationSymbol.requireStrikeoutness(): Boolean = when {
     deprecationStatus != null -> true
@@ -134,6 +137,6 @@ private fun getSuperTypeQualifierRange(typeReference: KtTypeReference): TextRang
     (typeReference.nextLeaf { it.elementType == KtTokens.GT } ?: typeReference).endOffset
 )
 
-context(KaSession)
+context(_: KaSession)
 internal fun KaCallableSymbol.isExtensionCall(isFunctionalVariableCall: Boolean): Boolean =
     isExtension || isFunctionalVariableCall && (returnType as? KaFunctionType)?.hasReceiver == true

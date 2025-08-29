@@ -22,7 +22,7 @@ object VariableOrFunctionWeigher {
     const val WEIGHER_ID = "kotlin.variableOrFunction"
     private var LookupElement.variableOrFunction by UserDataProperty(Key<Weight>("KOTLIN_VARIABLE_OR_FUNCTION_WEIGHT"))
 
-    context(KaSession)
+    context(_: KaSession)
 fun addWeight(lookupElement: LookupElement, symbol: KaSymbol) {
         when (symbol) {
             is KaVariableSymbol -> {

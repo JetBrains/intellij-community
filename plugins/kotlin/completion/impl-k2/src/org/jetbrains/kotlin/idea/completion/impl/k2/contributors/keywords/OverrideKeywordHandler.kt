@@ -12,6 +12,9 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.base.KaContextReceiversOwner
+import org.jetbrains.kotlin.analysis.api.components.containingSymbol
+import org.jetbrains.kotlin.analysis.api.components.fakeOverrideOriginal
+import org.jetbrains.kotlin.analysis.api.components.render
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
 import org.jetbrains.kotlin.analysis.api.renderer.base.contextReceivers.KaContextReceiversRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.base.contextReceivers.renderers.KaContextReceiverListRenderer
@@ -42,7 +45,7 @@ internal class OverrideKeywordHandler(
     private val importStrategyDetector: ImportStrategyDetector,
 ) : CompletionKeywordHandler<KaSession>(KtTokens.OVERRIDE_KEYWORD) {
 
-    context(KaSession)
+    context(_: KaSession)
     override fun createLookups(
         parameters: CompletionParameters,
         expression: KtExpression?,
@@ -59,7 +62,7 @@ internal class OverrideKeywordHandler(
         ) + lookup
     }
 
-    context(KaSession)
+    context(session: KaSession)
     fun createOverrideMemberLookups(
         parameters: KotlinFirCompletionParameters,
         declaration: KtCallableDeclaration?,
@@ -74,7 +77,9 @@ internal class OverrideKeywordHandler(
 
         for (member in members) {
             val symbolPointer = member.memberInfo.symbolPointer
-            val memberSymbol = symbolPointer.restoreSymbol()
+            val memberSymbol = with(session) {
+                symbolPointer.restoreSymbol()
+            }
             requireNotNull(memberSymbol) { "${symbolPointer::class} can't be restored" }
 
             if (declaration != null && !canCompleteDeclarationWithMember(declaration, memberSymbol)) continue
@@ -97,7 +102,7 @@ internal class OverrideKeywordHandler(
         } else allMembers.toList()
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun canCompleteDeclarationWithMember(
         declaration: KtCallableDeclaration,
         symbolToOverride: KaCallableSymbol
@@ -115,7 +120,7 @@ internal class OverrideKeywordHandler(
         else -> false
     }
 
-    context(KaSession)
+    context(session: KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun createLookupElementToGenerateSingleOverrideMember(
         member: KtClassMember,
@@ -125,7 +130,7 @@ internal class OverrideKeywordHandler(
         project: Project,
     ): OverridesCompletionLookupElementDecorator {
         val symbolPointer = member.memberInfo.symbolPointer
-        val memberSymbol = symbolPointer.restoreSymbol()
+        val memberSymbol = with(session) { symbolPointer.restoreSymbol() }
         requireNotNull(memberSymbol) { "${symbolPointer::class} can't be restored" }
         check(memberSymbol is KaNamedSymbol)
 

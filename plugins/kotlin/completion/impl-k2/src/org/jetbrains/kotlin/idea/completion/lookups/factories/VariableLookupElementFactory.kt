@@ -10,6 +10,8 @@ import kotlinx.serialization.Polymorphic
 import kotlinx.serialization.Serializable
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.javaGetterName
+import org.jetbrains.kotlin.analysis.api.components.javaSetterName
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSyntheticJavaPropertySymbol
@@ -28,7 +30,7 @@ import org.jetbrains.kotlin.renderer.render
 
 internal object VariableLookupElementFactory {
 
-    context(KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     fun createLookup(
         signature: KaVariableSignature<*>,
@@ -47,7 +49,7 @@ internal object VariableLookupElementFactory {
         return withCallableSignatureInfo(signature, builder)
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun createLookupElementBuilder(
         options: CallableInsertionOptions,
         signature: KaVariableSignature<*>,
@@ -92,7 +94,7 @@ internal object VariableLookupElementFactory {
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun markIfSyntheticJavaProperty(
         lookupElementBuilder: LookupElementBuilder,

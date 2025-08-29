@@ -5,6 +5,10 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.collectImplicitReceiverTypes
+import org.jetbrains.kotlin.analysis.api.components.dispatchReceiverType
+import org.jetbrains.kotlin.analysis.api.components.expressionType
+import org.jetbrains.kotlin.analysis.api.components.isSubtypeOf
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.completion.ItemPriority
@@ -33,7 +37,7 @@ internal class FirDeclarationFromUnresolvedNameContributor(
     priority: Int = 0,
 ) : FirCompletionContributorBase<KotlinRawPositionContext>(sink, priority) {
 
-    context(KaSession)
+    context(_: KaSession)
     override fun complete(
         positionContext: KotlinRawPositionContext,
         weighingContext: WeighingContext,
@@ -49,7 +53,7 @@ internal class FirDeclarationFromUnresolvedNameContributor(
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun processReference(
         referenceScope: KtElement,
         currentDeclarationInFakeFile: KtNamedDeclaration,
@@ -73,7 +77,7 @@ internal class FirDeclarationFromUnresolvedNameContributor(
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun shouldOfferCompletion(unresolvedRef: KtNameReferenceExpression, currentDeclaration: KtNamedDeclaration): Boolean {
         val refExprParent = unresolvedRef.parent
         val receiver = if (refExprParent is KtCallExpression) {
@@ -118,7 +122,7 @@ internal class FirDeclarationFromUnresolvedNameContributor(
         return qualifiedExpression.receiverExpression
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun getReceiverType(symbol: KaCallableSymbol): KaType? {
         return symbol.receiverType ?: (symbol as? KaCallableSymbol)?.dispatchReceiverType
     }

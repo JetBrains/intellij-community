@@ -99,7 +99,7 @@ internal class K2NamedArgumentCompletionContributor : K2SimpleCompletionContribu
         val indexedTypes: List<IndexedValue<KaType>>
     )
 
-    context(KaSession)
+    context(_: KaSession)
     private fun collectNamedArgumentInfos(
         callElement: KtCallElement,
         argumentsBeforeCurrent: List<KtValueArgument>,
@@ -117,7 +117,7 @@ internal class K2NamedArgumentCompletionContributor : K2SimpleCompletionContribu
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun collectNotUsedIndexedParameterCandidates(
         callElement: KtCallElement,
         candidate: KaFunctionCall<*>,

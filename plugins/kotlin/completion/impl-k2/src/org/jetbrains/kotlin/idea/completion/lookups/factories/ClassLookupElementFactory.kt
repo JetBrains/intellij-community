@@ -8,6 +8,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder
 import kotlinx.serialization.Serializable
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.asSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
@@ -21,7 +22,7 @@ import org.jetbrains.kotlin.renderer.render
 
 internal object ClassLookupElementFactory {
 
-    context(KaSession)
+    context(_: KaSession)
     fun createLookup(
         symbol: KaClassLikeSymbol,
         importingStrategy: ImportStrategy,
@@ -34,7 +35,7 @@ internal object ClassLookupElementFactory {
             .let { withClassifierSymbolInfo(symbol, it) }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     fun createConstructorLookup(
         containingSymbol: KaNamedClassSymbol,

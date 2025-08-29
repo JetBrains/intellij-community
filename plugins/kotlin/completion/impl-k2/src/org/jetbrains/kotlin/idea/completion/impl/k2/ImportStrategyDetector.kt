@@ -4,6 +4,8 @@ package org.jetbrains.kotlin.idea.completion.impl.k2
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.containingSymbol
+import org.jetbrains.kotlin.analysis.api.components.fakeOverrideOriginal
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.getDefaultImports
 import org.jetbrains.kotlin.idea.base.util.isImported
@@ -25,7 +27,7 @@ class ImportStrategyDetector(originalKtFile: KtFile, project: Project) {
     }
 
 
-    context(KaSession)
+    context(_: KaSession)
     fun detectImportStrategyForCallableSymbol(symbol: KaCallableSymbol, isFunctionalVariableCall: Boolean = false): ImportStrategy {
         val hasStablePath = when ((symbol.fakeOverrideOriginal.containingSymbol as? KaClassSymbol)?.classKind) {
             KaClassKind.ENUM_CLASS,
@@ -45,7 +47,7 @@ class ImportStrategyDetector(originalKtFile: KtFile, project: Project) {
         }
     }
 
-    context (KaSession)
+    context (_: KaSession)
     fun detectImportStrategyForClassifierSymbol(symbol: KaClassifierSymbol): ImportStrategy {
         if (symbol !is KaClassLikeSymbol) return ImportStrategy.DoNothing
 

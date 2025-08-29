@@ -15,6 +15,11 @@ import kotlinx.serialization.Serializable
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
+import org.jetbrains.kotlin.analysis.api.components.isNullable
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
+import org.jetbrains.kotlin.analysis.api.components.scopeContext
+import org.jetbrains.kotlin.analysis.api.components.sealedClassInheritors
+import org.jetbrains.kotlin.analysis.api.components.staticDeclaredMemberScope
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
@@ -124,13 +129,13 @@ internal class K2WhenWithSubjectConditionContributor : K2SimpleCompletionContrib
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun getClassSymbol(subjectType: KaType): KaNamedClassSymbol? {
         val classType = subjectType as? KaClassType
         return classType?.symbol as? KaNamedClassSymbol
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun createNullBranchLookupElement(
         context: WeighingContext,
         type: KaType?,
@@ -141,7 +146,7 @@ internal class K2WhenWithSubjectConditionContributor : K2SimpleCompletionContrib
             .applyWeighs(context)
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun completeAllTypes(
         context: K2CompletionSectionContext<KotlinWithSubjectEntryPositionContext>,
         whenCondition: KtWhenCondition,
@@ -194,7 +199,7 @@ internal class K2WhenWithSubjectConditionContributor : K2SimpleCompletionContrib
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun isPrefixNeeded(context: K2CompletionSectionContext<*>, symbol: KaNamedSymbol): Boolean {
         return when (symbol) {
             is KaAnonymousObjectSymbol -> return false
@@ -208,7 +213,7 @@ internal class K2WhenWithSubjectConditionContributor : K2SimpleCompletionContrib
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun completeSubClassesOfSealedClass(
         context: K2CompletionSectionContext<KotlinWithSubjectEntryPositionContext>,
         classSymbol: KaNamedClassSymbol,
@@ -246,7 +251,7 @@ internal class K2WhenWithSubjectConditionContributor : K2SimpleCompletionContrib
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun getHandledClassIds(conditions: List<KtWhenCondition>): Set<ClassId> =
         conditions.mapNotNullTo(hashSetOf()) { condition ->
             val reference = when (condition) {
@@ -258,7 +263,7 @@ internal class K2WhenWithSubjectConditionContributor : K2SimpleCompletionContrib
             resolvesTo?.classId
         }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun getAllSealedInheritors(classSymbol: KaNamedClassSymbol): Collection<KaNamedClassSymbol> {
 
         fun getAllSealedInheritorsTo(
@@ -277,7 +282,7 @@ internal class K2WhenWithSubjectConditionContributor : K2SimpleCompletionContrib
             .apply { getAllSealedInheritorsTo(classSymbol, this) }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun createElseBranchLookupElement(
         context: WeighingContext,
         whenCondition: KtWhenCondition,
@@ -293,7 +298,7 @@ internal class K2WhenWithSubjectConditionContributor : K2SimpleCompletionContrib
     }
 
 
-    context(KaSession)
+    context(_: KaSession)
     private fun completeEnumEntries(
         context: K2CompletionSectionContext<KotlinWithSubjectEntryPositionContext>,
         classSymbol: KaNamedClassSymbol,
@@ -327,7 +332,7 @@ internal class K2WhenWithSubjectConditionContributor : K2SimpleCompletionContrib
         return entry.conditions.size == 1
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun createLookupElement(
         context: K2CompletionSectionContext<*>,
         lookupString: String,

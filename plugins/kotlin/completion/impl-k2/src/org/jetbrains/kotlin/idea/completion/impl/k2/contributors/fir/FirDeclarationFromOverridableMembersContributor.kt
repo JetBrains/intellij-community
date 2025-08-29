@@ -36,7 +36,7 @@ internal class FirDeclarationFromOverridableMembersContributor(
     priority: Int = 0,
 ) : FirCompletionContributorBase<KotlinRawPositionContext>(sink, priority) {
 
-    context(KaSession)
+    context(_: KaSession)
     override fun complete(
         positionContext: KotlinRawPositionContext,
         weighingContext: WeighingContext,

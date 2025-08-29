@@ -6,6 +6,7 @@ import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.components.KaCompletionCandidateChecker
 import org.jetbrains.kotlin.analysis.api.components.KaCompletionExtensionCandidateChecker
 import org.jetbrains.kotlin.analysis.api.components.KaExtensionApplicabilityResult
+import org.jetbrains.kotlin.analysis.api.components.createExtensionCandidateChecker
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.psi.KtExpression
@@ -41,7 +42,7 @@ internal class KtCompletionExtensionCandidateChecker private constructor(
 
     companion object {
 
-        context(KaCompletionCandidateChecker)
+        context(_: KaCompletionCandidateChecker)
         fun create(
             originalFile: KtFile,
             nameExpression: KtSimpleNameExpression,

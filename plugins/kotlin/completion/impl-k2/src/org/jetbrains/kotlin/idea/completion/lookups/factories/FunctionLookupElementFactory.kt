@@ -18,6 +18,10 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
+import org.jetbrains.kotlin.analysis.api.components.createSubstitutor
+import org.jetbrains.kotlin.analysis.api.components.lowerBoundIfFlexible
+import org.jetbrains.kotlin.analysis.api.components.samConstructor
+import org.jetbrains.kotlin.analysis.api.components.upperBoundIfFlexible
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
@@ -45,7 +49,7 @@ import org.jetbrains.kotlin.renderer.render
 
 internal object FunctionLookupElementFactory {
 
-    context(KaSession)
+    context(_: KaSession)
     fun createLookup(
         shortName: Name,
         signature: KaFunctionSignature<*>,
@@ -68,7 +72,7 @@ internal object FunctionLookupElementFactory {
         return createLookupElement(signature, lookupObject, useFqNameInTailText = aliasName != null)
     }
 
-    context(KaSession)
+    context(_: KaSession)
     internal fun getTrailingFunctionSignature(
         signature: KaFunctionSignature<*>,
         checkDefaultValues: Boolean = true,
@@ -82,7 +86,7 @@ internal object FunctionLookupElementFactory {
             ?.takeUnless { it.symbol.isVararg }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     internal fun createTrailingFunctionDescriptor(
         trailingFunctionSignature: KaVariableSignature<KaValueParameterSymbol>,
     ): TrailingFunctionDescriptor? {
@@ -120,7 +124,7 @@ internal object FunctionLookupElementFactory {
     }
 
     @OptIn(KaExperimentalApi::class)
-    context(KaSession)
+    context(_: KaSession)
     @ApiStatus.Experimental
     fun createLookupWithTrailingLambda(
         shortName: Name,
@@ -153,7 +157,7 @@ internal object FunctionLookupElementFactory {
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun createLookupElement(
         signature: KaFunctionSignature<*>,
         lookupObject: FunctionCallLookupObject,
@@ -218,7 +222,7 @@ internal data class WithCallArgsInsertionHandler(
 }
 
 object FunctionInsertionHelper {
-    context(KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     fun functionCanBeCalledWithoutExplicitTypeArguments(
         symbol: KaFunctionSymbol,

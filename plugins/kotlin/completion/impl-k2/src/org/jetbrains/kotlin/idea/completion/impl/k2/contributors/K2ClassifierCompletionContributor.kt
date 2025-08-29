@@ -14,6 +14,12 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KaScopeWithKind
 import org.jetbrains.kotlin.analysis.api.components.ShortenCommand
+import org.jetbrains.kotlin.analysis.api.components.containingSymbol
+import org.jetbrains.kotlin.analysis.api.components.defaultType
+import org.jetbrains.kotlin.analysis.api.components.isSubtypeOf
+import org.jetbrains.kotlin.analysis.api.components.memberScope
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbols
+import org.jetbrains.kotlin.analysis.api.components.staticDeclaredMemberScope
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
@@ -43,7 +49,7 @@ internal open class K2ClassifierCompletionContributor : K2CompletionContributor<
     KotlinNameReferencePositionContext::class
 ), K2ChainCompletionContributor {
 
-    context(KaSession)
+    context(_: KaSession)
     private fun filterClassifiers(
         context: K2CompletionSectionContext<KotlinNameReferencePositionContext>,
         classifierSymbol: KaClassifierSymbol
@@ -68,7 +74,7 @@ internal open class K2ClassifierCompletionContributor : K2CompletionContributor<
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun getImportingStrategy(
         context: K2CompletionContext<KotlinNameReferencePositionContext>,
         importStrategyDetector: ImportStrategyDetector,
@@ -107,7 +113,7 @@ internal open class K2ClassifierCompletionContributor : K2CompletionContributor<
         return !context.positionContext.isAfterRangeOperator() && !context.positionContext.allowsOnlyNamedArguments()
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun KaScopeWithKind.completeClassifiers(
         context: K2CompletionSectionContext<KotlinNameReferencePositionContext>,
         visibilityChecker: CompletionVisibilityChecker,
@@ -116,7 +122,7 @@ internal open class K2ClassifierCompletionContributor : K2CompletionContributor<
         .filter { filterClassifiers(context, it) }
         .filter { visibilityChecker.isVisible(it, context.positionContext) }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun completeWithoutReceiverFromScopes(
         sectionContext: K2CompletionSectionContext<KotlinNameReferencePositionContext>
     ) {
@@ -174,7 +180,7 @@ internal open class K2ClassifierCompletionContributor : K2CompletionContributor<
         scopeClassifiers.forEach { sectionContext.addElement(it) }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun completeWithoutReceiverFromIndex(
         sectionContext: K2CompletionSectionContext<KotlinNameReferencePositionContext>
     ) {
@@ -213,7 +219,7 @@ internal open class K2ClassifierCompletionContributor : K2CompletionContributor<
         indexClassifiers.forEach { sectionContext.addElement(it) }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun completeWithReceiver(
         explicitReceiver: KtElement,
         sectionContext: K2CompletionSectionContext<KotlinNameReferencePositionContext>
@@ -241,7 +247,7 @@ internal open class K2ClassifierCompletionContributor : K2CompletionContributor<
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     override fun createChainedLookupElements(
         context: K2CompletionSectionContext<KotlinExpressionNameReferencePositionContext>,
         receiverExpression: KtDotQualifiedExpression,
@@ -266,7 +272,7 @@ internal open class K2ClassifierCompletionContributor : K2CompletionContributor<
             }.map { it.withPresentableText(selectorExpression.text + "." + it.lookupString) }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun createClassifierLookupElement(
         classifierSymbol: KaClassifierSymbol,
         positionContext: KotlinNameReferencePositionContext,

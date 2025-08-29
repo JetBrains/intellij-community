@@ -14,7 +14,7 @@ internal class FirClassReferenceCompletionContributor(
     priority: Int = 0,
 ) : FirCompletionContributorBase<KotlinCallableReferencePositionContext>(sink, priority) {
 
-    context(KaSession)
+    context(_: KaSession)
     override fun complete(
         positionContext: KotlinCallableReferencePositionContext,
         weighingContext: WeighingContext,

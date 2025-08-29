@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
 
 internal interface FirCompletionContributor<C : KotlinRawPositionContext> {
 
-    context(KaSession)
+    context(_: KaSession)
     fun complete(
         positionContext: C,
         weighingContext: WeighingContext,

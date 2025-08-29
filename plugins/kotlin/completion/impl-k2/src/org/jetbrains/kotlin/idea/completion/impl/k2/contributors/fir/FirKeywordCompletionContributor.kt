@@ -46,7 +46,7 @@ internal class FirKeywordCompletionContributor(
         )
     }
 
-    context(KaSession)
+    context(_: KaSession)
     override fun complete(
         positionContext: KotlinRawPositionContext,
         weighingContext: WeighingContext,

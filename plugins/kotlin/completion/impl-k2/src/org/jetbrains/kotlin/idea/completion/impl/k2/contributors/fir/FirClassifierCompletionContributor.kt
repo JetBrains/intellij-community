@@ -14,6 +14,12 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KaScopeWithKind
 import org.jetbrains.kotlin.analysis.api.components.ShortenCommand
+import org.jetbrains.kotlin.analysis.api.components.containingSymbol
+import org.jetbrains.kotlin.analysis.api.components.defaultType
+import org.jetbrains.kotlin.analysis.api.components.isSubtypeOf
+import org.jetbrains.kotlin.analysis.api.components.memberScope
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbols
+import org.jetbrains.kotlin.analysis.api.components.staticDeclaredMemberScope
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
@@ -47,14 +53,14 @@ internal open class FirClassifierCompletionContributor(
 ) : FirCompletionContributorBase<KotlinNameReferencePositionContext>(sink, priority),
     ChainCompletionContributor {
 
-    context(KaSession)
+    context(_: KaSession)
     protected open fun filterClassifiers(classifierSymbol: KaClassifierSymbol): Boolean = true
 
-    context(KaSession)
+    context(_: KaSession)
     protected open fun getImportingStrategy(classifierSymbol: KaClassifierSymbol): ImportStrategy =
         importStrategyDetector.detectImportStrategyForClassifierSymbol(classifierSymbol)
 
-    context(KaSession)
+    context(_: KaSession)
     override fun complete(
         positionContext: KotlinNameReferencePositionContext,
         weighingContext: WeighingContext,
@@ -88,7 +94,7 @@ internal open class FirClassifierCompletionContributor(
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun KaScopeWithKind.completeClassifiers(
         positionContext: KotlinNameReferencePositionContext,
     ): Sequence<KaClassifierSymbol> = scope
@@ -96,7 +102,7 @@ internal open class FirClassifierCompletionContributor(
         .filter { filterClassifiers(it) }
         .filter { visibilityChecker.isVisible(it, positionContext) }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun completeWithoutReceiver(
         weighingContext: WeighingContext,
         positionContext: KotlinNameReferencePositionContext,
@@ -170,7 +176,7 @@ internal open class FirClassifierCompletionContributor(
                 indexClassifiers
     }
 
-    context(KaSession)
+    context(_: KaSession)
     override fun createChainedLookupElements(
         positionContext: KotlinNameReferencePositionContext,
         receiverExpression: KtDotQualifiedExpression,
@@ -196,7 +202,7 @@ internal open class FirClassifierCompletionContributor(
     }
 
 
-    context(KaSession)
+    context(_: KaSession)
     private fun createClassifierLookupElement(
         classifierSymbol: KaClassifierSymbol,
         positionContext: KotlinRawPositionContext,
@@ -245,7 +251,7 @@ internal class FirAnnotationCompletionContributor(
     priority: Int = 0,
 ) : FirClassifierCompletionContributor(sink, priority) {
 
-    context(KaSession)
+    context(_: KaSession)
     override fun filterClassifiers(classifierSymbol: KaClassifierSymbol): Boolean = when (classifierSymbol) {
         is KaAnonymousObjectSymbol -> false
         is KaTypeParameterSymbol -> false
@@ -270,7 +276,7 @@ internal class FirClassifierReferenceCompletionContributor(
     priority: Int
 ) : FirClassifierCompletionContributor(sink, priority) {
 
-    context(KaSession)
+    context(_: KaSession)
     override fun getImportingStrategy(classifierSymbol: KaClassifierSymbol): ImportStrategy = when (classifierSymbol) {
         is KaTypeParameterSymbol -> ImportStrategy.DoNothing
         is KaClassLikeSymbol -> {

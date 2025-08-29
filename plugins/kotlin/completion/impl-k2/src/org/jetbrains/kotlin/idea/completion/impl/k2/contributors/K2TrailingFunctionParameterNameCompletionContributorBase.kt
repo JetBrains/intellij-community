@@ -17,6 +17,15 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaCompletionCandidateChecker
 import org.jetbrains.kotlin.analysis.api.components.KaCompletionExtensionCandidateChecker
 import org.jetbrains.kotlin.analysis.api.components.KaExtensionApplicabilityResult
+import org.jetbrains.kotlin.analysis.api.components.canBeAnalysed
+import org.jetbrains.kotlin.analysis.api.components.createSubstitutor
+import org.jetbrains.kotlin.analysis.api.components.expandedSymbol
+import org.jetbrains.kotlin.analysis.api.components.isSubClassOf
+import org.jetbrains.kotlin.analysis.api.components.lowerBoundIfFlexible
+import org.jetbrains.kotlin.analysis.api.components.memberScope
+import org.jetbrains.kotlin.analysis.api.components.render
+import org.jetbrains.kotlin.analysis.api.components.resolveToCallCandidates
+import org.jetbrains.kotlin.analysis.api.components.substitute
 import org.jetbrains.kotlin.analysis.api.impl.base.components.KaBaseIllegalPsiException
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
 import org.jetbrains.kotlin.analysis.api.renderer.types.KaTypeRenderer
@@ -26,6 +35,7 @@ import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
+import org.jetbrains.kotlin.analysis.api.symbols.findClass
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.builtins.StandardNames
@@ -111,7 +121,7 @@ internal sealed class K2TrailingFunctionParameterNameCompletionContributorBase<P
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     protected fun complete(
         position: KtElement,
         context: K2CompletionSectionContext<P>,
@@ -149,7 +159,7 @@ internal sealed class K2TrailingFunctionParameterNameCompletionContributorBase<P
             }.forEach { context.addElement(it) }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun createLookupElements(
         context: K2CompletionSectionContext<*>,
         trailingFunctionDescriptor: TrailingFunctionDescriptor,
@@ -178,7 +188,7 @@ internal sealed class K2TrailingFunctionParameterNameCompletionContributorBase<P
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun createLookupElements(
         context: K2CompletionSectionContext<*>,
         trailingFunctionDescriptor: TrailingFunctionDescriptor,
@@ -282,7 +292,7 @@ internal sealed class K2TrailingFunctionParameterNameCompletionContributorBase<P
         object FqNameListSerializer : KSerializer<List<FqName>> by ListSerializer(KotlinFqNameSerializer)
     }
 
-    context(KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun KaNamedClassSymbol.getSignatures(
         context: K2CompletionSectionContext<*>,
@@ -315,7 +325,7 @@ internal sealed class K2TrailingFunctionParameterNameCompletionContributorBase<P
         else emptyList()
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun KaNamedClassSymbol.getComponents(
         context: K2CompletionSectionContext<*>,
         receiverTypes: List<KaClassType>,
@@ -397,7 +407,7 @@ data class ChainedInsertHandler(
     }
 }
 
-context(KaSession)
+context(_: KaSession)
 private fun createCompoundLookupElement(
     suggestedNames: Collection<Pair<KaType, String>>,
     isDestructuring: Boolean = false,
@@ -436,7 +446,7 @@ internal data class CompoundInsertionHandler(
     }
 }
 
-context(KaSession)
+context(_: KaSession)
 @OptIn(KaExperimentalApi::class)
 private val KaType.text: String
     get() = render(
@@ -444,7 +454,7 @@ private val KaType.text: String
         position = Variance.INVARIANT,
     )
 
-context(KaCompletionCandidateChecker)
+context(_: KaCompletionCandidateChecker)
 private fun createExtensionCandidateChecker(
     bodyExpression: KtBlockExpression,
 ): KtCompletionExtensionCandidateChecker? {
