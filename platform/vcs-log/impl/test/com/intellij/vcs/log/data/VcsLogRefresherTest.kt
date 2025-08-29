@@ -165,15 +165,7 @@ class VcsLogRefresherTest : VcsPlatformTest() {
 
     val dataWaiter = DataWaiter()
     val loader = VcsLogRefresherImpl(cs, logData.storage, logData.logProviders, VcsLogProgress(project),
-                                              null, dataWaiter, recentCommitsCount
-    ).apply {
-      refreshBatchJobConsumer = {
-        startedTasks.add(it.asCompletableFuture())
-        LOG.debug(startedTasks.size.toString() + " started tasks")
-      }
-    }
-
-    private val startedTasks = Collections.synchronizedList(ArrayList<Future<*>>())
+                                     null, dataWaiter, recentCommitsCount)
 
     @Throws(InterruptedException::class, ExecutionException::class, TimeoutException::class)
     fun initAndWaitForFirstRefresh() {
@@ -210,8 +202,8 @@ class VcsLogRefresherTest : VcsPlatformTest() {
 
     @Throws(InterruptedException::class, ExecutionException::class, TimeoutException::class)
     fun waitForBackgroundTasksToComplete() {
-      for (task in ArrayList(startedTasks)) {
-        task.get(1, TimeUnit.SECONDS)
+      runBlocking {
+        loader.awaitNotBusy()
       }
     }
 

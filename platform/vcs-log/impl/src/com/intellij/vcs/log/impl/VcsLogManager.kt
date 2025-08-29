@@ -40,6 +40,7 @@ import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import it.unimi.dsi.fastutil.ints.IntSet
 import it.unimi.dsi.fastutil.ints.IntSets
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.first
 import org.jetbrains.annotations.ApiStatus.*
 import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.annotations.Nls
@@ -428,7 +429,7 @@ open class VcsLogManager @Internal constructor(
 @Internal
 suspend fun VcsLogManager.awaitContainsCommit(hash: Hash, root: VirtualFile): Boolean {
   if (!containsCommit(hash, root)) {
-    if (isLogUpToDate) return false
+    if (isLogUpToDate && !dataManager.isRefreshInProgress.value) return false
     waitForRefresh()
     if (!containsCommit(hash, root)) return false
   }
@@ -448,7 +449,7 @@ private fun VcsLogManager.containsCommit(hash: Hash, root: VirtualFile): Boolean
 
 private fun VcsLogUiEx.isVisible(): Boolean = ComponentUtil.isShowing(mainComponent, false)
 
-suspend fun VcsLogManager.waitForRefresh() {
+private suspend fun VcsLogManager.waitForUpToDateLog() {
   suspendCancellableCoroutine { continuation ->
     val dataPackListener = object : DataPackChangeListener {
       override fun onDataPackChange(newDataPack: DataPack) {
@@ -469,4 +470,15 @@ suspend fun VcsLogManager.waitForRefresh() {
 
     continuation.invokeOnCancellation { dataManager.removeDataPackChangeListener(dataPackListener) }
   }
+}
+
+private suspend fun VcsLogManager.waitForOngoingRefreshToFinish() {
+  dataManager.isRefreshInProgress.first {
+    !it
+  }
+}
+
+suspend fun VcsLogManager.waitForRefresh() {
+  waitForUpToDateLog()
+  waitForOngoingRefreshToFinish()
 }

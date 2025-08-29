@@ -37,6 +37,7 @@ import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.util.concurrent.atomic.AtomicBoolean
@@ -79,6 +80,7 @@ class VcsLogData @ApiStatus.Internal constructor(
 
   private val refresher: VcsLogRefresherImpl
   val dataPack: DataPack get() = refresher.currentDataPack
+  val isRefreshInProgress: StateFlow<Boolean> get() = refresher.isBusy
   private val dataPackChangeListeners = ContainerUtil.createLockFreeCopyOnWriteList<DataPackChangeListener>()
 
   val containingBranchesGetter: ContainingBranchesGetter

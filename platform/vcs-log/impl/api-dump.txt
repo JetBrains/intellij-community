@@ -209,6 +209,7 @@ f:com.intellij.vcs.log.data.VcsLogData
 - f:getUserNameResolver():com.intellij.vcs.log.data.VcsLogUserResolver
 - f:isDisposed():Z
 - sf:isIndexSwitchedOnInRegistry():Z
+- f:isRefreshInProgress():kotlinx.coroutines.flow.StateFlow
 - f:isSingleUser():Z
 - f:refresh(java.util.Collection):V
 - f:refresh(java.util.Collection,Z):V
