@@ -31,7 +31,9 @@ object BuildViewAssertions {
   }
 
   fun assertBuildViewTreeText(buildView: BuildView, assert: (String) -> Unit) {
-    assert(getBuildViewTreeText(buildView))
+    waitUntilAssertSucceedsBlocking {
+      assert(getBuildViewTreeText(buildView))
+    }
   }
 
   fun assertBuildViewNodeConsole(buildView: BuildView, nodeText: String, assert: (ExecutionConsole) -> Unit) {
