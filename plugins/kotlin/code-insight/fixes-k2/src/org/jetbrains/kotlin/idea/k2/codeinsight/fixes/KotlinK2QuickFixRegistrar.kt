@@ -578,6 +578,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
 
         registerFactory(RenameUnderscoreFixFactory.renameUnderscore)
         registerFactory(NamedContextParameterInFunctionTypeFixFactory.removeParameterName)
+        registerFactory(ReceiverShadowedByContextParameterFactory.addReceiverFactory)
     }
 
     private val optIn = KtQuickFixesListBuilder.registerPsiQuickFix {

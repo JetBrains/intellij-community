@@ -474,6 +474,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
                     "unsupportedFeature", // K2-related features only
                     "namedLambdaContextParameter",
                     "useWithIndex", // Intention-based inspection in K1, covered by the intention tests
+                    "receiverShadowedByContextParameter",
                 )
             )
         }
