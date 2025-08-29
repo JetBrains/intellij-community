@@ -14,13 +14,10 @@ import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader.extractFile
 import org.jetbrains.jps.model.serialization.JpsMavenSettings
-import org.jetbrains.kotlin.idea.artifacts.KotlinNativePrebuiltDownloader.downloadFile
-import org.jetbrains.kotlin.idea.artifacts.KotlinNativePrebuiltDownloader.unpackPrebuildArchive
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactConstants
 import org.jetbrains.kotlin.konan.target.HostManager
 import org.jetbrains.kotlin.konan.target.TargetSupportException
 import org.jetbrains.tools.model.updater.KotlinTestsDependenciesUtil
-import java.io.IOException
 import java.net.URI
 import java.nio.file.Files
 import java.nio.file.Path
@@ -351,24 +348,13 @@ object TestKotlinArtifacts {
         platform: String = HostManager.platformName(),
         library: String
     ): Path {
-        if (!KotlinNativeHostSupportDetector.isNativeHostSupported() && platform == HostManager.platformName())
-            throw TargetSupportException("kotlin-native-prebuilt can't be downloaded as it doesn't exist for the host: ${platform}")
-
-        val baseDir = communityRoot.communityRoot.resolve("out").createDirectories()
-        val prebuilt = "kotlin-native-prebuilt-$platform-$version"
-        val archiveName = if (HostManager.hostIsMingw) "$prebuilt.zip" else "$prebuilt.tar.gz"
-        val cdnUrl = if ("dev" in version) NATIVE_PREBUILT_DEV_CDN_URL else NATIVE_PREBUILT_RELEASE_CDN_URL
-        val downloadUrl = "$cdnUrl/$version/$platform/$archiveName"
-        val archiveFilePath = baseDir.resolve(archiveName)
-        val libFile = baseDir.resolve(prebuilt).resolve(library)
-        if (!libFile.exists()) {
-            Files.deleteIfExists(archiveFilePath)
-            downloadFile(downloadUrl, archiveFilePath)
-            unpackPrebuildArchive(archiveFilePath, Path.of("$baseDir/$prebuilt"))
-            Files.deleteIfExists(archiveFilePath)
+        val prebuiltDir = getNativePrebuilt(version = version, platform = platform, communityRoot = communityRoot)
+        val libFile = prebuiltDir.resolve(library)
+        check(libFile.exists()) {
+            "Library $library not found in prebuilt directory: ${prebuiltDir}. Available files:\n" +
+                    prebuiltDir.walk().joinToString("\n") { it.toString() }
         }
-        return if (libFile.exists()) libFile else
-            throw IOException("Library doesn't exist: $libFile")
+        return libFile
     }
 
     private fun Path.compressDirectoryToZip(targetZipFile: Path) {
