@@ -40,6 +40,3 @@
 *:com.intellij.vcs.commit.DelayedCommitMessageProvider
 - com.intellij.openapi.vcs.changes.ui.CommitMessageProvider
 - a:init(com.intellij.openapi.project.Project,com.intellij.vcs.commit.CommitMessageUi,com.intellij.openapi.Disposable):V
-*:com.intellij.vcs.commit.EditedCommitDetails
-- a:getCommit():com.intellij.vcs.log.VcsFullCommitDetails
-- a:getCurrentUser():com.intellij.vcs.log.VcsUser

@@ -25,6 +25,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.s
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.vcs.impl.shared.changes.PreviewDiffSplitterComponent
+import com.intellij.platform.vcs.impl.shared.commit.insertEditedCommitNode
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.ScrollPaneFactory.createScrollPane
@@ -41,7 +42,6 @@ import com.intellij.util.ui.*
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.commit.CommitWorkflowListener
-import com.intellij.vcs.commit.insertEditedCommitNode
 import com.intellij.vcs.log.runInEdt
 import com.intellij.vcs.log.runInEdtAsync
 import com.intellij.vcs.ui.ProgressStripe

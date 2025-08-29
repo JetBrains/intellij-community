@@ -3,3 +3,11 @@
 c:com.intellij.openapi.vcs.changes.ui.TreeModelBuilder
 - com.intellij.openapi.vcs.changes.ui.ChangesViewModelBuilder
 - *:build(Z):javax.swing.tree.DefaultTreeModel
+*:com.intellij.platform.vcs.impl.shared.commit.EditedCommitDetails
+- a:getAuthor():com.intellij.vcs.log.VcsUser
+- a:getChanges():java.util.Collection
+- a:getCommitHash():com.intellij.vcs.log.Hash
+- a:getCommitter():com.intellij.vcs.log.VcsUser
+- a:getCurrentUser():com.intellij.vcs.log.VcsUser
+- a:getFullMessage():java.lang.String
+- a:getSubject():java.lang.String

@@ -15,6 +15,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.UNVERSIONED_FILES_
 import com.intellij.openapi.vcs.changes.ui.ChangesListView
 import com.intellij.openapi.vcs.changes.ui.EditChangelistSupport
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData.*
+import com.intellij.platform.vcs.impl.shared.commit.EditedCommitPresentation
 import com.intellij.ui.EditorTextComponent
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil

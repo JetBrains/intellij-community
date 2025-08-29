@@ -8,6 +8,8 @@ import com.intellij.openapi.vcs.VcsListener
 import com.intellij.openapi.vcs.VcsRoot
 import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.vcs.impl.shared.commit.EditedCommitDetails
+import com.intellij.platform.vcs.impl.shared.commit.EditedCommitPresentation
 import com.intellij.vcs.log.VcsUser
 import com.intellij.vcs.log.util.VcsUserUtil.isSamePerson
 import org.jetbrains.concurrency.CancellablePromise
@@ -83,8 +85,8 @@ class NonModalAmendCommitHandler(private val workflowHandler: NonModalCommitWork
   }
 
   private fun setAmendDetails(amendDetails: EditedCommitDetails) {
-    setAmendAuthor(amendDetails.currentUser, amendDetails.commit.author)
-    setAmendMessage(workflowHandler.getCommitMessage(), amendDetails.commit.fullMessage)
+    setAmendAuthor(amendDetails.currentUser, amendDetails.author)
+    setAmendMessage(workflowHandler.getCommitMessage(), amendDetails.fullMessage)
     setEditedCommit(EditedCommitPresentation.Details(amendDetails))
   }
 
