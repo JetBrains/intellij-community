@@ -35,12 +35,7 @@ class ScratchFileModuleInfoProvider : ScratchFileListener {
             runReadAction { DaemonCodeAnalyzer.getInstance(project).restart(psiFile) }
         }
 
-        if (virtualFile.isKotlinWorksheet) {
-            val module = ModuleUtilCore.findModuleForFile(virtualFile, project) ?: return
-            file.setModule(module)
-        } else {
-            val module = ScriptRelatedModuleNameFile[project, virtualFile]?.let { ModuleManager.getInstance(project).findModuleByName(it) } ?: return
-            file.setModule(module)
-        }
+        val module = ScriptRelatedModuleNameFile[project, virtualFile]?.let { ModuleManager.getInstance(project).findModuleByName(it) } ?: return
+        file.setModule(module)
     }
 }

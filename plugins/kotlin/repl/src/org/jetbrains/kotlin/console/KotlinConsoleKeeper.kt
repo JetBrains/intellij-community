@@ -58,7 +58,7 @@ class KotlinConsoleKeeper(val project: Project) {
 
         fun createReplCommandLine(project: Project, module: Module?): Pair<TargetEnvironmentRequest, TargetedCommandLine> {
             val javaParameters = JavaParametersBuilder(project)
-                .withSdkFrom(module, true)
+                .withSdkFrom(module)
                 .withMainClassName("org.jetbrains.kotlin.cli.jvm.K2JVMCompiler")
                 .build()
 

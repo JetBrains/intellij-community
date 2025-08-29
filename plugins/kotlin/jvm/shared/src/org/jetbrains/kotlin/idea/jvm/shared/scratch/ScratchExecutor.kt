@@ -25,7 +25,7 @@ import org.jetbrains.kotlin.idea.jvm.shared.scratch.output.ScratchOutput
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.output.ScratchOutputHandler
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.output.ScratchOutputHandlerAdapter
 
-abstract class ScratchExecutor(protected open val file: ScratchFile) {
+abstract class ScratchExecutor(protected open val scratchFile: ScratchFile) {
     protected val handler: CompositeOutputHandler
 
     init {
@@ -51,10 +51,10 @@ abstract class ScratchExecutor(protected open val file: ScratchFile) {
     }
 
     fun errorOccurs(message: String, e: Throwable? = null, isFatal: Boolean = false) {
-        handler.error(file, message)
+        handler.error(scratchFile, message)
 
         if (isFatal) {
-            handler.onFinish(file)
+            handler.onFinish(scratchFile)
         }
 
         if (e != null && (e !is ControlFlowException)) LOG.error(e)

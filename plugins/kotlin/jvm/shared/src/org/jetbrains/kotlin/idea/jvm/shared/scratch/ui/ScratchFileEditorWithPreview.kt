@@ -26,7 +26,7 @@ import org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchFileAutoRunner
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.output.*
 import org.jetbrains.kotlin.psi.UserDataProperty
 
-abstract class KtScratchFileEditorWithPreview(
+abstract class ScratchFileEditorWithPreview(
     kotlinScratchFile: ScratchFile, sourceTextEditor: TextEditor, previewTextEditor: TextEditor
 ) : TextEditorWithPreview(sourceTextEditor, previewTextEditor), TextEditor, ScratchEditorLinesTranslator {
 
@@ -39,7 +39,7 @@ abstract class KtScratchFileEditorWithPreview(
     protected val toolWindowHandler: ScratchOutputHandler = requestToolWindowHandler()
     private val inlayScratchOutputHandler = InlayScratchOutputHandler(sourceTextEditor, toolWindowHandler)
     protected val previewEditorScratchOutputHandler: PreviewEditorScratchOutputHandler = PreviewEditorScratchOutputHandler(
-      previewOutputManager, toolWindowHandler, previewTextEditor as Disposable
+        previewOutputManager, toolWindowHandler, previewTextEditor as Disposable
     )
     protected val commonPreviewOutputHandler: LayoutDependantOutputHandler = LayoutDependantOutputHandler(
         noPreviewOutputHandler = inlayScratchOutputHandler,
@@ -56,7 +56,7 @@ abstract class KtScratchFileEditorWithPreview(
         ScratchFileAutoRunner.addListener(kotlinScratchFile.project, sourceTextEditor)
     }
 
-    override fun getFile(): VirtualFile = scratchFile.file
+    override fun getFile(): VirtualFile = scratchFile.virtualFile
 
     override fun previewLineToSourceLines(previewLine: Int): Pair<Int, Int>? {
         val expressionUnderCaret = scratchFile.getExpressionAtLine(previewLine) ?: return null
@@ -98,9 +98,7 @@ abstract class KtScratchFileEditorWithPreview(
     }
 
     override fun dispose() {
-        //scratchFile.replScratchExecutor?.stop()
-        //scratchFile.compilingScratchExecutor?.stop()
-      releaseToolWindowHandler(toolWindowHandler)
+        releaseToolWindowHandler(toolWindowHandler)
         super.dispose()
     }
 
@@ -163,10 +161,10 @@ abstract class KtScratchFileEditorWithPreview(
     }
 }
 
-fun TextEditor.findScratchFileEditorWithPreview(): KtScratchFileEditorWithPreview? =
-    this as? KtScratchFileEditorWithPreview ?: parentScratchEditorWithPreview
+fun TextEditor.findScratchFileEditorWithPreview(): ScratchFileEditorWithPreview? =
+    this as? ScratchFileEditorWithPreview ?: parentScratchEditorWithPreview
 
-var TextEditor.parentScratchEditorWithPreview: KtScratchFileEditorWithPreview? by UserDataProperty(Key.create("parent.preview.editor"))
+var TextEditor.parentScratchEditorWithPreview: ScratchFileEditorWithPreview? by UserDataProperty(Key.create("parent.preview.editor"))
 
 
 /**
@@ -175,9 +173,9 @@ var TextEditor.parentScratchEditorWithPreview: KtScratchFileEditorWithPreview? b
  * However, clears both handlers to simplify clearing when switching between layouts.
  */
 class LayoutDependantOutputHandler(
-  private val noPreviewOutputHandler: ScratchOutputHandler,
-  private val previewOutputHandler: ScratchOutputHandler,
-  private val layoutProvider: () -> TextEditorWithPreview.Layout?
+    private val noPreviewOutputHandler: ScratchOutputHandler,
+    private val previewOutputHandler: ScratchOutputHandler,
+    private val layoutProvider: () -> TextEditorWithPreview.Layout?
 ) : ScratchOutputHandlerAdapter() {
 
     override fun onStart(file: ScratchFile) {

@@ -7,10 +7,9 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.kotlin.idea.core.script.v1.AbstractFileGistService
-import org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchFileOptions
 
 @Service(Service.Level.PROJECT)
-class ScratchFileOptionsFile: AbstractFileGistService<ScratchFileOptions>(
+class ScratchFileOptionsByFile: AbstractFileGistService<ScratchFileOptions>(
     name = "kotlin-scratch-file-options",
     version = 1,
     read = { ScratchFileOptions(readBoolean(), readBoolean(), readBoolean()) },
@@ -19,12 +18,10 @@ class ScratchFileOptionsFile: AbstractFileGistService<ScratchFileOptions>(
         writeBoolean(it.isMakeBeforeRun)
         writeBoolean(it.isInteractiveMode)
     }
-) {
-    companion object {
-        operator fun get(project: Project, file: VirtualFile) = project.service<ScratchFileOptionsFile>()[file]
+)
 
-        operator fun set(project: Project, file: VirtualFile, newValue: ScratchFileOptions?) {
-            project.service<ScratchFileOptionsFile>()[file] = newValue
-        }
-    }
-}
+data class ScratchFileOptions(
+    val isRepl: Boolean = false,
+    val isMakeBeforeRun: Boolean = false,
+    val isInteractiveMode: Boolean = true
+)

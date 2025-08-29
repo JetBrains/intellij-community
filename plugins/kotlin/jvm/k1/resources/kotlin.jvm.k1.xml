@@ -49,7 +49,7 @@
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <quickFixContributor implementation="org.jetbrains.kotlin.idea.jvm.k1.quickfix.JvmQuickFixRegistrar"/>
     <scratchFileLanguageProvider language="kotlin"
-                                 implementationClass="org.jetbrains.kotlin.idea.jvm.k1.scratch.KtScratchFileLanguageProvider"/>
+                                 implementationClass="org.jetbrains.kotlin.idea.jvm.k1.scratch.K1ScratchFileLanguageProvider"/>
 
     <idePlatformKindTooling implementation="org.jetbrains.kotlin.idea.base.fe10.codeInsight.tooling.Fe10JvmIdePlatformKindTooling"/>
     <idePlatformKindTooling implementation="org.jetbrains.kotlin.idea.base.fe10.codeInsight.tooling.Fe10JsIdePlatformKindTooling"/>

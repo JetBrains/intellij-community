@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.idea.jvm.k1.scratch.compile.KtCompilingExecutor
 import org.jetbrains.kotlin.idea.jvm.k1.scratch.repl.KtScratchReplExecutor
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchFile
 
-class KtScratchFileLanguageProvider : ScratchFileLanguageProvider() {
+class K1ScratchFileLanguageProvider : ScratchFileLanguageProvider() {
     override fun createFile(project: Project, file: VirtualFile): ScratchFile = K1KotlinScratchFile(project, file)
     override fun createReplExecutor(file: ScratchFile): KtScratchReplExecutor = KtScratchReplExecutor(file as K1KotlinScratchFile)
     override fun createCompilingExecutor(file: ScratchFile): KtCompilingExecutor = KtCompilingExecutor(file as K1KotlinScratchFile)

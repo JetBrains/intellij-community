@@ -35,8 +35,8 @@ class KtScratchReplExecutor(file: org.jetbrains.kotlin.idea.jvm.k1.scratch.K1Kot
     private var osProcessHandler: OSProcessHandler? = null
 
     override fun startExecution() {
-        val module = file.module
-        val (environmentRequest, cmdLine) = KotlinConsoleKeeper.createReplCommandLine(file.project, module)
+        val module = scratchFile.module
+        val (environmentRequest, cmdLine) = KotlinConsoleKeeper.createReplCommandLine(scratchFile.project, module)
         val environment = environmentRequest.prepareEnvironment(TargetProgressIndicator.EMPTY)
 
         val commandPresentation = cmdLine.getCommandPresentation(environment)
@@ -76,7 +76,7 @@ class KtScratchReplExecutor(file: org.jetbrains.kotlin.idea.jvm.k1.scratch.K1Kot
     private fun clearState() {
         history.clear()
         osProcessHandler = null
-        handler.onFinish(file)
+        handler.onFinish(scratchFile)
     }
 
     override fun executeStatement(expression: ScratchExpression) {
@@ -175,7 +175,7 @@ class KtScratchReplExecutor(file: org.jetbrains.kotlin.idea.jvm.k1.scratch.K1Kot
             val output = try {
                 factory.newDocumentBuilder().parse(strToSource(text))
             } catch (e: Exception) {
-                return handler.error(file, "Couldn't parse REPL output: $text")
+                return handler.error(scratchFile, "Couldn't parse REPL output: $text")
             }
 
             val root = output.firstChild as Element
@@ -187,7 +187,7 @@ class KtScratchReplExecutor(file: org.jetbrains.kotlin.idea.jvm.k1.scratch.K1Kot
             if (outputType in setOf("SUCCESS", "COMPILE_ERROR", "INTERNAL_ERROR", "RUNTIME_ERROR", "READLINE_END")) {
                 history.entryProcessed()
                 if (history.isAllProcessed()) {
-                    handler.onFinish(file)
+                    handler.onFinish(scratchFile)
                 }
             }
 
@@ -201,7 +201,7 @@ class KtScratchReplExecutor(file: org.jetbrains.kotlin.idea.jvm.k1.scratch.K1Kot
                 }
 
                 if (lastExpression != null) {
-                    handler.handle(file, lastExpression, result)
+                    handler.handle(scratchFile, lastExpression, result)
                 }
             }
         }

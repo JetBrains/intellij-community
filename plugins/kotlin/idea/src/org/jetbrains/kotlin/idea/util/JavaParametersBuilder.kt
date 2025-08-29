@@ -7,29 +7,27 @@ import com.intellij.execution.configurations.JavaParameters
 import com.intellij.openapi.compiler.CompilerPaths
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.JavaSdkType
 import com.intellij.openapi.projectRoots.JdkUtil
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.OrderEnumerator
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.util.SystemProperties
 import kotlin.io.path.Path
 import kotlin.io.path.exists
 
 class JavaParametersBuilder(private val project: Project) {
-    private var setDefaultSdk = false
     private var mainClassName: String? = null
     private var sdk: Sdk? = null
 
     fun build(): JavaParameters {
         return JavaParameters().apply {
-            this.mainClass = mainClassName
-            this.jdk = sdk
-            if (jdk == null && setDefaultSdk) {
-                this.jdk = SimpleJavaSdkType().createJdk("tmp", SystemProperties.getJavaHome())
-            }
-            this.setShortenCommandLine(getDefaultShortenCommandLineMethod(jdk?.homePath), project)
+            mainClass = mainClassName
+            jdk = sdk ?: ProjectRootManager.getInstance(project).projectSdk ?: SimpleJavaSdkType().createJdk("tmp", SystemProperties.getJavaHome())
+            setShortenCommandLine(getDefaultShortenCommandLineMethod(jdk?.homePath), project)
         }
     }
 
@@ -48,14 +46,13 @@ class JavaParametersBuilder(private val project: Project) {
         return this
     }
 
-    fun withSdkFrom(module: Module?, setDefault: Boolean = false): JavaParametersBuilder {
+    fun withSdkFrom(module: Module?): JavaParametersBuilder {
         if (module != null) {
             val sdk = module.let { ModuleRootManager.getInstance(module).sdk }
             if (sdk != null && sdk.sdkType is JavaSdkType && sdk.homePath?.let { Path(it).exists() } == true) {
                 this.sdk = sdk
             }
         }
-        setDefaultSdk = setDefault
         return this
     }
 

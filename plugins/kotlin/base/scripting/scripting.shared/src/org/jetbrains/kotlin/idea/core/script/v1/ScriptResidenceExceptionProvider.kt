@@ -32,7 +32,6 @@ private val scriptResidenceExceptionProviders: List<ScriptResidenceExceptionProv
     ScriptResidenceExceptionProvider(".main.kts"),
     ScriptResidenceExceptionProvider(".space.kts"),
     ScriptResidenceExceptionProvider(".inspection.kts"),
-    ScriptResidenceExceptionProvider(".ws.kts", true),
     object : ScriptResidenceExceptionProvider(".teamcity.kts", true) {
         override fun isSupportedScriptExtension(virtualFile: VirtualFile): Boolean {
             if (!virtualFile.name.endsWith(".kts")) return false
