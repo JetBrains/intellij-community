@@ -181,7 +181,7 @@ public class BaseCompletionService extends CompletionService {
     }
 
     @Override
-    public void restartCompletionOnPrefixChange(ElementPattern<String> prefixCondition) {
+    public void restartCompletionOnPrefixChange(@NotNull ElementPattern<String> prefixCondition) {
     }
 
     @Override

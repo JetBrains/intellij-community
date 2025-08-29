@@ -40,7 +40,7 @@ class PolicyObeyingResultSet(
     return PolicyObeyingResultSet(originalResult.caseInsensitive(), policyHolder)
   }
 
-  override fun restartCompletionOnPrefixChange(prefixCondition: ElementPattern<String>?) {
+  override fun restartCompletionOnPrefixChange(prefixCondition: ElementPattern<String>) {
     originalResult.restartCompletionOnPrefixChange(prefixCondition)
   }
 

@@ -11,6 +11,7 @@ import com.intellij.util.Consumer;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedHashSet;
 
@@ -132,7 +133,8 @@ public abstract class CompletionResultSet implements Consumer<LookupElement> {
     myStopped = true;
   }
 
-  public @NotNull LinkedHashSet<CompletionResult> runRemainingContributors(CompletionParameters parameters, final boolean passResult) {
+  public @NotNull LinkedHashSet<CompletionResult> runRemainingContributors(@NotNull CompletionParameters parameters,
+                                                                           boolean passResult) {
     final LinkedHashSet<CompletionResult> elements = new LinkedHashSet<>();
     runRemainingContributors(parameters, result -> {
       if (passResult) {
@@ -143,16 +145,20 @@ public abstract class CompletionResultSet implements Consumer<LookupElement> {
     return elements;
   }
 
-  public void runRemainingContributors(CompletionParameters parameters, Consumer<? super CompletionResult> consumer) {
+  public void runRemainingContributors(@NotNull CompletionParameters parameters, @NotNull Consumer<? super CompletionResult> consumer) {
     runRemainingContributors(parameters, consumer, true);
   }
 
-  public void runRemainingContributors(CompletionParameters parameters, Consumer<? super CompletionResult> consumer, final boolean stop) {
+  public void runRemainingContributors(@NotNull CompletionParameters parameters,
+                                       @NotNull Consumer<? super CompletionResult> consumer,
+                                       boolean stop) {
     runRemainingContributors(parameters, consumer, stop, null);
   }
 
-  public void runRemainingContributors(CompletionParameters parameters, Consumer<? super CompletionResult> consumer, final boolean stop,
-                                       CompletionSorter customSorter) {
+  public void runRemainingContributors(@NotNull CompletionParameters parameters,
+                                       @NotNull Consumer<? super CompletionResult> consumer,
+                                       boolean stop,
+                                       @Nullable CompletionSorter customSorter) {
     //grouped contributors are not allowed to be used in runRemainingContributors from other contributors
     if (GroupedCompletionContributor.isGroupEnabledInApp() &&
         contributor instanceof GroupedCompletionContributor groupedCompletionContributor &&
@@ -183,14 +189,14 @@ public abstract class CompletionResultSet implements Consumer<LookupElement> {
   /**
    * Request that the completion contributors be run again when the user changes the prefix so that it becomes equal to the one given.
    */
-  public void restartCompletionOnPrefixChange(String prefix) {
+  public void restartCompletionOnPrefixChange(@NotNull String prefix) {
     restartCompletionOnPrefixChange(StandardPatterns.string().equalTo(prefix));
   }
 
   /**
    * Request that the completion contributors be run again when the user changes the prefix in a way satisfied by the given condition.
    */
-  public abstract void restartCompletionOnPrefixChange(ElementPattern<String> prefixCondition);
+  public abstract void restartCompletionOnPrefixChange(@NotNull ElementPattern<String> prefixCondition);
 
   /**
    * Request that the completion contributors be run again when the user changes the prefix in any way.

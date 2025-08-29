@@ -38,7 +38,7 @@ class FilteringResultSet(
     return FilteringResultSet(base.caseInsensitive(), filter)
   }
 
-  override fun restartCompletionOnPrefixChange(prefixCondition: ElementPattern<String>?) {
+  override fun restartCompletionOnPrefixChange(prefixCondition: ElementPattern<String>) {
     base.restartCompletionWhenNothingMatches()
   }
 
