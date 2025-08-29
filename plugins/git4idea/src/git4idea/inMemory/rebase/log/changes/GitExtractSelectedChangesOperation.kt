@@ -61,7 +61,7 @@ internal class GitExtractSelectedChangesOperation(
                                                           message = newMessage.toByteArray())
     val newHead = objectRepo.chainCommits(secondCommit, baseToHeadCommitsRange.drop(1))
     LOG.info("Finish computing new head for extract operation")
-    return CommitEditingResult(newHead, secondCommit)
+    return CommitEditingResult(newHead, secondCommit, targetCommit.oid)
   }
 
   private fun splitTreeByPaths(

@@ -20,6 +20,7 @@ internal sealed class GitCommitEditingOperationResult {
     private val oldHead: String,
     private val newHead: String,
     val commitToFocus: Hash? = null,
+    val commitToFocusOnUndo: Hash? = null,
   ) : GitCommitEditingOperationResult() {
     private val firstChangedHash = findFirstChangedHash()
 

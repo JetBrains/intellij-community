@@ -46,7 +46,7 @@ internal abstract class GitInMemoryCommitEditingOperation(
       val upstream = getRebaseUpstreamFor(baseCommitMetadata)
 
       return GitCommitEditingOperationResult.Complete(objectRepo.repository, upstream, initialHeadPosition,
-                                                      result.newHead.hex(), result.commitToFocus?.toHash())
+                                                      result.newHead.hex(), result.commitToFocus?.toHash(), result.commitToFocusOnUndo?.toHash())
     }
     catch (e: VcsException) {
       if (showFailureNotification) notifyOperationFailed(e)
@@ -70,6 +70,7 @@ internal abstract class GitInMemoryCommitEditingOperation(
   protected data class CommitEditingResult(
     val newHead: Oid,
     val commitToFocus: Oid? = null,
+    val commitToFocusOnUndo: Oid? = null,
   )
 
   protected fun assertCurrentRevMatchesInitialHead(performUpdate: Boolean = true) {

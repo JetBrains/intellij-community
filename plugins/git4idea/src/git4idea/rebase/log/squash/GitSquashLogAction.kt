@@ -57,7 +57,7 @@ internal class GitSquashLogAction : GitMultipleCommitEditingAction() {
       }
 
       if (operationResult is GitCommitEditingOperationResult.Complete) {
-        commitEditingData.logUiEx?.focusCommitAfterLogUpdate(commitEditingData.repository, operationResult.commitToFocus)
+        commitEditingData.logUiEx?.focusCommitWhenReady(commitEditingData.repository, operationResult.commitToFocus)
         operationResult.notifySuccess(
           GitBundle.message("rebase.log.squash.success.notification.title"),
           null,

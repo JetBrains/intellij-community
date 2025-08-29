@@ -10,7 +10,7 @@ import git4idea.inMemory.GitObjectRepository
 import git4idea.rebase.GitSingleCommitEditingAction
 import git4idea.rebase.log.GitCommitEditingOperationResult
 import git4idea.rebase.log.GitNewCommitMessageActionDialog
-import git4idea.rebase.log.focusCommitAfterLogUpdate
+import git4idea.rebase.log.focusCommitWhenReady
 import git4idea.rebase.log.getOrLoadSingleCommitDetails
 import git4idea.rebase.log.notifySuccess
 import kotlinx.coroutines.launch
@@ -59,13 +59,14 @@ internal class GitExtractSelectedChangesAction : GitSingleCommitEditingAction() 
           GitExtractSelectedChangesOperation(objectRepo, commit, newMessage, changes).execute()
         }
         if (operationResult is GitCommitEditingOperationResult.Complete) {
-          ui?.focusCommitAfterLogUpdate(repository, operationResult.commitToFocus)
+          ui?.focusCommitWhenReady(repository, operationResult.commitToFocus)
           operationResult.notifySuccess(
             GitBundle.message("in.memory.rebase.log.changes.extract.action.notification.successful.title"),
             null,
             GitBundle.message("in.memory.rebase.log.changes.extract.action.progress.indicator.undo.title"),
             GitBundle.message("in.memory.rebase.log.changes.extract.action.notification.undo.not.allowed.title"),
-            GitBundle.message("in.memory.rebase.log.changes.extract.action.notification.undo.failed.title")
+            GitBundle.message("in.memory.rebase.log.changes.extract.action.notification.undo.failed.title"),
+            ui
           )
         }
       }
