@@ -107,6 +107,10 @@ object JpsProjectEntitiesLoader {
                                                                              virtualFileManager)
     entityTypeSerializers += artifactsExternalFileSerializer
 
+    val projectSettingsUrl = configLocation.ideaFolder.append("misc.xml")
+    val projectSettingsStorageFile = JpsProjectFileEntitySource.ExactFile(projectSettingsUrl, configLocation)
+    entityTypeSerializers += ProjectSettingsSerializer(projectSettingsUrl, projectSettingsStorageFile)
+
     return JpsProjectSerializers.createSerializers(
       entityTypeSerializers = entityTypeSerializers,
       directorySerializersFactories = directorySerializersFactories,
@@ -135,6 +139,7 @@ object JpsProjectEntitiesLoader {
     val entityTypeSerializers = ArrayList<JpsFileEntityTypeSerializer<*>>()
     entityTypeSerializers += JpsLibrariesFileSerializer(projectFileSource, LibraryTableId.ProjectLibraryTableId)
     entityTypeSerializers += JpsArtifactsFileSerializer(projectFileUrl, projectFileSource, context.virtualFileUrlManager)
+    entityTypeSerializers += ProjectSettingsSerializer(projectFileUrl, projectFileSource)
     return JpsProjectSerializers.createSerializers(
       entityTypeSerializers = entityTypeSerializers,
       directorySerializersFactories = emptyList(),
