@@ -48,9 +48,7 @@ internal class UseWithIndexInspection : KotlinApplicableInspectionBase.Simple<Kt
         }
 
     override fun getApplicableRanges(element: KtForExpression): List<TextRange> =
-        ApplicabilityRange.single(element) { ktForExpression ->
-            return listOf(ktForExpression.forKeyword.textRangeInParent)
-        }
+        ApplicabilityRange.single(element) { it.forKeyword }
 
     override fun isApplicableByPsi(element: KtForExpression): Boolean {
         if (element.destructuringDeclaration != null) return false
@@ -185,6 +183,7 @@ internal class UseWithIndexInspection : KotlinApplicableInspectionBase.Simple<Kt
         val variableSymbol = resolveToVariable(incrementExpressionOperand) ?: return null
         val variable = variableSymbol.psi as? KtProperty ?: return null
         if (!variable.isVar) return null
+        if (!variable.returnType.isIntType) return null
 
         val unwrappedFor = forLoopExpression.unwrapIfLabeled()
         if (unwrappedFor.parent !is KtBlockExpression) return null

@@ -16379,6 +16379,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/useWithIndex/iterateIntArray.kt");
         }
 
+        @TestMetadata("longIndex.kt")
+        public void testLongIndex() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/useWithIndex/longIndex.kt");
+        }
+
         @TestMetadata("nonZeroStartingIndex.kt")
         public void testNonZeroStartingIndex() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/useWithIndex/nonZeroStartingIndex.kt");
