@@ -25,7 +25,7 @@ import java.util.List;
  */
 public interface IntentionActionWithOptions extends IntentionAction {
   @NotNull @Unmodifiable
-  List<IntentionAction> getOptions();
+  List<@NotNull IntentionAction> getOptions();
 
   /**
    * If this intention is used as an inspection quick fix, control what should be displayed in the popup.
