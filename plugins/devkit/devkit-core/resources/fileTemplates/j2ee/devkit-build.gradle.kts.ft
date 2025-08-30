@@ -1,8 +1,6 @@
 plugins {
     id("java")
-#if ($context.hasLanguage("kotlin"))
     id("org.jetbrains.kotlin.jvm") version "${context.getBomProperty("kotlin.version")}"
-#end
     id("org.jetbrains.intellij.platform") version "${context.getBomProperty("gradle.intellij.version")}"
 }
 
@@ -20,7 +18,7 @@ repositories {
 // Read more: https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin.html
 dependencies {
     intellijPlatform {
-        create("IC", "${context.getBomProperty("intellij.version")}")
+        create("IU", "${context.getBomProperty("intellij.version")}")
         testFramework(org.jetbrains.intellij.platform.gradle.TestFrameworkType.Platform)
 
       // Add necessary plugin dependencies for compilation here, example:
@@ -48,10 +46,8 @@ tasks {
     }
 }
 
-#if ($context.hasLanguage("kotlin"))
 kotlin {
     compilerOptions {
         jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21)
     }
 }
-#end
