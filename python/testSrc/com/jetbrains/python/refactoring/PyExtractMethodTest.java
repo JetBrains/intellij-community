@@ -386,4 +386,9 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
   public void testPreserveWhitespaceBetweenStatements() {
     doTest("extracted");
   }
+
+  // PY-61591
+  public void testMethodNameCanShadowModuleFunction() {
+    doTest("_require_instance");
+  }
 }
