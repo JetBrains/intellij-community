@@ -27,11 +27,13 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
     PyExtractMethodUtil.setAddTypeAnnotations(myFixture.getProject(), false);
     performExtractMethod(newName, beforeName, afterName);
 
-    // perform with type annotations
-    FileDocumentManager.getInstance().reloadFromDisk(myFixture.getDocument(myFixture.getFile()), myFixture.getProject());
-    PyExtractMethodUtil.setAddTypeAnnotations(myFixture.getProject(), true);
-    performExtractMethod(newName, beforeName, withTypeExists ? afterWithTypesName : afterName);
-    PyExtractMethodUtil.setAddTypeAnnotations(myFixture.getProject(), false);
+    // perform with type annotations only if expected file exists
+    if (withTypeExists) {
+      FileDocumentManager.getInstance().reloadFromDisk(myFixture.getDocument(myFixture.getFile()), myFixture.getProject());
+      PyExtractMethodUtil.setAddTypeAnnotations(myFixture.getProject(), true);
+      performExtractMethod(newName, beforeName, afterWithTypesName);
+      PyExtractMethodUtil.setAddTypeAnnotations(myFixture.getProject(), false);
+    }
   }
 
   private void performExtractMethod(@NotNull String newName, @NotNull String beforeName, @NotNull String afterName) {
@@ -380,6 +382,21 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
   }
 
   public void testPreserveWhitespaceBetweenStatements() {
+    doTest("extracted");
+  }
+
+  // PY-54512
+  public void testMultilineGeneratorInCall() {
+    doTest("extracted");
+  }
+
+  // PY-54512
+  public void testMultilineExpressionInCall() {
+    doTest("extracted");
+  }
+
+  // PY-54512
+  public void testBracketedLiteralMultiline() {
     doTest("extracted");
   }
 }
