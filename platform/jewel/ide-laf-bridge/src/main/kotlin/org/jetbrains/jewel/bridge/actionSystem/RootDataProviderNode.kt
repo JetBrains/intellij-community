@@ -17,6 +17,7 @@ public class RootDataProviderNode : Modifier.Node(), UiDataProvider {
     override fun uiDataSnapshot(sink: DataSink) {
         val context = DataProviderDataSinkContext(sink)
 
+        @Suppress("DEPRECATION")
         traverseDescendants(DataProviderNode) { dp ->
             if (dp is DataProviderNode) {
                 if (!dp.hasFocus) {

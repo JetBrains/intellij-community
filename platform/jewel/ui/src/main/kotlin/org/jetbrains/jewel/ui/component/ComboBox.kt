@@ -80,6 +80,7 @@ import org.jetbrains.jewel.ui.theme.comboBoxStyle
  * @param popupManager Manager for controlling the popup visibility state
  * @param popupContent Composable content for the popup
  */
+@Suppress("UnavailableSymbol") // TODO(JEWEL-983) Address Metalava suppressions
 @Composable
 public fun ComboBox(
     labelText: String,
@@ -93,7 +94,8 @@ public fun ComboBox(
     textStyle: TextStyle = JewelTheme.defaultTextStyle,
     onArrowDownPress: () -> Unit = {},
     onArrowUpPress: () -> Unit = {},
-    popupManager: PopupManager = remember { PopupManager() },
+    // TODO(JEWEL-983) Address Metalava suppressions
+    @Suppress("HiddenTypeParameter", "ReferencesHidden") popupManager: PopupManager = remember { PopupManager() },
     popupContent: @Composable () -> Unit,
 ) {
     val textColor = if (enabled) Color.Unspecified else style.colors.borderDisabled
