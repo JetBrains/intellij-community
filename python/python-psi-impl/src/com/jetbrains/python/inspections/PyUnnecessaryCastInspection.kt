@@ -3,10 +3,8 @@ package com.jetbrains.python.inspections
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.codeInspection.ex.ProblemDescriptorImpl
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix
-import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.TextRange
@@ -47,7 +45,7 @@ class PyUnnecessaryCastInspection : PyInspection() {
             "INSP.unnecessary.cast.message",
             toName
           ),
-          ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+          ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
           null,
           TextRange(0, callExpression.arguments[0].nextSibling.endOffset - callExpression.startOffset),
           RemoveUnnecessaryCastQuickFix(),
