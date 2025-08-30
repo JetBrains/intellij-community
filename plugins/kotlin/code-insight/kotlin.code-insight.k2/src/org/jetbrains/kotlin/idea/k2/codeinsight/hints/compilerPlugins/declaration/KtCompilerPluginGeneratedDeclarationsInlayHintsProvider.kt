@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.hints.compilerPlugins.declarati
 
 import com.intellij.codeInsight.hints.*
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.impl.ImaginaryEditor
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.k2.codeinsight.hints.compilerPlugins.fileCanBeAffectedByCompilerPlugins
