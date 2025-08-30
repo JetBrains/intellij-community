@@ -36,9 +36,12 @@
             implementationClass="org.jetbrains.kotlin.idea.statistics.KotlinCustomScriptFileTypeSchemaDetector"/>
 
     <internalFileTemplate name="Kotlin File"/>
+    <internalFileTemplate name="Kotlin Annotation"/>
     <internalFileTemplate name="Kotlin Class"/>
-    <internalFileTemplate name="Kotlin Enum"/>
     <internalFileTemplate name="Kotlin Interface"/>
+    <internalFileTemplate name="Kotlin Data Class"/>
+    <internalFileTemplate name="Kotlin Sealed Class"/>
+    <internalFileTemplate name="Kotlin Enum"/>
     <internalFileTemplate name="Kotlin Worksheet"/>
     <internalFileTemplate name="Kotlin Object"/>
     <internalFileTemplate name="Kotlin Script"/>
