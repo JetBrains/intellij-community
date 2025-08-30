@@ -61,6 +61,7 @@ print("⏳ Locating Jewel folder...")
 private val jewelDir = findJewelRoot()
 
 if (jewelDir == null || !jewelDir.isDirectory) {
+    println()
     printlnErr("Could not find the Jewel folder. Please make sure you're running the script from somewhere inside it.")
     exitProcess(1)
 }
