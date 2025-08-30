@@ -18,7 +18,7 @@ internal object JewelMavenArtifactsBuildTarget {
   fun main(args: Array<String>) {
     runBlocking(Dispatchers.Default) {
       val context = BuildContextImpl.createContext(
-        projectHome = ULTIMATE_HOME,
+        projectHome = COMMUNITY_ROOT.communityRoot,
         productProperties = IdeaCommunityProperties(COMMUNITY_ROOT.communityRoot),
       )
       CompilationTasks.create(context).compileModules(JewelMavenArtifacts.ALL_MODULES)
