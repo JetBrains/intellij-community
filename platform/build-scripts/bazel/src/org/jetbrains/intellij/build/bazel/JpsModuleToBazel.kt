@@ -60,6 +60,7 @@ internal class JpsModuleToBazel {
 
       println("Community root: $communityRoot")
       println("Ultimate root: $ultimateRoot")
+      println("M2 repo root: $m2Repo")
 
       val projectDir = ultimateRoot ?: communityRoot
 
