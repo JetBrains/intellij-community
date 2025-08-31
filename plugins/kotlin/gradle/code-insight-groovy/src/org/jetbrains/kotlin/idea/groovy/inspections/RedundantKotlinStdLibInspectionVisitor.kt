@@ -143,13 +143,13 @@ private class DependenciesVisitor(val holder: ProblemsHolder) : GroovyRecursiveE
     private fun isKotlinStdLibDependencyVersionCatalog(callExpression: GrCallExpression): Boolean {
         val origin = getOriginInVersionCatalog(callExpression) ?: return false
         val (dependencyGroup, dependencyName) = when (val originValue = origin.value) {
-            is TomlLiteral -> originValue.text.cleanRawString().split(":").let { it[0] to it[1] }
+            is TomlLiteral -> originValue.text.cleanRawString().split(":").takeIf { it.size >= 2 }?.let { it[0] to it[1] } ?: return false
             is TomlInlineTable -> {
                 val module = originValue.entries.find { it.key.segments.size == 1 && it.key.segments.firstOrNull()?.name == "module" }
                 if (module != null) {
                     val moduleValue = module.value
                     if (moduleValue !is TomlLiteral) return false
-                    moduleValue.text.cleanRawString().split(":").let { it[0] to it[1] }
+                    moduleValue.text.cleanRawString().split(":").takeIf { it.size >= 2 }?.let { it[0] to it[1] } ?: return false
                 } else {
                     val group = originValue.entries.find { it.key.segments.size == 1 && it.key.segments.firstOrNull()?.name == "group" }
                     val name = originValue.entries.find { it.key.segments.size == 1 && it.key.segments.firstOrNull()?.name == "name" }
