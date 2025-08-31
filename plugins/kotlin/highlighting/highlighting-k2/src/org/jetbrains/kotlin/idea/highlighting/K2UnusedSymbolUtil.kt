@@ -95,9 +95,11 @@ object K2UnusedSymbolUtil {
                 if (containingClass != null) {
                     if (containingClass.isData()) return false
                     // constructor parameters-fields of value class are considered used because they are implicitly used in equals() (???)
-                    if ((containingClass as KtClass).isValue() && declaration.hasValOrVar()) return false
-                    // constructor parameters-fields of inline class are considered used because they are implicitly used in equals() (???)
-                    if (containingClass.isInline() && declaration.hasValOrVar()) return false
+                    if (containingClass is KtClass) {
+                        if (containingClass.isValue() && declaration.hasValOrVar()) return false
+                        // constructor parameters-fields of inline class are considered used because they are implicitly used in equals() (???)
+                        if (containingClass.isInline() && declaration.hasValOrVar()) return false
+                    }
                     if (isExpectedOrActual(containingClass)) return false
                 }
             } else if (ownerFunction is KtFunction) {
