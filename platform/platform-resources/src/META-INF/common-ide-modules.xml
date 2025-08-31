@@ -15,9 +15,11 @@
     <module name="intellij.platform.ml.impl"/>
     <module name="intellij.platform.ml.logs"/>
     <module name="intellij.libraries.microba"/>
+    <module name="intellij.charts"/>
+
+    <!-- Compose UI Modules -->
     <module name="intellij.libraries.skiko"/>
     <module name="intellij.libraries.coil"/>
-    <module name="intellij.charts"/>
     <module name="intellij.platform.compose"/>
     <module name="intellij.platform.compose.markdown"/>
     <module name="intellij.platform.jewel.foundation"/>
@@ -32,6 +34,8 @@
     <module name="intellij.platform.jewel.markdown.extensions.gfmStrikethrough"/>
     <module name="intellij.platform.jewel.markdown.extensions.images"/>
     <module name="intellij.platform.jewel.markdown.core"/>
+    <!-- -->
+
     <module name="intellij.platform.diagnostic.freezeAnalyzer"/>
     <module name="intellij.platform.diagnostic.freezes"/>
     <module name="intellij.platform.warmup"/>

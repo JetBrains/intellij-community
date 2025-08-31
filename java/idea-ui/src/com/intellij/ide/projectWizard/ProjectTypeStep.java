@@ -203,15 +203,21 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
     for (TemplatesGroup templatesGroup : myTemplatesMap.keySet()) {
       ModuleBuilder builder = templatesGroup.getModuleBuilder();
       if (builder != null) {
-        myWizard.getSequence().addStepsForBuilder(builder, context, modulesProvider);
+        Collection<ModuleWizardStep> steps = myWizard.getSequence().addSteps(builder, context, modulesProvider);
+        initStepListener(steps);
       }
       for (ProjectTemplate template : myTemplatesMap.get(templatesGroup)) {
-        myWizard.getSequence().addStepsForBuilder(myBuilders.get(template), context, modulesProvider);
+        Collection<ModuleWizardStep> steps = myWizard.getSequence().addSteps(myBuilders.get(template), context, modulesProvider);
+        initStepListener(steps);
       }
     }
 
     myProjectTypeList.restoreSelection();
     myTemplatesList.restoreSelection();
+  }
+
+  private void initStepListener(Collection<ModuleWizardStep> steps) {
+    myWizard.setStepListener(steps);
   }
 
   private @NotNull Function<TemplateGroupItem, String> getNamer() {
@@ -500,6 +506,10 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
     ModuleWizardStep step = myCustomSteps.get(card);
     if (step == null) {
       step = builder.getCustomOptionsStep(myContext, this);
+      if (step != null) {
+        initStepListener(List.of(step));
+      }
+
       if (builder instanceof TemplateModuleBuilder) {
         step = new ProjectSettingsStep(myContext);
         myContext.setProjectBuilder(builder);
@@ -609,7 +619,8 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
   public void updateDataModel() {
     ModuleBuilder builder = getSelectedBuilder();
     if (builder != null) {
-      myWizard.getSequence().addStepsForBuilder(builder, myContext, myModulesProvider);
+      Collection<ModuleWizardStep> steps = myWizard.getSequence().addSteps(builder, myContext, myModulesProvider);
+      initStepListener(steps);
     }
     ModuleWizardStep step = getCustomStep();
     if (step != null) {

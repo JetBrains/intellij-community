@@ -3104,6 +3104,7 @@ f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Json
 - <init>():V
 f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Language
 - sf:GO:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:Kotlin:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Php:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Python:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Ruby:org.jetbrains.jewel.ui.icon.IntelliJIconKey

@@ -29,7 +29,6 @@ import com.intellij.openapi.observable.util.*
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.ProjectRootManager
-import com.intellij.openapi.roots.ui.configuration.JdkComboBox
 import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withPathToTextConvertor
 import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withTextToPathConvertor
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
@@ -88,8 +87,6 @@ abstract class CommonStarterInitialStep(
 
   protected lateinit var groupRow: Row
   protected lateinit var artifactRow: Row
-
-  protected lateinit var sdkComboBox: JdkComboBox
 
   protected fun Panel.addProjectLocationUi() {
     row(UIBundle.message("label.project.wizard.new.project.name")) {

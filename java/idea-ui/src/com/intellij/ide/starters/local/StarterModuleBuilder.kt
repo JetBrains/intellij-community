@@ -135,6 +135,7 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
     @TestOnly
     fun StarterModuleBuilder.setupTestModule(module: Module, starterId: String? = null, consumer: StarterContext.() -> Unit) {
       this.apply {
+        starterContext.language = getLanguages().first()
         starterContext.starterPack = getStarterPack()
         moduleJdk = ModuleRootManager.getInstance(module).sdk
 

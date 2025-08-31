@@ -2289,6 +2289,9 @@ public final class AllIconsKeys {
     public static final @NotNull IntelliJIconKey GO = new IntelliJIconKey("language/go.svg", "language/go.svg", AllIconsKeys.class);
     /** 16x16 */ 
     @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Kotlin = new IntelliJIconKey("language/kotlin.svg", "language/kotlin.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey Php = new IntelliJIconKey("language/php.svg", "expui/language/php.svg", AllIconsKeys.class);
     /** 16x16 */ 
     @GeneratedFromIntelliJSources

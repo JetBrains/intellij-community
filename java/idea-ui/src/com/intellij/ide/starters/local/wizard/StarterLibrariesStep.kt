@@ -37,7 +37,7 @@ import javax.swing.tree.TreePath
 import javax.swing.tree.TreeSelectionModel
 
 open class StarterLibrariesStep(contextProvider: StarterContextProvider) : ModuleWizardStep() {
-  protected val starterContext = contextProvider.starterContext
+  protected val starterContext: StarterContext = contextProvider.starterContext
   private val starterSettings: StarterWizardSettings = contextProvider.settings
   protected val moduleBuilder: StarterModuleBuilder = contextProvider.moduleBuilder
 
@@ -221,7 +221,7 @@ open class StarterLibrariesStep(contextProvider: StarterContextProvider) : Modul
 
               addToTop(JBLabel(messages?.selectedDependenciesLabel
                                ?: JavaStartersBundle.message("title.project.dependencies.selected.label")).apply {
-                border = JBUI.Borders.empty(0, 0, UIUtil.DEFAULT_VGAP * 2, 0)
+                border = JBUI.Borders.emptyBottom(UIUtil.DEFAULT_VGAP * 2)
               })
               addToCenter(selectedLibrariesPanel)
             }, gridConstraint(0, 1))

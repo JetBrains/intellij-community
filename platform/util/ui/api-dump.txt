@@ -769,6 +769,7 @@ f:com.intellij.icons.AllIcons$Json
 - <init>():V
 f:com.intellij.icons.AllIcons$Language
 - sf:GO:javax.swing.Icon
+- sf:Kotlin:javax.swing.Icon
 - sf:Php:javax.swing.Icon
 - sf:Python:javax.swing.Icon
 - sf:Ruby:javax.swing.Icon
