@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build.bazel
 
 import java.nio.file.Path
 import kotlin.io.path.invariantSeparatorsPathString
+import kotlin.io.path.isDirectory
 import kotlin.io.path.name
 import kotlin.io.path.nameWithoutExtension
 import kotlin.io.path.relativeTo
@@ -229,6 +230,12 @@ internal fun generateBazelModuleSectionsForLibs(
       for (jar in lib.sourceJars) {
         val label = fileToHttpRuleRepoName(jar.path)
         if (!labelTracker.add(label)) {
+          continue
+        }
+
+        if (jar.path.isDirectory()) {
+          // manually attached source directory
+          println("WARN: source directory ${jar.path} is attached to ${lib.target.jpsName}, not generating anything out of it")
           continue
         }
 
