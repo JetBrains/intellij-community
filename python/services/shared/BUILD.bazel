@@ -18,6 +18,8 @@ jvm_library(
     "@lib//:jetbrains-annotations",
     "//platform/eel-provider",
     "//python/python-exec-service/execService.python",
+    "//platform/diagnostic",
+    "//platform/util",
   ],
   runtime_deps = [":shared_resources"]
 )
@@ -40,6 +42,8 @@ jvm_library(
     "@lib//:hamcrest",
     "//python/python-exec-service/execService.python",
     "//python/python-exec-service/execService.python:execService.python_test_lib",
+    "//platform/diagnostic",
+    "//platform/util",
   ],
   runtime_deps = [":shared_resources"]
 )
