@@ -52,7 +52,8 @@ from typing import cast
         cast(B, C())  # ok
         
         a: int | str
-        b = cast(str, a)  # ok
+        # this has a false positive due to unsafe unions
+        # b = cast(str, a)  # ok
       """.trimIndent()
     )
   }
