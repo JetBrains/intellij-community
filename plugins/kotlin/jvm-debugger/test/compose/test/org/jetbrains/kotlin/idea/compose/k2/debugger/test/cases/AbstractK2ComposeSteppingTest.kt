@@ -4,7 +4,10 @@ package org.jetbrains.kotlin.idea.compose.k2.debugger.test.cases
 import com.intellij.jarRepository.RemoteRepositoryDescription
 import org.jetbrains.kotlin.config.JvmClosureGenerationScheme
 import org.jetbrains.kotlin.config.JvmTarget
-import org.jetbrains.kotlin.idea.compose.k2.test.K2ComposeTestProperties.COMPOSE_RUNTIME_MAVEN_COORDINATES
+import org.jetbrains.kotlin.idea.compose.k2.test.K2ComposeTestProperties.ANDROID_COLLECTION_JVM_BAZEL_COORDINATES
+import org.jetbrains.kotlin.idea.compose.k2.test.K2ComposeTestProperties.COMPOSE_RUNTIME_BAZEL_COORDINATES
+import org.jetbrains.kotlin.idea.compose.k2.test.K2ComposeTestProperties.COROUTINES_CORE_BAZEL_COORDINATES
+import org.jetbrains.kotlin.idea.compose.k2.test.K2ComposeTestProperties.COROUTINES_CORE_JVM_BAZEL_COORDINATES
 import org.jetbrains.kotlin.idea.debugger.test.DebuggerTestCompilerFacility
 import org.jetbrains.kotlin.idea.debugger.test.TestCompileConfiguration
 import org.jetbrains.kotlin.idea.debugger.test.TestFiles
@@ -21,7 +24,16 @@ abstract class AbstractK2IdeK1CodeComposeSteppingTest : AbstractK2IdeK1CodeKotli
         val facility = super.createDebuggerTestCompilerFacility(testFiles, jvmTarget, compileConfig)
 
         facility.addCompilerPlugin(composeCompilerJars)
-        addMavenDependency(facility, "maven(${COMPOSE_RUNTIME_MAVEN_COORDINATES})")
+        addDependenciesByLabels(
+            facility,
+            listOf(
+                "classes(${COMPOSE_RUNTIME_BAZEL_COORDINATES})",
+                "classes(${COROUTINES_CORE_BAZEL_COORDINATES})",
+                "classes(${COROUTINES_CORE_JVM_BAZEL_COORDINATES})",
+                "classes(${ANDROID_COLLECTION_JVM_BAZEL_COORDINATES})",
+            ),
+            emptyList()
+        )
 
         return facility
     }
@@ -46,7 +58,16 @@ abstract class AbstractK2IdeK2CodeComposeSteppingTest : AbstractK2IdeK2CodeKotli
         val facility = super.createDebuggerTestCompilerFacility(testFiles, jvmTarget, compileConfig)
 
         facility.addCompilerPlugin(composeCompilerJars)
-        addMavenDependency(facility, "maven(${COMPOSE_RUNTIME_MAVEN_COORDINATES})")
+        addDependenciesByLabels(
+            facility,
+            listOf(
+                "classes(${COMPOSE_RUNTIME_BAZEL_COORDINATES})",
+                "classes(${COROUTINES_CORE_BAZEL_COORDINATES})",
+                "classes(${COROUTINES_CORE_JVM_BAZEL_COORDINATES})",
+                "classes(${ANDROID_COLLECTION_JVM_BAZEL_COORDINATES})",
+            ),
+            emptyList()
+        )
 
         return facility
     }
@@ -73,7 +94,16 @@ abstract class AbstractK2IdeK1CodeClassLambdaComposeSteppingTest : AbstractK2Ide
         val facility = super.createDebuggerTestCompilerFacility(testFiles, jvmTarget, compileConfig)
 
         facility.addCompilerPlugin(composeCompilerJars)
-        addMavenDependency(facility, "maven(${COMPOSE_RUNTIME_MAVEN_COORDINATES})")
+        addDependenciesByLabels(
+            facility,
+            listOf(
+                "classes(${COMPOSE_RUNTIME_BAZEL_COORDINATES})",
+                "classes(${COROUTINES_CORE_BAZEL_COORDINATES})",
+                "classes(${COROUTINES_CORE_JVM_BAZEL_COORDINATES})",
+                "classes(${ANDROID_COLLECTION_JVM_BAZEL_COORDINATES})",
+            ),
+            emptyList()
+        )
 
         return facility
     }
