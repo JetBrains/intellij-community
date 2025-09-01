@@ -65,7 +65,7 @@ class ActionPopupTest {
                                                  PresentationFactory(), Supplier { SimpleDataContext.EMPTY_CONTEXT },
                                                  createOptions(false, false, false))
     val popup = object : ListPopupImpl(null, step) {
-      override fun getListElementRenderer() = object : PopupListElementRenderer<Object>(this) {
+      override fun getListElementRenderer() = object : PopupListElementRenderer<Any>(this) {
         override fun createItemComponent(): JComponent? {
           // Intentionally not creating myIconLabel here, similar to com.intellij.openapi.vcs.ui.PopupListElementRendererWithIcon
           myTextLabel = ErrorLabel()
