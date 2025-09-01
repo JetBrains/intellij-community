@@ -130,6 +130,37 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
             )
             .component
         }
+
+        group(message("terminal.command.completion")) {
+          buttonsGroup(title = message("terminal.command.completion.show")) {
+            row {
+              radioButton(message("terminal.command.completion.show.always"), value = TerminalCommandCompletionShowingMode.ALWAYS)
+            }
+            row {
+              radioButton(message("terminal.command.completion.show.parameters"), value = TerminalCommandCompletionShowingMode.ONLY_PARAMETERS)
+            }
+            row {
+              radioButton(message("terminal.command.completion.show.never"), value = TerminalCommandCompletionShowingMode.NEVER)
+            }
+          }.bind(optionsProvider::commandCompletionShowingMode)
+          row {
+            shortcutCombobox(
+              labelText = message("terminal.command.completion.shortcut.insert"),
+              presets = listOf(ENTER_SHORTCUT, TAB_SHORTCUT),
+              actionId = "Terminal.EnterCommandCompletion"
+            )
+          }
+          row {
+            shortcutCombobox(
+              labelText = message("terminal.command.completion.shortcut.trigger"),
+              presets = listOf(CTRL_SPACE_SHORTCUT, TAB_SHORTCUT),
+              actionId = "Terminal.CommandCompletion.Gen2"
+            )
+          }
+        }.visibleIf(terminalEngineComboBox.selectedValueIs(TerminalEngine.REWORKED)
+                      .and(completionPopupPredicate())
+                      .and(shellPathField.shellWithIntegrationSelected()))
+
         indent {
           buttonsGroup(title = message("settings.prompt.style")) {
             row {
@@ -175,36 +206,6 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
         }
       }
 
-      group(message("terminal.command.completion")) {
-        buttonsGroup(title = message("terminal.command.completion.show")) {
-          row {
-            radioButton(message("terminal.command.completion.show.always"), value = TerminalCommandCompletionShowingMode.ALWAYS)
-          }
-          row {
-            radioButton(message("terminal.command.completion.show.parameters"), value = TerminalCommandCompletionShowingMode.ONLY_PARAMETERS)
-          }
-          row {
-            radioButton(message("terminal.command.completion.show.never"), value = TerminalCommandCompletionShowingMode.NEVER)
-          }
-        }.bind(optionsProvider::commandCompletionShowingMode)
-        row {
-          shortcutCombobox(
-            labelText = message("terminal.command.completion.shortcut.insert"),
-            presets = listOf(ENTER_SHORTCUT, TAB_SHORTCUT),
-            actionId = "Terminal.EnterCommandCompletion"
-          )
-        }
-        row {
-          shortcutCombobox(
-            labelText = message("terminal.command.completion.shortcut.trigger"),
-            presets = listOf(CTRL_SPACE_SHORTCUT, TAB_SHORTCUT),
-            actionId = "Terminal.CommandCompletion.Gen2"
-          )
-        }
-      }.visibleIf(terminalEngineComboBox.selectedValueIs(TerminalEngine.REWORKED)
-                    .and(completionPopupPredicate())
-                    .and(shellPathField.shellWithIntegrationSelected())
-      )
       group(message("settings.terminal.font.settings")) {
         var fontSettings = TerminalFontSettingsService.getInstance().getSettings()
         row(message("settings.font.name")) {
