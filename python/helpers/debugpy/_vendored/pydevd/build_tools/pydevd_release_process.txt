@@ -1,0 +1,147 @@
+1. Update version
+=================
+
+__version_info__ in pydevd.py
+
+Update cython-generated files (must update cython and then run build_tools/build.py on python 3.10 and 3.12)
+
+Create tag:
+-----------
+git tag pydev_debugger_3_2_3 -a -m "PyDev.Debugger 3.2.3"
+git push origin pydev_debugger_3_2_3
+
+
+(pushing the tag does the release to PyPi now)
+
+
+
+
+
+
+
+
+
+Old release process (locally):
+=================================
+
+Create conda envs
+=====================
+
+conda create -y -f -n py38_64 python=3.8 cython numpy nose ipython pip
+activate py38_64
+pip install "django>=1.9"
+pip install -U "setuptools>=0.9"
+pip install -U "pip>=1.4" "wheel>=0.21" twine
+deactivate
+
+conda create -y -f -n py39_64 python=3.9 cython pip
+activate py39_64
+pip install "django>=1.9"
+pip install -U "setuptools>=0.9"
+pip install -U "pip>=1.4" "wheel>=0.21" twine
+deactivate
+
+conda create -y -f -n py310_64 python=3.10 cython pip
+activate py310_64
+pip install "django>=1.9"
+pip install -U "setuptools>=0.9"
+pip install -U "pip>=1.4" "wheel>=0.21" twine
+deactivate
+
+conda create -y -f -n py311_64 python=3.11 -c conda-forge
+activate py311_64
+pip install cython
+pip install "django>=1.9"
+pip install -U "setuptools>=0.9"
+pip install -U "pip>=1.4" "wheel>=0.21" twine
+deactivate
+
+conda create -y -f -n py312_64 python=3.11 -c conda-forge
+activate py312_64
+pip install cython
+pip install "django>=1.9"
+pip install -U "setuptools>=0.9"
+pip install -U "pip>=1.4" "wheel>=0.21" twine
+deactivate
+
+### UPDATE CYTHON
+
+activate py38_64
+pip install cython==3.0.8
+deactivate
+
+activate py39_64
+pip install cython==3.0.8
+deactivate
+
+activate py310_64
+pip install cython==3.0.8
+deactivate
+
+activate py311_64
+pip install cython==3.0.8
+deactivate
+
+activate py312_64
+pip install cython==3.0.8
+deactivate
+
+Regenerate the .pyx and .c
+===============================
+
+set FORCE_PYDEVD_VC_VARS=C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\VC\Auxiliary\Build\vcvars64.bat
+cd /D x:\pydev\plugins\org.python.pydev.core\pysrc
+set PYTHONPATH=x:\pydev\plugins\org.python.pydev.core\pysrc
+C:\bin\Miniconda\envs\py_38_tests\python.exe build_tools\build.py
+
+${ptvsd_folder}
+"C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\VC\Auxiliary\Build\vcvars64.bat"
+cd /D X:\ptvsd_workspace\ptvsd\src\debugpy\_vendored\pydevd
+set PYTHONPATH=X:\ptvsd_workspace\ptvsd\src\debugpy\_vendored\pydevd
+C:\bin\Miniconda\envs\py_38_tests\python.exe build_tools\build.py
+
+cd ~/Desktop/Pydev/plugins/org.python.pydev.core/pysrc
+export PYTHONPATH=~/Desktop/Pydev/plugins/org.python.pydev.core/pysrc
+python build_tools/build.py
+
+Generate new version
+======================
+
+cd /D x:\debugpyws\PyDev.Debugger
+
+set FORCE_PYDEVD_VC_VARS=C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\VC\Auxiliary\Build\vcvars64.bat
+
+set PYTHONPATH=x:\debugpyws\PyDev.Debugger
+set MINICONDA_ENVS=D:\bin\miniconda\envs
+python build_tools\build.py
+python build_tools\build_binaries_windows.py
+
+rm dist/pydevd*
+deactivate
+
+activate py38_64
+python setup.py sdist bdist_wheel
+deactivate
+dir dist
+
+activate py39_64
+python setup.py sdist bdist_wheel
+deactivate
+dir dist
+
+activate py310_64
+python setup.py sdist bdist_wheel
+deactivate
+dir dist
+
+activate py311_64
+python setup.py sdist bdist_wheel
+deactivate
+dir dist
+
+# Note: uploading with twine gives an error in the end, but apparently it works (check final result in pypi).
+twine upload dist/pydevd* --repository pydevd
+
+git tag pydev_debugger_2_9_5 -a -m "PyDev.Debugger 2.9.5"
+git push --tags
+
