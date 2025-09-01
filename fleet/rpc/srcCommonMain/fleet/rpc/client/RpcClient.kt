@@ -412,11 +412,12 @@ private class RpcClient(
   private fun resumeAllOngoingCallsWithThrowable(throwable: Throwable) {
     logger.debug(throwable) { "resumeAllOngoingCallsWithThrowable" }
 
-    val outgoingRpcIterator = outgoingRpc.iterator()
-    for ((key, value) in outgoingRpcIterator) {
-      outgoingRpcIterator.remove()
-      logger.trace { "resumeAllOngoingCallsWithThrowable: resume request $key" }
-      value.request.continuation.resumeWithException(throwable)
+    val outgoingKeys = outgoingRpc.keys.toList()
+    for (key in outgoingKeys) {
+      outgoingRpc.remove(key)?.let {
+        logger.trace { "resumeAllOngoingCallsWithThrowable: resume request $key" }
+        it.request.continuation.resumeWithException(throwable)
+      }
     }
     streams.values.removeAll {
       it.closeStream(throwable)
@@ -427,11 +428,10 @@ private class RpcClient(
 
   private fun resumeWithRouteClosed(route: UID) {
     val message = "Route $route closed"
-    val outgoingRpcIterator = outgoingRpc.iterator()
-    for ((_, value) in outgoingRpcIterator) {
-      if (value.request.route == route) {
-        outgoingRpcIterator.remove()
-        value.request.continuation.resumeWithException(RouteClosedException(route, rpcCallFailureMessage(value.request.call, message)))
+    val outgoingKeys = outgoingRpc.filterValues { it.request.route == route }.keys
+    for (key in outgoingKeys) {
+      outgoingRpc.remove(key)?.let {
+        it.request.continuation.resumeWithException(RouteClosedException(route, rpcCallFailureMessage(it.request.call, message)))
       }
     }
     streams.values.removeAll {
