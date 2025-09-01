@@ -5,7 +5,10 @@ import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.completion.actions.BaseCodeCompletionAction
 import com.intellij.codeInsight.inline.completion.InlineCompletion
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionContext
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionPromoter
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.terminal.frontend.TerminalCommandCompletion
 import org.jetbrains.annotations.Unmodifiable
@@ -32,8 +35,6 @@ internal class TerminalCommandCompletionActionGen2 : BaseCodeCompletionAction(),
     super.update(e)
     e.presentation.isEnabledAndVisible = e.terminalEditor?.isReworkedTerminalEditor == true && Registry.`is`(REWORKED_TERMINAL_COMPLETION_POPUP)
   }
-
-  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   override fun createHandler(
     completionType: CompletionType,
