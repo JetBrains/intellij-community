@@ -8,7 +8,6 @@ import com.intellij.diagnostic.ActivityCategory
 import com.intellij.ide.plugins.ContainerDescriptor
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.client.ClientAwareComponentManager
@@ -165,10 +164,6 @@ internal class DefaultProject : UserDataHolderBase(), Project, ComponentManagerE
     return (delegate as ComponentManagerEx).unregisterComponent(componentKey)
   }
 
-  override fun <T : Any> replaceServiceInstance(serviceInterface: Class<T>, instance: T, parentDisposable: Disposable) {
-    (delegate as ComponentManagerEx).replaceServiceInstance(serviceInterface, instance, parentDisposable)
-  }
-
   override fun instances(createIfNeeded: Boolean, filter: ((Class<*>) -> Boolean)?): Sequence<Any> {
     return (delegate as ComponentManagerEx).instances(createIfNeeded, filter)
   }
@@ -217,14 +212,6 @@ internal class DefaultProject : UserDataHolderBase(), Project, ComponentManagerE
     return (delegate as ComponentManagerEx).getServiceImplementation(key)
   }
 
-  override fun <T : Any> replaceComponentInstance(componentKey: Class<T>, componentImplementation: T, parentDisposable: Disposable?) {
-    (delegate as ComponentManagerEx).replaceComponentInstance(componentKey, componentImplementation, parentDisposable)
-  }
-
-  override fun registerComponentInstance(key: Class<*>, instance: Any) {
-    (delegate as ComponentManagerEx).registerComponentInstance(key, instance)
-  }
-
   override fun unregisterService(serviceInterface: Class<*>) {
     (delegate as ComponentManagerEx).unregisterService(serviceInterface)
   }
@@ -251,6 +238,7 @@ internal class DefaultProject : UserDataHolderBase(), Project, ComponentManagerE
     return (delegate as ComponentManagerEx).getServiceAsync(keyClass)
   }
 
+  @Suppress("DEPRECATION")
   @Deprecated("Deprecated in interface")
   override fun <T> getComponent(interfaceClass: Class<T>): T = delegate.getComponent(interfaceClass)
 
@@ -286,6 +274,10 @@ private class DefaultProjectImpl(
 ) : ClientAwareComponentManager(ApplicationManager.getApplication().getComponentManagerImpl()), Project {
   init {
     registerNewProjectId(this)
+  }
+
+  override val componentStore: IComponentStore by lazy {
+    getService(IComponentStore::class.java)!!
   }
 
   override fun <T : Any> findConstructorAndInstantiateClass(lookup: MethodHandles.Lookup, aClass: Class<T>): T {
@@ -335,7 +327,7 @@ private class DefaultProjectImpl(
     Disposer.register(actualContainerInstance, this)
   }
 
-  override fun toString() = "Project${if (isDisposed()) " (Disposed)" else ""}$TEMPLATE_PROJECT_NAME"
+  override fun toString() = "Project${if (isDisposed) " (Disposed)" else ""}$TEMPLATE_PROJECT_NAME"
 
   override fun equals(other: Any?): Boolean = other is Project && other.isDefault
 

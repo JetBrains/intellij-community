@@ -109,7 +109,8 @@ abstract class ComponentManagerImpl(
   @JvmField internal val parent: ComponentManagerImpl?,
   parentScope: CoroutineScope,
   additionalContext: CoroutineContext,
-) : ComponentManager, Disposable.Parent, MessageBusOwner, UserDataHolderBase(), ComponentManagerEx, ComponentStoreOwner {
+) : ComponentManager, Disposable.Parent, MessageBusOwner, UserDataHolderBase(), ComponentManagerEx, ComponentStoreOwner,
+    TestMutableComponentManager {
   protected enum class ContainerState {
     PRE_INIT, COMPONENT_CREATED, DISPOSE_IN_PROGRESS, DISPOSED, DISPOSE_COMPLETED
   }
@@ -261,11 +262,6 @@ abstract class ComponentManagerImpl(
       throw RuntimeException("Module doesn't have coroutineScope")
     }
   }
-
-  override val componentStore: IComponentStore
-    get() {
-      return getService(IComponentStore::class.java) ?: error("Cannot get service: ${IComponentStore::class.java.name}")
-    }
 
   internal fun getComponentInstance(componentKey: Any): Any? {
     val holder = ignoreDisposal {
@@ -1308,7 +1304,7 @@ abstract class ComponentManagerImpl(
   }
 
   @TestOnly
-  final override fun registerComponentInstance(key: Class<*>, instance: Any) {
+  fun registerComponentInstance(key: Class<*>, instance: Any) {
     val app = getApplication()
     check(app == null || app.isUnitTestMode)
     @Suppress("UNCHECKED_CAST")
@@ -1458,7 +1454,7 @@ internal fun doLoadClass(name: String, pluginDescriptor: PluginDescriptor, check
       return classLoader.loadClass(name)
     }
     catch (e: ClassNotFoundException) {
-      if (checkCoreSubModules && pluginDescriptor.pluginId == PluginManagerCore.CORE_ID && pluginDescriptor is IdeaPluginDescriptorImpl) {
+      if (checkCoreSubModules && pluginDescriptor.pluginId == PluginManagerCore.CORE_ID && pluginDescriptor is PluginMainDescriptor) {
         for (module in pluginDescriptor.contentModules) {
           if (module.packagePrefix == null && !module.moduleId.id.startsWith("intellij.libraries.")) {
             val pluginClassLoader = module.classLoader as? PluginAwareClassLoader ?: continue

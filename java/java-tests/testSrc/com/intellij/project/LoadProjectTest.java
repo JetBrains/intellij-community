@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.project;
 
 import com.intellij.codeHighlighting.Pass;
@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.serviceContainer.ComponentManagerImpl;
 import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 
@@ -33,7 +34,7 @@ public class LoadProjectTest extends HeavyPlatformTestCase {
     myProject = PlatformTestUtil.loadAndOpenProject(Path.of(projectPath), getTestRootDisposable());
     FileEditorManagerImpl editorManager = new FileEditorManagerImpl(myProject, ((ComponentManagerEx)myProject).getCoroutineScope());
     ServiceContainerUtil.registerServiceInstance(myProject, FileEditorManager.class, editorManager);
-    ((ComponentManagerEx) myProject).replaceServiceInstance(FileEditorManager.class, editorManager, getTestRootDisposable());
+    ((ComponentManagerImpl)myProject).replaceServiceInstance(FileEditorManager.class, editorManager, getTestRootDisposable());
   }
 
   @Override

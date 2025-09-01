@@ -19,20 +19,16 @@ val testPluginDescriptor: DefaultPluginDescriptor = DefaultPluginDescriptor("tes
 
 @OptIn(DelicateCoroutinesApi::class)
 @TestOnly
-class TestComponentManager(override var isGetComponentAdapterOfTypeCheckEnabled: Boolean = true, val parentScope: CoroutineScope = GlobalScope) :
+class TestComponentManager(
+  override var isGetComponentAdapterOfTypeCheckEnabled: Boolean = true,
+  @JvmField val parentScope: CoroutineScope = GlobalScope,
+) :
   ComponentManagerImpl(
     parent = null,
     parentScope = parentScope,
     additionalContext = EmptyCoroutineContext,
   ) {
-  init {
-    registerService(
-      serviceInterface = IComponentStore::class.java,
-      implementation = TestComponentStore::class.java,
-      pluginDescriptor = testPluginDescriptor,
-      override = false,
-    )
-  }
+  override val componentStore: IComponentStore = TestComponentStore()
 
   override fun getContainerDescriptor(pluginDescriptor: IdeaPluginDescriptorImpl) = pluginDescriptor.appContainerDescriptor
 

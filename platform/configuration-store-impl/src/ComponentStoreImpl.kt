@@ -113,7 +113,7 @@ abstract class ComponentStoreImpl : IComponentStore {
 
   @ApiStatus.Internal
   fun incrementModificationCount(componentName: String) {
-    components[componentName]?.let { info ->
+    components.get(componentName)?.let { info ->
       info.updateModificationCount(info.lastModificationCount + 1)
     }
   }

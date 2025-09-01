@@ -74,6 +74,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -155,6 +156,8 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
   private final ReadActionCacheImpl myReadActionCacheImpl = new ReadActionCacheImpl();
 
   private final ThreadLocal<Boolean> myImpatientReader = ThreadLocal.withInitial(() -> false);
+
+  private final AtomicInteger backgroundWriteActionCounter = new AtomicInteger(0);
 
   private final long myStartTime = System.currentTimeMillis();
   private boolean mySaveAllowed;
