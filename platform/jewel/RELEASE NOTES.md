@@ -1,6 +1,6 @@
 # Jewel Release Notes
 
-## v0.30 (2025-08-28)
+## v0.30 (2025-09-04)
 
 | Supported IJP versions | Compose Multiplatform version |
 |------------------------|-------------------------------|
@@ -10,7 +10,7 @@
 
 * **JEWEL-892** All Jewel internal and experimental APIs are now also annotated with the corresponding `ApiStatus` annotation ([#3136](https://github.com/JetBrains/intellij-community/pull/3136))
   * This means they'll be correctly identified as such by all JetBrains tooling, including the Plugin DevKit and Marketplace.
-* **JEWEL-896** Extracted Coil dependency as separate library out of the Markdown Images extension, so other plugins can use it too ([`6d9016a`](https://github.com/JetBrains/intellij-community/commit/6d9016a))
+* **JEWEL-896** Extracted Coil dependency as a separate library out of the Markdown Images extension, so other plugins can use it too ([`6d9016a`](https://github.com/JetBrains/intellij-community/commit/6d9016a))
 * **JEWEL-897** Experimental API `renderImagesContent` renamed to `renderImageContent` (singular) ([#3145](https://github.com/JetBrains/intellij-community/pull/3145))
 * **JEWEL-915** Removed the experimental `JewelToolWindowNoThemeComposePanel` and `composeForToolWindowWithoutTheme` APIs — they were identical to the non-`ToolWindow` variants ([#3143](https://github.com/JetBrains/intellij-community/pull/3143))
 * **JEWEL-920** The default `Indication` has been set to a no-op implementation in both standalone and bridge, instead of the previous default implementation we inherited from Compose ([#3161](https://github.com/JetBrains/intellij-community/pull/3161))
