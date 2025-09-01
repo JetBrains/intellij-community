@@ -12,7 +12,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.OverrideOnly
 interface StacktraceTabContentProvider {
   /**
-   * The method is called under modal progress dialog.
+   * The method is called under a modal progress dialog.
    * @param text text of thread dump or stacktrace
    */
   suspend fun createRunTabDescriptor(project: Project, text: String): RunContentDescriptor?

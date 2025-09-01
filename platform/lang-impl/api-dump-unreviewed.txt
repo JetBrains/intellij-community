@@ -16764,19 +16764,11 @@ f:com.intellij.ui.tabs.FileColorManagerImpl
 f:com.intellij.uiDesigner.SerializedComponentData
 - <init>(java.lang.String):V
 - getSerializedComponents():java.lang.String
-c:com.intellij.unscramble.AnalyzeStacktraceAction
-- com.intellij.openapi.actionSystem.AnAction
-- com.intellij.openapi.project.DumbAware
-- <init>():V
-- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 f:com.intellij.unscramble.AnalyzeStacktraceUtil
 - sf:EP_NAME:com.intellij.openapi.extensions.ProjectExtensionPointName
 - sf:addConsole(com.intellij.openapi.project.Project,com.intellij.unscramble.AnalyzeStacktraceUtil$ConsoleFactory,java.lang.String,java.lang.String):V
 - sf:addConsole(com.intellij.openapi.project.Project,com.intellij.unscramble.AnalyzeStacktraceUtil$ConsoleFactory,java.lang.String,java.lang.String,javax.swing.Icon):com.intellij.execution.ui.RunContentDescriptor
 - sf:addConsole(com.intellij.openapi.project.Project,com.intellij.unscramble.AnalyzeStacktraceUtil$ConsoleFactory,java.lang.String,java.lang.String,javax.swing.Icon,Z):com.intellij.execution.ui.RunContentDescriptor
-- sf:createEditorPanel(com.intellij.openapi.project.Project,com.intellij.openapi.Disposable):com.intellij.unscramble.AnalyzeStacktraceUtil$StacktraceEditorPanel
 - sf:printStacktrace(com.intellij.execution.ui.ConsoleView,java.lang.String):V
 f:com.intellij.unscramble.AnalyzeStacktraceUtil$StacktraceEditorPanel
 - javax.swing.JPanel
