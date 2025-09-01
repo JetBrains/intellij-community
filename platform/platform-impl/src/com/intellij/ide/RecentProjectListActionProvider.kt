@@ -341,7 +341,7 @@ private class RemoteRecentProjectActionGroup(val projectId: String, val project:
   : ActionGroup(), DumbAware,
     ProjectToolbarWidgetPresentable by RemoteRecentProjectWidgetActionHelper(projectId, project) {
   init {
-    templatePresentation.text = nameToDisplayAsText
+    templatePresentation.setText(nameToDisplayAsText, false)
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
@@ -376,7 +376,7 @@ private class RemoteRecentProjectAction(val projectId: String, val project: Rece
   : AnAction(), DumbAware,
     ProjectToolbarWidgetPresentable by RemoteRecentProjectWidgetActionHelper(projectId, project) {
   init {
-    templatePresentation.text = nameToDisplayAsText
+    templatePresentation.setText(nameToDisplayAsText, false)
   }
 
   override fun actionPerformed(e: AnActionEvent) {
