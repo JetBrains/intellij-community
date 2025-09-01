@@ -24,7 +24,7 @@ class TypeAnnotationFormatterTest : LightJavaCodeInsightFixtureTestCase() {
     super.setUp()
     commonSettings.KEEP_LINE_BREAKS = false
     commonSettings.METHOD_ANNOTATION_WRAP = WRAP_ALWAYS
-    IdeaTestUtil.setProjectLanguageLevel(myFixture.project, LanguageLevel.JDK_1_8)
+    IdeaTestUtil.setModuleLanguageLevel(myFixture.module, LanguageLevel.JDK_1_8)
     ModuleRootModificationUtil.updateModel(module, DefaultLightProjectDescriptor::addJetBrainsAnnotations)
   }
 
@@ -56,7 +56,7 @@ class TypeAnnotationFormatterTest : LightJavaCodeInsightFixtureTestCase() {
   }
 
   fun testLowLanguageLevel() {
-    IdeaTestUtil.setProjectLanguageLevel(myFixture.project, LanguageLevel.JDK_1_7)
+    IdeaTestUtil.setModuleLanguageLevel(myFixture.module, LanguageLevel.JDK_1_7)
     doTest()
   }
 

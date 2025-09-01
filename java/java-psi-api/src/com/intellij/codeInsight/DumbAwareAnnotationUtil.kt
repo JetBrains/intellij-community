@@ -3,14 +3,14 @@ package com.intellij.codeInsight
 
 import com.intellij.codeInsight.DumbAwareAnnotationUtil.KNOWN_ANNOTATIONS
 import com.intellij.codeInsight.DumbAwareAnnotationUtil.hasAnnotation
-import com.intellij.openapi.roots.LanguageLevelProjectExtension
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.pom.java.LanguageLevel
+import com.intellij.pom.java.JavaFeature
 import com.intellij.psi.*
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
+import com.intellij.psi.util.PsiUtil
 
 /**
  * Utility which helps to detect annotation in `Dumb mode`.
@@ -18,12 +18,23 @@ import com.intellij.psi.util.PsiModificationTracker
 object DumbAwareAnnotationUtil {
   private const val JAVA_LANG_PACKAGE = "java.lang"
 
+  /**
+   * Represents a list of fully qualified names for annotations that are treated as a type annotations.
+   */
   private val KNOWN_ANNOTATIONS = setOf(
     AnnotationUtil.NOT_NULL,
     AnnotationUtil.NULLABLE,
     AnnotationUtil.NON_NLS,
     AnnotationUtil.J_SPECIFY_NON_NULL,
     AnnotationUtil.J_SPECIFY_NULLABLE
+  )
+
+  /**
+   * Represents a mapping from a fully qualified name of a module to a set of fully qualified names of annotations
+   * that are treated as a type annotations and located in this module
+   */
+  private val KNOWN_MODULE_TO_ANNOTATIONS_MAP = mapOf(
+    "org.jspecify" to setOf(AnnotationUtil.J_SPECIFY_NON_NULL, AnnotationUtil.J_SPECIFY_NULLABLE)
   )
 
   /**
@@ -82,12 +93,12 @@ object DumbAwareAnnotationUtil {
   }
 
   private fun isAnnotationInModuleImportList(annotationFqn: String, moduleList: PsiImportList): Boolean {
-    val languageLevel = LanguageLevelProjectExtension.getInstance(moduleList.project).languageLevel
-    if (languageLevel.isLessThan(LanguageLevel.JDK_25)) return false
+    if (!PsiUtil.isAvailable(JavaFeature.MODULE_IMPORT_DECLARATIONS, moduleList)) return false
     return moduleList.importModuleStatements.any { statement: PsiImportModuleStatement ->
-      val referenceElement = statement.moduleReference ?: return@any false
-      val referenceElementText = getCanonicalTextOfTheReference(referenceElement)
-      annotationFqn.startsWith(referenceElementText)
+      val referenceName = statement.referenceName ?: return@any false
+      val formattedReferenceName = getFormattedReferenceFqn(referenceName)
+      if (formattedReferenceName !in KNOWN_MODULE_TO_ANNOTATIONS_MAP) return@any false
+      annotationFqn in KNOWN_MODULE_TO_ANNOTATIONS_MAP.getValue(formattedReferenceName)
     }
   }
 
@@ -97,10 +108,7 @@ object DumbAwareAnnotationUtil {
     return AnnotationImportInfo(packageName, className)
   }
 
-  private fun getCanonicalTextOfTheReference(reference: PsiElement): String {
-    if (reference !is PsiJavaCodeReferenceElement && reference !is PsiJavaModuleReferenceElement) error("Only code and module references are supported ")
-    return getFormattedReferenceFqn(reference.text)
-  }
+  private fun getCanonicalTextOfTheReference(reference: PsiJavaCodeReferenceElement): String = getFormattedReferenceFqn(reference.text)
 
   private data class AnnotationImportInfo(val packageName: String, val className: String)
 }

@@ -24,7 +24,7 @@ class JSpecifyTypeAnnotationFormatterTest : LightJavaCodeInsightFixtureTestCase(
     super.setUp()
     commonSettings.KEEP_LINE_BREAKS = false
     commonSettings.METHOD_ANNOTATION_WRAP = WRAP_ALWAYS
-    IdeaTestUtil.setProjectLanguageLevel(myFixture.project, LanguageLevel.JDK_1_8)
+    IdeaTestUtil.setModuleLanguageLevel(myFixture.module, LanguageLevel.JDK_1_8)
     ModuleRootModificationUtil.updateModel(module) { model ->
       MavenDependencyUtil.addFromMaven(model, "org.jspecify:jspecify:1.0.0")
     }
@@ -58,33 +58,38 @@ class JSpecifyTypeAnnotationFormatterTest : LightJavaCodeInsightFixtureTestCase(
   }
 
   fun testLowLanguageLevel() {
-    IdeaTestUtil.setProjectLanguageLevel(myFixture.project, LanguageLevel.JDK_1_7)
+    IdeaTestUtil.setModuleLanguageLevel(myFixture.module, LanguageLevel.JDK_1_7)
     doTest()
   }
 
   fun testModuleImport() {
-    IdeaTestUtil.setProjectLanguageLevel(myFixture.project, LanguageLevel.JDK_25)
+    IdeaTestUtil.setModuleLanguageLevel(myFixture.module, LanguageLevel.JDK_25)
     doTest()
   }
 
   fun testModuleImportWithSpaces() {
-    IdeaTestUtil.setProjectLanguageLevel(myFixture.project, LanguageLevel.JDK_25)
+    IdeaTestUtil.setModuleLanguageLevel(myFixture.module, LanguageLevel.JDK_25)
     doTest()
   }
 
   fun testModuleImportMixedWithPackageImport() {
-    IdeaTestUtil.setProjectLanguageLevel(myFixture.project, LanguageLevel.JDK_25)
+    IdeaTestUtil.setModuleLanguageLevel(myFixture.module, LanguageLevel.JDK_25)
     doTest()
   }
 
   fun testModuleImportMixedWithFqn() {
-    IdeaTestUtil.setProjectLanguageLevel(myFixture.project, LanguageLevel.JDK_25)
+    IdeaTestUtil.setModuleLanguageLevel(myFixture.module, LanguageLevel.JDK_25)
     doTest()
   }
 
 
   fun testLowLanguageLevelForModuleImport() {
-    IdeaTestUtil.setProjectLanguageLevel(myFixture.project, LanguageLevel.JDK_24)
+    IdeaTestUtil.setModuleLanguageLevel(myFixture.module, LanguageLevel.JDK_24)
+    doTest()
+  }
+
+  fun testUnknownModuleImport() {
+    IdeaTestUtil.setModuleLanguageLevel(myFixture.module, LanguageLevel.JDK_25)
     doTest()
   }
 
