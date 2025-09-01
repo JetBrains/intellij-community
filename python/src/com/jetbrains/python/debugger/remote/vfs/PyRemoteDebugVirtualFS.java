@@ -10,13 +10,15 @@ import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.debugger.PyDebugProcess;
 import com.jetbrains.python.debugger.PyLocalPositionConverter;
 import com.jetbrains.python.remote.PyRemotePathMapper;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.Map;
 
-public class PyRemoteDebugVirtualFS extends VirtualFileSystem {
+@ApiStatus.Internal
+public final class PyRemoteDebugVirtualFS extends VirtualFileSystem {
   private static final @NonNls String PROTOCOL = "remoteDebugVfs";
 
   private final PyRemotePathMapper myPathMapper;
@@ -83,19 +85,19 @@ public class PyRemoteDebugVirtualFS extends VirtualFileSystem {
   }
 
   @Override
-  protected void deleteFile(Object requestor, @NotNull VirtualFile vFile) throws IOException {
+  protected void deleteFile(Object requestor, @NotNull VirtualFile vFile) {
   }
 
   @Override
-  protected void moveFile(Object requestor, @NotNull VirtualFile vFile, @NotNull VirtualFile newParent) throws IOException {
+  protected void moveFile(Object requestor, @NotNull VirtualFile vFile, @NotNull VirtualFile newParent) {
   }
 
   @Override
-  protected void renameFile(Object requestor, @NotNull VirtualFile vFile, @NotNull String newName) throws IOException {
+  protected void renameFile(Object requestor, @NotNull VirtualFile vFile, @NotNull String newName) {
   }
 
   @Override
-  protected @NotNull VirtualFile createChildFile(Object requestor, @NotNull VirtualFile vDir, @NotNull String fileName) throws IOException {
+  protected @NotNull VirtualFile createChildFile(Object requestor, @NotNull VirtualFile vDir, @NotNull String fileName) {
     throw new IncorrectOperationException();
   }
 

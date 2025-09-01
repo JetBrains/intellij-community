@@ -86,6 +86,7 @@ interface PythonPackageDetails {
     repository.findPackageSpecification(pyRequirement(name, version?.let { pyRequirementVersionSpec(it) }))
 }
 
+@ApiStatus.Internal
 data class PythonSimplePackageDetails(
   override val name: String,
   override val availableVersions: List<String> = emptyList(),

@@ -107,6 +107,7 @@ import static com.jetbrains.python.console.PyConsoleUtil.ASYNCIO_REPL_ENV;
 /**
  * @author traff, oleg
  */
+@ApiStatus.Internal
 public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   /**
    * The address that IDE uses to listen for incoming connections from Python

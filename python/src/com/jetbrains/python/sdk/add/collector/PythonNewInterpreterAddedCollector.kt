@@ -31,6 +31,7 @@ object PythonNewInterpreterAddedCollector : CounterUsagesCollector() {
   }
 }
 
+@ApiStatus.Internal
 data class InterpreterStatisticsInfo(val type: InterpreterType,
                                      val target: InterpreterTarget,
                                      val globalSitePackage: Boolean,
