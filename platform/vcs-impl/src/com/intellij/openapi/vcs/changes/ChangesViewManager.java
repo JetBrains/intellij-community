@@ -7,11 +7,8 @@ import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.diff.impl.DiffEditorViewer;
 import com.intellij.diff.tools.util.DiffDataKeys;
 import com.intellij.diff.util.DiffUtil;
-import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.TreeExpander;
 import com.intellij.ide.dnd.DnDEvent;
-import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -43,7 +40,6 @@ import com.intellij.platform.vcs.impl.shared.changes.ChangesViewSettings;
 import com.intellij.platform.vcs.impl.shared.changes.PreviewDiffSplitterComponent;
 import com.intellij.platform.vcs.impl.shared.telemetry.VcsScopeKt;
 import com.intellij.problems.ProblemListener;
-import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.Wrapper;
@@ -372,7 +368,7 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
                                          () -> scheduleRefresh());
       ChangesViewDnDSupport.install(myProject, myView, this);
 
-      myChangesPanel.getToolbarActionGroup().addAll(createChangesToolbarActions(myView.getTreeExpander()));
+      ChangesViewPanelActions.initActions(myChangesPanel);
       registerShortcuts(this);
 
       ApplicationManager.getApplication().getMessageBus().connect(project)
@@ -662,23 +658,6 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
       ActionUtil.wrap("ChangesView.NewChangeList").registerCustomShortcutSet(CommonShortcuts.getNew(), component);
       ActionUtil.wrap("ChangesView.RemoveChangeList").registerCustomShortcutSet(CommonShortcuts.getDelete(), component);
       ActionUtil.wrap(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST).registerCustomShortcutSet(CommonShortcuts.getMove(), component);
-    }
-
-    private @NotNull List<AnAction> createChangesToolbarActions(@NotNull TreeExpander treeExpander) {
-      List<AnAction> actions = new ArrayList<>();
-      actions.add(CustomActionsSchema.getInstance().getCorrectedAction(ActionPlaces.CHANGES_VIEW_TOOLBAR));
-
-      if (!ExperimentalUI.isNewUI()) {
-        actions.add(Separator.getInstance());
-      }
-
-      actions.add(ActionManager.getInstance().getAction("ChangesView.ViewOptions"));
-      actions.add(CommonActionsManager.getInstance().createExpandAllHeaderAction(treeExpander, myView));
-      actions.add(CommonActionsManager.getInstance().createCollapseAllAction(treeExpander, myView));
-      actions.add(Separator.getInstance());
-      actions.add(ActionManager.getInstance().getAction("ChangesView.SingleClickPreview"));
-
-      return actions;
     }
 
     private void updateProgressComponent(@NotNull List<Supplier<@Nullable JComponent>> progress) {

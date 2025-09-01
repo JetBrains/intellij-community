@@ -7,6 +7,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.changes.ChangesViewPanel
+import com.intellij.openapi.vcs.changes.ChangesViewPanelActions
 import com.intellij.openapi.vcs.changes.LocalChangesListView
 import com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactory
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
@@ -28,8 +29,13 @@ internal class LocalChangesViewContentProvider : FrontendChangesViewContentProvi
   override fun initTabContent(project: Project, content: Content) {
     val tree = LocalChangesListView(project)
     val changesViewPanel = ChangesViewPanel(tree, content)
+    changesViewPanel.isToolbarHorizontal = true
+
     content.component = changesViewPanel
     tree.model = buildModel(project, tree.grouping, ChangeListsViewModel.getInstance(project).changeLists.value)
+
+    // TODO actions on thin client might still be unavailable. Should probably be replaced with FrontendActionRegistrationListener
+    ChangesViewPanelActions.initActions(changesViewPanel)
 
     project.service<ScopeProvider>().cs.launch(Dispatchers.UiWithModelAccess) {
       ChangeListsViewModel.getInstance(project).changeLists.collect {
