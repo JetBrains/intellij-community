@@ -2,7 +2,6 @@
 package git4idea.rebase.log.changes
 
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import git4idea.GitDisposable
 import git4idea.i18n.GitBundle
@@ -17,7 +16,7 @@ internal class GitDropSelectedChangesAction : GitSingleCommitEditingAction() {
   )
 
   override fun update(e: AnActionEvent, commitEditingData: SingleCommitEditingData) {
-    if (!Registry.`is`("git.drop.selected.changes.enabled") || commitEditingData.selectedChanges.isEmpty()) {
+    if (commitEditingData.selectedChanges.isEmpty()) {
       e.presentation.isEnabledAndVisible = false
       return
     }
