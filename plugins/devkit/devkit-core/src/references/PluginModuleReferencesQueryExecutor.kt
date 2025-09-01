@@ -20,9 +20,16 @@ internal class PluginModuleReferencesQueryExecutor : QueryExecutorBase<PsiRefere
     val elementToSearch = queryParameters.elementToSearch
     if (elementToSearch !is XmlTag) return
     if (DomUtil.getDomElement(elementToSearch) !is IdeaPlugin) return
-    if (runReadAction { !DescriptorUtil.isPluginModuleFile(elementToSearch.containingFile) }) return
-    val moduleName = elementToSearch.containingFile.name.removeSuffix(".xml")
+    val moduleName = getModuleName(elementToSearch) ?: return
     queryParameters.optimizer.searchWord(moduleName, queryParameters.effectiveSearchScope, true, elementToSearch)
+  }
+
+  private fun getModuleName(elementToSearch: XmlTag): String? {
+    return runReadAction {
+      val containingFile = elementToSearch.containingFile ?: return@runReadAction null
+      if (!DescriptorUtil.isPluginModuleFile(containingFile)) return@runReadAction null
+      containingFile.containingFile.name.removeSuffix(".xml")
+    }
   }
 
 }
