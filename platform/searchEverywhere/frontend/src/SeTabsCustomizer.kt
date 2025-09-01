@@ -7,13 +7,13 @@ import kotlin.jvm.java
 
 @ApiStatus.Internal
 @ApiStatus.Experimental
-interface SeTabCustomizer {
+interface SeTabsCustomizer {
   companion object {
     @JvmStatic
-    fun getInstance(): SeTabCustomizer {
-      return ApplicationManager.getApplication().getService(SeTabCustomizer::class.java)
+    fun getInstance(): SeTabsCustomizer {
+      return ApplicationManager.getApplication().getService(SeTabsCustomizer::class.java)
     }
   }
 
-  fun customizeTabs(tabFactories: List<SeTabFactory>) : List<SeTabFactory>
+  fun customize(tabFactories: List<SeTabFactory>) : List<SeTabFactory>
 }

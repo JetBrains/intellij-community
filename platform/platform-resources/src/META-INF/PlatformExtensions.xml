@@ -295,8 +295,8 @@
     <applicationService serviceInterface="com.intellij.ide.actions.searcheverywhere.TabsCustomizationStrategy"
                         serviceImplementation="com.intellij.ide.actions.searcheverywhere.SearchEverywhereMlTabsCustomizationStrategy"/>
 
-    <applicationService serviceInterface="com.intellij.platform.searchEverywhere.frontend.SeTabCustomizer"
-                        serviceImplementation="com.intellij.platform.searchEverywhere.frontend.SeIdentityTabCustomizer"/>"
+    <applicationService serviceInterface="com.intellij.platform.searchEverywhere.frontend.SeTabsCustomizer"
+                        serviceImplementation="com.intellij.platform.searchEverywhere.frontend.SeDefaultTabsCustomizer"/>"
 
     <applicationService serviceImplementation="com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter"/>
 

@@ -4,8 +4,8 @@ package com.intellij.platform.searchEverywhere.frontend
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class SeIdentityTabCustomizer: SeTabCustomizer {
-  override fun customizeTabs(tabFactories: List<SeTabFactory>): List<SeTabFactory> {
+class SeDefaultTabsCustomizer: SeTabsCustomizer {
+  override fun customize(tabFactories: List<SeTabFactory>): List<SeTabFactory> {
     return tabFactories
   }
 }
