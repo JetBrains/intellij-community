@@ -19,7 +19,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.keymap.KeyMapBundle
 import com.intellij.openapi.keymap.KeymapManager
-import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.keymap.ex.KeymapManagerEx
 import com.intellij.openapi.keymap.impl.ui.KeymapPanel
 import com.intellij.openapi.options.BoundSearchableConfigurable
@@ -87,9 +86,6 @@ import javax.swing.plaf.basic.BasicComboBoxEditor
 
 @ApiStatus.Internal
 const val TERMINAL_CONFIGURABLE_ID: String = "terminal"
-private val TAB_SHORTCUT = KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0), null)
-private val ENTER_SHORTCUT = KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), null)
-private val CTRL_SPACE_SHORTCUT = KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, InputEvent.CTRL_DOWN_MASK), null)
 
 internal class TerminalOptionsConfigurable(private val project: Project) : BoundSearchableConfigurable(
   displayName = IdeBundle.message("configurable.TerminalOptionsConfigurable.display.name"),
@@ -156,16 +152,16 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
 
           row {
             shortcutCombobox(
-              labelText = message("terminal.command.completion.shortcut.insert"),
-              presets = listOf(ENTER_SHORTCUT, TAB_SHORTCUT),
-              actionId = "Terminal.EnterCommandCompletion"
+              labelText = message("terminal.command.completion.shortcut.trigger"),
+              presets = listOf(getCtrlSpacePreset(project), TAB_SHORTCUT_PRESET),
+              actionId = "Terminal.CommandCompletion.Gen2"
             )
           }
           row {
             shortcutCombobox(
-              labelText = message("terminal.command.completion.shortcut.trigger"),
-              presets = listOf(CTRL_SPACE_SHORTCUT, TAB_SHORTCUT),
-              actionId = "Terminal.CommandCompletion.Gen2"
+              labelText = message("terminal.command.completion.shortcut.insert"),
+              presets = listOf(ENTER_SHORTCUT_PRESET, TAB_SHORTCUT_PRESET),
+              actionId = "Terminal.EnterCommandCompletion"
             )
           }
         }.visibleIf(terminalEngineComboBox.selectedValueIs(TerminalEngine.REWORKED)
@@ -565,40 +561,32 @@ private fun getClientSystemInfo(project: Project): ClientSystemInfo? {
 
 private val LOG = logger<TerminalOptionsConfigurable>()
 
-fun Row.shortcutCombobox(
+private fun Row.shortcutCombobox(
   @NlsContexts.Label labelText: String,
-  presets: List<Shortcut>,
+  presets: List<ShortcutPreset>,
   actionId: String,
 ) {
-  label(labelText)
-
   val comboBox = comboBox(
     items = presets.map { ShortcutItem.Preset(it) } + ShortcutItem.Custom,
-    renderer = textListCellRenderer { shortcut ->
-      when (shortcut) {
-        is ShortcutItem.Preset -> {
-          when (shortcut.shortcut) {
-            TAB_SHORTCUT -> "Tab"
-            ENTER_SHORTCUT -> "Enter"
-            CTRL_SPACE_SHORTCUT -> "Ctrl + Space"
-            else -> KeymapUtil.getShortcutText(shortcut.shortcut)
-          }
-        }
+    renderer = textListCellRenderer { item ->
+      when (item) {
+        is ShortcutItem.Preset -> item.preset.text
         is ShortcutItem.Custom -> message("terminal.command.completion.shortcut.custom")
         null -> ""
       }
     }
-  ).bindItem(
-    getter = {
-      val currentShortcut = getActionShortcut(actionId)
-      presets.find { it == currentShortcut }?.let { ShortcutItem.Preset(it) } ?: ShortcutItem.Custom
-    },
-    setter = { item ->
-      if (item is ShortcutItem.Preset) {
-        setActionShortcut(actionId, item.shortcut)
+  ).label(labelText)
+    .bindItem(
+      getter = {
+        val currentShortcut = getActionShortcut(actionId)
+        presets.find { it.shortcut == currentShortcut }?.let { ShortcutItem.Preset(it) } ?: ShortcutItem.Custom
+      },
+      setter = { item ->
+        if (item is ShortcutItem.Preset) {
+          setActionShortcut(actionId, item.preset.shortcut)
+        }
       }
-    }
-  ).component
+    ).component
 
   link(message("terminal.command.completion.shortcut.change")) {
     val allSettings = Settings.KEY.getData(DataManager.getInstance().getDataContext(it.source as Component))
@@ -645,8 +633,24 @@ private fun setActionShortcut(actionId: String, value: Shortcut?) {
   }
 }
 
+private val TAB_SHORTCUT_PRESET = ShortcutPreset(
+  KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0), null),
+  "Tab"
+)
+private val ENTER_SHORTCUT_PRESET = ShortcutPreset(
+  KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), null),
+  "Enter"
+)
+private fun getCtrlSpacePreset(project: Project): ShortcutPreset {
+  return ShortcutPreset(
+    KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, InputEvent.CTRL_DOWN_MASK), null),
+    if (isMac(project)) "⌃ Space" else "Ctrl+Space"
+  )
+}
+
+private class ShortcutPreset(val shortcut: Shortcut, val text: String)
 
 private sealed class ShortcutItem {
-  data class Preset(val shortcut: Shortcut) : ShortcutItem()
+  data class Preset(val preset: ShortcutPreset) : ShortcutItem()
   object Custom : ShortcutItem()
 }
