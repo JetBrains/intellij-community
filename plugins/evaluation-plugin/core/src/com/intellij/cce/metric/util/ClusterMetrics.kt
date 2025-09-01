@@ -24,9 +24,14 @@ import kotlin.math.ln
  *
  * Generic overloads are provided for List<T> labels; they are mapped to Int indices internally.
  */
-fun <T> homogeneityScore(labelsTrue: List<T>, labelsPred: List<T>, sampleWeight: List<Double>? = null): Double {
-  val (trueIdx, predIdx, sw, _) = mapParamsToIndices(labelsTrue, labelsPred, sampleWeight)
-  val cm = ContingencyMatrixWeighted.from(trueIdx, predIdx, sw)
+fun <T> homogeneityScore(
+  labelsTrue: List<T>,
+  labelsPred: List<T>,
+  sampleWeight: List<Double>? = null,
+  trueLabelWeights: Map<T, Double>? = null,
+): Double {
+  val (trueIdx, predIdx, sw, classWeights) = mapParamsToIndices(labelsTrue, labelsPred, sampleWeight, trueLabelWeights)
+  val cm = ContingencyMatrixWeighted.from(trueIdx, predIdx, sw, classWeights)
   if (cm.n == 0.0) return 1.0
   val hC = cm.entropyTrue()
   if (hC == 0.0) return 1.0
@@ -34,9 +39,14 @@ fun <T> homogeneityScore(labelsTrue: List<T>, labelsPred: List<T>, sampleWeight:
   return 1.0 - hCgivenK / hC
 }
 
-fun <T> completenessScore(labelsTrue: List<T>, labelsPred: List<T>, sampleWeight: List<Double>? = null): Double {
-  val (trueIdx, predIdx, sw, _) = mapParamsToIndices(labelsTrue, labelsPred, sampleWeight)
-  val cm = ContingencyMatrixWeighted.from(trueIdx, predIdx, sw)
+fun <T> completenessScore(
+  labelsTrue: List<T>,
+  labelsPred: List<T>,
+  sampleWeight: List<Double>? = null,
+  trueLabelWeights: Map<T, Double>? = null,
+): Double {
+  val (trueIdx, predIdx, sw, classWeights) = mapParamsToIndices(labelsTrue, labelsPred, sampleWeight, trueLabelWeights)
+  val cm = ContingencyMatrixWeighted.from(trueIdx, predIdx, sw, classWeights)
   if (cm.n == 0.0) return 1.0
   val hK = cm.entropyPred()
   if (hK == 0.0) return 1.0
@@ -44,9 +54,15 @@ fun <T> completenessScore(labelsTrue: List<T>, labelsPred: List<T>, sampleWeight
   return 1.0 - hKgivenC / hK
 }
 
-fun <T> vMeasureScore(labelsTrue: List<T>, labelsPred: List<T>, sampleWeight: List<Double>? = null, beta: Double = 1.0): Double {
-  val h = homogeneityScore(labelsTrue, labelsPred, sampleWeight)
-  val c = completenessScore(labelsTrue, labelsPred, sampleWeight)
+fun <T> vMeasureScore(
+  labelsTrue: List<T>,
+  labelsPred: List<T>,
+  sampleWeight: List<Double>? = null,
+  beta: Double = 1.0,
+  trueLabelWeights: Map<T, Double>? = null,
+): Double {
+  val h = homogeneityScore(labelsTrue, labelsPred, sampleWeight, trueLabelWeights)
+  val c = completenessScore(labelsTrue, labelsPred, sampleWeight, trueLabelWeights)
   if (h == 0.0 && c == 0.0) return 0.0
   val numerator = (1.0 + beta) * h * c
   val denominator = beta * h + c
@@ -65,8 +81,8 @@ fun <T> shannonEntropyTrueGivenPredicted(
   trueLabelWeights: Map<T, Double>? = null,
 ): Double {
   val (trueIdx, predIdx, sw, classWeights) = mapParamsToIndices(labelsTrue, labelsPred, sampleWeight, trueLabelWeights)
-  val cm = ContingencyMatrixWeighted.from(trueIdx, predIdx, sw)
-  return cm.conditionalEntropyTrueGivenPred(classWeights)
+  val cm = ContingencyMatrixWeighted.from(trueIdx, predIdx, sw, classWeights)
+  return cm.conditionalEntropyTrueGivenPred()
 }
 
 /**
@@ -80,33 +96,31 @@ fun <T> precisionScore(
   trueLabelWeights: Map<T, Double>? = null,
 ): Double {
   val (trueIdx, predIdx, sw, classWeights) = mapParamsToIndices(labelsTrue, labelsPred, sampleWeight, trueLabelWeights)
-  val cm = ContingencyMatrixWeighted.from(trueIdx, predIdx, sw)
+  val cm = ContingencyMatrixWeighted.from(trueIdx, predIdx, sw, classWeights)
   if (cm.n == 0.0) return 1.0
-  validateClassWeights(cm.counts.size, classWeights)
 
   var score = 0.0
-  for (k in cm.predSums.indices) {
-    val nk = cm.predSums[k]
-    if (nk == 0.0) continue
-
+  for (predCluster in cm.predSums.indices) {
+    // calculating weighted predClusterSize using gold class weights
     var denom = 0.0
-    for (c in cm.counts.indices) {
-      val nck = cm.counts[c][k]
-      if (nck == 0.0) continue
-      denom += nck * weightAt(classWeights, c)
+    for (goldCluster in cm.trueSums.indices) {
+      val numPredWithinGold = cm.counts[goldCluster][predCluster]
+      if (numPredWithinGold == 0.0) continue
+      denom += numPredWithinGold * weightAt(classWeights, goldCluster)
     }
     if (denom == 0.0) continue
 
     var maxP = 0.0
-    for (c in cm.counts.indices) {
-      val nck = cm.counts[c][k]
-      if (nck == 0.0) continue
-      val p = (nck * weightAt(classWeights, c)) / denom
+    for (goldCluster in cm.trueSums.indices) {
+      val numPredWithinGold = cm.counts[goldCluster][predCluster]
+      if (numPredWithinGold == 0.0) continue
+      // use gold class weights
+      val p = (numPredWithinGold * weightAt(classWeights, goldCluster)) / denom
       if (p > maxP) maxP = p
     }
-    score += (nk / cm.n) * maxP
+    score += maxP
   }
-  return score
+  return score / cm.predSums.size
 }
 
 /**
@@ -120,25 +134,24 @@ fun <T> recallScore(
   trueLabelWeights: Map<T, Double>? = null,
 ): Double {
   val (trueIdx, predIdx, sw, classWeights) = mapParamsToIndices(labelsTrue, labelsPred, sampleWeight, trueLabelWeights)
-  val cm = ContingencyMatrixWeighted.from(trueIdx, predIdx, sw)
+  val cm = ContingencyMatrixWeighted.from(trueIdx, predIdx, sw, classWeights)
   if (cm.n == 0.0) return 1.0
-  validateClassWeights(cm.counts.size, classWeights)
 
   var weightedSum = 0.0
   var totalWeight = 0.0
-  for (c in cm.counts.indices) {
-    val nc = cm.trueSums[c]
-    if (nc == 0.0) continue
-    var maxP = 0.0
-    for (k in cm.counts[c].indices) {
-      val nck = cm.counts[c][k]
-      if (nck == 0.0) continue
-      val p = nck / nc
-      if (p > maxP) maxP = p
+  for (goldCluster in cm.trueSums.indices) {
+    val goldClusterSize = cm.trueSums[goldCluster]
+    if (goldClusterSize == 0.0) continue
+    var maxR = 0.0
+    for (predCluster in cm.counts[goldCluster].indices) {
+      val numPredWithinGold = cm.counts[goldCluster][predCluster]
+      if (numPredWithinGold == 0.0) continue
+      val r = numPredWithinGold / goldClusterSize
+      if (r > maxR) maxR = r
     }
-    val weight = weightAt(classWeights, c) * nc
+    val weight = weightAt(classWeights, goldCluster)
     totalWeight += weight
-    weightedSum += weight * maxP
+    weightedSum += weight * maxR
   }
   if (totalWeight == 0.0) return 1.0
   return weightedSum / totalWeight
@@ -164,13 +177,6 @@ private fun <T> mapParamsToIndices(
   return MetricParams(trueIdx, predIdx, sw, classWeights)
 }
 
-private fun validateClassWeights(rows: Int, trueLabelWeights: DoubleArray?) {
-  if (trueLabelWeights == null) return
-  for (i in 0 until rows) {
-    val w = if (i < trueLabelWeights.size) trueLabelWeights[i] else 1.0
-    require(w >= 0.0) { "trueLabelWeights must be non-negative" }
-  }
-}
 
 private fun weightAt(trueLabelWeights: DoubleArray?, index: Int): Double =
   if (trueLabelWeights != null && index < trueLabelWeights.size) trueLabelWeights[index] else 1.0
@@ -223,35 +229,33 @@ private class ContingencyMatrixWeighted(
   val predSums: DoubleArray,
   val n: Double,
 ) {
+
+  private fun entropyFromCounts(counts: DoubleArray, n: Double): Double {
+    if (n == 0.0) return 0.0
+    var h = 0.0
+    for (cnt in counts) {
+      if (cnt == 0.0) continue
+      val p = cnt / n
+      h -= p * ln(p)
+    }
+    return h
+  }
+
   fun entropyTrue(): Double = entropyFromCounts(trueSums, n)
   fun entropyPred(): Double = entropyFromCounts(predSums, n)
 
-  fun conditionalEntropyTrueGivenPred(trueLabelWeights: DoubleArray? = null): Double {
+  fun conditionalEntropyTrueGivenPred(): Double {
     if (n == 0.0) return 0.0
-    // validate weights if provided
-    validateClassWeights(counts.size, trueLabelWeights)
     var result = 0.0
     val predSize = if (counts.isNotEmpty()) counts[0].size else 0
     for (k in 0 until predSize) {
       val nk = predSums[k]
       if (nk == 0.0) continue
-      var denom = 0.0
-      // compute denominator with class weights (defaults to 1.0 if weights are null or missing)
-      for (c in counts.indices) {
-        val nck = counts[c][k]
-        if (nck == 0.0) continue
-        val w = weightAt(trueLabelWeights, c)
-        if (w == 0.0) continue
-        denom += nck * w
-      }
-      if (denom == 0.0) continue
       var h = 0.0
       for (c in counts.indices) {
         val nck = counts[c][k]
         if (nck == 0.0) continue
-        val w = weightAt(trueLabelWeights, c)
-        if (w == 0.0) continue
-        val p = (nck * w) / denom
+        val p = nck / nk
         h -= p * ln(p)
       }
       result += (nk / n) * h
@@ -279,7 +283,7 @@ private class ContingencyMatrixWeighted(
 
 
   companion object {
-    fun from(labelsTrue: IntArray, labelsPred: IntArray, sampleWeight: DoubleArray? = null): ContingencyMatrixWeighted {
+    fun from(labelsTrue: IntArray, labelsPred: IntArray, sampleWeight: DoubleArray? = null, trueLabelWeights: DoubleArray? = null): ContingencyMatrixWeighted {
       require(labelsTrue.size == labelsPred.size) { "labelsTrue and labelsPred must have the same size" }
       if (sampleWeight != null) {
         require(labelsTrue.size == sampleWeight.size) { "sampleWeight must have the same size as labels" }
@@ -296,7 +300,8 @@ private class ContingencyMatrixWeighted(
         val c = labelsTrue[i]
         val k = labelsPred[i]
         if (c < 0 || k < 0) continue // ignore negative labels
-        val w = sampleWeight?.get(i) ?: 1.0
+        // apply class weighting additionally to sample weights
+        val w = (sampleWeight?.get(i) ?: 1.0) * weightAt(trueLabelWeights, c)
         if (sampleWeight != null) {
           require(w >= 0.0) { "sampleWeight must be non-negative" }
           if (w == 0.0) continue
@@ -309,16 +314,4 @@ private class ContingencyMatrixWeighted(
       return ContingencyMatrixWeighted(counts, trueSums, predSums, effectiveN)
     }
   }
-}
-
-
-private fun entropyFromCounts(counts: DoubleArray, n: Double): Double {
-  if (n == 0.0) return 0.0
-  var h = 0.0
-  for (cnt in counts) {
-    if (cnt == 0.0) continue
-    val p = cnt / n
-    h -= p * ln(p)
-  }
-  return h
 }
