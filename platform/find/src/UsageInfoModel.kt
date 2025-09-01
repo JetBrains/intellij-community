@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.Segment
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.vfs.ContentPreloadable
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.findDocument
 import com.intellij.psi.*
@@ -57,7 +58,7 @@ internal class UsageInfoModel private constructor(val project: Project, val mode
   private var cachedUsageInfos: List<UsageInfo> = emptyList()
     get() {
       if (field.isEmpty()) {
-        LOG.warn("UsageInfos are not yet initialized for ${model.presentablePath}")
+        LOG.debug("UsageInfos are not yet initialized for ${model.presentablePath}")
       }
       return field
     }
@@ -115,6 +116,14 @@ internal class UsageInfoModel private constructor(val project: Project, val mode
           if (virtualFile?.isValid == false) {
             LOG.warn("VirtualFile is invalid for ${model.presentablePath}")
             return@launch
+          }
+
+          (virtualFile as? ContentPreloadable)?.let { capability ->
+            try {
+              capability.preloadContent()
+            } catch (t: Throwable) {
+              LOG.debug("preloadContent failed during UsageInfoModel initialization for ${model.presentablePath}", t)
+            }
           }
 
           readAction {
