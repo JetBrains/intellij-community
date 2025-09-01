@@ -2,7 +2,6 @@
 package git4idea.inMemory.rebase.log.changes
 
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.vcs.log.util.VcsUserUtil.getShortPresentation
 import git4idea.GitDisposable
@@ -22,7 +21,7 @@ internal class GitExtractSelectedChangesAction : GitSingleCommitEditingAction() 
   )
 
   override fun update(e: AnActionEvent, commitEditingData: SingleCommitEditingData) {
-    if (!Registry.`is`("git.in.memory.commit.editing.operations.enabled") || commitEditingData.selectedChanges.isEmpty()) {
+    if (commitEditingData.selectedChanges.isEmpty()) {
       e.presentation.isEnabledAndVisible = false
       return
     }
