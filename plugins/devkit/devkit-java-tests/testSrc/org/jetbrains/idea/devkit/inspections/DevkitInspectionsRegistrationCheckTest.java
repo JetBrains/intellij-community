@@ -19,6 +19,7 @@ public class DevkitInspectionsRegistrationCheckTest extends BasePlatformTestCase
    */
   private static final List<String> DISABLED_INSPECTIONS =
     Stream.of(
+      "ModuleNotRegisteredAsPluginContent",
       "SerializableCtor",
       "StatisticsCollectorNotRegistered"
     ).sorted().toList();
