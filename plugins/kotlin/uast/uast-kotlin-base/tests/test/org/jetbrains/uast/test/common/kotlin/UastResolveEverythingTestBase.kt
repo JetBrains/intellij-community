@@ -81,12 +81,12 @@ interface UastResolveEverythingTestBase : UastFileComparisonTestBase,
 
         // NB: Except for class, all other kinds' name is redundant, hence captured by regex and removed.
         private val REGEXES: Map<Regex, String> = mapOf(
-            Regex("^SymbolLightClassFor.*?:") to "$TAG_CLASS:",
+            Regex("^SymbolLightClassFor.*?") to "$TAG_CLASS:",
 
             Regex("^PsiClass:.+$") to TAG_CLASS_DECOMPILED,
 
-            Regex("^SymbolLightConstructor:.+$") to TAG_METHOD,
-            Regex("^SymbolLight.*Method:.+$") to TAG_METHOD,
+            Regex("^SymbolLightConstructor.*$") to TAG_METHOD,
+            Regex("^SymbolLight.*Method.*$") to TAG_METHOD,
 
             Regex("^KtUltraLightMethodForSourceDeclaration:.+$") to TAG_METHOD,
             Regex("^LightMethodBuilder:.+$") to TAG_METHOD,
@@ -96,16 +96,17 @@ interface UastResolveEverythingTestBase : UastFileComparisonTestBase,
             Regex("^PsiMethod:.+$") to TAG_METHOD_DECOMPILED,
 
             Regex("^KtLightField:.+$") to TAG_VARIABLE,
+            Regex("^SymbolLightField.*$") to TAG_VARIABLE,
             Regex("^LightVariableBuilder:.+$") to TAG_VARIABLE,
 
             Regex("^KtLightFieldForDecompiledDeclaration of .+:.+$") to TAG_VARIABLE_DECOMPILED,
             Regex("^KtLightEnumEntryForDecompiledDeclaration.+:.+$") to TAG_VARIABLE_DECOMPILED,
             Regex("^PsiField:.+$") to TAG_VARIABLE_DECOMPILED,
 
-            Regex("^SymbolLightTypeParameter:.+$") to TAG_TYPE_PARAMETER,
+            Regex("^SymbolLightTypeParameter$") to TAG_TYPE_PARAMETER,
             Regex("^Light PSI class: .+$") to TAG_TYPE_PARAMETER,
 
-            Regex("^SymbolLight.*Parameter:.+$") to TAG_VALUE_PARAMETER,
+            Regex("^SymbolLight.*Parameter$") to TAG_VALUE_PARAMETER,
 
             // NB: tags are recursively built, e.g., KtLightMethodForDecompiled... of KtLightClassForDecompiled... of ...
             // Therefore, we should try regex patterns for member names before class names.
