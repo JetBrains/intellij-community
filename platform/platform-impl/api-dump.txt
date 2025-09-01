@@ -1372,7 +1372,6 @@ f:com.intellij.ui.tree.AsyncTreeModel
 - isProcessing():Z
 - onValidThread(java.lang.Runnable):V
 - resolve(javax.swing.tree.TreePath):org.jetbrains.concurrency.Promise
-- setRootImmediately(java.lang.Object):V
 - treeNodesChanged(javax.swing.tree.TreePath):V
 - treeNodesInserted(javax.swing.tree.TreePath):V
 - treeNodesRemoved(javax.swing.tree.TreePath):V

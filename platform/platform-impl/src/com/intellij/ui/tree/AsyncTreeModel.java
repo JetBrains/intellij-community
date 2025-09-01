@@ -1226,6 +1226,7 @@ public final class AsyncTreeModel extends AbstractTreeModel
    * @deprecated do not use
    */
   @Deprecated(forRemoval = true)
+  @ApiStatus.Internal
   public void setRootImmediately(@NotNull Object object) {
     Node node = new Node(object, LeafState.NEVER);
     node.insertPath(new CachingTreePath(object));
