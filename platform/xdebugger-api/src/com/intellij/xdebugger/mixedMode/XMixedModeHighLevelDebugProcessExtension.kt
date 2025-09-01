@@ -38,7 +38,9 @@ interface XMixedModeHighLevelDebugProcessExtension : XMixedModeDebugProcessExten
 
   fun setNextStatement(suspendContext: XSuspendContext, position: XSourcePosition)
 
-  suspend fun afterLowLevelStepCompleted(stoppedThreadId: Long, sendLastStopEvent: Boolean = true);
+  suspend fun afterLowLevelStepCompleted(stoppedThreadId: Long, finishedAsMixedStepOutTest: Boolean);
 
-  suspend fun shouldContinueAfterNativeStepCompleted(stepThreadId: Long): Boolean
+  suspend fun onLowLevelStepContinueAsItIsGoingToBeMixedStepOut(stoppedThreadId: Long)
+
+  suspend fun needToContinueAfterNativeStepCompleted(stepThreadId: Long): Boolean
 }
