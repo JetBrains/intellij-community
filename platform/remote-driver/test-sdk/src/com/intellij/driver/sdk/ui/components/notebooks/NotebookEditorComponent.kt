@@ -9,6 +9,7 @@ import com.intellij.driver.sdk.invokeActionWithRetries
 import com.intellij.driver.sdk.singleProject
 import com.intellij.driver.sdk.step
 import com.intellij.driver.sdk.ui.Finder
+import com.intellij.driver.sdk.ui.UiText.Companion.asString
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.components.common.EditorComponentImpl
@@ -71,6 +72,8 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
     get() = x("//div[@myicon='restartKernel.svg']")
   private val interruptKernel
     get() = x("//div[@myicon='stop.svg']")
+  private val deleteCell
+    get() = x("//div[@myicon='delete.svg']")
   val notebookCellOutputs: List<UiComponent>
     get() = xx("//div[@class='FullEditorWidthRenderer']//div[@class='EditorComponentImpl']").list()
   val jcefOffScreens: List<JcefOffScreenViewComponent>
@@ -85,6 +88,8 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
     get() = x("//div[@class='JupyterFileEditorToolbar']")
   val imagePanel: List<UiComponent>
     get() = xx("//div[@class='FullEditorWidthRenderer']//div[@class='ImagePanel']").list()
+  val lastNotebookOutput: String
+    get() = notebookCellOutputs.last().getAllTexts().asString()
 
   override val editorComponent: EditorComponentImpl
     get() = when {
@@ -121,6 +126,11 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
   fun restartKernel(): Unit = restartKernel.click()
 
   fun interruptKernel(): Unit = interruptKernel.click()
+
+  fun deleteFirstCell() {
+    notebookCellEditors.first().click()
+    deleteCell.click()
+  }
 
   fun restartHighlighting() {
     driver.withContext {
