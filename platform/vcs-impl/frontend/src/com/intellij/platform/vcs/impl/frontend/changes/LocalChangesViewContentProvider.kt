@@ -6,12 +6,12 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vcs.changes.ChangesViewPanel
 import com.intellij.openapi.vcs.changes.LocalChangesListView
 import com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactory
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder
 import com.intellij.platform.vcs.impl.shared.changes.ChangeListsViewModel
-import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.content.Content
 import com.intellij.util.cancelOnDispose
 import kotlinx.coroutines.CoroutineScope
@@ -27,8 +27,8 @@ internal class LocalChangesViewContentProvider : FrontendChangesViewContentProvi
 
   override fun initTabContent(project: Project, content: Content) {
     val tree = LocalChangesListView(project)
-    val panel = ScrollPaneFactory.createScrollPane(tree, true)
-    content.component = panel
+    val changesViewPanel = ChangesViewPanel(tree, content)
+    content.component = changesViewPanel
     tree.model = buildModel(project, tree.grouping, ChangeListsViewModel.getInstance(project).changeLists.value)
 
     project.service<ScopeProvider>().cs.launch(Dispatchers.UiWithModelAccess) {
