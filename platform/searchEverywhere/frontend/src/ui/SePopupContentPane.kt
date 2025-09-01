@@ -194,11 +194,17 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
               searchStatePublisher.searchStoppedProducingResults(searchId, resultListModel.size, true)
 
               if (!resultListModel.isValid || resultListModel.isEmpty) {
-                if (!textField.text.isEmpty() &&
-                    (vm.currentTab.getSearchEverywhereToggleAction() as? AutoToggleAction)?.autoToggle(true) ?: false) {
-                  vm.currentTab.lastNotFoundString = textField.text
-                  headerPane.updateActionsAsync()
-                  return@withContext
+                if (!textField.text.isEmpty()) {
+                  val currentTab = vm.currentTab
+                  if (currentTab.tabId == searchContext.tabId) {
+
+                    if ((currentTab.getSearchEverywhereToggleAction() as? AutoToggleAction)?.autoToggle(true) ?: false) {
+                      currentTab.lastNotFoundString = textField.text
+                      headerPane.updateActionsAsync()
+                      return@withContext
+                    }
+
+                  }
                 }
               }
 
