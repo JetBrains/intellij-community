@@ -156,6 +156,7 @@ jvm_library(
     "//platform/project/shared:project",
     "//platform/kernel/backend",
     "//platform/platform-impl/rpc",
+    "//platform/diff-impl/tests:tests_test_lib",
   ],
   runtime_deps = [":vcs-impl_resources"]
 )
