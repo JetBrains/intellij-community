@@ -47,6 +47,28 @@ public class GroovyHighlighting40Test extends LightGroovyTestCase implements Hig
     );
   }
 
+  public void testDuplicateNames() {
+    myFixture.addFileToProject("foo/Bar.groovy",
+      """
+      package foo;
+      
+      class Bar {
+          public static String Date = "01.01.2000"
+      }
+      """);
+
+    myFixture.configureByText("a.groovy", """
+      import java.util.Date
+      import java.sql.Date
+      import static foo.Bar.Date
+      
+      class <error descr="Class 'Date' already exists in '<default package>'">Date</error> {}
+      
+      trait <error descr="Class 'Date' already exists in '<default package>'">Date</error> {}
+      """);
+    myFixture.testHighlighting(false, false, false);
+  }
+
   @Override
   public final @NotNull LightProjectDescriptor getProjectDescriptor() {
     return GroovyProjectDescriptors.GROOVY_4_0;

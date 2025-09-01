@@ -2068,7 +2068,7 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
       JavaPsiFacade facade = JavaPsiFacade.getInstance(typeDefinition.getProject());
       GlobalSearchScope scope = inferClassScopeForSearchingDuplicates(typeDefinition);
       final PsiClass[] classes = facade.findClasses(qName, scope);
-      if (classes.length > 1) {
+      if (classes.length > 1 && (!GroovyConfigUtils.isAtLeastGroovy50(typeDefinition) || areInTheDifferentFiles(classes))) {
         String packageName = getPackageName(typeDefinition);
 
         if (!isScriptGeneratedClass(classes)) {
@@ -2079,6 +2079,17 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
         }
       }
     }
+  }
+
+  private static boolean areInTheDifferentFiles(PsiClass[] classes) {
+    if (classes.length <= 1) return true;
+
+    List<PsiFile> fileList = ContainerUtil.map(classes, it -> it.getContainingFile());
+    PsiFile file = fileList.getFirst();
+    for (int i = 1; i < fileList.size(); i++) {
+      if(fileList.get(i) != file) return true;
+    }
+    return false;
   }
 
   private static GlobalSearchScope inferClassScopeForSearchingDuplicates(GrTypeDefinition typeDefinition) {
