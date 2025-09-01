@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiMethod
+import org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.startLine
 import org.jetbrains.kotlin.idea.configuration.KOTLIN_GROUP_ID
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.native.KotlinGradleCodeInsightCommonBundle
 import org.jetbrains.kotlin.idea.groovy.inspections.DifferentStdlibGradleVersionInspection.Companion.getResolvedLibVersion
@@ -43,7 +44,7 @@ class RedundantKotlinStdLibInspectionVisitor(val holder: ProblemsHolder) : Kotli
     override fun visitCallExpression(callExpression: GrCallExpression) {
         // first check if org.jetbrains.kotlin.jvm plugin is applied before searching for kotlin-stdlib dependencies
         if (!isPluginIdOfKotlinJvm(callExpression) && !isPluginAliasOfKotlinJvm(callExpression)) return
-        DependenciesVisitor(holder).visitFile(callExpression.containingFile as GroovyFileBase)
+        DependenciesVisitor(holder).visitFile(holder.file as GroovyFileBase)
     }
 
     private fun isPluginCallApplied(callExpression: GrCallExpression): Boolean {
@@ -68,7 +69,12 @@ class RedundantKotlinStdLibInspectionVisitor(val holder: ProblemsHolder) : Kotli
         // TODO only works if plugin id argument is a literal
         if (pluginId !is GrLiteral || pluginId.value != KOTLIN_JVM_PLUGIN_ID) return false
 
-        LOG.debug("Kotlin JVM plugin is applied in file ${callExpression.containingFile.virtualFile.path}")
+        if (LOG.isDebugEnabled) LOG.debug(
+            "Kotlin JVM plugin is applied " +
+                    "at line ${callExpression.startLine(holder.file.fileDocument) + 1} " +
+                    "in file ${holder.file.virtualFile.path}"
+        )
+
         return true
     }
 
@@ -93,11 +99,11 @@ class RedundantKotlinStdLibInspectionVisitor(val holder: ProblemsHolder) : Kotli
 
         val idRaw = pluginIdLiteral.text.cleanRawString().split(":").firstOrNull() ?: return false
         if (idRaw != KOTLIN_JVM_PLUGIN_ID) return false
-        LOG.debug(
-            """
-            Kotlin JVM plugin is applied in file ${callExpression.containingFile.virtualFile.path} 
-            from version catalog ${origin.containingFile.virtualFile.path}
-            """
+        if (LOG.isDebugEnabled) LOG.debug(
+            "Kotlin JVM plugin is applied " +
+                    "at line ${callExpression.startLine(holder.file.fileDocument) + 1} " +
+                    "in file ${holder.file.virtualFile.path} " +
+                    "from version catalog ${origin.containingFile.virtualFile.path}"
         )
         return true
     }
@@ -122,7 +128,7 @@ private class DependenciesVisitor(val holder: ProblemsHolder) : GroovyRecursiveE
 
         val gradlePluginVersion = findResolvedKotlinGradleVersion(callExpression.containingFile) ?: return
         val stdlibVersion = getResolvedLibVersion(callExpression.containingFile, KOTLIN_GROUP_ID, listOf(KOTLIN_JAVA_STDLIB_NAME))
-        LOG.debug("Kotlin Plugin Version: $gradlePluginVersion, kotlin-stdlib Version: $stdlibVersion")
+        LOG.debug("Resolved versions of Kotlin JVM Plugin: ", gradlePluginVersion, " and kotlin-stdlib: ", stdlibVersion)
 
         // do nothing if the stdlib version is different from the plugin version
         if (stdlibVersion != gradlePluginVersion) return
@@ -134,6 +140,14 @@ private class DependenciesVisitor(val holder: ProblemsHolder) : GroovyRecursiveE
         )
     }
 
+    /**
+     * Checks if the dependency is a regular kotlin-stdlib dependency, e.g.
+     * `api 'org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version'` or
+     * `api group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib', version: '$kotlin_version'`
+     * (version can be omitted)
+     *
+     * TODO only works if arguments are string literals
+     */
     private fun isKotlinStdLibDependencyRegular(callExpression: GrCallExpression): Boolean {
         val (dependencyGroup, dependencyName) = if (callExpression.expressionArguments.size >= 1) {
             val argument = callExpression.expressionArguments.firstOrNull() ?: return false
@@ -158,6 +172,13 @@ private class DependenciesVisitor(val holder: ProblemsHolder) : GroovyRecursiveE
                 ?.let { it as? GrLiteral }?.let { it.value as? String } ?: return false
             group to name
         } else return false
+
+        if (LOG.isDebugEnabled) LOG.debug(
+            "Found a regular dependency: $dependencyGroup:$dependencyName " +
+                    "at line ${callExpression.startLine(holder.file.fileDocument) + 1} " +
+                    "in file ${holder.file.virtualFile.path}"
+        )
+
         return dependencyGroup == KOTLIN_GROUP_ID && dependencyName == KOTLIN_JAVA_STDLIB_NAME
     }
 
@@ -184,6 +205,14 @@ private class DependenciesVisitor(val holder: ProblemsHolder) : GroovyRecursiveE
 
             else -> return false
         }
+
+        if (LOG.isDebugEnabled) LOG.debug(
+            "Found a version catalog dependency: $dependencyGroup:$dependencyName " +
+                    "at line ${callExpression.startLine(holder.file.fileDocument) + 1} " +
+                    "in file ${holder.file.virtualFile.path} " +
+                    "from version catalog ${origin.containingFile.virtualFile.path}"
+        )
+
         return dependencyGroup == KOTLIN_GROUP_ID && dependencyName == KOTLIN_JAVA_STDLIB_NAME
     }
 }
