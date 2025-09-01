@@ -6,7 +6,9 @@ import com.intellij.platform.externalSystem.impl.workspaceModel.ExternalProjectE
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Experimental
 interface GradleBuildEntity : WorkspaceEntityWithSymbolicId {
   @Parent
   val externalProject: ExternalProjectEntity
@@ -15,7 +17,6 @@ interface GradleBuildEntity : WorkspaceEntityWithSymbolicId {
   val name: String
   // URL of the directory containing the settings.gradle(.kts)
   val url: VirtualFileUrl
-  val projects: List<GradleProjectEntity>
 
   override val symbolicId: GradleBuildEntityId
     get() = GradleBuildEntityId(externalProjectId, url)
@@ -28,7 +29,6 @@ interface GradleBuildEntity : WorkspaceEntityWithSymbolicId {
     var externalProjectId: ExternalProjectEntityId
     var name: String
     var url: VirtualFileUrl
-    var projects: List<GradleProjectEntity.Builder>
   }
 
   companion object : EntityType<GradleBuildEntity, Builder>() {

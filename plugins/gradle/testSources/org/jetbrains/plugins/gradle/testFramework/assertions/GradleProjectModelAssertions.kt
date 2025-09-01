@@ -4,7 +4,6 @@ package org.jetbrains.plugins.gradle.testFramework.assertions
 import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.externalSystem.impl.workspaceModel.ExternalProjectEntityId
-import com.intellij.platform.testFramework.assertion.collectionAssertion.CollectionAssertions.assertEqualsUnordered
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.plugins.gradle.model.projectModel.GradleBuildEntityId
 import org.jetbrains.plugins.gradle.model.projectModel.GradleProjectEntityId
@@ -15,7 +14,6 @@ internal fun assertGradleBuildEntity(
   project: Project,
   buildUrl: VirtualFileUrl,
   externalProjectId: ExternalProjectEntityId,
-  projectIds: List<GradleProjectEntityId>,
   name: String? = buildUrl.fileName,
 ) {
   val buildId = GradleBuildEntityId(externalProjectId, buildUrl)
@@ -31,9 +29,6 @@ internal fun assertGradleBuildEntity(
   }
   assertEquals(externalProjectId, buildEntity.externalProject.symbolicId) {
     "GradleBuildEntity with url = $buildUrl should be attached to an ExternalProjectEntity with proper symbolic ID"
-  }
-  assertEqualsUnordered(projectIds, buildEntity.projects.map { it.symbolicId }) {
-    "GradleBuildEntity with url = $buildUrl should have projects with expected symbolic IDs."
   }
 }
 
@@ -56,9 +51,6 @@ internal fun assertGradleProjectEntity(
   }
   assertEquals(name, projectEntity.name) {
     "GradleProjectEntity with `url` = $projectUrl should have expected project `name`."
-  }
-  assertEquals(buildId, projectEntity.build.symbolicId) {
-    "GradleProjectEntity with `url` = $projectUrl should be attached to a GradleBuildEntity with expected symbolic ID"
   }
   assertEquals(buildId, projectEntity.buildId) {
     "GradleProjectEntity with `url` = $projectUrl should have expected `buildId` of the build it belongs to."
