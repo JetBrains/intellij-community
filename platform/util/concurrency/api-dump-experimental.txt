@@ -4,5 +4,9 @@
 *f:com.intellij.virtualThreads.IntelliJVirtualThreads
 - s:ofVirtual():java.lang.Thread$Builder
 *f:com.intellij.virtualThreads.VirtualThreads
+- sf:asyncAsVirtualThread(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.CoroutineContext,kotlinx.coroutines.CoroutineStart,kotlin.jvm.functions.Function1):kotlinx.coroutines.Deferred
+- bs:asyncAsVirtualThread$default(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.CoroutineContext,kotlinx.coroutines.CoroutineStart,kotlin.jvm.functions.Function1,I,java.lang.Object):kotlinx.coroutines.Deferred
+- sf:launchAsVirtualThread(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.CoroutineContext,kotlinx.coroutines.CoroutineStart,kotlin.jvm.functions.Function1):kotlinx.coroutines.Job
+- bs:launchAsVirtualThread$default(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.CoroutineContext,kotlinx.coroutines.CoroutineStart,kotlin.jvm.functions.Function1,I,java.lang.Object):kotlinx.coroutines.Job
 - sf:virtualThread(Z,java.lang.String,java.lang.ClassLoader,kotlin.jvm.functions.Function0):java.lang.Thread
 - bs:virtualThread$default(Z,java.lang.String,java.lang.ClassLoader,kotlin.jvm.functions.Function0,I,java.lang.Object):java.lang.Thread
