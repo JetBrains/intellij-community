@@ -5,7 +5,6 @@ import com.intellij.execution.configurations.PathEnvironmentVariableUtil
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
@@ -23,9 +22,6 @@ import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.PyRequirementParser
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
-import com.jetbrains.python.pathValidation.PlatformAndRoot
-import com.jetbrains.python.pathValidation.ValidationRequest
-import com.jetbrains.python.pathValidation.validateExecutableFile
 import com.jetbrains.python.sdk.PyDetectedSdk
 import com.jetbrains.python.sdk.associatedModulePath
 import com.jetbrains.python.sdk.basePath
@@ -82,12 +78,6 @@ internal suspend fun detectPoetryExecutable(): PyResult<Path> {
 suspend fun getPoetryExecutable(): PyResult<Path> = withContext(Dispatchers.IO) {
   PropertiesComponent.getInstance().poetryPath?.let { Path.of(it) }?.takeIf { it.exists() }
 }?.let { PyResult.success(it) } ?: detectPoetryExecutable()
-
-@Internal
-suspend fun validatePoetryExecutable(poetryExecutable: Path?): ValidationInfo? = withContext(Dispatchers.IO) {
-  validateExecutableFile(ValidationRequest(path = poetryExecutable?.pathString, fieldIsEmpty = PyBundle.message("python.sdk.poetry.executable.not.found"), platformAndRoot = PlatformAndRoot.local // TODO: pass real converter from targets when we support poetry @ targets
-  ))
-}
 
 /**
  * Runs poetry command for the specified Poetry SDK.

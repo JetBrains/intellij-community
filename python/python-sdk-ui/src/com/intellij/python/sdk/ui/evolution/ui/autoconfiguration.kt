@@ -43,7 +43,7 @@ private class AutoconfigSelectSdkProvider() : EvoSelectSdkProvider {
     val section = EvoTreeSection(
       label = null,
       elements = extensions.mapIndexed { idx, (extension, intention) ->
-        EvoTreeLeafElement(RunConfiguratorAction(extension, intention, idx))
+        EvoTreeLeafElement(RunConfiguratorAction(intention, idx))
       }
     )
 
@@ -60,7 +60,6 @@ private val ratingIcons = listOf(
 )
 
 private class RunConfiguratorAction(
-  val extension: PyProjectSdkConfigurationExtension,
   intention: String,
   order: Int,
 ) : AnAction({ intention }, { intention }, ratingIcons.getOrElse(order, { AllIcons.Ide.Rating1 })) {

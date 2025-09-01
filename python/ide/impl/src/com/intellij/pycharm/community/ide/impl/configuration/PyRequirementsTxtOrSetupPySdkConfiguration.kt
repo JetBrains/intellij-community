@@ -8,14 +8,12 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -33,7 +31,6 @@ import com.jetbrains.python.packaging.PyPackageUtil
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.requirementsTxt.PythonRequirementTxtSdkUtils
 import com.jetbrains.python.packaging.setupPy.SetupPyManager
-import com.jetbrains.python.requirements.RequirementsFileType
 import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.basePath
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
@@ -132,18 +129,6 @@ class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigurationExte
 
     return if (permitted) envData else null
   }
-
-  private fun getCommandForPipInstall(requirementsTxtOrSetupPy: VirtualFile): List<String> {
-    return if (FileTypeRegistry.getInstance().isFileOfType(requirementsTxtOrSetupPy, RequirementsFileType.INSTANCE)) {
-      listOf("-r", getAbsPath(requirementsTxtOrSetupPy))
-    }
-    else {
-      listOf("-e", getAbsPath(requirementsTxtOrSetupPy.parent))
-    }
-  }
-
-  @NlsSafe
-  private fun getAbsPath(file: VirtualFile): String = file.toNioPath().toAbsolutePath().toString()
 
   private class Dialog(
     module: Module,
