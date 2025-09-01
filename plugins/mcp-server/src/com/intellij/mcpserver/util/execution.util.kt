@@ -2,6 +2,8 @@ package com.intellij.mcpserver.util
 
 import com.intellij.mcpserver.McpExpectedError
 import com.intellij.mcpserver.McpServerBundle
+import com.intellij.mcpserver.impl.McpServerService
+import com.intellij.mcpserver.mcpCallInfo
 import com.intellij.mcpserver.settings.McpServerSettings
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.colors.EditorFontType
@@ -10,13 +12,27 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.dsl.builder.*
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.withContext
 import javax.swing.Action
 import javax.swing.JComponent
 
 suspend fun checkUserConfirmationIfNeeded(@NlsContexts.Label notificationText: String, command: String?, project: Project) {
-  if (!McpServerSettings.getInstance().state.enableBraveMode && !askConfirmation(project,notificationText, command)) {
-    throw McpExpectedError("User rejected command execution")
+  fun rejected(): McpExpectedError = McpExpectedError("User rejected command execution")
+
+  val commandExecutionMode = currentCoroutineContext().mcpCallInfo.mcpSessionOptions.commandExecutionMode
+  when (commandExecutionMode) {
+    McpServerService.AskCommandExecutionMode.ASK -> {
+      if (!askConfirmation(project, notificationText, command)) throw rejected()
+    }
+    McpServerService.AskCommandExecutionMode.RESPECT_GLOBAL_SETTINGS -> {
+      if (!McpServerSettings.getInstance().state.enableBraveMode && !askConfirmation(project, notificationText, command)) {
+        throw rejected()
+      }
+    }
+    McpServerService.AskCommandExecutionMode.DONT_ASK -> {
+      // do nothing
+    }
   }
 }
 

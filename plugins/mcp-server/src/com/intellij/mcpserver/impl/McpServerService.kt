@@ -62,6 +62,17 @@ private val IJ_MCP_AUTH_TOKEN: String = ::IJ_MCP_AUTH_TOKEN.name
 
 @Service(Service.Level.APP)
 class McpServerService(val cs: CoroutineScope) {
+  enum class AskCommandExecutionMode {
+    ASK,
+    DONT_ASK,
+
+    /**
+     * Respects brave mode flag
+     */
+    RESPECT_GLOBAL_SETTINGS,
+  }
+  class McpSessionOptions(val commandExecutionMode: AskCommandExecutionMode)
+
   companion object {
     fun getInstance(): McpServerService = service()
     suspend fun getInstanceAsync(): McpServerService = serviceAsync()
@@ -71,7 +82,7 @@ class McpServerService(val cs: CoroutineScope) {
   @OptIn(ExperimentalAtomicApi::class)
   private val callId = AtomicInteger(0)
 
-  private val activeTokens = ConcurrentHashMap.newKeySet<String>()
+  private val activeAuthorizedSessions = ConcurrentHashMap<String, McpSessionOptions>()
 
   val isRunning: Boolean
     get() = server.value != null
@@ -98,20 +109,20 @@ class McpServerService(val cs: CoroutineScope) {
    * The calling site should pass the token value in http headers.
    * @param block suspend function that runs in the isolated MCP server context
    */
-  suspend fun authorizedSession(block: suspend CoroutineScope.(port: Int, authTokenName: String, authTokenValue: String) -> Unit) {
+  suspend fun authorizedSession(mcpSessionOptions: McpSessionOptions, block: suspend CoroutineScope.(port: Int, authTokenName: String, authTokenValue: String) -> Unit) {
     // open server here on random port
     val uuid = UUID.randomUUID().toString()
     val server = startServer(desiredPort = McpServerSettings.DEFAULT_MCP_PRIVATE_PORT, authCheck = true)
     try {
       val occupiedPort = server.engine.resolvedConnectors().first().port
       logger.trace { "Authorized MCP session started on port $occupiedPort" }
-      activeTokens.add(uuid)
+      activeAuthorizedSessions[uuid] = mcpSessionOptions
       coroutineScope {
         block(occupiedPort, IJ_MCP_AUTH_TOKEN, uuid)
       }
     }
     finally {
-      activeTokens.remove(uuid)
+      activeAuthorizedSessions.remove(uuid)
       try {
         // if to call `stopSuspend` without NonCancellable in the case of the current coroutine cancellation the stopSuspend won't run
         // DO NOT merge `withContext(NonCancellable)` and `withContext(Dispatchers.IO)`, otherwise it throws cancellation
@@ -132,7 +143,11 @@ class McpServerService(val cs: CoroutineScope) {
   }
 
   private fun isKnownToken(token: String): Boolean {
-    return activeTokens.contains(token)
+    return activeAuthorizedSessions.containsKey(token)
+  }
+
+  private fun getSessionOptions(token: String?): McpSessionOptions {
+    return token?.let { activeAuthorizedSessions[token] } ?: McpSessionOptions(commandExecutionMode = AskCommandExecutionMode.RESPECT_GLOBAL_SETTINGS)
   }
 
   val port: Int
@@ -280,6 +295,10 @@ private fun McpTool.mcpToolToRegisteredTool(server: Server, projectPathFromIniti
       return@RegisteredTool McpToolCallResult.error(errorMessage = e.message ?: "Unknown error", structuredContent = null).toSdkToolCallResult()
     }
 
+    val authToken = httpRequest?.headers[IJ_MCP_AUTH_TOKEN]
+
+    val sessionOptions = getSessionOptions(authToken)
+
     val vfsEvent = CopyOnWriteArrayList<VFileEvent>()
       val initialDocumentContents = ConcurrentHashMap<Document, String>()
       val clientVersion = server.clientVersion ?: Implementation("Unknown MCP client", "Unknown version")
@@ -290,7 +309,8 @@ private fun McpTool.mcpToolToRegisteredTool(server: Server, projectPathFromIniti
         project = project,
         mcpToolDescriptor = descriptor,
         rawArguments = request.arguments,
-        meta = request._meta
+        meta = request._meta,
+        mcpSessionOptions = sessionOptions
       )
 
       val callResult = coroutineScope {
