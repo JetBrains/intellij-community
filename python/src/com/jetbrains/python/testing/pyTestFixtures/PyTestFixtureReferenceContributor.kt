@@ -6,7 +6,7 @@ import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.TextRange
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.psi.*
-import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.findParentOfType
 import com.intellij.util.ArrayUtil
 import com.intellij.util.ProcessingContext
 import com.intellij.util.containers.ContainerUtil
@@ -16,6 +16,7 @@ import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.COROUTINE
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.GENERATOR
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.resolve.ImportedResolveResult
+import com.jetbrains.python.psi.resolve.QualifiedNameFinder
 import com.jetbrains.python.psi.types.*
 
 class PyTestFixtureReference(pyElement: PsiElement, fixture: PyTestFixture, private val importElement: PyElement? = null, range: TextRange? = null) : BaseReference(pyElement, range), PsiPolyVariantReference {
@@ -39,7 +40,7 @@ class PyTestFixtureReference(pyElement: PsiElement, fixture: PyTestFixture, priv
     // Provide completion variants for fixtures, especially inside pytest.mark.usefixtures strings
     val element = myElement
     val project = element.project
-    val context = TypeEvalContext.codeAnalysis(project, element.containingFile)
+    val context = TypeEvalContext.codeCompletion(project, element.containingFile)
 
     // If we are in a parameter, variants are handled elsewhere; be conservative and return empty
     if (element !is PyStringLiteralExpression) return emptyArray()
@@ -47,23 +48,30 @@ class PyTestFixtureReference(pyElement: PsiElement, fixture: PyTestFixture, priv
     val module = ModuleUtilCore.findModuleForPsiElement(element) ?: return emptyArray()
 
     // Try to find the function we are attached to (decorated function)
-    val func = PsiTreeUtil.getParentOfType(element, PyFunction::class.java)
+    val func = element.findParentOfType<PyFunction>()
 
     val fixtureNames: List<String> = if (func != null) {
       // For function-level decorators
       getFixtures(module, func, context)
         .filterNot { fixture ->
-          val fn = fixture.function ?: return@filterNot false
-          isFromPytestPackage(fn)
+          // `usefixtures` is only useful if no access to the fixture object is required.
+          // Otherwise, fixtures are provided via function arguments.
+          // Fixtures from pytest usually need some interaction to be useful.
+          fixture.function?.isFromPytestPackage() ?: false
         }
         .map { it.name }
     }
     else {
       // For class-level decorators and module-level function calls
       findDecoratorsByName(module, TEST_FIXTURE_DECORATOR_NAMES)
-        .filterNot { dec -> dec.target?.let { isFromPytestPackage(it) } == true }
+        .filterNot {
+          // `usefixtures` is only useful if no access to the fixture object is required.
+          // Otherwise, fixtures are provided via function arguments.
+          // Fixtures from pytest usually need some interaction to be useful.
+          dec ->
+          dec.target?.isFromPytestPackage() == true
+        }
         .mapNotNull { dec -> getTestFixtureName(dec) ?: dec.target?.name }
-        .toList()
     }
 
     // Filter out builtin/reserved pytest fixtures and the special 'request' pseudo-fixture
@@ -162,17 +170,15 @@ private object PyTestReferenceAsStringProvider : PyTestReferenceProvider() {
         PyTestFixtureReference(element, namedFixtureParameterLink.fixture, namedFixtureParameterLink.importElement, TextRange(1, element.textLength - 1))
       else
       // Provide a soft reference to enable completion even when nothing is resolvable yet (e.g., empty string)
-        PyTestFixtureReference(element, PyTestFixture(null, null, element.stringValue ?: ""), null, TextRange(1, element.textLength - 1))
+        PyTestFixtureReference(element, PyTestFixture(null, null, element.stringValue), null, TextRange(1, element.textLength - 1))
     )
   }
 }
 
-private fun isFromPytestPackage(element: PyElement): Boolean {
-  val vFile = element.containingFile?.virtualFile ?: return false
-  val path = vFile.path.replace('\\', '/')
-  // Treat anything under top-level packages "pytest" or "_pytest" as internal pytest implementation
-  return path.contains("/_pytest/") || path.contains("/pytest/")
-}
+private fun PyElement.isFromPytestPackage(): Boolean =
+  QualifiedNameFinder.findShortestImportableQName(containingFile)?.firstComponent.let {
+    it == "pytest" || it == "_pytest"
+  }
 
 class PyTestFixtureReferenceContributor : PsiReferenceContributor() {
 

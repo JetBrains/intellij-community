@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.testing
 
+import com.intellij.idea.TestFor
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.jetbrains.python.fixtures.PyTestCase
 import com.jetbrains.python.inspections.unusedLocal.PyUnusedLocalInspection
@@ -45,7 +46,8 @@ class PyTestFixtureAndParametrizedTest : PyTestCase() {
     myFixture.checkResultByFile("after_test_test.txt")
   }
 
-  fun testUsefixturesCompletionSuggestsFixture() {
+  @TestFor(issues = ["PY-54771"])
+  fun `test usefixtures completion suggests fix on function`() {
     myFixture.copyDirectoryToProject(".", ".")
     myFixture.configureByFile("test_usefixtures_completion.py")
     myFixture.completeBasic()
@@ -56,7 +58,8 @@ class PyTestFixtureAndParametrizedTest : PyTestCase() {
     assertFalse(variants.contains("tmp_path"))
   }
 
-  fun testUsefixturesCompletionSuggestsFixtureOnClass() {
+  @TestFor(issues = ["PY-54771"])
+  fun `test usefixtures completion suggests fix on class`() {
     myFixture.copyDirectoryToProject(".", ".")
     myFixture.configureByFile("test_usefixtures_completion_class.py")
     myFixture.completeBasic()
@@ -67,7 +70,8 @@ class PyTestFixtureAndParametrizedTest : PyTestCase() {
     assertFalse(variants.contains("tmp_path"))
   }
 
-  fun testUsefixturesCompletionSuggestsFixtureAtModule() {
+  @TestFor(issues = ["PY-54771"])
+  fun `test usefixtures completion suggests fix on module`() {
     myFixture.copyDirectoryToProject(".", ".")
     myFixture.configureByFile("test_usefixtures_completion_module.py")
     myFixture.completeBasic()
