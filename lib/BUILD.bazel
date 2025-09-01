@@ -820,22 +820,22 @@ jvm_import(
 
 jvm_import(
   name = "byte-buddy",
-  jar = "@byte-buddy-1_17_6_http//file",
-  source_jar = "@byte-buddy-1_17_6-sources_http//file",
+  jar = "@byte-buddy-1_17_7_http//file",
+  source_jar = "@byte-buddy-1_17_7-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "caffeine",
-  jar = "@caffeine-3_2_1_http//file",
-  source_jar = "@caffeine-3_2_1-sources_http//file",
+  jar = "@caffeine-3_2_2_http//file",
+  source_jar = "@caffeine-3_2_2-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "classgraph",
-  jar = "@classgraph-4_8_179_http//file",
-  source_jar = "@classgraph-4_8_179-sources_http//file",
+  jar = "@classgraph-4_8_181_http//file",
+  source_jar = "@classgraph-4_8_181-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -7253,22 +7253,22 @@ jvm_import(
 java_library(
   name = "miglayout-swing",
   exports = [
-    ":miglayout-swing-11_4_http_import",
-    ":miglayout-core-11_4_http_import",
+    ":miglayout-swing-11_4_2_http_import",
+    ":miglayout-core-11_4_2_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "miglayout-swing-11_4_http_import",
-  jar = "@miglayout-swing-11_4_http//file",
-  source_jar = "@miglayout-swing-11_4-sources_http//file"
+  name = "miglayout-swing-11_4_2_http_import",
+  jar = "@miglayout-swing-11_4_2_http//file",
+  source_jar = "@miglayout-swing-11_4_2-sources_http//file"
 )
 
 jvm_import(
-  name = "miglayout-core-11_4_http_import",
-  jar = "@miglayout-core-11_4_http//file",
-  source_jar = "@miglayout-core-11_4-sources_http//file"
+  name = "miglayout-core-11_4_2_http_import",
+  jar = "@miglayout-core-11_4_2_http//file",
+  source_jar = "@miglayout-core-11_4_2-sources_http//file"
 )
 
 java_library(
@@ -7490,51 +7490,51 @@ java_library(
 java_library(
   name = "netty-tcnative-boringssl",
   exports = [
-    ":netty-tcnative-boringssl-static-2_0_69_Final_http_import",
-    ":netty-tcnative-classes-2_0_69_Final_http_import",
-    ":netty-tcnative-boringssl-static-2_0_69_Final-linux-x86_64_http_import",
-    ":netty-tcnative-boringssl-static-2_0_69_Final-linux-aarch_64_http_import",
-    ":netty-tcnative-boringssl-static-2_0_69_Final-osx-x86_64_http_import",
-    ":netty-tcnative-boringssl-static-2_0_69_Final-osx-aarch_64_http_import",
-    ":netty-tcnative-boringssl-static-2_0_69_Final-windows-x86_64_http_import",
+    ":netty-tcnative-boringssl-static-2_0_73_Final_http_import",
+    ":netty-tcnative-classes-2_0_73_Final_http_import",
+    ":netty-tcnative-boringssl-static-2_0_73_Final-linux-x86_64_http_import",
+    ":netty-tcnative-boringssl-static-2_0_73_Final-linux-aarch_64_http_import",
+    ":netty-tcnative-boringssl-static-2_0_73_Final-osx-x86_64_http_import",
+    ":netty-tcnative-boringssl-static-2_0_73_Final-osx-aarch_64_http_import",
+    ":netty-tcnative-boringssl-static-2_0_73_Final-windows-x86_64_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "netty-tcnative-boringssl-static-2_0_69_Final_http_import",
-  jar = "@netty-tcnative-boringssl-static-2_0_69_Final_http//file"
+  name = "netty-tcnative-boringssl-static-2_0_73_Final_http_import",
+  jar = "@netty-tcnative-boringssl-static-2_0_73_Final_http//file"
 )
 
 jvm_import(
-  name = "netty-tcnative-classes-2_0_69_Final_http_import",
-  jar = "@netty-tcnative-classes-2_0_69_Final_http//file",
-  source_jar = "@netty-tcnative-classes-2_0_69_Final-sources_http//file"
+  name = "netty-tcnative-classes-2_0_73_Final_http_import",
+  jar = "@netty-tcnative-classes-2_0_73_Final_http//file",
+  source_jar = "@netty-tcnative-classes-2_0_73_Final-sources_http//file"
 )
 
 jvm_import(
-  name = "netty-tcnative-boringssl-static-2_0_69_Final-linux-x86_64_http_import",
-  jar = "@netty-tcnative-boringssl-static-2_0_69_Final-linux-x86_64_http//file"
+  name = "netty-tcnative-boringssl-static-2_0_73_Final-linux-x86_64_http_import",
+  jar = "@netty-tcnative-boringssl-static-2_0_73_Final-linux-x86_64_http//file"
 )
 
 jvm_import(
-  name = "netty-tcnative-boringssl-static-2_0_69_Final-linux-aarch_64_http_import",
-  jar = "@netty-tcnative-boringssl-static-2_0_69_Final-linux-aarch_64_http//file"
+  name = "netty-tcnative-boringssl-static-2_0_73_Final-linux-aarch_64_http_import",
+  jar = "@netty-tcnative-boringssl-static-2_0_73_Final-linux-aarch_64_http//file"
 )
 
 jvm_import(
-  name = "netty-tcnative-boringssl-static-2_0_69_Final-osx-x86_64_http_import",
-  jar = "@netty-tcnative-boringssl-static-2_0_69_Final-osx-x86_64_http//file"
+  name = "netty-tcnative-boringssl-static-2_0_73_Final-osx-x86_64_http_import",
+  jar = "@netty-tcnative-boringssl-static-2_0_73_Final-osx-x86_64_http//file"
 )
 
 jvm_import(
-  name = "netty-tcnative-boringssl-static-2_0_69_Final-osx-aarch_64_http_import",
-  jar = "@netty-tcnative-boringssl-static-2_0_69_Final-osx-aarch_64_http//file"
+  name = "netty-tcnative-boringssl-static-2_0_73_Final-osx-aarch_64_http_import",
+  jar = "@netty-tcnative-boringssl-static-2_0_73_Final-osx-aarch_64_http//file"
 )
 
 jvm_import(
-  name = "netty-tcnative-boringssl-static-2_0_69_Final-windows-x86_64_http_import",
-  jar = "@netty-tcnative-boringssl-static-2_0_69_Final-windows-x86_64_http//file"
+  name = "netty-tcnative-boringssl-static-2_0_73_Final-windows-x86_64_http_import",
+  jar = "@netty-tcnative-boringssl-static-2_0_73_Final-windows-x86_64_http//file"
 )
 
 jvm_import(
@@ -9423,8 +9423,8 @@ jvm_import(
 
 jvm_import(
   name = "zstd-jni",
-  jar = "@zstd-jni-1_5_7-3_http//file",
-  source_jar = "@zstd-jni-1_5_7-3-sources_http//file",
+  jar = "@zstd-jni-1_5_7-4_http//file",
+  source_jar = "@zstd-jni-1_5_7-4-sources_http//file",
   visibility = ["//visibility:public"]
 )
 

@@ -693,45 +693,45 @@ http_file(
 )
 
 http_file(
-  name = "byte-buddy-1_17_6_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/net/bytebuddy/byte-buddy/1.17.6/byte-buddy-1.17.6.jar",
-  sha256 = "d26382a839cb26d5c62a0b0f04715bcef55a531f96ac6ce40de452a1c0539e70",
-  downloaded_file_path = "byte-buddy-1.17.6.jar"
+  name = "byte-buddy-1_17_7_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/net/bytebuddy/byte-buddy/1.17.7/byte-buddy-1.17.7.jar",
+  sha256 = "3575dcb8a98faf943d3c1595c47a16047c4fce8a83ebbb26262f1a2f67546357",
+  downloaded_file_path = "byte-buddy-1.17.7.jar"
 )
 
 http_file(
-  name = "byte-buddy-1_17_6-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/net/bytebuddy/byte-buddy/1.17.6/byte-buddy-1.17.6-sources.jar",
-  sha256 = "bed458b6ee0df083eb4e1bd2dd171f7d8abe30993b510a9a241ba7bff3653e27",
-  downloaded_file_path = "byte-buddy-1.17.6-sources.jar"
+  name = "byte-buddy-1_17_7-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/net/bytebuddy/byte-buddy/1.17.7/byte-buddy-1.17.7-sources.jar",
+  sha256 = "8b4139f2607584938370ed3d2adfc404e893c39db253afae53222aa920c58182",
+  downloaded_file_path = "byte-buddy-1.17.7-sources.jar"
 )
 
 http_file(
-  name = "caffeine-3_2_1_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/ben-manes/caffeine/caffeine/3.2.1/caffeine-3.2.1.jar",
-  sha256 = "771175b14f1f893856a901e81a4a76073c806f931102c6b23e6e41969a98a4a5",
-  downloaded_file_path = "caffeine-3.2.1.jar"
+  name = "caffeine-3_2_2_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/ben-manes/caffeine/caffeine/3.2.2/caffeine-3.2.2.jar",
+  sha256 = "c74a6c72221dfb76eb92f2bb40108ea561a7da2f315dc3b1e64afa8f077f210c",
+  downloaded_file_path = "caffeine-3.2.2.jar"
 )
 
 http_file(
-  name = "caffeine-3_2_1-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/ben-manes/caffeine/caffeine/3.2.1/caffeine-3.2.1-sources.jar",
-  sha256 = "55f283dc6248f5f0f38171ab5beede01dc5f3bd1c9cba589675384f786b86b4c",
-  downloaded_file_path = "caffeine-3.2.1-sources.jar"
+  name = "caffeine-3_2_2-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/ben-manes/caffeine/caffeine/3.2.2/caffeine-3.2.2-sources.jar",
+  sha256 = "2ec9bc766e34375395ca88522105efcc82247ade006848ebd8decf21bead1d7d",
+  downloaded_file_path = "caffeine-3.2.2-sources.jar"
 )
 
 http_file(
-  name = "classgraph-4_8_179_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/github/classgraph/classgraph/4.8.179/classgraph-4.8.179.jar",
-  sha256 = "16558357f234052370109127a45d69a9bd6d8646925594792634486dc48b159d",
-  downloaded_file_path = "classgraph-4.8.179.jar"
+  name = "classgraph-4_8_181_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/github/classgraph/classgraph/4.8.181/classgraph-4.8.181.jar",
+  sha256 = "62a6436d69710ef5fab6ec243781ce4c5b299047ed1841b5f92746ae852ce545",
+  downloaded_file_path = "classgraph-4.8.181.jar"
 )
 
 http_file(
-  name = "classgraph-4_8_179-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/github/classgraph/classgraph/4.8.179/classgraph-4.8.179-sources.jar",
-  sha256 = "dc33a7a96bc89279fac734f586dfca2d56bc57569f89f9850c3e72c6b785404d",
-  downloaded_file_path = "classgraph-4.8.179-sources.jar"
+  name = "classgraph-4_8_181-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/github/classgraph/classgraph/4.8.181/classgraph-4.8.181-sources.jar",
+  sha256 = "6df77971fd117f7cb5007eab6a36ec219ea028165339cdbb531286cc5f57aac9",
+  downloaded_file_path = "classgraph-4.8.181-sources.jar"
 )
 
 http_file(
@@ -10325,31 +10325,31 @@ http_file(
 )
 
 http_file(
-  name = "miglayout-swing-11_4_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/miglayout/miglayout-swing/11.4/miglayout-swing-11.4.jar",
-  sha256 = "ddaf8b1b483d428203a45a13a9a621c6af855d2b805c11fd186f182ea2b52373",
-  downloaded_file_path = "miglayout-swing-11.4.jar"
+  name = "miglayout-swing-11_4_2_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/miglayout/miglayout-swing/11.4.2/miglayout-swing-11.4.2.jar",
+  sha256 = "036b8532021092afcc7159d3756086a5fbe19f6014ac8474817d55d1289af756",
+  downloaded_file_path = "miglayout-swing-11.4.2.jar"
 )
 
 http_file(
-  name = "miglayout-core-11_4_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/miglayout/miglayout-core/11.4/miglayout-core-11.4.jar",
-  sha256 = "2707c00b274df1f206626492902e240bbbeee68491bd56298534f9e9b72853e7",
-  downloaded_file_path = "miglayout-core-11.4.jar"
+  name = "miglayout-core-11_4_2_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/miglayout/miglayout-core/11.4.2/miglayout-core-11.4.2.jar",
+  sha256 = "1c23f628d8f2a7a1b72c8f634c6775d1a8fd0100fcf05bf50d7a2ac8dafb0e62",
+  downloaded_file_path = "miglayout-core-11.4.2.jar"
 )
 
 http_file(
-  name = "miglayout-swing-11_4-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/miglayout/miglayout-swing/11.4/miglayout-swing-11.4-sources.jar",
-  sha256 = "dab65780777a74cd8b007ee57fcb9656c0ef825069a47249b054aba2f5e6aac3",
-  downloaded_file_path = "miglayout-swing-11.4-sources.jar"
+  name = "miglayout-swing-11_4_2-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/miglayout/miglayout-swing/11.4.2/miglayout-swing-11.4.2-sources.jar",
+  sha256 = "70cc167a5a3d72b8534c5c1d8633d78b00c2fc07c4e3dfa163ec0e4cb49a45e0",
+  downloaded_file_path = "miglayout-swing-11.4.2-sources.jar"
 )
 
 http_file(
-  name = "miglayout-core-11_4-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/miglayout/miglayout-core/11.4/miglayout-core-11.4-sources.jar",
-  sha256 = "22cc4cef7d791d4e25eedcbe56068d0c2562605d62a6a6912c52d12260e8a15a",
-  downloaded_file_path = "miglayout-core-11.4-sources.jar"
+  name = "miglayout-core-11_4_2-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/miglayout/miglayout-core/11.4.2/miglayout-core-11.4.2-sources.jar",
+  sha256 = "933dfa0ee061a3c6ac990613b4a82eb075c8c2d9415945fee7932be002631311",
+  downloaded_file_path = "miglayout-core-11.4.2-sources.jar"
 )
 
 http_file(
@@ -10710,66 +10710,66 @@ http_file(
 )
 
 http_file(
-  name = "netty-tcnative-boringssl-static-2_0_69_Final_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-tcnative-boringssl-static/2.0.69.Final/netty-tcnative-boringssl-static-2.0.69.Final.jar",
-  sha256 = "79dbae7f0c2a1f73a6b4bb992edb0ab94ebd3196f5e83a94784039fb96d9a040",
-  downloaded_file_path = "netty-tcnative-boringssl-static-2.0.69.Final.jar"
+  name = "netty-tcnative-boringssl-static-2_0_73_Final_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-tcnative-boringssl-static/2.0.73.Final/netty-tcnative-boringssl-static-2.0.73.Final.jar",
+  sha256 = "cfd4332afd70ebb3041e244317dc790d8cb7bf6ddd05591cc1188b8052979946",
+  downloaded_file_path = "netty-tcnative-boringssl-static-2.0.73.Final.jar"
 )
 
 http_file(
-  name = "netty-tcnative-classes-2_0_69_Final_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-tcnative-classes/2.0.69.Final/netty-tcnative-classes-2.0.69.Final.jar",
-  sha256 = "0bbc2848cb099eb3f6f4ec36501b3600e1828457cda41d5330687f601ee04bef",
-  downloaded_file_path = "netty-tcnative-classes-2.0.69.Final.jar"
+  name = "netty-tcnative-classes-2_0_73_Final_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-tcnative-classes/2.0.73.Final/netty-tcnative-classes-2.0.73.Final.jar",
+  sha256 = "6396a4e67269f3f35851c17613257964f46fd4e937cb3ffe73ddcd963c2a83a7",
+  downloaded_file_path = "netty-tcnative-classes-2.0.73.Final.jar"
 )
 
 http_file(
-  name = "netty-tcnative-boringssl-static-2_0_69_Final-linux-x86_64_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-tcnative-boringssl-static/2.0.69.Final/netty-tcnative-boringssl-static-2.0.69.Final-linux-x86_64.jar",
-  sha256 = "083b527de741bd8e7cf3c4714429454122d2fb5e8cdd17c42d90269a391f6d11",
-  downloaded_file_path = "netty-tcnative-boringssl-static-2.0.69.Final-linux-x86_64.jar"
+  name = "netty-tcnative-boringssl-static-2_0_73_Final-linux-x86_64_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-tcnative-boringssl-static/2.0.73.Final/netty-tcnative-boringssl-static-2.0.73.Final-linux-x86_64.jar",
+  sha256 = "a700168761f778704d456e4b0cc9183a42a832ac4b970886663c6c855bf5461c",
+  downloaded_file_path = "netty-tcnative-boringssl-static-2.0.73.Final-linux-x86_64.jar"
 )
 
 http_file(
-  name = "netty-tcnative-boringssl-static-2_0_69_Final-linux-aarch_64_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-tcnative-boringssl-static/2.0.69.Final/netty-tcnative-boringssl-static-2.0.69.Final-linux-aarch_64.jar",
-  sha256 = "9e2a725c68de1b14347b4d849557d81940692613b0e7f7ec4fe3d4064ce82b53",
-  downloaded_file_path = "netty-tcnative-boringssl-static-2.0.69.Final-linux-aarch_64.jar"
+  name = "netty-tcnative-boringssl-static-2_0_73_Final-linux-aarch_64_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-tcnative-boringssl-static/2.0.73.Final/netty-tcnative-boringssl-static-2.0.73.Final-linux-aarch_64.jar",
+  sha256 = "6d9ebbb6db1567ebc7e3561a555b2e80cded56002f16be4c152bb911f6952cee",
+  downloaded_file_path = "netty-tcnative-boringssl-static-2.0.73.Final-linux-aarch_64.jar"
 )
 
 http_file(
-  name = "netty-tcnative-boringssl-static-2_0_69_Final-osx-x86_64_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-tcnative-boringssl-static/2.0.69.Final/netty-tcnative-boringssl-static-2.0.69.Final-osx-x86_64.jar",
-  sha256 = "f66b18f8367c2a244d3d95e9869ab8178e8ff2f90d4b8bf076c6e2563ffd3442",
-  downloaded_file_path = "netty-tcnative-boringssl-static-2.0.69.Final-osx-x86_64.jar"
+  name = "netty-tcnative-boringssl-static-2_0_73_Final-osx-x86_64_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-tcnative-boringssl-static/2.0.73.Final/netty-tcnative-boringssl-static-2.0.73.Final-osx-x86_64.jar",
+  sha256 = "f2cbc864db43bc57d13a79444b2f8d784a01345bbe259c9721be00935f8ba748",
+  downloaded_file_path = "netty-tcnative-boringssl-static-2.0.73.Final-osx-x86_64.jar"
 )
 
 http_file(
-  name = "netty-tcnative-boringssl-static-2_0_69_Final-osx-aarch_64_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-tcnative-boringssl-static/2.0.69.Final/netty-tcnative-boringssl-static-2.0.69.Final-osx-aarch_64.jar",
-  sha256 = "78bac6de55f6333157671007f989d5c183bbad9302e1a43b01b625125552e619",
-  downloaded_file_path = "netty-tcnative-boringssl-static-2.0.69.Final-osx-aarch_64.jar"
+  name = "netty-tcnative-boringssl-static-2_0_73_Final-osx-aarch_64_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-tcnative-boringssl-static/2.0.73.Final/netty-tcnative-boringssl-static-2.0.73.Final-osx-aarch_64.jar",
+  sha256 = "a1158e70bb79d591c7d7fcc2ab0bcf6682500f7de4961fda4a9cc1b015cad65e",
+  downloaded_file_path = "netty-tcnative-boringssl-static-2.0.73.Final-osx-aarch_64.jar"
 )
 
 http_file(
-  name = "netty-tcnative-boringssl-static-2_0_69_Final-windows-x86_64_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-tcnative-boringssl-static/2.0.69.Final/netty-tcnative-boringssl-static-2.0.69.Final-windows-x86_64.jar",
-  sha256 = "bbfc52aaf8d15db7ed4b2707bdc59e5b8b2c20fcee6a27a2475a8fbb8fa2f747",
-  downloaded_file_path = "netty-tcnative-boringssl-static-2.0.69.Final-windows-x86_64.jar"
+  name = "netty-tcnative-boringssl-static-2_0_73_Final-windows-x86_64_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-tcnative-boringssl-static/2.0.73.Final/netty-tcnative-boringssl-static-2.0.73.Final-windows-x86_64.jar",
+  sha256 = "6a8cb27bdd255a718ca100d52cfdac20cce70ab3a92c248efaee50f63eefd11e",
+  downloaded_file_path = "netty-tcnative-boringssl-static-2.0.73.Final-windows-x86_64.jar"
 )
 
 http_file(
-  name = "netty-tcnative-boringssl-static-2_0_69_Final-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-tcnative-boringssl-static/2.0.69.Final/netty-tcnative-boringssl-static-2.0.69.Final-sources.jar",
-  sha256 = "a85e8f8acfd6e015dc471aa92b732c4e0a92e68a31c5a6b89c41d335a4c9dccc",
-  downloaded_file_path = "netty-tcnative-boringssl-static-2.0.69.Final-sources.jar"
+  name = "netty-tcnative-boringssl-static-2_0_73_Final-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-tcnative-boringssl-static/2.0.73.Final/netty-tcnative-boringssl-static-2.0.73.Final-sources.jar",
+  sha256 = "55ea6c1cdd60d4ee0022f4687b3309b16464cb622ca35f85b22a1be68eb0522b",
+  downloaded_file_path = "netty-tcnative-boringssl-static-2.0.73.Final-sources.jar"
 )
 
 http_file(
-  name = "netty-tcnative-classes-2_0_69_Final-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-tcnative-classes/2.0.69.Final/netty-tcnative-classes-2.0.69.Final-sources.jar",
-  sha256 = "fe483b74a6be9b46999814e4b235c531e748af7afc907dc7824cfffd76d896a2",
-  downloaded_file_path = "netty-tcnative-classes-2.0.69.Final-sources.jar"
+  name = "netty-tcnative-classes-2_0_73_Final-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-tcnative-classes/2.0.73.Final/netty-tcnative-classes-2.0.73.Final-sources.jar",
+  sha256 = "36f43ad0a62d897c62e399864c894b812748732ad0ff60078d70ec22add45480",
+  downloaded_file_path = "netty-tcnative-classes-2.0.73.Final-sources.jar"
 )
 
 http_file(
@@ -13804,17 +13804,17 @@ http_file(
 )
 
 http_file(
-  name = "zstd-jni-1_5_7-3_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/luben/zstd-jni/1.5.7-3/zstd-jni-1.5.7-3.jar",
-  sha256 = "a38a4a97f1b43b878c91e0dd7f1e3d17f0e70beec71d95bacaf56a2f207624a3",
-  downloaded_file_path = "zstd-jni-1.5.7-3.jar"
+  name = "zstd-jni-1_5_7-4_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/luben/zstd-jni/1.5.7-4/zstd-jni-1.5.7-4.jar",
+  sha256 = "e7f064bf1eab83fa785cf587f657f09649e3b0af6f27caa5382416953b5a35f8",
+  downloaded_file_path = "zstd-jni-1.5.7-4.jar"
 )
 
 http_file(
-  name = "zstd-jni-1_5_7-3-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/luben/zstd-jni/1.5.7-3/zstd-jni-1.5.7-3-sources.jar",
-  sha256 = "a7041fddbe8f58eb74e3220da038366a67f05b7836c0c2401efa57e0477e645e",
-  downloaded_file_path = "zstd-jni-1.5.7-3-sources.jar"
+  name = "zstd-jni-1_5_7-4-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/luben/zstd-jni/1.5.7-4/zstd-jni-1.5.7-4-sources.jar",
+  sha256 = "4f507cf68ab0470f4401e0de6ab509b6e2a2ae43da2fba898fb49c64e15c2fc8",
+  downloaded_file_path = "zstd-jni-1.5.7-4-sources.jar"
 )
 
 http_file(
