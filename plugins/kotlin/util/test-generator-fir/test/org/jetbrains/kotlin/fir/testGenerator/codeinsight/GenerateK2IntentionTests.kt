@@ -158,6 +158,7 @@ internal fun MutableTWorkspace.generateK2IntentionTests() {
             model("${idea}intentions/convertToScope", pattern = pattern)
             model("${idea}intentions/implementAbstractMember", pattern = pattern)
             model("${idea}intentions/replaceSizeZeroCheckWithIsEmpty", pattern = pattern, isIgnored = true)
+            model("${idea}intentions/replaceTypeArgumentWithUnderscore", pattern = pattern)
             model("${idea}intentions/movePropertyToClassBody", pattern = pattern)
             model("${idea}intentions/replaceAddWithPlusAssign", pattern = pattern)
             model("${idea}intentions/reconstructTypeInCastOrIs", pattern = pattern)
