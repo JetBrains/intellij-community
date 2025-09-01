@@ -33,6 +33,7 @@ jvm_library(
     "@lib//:kotlinx-serialization-core",
     "@lib//:kotlinx-serialization-json",
     "//python/services/system-python",
+    "@lib//:stream_ex",
   ],
   runtime_deps = [":featuresTrainer_resources"]
 )
@@ -77,6 +78,7 @@ jvm_library(
     "//python/services/internal-impl:python-community-services-internal-impl",
     "//python/services/internal-impl:python-community-services-internal-impl_test_lib",
     "//python/pluginCore:community-plugin",
+    "@lib//:stream_ex",
   ],
   runtime_deps = [":featuresTrainer_resources"]
 )

@@ -37,7 +37,6 @@ jvm_library(
     "//python/python-sdk:sdk",
     "//platform/vcs-api:vcs",
     "//plugins/ide-features-trainer:featuresTrainer",
-    "//python/python-features-trainer:featuresTrainer",
     "//platform/util/progress",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:http-client",
@@ -55,7 +54,10 @@ jvm_library(
     "//python/python-hatch:hatch",
     "@lib//:io-github-z4kn4fein-semver-jvm",
   ],
-  runtime_deps = [":impl_resources"]
+  runtime_deps = [
+    ":impl_resources",
+    "//python/python-features-trainer:featuresTrainer",
+  ]
 )
 
 jvm_library(
@@ -91,8 +93,6 @@ jvm_library(
     "//platform/vcs-api:vcs",
     "//plugins/ide-features-trainer:featuresTrainer",
     "//plugins/ide-features-trainer:featuresTrainer_test_lib",
-    "//python/python-features-trainer:featuresTrainer",
-    "//python/python-features-trainer:featuresTrainer_test_lib",
     "//platform/util/progress",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:http-client",

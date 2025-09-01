@@ -51,14 +51,6 @@ public final class PyPackage extends InstalledPackage {
     return myLocation;
   }
 
-  /**
-   * @deprecated Return always true, becuase all packages found are installed.
-   */
-  @Deprecated(forRemoval = true)
-  public boolean isInstalled() {
-    return true;
-  }
-
   @Override
   public @Nullable String getTooltipText() {
     return FileUtil.getLocationRelativeToUserHome(myLocation);
