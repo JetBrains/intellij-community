@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
-internal class RemoveBracesFromAllBranchesIntention  : KotlinPsiUpdateModCommandAction.Simple<KtExpression>(KtExpression::class) {
+internal class RemoveBracesFromAllBranchesIntention  : KotlinPsiUpdateModCommandAction.Contextless<KtExpression>(KtExpression::class) {
     override fun getFamilyName(): @IntentionFamilyName String =
         KotlinBundle.message("remove.braces.from.all.branches")
 

@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 @Internal
 @IntellijInternalApi
-class AddBracesIntention : KotlinPsiUpdateModCommandAction.Simple<KtElement>(KtElement::class) {
+class AddBracesIntention : KotlinPsiUpdateModCommandAction.Contextless<KtElement>(KtElement::class) {
     override fun getFamilyName(): @IntentionFamilyName String =
         KotlinBundle.message("add.braces")
 

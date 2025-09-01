@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-internal class AddJvmOverloadsIntention : KotlinPsiUpdateModCommandAction.Simple<KtModifierListOwner>(KtModifierListOwner::class) {
+internal class AddJvmOverloadsIntention : KotlinPsiUpdateModCommandAction.Contextless<KtModifierListOwner>(KtModifierListOwner::class) {
 
     override fun getFamilyName(): @IntentionFamilyName String =
         KotlinBundle.message("add.jvmoverloads.annotation")

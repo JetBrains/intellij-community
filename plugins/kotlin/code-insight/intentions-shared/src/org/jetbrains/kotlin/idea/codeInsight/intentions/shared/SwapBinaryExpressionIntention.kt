@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
 
-internal class SwapBinaryExpressionIntention : KotlinPsiUpdateModCommandAction.Simple<KtBinaryExpression>(KtBinaryExpression::class) {
+internal class SwapBinaryExpressionIntention : KotlinPsiUpdateModCommandAction.Contextless<KtBinaryExpression>(KtBinaryExpression::class) {
     override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("flip.binary.expression")
 
     override fun getPresentation(context: ActionContext, element: KtBinaryExpression): Presentation? {

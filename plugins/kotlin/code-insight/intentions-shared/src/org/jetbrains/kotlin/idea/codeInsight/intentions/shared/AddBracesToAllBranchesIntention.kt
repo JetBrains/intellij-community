@@ -22,7 +22,7 @@ import org.jetbrains.kotlin.psi.psiUtil.siblings
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.util.match
 
-internal class AddBracesToAllBranchesIntention : KotlinPsiUpdateModCommandAction.Simple<KtExpression>(KtExpression::class) {
+internal class AddBracesToAllBranchesIntention : KotlinPsiUpdateModCommandAction.Contextless<KtExpression>(KtExpression::class) {
     override fun getFamilyName(): @IntentionFamilyName String =
         KotlinBundle.message("add.braces.to.all.branches")
 
