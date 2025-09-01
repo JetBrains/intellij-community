@@ -44,6 +44,7 @@ import org.jetbrains.kotlin.idea.base.fir.projectStructure.modules.source.KaSour
 import org.jetbrains.kotlin.idea.base.fir.projectStructure.symbolicId
 import org.jetbrains.kotlin.idea.base.projectStructure.*
 import org.jetbrains.kotlin.idea.base.projectStructure.modules.KaSourceModuleForOutsider
+import org.jetbrains.kotlin.idea.base.util.caching.findSdkBridge
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntity
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntity
 import org.jetbrains.kotlin.library.KotlinLibrary
@@ -264,7 +265,10 @@ class K2IDEProjectStructureProvider(private val project: Project) : IDEProjectSt
     }
 
     override fun getOpenapiSdk(module: KaLibraryModule): Sdk? {
-        return (module as? KaLibrarySdkModuleImpl)?.sdk
+        return when (module) {
+            is KaLibrarySdkModuleImpl -> module.entity.findSdkBridge(project.workspaceModel.currentSnapshot)
+            else -> null
+        }
     }
 
     override fun getAssociatedKaModules(virtualFile: VirtualFile): List<KaModule> {
