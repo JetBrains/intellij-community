@@ -2,9 +2,7 @@
 package com.intellij.workspaceModel.ide.legacyBridge
 
 import com.intellij.openapi.application.edtWriteAction
-import com.intellij.openapi.roots.libraries.Library
 import com.intellij.platform.backend.workspace.workspaceModel
-import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.LocalEelMachine
 import com.intellij.platform.workspace.jps.JpsGlobalFileEntitySource
 import com.intellij.platform.workspace.jps.entities.*
@@ -71,23 +69,6 @@ class ModuleDependencyIndexTest {
     val presented = index.hasDependencyOn(LibraryId("HeyLib", LibraryTableId.ProjectLibraryTableId))
 
     assertTrue(presented)
-  }
-
-  @Test
-  fun `test add two modules with same library`() = runBlocking {
-    projectModel.project.workspaceModel.update {
-      it addEntity LibraryEntity("HeyLib", LibraryTableId.ProjectLibraryTableId, emptyList(), MySource)
-    }
-
-    val events = withDependencyListener {
-      projectModel.project.workspaceModel.update {
-        val deps = listOf(LibraryDependency(LibraryId("HeyLib", LibraryTableId.ProjectLibraryTableId), false, DependencyScope.TEST))
-        it addEntity ModuleEntity("MyModule", deps, MySource)
-        it addEntity ModuleEntity("MyModule2", deps, MySource)
-      }
-    }
-
-    assertEquals("+HeyLib", events.single())
   }
 
   @Test
@@ -201,13 +182,6 @@ class ModuleDependencyIndexTest {
     projectModel.project.workspaceModel.update {
       it addEntity LibraryEntity("HeyLib", LibraryTableId.ProjectLibraryTableId, emptyList(), MySource)
     }
-    val events = withDependencyListener {
-      projectModel.project.workspaceModel.update {
-        val deps = listOf(LibraryDependency(LibraryId("HeyLib", LibraryTableId.ProjectLibraryTableId), false, DependencyScope.TEST))
-        it addEntity ModuleEntity("MyModule", deps, MySource)
-      }
-    }
-    assertEquals("+HeyLib", events.single())
 
     val events1 = withDependencyListener {
       projectModel.project.workspaceModel.update {
@@ -216,33 +190,12 @@ class ModuleDependencyIndexTest {
       }
     }
     assertTrue(events1.isEmpty())
-
-    val events2 = withDependencyListener {
-      projectModel.project.workspaceModel.update {
-        it.removeEntity(it.resolve(ModuleId("MyModule"))!!)
-      }
-    }
-    assertTrue(events2.isEmpty())
-
-    val events3 = withDependencyListener {
-      projectModel.project.workspaceModel.update {
-        it.removeEntity(it.resolve(ModuleId("MyModule2"))!!)
-      }
-    }
-    assertEquals("-HeyLib", events3.single())
   }
 
   private suspend fun withDependencyListener(action: suspend () -> Unit): List<String> {
     val events = mutableListOf<String>()
 
     val listener = object : ModuleDependencyListener {
-      override fun addedDependencyOn(library: Library) {
-        events.add("+${library.name}")
-      }
-
-      override fun removedDependencyOn(library: Library) {
-        events.add("-${library.name}")
-      }
     }
 
     try {
