@@ -13,6 +13,7 @@ import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.search.FilenameIndex;
@@ -86,25 +87,26 @@ public class NewProjectWizardTest extends NewProjectWizardTestCase {
   }
 
   public void testDefaultLanguageLevel13() throws Exception {
-    Project project = doLanguageLevelTest(LanguageLevel.JDK_1_3, false);
+    Project project = doLanguageLevelTest(LanguageLevel.JDK_1_3);
     assertFalse(LanguageLevelProjectExtension.getInstance(project).getDefault());
   }
 
   public void testDefaultLanguageLevel19() throws Exception {
-    Project project = doLanguageLevelTest(LanguageLevel.JDK_1_9, false);
+    Project project = doLanguageLevelTest(LanguageLevel.JDK_1_9);
     assertFalse(LanguageLevelProjectExtension.getInstance(project).getDefault());
   }
 
   public void testDefaultLanguageLevel() throws Exception {
     final Sdk defaultSdk = ProjectJdkTable.getInstance().findJdk(DEFAULT_SDK);
-    setProjectSdk(ProjectManager.getInstance().getDefaultProject(), defaultSdk);
 
     JavaSdkVersion version = JavaSdk.getInstance().getVersion(defaultSdk);
     assertNotNull(version);
 
-    Project project = doLanguageLevelTest(version.getMaxLanguageLevel(), true);
+    Project project = createProjectFromTemplate(JAVA, step -> {
+    });
     Boolean def = LanguageLevelProjectExtension.getInstance(project).getDefault();
-    assertNotNull(def);
+    LanguageLevel level = LanguageLevelProjectExtension.getInstance(project).getLanguageLevel();
+    assertEquals(version.getMaxLanguageLevel(), level);
     assertTrue(def);
   }
 
@@ -163,26 +165,19 @@ public class NewProjectWizardTest extends NewProjectWizardTestCase {
     ApplicationManager.getApplication().runWriteAction(() -> ProjectRootManager.getInstance(project).setProjectSdk(jdk17));
   }
 
-  private Project doLanguageLevelTest(LanguageLevel languageLevel, boolean detect) throws Exception {
-    ProjectManager projectManager = ProjectManager.getInstance();
-    Project defaultProject = projectManager.getDefaultProject();
+  private Project doLanguageLevelTest(LanguageLevel languageLevel) throws Exception {
+    var regValue = Registry.get("default.language.level.name");
 
-    LanguageLevelProjectExtension languageLevelProjectExtension = LanguageLevelProjectExtension.getInstance(defaultProject);
-    LanguageLevel old = languageLevelProjectExtension.getLanguageLevel();
     try {
-      WriteAction.run(() -> {
-        languageLevelProjectExtension.setLanguageLevel(languageLevel);
-        languageLevelProjectExtension.setDefault(detect);
-      });
+      regValue.setValue(languageLevel.name());
+
       Project project = createProjectFromTemplate(JAVA, step -> {});
       assertEquals(languageLevel, LanguageLevelProjectExtension.getInstance(project).getLanguageLevel());
       return project;
     }
     finally {
-      WriteAction.run(() -> {
-        languageLevelProjectExtension.setLanguageLevel(old);
-        languageLevelProjectExtension.setDefault(true);
-      });
+      regValue.setValue(""); // resetToDefault does not clear cache. This is a bug in the RegistryValue.
+      regValue.resetToDefault();
     }
   }
 

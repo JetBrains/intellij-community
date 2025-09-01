@@ -99,6 +99,10 @@
                  description="Enable reformat action execution on frontend in remote development"
                  key="reformat.action.execute.on.frontend"
                  restartRequired="false"/>
+    <registryKey defaultValue="" description="Default SDK name for new projects (legacy)"
+                 key="default.project.jdk.name" />
+    <registryKey defaultValue="" description="Default language level name for new projects (legacy)"
+                 key="default.language.level.name" />
     <!-- region IJPL-179136 -->
     <registryKey defaultValue="true"
                  description="Enable sending codeStyleSettingsChanged events when settings finish computing"
