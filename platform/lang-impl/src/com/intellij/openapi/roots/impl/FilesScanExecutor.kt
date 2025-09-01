@@ -31,7 +31,6 @@ import com.intellij.util.indexing.roots.kind.LibraryOrigin
 import com.intellij.util.indexing.roots.kind.SdkOrigin
 import com.intellij.util.indexing.roots.kind.SyntheticLibraryOrigin
 import com.intellij.util.indexing.roots.origin.ExternalEntityOrigin
-import kotlinx.coroutines.CancellationException
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.concurrent.Future
@@ -54,6 +53,7 @@ object FilesScanExecutor {
     }
     val results = ArrayList<Future<*>>()
     for (i in 0 until THREAD_COUNT) {
+      // The current Job cancellation will NOT stop the pooled threads. Use 'coroutineToIndicator'.
       results.add(ourExecutor.submit { ProgressManager.getInstance().runProcess(runnable, ProgressWrapper.wrap(progress)) })
     }
 
