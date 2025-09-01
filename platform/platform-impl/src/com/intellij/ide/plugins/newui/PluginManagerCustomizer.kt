@@ -15,6 +15,9 @@ import javax.swing.JComponent
 @ApiStatus.Internal
 @IntellijInternalApi
 interface PluginManagerCustomizer {
+
+  fun isEnabled(): Boolean
+
   fun initCustomizer(parentComponent: JComponent)
 
   suspend fun getInstallButonCustomizationModel(
@@ -60,7 +63,7 @@ interface PluginManagerCustomizer {
     @JvmStatic
     fun getInstance(): PluginManagerCustomizer? {
       if (Registry.`is`("reworked.plugin.manager.enabled", false)) {
-        return EP_NAME.extensionList.firstOrNull()
+        return EP_NAME.extensionList.firstOrNull { it.isEnabled() }
       }
       return null
     }

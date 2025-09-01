@@ -950,6 +950,7 @@ public final class PluginManagerConfigurable
                 }
                 result.removeDuplicates();
                 result.sortByName();
+                updatePanel(runQuery);
               }
               else {
                 PluginModelAsyncOperationsExecutor.INSTANCE
@@ -2058,8 +2059,13 @@ public final class PluginManagerConfigurable
       pluginsState.clearShutdownCallback();
     }
 
-    myMarketplaceTab.dispose();
-    myInstalledTab.dispose();
+    if(myMarketplaceTab != null) {
+      myMarketplaceTab.dispose();
+    }
+
+    if(myInstalledTab != null) {
+      myInstalledTab.dispose();
+    }
 
     if (myMarketplacePanel != null) {
       myMarketplacePanel.dispose();
@@ -2079,7 +2085,6 @@ public final class PluginManagerConfigurable
 
     if (myDisposer != null) {
       Disposer.dispose(myDisposer);
-      CoroutineScopeKt.cancel(myCoroutineScope, null);
       myDisposer = null;
     }
   }

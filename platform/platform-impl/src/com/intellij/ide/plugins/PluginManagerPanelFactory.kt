@@ -60,7 +60,8 @@ object PluginManagerPanelFactory {
       catch (e: Exception) {
         LOG.info("Main plugin repository is not available (${e.message}). Please check your network settings.")
       }
-      val installedPlugins = pluginManager.findInstalledPlugins(marketplaceData.flatMap { it.value.getPlugins().map { plugin -> plugin.pluginId } }.toSet())
+      val pluginIds = marketplaceData.flatMap { it.value.getPlugins().map { plugin -> plugin.pluginId } }.toSet() + customRepositoriesMap.flatMap { it.value.map { plugin -> plugin.pluginId } }.toSet()
+      val installedPlugins = pluginManager.findInstalledPlugins(pluginIds)
       withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
         callback(CreateMarketplacePanelModel(marketplaceData, errors, suggestedPlugins, customRepositoriesMap, installedPlugins, installationStates, internalPluginsGroupDescriptor))
       }

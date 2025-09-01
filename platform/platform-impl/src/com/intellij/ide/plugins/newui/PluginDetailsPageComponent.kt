@@ -176,10 +176,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   init {
     nameAndButtons = BaselinePanel(12, false)
     customizer = getPluginsViewCustomizer().getPluginDetailsCustomizer(pluginModel.getModel())
-    pluginManagerCustomizer = if (Registry.`is`("reworked.plugin.manager.enabled", false)) {
-      PluginManagerCustomizer.EP_NAME.extensionList.firstOrNull()
-    }
-    else null
+    pluginManagerCustomizer = PluginManagerCustomizer.getInstance()
 
     createPluginPanel()
     select(1, true)
