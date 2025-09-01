@@ -19,6 +19,8 @@ import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.test.assertContains
 
+private val testPluginDescriptor: DefaultPluginDescriptor = DefaultPluginDescriptor("test")
+
 class ServiceContainerTest {
   @Test
   fun `cyclic detection`() {

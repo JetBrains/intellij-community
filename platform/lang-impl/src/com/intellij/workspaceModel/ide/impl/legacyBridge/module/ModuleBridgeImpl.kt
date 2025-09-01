@@ -3,7 +3,7 @@ package com.intellij.workspaceModel.ide.impl.legacyBridge.module
 
 import com.intellij.configurationStore.DefaultModuleStoreFactory
 import com.intellij.configurationStore.ModuleStoreFactory
-import com.intellij.configurationStore.NonPersistentModuleStore
+import com.intellij.configurationStore.NonPersistentStore
 import com.intellij.configurationStore.RenameableStateStorageManager
 import com.intellij.facet.FacetManagerFactory
 import com.intellij.facet.impl.FacetEventsPublisher
@@ -57,7 +57,7 @@ open class ModuleBridgeImpl(
 
   override fun getModuleFile(): VirtualFile? = imlFilePointer?.file
 
-  override fun canStoreSettings(): Boolean = imlFilePointer != null && componentStore !is NonPersistentModuleStore
+  override fun canStoreSettings(): Boolean = imlFilePointer != null && componentStore !is NonPersistentStore
 
   override fun rename(newName: String, newModuleFileUrl: VirtualFileUrl?, notifyStorage: Boolean) {
     imlFilePointer = newModuleFileUrl as VirtualFileUrlBridge
@@ -73,7 +73,7 @@ open class ModuleBridgeImpl(
       val isDisposed = Disposer.isDisposed(this)
       if (!isDisposed) {
         val store = componentStore
-        if (store !is NonPersistentModuleStore) {
+        if (store !is NonPersistentStore) {
           return store.storageManager.expandMacro(StoragePathMacros.MODULE_FILE)
         }
       }
