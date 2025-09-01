@@ -2,19 +2,15 @@
 package com.intellij.platform.debugger.impl.frontend
 
 import com.intellij.concurrency.ConcurrentCollectionFactory
-import com.intellij.ide.ui.icons.icon
 import com.intellij.ide.vfs.rpcId
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Ref
-import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.debugger.impl.rpc.*
 import com.intellij.platform.project.projectId
@@ -35,7 +31,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
-import javax.swing.Icon
 import kotlin.time.Duration.Companion.seconds
 
 private val log = logger<FrontendXBreakpointManager>()
@@ -67,6 +62,8 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
     FrontendXDependentBreakpointManagerProxy(project, cs, breakpointById = {
       breakpoints[it]
     })
+
+  override val inlineBreakpointsCache: InlineBreakpointsCache = FrontendInlineBreakpointsCache(project, cs, this)
 
   @VisibleForTesting
   val breakpointIdsRemovedLocally: MutableSet<XBreakpointId> = ConcurrentHashMap.newKeySet()
@@ -356,20 +353,6 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
     }
   }
 
-  override suspend fun getBreakpointVariants(document: Document, onlyLine: Int?): Map<Int, List<InlineVariantWithMatchingBreakpointProxy>> {
-    val file = FileDocumentManager.getInstance().getFile(document) ?: return emptyMap()
-    val variantsOnLines = retryUntilVersionMatch(project, document) { version ->
-      XBreakpointTypeApi.getInstance().computeInlineBreakpointVariants(project.projectId(), file.rpcId(), onlyLine, version)
-    }
-    return variantsOnLines.associate { (line, variants) ->
-      line to variants.mapIndexed { index, dto ->
-        val (variantDto, breakpointId) = dto
-        val breakpoint = breakpointId?.let { getBreakpointById(it) } as? XLineBreakpointProxy
-        val variant = variantDto?.let { FrontendXLineBreakpointInlineVariantProxy(it, cs, index) }
-        InlineVariantWithMatchingBreakpointProxy(breakpoint, variant)
-      }
-    }
-  }
 
   private data class LightBreakpointPosition(val file: VirtualFile, val line: Int)
 
@@ -396,25 +379,6 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
   private fun FrontendXLineBreakpointProxy.unregisterInManager() {
     registrationInLineManagerStatus.set(RegistrationStatus.DEREGISTERED)
     lineBreakpointManager.unregisterBreakpoint(this)
-  }
-}
-
-private class FrontendXLineBreakpointInlineVariantProxy(
-  private val variant: XInlineBreakpointVariantDto,
-  private val cs: CoroutineScope,
-  private val index: Int,
-) : XLineBreakpointInlineVariantProxy {
-  override val highlightRange: TextRange?
-    get() = variant.highlightRange?.toTextRange()
-  override val icon: Icon
-    get() = variant.icon.icon()
-  override val tooltipDescription: String
-    get() = variant.tooltipDescription
-
-  override fun createBreakpoint(project: Project, file: VirtualFile, line: Int) {
-    cs.launch {
-      XBreakpointTypeApi.getInstance().createVariantBreakpoint(project.projectId(), file.rpcId(), line, index)
-    }
   }
 }
 

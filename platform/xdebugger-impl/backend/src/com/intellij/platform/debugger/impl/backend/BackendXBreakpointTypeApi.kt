@@ -243,13 +243,13 @@ internal class BackendXBreakpointTypeApi : XBreakpointTypeApi {
     }
   }
 
-  override suspend fun computeInlineBreakpointVariants(projectId: ProjectId, fileId: VirtualFileId, onlyLine: Int?, documentPatchVersion: DocumentPatchVersion?): List<InlineBreakpointVariantsOnLine>? {
+  override suspend fun computeInlineBreakpointVariants(projectId: ProjectId, fileId: VirtualFileId, lines: Set<Int>, documentPatchVersion: DocumentPatchVersion?): List<InlineBreakpointVariantsOnLine>? {
     val project = projectId.findProject()
     val file = fileId.virtualFile() ?: return emptyList()
     DocumentSync.awaitDocumentSync()
     val document = readAction { file.findDocument() } ?: return emptyList()
     if (!document.documentVersionMatches(project, documentPatchVersion)) return null
-    val lineToVariants = InlineBreakpointsVariantsManager.getInstance(project).calculateBreakpointsVariants(document, onlyLine)
+    val lineToVariants = InlineBreakpointsVariantsManager.getInstance(project).calculateBreakpointsVariants(document, lines)
     return lineToVariants.map { (line, variants) ->
       InlineBreakpointVariantsOnLine(line, variants.map { it.toRpc() })
     }
@@ -260,7 +260,7 @@ internal class BackendXBreakpointTypeApi : XBreakpointTypeApi {
     val file = fileId.virtualFile() ?: return
     val document = readAction { file.findDocument() } ?: return
     // TODO avoid collecting variants again
-    val variants = InlineBreakpointsVariantsManager.getInstance(project).calculateBreakpointsVariants(document, line)
+    val variants = InlineBreakpointsVariantsManager.getInstance(project).calculateBreakpointsVariants(document, setOf(line))
       .getOrDefault(line, emptyList())
     val variant = variants.getOrNull(variantIndex)?.variant ?: return
     edtWriteAction {

@@ -52,7 +52,7 @@ interface XBreakpointTypeApi : RemoteApi<Unit> {
    *
    * @return `null` if the request should be retried later due to version mismatch, or inline variants for the lines in the file.
    */
-  suspend fun computeInlineBreakpointVariants(projectId: ProjectId, fileId: VirtualFileId, onlyLine: Int?, documentPatchVersion: DocumentPatchVersion?): List<InlineBreakpointVariantsOnLine>?
+  suspend fun computeInlineBreakpointVariants(projectId: ProjectId, fileId: VirtualFileId, lines: Set<Int>, documentPatchVersion: DocumentPatchVersion?): List<InlineBreakpointVariantsOnLine>?
   suspend fun createVariantBreakpoint(projectId: ProjectId, fileId: VirtualFileId, line: Int, variantIndex: Int)
 }
 
