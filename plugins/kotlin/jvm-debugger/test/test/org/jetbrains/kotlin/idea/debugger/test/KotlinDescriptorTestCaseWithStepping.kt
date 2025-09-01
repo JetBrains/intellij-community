@@ -378,12 +378,19 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
         processAgentDependencies(library, compilerFacility)
     }
 
-    override fun addLibraryByLabelDependency(compilerFacility: DebuggerTestCompilerFacility, library: String) {
-        addBazelLabelDependency(compilerFacility, library, module)
-    }
-
-    override fun addJavaAgentByLabelDependency(compilerFacility: DebuggerTestCompilerFacility, library: String) {
-        processLabelAgentDependencies(library, compilerFacility)
+    override fun addDependenciesByLabels(compilerFacility: DebuggerTestCompilerFacility, libraryLabels: List<String>, agentLabels: List<String>) {
+        val dependencies = mutableListOf<OrderRoot>()
+        for (libraryLabel in libraryLabels) {
+            val bazelLabelDescriptor = BazelDependencyLabelDescriptor.fromString(libraryLabel)
+            dependencies.add(loadDependency(bazelLabelDescriptor))
+        }
+        for (agentLabel in agentLabels) {
+            val bazelLabelDescriptor = BazelDependencyLabelDescriptor.fromString(agentLabel)
+            agentList.add(bazelLabelDescriptor)
+            dependencies.add(loadDependency(bazelLabelDescriptor))
+        }
+        compilerFacility.addDependencies(dependencies.map { it.file.presentableUrl })
+        addLibraries(dependencies, module)
     }
 
     private fun addMavenDependency(compilerFacility: DebuggerTestCompilerFacility, library: String, module: Module) {
@@ -393,11 +400,6 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
         addMavenDependency(compilerFacility, groupId, artifactId, version, module)
     }
 
-    private fun addBazelLabelDependency(compilerFacility: DebuggerTestCompilerFacility, library: String, module: Module) {
-        val bazelLabelDescriptor = BazelDependencyLabelDescriptor.fromString(library)
-        addLabelDependency(compilerFacility, bazelLabelDescriptor, module)
-    }
-
     private fun processAgentDependencies(library: String, compilerFacility: DebuggerTestCompilerFacility) {
         val regex = Regex(pattern = "$MAVEN_DEPENDENCY_REGEX(-javaagent)?")
         val result = regex.matchEntire(library) ?: return
@@ -405,12 +407,6 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
         if ("-javaagent" == agent)
             agentListJpsDesc.add(JpsMavenRepositoryLibraryDescriptor(groupId, artifactId, version, false))
         addMavenDependency(compilerFacility, groupId, artifactId, version, module)
-    }
-
-    private fun processLabelAgentDependencies(library: String, compilerFacility: DebuggerTestCompilerFacility) {
-        val bazelLabelDescriptor = BazelDependencyLabelDescriptor.fromString(library)
-        agentList.add(bazelLabelDescriptor)
-        addLabelDependency(compilerFacility, bazelLabelDescriptor, module)
     }
 
     override fun createJavaParameters(mainClass: String?): JavaParameters {
@@ -455,16 +451,6 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
         val artifacts = loadDependencies(description)
         compilerFacility.addDependencies(artifacts.map { it.file.presentableUrl })
         addLibraries(artifacts, module)
-    }
-
-    protected fun addLabelDependency(
-        compilerFacility: DebuggerTestCompilerFacility,
-        bazelLabelDescriptor: BazelDependencyLabelDescriptor,
-        module: Module
-    ) {
-        val artifact = loadDependency(bazelLabelDescriptor)
-        compilerFacility.addDependencies(listOf(artifact.file.presentableUrl) )
-        addLibraries(mutableListOf(artifact), module)
     }
 
     protected fun addLibraries(compilerFacility: DebuggerTestCompilerFacility, libraries: List<Path>) {
