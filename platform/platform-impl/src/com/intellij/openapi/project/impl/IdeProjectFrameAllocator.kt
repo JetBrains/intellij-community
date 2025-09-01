@@ -105,7 +105,7 @@ internal class IdeProjectFrameAllocator(
         }
       }
 
-      launch {
+      val frameHelperInitJob = launch {
         val project = projectInitObservable.awaitProjectPreInit()
         val frameHelper = deferredProjectFrameHelper.await()
 
@@ -178,7 +178,9 @@ internal class IdeProjectFrameAllocator(
             frameHelper.updateTitle(serviceAsync<FrameTitleBuilder>().getProjectTitle(project), project)
           }
 
+          frameHelperInitJob.join() // initDockableContentFactory depends on it
           reopeningEditorJob.join()
+
           postOpenEditors(
             frameHelper = frameHelper,
             fileEditorManager = project.serviceAsync<FileEditorManager>() as FileEditorManagerImpl,
