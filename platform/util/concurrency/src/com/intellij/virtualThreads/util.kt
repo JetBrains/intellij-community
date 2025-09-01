@@ -65,6 +65,9 @@ fun <T> CoroutineScope.asyncAsVirtualThread(
   start: CoroutineStart = CoroutineStart.DEFAULT,
   action: (ThreadFactory) -> T,
 ): Deferred<T> {
+  if (start == CoroutineStart.UNDISPATCHED) {
+    throw IllegalArgumentException("CoroutineStart.UNDISPATCHED is unsupported for virtual threads")
+  }
   return async(start = start, context = Dispatchers.Default) {
     val currentJob = coroutineContext.job
     // we do not use suspendCancellableCoroutine here by design -- we do not need to trigger prompt cancellation of the outer `async`,

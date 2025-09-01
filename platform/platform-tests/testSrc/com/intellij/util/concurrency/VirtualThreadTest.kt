@@ -22,6 +22,7 @@ import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.fail
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.ThreadFactory
@@ -259,6 +260,14 @@ class VirtualThreadTest {
     withContext(Dispatchers.EDT) {
       launchAsVirtualThread {
         assertFalse(EDT.isCurrentThreadEdt())
+      }.join()
+    }
+  }
+
+  @Test
+  fun `cannot launch virtual thread coroutine in UNDISPATHCED`(): Unit = timeoutRunBlocking {
+    assertThrows<IllegalArgumentException> {
+      launchAsVirtualThread(start = CoroutineStart.UNDISPATCHED) {
       }.join()
     }
   }
