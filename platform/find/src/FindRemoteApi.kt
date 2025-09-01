@@ -48,13 +48,6 @@ interface FindRemoteApi : RemoteApi<Unit> {
 
   suspend fun checkDirectoryExists(findModel: FindModel): Boolean
 
-  /**
-   * Non-blocking stream of notifications that a file's content has been applied on the client side.
-   * A notification is emitted after the backend has bound the file content and the RD engine has
-   * applied all pending patches on the client. This lets the UI upgrade previews when content is ready.
-   */
-  suspend fun fileContentReady(): Flow<String>
-
   companion object {
     @JvmStatic
     suspend fun getInstance(): FindRemoteApi {
@@ -88,8 +81,6 @@ data class FindInFilesResult(
   val mergedOffsets: List<Int>,
   val length: Int,
   val fileId: VirtualFileId,
-  val isUpdateRequired: Boolean,
-  val fullFilePath: @NlsSafe String,
   val presentablePath: @NlsSafe String,
   val shortenPresentablePath: @NlsSafe String,
   val backgroundColor: ColorId?,
