@@ -33,8 +33,7 @@ internal fun PrinterContext.foldKonanDist(orderEntries: List<String>, module: Mo
 
     // Some expected content were unmatched, bail out
     if (expectedContent.isNotEmpty()) {
-        println("Expected Native distribution stub contains more entries then actual: ${expectedContent}")
-        return orderEntries
+        error("Expected Native distribution stub for $platform contains more entries then actual: ${expectedContent}")
     }
 
     val stubEntry = NATIVE_DISTRIBUTION_STUB_ENTRY
