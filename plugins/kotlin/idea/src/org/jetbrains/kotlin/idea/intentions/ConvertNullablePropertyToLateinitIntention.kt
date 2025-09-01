@@ -2,57 +2,75 @@
 
 package org.jetbrains.kotlin.idea.intentions
 
-import com.intellij.openapi.editor.Editor
-import org.jetbrains.kotlin.builtins.KotlinBuiltIns
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModPsiUpdater
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
+import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.config.LanguageFeature
-import org.jetbrains.kotlin.descriptors.PropertyDescriptor
-import org.jetbrains.kotlin.descriptors.VariableDescriptor
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
-import org.jetbrains.kotlin.idea.core.setType
 import org.jetbrains.kotlin.idea.base.psi.isNullExpression
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtNullableType
 import org.jetbrains.kotlin.psi.KtProperty
-import org.jetbrains.kotlin.psi.KtTypeReference
-import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.isInlineClassType
-import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
-import org.jetbrains.kotlin.types.TypeUtils
-import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
+import org.jetbrains.kotlin.psi.KtPsiFactory
 
-class ConvertNullablePropertyToLateinitIntention : SelfTargetingIntention<KtProperty>(
-    KtProperty::class.java, KotlinBundle.messagePointer("convert.to.lateinit.var")
+internal class ConvertNullablePropertyToLateinitIntention : KotlinApplicableModCommandAction<KtProperty, Unit>(
+    KtProperty::class
 ) {
-    override fun isApplicableTo(element: KtProperty, caretOffset: Int): Boolean {
-        if (element.hasModifier(KtTokens.LATEINIT_KEYWORD) || element.hasModifier(KtTokens.ABSTRACT_KEYWORD)) return false
+    override fun getFamilyName(): String = KotlinBundle.message("convert.to.lateinit.var")
+
+    override fun isApplicableByPsi(element: KtProperty): Boolean {
+        if (element.hasModifier(KtTokens.LATEINIT_KEYWORD)) return false
+        if (element.hasModifier(KtTokens.ABSTRACT_KEYWORD)) return false
         if (!element.isVar) return false
+        if (element.receiverTypeReference != null) return false
+        if (element.hasDelegate()) return false
+
         val languageVersionSettings = element.languageVersionSettings
         if (!languageVersionSettings.supportsFeature(LanguageFeature.LateinitLocalVariables) && element.isLocal) return false
         if (!languageVersionSettings.supportsFeature(LanguageFeature.LateinitTopLevelProperties) && element.isTopLevel) return false
-        if (element.getter?.hasBody() != null || element.setter?.hasBody() != null) return false
+        if (element.getter != null || element.setter != null) return false
         if (!element.initializer.isNullExpression()) return false
 
         val typeReference = element.typeReference
-        if (typeReference?.typeElement !is KtNullableType) return false
-        val context = element.analyze(BodyResolveMode.PARTIAL)
-        val type = context[BindingContext.TYPE, typeReference]?.makeNotNullable() ?: return false
-        if (KotlinBuiltIns.isPrimitiveType(type) || type.isInlineClassType() || TypeUtils.isNullableType(type)) return false
-
-        val descriptor = context[BindingContext.DECLARATION_TO_DESCRIPTOR, element] as? VariableDescriptor ?: return false
-        if (descriptor is PropertyDescriptor && context[BindingContext.BACKING_FIELD_REQUIRED, descriptor] == false) return false
-        if (descriptor.extensionReceiverParameter != null) return false
-
-        return true
+        return typeReference?.typeElement is KtNullableType
     }
 
-    override fun applyTo(element: KtProperty, editor: Editor?) {
-        val typeReference: KtTypeReference = element.typeReference ?: return
-        val notNullableType = element.analyze(BodyResolveMode.PARTIAL)[BindingContext.TYPE, typeReference]?.makeNotNullable() ?: return
+    override fun invoke(
+        actionContext: ActionContext,
+        element: KtProperty,
+        elementContext: Unit,
+        updater: ModPsiUpdater
+    ) {
+        val typeReference = element.typeReference ?: return
+        val ktNullableType = typeReference.typeElement as? KtNullableType ?: return
+        val innerType = ktNullableType.innerType ?: return
+
+        val newTypeReference = KtPsiFactory(element.project).createType(innerType.text)
+        typeReference.replace(newTypeReference)
         element.addModifier(KtTokens.LATEINIT_KEYWORD)
-        element.setType(notNullableType)
         element.initializer = null
     }
+
+    override fun KaSession.prepareContext(element: KtProperty): Unit? {
+        val returnType = element.symbol.returnType
+
+        if (!element.isLocal) {
+            val propertySymbol = element.symbol as? KaPropertySymbol ?: return null
+            if (propertySymbol.backingFieldSymbol == null || returnType.hasFlexibleNullability) return null
+        }
+
+        val nonNullableType = returnType.withNullability(false)
+        if (nonNullableType is KaTypeParameterType || nonNullableType.isPrimitive) return null
+
+        val classifier = nonNullableType.expandedSymbol
+        if (classifier is KaNamedClassSymbol && classifier.isInline) return null
+
+        return Unit
+    }
+
 }
