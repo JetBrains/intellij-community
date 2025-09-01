@@ -1,10 +1,11 @@
-package com.intellij.terminal.frontend
+package com.intellij.terminal.frontend.completion
 
 import com.google.common.base.Ascii
 import com.intellij.codeInsight.lookup.*
 import com.intellij.codeInsight.lookup.impl.EmptyLookupItem
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.terminal.TerminalUiSettingsManager
+import com.intellij.terminal.frontend.TerminalInput
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isOutputModelEditor
 import kotlin.math.max
 import kotlin.properties.ReadWriteProperty
@@ -35,7 +36,7 @@ class TerminalLookupManagerListener : LookupManagerListener {
 
 class TerminalLookupListener : LookupListener {
   override fun beforeItemSelected(event: LookupEvent): Boolean {
-    val terminalInput = event.lookup.editor.getUserData(TerminalInput.KEY) ?: return false
+    val terminalInput = event.lookup.editor.getUserData(TerminalInput.Companion.KEY) ?: return false
     val item = event.item
     val lookup = event.lookup as LookupImpl
     val completionChar = event.completionChar
@@ -76,7 +77,7 @@ class TerminalLookupListener : LookupListener {
   }
 
   private fun executeCommand(lookup: Lookup) {
-    val terminalInput = lookup.editor.getUserData(TerminalInput.KEY) ?: return
+    val terminalInput = lookup.editor.getUserData(TerminalInput.Companion.KEY) ?: return
     terminalInput.sendEnter()
   }
 }

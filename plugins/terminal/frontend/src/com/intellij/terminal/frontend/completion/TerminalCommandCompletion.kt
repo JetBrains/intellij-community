@@ -1,4 +1,4 @@
-package com.intellij.terminal.frontend
+package com.intellij.terminal.frontend.completion
 
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.completion.CodeCompletionHandlerBase
