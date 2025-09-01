@@ -7,6 +7,7 @@ import com.intellij.diagnostic.LogMessage
 import com.intellij.diagnostic.MessagePool
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ex.ActionContextElement
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.Interactive
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.fileLogger
@@ -32,7 +33,9 @@ internal fun processUnhandledException(
         logExceptionSafely(message, exception, interactive = true)
         val defaultMessage = LogMessage(exception, message, emptyList())
         // "clear" button doesn't play well with interactive message. Once cleared, windows becomes empty.
-        if (Registry.get("ide.exceptions.show.interactive").asBoolean()) {
+        val showError = Registry.get("ide.exceptions.show.interactive").asBoolean()
+                        && !ApplicationManager.getApplication().isHeadlessEnvironment
+        if (showError) {
           IdeErrorsDialog(MessagePool.getInstance(), null, false, defaultMessage, isModal = true, actionLeadToError = interactiveMode.action, hideClearButton = true).show()
         }
       }
