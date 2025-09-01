@@ -41,6 +41,7 @@ jvm_library(
     "//plugins/terminal/completion",
     "//platform/eel-provider",
     "@lib//:caffeine",
+    "//platform/observable",
   ],
   runtime_deps = [":frontend_resources"]
 )

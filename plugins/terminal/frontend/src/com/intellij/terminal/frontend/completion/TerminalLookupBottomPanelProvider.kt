@@ -2,12 +2,16 @@ package com.intellij.terminal.frontend.completion
 
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupBottomPanelProvider
+import com.intellij.codeInsight.lookup.impl.LookupImpl
+import com.intellij.codeInsight.lookup.impl.PrefixChangeListener
 import com.intellij.icons.AllIcons
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.actionSystem.Shortcut
 import com.intellij.openapi.keymap.KeymapManager
+import com.intellij.openapi.observable.properties.AtomicProperty
+import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurableWithId
 import com.intellij.openapi.options.ShowSettingsUtil
@@ -28,6 +32,7 @@ import java.awt.event.KeyEvent
 import java.util.function.Predicate
 import javax.swing.JComponent
 import javax.swing.KeyStroke
+import javax.swing.text.JTextComponent
 
 internal class TerminalLookupBottomPanelProvider : LookupBottomPanelProvider {
   override fun createBottomPanel(lookup: Lookup): JComponent? {
@@ -51,7 +56,7 @@ internal class TerminalLookupBottomPanelProvider : LookupBottomPanelProvider {
           TerminalCompletionPopupPromotion.promotionShown()
         }
         else {
-          shortcutHint()
+          shortcutHint(lookup)
         }
 
         actionButton(TerminalCommandCompletionSettingsAction())
@@ -82,28 +87,26 @@ internal class TerminalLookupBottomPanelProvider : LookupBottomPanelProvider {
       }
   }
 
-  private fun Row.shortcutHint() {
-    val shortcutHint = createInsertionShortcutHint()
-    if (shortcutHint != null) {
-      cell(shortcutHint)
-        .align(AlignY.CENTER)
+  private fun Row.shortcutHint(lookup: Lookup) {
+    val shortcutText = getInsertionShortcutText()
+    if (shortcutText == null || lookup !is LookupImpl) {
+      // If there is no shortcut, then do not show the hint
+      return
     }
+
+    val textState = ShortcutHintTextState(lookup, shortcutText)
+    lookup.addPrefixChangeListener(textState, lookup)
+
+    cell(createHintComponent())
+      .align(AlignY.CENTER)
+      .bindText(textState.value)
   }
 
-  private fun createInsertionShortcutHint(): JComponent? {
-    val shortcutText = getInsertionShortcutText()
-    if (shortcutText == null) {
-      // If there is no shortcut, then do not show the hint
-      return null
-    }
-
+  private fun createHintComponent(): JTextComponent {
     val hint = JBHtmlPane(JBHtmlPaneStyleConfiguration(), createCustomPaneConfiguration())
     hint.isOpaque = false
     hint.foreground = JBUI.CurrentTheme.CompletionPopup.Advertiser.foreground()
     hint.font = JBUI.Fonts.label().lessOn(1f)
-
-    hint.text = TerminalBundle.message("terminal.command.completion.insertion.shortcut.hint", shortcutText)
-
     return hint
   }
 
@@ -198,5 +201,41 @@ private object TerminalCompletionPopupPromotion {
 
   fun doNotShowAgain() {
     shownCount = PROMOTION_SHOWN_COUNT_LIMIT
+  }
+}
+
+/**
+ * Tracks the currently selected lookup item and updates the hint text accordingly:
+ * if a typed string matches the lookup item, then show the "Execute" hint instead of "Insert".
+ */
+private class ShortcutHintTextState(
+  private val lookup: Lookup,
+  private val shortcutText: String,
+) : PrefixChangeListener {
+  val value: ObservableMutableProperty<String> = AtomicProperty(defaultText())
+
+  override fun afterAppend(c: Char) {
+    value.set(calculateHintText())
+  }
+
+  override fun afterTruncate() {
+    value.set(calculateHintText())
+  }
+
+  private fun calculateHintText(): String {
+    val selectedItem = lookup.currentItem ?: return defaultText()
+    val typedPrefix = lookup.itemPattern(selectedItem)
+    return if (canExecuteWithChosenItem(selectedItem.lookupString, typedPrefix)) {
+      executeText()
+    }
+    else defaultText()
+  }
+
+  private fun defaultText(): String {
+    return TerminalBundle.message("terminal.command.completion.insertion.shortcut.hint", shortcutText)
+  }
+
+  private fun executeText(): String {
+    return TerminalBundle.message("terminal.command.completion.execution.shortcut.hint", shortcutText)
   }
 }

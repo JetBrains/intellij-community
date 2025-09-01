@@ -139,7 +139,7 @@ private class TerminalSelectedItemIconUpdater(private val lookup: Lookup) : Pref
 /**
  * Returns `true` if we need to execute the command immediately if user select [chosenItemString] in the Lookup.
  */
-private fun canExecuteWithChosenItem(chosenItemString: String, typedString: String): Boolean {
+internal fun canExecuteWithChosenItem(chosenItemString: String, typedString: String): Boolean {
   return chosenItemString == typedString
          // If the typed string differs only by the absence of the trailing slash, execute the command as well
          || "$typedString/" == chosenItemString
