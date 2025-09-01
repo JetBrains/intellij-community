@@ -5,12 +5,6 @@
     <module name="intellij.platform.find"/>
   </dependencies>
 
-  <extensionPoints>
-    <extensionPoint name="beforeSendFindResultListener"
-                    interface="com.intellij.platform.find.backend.BeforeSendFindResultListener"
-                    dynamic="true"/>
-  </extensionPoints>
-
   <extensions defaultExtensionNs="com.intellij">
 
     <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.find.backend.FindRemoteApiProvider"/>
