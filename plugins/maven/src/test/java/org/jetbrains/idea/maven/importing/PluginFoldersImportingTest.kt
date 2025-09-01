@@ -14,6 +14,8 @@ class PluginFoldersImportingTest : FoldersImportingTestCase() {
 
   @Test
   fun testSourceFolderPointsToProjectRootParent() = runBlocking {
+    assumeOnLocalEnvironmentOnly("IDEA-378277")
+
     createStdProjectFolders()
     importProjectAsync("""
                     <groupId>test</groupId>
@@ -480,6 +482,8 @@ class PluginFoldersImportingTest : FoldersImportingTestCase() {
 
   @Test
   fun testCustomAnnotationProcessorSources() = runBlocking {
+    assumeOnLocalEnvironmentOnly("IDEA-378277")
+
     createStdProjectFolders()
     createProjectSubDirsWithFile("custom-annotations",
                                  "custom-test-annotations",
@@ -519,6 +523,8 @@ class PluginFoldersImportingTest : FoldersImportingTestCase() {
 
   @Test
   fun testCustomAnnotationProcessorSourcesUnderMainGeneratedFolder() = runBlocking {
+    assumeOnLocalEnvironmentOnly("IDEA-378277")
+
     createProjectSubDirsWithFile("target/generated-sources/foo",
                                  "target/generated-sources/annotations",
                                  "target/generated-sources/custom-annotations",  // this and...
@@ -558,6 +564,8 @@ class PluginFoldersImportingTest : FoldersImportingTestCase() {
 
   @Test
   fun testSourceFoldersOrder() = runBlocking {
+    assumeOnLocalEnvironmentOnly("IDEA-378277")
+
     createStdProjectFolders()
     val target = createProjectSubDir("target")
     createProjectSubDirsWithFile("anno",
