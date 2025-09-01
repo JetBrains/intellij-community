@@ -3,6 +3,7 @@ package com.intellij.terminal.frontend.completion
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupBottomPanelProvider
 import com.intellij.icons.AllIcons
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.actionSystem.Shortcut
@@ -17,6 +18,7 @@ import com.intellij.ui.components.JBHtmlPane
 import com.intellij.ui.components.JBHtmlPaneConfiguration
 import com.intellij.ui.components.JBHtmlPaneStyleConfiguration
 import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import org.jetbrains.plugins.terminal.TERMINAL_CONFIGURABLE_ID
@@ -36,28 +38,56 @@ internal class TerminalLookupBottomPanelProvider : LookupBottomPanelProvider {
   }
 
   private fun doCreatePanel(lookup: Lookup): JComponent {
+    val shouldShowPromotion = TerminalCompletionPopupPromotion.shouldShowPromotion()
+
     val panel = panel {
       customizeSpacingConfiguration(EmptySpacingConfiguration()) {}
 
       row {
         resizableRow()
 
-        val shortcutHint = createInsertionShortcutHint()
-        if (shortcutHint != null) {
-          cell(shortcutHint)
-            .align(AlignY.CENTER)
+        if (shouldShowPromotion) {
+          promotion()
+          TerminalCompletionPopupPromotion.promotionShown()
+        }
+        else {
+          shortcutHint()
         }
 
         actionButton(TerminalCommandCompletionSettingsAction())
           .align(AlignY.CENTER)
           .align(AlignX.RIGHT)
+          .customize(UnscaledGaps(left = 6))
       }
     }
 
     panel.background = JBUI.CurrentTheme.CompletionPopup.Advertiser.background()
     panel.border = JBUI.Borders.empty(0, 12, 0, 5)
-    panel.preferredSize = JBDimension(240, 28)
+    val prefWidth = if (shouldShowPromotion) 300 else 240
+    panel.preferredSize = JBDimension(prefWidth, 28)
     return panel
+  }
+
+  private fun Row.promotion() {
+    icon(AllIcons.General.New_badge)
+      .align(AlignY.CENTER)
+      .customize(UnscaledGaps(right = 6))
+
+    label(TerminalBundle.message("terminal.command.completion.popup.promotion"))
+      .align(AlignY.CENTER)
+      .component
+      .apply {
+        foreground = JBUI.CurrentTheme.CompletionPopup.Advertiser.foreground()
+        font = JBUI.Fonts.label().lessOn(1f)
+      }
+  }
+
+  private fun Row.shortcutHint() {
+    val shortcutHint = createInsertionShortcutHint()
+    if (shortcutHint != null) {
+      cell(shortcutHint)
+        .align(AlignY.CENTER)
+    }
   }
 
   private fun createInsertionShortcutHint(): JComponent? {
@@ -140,9 +170,33 @@ private class TerminalCommandCompletionSettingsAction : DumbAwareAction(
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
+
+    TerminalCompletionPopupPromotion.doNotShowAgain()
+
     // TODO: it should highlight the Command Completion options group in the settings dialog.
     ShowSettingsUtil.getInstance().showSettingsDialog(project, Predicate { configurable: Configurable ->
       configurable is ConfigurableWithId && configurable.getId() == TERMINAL_CONFIGURABLE_ID
     }, null)
+  }
+}
+
+private object TerminalCompletionPopupPromotion {
+  private const val PROMOTION_SHOWN_COUNT_PROPERTY = "TerminalCompletionPopupPromotion.shownCount"
+  private const val PROMOTION_SHOWN_COUNT_LIMIT = 3
+
+  private var shownCount: Int
+    get() = PropertiesComponent.getInstance().getInt(PROMOTION_SHOWN_COUNT_PROPERTY, 0)
+    set(value) = PropertiesComponent.getInstance().setValue(PROMOTION_SHOWN_COUNT_PROPERTY, value, 0)
+
+  fun shouldShowPromotion(): Boolean {
+    return shownCount < PROMOTION_SHOWN_COUNT_LIMIT
+  }
+
+  fun promotionShown() {
+    shownCount++
+  }
+
+  fun doNotShowAgain() {
+    shownCount = PROMOTION_SHOWN_COUNT_LIMIT
   }
 }
