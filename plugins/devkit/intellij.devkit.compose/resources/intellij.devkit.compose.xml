@@ -16,6 +16,14 @@
     <fileEditorProvider implementation="com.intellij.devkit.compose.sandbox.ComposeSandboxFileEditorProvider"/>
     <postStartupActivity implementation="com.intellij.devkit.compose.sandbox.ComposeSandboxStartupActivity"/>
     <fileIconProvider implementation="com.intellij.devkit.compose.sandbox.ComposeSandboxFileIconProvider"/>
+    <applicationConfigurable
+      parentId="tools"
+      provider="com.intellij.devkit.compose.showcase.SettingsPageOnComposeProvider"
+      id="com.intellij.devkit.compose.showcase.SettingsPageOnCompose"
+      key="configurable.name.settings.page.on.compose"/>
+
+    <registryKey key="devkit.compose.example.settings.page" defaultValue="false"
+                 description="Enable example Settings page implemented with Compose UI"/>
   </extensions>
 
   <actions>
