@@ -41,7 +41,6 @@
       <add-to-group group-id="Vcs.RepositoryChangesBrowserMenu" relative-to-action="Vcs.ApplySelectedChanges" anchor="after"/>
     </action>
 
-    <action id="Git.InMemory.Reword.Commit" class="git4idea.inMemory.rebase.log.reword.GitInMemoryRewordAction"/>
     <action id="Git.InMemory.Extract.Selected.Changes" class="git4idea.inMemory.rebase.log.changes.GitExtractSelectedChangesAction">
       <add-to-group group-id="Vcs.RepositoryChangesBrowserMenu" relative-to-action="Vcs.ApplySelectedChanges" anchor="after"/>
     </action>
@@ -297,7 +296,6 @@
       <reference ref="Git.Uncommit"/>
       <separator/>
       <reference ref="Git.Reword.Commit"/>
-      <reference ref="Git.InMemory.Reword.Commit"/>
       <reference ref="Git.Fixup.To.Commit"/>
       <reference ref="Git.Squash.Into.Commit"/>
       <reference ref="Git.Drop.Commits"/>
