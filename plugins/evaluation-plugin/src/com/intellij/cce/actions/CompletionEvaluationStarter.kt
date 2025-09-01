@@ -17,6 +17,7 @@ import com.intellij.cce.evaluable.StrategySerializer
 import com.intellij.cce.evaluation.BackgroundStepFactory
 import com.intellij.cce.evaluation.EvaluationProcess
 import com.intellij.cce.evaluation.FinishEvaluationStep
+import com.intellij.cce.evaluation.allPreliminarySteps
 import com.intellij.cce.evaluation.step.SetupStatsCollectorStep
 import com.intellij.cce.evaluation.step.runInIntellij
 import com.intellij.cce.util.ExceptionsUtil.stackTraceToString
@@ -93,7 +94,7 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
     }
 
     protected fun runPreliminarySteps(feature: EvaluableFeature<*>, workspace: EvaluationWorkspace) {
-      for (step in feature.getPreliminaryEvaluationSteps()) {
+      for (step in allPreliminarySteps(feature)) {
         println("Starting preliminary step: ${step.name}")
         step.runInIntellij(null, workspace)
       }

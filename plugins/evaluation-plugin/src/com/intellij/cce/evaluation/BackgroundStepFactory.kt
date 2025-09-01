@@ -48,5 +48,9 @@ class BackgroundStepFactory(
 
   override fun featureSpecificSteps(): List<EvaluationStep> = feature.getEvaluationSteps(config)
 
-  override fun featureSpecificPreliminarySteps(): List<EvaluationStep> = feature.getPreliminaryEvaluationSteps()
+  override fun featureSpecificPreliminarySteps(): List<EvaluationStep> = allPreliminarySteps(feature)
 }
+
+fun allPreliminarySteps(feature: EvaluableFeature<*>): List<EvaluationStep> = listOfNotNull(
+  DisableDockerEel().takeIf { System.getenv("EVALUATION_DOCKER_LOCAL") == "true" },
+) + feature.getPreliminaryEvaluationSteps()
