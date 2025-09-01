@@ -66,7 +66,7 @@ class FindInFilesCommand(text: String, line: Int) : PlaybackCommandCoroutineAdap
       val findSpan = PerformanceTestSpan.TRACER.spanBuilder("$SEARCH_SPAN_NAME: $it").startSpan()
       val findMutex = Mutex(true)
 
-      findHelper.setStopHandler {
+      findHelper.setFinishHandler { resultsCount ->
         findSpan.end()
         findHelper.closeUI()
         findMutex.unlock()

@@ -1340,14 +1340,17 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
 
       public void onFinish() {
         ApplicationManager.getApplication().invokeLater(() -> {
+          boolean isEmpty = resultsCount.get() == 0;
+
           if (!isCancelled()) {
-            boolean isEmpty = resultsCount.get() == 0;
             if (isEmpty) {
               showEmptyText(FindBundle.message("message.nothingFound"), true);
             }
           }
           FindUsagesCollector.recordSearchFinished(System.currentTimeMillis() - startTime.get(), resultsCount.get(), ShowUsagesAction.getUsagesPageSize());
           onStop(hash);
+
+          myHelper.onSearchFinish(isEmpty ? 0 : myResultsPreviewTable.getRowCount());
         }, state);
       }
     }, myResultsPreviewSearchProgress);
@@ -1572,7 +1575,6 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
       if (backendValidator.isFinished) {
         header.loadingIcon.setIcon(EmptyIcon.ICON_16);
       }
-      myHelper.onSearchStop();
     });
   }
 
