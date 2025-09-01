@@ -214,9 +214,14 @@ class UnindexedFilesScanner (
 
     val triggerA = forceReindexingTrigger
     val triggerB = oldTask.forceReindexingTrigger
-    val mergedPredicate = BiPredicate { f: IndexedFile, stamp: FileIndexingStamp ->
-      (triggerA != null && triggerA.test(f, stamp)) ||
-      (triggerB != null && triggerB.test(f, stamp))
+
+    val mergedPredicate = if (triggerA == null && triggerB == null) {
+      null
+    } else {
+      BiPredicate { f: IndexedFile, stamp: FileIndexingStamp ->
+        (triggerA != null && triggerA.test(f, stamp)) ||
+        (triggerB != null && triggerB.test(f, stamp))
+      }
     }
     return UnindexedFilesScanner(
       myProject,
