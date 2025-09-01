@@ -39,6 +39,9 @@
   </extensionPoints>
 
   <actions>
+    <!-- TODO IJPL-173924 Temporary way to register ChangesViewPopupMenu in shared code -->
+    <group id="ChangesViewPopupMenuShared"/>
+
     <group id="ChangesView.GroupBy" icon="AllIcons.Actions.GroupBy" popup="true"
            class="com.intellij.openapi.vcs.changes.actions.SelectChangesGroupingActionGroup">
       <separator key="group.ChangesView.GroupBy.text"/>

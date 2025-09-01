@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.vcs.impl.frontend.changes
 
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -36,6 +38,9 @@ internal class LocalChangesViewContentProvider : FrontendChangesViewContentProvi
 
     // TODO actions on thin client might still be unavailable. Should probably be replaced with FrontendActionRegistrationListener
     ChangesViewPanelActions.initActions(changesViewPanel)
+
+    // TODO IJPL-173924 migrate ChangesViewManager
+    tree.installPopupHandler(ActionManager.getInstance().getAction("ChangesViewPopupMenuShared") as ActionGroup)
 
     project.service<ScopeProvider>().cs.launch(Dispatchers.UiWithModelAccess) {
       ChangeListsViewModel.getInstance(project).changeLists.collect {
