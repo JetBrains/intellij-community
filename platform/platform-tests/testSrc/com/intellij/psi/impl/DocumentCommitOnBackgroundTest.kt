@@ -5,8 +5,10 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.project.DumbService
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiTreeChangeAdapter
 import com.intellij.psi.PsiTreeChangeEvent
 import com.intellij.testFramework.PlatformTestUtil
@@ -64,6 +66,30 @@ class DocumentCommitOnBackgroundTest {
     }
   }
 
+  class RecordingDocumentTransactionListener : PsiDocumentTransactionListener {
+    val recorder = Recorder()
+
+    override fun transactionCompleted(document: Document, psiFile: PsiFile) {
+      recorder.recordUsage()
+    }
+
+    override fun transactionStarted(document: Document, psiFile: PsiFile) {
+      recorder.recordUsage()
+    }
+  }
+
+  class RecordingDocumentTransactionListenerBackgroundable : PsiDocumentTransactionListenerBackgroundable {
+    val recorder = Recorder()
+
+    override fun transactionCompleted(document: Document, psiFile: PsiFile) {
+      recorder.recordUsage()
+    }
+
+    override fun transactionStarted(document: Document, psiFile: PsiFile) {
+      recorder.recordUsage()
+    }
+  }
+
   @Test
   @RegistryKey("document.async.commit.with.coroutines", "true")
   fun `psiTreeChangeListener and psiTreeChangePreprocessor can be invoked on background`(@TestDisposable testDisposable: Disposable) {
@@ -103,5 +129,31 @@ class DocumentCommitOnBackgroundTest {
     // sometimes psi events get fired when dumb mode is ending, in this case we have usages of this listener on EDT
     assertTrue(backgroundablePreprocessor.recorder.onEdt.get() < backgroundablePreprocessor.recorder.invoked.get())
   }
+
+  @Test
+  @RegistryKey("document.async.commit.with.coroutines", "true")
+  fun `psiDocumentTransactionTest can be invoked on background`(@TestDisposable testDisposable: Disposable) {
+    val file = file.get()
+    val psiDocumentManager = PsiDocumentManager.getInstance(project.get())
+    val plainListener = RecordingDocumentTransactionListener()
+    val backgroundableListener = RecordingDocumentTransactionListenerBackgroundable()
+    project.get().messageBus.connect(testDisposable).subscribe(PsiDocumentTransactionListener.TOPIC, plainListener)
+    project.get().messageBus.connect(testDisposable).subscribe(PsiDocumentTransactionListenerBackgroundable.TOPIC, backgroundableListener)
+
+
+    val document = runReadAction {
+      psiDocumentManager.getDocument(file)!!
+    }
+    invokeAndWaitIfNeeded {
+      WriteCommandAction.runWriteCommandAction(project.get(), { document.insertString(0, " ") })
+      PlatformTestUtil.waitForAllDocumentsCommitted(10, TimeUnit.SECONDS)
+    }
+
+    assertTrue(plainListener.recorder.invoked.get() > 0)
+    assertTrue(plainListener.recorder.onEdt.get() > 0)
+    assertTrue(backgroundableListener.recorder.invoked.get() > 0)
+    assertTrue(backgroundableListener.recorder.onEdt.get() < backgroundableListener.recorder.invoked.get())
+  }
+
 
 }

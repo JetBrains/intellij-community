@@ -7,7 +7,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -54,6 +53,8 @@ public class PsiToDocumentSynchronizer {
   PsiToDocumentSynchronizer(@NotNull PsiDocumentManagerBase psiDocumentManager, @NotNull MessageBus bus) {
     myPsiDocumentManager = psiDocumentManager;
     myBus = bus;
+    myBus.connect(psiDocumentManager)
+      .subscribe(PsiDocumentTransactionListenerBackgroundable.TOPIC, new PsiDocumentTransactionListenerBackgroundableAdapter(bus));
   }
 
   public @Nullable DocumentChangeTransaction getTransaction(@NotNull Document document) {
@@ -157,6 +158,28 @@ public class PsiToDocumentSynchronizer {
     }
   }
 
+  private final static class PsiDocumentTransactionListenerBackgroundableAdapter implements PsiDocumentTransactionListenerBackgroundable {
+    private final MessageBus bus;
+
+    private PsiDocumentTransactionListenerBackgroundableAdapter(MessageBus bus) {
+      this.bus = bus;
+    }
+
+    @Override
+    public void transactionStarted(@NotNull Document document, @NotNull PsiFile psiFile) {
+      PsiManagerImpl.runWriteActionOnEdtRegardlessOfCurrentThread(() -> {
+        bus.syncPublisher(PsiDocumentTransactionListener.TOPIC).transactionStarted(document, psiFile);
+      });
+    }
+
+    @Override
+    public void transactionCompleted(@NotNull Document document, @NotNull PsiFile psiFile) {
+      PsiManagerImpl.runWriteActionOnEdtRegardlessOfCurrentThread(() -> {
+        bus.syncPublisher(PsiDocumentTransactionListener.TOPIC).transactionCompleted(document, psiFile);
+      });
+    }
+  }
+
   public void startTransaction(@NotNull Project project, @NotNull Document doc, @NotNull PsiFile scope) {
     LOG.assertTrue(!project.isDisposed());
     Pair<DocumentChangeTransaction, Integer> pair = myTransactionsMap.get(doc);
@@ -165,7 +188,7 @@ public class PsiToDocumentSynchronizer {
       PsiFile psiFile = scope.getContainingFile();
       pair = new Pair<>(new DocumentChangeTransaction(doc, psiFile), 0);
       if (scope.isPhysical()) {
-        myBus.syncPublisher(PsiDocumentTransactionListener.TOPIC).transactionStarted(doc, psiFile);
+        myBus.syncPublisher(PsiDocumentTransactionListenerBackgroundable.TOPIC).transactionStarted(doc, psiFile);
       }
     }
     else {
@@ -187,9 +210,7 @@ public class PsiToDocumentSynchronizer {
       checkPsiModificationAllowed(fakeEvent);
       doSync(fakeEvent, (document1, event) -> doCommitTransaction(document1, documentChangeTransaction));
       if (PomModelImpl.shouldFirePhysicalPsiEvents(changeScope)) {
-        PsiManagerImpl.runWriteActionOnEdtRegardlessOfCurrentThread(() -> {
-          myBus.syncPublisher(PsiDocumentTransactionListener.TOPIC).transactionCompleted(document, changeScope);
-        });
+        myBus.syncPublisher(PsiDocumentTransactionListenerBackgroundable.TOPIC).transactionCompleted(document, changeScope);
       }
     }
     catch (Throwable e) {
