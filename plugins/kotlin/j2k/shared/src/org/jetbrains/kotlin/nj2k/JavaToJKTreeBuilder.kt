@@ -847,7 +847,26 @@ class JavaToJKTreeBuilder(
                 when {
                     annotation !is PsiAnnotation -> null
                     annotation.qualifiedName == DEPRECATED_ANNOTATION_FQ_NAME && deprecatedAnnotation != null -> null
-                    AnnotationTargetUtil.isTypeAnnotation(annotation) -> null
+                    this is PsiMethod && AnnotationTargetUtil.findAnnotationTarget(
+                        annotation,
+                        PsiAnnotation.TargetType.METHOD,
+                    ) == null -> null
+                    this is PsiField && AnnotationTargetUtil.findAnnotationTarget(
+                        annotation,
+                        PsiAnnotation.TargetType.FIELD,
+                    ) == null -> null
+                    this is PsiParameter && AnnotationTargetUtil.findAnnotationTarget(
+                        annotation,
+                        PsiAnnotation.TargetType.PARAMETER,
+                    ) == null -> null
+                    this is PsiLocalVariable && AnnotationTargetUtil.findAnnotationTarget(
+                        annotation,
+                        PsiAnnotation.TargetType.LOCAL_VARIABLE,
+                    ) == null -> null
+                    this is PsiRecordComponent && AnnotationTargetUtil.findAnnotationTarget(
+                        annotation,
+                        PsiAnnotation.TargetType.RECORD_COMPONENT,
+                    ) == null -> null
                     else -> annotation.toJK()
                 }
             }
