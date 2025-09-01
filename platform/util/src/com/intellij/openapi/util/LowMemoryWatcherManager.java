@@ -3,11 +3,11 @@ package com.intellij.openapi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import javax.management.Notification;
 import javax.management.NotificationEmitter;
@@ -18,6 +18,8 @@ import java.util.Queue;
 import java.util.concurrent.*;
 import java.util.function.Consumer;
 
+import static com.intellij.util.SystemProperties.*;
+import static com.intellij.util.concurrency.SequentialTaskExecutor.createSequentialApplicationPoolExecutor;
 import static com.intellij.util.io.IOUtil.MiB;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
@@ -30,9 +32,14 @@ public final class LowMemoryWatcherManager {
   private static final Logger LOG = Logger.getInstance(LowMemoryWatcherManager.class);
 
   private static final long MIN_MEMORY_MARGIN = 5 * MiB;
+  private static final float MEMORY_NOTIFICATION_THRESHOLD = getFloatProperty("low.memory.watcher.notification.threshold", 0.95f);
 
-  private static final long WINDOW_SIZE_MS = SECONDS.toMillis(60);
-  private static final long IN_WINDOW_GC_DURATION_THRESHOLD_MS = SECONDS.toMillis(10);
+  private static final boolean USE_EXPONENTIAL_GC_SMOOTHING =
+    getBooleanProperty("LowMemoryWatcherManager.USE_EXPONENTIAL_GC_SMOOTHING", false);
+
+  private static final long WINDOW_SIZE_MS = getLongProperty("LowMemoryWatcherManager.WINDOW_SIZE_MS", SECONDS.toMillis(60));
+  private static final long IN_WINDOW_GC_DURATION_THRESHOLD_MS =
+    getLongProperty("LowMemoryWatcherManager.IN_WINDOW_GC_DURATION_THRESHOLD_MS", SECONDS.toMillis(10));
 
   /** Notify low-memory notifications will be delivered to {@link LowMemoryWatcher} via that pool, see watcherNotificationTask */
   private final ExecutorService watcherNotificationPool;
@@ -52,7 +59,7 @@ public final class LowMemoryWatcherManager {
 
   private final Future<?> memoryPoolMXBeansInitializationFuture;
 
-  private final GcTracker gcTracker = new GcTracker(getMajorGcTime());
+  private final GcTracker gcTracker;
 
   private final NotificationListener lowMemoryListener = new NotificationListener() {
     @Override
@@ -62,16 +69,16 @@ public final class LowMemoryWatcherManager {
       boolean memoryCollectionThreshold = MemoryNotificationInfo.MEMORY_COLLECTION_THRESHOLD_EXCEEDED.equals(notification.getType());
 
       if (memoryThreshold || memoryCollectionThreshold) {
-        long currentGcTime = getMajorGcTime();
-        long recentGcTime = gcTracker.trackGcAndGetRecentTime(currentGcTime);
+        long currentGcTime = fetchMajorGcDurationAccumulated();
+        long gcLoadScore = gcTracker.trackGc(System.currentTimeMillis(), currentGcTime);
         LOG.info(
-          "LowMemoryNotification{gcTime: " + currentGcTime + "ms, in last minute: " + recentGcTime + "ms}" +
+          "LowMemoryNotification{gcTime: " + currentGcTime + "ms, GC load score: " + gcLoadScore + "}" +
           "{threshold: " + memoryThreshold + ", collectionThreshold: " + memoryCollectionThreshold + "}"
         );
         synchronized (watcherNotificationTask) {
           if (watcherNotificationTaskSubmitted == null) {
             //This is not just 'after GC', it is (a lot of time spent on GC recently) AND (memory still low after GC)
-            boolean afterGC = (recentGcTime > IN_WINDOW_GC_DURATION_THRESHOLD_MS) && memoryCollectionThreshold;
+            boolean afterGC = (gcLoadScore > IN_WINDOW_GC_DURATION_THRESHOLD_MS) && memoryCollectionThreshold;
             watcherNotificationTaskSubmitted = watcherNotificationPool.submit(() -> watcherNotificationTask.accept(afterGC));
             // maybe it's executed too fast or even synchronously
             if (watcherNotificationTaskSubmitted.isDone()) {
@@ -84,16 +91,26 @@ public final class LowMemoryWatcherManager {
   };
 
   public LowMemoryWatcherManager(@NotNull ExecutorService backendExecutorService) {
-    // whether LowMemoryWatcher runnables should be executed on the same thread that the low memory events come
+    long gcDurationMs = fetchMajorGcDurationAccumulated();
+    if (USE_EXPONENTIAL_GC_SMOOTHING) {
+      LOG.info("Use ExponentiallySmoothingTracker(" + WINDOW_SIZE_MS + " ms)");
+      gcTracker = new ExponentiallySmoothingTracker(gcDurationMs, System.currentTimeMillis(), WINDOW_SIZE_MS);
+    }
+    else {
+      LOG.info("Use WindowedSumTracker(" + WINDOW_SIZE_MS + " ms)");
+      gcTracker = new WindowedSumTracker(gcDurationMs, System.currentTimeMillis(), WINDOW_SIZE_MS);
+    }
+
+    // whether LowMemoryWatcher runnables should be executed on the same thread that the low-memory events come
     watcherNotificationPool = Boolean.getBoolean("low.memory.watcher.sync") ?
                               ConcurrencyUtil.newSameThreadExecutorService() :
-                              SequentialTaskExecutor.createSequentialApplicationPoolExecutor("LowMemoryWatcherManager", backendExecutorService);
+                              createSequentialApplicationPoolExecutor("LowMemoryWatcherManager", backendExecutorService);
 
     memoryPoolMXBeansInitializationFuture = initializeMXBeanListenersLater(backendExecutorService);
   }
 
-  /** @return accumulated duration of major GC collections since the application start */
-  private static long getMajorGcTime() {
+  /** @return accumulated duration of major GC collections since the application start, ms */
+  private static long fetchMajorGcDurationAccumulated() {
     for (GarbageCollectorMXBean gc : ManagementFactory.getGarbageCollectorMXBeans()) {
       if (gc.getName().toLowerCase().contains("g1 old generation")) {
         return gc.getCollectionTime();
@@ -111,7 +128,7 @@ public final class LowMemoryWatcherManager {
           for (MemoryPoolMXBean bean : ManagementFactory.getMemoryPoolMXBeans()) {
             if (bean.getType() == MemoryType.HEAP && bean.isCollectionUsageThresholdSupported() && bean.isUsageThresholdSupported()) {
               long maxPoolCapacity = bean.getUsage().getMax();
-              long threshold = Math.min((long)(maxPoolCapacity * getOccupiedMemoryThreshold()), maxPoolCapacity - MIN_MEMORY_MARGIN);
+              long threshold = Math.min((long)(maxPoolCapacity * MEMORY_NOTIFICATION_THRESHOLD), maxPoolCapacity - MIN_MEMORY_MARGIN);
               LOG.info("Subscribing to MemoryPool[" + bean.getName() + "]{max: " + maxPoolCapacity + ", threshold: " + threshold + "}");
               if (threshold > 0) {
                 bean.setUsageThreshold(threshold);
@@ -132,10 +149,6 @@ public final class LowMemoryWatcherManager {
         return "initializeMXBeanListeners runnable";
       }
     });
-  }
-
-  private static float getOccupiedMemoryThreshold() {
-    return SystemProperties.getFloatProperty("low.memory.watcher.notification.threshold", 0.95f);
   }
 
   public void shutdown() {
@@ -161,30 +174,52 @@ public final class LowMemoryWatcherManager {
     memoryPoolMXBeansInitializationFuture.get(timeout, unit);
   }
 
-  private static class GcTracker {
-    private long lastGcDurationMs;
+  @ApiStatus.Internal
+  @VisibleForTesting
+  public interface GcTracker {
+    /** @return some weighted sum of GC times over the last period */
+    long trackGc(long currentTimeMs,
+                 long accumulatedGcDurationMs);
+  }
+
+  /** GC tracker computes a moving sum over {@link #WINDOW_SIZE_MS} window over reported GC cycle durations */
+  @ApiStatus.Internal
+  @VisibleForTesting
+  public static class WindowedSumTracker implements GcTracker {
+    private final long windowSizeMs;
+
+    private long previousAccumulatedGcDurationMs;
+    private long previousUpdateTimestampMs;
     private final Queue<GcPeriod> gcDurations = new LinkedList<>();
 
-    private GcTracker(long initialGcDurationMs) {
-      lastGcDurationMs = initialGcDurationMs;
+    public WindowedSumTracker(long initialGcDurationMs, long initialTimestampMs, long windowSizeMs) {
+      previousAccumulatedGcDurationMs = initialGcDurationMs;
+      this.windowSizeMs = windowSizeMs;
+      this.previousUpdateTimestampMs = initialTimestampMs;
     }
 
     /**
-     * adds GC time=(currentGcTime-previousGcTimeValue) to the list of recent GC times, and returns a sum of GC times over
-     * last {@link #WINDOW_SIZE_MS}
+     * Adds GC time=(currentGcTime-lastGcDurationMs) to the list of recent GC times, and returns a sum of GC times over
+     * last {@link #windowSizeMs}
      */
-    public synchronized long trackGcAndGetRecentTime(long currentGcDurationMs) {
-      //MAYBE RC: use EMA instead of WMA?
-      long nowMs = System.currentTimeMillis();
-
-      long previousGcDurationMs = lastGcDurationMs;
-      lastGcDurationMs = currentGcDurationMs;
-      long gcDurationDeltaMs = currentGcDurationMs - previousGcDurationMs;
-      if (gcDurationDeltaMs > 0) {
-        gcDurations.offer(new GcPeriod(nowMs, gcDurationDeltaMs));
+    @Override
+    public synchronized long trackGc(long currentTimeMs, long accumulatedGcDurationMs) {
+      if (previousUpdateTimestampMs < currentTimeMs - windowSizeMs) {
+        previousUpdateTimestampMs = currentTimeMs;
+        previousAccumulatedGcDurationMs = accumulatedGcDurationMs;
+        gcDurations.clear();
+        return 0;
       }
 
-      while (!gcDurations.isEmpty() && gcDurations.peek().timestamp < nowMs - WINDOW_SIZE_MS) {
+      long gcDurationDeltaMs = accumulatedGcDurationMs - previousAccumulatedGcDurationMs;
+      previousAccumulatedGcDurationMs = accumulatedGcDurationMs;
+      previousUpdateTimestampMs = currentTimeMs;
+
+      if (gcDurationDeltaMs > 0) {
+        gcDurations.offer(new GcPeriod(currentTimeMs, gcDurationDeltaMs));
+      }
+
+      while (!gcDurations.isEmpty() && gcDurations.peek().timestamp < currentTimeMs - windowSizeMs) {
         gcDurations.poll();
       }
 
@@ -201,6 +236,47 @@ public final class LowMemoryWatcherManager {
         this.timestamp = timestamp;
         this.gcDurationMs = gcDurationMs;
       }
+    }
+  }
+
+  /** GC tracker: computes an exponentially decaying sum with (lambda=1/{@link #windowSizeMs}) over reported GC cycle durations */
+  @ApiStatus.Internal
+  @VisibleForTesting
+  public static class ExponentiallySmoothingTracker implements GcTracker {
+    private final long windowSizeMs;
+
+    private long previousAccumulatedGcDurationMs;
+    private long previousUpdateTimestampMs;
+    private double ema;
+
+    public ExponentiallySmoothingTracker(long initialGcDurationMs,
+                                         long initialTimeMs,
+                                         long windowSizeMs) {
+      this.windowSizeMs = windowSizeMs;
+
+      previousAccumulatedGcDurationMs = initialGcDurationMs;
+      ema = initialGcDurationMs;
+
+      previousUpdateTimestampMs = initialTimeMs;
+    }
+
+    @Override
+    public synchronized long trackGc(long currentTimeMs,
+                                     long accumulatedGcDurationMs) {
+      long gcDurationInLastMs = accumulatedGcDurationMs - previousAccumulatedGcDurationMs;
+      if (gcDurationInLastMs > 0) {
+        long sinceLastUpdateMs = currentTimeMs - previousUpdateTimestampMs;
+
+        double decayFactor = Math.exp((-1.0 * sinceLastUpdateMs) / windowSizeMs);
+        //MAYBE RC: actually, we should also discount gcDurationInLastMs for sinceLastUpdateMs/2 because it is accumulated
+        //          during sinceLastUpdateMs period!
+        ema = ema * decayFactor + gcDurationInLastMs;
+      }
+
+      previousUpdateTimestampMs = currentTimeMs;
+      previousAccumulatedGcDurationMs = accumulatedGcDurationMs;
+
+      return (long)ema;
     }
   }
 }
