@@ -74,16 +74,17 @@ If IntelliJ IDEA displays a message about a missing or out-of-date required plug
 
 ### Build Configuration Steps
 1. **JDK Setup**
-  - Use JetBrains Runtime 17 (without JCEF) to compile
+
+- Use JetBrains Runtime 21 (without JCEF) to compile
   - IDE will prompt to download it on the first build
 > [!IMPORTANT]
 >
-> JetBrains Runtime **without** JCEF is required. If `jbr-17` SDK points to JCEF version, change it to the non-JCEF version:
+> JetBrains Runtime **without** JCEF is required. If `jbr-21` SDK points to JCEF version, change it to the non-JCEF version:
 > - Add `idea.is.internal=true` to `idea.properties` and restart the IDE.
 > - Go to '**Project Structure | SDKs**'
 > - Click 'Browse' → 'Download...'
-> - Select version 17 and vendor 'JetBrains Runtime'
-> - To confirm if the JDK is correct, navigate to the SDK page with jbr-17 selected. Search for `jcef`, it should **_NOT_** yield a result.
+> - Select version 21 and vendor 'JetBrains Runtime'
+> - To confirm if the JDK is correct, navigate to the SDK page with jbr-21 selected. Search for `jcef`, it should **_NOT_** yield a result.
 
 2. **Maven Configuration** : If the **Maven** plugin is disabled, [add the path variable](https://www.jetbrains.com/help/idea/absolute-path-variables.html) "**MAVEN_REPOSITORY**" pointing to `<USER_HOME>/.m2/repository` directory.
 
@@ -111,10 +112,10 @@ Installer build examples:
 ./installers.cmd -Dintellij.build.incremental.compilation=true
 ```
 
->[!TIP]
+> [!TIP]
 > 
 > The `installers.cmd` is used to run [OpenSourceCommunityInstallersBuildTarget](build/src/OpenSourceCommunityInstallersBuildTarget.kt) from the command line.
-You can also call it directly from IDEA, using run configuration `Build IDEA Community Installers (current OS)`.
+> You can also call it directly from IDEA, using run configuration `Build IDEA Community Installers (current OS)`.
 
 
 #### Dockerized Build Environment
