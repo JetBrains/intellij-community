@@ -74,8 +74,8 @@ public abstract class CompletionService {
    */
   @ApiStatus.Experimental
   protected void getVariantsFromGroupContributors(@NotNull CompletionParameters parameters,
-                                                  PrefixMatcher matcher,
-                                                  Consumer<? super CompletionResult> consumer) {
+                                                  @NotNull PrefixMatcher matcher,
+                                                  @NotNull Consumer<? super CompletionResult> consumer) {
     if (!GroupedCompletionContributor.isGroupEnabledInApp()) {
       return;
     }
