@@ -15,7 +15,11 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.XmlElementVisitor
 import com.intellij.psi.createSmartPointer
+import com.intellij.psi.search.searches.ReferencesSearch
+import com.intellij.psi.util.parentOfType
 import com.intellij.psi.xml.XmlFile
+import com.intellij.psi.xml.XmlTag
+import com.intellij.xml.util.XmlUtil
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.dom.index.PluginIdDependenciesIndex
 import org.jetbrains.idea.devkit.util.DescriptorUtil
@@ -26,7 +30,7 @@ internal class ModuleNotRegisteredAsPluginContentInspection : LocalInspectionToo
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
     return object : XmlElementVisitor() {
       override fun visitXmlFile(file: XmlFile) {
-        if (DescriptorUtil.isPluginModuleFile(file) && isNotReferencedAsContentModule(file)) {
+        if (DescriptorUtil.isPluginModuleFile(file) && isNotReferencedAsContentModule(file) && isNotXIncluded(file)) {
           val moduleName = getModuleName(file)
           holder.registerProblem(
             file,
@@ -45,6 +49,13 @@ internal class ModuleNotRegisteredAsPluginContentInspection : LocalInspectionToo
   private fun isNotReferencedAsContentModule(xmlFile: XmlFile): Boolean {
     val moduleVirtualFile = xmlFile.virtualFile ?: return false
     return PluginIdDependenciesIndex.findFilesIncludingContentModule(xmlFile.project, moduleVirtualFile).isEmpty()
+  }
+
+  private fun isNotXIncluded(file: XmlFile): Boolean {
+    return !ReferencesSearch.search(file).anyMatch {
+      val xmlTag = it.element.parentOfType<XmlTag>() ?: return@anyMatch false
+      xmlTag.namespace == XmlUtil.XINCLUDE_URI && xmlTag.localName == "include"
+    }
   }
 
   private fun fixIfPluginXmlFound(file: XmlFile, moduleName: String): Array<out LocalQuickFix> {
