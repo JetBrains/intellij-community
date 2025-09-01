@@ -1,139 +1,120 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.codeInsight.completion;
+package com.intellij.codeInsight.completion
 
-import com.intellij.injected.editor.EditorWindow;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.ex.AnActionListener;
-import com.intellij.openapi.command.CommandEvent;
-import com.intellij.openapi.command.CommandListener;
-import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Caret;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.messages.MessageBusConnection;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Unmodifiable;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import static com.intellij.codeWithMe.ClientIdKt.isOnGuest;
+import com.intellij.codeWithMe.isOnGuest
+import com.intellij.injected.editor.EditorWindow
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.ex.AnActionListener
+import com.intellij.openapi.command.CommandEvent
+import com.intellij.openapi.command.CommandListener
+import com.intellij.openapi.command.CommandProcessor
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.util.messages.MessageBusConnection
 
 /**
  * Tracks changes and actions performed on an editor instance.
  *
- * @see #hasAnythingHappened
+ * @see hasAnythingHappened
  */
-final class ActionTracker {
-  private static final Logger LOG = Logger.getInstance(ActionTracker.class);
+internal class ActionTracker(
+  private val myEditor: Editor,
+  parentDisposable: Disposable,
+) {
+  private val myProject: Project = myEditor.getProject() ?: ProjectManager.getInstance().getDefaultProject()
+  private val myConnection: MessageBusConnection = myProject.getMessageBus().connect(parentDisposable)
 
-  private final @NotNull MessageBusConnection myConnection;
-  private @NotNull List<Integer> myCaretOffsets;
-  private long myStartDocStamp;
-  private boolean myActionsHappened;
-  private final Editor myEditor;
-  private final Project myProject;
-  private final boolean myIsDumb;
+  private var myCaretOffsets: List<Int>? = null
+  private var myStartDocStamp: Long = 0
+  private var myActionsHappened = false
+  private val myIsDumb: Boolean = DumbService.getInstance(myProject).isDumb
+  private val happenedActions = mutableListOf<String>()
 
-  private final List<String> happenedActions = new ArrayList<>();
-
-  ActionTracker(@NotNull Editor editor, @NotNull Disposable parentDisposable) {
-    myEditor = editor;
-    Project project = editor.getProject();
-    myProject = project == null ? ProjectManager.getInstance().getDefaultProject() : project;
-    myIsDumb = DumbService.getInstance(myProject).isDumb();
-
-    myConnection = myProject.getMessageBus().connect(parentDisposable);
-    myConnection.subscribe(AnActionListener.TOPIC, new AnActionListener() {
-      @Override
-      public void beforeActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event) {
-        myActionsHappened = true;
-        if (LOG.isTraceEnabled()) {
-          happenedActions.add("Action class = " + action.getClass() + ", action = " + action);
+  init {
+    myConnection.subscribe(AnActionListener.TOPIC, object : AnActionListener {
+      override fun beforeActionPerformed(action: AnAction, event: AnActionEvent) {
+        myActionsHappened = true
+        if (LOG.isTraceEnabled) {
+          happenedActions.add("Action class = ${action.javaClass}, action = $action")
         }
       }
-    });
-    setDocumentState();
+    })
+    setDocumentState()
   }
 
-  private void setDocumentState() {
-    myStartDocStamp = docStamp();
-    myCaretOffsets = caretOffsets();
+  private fun setDocumentState() {
+    myStartDocStamp = docStamp()
+    myCaretOffsets = caretOffsets()
   }
 
-  private @Unmodifiable List<Integer> caretOffsets() {
-    return ContainerUtil.map(myEditor.getCaretModel().getAllCarets(), Caret::getOffset);
+  private fun caretOffsets(): List<Int> {
+    return myEditor.caretModel.allCarets.map { it.offset }
   }
 
-  private long docStamp() {
-    return myEditor.getDocument().getModificationStamp();
+  private fun docStamp(): Long {
+    return myEditor.document.modificationStamp
   }
 
-  void ignoreCurrentDocumentChange() {
-    if (CommandProcessor.getInstance().getCurrentCommand() == null) {
-      return;
+  fun ignoreCurrentDocumentChange() {
+    if (CommandProcessor.getInstance().currentCommand == null) {
+      return
     }
 
-    myConnection.subscribe(CommandListener.TOPIC, new CommandListener() {
-      boolean insideCommand = true;
+    myConnection.subscribe(CommandListener.TOPIC, object : CommandListener {
+      private var insideCommand: Boolean = true
 
-      @Override
-      public void commandFinished(@NotNull CommandEvent event) {
+      override fun commandFinished(event: CommandEvent) {
         if (insideCommand) {
-          insideCommand = false;
-          setDocumentState();
+          insideCommand = false
+          setDocumentState()
         }
       }
-    });
+    })
   }
 
-  boolean hasAnythingHappened() {
-    boolean hasDocumentOrCaretChanged = myStartDocStamp != docStamp() ||
-                                        !myCaretOffsets.equals(caretOffsets());
+  fun hasAnythingHappened(): Boolean {
+    val hasDocumentOrCaretChanged = myStartDocStamp != docStamp() || myCaretOffsets != caretOffsets()
     return myActionsHappened ||
-           myIsDumb != DumbService.getInstance(myProject).isDumb() ||
-           myEditor.isDisposed() ||
-           (myEditor instanceof EditorWindow && !((EditorWindow)myEditor).isValid()) ||
-           (hasDocumentOrCaretChanged && !isOnGuest()); //do not track speculative changes on thin client
+           myIsDumb != DumbService.getInstance(myProject).isDumb ||
+           myEditor.isDisposed ||
+           (myEditor is EditorWindow && !myEditor.isValid) ||
+           (hasDocumentOrCaretChanged && !isOnGuest()) //do not track speculative changes on thin client
   }
 
 
-  @NotNull String describeChangeEvent() {
-    if (myActionsHappened) {
-      if (LOG.isTraceEnabled()) {
-        return "The following actions were performed: " + happenedActions;
+  fun describeChangeEvent(): String = when {
+    myActionsHappened -> {
+      if (LOG.isTraceEnabled) {
+        """The following actions were performed: $happenedActions"""
       }
       else {
-        return "Actions were performed";
+        "Actions were performed"
       }
     }
-
-    if (myIsDumb != DumbService.getInstance(myProject).isDumb()) {
-      return "DumbMode state changed";
+    myIsDumb != DumbService.getInstance(myProject).isDumb -> {
+      "DumbMode state changed"
     }
-
-    if (myEditor.isDisposed()) {
-      return "Editor was disposed";
+    myEditor.isDisposed -> {
+      "Editor was disposed"
     }
-
-    if (myEditor instanceof EditorWindow && !((EditorWindow)myEditor).isValid()) {
-      return "Editor window became invalid";
+    myEditor is EditorWindow && !myEditor.isValid -> {
+      "Editor window became invalid"
     }
-
-    if (myStartDocStamp != docStamp()) {
-      return "Document was modified; myStartDocStamp =" + myStartDocStamp + ", docStamp()=" + docStamp();
+    myStartDocStamp != docStamp() -> {
+      "Document was modified; myStartDocStamp =$myStartDocStamp, docStamp()=${docStamp()}"
     }
-
-    if (!myCaretOffsets.equals(caretOffsets())) {
-      return "Caret position changed; myCaretOffsets = " + myCaretOffsets + ", caretOffsets()=" + caretOffsets();
+    myCaretOffsets != caretOffsets() -> {
+      "Caret position changed; myCaretOffsets = $myCaretOffsets, caretOffsets()=${caretOffsets()}"
     }
-
-    return "No changes detected";
+    else -> {
+      "No changes detected"
+    }
   }
 }
+
+private val LOG = logger<ActionTracker>()
