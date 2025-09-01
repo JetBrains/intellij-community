@@ -371,5 +371,6 @@ class JavaJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
 
     val intention = myFixture.getAvailableIntention("Set language level to 25 (Preview) - Primitive Types in Patterns, etc.")
     myFixture.launchAction(intention!!)
+    assertEquals(LanguageLevel.JDK_25_PREVIEW, LanguageLevelUtil.getEffectiveLanguageLevel(myFixture.module))
   }
 }
