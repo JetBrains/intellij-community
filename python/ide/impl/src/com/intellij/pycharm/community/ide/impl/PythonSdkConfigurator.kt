@@ -7,9 +7,9 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.impl.getOrInitializeModule
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.roots.ProjectRootManager
@@ -47,8 +47,7 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
       return
     }
 
-    val module = getModule(moduleRef, project) ?: return
-
+    val module = moduleRef.getOrInitializeModule(project, baseDir).also { thisLogger().debug { "Module: $it" } }
 
     StartupManager.getInstance(project).runWhenProjectIsInitialized {
       PyPackageCoroutine.launch(project) {
@@ -200,11 +199,6 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
         module.excludeInnerVirtualEnv(it)
       }
     }
-  }
-
-  private fun getModule(moduleRef: Ref<Module>, project: Project): Module? {
-    val module = (moduleRef.get() ?: ModuleManager.getInstance(project).modules.firstOrNull())
-    return module.also { thisLogger().debug { "Module: $it" } }
   }
 
   private fun getDefaultProjectSdk(): Sdk? {
