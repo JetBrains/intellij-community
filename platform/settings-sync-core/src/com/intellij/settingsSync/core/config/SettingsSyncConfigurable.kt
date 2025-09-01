@@ -437,35 +437,18 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
 
   private fun showDisableSyncDialog(): DisableSyncType {
     val providerName = selectedUser()?.providerName ?: ""
-    val intResult = if (SettingsSyncStatusTracker.getInstance().currentStatus is SettingsSyncStatusTracker.SyncStatus.ActionRequired) {
-      Messages.showDialog(
-        message("disable.dialog.text", providerName),
-        message("disable.dialog.title"),
-        arrayOf(Messages.getCancelButton(), message("disable.dialog.disable.button")),
-        1,
-        1,
-        Messages.getQuestionIcon(), null
-      )
-    } else {
-      Messages.showCheckboxMessageDialog(
-        message("disable.dialog.text", providerName),
-        message("disable.dialog.title"),
-        arrayOf(Messages.getCancelButton(), message("disable.dialog.disable.button")),
-        message("disable.dialog.remove.data.box", providerName),
-        false,
-        1,
-        1,
-        Messages.getQuestionIcon()
-      ) { index: Int, checkbox: JCheckBox ->
-        if (index == 1) {
-          if (checkbox.isSelected) 2 else 1
-        }
-        else {
-          0
-        }
+    val showRemoveDataCheckBox = SettingsSyncStatusTracker.getInstance().currentStatus != SettingsSyncStatusTracker.SyncStatus.UserActionRequired
+    val disableSyncDialog = DisableSyncDialog(configPanel, providerName, showRemoveDataCheckBox)
+    return if (disableSyncDialog.showAndGet()) {
+      if (disableSyncDialog.removeDataSelected) {
+        DisableSyncType.DISABLE_AND_REMOVE_DATA
+      } else {
+        DisableSyncType.DISABLE
       }
     }
-    return DisableSyncType.entries.find { it.value == intResult } ?: DisableSyncType.DONT_DISABLE
+    else {
+      DisableSyncType.DONT_DISABLE
+    }
   }
 
   private fun disableCurrentSyncDialog() : Boolean {
@@ -887,6 +870,11 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
       init()
     }
 
+    override fun createContentPaneBorder(): Border {
+      val insets = JButton().insets
+      return JBUI.Borders.empty(20, 20, 20 - insets.bottom, 20 - insets.right)
+    }
+
     override fun createCenterPanel(): JComponent {
       return panel {
         row {
@@ -894,7 +882,7 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
           panel {
             row {
               text(message("enable.dialog.source.option.title")).applyToComponent {
-                font = JBFont.h3()
+                font = JBFont.h4()
               }
             }
             row {
@@ -917,6 +905,48 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
       arrayOf(cancelAction, okAction)
   }
 
+  private class DisableSyncDialog(parent: JComponent, val providerName: String, val showRemoveDataCheckBox: Boolean) : DialogWrapper(parent, false) {
+    init {
+      title = message("title.settings.sync")
+      init()
+    }
+
+    var removeDataSelected = false
+
+    override fun createContentPaneBorder(): Border {
+      val insets = JButton().insets
+      return JBUI.Borders.empty(20, 20, 20 - insets.bottom, 20 - insets.right)
+    }
+
+    override fun createCenterPanel(): JComponent {
+      return panel {
+        row {
+          icon(AllIcons.General.QuestionDialog).align(AlignY.TOP)
+          panel {
+            row {
+              text(message("disable.dialog.title")).applyToComponent {
+                font = JBFont.h4()
+              }
+            }
+            row {
+              text(message("disable.dialog.text", providerName))
+            }
+            row {
+              if (showRemoveDataCheckBox) {
+                checkBox(message("disable.dialog.remove.data.box", providerName))
+                  .bindSelected(::removeDataSelected)
+              }
+            }
+          }
+        }
+      }
+    }
+
+
+    override fun createActions(): Array<Action> =
+      arrayOf(cancelAction, okAction)
+  }
+
   private class AddAccountDialog(parent: JComponent) : DialogWrapper(parent, false) {
 
     var providerCode: String = ""
@@ -928,7 +958,7 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
 
     override fun createContentPaneBorder(): Border {
       val insets = JButton().insets
-      return JBUI.Borders.empty(14, 20, 20 - insets.bottom, 20 - insets.right)
+      return JBUI.Borders.empty(20, 20, 20 - insets.bottom, 20 - insets.right)
     }
 
     override fun createCenterPanel(): JComponent {
@@ -938,7 +968,7 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
           panel {
             row {
               text(message("enable.sync.choose.data.provider.title")).applyToComponent {
-                font = JBFont.h3()
+                font = JBFont.h4()
               }
             }
             val availableProviders = RemoteCommunicatorHolder.getAvailableProviders().filter { it.isAvailable() }
