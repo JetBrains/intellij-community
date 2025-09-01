@@ -15,9 +15,6 @@ import java.util.Map;
  */
 @ApiStatus.Internal
 public interface StickyUsageInfoOnRangeMarker {
-
-  Key<Map<UsageInfo, Disposable>> STICKY_SUBSCRIPTION_DISPOSABLES = Key.create("STICKY_SUBSCRIPTION_DISPOSABLE");
-
   void bindToRangeMarker(RangeMarker rangeMarker);
   void rememberRanges();
 }
