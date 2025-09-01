@@ -117,6 +117,7 @@ private class DependenciesVisitor(val holder: ProblemsHolder) : GroovyRecursiveE
             return
         }
 
+        if (callExpression.hasClosureArguments()) return // dependency declaration with a closure probably has a custom configuration
         if (!isKotlinStdLibDependencyRegular(callExpression) && !isKotlinStdLibDependencyVersionCatalog(callExpression)) return
 
         val gradlePluginVersion = findResolvedKotlinGradleVersion(callExpression.containingFile) ?: return
@@ -134,10 +135,30 @@ private class DependenciesVisitor(val holder: ProblemsHolder) : GroovyRecursiveE
     }
 
     private fun isKotlinStdLibDependencyRegular(callExpression: GrCallExpression): Boolean {
-        val callExpressionText = callExpression.text
-        val index = callExpressionText.indexOf(KOTLIN_JAVA_STDLIB_NAME)
-        return index != -1 && callExpressionText.contains(KOTLIN_GROUP_ID) // This prevents detecting kotlin-stdlib inside kotlin-stdlib-common, -jdk8, etc.
-                && callExpressionText.getOrNull(index + KOTLIN_JAVA_STDLIB_NAME.length) != '-'
+        val (dependencyGroup, dependencyName) = if (callExpression.expressionArguments.size >= 1) {
+            val argument = callExpression.expressionArguments.firstOrNull() ?: return false
+            if (argument !is GrLiteral) return false
+            val dependencyId = argument.value
+            if (dependencyId !is String) return false
+            dependencyId.split(":").takeIf { it.size >= 2 }?.let { it[0] to it[1] } ?: return false
+        } else if (callExpression.namedArguments.size >= 2) {
+            val namedArguments = callExpression.namedArguments
+
+            // check that the dependency does not contain anything extra besides the group and name (and version)
+            val namedArgumentsNames = namedArguments.map { it.labelName }
+            when (namedArgumentsNames.size) {
+                2 -> if (!namedArgumentsNames.containsAll(setOf("group", "name"))) return false
+                3 -> if (!namedArgumentsNames.containsAll(setOf("group", "name", "version"))) return false
+                else -> return false
+            }
+
+            val group = namedArguments.find { it.labelName == "group" }?.expression
+                ?.let { it as? GrLiteral }?.let { it.value as? String } ?: return false
+            val name = namedArguments.find { it.labelName == "name" }?.expression
+                ?.let { it as? GrLiteral }?.let { it.value as? String } ?: return false
+            group to name
+        } else return false
+        return dependencyGroup == KOTLIN_GROUP_ID && dependencyName == KOTLIN_JAVA_STDLIB_NAME
     }
 
     private fun isKotlinStdLibDependencyVersionCatalog(callExpression: GrCallExpression): Boolean {
@@ -163,7 +184,7 @@ private class DependenciesVisitor(val holder: ProblemsHolder) : GroovyRecursiveE
 
             else -> return false
         }
-        return (dependencyGroup == KOTLIN_GROUP_ID && dependencyName == KOTLIN_JAVA_STDLIB_NAME)
+        return dependencyGroup == KOTLIN_GROUP_ID && dependencyName == KOTLIN_JAVA_STDLIB_NAME
     }
 }
 

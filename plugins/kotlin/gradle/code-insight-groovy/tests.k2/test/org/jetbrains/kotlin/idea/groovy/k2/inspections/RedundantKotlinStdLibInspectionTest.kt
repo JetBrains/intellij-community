@@ -339,6 +339,40 @@ class RedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
         }
     }
 
+    // should not warn as the overriding kotlin-stdlib dependency is a bit different
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun testDependencyWithExtraArgumentsInClosure(gradleVersion: GradleVersion) {
+        runTest(gradleVersion, SAME_VERSION_FIXTURE) {
+            testHighlighting(
+                """
+                plugins { id 'org.jetbrains.kotlin.jvm' version '2.2.0' }
+                dependencies { 
+                    api('org.jetbrains.kotlin:kotlin-stdlib:2.2.0') {
+                        exclude(group: 'org.jetbrains', module: 'annotations')
+                    }
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    // should not warn as the overriding kotlin-stdlib dependency is a bit different
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun testDependencyWithExtraArgumentsInMap(gradleVersion: GradleVersion) {
+        runTest(gradleVersion, SAME_VERSION_FIXTURE) {
+            testHighlighting(
+                """
+                plugins { id 'org.jetbrains.kotlin.jvm' version '2.2.0' }
+                dependencies { 
+                    api group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib', version: '2.2.0', because: 'why not'
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
     @ParameterizedTest
     @BaseGradleVersionSource
     fun testQuickFixRemove(gradleVersion: GradleVersion) {
