@@ -3,15 +3,9 @@ package com.intellij.internal
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.ex.ActionContextElement
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.Interactive
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.*
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.progress.runBlockingModal
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
@@ -34,7 +28,7 @@ internal class ExceptionShowCaseAction : DumbAwareAction() {
       override fun createCenterPanel(): JComponent = panel {
         row {
           button("Interactive Exception from Coroutine Background") {
-            ApplicationManager.getApplication().service<MyService>().scope.launch(Dispatchers.IO + Interactive("Test interactive action")) {
+            ApplicationManager.getApplication().service<MyService>().scope.launchInteractive("Test interactive action", Dispatchers.IO) {
               throw Exception("Exception from interactive coroutine BG")
             }
           }
