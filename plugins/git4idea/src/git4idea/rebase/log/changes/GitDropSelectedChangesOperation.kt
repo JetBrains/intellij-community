@@ -7,6 +7,7 @@ import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.vcs.log.VcsCommitMetadata
+import com.intellij.vcs.log.impl.HashImpl
 import com.intellij.vcs.log.impl.VcsProjectLog
 import git4idea.GitNotificationIdsHolder
 import git4idea.GitUtil
@@ -82,7 +83,9 @@ internal class GitDropSelectedChangesOperation(
     if (result.success()) {
       val upstream = getRebaseUpstreamFor(commit)
       return GitCommitEditingOperationResult.Complete(repository, upstream, initialHeadPosition,
-                                                      repository.currentRevision!!)
+                                                      repository.currentRevision!!,
+                                                      HashImpl.build(repository.currentRevision!!),
+                                                      commit.id)
     }
     else {
       notifyGitCommandFailed(result)
@@ -102,7 +105,11 @@ internal class GitDropSelectedChangesOperation(
       return GitCommitEditingOperationResult.Incomplete
     }
     val commitsToSquash = listOf(fixupCommit, commit)
-    return GitSquashOperation(repository).execute(commitsToSquash, commit.fullMessage, initialHeadPosition)
+    val result = GitSquashOperation(repository).execute(commitsToSquash, commit.fullMessage, initialHeadPosition)
+    if (result is GitCommitEditingOperationResult.Complete) {
+      return result.withFocusCommits(result.firstChangedHash, commit.id)
+    }
+    return result
   }
 
   private fun createFixupCommit(): Boolean {
