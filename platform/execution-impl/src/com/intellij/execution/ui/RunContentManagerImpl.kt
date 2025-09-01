@@ -10,7 +10,6 @@ import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.execution.dashboard.RunDashboardManager
 import com.intellij.execution.executors.DefaultRunExecutor
-import com.intellij.execution.process.BaseProcessHandler
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.process.ProcessListener
@@ -48,6 +47,7 @@ import com.intellij.util.SmartList
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -298,7 +298,6 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
         var processTerminated = false
 
         override fun startNotified(event: ProcessEvent) {
-          val pid = getPid(processHandler)
           UIUtil.invokeLaterIfNeeded {
             if (!processTerminated) {
               content.icon = getLiveIndicator(descriptor.icon)
@@ -308,7 +307,11 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
               }
               toolWindow!!.setIcon(getLiveIndicator(toolWindowIcon))
             }
-            if (pid != null) {
+          }
+
+          descriptor.coroutineScope.launch {
+            val pid = processHandler.nativePid?.await() ?: return@launch
+            withContext(Dispatchers.EDT) {
               content.description = ExecutionBundle.message("process.id.tooltip", pid)
             }
           }
@@ -631,15 +634,6 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
       }
       return askUserAndWait(processHandler, sessionName, task)
     }
-  }
-}
-
-private fun getPid(processHandler: ProcessHandler): Long? {
-  try {
-    return (processHandler as? BaseProcessHandler<*>)?.process?.pid()
-  }
-  catch (_: UnsupportedOperationException) {
-    return null
   }
 }
 
