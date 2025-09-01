@@ -75,4 +75,7 @@ fun MutableEntityStorage.modifyGradleProjectEntity(
 ): GradleProjectEntity {
   return modifyEntity(GradleProjectEntity.Builder::class.java, entity, modification)
 }
+
+var GradleProjectEntity.Builder.gradleModuleEntity: GradleModuleEntity.Builder?
+  by WorkspaceEntity.extensionBuilder(GradleModuleEntity::class.java)
 //endregion
