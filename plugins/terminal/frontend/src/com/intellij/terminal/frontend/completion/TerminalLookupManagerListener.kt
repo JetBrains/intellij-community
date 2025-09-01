@@ -4,6 +4,9 @@ import com.google.common.base.Ascii
 import com.intellij.codeInsight.lookup.*
 import com.intellij.codeInsight.lookup.impl.EmptyLookupItem
 import com.intellij.codeInsight.lookup.impl.LookupImpl
+import com.intellij.codeInsight.lookup.impl.PrefixChangeListener
+import com.intellij.icons.AllIcons
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.terminal.TerminalUiSettingsManager
 import com.intellij.terminal.frontend.TerminalInput
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isOutputModelEditor
@@ -11,9 +14,9 @@ import kotlin.math.max
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 
-class TerminalLookupManagerListener : LookupManagerListener {
+internal class TerminalLookupManagerListener : LookupManagerListener {
   override fun activeLookupChanged(oldLookup: Lookup?, newLookup: Lookup?) {
-    if (newLookup == null || newLookup !is LookupEx || !newLookup.editor.isOutputModelEditor) {
+    if (newLookup == null || newLookup !is LookupImpl || !newLookup.editor.isOutputModelEditor) {
       return
     }
 
@@ -21,6 +24,7 @@ class TerminalLookupManagerListener : LookupManagerListener {
       .withMaxVisibleItemsCount(MaxVisibleItemsProperty())
       .build()
     newLookup.addLookupListener(TerminalLookupListener())
+    newLookup.addPrefixChangeListener(TerminalSelectedItemIconUpdater(newLookup), newLookup)
   }
 
   private class MaxVisibleItemsProperty : ReadWriteProperty<LookupPresentation, Int> {
@@ -34,7 +38,7 @@ class TerminalLookupManagerListener : LookupManagerListener {
   }
 }
 
-class TerminalLookupListener : LookupListener {
+private class TerminalLookupListener : LookupListener {
   override fun beforeItemSelected(event: LookupEvent): Boolean {
     val terminalInput = event.lookup.editor.getUserData(TerminalInput.Companion.KEY) ?: return false
     val item = event.item
@@ -69,9 +73,7 @@ class TerminalLookupListener : LookupListener {
       return
     }
     val typedString = lookup.itemPattern(chosenItem)
-    if (typedString == chosenItem.lookupString
-        // if typed string differs only by the absence of the trailing slash, execute the command as well
-        || "$typedString/" == chosenItem.lookupString) {
+    if (canExecuteWithChosenItem(chosenItem.lookupString, typedString)) {
       executeCommand(lookup)
     }
   }
@@ -82,3 +84,63 @@ class TerminalLookupListener : LookupListener {
   }
 }
 
+/**
+ * Set's the [AllIcons.Actions.Execute] icon for the selected item in the lookup if it matches the user input.
+ * To indicate that insertion of the item will cause immediate execution of the command.
+ */
+private class TerminalSelectedItemIconUpdater(private val lookup: Lookup) : PrefixChangeListener {
+  private var curSelectedItem: LookupElement? = null
+
+  override fun afterAppend(c: Char) {
+    updateSelectedItemIcon()
+  }
+
+  override fun afterTruncate() {
+    updateSelectedItemIcon()
+  }
+
+  private fun updateSelectedItemIcon() {
+    val selectedItem = lookup.currentItem ?: run {
+      resetSelectedItemIcon()
+      return
+    }
+
+    val typedPrefix = lookup.itemPattern(selectedItem)
+    if (canExecuteWithChosenItem(selectedItem.lookupString, typedPrefix)) {
+      selectedItem.getTerminalIcon()?.forceIcon(AllIcons.Actions.Execute)
+      curSelectedItem = selectedItem
+    }
+    else {
+      resetSelectedItemIcon()
+    }
+  }
+
+  private fun resetSelectedItemIcon() {
+    curSelectedItem?.getTerminalIcon()?.useDefaultIcon()
+    curSelectedItem = null
+  }
+
+  private fun LookupElement.getTerminalIcon(): TerminalStatefulDelegatingIcon? {
+    val presentation = LookupElementPresentation()
+    renderElement(presentation)
+    val icon = presentation.icon
+    return if (icon !is TerminalStatefulDelegatingIcon) {
+      LOG.warn("Unexpected icon type: ${icon?.javaClass?.name}. All elements in terminal lookup should use TerminalStatefulDelegatingIcon")
+      null
+    }
+    else icon
+  }
+
+  companion object {
+    private val LOG = logger<TerminalSelectedItemIconUpdater>()
+  }
+}
+
+/**
+ * Returns `true` if we need to execute the command immediately if user select [chosenItemString] in the Lookup.
+ */
+private fun canExecuteWithChosenItem(chosenItemString: String, typedString: String): Boolean {
+  return chosenItemString == typedString
+         // If the typed string differs only by the absence of the trailing slash, execute the command as well
+         || "$typedString/" == chosenItemString
+}

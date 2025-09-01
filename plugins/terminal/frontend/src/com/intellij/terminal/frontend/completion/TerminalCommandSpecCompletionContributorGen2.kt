@@ -230,7 +230,7 @@ internal class TerminalCommandSpecCompletionContributorGen2 : CompletionContribu
     val element = LookupElementBuilder.create(this, escapedInsertValue)
       .withPresentableText(displayName ?: name)
       .withTailText(nextSuggestions, true)
-      .withIcon(actualIcon)
+      .withIcon(TerminalStatefulDelegatingIcon(actualIcon))
     // Actual insertion logic is performed in TerminalLookupListener
     element.putUserData(CodeCompletionHandlerBase.DIRECT_INSERTION, true)
 
