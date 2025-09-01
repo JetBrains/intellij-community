@@ -16,6 +16,7 @@ import com.intellij.openapi.application.ex.ClipboardUtil
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.ProjectExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -39,9 +40,7 @@ class AnalyzeStacktraceUtil private constructor() {
     val EP_NAME: ProjectExtensionPointName<Filter> = ProjectExtensionPointName<Filter>("com.intellij.analyzeStacktraceFilter")
 
     @ApiStatus.Experimental
-    @JvmField
-    val EP_CONTENT_PROVIDER: ProjectExtensionPointName<StacktraceTabContentProvider> = ProjectExtensionPointName<StacktraceTabContentProvider>(
-      "com.intellij.analyzeStacktraceRunContentProvider")
+    private val EP_CONTENT_PROVIDER = ExtensionPointName<StacktraceTabContentProvider>("com.intellij.analyzeStacktraceRunContentProvider")
 
     @JvmStatic
     fun printStacktrace(consoleView: ConsoleView, unscrambledTrace: String) {
@@ -99,7 +98,7 @@ class AnalyzeStacktraceUtil private constructor() {
         val runContentManager = RunContentManager.getInstance(project)
         runContentManager.showRunContent(executor, descriptor)
 
-        EP_CONTENT_PROVIDER.getExtensions(project).forEach { provider ->
+        for (provider in EP_CONTENT_PROVIDER.extensionList) {
           runWithModalProgressBlocking(project, LangBundle.message("unscramble.progress.title.analyzing.stacktrace")) {
             provider.createRunTabDescriptor(project, text)?.let { contentDescriptor ->
               Disposer.register(descriptor, contentDescriptor)
@@ -154,6 +153,7 @@ class AnalyzeStacktraceUtil private constructor() {
     }
   }
 
+  @ApiStatus.Internal
   class StacktraceEditorPanel(private val project: Project?, private val editor: Editor) : JPanel(BorderLayout()), UiDataProvider, Disposable {
     init {
       add(editor.getComponent())
