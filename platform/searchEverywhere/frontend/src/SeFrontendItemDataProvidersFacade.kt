@@ -69,6 +69,9 @@ class SeFrontendItemDataProvidersFacade(private val projectId: ProjectId,
     return SeRemoteApi.getInstance().itemSelected(projectId, sessionRef, itemData, modifiers, searchText, isAllTab = isAllTab)
   }
 
+  suspend fun getUpdatedPresentation(item: SeItemData): SeItemPresentation? =
+    SeRemoteApi.getInstance().getUpdatedPresentation(projectId, item)
+
   suspend fun getSearchScopesInfos(): Map<SeProviderId, SearchScopesInfo> =
     SeRemoteApi.getInstance().getSearchScopesInfoForProviders(
       projectId, providerIds = providerIds, sessionRef = sessionRef, dataContextId = dataContextId, isAllTab = isAllTab

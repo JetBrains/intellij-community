@@ -195,6 +195,10 @@ class SeTabVm(
       it is SearchEverywhereToggleAction
     } as? SearchEverywhereToggleAction
   }
+
+  suspend fun getUpdatedPresentation(item: SeItemData): SeItemPresentation? {
+    return tab.getUpdatedPresentation(item)
+  }
 }
 
 private const val ESSENTIALS_THROTTLE_DELAY: Long = 100

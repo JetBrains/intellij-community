@@ -38,4 +38,6 @@ interface SeTab : Disposable {
   suspend fun openInFindToolWindow(sessionRef: DurableRef<SeSessionEntity>, params: SeParams, initEvent: AnActionEvent): Boolean = false
 
   suspend fun essentialProviderIds(): Set<SeProviderId> = emptySet()
+
+  suspend fun getUpdatedPresentation(item: SeItemData): SeItemPresentation? = null
 }

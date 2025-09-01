@@ -8,11 +8,10 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.searchEverywhere.SeItemData
+import com.intellij.platform.searchEverywhere.SeItemPresentation
 import com.intellij.platform.searchEverywhere.SeParams
 import com.intellij.platform.searchEverywhere.SeResultEvent
 import com.intellij.platform.searchEverywhere.frontend.*
-import com.intellij.platform.searchEverywhere.frontend.SeFilterEditor
-import com.intellij.platform.searchEverywhere.frontend.SeTab
 import com.intellij.platform.searchEverywhere.frontend.providers.actions.SeActionsFilter
 import com.intellij.platform.searchEverywhere.frontend.resultsProcessing.SeTabDelegate
 import com.intellij.platform.searchEverywhere.frontend.tabs.utils.SeFilterEditorBase
@@ -46,6 +45,10 @@ class SeActionsTab(private val delegate: SeTabDelegate) : SeTab {
 
   override suspend fun canBeShownInFindResults(): Boolean {
     return delegate.canBeShownInFindResults()
+  }
+
+  override suspend fun getUpdatedPresentation(item: SeItemData): SeItemPresentation? {
+    return delegate.getUpdatedPresentation(item)
   }
 
   override fun dispose() {

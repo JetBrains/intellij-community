@@ -118,4 +118,9 @@ class SeRemoteApiImpl: SeRemoteApi {
     val findModel = FindManager.getInstance(project).findInProjectModel
     return SeTextSearchOptions(findModel.isCaseSensitive, findModel.isWholeWordsOnly, findModel.isRegularExpressions)
   }
+
+  override suspend fun getUpdatedPresentation(projectId: ProjectId, item: SeItemData): SeItemPresentation? {
+    val project = projectId.findProjectOrNull() ?: return null
+    return SeBackendService.getInstance(project).getUpdatedPresentation(item)
+  }
 }

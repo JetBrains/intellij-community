@@ -119,6 +119,10 @@ class SeTabDelegate(
     return providers.getValue().canBeShownInFindResults()
   }
 
+  suspend fun getUpdatedPresentation(item: SeItemData): SeItemPresentation? {
+    return providers.getValue().getUpdatedPresentation(item)
+  }
+
   suspend fun openInFindToolWindow(
     sessionRef: DurableRef<SeSessionEntity>,
     params: SeParams,
@@ -221,6 +225,16 @@ class SeTabDelegate(
       val frontedProviders = frontendProvidersFacade?.providerIds?.filter { !disabledProviders.contains(it) }
                              ?: emptyList()
       return localProviders.toList() + frontedProviders
+    }
+
+    suspend fun getUpdatedPresentation(item: SeItemData): SeItemPresentation? {
+      val localItem = item.fetchItemIfExists()
+      return if (localItem != null) {
+        localItem.presentation()
+      }
+      else {
+        frontendProvidersFacade?.getUpdatedPresentation(item)
+      }
     }
   }
 

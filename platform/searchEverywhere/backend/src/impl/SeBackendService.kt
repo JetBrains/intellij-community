@@ -228,6 +228,10 @@ class SeBackendService(val project: Project, private val coroutineScope: Corouti
     return true
   }
 
+  suspend fun getUpdatedPresentation(item: SeItemData): SeItemPresentation? {
+    return item.fetchItemIfExists()?.presentation()
+  }
+
   companion object {
     @JvmStatic
     fun getInstance(project: Project): SeBackendService = project.service<SeBackendService>()

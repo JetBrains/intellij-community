@@ -53,7 +53,6 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.event.*
-import java.util.*
 import java.util.function.Supplier
 import javax.accessibility.AccessibleContext
 import javax.swing.*
@@ -420,6 +419,30 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
     }
     else {
       resultList.repaint()
+      refreshPresentations()
+    }
+  }
+
+  private suspend fun refreshPresentations() {
+    val visibleRange = resultList.firstVisibleIndex..resultList.lastVisibleIndex
+    val visibleRows = visibleRange.mapNotNull { resultListModel.get(it) as? SeResultListItemRow }
+
+    coroutineScope {
+      visibleRows.forEach { itemRow ->
+        val item = itemRow.item
+
+        launch {
+          val newPresentation = vm.currentTab.getUpdatedPresentation(item)
+          if (newPresentation != null) {
+            val newItemRow = SeResultListItemRow(item.withPresentation(newPresentation))
+
+            withContext(Dispatchers.EDT) {
+              val index = resultListModel.indexOf(itemRow).takeIf { it != -1 } ?: return@withContext
+              resultListModel.set(index, newItemRow)
+            }
+          }
+        }
+      }
     }
   }
 

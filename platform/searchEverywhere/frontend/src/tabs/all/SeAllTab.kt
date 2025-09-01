@@ -68,6 +68,10 @@ class SeAllTab(private val delegate: SeTabDelegate) : SeTab {
     return delegate.openInFindToolWindow(sessionRef, params, initEvent, true,allTabFilter.disabledProviderIds)
   }
 
+  override suspend fun getUpdatedPresentation(item: SeItemData): SeItemPresentation? {
+    return delegate.getUpdatedPresentation(item)
+  }
+
   override fun dispose() {
     Disposer.dispose(delegate)
   }
