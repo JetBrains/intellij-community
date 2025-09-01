@@ -3,7 +3,8 @@ package org.jetbrains.plugins.terminal.block.completion
 
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 enum class TerminalCommandCompletionShowingMode {
-  NEVER, ONLY_PARAMETERS, ALWAYS
+  ALWAYS,
+  ONLY_PARAMETERS
 }

@@ -51,6 +51,8 @@ class TerminalOptionsProvider(private val coroutineScope: CoroutineScope) : Pers
     var terminalEngineInRemDev: TerminalEngine = TerminalEngine.REWORKED
 
     @ApiStatus.Internal
+    var showCompletionPopupAutomatically: Boolean = true
+    @ApiStatus.Internal
     var commandCompletionShowingMode: TerminalCommandCompletionShowingMode = TerminalCommandCompletionShowingMode.ONLY_PARAMETERS
 
     var myTabName: @Nls String = TerminalBundle.message("local.terminal.default.name")
@@ -107,7 +109,19 @@ class TerminalOptionsProvider(private val coroutineScope: CoroutineScope) : Pers
       }
     }
 
-  @get:ApiStatus.Internal
+  @get:ApiStatus.Experimental
+  @set:ApiStatus.Experimental
+  var showCompletionPopupAutomatically: Boolean
+    get() = state.showCompletionPopupAutomatically
+    set(value) {
+      if (state.showCompletionPopupAutomatically != value) {
+        state.showCompletionPopupAutomatically = value
+        fireSettingsChanged()
+      }
+    }
+
+  @get:ApiStatus.Experimental
+  @set:ApiStatus.Experimental
   var commandCompletionShowingMode: TerminalCommandCompletionShowingMode
     get() = state.commandCompletionShowingMode
     set(value) {

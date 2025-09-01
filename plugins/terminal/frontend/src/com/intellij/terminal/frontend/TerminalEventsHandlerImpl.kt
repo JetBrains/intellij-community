@@ -23,7 +23,6 @@ import com.jediterm.terminal.emulator.mouse.MouseFormat
 import com.jediterm.terminal.emulator.mouse.MouseMode
 import org.jetbrains.plugins.terminal.LocalBlockTerminalRunner.Companion.REWORKED_TERMINAL_COMPLETION_POPUP
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
-import org.jetbrains.plugins.terminal.block.completion.TerminalCommandCompletionShowingMode
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalUsageLocalStorage
@@ -108,7 +107,7 @@ internal open class TerminalEventsHandlerImpl(
         lookup == null &&
         (Character.isLetterOrDigit(charTyped) || charTyped == '-' || charTyped == File.separatorChar) &&
         Registry.`is`(REWORKED_TERMINAL_COMPLETION_POPUP) &&
-        TerminalOptionsProvider.instance.commandCompletionShowingMode != TerminalCommandCompletionShowingMode.NEVER) {
+        TerminalOptionsProvider.instance.showCompletionPopupAutomatically) {
       AutoPopupController.getInstance(project).scheduleAutoPopup(editor)
     }
   }

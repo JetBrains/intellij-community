@@ -41,6 +41,7 @@ import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.FontComboBox
 import com.intellij.ui.TextFieldWithHistoryWithBrowseButton
 import com.intellij.ui.components.ActionLink
+import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.textFieldWithHistoryWithBrowseButton
 import com.intellij.ui.dsl.builder.*
@@ -49,6 +50,7 @@ import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.ui.layout.and
 import com.intellij.ui.layout.enteredTextSatisfies
+import com.intellij.ui.layout.selected
 import com.intellij.ui.layout.selectedValueIs
 import com.intellij.ui.layout.selectedValueMatches
 import com.intellij.ui.render.fontInfoRenderer
@@ -64,7 +66,8 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.TerminalBundle.message
 import org.jetbrains.plugins.terminal.block.BlockTerminalOptions
-import org.jetbrains.plugins.terminal.block.completion.TerminalCommandCompletionShowingMode
+import org.jetbrains.plugins.terminal.block.completion.TerminalCommandCompletionShowingMode.ALWAYS
+import org.jetbrains.plugins.terminal.block.completion.TerminalCommandCompletionShowingMode.ONLY_PARAMETERS
 import org.jetbrains.plugins.terminal.block.feedback.askForFeedbackIfReworkedTerminalDisabled
 import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptStyle
 import org.jetbrains.plugins.terminal.runner.LocalTerminalStartCommandBuilder
@@ -132,17 +135,25 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
         }
 
         group(message("terminal.command.completion")) {
-          buttonsGroup(title = message("terminal.command.completion.show")) {
-            row {
-              radioButton(message("terminal.command.completion.show.always"), value = TerminalCommandCompletionShowingMode.ALWAYS)
-            }
-            row {
-              radioButton(message("terminal.command.completion.show.parameters"), value = TerminalCommandCompletionShowingMode.ONLY_PARAMETERS)
-            }
-            row {
-              radioButton(message("terminal.command.completion.show.never"), value = TerminalCommandCompletionShowingMode.NEVER)
-            }
-          }.bind(optionsProvider::commandCompletionShowingMode)
+          lateinit var completionEnabledCheckBox: JBCheckBox
+
+          row {
+            completionEnabledCheckBox = checkBox(message("terminal.command.completion.show"))
+              .bindSelected(optionsProvider::showCompletionPopupAutomatically)
+              .component
+          }
+          indent {
+            buttonsGroup {
+              row {
+                radioButton(message("terminal.command.completion.show.always"), value = ALWAYS)
+              }
+              row {
+                radioButton(message("terminal.command.completion.show.parameters"), value = ONLY_PARAMETERS)
+              }
+            }.bind(optionsProvider::commandCompletionShowingMode)
+              .enabledIf(completionEnabledCheckBox.selected)
+          }
+
           row {
             shortcutCombobox(
               labelText = message("terminal.command.completion.shortcut.insert"),
