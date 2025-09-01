@@ -43,6 +43,7 @@ interface CommandCompletionFactory : PossiblyDumbAware {
 
   /**
    * Determines whether the functionality is applicable in the given context.
+   * For injected languages, the context is the injected file.
    *
    * @param psiFile the PSI file representing the file in which the applicability is being evaluated
    * @param offset the position within the file where the applicability should be checked

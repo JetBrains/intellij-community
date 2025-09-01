@@ -13,7 +13,6 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -49,31 +48,25 @@ internal class CommandInsertHandler(private val completionCommand: CompletionCom
     }
 
     if (startOffset == -1) return
-    // Execute the command
-    val injectedLanguageManager = InjectedLanguageManager.getInstance(context.project)
-
-    if (injectedLanguageManager.isInjectedFragment(psiFile)) {
-      val topLevelFile = injectedLanguageManager.getTopLevelFile(psiFile)
-      InjectedLanguageUtil.findInjectedPsiNoCommit(topLevelFile, startOffset)
-      startOffset = (psiFile.fileDocument as? DocumentWindow)?.hostToInjected(startOffset) ?: 0
-    }
 
     ApplicationManager.getApplication().invokeLater {
-      commandProcessor.runUndoTransparentAction( {
-        completionCommand.execute(startOffset, psiFile, editor)
-      })
+      commandProcessor.runUndoTransparentAction(
+        {
+          completionCommand.execute(startOffset, psiFile, editor)
+        }
+      )
     }
   }
 
   private fun removeCommandText(context: InsertionContext): Int {
-    val editor = InjectedLanguageEditorUtil.getTopLevelEditor(context.editor)
+    val topLevelEditor = InjectedLanguageEditorUtil.getTopLevelEditor(context.editor)
     val injectedLanguageManager = InjectedLanguageManager.getInstance(context.project)
-    val document: Document = editor.document
+    val document: Document = topLevelEditor.document
     val tailOffset = injectedLanguageManager.injectedToHost(context.file, context.tailOffset)
     val startOffset = injectedLanguageManager.injectedToHost(context.file, context.startOffset)
     val service = context.project.service<CommandCompletionService>()
     val commandCompletionFactory = service.getFactory(context.file.language) ?: return startOffset
-    val completionType = findCommandCompletionType(commandCompletionFactory, !context.file.isWritable, tailOffset, editor)
+    val completionType = findCommandCompletionType(commandCompletionFactory, !context.file.isWritable, tailOffset, topLevelEditor)
     if (completionType != null) {
       CommandCompletionCollector.called(completionCommand::class.java,
                                         context.file.language,
@@ -85,14 +78,17 @@ internal class CommandInsertHandler(private val completionCommand: CompletionCom
                                       startOffset)
 
     // Remove the command text after the dots
-    val commandStart = startOffset - actualIndex
+    var commandStart = startOffset - actualIndex
 
     // Delete from commandStart to tailOffset
     document.deleteString(commandStart, tailOffset)
 
     // Adjust the caret position
-    editor.caretModel.moveToOffset(commandStart)
+    topLevelEditor.caretModel.moveToOffset(commandStart)
     context.commitDocument()
+    if (topLevelEditor != context.editor) {
+      commandStart = (context.editor.document as? DocumentWindow)?.hostToInjected(commandStart) ?: commandStart
+    }
     return commandStart
   }
 }

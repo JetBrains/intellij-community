@@ -9,7 +9,7 @@ a:com.intellij.codeInsight.completion.CompletionService
 - suffix():C
 - supportFiltersWithDoublePrefix():Z
 *f:com.intellij.codeInsight.completion.command.CommandCompletionProviderContext
-- <init>(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,I,com.intellij.psi.PsiFile,Z):V
+- <init>(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,I,com.intellij.psi.PsiFile,Z,Z):V
 - f:component1():com.intellij.openapi.project.Project
 - f:component2():com.intellij.openapi.editor.Editor
 - f:component3():I
@@ -18,8 +18,9 @@ a:com.intellij.codeInsight.completion.CompletionService
 - f:component6():I
 - f:component7():com.intellij.psi.PsiFile
 - f:component8():Z
-- f:copy(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,I,com.intellij.psi.PsiFile,Z):com.intellij.codeInsight.completion.command.CommandCompletionProviderContext
-- bs:copy$default(com.intellij.codeInsight.completion.command.CommandCompletionProviderContext,com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,I,com.intellij.psi.PsiFile,Z,I,java.lang.Object):com.intellij.codeInsight.completion.command.CommandCompletionProviderContext
+- f:component9():Z
+- f:copy(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,I,com.intellij.psi.PsiFile,Z,Z):com.intellij.codeInsight.completion.command.CommandCompletionProviderContext
+- bs:copy$default(com.intellij.codeInsight.completion.command.CommandCompletionProviderContext,com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,I,com.intellij.psi.PsiFile,Z,Z,I,java.lang.Object):com.intellij.codeInsight.completion.command.CommandCompletionProviderContext
 - equals(java.lang.Object):Z
 - f:getEditor():com.intellij.openapi.editor.Editor
 - f:getOffset():I
@@ -29,11 +30,13 @@ a:com.intellij.codeInsight.completion.CompletionService
 - f:getProject():com.intellij.openapi.project.Project
 - f:getPsiFile():com.intellij.psi.PsiFile
 - hashCode():I
+- f:isInjected():Z
 - f:isReadOnly():Z
 *:com.intellij.codeInsight.completion.command.CommandProvider
 - com.intellij.openapi.project.PossiblyDumbAware
 - a:getCommands(com.intellij.codeInsight.completion.command.CommandCompletionProviderContext):java.util.List
 - getId():java.lang.String
+- supportsInjected():Z
 - supportsReadOnly():Z
 *a:com.intellij.codeInsight.completion.command.CompletionCommand
 - com.intellij.openapi.util.UserDataHolderBase

@@ -4,7 +4,6 @@ package com.intellij.codeInsight.completion.command.commands
 import com.intellij.codeInsight.completion.command.CommandCompletionProviderContext
 import com.intellij.codeInsight.completion.command.HighlightInfoLookup
 import com.intellij.idea.ActionsBundle
-import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.util.TextRange
@@ -20,7 +19,6 @@ abstract class AbstractOptimizeImportCompletionCommandProvider :
 
   override fun isApplicable(offset: Int, psiFile: PsiFile, editor: Editor?): Boolean {
     if (!super.isApplicable(offset, psiFile, editor)) return false
-    if (InjectedLanguageManager.getInstance(psiFile.project).isInjectedFragment(psiFile)) return false
     return isApplicableToProject(offset, psiFile) || isImportList(psiFile, offset)
   }
 

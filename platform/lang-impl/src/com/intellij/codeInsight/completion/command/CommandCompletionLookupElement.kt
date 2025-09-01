@@ -23,7 +23,6 @@ import javax.swing.Icon
 class CommandCompletionLookupElement(
   lookupElement: LookupElement,
   val command: CompletionCommand,
-  val hostStartOffset: Int,
   val suffix: String,
   val icon: Icon?,
   val highlighting: HighlightInfoLookup?,

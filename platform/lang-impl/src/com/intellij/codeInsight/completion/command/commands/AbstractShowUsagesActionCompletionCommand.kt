@@ -5,7 +5,6 @@ import com.intellij.codeInsight.completion.command.CommandCompletionProviderCont
 import com.intellij.codeInsight.completion.command.getCommandContext
 import com.intellij.find.actions.ShowUsagesAction
 import com.intellij.idea.ActionsBundle
-import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -18,10 +17,10 @@ abstract class AbstractShowUsagesActionCompletionCommandProvider :
                         priority = -100,
                         previewText = ActionsBundle.message("action.ShowUsages.description")) {
   final override fun supportsReadOnly(): Boolean = true
+  final override fun supportsInjected(): Boolean = true
   final override fun isApplicable(offset: Int, psiFile: PsiFile, editor: Editor?): Boolean {
     val element = getCommandContext(offset, psiFile) ?: return false
-    return super.isApplicable(offset, psiFile, editor) && hasToShow(element) &&
-           !InjectedLanguageManager.getInstance(psiFile.project).isInjectedFragment(psiFile)
+    return super.isApplicable(offset, psiFile, editor) && hasToShow(element)
   }
 
 

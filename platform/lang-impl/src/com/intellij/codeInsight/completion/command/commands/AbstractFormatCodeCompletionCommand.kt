@@ -8,7 +8,6 @@ import com.intellij.codeInsight.completion.command.CompletionCommand
 import com.intellij.codeInsight.completion.command.getCommandContext
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.idea.ActionsBundle
-import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.psi.PsiElement
@@ -25,8 +24,6 @@ import java.util.Locale.getDefault
 abstract class AbstractFormatCodeCompletionCommandProvider :
   CommandProvider {
   override fun getCommands(context: CommandCompletionProviderContext): List<CompletionCommand> {
-    val psiFile = context.psiFile
-    if (InjectedLanguageManager.getInstance(psiFile.project).isInjectedFragment(psiFile)) return emptyList()
     val element = createCommand(context) ?: return emptyList()
     return listOf(element)
   }

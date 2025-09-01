@@ -35,6 +35,11 @@ interface CommandProvider : PossiblyDumbAware {
    * @return true if non-written files are supported; false otherwise.
    */
   fun supportsReadOnly(): Boolean = false
+
+  /**
+   * @return true if the implementation supports injected files.
+   */
+  fun supportsInjected(): Boolean = false
 }
 
 /**
@@ -44,13 +49,14 @@ interface CommandProvider : PossiblyDumbAware {
 
  * @property project the project in which the code completion is invoked
  * @property editor the editor instance where the code completion is triggered
- * @property offset the position within the document where the completion is invoked
- * @property psiFile the PSI file representing the file being edited
+ * @property offset the position within the document where the completion is invoked, injected offset for injected languages
+ * @property psiFile the PSI file representing the file being edited, injected file for injected languages
  * @property originalEditor the original editor instance, may differ in specific use cases (e.g., injected editors)
- * @property originalOffset the position within the document in the original editor
- * @property originalPsiFile the PSI file in the context of the original editor
+ * @property originalOffset the position within the document in the original editor, injected offset for injected languages
+ * @property originalPsiFile the PSI file in the context of the original editor, injected file for injected languages
  * @property isReadOnly it is not allowed to write in this PSI file. For example, a command can navigate to another file
  *                        (e.g., an imaginary file or preview state).
+ * @property isInjected action should consider injected elements
  */
 data class CommandCompletionProviderContext(
   val project: Project,
@@ -61,4 +67,5 @@ data class CommandCompletionProviderContext(
   val originalOffset: Int,
   val originalPsiFile: PsiFile,
   val isReadOnly: Boolean,
+  val isInjected: Boolean,
 )

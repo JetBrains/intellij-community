@@ -5,6 +5,7 @@ import com.intellij.codeInsight.completion.command.*
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.ide.ActivityTracker
 import com.intellij.ide.DataManager
+import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.editor.Editor
@@ -12,9 +13,12 @@ import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiComment
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiNameIdentifierOwner
+import com.intellij.util.SlowOperations
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.Nls
 import java.util.Locale.getDefault
@@ -38,7 +42,7 @@ open class ActionCommandProvider(
   val icon: Icon? = null,
   val priority: Int? = null,
   val previewText: @Nls String?,
-  val synonyms: List<String> = emptyList()
+  val synonyms: List<String> = emptyList(),
 ) : CommandProvider {
 
   /**
@@ -55,7 +59,7 @@ open class ActionCommandProvider(
     return listOf(element)
   }
 
-  
+
   /**
    * Creates a new action completion command based on the provided context.
    * This method instantiates an [ActionCompletionCommand] with the provider's configuration
@@ -127,7 +131,14 @@ open class ActionCommandProvider(
                                    icon = icon,
                                    priority = priority,
                                    previewText = previewText,
-                                   highlightInfo = HighlightInfoLookup(range, EditorColors.SEARCH_RESULT_ATTRIBUTES, 0))
+                                   highlightInfo = HighlightInfoLookup(getOffsetAwareInjection(element, range), EditorColors.SEARCH_RESULT_ATTRIBUTES, 0))
+  }
+
+  protected fun getOffsetAwareInjection(element: PsiElement, offset: TextRange): TextRange {
+    val injectedLanguageManager = InjectedLanguageManager.getInstance(element.project)
+    val injectedFile = element.containingFile
+    if (injectedFile == null || !injectedLanguageManager.isInjectedFragment(injectedFile)) return offset
+    return injectedLanguageManager.injectedToHost(injectedFile, offset)
   }
 }
 
@@ -145,14 +156,15 @@ open class ActionCompletionCommand(
   override val icon: Icon? = null,
   override val priority: Int? = null,
   override val highlightInfo: HighlightInfoLookup? = null,
-  override val synonyms: List<String> = emptyList()
+  override val synonyms: List<String> = emptyList(),
 ) : CompletionCommand(), DumbAware {
 
   override val presentableName: @Nls String = presentableActionName
     .replaceFirst("_", "")
     .lowercase()
     .replaceFirstChar {
-    if (it.isLowerCase()) it.titlecase(getDefault()) else it.toString() }
+      if (it.isLowerCase()) it.titlecase(getDefault()) else it.toString()
+    }
 
   private val action: AnAction? = ActionManager.getInstance().getAction(actionId)
 
@@ -174,6 +186,12 @@ open class ActionCompletionCommand(
     val presentation: Presentation = action.templatePresentation.clone()
     val event = AnActionEvent.createEvent(action, dataContext, presentation, ActionPlaces.ACTION_PLACE_QUICK_LIST_POPUP_ACTION,
                                           ActionUiKind.NONE, null)
+    if (InjectedLanguageManager.getInstance(psiFile.project).isInjectedFragment(psiFile)) {
+      SlowOperations.startSection(SlowOperations.ACTION_PERFORM).use { ignore ->
+        ActionUtil.performAction(action, event)
+      }
+      return
+    }
     ActionUtil.performAction(action, event)
   }
 

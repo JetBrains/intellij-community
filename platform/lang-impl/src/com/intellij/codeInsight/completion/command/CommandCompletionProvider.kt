@@ -35,6 +35,8 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil.FORCE_INJECTED_COPY_ELEMENT_KEY
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil.FORCE_INJECTED_EDITOR_KEY
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.ProcessingContext
 import com.intellij.util.Processor
@@ -66,9 +68,6 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
     if (parameters.completionType != CompletionType.BASIC) return
     if (parameters.position is PsiComment) return
     if (parameters.editor.caretModel.caretCount != 1) return
-    //not support injected fragment, it is not so obvious how to do it
-    //it can work with errors
-    if (parameters.editor is EditorWindow) return
 
     resultSet.runRemainingContributors(parameters) {
       resultSet.passResult(it)
@@ -76,6 +75,7 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
     val project = parameters.editor.project ?: return
     var editor = parameters.editor
     var isReadOnly = false
+    var isInjected = false
     var offset = parameters.offset
     val targetEditor = editor.getUserData(ORIGINAL_EDITOR)
     var originalFile = parameters.originalFile
@@ -95,6 +95,9 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
       if (topLevelEditor is EditorWindow) {
         return
       }
+      if (editor != topLevelEditor) {
+        isInjected = true
+      }
     }
     val commandCompletionService = project.getService(CommandCompletionService::class.java) ?: return
     val dumbService = DumbService.getInstance(project)
@@ -109,16 +112,23 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
 
     val commandCompletionType = findCommandCompletionType(commandCompletionFactory, isReadOnly, offset, parameters.editor) ?: return
     val adjustedParameters = try {
-      adjustParameters(commandCompletionFactory, commandCompletionType, editor, originalFile, offset, isReadOnly) ?: return
+      adjustParameters(commandCompletionFactory, commandCompletionType, editor, originalFile, offset, isReadOnly, isInjected) ?: return
     }
     catch (_: Exception) {
       return
     }
 
-    if (!commandCompletionFactory.isApplicable(adjustedParameters.copyFile, adjustedParameters.offset)) return
+    if (isInjected) {
+      if (adjustedParameters.injectedFile == null) return
+      if (adjustedParameters.injectedOffset == null) return
+      if (!commandCompletionFactory.isApplicable(adjustedParameters.injectedFile, adjustedParameters.injectedOffset)) return
+    }
+    else {
+      if (!commandCompletionFactory.isApplicable(adjustedParameters.copyFile, adjustedParameters.copyOffset)) return
+    }
 
     val copyEditor = MyEditor(adjustedParameters.copyFile, editor.settings)
-    copyEditor.caretModel.moveToOffset(adjustedParameters.offset)
+    copyEditor.caretModel.moveToOffset(adjustedParameters.copyOffset)
 
     val prefix = commandCompletionType.pattern
     val sorter = createSorter(parameters)
@@ -138,15 +148,15 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
     processCommandsForContext(commandCompletionFactory,
                               originalFile.project,
                               copyEditor,
-                              adjustedParameters.offset,
-                              adjustedParameters.copyFile,
+                              adjustedParameters,
                               editor,
                               parameters.offset,
                               originalFile,
-                              isReadOnly) { commands ->
+                              isReadOnly,
+                              isInjected) { commands ->
       commands.forEach { command ->
         CommandCompletionCollector.shown(command::class.java, originalFile.language, commandCompletionType::class.java)
-        val lookupElement = createLookupElement(command, adjustedParameters, commandCompletionFactory, prefix)
+        val lookupElement = createLookupElement(command, commandCompletionFactory, prefix)
         val customPrefixMatcher = command.customPrefixMatcher(prefix)
         if (customPrefixMatcher != null) {
           val alwaysShowMatcher = resultSet.withPrefixMatcher(customPrefixMatcher)
@@ -163,7 +173,6 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
 
   private fun createLookupElement(
     command: CompletionCommand,
-    adjustedParameters: AdjustedCompletionParameters,
     commandCompletionFactory: CommandCompletionFactory,
     prefix: String,
   ): LookupElement {
@@ -192,7 +201,6 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
                                                                   .withInsertHandler(CommandInsertHandler(command))
                                                                   .withBoldness(false),
                                                                 command,
-                                                                adjustedParameters.hostAdjustedOffset,
                                                                 commandCompletionFactory.suffix().toString() +
                                                                 (commandCompletionFactory.filterSuffix() ?: ""),
                                                                 command.icon ?: Lightning,
@@ -234,17 +242,17 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
     commandCompletionFactory: CommandCompletionFactory,
     project: Project,
     copyEditor: Editor,
-    offset: Int,
-    copyFile: PsiFile,
+    adjustedParameters: AdjustedCompletionParameters,
     originalEditor: Editor,
     originalOffset: Int,
     originalFile: PsiFile,
     isReadOnly: Boolean,
+    isInjected: Boolean,
     processor: Processor<in Collection<CompletionCommand>>,
   ) {
-    val element = copyFile.findElementAt(offset - 1) ?: return
     if (!ApplicationCommandCompletionService.getInstance().commandCompletionEnabled()) return
-    val commandProviders = commandCompletionFactory.commandProviders(project, element.language)
+    val commandProviders = commandCompletionFactory.commandProviders(project, (adjustedParameters.injectedFile
+                                                                               ?: adjustedParameters.copyFile).language)
     val afterHighlightingCommandProviders = commandProviders.filter { it is AfterHighlightingCommandProvider }.toSet()
     for (provider in commandProviders.filter { it !is AfterHighlightingCommandProvider }) {
       try {
@@ -252,8 +260,17 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
           provider.setAfterHighlightingProviders(afterHighlightingCommandProviders)
         }
         if (isReadOnly && !provider.supportsReadOnly()) continue
-        copyEditor.caretModel.moveToOffset(offset)
-        val context = CommandCompletionProviderContext(project, copyEditor, offset, copyFile, originalEditor, originalOffset, originalFile, isReadOnly)
+        if (isInjected && !provider.supportsInjected()) continue
+        copyEditor.caretModel.moveToOffset(adjustedParameters.copyOffset)
+        val context =
+          if (adjustedParameters.injectedFile != null && adjustedParameters.injectedOffset != null && isInjected) {
+            val injectedEditor = createInjectedEditor(adjustedParameters.injectedFile, copyEditor, copyEditor.settings) ?: return
+            injectedEditor.caretModel.moveToOffset(adjustedParameters.injectedOffset)
+            CommandCompletionProviderContext(project, injectedEditor, adjustedParameters.injectedOffset, adjustedParameters.injectedFile, originalEditor, originalOffset, originalFile, isReadOnly, isInjected)
+          }
+          else {
+            CommandCompletionProviderContext(project, copyEditor, adjustedParameters.copyOffset, adjustedParameters.copyFile, originalEditor, originalOffset, originalFile, isReadOnly, isInjected)
+          }
         val commands = provider.getCommands(context)
         processor.process(commands)
       }
@@ -268,7 +285,12 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
     }
   }
 
-  private data class AdjustedCompletionParameters(val copyFile: PsiFile, val offset: Int, val hostAdjustedOffset: Int)
+  private data class AdjustedCompletionParameters(
+    val copyFile: PsiFile,
+    val injectedFile: PsiFile?,
+    val copyOffset: Int,
+    val injectedOffset: Int?,
+  )
 
   private fun adjustParameters(
     commandCompletionFactory: CommandCompletionFactory,
@@ -277,6 +299,7 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
     originalFile: PsiFile,
     offset: Int,
     isNonWritten: Boolean,
+    isInjected: Boolean,
   ): AdjustedCompletionParameters? {
     val injectedLanguageManager = InjectedLanguageManager.getInstance(originalFile.project)
     val topFile = injectedLanguageManager.getTopLevelFile(originalFile)
@@ -285,24 +308,43 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
 
     // Get the document text up to the start of the command (before dots and command text)
     val hostOffset = injectedLanguageManager.injectedToHost(originalFile, offset)
-    var adjustedOffset = hostOffset - commandCompletionType.suffix.length - commandCompletionType.pattern.length
+    val moveRange = commandCompletionType.suffix.length + commandCompletionType.pattern.length
+    val adjustedOffset = hostOffset - moveRange
     if (adjustedOffset <= 0) return null
-    val hostAdjustedOffset = adjustedOffset
     val adjustedText = originalDocument.getText(TextRange(0, adjustedOffset)) + originalDocument.getText(
       TextRange(hostOffset, originalDocument.textLength))
 
 
-    var file = createFile(isNonWritten, originalFile, topFile, commandCompletionFactory, adjustedText, topEditor)
-
-    if (file is PsiFileImpl) {
-      file.setOriginalFile(topFile)
+    val copyTopFile =
+      if (!isInjected) {
+        createFile(isNonWritten, originalFile, topFile, commandCompletionFactory, adjustedText, topEditor) ?: return null
+      }
+      else {
+        val createdFile = topFile.copy() as PsiFile
+        val injectedElementAt = injectedLanguageManager.findInjectedElementAt(createdFile, adjustedOffset) ?: return null
+        val injectionHost = injectedLanguageManager.getInjectionHost(injectedElementAt) ?: return null
+        val injectedFileDocument = injectedElementAt.containingFile?.fileDocument as? DocumentWindow ?: return null
+        val hostToInjectedStartOffset = injectedFileDocument.hostToInjected(adjustedOffset)
+        injectedFileDocument.deleteString(hostToInjectedStartOffset, hostToInjectedStartOffset + moveRange)
+        PsiDocumentManager.getInstance(createdFile.project).commitDocument(injectedFileDocument)
+        if (!injectionHost.isValid) return null
+        val originalInjectedHost = injectedLanguageManager.getInjectionHost(originalFile)
+        injectionHost.putCopyableUserData(FORCE_INJECTED_COPY_ELEMENT_KEY, originalInjectedHost)
+        createdFile
+      }
+    if (copyTopFile is PsiFileImpl) {
+      copyTopFile.setOriginalFile(topFile)
     }
-    val injectedElement = injectedLanguageManager.findInjectedElementAt(file, adjustedOffset)
+    val injectedElement = injectedLanguageManager.findInjectedElementAt(copyTopFile, adjustedOffset)
+    var injectedOffset: Int? = null
     if (injectedElement != null) {
-      file = injectedElement.containingFile
-      adjustedOffset = (file.fileDocument as? DocumentWindow)?.hostToInjected(adjustedOffset) ?: 0
+      injectedOffset = (injectedElement.containingFile.fileDocument as? DocumentWindow)?.hostToInjected(adjustedOffset) ?: 0
     }
-    return AdjustedCompletionParameters(file, adjustedOffset, hostAdjustedOffset)
+    val injectedFile = injectedElement?.containingFile
+    if ((injectedOffset == null || injectedFile == null) && isInjected) {
+      return null
+    }
+    return AdjustedCompletionParameters(copyTopFile, injectedFile, adjustedOffset, injectedOffset)
   }
 
   private fun createFile(
@@ -312,7 +354,7 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
     commandCompletionFactory: CommandCompletionFactory,
     adjustedText: String,
     topEditor: Editor,
-  ): PsiFile {
+  ): PsiFile? {
     if (isNonWritten) {
       val createdFile = originalFile.copy() as PsiFile
       if (createdFile is PsiFileImpl) {
@@ -326,18 +368,13 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
       if (createdFile == null) {
         createdFile = PsiFileFactory.getInstance(topEditor.project)
           .createFileFromText(topFile.getName(), topFile.getLanguage(), adjustedText, true, true, false, topFile.virtualFile)
-        if (createdFile is PsiFileImpl) {
-          createdFile.setOriginalFile(topFile)
-        }
+      }
+      if (createdFile is PsiFileImpl) {
+        createdFile.setOriginalFile(topFile)
       }
       return createdFile
     }
-    val createdFile = PsiFileFactory.getInstance(topEditor.project)
-      .createFileFromText(topFile.getName(), topFile.getLanguage(), adjustedText, true, true, false, topFile.virtualFile)
-    if (createdFile is PsiFileImpl) {
-      createdFile.setOriginalFile(topFile)
-    }
-    return createdFile
+    return null
   }
 }
 
@@ -345,11 +382,11 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
 internal class CommandCompletionUnsupportedOperationException
   : UnsupportedOperationException("It's unexpected to invoke this method on a command completion calculating.")
 
-internal class MyEditor(psiFileCopy: PsiFile, private val settings: EditorSettings) : ImaginaryEditor(psiFileCopy.project,
-                                                                                                      psiFileCopy.viewProvider.document!!) {
+internal open class MyEditor(psiFileCopy: PsiFile, private val settings: EditorSettings) : ImaginaryEditor(psiFileCopy.project,
+                                                                                                           psiFileCopy.viewProvider.document!!) {
 
   override fun getFoldingModel(): FoldingModel {
-    return object : FoldingModel{
+    return object : FoldingModel {
       override fun addFoldRegion(startOffset: Int, endOffset: Int, placeholderText: String): FoldRegion? = null
       override fun removeFoldRegion(region: FoldRegion) = Unit
       override fun getAllFoldRegions(): Array<out FoldRegion?> = emptyArray()
@@ -508,4 +545,43 @@ private class LimitedToleranceMatcher(private val myCurrentPrefix: String) : Cam
     }
     return LimitedToleranceMatcher(prefix)
   }
+}
+
+internal fun createInjectedEditor(
+  psiFile: PsiFile,
+  myEditor: Editor,
+  editorSettings: EditorSettings,
+): EditorWindow? {
+  val documentWindow = psiFile.fileDocument as? DocumentWindow ?: return null
+
+  val injectedEditor = object : MyEditor(psiFile, editorSettings), EditorWindow {
+    override fun isValid(): Boolean {
+      return true
+    }
+
+    override fun getDocument(): DocumentWindow {
+      return documentWindow
+    }
+
+    override fun getInjectedFile(): PsiFile {
+      return psiFile
+    }
+
+    override fun hostToInjected(hPos: LogicalPosition): LogicalPosition {
+      val offset = myEditor.logicalPositionToOffset(hPos)
+      val hostToInjected = documentWindow.hostToInjected(offset)
+      return offsetToLogicalPosition(hostToInjected)
+    }
+
+    override fun injectedToHost(pos: LogicalPosition): LogicalPosition {
+      val offset = logicalPositionToOffset(pos)
+      return delegate.offsetToLogicalPosition(documentWindow.injectedToHost(offset))
+    }
+
+    override fun getDelegate(): Editor {
+      return myEditor
+    }
+  }
+  myEditor.putUserData(FORCE_INJECTED_EDITOR_KEY, injectedEditor)
+  return injectedEditor
 }

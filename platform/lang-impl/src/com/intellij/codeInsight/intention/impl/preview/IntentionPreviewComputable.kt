@@ -35,6 +35,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.IOException
 import java.lang.ref.Reference
 
+
 @Internal
 class IntentionPreviewComputable(
   private val project: Project,
@@ -43,6 +44,17 @@ class IntentionPreviewComputable(
   private val originalEditor: Editor,
   private val fixOffset: Int,
 ) {
+
+  companion object {
+    /**
+     * Specifies a default offset. In this case, the offset will be taken from the editor.
+     * It should be used with [IntentionPreviewComputable]
+     */
+    @Internal
+    @JvmStatic
+    val OFFSET_FROM_EDITOR: Int = -1
+  }
+
   fun call(): IntentionPreviewInfo = tryCreateDiffContent() ?: tryCreateFallbackDescriptionContent()
 
   private fun tryCreateFallbackDescriptionContent(): IntentionPreviewInfo {
