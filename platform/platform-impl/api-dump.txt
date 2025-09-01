@@ -171,6 +171,13 @@ com.intellij.ide.actions.SettingsEntryPointAction$IconCustomizer
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:getCustomIcon(com.intellij.ui.BadgeIconSupplier):javax.swing.Icon
 - getSecondIcon():javax.swing.Icon
+c:com.intellij.ide.browsers.actions.OpenInBrowserBaseGroupAction$OpenInBrowserFloatingToolbarProvider
+- com.intellij.openapi.editor.toolbar.floating.AbstractFloatingToolbarProvider
+- <init>():V
+- isApplicable(com.intellij.openapi.actionSystem.DataContext):Z
+com.intellij.ide.browsers.actions.OpenInBrowserBaseGroupAction$OpenInBrowserFloatingToolbarSuppressor
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- a:isSuppressed(com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProvider,com.intellij.openapi.actionSystem.DataContext):Z
 com.intellij.ide.dnd.TransferableWrapper
 - com.intellij.ide.dnd.FileFlavorProvider
 - a:getPsiElements():com.intellij.psi.PsiElement[]
@@ -564,11 +571,6 @@ com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapApplianceManager$Visib
 com.intellij.openapi.editor.markup.LineMarkerRendererEx
 - com.intellij.openapi.editor.markup.LineMarkerRenderer
 - a:getPosition():com.intellij.openapi.editor.markup.LineMarkerRendererEx$Position
-com.intellij.openapi.editor.toolbar.floating.EditorFloatingToolbarSuppressor
-- sf:Companion:com.intellij.openapi.editor.toolbar.floating.EditorFloatingToolbarSuppressor$Companion
-- a:isSuppressed(com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProvider,com.intellij.openapi.actionSystem.DataContext):Z
-f:com.intellij.openapi.editor.toolbar.floating.EditorFloatingToolbarSuppressor$Companion
-- f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
 com.intellij.openapi.editor.toolbar.floating.FloatingToolbarComponent
 - a:getAutoHideable():Z
 - a:getBackgroundAlpha():F
