@@ -38,6 +38,7 @@ com.intellij.xdebugger.attach.XLocalAttachDebugger
 - a:getDebuggerDisplayName():java.lang.String
 com.intellij.xdebugger.impl.evaluate.XValueCompactPresentation
 - a:renderValue(com.intellij.xdebugger.frame.presentation.XValuePresentation$XValueTextRenderer,com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl):V
+a:com.intellij.xdebugger.impl.frame.XDebugView
 c:com.intellij.xdebugger.impl.frame.XDebuggerFramesList
 - sessionStopped():V
 com.intellij.xdebugger.impl.frame.XDebuggerFramesList$ItemWithCustomBackgroundColor

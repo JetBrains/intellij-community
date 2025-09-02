@@ -72,6 +72,7 @@ data class XDebuggerSessionTabInfo(
   val iconId: IconId?,
   val forceNewDebuggerUi: Boolean,
   val withFramesCustomization: Boolean,
+  val defaultFramesViewKey: String?,
   // TODO pass to frontend
   @Transient val contentToReuse: RunContentDescriptor? = null,
   val executionEnvironmentProxyDto: ExecutionEnvironmentProxyDto?,

@@ -82,7 +82,8 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     XDebugSessionProxy proxy = XDebugSessionProxyKeeperKt.asProxy(session);
     boolean forceNewDebuggerUi = XDebugSessionTabCustomizerKt.forceShowNewDebuggerUi(session.getDebugProcess());
     boolean withFramesCustomization = XDebugSessionTabCustomizerKt.allowFramesViewCustomization(session.getDebugProcess());
-    return create(proxy, icon, environment == null ? null : new BackendExecutionEnvironmentProxy(environment), contentToReuse, forceNewDebuggerUi, withFramesCustomization);
+    @Nullable String defaultFramesViewKey = XDebugSessionTabCustomizerKt.getDefaultFramesViewKey(session.getDebugProcess());
+    return create(proxy, icon, environment == null ? null : new BackendExecutionEnvironmentProxy(environment), contentToReuse, forceNewDebuggerUi, withFramesCustomization, defaultFramesViewKey);
   }
 
   @ApiStatus.Internal
@@ -91,7 +92,8 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
                                                  @Nullable ExecutionEnvironmentProxy environmentProxy,
                                                  @Nullable RunContentDescriptor contentToReuse,
                                                  boolean forceNewDebuggerUi,
-                                                 boolean withFramesCustomization) {
+                                                 boolean withFramesCustomization,
+                                                 @Nullable String defaultFramesViewKey) {
     if (contentToReuse != null && SystemProperties.getBooleanProperty("xdebugger.reuse.session.tab", false)) {
       JComponent component = contentToReuse.getComponent();
       if (component != null) {
@@ -106,12 +108,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     XDebugSessionTab tab;
     if (UIExperiment.isNewDebuggerUIEnabled() || forceNewDebuggerUi) {
       if (withFramesCustomization) {
-        if (proxy instanceof XDebugSessionProxy.Monolith monolith) {
-          tab = new XDebugSessionTab3(monolith, icon, environmentProxy);
-        }
-        else {
-          throw new IllegalStateException("Frames view customization is not supported in split mode");
-        }
+        tab = new XDebugSessionTab3(proxy, icon, environmentProxy, defaultFramesViewKey);
       }
       else {
         tab = new XDebugSessionTabNewUI(proxy, icon, environmentProxy);

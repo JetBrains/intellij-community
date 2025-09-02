@@ -272,7 +272,7 @@ class FrontendXDebuggerSession private constructor(
       val proxy = this@FrontendXDebuggerSession
       withContext(Dispatchers.EDT) {
         XDebugSessionTab.create(proxy, tabInfo.iconId?.icon(), tabInfo.executionEnvironmentProxyDto?.executionEnvironment(project, cs), tabInfo.contentToReuse,
-                                tabInfo.forceNewDebuggerUi, tabInfo.withFramesCustomization).apply {
+                                tabInfo.forceNewDebuggerUi, tabInfo.withFramesCustomization, tabInfo.defaultFramesViewKey).apply {
           sessionTabDeferred.complete(this)
           proxy.onTabInitialized(this)
           showTab()

@@ -138,11 +138,6 @@ f:com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 - *s:createFormattedTextEditor(java.lang.String,com.intellij.openapi.fileTypes.FileType,com.intellij.openapi.project.Project,com.intellij.openapi.Disposable,Z):com.intellij.openapi.editor.Editor
 - *s:createFormattedTextViewer(java.lang.String,com.intellij.openapi.fileTypes.FileType,com.intellij.openapi.project.Project,com.intellij.openapi.Disposable):com.intellij.openapi.editor.Editor
 - *s:createTextViewer(java.lang.String,com.intellij.openapi.project.Project):com.intellij.xdebugger.impl.ui.TextViewer
-*:com.intellij.xdebugger.impl.ui.XDebugSessionTabCustomizer
-- allowFramesViewCustomization():Z
-- forceShowNewDebuggerUi():Z
-- getBottomLocalsComponentProvider():com.intellij.xdebugger.impl.ui.SessionTabComponentProvider
-- getDefaultFramesViewKey():java.lang.String
 com.intellij.xdebugger.impl.ui.XValueTextProvider
 - *a:shouldShowTextValue():Z
 *:com.intellij.xdebugger.impl.ui.attach.dialog.extensions.XAttachDebuggerButtonPresentationProvider

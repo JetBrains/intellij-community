@@ -20,18 +20,12 @@ import com.intellij.ui.PopupHandler
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SpeedSearchComparator
 import com.intellij.util.concurrency.EdtExecutorService
-import com.intellij.util.ui.JBEmptyBorder
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.NamedColorUtil
-import com.intellij.util.ui.TextTransferable
-import com.intellij.util.ui.UIUtil
-import com.intellij.xdebugger.XDebugSession
+import com.intellij.util.ui.*
 import com.intellij.xdebugger.XDebugSessionListener
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.XSuspendContext
-import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.actions.XDebuggerActions
 import com.intellij.xdebugger.impl.frame.XFramesView.addFramesNavigationAd
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab3
@@ -197,7 +191,7 @@ class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
 
     splitter.secondComponent = frameListWrapper
 
-    stackInfoDescriptionRequester = debugTab.session?.let { session ->
+    stackInfoDescriptionRequester = debugTab.sessionProxy?.let { session ->
       if (supportsDescription) {
         val requester = StackInfoDescriptionRequester(myThreadsList, session, mainPanel)
         threadsScrollPane.viewport.addChangeListener(requester)
@@ -207,11 +201,11 @@ class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
             myThreadsList.model.removeListDataListener(requester)
             threadsScrollPane.viewport.removeChangeListener(requester)
             stackInfoDescriptionRequester = null
-            myCurrentThreadDescriptionComponent.paragraphs = emptyList<TextParagraph>()
+            myCurrentThreadDescriptionComponent.paragraphs = emptyList()
             myCurrentThreadDescriptionComponent.revalidate()
             myCurrentThreadDescriptionComponent.repaint()
           }
-        })
+        }, this)
         requester
       }
       else {
@@ -227,7 +221,7 @@ class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
       if (e.valueIsAdjusting || !myListenersEnabled) return@addListSelectionListener
       val stack = myThreadsList.selectedValue?.stack ?: return@addListSelectionListener
 
-      val session = getSession(e) ?: return@addListSelectionListener
+      val session = getSessionProxy(e) ?: return@addListSelectionListener
       stack.setActive(session)
     }
 
@@ -277,13 +271,13 @@ class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
     })
   }
 
-  private inline fun processMouseEvent(e: MouseEvent, action: (XDebugSession, XExecutionStack, XStackFrame?) -> Unit) {
+  private inline fun processMouseEvent(e: MouseEvent, action: (XDebugSessionProxy, XExecutionStack, XStackFrame?) -> Unit) {
     if (!myListenersEnabled) return
 
     val i = myFramesList.locationToIndex(e.point)
     if (i == -1 || !myFramesList.isSelectedIndex(i)) return
 
-    val session = getSession(e) ?: return
+    val session = getSessionProxy(e) ?: return
     val stack = myThreadsList.selectedValue?.stack ?: return
     val frame = myFramesList.selectedValue as? XStackFrame
 
@@ -300,12 +294,12 @@ class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
     myCurrentThreadDescriptionComponent.repaint()
   }
 
-  override fun processSessionEvent(event: SessionEvent, session: XDebugSession) {
+  override fun processSessionEvent(event: SessionEvent, session: XDebugSessionProxy) {
     if (event == SessionEvent.BEFORE_RESUME) {
       return
     }
-    val suspendContext = session.suspendContext
-    if (suspendContext == null) {
+
+    if (!session.hasSuspendContext()) {
       requestClear()
       return
     }
@@ -321,8 +315,8 @@ class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
       }
 
       if (event == SessionEvent.FRAME_CHANGED) {
-        val currentExecutionStack = (session as XDebugSessionImpl).currentExecutionStack
-        val currentStackFrame = session.currentStackFrame
+        val currentExecutionStack = session.getCurrentExecutionStack()
+        val currentStackFrame = session.getCurrentStackFrame()
 
         var selectedStack = threads.selectedValue?.stack
         if (selectedStack != currentExecutionStack) {
@@ -348,19 +342,19 @@ class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
     }
   }
 
-  fun start(session: XDebugSession) {
-    val suspendContext = session.suspendContext ?: return
+  fun start(sessionProxy: XDebugSessionProxy) {
+    if (!(sessionProxy.hasSuspendContext())) return
     val disposable = nextDisposable()
 
     myFramesManager = FramesManager(myFramesList, disposable)
-    val activeStack = suspendContext.activeExecutionStack
-    activeStack?.setActive(session)
+    val activeStack = sessionProxy.getCurrentExecutionStack()
+    activeStack?.setActive(sessionProxy)
 
     myThreadsContainer = ThreadsContainer(myThreadsList, activeStack, disposable)
-    myThreadsContainer.start(suspendContext)
+    myThreadsContainer.start(sessionProxy)
   }
 
-  private fun XExecutionStack.setActive(session: XDebugSession) {
+  private fun XExecutionStack.setActive(sessionProxy: XDebugSessionProxy) {
     myFramesManager.setActive(this)
 
     setActiveThreadDescription(IdeBundle.message("progress.text.loading"))
@@ -377,7 +371,7 @@ class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
 
     val currentFrame = myFramesManager.tryGetCurrentFrame(this) ?: return
 
-    session.setCurrentStackFrame(this, currentFrame)
+    sessionProxy.setCurrentStackFrame(this, currentFrame)
   }
 
   private fun nextDisposable(): Disposable {
@@ -397,7 +391,7 @@ class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
     myThreadsContainer.clear()
     myFramesPresentationCache.clear()
     stackInfoDescriptionRequester?.clear()
-    myCurrentThreadDescriptionComponent.paragraphs = emptyList<TextParagraph>()
+    myCurrentThreadDescriptionComponent.paragraphs = emptyList()
     myCurrentThreadDescriptionComponent.revalidate()
     myCurrentThreadDescriptionComponent.repaint()
   }
@@ -556,7 +550,7 @@ class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
       private val loading = listOf(StackInfo.LOADING)
     }
 
-    fun start(suspendContext: XSuspendContext) {
+    fun start(sessionProxy: XDebugSessionProxy) {
       UIUtil.invokeLaterIfNeeded {
         if (isStarted) return@invokeLaterIfNeeded
 
@@ -569,7 +563,7 @@ class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
         }
 
         myThreadsList.selectedIndex = 0
-        suspendContext.computeExecutionStacks(this)
+        sessionProxy.computeExecutionStacks { this@ThreadsContainer }
         isStarted = true
       }
     }
@@ -631,7 +625,7 @@ class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
 @OptIn(FlowPreview::class)
 internal class StackInfoDescriptionRequester(
   private val threadsList: XDebuggerThreadsList,
-  val session: XDebugSessionImpl,
+  val sessionProxy: XDebugSessionProxy,
   val viewComponent: JComponent,
 ) : javax.swing.event.ChangeListener, ListDataListener {
 
@@ -644,7 +638,7 @@ internal class StackInfoDescriptionRequester(
   private val descriptionRequestsFlow = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   init {
-    session.coroutineScope.launch(Dispatchers.EDT) {
+    sessionProxy.coroutineScope.launch(Dispatchers.EDT) {
       descriptionRequestsFlow.debounce(DESCRIPTION_GROUPING_EVENT_TIMEOUT).collectLatest {
         val firstIndex = threadsList.firstVisibleIndex
         var lastIndex = threadsList.lastVisibleIndex
@@ -673,11 +667,11 @@ internal class StackInfoDescriptionRequester(
   }
 
   internal fun requestDescription(executionStack: XExecutionStack, onFinished: (XDebuggerExecutionStackDescription?, Throwable?) -> Unit) {
-    val descriptionService = session.project.service<XDebuggerExecutionStackDescriptionService>()
+    val descriptionService = sessionProxy.project.service<XDebuggerExecutionStackDescriptionService>()
     if (!(descriptionService.isAvailable())) return
 
     descriptionCalculationMap.getOrPut(executionStack) {
-      descriptionService.getExecutionStackDescription(executionStack, session).asCompletableFuture()
+      descriptionService.getExecutionStackDescription(executionStack, sessionProxy).asCompletableFuture()
     }.whenCompleteAsync({ result: XDebuggerExecutionStackDescription?, exception: Throwable? ->
       onFinished(result, exception)
       viewComponent.repaint()

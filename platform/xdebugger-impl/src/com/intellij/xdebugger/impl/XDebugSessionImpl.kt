@@ -72,6 +72,7 @@ import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl
 import com.intellij.xdebugger.impl.ui.XDebugSessionData
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab
 import com.intellij.xdebugger.impl.ui.allowFramesViewCustomization
+import com.intellij.xdebugger.impl.ui.getDefaultFramesViewKey
 import com.intellij.xdebugger.impl.ui.forceShowNewDebuggerUi
 import com.intellij.xdebugger.impl.util.start
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler
@@ -442,12 +443,13 @@ class XDebugSessionImpl @JvmOverloads constructor(
   private fun initSessionTab(contentToReuse: RunContentDescriptor?, shouldShowTab: Boolean) {
     val forceNewDebuggerUi = debugProcess.forceShowNewDebuggerUi()
     val withFramesCustomization = debugProcess.allowFramesViewCustomization()
+    val defaultFramesViewKey: String? = debugProcess.getDefaultFramesViewKey()
 
     if (useFeProxy()) {
       val environmentCoroutineScope = debuggerManager.coroutineScope.childScope("ExecutionEnvironmentDto")
       val tabClosedChannel = Channel<Unit>(capacity = 1)
       val additionalTabComponentManager = XDebugSessionAdditionalTabComponentManager(project, environmentCoroutineScope)
-      val tabInfo = XDebuggerSessionTabInfo(myIcon?.rpcId(), forceNewDebuggerUi, withFramesCustomization,
+      val tabInfo = XDebuggerSessionTabInfo(myIcon?.rpcId(), forceNewDebuggerUi, withFramesCustomization, defaultFramesViewKey,
                                             contentToReuse, executionEnvironment?.toDto(environmentCoroutineScope),
                                             additionalTabComponentManager.id, tabClosedChannel)
       if (myTabInitDataFlow.compareAndSet(null, tabInfo)) {
@@ -476,7 +478,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
       if (myTabInitDataFlow.compareAndSet(null, XDebuggerSessionTabInfoNoInit)) {
         val proxy = this.asProxy()
         val tab = XDebugSessionTab.create(proxy, myIcon, executionEnvironment?.let { BackendExecutionEnvironmentProxy(it) }, contentToReuse,
-                                          forceNewDebuggerUi, withFramesCustomization)
+                                          forceNewDebuggerUi, withFramesCustomization, defaultFramesViewKey)
         tabInitialized(tab)
         myDebugProcess!!.sessionInitialized()
         if (shouldShowTab) {

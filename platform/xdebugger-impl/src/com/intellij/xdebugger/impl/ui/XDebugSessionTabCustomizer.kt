@@ -4,6 +4,7 @@ import com.intellij.xdebugger.XDebugProcess
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
+@ApiStatus.Internal
 @ApiStatus.Experimental
 interface XDebugSessionTabCustomizer {
   fun getBottomLocalsComponentProvider(): SessionTabComponentProvider? = null
@@ -33,4 +34,9 @@ fun XDebugProcess.useSplitterView(): Boolean = getBottomLocalsComponentProvider(
 
 fun XDebugProcess.forceShowNewDebuggerUi(): Boolean {
   return (this as? XDebugSessionTabCustomizer)?.forceShowNewDebuggerUi() ?: false
+}
+
+@ApiStatus.Internal
+fun XDebugProcess.getDefaultFramesViewKey(): String? {
+  return (this as? XDebugSessionTabCustomizer)?.getDefaultFramesViewKey()
 }
