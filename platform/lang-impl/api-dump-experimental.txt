@@ -123,6 +123,7 @@ c:com.intellij.build.output.BuildOutputInstantReaderImpl
 - a:getTitle():java.lang.String
 c:com.intellij.codeInsight.actions.VcsFacade
 - *:createPatchPreviewComponent(com.intellij.openapi.project.Project,java.util.Map):javax.swing.JComponent
+- *:getLinesWithRemovedRangesAfter(com.intellij.psi.PsiFile):java.util.List
 *:com.intellij.codeInsight.codeVision.CodeVisionProvider
 - *sf:Companion:com.intellij.codeInsight.codeVision.CodeVisionProvider$Companion
 - sf:EP_NAME:java.lang.String
