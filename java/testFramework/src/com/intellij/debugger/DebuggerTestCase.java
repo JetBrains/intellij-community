@@ -36,7 +36,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
@@ -498,7 +497,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     createBreakpointInHelloWorld();
   }
 
-  protected void printAsyncStackTrace(boolean showLineNumbers) {
+  protected void printAsyncStackTrace() {
     if (!myLogAllCommands) {
       printContext(getDebugProcess().getDebuggerContext());
     }
@@ -512,15 +511,10 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
         systemPrintln("  <hidden frames>");
       }
       else {
-        systemPrintln("  " + frameRepresentation(f, showLineNumbers));
+        systemPrintln("  " + getFramePresentation(f));
       }
     });
     systemPrintln("^^^ stack trace ^^^");
-  }
-
-  private String frameRepresentation(XStackFrame f, boolean showLineNumbers) {
-    return showLineNumbers ? StringUtil.substringBeforeLast(getFramePresentation(f), "(") :
-      StringUtil.substringBeforeLast(getFramePresentation(f), ":");
   }
 
   protected @NotNull List<XStackFrame> collectFrames(@Nullable XDebugSession session) {
