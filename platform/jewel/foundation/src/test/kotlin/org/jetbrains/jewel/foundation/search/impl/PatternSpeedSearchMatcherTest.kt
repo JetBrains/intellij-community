@@ -40,7 +40,7 @@ public class PatternSpeedSearchMatcherTest {
         val result = matcher.matches("abcdef")
 
         assertEquals(1, result?.size)
-        assertEquals(0..2, result?.get(0))
+        assertEquals(0 until 2, result?.get(0))
     }
 
     @Test
@@ -49,7 +49,7 @@ public class PatternSpeedSearchMatcherTest {
         val result = matcher.matches("an eye for an eye")
 
         assertEquals(1, result?.size)
-        assertEquals(3..6, result?.get(0))
+        assertEquals(3 until 6, result?.get(0))
     }
 
     @Test
@@ -58,7 +58,7 @@ public class PatternSpeedSearchMatcherTest {
         val result = matcher.matches("an Eye for an eye")
 
         assertEquals(1, result?.size)
-        assertEquals(3..6, result?.get(0))
+        assertEquals(3 until 6, result?.get(0))
     }
 
     @Test
@@ -68,7 +68,7 @@ public class PatternSpeedSearchMatcherTest {
         // When matchFromBeginning is true, the implementation matches the pattern from the beginning of the text
         matcher.matches("abcdef").let { result ->
             assertEquals(1, result?.size)
-            assertEquals(0..2, result?.get(0))
+            assertEquals(0 until 2, result?.get(0))
         }
 
         // If the value is not found in the beginning, the implementation should return null
@@ -81,7 +81,7 @@ public class PatternSpeedSearchMatcherTest {
         val result = matcher.matches("abCDef")
 
         assertEquals(1, result?.size)
-        assertEquals(2..4, result?.get(0))
+        assertEquals(2 until 4, result?.get(0))
     }
 
     @Test
@@ -92,7 +92,7 @@ public class PatternSpeedSearchMatcherTest {
 
         // The implementation matches each letter separately
         assertEquals(1, result?.size)
-        assertEquals(4..6, result?.get(0))
+        assertEquals(4 until 6, result?.get(0))
     }
 
     @Test
@@ -103,7 +103,7 @@ public class PatternSpeedSearchMatcherTest {
 
         // The implementation matches each letter separately
         assertEquals(1, result?.size)
-        assertEquals(2..4, result?.get(0))
+        assertEquals(2 until 4, result?.get(0))
     }
 
     @Test
@@ -120,7 +120,7 @@ public class PatternSpeedSearchMatcherTest {
 
         // The implementation matches each letter separately with ALL case sensitivity
         assertEquals(1, result?.size)
-        assertEquals(2..4, result?.get(0))
+        assertEquals(2 until 4, result?.get(0))
     }
 
     @Test
@@ -129,7 +129,7 @@ public class PatternSpeedSearchMatcherTest {
         val result = matcher.matches("An Eye For An eye")
 
         assertEquals(1, result?.size)
-        assertEquals(14..17, result?.get(0))
+        assertEquals(14 until 17, result?.get(0))
     }
 
     @Test
@@ -139,13 +139,13 @@ public class PatternSpeedSearchMatcherTest {
         // Should match when first letter case matches
         matcher.matches("Abcdef").let { result ->
             assertEquals(1, result?.size)
-            assertEquals(0..2, result?.get(0))
+            assertEquals(0 until 2, result?.get(0))
         }
 
         // Should match when the second letter case doesn't match
         matcher.matches("ABcdef").let { result ->
             assertEquals(1, result?.size)
-            assertEquals(0..2, result?.get(0))
+            assertEquals(0 until 2, result?.get(0))
         }
 
         // Should not match when first letter case differs
@@ -159,8 +159,8 @@ public class PatternSpeedSearchMatcherTest {
         val result = matcher.matches("CamelCase")
 
         assertEquals(2, result?.size)
-        assertEquals(0..1, result?.get(0))
-        assertEquals(5..6, result?.get(1))
+        assertEquals(0 until 1, result?.get(0))
+        assertEquals(5 until 6, result?.get(1))
     }
 
     @Test
@@ -169,8 +169,8 @@ public class PatternSpeedSearchMatcherTest {
         val result = matcher.matches("CamelCase")
 
         assertEquals(2, result?.size)
-        assertEquals(1..2, result?.get(0))
-        assertEquals(5..6, result?.get(1))
+        assertEquals(1 until 2, result?.get(0))
+        assertEquals(5 until 6, result?.get(1))
     }
 
     @Test
@@ -180,9 +180,9 @@ public class PatternSpeedSearchMatcherTest {
 
         assertEquals(3, result?.size)
         // The implementation returns separate ranges for each matched capital letter
-        assertEquals(0..1, result?.get(0))
-        assertEquals(5..6, result?.get(1))
-        assertEquals(9..10, result?.get(2))
+        assertEquals(0 until 1, result?.get(0))
+        assertEquals(5 until 6, result?.get(1))
+        assertEquals(9 until 10, result?.get(2))
     }
 
     @Test
@@ -193,8 +193,8 @@ public class PatternSpeedSearchMatcherTest {
         assertEquals(2, result?.size)
         // The implementation returns separate ranges for the matched parts
 
-        assertEquals(0..1, result?.get(0))
-        assertEquals(6..7, result?.get(1))
+        assertEquals(0 until 1, result?.get(0))
+        assertEquals(6 until 7, result?.get(1))
     }
 
     @Test
@@ -205,7 +205,7 @@ public class PatternSpeedSearchMatcherTest {
         assertEquals(1, result?.size)
         // The implementation returns separate ranges for the matched parts
 
-        assertEquals(6..9, result?.get(0))
+        assertEquals(6 until 9, result?.get(0))
     }
 
     @Test
@@ -214,8 +214,8 @@ public class PatternSpeedSearchMatcherTest {
         // Should match without hard separators
         val result = matcher.matches("hello world")
         assertEquals(2, result?.size)
-        assertEquals(0..1, result?.get(0))
-        assertEquals(6..7, result?.get(1))
+        assertEquals(0 until 1, result?.get(0))
+        assertEquals(6 until 7, result?.get(1))
 
         // Should not match across hard separators
         assertNull(matcher.matches("hello(world)"))
@@ -228,8 +228,8 @@ public class PatternSpeedSearchMatcherTest {
 
         assertEquals(2, result?.size)
         // The implementation returns separate ranges for the matched parts
-        assertEquals(0..1, result?.get(0))
-        assertEquals(10..11, result?.get(1))
+        assertEquals(0 until 1, result?.get(0))
+        assertEquals(10 until 11, result?.get(1))
     }
 
     @Test
@@ -240,8 +240,8 @@ public class PatternSpeedSearchMatcherTest {
 
         // The implementation matches each letter separately
         assertEquals(2, result?.size)
-        assertEquals(0..1, result?.get(0))
-        assertEquals(6..7, result?.get(1))
+        assertEquals(0 until 1, result?.get(0))
+        assertEquals(6 until 7, result?.get(1))
     }
 
     @Test
@@ -254,7 +254,7 @@ public class PatternSpeedSearchMatcherTest {
         val result = matcher.matches(longText)
 
         assertEquals(1, result?.size)
-        assertEquals(150..251, result?.get(0))
+        assertEquals(150 until 251, result?.get(0))
     }
 
     @Test
@@ -263,6 +263,6 @@ public class PatternSpeedSearchMatcherTest {
         val result = matcher.matches("a.b")
 
         assertEquals(1, result?.size)
-        assertEquals(0..3, result?.get(0))
+        assertEquals(0 until 3, result?.get(0))
     }
 }

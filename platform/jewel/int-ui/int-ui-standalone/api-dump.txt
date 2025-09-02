@@ -454,12 +454,14 @@ f:org.jetbrains.jewel.intui.standalone.styling.IntUiScrollbarStylingKt
 - sf:windowsAndLinuxLight-zwkVjRg(org.jetbrains.jewel.ui.component.styling.ScrollbarColors$Companion,J,J,J,J,J,J,J,J,J,J,J,J):org.jetbrains.jewel.ui.component.styling.ScrollbarColors
 - bs:windowsAndLinuxLight-zwkVjRg$default(org.jetbrains.jewel.ui.component.styling.ScrollbarColors$Companion,J,J,J,J,J,J,J,J,J,J,J,J,I,java.lang.Object):org.jetbrains.jewel.ui.component.styling.ScrollbarColors
 f:org.jetbrains.jewel.intui.standalone.styling.IntUiSearchMatchStylingKt
-- sf:dark(org.jetbrains.jewel.ui.component.styling.SearchMatchStyle$Companion,org.jetbrains.jewel.ui.component.styling.SearchMatchColors):org.jetbrains.jewel.ui.component.styling.SearchMatchStyle
-- bs:dark$default(org.jetbrains.jewel.ui.component.styling.SearchMatchStyle$Companion,org.jetbrains.jewel.ui.component.styling.SearchMatchColors,I,java.lang.Object):org.jetbrains.jewel.ui.component.styling.SearchMatchStyle
+- sf:dark(org.jetbrains.jewel.ui.component.styling.SearchMatchStyle$Companion,org.jetbrains.jewel.ui.component.styling.SearchMatchColors,org.jetbrains.jewel.ui.component.styling.SearchMatchMetrics):org.jetbrains.jewel.ui.component.styling.SearchMatchStyle
+- bs:dark$default(org.jetbrains.jewel.ui.component.styling.SearchMatchStyle$Companion,org.jetbrains.jewel.ui.component.styling.SearchMatchColors,org.jetbrains.jewel.ui.component.styling.SearchMatchMetrics,I,java.lang.Object):org.jetbrains.jewel.ui.component.styling.SearchMatchStyle
 - sf:dark-zSO0fhY(org.jetbrains.jewel.ui.component.styling.SearchMatchColors$Companion,J,J,J):org.jetbrains.jewel.ui.component.styling.SearchMatchColors
 - bs:dark-zSO0fhY$default(org.jetbrains.jewel.ui.component.styling.SearchMatchColors$Companion,J,J,J,I,java.lang.Object):org.jetbrains.jewel.ui.component.styling.SearchMatchColors
-- sf:light(org.jetbrains.jewel.ui.component.styling.SearchMatchStyle$Companion,org.jetbrains.jewel.ui.component.styling.SearchMatchColors):org.jetbrains.jewel.ui.component.styling.SearchMatchStyle
-- bs:light$default(org.jetbrains.jewel.ui.component.styling.SearchMatchStyle$Companion,org.jetbrains.jewel.ui.component.styling.SearchMatchColors,I,java.lang.Object):org.jetbrains.jewel.ui.component.styling.SearchMatchStyle
+- sf:default(org.jetbrains.jewel.ui.component.styling.SearchMatchMetrics$Companion,androidx.compose.foundation.shape.CornerSize,androidx.compose.foundation.layout.PaddingValues):org.jetbrains.jewel.ui.component.styling.SearchMatchMetrics
+- bs:default$default(org.jetbrains.jewel.ui.component.styling.SearchMatchMetrics$Companion,androidx.compose.foundation.shape.CornerSize,androidx.compose.foundation.layout.PaddingValues,I,java.lang.Object):org.jetbrains.jewel.ui.component.styling.SearchMatchMetrics
+- sf:light(org.jetbrains.jewel.ui.component.styling.SearchMatchStyle$Companion,org.jetbrains.jewel.ui.component.styling.SearchMatchColors,org.jetbrains.jewel.ui.component.styling.SearchMatchMetrics):org.jetbrains.jewel.ui.component.styling.SearchMatchStyle
+- bs:light$default(org.jetbrains.jewel.ui.component.styling.SearchMatchStyle$Companion,org.jetbrains.jewel.ui.component.styling.SearchMatchColors,org.jetbrains.jewel.ui.component.styling.SearchMatchMetrics,I,java.lang.Object):org.jetbrains.jewel.ui.component.styling.SearchMatchStyle
 - sf:light-zSO0fhY(org.jetbrains.jewel.ui.component.styling.SearchMatchColors$Companion,J,J,J):org.jetbrains.jewel.ui.component.styling.SearchMatchColors
 - bs:light-zSO0fhY$default(org.jetbrains.jewel.ui.component.styling.SearchMatchColors$Companion,J,J,J,I,java.lang.Object):org.jetbrains.jewel.ui.component.styling.SearchMatchColors
 f:org.jetbrains.jewel.intui.standalone.styling.IntUiSegmentedControlButtonStylingKt
