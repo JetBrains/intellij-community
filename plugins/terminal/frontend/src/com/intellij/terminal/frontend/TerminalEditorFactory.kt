@@ -33,6 +33,7 @@ object TerminalEditorFactory {
   ): EditorImpl {
     val document = createDocument(withLanguage = true)
     val editor = createEditor(document, project, settings, parentDisposable)
+    editor.contentComponent.focusTraversalKeysEnabled = false
     editor.putUserData(TerminalDataContextUtils.IS_OUTPUT_MODEL_EDITOR_KEY, true)
     addTopAndBottomInsets(editor)
 
