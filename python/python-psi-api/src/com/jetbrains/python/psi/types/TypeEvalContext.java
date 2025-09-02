@@ -9,6 +9,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.CollectionFactory;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyTypeProvider;
 import org.jetbrains.annotations.ApiStatus;
@@ -45,6 +46,9 @@ public sealed class TypeEvalContext {
 
   private final Map<PyTypedElement, PyType> myEvaluated = new HashMap<>();
   private final Map<PyCallable, PyType> myEvaluatedReturn = new HashMap<>();
+  @ApiStatus.Internal
+  protected final Map<Pair<PyExpression, Object>, PyType> contextTypeCache = CollectionFactory.createConcurrentSoftValueMap();
+
 
   private TypeEvalContext(boolean allowDataFlow, boolean allowStubToAST, boolean allowCallContext, @Nullable PsiFile origin) {
     myConstraints = new TypeEvalConstraints(allowDataFlow, allowStubToAST, allowCallContext, origin);
@@ -249,6 +253,11 @@ public sealed class TypeEvalContext {
 
   public @Nullable PsiFile getOrigin() {
     return myConstraints.myOrigin;
+  }
+
+  @ApiStatus.Internal
+  public @NotNull Map<Pair<PyExpression, Object>, PyType> getContextTypeCache() {
+    return contextTypeCache;
   }
 
   /**

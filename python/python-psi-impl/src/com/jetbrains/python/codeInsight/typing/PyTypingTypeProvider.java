@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.typing;
 
+import com.dynatrace.hash4j.hashing.HashValue128;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.intellij.openapi.util.*;
@@ -47,8 +48,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Function;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.dynatrace.hash4j.hashing.Hashing.xxh3_128;
 import static com.intellij.openapi.util.RecursionManager.doPreventingRecursion;
 import static com.jetbrains.python.psi.PyKnownDecorator.TYPING_FINAL;
 import static com.jetbrains.python.psi.PyKnownDecorator.TYPING_FINAL_EXT;
@@ -750,9 +753,16 @@ public static final String CONTEXT_MANAGER = "contextlib.AbstractContextManager"
   }
 
   private static @Nullable Ref<PyType> getType(@NotNull PyExpression expression, @NotNull Context context) {
+    PyType type = context.getKnownType(expression);
+    if (type != null) {
+      return Ref.create(type);
+    }
     for (Pair<PyQualifiedNameOwner, PsiElement> pair : tryResolvingWithAliases(expression, context.getTypeContext())) {
       final Ref<PyType> typeRef = getTypeForResolvedElement(expression, pair.getFirst(), pair.getSecond(), context);
       if (typeRef != null) {
+        if (typeRef.get() != null) {
+          context.assumeType(expression, typeRef.get());
+        }
         return typeRef;
       }
     }
@@ -2240,6 +2250,22 @@ public static final String CONTEXT_MANAGER = "contextlib.AbstractContextManager"
 
     public @NotNull Stack<PyQualifiedNameOwner> getTypeAliasStack() {
       return myTypeAliasStack;
+    }
+
+    public @Nullable PyType getKnownType(@NotNull PyExpression expression) {
+      //noinspection SuspiciousMethodCalls
+      return myContext.getContextTypeCache().get(new Pair<>(expression, getContextStrongHashValue()));
+    }
+
+    public void assumeType(@NotNull PyExpression expression, @NotNull PyType type) {
+      myContext.getContextTypeCache().put(new Pair<>(expression, getContextStrongHashValue()), type);
+    }
+
+    private @NotNull HashValue128 getContextStrongHashValue() {
+      var result = xxh3_128().hashCharsTo128Bits(Stream.concat(Stream.of(myComputeTypeParameterScope ? "1" : "0"),
+                                                               myTypeAliasStack.stream().map(it -> it.getQualifiedName()))
+                                                   .collect(Collectors.joining("#")));
+      return result;
     }
     
     @Override
