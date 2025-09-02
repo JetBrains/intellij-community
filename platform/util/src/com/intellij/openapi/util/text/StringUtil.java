@@ -1269,6 +1269,7 @@ public class StringUtil {
     return new String(buffer);
   }
 
+  @ReviseWhenPortedToJDK(value = "11", description = "s.repeat(count)")
   @Contract(pure = true)
   public static @NotNull String repeat(@NotNull String s, int count) {
     if (count == 0) return "";

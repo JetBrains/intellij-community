@@ -249,9 +249,9 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
     myDocumentManager.saveAllDocuments();
     UIUtil.dispatchAllInvocationEvents();
     // "Actions on save" manager retains documents to be saved to run some actions on them
-    Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      ActionsOnSaveManager.Companion.getInstance(myProject).waitForTasks();
-    });
+    Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() ->
+      ActionsOnSaveManager.Companion.getInstance(myProject).waitForTasks()
+    );
     PlatformTestUtil.waitWithEventsDispatching("Could not finish auto-correction in 10 seconds", () -> future.isDone(), 10);
 
     GCWatcher.tracking(myDocumentManager.getDocument(file)).ensureCollected();
@@ -531,7 +531,7 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
   }
 
 
-  public void testFileTypeModificationDocumentPreservation() throws Exception {
+  public void testFileTypeModificationDocumentPreservation() {
     File ioFile = IoTestUtil.createTestFile("test.html", "<html>some text</html>");
     VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioFile);
     assertNotNull(ioFile.getPath(), file);
@@ -544,7 +544,7 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
     assertSame(afterRename + " != " + original, afterRename, original);
   }
 
-  public void testFileTypeChangeDocumentDetach() throws Exception {
+  public void testFileTypeChangeDocumentDetach() {
     File ioFile = IoTestUtil.createTestFile("test.html", "<html>some text</html>");
     VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioFile);
     assertNotNull(ioFile.getPath(), file);
