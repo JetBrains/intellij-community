@@ -791,6 +791,7 @@ platform/testRunner
 platform/threadDumpParser
 platform/tips-of-the-day
 platform/todo
+platform/todo/backend
 platform/tracing
 platform/tracing-ide
 platform/ui.jcef

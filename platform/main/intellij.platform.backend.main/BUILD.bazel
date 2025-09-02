@@ -22,6 +22,7 @@ jvm_library(
     "//platform/execution.dashboard/backend",
     "//spellchecker/xml",
     "//platform/find/backend",
+    "//platform/todo/backend",
     "//platform/managed-cache/managed.cache.backend",
     "//platform/scopes/backend",
     "//platform/remote-topics/backend",
