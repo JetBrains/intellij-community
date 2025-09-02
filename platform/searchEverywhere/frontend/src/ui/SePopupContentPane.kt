@@ -679,7 +679,7 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
   private fun createExtendedInfoComponent(): ExtendedInfoComponent? {
     if (isExtendedInfoEnabled()) {
       val leftText = fun(element: Any): String? {
-        val leftText = (element as? SeResultListItemRow)?.item?.presentation?.extendedInfo?.leftText
+        val leftText = (element as? SeResultListItemRow)?.item?.presentation?.extendedInfo?.text
         extendedInfoContainer.isVisible = !leftText.isNullOrEmpty()
         return leftText
       }
@@ -693,7 +693,11 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
         return object : DumbAwareAction({ actionText }, { actionDescription }) {
           override fun actionPerformed(e: AnActionEvent) {
             vm.coroutineScope.launch {
-              vm.currentTab.performRightAction(item)
+              if (vm.currentTab.performExtendedAction(item)) {
+                withContext(Dispatchers.EDT) {
+                  closePopup()
+                }
+              }
             }
           }
         }

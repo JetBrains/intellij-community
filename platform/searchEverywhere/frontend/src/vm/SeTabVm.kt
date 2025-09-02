@@ -200,8 +200,11 @@ class SeTabVm(
     return tab.getUpdatedPresentation(item)
   }
 
-  suspend fun performRightAction(item: SeItemData) {
-    tab.performRightAction(item)
+  /**
+   * @return true if the popup should be closed, false otherwise
+   */
+  suspend fun performExtendedAction(item: SeItemData) : Boolean {
+    return tab.performExtendedAction(item)
   }
 }
 

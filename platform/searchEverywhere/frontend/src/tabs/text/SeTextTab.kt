@@ -62,8 +62,8 @@ class SeTextTab(private val delegate: SeTabDelegate, registerShortcut: (AnAction
     return SeTextSearchOptions(findModel.isCaseSensitive, findModel.isWholeWordsOnly, findModel.isRegularExpressions)
   }
 
-  override suspend fun performRightAction(item: SeItemData) {
-    return delegate.performRightAction(item)
+  override suspend fun performExtendedAction(item: SeItemData): Boolean {
+    return delegate.performExtendedAction(item)
   }
 
   override fun dispose() {

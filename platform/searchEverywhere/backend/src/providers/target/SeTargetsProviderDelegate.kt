@@ -108,9 +108,9 @@ class SeTargetsProviderDelegate(private val contributorWrapper: SeAsyncWeightedC
     return SeTypeVisibilityStateProviderDelegate.getStates<T>(contributor, index)
   }
 
-  suspend fun performRightAction(item: SeItem) {
-    val legacyItem = (item as? SeTargetItem)?.legacyItem ?: return
-    withContext(Dispatchers.EDT) {
+  suspend fun performExtendedAction(item: SeItem): Boolean {
+    val legacyItem = (item as? SeTargetItem)?.legacyItem ?: return false
+    return withContext(Dispatchers.EDT) {
       contributor.processSelectedItem(legacyItem, InputEvent.SHIFT_DOWN_MASK, "")
     }
   }

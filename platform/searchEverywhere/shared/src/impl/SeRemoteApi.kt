@@ -101,14 +101,12 @@ interface SeRemoteApi : RemoteApi<Unit> {
     providerIds: List<SeProviderId>,
   ): Map<SeProviderId, @Nls String>
 
-  suspend fun getTextSearchOptions(projectId: ProjectId): SeTextSearchOptions?
-
   suspend fun getUpdatedPresentation(projectId: ProjectId, item: SeItemData): SeItemPresentation?
 
-  suspend fun performRightAction(projectId: ProjectId,
-                                 sessionRef: DurableRef<SeSessionEntity>,
-                                 itemData: SeItemData,
-                                 isAllTab: Boolean)
+  suspend fun performExtendedAction(projectId: ProjectId,
+                                    sessionRef: DurableRef<SeSessionEntity>,
+                                    itemData: SeItemData,
+                                    isAllTab: Boolean): Boolean
 
   companion object {
     @JvmStatic

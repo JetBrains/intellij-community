@@ -23,5 +23,10 @@ interface SeItemsProvider: Disposable {
    */
   suspend fun canBeShownInFindResults(): Boolean
 
-  suspend fun performRightAction(item: SeItem) {}
+  /**
+   * @return true if the popup should be closed, false otherwise
+   */
+  suspend fun performExtendedAction(item: SeItem): Boolean {
+    return false
+  }
 }

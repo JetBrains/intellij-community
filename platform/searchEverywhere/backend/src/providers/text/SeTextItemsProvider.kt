@@ -106,9 +106,9 @@ class SeTextItemsProvider(project: Project, private val contributorWrapper: SeAs
     return scopeProviderDelegate.searchScopesInfo.getValue()
   }
 
-  override suspend fun performRightAction(item: SeItem) {
-    val legacyItem = (item as? SeTextSearchItem)?.item ?: return
-    withContext(Dispatchers.EDT) {
+  override suspend fun performExtendedAction(item: SeItem): Boolean {
+    val legacyItem = (item as? SeTextSearchItem)?.item ?: return false
+    return withContext(Dispatchers.EDT) {
       contributor.processSelectedItem(legacyItem, InputEvent.SHIFT_DOWN_MASK, "")
     }
   }

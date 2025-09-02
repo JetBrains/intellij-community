@@ -33,8 +33,8 @@ class SeSymbolsProvider(private val contributorWrapper: SeAsyncWeightedContribut
     return targetsProviderDelegate.canBeShownInFindResults()
   }
 
-  override suspend fun performRightAction(item: SeItem) {
-    return targetsProviderDelegate.performRightAction(item)
+  override suspend fun performExtendedAction(item: SeItem): Boolean {
+    return targetsProviderDelegate.performExtendedAction(item)
   }
 
   override fun dispose() {

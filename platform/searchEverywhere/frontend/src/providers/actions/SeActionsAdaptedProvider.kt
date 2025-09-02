@@ -15,12 +15,12 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.providers.getExtendedInfo
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
-
 
 @Internal
 class SeActionItem(
@@ -68,12 +68,13 @@ class SeActionsAdaptedProvider(private val legacyContributor: ActionSearchEveryw
     return legacyContributor.showInFindResults()
   }
 
-  override suspend fun performRightAction(item: SeItem) {
-    val legacyItem = (item as? SeActionItem)?.matchedValue ?: return
+  override suspend fun performExtendedAction(item: SeItem): Boolean {
+    val legacyItem = (item as? SeActionItem)?.matchedValue ?: return false
     val rightAction = (legacyContributor as? SearchEverywhereExtendedInfoProvider)
-                        ?.createExtendedInfo()?.rightAction?.invoke(legacyItem) ?: return
+                        ?.createExtendedInfo()?.rightAction?.invoke(legacyItem) ?: return false
 
-    withContext(Dispatchers.EDT) {
+    return withContext(Dispatchers.EDT) {
+      val result = CompletableDeferred<Boolean>()
       DataManager.getInstance().getDataContextFromFocusAsync().onSuccess { context ->
         rightAction.actionPerformed(AnActionEvent.createEvent(
           context,
@@ -82,7 +83,11 @@ class SeActionsAdaptedProvider(private val legacyContributor: ActionSearchEveryw
           ActionUiKind.SEARCH_POPUP,
           null
         ))
+        result.complete(true)
+      }.onError {
+        result.complete(false)
       }
+      return@withContext result.await()
     }
   }
 

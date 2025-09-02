@@ -42,7 +42,7 @@ class SeFilesProvider(private val contributorWrapper: SeAsyncWeightedContributor
   override suspend fun getTypeVisibilityStates(index: Int): List<SeTypeVisibilityStatePresentation> =
     targetsProviderDelegate.getTypeVisibilityStates<FileTypeRef>(index)
 
-  override suspend fun performRightAction(item: SeItem) {
-    targetsProviderDelegate.performRightAction(item)
+  override suspend fun performExtendedAction(item: SeItem): Boolean {
+    return targetsProviderDelegate.performExtendedAction(item)
   }
 }

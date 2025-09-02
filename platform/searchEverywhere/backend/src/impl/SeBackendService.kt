@@ -232,9 +232,9 @@ class SeBackendService(val project: Project, private val coroutineScope: Corouti
     return item.fetchItemIfExists()?.presentation()
   }
 
-  suspend fun performRightAction(sessionRef: DurableRef<SeSessionEntity>, itemData: SeItemData, isAllTab: Boolean) {
-    val provider = getProvidersHolder(sessionRef, null)?.get(itemData.providerId, isAllTab) ?: return
-    return provider.performRightAction(itemData)
+  suspend fun performExtendedAction(sessionRef: DurableRef<SeSessionEntity>, itemData: SeItemData, isAllTab: Boolean): Boolean {
+    val provider = getProvidersHolder(sessionRef, null)?.get(itemData.providerId, isAllTab) ?: return false
+    return provider.performExtendedAction(itemData)
   }
 
   companion object {

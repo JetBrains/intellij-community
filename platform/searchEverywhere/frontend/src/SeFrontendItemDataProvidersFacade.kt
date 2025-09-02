@@ -88,8 +88,8 @@ class SeFrontendItemDataProvidersFacade(private val projectId: ProjectId,
     )
   }
 
-  suspend fun performRightAction(itemData: SeItemData) {
-    return SeRemoteApi.getInstance().performRightAction(projectId, sessionRef, itemData, isAllTab)
+  suspend fun performExtendedAction(itemData: SeItemData): Boolean {
+    return SeRemoteApi.getInstance().performExtendedAction(projectId, sessionRef, itemData, isAllTab)
   }
 
   companion object {

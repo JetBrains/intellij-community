@@ -118,11 +118,13 @@ class SeRemoteApiImpl: SeRemoteApi {
     return SeBackendService.getInstance(project).getUpdatedPresentation(item)
   }
 
-  override suspend fun performRightAction(projectId: ProjectId,
-                                          sessionRef: DurableRef<SeSessionEntity>,
-                                          itemData: SeItemData,
-                                          isAllTab: Boolean) {
-    val project = projectId.findProjectOrNull() ?: return
-    return SeBackendService.getInstance(project).performRightAction(sessionRef, itemData, isAllTab)
+  override suspend fun performExtendedAction(
+    projectId: ProjectId,
+    sessionRef: DurableRef<SeSessionEntity>,
+    itemData: SeItemData,
+    isAllTab: Boolean,
+  ): Boolean {
+    val project = projectId.findProjectOrNull() ?: return false
+    return SeBackendService.getInstance(project).performExtendedAction(sessionRef, itemData, isAllTab)
   }
 }

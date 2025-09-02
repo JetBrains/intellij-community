@@ -143,8 +143,11 @@ class SeTabDelegate(
                                                           isAllTab)
   }
 
-  suspend fun performRightAction(item: SeItemData) {
-    providers.getValue().performRightAction(item)
+  /**
+   * @return true if the popup should be closed, false otherwise
+   */
+  suspend fun performExtendedAction(item: SeItemData): Boolean {
+    return providers.getValue().performExtendedAction(item)
   }
 
   override fun dispose() {}
@@ -241,9 +244,9 @@ class SeTabDelegate(
       }
     }
 
-    suspend fun performRightAction(item: SeItemData) {
-      localProviders[item.providerId]?.performRightAction(item) ?: run {
-        frontendProvidersFacade?.performRightAction(item)
+    suspend fun performExtendedAction(item: SeItemData): Boolean {
+      return localProviders[item.providerId]?.performExtendedAction(item) ?: run {
+        frontendProvidersFacade?.performExtendedAction(item) ?: false
       }
     }
   }

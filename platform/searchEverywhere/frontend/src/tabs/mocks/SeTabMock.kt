@@ -35,7 +35,9 @@ class SeTabMock(
     return false
   }
 
-  override suspend fun performRightAction(item: SeItemData) {}
+  override suspend fun performExtendedAction(item: SeItemData): Boolean {
+    return false
+  }
 
   override fun dispose() {
     Disposer.dispose(delegate)

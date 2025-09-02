@@ -37,7 +37,10 @@ interface SeTab : Disposable {
 
   suspend fun openInFindToolWindow(sessionRef: DurableRef<SeSessionEntity>, params: SeParams, initEvent: AnActionEvent): Boolean = false
 
-  suspend fun performRightAction(item: SeItemData)
+  /**
+   * @return true if the popup should be closed, false otherwise
+   */
+  suspend fun performExtendedAction(item: SeItemData) : Boolean
 
   suspend fun essentialProviderIds(): Set<SeProviderId> = emptySet()
 
