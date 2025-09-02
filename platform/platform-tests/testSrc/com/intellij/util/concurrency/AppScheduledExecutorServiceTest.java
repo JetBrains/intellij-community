@@ -283,11 +283,11 @@ public class AppScheduledExecutorServiceTest extends CatchLogErrorsInAllThreadsT
       ));
     TimeoutUtil.sleep(delay);
     long start = System.currentTimeMillis();
-    while (!service.delayQueue.isEmpty()) {
+    while (!service.getDelayQueue().isEmpty()) {
       // wait till all tasks transferred to backend
       if (System.currentTimeMillis() > start + 20000) throw new AssertionError("Not transferred after 20 seconds");
     }
-    List<SchedulingWrapper.MyScheduledFutureTask<?>> queuedTasks = new ArrayList<>(service.delayQueue);
+    List<SchedulingWrapper.MyScheduledFutureTask<?>> queuedTasks = new ArrayList<>(service.getDelayQueue());
     if (!queuedTasks.isEmpty()) {
       String s = ContainerUtil.map(queuedTasks, BoundedTaskExecutor::info).toString();
       fail("Queued tasks left: "+s + ";\n"+queuedTasks);

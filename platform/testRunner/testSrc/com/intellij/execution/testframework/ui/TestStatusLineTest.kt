@@ -22,7 +22,7 @@ class TestStatusLineTest : LightPlatformTestCase() {
     ApplicationManager.getApplication().invokeAndWait {
       testStatusLine.formatTestMessage(testsTotal, finishedTestsCount, failuresCount, ignoredTestsCount, duration, endTime)
     }
-    expectedStatus?.let { assertEquals(it, testStatusLine.myState.toString()) }
+    expectedStatus?.let { assertEquals(it, testStatusLine.stateText) }
     expectedDescription?.let { assertEquals(it, testStatusLine.stateDescription.toString()) }
   }
 
@@ -114,7 +114,7 @@ class TestStatusLineTest : LightPlatformTestCase() {
       testStatusLine.formatTestMessage(3, 3, 1, 1, 1L, 1L)
     }
 
-    val iterator = testStatusLine.myState.iterator()
+    val iterator = testStatusLine.stateIterator
 
     iterator.next()
     assertEquals(iterator.fragment, "1 test failed")

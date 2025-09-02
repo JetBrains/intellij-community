@@ -414,7 +414,7 @@ public final class JUnit5TeamCityRunnerForTestAllSuite {
       return string;
     }
 
-    protected static String getTrace(Throwable ex, int limit) {
+    public static String getTrace(Throwable ex, int limit) {
       final StringWriter stringWriter = new StringWriter();
       final LimitedStackTracePrintWriter writer = new LimitedStackTracePrintWriter(stringWriter, limit);
       ex.printStackTrace(writer);

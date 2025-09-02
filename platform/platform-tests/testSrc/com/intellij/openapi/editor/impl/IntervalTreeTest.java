@@ -14,14 +14,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class IntervalTreeTest extends LightPlatformTestCase {
   private final DocumentImpl document = new DocumentImpl(" ".repeat(1000));
-  private final RangeMarkerTree<RangeMarkerEx> tree = new RangeMarkerTree<>() {
+  private final RangeMarkerTreeForTests tree = new RangeMarkerTreeForTests() {
     @Override
-    protected boolean keepIntervalOnWeakReference(@NotNull RangeMarkerEx interval) {
-      return false;
-    }
-
-    @Override
-    protected byte getTasteFlags(@NotNull RangeMarkerEx interval) {
+    public byte getTasteFlags(@NotNull RangeMarkerEx interval) {
       return ((RangeMarkerImpl)interval).isStickingToRight() ? MY_TASTE_FLAG : 0;
     }
   };
@@ -155,14 +150,9 @@ public class IntervalTreeTest extends LightPlatformTestCase {
   public void testSeveralTastes() {
     final DocumentImpl document = new DocumentImpl(" ".repeat(1000));
     byte MY_OTHER_FLAG = 2;
-    final RangeMarkerTree<RangeMarkerEx> tree = new RangeMarkerTree<>() {
+    final RangeMarkerTreeForTests tree = new RangeMarkerTreeForTests() {
       @Override
-      protected boolean keepIntervalOnWeakReference(@NotNull RangeMarkerEx interval) {
-        return false;
-      }
-
-      @Override
-      protected byte getTasteFlags(@NotNull RangeMarkerEx interval) {
+      public byte getTasteFlags(@NotNull RangeMarkerEx interval) {
         return interval.isGreedyToRight() ? MY_TASTE_FLAG : interval.isGreedyToLeft() ? MY_OTHER_FLAG : 0;
       }
     };
@@ -191,6 +181,43 @@ public class IntervalTreeTest extends LightPlatformTestCase {
         c++;
       }
       assertEquals(N/2, c);
+    }
+  }
+
+  private static class RangeMarkerTreeForTests extends RangeMarkerTree<RangeMarkerEx> {
+    @Override
+    public byte getTasteFlags(@NotNull RangeMarkerEx interval) {
+      return super.getTasteFlags(interval);
+    }
+
+    @Override
+    protected boolean keepIntervalOnWeakReference(@NotNull RangeMarkerEx interval) {
+      return false;
+    }
+
+    @Override
+    public @NotNull RMNode<RangeMarkerEx> addInterval(@NotNull RangeMarkerEx interval, int start, int end, boolean greedyToLeft, boolean greedyToRight, boolean stickingToRight, int layer) {
+      return super.addInterval(interval, start, end, greedyToLeft, greedyToRight, stickingToRight, layer);
+    }
+
+    @Override
+    public void verifyProperties() {
+      super.verifyProperties();
+    }
+
+    @Override
+    public int size() {
+      return super.size();
+    }
+
+    @Override
+    public MarkupIterator<RangeMarkerEx> overlappingDeliciousIterator(@NotNull TextRange range, byte tastePreference) {
+      return super.overlappingDeliciousIterator(range, tastePreference);
+    }
+
+    @Override
+    public @NotNull MarkupIterator<RangeMarkerEx> overlappingIterator(@NotNull TextRange rangeInterval) {
+      return super.overlappingIterator(rangeInterval);
     }
   }
 }

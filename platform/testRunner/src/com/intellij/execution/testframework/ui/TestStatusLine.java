@@ -35,7 +35,8 @@ public class TestStatusLine extends NonOpaquePanel {
   private final JPanel myProgressPanel;
 
   @TestOnly
-  protected SimpleColoredComponent getStateDescription() {
+  @ApiStatus.Internal
+  public SimpleColoredComponent getStateDescription() {
     return myStateDescription;
   }
 
@@ -213,6 +214,12 @@ public class TestStatusLine extends NonOpaquePanel {
     return myState.toString();
   }
 
+  @TestOnly
+  @ApiStatus.Internal
+  public @NotNull SimpleColoredComponent.ColoredIterator getStateIterator() {
+    return myState.iterator();
+  }
+  
   @ApiStatus.Internal
   public void setWarning(@Nls @NotNull String suffix) {
     myWarning.setText(suffix);

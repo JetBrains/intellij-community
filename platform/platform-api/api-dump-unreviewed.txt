@@ -8440,7 +8440,6 @@ a:com.intellij.ui.tabs.impl.ShapeTransform
 - f:moveTo(I,I):com.intellij.ui.tabs.impl.ShapeTransform
 - f:quadTo(I,I,I,I):com.intellij.ui.tabs.impl.ShapeTransform
 - f:reset():com.intellij.ui.tabs.impl.ShapeTransform
-- pf:reset(java.awt.Rectangle):com.intellij.ui.tabs.impl.ShapeTransform
 - a:transformInsets(java.awt.Insets):java.awt.Insets
 - a:transformLine(I,I,I,I):java.awt.geom.Line2D$Float
 - f:transformY1(java.lang.Object,java.lang.Object):java.lang.Object

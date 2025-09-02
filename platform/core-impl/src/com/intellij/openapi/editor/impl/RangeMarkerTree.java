@@ -11,10 +11,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.util.DocumentEventUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -48,6 +45,12 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
   protected void dispose(@NotNull Document document) {
     document.removeDocumentListener(this);
   }
+  
+  @TestOnly
+  @ApiStatus.Internal
+  public void disposeInTests(@NotNull Document document) {
+    dispose(document);
+  }
 
   private static final int DUPLICATE_LIMIT = 30; // assertion: no more than DUPLICATE_LIMIT range markers are allowed to be registered at given (start, end)
   @Override
@@ -78,6 +81,12 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
     }
 
     return null;
+  }
+
+  @TestOnly
+  @ApiStatus.Internal
+  public void addIntervalTestAccessor(@NotNull T interval, int start, int end, boolean greedyToLeft, boolean greedyToRight, boolean stickingToRight, int layer) {
+    addInterval(interval, start, end, greedyToLeft, greedyToRight, stickingToRight, layer);
   }
 
   @Override

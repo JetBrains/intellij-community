@@ -8102,7 +8102,6 @@ c:com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl
 - com.intellij.openapi.fileTypes.ex.FileTypeManagerEx
 - com.intellij.openapi.components.PersistentStateComponent
 - com.intellij.openapi.extensions.ExtensionPointListener
-- p:<init>(kotlinx.coroutines.CoroutineScope):V
 - associate(com.intellij.openapi.fileTypes.FileType,com.intellij.openapi.fileTypes.FileNameMatcher):V
 - findFileTypeByLanguage(com.intellij.lang.Language):com.intellij.openapi.fileTypes.LanguageFileType
 - findFileTypeByName(java.lang.String):com.intellij.openapi.fileTypes.FileType

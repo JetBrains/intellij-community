@@ -73,27 +73,27 @@ internal class MockMultiRootFileSystem(
   }
 
   override fun deleteFile(requestor: Any?, vFile: VirtualFile) {
-    fileSystem.deleteFile(requestor, vFile.toRealFile())
+    throw UnsupportedOperationException()
   }
 
   override fun moveFile(requestor: Any?, vFile: VirtualFile, newParent: VirtualFile) {
-    fileSystem.moveFile(requestor, vFile.toRealFile(), newParent.toRealFile())
+    throw UnsupportedOperationException()
   }
 
   override fun renameFile(requestor: Any?, vFile: VirtualFile, newName: String) {
-    fileSystem.renameFile(requestor, vFile.toRealFile(), newName)
+    throw UnsupportedOperationException()
   }
 
   override fun createChildFile(requestor: Any?, vDir: VirtualFile, fileName: String): VirtualFile {
-    return fileSystem.createChildFile(requestor, vDir.toRealFile(), fileName).toMockFile()
+    throw UnsupportedOperationException()
   }
 
   override fun createChildDirectory(requestor: Any?, vDir: VirtualFile, dirName: String): VirtualFile {
-    return fileSystem.createChildDirectory(requestor, vDir.toRealFile(), dirName).toMockFile()
+    throw UnsupportedOperationException()
   }
 
   override fun copyFile(requestor: Any?, virtualFile: VirtualFile, newParent: VirtualFile, copyName: String): VirtualFile {
-    return fileSystem.copyFile(requestor, virtualFile.toRealFile(), newParent.toRealFile(), copyName).toMockFile()
+    throw UnsupportedOperationException()
   }
 
   override fun isReadOnly(): Boolean {

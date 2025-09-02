@@ -100,7 +100,7 @@ public class JBCefInputMethodTest {
 
     SwingUtilities.invokeAndWait(() -> {
       browser = new JBCefBrowser();
-      browser.getJBCefClient().addLoadHandler(startupWaiter, browser.myCefBrowser);
+      browser.getJBCefClient().addLoadHandler(startupWaiter, browser.getCefBrowser());
       JBCefJSQuery jsQuery = JBCefJSQuery.create((JBCefBrowserBase)browser);
       jsQuery.addHandler(result -> {
         stringWaiter.setValue(result);

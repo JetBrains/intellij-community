@@ -816,7 +816,13 @@ public class FileEncodingTest implements TestDialog {
   }
 
   private static void change(VirtualFile file, Charset charset) throws IOException {
-    new ChangeFileEncodingAction().chosen(getDocument(file), null, file, file.contentsToByteArray(), charset);
+    Document document = getDocument(file);
+    byte[] bytes = file.contentsToByteArray();
+    String text = document.getText();
+    EncodingUtil.Magic8 isSafeToConvert = EncodingUtil.isSafeToConvertTo(file, text, bytes, charset);
+    EncodingUtil.Magic8 isSafeToReload = EncodingUtil.isSafeToReloadIn(file, text, bytes, charset);
+    Project project1 = ProjectLocator.getInstance().guessProjectForFile(file);
+    ChangeFileEncodingAction.changeTo(requireNonNull(project1), document, null, file, charset, isSafeToConvert, isSafeToReload);
   }
 
   private void globalUndo() {

@@ -33,7 +33,7 @@ public final class SynchronizedValueContainerImpl<Value> extends ValueContainerI
   }
 
   @Override
-  protected synchronized void removeValue(int inputId, Value value) {
+  public synchronized void removeValue(int inputId, Value value) {
     super.removeValue(inputId, value);
   }
 

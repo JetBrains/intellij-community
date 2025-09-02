@@ -97,7 +97,7 @@ public class JBCefLoadHtmlTest {
         return null;
       });
 
-      JBCefFileSchemeHandlerFactory.registerLoadHTMLRequest(browser.myCefBrowser, jsQuery.inject("'hello'"), JS_URL);
+      JBCefFileSchemeHandlerFactory.registerLoadHTMLRequest(browser.getCefBrowser(), jsQuery.inject("'hello'"), JS_URL);
     });
     assertNotNull(browser);
 

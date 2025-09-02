@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.regex.PatternSyntaxException;
 
@@ -20,8 +21,9 @@ public final class RegExMacro extends MacroBase {
     super("regularExpression", "regularExpression(String, Pattern, Replacement)");
   }
 
+  @VisibleForTesting
   @Override
-  protected @Nullable Result calculateResult(Expression @NotNull [] params, ExpressionContext context, boolean quick) {
+  public @Nullable Result calculateResult(Expression @NotNull [] params, ExpressionContext context, boolean quick) {
     if (params.length != 3) {
       return null;
     }
