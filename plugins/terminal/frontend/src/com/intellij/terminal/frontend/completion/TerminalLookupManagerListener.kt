@@ -7,6 +7,7 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.codeInsight.lookup.impl.PrefixChangeListener
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.terminal.TerminalUiSettingsManager
 import com.intellij.terminal.frontend.TerminalInput
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isOutputModelEditor
@@ -140,7 +141,8 @@ private class TerminalSelectedItemIconUpdater(private val lookup: Lookup) : Pref
  * Returns `true` if we need to execute the command immediately if user select [chosenItemString] in the Lookup.
  */
 internal fun canExecuteWithChosenItem(chosenItemString: String, typedString: String): Boolean {
-  return chosenItemString == typedString
+  val isCaseSensitive = SystemInfo.isFileSystemCaseSensitive
+  return chosenItemString.equals(typedString, ignoreCase = !isCaseSensitive)
          // If the typed string differs only by the absence of the trailing slash, execute the command as well
-         || "$typedString/" == chosenItemString
+         || chosenItemString.equals("$typedString/", ignoreCase = !isCaseSensitive)
 }
