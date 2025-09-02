@@ -145,4 +145,5 @@ internal fun canExecuteWithChosenItem(chosenItemString: String, typedString: Str
   return chosenItemString.equals(typedString, ignoreCase = !isCaseSensitive)
          // If the typed string differs only by the absence of the trailing slash, execute the command as well
          || chosenItemString.equals("$typedString/", ignoreCase = !isCaseSensitive)
+         || chosenItemString.equals("$typedString\\", ignoreCase = !isCaseSensitive)
 }
