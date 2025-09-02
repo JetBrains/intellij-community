@@ -12,12 +12,18 @@ import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.SideEffectChecker;
 import com.siyeh.ig.psiutils.StatementExtractor;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static com.intellij.codeInsight.BlockUtils.expandSingleStatementToBlockStatement;
+import static java.util.Arrays.asList;
 
 /**
  * This class provides a quick fix to lift a throw expression out of a switch expression
@@ -161,22 +167,18 @@ public class LiftThrowOutOfSwitchExpressionFix extends PsiUpdateModCommandAction
                                                                     PsiElementFactory factory,
                                                                     ModPsiUpdater updater) {
     var enclosingVariable = PsiTreeUtil.getParentOfType(switchExpression, PsiLocalVariable.class);
-    for (PsiElement element : enclosingStatement.getDeclaredElements()) {
-      if (element == enclosingVariable) {
-        PsiExpression initializer = enclosingVariable.getInitializer();
-        if (initializer != null) {
-          replaceStatementWithThrowStatement(enclosingStatement, initializer, switchExpression, factory, updater);
-        }
-        break;
-      }
-      else {
-        if (element instanceof PsiLocalVariable variable) {
-          var variableDeclaration =
-            factory.createVariableDeclarationStatement(variable.getName(), variable.getType(), variable.getInitializer());
-          enclosingStatement.getParent().addBefore(variableDeclaration, enclosingStatement);
-        }
-      }
+    if (enclosingVariable == null) return;
+    List<PsiStatement> precedingStatements = Arrays.stream(enclosingStatement.getDeclaredElements())
+      .takeWhile(element -> element != enclosingVariable)
+      .filter(element -> element instanceof PsiLocalVariable)
+      .map(element -> (PsiLocalVariable)element)
+      .map(variable -> factory.createVariableDeclarationStatement(variable.getName(), variable.getType(), variable.getInitializer()))
+      .collect(Collectors.toList());
+    var initializer = enclosingVariable.getInitializer();
+    if (initializer != null) {
+      precedingStatements.addAll(extractSideEffects(initializer, switchExpression));
     }
+    replaceStatementWithThrowPrecededWithSideEffects(enclosingStatement, switchExpression, factory, updater, precedingStatements);
   }
 
   private static @Nullable PsiExpression topmostExpressionOf(PsiStatement statement) {
@@ -213,24 +215,40 @@ public class LiftThrowOutOfSwitchExpressionFix extends PsiUpdateModCommandAction
                                                          PsiExpression enclosingExpression,
                                                          PsiSwitchExpression switchExpression,
                                                          PsiElementFactory factory, ModPsiUpdater updater) {
+    List<PsiStatement> statements = extractSideEffects(enclosingExpression, switchExpression);
+    replaceStatementWithThrowPrecededWithSideEffects(enclosingStatement, switchExpression, factory, updater, statements);
+  }
+
+  private static List<PsiStatement> extractSideEffects(PsiExpression enclosingExpression, PsiSwitchExpression switchExpression) {
     var precedingExpressions = findAllPrecedingExpressionsInsideAncestor(switchExpression, enclosingExpression);
     var expressions = SideEffectChecker.extractSideEffectExpressions(enclosingExpression, e -> !precedingExpressions.contains(e));
-    PsiStatement[] statements = StatementExtractor.generateStatements(expressions, enclosingExpression);
+    return asList(StatementExtractor.generateStatements(expressions, enclosingExpression));
+  }
 
+  private static void replaceStatementWithThrowPrecededWithSideEffects(PsiStatement enclosingStatement,
+                                                                       PsiSwitchExpression switchExpression,
+                                                                       PsiElementFactory factory,
+                                                                       ModPsiUpdater updater,
+                                                                       List<PsiStatement> precedingStatements) {
     var commentTracker = new CommentTracker();
     var throwText = "throw " + commentTracker.text(switchExpression) + ";";
     var throwStatement =
       commentTracker.replaceAndRestoreComments(enclosingStatement, factory.createStatementFromText(throwText, switchExpression));
-    if (!(throwStatement.getParent() instanceof PsiCodeBlock)) {
+    if (doesThrowNeedToBeWrappedInsideCodeBlock(throwStatement, precedingStatements)) {
       throwStatement = expandSingleStatementToBlockStatement((PsiStatement)throwStatement);
     }
-    for (PsiStatement statement : statements) {
+    for (PsiStatement statement : precedingStatements) {
       throwStatement.getParent().addBefore(statement, throwStatement);
     }
     PsiExpression exception = ((PsiThrowStatement)throwStatement).getException();
     if (exception != null) {
       updater.moveCaretTo(exception.getTextOffset());
     }
+  }
+
+  private static boolean doesThrowNeedToBeWrappedInsideCodeBlock(PsiElement throwStatement, List<PsiStatement> precedingStatements) {
+    PsiElement parent = throwStatement.getParent();
+    return !(parent instanceof PsiCodeBlock) && (!precedingStatements.isEmpty() || (parent instanceof PsiSwitchLabeledRuleStatement));
   }
 
   /**
