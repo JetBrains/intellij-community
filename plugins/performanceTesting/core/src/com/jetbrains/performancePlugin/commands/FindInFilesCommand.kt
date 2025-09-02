@@ -67,6 +67,7 @@ class FindInFilesCommand(text: String, line: Int) : PlaybackCommandCoroutineAdap
       val findMutex = Mutex(true)
 
       findHelper.setFinishHandler { resultsCount ->
+        findSpan.setAttribute("resultsCount", resultsCount.toLong())
         findSpan.end()
         findHelper.closeUI()
         findMutex.unlock()
