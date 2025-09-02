@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.merge
 
 import com.intellij.openapi.Disposable
@@ -30,11 +30,8 @@ interface MergeTool {
      * The component will be used for [com.intellij.openapi.actionSystem.ActionToolbar.setTargetComponent]
      * and might want to implement [com.intellij.openapi.actionSystem.UiDataProvider] for [ToolbarComponents.toolbarActions].
      */
-    @JvmField
-    val component: JComponent
-
-    @JvmField
-    val preferredFocusedComponent: JComponent?
+    fun getComponent(): JComponent
+    fun getPreferredFocusedComponent(): JComponent?
 
     /**
      * @return Action that should be triggered on the corresponding action.
@@ -59,13 +56,12 @@ interface MergeTool {
 
   class ToolbarComponents {
     @JvmField
-    var toolbarActions: MutableList<AnAction?>? = null
-
+    var toolbarActions: List<AnAction>? = null
     @JvmField
     var statusPanel: JComponent? = null
 
     /**
-     * return false if merge window should be prevented from closing and canceling resolve.
+     * Return false if a merge window should be prevented from closing and canceling resolve.
      */
     @JvmField
     var closeHandler: BooleanGetter? = null

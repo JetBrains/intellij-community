@@ -319,9 +319,11 @@ e:com.intellij.diff.merge.MergeResult
 - s:valueOf(java.lang.String):com.intellij.diff.merge.MergeResult
 - s:values():com.intellij.diff.merge.MergeResult[]
 com.intellij.diff.merge.MergeTool
+- sf:Companion:com.intellij.diff.merge.MergeTool$Companion
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:canShow(com.intellij.diff.merge.MergeContext,com.intellij.diff.merge.MergeRequest):Z
 - a:createComponent(com.intellij.diff.merge.MergeContext,com.intellij.diff.merge.MergeRequest):com.intellij.diff.merge.MergeTool$MergeViewer
+f:com.intellij.diff.merge.MergeTool$Companion
 com.intellij.diff.merge.MergeTool$MergeViewer
 - com.intellij.openapi.Disposable
 - a:dispose():V
@@ -329,7 +331,7 @@ com.intellij.diff.merge.MergeTool$MergeViewer
 - a:getPreferredFocusedComponent():javax.swing.JComponent
 - a:getResolveAction(com.intellij.diff.merge.MergeResult):javax.swing.Action
 - a:init():com.intellij.diff.merge.MergeTool$ToolbarComponents
-c:com.intellij.diff.merge.MergeTool$ToolbarComponents
+f:com.intellij.diff.merge.MergeTool$ToolbarComponents
 - closeHandler:com.intellij.openapi.util.BooleanGetter
 - statusPanel:javax.swing.JComponent
 - toolbarActions:java.util.List
