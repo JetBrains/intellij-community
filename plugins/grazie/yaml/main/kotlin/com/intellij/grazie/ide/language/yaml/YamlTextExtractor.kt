@@ -2,6 +2,7 @@
 package com.intellij.grazie.ide.language.yaml
 
 import com.intellij.grazie.text.TextContent
+import com.intellij.grazie.text.TextContent.TextDomain
 import com.intellij.grazie.text.TextContentBuilder
 import com.intellij.grazie.text.TextExtractor
 import com.intellij.grazie.utils.getNotSoDistantSimilarSiblings
@@ -17,19 +18,19 @@ import org.jetbrains.yaml.psi.impl.YAMLAnchorImpl
 private class YamlTextExtractor : TextExtractor() {
   private val commentBuilder = TextContentBuilder.FromPsi.removingIndents(" \t#")
 
-  override fun buildTextContent(root: PsiElement, allowedDomains: MutableSet<TextContent.TextDomain>): TextContent? {
-    if (root is PsiComment) {
+  override fun buildTextContent(root: PsiElement, allowedDomains: MutableSet<TextDomain>): TextContent? {
+    if (TextDomain.COMMENTS in allowedDomains && root is PsiComment) {
       val siblings = getNotSoDistantSimilarSiblings(root, TokenSet.create(WHITESPACE, INDENT, EOL)) { it.elementType == COMMENT }
-      return TextContent.joinWithWhitespace('\n', siblings.mapNotNull { commentBuilder.build(it, TextContent.TextDomain.COMMENTS) })
+      return TextContent.joinWithWhitespace('\n', siblings.mapNotNull { commentBuilder.build(it, TextDomain.COMMENTS) })
     }
-    if (root is YAMLScalar || (root.node != null && root.node.elementType == SCALAR_KEY)) {
+    if (TextDomain.LITERALS in allowedDomains && (root is YAMLScalar || (root.node != null && root.node.elementType == SCALAR_KEY))) {
       if (JsonSchemaSpellcheckerClientForYaml(root).matchesNameFromSchema()) {
         return null
       }
-      return TextContentBuilder.FromPsi.excluding { isStealth(it) }.build(root, TextContent.TextDomain.LITERALS)
+      return TextContentBuilder.FromPsi.excluding { isStealth(it) }.build(root, TextDomain.LITERALS)
     }
-    if (root is YAMLAnchorImpl && root.parent !is YAMLScalar) {
-      return TextContentBuilder.FromPsi.excluding { isStealth(it) }.build(root, TextContent.TextDomain.LITERALS)
+    if (TextDomain.LITERALS in allowedDomains && (root is YAMLAnchorImpl && root.parent !is YAMLScalar)) {
+      return TextContentBuilder.FromPsi.excluding { isStealth(it) }.build(root, TextDomain.LITERALS)
     }
     return null
   }

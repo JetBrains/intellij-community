@@ -49,12 +49,29 @@ public abstract class TextExtractor {
   /**
    * Extract text from the given PSI element, if possible.
    * The returned text is most often fully embedded in {@code element},
-   * but it may also include other PSI elements (e.g. adjacent comments).
+   * but it may also include other PSI elements (e.g., adjacent comments).
    * In the latter case, this extension should return an equal {@link TextContent} for every one of those adjacent elements.
+   * <p>
+   * Typical usage:
+   *
+   * <pre><code class="java">TextContentBuilder.FromPsi.build(element, textDomain)</code></pre>
+   *
+   * Implementation guidance:
+   * <p>
+   * To maximize performance, guard against unnecessary (and sometimes quite expensive) operations by checking that
+   * the requested textDomain is contained in allowedDomains before extracting.
+   *
+   * <pre><code class="java">
+   * if (shouldExtractTextContent(root) && allowedDomains.contains(textDomain)) {
+   *   // some other potentially performance-intensive operations
+   *   return TextContentBuilder.FromPsi.build(root, textDomain)
+   * }
+   * </code></pre>
+   *
+   * See concrete implementations (e.g., in ChatInputTextExtractor, JsonTextExtractor, GoTextExtractor, etc.) for
+   * examples.
+
    * @param allowedDomains the set of the text domains that are expected by the caller.
-   *                       The extension may check this set before doing unnecessary expensive PSI traversal
-   *                       to improve the performance,
-   *                       but it's not necessary.
    * @see TextContentBuilder
    * @see #buildTextContents
    */
