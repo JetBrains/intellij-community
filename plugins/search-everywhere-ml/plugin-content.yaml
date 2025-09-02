@@ -7,6 +7,11 @@
   - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-common-jvm/0/model-common-jvm-0.jar
   - name: $MAVEN_REPOSITORY$/ai/grazie/utils/utils-common-jvm/0/utils-common-jvm-0.jar
   - name: $MAVEN_REPOSITORY$/ai/grazie/utils/utils-multiplatform-jvm/0/utils-multiplatform-jvm-0.jar
+- name: lib/ai.grazie.model.swagger.annotations.jvm.jar
+  library: ai.grazie.model.swagger.annotations.jvm
+  module: intellij.searchEverywhereMl
+  files:
+  - name: $MAVEN_REPOSITORY$/ai/grazie/model/swagger-annotations-jvm/0/swagger-annotations-jvm-0.jar
 - name: lib/modules/intellij.searchEverywhereMl.ranking.core.jar
   contentModules:
   - name: intellij.searchEverywhereMl.ranking.core
