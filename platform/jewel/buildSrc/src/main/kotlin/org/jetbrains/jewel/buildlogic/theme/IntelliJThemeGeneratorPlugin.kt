@@ -24,7 +24,6 @@ class ThemeGeneratorContainer(container: NamedDomainObjectContainer<ThemeGenerat
     NamedDomainObjectContainer<ThemeGeneration> by container
 
 class ThemeGeneration(val name: String, project: Project) {
-
     val targetDir: DirectoryProperty =
         project.objects.directoryProperty().convention(project.layout.buildDirectory.dir("generated/theme"))
     val themeClassName = project.objects.property<String>()
@@ -33,15 +32,11 @@ class ThemeGeneration(val name: String, project: Project) {
 
 @CacheableTask
 abstract class IntelliJThemeGeneratorTask : DefaultTask() {
-
     @get:OutputFile abstract val outputFile: RegularFileProperty
 
-    @get:InputFile
-    @get:PathSensitive(PathSensitivity.RELATIVE)
-    abstract val themeFile: RegularFileProperty
+    @get:InputFile @get:PathSensitive(PathSensitivity.RELATIVE) abstract val themeFile: RegularFileProperty
 
-    @get:Input
-    abstract val themeFilePath: Property<String>
+    @get:Input abstract val themeFilePath: Property<String>
 
     @get:Input abstract val themeClassName: Property<String>
 
@@ -59,13 +54,38 @@ abstract class IntelliJThemeGeneratorTask : DefaultTask() {
         val themeDescriptor = themeFile.inputStream().use { json.decodeFromStream<IntellijThemeDescriptor>(it) }
 
         val className = ClassName.bestGuess(themeClassName.get())
-        val file = IntUiThemeDescriptorReader.readThemeFrom(themeDescriptor, className, themeFilePath.get())
+        val buildNumberFile = project.rootDir.resolve("../../build.txt")
+        check(buildNumberFile.isFile) { "The build.txt file must exist in the community root" }
+
+        val buildNumber = buildNumberFile.readText().trim()
+        check(validateBuildNumber(buildNumber)) { "The build number in build.txt does not seem valid: '$buildNumber'" }
+
+        val file =
+            IntUiThemeDescriptorReader.readThemeFrom(
+                themeDescriptor,
+                className,
+                themeFilePath.get(),
+                buildNumber.substringBefore('.'),
+            )
 
         val outputFile = outputFile.get().asFile
         logger.lifecycle(
             "Theme descriptor for ${themeDescriptor.name} parsed and code generated into ${outputFile.path}"
         )
         outputFile.bufferedWriter().use { file.writeTo(it) }
+    }
+
+    private fun validateBuildNumber(buildNumber: String): Boolean {
+        // Examples:
+        //  * 253.1234.567
+        //  * 241.SNAPSHOT
+        if (buildNumber.isBlank()) return false
+        if (buildNumber.length < 5) return false
+        if (buildNumber.take(3).toIntOrNull()?.takeIf { it > 240 } == null) return false
+        if (buildNumber[3] != '.') return false
+
+        val afterDot = buildNumber.drop(4)
+        return afterDot == "SNAPSHOT" || afterDot.all { it.isDigit() || it == '.' }
     }
 }
 
