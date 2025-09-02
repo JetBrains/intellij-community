@@ -8,5 +8,7 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 interface StickyUsageOnRangeMarker {
-  val stickyUsageInfos: List<StickyUsageInfoOnRangeMarker>
+  fun areStickyUsageInfosCalculated(): Boolean
+  fun bindUsageInfosAfterTheyAreLazilyCalculated(bind: (List<StickyUsageInfoOnRangeMarker>) -> Unit)
+  fun ensureLazyUsageInfosCalculationTriggered()
 }
