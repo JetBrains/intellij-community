@@ -66,5 +66,5 @@ class MavenArtifactsProperties {
   var isJavadocJarRequired: (JpsModule) -> Boolean = { false }
 
   @ApiStatus.Internal
-  var validate: (BuildContext, Collection<GeneratedMavenArtifacts>) -> Unit = { _, _ -> }
+  var validate: suspend (BuildContext, Collection<GeneratedMavenArtifacts>) -> Unit = { _, _ -> }
 }
