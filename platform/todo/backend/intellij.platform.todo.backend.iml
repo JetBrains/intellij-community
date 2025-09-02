@@ -33,6 +33,9 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" name="kotlin-stdlib" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.todo" />
     <orderEntry type="module" module-name="intellij.platform.kernel.backend" />
+    <orderEntry type="module" module-name="intellij.platform.project" />
   </component>
 </module>
