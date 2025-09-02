@@ -1,11 +1,9 @@
-import com.intellij.virtualThreads.IntelliJVirtualThreads;
+import com.intellij.concurrency.virtualThreads.IntelliJVirtualThreads;
+
 import java.lang.Thread;
 
 class UseIntelliJVirtualThreads {
-  java.lang.Thread.Builder m() {
-    return IntelliJVirtualThreads.ofVirtual();
-  }
-  void ok() {
-    IntelliJVirtualThreads.ofVirtual();
+  public static void main(String[] args) {
+    IntelliJVirtualThreads.ofVirtual()<caret>;
   }
 }

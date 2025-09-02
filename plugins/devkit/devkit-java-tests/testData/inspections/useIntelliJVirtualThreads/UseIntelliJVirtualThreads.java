@@ -1,11 +1,7 @@
-import com.intellij.virtualThreads.IntelliJVirtualThreads;
 import java.lang.Thread;
 
 class UseIntelliJVirtualThreads {
-  java.lang.Thread.Builder m() {
-    return <warning descr="Use 'IntelliJVirtualThreads.ofVirtual()' instead of 'Thread.ofVirtual()'">java.lang.Thread.ofVirtual()<caret></warning>;
-  }
-  void ok() {
-    IntelliJVirtualThreads.ofVirtual();
+  public static void main(String[] args) {
+    <warning descr="Use 'IntelliJVirtualThreads.ofVirtual()' instead of 'Thread.ofVirtual()'">Thread.ofVirtual()<caret></warning>;
   }
 }

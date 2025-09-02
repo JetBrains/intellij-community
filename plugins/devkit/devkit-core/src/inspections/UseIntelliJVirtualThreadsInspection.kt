@@ -1,102 +1,84 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.devkit.inspections;
+package org.jetbrains.idea.devkit.inspections
 
-import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.util.IntentionFamilyName;
-import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.uast.UastHintedVisitorAdapter;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.devkit.DevKitBundle;
-import org.jetbrains.uast.UCallExpression;
-import org.jetbrains.uast.UElement;
-import org.jetbrains.uast.UastContextKt;
-import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
+import com.intellij.codeInspection.LocalQuickFix
+import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.util.IntentionFamilyName
+import com.intellij.lang.java.JavaLanguage
+import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiElementVisitor
+import com.intellij.uast.UastHintedVisitorAdapter
+import org.jetbrains.idea.devkit.DevKitBundle
+import org.jetbrains.uast.*
+import org.jetbrains.uast.generate.getUastElementFactory
+import org.jetbrains.uast.generate.replace
+import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
 /**
  * Suggest using IntelliJVirtualThreads.ofVirtual instead of Thread.ofVirtual
  */
-public final class UseIntelliJVirtualThreadsInspection extends DevKitUastInspectionBase implements CleanupLocalInspectionTool {
-
-  private static final String THREAD_CLASS = "java.lang.Thread";
-  private static final String INTELLIJ_VIRTUAL_THREADS_FQN = "com.intellij.virtualThreads.IntelliJVirtualThreads";
-
-  @SuppressWarnings("unchecked")
-  private static final Class<? extends UElement>[] HINTS = new Class[]{UCallExpression.class};
-
-  @Override
-  protected boolean isAllowed(@NotNull ProblemsHolder holder) {
-    return DevKitInspectionUtil.isAllowed(holder.getFile()) &&
-           DevKitInspectionUtil.isClassAvailable(holder, INTELLIJ_VIRTUAL_THREADS_FQN);
+class UseIntelliJVirtualThreadsInspection : DevKitUastInspectionBase() {
+  override fun isAllowed(holder: ProblemsHolder): Boolean {
+    return DevKitInspectionUtil.isAllowed(holder.file) &&
+           DevKitInspectionUtil.isClassAvailable(holder, INTELLIJ_VIRTUAL_THREADS_FQN)
   }
 
-  @Override
-  public @NotNull PsiElementVisitor buildInternalVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    return UastHintedVisitorAdapter.create(holder.getFile().getLanguage(), new AbstractUastNonRecursiveVisitor() {
-      @Override
-      public boolean visitCallExpression(@NotNull UCallExpression node) {
-        if (!"ofVirtual".equals(node.getMethodName())) return super.visitCallExpression(node);
-        PsiMethod method = node.resolve();
-        boolean isThreadOfVirtual = false;
-        if (method != null) {
-          if (!method.hasModifierProperty(PsiModifier.STATIC)) return super.visitCallExpression(node);
-          PsiClass containingClass = method.getContainingClass();
-          if (containingClass == null) return super.visitCallExpression(node);
-          String qName = containingClass.getQualifiedName();
-          isThreadOfVirtual = THREAD_CLASS.equals(qName) || "Thread".equals(containingClass.getName());
+  public override fun buildInternalVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
+    return UastHintedVisitorAdapter.create(holder.file.getLanguage(), object : AbstractUastNonRecursiveVisitor() {
+      override fun visitCallExpression(node: UCallExpression): Boolean {
+        val method = node.takeIf {
+          it.methodName == "ofVirtual"
+        }?.resolve() ?: return super.visitCallExpression(node)
+        val clazz = method.containingClass ?: return super.visitCallExpression(node)
+        if (clazz.qualifiedName != THREAD_FQN) {
+          return super.visitCallExpression(node)
         }
-        else {
-          // Fallback for environments where JDK doesn't provide Thread.ofVirtual (e.g., tests on older JDK):
-          PsiElement sp = node.getSourcePsi();
-          if (sp instanceof PsiMethodCallExpression) {
-            PsiExpression qualifier = ((PsiMethodCallExpression)sp).getMethodExpression().getQualifierExpression();
-            String qualifierText = qualifier == null ? null : qualifier.getText();
-            isThreadOfVirtual = THREAD_CLASS.equals(qualifierText) || "Thread".equals(qualifierText);
-          }
-        }
-        if (!isThreadOfVirtual) return super.visitCallExpression(node);
 
-        PsiElement psi = node.getSourcePsi();
+        val psi = node.sourcePsi
         if (psi != null) {
-          LocalQuickFix[] fixes = psi.getLanguage().is(JavaLanguage.INSTANCE)
-                                      ? new LocalQuickFix[]{new ReplaceWithIntelliJVirtualThreadsFix()}
-                                      : LocalQuickFix.EMPTY_ARRAY;
-          holder.registerProblem(psi, DevKitBundle.message("inspection.use.intellij.virtual.threads.message"), fixes);
+          val fixes: Array<LocalQuickFix> = if (psi.getLanguage().`is`(JavaLanguage.INSTANCE) || psi.language.id == "kotlin") {
+            arrayOf(ReplaceWithIntelliJVirtualThreadsFix())
+          }
+          else {
+            LocalQuickFix.EMPTY_ARRAY
+          }
+          holder.registerProblem(psi, DevKitBundle.message("inspection.use.intellij.virtual.threads.message"), *fixes)
         }
-        return super.visitCallExpression(node);
+        return super.visitCallExpression(node)
       }
-    }, HINTS);
+    }, HINTS)
   }
 
-  private static class ReplaceWithIntelliJVirtualThreadsFix implements LocalQuickFix {
-
-    @Override
-    public @IntentionFamilyName @NotNull String getFamilyName() {
-      return DevKitBundle.message("inspection.use.intellij.virtual.threads.fix.family.name");
+  private class ReplaceWithIntelliJVirtualThreadsFix : LocalQuickFix {
+    @IntentionFamilyName
+    override fun getFamilyName(): @IntentionFamilyName String {
+      return DevKitBundle.message("inspection.use.intellij.virtual.threads.fix.family.name")
     }
 
-    @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement element = descriptor.getPsiElement();
-      PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class, false);
-      if (call == null && element instanceof PsiMethodCallExpression) {
-        call = (PsiMethodCallExpression) element;
-      }
-      if (call == null) return;
-
-      PsiReferenceExpression methodExpression = call.getMethodExpression();
-      PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-      PsiExpression newMethodRef = factory.createExpressionFromText(
-        INTELLIJ_VIRTUAL_THREADS_FQN + ".ofVirtual", call
-      );
-      PsiElement replaced = methodExpression.replace(newMethodRef);
-      JavaCodeStyleManager.getInstance(project).shortenClassReferences(replaced);
+    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+      val element = descriptor.psiElement
+      val uCall = element.toUElement() ?: return
+      val factory = uCall.getUastElementFactory(project) ?: return
+      val newReceiver = factory.createQualifiedReference(INTELLIJ_VIRTUAL_THREADS_FQN, uCall.sourcePsi) ?: return
+      val newCall = factory.createCallExpression(
+        receiver = newReceiver,
+        methodName = "ofVirtual",
+        parameters = emptyList(),
+        expectedReturnType = null,
+        kind = UastCallKind.METHOD_CALL,
+        context = uCall.sourcePsi
+      ) ?: return
+      val parent = uCall.uastParent
+      // we check for parent in case of `Thread.ofVirtual()` calls in Kotlin
+      val replacementUastElement = parent as? UQualifiedReferenceExpression ?: uCall
+      replacementUastElement.replace(newCall)
     }
   }
 }
+
+private const val THREAD_FQN = "java.lang.Thread"
+private const val INTELLIJ_VIRTUAL_THREADS_FQN = "com.intellij.concurrency.virtualThreads.IntelliJVirtualThreads"
+
+private val HINTS: Array<Class<out UElement>> = arrayOf(UCallExpression::class.java)
+
