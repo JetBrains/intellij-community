@@ -421,7 +421,7 @@ mod tests {
         assert!(stdout.contains(&expected), "'{}' is not in the output:\n{}", expected, stdout);
     }
 
-  #[test]
+    #[test]
     fn launching_via_external_symlink() {
         let test = prepare_test_env(LauncherLocation::Standard);
 
