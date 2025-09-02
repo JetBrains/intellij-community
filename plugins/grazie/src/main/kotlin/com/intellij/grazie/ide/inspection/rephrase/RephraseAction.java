@@ -99,9 +99,10 @@ public class RephraseAction extends IntentionAndQuickFixAction {
         int wordRangeCount = StandardWordTokenizer.INSTANCE.words(content.toString()).size();
         int rangeLength = textRange.getLength();
         GrazieFUSCounter.INSTANCE.reportRephraseRequested(iso, content.length(), rangeLength, wordRangeCount);
+        TextRange wordBoundRange = Text.alignToWordBounds(textRange, content.toString());
         List<String> rephrasedSentences = GrazieCloudConnector.Companion.getEP_NAME().getExtensionList()
           .stream()
-          .map(connector -> connector.rephrase(content.toString(), iso, project))
+          .map(connector -> connector.rephrase(content.toString(), wordBoundRange, iso, project))
           .filter(Objects::nonNull)
           .findFirst()
           .orElse(null);
@@ -109,7 +110,6 @@ public class RephraseAction extends IntentionAndQuickFixAction {
           return new SuggestionsWithLanguage(iso, Collections.emptyList(), content.length(), rangeLength, wordRangeCount);
         }
 
-        TextRange wordBoundRange = Text.alignToWordBounds(textRange, content.toString());
         List<ListItem> suggestions = ContainerUtil.mapNotNull(
           rephrasedSentences, rephrasedSentence -> toListItem(wordBoundRange, content, rephrasedSentence)
         );
@@ -130,6 +130,11 @@ public class RephraseAction extends IntentionAndQuickFixAction {
   private static ListItem toListItem(TextRange minRange, TextContent content, String suggestion) {
     int commonPrefix = StringUtil.commonPrefixLength(content.toString(), suggestion);
     int commonSuffix = StringUtil.commonSuffixLength(content.toString(), suggestion.substring(commonPrefix));
+
+    if (commonPrefix == 0 && commonSuffix == 0) {
+      return new ListItem(content.textRangeToFile(minRange), suggestion);
+    }
+
     if (commonPrefix > minRange.getEndOffset() + 1 || content.length() - commonSuffix < minRange.getStartOffset() - 1) {
       return null;
     }
