@@ -77,7 +77,7 @@ common --symlink_prefix=out/bazel-
 
 # FS Watch
 common --watchfs
-#common --experimental_windows_watchfs
+common --experimental_windows_watchfs
 common:linux --nowatchfs
 common:ci --nowatchfs
 
