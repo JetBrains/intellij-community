@@ -40,5 +40,6 @@
     <orderEntry type="module" module-name="intellij.python.parser" />
     <orderEntry type="module" module-name="intellij.python.syntax.core" exported="" />
     <orderEntry type="module" module-name="intellij.platform.ml" />
+    <orderEntry type="library" name="hash4j" level="project" />
   </component>
 </module>
