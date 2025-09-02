@@ -12,7 +12,7 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.terminal.frontend.completion.TerminalCommandCompletionHandler
 import org.jetbrains.annotations.Unmodifiable
 import org.jetbrains.plugins.terminal.block.reworked.TerminalCommandCompletion
-import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isReworkedTerminalEditor
+import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isOutputModelEditor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isSuppressCompletion
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.terminalEditor
 
@@ -32,7 +32,7 @@ internal class TerminalCommandCompletionActionGen2 : BaseCodeCompletionAction(),
 
   override fun update(e: AnActionEvent) {
     super.update(e)
-    e.presentation.isEnabledAndVisible = e.terminalEditor?.isReworkedTerminalEditor == true && TerminalCommandCompletion.isEnabled()
+    e.presentation.isEnabledAndVisible = e.terminalEditor?.isOutputModelEditor == true && TerminalCommandCompletion.isEnabled()
   }
 
   override fun createHandler(

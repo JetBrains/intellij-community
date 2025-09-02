@@ -25,6 +25,7 @@ import org.jetbrains.plugins.terminal.block.reworked.TerminalCommandCompletion
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalUsageLocalStorage
+import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isOutputModelEditor
 import java.awt.Point
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
@@ -104,6 +105,7 @@ internal open class TerminalEventsHandlerImpl(
     val project = editor.project
     if (project != null && typeAhead?.isDisabled() == false &&
         lookup == null &&
+        editor.isOutputModelEditor &&
         (Character.isLetterOrDigit(charTyped) || charTyped == '-' || charTyped == File.separatorChar) &&
         TerminalCommandCompletion.isEnabled() &&
         TerminalOptionsProvider.instance.showCompletionPopupAutomatically) {
