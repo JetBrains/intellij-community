@@ -9,9 +9,11 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import com.intellij.psi.CommonClassNames
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiMethod
+import com.intellij.psi.util.InheritanceUtil
 import org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.startLine
 import org.jetbrains.kotlin.idea.configuration.KOTLIN_GROUP_ID
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.native.KotlinGradleCodeInsightCommonBundle
@@ -26,6 +28,9 @@ import org.jetbrains.plugins.gradle.util.isInVersionCatalogAccessor
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression
@@ -33,6 +38,8 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.booleanValue
 import org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyMethodCallPattern
 import org.jetbrains.plugins.groovy.lang.psi.patterns.psiMethod
 import org.jetbrains.plugins.groovy.lang.psi.patterns.withKind
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyConstantExpressionEvaluator
 import org.toml.lang.psi.TomlInlineTable
 import org.toml.lang.psi.TomlKeyValue
 import org.toml.lang.psi.TomlLiteral
@@ -84,7 +91,8 @@ class RedundantKotlinStdLibInspectionVisitor(val holder: ProblemsHolder) : Kotli
         )
         if (!pluginAliasPattern.accepts(callExpression) || !isPluginCallApplied(callExpression)) return false
 
-        val origin = getOriginInVersionCatalog(callExpression) ?: return false
+        val reference = callExpression.expressionArguments.firstOrNull() ?: return false
+        val origin = getOriginInVersionCatalog(reference) ?: return false
         val pluginIdLiteral = when (val originValue = origin.value) {
             is TomlLiteral -> originValue
             is TomlInlineTable -> {
@@ -122,68 +130,90 @@ private class DependenciesVisitor(val holder: ProblemsHolder) : GroovyRecursiveE
             visitElement(callExpression)
             return
         }
-
         if (callExpression.hasClosureArguments()) return // dependency declaration with a closure probably has a custom configuration
-        if (!isKotlinStdLibDependencyRegular(callExpression) && !isKotlinStdLibDependencyVersionCatalog(callExpression)) return
-
-        val gradlePluginVersion = findResolvedKotlinGradleVersion(callExpression.containingFile) ?: return
-        val stdlibVersion = getResolvedLibVersion(callExpression.containingFile, KOTLIN_GROUP_ID, listOf(KOTLIN_JAVA_STDLIB_NAME))
+        val gradlePluginVersion = findResolvedKotlinGradleVersion(holder.file) ?: return
+        val stdlibVersion = getResolvedLibVersion(holder.file, KOTLIN_GROUP_ID, listOf(KOTLIN_JAVA_STDLIB_NAME))
         LOG.debug("Resolved versions of Kotlin JVM Plugin: ", gradlePluginVersion, " and kotlin-stdlib: ", stdlibVersion)
-
         // do nothing if the stdlib version is different from the plugin version
         if (stdlibVersion != gradlePluginVersion) return
+
+        if (callExpression.namedArguments.size >= 2 && isKotlinStdLibNamedArguments(callExpression.namedArguments.asList())) {
+            registerProblem(callExpression)
+            return
+        }
+
+        val singleArgument = callExpression.expressionArguments.singleOrNull()
+        if (singleArgument != null) {
+            if (isKotlinStdLibSingleString(singleArgument)
+                || isKotlinStdLibDependencyVersionCatalog(singleArgument)) {
+                registerProblem(callExpression)
+            }
+            return
+        }
+
+        for (argument in callExpression.expressionArguments) {
+            val type = argument.type ?: continue
+            when {
+                InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_LANG_CHAR_SEQUENCE)
+                || type.equalsToText(GroovyCommonClassNames.GROOVY_LANG_GSTRING) -> {
+                    if (isKotlinStdLibSingleString(argument)) registerProblem(argument)
+                }
+                InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_MAP) -> {
+                    if (argument is GrListOrMap && isKotlinStdLibNamedArguments(argument.namedArguments.asList())) {
+                        registerProblem(argument)
+                    }
+                }
+            }
+        }
+    }
+
+    private fun registerProblem(element: PsiElement) {
         holder.registerProblem(
-            callExpression,
+            element,
             KotlinGradleCodeInsightCommonBundle.message("inspection.message.redundant.kotlin.std.lib.dependency.descriptor"),
             ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-            RemoveDependencyFix(callExpression)
+            RemoveDependencyFix(element)
         )
     }
 
-    /**
-     * Checks if the dependency is a regular kotlin-stdlib dependency, e.g.
-     * `api 'org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version'` or
-     * `api group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib', version: '$kotlin_version'`
-     * (version can be omitted)
-     *
-     * TODO only works if arguments are string literals
-     */
-    private fun isKotlinStdLibDependencyRegular(callExpression: GrCallExpression): Boolean {
-        val (dependencyGroup, dependencyName) = if (callExpression.expressionArguments.size >= 1) {
-            val argument = callExpression.expressionArguments.firstOrNull() ?: return false
-            if (argument !is GrLiteral) return false
-            val dependencyId = argument.value
-            if (dependencyId !is String) return false
-            dependencyId.split(":").takeIf { it.size >= 2 }?.let { it[0] to it[1] } ?: return false
-        } else if (callExpression.namedArguments.size >= 2) {
-            val namedArguments = callExpression.namedArguments
+    private fun isKotlinStdLibNamedArguments(namedArguments: List<GrNamedArgument>): Boolean {
+        // check that the dependency does not contain anything extra besides the group and name (and version)
+        val namedArgumentsNames = namedArguments.map { it.labelName }
+        when (namedArgumentsNames.size) {
+            2 -> if (!namedArgumentsNames.containsAll(setOf("group", "name"))) return false
+            3 -> if (!namedArgumentsNames.containsAll(setOf("group", "name", "version"))) return false
+            else -> return false
+        }
 
-            // check that the dependency does not contain anything extra besides the group and name (and version)
-            val namedArgumentsNames = namedArguments.map { it.labelName }
-            when (namedArgumentsNames.size) {
-                2 -> if (!namedArgumentsNames.containsAll(setOf("group", "name"))) return false
-                3 -> if (!namedArgumentsNames.containsAll(setOf("group", "name", "version"))) return false
-                else -> return false
-            }
-
-            val group = namedArguments.find { it.labelName == "group" }?.expression
-                ?.let { it as? GrLiteral }?.let { it.value as? String } ?: return false
-            val name = namedArguments.find { it.labelName == "name" }?.expression
-                ?.let { it as? GrLiteral }?.let { it.value as? String } ?: return false
-            group to name
-        } else return false
+        val group = namedArguments.find { it.labelName == "group" }?.expression
+            ?.let { it as? GrLiteral }?.let { it.value as? String } ?: return false
+        val name = namedArguments.find { it.labelName == "name" }?.expression
+            ?.let { it as? GrLiteral }?.let { it.value as? String } ?: return false
 
         if (LOG.isDebugEnabled) LOG.debug(
-            "Found a regular dependency: $dependencyGroup:$dependencyName " +
-                    "at line ${callExpression.startLine(holder.file.fileDocument) + 1} " +
+            "Found a map notation dependency: $group:$name " +
+                    "at line ${namedArguments[0].startLine(holder.file.fileDocument) + 1} " +
                     "in file ${holder.file.virtualFile.path}"
         )
 
-        return dependencyGroup == KOTLIN_GROUP_ID && dependencyName == KOTLIN_JAVA_STDLIB_NAME
+        return group == KOTLIN_GROUP_ID && name == KOTLIN_JAVA_STDLIB_NAME
     }
 
-    private fun isKotlinStdLibDependencyVersionCatalog(callExpression: GrCallExpression): Boolean {
-        val origin = getOriginInVersionCatalog(callExpression) ?: return false
+    private fun isKotlinStdLibSingleString(argument: GrExpression): Boolean {
+        val string = GroovyConstantExpressionEvaluator.evaluate(argument) as? String ?: return false
+        val (group, name) = string.split(":").takeIf { it.size >= 2 }?.let { it[0] to it[1] } ?: return false
+
+        if (LOG.isDebugEnabled) LOG.debug(
+            "Found a single string notation dependency: $group:$name " +
+                    "at line ${argument.startLine(holder.file.fileDocument) + 1} " +
+                    "in file ${holder.file.virtualFile.path}"
+        )
+
+        return group == KOTLIN_GROUP_ID && name == KOTLIN_JAVA_STDLIB_NAME
+    }
+
+    private fun isKotlinStdLibDependencyVersionCatalog(expression: GrExpression): Boolean {
+        val origin = getOriginInVersionCatalog(expression) ?: return false
         val (dependencyGroup, dependencyName) = when (val originValue = origin.value) {
             is TomlLiteral -> originValue.text.cleanRawString().split(":").takeIf { it.size >= 2 }?.let { it[0] to it[1] } ?: return false
             is TomlInlineTable -> {
@@ -208,7 +238,7 @@ private class DependenciesVisitor(val holder: ProblemsHolder) : GroovyRecursiveE
 
         if (LOG.isDebugEnabled) LOG.debug(
             "Found a version catalog dependency: $dependencyGroup:$dependencyName " +
-                    "at line ${callExpression.startLine(holder.file.fileDocument) + 1} " +
+                    "at line ${expression.startLine(holder.file.fileDocument) + 1} " +
                     "in file ${holder.file.virtualFile.path} " +
                     "from version catalog ${origin.containingFile.virtualFile.path}"
         )
@@ -217,8 +247,8 @@ private class DependenciesVisitor(val holder: ProblemsHolder) : GroovyRecursiveE
     }
 }
 
-private fun getOriginInVersionCatalog(callExpression: GrCallExpression): TomlKeyValue? {
-    val catalogReference = callExpression.expressionArguments.firstOrNull() as? GrReferenceElement<*> ?: return null
+private fun getOriginInVersionCatalog(expression: GrExpression): TomlKeyValue? {
+    val catalogReference = expression as? GrReferenceElement<*> ?: return null
     val resolved = catalogReference.resolve()
     if (resolved !is PsiMethod || !isInVersionCatalogAccessor(resolved)) return null
     return findOriginInTomlFile(resolved, catalogReference) as? TomlKeyValue

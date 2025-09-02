@@ -375,6 +375,59 @@ class RedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
 
     @ParameterizedTest
     @BaseGradleVersionSource
+    fun testDependencyListSingleStrings(gradleVersion: GradleVersion) {
+        runTest(gradleVersion, SAME_VERSION_FIXTURE) {
+            testHighlighting(
+                """
+                plugins { id 'org.jetbrains.kotlin.jvm' version '2.2.0' }
+                dependencies { 
+                    api <warning>'org.jetbrains.kotlin:kotlin-stdlib:2.2.0'</warning>, 'com.fasterxml.jackson.core:jackson-databind:2.17.0'
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun testDependencyListMaps(gradleVersion: GradleVersion) {
+        runTest(gradleVersion, SAME_VERSION_FIXTURE) {
+            testHighlighting(
+                """
+                plugins { id 'org.jetbrains.kotlin.jvm' version '2.2.0' }
+                dependencies { 
+                    api(
+                        <warning>[group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib', version: '2.2.0']</warning>,
+                        [group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.17.0'],
+                        <warning>'org.jetbrains.kotlin:kotlin-stdlib:2.2.0'</warning>,
+                        'com.fasterxml.jackson.core:jackson-databind:2.17.0'
+                    )
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun testDependencyListMapsExtraArguments(gradleVersion: GradleVersion) {
+        runTest(gradleVersion, SAME_VERSION_FIXTURE) {
+            testHighlighting(
+                """
+                plugins { id 'org.jetbrains.kotlin.jvm' version '2.2.0' }
+                dependencies { 
+                    api(
+                        [group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib', version: '2.2.0', because: 'why not'],
+                        [group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.17.0']
+                    )
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
     fun testQuickFixRemove(gradleVersion: GradleVersion) {
         runTest(gradleVersion, SAME_VERSION_FIXTURE) {
             testIntention(
@@ -387,6 +440,57 @@ class RedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
                 """
                 plugins { id 'org.jetbrains.kotlin.jvm' version '2.2.0' }
                 dependencies {
+                }
+                """.trimIndent(),
+                "Remove dependency"
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun testQuickFixRemoveSingleStringFromList(gradleVersion: GradleVersion) {
+        runTest(gradleVersion, SAME_VERSION_FIXTURE) {
+            testIntention(
+                """
+                plugins { id 'org.jetbrains.kotlin.jvm' version '2.2.0' }
+                dependencies {
+                    api <caret>'org.jetbrains.kotlin:kotlin-stdlib:2.2.0', 'com.fasterxml.jackson.core:jackson-databind:2.17.0'
+                }
+                """.trimIndent(),
+                """
+                plugins { id 'org.jetbrains.kotlin.jvm' version '2.2.0' }
+                dependencies {
+                    api 'com.fasterxml.jackson.core:jackson-databind:2.17.0'
+                }
+                """.trimIndent(),
+                "Remove dependency"
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun testQuickFixRemoveMapFromList(gradleVersion: GradleVersion) {
+        runTest(gradleVersion, SAME_VERSION_FIXTURE) {
+            testIntention(
+                """
+                plugins { id 'org.jetbrains.kotlin.jvm' version '2.2.0' }
+                dependencies {
+                    api(
+                            <caret>[group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib', version: '2.2.0'],
+                            [group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.17.0'],
+                            'com.fasterxml.jackson.core:jackson-databind:2.17.0'
+                    )
+                }
+                """.trimIndent(),
+                """
+                plugins { id 'org.jetbrains.kotlin.jvm' version '2.2.0' }
+                dependencies {
+                    api(
+                            [group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.17.0'],
+                            'com.fasterxml.jackson.core:jackson-databind:2.17.0'
+                    )
                 }
                 """.trimIndent(),
                 "Remove dependency"
