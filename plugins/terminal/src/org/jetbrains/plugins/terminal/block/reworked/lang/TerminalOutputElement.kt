@@ -16,6 +16,7 @@ import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
 import com.intellij.util.IncorrectOperationException
 import com.intellij.util.text.CharArrayUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import javax.swing.Icon
 
@@ -27,7 +28,8 @@ import javax.swing.Icon
  * this PSI element can be changed even under read action when accessed in the background thread.
  * But all methods are implemented in a way that they always get the current snapshot of the document that is thread-safe.
  */
-internal class TerminalOutputElement(private val parent: PsiFile) : PsiElement, ASTNode, UserDataHolderBase() {
+@ApiStatus.Internal
+class TerminalOutputElement(private val parent: PsiFile) : PsiElement, ASTNode, UserDataHolderBase() {
   private val charsSequence: CharSequence
     get() = parent.viewProvider.document.immutableCharSequence
 
