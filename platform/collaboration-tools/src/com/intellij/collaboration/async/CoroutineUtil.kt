@@ -178,6 +178,21 @@ private class MappedStateFlow<T, R>(private val source: StateFlow<T>, private va
 fun <T1, T2, R> StateFlow<T1>.combineState(other: StateFlow<T2>, combiner: (T1, T2) -> R): StateFlow<R> =
   DerivedStateFlow(combine(other, combiner)) { combiner(value, other.value) }
 
+@ApiStatus.Experimental
+fun <T1, T2, R> combineStates(
+  f1: StateFlow<T1>,
+  f2: StateFlow<T2>,
+  combiner: (T1, T2) -> R,
+): StateFlow<R> = DerivedStateFlow(combine(f1, f2, combiner)) { combiner(f1.value, f2.value) }
+
+@ApiStatus.Experimental
+fun <T1, T2, T3, R> combineStates(
+  f1: StateFlow<T1>,
+  f2: StateFlow<T2>,
+  f3: StateFlow<T3>,
+  combiner: (T1, T2, T3) -> R,
+): StateFlow<R> = DerivedStateFlow(combine(f1, f2, f3, combiner)) { combiner(f1.value, f2.value, f3.value) }
+
 /**
  * Not great, because will always compute [combiner] twice at the start
  * To be used when you need the flow to handle [CoroutineStart.UNDISPATCHED], because pure [combine] does not
