@@ -26,6 +26,7 @@ jvm_library(
     "//plugins/devkit/intellij.kotlin.devkit/k1",
     "//plugins/devkit/intellij.kotlin.devkit/k2",
     "//plugins/devkit/intellij.devkit.workspaceModel:workspaceModel",
+    "//plugins/devkit/intellij.devkit.compose:compose",
   ]
 )
 
@@ -44,6 +45,7 @@ jvm_library(
     "//plugins/devkit/intellij.kotlin.devkit/k1",
     "//plugins/devkit/intellij.kotlin.devkit/k2",
     "//plugins/devkit/intellij.devkit.workspaceModel:workspaceModel",
+    "//plugins/devkit/intellij.devkit.compose:compose",
   ]
 )
 ### auto-generated section `build intellij.devkit.plugin.main` end
