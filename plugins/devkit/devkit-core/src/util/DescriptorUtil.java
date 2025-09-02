@@ -126,6 +126,7 @@ public final class DescriptorUtil {
     XmlTag rootTag = xmlFile.getRootTag();
     if (rootTag == null) return false;
     if (!rootTag.getName().equals("idea-plugin")) return false;
+    if (rootTag.findFirstSubTag("id") != null) return false;
     PsiDirectory parent = file.getParent();
     if (parent == null) return false;
     String parentDirName = parent.getName();
