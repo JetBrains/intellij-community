@@ -19,6 +19,7 @@ import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.Deque;
 import java.util.List;
@@ -447,5 +448,10 @@ public class SuspendManagerImpl implements SuspendManager {
     ThreadReference thread = stepEvent.thread();
 
     return thread == resumeOneSteppingIn.getThreadReference();
+  }
+  
+  @TestOnly
+  public void addExplicitlyResumedThread(@NotNull ThreadReferenceProxyImpl thread) {
+    myExplicitlyResumedThreads.add(thread);
   }
 }
