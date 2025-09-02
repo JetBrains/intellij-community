@@ -137,7 +137,7 @@ abstract class BaseProjectModelService<E : EntitySource, P : ExternalProject> {
    * Removes the default IJ module created for the root of the project
    * (that's going to be replaced with a module belonging to a specific project management system).
    *
-   * @see com.intellij.platform.PlatformProjectConfigurator
+   * @see com.intellij.openapi.project.impl.getOrInitializeModule
    */
   internal fun removeFakeModuleEntity(project: Project, storage: MutableEntityStorage) {
     val virtualFileUrlManager = project.workspaceModel.getVirtualFileUrlManager()

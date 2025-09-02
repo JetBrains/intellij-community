@@ -15,6 +15,12 @@ import org.jetbrains.annotations.ApiStatus
 
 private val LOG: Logger = Logger.getInstance("FakeModule")
 
+/**
+ * This method is used to create a "fake" module during project opening before running DirectoryProjectConfigurators
+ * or when one of them needs it
+ *
+ * @see com.intellij.platform.PlatformProjectOpenProcessor.runDirectoryProjectConfigurators
+ */
 @ApiStatus.Internal
 fun Ref<Module>.getOrInitializeModule(project: Project, baseDir: VirtualFile): Module {
   if (!this.isNull) {

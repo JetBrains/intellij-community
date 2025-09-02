@@ -86,7 +86,8 @@ class UvProjectOpenIntegrationTest {
     """.trimIndent())
 
     multiprojectFixture.openProject(projectPath).useProjectAsync { project ->
-      // Nothing was linked automatically. There is only the module created by PlatformProjectConfigurator.
+      // Nothing was linked automatically.
+      // There is only the module created by com.intellij.openapi.project.impl.CreateModuleKt.getOrInitializeModule
       ModuleAssertions.assertModules(project, "project")
       ContentRootAssertions.assertContentRoots(project, "project", listOf(projectPath))
       CollectionAssertions.assertEqualsUnordered(emptyList(), project.service<UvSettings>().getLinkedProjects())
