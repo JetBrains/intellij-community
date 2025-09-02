@@ -344,4 +344,9 @@ public abstract class TextExtractor {
     }
     return result;
   }
+  
+  @TestOnly
+  public @NotNull List<TextContent> buildTextContentsTestAccessor(@NotNull PsiElement element, @NotNull Set<TextContent.TextDomain> allowedDomains) {
+    return buildTextContents(element, allowedDomains); 
+  }
 }
