@@ -276,10 +276,10 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
   ): InstallPluginResult {
     prepareToInstall(installPluginInfo)
     val result = controller.installOrUpdatePlugin(sessionId, parentComponent, descriptor, updateDescriptor, myInstallSource, modalityState, null)
-    if (result.disabledPlugins.isEmpty() || result.disabledDependants.isEmpty()) {
+    if (result.disabledPlugins.isEmpty() && result.disabledDependants.isEmpty()) {
       return result
     }
-    val enableDependencies = PluginManagerMain.askToEnableDependencies(1, result.disabledPlugins, result.disabledDependants)
+    val enableDependencies = withContext(Dispatchers.EDT + modalityState.asContextElement()) { PluginManagerMain.askToEnableDependencies(1, result.disabledPlugins, result.disabledDependants) }
     return controller.continueInstallation(sessionId, actionDescriptor.pluginId, enableDependencies, result.allowInstallWithoutRestart, null, modalityState, parentComponent)
   }
 
