@@ -63,6 +63,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCase {
   protected static final int DEFAULT_ADDRESS = 3456;
@@ -120,6 +122,17 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
    */
   protected final void atDebuggerTearDown(ThrowableRunnable<Throwable> runnable) {
     myTearDownRunnables.add(0, runnable);
+  }
+
+  protected final <T> void restoreSettingAfterTest(Supplier<? extends T> getter, Consumer<? super T> setter) {
+    var oldValue = getter.get();
+    atDebuggerTearDown(() -> setter.accept(oldValue));
+  }
+
+  protected final <T> void setSettingForTest(Supplier<? extends T> getter, Consumer<? super T> setter, T newValue) {
+    var oldValue = getter.get();
+    setter.accept(newValue);
+    atDebuggerTearDown(() -> setter.accept(oldValue));
   }
 
   @Override
@@ -568,11 +581,11 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
   }
 
   private void setRendererEnabled(NodeRenderer renderer, boolean state) {
-    boolean oldValue = renderer.isEnabled();
-    if (oldValue != state) {
-      atDebuggerTearDown(() -> renderer.setEnabled(oldValue));
-      renderer.setEnabled(state);
-    }
+    setSettingForTest(
+      renderer::isEnabled,
+      renderer::setEnabled,
+      state
+    );
   }
   protected void doWhenXSessionPaused(ThrowableRunnable runnable) {
     doWhenXSessionPaused(runnable, false);

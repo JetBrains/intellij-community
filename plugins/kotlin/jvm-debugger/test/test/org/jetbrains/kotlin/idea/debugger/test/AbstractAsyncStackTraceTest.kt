@@ -11,8 +11,10 @@ abstract class AbstractAsyncStackTraceTest : KotlinDescriptorTestCaseWithSteppin
         super.setUp()
         DebuggerSettings.getInstance().INSTRUMENTING_AGENT = true
 
-        var showLibraryFrames = XDebuggerSettingManagerImpl.getInstanceImpl().dataViewSettings.isShowLibraryStackFrames
-        atDebuggerTearDown { XDebuggerSettingManagerImpl.getInstanceImpl().dataViewSettings.isShowLibraryStackFrames = showLibraryFrames }
+        restoreSettingAfterTest(
+            XDebuggerSettingManagerImpl.getInstanceImpl().dataViewSettings::isShowLibraryStackFrames,
+            XDebuggerSettingManagerImpl.getInstanceImpl().dataViewSettings::setShowLibraryStackFrames,
+        )
     }
 
     override fun jarRepositories(): List<RemoteRepositoryDescription> {
