@@ -31,7 +31,6 @@ import fleet.rpc.client.RpcTimeoutException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
@@ -88,7 +87,6 @@ open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : Find
           filesToScanInitially = filesToScanInitially.map { it.rpcId() },
           maxUsagesCount = maxUsagesCount
         ).take(maxUsagesCount)
-          .buffer(capacity = maxUsagesCount)
           .let {
             if (shouldThrottle) it.throttledWithAccumulation()
             else it.map { event -> ThrottledOneItem(event) }
