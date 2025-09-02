@@ -35,10 +35,7 @@ import com.jetbrains.python.psi.impl.*;
 import com.jetbrains.python.psi.search.PySearchUtilBase;
 import com.jetbrains.python.psi.stubs.PyClassAttributesIndex;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
-import com.jetbrains.python.psi.types.PyClassLikeType;
-import com.jetbrains.python.psi.types.PyClassType;
-import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.pyi.PyiFile;
 import com.jetbrains.python.pyi.PyiUtil;
 import one.util.streamex.StreamEx;
@@ -285,19 +282,24 @@ public final class PyResolveUtil {
 
     final List<String> remainingNames = qualifiedName.removeHead(1).getComponents();
     final List<RatedResolveResult> result = StreamEx.of(remainingNames).foldLeft(StreamEx.of(unqualifiedResults), (prev, name) ->
-      prev
-        .map(RatedResolveResult::getElement)
-        .select(PyTypedElement.class)
-        .map(context::getType)
-        .nonNull()
-        .flatMap(type -> {
-          // An instance type has access to instance attributes defined in __init__, a class type does not.
-          final PyType instanceType = type instanceof PyClassLikeType ? ((PyClassLikeType)type).toInstance() : type;
-          final List<? extends RatedResolveResult> results = instanceType.resolveMember(name, null, AccessDirection.READ, resolveContext);
-          return results != null ? StreamEx.of(results) : StreamEx.<RatedResolveResult>empty();
-        }))
-      .toList();
+        prev
+          .map(RatedResolveResult::getElement)
+          .select(PyTypedElement.class)
+          .map(context::getType)
+          .nonNull()
+          .flatMap(type -> {
+            assert type != null; // see filter nonNull()
+            // An instance type has access to instance attributes defined in __init__, a class type does not.
+            final PyType instanceType = type instanceof PyClassLikeType ? ((PyClassLikeType)type).toInstance() : type;
+            final List<? extends RatedResolveResult> results = instanceType instanceof PyModuleType moduleType
+                                                               ? moduleType.resolveModuleMember(name, scopeOwner, AccessDirection.READ,
+                                                                                                resolveContext)
+                                                               : instanceType.resolveMember(name, null, AccessDirection.READ,
+                                                                                            resolveContext);
 
+            return results != null ? StreamEx.of(results) : StreamEx.<RatedResolveResult>empty();
+          }))
+      .toList();
     return PyUtil.filterTopPriorityElements(result);
   }
 

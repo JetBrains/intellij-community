@@ -3966,6 +3966,15 @@ public class Py3TypeTest extends PyTestCase {
       """);
   }
 
+  // PY-74257
+  public void testNotProperlyImportedQualifiedNameInTypeHint() {
+    doMultiFileTest("Any", """
+      from lib import f
+      
+      expr = f()
+      """);
+  }
+
   private void doTest(final String expectedType, final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
