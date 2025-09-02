@@ -56,13 +56,17 @@ kotlin {
 }
 
 tasks {
-    detektMain { exclude { it.file.absolutePath.startsWith(layout.buildDirectory.asFile.get().absolutePath) } }
+    // We need to use relative paths for patterns.
+    // Exclude does not work; this is how the Kotlinter plugin docs recommend doing it, and it works...
+    val buildDir = layout.buildDirectory.asFile.get().relativeTo(project.projectDir).path
+    detektMain { source = (source - fileTree(buildDir)).asFileTree }
 
-    formatKotlinMain { exclude { it.file.absolutePath.replace('\\', '/').contains("build/generated") } }
-    withType<KtfmtBaseTask> { exclude { it.file.absolutePath.contains("build/generated") } }
+    formatKotlinMain { source = (source - fileTree(buildDir)).asFileTree }
+
+    withType<KtfmtBaseTask> { source = (source - fileTree(buildDir)).asFileTree }
 
     lintKotlinMain {
-        exclude { it.file.absolutePath.replace('\\', '/').contains("build/generated") }
+        source = (source - fileTree(buildDir)).asFileTree
 
         reports = provider {
             mapOf(
