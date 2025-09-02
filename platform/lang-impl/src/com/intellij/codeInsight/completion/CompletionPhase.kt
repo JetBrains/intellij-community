@@ -124,17 +124,17 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
       @ApiStatus.Internal
       @JvmStatic
       fun scheduleAsyncCompletion(
-        _editor: Editor,
+        editor: Editor,
         completionType: CompletionType,
         condition: Condition<in PsiFile?>?,
         project: Project,
         prevIndicator: CompletionProgressIndicator?
       ) {
         LOG.trace("Schedule async completion")
-        val topLevelEditor = InjectedLanguageEditorUtil.getTopLevelEditor(_editor)
+        val topLevelEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor)
         val offset = topLevelEditor.getCaretModel().offset
 
-        val phase = getCompletionPhase(prevIndicator, topLevelEditor, _editor.getUserData(AUTO_POPUP_TYPED_EVENT))
+        val phase = getCompletionPhase(prevIndicator, topLevelEditor, editor.getUserData(AUTO_POPUP_TYPED_EVENT))
 
         val autopopup = prevIndicator == null || prevIndicator.isAutopopupCompletion
 
