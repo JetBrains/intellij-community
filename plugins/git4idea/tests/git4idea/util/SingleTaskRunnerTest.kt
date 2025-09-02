@@ -13,11 +13,10 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 
-internal class DebouncedTaskRunnerTest {
+internal class SingleTaskRunnerTest {
   @Test
   fun `test inactive before start`() = timeoutRunBlocking {
-    withRunner(awaitDebounce = { },
-               task = { }) {
+    withRunner(task = { }) {
       request()
       assertThrows<TimeoutCancellationException> {
         withTimeout(100) {
@@ -30,8 +29,7 @@ internal class DebouncedTaskRunnerTest {
   @Test
   fun `test executed`() = timeoutRunBlocking {
     var ran = false
-    withRunner(awaitDebounce = { },
-               task = { ran = true }) {
+    withRunner({ ran = true }) {
       start()
 
       request()
@@ -44,8 +42,10 @@ internal class DebouncedTaskRunnerTest {
   fun `test execution debounced`() = timeoutRunBlocking {
     var counter = 0
     val runAllowed = MutableStateFlow(false)
-    withRunner(awaitDebounce = { runAllowed.first { it } },
-               task = { counter++ }) {
+    withRunner({
+                 runAllowed.first { it }
+                 counter++
+               }) {
       start()
 
       repeat(10) {
@@ -70,12 +70,11 @@ internal class DebouncedTaskRunnerTest {
   }
 
   private inline fun CoroutineScope.withRunner(
-    noinline awaitDebounce: suspend () -> Unit,
     noinline task: suspend () -> Unit,
-    consumer: DebouncedTaskRunner.() -> Unit,
+    consumer: SingleTaskRunner.() -> Unit,
   ) {
     val cs = childScope("BG runner")
-    DebouncedTaskRunner(cs, awaitDebounce, task).also(consumer)
+    SingleTaskRunner(cs, task).also(consumer)
     cs.cancel()
   }
 }

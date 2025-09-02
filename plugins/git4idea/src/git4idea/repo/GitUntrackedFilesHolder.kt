@@ -29,7 +29,8 @@ import git4idea.index.getFileStatus
 import git4idea.index.isIgnored
 import git4idea.index.isUntracked
 import git4idea.status.GitRefreshListener
-import git4idea.util.DebouncedTaskRunner
+import git4idea.util.DelayedTaskRunner
+import git4idea.util.SingleTaskRunner
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
@@ -61,7 +62,7 @@ class GitUntrackedFilesHolder internal constructor(
   private val _ignoredFilesHolder = MyGitRepositoryIgnoredFilesHolder()
   val ignoredFilesHolder: GitRepositoryIgnoredFilesHolder get() = _ignoredFilesHolder
 
-  private val updateRunner: DebouncedTaskRunner
+  private val updateRunner: SingleTaskRunner
   private val LOCK = Any()
 
   @get:ApiStatus.Internal
@@ -69,7 +70,7 @@ class GitUntrackedFilesHolder internal constructor(
     get() = untrackedFiles.initialized
 
   init {
-    updateRunner = DebouncedTaskRunner(cs, 500.milliseconds, ::update)
+    updateRunner = DelayedTaskRunner(cs, 500.milliseconds, ::update)
     cs.launch(start = CoroutineStart.UNDISPATCHED) {
       try {
         project.serviceAsync<InitialVfsRefreshService>().awaitInitialVfsRefreshFinished()
