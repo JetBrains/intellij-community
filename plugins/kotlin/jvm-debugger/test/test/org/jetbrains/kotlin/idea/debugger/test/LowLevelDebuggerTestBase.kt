@@ -10,6 +10,7 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.util.PathUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.ThrowableRunnable
+import com.intellij.util.net.localhostInetAddress
 import com.jetbrains.jdi.SocketListeningConnector
 import com.sun.jdi.ThreadReference
 import org.jetbrains.kotlin.backend.common.output.OutputFile
@@ -28,7 +29,6 @@ abstract class LowLevelDebuggerTestBase : ExecutionTestCase(),
 
     private companion object {
         private const val CLASSES_DIRECTORY_NAME = "classes"
-        private const val DEBUG_ADDRESS = "127.0.0.1"
     }
 
     private lateinit var testAppDirectory: File
@@ -129,7 +129,7 @@ abstract class LowLevelDebuggerTestBase : ExecutionTestCase(),
 
             val connector = SocketListeningConnector()
             val args = connector.defaultArguments().apply {
-                getValue("localAddress").setValue(DEBUG_ADDRESS)
+                getValue("localAddress").setValue(localhostInetAddress().hostAddress)
             }
             val port = connector.startListening(args).substringAfterLast(":")
 

@@ -69,6 +69,7 @@ import com.intellij.ui.awt.AnchoredPoint;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.ui.classFilter.DebuggerClassFilterProvider;
 import com.intellij.util.Alarm;
+import com.intellij.util.BazelEnvironmentUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.EdtScheduler;
@@ -76,6 +77,7 @@ import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.DisposableWrapperList;
 import com.intellij.util.lang.JavaVersion;
+import com.intellij.util.system.OS;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
@@ -704,7 +706,28 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
     setConnectorArgument("timeout", "0"); // wait forever
     try {
-      String listeningAddress = connector.startListening(myArguments);
+      String listeningAddress;
+      try {
+        listeningAddress = connector.startListening(myArguments);
+      }
+      catch (IOException e) {
+        // It's impossible to listen on IPv4 127.0.0.1 in Bazel hermetic macOS sandbox.
+        // It's a known macOS sandbox restriction.
+        // https://github.com/bazelbuild/bazel/issues/5206#issuecomment-402398624
+        // This code tries to keep involvement with production flow to a bare minimum
+        String localAddress = myArguments.get("localAddress").value();
+        if (BazelEnvironmentUtil.isBazelTestRun() &&
+            OS.CURRENT == OS.macOS &&
+            ("localhost".equals(localAddress) || "127.0.0.1".equals(localAddress))) {
+
+          setConnectorArgument("localAddress", "::1");
+          listeningAddress = connector.startListening(myArguments);
+        }
+        else {
+          throw e;
+        }
+      }
+
       String port = StringUtil.substringAfterLast(listeningAddress, ":");
       if (port != null) {
         listeningAddress = port;
@@ -736,6 +759,23 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     forEachSafe(myDebugProcessListeners, it -> it.connectorIsReady());
     try {
       return connector.attach(myArguments);
+    }
+    catch (IOException e) {
+      // It's impossible to connect to IPv4 127.0.0.1 in Bazel hermetic macOS sandbox.
+      // It's a known macOS sandbox restriction.
+      // https://github.com/bazelbuild/bazel/issues/5206#issuecomment-402398624
+      // This code tries to keep involvement with production flow to a bare minimum
+      String localAddress = myArguments.get("hostname").value();
+      if (BazelEnvironmentUtil.isBazelTestRun() &&
+          OS.CURRENT == OS.macOS &&
+          ("localhost".equals(localAddress) || "127.0.0.1".equals(localAddress))) {
+
+        setConnectorArgument("hostname", "::1");
+        return connector.attach(myArguments);
+      }
+      else {
+        throw e;
+      }
     }
     catch (IllegalArgumentException e) {
       throw new CantRunException(e.getLocalizedMessage());
