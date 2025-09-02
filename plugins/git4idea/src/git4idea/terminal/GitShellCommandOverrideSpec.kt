@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.terminal
 
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.vcs.LocalFilePath
 import com.intellij.terminal.completion.spec.ShellCompletionSuggestion
 import com.intellij.terminal.completion.spec.ShellRuntimeContext
@@ -31,7 +32,7 @@ private val remotesGenerator: ShellRuntimeDataGenerator<List<ShellCompletionSugg
 
   if (repository != null) {
     repository.remotes.map {
-      ShellCompletionSuggestion(
+      branchSuggestion(
         name = it.name,
         description = it.firstUrl ?: ""
       )
@@ -49,7 +50,7 @@ private val remotesGenerator: ShellRuntimeDataGenerator<List<ShellCompletionSugg
         @Suppress("HardCodedStringLiteral")
         val description: @Nls String = remoteLineParts.getOrNull(1)?.split(" ")?.firstOrNull() ?: ""
 
-        ShellCompletionSuggestion(
+        branchSuggestion(
           name = remoteLineParts.first(),
           description = description
         )
@@ -66,18 +67,18 @@ private fun postProcessBranchesFromCommandLine(lines: List<String>, insertWithou
 
     // Current branch
     if (isCurrentBranch) {
-      return@map ShellCompletionSuggestion(name, description = GitTerminalBundle.message("branch.current"), priority = 100)
+      return@map branchSuggestion(name, description = GitTerminalBundle.message("branch.current"), priority = 100)
     }
 
     // Remote branches
     if (name.startsWith("remotes/")) {
-      return@map ShellCompletionSuggestion(
+      return@map branchSuggestion(
         if (insertWithoutRemotes) name.removePrefix("remotes/") else name,
         description = GitTerminalBundle.message("branch.remote")
       )
     }
 
-    ShellCompletionSuggestion(name)
+    branchSuggestion(name)
   }.distinctBy { it.name }
 
 // git --no-optional-locks branch --no-color --sort=-committerdate
@@ -88,7 +89,7 @@ private val localBranchesGenerator: ShellRuntimeDataGenerator<List<ShellCompleti
     val currentBranch = repository.currentBranch
     val branches = repository.branches
     branches.localBranches.map { branch ->
-      ShellCompletionSuggestion(
+      branchSuggestion(
         branch.name,
         description = if (branch == currentBranch) GitTerminalBundle.message("branch.current") else GitTerminalBundle.message("branch"),
         priority = if (branch == currentBranch) 100 else 50
@@ -111,7 +112,7 @@ private val allBranchesGenerator: ShellRuntimeDataGenerator<List<ShellCompletion
     val currentBranch = repository.currentBranch
     val branches = repository.branches
     (branches.localBranches + branches.remoteBranches).map { branch ->
-      ShellCompletionSuggestion(
+      branchSuggestion(
         branch.name,
         description = if (branch == currentBranch) GitTerminalBundle.message("branch.current") else if (branch is GitRemoteBranch) GitTerminalBundle.message("branch.remote") else GitTerminalBundle.message("branch"),
         priority = if (branch == currentBranch) 100 else 50
@@ -133,7 +134,7 @@ private val remoteBranchesGenerator: ShellRuntimeDataGenerator<List<ShellComplet
   if (repository != null) {
     val branches = repository.branches
     branches.remoteBranches.map { branch ->
-      ShellCompletionSuggestion(
+      branchSuggestion(
         branch.name,
         description = GitTerminalBundle.message("branch.remote"),
         priority = 50
@@ -159,6 +160,15 @@ private val localOrRemoteBranchesGenerator: ShellRuntimeDataGenerator<List<Shell
   else {
     localBranchesGenerator.generate(context)
   }
+}
+
+private fun branchSuggestion(name: String, description: @Nls String? = null, priority: Int = 50): ShellCompletionSuggestion {
+  return ShellCompletionSuggestion(
+    name,
+    description = description,
+    priority = priority,
+    icon = AllIcons.Vcs.Branch
+  )
 }
 
 private fun ShellCommandContext.trackingOptions() {
