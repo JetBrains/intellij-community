@@ -22,12 +22,12 @@ import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
 
-public class SmartType20CompletionTest extends LightFixtureCompletionTestCase {
+public class SmartType21CompletionTest extends LightFixtureCompletionTestCase {
 
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_20;
+    return JAVA_21;
   }
 
   @Override
