@@ -13,10 +13,12 @@ import org.apache.maven.model.Developer
 import org.apache.maven.model.Exclusion
 import org.apache.maven.model.Model
 import org.apache.maven.model.Organization
+import org.apache.maven.model.Scm
 import org.apache.maven.model.io.xpp3.MavenXpp3Writer
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.DirSource
+import org.jetbrains.intellij.build.JetBrainsProductProperties
 import org.jetbrains.intellij.build.ZipSource
 import org.jetbrains.intellij.build.buildJar
 import org.jetbrains.intellij.build.impl.commonModuleExcludes
@@ -41,6 +43,11 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.Locale
 import java.util.function.BiConsumer
+import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.copyTo
+import kotlin.io.path.createDirectories
+import kotlin.io.path.deleteRecursively
+import kotlin.io.path.name
 
 /**
  * Generates Maven artifacts for IDE and plugin modules. Artifacts aren't generated for modules which depend on non-repository libraries.
@@ -319,9 +326,51 @@ open class MavenArtifactsBuilder(protected val context: BuildContext) {
   }
 
   internal suspend fun validate(builtArtifacts: Map<MavenArtifactData, List<Path>>) {
-    context.productProperties.mavenArtifacts.validate(context, builtArtifacts.map { (data, files) ->
+    val artifacts = builtArtifacts.map { (data, files) ->
       GeneratedMavenArtifacts(data.module, data.coordinates, files)
-    })
+    }
+    artifacts.forEach {
+      if (context.productProperties.mavenArtifacts.validateForMavenCentralPublication(it.module)) {
+        validateForMavenCentralPublication(it, context)
+      }
+    }
+    context.productProperties.mavenArtifacts.validate(context, artifacts)
+  }
+
+  /** See https://central.sonatype.org/publish/requirements */
+  @OptIn(ExperimentalPathApi::class)
+  private suspend fun validateForMavenCentralPublication(artifacts: GeneratedMavenArtifacts, context: BuildContext) {
+    if (artifacts.module.getSourceRoots(JavaSourceRootType.SOURCE).any()) {
+      val sources = artifacts.coordinates.getFileName("sources", "jar")
+      check(artifacts.files.any { it.name == sources }) {
+        "No $sources is generated for the module ${artifacts.module.name}"
+      }
+      val javadoc = artifacts.coordinates.getFileName("javadoc", "jar")
+      check(artifacts.files.any { it.name == javadoc }) {
+        "No $javadoc is generated for the module ${artifacts.module.name}"
+      }
+    }
+    val pom = artifacts.coordinates.getFileName(packaging = "pom")
+    val pomXml = artifacts.files.singleOrNull { it.name == pom }
+    check(pomXml != null) {
+      "No $pom is generated for the module ${artifacts.module.name}"
+    }
+    val workDir = context.paths.tempDir.resolve("${artifacts.module.name}-maven-central-publication-test")
+    workDir.deleteRecursively()
+    workDir.createDirectories()
+    artifacts.files.forEach { it.copyTo(workDir.resolve(it.name)) }
+    val publication = MavenCentralPublication(
+      context = context,
+      workDir = workDir,
+      dryRun = true,
+    )
+    // making sure that a bundle.zip can be built without issues
+    publication.bundle()
+    val coordinatesToBePublished = publication.artifacts.map { it.coordinates }
+    check(coordinatesToBePublished.count() == 1 && coordinatesToBePublished.contains(artifacts.coordinates)) {
+      "Maven coordinates ${artifacts.coordinates} generated for the module ${artifacts.module.name} " +
+      "don't match the coordinates $coordinatesToBePublished from $pomXml"
+    }
   }
 }
 
@@ -382,6 +431,14 @@ private fun generatePomXmlData(artifactData: MavenArtifactData, file: Path, cont
     organization = "JetBrains"
     organizationUrl = "https://www.jetbrains.com"
   })
+  if (JetBrainsProductProperties.isCommunityModule(artifactData.module, context)) {
+    pomModel.url = "https://github.com/JetBrains/intellij-community"
+    pomModel.scm = Scm().apply {
+      connection = "scm:git:https://github.com/JetBrains/intellij-community.git"
+      developerConnection = "scm:git:https://github.com/JetBrains/intellij-community.git"
+      url = "https://github.com/JetBrains/intellij-community"
+    }
+  }
   context.productProperties.mavenArtifacts.addPomMetadata(artifactData.module, pomModel)
   pomModel.setOrFailIfAlreadySet("Model version", value = "4.0.0", { modelVersion }, { modelVersion = it })
   pomModel.setOrFailIfAlreadySet("GroupId", value = artifactData.coordinates.groupId, { groupId }, { groupId = it })

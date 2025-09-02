@@ -5,23 +5,16 @@ import com.intellij.util.text.SemVer
 import org.apache.maven.model.Developer
 import org.apache.maven.model.License
 import org.apache.maven.model.Model
-import org.apache.maven.model.Scm
 import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
 import org.jetbrains.intellij.build.dependencies.DependenciesProperties
 import org.jetbrains.intellij.build.impl.libraries.isLibraryModule
 import org.jetbrains.intellij.build.impl.maven.*
-import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.JpsJavaDependencyScope
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsDependencyElement
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleDependency
 import kotlin.io.path.exists
-import kotlin.io.path.name
-import kotlin.io.path.ExperimentalPathApi
-import kotlin.io.path.copyTo
-import kotlin.io.path.createDirectories
-import kotlin.io.path.deleteRecursively
 
 internal object JewelMavenArtifacts {
   private const val GROUP_ID: String = "org.jetbrains.jewel"
@@ -151,16 +144,10 @@ internal object JewelMavenArtifacts {
     check(isPublishedJewelModule(module))
     model.name = "Jewel"
     model.description = "A theme for Compose for Desktop that implements the IntelliJ Platform look and feel."
-    model.url = "https://github.com/JetBrains/intellij-community"
     model.addLicense(License().apply {
       name = "Apache License 2.0"
       url = "https://www.apache.org/licenses/LICENSE-2.0.txt"
     })
-    model.scm = Scm().apply {
-      connection = "scm:git:https://github.com/JetBrains/intellij-community.git"
-      developerConnection = "scm:git:https://github.com/JetBrains/intellij-community.git"
-      url = "https://github.com/JetBrains/intellij-community"
-    }
     model.addDeveloper(Developer().apply {
       id = "Google"
       name = "Google Team"
@@ -184,7 +171,7 @@ internal object JewelMavenArtifacts {
     return (scope == JpsJavaDependencyScope.COMPILE || scope == JpsJavaDependencyScope.PROVIDED)
   }
 
-  suspend fun validate(context: BuildContext, mavenArtifacts: Collection<GeneratedMavenArtifacts>) {
+  fun validate(context: BuildContext, mavenArtifacts: Collection<GeneratedMavenArtifacts>) {
     ALL_MODULES.asSequence()
       .map(context::findRequiredModule)
       .flatMap { it.modulesTree() }
@@ -203,7 +190,6 @@ internal object JewelMavenArtifacts {
             "The module ${module.name} has groupId=${artifact.coordinates.groupId} " +
             "but it's expected to have groupId=$GROUP_ID because Maven Central publication credentials are issues per namespace/groupId"
           }
-          validateForMavenCentralPublication(artifact, context)
         }
       }
     for ((jewelModuleName, artifactId) in ALL) {
@@ -215,42 +201,6 @@ internal object JewelMavenArtifacts {
         "The module $jewelModuleName is expected to have groupId=$GROUP_ID and artifactId=$artifactId: " +
         "${mavenArtifacts.filter { (module) -> module.name == jewelModuleName }}"
       }
-    }
-  }
-
-  /** See https://central.sonatype.org/publish/requirements */
-  @OptIn(ExperimentalPathApi::class)
-  private suspend fun validateForMavenCentralPublication(artifacts: GeneratedMavenArtifacts, context: BuildContext) {
-    if (artifacts.module.getSourceRoots(JavaSourceRootType.SOURCE).any()) {
-      val sources = artifacts.coordinates.getFileName("sources", "jar")
-      check(artifacts.files.any { it.name == sources }) {
-        "No $sources is generated for the module ${artifacts.module.name}"
-      }
-      val javadoc = artifacts.coordinates.getFileName("javadoc", "jar")
-      check(artifacts.files.any { it.name == javadoc }) {
-        "No $javadoc is generated for the module ${artifacts.module.name}"
-      }
-    }
-    val pom = artifacts.coordinates.getFileName(packaging = "pom")
-    val pomXml = artifacts.files.singleOrNull { it.name == pom }
-    check(pomXml != null) {
-      "No $pom is generated for the module ${artifacts.module.name}"
-    }
-    val workDir = context.paths.tempDir.resolve("${artifacts.module.name}-maven-central-publication-test")
-    workDir.deleteRecursively()
-    workDir.createDirectories()
-    artifacts.files.forEach { it.copyTo(workDir.resolve(it.name)) }
-    val publication = MavenCentralPublication(
-      context = context,
-      workDir = workDir,
-      dryRun = true,
-    )
-    // making sure that a bundle.zip can be built without issues
-    publication.bundle()
-    val coordinatesToBePublished = publication.artifacts.map { it.coordinates }
-    check(coordinatesToBePublished.count() == 1 && coordinatesToBePublished.contains(artifacts.coordinates)) {
-      "Maven coordinates ${artifacts.coordinates} generated for the module ${artifacts.module.name} " +
-      "don't match the coordinates $coordinatesToBePublished from $pomXml"
     }
   }
 }
