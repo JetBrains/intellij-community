@@ -16,7 +16,7 @@ internal class ExactSubstringSpeedSearchMatcher(private val pattern: String, pri
         if (pattern.isBlank() || text.isNullOrBlank()) return MatchResult.NoMatch
         val matchIndex = text.indexOf(pattern, ignoreCase = ignoreCase)
         return if (matchIndex >= 0) {
-            MatchResult.Match(listOf(matchIndex..(matchIndex + pattern.length)))
+            MatchResult.Match(listOf(matchIndex until (matchIndex + pattern.length)))
         } else {
             MatchResult.NoMatch
         }

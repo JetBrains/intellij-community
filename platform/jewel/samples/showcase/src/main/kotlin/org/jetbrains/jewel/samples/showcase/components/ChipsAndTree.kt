@@ -25,13 +25,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.isTraversalGroup
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.dp
 import kotlin.random.Random
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.jetbrains.jewel.foundation.lazy.SelectableLazyColumn
-import org.jetbrains.jewel.foundation.lazy.items
 import org.jetbrains.jewel.foundation.lazy.rememberSelectableLazyListState
 import org.jetbrains.jewel.foundation.lazy.tree.buildTree
 import org.jetbrains.jewel.foundation.theme.JewelTheme
@@ -43,9 +42,13 @@ import org.jetbrains.jewel.ui.component.LazyTree
 import org.jetbrains.jewel.ui.component.OutlinedButton
 import org.jetbrains.jewel.ui.component.RadioButtonChip
 import org.jetbrains.jewel.ui.component.SimpleListItem
+import org.jetbrains.jewel.ui.component.SpeedSearchArea
 import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.ToggleableChip
 import org.jetbrains.jewel.ui.component.VerticalScrollbar
+import org.jetbrains.jewel.ui.component.search.SpeedSearchableLazyColumn
+import org.jetbrains.jewel.ui.component.search.highlightSpeedSearchMatches
+import org.jetbrains.jewel.ui.component.search.highlightTextSearch
 import org.jetbrains.jewel.ui.theme.colorPalette
 
 @Composable
@@ -179,23 +182,30 @@ public fun SelectableLazyColumnSample(modifier: Modifier = Modifier) {
         if (listOfItems.isEmpty()) {
             CircularProgressIndicator(Modifier.align(Alignment.Center))
         } else {
-            SelectableLazyColumn(modifier = Modifier.focusable(), state = state) {
-                items(listOfItems, key = { item -> item }) { item ->
-                    LaunchedEffect(isSelected) {
-                        if (isSelected) {
-                            JewelLogger.getInstance("ChipsAndTree").info("Item $item got selected")
+            SpeedSearchArea {
+                SpeedSearchableLazyColumn(modifier = Modifier.focusable(), state = state) {
+                    items(listOfItems, textContent = { item -> item }, key = { item -> item }) { item ->
+                        LaunchedEffect(isSelected) {
+                            if (isSelected) {
+                                JewelLogger.getInstance("ChipsAndTree").info("Item $item got selected")
+                            }
                         }
-                    }
 
-                    SimpleListItem(
-                        text = item,
-                        selected = isSelected,
-                        active = isActive,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
+                        var textLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
+
+                        SimpleListItem(
+                            text = item.highlightTextSearch(),
+                            selected = isSelected,
+                            active = isActive,
+                            onTextLayout = { textLayoutResult = it },
+                            modifier = Modifier.fillMaxWidth(),
+                            textModifier = Modifier.highlightSpeedSearchMatches(textLayoutResult),
+                        )
+                    }
                 }
+
+                VerticalScrollbar(state.lazyListState, modifier = Modifier.align(Alignment.CenterEnd))
             }
-            VerticalScrollbar(state.lazyListState, modifier = Modifier.align(Alignment.CenterEnd))
         }
     }
 }
