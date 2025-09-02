@@ -29,7 +29,8 @@ public class TestMethod extends TestObject {
   protected JavaParameters createJavaParameters() throws ExecutionException {
     final JavaParameters javaParameters = createDefaultJavaParameters();
     final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
-    javaParameters.getProgramParametersList().add(data.getMainClassName() + "," + data.getMethodNameWithSignature());
+    final String runClass = getConfiguration().getRunClass();
+    javaParameters.getProgramParametersList().add(runClass + "," + data.getMethodNameWithSignature());
     return javaParameters;
   }
 
@@ -105,7 +106,7 @@ public class TestMethod extends TestObject {
       return Comparing.equal(testMethod.getName(), data.getMethodName());
     }*/
     return
-      Objects.equals(JavaExecutionUtil.getRuntimeQualifiedName(testClass), data.getMainClassName()) &&
+      Objects.equals(testClass.getQualifiedName(), data.getMainClassName()) &&
       Objects.equals(JUnitConfiguration.Data.getMethodPresentation(testMethod), data.getMethodNameWithSignature());
   }
 

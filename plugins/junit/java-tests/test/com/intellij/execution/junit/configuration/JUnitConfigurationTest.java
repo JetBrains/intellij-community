@@ -112,13 +112,13 @@ public class JUnitConfigurationTest extends JUnitConfigurationTestCase {
 
     PsiClass innerTest = findClass(module1, INNER_TEST_NAME);
     configuration = createJUnitConfiguration(innerTest, TestInClassConfigurationProducer.class, new MapDataContext());
-    checkClassName(RT_INNER_TEST_NAME, configuration);
+    checkClassName("test1.InnerTest.Inner", configuration);
     checkCanRun(configuration);
 
     PsiMethod[] testMethod = innerTest.findMethodsByName("test", false);
     assertEquals(1, testMethod.length);
     configuration = createConfiguration(testMethod[0]);
-    checkClassName(RT_INNER_TEST_NAME, configuration);
+    checkClassName("test1.InnerTest.Inner", configuration);
     checkMethodName("test", configuration);
     checkTestObject(JUnitConfiguration.TEST_METHOD, configuration);
     checkCanRun(configuration);

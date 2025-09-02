@@ -89,7 +89,7 @@ public class JUnitTestKindFragment extends SettingsEditorFragment<JUnitConfigura
 
     BrowseModuleValueActionListener<?>[] browsers = JUnitConfigurable.createBrowsers(project, moduleSelector, packageField, pattern, category, () -> getClassName());
     JavaCodeFragment.VisibilityChecker classVisibilityChecker = JUnitConfigurable.createClassVisibilityChecker((JUnitConfigurable.TestClassBrowser)browsers[CLASS]);
-    myClassField = ClassEditorField.createClassField(project, () -> moduleSelector.getModule(), classVisibilityChecker, browsers[CLASS]);
+    myClassField = ClassEditorField.create(project, () -> moduleSelector.getModule(), classVisibilityChecker, browsers[CLASS]);
     EditorTextFieldWithBrowseButton methodField = new EditorTextFieldWithBrowseButton(project, true,
                                                                                       JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE,
                                                                                       PlainTextLanguage.INSTANCE.getAssociatedFileType());
