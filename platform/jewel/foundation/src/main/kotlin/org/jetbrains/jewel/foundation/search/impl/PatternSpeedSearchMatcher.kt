@@ -426,7 +426,7 @@ internal class PatternSpeedSearchMatcher(
     }
 }
 
-private fun IntRange.Companion.from(startOffset: Int, length: Int) = startOffset..startOffset + length
+private fun IntRange.Companion.from(startOffset: Int, length: Int) = startOffset until startOffset + length
 
 private fun Char.isUpperCaseOrDigit(): Boolean = isUpperCase() || isDigit()
 

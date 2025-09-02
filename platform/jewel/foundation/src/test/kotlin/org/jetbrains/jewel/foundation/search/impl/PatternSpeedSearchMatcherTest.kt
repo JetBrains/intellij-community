@@ -41,7 +41,7 @@ public class PatternSpeedSearchMatcherTest {
 
         assertIs<SpeedSearchMatcher.MatchResult.Match>(result)
         assertEquals(1, result.ranges.size)
-        assertEquals(0..2, result.ranges[0])
+        assertEquals(0 until 2, result.ranges[0])
     }
 
     @Test
@@ -51,7 +51,7 @@ public class PatternSpeedSearchMatcherTest {
 
         assertIs<SpeedSearchMatcher.MatchResult.Match>(result)
         assertEquals(1, result.ranges.size)
-        assertEquals(3..6, result.ranges[0])
+        assertEquals(3 until 6, result.ranges[0])
     }
 
     @Test
@@ -61,7 +61,7 @@ public class PatternSpeedSearchMatcherTest {
 
         assertIs<SpeedSearchMatcher.MatchResult.Match>(result)
         assertEquals(1, result.ranges.size)
-        assertEquals(3..6, result.ranges[0])
+        assertEquals(3 until 6, result.ranges[0])
     }
 
     @Test
@@ -72,7 +72,7 @@ public class PatternSpeedSearchMatcherTest {
         matcher.matches("abcdef").let { result ->
             assertIs<SpeedSearchMatcher.MatchResult.Match>(result)
             assertEquals(1, result.ranges.size)
-            assertEquals(0..2, result.ranges[0])
+            assertEquals(0 until 2, result.ranges[0])
         }
 
         // If the value is not found in the beginning, the implementation should return null
@@ -86,7 +86,7 @@ public class PatternSpeedSearchMatcherTest {
 
         assertIs<SpeedSearchMatcher.MatchResult.Match>(result)
         assertEquals(1, result.ranges.size)
-        assertEquals(2..4, result.ranges[0])
+        assertEquals(2 until 4, result.ranges[0])
     }
 
     @Test
@@ -98,7 +98,7 @@ public class PatternSpeedSearchMatcherTest {
         // The implementation matches each letter separately
         assertIs<SpeedSearchMatcher.MatchResult.Match>(result)
         assertEquals(1, result.ranges.size)
-        assertEquals(4..6, result.ranges[0])
+        assertEquals(4 until 6, result.ranges[0])
     }
 
     @Test
@@ -110,7 +110,7 @@ public class PatternSpeedSearchMatcherTest {
         // The implementation matches each letter separately
         assertIs<SpeedSearchMatcher.MatchResult.Match>(result)
         assertEquals(1, result.ranges.size)
-        assertEquals(2..4, result.ranges[0])
+        assertEquals(2 until 4, result.ranges[0])
     }
 
     @Test
@@ -128,7 +128,7 @@ public class PatternSpeedSearchMatcherTest {
         // The implementation matches each letter separately with ALL case sensitivity
         assertIs<SpeedSearchMatcher.MatchResult.Match>(result)
         assertEquals(1, result.ranges.size)
-        assertEquals(2..4, result.ranges[0])
+        assertEquals(2 until 4, result.ranges[0])
     }
 
     @Test
@@ -138,11 +138,11 @@ public class PatternSpeedSearchMatcherTest {
         matcher.matches("An Eye For An Eye").let { result ->
             assertIs<SpeedSearchMatcher.MatchResult.Match>(result)
             assertEquals(5, result.ranges.size)
-            assertEquals(0..2, result.ranges[0]) // An
-            assertEquals(3..6, result.ranges[1]) // Eye
-            assertEquals(7..10, result.ranges[2]) // For
-            assertEquals(11..13, result.ranges[3]) // An
-            assertEquals(14..17, result.ranges[4]) // Eye
+            assertEquals(0 until 2, result.ranges[0]) // An
+            assertEquals(3 until 6, result.ranges[1]) // Eye
+            assertEquals(7 until 10, result.ranges[2]) // For
+            assertEquals(11 until 13, result.ranges[3]) // An
+            assertEquals(14 until 17, result.ranges[4]) // Eye
         }
 
         assertIs<SpeedSearchMatcher.MatchResult.NoMatch>(matcher.matches("AN EYE FOR AN EYE")) // Not matching lower
@@ -159,7 +159,7 @@ public class PatternSpeedSearchMatcherTest {
 
         assertIs<SpeedSearchMatcher.MatchResult.Match>(result)
         assertEquals(1, result.ranges.size)
-        assertEquals(14..17, result.ranges[0])
+        assertEquals(14 until 17, result.ranges[0])
     }
 
     @Test
@@ -170,36 +170,36 @@ public class PatternSpeedSearchMatcherTest {
         matcher.matches("AbCdef").let { result ->
             assertIs<SpeedSearchMatcher.MatchResult.Match>(result)
             assertEquals(1, result.ranges.size)
-            assertEquals(0..4, result.ranges[0])
+            assertEquals(0 until 4, result.ranges[0])
         }
 
         // As "B" is not the first letter, neither upper in the pattern, it can match
         matcher.matches("ABCdef").let { result ->
             assertIs<SpeedSearchMatcher.MatchResult.Match>(result)
             assertEquals(1, result.ranges.size)
-            assertEquals(0..4, result.ranges[0])
+            assertEquals(0 until 4, result.ranges[0])
         }
 
         // As "D" is not the first letter, neither upper in the pattern, it can match
         matcher.matches("AbCDef").let { result ->
             assertIs<SpeedSearchMatcher.MatchResult.Match>(result)
             assertEquals(1, result.ranges.size)
-            assertEquals(0..4, result.ranges[0])
+            assertEquals(0 until 4, result.ranges[0])
         }
 
         // As neither "B" or "D" are the first letter, neither upper in the pattern, it can match
         matcher.matches("ABCDef").let { result ->
             assertIs<SpeedSearchMatcher.MatchResult.Match>(result)
             assertEquals(1, result.ranges.size)
-            assertEquals(0..4, result.ranges[0])
+            assertEquals(0 until 4, result.ranges[0])
         }
 
         // Should match "Ab", skip "cd" (lower case), and match "Cd" with "C" upper case
         matcher.matches("AbcdCdef").let { result ->
             assertIs<SpeedSearchMatcher.MatchResult.Match>(result)
             assertEquals(2, result.ranges.size)
-            assertEquals(0..2, result.ranges[0])
-            assertEquals(4..6, result.ranges[1])
+            assertEquals(0 until 2, result.ranges[0])
+            assertEquals(4 until 6, result.ranges[1])
         }
 
         // Should match "AB", skip "cd" (lower case), and match "Cd" with "C" and "D" upper case
@@ -207,8 +207,8 @@ public class PatternSpeedSearchMatcherTest {
         matcher.matches("ABcdCdef").let { result ->
             assertIs<SpeedSearchMatcher.MatchResult.Match>(result)
             assertEquals(2, result.ranges.size)
-            assertEquals(0..2, result.ranges[0])
-            assertEquals(4..6, result.ranges[1])
+            assertEquals(0 until 2, result.ranges[0])
+            assertEquals(4 until 6, result.ranges[1])
         }
 
         // Should match "Ab", skip "cd" (lower case), and match "Cd" with "C" and "D" upper case
@@ -216,8 +216,8 @@ public class PatternSpeedSearchMatcherTest {
         matcher.matches("AbcdCDef").let { result ->
             assertIs<SpeedSearchMatcher.MatchResult.Match>(result)
             assertEquals(2, result.ranges.size)
-            assertEquals(0..2, result.ranges[0])
-            assertEquals(4..6, result.ranges[1])
+            assertEquals(0 until 2, result.ranges[0])
+            assertEquals(4 until 6, result.ranges[1])
         }
 
         // Should not match as "C" is lower case
@@ -235,8 +235,8 @@ public class PatternSpeedSearchMatcherTest {
 
         assertIs<SpeedSearchMatcher.MatchResult.Match>(result)
         assertEquals(2, result.ranges.size)
-        assertEquals(0..1, result.ranges[0])
-        assertEquals(5..6, result.ranges[1])
+        assertEquals(0 until 1, result.ranges[0])
+        assertEquals(5 until 6, result.ranges[1])
     }
 
     @Test
@@ -246,8 +246,8 @@ public class PatternSpeedSearchMatcherTest {
 
         assertIs<SpeedSearchMatcher.MatchResult.Match>(result)
         assertEquals(2, result.ranges.size)
-        assertEquals(1..2, result.ranges[0])
-        assertEquals(5..6, result.ranges[1])
+        assertEquals(1 until 2, result.ranges[0])
+        assertEquals(5 until 6, result.ranges[1])
     }
 
     @Test
@@ -258,9 +258,9 @@ public class PatternSpeedSearchMatcherTest {
         assertIs<SpeedSearchMatcher.MatchResult.Match>(result)
         assertEquals(3, result.ranges.size)
         // The implementation returns separate ranges for each matched capital letter
-        assertEquals(0..1, result.ranges[0])
-        assertEquals(5..6, result.ranges[1])
-        assertEquals(9..10, result.ranges[2])
+        assertEquals(0 until 1, result.ranges[0])
+        assertEquals(5 until 6, result.ranges[1])
+        assertEquals(9 until 10, result.ranges[2])
     }
 
     @Test
@@ -272,8 +272,8 @@ public class PatternSpeedSearchMatcherTest {
         assertEquals(2, result.ranges.size)
         // The implementation returns separate ranges for the matched parts
 
-        assertEquals(0..1, result.ranges[0])
-        assertEquals(6..7, result.ranges[1])
+        assertEquals(0 until 1, result.ranges[0])
+        assertEquals(6 until 7, result.ranges[1])
     }
 
     @Test
@@ -285,7 +285,7 @@ public class PatternSpeedSearchMatcherTest {
         assertEquals(1, result.ranges.size)
         // The implementation returns separate ranges for the matched parts
 
-        assertEquals(6..9, result.ranges[0])
+        assertEquals(6 until 9, result.ranges[0])
     }
 
     @Test
@@ -329,8 +329,8 @@ public class PatternSpeedSearchMatcherTest {
         assertIs<SpeedSearchMatcher.MatchResult.Match>(result)
         assertEquals(2, result.ranges.size)
         // The implementation returns separate ranges for the matched parts
-        assertEquals(0..1, result.ranges[0])
-        assertEquals(10..11, result.ranges[1])
+        assertEquals(0 until 1, result.ranges[0])
+        assertEquals(10 until 11, result.ranges[1])
     }
 
     @Test
@@ -342,8 +342,8 @@ public class PatternSpeedSearchMatcherTest {
         // The implementation matches each letter separately
         assertIs<SpeedSearchMatcher.MatchResult.Match>(result)
         assertEquals(2, result.ranges.size)
-        assertEquals(0..1, result.ranges[0])
-        assertEquals(6..7, result.ranges[1])
+        assertEquals(0 until 1, result.ranges[0])
+        assertEquals(6 until 7, result.ranges[1])
     }
 
     @Test
@@ -357,7 +357,7 @@ public class PatternSpeedSearchMatcherTest {
 
         assertIs<SpeedSearchMatcher.MatchResult.Match>(result)
         assertEquals(1, result.ranges.size)
-        assertEquals(150..251, result.ranges[0])
+        assertEquals(150 until 251, result.ranges[0])
     }
 
     @Test
@@ -367,6 +367,6 @@ public class PatternSpeedSearchMatcherTest {
 
         assertIs<SpeedSearchMatcher.MatchResult.Match>(result)
         assertEquals(1, result.ranges.size)
-        assertEquals(0..3, result.ranges[0])
+        assertEquals(0 until 3, result.ranges[0])
     }
 }
