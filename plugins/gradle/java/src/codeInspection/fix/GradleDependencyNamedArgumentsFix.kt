@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 
@@ -26,29 +27,38 @@ class GradleDependencyNamedArgumentsFix(element: PsiElement) : LocalQuickFixOnPs
   }
 
   override fun invoke(project: Project, psiFile: PsiFile, startElement: PsiElement, endElement: PsiElement) {
-    if (startElement !is GrMethodCall) return
-    val group = startElement.namedArguments.find {
+    val namedArguments = when (startElement) {
+      is GrMethodCall -> startElement.namedArguments
+      is GrListOrMap -> startElement.namedArguments
+      else -> return
+    }
+    val group = namedArguments.find {
       it.labelName == "group"
     }?.expression?.text?.removeSurrounding("'")?.removeSurrounding("\"") ?: return
-    val name = startElement.namedArguments.find {
+    val name = namedArguments.find {
       it.labelName == "name"
     }?.expression?.text?.removeSurrounding("'")?.removeSurrounding("\"") ?: return
-    val version = startElement.namedArguments.find {
+    val version = namedArguments.find {
       it.labelName == "version"
     }?.expression?.text?.removeSurrounding("'")?.removeSurrounding("\"")
     val dependency = if (version != null) "$group:$name:$version" else "$group:$name"
 
-    val types = startElement.namedArguments.mapNotNull { it.expression?.type }
-
-    startElement.namedArguments.forEach { it.delete() }
-
-    // add dependency id as one string argument
-    if (types.any { it.equalsToText(GroovyCommonClassNames.GROOVY_LANG_GSTRING) }) {
+    val types = namedArguments.mapNotNull { it.expression?.type }
+    val newArgument = if (types.any { it.equalsToText(GroovyCommonClassNames.GROOVY_LANG_GSTRING) }) {
       // if any of the named arguments were of type GString, the new argument should also be a GString
-      startElement.argumentList.add(GroovyPsiElementFactory.getInstance(project).createExpressionFromText("\"$dependency\""))
+      GroovyPsiElementFactory.getInstance(project).createExpressionFromText("\"$dependency\"")
     } else {
       // else single quoted string literal
-      startElement.argumentList.add(GroovyPsiElementFactory.getInstance(project).createLiteralFromValue(dependency))
+      GroovyPsiElementFactory.getInstance(project).createLiteralFromValue(dependency)
+    }
+
+    when (startElement) {
+      is GrMethodCall -> {
+        namedArguments.forEach { it.delete() }
+        startElement.argumentList.add(newArgument)
+      }
+      is GrListOrMap -> startElement.replace(newArgument)
+      else -> return
     }
   }
 
