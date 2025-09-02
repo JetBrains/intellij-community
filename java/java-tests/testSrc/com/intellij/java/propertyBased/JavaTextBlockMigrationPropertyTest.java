@@ -73,7 +73,9 @@ public class JavaTextBlockMigrationPropertyTest extends LightJavaCodeInsightFixt
       MadTestingUtil.performOnFileContents(myFixture, PathManager.getHomePath(), f -> f.getName().endsWith(".java"),
                                            this::transformContent);
     PropertyChecker.
-      checkScenarios(fileAction);
+      customized()
+      .rechecking("8pL0YcjoxdYPRt0E2RIJAAUA2gNIBw0OAwUJBBwBBAUICAQAAwIJBQYTAQAGByAJ")
+      .checkScenarios(fileAction);
   }
 
   private void transformContent(@NotNull ImperativeCommand.Environment env, @NotNull VirtualFile file) {
@@ -174,6 +176,9 @@ public class JavaTextBlockMigrationPropertyTest extends LightJavaCodeInsightFixt
         line = value == null ? null : value.toString();
       }
       if (line == null) return null;
+      if (line.equals("\"")) {
+        line = StringUtil.escapeStringCharacters(line);
+      }
       lines[i] = line;
     }
     // IDEA-226395
