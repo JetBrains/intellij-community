@@ -2,14 +2,14 @@
 package com.intellij.util.concurrency
 
 import com.intellij.concurrency.currentThreadContext
+import com.intellij.concurrency.virtualThreads.IntelliJVirtualThreads
 import com.intellij.openapi.application.EDT
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.ui.EDT
-import com.intellij.virtualThreads.IntelliJVirtualThreads
-import com.intellij.virtualThreads.asyncAsVirtualThread
-import com.intellij.virtualThreads.launchAsVirtualThread
-import com.intellij.virtualThreads.virtualThread
+import com.intellij.concurrency.virtualThreads.asyncAsVirtualThread
+import com.intellij.concurrency.virtualThreads.launchAsVirtualThread
+import com.intellij.concurrency.virtualThreads.virtualThread
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers

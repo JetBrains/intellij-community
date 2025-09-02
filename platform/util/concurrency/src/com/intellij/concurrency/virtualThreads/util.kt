@@ -2,7 +2,7 @@
 @file:JvmName("VirtualThreads")
 @file:ApiStatus.Experimental
 
-package com.intellij.virtualThreads
+package com.intellij.concurrency.virtualThreads
 
 import com.intellij.concurrency.installThreadContext
 import com.intellij.util.concurrency.createChildContextWithContextJob
@@ -17,7 +17,7 @@ import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 
 /**
- * Creates a new [virtual thread][java.lang.Thread.Builder.OfVirtual] that runs the specified [block] of code.
+ * Creates a new [virtual thread][Thread.Builder.OfVirtual] that runs the specified [block] of code.
  *
  * This function is opposed to [kotlin.concurrent.thread], which creates a new *platform* thread
  */
@@ -44,7 +44,7 @@ fun virtualThread(
 }
 
 /**
- * Executes [action] in a virtual thread on top of [kotlinx.coroutines.Dispatchers.Default].
+ * Executes [action] in a virtual thread on top of [Dispatchers.Default].
  * The coroutine dispatcher is forcefully overridden, so any attempt to specify the dispatcher in the [receiving scope][this] or [context] would have no effect.
  * [action] gets canceled whenever the job of the [receiving scope][this] is canceled.
  *
