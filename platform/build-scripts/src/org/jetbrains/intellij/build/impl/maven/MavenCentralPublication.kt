@@ -77,39 +77,39 @@ class MavenCentralPublication(
     private const val STATUS_URI_BASE = "$URI_BASE/status"
     private val JSON = Json { ignoreUnknownKeys = true }
     private val SUPPORTED_CHECKSUMS = setOf("md5", "sha1", "sha256", "sha512")
+  }
 
-    /**
-     * See https://central.sonatype.org/publish/requirements/#required-pom-metadata
-     */
-    fun loadAndValidatePomXml(pom: Path): MavenCoordinates {
-      val pomModel = pom.inputStream().bufferedReader().use {
-        MavenXpp3Reader().read(it, true)
-      }
-      val coordinates = MavenCoordinates(
-        groupId = pomModel.groupId ?: error("$pom doesn't contain <groupId>"),
-        artifactId = pomModel.artifactId ?: error("$pom doesn't contain <artifactId>"),
-        version = pomModel.version ?: error("$pom doesn't contain <version>"),
-      )
-      check(!pomModel.name.isNullOrBlank()) {
-        "$pom doesn't contain <name>"
-      }
-      check(!pomModel.description.isNullOrBlank()) {
-        "$pom doesn't contain <description>"
-      }
-      check(!pomModel.url.isNullOrBlank()) {
-        "$pom doesn't contain <url>"
-      }
-      check(pomModel.licenses.any()) {
-        "$pom doesn't contain <licenses>"
-      }
-      check(pomModel.developers.any()) {
-        "$pom doesn't contain <developers>"
-      }
-      check(pomModel.scm != null) {
-        "$pom doesn't contain <scm>"
-      }
-      return coordinates
+  /**
+   * See https://central.sonatype.org/publish/requirements/#required-pom-metadata
+   */
+  private fun loadAndValidatePomXml(pom: Path): MavenCoordinates {
+    val pomModel = pom.inputStream().bufferedReader().use {
+      MavenXpp3Reader().read(it, true)
     }
+    val coordinates = MavenCoordinates(
+      groupId = pomModel.groupId ?: error("$pom doesn't contain <groupId>"),
+      artifactId = pomModel.artifactId ?: error("$pom doesn't contain <artifactId>"),
+      version = pomModel.version ?: error("$pom doesn't contain <version>"),
+    )
+    check(!pomModel.name.isNullOrBlank()) {
+      "$pom doesn't contain <name>"
+    }
+    check(!pomModel.description.isNullOrBlank()) {
+      "$pom doesn't contain <description>"
+    }
+    check(!pomModel.url.isNullOrBlank()) {
+      "$pom doesn't contain <url>"
+    }
+    check(pomModel.licenses.any()) {
+      "$pom doesn't contain <licenses>"
+    }
+    check(pomModel.developers.any()) {
+      "$pom doesn't contain <developers>"
+    }
+    check(pomModel.scm != null) {
+      "$pom doesn't contain <scm>"
+    }
+    return coordinates
   }
 
   enum class PublishingType {
@@ -117,7 +117,7 @@ class MavenCentralPublication(
     AUTOMATIC,
   }
 
-  private class MavenArtifacts(
+  class MavenArtifacts(
     val coordinates: MavenCoordinates,
     val distributionFiles: Collection<Path>,
   ) {
@@ -162,7 +162,7 @@ class MavenCentralPublication(
     return matchingFiles
   }
 
-  private val artifacts: List<MavenArtifacts> by lazy {
+  val artifacts: List<MavenArtifacts> by lazy {
     files(glob = "*.pom").map { pom ->
       val coordinates = loadAndValidatePomXml(pom)
       val distributionFiles = files(glob = "${coordinates.filesPrefix}*")
@@ -181,7 +181,6 @@ class MavenCentralPublication(
 
   suspend fun execute() {
     sign()
-    generateOrVerifyChecksums()
     val deploymentId = publish(bundle())
     if (deploymentId != null) wait(deploymentId)
   }
@@ -254,14 +253,20 @@ class MavenCentralPublication(
   /**
    * https://central.sonatype.org/publish/publish-portal-upload/
    */
-  private suspend fun bundle(): Path {
+  suspend fun bundle(): Path {
+    generateOrVerifyChecksums()
     return spanBuilder("creating a bundle").use {
       val bundle = workDir.resolve("bundle.zip")
       bundle.deleteIfExists()
       Compressor.Zip(bundle).use { zip ->
         for (artifact in artifacts) {
+          val signatures = artifact.signatures.asSequence().onEach {
+            check(it.exists() || dryRun) {
+              "Signature file $it doesn't exist"
+            }
+          }.filter { it.exists() }
           artifact.distributionFiles.asSequence()
-            .plus(artifact.signatures)
+            .plus(signatures)
             .plus(artifact.checksums)
             .distinct()
             .forEach {
