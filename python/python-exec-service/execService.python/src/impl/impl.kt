@@ -38,7 +38,7 @@ internal suspend fun ExecService.validatePythonAndGetVersionImpl(python: Executa
   val versionString = versionOutput.stdoutString.let { it.ifBlank { versionOutput.stderrString } }
   val languageLevel = getLanguageLevelFromVersionStringStaticSafe(versionString.trim())
   if (languageLevel == null) {
-    return@withContext PyResult.localizedError(message("python.get.version.wrong.version", python.userReadableName, versionOutput))
+    return@withContext PyResult.localizedError(message("python.get.version.wrong.version", python.userReadableName, versionString))
   }
   return@withContext Result.success(languageLevel)
 }
