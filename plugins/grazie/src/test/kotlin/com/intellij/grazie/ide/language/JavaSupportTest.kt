@@ -10,7 +10,7 @@ import com.intellij.tools.ide.metrics.benchmark.Benchmark
 
 
 class JavaSupportTest : GrazieTestBase() {
-  override val additionalEnabledRules: Set<String> = setOf("LanguageTool.EN.UPPERCASE_SENTENCE_START")
+  override val additionalEnabledRules: Set<String> = setOf("LanguageTool.EN.UPPERCASE_SENTENCE_START", "LanguageTool.EN.FILE_EXTENSIONS_CASE")
   override val enableGrazieChecker: Boolean = true
 
   override fun getProjectDescriptor(): LightProjectDescriptor {
@@ -134,6 +134,12 @@ class JavaSupportTest : GrazieTestBase() {
         }
       }
     """)
+  }
+
+  fun `test no highlighting after fixing an error within the same range`() {
+    runHighlightTestForFile("ide/language/java/PDF.java")
+    myFixture.launchAction(myFixture.findSingleIntention("PDF"))
+    myFixture.checkHighlighting()
   }
 
   private fun doTest(beforeText: String, afterText: String, hint: String) {

@@ -22,7 +22,6 @@ import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.*;
@@ -43,7 +42,7 @@ public abstract class TextExtractor {
   private static final Key<CachedValue<Cache>> COMMON_PARENT_CACHE = Key.create("TextExtractor common parent cache");
   private static final Key<CachedValue<Cache>> QUERY_CACHE = Key.create("TextExtractor query cache");
   private static final Key<Boolean> IGNORED = Key.create("TextExtractor ignored");
-  private static final Key<Map<TextContent, TextContent>> CONTENT_INTERNER = Key.create("TextExtractor interner");
+  private static final Key<CachedValue<Map<TextContent, TextContent>>> CONTENT_INTERNER = Key.create("TextExtractor interner");
   private static final Pattern SUPPRESSION = Pattern.compile(SuppressionUtil.COMMON_SUPPRESS_REGEXP);
 
   /**
@@ -164,9 +163,16 @@ public abstract class TextExtractor {
     var providedTracker = provider != null ? provider.getModificationTracker(psi) : null;
     var tracker = providedTracker != null ? providedTracker : PsiModificationTracker.MODIFICATION_COUNT;
     
-    CachedValue<Cache> cache = CachedValuesManager.getManager(psi.getProject()).createCachedValue(
-      () -> CachedValueProvider.Result.create(new Cache(), tracker));
+    CachedValue<Cache> cache = CachedValuesManager.getManager(psi.getProject())
+      .createCachedValue(() -> CachedValueProvider.Result.create(new Cache(), tracker));
     cache = ((UserDataHolderEx)psi).putUserDataIfAbsent(key, cache);
+    return cache.getValue();
+  }
+
+  private static Map<TextContent, TextContent> obtainInterner(PsiFile file) {
+    CachedValue<Map<TextContent, TextContent>> cache = CachedValuesManager.getManager(file.getProject())
+      .createCachedValue(() -> CachedValueProvider.Result.create(createConcurrentWeakKeyWeakValueMap(), file));
+    cache = ((UserDataHolderEx)file).putUserDataIfAbsent(CONTENT_INTERNER, cache);
     return cache.getValue();
   }
 
@@ -190,7 +196,7 @@ public abstract class TextExtractor {
     if (contents.isEmpty()) return Collections.emptyList();
 
     // deduplicate equal contents created by different threads to avoid O(token_count) 'equals' checks later on
-    var interner = ConcurrencyUtil.computeIfAbsent(file, CONTENT_INTERNER, () -> createConcurrentWeakKeyWeakValueMap());
+    var interner = obtainInterner(file);
     contents = ContainerUtil.map(contents, content -> interner.computeIfAbsent(content, __ -> content));
 
     for (TextContent content : contents) {
