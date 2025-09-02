@@ -27,6 +27,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -207,7 +208,13 @@ public abstract class AbstractRerunFailedTestsAction extends AnAction {
   protected @Nullable MyRunProfile getRunProfile(@NotNull ExecutionEnvironment environment) {
     return null;
   }
-
+  
+  @TestOnly
+  @ApiStatus.Internal
+  public @Nullable RunConfiguration getRunProfileTestAccessor(@NotNull ExecutionEnvironment environment) {
+    return getRunProfile(environment);
+  }
+  
   public @Nullable TestFrameworkRunningModel getModel() {
     if (myModel != null) {
       return myModel;
