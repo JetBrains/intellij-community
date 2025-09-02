@@ -10,7 +10,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.terminal.frontend.completion.TerminalCommandCompletion
+import com.intellij.terminal.frontend.completion.TerminalCommandCompletionHandler
 import org.jetbrains.annotations.Unmodifiable
 import org.jetbrains.plugins.terminal.LocalBlockTerminalRunner.Companion.REWORKED_TERMINAL_COMPLETION_POPUP
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isReworkedTerminalEditor
@@ -26,7 +26,7 @@ internal class TerminalCommandCompletionActionGen2 : BaseCodeCompletionAction(),
       if (inlineCompletionHandler != null && inlineCompletionContext != null) {
         inlineCompletionHandler.hide(inlineCompletionContext)
       }
-      val terminalCodeCompletion = TerminalCommandCompletion(CompletionType.BASIC, true, false, true)
+      val terminalCodeCompletion = TerminalCommandCompletionHandler(CompletionType.BASIC, true, false, true)
       terminalCodeCompletion.invokeCompletion(e, 1)
     }
   }
@@ -42,7 +42,7 @@ internal class TerminalCommandCompletionActionGen2 : BaseCodeCompletionAction(),
     autopopup: Boolean,
     synchronous: Boolean,
   ): CodeCompletionHandlerBase {
-    return TerminalCommandCompletion(completionType, invokedExplicitly, autopopup, synchronous)
+    return TerminalCommandCompletionHandler(completionType, invokedExplicitly, autopopup, synchronous)
   }
 
   override fun promote(actions: @Unmodifiable List<AnAction?>, context: DataContext): @Unmodifiable List<AnAction?>? {

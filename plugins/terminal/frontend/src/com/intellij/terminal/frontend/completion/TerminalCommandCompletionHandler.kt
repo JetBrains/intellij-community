@@ -19,28 +19,22 @@ import com.intellij.terminal.frontend.action.TerminalFrontendDataContextUtils.te
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.terminalEditor
 
-internal class TerminalCommandCompletion(
-  val completionType: CompletionType,
-  val invokedExplicitly: Boolean,
-  val autopopup: Boolean,
-  val synchronous: Boolean,
-) :
-  CodeCompletionHandlerBase(completionType, invokedExplicitly, autopopup, synchronous) {
+internal class TerminalCommandCompletionHandler(
+  private val completionType: CompletionType,
+  private val invokedExplicitly: Boolean,
+  autopopup: Boolean,
+  synchronous: Boolean,
+) : CodeCompletionHandlerBase(completionType, invokedExplicitly, autopopup, synchronous) {
   fun invokeCompletion(e: AnActionEvent, time: Int) {
-    val outputModel = e.terminalOutputModel
-                      ?: throw AssertionError("Output model is null during completion")
-
-    val commonEditor = e.terminalEditor
-                       ?: throw AssertionError("Common editor is null during completion")
-
-    val project = commonEditor.project
-                  ?: throw AssertionError("Project is null during completion")
+    val outputModel = e.terminalOutputModel ?: error("Output model is null during completion")
+    val editor = e.terminalEditor ?: error("Terminal editor is null during completion")
+    val project = editor.project ?: error("Project is null during completion")
 
     val inputEvent = e.inputEvent
-    val caret = prepareCaret(commonEditor, outputModel)
+    val caret = prepareCaret(editor, outputModel)
 
-    invokeCompletion(project, commonEditor, time, inputEvent != null && inputEvent.modifiersEx != 0,
-                     caret)
+    val hasModifiers = inputEvent != null && inputEvent.modifiersEx != 0
+    invokeCompletion(project, editor, time, hasModifiers, caret)
   }
 
   override fun invokeCompletion(
