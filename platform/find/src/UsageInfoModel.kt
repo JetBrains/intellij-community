@@ -118,11 +118,9 @@ internal class UsageInfoModel private constructor(val project: Project, val mode
             return@launch
           }
 
-          (virtualFile as? ContentPreloadable)?.let { capability ->
-            try {
-              capability.preloadContent()
-            } catch (t: Throwable) {
-              LOG.debug("preloadContent failed during UsageInfoModel initialization for ${model.presentablePath}", t)
+          (virtualFile as? ContentPreloadable)?.let { file ->
+            LOG.runAndLogException {
+              file.preloadContent()
             }
           }
 
