@@ -16,7 +16,6 @@ import java.util.function.Predicate
 import javax.swing.JComponent
 
 internal class KotlinHighlightingSuspendNotificationProvider : EditorNotificationProvider {
-    // same as [org.jetbrains.kotlin.idea.configuration.ui.KotlinPluginKindSwitcherController.canSwitchKotlinPluginModeViaUI]
     private fun canSwitchKotlinPluginModeViaUI(): Boolean = VMOptions.canWriteOptions()
 
     override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {

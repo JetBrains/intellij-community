@@ -145,7 +145,6 @@
             key="kotlin.language.configurable"
             id="preferences.language.Kotlin"
             instance="org.jetbrains.kotlin.idea.configuration.KotlinLanguageConfiguration"/>
-    <search.optionContributor implementation="org.jetbrains.kotlin.idea.configuration.KotlinPluginSwitchSearchOptionContributor"/>
 
     <projectConfigurable
             instance="org.jetbrains.kotlin.idea.base.compilerPreferences.configuration.KotlinCompilerConfigurableTab"
