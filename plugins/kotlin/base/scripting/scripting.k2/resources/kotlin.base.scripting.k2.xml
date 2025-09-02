@@ -43,7 +43,6 @@
                          instance="org.jetbrains.kotlin.idea.core.script.k2.settings.KotlinScriptingSettingsConfigurable"
                          parentId="preferences.language.Kotlin"/>
 
-    <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.core.script.k2.notifications.MainKtsScriptNotificationProvider"/>
     <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.core.script.k2.notifications.ScriptingSupportChecker"/>
 
     <registryKey defaultValue="false" key="kotlin.scripting.show.widget"
