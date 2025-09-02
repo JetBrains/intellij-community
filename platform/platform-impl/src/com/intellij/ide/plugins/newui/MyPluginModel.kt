@@ -898,6 +898,7 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
       val errors = getErrors(errorCheckResult)
       if (myPluginManagerCustomizer != null) {
         myPluginManagerCustomizer.updateAfterModificationAsync {
+          removeProgresses(descriptor)
           updateUiAfterUninstall(descriptor, needRestartForUninstall, errors)
           callback?.run()
         }
@@ -908,10 +909,14 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
       }
     }
     finally {
-      for (panel in myDetailPanels) {
-        if (panel.descriptorForActions === descriptor) {
-          panel.hideProgress()
-        }
+      removeProgresses(descriptor)
+    }
+  }
+
+  private fun removeProgresses(descriptor: PluginUiModel) {
+    for (panel in myDetailPanels) {
+      if (panel.descriptorForActions === descriptor) {
+        panel.hideProgress()
       }
     }
   }

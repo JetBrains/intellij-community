@@ -109,7 +109,7 @@ internal object PluginModelAsyncOperationsExecutor {
     cs.launch(Dispatchers.IO) {
       val result = UiPluginManager.getInstance().enablePlugins(sessionId, descriptorIds, enable, project)
       withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-        callback(result)
+        PluginManagerCustomizer.getInstance()?.updateAfterModificationAsync { callback(result) }
       }
     }
   }
