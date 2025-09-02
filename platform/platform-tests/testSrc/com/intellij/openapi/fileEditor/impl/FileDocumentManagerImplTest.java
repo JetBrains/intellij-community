@@ -16,7 +16,9 @@ import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -41,6 +43,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.Future;
@@ -674,8 +677,8 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
   public void testBeforeSaveAnyDocument_firedBeforeBeforeDocumentSaving() throws Exception {
     VirtualFile file = createFile();
     Document document = myDocumentManager.getDocument(file);
-    ArrayList<Document> firedDocuments = new ArrayList<>();
-    ArrayList<Document> reallySavedDocuments = new ArrayList<>();
+    List<Document> firedDocuments = new ArrayList<>();
+    List<Document> reallySavedDocuments = new ArrayList<>();
 
     getProject().getMessageBus().connect(getTestRootDisposable()).subscribe(FileDocumentManagerListener.TOPIC, new FileDocumentManagerListener() {
       @Override
@@ -694,6 +697,33 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
     myDocumentManager.saveDocument(document);
     assertOrderedEquals(firedDocuments, document);
     assertOrderedEquals(reallySavedDocuments, document);
+  }
+  public void testAfterDocumentSavedListener() throws Exception {
+    VirtualFile file = createFile();
+    Document myDoc = myDocumentManager.getDocument(file);
+    List<String> log = Collections.synchronizedList(new ArrayList<>());
+
+    getProject().getMessageBus().connect(getTestRootDisposable()).subscribe(FileDocumentManagerListener.TOPIC, new FileDocumentManagerListener() {
+      @Override
+      public void beforeDocumentSaving(@NotNull Document document) {
+        if (document == myDoc) {
+          assertTrue(FileDocumentManager.getInstance().isDocumentUnsaved(document));
+          log.add("BS");
+        }
+      }
+
+      @Override
+      public void afterDocumentSaved(@NotNull Document document) {
+        if (document == myDoc) {
+          assertFalse(FileDocumentManager.getInstance().isDocumentUnsaved(document));
+          log.add("AS");
+        }
+      }
+    });
+
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> myDoc.insertString(0, "xxx"));
+    myDocumentManager.saveDocument(myDoc);
+    assertOrderedEquals(log, "BS", "AS");
   }
 
   private void checkDocumentFiles(List<? extends VirtualFile> files) throws Exception {

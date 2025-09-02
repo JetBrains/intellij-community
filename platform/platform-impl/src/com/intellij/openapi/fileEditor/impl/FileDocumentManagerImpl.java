@@ -390,6 +390,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
     LOG.trace("  writing...");
     WriteAction.run(() -> doSaveDocumentInWriteAction(document, file));
     LOG.trace("  done");
+    myMultiCaster.afterDocumentSaved(document);
   }
 
   private boolean maySaveDocument(@NotNull VirtualFile file, @NotNull Document document, boolean isExplicit) {
