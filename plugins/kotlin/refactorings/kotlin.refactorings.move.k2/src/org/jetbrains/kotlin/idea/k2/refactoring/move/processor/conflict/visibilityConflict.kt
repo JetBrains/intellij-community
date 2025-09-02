@@ -143,7 +143,7 @@ internal fun checkVisibilityConflictForNonMovedUsages(
             tryFindConflict {
                 val usageElement = usageInfo.element ?: return@tryFindConflict null
                 val referencedDeclaration = usageInfo.upToDateReferencedElement as? KtNamedDeclaration ?: return@tryFindConflict null
-                analyze(referencedDeclaration) {
+                allowAnalysisFromWriteActionInEdt(referencedDeclaration) {
                     val usageKaModule = usageElement.module?.toKaSourceModuleContainingElement(usageElement)
                     val referencedDeclarationKaModule = targetDir.module?.toKaSourceModuleContainingElement(targetDir)
                     val isVisible = when (referencedDeclaration.symbol.visibility) {
