@@ -2,18 +2,26 @@
 
 package org.jetbrains.kotlin.idea.debugger.evaluate
 
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiElement
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
 import org.jetbrains.kotlin.idea.completion.test.ExpectedCompletionUtils
 import org.jetbrains.kotlin.idea.completion.test.ExpectedCompletionUtils.BLOCK_CODE_FRAGMENT
 import org.jetbrains.kotlin.idea.core.util.CodeFragmentUtils
 import org.jetbrains.kotlin.idea.debugger.core.CodeFragmentContextTuner
+import org.jetbrains.kotlin.idea.debugger.evaluate.util.KotlinK2CodeFragmentUtils
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtPsiFactory
@@ -35,6 +43,7 @@ internal fun KtCodeFragment.checkImports(testFile: File) {
     }
 }
 
+@OptIn(KaExperimentalApi::class)
 internal fun JavaCodeInsightTestFixture.configureByCodeFragment(filePath: String, useFirCodeFragment: Boolean = false) {
     configureByFile(File(filePath).name)
 
@@ -44,6 +53,17 @@ internal fun JavaCodeInsightTestFixture.configureByCodeFragment(filePath: String
     val file = createCodeFragment(filePath, elementAt!!, isBlock, useFirCodeFragment)
 
     val typeStr = InTextDirectivesUtils.findStringWithPrefixes(getFile().text, "// ${ExpectedCompletionUtils.RUNTIME_TYPE} ")
+
+    file.putCopyableUserData(KotlinK2CodeFragmentUtils.RUNTIME_TYPE_EVALUATOR_K2) { expression ->
+        if (typeStr != null) {
+            analyze(expression) {
+                val kaType = buildClassType(ClassId.topLevel(FqName(typeStr)))
+                kaType.createPointer()
+            }
+        } else {
+            null
+        }
+    }
     file.putCopyableUserData(CodeFragmentUtils.RUNTIME_TYPE_EVALUATOR) {
         if (typeStr != null) {
             val codeFragment = KtPsiFactory(project).createBlockCodeFragment(
@@ -58,7 +78,6 @@ internal fun JavaCodeInsightTestFixture.configureByCodeFragment(filePath: String
             null
         }
     }
-
     configureFromExistingVirtualFile(file.virtualFile!!)
 }
 
