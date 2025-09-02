@@ -76,6 +76,7 @@ jvm_library(
     "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared",
     "//platform/eel-provider",
     "//platform/projectModel-impl",
+    "//plugins/gradle/java",
   ]
 )
 
@@ -83,6 +84,10 @@ jvm_library(
   name = "kotlin-gradle-scripting_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["tests/**/*.kt", "tests/**/*.java", "tests/**/*.form"], allow_empty = True),
+  resources = [
+    ":kotlin-gradle-scripting_resources",
+    ":kotlin-gradle-scripting_resources_1",
+  ],
   kotlinc_opts = ":custom_kotlin-gradle-scripting",
   associates = [":kotlin-gradle-scripting"],
   deps = [
@@ -155,6 +160,7 @@ jvm_library(
     "//platform/eel-provider",
     "//platform/projectModel-impl",
     "//java/testFramework",
+    "//plugins/gradle/java",
   ]
 )
 ### auto-generated section `build intellij.kotlin.gradle.scripting` end

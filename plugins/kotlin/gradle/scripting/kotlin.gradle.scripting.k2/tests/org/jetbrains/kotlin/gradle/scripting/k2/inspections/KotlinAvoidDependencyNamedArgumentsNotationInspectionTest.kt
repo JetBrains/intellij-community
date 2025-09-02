@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.gradle.scripting.shared
+package org.jetbrains.kotlin.gradle.scripting.k2.inspections
 
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.codeInspection.GradleAvoidDependencyNamedArgumentsNotationInspection
@@ -68,12 +68,12 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : GradleCodeInsi
                 implementation$WARNING_START(group = "org.gradle", name = "gradle-core", version = "1.0")$WARNING_END
             }
             """.trimIndent(),
-                """
+            """
             dependencies { 
                 implementation(group = "org.gradle",<caret> name = "gradle-core", version = "1.0")
             }
             """.trimIndent(),
-                """
+            """
             dependencies { 
                 implementation("org.gradle:gradle-core:1.0")
             }
@@ -167,12 +167,12 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : GradleCodeInsi
                 implementation$WARNING_START(group = "org.gradle", name = "gradle-core")$WARNING_END
             }
             """.trimIndent(),
-                  """
+            """
             dependencies { 
                 implementation(group = "org.gradle",<caret> name = "gradle-core")
             }
             """.trimIndent(),
-                  """
+            """
             dependencies { 
                 implementation("org.gradle:gradle-core")
             }
@@ -205,14 +205,14 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : GradleCodeInsi
                 }
             }
             """.trimIndent(),
-                  """
+            """
             dependencies { 
                 implementation(group = "org.gradle",<caret> name = "gradle-core", version = "1.0") {
                     exclude(group = "com.google.guava", module = "guava")
                 }
             }
             """.trimIndent(),
-                  """
+            """
             dependencies { 
                 implementation("org.gradle:gradle-core:1.0") {
                     exclude(group = "com.google.guava", module = "guava")
@@ -232,12 +232,12 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : GradleCodeInsi
                 implementation$WARNING_START(version = "1.0", group = "org.gradle", name = "gradle-core")$WARNING_END
             }
             """.trimIndent(),
-                  """
+            """
             dependencies { 
                 implementation(version = "1.0",<caret> group = "org.gradle", name = "gradle-core")
             }
             """.trimIndent(),
-                  """
+            """
             dependencies { 
                 implementation("org.gradle:gradle-core:1.0")
             }

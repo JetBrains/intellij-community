@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.gradle.scripting.shared.inspections
+package org.jetbrains.kotlin.gradle.scripting.k2.inspections
 
 import com.intellij.codeInspection.CommonQuickFixBundle
 import com.intellij.codeInspection.ProblemHighlightType
@@ -48,6 +48,7 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionVisitor(val holder: P
             val symbol = singleFunctionCallOrNull?.symbol ?: return@analyze false
             symbol.callableId?.packageName == GRADLE_DSL_PACKAGE
                     && symbol.returnType.symbol?.classId?.asSingleFqName() == FqName(GRADLE_API_ARTIFACTS_EXTERNAL_MODULE_DEPENDENCY)
+                    && symbol.valueParameters.size >= 3
                     && symbol.valueParameters[0].name.identifier == "group"
                     && symbol.valueParameters[1].name.identifier == "name"
                     && symbol.valueParameters[2].name.identifier == "version"

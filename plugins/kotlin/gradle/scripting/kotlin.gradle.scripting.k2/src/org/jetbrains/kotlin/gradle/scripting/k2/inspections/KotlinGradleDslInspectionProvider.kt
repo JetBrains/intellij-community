@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.gradle.scripting.shared.inspections
+package org.jetbrains.kotlin.gradle.scripting.k2.inspections
 
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
@@ -12,7 +12,6 @@ class KotlinGradleDslInspectionProvider : GradleDslInspectionProvider {
         isOnTheFly: Boolean
     ): PsiElementVisitor {
         return PsiElementVisitor.EMPTY_VISITOR
-        //TODO("Not yet implemented")
     }
 
     override fun getForeignDelegateInspectionVisitor(
@@ -20,7 +19,6 @@ class KotlinGradleDslInspectionProvider : GradleDslInspectionProvider {
         isOnTheFly: Boolean
     ): PsiElementVisitor {
         return PsiElementVisitor.EMPTY_VISITOR
-        //TODO("Not yet implemented")
     }
 
     override fun getIncorrectDependencyNotationArgumentInspectionVisitor(
@@ -28,7 +26,6 @@ class KotlinGradleDslInspectionProvider : GradleDslInspectionProvider {
         isOnTheFly: Boolean
     ): PsiElementVisitor {
         return PsiElementVisitor.EMPTY_VISITOR
-        //TODO("Not yet implemented")
     }
 
     override fun getDeprecatedConfigurationInspectionVisitor(
@@ -36,7 +33,6 @@ class KotlinGradleDslInspectionProvider : GradleDslInspectionProvider {
         isOnTheFly: Boolean
     ): PsiElementVisitor {
         return PsiElementVisitor.EMPTY_VISITOR
-        //TODO("Not yet implemented")
     }
 
     override fun getPluginDslStructureInspectionVisitor(
@@ -44,7 +40,6 @@ class KotlinGradleDslInspectionProvider : GradleDslInspectionProvider {
         isOnTheFly: Boolean
     ): PsiElementVisitor {
         return PsiElementVisitor.EMPTY_VISITOR
-        //TODO("Not yet implemented")
     }
 
     override fun isAvoidDependencyNamedArgumentsNotationInspectionAvailable(file: PsiFile) : Boolean {

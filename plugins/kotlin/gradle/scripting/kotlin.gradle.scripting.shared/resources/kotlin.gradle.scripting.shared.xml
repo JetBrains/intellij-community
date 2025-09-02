@@ -6,7 +6,6 @@
   </dependencies>
   <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
     <projectResolve implementation="org.jetbrains.kotlin.gradle.scripting.shared.importing.KotlinDslScriptModelResolver" order="first"/>
-    <dslInspectionProvider language="kotlin" implementationClass="org.jetbrains.kotlin.gradle.scripting.shared.inspections.KotlinGradleDslInspectionProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
