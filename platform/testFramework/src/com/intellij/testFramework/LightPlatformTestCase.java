@@ -239,7 +239,11 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   }
 
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return new SimpleLightProjectDescriptor(getModuleTypeId(), getProjectJDK());
+    return createSimpleLightProjectDescriptor(getModuleTypeId(), getProjectJDK());
+  }
+
+  public static @NotNull LightProjectDescriptor createSimpleLightProjectDescriptor(String moduleTypeId, Sdk jdk) {
+    return new SimpleLightProjectDescriptor(moduleTypeId, jdk);
   }
 
   public static @NotNull Pair.NonNull<Project, Module> doSetup(@NotNull LightProjectDescriptor descriptor,
