@@ -55,7 +55,7 @@ class LambdaTestModel private constructor(
         
         private val __LambdaRdTestSessionNullableSerializer = LambdaRdTestSession.nullable()
         
-        const val serializationHash = 6458896133684569706L
+        const val serializationHash = -4665055027060669114L
         
     }
     override val serializersOwner: ISerializersOwner get() = LambdaTestModel
@@ -104,8 +104,7 @@ val IProtocol.lambdaTestModel get() = getOrCreateExtension(LambdaTestModel::clas
  */
 data class LambdaRdIdeInfo (
     val id: String,
-    val ideType: LambdaRdIdeType,
-    val testClassName: String
+    val ideType: LambdaRdIdeType
 ) : IPrintable {
     //companion
     
@@ -117,14 +116,12 @@ data class LambdaRdIdeInfo (
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): LambdaRdIdeInfo  {
             val id = buffer.readString()
             val ideType = buffer.readEnum<LambdaRdIdeType>()
-            val testClassName = buffer.readString()
-            return LambdaRdIdeInfo(id, ideType, testClassName)
+            return LambdaRdIdeInfo(id, ideType)
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: LambdaRdIdeInfo)  {
             buffer.writeString(value.id)
             buffer.writeEnum(value.ideType)
-            buffer.writeString(value.testClassName)
         }
         
         
@@ -142,7 +139,6 @@ data class LambdaRdIdeInfo (
         
         if (id != other.id) return false
         if (ideType != other.ideType) return false
-        if (testClassName != other.testClassName) return false
         
         return true
     }
@@ -151,7 +147,6 @@ data class LambdaRdIdeInfo (
         var __r = 0
         __r = __r*31 + id.hashCode()
         __r = __r*31 + ideType.hashCode()
-        __r = __r*31 + testClassName.hashCode()
         return __r
     }
     //pretty print
@@ -160,7 +155,6 @@ data class LambdaRdIdeInfo (
         printer.indent {
             print("id = "); id.print(printer); println()
             print("ideType = "); ideType.print(printer); println()
-            print("testClassName = "); testClassName.print(printer); println()
         }
         printer.print(")")
     }

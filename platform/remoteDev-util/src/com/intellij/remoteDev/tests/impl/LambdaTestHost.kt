@@ -141,30 +141,26 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
 
     LOG.info("Advise for session. Current state: ${model.session.value}...")
     model.session.viewNotNull(lifetime) { sessionLifetime, session ->
-      val testClassName = session.rdIdeInfo.testClassName
 
       try {
         @OptIn(ExperimentalCoroutinesApi::class)
-        val sessionBgtDispatcher = Dispatchers.Default.limitedParallelism(1, "Test session dispatcher: ${testClassName}")
+        val sessionBgtDispatcher = Dispatchers.Default.limitedParallelism(1, "Lambda test session dispatcher")
 
         setUpTestLoggingFactory(sessionLifetime, session)
         val app = ApplicationManager.getApplication()
-
-        LOG.info("New test session: $testClassName")
 
         // Needed to enable proper focus behaviour
         if (SystemInfoRt.isWindows) {
           WinFocusStealer.setFocusStealingEnabled(true)
         }
 
-        val testModuleId = System.getProperty(TEST_MODULE_ID_PROPERTY_NAME) ?: error("Test module ID '$TEST_MODULE_ID_PROPERTY_NAME' is not specified")
+        val testModuleId = System.getProperty(TEST_MODULE_ID_PROPERTY_NAME)
+                           ?: error("Test module ID '$TEST_MODULE_ID_PROPERTY_NAME' is not specified")
         val testPlugin = PluginManagerCore.getPluginSet().findEnabledModule((PluginId(testModuleId).asPluginModuleId()))
                          ?: error("Test plugin with test module '$testModuleId' is not found")
 
         LOG.info("Test class will be loaded from '${testPlugin.pluginId}' plugin")
 
-        val testClass = Class.forName(testClassName, true, testPlugin.pluginClassLoader).kotlin
-        val testClassCompanionObject = testClass.companionObject
 
         val ideContext = when (session.rdIdeInfo.ideType) {
           LambdaRdIdeType.BACKEND -> LambdaBackendContextClass()
@@ -172,25 +168,27 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
           LambdaRdIdeType.MONOLITH -> LambdaMonolithContextClass()
         }
 
-        val namedLambdas = testClassCompanionObject
-          ?.nestedClasses
-          ?.filter { it.isSubclassOf(NamedLambda::class) }
-          ?.map { it.constructors.single().call(ideContext) as NamedLambda }
-
-        val actionsMap = namedLambdas?.associate { namedLambda ->
-          namedLambda.name() to namedLambda
-        }
-
         // Advice for processing events
         session.runLambda.setSuspend(sessionBgtDispatcher) { _, parameters ->
+
+          val lambdaReference = parameters.reference
+          val className = lambdaReference.substringBeforeLast(".").removeSuffix(".Companion")
+
+          val testClass = Class.forName(className, true, testPlugin.pluginClassLoader).kotlin
+          val testClassCompanionObject = testClass.companionObject
+          val namedLambdas = testClassCompanionObject
+                               ?.nestedClasses
+                               ?.filter { it.isSubclassOf(NamedLambda::class) }
+                               ?.map { it.constructors.single().call(ideContext) as NamedLambda }
+                             ?: error("Can't find any named lambda in the test class '${testClass.qualifiedName}'")
+
           try {
-            val ideAction = actionsMap?.get(parameters.reference)
-                            ?: run {
-                              val text = "There is no Action with reference '${parameters.reference}', something went terribly wrong, " +
-                                         "all referenced actions: ${actionsMap?.keys}"
-                              LOG.error(text)
-                              error(text)
-                            }
+            val ideAction = namedLambdas.singleOrNull { it.name() == lambdaReference } ?: run {
+              val text = "There is no Action with reference '${lambdaReference}', something went terribly wrong, " +
+                         "all referenced actions: ${namedLambdas.map { it.name() }}"
+              LOG.error(text)
+              error(text)
+            }
 
             assert(ClientId.current.isLocal) { "ClientId '${ClientId.current}' should be local before test method starts" }
             LOG.info("'$parameters': received action execution request")

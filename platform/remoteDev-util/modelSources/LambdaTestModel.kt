@@ -14,7 +14,6 @@ object LambdaTestModel : Ext(LambdaTestRoot) {
   private val LambdaRdIdeInfo = structdef {
     field("id", string)
     field("ideType", LambdaRdIdeType)
-    field("testClassName", string)
   }
 
   private val LambdaRdIdeType = enum {
