@@ -5592,6 +5592,55 @@ public abstract class SharedK1LocalInspectionTestGenerated extends AbstractShare
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/inspectionsLocal/replaceWithStringBuilderAppendRange")
+    public static class ReplaceWithStringBuilderAppendRange extends AbstractSharedK1LocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("constantArgument.kt")
+        public void testConstantArgument() throws Exception {
+            runTest("../testData/inspectionsLocal/replaceWithStringBuilderAppendRange/constantArgument.kt");
+        }
+
+        @TestMetadata("hasReceiver.kt")
+        public void testHasReceiver() throws Exception {
+            runTest("../testData/inspectionsLocal/replaceWithStringBuilderAppendRange/hasReceiver.kt");
+        }
+
+        @TestMetadata("nullableCharArray.kt")
+        public void testNullableCharArray() throws Exception {
+            runTest("../testData/inspectionsLocal/replaceWithStringBuilderAppendRange/nullableCharArray.kt");
+        }
+
+        @TestMetadata("nullableCharArray2.kt")
+        public void testNullableCharArray2() throws Exception {
+            runTest("../testData/inspectionsLocal/replaceWithStringBuilderAppendRange/nullableCharArray2.kt");
+        }
+
+        @TestMetadata("precedence.kt")
+        public void testPrecedence() throws Exception {
+            runTest("../testData/inspectionsLocal/replaceWithStringBuilderAppendRange/precedence.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../testData/inspectionsLocal/replaceWithStringBuilderAppendRange/simple.kt");
+        }
+
+        @TestMetadata("zeroOffset.kt")
+        public void testZeroOffset() throws Exception {
+            runTest("../testData/inspectionsLocal/replaceWithStringBuilderAppendRange/zeroOffset.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/safeCastWithReturn")
     public static class SafeCastWithReturn extends AbstractSharedK1LocalInspectionTest {
         @java.lang.Override
