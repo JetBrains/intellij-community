@@ -2,6 +2,8 @@ package org.jetbrains.jewel.foundation.lazy
 
 import kotlin.math.max
 import kotlin.math.min
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.jewel.foundation.InternalJewelApi
 import org.jetbrains.jewel.foundation.lazy.SelectableLazyListKey.Selectable
 
 public interface SelectableColumnOnKeyEvent {
@@ -67,7 +69,17 @@ public interface SelectableColumnOnKeyEvent {
     /** Select Previous Node inherited from Up. */
     public fun onSelectPreviousItem(keys: List<SelectableLazyListKey>, state: SelectableLazyListState) {
         val initialIndex = state.lastActiveItemIndex ?: return
-        for (index in initialIndex - 1 downTo 0) {
+        onSelectPreviousItem(keys, state, initialIndex - 1 downTo 0)
+    }
+
+    @InternalJewelApi
+    @ApiStatus.Internal
+    public fun onSelectPreviousItem(
+        keys: List<SelectableLazyListKey>,
+        state: SelectableLazyListState,
+        possibleIndexes: Iterable<Int>,
+    ) {
+        for (index in possibleIndexes) {
             val key = keys[index]
             if (key is Selectable) {
                 state.selectedKeys = setOf(key.key)
@@ -94,7 +106,17 @@ public interface SelectableColumnOnKeyEvent {
     /** Select Next Node inherited from Down. */
     public fun onSelectNextItem(keys: List<SelectableLazyListKey>, state: SelectableLazyListState) {
         val initialIndex = state.lastActiveItemIndex ?: return
-        for (index in initialIndex + 1..keys.lastIndex) {
+        onSelectNextItem(keys, state, initialIndex + 1..keys.lastIndex)
+    }
+
+    @InternalJewelApi
+    @ApiStatus.Internal
+    public fun onSelectNextItem(
+        keys: List<SelectableLazyListKey>,
+        state: SelectableLazyListState,
+        possibleIndexes: Iterable<Int>,
+    ) {
+        for (index in possibleIndexes) {
             val key = keys[index]
             if (key is Selectable) {
                 state.selectedKeys = setOf(key.key)

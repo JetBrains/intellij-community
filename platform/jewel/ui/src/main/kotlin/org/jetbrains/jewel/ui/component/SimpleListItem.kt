@@ -16,6 +16,8 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.semantics.isTraversalGroup
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -84,6 +86,62 @@ public fun SimpleListItem(
 /**
  * A simple list item layout consisting of a text and an optional icon to its start side.
  *
+ * The text will only take up one line and is ellipsized if too long to fit.
+ *
+ * @param text The text displayed in the list item
+ * @param state The state of the list item, containing selection and activity status.
+ * @param modifier Optional [Modifier] to apply to the list item.
+ * @param textModifier Optional [Modifier] to apply to the list item text.
+ * @param iconModifier Optional [Modifier] to apply to specifically to the icon.
+ * @param icon Optional [IconKey] representing the icon displayed in the list item.
+ * @param iconContentDescription Optional content description [String] for accessibility purposes for the icon.
+ * @param style Optional [SimpleListItemStyle] for defining the appearance of the list item; default is based on the
+ *   Jewel theme.
+ * @param height The height of the list item; default is based on the Jewel theme's global metrics.
+ * @param colorFilter Optional [ColorFilter] to apply to the icon, if any.
+ * @param painterHints Optional [PainterHint]s to apply to the icon, if any.
+ */
+@Composable
+public fun SimpleListItem(
+    text: AnnotatedString,
+    state: ListItemState,
+    modifier: Modifier = Modifier,
+    textModifier: Modifier = Modifier,
+    iconModifier: Modifier = Modifier,
+    icon: IconKey? = null,
+    iconContentDescription: String? = null,
+    style: SimpleListItemStyle = JewelTheme.simpleListItemStyle,
+    height: Dp = JewelTheme.globalMetrics.rowHeight,
+    colorFilter: ColorFilter? = null,
+    onTextLayout: (TextLayoutResult) -> Unit = {},
+    vararg painterHints: PainterHint = emptyArray(),
+) {
+    SimpleListItem(
+        state = state,
+        modifier = modifier,
+        iconModifier = iconModifier,
+        icon = icon,
+        iconContentDescription = iconContentDescription,
+        style = style,
+        height = height,
+        painterHints = painterHints.toList(),
+        colorFilter = colorFilter,
+    ) {
+        Text(
+            text = text,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            style = JewelTheme.defaultTextStyle,
+            color = style.colors.contentFor(state).value,
+            onTextLayout = onTextLayout,
+            modifier = textModifier,
+        )
+    }
+}
+
+/**
+ * A simple list item layout consisting of a text and an optional icon to its start side.
+ *
  * The text will only take up one line and is ellipsized if too long to fit. It also exposes [selected] and [active]
  * properties, instead of the state.
  *
@@ -128,6 +186,58 @@ public fun SimpleListItem(
         style = style,
         height = height,
         colorFilter = colorFilter,
+        painterHints = painterHints,
+    )
+}
+
+/**
+ * A simple list item layout consisting of a text and an optional icon to its start side.
+ *
+ * The text will only take up one line and is ellipsized if too long to fit. It also exposes [selected] and [active]
+ * properties, instead of the state.
+ *
+ * @param text The text displayed in the list item.
+ * @param selected Indicates whether the list item is selected.
+ * @param active Indicates whether the list item is active or disabled; default is active.
+ * @param modifier Optional [Modifier] to apply to the entire list item.
+ * @param textModifier Optional [Modifier] to apply to specifically to the text.
+ * @param iconModifier Optional [Modifier] to apply to specifically to the icon.
+ * @param icon Optional [IconKey] representing the icon displayed on the start side of the list item.
+ * @param iconContentDescription Optional content description [String] for the icon for accessibility purposes.
+ * @param style The [SimpleListItemStyle] defining the appearance of the list item; default is based on the Jewel theme.
+ * @param height The height of the list item; default is based on the Jewel theme's global metrics.
+ * @param colorFilter Optional [ColorFilter] to apply to the icon, if any.
+ * @param painterHints Optional [PainterHint]s to apply to the icon, if any.
+ */
+@Composable
+public fun SimpleListItem(
+    text: AnnotatedString,
+    selected: Boolean,
+    modifier: Modifier = Modifier,
+    textModifier: Modifier = Modifier,
+    iconModifier: Modifier = Modifier,
+    active: Boolean = true,
+    icon: IconKey? = null,
+    iconContentDescription: String? = null,
+    style: SimpleListItemStyle = JewelTheme.simpleListItemStyle,
+    height: Dp = JewelTheme.globalMetrics.rowHeight,
+    colorFilter: ColorFilter? = null,
+    onTextLayout: (TextLayoutResult) -> Unit = {},
+    vararg painterHints: PainterHint = emptyArray(),
+) {
+    val state = remember(selected, active) { ListItemState(selected, active) }
+    SimpleListItem(
+        text = text,
+        state = state,
+        modifier = modifier,
+        textModifier = textModifier,
+        iconModifier = iconModifier,
+        icon = icon,
+        iconContentDescription = iconContentDescription,
+        style = style,
+        height = height,
+        colorFilter = colorFilter,
+        onTextLayout = onTextLayout,
         painterHints = painterHints,
     )
 }
