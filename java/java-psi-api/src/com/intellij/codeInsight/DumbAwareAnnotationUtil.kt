@@ -31,9 +31,10 @@ object DumbAwareAnnotationUtil {
 
   /**
    * Represents a mapping from a fully qualified name of a module to a set of fully qualified names of annotations
-   * that are treated as a type annotations and located in this module
+   * that are treated as type annotations and located in this module
    */
   private val KNOWN_MODULE_TO_ANNOTATIONS_MAP = mapOf(
+    "org.jetbrains.annotations" to setOf(AnnotationUtil.NOT_NULL, AnnotationUtil.NULLABLE, AnnotationUtil.NON_NLS),
     "org.jspecify" to setOf(AnnotationUtil.J_SPECIFY_NON_NULL, AnnotationUtil.J_SPECIFY_NULLABLE)
   )
 

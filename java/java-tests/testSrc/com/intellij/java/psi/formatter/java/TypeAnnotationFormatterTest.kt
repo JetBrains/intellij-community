@@ -60,6 +60,11 @@ class TypeAnnotationFormatterTest : LightJavaCodeInsightFixtureTestCase() {
     doTest()
   }
 
+  fun testModuleImport() {
+    IdeaTestUtil.setModuleLanguageLevel(myFixture.module, LanguageLevel.JDK_25)
+    doTest()
+  }
+
   private fun doTest() {
     val testName = getTestName(false)
     myFixture.configureByFile("$testName.java")
