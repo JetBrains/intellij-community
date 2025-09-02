@@ -163,7 +163,7 @@ public class ValidationRulesPersistedStorage implements IntellijValidationRulesS
         String dictionaryName = dictionarylastModifiedOnServerEntry.getKey();
         Long dictionaryLastModifiedLocally = dictionariesLastModifiedLocally.getOrDefault(dictionaryName, 0L);
         Long dictionaryLastModifiedOnServer = dictionarylastModifiedOnServerEntry.getValue();
-        if (dictionaryLastModifiedOnServer <= 0 || dictionaryLastModifiedOnServer > dictionaryLastModifiedLocally || !dictionaryAvailable(dictionaryStorage, dictionaryName)) {
+        if (dictionaryLastModifiedOnServer <= 0 || dictionaryLastModifiedOnServer > dictionaryLastModifiedLocally || !myMetadataPersistence.dictionaryAvailable(dictionaryName)) {
           String rawDictionary = myMetadataLoader.loadDictionaryFromServer(myRecorderId, dictionaryName);
           dictionaryStorage.updateDictionaryByName(dictionaryName, rawDictionary.getBytes(StandardCharsets.UTF_8));
           myMetadataPersistence.setDictionaryLastModified(dictionarylastModifiedOnServerEntry.getKey(), dictionaryLastModifiedOnServer);
@@ -179,16 +179,6 @@ public class ValidationRulesPersistedStorage implements IntellijValidationRulesS
           ));
         }
       }
-    }
-  }
-
-  private static boolean dictionaryAvailable(DictionaryStorage dictionaryStorage, String dictionaryName) {
-    try {
-      // will throw if for some reason the dictionary is not available
-      dictionaryStorage.getDictionaryByName(dictionaryName);
-      return true;
-    } catch (Exception e) {
-      return false;
     }
   }
 
