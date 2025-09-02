@@ -168,9 +168,10 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
           }.visible(Registry.`is`("terminal.new.ui.completion.popup"))
 
           TerminalCloudCompletionSettingsProvider.getProvider()?.addSettingsRow(this)
-        }.visibleIf(terminalEngineComboBox.selectedValueIs(TerminalEngine.REWORKED)
-                      .and(shellPathField.shellWithIntegrationSelected())
-                      .and(ComponentPredicate.fromValue(AppModeAssertions.isMonolith())))
+        }.bottomGap(BottomGap.NONE)
+          .visibleIf(terminalEngineComboBox.selectedValueIs(TerminalEngine.REWORKED)
+                       .and(shellPathField.shellWithIntegrationSelected())
+                       .and(ComponentPredicate.fromValue(AppModeAssertions.isMonolith())))
 
         indent {
           buttonsGroup(title = message("settings.prompt.style")) {
