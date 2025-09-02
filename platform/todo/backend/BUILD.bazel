@@ -12,7 +12,21 @@ jvm_library(
   module_name = "intellij.platform.todo.backend",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  deps = ["//platform/kernel/backend"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/todo",
+    "//platform/kernel/backend",
+    "//platform/project/shared:project",
+    "//platform/projectModel-api:projectModel",
+    "//platform/core-api:core",
+    "//platform/util",
+    "//platform/util/jdom",
+    "//platform/platform-impl/rpc",
+    "//platform/indexing-api:indexing",
+    "//platform/indexing-impl",
+    "//platform/editor-ui-ex:editor-ex",
+    "//platform/editor-ui-api:editor-ui",
+  ],
   runtime_deps = [":backend_resources"]
 )
 ### auto-generated section `build intellij.platform.todo.backend` end
