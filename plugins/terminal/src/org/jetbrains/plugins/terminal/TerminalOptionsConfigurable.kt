@@ -131,42 +131,46 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
         }
 
         group(message("terminal.command.completion")) {
-          lateinit var completionEnabledCheckBox: JBCheckBox
+          rowsRange {
+            lateinit var completionEnabledCheckBox: JBCheckBox
 
-          row {
-            completionEnabledCheckBox = checkBox(message("terminal.command.completion.show"))
-              .bindSelected(optionsProvider::showCompletionPopupAutomatically)
-              .component
-          }
-          indent {
-            buttonsGroup {
-              row {
-                radioButton(message("terminal.command.completion.show.always"), value = ALWAYS)
-              }
-              row {
-                radioButton(message("terminal.command.completion.show.parameters"), value = ONLY_PARAMETERS)
-              }
-            }.bind(optionsProvider::commandCompletionShowingMode)
-              .enabledIf(completionEnabledCheckBox.selected)
-          }
+            row {
+              completionEnabledCheckBox = checkBox(message("terminal.command.completion.show"))
+                .bindSelected(optionsProvider::showCompletionPopupAutomatically)
+                .component
+            }
+            indent {
+              buttonsGroup {
+                row {
+                  radioButton(message("terminal.command.completion.show.always"), value = ALWAYS)
+                }
+                row {
+                  radioButton(message("terminal.command.completion.show.parameters"), value = ONLY_PARAMETERS)
+                }
+              }.bind(optionsProvider::commandCompletionShowingMode)
+                .enabledIf(completionEnabledCheckBox.selected)
+            }
 
-          row {
-            shortcutCombobox(
-              labelText = message("terminal.command.completion.shortcut.trigger"),
-              presets = listOf(getCtrlSpacePreset(project), TAB_SHORTCUT_PRESET),
-              actionId = "Terminal.CommandCompletion.Gen2"
-            )
-          }
-          row {
-            shortcutCombobox(
-              labelText = message("terminal.command.completion.shortcut.insert"),
-              presets = listOf(ENTER_SHORTCUT_PRESET, TAB_SHORTCUT_PRESET),
-              actionId = "Terminal.EnterCommandCompletion"
-            )
-          }
+            row {
+              shortcutCombobox(
+                labelText = message("terminal.command.completion.shortcut.trigger"),
+                presets = listOf(getCtrlSpacePreset(project), TAB_SHORTCUT_PRESET),
+                actionId = "Terminal.CommandCompletion.Gen2"
+              )
+            }
+            row {
+              shortcutCombobox(
+                labelText = message("terminal.command.completion.shortcut.insert"),
+                presets = listOf(ENTER_SHORTCUT_PRESET, TAB_SHORTCUT_PRESET),
+                actionId = "Terminal.EnterCommandCompletion"
+              )
+            }
+          }.visible(Registry.`is`("terminal.new.ui.completion.popup"))
+
+          TerminalCloudCompletionSettingsProvider.getProvider()?.addSettingsRow(this)
         }.visibleIf(terminalEngineComboBox.selectedValueIs(TerminalEngine.REWORKED)
-                      .and(completionPopupPredicate())
-                      .and(shellPathField.shellWithIntegrationSelected()))
+                      .and(shellPathField.shellWithIntegrationSelected())
+                      .and(ComponentPredicate.fromValue(AppModeAssertions.isMonolith())))
 
         indent {
           buttonsGroup(title = message("settings.prompt.style")) {
@@ -296,12 +300,6 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
             .bindText(optionsProvider::tabName)
             .align(AlignX.FILL)
         }
-        TerminalCloudCompletionSettingsProvider.getProvider()
-          ?.addSettingsRow(this)
-          ?.visibleIf(terminalEngineComboBox.selectedValueIs(TerminalEngine.REWORKED)
-                        .and(shellPathField.shellWithIntegrationSelected())
-                        .and(ComponentPredicate.fromValue(AppModeAssertions.isMonolith())
-                        ))
         row {
           checkBox(message("settings.show.separators.between.blocks"))
             .bindSelected(blockTerminalOptions::showSeparatorsBetweenBlocks)
@@ -496,13 +494,6 @@ private fun Cell<TextFieldWithHistoryWithBrowseButton>.setupShellField(project: 
 
 private fun newUiPredicate(): ComponentPredicate {
   return if (ExperimentalUI.isNewUI()) {
-    ComponentPredicate.TRUE
-  }
-  else ComponentPredicate.FALSE
-}
-
-private fun completionPopupPredicate(): ComponentPredicate {
-  return if (Registry.`is`("terminal.new.ui.completion.popup")) {
     ComponentPredicate.TRUE
   }
   else ComponentPredicate.FALSE
