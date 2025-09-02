@@ -65,10 +65,12 @@ internal class UsageInfoModel private constructor(val project: Project, val mode
   private var isLoaded: Boolean = false
     set(value) {
       field = value
-      if (value) {
+      if (value && isRemDev()) {
         initializationListener.accept(this)
       }
     }
+
+  private fun isRemDev(): Boolean = model.usageInfos.isEmpty()
   private var initializationJob: Job? = null
 
   private val defaultRange: TextRange = TextRange(model.navigationOffset, model.navigationOffset + model.length)
@@ -94,7 +96,7 @@ internal class UsageInfoModel private constructor(val project: Project, val mode
 
   private fun initialize() {
     //local IDE case
-    if (model.usageInfos.isNotEmpty()) {
+    if (!isRemDev()) {
       cachedUsageInfos = model.usageInfos
       cachedPsiFile = cachedUsageInfos.firstOrNull()?.file
       cachedMergedSmartRanges = cachedUsageInfos.mapNotNull { it.psiFileRange }.sortedBy { it.range?.startOffset ?: 0 }
@@ -294,7 +296,9 @@ internal class UsageInfoModel private constructor(val project: Project, val mode
         val doc = psiDoc ?: virtualFile?.findDocument()
         if (doc != null && document == null) {
           document = doc
-          (doc as? DocumentEx)?.addFullUpdateListener(fullUpdateListener)
+          if (isRemDev()) {
+            (doc as? DocumentEx)?.addFullUpdateListener(fullUpdateListener)
+          }
         }
         doc
       }
