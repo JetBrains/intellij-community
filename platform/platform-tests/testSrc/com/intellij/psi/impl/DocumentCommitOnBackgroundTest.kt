@@ -7,12 +7,12 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiTreeChangeAdapter
 import com.intellij.psi.PsiTreeChangeEvent
 import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.junit5.fixture.moduleFixture
@@ -91,8 +91,8 @@ class DocumentCommitOnBackgroundTest {
   }
 
   @Test
-  @RegistryKey("document.async.commit.with.coroutines", "true")
   fun `psiTreeChangeListener and psiTreeChangePreprocessor can be invoked on background`(@TestDisposable testDisposable: Disposable) {
+    Registry.get("document.async.commit.with.coroutines").setValue(true, testDisposable)
     val file = file.get()
     val psiDocumentManager = PsiDocumentManager.getInstance(project.get())
     val psiManager = PsiManagerEx.getInstanceEx(project.get())
@@ -131,8 +131,8 @@ class DocumentCommitOnBackgroundTest {
   }
 
   @Test
-  @RegistryKey("document.async.commit.with.coroutines", "true")
   fun `psiDocumentTransactionTest can be invoked on background`(@TestDisposable testDisposable: Disposable) {
+    Registry.get("document.async.commit.with.coroutines").setValue(true, testDisposable)
     val file = file.get()
     val psiDocumentManager = PsiDocumentManager.getInstance(project.get())
     val plainListener = RecordingDocumentTransactionListener()
