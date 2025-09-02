@@ -16,7 +16,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.use
 import com.intellij.platform.ide.progress.withBackgroundProgress
-import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.PythonPluginDisposable
@@ -28,6 +27,7 @@ import com.jetbrains.python.sdk.configuration.suppressors.PyInterpreterInspectio
 import com.jetbrains.python.sdk.configuration.suppressors.PyPackageRequirementsInspectionSuppressor
 import com.jetbrains.python.sdk.configuration.suppressors.TipOfTheDaySuppressor
 import com.jetbrains.python.sdk.configurePythonSdk
+import com.jetbrains.python.sdk.persist
 import com.jetbrains.python.sdk.uv.isUv
 import com.jetbrains.python.statistics.ConfiguredPythonInterpreterIdsHolder.Companion.SDK_HAS_BEEN_CONFIGURED_AS_THE_PROJECT_INTERPRETER
 import com.jetbrains.python.util.ShowingMessageErrorSync
@@ -86,6 +86,8 @@ object PyProjectSdkConfiguration {
       return
     }
 
+    sdk.persist()
+
     configurePythonSdk(project, module, sdk)
     withContext(Dispatchers.EDT) {
       notifyAboutConfiguredSdk(project, module, sdk)
@@ -108,7 +110,6 @@ object PyProjectSdkConfiguration {
     return lifetime
   }
 
-  @RequiresEdt
   private fun notifyAboutConfiguredSdk(project: Project, module: Module, sdk: Sdk) {
     if (isNotificationSilentMode(project)) return
     NotificationGroupManager.getInstance().getNotificationGroup("ConfiguredPythonInterpreter")
