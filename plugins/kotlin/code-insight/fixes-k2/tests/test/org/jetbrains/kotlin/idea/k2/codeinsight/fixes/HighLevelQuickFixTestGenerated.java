@@ -3151,6 +3151,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("companionObjectConstructor.kt")
+        public void testCompanionObjectConstructor() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeObjectToClass/companionObjectConstructor.kt");
+        }
+
         @TestMetadata("primaryConstructor.kt")
         public void testPrimaryConstructor() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/changeObjectToClass/primaryConstructor.kt");

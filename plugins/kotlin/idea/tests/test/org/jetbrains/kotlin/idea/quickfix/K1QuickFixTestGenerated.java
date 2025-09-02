@@ -3298,6 +3298,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("companionObjectConstructor.kt")
+        public void testCompanionObjectConstructor() throws Exception {
+            runTest("testData/quickfix/changeObjectToClass/companionObjectConstructor.kt");
+        }
+
         @TestMetadata("primaryConstructor.kt")
         public void testPrimaryConstructor() throws Exception {
             runTest("testData/quickfix/changeObjectToClass/primaryConstructor.kt");
