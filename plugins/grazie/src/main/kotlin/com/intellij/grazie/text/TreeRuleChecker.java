@@ -31,7 +31,6 @@ import com.intellij.grazie.style.ConfigureSuggestedParameter;
 import com.intellij.grazie.style.TextLevelFix;
 import com.intellij.grazie.text.TextContent.TextDomain;
 import com.intellij.grazie.utils.HighlightingUtil;
-import com.intellij.grazie.utils.IdeUtils;
 import com.intellij.grazie.utils.Text;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
@@ -60,7 +59,7 @@ import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.intellij.grazie.utils.IdeUtils.ijRange;
+import static com.intellij.grazie.utils.UtilsKt.ijRange;
 
 @SuppressWarnings("NonAsciiCharacters")
 public final class TreeRuleChecker {
@@ -338,7 +337,7 @@ public final class TreeRuleChecker {
     return Arrays.stream(fix.getChanges())
       .map(c -> {
         SentenceWithContent sentence = findSentence(doc, c.getRange().getStart(), c.getRange().getEndExclusive());
-        return StringOperation.replace(sentence.content.textRangeToFile(IdeUtils.ijRange(c).shiftLeft(sentence.contentStart)), c.getText());
+        return StringOperation.replace(sentence.content.textRangeToFile(ijRange(c).shiftLeft(sentence.contentStart)), c.getText());
       })
       .toList();
   }

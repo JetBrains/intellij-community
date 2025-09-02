@@ -8,10 +8,10 @@ import com.intellij.grazie.text.TextExtractor.findAllTextContents
 import com.intellij.grazie.utils.HighlightingUtil
 import com.intellij.grazie.utils.NaturalTextDetector
 import com.intellij.grazie.utils.getLanguageIfAvailable
-import com.intellij.grazie.utils.runBlockingCancellable
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.platform.util.progress.RawProgressReporter

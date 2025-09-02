@@ -10,8 +10,7 @@ import com.intellij.grazie.text.TextContent
 import com.intellij.grazie.text.TextExtractor
 import com.intellij.grazie.utils.HighlightingUtil
 import com.intellij.grazie.utils.NaturalTextDetector
-import com.intellij.grazie.utils.blockingContext
-import com.intellij.grazie.utils.runBlockingCancellable
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 import java.util.*
@@ -93,16 +92,15 @@ class ParsedSentence private constructor(
         return emptyList()
       }
 
-      val parser = blockingContext { DependencyParser.getParser(content, minimal) } ?: return emptyList()
+      val parser = DependencyParser.getParser(content, minimal) ?: return emptyList()
 
       val out = ArrayList<ParsedSentence>()
-      val intersectingSentences = blockingContext {
+      val intersectingSentences =
         SentenceTokenizer.tokenize(content).filter { token ->
           val start = content.textOffsetToFile(token.start)
           val end = content.textOffsetToFile(token.end())
           rangeInFile.intersects(start, end)
         }
-      }
       if (intersectingSentences.isNotEmpty()) {
         val trees = parser.parseAsync(intersectingSentences.flatMap { listOfNotNull(it.swe(), it.stubbedSwe()) })
         for (sentence in intersectingSentences) {

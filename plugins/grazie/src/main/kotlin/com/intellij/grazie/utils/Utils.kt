@@ -1,8 +1,12 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.grazie.utils
 
+import ai.grazie.gec.model.problem.ProblemFix
+import com.intellij.openapi.util.TextRange
 import org.languagetool.rules.RuleMatch
 import java.util.*
+
+fun ProblemFix.Part.Change.ijRange(): TextRange = TextRange(range.start, range.endExclusive)
 
 fun RuleMatch.toIntRange(offset: Int = 0) = IntRange(fromPos + offset, toPos + offset - 1)
 
