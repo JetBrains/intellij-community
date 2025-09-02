@@ -15,6 +15,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
 import java.io.File;
@@ -33,7 +34,8 @@ public abstract class AbstractConfigUtils {
 
   private static final Logger LOG = Logger.getInstance(AbstractConfigUtils.class);
 
-  protected static final @NlsSafe String VERSION_GROUP_NAME = "version";
+  @VisibleForTesting
+  public static final @NlsSafe String VERSION_GROUP_NAME = "version";
 
   private final Condition<Library> LIB_SEARCH_CONDITION = library -> isSDKLibrary(library);
 
