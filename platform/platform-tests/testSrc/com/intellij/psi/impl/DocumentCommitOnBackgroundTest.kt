@@ -3,7 +3,6 @@ package com.intellij.psi.impl
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.project.DumbService
@@ -93,7 +92,6 @@ class DocumentCommitOnBackgroundTest {
   @Test
   fun `psiTreeChangeListener and psiTreeChangePreprocessor can be invoked on background`(@TestDisposable testDisposable: Disposable) {
     Registry.get("document.async.commit.with.coroutines").setValue(true, testDisposable)
-    val file = file.get()
     val psiDocumentManager = PsiDocumentManager.getInstance(project.get())
     val psiManager = PsiManagerEx.getInstanceEx(project.get())
     val plainListener = RecordingTreeChangeListener()
@@ -107,10 +105,9 @@ class DocumentCommitOnBackgroundTest {
     psiManager.addTreeChangePreprocessor(plainPreprocessor, testDisposable)
     psiManager.addTreeChangePreprocessorBackgroundable(backgroundablePreprocessor, testDisposable)
 
-    val document = runReadAction {
-      psiDocumentManager.getDocument(file)!!
-    }
     invokeAndWaitIfNeeded {
+      val file = file.get()
+      val document = psiDocumentManager.getDocument(file)!!
       WriteCommandAction.runWriteCommandAction(project.get(), { document.insertString(0, " ") })
       PlatformTestUtil.waitForAllDocumentsCommitted(10, TimeUnit.SECONDS)
     }
@@ -133,18 +130,15 @@ class DocumentCommitOnBackgroundTest {
   @Test
   fun `psiDocumentTransactionTest can be invoked on background`(@TestDisposable testDisposable: Disposable) {
     Registry.get("document.async.commit.with.coroutines").setValue(true, testDisposable)
-    val file = file.get()
     val psiDocumentManager = PsiDocumentManager.getInstance(project.get())
     val plainListener = RecordingDocumentTransactionListener()
     val backgroundableListener = RecordingDocumentTransactionListenerBackgroundable()
     project.get().messageBus.connect(testDisposable).subscribe(PsiDocumentTransactionListener.TOPIC, plainListener)
     project.get().messageBus.connect(testDisposable).subscribe(PsiDocumentTransactionListenerBackgroundable.TOPIC, backgroundableListener)
 
-
-    val document = runReadAction {
-      psiDocumentManager.getDocument(file)!!
-    }
     invokeAndWaitIfNeeded {
+      val file = file.get()
+      val document = psiDocumentManager.getDocument(file)!!
       WriteCommandAction.runWriteCommandAction(project.get(), { document.insertString(0, " ") })
       PlatformTestUtil.waitForAllDocumentsCommitted(10, TimeUnit.SECONDS)
     }
