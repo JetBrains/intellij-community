@@ -428,6 +428,21 @@ class RedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
 
     @ParameterizedTest
     @BaseGradleVersionSource
+    fun testDisabledDefaultStdLib(gradleVersion: GradleVersion) {
+        runTest(gradleVersion, DISABLED_DEFAULT_STDLIB_FIXTURE) {
+            testHighlighting(
+                """
+                plugins { id 'org.jetbrains.kotlin.jvm' version '2.2.0' }
+                dependencies { 
+                    api 'org.jetbrains.kotlin:kotlin-stdlib:2.2.0'
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
     fun testQuickFixRemove(gradleVersion: GradleVersion) {
         runTest(gradleVersion, SAME_VERSION_FIXTURE) {
             testIntention(
@@ -545,6 +560,13 @@ class RedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
                     }
                 }
             }
+        }
+        private val DISABLED_DEFAULT_STDLIB_FIXTURE = GradleTestFixtureBuilder.create("disabled_default_stdlib") { gradleVersion ->
+            withBuildFile(gradleVersion) {
+                withKotlinJvmPlugin("2.2.0")
+                addApiDependency("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")
+            }
+            withFile("gradle.properties", "kotlin.stdlib.default.dependency=false")
         }
     }
 }
