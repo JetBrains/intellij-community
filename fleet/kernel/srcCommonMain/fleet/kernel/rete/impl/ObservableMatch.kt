@@ -22,6 +22,7 @@ private object MatchState {
 
 class ObservableMatch<T> internal constructor(
   internal val observerId: NodeId,
+  internal val owner: Any,
   internal val match: Match<T>,
 ) : Match<T> {
 
@@ -124,7 +125,7 @@ internal suspend fun <U> withObservableMatches(
   }
 }
 
-internal fun <T> Query<*, T>.observable(terminalId: NodeId): Query<*, T> =
+internal fun <T> Query<*, T>.observable(owner: Any, terminalId: NodeId): Query<*, T> =
   Query<Many, T> {
     val observableMatches = adaptiveMapOf<Match<T>, ObservableMatch<T>>()
     onDispose {
@@ -136,7 +137,7 @@ internal fun <T> Query<*, T>.observable(terminalId: NodeId): Query<*, T> =
     producer().transform { token, emit ->
       when (token.added) {
         true -> {
-          val observableMatch = ObservableMatch(terminalId, token.match)
+          val observableMatch = ObservableMatch(terminalId, owner, token.match)
           observableMatches[token.match] = observableMatch
           emit(Token(true, observableMatch))
         }

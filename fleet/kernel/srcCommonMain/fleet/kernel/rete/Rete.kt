@@ -148,7 +148,9 @@ suspend fun <T> withRete(
               it[ReteEntity.TransactorAttr] = kernel
             }
           }
-          withContext(rete) {
+          // if an application has several instances of rete, it might nest their contexts (accidentally or on purpose)
+          // if only the network is overriden, it will at some point receive current context matches as dependencies and be really confused about those coming from another network
+          withContext(rete + ContextMatches(persistentListOf())) {
             body()
           }.also {
             change {
