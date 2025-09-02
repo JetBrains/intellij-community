@@ -69,6 +69,7 @@ import org.jetbrains.plugins.terminal.block.completion.TerminalCommandCompletion
 import org.jetbrains.plugins.terminal.block.completion.TerminalCommandCompletionShowingMode.ONLY_PARAMETERS
 import org.jetbrains.plugins.terminal.block.feedback.askForFeedbackIfReworkedTerminalDisabled
 import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptStyle
+import org.jetbrains.plugins.terminal.block.reworked.TerminalCommandCompletion
 import org.jetbrains.plugins.terminal.runner.LocalTerminalStartCommandBuilder
 import java.awt.Color
 import java.awt.Component
@@ -165,7 +166,7 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
                 actionId = "Terminal.EnterCommandCompletion"
               )
             }
-          }.visible(Registry.`is`("terminal.new.ui.completion.popup"))
+          }.visible(TerminalCommandCompletion.isEnabled())
 
           TerminalCloudCompletionSettingsProvider.getProvider()?.addSettingsRow(this)
         }.bottomGap(BottomGap.NONE)

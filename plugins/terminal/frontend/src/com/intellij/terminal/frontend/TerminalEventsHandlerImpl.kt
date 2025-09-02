@@ -13,7 +13,6 @@ import com.intellij.ide.DataManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.util.PsiUtilBase
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.session.TerminalState
@@ -21,8 +20,8 @@ import com.jediterm.terminal.emulator.mouse.MouseButtonCodes
 import com.jediterm.terminal.emulator.mouse.MouseButtonModifierFlags
 import com.jediterm.terminal.emulator.mouse.MouseFormat
 import com.jediterm.terminal.emulator.mouse.MouseMode
-import org.jetbrains.plugins.terminal.LocalBlockTerminalRunner.Companion.REWORKED_TERMINAL_COMPLETION_POPUP
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
+import org.jetbrains.plugins.terminal.block.reworked.TerminalCommandCompletion
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalUsageLocalStorage
@@ -106,7 +105,7 @@ internal open class TerminalEventsHandlerImpl(
     if (project != null && typeAhead?.isDisabled() == false &&
         lookup == null &&
         (Character.isLetterOrDigit(charTyped) || charTyped == '-' || charTyped == File.separatorChar) &&
-        Registry.`is`(REWORKED_TERMINAL_COMPLETION_POPUP) &&
+        TerminalCommandCompletion.isEnabled() &&
         TerminalOptionsProvider.instance.showCompletionPopupAutomatically) {
       AutoPopupController.getInstance(project).scheduleAutoPopup(editor)
     }
