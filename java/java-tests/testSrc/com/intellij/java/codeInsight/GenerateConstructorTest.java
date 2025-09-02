@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight;
 
 import com.intellij.JavaTestUtil;
@@ -47,6 +47,7 @@ public class GenerateConstructorTest extends LightJavaCodeInsightFixtureTestCase
     return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/generateConstructor";
   }
 
+  public void testClassNestedInImplicitClass() { doTest(); }
   public void testAbstractClass() { doTest(); }
   public void testNewLine() { doTest(); }
   public void testPackageLocalClass() { doTest(); }

@@ -17,6 +17,10 @@ class IntellijIconClassGeneratorConfig : IconClasses() {
         className = "DevKitIcons",
         packageName = "org.jetbrains.idea.devkit",
       )
+      "intellij.diagram.impl" -> IntellijIconClassGeneratorModuleConfig(
+        className = "UmlIcons",
+        packageName = "com.intellij.uml"
+      )
       "intellij.platform.ide.ui.inspector" -> IntellijIconClassGeneratorModuleConfig(
         // inspection icons are loaded by com.intellij.internal.inspector.components.HierarchyTree.Icons
         excludePackages = listOf("com.intellij.internal.inspector.icons"),
@@ -26,8 +30,18 @@ class IntellijIconClassGeneratorConfig : IconClasses() {
       )
       // force generating "Groovy" inner class to preserve backward compatiblity
       "intellij.groovy.psi" -> IntellijIconClassGeneratorModuleConfig(className = "JetgroovyIcons", iconDirectory = "icons")
-      "intellij.clouds.docker" -> IntellijIconClassGeneratorModuleConfig(className = "DockerIcons", packageName = "com.intellij.docker")
-      "intellij.clouds.docker.gateway" -> IntellijIconClassGeneratorModuleConfig(className = "DockerGatewayIcons", packageName = "com.intellij.clouds.docker.gateway")
+      "intellij.clouds.docker" -> IntellijIconClassGeneratorModuleConfig(
+        className = "DockerIcons",
+        packageName = "com.intellij.docker"
+      )
+      "intellij.clouds.docker.gateway" -> IntellijIconClassGeneratorModuleConfig(
+        className = "DockerGatewayIcons",
+        packageName = "com.intellij.clouds.docker.gateway"
+      )
+      "intellij.clouds.kubernetes" -> IntellijIconClassGeneratorModuleConfig(
+        className = "KubernetesIcons",
+        packageName = "com.intellij.kubernetes"
+      )
       "intellij.css" -> IntellijIconClassGeneratorModuleConfig(
         className = "CssIcons",
         packageName = "com.intellij.lang.css",
@@ -166,6 +180,11 @@ class IntellijIconClassGeneratorConfig : IconClasses() {
       )
 
       "intellij.platform.icons" -> super.getConfigForModule(moduleName)?.copy(generateJewelIcons = true) ?: IntellijIconClassGeneratorModuleConfig(generateJewelIcons = true)
+
+      "intellij.java.ultimate.icons" -> IntellijIconClassGeneratorModuleConfig(
+        className = "JavaUltimateIcons",
+        packageName = "com.intellij.java.ultimate.icons",
+      )
 
       else -> super.getConfigForModule(moduleName)
     }

@@ -65,12 +65,12 @@ public class IgnoreFileRemoveEntryFix extends LocalQuickFixAndIntentionActionOnP
    * Handles QuickFix action invoked on {@link IgnoreEntry}.
    *
    * @param project      the {@link Project} containing the working file
-   * @param file         the {@link PsiFile} containing handled entry
+   * @param psiFile         the {@link PsiFile} containing handled entry
    * @param startElement the {@link IgnoreEntry} that will be removed
    * @param endElement   the {@link PsiElement} which is ignored in invoked action
    */
   @Override
-  public void invoke(@NotNull Project project, @NotNull PsiFile file,
+  public void invoke(@NotNull Project project, @NotNull PsiFile psiFile,
                      @Nullable("is null when called from inspection") Editor editor,
                      @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
     if (startElement instanceof IgnoreEntry) {

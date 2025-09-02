@@ -3,8 +3,8 @@ package org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.k2.quickfi
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.PsiUpdateModCommandAction
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaCompilerPluginDiagnostic0
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.KotlinSerializationBundle
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -24,15 +24,14 @@ internal object JsonFormatRedundantDefaultFixFactory {
 
     private class JsonRedundantDefaultQuickFix(
         element: KtCallExpression,
-    ) : KotlinPsiUpdateModCommandAction.ElementBased<KtCallExpression, Unit>(element, Unit) {
+    ) : PsiUpdateModCommandAction<KtCallExpression>(element) {
 
         override fun getFamilyName(): String = KotlinSerializationBundle.message("replace.with.default.json.format")
 
         override fun invoke(
-            actionContext: ActionContext,
+            context: ActionContext,
             element: KtCallExpression,
-            elementContext: Unit,
-            updater: ModPsiUpdater,
+            updater: ModPsiUpdater
         ) {
             val callee = element.calleeExpression ?: return
             element.replace(callee)

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging
 
 import com.google.common.io.Resources
@@ -6,12 +6,14 @@ import com.google.gson.Gson
 import com.intellij.openapi.components.Service
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import java.util.*
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 
 @Service
+@ApiStatus.Internal
 class PyPIPackageRanking {
   private val lock = ReentrantReadWriteLock()
   private var myPackageRank: Map<String, Int> = emptyMap()

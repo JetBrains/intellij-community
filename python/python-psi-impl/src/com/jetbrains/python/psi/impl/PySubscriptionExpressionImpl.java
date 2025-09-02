@@ -23,6 +23,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PySliceItem;
 import com.jetbrains.python.psi.PySubscriptionExpression;
 import com.jetbrains.python.psi.impl.references.PyOperatorReference;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -48,25 +49,34 @@ public class PySubscriptionExpressionImpl extends PyElementImpl implements PySub
   @Override
   public @Nullable PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     final PyExpression indexExpression = getIndexExpression();
-    final PyType type = indexExpression != null ? context.getType(getOperand()) : null;
-    if (type instanceof PyTupleType tupleType) {
-      List<Integer> indexPossibleValues = getIndexExpressionPossibleValues(indexExpression, context, Integer.class);
-      List<@Nullable PyType> possibleTypes = ContainerUtil.map(indexPossibleValues, index -> {
-        if (!tupleType.isHomogeneous() && index < 0) {
-          index += tupleType.getElementCount();
+    if (indexExpression != null) {
+      final PyType operandType = context.getType(getOperand());
+      if (indexExpression instanceof PySliceItem) {
+        if (operandType instanceof PyTupleType) {
+          return ((PyTupleType)operandType).isHomogeneous() ? operandType : PyBuiltinCache.getInstance(this).getTupleType();
         }
-        return tupleType.getElementType(index);
-      });
-      return PyUnionType.union(possibleTypes);
-    }
-    if (type instanceof PyTypedDictType typedDictType) {
-      List<String> indexPossibleValues = getIndexExpressionPossibleValues(indexExpression, context, String.class);
-      return PyUnionType.union(ContainerUtil.map(indexPossibleValues, typedDictType::getElementType));
-    }
-    if (type instanceof PyClassType) {
-      PyType parameterizedType = Ref.deref(PyTypingTypeProvider.getType(this, context));
-      if (parameterizedType instanceof PyCollectionType collectionType) {
-        return collectionType.toClass();
+      }
+      else {
+        if (operandType instanceof PyTupleType tupleType) {
+          List<Integer> indexPossibleValues = getIndexExpressionPossibleValues(indexExpression, context, Integer.class);
+          List<@Nullable PyType> possibleTypes = ContainerUtil.map(indexPossibleValues, index -> {
+            if (!tupleType.isHomogeneous() && index < 0) {
+              index += tupleType.getElementCount();
+            }
+            return tupleType.getElementType(index);
+          });
+          return PyUnionType.union(possibleTypes);
+        }
+        if (operandType instanceof PyTypedDictType typedDictType) {
+          List<String> indexPossibleValues = getIndexExpressionPossibleValues(indexExpression, context, String.class);
+          return PyUnionType.union(ContainerUtil.map(indexPossibleValues, typedDictType::getElementType));
+        }
+        if (operandType instanceof PyClassType) {
+          PyType parameterizedType = Ref.deref(PyTypingTypeProvider.getType(this, context));
+          if (parameterizedType instanceof PyCollectionType collectionType) {
+            return collectionType.toClass();
+          }
+        }
       }
     }
     return PyCallExpressionHelper.getCallType(this, context, key);

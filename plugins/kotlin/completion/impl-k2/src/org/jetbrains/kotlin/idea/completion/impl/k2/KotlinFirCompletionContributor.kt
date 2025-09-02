@@ -3,13 +3,13 @@
 package org.jetbrains.kotlin.idea.completion
 
 import com.intellij.codeInsight.completion.*
+import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.patterns.PsiJavaPatterns
 import com.intellij.patterns.StandardPatterns
 import com.intellij.util.ProcessingContext
 import org.jetbrains.kotlin.idea.completion.api.CompletionDummyIdentifierProviderService
 import org.jetbrains.kotlin.idea.completion.impl.k2.Completions
-import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighers
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinPositionContextDetector
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
@@ -28,6 +28,14 @@ class KotlinFirCompletionContributor : CompletionContributor() {
             KDocTagCompletionProvider
         )
         extend(CompletionType.BASIC, psiElement(KDocTokens.TAG_NAME), KDocTagCompletionProvider)
+
+        if (RegistryManager.getInstance().`is`("kotlin.k2.smart.completion.enabled")) {
+            extend(
+                CompletionType.SMART,
+                psiElement(),
+                KotlinFirCompletionProvider,
+            )
+        }
     }
 
     override fun beforeCompletion(context: CompletionInitializationContext) {
@@ -74,13 +82,12 @@ private object KotlinFirCompletionProvider : CompletionProvider<CompletionParame
         if (AFTER_NUMBER_LITERAL.accepts(position)) return
         val positionContext = KotlinPositionContextDetector.detect(position)
 
-        val resultSet = result.withRelevanceSorter(parameters, positionContext)
-            .withPrefixMatcher(parameters)
-
         Completions.complete(
             parameters = parameters,
             positionContext = positionContext,
-            sink = LookupElementSink(resultSet, parameters),
+            resultSet = result
+                .withRelevanceSorter(parameters, positionContext)
+                .withPrefixMatcher(parameters),
         )
     }
 

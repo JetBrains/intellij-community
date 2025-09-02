@@ -4,6 +4,7 @@ package com.intellij.ui.content.impl;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -50,7 +51,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   private boolean myDisposed;
   private final Project myProject;
 
-  private final List<DataProvider> dataProviders = new SmartList<>();
+  private final List<UiDataProvider> myDataProviders = new SmartList<>();
   private final ArrayList<Content> mySelectionHistory = new ArrayList<>();
 
   /**
@@ -154,7 +155,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
 
     @Override
     public void uiDataSnapshot(@NotNull DataSink sink) {
-      for (Object dataProvider : ContainerUtil.concat(dataProviders, Arrays.asList(myUI, DataManager.getDataProvider(this)))) {
+      for (Object dataProvider : ContainerUtil.concat(myDataProviders, Arrays.asList(myUI, DataManager.getDataProvider(this)))) {
         DataSink.uiDataSnapshot(sink, dataProvider);
       }
       sink.set(PlatformDataKeys.CONTENT_MANAGER, ContentManagerImpl.this);
@@ -682,8 +683,13 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   }
 
   @Override
-  public void addDataProvider(final @NotNull DataProvider provider) {
-    dataProviders.add(provider);
+  public void addDataProvider(@NotNull DataProvider provider) {
+    addUiDataProvider(Utils.wrapToUiDataProvider(provider));
+  }
+
+  @Override
+  public void addUiDataProvider(@NotNull UiDataProvider provider) {
+    myDataProviders.add(provider);
   }
 
   @Override
@@ -716,7 +722,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     myContentWithChangedComponent.clear();
     myUI = null;
     myDispatcher.getListeners().clear();
-    dataProviders.clear();
+    myDataProviders.clear();
     myComponent = null;
   }
 

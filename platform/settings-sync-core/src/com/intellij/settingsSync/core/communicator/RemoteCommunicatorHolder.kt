@@ -6,7 +6,7 @@ import com.intellij.ide.plugins.PluginInstaller
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginXmlPathResolver
 import com.intellij.ide.plugins.loadDescriptor
-import com.intellij.ide.plugins.loadDescriptorFromArtifact
+import com.intellij.ide.plugins.loadAndInitDescriptorFromArtifact
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
@@ -219,7 +219,7 @@ object RemoteCommunicatorHolder : SettingsSyncEventListener {
           }
 
           val syncPluginFile = syncPluginDownloader.filePath
-          val syncPluginDescriptor = loadDescriptorFromArtifact(syncPluginFile, null) ?: let {
+          val syncPluginDescriptor = loadAndInitDescriptorFromArtifact(syncPluginFile, null) ?: let {
             logger.error("Cannot load plugin descriptor for ${settingsSyncPluginId.idString}")
             return@withContext false
           }

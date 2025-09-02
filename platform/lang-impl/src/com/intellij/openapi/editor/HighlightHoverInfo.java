@@ -28,7 +28,6 @@ import java.awt.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.openapi.editor.EditorMouseHoverPopupManager.LOG;
-import static com.intellij.openapi.editor.EditorMouseHoverPopupManager.validatePopupSize;
 
 record HighlightHoverInfo(@Tooltip @NotNull String tooltip, @Nullable TooltipAction tooltipAction) {
   private static final Key<Boolean> DISABLE_BINDING = Key.create("EditorMouseHoverPopupManager.disable.binding");
@@ -66,7 +65,7 @@ record HighlightHoverInfo(@Tooltip @NotNull String tooltip, @Nullable TooltipAct
         LightweightHint mockHint = mockHintRef.get();
         if (mockHint != null) closeHintIgnoreBinding(mockHint);
         wrapper.setContent(newComponent);
-        validatePopupSize(popup);
+        EditorMouseHoverPopupManager.getInstance().validatePopupSize(popup);
       }
     });
     if (hint == null) return null;

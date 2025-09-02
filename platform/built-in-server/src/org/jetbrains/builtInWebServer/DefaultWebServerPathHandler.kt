@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.builtInWebServer
 
-import com.intellij.ide.impl.isTrusted
+import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
@@ -14,8 +14,10 @@ import io.netty.handler.codec.http.FullHttpRequest
 import io.netty.handler.codec.http.HttpHeaders
 import io.netty.handler.codec.http.HttpResponseStatus
 import io.netty.handler.codec.http.QueryStringDecoder
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.ide.orInSafeMode
 import org.jetbrains.io.send
+import java.nio.file.Files
 import java.nio.file.Path
 
 private class DefaultWebServerPathHandler : WebServerPathHandler {
@@ -60,7 +62,7 @@ private class DefaultWebServerPathHandler : WebServerPathHandler {
         return true
       }
 
-      // we must redirect only after index file check to not expose directory status
+      // we must redirect only after the index file check to avoid exposing directory status
       if (!decodedRawPath.endsWith('/')) {
         redirectToDirectory(request, channel, extraHeaders = authHeaders)
         return true
@@ -111,5 +113,10 @@ private class DefaultWebServerPathHandler : WebServerPathHandler {
 
   private fun checkAccess(file: Path, project: Project): Boolean =
     hasAccess(file) &&
-    project.isTrusted() || runCatching { file.toRealPath().startsWith(project.basePath!!) }.getOrDefault(false)
+    TrustedProjects.isProjectTrusted(project) || runCatching { file.toRealPath().startsWith(project.basePath!!) }.getOrDefault(false)
 }
+
+// deny access to any dot-prefixed file
+@ApiStatus.Internal
+fun hasAccess(result: Path): Boolean =
+  Files.isReadable(result) && !(Files.isHidden(result) || result.fileName.toString().startsWith('.'))

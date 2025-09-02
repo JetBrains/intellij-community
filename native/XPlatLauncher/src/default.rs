@@ -17,6 +17,11 @@ const PRODUCT_INFO_REL_PATH: &str = "product-info.json";
 const PRODUCT_INFO_REL_PATH: &str = "Resources/product-info.json";
 
 #[cfg(target_os = "windows")]
+const USER_HOME_MACRO: &str = "%USER_HOME%";
+#[cfg(target_family = "unix")]
+const USER_HOME_MACRO: &str = "$USER_HOME";
+
+#[cfg(target_os = "windows")]
 const IDE_HOME_MACRO: &str = "%IDE_HOME%";
 #[cfg(target_os = "macos")]
 const IDE_HOME_MACRO: &str = "$APP_PACKAGE/Contents";
@@ -65,6 +70,7 @@ impl LaunchConfiguration for DefaultLaunchConfiguration {
         let ide_caches_path = self.user_caches_dir.to_string_checked()?;
         for vm_option in vm_options.iter_mut() {
             *vm_option = vm_option
+                .replace(USER_HOME_MACRO, &user_home_path)
                 .replace(IDE_HOME_MACRO, &ide_home_path)
                 .replace(IDE_CACHE_DIR_MACRO, &ide_caches_path); 
         }

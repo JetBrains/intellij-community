@@ -14,8 +14,8 @@ import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.vcs.log.VcsLogDataPack
 import com.intellij.vcs.log.VcsLogFileHistoryProvider
 import com.intellij.vcs.log.VcsLogListener
-import com.intellij.vcs.log.impl.VcsLogNavigationUtil.waitForRefresh
 import com.intellij.vcs.log.impl.VcsProjectLog
+import com.intellij.vcs.log.impl.waitForRefresh
 import com.intellij.vcs.log.ui.VcsLogUiHolder
 import com.intellij.vcs.log.visible.VisiblePack
 import com.jetbrains.performancePlugin.PerformanceTestSpan
@@ -56,7 +56,7 @@ class ShowFileHistoryCommand(text: String, line: Int) : PerformanceCommandCorout
         LOG.info("suspendCancellableCoroutine launched")
         val listener = object : VcsLogListener {
           override fun onChange(dataPack: VcsLogDataPack, refreshHappened: Boolean) {
-            if (!(dataPack as VisiblePack).canRequestMore()) {
+            if (!(dataPack as VisiblePack).canRequestMore) {
               mainSpan.end()
               scope.close()
               ui.removeLogListener(this)

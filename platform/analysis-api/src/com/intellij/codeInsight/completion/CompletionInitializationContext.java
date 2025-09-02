@@ -24,7 +24,7 @@ public class CompletionInitializationContext {
   public static final @NonNls String DUMMY_IDENTIFIER_TRIMMED = CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED;
   private final Editor myEditor;
   private final @NotNull Caret myCaret;
-  private final PsiFile myFile;
+  private final PsiFile myPsiFile;
   private final CompletionType myCompletionType;
   private final int myInvocationCount;
   private final OffsetMap myOffsetMap;
@@ -34,13 +34,13 @@ public class CompletionInitializationContext {
   public CompletionInitializationContext(final Editor editor,
                                          final @NotNull Caret caret,
                                          Language language,
-                                         final PsiFile file,
+                                         final PsiFile psiFile,
                                          final CompletionType completionType,
                                          int invocationCount) {
     myEditor = editor;
     myCaret = caret;
     myPositionLanguage = language;
-    myFile = file;
+    myPsiFile = psiFile;
     myCompletionType = completionType;
     myInvocationCount = invocationCount;
     myOffsetMap = new OffsetMap(editor.getDocument());
@@ -93,11 +93,11 @@ public class CompletionInitializationContext {
   }
 
   public @NotNull Project getProject() {
-    return myFile.getProject();
+    return myPsiFile.getProject();
   }
 
   public @NotNull PsiFile getFile() {
-    return myFile;
+    return myPsiFile;
   }
 
   public @NotNull OffsetMap getOffsetMap() {

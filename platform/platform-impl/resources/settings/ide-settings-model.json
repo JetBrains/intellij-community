@@ -4294,7 +4294,7 @@
       ]
     },
     {
-      "name": "EventLogWhitelist",
+      "name": "EventLogAllowedList",
       "scope": "app",
       "pluginId": "com.intellij",
       "classFqn": "com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogMetadataSettingsPersistence",
@@ -4463,7 +4463,7 @@
       "name": "WebTypesNpmLoader",
       "scope": "app",
       "pluginId": "JavaScript",
-      "classFqn": "com.intellij.javascript.webSymbols.nodejs.WebTypesNpmLoader",
+      "classFqn": "com.intellij.javascript.polySymbols.nodejs.WebTypesNpmLoader",
       "storage": "web-types-npm-loader.xml",
       "properties": [
         {

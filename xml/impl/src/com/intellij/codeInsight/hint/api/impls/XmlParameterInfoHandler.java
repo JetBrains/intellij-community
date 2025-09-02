@@ -86,7 +86,7 @@ public class XmlParameterInfoHandler implements ParameterInfoHandler<XmlTag,XmlE
 
         for (PsiElement child : children) {
           final TextRange range = child.getTextRange();
-          if (range.getStartOffset() <= offset && range.getEndOffset() > offset) return tag;
+          if (range.contains(offset)) return tag;
 
           if (child instanceof XmlToken token) {
             if (token.getTokenType() == XmlTokenType.XML_TAG_END) return null;

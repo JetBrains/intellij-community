@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.util.ConcurrencyUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -20,7 +21,7 @@ final class EdtScheduledExecutorServiceImpl extends SchedulingWrapper implements
   static final EdtScheduledExecutorService INSTANCE = new EdtScheduledExecutorServiceImpl();
 
   private EdtScheduledExecutorServiceImpl() {
-    super(EdtExecutorServiceImpl.INSTANCE, ((AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService()).delayQueue);
+    super(EdtExecutorServiceImpl.INSTANCE, ((AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService()).getDelayQueue());
   }
 
   @Override
@@ -30,7 +31,7 @@ final class EdtScheduledExecutorServiceImpl extends SchedulingWrapper implements
       null,
       triggerTime(delay, unit)) {
       @Override
-      boolean executeMeInBackendExecutor() {
+      public boolean executeMeInBackendExecutor() {
         // optimization: can be cancelled already
         if (!isDone()) {
           ApplicationManager.getApplication().invokeLater(this, modalityState, __ -> {
@@ -56,7 +57,7 @@ final class EdtScheduledExecutorServiceImpl extends SchedulingWrapper implements
   }
 
   @Override
-  public @NotNull List<Runnable> shutdownNow() {
+  public @NotNull @Unmodifiable List<Runnable> shutdownNow() {
     return AppScheduledExecutorService.notAllowedMethodCall();
   }
 

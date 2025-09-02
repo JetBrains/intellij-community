@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search;
 
 import com.intellij.openapi.module.Module;
@@ -42,14 +42,14 @@ public class DelegatingGlobalSearchScope extends GlobalSearchScope implements Co
     myEquality = ArrayUtilRt.EMPTY_OBJECT_ARRAY;
   }
 
-  // todo ijpl-339 mark experimental
+  // todo IJPL-339 mark experimental
   @ApiStatus.Internal
   @Override
   public @NotNull CodeInsightContextInfo getCodeInsightContextInfo() {
     GlobalSearchScope delegate = getDelegate();
     return delegate instanceof CodeInsightContextAwareSearchScope
            ? ((CodeInsightContextAwareSearchScope)delegate).getCodeInsightContextInfo()
-           : CodeInsightContextAwareSearchScopesKt.NoContextInformation();
+           : CodeInsightContextAwareSearchScopes.NoContextInformation();
   }
 
   @Override

@@ -2,7 +2,6 @@
 package com.intellij.platform.workspace.storage.tests.trace
 
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
-import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.asBase
 import com.intellij.platform.workspace.storage.instrumentation.ImmutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.testEntities.entities.*
@@ -157,7 +156,7 @@ class TraceTest {
     }.toSnapshot()
 
     val traces = ReadTracker.trace(newSnapshot) {
-      it.entities(NamedEntity::class.java).single().children.single<@Child NamedChildEntity>()
+      it.entities(NamedEntity::class.java).single().children.single<NamedChildEntity>()
     }
 
     assertEquals(2, traces.size)

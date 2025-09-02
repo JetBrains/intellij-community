@@ -26,6 +26,7 @@ import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.*;
 
 public class MultiProcessDebugger implements ProcessDebugger {
@@ -537,7 +538,14 @@ public class MultiProcessDebugger implements ProcessDebugger {
               sendDebuggerPort(socket, serverSocket, myMultiProcessDebugger.myDebugProcess);
               socket.close();
             }
-            debugger.waitForConnect();
+            try {
+              debugger.waitForConnect();
+            } catch (SocketException e) {
+              LOG.info("Socket exception while waiting for debugger connection", e);
+              disconnect();
+              return;
+            }
+
             debugger.handshake();
             myMultiProcessDebugger.addDebugger(debugger);
             myMultiProcessDebugger.myDebugProcess.init();
@@ -597,9 +605,9 @@ public class MultiProcessDebugger implements ProcessDebugger {
     }
 
     public void disconnect() {
-      myShouldAccept = false;
-      if (myServerSocket != null) {
-        synchronized (this) {
+      synchronized (this) {
+        myShouldAccept = false;
+        if (myServerSocket != null) {
           if (!myServerSocket.isClosed()) {
             try {
               myServerSocket.close();

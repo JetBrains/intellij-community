@@ -14,7 +14,9 @@ import com.intellij.util.Alarm
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
 import com.intellij.vcsUtil.VcsUtil
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
 
@@ -36,6 +38,8 @@ class ModuleVcsDetector(private val project: Project, private val coroutineScope
     it.setRestartTimerOnAdd(true)
   }
 
+  private val initialDetectionDone = CompletableDeferred<Unit>(parent = coroutineScope.coroutineContext[Job])
+
   private val dirtyContentRoots = LinkedHashSet<VirtualFile>()
 
   private suspend fun getVcsManager(): ProjectLevelVcsManagerImpl {
@@ -49,7 +53,15 @@ class ModuleVcsDetector(private val project: Project, private val coroutineScope
    */
   @VisibleForTesting
   fun needInitialDetection(props: PropertiesComponent, vcsManager: ProjectLevelVcsManager): Boolean {
-    return !props.getBoolean(INITIAL_DETECTION_KEY) && !vcsManager.hasAnyMappings();
+    return !props.getBoolean(INITIAL_DETECTION_KEY) && !vcsManager.hasAnyMappings() && VcsUtil.shouldDetectVcsMappingsFor(project);
+  }
+
+  suspend fun awaitInitialDetection() {
+    val props = project.serviceAsync<PropertiesComponent>()
+    val vcsManager = getVcsManager()
+    val willRun = needInitialDetection(props, vcsManager)
+    if (!willRun) return
+    initialDetectionDone.await()
   }
 
   private suspend fun startInitialDetection() {
@@ -57,7 +69,7 @@ class ModuleVcsDetector(private val project: Project, private val coroutineScope
 
     val vcsManager = getVcsManager()
     val props = project.serviceAsync<PropertiesComponent>()
-    if (needInitialDetection(props, vcsManager) && VcsUtil.shouldDetectVcsMappingsFor(project)) {
+    if (needInitialDetection(props, vcsManager)) {
       queue.queue(object : Update("initial scan") {
         override fun run() = throw UnsupportedOperationException("Sync execution is not supported")
 
@@ -66,6 +78,7 @@ class ModuleVcsDetector(private val project: Project, private val coroutineScope
           MAPPING_DETECTION_LOG.debug("ModuleVcsDetector.autoDetectDefaultRoots - contentRoots", contentRoots)
           autoDetectForContentRoots(contentRoots = contentRoots, isInitialDetection = true, vcsManager = vcsManager)
           props.updateValue(INITIAL_DETECTION_KEY, true)
+          initialDetectionDone.complete(Unit)
         }
       })
     }

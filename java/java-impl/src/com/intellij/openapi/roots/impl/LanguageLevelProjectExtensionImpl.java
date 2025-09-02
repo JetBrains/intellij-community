@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.project.Project;
@@ -8,6 +8,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ProjectExtension;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.pom.java.JavaRelease;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.ObjectUtils;
 import org.jdom.Element;
@@ -58,12 +59,12 @@ public final class LanguageLevelProjectExtensionImpl extends LanguageLevelProjec
   }
 
   private static LanguageLevel readLanguageLevel(String level) {
-    for (LanguageLevel languageLevel : LanguageLevel.values()) {
+    for (LanguageLevel languageLevel : LanguageLevel.getEntries()) {
       if (level.equals(languageLevel.name())) {
         return languageLevel;
       }
     }
-    return LanguageLevel.HIGHEST;
+    return JavaRelease.getHighest();
   }
 
   private void writeExternal(final Element element) {
@@ -83,12 +84,13 @@ public final class LanguageLevelProjectExtensionImpl extends LanguageLevelProjec
   }
 
   private @NotNull LanguageLevel getLanguageLevelOrDefault() {
-    return ObjectUtils.chooseNotNull(myLanguageLevel, LanguageLevel.HIGHEST);
+    return ObjectUtils.chooseNotNull(myLanguageLevel, JavaRelease.getHighest());
   }
 
   @Override
   public void setLanguageLevel(@NotNull LanguageLevel languageLevel) {
-    // we don't use here getLanguageLevelOrDefault() - if null, just set to provided value, because our default (LanguageLevel.HIGHEST) is changed every java release
+    // we don't use here getLanguageLevelOrDefault() - if null, just set to provided value because our default (JavaRelease.getHighest())
+    // is changed every java release
     if (myLanguageLevel != languageLevel) {
       myLanguageLevel = languageLevel;
       setDefault(false);

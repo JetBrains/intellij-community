@@ -60,12 +60,13 @@ public final class GitPushResultNotification extends Notification {
   }
 
   @RequiresEdt
-  static @NotNull GitPushResultNotification create(@NotNull Project project,
-                                                   @NotNull GitPushResult pushResult,
-                                                   @Nullable GitPushOperation pushOperation,
-                                                   boolean multiRepoProject,
-                                                   @Nullable GitUpdateInfoAsLog.NotificationData notificationData,
-                                                   @NotNull Map<String, VcsPushOptionValue> customParams) {
+  @VisibleForTesting
+  public static @NotNull GitPushResultNotification create(@NotNull Project project,
+                                                          @NotNull GitPushResult pushResult,
+                                                          @Nullable GitPushOperation pushOperation,
+                                                          boolean multiRepoProject,
+                                                          @Nullable GitUpdateInfoAsLog.NotificationData notificationData,
+                                                          @NotNull Map<String, VcsPushOptionValue> customParams) {
     GroupedPushResult grouped = GroupedPushResult.group(pushResult.getResults());
 
     String title;

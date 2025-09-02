@@ -1,20 +1,20 @@
-// "Replace spaces with tabs (1 space = 1 tab)" "true"
+// "Indent text block with spaces only" "true"
 
 class Foo {
   void test() {
     String colors = """
-
-
-							red
-
-
-
-							green
-
-
-
-							blue
-
-
-				""";
+            
+            
+               red
+            
+            
+            
+               green
+            
+            
+            
+               blue
+            
+            
+            """;
 

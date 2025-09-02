@@ -54,10 +54,10 @@ public abstract class AbstractFix implements IntentionAction {
   }
 
   @Override
-  public final boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+  public final boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
     if (requiresEditor() && editor == null) return false;
 
-    return isAvailableImpl(project, editor, file);
+    return isAvailableImpl(project, editor, psiFile);
   }
 
   protected abstract boolean isAvailableImpl(@NotNull Project project, @Nullable Editor editor, PsiFile file);

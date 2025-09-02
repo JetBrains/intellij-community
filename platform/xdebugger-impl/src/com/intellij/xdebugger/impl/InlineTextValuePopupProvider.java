@@ -4,10 +4,10 @@ package com.intellij.xdebugger.impl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerTreeCreator;
+import com.intellij.xdebugger.impl.frame.XDebugSessionProxy;
 import com.intellij.xdebugger.impl.inline.InlineValuePopupProvider;
 import com.intellij.xdebugger.impl.inline.XDebuggerTextInlayPopup;
 import com.intellij.xdebugger.impl.ui.XValueTextProvider;
@@ -30,7 +30,7 @@ public final class InlineTextValuePopupProvider implements InlineValuePopupProvi
 
   @Override
   public void showPopup(@NotNull XValueNodeImpl xValueNode,
-                        @NotNull XDebugSession session,
+                        @NotNull XDebugSessionProxy session,
                         @NotNull XSourcePosition position,
                         @NotNull XDebuggerTreeCreator treeCreator,
                         @NotNull Editor editor,

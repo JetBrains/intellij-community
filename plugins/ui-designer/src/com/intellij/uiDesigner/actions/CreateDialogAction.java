@@ -9,21 +9,15 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.uiDesigner.GuiDesignerConfiguration;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public final class CreateDialogAction extends AbstractCreateFormAction {
+final class CreateDialogAction extends AbstractCreateFormAction {
   private boolean myRecentGenerateOK;
   private boolean myRecentGenerateCancel;
   private boolean myRecentGenerateMain;
-
-  public CreateDialogAction() {
-    super(UIDesignerBundle.messagePointer("action.create.dialog"),
-          UIDesignerBundle.messagePointer("action.description.create.dialog"), PlatformIcons.UI_FORM_ICON);
-  }
 
   @Override
   protected PsiElement @NotNull [] invokeDialog(final @NotNull Project project, final @NotNull PsiDirectory directory) {

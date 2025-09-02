@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.serialization
 
 import com.amazon.ion.IonType
@@ -109,7 +109,7 @@ internal class CollectionBinding(type: ParameterizedType,
           try {
             constructor.setAccessible(true)
           }
-          catch (ignored: SecurityException) {
+          catch (_: SecurityException) {
           }
           @Suppress("UNCHECKED_CAST")
           return constructor.newInstance() as MutableCollection<Any?>

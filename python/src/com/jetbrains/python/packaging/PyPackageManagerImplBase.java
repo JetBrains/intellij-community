@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging;
 
 import com.intellij.execution.ExecutionException;
@@ -11,18 +11,20 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.python.community.helpersLocator.PythonHelpersLocator;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.net.HttpConfigurable;
 import com.jetbrains.python.PyPsiPackageUtil;
 import com.jetbrains.python.PySdkBundle;
-import com.jetbrains.python.PythonHelpersLocator;
-import com.jetbrains.python.execution.FailureReason;
+import com.jetbrains.python.errorProcessing.ExecError;
+import com.jetbrains.python.errorProcessing.ExecErrorReason;
+import com.jetbrains.python.packaging.common.PythonPackage;
+import com.jetbrains.python.packaging.pip.PipParseUtils;
 import com.jetbrains.python.packaging.repository.PyPackageRepositoryUtil;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.PyDetectedSdk;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,6 +37,10 @@ import java.util.regex.Pattern;
 
 import static com.intellij.webcore.packaging.PackageVersionComparator.VERSION_COMPARATOR;
 
+/**
+ * @deprecated TODO: explain
+ */
+@Deprecated(forRemoval = true)
 public abstract class PyPackageManagerImplBase extends PyPackageManager {
   protected static final String SETUPTOOLS_VERSION = "44.1.1";
   protected static final String PIP_VERSION = "24.3.1";
@@ -125,11 +131,14 @@ public abstract class PyPackageManagerImplBase extends PyPackageManager {
       return setuptoolsPackage != null ? setuptoolsPackage : PyPsiPackageUtil.findPackage(packages, PyPackageUtil.DISTRIBUTE);
     }
     catch (PyExecutionException e) {
-      var error = e.getFailureReason();
-      if (error instanceof FailureReason.ExecutionFailed executionFailed) {
-        int exitCode = executionFailed.getOutput().getExitCode();
-        if (exitCode == ERROR_NO_SETUPTOOLS) {
-          return null;
+      var pyError = e.getPyError();
+      if (pyError instanceof ExecError error) {
+        var errorReason = error.getErrorReason();
+        if (errorReason instanceof ExecErrorReason.UnexpectedProcessTermination unexpectedProcessTermination) {
+          int exitCode = unexpectedProcessTermination.getExitCode();
+          if (exitCode == ERROR_NO_SETUPTOOLS) {
+            return null;
+          }
         }
       }
       throw e;
@@ -159,6 +168,7 @@ public abstract class PyPackageManagerImplBase extends PyPackageManager {
     return dependents;
   }
 
+  @RequiresReadLock(generateAssertion = false)
   protected static @NotNull LanguageLevel getOrRequestLanguageLevelForSdk(@NotNull Sdk sdk) throws ExecutionException {
     if (sdk instanceof PyDetectedSdk) {
       final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(sdk);
@@ -194,7 +204,7 @@ public abstract class PyPackageManagerImplBase extends PyPackageManager {
   }
 
   @Override
-  public final @NotNull List<PyPackage> refreshAndGetPackages(boolean alwaysRefresh) throws ExecutionException {
+  public @NotNull List<PyPackage> refreshAndGetPackages(boolean alwaysRefresh) throws ExecutionException {
     final List<PyPackage> currentPackages = myPackagesCache;
     if (alwaysRefresh || currentPackages == null) {
       myPackagesCache = null;
@@ -277,48 +287,13 @@ public abstract class PyPackageManagerImplBase extends PyPackageManager {
     return urlArgument;
   }
 
-  protected final @NotNull List<PyPackage> parsePackagingToolOutput(@NotNull String output) throws PyExecutionException {
+  protected static @NotNull List<PyPackage> parsePackagingToolOutput(@NotNull String output) {
+    List<@NotNull PythonPackage> packageList = PipParseUtils.parseListResult(output);
     List<PyPackage> packages = new ArrayList<>();
-    for (String line : StringUtil.splitByLines(output)) {
-      PyPackage pkg = parsePackaging(line,
-                                     "\t",
-                                     true,
-                                     PySdkBundle.message("python.sdk.packaging.invalid.output.format"),
-                                     PACKAGING_TOOL);
-
-      if (pkg != null) {
-        packages.add(pkg);
-      }
+    for (PythonPackage pythonPackage : packageList) {
+      PyPackage pkg = new PyPackage(pythonPackage.getName(), pythonPackage.getVersion());
+      packages.add(pkg);
     }
     return packages;
-  }
-
-  protected final @Nullable PyPackage parsePackaging(@NotNull @NonNls String line,
-                                                     @NotNull @NonNls String separator,
-                                                     boolean useLocation,
-                                                     @NotNull @Nls String errorMessage,
-                                                     @NotNull @NonNls String command) throws PyExecutionException {
-    List<String> fields = StringUtil.split(line, separator);
-    if (fields.size() < 3) {
-      throw new PyExecutionException(errorMessage, command, List.of());
-    }
-
-    final String name = fields.get(0);
-
-    // TODO does it has to be parsed regardless the name?
-    List<PyRequirement> requirements = fields.size() >= 4 ?
-                                       parseRequirements(toMultilineString(fields.get(3))) :
-                                       List.of();
-
-    return "Python".equals(name) ?
-           null :
-           new PyPackage(name,
-                         fields.get(1),
-                         useLocation ? fields.get(2) : "",
-                         requirements);
-  }
-
-  private static @NotNull String toMultilineString(@NotNull String string) {
-    return StringUtil.join(StringUtil.split(string, ":"), "\n");
   }
 }

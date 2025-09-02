@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.repo
 
 import com.intellij.openapi.vcs.FilePath
@@ -31,6 +31,7 @@ internal class CopyOnWriteFilePathSet(private val caseSensitive: Boolean) {
   }
 
   fun remove(pathsToExclude: Collection<FilePath>) {
+    require(initialized) { "remove method should always called after set" }
     val newFiles = RecursiveFilePathSet(caseSensitive)
     filesSet.filePaths().forEach { file ->
       if (!pathsToExclude.contains(file)) {
@@ -41,6 +42,7 @@ internal class CopyOnWriteFilePathSet(private val caseSensitive: Boolean) {
   }
 
   fun add(pathsToAdd: Collection<FilePath>) {
+    require(initialized) { "add method should always called after set" }
     val newFiles = RecursiveFilePathSet(caseSensitive)
     newFiles.addAll(filesSet.filePaths())
     newFiles.addAll(pathsToAdd)

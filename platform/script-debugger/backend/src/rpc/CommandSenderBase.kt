@@ -8,6 +8,7 @@ import org.jetbrains.concurrency.catchError
 import org.jetbrains.jsonProtocol.Request
 
 abstract class CommandSenderBase<SUCCESS_RESPONSE> {
+  // Note: This method must call `message.buffer.release()` directly or indirectly (ex. by delegating to Netty) to prevent memory leaks.
   @ApiStatus.Internal
   protected abstract fun <RESULT> doSend(message: Request<RESULT>, callback: RequestPromise<SUCCESS_RESPONSE, RESULT>)
 
@@ -35,5 +36,13 @@ class RequestPromise<SUCCESS_RESPONSE, RESULT : Any?>(private val methodName: St
 
   override fun onError(error: Throwable) {
     setError(error)
+  }
+
+  override fun onCancel(error: Throwable?) {
+    if (error == null) {
+      cancel()
+    } else {
+      onError(error)
+    }
   }
 }

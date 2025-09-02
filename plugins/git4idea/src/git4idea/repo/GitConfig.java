@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.repo;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -10,16 +10,16 @@ import git4idea.GitRemoteBranch;
 import git4idea.branch.GitBranchUtil;
 import org.ini4j.Ini;
 import org.ini4j.Profile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import static java.util.Collections.emptyList;
 
 /**
  * Reads information from the {@code .git/config} file, and parses it to actual objects.
@@ -30,6 +30,7 @@ import static java.util.Collections.emptyList;
  *
  * TODO: note, that other git configuration files (such as ~/.gitconfig) are not handled yet.
  */
+@ApiStatus.Internal
 public final class GitConfig {
   private static final Logger LOG = Logger.getInstance(GitConfig.class);
 
@@ -39,15 +40,14 @@ public final class GitConfig {
   private static final Pattern BRANCH_COMMON_PARAMS_SECTION = Pattern.compile("branch", Pattern.CASE_INSENSITIVE);
   private static final String CORE_SECTION = "core";
 
-  private final @NotNull Collection<? extends Remote> myRemotes;
-  private final @NotNull Collection<? extends Url> myUrls;
-  private final @NotNull Collection<? extends BranchConfig> myTrackedInfos;
+  private final @NotNull Collection<Remote> myRemotes;
+  private final @NotNull Collection<Url> myUrls;
+  private final @NotNull Collection<BranchConfig> myTrackedInfos;
   private final @NotNull Core myCore;
 
-
-  private GitConfig(@NotNull Collection<? extends Remote> remotes,
-                    @NotNull Collection<? extends Url> urls,
-                    @NotNull Collection<? extends BranchConfig> trackedInfos,
+  private GitConfig(@NotNull Collection<Remote> remotes,
+                    @NotNull Collection<Url> urls,
+                    @NotNull Collection<BranchConfig> trackedInfos,
                     @NotNull Core core) {
     myRemotes = remotes;
     myUrls = urls;
@@ -65,8 +65,8 @@ public final class GitConfig {
    *    remote parameters written in the file. This method returns ONLY remotes defined in {@code .git/config}.</p>
    * @return Git remotes defined in {@code .git/config}.
    */
-  @NotNull
-  Set<GitRemote> parseRemotes() {
+  @VisibleForTesting
+  public @NotNull Set<GitRemote> parseRemotes() {
     // populate GitRemotes with substituting urls when needed
     LinkedHashSet<GitRemote> result = new LinkedHashSet<>();
     for (Remote remote : myRemotes) {
@@ -78,7 +78,7 @@ public final class GitConfig {
     return result;
   }
 
-  private static @NotNull GitRemote convertRemoteToGitRemote(@NotNull Collection<? extends Url> urls, @NotNull Remote remote) {
+  private static @NotNull GitRemote convertRemoteToGitRemote(@NotNull Collection<Url> urls, @NotNull Remote remote) {
     UrlsAndPushUrls substitutedUrls = substituteUrls(urls, remote);
     return new GitRemote(remote.myName, substitutedUrls.getUrls(), substitutedUrls.getPushUrls(),
                          remote.getFetchSpecs(), remote.getPushSpec());
@@ -87,8 +87,8 @@ public final class GitConfig {
   /**
    * Create branch tracking information based on the information defined in {@code .git/config}.
    */
-  @NotNull
-  Set<GitBranchTrackInfo> parseTrackInfos(@NotNull Collection<? extends GitLocalBranch> localBranches,
+  @VisibleForTesting
+  public @NotNull Set<GitBranchTrackInfo> parseTrackInfos(@NotNull Collection<GitLocalBranch> localBranches,
                                           @NotNull Collection<? extends GitRemoteBranch> remoteBranches) {
     LinkedHashSet<GitBranchTrackInfo> result = new LinkedHashSet<>();
     for (BranchConfig config : myTrackedInfos) {
@@ -110,8 +110,9 @@ public final class GitConfig {
    * <p/>
    * If some section is invalid, it is skipped, and a warning is reported.
    */
-  static @NotNull GitConfig read(@NotNull File configFile) {
-    GitConfig emptyConfig = new GitConfig(emptyList(), emptyList(), emptyList(), new Core(null));
+  @VisibleForTesting
+  public static @NotNull GitConfig read(@NotNull File configFile) {
+    GitConfig emptyConfig = new GitConfig(Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), new Core(null));
     if (!configFile.exists() || configFile.isDirectory()) {
       LOG.info("No .git/config file at " + configFile.getPath());
       return emptyConfig;
@@ -148,7 +149,7 @@ public final class GitConfig {
   }
 
   private static @Nullable GitBranchTrackInfo convertBranchConfig(@Nullable BranchConfig branchConfig,
-                                                                  @NotNull Collection<? extends GitLocalBranch> localBranches,
+                                                                  @NotNull Collection<GitLocalBranch> localBranches,
                                                                   @NotNull Collection<? extends GitRemoteBranch> remoteBranches) {
     if (branchConfig == null) {
       return null;
@@ -180,7 +181,7 @@ public final class GitConfig {
     return new GitBranchTrackInfo(localBranch, remoteBranch, merge);
   }
 
-  private static @Nullable GitLocalBranch findLocalBranch(@NotNull String branchName, @NotNull Collection<? extends GitLocalBranch> localBranches) {
+  private static @Nullable GitLocalBranch findLocalBranch(@NotNull String branchName, @NotNull Collection<GitLocalBranch> localBranches) {
     final String name = GitBranchUtil.stripRefsPrefix(branchName);
     return ContainerUtil.find(localBranches, input -> input.getName().equals(name));
   }
@@ -255,7 +256,7 @@ public final class GitConfig {
    *   <a href="http://thread.gmane.org/gmane.comp.version-control.git/127910">pushInsteadOf doesn't override explicit pushUrl</a>.
    * </p>
    */
-  private static @NotNull UrlsAndPushUrls substituteUrls(@NotNull Collection<? extends Url> urlSections, @NotNull Remote remote) {
+  private static @NotNull UrlsAndPushUrls substituteUrls(@NotNull Collection<Url> urlSections, @NotNull Remote remote) {
     List<String> urls = new ArrayList<>(remote.getUrls().size());
     Collection<String> pushUrls = new ArrayList<>();
 

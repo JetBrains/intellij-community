@@ -22,6 +22,7 @@ import java.util.Set;
 
 public class PackageScope extends GlobalSearchScope {
   private final Set<VirtualFile> myDirs;
+  private final Set<VirtualFile> myFiles;
   private final PsiPackage myPackage;
   private final boolean myIncludeSubpackages;
   private final boolean myIncludeLibraries;
@@ -54,6 +55,16 @@ public class PackageScope extends GlobalSearchScope {
       myDirs.add(e);
       return true;
     });
+    
+    Query<VirtualFile> files = packageIndex.getFilesByPackageName(myPackageQualifiedName);
+    if (packageScope != null) {
+      files = files.filtering(packageScope::contains);
+    }
+    myFiles = VfsUtilCore.createCompactVirtualFileSet();
+    files.forEach(e -> {
+      myFiles.add(e);
+      return true;
+    });
 
     myIncludeLibraries = includeLibraries;
 
@@ -84,7 +95,7 @@ public class PackageScope extends GlobalSearchScope {
         }
       }
     }
-    return false;
+    return myFiles.contains(file);
   }
 
   @Override

@@ -6,12 +6,12 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.annotations.Child
+import com.intellij.platform.workspace.storage.annotations.Parent
 
 
 interface ParentMultipleEntity : WorkspaceEntity {
   val parentData: String
-  val children: List<@Child ChildMultipleEntity>
+  val children: List<ChildMultipleEntity>
 
   //region generated code
   @GeneratedCodeApiVersion(3)
@@ -53,6 +53,7 @@ fun MutableEntityStorage.modifyParentMultipleEntity(
 interface ChildMultipleEntity : WorkspaceEntity {
   val childData: String
 
+  @Parent
   val parentEntity: ParentMultipleEntity
 
   //region generated code

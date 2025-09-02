@@ -17,9 +17,9 @@ package com.jetbrains.python.psi.stubs;
 
 import com.jetbrains.python.psi.impl.stubs.CustomTargetExpressionStub;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Map;
-import java.util.Optional;
+import java.util.LinkedHashMap;
 
 public interface PyNamedTupleStub extends CustomTargetExpressionStub {
 
@@ -34,5 +34,7 @@ public interface PyNamedTupleStub extends CustomTargetExpressionStub {
    * Iteration order repeats the declaration order.
    */
   @NotNull
-  Map<String, Optional<String>> getFields();
+  LinkedHashMap<String, FieldTypeAndHasDefault> getFields();
+
+  record FieldTypeAndHasDefault(@Nullable String type, boolean hasDefault) {}
 }

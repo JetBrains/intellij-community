@@ -5,6 +5,7 @@ class BaseSpatialFeatures:
     has_spatialrefsys_table: bool
     supports_add_srs_entry: bool
     supports_geometry_field_introspection: bool
+    supports_geography: bool
     supports_3d_storage: bool
     supports_3d_functions: bool
     supports_transform: bool
@@ -19,6 +20,10 @@ class BaseSpatialFeatures:
     supports_dwithin_distance_expr: bool
     supports_raster: bool
     supports_geometry_field_unique_index: bool
+    can_alter_geometry_field: bool
+    supports_tolerance_parameter: bool
+    unsupported_geojson_options: set[str]
+    empty_intersection_returns_none: bool
     @property
     def supports_bbcontains_lookup(self) -> bool: ...
     @property

@@ -28,7 +28,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import static com.intellij.documentation.mdn.MdnDocumentationKt.getHtmlMdnDocumentation;
-import static com.intellij.webSymbols.WebSymbolApiStatus.isDeprecatedOrObsolete;
+import static com.intellij.polySymbols.PolySymbolApiStatus.isDeprecatedOrObsolete;
 
 public final class HtmlDeprecatedTagInspection extends HtmlLocalInspectionTool {
   private static final @NonNls Set<String> ourHtmlReplaceableTags;

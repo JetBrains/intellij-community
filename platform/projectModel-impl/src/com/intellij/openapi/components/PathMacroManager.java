@@ -6,6 +6,8 @@ import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.application.options.ReplacePathToMacroMap;
 import com.intellij.openapi.application.PathMacroFilter;
 import com.intellij.openapi.application.PathMacros;
+import com.intellij.openapi.components.impl.ModulePathMacroManager;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -20,7 +22,16 @@ import java.util.Map;
 
 public class PathMacroManager implements PathMacroSubstitutor {
   public static @NotNull PathMacroManager getInstance(@NotNull ComponentManager componentManager) {
-    return componentManager.getService(PathMacroManager.class);
+    if (componentManager instanceof Module module) {
+      return getInstance(module);
+    }
+    else {
+      return componentManager.getService(PathMacroManager.class);
+    }
+  }
+
+  public static @NotNull PathMacroManager getInstance(@NotNull Module module) {
+    return new ModulePathMacroManager(module);
   }
 
   private PathMacrosImpl pathMacros;

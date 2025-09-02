@@ -8,6 +8,7 @@ import io.opentelemetry.api.trace.SpanBuilder
 import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.context.Context
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.withContext
 import java.util.concurrent.CancellationException
 import kotlin.coroutines.AbstractCoroutineContextElement
@@ -20,11 +21,11 @@ class OpenTelemetryContextElement(
   companion object Key : CoroutineContext.Key<OpenTelemetryContextElement>
 }
 
-suspend inline fun <T> Tracer.span(name: String, crossinline block: suspend (Span) -> T): T {
+suspend inline fun <T> Tracer.span(name: String, crossinline block: suspend CoroutineScope.(Span) -> T): T {
   return spanBuilder(name).use(block)
 }
 
-suspend inline fun <T> SpanBuilder.use(crossinline block: suspend (Span) -> T): T {
+suspend inline fun <T> SpanBuilder.use(crossinline block: suspend CoroutineScope.(Span) -> T): T {
   val telemetryContext = requireNotNull(coroutineContext.get(OpenTelemetryContextElement)) {
     "You must set OpenTelemetryContextElement for the root coroutine scope"
   }.context

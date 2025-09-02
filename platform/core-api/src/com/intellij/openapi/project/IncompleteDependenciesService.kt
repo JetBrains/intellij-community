@@ -12,7 +12,7 @@ import org.jetbrains.annotations.ApiStatus
 /**
  * Indicates project state when dependencies are not yet downloaded.
  */
-@ApiStatus.Internal
+@ApiStatus.Experimental
 interface IncompleteDependenciesService {
   /**
    * Note that [Flow.collect] is invoked asynchronously outside any lock

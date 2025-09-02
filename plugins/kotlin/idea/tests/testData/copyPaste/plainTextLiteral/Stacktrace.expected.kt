@@ -13,8 +13,8 @@ val x = """ "Alarm Pool" prio=0 tid=0x0 nid=0x0 waiting on condition
     at com.intellij.openapi.application.impl.NonBlockingReadActionImpl${'$'}Submission.<init>(NonBlockingReadActionImpl.java:278)
     at com.intellij.openapi.application.impl.NonBlockingReadActionImpl.submit(NonBlockingReadActionImpl.java:231)
     at com.intellij.lang.javascript.modules.remote.JSRemoteModulesUsagesDetector.performNonBlockingUpdate(JSRemoteModulesUsagesDetector.java:108)
-    at com.intellij.lang.javascript.modules.remote.JSRemoteModulesUsagesDetector${'$'}${'$'}Lambda/0x0000000101cb77a8.run(Unknown Source)
-    at com.intellij.util.Alarm${'$'}Request.lambda${'$'}runSafely${'$'}0(Alarm.java:371)
-    at com.intellij.util.Alarm${'$'}Request${'$'}${'$'}Lambda/0x0000000100fe5200.run(Unknown Source)
-    at com.intellij.util.concurrency.ChildContext${'$'}runAsCoroutine${'$'}1.invoke(propagation.kt:89)
-    at com.intellij.util.concurrency.ChildContext${'$'}runAsCoroutine${'$'}1.invoke(propagation.kt:89) """
+    at com.intellij.lang.javascript.modules.remote.JSRemoteModulesUsagesDetector$${'$'}Lambda/0x0000000101cb77a8.run(Unknown Source)
+    at com.intellij.util.Alarm${'$'}Request.lambda${'$'}runSafely$0(Alarm.java:371)
+    at com.intellij.util.Alarm${'$'}Request$${'$'}Lambda/0x0000000100fe5200.run(Unknown Source)
+    at com.intellij.util.concurrency.ChildContext${'$'}runAsCoroutine$1.invoke(propagation.kt:89)
+    at com.intellij.util.concurrency.ChildContext${'$'}runAsCoroutine$1.invoke(propagation.kt:89) """

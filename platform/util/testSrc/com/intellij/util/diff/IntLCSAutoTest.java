@@ -18,7 +18,6 @@ package com.intellij.util.diff;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.BitSet;
 import java.util.Random;
 
 public class IntLCSAutoTest extends TestCase {

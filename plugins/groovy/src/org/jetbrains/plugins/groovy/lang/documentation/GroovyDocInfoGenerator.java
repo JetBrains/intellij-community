@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.documentation;
 
 import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator;
@@ -8,6 +8,7 @@ import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocReferenceElement;
 
 import static org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes.*;
 
@@ -56,5 +57,11 @@ public class GroovyDocInfoGenerator extends JavaDocInfoGenerator {
         }
       }
     });
+  }
+
+  @Override
+  protected boolean isRefElement(PsiElement element) {
+    if (element instanceof GrDocReferenceElement) return true;
+    return super.isRefElement(element);
   }
 }

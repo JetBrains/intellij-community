@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.branch;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -51,7 +51,7 @@ public abstract class DvcsBranchPopup<Repo extends Repository> {
     myInSpecificRepository = myRepositoryManager.moreThanOneRoot() && myVcsSettings.getSyncSetting() == DvcsSyncSettings.Value.DONT_SYNC;
     String title = buildTitle(currentRepository);
     myPopup = new BranchActionGroupPopup(title, myProject, preselectActionCondition, createActions(), dimensionKey, dataContext);
-    new DvcsBranchSyncPolicyUpdateNotifier<>(myProject, myVcs, myVcsSettings, myRepositoryManager).initBranchSyncPolicyIfNotInitialized();
+    new DvcsBranchSyncPolicyUpdateNotifier<>(myProject, myVcsSettings, myRepositoryManager).initBranchSyncPolicyIfNotInitialized();
     warnThatBranchesDivergedIfNeeded();
     if (myRepositoryManager.moreThanOneRoot()) {
       myPopup.addToolbarAction(new DefaultTrackReposSynchronouslyAction(myVcsSettings), true);

@@ -4,7 +4,7 @@ package com.intellij.openapi.vcs.changes
 import com.intellij.diff.DiffContext
 import com.intellij.diff.actions.impl.SetEditorSettingsAction
 import com.intellij.diff.actions.impl.SetEditorSettingsActionGroup
-import com.intellij.diff.editor.DiffEditorTabFilesManager
+import com.intellij.diff.editor.DiffEditorTabFilesUtil
 import com.intellij.diff.editor.DiffRequestProcessorEditorCustomizer
 import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.openapi.Disposable
@@ -48,7 +48,7 @@ private class ShowDiffInEditorTabTooltipHolder(
   }
 
   override fun advancedSettingChanged(id: String, oldValue: Any, newValue: Any) {
-    if (id == DiffEditorTabFilesManager.SHOW_DIFF_IN_EDITOR_SETTING && !DiffEditorTabFilesManager.isDiffInEditor) {
+    if (id == DiffEditorTabFilesUtil.SHOW_DIFF_IN_EDITOR_SETTING && !DiffEditorTabFilesUtil.isDiffInEditor) {
       showGotItTooltip()
     }
   }

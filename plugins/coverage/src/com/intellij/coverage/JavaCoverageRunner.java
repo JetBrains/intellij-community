@@ -125,12 +125,4 @@ public abstract class JavaCoverageRunner extends CoverageRunner {
     }
     return tempFile;
   }
-
-  /**
-   * @deprecated This method is not used anymore, as all the runners support JDK 7+.
-   */
-  @Deprecated(forRemoval = true)
-  public boolean isJdk7Compatible() {
-    return true;
-  }
 }

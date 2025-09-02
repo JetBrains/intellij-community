@@ -6,10 +6,11 @@ import com.jetbrains.env.EnvTestTagsRequired
 import com.jetbrains.env.PyEnvTestCase
 import com.jetbrains.env.PyExecutionFixtureTestTask
 import com.jetbrains.python.packaging.PyPackageUtil
-import com.jetbrains.python.packaging.common.PythonPackage
-import com.jetbrains.python.packaging.common.PythonSimplePackageSpecification
+import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
 import com.jetbrains.python.packaging.management.PythonPackageManager
+import com.jetbrains.python.packaging.management.toInstallRequest
 import com.jetbrains.python.packaging.pip.PipManagementInstaller
+import com.jetbrains.python.packaging.repository.PyPIPackageRepository
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.statistics.version
 import kotlinx.coroutines.runBlocking
@@ -20,7 +21,7 @@ import org.junit.Test
 class PythonPackageManagerManagementInstallationTest : PyEnvTestCase() {
 
   companion object {
-    private val PKG_TO_INSTALL = PythonSimplePackageSpecification("pytest", null, null)
+    private val PKG_TO_INSTALL = PyPIPackageRepository.findPackageSpecification("pytest")!!
   }
 
   @EnvTestTagsRequired(tags = ["python3.8"])
@@ -54,7 +55,7 @@ class PythonPackageManagerManagementInstallationTest : PyEnvTestCase() {
   }
 }
 
-open class PythonPackageManagerManagementInstallationTask(private val pkgToInstall: PythonSimplePackageSpecification) : PyExecutionFixtureTestTask("") {
+open class PythonPackageManagerManagementInstallationTask(private val pkgToInstall: PythonRepositoryPackageSpecification) : PyExecutionFixtureTestTask("") {
 
   override fun runTestOn(sdkHome: String, existingSdk: Sdk?) {
     requireNotNull(existingSdk) { "Sdk should be not bull" }
@@ -77,12 +78,12 @@ open class PythonPackageManagerManagementInstallationTask(private val pkgToInsta
   }
 
   private suspend fun uninstallManagement(manager: PythonPackageManager) {
-    manager.uninstallPackage(PythonPackage(PyPackageUtil.PIP, EMPTY_STRING, false))
-    manager.uninstallPackage(PythonPackage(PyPackageUtil.SETUPTOOLS, EMPTY_STRING, false))
+    manager.uninstallPackage(PyPackageUtil.PIP)
+    manager.uninstallPackage(PyPackageUtil.SETUPTOOLS)
   }
 
-  private suspend fun installPackage(manager: PythonPackageManager, spec: PythonSimplePackageSpecification) {
-    manager.installPackage(spec, emptyList(), withBackgroundProgress = false)
+  private suspend fun installPackage(manager: PythonPackageManager, spec: PythonRepositoryPackageSpecification) {
+    manager.installPackage(spec.toInstallRequest(), emptyList())
   }
 
   companion object {

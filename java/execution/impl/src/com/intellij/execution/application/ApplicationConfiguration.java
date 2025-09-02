@@ -326,7 +326,7 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
 
   @Override
   public boolean needPrepareTarget() {
-    return TargetEnvironmentAwareRunProfile.super.needPrepareTarget() || runsUnderWslJdk();
+    return TargetEnvironmentAwareRunProfile.super.needPrepareTarget() || runsUnderWslJdk() || runsUnderRemoteJdk();
   }
 
   @Override
@@ -376,7 +376,7 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
 
     String workingDirectory = options.getWorkingDirectory();
     if (workingDirectory == null) {
-      workingDirectory = PathUtil.toSystemDependentName(getProject().getBasePath());
+      workingDirectory = ProgramParametersUtil.getWorkingDirectoryByModule(this);
     }
     else {
       workingDirectory = FileUtilRt.toSystemDependentName(VirtualFileManager.extractPath(workingDirectory));

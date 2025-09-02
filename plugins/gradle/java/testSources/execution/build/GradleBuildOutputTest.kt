@@ -93,7 +93,13 @@ class GradleBuildOutputTest : GradleExecutionTestCase() {
       assertBuildViewTree {
         assertNode("failed") {
           assertNode(":brokenProject:compileJava") {
-            assertNode("App2.java", skipIf = !isPerTaskOutputSupported()) {
+            assertNode("App2.java", skipIf = !isOrderBasedBuildCompilationReportSupported()) {
+              assertNode("';' expected")
+              assertNode("invalid method declaration; return type required")
+              assertNode("invalid method declaration; return type required")
+              assertNode("';' expected")
+            }
+            assertNode("App2.java", skipIf = isOrderBasedBuildCompilationReportSupported() || !isPerTaskOutputSupported()) {
               assertNode("';' expected")
               assertNode("invalid method declaration; return type required")
               assertNode("';' expected", skipIf = !isBuildCompilationReportSupported())

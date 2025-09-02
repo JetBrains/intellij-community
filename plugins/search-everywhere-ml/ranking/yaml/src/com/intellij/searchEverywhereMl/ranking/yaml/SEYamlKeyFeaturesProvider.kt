@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.searchEverywhereMl.ranking.yaml
 
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellCheckResult
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
@@ -55,7 +56,8 @@ private class SEYamlKeyFeaturesProvider : SearchEverywhereElementFeaturesProvide
                                   currentTime: Long,
                                   searchQuery: String,
                                   elementPriority: Int,
-                                  cache: FeaturesProviderCache?): List<EventPair<*>> {
+                                  cache: FeaturesProviderCache?,
+                                  correction: SearchEverywhereSpellCheckResult): List<EventPair<*>> {
     if (element !is YAMLKeyNavigationItem) return emptyList()
     return getKeyNameMatchingFeatures(element, searchQuery) + getStatisticianFeatures(element) + getFileFeatures(element, currentTime)
   }

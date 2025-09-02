@@ -5,6 +5,7 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.ImplicitToExplicitClassBackwardMigrationInspection;
 import com.intellij.java.JavaBundle;
 import com.intellij.pom.java.JavaFeature;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
@@ -16,7 +17,7 @@ public class ImplicitToExplicitClassBackwardMigrationInspectionTest extends Ligh
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_23;
+    return JAVA_LATEST_WITH_LATEST_JDK;
   }
 
   @Override
@@ -45,7 +46,10 @@ public class ImplicitToExplicitClassBackwardMigrationInspectionTest extends Ligh
 
   public void testAdjustComments() { doTest(); }
 
-  public void testWithPrint() { doTest(); }
+  public void testWithPrint() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_23_PREVIEW,
+                           () -> doTest());
+  }
 
   public void testSimpleModuleImport() { doTest(); }
 
@@ -58,12 +62,22 @@ public class ImplicitToExplicitClassBackwardMigrationInspectionTest extends Ligh
   }
 
   public void testConflictModuleImportDemandOverModule() {
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), () -> {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
       myFixture.addClass("""
                            package test;
                            public class List {}
                            """);
       doTest();
+    });
+  }
+
+  public void testWithPackageStatement() {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_CLASSES.getStandardLevel(), () -> {
+      myFixture.enableInspections(new ImplicitToExplicitClassBackwardMigrationInspection());
+      myFixture.testHighlighting(true, false, true, "foo/before" + getTestName(false) + ".java");
+      myFixture.checkPreviewAndLaunchAction(myFixture.findSingleIntention(
+        JavaBundle.message("inspection.implicit.to.explicit.class.backward.migration.fix.name")));
+      myFixture.checkResultByFile("foo/after" + getTestName(false) + ".java");
     });
   }
 }

@@ -7,7 +7,7 @@ import org.jetbrains.annotations.Nls
 
 internal class ErrorMarker(
   markerId: Int,
-  builder: ParsingTreeBuilder,
+  builder: SyntaxTreeBuilderImpl,
 ) : ProductionMarker(markerId, builder) {
 
   private var errorMessage: @Nls String? = null
@@ -29,12 +29,12 @@ internal class ErrorMarker(
 
   override fun getEndOffset(): Int = getStartOffset()
 
-  override fun getTokenType(): SyntaxElementType = SyntaxTokenTypes.ERROR_ELEMENT
+  override fun getNodeType(): SyntaxElementType = SyntaxTokenTypes.ERROR_ELEMENT
 
-  override fun getEndIndex(): Int = _startIndex
+  override fun getEndTokenIndex(): Int = startIndex
 
-  override fun getLexemeIndex(done: Boolean): Int = _startIndex
+  override fun getLexemeIndex(done: Boolean): Int = startIndex
 
   override fun setLexemeIndex(value: Int, done: Boolean) =
-    if (done) throw UnsupportedOperationException() else _startIndex = value
+    if (done) throw UnsupportedOperationException() else startIndex = value
 }

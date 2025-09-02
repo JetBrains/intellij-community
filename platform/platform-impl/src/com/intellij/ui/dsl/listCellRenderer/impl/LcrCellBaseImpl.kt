@@ -2,6 +2,7 @@
 package com.intellij.ui.dsl.listCellRenderer.impl
 
 import com.intellij.ui.SimpleColoredComponent
+import com.intellij.ui.components.OnOffButton
 import com.intellij.ui.dsl.listCellRenderer.LcrInitParams
 import com.intellij.ui.dsl.listCellRenderer.LcrRow
 import org.jetbrains.annotations.ApiStatus
@@ -18,7 +19,8 @@ internal sealed class LcrCellBaseImpl<T : LcrInitParams>(val initParams: T, val 
 
   enum class Type(private val instanceFactory: () -> JComponent) {
     ICON(::JLabel),
-    SIMPLE_COLORED_TEXT(::PatchedSimpleColoredComponent);
+    SIMPLE_COLORED_TEXT(::PatchedSimpleColoredComponent),
+    SWITCH(::OnOffButton);
 
     private val instance = lazy { instanceFactory() }
 

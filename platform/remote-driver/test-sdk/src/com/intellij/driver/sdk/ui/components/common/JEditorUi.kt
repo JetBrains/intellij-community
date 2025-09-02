@@ -3,12 +3,14 @@ package com.intellij.driver.sdk.ui.components.common
 import com.intellij.driver.client.Remote
 import com.intellij.driver.client.impl.DriverCallException
 import com.intellij.driver.client.impl.RefWrapper
+import com.intellij.driver.model.LockSemantics
 import com.intellij.driver.model.OnDispatcher
 import com.intellij.driver.model.RdTarget
 import com.intellij.driver.model.RemoteMouseButton
 import com.intellij.driver.sdk.*
 import com.intellij.driver.sdk.remoteDev.BeControlClass
 import com.intellij.driver.sdk.remoteDev.EditorComponentImplBeControlBuilder
+import com.intellij.driver.sdk.ui.DEFAULT_FIND_TIMEOUT
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.center
 import com.intellij.driver.sdk.ui.components.ComponentData
@@ -17,6 +19,7 @@ import com.intellij.driver.sdk.ui.remote.Component
 import org.intellij.lang.annotations.Language
 import java.awt.Point
 import java.awt.Rectangle
+import kotlin.time.Duration
 
 fun Finder.editor(@Language("xpath") xpath: String? = null): JEditorUiComponent {
   return x(xpath ?: "//div[@class='EditorComponentImpl']",
@@ -33,17 +36,20 @@ fun Finder.codeEditor(@Language("xpath") xpath: String? = null, action: JEditorU
     JEditorUiComponent::class.java).action()
 }
 
+fun Finder.codeEditorForFile(fileName: String): JEditorUiComponent = codeEditor("//div[@class='EditorTabs']//div[@accessiblename='Editor for $fileName']")
+
 fun Finder.editor(@Language("xpath") xpath: String? = null, action: JEditorUiComponent.() -> Unit) {
   x(xpath ?: "//div[@class='EditorComponentImpl']", JEditorUiComponent::class.java).action()
 }
 
 open class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
-  private val editorComponent get() = driver.cast(component, EditorComponentImpl::class)
-  private val document: Document by lazy { editor.getDocument() }
   private val caretPosition
     get() = editor.getCaretModel().getLogicalPosition()
+  protected open val editorComponent : EditorComponentImpl
+    get() = driver.cast(component, EditorComponentImpl::class)
 
-  val editor: Editor by lazy { editorComponent.getEditor() }
+  val editor: Editor get() = editorComponent.getEditor()
+  val document: Document get() = editor.getDocument()
 
   var text: String
     get() = document.getText()
@@ -55,9 +61,15 @@ open class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
       }
     }
 
-  fun isEditable() = editorComponent.isEditable()
+  fun getLineNumber(text: String): Int = document.getLineNumber(this.text.indexOf(text)) + 1
 
-  fun isSoftWrappingEnabled() = interact { getSoftWrapModel().isSoftWrappingEnabled() }
+  fun expandAllFoldings() {
+    driver.invokeAction("ExpandAllRegions", component = component)
+  }
+
+  fun isEditable(): Boolean = editorComponent.isEditable()
+
+  fun isSoftWrappingEnabled(): Boolean = interact { getSoftWrapModel().isSoftWrappingEnabled() }
 
   fun clickInlay(inlay: Inlay) {
     val inlayCenter = driver.withContext(OnDispatcher.EDT) { inlay.getBounds() }.center
@@ -111,10 +123,10 @@ open class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
     robot.selectAndDrag(component, to, from, delayMs)
   }
 
-  fun getCaretLine() = caretPosition.getLine() + 1
-  fun getCaretColumn() = caretPosition.getColumn() + 1
+  fun getCaretLine(): Int = caretPosition.getLine() + 1
+  fun getCaretColumn(): Int = caretPosition.getColumn() + 1
 
-  fun getFontSize() = editor.getColorsScheme().getEditorFontSize()
+  fun getFontSize(): Int = editor.getColorsScheme().getEditorFontSize()
 
   fun clickOn(text: String, button: RemoteMouseButton, times: Int = 1) {
     val offset = this.text.indexOf(text) + text.length / 2
@@ -125,14 +137,14 @@ open class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
     robot.click(component, point, button, times)
   }
 
-  fun goToPosition(line: Int, column: Int) = step("Go to position $line line $column column") {
+  fun goToPosition(line: Int, column: Int): Unit = step("Go to position $line line $column column") {
     click()
     interact {
       getCaretModel().moveToLogicalPosition(driver.logicalPosition(line - 1, column - 1, (this as? RefWrapper)?.getRef()?.rdTarget ?: RdTarget.DEFAULT))
     }
   }
 
-  fun goToLine(line: Int) = step("Go to $line line") {
+  fun goToLine(line: Int): Unit = step("Go to $line line") {
     click()
     interact {
       getCaretModel().moveToLogicalPosition(driver.logicalPosition(line - 1, 1, (this as? RefWrapper)?.getRef()?.rdTarget ?: RdTarget.DEFAULT))
@@ -162,10 +174,10 @@ open class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
     moveMouse(calculatePositionPoint(line, column))
   }
 
-  fun getLineText(line: Int) = text.lines().getOrElse(line - 1) { "" }
+  fun getLineText(line: Int): String = text.lines().getOrElse(line - 1) { "" }
 
   fun <T> interact(block: Editor.() -> T): T {
-    return driver.withContext(OnDispatcher.EDT) {
+    return driver.withContext(OnDispatcher.EDT, semantics = LockSemantics.READ_ACTION) {
       block.invoke(editor)
     }
   }
@@ -184,9 +196,9 @@ open class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
 
   fun containsText(expectedText: String) {
     step("Verify that editor contains text: $expectedText") {
-      waitFor(errorMessage = { "Editor doesn't contain text: $expectedText" }) {
-        text.trimIndent().contains(expectedText)
-      }
+      waitFor(errorMessage = { "Editor doesn't contain text: $expectedText" },
+              getter = { text.trimIndent() },
+              checker = { it.contains(expectedText) })
     }
   }
 }
@@ -197,7 +209,7 @@ interface IntentionActionUtils {
   fun invokeQuickFix(editor: Editor, highlightInfo: HighlightInfo, name: String)
 }
 
-@Remote("com.intellij.ml.llm.intentions.TestIntentionUtils", plugin = "com.intellij.ml.llm/intellij.ml.llm.core")
+@Remote("com.intellij.ml.llm.codeGeneration.testGeneration.TestIntentionUtils", plugin = "com.intellij.ml.llm/intellij.ml.llm.core")
 interface AiTestIntentionUtils {
   fun invokeAiAssistantIntention(editor: Editor, intentionName: String)
 }
@@ -218,7 +230,7 @@ interface EditorTextField : Component {
   fun getText(): String
 }
 
-fun Finder.gutter(@Language("xpath") xpath: String = "//div[@class='EditorGutterComponentImpl']") = x(xpath, GutterUiComponent::class.java)
+fun Finder.gutter(@Language("xpath") xpath: String = "//div[@class='EditorGutterComponentImpl']"): GutterUiComponent = x(xpath, GutterUiComponent::class.java)
 
 class GutterUiComponent(data: ComponentData) : UiComponent(data) {
 
@@ -232,6 +244,9 @@ class GutterUiComponent(data: ComponentData) : UiComponent(data) {
 
   val iconAreaOffset
     get() = gutter.getIconAreaOffset()
+
+  fun icon(timeout: Duration = DEFAULT_FIND_TIMEOUT, errorMessage: String = "icon not found", predicate: (GutterIcon) -> Boolean): GutterIcon =
+    waitFor(timeout = timeout, errorMessage = { errorMessage }, getter = { icons.filter(predicate) }, checker = { it.singleOrNull() != null }).single()
 
   fun getGutterIcons(): List<GutterIcon> {
     waitFor { this.icons.isNotEmpty() }
@@ -300,7 +315,8 @@ enum class GutterIcon(val path: String) {
   RUNSUCCESS("expui/gutter/runSuccess.svg"),
   RUNERROR("expui/gutter/runError.svg"),
   RERUN("expui/gutter/rerun.svg"),
-  BREAKPOINT("expui/breakpoints/breakpointValid.svg"),
+  BREAKPOINT("expui/breakpoints/breakpoint.svg"),
+  BREAKPOINT_VALID("expui/breakpoints/breakpointValid.svg"),
   NEXT_STATEMENT("expui/debugger/nextStatement.svg"),
   GOTO("icons/expui/assocFile@14x14.svg"),
   IMPLEMENT("expui/gutter/implementingMethod.svg")

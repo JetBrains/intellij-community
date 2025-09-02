@@ -1,0 +1,6 @@
+[versions]
+kotlin = "{{kgp_version}}"
+lib = "1.0.0"
+
+[libraries]
+lib = { group = "com.example", name = "lib", version.ref = "lib" }

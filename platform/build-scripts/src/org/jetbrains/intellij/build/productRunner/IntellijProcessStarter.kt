@@ -13,6 +13,7 @@ import org.jetbrains.intellij.build.impl.BuildUtils
 import org.jetbrains.intellij.build.impl.getCommandLineArgumentsForOpenPackages
 import org.jetbrains.intellij.build.io.DEFAULT_TIMEOUT
 import org.jetbrains.intellij.build.io.runJava
+import org.jetbrains.intellij.build.retryWithExponentialBackOff
 import java.lang.RuntimeException
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
@@ -23,6 +24,7 @@ import kotlin.io.path.createTempDirectory
 import kotlin.io.path.name
 import kotlin.io.path.walk
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
 
 /**
  * Internal function which runs IntelliJ process. Use [IntellijProductRunner.runProduct] instead.
@@ -62,19 +64,25 @@ suspend fun runApplicationStarter(
   }.toJvmArgs())
   jvmArgs.addAll(vmOptions.takeIf { it.isNotEmpty() } ?: listOf("-Xmx2g"))
   val debugProperty = "intellij.build.$appStarterId.debug.port"
-  System.getProperty(debugProperty)?.let {
+  val debugPropertyValue = System.getProperty(debugProperty)
+  debugPropertyValue?.let {
     jvmArgs.add("-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:$it")
   }
+  val actualTimeout = if (debugPropertyValue != null) 20.minutes else timeout
 
   val effectiveIdeClasspath = if (isFinalClassPath) classpath else prepareFlatClasspath(classpath = classpath, tempDir = tempDir, context = context)
   try {
-    runJava(mainClass = context.ideMainClassName, args = args, jvmArgs = jvmArgs, classPath = effectiveIdeClasspath, javaExe = context.stableJavaExecutable, timeout = timeout) {
-      val logFile = findLogFile(systemDir)
-      if (logFile != null) {
-        val logFileToPublish = Files.createTempFile(appStarterId, ".log")
-        Files.copy(logFile, logFileToPublish, StandardCopyOption.REPLACE_EXISTING)
-        context.notifyArtifactBuilt(logFileToPublish)
-        Span.current().addEvent("log file $logFileToPublish attached to build artifacts")
+    // a second attempt is performed as a hacky workaround for various sporadic exceptions from the IDE side like:
+    // com.intellij.util.IncorrectOperationException: Sorry but parent has already been disposed so the child will never be disposed
+    retryWithExponentialBackOff(attempts = 2) {
+      runJava(mainClass = context.ideMainClassName, args = args, jvmArgs = jvmArgs, classPath = effectiveIdeClasspath, javaExe = context.stableJavaExecutable, timeout = actualTimeout) {
+        val logFile = findLogFile(systemDir)
+        if (logFile != null) {
+          val logFileToPublish = Files.createTempFile(appStarterId, ".log")
+          Files.copy(logFile, logFileToPublish, StandardCopyOption.REPLACE_EXISTING)
+          context.notifyArtifactBuilt(logFileToPublish)
+          Span.current().addEvent("log file $logFileToPublish attached to build artifacts")
+        }
       }
     }
   }

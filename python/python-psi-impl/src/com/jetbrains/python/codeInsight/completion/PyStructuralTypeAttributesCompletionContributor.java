@@ -13,7 +13,6 @@ import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
@@ -120,9 +119,6 @@ public final class PyStructuralTypeAttributesCompletionContributor extends Compl
 
       final Set<PyClass> suitableClasses = new HashSet<>();
       for (PyClass candidate : candidates) {
-        if (PyUserSkeletonsUtil.isUnderUserSkeletonsDirectory(candidate.getContainingFile())) {
-          continue;
-        }
         final Set<String> inherited = getAllInheritedAttributeNames(candidate, context, ancestorsCache);
         if (LOG.isDebugEnabled()) {
           LOG.debug("All attributes of " + debugClassCoordinates(candidate) + ": " + inherited);

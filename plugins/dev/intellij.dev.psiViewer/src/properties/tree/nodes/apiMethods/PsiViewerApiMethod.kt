@@ -1,12 +1,13 @@
 package com.intellij.dev.psiViewer.properties.tree.nodes.apiMethods
 
+import com.intellij.dev.psiViewer.properties.tree.PsiViewerPropertyNode
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.ExtensionPointName
 import kotlinx.coroutines.CancellationException
 
-fun Class<*>.psiViewerApiMethods(instance: Any): List<PsiViewerApiMethod> {
-  return PsiViewerApiMethod.Provider.EP_NAME.extensionList.flatMap { it.apiMethods(instance, this) }
+fun Class<*>.psiViewerApiMethods(nodeContext: PsiViewerPropertyNode.Context, instance: Any): List<PsiViewerApiMethod> {
+  return nodeContext.apiMethodProviders.flatMap { it.apiMethods(instance, this) }
 }
 
 class PsiViewerApiMethod(
@@ -14,16 +15,16 @@ class PsiViewerApiMethod(
   val returnType: ReturnType,
   private val evaluator: suspend () -> Any?
 ) {
-  class ReturnType(
+  data class ReturnType(
     val returnType: Class<*>,
     val returnedCollectionType: Class<*>?,
   )
 
   interface Provider {
-
     companion object {
       val EP_NAME = ExtensionPointName<Provider>("com.intellij.dev.psiViewer.apiMethodsProvider")
     }
+
     fun apiMethods(instance: Any, clazz: Class<*>): List<PsiViewerApiMethod>
   }
 
@@ -41,5 +42,9 @@ class PsiViewerApiMethod(
       thisLogger().warn("Failed to evaluate method $name", e)
       null
     }
+  }
+
+  override fun toString(): String {
+    return "Method $name | $returnType"
   }
 }

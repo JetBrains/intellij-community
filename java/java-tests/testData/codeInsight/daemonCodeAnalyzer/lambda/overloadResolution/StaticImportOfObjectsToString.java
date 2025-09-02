@@ -11,7 +11,7 @@ class Foo {
     return super.toString();
   }
 
-  public static void main(String[] args) {
+  public static void main() {
     System.out.println(new Foo().go());
   }
 }

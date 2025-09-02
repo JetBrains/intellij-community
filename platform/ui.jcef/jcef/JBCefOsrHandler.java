@@ -313,4 +313,15 @@ class JBCefOsrHandler implements CefRenderHandler {
     drawVolatileImage(image);
     return image;
   }
+
+  Color getColorAt(int x, int y) {
+    JBHiDPIScaledImage image = myImage;
+    if (image == null) return null;
+    BufferedImage bi = (BufferedImage)image.getDelegate();
+    if (bi == null) {
+      return null;
+    }
+    if (x >= bi.getWidth() || y >= bi.getHeight() || x < 0 || y < 0) return null;
+    return new Color(bi.getRGB(x, y), true);
+  }
 }

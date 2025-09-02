@@ -9,7 +9,6 @@ package com.intellij.platform.debugger.impl.frontend.evaluate.quick.common;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.EditorMouseHoverPopupManager;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.editor.event.EditorMouseListener;
@@ -21,7 +20,7 @@ import com.intellij.platform.debugger.impl.frontend.evaluate.quick.XQuickEvaluat
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.xdebugger.impl.DebuggerSupport;
+import com.intellij.xdebugger.impl.evaluate.ValueLookupManagerController;
 import com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint;
 import com.intellij.xdebugger.impl.evaluate.quick.common.QuickEvaluateHandler;
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType;
@@ -32,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
+import static com.intellij.platform.debugger.impl.frontend.actions.CustomQuickEvaluateActionProviderKt.getEnabledCustomQuickEvaluateActionHandler;
 import static com.intellij.xdebugger.impl.evaluate.ValueLookupManagerController.DISABLE_VALUE_LOOKUP;
 
 @ApiStatus.Internal
@@ -107,14 +107,11 @@ public class ValueLookupManager implements EditorMouseMotionListener, EditorMous
       requestHint(myXQuickEvaluateHandler, editor, point, e, type);
       return;
     }
-    // otherwise, handle plugin handlers
-    // for remote dev: specific DebuggerSupport with remote bridge will be used
-    for (DebuggerSupport support : DebuggerSupport.getDebuggerSupports()) {
-      QuickEvaluateHandler handler = support.getQuickEvaluateHandler();
-      if (handler.isEnabled(myProject)) {
-        requestHint(handler, editor, point, e, type);
-        return;
-      }
+    // otherwise, handle custom plugin handlers
+    QuickEvaluateHandler customHandler = getEnabledCustomQuickEvaluateActionHandler(myProject);
+    if (customHandler != null) {
+      requestHint(customHandler, editor, point, e, type);
+      return;
     }
 
     // if no providers were triggered - hide
@@ -197,12 +194,7 @@ public class ValueLookupManager implements EditorMouseMotionListener, EditorMous
           myHintRequest = null;
         }
         if (hint == null) {
-          UIUtil.invokeLaterIfNeeded(() -> {
-            hideHint();
-            if (event != null) {
-              EditorMouseHoverPopupManager.getInstance().showInfoTooltip(event);
-            }
-          });
+          ValueLookupManagerController.getInstance(myProject).showEditorInfoTooltip(event);
           return;
         }
         if (myCurrentHint != null && myCurrentHint.equals(hint)) {

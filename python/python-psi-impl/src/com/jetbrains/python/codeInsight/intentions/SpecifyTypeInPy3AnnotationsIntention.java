@@ -57,9 +57,9 @@ public final class SpecifyTypeInPy3AnnotationsIntention extends TypeIntention {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (LanguageLevel.forElement(file).isPython2()) return false;
-    return super.isAvailable(project, editor, file);
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    if (LanguageLevel.forElement(psiFile).isPython2()) return false;
+    return super.isAvailable(project, editor, psiFile);
   }
 
   @Override

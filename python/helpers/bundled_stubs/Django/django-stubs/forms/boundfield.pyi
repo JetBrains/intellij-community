@@ -1,5 +1,5 @@
 from collections.abc import Iterable, Iterator
-from typing import Any, overload
+from typing import Any, TypeAlias, overload
 
 from django.forms.fields import Field
 from django.forms.forms import BaseForm
@@ -8,7 +8,6 @@ from django.forms.utils import ErrorList, RenderableFieldMixin
 from django.forms.widgets import Widget
 from django.utils.functional import _StrOrPromise, cached_property
 from django.utils.safestring import SafeString
-from typing_extensions import TypeAlias
 
 _AttrsT: TypeAlias = dict[str, str | bool]
 
@@ -70,6 +69,8 @@ class BoundField(RenderableFieldMixin):
     def widget_type(self) -> str: ...
     @property
     def use_fieldset(self) -> bool: ...
+    @property
+    def aria_describedby(self) -> str | None: ...
 
 class BoundWidget:
     parent_widget: Widget
@@ -83,3 +84,5 @@ class BoundWidget:
     def id_for_label(self) -> str: ...
     @property
     def choice_label(self) -> str: ...
+
+__all__ = ("BoundField",)

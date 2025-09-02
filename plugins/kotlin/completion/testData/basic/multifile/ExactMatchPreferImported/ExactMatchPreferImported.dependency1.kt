@@ -1,3 +1,3 @@
 package other
 
-class TODO
+public inline fun TODO(a: Int): Nothing = throw NotImplementedError()

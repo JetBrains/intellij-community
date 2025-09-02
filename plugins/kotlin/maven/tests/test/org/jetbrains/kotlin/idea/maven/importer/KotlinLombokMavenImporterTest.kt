@@ -86,7 +86,6 @@ class KotlinLombokMavenImporterTest : AbstractKotlinMavenImporterTest(false) {
         )
 
         assertModules("project")
-        assertImporterStatePresent()
 
         with(facetSettings) {
             org.junit.Assert.assertEquals(

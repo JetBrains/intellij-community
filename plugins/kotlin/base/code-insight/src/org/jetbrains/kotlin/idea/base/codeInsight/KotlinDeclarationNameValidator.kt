@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.base.codeInsight
 
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
-import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
@@ -34,8 +34,6 @@ class KotlinDeclarationNameValidator(
         }
     }
 
-
-    context(KaSession)
     fun validate(name: String): Boolean {
         val identifier = Name.identifier(name)
 
@@ -49,24 +47,23 @@ class KotlinDeclarationNameValidator(
         }
     }
 
-    context(KaSession)
     @OptIn(KaExperimentalApi::class)
-    private fun hasConflict(identifier: Name): Boolean {
-        return when(target) {
+    private fun hasConflict(identifier: Name): Boolean = analyze(visibleDeclarationsContext) {
+        when (target) {
             KotlinNameSuggestionProvider.ValidatorTarget.PROPERTY, KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE, KotlinNameSuggestionProvider.ValidatorTarget.PARAMETER, KotlinNameSuggestionProvider.ValidatorTarget.FUNCTION -> {
-                val scope =
-                    visibleDeclarationsContext.containingKtFile.scopeContext(visibleDeclarationsContext).compositeScope()
+                val scope = visibleDeclarationsContext.containingKtFile.scopeContext(visibleDeclarationsContext).compositeScope()
                 val containingClassSymbol = lazy(LazyThreadSafetyMode.NONE) { visibleDeclarationsContext.containingClass()?.classSymbol }
                 scope.callables(identifier).filterIsInstance<KaVariableSymbol>().any {
-                    it.psi !in excludedDeclarations && !it.isExtension && (containingClassSymbol.value?.let { cl -> it.isVisibleInClass(cl) } != false)
+                    it.psi !in excludedDeclarations && !it.isExtension && (containingClassSymbol.value?.let { cl ->
+                        it.isVisibleInClass(cl)
+                    } != false)
                 }
             }
+
             KotlinNameSuggestionProvider.ValidatorTarget.CLASS -> {
-                val scope =
-                  visibleDeclarationsContext.containingKtFile.scopeContext(visibleDeclarationsContext).compositeScope()
+                val scope = visibleDeclarationsContext.containingKtFile.scopeContext(visibleDeclarationsContext).compositeScope()
                 scope.classifiers(identifier).any { it.psi !in excludedDeclarations }
             }
-            else -> false
         }
     }
 

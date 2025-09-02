@@ -1,8 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.highlighting.analyzers
 
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
+import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.idea.highlighter.HighlightingFactory
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 
 /**
@@ -24,4 +27,9 @@ internal abstract class KotlinSemanticAnalyzer(
      * But it must not be exposed or stored outside this visitor.
      */
     protected val session: KaSession,
-) : KtVisitorVoid()
+) : KtVisitorVoid() {
+    protected fun highlightElement(element: PsiElement, type: HighlightInfoType) {
+        HighlightingFactory.highlightName(element, type)
+            ?.create()?.let(holder::add)
+    }
+}

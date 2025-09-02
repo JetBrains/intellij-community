@@ -23,7 +23,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.webSymbols.WebSymbolApiStatus;
+import com.intellij.polySymbols.PolySymbolApiStatus;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlDeprecationOwnerDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
@@ -251,7 +251,7 @@ public class HtmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl impl
     boolean html4Deprecated = ourHtml4DeprecatedTags.contains(myDelegate.getName());
     MdnSymbolDocumentation documentation = doIfNotNull(
       myDelegate.getDeclaration(), declaration -> MdnDocumentationKt.getHtmlMdnDocumentation(declaration, null));
-    boolean html5Deprecated = documentation != null && WebSymbolApiStatus.isDeprecatedOrObsolete(documentation.getApiStatus())
+    boolean html5Deprecated = documentation != null && PolySymbolApiStatus.isDeprecatedOrObsolete(documentation.getApiStatus())
                               || ourHtml5DeprecatedTags.contains(myDelegate.getName());
     if (!html4Deprecated && !html5Deprecated) {
       return false;

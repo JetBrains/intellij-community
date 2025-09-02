@@ -5,14 +5,18 @@ import git4idea.remote.hosting.HostedGitRepositoryConnection
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
 
-internal class GHRepositoryConnection(private val scope: CoroutineScope,
-                                      override val repo: GHGitRepositoryMapping,
-                                      override val account: GithubAccount,
-                                      val dataContext: GHPRDataContext)
+@ApiStatus.Internal
+class GHRepositoryConnection internal constructor(
+  private val scope: CoroutineScope,
+  override val repo: GHGitRepositoryMapping,
+  override val account: GithubAccount,
+  val dataContext: GHPRDataContext,
+)
   : HostedGitRepositoryConnection<GHGitRepositoryMapping, GithubAccount> {
 
   override suspend fun close() {

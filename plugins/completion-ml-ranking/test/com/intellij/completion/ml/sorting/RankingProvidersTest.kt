@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.completion.ml.sorting
 
 import com.intellij.completion.ml.ranker.ExperimentModelProvider
@@ -7,11 +7,15 @@ import com.intellij.internal.ml.DecisionFunction
 import com.intellij.internal.ml.FeatureMapper
 import com.intellij.internal.ml.completion.RankingModelProvider
 import com.intellij.lang.Language
-import com.intellij.testFramework.LightPlatformTestCase
-import junit.framework.TestCase
+import com.intellij.testFramework.common.runAll
 
-class RankingProvidersTest : LightPlatformTestCase() {
+class RankingProvidersTest : MLSortingTestCase() {
   private lateinit var testLanguage: Language
+
+  override fun customizeSettings(settings: MLRankingSettingsState): MLRankingSettingsState =
+    settings.withRankingEnabled(true).withDiffEnabled(false)
+
+  override fun configureExperimentStatus(actualSettingsState: MLRankingSettingsState) { }
 
   fun `test no providers registered`() {
     checkActiveProvider(null, 0)
@@ -62,11 +66,11 @@ class RankingProvidersTest : LightPlatformTestCase() {
     assertThrows(IllegalStateException::class.java) { ExperimentModelProvider.findProvider(testLanguage, 0) }
   }
 
-  private fun checkActiveProvider(expectedProvider: RankingModelProvider?, groupNumber: Int) {
+  private fun checkActiveProvider(expectedProvider: RankingModelProvider?, @Suppress("SameParameterValue") groupNumber: Int) {
     val languageSupported = expectedProvider != null
-    TestCase.assertEquals(languageSupported, expectedProvider in RankingSupport.availableRankers())
+    assertEquals(languageSupported, expectedProvider in RankingSupport.availableRankers())
     val actualProvider = ExperimentModelProvider.findProvider(testLanguage, groupNumber)
-    TestCase.assertEquals(expectedProvider, actualProvider)
+    assertEquals(expectedProvider, actualProvider)
   }
 
   private fun registerProviders(vararg providers: RankingModelProvider) {
@@ -79,15 +83,10 @@ class RankingProvidersTest : LightPlatformTestCase() {
   }
 
   override fun tearDown() {
-    try {
-      testLanguage.unregisterLanguage(PluginManagerCore.getPlugin(PluginManagerCore.CORE_ID)!!)
-    }
-    catch (e: Throwable) {
-      addSuppressedException(e)
-    }
-    finally {
-      super.tearDown()
-    }
+    runAll(
+      { if (::testLanguage.isInitialized) testLanguage.unregisterLanguage(PluginManagerCore.getPlugin(PluginManagerCore.CORE_ID)!!) },
+      { super.tearDown() }
+    )
   }
 
   private fun experiment(groupNumber: Int): RankingModelProvider = TestExperimentProvider(groupNumber, testLanguage)
@@ -103,7 +102,8 @@ class RankingProvidersTest : LightPlatformTestCase() {
   }
 
   private class TestExperimentProvider(private val experimentGroupNumber: Int, supportedLanguage: Language)
-    : TestModelProvider(supportedLanguage), ExperimentModelProvider {
+    : TestModelProvider(supportedLanguage), ExperimentModelProvider
+  {
     override fun experimentGroupNumber(): Int = experimentGroupNumber
   }
 

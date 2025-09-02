@@ -6470,7 +6470,6 @@ torch_pitch_shift torch-pitch-shift
 torch_runstats torch-runstats
 torexpress tornado-torexpress
 tornad_io SocketTornad.IO
-tornado tornado-bedframe
 tornadoalf tornado-alf
 tornadobabel Tornado-Babel
 tornadoencookie tornado-encookie

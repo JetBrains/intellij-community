@@ -16,7 +16,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.ui.NewUiValue;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -67,23 +66,23 @@ public final class ModCommandActionWrapper implements IntentionAction, PriorityA
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
     if (!DumbService.getInstance(project).isUsableInCurrentContext(myModAction)) return false;
-    Presentation presentation = myModAction.getPresentation(ActionContext.from(editor, file));
+    Presentation presentation = myModAction.getPresentation(ActionContext.from(editor, psiFile));
     if (presentation == null) return false;
     myPresentation = presentation;
     return true;
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    ActionContext context = ActionContext.from(editor, file);
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
+    ActionContext context = ActionContext.from(editor, psiFile);
     ModCommand command = myModAction.perform(context);
     ModCommandExecutor instance = ModCommandExecutor.getInstance();
-    if (file.isPhysical()) {
+    if (psiFile.isPhysical()) {
       instance.executeInteractively(context, command, editor);
     } else {
-      instance.executeForFileCopy(command, file);
+      instance.executeForFileCopy(command, psiFile);
     }
   }
 
@@ -93,8 +92,8 @@ public final class ModCommandActionWrapper implements IntentionAction, PriorityA
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    return myModAction.generatePreview(ActionContext.from(editor, file));
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    return myModAction.generatePreview(ActionContext.from(editor, psiFile));
   }
 
   @Override
@@ -104,7 +103,7 @@ public final class ModCommandActionWrapper implements IntentionAction, PriorityA
 
   @Override
   public Icon getIcon(int flags) {
-    return NewUiValue.isEnabled() || myPresentation == null ? null : myPresentation.icon();
+    return myPresentation == null ? null : myPresentation.icon();
   }
 
   @Override

@@ -3,7 +3,10 @@ package com.intellij.warmup.util
 
 import com.intellij.diagnostic.ThreadDumper
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.util.text.Formats
+import com.intellij.util.application
 import kotlinx.coroutines.*
 import kotlinx.coroutines.time.delay
 import java.io.File
@@ -57,7 +60,7 @@ suspend fun <Y> runTaskAndLogTime(
   val stackElement = coroutineContext[TaskAndLogTimeKey] ?: TaskAndLogTimeElement()
   stackElement.push(progressName)
 
-  val loggerJob = GlobalScope.launch(Dispatchers.IO) {
+  val loggerJob = application.service<WarmupScopeService>().launch(Dispatchers.IO) {
     launch {
       while (true) {
         delay(Duration.ofSeconds(5))
@@ -100,3 +103,6 @@ suspend fun <Y> runTaskAndLogTime(
     WarmupLogger.logInfo("Completed waiting for '$progressName' in ${cookie.formatDuration()}")
   }
 }
+
+@Service
+private class WarmupScopeService(coroutineScope: CoroutineScope) : CoroutineScope by coroutineScope

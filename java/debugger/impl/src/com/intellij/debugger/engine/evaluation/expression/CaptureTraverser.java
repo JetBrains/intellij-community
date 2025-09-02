@@ -1,15 +1,15 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.evaluation.expression;
 
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.sun.jdi.ClassType;
 import com.sun.jdi.Field;
 import com.sun.jdi.ObjectReference;
+import com.sun.jdi.ReferenceType;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
 
 /**
  * A helper class to find a value of captured outer class "this" object (probably several levels higher from the current class)
@@ -91,15 +91,18 @@ public final class CaptureTraverser {
     if (objRef == null) {
       return null;
     }
-    List<Field> list = objRef.referenceType().fields();
-    for (final Field field : list) {
-      final String name = field.name();
-      if (name != null && name.startsWith("this$") && field.isFinal() && field.isSynthetic() && !field.isStatic()) {
-        final ObjectReference rv = (ObjectReference)objRef.getValue(field);
-        if (rv != null) {
-          return rv;
+    ReferenceType type = objRef.referenceType();
+    while (type != null) {
+      for (Field field : type.fields()) {
+        String name = field.name();
+        if (name != null && name.startsWith("this$") && field.isFinal() && field.isSynthetic() && !field.isStatic()) {
+          ObjectReference rv = (ObjectReference)objRef.getValue(field);
+          if (rv != null) {
+            return rv;
+          }
         }
       }
+      type = (type instanceof ClassType classType) ? classType.superclass() : null;
     }
     return null;
   }

@@ -26,4 +26,9 @@ public class InnerClassEnabled {
 
     private static class Inner2 {
     }
+
+  <warning descr="Required tag '@param' is missing for parameter 'x'"><warning descr="Required tag '@param' is missing for parameter 'y'">/**</warning></warning>
+   * You have a point.
+   */
+  public record Point(int x, int y) {}
 }

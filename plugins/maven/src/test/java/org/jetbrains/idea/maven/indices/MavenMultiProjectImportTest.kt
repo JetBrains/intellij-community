@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.indices
 
+import com.intellij.ide.GeneralSettings
 import com.intellij.ide.projectWizard.ProjectWizardTestCase
 import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard
 import com.intellij.maven.testFramework.MavenTestCaseLegacy
@@ -27,10 +28,16 @@ class MavenMultiProjectImportTest : ProjectWizardTestCase<AbstractProjectWizard?
   override fun runInDispatchThread() = false
   private var myDir: Path? = null
 
+  override fun setUp() {
+    super.setUp()
+    GeneralSettings.getInstance().confirmOpenNewProject = GeneralSettings.OPEN_PROJECT_NEW_WINDOW
+  }
+
   override fun tearDown() {
     RunAll(
       ThrowableRunnable {
         super.tearDown()
+        GeneralSettings.getInstance().confirmOpenNewProject = GeneralSettings.defaultConfirmNewProject()
       },
       ThrowableRunnable { MavenServerManager.getInstance().closeAllConnectorsAndWait() }
     ).run()

@@ -7,9 +7,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.util.CurrentJavaVersion;
 import com.intellij.util.Processor;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.lang.JavaVersion;
 import com.sun.jna.Library;
 import com.sun.jna.Native;
 import org.jetbrains.annotations.NonNls;
@@ -62,7 +62,7 @@ public final class UnixProcessManager {
   @ReviseWhenPortedToJDK("9")
   public static int getProcessId(@NotNull Process process) {
     try {
-      if (JavaVersion.current().feature >= 9 &&
+      if (CurrentJavaVersion.currentJavaVersion().feature >= 9 &&
           ("java.lang.ProcessImpl".equals(process.getClass().getName()) ||
            "com.pty4j.unix.UnixPtyProcess".equals(process.getClass().getName())
           )

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.pico;
 
 import com.intellij.util.ExceptionUtilRt;
@@ -16,18 +16,19 @@ import java.util.*;
 /**
  * @deprecated Use {@link com.intellij.openapi.components.ComponentManager#instantiateClassWithConstructorInjection}
  */
-@SuppressWarnings("DeprecatedIsStillUsed")
+@SuppressWarnings({"DeprecatedIsStillUsed", "SSBasedInspection"})
 @Deprecated
 @ApiStatus.ScheduledForRemoval
 final class CachingConstructorInjectionComponentAdapter implements ComponentAdapter {
   private static final ThreadLocal<Set<Class<?>>> ourGuard = new ThreadLocal<>();
-  private Object myInstance;
-
-  private PicoContainer container;
+  private final PicoContainer container;
   private final Object key;
   private final Class<?> componentImplementation;
+  private Object myInstance;
 
-  CachingConstructorInjectionComponentAdapter(@NotNull PicoContainer container, @NotNull Object key, @NotNull Class<?> componentImplementation) {
+  CachingConstructorInjectionComponentAdapter(@NotNull PicoContainer container,
+                                              @NotNull Object key,
+                                              @NotNull Class<?> componentImplementation) {
     this.container = container;
     this.key = key;
     this.componentImplementation = componentImplementation;
@@ -58,7 +59,9 @@ final class CachingConstructorInjectionComponentAdapter implements ComponentAdap
     return instance;
   }
 
-  public static @NotNull Object instantiateGuarded(@Nullable CachingConstructorInjectionComponentAdapter adapter, @NotNull PicoContainer container, @NotNull Class<?> componentImplementation) {
+  public static @NotNull Object instantiateGuarded(@Nullable CachingConstructorInjectionComponentAdapter adapter,
+                                                   @NotNull PicoContainer container,
+                                                   @NotNull Class<?> componentImplementation) {
     Set<Class<?>> currentStack = ourGuard.get();
     if (currentStack == null) {
       currentStack = Collections.newSetFromMap(new IdentityHashMap<>(1));
@@ -81,7 +84,20 @@ final class CachingConstructorInjectionComponentAdapter implements ComponentAdap
     }
   }
 
-  private static @NotNull Object doGetComponentInstance(@Nullable ComponentAdapter adapter, @NotNull DefaultPicoContainer container, @NotNull Class<?> componentImplementation) {
+  private static ComponentAdapter resolveAdapter(@NotNull DefaultPicoContainer container,
+                                                 @Nullable ComponentAdapter excludeAdapter,
+                                                 @NotNull Class<?> expectedType) {
+    if (excludeAdapter == null) {
+      return container.getComponentAdapter(expectedType);
+    }
+
+    ComponentAdapter result = getTargetAdapter(container, expectedType, excludeAdapter.getComponentKey());
+    return result == null ? null : expectedType.isAssignableFrom(result.getComponentImplementation()) ? result : null;
+  }
+
+  private static @NotNull Object doGetComponentInstance(@Nullable ComponentAdapter adapter,
+                                                        @NotNull DefaultPicoContainer container,
+                                                        @NotNull Class<?> componentImplementation) {
     Constructor<?> constructor;
     try {
       constructor = getGreediestSatisfiableConstructor(adapter, container, componentImplementation);
@@ -101,7 +117,7 @@ final class CachingConstructorInjectionComponentAdapter implements ComponentAdap
         Object[] result = new Object[parameterTypes.length];
         for (int i = 0; i < parameterTypes.length; i++) {
           // type check is done in isResolvable
-          ComponentAdapter componentAdapter = ComponentParameter.resolveAdapter(container, adapter, parameterTypes[i]);
+          ComponentAdapter componentAdapter = resolveAdapter(container, adapter, parameterTypes[i]);
           if (componentAdapter != null) {
             result[i] = container.getComponentInstance(componentAdapter.getComponentKey());
           }
@@ -132,7 +148,7 @@ final class CachingConstructorInjectionComponentAdapter implements ComponentAdap
     Set<Class<?>[]> unsatisfiableDependencyTypes = new HashSet<>();
     // filter out all constructors that will definitely not match
     Constructor<?>[] constructors = componentImplementation.getDeclaredConstructors();
-    // optimize list of constructors moving the longest at the beginning
+    // optimize a list of constructors moving the longest at the beginning
     Arrays.sort(constructors, (arg0, arg1) -> arg1.getParameterCount() - arg0.getParameterCount());
     Constructor<?> greediestConstructor = null;
     int lastSatisfiableConstructorSize = -1;
@@ -144,10 +160,10 @@ final class CachingConstructorInjectionComponentAdapter implements ComponentAdap
 
       boolean failedDependency = false;
       Class<?>[] parameterTypes = constructor.getParameterTypes();
-      // remember: all constructors with less arguments than the given parameters are filtered out already
+      // remember: all constructors with fewer arguments than the given parameters are filtered out already
       for (Class<?> type : parameterTypes) {
         // check whether this constructor is satisfiable
-        if (ComponentParameter.resolveAdapter(container, adapter, type) != null) {
+        if (resolveAdapter(container, adapter, type) != null) {
           continue;
         }
         unsatisfiableDependencyTypes.add(parameterTypes);
@@ -167,7 +183,7 @@ final class CachingConstructorInjectionComponentAdapter implements ComponentAdap
         }
       }
       else if (!failedDependency && lastSatisfiableConstructorSize == parameterTypes.length) {
-        // satisfied and same size as previous one?
+        // satisfied and same size as the previous one?
         conflicts.add(constructor);
         conflicts.add(greediestConstructor);
       }
@@ -182,17 +198,16 @@ final class CachingConstructorInjectionComponentAdapter implements ComponentAdap
     }
 
     if (greediestConstructor == null && !unsatisfiableDependencyTypes.isEmpty()) {
-      @NotNull Class<?> componentImplementation1 = componentImplementation;
-      throw new PicoIntrospectionException(componentImplementation1.getName() + " has unsatisfied dependency: " + unsatisfiedDependencyType
+      throw new PicoIntrospectionException(componentImplementation.getName() + " has unsatisfied dependency: " + unsatisfiedDependencyType
                                            + " among unsatisfiable dependencies: " +
                                            unsatisfiableDependencyTypes + " where " + container
                                            + " was the leaf container being asked for dependencies.");
     }
     if (greediestConstructor == null) {
       // be nice to the user, show all constructors that were filtered out
-      Set<Constructor<?>> nonMatching = new HashSet<>(Arrays.asList(componentImplementation.getDeclaredConstructors()));
       throw new PicoInitializationException("Either do the specified parameters not match any of the following constructors: " +
-                                            nonMatching + " or the constructors were not accessible for '" + componentImplementation + "'");
+                                            Arrays.toString(componentImplementation.getDeclaredConstructors()) +
+                                            " or the constructors were not accessible for '" + componentImplementation + "'");
     }
     return greediestConstructor;
   }
@@ -206,19 +221,10 @@ final class CachingConstructorInjectionComponentAdapter implements ComponentAdap
     }
     return false;
   }
-}
 
-final class ComponentParameter {
-  public static ComponentAdapter resolveAdapter(@NotNull DefaultPicoContainer container, @Nullable ComponentAdapter excludeAdapter, @NotNull Class<?> expectedType) {
-    if (excludeAdapter == null) {
-      return container.getComponentAdapter(expectedType);
-    }
-
-    ComponentAdapter result = getTargetAdapter(container, expectedType, excludeAdapter.getComponentKey());
-    return result == null ? null : expectedType.isAssignableFrom(result.getComponentImplementation()) ? result : null;
-  }
-
-  private static ComponentAdapter getTargetAdapter(@NotNull DefaultPicoContainer container, Class<?> expectedType, @NotNull Object excludeKey) {
+  private static ComponentAdapter getTargetAdapter(@NotNull DefaultPicoContainer container,
+                                                   Class<?> expectedType,
+                                                   @NotNull Object excludeKey) {
     ComponentAdapter byKey = container.getComponentAdapter(expectedType);
     if (byKey != null && !excludeKey.equals(byKey.getComponentKey())) {
       return byKey;

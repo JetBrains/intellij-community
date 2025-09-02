@@ -30,8 +30,8 @@ public final class JavaOverrideMethodsHandler implements ContextAwareActionHandl
   }
 
   @Override
-  public void invoke(final @NotNull Project project, final @NotNull Editor editor, final @NotNull PsiFile file) {
-    PsiClass aClass = OverrideImplementUtil.getContextClass(project, editor, file, true);
+  public void invoke(final @NotNull Project project, final @NotNull Editor editor, final @NotNull PsiFile psiFile) {
+    PsiClass aClass = OverrideImplementUtil.getContextClass(project, editor, psiFile, true);
     if (aClass == null) return;
 
     ReadAction.nonBlocking(() -> {

@@ -3,37 +3,36 @@
 package com.intellij.ide.impl.dataRules;
 
 import com.intellij.ide.util.EditSourceUtil;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.DataMap;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-@ApiStatus.Internal
-public final class NavigatableRule implements GetDataRule {
-  @Override
-  public Object getData(@NotNull DataProvider dataProvider) {
-    final Navigatable navigatable = CommonDataKeys.NAVIGATABLE.getData(dataProvider);
-    if (navigatable instanceof OpenFileDescriptor openFileDescriptor) {
+import static com.intellij.openapi.actionSystem.CommonDataKeys.NAVIGATABLE;
+import static com.intellij.openapi.actionSystem.CommonDataKeys.PSI_ELEMENT;
+import static com.intellij.openapi.actionSystem.PlatformCoreDataKeys.SELECTED_ITEM;
 
-      if (openFileDescriptor.getFile().isValid()) {
-        return openFileDescriptor;
+final class NavigatableRule {
+  static @Nullable Navigatable getData(@NotNull DataMap dataProvider) {
+    Navigatable navigatable = dataProvider.get(NAVIGATABLE);
+    if (navigatable instanceof OpenFileDescriptor o) {
+      if (o.getFile().isValid()) {
+        return o;
       }
     }
-    final PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataProvider);
-    if (element instanceof Navigatable) {
-      return element;
+    PsiElement element = dataProvider.get(PSI_ELEMENT);
+    if (element instanceof Navigatable o) {
+      return o;
     }
     if (element != null) {
       return EditSourceUtil.getDescriptor(element);
     }
 
-    final Object selection = PlatformCoreDataKeys.SELECTED_ITEM.getData(dataProvider);
-    if (selection instanceof Navigatable) {
-      return selection;
+    Object selection = dataProvider.get(SELECTED_ITEM);
+    if (selection instanceof Navigatable o) {
+      return o;
     }
 
     return null;

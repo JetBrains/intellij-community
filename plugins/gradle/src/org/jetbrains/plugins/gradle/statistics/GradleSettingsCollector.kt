@@ -89,6 +89,7 @@ internal class GradleSettingsCollector : ProjectUsagesCollector() {
     }
 
     usages.add(DELEGATE_BUILD_RUN.metric(GradleProjectSettings.isDelegatedBuildEnabled(project, projectPath)))
+    usages.add(DELEGATE_RUN.metric(GradleProjectSettings.isDelegatedRunEnabled(project, projectPath)))
     usages.add(PREFERRED_TEST_RUNNER.metric(GradleProjectSettings.getTestRunner(project, projectPath)))
 
     val hasNonEmptyIntellijConfig = ProjectDataManager
@@ -123,7 +124,7 @@ internal class GradleSettingsCollector : ProjectUsagesCollector() {
     return Version.parseVersion(version.version)?.toCompactString() ?: "unknown"
   }
 
-  private val GROUP = EventLogGroup("build.gradle.state", 9)
+  private val GROUP = EventLogGroup("build.gradle.state", 10)
   private val HAS_GRADLE_PROJECT = GROUP.registerEvent("hasGradleProject", EventFields.Enabled)
   private val OFFLINE_WORK = GROUP.registerEvent("offlineWork", EventFields.Enabled)
   private val HAS_CUSTOM_SERVICE_DIRECTORY_PATH = GROUP.registerEvent("hasCustomServiceDirectoryPath", EventFields.Enabled)
@@ -137,6 +138,7 @@ internal class GradleSettingsCollector : ProjectUsagesCollector() {
   private val DISABLE_WRAPPER_SOURCE_DISTRIBUTION_NOTIFICATION = GROUP.registerEvent("disableWrapperSourceDistributionNotification",
                                                                                      EventFields.Enabled)
   private val DELEGATE_BUILD_RUN = GROUP.registerEvent("delegateBuildRun", EventFields.Enabled)
+  private val DELEGATE_RUN = GROUP.registerEvent("delegateRun", EventFields.Enabled)
   private val IDEA_SPECIFIC_CONFIGURATION_USED = GROUP.registerEvent("ideaSpecificConfigurationUsed", EventFields.Enabled)
 
   private val DISTRIBUTION_TYPE = GROUP.registerEvent("distributionType",

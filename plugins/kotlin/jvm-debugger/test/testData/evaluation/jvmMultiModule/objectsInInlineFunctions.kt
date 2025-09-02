@@ -14,7 +14,7 @@ private inline fun foo(): Int {
     return obj1.bar()
 }
 
-// MODULE: jvm-app()(jvm-lib)
+// MODULE: jvm-app(jvm-lib)
 // FILE: call.kt
 
 fun main() {

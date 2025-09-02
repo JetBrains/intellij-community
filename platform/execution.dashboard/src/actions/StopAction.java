@@ -18,6 +18,7 @@ import static com.intellij.execution.dashboard.actions.RunDashboardActionUtils.g
 /**
  * @author konstantin.aleev
  */
+// fixme again executor action - ask Lera?
 final class StopAction extends DumbAwareAction {
 
   @Override

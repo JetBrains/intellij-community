@@ -29,7 +29,7 @@ internal open class SamplingTask(@JvmField internal val dumpInterval: Int, maxDu
     get() = gcCurrentTime - gcStartTime
 
   init {
-    job = coroutineScope.launch {
+    job = coroutineScope.launch(CoroutineName("freeze dumper")) {
       val delayDuration = dumpInterval.milliseconds
       while (true) {
         dumpThreads(asyncCoroutineScope = coroutineScope)
@@ -50,7 +50,7 @@ internal open class SamplingTask(@JvmField internal val dumpInterval: Int, maxDu
       return
     }
 
-    asyncCoroutineScope.launch {
+    asyncCoroutineScope.launch(CoroutineName("async freeze dumper")) {
       val rawDump = ThreadDumper.getThreadDumpInfo(infos, true)
       val dump = EventCountDumper.addEventCountersTo(rawDump)
       dumpedThreads(dump)

@@ -12,7 +12,7 @@ import com.intellij.util.ProcessingContext
 import com.intellij.util.SystemProperties
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyBuiltinCache
-import com.jetbrains.python.psi.impl.PyCallExpressionHelper
+import com.jetbrains.python.psi.impl.mapArguments
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.PyResolveUtil
 import com.jetbrains.python.psi.resolve.fromFoothold
@@ -73,7 +73,7 @@ open class PySoftFileReferenceContributor : PsiReferenceContributor() {
           parameterNames.any(::matchesPathNamePattern)
         }
         .any {
-          val mapping = PyCallExpressionHelper.mapArguments(callExpr, it, typeEvalContext)
+          val mapping = callExpr.mapArguments( it, typeEvalContext)
           val parameterName = mapping.mappedParameters[expr]?.name ?: return@any false
           matchesPathNamePattern(parameterName)
         }
@@ -105,7 +105,7 @@ open class PySoftFileReferenceContributor : PsiReferenceContributor() {
       return callExpr.multiResolveCallee(PyResolveContext.defaultContext(typeEvalContext))
         .asSequence()
         .mapNotNull {
-          val mapping = PyCallExpressionHelper.mapArguments(callExpr, it, typeEvalContext)
+          val mapping = callExpr.mapArguments( it, typeEvalContext)
           mapping.mappedParameters[expr]?.getArgumentType(typeEvalContext)
         }
         .mapNotNull(PyUnionType::toNonWeakType)

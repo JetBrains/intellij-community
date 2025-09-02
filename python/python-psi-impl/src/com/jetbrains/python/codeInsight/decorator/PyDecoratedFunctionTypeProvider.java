@@ -13,6 +13,8 @@ import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeProviderBase;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.pyi.PyiUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,20 +37,21 @@ public final class PyDecoratedFunctionTypeProvider extends PyTypeProviderBase {
       return null;
     }
 
-    List<PyDecorator> decorators = ContainerUtil.filter(decoratorList.getDecorators(), d -> !isTransparentDecorator(d, context));
-    if (decorators.isEmpty()) {
+    PyDecorator[] decorators = decoratorList.getDecorators();
+    List<PyDecorator> explicitlyTypedDecorators = ContainerUtil.filter(decorators, d -> !isTransparentDecorator(d, context));
+    if (explicitlyTypedDecorators.isEmpty()) {
       return null;
     }
 
-    /* Our goal is to infer the type of reference of decorated object.
-     * For that we going to infer a type of expression <code>decorator(reference)<code>.
+    /* Our goal is to infer the type of reference of a decorated object.
+     * For that we are going to infer a type of expression <code>decorator(reference)<code>.
      * The expression contains a new reference for the same object, and our
      * type inferring engine will ask this provider about the type of the object again.
      * To prevent an infinite loop, we need to add a recursion guard here. */
     return RecursionManager.doPreventingRecursion(
       Pair.create(referenceTarget, context),
       false,
-      () -> evaluateType(pyDecoratable, context, decorators)
+      () -> evaluateType(pyDecoratable, context, explicitlyTypedDecorators)
     );
   }
 
@@ -60,11 +63,11 @@ public final class PyDecoratedFunctionTypeProvider extends PyTypeProviderBase {
     QualifiedName qualifiedName = decorator.getQualifiedName();
     if (qualifiedName == null) return false;
     // Decorator is the only expression persisted in PSI stubs.
-    // Calling getReference().resolve() will cause un-stubbing of the containing file
+    // Calling decorator.getCallee() to retrieve a reference will cause un-stubbing of the containing file
     List<PsiElement> resolved = PyResolveUtil.resolveQualifiedNameInScope(qualifiedName, (PyFile)decorator.getContainingFile(), context);
     for (PsiElement res : resolved) {
       if (res instanceof PyFunction function) {
-        if (function.getTypeCommentAnnotation() != null || function.getAnnotation() != null) {
+        if (hasReturnTypeHint(function, context)) {
           return false;
         }
       }
@@ -73,6 +76,12 @@ public final class PyDecoratedFunctionTypeProvider extends PyTypeProviderBase {
       }
     }
     return true;
+  }
+
+  private static boolean hasReturnTypeHint(@NotNull PyFunction function, @NotNull TypeEvalContext context) {
+    return StreamEx.of(function)
+      .append(PyiUtil.getOverloads(function, context))
+      .anyMatch(f -> f.getTypeCommentAnnotation() != null || f.getAnnotation() != null);
   }
 
   private static @Nullable Ref<PyType> evaluateType(@NotNull PyDecoratable referenceTarget,

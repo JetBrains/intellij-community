@@ -90,7 +90,7 @@ public final class RangeCollectorImpl extends TemplateDataElementType.RangeColle
       patcher = OuterLanguageRangePatcher.EXTENSION.forLanguage(templateLanguage);
     if (patcher != null) {
       StringBuilder builder =
-        templateSourceCode instanceof StringBuilder ? (StringBuilder)templateSourceCode : new StringBuilder(templateSourceCode);
+        templateSourceCode instanceof StringBuilder b ? b : new StringBuilder(templateSourceCode);
       insertDummyStringIntoInsertionRanges(patcher, originalSourceCode, builder);
     }
   }
@@ -197,9 +197,9 @@ public final class RangeCollectorImpl extends TemplateDataElementType.RangeColle
         currentLeafOrLazyParseable = removeElementsForRange(currentLeafOrLazyParseable, currentLeafOffset, rangeToProcess, charTable);
       }
       else {
-        if (currentLeafOrLazyParseable instanceof LeafElement && currentLeafOffset < rangeStartOffset) {
+        if (currentLeafOrLazyParseable instanceof LeafElement leaf && currentLeafOffset < rangeStartOffset) {
           int splitOffset = rangeStartOffset - currentLeafOffset;
-          currentLeafOrLazyParseable = templateTreePatcher.split((LeafElement)currentLeafOrLazyParseable, splitOffset, charTable);
+          currentLeafOrLazyParseable = templateTreePatcher.split(leaf, splitOffset, charTable);
           currentLeafOffset = rangeStartOffset;
         }
         if (currentLeafOrLazyParseable == null) {
@@ -222,7 +222,7 @@ public final class RangeCollectorImpl extends TemplateDataElementType.RangeColle
   }
 
   private void addRangeToLazyParseableCollector(@NotNull TreeElement leafOrLazyParseable, @NotNull TextRange rangeWithinLazyParseable) {
-    if (rangeWithinLazyParseable instanceof RangeToRemove && ((RangeToRemove)rangeWithinLazyParseable).myTextToRemove == null) return;
+    if (rangeWithinLazyParseable instanceof RangeToRemove remove && remove.myTextToRemove == null) return;
     RangeCollectorImpl lazyParseableCollector = leafOrLazyParseable.getUserData(OUTER_ELEMENT_RANGES);
     if (lazyParseableCollector != null) {
       assert lazyParseableCollector != this;
@@ -395,8 +395,8 @@ public final class RangeCollectorImpl extends TemplateDataElementType.RangeColle
     StringBuilder stringBuilder = new StringBuilder(chars);
     int shift = 0;
     for (TextRange outerElementRange : myOuterAndRemoveRanges) {
-      if (outerElementRange instanceof RangeToRemove) {
-        CharSequence textToRemove = ((RangeToRemove)outerElementRange).myTextToRemove;
+      if (outerElementRange instanceof RangeToRemove remove) {
+        CharSequence textToRemove = remove.myTextToRemove;
         if (textToRemove != null) {
           stringBuilder.insert(outerElementRange.getStartOffset() + shift, textToRemove);
           shift += textToRemove.length();
@@ -432,10 +432,10 @@ public final class RangeCollectorImpl extends TemplateDataElementType.RangeColle
     List<TextRange> ranges = modifications.myOuterAndRemoveRanges;
     if (ranges.isEmpty()) return sourceCode;
     for (TextRange range : ranges) {
-      if (range instanceof RangeToRemove) {
+      if (range instanceof RangeToRemove remove) {
         if (range.isEmpty()) continue;
         assertRangeOrder(range);
-        CharSequence textToRemove = ((RangeToRemove)range).myTextToRemove;
+        CharSequence textToRemove = remove.myTextToRemove;
         assert textToRemove != null;
         myOuterAndRemoveRanges.add(new RangeToRemove(range.getStartOffset(), textToRemove));
       }

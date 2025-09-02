@@ -13,6 +13,7 @@ import com.intellij.cce.metric.Metric
 import com.intellij.cce.metric.PrecisionMetric
 import com.intellij.cce.metric.SessionsCountMetric
 import com.intellij.cce.workspace.Config
+import com.intellij.cce.workspace.EvaluationWorkspace
 import java.lang.reflect.Type
 
 class StandaloneExampleFeature : StandaloneFeature<DatasetStrategy>("standalone-example") {
@@ -22,7 +23,7 @@ class StandaloneExampleFeature : StandaloneFeature<DatasetStrategy>("standalone-
     override fun deserialize(map: Map<String, Any>, language: String): DatasetStrategy = DatasetStrategy()
   }
 
-  override fun prepareEnvironment(config: Config): EvaluationEnvironment {
+  override fun prepareEnvironment(config: Config, outputWorkspace: EvaluationWorkspace): EvaluationEnvironment {
     val fileDataset = config.fileDataset ?: throw IllegalStateException("Required dataset config")
     return CsvEnvironment(
       datasetRef = DatasetRef.parse(fileDataset.url),

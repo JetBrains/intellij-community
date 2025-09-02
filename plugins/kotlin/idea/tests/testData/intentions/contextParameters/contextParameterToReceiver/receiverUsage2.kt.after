@@ -1,0 +1,11 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+
+context(c2: Int)
+fun String.foo(p1: Double) {
+}
+
+fun String.bar() {
+    fun Int.baz() {
+        this@bar.foo(2.0)
+    }
+}

@@ -112,4 +112,47 @@ class GradleUnusedVersionCatalogInspectionTest : GradleCodeInsightTestCase() {
         <warning>aaa-bbb</warning> = { group = "org.apache.groovy", name = "groovy", version.ref = "groovy-core" }
     """.trimIndent())
   }
+
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun testNoHighlightingForSuppressedUnusedLibrary(gradleVersion: GradleVersion) {
+    runTest(gradleVersion, "", """
+        [libraries]
+        # noinspection UnusedVersionCatalogEntry
+        groovy-core = "aa:bb:2.0.0"      
+    """.trimIndent())
+  }
+
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun testNoHighlightingForSuppressedUnusedBundle(gradleVersion: GradleVersion) {
+    runTest(gradleVersion, "", """
+        [bundles]
+        # noinspection UnusedVersionCatalogEntry
+        ui = []
+    """.trimIndent())
+  }
+
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun testNoHighlightingForSuppressedUnusedPlugin(gradleVersion: GradleVersion) {
+    runTest(gradleVersion, "", """
+        [plugins]
+        # noinspection UnusedVersionCatalogEntry
+        groovy-core = "aa:bb:2.0.0"      
+    """.trimIndent())
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun testNoHighlightingForSuppressedUnusedVersion(gradleVersion: GradleVersion) {
+    runTest(gradleVersion, "", """
+        [versions]
+        #noinspection UnusedVersionCatalogEntry
+        groovy-core = "10.0.0"      
+    """.trimIndent())
+  }
 }

@@ -4,12 +4,13 @@ import com.intellij.cce.core.*
 import com.intellij.cce.interpreter.FeatureInvoker
 
 class StandaloneExampleInvoker : FeatureInvoker {
-  override fun callFeature(expectedText: String, offset: Int, properties: TokenProperties): Session {
+  override fun callFeature(expectedText: String, offset: Int, properties: TokenProperties, sessionId: String): Session {
     val session = Session(
       offset = offset,
       expectedText = expectedText,
       completableLength = expectedText.length,
       properties,
+      sessionId
     )
 
     val letter = properties.additionalProperty("Letter")!!.first()

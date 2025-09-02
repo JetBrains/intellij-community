@@ -43,7 +43,7 @@ import org.jetbrains.idea.maven.utils.MavenUtil
 import java.io.File
 import java.text.MessageFormat
 
-class MavenSyncConsole(private val myProject: Project) : MavenEventHandler {
+class MavenSyncConsole(private val myProject: Project) : MavenEventHandler, MavenBuildIssueHandler {
   private val mySyncView: BuildProgressListener = myProject.getService(SyncViewManager::class.java)
   private var mySyncId = createTaskId()
   private var finished = false
@@ -117,7 +117,7 @@ class MavenSyncConsole(private val myProject: Project) : MavenEventHandler {
   @Synchronized
   fun addWarning(@Nls text: String, @Nls description: String) = addWarning(text, description, null)
 
-  fun addBuildIssue(issue: BuildIssue, kind: MessageEvent.Kind) = doIfImportInProcessOrPostpone {
+  override fun addBuildIssue(issue: BuildIssue, kind: MessageEvent.Kind): Unit = doIfImportInProcessOrPostpone {
     if (!newIssue(issue.title + issue.description)) return@doIfImportInProcessOrPostpone
     mySyncView.onEvent(mySyncId, BuildIssueEventImpl(mySyncId, issue, kind))
     hasErrors = hasErrors || kind == MessageEvent.Kind.ERROR

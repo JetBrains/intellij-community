@@ -7,6 +7,7 @@ import com.intellij.vcs.log.graph.api.elements.GraphEdge
 import com.intellij.vcs.log.graph.api.elements.GraphElement
 import com.intellij.vcs.log.graph.api.elements.GraphNode
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo
+import com.intellij.vcs.log.graph.api.permanent.VcsLogGraphNodeId
 import com.intellij.vcs.log.graph.api.printer.GraphColorGetter
 import com.intellij.vcs.log.graph.api.printer.GraphPrintElement
 import com.intellij.vcs.log.graph.api.printer.PrintElementPresentationManager
@@ -25,7 +26,7 @@ internal class PrintElementPresentationManagerImpl<CommitId>(private val permane
     return setSelection(Selection.FromPrintElement(printElement))
   }
 
-  fun setSelectedElements(selectedNodeId: Set<Int>): Boolean {
+  fun setSelectedElements(selectedNodeId: Set<VcsLogGraphNodeId>): Boolean {
     return setSelection(Selection.FromNodeIds(linearGraph, selectedNodeId))
   }
 
@@ -37,7 +38,7 @@ internal class PrintElementPresentationManagerImpl<CommitId>(private val permane
 
   override fun getColorId(element: GraphElement): Int {
     if (element is GraphNode) {
-      val nodeId: Int = linearGraph.getNodeId(element.nodeIndex)
+      val nodeId: VcsLogGraphNodeId = linearGraph.getNodeId(element.nodeIndex)
       return colorGetter.getNodeColor(nodeId, getLayoutIndex(nodeId))
     }
     val edge = element as GraphEdge
@@ -56,7 +57,7 @@ internal class PrintElementPresentationManagerImpl<CommitId>(private val permane
     else return colorGetter.getNodeColor(downNodeId, downLayoutIndex)
   }
 
-  private fun getLayoutIndex(nodeId: Int): Int {
+  private fun getLayoutIndex(nodeId: VcsLogGraphNodeId): Int {
     return if (nodeId < 0) nodeId else permanentGraphInfo.permanentGraphLayout.getLayoutIndex(nodeId)
   }
 
@@ -70,7 +71,7 @@ internal class PrintElementPresentationManagerImpl<CommitId>(private val permane
       }
     }
 
-    class FromNodeIds(private val linearGraph: LinearGraph, private val selectedNodeIds: Set<Int>) : Selection() {
+    class FromNodeIds(private val linearGraph: LinearGraph, private val selectedNodeIds: Set<VcsLogGraphNodeId>) : Selection() {
       override fun isSelected(printElement: GraphPrintElement): Boolean {
         val graphElement = printElement.graphElement
         if (graphElement is GraphNode) {

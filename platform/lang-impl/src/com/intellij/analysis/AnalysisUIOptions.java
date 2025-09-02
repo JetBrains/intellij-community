@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 @Service(Service.Level.PROJECT)
-@State(name = "AnalysisUIOptions", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
+@State(name = "AnalysisUIOptions", storages = @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE))
 public final class AnalysisUIOptions implements PersistentStateComponent<AnalysisUIOptions> {
   public static AnalysisUIOptions getInstance(Project project) {
     return project.getService(AnalysisUIOptions.class);

@@ -14,7 +14,6 @@ import org.gradle.tooling.BuildController;
 import org.gradle.tooling.internal.adapter.ProtocolToModelAdapter;
 import org.gradle.tooling.internal.adapter.TargetTypeProvider;
 import org.gradle.tooling.model.DomainObjectSet;
-import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.tooling.model.gradle.GradleBuild;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.ApiStatus;
@@ -34,6 +33,8 @@ import java.util.function.Function;
 @ApiStatus.Internal
 public class GradleModelFetchAction implements BuildAction<GradleModelHolderState>, Serializable {
 
+  private final @NotNull String myGradleVersion;
+
   private final NavigableSet<GradleModelFetchPhase> myModelFetchPhases = new TreeSet<>(Arrays.asList(GradleModelFetchPhase.values()));
   private final Map<GradleModelFetchPhase, Set<ProjectImportModelProvider>> myModelProviders = new LinkedHashMap<>();
   private final Set<Class<?>> myTargetTypes = new LinkedHashSet<>();
@@ -43,6 +44,14 @@ public class GradleModelFetchAction implements BuildAction<GradleModelHolderStat
 
   private transient boolean myProjectLoadedAction = false;
   private transient @Nullable GradleDaemonModelHolder myModels = null;
+
+  public GradleModelFetchAction(@NotNull GradleVersion version) {
+    myGradleVersion = version.getVersion();
+  }
+
+  private @NotNull GradleVersion getGradleVersion() {
+    return GradleVersion.version(myGradleVersion);
+  }
 
   public GradleModelFetchAction addProjectImportModelProviders(
     @NotNull Collection<? extends ProjectImportModelProvider> providers
@@ -106,7 +115,7 @@ public class GradleModelFetchAction implements BuildAction<GradleModelHolderStat
 
     if (myProjectLoadedAction || !myUseProjectsLoadedPhase) {
       myModels = telemetry.callWithSpan("InitAction", __ ->
-        initAction(controller, converterExecutor, telemetry)
+        initAction(controller, converterExecutor, telemetry, getGradleVersion())
       );
     }
 
@@ -149,27 +158,24 @@ public class GradleModelFetchAction implements BuildAction<GradleModelHolderStat
   private static @NotNull GradleDaemonModelHolder initAction(
     @NotNull BuildController controller,
     @NotNull ExecutorService converterExecutor,
-    @NotNull GradleOpenTelemetry telemetry
+    @NotNull GradleOpenTelemetry telemetry,
+    @NotNull GradleVersion gradleVersion
   ) {
     GradleBuild mainGradleBuild = telemetry.callWithSpan("GetMainGradleBuild", __ ->
       controller.getBuildModel()
     );
-    BuildEnvironment buildEnvironment = telemetry.callWithSpan("GetBuildEnvironment", __ ->
-      controller.getModel(BuildEnvironment.class)
-    );
     Collection<? extends GradleBuild> nestedGradleBuilds = telemetry.callWithSpan("GetNestedGradleBuilds", __ ->
-      getNestedBuilds(buildEnvironment, mainGradleBuild)
+      getNestedBuilds(mainGradleBuild, gradleVersion)
     );
     ToolingSerializerConverter serializer = telemetry.callWithSpan("GetToolingModelConverter", __ ->
       new ToolingSerializerConverter(controller, telemetry)
     );
     return telemetry.callWithSpan("InitModelConsumer", __ ->
-      new GradleDaemonModelHolder(converterExecutor, serializer, mainGradleBuild, nestedGradleBuilds, buildEnvironment)
+      new GradleDaemonModelHolder(converterExecutor, serializer, mainGradleBuild, nestedGradleBuilds, gradleVersion)
     );
   }
 
-  private static Collection<? extends GradleBuild> getNestedBuilds(@NotNull BuildEnvironment buildEnvironment, @NotNull GradleBuild build) {
-    GradleVersion gradleVersion = GradleVersion.version(buildEnvironment.getGradle().getGradleVersion());
+  private static Collection<? extends GradleBuild> getNestedBuilds(@NotNull GradleBuild build, @NotNull GradleVersion gradleVersion) {
     Set<String> processedBuildsPaths = new HashSet<>();
     Set<GradleBuild> nestedBuilds = new LinkedHashSet<>();
     String rootBuildPath = build.getBuildIdentifier().getRootDir().getPath();

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger;
 
 import com.intellij.execution.ExecutionException;
@@ -8,12 +8,14 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.process.*;
 import com.intellij.execution.util.ExecUtil;
+import com.intellij.ide.IdeBundle;
 import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationAction;
+import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -27,9 +29,9 @@ import com.intellij.openapi.util.NlsContexts.DialogMessage;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.python.community.helpersLocator.PythonHelpersLocator;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import com.jetbrains.python.run.PythonRunConfiguration;
 import com.jetbrains.python.sdk.PythonEnvUtil;
@@ -39,6 +41,8 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+
+import static com.jetbrains.python.statistics.CythonWarningIdsHolder.CYTHON_EXTENSION_SPEEDS_UP_PYTHON_DEBUGGING;
 
 public final class PyCythonExtensionWarning {
   private static final Logger LOG = Logger.getInstance(PyCythonExtensionWarning.class);
@@ -54,10 +58,20 @@ public final class PyCythonExtensionWarning {
     Notification notification =
       new Notification(CYTHON_WARNING_GROUP_ID, PyBundle.message("compile.cython.extensions.notification"),
                        PyBundle.message("debugger.cython.extension.speeds.up.python.debugging"),
-                       NotificationType.INFORMATION);
+                       NotificationType.INFORMATION).setDisplayId(CYTHON_EXTENSION_SPEEDS_UP_PYTHON_DEBUGGING);
     notification.setSuggestionType(true);
+    notification.setListener(NotificationListener.URL_OPENING_LISTENER);
+
     notification.addAction(createInstallAction(notification, project));
-    notification.addAction(createDocsAction());
+
+    notification.addAction(new NotificationAction(IdeBundle.message("label.dont.show")) {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
+        notification.setDoNotAskFor(null);
+        notification.expire();
+      }
+    });
+    notification.configureDoNotAskOption("CythonDebuggerExtensionAvailable", PyBundle.message("compile.cython.extensions.notification"));
     notification.notify(project);
   }
 
@@ -68,16 +82,6 @@ public final class PyCythonExtensionWarning {
       public void actionPerformed(@NotNull AnActionEvent e) {
         compileCythonExtension(project);
         notification.expire();
-      }
-    };
-  }
-
-  private static AnAction createDocsAction() {
-    return new DumbAwareAction(PyBundle.message("compile.cython.extensions.help")) {
-
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        HelpManager.getInstance().invokeHelp("Cython_Speedups");
       }
     };
   }
@@ -149,7 +153,7 @@ public final class PyCythonExtensionWarning {
         public void run(@NotNull ProgressIndicator indicator) {
           final CapturingProcessHandler handler =
             new CapturingProcessHandler(process, commandLine.getCharset(), commandLine.getCommandLineString());
-          handler.addProcessListener(new ProcessAdapter() {
+          handler.addProcessListener(new ProcessListener() {
             @Override
             public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
               if (outputType == ProcessOutputTypes.STDOUT || outputType == ProcessOutputTypes.STDERR) {

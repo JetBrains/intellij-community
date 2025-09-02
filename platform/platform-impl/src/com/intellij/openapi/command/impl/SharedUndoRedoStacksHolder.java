@@ -11,10 +11,12 @@ import java.util.*;
 @ApiStatus.Internal
 final class SharedUndoRedoStacksHolder extends UndoRedoStacksHolderBase<ImmutableActionChangeRange> {
   private final SharedAdjustableUndoableActionsHolder myAdjustableUndoableActionsHolder;
+  private final boolean myIsPerClientSupported;
 
-  SharedUndoRedoStacksHolder(boolean isUndo, SharedAdjustableUndoableActionsHolder undoableActionsHolder) {
+  SharedUndoRedoStacksHolder(SharedAdjustableUndoableActionsHolder undoableActionsHolder, boolean isPerClientSupported, boolean isUndo) {
     super(isUndo);
     myAdjustableUndoableActionsHolder = undoableActionsHolder;
+    myIsPerClientSupported = isPerClientSupported;
   }
 
   void addToStack(@NotNull DocumentReference reference, @NotNull ImmutableActionChangeRange changeRange) {
@@ -58,6 +60,9 @@ final class SharedUndoRedoStacksHolder extends UndoRedoStacksHolderBase<Immutabl
   }
 
   @NotNull MovementAvailability canMoveToStackTop(@NotNull DocumentReference reference, @NotNull Map<Integer, MutableActionChangeRange> rangesToMove) {
+    if (!myIsPerClientSupported) {
+      return MovementAvailability.ALREADY_MOVED;
+    }
     UndoRedoList<ImmutableActionChangeRange> stack = getStack(reference);
     ImmutableActionChangeRange[] affected = getAffectedRanges(stack, rangesToMove);
     if (affected == null) {

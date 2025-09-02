@@ -180,7 +180,7 @@ public final class Standalone {
   /**
    * @deprecated Use {@link #runBuild(JpsModelLoader, Path, Map, MessageHandler, List, boolean, CanceledStatus)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static void runBuild(@NotNull JpsModelLoader loader,
                               @NotNull File dataStorageRoot,
                               @NotNull MessageHandler messageHandler,
@@ -198,7 +198,7 @@ public final class Standalone {
   /**
    * @deprecated Use {@link #runBuild(JpsModelLoader, Path, Map, MessageHandler, List, boolean, CanceledStatus)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static void runBuild(@NotNull JpsModelLoader loader, @NotNull File dataStorageRoot,
                               @NotNull Map<String, String> buildParameters,
                               @NotNull MessageHandler messageHandler, @NotNull List<TargetTypeBuildScope> scopes,
@@ -209,7 +209,7 @@ public final class Standalone {
   /**
    * @deprecated Use {@link #runBuild(JpsModelLoader, Path, Map, MessageHandler, List, boolean, CanceledStatus)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static void runBuild(@NotNull JpsModelLoader loader,
                                 @NotNull File dataStorageRoot,
                                 @NotNull Map<String, String> buildParameters,

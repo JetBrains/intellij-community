@@ -3,9 +3,12 @@ package com.intellij.collaboration.ui.codereview.editor
 
 import com.intellij.collaboration.ui.codereview.editor.action.CodeReviewInEditorToolbarActionGroup
 import com.intellij.diff.util.Range
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.Constraints
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.Separator
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.EdtImmediate
 import com.intellij.openapi.diff.LineStatusMarkerColorScheme
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -71,7 +74,7 @@ object ReviewInEditorUtil {
   }
 
   suspend fun trackDocumentDiffSync(originalDocument: Document, currentDocument: Document, changesCollector: (List<Range>) -> Unit): Nothing {
-    withContext(Dispatchers.Main.immediate) {
+    withContext(Dispatchers.EdtImmediate) {
       val documentTracker = DocumentTracker(originalDocument, currentDocument)
       val trackerHandler = object : DocumentTracker.Handler {
         override fun afterBulkRangeChange(isDirty: Boolean) {
@@ -98,8 +101,13 @@ object ReviewInEditorUtil {
    * @throws IllegalStateException when the actions were not set up
    */
   suspend fun showReviewToolbar(vm: CodeReviewInEditorViewModel, editor: Editor): Nothing {
-    withContext(Dispatchers.Main) {
+    showReviewToolbarWithActions(vm, editor)
+  }
+
+  suspend fun showReviewToolbarWithActions(vm: CodeReviewInEditorViewModel, editor: Editor, vararg additionalActions: AnAction): Nothing {
+    withContext(Dispatchers.EDT) {
       val toolbarActionGroup = DefaultActionGroup(
+        *additionalActions,
         CodeReviewInEditorToolbarActionGroup(vm),
         Separator.getInstance()
       )

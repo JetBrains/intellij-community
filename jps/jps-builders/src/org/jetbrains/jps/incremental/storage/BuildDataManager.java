@@ -18,14 +18,14 @@ import org.jetbrains.jps.builders.storage.BuildDataPaths;
 import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
 import org.jetbrains.jps.builders.storage.StorageProvider;
 import org.jetbrains.jps.dependency.*;
-import org.jetbrains.jps.dependency.impl.Containers;
 import org.jetbrains.jps.dependency.impl.DependencyGraphImpl;
 import org.jetbrains.jps.dependency.impl.LoggingDependencyGraph;
 import org.jetbrains.jps.dependency.impl.PathSourceMapper;
 import org.jetbrains.jps.incremental.ProjectBuildException;
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 import org.jetbrains.jps.incremental.storage.dataTypes.LibraryRoots;
-import org.jetbrains.jps.javac.Iterators;
+import org.jetbrains.jps.incremental.storage.graph.PersistentMapletFactory;
+import org.jetbrains.jps.util.Iterators;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -410,7 +410,7 @@ public final class BuildDataManager {
           if (deleteExisting) {
             FileUtil.delete(mappingsRoot);
           }
-          myDepGraph = asSynchronizedGraph(new DependencyGraphImpl(Containers.createPersistentContainerFactory(mappingsRoot.toString())));
+          myDepGraph = asSynchronizedGraph(new DependencyGraphImpl(new PersistentMapletFactory(mappingsRoot.toString())));
         }
         else {
           try {
@@ -420,7 +420,7 @@ public final class BuildDataManager {
             if (deleteExisting) {
               FileUtil.delete(mappingsRoot);
             }
-            myDepGraph = asSynchronizedGraph(new DependencyGraphImpl(Containers.createPersistentContainerFactory(mappingsRoot.toString())));
+            myDepGraph = asSynchronizedGraph(new DependencyGraphImpl(new PersistentMapletFactory(mappingsRoot.toString())));
           }
         }
       }
@@ -461,6 +461,16 @@ public final class BuildDataManager {
     if (mappings != null) {
       synchronized (mappings) {
         mappings.flush(memoryCachesOnly);
+      }
+    }
+
+    GraphConfiguration graphConfig = getDependencyGraph();
+    if (graphConfig != null) {
+      try {
+        graphConfig.getGraph().flush();
+      }
+      catch (IOException e) {
+        LOG.warn(e);
       }
     }
   }
@@ -737,7 +747,7 @@ public final class BuildDataManager {
       private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
       @Override
-      public Delta createDelta(Iterable<NodeSource> sourcesToProcess, Iterable<NodeSource> deletedSources, boolean isSourceOnly) throws IOException {
+      public Delta createDelta(Iterable<NodeSource> sourcesToProcess, Iterable<NodeSource> deletedSources, boolean isSourceOnly) {
         lock.readLock().lock();
         try {
           return delegate.createDelta(sourcesToProcess, deletedSources, isSourceOnly);
@@ -748,10 +758,10 @@ public final class BuildDataManager {
       }
 
       @Override
-      public DifferentiateResult differentiate(Delta delta, DifferentiateParameters params) {
+      public DifferentiateResult differentiate(Delta delta, DifferentiateParameters params, Iterable<Graph> extParts) {
         lock.readLock().lock();
         try {
-          return delegate.differentiate(delta, params);
+          return delegate.differentiate(delta, params, extParts);
         }
         finally {
           lock.readLock().unlock();
@@ -817,6 +827,17 @@ public final class BuildDataManager {
         }
         finally {
           lock.writeLock().unlock();
+        }
+      }
+
+      @Override
+      public void flush() throws IOException {
+        lock.readLock().lock(); // flush is not supposed to mutate graph data
+        try {
+          delegate.flush();
+        }
+        finally {
+          lock.readLock().unlock();
         }
       }
     };

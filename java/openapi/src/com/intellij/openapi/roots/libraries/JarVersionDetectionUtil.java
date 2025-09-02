@@ -7,15 +7,15 @@ import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.io.JarUtil;
+import com.intellij.openapi.util.io.NioJarUtilKt;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
@@ -57,11 +57,11 @@ public final class JarVersionDetectionUtil {
     return null;
   }
 
-  public static @Nullable String getBundleVersion(@NotNull File jar) {
-    return JarUtil.getJarAttribute(jar, new Attributes.Name("Bundle-Version"));
+  public static @Nullable String getBundleVersion(@NotNull Path jar) {
+    return NioJarUtilKt.getJarAttribute(jar, new Attributes.Name("Bundle-Version"));
   }
 
-  public static @Nullable String getImplementationVersion(@NotNull File jar) {
-    return JarUtil.getJarAttribute(jar, Attributes.Name.IMPLEMENTATION_VERSION);
+  public static @Nullable String getImplementationVersion(@NotNull Path jar) {
+    return NioJarUtilKt.getJarAttribute(jar, Attributes.Name.IMPLEMENTATION_VERSION);
   }
 }

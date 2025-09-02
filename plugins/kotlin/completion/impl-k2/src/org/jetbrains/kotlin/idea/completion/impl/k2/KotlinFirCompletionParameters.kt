@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.completion
 
 import com.intellij.codeInsight.completion.CompletionParameters
+import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.config.LanguageVersionSettings
@@ -19,6 +20,9 @@ internal sealed class KotlinFirCompletionParameters(
 
     val invocationCount: Int
         get() = delegate.invocationCount
+
+    val completionType: CompletionType
+        get() = delegate.completionType
 
     val position: PsiElement
         get() = delegate.position

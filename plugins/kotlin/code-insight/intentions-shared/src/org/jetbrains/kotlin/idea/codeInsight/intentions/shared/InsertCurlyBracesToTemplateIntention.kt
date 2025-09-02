@@ -5,6 +5,7 @@ import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.openapi.editor.Editor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingOffsetIndependentIntention
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.entryPrefixLength
 import org.jetbrains.kotlin.idea.core.RestoreCaret
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtSimpleNameStringTemplateEntry
@@ -23,7 +24,7 @@ internal class InsertCurlyBracesToTemplateIntention : SelfTargetingOffsetIndepen
         val expression = element.expression ?: return
 
         with(RestoreCaret(expression, editor)) {
-            val entryPrefixLength = element.getStrictParentOfType<KtStringTemplateExpression>()?.interpolationPrefix?.textLength ?: 1
+            val entryPrefixLength = element.getStrictParentOfType<KtStringTemplateExpression>()?.entryPrefixLength ?: return
             val newEntry = KtPsiFactory(element.project).createMultiDollarBlockStringTemplateEntry(expression, entryPrefixLength)
             val wrapped = element.replace(newEntry)
             val afterExpression = (wrapped as? KtStringTemplateEntryWithExpression)?.expression ?: return

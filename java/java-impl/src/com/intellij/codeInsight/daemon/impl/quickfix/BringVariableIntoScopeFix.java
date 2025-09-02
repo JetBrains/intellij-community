@@ -115,8 +115,8 @@ public final class BringVariableIntoScopeFix implements ModCommandAction {
   }
 
   private static void invoke(@NotNull PsiLocalVariable outOfScopeVariable, @NotNull PsiReferenceExpression reference) {
-    PsiFile file = outOfScopeVariable.getContainingFile();
-    Project project = file.getProject();
+    PsiFile psiFile = outOfScopeVariable.getContainingFile();
+    Project project = psiFile.getProject();
     outOfScopeVariable.normalizeDeclaration();
     PsiUtil.setModifierProperty(outOfScopeVariable, PsiModifier.FINAL, false);
     PsiElement commonParent = PsiTreeUtil.findCommonParent(outOfScopeVariable, reference);

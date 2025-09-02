@@ -1,11 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection
 
+import com.intellij.openapi.fileTypes.PlainTextLanguage
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.PsiManager
-import com.intellij.psi.impl.FakePsiElement
-import com.intellij.psi.impl.source.DummyHolderFactory
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.assertErrorLogged
@@ -41,25 +41,11 @@ class ProblemDescriptionUtilTest : LightPlatformTestCase() {
     }
   }
 
-  internal fun doTest(message: String, element: String,
-                      expectedEditorMessage: String, expectedTreeMessage: String) {
-    val psiElement : FakePsiElement = object : FakePsiElement() {
-      override fun getParent(): PsiElement {
-        return DummyHolderFactory.createHolder(psiManager, null)
-      }
-
-      override fun getText(): String {
-        return element
-      }
-
-      override fun isPhysical(): Boolean {
-        return true // needed to avoid assertion in ProblemDescriptorBase which requires physical elements
-      }
-
-      override fun getTextRange(): TextRange {
-        return TextRange(0, element.length)
-      }
-    }
+  internal fun doTest(message: String,
+                      element: String,
+                      expectedEditorMessage: String,
+                      expectedTreeMessage: String) {
+    val psiElement : PsiElement = PsiFileFactory.getInstance(project).createFileFromText("x.txt", PlainTextLanguage.INSTANCE, element)
 
     val descriptorBase = object : ProblemDescriptorBase(psiElement, psiElement, message, null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                                false, null, true, false){

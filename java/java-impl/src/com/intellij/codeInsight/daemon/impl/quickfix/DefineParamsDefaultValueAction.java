@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -9,9 +9,11 @@ import com.intellij.codeInsight.template.impl.TextExpression;
 import com.intellij.codeInspection.redundantCast.RemoveRedundantCastUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.java.JavaBundle;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.modcommand.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.JavaFeature;
@@ -19,6 +21,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.util.RefactoringUIUtil;
+import com.intellij.ui.NewUiValue;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -28,7 +31,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public final class DefineParamsDefaultValueAction extends PsiBasedModCommandAction<PsiElement> {
+public final class DefineParamsDefaultValueAction extends PsiBasedModCommandAction<PsiElement> implements DumbAware {
   private static final Logger LOG = Logger.getInstance(DefineParamsDefaultValueAction.class);
 
   public DefineParamsDefaultValueAction() {
@@ -73,7 +76,7 @@ public final class DefineParamsDefaultValueAction extends PsiBasedModCommandActi
       return null;
     }
     return Presentation.of(message)
-      .withIcon(AllIcons.Actions.RefactoringBulb)
+      .withIcon(NewUiValue.isEnabled() ? null : AllIcons.Actions.RefactoringBulb)
       .withPriority(PriorityAction.Priority.LOW);
   }
 
@@ -81,19 +84,20 @@ public final class DefineParamsDefaultValueAction extends PsiBasedModCommandActi
   protected @NotNull ModCommand perform(@NotNull ActionContext context, @NotNull PsiElement element) {
     PsiElement parent = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiClass.class);
     PsiMethod method;
-    if (parent instanceof PsiMethod) {
-      method = (PsiMethod)parent;
+    if (parent instanceof PsiMethod m) {
+      method = m;
     }
     else if (parent instanceof PsiClass aClass && aClass.isRecord()) {
       method = JavaPsiRecordUtil.findCanonicalConstructor(aClass);
       assert method != null;
     }
     else throw new AssertionError();
-    PsiParameterList parameterList = method.getParameterList();
-    PsiParameter[] parameters = parameterList.getParameters();
+    PsiParameter[] parameters = method.getParameterList().getParameters();
     if (parameters.length == 1) {
-      return ModCommand.psiUpdate(method, (m, updater) -> invoke(context.project(), m, updater,
-                                                                 updater.getWritable(m).getParameterList().getParameters()));
+      return ModCommand.psiUpdate(method, (m, updater) -> {
+        PsiMethod writableMethod = updater.getWritable(m);
+        invoke(context.project(), writableMethod, updater, writableMethod.getParameterList().getParameters());
+      });
     }
     List<ParameterClassMember> members = ContainerUtil.map(parameters, ParameterClassMember::new);
     int idx = getSelectedIndex(element);
@@ -148,7 +152,7 @@ public final class DefineParamsDefaultValueAction extends PsiBasedModCommandActi
         if (ArrayUtil.find(parameters, psiParameter) > -1) {
           PsiType type = GenericsUtil.getVariableTypeByExpressionType(psiParameter.getType());
           String defaultValue = TypeUtils.getDefaultValue(type);
-          return defaultValue.equals(PsiKeyword.NULL) ? "(" + type.getCanonicalText() + ")null" : defaultValue;
+          return defaultValue.equals(JavaKeywords.NULL) ? "(" + type.getCanonicalText() + ")null" : defaultValue;
         }
         return psiParameter.getName();
       }, ",") + ");";
@@ -196,12 +200,13 @@ public final class DefineParamsDefaultValueAction extends PsiBasedModCommandActi
                                 (PsiMethod)method.copy();
     final PsiCodeBlock body = prototype.getBody();
     final PsiCodeBlock emptyBody = JavaPsiFacade.getElementFactory(method.getProject()).createCodeBlock();
-    PsiModifierList modifierList = prototype.getModifierList();
+    final PsiModifierList modifierList = prototype.getModifierList();
+    modifierList.setModifierProperty(PsiModifier.ABSTRACT, false);
+    modifierList.setModifierProperty(PsiModifier.NATIVE, false);
     if (body != null) {
       body.replace(emptyBody);
     } else {
-      modifierList.setModifierProperty(PsiModifier.ABSTRACT, false);
-      prototype.addBefore(emptyBody, null);
+      prototype.add(emptyBody);
     }
 
     final PsiClass aClass = method.getContainingClass();

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -25,7 +25,7 @@ final class XBreakpointGroupingByClassRule<B> extends XBreakpointGroupingRule<B,
   }
 
   @Override
-  public XBreakpointClassGroup getGroup(@NotNull B b, @NotNull Collection<? extends XBreakpointClassGroup> groups) {
+  public XBreakpointClassGroup getGroup(@NotNull B b) {
     if (b instanceof XBreakpoint) {
       Breakpoint javaBreakpoint = BreakpointManager.getJavaBreakpoint((XBreakpoint)b);
       if (javaBreakpoint == null) {
@@ -35,11 +35,6 @@ final class XBreakpointGroupingByClassRule<B> extends XBreakpointGroupingRule<B,
       String packageName = javaBreakpoint.getPackageName();
       if (className == null) {
         return null;
-      }
-      for (XBreakpointClassGroup group : groups) {
-        if (group.getClassName().equals(className) && group.getPackageName().equals(packageName)) {
-          return group;
-        }
       }
       return new XBreakpointClassGroup(packageName, className);
     }

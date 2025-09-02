@@ -4,12 +4,16 @@ package com.intellij.ide.plugins.marketplace
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.intellij.ide.plugins.PluginNode
+import com.intellij.ide.plugins.PluginNodeVendorDetails
 import com.intellij.ide.plugins.RepositoryHelper
 import com.intellij.ide.plugins.advertiser.PluginData
+import com.intellij.ide.plugins.newui.PluginUiModel
+import com.intellij.ide.plugins.newui.PluginUiModelBuilderFactory
 import com.intellij.ide.plugins.newui.Tags
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.text.StringUtil.parseLong
 import com.intellij.openapi.util.text.StringUtil.unquoteString
+import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.util.*
@@ -18,6 +22,7 @@ import java.util.*
  * Object from Search Service for getting compatible updates for IDE.
  * [externalPluginId] plugin ID from Plugin Repository database.
  */
+@Serializable
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class IdeCompatibleUpdate(
   @get:JsonProperty("id")
@@ -26,14 +31,16 @@ data class IdeCompatibleUpdate(
   val externalPluginId: String = "",
   @get:JsonProperty("pluginXmlId")
   val pluginId: String = "",
-  val version: String = ""
+  val version: String = "",
 )
 
 /**
  * Plugin Repository object for storing information about plugin updates.
  */
+@Serializable
+@ApiStatus.Internal
 @JsonIgnoreProperties(ignoreUnknown = true)
-internal data class IntellijUpdateMetadata(
+data class IntellijUpdateMetadata(
   @get:JsonProperty("xmlId")
   val id: String = "",
   val name: String = "",
@@ -49,35 +56,45 @@ internal data class IntellijUpdateMetadata(
   val until: String? = null,
   val productCode: String? = null,
   val url: String? = null,
-  val size: Int = 0
+  val size: Int = 0,
 ) {
-  fun toPluginNode(): PluginNode {
-    val pluginNode = PluginNode(PluginId.getId(id), name, size.toString())
-    pluginNode.description = description
-    pluginNode.vendor = vendor
-    pluginNode.tags = tags
-    pluginNode.changeNotes = notes
-    pluginNode.sinceBuild = since
-    pluginNode.untilBuild = until
-    pluginNode.productCode = productCode
-    pluginNode.version = version
-    pluginNode.setVendorDetails(organization)
-    pluginNode.url = url
+  fun toUiModel(): PluginUiModel {
+    val pluginId = PluginId.getId(id)
+    val builder = PluginUiModelBuilderFactory.getInstance().createBuilder(pluginId)
+
+    builder.setName(name)
+    builder.setSize(size.toString())
+
+    builder.setDescription(description)
+    builder.setVendor(vendor)
+    builder.setTags(tags)
+    builder.setChangeNotes(notes)
+    builder.setSinceBuild(since)
+    builder.setUntilBuild(until)
+    builder.setProductCode(productCode)
+    builder.setVersion(version)
+    builder.setVendorDetails(organization)
+    builder.setUrl(url)
+    builder.setIsFromMarketPlace(true)
+
     for (dep in dependencies) {
-      pluginNode.addDepends(dep, false)
+      builder.addDependency(dep, false)
     }
     for (dep in optionalDependencies) {
-      pluginNode.addDepends(dep, true)
+      builder.addDependency(dep, true)
     }
 
-    RepositoryHelper.addMarketplacePluginDependencyIfRequired(pluginNode)
+    val model = builder.build()
 
-    return pluginNode
+    RepositoryHelper.addMarketplacePluginDependencyIfRequired(model)
+    return model
   }
 }
 
+@Serializable
+@ApiStatus.Internal
 @JsonIgnoreProperties(ignoreUnknown = true)
-internal class MarketplaceSearchPluginData(
+class MarketplaceSearchPluginData(
   @get:JsonProperty("xmlId")
   val id: String = "",
   var isPaid: Boolean = false,
@@ -91,7 +108,7 @@ internal class MarketplaceSearchPluginData(
   val externalPluginId: String? = null,
   val downloads: String = "",
   @get:JsonProperty("nearestUpdate")
-  val nearestUpdate: NearestUpdate? = null
+  val nearestUpdate: NearestUpdate? = null,
 ) {
   fun toPluginNode(): PluginNode {
     val pluginNode = PluginNode(PluginId.getId(id))
@@ -106,8 +123,31 @@ internal class MarketplaceSearchPluginData(
     if (isPaid) pluginNode.tags = listOf(Tags.Paid.name)
     return pluginNode
   }
+
+  fun toPluginUiModel(): PluginUiModel {
+    val pluginId = PluginId.getId(id)
+    val builder = PluginUiModelBuilderFactory.getInstance().createBuilder(pluginId)
+
+    builder.setName(name)
+    builder.setRating("%.2f".format(Locale.US, rating))
+    builder.setDownloads(downloads)
+    builder.setVendorDetails(organization)
+    builder.setExternalPluginId(externalPluginId)
+    builder.setExternalUpdateId(externalUpdateId ?: nearestUpdate?.id)
+    builder.setIsPaid(isPaid)
+    builder.setIsFromMarketPlace(true)
+
+    if (cdate != null) {
+      builder.setDate(cdate)
+    }
+    if (isPaid) {
+      builder.setTags(listOf(Tags.Paid.name))
+    }
+    return builder.build()
+  }
 }
 
+@Serializable
 @ApiStatus.Internal
 @JsonIgnoreProperties(ignoreUnknown = true)
 class NearestUpdate(
@@ -120,7 +160,7 @@ class NearestUpdate(
   @get:JsonProperty("updateCompatibility")
   val updateCompatibility: Map<String, Long> = emptyMap(),
   @get:JsonProperty("isCompatible")
-  val compatible: Boolean = true
+  val compatible: Boolean = true,
 )
 
 /**
@@ -166,9 +206,10 @@ internal class MarketplaceBrokenPlugin(
   val since: String? = null,
   val until: String? = null,
   val originalSince: String? = null,
-  val originalUntil: String? = null
+  val originalUntil: String? = null,
 )
 
+@Serializable
 @ApiStatus.Internal
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class PluginReviewComment(
@@ -177,37 +218,45 @@ data class PluginReviewComment(
   val comment: @Nls String = "",
   val rating: Int = 0,
   val author: ReviewCommentAuthor = ReviewCommentAuthor(),
-  val plugin: ReviewCommentPlugin = ReviewCommentPlugin()
+  val plugin: ReviewCommentPlugin = ReviewCommentPlugin(),
 ) {
   fun getDate(): Long = parseLong(cdate, 0)
 }
 
+@Serializable
 @ApiStatus.Internal
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class ReviewCommentAuthor(
-  val name: @Nls String = ""
+  val name: @Nls String = "",
 )
 
+@Serializable
 @ApiStatus.Internal
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class ReviewCommentPlugin(
-  val link: @Nls String = ""
+  val link: @Nls String = "",
 )
 
+@Serializable
+@ApiStatus.Internal
 @JsonIgnoreProperties(ignoreUnknown = true)
-internal data class SalesMetadata(
+data class SalesMetadata(
   val trialPeriod: Int? = null,
-  val customTrialPeriods: List<CustomTrialPeriod>? = null
+  val customTrialPeriods: List<CustomTrialPeriod>? = null,
 )
 
+@Serializable
+@ApiStatus.Internal
 @JsonIgnoreProperties(ignoreUnknown = true)
-internal data class CustomTrialPeriod(
+data class CustomTrialPeriod(
   @JsonProperty("productCode") val productCode: String,
-  @JsonProperty("trialPeriod") val trialPeriod: Int
+  @JsonProperty("trialPeriod") val trialPeriod: Int,
 )
 
+@Serializable
+@ApiStatus.Internal
 @JsonIgnoreProperties(ignoreUnknown = true)
-internal data class IntellijPluginMetadata(
+data class IntellijPluginMetadata(
   val screenshots: List<String>? = null,
   val vendor: PluginVendorMetadata? = null,
   val forumUrl: String? = null,
@@ -216,7 +265,7 @@ internal data class IntellijPluginMetadata(
   val documentationUrl: String? = null,
   val sourceCodeUrl: String? = null,
   val reportPluginUrl: String? = null,
-  val salesInfo: SalesMetadata? = null
+  val salesInfo: SalesMetadata? = null,
 ) {
 
   fun toPluginNode(pluginNode: PluginNode) {
@@ -235,18 +284,43 @@ internal data class IntellijPluginMetadata(
     pluginNode.sourceCodeUrl = sourceCodeUrl
     pluginNode.reportPluginUrl = reportPluginUrl
     pluginNode.defaultTrialPeriod = salesInfo?.trialPeriod
-    pluginNode.setCustomTrialPeriodMap(salesInfo?.customTrialPeriods?.associate {
-      p -> p.productCode to p.trialPeriod
+    pluginNode.setCustomTrialPeriodMap(salesInfo?.customTrialPeriods?.associate { p ->
+      p.productCode to p.trialPeriod
     })
+  }
+
+
+  @ApiStatus.Internal
+  fun toPluginUiModel(model: PluginUiModel) {
+    if (vendor != null) {
+      val details = PluginNodeVendorDetails(vendor.name, vendor.url, vendor.trader, vendor.verified)
+      model.vendorDetails = details
+    }
+
+    model.forumUrl = forumUrl
+    model.licenseUrl = licenseUrl
+    model.bugtrackerUrl = bugtrackerUrl
+    model.documentationUrl = documentationUrl
+    model.sourceCodeUrl = sourceCodeUrl
+    model.reportPluginUrl = reportPluginUrl
+
+    screenshots?.let { model.screenShots = it }
+
+    model.defaultTrialPeriod = salesInfo?.trialPeriod
+    model.customTrialPeriods = salesInfo?.customTrialPeriods?.associate { p ->
+      p.productCode to p.trialPeriod
+    }
   }
 }
 
+@Serializable
+@ApiStatus.Internal
 @JsonIgnoreProperties(ignoreUnknown = true)
-internal data class PluginVendorMetadata(
+data class PluginVendorMetadata(
   val name: String = "",
   val url: String? = null,
   @get:JsonProperty("isTrader")
   val trader: Boolean = false,
   @get:JsonProperty("isVerified")
-  val verified: Boolean = false
+  val verified: Boolean = false,
 )

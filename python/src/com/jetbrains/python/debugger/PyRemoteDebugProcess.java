@@ -85,9 +85,11 @@ public class PyRemoteDebugProcess extends PyDebugProcess {
       getSession().resume();
     }
     if (!isWaitingForConnection()) {
-      setWaitingForConnection(true);
-      ApplicationManager.getApplication().invokeLater(() -> waitForConnection(getCurrentStateMessage(), getConnectionTitle()),
-                                                      ModalityState.defaultModalityState());
+      if (!isStopCalled) {
+        setWaitingForConnection(true);
+        ApplicationManager.getApplication().invokeLater(() -> waitForConnection(getCurrentStateMessage(), getConnectionTitle()),
+                                                        ModalityState.defaultModalityState());
+      }
     }
   }
 

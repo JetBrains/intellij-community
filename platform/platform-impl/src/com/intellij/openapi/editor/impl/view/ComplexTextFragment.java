@@ -7,6 +7,7 @@ import com.intellij.util.BitUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.awt.*;
 import java.awt.font.GlyphVector;
@@ -27,7 +28,8 @@ public final class ComplexTextFragment extends TextFragment {
                                             // (null if each code point takes one char).
                                             // We expect no more than 1025 chars in a fragment, so 'short' should be enough.
 
-  ComplexTextFragment(char @NotNull [] lineChars, int start, int end, boolean isRtl, @NotNull FontInfo fontInfo, @Nullable EditorView view) {
+  @VisibleForTesting
+  public ComplexTextFragment(char @NotNull [] lineChars, int start, int end, boolean isRtl, @NotNull FontInfo fontInfo, @Nullable EditorView view) {
     super(end - start, view);
     assert start >= 0              : assertMessage(lineChars, start, end, isRtl, fontInfo);
     assert end <= lineChars.length : assertMessage(lineChars, start, end, isRtl, fontInfo);

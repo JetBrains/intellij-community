@@ -8,8 +8,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
@@ -30,7 +30,7 @@ import java.util.List;
 public abstract class XmlStubBasedElement<T extends StubElement<?>> extends StubBasedPsiElementBase<T> implements XmlElement {
 
   XmlStubBasedElement(@NotNull T stub,
-                      @NotNull IStubElementType nodeType) {
+                      @NotNull IElementType nodeType) {
     super(stub, nodeType);
   }
 
@@ -123,6 +123,6 @@ public abstract class XmlStubBasedElement<T extends StubElement<?>> extends Stub
 
   @Override
   public String toString() {
-    return "PsiElement" + "(" + getElementType() + ")";
+    return "PsiElement" + "(" + getElementTypeImpl() + ")";
   }
 }

@@ -4,19 +4,19 @@ package org.intellij.images.scientific.action
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileChooser.FileChooserFactory
 import com.intellij.openapi.fileChooser.FileSaverDescriptor
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.vfs.VirtualFileManager
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.intellij.images.ImagesBundle
-import org.intellij.images.scientific.utils.ScientificUtils
 import org.intellij.images.scientific.statistics.ScientificImageActionsCollector
+import org.intellij.images.scientific.utils.ScientificUtils
 import org.intellij.images.scientific.utils.launchBackground
 import java.io.IOException
 import java.nio.file.Files
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import com.intellij.openapi.diagnostic.thisLogger
 
 internal class SaveImageAction : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
@@ -25,7 +25,7 @@ internal class SaveImageAction : DumbAwareAction() {
     val project = e.project
     val virtualFile = e.getData(CommonDataKeys.VIRTUAL_FILE)
     if (virtualFile == null || project == null) {
-      logger.error("Missing project or image file.")
+      thisLogger().error("Missing project or image file.")
       return
     }
 
@@ -41,9 +41,8 @@ internal class SaveImageAction : DumbAwareAction() {
       withContext(Dispatchers.IO) {
         try {
           Files.write(wrapper.file.toPath(), virtualFile.contentsToByteArray())
-        }
-        catch (e: IOException) {
-          logger.warn("Failed to save image", e)
+        } catch (e: IOException) {
+          thisLogger().warn("Failed to save image", e)
         }
         ScientificImageActionsCollector.logSaveAsImageInvoked(selectedFormat)
       }
@@ -60,5 +59,3 @@ internal class SaveImageAction : DumbAwareAction() {
     private const val IMAGE_DEFAULT_NAME: String = "myimg"
   }
 }
-
-private val logger = Logger.getInstance(SaveImageAction::class.java)

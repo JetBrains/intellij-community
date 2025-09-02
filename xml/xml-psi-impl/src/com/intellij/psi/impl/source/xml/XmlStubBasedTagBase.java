@@ -7,8 +7,8 @@ import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.xml.stub.XmlTagStub;
 import com.intellij.psi.meta.PsiMetaData;
-import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.PsiFileStub;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
@@ -39,7 +39,7 @@ public class XmlStubBasedTagBase<StubT extends XmlTagStub<?>>
   private volatile XmlTagValue myValue;
   private volatile XmlAttribute[] myAttributes;
 
-  XmlStubBasedTagBase(@NotNull StubT stub, @NotNull IStubElementType nodeType) {
+  XmlStubBasedTagBase(@NotNull StubT stub, @NotNull IElementType nodeType) {
     super(stub, nodeType);
   }
 
@@ -280,6 +280,11 @@ public class XmlStubBasedTagBase<StubT extends XmlTagStub<?>>
     else {
       visitor.visitElement(this);
     }
+  }
+
+  @Override
+  public IElementType getIElementType() {
+    return getElementTypeImpl();
   }
 
   @Override

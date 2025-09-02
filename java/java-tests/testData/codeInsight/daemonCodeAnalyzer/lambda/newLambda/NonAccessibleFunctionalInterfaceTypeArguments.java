@@ -4,7 +4,7 @@ import java.util.function.Consumer;
 class Test {
   {
     consume(<error descr="'Outer.A' has private access in 'Outer'">o -> {}</error>, new Outer.B(), new Outer.C());
-    consume(<error descr="'Outer.A' has private access in 'Outer'">Test::foo</error>, new Outer.B(), new Outer.C());
+    consume(Test::<error descr="'Outer.A' has private access in 'Outer'">foo</error>, new Outer.B(), new Outer.C());
   }
 
   private static void foo(Object o) {}

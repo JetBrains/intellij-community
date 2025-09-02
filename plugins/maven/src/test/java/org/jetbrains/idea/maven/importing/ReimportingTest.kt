@@ -13,7 +13,6 @@ import com.intellij.util.io.zipFile
 import kotlinx.coroutines.runBlocking
 import org.intellij.lang.annotations.Language
 import org.junit.Test
-import java.nio.file.Paths
 
 class ReimportingTest : MavenMultiVersionImportingTestCase() {
   override fun setUp() = runBlocking {
@@ -247,7 +246,7 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
   fun testMoveModuleWithSystemScopedDependency() = runBlocking {
     zipFile {
       file("a.txt")
-    }.generate(projectPath.resolve("lib.jar").toFile())
+    }.generate(projectPath.resolve("lib.jar"))
     updateModulePom("m1", generatePomWithSystemDependency("../lib.jar"))
     importProjectAsync()
 

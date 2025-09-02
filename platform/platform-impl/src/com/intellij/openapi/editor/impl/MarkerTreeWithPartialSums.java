@@ -5,6 +5,7 @@ import com.intellij.openapi.editor.Document;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.function.IntSupplier;
 import java.util.function.Supplier;
@@ -16,7 +17,8 @@ import java.util.function.Supplier;
  */
 @ApiStatus.Internal
 public class MarkerTreeWithPartialSums<T extends RangeMarkerImpl & IntSupplier> extends HardReferencingRangeMarkerTree<T> {
-  MarkerTreeWithPartialSums(@NotNull Document document) {
+  @VisibleForTesting
+  public MarkerTreeWithPartialSums(@NotNull Document document) {
     super(document);
   }
 
@@ -29,7 +31,8 @@ public class MarkerTreeWithPartialSums<T extends RangeMarkerImpl & IntSupplier> 
    * Should be called whenever a value associated with a marker is changed,
    * so that internal caches related to calculating value sums could be updated.
    */
-  void valueUpdated(T marker) {
+  @VisibleForTesting
+  public void valueUpdated(T marker) {
     Node<T> node = (Node<T>)lookupNode(marker);
     if (node != null) node.recalculateSubTreeSumUp();
   }
@@ -37,7 +40,8 @@ public class MarkerTreeWithPartialSums<T extends RangeMarkerImpl & IntSupplier> 
   /**
    * Calculates sum of values associated with markers having offset less than or equal to given offset.
    */
-  int getSumOfValuesUpToOffset(int offset) {
+  @VisibleForTesting
+  public int getSumOfValuesUpToOffset(int offset) {
     return getSumOfValuesForOverlappingRanges(getRoot(), offset, 0);
   }
 

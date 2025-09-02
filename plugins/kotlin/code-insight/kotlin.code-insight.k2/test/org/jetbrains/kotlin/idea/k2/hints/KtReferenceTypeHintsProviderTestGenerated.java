@@ -185,6 +185,11 @@ public class KtReferenceTypeHintsProviderTestGenerated extends AbstractKtReferen
         runTest("../../idea/tests/testData/codeInsight/hints/types/NestedClassWithoutImport.kt");
     }
 
+    @TestMetadata("ParameterNamesInFunctionTypes.kt")
+    public void testParameterNamesInFunctionTypes() throws Exception {
+        runTest("../../idea/tests/testData/codeInsight/hints/types/ParameterNamesInFunctionTypes.kt");
+    }
+
     @TestMetadata("ParameterType.kt")
     public void testParameterType() throws Exception {
         runTest("../../idea/tests/testData/codeInsight/hints/types/ParameterType.kt");

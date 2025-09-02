@@ -1,8 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.execution.eel
 
-import com.intellij.execution.wsl.WSLUtil
-import com.intellij.execution.wsl.WslPath
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTask
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration
@@ -43,7 +41,7 @@ class EelGradleExecutionAware : GradleExecutionAware {
   ): TargetEnvironmentConfigurationProvider? {
     return if (project.isEelSyncAvailable()) {
       runBlockingCancellable {
-        EelTargetEnvironmentConfigurationProvider(project.getEelDescriptor().upgrade(), project)
+        EelTargetEnvironmentConfigurationProvider(project.getEelDescriptor().toEelApi(), project)
       }
     }
     else {
@@ -57,7 +55,7 @@ class EelGradleExecutionAware : GradleExecutionAware {
   ): TargetEnvironmentConfigurationProvider? {
     return if (project.isEelSyncAvailable()) {
       runBlockingCancellable {
-        EelTargetEnvironmentConfigurationProvider(project.getEelDescriptor().upgrade(), project)
+        EelTargetEnvironmentConfigurationProvider(project.getEelDescriptor().toEelApi(), project)
       }
     }
     else {
@@ -80,8 +78,6 @@ class EelGradleExecutionAware : GradleExecutionAware {
   private fun Project.isEelSyncAvailable(): Boolean {
     return Registry.`is`("gradle.sync.use.eel.for.wsl", false)
            && projectFilePath != null
-           && WSLUtil.isSystemCompatible()
-           && WslPath.getDistributionByWindowsUncPath(projectFilePath!!) != null
            && getEelDescriptor() !is LocalEelDescriptor
   }
 }

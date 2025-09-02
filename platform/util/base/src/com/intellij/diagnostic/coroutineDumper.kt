@@ -134,7 +134,7 @@ private fun dumpCoroutines(jobTrees: List<JobTree>, out: Appendable, stripDump: 
 
 private tailrec fun Job.rootJob(): Job {
   @Suppress("DEPRECATION_ERROR")
-  val parentJob = (this as JobSupport).parentHandle?.parent
+  val parentJob = (this as? JobSupport)?.parentHandle?.parent
                   ?: return this
   return parentJob.rootJob()
 }

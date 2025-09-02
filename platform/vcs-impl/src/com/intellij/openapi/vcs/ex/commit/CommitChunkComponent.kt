@@ -41,9 +41,11 @@ import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
 import javax.swing.JComponent
 
-private class CommitChunkPanel(private val tracker: ChangelistsLocalLineStatusTracker,
-                               private val amendCommitHandler: NonModalAmendCommitHandler) : NonModalCommitPanel(tracker.project) {
-  override val commitProgressUi: CommitProgressUi = object : CommitProgressPanel() {
+private class CommitChunkPanel(
+  private val tracker: ChangelistsLocalLineStatusTracker,
+  private val amendCommitHandler: NonModalAmendCommitHandler,
+) : NonModalCommitPanel(tracker.project) {
+  override val commitProgressUi: CommitProgressUi = object : CommitProgressPanel(tracker.project) {
     override var isEmptyMessage: Boolean
       get() = commitMessage.text.isBlank()
       set(_) {}
@@ -67,17 +69,17 @@ private class CommitChunkPanel(private val tracker: ChangelistsLocalLineStatusTr
       executorEventDispatcher.multicaster.executorCalled(null)
     }
   }.apply {
-    registerCustomShortcutSet(CommonShortcuts.getCtrlEnter(), this@CommitChunkPanel, this@CommitChunkPanel)
+    registerCustomShortcutSet(CommonShortcuts.getCtrlEnter(), component, this@CommitChunkPanel)
   }
 
-  private val amendCommitToggle = object : ToggleAction(VcsBundle.message("checkbox.amend") , null, PlatformVcsImplIcons.AmendInline) {
+  private val amendCommitToggle = object : ToggleAction(VcsBundle.message("checkbox.amend"), null, PlatformVcsImplIcons.AmendInline) {
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
     override fun update(e: AnActionEvent) {
       super.update(e)
       val p = e.presentation
       p.isVisible = amendCommitHandler.isAmendCommitModeSupported() == true
-      p.isEnabled = isVisible && amendCommitHandler.isAmendCommitModeTogglingEnabled == true
+      p.isEnabled = component.isVisible && amendCommitHandler.isAmendCommitModeTogglingEnabled == true
     }
 
     override fun isSelected(e: AnActionEvent): Boolean = amendCommitHandler.isAmendCommitMode
@@ -87,7 +89,7 @@ private class CommitChunkPanel(private val tracker: ChangelistsLocalLineStatusTr
     }
   }.apply {
     val amendShortcut = ActionManager.getInstance().getAction("Vcs.ToggleAmendCommitMode").shortcutSet
-    registerCustomShortcutSet(amendShortcut, this@CommitChunkPanel, this@CommitChunkPanel)
+    registerCustomShortcutSet(amendShortcut, component, this@CommitChunkPanel)
   }
 
   var forcedWidth: Int = Spec.DEFAULT_WIDTH
@@ -104,21 +106,30 @@ private class CommitChunkPanel(private val tracker: ChangelistsLocalLineStatusTr
       .addToCenter(commitMessage)
       .addToRight(rightWrapper)
       .addToBottom(BorderLayoutPanel().addToRight(bottomWrapper).andTransparent())
-
-    // ui adjustment
-    centerPanel
       .andTransparent()
       .withBackground(Spec.INPUT_BACKGROUND)
 
-    withBorder(JBUI.Borders.emptyLeft(Spec.PANEL_LEFT_GAP))
-    resetPreferredHeight()
-    andTransparent()
+    val wrapper = object : BorderLayoutPanel() {
+      override fun getPreferredSize(): Dimension {
+        val pref = super.preferredSize
+        pref.height = minOf(pref.height, Spec.MAX_HEIGHT)
+        pref.width = forcedWidth
+        return pref
+      }
+    }.addToCenter(centerPanel)
+      .withBorder(JBUI.Borders.emptyLeft(Spec.PANEL_LEFT_GAP))
+      .andTransparent()
+
+    (component as BorderLayoutPanel)
+      .addToCenter(wrapper)
+      .resetPreferredHeight()
+      .andTransparent()
 
     val editor = commitMessage.editorField.getEditor(true)
     commitMessage.editorField.setPlaceholder(VcsBundle.message("commit.from.gutter.placeholder"))
     if (editor != null) {
       adjustEditorSettings(editor)
-      centerPanel.border = CommitInputBorder(editor, this)
+      centerPanel.border = CommitInputBorder(editor, component)
 
       ApplicationManagerEx.getApplicationEx().messageBus.connect(this)
         .subscribe(LafManagerListener.TOPIC, LafManagerListener {
@@ -144,7 +155,8 @@ private class CommitChunkPanel(private val tracker: ChangelistsLocalLineStatusTr
         if (length > Spec.INLINED_ACTIONS_TEXT_LIMIT || lineCount > 1) {
           rightWrapper.setContent(null)
           bottomWrapper.setContent(actionToolbar.component)
-        } else {
+        }
+        else {
           bottomWrapper.setContent(null)
           rightWrapper.setContent(actionToolbar.component)
         }
@@ -200,16 +212,8 @@ private class CommitChunkPanel(private val tracker: ChangelistsLocalLineStatusTr
 
   private fun resizeInput(newWidth: Int) {
     forcedWidth = newWidth
-    revalidate()
-    repaint()
-  }
-
-
-  override fun getPreferredSize(): Dimension {
-    val pref = super.preferredSize
-    pref.height = minOf(pref.height, Spec.MAX_HEIGHT)
-    pref.width = forcedWidth
-    return pref
+    component.revalidate()
+    component.repaint()
   }
 
   override fun activate(): Boolean = true
@@ -337,7 +341,7 @@ internal class CommitChunkComponent(
     Disposer.register(tracker.disposable, workflowHandler)
   }
 
-  fun getCommitInput(): JComponent = workflowHandler.ui
+  fun getCommitInput(): JComponent = workflowHandler.ui.component
 
   fun setPopup(disposable: Disposable) {
     workflowHandler.setPopup(disposable)
@@ -345,7 +349,6 @@ internal class CommitChunkComponent(
 }
 
 private fun adjustEditorSettings(editor: EditorEx) {
-  editor.scrollPane.border = JBUI.Borders.empty()
   editor.backgroundColor = Spec.INPUT_BACKGROUND
   editor.settings.isShowIntentionBulb = false
   editor.putUserData(IncrementalFindAction.SEARCH_DISABLED, true)

@@ -52,6 +52,7 @@ abstract class StatisticsEventLoggerProvider(val recorderId: String,
 
   init {
     // add existing options
+    LOG.info("Initialize event logger provider for '$recorderId'")
     val configOptionsService = EventLogConfigOptionsService.getInstance()
     recorderOptionsProvider = RecorderOptionProvider(configOptionsService.getOptions(recorderId).allOptions)
 

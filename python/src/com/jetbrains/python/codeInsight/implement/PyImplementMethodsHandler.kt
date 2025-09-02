@@ -29,10 +29,10 @@ class PyImplementMethodsHandler : LanguageCodeInsightActionHandler {
     return editor != null && file is PyFile && PyOverrideImplementUtil.getContextClass(editor, file) != null
   }
 
-  override fun invoke(project: Project, editor: Editor, file: PsiFile) {
-    val cls = PyOverrideImplementUtil.getContextClass(editor, file)
+  override fun invoke(project: Project, editor: Editor, psiFile: PsiFile) {
+    val cls = PyOverrideImplementUtil.getContextClass(editor, psiFile)
     if (cls != null) {
-      PyOverrideImplementUtil.chooseAndImplementMethods(project, editor, cls, TypeEvalContext.codeCompletion(project, file))
+      PyOverrideImplementUtil.chooseAndImplementMethods(project, editor, cls, TypeEvalContext.codeCompletion(project, psiFile))
     }
   }
 

@@ -103,7 +103,7 @@ object KotlinChangeSignatureHandler : KotlinChangeSignatureHandlerBase() {
 
         val superMethods = checkSuperMethods(callableDescriptor, emptyList(), RefactoringBundle.message("to.refactor"))
 
-        val callableToRefactor = findDeclaration(superMethods.firstOrNull() ?: return, callableDescriptor, project, editor) ?: return
+        val callableToRefactor = findDeclaration(superMethods.lastOrNull() ?: return, callableDescriptor, project, editor) ?: return
 
         when {
             callableToRefactor !is KtNamedDeclaration -> {

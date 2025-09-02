@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navigationToolbar;
 
 import com.intellij.ide.structureView.impl.java.JavaAnonymousClassesNodeProvider;
@@ -66,6 +66,9 @@ public class JavaNavBarExtension extends StructureAwareNavBarModelExtension {
         return parentPackage;
       }
     }
+    if (psiElement != null && psiElement.getParent() instanceof PsiImplicitClass psiImplicitClass) {
+      return psiImplicitClass.getParent();
+    }
     return super.getParent(psiElement);
   }
 
@@ -79,7 +82,7 @@ public class JavaNavBarExtension extends StructureAwareNavBarModelExtension {
           (index.isUnderSourceRootOfType(file, JavaModuleSourceRootTypes.SOURCES) || index.isInLibrary(file))) {
         if (psiElement instanceof PsiJavaFile psiJavaFile && psiJavaFile.getViewProvider().getBaseLanguage() == JavaLanguage.INSTANCE) {
           final PsiClass[] psiClasses = psiJavaFile.getClasses();
-          if (psiClasses.length == 1) {
+          if (psiClasses.length == 1 && !(psiClasses[0] instanceof PsiImplicitClass)) {
             return psiClasses[0];
           }
         }

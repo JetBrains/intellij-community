@@ -1,10 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.util;
 
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.InstantShutdown;
+import com.intellij.openapi.application.UiDispatcherKind;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.LaterInvocator;
@@ -31,8 +32,10 @@ import com.intellij.util.concurrency.EdtScheduler;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.ApiStatus.Obsolete;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,7 +63,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
   protected final @Nullable Project myProject;
   final boolean myShouldShowCancel;
 
-  private @ProgressTitle String myTitle;
+  private @Nls String myTitle;
 
   private boolean myStoppedAlready;
   protected boolean myBackgrounded;
@@ -177,7 +180,9 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     // executed in a small amount of time. Problem: UI blinks and looks ugly if we show progress dialog that disappears shortly
     // for each of them. The solution is to postpone the tasks of showing progress dialog. Hence, it will not be shown at all
     // if the task is already finished when the time comes.
-    EdtScheduler.getInstance().schedule(delayInMillis, getModalityState(), () -> {
+
+    // Modal progresses must run on EDT without write-intent lock, hence we pass RELAX dispatcher
+    EdtScheduler.getInstance().schedule(delayInMillis, getModalityState(), UiDispatcherKind.RELAX, () -> {
       if (isRunning()) {
         showDialog();
       }
@@ -253,7 +258,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
       return;
     }
 
-    if (app.isExitInProgress() && app.getService(InstantShutdown.class).isAllowed()) {
+    if (app.isExitInProgress() && InstantShutdown.isAllowed()) {
       return;
     }
 
@@ -293,7 +298,8 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     }
   }
 
-  @Nullable ProgressDialog getDialog() {
+  @ApiStatus.Internal
+  public @Nullable ProgressDialog getDialog() {
     ThreadingAssertions.assertEventDispatchThread();
     return myDialog;
   }
@@ -344,7 +350,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
   }
 
   @Override
-  public void setTitle(@NotNull @ProgressTitle String title) {
+  public void setTitle(@NotNull @Nls String title) {
     if (!title.equals(myTitle)) {
       myTitle = title;
 

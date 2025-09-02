@@ -257,6 +257,10 @@ class UISettingsState : BaseState() {
   @get:OptionTag("SHOW_PREVIEW_IN_SEARCH_EVERYWHERE")
   var showPreviewInSearchEverywhere: Boolean by property(UISettingsStateDefaultsProvider.getInstanceOrNull()?.searchEverywherePreviewDefault
                                                          ?: false)
+  @get:Internal
+  @set:Internal
+  @get:OptionTag("SHOW_PROGRESSES_IN_EDITOR")
+  var showProgressesInEditor: Boolean by property(false)
 
   @Suppress("FunctionName")
   fun _incrementModificationCount(): Unit = incrementModificationCount()

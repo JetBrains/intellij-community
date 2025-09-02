@@ -7,7 +7,8 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.gradle.multiplatformTests.AbstractTestChecker
-import org.jetbrains.kotlin.gradle.multiplatformTests.KotlinMppTestsContext
+import org.jetbrains.kotlin.gradle.multiplatformTests.KotlinSyncTestsContext
+import org.jetbrains.kotlin.gradle.multiplatformTests.KotlinTestProperties
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestConfiguration
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.workspace.GeneralWorkspaceChecks
 import org.jetbrains.kotlin.idea.base.facet.isTestModule
@@ -55,15 +56,13 @@ abstract class WorkspaceModelChecker<V : Any>(private val respectOrder: Boolean)
      */
     abstract fun renderTestConfigurationDescription(testConfiguration: TestConfiguration): List<String>
 
-    final override fun KotlinMppTestsContext.check() {
+    final override fun KotlinSyncTestsContext.check() {
         check(
             testProject,
             testDataDirectory,
             testProjectRoot,
-            kgpVersion,
-            gradleVersion.version,
+            testProperties,
             testConfiguration,
-            agpVersion
         )
     }
 
@@ -71,21 +70,17 @@ abstract class WorkspaceModelChecker<V : Any>(private val respectOrder: Boolean)
         project: Project,
         expectedTestDataDir: File,
         actualTestProjectRoot: File, // root of [project]
-        kotlinPluginVersion: KotlinToolingVersion,
-        gradleVersion: String,
+        testProperties: KotlinTestProperties,
         testConfiguration: TestConfiguration,
-        agpClassifier: String?,
     ) {
         val expectedTestDataFile = findMostSpecificExistingFileOrNewDefault(
             classifier,
             expectedTestDataDir,
-            kotlinPluginVersion,
-            gradleVersion,
-            agpClassifier,
+            testProperties,
             testConfiguration
         )
 
-        val actualProjectReport = buildProjectReport(project, actualTestProjectRoot, testConfiguration, kotlinPluginVersion)
+        val actualProjectReport = buildProjectReport(project, actualTestProjectRoot, testConfiguration, testProperties)
 
         val expectedProjectReport = if (expectedTestDataFile.exists())
             WorkspaceModelTestReportParser.parse(expectedTestDataFile.readText()) else null
@@ -106,9 +101,9 @@ abstract class WorkspaceModelChecker<V : Any>(private val respectOrder: Boolean)
         project: Project,
         projectRoot: File,
         testConfiguration: TestConfiguration,
-        kotlinGradlePluginVersion: KotlinToolingVersion
+        testProperties: KotlinTestProperties,
     ): ProjectReport {
-        val context = PrinterContext(project, projectRoot, testConfiguration, kotlinGradlePluginVersion)
+        val context = PrinterContext(project, projectRoot, testConfiguration, testProperties)
 
         val moduleReports = context.buildModulesReport()
         return ProjectReport(

@@ -265,6 +265,11 @@ public final class ImmutableZipFile implements ZipFile {
     return new ImmutableZipFile(ikv, classPackages, resourcePackages, nameDataPosition);
   }
 
+  // cannot use `.slice` API (JDK 13+)
+  public @NotNull ByteBuffer __getRawSlice() {
+    return ikv.getMappedBuffer();
+  }
+
   @Override
   public void close() throws Exception {
     ikv.close();

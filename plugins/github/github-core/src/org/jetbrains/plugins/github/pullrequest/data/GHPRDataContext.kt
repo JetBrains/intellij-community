@@ -1,13 +1,13 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.data
 
+import com.intellij.collaboration.async.collectScoped
+import com.intellij.collaboration.async.launchNow
+import com.intellij.collaboration.async.withInitial
 import com.intellij.collaboration.ui.html.AsyncHtmlImageLoader
 import com.intellij.collaboration.ui.icon.IconsProvider
-import com.intellij.openapi.util.Disposer
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.awaitCancellation
-import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.data.GHReactionContent
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
@@ -28,34 +28,24 @@ class GHPRDataContext internal constructor(
   internal val htmlImageLoader: AsyncHtmlImageLoader,
   internal val avatarIconsProvider: GHAvatarIconsProvider,
   internal val reactionIconsProvider: IconsProvider<GHReactionContent>,
-  internal val filesManager: GHPRFilesManager,
   internal val interactionState: GHPRPersistentInteractionState,
 ) {
-  private val listenersDisposable = Disposer.newDisposable("GH PR context listeners disposable")
-
   init {
-    listLoader.addDataListener(listenersDisposable, object : GHListLoader.ListDataListener {
-      override fun onDataAdded(startIdx: Int) = listUpdatesChecker.start()
-      override fun onAllDataRemoved() = listUpdatesChecker.stop()
-    })
-    dataProviderRepository.addDetailsLoadedListener(listenersDisposable) { details: GHPullRequest ->
-      listLoader.updateData {
-        if (it.id == details.id) details else null
+    scope.launchNow {
+      listLoader.refreshOrReloadRequests.withInitial(Unit).collectScoped {
+        try {
+          listUpdatesChecker.start()
+          awaitCancellation()
+        }
+        finally {
+          listUpdatesChecker.stop()
+        }
       }
-      filesManager.updateTimelineFilePresentation(details)
     }
 
-    // need immediate to dispose in time
-    scope.launch(Dispatchers.Main.immediate) {
-      try {
-        awaitCancellation()
-      }
-      finally {
-        Disposer.dispose(filesManager)
-        Disposer.dispose(listenersDisposable)
-        Disposer.dispose(dataProviderRepository)
-        Disposer.dispose(listLoader)
-        Disposer.dispose(listUpdatesChecker)
+    dataProviderRepository.addDetailsLoadedListener(scope) { details: GHPullRequest ->
+      listLoader.updateData {
+        if (it.id == details.id) details else null
       }
     }
   }

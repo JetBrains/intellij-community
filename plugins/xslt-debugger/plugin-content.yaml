@@ -1,8 +1,28 @@
 - name: lib/rmi-stubs.jar
+  library: RMI Stubs
+  module: intellij.xslt.debugger.rt
+  files:
+  - name: $PROJECT_DIR$/community/plugins/xslt-debugger/engine/lib/rmi-stubs.jar
 - name: lib/rt/saxon.jar
+  library: Saxon-6.5.5
+  module: intellij.xslt.debugger.impl.rt
+  files:
+  - name: $PROJECT_DIR$/community/plugins/xslt-debugger/engine/impl/lib/saxon.jar
 - name: lib/rt/saxon9he.jar
+  library: Saxon-9HE
+  module: intellij.xslt.debugger.impl.rt
+  files:
+  - name: $PROJECT_DIR$/community/plugins/xslt-debugger/engine/impl/lib/saxon9he.jar
 - name: lib/rt/serializer-2.7.3.jar
+  library: Serializer-2.7.3
+  module: intellij.xslt.debugger.impl.rt
+  files:
+  - name: $MAVEN_REPOSITORY$/xalan/serializer/2/serializer-2.jar
 - name: lib/rt/xalan-2.7.3.jar
+  library: Xalan-2.7.3
+  module: intellij.xslt.debugger.impl.rt
+  files:
+  - name: $MAVEN_REPOSITORY$/xalan/xalan/2/xalan-2.jar
 - name: lib/rt/xslt-debugger-impl-rt.jar
   modules:
   - name: intellij.xslt.debugger.impl.rt

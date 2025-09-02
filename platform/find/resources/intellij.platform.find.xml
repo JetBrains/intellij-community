@@ -1,0 +1,16 @@
+<idea-plugin>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <usagePresentationProvider implementation="com.intellij.platform.find.UsageInfoModelPresentationProvider"/>
+
+    <!--suppress PluginXmlRegistrationCheck -->
+    <applicationService serviceInterface="com.intellij.find.impl.FindAndReplaceExecutor"
+                        serviceImplementation="com.intellij.platform.find.FindAndReplaceExecutorImpl"/>
+
+    <registryKey key="find.in.files.split"
+                 defaultValue="false"
+                 description="Enables the 'Find in Files' implementation, optimized to support both remote development workflows and monolithic setups."/>
+
+  </extensions>
+
+</idea-plugin>

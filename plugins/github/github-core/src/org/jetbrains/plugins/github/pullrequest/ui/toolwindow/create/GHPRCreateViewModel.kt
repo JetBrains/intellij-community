@@ -2,8 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow.create
 
 import com.intellij.collaboration.async.*
-import com.intellij.collaboration.ui.codereview.diff.CodeReviewDiffRequestProducer
-import com.intellij.collaboration.ui.codereview.diff.model.ComputedDiffViewModel
+import com.intellij.collaboration.ui.util.selectedItem
 import com.intellij.collaboration.util.CollectionDelta
 import com.intellij.collaboration.util.ComputedResult
 import com.intellij.collaboration.util.computeEmitting
@@ -11,6 +10,7 @@ import com.intellij.collaboration.util.getOrNull
 import com.intellij.dvcs.DvcsUtil
 import com.intellij.dvcs.push.PushSpec
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.ListSelection
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
@@ -37,9 +37,7 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedR
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
-import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowTab
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.create.GHPRCreateViewModel.*
-import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWindowProjectViewModel
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.component.LabeledListPanelViewModel
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
@@ -50,8 +48,8 @@ import kotlin.concurrent.withLock
 
 private typealias NewBranchNameCallback = suspend (suggestedName: String) -> String
 
-@ApiStatus.Experimental
-internal interface GHPRCreateViewModel {
+@ApiStatus.Internal
+interface GHPRCreateViewModel {
   val project: Project
   val avatarIconsProvider: GHAvatarIconsProvider
 
@@ -61,7 +59,7 @@ internal interface GHPRCreateViewModel {
   val branches: StateFlow<BranchesState>
 
   val changesVm: StateFlow<ComputedResult<GHPRCreateChangesViewModel?>?>
-  val diffVm: ComputedDiffViewModel
+  val diffVm: GHPRCreateDiffViewModel
 
   val titleText: StateFlow<String>
   val descriptionText: StateFlow<String>
@@ -116,7 +114,10 @@ internal class GHPRCreateViewModelImpl(
   private val repositoryManager: GHHostedRepositoriesManager,
   private val settings: GithubPullRequestsProjectUISettings,
   private val dataContext: GHPRDataContext,
-  private val projectVm: GHPRToolWindowProjectViewModel,
+  private val viewPullRequest: (GHPRIdentifier, Boolean) -> Unit,
+  private val closeNewPullRequest: () -> Unit,
+  private val openPullRequestDiff: (GHPRIdentifier?, Boolean) -> Unit,
+  private val refreshPrOnCurrentBranch: () -> Unit
 ) : GHPRCreateViewModel, Disposable {
   private val cs = parentCs.childScope(javaClass.name)
   override val avatarIconsProvider: GHAvatarIconsProvider = dataContext.avatarIconsProvider
@@ -160,7 +161,7 @@ internal class GHPRCreateViewModelImpl(
         coroutineScope {
           val settings = project.serviceAsync<GithubPullRequestsProjectUISettings>()
           val vm = GHPRCreateChangesViewModel(project, settings, this, dataContext,
-                                              baseBranch, headBranch, commits)
+                                              baseBranch, headBranch, commits, openPullRequestDiff)
           emit(ComputedResult.success(vm))
         }
       }
@@ -174,7 +175,7 @@ internal class GHPRCreateViewModelImpl(
     dataContext.repositoryDataService.loadTemplate()
   }.stateIn(cs, SharingStarted.Lazily, ComputedResult.loading())
 
-  override val titleAndDescriptionGenerationVm =
+  override val titleAndDescriptionGenerationVm: StateFlow<GHPRCreateTitleAndDescriptionGenerationViewModel?> =
     GHPRTitleAndDescriptionGeneratorExtension.EP_NAME.extensionListFlow()
       .mapNotNull { it.firstOrNull() }
       .flatMapLatest { extension ->
@@ -242,22 +243,20 @@ internal class GHPRCreateViewModelImpl(
       }.collectScoped { vm ->
         vm?.handleSelection {
           if (it != null) {
-            diffVm.showChanges(it)
+            diffVm.showChanges(ListSelection.createAt(it.changes, it.selectedIdx))
           }
         }
       }
     }
 
     cs.launchNow {
-      diffVm.diffVm.collectScoped {
-        it.getOrNull()?.handleSelection { producer ->
-          val change = (producer as? CodeReviewDiffRequestProducer)?.change ?: return@handleSelection
-          val changesVm = changesVm.value?.getOrNull()
-          //TODO: handle different commit
-          val commitChangesVm = changesVm?.commitChangesVm?.value
-          val changeListVm = commitChangesVm?.changeListVm?.value?.getOrNull()
-          changeListVm?.selectChange(change)
-        }
+      diffVm.handleSelection {
+        val change = it?.selectedItem ?: return@handleSelection
+        val changesVm = changesVm.value?.getOrNull()
+        //TODO: handle different commit
+        val commitChangesVm = changesVm?.commitChangesVm?.value
+        val changeListVm = commitChangesVm?.changeListVm?.value?.getOrNull()
+        changeListVm?.selectChange(change)
       }
     }
   }
@@ -367,10 +366,10 @@ internal class GHPRCreateViewModelImpl(
 
         _creationProgress.value = CreationState.Created
 
-        projectVm.viewPullRequest(pullRequest.prId)
+        viewPullRequest(pullRequest.prId, true)
         settings.recentNewPullRequestHead = headRepo.repository
-        projectVm.refreshPrOnCurrentBranch()
-        projectVm.closeTab(GHPRToolWindowTab.NewPullRequest)
+        refreshPrOnCurrentBranch()
+        closeNewPullRequest()
       }
       catch (ce: CancellationException) {
         _creationProgress.value = null
@@ -456,7 +455,7 @@ internal class GHPRCreateViewModelImpl(
     }
     val existingPr = existingPrRequest.await()
     if (existingPr != null) {
-      return BranchesCheckResult.AlreadyExists { projectVm.viewPullRequest(existingPr, true) }
+      return BranchesCheckResult.AlreadyExists { viewPullRequest(existingPr, true) }
     }
     return BranchesCheckResult.OK
   }
@@ -535,9 +534,10 @@ internal class GHPRCreateViewModelImpl(
 private class MetadataListViewModel<T>(cs: CoroutineScope, itemsLoader: suspend () -> List<T>) : LabeledListPanelViewModel<T> {
   override val isEditingAllowed: Boolean = true
   override val items = MutableStateFlow(emptyList<T>())
+  // Eagerly load the data on creation, so that the reviewer panel is populated immediately.
   override val selectableItems: StateFlow<ComputedResult<List<T>>> =
     computationStateFlow(flowOf(Unit)) { itemsLoader() }
-      .stateIn(cs, SharingStarted.Lazily, ComputedResult.loading())
+      .stateIn(cs, SharingStarted.Eagerly, ComputedResult.loading())
   override val adjustmentProcessState: StateFlow<ComputedResult<Unit>?> = MutableStateFlow(null)
   override val editRequests = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
 

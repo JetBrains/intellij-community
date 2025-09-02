@@ -9,7 +9,6 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -63,9 +62,7 @@ private class DiffEditorTabTitleProvider : EditorTabTitleProvider, DumbAware {
 
     @Suppress("DEPRECATION")
     val future = (project as ComponentManagerEx).getCoroutineScope().async(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-      blockingContext {
-        supplier()
-      }
+      supplier()
     }.asCompletableFuture()
     return ProgressIndicatorUtils.awaitWithCheckCanceled(future)
   }

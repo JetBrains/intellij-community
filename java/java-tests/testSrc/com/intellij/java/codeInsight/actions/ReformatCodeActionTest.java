@@ -144,14 +144,22 @@ public class ReformatCodeActionTest extends JavaPsiTestCase {
     return createTestFiles(parentDirectory.getVirtualFile(), fileNames);
   }
 
+  private static void checkReformatActionAvailableAndPerform(@NotNull AnAction action, @NotNull AnActionEvent event) {
+    action.update(event);
+    assertTrue("Reformat code action is not enabled", event.getPresentation().isEnabled());
+    action.actionPerformed(event);
+  }
+
   protected void performReformatActionOnSelectedFiles(List<PsiFile> files) {
     final AnAction action = getReformatCodeAction();
-    action.actionPerformed(createEventFor(action, getVirtualFileArrayFrom(files), getProject()));
+    final AnActionEvent event = createEventFor(action, getVirtualFileArrayFrom(files), getProject());
+    checkReformatActionAvailableAndPerform(action, event);
   }
 
   protected void performReformatActionOnModule(Module module, List<VirtualFile> files) {
     final AnAction action = getReformatCodeAction();
-    action.actionPerformed(createEventFor(action, files, getProject(), new AdditionalEventInfo().setModule(module)));
+    AnActionEvent event = createEventFor(action, files, getProject(), new AdditionalEventInfo().setModule(module));
+    checkReformatActionAvailableAndPerform(action, event);
   }
 
   protected void checkFormationAndImportsOptimizationFor(List<PsiFile> @NotNull ... fileCollection) {

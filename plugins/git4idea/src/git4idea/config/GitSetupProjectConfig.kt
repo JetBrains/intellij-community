@@ -2,7 +2,6 @@
 package git4idea.config
 
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.SystemInfo
@@ -13,7 +12,7 @@ import git4idea.repo.GitRepositoryManager
 import kotlin.reflect.KProperty1
 
 internal class GitSetupProjectConfig : ProjectActivity {
-  override suspend fun execute(project: Project): Unit = blockingContext {
+  override suspend fun execute(project: Project): Unit {
     ProjectLevelVcsManager.getInstance(project).runAfterInitialization {
       setupConfigIfNeeded(project)
     }

@@ -2,7 +2,7 @@
 @file:JvmName("UpdateSettingsProviderHelper")
 package com.intellij.openapi.updateSettings.impl
 
-import com.intellij.ide.impl.isTrusted
+import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.SimplePersistentStateComponent
 import com.intellij.openapi.components.service
@@ -15,7 +15,7 @@ import org.jetbrains.annotations.ApiStatus
 internal class ConfigurationScriptPluginRepositoriesProvider : UpdateSettingsProvider {
   override fun getPluginRepositories(): List<String> {
     return getOpenedProjects()
-      .filter { it.isTrusted() }
+      .filter { TrustedProjects.isProjectTrusted(it) }
       .flatMap { project ->
         project.service<CustomPluginRepositoriesConfigurationComponent>().repositories
       }

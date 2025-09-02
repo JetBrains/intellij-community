@@ -1,8 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
+import com.intellij.ide.projectView.impl.nodes.AbstractPsiBasedNode;
 import com.intellij.ide.projectView.impl.nodes.ClassTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.lang.jvm.JvmElement;
+import com.intellij.lang.jvm.source.JvmDeclarationSearch;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -10,7 +13,9 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
@@ -21,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
 
 public class TreeJavaClassChooserDialog extends AbstractTreeClassChooserDialog<PsiClass> implements TreeClassChooser {
@@ -83,8 +89,27 @@ public class TreeJavaClassChooserDialog extends AbstractTreeClassChooserDialog<P
 
   @Override
   protected @Nullable PsiClass getSelectedFromTreeUserObject(DefaultMutableTreeNode node) {
-    if (!(node.getUserObject() instanceof ClassTreeNode descriptor)) return null;
-    return descriptor.getPsiClass();
+    Object userObject = node.getUserObject();
+    if (userObject instanceof ClassTreeNode descriptor) {
+      return descriptor.getPsiClass();
+    }
+
+    if (userObject instanceof AbstractPsiBasedNode<?> nodeDescriptor) {
+      // try to convert kotlin classes to psi without new API
+      // used only when Project Tree tab is selected and manual search is performed
+      Object value = nodeDescriptor.getValue();
+      if (value instanceof PsiNameIdentifierOwner) {
+        PsiElement nameIdentifier = ((PsiNameIdentifierOwner)value).getNameIdentifier();
+        if (nameIdentifier != null) {
+          Iterable<JvmElement> elements = JvmDeclarationSearch.getElementsByIdentifier(nameIdentifier);
+          Iterator<JvmElement> iterator = elements.iterator();
+          if (iterator.hasNext()) {
+            return (PsiClass)iterator.next();
+          }
+        }
+      }
+    }
+    return null;
   }
 
   @Override

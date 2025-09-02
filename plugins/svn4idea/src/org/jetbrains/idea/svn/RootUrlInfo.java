@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -9,7 +9,7 @@ import org.jetbrains.idea.svn.api.Url;
 
 import java.io.File;
 
-public class RootUrlInfo implements RootUrlPair {
+public final class RootUrlInfo implements RootUrlPair {
 
   private final @NotNull WorkingCopyFormat myFormat;
   private final @NotNull Node myNode;

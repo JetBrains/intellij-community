@@ -28,7 +28,7 @@ def g(x) -> int:
     if x:
         return <warning descr="Expected type 'int', got 'str' instead">'abc'</warning>
     else:
-        return <warning descr="Expected type 'int', got 'dict' instead">{}</warning>
+        return <warning descr="Expected type 'int', got 'dict[Any, Any]' instead">{}</warning>
 
 def h(x) -> int:
     <warning descr="Expected type 'int', got 'None' instead">return</warning>

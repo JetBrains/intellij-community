@@ -1,5 +1,6 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
+@file:OptIn(IntellijInternalApi::class)
 
 package com.intellij.platform.settings
 
@@ -7,6 +8,7 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import org.jetbrains.annotations.ApiStatus.Internal
+import java.util.List
 
 class SettingDescriptor<T : Any> @IntellijInternalApi @Internal constructor(
   /**
@@ -24,7 +26,7 @@ class SettingDescriptor<T : Any> @IntellijInternalApi @Internal constructor(
   val serializer: SettingSerializerDescriptor<T>,
 ) {
   class Builder @PublishedApi internal constructor() {
-    var tags: Collection<SettingTag> = java.util.List.of()
+    var tags: Collection<SettingTag> = List.of()
 
     @PublishedApi
     internal fun <T : Any> build(key: String, pluginId: PluginId, serializer: SettingSerializerDescriptor<T>): SettingDescriptor<T> {
@@ -59,7 +61,7 @@ class SettingDescriptor<T : Any> @IntellijInternalApi @Internal constructor(
     return result
   }
 
-  override fun toString() = "SettingDescriptor(key=$key, pluginId=$pluginId, tags=$tags, serializer=$serializer)"
+  override fun toString(): String = "SettingDescriptor(key=$key, pluginId=$pluginId, tags=$tags, serializer=$serializer)"
 
   @Internal
   // impl note - even for an internal usage, we do not allow providing arbitrary name here; that's why "sub"

@@ -5,3 +5,5 @@ fun x() {
 }
 
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.UnresolvedInvocationQuickFix$ChangeToPropertyAccessQuickFix
+// IGNORE_K2
+// Task for K2: KTIJ-33286

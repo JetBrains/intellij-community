@@ -132,7 +132,7 @@ public class InvokeIntention extends ActionOnFile {
         if (presentation == null) {
           throw new IllegalStateException("Unexpectedly no presentation for " + action.getFamilyName());
         }
-        ModCommand command = ActionUtil.underModalProgress(project, "", () -> action.perform(context));
+        ModCommand command = filterCommand(ActionUtil.underModalProgress(project, "", () -> action.perform(context)));
         String validationMessage = validateCommand(command);
         if (validationMessage != null) {
           LOG.warn("Skip command: " + presentation.name() + " (" + validationMessage + ")");
@@ -142,6 +142,15 @@ public class InvokeIntention extends ActionOnFile {
             project, () -> ModCommandExecutor.getInstance().executeInteractively(context, command, editor), null, null);
           UIUtil.dispatchAllInvocationEvents();
         }
+      }
+
+      private static @NotNull ModCommand filterCommand(@NotNull ModCommand command) {
+        if (command instanceof ModCompositeCommand compositeCommand &&
+            ContainerUtil.exists(compositeCommand.unpack(), c -> c instanceof ModUpdateReferences)) {
+          return compositeCommand.unpack().stream().filter(c -> !(c instanceof ModUpdateReferences)).reduce(ModCommand::andThen)
+            .orElse(ModCommand.nop());
+        }
+        return command;
       }
 
       private @Nullable String validateCommand(ModCommand command) {

@@ -96,8 +96,6 @@ open class MavenArtifactsBuilder(protected val context: BuildContext) {
             continue
           JpsJavaDependencyScope.TEST ->
             continue
-          else ->
-            continue
         }
       }
       return result
@@ -116,20 +114,26 @@ open class MavenArtifactsBuilder(protected val context: BuildContext) {
       return createDependencyTag(createArtifactDependencyByLibrary(descriptor, DependencyScope.COMPILE))
     }
 
-    private val FLEET_MODULES_IN_COMMUNITY = setOf(
+    private val FLEET_MODULES_ALLOWED_FOR_PUBLICATION = setOf(
+      // region Fleet modules in Community
       "fleet.andel",
       "fleet.kernel",
       "fleet.multiplatform.shims",
-      "fleet.preferences",
       "fleet.reporting.api",
+      "fleet.reporting.shared",
       "fleet.rhizomedb",
       "fleet.rpc",
       "fleet.rpc.server",
       "fleet.util.core",
       "fleet.util.logging.api",
+      "fleet.util.logging.slf4j",
       "fleet.util.multiplatform",
-      "fleet.util.os",
       "fleet.fastutil",
+      // endregion
+
+      // region Fleet Language Server Protocol modules allowed for publication - https://youtrack.jetbrains.com/issue/IJI-2644
+      "fleet.lsp.protocol",
+      // endregion
     )
   }
 
@@ -276,7 +280,7 @@ open class MavenArtifactsBuilder(protected val context: BuildContext) {
             dependencies += depArtifact.dependencies
           }
           else {
-            dependencies.add(MavenArtifactDependency(depArtifact.coordinates, true, ArrayList(), scope as DependencyScope?))
+            dependencies.add(MavenArtifactDependency(depArtifact.coordinates, true, ArrayList(), scope))
           }
         }
       }
@@ -284,7 +288,7 @@ open class MavenArtifactsBuilder(protected val context: BuildContext) {
         val library = dependency.library!!
         val typed = library.asTyped(JpsRepositoryLibraryType.INSTANCE)
         if (typed != null) {
-          dependencies.add(createArtifactDependencyByLibrary(typed.properties.data, scope as DependencyScope?))
+          dependencies.add(createArtifactDependencyByLibrary(typed.properties.data, scope))
         }
         else if (!isOptionalDependency(library)) {
           Span.current().addEvent("module depends on non-maven library", Attributes.of(
@@ -310,7 +314,7 @@ open class MavenArtifactsBuilder(protected val context: BuildContext) {
   }
 
   protected open fun shouldSkipModule(moduleName: String, moduleIsDependency: Boolean): Boolean {
-    val moduleShouldBePublished = moduleIsDependency || moduleName in FLEET_MODULES_IN_COMMUNITY || moduleName.startsWith("intellij.")
+    val moduleShouldBePublished = moduleIsDependency || moduleName in FLEET_MODULES_ALLOWED_FOR_PUBLICATION || moduleName.startsWith("intellij.")
     return !moduleShouldBePublished
   }
 
@@ -334,7 +338,7 @@ data class MavenCoordinates(
   val artifactId: String,
   val version: String,
 ) {
-  override fun toString() = "$groupId:$artifactId:$version"
+  override fun toString(): String = "$groupId:$artifactId:$version"
 
   val directoryPath: String
     get() = "${groupId.replace('.', '/')}/$artifactId/$version"
@@ -478,16 +482,17 @@ private suspend fun layoutMavenArtifacts(
         val jar = artifactDir.resolve(artifactData.coordinates.getFileName(packaging = "jar"))
         buildJar(
           targetFile = jar,
-          sources = modulesWithSources.map {
-            val moduleOutput = context.getModuleOutputDir(it)
-            check(Files.exists(moduleOutput)) {
-              "$it module output directory doesn't exist: $moduleOutput"
-            }
-            if (moduleOutput.toString().endsWith(".jar")) {
-              ZipSource(file = moduleOutput, distributionFileEntryProducer = null, filter = createModuleSourcesNamesFilter(commonModuleExcludes))
-            }
-            else {
-              DirSource(dir = moduleOutput, excludes = commonModuleExcludes)
+          sources = modulesWithSources.flatMap {
+            context.getModuleOutputRoots(it).map { moduleOutput ->
+              check(Files.exists(moduleOutput)) {
+                "$it module output directory doesn't exist: $moduleOutput"
+              }
+              if (moduleOutput.toString().endsWith(".jar")) {
+                ZipSource(file = moduleOutput, distributionFileEntryProducer = null, filter = createModuleSourcesNamesFilter(commonModuleExcludes))
+              }
+              else {
+                DirSource(dir = moduleOutput, excludes = commonModuleExcludes)
+              }
             }
           },
         )

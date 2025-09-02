@@ -171,8 +171,8 @@ public abstract class SpellCheckerDictionaryGenerator {
   }
 
   protected void processLeafsNames(final @NotNull PsiElement leafElement, final @NotNull HashSet<String> seenNames) {
-    final Language language = leafElement.getLanguage();
-    SpellCheckingInspection.tokenize(leafElement, language, new TokenConsumer() {
+    Language language = leafElement.getLanguage();
+    SpellCheckingInspection.tokenize(leafElement, new TokenConsumer() {
       @Override
       public void consumeToken(PsiElement element,
                                final String text,

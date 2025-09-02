@@ -7,6 +7,7 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.util.endOffset
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
@@ -19,6 +20,7 @@ import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.utils.canBeIterated
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.types.Variance
@@ -85,7 +87,7 @@ internal class IterateExpressionIntention : KotlinApplicableModCommandAction<KtE
 
         return analyze(element) {
             val expressionType = element.expressionType as? KaClassType ?: return null
-            if (!canBeIterated(expressionType)) return null
+            if (element.isUsedAsExpression || !canBeIterated(expressionType)) return null
             Unit
         }
     }
@@ -106,5 +108,17 @@ internal class IterateExpressionIntention : KotlinApplicableModCommandAction<KtE
         }
         return Presentation.of(KotlinBundle.message("iterate.over.0", typePresentation, context))
             .withPriority(PriorityAction.Priority.LOW)
+    }
+
+    override fun getApplicableRanges(element: KtExpression): List<TextRange> {
+        if (element !is KtCallExpression) {
+            return ApplicabilityRange.self(element)
+        }
+        return ApplicabilityRange.multiple(element) {
+            listOfNotNull(
+                it.calleeExpression,
+                it.valueArgumentList?.rightParenthesis
+            )
+        }
     }
 }

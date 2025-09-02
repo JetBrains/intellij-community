@@ -16,6 +16,10 @@ object DistributedTestModel : Ext(TestRoot) {
     field("launchNumber", int)
     field("agentType", RdAgentType)
     field("productType", RdProductType)
+    field("testIdeProductCode", string)
+    field("testQualifiedClassName", string)
+    field("testMethodNonParameterizedName", string)
+    field("testMethodParametersArrayString", string)
   }
 
   private val RdAgentType = enum {
@@ -36,7 +40,7 @@ object DistributedTestModel : Ext(TestRoot) {
     field("lineNumber", int)
   }
 
-  private val RdTestSessionExceptionCause = structdef {
+  private val RdTestSessionLightException = structdef {
     field("type", string)
     field("message", string.nullable)
     field("stacktrace", immutableList(RdTestSessionStackTraceElement))
@@ -47,7 +51,8 @@ object DistributedTestModel : Ext(TestRoot) {
     field("originalType", string.nullable)
     field("message", string.nullable)
     field("stacktrace", immutableList(RdTestSessionStackTraceElement))
-    field("cause", RdTestSessionExceptionCause.nullable)
+    field("cause", RdTestSessionLightException.nullable)
+    field("suppressedExceptions", immutableList(RdTestSessionLightException).nullable)
   }
 
 
@@ -62,20 +67,17 @@ object DistributedTestModel : Ext(TestRoot) {
   }
 
   private val RdTestSession = classdef {
-    field("agentInfo", RdAgentInfo)
-    field("testClassName", string.nullable)
-    field("testMethodName", string.nullable)
+    field("rdAgentInfo", RdAgentInfo)
+    field("runTestMethod", bool)
     field("traceCategories", immutableList(string))
     field("debugCategories", immutableList(string))
     property("ready", bool.nullable)
     signal("sendException", RdTestSessionException).async
     signal("exitApp", void).async
     signal("showNotification", string)
-    call("closeProject", void, bool).async
     call("forceLeaveAllModals", bool, void).async
-    call("closeProjectIfOpened", void, bool).async
+    call("closeAllOpenedProjects", void, bool).async
     call("runNextAction", RdTestActionParameters, string.nullable).async
-    call("runNextActionGetComponentData", RdTestActionParameters, RdTestComponentData).async
     call("requestFocus", bool, bool).async
     call("isFocused", void, bool).async
     call("visibleFrameNames", void, immutableList(string)).async

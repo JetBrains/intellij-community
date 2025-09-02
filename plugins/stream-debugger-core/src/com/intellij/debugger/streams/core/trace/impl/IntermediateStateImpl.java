@@ -13,7 +13,7 @@ import java.util.Map;
 /**
  * @author Vitaliy.Bibaev
  */
-public class IntermediateStateImpl extends StateBase implements BidirectionalAwareState {
+final class IntermediateStateImpl extends StateBase implements BidirectionalAwareState {
   private final Map<TraceElement, List<TraceElement>> myToPrev;
   private final Map<TraceElement, List<TraceElement>> myToNext;
   private final StreamCall myNextCall;

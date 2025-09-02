@@ -8,8 +8,8 @@ import org.gradle.tooling.BuildController;
 import org.gradle.tooling.UnknownModelException;
 import org.gradle.tooling.UnsupportedVersionException;
 import org.gradle.tooling.model.Model;
-import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.tooling.model.gradle.GradleBuild;
+import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,19 +25,19 @@ public class DefaultBuildController implements BuildController {
   private final @NotNull GradleBuild myMainGradleBuild;
   private final @NotNull Model myMyMainGradleBuildRootProject;
 
-  private final @NotNull BuildEnvironment myBuildEnvironment;
+  private final @NotNull GradleVersion myGradleVersion;
 
   public DefaultBuildController(
     @NotNull BuildController buildController,
     @NotNull GradleBuild mainGradleBuild,
-    @NotNull BuildEnvironment buildEnvironment
+    @NotNull GradleVersion gradleVersion
   ) {
     myDelegate = buildController;
 
     myMainGradleBuild = mainGradleBuild;
     myMyMainGradleBuildRootProject = myMainGradleBuild.getRootProject();
 
-    myBuildEnvironment = buildEnvironment;
+    myGradleVersion = gradleVersion;
   }
 
   private boolean isMainBuild(Model model) {
@@ -129,8 +129,7 @@ public class DefaultBuildController implements BuildController {
    * See <a href="https://github.com/gradle/gradle/issues/19837">Gradle issue 19837</a> for mode details.
    */
   private boolean isParallelModelFetchSupported() {
-    String gradleVersion = myBuildEnvironment.getGradle().getGradleVersion();
-    return GradleVersionUtil.isGradleAtLeast(gradleVersion, "7.4.2");
+    return GradleVersionUtil.isGradleAtLeast(myGradleVersion, "7.4.2");
   }
 
   @Override

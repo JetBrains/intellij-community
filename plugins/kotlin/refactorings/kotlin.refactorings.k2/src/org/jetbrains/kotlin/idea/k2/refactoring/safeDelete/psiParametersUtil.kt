@@ -13,8 +13,10 @@ import com.intellij.psi.PsiMethod
 import com.intellij.refactoring.util.RefactoringDescriptionLocation
 import org.jetbrains.kotlin.idea.searching.inheritors.findHierarchyWithSiblings
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
 
 internal fun getParametersToSearch(element: KtParameter): List<PsiElement> {
@@ -23,7 +25,7 @@ internal fun getParametersToSearch(element: KtParameter): List<PsiElement> {
 }
 
 private fun checkParametersInMethodHierarchy(parameter: KtParameter): Collection<PsiElement>? {
-    val method = parameter.ownerFunction ?: return null
+    val method = parameter.ownerDeclaration ?: return null
     val parametersToDelete = ProgressManager.getInstance()
         .runProcessWithProgressSynchronously(ThrowableComputable<Collection<PsiElement>?, RuntimeException> {
             runReadAction { collectParameterHierarchy( parameter) }
@@ -40,17 +42,34 @@ private fun checkParametersInMethodHierarchy(parameter: KtParameter): Collection
 }
 
 private fun collectParameterHierarchy(parameter: KtParameter): Set<PsiElement> {
-    val function = parameter.ownerFunction as? KtFunction ?: return emptySet()
+    val function = parameter.ownerDeclaration as? KtCallableDeclaration ?: return emptySet()
     val parameterIndex = parameter.parameterIndex()
     val parametersToDelete = HashSet<PsiElement>()
-    val processElement: (PsiElement) -> Unit = {
-        when (it) {
+    val processElement: (PsiElement) -> Unit = { owner ->
+
+        fun rememberContextParameter(owner: KtCallableDeclaration) {
+            owner.modifierList?.contextReceiverList?.contextParameters()?.get(parameterIndex)?.let { param ->
+                parametersToDelete.add(param)
+            }
+        }
+
+        when (owner) {
             is KtFunction -> {
-                parametersToDelete.add(it.valueParameters[parameterIndex])
+                if (parameter.isContextParameter) {
+                    rememberContextParameter(owner)
+                } else {
+                    parametersToDelete.add(owner.valueParameters[parameterIndex])
+                }
+            }
+
+            is KtProperty -> {
+                if (parameter.isContextParameter) {
+                    rememberContextParameter(owner)
+                }
             }
 
             is PsiMethod -> {
-                parametersToDelete.add(it.parameterList.parameters[parameterIndex])
+                parametersToDelete.add(owner.parameterList.parameters[parameterIndex])
             }
         }
     }

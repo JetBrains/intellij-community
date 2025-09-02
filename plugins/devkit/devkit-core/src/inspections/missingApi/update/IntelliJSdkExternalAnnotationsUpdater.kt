@@ -2,18 +2,20 @@
 package org.jetbrains.idea.devkit.inspections.missingApi.update
 
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.AnnotationOrderRootType
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.inspections.missingApi.MISSING_API_INSPECTION_SHORT_NAME
 import org.jetbrains.idea.devkit.inspections.missingApi.resolve.IntelliJSdkExternalAnnotations
@@ -25,29 +27,23 @@ import java.time.Instant
 import java.time.temporal.ChronoUnit
 import java.util.concurrent.ConcurrentHashMap
 
+private val LOG = logger<IntelliJSdkExternalAnnotationsUpdater>()
+
+private val UPDATE_RETRY_TIMEOUT = Duration.of(1, ChronoUnit.HOURS)
+private val PENDING = Instant.MAX
+
 /**
  * Utility class that updates external annotations of IntelliJ SDK.
  */
 @Service
-internal class IntelliJSdkExternalAnnotationsUpdater(private val cs: CoroutineScope) {
-  companion object {
-    private val LOG = Logger.getInstance(IntelliJSdkExternalAnnotationsUpdater::class.java)
-
-    private val UPDATE_RETRY_TIMEOUT = Duration.of(1, ChronoUnit.HOURS)
-    private val PENDING = Instant.MAX
-
-    fun getInstance(): IntelliJSdkExternalAnnotationsUpdater = service()
-  }
-
+internal class IntelliJSdkExternalAnnotationsUpdater(@JvmField internal val coroutineScope: CoroutineScope) {
   private val buildNumberLastFailedUpdateInstant = ConcurrentHashMap<BuildNumber, Instant>()
 
-  fun updateIdeaJdkAnnotationsIfNecessary(project: Project, ideaJdk: Sdk) {
-    cs.launch {
-      val buildNumber = getIdeaBuildNumber(ideaJdk)
-      if (buildNumber != null) {
-        withContext(Dispatchers.EDT) { } // wait for non-modal (Apply button in Settings)
-        updateIdeaJdkAnnotationsIfNecessaryInner(project, ideaJdk, buildNumber)
-      }
+  suspend fun updateIdeaJdkAnnotationsIfNecessary(project: Project, ideaJdk: Sdk) {
+    val buildNumber = getIdeaBuildNumber(ideaJdk)
+    if (buildNumber != null) {
+      withContext(Dispatchers.EDT) { } // wait for non-modal (Apply button in Settings)
+      updateIdeaJdkAnnotationsIfNecessaryInner(project, ideaJdk, buildNumber)
     }
   }
 

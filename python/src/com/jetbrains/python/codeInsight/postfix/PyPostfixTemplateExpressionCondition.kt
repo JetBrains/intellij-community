@@ -124,7 +124,7 @@ interface PyPostfixTemplateExpressionCondition : PostfixTemplateExpressionCondit
     override fun value(element: PyExpression): Boolean {
       val context = TypeEvalContext.codeCompletion(element.project, element.containingFile)
       val type = context.getType(element) ?: return false
-      return type != PyNoneType.INSTANCE
+      return !type.isNoneType
     }
 
     companion object {

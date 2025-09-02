@@ -9,16 +9,17 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.util.Consumer
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.vcs.log.VcsCommitMetadata
+import com.intellij.vcs.log.VcsLogCommitStorageIndex
 import com.intellij.vcs.log.data.DataGetter
+import org.jetbrains.annotations.ApiStatus
 import java.util.*
 import java.util.concurrent.CopyOnWriteArrayList
-
-private typealias HashedCommitId = Int
 
 /**
  * A common commit selection intended to be shared between multiple selection subscribers
  */
-internal class CommitDetailsLoader<D : VcsCommitMetadata> @JvmOverloads constructor(
+@ApiStatus.Internal
+class CommitDetailsLoader<D : VcsCommitMetadata> @JvmOverloads constructor(
   private val commitDetailsGetter: DataGetter<D>,
   parentDisposable: Disposable,
   private val limit: Int? = null,
@@ -35,7 +36,7 @@ internal class CommitDetailsLoader<D : VcsCommitMetadata> @JvmOverloads construc
   }
 
   @RequiresEdt
-  fun loadDetails(commitIds: List<HashedCommitId>) {
+  fun loadDetails(commitIds: List<VcsLogCommitStorageIndex>) {
     lastRequest?.cancel()
     lastRequest = null
     val commitIds = commitIds.subList(0, (limit?.coerceAtMost(commitIds.size) ?: commitIds.size))
@@ -83,7 +84,7 @@ internal class CommitDetailsLoader<D : VcsCommitMetadata> @JvmOverloads construc
     fun onLoadingStopped() {}
     fun onEmptySelection() {}
     fun onSelection() {}
-    fun onDetailsLoaded(commitIds: List<HashedCommitId>, details: List<D>) {}
+    fun onDetailsLoaded(commitIds: List<VcsLogCommitStorageIndex>, details: List<D>) {}
     fun onError(error: Throwable) {}
   }
 

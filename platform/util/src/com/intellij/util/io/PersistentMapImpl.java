@@ -253,11 +253,11 @@ public final class PersistentMapImpl<Key, Value> implements PersistentMapBase<Ke
     return myValueExternalizer;
   }
 
-  public @NotNull KeyDescriptor<Key> getKeyDescriptor(){
+  public @NotNull KeyDescriptor<Key> getKeyDescriptor() {
     return myKeyDescriptor;
   }
 
-  public @NotNull PersistentMapBuilder<Key, Value> builder(){
+  public @NotNull PersistentMapBuilder<Key, Value> builder() {
     //builder is mutable, so return a copy of it:
     return myBuilder.copy();
   }
@@ -409,7 +409,8 @@ public final class PersistentMapImpl<Key, Value> implements PersistentMapBase<Ke
     return file;
   }
 
-  static @NotNull Path getDataFile(@NotNull Path file) { // made public for testing
+  @VisibleForTesting
+  public static @NotNull Path getDataFile(@NotNull Path file) { // made public for testing
     return file.resolveSibling(file.getFileName() + DATA_FILE_EXTENSION);
   }
 
@@ -719,22 +720,22 @@ public final class PersistentMapImpl<Key, Value> implements PersistentMapBase<Ke
   private boolean doContainsMapping(Key key) throws IOException {
     flushAppendCache(key);
 
-    myEnumerator.lockStorageRead();
-    try {
-      if (myDirectlyStoreLongFileOffsetMode) {
-        return ((PersistentBTreeEnumerator<Key>)myEnumerator).getNonNegativeValue(key) != NULL_ADDR;
-      }
-      else {
-        final int id = myEnumerator.tryEnumerate(key);
+    if (myDirectlyStoreLongFileOffsetMode) {
+      return ((PersistentBTreeEnumerator<Key>)myEnumerator).getNonNegativeValue(key) != NULL_ADDR;
+    }
+    else {
+      myEnumerator.lockStorageRead();
+      try {
+        int id = myEnumerator.tryEnumerate(key);
         if (id == DataEnumerator.NULL_ID) {
           return false;
         }
         if (myIntMapping) return true;
         return readValueId(id) != NULL_ADDR;
       }
-    }
-    finally {
-      myEnumerator.unlockStorageRead();
+      finally {
+        myEnumerator.unlockStorageRead();
+      }
     }
   }
 

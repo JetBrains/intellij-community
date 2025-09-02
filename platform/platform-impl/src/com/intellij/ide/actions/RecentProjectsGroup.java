@@ -15,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public final class RecentProjectsGroup extends ActionGroup implements DumbAware, ActionRemoteBehaviorSpecification.Disabled {
+public final class RecentProjectsGroup extends ActionGroup implements DumbAware, ActionRemoteBehaviorSpecification.BackendOnly {
 
   public RecentProjectsGroup() {
     Presentation presentation = getTemplatePresentation();

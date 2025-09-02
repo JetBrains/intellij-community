@@ -1,7 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.test.producer
 
 import com.intellij.execution.RunManager
+import com.intellij.execution.actions.ConfigurationContext
+import com.intellij.execution.junit2.PsiMemberParameterizedLocation
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiDirectory
@@ -272,6 +274,17 @@ class GradleTestRunConfigurationProducerTest : GradleTestRunConfigurationProduce
     } finally {
       gradleRCTemplate?.settings?.scriptParameters = ""
     }
+  }
+
+  @Test
+  fun `test configuration from concrete class with inherited test`() {
+    val projectData = generateAndImportTemplateProject()
+    assertConfigurationFromContext<TestMethodGradleConfigurationProducer>(
+      """:test --tests "TestCase.test"""", {ConfigurationContext.createEmptyContextForLocation(
+      PsiMemberParameterizedLocation(myProject, projectData["project"]["org.example.AbstractTestCase"]["test"].element,
+                                     projectData["project"]["TestCase"].element, "")
+      )}
+    )
   }
 
   @Test

@@ -3,8 +3,8 @@ package com.intellij.usages.impl.rules;
 
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
@@ -90,7 +90,7 @@ public class DirectoryGroupingRule extends SingleParentUsageGroupingRule impleme
     return "UsageGrouping.Directory";
   }
 
-  protected class DirectoryGroup implements UsageGroup, DataProvider {
+  protected class DirectoryGroup implements UsageGroup, UiDataProvider {
     protected final VirtualFile myDir;
     private Icon myIcon;
     private final @NlsSafe String relativePathText;
@@ -188,21 +188,11 @@ public class DirectoryGroupingRule extends SingleParentUsageGroupingRule impleme
     }
 
     @Override
-    public @Nullable Object getData(@NotNull String dataId) {
-      if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
-        return myDir;
-      }
-      if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
-        return (DataProvider)slowId -> getSlowData(slowId);
-      }
-      return null;
-    }
-
-    private @Nullable Object getSlowData(@NotNull String dataId) {
-      if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      sink.set(CommonDataKeys.VIRTUAL_FILE, myDir);
+      sink.lazy(CommonDataKeys.PSI_ELEMENT, () -> {
         return getDirectory();
-      }
-      return null;
+      });
     }
 
     @Override

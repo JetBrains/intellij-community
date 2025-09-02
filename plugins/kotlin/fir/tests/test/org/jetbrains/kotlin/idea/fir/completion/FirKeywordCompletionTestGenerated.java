@@ -112,6 +112,11 @@ public abstract class FirKeywordCompletionTestGenerated extends AbstractFirKeywo
             runTest("../../completion/testData/keywords/AfterTryInAssignment.kt");
         }
 
+        @TestMetadata("AllowValInWhen.kt")
+        public void testAllowValInWhen() throws Exception {
+            runTest("../../completion/testData/keywords/AllowValInWhen.kt");
+        }
+
         @TestMetadata("BeforeClass.kt")
         public void testBeforeClass() throws Exception {
             runTest("../../completion/testData/keywords/BeforeClass.kt");
@@ -150,6 +155,16 @@ public abstract class FirKeywordCompletionTestGenerated extends AbstractFirKeywo
         @TestMetadata("CompanionObjectBeforeObject.kt")
         public void testCompanionObjectBeforeObject() throws Exception {
             runTest("../../completion/testData/keywords/CompanionObjectBeforeObject.kt");
+        }
+
+        @TestMetadata("ContextParameter.kt")
+        public void testContextParameter() throws Exception {
+            runTest("../../completion/testData/keywords/ContextParameter.kt");
+        }
+
+        @TestMetadata("ContextReceiver.kt")
+        public void testContextReceiver() throws Exception {
+            runTest("../../completion/testData/keywords/ContextReceiver.kt");
         }
 
         @TestMetadata("ContinuePrefixMatching.kt")
@@ -425,6 +440,21 @@ public abstract class FirKeywordCompletionTestGenerated extends AbstractFirKeywo
         @TestMetadata("NoFinalInParameterList.kt")
         public void testNoFinalInParameterList() throws Exception {
             runTest("../../completion/testData/keywords/NoFinalInParameterList.kt");
+        }
+
+        @TestMetadata("NoValInBinaryExpression.kt")
+        public void testNoValInBinaryExpression() throws Exception {
+            runTest("../../completion/testData/keywords/NoValInBinaryExpression.kt");
+        }
+
+        @TestMetadata("NoValInParenthesizedExpression.kt")
+        public void testNoValInParenthesizedExpression() throws Exception {
+            runTest("../../completion/testData/keywords/NoValInParenthesizedExpression.kt");
+        }
+
+        @TestMetadata("NoValInUnaryExpression.kt")
+        public void testNoValInUnaryExpression() throws Exception {
+            runTest("../../completion/testData/keywords/NoValInUnaryExpression.kt");
         }
 
         @TestMetadata("NoValVarInFunctionParameters.kt")
@@ -730,6 +760,11 @@ public abstract class FirKeywordCompletionTestGenerated extends AbstractFirKeywo
         @TestMetadata("TopScope3-.kt")
         public void testTopScope3_() throws Exception {
             runTest("../../completion/testData/keywords/TopScope3-.kt");
+        }
+
+        @TestMetadata("UseSiteTargetAll.kt")
+        public void testUseSiteTargetAll() throws Exception {
+            runTest("../../completion/testData/keywords/UseSiteTargetAll.kt");
         }
 
         @TestMetadata("UseSiteTargetForPrimaryConstructorParameter.kt")

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.slicer;
 
 import com.intellij.analysis.AnalysisScope;
@@ -8,6 +8,7 @@ import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.execution.filters.*;
 import com.intellij.java.JavaBundle;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
@@ -101,7 +102,7 @@ public final class DataflowExceptionAnalysisProvider implements ExceptionAnalysi
 
   private @Nullable AnalysisStartingPoint getAnalysis(@NotNull PsiElement anchor,
                                                       @NotNull ExceptionInfo info) {
-    if (anchor instanceof PsiKeyword && anchor.textMatches(PsiKeyword.NEW)) {
+    if (anchor instanceof PsiKeyword && anchor.textMatches(JavaKeywords.NEW)) {
       PsiNewExpression exceptionConstructor = tryCast(anchor.getParent(), PsiNewExpression.class);
       if (exceptionConstructor != null && !exceptionConstructor.isArrayCreation()) {
         PsiThrowStatement throwStatement =

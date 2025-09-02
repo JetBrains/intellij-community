@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
@@ -20,6 +21,7 @@ import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileVisitor
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.*
 import com.intellij.psi.PsiManager
@@ -125,24 +127,64 @@ class ImplicitPackagePrefixCache(private val project: Project) {
 
     private fun analyzeImplicitPackagePrefixes(sourceRoot: VirtualFile): MutableMap<FqName, MutableList<VirtualFile>> {
         val result = mutableMapOf<FqName, MutableList<VirtualFile>>()
-        val ktFiles = sourceRoot.children.filter(VirtualFile::isKotlinFileType)
-        for (ktFile in ktFiles) {
-            result.addFile(ktFile)
-        }
+
+        VfsUtilCore.visitChildrenRecursively(sourceRoot, object : VirtualFileVisitor<Any?>(limit(10)) {
+            override fun visitFileEx(file: VirtualFile): Result {
+                ProgressManager.checkCanceled()
+
+                if (!file.isDirectory) return CONTINUE
+
+                val ktFiles = file.children.filter(VirtualFile::isKotlinFileType)
+
+                if (ktFiles.isEmpty()) return CONTINUE
+
+                val topDirectories =
+                    generateSequence(file.takeIf { it != sourceRoot }) { f ->
+                        f.parent?.takeIf { it != sourceRoot }
+                    }
+                        .map { it.name }
+                        .toList().reversed()
+
+                for (ktFile in ktFiles) {
+                    result.addFile(ktFile, topDirectories)
+                }
+
+                return SKIP_CHILDREN
+            }
+        })
+
         return result
     }
 
-    private fun ImplicitPackageData.addFile(ktFile: VirtualFile) {
+    private fun ImplicitPackageData.addFile(ktFile: VirtualFile, topDirectories: List<String> = emptyList()) {
         synchronized(this) {
             val psiFile = PsiManager.getInstance(project).findFile(ktFile) as? KtFile ?: return
-            addPsiFile(psiFile, ktFile)
+            addPsiFile(psiFile, ktFile, topDirectories)
         }
     }
 
     private fun ImplicitPackageData.addPsiFile(
         psiFile: KtFile,
-        ktFile: VirtualFile
-    ) = getOrPut(psiFile.packageFqName) { mutableListOf() }.add(ktFile)
+        ktFile: VirtualFile,
+        topDirectories: List<String>
+    ): Boolean {
+        val packageFqName = psiFile.packageFqName
+        val key = if (topDirectories.isEmpty()) {
+            packageFqName
+        } else {
+            val pathSegments = packageFqName.pathSegments()
+            val lastSegments = pathSegments.takeLast(topDirectories.size).map { it.asString() }
+
+            if (lastSegments != topDirectories) return false
+
+            pathSegments
+                .dropLast(topDirectories.size)
+                .fold(FqName.ROOT) {
+                    prefix, segment -> prefix.child(segment)
+                }
+        }
+        return getOrPut(key) { mutableListOf() }.add(ktFile)
+    }
 
     private fun ImplicitPackageData.removeFile(file: VirtualFile) {
         synchronized(this) {
@@ -155,10 +197,10 @@ class ImplicitPackagePrefixCache(private val project: Project) {
         }
     }
 
-    private fun ImplicitPackageData.updateFile(file: KtFile) {
+    private fun ImplicitPackageData.updateFile(file: KtFile, topDirectories: List<String>) {
         synchronized(this) {
             removeFile(file.virtualFile)
-            addPsiFile(file, file.virtualFile)
+            addPsiFile(file, file.virtualFile, topDirectories)
         }
     }
 
@@ -197,9 +239,17 @@ class ImplicitPackagePrefixCache(private val project: Project) {
     }
 
     internal fun update(ktFile: KtFile) {
-        val parent = ktFile.virtualFile?.parent ?: return
-        if (ktFile.sourceRoot == parent) {
-            implicitPackageCache[parent]?.updateFile(ktFile)
+        val sourceRoot = ktFile.sourceRoot ?: return
+        var file: VirtualFile? = ktFile.virtualFile ?: return
+        val topDirectories = mutableListOf<String>()
+        while (file != sourceRoot && file != null) {
+            val parent = file.parent
+            if (parent == sourceRoot) {
+                implicitPackageCache[parent]?.updateFile(ktFile, topDirectories.asReversed())
+                break
+            }
+            topDirectories += parent.name
+            file = parent
         }
     }
 }

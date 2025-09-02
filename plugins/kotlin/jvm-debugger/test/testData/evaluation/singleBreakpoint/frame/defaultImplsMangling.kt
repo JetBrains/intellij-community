@@ -19,6 +19,7 @@ fun main() {
 
 // SHOW_KOTLIN_VARIABLES
 // PRINT_FRAME
+// JVM_DEFAULT_MODE: enable
 
 // EXPRESSION: x
 // RESULT: 1: I

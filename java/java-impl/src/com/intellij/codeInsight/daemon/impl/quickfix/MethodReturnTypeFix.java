@@ -116,7 +116,7 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
 
   @Override
   public boolean isAvailable(@NotNull Project project,
-                             @NotNull PsiFile file,
+                             @NotNull PsiFile psiFile,
                              @NotNull PsiElement startElement,
                              @NotNull PsiElement endElement) {
     final PsiMethod method = (PsiMethod)startElement;
@@ -135,7 +135,7 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
 
   @Override
   public void invoke(@NotNull Project project,
-                     @NotNull PsiFile file,
+                     @NotNull PsiFile psiFile,
                      Editor editor,
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
@@ -154,7 +154,7 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
     }
     PsiType[] superTypes = mySuggestSuperTypes ? returnType.getSuperTypes() : PsiType.EMPTY_ARRAY;
     if ((!isNullType && superTypes.length == 0) || editor == null || ApplicationManager.getApplication().isUnitTestMode()) {
-      changeReturnType(project, file, editor, method, returnType);
+      changeReturnType(project, psiFile, editor, method, returnType);
     }
     else {
       Set<PsiType> allSuperTypes = collectSuperTypes(returnType, startElement, new LinkedHashSet<>());
@@ -163,7 +163,7 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
       assert currentType != null;
       returnTypes.removeIf(e -> e.getCanonicalText().equals(currentType.getCanonicalText()));
       if (returnTypes.isEmpty()) return;
-      selectReturnType(project, file, editor, returnTypes, returnType, method);
+      selectReturnType(project, psiFile, editor, returnTypes, returnType, method);
     }
   }
 
@@ -214,7 +214,7 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
   }
 
   private void selectReturnType(@NotNull Project project,
-                                @NotNull PsiFile file,
+                                @NotNull PsiFile psiFile,
                                 @NotNull Editor editor,
                                 @NotNull List<PsiType> returnTypes,
                                 @NotNull PsiType myReturnType,
@@ -231,7 +231,7 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
         PsiType newReturnType = myMethod.getReturnType();
         if (newReturnType == null) return;
         TypeSelectorManagerImpl.typeSelected(newReturnType, myReturnType);
-        changeReturnType(project, file, editor, myMethod, newReturnType);
+        changeReturnType(project, psiFile, editor, myMethod, newReturnType);
       }
     };
     editor.getCaretModel().moveToOffset(typeElement.getTextOffset());
@@ -239,7 +239,7 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
   }
 
   private void changeReturnType(@NotNull Project project,
-                                @NotNull PsiFile file,
+                                @NotNull PsiFile psiFile,
                                 Editor editor,
                                 @NotNull PsiMethod method,
                                 @NotNull PsiType returnType) {
@@ -261,7 +261,7 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
       final ReturnStatementAdder adder = new ReturnStatementAdder(factory, returnType);
 
       for (PsiMethod affectedMethod : affectedMethods) {
-        PsiReturnStatement statement = adder.addReturnForMethod(file, affectedMethod);
+        PsiReturnStatement statement = adder.addReturnForMethod(psiFile, affectedMethod);
         if (statement != null && affectedMethod == method) {
           statementToSelect = statement;
         }
@@ -269,7 +269,7 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
     }
 
     if (statementToSelect != null) {
-      Editor editorForMethod = getEditorForMethod(method, project, editor, file);
+      Editor editorForMethod = getEditorForMethod(method, project, editor, psiFile);
       if (editorForMethod != null) {
         selectInEditor(statementToSelect.getReturnValue(), editorForMethod);
       }
@@ -286,7 +286,7 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
       myTargetType = targetType;
     }
 
-    private PsiReturnStatement addReturnForMethod(PsiFile file, PsiMethod method) {
+    private PsiReturnStatement addReturnForMethod(PsiFile psiFile, PsiMethod method) {
       final PsiModifierList modifiers = method.getModifierList();
       if (modifiers.hasModifierProperty(PsiModifier.ABSTRACT) || method.getBody() == null) {
         return null;
@@ -311,8 +311,8 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
         else {
           returnStatement = visitor.createReturnInLastStatement();
         }
-        if (method.getContainingFile() != file) {
-          UndoUtil.markPsiFileForUndo(file);
+        if (method.getContainingFile() != psiFile) {
+          UndoUtil.markPsiFileForUndo(psiFile);
         }
         return returnStatement;
       }
@@ -324,10 +324,10 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
     }
   }
 
-  private static Editor getEditorForMethod(PsiMethod myMethod, @NotNull Project project, Editor editor, PsiFile file) {
+  private static Editor getEditorForMethod(PsiMethod myMethod, @NotNull Project project, Editor editor, PsiFile psiFile) {
 
     PsiFile containingFile = myMethod.getContainingFile();
-    if (containingFile != file) {
+    if (containingFile != psiFile) {
       OpenFileDescriptor descriptor = new OpenFileDescriptor(project, containingFile.getVirtualFile());
       return FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
     }
@@ -476,7 +476,7 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
     PsiType type = myReturnTypePointer.getType();
     if (type == null) {
       return IntentionPreviewInfo.EMPTY;
@@ -484,12 +484,12 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
     PsiMethod method = (PsiMethod)getStartElement();
     type = correctType(method, type);
     PsiFile containingFile = method.getContainingFile();
-    if (containingFile == file.getOriginalFile()) {
-      PsiMethod methodCopy = PsiTreeUtil.findSameElementInCopy(method, file);
+    if (containingFile == psiFile.getOriginalFile()) {
+      PsiMethod methodCopy = PsiTreeUtil.findSameElementInCopy(method, psiFile);
       updateMethodType(methodCopy, type);
       if (!PsiTypes.voidType().equals(type)) {
         ReturnStatementAdder adder = new ReturnStatementAdder(JavaPsiFacade.getElementFactory(project), type);
-        adder.addReturnForMethod(file, methodCopy);
+        adder.addReturnForMethod(psiFile, methodCopy);
       }
       return IntentionPreviewInfo.DIFF;
     }

@@ -30,7 +30,7 @@ public abstract class CreateClassFromUsageBaseFix extends BaseIntentionAction {
   }
 
   @Override
-  public abstract @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file);
+  public abstract @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile);
 
   protected abstract @IntentionName String getText(String varName);
 
@@ -123,7 +123,7 @@ public abstract class CreateClassFromUsageBaseFix extends BaseIntentionAction {
   }
 
   @Override
-  public boolean isAvailable(final @NotNull Project project, final Editor editor, final PsiFile file) {
+  public boolean isAvailable(final @NotNull Project project, final Editor editor, final PsiFile psiFile) {
     final PsiJavaCodeReferenceElement element = getRefElement();
     if (element == null ||
         (!element.getManager().isInProject(element) && !ScratchUtil.isScratch(PsiUtilCore.getVirtualFile(element)))) {

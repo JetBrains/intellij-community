@@ -2,7 +2,7 @@
   <id>com.intellij.stats.completion</id>
   <name>Completion Stats Collector</name>
   <vendor>JetBrains</vendor>
-  <category>Other Tools</category>
+  <category>Platform Development</category>
 
   <description><![CDATA[
       <p>The plugin collects anonymous statistics about code completion usage.

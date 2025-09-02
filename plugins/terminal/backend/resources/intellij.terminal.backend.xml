@@ -1,6 +1,6 @@
 <idea-plugin package="com.intellij.terminal.backend">
   <dependencies>
-    <plugin id="com.intellij.platform.experimental.backend"/>
+    <module name="intellij.platform.backend"/>
     <module name="intellij.platform.kernel.backend"/>
   </dependencies>
 
@@ -9,5 +9,9 @@
 
     <projectService serviceInterface="com.intellij.terminal.backend.TerminalPortForwardingManager"
                     serviceImplementation="com.intellij.terminal.backend.TerminalNoPortForwardingManager"/>
+    <applicationService serviceImplementation="com.intellij.terminal.backend.rpc.TerminalInputChannelsManager"
+                        client="remote"/>
+    <applicationService serviceInterface="com.intellij.terminal.backend.TerminalActivityTracker"
+                        serviceImplementation="com.intellij.terminal.backend.TerminalNoOpActivityTracker"/>
   </extensions>
 </idea-plugin>

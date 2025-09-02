@@ -9,6 +9,7 @@ import com.intellij.internal.statistic.eventLog.connection.request.StatsHttpRequ
 import com.intellij.internal.statistic.eventLog.connection.request.StatsHttpResponse;
 import com.intellij.internal.statistic.eventLog.connection.request.StatsRequestBuilder;
 import com.intellij.internal.statistic.eventLog.filters.LogEventFilter;
+import com.jetbrains.fus.reporting.model.http.StatsConnectionSettings;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static com.intellij.internal.statistic.config.StatisticsStringUtil.isEmpty;
 
@@ -29,7 +31,7 @@ import static com.intellij.internal.statistic.config.StatisticsStringUtil.isEmpt
 public class EventLogStatisticsService implements StatisticsService {
 
   private final EventLogSendConfig myConfiguration;
-  private final EventLogSettingsService mySettingsService;
+  private final EventLogSettingsClient mySettingsClient;
 
   private final EventLogSendListener mySendListener;
 
@@ -37,30 +39,30 @@ public class EventLogStatisticsService implements StatisticsService {
                                    @NotNull EventLogApplicationInfo application,
                                    @Nullable EventLogSendListener listener) {
     myConfiguration = config;
-    mySettingsService = new EventLogUploadSettingsService(config.getRecorderId(), application);
+    mySettingsClient = new EventLogUploadSettingsClient(config.getRecorderId(), application, TimeUnit.MINUTES.toMillis(10));
     mySendListener = listener;
   }
 
   @TestOnly
   public EventLogStatisticsService(@NotNull EventLogSendConfig config,
                                    @Nullable EventLogSendListener listener,
-                                   @Nullable EventLogUploadSettingsService settingsService) {
+                                   @Nullable EventLogSettingsClient settingsClient) {
     myConfiguration = config;
-    mySettingsService = settingsService;
+    mySettingsClient = settingsClient;
     mySendListener = listener;
   }
 
   @Override
   public StatisticsResult send() {
-    return send(myConfiguration, mySettingsService, new EventLogCounterResultDecorator(mySendListener));
+    return send(myConfiguration, mySettingsClient, new EventLogCounterResultDecorator(mySendListener));
   }
 
   public StatisticsResult send(@NotNull EventLogResultDecorator decorator) {
-    return send(myConfiguration, mySettingsService, decorator);
+    return send(myConfiguration, mySettingsClient, decorator);
   }
 
   public static StatisticsResult send(@NotNull EventLogSendConfig config,
-                                      @NotNull EventLogSettingsService settings,
+                                      @NotNull EventLogSettingsClient settings,
                                       @NotNull EventLogResultDecorator decorator) {
     final EventLogApplicationInfo info = settings.getApplicationInfo();
     final DataCollectorDebugLogger logger = info.getLogger();
@@ -75,7 +77,7 @@ public class EventLogStatisticsService implements StatisticsService {
       return new StatisticsResult(ResultCode.NOTHING_TO_SEND, "No files to send");
     }
 
-    if (!settings.isSettingsReachable()) {
+    if (!settings.isConfigurationReachable()) {
       return new StatisticsResult(StatisticsResult.ResultCode.ERROR_IN_CONFIG, "ERROR: settings server is unreachable");
     }
 
@@ -84,7 +86,7 @@ public class EventLogStatisticsService implements StatisticsService {
       return new StatisticsResult(StatisticsResult.ResultCode.NOT_PERMITTED_SERVER, "NOT_PERMITTED");
     }
 
-    final String serviceUrl = settings.getServiceUrl();
+    final String serviceUrl = settings.provideServiceUrl();
     if (serviceUrl == null) {
       return new StatisticsResult(StatisticsResult.ResultCode.ERROR_IN_CONFIG, "ERROR: unknown Statistics Service URL.");
     }
@@ -92,18 +94,18 @@ public class EventLogStatisticsService implements StatisticsService {
     final boolean isInternal = info.isInternal();
     final String productCode = info.getProductCode();
     EventLogBuildType defaultBuildType = getDefaultBuildType(info.isEAP());
-    LogEventFilter baseFilter = settings.getBaseEventFilter();
+    LogEventFilter baseFilter = settings.provideBaseEventFilter(info.getBaselineVersion());
 
     MachineId machineId = getActualOrDisabledMachineId(config.getMachineId(), settings);
     try {
-      EventLogConnectionSettings connectionSettings = info.getConnectionSettings();
+      StatsConnectionSettings connectionSettings = info.getConnectionSettings();
 
       decorator.onLogsLoaded(logs.size());
       final List<File> toRemove = new ArrayList<>(logs.size());
       for (EventLogFile logFile : logs) {
         File file = logFile.getFile();
         EventLogBuildType type = logFile.getType(defaultBuildType);
-        LogEventFilter filter = settings.getEventFilter(baseFilter, type);
+        LogEventFilter filter = settings.provideEventFilter(baseFilter, type);
         String deviceId = config.getDeviceId();
         LogEventRecordRequest recordRequest =
           LogEventRecordRequest.Companion.create(file, config.getRecorderId(), productCode, deviceId, filter, isInternal, logger,
@@ -111,7 +113,7 @@ public class EventLogStatisticsService implements StatisticsService {
         ValidationErrorInfo error = validate(recordRequest, file);
         if (error != null) {
           if (logger.isTraceEnabled()) {
-            logger.trace(file.getName() + "-> " + error.getMessage());
+            logger.trace("Statistics. " + file.getName() + "-> " + error.getMessage());
           }
           decorator.onFailed(recordRequest, error.getCode(), null);
           toRemove.add(file);
@@ -119,6 +121,7 @@ public class EventLogStatisticsService implements StatisticsService {
         }
 
         try {
+          logger.info("Statistics. Starting sending " + file.getName() + " to " + serviceUrl);
           StatsHttpRequests.post(serviceUrl, connectionSettings).
             withBody(LogEventSerializer.INSTANCE.toString(recordRequest), "application/json", StandardCharsets.UTF_8).
             succeed((r, code) -> {
@@ -134,7 +137,7 @@ public class EventLogStatisticsService implements StatisticsService {
         }
         catch (Exception e) {
           if (logger.isTraceEnabled()) {
-            logger.trace(file.getName() + " -> " + e.getMessage());
+            logger.trace("Statistics. " + file.getName() + " -> " + e.getMessage());
           }
           //noinspection InstanceofCatchParameter
           int errorCode = e instanceof StatsRequestBuilder.InvalidHttpRequest ? ((StatsRequestBuilder.InvalidHttpRequest)e).getCode() : 50;
@@ -148,15 +151,15 @@ public class EventLogStatisticsService implements StatisticsService {
     catch (Exception e) {
       final String message = e.getMessage();
       logger.info(message != null ? message : "", e);
-      throw new StatServiceException("Error during data sending.", e);
+      throw new StatServiceException("Statistics. Error during data sending.", e);
     }
   }
 
-  private static MachineId getActualOrDisabledMachineId(@NotNull MachineId machineId, @NotNull EventLogSettingsService settings) {
+  private static MachineId getActualOrDisabledMachineId(@NotNull MachineId machineId, @NotNull EventLogSettingsClient settings) {
     if (machineId == MachineId.DISABLED) {
       return MachineId.DISABLED;
     }
-    Map<String, String> options = settings.getOptions();
+    Map<String, String> options = settings.provideOptions();
     String machineIdSaltOption = options.get(EventLogOptions.MACHINE_ID_SALT);
     if (EventLogOptions.MACHINE_ID_DISABLED.equals(machineIdSaltOption)) {
       return MachineId.DISABLED;

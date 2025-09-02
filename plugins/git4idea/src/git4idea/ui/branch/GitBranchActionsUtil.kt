@@ -5,7 +5,6 @@ import com.intellij.dvcs.branch.GroupingKey
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsNotifier
@@ -25,12 +24,8 @@ import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.update.GitUpdateExecutionProcess
 import kotlinx.coroutines.launch
-import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
-
-@Language("devkit-action-id")
-const val GIT_SINGLE_REF_ACTION_GROUP = "Git.Branch"
 
 @JvmOverloads
 internal fun createOrCheckoutNewBranch(project: Project,
@@ -39,7 +34,7 @@ internal fun createOrCheckoutNewBranch(project: Project,
                                        @Nls(capitalization = Nls.Capitalization.Title)
                                        title: String = GitBundle.message("branches.create.new.branch.dialog.title"),
                                        initialName: String? = null) {
-  val options = GitNewBranchDialog(project, repositories, title, initialName, true, true, false, true).showAndGetOptions() ?: return
+  val options = GitNewBranchDialog(project, repositories, title, initialName, showResetOption = true, localConflictsAllowed = true).showAndGetOptions() ?: return
   GitBranchCheckoutOperation(project, options.repositories).perform(startPoint, options)
 }
 
@@ -115,11 +110,13 @@ internal abstract class BranchGroupingAction(private val key: GroupingKey,
     return ActionUpdateThread.EDT
   }
 
-  override fun isSelected(e: AnActionEvent) =
-    e.project?.service<GitBranchManager>()?.isGroupingEnabled(key) ?: false
+  override fun isSelected(e: AnActionEvent): Boolean {
+    val project = e.project ?: return false
+    return GitVcsSettings.getInstance(project).branchSettings.isGroupingEnabled(key)
+  }
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
     val project = e.project ?: return
-    project.service<GitBranchManager>().setGrouping(key, state)
+    GitVcsSettings.getInstance(project).setBranchGroupingSettings(key, state)
   }
 }

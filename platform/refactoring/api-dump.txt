@@ -79,7 +79,7 @@ a:com.intellij.find.FindResult
 c:com.intellij.find.findUsages.PsiElement2UsageTargetAdapter
 - com.intellij.navigation.ItemPresentation
 - com.intellij.navigation.PsiElementNavigationItem
-- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.UiCompatibleDataProvider
 - com.intellij.usages.ConfigurableUsageTarget
 - com.intellij.usages.PsiElementUsageTarget
 - pf:myOptions:com.intellij.find.findUsages.FindUsagesOptions
@@ -93,7 +93,6 @@ c:com.intellij.find.findUsages.PsiElement2UsageTargetAdapter
 - s:convertToPsiElements(com.intellij.find.findUsages.PsiElement2UsageTargetAdapter[]):com.intellij.psi.PsiElement[]
 - findUsages():V
 - findUsagesInEditor(com.intellij.openapi.fileEditor.FileEditor):V
-- getData(java.lang.String):java.lang.Object
 - getElement():com.intellij.psi.PsiElement
 - getFiles():com.intellij.openapi.vfs.VirtualFile[]
 - getIcon(Z):javax.swing.Icon
@@ -110,6 +109,7 @@ c:com.intellij.find.findUsages.PsiElement2UsageTargetAdapter
 - isValid():Z
 - navigate(Z):V
 - showSettings():V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 - update():V
 f:com.intellij.ide.actions.FqnUtil
 - <init>():V

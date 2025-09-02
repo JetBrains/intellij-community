@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi.impl;
 
 import com.intellij.pom.java.LanguageLevel;
@@ -36,7 +36,7 @@ public class JavaElementFactoryTest extends LightJavaCodeInsightFixtureTestCase 
   }
 
   public void testArrayClassLanguageLevel() {
-    for (LanguageLevel level : LanguageLevel.values()) {
+    for (LanguageLevel level : LanguageLevel.getEntries()) {
       assertEquals(level, PsiUtil.getLanguageLevel(myFactory.getArrayClass(level)));
     }
   }

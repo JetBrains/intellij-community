@@ -14,14 +14,7 @@ final class ImmutableAttribute extends Attribute {
   @SuppressWarnings("MethodDoesntCallSuperMethod")
   @Override
   public Attribute clone() {
-    Attribute attribute = new Attribute();
-    attribute.name = getName();
-    attribute.namespace = getNamespace();
-    attribute.type = type;
-    attribute.value = value;
-
-    attribute.parent = null;
-    return attribute;
+    return new Attribute(true, getName(), value, getNamespace(), type);
   }
 
   @Override

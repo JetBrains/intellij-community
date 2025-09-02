@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.macros
 
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.vfs.JarFileSystem
@@ -30,17 +29,17 @@ internal class KotlinBundledRefresher : ProjectActivity {
         }
     }
 
-    override suspend fun execute(project: Project): Unit = blockingContext {
-        val propertiesComponent = PropertiesComponent.getInstance()
-        val installedKotlinVersion = propertiesComponent.getValue(INSTALLED_KOTLIN_VERSION)
+  override suspend fun execute(project: Project): Unit { // Force refresh jar handlers
+      val propertiesComponent = PropertiesComponent.getInstance()
+      val installedKotlinVersion = propertiesComponent.getValue(INSTALLED_KOTLIN_VERSION)
 
-        if (KotlinIdePlugin.version != installedKotlinVersion) {
-            // Force refresh jar handlers
-            requestKotlinDistRefresh(KotlinPluginLayout.kotlinc.toPath())
+      if (KotlinIdePlugin.version != installedKotlinVersion) {
+          // Force refresh jar handlers
+          requestKotlinDistRefresh(KotlinPluginLayout.kotlinc.toPath())
 
-            propertiesComponent.setValue(INSTALLED_KOTLIN_VERSION, KotlinIdePlugin.version)
-        }
-    }
+          propertiesComponent.setValue(INSTALLED_KOTLIN_VERSION, KotlinIdePlugin.version)
+      }
+  }
 
     companion object {
         private const val INSTALLED_KOTLIN_VERSION = "installed.kotlin.plugin.version"

@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
+import com.intellij.codeInsight.TypeNullability;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.CachedValue;
@@ -78,6 +79,11 @@ public class PsiDisjunctionType extends PsiType.Stub {
       if (!type.isValid()) return false;
     }
     return true;
+  }
+
+  @Override
+  public @NotNull TypeNullability getNullability() {
+    return TypeNullability.NOT_NULL_MANDATED;
   }
 
   @Override

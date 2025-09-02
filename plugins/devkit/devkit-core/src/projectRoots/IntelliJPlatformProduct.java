@@ -26,17 +26,13 @@ public enum IntelliJPlatformProduct {
   RIDER("RD", "Rider", PlatformUtils.RIDER_PREFIX, "com.jetbrains.intellij.rider:riderRD", "rider:JetBrains.Rider"),
   GOIDE("GO", "GoLand", PlatformUtils.GOIDE_PREFIX, "com.jetbrains.intellij.goland:goland", "go:goland"),
   ANDROID_STUDIO("AI", "Android Studio", "AndroidStudio", null, "com.google.android.studio:android-studio"),
-  /**
-   * @deprecated Code With Me Guest is an old name for JetBrains Client
-   */
-  @Deprecated(forRemoval = true)
-  CWM_GUEST("CWMG", "Code With Me Guest", PlatformUtils.CWM_GUEST_PREFIX, null, null),
   JETBRAINS_CLIENT("JBC", "JetBrains Client", PlatformUtils.JETBRAINS_CLIENT_PREFIX, null, null),
   GATEWAY("GW", "Gateway", PlatformUtils.GATEWAY_PREFIX, "com.jetbrains.intellij.gateway:gateway", "idea/gateway:JetBrainsGateway"),
   FLEET_BACKEND("FLIJ", "Fleet Backend", PlatformUtils.FLEET_PREFIX, "com.jetbrains.intellij.fleetBackend:fleetBackend", null),
   AQUA("QA", "Aqua", PlatformUtils.AQUA_PREFIX, null, "aqua:aqua"),
   RUSTROVER("RR", "RustRover", PlatformUtils.RUSTROVER_PREFIX, "com.jetbrains.intellij.rustrover:RustRover", "rustrover:RustRover"),
-  WRITERSIDE("WRS", "Writerside", PlatformUtils.WRITERSIDE_PREFIX, "com.jetbrains.intellij.idea:writerside", "writerside:writerside");
+  WRITERSIDE("WRS", "Writerside", PlatformUtils.WRITERSIDE_PREFIX, "com.jetbrains.intellij.idea:writerside", "writerside:writerside"),
+  GIT_CLIENT("GIG", "GitClient", PlatformUtils.GITCLIENT_PREFIX, null, null);
 
   private final String myProductCode;
   private final String myName;

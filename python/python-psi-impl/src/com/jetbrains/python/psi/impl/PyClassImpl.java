@@ -47,6 +47,7 @@ import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.pyi.PyiUtil;
 import com.jetbrains.python.toolbox.Maybe;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -257,6 +258,22 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
       return value instanceof PyStringLiteralExpression
              ? Collections.singletonList(((PyStringLiteralExpression)value).getStringValue())
              : PyUtilCore.strListValue(value);
+    }
+
+    return null;
+  }
+
+  @Override
+  public @Nullable List<@NotNull String> getOwnMatchArgs() {
+    final PyClassStub stub = getStub();
+    if (stub != null) {
+      return stub.getMatchArgs();
+    }
+
+    final PyTargetExpression matchArgs = ContainerUtil.find(getClassAttributes(), target -> PyNames.MATCH_ARGS.equals(target.getName()));
+    if (matchArgs != null) {
+      final PyExpression value = matchArgs.findAssignedValue();
+      return PyUtilCore.strListValue(value);
     }
 
     return null;
@@ -1752,6 +1769,18 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   @Override
   public @Nullable PyDecoratorList getDecoratorList() {
     return getStubOrPsiChild(PyStubElementTypes.DECORATOR_LIST);
+  }
+
+  @ApiStatus.Experimental
+  public static boolean canHaveAbstractMethods(@NotNull PyClass pyClass, @NotNull TypeEvalContext context) {
+    PyClassLikeType metaClassType = pyClass.getMetaClassType(true, context);
+    if (metaClassType != null && PyNames.ABC_META.equals(metaClassType.getClassQName())) {
+      return true;
+    }
+    return pyClass.getAncestorTypes(context).stream()
+      .filter(Objects::nonNull)
+      .map(PyClassLikeType::getClassQName)
+      .anyMatch(qName -> PyTypingTypeProvider.PROTOCOL.equals(qName) || PyTypingTypeProvider.PROTOCOL_EXT.equals(qName));
   }
 
   private @NotNull TypeEvalContext notNullizeContext(@Nullable TypeEvalContext context) {

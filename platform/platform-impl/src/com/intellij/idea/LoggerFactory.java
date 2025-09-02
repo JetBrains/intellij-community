@@ -3,10 +3,12 @@ package com.intellij.idea;
 
 import com.intellij.diagnostic.DialogAppender;
 import com.intellij.diagnostic.JsonLogHandler;
+import com.intellij.diagnostic.logs.LogLevelConfigurationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.JulLogger;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.util.logging.Level;
@@ -38,6 +40,31 @@ public final class LoggerFactory implements Logger.Factory {
     var dialogAppender = new DialogAppender();
     dialogAppender.setLevel(Level.SEVERE);
     rootLogger.addHandler(dialogAppender);
+
+    configureLoggersFromSystemProperties();
+  }
+
+  private static void configureLoggersFromSystemProperties() {
+    setLevelsForCategories(System.getProperty(LogLevelConfigurationManager.LOG_DEBUG_CATEGORIES_SYSTEM_PROPERTY), Level.FINE);
+    setLevelsForCategories(System.getProperty(LogLevelConfigurationManager.LOG_TRACE_CATEGORIES_SYSTEM_PROPERTY), Level.FINER);
+    setLevelsForCategories(System.getProperty(LogLevelConfigurationManager.LOG_ALL_CATEGORIES_SYSTEM_PROPERTY), Level.ALL);
+  }
+
+  private static void setLevelsForCategories(@Nullable String categories, Level level) {
+    if (categories == null) {
+      return;
+    }
+    var lastSeparator = -1;
+    for (int i = 0; i <= categories.length(); i++) {
+      if (i == categories.length() || categories.charAt(i) == ',' || categories.charAt(i) == '#') {
+        if (lastSeparator + 1 < i) {
+          var category = categories.substring(lastSeparator + 1, i);
+          java.util.logging.Logger.getLogger(category).setLevel(level);
+          java.util.logging.Logger.getLogger('#' + category).setLevel(level);
+        }
+        lastSeparator = i;
+      }
+    }
   }
 
   @Override

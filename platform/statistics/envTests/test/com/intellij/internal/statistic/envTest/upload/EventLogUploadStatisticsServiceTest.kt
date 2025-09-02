@@ -9,7 +9,6 @@ import com.intellij.internal.statistic.eventLog.connection.EventLogResultDecorat
 import com.intellij.internal.statistic.eventLog.connection.EventLogStatisticsService
 import com.intellij.internal.statistic.eventLog.connection.StatisticsResult
 import com.intellij.internal.statistic.eventLog.connection.StatisticsResult.ResultCode
-import junit.framework.TestCase
 import java.io.File
 import java.nio.file.Paths
 import kotlin.io.path.readText
@@ -20,17 +19,17 @@ internal class EventLogUploadStatisticsServiceTest : StatisticsServiceBaseTest()
     val machineId = MachineId("test.machine.id", 0)
     val requests = doTest(listOf(createTempFile("testLogFile.log", logText)), machineId = machineId)
 
-    TestCase.assertEquals(1, requests.size)
+    assertEquals(1, requests.size)
     val logEventRecordRequest = requests.first()
-    TestCase.assertEquals(RECORDER_ID, logEventRecordRequest.recorder)
-    TestCase.assertEquals(PRODUCT_CODE, logEventRecordRequest.product)
-    TestCase.assertEquals(1, logEventRecordRequest.records.size)
+    assertEquals(RECORDER_ID, logEventRecordRequest.recorder)
+    assertEquals(PRODUCT_CODE, logEventRecordRequest.product)
+    assertEquals(1, logEventRecordRequest.records.size)
 
     val events = logEventRecordRequest.records.first().events
-    TestCase.assertEquals(1, events.size)
+    assertEquals(1, events.size)
     val expected = SerializationHelper.deserializeLogEvent(logText)
     expected.event.data["system_machine_id"] = machineId.id
-    TestCase.assertEquals(expected, events.first())
+    assertEquals(expected, events.first())
   }
 
   fun testSendMultipleLogFiles() {
@@ -39,21 +38,21 @@ internal class EventLogUploadStatisticsServiceTest : StatisticsServiceBaseTest()
       newLogFile("testLogFile2.log", "log2.txt")
     )
     val requests = doTest(logFiles)
-    TestCase.assertEquals(logFiles.size, requests.size)
+    assertEquals(logFiles.size, requests.size)
   }
 
   fun testSendIfSettingsUnreachable() {
     val logFile = newLogFile("testLogFile.log", "log1.txt")
     val service = newSendService(container, listOf(logFile), settingsResponseFile = "non-existent.php")
     doTestFailed(EventLogConfigBuilder(container, tmpLocalRoot), service, ResultCode.ERROR_IN_CONFIG)
-    TestCase.assertTrue(logFile.exists())
+    assertTrue(logFile.exists())
   }
 
   fun testNoSendUrlSpecified() {
     val config = EventLogConfigBuilder(container, tmpLocalRoot).withSendUrlPath(null)
     val logFile = newLogFile("testLogFile.log", "log1.txt")
     doTestFailed(config, listOf(logFile), ResultCode.ERROR_IN_CONFIG)
-    TestCase.assertTrue(logFile.exists())
+    assertTrue(logFile.exists())
   }
 
   fun testSendIfServerUnreachable() {
@@ -90,14 +89,14 @@ internal class EventLogUploadStatisticsServiceTest : StatisticsServiceBaseTest()
     val config = EventLogConfigBuilder(container, tmpLocalRoot).withToBucket(0)
     val logFile = newLogFile("testLogFile.log", "log1.txt")
     doTestFailed(config, listOf(logFile), ResultCode.SENT_WITH_ERRORS)
-    TestCase.assertFalse(logFile.exists())
+    assertFalse(logFile.exists())
   }
 
   fun testFailedSendWithNoPermitted() {
     val config = EventLogConfigBuilder(container, tmpLocalRoot).withProductVersion("2020.2")
     val logFile = newLogFile("testLogFile.log", "log1.txt")
     doTestFailed(config, listOf(logFile), ResultCode.NOT_PERMITTED_SERVER)
-    TestCase.assertFalse(logFile.exists())
+    assertFalse(logFile.exists())
   }
 
   fun testSendIfMetadataUnreachable() {
@@ -110,7 +109,7 @@ internal class EventLogUploadStatisticsServiceTest : StatisticsServiceBaseTest()
     val logFile = newLogFile("testLogFile.log", "log1.txt")
     val service = newSendService(container, listOf(logFile), sendEnabled = false)
     doTestFailed(EventLogConfigBuilder(container, tmpLocalRoot), service, ResultCode.NOTHING_TO_SEND)
-    TestCase.assertFalse(logFile.exists())
+    assertFalse(logFile.exists())
   }
 
 
@@ -120,15 +119,15 @@ internal class EventLogUploadStatisticsServiceTest : StatisticsServiceBaseTest()
     val machineId = MachineId("test.machine.id", 42)
     val requests = doTest(listOf(createTempFile("testLogFile.log", logText)), config = config, machineId = machineId)
 
-    TestCase.assertEquals(1, requests.size)
+    assertEquals(1, requests.size)
     val logEventRecordRequest = requests.first()
-    TestCase.assertEquals(1, logEventRecordRequest.records.size)
+    assertEquals(1, logEventRecordRequest.records.size)
 
     val events = logEventRecordRequest.records.first().events
-    TestCase.assertEquals(1, events.size)
+    assertEquals(1, events.size)
     val expected = SerializationHelper.deserializeLogEvent(logText)
     expected.event.data["system_machine_id"] = EventLogOptions.MACHINE_ID_DISABLED
-    TestCase.assertEquals(expected, events.first())
+    assertEquals(expected, events.first())
   }
 
   fun testSendUnknownMachineId() {
@@ -136,15 +135,15 @@ internal class EventLogUploadStatisticsServiceTest : StatisticsServiceBaseTest()
     val machineId = MachineId.UNKNOWN
     val requests = doTest(listOf(createTempFile("testLogFile.log", logText)), machineId = machineId)
 
-    TestCase.assertEquals(1, requests.size)
+    assertEquals(1, requests.size)
     val logEventRecordRequest = requests.first()
-    TestCase.assertEquals(1, logEventRecordRequest.records.size)
+    assertEquals(1, logEventRecordRequest.records.size)
 
     val events = logEventRecordRequest.records.first().events
-    TestCase.assertEquals(1, events.size)
+    assertEquals(1, events.size)
     val expected = SerializationHelper.deserializeLogEvent(logText)
     expected.event.data["system_machine_id"] = machineId.id
-    TestCase.assertEquals(expected, events.first())
+    assertEquals(expected, events.first())
   }
 
   fun testSendDisabledMachineId() {
@@ -152,15 +151,15 @@ internal class EventLogUploadStatisticsServiceTest : StatisticsServiceBaseTest()
     val machineId = MachineId.DISABLED
     val requests = doTest(listOf(createTempFile("testLogFile.log", logText)), machineId = machineId)
 
-    TestCase.assertEquals(1, requests.size)
+    assertEquals(1, requests.size)
     val logEventRecordRequest = requests.first()
-    TestCase.assertEquals(1, logEventRecordRequest.records.size)
+    assertEquals(1, logEventRecordRequest.records.size)
 
     val events = logEventRecordRequest.records.first().events
-    TestCase.assertEquals(1, events.size)
+    assertEquals(1, events.size)
     val expected = SerializationHelper.deserializeLogEvent(logText)
     expected.event.data["system_machine_id"] = machineId.id
-    TestCase.assertEquals(expected, events.first())
+    assertEquals(expected, events.first())
   }
 
   fun testSendMachineIdWithNotDefaultRevision() {
@@ -168,16 +167,16 @@ internal class EventLogUploadStatisticsServiceTest : StatisticsServiceBaseTest()
     val machineId = MachineId("test.machine.id", 42)
     val requests = doTest(listOf(createTempFile("testLogFile.log", logText)), machineId = machineId)
 
-    TestCase.assertEquals(1, requests.size)
+    assertEquals(1, requests.size)
     val logEventRecordRequest = requests.first()
-    TestCase.assertEquals(1, logEventRecordRequest.records.size)
+    assertEquals(1, logEventRecordRequest.records.size)
 
     val events = logEventRecordRequest.records.first().events
-    TestCase.assertEquals(1, events.size)
+    assertEquals(1, events.size)
     val expected = SerializationHelper.deserializeLogEvent(logText)
     expected.event.data["system_machine_id"] = machineId.id
     expected.event.data["system_id_revision"] = machineId.revision.toLong()
-    TestCase.assertEquals(expected, events.first())
+    assertEquals(expected, events.first())
   }
 
   private fun newLogFile(targetName: String, sourceName: String): File {
@@ -186,7 +185,7 @@ internal class EventLogUploadStatisticsServiceTest : StatisticsServiceBaseTest()
 
   private fun doTestSendWithError(config: EventLogConfigBuilder, logFile: File, fileExists: Boolean = false) {
     doTestFailed(config, listOf(logFile), ResultCode.SENT_WITH_ERRORS)
-    TestCase.assertEquals(fileExists, logFile.exists())
+    assertEquals(fileExists, logFile.exists())
   }
 
   private fun doTestFailed(config: EventLogConfigBuilder, logFile: List<File>, expected: ResultCode) {
@@ -197,8 +196,8 @@ internal class EventLogUploadStatisticsServiceTest : StatisticsServiceBaseTest()
     config.create()
     val resultHolder = ResultHolder()
     val result = service.send(resultHolder)
-    TestCase.assertEquals(result.description, expected, result.code)
-    TestCase.assertEquals(0, resultHolder.getSucceed())
+    assertEquals(result.description, expected, result.code)
+    assertEquals(0, resultHolder.getSucceed())
   }
 
   private fun doTest(logFiles: List<File>,
@@ -209,15 +208,15 @@ internal class EventLogUploadStatisticsServiceTest : StatisticsServiceBaseTest()
     val resultHolder = ResultHolder()
 
     val result = service.send(resultHolder)
-    TestCase.assertEquals(result.description, ResultCode.SEND, result.code)
+    assertEquals(result.description, ResultCode.SEND, result.code)
     for (logFile in logFiles) {
-      TestCase.assertFalse(logFile.exists())
-      TestCase.assertTrue(resultHolder.successfullySentFiles.contains(logFile.absolutePath))
+      assertFalse(logFile.exists())
+      assertTrue(resultHolder.successfullySentFiles.contains(logFile.absolutePath))
     }
 
     return resultHolder.successContents.map {
       val jsonObject = ObjectMapper().readTree(it)
-      TestCase.assertEquals(jsonObject["method"].asText(), "POST")
+      assertEquals(jsonObject["method"].asText(), "POST")
       SerializationHelper.deserializeLogEventRecordRequest(jsonObject["body"].asText())
     }
   }

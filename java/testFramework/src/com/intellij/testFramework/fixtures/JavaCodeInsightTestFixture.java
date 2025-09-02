@@ -11,20 +11,21 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 
+/**
+ * A {@link CodeInsightTestFixture} extended a bit for Java-dependent tests.
+ */
 public interface JavaCodeInsightTestFixture extends CodeInsightTestFixture {
   JavaPsiFacadeEx getJavaFacade();
 
   PsiClass addClass(@Language("JAVA") final @NotNull @NonNls String classText);
 
   /**
-   * Finds class by given fully-qualified name in {@link GlobalSearchScope#allScope(Project)}.
+   * Finds class by given fully qualified name in {@link GlobalSearchScope#allScope(Project)}.
    *
    * @param name Qualified name of class to find.
    * @return Class instance.
    */
-  @NotNull
-  PsiClass findClass(@NotNull @NonNls String name);
+  @NotNull PsiClass findClass(@NotNull @NonNls String name);
 
-  @NotNull
-  PsiPackage findPackage(@NotNull @NonNls String name);
+  @NotNull PsiPackage findPackage(@NotNull @NonNls String name);
 }

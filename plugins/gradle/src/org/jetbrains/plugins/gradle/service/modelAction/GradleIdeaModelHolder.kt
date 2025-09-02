@@ -8,7 +8,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.PathMapper
 import org.gradle.tooling.model.BuildModel
 import org.gradle.tooling.model.ProjectModel
-import org.gradle.tooling.model.build.BuildEnvironment
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.model.GradleLightBuild
 import org.jetbrains.plugins.gradle.util.GradleObjectTraverser
@@ -20,7 +19,6 @@ import java.io.File
 @ApiStatus.Internal
 class GradleIdeaModelHolder(
   private val pathMapper: PathMapper? = null,
-  private var buildEnvironment: BuildEnvironment? = null
 ) {
 
   private var rootBuild: GradleLightBuild? = null
@@ -34,10 +32,6 @@ class GradleIdeaModelHolder(
     classesToSkip = setOf(String::class.java),
     classesToSkipChildren = setOf(Object::class.java, File::class.java)
   )
-
-  fun getBuildEnvironment(): BuildEnvironment? {
-    return buildEnvironment
-  }
 
   fun getRootBuild(): GradleLightBuild {
     return rootBuild!!
@@ -130,7 +124,6 @@ class GradleIdeaModelHolder(
   fun addState(state: GradleModelHolderState) {
     val rootBuild = state.rootBuild
     val nestedBuilds = state.nestedBuilds
-    val buildEnvironment = state.buildEnvironment
     val models = state.models
 
     if (rootBuild != null) {
@@ -140,10 +133,6 @@ class GradleIdeaModelHolder(
     for (nestedBuild in nestedBuilds) {
       convertBuildModelPathsInPlace(nestedBuild)
       this.nestedBuilds.add(nestedBuild)
-    }
-    if (buildEnvironment != null) {
-      convertModelPathsInPlace(buildEnvironment)
-      this.buildEnvironment = buildEnvironment
     }
     this.models.putAll(models)
   }

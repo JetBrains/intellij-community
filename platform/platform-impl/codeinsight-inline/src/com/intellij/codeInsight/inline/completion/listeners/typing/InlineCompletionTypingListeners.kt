@@ -4,7 +4,6 @@ package com.intellij.codeInsight.inline.completion.listeners.typing
 import com.intellij.codeInsight.editorActions.TypedHandlerDelegate
 import com.intellij.codeInsight.inline.completion.InlineCompletion
 import com.intellij.codeInsight.inline.completion.InlineCompletionEvent
-import com.intellij.codeInsight.inline.completion.TypingEvent
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker
 import com.intellij.codeInsight.inline.completion.utils.InlineCompletionHandlerUtils.hideInlineCompletion
 import com.intellij.codeInsight.template.Template
@@ -12,9 +11,6 @@ import com.intellij.codeInsight.template.TemplateEditingListener
 import com.intellij.codeInsight.template.TemplateManagerListener
 import com.intellij.codeInsight.template.impl.TemplateState
 import com.intellij.codeWithMe.ClientId
-import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.editor.ClientEditorManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.BulkAwareDocumentListener
@@ -24,6 +20,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.removeUserData
 import com.intellij.psi.PsiFile
 import com.intellij.util.application
+import org.jetbrains.annotations.ApiStatus
 
 internal class InlineCompletionDocumentListener(private val editor: Editor) : BulkAwareDocumentListener {
   override fun documentChangedNonBulk(event: DocumentEvent) {
@@ -31,8 +28,8 @@ internal class InlineCompletionDocumentListener(private val editor: Editor) : Bu
       hideInlineCompletion(editor, InlineCompletionUsageTracker.ShownEvents.FinishType.DOCUMENT_CHANGED)
       return
     }
-    val handler = InlineCompletion.getHandlerOrNull(editor)
-    handler?.documentChangesTracker?.onDocumentEvent(event, editor)
+    val typingSessionTracker = InlineCompletion.getHandlerOrNull(editor)?.typingSessionTracker
+    typingSessionTracker?.collectTypedCharOrInvalidateSession(event, editor)
   }
 }
 
@@ -50,29 +47,12 @@ internal class InlineCompletionTypedHandlerDelegate : TypedHandlerDelegate() {
 
   private fun allowTyping(editor: Editor, typed: String) {
     val handler = InlineCompletion.getHandlerOrNull(editor)
-    if (handler != null) {
-      val offset = editor.caretModel.offset
-      handler.documentChangesTracker.allowTyping(TypingEvent.PairedEnclosureInsertion(typed, offset))
-    }
+    handler?.typingSessionTracker?.expectPairedEnclosure(editor, typed)
   }
 }
 
-internal class InlineCompletionTypingListener : AnActionListener {
-
-  override fun beforeEditorTyping(c: Char, dataContext: DataContext) {
-    val editor = CommonDataKeys.EDITOR.getData(dataContext) ?: return
-    val handler = InlineCompletion.getHandlerOrNull(editor) ?: return
-
-    if (editor.getUserData(InlineCompletionTemplateListener.Companion.TEMPLATE_IN_PROGRESS_KEY) != null) {
-      return // ML-1684 Do now show inline completion while refactoring
-    }
-
-    val offset = editor.caretModel.offset
-    handler.documentChangesTracker.allowTyping(TypingEvent.OneSymbol(c, offset))
-  }
-}
-
-internal class InlineCompletionTemplateListener : TemplateManagerListener {
+@ApiStatus.Internal
+class InlineCompletionTemplateListener : TemplateManagerListener {
   override fun templateStarted(state: TemplateState) {
     state.editor?.let { editor ->
       start(editor)

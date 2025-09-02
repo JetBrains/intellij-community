@@ -32,7 +32,7 @@ public final class DataFrameDebugValue extends PyDebugValue {
                              boolean errorOnEval,
                              @Nullable String typeRendererId,
                              @NotNull PyFrameAccessor frameAccessor) {
-    super(name, type, typeQualifier, value, container, shape, isReturnedVal, isIPythonHidden, errorOnEval, typeRendererId, frameAccessor);
+    super(name, type, typeQualifier, value, container, shape, null, isReturnedVal, isIPythonHidden, errorOnEval, typeRendererId, null, frameAccessor);
   }
 
   public DataFrameDebugValue(@NotNull String name,

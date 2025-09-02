@@ -90,6 +90,18 @@ public class StringUtilTest {
   }
 
   @Test
+  public void testToUpperCaseGeneric() {
+    for (char ch = 0; ch < Character.MAX_VALUE; ch++) {
+      char upperCaseCh = Character.toUpperCase(ch);
+      assertEquals(
+        "Optimized StringUtil.toUpperCase(" + ch + ") must be == Character.toUpperCase(ch)[=" + upperCaseCh + "]",
+        upperCaseCh,
+        StringUtil.toUpperCase(ch)
+      );
+    }
+  }
+
+  @Test
   public void testToLowerCase() {
     assertEquals('/', StringUtil.toLowerCase('/'));
     assertEquals(':', StringUtil.toLowerCase(':'));
@@ -99,6 +111,18 @@ public class StringUtilTest {
     assertEquals('k', StringUtil.toLowerCase('K'));
 
     assertEquals('\u2567', StringUtil.toUpperCase(Character.toLowerCase('\u2567')));
+  }
+
+  @Test
+  public void testToLowerCaseGeneric() {
+    for (char ch = 0; ch < Character.MAX_VALUE; ch++) {
+      char lowerCaseCh = Character.toLowerCase(ch);
+      assertEquals(
+        "Optimized StringUtil.toLowerCase(" + ch + ") must be == Character.toLowerCase(ch)[=" + lowerCaseCh + "]",
+        lowerCaseCh,
+        StringUtil.toLowerCase(ch)
+      );
+    }
   }
 
   @Test
@@ -892,6 +916,7 @@ public class StringUtilTest {
   @Test
   public void testCollapseWhiteSpace() {
     assertEquals("one two three four five", StringUtil.collapseWhiteSpace("\t one\ttwo     three\nfour five   "));
+    assertEquals("one two three four five", StringUtil.collapseWhiteSpace(" one \ttwo  \t  three\n\tfour five "));
   }
 
   @Test

@@ -1,0 +1,4 @@
+<idea-plugin>
+  <depends optional="true" config-file="c.xml">c</depends>
+  <depends optional="true" config-file="b.xml">b</depends>
+</idea-plugin>

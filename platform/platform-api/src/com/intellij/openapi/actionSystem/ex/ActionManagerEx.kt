@@ -23,15 +23,15 @@ import java.awt.Component
 import java.util.function.Function
 import javax.swing.KeyStroke
 
-@Suppress("DeprecatedCallableAddReplaceWith")
 abstract class ActionManagerEx : ActionManager() {
   companion object {
     @JvmStatic
     fun getInstanceEx(): ActionManagerEx = getInstance() as ActionManagerEx
 
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("Use [KeymapUtil.getKeyStroke(s)]",
                 ReplaceWith("KeymapUtil.getKeyStroke(s)"),
-                DeprecationLevel.WARNING)
+                DeprecationLevel.ERROR)
     @JvmStatic
     fun getKeyStroke(s: String): KeyStroke? = KeymapUtil.getKeyStroke(s)
 
@@ -55,43 +55,25 @@ abstract class ActionManagerEx : ActionManager() {
     }
   }
 
-  abstract fun performWithActionCallbacks(action: AnAction, event: AnActionEvent, runnable: Runnable)
+  abstract fun performWithActionCallbacks(action: AnAction, event: AnActionEvent, runnable: Runnable): AnActionResult
 
   abstract fun createActionToolbar(place: String, group: ActionGroup, horizontal: Boolean, decorateButtons: Boolean): ActionToolbar
 
   abstract fun createActionToolbar(place: String, group: ActionGroup, horizontal: Boolean, decorateButtons: Boolean, customizable: Boolean): ActionToolbar
 
-  abstract fun createActionToolbar(place: String, group: ActionGroup, horizontal: Boolean, separatorCreator: Function<in String, out Component>): ActionToolbar
+  abstract fun createActionToolbar(place: String, group: ActionGroup, horizontal: Boolean, separatorCreator: Function<in String?, out Component>): ActionToolbar
 
-  @Deprecated("Use [ActionUtil.performActionDumbAwareWithCallbacks] instead",
-              ReplaceWith("ActionUtil.performActionDumbAwareWithCallbacks"),
-              DeprecationLevel.WARNING)
+  @Deprecated("Use [ActionUtil.performAction] instead",
+              ReplaceWith("ActionUtil.performAction"),
+              DeprecationLevel.ERROR)
   @Internal
   abstract fun fireBeforeActionPerformed(action: AnAction, event: AnActionEvent)
 
-  @Deprecated("Use [ActionUtil.performActionDumbAwareWithCallbacks] instead",
-              ReplaceWith("ActionUtil.performActionDumbAwareWithCallbacks"),
-              DeprecationLevel.WARNING)
+  @Deprecated("Use [ActionUtil.performAction] instead",
+              ReplaceWith("ActionUtil.performAction"),
+              DeprecationLevel.ERROR)
   @Internal
   abstract fun fireAfterActionPerformed(action: AnAction, event: AnActionEvent, result: AnActionResult)
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use [ActionUtil.performActionDumbAwareWithCallbacks] instead",
-              ReplaceWith("ActionUtil.performActionDumbAwareWithCallbacks"),
-              DeprecationLevel.ERROR)
-  fun fireBeforeActionPerformed(action: AnAction, @Suppress("unused") dataContext: DataContext, event: AnActionEvent) {
-    @Suppress("DEPRECATION")
-    fireBeforeActionPerformed(action, event)
-  }
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use [ActionUtil.performActionDumbAwareWithCallbacks] instead",
-              ReplaceWith("ActionUtil.performActionDumbAwareWithCallbacks"),
-              DeprecationLevel.ERROR)
-  fun fireAfterActionPerformed(action: AnAction, @Suppress("unused") dataContext: DataContext, event: AnActionEvent) {
-    @Suppress("DEPRECATION")
-    fireAfterActionPerformed(action, event, AnActionResult.PERFORMED)
-  }
 
   abstract fun fireBeforeEditorTyping(c: Char, dataContext: DataContext)
 

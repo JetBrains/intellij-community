@@ -1,66 +1,38 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.actions;
 
-import com.intellij.icons.AllIcons;
-import com.intellij.ide.IdeView;
-import com.intellij.ide.fileTemplates.FileTemplate;
-import com.intellij.ide.fileTemplates.FileTemplateManager;
-import com.intellij.ide.fileTemplates.actions.CreateFromTemplateActionBase;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.ide.fileTemplates.actions.CustomCreateFromTemplateAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.roots.PackageIndex;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
-import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
-import org.jetbrains.plugins.javaFX.JavaFXBundle;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
-import java.util.Set;
 
-import static com.intellij.psi.search.GlobalSearchScope.moduleWithDependenciesAndLibrariesScope;
-import static org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames.JAVAFX_APPLICATION_APPLICATION;
+import static org.jetbrains.plugins.javaFX.actions.JavaFxTemplateManager.isJavaFxTemplateAvailable;
 
-/**
- * @author pdolgov
- */
-public final class CreateFxmlFileAction extends CreateFromTemplateActionBase {
+final class CreateFxmlFileAction extends CustomCreateFromTemplateAction implements DumbAware {
   private static final String INTERNAL_TEMPLATE_NAME = "FxmlFile.fxml";
 
-  public CreateFxmlFileAction() {
-    super(JavaFXBundle.message("javafx.create.new.fxml.file.title"), JavaFXBundle.message("javafx.create.new.fxml.file.description"),
-          AllIcons.FileTypes.Xml);
+  CreateFxmlFileAction() {
+    super(INTERNAL_TEMPLATE_NAME);
   }
 
   @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.BGT;
-  }
-
-  @Override
-  protected FileTemplate getTemplate(Project project, PsiDirectory dir) {
-    return FileTemplateManager.getInstance(project).getInternalTemplate(INTERNAL_TEMPLATE_NAME);
-  }
-
-  @Override
-  protected Map<String, String> getLiveTemplateDefaults(DataContext dataContext, @NotNull PsiFile file) {
+  protected Map<String, String> getLiveTemplateDefaults(@NotNull DataContext dataContext, @NotNull PsiFile file) {
     String packageName = ReadAction.compute(() -> {
       PsiDirectory psiDirectory = file.getContainingDirectory();
       if (psiDirectory != null) {
@@ -112,43 +84,7 @@ public final class CreateFxmlFileAction extends CreateFromTemplateActionBase {
   }
 
   @Override
-  public void update(final @NotNull AnActionEvent e) {
-    final DataContext dataContext = e.getDataContext();
-    final Presentation presentation = e.getPresentation();
-
-    presentation.setEnabledAndVisible(isJavaFxTemplateAvailable(dataContext, JavaModuleSourceRootTypes.PRODUCTION));
-  }
-
-  static boolean isJavaFxTemplateAvailable(DataContext dataContext, Set<? extends JpsModuleSourceRootType<?>> requiredRootTypes) {
-    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    final IdeView view = LangDataKeys.IDE_VIEW.getData(dataContext);
-    if (project == null || view == null) {
-      return false;
-    }
-
-    final PsiDirectory[] directories = view.getDirectories();
-    if (directories.length == 0) {
-      return false;
-    }
-
-    Module module = ModuleUtilCore.findModuleForFile(directories[0].getVirtualFile(), project);
-    if (!hasJavaFxDependency(module)) {
-      return false;
-    }
-
-    final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
-    return Arrays.stream(directories)
-      .map(PsiDirectory::getVirtualFile)
-      .anyMatch(virtualFile -> index.isUnderSourceRootOfType(virtualFile, requiredRootTypes));
-  }
-
-  private static boolean hasJavaFxDependency(@Nullable Module module) {
-    if (module == null || module.isDisposed()) return false;
-
-    return CachedValuesManager.getManager(module.getProject()).getCachedValue(module, () -> {
-      boolean hasClass = JavaPsiFacade.getInstance(module.getProject())
-                           .findClass(JAVAFX_APPLICATION_APPLICATION, moduleWithDependenciesAndLibrariesScope(module)) != null;
-      return CachedValueProvider.Result.create(hasClass, ProjectRootManager.getInstance(module.getProject()));
-    });
+  public void update(@NotNull AnActionEvent e) {
+    e.getPresentation().setEnabledAndVisible(isJavaFxTemplateAvailable(e.getDataContext(), JavaModuleSourceRootTypes.PRODUCTION));
   }
 }

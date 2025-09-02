@@ -1,17 +1,26 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.cache.impl.id;
 
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Map;
 
+/**
+ * Helper to collect (ID,occurenceMask) pairs -- to be used in {@link IdIndexer} implementations.
+ * Collects both case-sensitive and case-insensitive hashes at the same time.
+ * Creates Map implementation heavily optimized for this specific purpose ({@link IdEntryToScopeMapImpl})
+ * <p/>
+ * All {@link IdIndexer} implementations are strongly recommended to use this class to collect IDs and occurrence masks, instead
+ * of using some other Map implementation directly.
+ */
 public final class IdDataConsumer {
 
   private final @NotNull IdEntryToScopeMapImpl hashToScopeMap = new IdEntryToScopeMapImpl();
 
   public @NotNull Map<IdIndexEntry, Integer> getResult() {
+    hashToScopeMap.ensureSerializedDataCached();
     return hashToScopeMap;
   }
 

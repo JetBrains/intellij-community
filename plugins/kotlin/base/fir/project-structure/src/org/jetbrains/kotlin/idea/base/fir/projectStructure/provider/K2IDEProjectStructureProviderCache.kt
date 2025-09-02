@@ -12,12 +12,10 @@ import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.jps.entities.SdkId
 import com.intellij.util.messages.MessageBus
 import org.jetbrains.kotlin.analysis.api.platform.analysisMessageBus
-import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinGlobalModuleStateModificationListener
-import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinGlobalSourceModuleStateModificationListener
-import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationTopics
-import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModuleStateModificationListener
+import org.jetbrains.kotlin.analysis.api.platform.modification.*
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
+import org.jetbrains.kotlin.idea.base.fir.projectStructure.modules.KaEntityBasedModuleCreationData
 import org.jetbrains.kotlin.idea.base.fir.projectStructure.modules.library.KaLibraryModuleImpl
 import org.jetbrains.kotlin.idea.base.fir.projectStructure.modules.library.KaLibrarySdkModuleImpl
 import org.jetbrains.kotlin.idea.base.fir.projectStructure.modules.source.KaSourceModuleImpl
@@ -62,16 +60,18 @@ internal class K2IDEProjectStructureProviderCache(
 
     init {
         analysisMessageBus.connect(this).apply {
-            subscribe(KotlinModificationTopics.GLOBAL_MODULE_STATE_MODIFICATION, KotlinGlobalModuleStateModificationListener {
-                invalidateAllModuleCaches()
-            })
-
-            subscribe(KotlinModificationTopics.MODULE_STATE_MODIFICATION, KotlinModuleStateModificationListener { module, _ ->
-                invalidateCaches(module)
-            })
-
-            subscribe(KotlinModificationTopics.GLOBAL_SOURCE_MODULE_STATE_MODIFICATION, KotlinGlobalSourceModuleStateModificationListener {
-                invalidateSourceModuleCaches()
+            subscribe(KotlinModificationEvent.TOPIC, KotlinModificationEventListener { event ->
+                when (event) {
+                    KotlinGlobalModuleStateModificationEvent -> invalidateAllModuleCaches()
+                    is KotlinModuleStateModificationEvent -> invalidateCaches(event.module)
+                    is KotlinGlobalSourceModuleStateModificationEvent -> invalidateSourceModuleCaches()
+                    is KotlinCodeFragmentContextModificationEvent -> {}
+                    KotlinGlobalSourceOutOfBlockModificationEvent -> {}
+                    is KotlinModuleOutOfBlockModificationEvent -> {}
+                    KotlinGlobalScriptModuleStateModificationEvent -> {
+                        /* scripts are not cached */
+                    }
+                }
             })
         }
     }
@@ -121,22 +121,28 @@ internal class K2IDEProjectStructureProviderCache(
 
     @OptIn(InternalKaModuleConstructor::class)
     fun cachedKaLibraryModule(id: LibraryId): KaLibraryModuleImpl {
-        if (!isItSafeToCacheModules()) return KaLibraryModuleImpl(id, project)
-        return libraryCache.computeIfAbsent(id) { KaLibraryModuleImpl(id, project) }
+        if (!isItSafeToCacheModules()) return KaLibraryModuleImpl(id, project, creationData())
+        return libraryCache.computeIfAbsent(id) { KaLibraryModuleImpl(id, project, creationData()) }
     }
 
     @OptIn(InternalKaModuleConstructor::class)
     fun cachedKaSdkModule(id: SdkId): KaLibrarySdkModuleImpl {
-        if (!isItSafeToCacheModules()) return KaLibrarySdkModuleImpl(project, id)
-        return sdkCache.computeIfAbsent(id) { KaLibrarySdkModuleImpl(project, id) }
+        if (!isItSafeToCacheModules()) return KaLibrarySdkModuleImpl(project, id, creationData())
+        return sdkCache.computeIfAbsent(id) { KaLibrarySdkModuleImpl(project, id, creationData()) }
     }
 
     @OptIn(InternalKaModuleConstructor::class)
     fun cachedKaSourceModule(id: ModuleId, kind: KaSourceModuleKind): KaSourceModule {
-        if (!isItSafeToCacheModules()) return KaSourceModuleImpl(id, kind, project)
+        if (!isItSafeToCacheModules()) return KaSourceModuleImpl(id, kind, project, creationData())
         val cache = moduleCacheForKind(kind)
-        return cache.computeIfAbsent(id) { KaSourceModuleImpl(id, kind, project) }
+        return cache.computeIfAbsent(id) { KaSourceModuleImpl(id, kind, project, creationData()) }
     }
+
+    private fun creationData() = KaEntityBasedModuleCreationData(
+        createdWithoutCaching = isItSafeToCacheModules(),
+        createdSourceTrackerValue = sourcesTracker.modificationCount,
+        createdLibrariesTrackerValue = sdkAndLibrariesTracker.modificationCount,
+    )
 
     /**
      * Checks if it is safe to cache a `KaModule` inside `K2IDEProjectStructureProviderCache` and `K2IDEProjectStructureProvider`.
@@ -154,7 +160,7 @@ internal class K2IDEProjectStructureProviderCache(
      * This function should only be used by `K2IDEProjectStructureProviderCache` and `K2IDEProjectStructureProvider`.
      */
     fun isItSafeToCacheModules(): Boolean {
-        return ALL_TOPICS.none { analysisMessageBus.hasUndeliveredEvents(it) }
+        return !analysisMessageBus.hasUndeliveredEvents(KotlinModificationEvent.TOPIC)
     }
 
     private fun moduleCacheForKind(kind: KaSourceModuleKind): ConcurrentHashMap<ModuleId, KaSourceModule> {
@@ -167,16 +173,6 @@ internal class K2IDEProjectStructureProviderCache(
     override fun dispose() {}
 
     companion object {
-        private val ALL_TOPICS = listOf(
-            KotlinModificationTopics.MODULE_STATE_MODIFICATION,
-            KotlinModificationTopics.MODULE_OUT_OF_BLOCK_MODIFICATION,
-            KotlinModificationTopics.GLOBAL_MODULE_STATE_MODIFICATION,
-            KotlinModificationTopics.GLOBAL_SOURCE_MODULE_STATE_MODIFICATION,
-            KotlinModificationTopics.GLOBAL_SCRIPT_MODULE_STATE_MODIFICATION,
-            KotlinModificationTopics.GLOBAL_SOURCE_OUT_OF_BLOCK_MODIFICATION,
-            KotlinModificationTopics.CODE_FRAGMENT_CONTEXT_MODIFICATION
-        )
-
         fun getInstance(project: Project): K2IDEProjectStructureProviderCache =
             project.service<K2IDEProjectStructureProviderCache>()
     }

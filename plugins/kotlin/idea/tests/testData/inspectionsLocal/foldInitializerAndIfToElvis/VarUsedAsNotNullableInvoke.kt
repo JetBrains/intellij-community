@@ -1,0 +1,16 @@
+// AFTER_ERROR: Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type String?
+// K2_AFTER_ERROR:
+
+fun returnsNullable(): String? = null
+
+fun String.lower() = this
+
+fun test() {
+    var foo: String? = returnsNullable()
+    if (<caret>foo == null) {
+        return
+    }
+    bar(foo.lower())
+}
+
+fun bar(s: String) {}

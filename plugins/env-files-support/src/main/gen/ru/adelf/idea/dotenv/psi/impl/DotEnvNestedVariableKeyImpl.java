@@ -8,11 +8,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import static ru.adelf.idea.dotenv.psi.DotEnvTypes.*;
-import ru.adelf.idea.dotenv.psi.DotEnvNestedVariableKeyMixin;
+import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import ru.adelf.idea.dotenv.psi.*;
-import com.intellij.openapi.util.NlsSafe;
 
-public class DotEnvNestedVariableKeyImpl extends DotEnvNestedVariableKeyMixin implements DotEnvNestedVariableKey {
+public class DotEnvNestedVariableKeyImpl extends ASTWrapperPsiElement implements DotEnvNestedVariableKey {
 
   public DotEnvNestedVariableKeyImpl(@NotNull ASTNode node) {
     super(node);

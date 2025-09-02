@@ -182,4 +182,8 @@ public final class PyTypeUtil {
                                                      new PyClassTypeImpl(superClass, false));
     return PyTypeChecker.convertToType(type, superClassType, context);
   }
+  
+  public static boolean inheritsAny(@NotNull PyType type, @NotNull TypeEvalContext context) {
+    return type instanceof PyClassLikeType classLikeType && classLikeType.getAncestorTypes(context).contains(null);
+  }
 }

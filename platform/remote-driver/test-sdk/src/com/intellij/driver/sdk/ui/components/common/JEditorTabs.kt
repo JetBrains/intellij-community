@@ -1,6 +1,7 @@
 package com.intellij.driver.sdk.ui.components.common
 
 import com.intellij.driver.client.Remote
+import com.intellij.driver.sdk.invokeAction
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
@@ -19,7 +20,9 @@ class EditorTabsUiComponent(data: ComponentData) : UiComponent(data) {
 
   fun getTabs() = editorTabsComponent.getTabs().map { Tab(it) }
 
-  fun getTabsComponents(): List<UiComponent> = xx { byType("com.intellij.openapi.fileEditor.impl.EditorTabLabel") }.list().filter {
+  fun tab(accessibleName: String) = x { and(byType(TYPE_EDITOR_TAB), byAccessibleName(accessibleName)) }
+
+  fun getTabsComponents(): List<UiComponent> = xx { byType(TYPE_EDITOR_TAB) }.list().filter {
     it.component.width > 0 && it.component.height > 0
   }
 
@@ -37,8 +40,7 @@ class EditorTabsUiComponent(data: ComponentData) : UiComponent(data) {
   }
 
   fun closeAllTabs() {
-    xx("//div[@class='EditorTabLabel']//div[@myicon='closeSmall.svg']")
-      .list().forEach { it.click() }
+    driver.invokeAction("CloseAllEditors")
   }
 
   fun isTabOpened(text: String) = getTabs().any { it.text == text }
@@ -48,6 +50,10 @@ class EditorTabsUiComponent(data: ComponentData) : UiComponent(data) {
       get() = data.getText()
     val fontSize: Int
       get() = data.getFontSize()
+  }
+
+  private companion object {
+    val TYPE_EDITOR_TAB = "com.intellij.openapi.fileEditor.impl.EditorTabLabel"
   }
 }
 

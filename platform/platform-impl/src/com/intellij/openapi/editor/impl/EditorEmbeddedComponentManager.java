@@ -467,7 +467,7 @@ public final class EditorEmbeddedComponentManager {
       private ResizeInfo info;
 
       @Override
-      public void mouseMoved(EditorMouseEvent e) {
+      public void mouseMoved(@NotNull EditorMouseEvent e) {
         ResizeInfo info = getInfoForResizeUnder(e.getMouseEvent().getPoint());
         if (info == null) {
           resetCursor();

@@ -14,7 +14,6 @@ import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.tasks.TaskBundle
 import com.intellij.util.DocumentUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.xdebugger.*
@@ -146,7 +145,9 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
 
             invokeLater { debugSession.setBreakpointMuted(false) }  // session is not initialized at this moment
             if (!watchesRemoved) {
-              (debugSession as XDebugSessionImpl).sessionData.watchExpressions = emptyList()
+              val sessionData = (debugSession as XDebugSessionImpl).sessionData
+              val watchesManager = (XDebuggerManager.getInstance(project) as XDebuggerManagerImpl).watchesManager
+              watchesManager.setWatchEntries(sessionData.configurationName, emptyList())
               watchesRemoved = true
             }
             debugSession.addSessionListener(object : XDebugSessionListener {
@@ -213,18 +214,18 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
       val shortcut = if (hasShortcut) "" else " " + LessonsBundle.message("debug.workflow.consider.to.add.a.shortcut")
 
       text(LessonsBundle.message("debug.workflow.use.watches",
-                                 strong(TaskBundle.message("debugger.watches")),
+                                 strong(LessonsBundle.message("debug.workflow.debugger.watches")),
                                  LessonUtil.rawKeyStroke(XDebuggerEvaluationDialog.getAddWatchKeystroke()),
                                  icon(AllIcons.Debugger.AddToWatch)))
       text(LessonsBundle.message("debug.workflow.use.watches.shortcut", action(it),
-                                 strong(TaskBundle.message("debugger.watches")), shortcut))
+                                 strong(LessonsBundle.message("debug.workflow.debugger.watches")), shortcut))
       val addToWatchActionText = ActionsBundle.actionText(it)
       triggerAndFullHighlight { usePulsation = true }.component { ui: ActionButton ->
         ui.action.templatePresentation.text == addToWatchActionText
       }
       stateCheck {
-        val watches = (XDebuggerManager.getInstance(project) as XDebuggerManagerImpl).watchesManager.getWatches(confNameForWatches)
-        watches.any { watch -> watch.expression == needAddToWatch }
+        val watches = (XDebuggerManager.getInstance(project) as XDebuggerManagerImpl).watchesManager.getWatchEntries(confNameForWatches)
+        watches.any { watch -> watch.expression.expression == needAddToWatch }
       }
       proposeSelectionChangeRestore(position)
       test { invokeActionViaShortcut("CTRL SHIFT ENTER") }
@@ -471,7 +472,6 @@ fun LessonContext.toggleBreakpointTask(sample: LessonSample?,
                                        logicalPosition: () -> LogicalPosition,
                                        checkLine: Boolean = true,
                                        breakpointXRange: (width: Int) -> IntRange = LessonUtil.breakpointXRange,
-                                       useCheckByTimerInsteadOfStateCheck: Boolean = false,
                                        textContent: TaskContext.() -> Unit) {
   highlightBreakpointGutter(breakpointXRange, logicalPosition)
 
@@ -482,12 +482,7 @@ fun LessonContext.toggleBreakpointTask(sample: LessonSample?,
     val checkLambda: TaskRuntimeContext.() -> Boolean = {
       lineWithBreakpoints() == setOf(logicalPosition().line)
     }
-    if (useCheckByTimerInsteadOfStateCheck) {
-      timerCheck(checkState = checkLambda)
-    }
-    else {
-      stateCheck(checkLambda)
-    }
+    timerCheck(checkState = checkLambda)
 
     proposeRestore {
       val breakpoints = lineWithBreakpoints()

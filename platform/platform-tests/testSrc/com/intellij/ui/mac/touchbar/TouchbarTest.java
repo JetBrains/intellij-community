@@ -65,6 +65,7 @@ public final class TouchbarTest {
   }
 
   private static Collection<Integer> ourIndices;
+
   private static Collection<Integer> _makeRandomCollection(int maxIndex) {
     if (ourIndices != null)
       return ourIndices;

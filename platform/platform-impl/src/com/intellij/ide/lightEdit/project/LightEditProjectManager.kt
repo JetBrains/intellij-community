@@ -68,7 +68,7 @@ class LightEditProjectManager {
       }
       if (created) {
         fireProjectOpened(project!!)
-        RecentProjectsManagerBase.getInstanceEx().setProjectHidden(project!!, true)
+        RecentProjectsManagerBase.getInstanceEx().setProjectHidden(project, true)
         ApplicationManager.getApplication().messageBus.connect().subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
           override fun projectClosed(project: Project) {
             if (project === projectImpl) {

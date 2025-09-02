@@ -11,6 +11,7 @@ import kotlinx.coroutines.Dispatchers;
 import kotlinx.coroutines.ExecutorsKt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.function.UnaryOperator;
 
@@ -26,7 +27,8 @@ public final class StubStringInterner implements Disposable, UnaryOperator<@Null
     return ApplicationManager.getApplication().getService(StubStringInterner.class);
   }
 
-  StubStringInterner() {
+  @VisibleForTesting
+  public StubStringInterner() {
     LowMemoryWatcher.register(internCache::invalidateAll, this);
   }
 

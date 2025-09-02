@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.actions;
 
 import com.intellij.build.events.BuildEventsNls;
@@ -12,6 +12,7 @@ import com.intellij.execution.ui.RunContentManager;
 import com.intellij.execution.ui.RunToolbarPopupKt;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.actionSystem.remoting.ActionRemotePermissionRequirements;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -39,7 +40,8 @@ import java.util.List;
 
 import static com.intellij.execution.StoppableRunDescriptorsKt.getStoppableDescriptors;
 
-public class StopAction extends DumbAwareAction implements ActionRemotePermissionRequirements.RunAccess {
+public class StopAction extends DumbAwareAction implements ActionRemotePermissionRequirements.RunAccess,
+                                                           ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
 
   private WeakReference<JBPopup> myActivePopupRef = null;
 

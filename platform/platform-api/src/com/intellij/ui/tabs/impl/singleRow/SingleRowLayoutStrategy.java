@@ -2,12 +2,14 @@
 package com.intellij.ui.tabs.impl.singleRow;
 
 import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.tabs.TabsUtil;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.tabs.impl.ShapeTransform;
 import com.intellij.ui.tabs.impl.TabLabel;
 import com.intellij.ui.tabs.impl.TabLayout;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -71,6 +73,10 @@ public abstract class SingleRowLayoutStrategy {
 
   public abstract boolean isDragOut(TabLabel tabLabel, int deltaX, int deltaY);
 
+  public @NotNull Point adjustDropPoint(@NotNull Point point) {
+    return point;
+  }
+
   /**
    * Whether a tab that didn't fit completely on the right/bottom side in scrollable layout should be clipped or hidden altogether.
    *
@@ -93,6 +99,21 @@ public abstract class SingleRowLayoutStrategy {
       Rectangle bounds = tabLabel.getBounds();
       if (bounds.x + bounds.width + deltaX < 0 || bounds.x + bounds.width > tabLabel.getParent().getWidth()) return true;
       return Math.abs(deltaY) > tabLabel.getHeight() * TabLayout.getDragOutMultiplier();
+    }
+
+    @Override
+    public @NotNull Point adjustDropPoint(@NotNull Point point) {
+      var layout = myLayout.lastSingRowLayout;
+      if (layout == null) return point;
+      var rowRect = layout.getHeaderRectangle();
+      var dropTolerance = JBUI.scale(TabsUtil.UNSCALED_DROP_TOLERANCE);
+      var adjustedPoint = new Point(point);
+      // Allow the tab to be dragged above or below the tab row without detaching,
+      // as long as the tab has not been dragged further away than the tab row height.
+      if (adjustedPoint.y >= rowRect.y - dropTolerance && adjustedPoint.y <= rowRect.y + rowRect.height + dropTolerance) {
+        adjustedPoint.y = rowRect.y + rowRect.height / 2; // pretend the mouse is centered vertically and not moved away at all
+      }
+      return adjustedPoint;
     }
 
     @Override

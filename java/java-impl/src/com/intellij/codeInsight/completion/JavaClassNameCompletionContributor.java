@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
@@ -8,6 +8,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil.JavaMod
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.java.JavaBundle;
 import com.intellij.java.codeserver.core.JavaPsiModuleUtil;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -42,7 +43,7 @@ import static com.intellij.codeInsight.completion.JavaClassNameInsertHandler.JAV
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 
 public class JavaClassNameCompletionContributor extends CompletionContributor implements DumbAware {
-  public static final PsiJavaElementPattern.Capture<PsiElement> AFTER_NEW = psiElement().afterLeaf(PsiKeyword.NEW);
+  public static final PsiJavaElementPattern.Capture<PsiElement> AFTER_NEW = psiElement().afterLeaf(JavaKeywords.NEW);
 
   @Override
   public void fillCompletionVariants(@NotNull CompletionParameters parameters, final @NotNull CompletionResultSet _result) {

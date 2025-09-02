@@ -45,6 +45,7 @@
                  description="No-op, use Terminal Engine option in Terminal settings instead"/>
     <registryKey key="terminal.new.ui.reworked" defaultValue="false"
                  description="No-op, use Terminal Engine option in Terminal settings instead"/>
+
     <registryKey key="terminal.new.ui.option.visible" defaultValue="false"
                  description="Whether Experimental 2024 terminal engine option visible in the settings"/>
     <registryKey key="terminal.new.ui.fish" defaultValue="false"
@@ -64,6 +65,16 @@
     <registryKey key="terminal.classic.refresh.vfs.on.shell.command.finished" defaultValue="true"
                  description="Refresh VFS when shell commands are finished in the Classic Terminal.
                   May not work 100% reliably as it uses heuristics to determine when command is finished."/>
+    <registryKey key="terminal.use.EelApi" defaultValue="false"
+                 description="Use EelApi to launch a shell process. Launching a local shell works the same as before.
+                  For WSL environments, the shell process in WSL will be launched via IJEnt instead of using wsl.exe."/>
+    <registryKey key="terminal.new.ui.completion.popup" defaultValue="false"
+                 description="Disabled completion popUp for reworked terminal for development time"/>
+    <registryKey key="terminal.type.ahead" defaultValue="false"
+                 description="Early prototype of type-ahead for the reworked terminal"/>
+    <registryKey key="terminal.generic.hyperlinks" defaultValue="false"
+                 description="Show generic file hyperlinks in the reworked terminal. Such hyperlinks are highlighted on mouse hover.
+                  Open a new terminal after enabling this option to take effect."/>
 
     <experimentalFeature id="terminal.shell.command.handling" percentOfUsers="100"/>
     <terminal.shellCommandHandler implementation="org.jetbrains.plugins.terminal.RunAnythingTerminalBridge"/>
@@ -87,8 +98,12 @@
     <lookup.charFilter implementation="org.jetbrains.plugins.terminal.block.prompt.TerminalCharFilter"
                        id="terminal" order="first"/>
     <completion.contributor language="any"
-                            id="terminalCommandSpec"
-                            implementationClass="org.jetbrains.plugins.terminal.block.completion.TerminalCommandSpecCompletionContributor"
+                            id="terminalCommandSpecGen1"
+                            implementationClass="org.jetbrains.plugins.terminal.block.completion.TerminalCommandSpecCompletionContributorGen1"
+                            order="first, before terminalPowerShell, after ml_context"/>
+    <completion.contributor language="any"
+                            id="terminalCommandSpecGen2"
+                            implementationClass="org.jetbrains.plugins.terminal.block.reworked.completion.TerminalCommandSpecCompletionContributorGen2"
                             order="first, before terminalPowerShell, after ml_context"/>
     <completion.contributor language="any"
                             id="terminalPowerShell"
@@ -96,7 +111,7 @@
                             order="first, before shShebang, before liveTemplates, after ml_context"/>
     <completion.ml.model implementation="org.jetbrains.plugins.terminal.block.completion.ml.ShMLRankingProvider"/>
     <weigher key="completion"
-             id="terminalCommandSpec"
+             id="terminalCommandSpecGen2"
              order="before stats"
              implementationClass="org.jetbrains.plugins.terminal.block.completion.ShellCommandSpecCompletionWeigher"/>
     <feedback.idleFeedbackSurvey implementation="org.jetbrains.plugins.terminal.block.feedback.ReworkedTerminalFeedbackSurvey"/>
@@ -104,6 +119,9 @@
     <lang.fileViewProviderFactory language="Terminal Prompt"
                                   implementationClass="org.jetbrains.plugins.terminal.block.prompt.lang.TerminalPromptFileViewProviderFactory"/>
     <highlightErrorFilter implementation="org.jetbrains.plugins.terminal.block.prompt.lang.TerminalPromptErrorFilter"/>
+
+    <lang.parserDefinition language="TerminalOutput"
+                           implementationClass="org.jetbrains.plugins.terminal.block.reworked.lang.TerminalOutputParserDefinition"/>
 
     <advancedSetting bundle="messages.TerminalBundle"  id="terminal.character.encoding" default="UTF-8" groupKey="group.advanced.settings.terminal"/>
     <applicationService serviceInterface="com.intellij.terminal.search.JediTermSearchComponentProvider"
@@ -114,7 +132,6 @@
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.terminal">
-    <localTerminalCustomizer implementation="org.jetbrains.plugins.terminal.TerminalCommandHandlerCustomizer"/>
     <commandSpecsProvider implementation="org.jetbrains.plugins.terminal.block.completion.spec.json.ShellDefaultCommandSpecsProvider"/>
     <commandSpecsProvider implementation="org.jetbrains.plugins.terminal.block.completion.spec.specs.ShellCodeBasedCommandSpecsProvider"/>
 

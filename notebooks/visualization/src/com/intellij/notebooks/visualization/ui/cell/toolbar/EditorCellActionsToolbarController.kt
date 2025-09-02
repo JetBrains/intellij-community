@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notebooks.visualization.ui.cell.toolbar
 
+import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.notebooks.ui.afterDistinctChange
 import com.intellij.notebooks.ui.visualization.NotebookUtil.notebookAppearance
 import com.intellij.notebooks.visualization.NotebookCellLines
@@ -13,6 +14,7 @@ import com.intellij.notebooks.visualization.ui.notebookEditor
 import com.intellij.notebooks.visualization.ui.providers.bounds.JupyterBoundsChangeHandler
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.Disposer
@@ -123,8 +125,13 @@ internal class EditorCellActionsToolbarController(
 
   private fun getActionGroup(cellType: NotebookCellLines.CellType): ActionGroup? = when (cellType) {
     NotebookCellLines.CellType.CODE -> {
+      val customToolbarActionGroup = DefaultActionGroup()
+      val customActionsGroup = CustomActionsSchema.getInstance().getCorrectedAction(ADDITIONAL_CODE_ACTION_GROUP_ID)
+      if (customActionsGroup != null) {
+        customToolbarActionGroup.add(customActionsGroup)
+      }
       hideDropdownIcon(ADDITIONAL_CODE_ELLIPSIS_ACTION_GROUP_ID)
-      ActionManager.getInstance().getAction(ADDITIONAL_CODE_ACTION_GROUP_ID) as? ActionGroup
+      customToolbarActionGroup
     }
     NotebookCellLines.CellType.MARKDOWN -> {
       hideDropdownIcon(ADDITIONAL_MARKDOWN_ELLIPSIS_ACTION_GROUP_ID)
@@ -168,7 +175,7 @@ internal class EditorCellActionsToolbarController(
     private const val RELATIVE_Y_OFFSET_RATIO = 0.05
 
     @Language("devkit-action-id")
-    private const val ADDITIONAL_CODE_ACTION_GROUP_ID = "Jupyter.AboveCodeCellAdditionalToolbar"
+    private const val ADDITIONAL_CODE_ACTION_GROUP_ID = "JupyterCodeCellToolbarCustomizeActionsGroup"
 
     @Language("devkit-action-id")
     private const val ADDITIONAL_CODE_ELLIPSIS_ACTION_GROUP_ID = "Jupyter.AboveCodeCellAdditionalToolbar.Ellipsis"

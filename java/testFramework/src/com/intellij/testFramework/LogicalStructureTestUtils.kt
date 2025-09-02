@@ -28,7 +28,8 @@ fun assertLogicalStructure(
   var targetStructureElement = structureView.treeModel.root
   nodePath?.split("/")?.forEach { pathPart ->
     val child = targetStructureElement.children.firstOrNull {
-      it.presentation.presentableText == pathPart
+      val presentation = it.presentation
+      presentation.presentableText == pathPart || (presentation as? PresentationData)?.coloredText?.firstOrNull()?.text == pathPart
     } as? StructureViewTreeElement
     assertNotNull("Can't find a child '$pathPart'", child)
     targetStructureElement = child!!

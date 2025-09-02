@@ -5,7 +5,7 @@ import com.jetbrains.python.ast.PyAstSliceItem;
 import org.jetbrains.annotations.Nullable;
 
 
-public interface PySliceItem extends PyAstSliceItem, PyElement {
+public interface PySliceItem extends PyAstSliceItem, PyExpression {
   @Override
   default @Nullable PyExpression getLowerBound() {
     return (PyExpression)PyAstSliceItem.super.getLowerBound();

@@ -48,6 +48,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import java.io.File
 import java.nio.file.Files
+import java.nio.file.Paths
 import java.util.function.Supplier
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.io.path.Path
@@ -242,14 +243,31 @@ fun JpsProjectSerializersImpl.checkConsistency(configLocation: JpsProjectConfigL
     .filterIsInstance<JpsFileEntitySource>()
     .filterNot { it is JpsGlobalFileEntitySource } // Do not check global entity sources in project-level serializers
     .mapTo(HashSet()) { getNonNullActualFileUrl(it) }
-  assertEquals(urlsFromSources.sorted(), fileSerializersByUrl.keys.associateWith { fileSerializersByUrl.getValues(it) }
-    .filterNot { entry -> entry.value.all { isSerializerWithoutEntities(it) } }.map { it.key }.sorted())
+
+  // iml file can be declared in modules.xml, but there might be no the file itself on the disk. Not sure if we should consider this
+  // situation as an empty module declaration, or no module at all (at the moment we consider this as a no-module).
+  // Either way, we have a serializer (because ModuleListSerializer creates serializers based on what it sees in the modules.xml
+  // file, even if the iml file does not exist on the disk). This should be taken into account during validation.
+  val moduleSerializersWithoutFiles = fileSerializersByUrl.values
+    .mapNotNull { it as? ModuleImlFileEntitiesSerializer }
+    .filter { !Files.exists(Paths.get(it.modulePath.path)) }
+    .toSet()
+  val moduleFileNamesWithoutFiles = moduleSerializersWithoutFiles.map { it.modulePath.moduleName + ".iml" }.toSet()
+  val moduleUrlsWithoutFiles = moduleSerializersWithoutFiles.map { it.fileUrl.url }.toSet()
+
+  // module without iml file is kind of a serializer without entity, but when WSM is loaded from cache, we can find ourselves in a situation
+  // that file on the disk does not exist already, but entities loaded from that file still exist. I.e. urlsFromSources
+  // may (when the model loaded from cache) or may not (when the model loaded from files) contain non-existing module urls.
+  assertEquals((urlsFromSources + moduleUrlsWithoutFiles).sorted(), fileSerializersByUrl.keys.associateWith { fileSerializersByUrl.getValues(it) }
+    .filterNot { entry -> entry.value.all { isSerializerWithoutEntities(it) } }
+    .map { it.key }.sorted())
 
   val fileIdFromEntities = allSources.filterIsInstance<JpsProjectFileEntitySource.FileInDirectory>().mapTo(
     HashSet()) { it.fileNameId }
   val unregisteredIds = fileIdFromEntities - fileIdToFileName.keys.toSet()
   assertTrue("Some fileNameId aren't registered: ${unregisteredIds}", unregisteredIds.isEmpty())
-  val staleIds = fileIdToFileName.keys.toSet() - fileIdFromEntities
+  val staleIds = (fileIdToFileName.keys.toSet() - fileIdFromEntities).toMutableSet()
+  staleIds.removeIf { moduleFileNamesWithoutFiles.contains(fileIdToFileName[it]) } // module without iml file not producing a stale file id
   assertTrue("There are stale mapping for some fileNameId: ${staleIds.joinToString { "$it -> ${fileIdToFileName.get(it)}" }}",
              staleIds.isEmpty())
 }

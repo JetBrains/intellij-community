@@ -1,0 +1,12 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+// LANGUAGE_VERSION: 2.2
+
+context(s: String)
+fun foo() {}
+
+fun bar() {
+    with("a") {
+        foo()
+    }
+}
+// IGNORE_K1

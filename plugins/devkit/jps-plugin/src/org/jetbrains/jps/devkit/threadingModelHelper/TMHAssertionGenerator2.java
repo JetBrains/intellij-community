@@ -83,7 +83,7 @@ public final class TMHAssertionGenerator2 implements TMHAssertionGenerator {
     "com/intellij/util/concurrency/annotations"
   );
 
-  static @NotNull Set<? extends TMHAssertionGenerator> generators(
+  public static @NotNull Set<? extends TMHAssertionGenerator> generators(
     @NotNull String threadAssertionsClassName,
     @NotNull String packageString
   ) {

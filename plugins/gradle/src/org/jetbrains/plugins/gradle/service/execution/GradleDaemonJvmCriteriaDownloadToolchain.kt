@@ -20,8 +20,7 @@ object GradleDaemonJvmCriteriaDownloadToolchain {
 
   suspend fun downloadJdkMatchingCriteria(project: Project, externalProjectPath: String) {
     val daemonJvmProperties = GradleDaemonJvmPropertiesFile.getProperties(Path.of(externalProjectPath))
-    val daemonJvmCriteria = daemonJvmProperties?.criteria ?: GradleDaemonJvmCriteria.ANY
-    val (jdkItem, jdkHome) = pickJdkItemAndPathForMatchingCriteria(project, daemonJvmCriteria) ?: return
+    val (jdkItem, jdkHome) = pickJdkItemAndPathForMatchingCriteria(project, daemonJvmProperties.criteria) ?: return
     val downloadTask = JdkDownloadUtil.createDownloadTask(project, jdkItem, jdkHome) ?: return
     val sdk = JdkDownloadUtil.createDownloadSdk(ExternalSystemJdkUtil.getJavaSdkType(), downloadTask)
     JdkDownloadUtil.downloadSdk(sdk)

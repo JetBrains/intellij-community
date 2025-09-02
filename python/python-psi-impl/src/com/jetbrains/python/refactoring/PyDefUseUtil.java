@@ -75,7 +75,6 @@ public final class PyDefUseUtil {
     ControlFlowUtil.iteratePrev(startNum, instructions,
                                 instruction -> {
                                   if (instruction instanceof PyWithContextExitInstruction withExit) {
-                                    // probably should remove acceptTypeAssertions and make context nullable
                                     if (!withExit.isSuppressingExceptions(context)) {
                                       return ControlFlowUtil.Operation.CONTINUE;
                                     }
@@ -86,7 +85,6 @@ public final class PyDefUseUtil {
                                       result.add(typeGuardInstruction);
                                       return ControlFlowUtil.Operation.CONTINUE;
                                     }
-                                    // not a back edge
                                     if (instruction.num() < startNum &&
                                         context.getOrigin() == callInstruction.getElement().getContainingFile()) {
                                       var newContext = (MAX_CONTROL_FLOW_SIZE > instructions.length)
@@ -96,9 +94,8 @@ public final class PyDefUseUtil {
                                     }
                                   }
                                   final PsiElement element = instruction.getElement();
-                                  if (acceptTypeAssertions
-                                      && instruction instanceof ConditionalInstruction conditionalInstruction
-                                      && instruction.num() < startNum) {
+                                  if (instruction.num() < startNum
+                                      && acceptTypeAssertions && instruction instanceof ConditionalInstruction conditionalInstruction) {
                                     if (conditionalInstruction.getCondition() instanceof PyTypedElement typedElement && context.getOrigin() == typedElement.getContainingFile()) {
                                       var newContext = (MAX_CONTROL_FLOW_SIZE > instructions.length)
                                                        ? TypeEvalContext.codeAnalysis(context.getOrigin().getProject(), context.getOrigin())
@@ -112,7 +109,8 @@ public final class PyDefUseUtil {
                                   }
                                   if (instruction instanceof ReadWriteInstruction rwInstruction) {
                                     final ReadWriteInstruction.ACCESS access = rwInstruction.getAccess();
-                                    if (access.isWriteAccess() || acceptTypeAssertions && access.isAssertTypeAccess()) {
+                                    if (access.isWriteAccess() ||
+                                        acceptTypeAssertions && access.isAssertTypeAccess() && instruction.num() < startNum) {
                                       final String name = elementName(element);
                                       if (Comparing.strEqual(name, varName)) {
                                         if (isReachableWithVersionChecks(rwInstruction, languageLevel)) {

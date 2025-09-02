@@ -16,6 +16,7 @@ import com.intellij.util.concurrency.InvokerSupplier;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -63,7 +64,7 @@ abstract class ServiceViewModel implements Disposable, InvokerSupplier, ServiceM
     return roots;
   }
 
-  protected abstract @NotNull List<? extends ServiceViewItem> doGetRoots();
+  protected abstract @NotNull @Unmodifiable List<? extends ServiceViewItem> doGetRoots();
 
   void saveState(ServiceViewState viewState) {
     viewState.groupByContributor = myShowContributorRoots;
@@ -437,7 +438,7 @@ abstract class ServiceViewModel implements Disposable, InvokerSupplier, ServiceM
     }
 
     @Override
-    protected @NotNull List<? extends ServiceViewItem> doGetRoots() {
+    protected @NotNull @Unmodifiable List<? extends ServiceViewItem> doGetRoots() {
       ServiceViewItem service = myServiceRef.get();
       return ContainerUtil.createMaybeSingletonList(service);
     }

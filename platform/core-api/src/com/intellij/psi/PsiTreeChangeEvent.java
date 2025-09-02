@@ -2,6 +2,7 @@
 package com.intellij.psi;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -77,8 +78,8 @@ public abstract class PsiTreeChangeEvent extends EventObject {
   protected PsiElement myChild;
   protected PsiElement myOldChild;
   protected PsiElement myNewChild;
-
-  protected PsiFile myFile;
+  @ApiStatus.Internal
+  protected PsiFile myPsiFile;
   protected int myOffset;
   protected int myOldLength;
 
@@ -132,7 +133,7 @@ public abstract class PsiTreeChangeEvent extends EventObject {
   }
 
   public @Nullable PsiFile getFile() {
-    return myFile;
+    return myPsiFile;
   }
 }
 

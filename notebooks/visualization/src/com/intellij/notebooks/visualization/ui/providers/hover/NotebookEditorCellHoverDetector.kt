@@ -9,15 +9,13 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import java.awt.GraphicsEnvironment
 import java.awt.Point
+import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
+import java.awt.event.MouseMotionListener
 import javax.swing.event.ChangeListener
 
-class NotebookEditorCellHoverDetector(private val manager: NotebookCellInlayManager) : Disposable.Default {
+class NotebookEditorCellHoverDetector(private val manager: NotebookCellInlayManager) : Disposable {
   private val editor = manager.editor
-
-  private val notebookAwtDispatcher = NotebookAWTMouseDispatcher(editor.component).also {
-    Disposer.register(this, it)
-  }
 
   private var mouseOverCell: EditorCell? = null
 
@@ -28,6 +26,16 @@ class NotebookEditorCellHoverDetector(private val manager: NotebookCellInlayMana
     editor.gutterComponentEx.mousePosition?.let {
       updateMouseOverCell(it)
     }
+  }
+
+  private val editorMouseListener = object : MouseAdapter() {
+    override fun mouseEntered(e: MouseEvent) = updateMouseOverCell(e)
+    override fun mouseExited(e: MouseEvent) = updateMouseOverCell(e)
+  }
+
+  private val editorMouseMotionEvent = object : MouseMotionListener {
+    override fun mouseDragged(e: MouseEvent) = updateMouseOverCell(e)
+    override fun mouseMoved(e: MouseEvent) = updateMouseOverCell(e)
   }
 
   init {
@@ -45,12 +53,22 @@ class NotebookEditorCellHoverDetector(private val manager: NotebookCellInlayMana
       }
     }, this)
 
-    notebookAwtDispatcher.eventDispatcher.addListener { event ->
-      if (event is MouseEvent) {
-        NotebookUiUtils.getEditorPoint(editor, event)?.let { (_, point) ->
-          updateMouseOverCell(point)
-        }
-      }
+    EditorComponentWrapper.get(editor).apply {
+      addEditorMouseEventListener(editorMouseListener)
+      addEditorMouseMotionEvent(editorMouseMotionEvent)
+    }
+  }
+
+  override fun dispose() {
+    EditorComponentWrapper.get(editor).apply {
+      removeEditorMouseEventListener(editorMouseListener)
+      removeEditorMouseMotionEvent(editorMouseMotionEvent)
+    }
+  }
+
+  private fun updateMouseOverCell(e: MouseEvent) {
+    NotebookUiUtils.getEditorPoint(editor, e)?.let { (_, point) ->
+      updateMouseOverCell(point)
     }
   }
 

@@ -14,9 +14,9 @@ import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.executors.DefaultRunExecutor;
-import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
@@ -74,7 +74,6 @@ import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.Decompressor;
-import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import junit.framework.AssertionFailedError;
@@ -616,9 +615,9 @@ public final class PlatformTestUtil {
     @SuppressWarnings("deprecation") DataContext context = DataManager.getInstance().getDataContext();
     AnActionEvent event = AnActionEvent.createFromAnAction(action, null, "", context);
     PerformWithDocumentsCommitted.commitDocumentsIfNeeded(action, event);
-    ActionUtil.performDumbAwareUpdate(action, event, false);
+    ActionUtil.updateAction(action, event);
     assertTrue(event.getPresentation().isEnabled());
-    ActionUtil.performActionDumbAwareWithCallbacks(action, event);
+    ActionUtil.performAction(action, event);
   }
 
   public static void assertTiming(@NotNull String message, long expectedMillis, long actualMillis) {
@@ -698,7 +697,7 @@ public final class PlatformTestUtil {
   public static @NotNull URL getRtJarURL() {
     String home = SystemProperties.getJavaHome();
     try {
-      return JavaVersion.current().feature >= 9 ? new URL("jrt:" + home) : new File(home + "/lib/rt.jar").toURI().toURL();
+      return CurrentJavaVersion.currentJavaVersion().feature >= 9 ? new URL("jrt:" + home) : new File(home + "/lib/rt.jar").toURI().toURL();
     }
     catch (MalformedURLException e) {
       throw new RuntimeException(e);
@@ -1175,7 +1174,7 @@ public final class PlatformTestUtil {
           descriptorProcessor.accept(descriptor);
         }
         assertNotNull(processHandler);
-        processHandler.addProcessListener(new ProcessAdapter() {
+        processHandler.addProcessListener(new ProcessListener() {
           @Override
           public void startNotified(@NotNull ProcessEvent event) {
             LOG.debug("Process notified: ", processHandler);

@@ -10,6 +10,7 @@ import com.intellij.ide.util.gotoByName.GotoActionModel;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
@@ -22,12 +23,17 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
 
+import static com.intellij.openapi.actionSystem.ex.ActionUtil.POPUP_HANDLER;
+
 public class GotoActionAction extends SearchEverywhereBaseAction implements DumbAware, LightEditCompatible {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     e = SearchFieldStatisticsCollector.wrapEventWithActionStartData(e);
+    var event = e;
     String tabID = ActionSearchEverywhereContributor.class.getSimpleName();
-    showInSearchEverywherePopup(tabID, e, false, true);
+    WriteIntentReadAction.run((Runnable)() -> {
+      showInSearchEverywherePopup(tabID, event, false, true);
+    });
   }
 
   public static void openOptionOrPerformAction(@NotNull Object element,
@@ -90,18 +96,16 @@ public class GotoActionAction extends SearchEverywhereBaseAction implements Dumb
       context, presentation, ActionPlaces.ACTION_SEARCH,
       ActionUiKind.SEARCH_POPUP, inputEvent, modifiers, ActionManager.getInstance());
     event.setInjectedContext(action.isInInjectedContext());
-    if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
-      Window window = SwingUtilities.getWindowAncestor(component);
-      ActionUtil.performDumbAwareWithCallbacks(action, event, () ->
-        ActionUtil.doPerformActionOrShowPopup(action, event, popup -> {
-          if (window != null) {
-            popup.showInCenterOf(window);
-          }
-          else {
-            popup.showInFocusCenter();
-          }
-        }));
-    }
+    Window window = SwingUtilities.getWindowAncestor(component);
+    event.getPresentation().putClientProperty(POPUP_HANDLER, popup -> {
+      if (window != null) {
+        popup.showInCenterOf(window);
+      }
+      else {
+        popup.showInFocusCenter();
+      }
+    });
+    ActionUtil.performAction(action, event);
   }
 
   @Override

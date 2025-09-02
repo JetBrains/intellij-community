@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dynamic Background Scrolling with Text</title>
+  <style>
+    canvas {
+      image-rendering: pixelated;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      line-height: 1.8;
+    }
+
+    #background {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: auto;
+      z-index: -1;
+    }
+
+    #content {
+      position: relative;
+      margin: 0;
+    }
+
+    .mark {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 1rem;
+      font-weight: bold;
+      color: white;
+      mix-blend-mode: difference; /* Ensures visibility on any background */
+      text-align: center;
+    }
+
+  </style>
+</head>
+<body>
+<canvas id="background"></canvas>
+
+<div id="content"></div>
+
+<script>
+  const canvas = document.getElementById('background')
+  const ctx = canvas.getContext('2d')
+
+  function resizeCanvas() {
+    const totalHeight = document.body.scrollHeight
+    canvas.width = window.innerWidth
+    canvas.height = totalHeight
+    drawBackground()
+  }
+
+  function drawBackground() {
+    const width = canvas.width
+    const height = canvas.height
+    ctx.imageSmoothingEnabled = false
+
+    const imageData = ctx.createImageData(width, height)
+
+    for (let y = 0; y < height; y++) {
+      const red = (y >> 16) & 0xFF
+      const green = (y >> 8) & 0xFF
+      const blue = y & 0xFF
+
+      for (let x = 0; x < width; x++) {
+        const pixelIndex = (y * width + x) * 4
+
+        imageData.data[pixelIndex] = red
+        imageData.data[pixelIndex + 1] = green
+        imageData.data[pixelIndex + 2] = blue
+        imageData.data[pixelIndex + 3] = 255
+      }
+    }
+    ctx.putImageData(imageData, 0, 0)
+  }
+
+  window.addEventListener('resize', resizeCanvas)
+</script>
+<script>
+  const contentDiv = document.getElementById("content");
+  const totalHeight = 4096;
+  const interval = 256;
+  const numMarks = Math.ceil(totalHeight / interval);
+
+  for (let i = 0; i <= numMarks; i++) {
+    const markPosition = i * interval;
+
+    const mark = document.createElement("div");
+    mark.className = "mark";
+    mark.style.top = `${markPosition}px`;
+    mark.textContent = `${markPosition}px`;
+
+    contentDiv.appendChild(mark);
+    resizeCanvas();
+  }
+</script>
+</body>
+</html>

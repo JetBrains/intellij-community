@@ -8,6 +8,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.util.SystemProperties
 import com.jetbrains.python.sdk.PythonSdkUtil
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.div
@@ -28,6 +29,8 @@ private const val UNIX_OPT_PATH = "/opt/"
 
 private val LOG = Logger.getInstance("#com.jetbrains.python.packaging")
 
+@ApiStatus.Internal
+
 fun getCondaBasePython(systemCondaExecutable: String): String? {
   val condaFile = LocalFileSystem.getInstance().findFileByPath(systemCondaExecutable)
   if (condaFile != null) {
@@ -41,6 +44,8 @@ fun getCondaBasePython(systemCondaExecutable: String): String? {
 }
 
 private fun getPythonName(): String = if (SystemInfo.isWindows) PYTHON_EXE_NAME else PYTHON_UNIX_BINARY_NAME
+
+@ApiStatus.Internal
 
 fun findCondaExecutableRelativeToEnv(pyExecutable: Path): Path? {
   if (!Files.exists(pyExecutable)) {
@@ -112,8 +117,7 @@ private fun findExecutable(condaName: String, condaFolder: Path): Path? {
   if (!Files.exists(bin)) return null
   return PythonSdkUtil.getExecutablePath(bin, condaName)
 }
-
-fun getSystemCondaExecutable(): Path? {
+internal fun getSystemCondaExecutable(): Path? {
   val condaName = if (SystemInfo.isWindows) CONDA_BAT_NAME else CONDA_BINARY_NAME
 
   // TODO we need another findInPath() that works with Path-s

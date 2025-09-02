@@ -28,6 +28,7 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 
@@ -121,8 +122,11 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
 
     CommandProcessor.getInstance().executeCommand(project, () -> {
       TestFramework framework = d.getSelectedTestFrameworkDescriptor();
-      final TestGenerator generator = TestGenerators.INSTANCE.forLanguage(framework.getLanguage());
-      DumbService.getInstance(project).withAlternativeResolveEnabled(() -> generator.generateTest(project, d));
+      Collection<TestGenerator> generators = TestGenerators.INSTANCE.allForLanguageWithDefault(framework.getLanguage());
+      for (TestGenerator generator : generators) {
+        PsiElement psiElement = DumbService.getInstance(project).withAlternativeResolveEnabled(() -> generator.generateTest(project, d));
+        if (psiElement != null) break;
+      }
     }, CodeInsightBundle.message("intention.create.test.title"), this);
   }
 

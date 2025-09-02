@@ -13,7 +13,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.io.File
 
 abstract class MissingDeprecatedAnnotationOnScheduledForRemovalApiInspectionTestBase : JvmInspectionTestBase() {
-  override val inspection = MissingDeprecatedAnnotationOnScheduledForRemovalApiInspection()
+  override val inspection: MissingDeprecatedAnnotationOnScheduledForRemovalApiInspection = MissingDeprecatedAnnotationOnScheduledForRemovalApiInspection()
 
   @Suppress("DuplicatedCode")
   override fun getProjectDescriptor(): LightProjectDescriptor = object : ProjectDescriptor(LanguageLevel.HIGHEST) {

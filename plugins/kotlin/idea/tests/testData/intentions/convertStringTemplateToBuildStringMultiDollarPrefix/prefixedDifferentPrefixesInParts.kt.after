@@ -1,0 +1,17 @@
+// COMPILER_ARGUMENTS: -Xmulti-dollar-interpolation
+// PRIORITY: LOW
+
+fun test(a: Int, b: Int, c: Int, d: Int, e: Int) {
+    buildString {
+        append("a")
+        append(a)
+        append($$"$b")
+        append(b)
+        append($$$"$$c")
+        append(c)
+        append($$$$"$$$d")
+        append(d)
+        append($$$$$"$$$$e")
+        append(e)
+    }
+}

@@ -1,3 +1,0 @@
-- name: lib/gradle-java-maven.jar
-  modules:
-  - name: intellij.gradle.java.maven

@@ -31,10 +31,12 @@ import org.intellij.plugins.relaxNG.compact.psi.RncFile;
 import org.intellij.plugins.relaxNG.compact.psi.RncFileReference;
 import org.intellij.plugins.relaxNG.compact.psi.util.EscapeUtil;
 import org.intellij.plugins.relaxNG.references.FileReferenceUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-abstract class RncFileReferenceImpl extends RncElementImpl implements RncFileReference {
+@ApiStatus.Internal
+public abstract class RncFileReferenceImpl extends RncElementImpl implements RncFileReference {
   RncFileReferenceImpl(ASTNode node) {
     super(node);
   }

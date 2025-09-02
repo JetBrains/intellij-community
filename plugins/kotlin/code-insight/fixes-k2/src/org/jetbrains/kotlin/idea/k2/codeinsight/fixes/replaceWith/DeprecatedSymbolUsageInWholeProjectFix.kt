@@ -13,14 +13,14 @@ import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.replaceUsagesInW
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.*
 
-class DeprecatedSymbolUsageInWholeProjectFix(
+internal class DeprecatedSymbolUsageInWholeProjectFix(
     element: KtReferenceExpression,
     replaceWith: ReplaceWithData,
     @Nls private val text: String
 ) : DeprecatedSymbolUsageFixBase(element, replaceWith) {
-    override fun getFamilyName() = KotlinBundle.message("replace.deprecated.symbol.usage.in.whole.project")
-    override fun getText() = text
-    override fun startInWriteAction() = false
+    override fun getFamilyName(): String = KotlinBundle.message("replace.deprecated.symbol.usage.in.whole.project")
+    override fun getText(): String = text
+    override fun startInWriteAction(): Boolean = false
 
     override fun isAvailable(project: Project, editor: Editor?, file: KtFile): Boolean {
         return super.isAvailable(project, editor, file) && targetPsiElement() != null

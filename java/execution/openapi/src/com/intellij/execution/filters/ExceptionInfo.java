@@ -1,6 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.filters;
 
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -151,7 +152,7 @@ public class ExceptionInfo {
     public RefinerMatchResult matchElement(@NotNull PsiElement current) {
       PsiElement newException = findNewException(current);
       if (newException != null) return RefinerMatchResult.of(newException);
-      if (current instanceof PsiKeyword && current.textMatches(PsiKeyword.THROW)) {
+      if (current instanceof PsiKeyword && current.textMatches(JavaKeywords.THROW)) {
         PsiElement nextLeaf = PsiTreeUtil.nextVisibleLeaf(current);
         newException = findNewException(nextLeaf);
         if (newException != null) return onTheSameLineFor(current, newException, true);
@@ -161,7 +162,7 @@ public class ExceptionInfo {
 
     private @Nullable PsiElement findNewException(PsiElement element) {
       // We look for new Exception() expression rather than throw statement, because stack-trace is filled in exception constructor
-      if (element instanceof PsiKeyword && element.textMatches(PsiKeyword.NEW)) {
+      if (element instanceof PsiKeyword && element.textMatches(JavaKeywords.NEW)) {
         PsiNewExpression newExpression = ObjectUtils.tryCast(element.getParent(), PsiNewExpression.class);
         if (newExpression != null) {
           PsiType type = newExpression.getType();

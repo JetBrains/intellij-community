@@ -430,6 +430,11 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, UiCo
     }
 
     @Override
+    public @NotNull CharSequence getText() {
+      return widget().getText();
+    }
+
+    @Override
     public boolean isCommandRunning() {
       try {
         return widget().hasRunningCommands();

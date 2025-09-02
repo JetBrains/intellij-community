@@ -85,6 +85,8 @@ public abstract class AbstractBasicCompleteStatementTest extends LightPlatformCo
   public void testNoErrors() { doTest(); }
 
   public void testThrow() { doTest(); }
+  
+  public void testThrowTwoLinesSemicolon() { doTest(); }
 
   public void testReturn() { doTest(); }
 

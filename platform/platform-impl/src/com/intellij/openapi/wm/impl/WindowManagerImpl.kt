@@ -274,7 +274,8 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
     return null
   }
 
-  internal fun removeAndGetRootFrame(): IdeFrameImpl? {
+  @Internal
+  fun removeAndGetRootFrame(): IdeFrameImpl? {
     return frameToReuse.getAndSet(null)
   }
 
@@ -330,7 +331,7 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
     frameToReuse.getAndSet(null)?.doDispose()
   }
 
-  fun withFrameReuseEnabled(): AutoCloseable {
+  override fun withFrameReuseEnabled(): AutoCloseable {
     val oldValue = frameReuseEnabled
     frameReuseEnabled = true
     return AutoCloseable { frameReuseEnabled = oldValue }

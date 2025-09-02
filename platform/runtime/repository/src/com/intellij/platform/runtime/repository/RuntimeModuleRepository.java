@@ -17,10 +17,10 @@ import java.util.List;
 @ApiStatus.NonExtendable
 public interface RuntimeModuleRepository {
   /**
-   * Creates a repository from a JAR file containing module descriptors.
+   * Creates a repository from a file containing module descriptors.
    */
-  static @NotNull RuntimeModuleRepository create(@NotNull Path moduleDescriptorsJarPath) throws MalformedRepositoryException {
-    return new RuntimeModuleRepositoryImpl(moduleDescriptorsJarPath);
+  static @NotNull RuntimeModuleRepository create(@NotNull Path moduleDescriptorsFilePath) throws MalformedRepositoryException {
+    return new RuntimeModuleRepositoryImpl(moduleDescriptorsFilePath);
   }
 
   /**

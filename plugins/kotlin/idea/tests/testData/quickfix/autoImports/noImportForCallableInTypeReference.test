@@ -5,6 +5,7 @@
 // ACTION: Create class 'Some'
 // ACTION: Create enum 'Some'
 // ACTION: Create interface 'Some'
+// ACTION: Create test
 // ACTION: Create type parameter 'Some' in function 'test'
 // ACTION: Remove explicit type specification
 // ERROR: Unresolved reference: Some

@@ -6,6 +6,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.spellchecker.DictionaryLayer
+import com.intellij.spellchecker.statistics.SpellcheckerRateTracker
 import org.jetbrains.annotations.ApiStatus.Internal
 
 /**
@@ -17,23 +18,29 @@ abstract class SpellCheckerQuickFixFactory {
     private val EP_NAME = ExtensionPointName.create<SpellCheckerQuickFixFactory>("com.intellij.spellchecker.quickFixFactory")
 
     @JvmStatic
-    fun rename(element: PsiElement): LocalQuickFix {
-      return EP_NAME.extensionList.firstNotNullOfOrNull { it.createRename(element) } ?: RenameTo()
+    @JvmOverloads
+    fun rename(element: PsiElement, tracker: SpellcheckerRateTracker? = null): LocalQuickFix {
+      return EP_NAME.extensionList.firstNotNullOfOrNull { it.createRename(element) } ?: RenameTo(tracker)
     }
 
     @JvmStatic
-    fun changeToVariants(element: PsiElement, rangeInElement: TextRange, word: String): List<LocalQuickFix> {
-      return EP_NAME.extensionList.firstNotNullOfOrNull { it.createChangeToVariantsFixes(element, rangeInElement, word) } ?: ChangeTo(word, element, rangeInElement).getAllAsFixes()
+    @JvmOverloads
+    fun changeToVariants(element: PsiElement, rangeInElement: TextRange, word: String, tracker: SpellcheckerRateTracker? = null): List<LocalQuickFix> {
+      return EP_NAME.extensionList.firstNotNullOfOrNull { it.createChangeToVariantsFixes(element, rangeInElement, word) }
+             ?: ChangeTo(word, element, rangeInElement, tracker).getAllAsFixes()
     }
 
     @JvmStatic
-    fun saveTo(element: PsiElement, rangeInElement: TextRange, word: String): LocalQuickFix {
-      return saveTo(element, rangeInElement, word, null)
+    @JvmOverloads
+    fun saveTo(element: PsiElement, rangeInElement: TextRange, word: String, tracker: SpellcheckerRateTracker? = null): LocalQuickFix {
+      return saveTo(element, rangeInElement, word, null, tracker)
     }
 
     @JvmStatic
-    fun saveTo(element: PsiElement, rangeInElement: TextRange, word: String, layer: DictionaryLayer?): LocalQuickFix {
-      return EP_NAME.extensionList.firstNotNullOfOrNull { it.createSaveToFix(element, rangeInElement, word, layer) } ?: SaveTo(word, layer)
+    @JvmOverloads
+    fun saveTo(element: PsiElement, rangeInElement: TextRange, word: String, layer: DictionaryLayer?, tracker: SpellcheckerRateTracker? = null): LocalQuickFix {
+      return EP_NAME.extensionList.firstNotNullOfOrNull { it.createSaveToFix(element, rangeInElement, word, layer) }
+             ?: SaveTo(word, layer, tracker)
     }
   }
 

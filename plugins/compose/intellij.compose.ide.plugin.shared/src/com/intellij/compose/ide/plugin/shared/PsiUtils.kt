@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compose.ide.plugin.shared
 
+import com.intellij.facet.FacetManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.roots.ProjectRootModificationTracker
@@ -70,6 +71,13 @@ internal fun isComposeEnabledInModule(module: Module): Boolean {
   return foundClasses.isNotEmpty()
 }
 
+private const val ANDROID_FACET_CLASS_NAME: String = "org.jetbrains.android.facet.AndroidFacet"
+
+internal fun isAndroidFacetConfiguredInModule(module: Module): Boolean {
+  val facets = FacetManager.getInstance(module).allFacets
+  return facets.any { it::class.java.name == ANDROID_FACET_CLASS_NAME }
+}
+
 internal fun isModifierEnabledInModule(module: Module): Boolean {
   val moduleScope = module.getModuleWithDependenciesAndLibrariesScope(/*includeTests = */true)
   val foundClasses = KotlinFullClassNameIndex[COMPOSE_MODIFIER_CLASS_ID.asFqNameString(), module.project, moduleScope]
@@ -107,7 +115,7 @@ internal fun KtDeclaration.returnTypeFqName(): FqName? =
     if (this !is KtCallableDeclaration) null
     else analyze(this) { this@returnTypeFqName.returnType.expandedSymbol?.classId?.asSingleFqName() }
 
-internal fun KtElement.callReturnTypeFqName() =
+internal fun KtElement.callReturnTypeFqName(): FqName? =
   analyze(this) {
     val call = resolveToCall()?.calls?.firstOrNull() as? KaCallableMemberCall<*, *>
     call?.let { it.symbol.returnType.expandedSymbol?.classId?.asSingleFqName() }

@@ -5,7 +5,6 @@ import com.intellij.codeInsight.inline.completion.session.InlineCompletionSessio
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionUpdateManager
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupEvent
-import com.intellij.injected.editor.EditorWindow
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.runReadAction
@@ -20,6 +19,7 @@ import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.PsiFileImpl
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil
 import com.intellij.psi.util.PsiUtilBase
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.ui.EDT
@@ -227,15 +227,7 @@ interface InlineCompletionEvent {
     @ApiStatus.Experimental
     override val editor: Editor,
     override val event: LookupEvent
-  ) : InlineLookupEvent, Builtin {
-
-    @Deprecated("It should not be created outside of the platform.")
-    @ApiStatus.ScheduledForRemoval
-    constructor(event: LookupEvent) : this(
-      runReadAction { event.lookup!!.editor },
-      event
-    )
-  }
+  ) : InlineLookupEvent, Builtin
 
   sealed interface InlineLookupEvent : InlineCompletionEvent, Builtin {
 
@@ -245,7 +237,7 @@ interface InlineCompletionEvent {
     // Since injected editors are poorly supported, we register handlers only for top-level editors.
     @get:ApiStatus.Experimental
     val topLevelEditor: Editor
-      get() = (editor as? EditorWindow)?.delegate ?: editor
+      get() = InjectedLanguageEditorUtil.getTopLevelEditor(editor)
 
     val event: LookupEvent
 

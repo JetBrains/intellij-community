@@ -1,10 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeserver.highlighting.errors;
 
-import com.intellij.codeInsight.JavaContainerProvider;
+import com.intellij.codeInsight.ContainerProvider;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightMessageUtil;
 import com.intellij.codeInsight.highlighting.HighlightUsagesDescriptionLocation;
 import com.intellij.java.codeserver.highlighting.JavaCompilationErrorBundle;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
@@ -56,9 +57,17 @@ final class JavaErrorFormatUtil {
     return symbolName == null ? "?" : symbolName;
   }
 
+  private static PsiElement getContainer(@NotNull PsiElement refElement) {
+    for (ContainerProvider provider : ContainerProvider.EP_NAME.getExtensionList()) {
+      PsiElement container = provider.getContainer(refElement);
+      if (container != null) return container;
+    }
+    return refElement.getParent();
+  }
+
   static @NotNull String formatResolvedSymbolContainer(@NotNull JavaResolveResult result) {
     PsiElement element = result.getElement();
-    PsiElement container = element == null ? null : new JavaContainerProvider().getContainer(element);
+    PsiElement container = element == null ? null : getContainer(element);
     String symbolName = container == null ? null : HighlightMessageUtil.getSymbolName(container, result.getSubstitutor());
     return symbolName == null ? "?" : symbolName;
   }
@@ -90,9 +99,10 @@ final class JavaErrorFormatUtil {
     throw new IllegalArgumentException("Record special method expected: " + method);
   }
   
-  static @Nullable TextRange getRange(@NotNull PsiElement element) {
+  static @NotNull TextRange getRange(@NotNull PsiElement element) {
     if (element instanceof PsiMember member) {
-      return getMemberDeclarationTextRange(member);
+      TextRange range = getMemberDeclarationTextRange(member);
+      return range == null ? TextRange.create(0, element.getTextLength()) : range;
     }
     if (element instanceof PsiJavaModule module) {
       return getModuleRange(module);
@@ -109,8 +119,8 @@ final class JavaErrorFormatUtil {
         return nameElement.getTextRangeInParent();
       }
     }
-    if (element instanceof PsiReferenceExpression refExpression) {
-      PsiElement nameElement = refExpression.getReferenceNameElement();
+    if (element instanceof PsiJavaCodeReferenceElement ref) {
+      PsiElement nameElement = ref.getReferenceNameElement();
       if (nameElement != null) {
         return nameElement.getTextRangeInParent();
       }
@@ -119,7 +129,7 @@ final class JavaErrorFormatUtil {
     if (PsiUtil.isJavaToken(nextSibling, JavaTokenType.SEMICOLON)) {
       return TextRange.create(0, element.getTextLength() + 1);
     }
-    return null;
+    return TextRange.create(0, element.getTextLength());
   }
 
   static @NotNull TextRange getMethodDeclarationTextRange(@NotNull PsiMethod method) {
@@ -203,7 +213,7 @@ final class JavaErrorFormatUtil {
   }
 
   static @NotNull String formatType(@Nullable PsiType type) {
-    return type == null ? PsiKeyword.NULL : PsiTypesUtil.removeExternalAnnotations(type).getInternalCanonicalText();
+    return type == null ? JavaKeywords.NULL : PsiTypesUtil.removeExternalAnnotations(type).getInternalCanonicalText();
   }
 
   static @NlsSafe @NotNull String format(@NotNull PsiElement element) {

@@ -20,4 +20,19 @@ public interface Segment {
     if (result == 0) result = r1.getEndOffset() - r2.getEndOffset();
     return result;
   };
+
+  /**
+   * @return true if {@link #getStartOffset()} {@code <= offset && offset < } {@link #getEndOffset()}
+   */
+  @Contract(pure = true)
+  default boolean contains(int offset) {
+    return getStartOffset() <= offset && offset < getEndOffset();
+  }
+  /**
+   * @return true if {@link #getStartOffset()} {@code <= offset && offset <= } {@link #getEndOffset()}
+   */
+  @Contract(pure = true)
+  default boolean containsInclusive(int offset) {
+    return getStartOffset() <= offset && offset <= getEndOffset();
+  }
 }

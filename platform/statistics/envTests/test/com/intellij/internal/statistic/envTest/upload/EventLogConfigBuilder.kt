@@ -1,12 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.envTest.upload
 
-import com.intellij.internal.statistic.config.EventLogExternalSettings
-import com.intellij.internal.statistic.config.bean.EventLogConfigVersions
-import com.intellij.internal.statistic.config.bean.EventLogMajorVersionBorders
-import com.intellij.internal.statistic.envTest.ApacheContainer
 import com.intellij.internal.statistic.config.SerializationHelper
+import com.intellij.internal.statistic.envTest.ApacheContainer
 import com.intellij.openapi.util.io.FileUtil
+import com.jetbrains.fus.reporting.model.config.v4.Configuration
+import com.jetbrains.fus.reporting.model.config.v4.ConfigurationMajorBuildVersionBorder
+import com.jetbrains.fus.reporting.model.config.v4.ConfigurationReleaseFilter
+import com.jetbrains.fus.reporting.model.config.v4.ConfigurationVersion
 import java.nio.file.Paths
 
 class EventLogConfigBuilder(private val container: ApacheContainer, private val tmpLocalRoot: String) {
@@ -51,25 +52,19 @@ class EventLogConfigBuilder(private val container: ApacheContainer, private val 
   }
 
   fun create() {
-    val externalSettings = EventLogExternalSettings()
-    externalSettings.productCode = PRODUCT_CODE
-    val version = EventLogConfigVersions()
-    val majorVersionBorders = EventLogMajorVersionBorders()
-    majorVersionBorders.from = productVersion
-    version.majorBuildVersionBorders = majorVersionBorders
-    val filter = EventLogConfigVersions.EventLogConfigFilterCondition()
-    filter.releaseType = "ALL"
-    filter.from = fromBucket
-    filter.to = toBucket
-    version.releaseFilters = listOf(filter)
+    val majorVersionBorders = ConfigurationMajorBuildVersionBorder(productVersion)
+
     val endpoints = hashMapOf<String, String>()
     if (sendPath != null) {
       endpoints["send"] = getSendUrl()
     }
     endpoints["metadata"] = container.getBaseUrl("$TEST_SERVER_ROOT/$metadataPath").toString()
-    version.endpoints = endpoints
-    version.options = options
-    externalSettings.versions = listOf(version)
+
+    val filter = ConfigurationReleaseFilter("ALL", fromBucket, toBucket)
+
+    val version = ConfigurationVersion(majorVersionBorders, endpoints, options, listOf(filter))
+
+    val externalSettings = Configuration(PRODUCT_CODE, listOf(version))
 
     val config = SerializationHelper.serializeToSingleLine(externalSettings)
     val path = String.format(SETTINGS_ROOT, RECORDER_ID, PRODUCT_CODE)

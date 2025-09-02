@@ -1,5 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.ide.JavaUiBundle;
@@ -23,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.List;
 
-public class ModuleConfigurable extends ProjectStructureElementConfigurable<Module> implements Place.Navigator {
+public final class ModuleConfigurable extends ProjectStructureElementConfigurable<Module> implements Place.Navigator {
   private final Module myModule;
   private final ModuleGrouper myModuleGrouper;
   private final ModulesConfigurator myConfigurator;
@@ -108,7 +107,6 @@ public class ModuleConfigurable extends ProjectStructureElementConfigurable<Modu
     ModuleEditor editor = getModuleEditor();
     return editor == null ? null : editor.getHelpTopic();
   }
-
 
   @Override
   public JComponent createOptionsPanel() {

@@ -5,7 +5,6 @@ import com.google.common.base.Ascii;
 import com.intellij.execution.Executor;
 import com.intellij.execution.ExecutorRegistry;
 import com.intellij.execution.executors.DefaultRunExecutor;
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -38,7 +37,6 @@ import com.jediterm.terminal.model.TerminalModelListener;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.terminal.TerminalCommandHandlerCustomizer.Constants;
 import org.jetbrains.plugins.terminal.arrangement.TerminalWorkingDirectoryManager;
 import org.jetbrains.plugins.terminal.fus.TerminalUsageTriggerCollector;
 import org.jetbrains.plugins.terminal.util.TerminalUtilKt;
@@ -63,7 +61,6 @@ public final class TerminalShellCommandHandlerHelper {
   private final Alarm myAlarm;
   private volatile String myWorkingDirectory;
   private volatile Boolean myHasRunningCommands;
-  private PropertiesComponent myPropertiesComponent;
   private final AtomicLong myLastKeyPressedMillis = new AtomicLong();
   private TerminalLineIntervalHighlighting myCommandHighlighting;
   private volatile SmartCommandContext myLastSmartCommandContext;
@@ -74,7 +71,7 @@ public final class TerminalShellCommandHandlerHelper {
     myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, widget);
 
     ApplicationManager.getApplication().getMessageBus().connect(myWidget).subscribe(
-      Constants.getTERMINAL_COMMAND_HANDLER_TOPIC(), () -> scheduleCommandHighlighting());
+      RunCommandUsingIdeUtil.TERMINAL_COMMAND_HANDLER_TOPIC, () -> scheduleCommandHighlighting());
 
     TerminalModelListener listener = () -> {
       if (System.currentTimeMillis() - myLastKeyPressedMillis.get() < TYPING_THRESHOLD_MS) {
@@ -182,18 +179,8 @@ public final class TerminalShellCommandHandlerHelper {
     myNotificationDisposable = notificationDisposable;
   }
 
-  private boolean isEnabledForProject() {
-    return getPropertiesComponent().getBoolean(Constants.TERMINAL_CUSTOM_COMMAND_EXECUTION,
-                                               Constants.TERMINAL_CUSTOM_COMMAND_EXECUTION_DEFAULT);
-  }
-
-  private @NotNull PropertiesComponent getPropertiesComponent() {
-    PropertiesComponent propertiesComponent = myPropertiesComponent;
-    if (propertiesComponent == null) {
-      propertiesComponent = ReadAction.compute(() -> PropertiesComponent.getInstance());
-      myPropertiesComponent = propertiesComponent;
-    }
-    return propertiesComponent;
+  private static boolean isEnabledForProject() {
+    return RunCommandUsingIdeUtil.INSTANCE.isEnabled();
   }
 
   private @Nullable String getWorkingDirectory() {

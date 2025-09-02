@@ -4,6 +4,7 @@ from .fields import RemoveField as RemoveField
 from .fields import RenameField as RenameField
 from .models import AddConstraint as AddConstraint
 from .models import AddIndex as AddIndex
+from .models import AlterConstraint as AlterConstraint
 from .models import AlterIndexTogether as AlterIndexTogether
 from .models import AlterModelManagers as AlterModelManagers
 from .models import AlterModelOptions as AlterModelOptions
@@ -20,3 +21,29 @@ from .models import RenameModel as RenameModel
 from .special import RunPython as RunPython
 from .special import RunSQL as RunSQL
 from .special import SeparateDatabaseAndState as SeparateDatabaseAndState
+
+__all__ = [
+    "CreateModel",
+    "DeleteModel",
+    "AlterModelTable",
+    "AlterModelTableComment",
+    "AlterUniqueTogether",
+    "RenameModel",
+    "AlterIndexTogether",
+    "AlterModelOptions",
+    "AddIndex",
+    "RemoveIndex",
+    "RenameIndex",
+    "AddField",
+    "RemoveField",
+    "AlterField",
+    "RenameField",
+    "AddConstraint",
+    "RemoveConstraint",
+    "AlterConstraint",
+    "SeparateDatabaseAndState",
+    "RunSQL",
+    "RunPython",
+    "AlterOrderWithRespectTo",
+    "AlterModelManagers",
+]

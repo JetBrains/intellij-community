@@ -222,7 +222,7 @@ public abstract class AbstractParameterTablePanel<P extends AbstractVariableData
       final P currentItem = getVariableData()[row];
       AbstractParameterTablePanel.this.exchangeRows(row, targetRow, currentItem);
 
-      myTableModel.fireTableRowsUpdated(Math.min(targetRow, row), Math.max(targetRow, row));
+      super.exchangeRows(row, targetRow);
       myTable.getSelectionModel().setSelectionInterval(targetRow, targetRow);
       updateSignature();
     }

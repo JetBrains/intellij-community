@@ -69,7 +69,7 @@ class KotlinMethodSmartStepTarget(
     fun getDeclaration(): KtDeclaration? =
         declarationPtr.getElementInReadAction()
 
-    override fun createMethodFilter(): MethodFilter {
+    override fun createMethodFilter(): KotlinMethodFilter {
         val declaration = declarationPtr.getElementInReadAction()
         return KotlinMethodFilter(declaration, callingExpressionLines, methodInfo)
     }

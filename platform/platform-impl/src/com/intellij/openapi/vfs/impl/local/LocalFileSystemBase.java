@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.core.CoreBundle;
@@ -15,8 +15,8 @@ import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
-import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.util.PathUtilRt;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.SystemProperties;
@@ -307,7 +307,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
         var actualCS = FileSystemUtil.readParentCaseSensitivity(new File(existing.getPath()));
         if ((actualCS == FileAttributes.CaseSensitivity.SENSITIVE) != knownCS) {
           // we need to update case sensitivity
-          var event = VirtualDirectoryImpl.generateCaseSensitivityChangedEvent(parent, actualCS);
+          var event = ((PersistentFSImpl)PersistentFS.getInstance()).generateCaseSensitivityChangedEvent(parent, actualCS);
           if (event != null) {
             RefreshQueue.getInstance().processEvents(false, List.of(event));
           }

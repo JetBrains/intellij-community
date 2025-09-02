@@ -6,12 +6,12 @@ import com.intellij.internal.statistic.eventLog.DataCollectorSystemEventLogger;
 import com.intellij.internal.statistic.eventLog.EventLogApplicationInfo;
 import com.intellij.internal.statistic.eventLog.EventLogSendConfig;
 import com.intellij.internal.statistic.eventLog.config.EventLogExternalApplicationInfo;
-import com.intellij.internal.statistic.eventLog.connection.EventLogConnectionSettings;
 import com.intellij.internal.statistic.eventLog.connection.EventLogSendListener;
 import com.intellij.internal.statistic.eventLog.connection.EventLogStatisticsService;
 import com.intellij.internal.statistic.eventLog.connection.StatisticsResult;
 import com.intellij.internal.statistic.uploader.events.ExternalEventsLogger;
 import com.intellij.internal.statistic.uploader.util.ExtraHTTPHeadersParser;
+import com.jetbrains.fus.reporting.model.http.StatsConnectionSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -90,12 +90,12 @@ public final class EventLogUploader {
                                          @NotNull ExternalEventsLogger eventsLogger) {
     String recorderId = config.getRecorderId();
     logger.info("[" + recorderId + "] Start uploading...");
-    EventLogConnectionSettings connectionSettings = appInfo.getConnectionSettings();
+    StatsConnectionSettings connectionSettings = appInfo.getConnectionSettings();
     logger.info("[" + recorderId + "] {"
                 + "product:" + appInfo.getProductCode()
                 + ", productVersion:" + appInfo.getProductVersion()
-                + ", userAgent:" + connectionSettings.getUserAgent()
-                + ", url: " + appInfo.getTemplateUrl()
+                + ", userAgent:" + connectionSettings.provideUserAgent()
+                + ", regionalCode: " + appInfo.getRegionalCode()
                 + ", internal:" + appInfo.isInternal()
                 + ", isTestConfig:" + appInfo.isTestConfig()
                 + ", isTestSendEndpoint:" + appInfo.isTestSendEndpoint() + "}");
@@ -134,18 +134,18 @@ public final class EventLogUploader {
                                                                       DataCollectorSystemEventLogger eventLogger) {
     String productCode = options.get(EventLogUploaderOptions.PRODUCT_OPTION);
     String productVersion = options.get(EventLogUploaderOptions.PRODUCT_VERSION_OPTION);
-    String url = options.get(EventLogUploaderOptions.URL_OPTION);
+    String regionalCode = options.get(EventLogUploaderOptions.REGIONAL_CODE_OPTION);
     String userAgent = options.get(EventLogUploaderOptions.USER_AGENT_OPTION);
     String headersString = options.get(EventLogUploaderOptions.EXTRA_HEADERS);
     Map<String, String> extraHeaders = ExtraHTTPHeadersParser.parse(headersString);
     int baselineVersion = Integer.parseInt(options.get(EventLogUploaderOptions.BASELINE_VERSION));
-    if (url != null && productCode != null) {
+    if (regionalCode != null && productCode != null) {
       boolean isInternal = options.containsKey(EventLogUploaderOptions.INTERNAL_OPTION);
       boolean isTestSendEndpoint = options.containsKey(EventLogUploaderOptions.TEST_SEND_ENDPOINT);
       boolean isTestConfig = options.containsKey(EventLogUploaderOptions.TEST_CONFIG);
       boolean isEAP = options.containsKey(EventLogUploaderOptions.EAP_OPTION);
       return new EventLogExternalApplicationInfo(
-        url, productCode, productVersion, userAgent, isInternal, isTestConfig, isTestSendEndpoint, isEAP, extraHeaders, logger, eventLogger,
+        regionalCode, productCode, productVersion, userAgent, isInternal, isTestConfig, isTestSendEndpoint, isEAP, extraHeaders, logger, eventLogger,
         baselineVersion);
     }
     return null;

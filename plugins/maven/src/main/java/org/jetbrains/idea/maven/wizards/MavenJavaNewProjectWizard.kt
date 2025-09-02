@@ -6,7 +6,6 @@ import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampl
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.MAVEN
 import com.intellij.ide.projectWizard.generators.*
 import com.intellij.ide.starters.local.StandardAssetsProvider
-import com.intellij.ide.util.projectWizard.ProjectConfigurator
 import com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardStep.Companion.ADD_SAMPLE_CODE_PROPERTY_NAME
@@ -31,8 +30,6 @@ class MavenJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
     MavenNewProjectWizardStep<JavaNewProjectWizard.Step>(parent),
     BuildSystemJavaNewProjectWizardData by parent,
     MavenJavaNewProjectWizardData {
-
-    private val builder = MavenJavaModuleBuilder()
 
     override val addSampleCodeProperty = propertyGraph.property(true)
       .bindBooleanStorage(ADD_SAMPLE_CODE_PROPERTY_NAME)
@@ -60,11 +57,7 @@ class MavenJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
     }
 
     override fun setupProject(project: Project) {
-      linkMavenProject(project, builder)
-    }
-
-    override fun createProjectConfigurator(): ProjectConfigurator? {
-      return builder.createProjectConfigurator()
+      linkMavenProject(project, MavenJavaModuleBuilder())
     }
 
     init {

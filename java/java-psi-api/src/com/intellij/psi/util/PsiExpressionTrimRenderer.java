@@ -1,6 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.*;
 import com.intellij.util.NotNullFunction;
@@ -21,7 +22,7 @@ public class PsiExpressionTrimRenderer extends JavaRecursiveElementWalkingVisito
   @Override
   public void visitInstanceOfExpression(@NotNull PsiInstanceOfExpression expression) {
     expression.getOperand().accept(this);
-    myBuf.append(" ").append(PsiKeyword.INSTANCEOF).append(" ");
+    myBuf.append(" ").append(JavaKeywords.INSTANCEOF).append(" ");
     final PsiTypeElement checkType = expression.getCheckType();
     if (checkType != null) {
       myBuf.append(checkType.getText());
@@ -211,14 +212,14 @@ public class PsiExpressionTrimRenderer extends JavaRecursiveElementWalkingVisito
     final PsiExpressionList argumentList = expr.getArgumentList();
 
     if (anonymousClass != null) {
-      myBuf.append(PsiKeyword.NEW).append(" ").append(anonymousClass.getBaseClassType().getPresentableText());
+      myBuf.append(JavaKeywords.NEW).append(" ").append(anonymousClass.getBaseClassType().getPresentableText());
       if (argumentList != null) argumentList.accept(this);
       myBuf.append(" {...}");
     }
     else {
       final PsiJavaCodeReferenceElement reference = expr.getClassReference();
       if (reference != null) {
-        myBuf.append(PsiKeyword.NEW).append(" ").append(reference.getText());
+        myBuf.append(JavaKeywords.NEW).append(" ").append(reference.getText());
 
         final PsiExpression[] arrayDimensions = expr.getArrayDimensions();
         final PsiType type = expr.getType();

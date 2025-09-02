@@ -12,6 +12,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.VcsLogDataKeys
+import com.intellij.vcs.log.graph.VcsLogVisibleGraphIndex
 import com.intellij.vcs.log.impl.VcsLogNavigationUtil.jumpToGraphRow
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector.PARENT_COMMIT
@@ -69,7 +70,7 @@ internal open class GoToParentOrChildAction(val parent: Boolean) : DumbAwareActi
     }
   }
 
-  private fun createGroup(ui: VcsLogUiEx, rows: List<Int>): ActionGroup {
+  private fun createGroup(ui: VcsLogUiEx, rows: List<VcsLogVisibleGraphIndex>): ActionGroup {
     val actions = rows.mapTo(mutableListOf()) { row ->
       val text = ui.table.listModel.getActionText(row)
       object : DumbAwareAction(text, VcsLogBundle.message("action.go.to.navigate.to", text), null) {
@@ -87,7 +88,7 @@ internal open class GoToParentOrChildAction(val parent: Boolean) : DumbAwareActi
   }
 
   @NlsActions.ActionText
-  private fun VcsLogCommitListModel.getActionText(row: Int): String {
+  private fun VcsLogCommitListModel.getActionText(row: VcsLogVisibleGraphIndex): String {
     val commitMetadata = getCachedCommitMetadata(row)
     if (commitMetadata != null) {
       val time: Long = commitMetadata.authorTime
@@ -104,7 +105,7 @@ internal open class GoToParentOrChildAction(val parent: Boolean) : DumbAwareActi
     return getCommitId(row)?.hash?.toShortString() ?: ""
   }
 
-  private fun getRowsToJump(ui: VcsLogUiEx): List<Int> {
+  private fun getRowsToJump(ui: VcsLogUiEx): List<VcsLogVisibleGraphIndex> {
     val selectedRows = ui.table.selection.rows
     if (selectedRows.size != 1) return emptyList()
     return ui.dataPack.visibleGraph.getRowInfo(selectedRows.single()).getAdjacentRows(parent).sorted()

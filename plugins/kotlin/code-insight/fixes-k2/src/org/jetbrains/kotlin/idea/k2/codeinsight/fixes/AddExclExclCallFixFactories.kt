@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.psi.PsiElement
@@ -15,15 +15,15 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 object AddExclExclCallFixFactories {
 
-    val unsafeCallFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.UnsafeCall ->
+    val unsafeCallFactory: KotlinQuickFixFactory.ModCommandBased<KaFirDiagnostic.UnsafeCall> = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.UnsafeCall ->
         getFixForUnsafeCall(diagnostic.psi)
     }
 
-    val unsafeInfixCallFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.UnsafeInfixCall ->
+    val unsafeInfixCallFactory: KotlinQuickFixFactory.ModCommandBased<KaFirDiagnostic.UnsafeInfixCall> = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.UnsafeInfixCall ->
         getFixForUnsafeCall(diagnostic.psi)
     }
 
-    val unsafeOperatorCallFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.UnsafeOperatorCall ->
+    val unsafeOperatorCallFactory: KotlinQuickFixFactory.ModCommandBased<KaFirDiagnostic.UnsafeOperatorCall> = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.UnsafeOperatorCall ->
         getFixForUnsafeCall(diagnostic.psi)
     }
 
@@ -90,18 +90,17 @@ object AddExclExclCallFixFactories {
     }
 
     @OptIn(KaExperimentalApi::class)
-    val iteratorOnNullableFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.IteratorOnNullable ->
-        val expression = diagnostic.psi as? KtExpression
-            ?: return@IntentionBased emptyList()
+    val iteratorOnNullableFactory: KotlinQuickFixFactory.ModCommandBased<KaFirDiagnostic.IteratorOnNullable> = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.IteratorOnNullable ->
+        val expression = diagnostic.psi
         val type = expression.expressionType
-            ?: return@IntentionBased emptyList()
+            ?: return@ModCommandBased emptyList()
         if (!type.canBeNull)
-            return@IntentionBased emptyList()
+            return@ModCommandBased emptyList()
 
         // NOTE: This is different from FE1.0 in that we offer the fix even if the function does NOT have the `operator` modifier.
         // Adding `!!` will then surface the error that `operator` should be added (with corresponding fix).
         val typeScope = type.scope?.declarationScope
-            ?: return@IntentionBased emptyList()
+            ?: return@ModCommandBased emptyList()
         val hasValidIterator = typeScope.callables(OperatorNameConventions.ITERATOR)
             .filter { it is KaNamedFunctionSymbol && it.valueParameters.isEmpty() }.singleOrNull() != null
         if (hasValidIterator) {

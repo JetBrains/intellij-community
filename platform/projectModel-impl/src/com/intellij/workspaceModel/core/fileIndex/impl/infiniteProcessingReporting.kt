@@ -10,7 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile
 internal fun reportInfiniteRecursion(file: VirtualFile, fileIndex: WorkspaceFileIndexImpl) {
   val parentsData = runReadAction { 
     generateSequence(file, VirtualFile::getParent).joinToString("\n") { file ->
-      val fileInfo = fileIndex.getFileInfo(file, true, true, false, false, false)
+      val fileInfo = fileIndex.getFileInfo(file, true, true, true, false, false, false)
       val symlinkData = if (file.`is`(VFileProperty.SYMLINK)) {
         ", link to ${file.canonicalFile}, recursive=${file.isRecursiveOrCircularSymlink}"
       }

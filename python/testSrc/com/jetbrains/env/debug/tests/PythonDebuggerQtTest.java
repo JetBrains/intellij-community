@@ -40,10 +40,6 @@ public class PythonDebuggerQtTest extends PyEnvTestCase {
     Assume.assumeFalse("Don't run under Windows", UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows);
 
     runPythonTest(new PyDebuggerQtTask("/debug/qt", "test_pyqt1.py") {
-      @Override
-      protected void init() {
-        setMultiprocessDebug(true);
-      }
 
       @Override
       public void before() {
@@ -73,10 +69,6 @@ public class PythonDebuggerQtTest extends PyEnvTestCase {
     Assume.assumeFalse("Don't run under Windows", UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows);
 
     runPythonTest(new PyDebuggerQtTask("/debug/qt", "test_pyqt2.py") {
-      @Override
-      protected void init() {
-        setMultiprocessDebug(true);
-      }
 
       @Override
       public void before() {
@@ -107,10 +99,6 @@ public class PythonDebuggerQtTest extends PyEnvTestCase {
     Assume.assumeFalse("Don't run under Windows", UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows);
 
     runPythonTest(new PyDebuggerQtTask("/debug/qt", "test_pyqt3.py") {
-      @Override
-      protected void init() {
-        setMultiprocessDebug(true);
-      }
 
       @Override
       public void before() {
@@ -189,10 +177,6 @@ public class PythonDebuggerQtTest extends PyEnvTestCase {
     Assume.assumeFalse("Don't run under Windows", UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows);
 
     runPythonTest(new PyDebuggerQtTask("/debug/qt", "test_pyside2_1.py") {
-      @Override
-      protected void init() {
-        setMultiprocessDebug(true);
-      }
 
       @Override
       public void before() {
@@ -223,10 +207,6 @@ public class PythonDebuggerQtTest extends PyEnvTestCase {
     Assume.assumeFalse("Don't run under Windows", UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows);
 
     runPythonTest(new PyDebuggerQtTask("/debug/qt", "test_pyside2_2.py") {
-      @Override
-      protected void init() {
-        setMultiprocessDebug(true);
-      }
 
       @Override
       public void before() {
@@ -256,10 +236,6 @@ public class PythonDebuggerQtTest extends PyEnvTestCase {
     Assume.assumeFalse("Don't run under Windows", UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows);
 
     runPythonTest(new PyDebuggerQtTask("/debug/qt", "test_pyside2_3.py") {
-      @Override
-      protected void init() {
-        setMultiprocessDebug(true);
-      }
 
       @Override
       public void before() {

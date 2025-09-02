@@ -145,3 +145,6 @@ class AddConstraint(IndexOperation):
 
 class RemoveConstraint(IndexOperation):
     def __init__(self, model_name: str, name: str) -> None: ...
+
+class AlterConstraint(IndexOperation):
+    def __init__(self, model_name: str, name: str, constraint: BaseConstraint) -> None: ...

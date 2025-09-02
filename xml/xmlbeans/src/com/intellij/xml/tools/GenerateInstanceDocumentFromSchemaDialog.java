@@ -20,6 +20,7 @@ import com.intellij.xml.XmlElementDescriptor;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -48,7 +49,8 @@ public final class GenerateInstanceDocumentFromSchemaDialog extends DialogWrappe
   private Runnable myOkAction;
   private final Project myProject;
 
-  GenerateInstanceDocumentFromSchemaDialog(Project project, VirtualFile file) {
+  @VisibleForTesting
+  public GenerateInstanceDocumentFromSchemaDialog(Project project, VirtualFile file) {
     super(project, true);
     myProject = project;
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.bucketing;
 
 import com.intellij.TestCaseLoader;
@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 @ApiStatus.Internal
-public class CyclicCounterBucketingScheme implements BucketingScheme {
+public final class CyclicCounterBucketingScheme implements BucketingScheme {
   private final AtomicInteger myCyclicCounter = new AtomicInteger(0);
   private final HashMap<String, Integer> myBuckets = new HashMap<>();
   private final int myBucketsCount;
@@ -22,7 +22,7 @@ public class CyclicCounterBucketingScheme implements BucketingScheme {
     this(TestCaseLoader.TEST_RUNNERS_COUNT, TestCaseLoader.TEST_RUNNER_INDEX);
   }
 
-  CyclicCounterBucketingScheme(int totalBucketsCount) {
+  public CyclicCounterBucketingScheme(int totalBucketsCount) {
     myBucketsCount = totalBucketsCount;
     myCurrentBucketIndex = TestCaseLoader.TEST_RUNNER_INDEX;
   }

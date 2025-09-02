@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -23,7 +23,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.LightweightHint;
@@ -41,6 +40,11 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+/**
+ * @deprecated use {@link AbstractJavaCopyPasteReferenceProcessor}
+ */
+@SuppressWarnings("DuplicatedCode")
+@Deprecated(forRemoval = true)
 public abstract class CopyPasteReferenceProcessor<TRef extends PsiElement> extends CopyPastePostProcessor<ReferenceTransferableData>
   implements ReferenceCopyPasteProcessor {
   private static final Logger LOG = Logger.getInstance(CopyPasteReferenceProcessor.class);
@@ -133,12 +137,8 @@ public abstract class CopyPasteReferenceProcessor<TRef extends PsiElement> exten
           }), ModalityState.nonModal(), __ -> editor.isDisposed());
       }
     };
-    if (Registry.is("run.refactorings.under.progress")) {
-      app.runWriteActionWithCancellableProgressInDispatchThread(JavaBundle.message("progress.title.restore.references"), project, null, consumer);
-    }
-    else {
-      app.runWriteAction(() -> consumer.accept(null));
-    }
+
+    app.runWriteActionWithCancellableProgressInDispatchThread(JavaBundle.message("progress.title.restore.references"), project, null, consumer);
   }
 
   protected abstract void removeImports(@NotNull PsiFile file, @NotNull Set<String> imports);

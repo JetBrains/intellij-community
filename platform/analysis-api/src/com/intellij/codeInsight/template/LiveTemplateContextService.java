@@ -7,8 +7,12 @@ import com.intellij.openapi.components.Service;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -28,8 +32,8 @@ public final class LiveTemplateContextService implements Disposable {
   public static LiveTemplateContextService getInstance() {
     return ApplicationManager.getApplication().getService(LiveTemplateContextService.class);
   }
-
-  public @NotNull Collection<@NotNull LiveTemplateContext> getLiveTemplateContexts() {
+                        
+  public @NotNull @Unmodifiable Collection<@NotNull LiveTemplateContext> getLiveTemplateContexts() {
     return myState.myLiveTemplateIds.values();
   }
 

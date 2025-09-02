@@ -11,7 +11,7 @@ import java.nio.file.Path
 
 object KotlinCompiler {
   private const val KOTLIN_IDE_MAVEN_REPOSITORY_URL =
-    "https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-ide-plugin-dependencies"
+    "https://cache-redirector.jetbrains.com/intellij-dependencies"
 
   fun downloadAndExtractKotlinCompiler(communityRoot: BuildDependenciesCommunityRoot): Path {
     // We already have kotlin JPS in the classpath, fetch version from it

@@ -45,13 +45,13 @@ public class CreateInnerClassFromNewFix extends CreateClassFromNewFix {
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
     chooseTargetClass(project, editor, this::invokeImpl);
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    PsiElement element = PsiTreeUtil.findSameElementInCopy(getElement(), file);
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    PsiElement element = PsiTreeUtil.findSameElementInCopy(getElement(), psiFile);
     List<PsiClass> targetClasses = filterTargetClasses(element, project);
     if (targetClasses.isEmpty()) return IntentionPreviewInfo.EMPTY;
     invokeImpl(targetClasses.get(0));

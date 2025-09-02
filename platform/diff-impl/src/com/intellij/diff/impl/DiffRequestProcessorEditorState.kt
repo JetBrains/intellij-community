@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.impl
 
-import com.intellij.diff.editor.DiffEditorTabFilesManager.Companion.isDiffInEditor
+import com.intellij.diff.editor.DiffEditorTabFilesUtil
 import com.intellij.openapi.fileEditor.FileEditorState
 import com.intellij.openapi.fileEditor.FileEditorStateLevel
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
@@ -12,7 +12,7 @@ internal data class DiffRequestProcessorEditorState(
   @JvmField val embeddedEditorStates: List<TextEditorState>
 ) : FileEditorStateWithPreferredOpenMode {
   override val openMode: FileEditorManagerImpl.OpenMode?
-    get() = if (!isDiffInEditor) FileEditorManagerImpl.OpenMode.NEW_WINDOW else null
+    get() = if (!DiffEditorTabFilesUtil.isDiffInEditor) FileEditorManagerImpl.OpenMode.NEW_WINDOW else null
 
   override fun canBeMergedWith(otherState: FileEditorState, level: FileEditorStateLevel): Boolean {
     return otherState is DiffRequestProcessorEditorState &&

@@ -41,6 +41,7 @@ internal class JarPackagerDependencyHelper(private val context: CompilationConte
     // todo use some marker
     if (moduleName == "intellij.rdct.testFramework" ||
         moduleName == "intellij.platform.split.testFramework" ||
+        moduleName == "intellij.python.junit5Tests" ||
         moduleName == "intellij.rdct.tests.distributed") {
       return true
     }
@@ -51,16 +52,18 @@ internal class JarPackagerDependencyHelper(private val context: CompilationConte
       }
 
       return moduleName != "intellij.rider.test.framework" &&
-             moduleName != "intellij.rider.test.framework.core"
+             moduleName != "intellij.rider.test.framework.core" &&
+             moduleName != "intellij.rider.test.framework.testng" &&
+             moduleName != "intellij.rider.test.framework.junit"
     }
     return moduleName.endsWith("._test")
   }
 
   suspend fun getPluginXmlContent(pluginModule: JpsModule): String {
     val path = "META-INF/plugin.xml"
-    var pluginXmlContent = context.getModuleOutputFileContent(pluginModule, path, forTests = false)
+    var pluginXmlContent = context.readFileContentFromModuleOutput(pluginModule, path, forTests = false)
     if (useTestSourceEnabled && pluginXmlContent == null) {
-      pluginXmlContent = context.getModuleOutputFileContent(pluginModule, path, forTests = true)
+      pluginXmlContent = context.readFileContentFromModuleOutput(pluginModule, path, forTests = true)
     }
     return pluginXmlContent?.let { String(it, Charsets.UTF_8) }
            ?: throw IllegalStateException("$path not found in ${pluginModule.name} module output")
@@ -144,7 +147,6 @@ internal class JarPackagerDependencyHelper(private val context: CompilationConte
     val prefix = "$parentGroup."
     for (dependency in getModuleDependencies(dependentModule)) {
       val moduleName = dependency.moduleReference.moduleName
-      // intellij.space.kotlin depends on module intellij.space and both uses library org.apache.ivy
       if (moduleName == parentGroup) {
         if (getLibraryDependencies(dependency.module ?: continue, withTests).any { it.libraryReference.libraryName == libraryName }) {
           return true

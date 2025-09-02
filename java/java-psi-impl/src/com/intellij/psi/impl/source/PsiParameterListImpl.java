@@ -51,7 +51,7 @@ public class PsiParameterListImpl extends JavaStubPsiElement<PsiParameterListStu
     if (stub != null) {
       int count = 0;
       for (StubElement<?> child : stub.getChildrenStubs()) {
-        if (child.getStubType() == JavaStubElementTypes.PARAMETER) {
+        if (child.getElementType() == JavaStubElementTypes.PARAMETER) {
           count++;
         }
       }
@@ -70,7 +70,7 @@ public class PsiParameterListImpl extends JavaStubPsiElement<PsiParameterListStu
     if (stub != null) {
       int count = 0;
       for (StubElement<?> child : stub.getChildrenStubs()) {
-        if (child.getStubType() == JavaStubElementTypes.PARAMETER) {
+        if (child.getElementType() == JavaStubElementTypes.PARAMETER) {
           if (count == index) return (PsiParameter)child.getPsi(); 
           count++;
         }
@@ -93,7 +93,7 @@ public class PsiParameterListImpl extends JavaStubPsiElement<PsiParameterListStu
     PsiParameterListStub stub = getGreenStub();
     if (stub != null) {
       for (StubElement<?> child : stub.getChildrenStubs()) {
-        if (child.getStubType() == JavaStubElementTypes.PARAMETER) {
+        if (child.getElementType() == JavaStubElementTypes.PARAMETER) {
           return false;
         }
       }

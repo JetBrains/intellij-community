@@ -4,7 +4,8 @@ package com.intellij.openapi.command.impl;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -24,7 +25,7 @@ import javax.swing.*;
 import java.util.Collection;
 
 @ApiStatus.Internal
-public final class CannotUndoReportDialog extends DialogWrapper implements DataProvider {
+public final class CannotUndoReportDialog extends DialogWrapper implements UiDataProvider {
   private static final int FILE_TEXT_PREVIEW_CHARS_LIMIT = 40;
   private final Project myProject;
 
@@ -84,14 +85,11 @@ public final class CannotUndoReportDialog extends DialogWrapper implements DataP
   }
 
   @Override
-  public @Nullable Object getData(@NotNull String dataId) {
-    if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.lazy(CommonDataKeys.NAVIGATABLE, () -> {
       DocumentReference value = myProblemFilesList.getSelectedValue();
       VirtualFile file = value != null ? value.getFile() : null;
-      if (file != null) {
-        return new OpenFileDescriptor(myProject, file);
-      }
-    }
-    return null;
+      return file != null ? new OpenFileDescriptor(myProject, file) : null;
+    });
   }
 }

@@ -128,8 +128,8 @@ public class OrderEntryTest extends DaemonAnalyzerTestCase {
   private void checkModuleInfo(@NotNull String moduleFileName, @NotNull String expectedModule) {
     VirtualFile root = ModuleRootManager.getInstance(myModule).getContentRoots()[0].getParent();
     final VirtualFile moduleFile = root.findFileByRelativePath(moduleFileName);
-    final PsiFile file = PsiManager.getInstance(myProject).findFile(moduleFile);
-    PsiJavaModule module = (PsiJavaModule)SyntaxTraverser.psiTraverser().children(file).filter(PsiJavaModule.class::isInstance).first();
+    final PsiFile psiFile = PsiManager.getInstance(myProject).findFile(moduleFile);
+    PsiJavaModule module = (PsiJavaModule)SyntaxTraverser.psiTraverser().children(psiFile).filter(PsiJavaModule.class::isInstance).first();
     for (PsiRequiresStatement require : module.getRequires()) {
       if (require.getModuleName().equals(expectedModule)) return;
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon
 
 import com.intellij.codeInspection.InspectionProfileEntry
@@ -232,7 +232,7 @@ class JavadocSettingsMergerTest: LightJavaCodeInsightFixtureTestCase5() {
       <option name="INNER_CLASS_OPTIONS">
         <value>
           <option name="ACCESS_JAVADOC_REQUIRED_FOR" value="public" />
-          <option name="REQUIRED_TAGS" value="" />
+          <option name="REQUIRED_TAGS" value="@param" />
         </value>
       </option>
       <option name="METHOD_OPTIONS">

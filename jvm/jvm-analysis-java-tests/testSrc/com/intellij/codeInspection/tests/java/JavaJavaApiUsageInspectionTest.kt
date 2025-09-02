@@ -2,6 +2,7 @@ package com.intellij.codeInspection.tests.java
 
 import com.intellij.jvm.analysis.internal.testFramework.JavaApiUsageInspectionTestBase
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
+import com.intellij.openapi.module.LanguageLevelUtil
 import com.intellij.pom.java.LanguageLevel
 
 class JavaJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
@@ -251,6 +252,23 @@ class JavaJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
         }
       }
     """.trimIndent())
+  }
+
+  fun `test language level quick fix`() {
+    myFixture.setLanguageLevel(LanguageLevel.JDK_17)
+    myFixture.configureByText("Main.java", """
+      import java.time.Duration;
+      
+      class Main {
+        {
+          try {
+            Thread.sl<caret>eep(Duration.ofSeconds(5));
+          } catch (InterruptedException e) { }
+        }
+      }
+    """.trimIndent())
+    myFixture.runQuickFix("Set language level to 19 - No new language features")
+    assertEquals(LanguageLevel.JDK_19, LanguageLevelUtil.getEffectiveLanguageLevel(myFixture.module))
   }
 
   fun `test override with different since version`() {

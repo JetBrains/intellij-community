@@ -26,7 +26,7 @@ internal class ShowSwitcherForwardAction : BaseSwitcherAction(true)
 internal class ShowSwitcherBackwardAction : BaseSwitcherAction(false)
 
 @ApiStatus.Internal
-abstract class BaseSwitcherAction(val forward: Boolean?) : DumbAwareAction() {
+abstract class BaseSwitcherAction(val forward: Boolean?) : DumbAwareAction(), ActionRemoteBehaviorSpecification.Frontend {
   private fun isControlTab(event: KeyEvent?) = event?.run { isControlDown && keyCode == KeyEvent.VK_TAB } ?: false
   private fun isControlTabDisabled(event: AnActionEvent) = ScreenReader.isActive() && isControlTab(event.inputEvent as? KeyEvent)
 
@@ -58,7 +58,7 @@ abstract class BaseSwitcherAction(val forward: Boolean?) : DumbAwareAction() {
 
 internal class ShowRecentFilesAction : LightEditCompatible, BaseRecentFilesAction(false)
 internal class ShowRecentlyEditedFilesAction : BaseRecentFilesAction(true)
-internal abstract class BaseRecentFilesAction(private val onlyEditedFiles: Boolean) : DumbAwareAction() {
+internal abstract class BaseRecentFilesAction(private val onlyEditedFiles: Boolean) : DumbAwareAction(), ActionRemoteBehaviorSpecification.Frontend {
   override fun update(event: AnActionEvent) {
     if (shouldUseFallbackSwitcher()) {
       event.presentation.isEnabledAndVisible = false
@@ -85,7 +85,7 @@ internal abstract class BaseRecentFilesAction(private val onlyEditedFiles: Boole
 }
 
 
-internal class SwitcherIterateThroughItemsAction : DumbAwareAction() {
+internal class SwitcherIterateThroughItemsAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.Frontend {
   override fun update(event: AnActionEvent) {
     if (shouldUseFallbackSwitcher()) {
       event.presentation.isEnabledAndVisible = false
@@ -129,7 +129,7 @@ internal class SwitcherToggleOnlyEditedFilesAction : DumbAwareToggleAction(), Ac
 
 internal class SwitcherNextProblemAction : SwitcherProblemAction(true)
 internal class SwitcherPreviousProblemAction : SwitcherProblemAction(false)
-internal abstract class SwitcherProblemAction(val forward: Boolean) : DumbAwareAction() {
+internal abstract class SwitcherProblemAction(val forward: Boolean) : DumbAwareAction(), ActionRemoteBehaviorSpecification.Frontend {
   private fun getFileList(event: AnActionEvent): JBList<SwitcherVirtualFile>? {
     return Switcher.SWITCHER_KEY.get(event.project)?.let { if (it.pinned) it.files else null }
   }
@@ -148,7 +148,7 @@ internal abstract class SwitcherProblemAction(val forward: Boolean) : DumbAwareA
         true -> (start + i).let { if (it > range.last) it - size else it }
         else -> (start - i).let { if (it < range.first) it + size else it }
       }
-      if (model.getElementAt(index)?.rpcModel?.hasProblems == true) return index
+      if (model.getElementAt(index)?.hasProblems == true) return index
     }
     return null
   }

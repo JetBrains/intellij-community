@@ -2,7 +2,6 @@
 package org.jetbrains.idea.maven.server
 
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
@@ -16,10 +15,11 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.idea.maven.buildtool.MavenEventHandler
 import org.jetbrains.idea.maven.buildtool.MavenLogEventHandler
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole
+import org.jetbrains.idea.maven.importing.output.MavenImportOutputParser
 import org.jetbrains.idea.maven.model.*
 import org.jetbrains.idea.maven.project.MavenConsole
 import org.jetbrains.idea.maven.project.MavenProject
-import org.jetbrains.idea.maven.server.MavenEmbedderWrapper.LongRunningEmbedderTask
+import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.telemetry.tracer
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator
@@ -328,27 +328,28 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
       getOrCreateWrappee()
     }
 
+
+
     return coroutineScope {
       val progressIndication = launch {
         tracer.spanBuilder("waitForLongRunningTask").useWithScope { span ->
           while (isActive) {
             span.addEvent("poll", System.currentTimeMillis(), TimeUnit.MILLISECONDS)
             delay(500)
-            blockingContext {
-              try {
-                val status = embedder.getLongRunningTaskStatus(longRunningTaskId, ourToken)
-                val fraction = status.fraction()
-                if (fraction > 1.0) {
-                  MavenLog.LOG.warn("fraction is more than one: $status")
-                }
-                progressReporter?.fraction(fraction.coerceAtMost(1.0))
-                eventHandler.handleConsoleEvents(status.consoleEvents())
-                eventHandler.handleDownloadEvents(status.downloadEvents())
+            try {
+              val status = embedder.getLongRunningTaskStatus(longRunningTaskId, ourToken)
+              val fraction = status.fraction()
+              if (fraction > 1.0) {
+                MavenLog.LOG.warn("fraction is more than one: $status")
               }
-              catch (e: Throwable) {
-                if (isActive) {
-                  throw e
-                }
+              progressReporter?.fraction(fraction.coerceAtMost(1.0))
+              processImportEvents(status)
+              eventHandler.handleConsoleEvents(status.consoleEvents())
+              eventHandler.handleDownloadEvents(status.downloadEvents())
+            }
+            catch (e: Throwable) {
+              if (isActive) {
+                throw e
               }
             }
           }
@@ -369,19 +370,47 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
       try {
         withContext(Dispatchers.IO) {
           tracer.spanBuilder("runMavenExecution").useWithScope { span ->
-            blockingContext {
-              val longRunningTaskInput = LongRunningTaskInput(longRunningTaskId, TelemetryContext.current())
-              val response = task.run(embedder, longRunningTaskInput)
-              val status = response.status
-              eventHandler.handleConsoleEvents(status.consoleEvents())
-              eventHandler.handleDownloadEvents(status.downloadEvents())
-              response.result
-            }
+            val longRunningTaskInput = LongRunningTaskInput(longRunningTaskId, TelemetryContext.current())
+            val response = task.run(embedder, longRunningTaskInput)
+            val status = response.status
+            processImportEvents(status)
+            eventHandler.handleConsoleEvents(status.consoleEvents())
+            eventHandler.handleDownloadEvents(status.downloadEvents())
+            response.result
           }
         }
       }
       finally {
         progressIndication.cancelAndJoin()
+      }
+    }
+  }
+
+  private fun processImportEvents(
+    status: LongRunningTaskStatus,
+  ) {
+    val console = MavenProjectsManager.getInstance(project).syncConsole
+    val outputParser = MavenImportOutputParser(project)
+    status.consoleEvents().forEach { consoleEvent ->
+      val prefix =
+        if (consoleEvent.level == MavenServerConsoleIndicator.LEVEL_ERROR || consoleEvent.level == MavenServerConsoleIndicator.LEVEL_FATAL) {
+          "[ERROR]"
+        }
+        else if (consoleEvent.level == MavenServerConsoleIndicator.LEVEL_WARN) {
+          "[WARNING]"
+        }
+        else if (consoleEvent.level == MavenServerConsoleIndicator.LEVEL_INFO) {
+          "INFO"
+        }
+        else if (consoleEvent.level == MavenServerConsoleIndicator.LEVEL_DEBUG) {
+          "[DEBUG]"
+        }
+        else ""
+
+      val message = if (consoleEvent.message.startsWith('[')) consoleEvent.message else "$prefix ${consoleEvent.message}"
+
+      outputParser.parse(message, null) {
+        console.addBuildEvent(it)
       }
     }
   }

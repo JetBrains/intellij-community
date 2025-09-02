@@ -7,6 +7,9 @@ import com.intellij.openapi.util.Version;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.stubs.*;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyStubElementTypes;
@@ -52,6 +55,7 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass>
                                ContainerUtil.map(psi.getSuperClassExpressions(), PsiElement::getText),
                                PyPsiUtils.asQualifiedName(psi.getMetaClassExpression()),
                                psi.getOwnSlots(),
+                               psi.getOwnMatchArgs(),
                                PyPsiUtils.strValue(psi.getDocStringExpression()),
                                psi.getDeprecationMessage(),
                                getStubElementType(),
@@ -82,8 +86,11 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass>
     if (classStub == null) {
       return List.of(pyClass.getSuperClassExpressions());
     }
-    return ContainerUtil.mapNotNull(classStub.getSuperClassesText(), 
-                                    x -> PyUtil.createExpressionFromFragment(x, pyClass.getContainingFile()));
+    return CachedValuesManager.getCachedValue(pyClass, () -> CachedValueProvider.Result.create(
+      (ContainerUtil.mapNotNull(classStub.getSuperClassesText(),
+                                x -> PyUtil.createExpressionFromFragment(x, pyClass.getContainingFile()))),
+      PsiModificationTracker.MODIFICATION_COUNT)
+    );
   }
 
   private static @Nullable QualifiedName resolveOriginalSuperClassQName(@NotNull PyExpression superClassExpression) {
@@ -128,6 +135,7 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass>
     QualifiedName.serialize(pyClassStub.getMetaClass(), dataStream);
 
     PyFileElementType.writeNullableList(dataStream, pyClassStub.getSlots());
+    PyFileElementType.writeNullableList(dataStream, pyClassStub.getMatchArgs());
 
     final String docString = pyClassStub.getDocString();
     dataStream.writeUTFFast(docString != null ? docString : "");
@@ -158,6 +166,7 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass>
     final QualifiedName metaClass = QualifiedName.deserialize(dataStream);
 
     final List<String> slots = PyFileElementType.readNullableList(dataStream);
+    final List<String> matchArgs = PyFileElementType.readNullableList(dataStream);
 
     final String docStringInStub = dataStream.readUTFFast();
     final String docString = StringUtil.nullize(docStringInStub);
@@ -168,7 +177,7 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass>
 
     final PyCustomClassStub customStub = deserializeCustomStub(dataStream);
 
-    return new PyClassStubImpl(name, parentStub, superClasses, baseClassesText, metaClass, slots, docString, deprecationMessage,
+    return new PyClassStubImpl(name, parentStub, superClasses, baseClassesText, metaClass, slots, matchArgs, docString, deprecationMessage,
                                getStubElementType(), versions, customStub);
   }
 

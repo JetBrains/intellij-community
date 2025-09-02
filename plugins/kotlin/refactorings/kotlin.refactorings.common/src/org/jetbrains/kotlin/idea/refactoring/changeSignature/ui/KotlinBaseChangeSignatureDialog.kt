@@ -83,6 +83,8 @@ abstract class KotlinBaseChangeSignatureDialog<P : KotlinModifiableParameterInfo
         return false
     }
 
+    open fun supportContextParameters(parameter: P) = false
+
     override fun createParametersListTable(): ParametersListTable = object : ParametersListTable() {
         private val rowRenderer = object : EditorTextFieldJBTableRowRenderer(project, KotlinLanguage.INSTANCE, disposable) {
             override fun getText(table: JTable?, row: Int): String {
@@ -121,11 +123,15 @@ abstract class KotlinBaseChangeSignatureDialog<P : KotlinModifiableParameterInfo
             private val components = ArrayList<JComponent>()
             private val nameEditor = EditorTextField(item.parameter.name, project, fileType)
             private val defaultParameterCheckbox = JCheckBox()
+            private val receiverCheckbox = JCheckBox()
+            private val contextParametersCheckbox = JCheckBox()
 
             private fun notifyReceiverListeners() {
                 val isNotReceiver = !item.isReceiverIn(parametersTableModel)
                 nameEditor.isEnabled = isNotReceiver
-                defaultParameterCheckbox.isEnabled = isNotReceiver
+                defaultParameterCheckbox.isEnabled = isNotReceiver && !item.parameter.isContextParameter
+                receiverCheckbox.isSelected = !isNotReceiver
+                contextParametersCheckbox.isSelected = item.parameter.isContextParameter
             }
 
             private fun isDefaultColumnEnabled() = item.parameter.isNewParameter && item.parameter != myMethod.receiver
@@ -179,7 +185,7 @@ abstract class KotlinBaseChangeSignatureDialog<P : KotlinModifiableParameterInfo
                         component = comboBox
                         editor = null
                     } else if (KotlinFunctionParameterTableModel.isReceiverColumn(columnInfo)) {
-                        val checkBox = JCheckBox()
+                        val checkBox = receiverCheckbox
                         checkBox.isSelected = parametersTableModel.receiver == item.parameter
                         checkBox.addItemListener(
                             disposable,
@@ -193,7 +199,26 @@ abstract class KotlinBaseChangeSignatureDialog<P : KotlinModifiableParameterInfo
 
                         component = checkBox
                         editor = null
-                    } else {
+                    } else if (supportContextParameters(item.parameter) && KotlinFunctionParameterTableModel.isContextParameterColumn(columnInfo)) {
+                        val checkBox = contextParametersCheckbox
+                        checkBox.isSelected = item.parameter.isContextParameter
+                        checkBox.addItemListener(
+                            disposable,
+                            ItemListener {
+                                val isSelected = it.stateChange == ItemEvent.SELECTED
+                                item.parameter.isContextParameter = isSelected
+                                if (isSelected && parametersTableModel.receiver == item.parameter) {
+                                    parametersTableModel.receiver = null
+                                }
+                                updateSignature()
+                                notifyReceiverListeners()
+                            },
+                        )
+
+                        component = checkBox
+                        editor = null
+                    }
+                    else {
                         continue
                     }
 

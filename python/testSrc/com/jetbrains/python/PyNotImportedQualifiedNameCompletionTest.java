@@ -164,8 +164,13 @@ public class PyNotImportedQualifiedNameCompletionTest extends PyTestCase {
   }
 
   // PY-47941
-  public void testAttributeReExportedWithAlias() {
+  public void testPytestMarkDefinedWithImportAlias() {
     assertContainsElements(doBasicCompletion(), "pytest.mark", "pytest.param");
+  }
+
+  // PY-81537
+  public void testAttributeReExportedWithAlias() {
+    assertContainsElements(doBasicCompletion(), "foo.RENAMED", "foo.DIRECT");
   }
 
   // PY-47254

@@ -17,11 +17,14 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
 public abstract class StubBase<T extends PsiElement> extends ObjectStubBase<StubElement<?>> implements StubElement<T> {
+  // todo remove once we don't need this for stub-ast mismatch debug info
+  private static volatile boolean ourStubReloadingProhibited;
   private StubList myStubList;
   private volatile T myPsi;
 
-  private static final AtomicReferenceFieldUpdater<StubBase, PsiElement> myPsiUpdater =
-    AtomicReferenceFieldUpdater.newUpdater(StubBase.class, PsiElement.class, "myPsi");
+  @SuppressWarnings("unchecked")
+  private static final AtomicReferenceFieldUpdater<StubBase<?>, PsiElement> myPsiUpdater =
+    AtomicReferenceFieldUpdater.newUpdater((Class<StubBase<?>>)(Class)StubBase.class, PsiElement.class, "myPsi");
 
   protected StubBase(@Nullable StubElement parent, IStubElementType<?, ?> elementType) {
     this(parent, (IElementType)elementType);
@@ -64,8 +67,8 @@ public abstract class StubBase<T extends PsiElement> extends ObjectStubBase<Stub
   }
 
   @Override
-  @SuppressWarnings("unchecked")
   public @NotNull List<StubElement<?>> getChildrenStubs() {
+    //noinspection unchecked
     return (List)myStubList.getChildrenStubs(id);
   }
 
@@ -85,8 +88,7 @@ public abstract class StubBase<T extends PsiElement> extends ObjectStubBase<Stub
     myPsi = psi;
   }
 
-  @ApiStatus.Internal
-  public final @Nullable T getCachedPsi() {
+  private @Nullable T getCachedPsi() {
     return myPsi;
   }
 
@@ -281,5 +283,24 @@ public abstract class StubBase<T extends PsiElement> extends ObjectStubBase<Stub
    */
   public int compareByOrderWith(ObjectStubBase<?> another) {
     return Integer.compare(getStubId(), another.getStubId());
+  }
+
+  @ApiStatus.Internal
+  public static void checkDeserializationCreatesNoPsi(PsiFileStub<?> @NotNull [] roots) {
+    if (ourStubReloadingProhibited) return;
+
+    for (PsiFileStub<?> root : roots) {
+      if (root instanceof StubBase) {
+        StubList stubList = ((StubBase<?>)root).getStubList();
+        for (int i = 0; i < stubList.size(); i++) {
+          StubBase<?> each = stubList.getCachedStub(i);
+          PsiElement cachedPsi = each == null ? null : each.getCachedPsi();
+          if (cachedPsi != null) {
+            ourStubReloadingProhibited = true;
+            throw new AssertionError("Stub deserialization shouldn't create PSI: " + cachedPsi + "; " + each);
+          }
+        }
+      }
+    }
   }
 }

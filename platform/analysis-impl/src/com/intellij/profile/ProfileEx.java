@@ -36,7 +36,7 @@ public abstract class ProfileEx implements Comparable<Object>, ExternalizableSch
 
   @Override
   public boolean equals(Object o) {
-    return this == o || o instanceof ProfileEx && myName.equals(((ProfileEx)o).myName);
+    return this == o || o instanceof ProfileEx ex && myName.equals(ex.myName);
   }
 
   @Override

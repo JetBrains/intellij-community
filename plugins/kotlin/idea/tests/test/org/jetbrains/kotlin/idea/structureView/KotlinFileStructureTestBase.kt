@@ -11,6 +11,7 @@ import com.intellij.util.ThrowableRunnable
 import com.intellij.util.ui.tree.TreeUtil
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.runAll
+import org.jetbrains.kotlin.test.InTextDirectivesUtils
 
 abstract class KotlinFileStructureTestBase : KotlinLightCodeInsightFixtureTestCase() {
 
@@ -60,7 +61,8 @@ abstract class KotlinFileStructureTestBase : KotlinLightCodeInsightFixtureTestCa
     }
 
     protected fun checkResult() {
-        val printInfo = Queryable.PrintInfo(arrayOf("text"), arrayOf("location"))
+        val extraInfoKeys = InTextDirectivesUtils.findListWithPrefixes(myFixture.file.text, "// EXTRA_INFO_KEYS:")
+        val printInfo = Queryable.PrintInfo(arrayOf("text"), (listOf("location") + extraInfoKeys).toTypedArray())
         PlatformTestUtil.waitForPromise(TreeUtil.promiseExpandAll(popupFixture.tree))
         PlatformTestUtil.waitWhileBusy(popupFixture.tree)
         val popupText = StructureViewUtil.print(popupFixture.tree, false, printInfo, null).trim { it <= ' ' }

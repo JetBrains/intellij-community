@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.DebuggerContext;
@@ -15,6 +15,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiElement;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationOrigin;
 import com.sun.jdi.Value;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -114,6 +115,7 @@ public final class EnumerationChildrenRenderer extends ReferenceRenderer impleme
                                                        childInfo.myExpression);
       data.setEnumerationIndex(idx++);
       UserExpressionDescriptor descriptor = descriptorFactory.getUserExpressionDescriptor(builder.getParentDescriptor(), data);
+      XEvaluationOrigin.setOrigin(descriptor, XEvaluationOrigin.RENDERER);
       if (childInfo.myOnDemand) {
         descriptor.putUserData(OnDemandRenderer.ON_DEMAND_CALCULATED, false);
       }

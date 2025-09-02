@@ -64,7 +64,7 @@ class StringInterpolationInjectionTest : KotlinLightCodeInsightFixtureTestCase()
         TestCase.assertEquals(expectedText, containingFile.text)
         TestCase.assertFalse(
             "Shouldn't be FRANKENSTEIN",
-            java.lang.Boolean.TRUE == containingFile.getUserData(InjectedLanguageManager.FRANKENSTEIN_INJECTION)
+            InjectedLanguageManager.getInstance(containingFile.project).isFrankensteinInjection(containingFile)
         )
 
         undo(editor)

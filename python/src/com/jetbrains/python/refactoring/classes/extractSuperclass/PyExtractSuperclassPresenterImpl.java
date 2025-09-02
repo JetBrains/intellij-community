@@ -42,7 +42,7 @@ public final class PyExtractSuperclassPresenterImpl extends MembersBasedPresente
   implements PyExtractSuperclassPresenter {
   private final NamesValidator myNamesValidator = LanguageNamesValidation.INSTANCE.forLanguage(PythonLanguage.getInstance());
 
-  PyExtractSuperclassPresenterImpl(final @NotNull PyExtractSuperclassView view,
+  public PyExtractSuperclassPresenterImpl(final @NotNull PyExtractSuperclassView view,
                                    final @NotNull PyClass classUnderRefactoring,
                                    final @NotNull PyMemberInfoStorage infoStorage) {
     super(view, classUnderRefactoring, infoStorage, new PyExtractSuperclassInfoModel(classUnderRefactoring));

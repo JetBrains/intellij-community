@@ -2,6 +2,7 @@
 package com.intellij.openapi.ui;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public interface TestDialog {
   TestDialog DEFAULT = message -> {
@@ -12,4 +13,8 @@ public interface TestDialog {
   TestDialog NO = __ -> Messages.NO;
 
   int show(@NotNull String message);
+
+  default int show(@NotNull String message, @Nullable DoNotAskOption doNotAskOption) {
+    return show(message);
+  }
 }

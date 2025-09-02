@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.performancePlugin.commands;
 
 import com.intellij.analysis.AnalysisScope;
@@ -52,6 +53,13 @@ public class InspectionCommand extends AbstractCommand {
           super.notifyInspectionsFinished(scope);
           context.message(PerformanceTestingBundle.message("command.inspection.finish"), getLine());
           actionCallback.setDone();
+        }
+
+        @Override
+        protected void canceled() {
+          super.canceled();
+          context.message("inspection was canceled", getLine());
+          actionCallback.reject("inspection was canceled");
         }
       };
 

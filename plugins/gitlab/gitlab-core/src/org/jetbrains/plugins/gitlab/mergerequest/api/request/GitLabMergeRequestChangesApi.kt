@@ -29,6 +29,7 @@ suspend fun GitLabApi.Rest.loadMergeRequestCommits(uri: URI): HttpResponse<out L
   }
 }
 
+
 data class GitLabChangesHolderDTO(
   val changes: List<GitLabDiffDTO>,
 )

@@ -12,6 +12,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 
@@ -26,11 +27,11 @@ public abstract class AbstractFilesScope extends GlobalSearchScope implements Vi
   }
 
   @Override
-  public @Nullable Collection<VirtualFile> getFilesIfCollection() {
+  public @Nullable @Unmodifiable Collection<VirtualFile> getFilesIfCollection() {
     return getFiles();
   }
 
-  abstract @NotNull VirtualFileSet getFiles();
+  abstract @NotNull @Unmodifiable VirtualFileSet getFiles();
 
   @Override
   public boolean contains(@NotNull VirtualFile file) {

@@ -4,7 +4,6 @@ fun buz {
     SomeClass.<caret>
 }
 
-// IGNORE_K2
 // EXIST: CONST_A
 // EXIST: aProc
 // EXIST: getA

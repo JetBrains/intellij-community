@@ -50,7 +50,7 @@ public class MockFileDocumentManagerImpl extends FileDocumentManager {
     if (myCachedDocumentKey != null) {
       return file.getUserData(myCachedDocumentKey);
     }
-    return null;
+    return file.getUserData(MOCK_DOC_KEY);
   }
 
   @Override

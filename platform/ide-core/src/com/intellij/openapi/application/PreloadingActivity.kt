@@ -2,7 +2,6 @@
 package com.intellij.openapi.application
 
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.blockingContext
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Deprecated("Use ApplicationInitializedListener (asyncScope)")
@@ -11,7 +10,7 @@ abstract class PreloadingActivity {
   open fun preload() {}
 
   /** Perform the preloading. */
-  open suspend fun execute() : Unit = blockingContext {
+  open suspend fun execute() {
     preload()
   }
 

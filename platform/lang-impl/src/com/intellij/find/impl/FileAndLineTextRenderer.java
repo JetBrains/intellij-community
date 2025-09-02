@@ -9,18 +9,27 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Objects;
+import java.util.function.BiFunction;
 
-final class FileAndLineTextRenderer extends ColoredListCellRenderer<SearchEverywhereItem> {
+final class FileAndLineTextRenderer extends ColoredListCellRenderer<Object> {
+  private final BiFunction<? super JList<?>, ? super Integer, UsagePresentation> myPrevUsagePresentationProvider;
+
+  FileAndLineTextRenderer(BiFunction<? super JList<?>, ? super Integer, UsagePresentation> prevUsagePresentationProvider) {
+    super();
+    myPrevUsagePresentationProvider = prevUsagePresentationProvider;
+  }
 
   @Override
   protected void customizeCellRenderer(
-    @NotNull JList<? extends SearchEverywhereItem> list,
-    @NotNull SearchEverywhereItem value,
+    @NotNull JList<?> list,
+    @NotNull Object item,
     int index, boolean selected, boolean hasFocus
   ) {
-    TextChunk[] text = value.getPresentation().getText();
+    if (!(item instanceof UsagePresentation presentation)) return;
+
+    TextChunk[] text = presentation.getText();
     // line number / file info
-    String fileString = value.getPresentation().getFileString();
+    String fileString = presentation.getFileString();
     String prevFileString = findPrevFile(list, index);
     SimpleTextAttributes attributes = Objects.equals(fileString, prevFileString)
                                       ? FindPopupPanel.UsageTableCellRenderer.REPEATED_FILE_ATTRIBUTES
@@ -30,11 +39,9 @@ final class FileAndLineTextRenderer extends ColoredListCellRenderer<SearchEveryw
     setBorder(null);
   }
 
-  @SuppressWarnings("TypeParameterExtendsFinalClass")
-  private static @Nullable String findPrevFile(@NotNull JList<? extends SearchEverywhereItem> list, int index) {
-    if (index <= 0) return null;
-    Object prev = list.getModel().getElementAt(index - 1);
-    //noinspection ConstantConditions,CastCanBeRemovedNarrowingVariableType
-    return prev instanceof SearchEverywhereItem ? ((SearchEverywhereItem)prev).getPresentation().getFileString() : null;
+  private @Nullable String findPrevFile(@NotNull JList<?> list, int index) {
+    UsagePresentation prevPresentation = myPrevUsagePresentationProvider.apply(list, index);
+    //noinspection ConstantConditions
+    return prevPresentation != null ? prevPresentation.getFileString() : null;
   }
 }

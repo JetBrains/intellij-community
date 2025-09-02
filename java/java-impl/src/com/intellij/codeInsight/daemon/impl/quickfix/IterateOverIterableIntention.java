@@ -45,7 +45,7 @@ public final class IterateOverIterableIntention implements IntentionAction {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
     int offset = editor.getCaretModel().getOffset();
     int startOffset = offset;
     if (editor.getSelectionModel().hasSelection()) {
@@ -53,7 +53,7 @@ public final class IterateOverIterableIntention implements IntentionAction {
       final int selEnd = editor.getSelectionModel().getSelectionEnd();
       startOffset = (offset == selStart) ? selEnd : selStart;
     }
-    PsiElement element = file.findElementAt(startOffset);
+    PsiElement element = psiFile.findElementAt(startOffset);
     while (element instanceof PsiWhiteSpace) {
       element = element.getPrevSibling();
     }
@@ -67,7 +67,7 @@ public final class IterateOverIterableIntention implements IntentionAction {
     if (psiStatement != null) {
       startOffset = psiStatement.getTextRange().getStartOffset();
     }
-    PsiExpression expression = getIterableExpression(editor, file);
+    PsiExpression expression = getIterableExpression(editor, psiFile);
     if (expression == null) return false;
     if (ConstructionUtils.isEmptyCollectionInitializer(expression)) {
       // Empty collection: iterating doesn't make much sense
@@ -78,12 +78,12 @@ public final class IterateOverIterableIntention implements IntentionAction {
       return false;
     }
 
-    TemplateImpl template = file instanceof PsiJavaFile ? getTemplate() : null;
+    TemplateImpl template = psiFile instanceof PsiJavaFile ? getTemplate() : null;
     if (template == null || template.isDeactivated()) return false;
 
     // we are checking Template applicability later, because it requires initialization of all (for all languages) template context types
-    if (!TemplateManagerImpl.isApplicable(file, offset, template) &&
-        !TemplateManagerImpl.isApplicable(file, startOffset, template)) {
+    if (!TemplateManagerImpl.isApplicable(psiFile, offset, template) &&
+        !TemplateManagerImpl.isApplicable(psiFile, startOffset, template)) {
       return false;
     }
 
@@ -100,7 +100,7 @@ public final class IterateOverIterableIntention implements IntentionAction {
     return myText == null ? getFamilyName() : myText;
   }
 
-  private @Nullable PsiExpression getIterableExpression(Editor editor, PsiFile file) {
+  private @Nullable PsiExpression getIterableExpression(Editor editor, PsiFile psiFile) {
     if (myExpression != null) {
       if (!myExpression.isValid()) return null;
       final PsiType type = myExpression.getType();
@@ -109,8 +109,8 @@ public final class IterateOverIterableIntention implements IntentionAction {
     }
     final SelectionModel selectionModel = editor.getSelectionModel();
     if (selectionModel.hasSelection()) {
-      PsiElement elementAtStart = file.findElementAt(selectionModel.getSelectionStart());
-      PsiElement elementAtEnd = file.findElementAt(selectionModel.getSelectionEnd() - 1);
+      PsiElement elementAtStart = psiFile.findElementAt(selectionModel.getSelectionStart());
+      PsiElement elementAtEnd = psiFile.findElementAt(selectionModel.getSelectionEnd() - 1);
       if (elementAtStart == null || elementAtStart instanceof PsiWhiteSpace || elementAtStart instanceof PsiComment) {
         elementAtStart = PsiTreeUtil.skipWhitespacesAndCommentsForward(elementAtStart);
         if (elementAtStart == null) return null;
@@ -129,7 +129,7 @@ public final class IterateOverIterableIntention implements IntentionAction {
       return null;
     }
 
-    PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
+    PsiElement element = psiFile.findElementAt(editor.getCaretModel().getOffset());
     while (element instanceof PsiWhiteSpace) {
       element = element.getPrevSibling();
     }
@@ -147,17 +147,17 @@ public final class IterateOverIterableIntention implements IntentionAction {
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
     final TemplateImpl template = getTemplate();
     SelectionModel selectionModel = editor.getSelectionModel();
     if (!selectionModel.hasSelection()) {
-      final PsiExpression iterableExpression = getIterableExpression(editor, file);
+      final PsiExpression iterableExpression = getIterableExpression(editor, psiFile);
       Logger.getInstance(IterateOverIterableIntention.class).assertTrue(iterableExpression != null);
 
       PsiElement element = PsiTreeUtil.skipSiblingsForward(iterableExpression, PsiWhiteSpace.class, PsiComment.class);
       if (PsiUtil.isJavaToken(element, JavaTokenType.SEMICOLON)) {
         element.delete();
-        PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(file.getViewProvider().getDocument());
+        PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(psiFile.getViewProvider().getDocument());
       }
       TextRange textRange = iterableExpression.getTextRange();
       selectionModel.setSelection(textRange.getStartOffset(), textRange.getEndOffset());

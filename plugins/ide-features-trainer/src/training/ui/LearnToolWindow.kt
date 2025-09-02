@@ -3,7 +3,6 @@ package training.ui
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeLater
@@ -31,8 +30,10 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.border.MatteBorder
 
-class LearnToolWindow internal constructor(val project: Project, private val wholeToolWindow: ToolWindow)
-  : SimpleToolWindowPanel(true, true), DataProvider {
+class LearnToolWindow internal constructor(
+  val project: Project,
+  private val wholeToolWindow: ToolWindow
+) : SimpleToolWindowPanel(true, true) {
   internal val parentDisposable: Disposable = wholeToolWindow.disposable
 
   internal val learnPanel: LearnPanel = LearnPanel(this)

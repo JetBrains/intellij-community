@@ -9,9 +9,10 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
+import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
-import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService
+import com.intellij.openapi.roots.ui.configuration.SdkPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.ui.popup.PopupStep
@@ -36,6 +37,7 @@ import org.jetbrains.kotlin.idea.util.isKotlinFileType
 import org.jetbrains.kotlin.idea.versions.getLibraryRootsWithIncompatibleAbi
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.KtFile
+import java.util.function.Consumer
 import java.util.function.Function
 import javax.swing.JComponent
 
@@ -92,15 +94,21 @@ class KotlinSetupEnvironmentNotificationProvider : EditorNotificationProvider {
             Function { fileEditor: FileEditor ->
                 EditorNotificationPanel(fileEditor, EditorNotificationPanel.Status.Warning).apply {
                     text = JavaUiBundle.message("project.sdk.not.defined")
-                    createActionLabel(ProjectBundle.message("project.sdk.setup")) {
-                        ProjectSettingsService.getInstance(project).chooseAndSetSdk() ?: return@createActionLabel
-
-                        runWriteAction {
-                            val module = ModuleUtilCore.findModuleForPsiElement(file)
-                            if (module != null) {
-                                ModuleRootModificationUtil.setSdkInherited(module)
-                            }
-                        }
+                    createComponentActionLabel(ProjectBundle.message("project.sdk.setup")) { label ->
+                        SdkPopupFactory.newBuilder()
+                            .withProject(project)
+                            .withSdkType(JavaSdk.getInstance())
+                            .updateProjectSdkFromSelection()
+                            .onSdkSelected(Consumer {
+                                runWriteAction {
+                                    val module = ModuleUtilCore.findModuleForPsiElement(file)
+                                    if (module != null) {
+                                        ModuleRootModificationUtil.setSdkInherited(module)
+                                    }
+                                }
+                            })
+                            .buildPopup()
+                            .showUnderneathOf(label)
                     }
                 }
             }

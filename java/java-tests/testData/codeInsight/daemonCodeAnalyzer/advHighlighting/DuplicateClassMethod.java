@@ -73,3 +73,12 @@ class ok2 {
   public ok2() {}
   public void ok2() {}
 }
+
+public class Outer {
+  public class <error descr="Duplicate class: 'Outer'">Outer</error> {
+    public<error descr="Identifier or type expected">;</error>
+    public<error descr="Identifier or type expected">;</error>
+    public<error descr="Identifier or type expected">;</error>
+    public<error descr="Identifier or type expected">;</error>
+  }
+}

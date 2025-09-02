@@ -76,7 +76,7 @@ private class LazyDistDirLayoutProducer(version: String, private val unpackedDis
             jarInMavenRepo.copyTo(lib.resolve(getDistJarNameFromMavenJar(jarInMavenRepo) ?: continue))
         }
         val jsEngines = KotlinPluginLayout.jsEngines
-        jsEngines.copyTo(lib.resolve(jsEngines.name)) // js.engines is required to avoid runtime errors when compiling kts via JPS
+        jsEngines?.copyTo(lib.resolve(jsEngines.name)) // js.engines is required to avoid runtime errors when compiling kts via JPS
         return listOf(unpackedDistDestination)
     }
 
@@ -148,12 +148,6 @@ private class LazyDistDirLayoutProducer(version: String, private val unpackedDis
 
         }
 
-        if (nameWithoutExtension.startsWith("kotlin-android-extensions-runtime")) {
-            return "android-extensions-runtime.jar"
-        }
-        if (nameWithoutExtension.startsWith("kotlin-android-extensions")) {
-            return "android-extensions-compiler.jar"
-        }
         return nameWithoutExtension.removeSuffix("-$version") + ".jar"
     }
 }

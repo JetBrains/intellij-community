@@ -2,12 +2,13 @@
 package com.intellij.vcs.log.graph.impl.print
 
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo
+import com.intellij.vcs.log.graph.api.permanent.VcsLogGraphNodeId
 import com.intellij.vcs.log.graph.api.printer.GraphColorGetter
 import com.intellij.vcs.log.graph.api.printer.GraphColorGetterFactory
 
 private class GraphColorGetterByNode<CommitId>(private val permanentGraphInfo: PermanentGraphInfo<CommitId>,
                                                private val colorGetter: (CommitId, Int) -> Int) : GraphColorGetter {
-  override fun getNodeColor(nodeId: Int, layoutIndex: Int): Int {
+  override fun getNodeColor(nodeId: VcsLogGraphNodeId, layoutIndex: Int): Int {
     return colorGetter(permanentGraphInfo.permanentCommitsInfo.getCommitId(nodeId), layoutIndex)
   }
 }

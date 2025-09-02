@@ -191,8 +191,8 @@ public interface DocumentationProvider {
                                                    @Nullable PsiElement contextElement,
                                                    int targetOffset) {
     //noinspection deprecation
-    return (this instanceof DocumentationProviderEx)
-           ? ((DocumentationProviderEx)this).getCustomDocumentationElement(editor, file, contextElement)
+    return (this instanceof DocumentationProviderEx ex)
+           ? ex.getCustomDocumentationElement(editor, file, contextElement)
            : null;
   }
 

@@ -34,4 +34,10 @@ public interface PyTypeVarType extends PyTypeParameterType, PyInstantiableType<P
    * in PEP 484.
    */
   @Nullable PyType getBound();
+
+  @NotNull Variance getVariance();
+
+  enum Variance {
+    COVARIANT, CONTRAVARIANT, INVARIANT, INFER_VARIANCE
+  }
 }

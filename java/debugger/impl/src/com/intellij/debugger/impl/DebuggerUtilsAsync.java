@@ -43,8 +43,12 @@ public final class DebuggerUtilsAsync {
 
   // Debugger manager thread
   public static CompletableFuture<String> getStringValue(StringReference value) {
-    if (value instanceof StringReferenceImpl && isAsyncEnabled()) {
-      return reschedule(((StringReferenceImpl)value).valueAsync());
+    return rescheduleIfNeeded(getStringValueJdiFuture(value));
+  }
+
+  static CompletableFuture<String> getStringValueJdiFuture(StringReference value) {
+    if (value instanceof StringReferenceImpl stringReference && isAsyncEnabled()) {
+      return stringReference.valueAsync();
     }
     return completedFuture(value.value());
   }
@@ -485,11 +489,16 @@ public final class DebuggerUtilsAsync {
     return completedFuture(null);
   }
 
-  public static CompletableFuture<Boolean> isCollected(ObjectReference reference) {
+  static CompletableFuture<Boolean> isCollectedJdiFuture(ObjectReference reference) {
     if (reference instanceof ObjectReferenceImpl objectReferenceImpl && isAsyncEnabled()) {
       return objectReferenceImpl.isCollectedAsync();
     }
     return toCompletableFuture(() -> reference.isCollected());
+  }
+
+  private static <T> CompletableFuture<T> rescheduleIfNeeded(CompletableFuture<T> future) {
+    if (future.isDone()) return future;
+    return reschedule(future);
   }
 
   /**

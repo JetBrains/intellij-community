@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @deprecated This class defines such contracts which ties the implementation to Swing.
  * Use {@link CoroutinesKt#readAction} for running a read action,
- * or {@link CoroutinesKt#readAndWriteAction} for running a read followed by a write.
+ * or {@link CoroutinesKt#readAndEdtWriteAction} for running a read followed by a write.
  */
 @Deprecated
 public abstract class ReadTask {

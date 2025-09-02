@@ -133,7 +133,7 @@ public abstract class GitPushSource implements PushSource {
   public static final class Tag extends GitPushSource {
     private final @NotNull GitTag tag;
 
-    Tag(@NotNull GitTag tag) {
+    public Tag(@NotNull GitTag tag) {
       this.tag = tag;
     }
 

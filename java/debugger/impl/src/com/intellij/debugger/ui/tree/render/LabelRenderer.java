@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -76,7 +76,8 @@ public class LabelRenderer extends ReferenceRenderer implements ValueLabelRender
           if (!debugProcess.isAttached()) {
             throw EvaluateExceptionUtil.PROCESS_EXITED;
           }
-          EvaluationContext thisEvaluationContext = evaluationContext.createEvaluationContext(value);
+          EvaluationContextImpl thisEvaluationContext = evaluationContextImpl.createEvaluationContext(value);
+          XEvaluationOrigin.setOrigin(thisEvaluationContext, XEvaluationOrigin.RENDERER);
           Value labelValue = evaluator.evaluate(thisEvaluationContext);
           JavaDebuggerEvaluatorStatisticsCollector.logEvaluationResult(debugProcess.getProject(), evaluator, true, XEvaluationOrigin.RENDERER);
           String result = StringUtil.notNullize(DebuggerUtils.getValueAsString(thisEvaluationContext, labelValue));

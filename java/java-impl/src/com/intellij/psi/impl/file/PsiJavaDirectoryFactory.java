@@ -10,17 +10,17 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.PsiManagerEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 
 public final class PsiJavaDirectoryFactory extends PsiDirectoryFactory {
-  private final PsiManagerImpl myManager;
+  private final PsiManagerEx myManager;
 
   public PsiJavaDirectoryFactory(@NotNull Project project) {
-    myManager = (PsiManagerImpl)PsiManager.getInstance(project);
+    myManager = PsiManagerEx.getInstanceEx(project);
   }
 
   @Override

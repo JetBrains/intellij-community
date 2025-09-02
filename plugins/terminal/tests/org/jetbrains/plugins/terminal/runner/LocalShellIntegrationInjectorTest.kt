@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.terminal.runner
 
 import com.intellij.idea.TestFor
-import com.intellij.util.PathUtil
 import org.jetbrains.plugins.terminal.ShellStartupOptions
 import org.jetbrains.plugins.terminal.runner.LocalShellIntegrationInjector.findAbsolutePath
 import org.jetbrains.plugins.terminal.shell_integration.CommandBlockIntegration
@@ -17,7 +16,7 @@ internal class LocalShellIntegrationInjectorTest {
   fun testZsh() {
     val actual = LocalShellIntegrationInjector.injectShellIntegration(
       ShellStartupOptions.Builder()
-        .shellCommand(mutableListOf<String>("/bin/zsh"))
+        .shellCommand(mutableListOf("/bin/zsh"))
         .envVariables(buildMap {
           put("MY_CUSTOM_ENV1", "MY_CUSTOM_ENV_VALUE1")
         })
@@ -28,12 +27,12 @@ internal class LocalShellIntegrationInjectorTest {
 
     assertEquals(listOf("/bin/zsh"), actual.shellCommand)
     assertEquals(ShellIntegration(ShellType.ZSH, CommandBlockIntegration(false)), actual.shellIntegration)
-    assertEquals(PathUtil.getParentPath(findAbsolutePath("shell-integrations/zsh/zsh-integration.zsh")), actual.envVariables[LocalShellIntegrationInjector.IJ_ZSH_DIR])
+    assertEquals(findAbsolutePath("shell-integrations/zsh/zsh-integration.zsh").parent.toString(), actual.envVariables[LocalShellIntegrationInjector.IJ_ZSH_DIR])
     assertEquals("1", actual.envVariables["PROCESS_LAUNCHED_BY_CW"])
     assertEquals("1", actual.envVariables["FIG_TERM"])
     assertEquals("1", actual.envVariables["PROCESS_LAUNCHED_BY_Q"])
     assertEquals("1", actual.envVariables["INTELLIJ_TERMINAL_COMMAND_BLOCKS"])
-    assertEquals(PathUtil.getParentPath(findAbsolutePath("shell-integrations/zsh/zdotdir/.zshenv")), actual.envVariables["ZDOTDIR"])
+    assertEquals(findAbsolutePath("shell-integrations/zsh/zdotdir/.zshenv").parent.toString(), actual.envVariables["ZDOTDIR"])
     assertEquals("MY_CUSTOM_ENV_VALUE1", actual.envVariables["MY_CUSTOM_ENV1"])
   }
 
@@ -50,7 +49,7 @@ internal class LocalShellIntegrationInjectorTest {
       false
     )
 
-    assertEquals(listOf("/bin/bash", "--rcfile", findAbsolutePath("shell-integrations/bash/bash-integration.bash")), actual.shellCommand)
+    assertEquals(listOf("/bin/bash", "--rcfile", findAbsolutePath("shell-integrations/bash/bash-integration.bash").toString()), actual.shellCommand)
     assertEquals(ShellIntegration(ShellType.BASH, CommandBlockIntegration(false)), actual.shellIntegration)
     assertEquals("1", actual.envVariables["PROCESS_LAUNCHED_BY_CW"])
     assertEquals("1", actual.envVariables["FIG_TERM"])

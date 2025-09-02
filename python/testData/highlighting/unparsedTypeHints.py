@@ -14,7 +14,7 @@ def c(d):
 e = None  # type: Union[str<EOLError descr="']' expected"></EOLError>
 
 
-def f(g: Union[int<error descr="']' expected">)</error> -> Union[str:<EOLError descr="':' or ']' expected"></EOLError>
+def f(g: Union[int<error descr="']' expected">)</error> -> Union[str:<EOLError descr="']' expected"></EOLError>
     pass<EOLError descr="End of statement expected"></EOLError>
 
 

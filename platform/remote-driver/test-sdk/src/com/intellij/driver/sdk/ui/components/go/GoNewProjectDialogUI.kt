@@ -6,9 +6,10 @@ import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.common.dialogs.NewProjectDialogUI
 import com.intellij.driver.sdk.ui.components.elements.JListUiComponent
 import com.intellij.driver.sdk.ui.ui
+import com.intellij.driver.sdk.ui.xQuery
 
 fun Finder.goNewProjectDialog(action: GoNewProjectDialogUI.() -> Unit) {
-  x("//div[@title='New Project']", GoNewProjectDialogUI::class.java).action()
+  x(xQuery { byTitle("New Project") }, GoNewProjectDialogUI::class.java).action()
 }
 
 fun Driver.goNewProjectDialog(action: GoNewProjectDialogUI.() -> Unit) {
@@ -24,5 +25,5 @@ class GoNewProjectDialogUI(data: ComponentData) : NewProjectDialogUI(data) {
     projectTypeList.clickItem(itemText = "App Engine", fullMatch = false)
   }
 
-  private val projectTypeList = x("//div[@class='JBList']", JListUiComponent::class.java)
+  private val projectTypeList = x(xQuery { byClass("JBList") }, JListUiComponent::class.java)
 }

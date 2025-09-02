@@ -2,7 +2,6 @@
 package com.jetbrains.python.sdk.add
 
 import com.intellij.CommonBundle
-import com.intellij.ide.IdeBundle
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
@@ -15,7 +14,6 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PySdkBundle
-import com.jetbrains.python.newProject.steps.PyAddNewEnvironmentPanel
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.pathValidation.PlatformAndRoot
 import com.jetbrains.python.pathValidation.ValidationRequest
@@ -110,12 +108,7 @@ abstract class PyAddSdkPanel : JPanel(), PyAddSdkView {
 
     @NlsContexts.Button
     private fun getDefaultButtonName(view: PyAddSdkView): String {
-      return if (view.component.parent?.parent is PyAddNewEnvironmentPanel) {
-        IdeBundle.message("new.dir.project.create") // ProjectSettingsStepBase.createActionButton
-      }
-      else {
-        CommonBundle.getOkButtonText() // DialogWrapper.createDefaultActions
-      }
+      return CommonBundle.getOkButtonText() // DialogWrapper.createDefaultActions
     }
   }
 }
@@ -130,9 +123,11 @@ fun addInterpretersAsync(sdkComboBox: PySdkPathChoosingComboBox, sdkObtainer: ()
 /**
  * Obtains a list of sdk on a pool using [sdkObtainer], then fills [sdkComboBox] and calls [onAdded] on the EDT.
  */
-fun addInterpretersAsync(sdkComboBox: PySdkPathChoosingComboBox,
-                         sdkObtainer: () -> List<Sdk>,
-                         onAdded: (List<Sdk>) -> Unit) {
+fun addInterpretersAsync(
+  sdkComboBox: PySdkPathChoosingComboBox,
+  sdkObtainer: () -> List<Sdk>,
+  onAdded: (List<Sdk>) -> Unit,
+) {
   ApplicationManager.getApplication().executeOnPooledThread {
     val executor = AppUIExecutor.onUiThread(ModalityState.any())
     executor.execute { sdkComboBox.setBusy(true) }
@@ -169,11 +164,13 @@ private fun PySdkPathChoosingComboBox.removeAllItems() {
  * Obtains a list of sdk to be used as a base for a virtual environment on a pool,
  * then fills the [sdkComboBox] on the EDT and chooses [com.jetbrains.python.sdk.PySdkSettings.preferredVirtualEnvBaseSdk] or prepends it.
  */
-fun addBaseInterpretersAsync(sdkComboBox: PySdkPathChoosingComboBox,
-                             existingSdks: List<Sdk>,
-                             module: Module?,
-                             context: UserDataHolder,
-                             callback: () -> Unit = {}) {
+fun addBaseInterpretersAsync(
+  sdkComboBox: PySdkPathChoosingComboBox,
+  existingSdks: List<Sdk>,
+  module: Module?,
+  context: UserDataHolder,
+  callback: () -> Unit = {},
+) {
   addInterpretersAsync(
     sdkComboBox,
     { findBaseSdks(existingSdks, module, context).takeIf { it.isNotEmpty() } ?: getSdksToInstall() },

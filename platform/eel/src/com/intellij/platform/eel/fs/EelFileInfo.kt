@@ -2,8 +2,10 @@
 package com.intellij.platform.eel.fs
 
 import com.intellij.platform.eel.path.EelPath
+import org.jetbrains.annotations.ApiStatus
 import java.time.ZonedDateTime
 
+@ApiStatus.Internal
 sealed interface EelFileInfo {
   val type: Type
   val permissions: Permissions
@@ -38,6 +40,7 @@ sealed interface EelFileInfo {
   }
 }
 
+@ApiStatus.Internal
 interface EelPosixFileInfo : EelFileInfo {
   override val type: Type
   override val permissions: Permissions
@@ -106,6 +109,7 @@ interface EelPosixFileInfo : EelFileInfo {
   }
 }
 
+@ApiStatus.Internal
 interface EelWindowsFileInfo : EelFileInfo {
   override val permissions: Permissions
 

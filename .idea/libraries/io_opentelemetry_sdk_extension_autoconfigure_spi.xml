@@ -1,0 +1,18 @@
+<component name="libraryTable">
+  <library name="io.opentelemetry.sdk.extension.autoconfigure.spi" type="repository">
+    <properties include-transitive-deps="false" maven-id="io.opentelemetry:opentelemetry-sdk-extension-autoconfigure-spi:1.45.0">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-sdk-extension-autoconfigure-spi/1.45.0/opentelemetry-sdk-extension-autoconfigure-spi-1.45.0.jar">
+          <sha256sum>d55d8e2e877d5b0424375c79a891c82e78d00eb1b1273295763e1b55b0374123</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-sdk-extension-autoconfigure-spi/1.45.0/opentelemetry-sdk-extension-autoconfigure-spi-1.45.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-sdk-extension-autoconfigure-spi/1.45.0/opentelemetry-sdk-extension-autoconfigure-spi-1.45.0-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

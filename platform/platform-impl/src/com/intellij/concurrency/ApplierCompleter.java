@@ -9,10 +9,10 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.IndexNotReadyException;
-import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.concurrency.ChildContext;
 import com.intellij.util.concurrency.Propagation;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -173,9 +173,7 @@ final class ApplierCompleter<T> extends ForkJoinTask<Void> {
     catch (IndexNotReadyException ignore) {
     }
     catch (Throwable e) {
-      e = accumulateException(myThrown, e);
-      cancelProgress();
-      ExceptionUtil.rethrow(e);
+      accumulateAndRethrowUncheckedRaw(e);
     }
   }
   private void helpAll() {
@@ -185,10 +183,26 @@ final class ApplierCompleter<T> extends ForkJoinTask<Void> {
     catch (IndexNotReadyException ignore) {
     }
     catch (Throwable e) {
-      e = accumulateException(myThrown, e);
-      cancelProgress();
-      ExceptionUtil.rethrow(e);
+      accumulateAndRethrowUncheckedRaw(e);
     }
+  }
+
+  // rethrow exception without adding suppressed by, to avoid too long stacktraces which hurt perf
+  @Contract("_->fail")
+  private void/*Nothing*/ accumulateAndRethrowUncheckedRaw(@NotNull Throwable e) {
+    e = accumulateException(myThrown, e);
+    cancelProgress();
+    rethrowUncheckedRaw(e);
+  }
+
+  /**
+   * rethrow exception as {@link RuntimeException} or {@link Error}, without calling {@link Throwable#addSuppressed(Throwable)} to avoid too long stacktraces which hurt perf
+   */
+  @Contract("_->fail")
+  static void/*Nothing*/ rethrowUncheckedRaw(@NotNull Throwable e) throws RuntimeException, Error {
+    if (e instanceof Error) throw (Error)e;
+    if (e instanceof RuntimeException) throw (RuntimeException)e;
+    throw new RuntimeException(e);
   }
 
   static @NotNull Throwable accumulateException(@NotNull AtomicReference<Throwable> thrown, @NotNull Throwable e) {
@@ -210,7 +224,7 @@ final class ApplierCompleter<T> extends ForkJoinTask<Void> {
     // set to true after processed all items, because some other completer could help processing them in the meantime
   }
 
-  boolean isFinishedAll() {
+  private boolean isFinishedAll() {
     return finishedOrUnqueuedAllOwned.get() == hi - lo;
   }
 
@@ -235,20 +249,33 @@ final class ApplierCompleter<T> extends ForkJoinTask<Void> {
   }
 
   static boolean completeTaskWhichFailToAcquireReadAction(@NotNull List<? extends ApplierCompleter<?>> tasks) {
+    if (tasks.isEmpty()) {
+      return true;
+    }
+    // do a defensive copy to avoid CME on SynchronizedList.iterator
+    ApplierCompleter<?>[] array = tasks.toArray(new ApplierCompleter[0]);
     final boolean[] result = {true};
     // these tasks could not be executed in the other thread; do them here
+    boolean inReadAction = ApplicationManager.getApplication().isReadAccessAllowed(); // we are going to reset thread context here, so the information about locks will be lost
     try (AccessToken ignored = ThreadContext.resetThreadContext()) {
-      for (ApplierCompleter<?> task : tasks) {
+      for (ApplierCompleter<?> task : array) {
         ProgressManager.checkCanceled();
-        ApplicationManager.getApplication().runReadAction(() ->
-                                                            task.wrapInReadActionAndIndicator(() -> {
-                                                              try {
-                                                                task.processArray();
-                                                              }
-                                                              catch (ComputationAbortedException e) {
-                                                                result[0] = false;
-                                                              }
-                                                            }));
+        Runnable r = () -> {
+          task.wrapInReadActionAndIndicator(() -> {
+            try {
+              task.processArray();
+            }
+            catch (ComputationAbortedException e) {
+              result[0] = false;
+            }
+          });
+        };
+        if (inReadAction) {
+          r.run();
+        }
+        else {
+          ApplicationManager.getApplication().runReadAction(r);
+        }
       }
     }
     return result[0];

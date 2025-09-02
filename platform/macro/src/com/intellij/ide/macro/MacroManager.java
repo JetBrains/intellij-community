@@ -22,6 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -34,6 +35,7 @@ public final class MacroManager {
   private static final Pattern MACRO_PATTERN = Pattern.compile("\\$.+\\$");
 
   public static final DataKey<MacroPathConverter> PATH_CONVERTER_KEY = DataKey.create("MacroPathConverter");
+  public static final DataKey<Path> CONTEXT_PATH = DataKey.create("MacroContextPath");
 
   public static MacroManager getInstance() {
     return ApplicationManager.getApplication().getService(MacroManager.class);

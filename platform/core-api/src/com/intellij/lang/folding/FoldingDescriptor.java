@@ -9,6 +9,7 @@ import com.intellij.util.BitUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collections;
 import java.util.Objects;
@@ -174,7 +175,7 @@ public class FoldingDescriptor {
   public FoldingDescriptor(@NotNull ASTNode node,
                            @NotNull TextRange range,
                            @Nullable FoldingGroup group,
-                           @NotNull Set<Object> dependencies,
+                           @NotNull @Unmodifiable Set<Object> dependencies,
                            boolean neverExpands,
                            @Nullable("null means FoldingBuilder.getPlaceholderText will be used") String placeholderText,
                            @Nullable("null means FoldingBuilder.isCollapsedByDefault will be used") Boolean collapsedByDefault) {
@@ -242,7 +243,7 @@ public class FoldingDescriptor {
            : foldingBuilder.getPlaceholderText(myElement);
   }
 
-  public @NotNull Set<Object> getDependencies() {
+  public @NotNull @Unmodifiable Set<Object> getDependencies() {
     return myDependencies;
   }
 

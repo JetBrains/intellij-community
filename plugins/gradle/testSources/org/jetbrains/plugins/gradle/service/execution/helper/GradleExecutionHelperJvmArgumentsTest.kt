@@ -15,212 +15,95 @@
  */
 package org.jetbrains.plugins.gradle.service.execution.helper
 
-import com.intellij.platform.testFramework.assertion.collectionAssertion.CollectionAssertions
-import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper
-import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
-import org.junit.jupiter.api.Disabled
-import org.junit.jupiter.api.Test
-import kotlin.io.path.createDirectories
+import org.assertj.core.api.Assertions
+import org.gradle.util.GradleVersion
+import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
+import org.junit.jupiter.params.ParameterizedTest
+import com.intellij.util.net.NetUtils
+import org.jetbrains.plugins.gradle.testFramework.util.assumeThatGradleIsAtLeast
 
 class GradleExecutionHelperJvmArgumentsTest : GradleExecutionHelperJvmArgumentsTestCase() {
 
-  @Test
-  fun `test Gradle JVM options resolution with empty environment`() {
-    val workingDirectory = tempDirectory.resolve("project")
-      .createDirectories()
+  @ParameterizedTest
+  @AllGradleVersionsSource
+  fun `test Gradle JVM options resolution with custom properties`(gradleVersion: GradleVersion) {
+    testEmptyProject(gradleVersion) {
 
-    val operation = createOperation()
-    val settings = GradleExecutionSettings()
-    val buildEnvironment = createBuildEnvironment(workingDirectory)
-    GradleExecutionHelper.setupJvmArguments(operation, settings, buildEnvironment)
-
-    CollectionAssertions.assertEmpty(operation.jvmArguments)
-  }
-
-  @Test
-  fun `test Gradle JVM options resolution with settings`() {
-    val projectRoot = tempDirectory.resolve("project")
-      .createDirectories()
-
-    val settings = GradleExecutionSettings().apply {
-      withVmOptions(
+      val customVmOptions = listOf(
         "-Dname=value",
-        "-Xmx10g"
+        "-Xmx420m"
       )
+
+      val daemonOptions = executeTaskAndCollectDaemonOptions(customVmOptions)
+
+      Assertions.assertThat(daemonOptions)
+        .contains("-Dname=value")
+        .contains("-Xmx420m")
     }
-
-    val operation = createOperation()
-    val buildEnvironment = createBuildEnvironment(projectRoot)
-    GradleExecutionHelper.setupJvmArguments(operation, settings, buildEnvironment)
-
-    val expectedJvmArguments = listOf(
-      "-Dname=value",
-      "-Xmx10g"
-    ) + IMMUTABLE_JVM_ARGUMENTS
-    CollectionAssertions.assertEqualsOrdered(expectedJvmArguments, operation.jvmArguments)
   }
 
-  @Test
-  fun `test Gradle JVM options resolution with BuildEnvironment`() {
-    val projectRoot = tempDirectory.resolve("project")
-      .createDirectories()
+  @ParameterizedTest
+  @AllGradleVersionsSource
+  fun `test Gradle JVM options resolution with gradle and custom properties`(gradleVersion: GradleVersion) {
+    testEmptyProject(gradleVersion) {
 
-    val buildEnvironment = createBuildEnvironment(projectRoot).apply {
-      java.jvmArguments = listOf(
-        "-Dname=value",
-        "-Xmx10g"
-      )
-    }
+      writeText("gradle.properties", """
+        |org.gradle.jvmargs=\
+        |  -Dname=value1 \
+        |  -Dname1=value \
+        |  -Xmx420m
+      """.trimMargin())
 
-    val operation = createOperation()
-    val settings = GradleExecutionSettings()
-    GradleExecutionHelper.setupJvmArguments(operation, settings, buildEnvironment)
-
-    CollectionAssertions.assertEmpty(operation.jvmArguments)
-  }
-
-  @Test
-  fun `test Gradle JVM options resolution with settings and BuildEnvironment`() {
-    val projectRoot = tempDirectory.resolve("project")
-      .createDirectories()
-
-    val buildEnvironment = createBuildEnvironment(projectRoot).apply {
-      java.jvmArguments = listOf(
-        "-Dname=value1",
-        "-Dname1=value",
-        "-Xmx1g"
-      )
-    }
-
-    val settings = GradleExecutionSettings().apply {
-      withVmOptions(
+      val customVmOptions = listOf(
         "-Dname=value2",
         "-Dname2=value",
-        "-Xmx2g"
+        "-Xmx421m"
       )
+
+      val daemonOptions = executeTaskAndCollectDaemonOptions(customVmOptions)
+
+      Assertions.assertThat(daemonOptions)
+        .doesNotContain("-Dname=value1")
+        .contains("-Dname=value2")
+        .contains("-Dname1=value")
+        .contains("-Dname2=value")
+        .doesNotContain("-Xmx420")
+        .contains("-Xmx421m")
     }
-
-    val operation = createOperation()
-    GradleExecutionHelper.setupJvmArguments(operation, settings, buildEnvironment)
-
-    val expectedJvmArguments = listOf(
-      "-Dname=value2",
-      "-Dname1=value",
-      "-Dname2=value",
-      "-Xmx2g"
-    ) + IMMUTABLE_JVM_ARGUMENTS
-    CollectionAssertions.assertEqualsOrdered(expectedJvmArguments, operation.jvmArguments)
   }
 
-  @Test
-  fun `test Gradle JVM options resolution with debug agent in BuildEnvironment`() {
-    val projectRoot = tempDirectory.resolve("project")
-      .createDirectories()
+  @ParameterizedTest
+  @AllGradleVersionsSource
+  fun `test Gradle JVM options resolution with debug agent in gradle properties and custom properties`(gradleVersion: GradleVersion) {
+    assumeThatGradleIsAtLeast(gradleVersion, "7.4") {
+      "Gradle debugger port cannot be specified in gradle.properties"
+    }
+    assumeThatGradleIsAtLeast(gradleVersion, "8.13") {
+      "Gradle TAPI's VM options merger cannot recognise org.gradle.debug.* sub-properties in gradle.properties"
+    }
 
-    val buildEnvironment = createBuildEnvironment(projectRoot).apply {
-      java.jvmArguments = listOf(
-        "-agentlib:jdwp=transport=dt_socket,server=n,suspend=y,address=*:5005"
+    testEmptyProject(gradleVersion) {
+
+      val port = NetUtils.findAvailableSocketPort()
+
+      writeText("gradle.properties", """
+        |org.gradle.debug=true
+        |org.gradle.debug.port=$port
+        |org.gradle.debug.suspend=false
+      """.trimMargin())
+
+      val customVmOptions = listOf(
+        "-Dname=value",
       )
+
+      val daemonOptions = executeTaskAndCollectDaemonOptions(customVmOptions)
+
+      Assertions.assertThat(daemonOptions)
+        .contains("-Dname=value")
+        .containsAnyOf(
+          "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=$port",
+          "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:$port"
+        )
     }
-
-    val settings = GradleExecutionSettings().apply {
-      withVmOption(
-        "-Dname=value"
-      )
-    }
-
-    val operation = createOperation()
-    GradleExecutionHelper.setupJvmArguments(operation, settings, buildEnvironment)
-
-    val expectedJvmArguments = listOf(
-      "-Dname=value",
-      "-agentlib:jdwp=transport=dt_socket,server=n,suspend=y,address=*:5005"
-    ) + IMMUTABLE_JVM_ARGUMENTS
-    CollectionAssertions.assertEqualsOrdered(expectedJvmArguments, operation.jvmArguments)
-  }
-
-  @Test
-  fun `test Gradle JVM options resolution with --add-opens and --add-exports`() {
-    val projectRoot = tempDirectory.resolve("project")
-      .createDirectories()
-
-    val buildEnvironment = createBuildEnvironment(projectRoot).apply {
-      java.jvmArguments = listOf(
-        "--add-opens", "java.base/java.util=ALL-UNNAMED",
-        "--add-opens", "java.base/java.lang=ALL-UNNAMED",
-        "--add-opens", "java.base/java.lang.invoke=ALL-UNNAMED",
-        "--add-opens", "java.prefs/java.util.prefs=ALL-UNNAMED",
-        "--add-exports", "jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED",
-        "--add-exports", "jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED",
-        "--add-opens", "java.base/java.nio.charset=ALL-UNNAMED",
-        "--add-opens", "java.base/java.net=ALL-UNNAMED",
-        "--add-opens", "java.base/java.util.concurrent.atomic=ALL-UNNAMED",
-        "-XX:MaxMetaspaceSize=384m",
-        "-XX:+HeapDumpOnOutOfMemoryError",
-        "-Xms256m",
-        "-Xmx512m"
-      ) + IMMUTABLE_JVM_ARGUMENTS
-    }
-
-    val settings = GradleExecutionSettings().apply {
-      withVmOption("-Dname=value")
-    }
-
-    val operation = createOperation()
-    GradleExecutionHelper.setupJvmArguments(operation, settings, buildEnvironment)
-
-    val expectedJvmArguments = listOf(
-      "-Dname=value",
-      "--add-exports", "jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED",
-      "--add-exports", "jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED",
-      "-XX:MaxMetaspaceSize=384m",
-      "-XX:+HeapDumpOnOutOfMemoryError",
-      "-Xms256m",
-      "-Xmx512m"
-    ) + IMMUTABLE_JVM_ARGUMENTS
-    CollectionAssertions.assertEqualsOrdered(expectedJvmArguments, operation.jvmArguments)
-  }
-
-  @Test
-  @Disabled("Known issues: The JVM options in long option notation cannot be correctly parsed")
-  fun `test Gradle JVM options resolution with --add-opens= and --add-exports=`() {
-    val projectRoot = tempDirectory.resolve("project")
-      .createDirectories()
-
-    val buildEnvironment = createBuildEnvironment(projectRoot).apply {
-      java.jvmArguments = listOf(
-        "--add-opens=java.base/java.util=ALL-UNNAMED",
-        "--add-opens=java.base/java.lang=ALL-UNNAMED",
-        "--add-opens=java.base/java.lang.invoke=ALL-UNNAMED",
-        "--add-opens=java.prefs/java.util.prefs=ALL-UNNAMED",
-        "--add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED",
-        "--add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED",
-        "--add-opens=java.base/java.nio.charset=ALL-UNNAMED",
-        "--add-opens=java.base/java.net=ALL-UNNAMED",
-        "--add-opens=java.base/java.util.concurrent.atomic=ALL-UNNAMED",
-        "-XX:MaxMetaspaceSize=384m",
-        "-XX:+HeapDumpOnOutOfMemoryError",
-        "-Xms256m",
-        "-Xmx512m"
-      ) + IMMUTABLE_JVM_ARGUMENTS
-    }
-
-    val settings = GradleExecutionSettings().apply {
-      withVmOption("-Dname=value")
-    }
-
-    val operation = createOperation()
-    GradleExecutionHelper.setupJvmArguments(operation, settings, buildEnvironment)
-
-    val expectedJvmArguments = listOf(
-      "-Dname=value",
-      "--add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED",
-      "--add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED",
-      "-XX:MaxMetaspaceSize=384m",
-      "-XX:+HeapDumpOnOutOfMemoryError",
-      "-Xms256m",
-      "-Xmx512m"
-    ) + IMMUTABLE_JVM_ARGUMENTS
-    CollectionAssertions.assertEqualsOrdered(expectedJvmArguments, operation.jvmArguments)
   }
 }

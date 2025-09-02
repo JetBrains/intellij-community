@@ -154,7 +154,7 @@ internal object FirKotlinUastConstantEvaluator {
         if (operands.any { it is String } && operator != UastBinaryOperator.PLUS) {
             return null
         }
-        return operands.asSequence().reduceOrNull { opr1, opr2 ->
+        return operands.reduceOrNull { opr1, opr2 ->
             if (opr1 is String || opr2 is String) {
                 return@reduceOrNull opr1.toString() + opr2.toString()
             }

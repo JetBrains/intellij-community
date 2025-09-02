@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.annotate
 
 import com.intellij.openapi.components.Service
@@ -10,15 +10,18 @@ import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsException
-import com.intellij.openapi.vcs.VcsScope
 import com.intellij.openapi.vcs.history.VcsRevisionNumber
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager.Companion.getInstance
 import com.intellij.platform.diagnostic.telemetry.helpers.use
+import com.intellij.platform.vcs.impl.shared.telemetry.VcsScope
 import git4idea.annotate.GitAnnotationProvider.GitRawAnnotationProvider
-import git4idea.telemetry.GitTelemetrySpan
-import kotlinx.coroutines.*
+import git4idea.telemetry.GitBackendTelemetrySpan
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.produce
+import kotlinx.coroutines.launch
 import java.util.concurrent.CancellationException
 import kotlin.time.TimedValue
 import kotlin.time.measureTimedValue
@@ -36,7 +39,7 @@ class GitAnnotationService(private val project: Project, private val cs: Corouti
                revision: VcsRevisionNumber?,
                file: VirtualFile): GitFileAnnotation {
     return runBlockingCancellable {
-      getInstance().getTracer(VcsScope).spanBuilder(GitTelemetrySpan.Annotations.OpenAnnotation.getName()).use { span ->
+      getInstance().getTracer(VcsScope).spanBuilder(GitBackendTelemetrySpan.Annotations.OpenAnnotation.getName()).use { span ->
         val providers = GitRawAnnotationProvider.EP_NAME.getExtensions(project)
         val default = providers.single { GitRawAnnotationProvider.isDefault(it.id) }
 

@@ -2,19 +2,14 @@
 package com.intellij.platform.workspace.storage.testEntities.entities
 
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
-import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.annotations.Child
+import com.intellij.platform.workspace.storage.annotations.Parent
 
 
 interface KeyParent : WorkspaceEntity {
   @EqualsBy
   val keyField: String
   val notKeyField: String
-  val children: List<@Child KeyChild>
+  val children: List<KeyChild>
 
   //region generated code
   @GeneratedCodeApiVersion(3)
@@ -59,6 +54,7 @@ fun MutableEntityStorage.modifyKeyParent(
 interface KeyChild : WorkspaceEntity {
   val data: String
 
+  @Parent
   val parentEntity : KeyParent
 
   //region generated code

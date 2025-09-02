@@ -2,6 +2,7 @@
 package com.intellij.execution.process.elevation
 
 import com.intellij.execution.ExecutionException
+import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.BaseOSProcessHandler
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.execution.process.mediator.client.ProcessMediatorClient
@@ -68,11 +69,29 @@ class ElevationDaemonProcessLauncher(clientBuilder: ProcessMediatorClient.Builde
 
   override fun createProcessHandler(transport: DaemonHandshakeTransport): BaseOSProcessHandler {
     val commandLine = createCommandLine(transport)
-    val sudoCommandLine = ExecUtil.sudoCommand(commandLine,
+    var sudoCommandLine = ExecUtil.sudoCommand(commandLine,
                                                ElevationBundle.message("dialog.title.sudo.prompt.product.elevation.daemon",
                                                                        ApplicationNamesInfo.getInstance().fullProductName))
     val sudoPath = if (sudoCommandLine !== commandLine) Path.of(sudoCommandLine.exePath) else null
 
+    if (sudoCommandLine.exePath == "pkexec") {
+      // Pkexec loops through all file descriptors < _SC_OPEN_MAX and marks
+      // them with FD_CLOEXEC before executing a command [1].
+      // On Ubuntu 25 _SC_OPEN_MAX=1073741816.
+      // Doing this many syscalls takes a few minutes (CPP-45629).
+      //
+      // This activity is redundant: when java starts a child process, it
+      // marks file descriptors with FD_CLOEXEC itself [2].
+      //
+      // To avoid a slow pkexec, we precede it with ulimit setting a
+      // small number of files to close.
+      //
+      // [1] https://github.com/polkit-org/polkit/blob/11c4a81f6f732e4b1887a96cab69a1ad6a000e00/src/programs/pkexec.c#L259-L267
+      // [2] https://github.com/openjdk/jdk/blob/9e209fef86fe75fb09734c9112fd1d8490c22413/src/java.base/unix/native/libjava/childproc.c#L410
+      val pkExecCommand = "pkexec " + sudoCommandLine.parametersList.parameters.joinToString(separator = " ")
+      val ulimitPkExec = "ulimit -n 1024 && $pkExecCommand"
+      sudoCommandLine = GeneralCommandLine("sh", "-c", ulimitPkExec)
+    }
     return createProcessHandler(transport, sudoCommandLine).apply {
       putUserData(SUDO_PATH_KEY, sudoPath)
     }

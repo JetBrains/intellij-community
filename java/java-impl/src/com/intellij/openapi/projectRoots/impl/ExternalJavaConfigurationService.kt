@@ -7,8 +7,8 @@ import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
@@ -117,7 +117,7 @@ class ExternalJavaConfigurationService(val project: Project, private val scope: 
     }
 
     // Match against JdkFinder
-    JdkFinder.getInstance().suggestHomePaths().forEach { path ->
+    JdkFinder.getInstance().suggestHomePaths(project).forEach { path ->
       if (configProvider.matchAgainstPath(releaseData, path) && (!SystemInfo.isWindows || wsl == WslPath.isWslUncPath(path))) {
         LOG.info("[$fileName] $releaseData - Candidate found to register")
         return JdkCandidate.Path(releaseData, path)

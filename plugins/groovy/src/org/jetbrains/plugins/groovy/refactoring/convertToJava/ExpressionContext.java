@@ -6,6 +6,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 
@@ -34,7 +35,8 @@ public final class ExpressionContext implements Cloneable {
     this.myClasses = myClasses;
   }
 
-  ExpressionContext(Project project, GroovyFile[] filesToConvert) {
+  @VisibleForTesting
+  public ExpressionContext(Project project, GroovyFile[] filesToConvert) {
     this(project, new HashSet<>(), new HashMap<>(), new HashSet<>());
     typeProvider = new TypeProvider();
     for (GroovyFile groovyFile : filesToConvert) {

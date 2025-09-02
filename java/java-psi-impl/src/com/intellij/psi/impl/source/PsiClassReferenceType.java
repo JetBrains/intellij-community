@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
+import com.intellij.codeInsight.TypeNullability;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
@@ -11,6 +12,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.JavaTypeNullabilityUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -24,6 +26,7 @@ import static com.intellij.util.ObjectUtils.notNull;
 
 public class PsiClassReferenceType extends PsiClassType.Stub {
   private final ClassReferencePointer myReference;
+  private TypeNullability myNullability = null;
 
   public PsiClassReferenceType(@NotNull PsiJavaCodeReferenceElement reference, LanguageLevel level) {
     this(reference, level, collectAnnotations(reference));
@@ -103,6 +106,31 @@ public class PsiClassReferenceType extends PsiClassType.Stub {
     }
 
     return annotations;
+  }
+
+  @Override
+  public @NotNull TypeNullability getNullability() {
+    TypeNullability nullability = myNullability;
+    if (nullability == null) {
+      myNullability = nullability = JavaTypeNullabilityUtil.getTypeNullability(this);
+    }
+    return nullability;
+  }
+
+  @Override
+  public @NotNull PsiClassType annotate(@NotNull TypeAnnotationProvider provider) {
+    PsiClassReferenceType annotated = (PsiClassReferenceType)super.annotate(provider);
+    annotated.myNullability = null;
+    return annotated;
+  }
+
+  @Override
+  public @NotNull PsiClassType withNullability(@NotNull TypeNullability nullability) {
+    ClassResolveResult result = resolveGenerics();
+    PsiClass psiClass = result.getElement();
+    if (psiClass == null) return this;
+    return new PsiImmediateClassType(
+      psiClass, result.getSubstitutor(), myLanguageLevel, getAnnotationProvider(), getPsiContext(), nullability);
   }
 
   @Override

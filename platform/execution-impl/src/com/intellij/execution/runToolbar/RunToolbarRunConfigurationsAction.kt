@@ -13,7 +13,7 @@ import com.intellij.ide.ui.UISettings.Companion.isIdeHelpTooltipEnabled
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
-import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl.DO_NOT_ADD_CUSTOMIZATION_HANDLER
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.impl.segmentedActionBar.SegmentedCustomPanel
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
@@ -256,7 +256,7 @@ open class RunToolbarRunConfigurationsAction : RunConfigurationsComboBoxAction()
     init {
       MouseListenerHelper.addListener(this, { doClick() }, { doShiftClick() }, { doRightClick() })
       fill()
-      putClientProperty(DO_NOT_ADD_CUSTOMIZATION_HANDLER, true)
+      putClientProperty(ActionToolbarImpl.DO_NOT_ADD_CUSTOMIZATION_HANDLER, true)
       isOpaque = false
     }
 
@@ -272,7 +272,7 @@ open class RunToolbarRunConfigurationsAction : RunConfigurationsComboBoxAction()
     protected fun updateView(@Nls text: String, enable: Boolean, icon: Icon? = null, @Nls toolTipText: String? = null) {
       setting.icon = icon
       setting.text = text
-      setting.putClientProperty(DO_NOT_ADD_CUSTOMIZATION_HANDLER, true)
+      setting.putClientProperty(ActionToolbarImpl.DO_NOT_ADD_CUSTOMIZATION_HANDLER, true)
 
 
       setting.isEnabled = enable

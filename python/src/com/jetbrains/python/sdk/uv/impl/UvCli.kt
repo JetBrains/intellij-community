@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.uv.impl
 
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil
@@ -7,10 +7,11 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.SystemProperties
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.errorProcessing.PyExecResult
 import com.jetbrains.python.pathValidation.PlatformAndRoot
 import com.jetbrains.python.pathValidation.ValidationRequest
 import com.jetbrains.python.pathValidation.validateExecutableFile
-import com.jetbrains.python.sdk.runExecutable
+import com.jetbrains.python.sdk.runExecutableWithProgress
 import com.jetbrains.python.sdk.uv.UvCli
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -18,6 +19,7 @@ import kotlinx.coroutines.withContext
 import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.pathString
+import kotlin.time.Duration.Companion.minutes
 
 private const val UV_PATH_SETTING: String = "PyCharm.Uv.Path"
 
@@ -38,8 +40,8 @@ private fun validateUvExecutable(uvPath: Path?): ValidationInfo? {
   ))
 }
 
-private suspend fun runUv(uv: Path, workingDir: Path, vararg args: String): Result<String> {
-  return runExecutable(uv, workingDir, *args)
+private suspend fun runUv(uv: Path, workingDir: Path, vararg args: String): PyExecResult<String> {
+  return runExecutableWithProgress(uv, workingDir, 10.minutes, *args)
 }
 
 private class UvCliImpl(val dispatcher: CoroutineDispatcher, uvPath: Path?) : UvCli {
@@ -55,7 +57,7 @@ private class UvCliImpl(val dispatcher: CoroutineDispatcher, uvPath: Path?) : Uv
     uv = path!!
   }
 
-  override suspend fun runUv(workingDir: Path, vararg args: String): Result<String> {
+  override suspend fun runUv(workingDir: Path, vararg args: String): PyExecResult<String> {
     return withContext(dispatcher) {
       runUv(uv, workingDir, *args)
     }

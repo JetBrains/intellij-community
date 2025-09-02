@@ -10,10 +10,11 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.components.service
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectCoreUtil
+import com.intellij.openapi.project.ProjectStorePathManager
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
@@ -24,6 +25,7 @@ import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.projectImport.ProjectAttachProcessor
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
@@ -53,30 +55,36 @@ open class AttachProjectAction : AnAction(), DumbAware {
   }
 
   fun chooseAndAttachToProject(project: Project) {
-    val descriptor = OpenProjectFileChooserDescriptor(true)
-    var preselectedDirectory = project.getUserData(TO_SELECT_KEY)?.let {
-      project.putUserData(TO_SELECT_KEY, null) // reset the value
-      LocalFileSystem.getInstance().findFileByNioFile(it)
-    }
-    if (preselectedDirectory == null) {
-      val defaultProjectDirectory = GeneralLocalSettings.getInstance().defaultProjectDirectory
-      preselectedDirectory = if (defaultProjectDirectory.isEmpty()) {
-        VfsUtil.findFileByIoFile(File(SystemProperties.getUserHome()), true)
-      }
-      else {
-        VfsUtil.findFileByIoFile(File(defaultProjectDirectory), true)
-      }
-    }
-
-    FileChooser.chooseFiles(descriptor, project, preselectedDirectory) {
-      val directory = it[0]
-      if (validateDirectory(project, directory)) {
-        attachProject(directory, project)
-      }
-    }
+    chooseAndAttachToProject(project, ::validateDirectory)
   }
 
   companion object {
+    @ApiStatus.Internal
+    fun chooseAndAttachToProject(project: Project, validateDirectory: (Project, VirtualFile) -> Boolean) {
+      val descriptor = OpenProjectFileChooserDescriptor(true)
+      var preselectedDirectory = project.getUserData(TO_SELECT_KEY)?.let {
+        project.putUserData(TO_SELECT_KEY, null) // reset the value
+        LocalFileSystem.getInstance().findFileByNioFile(it)
+      }
+
+      if (preselectedDirectory == null) {
+        val defaultProjectDirectory = GeneralLocalSettings.getInstance().defaultProjectDirectory
+        preselectedDirectory = if (defaultProjectDirectory.isEmpty()) {
+          VfsUtil.findFileByIoFile(File(SystemProperties.getUserHome()), true)
+        }
+        else {
+          VfsUtil.findFileByIoFile(File(defaultProjectDirectory), true)
+        }
+      }
+
+      FileChooser.chooseFiles(descriptor, project, preselectedDirectory) {
+        val directory = it[0]
+        if (validateDirectory(project, directory)) {
+          attachProject(directory, project)
+        }
+      }
+    }
+
     @JvmStatic
     val TO_SELECT_KEY: Key<Path> = Key.create("attach_to_select_key")
 
@@ -87,7 +95,7 @@ open class AttachProjectAction : AnAction(), DumbAware {
         baseDir = virtualFile.parent
         while (baseDir != null) {
           val isProjectDirectory = try {
-            ProjectCoreUtil.isKnownProjectDirectory(baseDir.toNioPath())
+            service<ProjectStorePathManager>().testStoreDirectoryExistsForProjectRoot(baseDir.toNioPath())
           }
           catch (e: InvalidPathException) {
             false

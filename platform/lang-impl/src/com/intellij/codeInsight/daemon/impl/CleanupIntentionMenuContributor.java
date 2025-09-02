@@ -22,9 +22,9 @@ public class CleanupIntentionMenuContributor implements IntentionMenuContributor
     }
   }
 
-  private static boolean appendCleanupCode(@NotNull List<HighlightInfo.IntentionActionDescriptor> actionDescriptors, @NotNull PsiFile file) {
+  private static boolean appendCleanupCode(@NotNull List<HighlightInfo.IntentionActionDescriptor> actionDescriptors, @NotNull PsiFile psiFile) {
     for (HighlightInfo.IntentionActionDescriptor descriptor : actionDescriptors) {
-      if (descriptor.canCleanup(file)) {
+      if (descriptor.canCleanup(psiFile)) {
         IntentionManager manager = IntentionManager.getInstance();
         actionDescriptors.add(new HighlightInfo.IntentionActionDescriptor(manager.createCleanupAllIntention(),
                                                                           manager.getCleanupIntentionOptions(),

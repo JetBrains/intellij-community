@@ -294,6 +294,17 @@ public interface PyClass extends PyAstClass, PsiNameIdentifierOwner, PyCompoundS
   List<String> getOwnSlots();
 
   /**
+   * Returns the list of names in the class' __match_args__ attribute, or null if the class
+   * does not define such an attribute.
+   *
+   * @return the list of names or null.
+   */
+  @Nullable
+  default List<@NotNull String> getOwnMatchArgs() {
+    return null;
+  }
+
+  /**
    * Process all declarations appearing at the syntactic level of this class' body, in particular class attributes, both
    * assignments and type declarations, methods, and nested classes.
    */

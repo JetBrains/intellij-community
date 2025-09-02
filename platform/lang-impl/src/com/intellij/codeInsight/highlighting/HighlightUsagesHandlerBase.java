@@ -26,14 +26,14 @@ public abstract class HighlightUsagesHandlerBase<T extends PsiElement> implement
   protected final @NotNull Editor myEditor;
   protected final @NotNull PsiFile myFile;
 
-  protected final List<TextRange> myReadUsages = new ArrayList<>();
-  protected final List<TextRange> myWriteUsages = new ArrayList<>();
+  protected final @NotNull List<@NotNull TextRange> myReadUsages = new ArrayList<>();
+  protected final @NotNull List<@NotNull TextRange> myWriteUsages = new ArrayList<>();
   protected @NlsContexts.StatusBarText String myStatusText;
   protected @NlsContexts.HintText String myHintText;
 
-  protected HighlightUsagesHandlerBase(@NotNull Editor editor, @NotNull PsiFile file) {
+  protected HighlightUsagesHandlerBase(@NotNull Editor editor, @NotNull PsiFile psiFile) {
     myEditor = editor;
-    myFile = file;
+    myFile = psiFile;
   }
 
   public void highlightUsages() {
@@ -92,11 +92,11 @@ public abstract class HighlightUsagesHandlerBase<T extends PsiElement> implement
     }
   }
 
-  public List<TextRange> getReadUsages() {
+  public @NotNull List<@NotNull TextRange> getReadUsages() {
     return myReadUsages;
   }
 
-  public List<TextRange> getWriteUsages() {
+  public @NotNull List<@NotNull TextRange> getWriteUsages() {
     return myWriteUsages;
   }
 
@@ -106,5 +106,10 @@ public abstract class HighlightUsagesHandlerBase<T extends PsiElement> implement
    */
   public boolean highlightReferences() {
     return false;
+  }
+
+  @Override
+  public String toString() {
+    return super.toString() +" myReadUsages="+myReadUsages+"; myWriteUsages="+myWriteUsages;
   }
 }

@@ -6,15 +6,15 @@ import com.intellij.platform.testFramework.assertion.moduleAssertion.DependencyA
 import com.intellij.platform.testFramework.assertion.moduleAssertion.DependencyAssertions.assertDependencies
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions.assertModuleEntity
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions.assertModules
-import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.useProjectAsync
-import org.jetbrains.plugins.gradle.testFramework.util.DEFAULT_SYNC_TIMEOUT
+import kotlinx.coroutines.runBlocking
+import org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID
 import org.junit.jupiter.api.Test
 
 class GradleProjectsWorkspaceIntegrationTest : ExternalProjectsWorkspaceIntegrationTestCase() {
 
   @Test
-  fun `test library substitution`(): Unit = timeoutRunBlocking(DEFAULT_SYNC_TIMEOUT) {
+  fun `test library substitution`(): Unit = runBlocking {
     createMavenLibrary("workspace/repository", "org.example:gradle-lib:1.0-SNAPSHOT")
     createGradleWrapper("workspace/gradle-app")
     createGradleBuildFile("workspace/gradle-app") {
@@ -32,7 +32,7 @@ class GradleProjectsWorkspaceIntegrationTest : ExternalProjectsWorkspaceIntegrat
     openProject("workspace").useProjectAsync { project ->
       assertModules(project, "workspace")
 
-      linkProject(project, "workspace/gradle-app")
+      linkProject(project, "workspace/gradle-app", SYSTEM_ID)
 
       assertModules(project, "workspace",
                     "gradle-app", "gradle-app.main", "gradle-app.test")
@@ -41,7 +41,7 @@ class GradleProjectsWorkspaceIntegrationTest : ExternalProjectsWorkspaceIntegrat
                            "Gradle: org.example:gradle-lib:1.0-SNAPSHOT")
       }
 
-      linkProject(project, "workspace/gradle-lib")
+      linkProject(project, "workspace/gradle-lib", SYSTEM_ID)
 
       assertModules(project, "workspace",
                     "gradle-app", "gradle-app.main", "gradle-app.test",
@@ -54,7 +54,7 @@ class GradleProjectsWorkspaceIntegrationTest : ExternalProjectsWorkspaceIntegrat
   }
 
   @Test
-  fun `test library substitution on unlink project`(): Unit = timeoutRunBlocking(DEFAULT_SYNC_TIMEOUT) {
+  fun `test library substitution on unlink project`(): Unit = runBlocking {
     createMavenLibrary("workspace/repository", "org.example:gradle-lib:1.0-SNAPSHOT")
     createGradleWrapper("workspace/gradle-app")
     createGradleBuildFile("workspace/gradle-app") {
@@ -72,9 +72,9 @@ class GradleProjectsWorkspaceIntegrationTest : ExternalProjectsWorkspaceIntegrat
     openProject("workspace").useProjectAsync { project ->
       assertModules(project, "workspace")
 
-      linkProject(project, "workspace/gradle-app")
-      linkProject(project, "workspace/gradle-lib")
-      unlinkProject(project, "workspace/gradle-lib")
+      linkProject(project, "workspace/gradle-app", SYSTEM_ID)
+      linkProject(project, "workspace/gradle-lib", SYSTEM_ID)
+      unlinkProject(project, "workspace/gradle-lib", SYSTEM_ID)
 
       assertModules(project, "workspace",
                     "gradle-app", "gradle-app.main", "gradle-app.test")
@@ -86,7 +86,7 @@ class GradleProjectsWorkspaceIntegrationTest : ExternalProjectsWorkspaceIntegrat
   }
 
   @Test
-  fun `test library substitution with transitive dependency`(): Unit = timeoutRunBlocking(DEFAULT_SYNC_TIMEOUT) {
+  fun `test library substitution with transitive dependency`(): Unit = runBlocking {
     createMavenLibrary("workspace/repository", "org.example:gradle-lib:1.0-SNAPSHOT") {
       dependency("compile", "org.example:gradle-super-lib:1.0-SNAPSHOT")
     }
@@ -115,7 +115,7 @@ class GradleProjectsWorkspaceIntegrationTest : ExternalProjectsWorkspaceIntegrat
     openProject("workspace").useProjectAsync { project ->
       assertModules(project, "workspace")
 
-      linkProject(project, "workspace/gradle-app")
+      linkProject(project, "workspace/gradle-app", SYSTEM_ID)
 
       assertModuleEntity(project, "gradle-app.main") { module ->
         assertDependencies(module, INHERITED_SDK, MODULE_SOURCE,
@@ -123,7 +123,7 @@ class GradleProjectsWorkspaceIntegrationTest : ExternalProjectsWorkspaceIntegrat
                            "Gradle: org.example:gradle-super-lib:1.0-SNAPSHOT")
       }
 
-      linkProject(project, "workspace/gradle-lib")
+      linkProject(project, "workspace/gradle-lib", SYSTEM_ID)
 
       assertModuleEntity(project, "gradle-app.main") { module ->
         assertDependencies(module, INHERITED_SDK, MODULE_SOURCE,
@@ -135,7 +135,7 @@ class GradleProjectsWorkspaceIntegrationTest : ExternalProjectsWorkspaceIntegrat
                            "Gradle: org.example:gradle-super-lib:1.0-SNAPSHOT")
       }
 
-      linkProject(project, "workspace/gradle-super-lib")
+      linkProject(project, "workspace/gradle-super-lib", SYSTEM_ID)
 
       assertModules(project, "workspace",
                     "gradle-app", "gradle-app.main", "gradle-app.test",

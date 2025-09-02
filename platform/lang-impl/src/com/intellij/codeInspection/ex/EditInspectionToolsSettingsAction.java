@@ -41,13 +41,13 @@ public final class EditInspectionToolsSettingsAction implements IntentionAction,
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
     return true;
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    final InspectionProjectProfileManager projectProfileManager = InspectionProjectProfileManager.getInstance(file.getProject());
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
+    final InspectionProjectProfileManager projectProfileManager = InspectionProjectProfileManager.getInstance(psiFile.getProject());
     InspectionProfileImpl inspectionProfile = projectProfileManager.getCurrentProfile();
     editToolSettings(project,
                      inspectionProfile,

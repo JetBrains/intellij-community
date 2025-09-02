@@ -21,7 +21,7 @@ import com.jetbrains.python.debugger.ArrayChunkBuilder;
 import com.jetbrains.python.debugger.PyDebugValue;
 import com.jetbrains.python.debugger.PyDebuggerException;
 import com.jetbrains.python.debugger.containerview.DataViewStrategy;
-import com.jetbrains.python.debugger.containerview.PyDataViewerPanel;
+import com.jetbrains.python.debugger.containerview.PyDataViewerCommunityPanel;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.event.TableModelEvent;
@@ -37,7 +37,7 @@ public class AsyncArrayTableModel extends AbstractTableModel {
 
   private final int myRows;
   private final int myColumns;
-  private final PyDataViewerPanel myDataProvider;
+  private final PyDataViewerCommunityPanel myDataProvider;
 
 
   private final ExecutorService myExecutorService = ConcurrencyUtil.newSingleThreadExecutor("Python async table");
@@ -53,7 +53,7 @@ public class AsyncArrayTableModel extends AbstractTableModel {
         return ListenableFutureTask.create(() -> {
           ArrayChunk chunk = myDebugValue.getFrameAccessor()
             .getArrayItems(myDebugValue, key.first, key.second, Math.min(CHUNK_ROW_SIZE, getRowCount() - key.first),
-                           Math.min(CHUNK_COL_SIZE, getColumnCount() - key.second), myDataProvider.getFormat());
+                           Math.min(CHUNK_COL_SIZE, getColumnCount() - key.second), myDataProvider.getDataViewerModel().getFormat());
           handleChunkAdded(key.first, key.second, chunk);
           return chunk;
         });
@@ -62,7 +62,7 @@ public class AsyncArrayTableModel extends AbstractTableModel {
 
   public AsyncArrayTableModel(int rows,
                               int columns,
-                              PyDataViewerPanel provider,
+                              PyDataViewerCommunityPanel provider,
                               PyDebugValue debugValue,
                               DataViewStrategy strategy) {
     myRows = rows;
@@ -131,7 +131,7 @@ public class AsyncArrayTableModel extends AbstractTableModel {
             try {
               ArrayChunk chunk = myDebugValue.getFrameAccessor()
                 .getArrayItems(myDebugValue, fromRow, fromCol, toRow - fromRow + 1, toCol - fromCol + 1,
-                               myDataProvider.getFormat());
+                               myDataProvider.getDataViewerModel().getFormat());
 
               if (chunk != null) {
                 whenLoaded.accept(chunk);

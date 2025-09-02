@@ -9,6 +9,12 @@ public class CallToNativeMethodWhileLocked {
     };
     new Object() {
       long l = Double.doubleToRawLongBits(42.0);
+
+      synchronized void x() {
+        <warning descr="Call to native method 'y()' in a synchronized context">y</warning>();
+      }
+
+      native void y();
     };
     Runnable s = () -> {
       assert Thread.holdsLock(this);

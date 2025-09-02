@@ -31,4 +31,27 @@ public class JvmClassNameReferenceInjectorTest extends LightJavaCodeInsightFixtu
     PsiElement resolved = reference.resolve();
     assertTrue("references resolves to PsiClass", resolved instanceof PsiClass);
   }
+  
+  public void testNestedClassReference() {
+    myFixture.addClass("""
+                           package demo;
+                           public class User {
+                             public static class Nested {}
+                           }
+                         """);
+    myFixture.configureByText("Demo.java", """
+        public class Demo {
+          public void run() {
+            String x = /* language=jvm-class-name */ "demo.User$N<caret>ested";
+          }
+        }
+      """);
+    JavaClassReference reference = findReferenceOfClass(myFixture.getReferenceAtCaretPosition(), JavaClassReference.class);
+    assertNotNull("there must be a JavaClassReference", reference);
+
+    assertEquals("Nested", reference.getCanonicalText());
+
+    PsiElement resolved = reference.resolve();
+    assertTrue("references resolves to PsiClass", resolved instanceof PsiClass);
+  }
 }

@@ -13,6 +13,7 @@ import it.unimi.dsi.fastutil.objects.ObjectIterator;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -442,8 +443,8 @@ public final class FilePageCache {
     }
   }
 
-  @NotNull
-  FilePageCacheStatistics getStatistics() {
+  @VisibleForTesting
+  public @NotNull FilePageCacheStatistics getStatistics() {
     pagesAllocationLock.lock();
     try {
       pagesAccessLock.lock();

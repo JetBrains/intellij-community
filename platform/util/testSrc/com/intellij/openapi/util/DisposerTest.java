@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.Disposable;
@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -261,7 +262,7 @@ public class DisposerTest  {
     UsefulTestCase.assertOrderedEquals(myDisposeActions, expected);
   }
 
-  private void assertDisposed(MyLoggingDisposable disposable) {
+  private static void assertDisposed(MyLoggingDisposable disposable) {
     assertTrue(disposable.isDisposed());
 
     Disposer.getTree().assertNoReferenceKeptInTree(disposable);
@@ -454,7 +455,31 @@ public class DisposerTest  {
 
       Disposer.register(parent, last);
 
-      UsefulTestCase.assertThrows(RuntimeException.class, "PCE must not be thrown from a dispose() implementation",
+      UsefulTestCase.assertThrows(RuntimeException.class, "CE must not be thrown from a dispose() implementation",
+                                  () -> Disposer.dispose(parent));
+
+      assertTrue(Disposer.isDisposed(parent));
+      assertTrue(Disposer.isDisposed(first));
+      assertTrue(Disposer.isDisposed(last));
+    });
+  }
+
+  @Test
+  public void testDisposeDespiteCE() throws Exception {
+    DefaultLogger.disableStderrDumping(myRoot);
+    TestLoggerKt.rethrowLoggedErrorsIn(() -> {
+      Disposable parent = Disposer.newDisposable();
+      Disposable first = Disposer.newDisposable();
+      Disposable last = Disposer.newDisposable();
+
+      Disposer.register(parent, first);
+      Disposer.register(parent, () -> {
+        throw new CancellationException("cancelled");
+      });
+
+      Disposer.register(parent, last);
+
+      UsefulTestCase.assertThrows(RuntimeException.class, "CE must not be thrown from a dispose() implementation",
                                   () -> Disposer.dispose(parent));
 
       assertTrue(Disposer.isDisposed(parent));

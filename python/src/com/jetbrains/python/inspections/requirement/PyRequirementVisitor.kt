@@ -1,40 +1,73 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inspections.requirement
 
-import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
-import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.jetbrains.python.PyPsiBundle
-import com.jetbrains.python.PyPsiPackageUtil.moduleToPackageName
-import com.jetbrains.python.codeInsight.stdlib.PyStdlibUtil
 import com.jetbrains.python.inspections.PyInspectionExtension
 import com.jetbrains.python.inspections.PyInspectionVisitor
 import com.jetbrains.python.inspections.quickfix.IgnoreRequirementFix
-import com.jetbrains.python.inspections.quickfix.PyGenerateRequirementsFileQuickFix
-import com.jetbrains.python.inspections.quickfix.PyInstallRequirementsFix
-import com.jetbrains.python.packaging.*
-import com.jetbrains.python.packaging.common.PythonPackage
+import com.jetbrains.python.inspections.quickfix.PyAddToDeclaredPackagesQuickFix
+import com.jetbrains.python.inspections.quickfix.SyncProjectQuickFix
+import com.jetbrains.python.packaging.PyPackageUtil
 import com.jetbrains.python.packaging.management.PythonPackageManager
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.packaging.utils.PyPackageManagerModuleHelpers
+import com.jetbrains.python.psi.PyFile
+import com.jetbrains.python.psi.PyFromImportStatement
+import com.jetbrains.python.psi.PyImportStatement
+import com.jetbrains.python.psi.PyQualifiedExpression
 import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.types.TypeEvalContext
-import com.jetbrains.python.sdk.PySdkProvider
 import com.jetbrains.python.sdk.PythonSdkUtil
-import org.jetbrains.annotations.ApiStatus.Internal
+import com.jetbrains.python.sdk.pythonSdk
+import org.jetbrains.annotations.ApiStatus
 
-@Internal
+@ApiStatus.Internal
 class PyRequirementVisitor(
   holder: ProblemsHolder?,
-  ignoredPackages: Collection<String>,
+  val ignoredPackages: Collection<String>,
   context: TypeEvalContext,
 ) : PyInspectionVisitor(holder, context) {
+  override fun visitPyFromImportStatement(node: PyFromImportStatement) {
+    val importSource = node.importSource ?: return
+    checkPackageNameInRequirements(importSource)
+  }
 
-  private val myIgnoredPackages: Set<String>?= ignoredPackages.toSet()
+  override fun visitPyImportStatement(node: PyImportStatement) {
+    node.importElements.mapNotNull { it.importReferenceExpression }.forEach { checkPackageNameInRequirements(it) }
+  }
+
+  private fun checkPackageNameInRequirements(importedExpression: PyQualifiedExpression) {
+    if (PyInspectionExtension.EP_NAME.extensionList.any { it.ignorePackageNameInRequirements(importedExpression) }) {
+      return
+    }
+
+    val packageReferenceExpression = PyPsiUtils.getFirstQualifier(importedExpression)
+    val importedPyModule = packageReferenceExpression.name ?: return
+    val module: Module = ModuleUtilCore.findModuleForPsiElement(packageReferenceExpression) ?: return
+
+    if (PyPackageManagerModuleHelpers.isLocalModule(packageReferenceExpression, module)) {
+      return
+    }
+
+    val sdk = module.pythonSdk ?: return
+    val manager = PythonPackageManager.forSdk(module.project, sdk)
+    val requirementsManager = manager.getDependencyManager() ?: return
+    val installedNotDeclaredChecker = InstalledButNotDeclaredChecker(ignoredPackages, manager)
+    val packageName = installedNotDeclaredChecker.getUndeclaredPackageName(importedPyModule = importedPyModule) ?: return
+
+    registerProblem(
+      packageReferenceExpression,
+      PyPsiBundle.message(PACKAGE_NOT_LISTED, importedPyModule),
+      ProblemHighlightType.WEAK_WARNING,
+      null,
+      PyAddToDeclaredPackagesQuickFix(requirementsManager, packageName),
+      IgnoreRequirementFix(setOf(packageName))
+    )
+  }
 
   override fun visitPyFile(node: PyFile) {
     val module = ModuleUtilCore.findModuleForPsiElement(node) ?: return
@@ -42,28 +75,21 @@ class PyRequirementVisitor(
   }
 
   private fun checkPackagesHaveBeenInstalled(file: PsiElement, module: Module) {
-    if (isRunningPackagingTasks(module)) return
+    if (PyPackageManagerModuleHelpers.isRunningPackagingTasks(module))
+      return
     val sdk = PythonSdkUtil.findPythonSdk(module) ?: return
     val manager = PythonPackageManager.forSdk(module.project, sdk)
 
-    val unsatisfied = myIgnoredPackages?.let { findUnsatisfiedRequirements(module, manager, it) }.orEmpty()
-    if (unsatisfied.isEmpty()) return
+    val declaredNotInstalledChecker = DeclaredButNotInstalledPackagesChecker(ignoredPackages)
+    val unsatisfied = declaredNotInstalledChecker.findUnsatisfiedRequirements(module, manager)
+    if (unsatisfied.isEmpty())
+      return
 
     val requirementsList = PyPackageUtil.requirementsToString(unsatisfied)
-    val message = PyPsiBundle.message(
-      REQUIREMENT_NOT_SATISFIED,
-      requirementsList,
-      unsatisfied.size)
+    val message = PyPsiBundle.message(REQUIREMENT_NOT_SATISFIED, requirementsList, unsatisfied.size)
 
-    val quickFixes = mutableListOf<LocalQuickFix>().apply {
-      val providedFix = PySdkProvider.EP_NAME.extensionList
-        .asSequence()
-        .mapNotNull { it.createInstallPackagesQuickFix(module) }
-        .firstOrNull()
-
-      add(providedFix ?: PyInstallRequirementsFix(null, module, sdk, unsatisfied))
-      add(IgnoreRequirementFix(unsatisfied.mapTo(mutableSetOf()) { it.presentableTextWithoutVersion }))
-    }
+    val ignoreFix = IgnoreRequirementFix(unsatisfied.mapTo(mutableSetOf()) { it.presentableTextWithoutVersion })
+    val quickFixes = listOf(SyncProjectQuickFix(), ignoreFix)
 
     registerProblem(
       file,
@@ -74,184 +100,9 @@ class PyRequirementVisitor(
     )
   }
 
-  override fun visitPyFromImportStatement(node: PyFromImportStatement) {
-    node.importSource?.let { checkPackageNameInRequirements(it) }
-  }
-
-  override fun visitPyImportStatement(node: PyImportStatement) {
-    node.importElements.mapNotNull { it.importReferenceExpression }.forEach { checkPackageNameInRequirements(it) }
-  }
-
-  private fun findUnsatisfiedRequirements(
-    module: Module,
-    manager: PythonPackageManager,
-    ignoredPackages: Set<String?>,
-  ): List<PyRequirement> {
-    val requirements = getRequirements(module) ?: return emptyList()
-    val installedPackages = manager.installedPackages
-    val modulePackages = collectPackagesInModule(module)
-
-    return requirements.filter { requirement ->
-      isRequirementUnsatisfied(requirement, ignoredPackages, installedPackages, modulePackages)
-    }
-  }
-
-  private fun isRequirementUnsatisfied(
-    requirement: PyRequirement,
-    ignoredPackages: Set<String?>,
-    installedPackages: List<PythonPackage>,
-    modulePackages: List<PythonPackage>,
-  ): Boolean {
-    if (requirement.name in ignoredPackages.map { normalizePackageName(it ?: EMPTY_STRING) }) {
-      return false
-    }
-
-    val isSatisfiedInInstalled = requirement.match(installedPackages) != null
-    val isSatisfiedInModule = requirement.match(modulePackages) != null
-
-    return !(isSatisfiedInInstalled || isSatisfiedInModule)
-  }
-
-  private fun getRequirements(module: Module): List<PyRequirement>? =
-    PyPackageUtil.getRequirementsFromTxt(module) ?: PyPackageUtil.findSetupPyRequires(module)
-
-  private fun collectPackagesInModule(module: Module): List<PythonPackage> {
-    return PyUtil.getSourceRoots(module).flatMap { srcRoot ->
-      VfsUtil.getChildren(srcRoot).filter { file ->
-        METADATA_EXTENSIONS.contains(file.extension)
-      }.mapNotNull { metadataFile ->
-        parsePackageNameAndVersion(metadataFile.nameWithoutExtension)
-      }
-    }
-  }
-
-  private fun parsePackageNameAndVersion(nameWithoutExtension: String): PythonPackage? {
-    val components = splitNameIntoComponents(nameWithoutExtension)
-    return if (components.size >= 2) PythonPackage(components[0], components[1], false) else null
-  }
-
-  private fun checkPackageNameInRequirements(importedExpression: PyQualifiedExpression) {
-    if (PyInspectionExtension.EP_NAME.extensionList.any { it.ignorePackageNameInRequirements(importedExpression) }) return
-
-    val packageReferenceExpression = PyPsiUtils.getFirstQualifier(importedExpression)
-    val packageName = packageReferenceExpression.name ?: return
-
-    if (isIgnoredOrStandardPackage(packageName)) return
-
-    val possiblePyPIPackageNames = moduleToPackageName(packageName, EMPTY_STRING)
-    if (!ApplicationManager.getApplication().isUnitTestMode() && !isPackageInPyPI(listOf(packageName, possiblePyPIPackageNames))) return
-
-    val module = ModuleUtilCore.findModuleForPsiElement(packageReferenceExpression) ?: return
-    val sdk = PythonSdkUtil.findPythonSdk(module) ?: return
-    val packageManager = PythonPackageManager.forSdk(module.project, sdk)
-    val requirements = getRequirementsInclTransitive(packageManager, module)
-    if (requirements == null) return
-
-    if (isPackageSatisfied(packageName, possiblePyPIPackageNames, requirements) || isLocalModule(packageReferenceExpression, module)) return
-
-    registerProblem(
-      packageReferenceExpression,
-      PyPsiBundle.message(
-        PACKAGE_NOT_LISTED,
-        packageName
-      ),
-      ProblemHighlightType.WEAK_WARNING,
-      null,
-      PyGenerateRequirementsFileQuickFix(module),
-      IgnoreRequirementFix(setOf(packageName))
-    )
-  }
-
-  private fun isIgnoredOrStandardPackage(packageName: String): Boolean =
-    myIgnoredPackages?.contains(packageName) == true ||
-    packageName == PyPackageUtil.SETUPTOOLS ||
-    PyStdlibUtil.getPackages()?.contains(packageName) == true
-
-  private fun isPackageInPyPI(packageNames: List<String>): Boolean =
-    packageNames.any { PyPIPackageUtil.INSTANCE.isInPyPI(it) }
-
-  private fun isPackageSatisfied(
-    packageName: String,
-    possiblePyPIPackageNames: String,
-    requirements: Collection<PyRequirement>,
-  ): Boolean =
-    requirements.map { it.name }.contains(normalizePackageName(packageName)) ||
-    requirements.map { it.name }.contains(normalizePackageName(possiblePyPIPackageNames))
-
-  private fun isLocalModule(packageReferenceExpression: PyExpression, module: Module): Boolean {
-    val reference = packageReferenceExpression.reference ?: return false
-    val element = reference.resolve() ?: return false
-
-    if (element is PsiDirectory) {
-      return ModuleUtilCore.moduleContainsFile(module, element.virtualFile, false)
-    }
-
-    val file = element.containingFile ?: return false
-    val virtualFile = file.virtualFile ?: return false
-    return ModuleUtilCore.moduleContainsFile(module, virtualFile, false)
-  }
-
-  /**
-   * `null` means: no `requirements.txt` at all
-   */
-  private fun getRequirementsInclTransitive(packageManager: PythonPackageManager, module: Module): Set<PyRequirement>? {
-    val requirements = getListedRequirements(module)
-    if (requirements == null) return null
-
-    val packages = packageManager.installedPackages
-    return getTransitiveRequirements(packages.toPyPackages(), requirements, HashSet()) + requirements
-  }
-
-  private fun getListedRequirements(module: Module): Set<PyRequirement>? {
-    val requirements = getRequirements(module) ?: return null
-    val extrasRequirements = getExtrasRequirements(module)
-
-    return (requirements + extrasRequirements).toSet()
-  }
-
-  private fun getExtrasRequirements(module: Module): List<PyRequirement> =
-    PyPackageUtil.findSetupPyExtrasRequire(module)
-      ?.values
-      ?.flatten()
-      .orEmpty()
-
-  private fun getTransitiveRequirements(
-    packages: List<PyPackage>,
-    requirements: Collection<PyRequirement>,
-    visited: MutableSet<PyPackage>,
-  ): Set<PyRequirement> {
-    val result: MutableSet<PyRequirement> = HashSet()
-
-    for (requirement in requirements) {
-      val myPackage = requirement.match(packages)
-      if (myPackage != null && visited.add(myPackage)) {
-        result.addAll(getTransitiveRequirements(packages, myPackage.requirements, visited))
-      }
-    }
-
-    return result
-  }
-
-  private fun isRunningPackagingTasks(module: Module): Boolean {
-    val value = module.getUserData(PythonPackageManager.RUNNING_PACKAGING_TASKS)
-    return value != null && value
-  }
-
-  private fun PyRequirement.match(packages: Collection<PythonPackage>): PythonPackage? {
-    return packages.firstOrNull { pkg ->
-      name == pkg.name
-      && versionSpecs.all { it.matches(pkg.version) }
-    }
-  }
-
-  private fun List<PythonPackage>.toPyPackages(): List<PyPackage> = map { PyPackage(it.name, it.version) }
 
   companion object {
+    private const val REQUIREMENT_NOT_SATISFIED = "INSP.requirements.package.requirements.not.satisfied"
     private const val PACKAGE_NOT_LISTED = "INSP.requirements.package.containing.module.not.listed.in.project.requirements"
-    private const val REQUIREMENT_NOT_SATISFIED =  "INSP.requirements.package.requirements.not.satisfied"
-    private val METADATA_EXTENSIONS = setOf("egg-info", "dist-info")
-    private const val EMPTY_STRING = ""
-
-    fun splitNameIntoComponents(name: String): Array<String> = name.split("-".toRegex(), limit = 3).toTypedArray()
   }
 }

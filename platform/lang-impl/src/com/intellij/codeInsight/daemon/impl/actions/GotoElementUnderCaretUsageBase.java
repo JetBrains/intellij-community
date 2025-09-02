@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.actions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
@@ -10,12 +10,13 @@ import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;
 
-/*package*/ abstract class GotoElementUnderCaretUsageBase extends BaseCodeInsightAction implements CodeInsightActionHandler {
-
+@ApiStatus.Internal
+public abstract class GotoElementUnderCaretUsageBase extends BaseCodeInsightAction implements CodeInsightActionHandler {
   private final @NotNull Direction myDirection;
 
   /**
@@ -31,11 +32,11 @@ import java.util.Comparator;
   }
 
   @Override
-  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
     Comparator<Integer> ordering = myDirection.ordering;
     int caretOffset = editor.getCaretModel().getOffset();
-    int startOffset = file.getTextRange().getStartOffset();
-    int endOffset = file.getTextRange().getEndOffset();
+    int startOffset = psiFile.getTextRange().getStartOffset();
+    int endOffset = psiFile.getTextRange().getEndOffset();
     Ref<Integer> first = new Ref<>();
     Ref<Integer> next = new Ref<>();
     DaemonCodeAnalyzerEx.processHighlights(((MarkupModelEx)editor.getMarkupModel()), project, null, startOffset, endOffset, info -> {

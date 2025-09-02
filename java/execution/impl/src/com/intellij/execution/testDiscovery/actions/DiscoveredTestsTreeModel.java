@@ -103,6 +103,7 @@ final class DiscoveredTestsTreeModel extends BaseTreeModel<Object> implements In
     return myInvoker;
   }
 
+  // TODO: this method can be replaced with ClassUtil.getBinaryClassName so it handles local classes.
   public static @Nullable String getClassName(@NotNull PsiClass c) {
     if (c instanceof PsiAnonymousClass) {
       PsiClass containingClass = PsiTreeUtil.getParentOfType(c, PsiClass.class);

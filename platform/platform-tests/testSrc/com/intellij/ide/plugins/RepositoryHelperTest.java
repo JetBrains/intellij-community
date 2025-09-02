@@ -7,6 +7,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.ApplicationRule;
 import com.intellij.testFramework.rules.TempDirectory;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.ClassRule;
@@ -173,11 +174,11 @@ public class RepositoryHelperTest {
     assertEquals("0.2", list.get(0).getVersion());
   }
 
-  private @NotNull List<PluginNode> loadPlugins(@NotNull String data) throws IOException {
+  private @NotNull List<PluginNode> loadPlugins(@Language("XML") @NotNull String data) throws IOException {
     return loadPlugins(data, null);
   }
 
-  private @NotNull List<PluginNode> loadPlugins(@NotNull String data,
+  private @NotNull List<PluginNode> loadPlugins(@Language("XML") @NotNull String data,
                                                 @Nullable BuildNumber build) throws IOException {
     File tempFile = tempDir.newFile("repo.xml");
     FileUtil.writeToFile(tempFile, data);

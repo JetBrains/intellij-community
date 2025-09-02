@@ -3,6 +3,7 @@ package com.intellij.xdebugger.impl.ui.tree.actions;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
@@ -12,7 +13,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 @ApiStatus.Internal
-public class XInspectAction extends XDebuggerTreeActionBase {
+public class XInspectAction extends XDebuggerTreeActionBase implements ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
     return ActionUpdateThread.BGT;
@@ -24,7 +25,7 @@ public class XInspectAction extends XDebuggerTreeActionBase {
     XValue value = node.getValueContainer();
     XInspectDialog dialog = new XInspectDialog(tree.getProject(), tree.getEditorsProvider(), tree.getSourcePosition(), nodeName, value,
                                                tree.getValueMarkers(),
-                                               DebuggerUIUtil.getSession(e),
+                                               DebuggerUIUtil.getSessionProxy(e),
                                                true);
     dialog.show();
   }

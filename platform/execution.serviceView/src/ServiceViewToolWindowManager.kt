@@ -12,11 +12,13 @@ internal class ServiceViewToolWindowManager(
 
   override fun shouldBeAvailable(): Boolean {
     // TODO move impl to this class
-    return (ServiceViewManager.getInstance(project) as ServiceViewManagerImpl).shouldBeAvailable()
+    return shouldEnableServicesViewInCurrentEnvironment() && (ServiceViewManager.getInstance(project) as ServiceViewManagerImpl).shouldBeAvailable()
   }
 
   override fun createToolWindowContent(toolWindow: ToolWindow) {
     // TODO move impl to this class
-    return (ServiceViewManager.getInstance(project) as ServiceViewManagerImpl).createToolWindowContent(toolWindow)
+    if (shouldEnableServicesViewInCurrentEnvironment()) {
+      return (ServiceViewManager.getInstance(project) as ServiceViewManagerImpl).createToolWindowContent(toolWindow)
+    }
   }
 }

@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.eel.provider.utils.EelPathUtils;
 import com.intellij.platform.eel.provider.utils.EelPathUtils.FileTransferAttributesStrategy;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -52,9 +53,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
+import static com.intellij.platform.eel.provider.EelNioBridgeServiceKt.asEelPath;
 import static com.intellij.platform.eel.provider.EelProviderUtil.getEelDescriptor;
-import static com.intellij.platform.eel.provider.EelProviderUtil.upgradeBlocking;
-import static com.intellij.platform.eel.provider.utils.EelPathUtils.transferLocalContentToRemoteTempIfNeeded;
+import static com.intellij.platform.eel.provider.utils.EelPathUtils.transferLocalContentToRemote;
 import static java.util.Arrays.asList;
 
 public class ShShellcheckExternalAnnotator
@@ -70,14 +71,14 @@ public class ShShellcheckExternalAnnotator
   }
 
   @Override
-  public @Nullable CollectedInfo collectInformation(@NotNull PsiFile file) {
-    if (!(file instanceof ShFile)) return null;
-    VirtualFile virtualFile = file.getVirtualFile();
+  public @Nullable CollectedInfo collectInformation(@NotNull PsiFile psiFile) {
+    if (!(psiFile instanceof ShFile)) return null;
+    VirtualFile virtualFile = psiFile.getVirtualFile();
     if (virtualFile == null) return null;
     VirtualFile parent = virtualFile.getParent();
     if (parent == null) return null;
-    return new CollectedInfo(file.getProject(), parent.getPath(), file.getText(), file.getModificationStamp(),
-                             getShellcheckExecutionParams(file));
+    return new CollectedInfo(psiFile.getProject(), parent.getPath(), psiFile.getText(), psiFile.getModificationStamp(),
+                             getShellcheckExecutionParams(psiFile));
   }
 
   @Override
@@ -91,14 +92,15 @@ public class ShShellcheckExternalAnnotator
     ShShellcheckUtil.checkShellCheckForUpdate(fileInfo.project);
 
 
-    final var eel = upgradeBlocking(getEelDescriptor(fileInfo.project));
+    final var eelDescriptor = getEelDescriptor(fileInfo.project);
 
     try {
       FileTransferAttributesStrategy forceExecutePermission =
         FileTransferAttributesStrategy.copyWithRequiredPosixPermissions(PosixFilePermission.OWNER_EXECUTE);
       GeneralCommandLine commandLine = new GeneralCommandLine()
         .withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE)
-        .withExePath(transferLocalContentToRemoteTempIfNeeded(eel, Path.of(shellcheckExecutable), forceExecutePermission).toString())
+        .withExePath(asEelPath(
+          transferLocalContentToRemote(Path.of(shellcheckExecutable), new EelPathUtils.TransferTarget.Temporary(eelDescriptor), forceExecutePermission)).toString())
         .withParameters(fileInfo.executionParams);
       if (!ApplicationManager.getApplication().isUnitTestMode()) commandLine.withWorkDirectory(fileInfo.workDirectory);
       long timestamp = fileInfo.modificationStamp;
@@ -128,14 +130,14 @@ public class ShShellcheckExternalAnnotator
   }
 
   @Override
-  public void apply(@NotNull PsiFile file, ShellcheckResponse shellcheckResponse, @NotNull AnnotationHolder holder) {
-    super.apply(file, shellcheckResponse, holder);
-    Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
+  public void apply(@NotNull PsiFile psiFile, ShellcheckResponse shellcheckResponse, @NotNull AnnotationHolder holder) {
+    super.apply(psiFile, shellcheckResponse, holder);
+    Document document = PsiDocumentManager.getInstance(psiFile.getProject()).getDocument(psiFile);
     if (document == null) {
       return;
     }
 
-    Collection<OuterLanguageElement> outerElements = PsiTreeUtil.findChildrenOfType(file, OuterLanguageElement.class);
+    Collection<OuterLanguageElement> outerElements = PsiTreeUtil.findChildrenOfType(psiFile, OuterLanguageElement.class);
     List<TextRange> rangesOfOuterElements = ContainerUtil.map(outerElements, el -> el.getTextRange());
 
     for (Result result : shellcheckResponse.results) {
@@ -145,7 +147,7 @@ public class ShShellcheckExternalAnnotator
       TextRange range = TextRange.create(startOffset, endOffset == startOffset ? endOffset + 1 : endOffset);
 
       // We skip results which out of scope for current file or intersect with outer language elements
-      if (!file.getTextRange().contains(range) || ContainerUtil.exists(rangesOfOuterElements, it -> it.contains(range))) continue;
+      if (!psiFile.getTextRange().contains(range) || ContainerUtil.exists(rangesOfOuterElements, it -> it.contains(range))) continue;
 
       long code = result.code;
       String message = result.message;

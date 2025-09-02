@@ -420,7 +420,7 @@ public final class RunAnythingPopupUI extends BigPopupUI {
 
       return AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, dataContext);
     }).finishOnUiThread(ModalityState.defaultModalityState(), event -> {
-      ActionUtil.performDumbAwareUpdate(myChooseContextAction, event, false);
+      ActionUtil.updateAction(myChooseContextAction, event);
     }).submit(AppExecutorUtil.getAppExecutorService());
   }
 

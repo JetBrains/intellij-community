@@ -6,13 +6,7 @@ plugins {
 
 java.targetCompatibility = JavaVersion.VERSION_11
 
-tasks.withType<KotlinCompile>().configureEach {
-    kotlinOptions {
-        apiVersion = "1.5"
-        languageVersion = "1.5"
-        jvmTarget = java.targetCompatibility.majorVersion
-    }
-}
+{{customCodePlaceholder}}
 
 repositories {
     { { kts_kotlin_plugin_repositories } }

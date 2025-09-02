@@ -38,20 +38,16 @@ class GitWarmupConfigurator : WarmupConfigurator {
     }
 
     val manager = VcsLogManager(project, project.serviceAsync<VcsLogProjectTabsProperties>(), logProviders,
-                                "Warmup Vcs Log for ${VcsLogUtil.getProvidersMapText(logProviders)}", false, true) { _, throwable ->
+                                "Warmup Vcs Log for ${VcsLogUtil.getProvidersMapText(logProviders)}", true) { _, throwable ->
       logger?.reportMessage(1, throwable.stackTraceToString())
     }
     blockingContextScope {
-      manager.scheduleInitialization()
+      manager.initialize()
     }
 
     assertVcsIndexed(manager)
 
-    withContext(Dispatchers.EDT) {
-      blockingContextScope {
-        manager.dispose(null)
-      }
-    }
+    manager.dispose()
 
     logger?.reportMessage(1, "Git log indexing has finished")
     return false

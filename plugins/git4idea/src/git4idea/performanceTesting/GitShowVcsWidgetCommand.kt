@@ -1,16 +1,18 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.performanceTesting
 
 import com.intellij.dvcs.repo.VcsRepositoryManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.concurrency.waitForPromise
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.vcs.impl.VcsInitialization
 import com.intellij.platform.diagnostic.telemetry.helpers.use
+import com.intellij.vcs.git.shared.branch.popup.GitBranchesPopup
 import com.jetbrains.performancePlugin.PerformanceTestSpan
 import com.jetbrains.performancePlugin.commands.PerformanceCommandCoroutineAdapter
 import git4idea.repo.GitRepository
-import git4idea.ui.branch.popup.GitBranchesTreePopup
+import git4idea.ui.branch.popup.GitBranchesTreePopupOnBackend
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.TestOnly
@@ -27,10 +29,10 @@ class GitShowVcsWidgetCommand(text: String, line: Int) : PerformanceCommandCorou
     val repository = getGitRepository(context)
 
     withContext(Dispatchers.EDT) {
-      val treePopup = (GitBranchesTreePopup.create(context.project, repository) as GitBranchesTreePopup)
+      val treePopup = (GitBranchesTreePopupOnBackend.create(context.project, repository) as GitBranchesPopup)
       treePopup.showCenteredInCurrentWindow(context.project)
       PerformanceTestSpan.TRACER.spanBuilder(NAME).use { span->
-        treePopup.waitTreeExpand(3.minutes)
+        treePopup.promiseExpandTree().waitForPromise(3.minutes)
         span.setAttribute("expandedPaths",treePopup.getExpandedPathsSize().toLong())
       }
     }

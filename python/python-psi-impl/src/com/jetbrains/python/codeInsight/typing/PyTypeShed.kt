@@ -21,7 +21,7 @@ import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.util.QualifiedName
-import com.jetbrains.python.PythonHelpersLocator
+import com.intellij.python.community.helpersLocator.PythonHelpersLocator
 import com.jetbrains.python.PythonRuntimeService
 import com.jetbrains.python.psi.LanguageLevel
 import java.io.File

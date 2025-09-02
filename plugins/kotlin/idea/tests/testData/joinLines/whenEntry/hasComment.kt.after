@@ -5,7 +5,7 @@ object Another : Foo()
 
 fun test(foo: Foo) {
     when (foo) {
-        Another -> /* comment */ TODO() Bar -> TODO()
+        Another -> /* comment */ TODO(); Bar -> TODO()
         Baz -> TODO()
     }
 }

@@ -13,10 +13,10 @@ import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.path.EelPath.Companion.parse
-import com.intellij.platform.eel.path.pathSeparator
+import com.intellij.platform.eel.pathSeparator
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
-import com.intellij.platform.eel.provider.utils.where
+import com.intellij.platform.eel.where
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.tree.LeafPsiElement
@@ -96,11 +96,11 @@ internal class ShDocumentationProvider(private val scope: CoroutineScope) : Docu
     if (commandName == null) return null
     val manExecutablePromise = myManExecutableCache.computeIfAbsent(eelDescriptor) {
       scope.suspendingLazy {
-        val eel = eelDescriptor.upgrade()
+        val eel = eelDescriptor.toEelApi()
         val path = eel.exec.fetchLoginShellEnvVariables()["PATH"]
 
         if (path != null) {
-          for (dir in StringUtil.tokenize(path, eelDescriptor.operatingSystem.pathSeparator)) {
+          for (dir in StringUtil.tokenize(path, eelDescriptor.osFamily.pathSeparator)) {
             val eelDir = runCatching { parse(dir, eelDescriptor) }.getOrNull() ?: continue
             val file = eelDir.resolve("info").asNioPath()
 

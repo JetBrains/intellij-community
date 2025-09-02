@@ -17,9 +17,12 @@ import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.JulLogger;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.util.objectTree.ThrowableInterner;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.awt.*;
 import java.util.concurrent.TimeUnit;
@@ -60,15 +63,35 @@ public final class IdeaLogger extends JulLogger {
     MyCache.cache.cleanUp();
   }
 
-  private static boolean isTooFrequentException(@Nullable Throwable t) {
-    if (t == null || !isMutingFrequentExceptionsEnabled() || !LoadingState.COMPONENTS_LOADED.isOccurred()) {
+  private boolean isTooFrequentException(@Nullable Throwable t) {
+    if (t == null || !isMutingFrequentExceptionsEnabled() || !LoadingState.COMPONENTS_LOADED.isOccurred() || isDebugEnabled() || isTraceEnabled()) {
       return false;
     }
 
     var hash = ThrowableInterner.computeAccurateTraceHashCode(t);
     var counter = MyCache.getOrCreate(hash, t);
     var occurrences = counter.incrementAndGet();
+    if (isFascinatingNumber(occurrences)) {
+      warn("Suppressed a frequent exception logged for the " + occurrences + (occurrences == 2 ? "nd" : "th") + " time: " +
+           shortenErrorMessage(t.getMessage()));
+    }
     return occurrences != 1;
+  }
+
+  /**
+   * 2, 5, 10, 20, 50, 100, ...
+   */
+  private static boolean isFascinatingNumber(int number) {
+    if (number <= 1) return false;
+    while (number % 10 == 0) number /= 10;
+    return number == 1 || number == 2 || number == 5;
+  }
+
+  private static @NotNull String shortenErrorMessage(@Nullable String message) {
+    if (message == null) return "null";
+    int newLine = message.indexOf('\n');
+    message = message.substring(0, newLine != -1 ? newLine : message.length());
+    return StringUtil.shortenTextWithEllipsis(message, 300, 0);
   }
 
   private static void reportToFus(@NotNull Throwable t) {
@@ -87,7 +110,9 @@ public final class IdeaLogger extends JulLogger {
     }
   }
 
-  static boolean isMutingFrequentExceptionsEnabled() {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public static boolean isMutingFrequentExceptionsEnabled() {
     return EXPIRE_FREQUENT_EXCEPTIONS_AFTER_MINUTES > 0;
   }
 
@@ -96,26 +121,16 @@ public final class IdeaLogger extends JulLogger {
     return info.getFullApplicationName() + "  " + "Build #" + info.getBuild().asString();
   };
 
-  IdeaLogger(@NotNull Logger logger) {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public IdeaLogger(@NotNull Logger logger) {
     super(logger);
   }
 
   @Override
-  public void error(String message, @Nullable Throwable t, Attachment @NotNull ... attachments) {
+  public void info(String message, @Nullable Throwable t) {
     if (isTooFrequentException(t)) return;
-
-    if (attachments.length == 0) {
-      logSevere(message, t);
-    }
-    else if (t != null) {
-      logSevere(message, new RuntimeExceptionWithAttachments(t, attachments));
-    }
-    else {
-      logSevere(message, new RuntimeExceptionWithAttachments(new Throwable(), attachments));
-    }
-    if (t != null) {
-      reportToFus(t);
-    }
+    super.info(message, ensureNotControlFlow(t));
   }
 
   @Override
@@ -125,20 +140,26 @@ public final class IdeaLogger extends JulLogger {
   }
 
   @Override
-  public void error(String message, @Nullable Throwable t, String @NotNull ... details) {
+  public void error(String message, @Nullable Throwable t, Attachment @NotNull ... attachments) {
     if (isTooFrequentException(t)) return;
-    doLogError(message, t, details);
-    logErrorHeader(t);
-    if (t != null) {
-      reportToFus(t);
+
+    Throwable errorWithAttachment;
+    if (attachments.length == 0) {
+      errorWithAttachment = t;
     }
+    else if (t != null) {
+      errorWithAttachment = new RuntimeExceptionWithAttachments(ensureNotControlFlow(t), attachments);
+    }
+    else {
+      errorWithAttachment = new RuntimeExceptionWithAttachments(new Throwable(), attachments);
+    }
+
+    error(message, errorWithAttachment);
   }
 
-  private void doLogError(String message, @Nullable Throwable t, String... details) {
-    if (t != null && shouldRethrow(t)) {
-      logSevere(message, ensureNotControlFlow(t));
-      ExceptionUtil.rethrow(t);
-    }
+  @Override
+  public void error(String message, @Nullable Throwable t, String @NotNull ... details) {
+    if (isTooFrequentException(t)) return;
 
     var detailString = String.join("\n", details);
     if (!detailString.isEmpty()) {
@@ -151,7 +172,17 @@ public final class IdeaLogger extends JulLogger {
       //noinspection AssignmentToStaticFieldFromInstanceMethod
       ourErrorsOccurred = new Exception(mess + detailString, t);
     }
-    logSevere(message + detailString, t);
+
+    logSevere(message + detailString, ensureNotControlFlow(t));
+    logErrorHeader(t);
+
+    if (t != null && shouldRethrow(t)) {
+      ExceptionUtil.rethrow(t);
+    }
+
+    if (t != null) {
+      reportToFus(t);
+    }
   }
 
   private void logErrorHeader(@Nullable Throwable t) {

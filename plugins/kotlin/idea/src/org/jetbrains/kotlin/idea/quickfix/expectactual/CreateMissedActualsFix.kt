@@ -22,6 +22,7 @@ import com.intellij.psi.PsiDirectory
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.layout.ComponentPredicate
+import com.intellij.util.ui.JBUI
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
@@ -229,7 +230,7 @@ private class CreateMissedActualsDialog(
         }
     }.apply {
         withMinimumWidth(500)
-        setMinimumWidthForAllRowLabels(90)
+        setMinimumWidthForAllRowLabels(JBUI.scale(90))
     }
 
     private data class ModuleWithLevel(val module: Module, val level: Int)

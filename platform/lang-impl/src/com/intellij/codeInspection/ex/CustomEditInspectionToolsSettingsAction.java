@@ -38,13 +38,13 @@ public class CustomEditInspectionToolsSettingsAction implements IntentionAction,
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return myEditInspectionToolsSettingsAction.isAvailable(project, editor, file);
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    return myEditInspectionToolsSettingsAction.isAvailable(project, editor, psiFile);
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    myEditInspectionToolsSettingsAction.invoke(project, editor, file);
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
+    myEditInspectionToolsSettingsAction.invoke(project, editor, psiFile);
   }
 
   @Override
@@ -58,7 +58,7 @@ public class CustomEditInspectionToolsSettingsAction implements IntentionAction,
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
     return new IntentionPreviewInfo.Html(InspectionsBundle.message("edit.inspection.options.preview", HighlightDisplayKey.getDisplayNameByKey(myDisplayKey)));
   }
 }

@@ -2,6 +2,7 @@
 package org.jetbrains.uast.kotlin.analysis
 
 import com.intellij.lang.Language
+import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
 import io.vavr.Tuple2
 import io.vavr.control.Option
 import org.jetbrains.kotlin.descriptors.VariableDescriptor
@@ -26,6 +27,7 @@ import org.jetbrains.uast.analysis.UNullability
 import org.jetbrains.uast.analysis.UastAnalysisPlugin
 import org.jetbrains.uast.kotlin.unwrapBlockOrParenthesis
 
+@InternalIgnoreDependencyViolation
 class KotlinUastAnalysisPlugin : UastAnalysisPlugin {
     override val language: Language
         get() = KotlinLanguage.INSTANCE

@@ -6,7 +6,7 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.annotations.Child
+import com.intellij.platform.workspace.storage.annotations.Parent
 
 
 interface MainEntityList : WorkspaceEntity {
@@ -46,11 +46,12 @@ fun MutableEntityStorage.modifyMainEntityList(
   return modifyEntity(MainEntityList.Builder::class.java, entity, modification)
 }
 
-var MainEntityList.Builder.child: @Child List<AttachedEntityList.Builder>
+var MainEntityList.Builder.child: List<AttachedEntityList.Builder>
   by WorkspaceEntity.extensionBuilder(AttachedEntityList::class.java)
 //endregion
 
 interface AttachedEntityList : WorkspaceEntity {
+  @Parent
   val ref: MainEntityList?
   val data: String
 
@@ -91,5 +92,5 @@ fun MutableEntityStorage.modifyAttachedEntityList(
 }
 //endregion
 
-val MainEntityList.child: List<@Child AttachedEntityList>
+val MainEntityList.child: List<AttachedEntityList>
     by WorkspaceEntity.extension()

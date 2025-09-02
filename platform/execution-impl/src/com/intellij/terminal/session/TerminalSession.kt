@@ -24,6 +24,14 @@ interface TerminalSession {
   suspend fun getOutputFlow(): Flow<List<TerminalOutputEvent>>
 
   /**
+   * Checks if there are commands running in the session.
+   * 
+   * The actual check is performed on the backend by checking if there are child processes
+   * running, including background ones.
+   */
+  suspend fun hasRunningCommands(): Boolean
+
+  /**
    * Returns true of this session was terminated.
    * ([TerminalSessionTerminatedEvent] was received from the output flow)
    *

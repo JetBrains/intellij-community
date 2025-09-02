@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.xsltDebugger.ui;
 
 import com.intellij.diagnostic.logging.AdditionalTabComponent;
@@ -6,11 +6,13 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import org.intellij.plugins.xsltDebugger.XsltDebuggerBundle;
 import org.intellij.plugins.xsltDebugger.ui.actions.OpenOutputAction;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class OutputTabComponent extends AbstractTabComponent {
+@ApiStatus.Internal
+public final class OutputTabComponent extends AbstractTabComponent {
   private final DefaultActionGroup myOutputActions;
   private final AdditionalTabComponent myOutputConsole;
 

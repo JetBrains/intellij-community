@@ -1,20 +1,24 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
+import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.common.ThreadLeakTracker;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 
 import java.util.Map;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
 public class JVMResponsivenessMonitorTest {
   @Test
-  @Timeout(5000)
-  @Disabled("Test fails on TeamCity because JVMResponsivenessMonitor's thread is left running from some other test")
-  public void monitorThreadIsTerminatedAfterClose() throws InterruptedException {
+  @Timeout(value = 5, unit = SECONDS)
+  public void monitorThread_IsTerminatedAfterClose() throws InterruptedException {
+    assumeFalse(UsefulTestCase.IS_UNDER_TEAMCITY,
+                "Test fails on TeamCity because JVMResponsivenessMonitor's thread is left running from some other test");
+
     Map<String, Thread> threadByNameBefore = ThreadLeakTracker.getThreads();
     Thread monitorThreadBeforeStarted = threadByNameBefore.get(JVMResponsivenessMonitor.MONITOR_THREAD_NAME);
     assertNull(
@@ -34,10 +38,10 @@ public class JVMResponsivenessMonitorTest {
   }
 
   @Test
-  @Timeout(5000)
-  public void threadLeakTrackerIgnoresResponsivenessMonitorThread() throws InterruptedException {
+  @Timeout(value = 5, unit = SECONDS)
+  public void threadLeakTracker_IgnoresResponsivenessMonitorThread() throws InterruptedException {
     Map<String, Thread> threadsBefore = ThreadLeakTracker.getThreads();
-    try (JVMResponsivenessMonitor monitor = new JVMResponsivenessMonitor()) {
+    try (@SuppressWarnings("unused") JVMResponsivenessMonitor monitor = new JVMResponsivenessMonitor()) {
       ThreadLeakTracker.checkLeak(threadsBefore);
     }
   }

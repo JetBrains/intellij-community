@@ -138,6 +138,6 @@ public class ServerModeDebuggerTransport extends BaseDebuggerTransport {
     }
 
     @Override
-    protected void onCommunicationError() {getDebugger().fireCommunicationError();}
+    protected void onCommunicationError() { getDebugger().fireCommunicationError(); }
   }
 }

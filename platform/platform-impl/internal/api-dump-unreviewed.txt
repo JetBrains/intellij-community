@@ -17,9 +17,6 @@ f:com.intellij.internal.ml.catboost.CatBoostResourcesModelMetadataReader
 f:com.intellij.internal.ml.catboost.NaiveCatBoostModel
 - s:loadModel(java.io.InputStream):com.intellij.internal.ml.catboost.NaiveCatBoostModel
 - makePredict(D[]):D
-com.intellij.internal.ml.completion.DecoratingItemsPolicy
-- sf:Companion:com.intellij.internal.ml.completion.DecoratingItemsPolicy$Companion
-- a:itemsToDecorate(java.lang.Iterable):java.util.Set
 f:com.intellij.internal.ml.completion.DecoratingItemsPolicy$ByAbsoluteThreshold
 - com.intellij.internal.ml.completion.DecoratingItemsPolicy
 - <init>(D):V
@@ -44,6 +41,3 @@ f:com.intellij.internal.performance.LatencyRecord
 - f:setMaxLatency(I):V
 - f:setTotalLatency(J):V
 - f:update(I):V
-com.intellij.internal.statistic.fileTypes.FileTypeStatisticProvider
-- a:accept(com.intellij.openapi.editor.Editor,com.intellij.openapi.fileTypes.FileType):Z
-- a:getPluginId():java.lang.String

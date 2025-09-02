@@ -3,8 +3,8 @@ package com.intellij.util.indexing
 
 import com.intellij.openapi.util.io.ByteArraySequence
 import com.intellij.psi.stubs.*
-import com.intellij.util.Base64
 import org.jetbrains.annotations.ApiStatus
+import java.util.*
 
 @ApiStatus.Internal
 object IndexDataPresenter {
@@ -18,7 +18,7 @@ object IndexDataPresenter {
         getPresentableSerializedStubTree(value)
       }
       is ByteArraySequence -> {
-        Base64.encode(value.toBytes())
+        Base64.getEncoder().encodeToString(value.toBytes())
       }
       else -> value.toString()
     }

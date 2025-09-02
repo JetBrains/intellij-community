@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 
@@ -38,7 +38,7 @@ public abstract class CloudServerRuntimeInstance
 
   public CloudServerRuntimeInstance(SC configuration,
                                     ServerTaskExecutor tasksExecutor,
-                                    List<? extends File> libraries,
+                                    List<Path> libraries,
                                     List<Class<?>> commonJarClasses,
                                     String specificsModuleName,
                                     String specificJarPath,
@@ -51,7 +51,7 @@ public abstract class CloudServerRuntimeInstance
   public CloudServerRuntimeInstance(@Nullable RemoteAgentProxyFactory proxyFactory,
                                     SC configuration,
                                     ServerTaskExecutor tasksExecutor,
-                                    List<? extends File> libraries,
+                                    List<Path> libraries,
                                     List<Class<?>> commonJarClasses,
                                     String specificsModuleName,
                                     String specificJarPath,

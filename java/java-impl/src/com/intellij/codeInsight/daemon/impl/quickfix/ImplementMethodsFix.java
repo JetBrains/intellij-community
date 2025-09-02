@@ -42,7 +42,7 @@ public class ImplementMethodsFix extends LocalQuickFixAndIntentionActionOnPsiEle
 
   @Override
   public boolean isAvailable(@NotNull Project project,
-                             @NotNull PsiFile file,
+                             @NotNull PsiFile psiFile,
                              @NotNull PsiElement startElement,
                              @NotNull PsiElement endElement) {
     return BaseIntentionAction.canModify(startElement);
@@ -50,7 +50,7 @@ public class ImplementMethodsFix extends LocalQuickFixAndIntentionActionOnPsiEle
 
   @Override
   public void invoke(@NotNull Project project,
-                     @NotNull PsiFile file,
+                     @NotNull PsiFile psiFile,
                      final @Nullable Editor editor,
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
@@ -67,7 +67,7 @@ public class ImplementMethodsFix extends LocalQuickFixAndIntentionActionOnPsiEle
           final List<PsiMethodMember> selectedElements = chooser.getSelectedElements();
           if (selectedElements == null || selectedElements.isEmpty()) return;
 
-          WriteCommandAction.writeCommandAction(project, file).run(() -> {
+          WriteCommandAction.writeCommandAction(project, psiFile).run(() -> {
             final PsiClass psiClass = ((PsiEnumConstant)myPsiElement).getOrCreateInitializingClass();
             OverrideImplementUtil.overrideOrImplementMethodsInRightPlace(editor, psiClass, selectedElements, chooser.getOptions());
           });
@@ -97,9 +97,9 @@ public class ImplementMethodsFix extends LocalQuickFixAndIntentionActionOnPsiEle
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
     final PsiElement startElement = getStartElement();
-    final PsiElement copy = PsiTreeUtil.findSameElementInCopy(startElement, file);
+    final PsiElement copy = PsiTreeUtil.findSameElementInCopy(startElement, psiFile);
     final OverrideOrImplementOptions options = new OverrideOrImplementOptions() {
       @Override
       public boolean isInsertOverrideWherePossible() {

@@ -68,7 +68,7 @@ class ReturnOfCollectionFieldInspection
 
     public Set foo()
     {
-        return <warning descr="Return of Set field 'm_foo'">m_foo</warning>;
+        return this.<warning descr="Return of Set field 'm_foo'">m_foo</warning>;
     }
 
     public List<String> fooBar()
@@ -225,5 +225,17 @@ record Data4(Collection<String> strings) {
   @Override
   public Collection<String> strings() {
     return <warning descr="Return of Collection<String> field 'strings'">strings</warning>;
+  }
+}
+record Fooz(ImmutableList<Integer> ints) {
+}
+record Safe1(List<Integer> values) {
+  Safe1 {
+    values = List.copyOf(values);
+  }
+}
+record Safe2(List<Integer> values) {
+  Safe2(List<Integer> values) {
+    this.values = List.copyOf(values);
   }
 }

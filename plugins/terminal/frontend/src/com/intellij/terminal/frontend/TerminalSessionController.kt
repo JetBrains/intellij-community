@@ -1,11 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.terminal.frontend
 
+import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.project.Project
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.session.*
 import com.intellij.terminal.session.dto.toState
@@ -20,11 +22,15 @@ import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalShellIntegrationEventsListener
 import org.jetbrains.plugins.terminal.fus.*
+import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isReworkedTerminalEditor
+import org.jetbrains.plugins.terminal.fus.FrontendOutputActivity
+import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
 import java.awt.Toolkit
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.TimeSource
 
 internal class TerminalSessionController(
+  private val project: Project,
   private val sessionModel: TerminalSessionModel,
   private val outputModel: TerminalOutputModel,
   private val alternateBufferModel: TerminalOutputModel,
@@ -136,7 +142,15 @@ internal class TerminalSessionController(
 
   private suspend fun updateOutputModel(block: (TerminalOutputModel) -> Unit) {
     withContext(edtContext) {
-      block(getCurrentOutputModel())
+      val doUpdate = Runnable {
+        block(getCurrentOutputModel())
+      }
+      val lookup = LookupManager.getInstance(project).activeLookup
+      if (lookup != null && lookup.editor.isReworkedTerminalEditor) {
+        lookup.performGuardedChange(doUpdate)
+      } else {
+        doUpdate.run()
+      }
     }
   }
 

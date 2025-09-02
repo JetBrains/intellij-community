@@ -7,7 +7,7 @@ import com.intellij.profile.codeInspection.ProjectInspectionProfileManager.Compa
 import com.intellij.codeInspection.logging.LoggingUtil
 
 abstract class LoggingStatementNotGuardedByLogConditionInspectionTestBase : LoggingInspectionTestBase() {
-  override val inspection = LoggingStatementNotGuardedByLogConditionInspection()
+  override val inspection: LoggingStatementNotGuardedByLogConditionInspection = LoggingStatementNotGuardedByLogConditionInspection()
 
   override fun setUp() {
     super.setUp()

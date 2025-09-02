@@ -57,6 +57,6 @@ def func3(t: tuple[*Ts]):
 t11: tuple[Unpack[tuple[str]], Unpack[tuple[str]]]  # OK
 t12: tuple[Unpack[tuple[str, Unpack[tuple[str, ...]]]]]  # OK
 t13: tuple[Unpack[tuple[str, ...]], Unpack[tuple[int, ...]]]  # E
-t14: tuple[
-    Unpack[tuple[str, Unpack[tuple[str, ...]]]], Unpack[tuple[int, ...]]  # E
+t14: tuple[  # E[t14]
+    Unpack[tuple[str, Unpack[tuple[str, ...]]]], Unpack[tuple[int, ...]]  # E[t14]
 ]

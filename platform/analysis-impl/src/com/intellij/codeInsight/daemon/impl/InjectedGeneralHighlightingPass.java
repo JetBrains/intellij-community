@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
@@ -35,7 +36,7 @@ import java.util.*;
  * Perform injections, run highlight visitors and annotators on discovered injected files
  */
 @ApiStatus.Internal
-public final class InjectedGeneralHighlightingPass extends ProgressableTextEditorHighlightingPass {
+final class InjectedGeneralHighlightingPass extends ProgressableTextEditorHighlightingPass implements DumbAware {
   private final @Nullable List<? extends @NotNull TextRange> myReducedRanges;
   private final boolean myUpdateAll;
   private final ProperTextRange myPriorityRange;
@@ -54,7 +55,10 @@ public final class InjectedGeneralHighlightingPass extends ProgressableTextEdito
                                   boolean updateAll,
                                   @NotNull ProperTextRange priorityRange,
                                   @Nullable Editor editor,
-                                  boolean runAnnotators, boolean runVisitors, boolean highlightErrorElements, @NotNull HighlightInfoUpdater highlightInfoUpdater) {
+                                  boolean runAnnotators,
+                                  boolean runVisitors,
+                                  boolean highlightErrorElements,
+                                  @NotNull HighlightInfoUpdater highlightInfoUpdater) {
     super(psiFile.getProject(), document, AnalysisBundle.message("highlighting.pass.injected.presentable.name"), psiFile, editor, TextRange.create(startOffset, endOffset), true, HighlightInfoProcessor.getEmpty());
     myReducedRanges = reducedRanges;
     myUpdateAll = updateAll;
@@ -116,12 +120,12 @@ public final class InjectedGeneralHighlightingPass extends ProgressableTextEdito
     for (DocumentWindow documentRange : cachedInjected) {
       ProgressManager.checkCanceled();
       if (!documentRange.isValid()) continue;
-      PsiFile file = psiDocumentManager.getPsiFile(documentRange);
-      if (file == null) continue;
-      PsiElement context = injectedLanguageManager.getInjectionHost(file);
+      PsiFile psiFile = psiDocumentManager.getPsiFile(documentRange);
+      if (psiFile == null) continue;
+      PsiElement context = injectedLanguageManager.getInjectionHost(psiFile);
       if (context != null
           && context.isValid()
-          && !file.getProject().isDisposed()
+          && !psiFile.getProject().isDisposed()
           && (myUpdateAll || myRestrictRange.contains(context.getTextRange()))) { // consider strict if partial update
         if (myReducedRanges != null && !ContainerUtil.exists(myReducedRanges, reducedRange -> reducedRange.contains(context.getTextRange()))) { // skip if not in reduced
           continue;
@@ -266,11 +270,11 @@ public final class InjectedGeneralHighlightingPass extends ProgressableTextEdito
         }
       }
 
-      //noinspection deprecation
-      HighlightInfo patched = new HighlightInfo(info.forcedTextAttributes, info.forcedTextAttributesKey, info.type,
-                          hostRange.getStartOffset(), hostRange.getEndOffset(),
-                          info.getDescription(), info.getToolTip(), info.getSeverity(), isAfterEndOfLine, null,
-                          false, 0, info.getProblemGroup(), info.getToolId(), info.getGutterIconRenderer(), info.getGroup(), info.hasHint(), info.getLazyQuickFixes());
+      HighlightInfo.Builder builder = info.copy(false).range(hostRange);
+      if (isAfterEndOfLine) {
+        builder.endOfLine();
+      }
+      HighlightInfo patched = builder.createUnconditionally();
 
       info.findRegisteredQuickFix((descriptor, quickfixTextRange) -> {
         List<TextRange> editableQF = injectedLanguageManager.intersectWithAllEditableFragments(injectedPsi, quickfixTextRange);

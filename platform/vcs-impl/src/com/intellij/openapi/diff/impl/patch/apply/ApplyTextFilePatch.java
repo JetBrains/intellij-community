@@ -7,11 +7,13 @@ import com.intellij.openapi.diff.impl.patch.CharsetEP;
 import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchForBaseRevisionTexts;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.transformer.TextPresentationTransformers;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,15 +38,17 @@ public final class ApplyTextFilePatch extends ApplyFilePatchBase<TextFilePatch> 
       throw new IOException("Failed to set contents for updated file " + fileToPatch.getPath());
     }
 
-    GenericPatchApplier.AppliedPatch appliedPatch = GenericPatchApplier.apply(document.getText(), myPatch.getHunks());
+    String documentText = document.getText();
+    String fileTextPersistent = TextPresentationTransformers.toPersistent(documentText, fileToPatch).toString();
+    GenericPatchApplier.AppliedPatch appliedPatch = GenericPatchApplier.apply(fileTextPersistent, myPatch.getHunks());
+
     if (appliedPatch != null) {
       if (appliedPatch.status == ApplyPatchStatus.ALREADY_APPLIED) {
         return new Result(appliedPatch.status);
       }
 
       if (appliedPatch.status == ApplyPatchStatus.SUCCESS) {
-        VcsFacade.getInstance().runHeavyModificationTask(project, document, () -> document.setText(appliedPatch.patchedText));
-        FileDocumentManager.getInstance().saveDocument(document);
+        updateDocumentContent(project, document, fileToPatch, appliedPatch.patchedText);
         return new Result(appliedPatch.status);
       }
     }
@@ -77,7 +81,23 @@ public final class ApplyTextFilePatch extends ApplyFilePatchBase<TextFilePatch> 
       catch (IllegalArgumentException ignore) {
       }
     }
-    document.setText(myPatch.getSingleHunkPatchText());
-    FileDocumentManager.getInstance().saveDocument(document);
+
+    String patchText = myPatch.getSingleHunkPatchText();
+    updateDocumentContent(project, document, newFile, patchText);
+  }
+
+  private void updateDocumentContent(@NotNull Project project,
+                                     @NotNull Document document,
+                                     @NotNull VirtualFile file,
+                                     @NotNull String patchedText) {
+    VcsFacade.getInstance().runHeavyModificationTask(project, document, () -> {
+      try {
+        LoadTextUtil.write(project, file, this, patchedText, -1, false);
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+      FileDocumentManager.getInstance().reloadFromDisk(document);
+    });
   }
 }

@@ -44,7 +44,7 @@ dc4_1 = DC4(0.0, "", (1,))
 class DC5:
     # This should generate an error because a default value of
     # type list, dict, or set generate a runtime error.
-    x: list[int] = []
+    x: list[int] = []  # E
 
 
 @dataclass

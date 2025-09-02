@@ -6,6 +6,7 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 
 /**
@@ -50,8 +51,11 @@ fun MutableEntityStorage.modifyExcludeUrlEntity(
   return modifyEntity(ExcludeUrlEntity.Builder::class.java, entity, modification)
 }
 
+@Parent
 var ExcludeUrlEntity.Builder.contentRoot: ContentRootEntity.Builder?
   by WorkspaceEntity.extensionBuilder(ContentRootEntity::class.java)
+
+@Parent
 var ExcludeUrlEntity.Builder.library: LibraryEntity.Builder?
   by WorkspaceEntity.extensionBuilder(LibraryEntity::class.java)
 //endregion

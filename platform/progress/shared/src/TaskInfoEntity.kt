@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.progress
 
 import com.intellij.platform.ide.progress.suspender.TaskSuspension
@@ -83,6 +83,12 @@ data class TaskInfoEntity(override val eid: EID) : Entity {
    */
   var taskStatus: TaskStatus by TaskStatusType
 
+  /**
+   * Specifies whether the task would be fully shown in the status bar
+   * or just in the number of running tasks and popup with the full list of tasks.
+   */
+  var visibleInStatusBar: Boolean by ProgressBarVisibilityType
+
   companion object : DurableEntityType<TaskInfoEntity>(
     TaskInfoEntity::class.java.name,
     "com.intellij.platform.ide.progress",
@@ -94,5 +100,6 @@ data class TaskInfoEntity(override val eid: EID) : Entity {
     val ProgressStateType: Optional<ProgressState> = optionalValue("progressState", ProgressState.serializer())
     val TaskStatusType: Required<TaskStatus> = requiredValue("taskStatus", TaskStatus.serializer())
     val ProjectEntityType: Optional<ProjectEntity> = optionalRef<ProjectEntity>("project", RefFlags.CASCADE_DELETE_BY)
+    val ProgressBarVisibilityType: Required<Boolean> = requiredValue("visibleInStatusBar", Boolean.serializer())
   }
 }

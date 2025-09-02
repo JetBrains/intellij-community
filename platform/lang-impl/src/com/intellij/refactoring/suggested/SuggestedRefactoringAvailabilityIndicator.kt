@@ -137,6 +137,13 @@ class SuggestedRefactoringAvailabilityIndicator(private val project: Project) {
     }
   }
 
+  @ApiStatus.Internal
+  fun editorHasRefactoringAvailable(editor: Editor): Boolean {
+    ThreadingAssertions.assertEventDispatchThread()
+
+    return editorsAndHighlighters[editor] != null
+  }
+
   @get:TestOnly
   val hasData: Boolean
     get() = data != null

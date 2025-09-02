@@ -21,9 +21,9 @@ public final class InjectedEditorWindowTrackerImpl extends InjectedEditorWindowT
 
   @NotNull
   @Override
-  protected Editor createEditor(final @NotNull DocumentWindow documentRange,
-                      final @NotNull Editor editor,
-                      final @NotNull PsiFile injectedFile) {
+  public Editor createEditor(final @NotNull DocumentWindow documentRange,
+                             final @NotNull Editor editor,
+                             final @NotNull PsiFile injectedFile) {
     if (!(editor instanceof EditorImpl editorImpl)) return editor;
     var documentRangeImpl = (DocumentWindowImpl)documentRange;
     assert documentRange.isValid();
@@ -49,7 +49,7 @@ public final class InjectedEditorWindowTrackerImpl extends InjectedEditorWindowT
   }
 
   @Override
-  protected void disposeInvalidEditors() {
+  public void disposeInvalidEditors() {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     synchronized (allEditors) {
       Iterator<EditorWindowImpl> iterator = allEditors.iterator();
@@ -64,7 +64,7 @@ public final class InjectedEditorWindowTrackerImpl extends InjectedEditorWindowT
   }
 
   @Override
-  protected void disposeEditorFor(@NotNull DocumentWindow documentWindow) {
+  public void disposeEditorFor(@NotNull DocumentWindow documentWindow) {
     synchronized (allEditors) {
       for (Iterator<EditorWindowImpl> iterator = allEditors.iterator(); iterator.hasNext(); ) {
         EditorWindowImpl editor = iterator.next();

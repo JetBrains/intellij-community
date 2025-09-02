@@ -15,10 +15,7 @@ import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.IdeUICustomization;
 import com.intellij.ui.svg.SvgKt;
 import com.intellij.util.SVGLoader;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.io.IOException;
@@ -35,6 +32,7 @@ import java.util.Objects;
 public class UIThemeLookAndFeelInfoImpl extends UIManager.LookAndFeelInfo implements UIThemeLookAndFeelInfo {
   private final UITheme theme;
   private boolean isInitialized;
+  private boolean restartRequired;
 
   public UIThemeLookAndFeelInfoImpl(@NotNull UITheme theme) {
     super(theme.getName(),
@@ -176,6 +174,17 @@ public class UIThemeLookAndFeelInfoImpl extends UIManager.LookAndFeelInfo implem
   @Override
   public @NotNull UIThemeExportableBean describe() {
     return theme.describe();
+  }
+
+  @Override
+  @ApiStatus.Internal
+  public boolean isRestartRequired() {
+    return restartRequired;
+  }
+
+  @ApiStatus.Internal
+  public void setRestartRequired(boolean restartRequired) {
+    this.restartRequired = restartRequired;
   }
 
   private static <T extends Enum<T>> String parseEnumValue(Object value, T defaultValue) {

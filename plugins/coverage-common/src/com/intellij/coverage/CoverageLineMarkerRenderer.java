@@ -238,7 +238,7 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, Filling
     if (myCoverageByTestApplicable) {
       group.add(new ShowCoveringTestsAction(editor.getProject(), myCoverageSuite, myClassName, lineData));
     }
-    final AnAction byteCodeViewAction = ActionManager.getInstance().getAction("ByteCodeViewer");
+    final AnAction byteCodeViewAction = ActionManager.getInstance().getAction("BytecodeViewer");
     if (byteCodeViewAction != null) {
       group.add(byteCodeViewAction);
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.junit5;
 
 import com.intellij.rt.execution.junit.IDEAJUnitListener;
@@ -10,6 +10,7 @@ import org.junit.platform.engine.support.descriptor.EngineDescriptor;
 import org.junit.platform.launcher.*;
 import org.junit.platform.launcher.core.LauncherFactory;
 
+import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -19,6 +20,14 @@ public final class JUnit5IdeaTestRunner implements IdeaTestRunner<TestIdentifier
   private final List<JUnit5TestExecutionListener> myExecutionListeners = new ArrayList<>();
   private ArrayList<String> myListeners;
   private Launcher myLauncher;
+
+  public JUnit5IdeaTestRunner() {
+    Runnable warmup = (Runnable) Proxy.newProxyInstance(
+      JUnit5IdeaTestRunner.class.getClassLoader(),
+      new Class<?>[]{Runnable.class},
+      (proxy, method, args) -> null);
+    warmup.run();
+  }
 
   @Override
   public void createListeners(ArrayList<String> listeners, int count) {

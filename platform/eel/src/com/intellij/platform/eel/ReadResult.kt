@@ -3,6 +3,7 @@ package com.intellij.platform.eel
 
 import com.intellij.platform.eel.ReadResult.EOF
 import com.intellij.platform.eel.ReadResult.NOT_EOF
+import org.jetbrains.annotations.ApiStatus
 
 
 /**
@@ -20,6 +21,7 @@ import com.intellij.platform.eel.ReadResult.NOT_EOF
  * }
  * ```
  */
+@ApiStatus.Experimental
 enum class ReadResult {
   EOF,
   NOT_EOF;
@@ -30,6 +32,7 @@ enum class ReadResult {
      *  fromNumberOfReadBytes(stream.read(buffer))
      *  ```
      */
+    @ApiStatus.Internal
     fun fromNumberOfReadBytes(bytesRead: Int): ReadResult = if (bytesRead < -1) {
       throw IllegalArgumentException("Number of bytes read must be in -1..INT_MAX, can't be $bytesRead")
     }

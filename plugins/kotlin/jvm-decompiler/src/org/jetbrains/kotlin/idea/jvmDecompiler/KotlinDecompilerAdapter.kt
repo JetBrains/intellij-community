@@ -14,7 +14,7 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.highlighter.isKotlinDecompiledFile
-import org.jetbrains.kotlin.idea.internal.DecompileFailedException
+import org.jetbrains.kotlin.idea.jvm.shared.internal.DecompileFailedException
 import org.jetbrains.kotlin.psi.KtFile
 
 @ApiStatus.Internal

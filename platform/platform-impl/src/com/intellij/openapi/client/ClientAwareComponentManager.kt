@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.client
 
 import com.intellij.codeWithMe.ClientId
@@ -8,7 +8,6 @@ import com.intellij.openapi.application.Application
 import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.serviceContainer.ComponentManagerImpl
-import com.intellij.serviceContainer.PrecomputedExtensionModel
 import com.intellij.serviceContainer.throwAlreadyDisposedError
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
@@ -17,8 +16,8 @@ private val logger = logger<ClientAwareComponentManager>()
 
 @ApiStatus.Internal
 abstract class ClientAwareComponentManager: ComponentManagerImpl {
-
   protected constructor(parent: ComponentManagerImpl) : super(parent)
+
   protected constructor(parentScope: CoroutineScope): super(parentScope)
 
   override fun <T : Any> getServices(serviceClass: Class<T>, clientKind: ClientKind): List<T> {
@@ -53,30 +52,29 @@ abstract class ClientAwareComponentManager: ComponentManagerImpl {
       // we need to try looking in the local session as a fallback
       // use case: coroutine has a frontend ClientId -> some code requests for a service registered as 'local' in the xml
       val localSession = sessionManager.getSession(ClientId.localId) as? ClientSessionImpl ?: return null
-      localSession.doGetService(serviceClass = serviceClass, createIfNeeded = createIfNeeded, fallbackToShared = false)
+      return localSession.doGetService(serviceClass = serviceClass, createIfNeeded = createIfNeeded, fallbackToShared = false)
     }
     return service
   }
 
-  final override fun registerComponents(modules: List<IdeaPluginDescriptorImpl>,
-                                        app: Application?,
-                                        precomputedExtensionModel: PrecomputedExtensionModel?,
-                                        listenerCallbacks: MutableList<in Runnable>?) {
+  final override fun registerComponents(
+    modules: List<IdeaPluginDescriptorImpl>,
+    app: Application?,
+    listenerCallbacks: MutableList<in Runnable>?
+  ) {
     super.registerComponents(modules = modules,
                              app = app,
-                             precomputedExtensionModel = precomputedExtensionModel,
                              listenerCallbacks = listenerCallbacks)
 
     val sessionsManager = super.getService(ClientSessionsManager::class.java)!!
     for (session in sessionsManager.getSessions(ClientKind.ALL)) {
       (session as? ClientSessionImpl)?.registerComponents(modules = modules,
                                                           app = app,
-                                                          precomputedExtensionModel = precomputedExtensionModel,
                                                           listenerCallbacks = listenerCallbacks)
     }
   }
 
-  override fun unloadServices(module: IdeaPluginDescriptor, services: List<ServiceDescriptor>) {
+  final override fun unloadServices(module: IdeaPluginDescriptor, services: List<ServiceDescriptor>) {
     super.unloadServices(module, services)
 
     val sessionsManager = super.getService(ClientSessionsManager::class.java)!!
@@ -85,7 +83,7 @@ abstract class ClientAwareComponentManager: ComponentManagerImpl {
     }
   }
 
-  override fun postPreloadServices(modules: List<IdeaPluginDescriptorImpl>,
+  final override fun postPreloadServices(modules: List<IdeaPluginDescriptorImpl>,
                                    activityPrefix: String,
                                    syncScope: CoroutineScope,
                                    onlyIfAwait: Boolean) {
@@ -96,7 +94,7 @@ abstract class ClientAwareComponentManager: ComponentManagerImpl {
     }
   }
 
-  override fun isPreInitialized(service: Any): Boolean {
+  final override fun isPreInitialized(service: Any): Boolean {
     return super.isPreInitialized(service) || service is ClientSessionsManager<*>
   }
 }

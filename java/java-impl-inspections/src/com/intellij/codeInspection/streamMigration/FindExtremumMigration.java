@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.streamMigration;
 
-
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
@@ -19,13 +18,12 @@ import java.util.Objects;
 import static com.intellij.psi.util.PsiUtil.skipParenthesizedExprDown;
 import static com.intellij.util.ObjectUtils.tryCast;
 
-class FindExtremumMigration extends BaseStreamApiMigration {
-
+final class FindExtremumMigration extends BaseStreamApiMigration {
   private static final String MAX_OP = "max";
   private static final String MIN_OP = "min";
   private static final EquivalenceChecker ourEquivalence = EquivalenceChecker.getCanonicalPsiEquivalence();
 
-  protected FindExtremumMigration(boolean shouldWarn, String replacement) {
+  FindExtremumMigration(boolean shouldWarn, String replacement) {
     super(shouldWarn, replacement);
   }
 

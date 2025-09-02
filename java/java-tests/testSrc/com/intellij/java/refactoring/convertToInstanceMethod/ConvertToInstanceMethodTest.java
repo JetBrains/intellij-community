@@ -3,19 +3,20 @@ package com.intellij.java.refactoring.convertToInstanceMethod;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.java.refactoring.LightRefactoringTestCase;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiModifier;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.refactoring.BaseRefactoringProcessor;
-import com.intellij.refactoring.convertToInstanceMethod.ConvertToInstanceMethodDialog;
 import com.intellij.refactoring.convertToInstanceMethod.ConvertToInstanceMethodHandler;
-import com.intellij.ui.UiInterceptors;
+import com.intellij.refactoring.convertToInstanceMethod.ConvertToInstanceMethodProcessor;
 import com.intellij.util.VisibilityUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.Arrays;
+import java.util.List;
 
 public class ConvertToInstanceMethodTest extends LightRefactoringTestCase {
   @NotNull
@@ -25,13 +26,21 @@ public class ConvertToInstanceMethodTest extends LightRefactoringTestCase {
   }
 
   public void testSimple() { doTest(0); }
+
   public void testInterface() { doTest(0); }
+
   public void testInterfacePrivate() { doTest(0); }
+
   public void testInterface2() { doTest(0); }
+
   public void testInterface3() { doTest(0); }
+
   public void testTypeParameter() { doTest(0); }
+
   public void testInterfaceTypeParameter() { doTest(0); }
+
   public void testJavadocParameter() { doTest(0); }
+
   public void testConflictingParameterName() { doTest(0); }
 
   public void testVisibilityConflict() {
@@ -52,16 +61,45 @@ public class ConvertToInstanceMethodTest extends LightRefactoringTestCase {
   protected void doTest(int targetParameter, String visibility, String... options) {
     final String filePath = getBasePath() + getTestName(false) + ".java";
     configureByFile(filePath);
-    UiInterceptors.register(new ConvertToInstanceMethodDialogUiInterceptor(targetParameter, visibility, options));
-    new ConvertToInstanceMethodHandler().invoke(getProject(), getEditor(), getFile(), getCurrentEditorDataContext());
+    callRefactoring(targetParameter, visibility, options);
     checkResultByFile(filePath + ".after");
   }
-  
+
+  private void callRefactoring(int parameter, String visibility, String... options) {
+    Editor editor = getEditor();
+    PsiElement element = getFile().findElementAt(editor.getCaretModel().getOffset());
+    if (element == null) fail();
+    if (element instanceof PsiIdentifier) element = element.getParent();
+    if (!(element instanceof PsiMethod method)) {
+      fail();
+      return;
+    }
+
+    Object[] objects = ConvertToInstanceMethodHandler.calculatePossibleInstanceQualifiers(method);
+    if (options.length > 0) {
+      List<Object> convertedParameters = ContainerUtil.map(objects, ob ->
+        ob instanceof PsiVariable variable ?
+        PsiFormatUtil.formatVariable(variable,
+                                     PsiFormatUtilBase.SHOW_NAME |
+                                     PsiFormatUtilBase.SHOW_TYPE,
+                                     PsiSubstitutor.EMPTY) : ob);
+      assertEquals(Arrays.toString(options), Arrays.toString(convertedParameters.toArray()));
+    }
+
+    final ConvertToInstanceMethodProcessor processor =
+      new ConvertToInstanceMethodProcessor(
+        method.getProject(),
+        method,
+        objects[parameter] instanceof PsiParameter psiParameter ? psiParameter : null,
+        visibility);
+    processor.run();
+  }
+
   protected void doTestException() {
     configureByFile(getBasePath() + getTestName(false) + ".java");
-    new ConvertToInstanceMethodHandler().invoke(getProject(), getEditor(), getFile(), getCurrentEditorDataContext());
+    callRefactoring(0, VisibilityUtil.ESCALATE_VISIBILITY);
   }
-  
+
   protected String getBasePath() {
     return "/refactoring/convertToInstanceMethod/";
   }
@@ -69,44 +107,5 @@ public class ConvertToInstanceMethodTest extends LightRefactoringTestCase {
   @Override
   protected LanguageLevel getLanguageLevel() {
     return LanguageLevel.JDK_1_6;
-  }
-
-  private static class ConvertToInstanceMethodDialogUiInterceptor extends UiInterceptors.UiInterceptor<ConvertToInstanceMethodDialog> {
-    private final int myTargetParameter;
-    private final String myVisibility;
-    private final String[] myOptions;
-
-    ConvertToInstanceMethodDialogUiInterceptor(int targetParameter, @Nullable String visibility, String... options) {
-      super(ConvertToInstanceMethodDialog.class);
-      myTargetParameter = targetParameter;
-      myVisibility = visibility;
-      myOptions = options;
-    }
-
-    @Override
-    protected void doIntercept(@NotNull ConvertToInstanceMethodDialog dialog) {
-      @SuppressWarnings("unchecked") JList<Object> list = (JList<Object>)dialog.getPreferredFocusedComponent();
-      ListModel<Object> model = list.getModel();
-      int size = model.getSize();
-      if (myTargetParameter < 0 || myTargetParameter >= size) {
-        fail("targetParameter out of bounds: " + myTargetParameter);
-      }
-      if (myOptions.length > 0) {
-        assertEquals(Arrays.toString(myOptions), toString(model));
-      }
-      list.setSelectedIndex(myTargetParameter);
-      dialog.setVisibility(myVisibility == null ? VisibilityUtil.ESCALATE_VISIBILITY : myVisibility);
-      dialog.performOKAction();
-    }
-
-    private static String toString(ListModel<Object> model) {
-      int size = model.getSize();
-      String[] result = new String[size];
-      for (int i = 0; i < size; i++) {
-        Object o = model.getElementAt(i);
-        result[i] = (o instanceof PsiElement e) ? e.getText() : o.toString();
-      }
-      return Arrays.toString(result);
-    }
   }
 }

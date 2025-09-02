@@ -229,7 +229,7 @@ public final class PyPsiUtils {
    * @return described element or {@code null} if it doesn't exist
    */
   public static @Nullable PsiElement getParentRightBefore(@NotNull PsiElement element, final @NotNull PsiElement superParent) {
-    return PsiTreeUtil.findFirstParent(element, false, element1 -> element1.getParent() == superParent);
+    return PyPsiUtilsCore.getParentRightBefore(element, superParent);
   }
 
   public static int getElementIndentation(final PsiElement element) {

@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 plugins {
   java
+  application
 }
 
 tasks.compileJava {
@@ -25,6 +26,14 @@ dependencies {
   implementation("org.jetbrains:annotations:24.0.0")
   testImplementation("junit:junit:4.13.2")
   testImplementation("org.assertj:assertj-core:3.26.3")
+}
+
+application {
+  mainClass = "org.jetbrains.java.decompiler.main.decompiler.ConsoleDecompiler"
+}
+
+tasks.withType<CreateStartScripts> {
+  applicationName = "fernflower"
 }
 
 tasks.jar {

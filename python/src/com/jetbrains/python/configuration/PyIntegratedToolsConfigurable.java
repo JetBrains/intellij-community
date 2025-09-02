@@ -9,6 +9,7 @@ import com.intellij.facet.ui.FacetConfigurationQuickFix;
 import com.intellij.facet.ui.FacetEditorValidator;
 import com.intellij.facet.ui.ValidationResult;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.module.Module;
@@ -17,6 +18,7 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.DefaultProjectFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogPanel;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -39,8 +41,9 @@ import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.packaging.PyPackageManagerUI;
 import com.jetbrains.python.packaging.PyPackageRequirementsSettings;
-import com.jetbrains.python.packaging.PyPackageUtil;
 import com.jetbrains.python.packaging.PyRequirementsKt;
+import com.jetbrains.python.packaging.requirementsTxt.PythonRequirementTxtSdkUtils;
+import com.jetbrains.python.sdk.PythonSdkAdditionalData;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import com.jetbrains.python.sdk.pipenv.PipenvCommandExecutorKt;
 import com.jetbrains.python.testing.PyAbstractTestFactory;
@@ -119,12 +122,36 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
   }
 
   private @NotNull String getRequirementsPath() {
-    final String path = myPackagingSettings.getRequirementsPath();
-    if (myModule != null && myPackagingSettings.isDefaultPath() && !PyPackageUtil.hasRequirementsTxt(myModule)) {
+    if (myModule == null) {
       return "";
     }
-    else {
-      return path;
+    Sdk sdk = PythonSdkUtil.findPythonSdk(myModule);
+    if (sdk == null) {
+      return "";
+    }
+    SdkAdditionalData data = sdk.getSdkAdditionalData();
+    if (!(data instanceof PythonSdkAdditionalData)) {
+      return "";
+    }
+    Path requiredTxtPath = ((PythonSdkAdditionalData)data).getRequiredTxtPath();
+    final String path = requiredTxtPath != null ? requiredTxtPath.toString() : "";
+    return path;
+  }
+
+  private void setRequirementsPath(String requirementsPath) {
+    if (myModule == null) {
+      return;
+    }
+
+    Sdk sdk = PythonSdkUtil.findPythonSdk(myModule);
+    if (sdk == null) {
+      return;
+    }
+    try {
+      PythonRequirementTxtSdkUtils.saveRequirementsTxtPath(myModule.getProject(), sdk, Path.of(requirementsPath));
+    }
+    catch (Throwable t) {
+      Logger.getInstance(PyIntegratedToolsConfigurable.class).warn("Failed to save requirements path", t);
     }
   }
 
@@ -165,7 +192,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
             }
           }
         });
-        ui.install(Collections.singletonList(PyRequirementsKt.pyRequirement(name)), Collections.emptyList());
+        ui.install(Collections.singletonList(PyRequirementsKt.pyRequirement(name, null)), Collections.emptyList());
       }
     };
   }
@@ -225,7 +252,8 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
     if (!getRequirementsPath().equals(myRequirementsPathField.getText())) {
       return true;
     }
-    if (!myPipEnvPathField.getText().equals(StringUtil.notNullize(PipenvCommandExecutorKt.getPipEnvPath(PropertiesComponent.getInstance())))) {
+    if (!myPipEnvPathField.getText()
+      .equals(StringUtil.notNullize(PipenvCommandExecutorKt.getPipEnvPath(PropertiesComponent.getInstance())))) {
       return true;
     }
     return ContainerUtil.exists(myCustomizePanels, panel -> panel.isModified());
@@ -256,7 +284,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
       reparseFiles(Collections.singletonList(PlainTextFileType.INSTANCE.getDefaultExtension()));
     }
     myDocumentationSettings.setAnalyzeDoctest(analyzeDoctest.isSelected());
-    myPackagingSettings.setRequirementsPath(myRequirementsPathField.getText());
+    setRequirementsPath(myRequirementsPathField.getText());
 
     DaemonCodeAnalyzer.getInstance(myProject).restart();
     PipenvCommandExecutorKt.setPipEnvPath(PropertiesComponent.getInstance(), StringUtil.nullize(myPipEnvPathField.getText()));

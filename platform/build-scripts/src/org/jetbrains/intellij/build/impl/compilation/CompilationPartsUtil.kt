@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "UnstableApiUsage", "ReplacePutWithAssignment")
 @file:OptIn(ExperimentalPathApi::class)
 
@@ -25,13 +25,18 @@ import org.jetbrains.intellij.build.http2Client.withHttp2ClientConnectionFactory
 import org.jetbrains.intellij.build.io.AddDirEntriesMode
 import org.jetbrains.intellij.build.io.zip
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
+import org.jetbrains.intellij.build.telemetry.blockingUse
 import org.jetbrains.intellij.build.telemetry.use
 import java.net.InetSocketAddress
 import java.net.URI
-import java.nio.file.*
+import java.nio.file.FileSystemException
+import java.nio.file.FileVisitOption
+import java.nio.file.Files
+import java.nio.file.NoSuchFileException
+import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.FileTime
-import java.util.*
+import java.util.TreeMap
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
@@ -173,13 +178,13 @@ private suspend fun packCompilationResult(zipDir: Path, context: CompilationCont
   return items
 }
 
-internal suspend fun packAndComputeHash(
+internal fun packAndComputeHash(
   addDirEntriesMode: AddDirEntriesMode,
   name: String,
   archive: Path,
   directory: Path,
 ): String {
-  spanBuilder("pack").setAttribute("name", name).use {
+  spanBuilder("pack").setAttribute("name", name).blockingUse {
     // we compress the whole file using ZSTD - no need to compress
     zip(
       targetFile = archive,
@@ -189,7 +194,7 @@ internal suspend fun packAndComputeHash(
       addDirEntriesMode = addDirEntriesMode,
     )
   }
-  return spanBuilder("compute hash").setAttribute("name", name).use {
+  return spanBuilder("compute hash").setAttribute("name", name).blockingUse {
     computeHash(archive)
   }
 }
@@ -354,7 +359,7 @@ suspend fun fetchAndUnpackCompiledClasses(
   val start = System.nanoTime()
   spanBuilder("unpack compiled classes archives").use(Dispatchers.IO) {
     toUnpack.forEachConcurrent(Runtime.getRuntime().availableProcessors().coerceAtLeast(4)) { item ->
-      spanBuilder("unpack").setAttribute("name", item.name).use {
+      spanBuilder("unpack").setAttribute("name", item.name).blockingUse {
         unpackCompilationPartArchive(item, saveHash)
       }
     }
@@ -373,7 +378,7 @@ private fun cleanupOutdatedCompiledClassArchives(
   var count = 0
   var bytes = 0L
   try {
-    val preserve = items.mapTo(HashSet<Path>(items.size)) { it.file }
+    val preserve = items.mapTo(HashSet(items.size)) { it.file }
     val epoch = FileTime.fromMillis(0)
     val daysAgo = FileTime.fromMillis(System.currentTimeMillis() - TimeUnit.DAYS.toMillis(4))
     Files.createDirectories(tempDownloadStorage)
@@ -418,8 +423,7 @@ private suspend fun checkPreviouslyUnpackedDirectories(
   withContext(Dispatchers.IO) {
     val name = "remove stalled directories not present in metadata"
     launch(CoroutineName(name)) {
-      @Suppress("RemoveRedundantQualifierName")
-      spanBuilder(name).setAttribute(AttributeKey.stringArrayKey("keys"), java.util.List.copyOf(metadata.files.keys)).use {
+      spanBuilder(name).setAttribute(AttributeKey.stringArrayKey("keys"), java.util.List.copyOf(metadata.files.keys)).blockingUse {
         removeStalledDirs(metadata, classOutput)
       }
     }
@@ -498,7 +502,7 @@ private fun CoroutineScope.removeStalledDirs(
 
   for (dir in stalledDirs) {
     launch(CoroutineName("delete stalled dir $dir")) {
-      spanBuilder("delete stalled dir").setAttribute("dir", dir.toString()).use {
+      spanBuilder("delete stalled dir").setAttribute("dir", dir.toString()).blockingUse {
         dir.deleteRecursively()
       }
     }

@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from typing import Any
+from typing import Any, ClassVar
 
 from django import forms
 from django.db.models.fields import _ErrorMessagesDict
@@ -10,7 +10,7 @@ from django.forms.widgets import _OptAttrs
 from ..utils import prefix_validation_error as prefix_validation_error
 
 class SimpleArrayField(forms.CharField):
-    default_error_messages: _ErrorMessagesDict
+    default_error_messages: ClassVar[_ErrorMessagesDict]
     base_field: forms.Field
     delimiter: str
     min_length: int | None
@@ -46,7 +46,7 @@ class SplitArrayWidget(forms.Widget):
     def needs_multipart_form(self) -> bool: ...  # type: ignore[override]
 
 class SplitArrayField(forms.Field):
-    default_error_messages: _ErrorMessagesDict
+    default_error_messages: ClassVar[_ErrorMessagesDict]
     base_field: forms.Field
     size: int
     remove_trailing_nulls: bool

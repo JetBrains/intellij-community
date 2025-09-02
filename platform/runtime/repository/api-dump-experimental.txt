@@ -37,7 +37,11 @@
 - getBasePath():java.nio.file.Path
 - getMainPluginModuleId():java.lang.String
 *f:com.intellij.platform.runtime.repository.serialization.RuntimeModuleRepositorySerialization
+- s:loadBootstrapClasspath(java.nio.file.Path,java.lang.String):java.lang.String[]
+- s:loadFromCompactFile(java.nio.file.Path):com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleRepositoryData
 - s:loadFromJar(java.nio.file.Path):com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleRepositoryData
 - s:loadFromRawData(java.nio.file.Path,com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleRepositoryData):com.intellij.platform.runtime.repository.RuntimeModuleRepository
+- s:saveToCompactFile(java.util.Collection,java.lang.String,java.nio.file.Path,I):V
+- s:saveToCompactFile(java.util.Collection,java.lang.String,java.nio.file.Path,java.lang.String,I):V
 - s:saveToJar(java.util.Collection,java.lang.String,java.nio.file.Path,I):V
 - s:saveToJar(java.util.Collection,java.lang.String,java.nio.file.Path,java.lang.String,I):V

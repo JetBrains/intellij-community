@@ -738,9 +738,10 @@ public final class ComparisonManagerImpl extends ComparisonManager {
     int end1 = lineOffsets1.getLineEnd(index1, true);
     int start2 = lineOffsets2.getLineStart(index2);
     int end2 = lineOffsets2.getLineEnd(index2, true);
-    Range range = TrimUtil.trimExpandText(text1, text2,
-                                          start1, start2, end1, end2,
-                                          ignored1, ignored2);
+    Range range = TrimUtil.trimExpand(start1, start2, end1, end2,
+                                      (i1, i2) -> text1.charAt(i1) == text2.charAt(i2),
+                                      ignored1::get,
+                                      ignored2::get);
     if (!range.isEmpty()) return false;
 
     List<InlineChunk> words1 = getNonIgnoredWords(index1, text1, lineOffsets1, ignored1);
@@ -774,7 +775,7 @@ public final class ComparisonManagerImpl extends ComparisonManager {
   }
 
   private static @NotNull TextRange trimIgnoredRange(int start, int end, @NotNull BitSet ignored, int offset) {
-    IntPair intPair = TrimUtil.trim(offset + start, offset + end, ignored);
+    IntPair intPair = TrimUtil.trim(offset + start, offset + end, (index) -> ignored.get(index));
     return new TextRange(intPair.first - offset, intPair.second - offset);
   }
 

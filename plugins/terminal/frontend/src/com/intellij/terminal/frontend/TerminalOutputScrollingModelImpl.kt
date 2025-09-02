@@ -25,8 +25,8 @@ import kotlin.math.max
 /**
  * Manages the vertical scroll offset of the terminal output:
  * 1. Adjusts it to follow the cursor offset or last non-blank line (depending on what is located lower)
- * if the user does not modify scrolling position manually.
- * 2. Provides an ability to scroll to cursor: [scrollToCursor]
+ * if the user does not modify the scrolling position manually.
+ * 2. Provides an ability to scroll to cursor: [updateScrollPosition]
  *
  * Lifecycle is bound to the provided Coroutine Scope.
  */
@@ -42,7 +42,7 @@ internal class TerminalOutputScrollingModelImpl(
     coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
       outputModel.cursorOffsetState.collect { offset ->
         if (shouldScrollToCursor) {
-          scrollToCursor(offset)
+          updateScrollPosition(offset)
         }
       }
     }
@@ -52,7 +52,7 @@ internal class TerminalOutputScrollingModelImpl(
         if (shouldScrollToCursor) {
           // We already called in an EDT, but let's update the scroll later to not block output model updates.
           coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-            scrollToCursor(outputModel.cursorOffsetState.value)
+            updateScrollPosition(outputModel.cursorOffsetState.value)
           }
         }
       }
@@ -85,7 +85,7 @@ internal class TerminalOutputScrollingModelImpl(
       shouldScrollToCursor = true
     }
     if (shouldScrollToCursor) {
-      scrollToCursor(outputModel.cursorOffsetState.value)
+      updateScrollPosition(outputModel.cursorOffsetState.value)
     }
   }
 
@@ -93,13 +93,14 @@ internal class TerminalOutputScrollingModelImpl(
    * The visible area of the terminal output is bound to the screen area - the last output lines that fit into the screen height.
    * But given that we have blocks with additional vertical insets, the same number of lines may require more height than we have.
    * The terminal should show the first screen line at the top of the viewport.
-   * But if we follow this rule, the line with cursor or just the last non-blank line can occur below the viewport bounds
-   * because actual height is increased by the block insets.
+   * But if we follow this rule, the line with the cursor or just the last non-blank line can occur below the viewport bounds
+   * because the actual height is increased by the block insets.
    *
    * So, this method is trying to adjust the scroll offset to put the first line of the screen to the top of the viewport.
    * But if the cursor or last non-blank line becomes out of viewport, we increase the offset to make them visible.
+   * The cursor is considered only if it is visible.
    */
-  private fun scrollToCursor(offset: Int) {
+  private fun updateScrollPosition(cursorOffset: Int) {
     val screenRows = editor.calculateTerminalSize()?.rows ?: return
 
     val screenBottomVisualLine = editor.offsetToVisualLine(editor.document.textLength, true)
@@ -110,17 +111,36 @@ internal class TerminalOutputScrollingModelImpl(
 
     val lastNotBlankVisualLine = findLastNotBlankVisualLine(screenTopVisualLine)
     val lastNotBlankLineBottomY = editor.visualLineToY(lastNotBlankVisualLine) + editor.lineHeight + bottomInset
-    val cursorBottomY = editor.offsetToXY(offset).y + editor.lineHeight + bottomInset
-    val screenBottomY = max(lastNotBlankLineBottomY, cursorBottomY)
+
+    val isCursorVisible = sessionModel.terminalState.value.isCursorVisible
+    val cursorVisualLine = editor.offsetToVisualLine(cursorOffset, true)
+    val screenBottomY = if (isCursorVisible) {
+      // Take the cursor into account only if it is visible.
+      val cursorBottomY = editor.visualLineToY(cursorVisualLine) + editor.lineHeight + bottomInset
+      max(lastNotBlankLineBottomY, cursorBottomY)
+    }
+    else lastNotBlankLineBottomY
 
     val screenTopY = editor.visualLineToY(screenTopVisualLine) - topInset
     val screenHeight = editor.scrollingModel.visibleArea.height
 
-    val scrollY = max(screenBottomY - screenHeight, screenTopY)
+    val scrollY = if (isCursorVisible && cursorVisualLine == screenTopVisualLine) {
+      // It is a special case: the cursor is at the top of the screen.
+      // In this case we allow adjusting the position by scrolling up.
+      // To support the case when the user executes "clear".
+      screenTopY
+    }
+    else {
+      // In a regular case always try to scroll to the bottom and do not scroll up
+      // to not cause blinking when lines are frequently added and removed from the bottom of the screen
+      maxOf(screenBottomY - screenHeight, screenTopY, editor.scrollingModel.verticalScrollOffset)
+    }
 
-    editor.doTerminalOutputScrollChangingAction {
-      editor.doWithoutScrollingAnimation {
-        editor.scrollingModel.scrollVertically(scrollY)
+    if (scrollY != editor.scrollingModel.verticalScrollOffset) {
+      editor.doTerminalOutputScrollChangingAction {
+        editor.doWithoutScrollingAnimation {
+          editor.scrollingModel.scrollVertically(scrollY)
+        }
       }
     }
   }

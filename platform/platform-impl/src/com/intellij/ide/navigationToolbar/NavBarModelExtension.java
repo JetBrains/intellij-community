@@ -1,10 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navigationToolbar;
 
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.DataSink;
-import com.intellij.openapi.actionSystem.DataSnapshot;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -16,7 +13,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Collection;
 
 /**
@@ -71,6 +68,16 @@ public interface NavBarModelExtension {
   @Deprecated(forRemoval = true)
   default @Nullable String getPopupMenuGroup(@NotNull DataProvider provider) { return null; }
 
+  /** @noinspection LambdaUnfriendlyMethodOverload*/
+  default PsiElement getLeafElement(@NotNull DataMap dataProvider) {
+    return getLeafElement((DataContext)dataId -> dataProvider.get(DataKey.create(dataId)));
+  }
+
+  /**
+   * @noinspection LambdaUnfriendlyMethodOverload, unused
+   * @deprecated Use {@link #getLeafElement(DataMap)} instead
+   */
+  @Deprecated(forRemoval = true)
   default PsiElement getLeafElement(@NotNull DataContext dataContext) {
     return null;
   }

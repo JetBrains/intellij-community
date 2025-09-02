@@ -3,9 +3,9 @@ from re import Pattern
 
 # This is defined here as a do-nothing function because we can't import
 # django.utils.translation -- that module depends on the settings.
-from typing import Any, Literal, Protocol, type_check_only
+from typing import Any, Literal, Protocol, TypeAlias, TypedDict, type_check_only
 
-from typing_extensions import TypeAlias
+from typing_extensions import NotRequired
 
 _Admins: TypeAlias = list[tuple[str, str]]
 
@@ -403,7 +403,12 @@ PASSWORD_RESET_TIMEOUT: int
 # upon login
 PASSWORD_HASHERS: list[str]
 
-AUTH_PASSWORD_VALIDATORS: list[dict[str, str]]
+@type_check_only
+class _AuthPasswordValidatorsDict(TypedDict):
+    NAME: str
+    OPTIONS: NotRequired[dict[str, Any]]
+
+AUTH_PASSWORD_VALIDATORS: list[_AuthPasswordValidatorsDict]
 
 ###########
 # SIGNING #

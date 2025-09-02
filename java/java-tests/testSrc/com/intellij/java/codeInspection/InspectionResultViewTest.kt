@@ -13,7 +13,6 @@ import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.createGlobalContextForTool
 import com.intellij.util.ui.UIUtil
-import java.io.File
 
 class InspectionResultViewTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   private val ENABLED_TOOLS = listOf("UNUSED_IMPORT", "MarkedForRemoval", "Java9RedundantRequiresStatement", "GroovyUnusedAssignment")
@@ -106,7 +105,7 @@ class InspectionResultViewTest : LightJava9ModulesCodeInsightFixtureTestCase() {
            -${ModuleDescriptor.M3.sourceRootName}/foo/bar
             -Baz.groovy
              Assignment is not used
-      """.trimIndent().replace('/', File.separatorChar))
+      """.trimIndent())
   }
 
   private fun runInspections(): InspectionResultsView {

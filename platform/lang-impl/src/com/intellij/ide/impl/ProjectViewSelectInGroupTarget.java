@@ -11,6 +11,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.IdeUICustomization;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.LinkedHashSet;
@@ -19,7 +20,7 @@ import java.util.Objects;
 
 public class ProjectViewSelectInGroupTarget implements CompositeSelectInTarget, DumbAware {
   @Override
-  public @NotNull Collection<SelectInTarget> getSubTargets(@NotNull SelectInContext context) {
+  public @NotNull @Unmodifiable Collection<SelectInTarget> getSubTargets(@NotNull SelectInContext context) {
     return ProjectView.getInstance(context.getProject()).getSelectInTargets();
   }
 

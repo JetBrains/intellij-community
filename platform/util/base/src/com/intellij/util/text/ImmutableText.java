@@ -81,7 +81,8 @@ public final class ImmutableText extends ImmutableCharSequence implements CharAr
    * @param  obj the object to represent as text.
    * @return the textual representation of the specified object.
    */
-  static @NotNull ImmutableText valueOf(@NotNull Object obj) {
+  @VisibleForTesting
+  public static @NotNull ImmutableText valueOf(@NotNull Object obj) {
     if (obj instanceof ImmutableText) return (ImmutableText)obj;
     if (obj instanceof CharSequence) return valueOf((CharSequence)obj);
     return valueOf(String.valueOf(obj));

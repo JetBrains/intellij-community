@@ -10,13 +10,14 @@ import com.intellij.execution.target.value.*
 import com.intellij.execution.testframework.AbstractTestProxy
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiTreeUtil
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.extensions.getQName
-import com.jetbrains.python.packaging.PyPackageManager
+import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyFunction
@@ -121,7 +122,9 @@ protected constructor(project: Project, factory: ConfigurationFactory, private v
       return false
     }
     val requiredPackage = this.requiredPackage ?: return true // Installed by default
-    return PyPackageManager.getInstance(sdk).packages?.firstOrNull { it.name == requiredPackage } != null
+    return runBlockingCancellable {
+      PythonPackageManager.forSdk(project, sdk).listInstalledPackages().find { it -> it.presentableName == requiredPackage } != null
+    }
   }
 
 

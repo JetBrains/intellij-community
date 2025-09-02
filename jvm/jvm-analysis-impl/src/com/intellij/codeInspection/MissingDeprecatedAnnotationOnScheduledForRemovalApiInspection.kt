@@ -1,8 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection
 
 import com.intellij.analysis.JvmAnalysisBundle
-import com.intellij.codeInsight.intention.AddAnnotationFix
+import com.intellij.codeInsight.intention.AddAnnotationModCommandAction
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiModifierListOwner
 import com.intellij.uast.UastVisitorAdapter
@@ -60,19 +60,20 @@ class MissingDeprecatedAnnotationOnScheduledForRemovalApiInspection : LocalInspe
       }
     }
 
-    private fun createAnnotationFix(node: UDeclaration): AddAnnotationFix? {
+    private fun createAnnotationFix(node: UDeclaration): LocalQuickFix? {
       //This quick fix works only for Java.
       val modifierListOwner = node.sourcePsi as? PsiModifierListOwner ?: return null
-      return AddAnnotationFix(DEPRECATED_ANNOTATION_NAME, modifierListOwner)
+      return LocalQuickFix.from(AddAnnotationModCommandAction(DEPRECATED_ANNOTATION_NAME, modifierListOwner))
     }
 
     private fun hasDeprecatedAnnotation(node: UAnnotated) =
-      node.findAnnotation(DEPRECATED_ANNOTATION_NAME) != null ||
-      node.findAnnotation(KOTLIN_DEPRECATED_ANNOTATION_NAME) != null ||
-      node.findAnnotation(SCALA_DEPRECATED_ANNOTATION_NAME) != null
+      node.findSourceAnnotation(DEPRECATED_ANNOTATION_NAME) != null ||
+      node.findSourceAnnotation(KOTLIN_DEPRECATED_ANNOTATION_NAME) != null ||
+      node.findSourceAnnotation(SCALA_DEPRECATED_ANNOTATION_NAME) != null ||
+      node.findSourceAnnotation(KOTLIN_DEPRECATED_ANNOTATION_NAME) != null
 
     private fun isScheduledForRemoval(annotated: UAnnotated): Boolean =
-      annotated.findAnnotation(SCHEDULED_FOR_REMOVAL_ANNOTATION_NAME) != null
+      annotated.findSourceAnnotation(SCHEDULED_FOR_REMOVAL_ANNOTATION_NAME) != null
   }
 
 }

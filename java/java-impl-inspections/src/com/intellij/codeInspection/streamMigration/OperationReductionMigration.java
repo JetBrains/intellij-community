@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.streamMigration;
 
 import com.intellij.openapi.project.Project;
@@ -14,13 +14,10 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Locale;
 import java.util.function.Predicate;
 
-/**
- * @author Roman Ivanov.
- */
-public class OperationReductionMigration extends BaseStreamApiMigration {
+final class OperationReductionMigration extends BaseStreamApiMigration {
   private final ReductionOperation myReductionOperation;
 
-  protected OperationReductionMigration(boolean shouldWarn, ReductionOperation context) {
+  OperationReductionMigration(boolean shouldWarn, ReductionOperation context) {
     super(shouldWarn, "reduce");
     myReductionOperation = context;
   }

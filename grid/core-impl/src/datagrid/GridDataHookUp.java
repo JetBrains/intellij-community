@@ -55,6 +55,7 @@ public interface GridDataHookUp<Row, Column> extends MutationSupport<Row, Column
 
   boolean isReadOnly();
 
+  default boolean isForSingleSource() { return true; }
 
   void addRequestListener(@NotNull RequestListener<Row, Column> listener, @NotNull Disposable disposable);
 

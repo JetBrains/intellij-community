@@ -30,7 +30,7 @@ public class SimplePyUnresolvedReferencesInspection extends PyUnresolvedReferenc
                    @NotNull PyInspection inspection,
                    @NotNull TypeEvalContext context,
                    @NotNull LanguageLevel languageLevel) {
-      super(holder, Collections.emptyList(), inspection, context, languageLevel);
+      super(holder, Collections.emptyList(), context, languageLevel);
     }
   }
 }

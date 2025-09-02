@@ -305,7 +305,7 @@ public final class DuplicateStringLiteralInspection extends AbstractBaseJavaLoca
     }
 
     @Override
-    public void invoke(@NotNull Project project, @NotNull PsiFile file, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
+    public void invoke(@NotNull Project project, @NotNull PsiFile psiFile, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
       PsiExpression[] literalExpressions = getDuplicateLiteralsUnderProgress(startElement);
       if (literalExpressions == null) return;
 

@@ -1,11 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.packaging.jlink;
 
 import com.intellij.execution.CommandLineUtil;
 import com.intellij.execution.CommandLineWrapperUtil;
 import com.intellij.execution.process.BaseOSProcessHandler;
-import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
@@ -226,7 +226,7 @@ public final class JLinkArtifactBuildTaskProvider extends ArtifactBuildTaskProvi
         final Process process = new ProcessBuilder(CommandLineUtil.toCommandLine(newCommands)).start();
 
         BaseOSProcessHandler handler = new BaseOSProcessHandler(process, newCommands.toString(), null);
-        handler.addProcessListener(new ProcessAdapter() {
+        handler.addProcessListener(new ProcessListener() {
           @Override
           public void processTerminated(@NotNull ProcessEvent event) {
             exitCode.set(event.getExitCode());

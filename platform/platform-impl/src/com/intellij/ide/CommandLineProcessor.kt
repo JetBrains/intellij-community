@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide
 
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
@@ -51,7 +51,18 @@ import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.text.ParseException
 import java.util.concurrent.CancellationException
+import kotlin.Boolean
+import kotlin.Int
 import kotlin.Result
+import kotlin.String
+import kotlin.Suppress
+import kotlin.Throwable
+import kotlin.check
+import kotlin.error
+import kotlin.let
+import kotlin.require
+import kotlin.requireNotNull
+import kotlin.use
 
 @get:Internal
 val isIdeStartupWizardEnabled: Boolean
@@ -161,13 +172,6 @@ object CommandLineProcessor {
 
     val project = IdeFocusManager.getGlobalInstance().lastFocusedFrame?.project
     return if (project != null && !LightEdit.owns(project)) project else projects.first()
-  }
-
-  @Internal
-  fun scheduleProcessProtocolCommand(rawUri: @NlsSafe String) {
-    (ApplicationManager.getApplication() as ComponentManagerEx).getCoroutineScope().launch {
-      processProtocolCommand(rawUri)
-    }
   }
 
   @Internal

@@ -5,6 +5,7 @@ import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds.AnnotationValueErrorContext;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
@@ -28,13 +29,15 @@ import java.lang.annotation.RetentionPolicy;
 import java.util.*;
 
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
+import static java.util.Objects.requireNonNull;
+import static java.util.Objects.requireNonNullElse;
 
 final class AnnotationChecker {
   private static final ElementPattern<PsiElement> ANY_ANNOTATION_ALLOWED = psiElement().andOr(
     psiElement().withParent(PsiNameValuePair.class),
     psiElement().withParents(PsiArrayInitializerMemberValue.class, PsiNameValuePair.class),
     psiElement().withParents(PsiArrayInitializerMemberValue.class, PsiAnnotationMethod.class),
-    psiElement().withParent(PsiAnnotationMethod.class).afterLeaf(PsiKeyword.DEFAULT),
+    psiElement().withParent(PsiAnnotationMethod.class).afterLeaf(JavaKeywords.DEFAULT),
     // Unterminated parameter list like "void test(@NotNull String)": error on annotation looks annoying here
     psiElement().withParents(PsiModifierList.class, PsiParameterList.class)
   );
@@ -410,7 +413,7 @@ final class AnnotationChecker {
       PsiNameValuePair[] attributes = annotation.getParameterList().getAttributes();
       for (PsiNameValuePair attribute : attributes) {
         String name = attribute.getName();
-        names.add(Objects.requireNonNullElse(name, PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME));
+        names.add(requireNonNullElse(name, PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME));
       }
 
       PsiMethod[] annotationMethods = psiClass.getMethods();
@@ -458,24 +461,16 @@ final class AnnotationChecker {
       if (myVisitor.hasErrorResults()) return;
     }
 
+    if (!(annotation.getOwner() instanceof PsiArrayType) && annotation.getParent() instanceof PsiTypeElement typeElement) {
+      PsiElement element = PsiTreeUtil.skipParentsOfType(typeElement, PsiTypeElement.class);
+      if (element instanceof PsiModifierListOwner modifierListOwner) {
+        targets = AnnotationTargetUtil.getTargetsForLocation(modifierListOwner.getModifierList());
+      }
+    }
     PsiAnnotation.TargetType applicable = AnnotationTargetUtil.findAnnotationTarget(annotation, targets);
     if (applicable == PsiAnnotation.TargetType.UNKNOWN) return;
 
     if (applicable == null) {
-      if (targets.length == 1 && targets[0] == PsiAnnotation.TargetType.TYPE_USE) {
-        PsiElement parent = annotation.getParent();
-        if (parent instanceof PsiTypeElement && !(annotation.getOwner() instanceof PsiArrayType)) {
-          PsiElement modifierList =
-            PsiTreeUtil.skipSiblingsBackward(parent, PsiWhiteSpace.class, PsiComment.class, PsiTypeParameterList.class);
-          if (modifierList instanceof PsiModifierList psiModifierList) {
-            targets = AnnotationTargetUtil.getTargetsForLocation(psiModifierList);
-            if (AnnotationTargetUtil.findAnnotationTarget(annotation, targets) == null) {
-              myVisitor.report(JavaErrorKinds.ANNOTATION_NOT_APPLICABLE.create(annotation, Arrays.asList(targets)));
-            }
-            return;
-          }
-        }
-      }
       myVisitor.report(JavaErrorKinds.ANNOTATION_NOT_APPLICABLE.create(annotation, Arrays.asList(targets)));
       return;
     }
@@ -486,8 +481,7 @@ final class AnnotationChecker {
         return;
       }
       if (owner instanceof PsiClassReferenceType referenceType) {
-        PsiJavaCodeReferenceElement ref = referenceType.getReference();
-        checkReferenceTarget(annotation, ref);
+        checkReferenceTarget(annotation, referenceType.getReference());
       }
       else if (owner instanceof PsiModifierList || owner instanceof PsiTypeElement) {
         PsiElement nextElement = owner instanceof PsiTypeElement typeElementOwner
@@ -615,7 +609,7 @@ final class AnnotationChecker {
     }
     PsiAnnotationMemberValue value = pair.getValue();
     if (value != null) {
-      PsiType expectedType = Objects.requireNonNull(annotationMethod.getReturnType());
+      PsiType expectedType = requireNonNull(annotationMethod.getReturnType());
       checkMemberValueType(value, expectedType, annotationMethod);
     }
     checkDuplicateAttribute(pair);
@@ -628,8 +622,8 @@ final class AnnotationChecker {
       if (attribute == pair) break;
       String name = pair.getName();
       if (Objects.equals(attribute.getName(), name)) {
-        myVisitor.report(
-          JavaErrorKinds.ANNOTATION_ATTRIBUTE_DUPLICATE.create(pair, name == null ? PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME : name));
+        myVisitor.report(JavaErrorKinds.ANNOTATION_ATTRIBUTE_DUPLICATE.create(pair, name == null ? PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME : name));
+        break;
       }
     }
   }

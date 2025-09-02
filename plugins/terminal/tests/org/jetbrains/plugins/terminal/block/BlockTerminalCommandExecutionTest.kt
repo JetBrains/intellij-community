@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.TextRange
 import com.intellij.terminal.TerminalTitle
 import com.intellij.testFramework.*
@@ -55,6 +56,8 @@ internal class BlockTerminalCommandExecutionTest(private val shellPath: Path) {
 
   @Test
   fun `commands are executed in order`() {
+    Assume.assumeFalse(SystemInfo.isWindows)
+
     val (session, view) = startSessionAndCreateView()
     val count = 50
     val expected = (1..count).map {
@@ -72,6 +75,8 @@ internal class BlockTerminalCommandExecutionTest(private val shellPath: Path) {
   @TestFor(issues = ["IJPL-156363"])
   @Test
   fun `multiline commands with bracketed mode`() {
+    Assume.assumeFalse(SystemInfo.isWindows)
+
     val (session, view) = startSessionAndCreateView()
     assumeTrue(session.model.isBracketedPasteMode)
     val expected = listOf(
@@ -88,6 +93,8 @@ internal class BlockTerminalCommandExecutionTest(private val shellPath: Path) {
   @TestFor(issues = ["IJPL-156274"])
   @Test
   fun `multiline commands without bracketed mode`() {
+    Assume.assumeFalse(SystemInfo.isWindows)
+
     val (session, view) = startSessionAndCreateView()
     Assume.assumeFalse(session.model.isBracketedPasteMode)
     session.commandExecutionManager.sendCommandToExecute("echo 1\necho 2")
@@ -111,6 +118,8 @@ internal class BlockTerminalCommandExecutionTest(private val shellPath: Path) {
 
   @Test
   fun `shell integration sends correct events`() {
+    Assume.assumeFalse(SystemInfo.isWindows)
+
     val actual = mutableListOf<String?>()
     val session = startBlockTerminalSession(disableSavingHistory = false) {
       val eventName = it.getOrNull(0)
@@ -141,6 +150,8 @@ internal class BlockTerminalCommandExecutionTest(private val shellPath: Path) {
   @TestFor(issues = ["IJPL-101408", "IJPL-165429"], classes = [ShellEditorBufferReportShellCommandListener::class])
   @Test
   fun `shell shell editor buffer reporting`() {
+    Assume.assumeFalse(SystemInfo.isWindows)
+
     val actual = mutableListOf<String?>()
     val session = startBlockTerminalSession(disableSavingHistory = false) {
       val eventName = it.getOrNull(0)
@@ -168,6 +179,8 @@ internal class BlockTerminalCommandExecutionTest(private val shellPath: Path) {
 
   @Test
   fun `basic hyperlinks are found`() {
+    Assume.assumeFalse(SystemInfo.isWindows)
+
     ExtensionTestUtil.maskExtensions<ConsoleFilterProvider>(
       ConsoleFilterProvider.FILTER_PROVIDERS,
       listOf(ConsoleFilterProvider { arrayOf(MyHyperlinkFilter("foo")) }),
@@ -192,6 +205,8 @@ internal class BlockTerminalCommandExecutionTest(private val shellPath: Path) {
 
   @Test
   fun `command with empty output`() {
+    Assume.assumeFalse(SystemInfo.isWindows)
+
     val (session, view) = startSessionAndCreateView()
     val commandLine = listOf("cd", ".").toCommandLine(session)
 

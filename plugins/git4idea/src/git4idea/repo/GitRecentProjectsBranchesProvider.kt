@@ -3,7 +3,6 @@ package git4idea.repo
 
 import com.github.benmanes.caffeine.cache.AsyncCacheLoader
 import com.github.benmanes.caffeine.cache.AsyncLoadingCache
-import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.vcs.RecentProjectsBranchesProvider
 import com.intellij.openapi.Disposable
@@ -12,11 +11,15 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.wm.IdeFrame
+import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.util.application
-import com.intellij.util.concurrency.AppExecutorUtil
 import git4idea.GitUtil
 import git4idea.branch.GitBranchUtil
+import git4idea.i18n.GitBundle
+import git4idea.util.CaffeineUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -34,7 +37,25 @@ import kotlin.io.path.absolutePathString
 import kotlin.io.path.readText
 
 internal class GitRecentProjectsBranchesProvider : RecentProjectsBranchesProvider {
-  override fun getCurrentBranch(projectPath: String): String? = application.service<GitRecentProjectsBranchesService>().getCurrentBranch(projectPath)
+  override fun getCurrentBranch(projectPath: String, nameIsDistinct: Boolean): String? =
+    application.service<GitRecentProjectsBranchesService>().getCurrentBranch(projectPath, nameIsDistinct)
+}
+
+internal enum class RecentProjectsShowBranchMode {
+  NEVER {
+    override fun toString(): String = GitBundle.message("git.recent.projects.show.branch.mode.never")
+    override fun shouldShow(nameIsDistinct: Boolean): Boolean = false
+  },
+  DUPLICATE_NAMES {
+    override fun toString(): String = GitBundle.message("git.recent.projects.show.branch.mode.for.duplicate.names")
+    override fun shouldShow(nameIsDistinct: Boolean): Boolean = !nameIsDistinct
+  },
+  ALWAYS {
+    override fun toString(): String = GitBundle.message("git.recent.projects.show.branch.mode.always")
+    override fun shouldShow(nameIsDistinct: Boolean): Boolean = true
+  };
+
+  abstract fun shouldShow(nameIsDistinct: Boolean): Boolean
 }
 
 @Service
@@ -45,10 +66,9 @@ internal class GitRecentProjectsBranchesService(val coroutineScope: CoroutineSco
   private val updateRecentProjectsSignal =
     MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
-  private val cache: AsyncLoadingCache<String, GitRecentProjectCachedBranch> = Caffeine.newBuilder()
+  private val cache: AsyncLoadingCache<String, GitRecentProjectCachedBranch> = CaffeineUtil.withIoExecutor()
     .refreshAfterWrite(REFRESH_IN)
     .expireAfterAccess(EXPIRE_IN)
-    .executor(AppExecutorUtil.getAppExecutorService())
     .buildAsync(BranchesLoader())
 
   init {
@@ -70,7 +90,19 @@ internal class GitRecentProjectsBranchesService(val coroutineScope: CoroutineSco
     }
   }
 
-  fun getCurrentBranch(projectPath: String): String? {
+  fun getCurrentBranch(projectPath: String, nameIsDistinct: Boolean): String? {
+    val showBranchMode = AdvancedSettings.getEnum("git.recent.projects.show.branch", RecentProjectsShowBranchMode::class.java)
+    if (!showBranchMode.shouldShow(nameIsDistinct)) {
+      return null
+    }
+
+    // IJPL-194035
+    // Avoid greedy I/O under non-local projects. For example, in the case of WSL:
+    //	1.	it may trigger Ijent initialization for each recent project
+    //	2.	with Ijent disabled, performance may degrade further — 9P is very slow and could lead to UI freezes
+    if (Path(projectPath).getEelDescriptor() != LocalEelDescriptor) {
+      return null
+    }
     val branchFuture = cache.get(projectPath)
     return (branchFuture.getNow(GitRecentProjectCachedBranch.Unknown) as? GitRecentProjectCachedBranch.KnownBranch)?.branchName
   }

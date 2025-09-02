@@ -3,7 +3,7 @@ package com.intellij.openapi.vcs.changes.ui.browser
 
 import com.intellij.diff.DiffContentFactory
 import com.intellij.diff.comparison.ComparisonManagerImpl
-import com.intellij.diff.comparison.trimExpandText
+import com.intellij.diff.comparison.trimExpand
 import com.intellij.diff.lang.DiffIgnoredRangeProvider
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
@@ -276,7 +276,10 @@ class ChangesFilterer(val project: Project?, val listener: Listener) : Disposabl
       val ignored1 = ComparisonManagerImpl.collectIgnoredRanges(ignoredRanges1)
       val ignored2 = ComparisonManagerImpl.collectIgnoredRanges(ignoredRanges2)
 
-      val range = trimExpandText(content1, content2, 0, 0, content1.length, content2.length, ignored1, ignored2)
+      val range = trimExpand(0, 0, content1.length, content2.length,
+                             { index1, index2 -> content1[index1] == content2[index2] },
+                             { index -> ignored1[index] },
+                             { index -> ignored2[index] })
       return !range.isEmpty
     }
   }

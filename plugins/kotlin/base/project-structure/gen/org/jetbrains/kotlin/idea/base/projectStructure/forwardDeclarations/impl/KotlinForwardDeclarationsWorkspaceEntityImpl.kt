@@ -11,7 +11,7 @@ import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
-import com.intellij.platform.workspace.storage.annotations.Child
+import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
@@ -28,15 +28,15 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations.KotlinForwardDeclarationsWorkspaceEntity
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(6)
+@GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class KotlinForwardDeclarationsWorkspaceEntityImpl(private val dataSource: KotlinForwardDeclarationsWorkspaceEntityData) : KotlinForwardDeclarationsWorkspaceEntity, WorkspaceEntityBase(
-  dataSource) {
+internal class KotlinForwardDeclarationsWorkspaceEntityImpl(private val dataSource: KotlinForwardDeclarationsWorkspaceEntityData) :
+  KotlinForwardDeclarationsWorkspaceEntity, WorkspaceEntityBase(dataSource) {
 
   private companion object {
-    internal val LIBRARY_CONNECTION_ID: ConnectionId = ConnectionId.create(LibraryEntity::class.java,
-                                                                           KotlinForwardDeclarationsWorkspaceEntity::class.java,
-                                                                           ConnectionId.ConnectionType.ONE_TO_ONE, false)
+    internal val LIBRARY_CONNECTION_ID: ConnectionId = ConnectionId.create(
+      LibraryEntity::class.java, KotlinForwardDeclarationsWorkspaceEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false
+    )
 
     private val connections = listOf<ConnectionId>(
       LIBRARY_CONNECTION_ID,
@@ -64,8 +64,9 @@ internal class KotlinForwardDeclarationsWorkspaceEntityImpl(private val dataSour
   }
 
 
-  internal class Builder(result: KotlinForwardDeclarationsWorkspaceEntityData?) : ModifiableWorkspaceEntityBase<KotlinForwardDeclarationsWorkspaceEntity, KotlinForwardDeclarationsWorkspaceEntityData>(
-    result), KotlinForwardDeclarationsWorkspaceEntity.Builder {
+  internal class Builder(result: KotlinForwardDeclarationsWorkspaceEntityData?) :
+    ModifiableWorkspaceEntityBase<KotlinForwardDeclarationsWorkspaceEntity, KotlinForwardDeclarationsWorkspaceEntityData>(result),
+    KotlinForwardDeclarationsWorkspaceEntity.Builder {
     internal constructor() : this(KotlinForwardDeclarationsWorkspaceEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -127,7 +128,8 @@ internal class KotlinForwardDeclarationsWorkspaceEntityImpl(private val dataSour
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as KotlinForwardDeclarationsWorkspaceEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
-      if (this.forwardDeclarationRoots != dataSource.forwardDeclarationRoots) this.forwardDeclarationRoots = dataSource.forwardDeclarationRoots.toMutableSet()
+      if (this.forwardDeclarationRoots != dataSource.forwardDeclarationRoots) this.forwardDeclarationRoots =
+        dataSource.forwardDeclarationRoots.toMutableSet()
       updateChildToParentReferences(parents)
     }
 
@@ -230,7 +232,8 @@ internal class KotlinForwardDeclarationsWorkspaceEntityData : WorkspaceEntityDat
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations.KotlinForwardDeclarationsWorkspaceEntity") as EntityMetadata
+      "org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations.KotlinForwardDeclarationsWorkspaceEntity"
+    ) as EntityMetadata
   }
 
   override fun clone(): KotlinForwardDeclarationsWorkspaceEntityData {

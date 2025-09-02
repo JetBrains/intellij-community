@@ -2,54 +2,28 @@
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.LighterAST;
-import com.intellij.lang.LighterASTNode;
-import com.intellij.psi.PsiAnnotationParameterList;
-import com.intellij.psi.impl.java.stubs.impl.PsiAnnotationParameterListStubImpl;
 import com.intellij.psi.impl.source.BasicJavaElementType;
 import com.intellij.psi.impl.source.tree.java.AnnotationParamListElement;
-import com.intellij.psi.impl.source.tree.java.PsiAnnotationParamListImpl;
-import com.intellij.psi.stubs.EmptyStubSerializer;
-import com.intellij.psi.stubs.IndexSink;
-import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.tree.ICompositeElementType;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.ParentProviderElementType;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Dmitry Avdeev
- */
-public class JavaAnnotationParameterListType extends JavaStubElementType<PsiAnnotationParameterListStub, PsiAnnotationParameterList>
-  implements EmptyStubSerializer<PsiAnnotationParameterListStub> {
+import java.util.Collections;
+import java.util.Set;
 
-  protected JavaAnnotationParameterListType() {
-    super("ANNOTATION_PARAMETER_LIST", true, BasicJavaElementType.BASIC_ANNOTATION_PARAMETER_LIST);
+public class JavaAnnotationParameterListType extends JavaStubElementType implements ICompositeElementType, ParentProviderElementType {
+  public JavaAnnotationParameterListType() {
+    super("ANNOTATION_PARAMETER_LIST", true);
   }
 
   @Override
-  public PsiAnnotationParameterList createPsi(@NotNull ASTNode node) {
-    return new PsiAnnotationParamListImpl(node);
+  public @NotNull Set<IElementType> getParents() {
+    return Collections.singleton(BasicJavaElementType.BASIC_ANNOTATION_PARAMETER_LIST);
   }
 
   @Override
   public @NotNull ASTNode createCompositeNode() {
     return new AnnotationParamListElement();
-  }
-
-  @Override
-  public @NotNull PsiAnnotationParameterListStub createStub(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull StubElement<?> parentStub) {
-    return new PsiAnnotationParameterListStubImpl(parentStub);
-  }
-
-  @Override
-  public PsiAnnotationParameterList createPsi(@NotNull PsiAnnotationParameterListStub stub) {
-    return getPsiFactory(stub).createAnnotationParameterList(stub);
-  }
-
-  @Override
-  public @NotNull PsiAnnotationParameterListStub instantiate(StubElement<?> parentStub) {
-    return new PsiAnnotationParameterListStubImpl(parentStub);
-  }
-
-  @Override
-  public void indexStub(@NotNull PsiAnnotationParameterListStub stub, @NotNull IndexSink sink) {
   }
 }

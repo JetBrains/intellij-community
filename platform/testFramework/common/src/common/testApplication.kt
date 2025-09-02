@@ -43,6 +43,7 @@ import com.intellij.openapi.vfs.encoding.EncodingManager
 import com.intellij.openapi.vfs.encoding.EncodingManagerImpl
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase
 import com.intellij.openapi.vfs.newvfs.ManagingFS
+import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.openapi.vfs.newvfs.RefreshQueueImpl
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl
@@ -50,10 +51,8 @@ import com.intellij.platform.ide.bootstrap.*
 import com.intellij.platform.ide.bootstrap.kernel.startClientKernel
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
-import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.DocumentCommitProcessor
 import com.intellij.psi.impl.DocumentCommitThread
-import com.intellij.psi.impl.PsiManagerImpl
 import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.stubs.StubIndexImpl
 import com.intellij.testFramework.LeakHunter
@@ -75,6 +74,7 @@ import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import com.intellij.platform.ide.bootstrap.kernel.startServerKernel
+import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.util.PlatformUtils
 import sun.awt.AWTAutoShutdown
 import java.time.Duration
@@ -177,7 +177,8 @@ private fun loadAppInUnitTestMode(isHeadless: Boolean) {
 
   try {
     // 40 seconds - tests maybe executed on cloud agents where I/O is very slow
-    val pluginSet = loadedModuleFuture.asCompletableFuture().get(40, TimeUnit.SECONDS)
+    val timeout = System.getProperty("intellij.testFramework.modules.timeout.seconds", "40").toLong()
+    val pluginSet = loadedModuleFuture.asCompletableFuture().get(timeout, TimeUnit.SECONDS)
     app.registerComponents(modules = pluginSet.getEnabledModules(), app = app)
 
     val task = suspend {
@@ -210,7 +211,8 @@ private fun loadAppInUnitTestMode(isHeadless: Boolean) {
 
 private suspend fun preloadServicesAndCallAppInitializedListeners(app: ApplicationImpl) {
   coroutineScope {
-    withTimeout(Duration.ofSeconds(40).toMillis()) {
+    val timeout = System.getProperty("intellij.testFramework.services.timeout.seconds", "40").toLong()
+    withTimeout(Duration.ofSeconds(timeout).toMillis()) {
       val pathMacroJob = preloadCriticalServices(
         app = app,
         asyncScope = app.getCoroutineScope(),
@@ -251,6 +253,9 @@ fun Application.cleanApplicationState() {
   }
 
   runCatching {
+    runInEdtAndWait {
+      NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
+    }
     waitForAppLeakingThreads(application = this, timeout = 10, timeUnit = TimeUnit.SECONDS)
   }.onFailure(::addError)
 
@@ -323,7 +328,7 @@ fun Application.cleanupApplicationCaches() {
   if (projectManager != null && projectManager.isDefaultProjectInitialized) {
     val defaultProject = projectManager.defaultProject
     runInEdtAndWait {
-      (PsiManager.getInstance(defaultProject) as PsiManagerImpl).cleanupForNextTest()
+      PsiManagerEx.getInstanceEx(defaultProject).cleanupForNextTest()
     }
   }
   (serviceIfCreated<FileBasedIndex>() as? FileBasedIndexImpl)?.cleanupForNextTest()
@@ -370,7 +375,7 @@ fun waitForAppLeakingThreads(application: Application, timeout: Long, timeUnit: 
   val stubIndex = application.serviceIfCreated<StubIndex>() as? StubIndexImpl
   stubIndex?.waitUntilStubIndexedInitialized()
 
-  while (RefreshQueueImpl.isRefreshInProgress() || RefreshQueueImpl.isEventProcessingInProgress()) {
+  while (RefreshQueue.getInstance() != null && (RefreshQueueImpl.isRefreshInProgress() || RefreshQueueImpl.isEventProcessingInProgress())) {
     if (EDT.isCurrentThreadEdt()) {
       EDT.dispatchAllInvocationEvents()
     }

@@ -16,6 +16,9 @@ interface GradleBuildScriptBuilder<Self : GradleBuildScriptBuilder<Self>>
   fun addGroup(group: String): Self
   fun addVersion(version: String): Self
 
+  fun registerTask(name: String, type: String?, configure: Consumer<ScriptTreeBuilder>): Self = registerTask(name, type) { configure.accept(this) }
+  fun registerTask(name: String, type: String? = null, configure: ScriptTreeBuilder.() -> Unit = {}): Self
+
   fun configureTask(name: String, type: String, configure: Consumer<ScriptTreeBuilder>): Self = configureTask(name, type) { configure.accept(this) }
   fun configureTask(name: String, type: String, configure: ScriptTreeBuilder.() -> Unit): Self
   fun configureTestTask(configure: ScriptTreeBuilder.() -> Unit): Self

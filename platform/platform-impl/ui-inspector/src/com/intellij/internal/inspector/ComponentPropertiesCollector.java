@@ -48,8 +48,8 @@ import javax.swing.tree.TreeModel;
 import java.awt.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 import static com.intellij.openapi.actionSystem.ex.CustomComponentAction.ACTION_KEY;
 
@@ -320,6 +320,7 @@ public final class ComponentPropertiesCollector {
     else if (component instanceof SquareStripeButton stripeButton) {
       // new UI
       window = stripeButton.getToolWindow();
+      myProperties.add(new PropertyBean("Stripe Button Icon", stripeButton.getIcon()));
     }
     else {
       return;

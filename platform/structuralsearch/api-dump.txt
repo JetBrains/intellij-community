@@ -1,0 +1,6 @@
+com.intellij.structuralsearch.MatchResultSink
+- a:getProgressIndicator():com.intellij.openapi.progress.ProgressIndicator
+- a:matchingFinished():V
+- a:newMatch(com.intellij.structuralsearch.MatchResult):V
+- a:processFile(com.intellij.psi.PsiFile):V
+- a:setMatchingProcess(com.intellij.structuralsearch.MatchingProcess):V

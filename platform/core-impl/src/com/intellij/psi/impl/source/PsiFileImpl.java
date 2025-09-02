@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.file.PsiFileImplUtil;
+import com.intellij.psi.impl.file.impl.FileManagerEx;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
@@ -39,7 +40,10 @@ import com.intellij.util.*;
 import com.intellij.util.indexing.IndexingDataKeys;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.CharSequenceSubSequence;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
@@ -87,7 +91,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     myPsiLock = myViewProvider.getFilePsiLock();
   }
 
-  public void setContentElementType(IElementType contentElementType) {
+  public void setContentElementType(@NotNull IElementType contentElementType) {
     LOG.assertTrue(contentElementType instanceof ILazyParseableElementType, contentElementType);
     myContentElementType = contentElementType;
   }
@@ -96,7 +100,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     return myContentElementType;
   }
 
-  protected void init(@NotNull IElementType elementType, IElementType contentElementType) {
+  protected void init(@NotNull IElementType elementType, @NotNull IElementType contentElementType) {
     myElementType = elementType;
     setContentElementType(contentElementType);
   }
@@ -170,7 +174,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     */
 
     // synchronized by read-write action
-    if (((FileManagerImpl)myManager.getFileManager()).evaluateValidity(this)) {
+    if (((FileManagerEx)myManager.getFileManager()).evaluateValidity(this)) {
       myPossiblyInvalidated = false;
       PsiInvalidElementAccessException.setInvalidationTrace(this, null);
       return true;
@@ -300,7 +304,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
     if (contentLeaf instanceof FileElement) {
       treeElement = (FileElement)contentLeaf;
-      if (getUserData(IndexingDataKeys.VIRTUAL_FILE) != null) {
+      if (isIndexingFileCopy()) {
         treeElement.setCharTable(NON_INTERNING_CHAR_TABLE);
       }
     }
@@ -1145,5 +1149,10 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
         !(myViewProvider instanceof FreeThreadedFileViewProvider)) {
       CheckUtil.checkWritable(this);
     }
+  }
+
+  @ApiStatus.Internal
+  public boolean isIndexingFileCopy() {
+    return getUserData(IndexingDataKeys.VIRTUAL_FILE) != null;
   }
 }

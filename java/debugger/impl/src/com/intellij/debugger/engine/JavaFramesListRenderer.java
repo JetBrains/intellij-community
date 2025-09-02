@@ -15,6 +15,13 @@ final class JavaFramesListRenderer {
   public static void customizePresentation(StackFrameDescriptorImpl descriptor,
                                            @NotNull ColoredTextContainer component,
                                            @Nullable StackFrameDescriptorImpl selectedDescriptor) {
+    customizePresentation(descriptor, component, selectedDescriptor, true);
+  }
+
+  public static void customizePresentation(StackFrameDescriptorImpl descriptor,
+                                           @NotNull ColoredTextContainer component,
+                                           @Nullable StackFrameDescriptorImpl selectedDescriptor,
+                                           boolean includeRecursionCount) {
     component.setIcon(descriptor.getIcon());
 
     final ValueMarkup markup = descriptor.getValueMarkup();
@@ -38,7 +45,7 @@ final class JavaFramesListRenderer {
       component.append(label.substring(closingBrace + 1), attributes);
     }
 
-    if (isOccurrenceOfSelectedFrame(selectedDescriptor, descriptor) && descriptor.isRecursiveCall()) {
+    if (includeRecursionCount && isOccurrenceOfSelectedFrame(selectedDescriptor, descriptor) && descriptor.isRecursiveCall()) {
       component.append(" [" + descriptor.getOccurrenceIndex() + "]", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
     }
   }

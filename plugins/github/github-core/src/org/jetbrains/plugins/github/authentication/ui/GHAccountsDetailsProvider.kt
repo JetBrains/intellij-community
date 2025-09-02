@@ -8,6 +8,7 @@ import com.intellij.collaboration.ui.ExceptionUtil
 import com.intellij.openapi.components.service
 import icons.CollaborationToolsIcons
 import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.data.GithubUserDetailed
@@ -18,7 +19,8 @@ import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException
 import org.jetbrains.plugins.github.util.CachingGHUserAvatarLoader
 import java.awt.Image
 
-internal class GHAccountsDetailsProvider(
+@ApiStatus.Internal
+class GHAccountsDetailsProvider(
   scope: CoroutineScope,
   private val executorSupplier: suspend (GithubAccount) -> GithubApiRequestExecutor?
 ) : LazyLoadingAccountsDetailsProvider<GithubAccount, GithubUserDetailed>(scope, CollaborationToolsIcons.Review.DefaultAvatar) {

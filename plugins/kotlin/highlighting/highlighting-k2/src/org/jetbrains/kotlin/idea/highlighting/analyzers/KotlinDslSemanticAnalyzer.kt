@@ -2,7 +2,7 @@
 
 package org.jetbrains.kotlin.idea.highlighting.analyzers
 
-import com.intellij.codeInsight.daemon.impl.HighlightInfo
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
@@ -16,34 +16,53 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.base.highlighting.dsl.DslStyleUtils
-import org.jetbrains.kotlin.idea.highlighter.HighlightingFactory
 import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtExpression
 
-internal class KotlinDslSemanticAnalyzer(holder: HighlightInfoHolder, session: KaSession) : KotlinSemanticAnalyzer(holder, session) {
+internal class KotlinDslSemanticAnalyzer(holder: HighlightInfoHolder, session: KaSession) : KotlinFunctionCallSemanticAnalyzer(holder, session) {
+    override fun visitBinaryExpression(expression: KtBinaryExpression) {
+        val referenceExpression = expression.operationReference
+        val dslExpressionHighlightType = expressionHighlightType(referenceExpression)
+        if (dslExpressionHighlightType != null) {
+            highlightElement(referenceExpression, dslExpressionHighlightType)
+        } else {
+            super.visitBinaryExpression(expression)
+        }
+    }
+
     override fun visitCallExpression(expression: KtCallExpression) {
-        holder.add(highlightCall(expression)?.create())
+        val calleeExpression = expression.calleeExpression ?: return
+        val dslExpressionHighlightType = expressionHighlightType(calleeExpression)
+        if (dslExpressionHighlightType != null) {
+            highlightElement(calleeExpression, dslExpressionHighlightType)
+        } else {
+            super.visitCallExpression(expression)
+        }
     }
 
     /**
-     * Highlights the call expression in case it's a DSL function (it has a single lambda argument)
+     * Highlights the expression in case it's a DSL function (it has a single lambda argument),
      * and its receiver is a DSL class. The receiver is considered to be a DSL class if:
      * 1) Its type specifier is marked with an annotation, that is marked by a dsl annotation
      * 2) The class or its superclasses' definition is marked by a dsl annotation
      */
-    private fun highlightCall(element: KtCallExpression): HighlightInfo.Builder? {
-        val calleeExpression = element.calleeExpression ?: return null
+    private fun expressionHighlightType(expression: KtExpression): HighlightInfoType? {
         val dslAnnotation = with(session) {
-            val functionCall = calleeExpression.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
+            val functionCall = expression.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
             // function declaration argument has a dsl marker
-            val argumentMapping = functionCall.argumentMapping
+
             // to check function declaration arguments type, rather call site
             // to avoid cases with generics like `apply` those have no dsl markers
-            argumentMapping.values.forEach { signature ->
-                val receiverType = (signature.returnType as? KaFunctionType)?.receiverType
-                receiverType?.let(::getDslAnnotation)?.let { return@with it }
+            functionCall.symbol.valueParameters.forEach { parameterSymbol ->
+                val receiverType = (parameterSymbol.returnType as? KaFunctionType)?.receiverType
+                receiverType?.let { type ->
+                    getDslAnnotation(type)?.let { return@with it }
+                }
             }
 
             // function has a dsl marker
@@ -51,7 +70,7 @@ internal class KotlinDslSemanticAnalyzer(holder: HighlightInfoHolder, session: K
 
             // in context of implicit receiver
             val dispatchReceiver = functionCall.partiallyAppliedSymbol.dispatchReceiver
-            val dispatchReceiverType = dispatchReceiver?.takeIf { it is KaImplicitReceiverValue }?.type as? KaClassType
+            val dispatchReceiverType = (dispatchReceiver as? KaImplicitReceiverValue)?.type as? KaClassType
             dispatchReceiverType?.symbol?.let(::firstDslAnnotationOrNull)?.let { return@with it }
 
             // in case of ext function
@@ -59,10 +78,8 @@ internal class KotlinDslSemanticAnalyzer(holder: HighlightInfoHolder, session: K
         } ?: return null
 
         val dslStyleId = DslStyleUtils.styleIdByFQName(dslAnnotation.asSingleFqName())
-        return HighlightingFactory.highlightName(
-            calleeExpression,
-            DslStyleUtils.typeById(dslStyleId)
-        )
+        val highlightInfoType = DslStyleUtils.typeById(dslStyleId)
+        return highlightInfoType
     }
 }
 
@@ -107,6 +124,7 @@ private fun KaSession.firstDslAnnotationOrNull(symbol: KaDeclarationSymbol): Cla
 private fun KaSession.getDslAnnotation(type: KaType): ClassId? {
     val allAnnotationsWithSuperTypes = sequence {
         yieldAll(type.annotations.classIds)
+        type.symbol?.let { yieldAll(it.annotations.classIds) }
         for (superType in type.allSupertypes) {
             superType.expandedSymbol?.let { yieldAll(it.annotations.classIds) }
         }

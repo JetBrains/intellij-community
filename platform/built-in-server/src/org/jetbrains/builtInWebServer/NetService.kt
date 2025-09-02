@@ -1,11 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.builtInWebServer
 
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.filters.TextConsoleBuilder
 import com.intellij.execution.process.OSProcessHandler
-import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
+import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
@@ -104,7 +104,7 @@ abstract class NetService @JvmOverloads protected constructor(protected val proj
 
   open fun getConsoleToolWindowActions(): ActionGroup = DefaultActionGroup()
 
-  private inner class MyProcessAdapter(private val osProcessHandler: OSProcessHandler?) : ProcessAdapter(), Consumer<String> {
+  private inner class MyProcessAdapter(private val osProcessHandler: OSProcessHandler?) : ProcessListener, Consumer<String> {
     override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
       print(event.text, ConsoleViewContentType.getConsoleViewType(outputType))
     }

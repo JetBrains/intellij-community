@@ -27,8 +27,8 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 class WolfHighlightingPass extends ProgressableTextEditorHighlightingPass {
-  WolfHighlightingPass(@NotNull Project project, @NotNull Document document, @NotNull PsiFile file) {
-    super(project, document, DaemonBundle.message("pass.wolf"), file, null, TextRange.EMPTY_RANGE, false, HighlightInfoProcessor.getEmpty());
+  WolfHighlightingPass(@NotNull Project project, @NotNull Document document, @NotNull PsiFile psiFile) {
+    super(project, document, DaemonBundle.message("pass.wolf"), psiFile, null, TextRange.EMPTY_RANGE, false, HighlightInfoProcessor.getEmpty());
   }
 
   @Override

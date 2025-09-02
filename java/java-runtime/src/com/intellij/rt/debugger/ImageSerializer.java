@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.rt.debugger;
 
 import javax.imageio.ImageIO;
@@ -51,8 +51,15 @@ public final class ImageSerializer {
     else {
       final int w = icon.getIconWidth();
       final int h = icon.getIconHeight();
-      final BufferedImage image = GraphicsEnvironment.getLocalGraphicsEnvironment()
-        .getDefaultScreenDevice().getDefaultConfiguration().createCompatibleImage(w, h, Transparency.TRANSLUCENT);
+      BufferedImage image;
+      try {
+        image = GraphicsEnvironment.getLocalGraphicsEnvironment()
+          .getDefaultScreenDevice().getDefaultConfiguration().createCompatibleImage(w, h, Transparency.TRANSLUCENT);
+      }
+      catch (HeadlessException e) {
+        //noinspection UndesirableClassUsage
+        image = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+      }
       final Graphics2D g = image.createGraphics();
       icon.paintIcon(null, g, 0, 0);
       g.dispose();

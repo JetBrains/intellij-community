@@ -15,25 +15,22 @@ import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.util.application
-import com.intellij.util.concurrency.ImplicitBlockingContextTest
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.sync.Semaphore
 import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
-import org.junit.jupiter.api.extension.ExtendWith
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
-import java.lang.Runnable
 import kotlin.coroutines.ContinuationInterceptor
 import kotlin.time.Duration.Companion.seconds
 
 /**
  * @see WithModalProgressTest
  */
-@ExtendWith(ImplicitBlockingContextTest.Enabler::class)
 class RunWithModalProgressBlockingTest : ModalCoroutineTest() {
 
   @Test
@@ -115,17 +112,15 @@ class RunWithModalProgressBlockingTest : ModalCoroutineTest() {
   @Test
   fun `non-cancellable`(): Unit = timeoutRunBlocking {
     val job = launch(Dispatchers.EDT) {
-      blockingContext {
-        Cancellation.computeInNonCancelableSection<_, Nothing> {
-          assertDoesNotThrow {
-            runWithModalProgressBlocking {
-              assertDoesNotThrow {
-                ensureActive()
-              }
-              this@launch.cancel()
-              assertDoesNotThrow {
-                ensureActive()
-              }
+      Cancellation.computeInNonCancelableSection<_, Nothing> {
+        assertDoesNotThrow {
+          runWithModalProgressBlocking {
+            assertDoesNotThrow {
+              ensureActive()
+            }
+            this@launch.cancel()
+            assertDoesNotThrow {
+              ensureActive()
             }
           }
         }
@@ -231,7 +226,7 @@ class RunWithModalProgressBlockingTest : ModalCoroutineTest() {
     withContext(Dispatchers.EDT) {
       writeIntentReadAction {
         runWithModalProgressBlocking {
-          ApplicationManager.getApplication().runWriteAction {
+          backgroundWriteAction {
           }
         }
       }
@@ -241,21 +236,15 @@ class RunWithModalProgressBlockingTest : ModalCoroutineTest() {
 
   private suspend fun blockingContextTest() {
     val contextModality = requireNotNull(currentCoroutineContext().contextModality())
-    blockingContext {
-      assertSame(contextModality, ModalityState.defaultModalityState())
-      runBlockingCancellable {
-        progressManagerTest {
-          val nestedModality = currentCoroutineContext().contextModality()
-          blockingContext {
-            assertSame(nestedModality, ModalityState.defaultModalityState())
-          }
-        }
-        runWithModalProgressBlockingTest {
-          val nestedModality = currentCoroutineContext().contextModality()
-          blockingContext {
-            assertSame(nestedModality, ModalityState.defaultModalityState())
-          }
-        }
+    assertSame(contextModality, ModalityState.defaultModalityState())
+    runBlockingCancellable {
+      progressManagerTest {
+        val nestedModality = currentCoroutineContext().contextModality()
+        assertSame(nestedModality, ModalityState.defaultModalityState())
+      }
+      runWithModalProgressBlockingTest {
+        val nestedModality = currentCoroutineContext().contextModality()
+        assertSame(nestedModality, ModalityState.defaultModalityState())
       }
     }
   }
@@ -295,7 +284,7 @@ class RunWithModalProgressBlockingTest : ModalCoroutineTest() {
       runWithModalProgressBlocking {
         repeat(Runtime.getRuntime().availableProcessors() * 10) {
           launch(Dispatchers.Default) {
-            ApplicationManager.getApplication().runWriteAction {
+            backgroundWriteAction {
               try {
                 writeActionCounter.incrementAndGet()
                 assertEquals(1, writeActionCounter.get())
@@ -319,7 +308,7 @@ class RunWithModalProgressBlockingTest : ModalCoroutineTest() {
       runWithModalProgressBlocking {
         repeat(Runtime.getRuntime().availableProcessors() * 5) {
           launch(Dispatchers.Default) {
-            ApplicationManager.getApplication().runWriteAction {
+            backgroundWriteAction {
               try {
                 writeActionCounter.incrementAndGet()
                 Thread.sleep(100)
@@ -376,7 +365,7 @@ class RunWithModalProgressBlockingTest : ModalCoroutineTest() {
       runWithModalProgressBlocking {
         repeat(Runtime.getRuntime().availableProcessors() * 5) {
           launch(Dispatchers.Default) {
-            ApplicationManager.getApplication().runWriteAction {
+            backgroundWriteAction {
               try {
                 writeActionCounter.incrementAndGet()
                 Thread.sleep(100)
@@ -408,7 +397,7 @@ class RunWithModalProgressBlockingTest : ModalCoroutineTest() {
       runWithModalProgressBlocking {
         repeat(Runtime.getRuntime().availableProcessors() * 5) {
           launch(Dispatchers.Default) {
-            ApplicationManager.getApplication().runWriteAction {
+            backgroundWriteAction {
               try {
                 writeActionCounter.incrementAndGet()
                 Thread.sleep(100)
@@ -498,21 +487,29 @@ class RunWithModalProgressBlockingTest : ModalCoroutineTest() {
       }
     }
   }
+
+  @Test
+  fun `pure read access in explicit read action`(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
+    runWithModalProgressBlocking {
+      ApplicationManager.getApplication().runReadAction {
+        assertFalse(application.isWriteIntentLockAcquired)
+        assertTrue(application.holdsReadLock())
+        assertFalse(application.isWriteAccessAllowed)
+        assertTrue(application.isReadAccessAllowed)
+      }
+    }
+  }
 }
 
 private fun CoroutineScope.runWithModalProgressBlockingCoroutine(action: suspend CoroutineScope.() -> Unit): Job {
   return launch(Dispatchers.EDT) {
-    blockingContext {
-      runWithModalProgressBlocking(action)
-    }
+    runWithModalProgressBlocking(action)
   }
 }
 
 private suspend fun <T> runWithModalProgressBlockingContext(action: suspend CoroutineScope.() -> T): T {
   return withContext(Dispatchers.EDT) {
-    blockingContext {
-      runWithModalProgressBlocking(action)
-    }
+    runWithModalProgressBlocking(action)
   }
 }
 

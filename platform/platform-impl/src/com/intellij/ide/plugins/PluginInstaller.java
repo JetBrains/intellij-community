@@ -39,10 +39,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -85,7 +82,7 @@ public final class PluginInstaller {
   }
 
   @ApiStatus.Internal
-  public static void uninstallAfterRestart(@NotNull IdeaPluginDescriptorImpl pluginDescriptor) throws IOException {
+  public static void uninstallAfterRestart(@NotNull IdeaPluginDescriptor pluginDescriptor) throws IOException {
     if (pluginDescriptor.isBundled()) {
       throw new IllegalArgumentException("Plugin is bundled: " + pluginDescriptor.getPluginId());
     }
@@ -247,11 +244,12 @@ public final class PluginInstaller {
   ) {
     try {
       var pluginDescriptor = ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-        return PluginDescriptorLoader.loadDescriptorFromArtifact(file, null);
+        return PluginDescriptorLoader.loadAndInitDescriptorFromArtifact(file, null);
       }, IdeBundle.message("action.InstallFromDiskAction.progress.text"), true, project);
 
       if (pluginDescriptor == null) {
-        MessagesEx.showErrorDialog(parent, IdeBundle.message("dialog.message.fail.to.load.plugin.descriptor.from.file", file.getFileName()), CommonBundle.getErrorTitle());
+        MessagesEx.showErrorDialog(parent, IdeBundle.message("dialog.message.fail.to.load.plugin.descriptor.from.file", file.getFileName()),
+                                   CommonBundle.getErrorTitle());
         return;
       }
 
@@ -278,7 +276,8 @@ public final class PluginInstaller {
         return;
       }
       if (isBrokenPlugin(pluginDescriptor)) {
-        var message = CoreBundle.message("plugin.loading.error.long.marked.as.broken", pluginDescriptor.getName(), pluginDescriptor.getVersion());
+        var message =
+          CoreBundle.message("plugin.loading.error.long.marked.as.broken", pluginDescriptor.getName(), pluginDescriptor.getVersion());
         MessagesEx.showErrorDialog(parent, message, CommonBundle.getErrorTitle());
         return;
       }
@@ -304,7 +303,7 @@ public final class PluginInstaller {
           @Override
           protected @NotNull Pair<PluginInstallOperation, ? extends IdeaPluginDescriptor> compute(@NotNull ProgressIndicator indicator) {
             var repositoryPlugins = CustomPluginRepositoryService.getInstance().getCustomRepositoryPlugins();
-            var operation = new PluginInstallOperation(List.of(), repositoryPlugins, pluginEnabler, indicator);
+            var operation = new PluginInstallOperation(List.of(), repositoryPlugins, indicator, pluginEnabler);
             operation.setAllowInstallWithoutRestart(true);
             return operation.checkMissingDependencies(pluginDescriptor, null) ?
                    new Pair<>(operation, operation.checkDependenciesAndReplacements(pluginDescriptor)) : Pair.empty();
@@ -395,13 +394,28 @@ public final class PluginInstaller {
 
     var targetPluginId = targetDescriptor.getPluginId();
 
+    // FIXME this is a bad place to do this IJPL-190806; bundled plugin may be not unloaded at this point
+    var loadedPlugin = PluginManagerCore.findPlugin(targetPluginId);
+    if (loadedPlugin != null && PluginManagerCore.isLoaded(loadedPlugin)) {
+      LOG.warn("Plugin " + loadedPlugin + " is still loaded, restart is required"); // FIXME IJPL-193781
+      return false;
+    }
+
+    var pluginSet = PluginManagerCore.getPluginSet();
+    var contentModuleIdMap = pluginSet.buildContentModuleIdMap();
+    var pluginMap = pluginSet.buildPluginIdMap();
+
+    if (PluginManagerCoreKt.pluginRequiresUltimatePluginButItsDisabled(targetDescriptor, pluginMap, contentModuleIdMap)) {
+      LOG.warn("Plugin " + targetPluginId + " requires Ultimate plugin, but it's disabled");
+      return false;
+    }
+
     if (DROP_DISABLED_FLAG_OF_REINSTALLED_PLUGINS && PluginEnabler.HEADLESS.isDisabled(targetPluginId)) {
-      var pluginSet = PluginManagerCore.INSTANCE.getPluginSet();
       var wasInstalledBefore = pluginSet.isPluginInstalled(targetPluginId);
       if (!wasInstalledBefore) {
         // FIXME can't drop the disabled flag first because it's implementation filters ids against the current plugin set;
         //  so load first, then enable
-        targetDescriptor.setEnabled(true);
+        targetDescriptor.setMarkedForLoading(true);
         var result = DynamicPlugins.INSTANCE.loadPlugin(targetDescriptor);
         PluginEnabler.HEADLESS.enable(Set.of(targetDescriptor));
         return result;
@@ -416,7 +430,7 @@ public final class PluginInstaller {
   }
 
   private static Set<String> findNotInstalledPluginDependencies(
-    List<IdeaPluginDependency> dependencies,
+    List<? extends IdeaPluginDependency> dependencies,
     InstalledPluginsTableModel model,
     Set<PluginId> installedDependencies
   ) {
@@ -428,8 +442,8 @@ public final class PluginInstaller {
       var pluginId = dependency.getPluginId();
       if (installedDependencies.contains(pluginId) ||
           model.isLoaded(pluginId) ||
-          PluginManagerCore.isModuleDependency(pluginId) ||
-          PluginManagerCore.INSTANCE.findPluginByModuleDependency(pluginId) != null) {
+          PluginManagerCore.looksLikePlatformPluginAlias(pluginId) ||
+          PluginManagerCore.findPluginByPlatformAlias(pluginId) != null) {
         continue;
       }
 
@@ -445,14 +459,15 @@ public final class PluginInstaller {
 
   @RequiresEdt
   static void installPluginFromCallbackData(@NotNull PluginInstallCallbackData callbackData) {
-    var descriptor = callbackData.getPluginDescriptor();
-    if (callbackData.getRestartNeeded()) {
-      shutdownOrRestartAppAfterInstall(descriptor);
-    }
-    else {
-      var loaded = installAndLoadDynamicPlugin(callbackData.getFile(), descriptor);
-      if (!loaded) {
+    if (callbackData.getPluginDescriptor() instanceof IdeaPluginDescriptorImpl descriptor && callbackData.getFile() != null) {
+      if (callbackData.getRestartNeeded()) {
         shutdownOrRestartAppAfterInstall(descriptor);
+      }
+      else {
+        var loaded = installAndLoadDynamicPlugin(callbackData.getFile(), descriptor);
+        if (!loaded) {
+          shutdownOrRestartAppAfterInstall(descriptor);
+        }
       }
     }
   }
@@ -461,9 +476,9 @@ public final class PluginInstaller {
     PluginManagerConfigurable.shutdownOrRestartAppAfterInstall(
       PluginManagerConfigurable.getUpdatesDialogTitle(),
       action -> IdeBundle.message("plugin.installed.ide.restart.required.message",
-                                                                                           descriptor.getName(),
-                                                                                           action,
-                                                                                           ApplicationNamesInfo.getInstance()
-                                                                                             .getFullProductName()));
+                                  descriptor.getName(),
+                                  action,
+                                  ApplicationNamesInfo.getInstance()
+                                    .getFullProductName()));
   }
 }

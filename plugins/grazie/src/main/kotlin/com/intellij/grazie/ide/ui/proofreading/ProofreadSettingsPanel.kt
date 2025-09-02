@@ -8,18 +8,21 @@ import com.intellij.grazie.ide.ui.proofreading.component.GrazieLanguagesComponen
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.remote.GrazieRemote
 import com.intellij.ide.DataManager
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurableUi
 import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.guessCurrentProject
 import com.intellij.profile.codeInspection.ui.ErrorsConfigurable
 import com.intellij.ui.HyperlinkLabel
-import com.intellij.ui.layout.migLayout.*
+import com.intellij.ui.layout.migLayout.createLayoutConstraints
 import com.intellij.util.ui.JBUI
 import net.miginfocom.layout.CC
 import net.miginfocom.swing.MigLayout
 import javax.swing.event.HyperlinkEvent
 
 class ProofreadSettingsPanel : ConfigurableUi<GrazieConfig> {
+  private val EP: ExtensionPointName<Configurable> = ExtensionPointName("com.intellij.grazie.proofreadSettingsExtension")
   private val languages = GrazieLanguagesComponent(::download)
 
   private fun download(lang: Lang): Boolean {
@@ -28,12 +31,17 @@ class ProofreadSettingsPanel : ConfigurableUi<GrazieConfig> {
     return isSucceed
   }
 
-  override fun reset(settings: GrazieConfig) = languages.reset(settings.state)
+  override fun reset(settings: GrazieConfig) {
+    languages.reset(settings.state)
+    EP.extensionList.forEach { it.reset() }
+  }
 
-  override fun isModified(settings: GrazieConfig) = languages.isModified(settings.state)
+  override fun isModified(settings: GrazieConfig): Boolean = languages.isModified(settings.state)
+                                                             || EP.extensionList.any { it.isModified }
 
   override fun apply(settings: GrazieConfig) {
     GrazieConfig.update { state ->
+      EP.extensionList.forEach { it.apply() }
       languages.apply(state)
     }
   }
@@ -58,6 +66,8 @@ class ProofreadSettingsPanel : ConfigurableUi<GrazieConfig> {
         }
       }
     }
-    add(link, CC())
+    add(link, CC().wrap())
+
+    EP.extensionList.forEach { add(it.createComponent(), CC().wrap()) }
   }
 }

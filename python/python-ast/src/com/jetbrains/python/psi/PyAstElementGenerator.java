@@ -11,8 +11,7 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
-import com.jetbrains.python.ast.PyAstExpression;
-import com.jetbrains.python.ast.PyAstExpressionStatement;
+import com.jetbrains.python.ast.*;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -120,6 +119,12 @@ public class PyAstElementGenerator {
   public PyAstExpressionStatement createDocstring(String content) {
     return createFromText(LanguageLevel.getDefault(),
                           PyAstExpressionStatement.class, content + "\n");
+  }
+
+  public PyAstPassStatement createPassStatement() {
+    final PyAstFunction function = createFromText(LanguageLevel.getDefault(), PyAstFunction.class, "def foo():\n\tpass");
+    final PyAstStatementList statementList = function.getStatementList();
+    return (PyAstPassStatement)statementList.getStatements()[0];
   }
 
   protected void specifyFileLanguageLevel(@NotNull VirtualFile virtualFile, @Nullable LanguageLevel langLevel) { }

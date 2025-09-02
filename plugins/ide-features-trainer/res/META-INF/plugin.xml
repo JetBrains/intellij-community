@@ -5,13 +5,13 @@
 
   <description><![CDATA[
     <p>
-      Learn basic shortcuts and essential features interactively - right inside the IDE.
+      Learn basic shortcuts and essential features interactively — right inside the IDE.
       No need to read long manuals or look for screencasts.
-      Just install this plugin, and open with the <b>Help | IDE Features Trainer</b> menu item.
+      Install the plugin, and open with the <b>Help | IDE Features Trainer</b> menu item.
     </p>
     <p/>
     <p>Found a bug or have a feature to suggest? Welcome to the tracker: <a href="https://youtrack.jetbrains.com/newIssue?project=IFT&description=**Description%3A**%20_Write%20description%20here_%0A%0A**Plugin%20version%3A**%20_Write%20plugin%20version%20here_">https://youtrack.jetbrains.com/issues/IFT</a></p>
-    ]]></description>
+  ]]></description>
 
   <dependencies>
     <module name="intellij.platform.tips"/>
@@ -22,6 +22,7 @@
   <content>
     <module name="intellij.vcs.git.featuresTrainer"/>
     <module name="intellij.featuresTrainer.onboarding"/>
+    <module name="intellij.kotlin.onboarding-promoter"/>
   </content>
 
   <resource-bundle>messages.LearnBundle</resource-bundle>
@@ -74,13 +75,13 @@
     <applicationService serviceImplementation="training.learn.lesson.LessonStateBase"/>
     <toolWindow id="Learn"
                 canCloseContents="true"
-                icon="training.FeaturesTrainerIcons.FeatureTrainerToolWindow"
-                factoryClass="training.ui.LearnToolWindowFactory"
-    />
+                icon="AllIcons.Toolwindows.Learn"
+                factoryClass="training.ui.LearnToolWindowFactory"/>
 
     <applicationConfigurable groupId="tools" bundle="messages.LearnBundle" key="learn.options.panel.name" id="FeaturesTrainerSettingsPanel"
                              instance="training.ui.FeaturesTrainerSettingsPanel"/>
 
+    <!--suppress PluginXmlCapitalization -->
     <notificationGroup displayType="STICKY_BALLOON" id="IDE Features Trainer" isLogByDefault="false"
         bundle="messages.LearnBundle" key="notification.group.feature.trainer"/>
   </extensions>
@@ -104,16 +105,16 @@
     <action id="ResetLearningProgressAction" class="training.actions.ResetLearningProgressAction"
             icon="AllIcons.Actions.Restart"/>
     <action id="RestartLessonAction" class="training.actions.RestartLessonAction"
-            icon="training.FeaturesTrainerIcons.ResetLesson"/>
+            icon="AllIcons.General.Reset"/>
 
-    <action id="ShowLearnPanel" class="training.actions.OpenLearnPanel" icon="training.FeaturesTrainerIcons.FeatureTrainerToolWindow">
+    <action id="ShowLearnPanel" class="training.actions.OpenLearnPanel" icon="AllIcons.Toolwindows.Learn">
       <add-to-group group-id="LearnGroup"/>
     </action>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
     <registryKey key="ift.short.onboarding.lesson"
-                 description="Use short onborading lesson followed after UI overview"
+                 description="Use short onboarding lesson followed after UI overview"
                  defaultValue="TRUE"
                  restartRequired="true"/>
     <registryKey key="ift.help.links"
@@ -149,10 +150,6 @@
                  defaultValue="FALSE"
                  restartRequired="false"/>
   </extensions>
-
-
-
-  <!--FEATURES SUGGESTER PART-->
 
   <extensionPoints>
     <extensionPoint name="ifs.suggester" interface="training.featuresSuggester.suggesters.FeatureSuggester" dynamic="true"/>
@@ -210,6 +207,7 @@
                  key="feature.suggester.force.show.suggestions"/>
     <registryKey defaultValue="false" description="Should suggesters be enabled in settings by default or not"
                  key="feature.suggester.enable.suggesters" restartRequired="true"/>
+    <!--suppress PluginXmlCapitalization -->
     <notificationGroup id="IDE Feature Suggester" displayType="STICKY_BALLOON" isLogByDefault="false"
         bundle="messages.FeatureSuggesterBundle" key="notification.group.feature.suggester"/>
 

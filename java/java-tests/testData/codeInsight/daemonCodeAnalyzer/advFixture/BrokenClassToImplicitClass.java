@@ -1,4 +1,4 @@
-<error descr="Implicitly declared class contains no 'main' method"><error descr="Package statement is not allowed for implicitly declared class">package p1;</error>
+package p1;
 
 class <warning descr="Class 'Demo' is never used">Demo</warning>{
   public static void  <warning descr="Method 't1()' is never used">t1</warning>(){}
@@ -9,4 +9,4 @@ class <warning descr="Class 'Demo' is never used">Demo</warning>{
 }
 public static void  <warning descr="Method 't5()' is never used">t5</warning>(){}
 public static void  <warning descr="Method 't6()' is never used">t6</warning>(){}
-<error descr="'class' or 'interface' expected">}</error></error>
+<error descr="'class' or 'interface' expected">}</error>

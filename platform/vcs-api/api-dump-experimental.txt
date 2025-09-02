@@ -13,8 +13,16 @@
 *f:com.intellij.codeInsight.hints.VcsCodeVisionLanguageContext$Companion
 - sf:EXTENSION:java.lang.String
 - f:getProvidersExtensionPoint():com.intellij.lang.LanguageExtension
-*:com.intellij.openapi.vcs.LinkDescriptor
-- a:getRange():com.intellij.openapi.util.TextRange
+*:com.intellij.openapi.vcs.VcsFileListenerIgnoredFilesProvider
+- *sf:Companion:com.intellij.openapi.vcs.VcsFileListenerIgnoredFilesProvider$Companion
+- s:isAdditionAllowed(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.FilePath):Z
+- a:isAdditionIgnored(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.FilePath):Z
+- s:isDeletionAllowed(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.FilePath):Z
+- a:isDeletionIgnored(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.FilePath):Z
+*f:com.intellij.openapi.vcs.VcsFileListenerIgnoredFilesProvider$Companion
+- f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
+- f:isAdditionAllowed(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.FilePath):Z
+- f:isDeletionAllowed(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.FilePath):Z
 *:com.intellij.openapi.vcs.changes.CommitExecutorWithRichDescription
 - com.intellij.openapi.vcs.changes.CommitExecutor
 - a:getText(com.intellij.vcs.commit.CommitWorkflowHandlerState):java.lang.String

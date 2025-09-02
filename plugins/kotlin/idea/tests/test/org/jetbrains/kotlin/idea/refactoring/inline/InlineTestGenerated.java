@@ -68,6 +68,11 @@ public abstract class InlineTestGenerated extends AbstractInlineTest {
             runTest("testData/refactoring/inline/anonymousFunction/withConstantParameter.kt");
         }
 
+        @TestMetadata("withImplicitInvoke.kt")
+        public void testWithImplicitInvoke() throws Exception {
+            runTest("testData/refactoring/inline/anonymousFunction/withImplicitInvoke.kt");
+        }
+
         @TestMetadata("withInvoke.kt")
         public void testWithInvoke() throws Exception {
             runTest("testData/refactoring/inline/anonymousFunction/withInvoke.kt");
@@ -2385,6 +2390,11 @@ public abstract class InlineTestGenerated extends AbstractInlineTest {
                 runTest("testData/refactoring/inline/namedFunction/LocalCapturing.kt");
             }
 
+            @TestMetadata("localJump.kt")
+            public void testLocalJump() throws Exception {
+                runTest("testData/refactoring/inline/namedFunction/localJump.kt");
+            }
+
             @TestMetadata("LocalSimple.kt")
             public void testLocalSimple() throws Exception {
                 runTest("testData/refactoring/inline/namedFunction/LocalSimple.kt");
@@ -2498,6 +2508,41 @@ public abstract class InlineTestGenerated extends AbstractInlineTest {
             @TestMetadata("nestedOperatorExpression4.kt")
             public void testNestedOperatorExpression4() throws Exception {
                 runTest("testData/refactoring/inline/namedFunction/nestedOperatorExpression4.kt");
+            }
+
+            @TestMetadata("nonLocalJump.kt")
+            public void testNonLocalJump() throws Exception {
+                runTest("testData/refactoring/inline/namedFunction/nonLocalJump.kt");
+            }
+
+            @TestMetadata("nonLocalJumpCrossClassBoundary.kt")
+            public void testNonLocalJumpCrossClassBoundary() throws Exception {
+                runTest("testData/refactoring/inline/namedFunction/nonLocalJumpCrossClassBoundary.kt");
+            }
+
+            @TestMetadata("nonLocalJumpCrossFunctionBoundary.kt")
+            public void testNonLocalJumpCrossFunctionBoundary() throws Exception {
+                runTest("testData/refactoring/inline/namedFunction/nonLocalJumpCrossFunctionBoundary.kt");
+            }
+
+            @TestMetadata("nonLocalJumpInInit.kt")
+            public void testNonLocalJumpInInit() throws Exception {
+                runTest("testData/refactoring/inline/namedFunction/nonLocalJumpInInit.kt");
+            }
+
+            @TestMetadata("nonLocalJumpIncorrectNonInline.kt")
+            public void testNonLocalJumpIncorrectNonInline() throws Exception {
+                runTest("testData/refactoring/inline/namedFunction/nonLocalJumpIncorrectNonInline.kt");
+            }
+
+            @TestMetadata("nonLocalJumpLabelNames.kt")
+            public void testNonLocalJumpLabelNames() throws Exception {
+                runTest("testData/refactoring/inline/namedFunction/nonLocalJumpLabelNames.kt");
+            }
+
+            @TestMetadata("nonLocalJumpNoJump.kt")
+            public void testNonLocalJumpNoJump() throws Exception {
+                runTest("testData/refactoring/inline/namedFunction/nonLocalJumpNoJump.kt");
             }
 
             @TestMetadata("NullableUnitReturnType.kt")
@@ -2633,6 +2678,11 @@ public abstract class InlineTestGenerated extends AbstractInlineTest {
             @TestMetadata("singleArgumentVarargs.kt")
             public void testSingleArgumentVarargs() throws Exception {
                 runTest("testData/refactoring/inline/namedFunction/singleArgumentVarargs.kt");
+            }
+
+            @TestMetadata("smartCastInThis.kt")
+            public void testSmartCastInThis() throws Exception {
+                runTest("testData/refactoring/inline/namedFunction/smartCastInThis.kt");
             }
 
             @TestMetadata("thisAsArgument.kt")

@@ -9,10 +9,16 @@ import com.intellij.model.Pointer
 import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.documentation.*
 import com.intellij.platform.backend.presentation.TargetPresentation
+import com.intellij.pom.PomTargetPsiElement
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
+import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.util.parentOfType
+import com.intellij.psi.util.siblings
 import com.intellij.psi.xml.XmlAttribute
+import com.intellij.psi.xml.XmlElement
 import com.intellij.psi.xml.XmlTag
+import com.intellij.util.xml.reflect.DomAttributeChildDescription
 
 internal const val ELEMENT_PATH_PREFIX = "#element:"
 internal const val ATTRIBUTE_PATH_PREFIX = "#attribute:"
@@ -27,7 +33,8 @@ internal const val ATTRIBUTE_DOC_LINK_PREFIX = "$PSI_ELEMENT_PROTOCOL$ATTRIBUTE_
  * [SDK docs](https://plugins.jetbrains.com/docs/intellij).
  *
  * To implement a new documentation provider:
- * 1. Create a documentation YAML containing the descriptor content.
+ * 1. Create a documentation YAML containing the descriptor content (the YAML file should be automatically mapped to
+ *    the `schemas/descriptor-documentation-schema.json` schema; all elements are documented).
  * 2. Extend this class.
  * 3. Provide a documentation YAML URL and path in [docYamlCoordinates].
  * 4. Register the provider in `com.intellij.platform.backend.documentation.psiTargetProvider` extension point.
@@ -37,24 +44,60 @@ internal abstract class AbstractXmlDescriptorDocumentationTargetProvider : PsiDo
   override fun documentationTarget(element: PsiElement, originalElement: PsiElement?): DocumentationTarget? {
     originalElement ?: return null
     if (!isApplicable(element, originalElement)) return null
-    val parent = originalElement.parent
-    val xmlElement = parent as? XmlAttribute ?: parent as? XmlTag ?: return null
-    val elementPath = getXmlElementPath(xmlElement)
+    val (isAttribute, elementPath) = getIsAttributeAndPath(element, originalElement) ?: return null
     val content = DocumentationContentProvider.getInstance().getContent(docYamlCoordinates) ?: return null
-    return when (xmlElement) {
-      is XmlTag -> {
-        val docElement = content.findElement(elementPath)?.takeIf { !it.isWildcard() } ?: return null
-        XmlDescriptorElementDocumentationTarget(element.project, content, docElement)
-      }
-      is XmlAttribute -> {
-        val docAttribute = content.findAttribute(elementPath) ?: return null
-        XmlDescriptorAttributeDocumentationTarget(element.project, content, docAttribute)
-      }
-      else -> null
+    return if (isAttribute) {
+      val docAttribute = content.findAttribute(elementPath)?.takeIf { it.isIncludedInDocProvider() } ?: return null
+      XmlDescriptorAttributeDocumentationTarget(element.project, content, docAttribute)
+    }
+    else {
+      val docElement = content.findElement(elementPath)?.takeIf { !it.isWildcard() && it.isIncludedInDocProvider() } ?: return null
+      XmlDescriptorElementDocumentationTarget(element.project, content, docElement)
     }
   }
 
   abstract fun isApplicable(element: PsiElement, originalElement: PsiElement?): Boolean
+
+  private fun getIsAttributeAndPath(element: PsiElement, originalElement: PsiElement): Pair<Boolean, List<String>>? {
+    val context = findContextElement(originalElement) ?: return null
+    val elementName = getElementName(element) ?: return null
+    if (elementName == getContextElementName (context)) { // assume no parent and child with the same name
+      return (context is XmlAttribute) to getXmlElementPath(context)
+    }
+    // handle lookup element
+    val target = (element as? PomTargetPsiElement)?.target ?: return null
+    val isAttribute = target is DomAttributeChildDescription<*>
+    val parentTag = context.parentOfType<XmlTag>(withSelf = isAttribute) ?: return null
+    val parentPath = getXmlElementPath(parentTag)
+    return isAttribute to (parentPath + elementName)
+  }
+
+  private fun getElementName(element: PsiElement): String? {
+    // because in case of elements defined with XSD:
+    if (element is XmlTag && element.containingFile.virtualFile.extension == "xsd") {
+      return element.getAttribute("name")?.value
+    }
+    return (element as? PsiNamedElement)?.name
+  }
+
+  private fun getContextElementName(context: PsiElement): String? {
+    return (context as? XmlTag)?.localName ?: (context as? PsiNamedElement)?.name
+  }
+
+  private fun findContextElement(context: PsiElement): XmlElement? {
+    if (context is PsiWhiteSpace) {
+      val prevXmlElement = context.siblings(forward = false, withSelf = false)
+        .mapNotNull { it as? XmlTag }
+        .firstOrNull()
+      if (prevXmlElement != null) {
+        return prevXmlElement
+      }
+    }
+    return generateSequence(context) { it.parent }
+      .filter { it is XmlTag || it is XmlAttribute }
+      .filterIsInstance<XmlElement>()
+      .firstOrNull()
+  }
 
   private fun getXmlElementPath(element: PsiElement): List<String> =
     generateSequence(element) { it.parent }

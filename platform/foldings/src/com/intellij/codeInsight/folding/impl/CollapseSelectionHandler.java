@@ -22,7 +22,7 @@ public final class CollapseSelectionHandler implements CodeInsightActionHandler 
   private static final Logger LOG = Logger.getInstance(CollapseSelectionHandler.class);
 
   @Override
-  public void invoke(@NotNull Project project, final @NotNull Editor editor, @NotNull PsiFile file) {
+  public void invoke(@NotNull Project project, final @NotNull Editor editor, @NotNull PsiFile psiFile) {
     editor.getFoldingModel().runBatchFoldingOperation(
       () -> {
         final EditorFoldingInfo info = EditorFoldingInfo.get(editor);

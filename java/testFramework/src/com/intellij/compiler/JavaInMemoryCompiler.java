@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler;
 
 import org.intellij.lang.annotations.Language;
@@ -12,7 +12,7 @@ import java.util.*;
 /**
  * @author Bas Leijdekkers
  */
-public class JavaInMemoryCompiler {
+public final class JavaInMemoryCompiler {
 
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   private final JavaMemFileManager myFileManager = new JavaMemFileManager();
@@ -27,6 +27,9 @@ public class JavaInMemoryCompiler {
     }
   }
 
+  /**
+   * @return the compiled classes as a map (a class Name -> the class compiled content)
+   */
   public Map<String, byte[]> compile(String className, @Language("JAVA") String code) {
     final DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<>();
     final Iterable<? extends JavaFileObject> compilationUnits = Collections.singletonList(new JavaSourceFromString(className, code));

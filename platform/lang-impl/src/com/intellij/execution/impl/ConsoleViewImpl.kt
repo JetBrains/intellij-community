@@ -1253,7 +1253,7 @@ open class ConsoleViewImpl protected constructor(
       return null
     }
 
-    return EditorHyperlinkSupport.getNextOccurrence(editor, delta) { next: RangeHighlighter ->
+    return EditorHyperlinkSupport.get(editor).getNextOccurrence(delta) { next: RangeHighlighter ->
       val offset = next.startOffset
       scrollTo(offset)
       val hyperlinkInfo = EditorHyperlinkSupport.getHyperlinkInfo(next)

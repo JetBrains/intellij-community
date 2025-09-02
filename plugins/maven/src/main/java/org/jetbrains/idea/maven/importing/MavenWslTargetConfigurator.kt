@@ -14,7 +14,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.getEelDescriptor
-import com.intellij.platform.eel.provider.upgradeBlocking
+import com.intellij.platform.eel.provider.toEelApiBlocking
 import org.jetbrains.idea.maven.execution.target.MavenRuntimeTargetConfiguration
 import org.jetbrains.idea.maven.project.MavenInSpecificPath
 import org.jetbrains.idea.maven.project.MavenProjectBundle
@@ -46,7 +46,7 @@ class MavenWslTargetConfigurator : MavenWorkspaceConfigurator {
     val wslDistribution = project.basePath?.let { project.tryGetWslDistribution() } ?: return
     dataHolder.putUserData(WSL_DISTRIBUTION, wslDistribution)
 
-    val eel = project.getEelDescriptor().upgradeBlocking()
+    val eel = project.getEelDescriptor().toEelApiBlocking()
     val distribution = eel.findMavenDistribution()?.asMavenDistribution() ?: project.getMavenUsedForSync()
     val mavenHome = distribution.mavenHome
     dataHolder.putUserData(MAVEN_HOME_DIR, mavenHome)

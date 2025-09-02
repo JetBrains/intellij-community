@@ -122,7 +122,7 @@ abstract class MavenProjectsTreeTestCase : MavenMultiVersionImportingTestCase() 
                      listOf(mavenProject),
                      tree,
                      tree.workspaceMap,
-                     generalSettings.effectiveRepositoryPath,
+                     MavenSettingsCache.getInstance(project).getEffectiveUserLocalRepo(),
                      updateSnapshots,
                      mavenEmbedderWrappers,
                      progressReporter,

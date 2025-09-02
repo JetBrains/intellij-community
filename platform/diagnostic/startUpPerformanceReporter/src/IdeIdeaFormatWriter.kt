@@ -183,9 +183,9 @@ private fun writeServiceStats(writer: JsonGenerator) {
     service.project += plugin.projectContainerDescriptor.services.size
     service.module += plugin.moduleContainerDescriptor.services.size
 
-    component.app += plugin.appContainerDescriptor.components?.size ?: 0
-    component.project += plugin.projectContainerDescriptor.components?.size ?: 0
-    component.module += plugin.moduleContainerDescriptor.components?.size ?: 0
+    component.app += plugin.appContainerDescriptor.components.size
+    component.project += plugin.projectContainerDescriptor.components.size
+    component.module += plugin.moduleContainerDescriptor.components.size
   }
 
   writer.obj("stats") {

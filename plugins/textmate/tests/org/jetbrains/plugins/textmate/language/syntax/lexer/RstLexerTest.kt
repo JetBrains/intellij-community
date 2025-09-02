@@ -1,7 +1,12 @@
 package org.jetbrains.plugins.textmate.language.syntax.lexer
 
-class RstLexerTest: LexerTestCase() {
-  override fun getTestDirRelativePath(): String = "rst"
+import org.junit.jupiter.api.Test
+import org.jetbrains.plugins.textmate.language.syntax.TextMateLexerTestCase
 
-  override fun getBundleName(): String = "restructuredtext"
+class RstLexerTest : TextMateLexerTestCase() {
+  @Test
+  fun nested() = doTest("nested.rst", "nested_after.rst")
+
+  override val testDirRelativePath = "rst"
+  override val bundleName = "restructuredtext"
 }

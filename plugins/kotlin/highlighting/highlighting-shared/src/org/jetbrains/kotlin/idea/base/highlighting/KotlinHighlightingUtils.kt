@@ -6,6 +6,7 @@ package org.jetbrains.kotlin.idea.base.highlighting
 
 import com.intellij.codeInsight.daemon.OutsidersPsiFileSupport
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootModificationTracker
@@ -23,7 +24,6 @@ import org.jetbrains.kotlin.idea.core.script.ScriptDependenciesModificationTrack
 import org.jetbrains.kotlin.idea.core.script.getScriptReports
 import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.scripting.definitions.ScriptConfigurationsProvider
 import kotlin.script.experimental.api.ScriptDiagnostic
 
 @ApiStatus.Internal
@@ -76,16 +76,25 @@ private fun KtFile.shouldDefinitelyHighlight(): Boolean =
 
 @OptIn(KaPlatformInterface::class)
 private fun KtFile.calculateShouldHighlightFile(): Boolean =
-    shouldDefinitelyHighlight() || RootKindFilter.everything.matches(this) && getKaModule(project, useSiteModule = null) !is KaNotUnderContentRootModule
+    shouldDefinitelyHighlight() || RootKindFilter.everything.matches(this) && getKaModule(
+        project,
+        useSiteModule = null
+    ) !is KaNotUnderContentRootModule
 
 private fun KtFile.calculateShouldHighlightScript(): Boolean {
     if (shouldDefinitelyHighlight()) return true
 
-    return (!KotlinPlatformUtils.isCidr // There is no Java support in CIDR. So do not highlight errors in KTS if running in CIDR.
-            && !getScriptReports(this).any { it.severity == ScriptDiagnostic.Severity.FATAL }
-            && isConfigurationLoaded()
-            && RootKindFilter.projectSources.copy(includeScriptsOutsideSourceRoots = true).matches(this))
+    if (KotlinPlatformUtils.isCidr) return false // There is no Java support in CIDR. So do not highlight errors in KTS if running in CIDR.
+    if (getScriptReports(this).any { it.severity == ScriptDiagnostic.Severity.FATAL }) return false
+
+    val isReadyToHighlight = AbstractScriptHighlightHelper.getInstance(project).isReadyToHighlight(this)
+    return isReadyToHighlight && RootKindFilter.projectSources.copy(includeScriptsOutsideSourceRoots = true).matches(this)
 }
 
-private fun KtFile.isConfigurationLoaded(): Boolean =
-    ScriptConfigurationsProvider.getInstance(project)?.getScriptConfigurationResult(this) != null
+abstract class AbstractScriptHighlightHelper {
+    abstract fun isReadyToHighlight(file: KtFile): Boolean
+
+    companion object {
+        fun getInstance(project: Project): AbstractScriptHighlightHelper = project.service<AbstractScriptHighlightHelper>()
+    }
+}

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.Forceable;
@@ -86,7 +86,7 @@ public interface VFSAttributesStorage extends Forceable, Closeable {
                        attributeValueSize + " b > max(" + MAX_ATTRIBUTE_VALUE_SIZE + ")" +
                        " -> please, do not use VFS file attributes for huge blobs of data. Consider using GistManager or GistStorage.";
       //RC: exceptions from .close() methods are frequently ignored (see e.g. kryo/Output)
-      //    => log the error right here, so ONE CAN'T SILENCE THE TRUTH!!!111
+      //    => log the error right here, so NO ONE CAN SILENCE THE TRUTH!!!111
       FSRecords.LOG.error(message);
       throw new FileTooBigException(message);
     }

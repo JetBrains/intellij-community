@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.idea.base.facet.stableName
 import org.jetbrains.kotlin.idea.base.fir.projectStructure.modules.KaEntityBasedModule
 import org.jetbrains.kotlin.idea.base.projectStructure.KaSourceModuleKind
-import org.jetbrains.kotlin.idea.base.projectStructure.KotlinResolveScopeEnlarger
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.ModuleSourcesScope
 import org.jetbrains.kotlin.idea.project.ModulePlatformCache
@@ -48,14 +47,14 @@ internal abstract class KaSourceModuleBase() : KaEntityBasedModule<ModuleEntity,
         KaSourceModuleDependenciesProvider.getInstance(project).getDirectFriendDependencies(this)
     }
 
-    override val contentScope: GlobalSearchScope
+    override val baseContentScope: GlobalSearchScope
         get() = when (kind) {
             KaSourceModuleKind.PRODUCTION -> {
-                KotlinResolveScopeEnlarger.enlargeScope(ModuleSourcesScope.production(module), module, isTestScope = false)
+                ModuleSourcesScope.production(module)
             }
 
             KaSourceModuleKind.TEST -> {
-                KotlinResolveScopeEnlarger.enlargeScope(ModuleSourcesScope.tests(module), module, isTestScope = true)
+                ModuleSourcesScope.tests(module)
             }
         }
 

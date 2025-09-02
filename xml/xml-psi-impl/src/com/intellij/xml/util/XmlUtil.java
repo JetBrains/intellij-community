@@ -42,15 +42,11 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.NullableFunction;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.XmlCharsetDetector;
 import com.intellij.xml.*;
 import com.intellij.xml.impl.schema.*;
-import com.intellij.xml.index.IndexedRelevantResource;
-import com.intellij.xml.index.XmlNamespaceIndex;
-import com.intellij.xml.index.XsdNamespaceBuilder;
 import com.intellij.xml.psi.XmlPsiBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -213,14 +209,7 @@ public final class XmlUtil {
   }
 
   public static @Unmodifiable @NotNull Collection<XmlFile> findNSFilesByURI(@NotNull String namespace, @NotNull Project project, @Nullable Module module) {
-    final List<IndexedRelevantResource<String, XsdNamespaceBuilder>>
-      resources = XmlNamespaceIndex.getResourcesByNamespace(namespace, project, module);
-    final PsiManager psiManager = PsiManager.getInstance(project);
-    return ContainerUtil.mapNotNull(resources,
-                                    (NullableFunction<IndexedRelevantResource<String, XsdNamespaceBuilder>, XmlFile>)resource -> {
-                                      PsiFile file = psiManager.findFile(resource.getFile());
-                                      return file instanceof XmlFile ? (XmlFile)file : null;
-                                    });
+    return XmlSchemaService.getInstance().findNSFilesByURI(namespace, project, module);
   }
 
   public static @Nullable XmlFile findXmlFile(@NotNull PsiFile base, @NotNull String uri) {

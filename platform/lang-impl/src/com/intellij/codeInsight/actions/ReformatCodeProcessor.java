@@ -119,19 +119,19 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
   }
 
   @Override
-  protected @NotNull FutureTask<Boolean> prepareTask(final @NotNull PsiFile file, final boolean processChangedTextOnly)
+  protected @NotNull FutureTask<Boolean> prepareTask(final @NotNull PsiFile psiFile, final boolean processChangedTextOnly)
     throws IncorrectOperationException
   {
     Pair<PsiFile, Runnable> fileToFormatAndCommitActionIfNeed = ReadAction.compute(() -> {
-      PsiFile psiFile = ensureValid(file);
-      if (psiFile != null) {
+      PsiFile psiFileValid = ensureValid(psiFile);
+      if (psiFileValid != null) {
         PsiDocumentManager instance = PsiDocumentManager.getInstance(myProject);
-        Document document = instance.getDocument(psiFile);
+        Document document = instance.getDocument(psiFileValid);
         if (document != null) {
-          return Pair.create(psiFile, () -> instance.commitDocument(document));
+          return Pair.create(psiFileValid, () -> instance.commitDocument(document));
         }
       }
-      return Pair.create(psiFile, null);
+      return Pair.create(psiFileValid, null);
     });
 
     PsiFile fileToProcess = fileToFormatAndCommitActionIfNeed.first;
@@ -140,7 +140,7 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
     }
 
     Computable<List<TextRange>> prepareRangesForFormat = () -> {
-      List<TextRange> formattingRanges = getRangesToFormat(file, processChangedTextOnly);
+      List<TextRange> formattingRanges = getRangesToFormat(psiFile, processChangedTextOnly);
       CodeFormattingData.prepare(fileToProcess, formattingRanges);
       return formattingRanges;
     };
@@ -151,7 +151,7 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
       rangesForFormat.set(ReadAction.compute(() -> prepareRangesForFormat.compute()));
     }
 
-    boolean doNotKeepLineBreaks = confirmSecondReformat(file);
+    boolean doNotKeepLineBreaks = confirmSecondReformat(psiFile);
     return new FutureTask<>(() -> {
       Ref<Boolean> result = new Ref<>();
       CodeStyle.runWithLocalSettings(myProject, CodeStyle.getSettings(fileToProcess), (settings) -> {
@@ -162,7 +162,7 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
           commitAction.run();
           rangesForFormat.set(prepareRangesForFormat.compute());
         }
-        result.set(doReformat(file, rangesForFormat.get(), processChangedTextOnly));
+        result.set(doReformat(psiFile, rangesForFormat.get(), processChangedTextOnly));
       });
       return result.get();
     });

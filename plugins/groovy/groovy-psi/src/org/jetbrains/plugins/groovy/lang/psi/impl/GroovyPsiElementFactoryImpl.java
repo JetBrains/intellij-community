@@ -1,6 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -310,7 +311,7 @@ public final class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     if (!(type instanceof PsiArrayType)) {
       final String canonical = type.getCanonicalText();
       final String text = canonical != null ? canonical : type.getPresentableText();
-      if (PsiKeyword.NULL.equals(text)) {
+      if (JavaKeywords.NULL.equals(text)) {
         return "";
       }
       else {
@@ -502,7 +503,7 @@ public final class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
 
   @Override
   public @NotNull GrMethod createMethodFromSignature(@NotNull String name, @NotNull GrSignature signature) {
-    StringBuilder builder = new StringBuilder(PsiKeyword.PUBLIC);
+    StringBuilder builder = new StringBuilder(JavaKeywords.PUBLIC);
     final PsiType returnType = signature.getReturnType();
     if (returnType != null && returnType != PsiTypes.nullType()) {
       builder.append(' ');

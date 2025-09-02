@@ -10,16 +10,13 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.progress.util.StandardProgressIndicatorBase;
-import com.intellij.util.ExceptionUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import kotlin.coroutines.CoroutineContext;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -38,9 +35,11 @@ public final class JobLauncherImpl extends JobLauncher {
   private final boolean logAllExceptions = System.getProperty("idea.job.launcher.log.all.exceptions", "false").equals("true");
   private final ForkJoinPool myForkJoinPool;
 
-  JobLauncherImpl(@NotNull ForkJoinPool pool) {
+  @VisibleForTesting
+  public JobLauncherImpl(@NotNull ForkJoinPool pool) {
     myForkJoinPool = pool;
   }
+
   JobLauncherImpl() {
     this(ForkJoinPool.commonPool());
   }
@@ -154,8 +153,8 @@ public final class JobLauncherImpl extends JobLauncher {
       }
       ProgressManager.checkCanceled();
       Throwable savedException = thrown.get();
-      if (savedException != null/* && !(savedException instanceof ProcessCanceledException)*/) {
-        ExceptionUtil.rethrow(savedException);
+      if (savedException != null) {
+        ApplierCompleter.rethrowUncheckedRaw(savedException);
       }
       return false;
     }
@@ -191,16 +190,15 @@ public final class JobLauncherImpl extends JobLauncher {
           continue;
         }
         cause = ApplierCompleter.accumulateException(thrown, cause);
-        ExceptionUtil.rethrow(cause);
+        ApplierCompleter.rethrowUncheckedRaw(cause);
+      }
+      catch (ApplierCompleter.ComputationAbortedException e) {
+        // contract: when some processor returned false (but not when PCE happened), wait until all other tasks are terminated before return from invokeConcurrentlyUnderProgress
+        thrown.set(e);
       }
       catch (Throwable e) {
-        if (e instanceof ApplierCompleter.ComputationAbortedException) {
-          // contract: when some processor returned false (but not when PCE happened), wait until all other tasks are terminated before return from invokeConcurrentlyUnderProgress
-          thrown.set(e);
-          continue;
-        }
         e = ApplierCompleter.accumulateException(thrown, e);
-        ExceptionUtil.rethrow(e);
+        ApplierCompleter.rethrowUncheckedRaw(e);
       }
     }
   }
@@ -335,7 +333,7 @@ public final class JobLauncherImpl extends JobLauncher {
           // was canceled in the middle of the execution
         }
         catch (ExecutionException e) {
-          ExceptionUtil.rethrow(e.getCause());
+          ApplierCompleter.rethrowUncheckedRaw(ObjectUtils.notNull(e.getCause(), e));
         }
       }
       return true;
@@ -454,7 +452,7 @@ public final class JobLauncherImpl extends JobLauncher {
       }
     }
     if (exception != null) {
-      ExceptionUtil.rethrow(exception);
+      ApplierCompleter.rethrowUncheckedRaw(exception);
     }
     return result;
   }

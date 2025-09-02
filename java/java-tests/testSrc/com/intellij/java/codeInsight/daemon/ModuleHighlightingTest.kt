@@ -18,6 +18,7 @@ import com.intellij.mock.MockLocalFileSystem
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runWriteActionAndWait
+import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.diagnostic.ReportingClassSubstitutor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
@@ -71,7 +72,7 @@ import java.util.jar.JarFile
 class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   override fun setUp() {
     super.setUp()
-    
+
     myFixture.enableInspections(JavaModuleDefinitionInspection())
 
     addFile("module-info.java", "module M2 { }", M2)
@@ -82,12 +83,13 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     try {
       JavaCompilerConfigurationProxy.setAdditionalOptions(project, module, arguments.toList())
       test()
-    } finally {
+    }
+    finally {
       JavaCompilerConfigurationProxy.setAdditionalOptions(project, module, emptyList())
     }
   }
 
-  fun testModuleImportDeclarationLevelCheck() {
+  fun testModuleImportDeclarationLevelCheck23() {
     IdeaTestUtil.withLevel(module, LanguageLevel.JDK_23) {
       highlight("Test.java", """
         <error descr="Module Import Declarations are not supported at language level '23'">import module java.sql;</error>
@@ -96,10 +98,56 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     }
   }
 
+  fun testModuleImportDeclarationLevelCheck23Preview() {
+    IdeaTestUtil.withLevel(module, LanguageLevel.JDK_23_PREVIEW) {
+      highlight("Test.java", """
+        import module java.base;
+        class Test {}
+      """.trimIndent())
+    }
+  }
+
+  fun testModuleImportDeclarationLevelCheck24() {
+    IdeaTestUtil.withLevel(module, LanguageLevel.JDK_24) {
+      highlight("Test.java", """
+        <error descr="Module Import Declarations are not supported at language level '24'">import module java.sql;</error>
+        class Test {}
+      """.trimIndent())
+    }
+  }
+
+  fun testModuleImportDeclarationLevelCheck24Preview() {
+    IdeaTestUtil.withLevel(module, LanguageLevel.JDK_24_PREVIEW) {
+      highlight("Test.java", """
+        import module java.base;
+        class Test {}
+      """.trimIndent())
+    }
+  }
+
+  fun testModuleImportDeclarationLevelCheck25() {
+    IdeaTestUtil.withLevel(module, LanguageLevel.JDK_25) {
+      highlight("Test.java", """
+        import module java.base;
+        import module java.base;
+        class Test {}
+      """.trimIndent())
+    }
+  }
+
+  fun testModuleImportDeclarationLevelCheck25Preview() {
+    IdeaTestUtil.withLevel(module, LanguageLevel.JDK_25) {
+      highlight("Test.java", """
+        import module java.base;
+        class Test {}
+      """.trimIndent())
+    }
+  }
+
   fun testModuleImportDeclarationInModuleInfoFile() {
     IdeaTestUtil.withLevel(module, LanguageLevel.JDK_23_PREVIEW) {
       highlight("module-info.java", """
-        <error descr="Import module is not allowed">import module M2;</error>
+        <error descr="Module import is not allowed">import module M2;</error>
         module my.module {
           requires M2;
         }
@@ -109,22 +157,43 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
 
   fun testModuleImportDeclarationInModuleInfoFileFix() {
     IdeaTestUtil.withLevel(module, LanguageLevel.JDK_23_PREVIEW) {
-      myFixture.configureFromExistingVirtualFile(addFile("module-info.java", """
-        <error descr="Import module is not allowed">import module <caret>M2;</error>
+      val actionName = "ReplaceOnDemandImportAction"
+
+      addFile("pkg/A.java", "package pkg;\npublic class A extends java.util.Random {}")
+
+      highlight("module-info.java", """
+        <error descr="Module import is not allowed">import module java.<caret>base;</error>
         module my.module {
           requires M2;
+          provides Random with pkg.A;
         }
-      """.trimIndent()))
+      """.trimIndent())
 
       val availableIntentions = myFixture.availableIntentions
       val available = availableIntentions
         .map { (it.asModCommandAction() ?: IntentionActionDelegate.unwrap(it))::class.java }
         .map { it.simpleName }
-      assertThat(available).describedAs(availableIntentions.toString()).contains("ReplaceOnDemandImportAction")
+
+      assertThat(available).describedAs(availableIntentions.toString()).contains(actionName)
+
+      WriteCommandAction.runWriteCommandAction(null) {
+        availableIntentions.first {
+          (it.asModCommandAction() ?: IntentionActionDelegate.unwrap(it))::class.java.simpleName == actionName
+        }.invoke(project, myFixture.editor, myFixture.file)
+      }
+
+      myFixture.checkResult("""
+        import java.util.Random;
+        
+        module my.module {
+          requires M2;
+          provides Random with pkg.A;
+        }
+        """.trimIndent())
     }
   }
 
-    fun testModuleImportDeclarationUnresolvedModule() {
+  fun testModuleImportDeclarationUnresolvedModule() {
     IdeaTestUtil.withLevel(module, LanguageLevel.JDK_23_PREVIEW) {
       addFile("moodule-info.java", "module current.module.name {}")
       highlight("Test.java", """
@@ -683,7 +752,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
 
     addFile("module-info.java", "module M6 {  requires lib.named; exports pkg;}", M6)
     addFile("pkg/A.java", "package pkg; public class A {public static void foo(java.util.function.Supplier<pkg.lib1.LC1> f){}}", M6)
-    highlight("pkg/Usage.java","import pkg.lib1.LC1; class Usage { {pkg.A.foo(LC1::new);} }")
+    highlight("pkg/Usage.java", "import pkg.lib1.LC1; class Usage { {pkg.A.foo(LC1::new);} }")
   }
 
   fun testDeprecations() {
@@ -819,7 +888,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   }
 
   fun testBrokenImportModuleStatement() {
-    IdeaTestUtil.withLevel(module, JavaFeature.MODULE_IMPORT_DECLARATIONS.minimumLevel){
+    IdeaTestUtil.withLevel(module, JavaFeature.MODULE_IMPORT_DECLARATIONS.minimumLevel) {
       highlight("A.java", """
         package a;
         
@@ -1093,10 +1162,12 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     val availableIntentions = myFixture.availableIntentions
     val available = availableIntentions
       .map { ReportingClassSubstitutor.getClassToReport(it) }
-      .filter { it.name.startsWith("com.intellij.codeInsight.") &&
-                !(it.name.startsWith("com.intellij.codeInsight.intention.impl.") && it.name.endsWith("Action"))
-                && !it.name.endsWith("DisableHighlightingIntentionAction")
-                && !it.name.endsWith("DeclarativeHintsTogglingIntention")}
+      .filter {
+        it.name.startsWith("com.intellij.codeInsight.") &&
+        !(it.name.startsWith("com.intellij.codeInsight.intention.impl.") && it.name.endsWith("Action"))
+        && !it.name.endsWith("DisableHighlightingIntentionAction")
+        && !it.name.endsWith("DeclarativeHintsTogglingIntention")
+      }
       .map { it.simpleName }
     assertThat(available).describedAs(availableIntentions.toString()).containsExactlyInAnyOrder(*fixes)
   }

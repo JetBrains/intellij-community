@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.compose.k2.debugger.test.cases
 
 import com.intellij.jarRepository.RemoteRepositoryDescription
+import org.jetbrains.kotlin.config.JvmClosureGenerationScheme
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.idea.compose.k2.test.K2ComposeTestProperties.COMPOSE_RUNTIME_MAVEN_COORDINATES
 import org.jetbrains.kotlin.idea.debugger.test.DebuggerTestCompilerFacility
@@ -11,6 +12,9 @@ import org.jetbrains.kotlin.idea.debugger.test.TestFiles
 import org.jetbrains.kotlin.idea.debugger.test.preference.DebuggerPreferences
 
 abstract class AbstractK2ComposeSteppingTest : KotlinDescriptorTestCaseWithStepping() {
+    override val compileWithK2: Boolean get() = true
+
+    override fun lambdasGenerationScheme(): JvmClosureGenerationScheme = JvmClosureGenerationScheme.INDY
 
     override fun createDebuggerTestCompilerFacility(
         testFiles: TestFiles,

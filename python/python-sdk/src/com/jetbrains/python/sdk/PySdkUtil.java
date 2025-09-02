@@ -68,9 +68,13 @@ public final class PySdkUtil {
    * @param timeout  how many milliseconds to wait until the process terminates; non-positive means inifinity.
    * @return a tuple of (stdout lines, stderr lines, exit_code), lines in them have line terminators stripped, or may be null.
    */
+  @ApiStatus.Internal
+
   public static @NotNull ProcessOutput getProcessOutput(String homePath, @NonNls String[] command, final int timeout) {
     return getProcessOutput(homePath, command, null, timeout);
   }
+
+  @ApiStatus.Internal
 
   public static @NotNull ProcessOutput getProcessOutput(String homePath,
                                                         @NonNls String[] command,
@@ -78,6 +82,8 @@ public final class PySdkUtil {
                                                         final int timeout) {
     return getProcessOutput(homePath, command, extraEnv, timeout, null, true);
   }
+
+  @ApiStatus.Internal
 
   public static @NotNull ProcessOutput getProcessOutput(String homePath,
                                                         @NonNls String[] command,
@@ -87,6 +93,8 @@ public final class PySdkUtil {
                                                         boolean needEOFMarker) {
     return getProcessOutput(new GeneralCommandLine(command), homePath, extraEnv, timeout, stdin, needEOFMarker);
   }
+
+  @ApiStatus.Internal
 
   public static ProcessOutput getProcessOutput(@NotNull GeneralCommandLine cmd, @Nullable String homePath,
                                                @Nullable @NonNls Map<String, String> extraEnv,
@@ -100,6 +108,8 @@ public final class PySdkUtil {
                                                byte @Nullable [] stdin, boolean needEOFMarker) {
     return getProcessOutput(cmd, homePath, extraEnv, timeout, stdin, needEOFMarker, null);
   }
+
+  @ApiStatus.Internal
 
   public static ProcessOutput getProcessOutput(@NotNull GeneralCommandLine cmd, @Nullable String homePath,
                                                @Nullable @NonNls Map<String, String> extraEnv,
@@ -244,6 +254,9 @@ public final class PySdkUtil {
   /**
    * @return name of builtins skeleton file; for Python 2.x it is '{@code __builtins__.py}'.
    */
+
+
+  @ApiStatus.Internal
   public static @NotNull @NonNls String getBuiltinsFileName(@NotNull Sdk sdk) {
     return PyBuiltinCache.getBuiltinsFileName(getLanguageLevelForSdk(sdk));
   }
@@ -253,6 +266,7 @@ public final class PySdkUtil {
    *
    * @param allowRemote - indicates whether remote interpreter is acceptable
    */
+  @ApiStatus.Internal
   public static @Nullable Sdk findSdkForDirectory(@NotNull Project project, @NotNull Path workingDirectory, boolean allowRemote) {
     VirtualFile workingDirectoryVirtualFile = LocalFileSystem.getInstance().findFileByNioFile(workingDirectory);
     if (workingDirectoryVirtualFile != null) {

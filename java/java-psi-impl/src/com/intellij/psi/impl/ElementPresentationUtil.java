@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.codeInsight.TestFrameworks;
@@ -20,7 +20,7 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public final class ElementPresentationUtil {
   private ElementPresentationUtil() {
@@ -141,17 +141,12 @@ public final class ElementPresentationUtil {
     BASE_ICON.put(CLASS_KIND_CLASS, iconManager.tooltipOnlyIfComposite(iconManager.getPlatformIcon(PlatformIcons.Class)));
     BASE_ICON.put(CLASS_KIND_CLASS | FLAGS_ABSTRACT, iconManager.getPlatformIcon(PlatformIcons.AbstractClass));
     BASE_ICON.put(CLASS_KIND_ANNOTATION, iconManager.getPlatformIcon(PlatformIcons.Annotation));
-    BASE_ICON.put(CLASS_KIND_ANNOTATION | FLAGS_ABSTRACT, iconManager.getPlatformIcon(PlatformIcons.Annotation));
     BASE_ICON.put(CLASS_KIND_ANONYMOUS, iconManager.getPlatformIcon(PlatformIcons.AnonymousClass));
-    BASE_ICON.put(CLASS_KIND_ANONYMOUS | FLAGS_ABSTRACT, iconManager.getPlatformIcon(PlatformIcons.AnonymousClass));
     BASE_ICON.put(CLASS_KIND_ASPECT, iconManager.getPlatformIcon(PlatformIcons.Aspect));
-    BASE_ICON.put(CLASS_KIND_ASPECT | FLAGS_ABSTRACT, iconManager.getPlatformIcon(PlatformIcons.Aspect));
     BASE_ICON.put(CLASS_KIND_ENUM, iconManager.getPlatformIcon(PlatformIcons.Enum));
-    BASE_ICON.put(CLASS_KIND_ENUM | FLAGS_ABSTRACT, iconManager.getPlatformIcon(PlatformIcons.Enum));
     BASE_ICON.put(CLASS_KIND_EXCEPTION, iconManager.getPlatformIcon(PlatformIcons.ExceptionClass));
     BASE_ICON.put(CLASS_KIND_EXCEPTION | FLAGS_ABSTRACT, iconManager.getPlatformIcon(PlatformIcons.AbstractException));
     BASE_ICON.put(CLASS_KIND_INTERFACE, iconManager.tooltipOnlyIfComposite(iconManager.getPlatformIcon(PlatformIcons.Interface)));
-    BASE_ICON.put(CLASS_KIND_INTERFACE | FLAGS_ABSTRACT, iconManager.tooltipOnlyIfComposite(iconManager.getPlatformIcon(PlatformIcons.Interface)));
     BASE_ICON.put(CLASS_KIND_JUNIT_TEST, iconManager.tooltipOnlyIfComposite(iconManager.getPlatformIcon(PlatformIcons.Class)));
     BASE_ICON.put(CLASS_KIND_JUNIT_TEST | FLAGS_ABSTRACT, iconManager.getPlatformIcon(PlatformIcons.AbstractClass));
     BASE_ICON.put(CLASS_KIND_RECORD, iconManager.getPlatformIcon(PlatformIcons.Record));
@@ -162,6 +157,10 @@ public final class ElementPresentationUtil {
     final boolean isAbstract = aClass.hasModifierProperty(PsiModifier.ABSTRACT);
     Icon result = BASE_ICON.get(classKind | (isAbstract ? FLAGS_ABSTRACT : 0));
     if (result == null) {
+      if (isAbstract) {
+        Icon alternative = BASE_ICON.get(classKind);
+        if (alternative != null) return alternative;
+      }
       throw new NullPointerException(
         "No icon registered for the class " + aClass + " of kind " + classKind + " (isAbstract=" + isAbstract + ")"
       );

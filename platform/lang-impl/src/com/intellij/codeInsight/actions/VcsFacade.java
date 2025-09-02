@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.actions;
 
-import com.intellij.model.ModelPatch;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -21,10 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class VcsFacade {
   public static final Key<CharSequence> TEST_REVISION_CONTENT = Key.create("test.revision.content");
@@ -161,7 +157,7 @@ public class VcsFacade {
   }
 
   @ApiStatus.Experimental
-  public @Nullable JComponent createPatchPreviewComponent(@NotNull Project project, @NotNull ModelPatch patch) {
+  public @Nullable JComponent createPatchPreviewComponent(@NotNull Project project, @NotNull Map<VirtualFile, CharSequence> patch) {
     return null;
   }
 }

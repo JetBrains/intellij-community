@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -7,7 +7,6 @@ import com.intellij.openapi.fileTypes.impl.FileTypeAssocTable;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.UnloadedModuleDescription;
-import com.intellij.openapi.module.impl.ModuleManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
@@ -21,6 +20,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileSet;
 import com.intellij.openapi.vfs.VirtualFileSetFactory;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
+import com.intellij.platform.backend.workspace.WorkspaceModelTopics;
 import com.intellij.platform.workspace.storage.WorkspaceEntity;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
@@ -39,7 +39,7 @@ import java.util.*;
 import java.util.HashMap;
 import java.util.HashSet;
 
-class RootIndex {
+final class RootIndex {
   static final Comparator<OrderEntry> BY_OWNER_MODULE = (o1, o2) -> {
     String name1 = o1.getOwnerModule().getName();
     String name2 = o2.getOwnerModule().getName();
@@ -52,6 +52,7 @@ class RootIndex {
   private final @NotNull Project myProject;
   private final Lazy<OrderEntryGraph> myOrderEntryGraphLazy = LazyKt.lazy(() -> calculateOrderEntryGraph());
 
+  @SuppressWarnings("deprecation")
   RootIndex(@NotNull Project project) {
     myProject = project;
 
@@ -59,9 +60,10 @@ class RootIndex {
     if (project.isDefault()) {
       LOG.error("Directory index may not be queried for default project");
     }
-    ModuleManager manager = ModuleManager.getInstance(project);
-    if (manager instanceof ModuleManagerEx) {
-      LOG.assertTrue(((ModuleManagerEx)manager).areModulesLoaded(), "Directory index can only be queried after project initialization");
+
+    WorkspaceModelTopics workspaceModelTopics = project.getService(WorkspaceModelTopics.class);
+    if (workspaceModelTopics != null) {
+      LOG.assertTrue(workspaceModelTopics.getModulesAreLoaded(), "Directory index can only be queried after project initialization");
     }
   }
 

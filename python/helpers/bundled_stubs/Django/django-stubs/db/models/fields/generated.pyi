@@ -1,4 +1,5 @@
-from typing import Any, ClassVar, Iterable, Literal
+from collections.abc import Iterable
+from typing import Any, ClassVar, Literal
 
 from django.core.validators import _ValidatorCallable
 from django.db import models
@@ -21,7 +22,7 @@ class GeneratedField(models.Field):
         *,
         expression: Expression,
         output_field: models.Field,
-        db_persist: bool | None = None,
+        db_persist: bool,
         verbose_name: _StrOrPromise | None = ...,
         name: str | None = ...,
         primary_key: bool = ...,
@@ -46,3 +47,5 @@ class GeneratedField(models.Field):
     ) -> None: ...
     def generated_sql(self, connection: BaseDatabaseWrapper) -> tuple[str, Any]: ...
     def db_type_parameters(self, connection: BaseDatabaseWrapper) -> DictWrapper: ...
+
+__all__ = ["GeneratedField"]

@@ -1,0 +1,18 @@
+<component name="libraryTable">
+  <library name="io.github.oshai.kotlin.logging.jvm" type="repository">
+    <properties include-transitive-deps="false" maven-id="io.github.oshai:kotlin-logging-jvm:7.0.3">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/github/oshai/kotlin-logging-jvm/7.0.3/kotlin-logging-jvm-7.0.3.jar">
+          <sha256sum>241daa21665dd0ca55576a4bc4d8e9ace8891ae3c698cc77f13bb4bdac372e94</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/io/github/oshai/kotlin-logging-jvm/7.0.3/kotlin-logging-jvm-7.0.3.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/io/github/oshai/kotlin-logging-jvm/7.0.3/kotlin-logging-jvm-7.0.3-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

@@ -5,12 +5,10 @@ import com.intellij.find.ngrams.TrigramIndex;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.scratch.ScratchRootType;
 import com.intellij.ide.scratch.ScratchesSearchScope;
-import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.java.index.StringIndex;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
@@ -29,9 +27,6 @@ import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.module.impl.scopes.ModuleWithDependentsScope;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
@@ -48,7 +43,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.cache.impl.id.IdIndex;
 import com.intellij.psi.impl.cache.impl.id.IdIndexEntry;
-import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.psi.impl.java.JavaFunctionalExpressionIndex;
 import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys;
 import com.intellij.psi.impl.search.JavaNullMethodArgumentIndex;
@@ -94,7 +88,6 @@ import org.jetbrains.plugins.groovy.GroovyLanguage;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -372,7 +365,7 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
 
     assertNotNull(JavaPsiFacade.getInstance(getProject()).findClass("Foo", scope));
 
-    assertNull(((FileManagerImpl)getPsiManager().getFileManager()).getCachedDirectory(psiFile.getVirtualFile().getParent()));
+    assertNull(getPsiManager().getFileManagerEx().getCachedDirectory(psiFile.getVirtualFile().getParent()));
     WriteCommandAction.runWriteCommandAction(getProject(), () -> {
       assertEquals(psiFile.setName("Foo1.java"), psiFile);
     });
@@ -395,7 +388,7 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
     assertNotNull(JavaPsiFacade.getInstance(getProject()).findClass("pkg.Foo", scope));
 
     final VirtualFile dir = psiFile.getVirtualFile().getParent();
-    assertNull(((FileManagerImpl)getPsiManager().getFileManager()).getCachedDirectory(dir));
+    assertNull(getPsiManager().getFileManagerEx().getCachedDirectory(dir));
     WriteAction.run(() -> dir.rename(this, "bar"));
 
     assertTrue(FileDocumentManager.getInstance().getUnsavedDocuments().length > 0);
@@ -969,47 +962,6 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
     assertTrue(StubIndex.getElements(JavaStubIndexKeys.METHODS, "run", getProject(), projectScope, PsiMethod.class).isEmpty());
   }
 
-  public void test_text_todo_indexing_checks_for_cancellation() {
-    TodoPattern pattern = new TodoPattern("(x+x+)+y", TodoAttributesUtil.createDefault(), true);
-
-    TodoPattern[] oldPatterns = TodoConfiguration.getInstance().getTodoPatterns();
-    TodoPattern[] newPatterns = new TodoPattern[]{pattern};
-    TodoConfiguration.getInstance().setTodoPatterns(newPatterns);
-    PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
-    FileBasedIndex.getInstance().ensureUpToDate(IdIndex.NAME, getProject(), GlobalSearchScope.allScope(getProject()));
-    myFixture.addFileToProject("Foo.txt", "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
-
-    try {
-      final CountDownLatch progressStarted = new CountDownLatch(1);
-      final ProgressIndicatorBase progressIndicatorBase = new ProgressIndicatorBase();
-      final AtomicBoolean canceled = new AtomicBoolean(false);
-      ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        try {
-          progressStarted.await();
-          TimeoutUtil.sleep(1000);
-          progressIndicatorBase.cancel();
-          TimeoutUtil.sleep(500);
-          assertTrue(canceled.get());
-        } catch (Exception e) {
-          throw new AssertionError("Should not throw exceptions", e);
-        }
-      });
-      ProgressManager.getInstance().runProcess(() ->  {
-          try {
-            progressStarted.countDown();
-            FileBasedIndex.getInstance().ensureUpToDate(IdIndex.NAME, getProject(), GlobalSearchScope.allScope(getProject()));
-          }
-          catch (ProcessCanceledException ignore) {
-            canceled.set(true);
-          }
-        }, progressIndicatorBase
-      );
-    }
-    finally {
-      TodoConfiguration.getInstance().setTodoPatterns(oldPatterns);
-    }
-  }
-
   public void test_stub_updating_index_problem_during_processAllKeys() {
     final String className = "Foo";
     myFixture.addClass("class " + className + " {}");
@@ -1307,7 +1259,7 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
   private static void assertStubLanguage(@NotNull com.intellij.lang.Language expectedLanguage, @NotNull ObjectStubTree<?> stub) {
     ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(expectedLanguage);
     PsiFileStub fileStub = assertInstanceOf(stub.getPlainList().get(0), PsiFileStub.class);
-    assertEquals(parserDefinition.getFileNodeType(), fileStub.getType());
+    assertEquals(parserDefinition.getFileNodeType(), fileStub.getFileElementType());
   }
 
   @NotNull
@@ -1586,5 +1538,43 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
     assertTrue(scratchJavaEnum.contains(((VirtualFileWithId)scratch).getId()));
     assertFalse(scratchJavaEnum.contains(((VirtualFileWithId)src).getId()));
     assertFalse(scratchJavaEnum.contains(((VirtualFileWithId)src2).getId()));
+  }
+
+  public void test_traceKeyHashToVirtualFileMapping() {
+    TracingFileBasedIndexExtension extension =
+      TracingFileBasedIndexExtension.registerTracingFileBasedIndex(myFixture.getTestRootDisposable());
+
+    myFixture.addFileToProject("src/TestFoo.java", "class TestFoo { }").getVirtualFile();
+
+    FileBasedIndex fileBasedIndex = FileBasedIndex.getInstance();
+
+    var processor = new Processor<String>() {
+      final AtomicInteger processed = new AtomicInteger(0);
+      @Override
+      public boolean process(String i) {
+        processed.incrementAndGet();
+        return true;
+      }
+
+      void reset() {
+        processed.set(0);
+      }
+    };
+
+    // process without a filter that should ignore a file, so we get 1 in the filter
+    fileBasedIndex.processAllKeys(extension.getName(), processor, getProject());
+    assertEquals(1, processor.processed.get());
+
+    processor.reset();
+
+    // process with a filter that should ignore a file, so we get 0 in the filter
+    TracingIdFilter filter = TracingFileBasedIndexExtension.Companion.getIdFilter();
+    fileBasedIndex.processAllKeys(extension.getName(),
+                                  processor,
+                                  GlobalSearchScope.everythingScope(getProject()),
+                                  filter
+    );
+
+    assertEquals(0, processor.processed.get());
   }
 }

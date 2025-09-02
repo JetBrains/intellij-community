@@ -29,6 +29,7 @@ import org.jetbrains.kotlin.idea.test.testFramework.KtUsefulTestCase
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
+import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.absolutePathString
 
@@ -37,7 +38,10 @@ data class TestCompileConfiguration(
     val languageVersion: LanguageVersion?,
     val enabledLanguageFeatures: Collection<LanguageFeature>,
     val useInlineScopes: Boolean,
+    val jvmDefaultMode: JvmDefaultMode?,
 )
+
+const val COMPILER_ARGS_FILENAME = "compiler.args"
 
 open class DebuggerTestCompilerFacility(
     private val project: Project,
@@ -67,13 +71,15 @@ open class DebuggerTestCompilerFacility(
             error("Library $name does not exist")
         }
 
-        val testFiles = libSrcPath.walk().filter { it.isFile }.toList().map {
+        val testFiles = libSrcPath.walk().filter { it.isFile && it.name != COMPILER_ARGS_FILENAME }.toList().map {
             val path = it.toRelativeString(libSrcPath)
             TestFileWithModule(DebuggerTestModule.Jvm.Default, path, FileUtil.loadFile(it, true))
         }
 
+        val compilerArgsFile = libSrcPath.walk().filter { it.name == COMPILER_ARGS_FILENAME }.singleOrNull()
+
         val libraryFiles = splitByLanguage(testFiles)
-        compileLibrary(libraryFiles, srcDir, classesDir)
+        compileLibrary(libraryFiles, compilerArgsFile, srcDir, classesDir)
     }
 
     fun addDependencies(libraryPaths: List<String>) {
@@ -92,7 +98,7 @@ open class DebuggerTestCompilerFacility(
         mavenArtifacts.find { it.contains(Regex("""kotlin-stdlib-\d+\.\d+\.\d+(-\w+)?""")) }
 
     fun compileLibrary(srcDir: File, classesDir: File) {
-        compileLibrary(this.libraryFiles, srcDir, classesDir)
+        compileLibrary(this.libraryFiles, compilerArgsFile = null, srcDir, classesDir)
 
         srcDir.refreshAndToVirtualFile()?.let { KtUsefulTestCase.refreshRecursively(it) }
         classesDir.refreshAndToVirtualFile()?.let { KtUsefulTestCase.refreshRecursively(it) }
@@ -100,6 +106,7 @@ open class DebuggerTestCompilerFacility(
 
     private fun compileLibrary(
         libraryFiles: TestFilesByLanguageAndPlatform,
+        compilerArgsFile: File?,
         srcDir: File,
         classesDir: File
     ) = with(libraryFiles) {
@@ -111,6 +118,10 @@ open class DebuggerTestCompilerFacility(
 
         val options = mutableListOf("-jvm-target", jvmTarget.description)
         options.addAll(getCompilerOptionsCommonForLibAndSource())
+
+        if (compilerArgsFile != null) {
+            options.addAll(Files.readAllLines(compilerArgsFile.toPath()))
+        }
 
         if (kotlinJvm.isNotEmpty()) {
             KotlinCompilerStandalone(
@@ -137,7 +148,8 @@ open class DebuggerTestCompilerFacility(
         commonSrcDir: File,
         scriptSrcDir: File,
         classesDir: File,
-        libClassesDir: File
+        libClassesDir: File,
+        additionalClassesDir: List<File> = emptyList(),
     ) = with(mainFiles) {
         resources.copy(jvmSrcDir)
         resources.copy(classesDir) // sic!
@@ -152,14 +164,14 @@ open class DebuggerTestCompilerFacility(
         if (kotlinJvm.isNotEmpty() || kotlinCommon.isNotEmpty()) {
             val options = getCompileOptionsForMainSources(jvmSrcDir, commonSrcDir, module.name)
             doWriteAction {
-                compileKotlinFilesWithCliCompiler(jvmSrcDir, commonSrcDir, classesDir, libClassesDir, options)
+                compileKotlinFilesWithCliCompiler(jvmSrcDir, commonSrcDir, classesDir, libClassesDir, options, additionalClassesDir)
             }
         }
 
         if (java.isNotEmpty()) {
             CodegenTestUtil.compileJava(
                 java.map { File(jvmSrcDir, it.name).absolutePath },
-                getClasspath(module) + listOf(classesDir.absolutePath),
+                getClasspath(module) + additionalClassesDir.map { it.absolutePath } + listOf(classesDir.absolutePath),
                 listOf("-g"),
                 classesDir
             )
@@ -183,12 +195,12 @@ open class DebuggerTestCompilerFacility(
 
     private fun compileKotlinFilesWithCliCompiler(
         jvmSrcDir: File, commonSrcDir: File, classesDir: File,
-        libClassesDir: File, options: List<String>,
+        libClassesDir: File, options: List<String>, additionalClassesDir: List<File>,
     ) {
         KotlinCompilerStandalone(
             listOf(jvmSrcDir, commonSrcDir), target = classesDir,
             options = options,
-            classpath = mavenArtifacts.map(::File) + libClassesDir,
+            classpath = mavenArtifacts.map(::File) + additionalClassesDir + libClassesDir,
             compileKotlinSourcesBeforeJava = false,
         ).compile()
     }
@@ -209,6 +221,9 @@ open class DebuggerTestCompilerFacility(
         }
         if (compileConfig.useInlineScopes) {
             options.add("-Xuse-inline-scopes-numbers")
+        }
+        if (compileConfig.jvmDefaultMode != null) {
+            options.add("-jvm-default=${compileConfig.jvmDefaultMode.description}")
         }
 
         if (compilerPlugins.isNotEmpty()) {
@@ -235,11 +250,10 @@ open class DebuggerTestCompilerFacility(
     }
 
     // Returns the qualified name of the main test class.
-    fun analyzeAndFindMainClass(jvmKtFiles: List<KtFile>): String {
+    internal fun analyzeAndFindMainClass(jvmKtFiles: List<KtFile>): String? {
         return runReadAction {
             val (languageVersionSettings, analysisResult) = analyzeSources(jvmKtFiles)
             findMainClass(analysisResult.bindingContext, languageVersionSettings, jvmKtFiles)?.asString()
-                ?: error("Cannot find main class name")
         }
     }
 

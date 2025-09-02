@@ -16,8 +16,6 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Properties;
 
 import static org.jetbrains.maven.server.SpyConstants.NEWLINE;
 
@@ -43,18 +41,7 @@ public class IntellijMavenSpy extends AbstractEventSpy {
 
   private void doInit(Context context)
     throws Throwable {
-
-    Map<String, Object> data = context.getData();
-    Properties properties = (Properties)data.get("versionProperties");
-    String version = properties.getProperty("version");
-    if (version.startsWith("3")) {
-      //noinspection UseOfSystemOutOrSystemErr
-      myPrinter = new EventInfoPrinter(s -> System.out.println(s));
-      return;
-    }
-    if (version.startsWith("4")) {
-      myPrinter = new EventInfoPrinter(new Maven4TerminalInvoker());
-    }
+    myPrinter = new EventInfoPrinter(s -> System.out.println(s));
   }
 
   @Override

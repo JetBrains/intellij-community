@@ -41,11 +41,11 @@ internal abstract class CreateFieldActionBase(
     fieldRenderer(project).doRender()
   }
 
-  override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo {
-    val copyClass = PsiTreeUtil.findSameElementInCopy(target, file)
+  override fun generatePreview(project: Project, editor: Editor, psiFile: PsiFile): IntentionPreviewInfo {
+    val copyClass = PsiTreeUtil.findSameElementInCopy(target, psiFile)
     val javaFieldRenderer = JavaFieldRenderer(project, isConstant(), copyClass, request)
     var field = javaFieldRenderer.renderField()
-    field = javaFieldRenderer.insertField(field, PsiTreeUtil.findSameElementInCopy((request as? CreateFieldFromJavaUsageRequest)?.anchor, file))
+    field = javaFieldRenderer.insertField(field, PsiTreeUtil.findSameElementInCopy((request as? CreateFieldFromJavaUsageRequest)?.anchor, psiFile))
     javaFieldRenderer.startTemplate(field)
     return IntentionPreviewInfo.DIFF
   }

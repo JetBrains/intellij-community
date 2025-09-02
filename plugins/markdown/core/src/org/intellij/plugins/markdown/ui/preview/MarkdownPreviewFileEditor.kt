@@ -1,14 +1,17 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.ui.preview
 
-import com.intellij.CommonBundle
 import com.intellij.ide.DataManager
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationType
+import com.intellij.notification.Notifications
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeIntentReadAction
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.DocumentEvent
@@ -18,7 +21,6 @@ import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorState
 import com.intellij.openapi.fileEditor.TextEditorWithPreview
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
@@ -184,20 +186,29 @@ class MarkdownPreviewFileEditor(
 
   private fun retrievePanelProvider(settings: MarkdownSettings): MarkdownHtmlPanelProvider {
     val providerInfo = settings.previewPanelProviderInfo
-    var provider = MarkdownHtmlPanelProvider.createFromInfo(providerInfo)
-    if (provider.isAvailable() !== MarkdownHtmlPanelProvider.AvailabilityInfo.AVAILABLE) {
-      val defaultProvider = MarkdownHtmlPanelProvider.createFromInfo(MarkdownSettings.defaultProviderInfo)
-      Messages.showMessageDialog(
-        htmlPanelWrapper,
-        MarkdownBundle.message("dialog.message.tried.to.use.preview.panel.provider", providerInfo.name),
-        CommonBundle.getErrorTitle(),
-        Messages.getErrorIcon()
-      )
-      MarkdownSettings.getInstance(project).previewPanelProviderInfo = defaultProvider.providerInfo
-      provider = MarkdownHtmlPanelProvider.getProviders().find { p: MarkdownHtmlPanelProvider -> p.isAvailable() === MarkdownHtmlPanelProvider.AvailabilityInfo.AVAILABLE }!!
+    val preferredProvider = MarkdownHtmlPanelProvider.createFromInfo(providerInfo)
+    if (preferredProvider.isAvailable() !== MarkdownHtmlPanelProvider.AvailabilityInfo.AVAILABLE) {
+      val registeredProviders = MarkdownHtmlPanelProvider.getProviders()
+      val availableProvider = registeredProviders.firstOrNull { p: MarkdownHtmlPanelProvider -> p.isAvailable() === MarkdownHtmlPanelProvider.AvailabilityInfo.AVAILABLE }
+      if (availableProvider == null) {
+        logger.warn("Cannot find any available preview panel provider. Registered providers: ${registeredProviders.joinToString { it.providerInfo.name }}")
+      }
+      else {
+        settings.previewPanelProviderInfo = availableProvider.providerInfo
+        Notifications.Bus.notify(
+          Notification(
+            "Markdown",
+            MarkdownBundle.message("markdown.settings.notification.title"),
+            MarkdownBundle.message("markdown.settings.preview.provider.not.available", providerInfo.name, availableProvider.providerInfo.name),
+            NotificationType.WARNING
+          ),
+          project
+        )
+        logger.warn("Cannot use preview panel provider '${providerInfo.name}'. Using the first one that is available: ${preferredProvider.providerInfo.name}")
+      }
     }
     lastPanelProviderInfo = settings.previewPanelProviderInfo
-    return provider
+    return preferredProvider
   }
 
   @RequiresEdt
@@ -286,6 +297,8 @@ class MarkdownPreviewFileEditor(
   }
 
   companion object {
+    private val logger = thisLogger()
+
     val PREVIEW_BROWSER: Key<WeakReference<MarkdownHtmlPanel>> = Key.create("PREVIEW_BROWSER")
 
     internal val PREVIEW_POPUP_POINT: DataKey<RelativePoint> = DataKey.create("PREVIEW_POPUP_POINT")

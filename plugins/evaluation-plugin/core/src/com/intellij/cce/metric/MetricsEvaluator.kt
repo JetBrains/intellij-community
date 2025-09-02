@@ -2,6 +2,8 @@
 package com.intellij.cce.metric
 
 import com.intellij.cce.core.Session
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.thisLogger
 
 class MetricsEvaluator private constructor(private val evaluationType: String) {
   companion object {
@@ -16,6 +18,8 @@ class MetricsEvaluator private constructor(private val evaluationType: String) {
       evaluator.registerMetrics(metrics)
       return evaluator
     }
+
+    val LOG: Logger = thisLogger()
   }
 
   private val metrics = mutableListOf<Metric>()
@@ -36,6 +40,8 @@ class MetricsEvaluator private constructor(private val evaluationType: String) {
 
   fun evaluate(sessions: List<Session>, numberOfSessions: Int): List<MetricInfo> {
     return metrics.map { metric ->
+      val initialSampleSize = if(metric is ConfidenceIntervalMetric<*>) metric.sample.size else null
+
       val (overallScore, individualScores) = if (metric.supportsIndividualScores) {
         val evaluationResult = metric.evaluateWithIndividualScores(sessions)
         evaluationResult.overallScore.toDouble() to evaluationResult.sessionIndividualScores
@@ -47,7 +53,7 @@ class MetricsEvaluator private constructor(private val evaluationType: String) {
         name = metric.name,
         description = metric.description,
         value = overallScore,
-        confidenceInterval = if (metric.shouldComputeIntervals(numberOfSessions)) metric.confidenceInterval() else null,
+        confidenceInterval = metric.confidenceInterval(numberOfSessions, initialSampleSize),
         evaluationType = evaluationType,
         valueType = metric.valueType,
         showByDefault = metric.showByDefault,
@@ -57,15 +63,18 @@ class MetricsEvaluator private constructor(private val evaluationType: String) {
   }
 
   fun globalMetricInfos(numberOfSessions: Int): List<MetricInfo> {
-    return metrics.map {
+    return metrics.map { metric ->
+      if(metric is ConfidenceIntervalMetric<*> && numberOfSessions > metric.maximumSessions && metric.toggleConfidenceIntervals)
+        LOG.warn("Confidence Interval not calculated for metric ${metric.name} because number of sessions $numberOfSessions exceeds maximum threshold of ${metric.maximumSessions} maximumSessions")
+
       MetricInfo(
-        name = it.name,
-        description = it.description,
-        value = it.value,
-        confidenceInterval = if (it.shouldComputeIntervals(numberOfSessions)) it.confidenceInterval() else null,
+        name = metric.name,
+        description = metric.description,
+        value = metric.value,
+        confidenceInterval = metric.confidenceInterval(numberOfSessions, null),
         evaluationType = evaluationType,
-        valueType = it.valueType,
-        showByDefault = it.showByDefault,
+        valueType = metric.valueType,
+        showByDefault = metric.showByDefault,
         individualScores = emptyMap()
       )
     }

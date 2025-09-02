@@ -27,12 +27,18 @@ class Git(private val dir: Path) {
     return executeWithNullSeparatedOutput("git", "ls-files", "-z")
   }
 
-  fun mv(source: Path, destination: Path) {
-    execute("git", "mv", source.pathString, destination.pathString)
+  fun rm(files: List<Path>) {
+    execute("git", "rm", *files.map { it.pathString }.toTypedArray())
+  }
+
+  fun add(files: List<Path>) {
+    execute("git", "add", *files.map { it.pathString }.toTypedArray())
   }
 
   fun currentCommitShortHash(): String {
-    val lines = execute("git", "rev-parse", "--short=13", "HEAD")
+    val repoDirectory = dir.toAbsolutePath().toString()
+
+    val lines = execute("git", "-c", "safe.directory=${repoDirectory}", "rev-parse", "--short=13", "HEAD")
     if (lines.size != 1) {
       throw IllegalStateException("Single line output is expected but got '$lines'")
     }

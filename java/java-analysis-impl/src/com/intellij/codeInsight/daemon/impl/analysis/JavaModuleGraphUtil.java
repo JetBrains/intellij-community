@@ -1,9 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.codeserver.core.JavaPsiModuleUtil;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.jvm.JvmLanguage;
@@ -21,8 +22,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightJavaModule;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.CachedValueProvider.Result;
-import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ObjectUtils;
@@ -32,7 +31,10 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
 
 import static com.intellij.openapi.roots.DependencyScope.PROVIDED;
 import static com.intellij.psi.PsiJavaModule.JAVA_BASE;
@@ -66,13 +68,6 @@ public final class JavaModuleGraphUtil {
     return javaModule instanceof LightJavaModule ? null : javaModule;
   }
 
-  public static boolean exports(@NotNull PsiJavaModule source, @NotNull String packageName, @Nullable PsiJavaModule target) {
-    Map<String, Set<String>> exports = CachedValuesManager.getCachedValue(source, () ->
-      Result.create(exportsMap(source), source.getContainingFile()));
-    Set<String> targets = exports.get(packageName);
-    return targets != null && (targets.isEmpty() || target != null && targets.contains(target.getName()));
-  }
-
   /**
    * Determines if a specified module is readable from a given context
    *
@@ -96,7 +91,7 @@ public final class JavaModuleGraphUtil {
    */
   public static boolean isModuleReadable(@NotNull PsiElement place,
                                          @NotNull PsiJavaModule targetModule) {
-    return ContainerUtil.and(JavaModuleSystem.EP_NAME.getExtensionList(), sys -> sys.isAccessible(targetModule, place));
+    return JavaModuleGraphHelper.getInstance().isAccessible(targetModule, place);
   }
 
   public static boolean addDependency(@NotNull PsiJavaModule from,
@@ -109,9 +104,9 @@ public final class JavaModuleGraphUtil {
     if (to.equals(from.getName())) return false;
     if (!PsiNameHelper.isValidModuleName(to, from)) return false;
     if (alreadyContainsRequires(from, to)) return false;
-    PsiUtil.addModuleStatement(from, PsiKeyword.REQUIRES + " " +
-                                     (isStaticModule(to, scope) ? PsiKeyword.STATIC + " " : "") +
-                                     (isExported ? PsiKeyword.TRANSITIVE + " " : "") +
+    PsiUtil.addModuleStatement(from, JavaKeywords.REQUIRES + " " +
+                                     (isStaticModule(to, scope) ? JavaKeywords.STATIC + " " : "") +
+                                     (isExported ? JavaKeywords.TRANSITIVE + " " : "") +
                                      to);
     return true;
   }
@@ -124,7 +119,7 @@ public final class JavaModuleGraphUtil {
     if (fromDescriptor == null) return false;
     PsiJavaModule toDescriptor = findDescriptorByElement(to);
     if (toDescriptor == null) return false;
-    if(!ContainerUtil.and(JavaModuleSystem.EP_NAME.getExtensionList(), sys -> sys.isAccessible(to, from))) return false;
+    if (!JavaModuleGraphHelper.getInstance().isAccessible(to, from)) return false;
     return addDependency(fromDescriptor, toDescriptor, scope);
   }
 
@@ -138,10 +133,10 @@ public final class JavaModuleGraphUtil {
     if (!PsiNameHelper.isValidModuleName(to.getName(), to)) return false;
     if (contains(from.getRequires(), to.getName())) return false;
     if (JavaPsiModuleUtil.reads(from, to)) return false;
-    PsiUtil.addModuleStatement(from, PsiKeyword.REQUIRES + " " +
-                                     (isStaticModule(to.getName(), scope) ? PsiKeyword.STATIC + " " : "") +
-                                     (isExported(from, to) ? PsiKeyword.TRANSITIVE + " " : "") +
-                                     to.getName());
+    PsiUtil.addModuleStatement(from, JavaKeywords.REQUIRES + " " +
+                                      (isStaticModule(to.getName(), scope) ? JavaKeywords.STATIC + " " : "") +
+                                      (isExported(from, to) ? JavaKeywords.TRANSITIVE + " " : "") +
+                                      to.getName());
     return true;
   }
 
@@ -191,16 +186,6 @@ public final class JavaModuleGraphUtil {
   private static boolean isStaticModule(@NotNull String moduleName, @Nullable DependencyScope scope) {
     if (STATIC_REQUIRES_MODULE_NAMES.contains(moduleName)) return true;
     return scope == PROVIDED;
-  }
-
-  private static @NotNull Map<String, Set<String>> exportsMap(@NotNull PsiJavaModule source) {
-    Map<String, Set<String>> map = new HashMap<>();
-    for (PsiPackageAccessibilityStatement statement : source.getExports()) {
-      String pkg = statement.getPackageName();
-      List<String> targets = statement.getModuleNames();
-      map.put(pkg, targets.isEmpty() ? Collections.emptySet() : new HashSet<>(targets));
-    }
-    return map;
   }
 
   public static class JavaModuleScope extends GlobalSearchScope {

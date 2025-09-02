@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
-import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
@@ -10,7 +9,7 @@ import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
-import com.intellij.platform.workspace.storage.annotations.Child
+import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
@@ -20,10 +19,10 @@ import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.ChildWithNullsMultiple
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(6)
+@GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class ChildWithNullsMultipleImpl(private val dataSource: ChildWithNullsMultipleData) : ChildWithNullsMultiple, WorkspaceEntityBase(
-  dataSource) {
+internal class ChildWithNullsMultipleImpl(private val dataSource: ChildWithNullsMultipleData) : ChildWithNullsMultiple,
+                                                                                                WorkspaceEntityBase(dataSource) {
 
   private companion object {
 
@@ -50,8 +49,8 @@ internal class ChildWithNullsMultipleImpl(private val dataSource: ChildWithNulls
   }
 
 
-  internal class Builder(result: ChildWithNullsMultipleData?) : ModifiableWorkspaceEntityBase<ChildWithNullsMultiple, ChildWithNullsMultipleData>(
-    result), ChildWithNullsMultiple.Builder {
+  internal class Builder(result: ChildWithNullsMultipleData?) :
+    ModifiableWorkspaceEntityBase<ChildWithNullsMultiple, ChildWithNullsMultipleData>(result), ChildWithNullsMultiple.Builder {
     internal constructor() : this(ChildWithNullsMultipleData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -147,7 +146,8 @@ internal class ChildWithNullsMultipleData : WorkspaceEntityData<ChildWithNullsMu
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.ChildWithNullsMultiple") as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.ChildWithNullsMultiple"
+    ) as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

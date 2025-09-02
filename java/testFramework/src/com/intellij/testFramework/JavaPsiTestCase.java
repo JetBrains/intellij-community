@@ -15,7 +15,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -25,13 +25,13 @@ import java.io.IOException;
 import java.util.Objects;
 
 public abstract class JavaPsiTestCase extends JavaModuleTestCase {
-  protected PsiManagerImpl myPsiManager;
+  protected PsiManagerEx myPsiManager;
   protected PsiFile myFile;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myPsiManager = (PsiManagerImpl)PsiManager.getInstance(myProject);
+    myPsiManager = PsiManagerEx.getInstanceEx(myProject);
   }
 
   @Override

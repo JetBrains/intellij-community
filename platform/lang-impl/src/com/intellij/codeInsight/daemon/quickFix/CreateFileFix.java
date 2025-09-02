@@ -75,17 +75,17 @@ public class CreateFileFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   }
 
   @Override
-  public @Nullable PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
+  public @Nullable PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
     return null;
   }
 
   @Override
   public void invoke(final @NotNull Project project,
-                     @NotNull PsiFile file,
+                     @NotNull PsiFile psiFile,
                      Editor editor,
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
-    if (isAvailable(project, null, file)) {
+    if (isAvailable(project, null, psiFile)) {
       invoke(project, (PsiDirectory)startElement);
     }
   }
@@ -97,7 +97,7 @@ public class CreateFileFix extends LocalQuickFixAndIntentionActionOnPsiElement {
 
   @Override
   public boolean isAvailable(@NotNull Project project,
-                             @NotNull PsiFile file,
+                             @NotNull PsiFile psiFile,
                              @NotNull PsiElement startElement,
                              @NotNull PsiElement endElement) {
     PsiDirectory myDirectory = (PsiDirectory)startElement;

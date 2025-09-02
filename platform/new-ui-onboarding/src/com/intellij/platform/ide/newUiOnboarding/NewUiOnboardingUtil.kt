@@ -154,7 +154,7 @@ object NewUiOnboardingUtil {
     val dispatcher = if (action.actionUpdateThread == ActionUpdateThread.BGT) Dispatchers.Default else Dispatchers.EDT
     withContext(dispatcher) {
       readAction {
-        ActionUtil.performDumbAwareUpdate(action, event, false)
+        ActionUtil.updateAction(action, event)
       }
     }
   }

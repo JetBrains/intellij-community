@@ -40,12 +40,13 @@ import com.intellij.openapi.vcs.changes.shelf.DiffShelvedChangesActionProvider.P
 import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.platform.vcs.impl.shared.changes.DiffPreviewUpdateProcessor;
+import com.intellij.platform.vcs.impl.shared.changes.PreviewDiffSplitterComponent;
 import com.intellij.pom.Navigatable;
 import com.intellij.pom.NavigatableAdapter;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.Content;
@@ -57,8 +58,6 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
-import com.intellij.platform.vcs.impl.shared.changes.DiffPreviewUpdateProcessor;
-import com.intellij.platform.vcs.impl.shared.changes.PreviewDiffSplitterComponent;
 import kotlinx.coroutines.CoroutineScope;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.*;
@@ -480,7 +479,6 @@ public class ShelvedChangesViewManager implements Disposable {
       super(project, false, false, false);
       myAsyncTreeModel = new ShelfTreeAsyncModel(project, getScope());
 
-      TreeSpeedSearch.installOn(this, true, ChangesBrowserNode.TO_TEXT_CONVERTER);
       setKeepTreeState(true);
     }
 
@@ -783,6 +781,11 @@ public class ShelvedChangesViewManager implements Disposable {
       public void returnFocusToTree() {
         ToolWindow toolWindow = getToolWindowFor(myProject, SHELF);
         if (toolWindow != null) toolWindow.activate(null);
+      }
+
+      @Override
+      public boolean openPreview(boolean requestFocus) {
+        return CommitToolWindowUtil.openDiff(SHELF, this, requestFocus);
       }
 
       @Override

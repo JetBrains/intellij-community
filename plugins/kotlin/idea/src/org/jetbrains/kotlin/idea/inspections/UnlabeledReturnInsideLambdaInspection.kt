@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.inspections
 
-import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
@@ -10,6 +9,7 @@ import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.asQuickFix
 import org.jetbrains.kotlin.idea.quickfix.ChangeToLabeledReturnFix
 import org.jetbrains.kotlin.psi.KtLambdaExpression
 import org.jetbrains.kotlin.psi.KtNamedFunction
@@ -30,7 +30,7 @@ class UnlabeledReturnInsideLambdaInspection : AbstractKotlinInspection() {
                 returnExpression.returnKeyword,
                 KotlinBundle.message("unlabeled.return.inside.lambda"),
                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                LocalQuickFix.from(action)!!
+                action.asQuickFix(),
             )
         })
 }

@@ -5,7 +5,7 @@ import com.intellij.psi.impl.cache.ModifierFlags;
 import com.intellij.psi.impl.java.stubs.PsiJavaFileStub;
 import com.intellij.psi.impl.java.stubs.PsiJavaModuleStub;
 import com.intellij.psi.impl.java.stubs.impl.*;
-import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.psi.tree.java.IJavaElementType;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
 import org.jetbrains.org.objectweb.asm.*;
@@ -84,11 +84,6 @@ public class ModuleStubBuildingVisitor extends ClassVisitor {
     super.visitAttribute(attribute);
   }
 
-  @Override
-  public void visitEnd() {
-    super.visitEnd();
-  }
-
   private static boolean isGenerated(int access) {
     return isSet(access, Opcodes.ACC_SYNTHETIC) || isSet(access, Opcodes.ACC_MANDATED);
   }
@@ -138,7 +133,7 @@ public class ModuleStubBuildingVisitor extends ClassVisitor {
       myRequires.add(new Requires(module, flags));
     }
 
-    void addPackageAccessibility(IStubElementType type, String packageName, String[] modules) {
+    void addPackageAccessibility(IJavaElementType type, String packageName, String[] modules) {
       myPackageAccessibilities.add(new PackageAccessibility(type, packageName, modules));
     }
 
@@ -213,11 +208,11 @@ public class ModuleStubBuildingVisitor extends ClassVisitor {
     }
 
     private static class PackageAccessibility {
-      final IStubElementType myType;
+      final IJavaElementType myType;
       final String myPackageName;
       final List<String> myModules;
 
-      PackageAccessibility(IStubElementType type, String packageName, String[] modules) {
+      PackageAccessibility(IJavaElementType type, String packageName, String[] modules) {
         myType = type;
         myPackageName = packageName;
         myModules = modules == null ? null : Arrays.asList(modules);

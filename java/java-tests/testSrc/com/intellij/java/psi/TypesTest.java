@@ -16,6 +16,8 @@ import com.intellij.util.ref.GCWatcher;
 
 import java.io.File;
 
+import static org.junit.Assert.assertNotEquals;
+
 public class TypesTest extends GenericsTestCase {
   @Override
   protected void setUp() throws Exception {
@@ -45,7 +47,7 @@ public class TypesTest extends GenericsTestCase {
     final PsiType typeListOfA = factory.createTypeFromText("test.List<java.lang.String>", null);
     assertEquals(varList.getType(), typeListOfA);
     final PsiType typeListOfObject = factory.createTypeFromText("test.List<java.lang.Object>", null);
-    assertFalse(varList.getType().equals(typeListOfObject));
+    assertNotEquals(varList.getType(), typeListOfObject);
 
     final PsiReferenceExpression methodExpression
             = ((PsiMethodCallExpression) ((PsiExpressionStatement) methodStatements[1]).getExpression()).getMethodExpression();
@@ -62,7 +64,7 @@ public class TypesTest extends GenericsTestCase {
     final PsiType aIteratorType = factory.createTypeFromText("test.Iterator<java.lang.String>", null);
     assertEquals(aIteratorType, aListIteratorType);
     final PsiType objectIteratorType = factory.createTypeFromText("test.Iterator<java.lang.Object>", null);
-    assertFalse(objectIteratorType.equals(aListIteratorType));
+    assertNotEquals(objectIteratorType, aListIteratorType);
   }
 
   public void testRawTypes() {
@@ -118,7 +120,7 @@ public class TypesTest extends GenericsTestCase {
     final PsiType integerIteratorType = factory.createTypeFromText("test.Iterator<java.lang.Integer>", null);
     assertEquals(integerIteratorType, intListIteratorReturnType);
     final PsiType objectIteratorType = factory.createTypeFromText("test.Iterator<java.lang.Object>", null);
-    assertFalse(objectIteratorType.equals(integerIteratorType));
+    assertNotEquals(objectIteratorType, integerIteratorType);
   }
 
   public void testSimpleRawTypeInMethodArg() {

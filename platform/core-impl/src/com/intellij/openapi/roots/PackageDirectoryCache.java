@@ -14,6 +14,8 @@ import java.util.Set;
  */
 public interface PackageDirectoryCache {
   @NotNull List<VirtualFile> getDirectoriesByPackageName(@NotNull String packageName);
+  
+  @NotNull List<VirtualFile> getFilesByPackageName(@NotNull String packageName);
 
   @NotNull Set<String> getSubpackageNames(@NotNull String packageName, @NotNull GlobalSearchScope scope);
 

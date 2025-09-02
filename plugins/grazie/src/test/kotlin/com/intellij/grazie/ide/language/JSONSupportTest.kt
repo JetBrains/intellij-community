@@ -2,9 +2,21 @@
 package com.intellij.grazie.ide.language
 
 import com.intellij.grazie.GrazieTestBase
+import com.intellij.openapi.components.service
+import com.intellij.spellchecker.grazie.GrazieSpellCheckerEngine
+import com.intellij.tools.ide.metrics.benchmark.Benchmark
 
 class JSONSupportTest : GrazieTestBase() {
   fun `test grammar check in file`() {
     runHighlightTestForFile("ide/language/json/Example.json")
+  }
+
+  fun `test json typos spellcheck performance`() {
+    Benchmark.newBenchmark("Highlight typos in i18n.json file") {
+      runHighlightTestForFile("ide/language/json/i18n.json")
+    }.setup {
+      psiManager.dropPsiCaches()
+      project.service<GrazieSpellCheckerEngine>().dropSuggestionCache()
+    }.start()
   }
 }

@@ -15,5 +15,6 @@
     <orderEntry type="library" name="tcServiceMessages" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="JUnit5Jupiter" level="project" />
     <orderEntry type="library" name="opentest4j" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.core.nio.fs" />
   </component>
 </module>

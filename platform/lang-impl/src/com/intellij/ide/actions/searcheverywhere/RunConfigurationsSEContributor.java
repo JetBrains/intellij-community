@@ -129,7 +129,7 @@ public final class RunConfigurationsSEContributor implements SearchEverywhereCon
       return RUN_MODE;
     }
     else {
-      return (modifiers & InputEvent.SHIFT_MASK) == 0 ? DEBUG_MODE : RUN_MODE;
+      return (modifiers & InputEvent.SHIFT_DOWN_MASK) == 0 ? DEBUG_MODE : RUN_MODE;
     }
   }
 
@@ -271,7 +271,9 @@ public final class RunConfigurationsSEContributor implements SearchEverywhereCon
         SearchEverywhereManager manager = SearchEverywhereManager.getInstance(project);
         if (!manager.isShown()) return null;
 
-        return manager.getCurrentlyShownUI().getSearchField().getText();
+        SearchEverywherePopupInstance popupInstance = manager.getCurrentlyShownPopupInstance();
+        if (popupInstance != null) return popupInstance.getSearchText();
+        else return null;
       };
 
       return new RunConfigurationsSEContributor(project, contextComponent, commandSupplier);

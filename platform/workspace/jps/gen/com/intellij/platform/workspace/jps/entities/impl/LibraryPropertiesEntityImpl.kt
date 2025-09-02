@@ -11,7 +11,7 @@ import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
-import com.intellij.platform.workspace.storage.annotations.Child
+import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
@@ -27,14 +27,14 @@ import org.jetbrains.annotations.NonNls
 
 @Internal
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(6)
+@GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class LibraryPropertiesEntityImpl(private val dataSource: LibraryPropertiesEntityData) : LibraryPropertiesEntity, WorkspaceEntityBase(
-  dataSource) {
+internal class LibraryPropertiesEntityImpl(private val dataSource: LibraryPropertiesEntityData) : LibraryPropertiesEntity,
+                                                                                                  WorkspaceEntityBase(dataSource) {
 
   private companion object {
-    internal val LIBRARY_CONNECTION_ID: ConnectionId = ConnectionId.create(LibraryEntity::class.java, LibraryPropertiesEntity::class.java,
-                                                                           ConnectionId.ConnectionType.ONE_TO_ONE, false)
+    internal val LIBRARY_CONNECTION_ID: ConnectionId =
+      ConnectionId.create(LibraryEntity::class.java, LibraryPropertiesEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
 
     private val connections = listOf<ConnectionId>(
       LIBRARY_CONNECTION_ID,
@@ -62,8 +62,8 @@ internal class LibraryPropertiesEntityImpl(private val dataSource: LibraryProper
   }
 
 
-  internal class Builder(result: LibraryPropertiesEntityData?) : ModifiableWorkspaceEntityBase<LibraryPropertiesEntity, LibraryPropertiesEntityData>(
-    result), LibraryPropertiesEntity.Builder {
+  internal class Builder(result: LibraryPropertiesEntityData?) :
+    ModifiableWorkspaceEntityBase<LibraryPropertiesEntity, LibraryPropertiesEntityData>(result), LibraryPropertiesEntity.Builder {
     internal constructor() : this(LibraryPropertiesEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -201,7 +201,8 @@ internal class LibraryPropertiesEntityData : WorkspaceEntityData<LibraryProperti
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.jps.entities.LibraryPropertiesEntity") as EntityMetadata
+      "com.intellij.platform.workspace.jps.entities.LibraryPropertiesEntity"
+    ) as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

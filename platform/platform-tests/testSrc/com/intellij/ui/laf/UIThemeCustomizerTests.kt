@@ -93,6 +93,10 @@ class UIThemeCustomizerTests {
           emptyMap()
         }
       }
+
+      override fun createEditorThemeCustomizer(themeName: String): Map<String, String> {
+        return emptyMap()
+      }
     }, disposable)
     val iconPathMap = mutableMapOf<String, String>()
     val awtColorMap = mutableMapOf<String, Color>()

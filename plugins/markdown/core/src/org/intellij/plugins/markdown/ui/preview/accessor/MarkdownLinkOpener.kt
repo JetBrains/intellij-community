@@ -2,6 +2,7 @@ package org.intellij.plugins.markdown.ui.preview.accessor
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -21,7 +22,10 @@ interface MarkdownLinkOpener {
    *
    * Note: it is possible to add custom url handler with [com.intellij.ide.browsers.UrlOpener] EP.
    */
+  @Deprecated("this method lacks remote development support", ReplaceWith("openLink(project, link, sourceFile)"))
   fun openLink(project: Project?, link: String)
+
+  fun openLink(project: Project?, link: String, sourceFile: VirtualFile?)
 
   fun isSafeLink(project: Project?, link: String): Boolean
 

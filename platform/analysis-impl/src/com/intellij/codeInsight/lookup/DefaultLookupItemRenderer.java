@@ -34,8 +34,8 @@ public final class DefaultLookupItemRenderer extends LookupElementRenderer<Looku
     try (AccessToken ignore = SlowOperations.knownIssue("IDEA-344670, 32126317")) {
       icon = _getRawIcon(item);
     }
-    if (icon instanceof ScalableIcon) {
-      icon = ((ScalableIcon)icon).scale(1f);
+    if (icon instanceof ScalableIcon scalableIcon) {
+      icon = scalableIcon.scale(1f);
     }
     if (icon != null && icon.getIconHeight() > IconManager.getInstance().getPlatformIcon(PlatformIcons.Class).getIconHeight()) {
       return new SizedIcon(icon, icon.getIconWidth(), IconManager.getInstance().getPlatformIcon(PlatformIcons.Class).getIconHeight());
@@ -44,15 +44,15 @@ public final class DefaultLookupItemRenderer extends LookupElementRenderer<Looku
   }
 
   private static @Nullable Icon _getRawIcon(LookupElement item) {
-    if (item instanceof LookupItem) {
-      Icon icon = (Icon)((LookupItem<?>)item).getAttribute(LookupItem.ICON_ATTR);
+    if (item instanceof LookupItem<?> lookupItem) {
+      Icon icon = (Icon)lookupItem.getAttribute(LookupItem.ICON_ATTR);
       if (icon != null) return icon;
     }
 
     Object o = item.getObject();
 
-    if (o instanceof Iconable && !(o instanceof PsiElement)) {
-      return ((Iconable)o).getIcon(Registry.is("ide.completion.show.visibility.icon") ? Iconable.ICON_FLAG_VISIBILITY : 0);
+    if (o instanceof Iconable iconable && !(o instanceof PsiElement)) {
+      return iconable.getIcon(Registry.is("ide.completion.show.visibility.icon") ? Iconable.ICON_FLAG_VISIBILITY : 0);
     }
 
     final PsiElement element = item.getPsiElement();
@@ -67,8 +67,8 @@ public final class DefaultLookupItemRenderer extends LookupElementRenderer<Looku
   private static @Nullable String getText3(LookupItem<?> item) {
     Object o = item.getObject();
     String text;
-    if (o instanceof LookupValueWithUIHint) {
-      text = ((LookupValueWithUIHint)o).getTypeHint();
+    if (o instanceof LookupValueWithUIHint hint) {
+      text = hint.getTypeHint();
     }
     else {
       text = (String)item.getAttribute(LookupItem.TYPE_TEXT_ATTR);
@@ -91,11 +91,11 @@ public final class DefaultLookupItemRenderer extends LookupElementRenderer<Looku
         name = PsiUtilCore.getName(element);
       }
     }
-    else if (o instanceof PsiMetaData) {
-      name = ((PsiMetaData)o).getName();
+    else if (o instanceof PsiMetaData metaData) {
+      name = metaData.getName();
     }
-    else if (o instanceof PresentableLookupValue ) {
-      name = ((PresentableLookupValue)o).getPresentation();
+    else if (o instanceof PresentableLookupValue lookupValue) {
+      name = lookupValue.getPresentation();
     }
     else {
       name = String.valueOf(o);

@@ -20,12 +20,16 @@ import com.intellij.externalProcessAuthHelper.AuthenticationMode;
 import com.intellij.openapi.project.Project;
 import git4idea.commands.GitHttpAuthService;
 import git4idea.commands.GitHttpAuthenticator;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.Collection;
 
 public class GitHttpAuthTestService extends GitHttpAuthService {
+  GitHttpAuthTestService(CoroutineScope coroutineScope) {
+    super(coroutineScope);
+  }
 
   @NotNull private GitHttpAuthenticator myAuthenticator = STUB_AUTHENTICATOR;
 

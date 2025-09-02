@@ -8,7 +8,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.settingsSync.core.communicator.RemoteCommunicatorHolder
@@ -76,13 +75,11 @@ private class SettingsSynchronizerApplicationInitializedListener : ApplicationAc
   private suspend fun initializeSyncing(initMode: SettingsSyncBridge.InitMode, settingsSyncEventListener: SettingsSyncEventListener) {
     LOG.info("Initializing settings sync. Mode: $initMode")
     val settingsSyncMain = SettingsSyncMain.getInstanceAsync()
-    blockingContext {
-      settingsSyncMain.controls.bridge.initialize(initMode)
-      val settingsSyncEvents = SettingsSyncEvents.getInstance()
-      settingsSyncEvents.addListener(settingsSyncEventListener)
-      settingsSyncEvents.fireSettingsChanged(SyncSettingsEvent.SyncRequest)
-      LocalHostNameProvider.initialize()
-    }
+    settingsSyncMain.controls.bridge.initialize(initMode)
+    val settingsSyncEvents = SettingsSyncEvents.getInstance()
+    settingsSyncEvents.addListener(settingsSyncEventListener)
+    settingsSyncEvents.fireSettingsChanged(SyncSettingsEvent.SyncRequest)
+    LocalHostNameProvider.initialize()
   }
 
   private fun setProviderCodeAndUserId() {

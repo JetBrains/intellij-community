@@ -1,9 +1,19 @@
 externalApp.ExternalApp
+externalApp.ExternalAppEntry
+- s:fromMain(java.lang.String[]):externalApp.ExternalAppEntry
+- a:getArgs():java.lang.String[]
+- a:getEnvironment():java.util.Map
+- a:getStderr():java.io.PrintStream
+- a:getStdout():java.io.PrintStream
+- a:getWorkingDirectory():java.lang.String
 externalApp.ExternalAppHandler
 - sf:HANDLER_ID_PARAMETER:java.lang.String
 f:externalApp.ExternalAppUtil
 - s:getEnv(java.lang.String):java.lang.String
+- s:getEnv(java.lang.String,java.util.Map):java.lang.String
 - s:getEnvInt(java.lang.String):I
+- s:getEnvInt(java.lang.String,java.util.Map):I
+- s:handleAskPassInvocation(java.lang.String,java.lang.String,java.lang.String,externalApp.ExternalAppEntry):I
 - s:handleAskPassInvocation(java.lang.String,java.lang.String,java.lang.String,java.lang.String[]):V
 - s:sendIdeRequest(java.lang.String,I,java.lang.String,java.lang.String):externalApp.ExternalAppUtil$Result
 c:externalApp.ExternalAppUtil$Result
@@ -14,8 +24,13 @@ c:externalApp.ExternalAppUtil$Result
 - s:error(I,java.lang.String):externalApp.ExternalAppUtil$Result
 - getPresentableError():java.lang.String
 - s:success(I,java.lang.String):externalApp.ExternalAppUtil$Result
+externalApp.ExternalCli
+- a:entryPoint(externalApp.ExternalAppEntry):I
 c:externalApp.nativessh.NativeSshAskPassApp
 - externalApp.ExternalApp
+- externalApp.ExternalCli
+- <init>():V
+- entryPoint(externalApp.ExternalAppEntry):I
 - s:main(java.lang.String[]):V
 externalApp.nativessh.NativeSshAskPassAppHandler
 - externalApp.ExternalAppHandler

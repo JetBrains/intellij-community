@@ -1,5 +1,0 @@
-<idea-plugin>
-  <id>com.intellij.disabled</id>
-  <description>This is a disabled plugin</description>
-  <depends>com.intellij.modules.lang</depends>
-</idea-plugin>

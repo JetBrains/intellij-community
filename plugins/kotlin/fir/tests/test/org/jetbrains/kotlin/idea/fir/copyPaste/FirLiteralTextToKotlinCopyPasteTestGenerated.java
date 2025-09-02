@@ -70,9 +70,169 @@ public class FirLiteralTextToKotlinCopyPasteTestGenerated extends AbstractFirLit
         runTest("../../idea/tests/testData/copyPaste/plainTextLiteral/NoSpecialCharsToSingleQuote.txt");
     }
 
+    @TestMetadata("RawNoPrefixTwoDollars1.txt")
+    public void testRawNoPrefixTwoDollars1() throws Exception {
+        runTest("../../idea/tests/testData/copyPaste/plainTextLiteral/RawNoPrefixTwoDollars1.txt");
+    }
+
+    @TestMetadata("RawNoPrefixTwoDollars2.txt")
+    public void testRawNoPrefixTwoDollars2() throws Exception {
+        runTest("../../idea/tests/testData/copyPaste/plainTextLiteral/RawNoPrefixTwoDollars2.txt");
+    }
+
+    @TestMetadata("RawNoPrefixTwoDollars3.txt")
+    public void testRawNoPrefixTwoDollars3() throws Exception {
+        runTest("../../idea/tests/testData/copyPaste/plainTextLiteral/RawNoPrefixTwoDollars3.txt");
+    }
+
+    @TestMetadata("RawNoPrefixTwoDollars4.txt")
+    public void testRawNoPrefixTwoDollars4() throws Exception {
+        runTest("../../idea/tests/testData/copyPaste/plainTextLiteral/RawNoPrefixTwoDollars4.txt");
+    }
+
+    @TestMetadata("RawNoPrefixTwoDollars5.txt")
+    public void testRawNoPrefixTwoDollars5() throws Exception {
+        runTest("../../idea/tests/testData/copyPaste/plainTextLiteral/RawNoPrefixTwoDollars5.txt");
+    }
+
+    @TestMetadata("RawPrefix2EntriesAndSurroundingDollars1.txt")
+    public void testRawPrefix2EntriesAndSurroundingDollars1() throws Exception {
+        runTest("../../idea/tests/testData/copyPaste/plainTextLiteral/RawPrefix2EntriesAndSurroundingDollars1.txt");
+    }
+
+    @TestMetadata("RawPrefix2EntriesAndSurroundingDollars2.txt")
+    public void testRawPrefix2EntriesAndSurroundingDollars2() throws Exception {
+        runTest("../../idea/tests/testData/copyPaste/plainTextLiteral/RawPrefix2EntriesAndSurroundingDollars2.txt");
+    }
+
+    @TestMetadata("RawPrefix2EntriesAndSurroundingDollars3.txt")
+    public void testRawPrefix2EntriesAndSurroundingDollars3() throws Exception {
+        runTest("../../idea/tests/testData/copyPaste/plainTextLiteral/RawPrefix2EntriesAndSurroundingDollars3.txt");
+    }
+
+    @TestMetadata("RawPrefix2OneDollar1.txt")
+    public void testRawPrefix2OneDollar1() throws Exception {
+        runTest("../../idea/tests/testData/copyPaste/plainTextLiteral/RawPrefix2OneDollar1.txt");
+    }
+
+    @TestMetadata("RawPrefix2OneDollar2.txt")
+    public void testRawPrefix2OneDollar2() throws Exception {
+        runTest("../../idea/tests/testData/copyPaste/plainTextLiteral/RawPrefix2OneDollar2.txt");
+    }
+
+    @TestMetadata("RawPrefix2OneDollar3.txt")
+    public void testRawPrefix2OneDollar3() throws Exception {
+        runTest("../../idea/tests/testData/copyPaste/plainTextLiteral/RawPrefix2OneDollar3.txt");
+    }
+
+    @TestMetadata("RawPrefix2OneDollar4.txt")
+    public void testRawPrefix2OneDollar4() throws Exception {
+        runTest("../../idea/tests/testData/copyPaste/plainTextLiteral/RawPrefix2OneDollar4.txt");
+    }
+
+    @TestMetadata("RawPrefix2OneDollar5.txt")
+    public void testRawPrefix2OneDollar5() throws Exception {
+        runTest("../../idea/tests/testData/copyPaste/plainTextLiteral/RawPrefix2OneDollar5.txt");
+    }
+
+    @TestMetadata("RawPrefix2OneDollar6.txt")
+    public void testRawPrefix2OneDollar6() throws Exception {
+        runTest("../../idea/tests/testData/copyPaste/plainTextLiteral/RawPrefix2OneDollar6.txt");
+    }
+
+    @TestMetadata("RawPrefix2OneDollar7.txt")
+    public void testRawPrefix2OneDollar7() throws Exception {
+        runTest("../../idea/tests/testData/copyPaste/plainTextLiteral/RawPrefix2OneDollar7.txt");
+    }
+
+    @TestMetadata("RawPrefix2PastedDollarsBeforeAfter1.txt")
+    public void testRawPrefix2PastedDollarsBeforeAfter1() throws Exception {
+        runTest("../../idea/tests/testData/copyPaste/plainTextLiteral/RawPrefix2PastedDollarsBeforeAfter1.txt");
+    }
+
+    @TestMetadata("RawPrefix2PastedDollarsBeforeAfter2.txt")
+    public void testRawPrefix2PastedDollarsBeforeAfter2() throws Exception {
+        runTest("../../idea/tests/testData/copyPaste/plainTextLiteral/RawPrefix2PastedDollarsBeforeAfter2.txt");
+    }
+
+    @TestMetadata("RawPrefix2PastedDollarsBeforeAfter3.txt")
+    public void testRawPrefix2PastedDollarsBeforeAfter3() throws Exception {
+        runTest("../../idea/tests/testData/copyPaste/plainTextLiteral/RawPrefix2PastedDollarsBeforeAfter3.txt");
+    }
+
+    @TestMetadata("RawPrefix2TwoDollars1.txt")
+    public void testRawPrefix2TwoDollars1() throws Exception {
+        runTest("../../idea/tests/testData/copyPaste/plainTextLiteral/RawPrefix2TwoDollars1.txt");
+    }
+
+    @TestMetadata("RawPrefix2TwoDollars2.txt")
+    public void testRawPrefix2TwoDollars2() throws Exception {
+        runTest("../../idea/tests/testData/copyPaste/plainTextLiteral/RawPrefix2TwoDollars2.txt");
+    }
+
+    @TestMetadata("RawPrefix2TwoDollarsSelection1.txt")
+    public void testRawPrefix2TwoDollarsSelection1() throws Exception {
+        runTest("../../idea/tests/testData/copyPaste/plainTextLiteral/RawPrefix2TwoDollarsSelection1.txt");
+    }
+
+    @TestMetadata("RawPrefix2TwoDollarsSelection2.txt")
+    public void testRawPrefix2TwoDollarsSelection2() throws Exception {
+        runTest("../../idea/tests/testData/copyPaste/plainTextLiteral/RawPrefix2TwoDollarsSelection2.txt");
+    }
+
+    @TestMetadata("RawPrefix3TwoDollars1.txt")
+    public void testRawPrefix3TwoDollars1() throws Exception {
+        runTest("../../idea/tests/testData/copyPaste/plainTextLiteral/RawPrefix3TwoDollars1.txt");
+    }
+
+    @TestMetadata("RawPrefix3TwoDollars2.txt")
+    public void testRawPrefix3TwoDollars2() throws Exception {
+        runTest("../../idea/tests/testData/copyPaste/plainTextLiteral/RawPrefix3TwoDollars2.txt");
+    }
+
+    @TestMetadata("RawPrefix3TwoDollars3.txt")
+    public void testRawPrefix3TwoDollars3() throws Exception {
+        runTest("../../idea/tests/testData/copyPaste/plainTextLiteral/RawPrefix3TwoDollars3.txt");
+    }
+
+    @TestMetadata("RawPrefix3TwoSeparatedDollars1.txt")
+    public void testRawPrefix3TwoSeparatedDollars1() throws Exception {
+        runTest("../../idea/tests/testData/copyPaste/plainTextLiteral/RawPrefix3TwoSeparatedDollars1.txt");
+    }
+
+    @TestMetadata("RawPrefix3TwoSeparatedDollars2.txt")
+    public void testRawPrefix3TwoSeparatedDollars2() throws Exception {
+        runTest("../../idea/tests/testData/copyPaste/plainTextLiteral/RawPrefix3TwoSeparatedDollars2.txt");
+    }
+
+    @TestMetadata("RawPrefix3TwoSeparatedDollars3.txt")
+    public void testRawPrefix3TwoSeparatedDollars3() throws Exception {
+        runTest("../../idea/tests/testData/copyPaste/plainTextLiteral/RawPrefix3TwoSeparatedDollars3.txt");
+    }
+
+    @TestMetadata("RawPrefix3TwoSeparatedDollars4.txt")
+    public void testRawPrefix3TwoSeparatedDollars4() throws Exception {
+        runTest("../../idea/tests/testData/copyPaste/plainTextLiteral/RawPrefix3TwoSeparatedDollars4.txt");
+    }
+
+    @TestMetadata("RawPrefix3TwoSeparatedDollars5.txt")
+    public void testRawPrefix3TwoSeparatedDollars5() throws Exception {
+        runTest("../../idea/tests/testData/copyPaste/plainTextLiteral/RawPrefix3TwoSeparatedDollars5.txt");
+    }
+
     @TestMetadata("Stacktrace.txt")
     public void testStacktrace() throws Exception {
         runTest("../../idea/tests/testData/copyPaste/plainTextLiteral/Stacktrace.txt");
+    }
+
+    @TestMetadata("StacktraceDoublePrefix.txt")
+    public void testStacktraceDoublePrefix() throws Exception {
+        runTest("../../idea/tests/testData/copyPaste/plainTextLiteral/StacktraceDoublePrefix.txt");
+    }
+
+    @TestMetadata("StacktraceTriplePrefix.txt")
+    public void testStacktraceTriplePrefix() throws Exception {
+        runTest("../../idea/tests/testData/copyPaste/plainTextLiteral/StacktraceTriplePrefix.txt");
     }
 
     @TestMetadata("TrailingLines.txt")

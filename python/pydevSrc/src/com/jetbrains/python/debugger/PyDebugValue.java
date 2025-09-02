@@ -6,15 +6,13 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.frame.presentation.XRegularValuePresentation;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
@@ -27,8 +25,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
 import java.awt.event.MouseEvent;
+import java.util.*;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -65,6 +63,7 @@ public class PyDebugValue extends XNamedValue {
   protected @Nullable String myValue;
   private final boolean myContainer;
   private final @Nullable String myShape;
+  private final @Nullable String myArrayElementType;
   private final boolean myIsReturnedVal;
   private final boolean myIsIPythonHidden;
   private @Nullable PyDebugValue myParent;
@@ -129,12 +128,47 @@ public class PyDebugValue extends XNamedValue {
                       @Nullable String typeRendererId,
                       final @Nullable PyDebugValue parent,
                       final @NotNull PyFrameAccessor frameAccessor) {
+    this(name, type, typeQualifier, value, container, shape, null, isReturnedVal, isIPythonHidden, errorOnEval, typeRendererId, parent, frameAccessor);
+  }
+
+
+  public PyDebugValue(final @NotNull String name,
+                      final @Nullable String type,
+                      @Nullable String typeQualifier,
+                      final @Nullable String value,
+                      final boolean container,
+                      @Nullable String shape,
+                      @Nullable String arrayElementType,
+                      boolean isReturnedVal,
+                      boolean isIPythonHidden,
+                      boolean errorOnEval,
+                      @Nullable String typeRendererId,
+                      final @NotNull PyFrameAccessor frameAccessor) {
+    this(name, type, typeQualifier, value, container, shape, arrayElementType, isReturnedVal, isIPythonHidden, errorOnEval, typeRendererId,
+         null, frameAccessor);
+  }
+
+
+  public PyDebugValue(final @NotNull String name,
+                      final @Nullable String type,
+                      @Nullable String typeQualifier,
+                      final @Nullable String value,
+                      final boolean container,
+                      @Nullable String shape,
+                      @Nullable String arrayElementType,
+                      boolean isReturnedVal,
+                      boolean isIPythonHidden,
+                      boolean errorOnEval,
+                      @Nullable String typeRendererId,
+                      final @Nullable PyDebugValue parent,
+                      final @NotNull PyFrameAccessor frameAccessor) {
     super(name);
     myType = type;
     myTypeQualifier = Strings.isNullOrEmpty(typeQualifier) ? null : typeQualifier;
     myValue = value;
     myContainer = container;
     myShape = shape;
+    myArrayElementType = arrayElementType;
     myIsReturnedVal = isReturnedVal;
     myIsIPythonHidden = isIPythonHidden;
     myErrorOnEval = errorOnEval;
@@ -149,7 +183,7 @@ public class PyDebugValue extends XNamedValue {
   }
 
   public PyDebugValue(@NotNull PyDebugValue value, @NotNull String newName) {
-    this(newName, value.getType(), value.getTypeQualifier(), value.getValue(), value.isContainer(), value.getShape(), value.isReturnedVal(),
+    this(newName, value.getType(), value.getTypeQualifier(), value.getValue(), value.isContainer(), value.getShape(), value.getArrayElementType(), value.isReturnedVal(),
          value.isIPythonHidden(), value.isErrorOnEval(), value.getTypeRendererId(), value.getParent(), value.getFrameAccessor());
     myOffset = value.getOffset();
     setLoadValuePolicy(value.getLoadValuePolicy());
@@ -202,6 +236,10 @@ public class PyDebugValue extends XNamedValue {
 
   public @Nullable String getTypeRendererId() {
     return myTypeRendererId;
+  }
+
+  public @Nullable String getArrayElementType() {
+    return myArrayElementType;
   }
 
   public @Nullable PyDebugValue getParent() {
@@ -507,12 +545,12 @@ public class PyDebugValue extends XNamedValue {
       public void onClick(MouseEvent event) {
         AnAction action = ActionManager.getInstance().getAction("JupyterShowAsImageAction");
         DataContext dataContext = DataManager.getInstance().getDataContext((Component)event.getSource());
-        AnActionEvent actionEvent = AnActionEvent.createFromAnAction(
-          action,
-          null,
-          "JupyterShowAsImageAction",
-          dataContext
-        );
+        AnActionEvent actionEvent = AnActionEvent.createEvent(action,
+                                                              dataContext,
+                                                              null,
+                                                              "JupyterShowAsImageAction",
+                                                              ActionUiKind.NONE,
+                                                              null);
         action.actionPerformed(actionEvent);
       }
 
@@ -524,12 +562,9 @@ public class PyDebugValue extends XNamedValue {
   }
 
   private static boolean checkAndShowViewAsImageOnScreen(PyDebugValue debugValue) {
-    try {
-      return Registry.get("actions.show.as.image.visibility").asBoolean()
+      return Registry.is("actions.show.as.image.visibility", false)
+             && !PluginManagerCore.isDisabled(PluginManagerCore.ULTIMATE_PLUGIN_ID)
              && checkAndEnableViewAsImageVisibility(debugValue);
-    } catch (MissingResourceException e) {
-      return false;
-    }
   }
 
   private static boolean checkAndEnableViewAsImageVisibility(PyDebugValue debugValue) {
@@ -538,7 +573,10 @@ public class PyDebugValue extends XNamedValue {
       case NodeTypes.NDARRAY_NODE_TYPE, NodeTypes.EAGER_TENSOR_NODE_TYPE, NodeTypes.RESOURCE_VARIABLE_NODE_TYPE,
            NodeTypes.SPARSE_TENSOR_NODE_TYPE, NodeTypes.TENSOR_NODE_TYPE -> {
         int[] shape = extractShape(debugValue);
-        yield isValidArrayShape(shape);
+        String arrayElementType = debugValue.getArrayElementType();
+        boolean isConvertibleDataType = arrayElementType != null && !arrayElementType.isEmpty() &&
+                                  (arrayElementType.contains("float") || arrayElementType.contains("bool") || arrayElementType.contains("int"));
+        yield isConvertibleDataType && isConvertibleArrayShape(shape);
       }
       case NodeTypes.IMAGE_NODE_TYPE, NodeTypes.PNG_IMAGE_NODE_TYPE, NodeTypes.JPEG_IMAGE_NODE_TYPE, NodeTypes.FIGURE_NODE_TYPE -> true;
       default -> false;
@@ -561,7 +599,7 @@ public class PyDebugValue extends XNamedValue {
       .toArray();
   }
 
-  private static boolean isValidArrayShape(int[] shape) {
+  private static boolean isConvertibleArrayShape(int[] shape) {
     if (shape == null || shape.length == 0) {
       return false;
     }

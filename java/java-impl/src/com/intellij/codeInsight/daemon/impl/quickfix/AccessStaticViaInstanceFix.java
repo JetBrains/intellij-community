@@ -4,7 +4,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightMessageUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightNamesUtil;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.JavaBundle;
 import com.intellij.modcommand.ActionContext;
@@ -75,7 +75,7 @@ public class AccessStaticViaInstanceFix extends PsiBasedModCommandAction<PsiRefe
                                   ? "access.static.method.via.class.reference.text"
                                   : "access.static.field.via.class.reference.text",
                                   HighlightMessageUtil.getSymbolName(member, substitutor, PsiFormatUtilBase.SHOW_TYPE),
-                                  HighlightUtil.formatClass(aClass, false));
+                                  HighlightNamesUtil.formatClass(aClass, false));
   }
 
   @Override

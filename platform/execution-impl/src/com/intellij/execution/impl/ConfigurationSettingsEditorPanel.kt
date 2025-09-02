@@ -1,8 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl
 
 import com.intellij.execution.ExecutionBundle
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.CollapsibleRow
 import com.intellij.ui.dsl.builder.Placeholder
@@ -15,8 +16,11 @@ import javax.swing.JPanel
 
 private const val EXPAND_PROPERTY_KEY = "ExpandBeforeRunStepsPanel"
 
+/**
+ * @param maximizeEditorHeight see [com.intellij.openapi.options.SettingsEditor.isMaximizeEditorHeight]
+ */
 @ApiStatus.Internal
-class ConfigurationSettingsEditorPanel(rcStorage: JComponent?) {
+internal class ConfigurationSettingsEditorPanel @JvmOverloads constructor(rcStorage: JComponent?, maximizeEditorHeight: Boolean = false) {
 
   lateinit var isAllowRunningInParallelCheckBox: JCheckBox
   lateinit var targetPanel: JPanel
@@ -25,7 +29,7 @@ class ConfigurationSettingsEditorPanel(rcStorage: JComponent?) {
   lateinit var beforeRunStepsPlaceholder: Placeholder
 
   @JvmField
-  val panel = panel {
+  val panel: DialogPanel = panel {
     row {
       isAllowRunningInParallelCheckBox = checkBox(ExecutionBundle.message("run.configuration.allow.running.parallel.tag"))
         .resizableColumn()
@@ -47,6 +51,10 @@ class ConfigurationSettingsEditorPanel(rcStorage: JComponent?) {
       componentPlace = cell(JPanel())
         .align(AlignX.FILL)
         .component
+    }.apply {
+      if (maximizeEditorHeight) {
+        resizableRow()
+      }
     }
 
     beforeRunStepsRow = collapsibleGroup("") {

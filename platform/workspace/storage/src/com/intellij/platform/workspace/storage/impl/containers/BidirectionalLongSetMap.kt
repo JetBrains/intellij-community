@@ -1,19 +1,22 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.impl.containers
 
+import it.unimi.dsi.fastutil.Hash.DEFAULT_INITIAL_SIZE
+import it.unimi.dsi.fastutil.Hash.FAST_LOAD_FACTOR
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet
 import it.unimi.dsi.fastutil.longs.LongSet
-import kotlin.collections.component1
-import kotlin.collections.component2
 
 internal class BidirectionalLongSetMap<V> private constructor(
   private val keyToValueMap: Long2ObjectOpenHashMap<V>,
-  private val valueToKeysMap: MutableMap<V, LongOpenHashSet>
+  private val valueToKeysMap: MutableMap<V, LongOpenHashSet>,
 ) {
 
-  constructor() : this(Long2ObjectOpenHashMap<V>(), HashMap<V, LongOpenHashSet>())
+  constructor(expectedSize: Int = DEFAULT_INITIAL_SIZE) : this(
+    Long2ObjectOpenHashMap<V>(expectedSize),
+    HashMap<V, LongOpenHashSet>(),
+  )
 
   fun put(key: Long, value: V): V? {
     val oldValue = keyToValueMap.put(key, value)
@@ -28,7 +31,7 @@ internal class BidirectionalLongSetMap<V> private constructor(
       }
     }
 
-    val array = valueToKeysMap.computeIfAbsent(value) { LongOpenHashSet() }
+    val array = valueToKeysMap.computeIfAbsent(value) { LongOpenHashSet(DEFAULT_INITIAL_SIZE, FAST_LOAD_FACTOR) }
     array.add(key)
     return oldValue
   }

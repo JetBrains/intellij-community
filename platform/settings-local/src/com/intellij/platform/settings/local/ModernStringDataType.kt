@@ -36,14 +36,10 @@ internal object ModernStringDataType : BasicDataType<String>() {
     }
     while (low <= high) {
       val compare = key.compareTo(storage[x]!!)
-      if (compare > 0) {
-        low = x + 1
-      }
-      else if (compare < 0) {
-        high = x - 1
-      }
-      else {
-        return x
+      when {
+        compare > 0 -> low = x + 1
+        compare < 0 -> high = x - 1
+        else -> return x
       }
       x = (low + high) ushr 1
     }

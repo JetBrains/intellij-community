@@ -24,10 +24,10 @@ internal object FirClassifierProvider {
         positionContext: KotlinRawPositionContext,
         scopeNameFilter: (Name) -> Boolean,
         visibilityChecker: CompletionVisibilityChecker,
-    ): Sequence<KaClassifierSymbolWithContainingScopeKind> = scope
+    ): Sequence<KtSymbolWithOrigin<KaClassifierSymbol>> = scope
         .classifiers(scopeNameFilter)
         .filter { visibilityChecker.isVisible(it, positionContext) }
-        .map { KaClassifierSymbolWithContainingScopeKind(it, kind) }
+        .map { KtSymbolWithOrigin(it, kind) }
 
     context(KaSession)
     fun getAvailableClassifiersFromIndex(

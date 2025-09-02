@@ -72,6 +72,7 @@ public class Notification {
   private boolean mySuggestionType;
   private boolean myImportantSuggestion;
   private boolean myRemoveWhenExpired;
+  private boolean myAddExtraAction;
   private String myDoNotAskId;
   private @Nls String myDoNotAskDisplayName;
   private boolean myIsShowingPopupSuppressed;
@@ -129,6 +130,16 @@ public class Notification {
   @Contract(value = "_ -> this", mutates = "this")
   public @NotNull Notification setRemoveWhenExpired(boolean removeWhenExpired) {
     myRemoveWhenExpired = removeWhenExpired;
+    return this;
+  }
+
+  public boolean isAddExtraAction() {
+    return myAddExtraAction;
+  }
+
+  @Contract(value = "_ -> this", mutates = "this")
+  public @NotNull Notification setAddExtraAction(boolean addExtraAction) {
+    myAddExtraAction = addExtraAction;
     return this;
   }
 
@@ -450,21 +461,30 @@ public class Notification {
                          id, myGroupId, myType, myTitle, mySubtitle, myContent);
   }
 
-  //<editor-fold desc="Deprecated stuff.">
+  private static final String DO_NOT_ASK_PREFIX = "Notification.DoNotAsk-";
+  private static final String DO_NOT_ASK_DISPLAY_PREFIX = "Notification.DisplayName-DoNotAsk-";
 
-  @ApiStatus.Internal
+  @ApiStatus.Experimental
   @Contract("_ -> this")
   public Notification setDoNotAskFor(@Nullable Project project) {
     PropertiesComponent manager = project == null ? PropertiesComponent.getInstance() : PropertiesComponent.getInstance(project);
-    manager.setValue("Notification.DoNotAsk-" + myDoNotAskId, true);
-    manager.setValue("Notification.DisplayName-DoNotAsk-" + myDoNotAskId, myDoNotAskDisplayName);
+    manager.setValue(DO_NOT_ASK_PREFIX + myDoNotAskId, true);
+    manager.setValue(DO_NOT_ASK_DISPLAY_PREFIX + myDoNotAskId, myDoNotAskDisplayName);
     return this;
   }
+
+  @ApiStatus.Experimental
+  public static boolean isDoNotAskFor(@Nullable Project project, @NotNull String doNotAskId) {
+    return project != null && PropertiesComponent.getInstance(project).getBoolean(DO_NOT_ASK_PREFIX + doNotAskId)
+           || PropertiesComponent.getInstance().getBoolean(DO_NOT_ASK_PREFIX + doNotAskId);
+  }
+
+  //<editor-fold desc="Deprecated stuff.">
 
   public static void fire(@NotNull Notification notification, @NotNull AnAction action, @Nullable DataContext context) {
     var dataContext = context != null ? context : CustomizedDataContext.withSnapshot(DataContext.EMPTY_CONTEXT, sink -> sink.set(KEY, notification));
     var event = AnActionEvent.createEvent(action, dataContext, null, ActionPlaces.NOTIFICATION, ActionUiKind.NONE, null);
-    IdeUiService.getInstance().performActionDumbAwareWithCallbacks(action, event);
+    IdeUiService.getInstance().performAction(action, event);
   }
 
   /**

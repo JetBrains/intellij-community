@@ -492,6 +492,7 @@ c:com.intellij.psi.codeStyle.CodeStyleSettings
 - clone():com.intellij.psi.codeStyle.CodeStyleSettings
 - copyFrom(com.intellij.psi.codeStyle.CodeStyleSettings):V
 - equals(java.lang.Object):Z
+- s:generateConfigurableIdByLanguage(com.intellij.lang.Language):java.lang.String
 - getClassCountToUseImportOnDemand():I
 - getCommonSettings(com.intellij.lang.Language):com.intellij.psi.codeStyle.CommonCodeStyleSettings
 - getCommonSettings(java.lang.String):com.intellij.psi.codeStyle.CommonCodeStyleSettings
@@ -940,6 +941,7 @@ com.intellij.psi.codeStyle.FileCodeStyleProvider
 a:com.intellij.psi.codeStyle.FileIndentOptionsProvider
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - <init>():V
+- getActivatingAction(com.intellij.psi.codeStyle.modifier.CodeStyleStatusBarUIContributor,com.intellij.psi.PsiFile):com.intellij.openapi.actionSystem.AnAction
 - getIndentOptions(com.intellij.openapi.project.Project,com.intellij.psi.codeStyle.CodeStyleSettings,com.intellij.openapi.vfs.VirtualFile):com.intellij.psi.codeStyle.CommonCodeStyleSettings$IndentOptions
 - getIndentOptions(com.intellij.psi.codeStyle.CodeStyleSettings,com.intellij.psi.PsiFile):com.intellij.psi.codeStyle.CommonCodeStyleSettings$IndentOptions
 - getIndentStatusBarUiContributor(com.intellij.psi.codeStyle.CommonCodeStyleSettings$IndentOptions):com.intellij.psi.codeStyle.modifier.CodeStyleStatusBarUIContributor

@@ -1,9 +1,9 @@
 import com.intellij.codeInsight.XmlDocumentationTest
 import com.intellij.html.HtmlDocumentationTest
 import com.intellij.htmltools.codeInsight.daemon.HtmlHighlightingTest
-import com.intellij.javascript.webSymbols.css.WebSymbolsCssCodeCompletionTest
-import com.intellij.javascript.webSymbols.html.WebSymbolsHtmlDocumentationTest
-import com.intellij.javascript.webSymbols.html.WebSymbolsHtmlLookupDocumentationTest
+import com.intellij.javascript.polySymbols.css.PolySymbolsCssCodeCompletionTest
+import com.intellij.javascript.polySymbols.html.PolySymbolsHtmlDocumentationTest
+import com.intellij.javascript.polySymbols.html.PolySymbolsHtmlLookupDocumentationTest
 import com.intellij.lang.javascript.JSDocumentationTest
 import com.intellij.lang.javascript.typescript.TypeScriptDocumentationTest
 import com.intellij.lang.javascript.typescript.service.TypeScriptServiceDocumentationTest
@@ -24,9 +24,9 @@ import org.junit.runners.Suite
   HtmlDocumentationTest::class,
   XmlDocumentationTest::class,
   HtmlHighlightingTest::class,
-  WebSymbolsHtmlDocumentationTest::class,
-  WebSymbolsHtmlLookupDocumentationTest::class,
-  WebSymbolsCssCodeCompletionTest::class,
+  PolySymbolsHtmlDocumentationTest::class,
+  PolySymbolsHtmlLookupDocumentationTest::class,
+  PolySymbolsCssCodeCompletionTest::class,
   CssDocumentationTest::class,
   JSDocumentationTest::class,
   TypeScriptDocumentationTest::class,

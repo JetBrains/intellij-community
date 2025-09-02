@@ -1,6 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.java;
 
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
@@ -326,7 +327,7 @@ public final class PsiMethodReferenceExpressionImpl extends JavaStubPsiElement<F
   @Override
   public boolean isConstructor() {
     final PsiElement element = getReferenceNameElement();
-    return element instanceof PsiKeyword && PsiKeyword.NEW.equals(element.getText());
+    return element instanceof PsiKeyword && JavaKeywords.NEW.equals(element.getText());
   }
 
   @Override

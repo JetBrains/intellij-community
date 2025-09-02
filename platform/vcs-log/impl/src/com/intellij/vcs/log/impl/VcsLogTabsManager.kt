@@ -1,44 +1,42 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.impl
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.openapi.wm.ex.ToolWindowManagerListener
-import com.intellij.ui.content.TabGroupId
-import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.vcs.log.VcsLogBundle
+import com.intellij.ui.content.ContentManagerEvent
+import com.intellij.ui.content.ContentManagerListener
 import com.intellij.vcs.log.VcsLogFilterCollection
-import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.impl.VcsLogContentUtil.getToolWindow
 import com.intellij.vcs.log.impl.VcsLogContentUtil.openLogTab
 import com.intellij.vcs.log.impl.VcsLogContentUtil.updateLogUiName
 import com.intellij.vcs.log.impl.VcsLogEditorUtil.findVcsLogUi
-import com.intellij.vcs.log.impl.VcsLogManager.VcsLogUiFactory
 import com.intellij.vcs.log.ui.MainVcsLogUi
+import com.intellij.vcs.log.ui.editor.DefaultVcsLogFile
 import com.intellij.vcs.log.ui.editor.VcsLogVirtualFileSystem
-import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.CompletableFuture
 
-class VcsLogTabsManager internal constructor(private val project: Project,
-                                             private val uiProperties: VcsLogProjectTabsProperties,
-                                             private val logManager: VcsLogManager) {
-  private var isLogDisposing = false
-
+internal class VcsLogTabsManager(
+  private val project: Project,
+  private val uiProperties: VcsLogProjectTabsProperties,
+  private val logManager: VcsLogManager,
+) : Disposable {
   private val futureToolWindow: CompletableFuture<ToolWindow> = CompletableFuture()
+  private var filesListenerInstalled = false
+  private var toolWindowListenerInstalled = false
+  private var isDisposed: Boolean = false
 
-  // for statistics
-  @get:ApiStatus.Internal
-  val tabs: Set<String> get() = uiProperties.tabs.keys
-
-  internal fun createTabs() {
+  fun createTabs() {
     val savedTabs = uiProperties.tabs
     if (savedTabs.isEmpty()) return
 
@@ -79,16 +77,17 @@ class VcsLogTabsManager internal constructor(private val project: Project,
     }
   }
 
-  internal fun disposeTabs() {
-    isLogDisposing = true
+  override fun dispose() {
+    isDisposed = true
   }
 
-  internal fun toolWindowShown(toolWindow: ToolWindow) {
+  fun toolWindowShown(toolWindow: ToolWindow) {
     futureToolWindow.complete(toolWindow)
   }
 
   fun openAnotherLogTab(filters: VcsLogFilterCollection, location: VcsLogTabLocation): MainVcsLogUi {
-    val tabId = VcsLogTabsUtil.generateTabId(logManager)
+    require(!isDisposed) { "Already disposed" }
+    val tabId = logManager.generateNewLogId()
     uiProperties.resetState(tabId)
     if (location === VcsLogTabLocation.EDITOR) {
       val editors = openEditorLogTab(tabId, true, filters)
@@ -104,57 +103,70 @@ class VcsLogTabsManager internal constructor(private val project: Project,
 
   private fun openEditorLogTab(tabId: String, focus: Boolean, filters: VcsLogFilterCollection?): Array<FileEditor> {
     val file = VcsLogVirtualFileSystem.Holder.getInstance().createVcsLogFile(project, tabId, filters)
+    installFilesListener()
+    uiProperties.addTab(tabId, VcsLogTabLocation.EDITOR)
     return FileEditorManager.getInstance(project).openFile(file, focus, true)
+  }
+
+  private fun installFilesListener() {
+    if(filesListenerInstalled) return
+    project.messageBus.connect(this).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
+      override fun fileClosed(source: FileEditorManager, file: VirtualFile) {
+        if (file !is DefaultVcsLogFile) return
+        // restore the tab after project/log is recreated
+        if (this@VcsLogTabsManager.project.isDisposed) return
+        uiProperties.removeTab(file.tabId)
+      }
+    })
+    filesListenerInstalled = true
   }
 
   private fun openToolWindowLogTab(toolWindow: ToolWindow, tabId: String, focus: Boolean,
                                    filters: VcsLogFilterCollection?): MainVcsLogUi {
-    val factory = getPersistentVcsLogUiFactory(tabId, VcsLogTabLocation.TOOL_WINDOW, filters)
-    val ui = openLogTab(logManager, factory, toolWindow, TAB_GROUP_ID, { u: MainVcsLogUi -> VcsLogTabsUtil.generateShortDisplayName(u) }, focus)
+    val ui = logManager.createLogUi(tabId, filters)
+    openLogTab(logManager, toolWindow, VcsLogContentUtil.DEFAULT_TAB_GROUP_ID, ui, { it: MainVcsLogUi -> VcsLogTabsUtil.generateShortDisplayName(it) }, focus)
     ui.onDisplayNameChange { updateLogUiName(project, ui) }
+
+    installContentListener(toolWindow)
+    uiProperties.addTab(tabId, VcsLogTabLocation.TOOL_WINDOW)
+
     return ui
   }
 
-  @RequiresEdt
-  @ApiStatus.Internal
-  fun getPersistentVcsLogUiFactory(tabId: String,
-                                   location: VcsLogTabLocation,
-                                   filters: VcsLogFilterCollection?): VcsLogUiFactory<MainVcsLogUi> {
-    return PersistentVcsLogUiFactory(logManager.getMainLogUiFactory(tabId, filters), location)
+  private fun installContentListener(toolWindow: ToolWindow) {
+    if (toolWindowListenerInstalled) return
+    val listener = object : ContentManagerListener {
+      override fun contentRemoved(event: ContentManagerEvent) {
+        // restore the tab after project/log is recreated
+        if (this@VcsLogTabsManager.project.isDisposed) return
+        val id = VcsLogContentUtil.getId(event.content)
+        if (id != null) {
+          uiProperties.removeTab(id)
+        }
+      }
+    }
+    toolWindow.addContentManagerListener(listener)
+    Disposer.register(this) {
+      if (!toolWindow.isDisposed) {
+        toolWindow.contentManagerIfCreated?.removeContentManagerListener(listener)
+      }
+    }
+    toolWindowListenerInstalled = true
   }
 
-  private inner class PersistentVcsLogUiFactory(private val factory: VcsLogUiFactory<out MainVcsLogUi>,
-                                                private val logTabLocation: VcsLogTabLocation) : VcsLogUiFactory<MainVcsLogUi> {
-    override fun createLogUi(project: Project, logData: VcsLogData): MainVcsLogUi {
-      val ui = factory.createLogUi(project, logData)
-      uiProperties.addTab(ui.id, logTabLocation)
-      Disposer.register(ui) {
-        if (this@VcsLogTabsManager.project.isDisposed || isLogDisposing) return@register // need to restore the tab after project/log is recreated
-        uiProperties.removeTab(ui.id) // tab is closed by a user
-      }
-      return ui
-    }
-  }
+  fun getTabs(): Set<String> = uiProperties.tabs.keys
+
+  fun getTabs(location: VcsLogTabLocation): Set<String> =
+    uiProperties.tabs.filterValues { it === location }.keys
 
   companion object {
     private val LOG = Logger.getInstance(VcsLogTabsManager::class.java)
-    val TAB_GROUP_ID = TabGroupId(VcsLogContentProvider.TAB_NAME, { VcsLogBundle.message("vcs.log.tab.name") }, true)
 
     fun MainVcsLogUi.onDisplayNameChange(block: () -> Unit) {
       filterUi.addFilterListener { block() }
       properties.onPropertyChange(this) {
         if (it == MainVcsLogUiProperties.GRAPH_OPTIONS) block()
       }
-    }
-  }
-}
-
-internal class VcsLogToolwindowManagerListener(private val project: Project) : ToolWindowManagerListener {
-  override fun toolWindowShown(toolWindow: ToolWindow) {
-    if (toolWindow.id == ChangesViewContentManager.TOOLWINDOW_ID) {
-      val projectLog = VcsProjectLog.getInstance(project)
-      projectLog.createLogInBackground(true)
-      projectLog.tabManager?.toolWindowShown(toolWindow)
     }
   }
 }

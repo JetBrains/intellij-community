@@ -9,8 +9,6 @@ import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
-import com.intellij.openapi.externalSystem.service.project.IdeUIModifiableModelsProvider
-import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.impl.UnloadedModulesListStorage
@@ -29,6 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
 import com.intellij.platform.diagnostic.telemetry.helpers.use
+import com.intellij.platform.externalSystem.impl.dependencySubstitution.DependencySubstitutionUtil
 import com.intellij.platform.workspace.jps.JpsImportedEntitySource
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.jps.serialization.impl.FileInDirectorySourceNames
@@ -98,7 +97,7 @@ internal open class WorkspaceProjectImporter(
     val mavenProjectToModuleName = buildModuleNameMap(externalSystemModuleEntities, allProjectsToChanges)
 
     val builder = MutableEntityStorage.create()
-    builder.addEntity(MavenProjectsTreeSettingsEntity(projectChangesInfo.projectFilePaths, MavenProjectsTreeEntitySource))
+    builder.addEntity(MavenProjectsTreeSettingsEntity(projectChangesInfo.projectFilePaths, MavenEntitySource))
 
     val contextData = UserDataHolderBase()
 
@@ -120,12 +119,6 @@ internal open class WorkspaceProjectImporter(
     stats.recordPhase(MavenImportCollector.WORKSPACE_LEGACY_IMPORTERS_PHASE) { activity ->
       tracer.spanBuilder("configLegacyFacets").use {
         configLegacyFacets(appliedProjectsWithModules, mavenProjectToModuleName, postTasks, activity)
-      }
-    }
-
-    stats.recordPhase(MavenImportCollector.WORKSPACE_DEPENDENCY_SUBSTITUTION_PHASE) { activity ->
-      tracer.spanBuilder("updateLibrarySubstitutions").use {
-        updateLibrarySubstitutions()
       }
     }
 
@@ -329,7 +322,7 @@ internal open class WorkspaceProjectImporter(
   ): List<MavenProjectWithModulesData<Module>> {
     val appliedModulesResult = mutableListOf<MavenProjectWithModulesData<Module>>()
     updateProjectModelFastOrSlow(myProject, stats,
-                                 { snapshot -> applyToCurrentStorage(mavenProjectsWithModules, snapshot, newStorage) },
+                                 { snapshot -> applyToCurrentStorage(mavenProjectsWithModules, snapshot, newStorage, stats) },
                                  { applied ->
                                    mapEntitiesToModulesAndRunAfterModelApplied(applied,
                                                                                mavenProjectsWithModules,
@@ -344,6 +337,7 @@ internal open class WorkspaceProjectImporter(
     mavenProjectsWithModules: List<MavenProjectWithModulesData<ModuleEntity>>,
     currentStorage: MutableEntityStorage,
     newStorage: MutableEntityStorage,
+    stats: WorkspaceImportStats,
   ) {
     // also remove non-Maven modules that has clashing content roots, otherwise we might end up with a situation:
     //  * A user opens a project with existing non-maven module 'A', with a single content root(==project root), and a pom.xml in the root.
@@ -385,6 +379,10 @@ internal open class WorkspaceProjectImporter(
     WorkspaceChangesRetentionUtil.retainManualChanges(myProject, currentStorage, newStorage)
 
     currentStorage.replaceBySource({ isMavenEntity(it) }, newStorage)
+
+    stats.recordPhase(MavenImportCollector.WORKSPACE_DEPENDENCY_SUBSTITUTION_PHASE) {
+      DependencySubstitutionUtil.updateDependencySubstitutions(currentStorage)
+    }
 
     // Now we have some modules with duplicating content roots. One content root existed before and another one exported from maven.
     //   We need to move source roots and excludes from existing content roots to the exported content roots and remove (obsolete) existing.
@@ -554,19 +552,6 @@ internal open class WorkspaceProjectImporter(
     MavenProjectImporterUtil.importLegacyExtensions(myProject, myModifiableModelsProvider, legacyFacetImporters, postTasks, activity)
   }
 
-  private fun updateLibrarySubstitutions() {
-    if (Registry.`is`("external.system.substitute.library.dependencies")) {
-      // commit does nothing for this provider, so it should be reused
-      val provider = myModifiableModelsProvider as? IdeUIModifiableModelsProvider
-                     ?: ProjectDataManager.getInstance().createModifiableModelsProvider(myProject)
-      MavenUtil.invokeAndWaitWriteAction(myProject) {
-        // The ModifiableWorkspaceModel#updateLibrarySubstitutions function is automatically called
-        // inside the IdeModifiableModelsProviderImpl#commit function
-        provider.commit()
-      }
-    }
-  }
-
   override fun createdModules(): List<Module> {
     return createdModulesList
   }
@@ -577,7 +562,7 @@ internal open class WorkspaceProjectImporter(
 
     private fun isMavenEntity(it: EntitySource) =
       (it as? JpsImportedEntitySource)?.externalSystemId == WorkspaceModuleImporter.EXTERNAL_SOURCE_ID
-      || it is MavenProjectsTreeEntitySource
+      || it is MavenEntitySource
 
     private fun readMavenExternalSystemData(storage: EntityStorage) =
       importedEntities(storage, ExternalSystemModuleOptionsEntity::class.java)

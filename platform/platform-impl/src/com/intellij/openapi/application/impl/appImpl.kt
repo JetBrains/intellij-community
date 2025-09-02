@@ -1,18 +1,15 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl
 
 import com.intellij.concurrency.ContextAwareRunnable
-import com.intellij.core.rwmutex.ReadPermit
 import com.intellij.openapi.application.readLockCompensationTimeout
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.platform.util.coroutines.internal.runSuspend
+import com.intellij.openapi.util.ThrowableComputable
+import com.intellij.util.ThrowableRunnable
 import io.opentelemetry.api.metrics.BatchCallback
 import io.opentelemetry.api.metrics.Meter
-import kotlinx.coroutines.InternalCoroutinesApi
-import kotlinx.coroutines.internal.intellij.IntellijCoroutines
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.annotations.VisibleForTesting
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.Duration
@@ -87,22 +84,6 @@ internal fun rethrowExceptions(transformer: (Runnable) -> Runnable, actual: Runn
   }
 }
 
-@OptIn(InternalCoroutinesApi::class)
-@VisibleForTesting
-internal fun acquireReadLockWithCompensation(action: suspend () -> ReadPermit): ReadPermit {
-  val compensationTimeout = compensationTimeout
-  return if (compensationTimeout == null) {
-    runSuspend(action)
-  }
-  else {
-    return IntellijCoroutines.runAndCompensateParallelism(compensationTimeout) {
-      runSuspend {
-        action()
-      }
-    }
-  }
-}
-
 @Volatile
 private var compensationTimeout: Duration? = if (readLockCompensationTimeout == -1) {
   null
@@ -114,6 +95,12 @@ else {
 
 @TestOnly
 @ApiStatus.Internal
-fun setCompensationTimeout(timeout: Duration?) {
+fun setCompensationTimeout(timeout: Duration?): Duration? {
+  val currentTimeout = compensationTimeout
   compensationTimeout = timeout
+  return currentTimeout
 }
+
+internal fun runnableUnitFunction(runnable: Runnable): () -> Unit = runnable::run
+internal fun rethrowCheckedExceptions(f: ThrowableRunnable<*>): () -> Unit = f::run
+internal fun <T> rethrowCheckedExceptions(f: ThrowableComputable<T, *>): () -> T = f::compute

@@ -70,6 +70,18 @@ public final class NioFiles {
   }
 
   /**
+   * Same as {@link Files#size(Path)}, but returns {@code -1} instead of throwing {@link IOException}.
+   */
+  public static long sizeIfExists(@NotNull Path path) {
+    try {
+      return Files.size(path);
+    }
+    catch (IOException e) {
+      return -1;
+    }
+  }
+
+  /**
    * A drop-in replacement for {@link Files#createDirectories} that doesn't stumble upon symlinks - unlike the original.
    * I.e., this method accepts "/path/.../dir_link" (where "dir_link" is a symlink to a directory), while the original fails.
    */

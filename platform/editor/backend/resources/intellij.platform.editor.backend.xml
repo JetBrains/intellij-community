@@ -1,6 +1,6 @@
 <idea-plugin>
   <dependencies>
-    <plugin id="com.intellij.platform.experimental.backend"/>
+    <module name="intellij.platform.backend"/>
     <module name="intellij.platform.editor"/>
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">

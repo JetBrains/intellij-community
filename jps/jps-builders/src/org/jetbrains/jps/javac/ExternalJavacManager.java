@@ -34,8 +34,9 @@ import org.jetbrains.jps.builders.java.JavaCompilingTool;
 import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.incremental.GlobalContextKey;
 import org.jetbrains.jps.javac.rpc.JavacRemoteProto;
+import org.jetbrains.jps.util.Iterators;
 
-import javax.tools.*;
+import javax.tools.Diagnostic;
 import java.io.File;
 import java.net.InetAddress;
 import java.net.UnknownHostException;

@@ -109,12 +109,6 @@ public final class FoldingModelWindow implements FoldingModelEx, ModificationTra
   }
 
   @Override
-  public void runBatchFoldingOperation(@NotNull Runnable operation, boolean moveCaretFromCollapsedRegion) {
-    //noinspection deprecation
-    myDelegate.runBatchFoldingOperation(operation, moveCaretFromCollapsedRegion);
-  }
-
-  @Override
   public int getLastCollapsedRegionBefore(int offset) {
     return -1; //todo implement
   }
@@ -130,6 +124,7 @@ public final class FoldingModelWindow implements FoldingModelEx, ModificationTra
   }
 
   static final Key<FoldingRegionWindow> FOLD_REGION_WINDOW = Key.create("FOLD_REGION_WINDOW");
+
   @Override
   public FoldRegion createFoldRegion(int startOffset, int endOffset, @NotNull String placeholder, FoldingGroup group, boolean neverExpands) {
     TextRange hostRange = myDocumentWindow.injectedToHost(new TextRange(startOffset, endOffset));
@@ -138,7 +133,7 @@ public final class FoldingModelWindow implements FoldingModelEx, ModificationTra
     if (hostRegion == null) return null;
     FoldingRegionWindow window = new FoldingRegionWindow(myDocumentWindow, myEditorWindow, startOffset, endOffset){
       @Override
-      @NotNull RangeMarker createHostRangeMarkerToTrack(@NotNull TextRange hostRange, boolean surviveOnExternalChange) {
+      public @NotNull RangeMarker createHostRangeMarkerToTrack(@NotNull TextRange hostRange, boolean surviveOnExternalChange) {
         return hostRegion;
       }
     };

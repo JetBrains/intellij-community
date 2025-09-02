@@ -67,6 +67,14 @@ interface LcrRow<T> {
   var toolTipText: @NlsContexts.Tooltip String?
 
   /**
+   * Height of the row (excluding separator) or null for auto height calculation.
+   * By default [com.intellij.util.ui.JBUI.CurrentTheme.List.rowHeight] is used
+   */
+  @get:ApiStatus.Internal
+  @set:ApiStatus.Internal
+  var rowHeight: Int?
+
+  /**
    * The gap between the previous cell and the next one. Not used for the first cell
    */
   fun gap(gap: Gap)
@@ -80,6 +88,12 @@ interface LcrRow<T> {
    * Adds a cell with a text
    */
   fun text(text: @Nls String, init: (LcrTextInitParams.() -> Unit)? = null)
+
+  /**
+   * Adds a cell with a switcher (toggle button).
+   */
+  @ApiStatus.Internal
+  fun switch(isOn: Boolean, init: (LcrSwitchInitParams.() -> Unit)? = null)
 
   /**
    * Adds separator above the row

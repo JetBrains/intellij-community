@@ -2,6 +2,7 @@
 package com.intellij.compose.ide.plugin.resources.findUsages
 
 import com.intellij.compose.ide.plugin.resources.ComposeResourcesBase
+import com.intellij.compose.ide.plugin.resources.ComposeResourcesUsageCollector
 import com.intellij.compose.ide.plugin.resources.ComposeResourcesFileBase
 import com.intellij.compose.ide.plugin.resources.ComposeResourcesXmlBase
 import com.intellij.find.findUsages.FindUsagesHandler
@@ -15,7 +16,7 @@ import com.intellij.usages.UsageTarget
 import com.intellij.usages.UsageTargetProvider
 
 /** Display usages of Compose resources from resource files and string values */
-abstract class ComposeResourcesFindUsagesHandlerBaseFactory : FindUsagesHandlerFactory(), ComposeResourcesBase {
+internal abstract class ComposeResourcesFindUsagesHandlerBaseFactory : FindUsagesHandlerFactory(), ComposeResourcesBase {
 
   override fun canFindUsages(element: PsiElement): Boolean = isComposeResourcesElement(element)
 
@@ -24,15 +25,20 @@ abstract class ComposeResourcesFindUsagesHandlerBaseFactory : FindUsagesHandlerF
     val property = runReadAction { getKotlinPropertyFromComposeResource(element) } ?: return null
     return object : FindUsagesHandler(property) {
       override fun getPrimaryElements(): Array<PsiElement> = arrayOf(myPsiElement)
+    }.also {
+      ComposeResourcesUsageCollector.logAction(fusActionType, fusResourceBaseType, null)
     }
   }
+
+  override val fusActionType: ComposeResourcesUsageCollector.ActionType
+    get() = ComposeResourcesUsageCollector.ActionType.FIND_USAGES
 }
 
-class ComposeResourcesFileFindUsagesHandlerFactory : ComposeResourcesFindUsagesHandlerBaseFactory(), ComposeResourcesFileBase
+internal class ComposeResourcesFileFindUsagesHandlerFactory : ComposeResourcesFindUsagesHandlerBaseFactory(), ComposeResourcesFileBase
 
-class ComposeResourcesXmlFindUsagesHandlerFactory : ComposeResourcesFindUsagesHandlerBaseFactory(), ComposeResourcesXmlBase
+internal class ComposeResourcesXmlFindUsagesHandlerFactory : ComposeResourcesFindUsagesHandlerBaseFactory(), ComposeResourcesXmlBase
 
-class ComposeResourcesUsagesTargetProvider : UsageTargetProvider, ComposeResourcesXmlBase {
+internal class ComposeResourcesUsagesTargetProvider : UsageTargetProvider, ComposeResourcesXmlBase {
   override fun getTargets(editor: Editor, file: PsiFile): Array<out UsageTarget?>? {
     val element = file.findElementAt(editor.caretModel.offset) ?: return null
     return element.takeIf { isComposeResourcesElement(it) }?.let { arrayOf(PsiElement2UsageTargetAdapter(it, true)) }

@@ -56,6 +56,10 @@ class ClassA:
     x: NoReturn
     y: list[NoReturn]
 
+    def __init__(self, x: NoReturn, y: list[NoReturn]) -> None:
+        self.x = x
+        self.y = y
+
 
 # Never is compatible with all types.
 

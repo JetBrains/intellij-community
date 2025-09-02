@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
 import org.jetbrains.kotlin.resolve.ArrayFqNames
 
-object SurroundWithArrayOfWithSpreadOperatorInFunctionFixFactory {
+internal object SurroundWithArrayOfWithSpreadOperatorInFunctionFixFactory {
 
     private data class ElementContext(
         val fullyQualifiedArrayOfCall: String,

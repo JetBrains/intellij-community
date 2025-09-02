@@ -11,6 +11,7 @@ import com.intellij.openapi.externalSystem.service.project.manage.WorkspaceDataS
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.List;
@@ -59,7 +60,7 @@ public interface ProjectDataManager {
                                              @NotNull ProjectSystemId projectSystemId,
                                              @NotNull String externalProjectPath);
 
-  @NotNull
+  @NotNull @Unmodifiable
   Collection<ExternalProjectInfo> getExternalProjectsData(@NotNull Project project, @NotNull ProjectSystemId projectSystemId);
 
   /**

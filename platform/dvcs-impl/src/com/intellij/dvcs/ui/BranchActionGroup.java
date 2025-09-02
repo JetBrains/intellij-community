@@ -1,12 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.ui;
 
+import com.intellij.dvcs.DvcsImplIconsExt;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.ui.ExperimentalUI;
-import com.intellij.ui.IconManager;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.ui.EmptyIcon;
 import icons.DvcsImplIcons;
@@ -66,12 +65,8 @@ public abstract class BranchActionGroup extends ActionGroup implements DumbAware
   @Override
   public @Nullable Icon getRightIcon() {
     if (hasIncomingCommits()) {
-      return hasOutgoingCommits() ? getIncomingOutgoingIcon() : DvcsImplIcons.Incoming;
+      return hasOutgoingCommits() ? DvcsImplIconsExt.getIncomingOutgoingIcon() : DvcsImplIcons.Incoming;
     }
     return hasOutgoingCommits() ? DvcsImplIcons.Outgoing : null;
-  }
-
-  public static Icon getIncomingOutgoingIcon() {
-    return ExperimentalUI.isNewUI() ? IconManager.getInstance().createRowIcon(DvcsImplIcons.Incoming, DvcsImplIcons.Outgoing) : DvcsImplIcons.IncomingOutgoing;
   }
 }

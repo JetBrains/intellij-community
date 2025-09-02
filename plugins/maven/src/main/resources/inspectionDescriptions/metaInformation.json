@@ -23,6 +23,14 @@
     {
       "id": "MavenPropertyInParent",
       "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "MavenModelVersionMissed",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "MavenNewElementsInOldSchema",
+      "codeQualityCategory": "Reliability"
     }
   ]
 }

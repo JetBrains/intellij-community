@@ -13,8 +13,8 @@ object KotlinGradlePluginDownloader {
     private const val kotlinBootstrapRepositoryUrl =
         "https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/bootstrap"
 
-    private const val kotlinIdePluginDependenciesRepositoryUrl =
-        "https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-ide-plugin-dependencies"
+    private const val intellijDependenciesRepositoryUrl =
+        "https://cache-redirector.jetbrains.com/intellij-dependencies"
 
     private const val mavenCentralRepositoryUrl =
         "https://cache-redirector.jetbrains.com/repo.maven.apache.org/maven2/"
@@ -26,7 +26,7 @@ object KotlinGradlePluginDownloader {
             RemoteRepository.Builder("mavenLocal", "default", "file://" + mavenLocalDir.absolutePath).build(),
             RemoteRepository.Builder("mavenCentral", "default", mavenCentralRepositoryUrl).build(),
             RemoteRepository.Builder("bootstrap", "default", kotlinBootstrapRepositoryUrl).build(),
-            RemoteRepository.Builder("kotlin-ide-plugin-dependencies", "default", kotlinIdePluginDependenciesRepositoryUrl).build()
+            RemoteRepository.Builder("intellij-dependencies", "default", intellijDependenciesRepositoryUrl).build()
         )
 
         return ArtifactRepositoryManager(

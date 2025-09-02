@@ -69,7 +69,7 @@ public class PyImportCollector {
     return existingImportFile;
   }
 
-  PsiFile addCandidatesViaFromImports(PsiFile existingImportFile, PyFile pyFile) {
+  protected PsiFile addCandidatesViaFromImports(PsiFile existingImportFile, PyFile pyFile) {
     for (PyFromImportStatement fromImportStatement : pyFile.getFromImports()) {
       if (!fromImportStatement.isStarImport() && fromImportStatement.getImportElements().length > 0) {
         PsiElement source = fromImportStatement.resolveImportSource();
@@ -145,7 +145,7 @@ public class PyImportCollector {
     }
   }
 
-  PyElement getNode() {
+  protected PyElement getNode() {
     return myNode;
   }
 

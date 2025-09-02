@@ -73,6 +73,10 @@
     background-color: transparent;
 }
 
+.tabulator-cell {
+  user-select: text;
+}
+
 .errRef {
     color: red;
 }

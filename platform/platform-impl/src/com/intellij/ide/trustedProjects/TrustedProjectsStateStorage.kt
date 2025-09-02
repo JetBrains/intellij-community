@@ -8,7 +8,7 @@ import com.intellij.util.containers.prefixTree.map.PrefixTreeMap
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
-@ApiStatus.Internal
+@ApiStatus.Internal // Used in MPS
 abstract class TrustedProjectsStateStorage<S: State>(state: S) : SerializablePersistentStateComponent<S>(state) {
 
   interface State {

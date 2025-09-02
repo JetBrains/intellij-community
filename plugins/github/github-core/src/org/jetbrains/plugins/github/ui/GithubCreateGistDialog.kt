@@ -10,6 +10,7 @@ import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.*
 import org.jetbrains.plugins.github.authentication.GHAccountsUtil
+import org.jetbrains.plugins.github.authentication.GHLoginSource
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.i18n.GithubBundle.message
 import javax.swing.JComponent
@@ -75,7 +76,7 @@ class GithubCreateGistDialog(
           .resizableColumn()
 
         if (accountsModel.size == 0) {
-          cell(GHAccountsUtil.createAddAccountLink(project, accountsModel))
+          cell(GHAccountsUtil.createAddAccountLink(project, accountsModel, GHLoginSource.GIST))
         }
       }
     }

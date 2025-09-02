@@ -2,6 +2,7 @@
 package com.intellij.notebooks.visualization.ui.jupyterToolbars
 
 import com.intellij.notebooks.ui.SelectClickedCellEventHelper
+import com.intellij.notebooks.visualization.useG2D
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnAction
@@ -47,22 +48,20 @@ abstract class JupyterAbstractAboveCellToolbar(
   }
 
   override fun paintComponent(g: Graphics) {
-    val g2 = g.create() as Graphics2D
-    try {
-      g2.composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, ALPHA)
-      g2.color = this.background
-      g2.fillRoundRect(0, 0, width, height, getArcSize(), getArcSize())
-    }
-    finally {
-      g2.dispose()
+    g.useG2D { g2d ->
+      g2d.composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, ALPHA)
+      g2d.color = this.background
+      fillRect(g2d)
     }
   }
 
+  protected open fun fillRect(g2d: Graphics2D) {
+    g2d.fillRoundRect(0, 0, width, height, getArcSize(), getArcSize())
+  }
+
   override fun updateUI() {
+    background = if (JBColor.isBright()) JBColor.WHITE else null
     super.updateUI()
-    if (JBColor.isBright()) {
-      background = JBColor.WHITE
-    }
   }
 
   protected abstract fun getArcSize(): Int
@@ -70,7 +69,7 @@ abstract class JupyterAbstractAboveCellToolbar(
   protected open fun getVerticalPadding(): Int = getHorizontalPadding()
 
   companion object {
-    private const val ALPHA = 1.0f
-    private val TOOLBAR_BORDER_THICKNESS = JBUI.scale(1)
+    const val ALPHA: Float = 1.0f
+    val TOOLBAR_BORDER_THICKNESS: Int = JBUI.scale(1)
   }
 }

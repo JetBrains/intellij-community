@@ -658,7 +658,7 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
   @Override
   public int getOffset() {
     assertNotUpdating();
-    ApplicationManager.getApplication().assertReadAccessAllowed();
+    EditorThreading.assertInteractionAllowed();
     while (true) {
       PositionMarker marker = myPositionMarker;
       if (marker == null) return 0; // caret was disposed
@@ -910,7 +910,7 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
 
   @Override
   public int getSelectionStart() {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
+    EditorThreading.assertInteractionAllowed();
     if (hasSelection()) {
       RangeMarker marker = mySelectionMarker;
       if (marker != null) {
@@ -963,7 +963,7 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
 
   @Override
   public int getSelectionEnd() {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
+    EditorThreading.assertInteractionAllowed();
     if (hasSelection()) {
       RangeMarker marker = mySelectionMarker;
       if (marker != null) {
@@ -1016,7 +1016,7 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
 
   @Override
   public boolean hasSelection() {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
+    EditorThreading.assertInteractionAllowed();
     SelectionMarker marker = mySelectionMarker;
     return hasSelection(marker);
   }
@@ -1028,7 +1028,7 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
 
   @Override
   public @NotNull TextRange getSelectionRange() {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
+    EditorThreading.assertInteractionAllowed();
     SelectionMarker marker = mySelectionMarker;
     if (hasSelection(marker)) {
       return marker.getTextRange();
@@ -1207,7 +1207,7 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
 
   @Override
   public int getLeadSelectionOffset() {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
+    EditorThreading.assertInteractionAllowed();
     int caretOffset = getOffset();
     if (hasSelection()) {
       RangeMarker marker = mySelectionMarker;
@@ -1335,7 +1335,7 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
   }
 
   boolean hasVirtualSelection() {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
+    EditorThreading.assertInteractionAllowed();
     SelectionMarker marker = mySelectionMarker;
     return marker != null && marker.isValid() && isVirtualSelectionEnabled() && marker.hasVirtualSelection();
   }

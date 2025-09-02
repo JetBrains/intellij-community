@@ -372,6 +372,8 @@ internal fun resolveToPsiMethod(
     }
 
     return when (source) {
+        is KtPropertyAccessor ->
+            LightClassUtil.getLightClassAccessorMethod(source)
         is KtFunction ->
             if (source.isLocal)
                 getContainingLightClass(source)?.let { UastFakeSourceLightMethod(source, it) }

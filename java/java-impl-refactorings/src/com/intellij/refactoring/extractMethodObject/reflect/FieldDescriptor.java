@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethodObject.reflect;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -9,7 +9,6 @@ import com.intellij.refactoring.extractMethodObject.ItemToReplaceDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Array;
 import java.util.Objects;
 
 /**
@@ -39,7 +38,6 @@ public final class FieldDescriptor implements ItemToReplaceDescriptor {
       PsiClass containingClass = field.getContainingClass();
 
       if (!Objects.equals(containingClass, outerClass) && needReplace(outerClass, field, expression)) {
-        Array.getLength(new int[3]);
         return new FieldDescriptor(field, expression);
       }
     }
@@ -47,14 +45,16 @@ public final class FieldDescriptor implements ItemToReplaceDescriptor {
     return null;
   }
 
+  public boolean isUpdate() {
+    return myExpression.getParent() instanceof PsiAssignmentExpression parentAssignment && parentAssignment.getLExpression() == myExpression;
+  }
+
   @Override
   public void replace(@NotNull PsiClass outerClass,
                       @NotNull PsiElementFactory elementFactory,
                       @NotNull PsiMethodCallExpression callExpression) {
-    PsiElement parent = myExpression.getParent();
-    if (parent instanceof PsiAssignmentExpression &&
-        Objects.equals(myExpression, ((PsiAssignmentExpression)parent).getLExpression())) {
-      grantUpdateAccess((PsiAssignmentExpression)parent, outerClass, callExpression, elementFactory);
+    if (isUpdate()) {
+      grantUpdateAccess((PsiAssignmentExpression)myExpression.getParent(), outerClass, callExpression, elementFactory);
     }
     else {
       grantReadAccess(outerClass, callExpression, elementFactory);
@@ -70,7 +70,7 @@ public final class FieldDescriptor implements ItemToReplaceDescriptor {
     outerClass.add(newMethod);
 
     String object = MemberQualifierUtil.findObjectExpression(myExpression, myField, outerClass, generatedCall, elementFactory);
-    String methodCall = newMethod.getName() + "(" + (object == null ? "null" : object) + ", null)";
+    String methodCall = newMethod.getName() + "(" + object + ")";
     myExpression.replace(elementFactory.createExpressionFromText(methodCall, myExpression));
   }
 
@@ -90,8 +90,7 @@ public final class FieldDescriptor implements ItemToReplaceDescriptor {
 
     String newValue = rightExpression.getText();
     String objectForReference = MemberQualifierUtil.findObjectExpression(myExpression, myField, outerClass, generatedCall, elementFactory);
-    String args = (objectForReference == null ? "null" : objectForReference) + ", " + newValue;
-    String methodCallExpression = newMethod.getName() + "(" + args + ")";
+    String methodCallExpression = newMethod.getName() + "(" + objectForReference + ", " + newValue + ")";
 
     PsiExpression newMethodCallExpression = elementFactory.createExpressionFromText(methodCallExpression, myExpression);
     assignmentExpression.replace(newMethodCallExpression);
@@ -109,16 +108,20 @@ public final class FieldDescriptor implements ItemToReplaceDescriptor {
     String methodName = PsiReflectionAccessUtil.getUniqueMethodName(outerClass, "accessToField" + StringUtil.capitalize(fieldName));
     ReflectionAccessMethodBuilder methodBuilder = new ReflectionAccessMethodBuilder(methodName);
     if (FieldAccessType.GET.equals(accessType)) {
-      methodBuilder.accessedField(className, fieldName).setReturnType(myAccessibleType);
+      methodBuilder.accessedField(className, fieldName);
     }
     else {
-      methodBuilder.updatedField(className, fieldName)
-                   .setReturnType("void");
+      methodBuilder.updatedField(className, fieldName);
     }
 
-    methodBuilder.setStatic(outerClass.hasModifierProperty(PsiModifier.STATIC))
-                 .addParameter(CommonClassNames.JAVA_LANG_OBJECT, "object")
-                 .addParameter(CommonClassNames.JAVA_LANG_OBJECT, "value");
+    methodBuilder
+      .setReturnType(myAccessibleType)
+      .setStatic(outerClass.hasModifierProperty(PsiModifier.STATIC))
+      .addParameter(CommonClassNames.JAVA_LANG_OBJECT, "object");
+
+    if (!FieldAccessType.GET.equals(accessType)) {
+      methodBuilder.addParameter(myAccessibleType, "value");
+    }
 
     return methodBuilder.build(elementFactory, outerClass);
   }

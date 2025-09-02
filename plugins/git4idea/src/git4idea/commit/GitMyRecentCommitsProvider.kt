@@ -2,13 +2,12 @@
 package git4idea.commit
 
 import com.github.benmanes.caffeine.cache.AsyncLoadingCache
-import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.graph.PermanentGraph
@@ -20,6 +19,7 @@ import git4idea.log.GitLogProvider
 import git4idea.repo.GitRepoInfo
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryStateChangeListener
+import git4idea.util.CaffeineUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.future.future
@@ -31,15 +31,13 @@ import kotlin.time.measureTimedValue
 @ApiStatus.Experimental
 @Service(Service.Level.PROJECT)
 class GitMyRecentCommitsProvider(private val project: Project, private val scope: CoroutineScope) {
-  private val requestedDepth: MutableMap<VirtualFile, Int> = ConcurrentHashMap()
+  private val requestedDepth = ConcurrentHashMap<VirtualFile, Int>()
 
-  private val cache: AsyncLoadingCache<VirtualFile, List<VcsCommitMetadata>> = Caffeine.newBuilder()
-    .executor(AppExecutorUtil.getAppExecutorService())
+  private val cache: AsyncLoadingCache<VirtualFile, List<VcsCommitMetadata>> = CaffeineUtil.withIoExecutor()
     .buildAsync { root, executor ->
-      requestedDepth[root]?.let { commitsToLoad ->
-        scope.future {
-          readRecentCommits(root, commitsToLoad)
-        }
+      val commitsToLoad = requestedDepth.get(root) ?: return@buildAsync CompletableFuture.completedFuture(emptyList())
+      scope.future {
+        readRecentCommits(root, commitsToLoad)
       }
     }
 
@@ -47,7 +45,7 @@ class GitMyRecentCommitsProvider(private val project: Project, private val scope
     project.messageBus.connect(scope)
       .subscribe(GitRepository.GIT_REPO_STATE_CHANGE, object : GitRepositoryStateChangeListener {
         override fun repositoryChanged(repository: GitRepository, previousInfo: GitRepoInfo, info: GitRepoInfo) {
-          LOG.debug("Refreshing cache entry for ${repository.root}")
+          LOG.debug { "Refreshing cache entry for ${repository.root}" }
           cache.synchronous().refresh(repository.root)
         }
       })
@@ -63,11 +61,10 @@ class GitMyRecentCommitsProvider(private val project: Project, private val scope
       else current
     }
     if (shouldInvalidate) {
-      LOG.debug("Limit updated for $root - $limit")
+      LOG.debug { "Limit updated for $root - $limit" }
       cache.synchronous().invalidate(root)
     }
-    val future: CompletableFuture<List<VcsCommitMetadata>> = cache.get(root)
-    return future.await().take(limit)
+    return cache.get(root).await().take(limit)
   }
 
   @RequiresBackgroundThread
@@ -84,7 +81,7 @@ class GitMyRecentCommitsProvider(private val project: Project, private val scope
       GitLogUtil.collectMetadata(project, root, parameters).commits
     }
 
-    LOG.debug("Loaded ${commits.size} commits for $root in ${duration}ms")
+    LOG.debug { "Loaded ${commits.size} commits for $root in ${duration}ms" }
 
     return commits
   }

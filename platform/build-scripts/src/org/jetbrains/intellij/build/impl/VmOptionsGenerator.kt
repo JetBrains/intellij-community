@@ -2,6 +2,8 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.ReviseWhenPortedToJDK
+import com.intellij.platform.ijent.community.buildConstants.MULTI_ROUTING_FILE_SYSTEM_VMOPTIONS
+import com.intellij.platform.ijent.community.buildConstants.isMultiRoutingFileSystemEnabledForProduct
 import org.jetbrains.intellij.build.BuildContext
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
@@ -14,6 +16,7 @@ object VmOptionsGenerator {
 
   @Suppress("SpellCheckingInspection")
   private val COMMON_VM_OPTIONS: List<String> = listOf(
+    "-XX:JbrShrinkingGcMaxHeapFreeRatio=40", // IJPL-181469. Used in a couple with AppIdleMemoryCleaner.runGc()
     "-XX:ReservedCodeCacheSize=512m",
     "-XX:+HeapDumpOnOutOfMemoryError",
     "-XX:-OmitStackTraceInFastThrow",
@@ -42,7 +45,8 @@ object VmOptionsGenerator {
       val customPluginRepositoryUrl = computeCustomPluginRepositoryUrl(context)
       if (customPluginRepositoryUrl == null) it
       else it + "-D${CUSTOM_BUILT_IN_PLUGIN_REPOSITORY_PROPERTY}=${customPluginRepositoryUrl}"
-    }
+    },
+    context.productProperties.platformPrefix,
   )
 
   private fun computeCustomPluginRepositoryUrl(context: BuildContext): String? {
@@ -59,7 +63,13 @@ object VmOptionsGenerator {
     return null
   }
 
-  internal fun generate(isEAP: Boolean, bundledRuntime: BundledRuntime, customVmMemoryOptions: Map<String, String>, additionalVmOptions: List<String>): List<String> {
+  internal fun generate(
+    isEAP: Boolean,
+    bundledRuntime: BundledRuntime,
+    customVmMemoryOptions: Map<String, String>,
+    additionalVmOptions: List<String>,
+    platformPrefix: String?,
+  ): List<String> {
     val result = ArrayList<String>()
 
     val memory = LinkedHashMap<String, String>(customVmMemoryOptions)
@@ -70,6 +80,10 @@ object VmOptionsGenerator {
     }
 
     result += COMMON_VM_OPTIONS
+
+    if (isMultiRoutingFileSystemEnabledForProduct(platformPrefix)) {
+      result += MULTI_ROUTING_FILE_SYSTEM_VMOPTIONS
+    }
 
     result += additionalVmOptions
 

@@ -290,7 +290,12 @@ subshell_command ::= '(' list ')'
 list ::= newlines ((pipeline_command_list | pipeline_command) end_of_list? newlines)+ {pin(".*")=2 elementType=compound_list}
 private end_of_list ::= '\n' | ';' | '&'
 
-shell_parameter_expansion ::= '{' shell_parameter_expansion_inner+ '}' {pin=1}
+shell_parameter_expansion ::= '{' shell_parameter_expansion_inner+ '}' {
+  pin=1
+  mixin="com.intellij.sh.psi.impl.ShShellParameterExpansionMixin"
+}
+
+
 //noinspection BnfSuspiciousToken
 private shell_parameter_expansion_inner ::= w | array_expression | param_separator | vars { name="parameter expansion" }
 

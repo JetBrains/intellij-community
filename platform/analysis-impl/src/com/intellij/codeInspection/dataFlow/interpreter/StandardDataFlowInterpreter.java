@@ -173,7 +173,7 @@ public class StandardDataFlowInterpreter implements DataFlowInterpreter {
               }
             }
             if (nextInstruction.getIndex() < instruction.getIndex() &&
-                (!(instruction instanceof GotoInstruction) || ((GotoInstruction)instruction).shouldWidenBackBranch())) {
+                (!(instruction instanceof GotoInstruction gotoInstruction) || gotoInstruction.shouldWidenBackBranch())) {
               state.getMemoryState().widen();
             }
             queue.offer(state);

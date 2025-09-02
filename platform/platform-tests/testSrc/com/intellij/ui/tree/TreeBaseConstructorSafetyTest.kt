@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tree
 
+import com.intellij.testFramework.junit5.RunInEdt
 import com.intellij.ui.treeStructure.CachingTreePath
 import com.intellij.ui.treeStructure.Tree
 import org.assertj.core.api.Assertions.assertThat
@@ -11,7 +12,15 @@ import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.TreeModel
 import javax.swing.tree.TreePath
+import kotlin.collections.ArrayDeque
+import kotlin.collections.filter
+import kotlin.collections.getValue
+import kotlin.collections.hashMapOf
+import kotlin.collections.listOf
+import kotlin.collections.set
+import kotlin.collections.toList
 
+@RunInEdt
 class TreeBaseConstructorSafetyTest {
   private val nodesByString = hashMapOf<String, DefaultMutableTreeNode>()
   private var sut: Tree? = null

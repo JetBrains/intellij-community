@@ -1,0 +1,43 @@
+LineBreakpoint created at privateSuspend.kt:45
+Run Java
+Connected to the target VM
+privateSuspend.kt:45
+Compile bytecode for kotlinx.coroutines.runBlocking(
+    @kotlin.OptIn(kotlin.ExperimentalStdlibApi::class)
+    coroutineContext.minusKey(kotlinx.coroutines.CoroutineDispatcher)
+) {
+    Obj.privateStringMemberFun()
+}
+Compile bytecode for kotlinx.coroutines.runBlocking(
+    @kotlin.OptIn(kotlin.ExperimentalStdlibApi::class)
+    coroutineContext.minusKey(kotlinx.coroutines.CoroutineDispatcher)
+) {
+    Obj.privateIntMemberFun()
+}
+Compile bytecode for kotlinx.coroutines.runBlocking(
+    @kotlin.OptIn(kotlin.ExperimentalStdlibApi::class)
+    coroutineContext.minusKey(kotlinx.coroutines.CoroutineDispatcher)
+) {
+    Obj.privateICMemberFun().x
+}
+Compile bytecode for kotlinx.coroutines.runBlocking(
+    @kotlin.OptIn(kotlin.ExperimentalStdlibApi::class)
+    coroutineContext.minusKey(kotlinx.coroutines.CoroutineDispatcher)
+) {
+    privateStringTopLevelFun()
+}
+Compile bytecode for kotlinx.coroutines.runBlocking(
+    @kotlin.OptIn(kotlin.ExperimentalStdlibApi::class)
+    coroutineContext.minusKey(kotlinx.coroutines.CoroutineDispatcher)
+) {
+    privateIntTopLevelFun()
+}
+Compile bytecode for kotlinx.coroutines.runBlocking(
+    @kotlin.OptIn(kotlin.ExperimentalStdlibApi::class)
+    coroutineContext.minusKey(kotlinx.coroutines.CoroutineDispatcher)
+) {
+    privateICClassTopLevelFun().x
+}
+Disconnected from the target VM
+
+Process finished with exit code 0

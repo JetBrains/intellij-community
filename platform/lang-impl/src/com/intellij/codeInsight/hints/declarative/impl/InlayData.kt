@@ -3,9 +3,7 @@ package com.intellij.codeInsight.hints.declarative.impl
 
 import com.intellij.codeInsight.hints.declarative.*
 import com.intellij.codeInsight.hints.declarative.impl.util.TinyTree
-import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.psi.PsiFile
 import com.intellij.util.io.DataExternalizer
 import com.intellij.util.io.DataInputOutputUtil.readINT
 import com.intellij.util.io.DataInputOutputUtil.writeINT
@@ -53,15 +51,47 @@ data class InlayData(
   val payloads: List<InlayPayload>?,
   val providerClass: Class<*>, // Just for debugging purposes
   val sourceId: String,
-)
+) {
+  override fun toString(): String {
+    fun buildStringFromTextNodes(index: Byte, builder: StringBuilder): Unit = with(builder) {
+      tree.processChildren(index) { i ->
+        val tag = tree.getBytePayload(i)
+        when (tag) {
+          InlayTags.TEXT_TAG -> append(
+            when (val data = tree.getDataPayload(i)) {
+              is String -> data
+              is ActionWithContent -> data.content as String
+              else -> "%error: unexpected data in text node%"
+            })
+          InlayTags.COLLAPSIBLE_LIST_COLLAPSED_BRANCH_TAG -> {
+            // do nothing, we want to return fully expanded text
+          }
+          else -> {
+            buildStringFromTextNodes(i, builder)
+          }
+        }
+        true
+      }
+    }
 
-internal object InlayDataExternalizer : DataExternalizer<InlayData> {
-  // increment on format changed
-  private const val SERDE_VERSION = 8
+    return buildString {
+      append("<# ")
+      buildStringFromTextNodes(0, this)
+      append(" #>")
+    }
+  }
+}
 
-  private val treeExternalizer: PresentationTreeExternalizer = PresentationTreeExternalizer
+@ApiStatus.Internal
+abstract class InlayDataExternalizer(
+  private val treeExternalizer: PresentationTreeExternalizer
+) : DataExternalizer<InlayData> {
+  companion object {
+    // increment on format changed
+    private const val SERDE_VERSION = 9
+  }
 
-  fun serdeVersion(): Int = SERDE_VERSION + treeExternalizer.serdeVersion()
+  open fun serdeVersion(): Int = SERDE_VERSION + treeExternalizer.serdeVersion()
 
   override fun save(output: DataOutput, inlayData: InlayData) {
     writePosition(output, inlayData.position)
@@ -69,8 +99,9 @@ internal object InlayDataExternalizer : DataExternalizer<InlayData> {
     writeHintFormat(output, inlayData.hintFormat)
     treeExternalizer.save(output, inlayData.tree)
     writeUTF(output, inlayData.providerId)
-    output.writeBoolean(inlayData.disabled)
+    writeDisabled(output, inlayData.disabled)
     writePayloads(output, inlayData.payloads)
+    writeProviderClass(output, inlayData.providerClass)
     writeSourceId(output, inlayData.sourceId)
   }
 
@@ -80,9 +111,9 @@ internal object InlayDataExternalizer : DataExternalizer<InlayData> {
     val hintFormat: HintFormat        = readHintFormat(input)
     val tree: TinyTree<Any?>          = treeExternalizer.read(input)
     val providerId: String            = readUTF(input)
-    val disabled: Boolean             = input.readBoolean()
+    val disabled: Boolean             = readDisabled(input)
     val payloads: List<InlayPayload>? = readPayloads(input)
-    val providerClass: Class<*>       = ZombieInlayHintsProvider::class.java
+    val providerClass: Class<*>       = readProviderClass(input)
     val sourceId: String              = readSourceId(input)
     return InlayData(position, tooltip, hintFormat, tree, providerId, disabled, payloads, providerClass, sourceId)
   }
@@ -111,28 +142,33 @@ internal object InlayDataExternalizer : DataExternalizer<InlayData> {
 
   private fun readPosition(input: DataInput): InlayPosition {
     val type = readINT(input)
-    if (type == 0) {
-      val offset = readINT(input)
-      val related = input.readBoolean()
-      val priority = readINT(input)
-      return InlineInlayPosition(offset, related, priority)
-    } else if (type == 1) {
-      val line = readINT(input)
-      val priority = readINT(input)
-      return EndOfLinePosition(line, priority)
-    } else if (type == 2) {
-      val offset = readINT(input)
-      val verticalPriority = readINT(input)
-      val priority = readINT(input)
-      return AboveLineIndentedPosition(offset, verticalPriority, priority)
+    when (type) {
+      0 -> {
+        val offset = readINT(input)
+        val related = input.readBoolean()
+        val priority = readINT(input)
+        return InlineInlayPosition(offset, related, priority)
+      }
+      1 -> {
+        val line = readINT(input)
+        val priority = readINT(input)
+        return EndOfLinePosition(line, priority)
+      }
+      2 -> {
+        val offset = readINT(input)
+        val verticalPriority = readINT(input)
+        val priority = readINT(input)
+        return AboveLineIndentedPosition(offset, verticalPriority, priority)
+      }
+      else -> throw IllegalStateException("unknown inlay position type: $type")
     }
-    throw IllegalStateException("unknown inlay position type: $type")
   }
 
   private fun writeTooltip(output: DataOutput, tooltip: String?) {
     if (tooltip == null) {
       output.writeBoolean(false)
-    } else {
+    }
+    else {
       output.writeBoolean(true)
       writeUTF(output, tooltip)
     }
@@ -141,7 +177,8 @@ internal object InlayDataExternalizer : DataExternalizer<InlayData> {
   private fun readTooltip(input: DataInput): String? {
     return if (input.readBoolean()) {
       readUTF(input)
-    } else {
+    }
+    else {
       null
     }
   }
@@ -153,16 +190,17 @@ internal object InlayDataExternalizer : DataExternalizer<InlayData> {
   }
 
   private fun readHintFormat(input: DataInput): HintFormat {
-    val hintColorKind= HintColorKind.valueOf(readUTF(input))
-    val hintFontSize= HintFontSize.valueOf(readUTF(input))
-    val padding= HintMarginPadding.valueOf(readUTF(input))
+    val hintColorKind = HintColorKind.valueOf(readUTF(input))
+    val hintFontSize = HintFontSize.valueOf(readUTF(input))
+    val padding = HintMarginPadding.valueOf(readUTF(input))
     return HintFormat(hintColorKind, hintFontSize, padding)
   }
 
-  private fun writePayloads(output: DataOutput, payloads: List<InlayPayload>?) {
+  open fun writePayloads(output: DataOutput, payloads: List<InlayPayload>?) {
     if (payloads == null) {
       output.writeBoolean(false)
-    } else {
+    }
+    else {
       output.writeBoolean(true)
       writeINT(output, payloads.size)
       for (p in payloads) {
@@ -171,7 +209,7 @@ internal object InlayDataExternalizer : DataExternalizer<InlayData> {
     }
   }
 
-  private fun readPayloads(input: DataInput): List<InlayPayload>? {
+  open fun readPayloads(input: DataInput): List<InlayPayload>? {
     if (input.readBoolean()) {
       val payloadCount = readINT(input)
       val payloads = ArrayList<InlayPayload>(payloadCount)
@@ -180,7 +218,8 @@ internal object InlayDataExternalizer : DataExternalizer<InlayData> {
         payloads.add(inlayPayload)
       }
       return payloads
-    } else {
+    }
+    else {
       return null
     }
   }
@@ -196,17 +235,23 @@ internal object InlayDataExternalizer : DataExternalizer<InlayData> {
     return InlayPayload(payloadName, inlayActionPayload)
   }
 
-  private fun writeSourceId(output: DataOutput, sourceId: String) {
+  open fun writeSourceId(output: DataOutput, sourceId: String) {
     writeUTF(output, sourceId)
   }
 
-  private fun readSourceId(input: DataInput): String {
+  open fun readSourceId(input: DataInput): String {
     return readUTF(input)
   }
-}
 
-private class ZombieInlayHintsProvider : InlayHintsProvider {
-  override fun createCollector(file: PsiFile, editor: Editor): InlayHintsCollector? {
-    throw UnsupportedOperationException("Zombie provider does not support inlay collecting")
+  abstract fun writeProviderClass(output: DataOutput, providerClass: Class<*>)
+
+  abstract fun readProviderClass(input: DataInput): Class<*>
+
+  fun writeDisabled(output: DataOutput, disabled: Boolean) {
+    output.writeBoolean(disabled)
+  }
+
+  fun readDisabled(input: DataInput): Boolean {
+    return input.readBoolean()
   }
 }

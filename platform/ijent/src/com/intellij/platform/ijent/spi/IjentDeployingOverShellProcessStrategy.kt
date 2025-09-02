@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.spi
 
 import com.intellij.execution.CommandLineUtil.posixQuote
@@ -40,12 +40,13 @@ abstract class IjentDeployingOverShellProcessStrategy(scope: CoroutineScope) : I
   private val myContext: Deferred<DeployingContextAndShell> = run {
     var createdShellProcess: ShellProcessWrapper? = null
     val context = scope.async(start = CoroutineStart.LAZY) {
-      val shellProcess = ShellProcessWrapper(IjentSessionMediator.create(scope, createShellProcess(), ijentLabel))
+      val shellProcess = ShellProcessWrapper(IjentSessionMediator.create(scope, createShellProcess(), ijentLabel, ::isExpectedProcessExit))
       createdShellProcess = shellProcess
       createDeployingContext(shellProcess.apply {
         val initializationTime = measureTime {
           withTimeout(runCatching { Registry.intValue("ijent.shell.initialization.timeout") }.getOrDefault(30_000).milliseconds) {
-            write("set -ex")
+            val debugOption = if (LOG.isDebugEnabled) "x" else ""
+            write("set -e$debugOption")
             ensureActive()
             filterOutBanners()
           }
@@ -300,8 +301,8 @@ private suspend fun DeployingContextAndShell.getTargetPlatform(): EelPlatform.Po
 
   val targetPlatform = when {
     arch.isEmpty() -> throw IjentStartupError.IncompatibleTarget("Empty output of `uname`")
-    "x86_64" in arch -> EelPlatform.Linux(EelPlatform.X86_64)
-    "aarch64" in arch -> EelPlatform.Linux(EelPlatform.ARM_64)
+    "x86_64" in arch -> EelPlatform.Linux(EelPlatform.Arch.X86_64)
+    "aarch64" in arch -> EelPlatform.Linux(EelPlatform.Arch.ARM_64)
     else -> throw IjentStartupError.IncompatibleTarget("No binary for architecture $arch")
   }
   return targetPlatform

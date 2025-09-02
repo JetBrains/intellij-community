@@ -1,1 +1,2 @@
 Method bar() uses class Test which will be inaccessible after move
+Method bar() uses class Test which will be inaccessible after move

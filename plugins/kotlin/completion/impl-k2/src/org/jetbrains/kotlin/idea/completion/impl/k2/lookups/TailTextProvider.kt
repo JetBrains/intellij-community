@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.completion.lookups
 
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
@@ -18,14 +19,22 @@ import org.jetbrains.kotlin.idea.completion.lookups.CompletionShortNamesRenderer
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.renderer.render
 
-internal object TailTextProvider {
+@ApiStatus.Internal
+object TailTextProvider {
 
     context(KaSession)
     fun getTailText(
         signature: KaCallableSignature<*>,
-    ): String = buildString {
+    ): String  {
         // use unsubstituted type when rendering receiver type of extension
         val symbol = signature.symbol
+        return getTailText(symbol)
+    }
+
+    context(KaSession)
+    fun getTailText(
+        symbol: KaCallableSymbol,
+    ): String = buildString {
         symbol.receiverType?.let { renderReceiverType(it) }
 
         symbol.getContainerPresentation(isFunctionalVariableCall = false)?.let { append(it) }

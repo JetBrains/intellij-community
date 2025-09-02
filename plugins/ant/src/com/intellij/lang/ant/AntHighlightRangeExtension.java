@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 public final class AntHighlightRangeExtension implements HighlightRangeExtension {
 
   @Override
-  public boolean isForceHighlightParents(final @NotNull PsiFile file) {
-    return XmlUtil.isAntFile(file);
+  public boolean isForceHighlightParents(final @NotNull PsiFile psiFile) {
+    return XmlUtil.isAntFile(psiFile);
   }
 }

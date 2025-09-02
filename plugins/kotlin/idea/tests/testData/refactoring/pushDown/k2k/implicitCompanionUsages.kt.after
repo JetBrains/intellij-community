@@ -3,11 +3,12 @@ class X {
 
         companion object {
             fun bar() = 1
+            const val BAZ: Int = 0
         }
     }
 }
 
 class B : X.A {
     // INFO: {"checked": "true"}
-    fun foo(): Int = bar() + bar() + bar()
+    fun foo(): Int = bar() + bar() + bar() + BAZ + BAZ + BAZ
 }

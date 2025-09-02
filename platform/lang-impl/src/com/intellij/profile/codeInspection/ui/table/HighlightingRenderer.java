@@ -12,8 +12,6 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.awt.event.MouseEvent;
-import java.util.EventObject;
 import java.util.List;
 
 @ApiStatus.Internal
@@ -26,6 +24,12 @@ public abstract class HighlightingRenderer extends ComboBoxTableRenderer<TextAtt
   HighlightingRenderer(@NotNull @Unmodifiable List<? extends Pair<TextAttributesKey, @Nls String>> editorAttributesKey) {
     super(editorAttributesKey.stream().map(pair -> pair.first).toArray(TextAttributesKey[]::new));
     myEditorAttributesKey = editorAttributesKey;
+    withClickCount(1);
+  }
+
+  @Override
+  protected int getPreferredSizeMaxValues() {
+    return 0; // there can be long values inside, and this makes the popup appearing on mouse hover unnecessarily large
   }
 
   @Override
@@ -43,11 +47,6 @@ public abstract class HighlightingRenderer extends ComboBoxTableRenderer<TextAtt
     }
     text = HighlightingChooser.stripColorOptionCategory(text);
     return text;
-  }
-
-  @Override
-  public boolean isCellEditable(EventObject event) {
-    return !(event instanceof MouseEvent) || ((MouseEvent)event).getClickCount() >= 1;
   }
 
   @Override

@@ -8,11 +8,9 @@ import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificatio
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener
 
 internal class Fe10KotlinModificationTrackerFactory(private val project: Project) : KotlinModificationTrackerFactory {
-    override fun createProjectWideOutOfBlockModificationTracker(): ModificationTracker {
-        return KotlinCodeBlockModificationListener.getInstance(project).kotlinOutOfCodeBlockTracker
-    }
+    override fun createProjectWideSourceModificationTracker(): ModificationTracker =
+        KotlinCodeBlockModificationListener.getInstance(project).kotlinOutOfCodeBlockTracker
 
-    override fun createLibrariesWideModificationTracker(): ModificationTracker {
-        return JavaLibraryModificationTracker.getInstance(project)
-    }
+    override fun createProjectWideLibraryModificationTracker(): ModificationTracker =
+        JavaLibraryModificationTracker.getInstance(project)
 }

@@ -38,6 +38,8 @@ import java.util.function.Function;
 public class TemplateDataElementType extends IFileElementType implements ITemplateDataElementType {
   private static final Logger LOG = Logger.getInstance(TemplateDataElementType.class);
   private static final int CHECK_PROGRESS_AFTER_TOKENS = 1000;
+
+  @ApiStatus.Internal
   public static final LanguageExtension<TreePatcher> TREE_PATCHER =
     new LanguageExtension<>("com.intellij.lang.treePatcher", new SimpleTreePatcher());
 
@@ -114,8 +116,8 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
                                        final TemplateLanguageFileViewProvider viewProvider,
                                        @NotNull TemplateDataElementType.RangeCollector rangeCollector) {
     CharSequence templateSourceCode = createTemplateText(sourceCode, createBaseLexer(viewProvider), rangeCollector);
-    if (rangeCollector instanceof RangeCollectorImpl) {
-      ((RangeCollectorImpl)rangeCollector).prepareFileForParsing(templateLanguage, sourceCode, templateSourceCode);
+    if (rangeCollector instanceof RangeCollectorImpl impl) {
+      impl.prepareFileForParsing(templateLanguage, sourceCode, templateSourceCode);
     }
     return createPsiFileFromSource(templateLanguage, templateSourceCode, psiFile.getManager());
   }
@@ -272,8 +274,8 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
   protected OuterLanguageElementImpl createOuterLanguageElement(@NotNull CharSequence internedTokenText,
                                                                 @NotNull IElementType outerElementType) {
     var factoryCreatedElement = ASTFactory.leaf(outerElementType, internedTokenText);
-    if (factoryCreatedElement instanceof OuterLanguageElementImpl) {
-      return (OuterLanguageElementImpl)factoryCreatedElement;
+    if (factoryCreatedElement instanceof OuterLanguageElementImpl outer) {
+      return outer;
     }
     LOG.error(
       "Wrong element created by ASTFactory. See method documentation for details. Here is what we have:" +

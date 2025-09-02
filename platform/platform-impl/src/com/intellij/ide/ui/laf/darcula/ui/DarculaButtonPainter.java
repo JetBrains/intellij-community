@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf.darcula.ui;
 
+import com.intellij.openapi.application.impl.InternalUICustomization;
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
 import com.intellij.ui.ClientProperty;
 import com.intellij.ui.JBColor;
@@ -30,7 +31,8 @@ public class DarculaButtonPainter implements Border, UIResource {
 
   @Override
   public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-    Graphics2D g2 = (Graphics2D)g.create();
+    InternalUICustomization service = InternalUICustomization.getInstance();
+    Graphics2D g2 = (Graphics2D) ((service != null) ? service.transformButtonGraphics(g.create()) : g.create()) ;
 
     try {
       Object avoidExtendingObject = ClientProperty.get(c, AVOID_EXTENDING_BORDER_GRAPHICS);
@@ -133,8 +135,12 @@ public class DarculaButtonPainter implements Border, UIResource {
         return JBUI.CurrentTheme.Button.focusBorderColor(defButton);
       }
       else {
-        return new GradientPaint(0, 0, JBUI.CurrentTheme.Button.buttonOutlineColorStart(defButton),
-                                 0, r.height, JBUI.CurrentTheme.Button.buttonOutlineColorEnd(defButton));
+        GradientPaint paint = new GradientPaint(0, 0, JBUI.CurrentTheme.Button.buttonOutlineColorStart(defButton),
+                                                0, r.height, JBUI.CurrentTheme.Button.buttonOutlineColorEnd(defButton));
+        InternalUICustomization instance = InternalUICustomization.getInstance();
+        if (instance == null) return paint;
+
+        return instance.getAiComponentMarker().getCustomButtonBorderPaint(b, r, paint);
       }
     }
     else {

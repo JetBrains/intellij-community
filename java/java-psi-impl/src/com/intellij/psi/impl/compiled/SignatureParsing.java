@@ -12,6 +12,7 @@ import com.intellij.psi.impl.java.stubs.impl.PsiClassReferenceListStubImpl;
 import com.intellij.psi.impl.java.stubs.impl.PsiTypeParameterStubImpl;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.Function;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.cls.ClsFormatException;
 import org.jetbrains.annotations.NotNull;
@@ -121,7 +122,7 @@ public final class SignatureParsing {
     void fillInTypeParameterList(StubElement<?> parent) {
       List<TypeParameterDeclaration> declarations = this.myDeclarations;
       if (declarations.isEmpty()) return;
-      PsiTypeParameterListStub listStub = parent.findChildStubByType(JavaStubElementTypes.TYPE_PARAMETER_LIST);
+      PsiTypeParameterListStub listStub = ObjectUtils.tryCast(parent.findChildStubByElementType(JavaStubElementTypes.TYPE_PARAMETER_LIST), PsiTypeParameterListStub.class);
       if (listStub == null) return;
       for (TypeParameterDeclaration parameter : declarations) {
         parameter.createTypeParameter(listStub);

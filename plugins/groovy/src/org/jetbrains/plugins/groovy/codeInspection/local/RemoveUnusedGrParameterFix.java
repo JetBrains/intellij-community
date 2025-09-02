@@ -45,16 +45,16 @@ public class RemoveUnusedGrParameterFix implements IntentionAction {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    PsiElement at = file.findElementAt(editor.getCaretModel().getOffset());
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    PsiElement at = psiFile.findElementAt(editor.getCaretModel().getOffset());
     GrParameter parameter = PsiTreeUtil.getParentOfType(at, GrParameter.class);
 
     return parameter != null && myName.equals(parameter.getName());
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    GrParameter parameter = getParameter(editor, file);
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
+    GrParameter parameter = getParameter(editor, psiFile);
     if (parameter == null) return;
 
     if (!FileModificationService.getInstance().prepareFileForWrite(parameter.getContainingFile())) return;
@@ -87,8 +87,8 @@ public class RemoveUnusedGrParameterFix implements IntentionAction {
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    GrParameter parameter = getParameter(editor, file);
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    GrParameter parameter = getParameter(editor, psiFile);
     if (parameter == null) {
       return IntentionPreviewInfo.EMPTY;
     }

@@ -241,18 +241,18 @@ public class CoreApplicationEnvironment {
 
   @SuppressWarnings("unused")
   public static void registerExtensionPointAndExtensions(@NotNull Path pluginRoot, @NotNull String fileName, @NotNull ExtensionsArea area) {
-    IdeaPluginDescriptorImpl descriptor = PluginDescriptorLoader.loadForCoreEnv(pluginRoot, fileName);
+    IdeaPluginDescriptorImpl descriptor = PluginDescriptorLoader.loadAndInitForCoreEnv(pluginRoot, fileName);
     if (descriptor == null) {
       PluginManagerCore.getLogger().error("Cannot load " + fileName + " from " + pluginRoot);
       return;
     }
 
-    List<ExtensionPointDescriptor> extensionPoints = descriptor.appContainerDescriptor.extensionPoints;
+    List<ExtensionPointDescriptor> extensionPoints = descriptor.getAppContainerDescriptor().extensionPoints;
     ExtensionsAreaImpl areaImpl = (ExtensionsAreaImpl)area;
     if (!extensionPoints.isEmpty()) {
       areaImpl.registerExtensionPoints(extensionPoints, descriptor);
     }
-    descriptor.registerExtensions(areaImpl.getNameToPointMap(), descriptor.appContainerDescriptor, null);
+    descriptor.registerExtensions(areaImpl.getNameToPointMap(), null);
   }
 
   public @NotNull CoreLocalFileSystem getLocalFileSystem() {

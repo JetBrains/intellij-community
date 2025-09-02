@@ -44,9 +44,16 @@ public final class Restarter {
       }
     }
     else if (SystemInfo.isMac) {
-      var appDir = Path.of(PathManager.getHomePath()).getParent();
-      if (appDir != null && appDir.getFileName().toString().endsWith(".app") && Files.isDirectory(appDir)) {
-        return appDir;
+      if (PlatformUtils.isJetBrainsClient()) {
+        var appDir = Path.of(PathManager.getHomePath()).getParent();
+        if (appDir != null && appDir.getFileName().toString().endsWith(".app") && Files.isDirectory(appDir)) {
+          return appDir;
+        }
+      } else {
+        var starter = Path.of(PathManager.getHomePath(), "MacOS", ApplicationNamesInfo.getInstance().getScriptName());
+        if (Files.exists(starter)) {
+          return starter;
+        }
       }
     }
     else if (SystemInfo.isLinux) {
@@ -151,7 +158,11 @@ public final class Restarter {
       restartOnWindows(elevate, List.of(beforeRestart), mainAppArgs);
     }
     else if (SystemInfo.isMac) {
-      restartOnMac(List.of(beforeRestart), mainAppArgs);
+      if (PlatformUtils.isJetBrainsClient()) {
+        restartJBCOnMac(List.of(beforeRestart), mainAppArgs);
+      } else {
+        restartOnMac(List.of(beforeRestart), mainAppArgs);
+      }
     }
     else if (SystemInfo.isLinux) {
       restartOnLinux(List.of(beforeRestart), mainAppArgs);
@@ -179,18 +190,18 @@ public final class Restarter {
     runRestarter(command);
   }
 
-  private static void restartOnMac(List<String> beforeRestart, List<String> args) throws IOException {
+  private static void restartJBCOnMac(List<String> beforeRestart, List<String> args) throws IOException {
     var appDir = ourStarter.getValue();
     if (appDir == null) throw new IOException("Application bundle not found: " + PathManager.getHomePath());
     var command = prepareCommand(beforeRestart);
-    
+
     var runProcessCommand = new ArrayList<String>();
     runProcessCommand.add("/usr/bin/open");
 
-    /* JetBrains Client process may be started from the same bundle as the full IDE, so we need to force 'open' command to run a new 
+    /* JetBrains Client process may be started from the same bundle as the full IDE, so we need to force 'open' command to run a new
        process from that bundle instead of focusing on the existing application if it's running */
     runProcessCommand.add("-n");
-    
+
     runProcessCommand.add(appDir.toString());
     if (!args.isEmpty()) {
       runProcessCommand.add("--args");
@@ -199,6 +210,16 @@ public final class Restarter {
 
     command.add(String.valueOf(runProcessCommand.size()));
     command.addAll(runProcessCommand);
+    runRestarter(command);
+  }
+
+  private static void restartOnMac(List<String> beforeRestart, List<String> args) throws IOException {
+    var starter = ourStarter.getValue();
+    if (starter == null) throw new IOException("Starter executable not found in: " + PathManager.getHomePath());
+    var command = prepareCommand(beforeRestart);
+    command.add(String.valueOf(args.size() + 1));
+    command.add(starter.toString());
+    command.addAll(args);
     runRestarter(command);
   }
 

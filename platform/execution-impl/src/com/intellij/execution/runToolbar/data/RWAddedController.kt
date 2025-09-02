@@ -1,9 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.runToolbar.data
 
 import javax.swing.SwingUtilities
 
-class RWAddedController : RWListenersController<RWActiveListener>() {
+internal class RWAddedController : RWListenersController<RWActiveListener>() {
   fun enabled() {
     doWithListeners { listeners ->
       listeners.forEach { it.enabled() }
@@ -51,7 +51,7 @@ internal class RWStateController : RWListenersController<RWStateListener>() {
   }
 }
 
-abstract class RWListenersController<T> {
+internal sealed class RWListenersController<T> {
   private val listenersUnsafe = mutableListOf<T>()
   private val listenerLock = Object()
   protected fun doWithListeners(action: (MutableList<T>) -> Unit) {

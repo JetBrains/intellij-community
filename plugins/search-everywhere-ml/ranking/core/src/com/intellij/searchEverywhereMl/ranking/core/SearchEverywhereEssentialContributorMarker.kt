@@ -1,14 +1,17 @@
+@file:OptIn(IntellijInternalApi::class)
+
 package com.intellij.searchEverywhereMl.ranking.core
 
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereEssentialContributorMarker
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.util.registry.Registry
-import com.intellij.searchEverywhereMl.SearchEverywhereMlExperiment
-import com.intellij.searchEverywhereMl.SearchEverywhereTabWithMlRanking
+import com.intellij.openapi.util.IntellijInternalApi
+import com.intellij.searchEverywhereMl.SearchEverywhereTab
+import com.intellij.searchEverywhereMl.isEssentialContributorPredictionExperiment
 import com.intellij.searchEverywhereMl.ranking.core.model.CatBoostModelFactory
 import com.intellij.searchEverywhereMl.ranking.core.model.SearchEverywhereCatBoostBinaryClassifierModel
+import java.util.WeakHashMap
 
 
 /**
@@ -26,21 +29,14 @@ internal class SearchEverywhereEssentialContributorMlMarker : SearchEverywhereEs
     .withResourceDirectory(RESOURCE_DIR)
     .buildBinaryClassifier(TRUE_THRESHOLD)
 
-  private val isExperimentDisabledByRegistry
-    get() = Registry.`is`("search.everywhere.force.disable.experiment.essential.contributors.ml")
+  private val contributorPredictionCache = WeakHashMap<SearchEverywhereContributor<*>, Float>()
 
   override fun isAvailable(): Boolean {
     return isActiveExperiment() && isSearchStateActive()
   }
 
   private fun isActiveExperiment(): Boolean {
-    if (isExperimentDisabledByRegistry) {
-      return false
-    }
-
-    val experiment = SearchEverywhereMlExperiment()
-    val experimentForAllTab = experiment.getExperimentForTab(SearchEverywhereTabWithMlRanking.ALL)
-    return experimentForAllTab == SearchEverywhereMlExperiment.ExperimentType.ESSENTIAL_CONTRIBUTOR_PREDICTION
+    return SearchEverywhereTab.All.isEssentialContributorPredictionExperiment
   }
 
   private fun isSearchStateActive(): Boolean {
@@ -57,9 +53,19 @@ internal class SearchEverywhereEssentialContributorMlMarker : SearchEverywhereEs
     }
   }
 
-  override fun isContributorEssential(contributor: SearchEverywhereContributor<*>): Boolean? {
+  private fun computeProbability(contributor: SearchEverywhereContributor<*>): Float {
     val features = getFeatures(contributor).associate { it.field.name to it.data }
-    return model.predictTrue(features)
+    return model.predict(features).toFloat()
+  }
+
+  override fun isContributorEssential(contributor: SearchEverywhereContributor<*>): Boolean? {
+    return computeProbability(contributor) >= TRUE_THRESHOLD
+  }
+
+  internal fun getContributorEssentialPrediction(contributor: SearchEverywhereContributor<*>): Float? {
+    return contributorPredictionCache.getOrPut(contributor) {
+      computeProbability(contributor)
+    }
   }
 
   private fun getFeatures(contributor: SearchEverywhereContributor<*>): List<EventPair<*>> {

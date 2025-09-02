@@ -15,11 +15,16 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.lexer.PythonIndentingLexer;
 import com.jetbrains.python.psi.PyStatement;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 
 public final class PyTokenSeparatorGenerator implements TokenSeparatorGenerator {
   @Override
-  public ASTNode generateWhitespaceBetweenTokens(ASTNode left, ASTNode right) {
+  public ASTNode generateWhitespaceBetweenTokens(@Nullable ASTNode left, @NotNull ASTNode right) {
+    if (left == null) {
+      return null;
+    }
     PsiManager manager = right.getTreeParent().getPsi().getManager();
     if (left.getElementType() == PyTokenTypes.END_OF_LINE_COMMENT) {
       return createLineBreak(manager);

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.jdi;
 
 import com.intellij.debugger.SourcePosition;
@@ -8,6 +8,7 @@ import com.intellij.debugger.engine.StackFrameContext;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.SimpleStackFrameContext;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
@@ -528,7 +529,7 @@ public final class LocalVariablesUtil {
   }
 
   private static int getTypeSlotSize(String name) {
-    if (PsiKeyword.DOUBLE.equals(name) || PsiKeyword.LONG.equals(name)) {
+    if (JavaKeywords.DOUBLE.equals(name) || JavaKeywords.LONG.equals(name)) {
       return 2;
     }
     return 1;

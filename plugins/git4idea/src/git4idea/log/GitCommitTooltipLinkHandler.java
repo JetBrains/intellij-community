@@ -9,7 +9,7 @@ import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.impl.HashImpl;
-import com.intellij.vcs.log.ui.actions.ShowCommitInLogAction;
+import com.intellij.vcs.log.impl.VcsProjectLog;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,7 +28,7 @@ public class GitCommitTooltipLinkHandler extends TooltipLinkHandler {
       return false;
     }
 
-    ShowCommitInLogAction.jumpToRevision(project, hash);
+    VcsProjectLog.showRevisionInMainLog(project, hash);
     return true;
   }
 

@@ -2,6 +2,8 @@
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -47,5 +49,13 @@ public class LightPrimitivePatternsHighlightingTest extends LightJavaCodeInsight
   private void doTest() {
     myFixture.configureByFile(getTestName(false) + ".java");
     myFixture.checkHighlighting();
+  }
+
+  public void testSwitchRecordPrimitiveJava25Preview() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_25_PREVIEW, this::doTest);
+  }
+
+  public void testSwitchRecordPrimitiveJava25() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_25, this::doTest);
   }
 }

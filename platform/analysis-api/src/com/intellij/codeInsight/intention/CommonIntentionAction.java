@@ -15,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @see IntentionAction
  * @see com.intellij.modcommand.ModCommandAction
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/code-inspections-and-intentions.html">Code Inspection and Intentions (IntelliJ Platform Docs)</a>
  */
 @ApiStatus.NonExtendable
 public interface CommonIntentionAction {

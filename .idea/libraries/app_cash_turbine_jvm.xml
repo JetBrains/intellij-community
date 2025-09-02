@@ -1,0 +1,18 @@
+<component name="libraryTable">
+  <library name="app.cash.turbine.jvm" type="repository">
+    <properties include-transitive-deps="false" maven-id="app.cash.turbine:turbine-jvm:1.0.0">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/app/cash/turbine/turbine-jvm/1.0.0/turbine-jvm-1.0.0.jar">
+          <sha256sum>41984dffaf069b84b814fa787f740bf7ebdc90bf89f69d05bc4660c69874b49e</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/app/cash/turbine/turbine-jvm/1.0.0/turbine-jvm-1.0.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/app/cash/turbine/turbine-jvm/1.0.0/turbine-jvm-1.0.0-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

@@ -7,7 +7,6 @@ import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.*
@@ -274,10 +273,8 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
         FileDocumentManager.getInstance().saveAllDocuments()
       }
       return withContext(Dispatchers.IO) {
-        blockingContext {
-          ScheduleForAdditionAction.Manager.addUnversionedFilesToVcsInSync(project, changeList, unversionedFiles) { newChanges ->
-            inclusionModel.addInclusion(newChanges)
-          }
+        ScheduleForAdditionAction.Manager.addUnversionedFilesToVcsInSync(project, changeList, unversionedFiles) { newChanges ->
+          inclusionModel.addInclusion(newChanges)
         }
       }
     }

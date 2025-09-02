@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.performancePlugin.commands;
 
 import com.intellij.openapi.application.PathManager;
@@ -25,17 +26,9 @@ public final class MemoryDumpCommand extends AbstractCommand {
 
   @Override
   protected @NotNull Promise<Object> _execute(@NotNull PlaybackContext context) {
-    if (!MemoryDumpHelper.memoryDumpAvailable()) {
-      return Promises.rejectedPromise("Memory dump can't be collected");
-    }
-
-    //noinspection CallToSystemGC
-    System.gc();
-
-    String path = getMemoryDumpPath();
-
     try {
-      MemoryDumpHelper.captureMemoryDumpZipped(path);
+      String path = getMemoryDumpPath();
+      captureZippedMemoryDump(path);
       context.message("Memory snapshot is saved at " + path, getLine());
       return Promises.resolvedPromise();
     }
@@ -47,6 +40,15 @@ public final class MemoryDumpCommand extends AbstractCommand {
   public static @NotNull String getMemoryDumpPath() {
     String memoryDumpPath = System.getProperties().getProperty("memory.snapshots.path", PathManager.getLogPath());
     String currentTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
-    return memoryDumpPath + File.separator + (Timer.instance.getActivityName() + '-' + currentTime + ".hprof");
+    return memoryDumpPath + File.separator + (Timer.instance.getActivityName() + '-' + currentTime + ".zip");
+  }
+
+  public static void captureZippedMemoryDump(String dumpPath) throws Exception {
+    if (!MemoryDumpHelper.memoryDumpAvailable()) {
+      throw new RuntimeException("Memory dump is not available");
+    }
+    //noinspection CallToSystemGC
+    System.gc();
+    MemoryDumpHelper.captureMemoryDumpZipped(dumpPath);
   }
 }

@@ -1,0 +1,36 @@
+<idea-plugin package="com.intellij.compilation.charts">
+  <module value="intellij.java.compiler.charts" />
+  <extensions defaultExtensionNs="com.intellij">
+    <postStartupActivity implementation="com.intellij.compilation.charts.jps.CompilationChartsProjectActivity"/>
+    <compileServer.plugin classpath="jps/compilation-charts-jps.jar"/>
+    <buildProcess.parametersProvider implementation="com.intellij.compilation.charts.jps.CompilationChartsBuildParametersProvider"/>
+
+    <registryKey key="compilation.charts" defaultValue="false"
+                 description="Show compilation charts" restartRequired="false"/>
+    <registryKey key="compilation.charts.mac.magnificationGesture" defaultValue="false"
+                 description="Enable pinch-to-zoom gesture for magnifying compilation charts." restartRequired="false"/>
+
+    <applicationService serviceInterface="com.intellij.compilation.charts.CompilationChartsFactory"
+                        serviceImplementation="com.intellij.compilation.charts.impl.CompilationChartsFactoryImpl"/>
+  </extensions>
+  <actions resource-bundle="messages.CompilationChartsBundle">
+    <action id="CompilationChartsZoomResetAction" class="com.intellij.compilation.charts.ui.ActionPanel$ZoomResetAction"
+            icon="AllIcons.Graph.ActualZoom">
+      <keyboard-shortcut first-keystroke="shift meta EQUALS" keymap="Mac OS X"/>
+      <keyboard-shortcut first-keystroke="shift ctrl EQUALS" keymap="$default"/>
+      <override-text place="CompilationChartsToolbar"/>
+    </action>
+    <action id="CompilationChartsZoomOutAction" class="com.intellij.compilation.charts.ui.ActionPanel$ZoomOutAction"
+            icon="AllIcons.Graph.ZoomOut" use-shortcut-of="CollapseAll">
+      <override-text place="CompilationChartsToolbar"/>
+    </action>
+    <action id="CompilationChartsZoomInAction" class="com.intellij.compilation.charts.ui.ActionPanel$ZoomInAction"
+            icon="AllIcons.Graph.ZoomIn" use-shortcut-of="ExpandAll">
+      <override-text place="CompilationChartsToolbar"/>
+    </action>
+    <action id="CompilationChartsScrollToEndAction" class="com.intellij.compilation.charts.ui.ActionPanel$ScrollToEndAction"
+            icon="AllIcons.Actions.Forward">
+      <override-text place="CompilationChartsToolbar"/>
+    </action>
+  </actions>
+</idea-plugin>

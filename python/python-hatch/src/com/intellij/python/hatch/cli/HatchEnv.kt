@@ -2,10 +2,13 @@
 package com.intellij.python.hatch.cli
 
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.platform.eel.provider.utils.stderrString
+import com.intellij.platform.eel.provider.utils.stdoutString
 import com.intellij.python.hatch.runtime.HatchRuntime
 import com.jetbrains.python.PythonHomePath
 import com.jetbrains.python.Result
-import com.jetbrains.python.errorProcessing.PyError.ExecException
+import com.jetbrains.python.errorProcessing.ExecError
+import com.jetbrains.python.errorProcessing.PyExecResult
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -127,14 +130,14 @@ class HatchEnv(runtime: HatchRuntime) : HatchCommand("env", runtime) {
    *
    * @return true if created, false if already exists
    */
-  suspend fun create(envName: String? = null): Result<CreateResult, ExecException> {
+  suspend fun create(envName: String? = null): PyExecResult<CreateResult> {
     val arguments = if (envName == null) emptyArray() else arrayOf(envName)
     return executeAndHandleErrors("create", *arguments) {
       val actualEnvName = envName ?: DEFAULT_ENV_NAME
       when {
-        it.exitCode == 0 && it.stderr.startsWith("Creating environment") -> Result.success(CreateResult.Created)
+        it.isSuccessStop("Creating environment") -> Result.success(CreateResult.Created)
         it.exitCode == 0 -> Result.success(CreateResult.AlreadyExists)
-        it.stderr.startsWith("Environment `$actualEnvName` is not defined by project config") -> Result.success(CreateResult.NotDefinedInConfig)
+        it.stderrString.startsWith("Environment `$actualEnvName` is not defined by project config") -> Result.success(CreateResult.NotDefinedInConfig)
         else -> Result.failure(null)
       }
     }
@@ -145,13 +148,13 @@ class HatchEnv(runtime: HatchRuntime) : HatchCommand("env", runtime) {
    *
    * @return path to environment
    */
-  suspend fun find(envName: String? = null): Result<PythonHomePath?, ExecException> {
+  suspend fun find(envName: String? = null): PyExecResult<PythonHomePath?> {
     val arguments = if (envName == null) emptyArray() else arrayOf(envName)
     return executeAndHandleErrors("find", *arguments) {
       when (it.exitCode) {
-        0 -> Result.success(Path.of(it.stdout.trim()))
+        0 -> Result.success(Path.of(it.stdoutString.trim()))
         else -> {
-          if (it.stderr.startsWith("Environment `${envName ?: DEFAULT_ENV_NAME}` is not defined by project config")) {
+          if (it.stderrString.startsWith("Environment `${envName ?: DEFAULT_ENV_NAME}` is not defined by project config")) {
             Result.success(null)
           }
           else {
@@ -178,17 +181,17 @@ class HatchEnv(runtime: HatchRuntime) : HatchCommand("env", runtime) {
    * - [RemoveResult.NotExists] if the environment does not exist.
    * - [RemoveResult.NotDefinedInConfig] if the environment is not defined in the project configuration.
    * - [RemoveResult.CantRemoveActiveEnvironment] if the environment cannot be removed because it is currently active.
-   * - An error wrapped in [ExecException] in case of execution failure.
+   * - An error wrapped in [ExecError] in case of execution failure.
    */
-  suspend fun remove(envName: String? = null): Result<RemoveResult, ExecException> {
+  suspend fun remove(envName: String? = null): PyExecResult<RemoveResult> {
     val arguments = if (envName == null) emptyArray() else arrayOf(envName)
     return executeAndHandleErrors("remove", *arguments) {
       val actualEnvName = envName ?: DEFAULT_ENV_NAME
       when {
-        it.exitCode == 0 && it.stderr.startsWith("Removing environment") -> Result.success(RemoveResult.Removed)
-        it.exitCode == 0 && it.stderr.isBlank() -> Result.success(RemoveResult.NotExists)
-        it.stderr.startsWith("Environment `$actualEnvName` is not defined by project config") -> Result.success(RemoveResult.NotDefinedInConfig)
-        it.stderr.startsWith("Cannot remove active environment") -> Result.success(RemoveResult.CantRemoveActiveEnvironment)
+        it.isSuccessStop("Removing environment") -> Result.success(RemoveResult.Removed)
+        it.exitCode == 0 && it.stderrString.isBlank() -> Result.success(RemoveResult.NotExists)
+        it.stderrString.startsWith("Environment `$actualEnvName` is not defined by project config") -> Result.success(RemoveResult.NotDefinedInConfig)
+        it.stderrString.startsWith("Cannot remove active environment") -> Result.success(RemoveResult.CantRemoveActiveEnvironment)
         else -> Result.failure(null)
       }
     }
@@ -200,11 +203,11 @@ class HatchEnv(runtime: HatchRuntime) : HatchCommand("env", runtime) {
    * @param envs A vararg parameter specifying the environment names to be displayed. If not provided, information for all environments is shown.
    * @return A [Result] containing:
    * - [HatchDetailedEnvironments] if operation is successful.
-   * - An error wrapped in [ExecException] if an execution failure occurs.
+   * - An error wrapped in [ExecError] if an execution failure occurs.
    */
-  suspend fun showWithDetails(vararg envs: String): Result<HatchDetailedEnvironments, ExecException> {
+  suspend fun showWithDetails(vararg envs: String): PyExecResult<HatchDetailedEnvironments> {
     return executeAndHandleErrors("show", "--json", *envs) { processOutput ->
-      val output = processOutput.takeIf { it.exitCode == 0 }?.stdout
+      val output = processOutput.takeIf { it.exitCode == 0 }?.stdoutString
                    ?: return@executeAndHandleErrors Result.failure(null)
 
       val json = Json { ignoreUnknownKeys = true }
@@ -227,9 +230,9 @@ class HatchEnv(runtime: HatchRuntime) : HatchCommand("env", runtime) {
    * @param internal Optional parameter indicating whether to include internal environments. Defaults to false.
    * @return A [Result] containing:
    * - [HatchDetailedEnvironments] if operation is successful.
-   * - An error wrapped in [ExecException] if an execution failure occurs.
+   * - An error wrapped in [ExecError] if an execution failure occurs.
    */
-  suspend fun show(vararg envs: String, internal: Boolean = false): Result<HatchEnvironments, ExecException> {
+  suspend fun show(vararg envs: String, internal: Boolean = false): PyExecResult<HatchEnvironments> {
     val options = listOf(internal to "--internal").makeOptions()
 
     return executeAndMatch("show", "--ascii", *options, *envs, expectedOutput = SHOW_RESPONSE_REGEX) { matchResult ->

@@ -79,6 +79,7 @@ def attach_to_debugger(debugger_port):
     debugger = pydevd.PyDB()
     debugger.frame_eval_func = None
     ipython_shell.debugger = debugger
+    reset_threads_debug_state()
     try:
         debugger.connect(pydev_localhost.get_localhost(), debugger_port)
         debugger.prepare_to_run(enable_tracing_from_start=False)
@@ -112,3 +113,56 @@ def kill_pydev_threads(py_db):
     from _pydevd_bundle.pydevd_kill_all_pydevd_threads import kill_all_pydev_threads
     py_db.finish_debugging_session()
     kill_all_pydev_threads()
+
+
+def is_cell_filename(filename):
+    try:
+        import linecache
+        import IPython
+        ipython_major_version = int(IPython.__version__[0])
+        if hasattr(linecache, 'cache'):
+            if ipython_major_version < 8:
+                if hasattr(linecache, '_ipython_cache'):
+                    if filename in linecache._ipython_cache:
+                        cached_value = linecache._ipython_cache[filename]
+                        is_util_code = "pydev_util_command" in cached_value[2][0]
+                        return not is_util_code
+            else:
+                if filename in linecache.cache:
+                    cached_value = linecache.cache[filename]
+                    is_not_library = cached_value[1] is None
+                    is_util_code = "pydev_util_command" in cached_value[2][0]
+                    return is_not_library and not is_util_code
+    except:
+        pass
+
+    return False
+
+
+def reset_threads_debug_state():
+    """
+    Resets the debugging state of all non-daemon threads to their initial values.
+
+    This is called when initializing or reinitializing the debugger
+    to ensure all threads start with a clean debugging state.
+    """
+    try:
+        import threading
+        from _pydevd_bundle.pydevd_trace_dispatch_regular import set_additional_thread_info
+        # get_non_pydevd_threads
+        all_threads = threading.enumerate()
+        non_pydevd_threads = [t for t in all_threads if t and not getattr(t, 'is_pydev_daemon_thread', False)]
+
+        for t in non_pydevd_threads:
+            if t is None:
+                continue
+            try:
+                additional_info = set_additional_thread_info(t)
+                additional_info.pydev_step_cmd = -1
+                additional_info.pydev_step_stop = None
+                additional_info.pydev_state = 1  # STATE_RUN
+            except:
+                sys.stderr.write('Jupyter Debugger Plugin: Unable to reset debug state for thread. Debug functionality may be incorrect\n')
+
+    except:
+        sys.stderr.write('Jupyter Debugger Plugin: Failed to initialize thread debug states. Debugger may not function correctly\n')

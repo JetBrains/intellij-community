@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.dev.psiViewer.debug
 
 import com.intellij.debugger.engine.DebuggerUtils
@@ -43,7 +43,7 @@ internal class PsiViewerDebugAction : DebuggerTreeAction() {
     val project = e.project ?: return
     val debugProcess = JavaDebugProcess.getCurrentDebugProcess(e)
     val suspendContext = debugProcess?.suspendManager?.getPausedContext()
-    debugProcess?.managerThread?.schedule(object : SuspendContextCommandImpl(suspendContext) {
+    suspendContext?.managerThread?.schedule(object : SuspendContextCommandImpl(suspendContext) {
       override fun contextAction(suspendContext: SuspendContextImpl) {
         try {
           val evalContext = EvaluationContextImpl(suspendContext, suspendContext.frameProxy)

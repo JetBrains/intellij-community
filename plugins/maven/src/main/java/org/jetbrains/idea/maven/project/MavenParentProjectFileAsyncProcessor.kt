@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.idea.maven.dom.MavenDomProjectProcessorUtils
 import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.model.MavenId
+import org.jetbrains.idea.maven.project.MavenSettingsCache
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil
 import org.jetbrains.idea.maven.utils.MavenUtil
 
@@ -57,7 +58,7 @@ abstract class MavenParentProjectFileAsyncProcessor<RESULT_TYPE>(private val myP
   private suspend fun findInLocalRepository(generalSettings: MavenGeneralSettings, parentDesc: MavenParentDesc): RESULT_TYPE? {
     var result: RESULT_TYPE? = null
     val parentFile: VirtualFile?
-    val parentIoFile = MavenArtifactUtil.getArtifactFile(generalSettings.effectiveRepositoryPath, parentDesc.parentId, "pom")
+    val parentIoFile = MavenArtifactUtil.getArtifactFile(MavenSettingsCache.getInstance(myProject).getEffectiveUserLocalRepo(), parentDesc.parentId, "pom")
     parentFile = LocalFileSystem.getInstance().findFileByNioFile(parentIoFile)
     if (parentFile != null) {
       result = processRepositoryParent(parentFile)

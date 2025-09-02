@@ -3,6 +3,7 @@ package com.intellij.vcs.log.ui.table.column
 
 import com.intellij.vcs.log.ui.table.GraphTableModel
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable
+import com.intellij.vcs.log.ui.table.VcsLogTableIndex
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
@@ -44,7 +45,7 @@ interface VcsLogColumn<T> {
    *
    * @see getStubValue
    */
-  fun getValue(model: GraphTableModel, row: Int): T?
+  fun getValue(model: GraphTableModel, row: VcsLogTableIndex): T?
 
   /**
    * @return [TableCellRenderer] which will be used to draw the column rows

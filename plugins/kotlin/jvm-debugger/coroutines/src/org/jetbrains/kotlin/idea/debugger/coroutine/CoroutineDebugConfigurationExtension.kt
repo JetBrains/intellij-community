@@ -25,7 +25,7 @@ private class CoroutineDebugConfigurationExtension : RunConfigurationExtension()
                 configuration.project,
                 configuration,
                 params,
-                argumentsShouldBeModified(configuration)
+                isExternalSystemRunConfiguration(configuration),
             )
         }
     }
@@ -36,19 +36,25 @@ private class CoroutineDebugConfigurationExtension : RunConfigurationExtension()
 
 private const val KOTLINX_COROUTINES_DEBUG_PROPERTY_NAME = "kotlinx.coroutines.debug"
 private const val KOTLINX_COROUTINES_DEBUG_OFF_VALUE = "off"
+private const val GRADLE_RUN_CONFIGURATION = "GradleRunConfiguration"
+private const val KOTLIN_GRADLE_RUN_CONFIGURATION = "KotlinGradleRunConfiguration"
+private const val MAVEN_RUN_CONFIGURATION = "MavenRunConfiguration"
 
 private fun JavaParameters.isKotlinxCoroutinesDebugDisabled(): Boolean {
     val kotlinxCoroutinesDebugProperty = vmParametersList.properties[KOTLINX_COROUTINES_DEBUG_PROPERTY_NAME]
     return kotlinxCoroutinesDebugProperty == KOTLINX_COROUTINES_DEBUG_OFF_VALUE
 }
 
-private fun argumentsShouldBeModified(configuration: RunConfigurationBase<*>): Boolean =
+// Check if the given configuration is an external system run configuration,
+// as they do not depend on the IDE/JPS model, attach of the debug agent should be handled with external extensions.
+// See `KotlinCoroutineJvmDebugInit.gradle` for GradleRunConfiguration.
+private fun isExternalSystemRunConfiguration(configuration: RunConfigurationBase<*>): Boolean =
     !configuration.isGradleConfiguration() && !configuration.isMavenConfiguration()
 
 private fun RunConfigurationBase<*>.isGradleConfiguration(): Boolean {
     val name = type.id
-    return name == "GradleRunConfiguration" || name == "KotlinGradleRunConfiguration"
+    return name == GRADLE_RUN_CONFIGURATION || name == KOTLIN_GRADLE_RUN_CONFIGURATION
 }
 
 private fun RunConfigurationBase<*>.isMavenConfiguration(): Boolean =
-    type.id == "MavenRunConfiguration"
+    type.id == MAVEN_RUN_CONFIGURATION

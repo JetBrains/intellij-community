@@ -32,7 +32,6 @@ import java.awt.Image
 import java.io.IOException
 import java.util.concurrent.ConcurrentHashMap
 import javax.swing.Icon
-import kotlin.Throws
 
 @Service(Service.Level.PROJECT)
 internal class GHPRDataContextRepository(private val project: Project, parentCs: CoroutineScope) {
@@ -88,7 +87,7 @@ internal class GHPRDataContextRepository(private val project: Project, parentCs:
         if (it is HttpStatusErrorException)
 
         // github.com is always expected to have a ghost user, but any enterprise server may not
-        if (account.server.isGithubDotCom) error("Couldn't load ghost user details")
+          if (account.server.isGithubDotCom) error("Couldn't load ghost user details")
 
         GHUser.FAKE_GHOST
       }
@@ -140,8 +139,8 @@ internal class GHPRDataContextRepository(private val project: Project, parentCs:
       val filesService = GHPRFilesServiceImpl(requestExecutor, apiRepositoryCoordinates)
       val reactionsService = GHReactionsServiceImpl(requestExecutor, apiRepositoryCoordinates)
 
-      val listLoader = GHPRListLoader(ProgressManager.getInstance(), requestExecutor, apiRepositoryCoordinates)
-      val listUpdatesChecker = GHPRListETagUpdateChecker(ProgressManager.getInstance(), requestExecutor, account.server, apiRepositoryPath)
+      val listLoader = GHPRListLoader(cs, requestExecutor, apiRepositoryCoordinates)
+      val listUpdatesChecker = GHPRListETagUpdateChecker(cs, ProgressManager.getInstance(), requestExecutor, account.server, apiRepositoryPath)
 
       val dataProviderRepository = GHPRDataProviderRepositoryImpl(cs,
                                                                   repoDataService,
@@ -150,15 +149,16 @@ internal class GHPRDataContextRepository(private val project: Project, parentCs:
                                                                   filesService,
                                                                   commentService,
                                                                   changesService) { id ->
-        GHGQLPagedListLoader(ProgressManager.getInstance(),
-                             SimpleGHGQLPagesLoader(requestExecutor, { p ->
-                               GHGQLRequests.PullRequest.Timeline.items(account.server, apiRepositoryPath.owner,
-                                                                        apiRepositoryPath.repository,
-                                                                        id.number, p)
-                             }, true))
+        GHGQLPagedListLoader(
+          this,
+          ProgressManager.getInstance(),
+          SimpleGHGQLPagesLoader(requestExecutor, { p ->
+            GHGQLRequests.PullRequest.Timeline.items(account.server, apiRepositoryPath.owner,
+                                                     apiRepositoryPath.repository,
+                                                     id.number, p)
+          }, true))
       }
 
-      val filesManager = GHPRFilesManagerImpl(project, apiRepositoryCoordinates)
       val interactionState = project.service<GHPRPersistentInteractionState>()
 
       val creationService = GHPRCreationServiceImpl(requestExecutor, repoDataService)
@@ -166,7 +166,7 @@ internal class GHPRDataContextRepository(private val project: Project, parentCs:
       GHPRDataContext(cs, listLoader, listUpdatesChecker, dataProviderRepository,
                       securityService, repoDataService, creationService, detailsService, reactionsService,
                       imageLoader, avatarIconsProvider, reactionIconsProvider,
-                      filesManager, interactionState)
+                      interactionState)
     }
   }
 
@@ -184,9 +184,6 @@ internal class GHPRDataContextRepository(private val project: Project, parentCs:
     override suspend fun postProcess(image: Image): Image =
       ImageUtil.createCircleImage(ImageUtil.toBufferedImage(image))
   }
-
-  // dangerous to do this without lock, but making it suspendable is too much work
-  fun findContext(repositoryCoordinates: GHRepositoryCoordinates): GHPRDataContext? = cache[repositoryCoordinates]
 
   companion object {
     private val LOG = logger<GHPRDataContextRepository>()

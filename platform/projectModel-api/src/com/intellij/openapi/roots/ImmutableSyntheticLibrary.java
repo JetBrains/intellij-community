@@ -7,8 +7,12 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
 @ApiStatus.Internal
 public class ImmutableSyntheticLibrary extends SyntheticLibrary {
@@ -18,12 +22,12 @@ public class ImmutableSyntheticLibrary extends SyntheticLibrary {
   private final Condition<? super VirtualFile> myExcludeCondition;
   private final int hashCode;
 
-  ImmutableSyntheticLibrary(@Nullable String comparisonId,
-                            @NotNull List<? extends VirtualFile> sourceRoots,
-                            @NotNull List<? extends VirtualFile> binaryRoots,
-                            @NotNull Set<? extends VirtualFile> excludedRoots,
-                            @Nullable Condition<? super VirtualFile> excludeCondition,
-                            @Nullable ExcludeFileCondition constantCondition) {
+  public ImmutableSyntheticLibrary(@Nullable String comparisonId,
+                                   @NotNull List<? extends VirtualFile> sourceRoots,
+                                   @NotNull List<? extends VirtualFile> binaryRoots,
+                                   @NotNull Set<? extends VirtualFile> excludedRoots,
+                                   @Nullable Condition<? super VirtualFile> excludeCondition,
+                                   @Nullable ExcludeFileCondition constantCondition) {
     super(comparisonId, constantCondition);
     mySourceRoots = List.copyOf(sourceRoots);
     myBinaryRoots = List.copyOf(binaryRoots);
@@ -33,17 +37,17 @@ public class ImmutableSyntheticLibrary extends SyntheticLibrary {
   }
 
   @Override
-  public @NotNull Collection<VirtualFile> getSourceRoots() {
+  public @NotNull @Unmodifiable Collection<VirtualFile> getSourceRoots() {
     return mySourceRoots;
   }
 
   @Override
-  public @NotNull Collection<VirtualFile> getBinaryRoots() {
+  public @NotNull @Unmodifiable Collection<VirtualFile> getBinaryRoots() {
     return myBinaryRoots;
   }
 
   @Override
-  public @NotNull Set<VirtualFile> getExcludedRoots() {
+  public @NotNull @Unmodifiable Set<VirtualFile> getExcludedRoots() {
     return myExcludedRoots;
   }
 

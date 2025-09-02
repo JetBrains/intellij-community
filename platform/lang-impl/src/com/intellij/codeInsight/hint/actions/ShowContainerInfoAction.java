@@ -31,7 +31,7 @@ public final class ShowContainerInfoAction extends BaseCodeInsightAction{
   }
 
   @Override
-  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, final @NotNull PsiFile file) {
-    return LanguageStructureViewBuilder.getInstance().getStructureViewBuilder(file) instanceof TreeBasedStructureViewBuilder;
+  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, final @NotNull PsiFile psiFile) {
+    return LanguageStructureViewBuilder.getInstance().getStructureViewBuilder(psiFile) instanceof TreeBasedStructureViewBuilder;
   }
 }

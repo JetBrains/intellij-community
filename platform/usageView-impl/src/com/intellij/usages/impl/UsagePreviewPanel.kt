@@ -382,7 +382,8 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
   private class BalloonPositionTracker(private val myProject: Project,
                                        private val myEditor: Editor,
                                        private val myRange: TextRange,
-                                       private val myBalloonText: String) : PositionTracker<Balloon?>(myEditor.contentComponent) {
+                                       private val myBalloonText: String,
+                                       private val myPosition: Balloon.Position) : PositionTracker<Balloon?>(myEditor.contentComponent) {
     override fun recalculateLocation(balloon: Balloon): RelativePoint {
       val startOffset = myRange.startOffset
       val endOffset = myRange.endOffset
@@ -410,7 +411,8 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
       }
       val startPoint = myEditor.visualPositionToXY(myEditor.offsetToVisualPosition(startOffset))
       val endPoint = myEditor.visualPositionToXY(myEditor.offsetToVisualPosition(endOffset))
-      val point = Point((startPoint.x + endPoint.x) / 2, endPoint.y + myEditor.lineHeight)
+      val delta = if (myPosition == Balloon.Position.below) myEditor.lineHeight else 0
+      val point = Point((startPoint.x + endPoint.x) / 2, endPoint.y + delta)
       return RelativePoint(myEditor.contentComponent, point)
     }
   }
@@ -535,11 +537,13 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
       ThreadingAssertions.assertEventDispatchThread()
       try {
         val balloon = createPreviewBalloon(balloonText)
+        val lineNumber = editor.document.getLineNumber(range.endOffset)
+        val position = if (lineNumber > editor.document.lineCount - 3) Balloon.Position.above else Balloon.Position.below
         EditorUtil.disposeWithEditor(editor, balloon)
-        balloon.show(BalloonPositionTracker(project, editor, range, balloonText), Balloon.Position.below)
+        balloon.show(BalloonPositionTracker(project, editor, range, balloonText, position), position)
         editor.putUserData(PREVIEW_BALLOON_KEY, balloon)
       }
-      catch (e: MalformedReplacementStringException) {
+      catch (_: MalformedReplacementStringException) {
         //Not a problem, just don't show balloon in this case
       }
     }
@@ -640,7 +644,7 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
       if (r.startOffset > textLength) return false
       if (r.endOffset > textLength) return false
       val visibleArea = e.scrollingModel.visibleArea
-      visibleArea.height -= 2 * e.lineHeight
+      visibleArea.height += 2 * e.lineHeight
       visibleArea.y -= e.lineHeight
       val point = e.logicalPositionToXY(e.offsetToLogicalPosition(r.startOffset))
       return visibleArea.contains(point)

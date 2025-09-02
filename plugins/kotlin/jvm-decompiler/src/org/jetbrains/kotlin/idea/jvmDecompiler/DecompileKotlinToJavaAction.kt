@@ -12,7 +12,7 @@ import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.util.ActionCallback
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.idea.base.util.KotlinPlatformUtils
-import org.jetbrains.kotlin.idea.internal.KotlinJvmDecompilerFacade
+import org.jetbrains.kotlin.idea.jvm.shared.internal.KotlinJvmDecompilerFacade
 import org.jetbrains.kotlin.psi.KtFile
 
 class DecompileKotlinToJavaAction : AnAction() {

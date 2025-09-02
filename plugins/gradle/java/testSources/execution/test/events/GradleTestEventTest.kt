@@ -2,12 +2,12 @@
 package org.jetbrains.plugins.gradle.execution.test.events
 
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.testFramework.GradleExecutionTestCase
+import org.jetbrains.plugins.gradle.testFramework.GradleTestExecutionTestCase
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
 import org.jetbrains.plugins.gradle.testFramework.util.assumeThatGradleIsAtLeast
 import org.junit.jupiter.params.ParameterizedTest
 
-class GradleTestEventTest : GradleExecutionTestCase() {
+class GradleTestEventTest : GradleTestExecutionTestCase() {
 
   @ParameterizedTest
   @AllGradleVersionsSource

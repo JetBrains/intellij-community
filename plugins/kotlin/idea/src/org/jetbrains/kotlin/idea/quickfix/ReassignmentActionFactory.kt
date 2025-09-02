@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix
 
@@ -21,7 +21,7 @@ class ReassignmentActionFactory(val factory: DiagnosticFactory1<*, DeclarationDe
         val propertyDescriptor = factory.cast(diagnostic).a
         val declaration =
             DescriptorToSourceUtils.descriptorToDeclaration(propertyDescriptor) as? KtValVarKeywordOwner ?: return null
-        return ChangeVariableMutabilityFix(declaration, true)
+        return ChangeVariableMutabilityFix(declaration, true).asIntention()
     }
 }
 
@@ -31,6 +31,6 @@ object DelegatedPropertyValFactory : KotlinSingleIntentionActionFactory() {
         val property = element.getStrictParentOfType<KtProperty>() ?: return null
         val info = CreatePropertyDelegateAccessorsActionFactory.extractFixData(property, diagnostic).singleOrNull() ?: return null
         if (info.name != OperatorNameConventions.SET_VALUE.asString()) return null
-        return ChangeVariableMutabilityFix(property, makeVar = false, actionText = KotlinBundle.message("change.to.val"))
+        return ChangeVariableMutabilityFix(property, makeVar = false, actionText = KotlinBundle.message("change.to.val")).asIntention()
     }
 }

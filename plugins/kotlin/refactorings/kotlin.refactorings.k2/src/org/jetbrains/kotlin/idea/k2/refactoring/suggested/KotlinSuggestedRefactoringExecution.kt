@@ -15,10 +15,12 @@ import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinParameterI
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinTypeInfo
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.*
 import org.jetbrains.kotlin.idea.refactoring.suggested.defaultValue
+import org.jetbrains.kotlin.idea.refactoring.suggested.isContextParameter
 import org.jetbrains.kotlin.idea.refactoring.suggested.modifiers
 import org.jetbrains.kotlin.idea.refactoring.suggested.receiverType
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.utils.addIfNotNull
 
@@ -28,7 +30,8 @@ class KotlinSuggestedRefactoringExecution(
 
     private data class PrepareChangeSignatureResult(
         val returnTypeInfo: KotlinTypeInfo,
-        val parameterTypeInfos: List<KotlinTypeInfo>
+        val parameterTypeInfos: List<KotlinTypeInfo>,
+        val contextParametersNumber: Int
     )
 
     override fun prepareChangeSignature(data: SuggestedChangeSignatureData): Any {
@@ -45,12 +48,13 @@ class KotlinSuggestedRefactoringExecution(
             }
 
             val valueParameters = (descriptorWithNewSignature as? KaFunctionSymbol)?.valueParameters
-            require((valueParameters?.size ?: 0) == newSignature.parameters.size) {
+            val contextParameters = declaration.modifierList?.contextReceiverList?.contextParameters()?.map { it.symbol }
+            require(((valueParameters?.size ?:0) + (contextParameters?.size ?: 0)) == newSignature.parameters.size) {
                 "Number of parameters of newSignature is ${newSignature.parameters.size} and of the descriptor is ${valueParameters?.size ?: 0}"
             }
 
-            val parameterTypeInfos = if (valueParameters != null)
-                descriptorWithNewSignature.valueParameters.zip(newSignature.parameters)
+            val parameterTypeInfos = if (valueParameters != null || contextParameters != null)
+                (contextParameters.orEmpty() + valueParameters.orEmpty()).zip(newSignature.parameters)
                     .map { (parameterDescriptor, parameterData) ->
                         val type = parameterDescriptor.returnType
                         if (type !is KaErrorType) {
@@ -60,7 +64,7 @@ class KotlinSuggestedRefactoringExecution(
                         }
                     } else emptyList()
 
-            PrepareChangeSignatureResult(returnTypeInfo, parameterTypeInfos)
+            PrepareChangeSignatureResult(returnTypeInfo, parameterTypeInfos, contextParameters?.size ?: 0)
         }
     }
 
@@ -69,7 +73,7 @@ class KotlinSuggestedRefactoringExecution(
         newParameterValues: List<NewParameterValue>,
         preparedData: Any?
     ) {
-        val (returnTypeInfo, parameterTypeInfos) = preparedData as PrepareChangeSignatureResult
+        val (returnTypeInfo, parameterTypeInfos, contextParametersNumber) = preparedData as PrepareChangeSignatureResult
 
         val declaration = data.declaration as KtCallableDeclaration
         val project = declaration.project
@@ -124,7 +128,8 @@ class KotlinSuggestedRefactoringExecution(
                     defaultValueAsDefaultParameter = false,
                     defaultValue = defaultValue,
                     modifierList = modifierList,
-                    context = declaration
+                    context = declaration,
+                    isContextParameter = parameter.isContextParameter
                 ).apply {
                     // a few last added parameters may be missing in newParameterValues
                     // because they have default values and we did not offer to enter value for them
@@ -133,16 +138,17 @@ class KotlinSuggestedRefactoringExecution(
                     }
                 }
             } else {
-                val initialIndexWithOffset = initialIndex + (if (methodDescriptor.receiver != null) 1 else 0)
+                val initialIndexWithOffset = initialIndex + (if (methodDescriptor.receiver != null && !parameter.isContextParameter) 1 else 0)
                 KotlinParameterInfo(
                     name = methodDescriptor.parameters[initialIndexWithOffset].name,
                     originalType = methodDescriptor.parameters[initialIndexWithOffset].originalType,
-                    originalIndex = initialIndexWithOffset,
+                    originalIndex = initialIndexWithOffset - (if (!parameter.isContextParameter) contextParametersNumber else 0),
                     valOrVar = KotlinValVar.None,
                     defaultValueForCall = null,
                     defaultValueAsDefaultParameter = false,
                     defaultValue = defaultValue,
-                    context = declaration
+                    context = declaration,
+                    isContextParameter = parameter.isContextParameter
                 ).apply {
                     currentType = parameterTypeInfos[index]
                     name = parameter.name

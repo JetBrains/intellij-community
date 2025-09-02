@@ -16,15 +16,18 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.EditorTextComponent;
+import com.intellij.ui.UIBundle;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.SingleEdtTaskScheduler;
 import com.intellij.util.ui.*;
+import com.intellij.util.ui.accessibility.AccessibleAnnouncerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import sun.swing.SwingUtilities2;
 
+import javax.accessibility.Accessible;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.event.DocumentEvent;
@@ -67,6 +70,7 @@ public class ComponentValidator {
 
   private ValidationInfo validationInfo;
   private final SingleEdtTaskScheduler popupAlarm = SingleEdtTaskScheduler.createSingleEdtTaskScheduler();
+  private SingleEdtTaskScheduler popupAnnouncementAlarm;
   private boolean isOverPopup;
 
   private ComponentPopupBuilder popupBuilder;
@@ -365,6 +369,19 @@ public class ComponentValidator {
       popupLocation = new RelativePoint(validationInfo.component, point);
 
       popup.show(popupLocation);
+
+      if (AccessibleAnnouncerUtil.isAnnouncingAvailable() && validationInfo.component instanceof Accessible a) {
+        if (popupAnnouncementAlarm == null) {
+          popupAnnouncementAlarm = SingleEdtTaskScheduler.createSingleEdtTaskScheduler();
+        }
+        // Announce after a small delay because otherwise the announcement will be interrupted by reading the focused component.
+        popupAnnouncementAlarm.cancelAndRequest(200, () -> {
+          String message =
+            UIBundle.message(validationInfo.warning ? "validation.info.warning.with.prefix" : "validation.info.error.with.prefix",
+                             validationInfo.message);
+          AccessibleAnnouncerUtil.announce(a, message, false);
+        });
+      }
     }
   }
 

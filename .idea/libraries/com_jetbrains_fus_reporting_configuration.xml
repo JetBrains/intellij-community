@@ -1,0 +1,18 @@
+<component name="libraryTable">
+  <library name="com.jetbrains.fus.reporting.configuration" type="repository">
+    <properties include-transitive-deps="false" maven-id="com.jetbrains.fus.reporting:configuration:134">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/fus/reporting/configuration/134/configuration-134.jar">
+          <sha256sum>c58ea5f79ebfd97700782b1fcd9023d3a875f3aff4ac9f08004a3b455369d35e</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/fus/reporting/configuration/134/configuration-134.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/fus/reporting/configuration/134/configuration-134-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

@@ -55,6 +55,10 @@ public final @NonNls class PyNames {
   public static final String TYPE_ENUM_MEMBER = "enum.member";
   public static final String TYPE_ENUM_NONMEMBER = "enum.nonmember";
 
+  public static final String TYPE_NONE = "_typeshed.NoneType";
+  public static final Set<String> TYPE_NONE_NAMES = Set.of("types.NoneType", TYPE_NONE);
+
+  public static final Set<String> BUILTINS_MODULES = Set.of("builtins.py", "__builtin__.py");
   public static final String PYTHON_SDK_ID_NAME = "Python SDK";
   public static final String VERBOSE_REG_EXP_LANGUAGE_ID = "PythonVerboseRegExp";
   public static final @NonNls String PYTHON_MODULE_ID = "PYTHON_MODULE";
@@ -588,6 +592,17 @@ public final @NonNls class PyNames {
     FOR,
     LAMBDA,
     TRY
+  );
+
+  // As per: https://docs.python.org/3/reference/lexical_analysis.html#keywords
+  public static final Set<String> PY3_KEYWORDS = Set.of(
+    FALSE,  AWAIT,    ELSE,    IMPORT,   PASS,
+    NONE,   BREAK,    EXCEPT,  IN,       RAISE,
+    TRUE,   CLASS,    FINALLY, IS,       RETURN,
+    AND,    CONTINUE, FOR,     LAMBDA,   TRY,
+    AS,     DEF,      FROM,    NONLOCAL, WHILE,
+    ASSERT, DEL,      GLOBAL,  NOT,      WITH,
+    ASYNC,  ELIF,     IF,      OR,       YIELD
   );
 
   public static final Set<String> BUILTIN_INTERFACES = Set.of(

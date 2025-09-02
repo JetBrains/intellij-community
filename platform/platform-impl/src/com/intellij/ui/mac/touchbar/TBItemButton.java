@@ -18,6 +18,7 @@ import com.sun.jna.Pointer;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.concurrency.AsyncPromise;
 
 import javax.swing.*;
@@ -77,7 +78,8 @@ public class TBItemButton extends TBItem {
     }
   }
 
-  TBItemButton setIcon(Icon icon) {
+  @VisibleForTesting
+  public TBItemButton setIcon(Icon icon) {
     if (!Objects.equals(icon, originIcon) || isGetDisabledIconNeeded) {
       originIcon = icon;
       isGetDisabledIconNeeded = false;
@@ -138,7 +140,8 @@ public class TBItemButton extends TBItem {
     }
   }
 
-  TBItemButton setText(String text) {
+  @VisibleForTesting
+  public TBItemButton setText(String text) {
     if (!Objects.equals(text, myText)) {
       myText = text;
       updateOptions |= NSTLibrary.BUTTON_UPDATE_TEXT;
@@ -160,7 +163,8 @@ public class TBItemButton extends TBItem {
     this.modality = modality;
   }
 
-  TBItemButton setAction(Runnable action, boolean executeOnEDT) {
+  @VisibleForTesting
+  public TBItemButton setAction(Runnable action, boolean executeOnEDT) {
     if (action == this.action && this.executeOnEdt == executeOnEDT) {
       return this;
     }
@@ -199,7 +203,8 @@ public class TBItemButton extends TBItem {
     return this;
   }
 
-  TBItemButton setWidth(int width) { return setLayout(width, 0, 2, 8); }
+  @VisibleForTesting
+  public TBItemButton setWidth(int width) { return setLayout(width, 0, 2, 8); }
 
   TBItemButton setLayout(int width, int widthFlags, int margin, int border) {
     if (width < 0) {
@@ -224,7 +229,8 @@ public class TBItemButton extends TBItem {
     return this;
   }
 
-  void setToggle() { _setFlag(NSTLibrary.BUTTON_FLAG_TOGGLE, true); }
+  @VisibleForTesting
+  public void setToggle() { _setFlag(NSTLibrary.BUTTON_FLAG_TOGGLE, true); }
 
   void setColored() { _setFlag(NSTLibrary.BUTTON_FLAG_COLORED, true); }
 

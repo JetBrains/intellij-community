@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.wm.BannerStartPagePromoter
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -63,6 +64,7 @@ open class OnboardingLessonPromoter(@NonNls protected val lessonId: String,
   override val description: String
     get() = LearnBundle.message("welcome.promo.description", LessonUtil.productName)
 
+  @RequiresEdt
   protected fun startOnboardingLessonWithSdk(lessonId: String, languageId: String) {
     resetPrimaryLanguage(languageId)
     val lesson = CourseManager.instance.lessonsForModules.find { it.id == lessonId }

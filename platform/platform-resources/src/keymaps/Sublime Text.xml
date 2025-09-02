@@ -82,6 +82,7 @@
   </action>
   <action id="JumpToLastChange"/>
   <action id="Vcs.UpdateProject"/>
+  <action id="ChangesView.ShowCommitOptions"/>
   <action id="ExpandAllRegions">
     <keyboard-shortcut first-keystroke="control k" second-keystroke="control j"/>
     <keyboard-shortcut first-keystroke="control k" second-keystroke="control 0"/>

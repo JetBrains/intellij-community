@@ -1,19 +1,19 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.intellij.build
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 
-import java.util.*
+package org.jetbrains.intellij.build
 
 @JvmInline
 value class VmProperties(val map: Map<String, String>) {
   inline fun mutate(operation: MutableMap<String, String>.() -> Unit): VmProperties {
     val map = LinkedHashMap(map)
     map.operation()
-    return VmProperties(map.takeIf { it.isNotEmpty() } ?: Collections.emptyMap())
+    return VmProperties(map.takeIf { it.isNotEmpty() } ?: java.util.Map.of())
   }
 
   fun toJvmArgs(): List<String> {
     if (map.isEmpty()) {
-      return Collections.emptyList()
+      return java.util.List.of()
     }
 
     val result = ArrayList<String>(map.size)

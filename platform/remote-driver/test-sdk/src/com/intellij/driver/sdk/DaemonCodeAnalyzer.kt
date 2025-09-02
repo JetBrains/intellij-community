@@ -23,11 +23,28 @@ interface HighlightInfo {
   fun getDescription(): String
   fun getSeverity(): HighlightSeverity
   fun getText(): String
+  fun getHighlighter(): RangeHighlighterEx
 }
 
 @Remote("com.intellij.lang.annotation.HighlightSeverity")
 interface HighlightSeverity {
   fun getName(): String
+}
+
+@Remote("com.intellij.openapi.editor.ex.RangeHighlighterEx")
+interface RangeHighlighterEx {
+  fun getTextAttributesKey(): TextAttributesKey
+}
+
+@Remote("com.intellij.codeInsight.daemon.impl.HighlightInfoType")
+interface HighlightInfoType {
+  fun getSeverity(psiElement: PsiElement): HighlightSeverity
+  fun getAttributesKey(): TextAttributesKey
+}
+
+@Remote("com.intellij.openapi.editor.colors.TextAttributesKey")
+interface TextAttributesKey {
+  fun compareTo(key: TextAttributesKey): Int
 }
 
 fun Driver.isCodeAnalysisRunning(project: Project? = null): Boolean {

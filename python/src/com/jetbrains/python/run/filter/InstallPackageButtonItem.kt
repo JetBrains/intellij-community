@@ -12,7 +12,8 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.ui.awt.RelativePoint
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.icons.PythonIcons
-import com.jetbrains.python.packaging.PyPackageInstallUtils
+import com.jetbrains.python.packaging.management.ui.PythonPackageManagerUI
+import com.jetbrains.python.packaging.management.ui.launchInstallPackageWithBalloonBackground
 import java.awt.Cursor
 import java.awt.Point
 import java.awt.event.MouseEvent
@@ -36,7 +37,7 @@ class InstallPackageButtonItem(
     ) { event: MouseEvent?, _: Point ->
       val component = event?.component ?: return@referenceOnHover
       val relativePoint = RelativePoint(component, event.point)
-      PyPackageInstallUtils.invokeInstallPackage(project, pythonSdk, packageName, relativePoint)
+      PythonPackageManagerUI.forSdk(project, pythonSdk).launchInstallPackageWithBalloonBackground(packageName, relativePoint)
     }
     val presentation = factory.withCursorOnHover(basePresentation, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR))
     return PresentationRenderer(presentation)

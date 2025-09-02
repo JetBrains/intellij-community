@@ -1,11 +1,13 @@
 from collections.abc import Container
-from typing import Any
+from typing import Any, ClassVar
 
 from django.core.management.base import BaseCommand
 from django.db.backends.base.base import BaseDatabaseWrapper
+from django.db.migrations.autodetector import MigrationAutodetector
 from django.db.migrations.operations.base import Operation
 
 class Command(BaseCommand):
+    autodetector: ClassVar[type[MigrationAutodetector]]
     verbosity: int
     interactive: bool
     start: float

@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -87,7 +88,7 @@ public abstract class FileBasedIndexExtension<K, V> extends IndexExtension<K, V,
    * <p>
    * Use carefully, because indexing large files may influence index update speed dramatically.
    */
-  public @NotNull Collection<FileType> getFileTypesWithSizeLimitNotApplicable() {
+  public @NotNull @Unmodifiable Collection<FileType> getFileTypesWithSizeLimitNotApplicable() {
     return Collections.emptyList();
   }
 

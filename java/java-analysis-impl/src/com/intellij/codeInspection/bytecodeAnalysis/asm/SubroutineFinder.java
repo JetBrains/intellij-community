@@ -1,13 +1,15 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.bytecodeAnalysis.asm;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.org.objectweb.asm.Opcodes;
 import org.jetbrains.org.objectweb.asm.tree.*;
 import org.jetbrains.org.objectweb.asm.tree.analysis.AnalyzerException;
 
 import java.util.List;
 
-abstract class SubroutineFinder implements Opcodes {
+@ApiStatus.Internal
+public abstract class SubroutineFinder implements Opcodes {
   InsnList insns;
   List<TryCatchBlockNode>[] handlers;
   Subroutine[] subroutines;
@@ -25,13 +27,12 @@ abstract class SubroutineFinder implements Opcodes {
       AbstractInsnNode node = insns.get(insn);
 
       // calls findSubroutine recursively on normal successors
-      if (node instanceof JumpInsnNode) {
+      if (node instanceof JumpInsnNode jNode) {
         if (node.getOpcode() == JSR) {
           // do not follow a JSR, it leads to another subroutine!
           calls.add(node);
         }
         else {
-          JumpInsnNode jNode = (JumpInsnNode)node;
           findSubroutine(insns.indexOf(jNode.label), sub, calls);
         }
       }

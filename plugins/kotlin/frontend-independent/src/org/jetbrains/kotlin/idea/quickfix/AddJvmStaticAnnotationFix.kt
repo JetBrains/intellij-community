@@ -2,8 +2,7 @@
 package org.jetbrains.kotlin.idea.quickfix
 
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.name.ClassId
-import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.name.JvmStandardClassIds
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtNamedFunction
@@ -11,7 +10,7 @@ import org.jetbrains.kotlin.psi.KtProperty
 
 class AddJvmStaticAnnotationFix(declaration: KtCallableDeclaration) : AddAnnotationFix(
     declaration,
-    ClassId.topLevel(FqName("kotlin.jvm.JvmStatic")),
+    JvmStandardClassIds.Annotations.JvmStatic,
     Kind.Declaration(declaration.nameAsSafeName.asString()),
 ) {
 

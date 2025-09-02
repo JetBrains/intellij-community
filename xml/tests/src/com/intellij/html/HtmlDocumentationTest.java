@@ -21,7 +21,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
-import com.intellij.webSymbols.testFramework.WebTestUtil;
+import com.intellij.polySymbols.testFramework.WebTestUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class HtmlDocumentationTest extends BasePlatformTestCase {

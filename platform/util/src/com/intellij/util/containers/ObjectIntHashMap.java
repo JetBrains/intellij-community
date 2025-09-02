@@ -89,6 +89,7 @@ public final class ObjectIntHashMap<K> implements ObjectIntMap<K> {
   /**
    * @deprecated use {@link #getOrDefault(Object, int)}
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public int get(@NotNull K key, int defaultValue) {
     return getOrDefault(key, defaultValue);

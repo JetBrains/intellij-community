@@ -35,7 +35,7 @@ import org.jetbrains.idea.maven.utils.actions.MavenActionUtil
  * Unlink Maven Projects
  */
 class RemoveManagedFilesAction : MavenAction() {
-  override fun isVisible(e: AnActionEvent): Boolean {
+  public override fun isAvailable(e: AnActionEvent): Boolean {
     if (!super.isVisible(e)) return false
     val context = e.dataContext
 

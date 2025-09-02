@@ -45,23 +45,19 @@ class DumbServicePropagationTest : BasePlatformTestCase() {
     val element = TestElement("element")
     val callTracker = CompletableDeferred<Boolean>()
     // spawn dumb mode
-    blockingContext {
-      dumbService.queueTask(object : DumbModeTask() {
-        override fun performInDumbMode(indicator: ProgressIndicator) {
-          // immediately finishes on execution
-        }
-      })
-    }
+    dumbService.queueTask(object : DumbModeTask() {
+      override fun performInDumbMode(indicator: ProgressIndicator) {
+        // immediately finishes on execution
+      }
+    })
 
     assertTrue(dumbService.isDumb)
 
     // set up context
     withContext(element) {
-      blockingContext {
-        dumbService.runWhenSmart {
-          assertSame(element, currentThreadContext()[TestElementKey])
-          callTracker.complete(true)
-        }
+      dumbService.runWhenSmart {
+        assertSame(element, currentThreadContext()[TestElementKey])
+        callTracker.complete(true)
       }
     }
 
@@ -143,13 +139,11 @@ class DumbServicePropagationTest : BasePlatformTestCase() {
 
   fun testCancellationPropagationOfSmartNBRA() = doPropagationApplicationTest {
     // spawn dumb mode
-    blockingContext {
-      dumbService.queueTask(object : DumbModeTask() {
-        override fun performInDumbMode(indicator: ProgressIndicator) {
-          // immediately finishes on execution
-        }
-      })
-    }
+    dumbService.queueTask(object : DumbModeTask() {
+      override fun performInDumbMode(indicator: ProgressIndicator) {
+        // immediately finishes on execution
+      }
+    })
     // now smart read action cannot proceed
     val indicator = EmptyProgressIndicator()
     val semaphore = Semaphore(1)

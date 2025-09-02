@@ -8,6 +8,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.io.DirectoryContentSpec;
 import com.intellij.util.io.TestFileSystemBuilder;
 import com.intellij.util.text.UniqueNameGenerator;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildResult;
 import org.jetbrains.jps.builders.CompileScopeTestBuilder;
 import org.jetbrains.jps.builders.JpsBuildTestCase;
@@ -28,6 +29,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import static com.intellij.util.io.TestFileSystemItem.fs;
@@ -124,7 +126,14 @@ public abstract class ArtifactBuilderTestCase extends JpsBuildTestCase {
   }
 
   protected static String getJUnitJarPath() {
-    final File file = new File(assertOneElement(IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("JUnit3")));
+    List<@NotNull String> files = IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("JUnit4");
+    File file = null;
+    for (String path : files) {
+      if (path.contains("junit")) {
+        file = new File(path);
+      }
+    }
+    assertNotNull(file);
     assertTrue("File " + file.getAbsolutePath() + " doesn't exist", file.exists());
     return FileUtilRt.toSystemIndependentName(file.getAbsolutePath());
   }

@@ -15,7 +15,6 @@ import com.intellij.collaboration.ui.util.bindDisabledIn
 import com.intellij.collaboration.ui.util.bindTextIn
 import com.intellij.openapi.project.Project
 import com.intellij.util.ui.InlineIconButton
-import com.intellij.util.ui.UIUtil
 import icons.CollaborationToolsIcons
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -166,7 +165,6 @@ internal object GitLabNoteComponentFactory {
 
   fun createTextPanel(project: Project, cs: CoroutineScope, textFlow: Flow<@Nls String>, baseUrl: URL): JComponent =
     SimpleHtmlPane(baseUrl = baseUrl, addBrowserListener = false).apply {
-      putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
       bindTextIn(cs, textFlow)
       addGitLabHyperlinkListener(project)
     }

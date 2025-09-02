@@ -120,6 +120,10 @@ public final class SelectionModelUtil {
     }
 
     @Override
+    public void clearSelection() {
+    }
+
+    @Override
     public @NotNull ModelIndex<GridRow> getSelectedRow() {
       return ModelIndex.forRow(myGrid, -1);
     }

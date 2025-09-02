@@ -9,6 +9,7 @@ import com.intellij.ide.actions.ToolWindowMoveAction
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
+import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.util.ScalableIcon
@@ -24,7 +25,6 @@ import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import sun.swing.SwingUtilities2
 import java.awt.*
 import java.awt.event.MouseEvent
 import java.awt.image.BufferedImage
@@ -142,7 +142,7 @@ internal class SquareStripeButton(action: SquareAnActionButton, val toolWindow: 
           var firstX: Int? = null
 
           for (text in texts) {
-            val textWidth = SwingUtilities2.stringWidth(this@SquareStripeButton, fm, text)
+            val textWidth = UIUtil.computeStringWidth(this@SquareStripeButton, fm, text)
 
             val g2d = g!!.create() as Graphics2D
 
@@ -213,13 +213,16 @@ internal class SquareStripeButton(action: SquareAnActionButton, val toolWindow: 
     return arrayOf(text.substring(0, index), text.substring(index + 1))
   }
 
-  override fun paintButtonLook(g: Graphics?) {
+  private val customizer = InternalUICustomization.getInstance()
+
+  override fun paintButtonLook(_g: Graphics) {
+    val look = buttonLook
+    val g = customizer?.configureButtonLook(look, _g) ?: _g
     if (!myShowName) {
       super.paintButtonLook(g)
       return
     }
 
-    val look = buttonLook
     look.paintBackground(g, this)
     look.paintIcon(g, this, icon)
 

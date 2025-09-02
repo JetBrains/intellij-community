@@ -14,9 +14,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.templateLanguages.TemplateLanguage;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.containers.JBIterable;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -91,18 +91,6 @@ public final class LanguageUtil {
     return ParserDefinition.SpaceRequirements.MAY;
   }
 
-  /**
-   * @deprecated see {@link Language#getTransitiveDialects()}
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  public static @NotNull Set<Language> getAllDerivedLanguages(@NotNull Language base) {
-    Set<Language> result = new HashSet<>();
-    result.add(base);
-    result.addAll(base.getTransitiveDialects());
-    return result;
-  }
-
   public static boolean isInTemplateLanguageFile(@NotNull PsiElement element) {
     PsiFile psiFile = element.getContainingFile();
     if (psiFile == null) {
@@ -129,7 +117,7 @@ public final class LanguageUtil {
     return LanguageParserDefinitions.INSTANCE.forLanguage(language) != null;
   }
 
-  public static @NotNull List<Language> getInjectableLanguages() {
+  public static @NotNull @Unmodifiable List<Language> getInjectableLanguages() {
     return getLanguages(LanguageUtil::isInjectableLanguage);
   }
 
@@ -144,11 +132,11 @@ public final class LanguageUtil {
     return type != null && !Strings.isEmpty(type.getDefaultExtension());
   }
 
-  public static @NotNull List<Language> getFileLanguages() {
+  public static @NotNull @Unmodifiable List<Language> getFileLanguages() {
     return getLanguages(LanguageUtil::isFileLanguage);
   }
 
-  public static @NotNull List<Language> getLanguages(@NotNull Predicate<? super Language> filter) {
+  public static @NotNull @Unmodifiable List<Language> getLanguages(@NotNull Predicate<? super Language> filter) {
     LanguageParserDefinitions.INSTANCE.ensureValuesLoaded();
     List<Language> result = new ArrayList<>();
     for (Language language : Language.getRegisteredLanguages()) {
@@ -175,7 +163,7 @@ public final class LanguageUtil {
 
   private static final Key<List<MetaLanguage>> MATCHING_META_LANGUAGES = Key.create("MATCHING_META_LANGUAGES");
 
-  static @NotNull List<MetaLanguage> matchingMetaLanguages(@NotNull Language language) {
+  static @NotNull @Unmodifiable List<MetaLanguage> matchingMetaLanguages(@NotNull Language language) {
     List<MetaLanguage> cached = language.getUserData(MATCHING_META_LANGUAGES);
     if (cached != null) {
       return cached;

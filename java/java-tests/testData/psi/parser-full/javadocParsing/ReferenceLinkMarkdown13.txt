@@ -1,0 +1,34 @@
+PsiJavaFile:ReferenceLinkMarkdown13.java
+  PsiImportList
+    <empty list>
+  PsiClass:C
+    PsiDocComment
+      PsiDocToken:DOC_COMMENT_LEADING_ASTERISKS('///')
+      PsiWhiteSpace(' ')
+      PsiReferenceLink:
+        PsiDocToken:DOC_LBRACKET('[')
+        PsiReferenceLabel:
+          PsiDocToken:DOC_COMMENT_DATA('link to module')
+        PsiDocToken:DOC_RBRACKET(']')
+        PsiDocToken:DOC_LBRACKET('[')
+        PsiElement(DOC_METHOD_OR_FIELD_REF)
+          PsiElement(DOC_TAG_VALUE_ELEMENT)
+            PsiJavaModuleReference
+              PsiDocToken:DOC_COMMENT_DATA('java.base')
+            PsiDocToken:DOC_TAG_VALUE_SLASH('/')
+        PsiDocToken:DOC_RBRACKET(']')
+    PsiWhiteSpace('\n')
+    PsiModifierList:
+      <empty list>
+    PsiKeyword:class('class')
+    PsiWhiteSpace(' ')
+    PsiIdentifier:C('C')
+    PsiTypeParameterList
+      <empty list>
+    PsiReferenceList
+      <empty list>
+    PsiReferenceList
+      <empty list>
+    PsiWhiteSpace(' ')
+    PsiJavaToken:LBRACE('{')
+    PsiJavaToken:RBRACE('}')

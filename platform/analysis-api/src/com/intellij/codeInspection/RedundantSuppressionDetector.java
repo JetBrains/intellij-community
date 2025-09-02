@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 
@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 public interface RedundantSuppressionDetector extends PossiblyDumbAware {
 
   /**
-   * @return comma separated list of suppress ids configured in this {@code element}
+   * @return comma separated list of suppression ids configured in this {@code element}
    */
   @Nullable
   String getSuppressionIds(@NotNull PsiElement element);

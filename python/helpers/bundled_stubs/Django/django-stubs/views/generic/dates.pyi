@@ -1,6 +1,6 @@
 import datetime
 from collections.abc import Sequence
-from typing import Any, TypeVar
+from typing import Any, TypeAlias, TypeVar
 
 from django.db import models
 from django.db.models.query import QuerySet
@@ -10,7 +10,6 @@ from django.utils.functional import _Getter
 from django.views.generic.base import View
 from django.views.generic.detail import BaseDetailView, SingleObjectTemplateResponseMixin
 from django.views.generic.list import MultipleObjectMixin, MultipleObjectTemplateResponseMixin
-from typing_extensions import TypeAlias
 
 _M = TypeVar("_M", bound=models.Model)
 _DatedItems: TypeAlias = tuple[_IndexableCollection[datetime.date] | None, _IndexableCollection[_M], dict[str, Any]]

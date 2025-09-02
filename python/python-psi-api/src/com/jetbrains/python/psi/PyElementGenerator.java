@@ -107,7 +107,10 @@ public abstract class PyElementGenerator extends PyAstElementGenerator {
     return (PyExpressionStatement)super.createDocstring(content);
   }
 
-  public abstract PyPassStatement createPassStatement();
+  @Override
+  public PyPassStatement createPassStatement() {
+    return (PyPassStatement)super.createPassStatement();
+  }
 
   public abstract @NotNull PyDecoratorList createDecoratorList(final String @NotNull ... decoratorTexts);
 
@@ -142,7 +145,7 @@ public abstract class PyElementGenerator extends PyAstElementGenerator {
                                                           @NotNull String name,
                                                           @Nullable String alias);
 
-  public abstract @NotNull PyNoneLiteralExpression createEllipsis();
+  public abstract @NotNull PyEllipsisLiteralExpression createEllipsis();
 
   public abstract @NotNull PySingleStarParameter createSingleStarParameter();
 

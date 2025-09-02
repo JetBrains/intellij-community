@@ -4,6 +4,7 @@ package com.intellij.psi.search;
 import com.intellij.core.CoreBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.UnloadedModuleDescription;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -16,11 +17,12 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
 final class UnionScope extends GlobalSearchScope implements VirtualFileEnumerationAware, CodeInsightContextAwareSearchScope {
-  private final GlobalSearchScope @NotNull [] myScopes;
+  final GlobalSearchScope @NotNull [] myScopes;
 
   @Override
   public @Nullable VirtualFileEnumeration extractFileEnumeration() {
@@ -103,7 +105,10 @@ final class UnionScope extends GlobalSearchScope implements VirtualFileEnumerati
 
   @Override
   public boolean contains(final @NotNull VirtualFile file) {
-    return ContainerUtil.find(myScopes, scope -> scope.contains(file)) != null;
+    return ContainerUtil.find(myScopes, scope -> {
+      ProgressManager.checkCanceled();
+      return scope.contains(file);
+    }) != null;
   }
 
   @Override
@@ -112,7 +117,7 @@ final class UnionScope extends GlobalSearchScope implements VirtualFileEnumerati
   }
 
   @Override
-  public @NotNull Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
+  public @NotNull @Unmodifiable Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
     Set<UnloadedModuleDescription> result = new LinkedHashSet<>();
     for (GlobalSearchScope scope : myScopes) {
       result.addAll(scope.getUnloadedModulesBelongingToScope());

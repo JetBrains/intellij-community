@@ -6,7 +6,7 @@ Compile bytecode for this
 KotlinStackFrame (localClass3.kt:8)
     JavaValue[this] this: LocalClass3Kt$main$Inner@uniqueID = LocalClass3Kt$main$Inner@hashCode
         DummyMessageValueNode = No fields to display
-        JavaValue[getter] bar: java.lang.String (localClass3.kt:3)
+        JavaValue[getter LocalClass3Kt$main$Inner.getBar()] bar: java.lang.String (localClass3.kt:3)
 Disconnected from the target VM
 
 Process finished with exit code 0

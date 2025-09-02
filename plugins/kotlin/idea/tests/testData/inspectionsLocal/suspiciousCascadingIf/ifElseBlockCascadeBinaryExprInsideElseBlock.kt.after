@@ -1,0 +1,21 @@
+// PROBLEM: Suspicious cascading 'if' expression
+// FIX: Replace 'if' with 'when' (changes semantics)
+// IGNORE_K1
+fun test() {
+    if (true) {
+    } else {
+        <caret>when {
+            true -> {
+                1
+            }
+
+            true -> {
+                2
+            }
+
+            else -> {
+                3
+            }
+        } + 4
+    }
+}

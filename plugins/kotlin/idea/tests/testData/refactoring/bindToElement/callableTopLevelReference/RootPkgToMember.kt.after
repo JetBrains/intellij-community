@@ -6,5 +6,5 @@ class B {
 }
 
 fun foo() {
-    val x = B:<caret>:C
+    val x = <caret>B::C
 }

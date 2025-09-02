@@ -71,7 +71,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
   public static final Key<String> CREATION_TRACE = Key.create("CREATION_TRACE");
   public static final boolean ourTraceStubAstBinding = "true".equals(System.getProperty("trace.stub.ast.binding", "false"));
   private volatile SubstrateRef mySubstrateRef;
-  private final IElementType myElementType;
+  private final @NotNull IElementType myElementType;
 
   public StubBasedPsiElementBase(@NotNull T stub, @NotNull IStubElementType<?,?> nodeType) {
     mySubstrateRef = new SubstrateRef.StubRef(stub);
@@ -331,7 +331,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
   public @NotNull IStubElementType getElementType() {
     if (!(myElementType instanceof IStubElementType)) {
       throw new ClassCastException("Don't use #getElementType method. It is deprecated.\n" +
-                                   "Implement and use #getIElementType with the help of #getElementTypeImpl" +
+                                   "Implement and use #getIElementType with the help of #getElementTypeImpl.\n" +
                                    "Not a stub type: " + myElementType + " in " + getClass());
     }
     return (IStubElementType<?, ?>)myElementType;

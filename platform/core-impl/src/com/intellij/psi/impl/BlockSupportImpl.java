@@ -36,6 +36,8 @@ import com.intellij.util.diff.FlyweightCapableTreeStructure;
 import com.intellij.util.diff.ShallowNodeComparator;
 import org.jetbrains.annotations.*;
 
+import java.util.List;
+
 @ApiStatus.Internal
 public final class BlockSupportImpl extends BlockSupport {
   private static final Logger LOG = Logger.getInstance(BlockSupportImpl.class);
@@ -343,7 +345,8 @@ public final class BlockSupportImpl extends BlockSupport {
       newRoot.putUserData(TREE_TO_BE_REPARSED, null);
     }
 
-    ASTShallowComparator comparator = new ASTShallowComparator(indicator);
+    List<CustomLanguageASTComparator> customLanguageASTComparators = CustomLanguageASTComparator.getMatchingComparators(fileImpl);
+    ASTShallowComparator comparator = new ASTShallowComparator(indicator, customLanguageASTComparators);
     ASTStructure treeStructure = createInterruptibleASTStructure(newRoot, indicator);
 
     DiffLog diffLog = new DiffLog();

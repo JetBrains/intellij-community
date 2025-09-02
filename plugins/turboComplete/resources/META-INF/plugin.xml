@@ -16,6 +16,7 @@
   </content>
 
   <dependencies>
+    <module name="intellij.platform.ml.impl"/>
     <plugin id="com.intellij.completion.ml.ranking"/>
   </dependencies>
 

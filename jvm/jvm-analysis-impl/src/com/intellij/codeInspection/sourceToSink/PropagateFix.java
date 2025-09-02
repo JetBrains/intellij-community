@@ -62,7 +62,7 @@ public class PropagateFix extends LocalQuickFixAndIntentionActionOnPsiElement {
 
   @Override
   public void invoke(@NotNull Project project,
-                     @NotNull PsiFile file,
+                     @NotNull PsiFile psiFile,
                      @Nullable Editor editor,
                      @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
     List<TaintNode> roots = ActionUtil.underModalProgress(project, CodeInsightBundle.message("progress.title.preparing.result"), ()->{
@@ -110,7 +110,7 @@ public class PropagateFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
     return new IntentionPreviewInfo.Html(
       JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.propagate.safe.preview")
     );

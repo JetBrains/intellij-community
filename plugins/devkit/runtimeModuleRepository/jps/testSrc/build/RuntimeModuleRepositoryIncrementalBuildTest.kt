@@ -83,7 +83,7 @@ class RuntimeModuleRepositoryIncrementalBuildTest : RuntimeModuleRepositoryTestC
       descriptor("a")
     }
 
-    deleteFile("out/${RuntimeModuleRepositoryBuildConstants.JAR_REPOSITORY_FILE_NAME}")
+    deleteFile("out/${RuntimeModuleRepositoryBuildConstants.COMPACT_REPOSITORY_FILE_NAME}")
     buildAndCheck {
       descriptor("a")
     }

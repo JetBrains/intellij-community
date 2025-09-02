@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast
 
 import com.intellij.psi.*
@@ -95,6 +95,23 @@ interface UField : UVariable, PsiField {
   @Deprecated("see the base property description", ReplaceWith("javaPsi"))
   override val psi: PsiField
 
+  /**
+   * Returns all annotations as defined on the [sourcePsi], in some cases this can differ with [uAnnotations] where only annotations that
+   * are strictly applied to the field are returned. Consider the following example:
+   * ```Java
+   * public @interface Foo { }
+   * ```
+   * ```Kotlin
+   * @Foo
+   * val foo = 0
+   * ```
+   * According to the [Kotlin docs](https://kotlinlang.org/docs/annotations.html#annotation-use-site-targets), if no `@Target` is specified,
+   * the first applicable target will be taken from the following order: param, property, field. Therefore `Foo` will only be applied to the
+   * property and won't be returned in [uAnnotations], to get annotations that are applied to the property, use [sourceAnnotations].
+   */
+  val sourceAnnotations: List<UAnnotation>
+    @ApiStatus.Experimental get() = uAnnotations
+
   override fun asLogString(): String = log("name = $name")
 
   override fun accept(visitor: UastVisitor) {
@@ -104,6 +121,24 @@ interface UField : UVariable, PsiField {
   }
 
   override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R = visitor.visitField(this, data)
+}
+
+/**
+ * Returns all annotations as defined on the [UElement.sourcePsi].
+ * @see UField.sourceAnnotations
+ */
+@ApiStatus.Experimental
+fun UAnnotated.sourceAnnotations(): List<UAnnotation> {
+  return if (this is UField) sourceAnnotations else uAnnotations
+}
+
+/**
+ * Returns the first source annotation matching [fqName].
+ * @see sourceAnnotations
+ */
+@ApiStatus.Experimental
+fun UAnnotated.findSourceAnnotation(fqName: String): UAnnotation? {
+  return sourceAnnotations().firstOrNull { it.qualifiedName == fqName }
 }
 
 interface UFieldEx : UField, UDeclarationEx {

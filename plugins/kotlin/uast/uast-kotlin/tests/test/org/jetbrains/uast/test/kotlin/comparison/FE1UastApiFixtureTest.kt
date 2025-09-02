@@ -138,6 +138,10 @@ class FE1UastApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), UastApiFi
         checkInvokedLambdaBody(myFixture)
     }
 
+    fun testInvokedLambdaViaFunctionCall() {
+        checkInvokedLambdaViaFunctionCall(myFixture)
+    }
+
     fun testImplicitReceiver() {
         checkImplicitReceiver(myFixture)
     }
@@ -194,6 +198,10 @@ class FE1UastApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), UastApiFi
         checkNoArgConstructorSourcePsi(myFixture)
     }
 
+    fun testDataClassCopy() {
+        checkDataClassCopy(myFixture)
+    }
+
     fun testNullLiteral() {
         checkNullLiteral(myFixture)
     }
@@ -216,5 +224,21 @@ class FE1UastApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), UastApiFi
 
     fun testJavaConstantEvaluation() {
         checkJavaConstantEvaluation(myFixture)
+    }
+
+    fun testAnnotationOnMemberWithValueClassInSignature() {
+        checkAnnotationOnMemberWithValueClassInSignature(myFixture)
+    }
+
+    fun testAnnotationOnPropertyWithValueClassInSignature() {
+        checkAnnotationOnPropertyWithValueClassInSignature(myFixture)
+    }
+
+    fun testTypealiasAnnotation() {
+        checkTypealiasAnnotation(myFixture)
+    }
+
+    fun testAttributeValueWithExtraParenthesis() {
+        checkAttributeValueWithExtraParenthesis(myFixture)
     }
 }

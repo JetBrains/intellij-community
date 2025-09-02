@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.openapi.application.ReadAction;
@@ -7,7 +7,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,8 +31,8 @@ public final class RefFunctionalExpressionImpl extends RefJavaElementImpl implem
     PsiElement sourceElement = element.getSourcePsi();
     LOG.assertTrue(sourceElement != null);
     setOwner();
-    if (element instanceof ULambdaExpression) {
-      setParameters(((ULambdaExpression)element).getParameters());
+    if (element instanceof ULambdaExpression lambda) {
+      setParameters(lambda.getParameters());
     }
     else if (element instanceof UCallableReferenceExpression) {
       PsiMethod resolvedMethod = LambdaUtil.getFunctionalInterfaceMethod(sourceElement);
@@ -57,21 +56,20 @@ public final class RefFunctionalExpressionImpl extends RefJavaElementImpl implem
     LOG.assertTrue(sourceElement != null);
     final PsiMethod resolvedMethod = LambdaUtil.getFunctionalInterfaceMethod(sourceElement);
     if (resolvedMethod != null) {
-      RefMethod resolvedRefMethod = ObjectUtils.tryCast(getRefManager().getReference(resolvedMethod), RefMethod.class);
-      if (resolvedRefMethod != null) {
-        resolvedRefMethod.addDerivedReference(this);
-        resolvedRefMethod.initializeIfNeeded();
-        RefClass refClass = resolvedRefMethod.getOwnerClass();
+      if (getRefManager().getReference(resolvedMethod) instanceof RefMethod refMethod) {
+        refMethod.addDerivedReference(this);
+        refMethod.initializeIfNeeded();
+        RefClass refClass = refMethod.getOwnerClass();
         if (refClass != null) {
           refClass.addDerivedReference(this);
         }
         if (element instanceof UCallableReferenceExpression && !TypeConversionUtil.isVoidType(resolvedMethod.getReturnType())) {
-          ((RefMethodImpl)resolvedRefMethod).updateReturnValueTemplate(element);
+          ((RefMethodImpl)refMethod).updateReturnValueTemplate(element);
         }
       }
     }
-    if (element instanceof ULambdaExpression) {
-      RefJavaUtil.getInstance().addReferencesTo(element, this, ((ULambdaExpression)element).getBody());
+    if (element instanceof ULambdaExpression lambda) {
+      RefJavaUtil.getInstance().addReferencesTo(element, this, lambda.getBody());
     }
     else if (element instanceof UCallableReferenceExpression) {
       RefJavaUtil.getInstance().addReferencesTo(element, this, element);
@@ -152,12 +150,10 @@ public final class RefFunctionalExpressionImpl extends RefJavaElementImpl implem
     UExpression element = getUastElement();
     assert element != null;
     boolean isEmptyBody = false;
-    if (element instanceof ULambdaExpression) {
-      PsiType type = ((ULambdaExpression)element).getFunctionalInterfaceType();
-      UBlockExpression body = ObjectUtils.tryCast(((ULambdaExpression)element).getBody(), UBlockExpression.class);
-      if (body != null && (body.getExpressions().isEmpty() || checkIfOnlyCallsSuper(body, type))) {
-        isEmptyBody = true;
-      }
+    if (element instanceof ULambdaExpression lambda
+        && lambda.getBody() instanceof UBlockExpression body
+        && (body.getExpressions().isEmpty() || checkIfOnlyCallsSuper(body, lambda.getFunctionalInterfaceType()))) {
+      isEmptyBody = true;
     }
     setFlag(isEmptyBody, RefMethodImpl.IS_BODY_EMPTY_MASK);
   }
@@ -166,8 +162,8 @@ public final class RefFunctionalExpressionImpl extends RefJavaElementImpl implem
     List<UExpression> expressions = body.getExpressions();
     if (expressions.size() > 1) return false;
     UExpression expression = expressions.get(0);
-    if (expression instanceof UReturnExpression) {
-      expression = ((UReturnExpression)expression).getReturnExpression();
+    if (expression instanceof UReturnExpression r) {
+      expression = r.getReturnExpression();
     }
     if (expression instanceof UQualifiedReferenceExpression) {
       UMethod lambdaMethod = UastContextKt.toUElement(LambdaUtil.getFunctionalInterfaceMethod(type), UMethod.class);

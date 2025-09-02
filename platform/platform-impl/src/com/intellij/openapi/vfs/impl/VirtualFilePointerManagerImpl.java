@@ -45,10 +45,7 @@ import com.intellij.util.io.URLUtil;
 import it.unimi.dsi.fastutil.objects.Reference2IntMap;
 import it.unimi.dsi.fastutil.objects.Reference2IntOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
@@ -62,7 +59,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
 
   static boolean shouldCheckConsistency() {
     return IS_UNDER_UNIT_TEST && !ApplicationManagerEx.isInStressTest()
-           && !Boolean.TRUE.equals(TestModeFlags.get(DISABLE_VFS_CONSISTENCY_CHECK_IN_TEST));
+           && !TestModeFlags.is(DISABLE_VFS_CONSISTENCY_CHECK_IN_TEST);
   }
 
   @TestOnly
@@ -149,7 +146,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
   }
 
   @TestOnly
-  synchronized @NotNull Collection<? extends VirtualFilePointer> getPointersUnder(@NotNull VirtualFileSystemEntry parent, @NotNull String childName) {
+  public synchronized @NotNull Collection<? extends VirtualFilePointer> getPointersUnder(@NotNull VirtualFileSystemEntry parent, @NotNull String childName) {
     assert !StringUtil.isEmptyOrSpaces(childName);
     @NotNull MultiMap<VirtualFilePointerListener, VirtualFilePointerImpl> nodes = MultiMap.create();
     addRelevantPointers(null, parent, toNameId(childName), nodes, new ArrayList<>(), true, parent.getFileSystem(), new VFileDeleteEvent(this, parent));
@@ -447,7 +444,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
   private static void resolveUrlBasedPointers(@NotNull FilePartNodeRoot root) {
     for (FilePartNode child : root.children) {
       if (child.isUrlBased()) {
-        final var resolvedChild = VirtualFileManager.getInstance().findFileByUrl(FilePartNode.myUrl(child.myFileOrUrl));
+        var resolvedChild = VirtualFileManager.getInstance().findFileByUrl(FilePartNode.urlOf(child.fileOrUrl));
         if (resolvedChild != null) {
           child = child.replaceWithFPPN(resolvedChild, root);
         }
@@ -482,7 +479,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
       }
     }
     else {
-      throw new IllegalStateException("Node for " + node.myFileOrUrl + " is not a url-based");
+      throw new IllegalStateException("Node for " + node.fileOrUrl + " is not a url-based");
     }
   }
 
@@ -668,8 +665,8 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
     }
   }
 
-  @NotNull
-  ChangeApplier prepareChange(@NotNull List<? extends VFileEvent> events) {
+  @VisibleForTesting
+  public @NotNull ChangeApplier prepareChange(@NotNull List<? extends VFileEvent> events) {
     myCollectedEvents = collectEvents(events);
     return new ChangeApplier() {
       @Override
@@ -699,7 +696,8 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
     return FSRecords.getInstance().getNameId(name);
   }
 
-  synchronized void assertConsistency() {
+  @VisibleForTesting
+  public synchronized void assertConsistency() {
     if (IS_UNDER_UNIT_TEST && !ApplicationManagerEx.isInStressTest()) {
       myLocalRoot.checkConsistency();
       myTempRoot.checkConsistency();
@@ -760,7 +758,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
     if (!shouldKill) {
       return false;
     }
-    getRoot(pointer.getNode().fs).removePointer(pointer);
+    getRoot(pointer.myNode.fs).removePointer(pointer);
     pointer.myNode = null;
     assertConsistency();
     myPointerSetModCount++;
@@ -813,7 +811,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
           Reference2IntMap.Entry<VirtualFilePointerImpl> entry = iterator.next();
           VirtualFilePointerImpl pointer = entry.getKey();
           int disposeCount = entry.getIntValue();
-          boolean isDisposed = !(pointer instanceof IdentityVirtualFilePointer) && pointer.getNode() == null;
+          boolean isDisposed = !(pointer instanceof IdentityVirtualFilePointer) && pointer.myNode == null;
           if (isDisposed) {
             pointer.throwDisposalError("Already disposed:\n" + pointer.getStackTrace());
           }
@@ -835,23 +833,23 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
   }
 
   @TestOnly
-  synchronized int numberOfPointers() {
+  public synchronized int numberOfPointers() {
     return dumpAllPointers().size();
   }
 
   @TestOnly
-  synchronized int numberOfListeners() {
+  public synchronized int numberOfListeners() {
     return ContainerUtil.count(dumpAllPointers(), pointer -> ((VirtualFilePointerImpl)pointer).myListener != null);
   }
 
   @TestOnly
-  synchronized int numberOfCachedUrlToIdentity() {
+  public synchronized int numberOfCachedUrlToIdentity() {
     return myUrlToIdentity.size();
   }
 
   // some tests need to operate on the deterministic number of pointers, so we clear all of them out of the way during the test execution
   @TestOnly
-  void shelveAllPointersIn(@NotNull Runnable runnable) {
+  public void shelveAllPointersIn(@NotNull Runnable runnable) {
     FilePartNode[] oldChildren;
     //noinspection SynchronizeOnThis
     FilePartNodeRoot localRoot = myLocalRoot;
@@ -870,7 +868,8 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
     }
   }
 
-  synchronized @NotNull Collection<VirtualFilePointer> dumpAllPointers() {
+  @VisibleForTesting
+  public synchronized @NotNull Collection<VirtualFilePointer> dumpAllPointers() {
     Collection<VirtualFilePointer> result = new ArrayList<>();
     dumpPointersRecursivelyTo(myLocalRoot, result);
     dumpPointersRecursivelyTo(myTempRoot, result);

@@ -28,7 +28,8 @@ import java.util.function.Supplier;
 @Deprecated(forRemoval = true)
 public abstract class ConfigurableBuilder extends UiDslUnnamedConfigurable.Simple
   implements UiDslUnnamedConfigurable, ConfigurableWithOptionDescriptors {
-  private @NlsContexts.BorderTitle String myTitle;
+
+  private @Nullable @NlsContexts.BorderTitle String myTitle;
 
   private interface PropertyAccessor<T> {
     T getValue();
@@ -37,10 +38,10 @@ public abstract class ConfigurableBuilder extends UiDslUnnamedConfigurable.Simpl
   }
 
   private static final class CallbackAccessor<T> implements PropertyAccessor<T> {
-    private final Supplier<? extends T> myGetter;
-    private final Setter<? super T> mySetter;
+    private final @NotNull Supplier<? extends T> myGetter;
+    private final @NotNull Setter<? super T> mySetter;
 
-    private CallbackAccessor(Supplier<? extends T> getter, Setter<? super T> setter) {
+    private CallbackAccessor(@NotNull Supplier<? extends T> getter, @NotNull Setter<? super T> setter) {
       myGetter = getter;
       mySetter = setter;
     }
@@ -57,9 +58,10 @@ public abstract class ConfigurableBuilder extends UiDslUnnamedConfigurable.Simpl
   }
 
   private static final class KPropertyAccessor<T> implements PropertyAccessor<T> {
-    private final KMutableProperty0<T> myProperty;
 
-    private KPropertyAccessor(KMutableProperty0<T> property) {
+    private final @NotNull KMutableProperty0<T> myProperty;
+
+    private KPropertyAccessor(@NotNull KMutableProperty0<T> property) {
       myProperty = property;
     }
 
@@ -75,8 +77,11 @@ public abstract class ConfigurableBuilder extends UiDslUnnamedConfigurable.Simpl
   }
 
   abstract static class BeanField<C extends JComponent, T> {
-    protected final PropertyAccessor<T> myAccessor;
-    private C myComponent;
+
+    @ApiStatus.Internal
+    final @NotNull PropertyAccessor<T> myAccessor;
+
+    private @Nullable C myComponent;
 
     private BeanField(@NotNull PropertyAccessor<T> accessor) {
       myAccessor = accessor;
@@ -112,9 +117,9 @@ public abstract class ConfigurableBuilder extends UiDslUnnamedConfigurable.Simpl
   }
 
   private static final class CheckboxField extends BeanField<JCheckBox, @NotNull Boolean> {
-    private final @NlsContexts.Checkbox String myTitle;
+    private final @NotNull @NlsContexts.Checkbox String myTitle;
 
-    private CheckboxField(PropertyAccessor<Boolean> accessor, @NotNull @NlsContexts.Checkbox String title) {
+    private CheckboxField(@NotNull PropertyAccessor<Boolean> accessor, @NotNull @NlsContexts.Checkbox String title) {
       super(accessor);
       myTitle = title;
     }
@@ -153,15 +158,12 @@ public abstract class ConfigurableBuilder extends UiDslUnnamedConfigurable.Simpl
   }
 
   protected ConfigurableBuilder(@Nullable @NlsContexts.BorderTitle String title) {
-    setTitle(title);
+    myTitle = title;
   }
 
+  @ApiStatus.Internal
   public @Nullable String getTitle() {
     return myTitle;
-  }
-
-  protected void setTitle(@Nullable @NlsContexts.BorderTitle String title) {
-    myTitle = title;
   }
 
   /**

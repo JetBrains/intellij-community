@@ -59,7 +59,7 @@ class MarkAsSafeFix extends LocalQuickFixOnPsiElement {
 
   @Override
   public void invoke(@NotNull Project project,
-                     @NotNull PsiFile file,
+                     @NotNull PsiFile psiFile,
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
     UExpression uExpression = UastContextKt.toUElementOfExpectedTypes(startElement, UExpression.class);

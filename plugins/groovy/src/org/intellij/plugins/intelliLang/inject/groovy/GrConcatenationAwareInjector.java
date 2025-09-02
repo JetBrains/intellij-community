@@ -8,7 +8,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
@@ -57,9 +56,10 @@ public final class GrConcatenationAwareInjector implements ConcatenationAwareInj
                                       List<InjectionInfo> list,
                                       boolean settingsAvailable,
                                       boolean unparsable) {
-        InjectorUtils.registerInjection(language, file, list, registrar);
-        InjectorUtils.registerSupport(support, settingsAvailable, list.get(0).host(), language);
-        InjectorUtils.putInjectedFileUserData(list.get(0).host(), language, InjectedLanguageUtil.FRANKENSTEIN_INJECTION, unparsable);
+        InjectorUtils.registerInjection(language, file, list, registrar, registrar -> {
+          InjectorUtils.registerSupport(registrar, support, settingsAvailable);
+          registrar.frankensteinInjection(unparsable);
+        });
       }
 
       @Override

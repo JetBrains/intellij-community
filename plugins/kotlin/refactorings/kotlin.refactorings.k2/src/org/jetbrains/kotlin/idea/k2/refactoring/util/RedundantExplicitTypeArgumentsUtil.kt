@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.k2.refactoring.util
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
@@ -84,11 +85,11 @@ private fun findContextToAnalyze(
 }
 
 @OptIn(KaExperimentalApi::class)
-private fun KaSession.areTypeArgumentsEqual(
+private fun areTypeArgumentsEqual(
     originalCallExpression: KtCallExpression,
     newCallExpression: KtCallExpression,
     approximateFlexible: Boolean,
-): Boolean {
+): Boolean = analyze(newCallExpression) {
     val originalTypeArgs = originalCallExpression
         .resolveToCall()
         ?.singleFunctionCallOrNull()

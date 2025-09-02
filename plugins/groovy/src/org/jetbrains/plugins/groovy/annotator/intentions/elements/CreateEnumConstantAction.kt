@@ -30,13 +30,13 @@ internal class CreateEnumConstantAction(
 
   override fun getText(): String = GroovyBundle.message("intention.name.create.enum.constant.0", request.fieldName)
 
-  override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo {
+  override fun generatePreview(project: Project, editor: Editor, psiFile: PsiFile): IntentionPreviewInfo {
     val (_, _, constant) = getEnumConstantTriple(project)
     val className = myTargetPointer.element?.name
     return IntentionPreviewInfo.CustomDiff(GroovyFileType.GROOVY_FILE_TYPE, className, "", constant.text)
   }
 
-  override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
+  override fun invoke(project: Project, editor: Editor?, psiFile: PsiFile?) {
     val (targetClass, parameters, enumConstant) = getEnumConstantTriple(project)
 
     var added = targetClass.add(enumConstant) as GrEnumConstant

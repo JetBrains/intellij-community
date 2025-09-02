@@ -699,6 +699,7 @@ class IdeTooltipManager(coroutineScope: CoroutineScope) : Disposable {
   }
 
   @Suppress("DeprecatedCallableAddReplaceWith")
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("use {@link JBUI.CurrentTheme.Tooltip#borderColor()} instead.")
   fun getBorderColor(@Suppress("unused") awtTooltip: Boolean): Color = JBUI.CurrentTheme.Tooltip.borderColor()
 

@@ -9,6 +9,7 @@ import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType;
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemProcessingManager;
+import com.intellij.openapi.externalSystem.service.project.trusted.ExternalSystemTrustedProjectDialog;
 import com.intellij.openapi.externalSystem.statistics.ExternalSystemActionsCollector;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
@@ -72,7 +73,7 @@ public class RefreshAllExternalProjectsAction extends DumbAwareAction {
     // We save all documents because there is a possible case that there is an external system config file changed inside the ide.
     FileDocumentManager.getInstance().saveAllDocuments();
 
-    if (ExternalSystemUtil.confirmLoadingUntrustedProject(project, systemIds)) {
+    if (ExternalSystemTrustedProjectDialog.confirmLoadingUntrustedProject(project, systemIds)) {
       for (ProjectSystemId externalSystemId : systemIds) {
         ExternalSystemActionsCollector.trigger(project, externalSystemId, this, e);
         ExternalSystemUtil.refreshProjects(new ImportSpecBuilder(project, externalSystemId));

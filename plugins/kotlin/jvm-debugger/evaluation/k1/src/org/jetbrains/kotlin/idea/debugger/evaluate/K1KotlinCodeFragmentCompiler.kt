@@ -53,7 +53,7 @@ private class K1KotlinCodeFragmentCompiler : KotlinCodeFragmentCompiler {
 
         logCompilation(codeFragment)
 
-        return createCompiledDataDescriptor(result)
+        return createCompiledDataDescriptor(result, canBeCached = true)
     }
 
     private fun analyze(codeFragment: KtCodeFragment, debugProcess: DebugProcessImpl, compilerStrategy: IRCodeFragmentCompilingStrategy): ErrorCheckingResult {

@@ -18,6 +18,9 @@ internal class JavaFxModuleTemplateGroup : FileTemplateGroupDescriptorFactory {
     root.addTemplate(JAVAFX_HELLO_VIEW_FXML)
     root.addTemplate(JAVAFX_MODULE_INFO_JAVA)
 
+    root.addTemplate("javafx-Launcher-java.java")
+    root.addTemplate("javafx-Launcher-groovy.groovy")
+
     root.addTemplate("javafx-HelloApplication-java.java")
     root.addTemplate("javafx-HelloApplication-kotlin.kt")
     root.addTemplate("javafx-HelloApplication-groovy.groovy")

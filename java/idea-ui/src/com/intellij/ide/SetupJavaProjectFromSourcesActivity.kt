@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide
 
 import com.google.common.collect.ArrayListMultimap
@@ -25,7 +25,6 @@ import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdk
@@ -67,7 +66,7 @@ private class SetupJavaProjectFromSourcesActivity : ProjectActivity {
       return
     }
 
-    if (!project.isOpenedByPlatformProcessor()) {
+    if (!isOpenedByPlatformProcessor(project)) {
       return
     }
 
@@ -90,9 +89,7 @@ suspend fun detectJavaProjectStructure(project: Project, projectDir: VirtualFile
         setCompilerOutputPath(project, "${projectDir.path}/out")
       }
 
-      blockingContext {
-        showNotificationToImport(project, projectDir, importers)
-      }
+      showNotificationToImport(project, projectDir, importers)
     }
     else if (setupFromSources){
       setupFromSources(project = project, projectDir = projectDir)

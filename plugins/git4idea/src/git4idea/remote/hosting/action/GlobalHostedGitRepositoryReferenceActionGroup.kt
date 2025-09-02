@@ -20,7 +20,7 @@ abstract class GlobalHostedGitRepositoryReferenceActionGroup : HostedGitReposito
   constructor(
     dynamicText: Supplier<@NlsActions.ActionText String>,
     dynamicDescription: Supplier<@NlsActions.ActionDescription String>,
-    icon: Supplier<Icon?>?
+    icon: Supplier<Icon?>?,
   ) : super(dynamicText, dynamicDescription, icon)
 
   protected abstract fun repositoriesManager(project: Project): HostedGitRepositoriesManager<*>
@@ -36,22 +36,26 @@ abstract class GlobalHostedGitRepositoryReferenceActionGroup : HostedGitReposito
   private fun findReferencesInHistory(project: Project, dataContext: DataContext): List<HostedGitRepositoryReference> {
     val fileRevision = dataContext.getData(VcsDataKeys.VCS_FILE_REVISION) ?: return emptyList()
     if (fileRevision !is GitFileRevision) return emptyList()
-    return findReferences(project, repositoriesManager(project), fileRevision, ::getUri)
+    return findReferences(project, repositoriesManager(project), fileRevision) { repository, revisionHash -> getUri(project, repository, revisionHash) }
   }
 
   private fun findReferencesInLog(project: Project, dataContext: DataContext): List<HostedGitRepositoryReference> {
     val commit = dataContext.getData(VcsLogDataKeys.VCS_LOG_COMMIT_SELECTION)?.commits?.firstOrNull() ?: return emptyList()
-    return findReferences(project, repositoriesManager(project), commit, ::getUri)
+    return findReferences(project, repositoriesManager(project), commit) { repository, revisionHash -> getUri(project, repository, revisionHash) }
   }
 
   private fun findReferencesInFile(project: Project, dataContext: DataContext): List<HostedGitRepositoryReference> {
     val virtualFile = dataContext.getData(CommonDataKeys.VIRTUAL_FILE) ?: return emptyList()
     val editor = dataContext.getData(CommonDataKeys.EDITOR)
 
-    return findReferences(project, repositoriesManager(project), virtualFile, editor, ::getUri)
+    return findReferences(project, repositoriesManager(project), virtualFile, editor) { repository, revisionHash, relativePath, lineRange ->
+      getUri(project, repository, revisionHash, relativePath, lineRange)
+    }
   }
 
+  protected open fun getUri(project: Project, repository: URI, revisionHash: String): URI = getUri(repository, revisionHash)
   protected abstract fun getUri(repository: URI, revisionHash: String): URI
 
+  protected open fun getUri(project: Project, repository: URI, revisionHash: String, relativePath: String, lineRange: IntRange?): URI = getUri(repository, revisionHash, relativePath, lineRange)
   protected abstract fun getUri(repository: URI, revisionHash: String, relativePath: String, lineRange: IntRange?): URI
 }

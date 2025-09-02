@@ -63,9 +63,17 @@
                      implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.DispatchersEdtInspection"
                      key="inspection.dispatchers.edt.display.name"/>
 
-    <iconProvider implementation="org.jetbrains.idea.devkit.kotlin.driver.RemoteIconProvider" order="first"/>
+    <localInspection language="kotlin"
+                     shortName="checkedExceptions"
+                     key="inspection.checked.exceptions"
+                     groupBundle="messages.DevKitBundle"
+                     groupPathKey="inspections.group.path"
+                     groupKey="inspections.group.code"
+                     enabledByDefault="true"
+                     level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.KotlinCheckedExceptionInspection"/>
 
-    <annotator language="kotlin" implementationClass="org.jetbrains.idea.devkit.kotlin.compose.ComposeColorAnnotator"/>
+    <iconProvider implementation="org.jetbrains.idea.devkit.kotlin.driver.RemoteIconProvider" order="first"/>
   </extensions>
 
   <extensions defaultExtensionNs="DevKit.lang">

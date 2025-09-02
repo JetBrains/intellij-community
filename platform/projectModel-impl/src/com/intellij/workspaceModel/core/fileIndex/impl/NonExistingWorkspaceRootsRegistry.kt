@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.core.fileIndex.impl
 
 import com.intellij.openapi.project.Project
@@ -14,6 +14,7 @@ import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.indices.VirtualFileIndex
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.io.URLUtil
 import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
@@ -21,9 +22,10 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeIm
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import java.util.*
 
-internal class NonExistingWorkspaceRootsRegistry(private val project: Project, private val indexData: WorkspaceFileIndexDataImpl) {
-  private val virtualFileManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
-
+internal class NonExistingWorkspaceRootsRegistry(
+  private val project: Project,
+  private val virtualFileManager: VirtualFileUrlManager,
+) {
   /** todo: replace by MostlySingularMultiMap to reduce memory usage  */
   private val nonExistingFiles = MultiMap.createConcurrent<VirtualFileUrl, NonExistingFileSetData>()
   
@@ -65,39 +67,39 @@ internal class NonExistingWorkspaceRootsRegistry(private val project: Project, p
     }
   }
 
-  fun analyzeVfsChanges(events: List<VFileEvent>): VfsChangeApplier? {
+  fun analyzeVfsChanges(events: List<VFileEvent>, indexData: WorkspaceFileIndexDataImpl): VfsChangeApplier? {
     val entityChanges = EntityChangeStorage()
     val entityStorage = WorkspaceModel.getInstance(project).currentSnapshot
     for (event in events) {
       when (event) {
         is VFileDeleteEvent ->
-          calculateEntityChangesIfNeeded(virtualFileManager.getOrCreateFromUrl(event.file.url), event.file, entityChanges, entityStorage, true)
+          calculateEntityChangesIfNeeded(virtualFileManager.getOrCreateFromUrl(event.file.url), event.file, entityChanges, entityStorage, true, indexData)
         is VFileCreateEvent -> {
           val parentUrl = event.parent.url
           val protocolEnd = parentUrl.indexOf(URLUtil.SCHEME_SEPARATOR)
           val url = if (protocolEnd != -1) {
-            parentUrl.substring(0, protocolEnd) + URLUtil.SCHEME_SEPARATOR + event.path
+            parentUrl.take(protocolEnd) + URLUtil.SCHEME_SEPARATOR + event.path
           }
           else {
             VfsUtilCore.pathToUrl(event.path)
           }
           val virtualFileUrl = virtualFileManager.getOrCreateFromUrl(url)
-          calculateEntityChangesIfNeeded(virtualFileUrl, null, entityChanges, entityStorage, false)
+          calculateEntityChangesIfNeeded(virtualFileUrl, null, entityChanges, entityStorage, false, indexData)
           if (url.startsWith(URLUtil.FILE_PROTOCOL) && (event.isDirectory || event.childName.endsWith(".jar"))) {
             //if a new directory or a new jar file is created, we may have roots pointing to files under it with jar protocol
             val suffix = if (event.isDirectory) "" else URLUtil.JAR_SEPARATOR
             val jarFileUrl = URLUtil.JAR_PROTOCOL + URLUtil.SCHEME_SEPARATOR + URLUtil.urlToPath(url) + suffix
             val jarVirtualFileUrl = virtualFileManager.getOrCreateFromUrl(jarFileUrl)
-            calculateEntityChangesIfNeeded(jarVirtualFileUrl, null, entityChanges, entityStorage, false)
+            calculateEntityChangesIfNeeded(jarVirtualFileUrl, null, entityChanges, entityStorage, false, indexData)
           }
         }
         is VFileCopyEvent -> calculateEntityChangesIfNeeded(virtualFileManager.getOrCreateFromUrl(VfsUtilCore.pathToUrl(event.path)), null, entityChanges,
-                                                            entityStorage, false)
+                                                            entityStorage, false, indexData)
         is VFilePropertyChangeEvent, is VFileMoveEvent -> {
           val (oldUrl, newUrl) = getOldAndNewUrls(event)
           if (oldUrl != newUrl) {
-            calculateEntityChangesIfNeeded(virtualFileManager.getOrCreateFromUrl(oldUrl), event.file, entityChanges, entityStorage, true)
-            calculateEntityChangesIfNeeded(virtualFileManager.getOrCreateFromUrl(newUrl), null, entityChanges, entityStorage, false)
+            calculateEntityChangesIfNeeded(virtualFileManager.getOrCreateFromUrl(oldUrl), event.file, entityChanges, entityStorage, true, indexData)
+            calculateEntityChangesIfNeeded(virtualFileManager.getOrCreateFromUrl(newUrl), null, entityChanges, entityStorage, false, indexData)
           }
         }
       }
@@ -120,11 +122,14 @@ internal class NonExistingWorkspaceRootsRegistry(private val project: Project, p
     return if (parentVirtualFileUrl != null && parentVirtualFileUrl in indexedJarDirectories) parentVirtualFileUrl else null
   }
 
-  private fun calculateEntityChangesIfNeeded(virtualFileUrl: VirtualFileUrl,
-                                             virtualFile: VirtualFile?,
-                                             entityChanges: EntityChangeStorage,
-                                             storage: EntityStorage,
-                                             allRootsWereRemoved: Boolean) {
+  private fun calculateEntityChangesIfNeeded(
+    virtualFileUrl: VirtualFileUrl,
+    virtualFile: VirtualFile?,
+    entityChanges: EntityChangeStorage,
+    storage: EntityStorage,
+    allRootsWereRemoved: Boolean,
+    indexData: WorkspaceFileIndexDataImpl,
+  ) {
     val includingJarDirectory = getIncludingJarDirectory(storage, virtualFileUrl)
     if (includingJarDirectory != null) {
       //todo handle JAR directories inside WorkspaceFileIndex instead
@@ -134,17 +139,20 @@ internal class NonExistingWorkspaceRootsRegistry(private val project: Project, p
       return
     }
 
-    collectAffectedEntities(virtualFileUrl, virtualFile, allRootsWereRemoved, entityChanges)
+    collectAffectedEntities(virtualFileUrl, virtualFile, allRootsWereRemoved, entityChanges, indexData)
     virtualFileUrl.subTreeFileUrls.forEach { urlUnder ->
       val fileUnder = if (virtualFile != null) urlUnder.virtualFile else null
-      collectAffectedEntities(urlUnder, fileUnder, allRootsWereRemoved, entityChanges)
+      collectAffectedEntities(urlUnder, fileUnder, allRootsWereRemoved, entityChanges, indexData)
     }
   }
 
-  private fun collectAffectedEntities(url: VirtualFileUrl,
-                                      virtualFile: VirtualFile?,
-                                      allRootsWereRemoved: Boolean,
-                                      entityChanges: EntityChangeStorage) {
+  private fun collectAffectedEntities(
+    url: VirtualFileUrl,
+    virtualFile: VirtualFile?,
+    allRootsWereRemoved: Boolean,
+    entityChanges: EntityChangeStorage,
+    indexData: WorkspaceFileIndexDataImpl,
+  ) {
     if (virtualFile != null) {
       var hasEntities = false
       indexData.processFileSets(virtualFile) {

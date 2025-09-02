@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.multilaunch.execution.executables.impl
 
 import com.intellij.execution.*
@@ -13,24 +14,24 @@ import com.intellij.execution.multilaunch.execution.ExecutionMode
 import com.intellij.execution.multilaunch.execution.executables.Executable
 import com.intellij.execution.multilaunch.execution.executables.ExecutableTemplate
 import com.intellij.execution.multilaunch.state.ExecutableSnapshot
-import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
+import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.ide.DataManager
+import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.jetbrains.rd.util.lifetime.Lifetime
 import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
+import com.jetbrains.rd.util.lifetime.Lifetime
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.suspendCancellableCoroutine
-import com.intellij.internal.statistic.StructuredIdeActivity
 
 @Service(Service.Level.PROJECT)
 class RunConfigurationExecutableManager(private val project: Project) : ExecutableTemplate {
@@ -132,7 +133,7 @@ class RunConfigurationExecutableManager(private val project: Project) : Executab
         }
         else -> {
           suspendCancellableCoroutine { cont ->
-            runContentDescriptor.processHandler?.addProcessListener(object : ProcessAdapter() {
+            runContentDescriptor.processHandler?.addProcessListener(object : ProcessListener {
               override fun processTerminated(event: ProcessEvent) {
                 cont.resume(Unit, null)
               }

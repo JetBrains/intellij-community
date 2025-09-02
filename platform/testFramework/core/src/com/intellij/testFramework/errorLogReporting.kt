@@ -20,7 +20,13 @@ internal fun ErrorLog.reportAsFailures() {
 private fun logAsTeamcityTestFailure(error: LoggedError) {
   val message = findMessage(error)
   val stackTraceContent = error.stackTraceToString()
-  val testName = if (message == null) "Error logged without message" else generifyErrorMessage(message)
+  val testName = if (message == null) {
+    "Error logged without message"
+  } else {
+    generifyErrorMessage(message)
+      .replace("[:.()]".toRegex(), " ")
+      .replace(" +".toRegex(), " ")
+  }
   System.out.reportTestFailure(testName, message ?: "", stackTraceContent)
 }
 

@@ -2,11 +2,12 @@
 package org.jetbrains.plugins.gradle.execution.build;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.io.FileUtil;
+import kotlin.io.path.PathsKt;
+import kotlin.text.Charsets;
 import org.jetbrains.annotations.ApiStatus;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.*;
 
 import static com.intellij.openapi.util.text.StringUtil.splitByLines;
@@ -34,9 +35,9 @@ class GradleImprovedHotswapOutput {
     return path;
   }
 
-  public static Collection<GradleImprovedHotswapOutput> parseOutputFile(File file) {
+  public static Collection<GradleImprovedHotswapOutput> parseOutputFile(Path file) {
     try {
-      String content = FileUtil.loadFile(file);
+      String content = PathsKt.readText(file, Charsets.UTF_8);
 
       Iterator<String> lines = Arrays.stream(splitByLines(content, true))
         .filter(line -> !line.isBlank())

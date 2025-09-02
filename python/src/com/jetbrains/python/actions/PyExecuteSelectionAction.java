@@ -38,7 +38,6 @@ public class PyExecuteSelectionAction extends DumbAwareAction {
     if (editor != null && project != null) {
       PythonRunConfiguration config = PyExecuteConsoleCustomizer.Companion.getInstance().getContextConfig(e.getDataContext());
       final String selectionText = getSelectionText(editor);
-      if (!PyExecuteInConsole.checkIfAvailableAndShowHint(editor)) return;
       if (selectionText != null) {
         PyExecuteInConsole.executeCodeInConsole(project, selectionText, editor, true, true, false, config);
       }

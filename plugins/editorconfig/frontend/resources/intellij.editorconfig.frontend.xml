@@ -1,0 +1,19 @@
+<idea-plugin>
+  <dependencies>
+    <module name="intellij.platform.frontend"/>
+    <module name="intellij.editorconfig.common"/>
+  </dependencies>
+  <extensions defaultExtensionNs="com.intellij">
+    <lang.syntaxHighlighterFactory language="EditorConfig"
+                                   implementationClass="com.intellij.editorconfig.frontend.highlighting.EditorConfigSyntaxHighlighterFactory"/>
+    <annotator language="EditorConfig" implementationClass="com.intellij.editorconfig.frontend.highlighting.EditorConfigAnnotator"/>
+    <colorSettingsPage implementation="com.intellij.editorconfig.frontend.settings.EditorConfigColorSettingsPage"/>
+    <lang.foldingBuilder language="EditorConfig"
+                         implementationClass="com.intellij.editorconfig.frontend.lang.editor.EditorConfigFoldingBuilder"/>
+    <statementUpDownMover implementation="com.intellij.editorconfig.frontend.editor.EditorConfigStatementUpDownMover"/>
+    <moveLeftRightHandler language="EditorConfig"
+                          implementationClass="com.intellij.editorconfig.frontend.editor.EditorConfigMoveElementLeftRightHandler"/>
+    <enterHandlerDelegate implementation="com.intellij.editorconfig.frontend.editor.EnterInEditorConfigFileHandler"/>
+    <typedHandler implementation="com.intellij.editorconfig.frontend.editor.EditorConfigTypedHandlerDelegate"/>
+  </extensions>
+</idea-plugin>

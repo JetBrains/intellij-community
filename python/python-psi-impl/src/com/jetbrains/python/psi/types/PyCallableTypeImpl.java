@@ -103,9 +103,7 @@ public class PyCallableTypeImpl implements PyCallableType {
                                              final PyType type = param.getType(context);
                                              if (name != null) {
                                                builder.append(name);
-                                               if (type != null) {
-                                                 builder.append(": ");
-                                               }
+                                               builder.append(": ");
                                              }
                                              builder.append(type != null ? type.getName() : PyNames.UNKNOWN_TYPE);
                                              return builder.toString();
@@ -139,6 +137,11 @@ public class PyCallableTypeImpl implements PyCallableType {
   @Override
   public int getImplicitOffset() {
     return myImplicitOffset;
+  }
+
+  @Override
+  public @Nullable PyQualifiedNameOwner getDeclarationElement() {
+    return myCallable;
   }
 
   @Override

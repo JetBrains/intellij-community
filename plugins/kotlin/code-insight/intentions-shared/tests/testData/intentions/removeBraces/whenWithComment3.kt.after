@@ -1,8 +1,7 @@
 // AFTER-WARNING: Parameter 'a' is never used
 fun foo(s: String) {
     when (s) {
-        "a" ->
-            println("a") // 1
+        "a" -> println("a") // 1
             // 2
             // 3
 

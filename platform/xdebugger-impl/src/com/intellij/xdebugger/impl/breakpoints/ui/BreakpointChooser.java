@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.popup.util.*;
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -21,6 +22,7 @@ import javax.swing.event.PopupMenuListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.List;
+import java.util.Objects;
 
 @ApiStatus.Internal
 public class BreakpointChooser {
@@ -42,8 +44,12 @@ public class BreakpointChooser {
     myDetailController.setDetailView(myDetailView);
   }
 
-  public Object getSelectedBreakpoint() {
-    return ((BreakpointItem)myComboBox.getSelectedItem()).getBreakpoint();
+  public @Nullable XBreakpointProxy getSelectedBreakpoint() {
+    BreakpointItem selectedItem = (BreakpointItem)myComboBox.getSelectedItem();
+    if (selectedItem == null) {
+      return null;
+    }
+    return selectedItem.getBreakpoint();
   }
 
   private void pop(DetailView.PreviewEditorState pushed) {
@@ -57,7 +63,7 @@ public class BreakpointChooser {
     }
   }
 
-  public void setSelectedBreakpoint(Object breakpoint) {
+  public void setSelectedBreakpoint(XBreakpointProxy breakpoint) {
     myComboBox.setSelectedItem(findItem(breakpoint, myBreakpointItems));
   }
 
@@ -66,7 +72,10 @@ public class BreakpointChooser {
   }
 
   @Contract(mutates = "param4")
-  public BreakpointChooser(final Project project, Delegate delegate, Object baseBreakpoint, List<BreakpointItem> breakpointItems) {
+  public BreakpointChooser(final Project project,
+                           Delegate delegate,
+                           XBreakpointProxy baseBreakpoint,
+                           List<BreakpointItem> breakpointItems) {
     myDelegate = delegate;
     myBreakpointItems = breakpointItems;
 
@@ -139,10 +148,10 @@ public class BreakpointChooser {
     });
   }
 
-  private static @Nullable BreakpointItem findItem(Object baseBreakpoint, List<? extends BreakpointItem> breakpointItems) {
+  private static @Nullable BreakpointItem findItem(XBreakpointProxy baseBreakpoint, List<? extends BreakpointItem> breakpointItems) {
     BreakpointItem breakpointItem = null;
     for (BreakpointItem item : breakpointItems) {
-      if (item.getBreakpoint() == baseBreakpoint) {
+      if (Objects.equals(item.getBreakpoint(), baseBreakpoint)) {
         breakpointItem = item;
         break;
       }

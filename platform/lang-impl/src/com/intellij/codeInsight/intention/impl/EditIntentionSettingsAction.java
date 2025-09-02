@@ -34,7 +34,7 @@ public final class EditIntentionSettingsAction extends AbstractEditIntentionSett
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
     IntentionsConfigurable configurable = (IntentionsConfigurable)ConfigurableExtensionPointUtil
       .createApplicationConfigurableForProvider(IntentionsConfigurableProvider.class);
     if (configurable != null) {

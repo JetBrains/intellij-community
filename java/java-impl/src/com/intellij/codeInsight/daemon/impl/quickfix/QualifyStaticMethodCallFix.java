@@ -14,8 +14,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public class QualifyStaticMethodCallFix extends StaticImportMethodFix {
-  public QualifyStaticMethodCallFix(@NotNull PsiFile file, @NotNull PsiMethodCallExpression methodCallExpression) {
-    super(file, methodCallExpression);
+  public QualifyStaticMethodCallFix(@NotNull PsiFile psiFile, @NotNull PsiMethodCallExpression methodCallExpression) {
+    super(psiFile, methodCallExpression);
   }
 
   @Override
@@ -39,8 +39,8 @@ public class QualifyStaticMethodCallFix extends StaticImportMethodFix {
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    return generatePreview(file, (expression, method) -> qualifyStatically(method, project, ((PsiMethodCallExpression)expression).getMethodExpression()));
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    return generatePreview(psiFile, (expression, method) -> qualifyStatically(method, project, ((PsiMethodCallExpression)expression).getMethodExpression()));
   }
 
   @Override

@@ -1,3 +1,33 @@
+c:com.intellij.openapi.vcs.IssueNavigationConfiguration
+- com.intellij.openapi.util.SimpleModificationTracker
+- com.intellij.openapi.components.PersistentStateComponent
+- <init>():V
+- s:findIssueLinkMatches(java.lang.CharSequence,com.intellij.openapi.vcs.IssueNavigationLink,java.util.List):V
+- findIssueLinks(java.lang.CharSequence):java.util.List
+- s:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.IssueNavigationConfiguration
+- getLinks():java.util.List
+- getState():com.intellij.openapi.vcs.IssueNavigationConfiguration
+- loadState(com.intellij.openapi.vcs.IssueNavigationConfiguration):V
+- noStateLoaded():V
+- s:processTextWithLinks(java.lang.String,java.util.List,java.util.function.Consumer,java.util.function.BiConsumer):V
+- setLinks(java.util.List):V
+c:com.intellij.openapi.vcs.IssueNavigationConfiguration$LinkMatch
+- com.intellij.openapi.vcs.LinkDescriptor
+- java.lang.Comparable
+- <init>(com.intellij.openapi.util.TextRange,java.lang.String):V
+- compareTo(java.lang.Object):I
+- getRange():com.intellij.openapi.util.TextRange
+- getTargetUrl():java.lang.String
+c:com.intellij.openapi.vcs.IssueNavigationLink
+- <init>():V
+- <init>(java.lang.String,java.lang.String):V
+- equals(java.lang.Object):Z
+- getIssuePattern():java.util.regex.Pattern
+- getIssueRegexp():java.lang.String
+- getLinkRegexp():java.lang.String
+- hashCode():I
+- setIssueRegexp(java.lang.String):V
+- setLinkRegexp(java.lang.String):V
 com.intellij.platform.vcs.impl.shared.changes.DiffPreviewUpdateProcessor
 - a:clear():V
 - a:getComponent():javax.swing.JComponent

@@ -5,7 +5,6 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.FilenameIndex
 import com.intellij.testFramework.TestDataPath
-import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.testFramework.utils.vfs.getPsiFile
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaBuiltinsModule
@@ -16,7 +15,6 @@ import org.jetbrains.kotlin.gradle.AbstractKotlinGradleNavigationTest.Companion.
 import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
 import org.jetbrains.kotlin.idea.base.test.JUnit4Assertions.assertTrue
 import org.jetbrains.kotlin.idea.base.test.TestRoot
-import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.test.AssertKotlinPluginMode
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.UseK2PluginMode
@@ -44,12 +42,6 @@ class GradleScriptProjectStructureTest : AbstractGradleCodeInsightTest() {
 
     private fun checkProjectStructure(gradleVersion: GradleVersion) {
         test(gradleVersion, GRADLE_KOTLIN_FIXTURE) {
-            val mainFile = mainTestDataPsiFile
-
-            runInEdtAndWait {
-                ScriptConfigurationManager.updateScriptDependenciesSynchronously(mainFile)
-            }
-
             val allModules = runReadAction { collectModules() }
             runReadAction { validateScriptModules(allModules) }
 

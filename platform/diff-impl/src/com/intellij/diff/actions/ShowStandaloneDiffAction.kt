@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.actions
 
-import com.intellij.diff.editor.DiffEditorTabFilesManager.Companion.isDiffInEditor
+import com.intellij.diff.editor.DiffEditorTabFilesUtil
 import com.intellij.diff.tools.external.ExternalDiffTool
 import com.intellij.idea.ActionsBundle.message
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -28,7 +28,7 @@ internal class ShowStandaloneDiffAction : ExtendableAction(EP_NAME), DumbAware {
     val project = e.project
 
     with(e.presentation) {
-      if (isDiffInEditor) {
+      if (DiffEditorTabFilesUtil.isDiffInEditor) {
         text = message("action.Diff.ShowStandaloneDiff.tab.text")
         description = message("action.Diff.ShowStandaloneDiff.tab.description")
       }

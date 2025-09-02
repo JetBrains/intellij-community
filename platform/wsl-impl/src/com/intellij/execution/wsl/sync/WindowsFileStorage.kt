@@ -38,7 +38,7 @@ private class MyFileVisitor(private val filters: WslHashFilters,
   val dirLinks: Map<FilePathRelativeToDir, FilePathRelativeToDir> get() = _dirLinks
   val stubs: Set<FilePathRelativeToDir> get() = _stubs
 
-  override fun postVisitDirectory(dir: Path?, exc: IOException?): FileVisitResult {
+  override fun postVisitDirectory(dir: Path, exc: IOException?): FileVisitResult {
     return super.postVisitDirectory(dir, exc)
   }
 

@@ -1,9 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.nio.file.Path;
 
@@ -15,7 +16,8 @@ public final class PersistentFSPaths {
 
   private final @NotNull Path storagesDir;
 
-  PersistentFSPaths(final @NotNull Path storagesDir) {
+  @VisibleForTesting
+  public PersistentFSPaths(final @NotNull Path storagesDir) {
     this.storagesDir = storagesDir.toAbsolutePath();
   }
 

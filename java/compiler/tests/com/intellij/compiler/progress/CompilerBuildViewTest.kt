@@ -52,15 +52,15 @@ class CompilerBuildViewTest : BaseCompilerTestCase() {
   fun `test empty build`() {
     make(compilerManager.createProjectCompileScope(myProject))
     buildViewTestFixture.assertBuildViewTreeEquals("-\n build finished")
-    buildViewTestFixture.assertBuildViewSelectedNode("build finished", "", false)
+    buildViewTestFixture.assertBuildViewNode("build finished", "")
 
     rebuildProject(false)
     buildViewTestFixture.assertBuildViewTreeEquals("-\n rebuild finished")
-    buildViewTestFixture.assertBuildViewSelectedNode("rebuild finished", "", false)
+    buildViewTestFixture.assertBuildViewNode("rebuild finished", "")
 
     compile(compilerManager.createProjectCompileScope(myProject), true)
     buildViewTestFixture.assertBuildViewTreeEquals("-\n recompile finished")
-    buildViewTestFixture.assertBuildViewSelectedNode("recompile finished", "", false)
+    buildViewTestFixture.assertBuildViewNode("recompile finished", "")
   }
 
   fun `test successful build`() {
@@ -75,7 +75,7 @@ class CompilerBuildViewTest : BaseCompilerTestCase() {
 
     runWithProgressExIndicatorSupport { rebuildProject() }
     buildViewTestFixture.assertBuildViewTreeEquals("-\n rebuild finished")
-    buildViewTestFixture.assertBuildViewSelectedNode("rebuild finished", false) { output ->
+    buildViewTestFixture.assertBuildViewNode("rebuild finished") { output ->
       assertThat(output).startsWith(if (AdvancedSettings.getBoolean("compiler.unified.ic.implementation")) """
           Clearing build system data…
           Executing pre-compile tasks…
@@ -112,7 +112,7 @@ class CompilerBuildViewTest : BaseCompilerTestCase() {
 
     runWithProgressExIndicatorSupport { rebuild(module) }
     buildViewTestFixture.assertBuildViewTreeEquals("-\n recompile finished")
-    buildViewTestFixture.assertBuildViewSelectedNode("recompile finished", false) { output ->
+    buildViewTestFixture.assertBuildViewNode("recompile finished") { output ->
       assertThat(output).startsWith(if (AdvancedSettings.getBoolean("compiler.unified.ic.implementation")) """
         Executing pre-compile tasks…
         Cleaning output directories…
@@ -243,11 +243,11 @@ class CompilerBuildViewTest : BaseCompilerTestCase() {
     buildViewTestFixture.assertBuildViewTreeEquals("-\n" +
                                                    " -build finished\n" +
                                                    "  another yellow message")
-    buildViewTestFixture.assertBuildViewSelectedNode("build finished", "some progress 60%\n" +
-                                                                       "another message\n" +
-                                                                       "another yellow message\n" +
-                                                                       "some progress 95%\n" +
-                                                                       "some progress 100%", false)
+    buildViewTestFixture.assertBuildViewNode("build finished", "some progress 60%\n" +
+                                                               "another message\n" +
+                                                               "another yellow message\n" +
+                                                               "some progress 95%\n" +
+                                                               "some progress 100%")
   }
 
   private fun build(module: Module, errorsExpected: Boolean = false): CompilationLog? {

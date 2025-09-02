@@ -1,9 +1,10 @@
-<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" allow-bundled-update="true">
   <id>com.intellij.java</id>
   <name>Java</name>
   <description><![CDATA[
-  Adds support for the Java language, including Java projects, language syntax highlighting, inspections, and all other coding assistance features.
-]]></description>
+    Adds support for the Java language, including Java projects, language syntax highlighting, inspections, and all other coding assistance features.
+  ]]></description>
+
   <vendor>JetBrains</vendor>
   <category>Languages</category>
   <resource-bundle>messages.ActionsBundle</resource-bundle>
@@ -14,13 +15,16 @@
     <plugin id="com.intellij.modules.xdebugger"/>
     <plugin id="com.intellij.modules.xml"/>
     <plugin id="com.intellij.modules.java-capable"/>
+    <module name="intellij.platform.vcs.impl.lang"/>
+    <module name="intellij.spellchecker"/>
+    <module name="intellij.xml.dom.impl"/>
   </dependencies>
 
   <depends optional="true" config-file="java-copyright.xml">com.intellij.copyright</depends>
 
   <xi:include href="/META-INF/JavaPlugin.xml"/>
 
-  <!-- todo: these files are present in Java plugin for IDEA Ultimate only, they should be extract to a different plugin.xml -->
+  <!-- todo: these files are present in Java plugin for IDEA Ultimate only, they should be converted to content modules -->
   <xi:include href="intellij.java.duplicates.analysis.xml">
     <xi:fallback/>
   </xi:include>
@@ -37,11 +41,24 @@
     <module name="intellij.java.performancePlugin"/>
     <module name="intellij.java.unscramble"/>
     <module name="intellij.java.vcs"/>
-    <module name="intellij.java.compiler.charts"/>
     <module name="intellij.java.terminal"/>
     <module name="intellij.jvm.analysis.impl"/>
     <module name="intellij.java.debugger.impl.frontend"/>
     <module name="intellij.java.debugger.impl.backend"/>
+    <module name="intellij.java.execution.impl.frontend"/>
+    <module name="intellij.java.execution.impl.backend"/>
+    <module name="intellij.java.frontback.psi" loading="embedded"/>
+    <module name="intellij.java.frontback.psi.impl" loading="embedded"/>
+    <module name="intellij.java.frontback.impl" loading="embedded"/>
+    <module name="intellij.java.debugger.impl.shared" loading="embedded"/>
+    <module name="intellij.java.execution.impl.shared" loading="embedded"/>
+    <module name="intellij.java.syntax" loading="embedded"/>
+    <module name="intellij.java.psi.impl" loading="embedded"/>
+    <module name="intellij.java.psi" loading="embedded"/>
+
+    <module name="intellij.debugger.collections.visualizer.jvm"/>
+    <module name="intellij.profiler.ultimate"/>
+    <module name="intellij.jvm.dfa.analysis.ui"/>
   </content>
 
   <depends optional="true" config-file="intellij.java.remoteServers.impl.xml">com.intellij.modules.remoteServers</depends>

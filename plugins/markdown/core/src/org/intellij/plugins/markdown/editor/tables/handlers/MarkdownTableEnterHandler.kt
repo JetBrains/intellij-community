@@ -1,8 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.editor.tables.handlers
 
 import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate
-import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegateAdapter
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.editor.Editor
@@ -15,7 +14,7 @@ import com.intellij.psi.PsiFile
 import org.intellij.plugins.markdown.editor.tables.TableUtils
 import org.intellij.plugins.markdown.settings.MarkdownCodeInsightSettings
 
-internal class MarkdownTableEnterHandler: EnterHandlerDelegateAdapter() {
+internal class MarkdownTableEnterHandler: EnterHandlerDelegate {
   private var firstEnterPosition: Int? = null
 
   override fun preprocessEnter(

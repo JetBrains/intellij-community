@@ -11,6 +11,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.uast.UastMetaLanguage;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 
@@ -67,7 +68,7 @@ public abstract class HTMLJavaHTMLComposer implements HTMLComposerExtension<HTML
   }
 
   @Override
-  public Collection<Language> getLanguages() {
+  public @Unmodifiable @NotNull Collection<Language> getLanguages() {
     return Language.findInstance(UastMetaLanguage.class).getMatchingLanguages();
   }
 }

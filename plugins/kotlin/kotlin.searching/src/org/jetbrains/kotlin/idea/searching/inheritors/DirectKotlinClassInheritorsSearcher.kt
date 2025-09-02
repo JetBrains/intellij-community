@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.searching.inheritors
 
 import com.intellij.model.search.Searcher
@@ -95,7 +95,7 @@ internal class DirectKotlinClassInheritorsSearcher : Searcher<DirectKotlinClassI
                         return false
                     }
 
-                    fun KaUsualClassType.classIdWithExpandedTypeAlias(): ClassId? =
+                    fun KaUsualClassType.classIdWithExpandedTypeAlias(): ClassId =
                         ((symbol as? KaTypeAliasSymbol)?.expandedType as? KaUsualClassType)?.classId ?: classId
 
                     return ktSymbol.superTypes.any { it is KaUsualClassType && (it.symbol == baseSymbol || it.classIdWithExpandedTypeAlias() == baseSymbol.classId) }

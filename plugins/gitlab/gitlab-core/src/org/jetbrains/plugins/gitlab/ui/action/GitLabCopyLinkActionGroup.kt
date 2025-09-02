@@ -15,11 +15,17 @@ class GitLabCopyLinkActionGroup : GlobalHostedGitRepositoryReferenceActionGroup(
   override fun repositoriesManager(project: Project): HostedGitRepositoriesManager<*> =
     project.service<GitLabProjectsManager>()
 
+  override fun getUri(project: Project, repository: URI, revisionHash: String): URI =
+    GitLabURIUtil.getWebURI(project, repository, revisionHash)
+
   override fun getUri(repository: URI, revisionHash: String): URI =
-    GitLabURIUtil.getWebURI(repository, revisionHash)
+    GitLabURIUtil.getWebURI(null, repository, revisionHash)
+
+  override fun getUri(project: Project, repository: URI, revisionHash: String, relativePath: String, lineRange: IntRange?): URI =
+    GitLabURIUtil.getWebURI(project, repository, revisionHash, relativePath, lineRange)
 
   override fun getUri(repository: URI, revisionHash: String, relativePath: String, lineRange: IntRange?): URI =
-    GitLabURIUtil.getWebURI(repository, revisionHash, relativePath, lineRange)
+    GitLabURIUtil.getWebURI(null, repository, revisionHash, relativePath, lineRange)
 
   override fun handleReference(reference: HostedGitRepositoryReference) {
     val uri = reference.buildWebURI()?.toString() ?: return

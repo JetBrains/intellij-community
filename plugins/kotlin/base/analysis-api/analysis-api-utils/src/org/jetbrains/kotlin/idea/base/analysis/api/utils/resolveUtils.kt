@@ -22,6 +22,8 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
 import org.jetbrains.kotlin.psi.psiUtil.referenceExpression
 import org.jetbrains.kotlin.resolve.ArrayFqNames
+import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
+import org.jetbrains.kotlin.utils.exceptions.withPsiEntry
 
 // Analogous to Call.resolveCandidates() in plugins/kotlin/core/src/org/jetbrains/kotlin/idea/core/Utils.kt
 context(KaSession)
@@ -91,7 +93,12 @@ fun filterCandidateByReceiverTypeAndVisibility(
     val receiverTypes = collectReceiverTypesForElement(callElement, explicitReceiver)
 
     val candidateReceiverType = signature.receiverType
-    if (candidateReceiverType != null && receiverTypes.none { it.isSubtypeOf(candidateReceiverType, subtypingErrorTypePolicy) }) return false
+    if (candidateReceiverType != null && receiverTypes.none {
+            it.isSubtypeOf(candidateReceiverType, subtypingErrorTypePolicy) ||
+                    it.nullability != KaTypeNullability.NON_NULLABLE && it.withNullability(KaTypeNullability.NON_NULLABLE)
+                        .isSubtypeOf(candidateReceiverType, subtypingErrorTypePolicy)
+        }
+    ) return false
 
     // Filter out candidates not visible from call site
     if (!visibilityChecker.isVisible(candidateSymbol)) return false
@@ -115,7 +122,12 @@ fun collectReceiverTypesForElement(callElement: KtElement, explicitReceiver: KtE
 
 context(KaSession)
 fun collectReceiverTypesForExplicitReceiverExpression(explicitReceiver: KtExpression): List<KaType> {
-    explicitReceiver.referenceExpression()?.mainReference?.let { receiverReference ->
+    val referenceExpression = when (explicitReceiver) {
+        is KtDotQualifiedExpression -> explicitReceiver.selectorExpression ?: explicitReceiver
+        else -> explicitReceiver
+    }
+
+    referenceExpression.referenceExpression()?.mainReference?.let { receiverReference ->
         val receiverSymbol = receiverReference.resolveToExpandedSymbol()
         if (receiverSymbol == null || receiverSymbol is KaPackageSymbol) return emptyList()
 
@@ -127,7 +139,12 @@ fun collectReceiverTypesForExplicitReceiverExpression(explicitReceiver: KtExpres
 
     val isSafeCall = explicitReceiver.parent is KtSafeQualifiedExpression
 
-    val explicitReceiverType = explicitReceiver.expressionType ?: error("Receiver should have a KaType")
+    val explicitReceiverType = explicitReceiver.expressionType ?: 
+        errorWithAttachment("Receiver should have a KaType") {
+            withPsiEntry("explicitReceiver", explicitReceiver)
+            withPsiEntry("file", explicitReceiver.containingKtFile)
+        }
+    
     val adjustedType = if (isSafeCall) {
         explicitReceiverType.withNullability(KaTypeNullability.NON_NULLABLE)
     } else {

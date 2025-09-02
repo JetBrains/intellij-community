@@ -5,8 +5,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.python.community.helpersLocator.PythonHelpersLocator;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.xml.sax.Attributes;
@@ -19,6 +19,7 @@ import org.xml.sax.helpers.XMLReaderFactory;
 import java.io.CharArrayWriter;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -42,7 +43,8 @@ public final class UnsupportedFeaturesUtil {
 
   private static void fillTestCaseMethods() throws IOException {
     final Logger log = Logger.getInstance(UnsupportedFeaturesUtil.class.getName());
-    try (FileReader reader = new FileReader(PythonHelpersLocator.findPathStringInHelpers("/tools/class_method_versions.xml"))) {
+    try (FileReader reader = new FileReader(PythonHelpersLocator.findPathStringInHelpers("/tools/class_method_versions.xml"),
+                                            StandardCharsets.UTF_8)) {
       final XMLReader xr = XMLReaderFactory.createXMLReader();
       final ClassMethodsParser parser = new ClassMethodsParser();
       xr.setContentHandler(parser);
@@ -55,7 +57,7 @@ public final class UnsupportedFeaturesUtil {
 
   private static void fillMaps() throws IOException {
     Logger log = Logger.getInstance(UnsupportedFeaturesUtil.class.getName());
-    try (FileReader reader = new FileReader(PythonHelpersLocator.findPathStringInHelpers("/tools/versions.xml"))) {
+    try (FileReader reader = new FileReader(PythonHelpersLocator.findPathStringInHelpers("/tools/versions.xml"), StandardCharsets.UTF_8)) {
       XMLReader xr = XMLReaderFactory.createXMLReader();
       VersionsParser parser = new VersionsParser();
       xr.setContentHandler(parser);

@@ -74,7 +74,7 @@ public final class WelcomeScreenActionsUtil {
     DataContext context = ActionToolbar.getDataContextFor(component);
     AnActionEvent actionEvent = AnActionEvent.createEvent(
       action, context, null, ActionPlaces.WELCOME_SCREEN, uiKind, null);
-    ActionUtil.performActionDumbAwareWithCallbacks(action, actionEvent);
+    ActionUtil.performAction(action, actionEvent);
   }
 
   private static class LargeIconWithTextPanel extends NonOpaquePanel {

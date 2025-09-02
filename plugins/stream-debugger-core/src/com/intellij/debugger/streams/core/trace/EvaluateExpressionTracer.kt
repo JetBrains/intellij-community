@@ -25,7 +25,7 @@ class EvaluateExpressionTracer(
 ) : StreamTracer {
 
   override suspend fun trace(chain: StreamChain) : StreamTracer.Result {
-    val streamTraceExpression = myExpressionBuilder.createTraceExpression(chain)
+    val streamTraceExpression = withContext(Dispatchers.Default) { myExpressionBuilder.createTraceExpression(chain) }
 
     val stackFrame = mySession.getCurrentStackFrame()
     val evaluator = mySession.getDebugProcess().getEvaluator()
@@ -47,7 +47,7 @@ class EvaluateExpressionTracer(
               return StreamTracer.Result.EvaluationFailed(streamTraceExpression,
                                                           StreamDebuggerBundle.message("stream.debugger.evaluation.failed.cannot.interpret.result", t.message!!))
             }
-            return StreamTracer.Result.Evaluated(interpretedResult, result.debuggerCommandLauncher)
+            return StreamTracer.Result.Evaluated(interpretedResult, result.evaluationContext)
           }
           is XValueInterpreter.Result.Error -> {
             return StreamTracer.Result.EvaluationFailed(streamTraceExpression, result.message)

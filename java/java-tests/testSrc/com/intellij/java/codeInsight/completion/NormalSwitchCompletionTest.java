@@ -115,6 +115,9 @@ public class NormalSwitchCompletionTest extends NormalCompletionTestCase {
   }
   public void testDefaultAfterNotNull() { doTest(); }
   public void testDefaultAfterDefault() { doTest(); }
+
+  @NeedsIndex.ForStandardLibrary
+  public void testNoExtraArrowMultiCaret() { doTest(); }
   public void testClassEnumInSwitchInJava20() {
     IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_20, () -> doTest());
   }

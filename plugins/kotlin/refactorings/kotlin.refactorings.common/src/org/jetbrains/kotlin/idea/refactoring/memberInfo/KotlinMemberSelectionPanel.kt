@@ -10,12 +10,13 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import java.awt.BorderLayout
 
-class KotlinMemberSelectionPanel(
+class KotlinMemberSelectionPanel @JvmOverloads constructor(
     @NlsContexts.DialogTitle title: String? = null,
     memberInfo: List<KotlinMemberInfo>,
-    @Nls abstractColumnHeader: String? = null
+    @Nls abstractColumnHeader: String? = null,
+    memberInfoModel: KotlinMemberInfoModel? = null,
 ) : AbstractMemberSelectionPanel<KtNamedDeclaration, KotlinMemberInfo>() {
-    private val table = createMemberSelectionTable(memberInfo, abstractColumnHeader)
+    private val table: KotlinMemberSelectionTable = createMemberSelectionTable(memberInfo, memberInfoModel, abstractColumnHeader)
 
     init {
         layout = BorderLayout()
@@ -26,10 +27,11 @@ class KotlinMemberSelectionPanel(
 
     private fun createMemberSelectionTable(
         memberInfo: List<KotlinMemberInfo>,
+        memberInfoModel: KotlinMemberInfoModel?,
         @Nls abstractColumnHeader: String?
     ): KotlinMemberSelectionTable {
-        return KotlinMemberSelectionTable(memberInfo, null, abstractColumnHeader)
+        return KotlinMemberSelectionTable(memberInfo, memberInfoModel, abstractColumnHeader)
     }
 
-    override fun getTable() = table
+    override fun getTable(): KotlinMemberSelectionTable = table
 }

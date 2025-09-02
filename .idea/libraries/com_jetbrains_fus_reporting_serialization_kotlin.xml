@@ -1,0 +1,18 @@
+<component name="libraryTable">
+  <library name="com.jetbrains.fus.reporting.serialization.kotlin" type="repository">
+    <properties include-transitive-deps="false" maven-id="com.jetbrains.fus.reporting:serialization-kotlin:134">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/fus/reporting/serialization-kotlin/134/serialization-kotlin-134.jar">
+          <sha256sum>ba4ee8bdedc23b8873e43932e51f5ece07473c45db8c59f4c3ebf2249d357f9c</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/fus/reporting/serialization-kotlin/134/serialization-kotlin-134.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/fus/reporting/serialization-kotlin/134/serialization-kotlin-134-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

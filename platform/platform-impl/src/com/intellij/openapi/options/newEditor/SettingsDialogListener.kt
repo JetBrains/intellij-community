@@ -11,7 +11,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 interface SettingsDialogListener {
   /** Fired on 'Apply' button click, but after changed settings are applied */
-  fun afterApply(settingsEditor: AbstractEditor) {
+  fun afterApply(settingsEditor: SettingsEditor, modifiedConfigurableIds: Set<String>) {
   }
 
   companion object {

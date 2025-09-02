@@ -94,7 +94,7 @@ public abstract class YamlMissingKeysInspectionBase extends YamlMetaTypeInspecti
 
     @Override
     public boolean isAvailable(@NotNull Project project,
-                               @NotNull PsiFile file,
+                               @NotNull PsiFile psiFile,
                                @Nullable Editor editor,
                                @NotNull PsiElement startElement,
                                @NotNull PsiElement endElement) {
@@ -104,7 +104,7 @@ public abstract class YamlMissingKeysInspectionBase extends YamlMetaTypeInspecti
 
     @Override
     public void invoke(@NotNull Project project,
-                       @NotNull PsiFile file,
+                       @NotNull PsiFile psiFile,
                        @Nullable Editor editor,
                        @NotNull PsiElement startElement,
                        @NotNull PsiElement endElement) {

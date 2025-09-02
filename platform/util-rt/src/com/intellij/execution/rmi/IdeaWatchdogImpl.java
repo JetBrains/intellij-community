@@ -18,11 +18,13 @@ public final class IdeaWatchdogImpl implements IdeaWatchdog {
   private final AtomicBoolean isAlive = new AtomicBoolean(true);
   private volatile long lastTimePinged = System.currentTimeMillis();
 
-  IdeaWatchdogImpl() {
+  @VisibleForTesting
+  public IdeaWatchdogImpl() {
     this(DEFAULT_WAIT_TIMEOUT_MILLIS, DEFAULT_PULSE_TIMEOUT_MILLIS);
   }
 
-  IdeaWatchdogImpl(long waitTimeoutMillis, long pulseTimeoutMillis) {
+  @VisibleForTesting
+  public IdeaWatchdogImpl(long waitTimeoutMillis, long pulseTimeoutMillis) {
     myWaitTimeoutMillis = waitTimeoutMillis;
     myPulseTimeoutMillis = pulseTimeoutMillis;
   }

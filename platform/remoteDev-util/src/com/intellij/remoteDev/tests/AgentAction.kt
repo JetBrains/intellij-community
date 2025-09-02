@@ -13,9 +13,3 @@ class AgentAction(val timeout: Duration,
                   val coroutineContextGetter: () -> CoroutineContext,
                   val requestFocusBeforeStart: Boolean? = null,
                   val action: suspend (AgentContext).(List<String>?) -> String?)
-
-@ApiStatus.Internal
-class AgentActionGetComponentData(val timeout: Duration,
-                                  val coroutineContextGetter: () -> CoroutineContext,
-                                  val requestFocusBeforeStart: Boolean? = null,
-                                  val action: suspend (AgentContext).(List<String>?) -> RdTestComponentData)

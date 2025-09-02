@@ -20,10 +20,7 @@ import com.intellij.ide.util.gotoByName.ChooseByNameFilter;
 import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
 import com.intellij.lang.InjectableLanguage;
 import com.intellij.lang.Language;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -59,7 +56,7 @@ import java.util.Set;
 /**
  * @author Konstantin Bulenkov
  */
-public final class RunInspectionAction extends GotoActionBase implements DataProvider {
+public final class RunInspectionAction extends GotoActionBase implements UiDataProvider {
   private static final Logger LOGGER = Logger.getInstance(RunInspectionAction.class);
   private final String myPredefinedText;
 
@@ -104,8 +101,8 @@ public final class RunInspectionAction extends GotoActionBase implements DataPro
   }
 
   @Override
-  public @Nullable Object getData(@NotNull String dataId) {
-    return PlatformDataKeys.PREDEFINED_TEXT.is(dataId) ? myPredefinedText : null;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(PlatformDataKeys.PREDEFINED_TEXT, myPredefinedText);
   }
 
   public static void runInspection(@NotNull Project project,

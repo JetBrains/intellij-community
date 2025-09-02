@@ -1,6 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.changeToOperator.transformations;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.changeToOperator.ChangeToOperatorInspection.Options;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -13,7 +14,8 @@ import java.util.Objects;
  * a.equals(b)  -> (a == b)
  * !a.equals(b) -> (a != b)
  */
-abstract class BinaryTransformation extends Transformation {
+@ApiStatus.Internal
+public abstract class BinaryTransformation extends Transformation {
 
   protected @NotNull GrExpression getLhs(@NotNull GrMethodCall methodCall) {
     return Objects.requireNonNull(getBase(methodCall));

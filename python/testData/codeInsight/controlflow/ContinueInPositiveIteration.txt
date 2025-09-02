@@ -15,7 +15,8 @@
 14(15) element: PyExpressionStatement
 15(16) READ ACCESS: sys
 16(4,17) element: PyCallExpression: sys.exit
-17(18) raise: PyRaiseStatement
+17(18) element: PyRaiseStatement
 18(19) READ ACCESS: Exception
 19(20) element: PyCallExpression: Exception
-20() element: null
+20(21) raise: PyRaiseStatement
+21() element: null

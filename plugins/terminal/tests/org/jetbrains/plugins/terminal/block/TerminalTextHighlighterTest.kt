@@ -41,7 +41,7 @@ internal class TerminalTextHighlighterTest {
     for (documentOffset in 0 until outputManager.document.textLength) {
       val iterator = outputManager.terminalOutputHighlighter.createIterator(documentOffset)
       Assert.assertTrue(!iterator.atEnd())
-      val expectedTextRange = ranges.find { it.startOffset <= documentOffset && documentOffset < it.endOffset }
+      val expectedTextRange = ranges.find { it.contains(documentOffset) }
       Assert.assertNotNull(expectedTextRange)
       Assert.assertEquals(expectedTextRange, TextRange(iterator.start, iterator.end))
     }

@@ -1,15 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.rename
 
 import com.intellij.ide.util.SuperMethodWarningUtil
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.Editor
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiManager
-import com.intellij.psi.PsiMethod
-import com.intellij.psi.PsiNamedElement
-import com.intellij.psi.PsiSubstitutor
+import com.intellij.psi.*
 import com.intellij.psi.impl.light.LightElement
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.util.PsiFormatUtil
@@ -46,7 +42,7 @@ class RenameJavaSyntheticPropertyHandler : AbstractReferenceSubstitutionRenameHa
         override fun substituteElementToRename(
             element: PsiElement,
             editor: Editor?
-        ): PsiElement? {
+        ): PsiElement {
             if (element is SyntheticPropertyWrapper) {
             val superMethod = SuperMethodWarningUtil.checkSuperMethod(element.getter)
             val setter = element.setter

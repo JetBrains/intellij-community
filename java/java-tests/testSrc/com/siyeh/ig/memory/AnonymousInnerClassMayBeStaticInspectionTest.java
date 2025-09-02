@@ -30,6 +30,8 @@ public class AnonymousInnerClassMayBeStaticInspectionTest extends LightJavaInspe
 
   public void testAnonymousInnerClassMayBeStatic() { doTest(); }
 
+  public void testUnresolvedReference() { doTest(); }
+
   public void testAnonymousInnerClassMayBeStaticInsideInterface() {
     doTest();
     String message = InspectionGadgetsBundle.message("anonymous.inner.may.be.named.static.inner.class.quickfix");
@@ -41,7 +43,7 @@ public class AnonymousInnerClassMayBeStaticInspectionTest extends LightJavaInspe
                        default void sample() {
                            Thread thread = new Thread(new MyRunnable());
                        }
-                                      
+                   
                        class MyRunnable implements Runnable {
                            @Override
                            public void run() {

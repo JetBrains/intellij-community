@@ -1,10 +1,10 @@
-void <error descr="Implicitly declared classes are not supported at language level '20'">foo</error>() {
+void <error descr="Compact source files are not supported at language level '20'">foo</error>() {
 
 }
 
-String <error descr="Implicitly declared classes are not supported at language level '20'">s</error> = "asd";
+String <error descr="Compact source files are not supported at language level '20'">s</error> = "asd";
 
-<error descr="Implicitly declared classes are not supported at language level '20'">static {
+<error descr="Compact source files are not supported at language level '20'">static {
 
 }</error>
 

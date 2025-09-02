@@ -1,6 +1,9 @@
+@file:OptIn(IntellijInternalApi::class)
+
 package com.intellij.searchEverywhereMl.ranking.core
 
 import com.intellij.ide.actions.searcheverywhere.SearchRestartReason
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMLStatisticsCollector.REBUILD_REASON_KEY
 import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMLStatisticsCollector.SEARCH_RESTARTED
 import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMLStatisticsCollector.SESSION_FINISHED
@@ -37,7 +40,7 @@ class SearchEverywhereMlStatisticsCollectorTest : SearchEverywhereLoggingTestCas
   fun `search finished event is reported`() {
     val events = MockSearchEverywhereProvider.SingleActionSearchEverywhere.runSearchAndCollectLogEvents {
       type("reg")
-      selectFirst()
+      selectFirstItem()
     }
 
     assertNotNull(events.find { it.event.id == SESSION_FINISHED.eventId })
@@ -47,7 +50,7 @@ class SearchEverywhereMlStatisticsCollectorTest : SearchEverywhereLoggingTestCas
   fun `the number of events is correct`() {
     val events = MockSearchEverywhereProvider.SingleActionSearchEverywhere.runSearchAndCollectLogEvents {
       type("reg")
-      selectFirst()
+      selectFirstItem()
     }
 
     assertEquals(4, events.size)

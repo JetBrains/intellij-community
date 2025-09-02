@@ -149,6 +149,7 @@ class UnifiedLocalChangeListDiffViewer(context: DiffContext,
                                                 private val progressIndicator: ProgressIndicator) : LocalTrackerDiffHandler {
 
     override fun done(isContentsEqual: Boolean,
+                      areVCSBoundedActionsDisabled: Boolean,
                       texts: Array<CharSequence>,
                       toggleableLineRanges: List<ToggleableLineRange>): Runnable {
       val builder = runReadAction {
@@ -157,7 +158,7 @@ class UnifiedLocalChangeListDiffViewer(context: DiffContext,
       }
 
       val applyChanges = apply(builder, texts, progressIndicator)
-      val applyGutterExcludeOperations = applyGutterOperations(builder, toggleableLineRanges)
+      val applyGutterExcludeOperations = applyGutterOperations(builder, toggleableLineRanges, areVCSBoundedActionsDisabled)
 
       return Runnable {
         applyChanges.run()
@@ -254,8 +255,10 @@ class UnifiedLocalChangeListDiffViewer(context: DiffContext,
   }
 
   private fun applyGutterOperations(builder: LocalUnifiedDiffState,
-                                    toggleableLineRanges: List<ToggleableLineRange>): Runnable {
+                                    toggleableLineRanges: List<ToggleableLineRange>,
+                                    areGutterIconsEnabled: Boolean): Runnable {
     return Runnable {
+      if (areGutterIconsEnabled) return@Runnable
       toggleableLineRanges.forEachIndexed { index, toggleableLineRange ->
         val rangeArea = builder.rangeAreas[index]
         if (isAllowExcludeChangesFromCommit) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("AddInterpreterActions")
 
 package com.jetbrains.python.sdk
@@ -10,6 +10,8 @@ import com.intellij.execution.target.TargetEnvironmentWizard
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -25,8 +27,10 @@ import com.jetbrains.python.sdk.add.v2.PythonAddLocalInterpreterDialog
 import com.jetbrains.python.sdk.add.v2.PythonAddLocalInterpreterPresenter
 import com.jetbrains.python.target.PythonLanguageRuntimeType
 import com.jetbrains.python.util.ShowingMessageErrorSync
+import org.jetbrains.annotations.ApiStatus
 import java.util.function.Consumer
 
+@ApiStatus.Internal
 fun collectAddInterpreterActions(moduleOrProject: ModuleOrProject, onSdkCreated: Consumer<Sdk>): List<AnAction> {
   // If module resides on this target, we can't use any target except same target and target types that explicitly allow that
   // example: on ``\\wsl$`` you can only use wsl target and dockers
@@ -59,13 +63,20 @@ private class AddLocalInterpreterAction(
   private val onSdkCreated: Consumer<Sdk>,
 ) : AnAction(PyBundle.messagePointer("python.sdk.action.add.local.interpreter.text"), AllIcons.Nodes.HomeFolder), DumbAware {
   override fun actionPerformed(e: AnActionEvent) {
-    val dialogPresenter = PythonAddLocalInterpreterPresenter(moduleOrProject, errorSink = ShowingMessageErrorSync).apply {
-      // Model provides flow, but we need to call Consumer
-      sdkCreatedFlow.oneShotConsumer(onSdkCreated)
+    runInEdt {
+      FileDocumentManager.getInstance().saveAllDocuments()
     }
-    PythonAddLocalInterpreterDialog(dialogPresenter).show()
-    return
+    addLocalInterpreter(moduleOrProject, onSdkCreated)
   }
+}
+
+@ApiStatus.Internal
+fun addLocalInterpreter(moduleOrProject: ModuleOrProject, onSdkCreated: Consumer<Sdk>) {
+  val dialogPresenter = PythonAddLocalInterpreterPresenter(moduleOrProject, errorSink = ShowingMessageErrorSync).apply {
+    // Model provides flow, but we need to call Consumer
+    sdkCreatedFlow.oneShotConsumer(onSdkCreated)
+  }
+  PythonAddLocalInterpreterDialog(dialogPresenter).show()
 }
 
 private class AddInterpreterOnTargetAction(
@@ -80,7 +91,7 @@ private class AddInterpreterOnTargetAction(
       val model = PyConfigurableInterpreterList.getInstance(project).model
       val sdk = (wizard.currentStepObject as? TargetCustomToolWizardStep)?.customTool as? Sdk
       if (sdk != null) {
-        PythonNewInterpreterAddedCollector.logPythonNewInterpreterAdded(sdk)
+        PythonNewInterpreterAddedCollector.logPythonNewInterpreterAdded(sdk, isPreviouslyConfigured = true)
         if (model.findSdk(sdk.name) == null) {
           model.addSdk(sdk)
           model.apply()
@@ -90,6 +101,8 @@ private class AddInterpreterOnTargetAction(
     }
   }
 }
+
+@ApiStatus.Internal
 
 fun switchToSdk(module: Module, sdk: Sdk, currentSdk: Sdk?) {
   val project = module.project
@@ -102,4 +115,6 @@ fun switchToSdk(module: Module, sdk: Sdk, currentSdk: Sdk?) {
   removeTransferredRoots(module, currentSdk)
   module.pythonSdk = sdk
   transferRoots(module, sdk)
+
+  module.excludeInnerVirtualEnv(sdk)
 }

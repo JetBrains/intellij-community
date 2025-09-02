@@ -1,5 +1,5 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "LiftReturnOrAssignment")
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment")
 
 package com.intellij.openapi.wm.impl.status.widget
 
@@ -17,24 +17,26 @@ import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 import com.intellij.openapi.wm.impl.status.createComponentByWidgetPresentation
 import com.intellij.platform.util.coroutines.childScope
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 import javax.swing.JComponent
 
-@Service(Service.Level.PROJECT)
-class StatusBarWidgetsManager(private val project: Project,
-                              private val parentScope: CoroutineScope) : SimpleModificationTracker(), Disposable {
-  companion object {
-    private val LOG = logger<StatusBarWidgetsManager>()
-  }
+private val LOG = logger<StatusBarWidgetsManager>()
 
+@Service(Service.Level.PROJECT)
+class StatusBarWidgetsManager(
+  private val project: Project,
+  private val parentScope: CoroutineScope,
+) : SimpleModificationTracker(), Disposable {
   private val widgetFactories = LinkedHashMap<StatusBarWidgetFactory, StatusBarWidget>()
   private val widgetIdMap = HashMap<String, StatusBarWidgetFactory>()
 
@@ -42,18 +44,15 @@ class StatusBarWidgetsManager(private val project: Project,
     StatusBarActionManager.getInstance()
   }
 
-  @OptIn(ExperimentalCoroutinesApi::class)
   internal val dataContext: WidgetPresentationDataContext = object : WidgetPresentationDataContext {
     override val project: Project
       get() = this@StatusBarWidgetsManager.project
 
     override val currentFileEditor: StateFlow<FileEditor?> by lazy {
       flow {
-        emit(project.serviceAsync<FileEditorManager>() as FileEditorManagerEx)
-      }
-        .take(1)
-        .flatMapConcat { it.currentFileEditorFlow }
-        .stateIn(scope = parentScope, started = SharingStarted.Eagerly, initialValue = null)
+        val manager = project.serviceAsync<FileEditorManager>()
+        emitAll(manager.selectedEditorFlow)
+      }.stateIn(parentScope, started = SharingStarted.Eagerly, initialValue = null)
     }
   }
 
@@ -68,7 +67,7 @@ class StatusBarWidgetsManager(private val project: Project,
   fun updateWidget(factoryExtension: Class<out StatusBarWidgetFactory>) {
     val factory = StatusBarWidgetFactory.EP_NAME.findExtension(factoryExtension)
     if (factory == null) {
-      LOG.warn("Factory is not registered as `com.intellij.statusBarWidgetFactory` extension: ${factoryExtension.name}")
+      LOG.warn("Factory is not registered as `com.intellij.statusBarWidgetFactory` extension: ${factoryExtension.name} [1]")
     }
     else {
       updateWidget(factory)
@@ -89,19 +88,19 @@ class StatusBarWidgetsManager(private val project: Project,
 
       val order = StatusBarWidgetFactory.EP_NAME.filterableLazySequence().firstOrNull { it.id == factory.id }?.order
       if (order == null) {
-        LOG.warn("Factory is not registered as `com.intellij.statusBarWidgetFactory` extension: ${factory.id}")
+        LOG.warn("Factory is not registered as `com.intellij.statusBarWidgetFactory` extension: ${factory.id} [2]")
         return
       }
 
-      val widget = createWidget(factory = factory, dataContext, parentScope = parentScope)
+      val widget = createWidget(factory, dataContext, parentScope)
       widgetFactories.put(factory, widget)
       widgetIdMap.put(widget.ID(), factory)
       parentScope.launch(Dispatchers.EDT) {
         when (val statusBar = WindowManager.getInstance().getStatusBar(project)) {
-          null -> PluginException.logPluginError(LOG, "Cannot add a widget for project without root status bar: ${factory.id}",
-                                                 null,
-                                                 factory.javaClass)
           is IdeStatusBarImpl -> statusBar.addWidget(widget, order)
+          null -> {
+            PluginException.logPluginError(LOG, "Cannot add a widget for project without root status bar: ${factory.id}", null, factory.javaClass)
+          }
           else -> {
             @Suppress("DEPRECATION")
             statusBar.addWidget(widget, order.toString())
@@ -112,10 +111,8 @@ class StatusBarWidgetsManager(private val project: Project,
   }
 
   fun wasWidgetCreated(factoryId: String): Boolean {
-    synchronized(widgetFactories) {
-      return widgetFactories.keys.any { factory ->
-        factory.id.equals(factoryId, ignoreCase = true)
-      }
+    return synchronized(widgetFactories) {
+      widgetFactories.keys.any { it.id.equals(factoryId, ignoreCase = true) }
     }
   }
 
@@ -159,8 +156,10 @@ class StatusBarWidgetsManager(private val project: Project,
       .filter {
         val id = it.id
         if (id == null) {
-          LOG.warn("${it.implementationClassName} doesn't define 'id' for extension (point=com.intellij.statusBarWidgetFactory). " +
-                   "Please specify `id` attribute. Plugin ID: ${it.pluginDescriptor.pluginId}")
+          LOG.warn(
+            "${it.implementationClassName} doesn't define 'id' for extension (point=com.intellij.statusBarWidgetFactory). " +
+            "Please specify `id` attribute. Plugin ID: ${it.pluginDescriptor.pluginId}"
+          )
           true
         }
         else {
@@ -178,25 +177,25 @@ class StatusBarWidgetsManager(private val project: Project,
       StatusBarWidgetProviderToFactoryAdapter(project, frame, it) to LoadingOrder.anchorToOrder(it.anchor)
     }
 
-    pendingFactories.removeAll {  (factory, _) ->
+    pendingFactories.removeAll { (factory, _) ->
       (factory.isConfigurable && !statusBarWidgetSettings.isEnabled(factory)) || !factory.isAvailable(project)
     }
 
-    val widgets: List<Pair<StatusBarWidget, LoadingOrder>> = synchronized(widgetFactories) {
+    val widgets = synchronized(widgetFactories) {
       val result = mutableListOf<Pair<StatusBarWidget, LoadingOrder>>()
+
       for ((factory, anchor) in pendingFactories) {
         if (widgetFactories.containsKey(factory)) {
-          PluginException.logPluginError(LOG, "Factory has been added already: ${factory.id}",
-                                         null,
-                                         factory.javaClass)
+          PluginException.logPluginError(LOG, "Factory has been added already: ${factory.id}", null, factory.javaClass)
           continue
         }
 
-        val widget = createWidget(factory = factory, dataContext = dataContext, parentScope = parentScope)
-        widgetFactories.put(factory, widget)
-        widgetIdMap.put(widget.ID(), factory)
+        val widget = createWidget(factory, dataContext, parentScope)
+        widgetFactories[factory] = widget
+        widgetIdMap[widget.ID()] = factory
         result.add(widget to anchor)
       }
+
       result
     }
 
@@ -210,9 +209,7 @@ class StatusBarWidgetsManager(private val project: Project,
 
         synchronized(widgetFactories) {
           if (widgetFactories.containsKey(extension)) {
-            PluginException.logPluginError(LOG, "Factory has been added already: ${extension.id}",
-                                           null,
-                                           extension.javaClass)
+            PluginException.logPluginError(LOG, "Factory has been added already: ${extension.id}", null, extension.javaClass)
             return
           }
 
@@ -236,25 +233,24 @@ class StatusBarWidgetsManager(private val project: Project,
   }
 }
 
-private fun createWidget(factory: StatusBarWidgetFactory,
-                         dataContext: WidgetPresentationDataContext,
-                         parentScope: CoroutineScope): StatusBarWidget {
+private fun createWidget(
+  factory: StatusBarWidgetFactory,
+  dataContext: WidgetPresentationDataContext,
+  parentScope: CoroutineScope,
+): StatusBarWidget {
   if (factory !is WidgetPresentationFactory) {
     return factory.createWidget(dataContext.project, parentScope)
   }
 
   return object : StatusBarWidget, CustomStatusBarWidget {
-    private val scope = lazy { parentScope.childScope() }
+    private val scope = lazy { parentScope.childScope(name = "${factory.id}-widget-scope") }
 
     override fun ID(): String = factory.id
 
     override fun getComponent(): JComponent {
       val scope = scope.value
-      return createComponentByWidgetPresentation(presentation = factory.createPresentation(context = dataContext, scope = scope),
-                                                 project = dataContext.project,
-                                                 scope = scope)
+      return createComponentByWidgetPresentation(factory.createPresentation(dataContext, scope), dataContext.project, scope)
     }
-
 
     override fun dispose() {
       if (scope.isInitialized()) {

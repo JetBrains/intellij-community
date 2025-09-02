@@ -9,7 +9,7 @@ import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.LightProjectDescriptor
 
 abstract class AssertEqualsBetweenInconvertibleTypesInspectionTestBase : JvmInspectionTestBase() {
-  override val inspection = AssertBetweenInconvertibleTypesInspection()
+  override val inspection: AssertBetweenInconvertibleTypesInspection = AssertBetweenInconvertibleTypesInspection()
 
   protected open class AssertJProjectDescriptor(languageLevel: LanguageLevel) : ProjectDescriptor(languageLevel) {
     override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {

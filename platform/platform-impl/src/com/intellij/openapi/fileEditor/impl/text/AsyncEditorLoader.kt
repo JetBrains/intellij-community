@@ -21,13 +21,13 @@ import com.intellij.openapi.util.Key
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.ui.EditorNotifications
 import com.intellij.util.ArrayUtil
+import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.ui.AnimatedIcon
 import com.intellij.util.ui.AsyncProcessIcon
 import kotlinx.coroutines.*
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.JComponent
@@ -49,7 +49,7 @@ class  AsyncEditorLoader internal constructor(
    * - empty array: the editor was not loaded
    * - list of runnables: the editor was not loaded and these runnables need to be run on load
    * - `null`: the editor is loaded
-   *  empty list was chosen to mark editor "not loaded" as early as possible, to avoid a narrow data race between TextEditorImpl instantiation and [AsyncEditorLoader.start] call
+   *  an empty list was chosen to mark editor "not loaded" as early as possible, to avoid a narrow data race between TextEditorImpl instantiation and [AsyncEditorLoader.start] call
    */
   private val delayedActions: AtomicReference<Array<Runnable>> = AtomicReference(ArrayUtil.EMPTY_RUNNABLE_ARRAY)
   private val delayedScrollState = AtomicReference<DelayedScrollState?>()
@@ -78,9 +78,10 @@ class  AsyncEditorLoader internal constructor(
       }
     }
 
+    @Suppress("UsagesOfObsoleteApi")
     internal suspend fun waitForCompleted(editor: Editor) {
       val asyncLoader = editor.getUserData(ASYNC_LOADER)?.takeIf { !it.isLoaded() } ?: return
-      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      withContext(Dispatchers.ui(UiDispatcherKind.LEGACY) + ModalityState.any().asContextElement()) {
         suspendCancellableCoroutine { continuation ->
           // resume on editor close
           val handle = asyncLoader.coroutineScope.coroutineContext.job.invokeOnCompletion {
@@ -151,9 +152,7 @@ class  AsyncEditorLoader internal constructor(
         val scrollingModel = textEditor.editor.scrollingModel
         scrollingModel.disableAnimation()
         try {
-          writeIntentReadAction {
-            executeDelayedActions(delayedActions.getAndSet(null))
-          }
+          executeDelayedActions(delayedActions.getAndSet(null))
         }
         finally {
           scrollingModel.enableAnimation()
@@ -166,7 +165,7 @@ class  AsyncEditorLoader internal constructor(
         delayedActions.set(null)
 
         // make sure the highlighting is restarted when the editor is finally loaded, because otherwise some crazy things happen,
-        // for instance `FileEditor.getBackgroundHighlighter()` returning null, essentially stopping highlighting silently
+        // for instance, `FileEditor.getBackgroundHighlighter()` returning null, essentially stopping highlighting silently
         daemonCodeAnalyzer.restart("AsyncEditorLoader.start ${textEditor.file.name}")
       }
   }
@@ -224,6 +223,7 @@ private fun restoreCaretPosition(editor: EditorEx, delayedScrollState: DelayedSc
   }
 }
 
+@OptIn(AwaitCancellationAndInvoke::class)
 private fun CoroutineScope.showLoadingIndicator(
   startDelay: Duration,
   addUi: (component: JComponent) -> Unit,
@@ -240,7 +240,7 @@ private fun CoroutineScope.showLoadingIndicator(
     val processIconRef = AtomicReference<AnimatedIcon>()
 
     awaitCancellationAndInvoke {
-      withContext(Dispatchers.EDT) {
+      withContext(Dispatchers.ui(UiDispatcherKind.STRICT)) {
         val processIcon = processIconRef.getAndSet(null)
         if (processIcon != null) {
           processIcon.suspend()
@@ -250,7 +250,7 @@ private fun CoroutineScope.showLoadingIndicator(
       }
     }
 
-    withContext(Dispatchers.EDT) {
+    withContext(Dispatchers.ui(UiDispatcherKind.STRICT)) {
       val processIcon = AsyncProcessIcon.createBig(/* coroutineScope = */ this@launch)
       processIconRef.set(processIcon)
       addUi(processIcon)

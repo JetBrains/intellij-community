@@ -1,26 +1,27 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.command.commands
 
+import com.intellij.codeInsight.completion.command.CommandCompletionProviderContext
+import com.intellij.codeInsight.completion.command.getCommandContext
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 
-/**
- * Represents an abstract command to navigate to the implementation(s)
- * of a given element within a code editor during code completion processes.
- */
-abstract class AbstractGoToImplementationCompletionCommand : AbstractActionCompletionCommand("GotoImplementation",
-                                                                                             "Go to Implementation",
-                                                                                             ActionsBundle.message("action.GotoImplementation.text"),
-                                                                                             null) {
-  final override fun supportsReadOnly(): Boolean = true
-
-  final override fun isApplicable(offset: Int, psiFile: PsiFile, editor: Editor?): Boolean {
+abstract class AbstractGoToImplementationCompletionCommandProvider :
+  ActionCommandProvider(actionId = "GotoImplementation",
+                        synonyms = listOf("Go to implementation"),
+                        presentableName = ActionsBundle.message("action.GotoImplementation.text"),
+                        icon = null,
+                        priority = -100,
+                        previewText = ActionsBundle.message("action.GotoImplementation.description")){
+  override fun isApplicable(offset: Int, psiFile: PsiFile, editor: Editor?): Boolean {
     if (!super.isApplicable(offset, psiFile, editor)) return false
-    val element = getContext(offset, psiFile) ?: return false
+    val element = getCommandContext(offset, psiFile) ?: return false
     return canGoToImplementation(element, offset)
   }
+
+  override fun supportsReadOnly(): Boolean = true
 
   /**
    * Determines if navigation to the implementation of the specified element is possible.
@@ -30,4 +31,9 @@ abstract class AbstractGoToImplementationCompletionCommand : AbstractActionCompl
    * @return true if navigation to the implementation is possible, otherwise false
    */
   abstract fun canGoToImplementation(element: PsiElement, offset: Int): Boolean
+
+
+  override fun createCommand(context: CommandCompletionProviderContext): ActionCompletionCommand? {
+    return createCommandWithNameIdentifier(context)
+  }
 }

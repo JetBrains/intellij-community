@@ -104,4 +104,19 @@ public abstract class RefGraphAnnotator {
                                PsiElement from,
                                boolean referencedFromClassInitializer) {}
 
+  /**
+   * Called when a reference to the specified element has not been found, but the referencing element has to appear in the graph.
+   *
+   * @param refFrom                        the referencing element.
+   * @param referencedFromClassInitializer if true, {@code refFrom} is a class and the reference
+   *                                       has been found in its initializer block.
+   * @param forReading                     used for reading
+   * @param forWriting                     used for writing
+   * @param referenceElement               reference element in refFrom
+   */
+  public void onAnonymousReferenced(RefElement refFrom,
+                                    boolean referencedFromClassInitializer,
+                                    boolean forReading,
+                                    boolean forWriting,
+                                    PsiElement referenceElement) {}
 }

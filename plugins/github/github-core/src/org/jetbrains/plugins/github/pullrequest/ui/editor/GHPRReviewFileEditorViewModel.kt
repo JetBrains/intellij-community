@@ -2,8 +2,10 @@
 package org.jetbrains.plugins.github.pullrequest.ui.editor
 
 import com.intellij.collaboration.async.*
-import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
-import com.intellij.collaboration.util.*
+import com.intellij.collaboration.util.ComputedResult
+import com.intellij.collaboration.util.RefComparisonChange
+import com.intellij.collaboration.util.computeEmitting
+import com.intellij.collaboration.util.onFailure
 import com.intellij.diff.util.LineRange
 import com.intellij.diff.util.Range
 import com.intellij.diff.util.Side
@@ -20,20 +22,18 @@ import git4idea.changes.createVcsChange
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.github.api.data.GHUser
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
-import org.jetbrains.plugins.github.api.data.pullrequest.isVisible
-import org.jetbrains.plugins.github.api.data.pullrequest.mapToLocation
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
-import org.jetbrains.plugins.github.pullrequest.data.provider.threadsComputationFlow
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewCommentLocation
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewCommentPosition
+import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewUnifiedPosition
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRThreadsViewModels
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 
 interface GHPRReviewFileEditorViewModel {
+  val change: RefComparisonChange
+
   val iconProvider: GHAvatarIconsProvider
   val currentUser: GHUser
 
@@ -50,6 +50,14 @@ interface GHPRReviewFileEditorViewModel {
 
   val linesWithComments: StateFlow<Set<Int>>
 
+  fun lookupNextComment(focusedThreadId: String): String?
+  fun lookupNextComment(line: Int): String?
+  fun lookupPreviousComment(focusedThreadId: String): String?
+  fun lookupPreviousComment(line: Int): String?
+
+  fun getThreadPosition(threadId: String): Pair<RefComparisonChange, Int>?
+  fun requestThreadFocus(threadId: String)
+
   fun requestNewComment(lineIdx: Int, focus: Boolean)
   fun cancelNewComment(lineIdx: Int)
 
@@ -63,10 +71,10 @@ internal class GHPRReviewFileEditorViewModelImpl(
   parentCs: CoroutineScope,
   dataContext: GHPRDataContext,
   dataProvider: GHPRDataProvider,
-  private val change: RefComparisonChange,
+  override val change: RefComparisonChange,
   private val diffData: GitTextFilePatchWithHistory,
-  private val threadsVms: GHPRThreadsViewModels,
-  private val discussionsViewOption: StateFlow<DiscussionsViewOption>,
+  private val threadsVm: GHPRThreadsViewModels,
+  private val allMappedThreads: StateFlow<Map<String, MappedGHPRReviewEditorThreadViewModel.MappingData>>,
   private val showDiff: (change: RefComparisonChange, lineIdx: Int?) -> Unit,
 ) : GHPRReviewFileEditorViewModel {
   private val cs = parentCs.childScope(javaClass.name, Dispatchers.Default)
@@ -99,25 +107,16 @@ internal class GHPRReviewFileEditorViewModelImpl(
   override val commentableRanges: List<Range> = diffData.patch.ranges
 
   private val mappedThreads: StateFlow<Map<String, MappedGHPRReviewEditorThreadViewModel.MappingData>> =
-    dataProvider.reviewData.threadsComputationFlow
-      .transformConsecutiveSuccesses(false) {
-        combine(discussionsViewOption) { threads, viewOption ->
-          threads.associateBy(GHPullRequestReviewThread::id) { threadData ->
-            val isVisible = threadData.isVisible(viewOption)
-            val line = threadData.mapToLocation(diffData, Side.RIGHT)?.takeIf { (side, _) -> side == Side.RIGHT }?.second
-            MappedGHPRReviewEditorThreadViewModel.MappingData(isVisible, line)
-          }
-        }
-      }.map { it.getOrNull().orEmpty() }.stateInNow(cs, emptyMap())
+    allMappedThreads.mapState { map -> map.filterValues { it.change == change } }
 
   override val threads: StateFlow<Collection<GHPRReviewFileEditorThreadViewModel>> =
-    threadsVms.compactThreads.mapModelsToViewModels { sharedVm ->
+    threadsVm.compactThreads.mapModelsToViewModels { sharedVm ->
       MappedGHPRReviewEditorThreadViewModel(this, sharedVm, mappedThreads.mapNotNull { it[sharedVm.id] })
     }.stateInNow(cs, emptyList())
 
   override val linesWithComments: StateFlow<Set<Int>> =
     mappedThreads.map {
-      it.values.mapNotNullTo(mutableSetOf()) { (isVisible, location) -> location?.takeIf { isVisible } }
+      it.values.mapNotNullTo(mutableSetOf()) { (isVisible, _, location) -> location?.takeIf { isVisible } }
     }.stateInNow(cs, emptySet())
 
   private val newCommentsContainer =
@@ -129,16 +128,47 @@ internal class GHPRReviewFileEditorViewModelImpl(
 
   init {
     cs.launchNow {
-      threadsVms.newComments.collect { comments ->
+      threadsVm.newComments.collect { comments ->
         val commentsForChange = comments.values.filter { it.position.change == change && it.position.location.side == Side.RIGHT }
         newCommentsContainer.update(commentsForChange)
       }
     }
   }
 
+  override fun lookupNextComment(focusedThreadId: String): String? =
+    threadsVm.lookupNextComment(focusedThreadId, this::threadIsVisible)
+
+  override fun lookupNextComment(line: Int): String? =
+    threadsVm.lookupNextComment(lineToUnified(line), this::threadIsVisible)
+
+  override fun lookupPreviousComment(focusedThreadId: String): String? =
+    threadsVm.lookupPreviousComment(focusedThreadId, this::threadIsVisible)
+
+  override fun lookupPreviousComment(line: Int): String? =
+    threadsVm.lookupPreviousComment(lineToUnified(line), this::threadIsVisible)
+
+  override fun getThreadPosition(threadId: String): Pair<RefComparisonChange, Int>? {
+    val position = allMappedThreads.value[threadId] ?: return null
+    return (position.change ?: return null) to (position.line ?: return null)
+  }
+
+  override fun requestThreadFocus(threadId: String) {
+    threadsVm.compactThreads.value.find { it.id == threadId }?.requestFocus()
+  }
+
+  /**
+   * We don't really care about the left-sided line number. It needs to be at the beginning to make sure
+   * the first comment on the line is picked though.
+   */
+  private fun lineToUnified(line: Int): GHPRReviewUnifiedPosition =
+    GHPRReviewUnifiedPosition(change, leftLine = -1, rightLine = line)
+
+  private fun threadIsVisible(threadId: String): Boolean =
+    allMappedThreads.value[threadId]?.let { it.isVisible && it.line != null && it.change?.filePathAfter != null } ?: false
+
   override fun requestNewComment(lineIdx: Int, focus: Boolean) {
     val position = GHPRReviewCommentPosition(change, GHPRReviewCommentLocation.SingleLine(Side.RIGHT, lineIdx))
-    val sharedVm = threadsVms.requestNewComment(position)
+    val sharedVm = threadsVm.requestNewComment(position)
     if (focus) {
       cs.launchNow {
         newCommentsContainer.addIfAbsent(sharedVm).requestFocus()
@@ -148,7 +178,7 @@ internal class GHPRReviewFileEditorViewModelImpl(
 
   override fun cancelNewComment(lineIdx: Int) {
     val position = GHPRReviewCommentPosition(change, GHPRReviewCommentLocation.SingleLine(Side.RIGHT, lineIdx))
-    threadsVms.cancelNewComment(position)
+    threadsVm.cancelNewComment(position)
   }
 
   override fun showDiff(lineIdx: Int?) {

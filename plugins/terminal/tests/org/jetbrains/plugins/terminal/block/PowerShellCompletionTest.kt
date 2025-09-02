@@ -179,7 +179,11 @@ internal class PowerShellCompletionTest : CodeInsightFixtureTestCase<ModuleFixtu
   private fun getCompletionsForCommand(command: String): List<String>? {
     myFixture.configureByText(PlainTextFileType.INSTANCE, command)
     editor.putUserData(BlockTerminalSession.KEY, session)
-    editor.putUserData(TerminalPromptModel.KEY, TerminalPromptModelImpl(editor as EditorEx, session))
+
+    val promptModel = TerminalPromptModelImpl(editor as EditorEx, session)
+    Disposer.register(session, promptModel)
+    editor.putUserData(TerminalPromptModel.KEY, promptModel)
+
     editor.putUserData(ShellRuntimeContextProviderImpl.KEY, ShellRuntimeContextProviderImpl(project, session))
     editor.putUserData(ShellDataGeneratorsExecutorImpl.KEY, ShellDataGeneratorsExecutorImpl(session))
 

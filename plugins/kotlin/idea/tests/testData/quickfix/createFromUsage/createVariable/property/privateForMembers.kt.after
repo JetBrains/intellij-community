@@ -1,6 +1,6 @@
 // "Create property 'foo'" "true"
 // ERROR: Property must be initialized or be abstract
-// K2_AFTER_ERROR: 'lateinit' modifier is not allowed on properties of primitive types.
+// K2_AFTER_ERROR: Property must be initialized or be abstract.
 class A {
     private var foo: Int
 

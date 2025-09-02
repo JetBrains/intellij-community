@@ -5,7 +5,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-@SuppressWarnings("deprecation")
 final class CompactVirtualFileSetFactory implements VirtualFileSetFactory {
   @Override
   public @NotNull VirtualFileSet createCompactVirtualFileSet() {

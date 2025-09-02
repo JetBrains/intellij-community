@@ -1,8 +1,19 @@
-- name: lib/editorconfig.jar
-  projectLibraries:
-  - name: ec4j-core
-    files:
-    - name: $MAVEN_REPOSITORY$/org/ec4j/core/ec4j-core/0/ec4j-core-0.jar
-    reason: <- intellij.editorconfig
+- name: lib/editorconfig-plugin.jar
   modules:
-  - name: intellij.editorconfig
+  - name: intellij.editorconfig.plugin
+- name: lib/modules/intellij.editorconfig.backend.jar
+  contentModules:
+  - name: intellij.editorconfig.backend
+  library: ec4j-core
+  files:
+  - name: $MAVEN_REPOSITORY$/org/ec4j/core/ec4j-core/0/ec4j-core-0.jar
+  reason: <- intellij.editorconfig.backend
+- name: lib/modules/intellij.editorconfig.common.jar
+  contentModules:
+  - name: intellij.editorconfig.common
+- name: lib/modules/intellij.editorconfig.frontend.jar
+  contentModules:
+  - name: intellij.editorconfig.frontend
+- name: lib/modules/intellij.editorconfig.frontend.split.jar
+  contentModules:
+  - name: intellij.editorconfig.frontend.split

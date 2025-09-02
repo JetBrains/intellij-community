@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public final class LayoutCodeDialog extends DialogWrapper {
-  private final PsiFile myFile;
+  private final PsiFile myPsiFile;
   private final boolean myTextSelected;
   private final String myHelpId;
   private final LastRunReformatCodeOptionsProvider myLastRunOptions;
@@ -33,9 +33,9 @@ public final class LayoutCodeDialog extends DialogWrapper {
   private JRadioButton myWholeFileRadioButton;
   private JBCheckBox myDoNotKeepLineBreaks;
 
-  public LayoutCodeDialog(@NotNull Project project, @NotNull PsiFile file, boolean textSelected, String helpId) {
+  public LayoutCodeDialog(@NotNull Project project, @NotNull PsiFile psiFile, boolean textSelected, String helpId) {
     super(project, true);
-    myFile = file;
+    myPsiFile = psiFile;
     myTextSelected = textSelected;
     myHelpId = helpId;
 
@@ -43,7 +43,7 @@ public final class LayoutCodeDialog extends DialogWrapper {
     myRunOptions = createOptionsBundledOnDialog();
 
     setOKButtonText(CodeInsightBundle.message("reformat.code.accept.button.text"));
-    setTitle(CodeInsightBundle.message("dialog.title.reformat.file.0", file.getName()));
+    setTitle(CodeInsightBundle.message("dialog.title.reformat.file.0", psiFile.getName()));
 
     init();
   }
@@ -63,8 +63,8 @@ public final class LayoutCodeDialog extends DialogWrapper {
       mySelectedTextRadioButton.setToolTipText(CodeInsightBundle.message("tooltip.no.text.selected.in.editor"));
     }
 
-    final boolean fileHasChanges = VcsFacade.getInstance().hasChanges(myFile);
-    if (myFile.getVirtualFile() instanceof LightVirtualFile) {
+    final boolean fileHasChanges = VcsFacade.getInstance().hasChanges(myPsiFile);
+    if (myPsiFile.getVirtualFile() instanceof LightVirtualFile) {
       myOnlyVCSChangedTextRb.setVisible(false);
     }
     else {
@@ -92,21 +92,21 @@ public final class LayoutCodeDialog extends DialogWrapper {
   }
 
   private void setUpActions() {
-    boolean canOptimizeImports = !LanguageImportStatements.INSTANCE.forFile(myFile).isEmpty();
+    boolean canOptimizeImports = !LanguageImportStatements.INSTANCE.forFile(myPsiFile).isEmpty();
     myOptimizeImportsCb.setVisible(canOptimizeImports);
     if (canOptimizeImports) {
       myOptimizeImportsCb.setSelected(myLastRunOptions.getLastOptimizeImports());
     }
 
-    boolean canRearrangeCode = Rearranger.EXTENSION.forLanguage(myFile.getLanguage()) != null;
+    boolean canRearrangeCode = Rearranger.EXTENSION.forLanguage(myPsiFile.getLanguage()) != null;
     myRearrangeCodeCb.setVisible(canRearrangeCode);
     if (canRearrangeCode) {
-      myRearrangeCodeCb.setSelected(myLastRunOptions.isRearrangeCode(myFile.getLanguage()));
+      myRearrangeCodeCb.setSelected(myLastRunOptions.isRearrangeCode(myPsiFile.getLanguage()));
     }
 
     myApplyCodeCleanup.setSelected(myLastRunOptions.getLastCodeCleanup());
 
-    boolean keepLineBreaks = CodeStyle.getLanguageSettings(myFile).KEEP_LINE_BREAKS;
+    boolean keepLineBreaks = CodeStyle.getLanguageSettings(myPsiFile).KEEP_LINE_BREAKS;
     myDoNotKeepLineBreaks.setVisible(keepLineBreaks);
     if (keepLineBreaks) {
       myDoNotKeepLineBreaks.setSelected(myLastRunOptions.isDoNotKeepLineBreaks());
@@ -114,10 +114,10 @@ public final class LayoutCodeDialog extends DialogWrapper {
   }
 
   private @Nullable @NlsContexts.Tooltip String getChangesNotAvailableHint() {
-    if (!VcsFacade.getInstance().isFileUnderVcs(myFile)) {
+    if (!VcsFacade.getInstance().isFileUnderVcs(myPsiFile)) {
       return CodeInsightBundle.message("tooltip.file.not.under.vcs.root");
     }
-    else if (!VcsFacade.getInstance().hasChanges(myFile)) {
+    else if (!VcsFacade.getInstance().hasChanges(myPsiFile)) {
       return CodeInsightBundle.message("tooltip.file.was.not.changed.since.last.revision");
     }
     return null;
@@ -128,7 +128,7 @@ public final class LayoutCodeDialog extends DialogWrapper {
       myLastRunOptions.saveOptimizeImportsState(myRunOptions.isOptimizeImports());
     }
     if (myRearrangeCodeCb.isEnabled()) {
-      myLastRunOptions.saveRearrangeState(myFile.getLanguage(), myRunOptions.isRearrangeCode());
+      myLastRunOptions.saveRearrangeState(myPsiFile.getLanguage(), myRunOptions.isRearrangeCode());
     }
     if (myApplyCodeCleanup.isEnabled()) {
       myLastRunOptions.saveCodeCleanupState(myApplyCodeCleanup.isSelected());

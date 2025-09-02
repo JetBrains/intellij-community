@@ -21,7 +21,7 @@ import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesC
 
 internal class DiffUsagesCollector : ApplicationUsagesCollector() {
 
-  private val GROUP = EventLogGroup("vcs.diff", 8)
+  private val GROUP = EventLogGroup("vcs.diff", 9)
   private val places = listOf(DiffPlaces.DEFAULT,
                               DiffPlaces.CHANGES_VIEW,
                               DiffPlaces.VCS_LOG_VIEW,

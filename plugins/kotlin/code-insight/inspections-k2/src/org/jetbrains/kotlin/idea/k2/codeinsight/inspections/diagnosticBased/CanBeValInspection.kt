@@ -9,6 +9,7 @@ import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeInsight.replaceVarWithVal
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinKtDiagnosticBasedInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
@@ -22,10 +23,10 @@ internal class CanBeValInspection : KotlinKtDiagnosticBasedInspectionBase<KtDecl
     override fun buildVisitor(
         holder: ProblemsHolder,
         isOnTheFly: Boolean
-    ): KtVisitor<*, *> = declarationVisitor(fun(declaration) {
-        if (declaration !is KtProperty && declaration !is KtDestructuringDeclaration) return
-        visitTargetElement(declaration, holder, isOnTheFly)
-    })
+    ): KtVisitor<*, *> = declarationVisitor { declaration ->
+        if (declaration is KtProperty || declaration is KtDestructuringDeclaration)
+            visitTargetElement(declaration, holder, isOnTheFly)
+    }
 
     override fun getProblemDescription(
         element: KtDeclaration,
@@ -55,10 +56,7 @@ internal class CanBeValInspection : KotlinKtDiagnosticBasedInspectionBase<KtDecl
             element: KtDeclaration,
             updater: ModPsiUpdater
         ) {
-            val varKeyword = (element as? KtValVarKeywordOwner)?.valOrVarKeyword ?: return
-            varKeyword.replace(
-                KtPsiFactory(project).createValKeyword()
-            )
+            (element as? KtValVarKeywordOwner)?.replaceVarWithVal()
         }
     }
 }

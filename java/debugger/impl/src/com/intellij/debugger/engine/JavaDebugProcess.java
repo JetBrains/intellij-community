@@ -144,6 +144,11 @@ public class JavaDebugProcess extends XDebugProcess {
                 ThreadReferenceProxyImpl threadProxy = newContext.getThreadProxy();
                 newSuspendContext.initExecutionStacks(threadProxy);
 
+                if (event == DebuggerSession.Event.REFRESH) {
+                  ((XDebugSessionImpl)getSession()).updateSuspendContext(newSuspendContext);
+                  return;
+                }
+
                 Pair<Breakpoint, Event> item = ContainerUtil.getFirstItem(DebuggerUtilsEx.getEventDescriptors(newSuspendContext));
                 if (item != null) {
                   XBreakpoint xBreakpoint = item.getFirst().getXBreakpoint();

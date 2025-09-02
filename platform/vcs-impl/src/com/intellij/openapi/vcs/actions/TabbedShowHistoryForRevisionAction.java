@@ -44,9 +44,8 @@ public final class TabbedShowHistoryForRevisionAction extends DumbAwareAction {
     FilePath file = fileAndRevision.getFirst();
     VcsRevisionNumber revisionNumber = fileAndRevision.getSecond();
 
-    String revisionNumberString = revisionNumber.asString();
-    if (canShowNewFileHistory(project, file, revisionNumberString)) {
-      showNewFileHistory(project, file, revisionNumberString);
+    if (canShowNewFileHistory(project, file, revisionNumber)) {
+      showNewFileHistory(project, file, revisionNumber);
     }
     else {
       VcsHistoryProviderEx vcsHistoryProvider = Objects.requireNonNull((VcsHistoryProviderEx)vcs.getVcsHistoryProvider());
@@ -60,12 +59,12 @@ public final class TabbedShowHistoryForRevisionAction extends DumbAwareAction {
     return ActionUpdateThread.BGT;
   }
 
-  private static void showNewFileHistory(@NotNull Project project, @NotNull FilePath path, @NotNull String revisionNumber) {
+  private static void showNewFileHistory(@NotNull Project project, @NotNull FilePath path, @NotNull VcsRevisionNumber revisionNumber) {
     VcsLogFileHistoryProvider historyProvider = project.getService(VcsLogFileHistoryProvider.class);
     historyProvider.showFileHistory(Collections.singletonList(path), revisionNumber);
   }
 
-  private static boolean canShowNewFileHistory(@NotNull Project project, @NotNull FilePath path, @NotNull String revisionNumber) {
+  private static boolean canShowNewFileHistory(@NotNull Project project, @NotNull FilePath path, @NotNull VcsRevisionNumber revisionNumber) {
     VcsLogFileHistoryProvider historyProvider = project.getService(VcsLogFileHistoryProvider.class);
     return historyProvider != null && historyProvider.canShowFileHistory(Collections.singletonList(path), revisionNumber);
   }
@@ -96,7 +95,7 @@ public final class TabbedShowHistoryForRevisionAction extends DumbAwareAction {
 
     Project project = event.getProject();
     if (project == null ||
-        !canShowNewFileHistory(project, fileAndRevision.getFirst(), fileAndRevision.getSecond().asString())) return fileAndRevision;
+        !canShowNewFileHistory(project, fileAndRevision.getFirst(), fileAndRevision.getSecond())) return fileAndRevision;
     VcsRevisionNumber revisionNumber = event.getData(VcsDataKeys.VCS_REVISION_NUMBER);
     if (revisionNumber == null) return fileAndRevision;
 

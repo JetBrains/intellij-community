@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.extractModule
 
 import com.intellij.analysis.AnalysisScope
@@ -7,74 +7,98 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.Task
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.impl.OrderEntryUtil
+import com.intellij.openapi.roots.libraries.Library
 import com.intellij.packageDependencies.DependenciesToolWindow
 import com.intellij.packageDependencies.ForwardDependenciesBuilder
 import com.intellij.packageDependencies.ui.DependenciesPanel
-import com.intellij.psi.PsiFile
+import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.psi.JavaPsiFacade
 import com.intellij.ui.content.ContentFactory
-import org.jetbrains.concurrency.AsyncPromise
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 
 /**
  * Finds and removes dependencies which aren't used in the code.
  */
-class ModuleDependenciesCleaner(private val module: Module, dependenciesToCheck: Collection<Module>) {
+class ModuleDependenciesCleaner(
+  private val module: Module,
+  dependenciesToCheck: Collection<Module>,
+) {
   private val dependenciesToCheck = dependenciesToCheck.toSet()
   private val project = module.project
+  private val usedModules: MutableSet<Module> = HashSet()
+  private val usedLibraries: MutableSet<Library> = HashSet()
 
-  fun startInBackground(promise: AsyncPromise<Unit>) {
-    val builder = ForwardDependenciesBuilder(project, AnalysisScope(module))
-    object : Task.Backgroundable(project, JavaUiBundle.message("progress.title.searching.for.redundant.dependencies", module.name)) {
-      override fun run(indicator: ProgressIndicator) {
-        indicator.isIndeterminate = false
-        builder.analyze()
-        runReadAction { processRedundantDependencies(builder.directDependencies, promise) }
-      }
-    }.queue()
+  internal suspend fun findDependenciesToRemove(moduleFileProcessor: ExtractModuleFileProcessor): Set<Module> {
+    readAction {
+      val fileIndex = ProjectFileIndex.getInstance(module.project)
+      moduleFileProcessor.referencedClasses
+        .asSequence()
+        .mapNotNull { className ->
+          findFile(className)?.virtualFile
+        }
+        .forEach { virtualFile ->
+          val dependencyModule = fileIndex.getModuleForFile(virtualFile)
+          if (dependencyModule != null) {
+            usedModules.add(dependencyModule)
+          }
+          else {
+            fileIndex.getOrderEntriesForFile(virtualFile).asSequence()
+              .filterIsInstance<LibraryOrderEntry>()
+              .filter { !it.isModuleLevel }
+              .mapNotNull { it.library }
+              .firstOrNull()
+              ?.let { usedLibraries.add(it) }
+          }
+        }
+    }
+
+    val dependenciesToRemove =
+      withBackgroundProgress(project, JavaUiBundle.message("progress.title.searching.for.redundant.dependencies", module.name)) {
+        readAction { processRedundantDependencies(usedModules, moduleFileProcessor.gatheredClassLinks) }
+      } ?: return emptySet()
+
+    return dependenciesToRemove
   }
 
-  private fun processRedundantDependencies(directDependencies: Map<PsiFile, Set<PsiFile>>, promise: AsyncPromise<Unit>) {
-    val fileIndex = ProjectFileIndex.getInstance(module.project)
-    val usedModules = directDependencies.values.asSequence().flatten().mapNotNullTo(HashSet()) {
-      it.virtualFile?.let { file -> fileIndex.getModuleForFile(file) }
-    }
+  @RequiresReadLock
+  private fun processRedundantDependencies(usedModules: Set<Module>, classLinks: Map<String, Set<String>>): Set<Module>? {
     val dependenciesToRemove = dependenciesToCheck - usedModules
     if (dependenciesToRemove.isEmpty()) {
+      val fileIndex = ProjectFileIndex.getInstance(module.project)
       val builder = ForwardDependenciesBuilder(project, AnalysisScope(module))
-      for ((file, dependencies) in directDependencies) {
-        if (!file.isValid) continue
-        val relevantDependencies = dependencies.filterTo(LinkedHashSet()) { psiFile ->
-          val virtualFile = psiFile.virtualFile
-          virtualFile != null && fileIndex.getModuleForFile(virtualFile) in dependenciesToCheck
+
+      for ((className, dependenciesNames) in classLinks) {
+        val file = findFile(className)
+        if (file == null || !file.isValid) continue
+        val relevantDependencies = dependenciesNames.mapNotNullTo(LinkedHashSet()) {
+          findFile(it)?.takeIf { psiFile ->
+            val virtualFile = psiFile.virtualFile
+            virtualFile != null && fileIndex.getModuleForFile(virtualFile) in dependenciesToCheck
+          }
         }
+
         if (relevantDependencies.isNotEmpty()) {
           builder.directDependencies[file] = relevantDependencies
           builder.dependencies[file] = relevantDependencies
         }
       }
       showNothingToCleanNotification(builder)
-      promise.setResult(Unit)
-      return
+      return null
     }
 
-    ApplicationManager.getApplication().invokeLater {
-      runWriteAction {
-        removeDependencies(dependenciesToRemove, usedModules)
-        promise.setResult(Unit)
-      }
-    }
+    return dependenciesToRemove
   }
 
-  private fun removeDependencies(dependenciesToRemove: Set<Module>, usedModules: HashSet<Module>) {
-    if (module.isDisposed || dependenciesToRemove.any { it.isDisposed }) return
+  private fun findFile(className: String) = JavaPsiFacade.getInstance(module.project).findClass(className, module.getModuleWithDependenciesAndLibrariesScope(
+    false))?.containingFile
+
+  fun removeDependencies(dependenciesToRemove: Set<Module>) {
+    if (module.isDisposed || dependenciesToRemove.any { it.isDisposed } || dependenciesToRemove.isEmpty()) return
 
     val model = ModuleRootManager.getInstance(module).modifiableModel
     val rootModelProvider = object : RootModelProvider {
@@ -110,15 +134,21 @@ class ModuleDependenciesCleaner(private val module: Module, dependenciesToCheck:
     val transitiveDependenciesMessage =
       if (transitiveDependenciesToAdd.isNotEmpty()) JavaUiBundle.message("notification.content.transitive.dependencies.were.added", transitiveDependenciesToAdd.first().name, transitiveDependenciesToAdd.size - 1)
       else ""
-    val notification = Notification("Dependencies", JavaUiBundle.message("notification.title.dependencies.were.cleaned.up", module.name),
-                                    JavaUiBundle.message("notification.content.unused.dependencies.were.removed", dependenciesToRemove.first().name, dependenciesToRemove.size - 1, transitiveDependenciesMessage),
-                                    NotificationType.INFORMATION)
+    val notification = Notification(
+      "Dependencies",
+      JavaUiBundle.message("notification.title.dependencies.were.cleaned.up", module.name),
+      JavaUiBundle.message("notification.content.unused.dependencies.were.removed", dependenciesToRemove.first().name, dependenciesToRemove.size - 1, transitiveDependenciesMessage),
+      NotificationType.INFORMATION
+    )
     notification.notify(project)
   }
 
   private fun showNothingToCleanNotification(builder: ForwardDependenciesBuilder) {
-    val notification = Notification("Dependencies",
-                                    JavaUiBundle.message("notification.content.none.module.dependencies.can.be.safely.removed", module.name), NotificationType.INFORMATION)
+    val notification = Notification(
+      "Dependencies",
+      JavaUiBundle.message("notification.content.none.module.dependencies.can.be.safely.removed", module.name),
+      NotificationType.INFORMATION
+    )
     notification.addAction(ShowDependenciesAction(module, builder))
     notification.notify(project)
   }

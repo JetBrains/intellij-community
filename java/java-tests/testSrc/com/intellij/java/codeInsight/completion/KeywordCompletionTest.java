@@ -10,6 +10,7 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiMethod;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.NeedsIndex;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,7 +34,7 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   }
 
   public void testFileScopeWithoutPackage() {
-    setLanguageLevel(JavaFeature.IMPLICIT_CLASSES.getMinimumLevel());
+    setLanguageLevel(JavaFeature.IMPLICIT_CLASSES.getStandardLevel());
     doTest(16, "package", "public", "import", "final", "class", "interface", "abstract", "enum",
            "transient", "static", "private", "protected", "volatile", "synchronized", "sealed", "non-sealed");
     assertNotContainItems("default", "strictfp");
@@ -54,7 +55,7 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
     assertNotContainItems("default", "transient", "static", "private", "protected", "volatile", "synchronized", "sealed", "non-sealed");
   }
   public void testFileScopeWithPackage2() {
-    setLanguageLevel(JavaFeature.IMPLICIT_CLASSES.getMinimumLevel());
+    setLanguageLevel(JavaFeature.IMPLICIT_CLASSES.getStandardLevel());
     doTest(10, "public", "import", "final", "class", "interface", "abstract", "enum", "record", "sealed", "non-sealed");
     assertNotContainItems("default", "transient", "static", "private", "protected", "volatile", "synchronized");
   }
@@ -188,7 +189,7 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testImportStatic() { doTest(1, "static"); }
 
   public void testImportModule() {
-    setLanguageLevel(JavaFeature.MODULE_IMPORT_DECLARATIONS.getMinimumLevel());
+    setLanguageLevel(JavaFeature.MODULE_IMPORT_DECLARATIONS.getStandardLevel());
     doTest(2, "static", "module");
   }
   public void testAbstractInInterface() { doTest(1, "abstract"); }
@@ -256,6 +257,12 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
     assertContainsItems("module");
   }
 
+  public void testImportKeywordModuleFile() {
+    configureFromFileText("module-info.java", "im<caret>port something");
+    complete();
+    assertContainsItems("import");
+  }
+
   public void testOverwriteCatch() {
     configureByTestName();
     selectItem(myItems[0], Lookup.REPLACE_SELECT_CHAR);
@@ -311,6 +318,32 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
     complete();
     assertNotContainItems("package");
   }
+
+  public void testVoidAtBeginningImplicitClass() {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_CLASSES.getStandardLevel(), ()->{
+      configureFromFileText("Test.java", """
+      vo<caret>""");
+      complete();
+      assertContainsItems("void");
+    });
+  }
+
+  public void testNoVoidWithPackageStatement() {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_CLASSES.getStandardLevel(), ()->{
+      configureFromFileText("Test.java", """
+      package a;
+      vo<caret>""");
+      complete();
+      assertNotContainItems("void");
+    });
+  }
+  public void testNoPrimitivesAfterExpressions() { doTest(); }
+
+  public void testNoPrimitivesAfterExpressions2() { doTest(); }
+
+  public void testNoPrimitivesAfterExpressions3() { doTest(); }
+
+  public void testNoPrimitivesAfterExpressions4() { doTest(); }
 
   private void doTest() {
     configureByTestName();

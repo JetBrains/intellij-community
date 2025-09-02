@@ -245,8 +245,7 @@ fn get_jvm_init_args(vm_options: Vec<String>) -> Result<(jni::sys::JavaVMInitArg
 #[cfg(target_os = "windows")]
 fn convert_vm_options(vm_options: Vec<String>) -> Result<Vec<CString>> {
     use {
-        windows::core::{HSTRING, PCSTR},
-        windows::Win32::Foundation::BOOL,
+        windows::core::{BOOL, HSTRING, PCSTR},
         windows::Win32::Globalization::{GetACP, CP_ACP, CP_UTF8, WC_NO_BEST_FIT_CHARS, WideCharToMultiByte}
     };
 

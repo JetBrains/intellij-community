@@ -1,0 +1,12 @@
+// WITH_STDLIB
+data class A(val p: Int) {
+    companion object {
+        operator fun invoke() {}
+    }
+}
+
+fun m() {
+    A <caret>().apply {
+        println()
+    }
+}

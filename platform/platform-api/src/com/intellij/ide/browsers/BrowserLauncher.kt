@@ -1,10 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.browsers
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
-
-import java.io.File
+import org.jetbrains.annotations.ApiStatus
 import java.net.URI
 import java.nio.file.Path
 
@@ -17,7 +16,9 @@ abstract class BrowserLauncher {
 
   abstract fun open(url: String)
 
-  abstract fun browse(file: File)
+  /** Prefer `browse(Path)`. */
+  @ApiStatus.Obsolete
+  abstract fun browse(file: java.io.File)
 
   abstract fun browse(file: Path)
 

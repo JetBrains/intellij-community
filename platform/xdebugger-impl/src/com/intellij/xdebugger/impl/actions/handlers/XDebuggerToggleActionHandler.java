@@ -3,8 +3,8 @@ package com.intellij.xdebugger.impl.actions.handlers;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
-import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.impl.actions.DebuggerToggleActionHandler;
+import com.intellij.xdebugger.impl.frame.XDebugSessionProxy;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -14,25 +14,22 @@ import org.jetbrains.annotations.Nullable;
 public abstract class XDebuggerToggleActionHandler extends DebuggerToggleActionHandler {
   @Override
   public final boolean isEnabled(final @NotNull Project project, final AnActionEvent event) {
-    XDebugSession session = DebuggerUIUtil.getSession(event);
-    return isEnabled(session, event);
+    return isEnabled(DebuggerUIUtil.getSessionProxy(event), event);
   }
 
   @Override
   public boolean isSelected(final @NotNull Project project, final AnActionEvent event) {
-    XDebugSession session = DebuggerUIUtil.getSession(event);
-    return isSelected(session, event);
+    return isSelected(DebuggerUIUtil.getSessionProxy(event), event);
   }
 
   @Override
   public void setSelected(final @NotNull Project project, final AnActionEvent event, final boolean state) {
-    XDebugSession session = DebuggerUIUtil.getSession(event);
-    setSelected(session, event, state);
+    setSelected(DebuggerUIUtil.getSessionProxy(event), event, state);
   }
 
-  protected abstract boolean isEnabled(@Nullable XDebugSession session, final AnActionEvent event);
+  protected abstract boolean isEnabled(@Nullable XDebugSessionProxy session, final AnActionEvent event);
 
-  protected abstract boolean isSelected(@Nullable XDebugSession session, final AnActionEvent event);
+  protected abstract boolean isSelected(@Nullable XDebugSessionProxy session, final AnActionEvent event);
 
-  protected abstract void setSelected(@Nullable XDebugSession session, final AnActionEvent event, boolean state);
+  protected abstract void setSelected(@Nullable XDebugSessionProxy session, final AnActionEvent event, boolean state);
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.facet.Facet;
@@ -54,7 +54,7 @@ import java.util.List;
 /**
  * @author Eugene Zhuravlev
  */
-public class ModulesConfigurator implements ModulesProvider, ModuleEditor.ChangeListener {
+public final class ModulesConfigurator implements ModulesProvider, ModuleEditor.ChangeListener {
   private static final Logger LOG = Logger.getInstance(ModulesConfigurator.class);
 
   private final Project myProject;
@@ -366,7 +366,6 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     return myModuleModelCommitted;
   }
 
-
   private @Nullable List<Module> addModule(Producer<@Nullable AbstractProjectWizard> createWizardAction) {
     var wizard = createWizardAction.produce();
     if (null == wizard) return null;
@@ -493,12 +492,8 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     }
     int result =
       Messages.showYesNoDialog(myProject, question, JavaUiBundle.message("module.remove.confirmation.title", selectedEditors.size()), Messages.getQuestionIcon());
-    if (result != Messages.YES) {
-      return false;
-    }
-    return true;
+    return result == Messages.YES;
   }
-
 
   private void processModuleCountChanged() {
     for (ModuleEditor moduleEditor : myModuleEditors.values()) {
@@ -529,8 +524,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     return ShowSettingsUtil.getInstance().editConfigurable(project, configurable, () -> configurable.select(artifact, true));
   }
 
-  public static boolean showFacetSettingsDialog(final @NotNull Facet facet,
-                                                final @Nullable String tabNameToSelect) {
+  public static boolean showFacetSettingsDialog(@NotNull Facet<?> facet, @Nullable String tabNameToSelect) {
     final Project project = facet.getModule().getProject();
     final ProjectStructureConfigurable config = ProjectStructureConfigurable.getInstance(project);
     return ShowSettingsUtil.getInstance().editConfigurable(project, config, () -> {
@@ -544,17 +538,16 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     });
   }
 
-  public static boolean showDialog(@NotNull Project project, final @Nullable String moduleToSelect, final @Nullable String editorNameToSelect) {
+  public static boolean showDialog(@NotNull Project project, @Nullable String moduleToSelect, @Nullable String editorNameToSelect) {
     final ProjectStructureConfigurable config = ProjectStructureConfigurable.getInstance(project);
     return ShowSettingsUtil.getInstance().editConfigurable(project, config, () -> config.select(moduleToSelect, editorNameToSelect, true));
   }
 
-  public void moduleRenamed(@NotNull Module module, final String oldName, @NotNull String name) {
+  public void moduleRenamed(@NotNull Module module, String oldName, @NotNull String name) {
     ModuleEditor moduleEditor = myModuleEditors.get(module);
     if (moduleEditor != null) {
       moduleEditor.setModuleName(name);
-      moduleEditor.updateCompilerOutputPathChanged(
-        myProjectStructureConfigurable.getProjectConfig().getCompilerOutputUrl(), name);
+      moduleEditor.updateCompilerOutputPathChanged(myProjectStructureConfigurable.getProjectConfig().getCompilerOutputUrl(), name);
       myContext.getDaemonAnalyzer().queueUpdate(new ModuleProjectStructureElement(myContext, module));
     }
   }
@@ -568,9 +561,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     @NotNull NewProjectWizard create(@Nullable Project project, @NotNull ModulesProvider modulesProvider, @Nullable String defaultPath);
   }
 
-  @ApiStatus.Internal
-  public static final class NewProjectWizardFactoryImpl implements NewProjectWizardFactory {
-
+  static final class NewProjectWizardFactoryImpl implements NewProjectWizardFactory {
     @Override
     public @NotNull NewProjectWizard create(@Nullable Project project,
                                             @NotNull ModulesProvider modulesProvider,

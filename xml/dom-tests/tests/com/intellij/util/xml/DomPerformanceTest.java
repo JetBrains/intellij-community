@@ -23,6 +23,7 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
@@ -93,7 +94,7 @@ public class DomPerformanceTest extends DomHardCoreTestCase {
       return null;
     });
 
-    ((PsiManagerImpl)getPsiManager()).cleanupForNextTest();
+    ((PsiManagerEx)getPsiManager()).cleanupForNextTest();
     final XmlFile file = (XmlFile)getPsiManager().findFile(virtualFile);
     assertFalse(file.getNode().isParsed());
     assertTrue(StringUtil.isNotEmpty(file.getText()));

@@ -19,7 +19,6 @@ import kotlinx.coroutines.future.asCompletableFuture
 import java.nio.charset.Charset
 import java.nio.file.FileSystems
 import java.nio.file.Path
-import kotlin.io.path.isDirectory
 import kotlin.io.path.name
 
 class EelBuildCommandLineBuilder(val project: Project, exePath: Path) : BuildCommandLineBuilder {
@@ -27,7 +26,7 @@ class EelBuildCommandLineBuilder(val project: Project, exePath: Path) : BuildCom
     private val logger = logger<EelBuildCommandLineBuilder>()
   }
 
-  private val eel: EelApi = exePath.getEelDescriptor().upgradeBlocking()
+  private val eel: EelApi = exePath.getEelDescriptor().toEelApiBlocking()
   private val commandLine = GeneralCommandLine().withExePath(exePath.toString())
 
   private val workingDirectory: Path = getSystemSubfolder(BuildManager.SYSTEM_ROOT)
@@ -50,7 +49,7 @@ class EelBuildCommandLineBuilder(val project: Project, exePath: Path) : BuildCom
       runCatching {
         copyProjectSpecificPathToTargetIfRequired(project, Path.of(hostLocation)).asEelPath()
       }.onFailure { error -> logger.warn("Can't map classpath parameter: $hostLocation", error) }.getOrNull()
-    }.joinToString(eel.platform.pathSeparator)
+    }.joinToString(eel.platform.osFamily.pathSeparator)
     require(classpathInTarget.isEmpty()) {
       "Target classpath is not supported"
     }
@@ -71,7 +70,7 @@ class EelBuildCommandLineBuilder(val project: Project, exePath: Path) : BuildCom
       return path
     }
     val remotePath = workingDirectory.resolve(path.name)
-    return transferPathToRemoteIfRequired(path, remotePath)
+    return EelPathUtils.transferLocalContentToRemote(path, EelPathUtils.TransferTarget.Explicit(remotePath))
   }
 
   override fun copyProjectSpecificPathToTargetIfRequired(project: Project, path: Path): Path {
@@ -80,7 +79,7 @@ class EelBuildCommandLineBuilder(val project: Project, exePath: Path) : BuildCom
     }
     val cacheFileName = project.getProjectCacheFileName()
     val target = cacheDirectory.resolve(cacheFileName).resolve(path.name)
-    return transferPathToRemoteIfRequired(path, target)
+    return EelPathUtils.transferLocalContentToRemote(path, EelPathUtils.TransferTarget.Explicit(target))
   }
 
   override fun getYjpAgentPath(yourKitProfilerService: YourKitProfilerService?): String? {
@@ -103,16 +102,6 @@ class EelBuildCommandLineBuilder(val project: Project, exePath: Path) : BuildCom
 
   fun pathPrefixes(): Set<String> {
     return eel.descriptor.routingPrefixes().map { it.toString().removeSuffix(FileSystems.getDefault().separator) }.toSet()
-  }
-
-  private fun transferPathToRemoteIfRequired(source: Path, target: Path): Path {
-    if (source.isDirectory()) {
-      EelPathUtils.transferContentsIfNonLocal(eel, source, target)
-    }
-    else {
-      EelPathUtils.transferFileIfNonLocal(source, target)
-    }
-    return target
   }
 
   /**

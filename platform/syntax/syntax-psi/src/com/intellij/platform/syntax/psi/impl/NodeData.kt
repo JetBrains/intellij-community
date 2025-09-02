@@ -23,17 +23,15 @@ internal class NodeData(
   val lexemeCount: Int,
   val convertedLexTypes: Array<IElementType>,
   val lexTypes: Array<SyntaxElementType>,
-  var charTable: CharTable?, // todo make it not-null
+  var charTable: CharTable?,
   val astFactory: ASTFactory?, // parserDefinition as? ASTFactory
   val textArray: CharArray?,
   val file: PsiFile?,
 ) {
   val chameleonCache = Int2ObjectOpenHashMap<LazyParseableToken>()
 
-  // todo inline?
   fun getLexemeType(index: Int): IElementType = convertedLexTypes[index]
 
-  // todo inline?
   fun getLexemeStart(index: Int): Int = lexStarts[index]
 
   fun createLeaf(type: IElementType, start: Int, end: Int): TreeElement {
@@ -150,9 +148,8 @@ internal class NodeData(
       }
       val start = getLexemeStart(curToken)
       val end = getLexemeStart(curToken + 1)
-      if (start < end || getLexemeType(
-          curToken) is ILeafElementType
-      ) { // Empty token. Most probably a parser directive like indent/dedent in Python
+      if (start < end || getLexemeType(curToken) is ILeafElementType) {
+        // Empty token. Most probably a parser directive like indent/dedent in Python
         val type = getLexemeType(curToken)
         val leaf = createLeaf(type, start, end)
         curNode.rawAddChildrenWithoutNotifications(leaf)

@@ -37,10 +37,8 @@
 - getMergedChanges():java.util.Collection
 - p:parseChanges():com.intellij.vcs.log.impl.VcsChangesLazilyParsedDetails$ParsedChanges
 - size():I
-e:com.intellij.vcs.log.impl.VcsLogTabLocation
-- java.lang.Enum
-- *sf:EDITOR:com.intellij.vcs.log.impl.VcsLogTabLocation
-- *sf:STANDALONE:com.intellij.vcs.log.impl.VcsLogTabLocation
+*:com.intellij.vcs.log.impl.VcsLogManager$VcsLogUiFactory
+- a:createLogUi(com.intellij.openapi.project.Project,com.intellij.vcs.log.data.VcsLogData):com.intellij.vcs.log.ui.VcsLogUiEx
 *:com.intellij.vcs.log.ui.MainVcsLogUi
 - com.intellij.vcs.log.ui.VcsLogUiEx
 - a:getChangesBrowser():com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase

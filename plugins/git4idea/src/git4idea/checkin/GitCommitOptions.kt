@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.checkin
 
 import com.intellij.openapi.Disposable
@@ -17,6 +17,7 @@ import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.util.containers.nullize
 import com.intellij.util.ui.JBUI
 import com.intellij.vcs.commit.*
 import com.intellij.vcs.log.VcsUser
@@ -162,12 +163,15 @@ class GitCommitOptionsUi(
     if (commitPanel.isNonModalCommit) updateRenamesCheckboxState()
     val author = getAuthor()
 
+    commitContext.freshRoots = commitPanel.roots
+      .filter { getRepositoryManager(project).getRepositoryForRootQuick(it)?.isFresh == true }
+      .nullize()?.toSet()
     commitContext.commitAuthor = author
     commitContext.commitAuthorDate = authorDate
     commitContext.isSignOffCommit = signOffCommit.isSelected
     commitContext.isCommitRenamesSeparately = commitRenamesSeparately.run { isEnabled && isSelected }
 
-    author?.let { settings.saveCommitAuthor(it) }
+    author?.let { settings.saveCommitAuthor(it.toString()) }
     settings.setSignOffCommit(signOffCommit.isSelected)
     settings.isCommitRenamesSeparately = commitRenamesSeparately.isSelected
   }

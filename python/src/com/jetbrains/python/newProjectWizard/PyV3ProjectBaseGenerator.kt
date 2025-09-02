@@ -13,7 +13,9 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.DirectoryProjectGenerator
 import com.intellij.platform.ProjectGeneratorPeer
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.Result
 import com.jetbrains.python.newProjectWizard.collector.PyProjectTypeGenerator
 import com.jetbrains.python.newProjectWizard.collector.PythonNewProjectWizardCollector.logPythonNewProjectGenerated
@@ -22,6 +24,7 @@ import com.jetbrains.python.newProjectWizard.impl.PyV3UIServicesProd
 import com.jetbrains.python.newProjectWizard.projectPath.ProjectPathFlows.Companion.validatePath
 import com.jetbrains.python.onFailure
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode
+import com.jetbrains.python.sdk.refreshPaths
 import com.jetbrains.python.statistics.version
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -70,10 +73,9 @@ abstract class PyV3ProjectBaseGenerator<TYPE_SPECIFIC_SETTINGS : PyV3ProjectType
     coroutineScope.launch {
       val (sdk, interpreterStatistics) = settings.generateAndGetSdk(module, baseDir, supportsNotEmptyModuleStructure).getOr {
         withContext(Dispatchers.EDT) {
-          // TODO: Migrate to python Result using PyError as exception not to make this dynamic check
           uiServices.errorSink.emit(it.error)
         }
-        return@launch // Since we failed to generate project, we do not need to go any further
+        return@launch // Since we failed to generate a project, we do not need to go any further
       }
 
       withContext(Dispatchers.EDT) {
@@ -88,12 +90,15 @@ abstract class PyV3ProjectBaseGenerator<TYPE_SPECIFIC_SETTINGS : PyV3ProjectType
                                    this@PyV3ProjectBaseGenerator,
                                    emptyList())
 
-      // Project view must be expanded (PY-75909) but it can't be unless it contains some files.
-      // Either base settings (which create venv) might generate some or type specific settings (like Django) may.
+      // The project view must be expanded (PY-75909), but it can't be unless it contains some files.
+      // Either base settings (which create venv) might generate some or type-specific settings (like Django) may.
       // So we expand it right after SDK generation, but if there are no files yet, we do it again after project generation
       uiServices.expandProjectTreeView(project)
-      typeSpecificSettings.generateProject(module, baseDir, sdk).onFailure {
-        uiServices.errorSink.emit(it)
+      withBackgroundProgress(project, PyBundle.message("python.project.model.progress.title.generating"), cancellable = true) {
+        typeSpecificSettings.generateProject(module, baseDir, sdk).onFailure {
+          uiServices.errorSink.emit(it)
+        }
+        refreshPaths(project, sdk)
       }
       uiServices.expandProjectTreeView(project)
     }
@@ -108,7 +113,7 @@ abstract class PyV3ProjectBaseGenerator<TYPE_SPECIFIC_SETTINGS : PyV3ProjectType
       is Result.Success -> {
         ValidationResult.OK
       }
-      is Result.Failure -> ValidationResult(pathOrError.error)
+      is Result.Failure -> ValidationResult(pathOrError.error.message)
     }
 
 

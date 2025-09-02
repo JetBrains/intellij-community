@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.diagnostic.PerformanceWatcher;
@@ -68,8 +68,8 @@ public final class UnindexedFilesIndexer extends DumbModeTask {
   private final IncompleteIndexingToken taskToken;
   private final @Nullable PerProjectIndexingQueue customFilesSource;
 
-  UnindexedFilesIndexer(@NotNull Project project,
-                        @NonNls @NotNull String indexingReason) {
+  @VisibleForTesting
+  public UnindexedFilesIndexer(@NotNull Project project, @NonNls @NotNull String indexingReason) {
     this(project, null, indexingReason);
   }
 

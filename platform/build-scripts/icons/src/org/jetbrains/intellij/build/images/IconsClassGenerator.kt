@@ -24,11 +24,10 @@ import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.time.LocalDate
-import java.util.*
+import java.util.Locale
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicInteger
 import javax.xml.stream.XMLStreamException
-import kotlin.collections.any
 import kotlin.io.path.exists
 
 @JvmRecord
@@ -430,7 +429,7 @@ internal open class IconsClassGenerator(
       if (group != null) {
         val oldLength = result.length
         val className = className(key)
-        if (isInlineClass(className)) {
+        if (isInlineClass(className) || group.firstOrNull()?.flat == true) {
           processIcons(group, mappings, result, depth + 1, iconClassSpecificsGenerator, topLevelClass)
         }
         else {
@@ -469,7 +468,7 @@ internal open class IconsClassGenerator(
     image: ImageInfo,
     mappings: Map<String, String>?,
     result: StringBuilder,
-    level: Int,
+    depth: Int,
     hasher: IconHasher,
     iconClassSpecificsGenerator: IconClassSpecificsGenerator,
     topLevelClass: String
@@ -484,6 +483,7 @@ internal open class IconsClassGenerator(
       processedPhantom.incrementAndGet()
     }
 
+    val level = if (image.flat) 1 else depth
     if (image.used || image.deprecated) {
       val deprecationComment = image.deprecation?.comment
       if (deprecationComment != null) {
@@ -664,6 +664,9 @@ internal open class IconsClassGenerator(
         }
         else {
           sb.append('_')
+          if (index == 0 && Character.isDigit(c)) {
+            sb.append(c)
+          }
         }
       }
 

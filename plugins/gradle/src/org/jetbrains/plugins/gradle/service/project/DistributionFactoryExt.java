@@ -126,7 +126,6 @@ public final class DistributionFactoryExt extends DistributionFactory {
     private InstalledDistribution installedDistribution;
     private final WrapperConfiguration wrapperConfiguration;
     private final Clock clock;
-    private static final int NETWORK_TIMEOUT = 10000;
 
     private ZippedDistribution(WrapperConfiguration wrapperConfiguration, Clock clock) {
       this.wrapperConfiguration = wrapperConfiguration;
@@ -144,7 +143,12 @@ public final class DistributionFactoryExt extends DistributionFactory {
                                                        ConnectionParameters connectionParameters,
                                                        BuildCancellationToken cancellationToken) {
       if (installedDistribution == null) {
-        final DistributionInstaller installer = new DistributionInstaller(progressLoggerFactory, progressListener, clock, NETWORK_TIMEOUT);
+        final DistributionInstaller installer = new DistributionInstaller(
+          progressLoggerFactory,
+          progressListener,
+          clock,
+          (int)Duration.ofSeconds(30).toMillis()
+        );
         File installDir;
         try {
           cancellationToken.addCallback(() -> installer.cancel());

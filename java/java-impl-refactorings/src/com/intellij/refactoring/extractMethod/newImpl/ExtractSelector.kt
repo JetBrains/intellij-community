@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethod.newImpl
 
 import com.intellij.codeInsight.CodeInsightUtil
@@ -90,7 +90,14 @@ class ExtractSelector {
   }
 
   private fun hasAssignmentInside(expression: PsiExpression): Boolean {
-    return PsiTreeUtil.findChildOfType(expression, PsiAssignmentExpression::class.java, false) != null
+    val assignment = PsiTreeUtil.findChildOfType(expression, PsiAssignmentExpression::class.java, false)
+    if (assignment == null) return false
+    val lhs = assignment.lExpression
+    if (lhs is PsiReferenceExpression) {
+      val target = lhs.resolve()
+      return target != null && !expression.textRange.contains(target.textRange)
+    }
+    return false
   }
 
   private fun alignStatements(statements: List<PsiElement>): List<PsiElement> {

@@ -2,6 +2,7 @@
 package com.intellij.ui.icons;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.util.List;
@@ -11,5 +12,6 @@ public interface RowIcon extends CompositeIcon, DarkIconProvider {
 
   void setIcon(Icon icon, int i);
 
-  @NotNull List<Icon> getAllIcons();
+  @NotNull @Unmodifiable
+  List<Icon> getAllIcons();
 }

@@ -13,6 +13,7 @@ import com.intellij.openapi.command.impl.DummyProject
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.getOrLogException
+import com.intellij.openapi.externalSystem.util.environment.Environment
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.Project
@@ -37,7 +38,7 @@ import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.utils.EelPathUtils.getActualPath
 import com.intellij.platform.eel.provider.utils.fetchLoginShellEnvVariablesBlocking
-import com.intellij.platform.eel.provider.utils.where
+import com.intellij.platform.eel.where
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.withProgressText
@@ -72,18 +73,28 @@ import java.io.IOException
 import java.nio.file.Path
 import javax.swing.event.HyperlinkEvent
 
-object MavenEelUtil  {
+object MavenEelUtil {
   @JvmStatic
   fun EelApi?.resolveM2Dir(): Path {
     val localUserHome = Path.of(SystemProperties.getUserHome())
-    val userHome = if (this != null && this !is LocalEelApi) fs.user.home.asNioPath() else localUserHome
+    val mavenUserHomeVar = Environment.getVariable("MAVEN_USER_HOME")
+    if (mavenUserHomeVar == null) {
+      val userHome = if (this != null && this !is LocalEelApi) fs.user.home.asNioPath() else localUserHome
 
-    return userHome.resolve(DOT_M2_DIR)
+      return userHome.resolve(DOT_M2_DIR)
+    }
+    else {
+      if (this != null && this !is LocalEelApi) {
+        return fs.getPath(mavenUserHomeVar).asNioPath()
+      }
+      else return Path.of(mavenUserHomeVar)
+    }
+
   }
 
   @JvmStatic
   suspend fun Project?.resolveM2DirAsync(): Path {
-    return this?.filterAcceptable()?.getEelDescriptor()?.upgrade().resolveM2Dir()
+    return this?.filterAcceptable()?.getEelDescriptor()?.toEelApi().resolveM2Dir()
   }
 
   suspend fun <T> resolveUsingEel(project: Project?, ordinary: suspend () -> T, eel: suspend (EelApi) -> T?): T {
@@ -91,7 +102,7 @@ object MavenEelUtil  {
       MavenLog.LOG.error("resolveEelAware: Project is null")
     }
 
-    return project?.filterAcceptable()?.getEelDescriptor()?.upgrade()?.let { eel(it) } ?: ordinary.invoke()
+    return project?.filterAcceptable()?.getEelDescriptor()?.toEelApi()?.let { eel(it) } ?: ordinary.invoke()
   }
 
   private fun Project.filterAcceptable(): Project? = takeIf { !it.isDefault && it !is DummyProject }
@@ -144,10 +155,6 @@ object MavenEelUtil  {
     ) ?: resolveM2Dir().resolve(REPOSITORY_DIR)
   }
 
-  @JvmStatic
-  fun <T> resolveUsingEelBlocking(project: Project?, ordinary: () -> T, eel: suspend (EelApi) -> T?): T {
-    return runBlockingMaybeCancellable { resolveUsingEel(project, ordinary, eel) }
-  }
 
   /**
    * USE ONLY IN SETTINGS PREVIEW
@@ -289,12 +296,12 @@ object MavenEelUtil  {
   }
 
   @JvmStatic
-  fun getGlobalSettings(project: Project?, mavenHome: StaticResolvedMavenHomeType, mavenConfig: MavenConfig?): Path? {
+  suspend fun getGlobalSettingsAsync(project: Project?, mavenHome: StaticResolvedMavenHomeType, mavenConfig: MavenConfig?): Path? {
     val filePath = mavenConfig?.getFilePath(MavenConfigSettings.ALTERNATE_GLOBAL_SETTINGS)
     if (filePath != null) return Path.of(filePath)
-    return resolveUsingEelBlocking(project,
-                                   { resolveGlobalSettingsFile(mavenHome) },
-                                   { resolveGlobalSettingsFile(mavenHome) })
+    return resolveUsingEel(project,
+                           { resolveGlobalSettingsFile(mavenHome) },
+                           { resolveGlobalSettingsFile(mavenHome) })
   }
 
   @JvmStatic
@@ -420,7 +427,7 @@ object MavenEelUtil  {
   ) {
     project.service<CoroutineService>().coroutineScope.launch(Dispatchers.IO) {
       withBackgroundProgress(project, MavenProjectBundle.message("wsl.jdk.searching"), cancellable = false) {
-        val eel = project.getEelDescriptor().upgrade()
+        val eel = project.getEelDescriptor().toEelApi()
         val sdkPath = service<JdkFinder>().suggestHomePaths(project).firstOrNull()
         if (sdkPath != null) {
           edtWriteAction {

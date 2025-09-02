@@ -77,9 +77,8 @@ public class PatternPackageSet extends PatternBasedPackageSet {
   }
 
   private static String getPackageName(@NotNull VirtualFile file, @NotNull Project project) {
-    VirtualFile dir = file.isDirectory() ? file : file.getParent();
-    if (dir == null) return null;
-    return StringUtil.getQualifiedName(PackageIndex.getInstance(project).getPackageNameByDirectory(dir), file.getNameWithoutExtension());
+    String name = PackageIndex.getInstance(project).getPackageName(file);
+    return name == null ? null : StringUtil.getQualifiedName(name, file.getNameWithoutExtension());
   }
 
   @Override

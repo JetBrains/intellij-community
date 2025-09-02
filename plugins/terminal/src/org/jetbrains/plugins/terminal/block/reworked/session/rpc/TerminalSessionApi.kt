@@ -22,6 +22,8 @@ interface TerminalSessionApi : RemoteApi<Unit> {
   suspend fun getInputChannel(sessionId: TerminalSessionId): SendChannel<TerminalInputEvent>
 
   suspend fun getOutputFlow(sessionId: TerminalSessionId): Flow<List<TerminalOutputEvent>>
+  
+  suspend fun hasRunningCommands(sessionId: TerminalSessionId): Boolean
 
   companion object {
     @JvmStatic

@@ -4,7 +4,8 @@ package com.intellij.execution.testDiscovery.actions;
 import com.intellij.execution.Location;
 import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.ide.SelectInEditorManager;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -32,7 +33,7 @@ import javax.swing.*;
 import java.util.Collection;
 import java.util.Collections;
 
-class TestMethodUsage implements Usage, UsageInFile, UsageInModule, PsiElementUsage, DataProvider {
+class TestMethodUsage implements Usage, UsageInFile, UsageInModule, PsiElementUsage, UiDataProvider {
   private final @NotNull SmartPsiElementPointer<? extends PsiMethod> myTestMethodPointer;
   private final @Nullable SmartPsiElementPointer<? extends PsiClass> myTestClassPointer;
 
@@ -168,9 +169,10 @@ class TestMethodUsage implements Usage, UsageInFile, UsageInModule, PsiElementUs
   }
 
   @Override
-  public @Nullable Object getData(@NotNull String dataId) {
-    if (!UsageView.USAGE_INFO_LIST_KEY.is(dataId)) return null;
-    PsiElement psi = getElement();
-    return psi == null ? null : Collections.singletonList(new UsageInfo(psi));
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.lazy(UsageView.USAGE_INFO_LIST_KEY, () -> {
+      PsiElement psi = getElement();
+      return psi == null ? null : Collections.singletonList(new UsageInfo(psi));
+    });
   }
 }

@@ -3,7 +3,6 @@ package com.jetbrains.python.run.filter
 
 import com.intellij.execution.filters.Filter
 import com.intellij.openapi.editor.impl.EditorImpl
-import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.projectRoots.Sdk
@@ -12,8 +11,9 @@ import com.jetbrains.python.packaging.PyPackageInstallUtils
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.pythonSdk
+import org.jetbrains.annotations.ApiStatus
 
-class PythonInstallPackageFilter(val project: Project, var editor: EditorImpl? = null) : Filter, DumbAware {
+class PythonInstallPackageFilter(val project: Project, var editor: EditorImpl? = null) : Filter {
   override fun applyFilter(line: String, entireLength: Int): Filter.Result? {
     val prefix = "ModuleNotFoundError: No module named '"
     if (!line.startsWith(prefix))
@@ -39,4 +39,7 @@ class PythonInstallPackageFilter(val project: Project, var editor: EditorImpl? =
     val pyPsiFile = viewProvider.allFiles.firstOrNull { it is PyFile } ?: return null
     return PythonSdkUtil.findPythonSdk(pyPsiFile)
   }
+
+  @ApiStatus.Internal
+  override fun isDumbAware(): Boolean = true
 }

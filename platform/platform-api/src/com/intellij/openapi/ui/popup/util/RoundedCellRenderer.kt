@@ -4,6 +4,7 @@ package com.intellij.openapi.ui.popup.util
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.popup.list.SelectablePanel.Companion.wrap
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import java.awt.Component
 import javax.swing.JComponent
@@ -13,6 +14,7 @@ import javax.swing.ListCellRenderer
 /**
  * Use [com.intellij.ui.dsl.listCellRenderer.BuilderKt.textListCellRenderer/listCellRenderer] when possible
  */
+@ApiStatus.Internal
 class RoundedCellRenderer<T> @JvmOverloads constructor(private val renderer: ListCellRenderer<T>,
                                                        private val fixedHeight: Boolean = true) : ListCellRenderer<T> {
   override fun getListCellRendererComponent(list: JList<out T>, value: T, index: Int, isSelected: Boolean,

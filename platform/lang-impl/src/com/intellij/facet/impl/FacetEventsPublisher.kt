@@ -1,55 +1,65 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment")
+
 package com.intellij.facet.impl
 
 import com.intellij.facet.*
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.ModuleListener
 import com.intellij.openapi.project.Project
 import com.intellij.util.containers.ContainerUtil
-import java.util.*
 
+private val LISTENER_EP = ExtensionPointName<ProjectFacetListenerEP>("com.intellij.projectFacetListener")
+private val LISTENER_EP_CACHE_KEY = java.util.function.Function<ProjectFacetListenerEP, String?> { it.facetTypeId }
+private const val ANY_TYPE = "any"
+
+@Service(Service.Level.PROJECT)
 internal class FacetEventsPublisher(private val project: Project) {
-  private val facetsByType: MutableMap<FacetTypeId<*>, MutableMap<Facet<*>, Boolean>> = HashMap()
+  private val facetsByType = HashMap<FacetTypeId<*>, MutableSet<Facet<*>>>()
   private val manuallyRegisteredListeners = ContainerUtil.createConcurrentList<Pair<FacetTypeId<*>?, ProjectFacetListener<*>>>()
   private val publisher = project.messageBus.syncPublisher(FacetManager.FACETS_TOPIC)
 
-  init {
+  companion object {
+    fun getInstance(project: Project): FacetEventsPublisher = project.service()
+  }
+
+  internal fun sendEvents(facetManagerFactory: FacetManagerFactoryImpl) {
+    val listeners by lazy { getAnyFacetListeners() }
+    for (facetManager in facetManagerFactory.getAllFacets()) {
+      for (facet in facetManager.allFacets) {
+        onFacetAdded(facet, listeners)
+      }
+    }
+  }
+
+  internal fun listen() {
     val connection = project.messageBus.simpleConnect()
     connection.subscribe(ModuleListener.TOPIC, object : ModuleListener {
       override fun modulesAdded(project: Project, modules: List<Module>) {
+        val facetManagerFactory = project.service<FacetManagerFactory>()
+        val listeners by lazy { getAnyFacetListeners() }
         for (module in modules) {
-          onModuleAdded(module)
+          for (facet in facetManagerFactory.getFacetManager(module).allFacets) {
+            onFacetAdded(facet, listeners)
+          }
         }
       }
 
       override fun moduleRemoved(project: Project, module: Module) {
-        onModuleRemoved(module)
+        project.service<FacetEventsPublisher>().onModuleRemoved(module)
       }
     })
-    for (module in ModuleManager.getInstance(project).modules) {
-      onModuleAdded(module)
-    }
-  }
-
-  companion object {
-    @JvmStatic
-    fun getInstance(project: Project): FacetEventsPublisher = project.service()
-
-    @JvmField
-    internal val LISTENER_EP: ExtensionPointName<ProjectFacetListenerEP> = ExtensionPointName("com.intellij.projectFacetListener")
-    private val LISTENER_EP_CACHE_KEY = java.util.function.Function<ProjectFacetListenerEP, String?> { it.facetTypeId }
-    private const val ANY_TYPE = "any"
   }
 
   fun <F : Facet<*>> registerListener(type: FacetTypeId<F>?, listener: ProjectFacetListener<out F>) {
-    manuallyRegisteredListeners += Pair(type, listener)
+    manuallyRegisteredListeners.add(Pair(type, listener))
   }
 
   fun <F : Facet<*>> unregisterListener(type: FacetTypeId<F>?, listener: ProjectFacetListener<out F>) {
-    manuallyRegisteredListeners -= Pair(type, listener)
+    manuallyRegisteredListeners.remove(Pair(type, listener))
   }
 
   fun fireBeforeFacetAdded(facet: Facet<*>) {
@@ -67,10 +77,10 @@ internal class FacetEventsPublisher(private val project: Project) {
 
   fun fireFacetAdded(facet: Facet<*>) {
     publisher.facetAdded(facet)
-    onFacetAdded(facet)
+    onFacetAdded(facet, getAnyFacetListeners())
   }
 
-  fun fireFacetRemoved(module: Module, facet: Facet<*>) {
+  fun fireFacetRemoved(facet: Facet<*>) {
     publisher.facetRemoved(facet)
     onFacetRemoved(facet, false)
   }
@@ -87,12 +97,6 @@ internal class FacetEventsPublisher(private val project: Project) {
   private fun onModuleRemoved(module: Module) {
     for (facet in FacetManager.getInstance(module).allFacets) {
       onFacetRemoved(facet, false)
-    }
-  }
-
-  private fun onModuleAdded(module: Module) {
-    for (facet in FacetManager.getInstance(module).allFacets) {
-      onFacetAdded(facet)
     }
   }
 
@@ -121,7 +125,7 @@ internal class FacetEventsPublisher(private val project: Project) {
         }
       }
     }
-    processListeners {
+    processListeners(getAnyFacetListeners()) {
       if (before) {
         it.beforeFacetRemoved(facet)
       }
@@ -134,24 +138,21 @@ internal class FacetEventsPublisher(private val project: Project) {
     }
   }
 
-  private fun <F : Facet<*>> onFacetAdded(facet: F) {
-    val firstFacet = facetsByType.isEmpty()
-    val typeId = facet.typeId
-    var facets = facetsByType[typeId]
-    if (facets == null) {
-      facets = WeakHashMap()
-      facetsByType[typeId] = facets
-    }
-    val firstFacetOfType = facets.isEmpty()
-    facets[facet] = true
-    processListeners {
-      if (firstFacet) {
+  private fun <F : Facet<*>> onFacetAdded(facet: F, listeners: List<ProjectFacetListenerEP>) {
+    val isFirstFacet = facetsByType.isEmpty()
+    val facets = facetsByType.computeIfAbsent(facet.typeId) { ContainerUtil.createWeakSet() }
+
+    val isFirstFacetOfType = facets.isEmpty()
+    facets.add(facet)
+
+    processListeners(listeners) {
+      if (isFirstFacet) {
         it.firstFacetAdded(project)
       }
       it.facetAdded(facet)
     }
     processListeners(facet.type) {
-      if (firstFacetOfType) {
+      if (isFirstFacetOfType) {
         it.firstFacetAdded(project)
       }
       it.facetAdded(facet)
@@ -162,7 +163,7 @@ internal class FacetEventsPublisher(private val project: Project) {
     processListeners(facet.type) {
       it.facetConfigurationChanged(facet)
     }
-    processListeners {
+    processListeners(listeners = getAnyFacetListeners()) {
       it.facetConfigurationChanged(facet)
     }
   }
@@ -172,20 +173,29 @@ internal class FacetEventsPublisher(private val project: Project) {
     for (listenerEP in LISTENER_EP.getByGroupingKey(facetType.stringId, LISTENER_EP_CACHE_KEY::class.java, LISTENER_EP_CACHE_KEY)) {
       action(listenerEP.listenerInstance as ProjectFacetListener<F>)
     }
-    manuallyRegisteredListeners.filter { it.first == facetType.id }.forEach {
-      action(it.second as ProjectFacetListener<F>)
+
+    for (pair in manuallyRegisteredListeners) {
+      if (pair.first == facetType.id) {
+        action(pair.second as ProjectFacetListener<F>)
+      }
     }
   }
 
-  @Suppress("UNCHECKED_CAST")
-  private inline fun processListeners(action: (ProjectFacetListener<Facet<*>>) -> Unit) {
-    for (listenerEP in LISTENER_EP.getByGroupingKey(ANY_TYPE, LISTENER_EP_CACHE_KEY::class.java, LISTENER_EP_CACHE_KEY)) {
-      action(listenerEP.listenerInstance as ProjectFacetListener<Facet<*>>)
+  private fun processListeners(listeners: List<ProjectFacetListenerEP>, action: (ProjectFacetListener<Facet<*>>) -> Unit) {
+    for (extension in listeners) {
+      @Suppress("UNCHECKED_CAST")
+      action(extension.listenerInstance as ProjectFacetListener<Facet<*>>)
     }
-    manuallyRegisteredListeners.asSequence()
-      .filter { it.first == null }
-      .forEach {
-        action(it.second as ProjectFacetListener<Facet<*>>)
+
+    for (pair in manuallyRegisteredListeners) {
+      if (pair.first == null) {
+        @Suppress("UNCHECKED_CAST")
+        action(pair.second as ProjectFacetListener<Facet<*>>)
       }
+    }
+  }
+
+  private fun getAnyFacetListeners(): List<ProjectFacetListenerEP> {
+    return LISTENER_EP.getByGroupingKey(ANY_TYPE, LISTENER_EP_CACHE_KEY::class.java, LISTENER_EP_CACHE_KEY)
   }
 }

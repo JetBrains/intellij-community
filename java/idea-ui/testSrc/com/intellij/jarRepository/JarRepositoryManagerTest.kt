@@ -1,13 +1,18 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.jarRepository
 
+import com.intellij.idea.TestFor
+import com.intellij.openapi.application.PathMacros
+import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.AnnotationOrderRootType
+import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.ui.OrderRoot
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
+import com.intellij.testFramework.replaceService
 import com.intellij.testFramework.runInEdtAndGet
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.ui.UIUtil
@@ -18,6 +23,8 @@ import org.junit.Test
 import java.io.File
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
+import kotlin.io.path.absolutePathString
+import kotlin.io.path.createTempDirectory
 
 class JarRepositoryManagerTest : UsefulTestCase() {
 
@@ -26,6 +33,7 @@ class JarRepositoryManagerTest : UsefulTestCase() {
   private lateinit var myMavenRepo: File
   private lateinit var myTestLocalMvnCache: File
   private lateinit var myTestRepo: RemoteRepositoryDescription
+  private var myOldTestRepo: String? = null
 
   override fun setUp() {
     super.setUp()
@@ -36,11 +44,13 @@ class JarRepositoryManagerTest : UsefulTestCase() {
     myMavenRepo = FileUtil.createTempDirectory("maven", "repo")
     myTestLocalMvnCache = FileUtil.createTempDirectory("maven", "cache")
     myTestRepo = RemoteRepositoryDescription("id", "name", myMavenRepo.toURI().toURL().toString())
-    JarRepositoryManager.setLocalRepositoryPath(myTestLocalMvnCache)
+    myOldTestRepo =  PathMacros.getInstance().getValue("MAVEN_REPOSITORY")
+    PathMacros.getInstance().setMacro("MAVEN_REPOSITORY", myTestLocalMvnCache.absolutePath)
   }
 
   override fun tearDown() {
     try {
+      PathMacros.getInstance().setMacro("MAVEN_REPOSITORY", myOldTestRepo)
       runInEdtAndWait {
         myFixture.tearDown()
       }
@@ -88,7 +98,8 @@ class JarRepositoryManagerTest : UsefulTestCase() {
     assertEquals(AnnotationOrderRootType.getInstance(), root.type)
   }
 
-  @Test fun `test resolving latest annotations artifact`() {
+  @Test
+  fun `test resolving latest annotations artifact`() {
     val expectedName = MavenRepoFixture(myMavenRepo).run {
       addAnnotationsArtifact(version = "1.0")
       addAnnotationsArtifact(version = "1.0-an1")
@@ -109,7 +120,8 @@ class JarRepositoryManagerTest : UsefulTestCase() {
     assertTrue("File name [${root.file.name}] should contain '$expectedName'", root.file.name.contains(expectedName))
   }
 
-  @Test fun `test fallback to previous major annotations version`() {
+  @Test
+  fun `test fallback to previous major annotations version`() {
     val expectedName = MavenRepoFixture(myMavenRepo).run {
       addAnnotationsArtifact(version = "1.0")
       addAnnotationsArtifact(version = "2.0")
@@ -132,7 +144,8 @@ class JarRepositoryManagerTest : UsefulTestCase() {
   }
 
 
-  @Test fun `test selection for interval`() {
+  @Test
+  fun `test selection for interval`() {
     val expectedName = MavenRepoFixture(myMavenRepo).run {
       addAnnotationsArtifact(version = "1.0")
       addAnnotationsArtifact(version = "2.0")
@@ -155,7 +168,8 @@ class JarRepositoryManagerTest : UsefulTestCase() {
     assertTrue("File name [${root.file.name} should contain '$expectedName'", root.file.name.contains(expectedName))
   }
 
-  @Test fun `test selection for snapshot`() {
+  @Test
+  fun `test selection for snapshot`() {
     MavenRepoFixture(myMavenRepo).apply {
       addAnnotationsArtifact(version = "1-SNAPSHOT-an1")
       generateMavenMetadata("myGroup", "myArtifact")
@@ -171,7 +185,8 @@ class JarRepositoryManagerTest : UsefulTestCase() {
     assertEquals(AnnotationOrderRootType.getInstance(), root.type)
   }
 
-  @Test fun `test remote repositories selection uses project repos by default`() {
+  @Test
+  fun `test remote repositories selection uses project repos by default`() {
     RemoteRepositoriesConfiguration.getInstance(myProject).repositories = listOf(
       RemoteRepositoryDescription("repo1", "repo1", "https://example.com/repo1"),
       RemoteRepositoryDescription("repo2", "repo2", "https://example.com/repo2"),
@@ -185,22 +200,24 @@ class JarRepositoryManagerTest : UsefulTestCase() {
     val actualWhenEmptyListPassed = JarRepositoryManager.selectRemoteRepositories(myProject, descriptor, emptyList())
     assertEquals(expected, actualWhenEmptyListPassed)
   }
-  
-  @Test fun `test remote repositories selection repo from desc has second priority`() {
+
+  @Test
+  fun `test remote repositories selection repo from desc has second priority`() {
     val repo1 = RemoteRepositoryDescription("repo1", "repo1", "https://example.com/repo1")
     val repo2 = RemoteRepositoryDescription("repo2", "repo2", "https://example.com/repo2")
 
     RemoteRepositoriesConfiguration.getInstance(myProject).repositories = listOf(repo1, repo2)
     val descriptor = createDescriptorWithJarRepoId(repo1.id)
-    
+
     val expected = listOf(repo1)
     val actualWhenNullPassed = JarRepositoryManager.selectRemoteRepositories(myProject, descriptor, null)
     val actualWhenEmptyListPassed = JarRepositoryManager.selectRemoteRepositories(myProject, descriptor, emptyList())
     assertEquals(expected, actualWhenNullPassed)
     assertEquals(expected, actualWhenEmptyListPassed)
-  }  
-  
-  @Test fun `test remote repositories selection explicitly set repos have max priority`() {
+  }
+
+  @Test
+  fun `test remote repositories selection explicitly set repos have max priority`() {
     val repo1 = RemoteRepositoryDescription("repo1", "repo1", "https://example.com/repo1")
     val repo2 = RemoteRepositoryDescription("repo2", "repo2", "https://example.com/repo2")
 
@@ -210,10 +227,11 @@ class JarRepositoryManagerTest : UsefulTestCase() {
     val actual = JarRepositoryManager.selectRemoteRepositories(myProject, descriptor, expected)
     assertEquals(expected, actual)
   }
-  
+
   private fun createDescriptorWithJarRepoId(jarRepoId: String?) = JpsMavenRepositoryLibraryDescriptor("id", false, emptyList(),
                                                                                                       emptyList(),
                                                                                                       jarRepoId)
+
   private fun getResultingRoots(promise: Promise<MutableList<OrderRoot>>): List<OrderRoot>? {
     var result: List<OrderRoot>? = null
     (1..5).forEach {
@@ -227,4 +245,39 @@ class JarRepositoryManagerTest : UsefulTestCase() {
     }
     return result
   }
+
+  @TestFor(issues = ["IDEA-370993"])
+  //remove when IDEA-372163 is ready
+  @Test
+  fun testShouldResolveToProjectAwareMavenRepoIfSet() {
+    val myLocalProjectRepo = createTempDirectory()
+    myProject.replaceService(PathMacroManager::class.java, object : PathMacroManager(null) {
+      override fun expandPath(text: String?): String? {
+        return if (text == JarRepositoryManager.MAVEN_REPOSITORY_MACRO) myLocalProjectRepo.absolutePathString()
+        else text
+      }
+    }, testRootDisposable)
+
+    MavenRepoFixture(myMavenRepo).apply {
+      addLibraryArtifact(group = "myGroup", artifact = "myArtifact", version = "1.0")
+      generateMavenMetadata("group", "artifact")
+    }
+
+    RemoteRepositoriesConfiguration.getInstance(myProject).repositories = listOf(
+      RemoteRepositoryDescription("id", "name", myMavenRepo.toURI().toURL().toString())
+    )
+
+    val description = JpsMavenRepositoryLibraryDescriptor("myGroup", "myArtifact", "1.0")
+    val promise = JarRepositoryManager.loadDependenciesAsync(myProject, description, setOf(ArtifactKind.ARTIFACT),
+                                                             listOf(myTestRepo), null)
+
+    val result = getResultingRoots(promise)
+    assertEquals(1, result!!.size)
+    val root = result?.get(0)!!
+    assertEquals(OrderRootType.CLASSES, root.type)
+    assertTrue("files should be downloaded into project defined repo",
+               root.file.toString().startsWith("jar://$myLocalProjectRepo"))
+  }
 }
+
+

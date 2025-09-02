@@ -21,10 +21,12 @@ public final class GradleEnvironment {
   @ApiStatus.Internal
   public static final class Urls {
 
-    public static final @Nullable String MAVEN_REPOSITORY_URL =
-      System.getProperty("idea.gradle.mavenRepositoryUrl", null);
+    public static @Nullable String getMavenRepositoryUrl() {
+      return System.getProperty("idea.gradle.mavenRepositoryUrl", null);
+    }
 
-    public static final @NotNull String GRADLE_SERVICES_URL =
-      System.getProperty("idea.gradle.servicesUrl", "https://services.gradle.org");
+    public static @NotNull String getGradleServicesUrl() {
+      return System.getProperty("idea.gradle.servicesUrl", "https://services.gradle.org");
+    }
   }
 }

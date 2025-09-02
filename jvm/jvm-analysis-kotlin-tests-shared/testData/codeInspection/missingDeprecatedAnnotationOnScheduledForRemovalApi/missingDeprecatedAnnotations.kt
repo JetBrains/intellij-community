@@ -1,4 +1,4 @@
-package test;
+package test
 
 import org.jetbrains.annotations.ApiStatus
 
@@ -21,7 +21,7 @@ class NoWarnings {
 
   @ApiStatus.ScheduledForRemoval
   @Deprecated("reason")
-  val field: Int = 0;
+  val field: Int = 0
 
   @ApiStatus.ScheduledForRemoval
   @Deprecated("reason")

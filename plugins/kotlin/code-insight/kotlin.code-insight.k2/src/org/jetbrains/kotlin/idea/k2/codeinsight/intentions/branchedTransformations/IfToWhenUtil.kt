@@ -2,23 +2,25 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions.branchedTransformations
 
 import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiRecursiveVisitor
 import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.psi.AddLoopLabelUtil.getExistingLabelName
+import org.jetbrains.kotlin.idea.base.psi.AddLoopLabelUtil.getUniqueLabelName
 import org.jetbrains.kotlin.idea.base.psi.getSingleUnwrappedStatementOrThis
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.util.reformat
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.AddLoopLabelFix
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 
-fun convertIfToWhen(element: KtIfExpression, updater: ModPsiUpdater) {
-    val ifExpression = element.topmostIfExpression()
+fun convertIfToWhen(element: KtIfExpression, updater: ModPsiUpdater): KtWhenExpression {
+    val ifExpression = updater.getWritable(element.topmostIfExpression())
     val parent = ifExpression.parent
 
     val elementCommentSaver = CommentSaver(ifExpression, saveLineBreaks = true)
@@ -33,13 +35,16 @@ fun convertIfToWhen(element: KtIfExpression, updater: ModPsiUpdater) {
 
     val commentSaver = if (applyFullCommentSaver) fullCommentSaver else elementCommentSaver
 
-    val subjectedWhenExpression = analyze(element) {
-        val analysableWhenExpression =
-            org.jetbrains.kotlin.psi.KtPsiFactory(element.project).createExpressionCodeFragment(whenExpression.text, ifExpression)
-                .getContentElement() as KtWhenExpression
+    val whenExpressionInCodeFragment =
+        KtPsiFactory(element.project).createExpressionCodeFragment(whenExpression.text, ifExpression)
+            .getContentElement() as KtWhenExpression
 
-        val subject = analysableWhenExpression.getSubjectToIntroduce(false)
-        whenExpression.introduceSubjectIfPossible(subject, ifExpression)
+    // ensure comments from whenExpression are saved and won't be duplicated
+    commentSaver.elementCreatedByText(whenExpressionInCodeFragment, whenExpression, TextRange(0, whenExpression.textLength))
+
+    val subjectedWhenExpression = analyze(whenExpressionInCodeFragment) {
+        val subject = whenExpressionInCodeFragment.getSubjectToIntroduce(false)
+        whenExpressionInCodeFragment.introduceSubjectIfPossible(subject, ifExpression)
     }
 
     val result = ifExpression.replaced(subjectedWhenExpression)
@@ -57,12 +62,14 @@ fun convertIfToWhen(element: KtIfExpression, updater: ModPsiUpdater) {
     result.accept(loopJumpVisitor)
     val labelName = loopJumpVisitor.labelName
     if (loop != null && loopJumpVisitor.labelRequired && labelName != null && loop.parent !is KtLabeledExpression) {
-        val labeledLoopExpression = org.jetbrains.kotlin.psi.KtPsiFactory(result.project).createLabeledExpression(labelName)
+        val labeledLoopExpression = KtPsiFactory(result.project).createLabeledExpression(labelName)
         labeledLoopExpression.baseExpression!!.replace(loop)
 
         val replacedLabeledLoopExpression = loop.replace(labeledLoopExpression)
         replacedLabeledLoopExpression.reformat()
     }
+
+    return result
 }
 
 private fun createWhenExpression(
@@ -70,7 +77,7 @@ private fun createWhenExpression(
     toDelete: ArrayList<PsiElement>
 ): Pair<KtWhenExpression, Boolean> {
     var applyFullCommentSaver = true
-    val whenExpression = KtPsiFactory(ifExpression.project).buildExpression {
+    val whenExpression = KtPsiFactory(ifExpression.project).buildExpression(reformat = false) {
         appendFixedText("when {\n")
 
         var currentIfExpression = ifExpression
@@ -121,6 +128,17 @@ private fun createWhenExpression(
 
         appendFixedText("}")
     } as KtWhenExpression
+
+    // Ensure only entries inside when are formatted
+    // Explanation:
+    // KtPsiFactory#createExpression() creates top level property `val x = text` with expr as initializer,
+    // it leads to additional indentation of the whole `when` if reformatted.
+    // when we would build code fragments over this expression, indentation would be preserved, though the code doesn't really contain `val x`
+    val whenExpressionProperty = whenExpression.firstChild as? KtProperty
+    if (whenExpressionProperty != null) {
+        whenExpression.deleteChildRange(whenExpressionProperty, whenExpressionProperty.nextSibling)
+    }
+    whenExpression.entries.forEach { entry -> entry.reformat() }
 
     return Pair(whenExpression, applyFullCommentSaver)
 }
@@ -204,7 +222,7 @@ private fun KtIfExpression.siblingsUpTo(other: KtExpression): List<PsiElement> {
 private class LabelLoopJumpVisitor(private val nearestLoopIfAny: KtLoopExpression?) : KtVisitorVoid(),PsiRecursiveVisitor {
     val labelName: String? by lazy {
         nearestLoopIfAny?.let { loop ->
-            (loop.parent as? KtLabeledExpression)?.getLabelName() ?: AddLoopLabelFix.getUniqueLabelName(loop)
+            getExistingLabelName(loop) ?: getUniqueLabelName(loop)
         }
     }
 

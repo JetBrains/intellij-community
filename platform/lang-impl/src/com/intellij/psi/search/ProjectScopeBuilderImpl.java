@@ -5,7 +5,6 @@ import com.intellij.core.CoreProjectScopeBuilder;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.ide.scratch.RootType;
 import com.intellij.lang.LangBundle;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.project.Project;
@@ -34,10 +33,9 @@ public class ProjectScopeBuilderImpl extends ProjectScopeBuilder {
       final FileBasedIndexImpl myFileBasedIndex;
 
       {
-        boolean unitTestMode = ApplicationManager.getApplication().isUnitTestMode();
         FileBasedIndex fileBasedIndex = FileBasedIndex.getInstance();
         // handle case of EmptyFileBasedIndex
-        myFileBasedIndex = unitTestMode && !(fileBasedIndex instanceof FileBasedIndexImpl)
+        myFileBasedIndex = !(fileBasedIndex instanceof FileBasedIndexImpl)
                            ? null
                            : (FileBasedIndexImpl)fileBasedIndex;
       }

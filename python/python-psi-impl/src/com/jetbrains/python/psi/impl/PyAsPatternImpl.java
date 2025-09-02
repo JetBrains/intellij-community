@@ -22,4 +22,9 @@ public class PyAsPatternImpl extends PyElementImpl implements PyAsPattern {
   public @Nullable PyType getType(@NotNull TypeEvalContext context, TypeEvalContext.@NotNull Key key) {
     return context.getType(getPattern());
   }
+
+  @Override
+  public boolean canExcludePatternType(@NotNull TypeEvalContext context) {
+    return getPattern().canExcludePatternType(context);
+  }
 }

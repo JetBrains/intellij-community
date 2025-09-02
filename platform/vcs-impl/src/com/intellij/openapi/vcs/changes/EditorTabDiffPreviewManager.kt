@@ -5,7 +5,9 @@ import com.intellij.diff.tools.util.DiffDataKeys
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerListener
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use DiffEditorTabFilesManager instead")
 class EditorTabDiffPreviewManager(private val project: Project) {
   fun subscribeToPreviewVisibilityChange(disposable: Disposable, onVisibilityChange: Runnable) {
@@ -19,6 +21,7 @@ class EditorTabDiffPreviewManager(private val project: Project) {
   }
 
   companion object {
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("Use DiffDataKeys.EDITOR_TAB_DIFF_PREVIEW instead")
     @JvmField
     val EDITOR_TAB_DIFF_PREVIEW = DiffDataKeys.EDITOR_TAB_DIFF_PREVIEW

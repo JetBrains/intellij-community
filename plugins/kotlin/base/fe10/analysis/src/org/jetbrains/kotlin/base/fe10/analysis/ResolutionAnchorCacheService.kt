@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.base.fe10.analysis
 
@@ -54,7 +54,7 @@ interface ResolutionAnchorCacheService {
         val Empty = object : ResolutionAnchorCacheService {
             override val resolutionAnchorsForLibraries: Map<LibraryInfo, ModuleSourceInfo> get() = emptyMap()
             override val librariesForResolutionAnchors: Map<ModuleSourceInfo, List<LibraryInfo>> get() = emptyMap()
-            override val librariesForResolutionAnchorsIfComputed: Map<ModuleSourceInfo, List<LibraryInfo>>? get() = emptyMap()
+            override val librariesForResolutionAnchorsIfComputed: Map<ModuleSourceInfo, List<LibraryInfo>> get() = emptyMap()
             override fun getDependencyResolutionAnchors(libraryInfo: LibraryInfo): Set<ModuleSourceInfo> = emptySet()
         }
 

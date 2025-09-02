@@ -40,12 +40,12 @@ final class ChangeSignaturePassFactory implements TextEditorHighlightingPassFact
   }
 
   private static final class ChangeSignaturePass extends TextEditorHighlightingPass {
-    private final PsiFile myFile;
+    private final PsiFile myPsiFile;
     private final Editor myEditor;
 
-    ChangeSignaturePass(Project project, PsiFile file, Editor editor) {
+    ChangeSignaturePass(Project project, PsiFile psiFile, Editor editor) {
       super(project, editor.getDocument(), true);
-      myFile = file;
+      myPsiFile = psiFile;
       myEditor = editor;
     }
 
@@ -73,7 +73,7 @@ final class ChangeSignaturePassFactory implements TextEditorHighlightingPassFact
         builder.registerFix(action, null, null, null, null);
         info = builder.createUnconditionally();
       }
-      BackgroundUpdateHighlightersUtil.setHighlightersToEditor(myProject, myFile, myDocument, 0, myFile.getTextLength(),
+      BackgroundUpdateHighlightersUtil.setHighlightersToEditor(myProject, myPsiFile, myDocument, 0, myPsiFile.getTextLength(),
                                                                ContainerUtil.createMaybeSingletonList(info), getId());
     }
 

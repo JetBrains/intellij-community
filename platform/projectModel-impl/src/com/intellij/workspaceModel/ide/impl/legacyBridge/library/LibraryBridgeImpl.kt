@@ -15,6 +15,7 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryProperties
 import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TraceableDisposable
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.WorkspaceModel
@@ -58,7 +59,7 @@ class LibraryBridgeImpl(
   initialId: LibraryId,
   initialEntityStorage: VersionedEntityStorage,
   private var targetBuilder: MutableEntityStorage?,
-) : LibraryBridge, RootProvider, TraceableDisposable(true) {
+) : LibraryBridge, RootProvider, TraceableDisposable(true), Disposable {
 
   override fun getModule(): Module? = (libraryTable as? ModuleLibraryTableBridge)?.module
 
@@ -244,6 +245,15 @@ class LibraryBridgeImpl(
         return PathUtil.getFileName(PathUtil.toPresentableUrl(urls[0]))
       }
       return ProjectModelBundle.message("empty.library.title")
+    }
+
+    /**
+     * A temporary function which disposes instances of `Library`. All the usages should be eliminated to fix IJPL-183361.
+     */
+    @ApiStatus.Internal
+    @JvmStatic
+    fun disposeLibrary(library: Library) {
+      Disposer.dispose(library as Disposable)
     }
   }
 }

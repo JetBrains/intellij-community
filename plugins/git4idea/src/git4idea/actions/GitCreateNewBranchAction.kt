@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.actions
 
 import com.intellij.dvcs.getCommonCurrentBranch
@@ -11,7 +11,6 @@ import git4idea.actions.branch.GitBranchActionsUtil.getRepositoriesForTopLevelAc
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.createOrCheckoutNewBranch
-import git4idea.ui.branch.popup.GitBranchesTreePopupBase
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
@@ -48,7 +47,7 @@ class GitCreateNewBranchAction : DumbAwareAction() {
 
   private fun collectData(e: AnActionEvent): Data {
     val project = e.project ?: return Data.Invisible
-    val repositories = getRepositoriesForTopLevelActions(e) { it.place == GitBranchesTreePopupBase.TOP_LEVEL_ACTION_PLACE }
+    val repositories = getRepositoriesForTopLevelActions(e)
     if (repositories.any { it.isFresh }) {
       return Data.Disabled(GitBundle.message("action.New.Branch.disabled.fresh.description"))
     }

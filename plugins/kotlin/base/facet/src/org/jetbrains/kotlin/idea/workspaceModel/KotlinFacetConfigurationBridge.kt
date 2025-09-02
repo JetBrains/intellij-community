@@ -45,8 +45,8 @@ class KotlinFacetConfigurationBridge : KotlinFacetConfiguration, FacetConfigurat
 
     constructor(originKotlinSettingsEntity: KotlinSettingsEntity) :
             this(KotlinSettingsEntity(
-                originKotlinSettingsEntity.name,
                 originKotlinSettingsEntity.moduleId,
+                originKotlinSettingsEntity.name,
                 originKotlinSettingsEntity.sourceRoots,
                 originKotlinSettingsEntity.configFileItems,
                 originKotlinSettingsEntity.useProjectSettings,
@@ -82,8 +82,8 @@ class KotlinFacetConfigurationBridge : KotlinFacetConfiguration, FacetConfigurat
 
     override fun getEntityBuilder(moduleEntity: ModuleEntity.Builder): KotlinSettingsEntity.Builder {
         return KotlinSettingsEntity(
-            kotlinSettingsEntity.name,
             kotlinSettingsEntity.moduleId,
+            kotlinSettingsEntity.name,
             kotlinSettingsEntity.sourceRoots,
             kotlinSettingsEntity.configFileItems,
             kotlinSettingsEntity.useProjectSettings,

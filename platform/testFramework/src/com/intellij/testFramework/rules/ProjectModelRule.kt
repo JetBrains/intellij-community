@@ -70,8 +70,9 @@ open class ProjectModelRule : TestRule {
     return ruleChain.apply(base, description)
   }
 
-  fun createModule(name: String = "module"): Module {
-    val imlFile = generateImlPath(name)
+  @JvmOverloads
+  fun createModule(name: String = "module", moduleBaseDir: Path = projectRootDir): Module {
+    val imlFile = generateImlPath(name, moduleBaseDir)
     val manager = moduleManager
     return runWriteActionAndWait {
       manager.newModule(imlFile, EmptyModuleType.EMPTY_MODULE)
@@ -98,7 +99,9 @@ open class ProjectModelRule : TestRule {
     return srcRoot
   }
 
-  private fun generateImlPath(name: String) = projectRootDir.resolve("$name/$name.iml")
+  private fun generateImlPath(name: String, rootDir: Path = projectRootDir): Path {
+    return rootDir.resolve("$name/$name.iml")
+  }
 
   fun createSdk(name: String = "sdk", setup: (SdkModificator) -> Unit = {}): Sdk {
     val sdk = ProjectJdkTable.getInstance().createSdk(name, sdkType)

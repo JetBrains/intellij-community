@@ -22,6 +22,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -149,12 +150,19 @@ public class GotoTestOrCodeHandler extends GotoTargetHandler {
   }
 
   @Override
-  protected void navigateToElement(@NotNull Navigatable element) {
+  @ApiStatus.Internal
+  protected void navigateToElement(@Nullable Project project, @NotNull Navigatable element) {
     if (element instanceof PsiElement) {
       NavigationUtil.activateFileWithPsiElement((PsiElement)element, true);
     }
     else {
       element.navigate(true);
     }
+  }
+
+  @Override
+  @ApiStatus.Obsolete
+  protected void navigateToElement(@NotNull Navigatable element) {
+    navigateToElement(null, element);
   }
 }

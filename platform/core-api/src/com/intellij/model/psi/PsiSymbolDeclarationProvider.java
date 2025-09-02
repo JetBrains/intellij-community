@@ -3,6 +3,7 @@ package com.intellij.model.psi;
 
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 
@@ -37,5 +38,6 @@ public interface PsiSymbolDeclarationProvider {
    *                        The platform filters returned declarations by the offset later
    * @see com.intellij.psi.util.PsiTreeUtilKt#elementsAroundOffsetUp(com.intellij.psi.PsiFile, int)
    */
-  @NotNull Collection<? extends @NotNull PsiSymbolDeclaration> getDeclarations(@NotNull PsiElement element, int offsetInElement);
+  @NotNull @Unmodifiable
+  Collection<? extends @NotNull PsiSymbolDeclaration> getDeclarations(@NotNull PsiElement element, int offsetInElement);
 }

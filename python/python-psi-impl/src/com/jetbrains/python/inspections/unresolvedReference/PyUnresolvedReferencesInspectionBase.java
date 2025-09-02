@@ -5,7 +5,6 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElementVisitor;
-import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.inspections.PyInspection;
 import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NotNull;
@@ -36,15 +35,9 @@ public abstract class PyUnresolvedReferencesInspectionBase extends PyInspection 
   public final void inspectionFinished(@NotNull LocalInspectionToolSession session, @NotNull ProblemsHolder holder) {
     final PyUnresolvedReferencesVisitor visitor = session.getUserData(KEY);
     assert visitor != null;
-    ReadAction.run(
-      () -> {
-        visitor.addInstallAllImports();
-        if (PyCodeInsightSettings.getInstance().HIGHLIGHT_UNUSED_IMPORTS) {
-          visitor.highlightUnusedImports();
-        }
-        visitor.highlightImportsInsideGuards();
-      }
-    );
+    ReadAction.run(() -> {
+      visitor.addInstallAllImports();
+    });
     session.putUserData(KEY, null);
   }
 

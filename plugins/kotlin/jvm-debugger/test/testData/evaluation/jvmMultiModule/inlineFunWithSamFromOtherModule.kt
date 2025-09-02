@@ -32,4 +32,4 @@ fun main() {
     println()
 }
 
-// IGNORE_K2
+// IGNORE_K1

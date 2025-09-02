@@ -15,17 +15,17 @@ final class NewUiUtil {
   private NewUiUtil() {
   }
 
-  static @NotNull @NlsSafe String getVersion(@NotNull IdeaPluginDescriptor oldDescriptor,
-                                             @NotNull IdeaPluginDescriptor newDescriptor) {
+  static @NotNull @NlsSafe String getUpdateVersionText(@Nullable String oldVersion,
+                                                       @Nullable String newVersion) {
     return String.join(" ",
-                       getVersion(oldDescriptor),
+                       StringUtil.defaultIfEmpty(oldVersion, IdeBundle.message("plugin.info.unknown")),
                        UIUtil.rightArrow(),
-                       getVersion(newDescriptor));
+                       StringUtil.defaultIfEmpty(newVersion, IdeBundle.message("plugin.info.unknown")));
   }
 
-  private static @NotNull @NlsSafe String getVersion(@NotNull IdeaPluginDescriptor descriptor) {
-    return StringUtil.defaultIfEmpty(descriptor.getVersion(),
-                                     IdeBundle.message("plugin.info.unknown"));
+  static @NotNull @NlsSafe String getVersion(@NotNull IdeaPluginDescriptor oldDescriptor,
+                                             @NotNull IdeaPluginDescriptor newDescriptor) {
+    return getUpdateVersionText(oldDescriptor.getVersion(), newDescriptor.getVersion());
   }
 
   static boolean isDeleted(@Nullable IdeaPluginDescriptor descriptor) {

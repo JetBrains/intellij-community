@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.structureView.newStructureView;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.*;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.structureView.*;
@@ -84,7 +83,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class StructureViewComponent extends SimpleToolWindowPanel implements TreeActionsOwner, DataProvider, StructureView {
+public class StructureViewComponent extends SimpleToolWindowPanel implements TreeActionsOwner, StructureView {
   private static final Logger LOG = Logger.getInstance(StructureViewComponent.class);
 
   private static final Key<TreeState> STRUCTURE_VIEW_STATE_KEY = Key.create("STRUCTURE_VIEW_STATE");
@@ -376,16 +375,13 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   }
 
   @ApiStatus.Internal
-  public final DefaultActionGroup getViewActions() {
-    DefaultActionGroup result = new DefaultActionGroup(IdeBundle.message("group.view.options"), null, AllIcons.Actions.GroupBy);
-    result.setPopup(true);
+  public final void getViewActions(@NotNull DefaultActionGroup result) {
     result.addSeparator(StructureViewBundle.message("structureview.subgroup.sort"));
     result.addAll(sortActionsByName(getSortActions()));
     result.addSeparator(StructureViewBundle.message("structureview.subgroup.filter"));
     result.addAll(sortActionsByName(getFilterActions()));
     result.addSeparator(StructureViewBundle.message("structureview.subgroup.group"));
     addGroupByActions(result);
-    return result;
   }
 
   private @NotNull List<AnAction> getSortActions() {
@@ -425,8 +421,9 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   public final @NotNull List<AnAction> addExpandCollapseActions() {
     List<AnAction> result = new ArrayList<>();
     CommonActionsManager commonActionManager = CommonActionsManager.getInstance();
-    result.add(commonActionManager.createExpandAllHeaderAction(getTree()));
-    result.add(commonActionManager.createCollapseAllHeaderAction(getTree()));
+    var expander = new StructureViewExpander(myProject);
+    result.add(commonActionManager.createExpandAllHeaderAction(expander, getTree()));
+    result.add(commonActionManager.createCollapseAllHeaderAction(expander, getTree()));
     return result;
   }
 
@@ -809,6 +806,11 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   @Override
   public @NotNull StructureViewModel getTreeModel() {
     return myTreeModel;
+  }
+
+  @ApiStatus.Internal
+  public @NotNull AsyncTreeModel getAsyncTreeModel() {
+    return myAsyncTreeModel;
   }
 
   @Override

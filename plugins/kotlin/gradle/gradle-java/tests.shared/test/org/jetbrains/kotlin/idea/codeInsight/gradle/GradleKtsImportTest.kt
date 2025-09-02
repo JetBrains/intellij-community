@@ -11,16 +11,15 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.testFramework.replaceService
 import junit.framework.AssertionFailedError
-import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
-import org.jetbrains.kotlin.idea.core.script.applySuggestedScriptConfiguration
-import org.jetbrains.kotlin.idea.core.script.configuration.CompositeScriptConfigurationManager
-import org.jetbrains.kotlin.idea.core.script.configuration.loader.DefaultScriptConfigurationLoader
-import org.jetbrains.kotlin.idea.core.script.configuration.loader.ScriptConfigurationLoadingContext
 import org.jetbrains.kotlin.idea.core.script.configuration.utils.areSimilar
 import org.jetbrains.kotlin.idea.core.script.configuration.utils.getKtFile
+import org.jetbrains.kotlin.idea.core.script.k1.ScriptConfigurationManager
+import org.jetbrains.kotlin.idea.core.script.k1.applySuggestedScriptConfiguration
+import org.jetbrains.kotlin.idea.core.script.k1.configuration.loader.DefaultScriptConfigurationLoader
+import org.jetbrains.kotlin.idea.core.script.k1.configuration.loader.ScriptConfigurationLoadingContext
+import org.jetbrains.kotlin.idea.core.script.k1.ucache.listDependencies
 import org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptEntity
 import org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptLibraryRootTypeId
-import org.jetbrains.kotlin.idea.core.script.ucache.listDependencies
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrapper
@@ -45,8 +44,8 @@ abstract class GradleKtsImportTest : KotlinGradleImportingTestCase() {
 
     val projectDir: File get() = File(GradleSettings.getInstance(myProject).linkedProjectsSettings.first().externalProjectPath)
 
-    internal val scriptConfigurationManager: CompositeScriptConfigurationManager
-        get() = ScriptConfigurationManager.getInstance(myProject) as CompositeScriptConfigurationManager
+    internal val scriptConfigurationManager: ScriptConfigurationManager
+        get() = ScriptConfigurationManager.getInstance(myProject)
 
     override fun testDataDirName(): String = "gradleKtsImportTest"
 

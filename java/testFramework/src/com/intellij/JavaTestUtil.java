@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij;
 
 import com.intellij.openapi.Disposable;
@@ -14,6 +14,8 @@ import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+
+import java.util.List;
 
 public final class JavaTestUtil {
 
@@ -60,7 +62,7 @@ public final class JavaTestUtil {
   }
 
   public static LanguageLevel getMaxRegisteredLanguageLevel() {
-    LanguageLevel[] values = LanguageLevel.values();
-    return values[values.length - 1];
+    List<LanguageLevel> values = LanguageLevel.getEntries();
+    return values.get(values.size() - 1);
   }
 }

@@ -1,1 +1,1 @@
-org.jetbrains.kotlin.idea.codeInsight.intentions.shared.UnfoldPropertyToWhenIntention
+org.jetbrains.kotlin.idea.codeInsight.intentions.shared.branchedTransformations.UnfoldPropertyToWhenIntention

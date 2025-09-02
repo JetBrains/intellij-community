@@ -1,18 +1,24 @@
+- name: lib/apache.sshd.osgi.jar
+  library: apache.sshd.osgi
+  files:
+  - name: $MAVEN_REPOSITORY$/org/apache/sshd/sshd-osgi/2/sshd-osgi-2.jar
+  reason: <- intellij.settingsRepository
+- name: lib/eclipse.jgit.ssh.apache.agent.jar
+  library: eclipse.jgit.ssh.apache.agent
+  module: intellij.settingsRepository
+  files:
+  - name: $MAVEN_REPOSITORY$/org/eclipse/jgit/org.eclipse.jgit.ssh.apache.agent/6/org.eclipse.jgit.ssh.apache.agent-6.jar
+- name: lib/eclipse.jgit.ssh.apache.jar
+  library: eclipse.jgit.ssh.apache
+  module: intellij.settingsRepository
+  files:
+  - name: $MAVEN_REPOSITORY$/org/eclipse/jgit/org.eclipse.jgit.ssh.apache/6/org.eclipse.jgit.ssh.apache-6.jar
+- name: lib/jetbrains.intellij.deps.eclipse.jgit.jar
+  library: jetbrains.intellij.deps.eclipse.jgit
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/org.eclipse.jgit/6/org.eclipse.jgit-6.jar
+  - name: $MAVEN_REPOSITORY$/com/googlecode/javaewah/JavaEWAH/1/JavaEWAH-1.jar
+  reason: <- intellij.settingsRepository
 - name: lib/settingsRepository.jar
-  projectLibraries:
-  - name: apache.sshd.osgi
-    files:
-    - name: $MAVEN_REPOSITORY$/org/apache/sshd/sshd-osgi/2/sshd-osgi-2.jar
-    reason: <- intellij.settingsRepository
-  - name: jetbrains.intellij.deps.eclipse.jgit
-    files:
-    - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/org.eclipse.jgit/6/org.eclipse.jgit-6.jar
-    - name: $MAVEN_REPOSITORY$/com/googlecode/javaewah/JavaEWAH/1/JavaEWAH-1.jar
-    reason: <- intellij.settingsRepository
   modules:
   - name: intellij.settingsRepository
-    libraries:
-      eclipse.jgit.ssh.apache.agent:
-      - name: $MAVEN_REPOSITORY$/org/eclipse/jgit/org.eclipse.jgit.ssh.apache.agent/6/org.eclipse.jgit.ssh.apache.agent-6.jar
-      eclipse.jgit.ssh.apache:
-      - name: $MAVEN_REPOSITORY$/org/eclipse/jgit/org.eclipse.jgit.ssh.apache/6/org.eclipse.jgit.ssh.apache-6.jar

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.vcs
 
 import com.intellij.build.BuildView
@@ -9,8 +9,8 @@ import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.impl.RunConfigurationBeforeRunProviderDelegate
 import com.intellij.execution.impl.RunManagerImpl
-import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
+import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.execution.testframework.TestsUIUtil.TestResultPresentation
@@ -183,7 +183,7 @@ private class RunConfigurationBeforeCommitHandler(private val project: Project) 
       val executionConsole = descriptor.console
       val testResultForm = getTestRunnerResultsForm(executionConsole)
                            ?: getTestRunnerResultsForm((executionConsole as? ConsoleViewWithDelegate)?.delegate)
-      val processListener = object : ProcessAdapter() {
+      val processListener = object : ProcessListener {
         override fun processTerminated(event: ProcessEvent) {
           val result = RunConfigurationResult(
             event.exitCode,

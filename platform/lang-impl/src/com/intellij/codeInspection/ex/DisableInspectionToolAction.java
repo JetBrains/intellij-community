@@ -41,7 +41,7 @@ public class DisableInspectionToolAction extends IntentionAndQuickFixAction impl
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
     final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(project);
     InspectionProfile inspectionProfile = profileManager.getCurrentProfile();
     InspectionToolWrapper toolWrapper = inspectionProfile.getInspectionTool(myToolId, project);
@@ -49,8 +49,8 @@ public class DisableInspectionToolAction extends IntentionAndQuickFixAction impl
   }
 
   @Override
-  public void applyFix(@NotNull Project project, final PsiFile file, @Nullable Editor editor) {
-    InspectionProfileModifiableModelKt.modifyAndCommitProjectProfile(project, it -> it.disableTool(myToolId, file));
+  public void applyFix(@NotNull Project project, final PsiFile psiFile, @Nullable Editor editor) {
+    InspectionProfileModifiableModelKt.modifyAndCommitProjectProfile(project, it -> it.disableTool(myToolId, psiFile));
   }
 
   @Override

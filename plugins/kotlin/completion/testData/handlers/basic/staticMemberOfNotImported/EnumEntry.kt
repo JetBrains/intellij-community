@@ -4,5 +4,4 @@ fun foo() {
     Bar.<caret>
 }
 
-// IGNORE_K2
 // ELEMENT: FOO

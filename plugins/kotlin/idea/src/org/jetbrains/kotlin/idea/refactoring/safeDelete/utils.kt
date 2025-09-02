@@ -13,8 +13,8 @@ import com.intellij.refactoring.util.RefactoringDescriptionLocation
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.refactoring.removeOverrideModifier
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
-import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
 import java.util.*
@@ -36,19 +36,6 @@ fun PsiElement.canDeleteElement(): Boolean {
             || this is KtProperty
             || this is KtTypeParameter
             || this is KtTypeAlias
-}
-
-fun PsiElement.removeOverrideModifier() {
-    when (this) {
-        is KtNamedFunction, is KtProperty -> {
-            (this as KtModifierListOwner).modifierList?.getModifier(KtTokens.OVERRIDE_KEYWORD)?.delete()
-        }
-        is PsiMethod -> {
-            modifierList.annotations.firstOrNull { annotation ->
-                annotation.qualifiedName == "java.lang.Override"
-            }?.delete()
-        }
-    }
 }
 
 fun PsiMethod.cleanUpOverrides() {

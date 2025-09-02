@@ -8,59 +8,11 @@ import org.jetbrains.intellij.build.io.copyDir
 import java.nio.file.Files
 
 object PythonCommunityPluginModules {
-  @JvmField
-  val COMMUNITY_MODULES: PersistentList<String> = persistentListOf(
-    "intellij.commandInterface",
-    "intellij.python.community",
-    "intellij.python.community.communityOnly",
-    "intellij.python.community.core.impl",
-    "intellij.python.community.impl",
-    "intellij.python.community.impl.poetry",
-    "intellij.python.community.impl.installer",
-    "intellij.python.community.impl.huggingFace",
-    "intellij.python.community.impl.venv",
-    "intellij.python.community.services.systemPython",
-    "intellij.python.community.services.shared",
-    "intellij.python.community.services.internal.impl",
-    "intellij.python.community.execService",
-    "intellij.python.community.plugin.impl",
-    "intellij.python.community.plugin.java",
-    "intellij.python.community.plugin.minor",
-    "intellij.python.community.plugin.minorRider",
-    "intellij.python.copyright",
-    "intellij.python.featuresTrainer",
-    "intellij.python.grazie",
-    "intellij.python.langInjection",
-    "intellij.python.markdown",
-    "intellij.python.psi",
-    "intellij.python.psi.impl",
-    "intellij.python.pydev",
-    "intellij.python.sdk",
-    "intellij.python.terminal",
-    "intellij.python.ml.features",
-    "intellij.python.pyproject",
-    "intellij.python.hatch",
-  )
-
-  /**
-   * List of modules used in both Python plugin and Python Frontend plugin
-   */
-  @JvmField
-  val PYTHON_COMMON_MODULES: PersistentList<String> = persistentListOf(
-    "intellij.python.parser",
-    "intellij.python.ast",
-    "intellij.python.syntax",
-    "intellij.python.syntax.core"
-  )
 
   const val pythonCommunityName: String = "python-ce"
 
   fun pythonCommunityPluginLayout(body: ((PluginLayout.PluginLayoutSpec) -> Unit)? = null): PluginLayout {
-    return pythonPlugin("intellij.python.community.plugin", pythonCommunityName, COMMUNITY_MODULES) { spec ->
-      PYTHON_COMMON_MODULES.forEach {
-        spec.withModule(it, "python-common.jar")
-      }
-
+    return pythonPlugin("intellij.python.community.plugin", pythonCommunityName, emptyList()) { spec ->
       body?.invoke(spec)
       spec.withProjectLibrary("XmlRPC")
     }

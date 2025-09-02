@@ -15,11 +15,12 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ClassLoaderUtil
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.spellchecker.dictionary.Dictionary
+import com.intellij.spellchecker.dictionary.Dictionary.LookupStatus.*
 import com.intellij.spellchecker.grazie.SpellcheckerLifecycle
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
@@ -38,8 +39,6 @@ internal class GrazieSpellcheckerLifecycle : SpellcheckerLifecycle {
 @Service(Service.Level.APP)
 class GrazieCheckers(coroutineScope: CoroutineScope) : GrazieStateLifecycle {
 
-  private val MAX_SUGGESTIONS_COUNT = 3
-
   private val filter by lazy { RuleFilter.withAllBuiltIn() }
 
   private fun filterCheckers(word: String): Set<SpellerTool> {
@@ -54,7 +53,7 @@ class GrazieCheckers(coroutineScope: CoroutineScope) : GrazieStateLifecycle {
       .toSet()
   }
 
-  data class SpellerTool(val tool: JLanguageTool, val lang: Lang, val speller: SpellingCheckRule, val suggestLimit: Int) {
+  data class SpellerTool(val tool: JLanguageTool, val lang: Lang, val speller: SpellingCheckRule) {
     fun check(word: String): Boolean? = synchronized(speller) {
       if (word.isBlank()) return true
 
@@ -81,7 +80,7 @@ class GrazieCheckers(coroutineScope: CoroutineScope) : GrazieStateLifecycle {
               text.replaceRange(match.fromPos, match.toPos, it)
             }
           }
-          .take(suggestLimit).toSet()
+          .toSet()
       }
     }
   }
@@ -106,7 +105,7 @@ class GrazieCheckers(coroutineScope: CoroutineScope) : GrazieStateLifecycle {
 
       val tool = LangTool.getTool(lang)
       tool.allSpellingCheckRules.firstOrNull()
-        ?.let { set.add(SpellerTool(tool, lang, it, MAX_SUGGESTIONS_COUNT)) }
+        ?.let { set.add(SpellerTool(tool, lang, it)) }
     }
 
     return set
@@ -114,23 +113,23 @@ class GrazieCheckers(coroutineScope: CoroutineScope) : GrazieStateLifecycle {
 
   override fun update(prevState: GrazieConfig.State, newState: GrazieConfig.State) {
     configurationScope.launch {
-      checkers = blockingContext { heavyInit() }
+      checkers = heavyInit()
     }
   }
 
-  fun isCorrect(word: String): Boolean? {
+  fun lookup(word: String): Dictionary.LookupStatus {
     val myCheckers = filterCheckers(word)
 
     var isAlien = true
     for (speller in myCheckers) {
       when (speller.check(word)) {
-        true -> return true
+        true -> return Present
         false -> isAlien = false
         else -> {}
       }
     }
 
-    return if (isAlien) null else false
+    return if (isAlien) Alien else Absent
   }
 
   fun getSuggestions(word: String): Collection<String> {

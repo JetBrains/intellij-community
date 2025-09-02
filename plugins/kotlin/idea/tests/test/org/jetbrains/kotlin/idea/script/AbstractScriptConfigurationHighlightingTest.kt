@@ -3,15 +3,15 @@
 package org.jetbrains.kotlin.idea.script
 
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandler
-import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.core.script.k1.ScriptConfigurationManager
 import org.jetbrains.kotlin.psi.KtFile
 import org.junit.ComparisonFailure
 
 abstract class AbstractScriptConfigurationHighlightingTest : AbstractScriptConfigurationTest() {
     fun doTest(unused: String) {
         configureScriptFile(testDataFile())
-        assertNotNull(ScriptConfigurationManager.getInstance(project).getConfiguration(myFile as KtFile))
+        assertNotNull(ScriptConfigurationManager.getInstanceSafe(project)?.getConfiguration(myFile as KtFile))
 
         // Highlight references at caret
         HighlightUsagesHandler.invoke(project, editor, myFile)

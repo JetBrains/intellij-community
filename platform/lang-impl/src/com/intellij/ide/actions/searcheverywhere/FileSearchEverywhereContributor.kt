@@ -32,15 +32,18 @@ import com.intellij.ui.DirtyUI
 import com.intellij.util.Processor
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
+import java.util.function.Function
 import javax.swing.JList
 import javax.swing.ListCellRenderer
 
 private val LOG = Logger.getInstance(FileSearchEverywhereContributor::class.java)
 
-open class FileSearchEverywhereContributor(event: AnActionEvent) : AbstractGotoSEContributor(
-  event), EssentialContributor, SearchEverywherePreviewProvider {
+open class FileSearchEverywhereContributor(event: AnActionEvent, contributorModules: List<SearchEverywhereContributorModule>?) : AbstractGotoSEContributor(
+  event, contributorModules), EssentialContributor, SearchEverywherePreviewProvider {
   private val modelForRenderer: GotoFileModel
   private val filter: PersistentSearchEverywhereContributorFilter<FileTypeRef>
+
+  constructor(event: AnActionEvent) : this(event, null)
 
   init {
     val project = event.getRequiredData(CommonDataKeys.PROJECT)
@@ -77,7 +80,11 @@ open class FileSearchEverywhereContributor(event: AnActionEvent) : AbstractGotoS
     return object : SearchEverywherePsiRenderer(this) {
       @DirtyUI
       override fun getItemMatchers(list: JList<*>, value: Any): ItemMatchers {
-        val defaultMatchers = super.getItemMatchers(list, value)
+        return getNonComponentItemMatchers({ v -> super.getItemMatchers(list, v) }, value)
+      }
+
+      override fun getNonComponentItemMatchers(matcherProvider: Function<Any, ItemMatchers>, value: Any): ItemMatchers {
+        val defaultMatchers = matcherProvider.apply(value)
         if (value !is PsiFileSystemItem) {
           return defaultMatchers
         }

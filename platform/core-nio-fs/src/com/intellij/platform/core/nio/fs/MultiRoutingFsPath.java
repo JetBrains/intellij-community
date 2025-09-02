@@ -261,6 +261,6 @@ public final class MultiRoutingFsPath implements Path, sun.nio.fs.BasicFileAttri
 
   @Override
   public int hashCode() {
-    return Objects.hash(myDelegate, myFileSystem);
+    return myDelegate.hashCode() * 31 + myFileSystem.hashCode();
   }
 }

@@ -9,7 +9,7 @@ import com.jetbrains.python.PyTokenTypes;
 import com.intellij.openapi.util.text.StringUtil;
 
 
-class _PythonLexer implements FlexLexerEx {
+public class _PythonLexer implements FlexLexerEx {
 
   /** This character denotes the end of file */
   public static final int YYEOF = -1;
@@ -1020,7 +1020,7 @@ private int getSpaceLength(CharSequence string) {
    *
    * @param   in  the java.io.Reader to read input from.
    */
-  _PythonLexer(java.io.Reader in, PythonLexerKind kind) {
+  public _PythonLexer(java.io.Reader in, PythonLexerKind kind) {
     this.myKind = kind;
     this.zzReader = in;
   }

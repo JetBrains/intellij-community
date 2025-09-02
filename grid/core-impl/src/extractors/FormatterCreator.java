@@ -726,7 +726,7 @@ public class FormatterCreator {
     DecimalFormatSymbols symbols = format.getDecimalFormatSymbols();
     DataGridSettings settings = config != null ? config.getSettings() : null;
     String pattern = settings != null ? settings.getEffectiveNumberPattern() : null;
-    if (settings != null) {
+    if (settings != null && config.supportsNumberFormats()) {
       format.setGroupingUsed(settings.isNumberGroupingEnabled());
       symbols.setGroupingSeparator(settings.getNumberGroupingSeparator());
       symbols.setDecimalSeparator(settings.getDecimalSeparator());

@@ -4,6 +4,7 @@ package com.intellij.openapi.fileEditor.impl.text
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter
 import com.intellij.codeInsight.daemon.impl.TextEditorBackgroundHighlighter
 import com.intellij.codeInsight.folding.CodeFoldingManager
+import com.intellij.idea.AppModeAssertions
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readActionBlocking
 import com.intellij.openapi.application.writeIntentReadAction
@@ -18,9 +19,10 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory
 import com.intellij.openapi.editor.impl.EditorFactoryImpl
 import com.intellij.openapi.editor.impl.EditorGutterLayout
+import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.editor.impl.zombie.Necropolis
 import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader.Companion.isEditorLoaded
-import com.intellij.openapi.editor.impl.zombie.Necropolis
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.WriteExternalException
 import com.intellij.openapi.vfs.VirtualFile
@@ -28,6 +30,7 @@ import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.psi.PsiDocumentManager
 import kotlinx.coroutines.*
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.util.function.Supplier
 
@@ -55,7 +58,9 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
       val effectiveDocument = document!!
 
       // trigger opening of persistent maps in advance
-      project.serviceAsync<Necropolis>()
+      if (!AppModeAssertions.isBackend()) {
+        project.serviceAsync<Necropolis>()
+      }
 
       val highlighterDeferred = async(CoroutineName("editor highlighter creating")) {
         val scheme = serviceAsync<EditorColorsManager>().globalScheme
@@ -86,15 +91,7 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
 
       withContext(Dispatchers.EDT) {
         writeIntentReadAction {
-          val editor = factory.createMainEditor(
-            document = effectiveDocument,
-            project = project,
-            file = file,
-            highlighter = highlighter,
-            afterCreation = {
-              it.putUserData(AsyncEditorLoader.ASYNC_LOADER, asyncLoader)
-            },
-          )
+          val editor = initializeEditor(factory, effectiveDocument, project, file, highlighter, asyncLoader)
           editorDeferred.complete(editor)
           editor.gutterComponentEx.setInitialIconAreaWidth(EditorGutterLayout.getInitialGutterWidth())
           val component = createPsiAwareTextEditorComponent(file = file, editor = editor)
@@ -105,6 +102,25 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
       }
     }
   }
+
+  @ApiStatus.Internal
+  @ApiStatus.OverrideOnly
+  protected open fun initializeEditor(
+    factory: EditorFactoryImpl,
+    effectiveDocument: Document,
+    project: Project,
+    file: VirtualFile,
+    highlighter: EditorHighlighter,
+    asyncLoader: AsyncEditorLoader,
+  ): EditorImpl = factory.createMainEditor(
+    document = effectiveDocument,
+    project = project,
+    file = file,
+    highlighter = highlighter,
+    afterCreation = {
+      it.putUserData(AsyncEditorLoader.ASYNC_LOADER, asyncLoader)
+    },
+  )
 
   // Deferred<Unit> - to handle error by loader
   private fun createInitTask(
@@ -119,8 +135,10 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
       val editorSupplier = suspend { editorDeferred.await() }
       val highlighterReady = suspend { highlighterDeferred.join() }
 
-      val necropolis = project.serviceAsync<Necropolis>()
-      necropolis.spawnZombies(project, file, document, editorSupplier, highlighterReady)
+      if (!AppModeAssertions.isBackend()) {
+        val necropolis = project.serviceAsync<Necropolis>()
+        necropolis.spawnZombies(project, file, document, editorSupplier, highlighterReady)
+      }
 
       val editor = editorSupplier()
       span("editor languageSupplier set", Dispatchers.EDT) {

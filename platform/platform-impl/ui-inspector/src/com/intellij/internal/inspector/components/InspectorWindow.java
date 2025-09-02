@@ -11,10 +11,13 @@ import com.intellij.internal.inspector.PropertyBean;
 import com.intellij.internal.inspector.UiInspectorAction;
 import com.intellij.internal.inspector.UiInspectorCustomComponentChildProvider;
 import com.intellij.internal.inspector.UiInspectorImpl;
+import com.intellij.internal.inspector.accessibilityAudit.UiInspectorAccessibilityInspection;
+import com.intellij.internal.inspector.themePicker.UiThemeColorPicker;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -25,16 +28,18 @@ import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.pom.Navigatable;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.JBSplitter;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBThinOverlappingScrollBar;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.paint.RectanglePainter;
 import com.intellij.ui.tree.TreeVisitor;
+import com.intellij.util.MethodInvocator;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -43,8 +48,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.Accessible;
-import javax.accessibility.AccessibleContext;
 import javax.swing.*;
+import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.*;
@@ -70,16 +75,17 @@ public final class InspectorWindow extends JDialog implements Disposable {
   private final @NotNull Wrapper myWrapperPanel;
   private final @Nullable Project myProject;
   private final UiInspectorAction.UiInspector myInspector;
+  private final ToggleShowAccessibilityIssuesAction myShowAccessibilityIssuesAction;
 
   public InspectorWindow(@Nullable Project project,
                          @NotNull Component component,
                          @NotNull UiInspectorAction.UiInspector inspector,
                          @Nullable MouseEvent event) throws HeadlessException {
-    super(findWindow(component));
+    super(findOwnerDialog(component));
     myProject = project;
     myInspector = inspector;
-    Window window = findWindow(component);
-    setModal(window instanceof JDialog && ((JDialog)window).isModal());
+    Window ownerWindow = findOwnerDialog(component);
+    setModal(ownerWindow instanceof JDialog && ((JDialog)ownerWindow).isModal());
     myComponents.add(component);
     myInitialComponent = component;
     getRootPane().setBorder(JBUI.Borders.empty(5));
@@ -133,12 +139,14 @@ public final class InspectorWindow extends JDialog implements Disposable {
     actions.addSeparator();
     actions.add(new ToggleAccessibleAction());
     actions.addSeparator();
+    actions.addAction(new ToggleThemeColorPickerAction());
+    actions.addSeparator();
     actions.add(new ShowDataContextAction());
     actions.addSeparator();
     actions.add(new MyNavigateAction());
     actions.addSeparator();
-    ShowAccessibilityIssuesAction showAccessibilityIssuesAction = new ShowAccessibilityIssuesAction();
-    actions.add(showAccessibilityIssuesAction);
+    myShowAccessibilityIssuesAction = new ToggleShowAccessibilityIssuesAction();
+    actions.add(myShowAccessibilityIssuesAction);
 
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.CONTEXT_TOOLBAR, actions, true);
     toolbar.setTargetComponent(getRootPane());
@@ -180,6 +188,18 @@ public final class InspectorWindow extends JDialog implements Disposable {
         });
       }
     });
+
+    if (isDoubleBufferingDisabled(component)) {
+      String message = "Double buffering is disabled for this window. See 'com.intellij.util.ui.GraphicsUtil.safelyGetGraphics' JavaDoc.";
+      if (SystemProperties.getBooleanProperty("idea.debug.mode", false)) {
+        message += "<br>To find the cause, you may pass a '-Dswing.logDoubleBufferingDisable=true' option " +
+                   "or put a breakpoint into 'javax.swing.JRootPane.disableTrueDoubleBuffering', " +
+                   "and restart IDE. Please report an issue in YouTrack.";
+      }
+      InlineBanner banner = new InlineBanner(message, EditorNotificationPanel.Status.Error);
+      topPanel.add(banner);
+    }
+
     topPanel.add(navBarScroll);
     add(topPanel, BorderLayout.NORTH);
 
@@ -202,8 +222,8 @@ public final class InspectorWindow extends JDialog implements Disposable {
     updateHighlighting();
     getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "CLOSE");
 
-    if (PropertiesComponent.getInstance().getBoolean(ShowAccessibilityIssuesAction.SHOW_ACCESSIBILITY_ISSUES_KEY, false)) {
-      showAccessibilityIssuesAction.updateTreeWithAccessibilityStatus();
+    if (myShowAccessibilityIssuesAction.showAccessibilityIssues) {
+      myShowAccessibilityIssuesAction.updateTreeWithAccessibilityAuditStatus();
     }
   }
 
@@ -218,7 +238,7 @@ public final class InspectorWindow extends JDialog implements Disposable {
     return "UiInspectorWindow";
   }
 
-  private static Window findWindow(Component component) {
+  private static Window findOwnerDialog(Component component) {
     DialogWrapper dialogWrapper = DialogWrapper.findInstance(component);
     if (dialogWrapper != null) {
       return dialogWrapper.getPeer().getWindow();
@@ -238,7 +258,7 @@ public final class InspectorWindow extends JDialog implements Disposable {
     Component showingComponent = components.get(0);
     setTitle(showingComponent.getClass().getName());
     Disposer.dispose(myInspectorTable);
-    myInspectorTable = new InspectorTable(showingComponent, myProject);
+    myInspectorTable = new InspectorTable(showingComponent, myProject, getSelectedNodeFailedAccessibilityInspections());
     myWrapperPanel.setContent(myInspectorTable);
     myNavBarPanel.setSelectedComponent(showingComponent);
   }
@@ -248,7 +268,7 @@ public final class InspectorWindow extends JDialog implements Disposable {
     myInfo = clickInfo;
     setTitle("Click Info");
     Disposer.dispose(myInspectorTable);
-    myInspectorTable = new InspectorTable(clickInfo, myProject);
+    myInspectorTable = new InspectorTable(clickInfo, myProject, getSelectedNodeFailedAccessibilityInspections());
     myWrapperPanel.setContent(myInspectorTable);
   }
 
@@ -437,6 +457,38 @@ public final class InspectorWindow extends JDialog implements Disposable {
     return null;
   }
 
+
+  private static boolean isDoubleBufferingDisabled(Component component) {
+    // we do not want to get the Popup.HeavyWeightWindow
+    Component window = ComponentUtil.findParentByCondition(component, it -> {
+      return it instanceof JFrame || it instanceof JDialog;
+    });
+    if (window instanceof RootPaneContainer) {
+      JRootPane rootPane = ((RootPaneContainer)window).getRootPane();
+      try {
+        MethodInvocator invocator = new MethodInvocator(JRootPane.class, "getUseTrueDoubleBuffering");
+        if (invocator.isAvailable()) {
+          boolean useTrueDoubleBuffering = (boolean)invocator.invoke(rootPane);
+          return !useTrueDoubleBuffering;
+        }
+      }
+      catch (Throwable e) {
+        Logger.getInstance(InspectorWindow.class).warn(e);
+        return false;
+      }
+    }
+    return false;
+  }
+
+  private @NotNull List<UiInspectorAccessibilityInspection> getSelectedNodeFailedAccessibilityInspections() {
+    List<UiInspectorAccessibilityInspection> failedInspections = Collections.emptyList();
+    TreePath path = myHierarchyTree.getSelectionPath();
+    if (path != null && path.getLastPathComponent() instanceof HierarchyTree.ComponentNode node) {
+      failedInspections = node.getFailedAccessibilityInspections();
+    }
+    return failedInspections;
+  }
+
   private class MyRootPane extends JRootPane implements UiDataProvider {
     @Override
     public void uiDataSnapshot(@NotNull DataSink sink) {
@@ -461,7 +513,7 @@ public final class InspectorWindow extends JDialog implements Disposable {
     }
   }
 
-  private final class ToggleHighlightAction extends MyTextAction {
+  private final class ToggleHighlightAction extends MyTextAction implements Toggleable {
     private ToggleHighlightAction() {
       super(IdeBundle.messagePointer("action.Anonymous.text.highlight"));
     }
@@ -475,6 +527,7 @@ public final class InspectorWindow extends JDialog implements Disposable {
     @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(myInfo != null || !myComponents.isEmpty());
+      Toggleable.setSelected(e.getPresentation(), myIsHighlighted);
     }
 
     @Override
@@ -483,49 +536,42 @@ public final class InspectorWindow extends JDialog implements Disposable {
     }
   }
 
-  private final class ShowAccessibilityIssuesAction extends MyTextAction {
-    private final boolean isAccessibilityAuditEnabled = Registry.is("ui.inspector.accessibility.audit", false);
+  private final class ToggleShowAccessibilityIssuesAction extends MyTextAction implements Toggleable {
+    private final boolean isAccessibilityAuditEnabled = Registry.is("ui.inspector.accessibility.audit", true);
     public static final String SHOW_ACCESSIBILITY_ISSUES_KEY = "ui.inspector.show.accessibility.issues.key";
     private boolean showAccessibilityIssues;
 
-    private ShowAccessibilityIssuesAction() {
+    private ToggleShowAccessibilityIssuesAction() {
       super(InternalActionsBundle.messagePointer("action.Anonymous.text.ShowAccessibilityIssues"));
       showAccessibilityIssues = PropertiesComponent.getInstance().getBoolean(SHOW_ACCESSIBILITY_ISSUES_KEY, false);
+      getTemplatePresentation().setDescription(
+        InternalActionsBundle.messagePointer("action.Anonymous.description.ShowAccessibilityIssues"));
     }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       showAccessibilityIssues = !showAccessibilityIssues;
       PropertiesComponent.getInstance().setValue(SHOW_ACCESSIBILITY_ISSUES_KEY, showAccessibilityIssues);
-      updateTreeWithAccessibilityStatus();
+      updateTreeWithAccessibilityAuditStatus();
     }
 
     @Override
-    public void update(@NotNull AnActionEvent e) { e.getPresentation().setEnabledAndVisible(isAccessibilityAuditEnabled); }
+    public void update(@NotNull AnActionEvent e) {
+      e.getPresentation().setEnabledAndVisible(isAccessibilityAuditEnabled);
+      Toggleable.setSelected(e.getPresentation(), showAccessibilityIssues);
+    }
 
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() { return ActionUpdateThread.BGT; }
 
-    private void updateTreeWithAccessibilityStatus() {
+    private void updateTreeWithAccessibilityAuditStatus() {
       TreeUtil.visitVisibleRows(myHierarchyTree, path -> {
         Object node = path.getLastPathComponent();
         if (node instanceof HierarchyTree.ComponentNode componentNode) {
           if (showAccessibilityIssues) {
-            Component component = componentNode.getComponent();
-            Accessible accessible = componentNode.getAccessible();
-            AccessibleContext ac = null;
-
-            if (component instanceof Accessible a) {
-              ac = a.getAccessibleContext();
-            }
-            else if (component == null && accessible != null) {
-              ac = accessible.getAccessibleContext();
-            }
-            if (ac != null) {
-              componentNode.runAccessibilityTests(ac);
-            }
+            componentNode.runAccessibilityAudit();
           } else {
-            componentNode.clearAccessibilityTestsResult();
+            componentNode.clearAccessibilityAuditResult();
           }
         }
 
@@ -557,7 +603,7 @@ public final class InspectorWindow extends JDialog implements Disposable {
     }
   }
 
-  private final class ToggleAccessibleAction extends MyTextAction {
+  private final class ToggleAccessibleAction extends MyTextAction implements Toggleable {
     private boolean isAccessibleEnable = false;
 
     private ToggleAccessibleAction() {
@@ -571,9 +617,7 @@ public final class InspectorWindow extends JDialog implements Disposable {
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      e.getPresentation().setText(isAccessibleEnable
-                                  ? InternalActionsBundle.message("action.Anonymous.text.Visible")
-                                  : InternalActionsBundle.message("action.Anonymous.text.Accessible"));
+      Toggleable.setSelected(e.getPresentation(), isAccessibleEnable);
     }
 
     @Override
@@ -597,6 +641,31 @@ public final class InspectorWindow extends JDialog implements Disposable {
       if (selected != null) {
         myHierarchyTree.selectPath(selected, isAccessibleEnable);
       }
+
+      if (myShowAccessibilityIssuesAction.showAccessibilityIssues) {
+        myShowAccessibilityIssuesAction.updateTreeWithAccessibilityAuditStatus();
+      }
+    }
+  }
+
+  private final class ToggleThemeColorPickerAction extends MyTextAction implements Toggleable {
+    private ToggleThemeColorPickerAction() {
+      super(InternalActionsBundle.messagePointer("action.Anonymous.text.colorPicker"));
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      UiThemeColorPicker.getInstance().setEnabled(!UiThemeColorPicker.getInstance().isEnabled());
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      Toggleable.setSelected(e.getPresentation(), UiThemeColorPicker.getInstance().isEnabled());
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
   }
 
@@ -613,8 +682,12 @@ public final class InspectorWindow extends JDialog implements Disposable {
       if (node == null) return;
       JComponent c = UIUtil.getParentOfType(JComponent.class, node.getComponent());
       if (c == null) return;
+      var components = JBIterable.<TreeNode>generate(node, o -> o.getParent())
+        .filter(HierarchyTree.ComponentNode.class)
+        .filterMap(o -> o.getComponent())
+        .toList();
 
-      new DataContextDialog(myProject, c).show();
+      new DataContextDialog(myProject, components).show();
     }
   }
 

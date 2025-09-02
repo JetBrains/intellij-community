@@ -3,8 +3,9 @@ package com.siyeh.ig.annotation;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.MetaAnnotationUtil;
-import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
+import com.intellij.codeInsight.intention.AddAnnotationModCommandAction;
 import com.intellij.codeInspection.*;
+import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.util.ObjectUtils;
@@ -35,14 +36,15 @@ public final class MetaAnnotationWithoutRuntimeRetentionInspection extends Abstr
         String runtimeRef = StringUtil.getQualifiedName("java.lang.annotation.RetentionPolicy", "RUNTIME");
         PsiAnnotation newAnnotation = JavaPsiFacade.getElementFactory(aClass.getProject())
           .createAnnotationFromText("@Retention(" + runtimeRef + ")", aClass);
-        AddAnnotationPsiFix annotationPsiFix = new AddAnnotationPsiFix(CommonClassNames.JAVA_LANG_ANNOTATION_RETENTION,
-                                                                       aClass,
-                                                                       newAnnotation.getParameterList().getAttributes());
+        ModCommandAction annotationPsiFix = new AddAnnotationModCommandAction(CommonClassNames.JAVA_LANG_ANNOTATION_RETENTION,
+                                                                              aClass,
+                                                                              newAnnotation.getParameterList().getAttributes());
         ProblemDescriptor descriptor =
           manager.createProblemDescriptor(ObjectUtils.notNull(aClass.getNameIdentifier(), aClass),
                                           InspectionGadgetsBundle.message("inspection.meta.annotation.without.runtime.description",
                                                                           aClass.getName()),
-                                          annotationPsiFix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
+                                          LocalQuickFix.from(annotationPsiFix), 
+                                          ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
         return new ProblemDescriptor[]{descriptor};
       }
       else {

@@ -1,21 +1,23 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java.parser;
 
 import com.intellij.core.JavaPsiBundle;
+import com.intellij.java.syntax.lexer.JavaDocLexer;
+import com.intellij.java.syntax.lexer.JavaLexer;
 import com.intellij.lang.*;
 import com.intellij.lang.impl.PsiBuilderAdapter;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.lang.java.lexer.BasicJavaLexer;
-import com.intellij.lang.java.lexer.JavaDocLexer;
-import com.intellij.lexer.Lexer;
-import com.intellij.lexer.TokenList;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
+import com.intellij.platform.syntax.lexer.Lexer;
+import com.intellij.platform.syntax.lexer.TokenList;
+import com.intellij.platform.syntax.parser.SyntaxTreeBuilder;
+import com.intellij.platform.syntax.psi.*;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.ParsingDiagnostics;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.BasicJavaAstTreeUtil;
@@ -32,6 +34,7 @@ import org.jetbrains.annotations.PropertyKey;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+import static com.intellij.platform.syntax.lexer.TokenListUtil.tokenListLexer;
 import static com.intellij.psi.impl.source.BasicJavaDocElementType.BASIC_DOC_COMMENT;
 
 @ApiStatus.Experimental
@@ -39,23 +42,44 @@ public final class BasicJavaParserUtil {
   private static final Key<LanguageLevel> LANG_LEVEL_KEY = Key.create("JavaParserUtil.LanguageLevel");
   private static final Key<Boolean> DEEP_PARSE_BLOCKS_IN_STATEMENTS = Key.create("JavaParserUtil.ParserExtender");
 
+  private static final com.intellij.platform.syntax.Logger SYNTAX_LOGGER = IntelliJLogger.asSyntaxLogger(Logger.getInstance(BasicJavaParserUtil.class));
 
   private BasicJavaParserUtil() { }
 
+  /**
+   * @deprecated Use the new Java syntax library instead.
+   *             See {@link com.intellij.java.syntax.parser.JavaParser}
+   */
+  @Deprecated
   public static void setLanguageLevel(final PsiBuilder builder, final LanguageLevel level) {
     builder.putUserData(LANG_LEVEL_KEY, level);
   }
 
+  /**
+   * @deprecated Use the new Java syntax library instead.
+   *             See {@link com.intellij.java.syntax.parser.JavaParser}
+   */
+  @Deprecated
   public static @NotNull LanguageLevel getLanguageLevel(final PsiBuilder builder) {
     final LanguageLevel level = builder.getUserData(LANG_LEVEL_KEY);
     assert level != null : builder;
     return level;
   }
 
+  /**
+   * @deprecated Use the new Java syntax library instead.
+   *             See {@link com.intellij.java.syntax.parser.JavaParser}
+   */
+  @Deprecated
   public static void setParseStatementCodeBlocksDeep(final PsiBuilder builder, final boolean deep) {
     builder.putUserData(DEEP_PARSE_BLOCKS_IN_STATEMENTS, deep);
   }
 
+  /**
+   * @deprecated Use the new Java syntax library instead.
+   *             See {@link com.intellij.java.syntax.parser.JavaParser}
+   */
+  @Deprecated
   public static boolean isParseStatementCodeBlocksDeep(final PsiBuilder builder) {
     return Boolean.TRUE.equals(builder.getUserData(DEEP_PARSE_BLOCKS_IN_STATEMENTS));
   }
@@ -77,6 +101,11 @@ public final class BasicJavaParserUtil {
     marker.setCustomEdgeTokenBinders(left, right);
   }
 
+  /**
+   * @deprecated Use the new Java syntax library instead.
+   *             See {@link com.intellij.java.syntax.parser.JavaParser}
+   */
+  @Deprecated
   public static void done(final @NotNull PsiBuilder.Marker marker,
                           final @NotNull IElementType type,
                           final @NotNull PsiBuilder builder,
@@ -91,15 +120,30 @@ public final class BasicJavaParserUtil {
     marker.setCustomEdgeTokenBinders(left, right);
   }
 
+  /**
+   * @deprecated Use the new Java syntax library instead.
+   *             See {@link com.intellij.java.syntax.parser.JavaParser}
+   */
+  @Deprecated
   public static @Nullable IElementType exprType(final @Nullable PsiBuilder.Marker marker) {
     return marker != null ? marker.getTokenType() : null;
   }
 
   // used instead of PsiBuilder.error() as it keeps all subsequent error messages
+  /**
+   * @deprecated Use the new Java syntax library instead.
+   *             See {@link com.intellij.java.syntax.parser.JavaParser}
+   */
+  @Deprecated
   public static void error(final PsiBuilder builder, @NotNull @NlsContexts.ParsingError String message) {
     builder.mark().error(message);
   }
 
+  /**
+   * @deprecated Use the new Java syntax library instead.
+   *             See {@link com.intellij.java.syntax.parser.JavaParser}
+   */
+  @Deprecated
   public static void error(final PsiBuilder builder,
                            @NotNull @NlsContexts.ParsingError String message,
                            final @Nullable PsiBuilder.Marker before) {
@@ -111,6 +155,11 @@ public final class BasicJavaParserUtil {
     }
   }
 
+  /**
+   * @deprecated Use the new Java syntax library instead.
+   *             See {@link com.intellij.java.syntax.parser.JavaParser}
+   */
+  @Deprecated
   public static boolean expectOrError(PsiBuilder builder,
                                       TokenSet expected,
                                       @PropertyKey(resourceBundle = JavaPsiBundle.BUNDLE) String key) {
@@ -121,6 +170,11 @@ public final class BasicJavaParserUtil {
     return true;
   }
 
+  /**
+   * @deprecated Use the new Java syntax library instead.
+   *             See {@link com.intellij.java.syntax.parser.JavaParser}
+   */
+  @Deprecated
   public static boolean expectOrError(PsiBuilder builder,
                                       IElementType expected,
                                       @PropertyKey(resourceBundle = JavaPsiBundle.BUNDLE) String key) {
@@ -131,18 +185,38 @@ public final class BasicJavaParserUtil {
     return true;
   }
 
+  /**
+   * @deprecated Use the new Java syntax library instead.
+   *             See {@link com.intellij.java.syntax.parser.JavaParser}
+   */
+  @Deprecated
   public static void emptyElement(final PsiBuilder builder, final IElementType type) {
     builder.mark().done(type);
   }
 
+  /**
+   * @deprecated Use the new Java syntax library instead.
+   *             See {@link com.intellij.java.syntax.parser.JavaParser}
+   */
+  @Deprecated
   public static void emptyElement(final PsiBuilder.Marker before, final IElementType type) {
     before.precede().doneBefore(type, before);
   }
 
+  /**
+   * @deprecated Use the new Java syntax library instead.
+   *             See {@link com.intellij.java.syntax.parser.JavaParser}
+   */
+  @Deprecated
   public static void semicolon(final PsiBuilder builder) {
     expectOrError(builder, JavaTokenType.SEMICOLON, "expected.semicolon");
   }
 
+  /**
+   * @deprecated Use the new Java syntax library instead.
+   *             See {@link com.intellij.java.syntax.parser.JavaParser}
+   */
+  @Deprecated
   public static PsiBuilder braceMatchingBuilder(final PsiBuilder builder) {
     final PsiBuilder.Marker pos = builder.mark();
 
@@ -163,6 +237,11 @@ public final class BasicJavaParserUtil {
     return stoppingBuilder(builder, stopAt);
   }
 
+  /**
+   * @deprecated Use the new Java syntax library instead.
+   *             See {@link com.intellij.java.syntax.parser.JavaParser}
+   */
+  @Deprecated
   public static PsiBuilder stoppingBuilder(final PsiBuilder builder, final int stopAt) {
     return new PsiBuilderAdapter(builder) {
       @Override
@@ -179,9 +258,14 @@ public final class BasicJavaParserUtil {
 
   @FunctionalInterface
   public interface ParserWrapper {
-    void parse(PsiBuilder builder);
+    void parse(@NotNull SyntaxTreeBuilder builder, @NotNull LanguageLevel languageLevel);
   }
 
+  /**
+   * @deprecated Use the new Java syntax library instead.
+   *             See {@link com.intellij.java.syntax.parser.JavaParser}
+   */
+  @Deprecated
   public static PsiBuilder stoppingBuilder(final PsiBuilder builder, final Predicate<? super Pair<IElementType, String>> condition) {
     return new PsiBuilderAdapter(builder) {
       @Override
@@ -198,48 +282,103 @@ public final class BasicJavaParserUtil {
     };
   }
 
-  public static @Nullable ASTNode parseFragment(final ASTNode chameleon, final BasicJavaParserUtil.ParserWrapper wrapper,
-                                                Function<LanguageLevel, JavaDocLexer> javaDocLexer,
-                                                Function<LanguageLevel, BasicJavaLexer> javaLexer) {
-    return parseFragment(chameleon, wrapper, true, LanguageLevel.HIGHEST, javaDocLexer, javaLexer);
+  public static @Nullable ASTNode parseFragmentWithHighestLanguageLevel(
+    ASTNode chameleon,
+    BasicJavaParserUtil.ParserWrapper wrapper
+  ) {
+    return parseFragment(chameleon, wrapper, true, LanguageLevel.HIGHEST, JavaLexer::new);
   }
 
-  public static @Nullable ASTNode parseFragment(final ASTNode chameleon,
-                                                final BasicJavaParserUtil.ParserWrapper wrapper,
-                                                final boolean eatAll,
-                                                final LanguageLevel level,
-                                                Function<LanguageLevel, JavaDocLexer> javaDocLexer,
-                                                Function<LanguageLevel, ? extends Lexer> javaLexer) {
+  public static @Nullable ASTNode parseFragment(
+    @NotNull ASTNode chameleon,
+    @NotNull BasicJavaParserUtil.ParserWrapper wrapper,
+    boolean eatAll,
+    @NotNull LanguageLevel level) {
+    return parseFragment(chameleon, wrapper, eatAll, level, JavaLexer::new);
+  }
+
+  public static @Nullable ASTNode parseFragment(
+    @NotNull ASTNode chameleon,
+    @NotNull BasicJavaParserUtil.ParserWrapper wrapper,
+    boolean eatAll,
+    @NotNull LanguageLevel level,
+    @NotNull Function<LanguageLevel, ? extends Lexer> javaLexer
+  ) {
     final PsiElement psi = chameleon.getTreeParent() != null ? chameleon.getTreeParent().getPsi() : chameleon.getPsi();
     assert psi != null : chameleon;
-    final Project project = psi.getProject();
 
-    final PsiBuilderFactory factory = PsiBuilderFactory.getInstance();
-    final Lexer lexer = BasicJavaAstTreeUtil.is(chameleon, BASIC_DOC_COMMENT) ? javaDocLexer.apply(level) : javaLexer.apply(level);
-    final PsiBuilder builder =
-      factory.createBuilder(project, chameleon, lexer, chameleon.getElementType().getLanguage(), chameleon.getChars());
-    setLanguageLevel(builder, level);
+    PsiSyntaxBuilderFactory factory = PsiSyntaxBuilderFactory.getInstance();
+    Lexer lexer = BasicJavaAstTreeUtil.is(chameleon, BASIC_DOC_COMMENT) ? new JavaDocLexer(level) : javaLexer.apply(level);
+    PsiSyntaxBuilder psiBuilder = factory.createBuilder(chameleon, lexer, chameleon.getElementType().getLanguage(), chameleon.getChars());
 
     long startTime = System.nanoTime();
-    final PsiBuilder.Marker root = builder.mark();
-    wrapper.parse(builder);
+    SyntaxTreeBuilder builder = psiBuilder.getSyntaxTreeBuilder();
+    SyntaxTreeBuilder.Marker root = builder.mark();
+    wrapper.parse(builder, level);
     if (!builder.eof()) {
       if (!eatAll) throw new AssertionError("Unexpected token: '" + builder.getTokenText() + "'");
-      final PsiBuilder.Marker extras = builder.mark();
+      final SyntaxTreeBuilder.Marker extras = builder.mark();
       while (!builder.eof()) builder.advanceLexer();
       extras.error(JavaPsiBundle.message("unexpected.tokens"));
     }
-    root.done(chameleon.getElementType());
-    ASTNode result = builder.getTreeBuilt().getFirstChildNode();
+    ElementTypeConverter converter = ElementTypeConverters.getConverter(JavaLanguage.INSTANCE);
+    root.done(ElementTypeConverterKt.convertNotNull(converter, chameleon.getElementType()));
+    ASTNode result = psiBuilder.getTreeBuilt().getFirstChildNode();
     ParsingDiagnostics.registerParse(builder, chameleon.getElementType().getLanguage(), System.nanoTime() - startTime);
     return result;
   }
 
 
+  public static @NotNull PsiSyntaxBuilderWithLanguageLevel createSyntaxBuilder(@NotNull ASTNode chameleon,
+                                                                               @NotNull Function<PsiElement, LanguageLevel> languageLevelFunction,
+                                                                               @NotNull Function<PsiFile, TokenList> psiAsLexer) {
+    PsiElement psi = chameleon.getPsi();
+    assert psi != null : chameleon;
+
+    CharSequence indexedText = psi.getUserData(IndexingDataKeys.FILE_TEXT_CONTENT_KEY);
+
+    CharSequence text;
+    if (TreeUtil.isCollapsedChameleon(chameleon)) {
+      text = chameleon.getChars();
+    }
+    else {
+      text = indexedText;
+      if (text == null) text = chameleon.getChars();
+    }
+
+    LanguageLevel level = languageLevelFunction.apply(psi);
+    Lexer lexer = psi instanceof PsiFile && indexedText != null ? tokenListLexer(psiAsLexer.apply((PsiFile)psi), SYNTAX_LOGGER)
+                                                                : new JavaLexer(level);
+    Language language = psi.getLanguage();
+    if (!language.isKindOf(JavaLanguage.INSTANCE)) language = JavaLanguage.INSTANCE;
+    PsiSyntaxBuilderFactory factory = PsiSyntaxBuilderFactory.getInstance();
+    PsiSyntaxBuilder builder = factory.createBuilder(chameleon, lexer, language, text);
+
+    return new PsiSyntaxBuilderWithLanguageLevel(builder, level);
+  }
+
+  public static @NotNull PsiSyntaxBuilderWithLanguageLevel createSyntaxBuilder(@NotNull LighterLazyParseableNode chameleon,
+                                                                               @NotNull Function<PsiElement, LanguageLevel> languageLevelFunction) {
+    PsiElement psi = chameleon.getContainingFile();
+    assert psi != null : chameleon;
+
+    PsiSyntaxBuilderFactory factory = PsiSyntaxBuilderFactory.getInstance();
+    LanguageLevel level = languageLevelFunction.apply(psi);
+    Lexer lexer = new JavaLexer(level);
+    PsiSyntaxBuilder builder = factory.createBuilder(chameleon, lexer, chameleon.getTokenType().getLanguage(), chameleon.getText());
+
+    return new PsiSyntaxBuilderWithLanguageLevel(builder, level);
+  }
+
+  /**
+   * @deprecated Use the new Java syntax library instead.
+   *             See {@link com.intellij.java.syntax.parser.JavaParser}
+   */
+  @Deprecated
   public static @NotNull PsiBuilder createBuilder(final @NotNull ASTNode chameleon,
                                                   @NotNull Function<PsiElement, LanguageLevel> languageLevelFunction,
-                                                  @NotNull Function<LanguageLevel, BasicJavaLexer> lexerFunction,
-                                                  @NotNull Function<PsiFile, TokenList> psiAsLexer) {
+                                                  @NotNull Function<LanguageLevel, com.intellij.lexer.Lexer> lexerFunction,
+                                                  @NotNull Function<PsiFile, com.intellij.lexer.TokenList> psiAsLexer) {
     final PsiElement psi = chameleon.getPsi();
     assert psi != null : chameleon;
     final Project project = psi.getProject();
@@ -256,8 +395,8 @@ public final class BasicJavaParserUtil {
     }
 
     LanguageLevel level = languageLevelFunction.apply(psi);
-    Lexer lexer = psi instanceof PsiFile && indexedText != null ? psiAsLexer.apply((PsiFile)psi).asLexer()
-                                                                : lexerFunction.apply(level);
+    com.intellij.lexer.Lexer lexer = psi instanceof PsiFile && indexedText != null ? psiAsLexer.apply((PsiFile)psi).asLexer()
+                                                                                   : lexerFunction.apply(level);
     Language language = psi.getLanguage();
     if (!language.isKindOf(JavaLanguage.INSTANCE)) language = JavaLanguage.INSTANCE;
     PsiBuilder builder = PsiBuilderFactory.getInstance().createBuilder(project, chameleon, lexer, language, text);
@@ -266,16 +405,21 @@ public final class BasicJavaParserUtil {
     return builder;
   }
 
+  /**
+   * @deprecated Use the new Java syntax library instead.
+   *             See {@link com.intellij.java.syntax.parser.JavaParser}
+   */
+  @Deprecated
   public static @NotNull PsiBuilder createBuilder(@NotNull LighterLazyParseableNode chameleon,
                                                   @NotNull Function<PsiElement, LanguageLevel> languageLevelFunction,
-                                                  @NotNull Function<LanguageLevel, BasicJavaLexer> lexerFunction) {
+                                                  @NotNull Function<LanguageLevel, com.intellij.lexer.Lexer> lexerFunction) {
     final PsiElement psi = chameleon.getContainingFile();
     assert psi != null : chameleon;
     final Project project = psi.getProject();
 
     final PsiBuilderFactory factory = PsiBuilderFactory.getInstance();
     final LanguageLevel level = languageLevelFunction.apply(psi);
-    final Lexer lexer = lexerFunction.apply(level);
+    final com.intellij.lexer.Lexer lexer = lexerFunction.apply(level);
     final PsiBuilder builder =
       factory.createBuilder(project, chameleon, lexer, chameleon.getTokenType().getLanguage(), chameleon.getText());
     setLanguageLevel(builder, level);

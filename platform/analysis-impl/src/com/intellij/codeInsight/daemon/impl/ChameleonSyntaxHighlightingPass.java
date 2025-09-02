@@ -55,20 +55,20 @@ final class ChameleonSyntaxHighlightingPass extends ProgressableTextEditorHighli
     }
 
     @Override
-    public @NotNull TextEditorHighlightingPass createMainHighlightingPass(@NotNull PsiFile file,
+    public @NotNull TextEditorHighlightingPass createMainHighlightingPass(@NotNull PsiFile psiFile,
                                                                           @NotNull Document document,
                                                                           @NotNull HighlightInfoProcessor highlightInfoProcessor) {
       ProperTextRange range = ProperTextRange.from(0, document.getTextLength());
-      return new ChameleonSyntaxHighlightingPass(file, document, range, range, null);
+      return new ChameleonSyntaxHighlightingPass(psiFile, document, range, range, null);
     }
   }
 
-  private ChameleonSyntaxHighlightingPass(@NotNull PsiFile file,
+  private ChameleonSyntaxHighlightingPass(@NotNull PsiFile psiFile,
                                           @NotNull Document document,
                                           @NotNull ProperTextRange restrictRange,
                                           @NotNull ProperTextRange priorityRange,
                                           @Nullable Editor editor) {
-    super(file.getProject(), document, AnalysisBundle.message("pass.chameleon"), file, editor, restrictRange, false, HighlightInfoProcessor.getEmpty());
+    super(psiFile.getProject(), document, AnalysisBundle.message("pass.chameleon"), psiFile, editor, restrictRange, false, HighlightInfoProcessor.getEmpty());
     myPriorityRange = priorityRange;
   }
 

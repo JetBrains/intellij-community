@@ -26,30 +26,21 @@ public final class MavenApiConverterUtil {
   }
 
   private static ModelProblem.Version convertFromApiVersion(org.apache.maven.api.services.ModelProblem.Version version) {
-    switch (version) {
-      case BASE:
-        return ModelProblem.Version.BASE;
-      case V20:
-        return ModelProblem.Version.V20;
-      case V30:
-        return ModelProblem.Version.V30;
-      case V31:
-        return ModelProblem.Version.V31;
-      case V40:
-        return ModelProblem.Version.V40;
-    }
-    throw new IllegalArgumentException(version.toString());
+    return switch (version) {
+      case BASE -> ModelProblem.Version.BASE;
+      case V20 -> ModelProblem.Version.V20;
+      case V30 -> ModelProblem.Version.V30;
+      case V31 -> ModelProblem.Version.V31;
+      case V40 -> ModelProblem.Version.V40;
+      default -> throw new IllegalArgumentException(version.toString());
+    };
   }
 
   private static ModelProblem.Severity convertFromApiSeverity(BuilderProblem.Severity severity) {
-    switch (severity) {
-      case FATAL:
-        return ModelProblem.Severity.FATAL;
-      case ERROR:
-        return ModelProblem.Severity.ERROR;
-      case WARNING:
-        return ModelProblem.Severity.WARNING;
-    }
-    throw new IllegalArgumentException(severity.toString());
+    return switch (severity) {
+      case FATAL -> ModelProblem.Severity.FATAL;
+      case ERROR -> ModelProblem.Severity.ERROR;
+      case WARNING -> ModelProblem.Severity.WARNING;
+    };
   }
 }

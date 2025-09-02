@@ -51,10 +51,10 @@ public final class AddGradleDslPluginAction extends CodeInsightAction {
   }
 
   @Override
-  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    if (file instanceof PsiCompiledElement) return false;
-    if (!GradleFileType.isGradleFile(file)) return false;
-    return !GradleConstants.SETTINGS_FILE_NAME.equals(file.getName());
+  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    if (psiFile instanceof PsiCompiledElement) return false;
+    if (!GradleFileType.isGradleFile(psiFile)) return false;
+    return !GradleConstants.SETTINGS_FILE_NAME.equals(psiFile.getName());
   }
 }
 

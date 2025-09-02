@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.psi.PsiManager
+import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.psi.impl.PsiManagerImpl
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
@@ -78,7 +79,7 @@ object AstAccessControl {
         shouldFail: Boolean, project: Project, disposable: Disposable,
         forbidAstAccessFilter: (VirtualFile) -> Boolean, testBody: () -> T
     ): T? {
-        val manager = (PsiManager.getInstance(project) as PsiManagerImpl)
+        val manager = PsiManagerEx.getInstanceEx(project)
 
         manager.setAssertOnFileLoadingFilter(VirtualFileFilter { file -> forbidAstAccessFilter(file) }, disposable)
 

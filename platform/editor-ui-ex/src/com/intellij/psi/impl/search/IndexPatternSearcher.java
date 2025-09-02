@@ -115,16 +115,17 @@ public class IndexPatternSearcher extends QueryExecutorBase<IndexPatternOccurren
       final FileViewProvider viewProvider = file.getViewProvider();
       final Set<Language> relevantLanguages = viewProvider.getLanguages();
       for (Language lang : relevantLanguages) {
+        final PsiFile currentPsiFile = file.getViewProvider().getPsi(lang);
         final SyntaxHighlighter syntaxHighlighter =
           SyntaxHighlighterFactory.getSyntaxHighlighter(lang, file.getProject(), file.getVirtualFile());
         Lexer lexer = syntaxHighlighter.getHighlightingLexer();
         TokenSet commentTokens = null;
         IndexPatternBuilder builderForFile = null;
         for (IndexPatternBuilder builder : IndexPatternBuilder.EP_NAME.getExtensionList()) {
-          Lexer lexerFromBuilder = builder.getIndexingLexer(file);
+          Lexer lexerFromBuilder = builder.getIndexingLexer(currentPsiFile);
           if (lexerFromBuilder != null) {
             lexer = lexerFromBuilder;
-            commentTokens = builder.getCommentTokenSet(file);
+            commentTokens = builder.getCommentTokenSet(currentPsiFile);
             builderForFile = builder;
           }
         }
@@ -233,7 +234,7 @@ public class IndexPatternSearcher extends QueryExecutorBase<IndexPatternOccurren
         int start = fitToRange(matcher.start(), commentPrefixLength, suffixStartOffset) + commentStart - commentPrefixLength;
         int end = fitToRange(matcher.end(), commentPrefixLength, suffixStartOffset) + commentStart - commentPrefixLength;
         if (start != end) {
-          if ((range == null || range.getStartOffset() <= start && end <= range.getEndOffset()) && !matches.contains(start)) {
+          if ((range == null || range.containsRange(start, end)) && !matches.contains(start)) {
             List<TextRange> additionalRanges = multiLine ? findContinuation(start, chars, allIndexPatterns, commentRanges, commentNum)
                                                          : Collections.emptyList();
             if (range != null && !additionalRanges.isEmpty() &&

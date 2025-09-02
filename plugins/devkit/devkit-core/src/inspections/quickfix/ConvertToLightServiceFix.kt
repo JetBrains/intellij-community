@@ -1,8 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.quickfix
 
-import com.intellij.codeInsight.ExternalAnnotationsManager
-import com.intellij.codeInsight.intention.AddAnnotationFix
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInspection.LocalQuickFix
@@ -13,6 +11,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.psi.*
+import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.xml.XmlTag
 import com.intellij.util.xml.highlighting.RemoveDomElementQuickFix
 import org.jetbrains.annotations.ApiStatus
@@ -66,16 +65,18 @@ interface AddServiceAnnotationProvider {
 internal class JavaAddServiceAnnotationProvider : AddServiceAnnotationProvider {
   override fun addServiceAnnotation(aClass: PsiElement, level: Service.Level) {
     if (aClass !is PsiClass) return
-    val fix = when (level) {
-      Service.Level.APP -> AddAnnotationPsiFix(Service::class.java.canonicalName, aClass)
+    val attributes = when (level) {
+      Service.Level.APP -> emptyArray()
       Service.Level.PROJECT -> {
         val factory = JavaPsiFacade.getElementFactory(aClass.project)
         val projectLevelFqn = getProjectLevelFQN()
         val newAnnotation = factory.createAnnotationFromText("@${Service::class.java.canonicalName}(${projectLevelFqn})", aClass)
-        val attributes = newAnnotation.parameterList.attributes
-        AddAnnotationFix(Service::class.java.canonicalName, aClass, attributes, ExternalAnnotationsManager.AnnotationPlace.IN_CODE)
+        newAnnotation.parameterList.attributes
       }
     }
-    fix.invoke(aClass.project, aClass.containingFile, aClass, aClass)
+    val annotation = AddAnnotationPsiFix.addPhysicalAnnotationIfAbsent(Service::class.java.canonicalName, attributes, aClass.modifierList!!)
+    if (annotation != null) {
+      JavaCodeStyleManager.getInstance(aClass.project).shortenClassReferences(annotation)
+    }
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github;
 
 import com.intellij.ide.BrowserUtil;
@@ -18,10 +18,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor;
 import org.jetbrains.plugins.github.api.GithubApiRequests;
 import org.jetbrains.plugins.github.api.GithubServerPath;
 import org.jetbrains.plugins.github.api.data.request.GithubGistRequest.FileContent;
+import org.jetbrains.plugins.github.authentication.GHLoginSource;
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager;
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount;
 import org.jetbrains.plugins.github.i18n.GithubBundle;
@@ -120,7 +122,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
     new Task.Backgroundable(project, GithubBundle.message("create.gist.process")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        String token = GHCompatibilityUtil.getOrRequestToken(account, project);
+        String token = GHCompatibilityUtil.getOrRequestToken(account, project, GHLoginSource.GIST);
         if (token == null) return;
         GithubApiRequestExecutor requestExecutor = GithubApiRequestExecutor.Factory.getInstance().create(account.getServer(), token);
 
@@ -155,14 +157,15 @@ public class GithubCreateGistAction extends DumbAwareAction {
     }.queue();
   }
 
-  static @Nullable String createGist(@NotNull Project project,
-                                     @NotNull GithubApiRequestExecutor executor,
-                                     @NotNull ProgressIndicator indicator,
-                                     @NotNull GithubServerPath server,
-                                     @NotNull List<? extends FileContent> contents,
-                                     final boolean isSecret,
-                                     final @NotNull String description,
-                                     @Nullable String filename) {
+  @VisibleForTesting
+  public static @Nullable String createGist(@NotNull Project project,
+                                            @NotNull GithubApiRequestExecutor executor,
+                                            @NotNull ProgressIndicator indicator,
+                                            @NotNull GithubServerPath server,
+                                            @NotNull List<? extends FileContent> contents,
+                                            final boolean isSecret,
+                                            final @NotNull String description,
+                                            @Nullable String filename) {
     if (contents.isEmpty()) {
       GithubNotifications.showWarning(project,
                                       GithubNotificationIdsHolder.GIST_CANNOT_CREATE,

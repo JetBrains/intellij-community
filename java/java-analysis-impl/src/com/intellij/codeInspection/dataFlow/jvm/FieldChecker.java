@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.jvm;
 
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.psi.*;
 import com.intellij.psi.util.CachedValuesManager;
@@ -108,7 +109,7 @@ public class FieldChecker {
 
         for (PsiMethodCallExpression call : SyntaxTraverser.psiTraverser().withRoot(body).filter(PsiMethodCallExpression.class)) {
           PsiReferenceExpression methodExpression = call.getMethodExpression();
-          if (methodExpression.textMatches(PsiKeyword.THIS) || methodExpression.textMatches(PsiKeyword.SUPER)) continue;
+          if (methodExpression.textMatches(JavaKeywords.THIS) || methodExpression.textMatches(JavaKeywords.SUPER)) continue;
           if (SAFE_CALLS.test(call)) continue;
           if (!virtual) return true;
 

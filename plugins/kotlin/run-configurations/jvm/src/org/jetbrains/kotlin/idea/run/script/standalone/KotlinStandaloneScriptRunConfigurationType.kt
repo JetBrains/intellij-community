@@ -6,6 +6,7 @@ import com.intellij.execution.application.JvmMainMethodRunConfigurationOptions
 import com.intellij.execution.configurations.ConfigurationTypeUtil
 import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.execution.configurations.SimpleConfigurationType
+import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NotNullLazyValue
 import org.jetbrains.kotlin.idea.KotlinIcons
@@ -15,15 +16,15 @@ fun kotlinStandaloneScriptRunConfigurationType(): KotlinStandaloneScriptRunConfi
     return ConfigurationTypeUtil.findConfigurationType(KotlinStandaloneScriptRunConfigurationType::class.java)
 }
 
+@InternalIgnoreDependencyViolation
 class KotlinStandaloneScriptRunConfigurationType : SimpleConfigurationType(
     "KotlinStandaloneScriptRunConfigurationType",
     KotlinRunConfigurationsBundle.message("name.kotlin.script"),
     KotlinRunConfigurationsBundle.message("run.kotlin.script"),
-    NotNullLazyValue.createValue { KotlinIcons.SMALL_LOGO }
+    NotNullLazyValue.createValue { KotlinIcons.SCRIPT }
 ) {
-    override fun createTemplateConfiguration(project: Project): RunConfiguration {
-        return KotlinStandaloneScriptRunConfiguration(project, this, "")
-    }
+    override fun createTemplateConfiguration(project: Project): RunConfiguration =
+        KotlinStandaloneScriptRunConfiguration(project, this, "")
 
     override fun getOptionsClass() = JvmMainMethodRunConfigurationOptions::class.java
 

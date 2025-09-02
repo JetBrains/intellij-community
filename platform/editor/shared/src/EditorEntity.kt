@@ -3,7 +3,7 @@ package com.intellij.platform.editor
 
 import com.intellij.codeWithMe.ClientId
 import com.intellij.openapi.editor.impl.EditorId
-import com.intellij.openapi.editor.impl.ad.AdDocumentEntity
+import com.intellij.platform.pasta.common.DocumentEntity
 import com.jetbrains.rhizomedb.EID
 import com.jetbrains.rhizomedb.Entity
 import com.jetbrains.rhizomedb.Indexing
@@ -16,7 +16,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 @Internal
 data class EditorEntity(override val eid: EID) : Entity {
 
-  val document: AdDocumentEntity by documentAttr
+  val document: DocumentEntity by documentAttr
   val id: EditorId by idAttr
   val clientId: ClientId by clientIdAttr
 
@@ -27,7 +27,7 @@ data class EditorEntity(override val eid: EID) : Entity {
   ) {
 
     val idAttr: Required<EditorId> = requiredValue("id", EditorId.serializer(), Indexing.UNIQUE)
-    val documentAttr: Required<AdDocumentEntity> = requiredRef("document", RefFlags.CASCADE_DELETE_BY)
+    val documentAttr: Required<DocumentEntity> = requiredRef("document", RefFlags.CASCADE_DELETE_BY)
     val clientIdAttr: Required<ClientId> = requiredValue("clientId", ClientIdSerializer)
   }
 }

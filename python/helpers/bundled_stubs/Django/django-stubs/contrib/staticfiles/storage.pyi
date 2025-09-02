@@ -1,12 +1,11 @@
 from collections.abc import Callable, Iterator
 from re import Match
-from typing import Any
+from typing import Any, TypeAlias
 
 from django.core.files.base import File
 from django.core.files.storage import FileSystemStorage, Storage
 from django.utils._os import _PathCompatible
 from django.utils.functional import LazyObject
-from typing_extensions import TypeAlias
 
 _PostProcessT: TypeAlias = Iterator[tuple[str, str, bool] | tuple[str, None, RuntimeError]]
 

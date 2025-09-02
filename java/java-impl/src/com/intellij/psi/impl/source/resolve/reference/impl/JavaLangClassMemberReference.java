@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.reference.impl;
 
 import com.intellij.codeInsight.completion.InsertHandler;
@@ -6,6 +6,7 @@ import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.completion.JavaLookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInspection.reference.PsiMemberReference;
+import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -183,18 +184,31 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
   }
 
   private static int matchMethodArguments(PsiMethod method, List<ReflectiveType> argumentTypes) {
-    final PsiParameter[] parameters = method.getParameterList().getParameters();
-    if (parameters.length != argumentTypes.size()) {
+    // Get nested classes because they need to be passed if not static
+    List<PsiClass> enclosingClasses = PsiTreeUtil.collectParents(method, PsiClass.class, false, parent -> {
+        return parent instanceof PsiFile || parent instanceof PsiClass cls && cls.hasModifier(JvmModifier.STATIC);
+    });
+    if (!enclosingClasses.isEmpty()) {
+      // the containing class of the method doesn't need to be passed
+      enclosingClasses = ContainerUtil.reverse(enclosingClasses).subList(0, enclosingClasses.size() - 1);
+    }
+    final List<PsiType> containingClassTypes = ContainerUtil.map(
+      enclosingClasses, cls -> JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createType(cls)
+    );
+    final List<PsiType> methodParamTypes = ContainerUtil.map(method.getParameterList().getParameters(), p -> p.getType());
+    final List<PsiType> allTypes = ContainerUtil.concat(containingClassTypes, methodParamTypes);
+
+    if (allTypes.size() != argumentTypes.size()) {
       return -1;
     }
     int mismatchCount = 0;
-    for (int i = 0; i < parameters.length; i++) {
+    for (int i = 0; i < allTypes.size(); i++) {
       final ReflectiveType argumentType = argumentTypes.get(i);
       if (argumentType == null) {
         mismatchCount++;
         continue;
       }
-      if (!argumentType.isEqualTo(parameters[i].getType())) {
+      if (!argumentType.isEqualTo(allTypes.get(i))) {
         return -1;
       }
     }

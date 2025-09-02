@@ -4,11 +4,23 @@ package org.jetbrains.intellij.build.impl
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
-import kotlinx.collections.immutable.*
+import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.PersistentMap
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentMapOf
+import kotlinx.collections.immutable.persistentSetOf
+import kotlinx.collections.immutable.plus
+import kotlinx.collections.immutable.toPersistentSet
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.CustomAssetDescriptor
+import org.jetbrains.intellij.build.JvmArchitecture
+import org.jetbrains.intellij.build.LazySource
+import org.jetbrains.intellij.build.LibcImpl
+import org.jetbrains.intellij.build.OsFamily
+import org.jetbrains.intellij.build.PluginBundlingRestrictions
 import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.io.copyFileToDir
 import java.nio.file.FileSystemException
@@ -75,9 +87,9 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
 
   /**
    * Should be `true` if the semantic versioning is enabled for the plugin in plugins.jetbrains.com.
-   * Then the plugin version will be checked against [org.jetbrains.intellij.build.impl.SemanticVersioningScheme].
+   * Then the plugin version will be checked against [com.intellij.util.text.SemVer].
    */
-  var semanticVersioning: Boolean = false
+  var semanticVersioning: Boolean = true
     private set
 
   @JvmField
@@ -91,6 +103,9 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
 
   internal var platformResourceGenerators: PersistentMap<SupportedDistribution, PersistentList<ResourceGenerator>> = persistentMapOf()
     private set
+
+  val hasPlatformSpecificResources: Boolean
+    get() = platformResourceGenerators.isNotEmpty() || customAssets.any { it.platformSpecific != null }
 
   fun getMainJarName(): String = mainJarName
 
@@ -132,17 +147,19 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
 
     // we cannot break compatibility / risk to change the existing plugin dir name
     @Suppress("DEPRECATION")
-    fun pluginAutoWithCustomDirName(mainModuleName: String, body: (PluginLayoutSpec) -> Unit): PluginLayout =
-      plugin(mainModuleName, auto = true, body)
+    fun pluginAutoWithCustomDirName(mainModuleName: String, body: (PluginLayoutSpec) -> Unit): PluginLayout {
+      return plugin(mainModuleName, auto = true, body)
+    }
 
     // we cannot break compatibility / risk to change the existing plugin dir name
     @Suppress("DEPRECATION")
-    fun pluginAutoWithCustomDirName(mainModuleName: String, dirName: String, body: (PluginLayoutSpec) -> Unit): PluginLayout =
-      plugin(mainModuleName, auto = true) { spec ->
+    fun pluginAutoWithCustomDirName(mainModuleName: String, dirName: String, body: (PluginLayoutSpec) -> Unit): PluginLayout {
+      return plugin(mainModuleName, auto = true) { spec ->
         spec.directoryName = dirName
         spec.mainJarName = "${dirName}.jar"
         body(spec)
       }
+    }
 
     fun pluginAuto(moduleName: String, body: (SimplePluginLayoutSpec) -> Unit): PluginLayout = pluginAuto(listOf(moduleName), body)
 
@@ -179,12 +196,19 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
     }
   }
 
-  override fun toString(): String =
-    "Plugin '$mainModule'" + (if (bundlingRestrictions == PluginBundlingRestrictions.NONE) "" else ", restrictions: $bundlingRestrictions")
+  override fun toString(): String {
+    return "Plugin '$mainModule'" + (if (bundlingRestrictions == PluginBundlingRestrictions.NONE) "" else ", restrictions: $bundlingRestrictions")
+  }
 
-  override fun getRelativeJarPath(moduleName: String): String =
-    if (moduleName.endsWith(".jps") || moduleName.endsWith(".rt")) "${convertModuleNameToFileName(moduleName)}.jar"  // must be in a separate JAR
-    else mainJarName
+  override fun getRelativeJarPath(moduleName: String): String {
+    if (moduleName.endsWith(".jps") || moduleName.endsWith(".rt")) {
+      // must be in a separate JAR
+      return "${convertModuleNameToFileName(moduleName)}.jar"
+    }
+    else {
+      return mainJarName
+    }
+  }
 
   sealed class PluginLayoutBuilder(@JvmField protected val layout: PluginLayout) : BaseLayoutSpec(layout) {
     /**
@@ -214,14 +238,28 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
 
     fun withCustomAsset(lazySourceSupplier: (context: BuildContext) -> LazySource?) {
       layout.customAssets += object : CustomAssetDescriptor {
-        override suspend fun getSources(context: BuildContext): Sequence<Source>? {
+        override val platformSpecific: SupportedDistribution?
+          get() = null
+
+        override suspend fun getSources(context: BuildContext): Sequence<LazySource>? {
           return sequenceOf(lazySourceSupplier(context) ?: return null)
         }
       }
     }
 
-    fun withGeneratedPlatformResources(os: OsFamily, arch: JvmArchitecture, generator: ResourceGenerator) {
-      val key = SupportedDistribution(os, arch)
+    fun withCustomAsset(platform: SupportedDistribution, lazySourceSupplier: (context: BuildContext) -> LazySource?) {
+      layout.customAssets += object : CustomAssetDescriptor {
+        override val platformSpecific: SupportedDistribution
+          get() = platform
+
+        override suspend fun getSources(context: BuildContext): Sequence<LazySource>? {
+          return sequenceOf(lazySourceSupplier(context) ?: return null)
+        }
+      }
+    }
+
+    fun withGeneratedPlatformResources(os: OsFamily, arch: JvmArchitecture, libc: LibcImpl, generator: ResourceGenerator) {
+      val key = SupportedDistribution(os, arch, libc)
       val newValue = layout.platformResourceGenerators[key]?.let { it + generator } ?: persistentListOf(generator)
       layout.platformResourceGenerators += key to newValue
     }
@@ -263,7 +301,9 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
     /**
      * @see [PluginLayout.semanticVersioning]
      */
-    var semanticVersioning: Boolean = false
+    @Suppress("unused")
+    var semanticVersioning: Boolean
+      get() = layout.semanticVersioning
       set(value) {
         layout.semanticVersioning = value
       }
@@ -290,8 +330,8 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
       }
     }
 
-    fun withPlatformBin(os: OsFamily, arch: JvmArchitecture, binPathRelativeToCommunity: String, outputPath: String, skipIfDoesntExist: Boolean = false) {
-      withGeneratedPlatformResources(os, arch) { targetDir, context ->
+    fun withPlatformBin(os: OsFamily, arch: JvmArchitecture, libc: LibcImpl, binPathRelativeToCommunity: String, outputPath: String, skipIfDoesntExist: Boolean = false) {
+      withGeneratedPlatformResources(os, arch, libc) { targetDir, context ->
         copyBinaryResource(binPathRelativeToCommunity, outputPath, skipIfDoesntExist, targetDir, context)
       }
     }
@@ -342,7 +382,7 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
     }
 
     /**
-     * By default, a version of a plugin is equal to the build number of the IDE it's built with.
+     * By default, a version of a plugin is equal to [org.jetbrains.intellij.build.BuildContext.pluginBuildNumber].
      * This method allows specifying custom version evaluator.
      */
     fun withCustomVersion(versionEvaluator: PluginVersionEvaluator) {

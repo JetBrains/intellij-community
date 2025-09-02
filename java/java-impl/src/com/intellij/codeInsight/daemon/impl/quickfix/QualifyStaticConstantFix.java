@@ -14,8 +14,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public class QualifyStaticConstantFix extends StaticImportConstantFix {
-  QualifyStaticConstantFix(@NotNull PsiFile file, @NotNull PsiJavaCodeReferenceElement referenceElement) {
-    super(file, referenceElement);
+  QualifyStaticConstantFix(@NotNull PsiFile psiFile, @NotNull PsiJavaCodeReferenceElement referenceElement) {
+    super(psiFile, referenceElement);
   }
 
   @Override
@@ -24,8 +24,8 @@ public class QualifyStaticConstantFix extends StaticImportConstantFix {
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    return generatePreview(file, (expression, field) -> {
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    return generatePreview(psiFile, (expression, field) -> {
       if (expression instanceof PsiReferenceExpression) {
         QualifyStaticMethodCallFix.qualifyStatically(field, project, (PsiReferenceExpression)expression);
       }

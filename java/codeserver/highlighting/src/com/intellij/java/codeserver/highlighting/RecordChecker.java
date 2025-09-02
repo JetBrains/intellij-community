@@ -15,7 +15,8 @@ import com.intellij.util.JavaPsiConstructorUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-import java.util.Objects;
+
+import static java.util.Objects.requireNonNull;
 
 final class RecordChecker {
   private final @NotNull JavaErrorVisitor myVisitor;
@@ -103,7 +104,7 @@ final class RecordChecker {
     }
     if (method.isConstructor()) {
       AccessModifier modifier = AccessModifier.fromModifierList(method.getModifierList());
-      PsiModifierList classModifierList = Objects.requireNonNull(method.getContainingClass()).getModifierList();
+      PsiModifierList classModifierList = requireNonNull(method.getContainingClass()).getModifierList();
       if (classModifierList != null) {
         AccessModifier classModifier = AccessModifier.fromModifierList(classModifierList);
         if (classModifier.isWeaker(modifier)) {

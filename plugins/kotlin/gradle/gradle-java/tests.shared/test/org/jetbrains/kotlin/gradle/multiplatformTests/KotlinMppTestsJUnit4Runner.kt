@@ -9,11 +9,11 @@ import org.junit.runners.model.FrameworkMethod
  */
 class KotlinMppTestsJUnit4Runner(testClass: Class<*>) : BlockJUnit4ClassRunner(testClass) {
     override fun testName(method: FrameworkMethod?): String {
-        val props = KotlinTestProperties.construct(TestConfiguration())
+        val props = KotlinMppTestProperties.construct(TestConfiguration())
         val agpVersion = props.agpVersion
-        val kgpVersion = props.kotlinGradlePluginVersion
+        val kotlinVersion = props.kotlinVersion
         val gradleVersion = props.gradleVersion
 
-        return super.testName(method) + "[$kgpVersion, $gradleVersion, AGP $agpVersion]"
+        return super.testName(method) + "[$kotlinVersion, $gradleVersion, AGP $agpVersion]"
     }
 }

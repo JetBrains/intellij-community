@@ -118,7 +118,7 @@ class KotlinTestRunLineMarkerContributor : RunLineMarkerContributor() {
         element: PsiElement,
         includeSlowProviders: Boolean
     ): Info? {
-        val declaration = element.getStrictParentOfType<KtNamedDeclaration>()?.takeIf { it.nameIdentifier == element } ?: return null
+        val declaration = (element.parent as? KtNamedDeclaration)?.takeIf { it.nameIdentifier == element } ?: return null
 
         val module = declaration.module
         val targetPlatform = module?.platform ?: return null

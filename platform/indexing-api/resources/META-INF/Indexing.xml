@@ -23,7 +23,8 @@
     <extensionPoint name="findModelExtension" interface="com.intellij.find.FindModelExtension" dynamic="true"/>
     <extensionPoint name="codeUsageScopeOptimizer" interface="com.intellij.psi.search.ScopeOptimizer" dynamic="true"/>
     <extensionPoint name="binaryFileSourceProvider" interface="com.intellij.platform.indexing.BinaryFileSourceProvider" dynamic="true"/>
-    <extensionPoint name="trigramIndexFilterExcludeExtension" interface="com.intellij.find.ngrams.TrigramIndexFilterExcludeExtension" dynamic="true"/>
+
+    <extensionPoint name="trigramIndexFilterExcludeExtension" interface="com.intellij.util.indexing.IndexFilterExcludingExtension" dynamic="true"/>
 
     <extensionPoint name="stubElementRegistryExtension"
                     interface="com.intellij.psi.stubs.StubRegistryExtension"

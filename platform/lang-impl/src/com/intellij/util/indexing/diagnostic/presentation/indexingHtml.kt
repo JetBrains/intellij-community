@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("unused", "HardCodedStringLiteral")
 
 package com.intellij.util.indexing.diagnostic.presentation
@@ -560,6 +560,7 @@ private fun JsonProjectDumbIndexingHistory.generateDumbIndexingHtml(target: Appe
               }
               tr {
                 th("Index")
+                th("shards #")
                 th("Number of files")
                 th("Part of total indexing time")
                 th("Total number of files indexed by $INDEX_INFRA_EXTENSIONS")
@@ -571,6 +572,7 @@ private fun JsonProjectDumbIndexingHistory.generateDumbIndexingHtml(target: Appe
               for (statsPerIndexer in totalStatsPerIndexer) {
                 tr(classes = getMinorDataClass(statsPerIndexer.partOfTotalIndexingTime.partition < 0.1)) {
                   td(statsPerIndexer.indexId)
+                  td(statsPerIndexer.shardsCount.toString())
                   td(statsPerIndexer.totalNumberOfFiles.toString())
                   td(statsPerIndexer.partOfTotalIndexingTime.presentablePercentages())
                   td(statsPerIndexer.totalNumberOfFilesIndexedByExtensions.toString())

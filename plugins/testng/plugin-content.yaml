@@ -1,13 +1,13 @@
 - name: lib/testng-plugin.jar
-  projectLibraries:
-  - name: TestNG
-    files:
-    - name: $MAVEN_REPOSITORY$/org/testng/testng/7/testng-7.jar
-    - name: $MAVEN_REPOSITORY$/com/beust/jcommander/1/jcommander-1.jar
-    - name: $MAVEN_REPOSITORY$/org/webjars/jquery/3/jquery-3.jar
-    reason: withProjectLibrary
   modules:
   - name: intellij.testng
 - name: lib/testng-rt.jar
   modules:
   - name: intellij.testng.rt
+- name: lib/testng.jar
+  library: TestNG
+  files:
+  - name: $MAVEN_REPOSITORY$/org/testng/testng/7/testng-7.jar
+  - name: $MAVEN_REPOSITORY$/com/beust/jcommander/1/jcommander-1.jar
+  - name: $MAVEN_REPOSITORY$/org/webjars/jquery/3/jquery-3.jar
+  reason: withProjectLibrary

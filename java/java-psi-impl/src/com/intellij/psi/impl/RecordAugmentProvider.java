@@ -1,6 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -139,7 +140,7 @@ public final class RecordAugmentProvider extends PsiAugmentProvider implements D
 
   private static boolean hasForbiddenType(@NotNull PsiRecordComponent component) {
     PsiTypeElement typeElement = component.getTypeElement();
-    return typeElement == null || typeElement.getText().equals(PsiKeyword.RECORD);
+    return typeElement == null || typeElement.getText().equals(JavaKeywords.RECORD);
   }
 
   private static @Nullable String getTypeText(@NotNull PsiRecordComponent component) {

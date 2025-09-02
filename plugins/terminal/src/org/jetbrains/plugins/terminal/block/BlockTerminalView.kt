@@ -294,6 +294,14 @@ class BlockTerminalView(
     controller.startCommandExecution(shellCommand)
   }
 
+  override fun getText(): CharSequence {
+    alternateBufferView?.let { return it.getText() }
+
+    val outputText = outputView.controller.outputModel.editor.document.text
+    val promptText = promptView.controller.model.editor.document.text
+    return "$outputText\n$promptText"
+  }
+
   override fun dispose() {}
 
   private fun getDisposed(): () -> Boolean = outputView.controller.outputModel.editor.getDisposed()

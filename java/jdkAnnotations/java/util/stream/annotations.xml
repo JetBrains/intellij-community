@@ -1034,6 +1034,10 @@
   <item name='java.util.stream.Stream java.lang.Object[] toArray()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='java.util.stream.Stream java.util.List&lt;T&gt; toList()'>
+    <annotation name='org.jetbrains.annotations.Unmodifiable'/>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name='java.util.stream.Stream java.util.Optional&lt;T&gt; findAny()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>

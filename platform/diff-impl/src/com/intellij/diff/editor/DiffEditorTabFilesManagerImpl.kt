@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.editor
 
-import com.intellij.diff.editor.DiffEditorTabFilesManager.Companion.isDiffInEditor
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ModalityState
@@ -21,9 +20,9 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.headTail
 
 internal class DiffEditorTabFilesManagerImpl(val project: Project) : DiffEditorTabFilesManager {
-  override fun showDiffFile(diffFile: VirtualFile, focusEditor: Boolean): Array<out FileEditor> {
+  override fun showDiffFile(diffFile: VirtualFile, focusEditor: Boolean, openInEditor: Boolean): Array<out FileEditor> {
     val editorManager = FileEditorManager.getInstance(project) as FileEditorManagerImpl
-    val openMode = if (isDiffInEditor) FileEditorManagerImpl.OpenMode.DEFAULT else FileEditorManagerImpl.OpenMode.NEW_WINDOW
+    val openMode = if (openInEditor) FileEditorManagerImpl.OpenMode.DEFAULT else FileEditorManagerImpl.OpenMode.NEW_WINDOW
     val newTab = editorManager.openFile(
       file = diffFile,
       window = null,
@@ -57,7 +56,7 @@ internal abstract class MoveDiffEditorAction(private val openInNewWindow: Boolea
   override fun update(e: AnActionEvent) {
     val editorWindow = e.getData(EditorWindow.DATA_KEY)
     val fileEditor = editorWindow?.selectedComposite?.selectedEditor
-    if (fileEditor == null || !IS_DIFF_FILE_EDITOR.isIn(fileEditor)) {
+    if (fileEditor == null || !IS_DIFF_FILE_EDITOR.isIn(fileEditor) || DiffEditorTabFilesUtil.isForceOpeningsInNewWindow(fileEditor.file)) {
       e.presentation.isEnabledAndVisible = false
       return
     }
@@ -67,7 +66,7 @@ internal abstract class MoveDiffEditorAction(private val openInNewWindow: Boolea
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    DiffEditorTabFilesManager.isDiffInEditor = !openInNewWindow
+    DiffEditorTabFilesUtil.isDiffInEditor = !openInNewWindow
   }
 
   internal class ToEditor : MoveDiffEditorAction(false)
@@ -76,7 +75,7 @@ internal abstract class MoveDiffEditorAction(private val openInNewWindow: Boolea
 
 internal class EditorTabDiffPreviewAdvancedSettingsListener : AdvancedSettingsChangeListener {
   override fun advancedSettingChanged(id: String, oldValue: Any, newValue: Any) {
-    if (id == DiffEditorTabFilesManager.SHOW_DIFF_IN_EDITOR_SETTING) {
+    if (id == DiffEditorTabFilesUtil.SHOW_DIFF_IN_EDITOR_SETTING) {
       for (project in ProjectManager.getInstance().openProjects) {
         reopenDiffEditorsForFiles(project)
       }
@@ -88,7 +87,7 @@ internal class EditorTabDiffPreviewAdvancedSettingsListener : AdvancedSettingsCh
      * Unlike [com.intellij.diff.editor.DiffEditorViewerFileEditor.reloadDiffEditorsForFiles], should not try to reopen tabs in-place.
      */
     private fun reopenDiffEditorsForFiles(project: Project) {
-      val isOpenInNewWindow = DiffEditorTabFilesManager.isDiffInWindow
+      val isOpenInNewWindow = DiffEditorTabFilesUtil.isDiffInWindow
 
       val editorManager = FileEditorManager.getInstance(project) as? FileEditorManagerImpl ?: return
       val diffEditorManager = DiffEditorTabFilesManager.getInstance(project)
@@ -97,6 +96,7 @@ internal class EditorTabDiffPreviewAdvancedSettingsListener : AdvancedSettingsCh
         .filter { window -> isSingletonEditorInWindow(window) != isOpenInNewWindow }
         .flatMap { window -> window.fileList }
         .filter { it is DiffContentVirtualFile }
+        .filter { !DiffEditorTabFilesUtil.isForceOpeningsInNewWindow(it) }
         .distinct()
       if (diffFiles.isEmpty()) return
 
@@ -121,17 +121,24 @@ internal class DiffInWindowDndListener : FileOpenedSyncListener {
   override fun fileOpenedSync(editorManager: FileEditorManager, file: VirtualFile, editorsWithProviders: List<FileEditorWithProvider>) {
     if (file !is DiffContentVirtualFile) return
     if (editorManager !is FileEditorManagerImpl) return
+    if (DiffEditorTabFilesUtil.isForceOpeningsInNewWindow(file)) return
 
     // flag is not properly set for async editor opening
     //if (file.getUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN) != true) return
 
     val openedFileEditors = editorsWithProviders.map { it.fileEditor }
-    val window = editorManager.windows.find { it.allComposites.any { it.allEditors.any { openedFileEditors.contains(it) } } } ?: return
+    val window = editorManager.windows.find { editorWindow ->
+      editorWindow.allComposites.any { editorComposite ->
+        editorComposite.allEditors.any { editor ->
+          openedFileEditors.contains(editor)
+        }
+      }
+    } ?: return
 
     val isFileInEditor = !isSingletonEditorInWindow(window)
-    if (DiffEditorTabFilesManager.isDiffInEditor != isFileInEditor) {
+    if (DiffEditorTabFilesUtil.isDiffInEditor != isFileInEditor) {
       invokeLater(ModalityState.nonModal()) {
-        DiffEditorTabFilesManager.isDiffInEditor = isFileInEditor
+        DiffEditorTabFilesUtil.isDiffInEditor = isFileInEditor
       }
     }
   }

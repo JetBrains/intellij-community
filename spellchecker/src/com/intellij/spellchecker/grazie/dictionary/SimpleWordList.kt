@@ -14,7 +14,7 @@ internal class SimpleWordList(private val container: Set<String>) : WordList {
   private val invariants = buildInvariants(container)
 
   private fun buildInvariants(container: Set<String>): Set<String> {
-    val result = CollectionFactory.createSmallMemoryFootprintSet<String>()
+    val result = CollectionFactory.createSmallMemoryFootprintSet<String>(container.size)
     for (entry in container) {
       ProgressManager.checkCanceled()
       result.add(entry.lowercase())

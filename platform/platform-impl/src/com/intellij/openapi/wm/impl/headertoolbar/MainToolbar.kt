@@ -24,6 +24,8 @@ import com.intellij.openapi.actionSystem.toolbarLayout.CompressingLayoutStrategy
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.UiDispatcherKind
+import com.intellij.openapi.application.ui
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil
 import com.intellij.openapi.project.DumbAwareAction
@@ -110,7 +112,7 @@ class MainToolbar(
 ) : JPanel(HorizontalLayout(layoutGap)) {
   private val flavor: MainToolbarFlavor
   private val widthCalculationListeners = mutableSetOf<ToolbarWidthCalculationListener>()
-  private val cachedWidths by lazy { ConcurrentHashMap<String, Int>() }
+  private val cachedWidths by lazy { ConcurrentHashMap<String?, Int>() }
 
   init {
     this.background = background
@@ -183,7 +185,7 @@ class MainToolbar(
       CustomizationUtil.createToolbarCustomizationHandler(it, MAIN_TOOLBAR_ID, this, ActionPlaces.MAIN_TOOLBAR)
     }
 
-    val widgets = withContext(Dispatchers.EDT) {
+    val widgets = withContext(Dispatchers.ui(UiDispatcherKind.RELAX)) {
       removeAll()
 
       flavor.addWidget()
@@ -460,7 +462,7 @@ class MyActionToolbarImpl(group: ActionGroup, customizationGroup: ActionGroup?)
   }
 
   override fun getSeparatorColor(): Color {
-    return JBColor.namedColor("MainToolbar.separatorColor", super.separatorColor)
+    return JBColor.namedColor("MainToolbar.separatorColor", super.getSeparatorColor())
   }
 
   private fun findComboButton(c: Container): ComboBoxButton? {
@@ -481,8 +483,9 @@ class MyActionToolbarImpl(group: ActionGroup, customizationGroup: ActionGroup?)
   }
 
   override fun updateUI() {
+    @Suppress("UNNECESSARY_SAFE_CALL") // you know, the old "this thing is called from a superclass constructor" pitfall
+    iconUpdater?.clearCache()
     super.updateUI()
-
     updateFont()
   }
 
@@ -545,7 +548,7 @@ private fun getMainToolbarGroups(): Sequence<GroupInfo> {
 
 internal fun isDarkHeader(): Boolean = ColorUtil.isDark(JBColor.namedColor("MainToolbar.background"))
 
-fun adjustIconForHeader(icon: Icon): Icon = if (isDarkHeader()) IconLoader.getDarkIcon(icon = icon, dark = true) else icon
+private fun adjustIconForHeader(icon: Icon): Icon = IconLoader.getDarkIcon(icon = icon, dark = isDarkHeader())
 
 private class HeaderIconUpdater {
   val iconCache = WeakHashMap<Icon, WeakReference<Icon>>()
@@ -561,6 +564,11 @@ private class HeaderIconUpdater {
     iconCache[sourceIcon] = WeakReference(replaceIcon)
     alreadyUpdated.add(replaceIcon)
     return replaceIcon
+  }
+
+  fun clearCache() {
+    iconCache.clear()
+    alreadyUpdated.clear()
   }
 }
 

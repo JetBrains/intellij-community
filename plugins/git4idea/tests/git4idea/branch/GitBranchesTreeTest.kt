@@ -40,7 +40,7 @@ internal class GitBranchesTreeTestContext(private val groupByDirectories: Boolea
     }
   }
   val branchesTree = GitBranchesTestTree()
-  val searchTextField = branchesTree.installSearchField()
+  private val searchTextField = branchesTree.installSearchField()
 
   fun assertTree(expected: String) {
     assertEquals("Tree state doesn't match expected. Search field - '${searchTextField.text}'", expected.trim(), printTree())
@@ -77,6 +77,16 @@ internal class GitBranchesTreeTestContext(private val groupByDirectories: Boolea
     if (expanded) {
       TreeTestUtil(tree).expandAll()
     }
+  }
+
+  fun filter(filterText: String) {
+    searchTextField.text = filterText
+    branchesTree.speedSearch.refilter(searchTextField.text)
+  }
+
+  fun appendFilter(character: Char) {
+    searchTextField.text += character
+    branchesTree.speedSearch.refilter(searchTextField.text)
   }
 
   fun selectBranch(branch: String) {

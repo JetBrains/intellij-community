@@ -15,7 +15,7 @@ internal class EditorModelImpl(private val editor: EditorImpl) : EditorModel {
   override fun getDocumentMarkupModel(): MarkupModelEx = editor.filteredDocumentMarkupModel
   override fun getHighlighter(): EditorHighlighter = editor.highlighter
   override fun getInlayModel(): InlayModelEx = editor.inlayModel
-  override fun getFoldingModel(): FoldingModelEx = editor.foldingModel
+  override fun getFoldingModel(): FoldingModelInternal = editor.foldingModel
   override fun getSoftWrapModel(): SoftWrapModelEx = editor.softWrapModel
   override fun getCaretModel(): CaretModel = editor.caretModel
   override fun getSelectionModel(): SelectionModel = editor.selectionModel

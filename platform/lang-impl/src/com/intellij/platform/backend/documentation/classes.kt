@@ -3,7 +3,6 @@ package com.intellij.platform.backend.documentation
 
 import com.intellij.lang.documentation.DocumentationImageResolver
 import com.intellij.model.Pointer
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.psi.PsiElement
 import com.intellij.util.AsyncSupplier
 import kotlinx.coroutines.Dispatchers
@@ -55,9 +54,7 @@ internal class AsyncResolvedTarget(
 @Internal
 internal fun <X> Supplier<X>.asAsyncSupplier(): AsyncSupplier<X> = {
   withContext(Dispatchers.IO) {
-    blockingContext {
-      this@asAsyncSupplier.get()
-    }
+    this@asAsyncSupplier.get()
   }
 }
 
@@ -72,10 +69,8 @@ internal fun imageResolver(map: Map<String, Image>): DocumentationImageResolver?
 @Internal
 internal fun BlockingDocumentationContentFlow.asFlow(): Flow<DocumentationContent> {
   val flow = channelFlow {
-    blockingContext {
-      collectBlocking { content ->
-        check(trySend(content).isSuccess) // sanity check
-      }
+    collectBlocking { content ->
+      check(trySend(content).isSuccess) // sanity check
     }
   }
   return flow

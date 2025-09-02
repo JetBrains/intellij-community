@@ -2,7 +2,7 @@ package com.siyeh.igtest.numeric.pointless_arithmetic_expression;
 
 import java.util.Random;
 
-public class PointlessArithmeticExpression
+class PointlessArithmeticExpression
 {
     private static final int ZERO_CONSTANT = 0;
     private static final int ONE_CONSTANT = 1;

@@ -2,8 +2,6 @@
 package com.intellij.platform.recentFiles.frontend
 
 import com.intellij.ide.actions.ActivateToolWindowAction
-import com.intellij.ide.vfs.VirtualFileId
-import com.intellij.ide.vfs.rpcId
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.actionSystem.ex.ActionUtil
@@ -15,10 +13,11 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.Strings
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
+import com.intellij.platform.recentFiles.shared.SWITCHER_ELEMENTS_LIMIT
 
 private val LOG by lazy { fileLogger() }
-private const val SWITCHER_ELEMENTS_LIMIT = 30
 
 private val mnemonicAndMainTextComparator by lazy {
   Comparator.comparing(SwitcherListItem::mnemonic) { m1, m2 ->
@@ -27,11 +26,13 @@ private val mnemonicAndMainTextComparator by lazy {
     .thenComparing(SwitcherListItem::mainText, NaturalComparator.INSTANCE)
 }
 
-internal fun collectFilesFromFrontendEditorSelectionHistory(project: Project): List<VirtualFileId> {
-  return (FileEditorManager.getInstance(project) as FileEditorManagerImpl).getSelectionHistoryList()
+internal fun collectFilesFromFrontendEditorSelectionHistory(project: Project): List<VirtualFile> {
+  return (FileEditorManager.getInstance(project) as? FileEditorManagerImpl)
+    ?.getSelectionHistoryList()
+    .orEmpty()
     .asSequence()
     .take(SWITCHER_ELEMENTS_LIMIT)
-    .map { it.first.rpcId() }
+    .map { it.first }
     .toList()
 }
 

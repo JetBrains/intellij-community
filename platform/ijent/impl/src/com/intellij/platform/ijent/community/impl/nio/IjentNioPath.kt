@@ -1,14 +1,14 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.community.impl.nio
 
 import com.intellij.platform.core.nio.fs.BasicFileAttributesHolder2
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.path.EelPathException
 import com.intellij.platform.eel.provider.utils.getOrThrowFileSystemException
+import org.jetbrains.annotations.ApiStatus
 import java.net.URI
 import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
-import kotlin.collections.plusAssign
 
 /**
  * Such paths are supposed to be created via the corresponding nio FileSystem. [Path.of] does NOT return instances of this class.
@@ -21,6 +21,7 @@ import kotlin.collections.plusAssign
  *   .getPath("/usr/bin/cowsay")
  * ```
  */
+@ApiStatus.Internal
 sealed class IjentNioPath protected constructor(
   internal val nioFs: IjentNioFileSystem,
   cachedAttributes: BasicFileAttributes?,

@@ -12,6 +12,7 @@ import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.merge.MergeConflictManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
@@ -209,8 +210,11 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
                                                   boolean skipSingleDefaultChangeList,
                                                   @Nullable Function<? super ChangeNodeDecorator, ? extends ChangeNodeDecorator> changeDecoratorProvider) {
     assert myProject != null;
-    final RemoteRevisionsCache revisionsCache = RemoteRevisionsCache.getInstance(myProject);
+    List<FilePath> resolvedUnchangedFiles = MergeConflictManager.getInstance(myProject).getResolvedConflictPaths();
+    RemoteRevisionsCache revisionsCache = RemoteRevisionsCache.getInstance(myProject);
     boolean skipChangeListNode = skipSingleDefaultChangeList && isSingleBlankChangeList(changeLists);
+    ChangesBrowserConflictsNode conflictsRoot = null;
+
     for (ChangeList list : changeLists) {
       List<Change> changes = sorted(list.getChanges(), CHANGE_COMPARATOR);
       ChangeListRemoteState listRemoteState = new ChangeListRemoteState();
@@ -231,10 +235,40 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
         Change change = changes.get(i);
         RemoteStatusChangeNodeDecorator baseDecorator = new RemoteStatusChangeNodeDecorator(revisionsCache, listRemoteState, i);
         ChangeNodeDecorator decorator = changeDecoratorProvider != null ? changeDecoratorProvider.apply(baseDecorator) : baseDecorator;
-        insertChangeNode(change, changesParent, createChangeNode(change, decorator));
+        FilePath path = ChangesUtil.getFilePath(change);
+        if (MergeConflictManager.getInstance(myProject).isResolvedConflict(path)) {
+          resolvedUnchangedFiles.remove(path);
+          insertChangeNode(change, changesParent, createChangeNode(change, decorator));
+        }
+        else if (MergeConflictManager.isMergeConflict(change.getFileStatus())) {
+          if (conflictsRoot == null) {
+            conflictsRoot = new ChangesBrowserConflictsNode(myProject);
+            conflictsRoot.markAsHelperNode();
+            myModel.insertNodeInto(conflictsRoot, myRoot, myModel.getChildCount(myRoot));
+          }
+          insertChangeNode(change, conflictsRoot, createChangeNode(change, decorator));
+        }
+        else {
+          insertChangeNode(change, changesParent, createChangeNode(change, decorator));
+        }
+      }
+
+      insertResolvedUnchangedNodes(list, resolvedUnchangedFiles, changesParent);
+    }
+
+    return this;
+  }
+
+  private void insertResolvedUnchangedNodes(@NotNull ChangeList list,
+                                            @NotNull List<FilePath> resolvedUnchangedFilePaths,
+                                            @NotNull ChangesBrowserNode<?> changesParent) {
+    if (resolvedUnchangedFilePaths.isEmpty()) return;
+
+    if (list instanceof LocalChangeList localList && localList.isDefault()) {
+      for (FilePath resolvedConflictPath : resolvedUnchangedFilePaths) {
+        insertChangeNode(resolvedConflictPath, changesParent, ChangesBrowserNode.createFilePath(resolvedConflictPath, FileStatus.MERGE));
       }
     }
-    return this;
   }
 
   private static boolean isSingleBlankChangeList(Collection<? extends ChangeList> lists) {

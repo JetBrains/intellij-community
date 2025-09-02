@@ -18,15 +18,15 @@ final class CollapseBlockAction extends BaseCodeInsightAction {
   protected @NotNull CodeInsightActionHandler getHandler() {
     return new CodeInsightActionHandler() {
       @Override
-      public void invoke(final @NotNull Project project, final @NotNull Editor editor, final @NotNull PsiFile file) {
-        executor(project, editor, file, true);
+      public void invoke(final @NotNull Project project, final @NotNull Editor editor, final @NotNull PsiFile psiFile) {
+        executor(project, editor, psiFile, true);
       }
     };
   }
 
   @Override
-  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    return executor(project, editor, file, false);
+  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    return executor(project, editor, psiFile, false);
   }
 
   private static boolean executor(final @NotNull Project project,

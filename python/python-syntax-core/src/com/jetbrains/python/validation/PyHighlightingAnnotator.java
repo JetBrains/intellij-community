@@ -93,8 +93,8 @@ public final class PyHighlightingAnnotator extends PyFrontendAnnotator implement
   }
 
   @Override
-  public boolean isForceHighlightParents(@NotNull PsiFile file) {
-    return file instanceof PyAstFile;
+  public boolean isForceHighlightParents(@NotNull PsiFile psiFile) {
+    return psiFile instanceof PyAstFile;
   }
 
   private void highlightKeyword(@NotNull PsiElement node, @NotNull PyElementType elementType) {

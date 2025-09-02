@@ -1,0 +1,5 @@
+// IGNORE_K1
+// FIX: Remove unreachable code
+fun f(): Int {
+    throw Exception("Throw far away")
+}

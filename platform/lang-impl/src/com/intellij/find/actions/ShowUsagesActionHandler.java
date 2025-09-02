@@ -18,6 +18,7 @@ import com.intellij.usages.UsageSearcher;
 import com.intellij.usages.impl.UsageViewImpl;
 import com.intellij.usages.impl.UsageViewPopupManager;
 import com.intellij.util.SlowOperations;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,14 +38,6 @@ public interface ShowUsagesActionHandler {
   @Nullable ShowUsagesActionHandler showDialog();
 
   @Nullable ShowUsagesActionHandler withScope(@NotNull SearchScope searchScope);
-
-  default @Nullable ShowUsagesActionHandler withMaximalScope() {
-    return withScope(getMaximalScope());
-  }
-
-  default boolean isSaveScope() {
-    return true;
-  }
 
   @Nullable ShowUsagesParameters moreUsages(@NotNull ShowUsagesParameters parameters);
 
@@ -86,5 +79,12 @@ public interface ShowUsagesActionHandler {
       return null;
     }
     return FindBundle.message("show.usages.advertisement", KeymapUtil.getShortcutText(shortcut), maximalScope.getDisplayName());
+  }
+
+  // call the returned runnable to disable the maximal scope search
+  @ApiStatus.Internal
+  default @NotNull Runnable enableMaximalScopeSearch(@NotNull ShowUsagesParameters parameters) {
+    ShowUsagesAction.requestMaximalScopeSearch(parameters, this);
+    return () -> ShowUsagesAction.resetMaximalScopeSearch(parameters.project);
   }
 }

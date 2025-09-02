@@ -1,12 +1,15 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk
 
 import com.google.gson.*
+import org.jetbrains.annotations.ApiStatus
 import java.lang.reflect.Type
 
 /**
  * Mark sealed class to serialize automatically each inheritor
  */
+@ApiStatus.Internal
+
 class SealedClassAdapter : JsonSerializer<Any>, JsonDeserializer<Any> {
   private companion object {
     const val sealedClassChildId = "sealedClassChildId"

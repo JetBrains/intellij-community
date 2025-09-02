@@ -17,15 +17,17 @@ package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.AppUIUtil;
-import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.XStackFrame;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 public class XStandaloneVariablesView extends XVariablesViewBase {
   private final XStackFrame myStackFrame;
 
-  public XStandaloneVariablesView(@NotNull Project project, @NotNull XDebuggerEditorsProvider editorsProvider, @NotNull XStackFrame stackFrame) {
+  public XStandaloneVariablesView(@NotNull Project project,
+                                  @NotNull XDebuggerEditorsProvider editorsProvider,
+                                  @NotNull XStackFrame stackFrame) {
     super(project, editorsProvider, null);
     myStackFrame = stackFrame;
     buildTreeAndRestoreState(stackFrame);
@@ -35,7 +37,8 @@ public class XStandaloneVariablesView extends XVariablesViewBase {
     AppUIUtil.invokeLaterIfProjectAlive(getTree().getProject(), () -> buildTreeAndRestoreState(myStackFrame));
   }
 
+  @ApiStatus.Internal
   @Override
-  public void processSessionEvent(@NotNull SessionEvent event, @NotNull XDebugSession session) {
+  public void processSessionEvent(@NotNull SessionEvent event, @NotNull XDebugSessionProxy session) {
   }
 }

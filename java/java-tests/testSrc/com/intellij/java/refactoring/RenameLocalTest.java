@@ -113,7 +113,7 @@ public class RenameLocalTest extends LightRefactoringTestCase {
 
   public void testConflictWithPatternInline() {
     assertThrows(BaseRefactoringProcessor.ConflictsInTestsException.class, 
-                 "An existing pattern variable s has the same name",
+                 "Variable 's' Already Exists",
                  () -> doTestInplaceRename("s"));
   }
 

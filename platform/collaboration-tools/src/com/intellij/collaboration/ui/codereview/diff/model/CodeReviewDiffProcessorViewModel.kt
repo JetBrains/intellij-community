@@ -11,12 +11,8 @@ import com.intellij.collaboration.util.onSuccess
 import com.intellij.openapi.ListSelection
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.awaitCancellation
-import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.*
-import java.util.concurrent.CopyOnWriteArrayList
 
 /**
  * A viewmodel for a diff processor which can show multiple diffs and switch between them
@@ -63,8 +59,7 @@ private class PreLoadingCodeReviewAsyncDiffViewModelDelegateImpl<D : Any, C : An
   private val changesPreProcessor: Flow<(List<C>) -> List<C>>,
   private val createViewModel: CoroutineScope.(D, C) -> CVM,
 ) : PreLoadingCodeReviewAsyncDiffViewModelDelegate<C, CVM> {
-  private val changesToShow = MutableStateFlow(ChangesState<C>())
-  private val selectionListeners = CopyOnWriteArrayList<ChangesSelectionListener<C>>()
+  private val delegate: CodeReviewAsyncDiffViewModelDelegate<C> = CodeReviewAsyncDiffViewModelDelegate.create()
 
   override val changes: Flow<ComputedResult<CodeReviewDiffProcessorViewModel.State<CVM>>?> =
     preloadedDataFlow.transformLatest { dataLoadingResult ->
@@ -84,7 +79,7 @@ private class PreLoadingCodeReviewAsyncDiffViewModelDelegateImpl<D : Any, C : An
       }
       var lastList: List<C> = emptyList()
       changesPreProcessor.collectLatest { preProcessor ->
-        changesToShow.collectScoped { changesState ->
+        delegate.changesToShow.collectScoped { changesState ->
           try {
             if (changesState.selectedChanges.list != lastList) {
               emit(ComputedResult.loading())
@@ -106,69 +101,9 @@ private class PreLoadingCodeReviewAsyncDiffViewModelDelegateImpl<D : Any, C : An
     }
   }
 
-  override fun showChanges(changes: ListSelection<C>, scrollRequest: DiffViewerScrollRequest?) {
-    val state = changesToShow.updateAndGet {
-      if (it.selectedChanges == changes) it else ChangesState(changes)
-    }
-    notifySelection(state.selectedChanges)
+  override fun showChanges(changes: ListSelection<C>, scrollRequest: DiffViewerScrollRequest?) = delegate.showChanges(changes, scrollRequest)
 
-    if (scrollRequest != null) {
-      state.scroll(scrollRequest)
-    }
-  }
+  override fun showChange(change: C, scrollRequest: DiffViewerScrollRequest?) = delegate.showChange(change, scrollRequest)
 
-  override fun showChange(change: C, scrollRequest: DiffViewerScrollRequest?) {
-    val current = changesToShow.value
-    val newIdx = current.selectedChanges.list.indexOf(change)
-    if (newIdx < 0) return
-    val newChanges = ListSelection.createAt(current.selectedChanges.list, newIdx)
-    val newState = current.copy(selectedChanges = newChanges)
-    if (!changesToShow.compareAndSet(current, newState)) {
-      return
-    }
-    notifySelection(newState.selectedChanges)
-
-    if (scrollRequest != null) {
-      newState.scroll(scrollRequest)
-    }
-  }
-
-  private fun notifySelection(selection: ListSelection<C>) =
-    selectionListeners.forEach {
-      try {
-        it.invoke(selection)
-      }
-      catch (e: Exception) {
-        // notification failed
-      }
-    }
-
-  override suspend fun handleSelection(listener: ChangesSelectionListener<C>): Nothing {
-    try {
-      selectionListeners.add(listener)
-      listener(changesToShow.value.selectedChanges)
-      awaitCancellation()
-    }
-    finally {
-      selectionListeners.remove(listener)
-    }
-  }
-
-  private data class ChangesState<C : Any>(val selectedChanges: ListSelection<C>) {
-    constructor() : this(ListSelection.empty())
-
-    private val _scrollRequests = Channel<DiffViewerScrollRequest>(1, BufferOverflow.DROP_OLDEST)
-    val scrollRequests: Flow<DiffViewerScrollRequest> = _scrollRequests.receiveAsFlow()
-
-    fun scroll(cmd: DiffViewerScrollRequest) {
-      _scrollRequests.trySend(cmd)
-    }
-  }
-
-  private data class ViewModelsState<CVM : Any>(
-    override val selectedChanges: ListSelection<CVM>,
-    override val scrollRequests: Flow<DiffViewerScrollRequest>,
-  ) : CodeReviewDiffProcessorViewModel.State<CVM>, DiffViewerScrollRequestProducer
+  override suspend fun handleSelection(listener: ChangesSelectionListener<C>): Nothing = delegate.handleSelection(listener)
 }
-
-private typealias ChangesSelectionListener<C> = (ListSelection<C>) -> Unit

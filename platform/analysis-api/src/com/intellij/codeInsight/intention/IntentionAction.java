@@ -54,10 +54,10 @@ public interface IntentionAction extends FileModifier, CommonIntentionAction, Po
    *
    * @param project the project in which the availability is checked.
    * @param editor  the editor in which the intention will be invoked.
-   * @param file    the file open in the editor.
+   * @param psiFile    the file open in the editor.
    * @return {@code true} if the intention is available, {@code false} otherwise.
    */
-  boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file);
+  boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile);
 
   /**
    * Called when the user has selected the intention in order to invoke it.
@@ -67,9 +67,9 @@ public interface IntentionAction extends FileModifier, CommonIntentionAction, Po
    *
    * @param project the project in which the intention is invoked.
    * @param editor  the editor in which the intention is invoked.
-   * @param file    the file open in the editor.
+   * @param psiFile    the file open in the editor.
    */
-  void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException;
+  void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException;
 
   /**
    * Indicate whether this action should be invoked inside a write action.
@@ -104,16 +104,16 @@ public interface IntentionAction extends FileModifier, CommonIntentionAction, Po
    * @param project the current project
    * @param editor  the editor where a file copy is opened.
    *                Could be a simplified headless Editor implementation that lacks some features.
-   * @param file    a non-physical file to apply, which is a copy of the file that contains the element returned from
+   * @param psiFile    a non-physical file to apply, which is a copy of the file that contains the element returned from
    *                {@link #getElementToMakeWritable(PsiFile)}, or a copy of the current file if that method returns null
    * @return an object that describes the action preview to display
    */
-  default @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    IntentionAction copy = ObjectUtils.tryCast(getFileModifierForPreview(file), IntentionAction.class);
+  default @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    IntentionAction copy = ObjectUtils.tryCast(getFileModifierForPreview(psiFile), IntentionAction.class);
     if (copy == null) return IntentionPreviewInfo.FALLBACK_DIFF;
-    PsiElement writable = copy.getElementToMakeWritable(file);
-    if (writable == null || writable.getContainingFile() != file) return IntentionPreviewInfo.FALLBACK_DIFF;
-    copy.invoke(project, editor, file);
+    PsiElement writable = copy.getElementToMakeWritable(psiFile);
+    if (writable == null || writable.getContainingFile() != psiFile) return IntentionPreviewInfo.FALLBACK_DIFF;
+    copy.invoke(project, editor, psiFile);
     return IntentionPreviewInfo.DIFF;
   }
 

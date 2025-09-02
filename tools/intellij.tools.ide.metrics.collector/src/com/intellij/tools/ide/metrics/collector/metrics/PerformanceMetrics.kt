@@ -2,6 +2,7 @@ package com.intellij.tools.ide.metrics.collector.metrics
 
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.tools.ide.metrics.collector.publishing.ApplicationMetricDto
+import org.jetbrains.annotations.ApiStatus
 import java.time.OffsetDateTime
 
 data class PerformanceMetrics(
@@ -27,7 +28,8 @@ data class PerformanceMetrics(
     data class Counter internal constructor(override val name: String) : MetricId()
   }
 
-  data class Metric private constructor(
+  @ApiStatus.Internal
+  data class Metric(
     @JvmField val id: MetricId,
     @JvmField val value: Int,
   ) {

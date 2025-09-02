@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
@@ -9,8 +9,13 @@ abstract class IncorrectCancellationExceptionHandlingInspectionTestBase : LightJ
     super.setUp()
     myFixture.enableInspections(IncorrectCancellationExceptionHandlingInspection())
     myFixture.addClass("""
+        package java.util.concurrent;
+        public class CancellationException extends IllegalStateException {}
+    """.trimIndent())
+    myFixture.addClass("""
         package com.intellij.openapi.progress;
-        public class ProcessCanceledException extends RuntimeException {}
+        import java.util.concurrent.CancellationException;
+        public class ProcessCanceledException extends CancellationException {}
         """.trimIndent())
     myFixture.addClass("""
         package com.intellij.openapi.diagnostic;

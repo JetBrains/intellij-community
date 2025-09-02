@@ -46,8 +46,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.function.Consumer;
 
 //@ApiStatus.Internal
@@ -1482,7 +1482,7 @@ public final class EditorPainter implements TextDrawingCallback {
           boolean hasSoftWrap = softWrap != null;
           if (hasSoftWrap || myEditor.isRightAligned()) {
             prevEndOffset = offset;
-            it = new IterationState(myView, offset == 0 ? 0 : DocumentUtil.getPreviousCodePointOffset(myDocument, offset),
+            it = new IterationState(myEditor, offset == 0 ? 0 : DocumentUtil.getPreviousCodePointOffset(myDocument, offset),
                                     visualLineEndOffset,
                                     myCaretData, false, false, false, false);
             if (it.getEndOffset() <= offset) {
@@ -1498,7 +1498,7 @@ public final class EditorPainter implements TextDrawingCallback {
         FoldRegion foldRegion = fragment.getCurrentFoldRegion();
         if (foldRegion == null) {
           if (start != prevEndOffset) {
-            it = new IterationState(myView, start, fragment.isRtl() ? offset : visualLineEndOffset,
+            it = new IterationState(myEditor, start, fragment.isRtl() ? offset : visualLineEndOffset,
                                     myCaretData, false, false, false, fragment.isRtl());
           }
           prevEndOffset = end;
@@ -1555,14 +1555,14 @@ public final class EditorPainter implements TextDrawingCallback {
         maxColumn = fragment.getEndVisualColumn();
       }
       if (firstFragment && myEditor.isRightAligned()) {
-        it = new IterationState(myView, offset, visualLineEndOffset, myCaretData, false, false, false, false);
+        it = new IterationState(myEditor, offset, visualLineEndOffset, myCaretData, false, false, false, false);
         if (it.getEndOffset() <= offset) {
           it.advance();
         }
         painter.paintBeforeLineStart(it.getBeforeLineStartBackgroundAttributes(), false, maxColumn, x, y);
       }
       if (it == null || it.getEndOffset() != visualLineEndOffset) {
-        it = new IterationState(myView,
+        it = new IterationState(myEditor,
                                 visualLineEndOffset == offset ? visualLineEndOffset
                                                               : DocumentUtil.getPreviousCodePointOffset(myDocument, visualLineEndOffset),
                                 visualLineEndOffset,
@@ -1631,11 +1631,15 @@ public final class EditorPainter implements TextDrawingCallback {
     }
 
     private static TextAttributes debugZombieFoldRegion(@NotNull FoldRegion region, @NotNull TextAttributes foldAttributes) {
-      if (Registry.is("cache.markup.debug") && region.getUserData(FoldingModelImpl.ZOMBIE_REGION_KEY) != null) {
+      if (Registry.is("cache.markup.debug") && region.getUserData(FoldingKeys.ZOMBIE_REGION_KEY) != null) {
         TextAttributes zombieAttr = foldAttributes.clone();
         zombieAttr.copyFrom(foldAttributes);
         zombieAttr.setEffectType(EffectType.STRIKEOUT);
-        zombieAttr.setEffectColor(JBColor.DARK_GRAY);
+        if (region.getUserData(FoldingKeys.AUTO_CREATED_ZOMBIE) != null) {
+          zombieAttr.setEffectColor(JBColor.MAGENTA);
+        } else {
+          zombieAttr.setEffectColor(JBColor.DARK_GRAY);
+        }
         return zombieAttr;
       }
       return foldAttributes;

@@ -11,6 +11,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyKnownDecorator;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyTypeProvider;
 import com.jetbrains.python.psi.impl.stubs.PyEnumAttributeStubType;
@@ -67,7 +68,7 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
     if (!referenceExpression.isQualified()) {
       final String name = referenceExpression.getReferencedName();
       if (PyNames.NONE.equals(name)) {
-        return PyNoneType.INSTANCE;
+        return PyBuiltinCache.getInstance(referenceExpression).getNoneType();
       }
       else if (PyNames.FALSE.equals(name) || PyNames.TRUE.equals(name)) {
         return PyBuiltinCache.getInstance(referenceExpression).getBoolType();

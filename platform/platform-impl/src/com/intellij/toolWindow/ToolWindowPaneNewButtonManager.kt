@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.toolWindow
 
+import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.RegisterToolWindowTask
 import com.intellij.openapi.wm.ToolWindowAnchor
@@ -8,6 +9,7 @@ import com.intellij.openapi.wm.WindowInfo
 import com.intellij.openapi.wm.impl.AbstractDroppableStripe
 import com.intellij.openapi.wm.impl.SquareStripeButton
 import com.intellij.openapi.wm.impl.ToolWindowImpl
+import com.intellij.ui.JBColor
 import com.intellij.ui.awt.DevicePoint
 import java.awt.BorderLayout
 import java.awt.Dimension
@@ -23,6 +25,8 @@ internal open class ToolWindowPaneNewButtonManager(paneId: String, isPrimary: Bo
   private val right = ToolWindowRightToolbar(paneId, isPrimary)
   private var showButtons = true
   private var isStripesOverlaid = false
+
+  private val visibleToolbarsListeners = mutableListOf<(Boolean, Boolean) -> Unit>()
 
   override val isNewUi: Boolean
     get() = true
@@ -41,9 +45,11 @@ internal open class ToolWindowPaneNewButtonManager(paneId: String, isPrimary: Bo
 
   override fun wrapWithControls(pane: ToolWindowPane): JComponent {
     return JPanel(BorderLayout()).apply {
+      background = JBColor.namedColor("MainWindow.background", JBColor.PanelBackground)
       add(pane, BorderLayout.CENTER)
       add(left, BorderLayout.WEST)
       add(right, BorderLayout.EAST)
+      InternalUICustomization.getInstance()?.configureToolWindowPane(this, this@ToolWindowPaneNewButtonManager)
     }
   }
 
@@ -53,14 +59,21 @@ internal open class ToolWindowPaneNewButtonManager(paneId: String, isPrimary: Bo
     return updateToolStripesVisibility()
   }
 
-  private fun updateToolStripesVisibility(): Boolean {
+  internal fun updateToolStripesVisibility(): Boolean {
     val oldSquareVisible = left.isVisible && right.isVisible
     val visible = this.showButtons || this.isStripesOverlaid
-    left.isVisible = visible && left.hasVisibleButtons()
-    right.isVisible = visible && right.hasVisibleButtons()
+    val isLeftVisible = visible && left.hasVisibleButtons()
+    val isRightVisible = visible && right.hasVisibleButtons()
+    left.isVisible = isLeftVisible
+    right.isVisible = isRightVisible
     left.updateNamedState()
     right.updateNamedState()
+    visibleToolbarsListeners.forEach { it(isLeftVisible, isRightVisible) }
     return oldSquareVisible != visible
+  }
+
+  internal fun addVisibleToolbarsListener(listener: (Boolean, Boolean) -> Unit) {
+    visibleToolbarsListeners.add(listener)
   }
 
   override fun initMoreButton(project: Project) {

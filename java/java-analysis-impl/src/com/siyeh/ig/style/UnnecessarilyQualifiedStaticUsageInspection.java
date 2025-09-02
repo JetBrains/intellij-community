@@ -18,6 +18,7 @@ package com.siyeh.ig.style;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
@@ -136,7 +137,7 @@ public final class UnnecessarilyQualifiedStaticUsageInspection extends BaseInspe
     if (referenceName == null) {
       return false;
     }
-    if (referenceName.equals(PsiKeyword.YIELD) && parent instanceof PsiMethodCallExpression) {
+    if (referenceName.equals(JavaKeywords.YIELD) && parent instanceof PsiMethodCallExpression) {
       // Qualifier required since Java 14 (JLS 3.8)
       return false;
     }

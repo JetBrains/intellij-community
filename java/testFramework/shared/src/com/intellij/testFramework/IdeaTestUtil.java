@@ -211,27 +211,27 @@ public final class IdeaTestUtil {
     return createMockJdk(name, path, null);
   }
 
-  // it's JDK 1.4, not 14
+  /// It's JDK 1.4, not 14.
   public static @NotNull Sdk getMockJdk14() {
     return getMockJdk(JavaVersion.compose(4));
   }
 
-  // it's JDK 1.6, not 16
+  /// It's JDK 1.6, not 16.
   public static @NotNull Sdk getMockJdk16() {
     return getMockJdk(JavaVersion.compose(6));
   }
 
-  // it's JDK 1.7, not 17
+  /// It's JDK 1.7, not 17.
   public static @NotNull Sdk getMockJdk17() {
     return getMockJdk(JavaVersion.compose(7));
   }
 
-  // it's JDK 1.7, not 17
+  /// It's JDK 1.7, not 17.
   public static @NotNull Sdk getMockJdk17(@NotNull String name) {
     return createMockJdk(name, getMockJdk17Path().getPath());
   }
 
-  // it's JDK 1.8, not 18
+  /// It's JDK 1.8, not 18.
   public static @NotNull Sdk getMockJdk18() {
     return getMockJdk(JavaVersion.compose(8));
   }

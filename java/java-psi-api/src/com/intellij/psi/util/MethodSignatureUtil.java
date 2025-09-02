@@ -36,13 +36,14 @@ public final class MethodSignatureUtil {
     return CollectionFactory.createCustomHashingStrategySet(METHOD_PARAMETERS_ERASURE_STRATEGY);
   }
 
-  /**
-   * def: (8.4.2 Method Signature) Two method signatures m1 and m2 are override-equivalent iff either m1 is a subsignature of m2 or m2 is a subsignature of m1.
-   *
-   * erasure (erasure) = erasure, so we would check if erasures are equal and then check if the number of type parameters agree:
-   *      if signature(m1)=signature(m2), then m1.typeParams=m2.typeParams
-   *      if (erasure(signature(m1))=signature(m2), then m2.typeParams.length=0 and vise versa
-   */
+  /// Two method signatures `m1` and `m2` are override-equivalent iff either `m1` is a subsignature of `m2`
+  /// or `m2` is a subsignature of `m1`.
+  /// 
+  /// See JLS 8.4.2 Method Signature
+  /// 
+  /// `erasure (erasure) = erasure`, so we would check if erasures are equal and then check if the number of type parameters agrees:
+  /// - if `signature(m1) = signature(m2)`, then `m1.typeParams=m2.typeParams`
+  /// - if `erasure(signature(m1)) = signature(m2)`, then `m2.typeParams.length=0` and vice versa
   public static boolean areOverrideEquivalent(@NotNull PsiMethod method1, @NotNull PsiMethod method2) {
     final int typeParamsLength1 = method1.getTypeParameters().length;
     final int typeParamsLength2 = method2.getTypeParameters().length;

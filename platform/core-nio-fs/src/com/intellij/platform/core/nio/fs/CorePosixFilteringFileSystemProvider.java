@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.core.nio.fs;
 
 import org.jetbrains.annotations.Contract;
@@ -35,12 +35,6 @@ class CorePosixFilteringFileSystemProvider
 
   CorePosixFilteringFileSystemProvider(FileSystemProvider provider) { myFileSystemProvider = provider; }
 
-  @Override
-  public boolean canHandleRouting() {
-    return myFileSystemProvider instanceof RoutingAwareFileSystemProvider &&
-           ((RoutingAwareFileSystemProvider)myFileSystemProvider).canHandleRouting();
-  }
-
   private static FileAttribute<?>[] filterAttrs(FileAttribute<?>... attrs) {
     return Arrays.stream(attrs).filter(attr -> !attr.name().startsWith("posix:")).toArray(FileAttribute<?>[]::new);
   }
@@ -57,12 +51,12 @@ class CorePosixFilteringFileSystemProvider
 
   @Override
   @Contract("null -> null; !null -> !null")
-  protected @Nullable Path toDelegatePath(@Nullable Path path) {
-    return path;
+  protected @Nullable Path wrapDelegatePath(@Nullable Path delegatePath) {
+    return delegatePath;
   }
 
   @Override
-  protected @Nullable Path fromDelegatePath(@Nullable Path path) {
+  protected @Nullable Path toDelegatePath(@Nullable Path path) {
     return path;
   }
 

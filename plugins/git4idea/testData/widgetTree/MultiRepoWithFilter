@@ -1,0 +1,48 @@
+-Common Local Branches
+ -another [nodes/folder.svg]
+  -group [nodes/folder.svg]
+   test [vcs/branchNode.svg]
+ -group [nodes/folder.svg]
+  test [vcs/branchNode.svg]
+-Common Remote Branches
+ -origin [nodes/folder.svg]
+  -another [nodes/folder.svg]
+   -group [nodes/folder.svg]
+    test [vcs/branchNode.svg]
+  -group [nodes/folder.svg]
+   test [vcs/branchNode.svg]
+-Common Tags
+-bro-repo
+ -Local
+  -another [nodes/folder.svg]
+   -group [nodes/folder.svg]
+    test [vcs/branchNode.svg]
+  -group [nodes/folder.svg]
+   test [vcs/branchNode.svg]
+ -Remote
+  -origin [nodes/folder.svg]
+   -another [nodes/folder.svg]
+    -group [nodes/folder.svg]
+     test [vcs/branchNode.svg]
+   -group [nodes/folder.svg]
+    test [vcs/branchNode.svg]
+ -Tags
+  -group [nodes/folder.svg]
+   v2 [icons/branchLabel.svg]
+-project
+ -Local
+  -another [nodes/folder.svg]
+   -group [nodes/folder.svg]
+    test [vcs/branchNode.svg]
+  -group [nodes/folder.svg]
+   test [vcs/branchNode.svg]
+ -Remote
+  -origin [nodes/folder.svg]
+   -another [nodes/folder.svg]
+    -group [nodes/folder.svg]
+     test [vcs/branchNode.svg]
+   -group [nodes/folder.svg]
+    test [vcs/branchNode.svg]
+ -Tags
+  -group [nodes/folder.svg]
+   v2 [icons/branchLabel.svg]

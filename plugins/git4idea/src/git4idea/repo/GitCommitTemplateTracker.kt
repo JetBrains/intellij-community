@@ -5,7 +5,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
@@ -34,6 +33,9 @@ import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 import kotlin.coroutines.coroutineContext
+import kotlin.io.path.Path
+import kotlin.io.path.exists
+import kotlin.io.path.pathString
 
 private val LOG = logger<GitCommitTemplateTracker>()
 
@@ -190,9 +192,9 @@ internal class GitCommitTemplateTracker(
 
   private fun resolvePathAsAbsolute(repository: GitRepository, gitCommitTemplatePath: String): String? {
     val executable = GitExecutableManager.getInstance().getExecutable(repository.project)
-    val localPath = executable.convertFilePathBack(gitCommitTemplatePath, File(repository.root.path))
+    val localPath = executable.convertFilePathBack(gitCommitTemplatePath, Path(repository.root.path))
     if (localPath.exists()) {
-      return localPath.path
+      return localPath.pathString
     }
 
     return null
@@ -285,7 +287,7 @@ internal class GitCommitTemplateTracker(
   }
 
   internal class GitCommitTemplateTrackerStartupActivity : ProjectActivity {
-    override suspend fun execute(project: Project): Unit = blockingContext {
+    override suspend fun execute(project: Project) {
       ProjectLevelVcsManager.getInstance(project).runAfterInitialization {
         getInstance(project).start()
       }

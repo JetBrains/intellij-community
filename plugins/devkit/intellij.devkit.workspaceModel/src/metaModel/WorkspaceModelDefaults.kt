@@ -3,7 +3,7 @@ package com.intellij.devkit.workspaceModel.metaModel
 
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.annotations.Abstract
-import com.intellij.platform.workspace.storage.annotations.Child
+import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.annotations.Default
 import com.intellij.platform.workspace.storage.annotations.Open
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
@@ -16,7 +16,7 @@ enum class WorkspaceModelDefaults(val fqName: FqName, val classId: ClassId) {
   DEFAULT_ANNOTATION(FqName(Default::class.qualifiedName!!), ClassId.topLevel(FqName(Default::class.qualifiedName!!))),
   OPEN_ANNOTATION(FqName(Open::class.qualifiedName!!), ClassId.topLevel(FqName(Open::class.qualifiedName!!))),
   ABSTRACT_ANNOTATION(FqName(Abstract::class.qualifiedName!!), ClassId.topLevel(FqName(Abstract::class.qualifiedName!!))),
-  CHILD_ANNOTATION(FqName(Child::class.qualifiedName!!), ClassId.topLevel(FqName(Child::class.qualifiedName!!))),
+  PARENT_ANNOTATION(FqName(Parent::class.qualifiedName!!), ClassId.topLevel(FqName(Parent::class.qualifiedName!!))),
   EQUALS_BY_ANNOTATION(FqName(EqualsBy::class.qualifiedName!!), ClassId.topLevel(FqName(EqualsBy::class.qualifiedName!!))),
 
   LIST_INTERFACE(StandardNames.FqNames.list, StandardClassIds.List),

@@ -13,10 +13,7 @@ import com.intellij.openapi.keymap.impl.KeymapImpl;
 import com.intellij.openapi.keymap.impl.ShortcutRestrictions;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.ServiceContainerUtil;
-import com.intellij.testFramework.junit5.DynamicTests;
-import com.intellij.testFramework.junit5.NamedFailure;
-import com.intellij.testFramework.junit5.TestApplication;
-import com.intellij.testFramework.junit5.TestDisposable;
+import com.intellij.testFramework.junit5.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,6 +27,7 @@ import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@RunInEdt(writeIntent = true)
 @TestApplication
 public class ActionsTreeTest {
   private static final Logger LOG = Logger.getInstance(ActionsTreeTest.class);

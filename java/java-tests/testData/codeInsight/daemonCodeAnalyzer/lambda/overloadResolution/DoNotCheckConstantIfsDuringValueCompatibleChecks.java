@@ -20,7 +20,7 @@ class Test {
   private <T> void process(handler<T> <warning descr="Parameter 'h' is never used">h</warning>) {}
 
 
-  public static void main(String[] args) {
+  public static void main() {
     Test t = new Test();
     t.<Message<Result<String>>>process(m -> {
       if (m.data.isSuccessful());

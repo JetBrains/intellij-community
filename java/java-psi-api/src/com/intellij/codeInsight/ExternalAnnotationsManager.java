@@ -5,7 +5,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,9 +14,6 @@ import java.util.List;
 
 public abstract class ExternalAnnotationsManager {
   public static final String ANNOTATIONS_XML = "annotations.xml";
-
-  @Topic.ProjectLevel
-  public static final Topic<ExternalAnnotationsListener> TOPIC = new Topic<>("external annotations", ExternalAnnotationsListener.class);
 
   /**
    * Describes where to place the new annotation

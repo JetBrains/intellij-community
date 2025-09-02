@@ -43,5 +43,8 @@ private fun openInIdeaProject(project: Project?, module: Module, fileName: Strin
       return true
     }
   }
+
+  val a: Project = null!!
+  a.basePath
   return false
 }

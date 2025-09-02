@@ -5,6 +5,7 @@ import com.intellij.util.KeyedLazyInstance;
 import kotlinx.collections.immutable.PersistentList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -23,7 +24,7 @@ public class ClassExtension<T> extends KeyedExtensionCollector<T, Class<?>> {
   }
 
   @Override
-  protected final @NotNull List<T> buildExtensions(@NotNull String key, @NotNull Class classKey) {
+  protected final @NotNull @Unmodifiable List<T> buildExtensions(@NotNull String key, @NotNull Class classKey) {
     Set<String> allSupers = new LinkedHashSet<>();
     collectSupers(classKey, allSupers);
     return buildExtensionsWithInheritance(allSupers);

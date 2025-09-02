@@ -37,6 +37,8 @@ class ForMultiLanguageSupport {
 
   // An iterable of bundle instances
 
+  // b'0' fill as usize is a mistake
+
   // Resolve '../' in paths (like real_path)
 
   // Thrown when an UPLOAD_ERR_CANT_WRITE error occurred with UploadedFile.
@@ -84,4 +86,27 @@ class ForMultiLanguageSupport {
   //        for (Person person : people) {
   //            System.out.println(person);
   //        }
+
+  // if the subject includes the
+  //    string '|6xX$\WG-C?|' or the author includes the string
+  //    '|^#=)A?mUi5|' ; this is however highly unlikely...
+
+  // if the subject includes the
+  //    string '|6xX$\WG-C?|' or the author includes the string
+  //    '|^#=(A?mUi5|' ; this is however highly unlikely...
+
+  // print(f'Hello world')
+  // print(f'
+  // print(f')
+  // print(f'      world')
+
+  // Українська. У мене хороші будинки.
+  // Граматична помилка: Поверталися на <GRAMMAR_ERROR descr="VYSHIDNYI_VYHIDNYI">висхідну</GRAMMAR_ERROR> позицію.
+  // Друкувати словом: У мене хороші <TYPO descr="Typo: In word 'будінки'">будінки</TYPO>.
+
+  // Беларускі. У мяне добры дом.
+  // Граматычная памылка: А <GRAMMAR_ERROR descr="pa_fakcie">па факту</GRAMMAR_ERROR> атрымалася, што сіл няма.
+  // Памылка друку ў word: У мяне добры <TYPO descr="Typo: In word 'домн'">домн</TYPO>.
+
+  // <TYPO descr="Typo: In word 'Timout'">Timout</TYPO>
 }

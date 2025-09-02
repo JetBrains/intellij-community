@@ -70,6 +70,7 @@ public class PythonHighlightingLexer extends PythonLexer {
 
       if (myLanguageLevel.isPy3K()) {
         if (tokenText.equals(PyNames.NONE)) return PyTokenTypes.NONE_KEYWORD;
+        if (tokenText.equals(PyNames.ELLIPSIS)) return PyTokenTypes.ELLIPSIS_LITERAL;
         if (tokenText.equals(PyNames.TRUE)) return PyTokenTypes.TRUE_KEYWORD;
         if (tokenText.equals(PyNames.FALSE)) return PyTokenTypes.FALSE_KEYWORD;
         if (tokenText.equals(PyNames.NONLOCAL)) return PyTokenTypes.NONLOCAL_KEYWORD;

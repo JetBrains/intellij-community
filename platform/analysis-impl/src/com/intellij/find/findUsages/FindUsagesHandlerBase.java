@@ -73,20 +73,18 @@ public class FindUsagesHandlerBase {
 
     final SearchScope scope = options.searchScope;
 
-    final boolean searchText = options.isSearchForTextOccurrences && scope instanceof GlobalSearchScope;
-
     if (options.isUsages) {
       boolean success =
         ReferencesSearch.search(createSearchParameters(element, scope, options)).forEach(refProcessor);
       if (!success) return false;
     }
 
-    if (searchText) {
+    if (options.isSearchForTextOccurrences && scope instanceof GlobalSearchScope globalSearchScope) {
       if (options.fastTrack != null) {
-        options.fastTrack.searchCustom(consumer -> processUsagesInText(element, processor, (GlobalSearchScope)scope));
+        options.fastTrack.searchCustom(consumer -> processUsagesInText(element, processor, globalSearchScope));
       }
       else {
-        return processUsagesInText(element, processor, (GlobalSearchScope)scope);
+        return processUsagesInText(element, processor, globalSearchScope);
       }
     }
     return true;
@@ -101,8 +99,8 @@ public class FindUsagesHandlerBase {
   }
 
   protected @Unmodifiable @Nullable Collection<String> getStringsToSearch(final @NotNull PsiElement element) {
-    if (element instanceof PsiNamedElement) {
-      return ContainerUtil.createMaybeSingletonList(((PsiNamedElement)element).getName());
+    if (element instanceof PsiNamedElement namedElement) {
+      return ContainerUtil.createMaybeSingletonList(namedElement.getName());
     }
 
     return Collections.singleton(element.getText());

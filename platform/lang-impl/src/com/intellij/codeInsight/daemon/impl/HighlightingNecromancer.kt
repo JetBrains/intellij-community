@@ -29,8 +29,8 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vfs.FileIdAdapter
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer.MarkupType
 import com.intellij.util.CommonProcessors
@@ -140,6 +140,7 @@ open class HighlightingNecromancer(
   open fun subscribeDaemonFinished() {
     // as soon as highlighting kicks in and displays its own range highlighters, remove ones we applied from the on-disk cache,
     // but only after the highlighting finished, to avoid flicker
+    val fileIdAdapter = FileIdAdapter.getInstance()
     project.messageBus.connect(coroutineScope).subscribe(
       DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC,
       object : DaemonCodeAnalyzer.DaemonListener {
@@ -148,10 +149,9 @@ open class HighlightingNecromancer(
             for (fileEditor in fileEditors) {
               if (fileEditor is TextEditor && shouldPutDownActiveZombiesInFile(fileEditor)) {
                 val document = fileEditor.editor.document
-                val file = FileDocumentManager.getInstance().getFile(document)
-                if (file is VirtualFileWithId) {
-                  putDownActiveZombiesInFile(file, document)
-                }
+                val file = FileDocumentManager.getInstance().getFile(document) ?: return
+                val fileId = fileIdAdapter.getId(file) ?: return
+                putDownActiveZombiesInFile(file, fileId, document)
               }
             }
           }
@@ -188,8 +188,8 @@ open class HighlightingNecromancer(
     return highlighter.layer
   }
 
-  protected fun putDownActiveZombiesInFile(file: VirtualFileWithId, document: Document) {
-    val replaced = zombieStatusMap.replace(file.id, Status.SPAWNED, Status.DISPOSED)
+  protected fun putDownActiveZombiesInFile(file: VirtualFile, fileId: Int, document: Document) {
+    val replaced = zombieStatusMap.replace(fileId, Status.SPAWNED, Status.DISPOSED)
     if (!replaced) {
       // no zombie or zombie already disposed
       return
@@ -283,12 +283,8 @@ open class HighlightingNecromancer(
     zombieStatusMap.clear()
   }
 
-  private fun fileName(file: VirtualFileWithId): String {
-    return fileName(file as VirtualFile)
-  }
-
   private fun fileName(file: VirtualFile): String {
-    return "file(id=${(file as VirtualFileWithId).id}, name=${file.name})"
+    return "file(id=${FileIdAdapter.getInstance().getId(file)}, name=${file.name})"
   }
 
   private inner class HighlighterCollector : CommonProcessors.CollectProcessor<RangeHighlighterEx>() {

@@ -7,11 +7,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.platform.asComposeFontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.Dp
@@ -34,7 +36,9 @@ import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List.Ordered
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List.Ordered.NumberFormatStyles.NumberFormatStyle
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List.Unordered
+import java.awt.Font
 
+@OptIn(ExperimentalTextApi::class)
 @Suppress("FunctionName")
 internal fun JcefLikeMarkdownStyling(scheme: PreviewStyleScheme, fontSize: TextUnit): MarkdownStyling {
   val fontSizeDp = fontSize.value.dp
@@ -50,11 +54,14 @@ internal fun JcefLikeMarkdownStyling(scheme: PreviewStyleScheme, fontSize: TextU
   val blockVerticalSpacing: Dp = 16.dp
   val baseTextStyle: TextStyle = defaultTextStyle
 
+  val codeFenceFont = Font(FontPreferences.JETBRAINS_MONO, Font.PLAIN, (fontSize.value * 0.9f).toInt()).asComposeFontFamily()
+  val codeFenceTextStyle = baseTextStyle.copy(fontFamily = codeFenceFont)
+
   val inlinesStyling = createInlinesStyling(baseTextStyle, scheme)
   val paragraph = createParagraphStyling(inlinesStyling)
   val heading = createHeadingStyling(scheme, baseTextStyle, fontSizeDp)
   val blockQuote = createBlockQuoteStyling(scheme)
-  val code: Code = createCodeStyling(baseTextStyle, scheme)
+  val code: Code = createCodeStyling(codeFenceTextStyle, scheme)
   val list: List = createListStyling(baseTextStyle)
   val image: Image = createImageStyling()
   val thematicBreak: ThematicBreak = createThematicBreakStyling(scheme)

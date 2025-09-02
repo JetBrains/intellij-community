@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -7,7 +7,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 
 
-class PySyncPythonRequirementsAction : AnAction() {
+internal class PySyncPythonRequirementsAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val module = e.getData(PlatformCoreDataKeys.MODULE) ?: return
     syncWithImports(module)

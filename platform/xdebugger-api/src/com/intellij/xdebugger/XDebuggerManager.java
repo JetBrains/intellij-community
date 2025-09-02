@@ -7,6 +7,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.messages.Topic;
 import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import org.jetbrains.annotations.ApiStatus;
@@ -46,40 +47,53 @@ public abstract class XDebuggerManager {
    * Start a new debugging session. Use this method only if debugging is started by using standard 'Debug' action i.e. this methods is called
    * from {@link com.intellij.execution.runners.ProgramRunner#execute(ExecutionEnvironment)} method. Otherwise, use {@link #startSessionAndShowTab} method
    */
-  public abstract @NotNull XDebugSession startSession(@NotNull ExecutionEnvironment environment, @NotNull XDebugProcessStarter processStarter) throws ExecutionException;
+  @RequiresEdt(generateAssertion = false)
+  public abstract @NotNull XDebugSession startSession(@NotNull ExecutionEnvironment environment,
+                                                      @NotNull XDebugProcessStarter processStarter) throws ExecutionException;
 
   /**
    * Start a new debugging session and open 'Debug' tool window
+   *
    * @param sessionName title of 'Debug' tool window
    */
+  @RequiresEdt(generateAssertion = false)
   public abstract @NotNull XDebugSession startSessionAndShowTab(@NotNull @Nls String sessionName,
-                                                       @Nullable RunContentDescriptor contentToReuse,
-                                                       @NotNull XDebugProcessStarter starter) throws ExecutionException;
+                                                                @Nullable RunContentDescriptor contentToReuse,
+                                                                @NotNull XDebugProcessStarter starter) throws ExecutionException;
 
   /**
    * Start a new debugging session and open 'Debug' tool window
+   *
    * @param sessionName title of 'Debug' tool window
    */
+  @RequiresEdt(generateAssertion = false)
   public abstract @NotNull XDebugSession startSessionAndShowTab(@NotNull @Nls String sessionName,
-                                                       @NotNull XDebugProcessStarter starter,
-                                                       @NotNull ExecutionEnvironment environment) throws ExecutionException;
+                                                                @NotNull XDebugProcessStarter starter,
+                                                                @NotNull ExecutionEnvironment environment) throws ExecutionException;
 
   /**
    * Start a new debugging session and open 'Debug' tool window
-   * @param sessionName title of 'Debug' tool window
+   *
+   * @param sessionName                 title of 'Debug' tool window
    * @param showToolWindowOnSuspendOnly if {@code true} 'Debug' tool window won't be shown until debug process is suspended on a breakpoint
    */
-  public abstract @NotNull XDebugSession startSessionAndShowTab(@NotNull @Nls String sessionName, @Nullable RunContentDescriptor contentToReuse,
-                                                       boolean showToolWindowOnSuspendOnly,
-                                                       @NotNull XDebugProcessStarter starter) throws ExecutionException;
+  @RequiresEdt(generateAssertion = false)
+  public abstract @NotNull XDebugSession startSessionAndShowTab(@NotNull @Nls String sessionName,
+                                                                @Nullable RunContentDescriptor contentToReuse,
+                                                                boolean showToolWindowOnSuspendOnly,
+                                                                @NotNull XDebugProcessStarter starter) throws ExecutionException;
 
   /**
    * Start a new debugging session and open 'Debug' tool window
-   * @param sessionName title of 'Debug' tool window
-   * @param icon icon of 'Debug' tool window
+   *
+   * @param sessionName                 title of 'Debug' tool window
+   * @param icon                        icon of 'Debug' tool window
    * @param showToolWindowOnSuspendOnly if {@code true} 'Debug' tool window won't be shown until debug process is suspended on a breakpoint
    */
-  public abstract @NotNull XDebugSession startSessionAndShowTab(@NotNull @Nls String sessionName, @Nullable Icon icon,
-                                                       @Nullable RunContentDescriptor contentToReuse, boolean showToolWindowOnSuspendOnly,
-                                                       @NotNull XDebugProcessStarter starter) throws ExecutionException;
+  @RequiresEdt(generateAssertion = false)
+  public abstract @NotNull XDebugSession startSessionAndShowTab(@NotNull @Nls String sessionName,
+                                                                @Nullable Icon icon,
+                                                                @Nullable RunContentDescriptor contentToReuse,
+                                                                boolean showToolWindowOnSuspendOnly,
+                                                                @NotNull XDebugProcessStarter starter) throws ExecutionException;
 }

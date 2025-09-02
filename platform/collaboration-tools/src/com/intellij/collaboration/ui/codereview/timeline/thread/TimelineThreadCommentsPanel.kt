@@ -5,12 +5,14 @@ import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.collaboration.ui.codereview.timeline.thread.TimelineThreadCommentsPanel.Companion.FOLD_THRESHOLD
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.panels.ListLayout
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
-import java.awt.*
+import java.awt.Component
 import java.awt.event.ActionEvent
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -26,7 +28,7 @@ class TimelineThreadCommentsPanel<T>(
   private val commentComponentFactory: (T) -> JComponent,
   offset: Int = JBUI.scale(8),
   private val foldButtonOffset: Int = 30
-) : BorderLayoutPanel() {
+) : BorderLayoutPanel(), UiDataProvider {
 
   val foldModel = SingleValueModel(true)
   private val collapsedCountModel: SingleValueModel<Int> = SingleValueModel(commentsModel.size - FOLD_THRESHOLD - 1)
@@ -58,7 +60,6 @@ class TimelineThreadCommentsPanel<T>(
   init {
     isOpaque = false
     addToCenter(foldablePanel)
-    putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
 
     commentsModel.addListDataListener(object : ListDataListener {
       override fun intervalRemoved(e: ListDataEvent) {
@@ -92,6 +93,10 @@ class TimelineThreadCommentsPanel<T>(
 
     foldModel.addListener { updateFolding(it) }
     updateFolding(foldModel.value)
+  }
+
+  override fun uiDataSnapshot(sink: DataSink) {
+    sink.setNull(CommonDataKeys.EDITOR)
   }
 
   private fun updateFolding(folded: Boolean) {

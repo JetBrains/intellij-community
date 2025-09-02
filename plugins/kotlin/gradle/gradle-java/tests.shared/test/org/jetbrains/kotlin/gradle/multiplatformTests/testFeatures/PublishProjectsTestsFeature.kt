@@ -10,7 +10,7 @@ import com.intellij.openapi.externalSystem.service.notification.ExternalSystemPr
 import com.intellij.openapi.externalSystem.task.TaskCallback
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.gradle.multiplatformTests.KotlinMppTestsContext
+import org.jetbrains.kotlin.gradle.multiplatformTests.KotlinSyncTestsContext
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestConfigurationDslScope
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestFeature
 import org.jetbrains.kotlin.gradle.multiplatformTests.writeAccess
@@ -62,7 +62,7 @@ interface GradleProjectsPublishingDsl {
 object GradleProjectsPublishingTestsFeature : TestFeature<ProjectsToPublish> {
     override fun createDefaultConfiguration(): ProjectsToPublish = ProjectsToPublish(mutableSetOf())
 
-    override fun KotlinMppTestsContext.beforeImport() {
+    override fun KotlinSyncTestsContext.beforeImport() {
         testConfiguration.getConfiguration(this@GradleProjectsPublishingTestsFeature).publishedSubprojectNames.forEach {
             GradleProjectsPublisher.publishSubproject(it, testProjectRoot, testProject)
         }

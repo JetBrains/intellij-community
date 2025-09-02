@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger;
 
 import com.intellij.icons.AllIcons;
@@ -18,7 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class PyVariableViewSettings {
-  public static class SimplifiedView extends ToggleAction {
+  public static final class SimplifiedView extends ToggleAction {
     private final PyDebugProcess myProcess;
     private volatile boolean mySimplifiedView;
 
@@ -100,7 +100,7 @@ public final class PyVariableViewSettings {
     }
   }
 
-  public static class VariablesPolicyGroup extends AbstractPolicyGroup<ValuesPolicy, VariablePolicyAction> {
+  public static final class VariablesPolicyGroup extends AbstractPolicyGroup<ValuesPolicy, VariablePolicyAction> {
     public VariablesPolicyGroup() {
       super(PyBundle.message("debugger.variables.loading.policy"));
       addPolicyActions(new VariablePolicyAction(PyBundle.message("debugger.variables.loading.synchronously.text"),
@@ -120,7 +120,7 @@ public final class PyVariableViewSettings {
     }
   }
 
-  public static class QuotingPolicyAction extends AbstractPolicyAction<QuotingPolicy, QuotingPolicyGroup> {
+  public static final class QuotingPolicyAction extends AbstractPolicyAction<QuotingPolicy, QuotingPolicyGroup> {
 
     public QuotingPolicyAction(@Nls @NotNull String text,
                                @Nls @NotNull String description,
@@ -135,7 +135,7 @@ public final class PyVariableViewSettings {
     }
   }
 
-  public static class QuotingPolicyGroup extends AbstractPolicyGroup<QuotingPolicy, QuotingPolicyAction> {
+  public static final class QuotingPolicyGroup extends AbstractPolicyGroup<QuotingPolicy, QuotingPolicyAction> {
     public QuotingPolicyGroup() {
       super(PyBundle.message("debugger.variables.view.quoting.policy"));
       addPolicyActions(new QuotingPolicyAction(PyBundle.message("debugger.variables.view.quoting.single.text"),
@@ -214,7 +214,7 @@ public final class PyVariableViewSettings {
     protected abstract void changeDebuggerSettings();
   }
 
-  private abstract static class AbstractPolicyGroup<Policy extends AbstractPolicy, PolicyAction extends AbstractPolicyAction<Policy, ? extends DefaultActionGroup>>
+  public abstract static class AbstractPolicyGroup<Policy extends AbstractPolicy, PolicyAction extends AbstractPolicyAction<Policy, ? extends DefaultActionGroup>>
     extends DefaultActionGroup {
     private final @NotNull List<PolicyAction> myPolicyActions = new ArrayList<>();
     private final List<PolicyListener> myPolicyListeners = new ArrayList<>();

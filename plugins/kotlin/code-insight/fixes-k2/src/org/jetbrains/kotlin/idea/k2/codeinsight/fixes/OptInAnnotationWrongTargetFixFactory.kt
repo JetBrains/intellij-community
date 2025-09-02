@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypes
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-object OptInAnnotationWrongTargetFixFactory {
+internal object OptInAnnotationWrongTargetFixFactory {
 
     val optInAnnotationWrongTargetFixFactory =
         KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.OptInMarkerOnWrongTarget ->

@@ -14,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.TerminalEngine;
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider;
+import org.jetbrains.plugins.terminal.TerminalTabState;
 import org.jetbrains.plugins.terminal.TerminalToolWindowManager;
 
 /**
@@ -53,6 +54,12 @@ public final class RevealFileInTerminalAction extends DumbAwareAction {
     if (project == null || selectedFile == null) {
       return;
     }
-    TerminalToolWindowManager.getInstance(project).openTerminalIn(selectedFile);
+    var tabState = new TerminalTabState();
+    tabState.myWorkingDirectory = selectedFile.getPath();
+    TerminalToolWindowManager.getInstance(project).createNewTab(
+      TerminalOptionsProvider.getInstance().getTerminalEngine(),
+      null,
+      tabState
+    );
   }
 }

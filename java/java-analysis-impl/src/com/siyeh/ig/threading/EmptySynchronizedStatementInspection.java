@@ -16,9 +16,9 @@
 package com.siyeh.ig.threading;
 
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.PsiSynchronizedStatement;
 import com.intellij.psi.util.FileTypeUtils;
 import com.siyeh.InspectionGadgetsBundle;
@@ -39,7 +39,7 @@ public final class EmptySynchronizedStatementInspection extends BaseInspection {
 
   @Override
   protected @Nullable LocalQuickFix buildFix(Object... infos) {
-    return new DeleteUnnecessaryStatementFix(PsiKeyword.SYNCHRONIZED);
+    return new DeleteUnnecessaryStatementFix(JavaKeywords.SYNCHRONIZED);
   }
 
   @Override

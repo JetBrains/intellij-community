@@ -26,7 +26,7 @@ import com.intellij.psi.impl.light.LightJavaModule;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.Function;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
@@ -37,6 +37,7 @@ import org.jetbrains.uast.*;
 
 import java.io.File;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -50,9 +51,9 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
   private static @Nullable SmartPsiFileRange createReferencePointer(@NotNull PsiReference reference) {
     PsiElement element = reference.getElement();
     int offset = element.getTextRange().getStartOffset() + reference.getRangeInElement().getStartOffset();
-    PsiFile file = element.getContainingFile();
-    if (areReferencesEquivalent(reference, file.findReferenceAt(offset))) {
-      return SmartPointerManager.getInstance(element.getProject()).createSmartPsiFileRangePointer(file, TextRange.from(offset, 0));
+    PsiFile psiFile = element.getContainingFile();
+    if (areReferencesEquivalent(reference, psiFile.findReferenceAt(offset))) {
+      return SmartPointerManager.getInstance(element.getProject()).createSmartPsiFileRangePointer(psiFile, TextRange.from(offset, 0));
     }
     return null;
   }
@@ -65,9 +66,9 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
   }
 
   @Nullable PsiReference restoreReference() {
-    PsiFile file = myReferencePointer == null ? null : myReferencePointer.getContainingFile();
+    PsiFile psiFile = myReferencePointer == null ? null : myReferencePointer.getContainingFile();
     Segment range = myReferencePointer == null ? null : myReferencePointer.getPsiRange();
-    return file == null || range == null ? null : file.findReferenceAt(range.getStartOffset());
+    return psiFile == null || range == null ? null : psiFile.findReferenceAt(range.getStartOffset());
   }
 
   @Override
@@ -89,12 +90,13 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
     return registerFixes(reference, registrar, shortReferenceName -> {
       Project project = reference.getElement().getProject();
       return PsiShortNamesCache.getInstance(project).getClassesByName(shortReferenceName, GlobalSearchScope.allScope(project));
-    });
+    }, r -> r.getCanonicalText());
   }
 
   public static @NotNull List<@NotNull LocalQuickFix> registerFixes(@NotNull PsiReference reference,
                                                                     @NotNull List<? super IntentionAction> registrar,
-                                                                    @NotNull Function<? super String, PsiClass[]> shortReferenceNameToClassesLookup) {
+                                                                    @NotNull Function<? super String, ? extends PsiMember[]> shortReferenceNameToClassesLookup,
+                                                                    @NotNull Function<PsiReference, String> calculateCanonicalText) {
     PsiElement psiElement = reference.getElement();
     String shortReferenceName = reference.getRangeInElement().substring(psiElement.getText());
 
@@ -120,20 +122,20 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
     List<LocalQuickFix> result = new SmartList<>();
     JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
 
-    registerExternalFixes(reference, psiElement, shortReferenceName, currentModule, scope, registrar, result);
+    registerExternalFixes(reference, psiElement, shortReferenceName, currentModule, scope, registrar, calculateCanonicalText, result);
     if (!result.isEmpty()) {
       return result;
     }
 
-    PsiClass[] classes = shortReferenceNameToClassesLookup.fun(shortReferenceName);
-    List<PsiClass> allowedDependencies = filterAllowedDependencies(psiElement, classes);
+    PsiMember[] classes = shortReferenceNameToClassesLookup.apply(shortReferenceName);
+    List<PsiMember> allowedDependencies = filterAllowedDependencies(psiElement, classes);
     if (allowedDependencies.isEmpty()) {
       return result;
     }
     if (reference instanceof PsiJavaCodeReferenceElement codeReference) {
       String qualifiedName = getQualifiedName(codeReference, shortReferenceName, containingFile);
       if (qualifiedName != null) {
-        allowedDependencies.removeIf(aClass -> !qualifiedName.equals(aClass.getQualifiedName()));
+        allowedDependencies.removeIf(aClass -> aClass instanceof PsiQualifiedNamedElement && !qualifiedName.equals(((PsiQualifiedNamedElement)aClass).getQualifiedName()));
       }
     }
 
@@ -146,8 +148,8 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
     Set<Library> excluded = new HashSet<>();
     Set<Library> withTestScope = new HashSet<>();
     ModuleFileIndex moduleFileIndex = ModuleRootManager.getInstance(currentModule).getFileIndex();
-    for (PsiClass aClass : allowedDependencies) {
-      if (!facade.getResolveHelper().isAccessible(aClass, psiElement, aClass)) continue;
+    for (PsiMember aClass : allowedDependencies) {
+      if (!facade.getResolveHelper().isAccessible(aClass, psiElement, ObjectUtils.tryCast(aClass, PsiClass.class))) continue;
       PsiFile psiFile = aClass.getContainingFile();
       if (psiFile == null) continue;
       VirtualFile virtualFile = psiFile.getVirtualFile();
@@ -160,7 +162,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
           if (files.length == 0) continue;
           final VirtualFile jar = files[0];
 
-          String qualifiedName = aClass.getQualifiedName();
+          String qualifiedName = aClass instanceof PsiClass cls ? cls.getQualifiedName() : null;
           if (qualifiedName == null) continue;
 
           if (jar == null || 
@@ -290,9 +292,10 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
                                             @NotNull Module currentModule,
                                             @NotNull DependencyScope scope,
                                             @NotNull List<? super @NotNull IntentionAction> registrar,
+                                            @NotNull Function<PsiReference, String> calculateCanonicalText,
                                             @NotNull List<? super @NotNull LocalQuickFix> result) {
     JavaPsiFacade facade = JavaPsiFacade.getInstance(currentModule.getProject());
-    String fullReferenceText = reference.getCanonicalText();
+    String fullReferenceText = calculateCanonicalText.apply(reference);
     ThreeState refToAnnotation = isReferenceToAnnotation(psiElement);
     for (ExternalLibraryResolver resolver : ExternalLibraryResolver.EP_NAME.getExtensionList()) {
       ExternalClassResolveResult resolveResult = resolver.resolveClass(shortReferenceName, refToAnnotation, currentModule);
@@ -318,11 +321,11 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
     }
   }
 
-  private static @NotNull List<PsiClass> filterAllowedDependencies(@NotNull PsiElement element, PsiClass @NotNull [] classes) {
+  private static @NotNull List<PsiMember> filterAllowedDependencies(@NotNull PsiElement element, PsiMember @NotNull [] classes) {
     DependencyValidationManager dependencyValidationManager = DependencyValidationManager.getInstance(element.getProject());
     PsiFile fromFile = element.getContainingFile();
-    List<PsiClass> result = new ArrayList<>();
-    for (PsiClass psiClass : classes) {
+    List<PsiMember> result = new ArrayList<>();
+    for (PsiMember psiClass : classes) {
       PsiFile containingFile = psiClass.getContainingFile();
       if (containingFile != null && dependencyValidationManager.getViolatorDependencyRule(fromFile, containingFile) == null) {
         result.add(psiClass);

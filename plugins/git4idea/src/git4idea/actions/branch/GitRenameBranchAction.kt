@@ -17,13 +17,23 @@ class GitRenameBranchAction : GitSingleBranchAction(ActionsBundle.messagePointer
 
   override fun actionPerformed(e: AnActionEvent, project: Project, repositories: List<GitRepository>, branch: GitBranch) {
     val branchName = branch.name
+
+    val hasUpstream = repositories.any { repository ->
+      repository.getBranchTrackInfo(branchName) != null
+    }
+
     val options = GitNewBranchDialog(project, repositories,
                                      GitBundle.message("branches.rename.branch", branchName),
                                      branchName,
-                                     false, false,
-                                     false, false, GitBranchOperationType.RENAME).showAndGetOptions()
+                                     false, showUnsetUpstreamOption = hasUpstream,
+                                     operation = GitBranchOperationType.RENAME).showAndGetOptions()
     if (options != null) {
-      GitBrancher.getInstance(project).renameBranch(branchName, options.name, options.repositories.toList())
+      if (!options.unsetUpstream) {
+        GitBrancher.getInstance(project).renameBranch(branchName, options.name, options.repositories.toList())
+      }
+      else {
+        GitBrancher.getInstance(project).renameBranchAndUnsetUpstream(branchName, options.name, options.repositories.toList())
+      }
     }
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.inline;
 
 import com.intellij.icons.AllIcons;
@@ -7,13 +7,13 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ThreeState;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.Obsolescent;
-import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.frame.presentation.XErrorValuePresentation;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
+import com.intellij.xdebugger.impl.frame.XDebugSessionProxy;
 import com.intellij.xdebugger.impl.frame.XDebugView;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.XValueTextProvider;
@@ -134,7 +134,7 @@ public class InlineWatchNodeImpl extends WatchNodeImpl implements InlineWatchNod
     }
 
     private boolean sessionIsInOtherFileThanNode() {
-      XDebugSession session = XDebugView.getSession(myTree);
+      XDebugSessionProxy session = XDebugView.getSessionProxy(myTree);
       if (session != null) {
         XSourcePosition sessionCurrentPosition = session.getCurrentPosition();
         if (sessionCurrentPosition != null && !sessionCurrentPosition.getFile().equals(myPosition.getFile())) {

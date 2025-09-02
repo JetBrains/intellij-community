@@ -2,7 +2,7 @@
 package com.intellij.execution.junit;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.intention.AddAnnotationFix;
+import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.execution.JUnitBundle;
 import com.intellij.ide.fileTemplates.FileTemplateDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
@@ -128,7 +128,8 @@ public class JUnit5Framework extends JUnitTestFramework {
                                              JUnitBundle.message("create.setup.dialog.title"),
                                              Messages.getWarningIcon());
       if (exit == Messages.OK) {
-        new AddAnnotationFix(JUnitUtil.BEFORE_EACH_ANNOTATION_NAME, existingMethod).invoke(existingMethod.getProject(), null, existingMethod.getContainingFile());
+        AddAnnotationPsiFix.addPhysicalAnnotationIfAbsent(JUnitUtil.BEFORE_EACH_ANNOTATION_NAME, PsiNameValuePair.EMPTY_ARRAY, 
+                                                          existingMethod.getModifierList());
         return existingMethod;
       }
     }

@@ -58,12 +58,6 @@ public final class EmptyAction extends AnAction {
     return ActionUpdateThread.BGT;
   }
 
-  /** @deprecated Use {@link ActionUtil#mergeFrom} and {@link AnAction#registerCustomShortcutSet} directly */
-  @Deprecated(forRemoval = true)
-  public static void setupAction(@NotNull AnAction action, @NotNull String id, @Nullable JComponent component) {
-    ActionUtil.mergeFrom(action, id).registerCustomShortcutSet(component, null);
-  }
-
   /** @deprecated Use {@link ActionUtil#wrap(String)} and {@link AnAction#registerCustomShortcutSet} directly. */
   @Deprecated(forRemoval = true)
   public static @NotNull AnAction registerWithShortcutSet(@NotNull String id, @NotNull ShortcutSet shortcutSet, @NotNull JComponent component) {

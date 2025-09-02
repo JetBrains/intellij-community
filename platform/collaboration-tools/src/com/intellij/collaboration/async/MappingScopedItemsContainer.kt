@@ -32,51 +32,43 @@ class MappingScopedItemsContainer<T, K, V> internal constructor(
   private val hashingStrategy: HashingStrategy<K>,
   private val mapper: CoroutineScope.(T) -> V,
   private val destroy: suspend V.() -> Unit,
-  private val update: (suspend V.(T) -> Unit)? = null
+  private val update: (suspend V.(T) -> Unit)? = null,
 ) {
   private val _mappingState = MutableStateFlow<Map<K, ScopingWrapper<V>>>(emptyMap())
   val mappingState: StateFlow<Map<K, V>> = _mappingState.mapState { it.mapValues { (_, value) -> value.value } }
   private val mapGuard = Mutex()
 
-  suspend fun update(items: Iterable<T>) = mapGuard.withLock {
+  suspend fun update(items: Iterable<T>): Unit = mapGuard.withLock {
     withContext(NonCancellable) {
       val currentMap = _mappingState.value
-      var hasStructureChanges = false
-      val newItemsSet = CollectionFactory.createLinkedCustomHashingStrategySet(hashingStrategy).also {
-        items.mapTo(it, keyExtractor)
-      }
+      val resultMap = createLinkedMap<K, ScopingWrapper<V>>(hashingStrategy)
 
-      val result = createLinkedMap<K, ScopingWrapper<V>>(hashingStrategy)
-      // destroy missing
-      for ((key, scopedValue) in currentMap) {
-        if (!newItemsSet.contains(key)) {
-          hasStructureChanges = true
-          scopedValue.value.destroy()
-          scopedValue.cancel()
-        }
-        else {
-          result[key] = scopedValue
-        }
-      }
-
-      // add new or update existing
+      // add everything to the new mapping
       for (item in items) {
         val itemKey = keyExtractor(item)
-        val existing = result[itemKey]
+        val existing = currentMap[itemKey]
+
         if (existing == null) {
-          val valueScope = cs.childScope()
-          result[itemKey] = ScopingWrapper(valueScope, mapper(valueScope, item))
-          hasStructureChanges = true
+          val valueScope = cs.childScope("item=$itemKey")
+          resultMap[itemKey] = ScopingWrapper(valueScope, mapper(valueScope, item))
         }
         else {
           // if not inferring nullability fsr
           update?.let { existing.value.it(item) }
-          result[itemKey] = existing
+          resultMap[itemKey] = existing
         }
       }
 
-      if (hasStructureChanges) {
-        _mappingState.value = result
+      // cancel scopes that are no longer included in the list
+      val deletedKeys = currentMap.keys - resultMap.keys
+      for (key in deletedKeys) {
+        val scopedValue = currentMap[key] ?: continue
+        scopedValue.value.destroy()
+        scopedValue.cancel()
+      }
+
+      if (currentMap.size != resultMap.size || deletedKeys.isNotEmpty()) {
+        _mappingState.value = resultMap
       }
     }
   }
@@ -85,7 +77,7 @@ class MappingScopedItemsContainer<T, K, V> internal constructor(
     withContext(NonCancellable) {
       val key = keyExtractor(item)
       _mappingState.value[key]?.value ?: _mappingState.updateAndGet {
-        val valueScope = cs.childScope()
+        val valueScope = cs.childScope("item=$key")
         val newValue = ScopingWrapper(valueScope, mapper(valueScope, item))
         it + (key to newValue)
       }[key]!!.value

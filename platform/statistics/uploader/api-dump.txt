@@ -1,0 +1,3 @@
+com.intellij.internal.statistic.eventLog.EventLogFilesProvider
+- a:getLogFiles():java.util.List
+- a:getLogFilesExceptActive():java.util.List

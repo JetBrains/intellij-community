@@ -45,7 +45,7 @@ public class CreateConstructorMatchingSuperFix extends BaseIntentionAction {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
     if (!myClass.isValid() || !canModify(myClass)) return false;
     PsiClass base = myClass.getSuperClass();
     if (base == null) return false;
@@ -66,7 +66,7 @@ public class CreateConstructorMatchingSuperFix extends BaseIntentionAction {
   }
 
   @Override
-  public void invoke(final @NotNull Project project, final Editor editor, PsiFile file) {
+  public void invoke(final @NotNull Project project, final Editor editor, PsiFile psiFile) {
     if (!FileModificationService.getInstance().prepareFileForWrite(myClass.getContainingFile())) return;
     chooseConstructor2Delegate(project, editor, myClass);
   }
@@ -92,8 +92,8 @@ public class CreateConstructorMatchingSuperFix extends BaseIntentionAction {
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    PsiClass targetClass = PsiTreeUtil.findSameElementInCopy(myClass, file);
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    PsiClass targetClass = PsiTreeUtil.findSameElementInCopy(myClass, psiFile);
     insertConstructor(project, editor, targetClass, false, calculateConstructors(targetClass));
     return IntentionPreviewInfo.DIFF;
   }

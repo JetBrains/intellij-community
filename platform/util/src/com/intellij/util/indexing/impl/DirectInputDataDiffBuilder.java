@@ -3,6 +3,7 @@ package com.intellij.util.indexing.impl;
 
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 
@@ -18,5 +19,5 @@ public abstract class DirectInputDataDiffBuilder<Key, Value> extends InputDataDi
   /**
    * @return keys stored for a corresponding {@link InputDataDiffBuilder#myInputId}
    */
-  public abstract @NotNull Collection<Key> getKeys();
+  public abstract @NotNull @Unmodifiable Collection<Key> getKeys();
 }

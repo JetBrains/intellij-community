@@ -18,23 +18,24 @@ import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.openapi.ui.validation.WHEN_PROPERTY_CHANGED
 import com.intellij.openapi.ui.validation.and
 import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.python.hatch.icons.PythonHatchIcons
+import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.Row
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.Result
+import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.icons.PythonIcons
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
+import com.jetbrains.python.psi.icons.PythonPsiApiIcons
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.pipenv.PIPENV_ICON
 import com.jetbrains.python.sdk.poetry.POETRY_ICON
 import com.jetbrains.python.sdk.uv.UV_ICON
 import com.jetbrains.python.statistics.InterpreterTarget
-import com.jetbrains.python.errorProcessing.ErrorSink
-import com.jetbrains.python.errorProcessing.PyError
+import com.jetbrains.python.statistics.PythonInterpreterInstallationIdsHolder.Companion.PYTHON_INSTALLATION_INTERRUPTED
+import kotlinx.coroutines.CoroutineScope
 import javax.swing.Icon
-import com.intellij.python.hatch.icons.PythonHatchIcons
-import com.intellij.ui.dsl.builder.Align
-import com.intellij.ui.dsl.builder.Row
-import com.jetbrains.python.psi.icons.PythonPsiApiIcons
 
 abstract class PythonAddEnvironment(open val model: PythonAddInterpreterModel) {
 
@@ -44,17 +45,25 @@ abstract class PythonAddEnvironment(open val model: PythonAddInterpreterModel) {
   internal val propertyGraph
     get() = model.propertyGraph
 
-  abstract fun buildOptions(panel: Panel, validationRequestor: DialogValidationRequestor, errorSink: ErrorSink)
-  open fun onShown() {}
+  abstract fun setupUI(panel: Panel, validationRequestor: DialogValidationRequestor)
+  abstract fun onShown(scope: CoroutineScope)
 
   /**
    * Returns created SDK ready to use
    *
    * Error is shown to user. Do not catch all exceptions, only return exceptions valuable to user
    */
-  abstract suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): Result<Sdk, PyError>
+  protected abstract suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): PyResult<Sdk>
 
-  open suspend fun createPythonModuleStructure(module: Module): Result<Unit, PyError> = Result.success(Unit)
+  suspend fun setupSdk(moduleOrProject: ModuleOrProject): PyResult<Sdk> {
+    val sdk = getOrCreateSdk(moduleOrProject).getOr { return it }
+
+    moduleOrProject.moduleIfExists?.excludeInnerVirtualEnv(sdk)
+
+    return Result.success(sdk)
+  }
+
+  open suspend fun createPythonModuleStructure(module: Module): PyResult<Unit> = Result.success(Unit)
 
   abstract fun createStatisticsInfo(target: PythonInterpreterCreationTargets): InterpreterStatisticsInfo
 }
@@ -126,6 +135,7 @@ internal fun installBaseSdk(sdk: Sdk, existingSdks: List<Sdk>): Sdk? {
     val notification = NotificationGroupManager.getInstance()
       .getNotificationGroup("Python interpreter installation")
       .createNotification(message("python.sdk.installation.balloon.error.message"), NotificationType.ERROR)
+      .setDisplayId(PYTHON_INSTALLATION_INTERRUPTED)
     notification.collapseDirection
 
     notification.addAction(NotificationAction.createSimple(message("python.sdk.installation.balloon.error.action")) {

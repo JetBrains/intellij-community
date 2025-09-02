@@ -53,7 +53,7 @@ internal open class IndexSpeedSearch(project: Project, private val index: VcsLog
   }
 
   override fun isMatchingElement(row: Any, pattern: String): Boolean {
-    val commitId = getCommitId(row as Int) ?: return false
+    val commitId = getCommitId(row as VcsLogTableIndex) ?: return false
     if (super.isMatchingElement(row, pattern)) return true
     return matchResult?.run {
       commitsForUsers.isNotEmpty() &&  // getting id from row takes time, so optimizing a little here
@@ -69,13 +69,13 @@ internal open class IndexSpeedSearch(project: Project, private val index: VcsLog
     return super.isMatchingMetadata(pattern, metadata)
   }
 
-  override fun getCommitMetadata(row: Int): VcsCommitMetadata? {
+  override fun getCommitMetadata(row: VcsLogTableIndex): VcsCommitMetadata? {
     val dataGetter = index.dataGetter ?: return super.getCommitMetadata(row)
     val commitId = getCommitId(row) ?: return null
     return IndexedDetails(dataGetter, storage, commitId)
   }
 
-  protected fun getCommitId(row: Int): Int? = myComponent.model.getId(row)
+  protected fun getCommitId(row: VcsLogTableIndex): VcsLogCommitStorageIndex? = myComponent.model.getId(row)
 }
 
 private data class MatchResult(@JvmField val pattern: String,

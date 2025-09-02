@@ -19,8 +19,17 @@ class KotlinPsiDocumentationTargetProvider : PsiDocumentationTargetProvider {
     override fun documentationTarget(element: PsiElement, originalElement: PsiElement?): DocumentationTarget? {
         return if (element.language.`is`(KotlinLanguage.INSTANCE)) {
             KotlinDocumentationTarget(element, originalElement).takeUnless {
-                // show documentation based on java presentation
-                element.navigationElement is KtFile && originalElement?.containingFile is PsiJavaFile
+                val navigationElement = element.navigationElement
+
+                // there are cases when documentation viewed from Java files
+                // should NOT be based on Kotlin representation, but on original Java
+                if (originalElement?.containingFile !is PsiJavaFile) {
+                    return@takeUnless false
+                }
+
+                // top level functions and properties are accessible via file-wrapper class
+                // `foo.kt` is represented in Java as `FooKt`.
+                navigationElement is KtFile
             }
         } else {
             null

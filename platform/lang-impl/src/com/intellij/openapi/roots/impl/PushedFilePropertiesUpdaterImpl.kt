@@ -30,8 +30,9 @@ import com.intellij.platform.util.coroutines.forEachConcurrent
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.psi.impl.PsiManagerEx
-import com.intellij.psi.impl.file.impl.FileManagerImpl
+import com.intellij.psi.impl.file.impl.FileManagerEx
 import com.intellij.util.ModalityUiUtil
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.containers.TreeNodeProcessingResult
 import com.intellij.util.gist.GistManager
 import com.intellij.util.gist.GistManagerImpl
@@ -230,9 +231,7 @@ class PushedFilePropertiesUpdaterImpl(private val myProject: Project) : PushedFi
       try {
         coroutineScope {
           task.getTasks().forEachConcurrent(SCANNING_PARALLELISM) { subtask ->
-            blockingContext {
-              subtask.run()
-            }
+            subtask.run()
           }
         }
         hadTasks = true
@@ -309,6 +308,7 @@ class PushedFilePropertiesUpdaterImpl(private val myProject: Project) : PushedFi
     }
   }
 
+  @RequiresReadLock
   private fun doApplyPushersToFile(fileOrDir: VirtualFile,
                                    pushers: List<FilePropertyPusher<*>>,
                                    moduleValues: Array<Any?>?) {
@@ -508,7 +508,7 @@ class PushedFilePropertiesUpdaterImpl(private val myProject: Project) : PushedFi
     }
 
     private fun reloadPsi(file: VirtualFile, project: Project) {
-      val fileManager = PsiManagerEx.getInstanceEx(project).fileManager as FileManagerImpl
+      val fileManager = PsiManagerEx.getInstanceEx(project).fileManager as FileManagerEx
       if (fileManager.findCachedViewProvider(file) != null) {
         ModalityUiUtil.invokeLaterIfNeeded(ModalityState.defaultModalityState(), project.disposed
         ) { WriteAction.run<RuntimeException> { fileManager.forceReload(file) } }

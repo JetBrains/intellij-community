@@ -31,11 +31,11 @@ internal class CreateMethodAction(
 
   override fun getActionGroup(): JvmActionGroup = if (abstract) CreateAbstractMethodActionGroup else CreateMethodActionGroup
 
-  override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean {
-    return super.isAvailable(project, editor, file) && PsiNameHelper.getInstance(project).isIdentifier(request.methodName)
+  override fun isAvailable(project: Project, editor: Editor?, psiFile: PsiFile?): Boolean {
+    return super.isAvailable(project, editor, psiFile) && PsiNameHelper.getInstance(project).isIdentifier(request.methodName)
   }
 
-  override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo {
+  override fun generatePreview(project: Project, editor: Editor, psiFile: PsiFile): IntentionPreviewInfo {
     val method = MethodRenderer(project, abstract, target, request).renderMethod()
     val className = myTargetPointer.element?.name
     return IntentionPreviewInfo.CustomDiff(GroovyFileType.GROOVY_FILE_TYPE, className, "", method.text)
@@ -52,7 +52,7 @@ internal class CreateMethodAction(
     return GroovyBundle.message(template, what, where)
   }
 
-  override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
+  override fun invoke(project: Project, editor: Editor?, psiFile: PsiFile?) {
     MethodRenderer(project, abstract, target, request).execute()
   }
 }

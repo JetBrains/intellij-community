@@ -26,7 +26,7 @@ public class AntChangeContextFix extends BaseIntentionAction {
   }
 
   @Override
-  public boolean isAvailable(final @NotNull Project project, final Editor editor, final PsiFile file) {
+  public boolean isAvailable(final @NotNull Project project, final Editor editor, final PsiFile psiFile) {
     //if (!(file instanceof XmlFile)) {
     //  return false;
     //}
@@ -47,8 +47,8 @@ public class AntChangeContextFix extends BaseIntentionAction {
   }
 
   @Override
-  public void invoke(final @NotNull Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-    final HectorComponent component = project.getService(HectorComponentFactory.class).create(file);
+  public void invoke(final @NotNull Project project, final Editor editor, final PsiFile psiFile) throws IncorrectOperationException {
+    final HectorComponent component = project.getService(HectorComponentFactory.class).create(psiFile);
     //final JComponent focusComponent = findComponentToFocus(component);
     component.showComponent(JBPopupFactory.getInstance().guessBestPopupLocation(editor));
     //SwingUtilities.invokeLater(new Runnable() {

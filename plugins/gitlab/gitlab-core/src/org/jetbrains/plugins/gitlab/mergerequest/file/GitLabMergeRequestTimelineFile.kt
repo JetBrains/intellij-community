@@ -4,11 +4,11 @@ package org.jetbrains.plugins.gitlab.mergerequest.file
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.Project
+import com.intellij.vcs.gitlab.icons.GitlabIcons
 import org.jetbrains.annotations.Nls
-import org.jetbrains.plugins.gitlab.GitlabIcons
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestDetails
-import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabProjectViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import javax.swing.Icon
 
@@ -28,8 +28,8 @@ internal class GitLabMergeRequestTimelineFile(connectionId: String,
   override fun getFileType(): FileType = GitLabTimelineFileType.instance
 
   private fun findDetails(): GitLabMergeRequestDetails? =
-    project.serviceIfCreated<GitLabToolWindowViewModel>()
-      ?.projectVm?.value?.takeIf { it.connectionId == connectionId }?.findMergeRequestDetails(mergeRequestId)
+    project.serviceIfCreated<GitLabProjectViewModel>()
+      ?.connectedProjectVm?.value?.takeIf { it.connectionId == connectionId }?.findMergeRequestDetails(mergeRequestId)
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true

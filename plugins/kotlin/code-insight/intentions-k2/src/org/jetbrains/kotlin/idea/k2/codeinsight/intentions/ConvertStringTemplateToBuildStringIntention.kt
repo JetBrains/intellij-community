@@ -22,7 +22,7 @@ internal class ConvertStringTemplateToBuildStringIntention :
         Presentation.of(familyName).withPriority(PriorityAction.Priority.LOW)
 
     override fun isApplicableByPsi(element: KtStringTemplateExpression): Boolean =
-        element.isSingleQuoted() && !element.isInsideAnnotationEntryArgumentList() && element.interpolationPrefix == null
+        element.isSingleQuoted() && !element.isInsideAnnotationEntryArgumentList()
 
     override fun KaSession.prepareContext(element: KtStringTemplateExpression) {
     }

@@ -9,5 +9,3 @@ public class TestingUse {
 fun main() {
     val funcInfunc = TestingUse().test6({<caret>f -> f(5) > 20}, {x -> x + 2})
 }
-
-// IGNORE_K2

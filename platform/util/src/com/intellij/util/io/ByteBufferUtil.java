@@ -3,9 +3,9 @@ package com.intellij.util.io;
 
 import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.CurrentJavaVersion;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.Unsafe;
-import com.intellij.util.lang.JavaVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,7 +22,7 @@ public final class ByteBufferUtil {
   private static @Nullable MethodHandle findInvokeCleaner() {
     MethodHandle invokeCleaner = null;
     try {
-      if (JavaVersion.current().feature >= 9) {
+      if (CurrentJavaVersion.currentJavaVersion().feature >= 9) {
         Object unsafe = ReflectionUtil.getUnsafe();
         MethodType type = MethodType.methodType(void.class, ByteBuffer.class);
         invokeCleaner = MethodHandles.publicLookup().findVirtual(unsafe.getClass(), "invokeCleaner", type).bindTo(unsafe);
@@ -37,7 +37,7 @@ public final class ByteBufferUtil {
   private static @Nullable MethodHandle findAddress() {
     MethodHandle address = null;
     try {
-      if (JavaVersion.current().feature >= 9) {
+      if (CurrentJavaVersion.currentJavaVersion().feature >= 9) {
         Class<?> directBufferClass = Class.forName("sun.nio.ch.DirectBuffer");
         address = MethodHandles.lookup().findVirtual(directBufferClass,
                                                      "address",

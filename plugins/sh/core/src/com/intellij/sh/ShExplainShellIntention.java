@@ -47,8 +47,8 @@ final class ShExplainShellIntention extends BaseIntentionAction {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!(file instanceof ShFile)) return false;
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    if (!(psiFile instanceof ShFile)) return false;
 
     SelectionModel selectionModel = editor.getSelectionModel();
     if (selectionModel.hasSelection()) {
@@ -59,7 +59,7 @@ final class ShExplainShellIntention extends BaseIntentionAction {
 
     Caret caret = editor.getCaretModel().getPrimaryCaret();
     int offset = caret.getOffset();
-    PsiElement at = file.findElementAt(offset);
+    PsiElement at = psiFile.findElementAt(offset);
 
     if (at == null) return false;
     //noinspection RedundantIfStatement
@@ -68,7 +68,7 @@ final class ShExplainShellIntention extends BaseIntentionAction {
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
     String selectedText = editor.getSelectionModel().getSelectedText();
 
     if (selectedText != null) {
@@ -77,7 +77,7 @@ final class ShExplainShellIntention extends BaseIntentionAction {
     else {
       Caret caret = editor.getCaretModel().getPrimaryCaret();
       int offset = caret.getOffset();
-      PsiElement at = file.findElementAt(offset);
+      PsiElement at = psiFile.findElementAt(offset);
       List<ShCompositeElement> parents =
           at == null
           ? Collections.emptyList()

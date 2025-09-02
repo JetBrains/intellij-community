@@ -3,7 +3,6 @@ package com.intellij.util.indexing.internal
 
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.UnindexedFilesScannerExecutor
 import com.intellij.platform.ide.progress.withBackgroundProgress
@@ -40,12 +39,10 @@ internal class InternalIndexingActionsService(private val project: Project, priv
       val activityName = "From InternalIndexingActionsService"
 
       withBackgroundProgress(project, activityName) {
-        blockingContext {
-          UnindexedFilesScannerExecutor.getInstance(project).suspendScanningAndIndexingThenRun(activityName) {
-            while (true) {
-              ProgressManager.checkCanceled()
-              Thread.sleep(100)
-            }
+        UnindexedFilesScannerExecutor.getInstance(project).suspendScanningAndIndexingThenRun(activityName) {
+          while (true) {
+            ProgressManager.checkCanceled()
+            Thread.sleep(100)
           }
         }
       }

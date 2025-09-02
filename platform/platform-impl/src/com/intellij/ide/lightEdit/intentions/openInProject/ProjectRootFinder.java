@@ -1,14 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.lightEdit.intentions.openInProject;
 
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Predicate;
 
-abstract class ProjectRootFinder {
+@ApiStatus.Internal
+public abstract class ProjectRootFinder {
   @Nullable VirtualFile findProjectRoot(@NotNull VirtualFile sourceFile) {
     VirtualFile parent = sourceFile.getParent();
     while (parent != null) {

@@ -6,6 +6,7 @@ import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.Dispatchers
+import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.impl.logging.jps.withJpsLogging
 import org.jetbrains.intellij.build.telemetry.TraceManager
@@ -35,7 +36,11 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
   companion object {
     init {
       setSystemPropertyIfUndefined(GlobalOptions.COMPILE_PARALLEL_OPTION, "true")
-      setSystemPropertyIfUndefined(DependencyResolvingBuilder.RESOLUTION_PARALLELISM_PROPERTY, Runtime.getRuntime().availableProcessors().toString())
+      val availableProcessors = Runtime.getRuntime().availableProcessors().toString()
+      setSystemPropertyIfUndefined(DependencyResolvingBuilder.RESOLUTION_PARALLELISM_PROPERTY, availableProcessors)
+      if (!BuildOptions().isInDevelopmentMode) {
+        setSystemPropertyIfUndefined(GlobalOptions.COMPILE_PARALLEL_MAX_THREADS_OPTION, availableProcessors)
+      }
       setSystemPropertyIfUndefined(GlobalOptions.USE_DEFAULT_FILE_LOGGING_OPTION, "false")
 
       // https://youtrack.jetbrains.com/issue/IDEA-269280

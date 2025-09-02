@@ -13,9 +13,9 @@ class A {
 
 sealed interface BaseInterface<T> permits BaseInterface.Record1, BaseInterface.Record2{
 
-  record Record1<T>() implements BaseInterface<T> {
+  final class Record1<T> implements BaseInterface<T> {
   }
 
-  record Record2() implements BaseInterface<String> {
+  final class Record2 implements BaseInterface<String> {
   }
 }

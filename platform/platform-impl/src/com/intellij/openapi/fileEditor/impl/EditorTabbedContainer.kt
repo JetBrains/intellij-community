@@ -43,6 +43,7 @@ import com.intellij.ui.docking.DockableContent
 import com.intellij.ui.docking.DragSession
 import com.intellij.ui.docking.impl.DockManagerImpl.Companion.isNorthPanelAvailable
 import com.intellij.ui.tabs.*
+import com.intellij.ui.tabs.JBTabPainter.Companion.DEFAULT
 import com.intellij.ui.tabs.TabInfo.DragOutDelegate
 import com.intellij.ui.tabs.UiDecorator.UiDecoration
 import com.intellij.ui.tabs.impl.*
@@ -207,6 +208,7 @@ class EditorTabbedContainer internal constructor(
     indexToInsert: Int,
     selectedEditor: FileEditor?,
     parentDisposable: Disposable,
+    holderCreator: (TabInfo) -> TabInfoIconHolder,
   ): TabInfo {
     editorTabs.findInfo(file)?.let {
       return it
@@ -222,9 +224,9 @@ class EditorTabbedContainer internal constructor(
         it.setText(file.presentableName)
         it.setTooltipText(tooltip)
         if (UISettings.getInstance().showFileIconInTabs) {
-          it.setIcon(icon)
+          it.setIconHolder(holderCreator(it)).setIcon(icon)
         }
-        InternalUICustomization.getInstance().componentMarker.markAIComponent(it.component, selectedEditor)
+        InternalUICustomization.getInstance()?.aiComponentMarker?.markAiComponent(it.component, file)
       }
     )
     selectedEditor?.tabActions?.let {
@@ -233,14 +235,14 @@ class EditorTabbedContainer internal constructor(
 
     coroutineScope.launch {
       val title = EditorTabPresentationUtil.getCustomEditorTabTitleAsync(window.manager.project, file) ?: return@launch
-      withContext(Dispatchers.EDT) {
+      withContext(Dispatchers.ui(UiDispatcherKind.RELAX)) {
         tab.setText(title)
       }
     }
     val project = window.manager.project
     coroutineScope.launch {
       val color = readAction { EditorTabPresentationUtil.getEditorTabBackgroundColor(project, file) }
-      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      withContext(Dispatchers.ui(UiDispatcherKind.RELAX) + ModalityState.any().asContextElement()) {
         tab.setTabColor(color)
       }
     }
@@ -564,6 +566,7 @@ private class EditorTabs(
     source.templatePresentation.putClientProperty(ActionUtil.HIDE_DROPDOWN_ICON, true)
     source.templatePresentation.putClientProperty(ActionUtil.ALWAYS_VISIBLE_GROUP, true)
     _entryPointActionGroup = DefaultActionGroup(java.util.List.of(source))
+    InternalUICustomization.getInstance()?.installEditorBackground(this)
   }
 
   override fun uiDataSnapshot(sink: DataSink) {
@@ -648,7 +651,7 @@ private class EditorTabs(
     return closeTabAction?.getIcon(isHovered)
   }
 
-  override fun createTabPainterAdapter(): TabPainterAdapter = InternalUICustomization.getInstance().editorTabPainterAdapter
+  override fun createTabPainterAdapter(): TabPainterAdapter = InternalUICustomization.getInstance()?.editorTabPainterAdapter ?: DefaultTabPainterAdapter(DEFAULT)
 
   override fun createTabBorder(): JBTabsBorder = JBEditorTabsBorder(this)
 
@@ -734,7 +737,11 @@ private class EditorTabLabel(info: TabInfo, tabs: JBTabsImpl) : TabLabel(tabs, i
   override val isTabActionsOnTheRight: Boolean
     get() = UISettings.getInstance().closeTabButtonOnTheRight
 
-  override fun shouldPaintFadeout(): Boolean = super.shouldPaintFadeout() && Registry.`is`("ide.editor.tabs.show.fadeout", true)
+  override fun shouldPaintFadeout(): Boolean {
+    val customization = InternalUICustomization.getInstance()
+    return super.shouldPaintFadeout() && Registry.`is`("ide.editor.tabs.show.fadeout", true) &&
+           (customization == null || customization.shouldPaintEditorFadeout)
+  }
 
   override fun editLabelForeground(baseForeground: Color?): Color? {
     if (baseForeground != null && paintDimmed()) {

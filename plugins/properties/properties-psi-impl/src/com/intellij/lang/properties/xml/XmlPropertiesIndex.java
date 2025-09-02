@@ -17,7 +17,9 @@ import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.xml.NanoXmlBuilder;
 import com.intellij.util.xml.NanoXmlUtil;
 import net.n3.nanoxml.StdXMLReader;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.*;
 import java.util.Collections;
@@ -25,9 +27,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-/**
- * @author Dmitry Avdeev
- */
+@ApiStatus.Internal
 public class XmlPropertiesIndex extends FileBasedIndexExtension<XmlPropertiesIndex.Key, String>
   implements DataIndexer<XmlPropertiesIndex.Key, String, FileContent>,
              KeyDescriptor<XmlPropertiesIndex.Key> {
@@ -92,7 +92,8 @@ public class XmlPropertiesIndex extends FileBasedIndexExtension<XmlPropertiesInd
     return map;
   }
 
-  static boolean isPropertiesFile(XmlFile file) {
+  @VisibleForTesting
+  public static boolean isPropertiesFile(XmlFile file) {
     Project project = file.getProject();
     if (!file.isValid()) return false;
     VirtualFile virtualFile = file.getVirtualFile();
@@ -186,8 +187,7 @@ public class XmlPropertiesIndex extends FileBasedIndexExtension<XmlPropertiesInd
     }
   }
 
-  private static class MyIXMLBuilderAdapter implements NanoXmlBuilder {
-
+  private static final class MyIXMLBuilderAdapter implements NanoXmlBuilder {
     boolean accepted;
     boolean insideEntry;
     String key;

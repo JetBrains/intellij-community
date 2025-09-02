@@ -55,6 +55,11 @@ public class GotoTestOrCodeActionTestGenerated extends AbstractGotoTestOrCodeAct
         runTest("testData/navigation/gotoTestOrCode/fromKotlinClassToTest.main.kt");
     }
 
+    @TestMetadata("fromKotlinFile2ToTest.main.kt")
+    public void testFromKotlinFile2ToTest() throws Exception {
+        runTest("testData/navigation/gotoTestOrCode/fromKotlinFile2ToTest.main.kt");
+    }
+
     @TestMetadata("fromKotlinFileToJavaFacade.main.kt")
     public void testFromKotlinFileToJavaFacade() throws Exception {
         runTest("testData/navigation/gotoTestOrCode/fromKotlinFileToJavaFacade.main.kt");
@@ -63,6 +68,11 @@ public class GotoTestOrCodeActionTestGenerated extends AbstractGotoTestOrCodeAct
     @TestMetadata("fromKotlinFileToTest.main.kt")
     public void testFromKotlinFileToTest() throws Exception {
         runTest("testData/navigation/gotoTestOrCode/fromKotlinFileToTest.main.kt");
+    }
+
+    @TestMetadata("fromKotlinFunctionToTest.main.kt")
+    public void testFromKotlinFunctionToTest() throws Exception {
+        runTest("testData/navigation/gotoTestOrCode/fromKotlinFunctionToTest.main.kt");
     }
 
     @TestMetadata("fromKotlinJvmFileToJavaFacadeTest.main.kt")
@@ -83,5 +93,10 @@ public class GotoTestOrCodeActionTestGenerated extends AbstractGotoTestOrCodeAct
     @TestMetadata("fromKotlinTestToKotlinFile.main.kt")
     public void testFromKotlinTestToKotlinFile() throws Exception {
         runTest("testData/navigation/gotoTestOrCode/fromKotlinTestToKotlinFile.main.kt");
+    }
+
+    @TestMetadata("fromKotlinTestToKotlinFunction.main.kt")
+    public void testFromKotlinTestToKotlinFunction() throws Exception {
+        runTest("testData/navigation/gotoTestOrCode/fromKotlinTestToKotlinFunction.main.kt");
     }
 }

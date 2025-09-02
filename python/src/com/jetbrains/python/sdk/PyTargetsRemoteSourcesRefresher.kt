@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk
 
 import com.google.gson.Gson
@@ -32,6 +32,7 @@ import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import com.jetbrains.python.target.PyTargetAwareAdditionalData.Companion.pathsAddedByUser
 import com.jetbrains.python.target.PyTargetAwareAdditionalData.Companion.pathsRemovedByUser
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Files
 import java.nio.file.attribute.FileTime
 import java.nio.file.attribute.PosixFilePermissions
@@ -42,6 +43,8 @@ import kotlin.io.path.setPosixFilePermissions
 
 
 private const val STATE_FILE = ".state.json"
+
+@ApiStatus.Internal
 
 class PyTargetsRemoteSourcesRefresher(val sdk: Sdk, private val project: Project) {
   private val pyRequest: HelpersAwareTargetEnvironmentRequest =

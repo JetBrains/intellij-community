@@ -360,13 +360,14 @@ data class ClientId(val value: String) {
     }
 
     @Internal
-    @ApiStatus.Obsolete
+    @ApiStatus.ScheduledForRemoval
     @Deprecated(message = "Resolve ClientSessionsManager via Application in client code", level = DeprecationLevel.ERROR,
                 replaceWith = ReplaceWith("ApplicationManager.getApplication().serviceOrNull<ClientSessionsManager<*>>()"))
     fun getCachedService(): ClientSessionsManager<*>? {
       return ApplicationManager.getApplication().serviceOrNull<ClientSessionsManager<*>>()
     }
 
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("ClientId propagation is handled by context propagation. You don't need to do it manually. The method will be removed soon.")
     @Internal
     @JvmStatic
@@ -392,6 +393,7 @@ data class ClientId(val value: String) {
     @JvmStatic
     fun <T, U> decorateBiConsumer(biConsumer: BiConsumer<T, U>): BiConsumer<T, U> = biConsumer
 
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("ClientId propagation is handled by context propagation. You don't need to do it manually. The method will be removed soon.")
     @Internal
     @JvmStatic

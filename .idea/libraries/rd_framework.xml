@@ -1,20 +1,20 @@
 <component name="libraryTable">
   <library name="rd-framework" type="repository">
-    <properties include-transitive-deps="false" maven-id="com.jetbrains.rd:rd-framework:2025.1.1">
+    <properties include-transitive-deps="false" maven-id="com.jetbrains.rd:rd-framework:2025.2.2">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-framework/2025.1.1/rd-framework-2025.1.1.jar">
-          <sha256sum>bda87e5727c89c84558e6274d6ba9f4aef5c7e5b367cfc8e1948ad2aa116e55b</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-framework/2025.2.2/rd-framework-2025.2.2.jar">
+          <sha256sum>ad21f153b7d8c2102f79db44f25a7891f69672bbecb9953d4898236ee6f4d59f</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-framework/2025.1.1/rd-framework-2025.1.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-framework/2025.2.2/rd-framework-2025.2.2.jar!/" />
     </CLASSES>
     <JAVADOC>
-      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-framework/2025.1.1/rd-framework-2025.1.1-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-framework/2025.2.2/rd-framework-2025.2.2-javadoc.jar!/" />
     </JAVADOC>
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-framework/2025.1.1/rd-framework-2025.1.1-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-framework/2025.2.2/rd-framework-2025.2.2-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

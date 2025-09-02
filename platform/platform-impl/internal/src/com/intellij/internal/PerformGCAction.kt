@@ -3,11 +3,15 @@ package com.intellij.internal
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import org.jetbrains.annotations.ApiStatus
+import com.jetbrains.JBR
 
-@ApiStatus.Internal
-class PerformGCAction : AnAction() {
+internal class PerformGCAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
-    System.gc()
+    if (JBR.isSystemUtilsSupported()) {
+      JBR.getSystemUtils().fullGC()
+    }
+    else {
+      System.gc()
+    }
   }
 }

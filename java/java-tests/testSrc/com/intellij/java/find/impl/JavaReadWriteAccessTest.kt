@@ -16,9 +16,12 @@
 package com.intellij.java.find.impl
 
 import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector
+import com.intellij.psi.PsiField
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiForeachStatement
 import com.intellij.psi.PsiMethodCallExpression
 import com.intellij.psi.PsiNameValuePair
+import com.intellij.psi.PsiParameter
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
@@ -63,5 +66,28 @@ class JavaReadWriteAccessTest : LightJavaCodeInsightFixtureTestCase() {
     assertNotNull(element)
     val expressionAccess = detector!!.getExpressionAccess(PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression::class.java, true)!!)
     assertEquals(ReadWriteAccessDetector.Access.Read, expressionAccess)
+  }
+
+  fun testJavaField() {
+    val anno = myFixture.addClass("""
+      class X { 
+        int x1;
+        int x2 = 1;
+        void f(int x3) {
+          for (int x4: new int[1]) {
+            System.out.println();
+          }
+        }
+      }""")
+    val x1: PsiField = anno.findFieldByName("x1", false)!!
+    val x2: PsiField = anno.findFieldByName("x2", false)!!
+    val x3: PsiParameter = anno.findMethodsByName("f", false)[0].parameterList.parameters[0]!!
+    val x4: PsiParameter = (anno.findMethodsByName("f", false)[0].body!!.statements[0] as PsiForeachStatement).iterationParameter
+    val detector = ReadWriteAccessDetector.findDetector(x1)!!
+
+    assertFalse(detector.isDeclarationWriteAccess(x1))
+    assertTrue(detector.isDeclarationWriteAccess(x2))
+    assertFalse(detector.isDeclarationWriteAccess(x3))
+    assertTrue(detector.isDeclarationWriteAccess(x4))
   }
 }

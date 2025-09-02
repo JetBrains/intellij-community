@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Assertions.assertNotNull
 import java.util.function.Supplier
 import javax.swing.SwingUtilities
 import kotlin.coroutines.resume
+import kotlin.test.assertFalse
 
 fun Application.withModality(action: () -> Unit) {
   val modalEntity = Any()
@@ -34,15 +35,12 @@ fun Application.withModality(action: () -> Unit) {
 }
 
 fun assertReferenced(root: Any, referenced: Any) {
-  val foundObjects = ArrayList<Any>()
   val rootSupplier: Supplier<Map<Any, String>> = Supplier {
     mapOf(root to "root")
   }
-  LeakHunter.processLeaks(rootSupplier, referenced.javaClass, null, null) { leaked, _ ->
-    foundObjects.add(leaked)
-    true
-  }
-  assertNotNull(foundObjects.find { it === referenced })
+  assertFalse(LeakHunter.processLeaks (rootSupplier, referenced.javaClass, null, null) { leaked, _ ->
+    leaked !== referenced
+  })
 }
 
 fun assertNotReferenced(root: Any, referenced: Any) {

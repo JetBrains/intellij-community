@@ -20,7 +20,7 @@ internal class RedundantModalityModifierInspection :
     override fun createQuickFix(
         element: KtModifierListOwner,
         context: ModifierContext,
-    ): KotlinModCommandQuickFix<KtModifierListOwner> = object : RemoveRedundantModifierQuickFixBase(context) {
+    ): KotlinModCommandQuickFix<KtModifierListOwner> = object : RemoveRedundantModifierQuickFixBase<KtModifierListOwner>(context) {
 
         override fun getFamilyName(): String =
             KotlinBundle.message("remove.redundant.modality.modifier")

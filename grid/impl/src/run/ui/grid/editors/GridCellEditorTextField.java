@@ -129,7 +129,6 @@ public class GridCellEditorTextField extends EditorTextField implements Disposab
     sink.set(CommonDataKeys.VIRTUAL_FILE, FileDocumentManager.getInstance().getFile(getDocument()));
     Editor editor = getEditor();
     sink.set(CommonDataKeys.EDITOR, editor);
-    sink.set(CommonDataKeys.HOST_EDITOR, editor);
   }
 
   @Override
@@ -170,9 +169,7 @@ public class GridCellEditorTextField extends EditorTextField implements Disposab
       private static void performEditorEnter(@NotNull AnActionEvent e) {
         AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_ENTER);
         if (action == null) return;
-        if (ActionUtil.lastUpdateAndCheckDumb(action, e, false)) {
-          ActionUtil.performActionDumbAwareWithCallbacks(action, e);
-        }
+        ActionUtil.performAction(action, e);
       }
     };
     registerAction(editor, action, enterAndControlEnter);

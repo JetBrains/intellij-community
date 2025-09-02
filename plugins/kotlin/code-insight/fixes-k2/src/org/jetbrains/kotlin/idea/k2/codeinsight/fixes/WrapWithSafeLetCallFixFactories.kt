@@ -28,7 +28,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
 
-object WrapWithSafeLetCallFixFactories {
+internal object WrapWithSafeLetCallFixFactories {
 
     private val LOG = Logger.getInstance(this::class.java)
 

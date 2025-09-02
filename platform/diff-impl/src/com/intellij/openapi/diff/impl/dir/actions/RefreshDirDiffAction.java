@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.client.ClientSystemInfo;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.impl.dir.DirDiffTableModel;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -17,11 +16,6 @@ import org.jetbrains.annotations.NotNull;
  */
 @ApiStatus.Internal
 public class RefreshDirDiffAction extends DirDiffAction {
-  /**
-   * @deprecated Use {@link #getShortcut()} instead
-   */
-  @Deprecated(forRemoval = true)
-  public static final CustomShortcutSet REFRESH_SHORTCUT = CustomShortcutSet.fromString(SystemInfo.isMac ? "meta R" : "F5");
 
   public RefreshDirDiffAction(DirDiffTableModel model) {
     super(model);

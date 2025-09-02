@@ -4,11 +4,12 @@ package com.jetbrains.python.sdk.add.v2
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.jetbrains.python.Result
+import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.sdk.ModuleOrProject
-import com.jetbrains.python.venvReader.VirtualEnvReader
+import com.jetbrains.python.sdk.add.collector.PythonNewInterpreterAddedCollector
 import com.jetbrains.python.sdk.rootManager
 import com.jetbrains.python.sdk.service.PySdkService.Companion.pySdkService
-import com.jetbrains.python.errorProcessing.ErrorSink
+import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -36,13 +37,15 @@ class PythonAddLocalInterpreterPresenter(val moduleOrProject: ModuleOrProject, v
   val sdkCreatedFlow: Flow<Sdk> = _sdkShared.asSharedFlow()
 
   suspend fun okClicked(addEnvironment: PythonAddEnvironment) {
-    when (val r = addEnvironment.getOrCreateSdk(moduleOrProject)) {
+    when (val r = addEnvironment.setupSdk(moduleOrProject)) {
       is Result.Failure -> {
         errorSink.emit(r.error)
         return
       }
       is Result.Success -> {
         moduleOrProject.project.pySdkService.persistSdk(r.result)
+        val isPreviouslyConfigured = addEnvironment.createStatisticsInfo(PythonInterpreterCreationTargets.LOCAL_MACHINE).previouslyConfigured
+        PythonNewInterpreterAddedCollector.logPythonNewInterpreterAdded(r.result, isPreviouslyConfigured)
         _sdkShared.emit(r.result)
       }
     }

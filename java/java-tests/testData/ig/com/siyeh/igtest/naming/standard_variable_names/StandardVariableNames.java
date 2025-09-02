@@ -27,6 +27,10 @@ public class StandardVariableNames {
         };
     }
 
+
+  public String toString(StandardVariableNames this) {
+    return "x";
+  }
 }
 interface MyOutputStream {
     void write(int <warning descr="Variable named 'b' doesn't have type 'byte' or 'java.lang.Byte'">b</warning>) throws IOException;

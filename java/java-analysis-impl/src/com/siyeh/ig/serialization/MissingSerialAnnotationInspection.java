@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.serialization;
 
-import com.intellij.codeInsight.intention.AddAnnotationFix;
+import com.intellij.codeInsight.intention.AddAnnotationModCommandAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.pom.java.JavaFeature;
@@ -111,6 +111,7 @@ public final class MissingSerialAnnotationInspection extends BaseInspection {
 
   @Override
   protected LocalQuickFix buildFix(Object... infos) {
-    return new AddAnnotationFix(JAVA_IO_SERIAL, (PsiModifierListOwner)infos[0], PsiNameValuePair.EMPTY_ARRAY);
+    return LocalQuickFix.from(
+      new AddAnnotationModCommandAction(JAVA_IO_SERIAL, (PsiModifierListOwner)infos[0]));
   }
 }

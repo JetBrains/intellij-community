@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.idea.facet.KotlinFacetConfigurationImpl
 
 object KotlinFacetBridgeFactory {
     val kotlinFacetBridgeEnabled: Boolean
-        get() = Registry.`is`("workspace.model.kotlin.facet.bridge", false)
+        get() = Registry.`is`("workspace.model.kotlin.facet.bridge", true)
 
     fun createFacetConfiguration(): KotlinFacetConfiguration {
         return if (kotlinFacetBridgeEnabled) KotlinFacetConfigurationBridge() else KotlinFacetConfigurationImpl()

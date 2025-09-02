@@ -2,7 +2,10 @@
 package com.intellij.psi.impl.cache;
 
 import com.intellij.codeInsight.ExternalAnnotationsManager;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.TypeAnnotationProvider;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -60,16 +63,10 @@ public final class ExternalTypeAnnotationContainer implements TypeAnnotationCont
   }
 
   @Override
-  public @NotNull PsiType applyTo(@NotNull PsiType type, @NotNull PsiElement context) {
+  public void appendImmediateText(@NotNull StringBuilder sb) {
     throw new UnsupportedOperationException();
   }
 
-  @Override
-  public @NotNull PsiJavaCodeReferenceElement annotateReference(@NotNull PsiJavaCodeReferenceElement reference,
-                                                                @NotNull PsiElement context) {
-    throw new UnsupportedOperationException();
-  }
-  
   public static @NotNull TypeAnnotationContainer create(@NotNull PsiModifierListOwner owner) {
     return new ExternalTypeAnnotationContainer("", owner);
   }

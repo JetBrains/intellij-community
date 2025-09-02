@@ -442,6 +442,8 @@ fun createSpacingBuilder(settings: CodeStyleSettings, builderUtil: KotlinSpacing
         betweenInside(KtNodeTypes.LOOP_RANGE, KtTokens.RPAR, KtNodeTypes.FOR).spaces(0)
 
         afterInside(KtNodeTypes.ANNOTATION_ENTRY, KtNodeTypes.ANNOTATED_EXPRESSION).spaces(1)
+        afterInside(KtTokens.COLON, KtNodeTypes.ANNOTATION_ENTRY).spaces(0)
+        beforeInside(KtTokens.COLON, KtNodeTypes.ANNOTATION_ENTRY).spaces(0)
 
         before(KtTokens.SEMICOLON).spaces(0)
 
@@ -550,7 +552,7 @@ fun createSpacingBuilder(settings: CodeStyleSettings, builderUtil: KotlinSpacing
         // Add space after a semicolon if there is another child at the same line
         inPosition(left = KtTokens.SEMICOLON).customRule { _, left, _ ->
           val nodeAfterLeft = left.requireNode().treeNext
-          if (nodeAfterLeft is PsiWhiteSpace && !nodeAfterLeft.textContains('\n')) {
+          if (nodeAfterLeft !is PsiWhiteSpace || !nodeAfterLeft.textContains('\n')) {
             createSpacing(1)
           }
           else {
@@ -573,6 +575,11 @@ fun createSpacingBuilder(settings: CodeStyleSettings, builderUtil: KotlinSpacing
         inPosition(parent = KtNodeTypes.SECONDARY_CONSTRUCTOR, right = KtNodeTypes.BLOCK).customRule(leftBraceRule())
         inPosition(parent = KtNodeTypes.CLASS_INITIALIZER, right = KtNodeTypes.BLOCK).customRule(leftBraceRule())
         inPosition(parent = KtNodeTypes.PROPERTY_ACCESSOR, right = KtNodeTypes.BLOCK).customRule(leftBraceRule())
+
+        // No space before the spread operator.
+        // MUL with a direct VALUE_ARGUMENT parent is always a spread operator.
+        // Otherwise, it would be part of a binary expression or similar.
+        inPosition(parent = KtNodeTypes.VALUE_ARGUMENT, left = KtTokens.MUL).spacing(createSpacing(0))
 
         inPosition(right = KtNodeTypes.CLASS_BODY).customRule(leftBraceRule(blockType = KtNodeTypes.CLASS_BODY))
         inPosition(left = KtNodeTypes.WHEN_ENTRY, right = KtNodeTypes.WHEN_ENTRY).customRule { _, left, right ->

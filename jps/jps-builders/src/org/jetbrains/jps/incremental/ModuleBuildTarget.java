@@ -156,7 +156,7 @@ public class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRootDescri
         File outputIoDir = ProjectPaths.getAnnotationProcessorGeneratedSourcesOutputDir(myModule, JavaSourceRootType.TEST_SOURCE == sourceRoot.getRootType(), profile);
         if (outputIoDir != null) {
           Path outputDir = outputIoDir.toPath();
-          if (sourceRoot.getPath().startsWith(outputDir)) {
+          if (outputDir.startsWith(sourceRoot.getPath())) {
             excludes = FileCollectionFactory.createCanonicalPathSet(excludes);
             excludes.add(outputDir);
           }

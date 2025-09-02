@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.highlighting
 
 import com.intellij.openapi.editor.Editor
-import org.jetbrains.kotlin.gradle.multiplatformTests.KotlinMppTestsContext
+import org.jetbrains.kotlin.gradle.multiplatformTests.KotlinSyncTestsContext
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestFeature
 
 /**
@@ -29,5 +29,5 @@ interface TestFeatureWithFileMarkup<T : Any> : TestFeature<T> {
      * @param editor [Editor] containing the file
      * @return text with updated markup or `null` in case of no changes
      */
-    fun KotlinMppTestsContext.restoreMarkup(text: String, editor: Editor): String?
+    fun KotlinSyncTestsContext.restoreMarkup(text: String, editor: Editor): String?
 }

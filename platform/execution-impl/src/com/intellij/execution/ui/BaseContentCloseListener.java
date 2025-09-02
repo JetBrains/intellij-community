@@ -160,6 +160,7 @@ public abstract class BaseContentCloseListener implements VetoableProjectManager
     }
     boolean destroyProcess = rc == ProcessCloseConfirmation.TERMINATE;
     if (destroyProcess) {
+      processHandler.putUserData(ProcessHandler.TERMINATION_REQUESTED, true);
       processHandler.destroyProcess();
     }
     else {

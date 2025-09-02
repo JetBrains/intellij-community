@@ -11,6 +11,7 @@ import com.intellij.ide.IconLayerProvider
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
+import com.intellij.ide.plugins.contentModules
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.PluginId
@@ -255,7 +256,7 @@ class CoreIconManager : IconManager, CoreAwareIconManager {
       return plugin.classLoader
     }
     else {
-      return plugin.content.modules.firstOrNull { it.name == moduleId }?.requireDescriptor()?.classLoader
+      return plugin.contentModules.firstOrNull { it.moduleName == moduleId }?.classLoader
     }
   }
 

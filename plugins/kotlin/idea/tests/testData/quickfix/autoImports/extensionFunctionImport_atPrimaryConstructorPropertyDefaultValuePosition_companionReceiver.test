@@ -1,0 +1,37 @@
+// FILE: first.before.kt
+// "Import extension function 'Companion.extCompanionFun'" "true"
+// ERROR: Unresolved reference: extCompanionFun
+package test
+
+class MyClass(
+    val param: Int = <caret>extCompanionFun()
+) {
+    companion object
+}
+
+//-----------------------
+
+
+// FILE: second.kt
+package library
+
+import test.MyClass
+
+fun MyClass.Companion.extCompanionFun() {}
+
+//-----------------------
+
+// FILE: first.after.kt
+// "Import extension function 'Companion.extCompanionFun'" "true"
+// ERROR: Unresolved reference: extCompanionFun
+package test
+
+import library.extCompanionFun
+
+class MyClass(
+    val param: Int = <caret>extCompanionFun()
+) {
+    companion object
+}
+
+//-----------------------

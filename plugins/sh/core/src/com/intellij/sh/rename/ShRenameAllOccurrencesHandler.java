@@ -17,6 +17,7 @@ import com.intellij.sh.highlighting.ShTextOccurrencesUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.Collection;
 import java.util.MissingResourceException;
@@ -64,7 +65,8 @@ public final class ShRenameAllOccurrencesHandler extends EditorActionHandler {
     }
   }
 
-  static @NotNull RegistryValue getMaxInplaceRenameSegmentsRegistryValue() {
+  @VisibleForTesting
+  public static @NotNull RegistryValue getMaxInplaceRenameSegmentsRegistryValue() {
     return Registry.get("inplace.rename.segments.limit");
   }
 

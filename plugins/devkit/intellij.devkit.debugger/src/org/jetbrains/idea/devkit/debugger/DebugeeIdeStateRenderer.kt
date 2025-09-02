@@ -7,6 +7,7 @@ import com.intellij.debugger.engine.evaluation.EvaluationContext
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.engine.jdi.StackFrameProxy
 import com.intellij.debugger.impl.DebuggerUtilsImpl
+import com.intellij.debugger.impl.wrapIncompatibleThreadStateException
 import com.intellij.debugger.memory.utils.StackFrameItem
 import com.intellij.debugger.ui.tree.ExtraDebugNodesProvider
 import com.intellij.icons.AllIcons
@@ -32,19 +33,19 @@ private const val GET_STATE_METHOD_NAME = "getApplicationState"
 private const val GET_STATE_METHOD_SIGNATURE = "()Lcom/intellij/ide/debug/ApplicationDebugState;"
 private const val READ_ACTION_ALLOWED_FIELD_NAME = "readActionAllowed"
 private const val WRITE_ACTION_ALLOWED_FIELD_NAME = "writeActionAllowed"
-private const val THREADING_SUPPORT_FQN = "com.intellij.openapi.application.impl.AnyThreadWriteThreadingSupport"
+private const val THREADING_SUPPORT_FQN = "com.intellij.openapi.application.impl.NestedLocksThreadingSupport"
 private const val APPLICATION_IMPL_FQN = "com.intellij.openapi.application.impl.ApplicationImpl"
 private const val COROUTINES_KT_FQN = "com.intellij.openapi.application.CoroutinesKt"
 private const val ACTIONS_KT_FQN = "com.intellij.openapi.application.ActionsKt"
 
 internal data class IdeState(val readAllowed: Boolean?, val writeAllowed: Boolean?)
 
-internal fun getIdeState(evaluationContext: EvaluationContext): IdeState? {
-  try {
+internal fun getIdeState(evaluationContext: EvaluationContext): IdeState? = try {
+  wrapIncompatibleThreadStateException {
     val supportClass = findClassOrNull(evaluationContext, SUPPORT_CLASS_FQN) as? ClassType ?: return null
     val debugProcess = evaluationContext.debugProcess as? DebugProcessImpl ?: return null
     val suspendContext = evaluationContext.suspendContext as? SuspendContextImpl ?: return null
-    if (!debugProcess.isEvaluationPossibleInCurrentCommand(suspendContext)) return null
+    if (!debugProcess.isEvaluationPossible(suspendContext)) return null
     val state = evaluationContext.computeAndKeep {
       DebuggerUtilsImpl.invokeClassMethod(evaluationContext, supportClass, GET_STATE_METHOD_NAME, GET_STATE_METHOD_SIGNATURE, emptyList()) as? ObjectReference
     } ?: return null
@@ -54,14 +55,12 @@ internal fun getIdeState(evaluationContext: EvaluationContext): IdeState? {
 
     val readField = (fieldValues[READ_ACTION_ALLOWED_FIELD_NAME] as? BooleanValue)?.value()
     val writeField = (fieldValues[WRITE_ACTION_ALLOWED_FIELD_NAME] as? BooleanValue)?.value()
-    return IdeState(readAllowed = readField, writeAllowed = writeField)
+    IdeState(readAllowed = readField, writeAllowed = writeField)
   }
-  catch (e: Exception) {
-    if (!logIncorrectSuspendState(e)) {
-      DebuggerUtilsImpl.logError(e)
-    }
-    return null
-  }
+}
+catch (e: Exception) {
+  DebuggerUtilsImpl.logError(e)
+  null
 }
 
 
@@ -73,12 +72,12 @@ internal class DebugeeIdeStateRenderer : ExtraDebugNodesProvider {
     if (ideState.readAllowed == null && ideState.writeAllowed == null) return
 
     val (isReadActionAllowed, isWriteActionAllowed) = try {
-      (ideState.readAllowed to ideState.writeAllowed).adjustLockStatus(evaluationContext)
+      wrapIncompatibleThreadStateException {
+        (ideState.readAllowed to ideState.writeAllowed).adjustLockStatus(evaluationContext)
+      } ?: return
     }
     catch (e: EvaluateException) {
-      if (!logIncorrectSuspendState(e)) {
-        DebuggerUtilsImpl.logError(e)
-      }
+      DebuggerUtilsImpl.logError(e)
       return
     }
 

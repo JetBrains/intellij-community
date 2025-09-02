@@ -4,16 +4,14 @@ package com.intellij.util.indexing
 import com.intellij.find.TextSearchService
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.platform.testFramework.loadExtensionWithText
 import com.intellij.openapi.application.*
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileTypes.ExtensionFileNameMatcher
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl
-import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getProjectCachePath
-import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.ShutDownTracker
@@ -22,6 +20,12 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.openapi.vfs.writeText
+import com.intellij.platform.backend.workspace.toVirtualFileUrl
+import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.workspace.jps.entities.ContentRootEntity
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.ModuleId
+import com.intellij.platform.workspace.jps.entities.modifyModuleEntity
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.*
@@ -40,21 +44,33 @@ import com.intellij.util.indexing.diagnostic.dto.JsonIndexingActivityDiagnostic
 import com.intellij.util.indexing.diagnostic.dto.JsonProjectScanningHistory
 import com.intellij.util.indexing.diagnostic.dto.JsonProjectScanningHistoryTimes
 import com.intellij.util.indexing.mocks.FakeFileType
+import com.intellij.util.io.DataExternalizer
+import com.intellij.util.io.EnumeratorStringDescriptor
+import com.intellij.util.io.KeyDescriptor
+import com.intellij.util.indexing.testEntities.TestModuleEntitySource
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.junit.*
 import org.junit.rules.TestName
-import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
 import java.nio.file.Path
 import kotlin.io.path.createDirectories
 import kotlin.random.Random
 
+private class DoNoRethrowBrokenIndexingErrors : LoggedErrorProcessor() {
+  override fun processError(category: String, message: String, details: Array<String>, t: Throwable?): Set<Action> {
+    if ("#com.intellij.util.indexing.diagnostic.BrokenIndexingDiagnostics" == category) {
+      return setOf(Action.LOG, Action.STDERR)
+    }
+    return super.processError(category, message, details, t)
+  }
+}
+
 /**
  * See also com.intellij.functionalTests.FunctionalDirtyFilesQueueTest
  */
-@RunWith(JUnit4::class)
+
+//@RunWith(JUnit4::class)
 class DirtyFilesQueueTest {
   companion object {
     @ClassRule
@@ -84,10 +100,8 @@ class DirtyFilesQueueTest {
 
   @After
   fun tearDown() {
-    runBlocking(Dispatchers.EDT) {
-      edtWriteAction {
-        Disposer.dispose(testRootDisposable) // must dispose in EDT
-      }
+    runInEdtAndWait {
+      Disposer.dispose(testRootDisposable) // must dispose in EDT
     }
   }
 
@@ -106,11 +120,7 @@ class DirtyFilesQueueTest {
     runBlocking {
       openProject(testNameRule.methodName) { project, module ->
         val src = tempDir.createVirtualDir("src")
-        edtWriteAction {
-          val rootModel = ModuleRootManager.getInstance(module).modifiableModel
-          rootModel.addContentEntry(src)
-          rootModel.commit()
-        }
+        module.createContentRoot(project, src)
         IndexingTestUtil.waitUntilIndexesAreReady(project) // scanning due to model change
         edtWriteAction { src.createFile("A.txt") }
         restart(skipFullScanning = false, project) // persist queue
@@ -144,6 +154,90 @@ class DirtyFilesQueueTest {
     doTestFileIsIndexedAfterItWasEditedWhenProjectWasClosed(fileCount = 30, expectFullScanning = true, restartApp = true)
   }
 
+  private suspend fun ModuleEntity.createContentRoot(
+    project: Project,
+    root: VirtualFile,
+  ) {
+    val workspaceModel = project.workspaceModel
+    val url = root.toVirtualFileUrl(workspaceModel.getVirtualFileUrlManager())
+    val contentRoot = ContentRootEntity(url = url, excludedPatterns = emptyList(), entitySource = entitySource)
+    workspaceModel.update("add content root") { storage ->
+      storage.modifyModuleEntity(this) {
+        this.contentRoots += contentRoot
+      }
+    }
+  }
+
+  internal class BadFileBasedIndexExtension : FileBasedIndexExtension<String, String>() {
+    companion object {
+      private val INDEX_ID: ID<String, String> = ID.create("badIndex")
+
+      @Volatile
+      internal var fails: Boolean = true
+    }
+
+    override fun getName(): ID<String, String> = INDEX_ID
+
+    override fun getInputFilter(): FileBasedIndex.InputFilter =
+      FileBasedIndex.InputFilter { file -> file.extension == FakeFileType().extension }
+
+    override fun dependsOnFileContent(): Boolean = true
+
+    override fun getIndexer(): DataIndexer<String?, String?, FileContent?> = DataIndexer<String?, String?, FileContent?> {
+      when {
+        fails -> error("Bad file failed to index")
+        else -> mapOf("key" to "value")
+      }
+    }
+
+    override fun getKeyDescriptor(): KeyDescriptor<String> = EnumeratorStringDescriptor.INSTANCE
+    override fun getValueExternalizer(): DataExternalizer<String> = EnumeratorStringDescriptor.INSTANCE
+
+    override fun getVersion(): Int = 0
+  }
+
+  @Test
+  fun `test file is failed to index at startup but indexed after restart`() = LoggedErrorProcessor.executeWith<Throwable>(DoNoRethrowBrokenIndexingErrors()) {
+    val filetype = FakeFileType()
+    val text = "<fileBasedIndex implementation=\"${BadFileBasedIndexExtension::class.java.name}\"/>"
+
+    runBlocking {
+      runInEdt {
+        val child = loadExtensionWithText(text)
+        Disposer.register(testRootDisposable, child)
+        ScalarIndexExtension.EXTENSION_POINT_NAME.findExtensionOrFail(BadFileBasedIndexExtension::class.java)
+      }
+
+      openProject(testNameRule.methodName) { project, module ->
+        val fileBasedIndex = FileBasedIndex.getInstance() as FileBasedIndexImpl
+        registerFiletype(filetype)
+        val src = tempDir.createVirtualDir("src")
+
+        module.createContentRoot(project, src)
+        IndexingTestUtil.waitUntilIndexesAreReady(project) // scanning due to model change
+        edtWriteAction {
+          src.createFile("A.${filetype.defaultExtension}")
+        }
+
+        val keys = smartReadAction(project = project) {
+          fileBasedIndex.getAllKeys(BadFileBasedIndexExtension().name, project)
+        }
+        assertThat(keys).isEmpty()
+      }
+
+      BadFileBasedIndexExtension.fails = false
+      restart(skipFullScanning = true)
+
+      openProject(testNameRule.methodName) { project, module ->
+        val fileBasedIndex = FileBasedIndex.getInstance() as FileBasedIndexImpl
+        val allKeys = smartReadAction(project = project) {
+          fileBasedIndex.getAllKeys(BadFileBasedIndexExtension().name, project)
+        }
+        assertThat(allKeys).isNotEmpty()
+      }
+    }
+  }
+
   private fun setOrphanDirtyFilesQueueMaxSize(@Suppress("SameParameterValue") value: Int) {
     Registry.get("maximum.size.of.orphan.dirty.files.queue").setValue(value, testRootDisposable)
   }
@@ -156,11 +250,7 @@ class DirtyFilesQueueTest {
 
       val files: List<VirtualFile> = openProject(testNameRule.methodName) { project, module ->
         val src = tempDir.createVirtualDir("src")
-        edtWriteAction {
-          val rootModel = ModuleRootManager.getInstance(module).modifiableModel
-          rootModel.addContentEntry(src)
-          rootModel.commit()
-        }
+        module.createContentRoot(project, src)
         IndexingTestUtil.waitUntilIndexesAreReady(project) // scanning due to model change
         val files = edtWriteAction {
           fileNames.map {
@@ -216,16 +306,18 @@ class DirtyFilesQueueTest {
     }
   }
 
-  private fun configureModule(project: Project): Module {
-    var m: Module? = null
-    runBlocking(Dispatchers.EDT) {
-      LightProjectDescriptor().setUpProject(project, object : LightProjectDescriptor.SetupHandler {
-        override fun moduleCreated(module: Module) {
-          m = module
-        }
-      })
+  private suspend fun configureModule(project: Project): ModuleEntity {
+    val workspaceModel = project.workspaceModel
+    val moduleEntity = ModuleEntity(
+      name = TEST_MODULE_NAME,
+      dependencies = emptyList(),
+      entitySource = TestModuleEntitySource
+    )
+
+    workspaceModel.update("creating test module") { storage ->
+      storage.addEntity(moduleEntity)
     }
-    return m!!
+    return workspaceModel.currentSnapshot.resolve(ModuleId(TEST_MODULE_NAME))!!
   }
 
   private fun testDirtyFileIsIndexedAfterFileBasedIndexIsRestarted(skipFullScanning: Boolean) {
@@ -236,11 +328,7 @@ class DirtyFilesQueueTest {
         registerFiletype(filetype)
         val src = tempDir.createVirtualDir("src")
 
-        edtWriteAction {
-          val rootModel = ModuleRootManager.getInstance(module).modifiableModel
-          rootModel.addContentEntry(src)
-          rootModel.commit()
-        }
+        module.createContentRoot(project, src)
         IndexingTestUtil.waitUntilIndexesAreReady(project) // scanning due to model change
         val file = edtWriteAction {
           src.createFile("A.${filetype.defaultExtension}")
@@ -265,11 +353,8 @@ class DirtyFilesQueueTest {
         val filetype = FakeFileType()
         registerFiletype(filetype)
         val src = tempDir.createVirtualDir("src")
-
+        module.createContentRoot(project, src)
         val file = edtWriteAction {
-          val rootModel = ModuleRootManager.getInstance(module).modifiableModel
-          rootModel.addContentEntry(src)
-          rootModel.commit()
           src.createFile("A.${filetype.defaultExtension}")
         }
         smartReadAction(project) {
@@ -291,7 +376,7 @@ class DirtyFilesQueueTest {
     }
   }
 
-  private suspend fun <T> openProject(name: String, action: suspend (Project, Module) -> T): T {
+  private suspend fun <T> openProject(name: String, action: suspend (Project, ModuleEntity) -> T): T {
     val projectFile = nameToPathMap.computeIfAbsent(name) { n -> TemporaryDirectory.generateTemporaryPath("project_$n") }
     val reopenProject = ProjectUtil.isValidProjectPath(projectFile)
     projectFile.createDirectories()
@@ -300,7 +385,10 @@ class DirtyFilesQueueTest {
     IndexDiagnosticDumper.shouldDumpInUnitTestMode = true
     WorkspaceModelCacheImpl.forceEnableCaching(testRootDisposable)
     val project = ProjectUtil.openOrImportAsync(projectFile, options)!!
-    val module = if (reopenProject) ModuleManager.getInstance(project).findModuleByName(TEST_MODULE_NAME)!! else configureModule(project)
+    val module = when {
+      reopenProject -> project.workspaceModel.currentSnapshot.resolve(ModuleId(TEST_MODULE_NAME))!!
+      else -> configureModule(project)
+    }
     return project.useProjectAsync(save = true) {
       IndexingTestUtil.waitUntilIndexesAreReady(project)
       val res = action(project, module)

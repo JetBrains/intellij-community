@@ -181,7 +181,7 @@ public class RenameMembersInplaceTest extends LightJavaCodeInsightTestCase {
       doTestInplaceRename("bar");
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      assertEquals("Method bar() is already defined in the class <b><code>Foo</code></b>", e.getMessage());
+      assertEquals("Method <b><code>bar()</code></b> is already defined in class <b><code>Foo</code></b>", e.getMessage());
       checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
       return;
     }

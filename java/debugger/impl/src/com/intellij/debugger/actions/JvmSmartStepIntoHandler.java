@@ -4,6 +4,7 @@ package com.intellij.debugger.actions;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.impl.DebuggerSession;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
@@ -42,6 +43,10 @@ public abstract class JvmSmartStepIntoHandler {
    * @return SmartStepFilter
    */
   protected @Nullable MethodFilter createMethodFilter(SmartStepTarget stepTarget) {
+    return ReadAction.compute(() -> createMethodFilterInReadAction(stepTarget));
+  }
+
+  private static @Nullable MethodFilter createMethodFilterInReadAction(SmartStepTarget stepTarget) {
     if (stepTarget instanceof MethodSmartStepTarget methodSmartStepTarget) {
       final PsiMethod method = methodSmartStepTarget.getMethod();
       if (stepTarget.needsBreakpointRequest()) {

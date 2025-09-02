@@ -6,10 +6,10 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.annotations.Child
+import com.intellij.platform.workspace.storage.annotations.Parent
 
 interface OptionalOneToOneParentEntity : WorkspaceEntity {
-  val child: @Child OptionalOneToOneChildEntity?
+  val child: OptionalOneToOneChildEntity?
 
   //region generated code
   @GeneratedCodeApiVersion(3)
@@ -46,6 +46,7 @@ fun MutableEntityStorage.modifyOptionalOneToOneParentEntity(
 
 interface OptionalOneToOneChildEntity : WorkspaceEntity {
   val data: String
+  @Parent
   val parent: OptionalOneToOneParentEntity?
 
   //region generated code

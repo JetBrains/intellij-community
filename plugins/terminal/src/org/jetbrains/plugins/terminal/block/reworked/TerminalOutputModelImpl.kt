@@ -44,6 +44,11 @@ class TerminalOutputModelImpl(
 
   private var contentUpdateInProgress: Boolean = false
 
+  override fun getAbsoluteLineIndex(documentOffset: Int): Long {
+    val documentLineIndex = document.getLineNumber(documentOffset)
+    return trimmedLinesCount + documentLineIndex.toLong()
+  }
+
   override fun updateContent(absoluteLineIndex: Long, text: String, styles: List<StyleRange>) {
     changeDocumentContent {
       // If absolute line index is far in the past - in the already trimmed part of the output,
@@ -81,6 +86,25 @@ class TerminalOutputModelImpl(
     }
 
     mutableCursorOffsetState.value = lineStartOffset + trimmedColumnIndex
+  }
+
+  override fun insertAtCursor(text: String) {
+    changeDocumentContent {
+      val offset = mutableCursorOffsetState.value
+      document.insertString(offset, text)
+      offset
+    }
+    ++mutableCursorOffsetState.value
+  }
+
+  override fun backspace() {
+    val offset = mutableCursorOffsetState.value
+    if (offset <= 1) return
+    changeDocumentContent {
+      document.deleteString(offset - 1, offset)
+      offset - 1
+    }
+    --mutableCursorOffsetState.value
   }
 
   /** Returns offset from which document was updated */
@@ -163,6 +187,10 @@ class TerminalOutputModelImpl(
     else highlightingsModel.getHighlightingsSnapshot()
   }
 
+  override fun getHighlightingAt(documentOffset: Int): HighlightingInfo? {
+    return highlightingsModel.getHighlightingAt(documentOffset)
+  }
+
   override fun addListener(parentDisposable: Disposable, listener: TerminalOutputModelListener) {
     dispatcher.addListener(listener, parentDisposable)
   }
@@ -222,6 +250,29 @@ class TerminalOutputModelImpl(
       val snapshot = TerminalOutputHighlightingsSnapshot(document, documentRelativeHighlightings)
       highlightingsSnapshot = snapshot
       return snapshot
+    }
+
+    fun getHighlightingAt(documentOffset: Int): HighlightingInfo? {
+      if (documentOffset < 0 || documentOffset >= document.textLength) {
+        return null
+      }
+      val absoluteOffset = documentOffset + trimmedCharsCount
+      val index = styleRanges.binarySearch {
+        when {
+          it.endOffset <= absoluteOffset -> -1
+          it.startOffset > absoluteOffset -> 1
+          else -> 0
+        }
+      }
+      return if (index >= 0) {
+        val range = styleRanges[index]
+        HighlightingInfo(
+          startOffset = (range.startOffset - trimmedCharsCount).toInt(),
+          endOffset = (range.endOffset - trimmedCharsCount).toInt(),
+          textAttributesProvider = TextStyleAdapter(range.style, colorPalette),
+        )
+      }
+      else null
     }
 
     fun addHighlightings(documentOffset: Int, styles: List<StyleRange>) {

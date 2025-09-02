@@ -6,6 +6,7 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.options.OptPane
+import com.intellij.openapi.components.service
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
@@ -77,7 +78,7 @@ class PyStubPackagesCompatibilityInspection : PyInspection() {
       val nameToPkg = mutableMapOf<String, PyPackage>()
       installedPackages.forEach { nameToPkg[it.name] = it }
 
-      val status = node.project.getService(PyStubPackagesInstallingStatus::class.java)
+      val status = node.project.service<PyStubPackagesInstallingStatus>()
 
       findIncompatibleRuntimeToStubPackages(
         sdk) { stubPkg ->

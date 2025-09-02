@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.test
 
 import com.intellij.analysis.JvmAnalysisBundle
@@ -65,7 +65,7 @@ class TestOnlyInspection : AbstractBaseUastLocalInspectionTool() {
     }
   }
 
-  private fun isDirectlyTestOnly(member: UDeclaration) = member.findAnnotation(AnnotationUtil.TEST_ONLY) != null
+  private fun isDirectlyTestOnly(member: UDeclaration) = member.findSourceAnnotation(AnnotationUtil.TEST_ONLY) != null
 
   inner class TestOnlyApiUsageProcessor(private val holder: ProblemsHolder) : ApiUsageProcessor {
 

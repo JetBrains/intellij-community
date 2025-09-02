@@ -29,6 +29,7 @@ import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener;
 import com.intellij.platform.workspace.jps.entities.ModuleEntity;
 import com.intellij.platform.workspace.storage.EntityChange;
@@ -42,6 +43,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleEntityUtils;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PythonIdeLanguageCustomization;
+import com.jetbrains.python.projectModel.uv.UvProjectModelService;
+import com.jetbrains.python.projectModel.uv.UvProjectModelService.UvWorkspace;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
@@ -84,8 +87,8 @@ public final class PyInterpreterInspection extends PyInspection {
 
   public static class Visitor extends PyInspectionVisitor {
     /** Invalidated by {@link CacheCleaner}. */
-    private static final AsyncLoadingCache<Module, List<PyDetectedSdk>> DETECTED_ASSOCIATED_ENVS_CACHE = Caffeine.newBuilder()
-      .executor(AppExecutorUtil.getAppExecutorService())
+    private static final AsyncLoadingCache<@NotNull Module, @NotNull List<PyDetectedSdk>> DETECTED_ASSOCIATED_ENVS_CACHE =
+      Caffeine.newBuilder().executor(AppExecutorUtil.getAppExecutorService())
 
       // Even though various listeners invalidate the cache on many actions, it's unfeasible to track for venv/conda interpreters
       // creation performed outside the IDE.
@@ -109,7 +112,6 @@ public final class PyInterpreterInspection extends PyInspection {
       if (isFileIgnored(node)) return;
       @Nullable final Module module = ModuleUtilCore.findModuleForPsiElement(node);
       @Nullable final Sdk sdk = PyBuiltinCache.findSdkForFile(node);
-
       final boolean pyCharm = PythonIdeLanguageCustomization.isMainlyPythonIde();
 
       final List<LocalQuickFix> fixes = new ArrayList<>();
@@ -125,7 +127,9 @@ public final class PyInterpreterInspection extends PyInspection {
       }
       else {
         final @NlsSafe String associatedModulePath = PySdkExtKt.getAssociatedModulePath(sdk);
-        if (module != null && !PlatformUtils.isFleetBackend() && (associatedModulePath == null || PySdkExtKt.isAssociatedWithAnotherModule(sdk, module))) {
+        if (module != null && !PlatformUtils.isFleetBackend() &&
+            (associatedModulePath == null || PySdkExtKt.isAssociatedWithAnotherModule(sdk, module)) &&
+            !(Registry.is("python.project.model.uv", false) && isAssociatedWithUvWorkspaceRootModule(associatedModulePath, module))) {
           final PyInterpreterInspectionQuickFixData fixData = PySdkProvider.EP_NAME.getExtensionList().stream()
             .map(ext -> ext.createEnvironmentAssociationFix(module, sdk, pyCharm, associatedModulePath))
             .filter(it -> it != null)
@@ -166,6 +170,13 @@ public final class PyInterpreterInspection extends PyInspection {
           }
         }
       }
+    }
+
+    private static boolean isAssociatedWithUvWorkspaceRootModule(@Nullable String sdkAssociatedPath, @NotNull Module module) {
+      if (sdkAssociatedPath == null) return false;
+      UvWorkspace<@NotNull Module> uvWorkspace = UvProjectModelService.INSTANCE.findWorkspace(module);
+      if (uvWorkspace == null) return false;
+      return sdkAssociatedPath.equals(BasePySdkExtKt.getBasePath(uvWorkspace.getRoot()));
     }
 
     private void registerProblemWithCommonFixes(PyFile node,
@@ -255,6 +266,11 @@ public final class PyInterpreterInspection extends PyInspection {
       final var systemWideSdk = PySdkExtKt.mostPreferred(PySdkExtKt.filterSystemWideSdks(existingSdks));
       if (systemWideSdk != null) {
         return new UseExistingInterpreterFix(systemWideSdk, module);
+      }
+
+      LocalQuickFix fallbackFix = PyCondaSdkCustomizer.Companion.getInstance().getFallbackInterpreterFix();
+      if (fallbackFix != null) {
+        return fallbackFix;
       }
 
       final var detectedSystemWideSdk = ContainerUtil.getFirstItem(PySdkExtKt.detectSystemWideSdks(module, existingSdks));

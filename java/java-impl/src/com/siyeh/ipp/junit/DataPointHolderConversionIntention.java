@@ -1,7 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.junit;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.Presentation;
@@ -82,7 +83,7 @@ public final class DataPointHolderConversionIntention extends PsiUpdateModComman
     assert body != null;
 
     final PsiStatement methodCode =
-      elementFactory.createStatementFromText(PsiKeyword.RETURN + " " + requireNonNull(fieldInitializer).getText() + ";", null);
+      elementFactory.createStatementFromText(JavaKeywords.RETURN + " " + requireNonNull(fieldInitializer).getText() + ";", null);
     body.add(methodCode);
     return method;
   }

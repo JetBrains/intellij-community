@@ -25,9 +25,11 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 @ApiStatus.Internal
 public final class DirectByteBufferAllocator {
-  // Fixes IDEA-222358 Linux native memory leak. Please do not replace with BoundedTaskExecutor
+  // Fixes IDEA-222358 Linux native memory leak. Please do not replace it with BoundedTaskExecutor.
+  // This workaround is disabled if the native launcher is used because it fixes the issue differently (via `mallopt`, see JBR-1837)
   private static final ExecutorService singleThreadAllocator =
-    SystemInfoRt.isLinux && SystemProperties.getBooleanProperty("idea.limit.paged.storage.allocators", true)
+    SystemInfoRt.isLinux && SystemProperties.getBooleanProperty("idea.limit.paged.storage.allocators",
+                                                                System.getProperty("ide.native.launcher") == null)
     ? ConcurrencyUtil.newSingleThreadExecutor("DirectBufferWrapper allocation thread")
     : null;
 

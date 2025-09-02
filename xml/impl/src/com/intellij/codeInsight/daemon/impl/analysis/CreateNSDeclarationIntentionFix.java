@@ -102,8 +102,8 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
   public void applyFix(final @NotNull Project project, final @NotNull ProblemDescriptor descriptor) {
     final PsiFile containingFile = descriptor.getPsiElement().getContainingFile();
     Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
-    final PsiFile file = editor != null ? PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument()) : null;
-    if (file == null || !Comparing.equal(file.getVirtualFile(), containingFile.getVirtualFile())) return;
+    final PsiFile psiFile = editor != null ? PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument()) : null;
+    if (psiFile == null || !Comparing.equal(psiFile.getVirtualFile(), containingFile.getVirtualFile())) return;
 
     try {
       invoke(project, editor, containingFile);
@@ -119,15 +119,15 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
     PsiElement element = myElement.retrieve();
     if (element == null) return IntentionPreviewInfo.EMPTY;
-    return doPreview(project, PsiTreeUtil.findSameElementInCopy(element, file), editor);
+    return doPreview(project, PsiTreeUtil.findSameElementInCopy(element, psiFile), editor);
   }
 
   private @NotNull IntentionPreviewInfo doPreview(@NotNull Project project, PsiElement element, @Nullable Editor editor) {
-    PsiFile file = element.getContainingFile();
-    if (!(file instanceof XmlFile xmlFile)) return IntentionPreviewInfo.EMPTY;
+    PsiFile psiFile = element.getContainingFile();
+    if (!(psiFile instanceof XmlFile xmlFile)) return IntentionPreviewInfo.EMPTY;
     List<String> namespaces = getNamespaces(element, xmlFile);
     String namespace = namespaces.isEmpty() ? "" : namespaces.get(0);
     new MyStringToAttributeProcessor(element, project, editor, xmlFile)
@@ -136,10 +136,10 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!(file instanceof XmlFile)) return false;
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    if (!(psiFile instanceof XmlFile)) return false;
     PsiElement element = myElement.retrieve();
-    XmlTag rootTag = ((XmlFile)file).getRootTag();
+    XmlTag rootTag = ((XmlFile)psiFile).getRootTag();
     return element != null && rootTag != null && !PsiUtilCore.hasErrorElementChild(rootTag);
   }
 
@@ -163,7 +163,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
   }
 
   @Override
-  public void invoke(final @NotNull Project project, final Editor editor, @NotNull PsiFile file) throws IncorrectOperationException {
+  public void invoke(final @NotNull Project project, final Editor editor, @NotNull PsiFile psiFile) throws IncorrectOperationException {
     final PsiElement element = myElement.retrieve();
     if (element == null) return;
     XmlFile xmlFile = getFile();
@@ -324,13 +324,13 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
   }
 
   public static void processExternalUris(final MetaHandler metaHandler,
-                                         final PsiFile file,
+                                         final PsiFile psiFile,
                                          final ExternalUriProcessor processor) {
     ProgressManager.getInstance().runProcessWithProgressSynchronously(
-      () -> ReadAction.run(() -> processExternalUrisImpl(metaHandler, file, processor)),
+      () -> ReadAction.run(() -> processExternalUrisImpl(metaHandler, psiFile, processor)),
       XmlPsiBundle.message("xml.progress.finding.acceptable.uri"),
       false,
-      file.getProject()
+      psiFile.getProject()
     );
   }
 
@@ -365,7 +365,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
   }
 
   private static void processExternalUrisImpl(final MetaHandler metaHandler,
-                                              final PsiFile file,
+                                              final PsiFile psiFile,
                                               final ExternalUriProcessor processor) {
     final ProgressIndicator pi = ProgressManager.getInstance().getProgressIndicator();
 
@@ -385,7 +385,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
         pi.setText2(url);
         ++i;
       }
-      final XmlFile xmlFile = XmlUtil.findNamespace(file, url);
+      final XmlFile xmlFile = XmlUtil.findNamespace(psiFile, url);
 
       if (xmlFile != null) {
         final boolean wordFound = checkIfGivenXmlHasTheseWords(searchFor, xmlFile);

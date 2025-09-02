@@ -4,6 +4,3 @@
 fun foo(y: Boolean) {
     y
 }
-
-// IGNORE_K2 
-// (see KT-73758)

@@ -7,6 +7,8 @@ import com.intellij.ide.ui.MainMenuDisplayMode
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.customization.CustomisedActionGroup
 import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
@@ -89,8 +91,8 @@ object CustomWindowHeaderUtil {
 
     val mainToolbarHasNoActions = mainToolbarActionSupplier().all {
       when (val g = it.first) {
-        is DefaultActionGroup -> g.childActionsOrStubs.isEmpty()
-        is CustomisedActionGroup -> g.defaultChildrenOrStubs.isEmpty()
+        is DefaultActionGroup -> isEmptyExceptNonRemovableActions(g.childActionsOrStubs)
+        is CustomisedActionGroup -> isEmptyExceptNonRemovableActions(g.defaultChildrenOrStubs)
         else -> false
       }
     }
@@ -108,6 +110,20 @@ object CustomWindowHeaderUtil {
     }
     return DistractionFreeModeController.shouldMinimizeCustomHeader() || !UISettings.getInstance().showNewMainToolbar
   }
+
+  private fun isEmptyExceptNonRemovableActions(actions: Array<AnAction>): Boolean {
+    val manager = ActionManager.getInstance()
+    for (action in actions) {
+      val id = manager.getId(action)
+      //return false
+      if (id !in NON_REMOVABLE_ACTIONS) return false
+    }
+    return true
+  }
+
+  private val NON_REMOVABLE_ACTIONS = setOf(
+    "TrialStateWidget"
+  )
 
   internal fun isToolbarInHeader(uiSettings: UISettings, isFullscreen: Boolean): Boolean {
     if (IdeFrameDecorator.isCustomDecorationAvailable) {

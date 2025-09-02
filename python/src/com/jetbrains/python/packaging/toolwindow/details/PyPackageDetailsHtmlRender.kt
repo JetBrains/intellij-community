@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.toolwindow.details
 
 import com.intellij.execution.process.CapturingProcessHandler
@@ -10,9 +10,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.reportRawProgress
+import com.intellij.python.community.helpersLocator.PythonHelpersLocator
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.PythonHelper
-import com.jetbrains.python.PythonHelpersLocator
 import com.jetbrains.python.packaging.PyPIPackageRanking
 import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory

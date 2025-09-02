@@ -1,6 +1,7 @@
 package com.intellij.terminal.backend
 
 import com.intellij.ide.util.RunOnceUtil
+import com.intellij.idea.AppMode
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
 import com.intellij.util.xmlb.annotations.XCollection
@@ -18,9 +19,15 @@ internal class TerminalTabsStorage(private val project: Project) : PersistentSta
   private var state = State()
 
   fun getStoredTabs(): List<TerminalSessionPersistedTab> {
-    // Fill the initial state of the new terminal tabs storage from the TerminalArrangementManager.
-    RunOnceUtil.runOnceForProject(project, "TerminalTabsStorage.copyFrom.TerminalArrangementManager") {
-      restoreStateFromTerminalArrangementManager()
+    // Fill the initial state of the reworked terminal tabs storage from the TerminalArrangementManager (classic terminal tabs storage).
+    RunOnceUtil.runOnceForProject(project, "TerminalTabsStorage.copyFrom.TerminalArrangementManager.252") {
+      // Do not perform the migration in RemDev, since the Reworked terminal is already enabled there by default.
+      if (AppMode.isRemoteDevHost()) return@runOnceForProject
+
+      // Do not perform the migration if the user already has any stored Reworked Terminal tabs.
+      if (state.tabs.isEmpty()) {
+        restoreStateFromTerminalArrangementManager()
+      }
     }
 
     return state.tabs

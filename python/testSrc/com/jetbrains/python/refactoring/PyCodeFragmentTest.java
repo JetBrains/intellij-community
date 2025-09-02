@@ -65,7 +65,7 @@ public class PyCodeFragmentTest extends LightMarkedTestCase {
     }
     final StringBuilder buffer = new StringBuilder();
     try {
-      final CodeFragment fragment = PyCodeFragmentUtil.createCodeFragment((ScopeOwner)context, startElement, endElement);
+      final CodeFragment fragment = PyCodeFragmentUtil.createCodeFragment((ScopeOwner)context, startElement, endElement, null);
       if (fragment.isReturnInstructionInside()) {
         buffer.append("Return instruction inside found").append("\n");
       }

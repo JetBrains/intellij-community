@@ -1,0 +1,13 @@
+// IGNORE_K1
+
+// The result here is technically a parser error, but it is very easy for the user to fix it
+// and comments like this are very unusual
+fun some(list: List<String>) {
+    list /*
+    SomeComment
+    */
+        // Other comment
+        .<caret>
+}
+
+// ELEMENT: "[]"

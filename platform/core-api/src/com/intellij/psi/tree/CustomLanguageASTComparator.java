@@ -26,10 +26,23 @@ public interface CustomLanguageASTComparator {
   }
 
   /**
+   * This method is used during reparse of top-level PSI trees.
+   *
    * @return {@code ThreeState#NO} for the children to be reparsed, {@code ThreeState#UNSURE} to continue comparing
    */
   @NotNull
   ThreeState compareAST(@NotNull ASTNode oldNode,
                         @NotNull LighterASTNode newNode,
                         @NotNull FlyweightCapableTreeStructure<LighterASTNode> structure);
+
+  /**
+   * This method is used when reparsing injected PSI trees.
+   *
+   * @return {@code ThreeState#NO} for the children to be reparsed, {@code ThreeState#UNSURE} to continue comparing
+   */
+  @NotNull
+  default ThreeState compareAST(@NotNull ASTNode oldNode,
+                                @NotNull ASTNode newNode) {
+    return ThreeState.UNSURE;
+  }
 }

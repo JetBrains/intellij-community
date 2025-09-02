@@ -2,6 +2,7 @@
 package com.intellij.spellchecker.quickfixes;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.intention.EventTrackingIntentionAction;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -10,6 +11,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.model.SideEffectGuard;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -24,6 +26,8 @@ import com.intellij.spellchecker.DictionaryLayer;
 import com.intellij.spellchecker.DictionaryLayersProvider;
 import com.intellij.spellchecker.SpellCheckerManager;
 import com.intellij.spellchecker.inspections.SpellCheckingInspection;
+import com.intellij.spellchecker.statistics.SpellcheckerActionStatistics;
+import com.intellij.spellchecker.statistics.SpellcheckerRateTracker;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.util.concurrency.ThreadingAssertions;
@@ -37,7 +41,8 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public final class SaveTo implements SpellCheckerQuickFix, LowPriorityAction, DumbAware {
+public final class SaveTo implements SpellCheckerQuickFix, LowPriorityAction, DumbAware, EventTrackingIntentionAction {
+  private SpellcheckerRateTracker myTracker;
   private @Nullable DictionaryLayer myLayer = null;
   private String myWord;
 
@@ -49,9 +54,10 @@ public final class SaveTo implements SpellCheckerQuickFix, LowPriorityAction, Du
     myWord = word;
   }
 
-  public SaveTo(String word, @Nullable DictionaryLayer layer) {
+  public SaveTo(String word, @Nullable DictionaryLayer layer, SpellcheckerRateTracker tracker) {
     myWord = word;
     myLayer = layer;
+    myTracker = tracker;
   }
 
   @Override
@@ -76,6 +82,16 @@ public final class SaveTo implements SpellCheckerQuickFix, LowPriorityAction, Du
     var wordRange = descriptor.getTextRangeInElement().shiftRight(psiElement.getTextRange().getStartOffset());
     var wordToSave = myWord != null ? myWord : ProblemDescriptorUtil.extractHighlightedText(descriptor, descriptor.getPsiElement());
     applyFix(project, psiFile, wordRange, wordToSave, myLayer);
+    if (myTracker != null) {
+      SpellcheckerActionStatistics.saveToPerformed(myTracker, myLayer);
+    }
+  }
+
+  @Override
+  public void suggestionShown(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    if (myTracker != null && myTracker.markShown()) {
+      SpellcheckerActionStatistics.suggestionShown(myTracker);
+    }
   }
 
   public static void applyFix(@NotNull Project project, PsiFile psiFile, TextRange wordRange, String wordToSave, @Nullable DictionaryLayer layer) {

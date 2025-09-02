@@ -1,7 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
-import com.intellij.dupLocator.iterators.NodeIterator;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -9,6 +9,7 @@ import com.intellij.openapi.util.text.Strings;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
+import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.PsiShortNamesCache;
@@ -23,7 +24,6 @@ import com.intellij.structuralsearch.impl.matcher.JavaCompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.JavaMatchUtil;
 import com.intellij.structuralsearch.impl.matcher.filters.*;
 import com.intellij.structuralsearch.impl.matcher.handlers.*;
-import com.intellij.structuralsearch.impl.matcher.iterators.DocValuesIterator;
 import com.intellij.structuralsearch.impl.matcher.predicates.ExprTypePredicate;
 import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate;
 import com.intellij.util.SmartList;
@@ -42,8 +42,8 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
   private final @NotNull GlobalCompilingVisitor myCompilingVisitor;
 
   private static final @NonNls Pattern COMMENT_PATTERN = Pattern.compile("__\\$_\\w+");
-  private static final Set<String> excludedKeywords = ContainerUtil.newHashSet(PsiKeyword.CLASS, PsiKeyword.INTERFACE, PsiKeyword.ENUM,
-                                                                               PsiKeyword.THROWS, PsiKeyword.EXTENDS, PsiKeyword.IMPLEMENTS);
+  private static final Set<String> excludedKeywords = ContainerUtil.newHashSet(JavaKeywords.CLASS, JavaKeywords.INTERFACE, JavaKeywords.ENUM,
+                                                                               JavaKeywords.THROWS, JavaKeywords.EXTENDS, JavaKeywords.IMPLEMENTS);
 
   public JavaCompilingVisitor(@NotNull GlobalCompilingVisitor compilingVisitor) {
     myCompilingVisitor = compilingVisitor;
@@ -122,19 +122,19 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
       final CompileContext context = myCompilingVisitor.getContext();
       if (!handleWord(aClass.getName(), CODE, context)) return;
       if (aClass.isInterface()) {
-        GlobalCompilingVisitor.addFilesToSearchForGivenWord(PsiKeyword.INTERFACE, true, CODE, context);
+        GlobalCompilingVisitor.addFilesToSearchForGivenWord(JavaKeywords.INTERFACE, true, CODE, context);
       }
       else if (aClass.isEnum()) {
-        GlobalCompilingVisitor.addFilesToSearchForGivenWord(PsiKeyword.ENUM, true, CODE, context);
+        GlobalCompilingVisitor.addFilesToSearchForGivenWord(JavaKeywords.ENUM, true, CODE, context);
       }
       else if (aClass.isRecord()) {
-        GlobalCompilingVisitor.addFilesToSearchForGivenWord(PsiKeyword.RECORD, true, CODE, context);
+        GlobalCompilingVisitor.addFilesToSearchForGivenWord(JavaKeywords.RECORD, true, CODE, context);
       }
       else {
-        GlobalCompilingVisitor.addFilesToSearchForGivenWord(PsiKeyword.INTERFACE, false, CODE, context);
-        GlobalCompilingVisitor.addFilesToSearchForGivenWord(PsiKeyword.ENUM, false, CODE, context);
-        GlobalCompilingVisitor.addFilesToSearchForGivenWord(PsiKeyword.RECORD, false, CODE, context);
-        GlobalCompilingVisitor.addFilesToSearchForGivenWord(PsiKeyword.CLASS, true, CODE, context);
+        GlobalCompilingVisitor.addFilesToSearchForGivenWord(JavaKeywords.INTERFACE, false, CODE, context);
+        GlobalCompilingVisitor.addFilesToSearchForGivenWord(JavaKeywords.ENUM, false, CODE, context);
+        GlobalCompilingVisitor.addFilesToSearchForGivenWord(JavaKeywords.RECORD, false, CODE, context);
+        GlobalCompilingVisitor.addFilesToSearchForGivenWord(JavaKeywords.CLASS, true, CODE, context);
       }
       super.visitClass(aClass);
     }
@@ -196,12 +196,12 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
   @Override
   public void visitDocTag(@NotNull PsiDocTag psiDocTag) {
     super.visitDocTag(psiDocTag);
+  }
 
-    final NodeIterator nodes = new DocValuesIterator(psiDocTag.getFirstChild());
-    while (nodes.hasNext()) {
-      myCompilingVisitor.setHandler(nodes.current(), new DocDataHandler());
-      nodes.advance();
-    }
+  @Override
+  public void visitDocTagValue(@NotNull PsiDocTagValue value) {
+    super.visitDocTagValue(value);
+    myCompilingVisitor.setFilterSimple(value, JavaDocTagDataFilter.getInstance());
   }
 
   @Override

@@ -35,7 +35,7 @@ interface Lexer {
   }
 
   fun getTokenText(): String {
-    return this.getTokenSequence().toString()
+    return getTokenSequence().toString()
   }
 
   /**

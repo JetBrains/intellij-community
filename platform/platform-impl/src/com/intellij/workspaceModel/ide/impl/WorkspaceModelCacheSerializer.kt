@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl
 
 import com.intellij.ide.plugins.PluginManagerCore
@@ -30,15 +30,17 @@ import kotlin.io.path.getLastModifiedTime
 class WorkspaceModelCacheSerializer(vfuManager: VirtualFileUrlManager, urlRelativizer: UrlRelativizer?) {
   private val serializer: EntityStorageSerializer =
     EntityStorageSerializerImpl(
-      PluginAwareEntityTypesResolver,
-      vfuManager,
-      urlRelativizer,
-      ApplicationInfo.getInstance().build.toString(),
+      typesResolver = PluginAwareEntityTypesResolver,
+      virtualFileManager = vfuManager,
+      urlRelativizer = urlRelativizer,
+      ijBuildVersion = ApplicationInfo.getInstance().build.toString(),
     )
 
-  internal fun loadCacheFromFile(file: Path,
-                                 invalidateGlobalCachesMarkerFile: Path,
-                                 invalidateCachesMarkerFile: Path): MutableEntityStorage? = loadCacheFromFileTimeMs.addMeasuredTime {
+  internal fun loadCacheFromFile(
+    file: Path,
+    invalidateGlobalCachesMarkerFile: Path,
+    invalidateCachesMarkerFile: Path,
+  ): MutableEntityStorage? = loadCacheFromFileTimeMs.addMeasuredTime {
     val start = System.currentTimeMillis()
     val cacheFileAttributes = file.basicAttributesIfExists() ?: return@addMeasuredTime null
 
@@ -67,10 +69,12 @@ class WorkspaceModelCacheSerializer(vfuManager: VirtualFileUrlManager, urlRelati
     return@addMeasuredTime cache
   }
 
-  // Serialize and atomically replace cacheFile. Delete temporary file in any cache to avoid junk in cache folder
-  internal fun saveCacheToFile(storage: ImmutableEntityStorage,
-                               file: Path,
-                               userPreProcessor: Boolean = false): SaveInfo = saveCacheToFileTimeMs.addMeasuredTime {
+  // Serialize and atomically replace cacheFile. Delete a temporary file in any cache to avoid junk in the cache folder
+  internal fun saveCacheToFile(
+    storage: ImmutableEntityStorage,
+    file: Path,
+    userPreProcessor: Boolean = false,
+  ): SaveInfo = saveCacheToFileTimeMs.addMeasuredTime {
     val start = System.currentTimeMillis()
 
     LOG.debug("Saving Workspace model cache to $file")
@@ -101,9 +105,9 @@ class WorkspaceModelCacheSerializer(vfuManager: VirtualFileUrlManager, urlRelati
   }
 
   // Looks like https://opentelemetry.io/docs/specs/otel/metrics/api/#histogram
-  data class SaveInfo(
-    val loadingTime: Long,
-    val loadedSize: Long?,
+  internal data class SaveInfo(
+    @JvmField val loadingTime: Long,
+    @JvmField val loadedSize: Long?,
   )
 
   private fun cachePreProcess(storage: ImmutableEntityStorage): ImmutableEntityStorage {
@@ -143,7 +147,6 @@ class WorkspaceModelCacheSerializer(vfuManager: VirtualFileUrlManager, urlRelati
       val plugin = PluginManagerCore.getPlugin(id)
       return plugin?.pluginClassLoader ?: ApplicationManager::class.java.classLoader
     }
-
   }
 
   companion object {

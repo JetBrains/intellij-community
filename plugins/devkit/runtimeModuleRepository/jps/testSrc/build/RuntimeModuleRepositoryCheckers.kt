@@ -3,14 +3,23 @@ package com.intellij.devkit.runtimeModuleRepository.jps.build
 
 import com.intellij.platform.runtime.repository.RuntimeModuleId
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDescriptor
+import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleRepositoryData
 import com.intellij.platform.runtime.repository.serialization.RuntimeModuleRepositorySerialization
 import org.jetbrains.jps.builders.JpsBuildTestCase
 import java.nio.file.Path
 
 fun checkRuntimeModuleRepository(outputDir: Path,
                                  expected: RawDescriptorListBuilder.() -> Unit) {
-  val zipPath = outputDir.resolve(RuntimeModuleRepositoryBuildConstants.JAR_REPOSITORY_FILE_NAME)
-  val buildRepositoryData = RuntimeModuleRepositorySerialization.loadFromJar(zipPath)
+  val jarPath = outputDir.resolve(RuntimeModuleRepositoryBuildConstants.JAR_REPOSITORY_FILE_NAME)
+  checkRuntimeModuleRepository(RuntimeModuleRepositorySerialization.loadFromJar(jarPath), expected)
+  val compactPath = outputDir.resolve(RuntimeModuleRepositoryBuildConstants.COMPACT_REPOSITORY_FILE_NAME)
+  checkRuntimeModuleRepository(RuntimeModuleRepositorySerialization.loadFromCompactFile(compactPath), expected)
+}
+
+private fun checkRuntimeModuleRepository(
+  buildRepositoryData: RawRuntimeModuleRepositoryData,
+  expected: RawDescriptorListBuilder.() -> Unit,
+) {
   val actualIds = buildRepositoryData.allIds.filter { it != RUNTIME_REPOSITORY_MARKER_MODULE && it != "${RUNTIME_REPOSITORY_MARKER_MODULE}${RuntimeModuleId.TESTS_NAME_SUFFIX}" }
   val builder = RawDescriptorListBuilder()
   builder.expected()

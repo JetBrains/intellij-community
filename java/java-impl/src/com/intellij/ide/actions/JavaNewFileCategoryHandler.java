@@ -13,6 +13,7 @@ import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEnumerator;
+import com.intellij.openapi.roots.ProjectModelExternalSource;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.util.Ref;
@@ -21,6 +22,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
+import org.jetbrains.jps.model.serialization.SerializationConstants;
 
 import static com.intellij.ide.actions.CreateTemplateInPackageAction.JAVA_NEW_FILE_CATEGORY;
 import static com.intellij.ide.actions.CreateTemplateInPackageAction.isInContentRoot;
@@ -57,7 +59,7 @@ final class JavaNewFileCategoryHandler implements NewFileActionCategoryHandler {
           OrderEnumerator.orderEntries(module).recursively()
             .forEachLibrary(library -> {
               if (library instanceof LibraryEx
-                  && ((LibraryEx)library).getProperties() instanceof LibraryWithMavenCoordinatesProperties) {
+                  && isImportedJvmLibrary((LibraryEx)library)) {
                 hasAnyMavenDependencies.set(true);
                 return false;
               }
@@ -71,5 +73,18 @@ final class JavaNewFileCategoryHandler implements NewFileActionCategoryHandler {
     }
 
     return ThreeState.UNSURE;
+  }
+
+  private static boolean isImportedJvmLibrary(LibraryEx library) {
+    ProjectModelExternalSource externalSource = library.getExternalSource();
+    if (externalSource != null) {
+      String id = externalSource.getId();
+      if (SerializationConstants.MAVEN_EXTERNAL_SOURCE_ID.equals(id)
+          || "GRADLE".equals(id)) {
+        return true;
+      }
+    }
+
+    return library.getProperties() instanceof LibraryWithMavenCoordinatesProperties;
   }
 }

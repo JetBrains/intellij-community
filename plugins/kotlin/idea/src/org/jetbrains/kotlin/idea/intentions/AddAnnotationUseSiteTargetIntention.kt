@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddAnnotationUseSiteTargetUtils.addUseSiteTarget
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddAnnotationUseSiteTargetUtils.addOrChooseUseSiteTarget
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddAnnotationUseSiteTargetUtils.applicableUseSiteTargets
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.resolve.AnnotationChecker
@@ -32,7 +32,7 @@ class AddAnnotationUseSiteTargetIntention : SelfTargetingIntention<KtAnnotationE
 
     override fun applyTo(element: KtAnnotationEntry, editor: Editor?) {
         val useSiteTargets = element.getApplicableUseSiteTargets()
-        element.addUseSiteTarget(useSiteTargets, editor)
+        element.addOrChooseUseSiteTarget(useSiteTargets, editor)
     }
 }
 

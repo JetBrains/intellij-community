@@ -20,8 +20,10 @@ import com.intellij.vcs.log.VcsLogRangeFilter
 import com.intellij.vcs.log.data.DataPack
 import com.intellij.vcs.log.data.DataPackChangeListener
 import com.intellij.vcs.log.data.VcsLogData
-import com.intellij.vcs.log.impl.*
-import com.intellij.vcs.log.impl.VcsLogTabLocation.Companion.findLogUi
+import com.intellij.vcs.log.impl.MainVcsLogUiProperties
+import com.intellij.vcs.log.impl.VcsLogContentUtil
+import com.intellij.vcs.log.impl.VcsLogManager
+import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.ui.MainVcsLogUi
 import com.intellij.vcs.log.ui.VcsLogColorManager
 import com.intellij.vcs.log.ui.VcsLogUiEx
@@ -38,7 +40,6 @@ import git4idea.merge.MergeChangeCollector
 import git4idea.repo.GitRepository
 import java.util.*
 import java.util.concurrent.CompletableFuture
-import java.util.function.Function
 
 private val LOG = logger<GitUpdateInfoAsLog>()
 
@@ -145,7 +146,7 @@ class GitUpdateInfoAsLog(private val project: Project,
       }
       return
     }
-    val logUi = logManager.findLogUi(VcsLogTabLocation.TOOL_WINDOW, VcsLogUiEx::class.java, select) {
+    val logUi = VcsLogContentUtil.findLogUi(project, VcsLogUiEx::class.java, select) {
       isUpdateTabId(it.id) && it.filterUi.filters.get(RANGE_FILTER) == rangeFilter
     }
     if (logUi != null) return
@@ -165,8 +166,8 @@ class GitUpdateInfoAsLog(private val project: Project,
 
   private fun createLogUi(logManager: VcsLogManager, logUiFactory: MyLogUiFactory, select: Boolean) {
     val tabName = DateFormatUtil.formatDateTime(System.currentTimeMillis())
-    VcsLogContentUtil.openLogTab(project, logManager, tabGroupId,
-                                 Function { tabName }, logUiFactory, select)
+    val ui = logManager.createLogUi(logUiFactory)
+    VcsLogContentUtil.openLogTab(project, logManager, tabGroupId, ui, { tabName }, select)
   }
 
   private val tabGroupId = TabGroupId("Update Info", VcsBundle.messagePointer("vcs.update.tab.name"))

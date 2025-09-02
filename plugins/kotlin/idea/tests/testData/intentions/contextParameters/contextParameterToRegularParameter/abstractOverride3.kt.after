@@ -1,0 +1,16 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+
+abstract class Base {
+    context(c1: Int)
+    abstract fun foo(c2: String, p1: Double)
+}
+
+class Derived : Base() {
+    context(c1: Int)
+    override fun foo(c2: String, p1: Double) {}
+
+    context(c1: String, c2: Int)
+    fun bar() {
+        foo(c1, 0.0)
+    }
+}

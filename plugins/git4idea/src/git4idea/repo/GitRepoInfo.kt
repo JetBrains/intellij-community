@@ -7,6 +7,7 @@ import com.intellij.vcs.log.Hash
 import git4idea.GitLocalBranch
 import git4idea.GitReference
 import git4idea.GitRemoteBranch
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 
 data class GitRepoInfo(val currentBranch: GitLocalBranch?,
@@ -23,6 +24,7 @@ data class GitRepoInfo(val currentBranch: GitLocalBranch?,
     branchTrackInfos.associateByTo(CollectionFactory.createCustomHashingStrategyMap(GitReference.BRANCH_NAME_HASHING_STRATEGY)) { it.localBranch.name }
 
   val remoteBranches: Collection<GitRemoteBranch>
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("")
     get() = remoteBranchesWithHashes.keys
 

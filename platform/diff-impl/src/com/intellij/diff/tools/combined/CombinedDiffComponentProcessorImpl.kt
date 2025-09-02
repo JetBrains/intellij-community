@@ -2,7 +2,7 @@
 package com.intellij.diff.tools.combined
 
 import com.intellij.diff.*
-import com.intellij.diff.editor.DiffEditorTabFilesManager.Companion.isDiffInEditor
+import com.intellij.diff.editor.DiffEditorTabFilesUtil
 import com.intellij.diff.impl.DiffEditorViewer
 import com.intellij.diff.impl.DiffEditorViewerListener
 import com.intellij.diff.impl.DiffRequestProcessor
@@ -261,7 +261,7 @@ internal data class CombinedDiffEditorState(
   val activeEditorStates: List<TextEditorState>,
 ) : FileEditorStateWithPreferredOpenMode {
   override val openMode: FileEditorManagerImpl.OpenMode?
-    get() = if (!isDiffInEditor) FileEditorManagerImpl.OpenMode.NEW_WINDOW else null
+    get() = if (!DiffEditorTabFilesUtil.isDiffInEditor) FileEditorManagerImpl.OpenMode.NEW_WINDOW else null
 
   override fun canBeMergedWith(otherState: FileEditorState, level: FileEditorStateLevel): Boolean {
     return otherState is CombinedDiffEditorState &&

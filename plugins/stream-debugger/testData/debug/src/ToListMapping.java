@@ -5,6 +5,6 @@ import java.util.stream.Stream;
 public class ToListMapping {
   public static void main(String[] args) {
     // Breakpoint!
-    final List<Object> objects = Stream.of(new Object(), new Object(), new Object()).collect(Collectors.toList());
+    final List<Object> objects = Stream.of(new Object(), new Object(), new Object()).toList();
   }
 }

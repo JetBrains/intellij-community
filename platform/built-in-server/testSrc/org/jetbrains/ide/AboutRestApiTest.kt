@@ -28,4 +28,14 @@ internal class AboutRestApiTest : BuiltInServerTestCase() {
       assertThat(response.body().reader().readText()).doesNotContain("registeredFileTypes")
     }
   }
+
+  @Test
+  fun `about is not allowed for almost hyperskill origin`() {
+    doTest("", origin = "https://hyperskillAorg", asSignedRequest = false, responseStatus = 404)
+  }
+
+  @Test
+  fun `about is not allowed for almost jetbrains origin`() {
+    doTest("", origin = "https://jetbrainsAcom", asSignedRequest = false, responseStatus = 404)
+  }
 }

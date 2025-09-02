@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet", "SSBasedInspection")
 @file:ApiStatus.Internal
 
@@ -168,6 +168,7 @@ private fun customize(bean: UIThemeBean) {
     val iconCustomizer = uiThemeCustomizer?.createIconCustomizer(themeName)
     val colorsCustomizer = uiThemeCustomizer?.createColorCustomizer(themeName)
     val namedColorCustomizer = uiThemeCustomizer?.createNamedColorCustomizer(themeName)
+    val editorSchemeCustomizer = uiThemeCustomizer?.createEditorThemeCustomizer(themeName)
     if (iconCustomizer?.isNotEmpty() == true) {
       val newIcons = LinkedHashMap<String, Any?>(iconCustomizer)
       val originIcons = bean.icons
@@ -207,6 +208,15 @@ private fun customize(bean: UIThemeBean) {
         }
       }
       bean.colorMap.rawMap = newRawColorMap
+    }
+    if (editorSchemeCustomizer?.isNotEmpty() == true) {
+      val currentScheme = bean.editorScheme
+      if (currentScheme != null) {
+        val newTheme = editorSchemeCustomizer.get(currentScheme)
+        if (newTheme != null) {
+          bean.editorScheme = newTheme
+        }
+      }
     }
   }
 }
@@ -369,18 +379,21 @@ private const val OS_WINDOWS_KEY = "os.windows"
 private const val OS_LINUX_KEY = "os.linux"
 private const val OS_DEFAULT_KEY = "os.default"
 
-private val osKey
-  get() = when {
+private fun getOsKey(): String {
+  return when {
     ClientSystemInfo.isWindows() -> OS_WINDOWS_KEY
     ClientSystemInfo.isMac() -> OS_MACOS_KEY
     else -> OS_LINUX_KEY
   }
+}
 
-private fun putEntry(prefix: Deque<String>,
-                     result: MutableMap<String, Any?>,
-                     parser: JsonParser,
-                     path: StringBuilder,
-                     getter: (key: String) -> Any?) {
+private fun putEntry(
+  prefix: Deque<String>,
+  result: MutableMap<String, Any?>,
+  parser: JsonParser,
+  path: StringBuilder,
+  getter: (key: String) -> Any?,
+) {
   if (!prefix.isEmpty()) {
     var isFirst = true
     for (element in prefix) {
@@ -395,7 +408,7 @@ private fun putEntry(prefix: Deque<String>,
   }
 
   when (val key = parser.currentName()) {
-    osKey -> {
+    getOsKey() -> {
     }
     OS_WINDOWS_KEY, OS_MACOS_KEY, OS_LINUX_KEY -> {
       path.setLength(0)

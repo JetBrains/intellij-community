@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -7,6 +7,7 @@ import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementWeigher;
 import com.intellij.codeInsight.lookup.TypedLookupItem;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.util.Key;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
@@ -47,7 +48,7 @@ public class PreferByKindWeigher extends LookupElementWeigher {
          withParent(PsiTypeElement.class).withSuperParent(2, PsiParameter.class).withSuperParent(3, PsiCatchSection.class)));
 
   static final ElementPattern<PsiElement> INSIDE_METHOD_THROWS_CLAUSE =
-    psiElement().afterLeaf(PsiKeyword.THROWS, ",").inside(psiElement(JavaElementType.THROWS_LIST));
+    psiElement().afterLeaf(JavaKeywords.THROWS, ",").inside(psiElement(JavaElementType.THROWS_LIST));
 
   static final ElementPattern<PsiElement> IN_RESOURCE =
     psiElement().withParent(or(
@@ -324,22 +325,22 @@ public class PreferByKindWeigher extends LookupElementWeigher {
 
   private @NotNull ThreeState isProbableKeyword(String keyword) {
     PsiStatement parentStatement = PsiTreeUtil.getParentOfType(myPosition, PsiStatement.class);
-    if (PsiKeyword.RETURN.equals(keyword)) {
+    if (JavaKeywords.RETURN.equals(keyword)) {
       if (isLastStatement(parentStatement) &&
           !isOnTopLevelInVoidMethod(parentStatement) &&
           !(parentStatement.getParent() instanceof PsiLoopStatement)) {
         return ThreeState.YES;
       }
     }
-    if ((PsiKeyword.BREAK.equals(keyword) || PsiKeyword.CONTINUE.equals(keyword)) &&
+    if ((JavaKeywords.BREAK.equals(keyword) || JavaKeywords.CONTINUE.equals(keyword)) &&
         PsiTreeUtil.getParentOfType(myPosition, PsiLoopStatement.class) != null &&
         isLastStatement(parentStatement)) {
       return ThreeState.YES;
     }
-    if (PsiKeyword.ELSE.equals(keyword) || PsiKeyword.FINALLY.equals(keyword) || PsiKeyword.CATCH.equals(keyword)) {
+    if (JavaKeywords.ELSE.equals(keyword) || JavaKeywords.FINALLY.equals(keyword) || JavaKeywords.CATCH.equals(keyword)) {
       return ThreeState.YES;
     }
-    if (PsiKeyword.TRUE.equals(keyword) || PsiKeyword.FALSE.equals(keyword)) {
+    if (JavaKeywords.TRUE.equals(keyword) || JavaKeywords.FALSE.equals(keyword)) {
       if (myCompletionType == CompletionType.SMART) {
         boolean inReturn = psiElement().withParents(PsiReferenceExpression.class, PsiReturnStatement.class).accepts(myPosition);
         return inReturn ? ThreeState.YES : ThreeState.UNSURE;
@@ -348,18 +349,18 @@ public class PreferByKindWeigher extends LookupElementWeigher {
         return ThreeState.YES;
       }
     }
-    if (PsiKeyword.INTERFACE.equals(keyword) && psiElement().afterLeaf("@").accepts(myPosition)) {
+    if (JavaKeywords.INTERFACE.equals(keyword) && psiElement().afterLeaf("@").accepts(myPosition)) {
       return ThreeState.NO;
     }
-    if (PsiKeyword.NULL.equals(keyword) && isComparisonRhs(myPosition)) {
+    if (JavaKeywords.NULL.equals(keyword) && isComparisonRhs(myPosition)) {
       boolean expectsNotNull = ContainerUtil.exists(myExpectedTypes, PreferByKindWeigher::isEnumClass);
       return expectsNotNull ? ThreeState.NO : ThreeState.YES;
     }
-    if (JavaKeywordCompletion.PRIMITIVE_TYPES.contains(keyword) || PsiKeyword.VOID.equals(keyword)) {
+    if (JavaKeywordCompletion.PRIMITIVE_TYPES.contains(keyword) || JavaKeywords.VOID.equals(keyword)) {
       boolean inCallArg = psiElement().withParents(PsiReferenceExpression.class, PsiExpressionList.class).accepts(myPosition);
       return inCallArg || isInMethodTypeArg(myPosition) ? ThreeState.NO : ThreeState.UNSURE;
     }
-    if (PsiKeyword.FINAL.equals(keyword) && isBeforeVariableOnSameLine(parentStatement)) {
+    if (JavaKeywords.FINAL.equals(keyword) && isBeforeVariableOnSameLine(parentStatement)) {
       return ThreeState.YES;
     }
     return ThreeState.UNSURE;

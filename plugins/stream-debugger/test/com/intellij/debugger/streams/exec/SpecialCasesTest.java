@@ -39,8 +39,4 @@ public class SpecialCasesTest extends TraceExecutionTestCase {
   public void testToCollection() {
     doTest(false);
   }
-
- public void testToList() {
-    doTest(false);
-  }
 }

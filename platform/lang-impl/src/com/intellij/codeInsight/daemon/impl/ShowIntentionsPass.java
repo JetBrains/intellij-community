@@ -49,7 +49,7 @@ import java.util.*;
 public final class ShowIntentionsPass extends TextEditorHighlightingPass implements DumbAware {
   private final Editor myEditor;
 
-  private final PsiFile myFile;
+  private final PsiFile myPsiFile;
   private final boolean myQueryIntentionActions;
   private final @NotNull ProperTextRange myVisibleRange;
   private volatile CachedIntentions myCachedIntentions;
@@ -64,20 +64,20 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass impleme
     super(psiFile.getProject(), editor.getDocument(), false);
     myQueryIntentionActions = queryIntentionActions;
     myEditor = editor;
-    myFile = psiFile;
+    myPsiFile = psiFile;
     myVisibleRange = HighlightingSessionImpl.getFromCurrentIndicator(psiFile).getVisibleRange();
   }
 
   public static @NotNull List<HighlightInfo.IntentionActionDescriptor> getAvailableFixes(@NotNull Editor editor,
-                                                                                         @NotNull PsiFile file,
+                                                                                         @NotNull PsiFile psiFile,
                                                                                          int passId,
                                                                                          int offset) {
-    Project project = file.getProject();
+    Project project = psiFile.getProject();
 
     List<HighlightInfo.IntentionActionDescriptor> result = new ArrayList<>();
     DaemonCodeAnalyzerImpl.processHighlightsNearOffset(editor.getDocument(), project, HighlightSeverity.INFORMATION, offset, true,
                                                        info-> {
-                                                         addAvailableFixesForGroups(info, editor, file, result, passId, offset, true);
+                                                         addAvailableFixesForGroups(info, editor, psiFile, result, passId, offset, true);
                                                          return true;
                                                        });
     return result;
@@ -99,7 +99,7 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass impleme
   @ApiStatus.Internal
   public static void addAvailableFixesForGroups(@NotNull HighlightInfo info,
                                                 @NotNull Editor editor,
-                                                @NotNull PsiFile file,
+                                                @NotNull PsiFile psiFile,
                                                 @NotNull List<? super HighlightInfo.IntentionActionDescriptor> outList,
                                                 int group,
                                                 int offset,
@@ -112,7 +112,7 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass impleme
     boolean[] hasAvailableAction = {false};
     HighlightInfo.IntentionActionDescriptor[] unavailableAction = {null};
     info.findRegisteredQuickFix((descriptor, fixRange) -> {
-      if (!DumbService.getInstance(file.getProject()).isUsableInCurrentContext(descriptor.getAction())) {
+      if (!DumbService.getInstance(psiFile.getProject()).isUsableInCurrentContext(descriptor.getAction())) {
         return null;
       }
 
@@ -120,27 +120,27 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass impleme
         return null;
       }
       Editor editorToUse;
-      PsiFile fileToUse;
+      PsiFile psiFileToUse;
       int offsetToUse;
       if (info.isFromInjection()) {
         if (injectedEditor[0] == null) {
-          injectedFile[0] = InjectedLanguageUtilBase.findInjectedPsiNoCommit(file, offset);
+          injectedFile[0] = InjectedLanguageUtilBase.findInjectedPsiNoCommit(psiFile, offset);
           injectedEditor[0] = InjectedLanguageUtil.getInjectedEditorForInjectedFile(editor, injectedFile[0]);
         }
         editorToUse = injectedFile[0] == null ? editor : injectedEditor[0];
-        fileToUse = injectedFile[0] == null ? file : injectedFile[0];
+        psiFileToUse = injectedFile[0] == null ? psiFile : injectedFile[0];
         offsetToUse = !(editorToUse instanceof EditorWindow editorWindow)
                       ? offset : editorWindow.logicalPositionToOffset(editorWindow.hostToInjected(editor.offsetToLogicalPosition(offset)));
       }
       else {
         editorToUse = editor;
-        fileToUse = file;
+        psiFileToUse = psiFile;
         offsetToUse = offset;
       }
       if (indicator != null) {
         indicator.setText(descriptor.getDisplayName());
       }
-      if (ShowIntentionActionsHandler.availableFor(fileToUse, editorToUse, offsetToUse, descriptor.getAction())) {
+      if (ShowIntentionActionsHandler.availableFor(psiFileToUse, editorToUse, offsetToUse, descriptor.getAction())) {
         outList.add(descriptor);
         hasAvailableAction[0] = true;
       }
@@ -247,10 +247,10 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass impleme
       return;
     }
     IntentionsInfo intentionsInfo = new IntentionsInfo();
-    getActionsToShow(myEditor, myFile, intentionsInfo, -1, myQueryIntentionActions);
-    myCachedIntentions = IntentionsUI.getInstance(myProject).getCachedIntentions(myEditor, myFile);
+    getActionsToShow(myEditor, myPsiFile, intentionsInfo, -1, myQueryIntentionActions);
+    myCachedIntentions = IntentionsUI.getInstance(myProject).getCachedIntentions(myEditor, myPsiFile);
     myActionsChanged = myCachedIntentions.wrapAndUpdateActions(intentionsInfo, false);
-    LazyQuickFixUpdater.getInstance(myProject).startComputingNextQuickFixes(myFile, myEditor, myVisibleRange);
+    LazyQuickFixUpdater.getInstance(myProject).startComputingNextQuickFixes(myPsiFile, myEditor, myVisibleRange);
   }
 
   @Override

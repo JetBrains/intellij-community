@@ -10,6 +10,7 @@ class Some {
 
 // EXIST:  abstract
 // EXIST:  as
+// EXIST:  as?
 // EXIST:  class
 // EXIST:  enum class
 // EXIST:  final

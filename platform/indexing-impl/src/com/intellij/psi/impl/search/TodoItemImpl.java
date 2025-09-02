@@ -13,15 +13,15 @@ import java.util.List;
 import java.util.Objects;
 
 public final class TodoItemImpl implements TodoItem {
-  private final PsiFile myFile;
+  private final PsiFile myPsiFile;
   private final int myStartOffset;
   private final int myEndOffset;
   private final @Nullable TodoPattern myPattern;
   private final List<TextRange> myAdditionalRanges;
 
-  public TodoItemImpl(@NotNull PsiFile file, int startOffset, int endOffset, @Nullable TodoPattern pattern,
+  public TodoItemImpl(@NotNull PsiFile psiFile, int startOffset, int endOffset, @Nullable TodoPattern pattern,
                       @NotNull List<TextRange> additionalRanges) {
-    myFile = file;
+    myPsiFile = psiFile;
     myStartOffset = startOffset;
     myEndOffset = endOffset;
     myPattern = pattern;
@@ -30,7 +30,7 @@ public final class TodoItemImpl implements TodoItem {
 
   @Override
   public @NotNull PsiFile getFile() {
-    return myFile;
+    return myPsiFile;
   }
 
   @Override
@@ -50,7 +50,7 @@ public final class TodoItemImpl implements TodoItem {
 
   @Override
   public int hashCode() {
-    return myFile.hashCode() + myStartOffset + myEndOffset + (myPattern != null ? myPattern.hashCode() : 0);
+    return myPsiFile.hashCode() + myStartOffset + myEndOffset + (myPattern != null ? myPattern.hashCode() : 0);
   }
 
   @Override
@@ -58,7 +58,7 @@ public final class TodoItemImpl implements TodoItem {
     if(!(obj instanceof TodoItemImpl todoItem)){
       return false;
     }
-    return myFile.equals(todoItem.myFile) &&
+    return myPsiFile.equals(todoItem.myPsiFile) &&
            myStartOffset == todoItem.myStartOffset &&
            myEndOffset == todoItem.myEndOffset &&
            Objects.equals(myPattern, todoItem.myPattern);

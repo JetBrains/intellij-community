@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="JUnit5Jupiter" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.junit.jupiter:junit-jupiter-engine:5.11.3">
+    <properties include-transitive-deps="false" maven-id="org.junit.jupiter:junit-jupiter-engine:5.12.2">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/junit/jupiter/junit-jupiter-engine/5.11.3/junit-jupiter-engine-5.11.3.jar">
-          <sha256sum>e62420c99f7c0d59a2159a2ef63e61877e9c80bd722c03ca8bf3bdcea050a589</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/junit/jupiter/junit-jupiter-engine/5.12.2/junit-jupiter-engine-5.12.2.jar">
+          <sha256sum>f576c06b8accde9985063b8bc80526cb980eec24dee0b7221fc8ddd7ace65800</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/junit/jupiter/junit-jupiter-engine/5.11.3/junit-jupiter-engine-5.11.3.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/junit/jupiter/junit-jupiter-engine/5.12.2/junit-jupiter-engine-5.12.2.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/junit/jupiter/junit-jupiter-engine/5.11.3/junit-jupiter-engine-5.11.3-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/junit/jupiter/junit-jupiter-engine/5.12.2/junit-jupiter-engine-5.12.2-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

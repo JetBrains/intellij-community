@@ -2,7 +2,7 @@
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPass;
+import com.intellij.codeInsight.daemon.impl.IdentifierHighlightingComputer;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
@@ -230,6 +230,6 @@ public class LightPatternsForSwitchHighlightingTest extends LightJavaCodeInsight
   private void testIdentifierHighlighter(int expectedUsages) {
     PsiFile file = myFixture.configureByFile(getTestName(false) + ".java");
     PsiElement element = myFixture.getElementAtCaret();
-    assertSize(expectedUsages, IdentifierHighlighterPass.getUsages(element, file, true));
+    assertSize(expectedUsages, IdentifierHighlightingComputer.getUsages(element, file, true));
   }
 }

@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
-import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.resolveExpression
+import org.jetbrains.kotlin.idea.codeinsight.utils.resolveExpression
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.*
@@ -51,7 +51,11 @@ internal class UnusedFlowInspection : KotlinApplicableInspectionBase<KtExpressio
 
     private fun KtExpression.isTopMostExpression(): Boolean {
         return parents.takeWhile { it !is KtBlockExpression && it !is KtStatementExpression }
-            .none { it is KtDotQualifiedExpression || it is KtCallExpression }
+            .none { it is KtDotQualifiedExpression || it is KtCallExpression || it is KtThisExpression }
+    }
+
+    private fun KtExpression.isBeingReturned(): Boolean {
+        return parents.takeWhile { it is KtExpression && it !is KtBlockExpression }.any { it is KtReturnExpression }
     }
 
     /**
@@ -63,6 +67,10 @@ internal class UnusedFlowInspection : KotlinApplicableInspectionBase<KtExpressio
         if (element is KtOperationReferenceExpression) return false
         // Assignment operations do use the value, so we can skip this case
         if (element is KtBinaryExpression && element.operationToken == KtTokens.EQ) return false
+        // These are not expressions
+        if (element is KtLabelReferenceExpression || element.parentOfType<KtValueArgumentName>(withSelf = true) != null) return false
+        // If the flow is being returned directly, it is being used
+        if (element.isBeingReturned()) return false
         if (element.isInImportDirective() || element.parentOfType<KtPackageDirective>() != null) return false
         // If the flow is being provided to a call, the flow is used, and we do not even have to continue.
         if (element.isBeingProvidedToCall()) return false

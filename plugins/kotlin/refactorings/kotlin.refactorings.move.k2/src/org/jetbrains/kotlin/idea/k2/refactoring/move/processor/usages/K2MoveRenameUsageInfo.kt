@@ -14,6 +14,7 @@ import com.intellij.refactoring.move.moveMembers.MoveMembersOptions
 import com.intellij.refactoring.move.moveMembers.MoveMembersProcessor
 import com.intellij.refactoring.util.MoveRenameUsageInfo
 import com.intellij.usageView.UsageInfo
+import com.intellij.util.IncorrectOperationException
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
@@ -67,7 +68,14 @@ sealed class K2MoveRenameUsageInfo(
                 && newLightElement is PsiMember
                 && updateJavaReference(element, oldContainingFqn, newLightElement)
             ) return element
-            return reference?.bindToElement(newLightElement)
+            return try {
+                 reference?.bindToElement(newLightElement)
+            } catch (_: IncorrectOperationException) {
+                // This is thrown if the bind cannot be handled for some reason, in which case we should ignore this exception.
+                // An example is the embedded query language in Spring that references Spring entities, but
+                // we cannot rebind the references inside this query language.
+                element
+            }
         }
 
         private fun updateJavaReference(

@@ -16,41 +16,40 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.codeInspection.ui.OptionAccessor;
-import com.intellij.openapi.util.text.StringUtil;
 import com.siyeh.ig.LightJavaInspectionTestCase;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 public class ObjectToStringInspectionTest extends LightJavaInspectionTestCase {
+
+  private ObjectToStringInspection myInspection;
 
   public void testObjectToString() {
     doTest();
   }
 
   public void testObjectToString_IGNORE_TOSTRING() {
+    myInspection.IGNORE_TOSTRING = true;
     doTest();
   }
 
   public void testObjectToString_IGNORE_EXCEPTION() {
+    myInspection.IGNORE_EXCEPTION = true;
     doTest();
   }
 
   public void testObjectToString_IGNORE_ASSERT() {
+    myInspection.IGNORE_ASSERT = true;
     doTest();
   }
 
   public void testObjectToString_IGNORE_NONNLS() {
+    myInspection.IGNORE_NONNLS = true;
     doTest();
   }
 
-  @Nullable
   @Override
-  protected InspectionProfileEntry getInspection() {
-    ObjectToStringInspection inspection = new ObjectToStringInspection();
-    String option = StringUtil.substringAfter(getName(), "_");
-    if(option != null) {
-      new OptionAccessor.Default(inspection).setOption(option, true);
-    }
-    return inspection;
+  protected @NotNull InspectionProfileEntry getInspection() {
+    myInspection = new ObjectToStringInspection();
+    return myInspection;
   }
 }

@@ -1,0 +1,1 @@
+data class XYZ(val /*rename*/x: Int)

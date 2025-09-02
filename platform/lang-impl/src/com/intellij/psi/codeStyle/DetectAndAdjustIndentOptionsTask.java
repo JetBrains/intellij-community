@@ -37,11 +37,14 @@ final class DetectAndAdjustIndentOptionsTask {
   private final Document myDocument;
   private final Project myProject;
   private final TimeStampedIndentOptions myOptionsToAdjust;
+  private final CodeStyleSettings mySettings;
 
-  DetectAndAdjustIndentOptionsTask(@NotNull Project project, @NotNull Document document, @NotNull TimeStampedIndentOptions toAdjust) {
+  DetectAndAdjustIndentOptionsTask(@NotNull Project project, @NotNull Document document, @NotNull TimeStampedIndentOptions toAdjust,
+                                   @NotNull CodeStyleSettings settings) {
     myProject = project;
     myDocument = document;
     myOptionsToAdjust = toAdjust;
+    mySettings = settings;
   }
   
   private VirtualFile getFile() {
@@ -59,7 +62,7 @@ final class DetectAndAdjustIndentOptionsTask {
     VirtualFile virtualFile = getFile();
     if (virtualFile == null) return;
 
-    final IndentOptions currentDefault = getDefaultIndentOptions(myProject, virtualFile, myDocument);
+    final IndentOptions currentDefault = getDefaultIndentOptions(myProject, virtualFile, myDocument, mySettings);
     myOptionsToAdjust.copyFrom(currentDefault);
 
     adjuster.adjust(myOptionsToAdjust);
@@ -101,9 +104,9 @@ final class DetectAndAdjustIndentOptionsTask {
     }
   }
 
-  static @NotNull TimeStampedIndentOptions getDefaultIndentOptions(@NotNull Project project, @NotNull VirtualFile file, @NotNull Document document) {
+  static @NotNull TimeStampedIndentOptions getDefaultIndentOptions(@NotNull Project project, @NotNull VirtualFile file, @NotNull Document document,
+                                                                   @NotNull CodeStyleSettings settings) {
     FileType fileType = file.getFileType();
-    CodeStyleSettings settings = CodeStyle.getSettings(project, file);
     return new TimeStampedIndentOptions(settings.getIndentOptions(fileType), document.getModificationStamp());
   }
 

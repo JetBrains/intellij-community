@@ -3,6 +3,7 @@ package com.intellij.refactoring;
 
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Set;
@@ -20,8 +21,9 @@ public interface RenameRefactoring extends Refactoring {
    */
   void addElement(PsiElement element, String newName);
 
-  Set<PsiElement> getElements();
+  @Unmodifiable Set<PsiElement> getElements();
 
+  @Unmodifiable
   Collection<String> getNewNames();
 
   void setSearchInComments(boolean value);

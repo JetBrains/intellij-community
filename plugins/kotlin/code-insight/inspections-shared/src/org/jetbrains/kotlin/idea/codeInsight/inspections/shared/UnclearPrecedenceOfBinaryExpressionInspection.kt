@@ -13,6 +13,7 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.siblings
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -21,7 +22,7 @@ import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.UnclearPrecedenc
 import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.UnclearPrecedenceOfBinaryExpressionInspection.Holder.toUnified
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.parsing.KotlinExpressionParsing.Precedence
+import org.jetbrains.kotlin.parsing.KotlinExpressionParsing.BinaryOperationPrecedence
 import org.jetbrains.kotlin.psi.*
 
 @ApiStatus.Internal
@@ -161,11 +162,11 @@ class UnclearPrecedenceOfBinaryExpressionInspection : AbstractKotlinInspection()
         fun KtExpression.flattenParentheses(): KtExpression? =
             generateSequence(this) { (it as? KtParenthesizedExpression)?.expression }.firstOrNull { it !is KtParenthesizedExpression }
 
-        val childToUnclearPrecedenceParentsMapping = listOf(
-            Precedence.ELVIS to listOf(Precedence.EQUALITY, Precedence.COMPARISON, Precedence.IN_OR_IS),
-            Precedence.SIMPLE_NAME to listOf(Precedence.ELVIS),
-            Precedence.ADDITIVE to listOf(Precedence.ELVIS),
-            Precedence.MULTIPLICATIVE to listOf(Precedence.ELVIS)
+        val childToUnclearPrecedenceParentsMapping: List<Pair<BinaryOperationPrecedence, List<IElementType>>> = listOf(
+            BinaryOperationPrecedence.ELVIS to listOf(BinaryOperationPrecedence.EQUALITY, BinaryOperationPrecedence.COMPARISON, BinaryOperationPrecedence.IN_OR_IS),
+            BinaryOperationPrecedence.INFIX to listOf(BinaryOperationPrecedence.ELVIS),
+            BinaryOperationPrecedence.ADDITIVE to listOf(BinaryOperationPrecedence.ELVIS),
+            BinaryOperationPrecedence.MULTIPLICATIVE to listOf(BinaryOperationPrecedence.ELVIS)
         ).onEach { (key, value) ->
             value.forEach { check(key < it) }
         }.map { item -> Pair(item.first, item.second.flatMap { it.operations.types.toList() }) }
@@ -183,12 +184,18 @@ class UnclearPrecedenceOfBinaryExpressionInspection : AbstractKotlinInspection()
             if (isRecommendedToPutParentheses(unified)) {
                 return true
             }
+            if (isWhenGuardWithOrSpecialCase(unified)) return true
             if (reportEvenObviousCases) {
                 val parentToken = unified.expression.parent?.toUnified()?.operation?.getReferencedNameElementType()
                     ?: return false
                 return unified.operation.getReferencedNameElementType() != parentToken
             }
             return false
+        }
+
+        private fun isWhenGuardWithOrSpecialCase(unifiedBinaryExpression: UnifiedBinaryExpression): Boolean {
+            val expression = unifiedBinaryExpression.expression as? KtBinaryExpression ?: return false
+            return expression.parent is KtWhenEntryGuard && expression.operationToken == KtTokens.OROR
         }
     }
 }

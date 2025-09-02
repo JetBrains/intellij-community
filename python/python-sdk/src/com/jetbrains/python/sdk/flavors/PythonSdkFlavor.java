@@ -17,7 +17,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PatternUtil;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
-import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.icons.PythonPsiApiIcons;
 import com.jetbrains.python.run.CommandLinePatcher;
@@ -33,10 +32,12 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
-import static com.jetbrains.python.venvReader.ResolveUtilKt.tryResolvePath;
+import static com.jetbrains.python.PythonBinaryKt.PYTHON_VERSION_ARG;
 import static com.jetbrains.python.sdk.flavors.PySdkFlavorUtilKt.getFileExecutionError;
 import static com.jetbrains.python.sdk.flavors.PySdkFlavorUtilKt.getFileExecutionErrorOnEdt;
+import static com.jetbrains.python.venvReader.ResolveUtilKt.tryResolvePath;
 
 
 /**
@@ -65,12 +66,6 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
 
   private static final Pattern VERSION_RE = Pattern.compile("(Python \\S+).*");
   private static final Logger LOG = Logger.getInstance(PythonSdkFlavor.class);
-  /**
-   * <code>
-   * python --version
-   * </code>
-   */
-  public static final String PYTHON_VERSION_ARG = "--version";
 
 
   /**
@@ -97,20 +92,31 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
   }
 
   /**
-   * On local targets some flavours could be detected. It returns path to python interpreters for such cases.
+   * Flavors that are aware of some system pythons must return them there.
    */
-  public @NotNull Collection<@NotNull Path> suggestLocalHomePaths(final @Nullable Module module, final @Nullable UserDataHolder context) {
-    return ContainerUtil.map(suggestHomePaths(module, context), Path::of);
-  }
-
-  /**
-   * @deprecated use {@link #suggestLocalHomePaths(Module, UserDataHolder)}
-   */
-  @Deprecated(forRemoval = true)
-  public Collection<String> suggestHomePaths(final @Nullable Module module, final @Nullable UserDataHolder context) {
+  @RequiresBackgroundThread(generateAssertion = false)
+  protected @NotNull Collection<@NotNull Path> suggestLocalHomePathsImpl(final @Nullable Module module,
+                                                                         final @Nullable UserDataHolder context) {
     return Collections.emptyList();
   }
 
+  /**
+   * On local targets some flavors could be detected. It returns a path to python interpreters for such cases.
+   */
+  @RequiresBackgroundThread(generateAssertion = false)
+  public final @NotNull Collection<@NotNull Path> suggestLocalHomePaths(final @Nullable Module module,
+                                                                        final @Nullable UserDataHolder context) {
+    return suggestLocalHomePathsImpl(module, context).stream().filter(path -> {
+      var flavor = tryDetectFlavorByLocalPath(path.toString());
+      boolean correctFlavor = flavor != null && flavor.getClass().equals(getClass());
+      // Some flavors might report foreign pythons: i.e Windows might find conda on PATH.
+      if (!correctFlavor) {
+        LOG.info(String.format("Path %s has a wrong flavor, not %s, skipping", path, this));
+        return false;
+      }
+      return true;
+    }).collect(Collectors.toSet()).stream().sorted().toList();
+  }
 
   /**
    * Flavor is added to result in {@link #getApplicableFlavors()} if this method returns true.
@@ -195,7 +201,7 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
     builder.append(" ");
     if (configuration instanceof TargetConfigurationWithId) {
       var typeAndTargetId = ((TargetConfigurationWithId)configuration).getTargetAndTypeId();
-      builder.append(typeAndTargetId.component1().toString());
+      builder.append(typeAndTargetId.component1());
       builder.append(typeAndTargetId.getSecond());
     }
     else if (configuration != null) {
@@ -274,7 +280,7 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
   }
 
   /**
-   * Detects {@link PythonSdkFlavor} for local python path
+   * Detects {@link PythonSdkFlavor} for a local python path
    */
   @RequiresBackgroundThread(generateAssertion = false) //No warning yet as there are usages: to be fixed
   public static @Nullable PythonSdkFlavor<?> tryDetectFlavorByLocalPath(@NotNull String sdkPath) {
@@ -366,14 +372,6 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
     return PatternUtil.getFirstMatch(Arrays.asList(StringUtil.splitByLines(output)), VERSION_RE);
   }
 
-  /**
-   * @deprecated use {@link #PYTHON_VERSION_ARG}
-   */
-  @Deprecated(forRemoval = true)
-  public @NotNull String getVersionOption() {
-    return PYTHON_VERSION_ARG;
-  }
-
   public @NotNull Collection<String> getExtraDebugOptions() {
     return Collections.emptyList();
   }
@@ -401,17 +399,6 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
     return getLanguageLevelFromVersionStringStatic(getVersionString(sdkHome));
   }
 
-
-  /**
-   * Returns wrong language level when argument is null which isn't probably what you except.
-   * Be sure to check argument for null
-   *
-   * @deprecated use {@link #getLanguageLevelFromVersionStringStatic(String)}
-   */
-  @Deprecated(forRemoval = true)
-  public @NotNull LanguageLevel getLanguageLevelFromVersionString(@Nullable String version) {
-    return getLanguageLevelFromVersionStringStatic(version);
-  }
 
   /**
    * Returns wrong language level when argument is null which isn't probably what you except.

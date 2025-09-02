@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.ide.plugins.PluginManagerCoreKt;
@@ -12,6 +12,8 @@ import java.io.File;
 import java.net.URL;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 public final class PluginPathManager {
   private PluginPathManager() {
@@ -48,7 +50,7 @@ public final class PluginPathManager {
       Set<File> result = new HashSet<>();
       for (String root : ROOT_NAMES) {
         var subRepo = new File(dir, root);
-        if (subRepo.exists() && subRepo.isDirectory()) {
+        if (subRepo.isDirectory()) {
           result.add(subRepo.toPath().normalize().toFile());
         }
       }
@@ -59,18 +61,20 @@ public final class PluginPathManager {
     }
   }
 
+  private static ConcurrentMap<String, File> ourPluginHomes = new ConcurrentHashMap<>();
+
   public static File getPluginHome(@NonNls String pluginName) {
-    File subRepo = findSubRepo(pluginName);
-    if (subRepo != null) {
-      return subRepo;
-    }
-    return new File(PathManager.getHomePath(), "plugins/" + pluginName);
+    File subRepo = ourPluginHomes.computeIfAbsent(pluginName, k -> {
+      File repo = findSubRepo(k);
+      return repo != null ? repo : new File(PathManager.getHomePath(), "plugins/" + k);
+    });
+    return subRepo;
   }
 
   private static File findSubRepo(String pluginName) {
     for (File subRepo : SubRepoHolder.subRepos) {
       File candidate = new File(subRepo, pluginName);
-      if (candidate.isDirectory()) {
+      if (candidate.exists() && candidate.isDirectory()) {
         return candidate;
       }
     }

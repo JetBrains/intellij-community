@@ -23,5 +23,5 @@ public interface InjectedLanguageHighlightingRangeReducer {
    * @return collection of ranges to highlight or null if this extension doesn't supply any reduced ranges
    * @see InjectedGeneralHighlightingPassFactory
    */
-  List<@NotNull TextRange> reduceRange(@NotNull PsiFile file, @NotNull Editor editor);
+  List<@NotNull TextRange> reduceRange(@NotNull PsiFile psiFile, @NotNull Editor editor);
 }

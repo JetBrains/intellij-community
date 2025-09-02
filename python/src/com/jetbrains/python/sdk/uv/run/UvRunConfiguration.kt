@@ -9,16 +9,20 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.xmlb.XmlSerializer
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.Result
 import com.jetbrains.python.onFailure
-import com.jetbrains.python.run.*
+import com.jetbrains.python.run.AbstractPythonRunConfiguration
 import com.jetbrains.python.sdk.PythonSdkUtil
+import com.jetbrains.python.sdk.associatedModulePath
 import com.jetbrains.python.sdk.pythonSdk
+import com.jetbrains.python.sdk.uv.UvSdkAdditionalData
 import com.jetbrains.python.venvReader.tryResolvePath
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
+import java.nio.file.Path
 
 @ApiStatus.Internal
 enum class UvRunType {
@@ -38,6 +42,10 @@ data class UvRunConfigurationOptions(
 ) {
   val uvSdk: Sdk?
     get() = uvSdkKey?.let {PythonSdkUtil.findSdkByKey(it)}
+
+  val workingDirectory: Path?
+    get() = (uvSdk?.sdkAdditionalData as? UvSdkAdditionalData)?.uvWorkingDirectory
+      ?: tryResolvePath(uvSdk?.associatedModulePath)
 }
 
 @ApiStatus.Internal
@@ -67,9 +75,12 @@ class UvRunConfiguration(
 
   override fun checkConfiguration() {
     checkConfiguration(options).onFailure {
-      @Suppress("HardCodedStringLiteral") // these strings are all returned already localized
       throw RuntimeConfigurationError(it)
     }
+  }
+
+  override fun getSdk(): Sdk? {
+    return options.uvSdk
   }
 }
 
@@ -84,7 +95,7 @@ fun writeExternal(element: Element, options: UvRunConfigurationOptions) {
 }
 
 @ApiStatus.Internal
-fun checkConfiguration(options: UvRunConfigurationOptions): Result<Unit, String> {
+fun checkConfiguration(options: UvRunConfigurationOptions): Result<Unit, @NlsSafe String> {
   if (options.uvSdk == null) {
     return Result.failure(PyBundle.message("uv.run.configuration.validation.sdk"))
   }

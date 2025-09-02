@@ -7,11 +7,13 @@ import com.intellij.collaboration.auth.AccountsRepository
 import com.intellij.collaboration.auth.PasswordSafeCredentialsRepository
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gitlab.api.GitLabServerPath
 import org.jetbrains.plugins.gitlab.api.toHttpsNormalizedURI
 import org.jetbrains.plugins.gitlab.util.GitLabUtil
 
-internal interface GitLabAccountManager : AccountManager<GitLabAccount, String> {
+@ApiStatus.Internal
+interface GitLabAccountManager : AccountManager<GitLabAccount, String> {
   fun isAccountUnique(server: GitLabServerPath, accountName: String): Boolean
 }
 

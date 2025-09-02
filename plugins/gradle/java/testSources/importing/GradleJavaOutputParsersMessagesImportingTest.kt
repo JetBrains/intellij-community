@@ -77,6 +77,8 @@ class GradleJavaOutputParsersMessagesImportingTest : GradleOutputParsersMessages
     assertBuildViewTreeSame(expectedExecutionTree)
 
     val compilationReportErrors = when {
+      isGradleAtLeast("8.14") -> "\n    invalid method declaration; return type required" +
+                                 "\n    ';' expected"
       isGradleAtLeast("8.11") -> "\n    ';' expected" +
                                  "\n    invalid method declaration; return type required"
       else -> ""

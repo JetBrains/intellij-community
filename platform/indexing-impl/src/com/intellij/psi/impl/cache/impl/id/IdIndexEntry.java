@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.cache.impl.id;
 
@@ -72,7 +72,7 @@ public final class IdIndexEntry {
                            : StringUtil.stringHashCodeInsensitive(line, start, end);
     }
     else {
-      // use more compact hash
+      // use more compact hash, based on just <length> and first and last chars:
       if (start == end) return 0;
       char firstChar = line.charAt(start);
       char lastChar = line.charAt(end - 1);
@@ -80,9 +80,7 @@ public final class IdIndexEntry {
         firstChar = StringUtil.toLowerCase(firstChar);
         lastChar = StringUtil.toLowerCase(lastChar);
       }
-      //TODO RC: Why start/end _positions_ in line are taken as a part of the hash?
-      //         It means that same identifier has different hash depending on it's position in line?
-      return (firstChar << 8) + (lastChar << 4) + end - start;
+      return (firstChar << 8) + (lastChar << 4) + (end - start);
     }
   }
 

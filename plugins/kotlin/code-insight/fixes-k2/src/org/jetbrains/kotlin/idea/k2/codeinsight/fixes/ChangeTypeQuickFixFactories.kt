@@ -7,6 +7,7 @@ import com.intellij.psi.util.parentOfType
 import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
@@ -23,6 +24,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.updateType
+import org.jetbrains.kotlin.idea.k2.refactoring.introduce.extractionEngine.isResolvableInScope
 import org.jetbrains.kotlin.idea.quickfix.ChangeTypeFixUtils
 import org.jetbrains.kotlin.idea.quickfix.NumberConversionFix
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -33,7 +35,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.isNull
 import org.jetbrains.kotlin.types.Variance
 
-object ChangeTypeQuickFixFactories {
+internal object ChangeTypeQuickFixFactories {
     enum class TargetType {
         CURRENT_DECLARATION,
         BASE_DECLARATION,
@@ -130,7 +132,12 @@ object ChangeTypeQuickFixFactories {
         val initializer = initializer
         return if (typeReference != null && initializer != null) {
             //copy property initializer to calculate initializer's type without property's declared type
-            KtPsiFactory(project).createExpressionCodeFragment(initializer.text, this).getContentElement()?.expressionType
+            val newExpression = KtPsiFactory(project).createExpressionCodeFragment(initializer.text, this).getContentElement() ?: return null
+
+            // A new expression has to be analyzed in the context of the newly created file. To go back to the outer session, a workaround with
+            // converting a type to a pointer and back can be used
+            @OptIn(KaExperimentalApi::class)
+            analyze(newExpression) { newExpression.expressionType?.createPointer() }?.restore()
         } else null
     }
 
@@ -172,6 +179,7 @@ object ChangeTypeQuickFixFactories {
     ): List<ModCommandAction> {
         val resolvedCall = expression.resolveToCall() ?: return emptyList()
 
+        if (!isResolvableInScope(expectedType, expression, mutableSetOf())) return emptyList()
         return buildList {
             addIfNotNull(createUpdateTypeFixForCalledFunction(resolvedCall, expectedType))
             addAll(createUpdateTypeFixesForCalledVariable(resolvedCall, actualType, expectedType))
@@ -229,7 +237,13 @@ object ChangeTypeQuickFixFactories {
             val declaration = diagnostic.psi as? KtProperty
                 ?: return@ModCommandBased emptyList()
 
-            registerVariableTypeFixes(declaration, getActualType(diagnostic.actualType), diagnostic.expectedType)
+            val actualType = getActualType(diagnostic.actualType)
+            val expectedType = diagnostic.expectedType
+            if (actualType.semanticallyEquals(expectedType)) {
+                return@ModCommandBased emptyList()
+            }
+
+            registerVariableTypeFixes(declaration, actualType, expectedType)
         }
 
     val assignmentTypeMismatch =
@@ -251,7 +265,10 @@ object ChangeTypeQuickFixFactories {
                 if (declaration.typeReference == null) {
                     add(UpdateTypeQuickFix(declaration, TargetType.VARIABLE, createTypeInfo(declaration.returnType(type))))
                 }
-                addAll(registerExpressionTypeFixes(expression, diagnostic.expectedType, type))
+                val expectedType = diagnostic.expectedType
+                if (!expectedType.semanticallyEquals(actualType)) {
+                    addAll(registerExpressionTypeFixes(expression, expectedType, type))
+                }
             }
         }
 
@@ -261,8 +278,12 @@ object ChangeTypeQuickFixFactories {
             val property = expr.parent as? KtProperty
                 ?: return@ModCommandBased emptyList()
 
-            val actualType = property.getPropertyInitializerType() ?: diagnostic.actualType
-            registerVariableTypeFixes(property, getActualType(actualType), diagnostic.expectedType)
+            val actualType = getActualType(property.getPropertyInitializerType() ?: diagnostic.actualType)
+            val expectedType = diagnostic.expectedType
+            if (expectedType.semanticallyEquals(actualType)) {
+                return@ModCommandBased emptyList()
+            }
+            registerVariableTypeFixes(property, actualType, expectedType)
         }
 
     private fun KaSession.registerVariableTypeFixes(
@@ -270,6 +291,7 @@ object ChangeTypeQuickFixFactories {
         actualType: KaType,
         expectedTypeFromDiagnostics: KaType
     ): List<ModCommandAction> {
+        if (!isResolvableInScope(expectedTypeFromDiagnostics, declaration, mutableSetOf())) return emptyList()
         val expectedTypeFromDeclaration = declaration.returnType
         val expression = declaration.initializer ?: return emptyList()
         return buildList {
@@ -288,6 +310,9 @@ object ChangeTypeQuickFixFactories {
             val expression = diagnostic.psi as? KtExpression ?: return@ModCommandBased emptyList()
             val actualType = getActualType(diagnostic.actualType)
             val expectedType = diagnostic.expectedType
+            if (actualType.semanticallyEquals(expectedType)) {
+                return@ModCommandBased emptyList()
+            }
 
             val property = (expression as? KtReferenceExpression)?.mainReference?.resolve() as? KtProperty
             if (property != null) {
@@ -450,6 +475,25 @@ object ChangeTypeQuickFixFactories {
             val containerName = parentOfType<KtClassOrObject>()?.nameAsName?.takeUnless { it.isSpecial }
             return ChangeTypeFixUtils.functionOrConstructorParameterPresentation(this, containerName?.asString())
         }
+
+    val implicitNothingPropertyTypeFixFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.ImplicitNothingPropertyType ->
+        createImplicitNothingTypeFix(diagnostic.psi as? KtProperty)
+    }
+
+    val implicitNothingReturnTypeFixFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.ImplicitNothingReturnType ->
+        createImplicitNothingTypeFix(diagnostic.psi as? KtFunction)
+    }
+
+    private fun createImplicitNothingTypeFix(callable: KtCallableDeclaration?): List<ModCommandAction> {
+        if (callable == null) return emptyList()
+        return listOf(
+            UpdateTypeQuickFix(
+                callable,
+                TargetType.ENCLOSING_DECLARATION,
+                CallableReturnTypeUpdaterUtils.TypeInfo(CallableReturnTypeUpdaterUtils.TypeInfo.NOTHING)
+            )
+        )
+    }
 }
 
 @OptIn(KaExperimentalApi::class)

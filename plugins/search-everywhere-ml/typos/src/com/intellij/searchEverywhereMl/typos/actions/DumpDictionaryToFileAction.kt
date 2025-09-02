@@ -27,12 +27,17 @@ private class DumpDictionaryToFileAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project!!
 
-    val dictionaryWords = ActionsLanguageModel.getInstance()!!
+    val dictionary = ActionsLanguageModel.getInstance()!!
       .deferredDictionary.getCompleted()
-      .allWords
+
+    val dictionaryWithFrequencies = dictionary.allWords
       .sorted()
-      .joinToString(separator = "\n")
-    val virtualFile = writeToFile(project, dictionaryWords)
+      .joinToString(separator = "\n") { word ->
+        val frequency = dictionary.getFrequency(word) ?: 0
+        "$word fr:$frequency"
+      }
+
+    val virtualFile = writeToFile(project, dictionaryWithFrequencies)
     FileEditorManager.getInstance(project).openFile(virtualFile, true)
   }
 

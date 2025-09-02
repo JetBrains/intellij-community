@@ -144,7 +144,8 @@ public final class WatchRootsManager {
     });
   }
 
-  static @NotNull CanonicalPathMap createCanonicalPathMap(
+  @VisibleForTesting
+  public static @NotNull CanonicalPathMap createCanonicalPathMap(
     @NotNull Set<String> flatWatchRoots,
     @NotNull Set<String> optimizedRecursiveWatchRoots,
     @NotNull Collection<Pair<String, String>> pathMappings,

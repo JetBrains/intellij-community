@@ -560,6 +560,37 @@ public abstract class ParameterInfoControllerBase extends UserDataHolderBase imp
     }
   }
 
+  @ApiStatus.Internal
+  protected static final class RawSignaturePresentationItem implements SignatureItemModel {
+    public final @NotNull List<@NotNull RawParameterPresentationItem> parameters;
+    public final int currentParameterIndex;
+    public final @NotNull String separator;
+    public final boolean isDeprecated;
+
+    public RawSignaturePresentationItem(@NotNull List<@NotNull RawParameterPresentationItem> parameters,
+                                        int currentParameterIndex,
+                                        @NotNull String separator,
+                                        boolean isDeprecated) {
+      this.parameters = parameters;
+      this.currentParameterIndex = currentParameterIndex;
+      this.separator = separator;
+      this.isDeprecated = isDeprecated;
+    }
+
+    @ApiStatus.Internal
+    public static class RawParameterPresentationItem {
+      public final @NotNull String nameAndTypeHtml;
+      public final @Nullable String defaultValueHtml;
+      public final boolean isMismatched;
+
+      public RawParameterPresentationItem(@NotNull String nameAndTypeHtml, @Nullable String defaultValueHtml, boolean isMismatched) {
+        this.nameAndTypeHtml = nameAndTypeHtml;
+        this.defaultValueHtml = defaultValueHtml;
+        this.isMismatched = isMismatched;
+      }
+    }
+  }
+
   public static final class SignatureItem implements SignatureItemModel {
     public final String text;
     public final boolean deprecated;

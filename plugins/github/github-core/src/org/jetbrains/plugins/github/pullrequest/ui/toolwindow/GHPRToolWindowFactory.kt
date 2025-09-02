@@ -5,7 +5,6 @@ import com.intellij.collaboration.ui.toolwindow.dontHideOnEmptyContent
 import com.intellij.collaboration.ui.toolwindow.manageReviewToolwindowTabs
 import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.actionSystem.EdtNoGetDataProvider
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
@@ -24,12 +23,16 @@ import com.intellij.util.cancelOnDispose
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flatMapLatest
 import org.jetbrains.plugins.github.GithubIcons
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
 import org.jetbrains.plugins.github.pullrequest.action.GHPRSelectPullRequestForFileAction
 import org.jetbrains.plugins.github.pullrequest.action.GHPRSwitchRemoteAction
+import org.jetbrains.plugins.github.pullrequest.ui.GHPRProjectViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWindowViewModel
 import javax.swing.UIManager
 
@@ -50,12 +53,12 @@ internal class GHPRToolWindowFactory : ToolWindowFactory, DumbAware {
 
 @Service(Service.Level.PROJECT)
 private class GHPRToolWindowController(private val project: Project, parentCs: CoroutineScope) {
-  private val cs = parentCs.childScope(Dispatchers.Main)
+  private val cs = parentCs.childScope(javaClass.name, Dispatchers.Main)
 
   @OptIn(ExperimentalCoroutinesApi::class)
   suspend fun manageIconInToolbar(toolWindow: ToolWindow) {
     coroutineScope {
-      val vm = project.serviceAsync<GHPRToolWindowViewModel>()
+      val vm = project.serviceAsync<GHPRProjectViewModel>()
       launch {
         vm.isAvailable.collect {
           withContext(Dispatchers.EDT) {
@@ -74,7 +77,7 @@ private class GHPRToolWindowController(private val project: Project, parentCs: C
 
       val focusColor = UIManager.getColor("ToolWindow.Button.selectedForeground")
       launch {
-        vm.projectVm
+        vm.connectedProjectVm
           .filterNotNull().flatMapLatest { it.listVm.hasUpdates }
           .distinctUntilChanged()
           .collectLatest {
@@ -94,22 +97,25 @@ private class GHPRToolWindowController(private val project: Project, parentCs: C
   fun manageContent(toolWindow: ToolWindow) {
     toolWindow.component.putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, "true")
 
+    val wrapper = ActionUtil.wrap("Github.Create.Pull.Request")
+    wrapper.registerCustomShortcutSet(CommonShortcuts.getNew(), toolWindow.component)
+    toolWindow.setTitleActions(listOf(wrapper, GHPRSelectPullRequestForFileAction()))
+    toolWindow.setAdditionalGearActions(DefaultActionGroup(GHPRSwitchRemoteAction()))
+
     cs.launch {
-      val vm = project.serviceAsync<GHPRToolWindowViewModel>()
+      val vm = project.serviceAsync<GHPRProjectViewModel>()
+      val reviewTwVm = GHPRToolWindowViewModel(this, vm)
 
       coroutineScope {
-        toolWindow.contentManager.addDataProvider(EdtNoGetDataProvider { sink ->
-          sink[GHPRActionKeys.PULL_REQUESTS_PROJECT_VM] = vm.projectVm.value
-        })
+        toolWindow.contentManager.addUiDataProvider { sink ->
+          sink[GHPRActionKeys.PULL_REQUESTS_PROJECT_VM] = vm
+          sink[GHPRActionKeys.PULL_REQUESTS_CONNECTED_PROJECT_VM] = vm.connectedProjectVm.value
+        }
 
         // so it's not closed when all content is removed
         toolWindow.dontHideOnEmptyContent()
         val componentFactory = GHPRToolWindowTabComponentFactory(project, vm)
-        manageReviewToolwindowTabs(this, toolWindow, vm, componentFactory, GithubBundle.message("toolwindow.stripe.Pull_Requests"))
-        val wrapper = ActionUtil.wrap("Github.Create.Pull.Request")
-        wrapper.registerCustomShortcutSet(CommonShortcuts.getNew(), toolWindow.component)
-        toolWindow.setTitleActions(listOf(wrapper, GHPRSelectPullRequestForFileAction()))
-        toolWindow.setAdditionalGearActions(DefaultActionGroup(GHPRSwitchRemoteAction()))
+        manageReviewToolwindowTabs(this, toolWindow, reviewTwVm, componentFactory, GithubBundle.message("toolwindow.stripe.Pull_Requests"))
 
         awaitCancellation()
       }

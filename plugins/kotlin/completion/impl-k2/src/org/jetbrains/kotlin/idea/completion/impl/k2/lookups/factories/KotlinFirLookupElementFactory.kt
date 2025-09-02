@@ -10,29 +10,39 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
-import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.idea.completion.ItemPriority
 import org.jetbrains.kotlin.idea.completion.impl.k2.ImportStrategyDetector
+import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.BracketOperatorInsertionHandler
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.NamedArgumentLookupElementFactory
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.TypeLookupElementFactory
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
 import org.jetbrains.kotlin.idea.completion.lookups.detectCallableOptions
+import org.jetbrains.kotlin.idea.completion.priority
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 
 @ApiStatus.Internal
 object KotlinFirLookupElementFactory {
+    context(KaSession)
+    @OptIn(KaExperimentalApi::class)
+    fun createConstructorCallLookupElement(
+        containingSymbol: KaNamedClassSymbol,
+        visibleConstructorSymbols: List<KaConstructorSymbol>,
+        importingStrategy: ImportStrategy = ImportStrategy.DoNothing,
+    ): LookupElementBuilder? {
+        if (visibleConstructorSymbols.isEmpty()) return null
+        return ClassLookupElementFactory.createConstructorLookup(containingSymbol, visibleConstructorSymbols, importingStrategy)
+    }
 
     context(KaSession)
     fun createClassifierLookupElement(
         symbol: KaClassifierSymbol,
         importingStrategy: ImportStrategy = ImportStrategy.DoNothing,
-    ): LookupElement? = when (symbol) {
+    ): LookupElementBuilder? = when (symbol) {
         is KaClassLikeSymbol ->
             if (symbol is KaNamedSymbol) ClassLookupElementFactory.createLookup(symbol, importingStrategy)
             else null
@@ -71,14 +81,17 @@ object KotlinFirLookupElementFactory {
     }
 
     context(KaSession)
-    @ApiStatus.Experimental
-    fun createCallableLookupElementWithTrailingLambda(
-        name: Name,
+    fun createBracketOperatorLookupElement(
+        operatorName: Name,
         signature: KaCallableSignature<*>,
         options: CallableInsertionOptions,
-    ): LookupElementBuilder? = when (signature) {
-        is KaFunctionSignature<*> -> FunctionLookupElementFactory.createLookupWithTrailingLambda(name, signature, options)
-        else -> null
+        expectedType: KaType? = null,
+    ): LookupElementBuilder {
+        require(operatorName.identifier.length == 2) { "Bracket operator name '$operatorName' should consist of 2 characters (the brackets)" }
+        val indexingLookupElement = createCallableLookupElement(operatorName, signature, options, expectedType)
+            .withInsertHandler(BracketOperatorInsertionHandler)
+        indexingLookupElement.priority = ItemPriority.BRACKET_OPERATOR
+        return indexingLookupElement
     }
 
     fun createPackagePartLookupElement(packagePartFqName: FqName): LookupElement =

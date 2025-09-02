@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2023 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2025 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -106,7 +106,11 @@ public final class IgnoreResultOfCallInspection extends BaseInspection {
     );
 
   private static final Set<String> CHECK_ANNOTATIONS = Set.of(
-    "javax.annotation.CheckReturnValue", "org.assertj.core.util.CheckReturnValue", "com.google.errorprone.annotations.CheckReturnValue");
+    "javax.annotation.CheckReturnValue",
+    "org.assertj.core.util.CheckReturnValue",
+    "com.google.errorprone.annotations.CheckReturnValue",
+    "org.jetbrains.annotations.CheckReturnValue",
+    "org.springframework.lang.CheckReturnValue");
   private final MethodMatcher myMethodMatcher;
   /**
    * @noinspection PublicField

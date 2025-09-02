@@ -10,11 +10,10 @@ import com.intellij.diff.fragments.MergeLineFragment
 import com.intellij.diff.fragments.MergeLineFragmentImpl
 import com.intellij.diff.util.MergeRange
 import com.intellij.diff.util.Range
-import com.intellij.openapi.util.Pair
-import com.intellij.openapi.util.text.Strings
-import it.unimi.dsi.fastutil.ints.IntArrayList
-import it.unimi.dsi.fastutil.ints.IntList
+import com.intellij.util.fastutil.ints.IntArrayList
+import com.intellij.util.fastutil.ints.IntList
 import org.jetbrains.annotations.ApiStatus
+import kotlin.jvm.JvmStatic
 import kotlin.math.max
 import kotlin.math.min
 
@@ -202,8 +201,8 @@ object ByLineRt {
         val start1 = max(last1, builder.index1)
         val start2 = max(last2, builder.index2)
 
-        val subLines1: IntList = IntArrayList()
-        val subLines2: IntList = IntArrayList()
+        val subLines1 = IntArrayList()
+        val subLines2 = IntArrayList()
         for (i in start1 until line1) {
           if (ComparisonUtil.isEquals(sample, lines1[i].content, ComparisonPolicy.IGNORE_WHITESPACES)) {
             subLines1.add(i)
@@ -217,7 +216,7 @@ object ByLineRt {
           }
         }
 
-        assert(subLines1.size > 0 && subLines2.size > 0)
+        check(subLines1.size > 0 && subLines2.size > 0)
         alignExactMatching(subLines1, subLines2)
 
         sample = null
@@ -231,8 +230,8 @@ object ByLineRt {
         if (skipAligning) {
           val count = min(subLines1.size, subLines2.size)
           for (i in 0 until count) {
-            val index1 = subLines1.getInt(i)
-            val index2 = subLines2.getInt(i)
+            val index1 = subLines1[i]
+            val index2 = subLines2[i]
             if (lines1[index1] == lines2[index2]) {
               builder.markEqual(index1, index2)
             }
@@ -242,9 +241,9 @@ object ByLineRt {
 
         if (subLines1.size < subLines2.size) {
           val matching = getBestMatchingAlignment(subLines1, subLines2, lines1, lines2)
-          for (i in subLines1.indices) {
-            val index1 = subLines1.getInt(i)
-            val index2 = subLines2.getInt(matching[i])
+          for (i in 0..subLines1.size - 1) {
+            val index1 = subLines1[i]
+            val index2 = subLines2[matching[i]]
             if (lines1[index1] == lines2[index2]) {
               builder.markEqual(index1, index2)
             }
@@ -252,9 +251,9 @@ object ByLineRt {
         }
         else {
           val matching = getBestMatchingAlignment(subLines2, subLines1, lines2, lines1)
-          for (i in subLines2.indices) {
-            val index1 = subLines1.getInt(matching[i])
-            val index2 = subLines2.getInt(i)
+          for (i in 0..subLines2.size - 1) {
+            val index1 = subLines1[matching[i]]
+            val index2 = subLines2[i]
             if (lines1[index1] == lines2[index2]) {
               builder.markEqual(index1, index2)
             }
@@ -272,7 +271,7 @@ object ByLineRt {
     lines1: List<Line>,
     lines2: List<Line>,
   ): IntArray {
-    assert(subLines1.size < subLines2.size)
+    check(subLines1.size < subLines2.size)
     val size = subLines1.size
 
     val comb = IntArray(size)
@@ -304,14 +303,14 @@ object ByLineRt {
       fun processCombination() {
         var weight = 0
         for (i in 0 until size) {
-          val index1 = subLines1.getInt(i)
-          val index2 = subLines2.getInt(comb[i])
+          val index1 = subLines1[i]
+          val index2 = subLines2[comb[i]]
           if (lines1[index1] == lines2[index2]) weight++
         }
 
         if (weight > bestWeight) {
           bestWeight = weight
-          System.arraycopy(comb, 0, best, 0, comb.size)
+          comb.copyInto(best, 0, 0, comb.size)
         }
       }
     }.run()
@@ -350,7 +349,7 @@ object ByLineRt {
 
   private fun getBigLines(lines: List<Line>, threshold: Int): Pair<List<Line>, IntList> {
     val bigLines: MutableList<Line> = ArrayList(lines.size)
-    val indexes: IntList = IntArrayList(lines.size)
+    val indexes = IntArrayList(lines.size)
 
     for (i in lines.indices) {
       val line = lines[i]
@@ -359,7 +358,7 @@ object ByLineRt {
         indexes.add(i)
       }
     }
-    return Pair.create(bigLines, indexes)
+    return Pair(bigLines, indexes)
   }
 
   private fun expandRanges(
@@ -423,10 +422,10 @@ object ByLineRt {
 
     override fun equals(other: Any?): Boolean {
       if (this === other) return true
-      if (other == null || javaClass != other.javaClass) return false
+      if (other == null || this::class != other::class) return false
 
       val line = other as Line
-      assert(policy == line.policy)
+      check(policy == line.policy)
 
       if (hashCode() != line.hashCode()) return false
 
@@ -446,7 +445,7 @@ object ByLineRt {
 
         while (offset < len) {
           val c = text[offset]
-          if (!Strings.isWhiteSpace(c)) nonSpace++
+          if (!c.isSpaceEnterOrTab()) nonSpace++
           offset++
         }
 

@@ -10,13 +10,13 @@ import org.jetbrains.annotations.NotNull;
 public final class DeconstructionUsageInfo extends UsageInfo {
   private final @NotNull PsiDeconstructionPattern myDeconstruction;
 
-  DeconstructionUsageInfo(final @NotNull PsiDeconstructionPattern deconstruction) {
+  public DeconstructionUsageInfo(final @NotNull PsiDeconstructionPattern deconstruction) {
     super(deconstruction);
     myDeconstruction = deconstruction;
   }
 
   @NotNull
-  PsiDeconstructionPattern getDeconstruction() {
+  public PsiDeconstructionPattern getDeconstruction() {
     return myDeconstruction;
   }
 }

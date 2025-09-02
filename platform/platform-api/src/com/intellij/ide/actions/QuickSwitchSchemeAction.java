@@ -70,11 +70,15 @@ public abstract class QuickSwitchSchemeAction extends AnAction implements DumbAw
       }
     }
 
+    showPopup(e, createPopup(e, group, aid));
+  }
+
+  @ApiStatus.Internal
+  protected @NotNull ListPopup createPopup(AnActionEvent e, DefaultActionGroup group, JBPopupFactory.ActionSelectionAid aid) {
     ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
       getPopupTitle(e), group, e.getDataContext(), aid, true, null, -1,
       preselectAction(), myActionPlace);
-
-    showPopup(e, popup);
+    return popup;
   }
 
   protected @Nullable Condition<? super AnAction> preselectAction() {

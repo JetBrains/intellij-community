@@ -24,6 +24,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.platform.project.OpenFileChooserService;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.dsl.gridLayout.builders.RowBuilder;
 import com.intellij.util.ui.JBInsets;
@@ -75,36 +76,62 @@ public final class FindPopupDirectoryChooser extends JPanel {
     TextFieldWithBrowseButton.MyDoClickAction.addTo(mySelectDirectoryButton, myDirectoryComboBox);
     mySelectDirectoryButton.setMargin(JBInsets.emptyInsets());
 
-    mySelectDirectoryButton.addActionListener(__ -> {
-      FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
-      descriptor.setForcedToUseIdeaFileChooser(true);
-      myFindPopupPanel.getCanClose().set(false);
-      FileChooser.chooseFiles(descriptor, myProject, null,
-                              VfsUtil.findFileByIoFile(new File(getDirectory()), true),
-                              new FileChooser.FileChooserConsumer() {
-        @Override
-        public void consume(List<VirtualFile> files) {
-          ApplicationManager.getApplication().invokeLater(() -> {
-            myFindPopupPanel.getCanClose().set(true);
-            IdeFocusManager.getInstance(myProject).requestFocus(myDirectoryComboBox.getEditor().getEditorComponent(), true);
-            myHelper.getModel().setDirectoryName(files.get(0).getPresentableUrl());
-            myDirectoryComboBox.getEditor().setItem(files.get(0).getPresentableUrl());
-          });
-        }
+    // TODO: Remove this 'if' branch once FindKey is enabled by default. Keep only the 'else' branch.
+    if (!FindKey.isEnabled()) {
+        mySelectDirectoryButton.addActionListener(__ -> {
+        FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
+        descriptor.setForcedToUseIdeaFileChooser(true);
+        myFindPopupPanel.getCanClose().set(false);
+        FileChooser.chooseFiles(descriptor, myProject, null,
+                                VfsUtil.findFileByIoFile(new File(getDirectory()), true),
+                                new FileChooser.FileChooserConsumer() {
+          @Override
+          public void consume(List<VirtualFile> files) {
+            ApplicationManager.getApplication().invokeLater(() -> {
+              myFindPopupPanel.getCanClose().set(true);
+              IdeFocusManager.getInstance(myProject).requestFocus(myDirectoryComboBox.getEditor().getEditorComponent(), true);
+              myHelper.getModel().setDirectoryName(files.get(0).getPresentableUrl());
+              myDirectoryComboBox.getEditor().setItem(files.get(0).getPresentableUrl());
+            });
+          }
 
-        @Override
-        public void cancelled() {
+          @Override
+          public void cancelled() {
+            ApplicationManager.getApplication().invokeLater(() -> {
+              myFindPopupPanel.getCanClose().set(true);
+              IdeFocusManager.getInstance(myProject).requestFocus(myDirectoryComboBox.getEditor().getEditorComponent(), true);
+            });
+          }
+        });
+      });
+    } else {
+      mySelectDirectoryButton.addActionListener(__ -> {
+        myFindPopupPanel.getCanClose().set(false);
+        OpenFileChooserService.getInstance().chooseDirectory(myProject, getDirectory(), (result) -> {
           ApplicationManager.getApplication().invokeLater(() -> {
             myFindPopupPanel.getCanClose().set(true);
             IdeFocusManager.getInstance(myProject).requestFocus(myDirectoryComboBox.getEditor().getEditorComponent(), true);
+            if (result == null) return;
+            myHelper.getModel().setDirectoryName(result);
+            myDirectoryComboBox.getEditor().setItem(result);
           });
-        }
+          return null;
+        });
       });
-    });
+    }
 
     MyRecursiveDirectoryAction recursiveDirectoryAction = new MyRecursiveDirectoryAction();
     int mnemonicModifiers = ClientSystemInfo.isMac() ? InputEvent.ALT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK : InputEvent.ALT_DOWN_MASK;
     recursiveDirectoryAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_Y, mnemonicModifiers)), myFindPopupPanel);
+
+    // Disable directory selection in CWM client environment to prevent exposure of host filesystem structure
+    boolean isCwmClient = FindKey.isCwmClient();
+    if (isCwmClient) {
+      mySelectDirectoryButton.setEnabled(false);
+      myDirectoryComboBox.setEnabled(false);
+      mySelectDirectoryButton.setToolTipText(FindBundle.message("directory.selection.not.available.cwm"));
+      myDirectoryComboBox.setToolTipText(FindBundle.message("directory.selection.not.available.cwm"));
+    }
 
     RowBuilder builder = new RowBuilder(this);
     builder
@@ -141,8 +168,13 @@ public final class FindPopupDirectoryChooser extends JPanel {
   }
 
   public @Nullable ValidationInfo validate(@NotNull FindModel model) {
+    if (FindKey.isEnabled()) return null;
     VirtualFile directory = FindInProjectUtil.getDirectory(model);
-    if (directory == null) {
+    return getDirectoryValidationInfo(directory != null);
+  }
+
+  public ValidationInfo getDirectoryValidationInfo(boolean isDirectoryExists) {
+    if (!isDirectoryExists) {
       return new ValidationInfo(FindBundle.message("find.directory.not.found.error"), myDirectoryComboBox);
     }
     return null;

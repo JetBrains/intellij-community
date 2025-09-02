@@ -3,6 +3,7 @@ package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.java.codeserver.core.JavaPsiSwitchUtil;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
@@ -89,11 +90,11 @@ public final class SwitchExpressionCanBePushedDownInspection extends AbstractBas
     if (selector == null) return false;
     PsiClass selectorClass = PsiUtil.resolveClassInClassTypeOnly(selector.getType());
     if (selectorClass == null || !selectorClass.isEnum()) {
-      return SwitchUtils.findDefaultElement(statement) == null;
+      return JavaPsiSwitchUtil.findDefaultElement(statement) == null;
     }
     Set<PsiEnumConstant> missingConstants = StreamEx.of(selectorClass.getFields()).select(PsiEnumConstant.class).toMutableSet();
     for (PsiSwitchLabelStatementBase child : PsiTreeUtil.getChildrenOfTypeAsList(statement.getBody(), PsiSwitchLabelStatementBase.class)) {
-      if (SwitchUtils.findDefaultElement(child) != null) return false;
+      if (JavaPsiSwitchUtil.findDefaultElement(child) != null) return false;
       for (PsiEnumConstant constant : SwitchUtils.findEnumConstants(child)) {
         missingConstants.remove(constant);
         if (missingConstants.isEmpty()) return false;

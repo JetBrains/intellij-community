@@ -2,6 +2,7 @@ package com.intellij.driver.sdk.ui
 
 import com.intellij.driver.client.Remote
 import com.intellij.driver.model.RemoteMouseButton
+import com.intellij.driver.sdk.ui.components.UiComponent
 import java.awt.Point
 import java.awt.datatransfer.DataFlavor
 import java.awt.event.KeyEvent
@@ -18,6 +19,11 @@ fun UiRobot.pasteText(text: String) {
   }
 }
 
+fun UiRobot.getClipboardText() = driver.utility(ToolkitRef::class)
+    .getDefaultToolkit()
+    .getSystemClipboard()
+    .getData(DataFlavor.stringFlavor)
+
 fun UiRobot.dragAndDrop(start: Point, end: Point) {
   try {
     moveMouse(start)
@@ -29,6 +35,10 @@ fun UiRobot.dragAndDrop(start: Point, end: Point) {
   } finally {
     robot.releaseMouse(RemoteMouseButton.LEFT)
   }
+}
+
+fun UiComponent.dragAndDrop(to: Point) {
+  driver.ui.dragAndDrop(this.center, to)
 }
 
 @Remote("java.awt.Toolkit")

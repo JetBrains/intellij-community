@@ -2,49 +2,53 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.AddTypeArgumentsFix;
-import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public final class AddExplicitTypeArgumentsIntention extends BaseElementAtCaretIntentionAction {
+public final class AddExplicitTypeArgumentsIntention extends PsiUpdateModCommandAction<PsiIdentifier> {
+  public AddExplicitTypeArgumentsIntention() {
+    super(PsiIdentifier.class);
+  }
+  
   @Override
   public @NotNull String getFamilyName() {
     return JavaBundle.message("intention.add.explicit.type.arguments.family");
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, @NotNull Editor editor, @NotNull PsiElement element) {
-    PsiIdentifier identifier = ObjectUtils.tryCast(element, PsiIdentifier.class);
-    if (identifier == null) return false;
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiIdentifier identifier) {
     PsiReferenceExpression methodExpression = ObjectUtils.tryCast(identifier.getParent(), PsiReferenceExpression.class);
-    if (methodExpression == null) return false;
+    if (methodExpression == null) return null;
     PsiElement parent = methodExpression.getParent();
     if (parent instanceof PsiMethodCallExpression callExpression && callExpression.getTypeArguments().length == 0) {
       JavaResolveResult result = callExpression.resolveMethodGenerics();
       if (result instanceof MethodCandidateInfo candidateInfo && candidateInfo.isApplicable()) {
         PsiMethod method = candidateInfo.getElement();
-        setText(getFamilyName());
-        return !method.isConstructor() && method.hasTypeParameters() && AddTypeArgumentsFix.addTypeArguments(callExpression, null) != null;
+        if (!method.isConstructor() && method.hasTypeParameters() && AddTypeArgumentsFix.addTypeArguments(callExpression, null) != null) {
+          return Presentation.of(getFamilyName());
+        }
       }
     }
-    return false;
+    return null;
   }
 
   @Override
-  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiIdentifier element, @NotNull ModPsiUpdater updater) {
     PsiMethodCallExpression callExpression = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
     assert callExpression != null;
     PsiExpression withArgs = AddTypeArgumentsFix.addTypeArguments(callExpression, null);
     if (withArgs != null) {
-      CodeStyleManager.getInstance(project).reformat(callExpression.replace(withArgs));
+      CodeStyleManager.getInstance(context.project()).reformat(callExpression.replace(withArgs));
     }
   }
 }

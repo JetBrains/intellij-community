@@ -67,11 +67,11 @@ abstract class PyElementTypesFacade {
   abstract val imaginaryLiteralExpressionConstructor: Function<in ASTNode, out PsiElement>
   abstract val stringLiteralExpressionConstructor: Function<in ASTNode, out PsiElement>
   abstract val noneLiteralExpressionConstructor: Function<in ASTNode, out PsiElement>
+  abstract val ellipsisLiteralExpressionConstructor: Function<in ASTNode, out PsiElement>
   abstract val boolLiteralExpressionConstructor: Function<in ASTNode, out PsiElement>
   abstract val parenthesizedExpressionConstructor: Function<in ASTNode, out PsiElement>
   abstract val subscriptionExpressionConstructor: Function<in ASTNode, out PsiElement>
 
-  abstract val sliceExpressionConstructor: Function<in ASTNode, out PsiElement>
   abstract val sliceItemConstructor: Function<in ASTNode, out PsiElement>
   abstract val binaryExpressionConstructor: Function<in ASTNode, out PsiElement>
   abstract val prefixExpressionConstructor: Function<in ASTNode, out PsiElement>

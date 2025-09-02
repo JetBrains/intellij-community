@@ -5,7 +5,7 @@ import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMo
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
-import org.jetbrains.kotlin.gradle.multiplatformTests.KotlinMppTestsContext
+import org.jetbrains.kotlin.gradle.multiplatformTests.KotlinSyncTestsContext
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestConfigurationDslScope
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestFeature
 import org.jetbrains.kotlin.gradle.multiplatformTests.writeAccess
@@ -16,7 +16,7 @@ import java.io.File
 object LinkedProjectPathsTestsFeature : TestFeature<LinkedProjectPaths> {
     override fun createDefaultConfiguration(): LinkedProjectPaths = LinkedProjectPaths(mutableSetOf())
 
-    override fun KotlinMppTestsContext.beforeImport() {
+    override fun KotlinSyncTestsContext.beforeImport() {
         testConfiguration.getConfiguration(LinkedProjectPathsTestsFeature).linkedProjectPaths.forEach {
             GradleProjectsLinker.linkGradleProject(it, testProjectRoot, testProject)
         }

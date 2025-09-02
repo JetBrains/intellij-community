@@ -5,7 +5,7 @@
     <module>light_idea_test_case</module>
     <entry_point TYPE="file" FQNAME="temp:///src/spelling.kt" />
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Typo</problem_class>
-    <description>Typo: In word 'xyzzyy'</description>
+    <description>Typo: In word 'xxyyzz'</description>
   </problem>
   <problem>
     <file>spelling.kt</file>

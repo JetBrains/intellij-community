@@ -17,7 +17,7 @@ import com.intellij.testFramework.LightProjectDescriptor
 import java.util.*
 
 abstract class TestFailedLineInspectionTestBase : JvmInspectionTestBase() {
-  override val inspection = TestFailedLineInspection()
+  override val inspection: TestFailedLineInspection = TestFailedLineInspection()
 
   override fun getProjectDescriptor(): LightProjectDescriptor = JUnitProjectDescriptor(LanguageLevel.HIGHEST)
 
@@ -36,7 +36,7 @@ abstract class TestFailedLineInspectionTestBase : JvmInspectionTestBase() {
     fileName: String = generateFileName(),
     url: String,
     stackTrace: String,
-    errorMessage: String
+    errorMessage: String,
   ) {
     val pair = TestStackTraceParser(url, stackTrace, errorMessage, JavaTestLocator.INSTANCE, project)
     val record = TestStateStorage.Record(

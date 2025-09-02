@@ -12,7 +12,6 @@ import org.jetbrains.annotations.NotNull;
 /**
  * This action works only in the variables view
  * @see com.intellij.xdebugger.impl.actions.AddToWatchesAction
- * @see com.intellij.platform.debugger.impl.frontend.actions.FrontendXAddToWatchesTreeAction
  */
 @ApiStatus.Internal
 public class XAddToWatchesTreeAction extends XDebuggerTreeActionBase {

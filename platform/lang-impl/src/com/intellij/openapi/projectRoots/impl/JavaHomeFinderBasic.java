@@ -1,7 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.projectRoots.JavaSdkType;
@@ -55,6 +56,7 @@ public class JavaHomeFinderBasic {
     myFinders.add(this::findJavaInstalledByAsdfJava);
     myFinders.add(this::findJavaInstalledByGradle);
     myFinders.add(this::findJavaInstalledByMise);
+    myFinders.add(this::findJavaInstalledByJabba);
 
     myFinders.add(
       () -> myCheckEmbeddedJava ? scanAll(getJavaHome(), false) : Collections.emptySet()
@@ -143,17 +145,24 @@ public class JavaHomeFinderBasic {
 
       Set<Path> dirsToCheck = new HashSet<>();
       for (String p : pathVarString.split(mySystemInfo.getPathSeparator())) {
-        Path dir = mySystemInfo.getPath(p);
-        if (!StringUtilRt.equal(dir.getFileName().toString(), "bin", mySystemInfo.isFileSystemCaseSensitive())) {
-          continue;
-        }
+        if (p.isEmpty()) continue;
+        try {
+          Path dir = mySystemInfo.getPath(p);
+          if (!StringUtilRt.equal(dir.getFileName().toString(), "bin", mySystemInfo.isFileSystemCaseSensitive())) {
+            continue;
+          }
 
-        Path parentFile = dir.getParent();
-        if (parentFile == null) {
-          continue;
-        }
+          Path parentFile = dir.getParent();
+          if (parentFile == null) {
+            continue;
+          }
 
-        dirsToCheck.addAll(listPossibleJdkInstallRootsFromHomes(parentFile));
+          dirsToCheck.addAll(listPossibleJdkInstallRootsFromHomes(parentFile));
+        }
+        catch (Exception e) {
+          if (e instanceof ControlFlowException) throw e;
+          log.warn("Failed to get Java home path for " + p, e);
+        }
       }
 
       return scanAll(dirsToCheck, false);
@@ -226,12 +235,9 @@ public class JavaHomeFinderBasic {
     try (Stream<Path> files = Files.list(folder)) {
       files.forEach(candidate -> {
         for (Path adjusted : listPossibleJdkHomesFromInstallRoot(candidate)) {
-          try {
-            final int found = result.size();
-            scanFolder(adjusted, false, result);
-            if (result.size() > found) { break; } // Avoid duplicates
-          }
-          catch (IllegalStateException ignored) {}
+          final int found = result.size();
+          scanFolder(adjusted, false, result);
+          if (result.size() > found) { break; } // Avoid duplicates
         }
       });
     }
@@ -435,6 +441,14 @@ public class JavaHomeFinderBasic {
     return null;
   }
 
+  /**
+   * Finds Java home directories installed by <a href="https://github.com/shyiko/jabba">jabba</a>.
+   */
+  private @NotNull Set<String> findJavaInstalledByJabba() {
+    Path installsDir = getPathInUserHome(".jabba/jdk");
+    if (installsDir == null) return Collections.emptySet();
+    return safeIsDirectory(installsDir) ? scanAll(installsDir, true) : Collections.emptySet();
+  }
 
   private boolean safeIsDirectory(@NotNull Path dir) {
     try {

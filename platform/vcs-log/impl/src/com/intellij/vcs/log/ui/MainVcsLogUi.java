@@ -11,6 +11,9 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
+/**
+ * A default non-custom VCS Log UI
+ */
 @ApiStatus.Experimental
 public interface MainVcsLogUi extends VcsLogUiEx {
   @Override

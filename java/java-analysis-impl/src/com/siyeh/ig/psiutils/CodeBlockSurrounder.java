@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.BlockUtils;
@@ -6,6 +6,7 @@ import com.intellij.codeInsight.intention.impl.SplitConditionUtil;
 import com.intellij.codeInspection.ConditionalBreakInInfiniteLoopInspection;
 import com.intellij.codeInspection.RedundantLambdaCodeBlockInspection;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
@@ -670,7 +671,7 @@ public abstract class CodeBlockSurrounder {
       PsiCodeBlock copyFinally = copy.getFinallyBlock();
       if (copyFinally != null) {
         PsiElement element = PsiTreeUtil.skipWhitespacesAndCommentsBackward(copyFinally);
-        if (element != null && element.textMatches(PsiKeyword.FINALLY)) {
+        if (element != null && element.textMatches(JavaKeywords.FINALLY)) {
           element.delete();
         }
         copyFinally.delete();

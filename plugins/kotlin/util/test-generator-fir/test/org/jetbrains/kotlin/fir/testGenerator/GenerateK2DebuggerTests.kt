@@ -98,6 +98,15 @@ internal fun MutableTWorkspace.generateK2DebuggerTests() {
             }
         }
 
+        listOf(
+            AbstractK2IdeK2CoroutineViewJobHierarchyTest::class,
+            AbstractK2IdeK1CoroutineViewJobHierarchyTest::class,
+        ).forEach {
+            testClass(it) {
+                model("coroutinesView")
+            }
+        }
+
         //testClass<AbstractSequenceTraceTestCase> { // TODO: implement mapping logic for terminal operations
         //    model("sequence/streams/sequence", excludedDirectories = listOf("terminal"))
         //}

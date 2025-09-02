@@ -32,12 +32,12 @@ internal class CreatePropertyAction(
 
   override fun getFamilyName(): String = message("create.property.from.usage.family")
 
-  override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo {
-    return CreateFieldAction(target, PropertyRequest(), false).generatePreview(project, editor, file)
+  override fun generatePreview(project: Project, editor: Editor, psiFile: PsiFile): IntentionPreviewInfo {
+    return CreateFieldAction(target, PropertyRequest(), false).generatePreview(project, editor, psiFile)
   }
 
-  override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean {
-    if (!super.isAvailable(project, editor, file)) return false
+  override fun isAvailable(project: Project, editor: Editor?, psiFile: PsiFile?): Boolean {
+    if (!super.isAvailable(project, editor, psiFile)) return false
     val (propertyName, propertyKind) = getPropertyNameAndKind(request.methodName) ?: return false
 
     if (propertyKind == SETTER && readOnly) return false
@@ -78,9 +78,9 @@ internal class CreatePropertyAction(
     }
   }
 
-  override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
+  override fun invoke(project: Project, editor: Editor?, psiFile: PsiFile?) {
     CreateFieldAction(target, PropertyRequest(), false).apply {
-      if (isAvailable(project, editor, file)) invoke(project, editor, file)
+      if (isAvailable(project, editor, psiFile)) invoke(project, editor, psiFile)
     }
   }
 

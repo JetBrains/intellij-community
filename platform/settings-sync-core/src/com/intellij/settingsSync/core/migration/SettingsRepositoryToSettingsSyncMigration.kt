@@ -15,8 +15,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.settingsSync.core.*
-import com.intellij.settingsSync.core.NOTIFICATION_GROUP
-import com.intellij.settingsSync.core.SettingsSyncIdeMediatorImpl
 import com.intellij.settingsSync.core.plugins.PluginManagerProxy
 import com.intellij.settingsSync.core.statistics.SettingsSyncEventsStatistics
 import com.intellij.settingsSync.core.statistics.SettingsSyncEventsStatistics.SettingsRepositoryMigrationNotificationAction.INSTALL_SETTINGS_REPOSITORY
@@ -84,7 +82,7 @@ internal class SettingsRepositoryToSettingsSyncMigration {
       val prefix = OS_PREFIXES.find { topLevelFile.name.startsWith(it.first) }
       if (!SPECIAL_FILES.contains(topLevelFile.name)) {
         Files.walkFileTree(topLevelFile, object : SimpleFileVisitor<Path>() {
-          override fun visitFile(file: Path, attrs: BasicFileAttributes?): FileVisitResult {
+          override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
             if (!file.isRegularFile()) return FileVisitResult.CONTINUE
 
             val relative = settingsRepositoryConfigPath.relativize(file).invariantSeparatorsPathString

@@ -96,12 +96,12 @@ public final class ImportToggleAliasIntention extends PyBaseIntentionAction {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!(file instanceof PyFile)) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    if (!(psiFile instanceof PyFile)) {
       return false;
     }
 
-    IntentionState state = IntentionState.fromContext(editor, file);
+    IntentionState state = IntentionState.fromContext(editor, psiFile);
     setText(state.getText());
     return state.isAvailable();
   }

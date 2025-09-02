@@ -5,4 +5,4 @@ fun foo(list: java.util.List<String>) {
 }
 
 // FILE: after.kt
-public class <caret>String : Comparable<String>, CharSequence {
+public actual class <caret>String : Comparable<String>, CharSequence {

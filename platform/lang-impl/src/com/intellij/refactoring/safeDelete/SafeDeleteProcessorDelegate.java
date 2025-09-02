@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.safeDelete;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -7,6 +7,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,10 +17,11 @@ import java.util.List;
 import static com.intellij.openapi.util.NlsContexts.DialogMessage;
 
 /**
- * An extension point for "Safe Delete" refactoring.
+ * Extension point for the "Safe Delete" refactoring.
  * <p> 
- * Delegates are processed one by one, the first delegate which agrees to handle element ({@link #handlesElement(PsiElement)}) will be used, rest are ignored.
- * Natural loading order can be changed by providing attribute "order" during registration in plugin.xml.
+ * Delegates are processed one by one.
+ * The first delegate which agrees to handle the element ({@link #handlesElement(PsiElement)}) is used, the rest are ignored.
+ * The loading order can be changed by providing attribute "order" during registration in plugin.xml.
  */
 public interface SafeDeleteProcessorDelegate {
   ExtensionPointName<SafeDeleteProcessorDelegate> EP_NAME = ExtensionPointName.create("com.intellij.refactoring.safeDeleteProcessor");
@@ -36,7 +38,7 @@ public interface SafeDeleteProcessorDelegate {
    * @param element              an element selected for deletion.
    * @param allElementsToDelete  all elements selected for deletion.
    * @param result               list of {@link UsageInfo} to store found usages
-   * @return                     {@code null} if element should not be searched in text occurrences/comments though corresponding settings were enabled, otherwise
+   * @return                     {@code null} if the element should not be searched in text occurrences/comments though corresponding settings were enabled, otherwise
    *                             bean with the information how to detect if an element is inside all elements to delete (e.g. {@link SafeDeleteProcessor#getDefaultInsideDeletedCondition(PsiElement[])})
    *                             and current element.
    */
@@ -69,12 +71,32 @@ public interface SafeDeleteProcessorDelegate {
   /**
    * Detects usages which are not safe to delete.
    *
-   * @param  element an element selected for deletion.
+   * @param  element the element selected for deletion.
    * @param  allElementsToDelete all elements selected for deletion.
-   * @return collection of conflict messages which would be shown to the user before delete can be performed.
+   * @return collection of conflict messages that are shown to the user before the deletion is performed.
+   *
+   * @deprecated Override {@link #findConflicts(PsiElement, PsiElement[], UsageInfo[], MultiMap)} instead to use the new conflicts dialog
+   * with preview
    */
-  @Nullable
-  Collection<@DialogMessage String> findConflicts(@NotNull PsiElement element, PsiElement @NotNull [] allElementsToDelete);
+  @Deprecated @Nullable
+  default Collection<@DialogMessage String> findConflicts(@NotNull PsiElement element, PsiElement @NotNull [] allElementsToDelete) {
+    return null;
+  }
+
+  /**
+   * Detects usages which are not safe to delete. These usages will be shown in a conflict dialog with preview (the new conflicts dialog).
+   *
+   * @param element  the element selected for deletion.
+   * @param allElementsToDelete  all elements that will be deleted.
+   * @param usages  usages of the element selected for deletion.
+   * @param conflicts  a multimap of conflicting usage elements mapped to one or more messages that will be shown in the conflicts-dialog
+   *                              before the deletion is performed.
+   */
+  default void findConflicts(@NotNull PsiElement element,
+                             PsiElement @NotNull [] allElementsToDelete,
+                             UsageInfo @NotNull [] usages,
+                             @NotNull MultiMap<PsiElement, @DialogMessage String> conflicts) {
+  }
 
   /**
    * Called after the user has confirmed the refactoring. Can filter out some of the usages
@@ -83,7 +105,7 @@ public interface SafeDeleteProcessorDelegate {
    *
    * @param project the project where the refactoring happens.
    * @param usages all usages to be processed by the refactoring. 
-   * @return the filtered list of usages, or null if the user has cancelled the refactoring.
+   * @return the filtered list of usages, or null if the user has canceled the refactoring.
    */
   UsageInfo @Nullable [] preprocessUsages(@NotNull Project project, UsageInfo @NotNull [] usages);
 

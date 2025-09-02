@@ -14,6 +14,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.search.FileTypeIndex
+import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.idea.KotlinFileType
 import java.time.Duration
 import java.time.Instant
@@ -26,7 +28,7 @@ internal class KotlinModuleSizeCollector : ProjectUsagesCollector() {
         private const val AVERAGE_SIZE_PER_LINE = 40
     }
 
-    override fun getGroup(): EventLogGroup? = GROUP
+    override fun getGroup(): EventLogGroup = GROUP
 
     // Collector ID
     private val GROUP = EventLogGroup("kotlin.project.structure", 1)
@@ -34,6 +36,13 @@ internal class KotlinModuleSizeCollector : ProjectUsagesCollector() {
     private fun IntRange.toBucketName(): String {
         if (endInclusive == Int.MAX_VALUE) return "bucket_${start}_max"
         return "bucket_${start}_${endInclusive}"
+    }
+
+    private fun List<IntRange>.toBuckets() = map { range ->
+        StatisticsBucket(
+            eventField = EventFields.Int(range.toBucketName()),
+            range = range,
+        )
     }
 
     // These are the ranges that define the buckets for line counts we use
@@ -54,12 +63,7 @@ internal class KotlinModuleSizeCollector : ProjectUsagesCollector() {
         500001..1000000,
         1000001..Int.MAX_VALUE
     )
-    private val LINE_COUNT_BUCKETS = lineCountBucketRanges.map { range ->
-        StatisticsBucket(
-            eventField = EventFields.Int(range.toBucketName()),
-            range = range,
-        )
-    }
+    private val LINE_COUNT_BUCKETS = lineCountBucketRanges.toBuckets()
     private val LINE_COUNT_EVENT = GROUP.registerVarargEvent(
         eventId = "modules.sizes.line_count",
         *LINE_COUNT_BUCKETS.map { it.eventField }.toTypedArray(),
@@ -85,12 +89,7 @@ internal class KotlinModuleSizeCollector : ProjectUsagesCollector() {
         4001..Int.MAX_VALUE
     )
 
-    private val FILE_COUNT_BUCKETS = fileCountBucketRanges.map { range ->
-        StatisticsBucket(
-            eventField = EventFields.Int(range.toBucketName()),
-            range = range,
-        )
-    }
+    private val FILE_COUNT_BUCKETS = fileCountBucketRanges.toBuckets()
     private val FILE_COUNT_EVENT = GROUP.registerVarargEvent(
         eventId = "modules.sizes.file_count",
         *FILE_COUNT_BUCKETS.map { it.eventField }.toTypedArray(),
@@ -177,11 +176,24 @@ internal class KotlinModuleSizeCollector : ProjectUsagesCollector() {
         return projectStatistics.generateEvents()
     }
 
+    private fun Project.hasKotlinFiles(): Boolean {
+        return FileTypeIndex.containsFileOfType(KotlinFileType.INSTANCE, GlobalSearchScope.projectScope(this))
+    }
+
     override suspend fun collect(project: Project): Set<MetricEvent> {
         if (!KotlinModuleSizeCollectorTracker.getInstance(project).shouldCollectData()) return emptySet()
 
         val startTime = System.currentTimeMillis()
-        val result = project.gatherProjectStatistics()
+        val hasKotlinFiles = readAction {
+            project.hasKotlinFiles()
+        }
+        // If there are no Kotlin files, then we do not want to collect any statistics for the project.
+        // We still want to mark it as having finished collecting statistics, so that we do not check for Kotlin files too often.
+        val result = if (hasKotlinFiles) {
+            project.gatherProjectStatistics()
+        } else {
+            emptySet()
+        }
         KotlinModuleSizeCollectorTracker.getInstance(project).onCollectionFinished()
         logger.debug("Collecting stats for project took ${System.currentTimeMillis() - startTime} ms")
 

@@ -16,6 +16,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -273,6 +274,7 @@ public abstract class AbstractExternalSystemSettings<
   }
 
   public interface State<S> {
+    @Unmodifiable
     Set<S> getLinkedExternalProjectsSettings();
 
     void setLinkedExternalProjectsSettings(Set<S> settings);

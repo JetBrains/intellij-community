@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.refactoring.move
 
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.module.impl.scopes.JdkScope
 import com.intellij.openapi.project.Project
@@ -363,6 +364,7 @@ fun checkModuleConflictsInDeclarations(
     val referencesToSkip = HashSet<KtReferenceExpression>()
     for (declaration in moveCheckerInfo.elementsToMove) {
         if (declaration.module == targetModule) continue
+        if (ModuleType.isInternal(targetModule)) continue
         declaration.forEachDescendantOfType<KtReferenceExpression> { refExpr ->
             // NB: for unknown reason, refExpr.resolveToCall() does not work here
             val targetDescriptor =
@@ -397,7 +399,6 @@ fun checkVisibilityInUsages(
     usages: Collection<UsageInfo>
 ): MultiMap<PsiElement, String> {
     val conflicts = MultiMap<PsiElement, String>()
-    val declarationToContainers = HashMap<KtNamedDeclaration, MutableSet<PsiElement>>()
     for (usage in usages) {
         val element = usage.element
         if (element == null || usage !is MoveRenameUsageInfo || usage is NonCodeUsageInfo) continue
@@ -411,7 +412,6 @@ fun checkVisibilityInUsages(
             && moveTarget.targetElement.parentsWithSelf.filterIsInstance<KtClassOrObject>().all { it.isPublic}
         ) continue
         val container = element.getUsageContext()
-        if (!declarationToContainers.getOrPut(referencedElement) { HashSet() }.add(container)) continue
         val targetContainer = moveTarget.getContainerDescriptor(moveCheckerInfo.context) ?: continue
         val referencingDescriptor = when (container) {
             is KtDeclaration -> container.resolveToDescriptorIfAny()

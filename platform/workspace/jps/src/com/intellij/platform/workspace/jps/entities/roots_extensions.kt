@@ -8,7 +8,7 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.annotations.Child
+import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NonNls
 interface SourceRootOrderEntity : WorkspaceEntity {
   val orderOfSourceRoots: List<VirtualFileUrl>
 
+  @Parent
   val contentRootEntity: ContentRootEntity
 
   //region generated code
@@ -63,7 +64,7 @@ fun MutableEntityStorage.modifySourceRootOrderEntity(
 //endregion
 
 @get:Internal
-val ContentRootEntity.sourceRootOrder: @Child SourceRootOrderEntity?
+val ContentRootEntity.sourceRootOrder: SourceRootOrderEntity?
   by WorkspaceEntity.extension()
 
 
@@ -74,6 +75,7 @@ val ContentRootEntity.sourceRootOrder: @Child SourceRootOrderEntity?
 interface CustomSourceRootPropertiesEntity : WorkspaceEntity {
   val propertiesXmlTag: @NonNls String
 
+  @Parent
   val sourceRoot: SourceRootEntity
 
   //region generated code
@@ -115,7 +117,7 @@ fun MutableEntityStorage.modifyCustomSourceRootPropertiesEntity(
 //endregion
 
 @get:Internal
-val SourceRootEntity.customSourceRootProperties: @Child CustomSourceRootPropertiesEntity?
+val SourceRootEntity.customSourceRootProperties: CustomSourceRootPropertiesEntity?
   by WorkspaceEntity.extension()
 
 /**
@@ -126,6 +128,7 @@ val SourceRootEntity.customSourceRootProperties: @Child CustomSourceRootProperti
 interface ExcludeUrlOrderEntity : WorkspaceEntity {
   val order: List<VirtualFileUrl>
 
+  @Parent
   val contentRoot: ContentRootEntity
 
   //region generated code
@@ -166,5 +169,5 @@ fun MutableEntityStorage.modifyExcludeUrlOrderEntity(
 //endregion
 
 @get:Internal
-val ContentRootEntity.excludeUrlOrder: @Child ExcludeUrlOrderEntity?
+val ContentRootEntity.excludeUrlOrder: ExcludeUrlOrderEntity?
   by WorkspaceEntity.extension()

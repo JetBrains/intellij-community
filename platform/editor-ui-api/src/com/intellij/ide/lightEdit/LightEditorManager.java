@@ -30,6 +30,7 @@ public interface LightEditorManager {
   boolean isImplicitSaveAllowed(@NotNull Document document);
 
   @NotNull
+  @Unmodifiable
   Collection<VirtualFile> getOpenFiles();
 
   @NotNull

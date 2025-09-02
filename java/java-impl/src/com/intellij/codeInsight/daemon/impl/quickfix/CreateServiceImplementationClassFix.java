@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.CommonBundle;
@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.JavaBundle;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
@@ -83,7 +84,7 @@ public class CreateServiceImplementationClassFix extends CreateServiceClassFixBa
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
     if (mySuperClassName != null && myImplementationClassName != null && myModuleName != null) {
       JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
       GlobalSearchScope projectScope = GlobalSearchScope.projectScope(project);
@@ -95,7 +96,7 @@ public class CreateServiceImplementationClassFix extends CreateServiceClassFixBa
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
     Module module = ModuleManager.getInstance(project).findModuleByName(myModuleName);
     if (module != null) {
       String qualifierText = StringUtil.getPackageName(myImplementationClassName);
@@ -108,10 +109,10 @@ public class CreateServiceImplementationClassFix extends CreateServiceClassFixBa
       }
 
       if (ApplicationManager.getApplication().isUnitTestMode()) {
-        PsiDirectory rootDir = file.getUserData(SERVICE_ROOT_DIR);
-        Boolean isSubclass = file.getUserData(SERVICE_IS_SUBCLASS);
+        PsiDirectory rootDir = psiFile.getUserData(SERVICE_ROOT_DIR);
+        Boolean isSubclass = psiFile.getUserData(SERVICE_IS_SUBCLASS);
         if (rootDir != null && isSubclass != null) {
-          WriteAction.run(() -> createClassInRoot(rootDir, isSubclass, file));
+          WriteAction.run(() -> createClassInRoot(rootDir, isSubclass, psiFile));
         }
         return;
       }
@@ -122,7 +123,7 @@ public class CreateServiceImplementationClassFix extends CreateServiceClassFixBa
         PsiDirectory psiRootDir = dialog.getRootDir();
         if (psiRootDir != null) {
           boolean isSubclass = dialog.isSubclass();
-          PsiClass psiClass = WriteAction.compute(() -> createClassInRoot(psiRootDir, isSubclass, file));
+          PsiClass psiClass = WriteAction.compute(() -> createClassInRoot(psiRootDir, isSubclass, psiFile));
           positionCursor(psiClass);
         }
       }
@@ -143,11 +144,11 @@ public class CreateServiceImplementationClassFix extends CreateServiceClassFixBa
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
     String superClassName = StringUtil.getShortName(mySuperClassName);
     return new IntentionPreviewInfo.CustomDiff(JavaFileType.INSTANCE, "",
                                                "public class " + StringUtil.getShortName(myImplementationClassName) + " " +
-                                               (myInterface ? PsiKeyword.IMPLEMENTS : PsiKeyword.EXTENDS) + " " + superClassName + " {\n" +
+                                               (myInterface ? JavaKeywords.IMPLEMENTS : JavaKeywords.EXTENDS) + " " + superClassName + " {\n" +
                                                "  public static " + superClassName + " provider() { return null;}" +
                                                "\n}");
   }

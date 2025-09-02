@@ -10,14 +10,11 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiImplicitClass;
-import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.testFramework.UsefulTestCase;
@@ -30,12 +27,8 @@ public class OverrideImplementTest extends LightJavaCodeInsightFixtureTestCase {
     return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/overrideImplement";
   }
 
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_LATEST;
-  }
-
   private void addRecordClass() {
+    //noinspection override
     myFixture.addClass("package java.lang;public abstract class Record {" +
                        "public abstract boolean equals(Object obj);" +
                        "public abstract int hashCode();" +
@@ -61,9 +54,8 @@ public class OverrideImplementTest extends LightJavaCodeInsightFixtureTestCase {
     doTest(false);
   }
 
-  public void testOverrideForImplicitClass() {
-    doTest(false);
-  }
+  public void testOverrideForImplicitClass() { doTest(false); }
+  public void testOverrideForClassNestedInImplicitClass() { doTest(false); }
 
   public void testImplementExtensionMethods() { doTest(true); }
 
@@ -710,15 +702,11 @@ public class OverrideImplementTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   private void invokeAction(boolean toImplement) {
-    int offset = myFixture.getEditor().getCaretModel().getOffset();
-    PsiFile psiFile = myFixture.getFile();
-    PsiClass psiClass = PsiTreeUtil.findElementOfClassAtOffset(psiFile, offset, PsiClass.class, false);
-    if (psiFile instanceof PsiJavaFile javaFile && javaFile.getClasses().length == 1 &&
-        javaFile.getClasses()[0] instanceof PsiImplicitClass implicitClass) {
-      psiClass = implicitClass;
-    }
-    assertNotNull(psiClass);
-    OverrideImplementUtil.chooseAndOverrideOrImplementMethods(getProject(), myFixture.getEditor(), psiClass, toImplement);
+    Editor editor = myFixture.getEditor();
+    PsiFile file = myFixture.getFile();
+    PsiClass aClass = OverrideImplementUtil.getContextClass(getProject(), editor, file, true);
+    assertNotNull(aClass);
+    OverrideImplementUtil.chooseAndOverrideOrImplementMethods(getProject(), editor, aClass, toImplement);
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
   }
 }

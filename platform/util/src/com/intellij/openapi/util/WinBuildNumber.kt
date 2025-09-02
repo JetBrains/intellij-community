@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("WinBuildNumber")
 package com.intellij.openapi.util
 
@@ -12,7 +12,7 @@ internal fun getWinBuildNumber(): Long? =
 
 private fun getWinBuildNumberInternal(): Long? =
   try {
-    // this key is undocumented, but mentioned heavily all over the Internet
+    // this key is undocumented but mentioned heavily all over the Internet
     Advapi32Util.registryGetStringValue(WinReg.HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", "CurrentBuildNumber").toLong()
   }
   catch (e: Exception) {

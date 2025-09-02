@@ -5,7 +5,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.*;
 import com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
-import com.intellij.ide.plugins.newui.PluginDetailsPageComponent;
+import com.intellij.ide.plugins.newui.*;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
@@ -52,7 +52,7 @@ public final class InstallAndEnableTask extends Task.Modal {
   public void run(@NotNull ProgressIndicator indicator) {
     try {
       List<PluginNode> marketplacePlugins = MarketplaceRequests.loadLastCompatiblePluginDescriptors(myPluginIds);
-      myCustomPlugins = RepositoryHelper.loadPluginsFromCustomRepositories(indicator);
+      myCustomPlugins = RepositoryHelper.loadPluginsFromCustomRepositories(indicator,  PluginNodeModelBuilderFactory.INSTANCE);
 
       List<IdeaPluginDescriptor> descriptors = new ArrayList<>(RepositoryHelper.mergePluginsFromRepositories(marketplacePlugins, myCustomPlugins, true));
       descriptors.removeIf(descriptor -> !myPluginIds.contains(descriptor.getPluginId()));
@@ -69,10 +69,11 @@ public final class InstallAndEnableTask extends Task.Modal {
               node.setExternalUpdateId(update.getExternalUpdateId());
               node.setDescription(null);
 
-              PluginNode pluginNode = marketplace.loadPluginDetails(node);
+              PluginUiModelAdapter marketplaceModel = new PluginUiModelAdapter(node);
+              PluginUiModel pluginNode = marketplace.loadPluginDetails(marketplaceModel);
               if (pluginNode != null) {
-                PluginDetailsPageComponent.loadAllPluginDetails(marketplace, node, pluginNode);
-                descriptors.set(index, pluginNode);
+                PluginDetailsPageComponentKt.loadAllPluginDetails(marketplaceModel, pluginNode);
+                descriptors.set(index, pluginNode.getDescriptor());
               }
             }
           }

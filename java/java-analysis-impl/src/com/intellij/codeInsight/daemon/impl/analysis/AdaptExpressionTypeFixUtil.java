@@ -29,6 +29,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 import static com.intellij.util.ObjectUtils.tryCast;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Utilities to register fixes for mismatching type
@@ -109,7 +110,7 @@ final class AdaptExpressionTypeFixUtil {
       PsiTypeCastExpression cast = (PsiTypeCastExpression)factory.createExpressionFromText("(x)null", call);
       PsiTypeElement typeElement = factory.createTypeElement(substituted);
       try {
-        Objects.requireNonNull(cast.getCastType()).replace(typeElement);
+        requireNonNull(cast.getCastType()).replace(typeElement);
       }
       catch (IncorrectOperationException ignored) {
         // Malformed type
@@ -233,7 +234,7 @@ final class AdaptExpressionTypeFixUtil {
                                         @Nullable PsiType expectedType,
                                         @Nullable PsiType actualType) {
     if (actualType == null || expectedType == null) return;
-    HighlightFixUtil.registerChangeVariableTypeFixes(expression, expectedType, info);
+    HighlightFixUtil.registerChangeVariableTypeFixes(info, expression, expectedType);
     if (!(expression.getParent() instanceof PsiConditionalExpression && PsiTypes.voidType().equals(expectedType))) {
       info.accept(HighlightFixUtil.createChangeReturnTypeFix(expression, expectedType));
     }

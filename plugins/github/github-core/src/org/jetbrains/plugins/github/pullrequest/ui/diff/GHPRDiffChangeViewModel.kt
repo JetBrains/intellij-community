@@ -1,137 +1,78 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.diff
 
-import com.intellij.collaboration.async.*
-import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
-import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
+import com.intellij.collaboration.async.computationStateFlow
+import com.intellij.collaboration.async.withInitial
+import com.intellij.collaboration.ui.codereview.diff.model.AsyncDiffViewModel
+import com.intellij.collaboration.util.ComputedResult
 import com.intellij.collaboration.util.RefComparisonChange
-import com.intellij.collaboration.util.filePath
-import com.intellij.collaboration.util.getOrNull
-import com.intellij.diff.util.Range
-import com.intellij.openapi.diff.impl.patch.PatchHunkUtil
-import com.intellij.openapi.diff.impl.patch.TextFilePatch
+import com.intellij.diff.requests.DiffRequest
+import com.intellij.diff.util.DiffUserDataKeysEx
+import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.UserDataHolderBase
+import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.vcsUtil.VcsFileUtil
-import git4idea.changes.GitTextFilePatchWithHistory
+import git4idea.changes.GitBranchComparisonResult
+import git4idea.changes.createVcsChange
+import git4idea.changes.getDiffComputer
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
-import org.jetbrains.plugins.github.ai.GHPRAICommentViewModel
-import org.jetbrains.plugins.github.ai.GHPRAIReviewExtension
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
-import org.jetbrains.plugins.github.api.data.pullrequest.isVisible
-import org.jetbrains.plugins.github.api.data.pullrequest.mapToLocation
-import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
-import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
-import org.jetbrains.plugins.github.pullrequest.data.provider.threadsComputationFlow
-import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewCommentLocation
-import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewCommentPosition
-import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRThreadsViewModels
-import org.jetbrains.plugins.github.pullrequest.ui.comment.lineLocation
-import org.jetbrains.plugins.github.pullrequest.ui.editor.GHPRReviewNewCommentEditorViewModel
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.consumeAsFlow
+import kotlinx.coroutines.flow.stateIn
+import org.jetbrains.annotations.ApiStatus
 
-interface GHPRDiffChangeViewModel {
-  val commentableRanges: List<Range>
-  val canComment: Boolean
-
-  val threads: StateFlow<Collection<GHPRReviewThreadDiffViewModel>>
-  val newComments: StateFlow<Collection<GHPRNewCommentDiffViewModel>>
-  val aiComments: StateFlow<Collection<GHPRAICommentViewModel>>
-
-  val locationsWithDiscussions: StateFlow<Set<DiffLineLocation>>
-
-  fun requestNewComment(location: GHPRReviewCommentLocation, focus: Boolean)
-  fun cancelNewComment(location: GHPRReviewCommentLocation)
-
-  fun markViewed()
+@ApiStatus.Internal
+interface GHPRDiffChangeViewModel: AsyncDiffViewModel {
+  val change: RefComparisonChange
 }
 
 internal class GHPRDiffChangeViewModelImpl(
-  project: Project,
+  private val project: Project,
   parentCs: CoroutineScope,
-  private val dataContext: GHPRDataContext,
-  private val dataProvider: GHPRDataProvider,
-  private val change: RefComparisonChange,
-  private val diffData: GitTextFilePatchWithHistory,
-  private val threadsVms: GHPRThreadsViewModels,
-  private val discussionsViewOption: StateFlow<DiscussionsViewOption>,
+  private val allChanges: GitBranchComparisonResult,
+  override val change: RefComparisonChange,
 ) : GHPRDiffChangeViewModel {
   private val cs = parentCs.childScope(javaClass.name)
+  private val reloadRequests = Channel<Unit>(1, BufferOverflow.DROP_OLDEST)
 
-  override val commentableRanges: List<Range> = diffData.patch.ranges
-  override val canComment: Boolean = threadsVms.canComment
-
-  private val mappedThreads: StateFlow<Map<String, MappedGHPRReviewThreadDiffViewModel.MappingData>> =
-    dataProvider.reviewData.threadsComputationFlow
-      .transformConsecutiveSuccesses(false) {
-        combine(this, discussionsViewOption) { threads, viewOption ->
-          threads.associateBy(GHPullRequestReviewThread::id) { threadData ->
-            val isVisible = threadData.isVisible(viewOption)
-            val location = threadData.mapToLocation(diffData)
-            MappedGHPRReviewThreadDiffViewModel.MappingData(isVisible, location)
-          }
-        }
-      }.map { it.getOrNull().orEmpty() }.stateInNow(cs, emptyMap())
-
-  override val threads: StateFlow<Collection<GHPRReviewThreadDiffViewModel>> =
-    threadsVms.compactThreads.mapModelsToViewModels { sharedVm ->
-      MappedGHPRReviewThreadDiffViewModel(this, sharedVm, mappedThreads.mapNotNull { it[sharedVm.id] })
-    }.stateInNow(cs, emptyList())
-
-  override val locationsWithDiscussions: StateFlow<Set<DiffLineLocation>> =
-    mappedThreads.map {
-      it.values.mapNotNullTo(mutableSetOf()) { (isVisible, location) -> location?.takeIf { isVisible } }
-    }.stateInNow(cs, emptySet())
-
-  private val newCommentsContainer =
-    MappingScopedItemsContainer.byIdentity<GHPRReviewNewCommentEditorViewModel, GHPRNewCommentDiffViewModelImpl>(cs) {
-      GHPRNewCommentDiffViewModelImpl(it.position.location.lineLocation, it)
+  override val request: StateFlow<ComputedResult<DiffRequest>?> = computationStateFlow(reloadRequests.consumeAsFlow().withInitial(Unit)) {
+    val changeDiffProducer = ChangeDiffRequestProducer.create(project, change.createVcsChange(project))
+                             ?: error("Could not create diff producer from $change")
+    val request = coroutineToIndicator {
+      changeDiffProducer.process(UserDataHolderBase(), ProgressManager.getInstance().progressIndicator ?: EmptyProgressIndicator())
     }
-  override val newComments: StateFlow<Collection<GHPRNewCommentDiffViewModel>> =
-    newCommentsContainer.mappingState.mapState { it.values }
-
-  @OptIn(ExperimentalCoroutinesApi::class)
-  override val aiComments: StateFlow<Collection<GHPRAICommentViewModel>> =
-    GHPRAIReviewExtension.singleFlow
-      .flatMapLatest { it?.provideCommentVms(project, dataProvider, change, diffData) ?: flowOf(listOf()) }
-      .stateIn(cs, SharingStarted.Eagerly, emptyList())
-
-  init {
-    cs.launchNow {
-      threadsVms.newComments.collect {
-        val commentForChange = it.values.filter { it.position.change == change }
-        newCommentsContainer.update(commentForChange)
-      }
+    request.apply {
+      putUserData(RefComparisonChange.KEY, change)
+      putUserData(DiffUserDataKeysEx.CUSTOM_DIFF_COMPUTER, allChanges.patchesByChange[change]?.getDiffComputer())
     }
+  }.stateIn(cs, SharingStarted.Lazily, null)
+
+
+  override fun reloadRequest() {
+    reloadRequests.trySend(Unit)
   }
 
-  override fun requestNewComment(location: GHPRReviewCommentLocation, focus: Boolean) {
-    val position = GHPRReviewCommentPosition(change, location)
-    val sharedVm = threadsVms.requestNewComment(position)
-    if (focus) {
-      cs.launchNow {
-        newCommentsContainer.addIfAbsent(sharedVm).requestFocus()
-      }
-    }
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is GHPRDiffChangeViewModelImpl) return false
+
+    if (project != other.project) return false
+    if (allChanges != other.allChanges) return false
+    if (change != other.change) return false
+
+    return true
   }
 
-  override fun cancelNewComment(location: GHPRReviewCommentLocation) {
-    val position = GHPRReviewCommentPosition(change, location)
-    threadsVms.cancelNewComment(position)
-  }
-
-  override fun markViewed() {
-    if (!diffData.isCumulative) return
-    cs.launch {
-      val repository = dataContext.repositoryDataService.repositoryMapping.gitRepository
-      val repositoryRelativePath = VcsFileUtil.relativePath(repository.root, change.filePath)
-      // TODO: handle error
-      dataProvider.viewedStateData.updateViewedState(listOf(repositoryRelativePath), true)
-    }
+  override fun hashCode(): Int {
+    var result = project.hashCode()
+    result = 31 * result + allChanges.hashCode()
+    result = 31 * result + change.hashCode()
+    return result
   }
 }
-
-private val TextFilePatch.ranges: List<Range>
-  get() = hunks.map(PatchHunkUtil::getRange)

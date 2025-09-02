@@ -21,8 +21,8 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.vfs.FileIdAdapter
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer.MarkupType
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer.getStartUpContextElementIntoIdeStarter
 import com.intellij.util.containers.ComparatorUtil
@@ -427,7 +427,10 @@ object FUSProjectHotStartUpMeasurer {
       ids[markupType]!!.add(fileId)
     }
 
-    fun contains(file: VirtualFile, markupType: MarkupType): Boolean = file is VirtualFileWithId && ids[markupType]!!.contains(file.id)
+    fun contains(file: VirtualFile, markupType: MarkupType): Boolean {
+      val fileId = FileIdAdapter.getInstance().getId(file) ?: return false
+      return ids[markupType]!!.contains(fileId)
+    }
   }
 
   private suspend fun handleStatisticEvents() {

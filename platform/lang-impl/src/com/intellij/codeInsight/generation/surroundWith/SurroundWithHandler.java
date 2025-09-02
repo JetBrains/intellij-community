@@ -59,15 +59,15 @@ public final class SurroundWithHandler implements CodeInsightActionHandler {
   public static final TextRange CARET_IS_OK = new TextRange(0, 0);
 
   @Override
-  public void invoke(final @NotNull Project project, final @NotNull Editor editor, @NotNull PsiFile file) {
+  public void invoke(final @NotNull Project project, final @NotNull Editor editor, @NotNull PsiFile psiFile) {
     if (!EditorModificationUtil.checkModificationAllowed(editor)) return;
-    if (file instanceof PsiCompiledElement) {
+    if (psiFile instanceof PsiCompiledElement) {
       HintManager.getInstance().showErrorHint(editor, LangBundle.message("hint.text.can.t.modify.decompiled.code"));
       return;
     }
 
-    Map<Surrounder, PsiElement[]> surrounders = computeSurrounders(editor, file);
-    ReadAction.nonBlocking(() -> doBuildSurroundActions(project, editor, file, surrounders))
+    Map<Surrounder, PsiElement[]> surrounders = computeSurrounders(editor, psiFile);
+    ReadAction.nonBlocking(() -> doBuildSurroundActions(project, editor, psiFile, surrounders))
       .expireWhen(() -> editor.isDisposed() || project.isDisposed())
       .finishOnUiThread(ModalityState.nonModal(), applicable -> {
         if (applicable != null) {

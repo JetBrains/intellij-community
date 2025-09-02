@@ -1,0 +1,5 @@
+<idea-plugin>
+  <id>my.plugin</id>
+  <depends optional="true" config-file="a.xml">foo</depends>
+  <depends optional="true" config-file="b.xml">foo</depends>
+</idea-plugin>

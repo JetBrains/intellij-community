@@ -2982,7 +2982,7 @@
             {
               "key": "class",
               "type": "string",
-              "value": "com.intellij.javascript.webSymbols.nodejs.PackageJsonWebSymbolsRegistryManagerStartup"
+              "value": "com.intellij.javascript.polySymbols.nodejs.PackageJsonPolySymbolsRegistryManagerStartup"
             },
             {
               "key": "plugin",
@@ -16280,11 +16280,6 @@
           "startTimeNano": 1699257583573157,
           "duration": 3706,
           "tags": [
-            {
-              "key": "class",
-              "type": "string",
-              "value": "com.intellij.space.kotlin.scriptdefinition.detect.SpaceKtsStartupActivity"
-            },
             {
               "key": "plugin",
               "type": "string",

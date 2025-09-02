@@ -134,8 +134,11 @@ final class TextComponentCaretModel implements CaretModel {
   @Override
   public void runForEachCaret(@NotNull CaretAction action) {
     myCaretActionListeners.getMulticaster().beforeAllCaretsAction();
-    action.perform(myCaret);
-    myCaretActionListeners.getMulticaster().afterAllCaretsAction();
+    try {
+      action.perform(myCaret);
+    } finally {
+      myCaretActionListeners.getMulticaster().afterAllCaretsAction();
+    }
   }
 
   @Override

@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
@@ -85,7 +84,7 @@ internal class SmartUpdate(val project: Project, private val coroutineScope: Cor
       SmartUpdateUsagesCollector.logScheduled()
       delay(duration.toMillis())
       LOG.info("Scheduled update started")
-      blockingContext { execute(project) }
+      execute(project)
     }
   }
 

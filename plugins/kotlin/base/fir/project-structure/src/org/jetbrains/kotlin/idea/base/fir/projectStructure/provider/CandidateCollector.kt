@@ -10,7 +10,6 @@ import com.intellij.platform.workspace.storage.EntityPointer
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.psi.PsiFile
 import com.intellij.util.SmartList
-import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileSetRecognizer
@@ -64,14 +63,15 @@ internal object CandidateCollector {
         val originalVirtualFileForOutsider = if (isOutsiderFile(virtualFile)) getOutsiderFileOrigin(project, virtualFile) else null
 
         val workspaceModel = WorkspaceModel.Companion.getInstance(project)
-        val workspaceFileIndex = WorkspaceFileIndex.Companion.getInstance(project) as WorkspaceFileIndexEx
+        val workspaceFileIndex = WorkspaceFileIndexEx.Companion.getInstance(project)
         val fileSets = workspaceFileIndex.getFileInfo(
-            originalVirtualFileForOutsider ?: virtualFile,
-            honorExclusion = false,
-            includeContentSets = true,
-            includeExternalSets = true,
-            includeExternalSourceSets = true,
-            includeCustomKindSets = true
+          originalVirtualFileForOutsider ?: virtualFile,
+          honorExclusion = false,
+          includeContentSets = true,
+          includeContentNonIndexableSets = true,
+          includeExternalSets = true,
+          includeExternalSourceSets = true,
+          includeCustomKindSets = true
         ).fileSets
 
         return fileSets

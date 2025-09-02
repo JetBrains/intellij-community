@@ -132,7 +132,8 @@ private class TestCoroutineProgressAction : AnAction() {
           button("Pause/Resume") {
             suspenders.forEach {
               val suspender = it.get() ?: return@forEach
-              if (suspender.isPaused()) suspender.resume() else suspender.pause("Suspended by test action") }
+              if (suspender.isPaused()) suspender.resume() else suspender.pause("Suspended by test action")
+            }
           }
         }
         row {
@@ -150,16 +151,22 @@ private class TestCoroutineProgressAction : AnAction() {
             }
           }
         }
+        row {
+          button("Cancellable BG Progress, Invisible in Status Bar") {
+            cs.cancellableBGProgress(project, visibleInStatusBar = false)
+          }
+        }
       }
     }.show()
   }
 
-  private fun CoroutineScope.cancellableBGProgress(project: Project) {
+  private fun CoroutineScope.cancellableBGProgress(project: Project, visibleInStatusBar: Boolean = true) {
     launch {
       val taskCancellation = TaskCancellation.cancellable()
         .withButtonText("Cancel Button Text")
         .withTooltipText("Cancel tooltip text")
-      withBackgroundProgress(project, "Cancellable task title", taskCancellation) {
+      val title = if (visibleInStatusBar) "Cancellable task title" else "Cancellable invisible in status bar task title"
+      withBackgroundProgress(project, title, taskCancellation, null, visibleInStatusBar = visibleInStatusBar) {
         doStuff()
       }
     }

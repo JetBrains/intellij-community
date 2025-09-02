@@ -17,6 +17,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.terminal.DetectedShellInfo
+import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.TerminalTabState
 import org.jetbrains.plugins.terminal.TerminalToolWindowManager
 import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalShellsDetectorApi
@@ -124,7 +125,11 @@ class TerminalNewPredefinedSessionAction : DumbAwareAction(), ActionRemoteBehavi
       tabState.myTabName = templateText
       tabState.myShellCommand = myCommand
       val startupFusInfo = TerminalStartupFusInfo(TerminalOpeningWay.START_NEW_PREDEFINED_SESSION)
-      TerminalToolWindowManager.getInstance(project).createNewSession(tabState, startupFusInfo)
+      TerminalToolWindowManager.getInstance(project).createNewTab(
+        TerminalOptionsProvider.instance.terminalEngine,
+        startupFusInfo,
+        tabState
+      )
     }
   }
 }

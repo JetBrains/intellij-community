@@ -1,12 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.wsl
 
+import com.intellij.concurrency.currentThreadContext
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.blockingContext
-import com.intellij.openapi.progress.currentThreadCoroutineScope
 import com.intellij.openapi.progress.runBlockingCancellable
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -64,7 +64,7 @@ class WslDistributionSafeNullableLazyValue<T> private constructor(private val co
             canWait -> {
               val result = runCatching {
                 runBlockingCancellable {
-                  blockingContext {
+                  run {
                     computable.get()
                   }
                 }
@@ -73,8 +73,12 @@ class WslDistributionSafeNullableLazyValue<T> private constructor(private val co
               result.getOrThrow()
             }
             else -> {
-              currentThreadCoroutineScope().launch(Dispatchers.IO) {
-                blockingContext {
+              if (currentThreadContext()[Job] == null) {
+                LOG.error("The current context is not cancellable. Consider providing a context `Job`")
+              }
+              @Suppress("RAW_SCOPE_CREATION")
+              CoroutineScope(currentThreadContext()).launch(Dispatchers.IO) {
+                run {
                   val result = runCatching {
                     computable.get()
                   }
@@ -127,6 +131,9 @@ class WslDistributionSafeNullableLazyValue<T> private constructor(private val co
 
   @OptIn(ExperimentalCoroutinesApi::class)
   private fun Deferred<T>.isCompletedExceptionally() = isCompleted && getCompletionExceptionOrNull() != null
+
+  @Service(Service.Level.APP)
+  private class ScopeHolder(val coroutineScope: CoroutineScope)
 
   companion object {
     private val LOG = logger<WslDistributionSafeNullableLazyValue<*>>()

@@ -2,7 +2,7 @@
 package com.intellij.codeInsight.options;
 
 import com.intellij.codeInsight.NullableNotNullDialog;
-import com.intellij.codeInspection.ex.EntryPointsManagerImpl;
+import com.intellij.codeInspection.ex.impl.EntryPointsManagerImpl;
 import com.intellij.codeInspection.ui.CustomComponentExtensionWithSwingRenderer;
 import com.intellij.openapi.project.Project;
 import com.intellij.packageDependencies.ui.DependencyConfigurable;

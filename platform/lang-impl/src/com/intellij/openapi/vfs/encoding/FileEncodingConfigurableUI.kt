@@ -23,8 +23,6 @@ class FileEncodingConfigurableUI {
 
   fun createContent(tablePanel: JComponent, filesEncodingCombo: JComponent): DialogPanel {
     return panel {
-      useNewComboBoxRenderer()
-
       row {
         cell(tablePanel).align(Align.FILL)
       }.resizableRow()

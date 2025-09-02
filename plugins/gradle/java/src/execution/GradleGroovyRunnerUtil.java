@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution;
 
 import com.intellij.execution.Location;
@@ -9,8 +9,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.plugins.gradle.service.resolve.GradleResolverUtil;
 import org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
@@ -29,6 +31,7 @@ import static org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassName
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.STRING_DQ;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.STRING_SQ;
 
+@ApiStatus.Internal
 public final class GradleGroovyRunnerUtil {
   public static @NotNull List<String> getTasksTarget(@NotNull PsiElement element, @Nullable Module module) {
     PsiElement parent = element;
@@ -143,7 +146,8 @@ public final class GradleGroovyRunnerUtil {
     return getTasksTarget(element, null);
   }
 
-  static @Nullable String getTaskNameIfContains(PsiElement element) {
+  @VisibleForTesting
+  public static @Nullable String getTaskNameIfContains(PsiElement element) {
     String taskNameCandidate = getTaskNameCandidate(element);
     if (isEmpty(taskNameCandidate)) return null;
 

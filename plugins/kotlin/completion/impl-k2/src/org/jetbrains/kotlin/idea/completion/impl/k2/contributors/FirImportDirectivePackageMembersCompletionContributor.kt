@@ -3,8 +3,6 @@ package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
-import org.jetbrains.kotlin.idea.completion.contributors.helpers.CompletionSymbolOrigin
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOrigin
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.resolveReceiverToSymbols
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.staticScope
@@ -18,10 +16,9 @@ import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinImportDirectivePositionContext
 
 internal class FirImportDirectivePackageMembersCompletionContributor(
-    parameters: KotlinFirCompletionParameters,
     sink: LookupElementSink,
     priority: Int = 0,
-) : FirCompletionContributorBase<KotlinImportDirectivePositionContext>(parameters, sink, priority) {
+) : FirCompletionContributorBase<KotlinImportDirectivePositionContext>(sink, priority) {
 
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
@@ -33,14 +30,13 @@ internal class FirImportDirectivePackageMembersCompletionContributor(
             .mapNotNull { it.staticScope }
             .flatMap { scopeWithKind ->
                 val scope = scopeWithKind.scope
-                val symbolOrigin = CompletionSymbolOrigin.Scope(scopeWithKind.kind)
 
                 scope.classifiers(scopeNameFilter)
                     .filter { visibilityChecker.isVisible(it, positionContext) }
                     .mapNotNull { symbol ->
                         KotlinFirLookupElementFactory.createClassifierLookupElement(symbol)?.applyWeighs(
                             context = weighingContext,
-                            symbolWithOrigin = KtSymbolWithOrigin(symbol, symbolOrigin)
+                            symbolWithOrigin = KtSymbolWithOrigin(symbol, scopeWithKind.kind)
                         )
                     } + scope.callables(scopeNameFilter)
                     .filter { visibilityChecker.isVisible(it, positionContext) }
@@ -50,7 +46,7 @@ internal class FirImportDirectivePackageMembersCompletionContributor(
                             context = weighingContext,
                             signature = it,
                             options = CallableInsertionOptions(ImportStrategy.DoNothing, CallableInsertionStrategy.AsIdentifier),
-                            symbolOrigin = symbolOrigin,
+                            scopeKind = scopeWithKind.kind,
                         )
                     }
             }.forEach(sink::addElement)

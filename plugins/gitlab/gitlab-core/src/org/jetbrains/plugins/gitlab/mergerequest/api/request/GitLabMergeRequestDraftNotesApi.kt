@@ -23,15 +23,14 @@ fun getMergeRequestDraftNotesUri(project: GitLabProjectCoordinates, mrIid: Strin
 private fun getSpecificMergeRequestDraftNoteUri(project: GitLabProjectCoordinates, mrIid: String, noteId: String): URI =
   getMergeRequestDraftNotesUri(project, mrIid).resolveRelative(noteId)
 
-private fun URI.withParams(params: Map<String, String>): URI =
-  withQuery(params.entries.joinToString("&") { "${it.key}=${URLEncoder.encode(it.value, "UTF-8")}" })
-
 @SinceGitLab("15.10")
-suspend fun GitLabApi.Rest.updateDraftNote(project: GitLabProjectCoordinates,
-                                           mrIid: String,
-                                           noteId: String,
-                                           position: GitLabMergeRequestDraftNoteRestDTO.Position,
-                                           body: String)
+suspend fun GitLabApi.Rest.updateDraftNote(
+  project: GitLabProjectCoordinates,
+  mrIid: String,
+  noteId: String,
+  position: GitLabMergeRequestDraftNoteRestDTO.Position,
+  body: String,
+)
   : HttpResponse<out Unit> {
   val params = mapOf(
     "note" to body,
@@ -45,9 +44,11 @@ suspend fun GitLabApi.Rest.updateDraftNote(project: GitLabProjectCoordinates,
 }
 
 @SinceGitLab("15.9")
-suspend fun GitLabApi.Rest.deleteDraftNote(project: GitLabProjectCoordinates,
-                                           mrIid: String,
-                                           noteId: Long)
+suspend fun GitLabApi.Rest.deleteDraftNote(
+  project: GitLabProjectCoordinates,
+  mrIid: String,
+  noteId: Long,
+)
   : HttpResponse<out Unit> {
   val uri = getSpecificMergeRequestDraftNoteUri(project, mrIid, noteId.toString())
   val request = request(uri).DELETE().build()
@@ -57,8 +58,10 @@ suspend fun GitLabApi.Rest.deleteDraftNote(project: GitLabProjectCoordinates,
 }
 
 @SinceGitLab("15.11")
-suspend fun GitLabApi.Rest.submitDraftNotes(project: GitLabProjectCoordinates,
-                                            mrIid: String)
+suspend fun GitLabApi.Rest.submitDraftNotes(
+  project: GitLabProjectCoordinates,
+  mrIid: String,
+)
   : HttpResponse<out Unit> {
   val uri = getMergeRequestDraftNotesUri(project, mrIid).resolveRelative("bulk_publish")
   val request = request(uri).POST(BodyPublishers.noBody()).build()
@@ -68,9 +71,11 @@ suspend fun GitLabApi.Rest.submitDraftNotes(project: GitLabProjectCoordinates,
 }
 
 @SinceGitLab("15.10")
-suspend fun GitLabApi.Rest.submitSingleDraftNote(project: GitLabProjectCoordinates,
-                                                 mrIid: String,
-                                                 noteId: Long): HttpResponse<out Unit> {
+suspend fun GitLabApi.Rest.submitSingleDraftNote(
+  project: GitLabProjectCoordinates,
+  mrIid: String,
+  noteId: Long,
+): HttpResponse<out Unit> {
   val uri = getSpecificMergeRequestDraftNoteUri(project, mrIid, noteId.toString()).resolveRelative("publish")
   val request = request(uri).PUT(BodyPublishers.noBody()).build()
   return withErrorStats(GitLabApiRequestName.REST_SUBMIT_SINGLE_DRAFT_NOTE) {
@@ -79,10 +84,12 @@ suspend fun GitLabApi.Rest.submitSingleDraftNote(project: GitLabProjectCoordinat
 }
 
 @SinceGitLab("16.3")
-suspend fun GitLabApi.Rest.addDraftReplyNote(project: GitLabProjectCoordinates,
-                                             mrIid: String,
-                                             discussionId: String,
-                                             body: String): HttpResponse<out GitLabMergeRequestDraftNoteRestDTO> {
+suspend fun GitLabApi.Rest.addDraftReplyNote(
+  project: GitLabProjectCoordinates,
+  mrIid: String,
+  discussionId: String,
+  body: String,
+): HttpResponse<out GitLabMergeRequestDraftNoteRestDTO> {
   val params = listOfNotNull(
     "note" to body,
     "in_reply_to_discussion_id" to discussionId
@@ -96,11 +103,13 @@ suspend fun GitLabApi.Rest.addDraftReplyNote(project: GitLabProjectCoordinates,
 }
 
 @SinceGitLab("15.10")
-suspend fun GitLabApi.Rest.addDraftNote(project: GitLabProjectCoordinates,
-                                        mrIid: String,
-                                        @SinceGitLab("16.3")
-                                        positionOrNull: GitLabDiffPositionInput?,
-                                        body: String): HttpResponse<out GitLabMergeRequestDraftNoteRestDTO> {
+suspend fun GitLabApi.Rest.addDraftNote(
+  project: GitLabProjectCoordinates,
+  mrIid: String,
+  @SinceGitLab("16.3")
+  positionOrNull: GitLabDiffPositionInput?,
+  body: String,
+): HttpResponse<out GitLabMergeRequestDraftNoteRestDTO> {
   val params = mapOf(
     "note" to body,
   ) + (positionOrNull?.let(::createPositionParameters) ?: mapOf())

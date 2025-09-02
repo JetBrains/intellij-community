@@ -1,13 +1,13 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.util;
 
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.ui.NameSuggestionsGenerator;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -54,7 +54,7 @@ public final class JavaNameSuggestionUtil {
   public static String[] appendUnresolvedExprName(String[] names, final PsiExpression expr) {
     if (expr instanceof PsiReferenceExpression && ((PsiReferenceExpression)expr).resolve() == null) {
       final String name = expr.getText();
-      if (PsiNameHelper.getInstance(expr.getProject()).isIdentifier(name, LanguageLevel.HIGHEST)) {
+      if (PsiNameHelper.getInstance(expr.getProject()).isIdentifier(name, PsiUtil.getLanguageLevel(expr))) {
         names = ArrayUtil.mergeArrays(new String[]{name}, names);
       }
     }

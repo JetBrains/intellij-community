@@ -7,6 +7,8 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector;
 import com.intellij.ide.plugins.marketplace.statistics.enums.DialogAcceptanceResultEnum;
+import com.intellij.ide.plugins.newui.PluginUiModel;
+import com.intellij.ide.plugins.newui.UiPluginManager;
 import com.intellij.idea.AppMode;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
@@ -169,30 +171,19 @@ public final class PluginManagerMain {
     }
   }
 
-  public static final class MyHyperlinkListener extends HyperlinkAdapter {
-    @Override
-    protected void hyperlinkActivated(@NotNull HyperlinkEvent e) {
-      JEditorPane pane = (JEditorPane)e.getSource();
-      if (e instanceof HTMLFrameHyperlinkEvent) {
-        HTMLDocument doc = (HTMLDocument)pane.getDocument();
-        doc.processHTMLFrameHyperlinkEvent((HTMLFrameHyperlinkEvent)e);
-      }
-      else {
-        URL url = e.getURL();
-        if (url != null) {
-          BrowserUtil.browse(url);
-        }
-      }
-    }
+  public static boolean suggestToEnableInstalledDependantPlugins(@NotNull com.intellij.ide.plugins.PluginEnabler pluginEnabler,
+                                                                 @NotNull List<? extends IdeaPluginDescriptor> list) {
+    return suggestToEnableInstalledDependantPlugins(pluginEnabler, list, null);
   }
 
   public static boolean suggestToEnableInstalledDependantPlugins(@NotNull com.intellij.ide.plugins.PluginEnabler pluginEnabler,
-                                                                 @NotNull List<? extends IdeaPluginDescriptor> list) {
+                                                                 @NotNull List<? extends IdeaPluginDescriptor> list,
+                                                                 @Nullable Boolean isUpdate) {
     Set<IdeaPluginDescriptor> disabled = new HashSet<>();
     Set<IdeaPluginDescriptor> disabledDependants = new HashSet<>();
     for (IdeaPluginDescriptor node : list) {
       PluginId pluginId = node.getPluginId();
-      if (pluginEnabler.isDisabled(pluginId)) {
+      if (pluginEnabler.isDisabled(pluginId) && (isUpdate == null || isUpdate)) {
         disabled.add(node);
       }
       for (IdeaPluginDependency dependency : node.getDependencies()) {
@@ -202,14 +193,14 @@ public final class PluginManagerMain {
 
         PluginId dependantId = dependency.getPluginId();
         // If there is no installed plugin implementing the module, then it can only be a platform module that cannot be disabled
-        if (PluginManagerCore.isModuleDependency(dependantId) &&
-            PluginManagerCore.INSTANCE.findPluginByModuleDependency(dependantId) == null) {
+        if (PluginManagerCore.looksLikePlatformPluginAlias(dependantId) &&
+            PluginManagerCore.findPluginByPlatformAlias(dependantId) == null) { //TODO Denis Zaichenko move to backend
           continue;
         }
 
-        IdeaPluginDescriptor pluginDescriptor = PluginManagerCore.getPlugin(dependantId);
-        if (pluginDescriptor != null && pluginEnabler.isDisabled(dependantId)) {
-          disabledDependants.add(pluginDescriptor);
+        PluginUiModel pluginUiModel = UiPluginManager.getInstance().getPlugin(dependantId);
+        if (pluginUiModel != null && pluginEnabler.isDisabled(dependantId)) {
+          disabledDependants.add(pluginUiModel.getDescriptor());
         }
       }
     }
@@ -359,7 +350,7 @@ public final class PluginManagerMain {
 
     if (AppMode.isHeadless()) {
       // postponing the dialog till the next start
-      PluginManagerCore.writeThirdPartyPluginsIds(ContainerUtil.map(aliens, IdeaPluginDescriptor::getPluginId));
+      ThirdPartyPluginsWithoutConsentFile.appendAliens(ContainerUtil.map(aliens, IdeaPluginDescriptor::getPluginId));
       return true;
     }
 
@@ -378,6 +369,27 @@ public final class PluginManagerMain {
     else {
       PluginManagerUsageCollector.thirdPartyAcceptanceCheck(DialogAcceptanceResultEnum.DECLINED);
       return false;
+    }
+  }
+
+  /**
+   * @deprecated this class does not relate to PluginManager. Reimplement at use site. Also, see other implementations of HyperlinkAdapter.
+   */
+  @Deprecated(forRemoval = true)
+  public static final class MyHyperlinkListener extends HyperlinkAdapter {
+    @Override
+    protected void hyperlinkActivated(@NotNull HyperlinkEvent e) {
+      JEditorPane pane = (JEditorPane)e.getSource();
+      if (e instanceof HTMLFrameHyperlinkEvent) {
+        HTMLDocument doc = (HTMLDocument)pane.getDocument();
+        doc.processHTMLFrameHyperlinkEvent((HTMLFrameHyperlinkEvent)e);
+      }
+      else {
+        URL url = e.getURL();
+        if (url != null) {
+          BrowserUtil.browse(url);
+        }
+      }
     }
   }
 }

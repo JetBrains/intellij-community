@@ -68,7 +68,7 @@ class PsiBasedClassResolver @TestOnly constructor(private val targetClassFqName:
                 {
                     CachedValueProvider.Result(
                         PsiBasedClassResolver(target),
-                        KotlinModificationTrackerFactory.getInstance(target.project).createProjectWideOutOfBlockModificationTracker(),
+                        KotlinModificationTrackerFactory.getInstance(target.project).createProjectWideSourceModificationTracker(),
                     )
                 }, false
             )

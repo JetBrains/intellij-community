@@ -56,6 +56,7 @@ public abstract class SLRUCache<K, V> extends SLRUMap<K, V> {
   /**
    * @deprecated Use Caffeine.
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static @NotNull <K, V> SLRUCache<K, V> create(
     int protectedQueueSize,

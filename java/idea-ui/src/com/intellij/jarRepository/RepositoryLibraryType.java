@@ -23,7 +23,7 @@ public class RepositoryLibraryType extends LibraryType<RepositoryLibraryProperti
   public static final LibraryTypeId LIBRARY_TYPE_ID = new LibraryTypeId("repository");
 
   public static final PersistentLibraryKind<RepositoryLibraryProperties>
-    REPOSITORY_LIBRARY_KIND = new PersistentLibraryKind<>("repository") {
+    REPOSITORY_LIBRARY_KIND = new PersistentLibraryKind<>(LIBRARY_TYPE_ID.getName()) {
     @Override
     public @NotNull RepositoryLibraryProperties createDefaultProperties() {
       return new RepositoryLibraryProperties();

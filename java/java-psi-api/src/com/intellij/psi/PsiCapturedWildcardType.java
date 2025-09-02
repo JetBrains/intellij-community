@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
+import com.intellij.codeInsight.TypeNullability;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
@@ -13,6 +14,7 @@ public final class PsiCapturedWildcardType extends PsiType.Stub {
   private final @NotNull PsiWildcardType myExistential;
   private final @NotNull PsiElement myContext;
   private final @Nullable PsiTypeParameter myParameter;
+  private @Nullable TypeNullability myNullability;
 
   private PsiType myUpperBound;
 
@@ -23,17 +25,19 @@ public final class PsiCapturedWildcardType extends PsiType.Stub {
   public static @NotNull PsiCapturedWildcardType create(@NotNull PsiWildcardType existential,
                                                         @NotNull PsiElement context,
                                                         @Nullable PsiTypeParameter parameter) {
-    return new PsiCapturedWildcardType(existential, context, parameter);
+    return new PsiCapturedWildcardType(existential, context, parameter, null);
   }
 
   private PsiCapturedWildcardType(@NotNull PsiWildcardType existential,
                                   @NotNull PsiElement context,
-                                  @Nullable PsiTypeParameter parameter) {
+                                  @Nullable PsiTypeParameter parameter, 
+                                  @Nullable TypeNullability nullability) {
     super(TypeAnnotationProvider.EMPTY);
     myExistential = existential;
     myContext = context;
     myParameter = parameter;
-    myUpperBound = PsiType.getJavaLangObject(myContext.getManager(), getResolveScope());
+    myUpperBound = getJavaLangObject(myContext.getManager(), getResolveScope());
+    myNullability = nullability;
   }
 
   private static final RecursionGuard<Object> guard = RecursionManager.createGuard("captureGuard");
@@ -83,6 +87,21 @@ public final class PsiCapturedWildcardType extends PsiType.Stub {
 
   private static PsiType getGreatestLowerBound(PsiType glb, PsiType bound, PsiWildcardType guardObject) {
     return guard.doPreventingRecursion(guardObject, true, () -> GenericsUtil.getGreatestLowerBound(glb, bound));
+  }
+
+  @Override
+  public @NotNull TypeNullability getNullability() {
+    if (myNullability == null) {
+      myNullability = myExistential.getNullability();
+    }
+    return myNullability;
+  }
+
+  @Override
+  public @NotNull PsiType withNullability(@NotNull TypeNullability nullability) {
+    PsiCapturedWildcardType type = new PsiCapturedWildcardType(myExistential, myContext, myParameter, nullability);
+    type.setUpperBound(myUpperBound);
+    return type;
   }
 
   @Override

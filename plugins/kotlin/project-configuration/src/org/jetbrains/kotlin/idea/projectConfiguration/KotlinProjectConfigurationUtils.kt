@@ -154,7 +154,9 @@ private fun ApiVersion.toMavenArtifactVersion(project: Project): String? {
     object : Task.Modal(project, KotlinProjectConfigurationBundle.message("fetching.available.maven.versions.title"), true) {
         override fun run(indicator: ProgressIndicator) {
             val repositoryLibraryProperties = LibraryJarDescriptor.RUNTIME_JDK8_JAR.repositoryLibraryProperties
-            val version: Version? = ArtifactRepositoryManager(JarRepositoryManager.getLocalRepositoryPath()).getAvailableVersions(
+            val version: Version? = ArtifactRepositoryManager(
+                JarRepositoryManager.getJPSLocalMavenRepositoryForIdeaProject(project).toFile()
+            ).getAvailableVersions(
                 repositoryLibraryProperties.groupId,
                 repositoryLibraryProperties.artifactId,
                 "[${apiVersion.versionString},)",
@@ -173,7 +175,8 @@ fun askUpdateRuntime(module: Module, requiredVersion: ApiVersion): Boolean {
 
 fun updateLibraries(project: Project, upToMavenVersion: String, libraries: Collection<Library>) {
     if (project.modules.any { module -> module.buildSystemType != BuildSystemType.JPS }) {
-        val message = KotlinProjectConfigurationBundle.message("automatic.library.version.update.for.maven.and.gradle.projects.is.currently.unsupported.please.update.your.build.scripts.manually")
+        val message =
+            KotlinProjectConfigurationBundle.message("automatic.library.version.update.for.maven.and.gradle.projects.is.currently.unsupported.please.update.your.build.scripts.manually")
         val title = KotlinProjectConfigurationBundle.message("update.kotlin.runtime.library")
         Messages.showMessageDialog(project, message, title, Messages.getErrorIcon())
         return

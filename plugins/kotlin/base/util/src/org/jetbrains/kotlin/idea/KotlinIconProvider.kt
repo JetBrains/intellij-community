@@ -69,7 +69,7 @@ abstract class KotlinIconProvider : IconProvider(), DumbAware {
 
             val withExpectedActual: Icon = try {
                 result.addExpectActualMarker(psiElement)
-            } catch (indexNotReady: IndexNotReadyException) {
+            } catch (_: IndexNotReadyException) {
                 result
             }
 
@@ -79,7 +79,7 @@ abstract class KotlinIconProvider : IconProvider(), DumbAware {
     }
 
     companion object {
-        fun isSingleClassFile(file: KtFile) = getSingleClass(file) != null
+        fun isSingleClassFile(file: KtFile): Boolean = getSingleClass(file) != null
 
         fun getSingleClass(file: KtFile): KtClassOrObject? {
             var targetDeclaration: KtDeclaration? = null
@@ -139,10 +139,21 @@ abstract class KotlinIconProvider : IconProvider(), DumbAware {
                 receiverTypeReference != null ->
                     if (KtPsiUtil.isAbstract(this)) ABSTRACT_EXTENSION_FUNCTION else EXTENSION_FUNCTION
                 getStrictParentOfType<KtNamedDeclaration>() is KtClass ->
-                    if (KtPsiUtil.isAbstract(this)) PlatformIcons.ABSTRACT_METHOD_ICON else
-                        IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Method)
+                    if (KtPsiUtil.isAbstract(this)) {
+                        PlatformIcons.ABSTRACT_METHOD_ICON
+                    } else {
+                        if (this.modifierList?.hasModifier(KtTokens.SUSPEND_KEYWORD) == true) {
+                            SUSPEND_METHOD
+                        } else {
+                            IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Method)
+                        }
+                    }
                 else ->
-                    FUNCTION
+                    if (this.modifierList?.hasModifier(KtTokens.SUSPEND_KEYWORD) == true) {
+                        SUSPEND_FUNCTION
+                    } else {
+                        FUNCTION
+                    }
             }
             is KtConstructor<*> -> IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Method)
             is KtLightMethod -> when(val u = unwrapped) {

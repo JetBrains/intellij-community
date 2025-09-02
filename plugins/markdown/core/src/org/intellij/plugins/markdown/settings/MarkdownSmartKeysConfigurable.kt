@@ -31,8 +31,6 @@ internal class MarkdownSmartKeysConfigurable: UiDslUnnamedConfigurable.Simple(),
   }
 
   override fun Panel.createContent() {
-    useNewComboBoxRenderer()
-
     group(title = MarkdownBundle.message("markdown.smart.keys.configurable.tables.group.name")) {
       row {
         checkBox(MarkdownBundle.message("markdown.smart.keys.configurable.tables.reformat.on.type"))

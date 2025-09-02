@@ -34,7 +34,9 @@ internal class K2ComposablePropertyCallHighlightingTestCase: ComposablePropertyC
         "Call was not found!"
       }
 
-      ext.highlightCall(element, call)
+      with(ext) {
+        highlightCall(element, call)
+      }
     }
   }
 }

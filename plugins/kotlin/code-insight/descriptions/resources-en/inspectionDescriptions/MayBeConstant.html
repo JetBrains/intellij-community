@@ -14,5 +14,6 @@ for better performance and Java interoperability.
       const val foo = 1
   }
 </code></pre>
+<b>For library authors:</b> using const for public API symbols is dangerous as two different values may be used if the compile-time version of the library is not the same as the run-time version of the library. Use with caution.
 </body>
 </html>

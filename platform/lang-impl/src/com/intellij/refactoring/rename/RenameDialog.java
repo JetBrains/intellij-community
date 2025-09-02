@@ -180,10 +180,13 @@ public class RenameDialog extends RefactoringDialog implements RenameRefactoring
     if (initialName != null) {
       result.add(initialName);
     }
-    result.addAll(myPredefinedSuggestedNames);
-    result.add(UsageViewUtil.getShortName(myPsiElement));
     mySuggestedNameInfo = ActionUtil.underModalProgress(myProject, RefactoringBundle.message("progress.title.collecting.suggested.names"),
-                                                        () -> NameSuggestionProvider.suggestNames(myPsiElement, myNameSuggestionContext, result));
+                                                        () -> {
+                                                          result.addAll(myPredefinedSuggestedNames);
+                                                          result.add(UsageViewUtil.getShortName(myPsiElement));
+                                                          return NameSuggestionProvider.suggestNames(myPsiElement, myNameSuggestionContext,
+                                                                                                     result);
+                                                        });
     return ArrayUtilRt.toStringArray(result);
   }
 

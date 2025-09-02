@@ -3,10 +3,12 @@ package com.intellij.ide.plugins;
 
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector;
+import com.intellij.ide.plugins.newui.PluginUiModel;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,7 +32,7 @@ public final class InstalledPluginsState {
   }
 
   private final Object myLock = new Object();
-  private final Map<PluginId, IdeaPluginDescriptor> myInstalledPlugins = new IdentityHashMap<>();
+  private final Map<PluginId, IdeaPluginDescriptor> myInstalledPlugins = new HashMap<>();
   private final Set<PluginId> myInstalledWithoutRestartPlugins = new HashSet<>();
   private final Set<PluginId> myUpdatedPlugins = new HashSet<>();
   private final Set<PluginId> myUpdatedWithoutRestartPlugins = new HashSet<>();
@@ -68,6 +70,12 @@ public final class InstalledPluginsState {
     }
   }
 
+  public @NotNull Collection<PluginId> getInstalledWithoutRestartPlugins() {
+    synchronized (myLock) {
+      return Collections.unmodifiableCollection(myInstalledWithoutRestartPlugins);
+    }
+  }
+
   public @NotNull Collection<PluginId> getUpdatedPlugins() {
     synchronized (myLock) {
       return Collections.unmodifiableCollection(myUpdatedPlugins);
@@ -80,6 +88,9 @@ public final class InstalledPluginsState {
     }
   }
 
+  /**
+   * @return whether a plugin with a given id was installed during this IDE session, it required a restart, and it was not an update of an existing plugin.
+   */
   public boolean wasInstalled(@NotNull PluginId id) {
     synchronized (myLock) {
       return myInstalledPlugins.containsKey(id);
@@ -113,14 +124,15 @@ public final class InstalledPluginsState {
   /**
    * Should be called whenever a list of plugins is loaded from a repository to check if there is an updated version.
    */
-  public void onDescriptorDownload(@NotNull IdeaPluginDescriptor descriptor) {
+  @ApiStatus.Internal
+  public void onDescriptorDownload(@NotNull PluginUiModel descriptor) {
     PluginId id = descriptor.getPluginId();
     IdeaPluginDescriptor existing = PluginManagerCore.getPlugin(id);
     if (existing == null || (existing.isBundled() && !existing.allowBundledUpdate()) || wasUpdated(id)) {
       return;
     }
 
-    boolean supersedes = PluginManagerCore.isCompatible(descriptor) &&
+    boolean supersedes = PluginManagerCore.isCompatible(descriptor.getDescriptor()) &&
                          PluginDownloader.compareVersionsSkipBrokenAndIncompatible(descriptor.getVersion(), existing) > 0;
 
     String idString = id.getIdString();
@@ -134,9 +146,11 @@ public final class InstalledPluginsState {
       }
     }
   }
+
   /**
    * Should be called whenever a new plugin is installed or an existing one is updated.
    */
+  @ApiStatus.Internal
   public void onPluginInstall(@NotNull IdeaPluginDescriptor descriptor, boolean isUpdate, boolean restartNeeded) {
     PluginId id = descriptor.getPluginId();
     synchronized (myLock) {
@@ -160,6 +174,7 @@ public final class InstalledPluginsState {
   }
 
 
+  @ApiStatus.Internal
   public void onPluginUninstall(@NotNull IdeaPluginDescriptor descriptor,
                                 boolean isDynamicallyUnloadable) {
     PluginId id = descriptor.getPluginId();
@@ -171,6 +186,7 @@ public final class InstalledPluginsState {
     PluginManagerUsageCollector.pluginRemoved(id);
   }
 
+  @ApiStatus.Internal
   public void resetChangesAppliedWithoutRestart() {
     // The plugins configurable may be recreated when installing a plugin that registers any configurables,
     // and this leads to a call of disposeUIResources() that lands here. In this case we must not forget
@@ -181,6 +197,7 @@ public final class InstalledPluginsState {
     }
   }
 
+  @ApiStatus.Internal
   public void trackPluginInstallation(Runnable runnable) {
     myInstallationInProgress = true;
     try {
@@ -191,16 +208,19 @@ public final class InstalledPluginsState {
     }
   }
 
+  @ApiStatus.Internal
   public void setShutdownCallback(Runnable runnable) {
     if (myShutdownCallback == null) {
       myShutdownCallback = runnable;
     }
   }
 
+  @ApiStatus.Internal
   public void clearShutdownCallback() {
     myShutdownCallback = null;
   }
 
+  @ApiStatus.Internal
   public void runShutdownCallback() {
     if (myShutdownCallback != null) {
       myShutdownCallback.run();
@@ -212,6 +232,7 @@ public final class InstalledPluginsState {
     return myRestartRequired;
   }
 
+  @ApiStatus.Internal
   public void setRestartRequired(boolean restartRequired) {
     myRestartRequired = restartRequired;
   }

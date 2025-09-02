@@ -1,9 +1,7 @@
 from collections.abc import Sequence
 from html.parser import HTMLParser
 from re import Pattern
-from typing import Any
-
-from typing_extensions import TypeAlias
+from typing import Any, TypeAlias
 
 ASCII_WHITESPACE: Pattern[str]
 BOOLEAN_ATTRIBUTES: set[str]

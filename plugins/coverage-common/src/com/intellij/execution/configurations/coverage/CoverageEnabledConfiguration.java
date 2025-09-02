@@ -110,7 +110,7 @@ public abstract class CoverageEnabledConfiguration implements JDOMExternalizable
   /**
    * @deprecated Moved to coverage settings.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public boolean isCoverageEnabled() {
     return myIsCoverageEnabled;
   }
@@ -126,7 +126,7 @@ public abstract class CoverageEnabledConfiguration implements JDOMExternalizable
   /**
    * @deprecated Moved to coverage settings.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public boolean isBranchCoverageEnabled() {
     return myBranchCoverage;
   }
@@ -134,7 +134,7 @@ public abstract class CoverageEnabledConfiguration implements JDOMExternalizable
   /**
    * @deprecated Moved to coverage settings.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void setBranchCoverage(final boolean branchCoverage) {
     myBranchCoverage = branchCoverage;
   }
@@ -142,7 +142,7 @@ public abstract class CoverageEnabledConfiguration implements JDOMExternalizable
   /**
    * @deprecated Moved to coverage settings.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public boolean isTrackPerTestCoverage() {
     return myTrackPerTestCoverage;
   }
@@ -151,7 +151,7 @@ public abstract class CoverageEnabledConfiguration implements JDOMExternalizable
    * @deprecated Moved to coverage settings.
    */
   @ApiStatus.Internal
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void setTrackPerTestCoverage(final boolean testTracking) {
     myTrackPerTestCoverage = testTracking;
   }

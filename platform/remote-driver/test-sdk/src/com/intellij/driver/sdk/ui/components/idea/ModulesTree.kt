@@ -1,5 +1,6 @@
 package com.intellij.driver.sdk.ui.components.idea
 
+import com.intellij.driver.model.TreePath
 import com.intellij.driver.sdk.ui.components.elements.JTreeUiComponent
 import com.intellij.driver.sdk.ui.components.elements.tree
 import kotlin.time.Duration.Companion.seconds
@@ -9,9 +10,26 @@ fun ProjectStructureUI.modulesTree(): ModulesTree {
 }
 
 class ModulesTree(private val tree: JTreeUiComponent) {
+  val selectedPaths: List<TreePath>
+    get() = tree.collectSelectedPaths()
 
-  fun selectModule(moduleName: String) {
-    tree.clickPath(*moduleName.split(".").toTypedArray())
+  fun expandByPath(path: String, fullMatch: Boolean = true) {
+    val segments = path.split(".",).filter { it.isNotEmpty() }.toTypedArray()
+    tree.expandPath(
+      *segments,
+      fullMatch = fullMatch
+    )
+  }
+
+  fun selectModule(moduleName: String, fullMatch: Boolean = true) {
+    val segments = moduleName.split(".",).filter { it.isNotEmpty() }.toTypedArray()
+      .takeIf { it.isNotEmpty() } ?: return
+
+    tree.waitOneText(segments.first())
+    tree.clickPath(
+      *segments,
+      fullMatch = fullMatch
+    )
   }
 
   fun forEachModule(action: () -> Unit) {

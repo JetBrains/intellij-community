@@ -1,4 +1,4 @@
-// "Convert to record class" "true"
+// "Convert to record class" "true-preview"
 record R(int first, int second) {
     // third field
     static int third = 1;

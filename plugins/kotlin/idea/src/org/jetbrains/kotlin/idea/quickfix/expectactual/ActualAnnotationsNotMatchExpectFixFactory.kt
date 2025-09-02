@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.quickfix.expectactual
 
 import com.intellij.codeInsight.intention.IntentionAction
@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
 import org.jetbrains.kotlin.diagnostics.Errors
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixActionBase
 import org.jetbrains.kotlin.idea.quickfix.ActualAnnotationsNotMatchExpectFixFactoryCommon
 import org.jetbrains.kotlin.idea.quickfix.KotlinIntentionActionsFactory
 import org.jetbrains.kotlin.load.kotlin.toSourceElement
@@ -33,7 +32,7 @@ internal object ActualAnnotationsNotMatchExpectFixFactory : KotlinIntentionActio
         val removeAnnotationFix =
             ActualAnnotationsNotMatchExpectFixFactoryCommon.createRemoveAnnotationFromExpectFix(expectAnnotationEntry)
 
-        return listOfNotNull(removeAnnotationFix) +
+        return listOfNotNull(removeAnnotationFix?.asIntention()) +
                 createCopyAndReplaceAnnotationFixes(expectAnnotationEntry, castedDiagnostic.a, castedDiagnostic.b,
                                                     castedDiagnostic.c, incompatibilityType)
     }
@@ -44,7 +43,7 @@ internal object ActualAnnotationsNotMatchExpectFixFactory : KotlinIntentionActio
         actualDeclarationDescriptor: DeclarationDescriptor,
         actualAnnotationTargetSourceElement: Optional<SourceElement>,
         incompatibilityType: ExpectActualAnnotationsIncompatibilityType<AnnotationDescriptor>,
-    ): List<QuickFixActionBase<*>> {
+    ): List<IntentionAction> {
         val expectDeclaration = expectDeclarationDescriptor.toSourceElement.getPsi() as? KtNamedDeclaration ?: return emptyList()
         val actualDeclaration = actualDeclarationDescriptor.toSourceElement.getPsi() as? KtNamedDeclaration ?: return emptyList()
         val mappedIncompatibilityType = incompatibilityType.mapAnnotationType {
@@ -58,7 +57,7 @@ internal object ActualAnnotationsNotMatchExpectFixFactory : KotlinIntentionActio
             actualAnnotationTargetSourceElement.orElse(null)?.getPsi(),
             mappedIncompatibilityType,
             annotationClassIdProvider = { getAnnotationClassId(expectAnnotationEntry) }
-        )
+        ).map { it.asIntention() }
     }
 
     private fun getAnnotationClassId(annotationEntry: KtAnnotationEntry): ClassId? {

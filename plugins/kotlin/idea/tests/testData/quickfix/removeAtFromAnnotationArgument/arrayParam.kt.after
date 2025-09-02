@@ -8,6 +8,4 @@ annotation class X(val value: Array<Y>)
 fun foo() {
 }
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveAtFromAnnotationArgument
-// IGNORE_K2
-// KT-72831
-// KTIJ-31896
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveAtFromAnnotationArgument

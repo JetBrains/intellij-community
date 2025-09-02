@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.smart
 
 import com.intellij.codeInsight.editorActions.moveUpDown.LineMover
@@ -12,12 +13,9 @@ import org.jetbrains.yaml.YAMLElementTypes
 import org.jetbrains.yaml.YAMLLanguage
 import org.jetbrains.yaml.psi.impl.YAMLBlockMappingImpl
 import org.jetbrains.yaml.psi.impl.YAMLBlockSequenceImpl
-import org.jetbrains.yaml.settingsSync.shouldDoNothingInBackendMode
 
 class YAMLStatementMover : LineMover() {
   override fun checkAvailable(editor: Editor, file: PsiFile, info: MoveInfo, down: Boolean): Boolean {
-    if (shouldDoNothingInBackendMode()) return false
-
     if (!file.viewProvider.hasLanguage(YAMLLanguage.INSTANCE)) return false
     val offset = editor.caretModel.offset
     val selectionModel = editor.selectionModel

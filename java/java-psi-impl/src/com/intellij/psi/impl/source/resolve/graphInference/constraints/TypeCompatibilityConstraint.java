@@ -32,8 +32,8 @@ public class TypeCompatibilityConstraint implements ConstraintFormula {
   private PsiType myS;
 
   public TypeCompatibilityConstraint(@NotNull PsiType t, @NotNull PsiType s) {
-    myT = t.annotate(TypeAnnotationProvider.EMPTY);
-    myS = s.annotate(TypeAnnotationProvider.EMPTY);
+    myT = t;
+    myS = s;
   }
 
   @Override
@@ -131,17 +131,13 @@ public class TypeCompatibilityConstraint implements ConstraintFormula {
     if (o == null || getClass() != o.getClass()) return false;
 
     TypeCompatibilityConstraint that = (TypeCompatibilityConstraint)o;
-
-    if (!myS.equals(that.myS)) return false;
-    if (!myT.equals(that.myT)) return false;
-
-    return true;
+    return ConstraintUtil.typesEqual(myS, that.myS) && ConstraintUtil.typesEqual(myT, that.myT);
   }
 
   @Override
   public int hashCode() {
-    int result = myT.hashCode();
-    result = 31 * result + myS.hashCode();
+    int result = ConstraintUtil.typeHashCode(myT);
+    result = 31 * result + ConstraintUtil.typeHashCode(myS);
     return result;
   }
 

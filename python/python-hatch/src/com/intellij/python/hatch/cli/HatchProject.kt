@@ -1,9 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.hatch.cli
 
+import com.intellij.platform.eel.provider.utils.stdoutString
 import com.intellij.python.hatch.runtime.HatchRuntime
 import com.jetbrains.python.Result
-import com.jetbrains.python.errorProcessing.PyError.ExecException
+import com.jetbrains.python.errorProcessing.PyExecResult
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -61,9 +62,9 @@ class HatchProject(runtime: HatchRuntime) : HatchCommand("project", runtime) {
   /**
    * Display project metadata
    */
-  suspend fun metadata(): Result<Metadata, ExecException> {
+  suspend fun metadata(): PyExecResult<Metadata> {
     return executeAndHandleErrors("metadata") { processOutput ->
-      val output = processOutput.takeIf { it.exitCode == 0 }?.stdout
+      val output = processOutput.takeIf { it.exitCode == 0 }?.stdoutString
                    ?: return@executeAndHandleErrors Result.failure(null)
 
       val json = Json { ignoreUnknownKeys = true }

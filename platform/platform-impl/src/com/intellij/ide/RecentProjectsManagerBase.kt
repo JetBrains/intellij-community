@@ -4,6 +4,7 @@
 package com.intellij.ide
 
 import com.intellij.diagnostic.runActivity
+import com.intellij.ide.RecentProjectsManager.RecentProjectsChange
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.impl.ProjectUtil.isSameProject
@@ -12,7 +13,10 @@ import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.ide.vcs.RecentProjectsBranchesProvider
 import com.intellij.idea.AppMode
 import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.appSystemDir
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.*
@@ -23,13 +27,12 @@ import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
-import com.intellij.openapi.project.ProjectCoreUtil
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.ProjectStorePathManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
-import com.intellij.openapi.project.impl.OpenProjectImplOptions
 import com.intellij.openapi.project.impl.createIdeFrame
-import com.intellij.openapi.project.impl.frame
 import com.intellij.openapi.util.ModificationTracker
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.util.registry.Registry
@@ -40,10 +43,15 @@ import com.intellij.openapi.wm.impl.*
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.eel.provider.EelInitialization
+import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
 import com.intellij.project.stateStore
+import com.intellij.ui.mac.createMacDelegate
+import com.intellij.ui.win.createWinDockDelegate
 import com.intellij.util.PathUtilRt
 import com.intellij.util.PlatformUtils
+import com.intellij.util.application
 import com.intellij.util.io.createParentDirectories
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
@@ -65,6 +73,7 @@ import java.util.concurrent.atomic.LongAdder
 import javax.swing.Icon
 import javax.swing.JFrame
 import kotlin.collections.Map.Entry
+import kotlin.io.path.Path
 import kotlin.io.path.exists
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.relativeTo
@@ -100,6 +109,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
   private val disableUpdatingRecentInfo = AtomicBoolean()
 
   private val nameResolveRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  private val updateDockRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   private val stateLock = Any()
   private var state = RecentProjectManagerState()
@@ -119,12 +129,48 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
           }
         }
     }
+
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment) {
+      coroutineScope.launch {
+        val delegate = when {
+                         SystemInfoRt.isMac -> createMacDelegate()
+                         SystemInfoRt.isWindows -> createWinDockDelegate()
+                         else -> null
+                       } ?: return@launch
+
+        updateDockRequests
+          .debounce(50.milliseconds)
+          .collectLatest {
+            runActivity("system dock menu") {
+              runCatching {
+                delegate.updateRecentProjectsMenu()
+              }.getOrLogException(LOG)
+            }
+          }
+      }
+    }
+
+    application.messageBus.connect().subscribe(RecentProjectsManager.RECENT_PROJECTS_CHANGE_TOPIC, object : RecentProjectsChange {
+      override fun change() {
+        updateSystemDockMenu()
+      }
+    })
+  }
+
+  private fun updateSystemDockMenu() {
+    check(updateDockRequests.tryEmit(Unit))
   }
 
   final override fun getState(): RecentProjectManagerState = state
 
-  internal fun getProjectMetaInfo(projectStoreBaseDir: Path): RecentProjectMetaInfo? {
+  @Internal
+  fun getProjectMetaInfo(projectStoreBaseDir: Path): RecentProjectMetaInfo? {
     val path = getProjectPath(projectStoreBaseDir) ?: return null
+    return getProjectMetaInfo(path)
+  }
+
+  @Internal
+  fun getProjectMetaInfo(path: String): RecentProjectMetaInfo? {
     synchronized(stateLock) {
       return state.additionalInfo.get(path)
     }
@@ -205,6 +251,8 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
         state.recentPaths.clear()
       }
     }
+
+    updateSystemDockMenu()
   }
 
   override fun removePath(path: String) {
@@ -403,11 +451,11 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
   }
 
   @Internal
-  suspend fun projectOpened(project: Project) {
+  fun projectOpened(project: Project) {
     projectOpened(project, System.currentTimeMillis())
   }
 
-  internal suspend fun projectOpened(project: Project, openTimestamp: Long) {
+  internal fun projectOpened(project: Project, openTimestamp: Long) {
     if (disableUpdatingRecentInfo.get() || LightEdit.owns(project)) {
       return
     }
@@ -424,9 +472,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
       validateRecentProjects(modCounter, state.additionalInfo)
     }
 
-    withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-      updateSystemDockMenu()
-    }
+    updateSystemDockMenu()
   }
 
   @Internal
@@ -460,7 +506,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
       synchronized(manager.stateLock) {
         manager.state.additionalInfo.get(manager.getProjectPath(project))?.opened = false
       }
-      updateSystemDockMenu()
+      manager.updateSystemDockMenu()
     }
   }
 
@@ -483,8 +529,8 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
     }
   }
 
-  fun getCurrentBranchName(path: String): String? {
-    return RecentProjectsBranchesProvider.getCurrentBranch(path)
+  fun getCurrentBranch(path: String, nameIsDistinct: Boolean): String? {
+    return RecentProjectsBranchesProvider.getCurrentBranch(path, nameIsDistinct)
   }
 
   fun getProjectName(path: String): String {
@@ -506,9 +552,9 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
     }
   }
 
-  override fun willReopenProjectOnStart(): Boolean {
+  override suspend fun willReopenProjectOnStart(): Boolean {
     if (!synchronized(stateLock) { state.forceReopenProjects }
-        && (!GeneralSettings.getInstance().isReopenLastProject || AppMode.isDontReopenProjects())) {
+        && (!serviceAsync<GeneralSettings>().isReopenLastProject || AppMode.isDontReopenProjects())) {
       return false
     }
 
@@ -567,9 +613,11 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
     return ApplicationManager.getApplication().isHeadlessEnvironment || WindowManagerEx.getInstanceEx().getFrameHelper(null) != null
   }
 
-  private suspend fun openOneByOne(openPaths: List<Entry<String, RecentProjectMetaInfo>>,
-                                   index: Int,
-                                   someProjectWasOpened: Boolean): Boolean {
+  private suspend fun openOneByOne(
+    openPaths: List<Entry<String, RecentProjectMetaInfo>>,
+    index: Int,
+    someProjectWasOpened: Boolean,
+  ): Boolean {
     val (key, value) = openPaths.get(index)
     EelInitialization.runEelInitialization(key)
     val project = openProject(projectFile = Path.of(key), options = OpenProjectTask {
@@ -626,8 +674,19 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
     }
 
     val projectManager = ProjectManagerEx.getInstanceEx()
-    for ((path, options) in taskList) {
-      projectManager.openProjectAsync(path, options)
+    try {
+      val iterator = taskList.iterator()
+      while (iterator.hasNext()) {
+        val (path, options) = iterator.next()
+        projectManager.openProjectAsync(path, options)
+        iterator.remove()
+      }
+    }
+    finally {
+      // cleanup unused pre-allocated frames if the operation failed or was canceled
+      for (task in taskList) {
+        task.second.frame?.dispose()
+      }
     }
     return true
   }
@@ -641,10 +700,16 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
    */
   fun setProjectHidden(project: Project, hidden: Boolean) {
     val path = getProjectPath(project) ?: return
-    val info = state.additionalInfo.get(path) ?: return
-    val oldHidden = info.hidden
-    info.hidden = hidden
-    if (oldHidden != hidden) {
+    synchronized(stateLock) {
+      val info = state.additionalInfo.computeIfAbsent(path) {
+        // A new unopened project isn't in `state.additionalInfo` yet, because it will be
+        // added there on frame activation in `setActivationTimestamp` a bit later.
+        // Add it to `state.additionalInfo` now to support new projects which are not opened yet.
+        RecentProjectMetaInfo()
+      }
+      if (info.hidden == hidden) return
+
+      info.hidden = hidden
       modCounter.increment()
     }
   }
@@ -825,11 +890,11 @@ int32 "extendedState"
   fun updateProjectColor(project: Project) {
     val info = ProjectColorInfoManager.getInstance(project).recentProjectColorInfo
     val projectPath = ProjectWindowCustomizerService.projectPath(project) ?: return
-    updateProjectColor(Path.of(projectPath), info)
+    updateProjectColor(projectPath, info)
   }
 
   @Internal
-  fun updateProjectColor(projectBasePath: Path, info: RecentProjectColorInfo) {
+  fun updateProjectColor(projectBasePath: String, info: RecentProjectColorInfo) {
     synchronized(stateLock) {
       getProjectMetaInfo(projectBasePath)?.colorInfo = info
       modCounter.increment()
@@ -891,6 +956,14 @@ private fun readProjectName(path: String): String {
     return path
   }
 
+  // IJPL-194035
+  // Avoid greedy I/O under non-local projects. For example, in the case of WSL:
+  //	1.	it may trigger Ijent initialization for each recent project
+  //	2.	with Ijent disabled, performance may degrade further — 9P is very slow and could lead to UI freezes
+  if (Path(path).getEelDescriptor() != LocalEelDescriptor) {
+    return path
+  }
+
   if (path.endsWith(".ipr")) {
     return FileUtilRt.getNameWithoutExtension(path)
   }
@@ -902,7 +975,7 @@ private fun readProjectName(path: String): String {
     return path
   }
 
-  val storePath = ProjectCoreUtil.getProjectStoreDirectory(file)
+  val storePath = ProjectStorePathManager.getInstance().getStoreDirectoryPath(file)
   return JpsPathUtil.readProjectName(storePath) ?: PathUtilRt.getFileName(path)
 }
 
@@ -911,14 +984,6 @@ private fun getLastProjectFrameInfoFile() = appSystemDir.resolve("lastProjectFra
 private fun convertToSystemIndependentPaths(list: MutableList<String>) {
   list.replaceAll {
     FileUtilRt.toSystemIndependentName(it)
-  }
-}
-
-private fun updateSystemDockMenu() {
-  if (!ApplicationManager.getApplication().isHeadlessEnvironment) {
-    runActivity("system dock menu") {
-      SystemDock.updateMenu()
-    }
   }
 }
 
@@ -962,3 +1027,21 @@ internal fun getProjectNameOnlyByPath(path: String): String {
 @JvmInline
 @Internal
 value class ProjectNameOrPathIfNotYetComputed(val nameOnlyByProjectPath: String)
+
+@Internal
+data class OpenProjectImplOptions(
+  @JvmField val recentProjectMetaInfo: RecentProjectMetaInfo,
+  @JvmField val frameInfo: FrameInfo? = null,
+  @JvmField val frame: IdeFrameImpl? = null,
+)
+
+val OpenProjectTask.frame: IdeFrameImpl?
+  @Internal get() = (implOptions as OpenProjectImplOptions?)?.frame
+
+val OpenProjectTask.frameInfo: FrameInfo?
+  @Internal get() = (implOptions as OpenProjectImplOptions?)?.frameInfo
+
+@Internal
+interface SystemDock {
+  suspend fun updateRecentProjectsMenu()
+}

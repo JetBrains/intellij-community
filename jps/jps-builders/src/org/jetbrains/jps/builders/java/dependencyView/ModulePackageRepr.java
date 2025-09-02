@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.util.io.DataExternalizer;
@@ -12,7 +12,7 @@ import java.io.PrintStream;
 import java.util.*;
 
 final class ModulePackageRepr extends Proto {
-  private static final DataExternalizer<Integer> INT_EXTERNALIZER = new DataExternalizer<Integer>() {
+  private static final DataExternalizer<Integer> INT_EXTERNALIZER = new DataExternalizer<>() {
     @Override
     public void save(@NotNull DataOutput out, Integer value) throws IOException {
       DataInputOutputUtil.writeINT(out, value);
@@ -67,7 +67,7 @@ final class ModulePackageRepr extends Proto {
     return 31 * name;
   }
 
-  public abstract static class Diff extends DifferenceImpl {
+  abstract static class Diff extends DifferenceImpl {
 
     public abstract Specifier<Integer, Difference> targetModules();
 
@@ -112,7 +112,7 @@ final class ModulePackageRepr extends Proto {
   }
 
   public static DataExternalizer<ModulePackageRepr> externalizer(final DependencyContext context) {
-    return new DataExternalizer<ModulePackageRepr>() {
+    return new DataExternalizer<>() {
       @Override
       public void save(@NotNull DataOutput out, ModulePackageRepr value) {
         value.save(out);

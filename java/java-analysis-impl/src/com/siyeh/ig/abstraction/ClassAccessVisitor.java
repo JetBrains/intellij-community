@@ -34,7 +34,7 @@ public final class ClassAccessVisitor extends JavaRecursiveElementWalkingVisitor
     new HashSet<>(2);
   private final PsiClass currentClass;
 
-  ClassAccessVisitor(PsiClass currentClass) {
+  public ClassAccessVisitor(PsiClass currentClass) {
     this.currentClass = currentClass;
   }
 
@@ -94,7 +94,7 @@ public final class ClassAccessVisitor extends JavaRecursiveElementWalkingVisitor
     }
   }
 
-  Set<PsiClass> getOveraccessedClasses() {
+  public Set<PsiClass> getOveraccessedClasses() {
     return Collections.unmodifiableSet(m_overAccessedClasses);
   }
 }

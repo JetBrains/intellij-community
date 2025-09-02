@@ -47,11 +47,11 @@ public final class PyAnnotateVariableTypeIntention extends PyBaseIntentionAction
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!(file instanceof PyFile) || file instanceof PyDocstringFile) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    if (!(psiFile instanceof PyFile) || psiFile instanceof PyDocstringFile) {
       return false;
     }
-    final List<PyTargetExpression> resolved = findSuitableTargetsUnderCaret(project, editor, file);
+    final List<PyTargetExpression> resolved = findSuitableTargetsUnderCaret(project, editor, psiFile);
     if (resolved.size() != 1) {
       return false;
     }

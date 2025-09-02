@@ -44,4 +44,18 @@ public interface PsiCall extends PsiElement {
    */
   @NotNull
   JavaResolveResult resolveMethodGenerics();
+
+  /**
+   * Returns the results of resolving the called method.
+   *
+   * @param incompleteCode if true, the code in the context of which the call is
+   * being resolved is considered incomplete, and the method may return additional
+   * invalid results.
+   *
+   * @return the array of results for resolving the called method.
+   */
+  default JavaResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
+    JavaResolveResult result = resolveMethodGenerics();
+    return result == JavaResolveResult.EMPTY ? JavaResolveResult.EMPTY_ARRAY : new JavaResolveResult[]{result};
+  }
 }

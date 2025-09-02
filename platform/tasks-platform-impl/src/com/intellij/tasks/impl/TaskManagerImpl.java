@@ -1,9 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.impl;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.configurationStore.XmlSerializer;
-import com.intellij.ide.impl.ProjectUtilKt;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
@@ -39,6 +38,7 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XCollection;
+import kotlinx.coroutines.CoroutineScope;
 import org.jdom.Element;
 import org.jetbrains.annotations.*;
 
@@ -52,6 +52,9 @@ import java.util.*;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+
+import static com.intellij.util.concurrency.AppJavaExecutorUtil.executeOnPooledCpuThread;
+import static com.intellij.util.concurrency.AppJavaExecutorUtil.executeOnPooledIoThread;
 
 /**
  * @author Dmitry Avdeev
@@ -68,6 +71,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
   private static final Convertor<Task, String> KEY_CONVERTOR = o -> o.getId();
 
   private final Project myProject;
+  @NotNull private final CoroutineScope coroutineScope;
 
   private final Map<String, Task> myIssueCache = Collections.synchronizedMap(new LinkedHashMap<>());
 
@@ -101,8 +105,10 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
   private final EventDispatcher<TaskListener> myDispatcher = EventDispatcher.create(TaskListener.class);
   private final Set<TaskRepository> myBadRepositories = ConcurrentCollectionFactory.createConcurrentSet();
 
-  public TaskManagerImpl(@NotNull Project project) {
+  @ApiStatus.Internal
+  public TaskManagerImpl(@NotNull Project project, @NotNull CoroutineScope coroutineScope) {
     myProject = project;
+    this.coroutineScope = coroutineScope;
 
     myChangeListListener = new ChangeListAdapter() {
       @Override
@@ -128,7 +134,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
     };
 
     // remove repositories pertaining to non-existent types
-    TaskRepositoryType.addEPListChangeListener(this, () -> {
+    TaskRepositoryType.addEPListChangeListener(coroutineScope, () -> {
       List<Class<?>> possibleRepositoryClasses = TaskRepositoryType.getRepositoryClasses();
       List<TaskRepository> repositories = myRepositories;
       boolean removed = repositories.removeIf(repository -> {
@@ -701,7 +707,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
     changeListManager.addChangeListListener(myChangeListListener, myProject);
 
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      ProjectUtilKt.executeOnPooledThread(myProject, () -> {
+      executeOnPooledCpuThread(coroutineScope, () -> {
         WorkingContextManager.getInstance(myProject).pack(200, 50);
       });
     }
@@ -790,7 +796,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
       doUpdate(onComplete);
     }
     else {
-      ApplicationManager.getApplication().executeOnPooledThread(() -> doUpdate(onComplete));
+      executeOnPooledIoThread(coroutineScope, () -> doUpdate(onComplete));
     }
   }
 

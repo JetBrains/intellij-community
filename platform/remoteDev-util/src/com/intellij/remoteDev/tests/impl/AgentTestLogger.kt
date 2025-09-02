@@ -5,7 +5,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.remoteDev.tests.modelGenerated.RdTestSession
 import com.intellij.remoteDev.tests.modelGenerated.RdTestSessionException
-import com.intellij.remoteDev.tests.modelGenerated.RdTestSessionExceptionCause
+import com.intellij.remoteDev.tests.modelGenerated.RdTestSessionLightException
 import com.intellij.remoteDev.tests.modelGenerated.RdTestSessionStackTraceElement
 
 open class AgentTestLogger(logger: Logger, private val factory: AgentTestLoggerFactory) : DelegatingLogger<Logger>(logger) {
@@ -27,8 +27,9 @@ open class AgentTestLogger(logger: Logger, private val factory: AgentTestLoggerF
     val rdtseType = getRdtseType(t)
     val rdtseStackTrace = getRdtseStackTrace(t?.stackTrace)
     val rdtseCause = getRdtseCause(t)
+    val rdtseSuppressedExceptions = getRdtseSuppressedExceptions(t)
     val rdTestSessionException = RdTestSessionException(type = rdtseType, originalType = null, message = rdtseMessage,
-                                                        stacktrace = rdtseStackTrace, cause = rdtseCause)
+                                                        stacktrace = rdtseStackTrace, cause = rdtseCause, suppressedExceptions = rdtseSuppressedExceptions)
 
     info("Fired ex to the test runner ${rdTestSessionException.message}")
 
@@ -39,7 +40,7 @@ open class AgentTestLogger(logger: Logger, private val factory: AgentTestLoggerF
     stackTrace?.map { RdTestSessionStackTraceElement(it.className, it.methodName, it.fileName.orEmpty(), it.lineNumber) }
     ?: emptyList()
 
-  protected fun getRdtseMessage(message: String?, t: Throwable?) =
+  protected fun getRdtseMessage(message: String?, t: Throwable?): String =
     when (message) {
       t?.message ->
         message ?: "There was an error of type ${t?.javaClass?.name}"
@@ -47,10 +48,14 @@ open class AgentTestLogger(logger: Logger, private val factory: AgentTestLoggerF
         listOf(message, t?.message).filter { !it?.trim().isNullOrEmpty() }.joinToString(": ")
     }
 
-  protected fun getRdtseType(t: Throwable?) = t?.javaClass?.typeName ?: "<LOG_ERROR>"
-  protected fun getRdtseCause(t: Throwable?) =
+  protected fun getRdtseType(t: Throwable?): String = t?.javaClass?.typeName ?: "<LOG_ERROR>"
+  protected fun getRdtseCause(t: Throwable?): RdTestSessionLightException? =
     t?.cause?.let { cause ->
-      RdTestSessionExceptionCause(cause.javaClass.typeName, cause.message, getRdtseStackTrace(cause.stackTrace))
+      RdTestSessionLightException(cause.javaClass.typeName, cause.message, getRdtseStackTrace(cause.stackTrace))
     }
 
+  protected fun getRdtseSuppressedExceptions(t: Throwable?): List<RdTestSessionLightException>? =
+    t?.suppressedExceptions?.map { suppressedException ->
+      RdTestSessionLightException(suppressedException.javaClass.typeName, suppressedException.message, stacktrace = getRdtseStackTrace(suppressedException.stackTrace))
+    }
 }

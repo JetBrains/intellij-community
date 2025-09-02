@@ -1,0 +1,35 @@
+{
+  "language": "TypeScript",
+  "projectPath": "../ml-eval/WebstormMarkerTests",
+  "repository": "ssh://git@git.jetbrains.team/code-generation-evaluation/WebstormMarkerTests.git",
+  "revision": "main",
+  "outputDir": "bin/ml-eval-code-generation-typescript-output",
+  "strategy": {
+    "model": "",
+    "mode": "",
+    "behaviour": "MULTI_FILE_GENERATION",
+    "collectContextOnly": false,
+    "userPrompts": {}
+  },
+  "actions": {
+    "evaluationRoots": [
+      "."
+    ],
+    "sourceFile": "../ml-eval/WebstormMarkerTests/evaluation/multi-file-actions.json"
+  },
+  "interpret": {
+    "saveLogs": true,
+    "sessionProbability": 1.0,
+    "sessionSeed": null,
+    "sessionsLimit": 400,
+    "filesLimit": 100,
+    "order": "LINEAR",
+    "trainTestSplit": 70,
+    "registry":"llm.context.service.debug=true"
+  },
+  "reports": {
+    "evaluationTitle": "Default",
+    "sessionsFilters": [],
+    "comparisonFilters": []
+  }
+}

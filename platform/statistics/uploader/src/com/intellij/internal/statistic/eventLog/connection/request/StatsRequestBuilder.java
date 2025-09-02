@@ -2,7 +2,8 @@
 package com.intellij.internal.statistic.eventLog.connection.request;
 
 import com.intellij.internal.statistic.config.StatisticsStringUtil;
-import com.intellij.internal.statistic.eventLog.connection.EventLogConnectionSettings;
+import com.jetbrains.fus.reporting.model.http.StatsConnectionSettings;
+import com.jetbrains.fus.reporting.model.http.StatsProxyInfo;
 import org.jetbrains.annotations.NotNull;
 
 import javax.net.ssl.SSLContext;
@@ -47,13 +48,13 @@ public class StatsRequestBuilder {
   private StatsResponseHandler onSucceed;
   private StatsResponseHandler onFail;
 
-  public StatsRequestBuilder(@NotNull String method, @NotNull String url, @NotNull EventLogConnectionSettings settings) {
+  public StatsRequestBuilder(@NotNull String method, @NotNull String url, @NotNull StatsConnectionSettings settings) {
     myMethod = method;
     myUrl = url;
-    myUserAgent = settings.getUserAgent();
-    myProxyInfo = settings.selectProxy(myUrl);
-    mySSLContext = settings.getSSLContext();
-    myExtraHeaders = settings.getExtraHeaders();
+    myUserAgent = settings.provideUserAgent();
+    myProxyInfo = settings.provideProxy(myUrl);
+    mySSLContext = settings.provideSSLContext();
+    myExtraHeaders = settings.provideExtraHeaders();
   }
 
   public @NotNull StatsRequestBuilder withBody(@NotNull String body, @NotNull String contentType, @NotNull Charset charset) {

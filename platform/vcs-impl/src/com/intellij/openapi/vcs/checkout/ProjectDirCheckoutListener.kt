@@ -2,13 +2,14 @@
 package com.intellij.openapi.vcs.checkout
 
 import com.intellij.ide.impl.OpenProjectTask
-import com.intellij.ide.impl.OpenProjectTask.Companion.build
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectCoreUtil
+import com.intellij.openapi.project.ProjectStorePathManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
+import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
 import java.nio.file.Path
 
 /**
@@ -19,11 +20,14 @@ private class ProjectDirCheckoutListener : CheckoutListener {
     ApplicationManager.getApplication().assertIsNonDispatchThread()
 
     // todo Rider project layout - several.idea.solution-name names
-    if (!ProjectCoreUtil.isKnownProjectDirectory(directory)) {
+    if (!service<ProjectStorePathManager>().testStoreDirectoryExistsForProjectRoot(directory)) {
       return false
     }
     runBlockingCancellable {
-      ProjectManagerEx.getInstanceEx().openProjectAsync(directory, OpenProjectTask { projectToClose = project })
+      ProjectManagerEx.getInstanceEx().openProjectAsync(directory, OpenProjectTask {
+        projectToClose = project
+        forceReuseFrame = willOpenFromWelcomeScreenProject(project)
+      })
     }
     return true
   }
@@ -37,7 +41,14 @@ private class PlatformProjectCheckoutListener : CheckoutListener {
     ApplicationManager.getApplication().assertIsNonDispatchThread()
 
     return runBlockingCancellable {
-      ProjectUtil.openOrImportAsync(directory, build().withProjectToClose(project)) != null
+      ProjectUtil.openOrImportAsync(directory, OpenProjectTask {
+        projectToClose = project
+        forceReuseFrame = willOpenFromWelcomeScreenProject(project)
+      }) != null
     }
   }
+}
+
+private fun willOpenFromWelcomeScreenProject(project: Project): Boolean {
+  return WelcomeScreenProjectProvider.isSingleWelcomeScreenProject(project)
 }

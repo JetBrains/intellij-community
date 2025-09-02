@@ -50,7 +50,6 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 
 abstract class XsltElementImpl extends LightElement implements Iconable, PsiElementNavigationItem, XsltElement, ItemPresentation {
-
     protected final @NotNull XmlTag myElement;
     protected final XsltElementFactory myElementFactory;
 
@@ -118,13 +117,13 @@ abstract class XsltElementImpl extends LightElement implements Iconable, PsiElem
     }
 
     @Override
-    @SuppressWarnings({"RawUseOfParameterizedType"})
+    @SuppressWarnings("RawUseOfParameterizedType")
     public @NotNull PsiElement getNavigationElement() {
         if (myNavigationElement == null && myElement.isValid()) {
             final Class[] allInterfaces = CompletionLists.getAllInterfaces(myElement.getClass());
             myNavigationElement = (PsiElement)Proxy.newProxyInstance(getClass().getClassLoader(), allInterfaces, new InvocationHandler() {
                 @Override
-                @SuppressWarnings({"StringEquality", "AutoBoxing", "AutoUnboxing"})
+                @SuppressWarnings({"AutoBoxing", "AutoUnboxing"})
                 public @Nullable Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
                     try {
                         final XmlAttributeValue nameElement = XsltElementImpl.this.getNameElement();

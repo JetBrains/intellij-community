@@ -26,7 +26,7 @@ import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.types.Variance
 
 @OptIn(KaExperimentalApi::class)
-object CastExpressionFixFactories {
+internal object CastExpressionFixFactories {
 
     private data class ElementContext(
         val typePresentation: String,

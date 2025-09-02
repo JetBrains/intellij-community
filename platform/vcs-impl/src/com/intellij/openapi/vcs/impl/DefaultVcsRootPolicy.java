@@ -23,15 +23,11 @@ public abstract class DefaultVcsRootPolicy {
     return project.getService(DefaultVcsRootPolicy.class);
   }
 
-  public final @NotNull Collection<VirtualFile> getDefaultVcsRoots() {
-    return getDefaultVcsRootsCandidates();
-  }
-
   /**
    * Return roots that belong to the project (ex: all content roots).
    * If 'Project' mapping is configured, all vcs roots for these roots will be put to the mappings.
    */
-  protected abstract @NotNull Collection<VirtualFile> getDefaultVcsRootsCandidates();
+  public abstract @NotNull Collection<VirtualFile> getDefaultVcsRoots();
 
   public @Nls String getProjectConfigurationMessage() {
     boolean isDirectoryBased = ProjectKt.isDirectoryBased(myProject);

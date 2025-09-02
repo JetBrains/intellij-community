@@ -25,13 +25,15 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.flow
+import org.jetbrains.annotations.ApiStatus
 import java.beans.PropertyChangeListener
 import kotlin.coroutines.cancellation.CancellationException
 
 private val LOG: Logger
   get() = logger<EditorCompositeModelManager>()
 
-internal fun createEditorCompositeModel(
+@ApiStatus.Internal
+fun createEditorCompositeModel(
   editorPropertyChangeListener: PropertyChangeListener,
   fileProvider: suspend () -> VirtualFile,
   project: Project,

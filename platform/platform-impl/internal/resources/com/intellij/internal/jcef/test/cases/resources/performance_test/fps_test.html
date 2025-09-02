@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FPS Test</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #000;
+      height: 100%;
+      overflow: auto;
+    }
+    canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+  </style>
+</head>
+<body>
+<canvas id="particlesCanvas"></canvas>
+<script>
+  const Particles = (() => {
+    let canvas, ctx, particles = [];
+    const PARTICLE_SIZE = 5;
+    let particleCount = 200, animationFrameId;
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = 10000;
+    }
+
+    function createParticle() {
+      return {
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        vx: (Math.random() - 0.5) * 2,
+        vy: (Math.random() - 0.5) * 2,
+        color: `hsl(${Math.random() * 360}, 100%, 50%)`,
+      };
+    }
+
+    function initParticles(count) {
+      particles = Array.from({ length: count }, createParticle);
+    }
+
+    function drawParticles() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particles.forEach(p => {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, PARTICLE_SIZE, 0, Math.PI * 2);
+        ctx.fillStyle = p.color;
+        ctx.fill();
+      });
+    }
+
+    function updateParticles() {
+      particles.forEach(p => {
+        p.x += p.vx;
+        p.y += p.vy;
+        if (p.x <= 0 || p.x >= canvas.width) p.vx *= -1;
+        if (p.y <= 0 || p.y >= canvas.height) p.vy *= -1;
+      });
+    }
+
+    function animate() {
+      updateParticles();
+      drawParticles();
+      animationFrameId = requestAnimationFrame(animate);
+    }
+
+    return {
+      init(count = 200) {
+        canvas = document.getElementById('particlesCanvas');
+        ctx = canvas.getContext('2d');
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+        initParticles(count);
+        animate();
+      },
+
+      setParticlesCount(count) {
+        initParticles(count);
+        drawParticles();
+      },
+
+      pause() {
+        if (animationFrameId) cancelAnimationFrame(animationFrameId);
+        animationFrameId = null;
+      },
+
+      continue() {
+        if (!animationFrameId) animate();
+      },
+    };
+  })();
+
+  Particles.init();
+</script>
+</body>
+</html>

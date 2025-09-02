@@ -17,7 +17,8 @@ class ServersToolWindowMessagePanel implements RemoteServersDeploymentManager.Me
   private String myCurrentText;
 
   ServersToolWindowMessagePanel() {
-    myMessageArea.setBackground(UIUtil.getPanelBackground());
+    myPanel.setBackground(JBUI.CurrentTheme.ToolWindow.background());
+    myMessageArea.setBackground(myPanel.getBackground());
     myMessageArea.setBorder(JBUI.Borders.empty());
     if (myMessageArea.getCaret() != null) {
       myMessageArea.setCaretPosition(0);
@@ -31,7 +32,7 @@ class ServersToolWindowMessagePanel implements RemoteServersDeploymentManager.Me
       return;
     }
     myMessageArea.setText(CloudBundle.message("editor.pane.text.empty.text", UIUtil.getCssFontDeclaration(StartupUiUtil.getLabelFont(), null, null, null),
-                                              ColorUtil.toHex(UIUtil.getPanelBackground()), ColorUtil.toHex(
+                                              ColorUtil.toHex(myPanel.getBackground()), ColorUtil.toHex(
         NamedColorUtil.getInactiveTextColor()), text));
     myCurrentText = text;
   }

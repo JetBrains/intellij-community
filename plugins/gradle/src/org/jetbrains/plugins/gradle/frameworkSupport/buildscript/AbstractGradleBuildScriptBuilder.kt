@@ -187,6 +187,9 @@ abstract class AbstractGradleBuildScriptBuilder<Self : GradleBuildScriptBuilder<
       true -> {
         addTestImplementationDependency(call("platform", "org.junit:junit-bom:$junit5Version"))
         addTestImplementationDependency("org.junit.jupiter:junit-jupiter")
+        if (isExplicitTestFrameworkRuntimeDeclarationRequired(gradleVersion)) {
+          addTestRuntimeOnlyDependency("org.junit.platform:junit-platform-launcher")
+        }
       }
       else -> {
         addTestImplementationDependency("org.junit.jupiter:junit-jupiter-api:$junit5Version")
@@ -232,9 +235,17 @@ abstract class AbstractGradleBuildScriptBuilder<Self : GradleBuildScriptBuilder<
     call("project", "path" to name, "configuration" to configuration)
 
   override fun ScriptTreeBuilder.mavenCentral(): ScriptTreeBuilder = applyKt {
-    val mavenRepositoryUrl = GradleEnvironment.Urls.MAVEN_REPOSITORY_URL
+    val mavenRepositoryUrl = GradleEnvironment.Urls.getMavenRepositoryUrl()
     if (mavenRepositoryUrl != null) {
-      mavenRepository(mavenRepositoryUrl)
+      // it is possible to configure the mavenCentral repository via closure only since Gradle 5.3
+      if (GradleVersionUtil.isGradleOlderThan(gradleVersion, "5.3")) {
+        mavenRepository(mavenRepositoryUrl)
+      }
+      else {
+        call("mavenCentral") {
+          assign("url", call("uri", mavenRepositoryUrl))
+        }
+      }
     }
     else {
       call("mavenCentral")

@@ -1,11 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module;
 
-import com.intellij.codeInsight.multiverse.CodeInsightContext;
-import com.intellij.codeInsight.multiverse.FileViewProviderUtil;
-import com.intellij.codeInsight.multiverse.ModuleContext;
-import com.intellij.codeInsight.multiverse.CodeInsightContextKt;
-import com.intellij.codeInsight.multiverse.CodeInsightContextManager;
+import com.intellij.codeInsight.multiverse.*;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -26,6 +22,7 @@ import com.intellij.workspaceModel.ide.legacyBridge.WorkspaceModelLegacyBridge;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -101,7 +98,7 @@ public class ModuleUtilCore {
    *         empty list for project files outside module content roots or library files
    */
   @ApiStatus.Internal
-  public static @NotNull Set<Module> findModulesForFile(@NotNull VirtualFile file, @NotNull Project project) {
+  public static @NotNull @Unmodifiable Set<Module> findModulesForFile(@NotNull VirtualFile file, @NotNull Project project) {
     if (project.isDefault()) {
       return Collections.emptySet();
     }
@@ -154,7 +151,7 @@ public class ModuleUtilCore {
         }
       }
 
-      if (CodeInsightContextKt.isSharedSourceSupportEnabled(project) && containingFile != null) {
+      if (CodeInsightContexts.isSharedSourceSupportEnabled(project) && containingFile != null) {
         var currentContext = CodeInsightContextManager.getInstance(project).getCodeInsightContext(containingFile.getViewProvider());
         if (currentContext instanceof ModuleContext) {
           return ((ModuleContext) currentContext).getModule();

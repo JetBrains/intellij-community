@@ -48,6 +48,17 @@ abstract class KotlinApplicableInspectionBase<E : KtElement, C : Any> : LocalIns
                 .withPsiAttachment("element.kt", element)
                 .withPsiAttachment("file.kt", element.containingFile)
         } ?: return
+
+        registerProblem(ranges, holder, element, context, isOnTheFly)
+    }
+
+    protected open fun registerProblem(
+        ranges: List<TextRange>,
+        holder: ProblemsHolder,
+        element: E,
+        context: C,
+        isOnTheFly: Boolean
+    ) {
         ranges.asSequence()
             .map { rangeInElement ->
                 holder.manager.createProblemDescriptor(

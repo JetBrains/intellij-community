@@ -150,7 +150,7 @@ object OrderEntriesChecker : WorkspaceModelChecker<OrderEntriesChecksConfigurati
             // Be careful not to use KGP_VERSION placeholder for 3rd-party libraries (e.g. those that try to align versioning with Kotlin)
             .let {
                 if ("org.jetbrains.kotlin" in it || "Kotlin/Native" in it) it.replace(
-                    kotlinGradlePluginVersion.toString(),
+                    testProperties.kotlinVersion.toString(),
                     "{{KGP_VERSION}}"
                 ) else it
             }

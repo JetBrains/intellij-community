@@ -285,7 +285,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
 
         DefaultActionGroup group = new DefaultActionGroup();
         for (Action action : CopySettingsPathAction.createSwingActions(() -> names)) {
-          group.add(ActionUtil.createActionFromSwingAction(action));
+          group.add(ActionUtil.createActionFromSwingAction(action, true));
         }
 
         JPopupMenu popup = ActionManager.getInstance().createActionPopupMenu("settings", group).getComponent();

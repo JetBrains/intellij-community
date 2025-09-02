@@ -1,6 +1,7 @@
 <idea-plugin package="com.intellij.toml.grazie">
     <dependencies>
         <plugin id="tanvd.grazi"/>
+        <module name="intellij.toml.core"/>
     </dependencies>
 
     <extensions defaultExtensionNs="com.intellij.grazie">

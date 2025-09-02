@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.highlighting.BraceHighlightingHandler;
@@ -34,6 +34,7 @@ import org.jetbrains.annotations.NotNull;
 public final class MatchBraceAction extends EditorAction {
   public MatchBraceAction() {
     super(new MyHandler());
+    setInjectedContext(true);
   }
 
   private static final class MyHandler extends EditorActionHandler.ForEachCaret {

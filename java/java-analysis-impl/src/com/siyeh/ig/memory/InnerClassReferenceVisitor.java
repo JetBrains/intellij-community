@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2025 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,12 +24,21 @@ import org.jetbrains.annotations.NotNull;
 public class InnerClassReferenceVisitor extends JavaRecursiveElementWalkingVisitor {
 
   private final PsiClass innerClass;
+  private final boolean allowReferencesToLocalVariables;
   private boolean referencesStaticallyAccessible = true;
 
   public InnerClassReferenceVisitor(@NotNull PsiClass innerClass) {
-    this.innerClass = innerClass;
+    this(innerClass, false);
   }
 
+  public InnerClassReferenceVisitor(@NotNull PsiClass innerClass, boolean allowReferencesToLocalVariables) {
+    this.innerClass = innerClass;
+    this.allowReferencesToLocalVariables = allowReferencesToLocalVariables;
+  }
+
+  /**
+   * Also useful in determining if a local class can be a record (because records are implicitly static).
+   */
   public boolean canInnerClassBeStatic() {
     final PsiClass superClass = innerClass.getSuperClass();
     if (superClass != null && !isClassStaticallyAccessible(superClass)) {
@@ -42,8 +51,8 @@ public class InnerClassReferenceVisitor extends JavaRecursiveElementWalkingVisit
     if (PsiTreeUtil.isAncestor(innerClass, aClass, false) || aClass.hasModifierProperty(PsiModifier.STATIC)) {
       return true;
     }
-    if (aClass instanceof PsiTypeParameter) {
-      PsiTypeParameterListOwner owner = ((PsiTypeParameter)aClass).getOwner();
+    if (aClass instanceof PsiTypeParameter parameter) {
+      PsiTypeParameterListOwner owner = parameter.getOwner();
       return owner != null && PsiTreeUtil.isAncestor(innerClass, owner, false);
     }
     final PsiClass containingClass = aClass.getContainingClass();
@@ -88,8 +97,15 @@ public class InnerClassReferenceVisitor extends JavaRecursiveElementWalkingVisit
       return;
     }
     final PsiElement target = expression.resolve();
-    if (target instanceof PsiLocalVariable || target instanceof PsiParameter) {
+    if (target == null) {
+      referencesStaticallyAccessible = false;
       return;
+    }
+    if (target instanceof PsiLocalVariable || target instanceof PsiParameter) {
+      if (!allowReferencesToLocalVariables && !PsiTreeUtil.isAncestor(innerClass, target, true)) {
+        referencesStaticallyAccessible = false;
+        return;
+      }
     }
     if (target instanceof PsiMethod || target instanceof PsiField) {
       final PsiMember member = (PsiMember)target;
@@ -112,7 +128,7 @@ public class InnerClassReferenceVisitor extends JavaRecursiveElementWalkingVisit
       }
       referencesStaticallyAccessible = false;
     }
-    else if (target instanceof PsiClass && !isClassStaticallyAccessible((PsiClass)target)) {
+    else if (target instanceof PsiClass aClass && !isClassStaticallyAccessible(aClass)) {
       referencesStaticallyAccessible = false;
     }
   }
@@ -128,10 +144,7 @@ public class InnerClassReferenceVisitor extends JavaRecursiveElementWalkingVisit
       return;
     }
     final PsiElement target = classReference.resolve();
-    if (!(target instanceof PsiClass)) {
-      return;
-    }
-    if (!isClassStaticallyAccessible((PsiClass)target)) {
+    if (target instanceof PsiClass aClass && !isClassStaticallyAccessible(aClass)) {
       referencesStaticallyAccessible = false;
     }
   }

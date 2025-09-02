@@ -7,6 +7,8 @@ import com.intellij.codeInsight.daemon.impl.quickfix.SimplifyBooleanExpressionFi
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.codeInspection.redundantCast.RemoveRedundantCastUtil;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommand;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -24,6 +26,7 @@ import com.intellij.psi.util.PsiPrecedenceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.RedundantCastUtil;
+import com.intellij.refactoring.inline.InlineLocalHandler;
 import com.intellij.refactoring.inline.InlineTransformer;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonJavaRefactoringUtil;
@@ -893,6 +896,13 @@ public final class InlineUtil implements CommonJavaInlineUtil {
       inlineVariable(resultVar, resultVar.getInitializer(), resultUsage);
       declaration.delete();
     }
+  }
+
+  @Override
+  public @NotNull ModCommand inline(@NotNull PsiVariable var) {
+    return InlineLocalHandler.doInline(
+      ActionContext.from(null, var.getContainingFile()),
+      var, null, InlineLocalHandler.InlineMode.CHECK_CONFLICTS);
   }
 
   public enum TailCallType {

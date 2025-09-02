@@ -1,0 +1,35 @@
+{
+  "language": "Java",
+  "projectPath": "../ml-eval/java-2-kotlin-generator-samples/spring/petclinic/java/spring-petclinic",
+  "repositoryPath": "../ml-eval/java-2-kotlin-generator-samples",
+  "revision": "main",
+  "outputDir": "bin/ml-eval-code-generation-java-output",
+  "strategy": {
+    "model": "",
+    "mode": "",
+    "behaviour": "MULTI_FILE_GENERATION",
+    "collectContextOnly": false,
+    "userPrompts": {}
+  },
+  "actions": {
+    "evaluationRoots": [
+      "."
+    ],
+    "sourceFile": "../ml-eval/java-2-kotlin-generator-samples/spring/petclinic/java/spring-petclinic/evaluation/actions.json"
+  },
+  "interpret": {
+    "saveLogs": true,
+    "sessionProbability": 1.0,
+    "sessionSeed": null,
+    "sessionsLimit": 400,
+    "filesLimit": 100,
+    "order": "LINEAR",
+    "trainTestSplit": 70,
+    "registry":"llm.context.service.debug=true"
+  },
+  "reports": {
+    "evaluationTitle": "Default",
+    "sessionsFilters": [],
+    "comparisonFilters": []
+  }
+}

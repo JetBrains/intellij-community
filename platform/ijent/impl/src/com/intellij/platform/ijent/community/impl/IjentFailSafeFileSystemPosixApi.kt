@@ -38,15 +38,15 @@ import java.util.concurrent.atomic.AtomicReference
 @Suppress("FunctionName")
 fun IjentFailSafeFileSystemPosixApi(
   coroutineScope: CoroutineScope,
-  delegateFactory: suspend () -> IjentPosixApi,
+  descriptor: EelDescriptor,
 ): IjentFileSystemApi {
-  val holder = DelegateHolder<IjentPosixApi, IjentFileSystemPosixApi>(coroutineScope, delegateFactory)
-  return IjentFailSafeFileSystemPosixApiImpl(holder)
+  val holder = DelegateHolder<IjentPosixApi, IjentFileSystemPosixApi>(coroutineScope, descriptor)
+  return IjentFailSafeFileSystemPosixApiImpl(holder, descriptor)
 }
 
 private class DelegateHolder<I : IjentApi, F : IjentFileSystemApi>(
   private val coroutineScope: CoroutineScope,
-  private val delegateFactory: suspend () -> I,
+  private val descriptor: EelDescriptor
 ) {
   private val delegate = AtomicReference<Deferred<I>?>(null)
 
@@ -63,7 +63,8 @@ private class DelegateHolder<I : IjentApi, F : IjentFileSystemApi>(
         oldDelegate
       else
         coroutineScope.async(Dispatchers.IO, start = CoroutineStart.LAZY) {
-          delegateFactory()
+          @Suppress("UNCHECKED_CAST")
+          descriptor.toEelApi() as I
         }
     }!!
 
@@ -100,6 +101,7 @@ private class DelegateHolder<I : IjentApi, F : IjentFileSystemApi>(
  */
 private class IjentFailSafeFileSystemPosixApiImpl(
   private val holder: DelegateHolder<IjentPosixApi, IjentFileSystemPosixApi>,
+  override val descriptor: EelDescriptor
 ) : IjentFileSystemPosixApi {
   // TODO Make user suspendable again?
   override val user: EelUserPosixInfo by lazy {
@@ -107,13 +109,6 @@ private class IjentFailSafeFileSystemPosixApiImpl(
       holder.withDelegateRetrying { user }
     }
   }
-
-  override val descriptor: EelDescriptor by lazy {
-    runBlocking {
-      holder.withDelegateRetrying { descriptor }
-    }
-  }
-
 
   override suspend fun listDirectory(
     path: EelPath,

@@ -1,12 +1,15 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij;
 
+import com.intellij.diagnostic.PluginException;
+import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
 import com.intellij.l10n.LocalizationOrder;
 import com.intellij.l10n.LocalizationUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginAware;
 import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -14,6 +17,7 @@ import com.intellij.util.DefaultBundleService;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.xmlb.annotations.Attribute;
+import kotlin.Unit;
 import org.jetbrains.annotations.*;
 import org.jetbrains.annotations.ApiStatus.Obsolete;
 import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
@@ -71,12 +75,19 @@ public class DynamicBundle extends AbstractBundle {
         ));
   }
 
+  @Nullable
   private static ResourceBundle getBundleFromCache(@NotNull ClassLoader loader, @NotNull String pathToBundle) {
     Map<String, ResourceBundle> loaderCache = ourCache.get(loader);
     if (loaderCache == null) return null;
     return loaderCache.get(pathToBundle);
   }
-  
+
+  private static void removeBundleFromCache(@NotNull ClassLoader loader, @NotNull String pathToBundle) {
+    Map<String, ResourceBundle> loaderCache = ourCache.get(loader);
+    if (loaderCache == null) return;
+    loaderCache.remove(pathToBundle);
+  }
+
   private static @NotNull ResourceBundle resolveResourceBundle(@NotNull ClassLoader bundleClassLoader,
                                                                @NotNull ClassLoader baseLoader,
                                                                @NotNull String defaultPath,
@@ -212,11 +223,23 @@ public class DynamicBundle extends AbstractBundle {
   @ApiStatus.Internal
   protected ResourceBundle getBundle(boolean isDefault, @NotNull ClassLoader classLoader) {
     ResourceBundle bundle = super.getBundle(isDefault, classLoader);
-    if (bundle != null &&
-        !isDefault &&
-        (getBundleFromCache(classLoader, bundle.getBaseBundleName()) == null ||
-         getBundleFromCache(classLoader, bundle.getBaseBundleName()) != bundle)) {
-      LOG.info("Cleanup bundle cache for " + bundle.getBaseBundleName());
+    if (bundle == null || isDefault) {
+      return bundle;
+    }
+
+    String bundleName = bundle.getBaseBundleName();
+    if (bundleName == null) {
+      LOG.warn("Bundle without name cannot be properly cached: " + bundle);
+      return bundle;
+    }
+    ResourceBundle bundleFromCache = getBundleFromCache(classLoader, bundleName);
+    if (bundleFromCache == null) {
+      // Return null to force findBundle execution which will properly resolve and cache the bundle
+      return null;
+    }
+    if (bundleFromCache != bundle) {
+      LOG.info("Cleanup bundle cache for " + bundleName);
+      removeBundleFromCache(classLoader, bundleName);
       return null;
     }
     return bundle;
@@ -308,6 +331,10 @@ public class DynamicBundle extends AbstractBundle {
         locale,
         bundleResolver(pathToBundle)
       );
+    }, (e) -> {
+      PluginId pluginId = loader instanceof PluginAwareClassLoader ? ((PluginAwareClassLoader)loader).getPluginId() : null;
+      LOG.error(new PluginException(e, pluginId));
+      return Unit.INSTANCE;
     });
   }
 

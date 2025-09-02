@@ -181,4 +181,13 @@ public class LocalCanBeFinalTest extends LightJavaCodeInsightFixtureTestCase {
     myTool.REPORT_PATTERN_VARIABLES = true;
     IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, this::doTest);
   }
+  
+  public void testUnnamedVariables() {
+    myTool.REPORT_PATTERN_VARIABLES = true;
+    myTool.REPORT_VARIABLES = true;
+    myTool.REPORT_FOREACH_PARAMETERS = true;
+    myTool.REPORT_IMPLICIT_FINALS = true;
+    myTool.REPORT_CATCH_PARAMETERS = true;
+    doTest();
+  }
 }

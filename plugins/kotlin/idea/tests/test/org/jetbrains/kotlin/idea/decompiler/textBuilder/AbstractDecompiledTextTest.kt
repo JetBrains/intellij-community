@@ -38,9 +38,8 @@ abstract class AbstractDecompiledTextTest(baseDirectory: String) : AbstractDecom
         return getClassFile(testFilePackage, className, module!!)
     }
 
-    override fun checkStubConsistency(file: VirtualFile, decompiledText: String) {
-        val fileWithDecompiledText = KtPsiFactory(project).createFile(decompiledText)
-        val stubTreeFromDecompiledText = KtFileStubBuilder().buildStubTree(fileWithDecompiledText)
+    override fun checkStubConsistency(file: VirtualFile, decompiledFile: PsiFile) {
+        val stubTreeFromDecompiledText = KtFileStubBuilder().buildStubTree(decompiledFile)
         val expectedText = stubTreeFromDecompiledText.serializeToString()
 
         val fileStub = KotlinClsStubBuilder().buildFileStub(FileContentImpl.createByFile(file))!!

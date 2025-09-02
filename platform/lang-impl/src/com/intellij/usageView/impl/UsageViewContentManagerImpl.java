@@ -50,15 +50,7 @@ public final class UsageViewContentManagerImpl extends UsageViewContentManager {
   @NonInjectable
   public UsageViewContentManagerImpl(@NotNull Project project,
                                      @NotNull ToolWindowManager toolWindowManager) {
-    ToolWindow toolWindow = toolWindowManager.registerToolWindow(
-      ToolWindowId.FIND,
-      builder -> {
-        builder.stripeTitle = UIBundle.messagePointer("tool.window.name.find");
-        builder.icon = AllIcons.Toolwindows.ToolWindowFind;
-        builder.shouldBeAvailable = false;
-        return Unit.INSTANCE;
-      }
-    );
+    ToolWindow toolWindow = getOrRegisterFindToolWindow(toolWindowManager);
     toolWindow.setHelpId(UsageViewImpl.HELP_ID);
     toolWindow.setToHideOnEmptyContent(true);
 
@@ -128,6 +120,24 @@ public final class UsageViewContentManagerImpl extends UsageViewContentManager {
         event.getContent().release();
       }
     });
+  }
+
+  private static @NotNull ToolWindow getOrRegisterFindToolWindow(@NotNull ToolWindowManager toolWindowManager) {
+    if (toolWindowManager.getToolWindowIdSet().contains(ToolWindowId.FIND)) {
+      ToolWindow toolWindow = toolWindowManager.getToolWindow(ToolWindowId.FIND);
+      if (toolWindow != null) return toolWindow;
+      else //noinspection deprecation
+        toolWindowManager.unregisterToolWindow(ToolWindowId.FIND);
+    }
+    return toolWindowManager.registerToolWindow(
+      ToolWindowId.FIND,
+      builder -> {
+        builder.stripeTitle = UIBundle.messagePointer("tool.window.name.find");
+        builder.icon = AllIcons.Toolwindows.ToolWindowFind;
+        builder.shouldBeAvailable = false;
+        return Unit.INSTANCE;
+      }
+    );
   }
 
   @Override

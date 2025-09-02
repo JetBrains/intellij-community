@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.kotlin.inspections
 
 import com.intellij.testFramework.TestDataPath
@@ -17,18 +17,22 @@ abstract class KtIncorrectCancellationExceptionHandlingInspectionTestBase : Inco
         @Target(AnnotationTarget.FUNCTION, AnnotationTarget.PROPERTY_GETTER, AnnotationTarget.PROPERTY_SETTER, AnnotationTarget.CONSTRUCTOR)
         @Retention(AnnotationRetention.SOURCE)
         annotation class Throws(vararg val exceptionClasses: KClass<out Throwable>)
-      """)
+      """.trimIndent())
     addKotlinFile("Throws.kt", """
         package kotlin
         
         @SinceKotlin("1.4")
         actual typealias Throws = kotlin.jvm.Throws
-      """)
+      """.trimIndent())
+    addKotlinFile("CancellationException.kt", """
+        package kotlin.coroutines.cancellation
+        actual typealias CancellationException = java.util.concurrent.CancellationException
+      """.trimIndent())
     addKotlinFile("SubclassOfProcessCanceledException.kt", """
         package com.example
         import com.intellij.openapi.progress.ProcessCanceledException
         class SubclassOfProcessCanceledException : ProcessCanceledException()
-      """)
+      """.trimIndent())
   }
 
   protected fun addKotlinFile(relativePath: String, @Language("kotlin") fileText: String) {

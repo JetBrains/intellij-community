@@ -10,7 +10,7 @@
   <action id="GotoClass"/>
   <action id="GotoChangedFile"/>
   <action id="GotoFile"/>
-  <action id="CPP.CreateCMakeProject">
+  <action id="CPP.CreateNewCLionProject">
     <keyboard-shortcut first-keystroke="control shift N"/>
   </action>
   <action id="$SelectAll">
@@ -78,6 +78,7 @@
     <keyboard-shortcut first-keystroke="alt 4"/>
   </action>
   <action id="Vcs.ToggleAmendCommitMode"/>
+  <action id="ChangesView.ShowCommitOptions"/>
   <action id="ShowBookmarks">
     <keyboard-shortcut first-keystroke="alt M"/>
   </action>

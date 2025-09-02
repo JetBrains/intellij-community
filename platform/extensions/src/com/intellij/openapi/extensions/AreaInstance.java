@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
  * An element of the container system with which extensions may be associated. It's either {@link com.intellij.openapi.application.Application Application},
  * {@link com.intellij.openapi.project.Project Project} or {@link com.intellij.openapi.module.Module Module}.
  */
+@ApiStatus.NonExtendable
 public interface AreaInstance {
   @NotNull
   @ApiStatus.Internal

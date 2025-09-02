@@ -8,10 +8,16 @@ import com.intellij.lang.jvm.actions.*
 import com.intellij.lang.jvm.actions.AnnotationAttributeValueRequest.NestedAnnotation
 import com.intellij.lang.jvm.actions.AnnotationAttributeValueRequest.StringValue
 import com.intellij.lang.jvm.types.JvmSubstitutor
+import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Pair.pair
 import com.intellij.psi.*
+import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.testFramework.EdtTestUtil
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
+import com.intellij.testFramework.runInEdtAndWait
+import com.intellij.util.ThrowableRunnable
 import junit.framework.TestCase
 import org.intellij.lang.annotations.Language
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
@@ -21,9 +27,12 @@ import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.util.allScope
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseBase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
+import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtModifierListOwner
 import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.uast.UClass
 import org.jetbrains.uast.toUElement
+import org.jetbrains.uast.toUElementOfType
 import org.junit.Assert
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
@@ -39,7 +48,8 @@ class K2CommonIntentionActionsTest : KotlinLightCodeInsightFixtureTestCaseBase()
         private val returnType: ExpectedTypes = emptyList(),
         private val annotations: Collection<AnnotationRequest> = emptyList(),
         parameters: List<ExpectedParameter> = emptyList(),
-        private val targetSubstitutor: JvmSubstitutor = PsiJvmSubstitutor(project, PsiSubstitutor.EMPTY)
+        private val targetSubstitutor: JvmSubstitutor = PsiJvmSubstitutor(project, PsiSubstitutor.EMPTY),
+        private val elementToReplace: PsiElement? = null,
     ) : CreateMethodRequest {
         private val expectedParameters = parameters
 
@@ -57,6 +67,7 @@ class K2CommonIntentionActionsTest : KotlinLightCodeInsightFixtureTestCaseBase()
 
         override fun isValid(): Boolean = true
 
+        override fun getElementToReplace(): PsiElement? = elementToReplace
     }
 
     override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceFullJdk()
@@ -1434,6 +1445,50 @@ class K2CommonIntentionActionsTest : KotlinLightCodeInsightFixtureTestCaseBase()
         |    fun bar() {}
         |    fun setBaz(param0: String, param1: String) {
         |
+        |    }
+        |}
+        """.trim().trimMargin(), true
+        )
+    }
+
+    @OptIn(KaAllowAnalysisOnEdt::class)
+    fun testReplaceRefByIntMethod() {
+        val file = myFixture.configureByText(
+            "foo.kt", """
+        |class Foo {
+        |    bar<caret>
+        |}
+        """.trim().trimMargin()
+        )
+
+        val psiReference = file.findElementAt(myFixture.caretOffset - 1)
+        val targetClass = PsiTreeUtil.getParentOfType(psiReference, KtClass::class.java)
+        assertNotNull(targetClass)
+
+        allowAnalysisOnEdt {
+            createMethodActions(
+                targetClass.toUElementOfType<UClass>()!!,
+                SimpleMethodRequest(
+                    project,
+                    methodName = "baz",
+                    modifiers = listOf(JvmModifier.PUBLIC),
+                    returnType = expectedTypes(PsiTypes.intType()),
+                    parameters = expectedParams(PsiTypes.intType()),
+                    elementToReplace = psiReference
+                )
+            ).first()
+        }.apply {
+            runInEdtAndWait {
+                WriteCommandAction.runWriteCommandAction(project) {
+                    invoke(project, myFixture.editor, myFixture.file)
+                }
+            }
+        }
+        myFixture.checkResult(
+            """
+        |class Foo {      
+        |    fun baz(param0: Int): Int {
+        |        TODO("Not yet implemented")
         |    }
         |}
         """.trim().trimMargin(), true

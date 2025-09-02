@@ -13,6 +13,8 @@ import com.jetbrains.python.run.PythonModuleExecution
 import com.jetbrains.python.run.buildTargetedCommandLine
 import org.jetbrains.annotations.ApiStatus
 import java.nio.charset.Charset
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 @ApiStatus.Internal
 object PythonExecuteUtils {
@@ -21,7 +23,8 @@ object PythonExecuteUtils {
     sdk: Sdk,
     pyModuleToRun: String,
     runArgs: List<String>,
-    envs: Map<String, String> = emptyMap()
+    timeout: Duration = 5.seconds,
+    envs: Map<String, String> = emptyMap(),
   ): ProcessOutput {
     val targetEnvConfiguration = sdk.targetEnvConfiguration
     val execution = PythonModuleExecution()
@@ -43,10 +46,9 @@ object PythonExecuteUtils {
       isUsePty = false,
     )
     val process = targetEnvironment.createProcess(targetCommandLine)
-    val processOutput = CapturingProcessHandler(process, Charset.defaultCharset(),
-                                                targetCommandLine.getCommandPresentation(targetEnvironment))
-      .runProcess(5000, true)
-    return processOutput
-  }
 
+    val capturingProcessHandler = CapturingProcessHandler(process, Charset.defaultCharset(),
+                                                          targetCommandLine.getCommandPresentation(targetEnvironment))
+    return capturingProcessHandler.runProcess(timeout.inWholeMilliseconds.toInt(), true)
+  }
 }

@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.config.JvmClosureGenerationScheme
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import java.util.concurrent.atomic.AtomicInteger
 
-abstract class AbstractKotlinSteppingPacketsNumberTest : AbstractIrKotlinSteppingTest() {
+abstract class AbstractKotlinSteppingPacketsNumberTest : AbstractIrKotlinSteppingTestWithVariablePrinting() {
     private val packets = AtomicInteger()
     private val methods = AtomicInteger()
     private var firstAccessSkipped = false
@@ -17,7 +17,7 @@ abstract class AbstractKotlinSteppingPacketsNumberTest : AbstractIrKotlinSteppin
         setUpPacketsMeasureTest()
     }
 
-    override fun extraPrintContext(context: SuspendContextImpl) {
+    override fun printAfterFrame(context: SuspendContextImpl) {
         val totalPacketsNumber = (context.virtualMachineProxy.virtualMachine as VirtualMachineImpl).waitPacketsNumber
         val totalMethodsNumber = context.debugProcess.methodInvocationsCount
         val previousPacketsNumber = packets.getAndSet(totalPacketsNumber)

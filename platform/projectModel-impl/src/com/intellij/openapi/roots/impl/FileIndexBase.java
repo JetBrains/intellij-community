@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ContentIteratorEx;
 import com.intellij.openapi.roots.FileIndex;
+import com.intellij.openapi.vfs.DeduplicatingVirtualFileFilter;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.util.containers.TreeNodeProcessingResult;
@@ -39,7 +40,7 @@ public abstract class FileIndexBase implements FileIndex {
                                               @NotNull ContentIterator processor,
                                               @Nullable VirtualFileFilter customFilter) {
     ContentIteratorEx processorEx = toContentIteratorEx(processor);
-    return myWorkspaceFileIndex.processContentFilesRecursively(dir, processorEx, customFilter, fileSet -> !isScopeDisposed() && isInContent(fileSet));
+    return myWorkspaceFileIndex.processIndexableFilesRecursively(dir, processorEx, customFilter, fileSet -> !isScopeDisposed() && isInContent(fileSet));
   }
 
   private static @NotNull ContentIteratorEx toContentIteratorEx(@NotNull ContentIterator processor) {
@@ -54,14 +55,15 @@ public abstract class FileIndexBase implements FileIndex {
                                                   @Nullable VirtualFileFilter filter,
                                                   @NotNull Collection<VirtualFile> topLevelRecursiveRoots,
                                                   @NotNull Collection<VirtualFile> nonRecursiveRoots) {
+    VirtualFileFilter deduplicatingFilter = new DeduplicatingVirtualFileFilter(filter);
     ContentIteratorEx processorEx = toContentIteratorEx(processor);
     for (VirtualFile root : topLevelRecursiveRoots) {
-      if (!iterateContentUnderDirectory(root, processorEx, filter)) {
+      if (!iterateContentUnderDirectory(root, processorEx, deduplicatingFilter)) {
         return false;
       }
     }
     for (VirtualFile root : nonRecursiveRoots) {
-      if ((filter == null || filter.accept(root)) && processorEx.processFileEx(root) == TreeNodeProcessingResult.STOP) {
+      if (deduplicatingFilter.accept(root) && processorEx.processFileEx(root) == TreeNodeProcessingResult.STOP) {
         return false;
       }
     }

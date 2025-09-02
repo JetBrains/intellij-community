@@ -1,0 +1,18 @@
+<idea-plugin>
+  <dependencies>
+    <plugin id="com.intellij.java"/>
+    <module name="intellij.devkit.core"/>
+  </dependencies>
+  <actions resource-bundle="messages.DevkitScaffoldingBundle">
+    <action id="newIjModule" icon="AllIcons.Nodes.Module"
+            class="com.intellij.devkit.scaffolding.NewIjModuleAction">
+      <add-to-group group-id="NewGroup1" anchor="after" relative-to-action="NewModuleInGroup"/>
+      <add-to-group group-id="NewProjectOrModuleGroup"/>
+    </action>
+  </actions>
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="devkit.plugin.directory.icons" defaultValue="true"
+                 description="Enables icons for well-formed plugin directories, for instance, in Project View"/>
+    <iconProvider implementation="com.intellij.devkit.scaffolding.ScaffoldingDirectoryIconProvider" order="before javaDirectory"/>
+  </extensions>
+</idea-plugin>

@@ -790,10 +790,7 @@ public class CustomizableActionsPanel {
     void performAction(JComponent component, String place, Presentation presentation) {
       DataContext dataContext = ActionToolbar.getDataContextFor(component);
       AnActionEvent event = AnActionEvent.createFromInputEvent(null, place, presentation, dataContext);
-
-      if (ActionUtil.lastUpdateAndCheckDumb(this, event, true)) {
-        ActionUtil.performActionDumbAwareWithCallbacks(this, event);
-      }
+      ActionUtil.performAction(this, event);
     }
   }
 

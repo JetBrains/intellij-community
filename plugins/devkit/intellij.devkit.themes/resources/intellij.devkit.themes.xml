@@ -1,7 +1,7 @@
 <idea-plugin package="org.jetbrains.idea.devkit.themes">
   <dependencies>
     <module name="intellij.devkit.core"/>
-    <plugin id="com.intellij.modules.json"/>
+    <module name="intellij.json.backend"/>
   </dependencies>
   <resource-bundle>messages.DevKitThemesBundle</resource-bundle>
   <extensions defaultExtensionNs="com.intellij">
@@ -26,8 +26,8 @@
     <ProviderFactory implementation="org.jetbrains.idea.devkit.themes.metadata.ThemeMetadataJsonSchemaProviderFactory"/>
   </extensions>
   <actions>
-    <action id="DevKit.NewTheme" class="org.jetbrains.idea.devkit.themes.actions.NewThemeAction">
-      <add-to-group group-id="DevkitNewActions" anchor="last"/>
+    <action id="DevKit.NewTheme" class="org.jetbrains.idea.devkit.themes.actions.NewThemeAction" icon="AllIcons.Actions.Colors">
+      <add-to-group group-id="NewGroup" anchor="last"/>
     </action>
     <group id="DevKit.ThemeEditorToolbar">
       <action id="DevKit.ApplyTheme" class="org.jetbrains.idea.devkit.themes.actions.ApplyThemeAction"

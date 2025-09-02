@@ -40,12 +40,12 @@ final class LocalInspectionsPassFactory implements MainHighlightingPassFactory,
   }
 
   @Override
-  public TextEditorHighlightingPass createMainHighlightingPass(@NotNull PsiFile file,
+  public TextEditorHighlightingPass createMainHighlightingPass(@NotNull PsiFile psiFile,
                                                                @NotNull Document document,
                                                                @NotNull HighlightInfoProcessor highlightInfoProcessor) {
-    TextRange textRange = file.getTextRange();
-    LOG.assertTrue(textRange != null, "textRange is null for " + file + " (" + PsiUtilCore.getVirtualFile(file) + ")");
-    return new LocalInspectionsPass(file, document, textRange, TextRange.EMPTY_RANGE, true, HighlightInfoUpdater.EMPTY, true);
+    TextRange textRange = psiFile.getTextRange();
+    LOG.assertTrue(textRange != null, "textRange is null for " + psiFile + " (" + PsiUtilCore.getVirtualFile(psiFile) + ")");
+    return new LocalInspectionsPass(psiFile, document, textRange, TextRange.EMPTY_RANGE, true, HighlightInfoUpdater.EMPTY, true);
   }
 
   @Override

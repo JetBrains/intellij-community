@@ -5,6 +5,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.vcs.log.VcsLogDataPack
+import com.intellij.vcs.log.VcsLogCommitStorageIndex
 import com.intellij.vcs.log.visible.VisiblePack
 
 object FileHistoryPaths {
@@ -16,7 +17,7 @@ object FileHistoryPaths {
       return FILE_HISTORY.get(this) ?: FileHistory.EMPTY
     }
 
-  private val VcsLogDataPack.commitToFileStateMap: Map<Int, CommitFileState>
+  private val VcsLogDataPack.commitToFileStateMap: Map<VcsLogCommitStorageIndex, CommitFileState>
     get() = fileHistory.commitToFileStateMap
 
   @JvmStatic
@@ -31,15 +32,15 @@ object FileHistoryPaths {
   }
 
   @JvmStatic
-  fun VcsLogDataPack.filePath(commit: Int): FilePath? = this.commitToFileStateMap[commit]?.filePath
+  fun VcsLogDataPack.filePath(commit: VcsLogCommitStorageIndex): FilePath? = this.commitToFileStateMap[commit]?.filePath
 
   @JvmStatic
-  fun VcsLogDataPack.filePathOrDefault(commit: Int): FilePath? {
+  fun VcsLogDataPack.filePathOrDefault(commit: VcsLogCommitStorageIndex): FilePath? {
     return this.commitToFileStateMap[commit]?.filePath ?: FileHistoryFilterer.getFilePath(filters)
   }
 
   @JvmStatic
-  fun VcsLogDataPack.isDeletedInCommit(commit: Int): Boolean = this.commitToFileStateMap[commit]?.deleted ?: false
+  fun VcsLogDataPack.isDeletedInCommit(commit: VcsLogCommitStorageIndex): Boolean = this.commitToFileStateMap[commit]?.deleted ?: false
 
   @JvmStatic
   fun VcsLogDataPack.filePaths(): Set<FilePath> {

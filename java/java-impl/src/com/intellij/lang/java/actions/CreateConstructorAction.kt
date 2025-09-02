@@ -43,8 +43,8 @@ internal class CreateConstructorAction(
 
   private fun constructorRenderer(project: Project) = JavaConstructorRenderer(project, target, request)
 
-  override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo {
-    val copyClass = PsiTreeUtil.findSameElementInCopy(target, file)
+  override fun generatePreview(project: Project, editor: Editor, psiFile: PsiFile): IntentionPreviewInfo {
+    val copyClass = PsiTreeUtil.findSameElementInCopy(target, psiFile)
     val javaFieldRenderer = JavaConstructorRenderer(project, copyClass, request)
     javaFieldRenderer.doMagic()
     return IntentionPreviewInfo.DIFF

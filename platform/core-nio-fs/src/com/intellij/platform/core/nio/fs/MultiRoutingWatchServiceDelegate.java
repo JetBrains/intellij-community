@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.core.nio.fs;
 
 import org.jetbrains.annotations.NotNull;
@@ -8,7 +8,7 @@ import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
 import java.util.concurrent.TimeUnit;
 
-class MultiRoutingWatchServiceDelegate implements WatchService {
+final class MultiRoutingWatchServiceDelegate implements WatchService {
   final @NotNull WatchService myDelegate;
   private final @NotNull MultiRoutingFileSystemProvider myProvider;
 

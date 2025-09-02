@@ -7,6 +7,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginNode;
 import com.intellij.ide.plugins.PluginStateListener;
 import com.intellij.ide.plugins.PluginStateManager;
+import com.intellij.ide.plugins.newui.PluginUiModel;
 import com.intellij.ide.plugins.newui.PluginUpdatesService;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -45,7 +46,7 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
 
   private static @Nullable Set<String> myAlreadyShownPluginUpdates;
   private static @Nullable Collection<PluginDownloader> myUpdatesForPlugins;
-  private static @Nullable Collection<PluginNode> myCustomRepositoryPlugins;
+  private static @Nullable Collection<PluginUiModel> myCustomRepositoryPlugins;
 
   private static PluginUpdatesService myUpdatesService;
   private static PluginStateListener myPluginStateListener;
@@ -182,7 +183,7 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
   }
 
   public static void newPluginUpdates(@NotNull Collection<PluginDownloader> updatesForPlugins,
-                                      @NotNull Collection<PluginNode> customRepositoryPlugins) {
+                                      @NotNull Collection<PluginUiModel> customRepositoryPlugins) {
     if (UpdateSettings.getInstance().isPluginsCheckNeeded()) {
       myUpdatesForPlugins = updatesForPlugins;
       myCustomRepositoryPlugins = customRepositoryPlugins;

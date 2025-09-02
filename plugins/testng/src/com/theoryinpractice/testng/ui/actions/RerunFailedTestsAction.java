@@ -9,8 +9,6 @@ import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.target.TargetEnvironment;
-import com.intellij.execution.target.local.LocalTargetEnvironment;
-import com.intellij.execution.target.local.LocalTargetEnvironmentRequest;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.SearchForTestsTask;
 import com.intellij.execution.testframework.TestConsoleProperties;
@@ -52,11 +50,6 @@ public class RerunFailedTestsAction extends JavaRerunFailedTestsAction {
       @Override
       public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) {
         return new TestNGRunnableState(env, configuration) {
-
-          @Override
-          public SearchForTestsTask createSearchingForTestsTask() {
-            return createSearchingForTestsTask(new LocalTargetEnvironment(new LocalTargetEnvironmentRequest()));
-          }
 
           @Override
           public SearchForTestsTask createSearchingForTestsTask(@NotNull TargetEnvironment targetEnvironment) {

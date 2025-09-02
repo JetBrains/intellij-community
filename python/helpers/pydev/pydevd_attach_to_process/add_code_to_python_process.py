@@ -130,7 +130,7 @@ IS_MAC = sys.platform == 'darwin'
 
 
 def is_python_64bit():
-    return (struct.calcsize('P') == 8)
+    return struct.calcsize('P') == 8
 
 
 def get_target_filename(is_target_process_64=None, prefix=None, extension=None):
@@ -266,7 +266,14 @@ def get_target_filename(is_target_process_64=None, prefix=None, extension=None):
 
 def run_python_code_windows(pid, python_code, connect_debugger_tracing=False, show_debug_info=0):
     assert '\'' not in python_code, 'Having a single quote messes with our command.'
-    from winappdbg.process import Process
+
+    # Suppress winappdbg warning about sql package missing.
+    import warnings
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=ImportWarning)
+        from winappdbg.process import Process
+
     if not isinstance(python_code, bytes):
         python_code = python_code.encode('utf-8')
 

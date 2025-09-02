@@ -8,7 +8,7 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.annotations.Child
+import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
@@ -26,6 +26,7 @@ interface ModuleCustomImlDataEntity : WorkspaceEntity {
    */
   val customModuleOptions: Map<@NonNls String, @NonNls String>
 
+  @Parent
   val module: ModuleEntity
 
   //region generated code
@@ -68,7 +69,7 @@ fun MutableEntityStorage.modifyModuleCustomImlDataEntity(
 //endregion
 
 @get:Internal
-val ModuleEntity.customImlData: @Child ModuleCustomImlDataEntity?
+val ModuleEntity.customImlData: ModuleCustomImlDataEntity?
   by WorkspaceEntity.extension()
 
 /**
@@ -77,6 +78,7 @@ val ModuleEntity.customImlData: @Child ModuleCustomImlDataEntity?
  */
 @Internal
 interface ModuleGroupPathEntity : WorkspaceEntity {
+  @Parent
   val module: ModuleEntity
 
   val path: List<@NonNls String>
@@ -120,7 +122,7 @@ fun MutableEntityStorage.modifyModuleGroupPathEntity(
 //endregion
 
 @get:Internal
-val ModuleEntity.groupPath: @Child ModuleGroupPathEntity?
+val ModuleEntity.groupPath: ModuleGroupPathEntity?
   by WorkspaceEntity.extension()
 
 /**
@@ -128,6 +130,7 @@ val ModuleEntity.groupPath: @Child ModuleGroupPathEntity?
  */
 @Internal
 interface ExternalSystemModuleOptionsEntity : WorkspaceEntity {
+  @Parent
   val module: ModuleEntity
 
   val externalSystem: String?
@@ -181,7 +184,7 @@ fun MutableEntityStorage.modifyExternalSystemModuleOptionsEntity(
 //endregion
 
 @get:Internal
-val ModuleEntity.exModuleOptions: @Child ExternalSystemModuleOptionsEntity?
+val ModuleEntity.exModuleOptions: ExternalSystemModuleOptionsEntity?
   by WorkspaceEntity.extension()
 
 /**
@@ -189,6 +192,7 @@ val ModuleEntity.exModuleOptions: @Child ExternalSystemModuleOptionsEntity?
  */
 @Internal
 interface TestModulePropertiesEntity : WorkspaceEntity {
+  @Parent
   val module: ModuleEntity
   val productionModuleId: ModuleId
 
@@ -230,5 +234,5 @@ fun MutableEntityStorage.modifyTestModulePropertiesEntity(
 //endregion
 
 @get:Internal
-val ModuleEntity.testProperties: @Child TestModulePropertiesEntity?
+val ModuleEntity.testProperties: TestModulePropertiesEntity?
   by WorkspaceEntity.extension()

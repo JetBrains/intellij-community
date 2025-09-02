@@ -3,6 +3,7 @@ package org.jetbrains.plugins.terminal.arrangement;
 
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.execution.ijent.IjentChildPtyProcessAdapter
 import com.intellij.execution.process.CapturingProcessRunner
 import com.intellij.execution.process.OSProcessHandler
 import com.intellij.openapi.components.Service
@@ -68,6 +69,10 @@ class ProcessInfoUtil(private val coroutineScope: CoroutineScope) {
   @Throws(IllegalStateException::class)
   private fun doGetCwd(process: Process): String? {
     return when {
+      process is IjentChildPtyProcessAdapter -> {
+        // Use shell integration instead
+        null
+      }
       SystemInfo.isUnix -> {
         val pid = process.pid().toInt()
         tryGetCwdFastOnUnix(pid) ?: getCwdOnUnix(pid)

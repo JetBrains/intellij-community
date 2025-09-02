@@ -1,9 +1,9 @@
 <component name="libraryTable">
   <library name="XStream" type="repository">
-    <properties maven-id="com.thoughtworks.xstream:xstream:1.4.20">
+    <properties maven-id="com.thoughtworks.xstream:xstream:1.4.21">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/com/thoughtworks/xstream/xstream/1.4.20/xstream-1.4.20.jar">
-          <sha256sum>87df0f0be57c92037d0110fbb225a30b651702dc275653d285afcfef31bc2e81</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/thoughtworks/xstream/xstream/1.4.21/xstream-1.4.21.jar">
+          <sha256sum>f56586f3de59ae2a49430acbc9f27942b8c5cebec9245c869fae7136733333ec</sha256sum>
         </artifact>
         <artifact url="file://$MAVEN_REPOSITORY$/io/github/x-stream/mxparser/1.2.2/mxparser-1.2.2.jar">
           <sha256sum>aeeee23a3303d811bca8790ea7f25b534314861c03cff36dafdcc2180969eb97</sha256sum>
@@ -18,13 +18,13 @@
       </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/thoughtworks/xstream/xstream/1.4.20/xstream-1.4.20.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/thoughtworks/xstream/xstream/1.4.21/xstream-1.4.21.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/io/github/x-stream/mxparser/1.2.2/mxparser-1.2.2.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/xmlpull/xmlpull/1.1.3.1/xmlpull-1.1.3.1.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/thoughtworks/xstream/xstream/1.4.20/xstream-1.4.20-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/thoughtworks/xstream/xstream/1.4.21/xstream-1.4.21-sources.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/io/github/x-stream/mxparser/1.2.2/mxparser-1.2.2-sources.jar!/" />
     </SOURCES>
   </library>

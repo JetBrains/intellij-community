@@ -1,5 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic.logging;
 
 import com.intellij.execution.ExecutionBundle;
@@ -7,9 +6,9 @@ import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.impl.ConsoleBuffer;
 import com.intellij.execution.process.AnsiEscapeDecoder;
-import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.icons.AllIcons;
@@ -50,9 +49,7 @@ import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
-import org.jetbrains.annotations.CalledInAny;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -437,7 +434,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
 
   public void attachStopLogConsoleTrackingListener(final ProcessHandler process) {
     if (process != null) {
-      final ProcessAdapter stopListener = new ProcessAdapter() {
+      final ProcessListener stopListener = new ProcessListener() {
         @Override
         public void processTerminated(final @NotNull ProcessEvent event) {
           process.removeProcessListener(this);
@@ -471,7 +468,9 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
     return myOriginalDocument;
   }
 
-  static void resizeBuffer(@NotNull StringBuffer buffer, int size) {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public static void resizeBuffer(@NotNull StringBuffer buffer, int size) {
     final int toRemove = buffer.length() - size;
     if (toRemove > 0) {
 
@@ -497,7 +496,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
     return CommonDataKeys.EDITOR.getData(dataContext);
   }
 
-  private void filterConsoleOutput() {
+  protected void filterConsoleOutput() {
     ApplicationManager.getApplication().invokeLater(() -> computeSelectedLineAndFilter());
   }
 
@@ -597,7 +596,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
    * If we get the assertion then it is a time to revisit logic of caller ;)
    */
 
-  private @NotNull ConsoleView getConsoleNotNull() {
+  public @NotNull ConsoleView getConsoleNotNull() {
     final ConsoleView console = getConsole();
     assert console != null: "it looks like console has been disposed";
     return console;

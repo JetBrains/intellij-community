@@ -1,14 +1,13 @@
-from collections.abc import Callable, Iterable
+from collections.abc import Awaitable, Callable, Iterable
 from typing import TypeVar, overload
 
-from django.contrib.auth.base_user import _UserModel
-from django.contrib.auth.models import AnonymousUser
+from django.contrib.auth.models import _AnyUser
 from django.http.response import HttpResponseBase
 
-_VIEW = TypeVar("_VIEW", bound=Callable[..., HttpResponseBase])
+_VIEW = TypeVar("_VIEW", bound=Callable[..., HttpResponseBase | Awaitable[HttpResponseBase]])
 
 def user_passes_test(
-    test_func: Callable[[_UserModel | AnonymousUser], bool],
+    test_func: Callable[[_AnyUser], bool],
     login_url: str | None = ...,
     redirect_field_name: str | None = ...,
 ) -> Callable[[_VIEW], _VIEW]: ...

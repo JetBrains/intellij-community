@@ -35,6 +35,7 @@ package com.intellij.ui.layout.migLayout.patched
  *         Date: 2006-sep-08
  */
 
+import com.intellij.util.ui.GraphicsUtil
 import net.miginfocom.layout.ComponentWrapper
 import net.miginfocom.layout.ContainerWrapper
 import java.awt.BasicStroke
@@ -68,7 +69,7 @@ internal class SwingContainerWrapper(c: JComponent) : SwingComponentWrapper(c), 
       return
     }
 
-    val g = c.graphics as? Graphics2D ?: return
+    val g = GraphicsUtil.safelyGetGraphics(c) as? Graphics2D ?: return
 
     g.stroke = BasicStroke(1f, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 10f, floatArrayOf(2f, 3f), 0f)
     g.paint = DB_CELL_OUTLINE

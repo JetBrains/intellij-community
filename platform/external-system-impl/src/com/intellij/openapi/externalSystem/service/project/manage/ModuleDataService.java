@@ -14,10 +14,7 @@ import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalS
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.Order;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.ApiStatus;
@@ -38,27 +35,8 @@ public final class ModuleDataService extends AbstractModuleDataService<ModuleDat
   }
 
   @Override
-  public @NotNull Computable<Collection<Module>> computeOrphanData(final @NotNull Collection<? extends DataNode<ModuleData>> toImport,
-                                                                   final @NotNull ProjectData projectData,
-                                                                   final @NotNull Project project,
-                                                                   final @NotNull IdeModifiableModelsProvider modelsProvider) {
-    return () -> {
-      List<Module> orphanIdeModules = new SmartList<>();
-
-      for (Module module : modelsProvider.getModules()) {
-        if (!ExternalSystemApiUtil.isExternalSystemAwareModule(projectData.getOwner(), module)) continue;
-        if (ExternalSystemApiUtil.getExternalModuleType(module) != null) continue;
-
-        final String rootProjectPath = ExternalSystemApiUtil.getExternalRootProjectPath(module);
-        if (projectData.getLinkedExternalProjectPath().equals(rootProjectPath)) {
-          if (module.getUserData(AbstractModuleDataService.MODULE_DATA_KEY) == null) {
-            orphanIdeModules.add(module);
-          }
-        }
-      }
-
-      return orphanIdeModules;
-    };
+  public @Nullable String getExternalModuleType() {
+    return null;
   }
 
   @Override

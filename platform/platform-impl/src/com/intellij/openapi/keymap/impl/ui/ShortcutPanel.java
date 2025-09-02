@@ -1,12 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.openapi.actionSystem.Shortcut;
+import org.jetbrains.annotations.ApiStatus;
 
-import java.awt.LayoutManager;
-import javax.swing.JPanel;
+import javax.swing.*;
+import java.awt.*;
 
-class ShortcutPanel<T extends Shortcut> extends JPanel {
+@ApiStatus.Internal
+public class ShortcutPanel<T extends Shortcut> extends JPanel {
   private T myShortcut;
 
   ShortcutPanel(LayoutManager layout) {

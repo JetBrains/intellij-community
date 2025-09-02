@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.impl
 
-import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
@@ -21,7 +20,7 @@ import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.DefaultPropEntity
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(6)
+@GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class DefaultPropEntityImpl(private val dataSource: DefaultPropEntityData) : DefaultPropEntity, WorkspaceEntityBase(dataSource) {
 
@@ -62,8 +61,8 @@ internal class DefaultPropEntityImpl(private val dataSource: DefaultPropEntityDa
   }
 
 
-  internal class Builder(result: DefaultPropEntityData?) : ModifiableWorkspaceEntityBase<DefaultPropEntity, DefaultPropEntityData>(
-    result), DefaultPropEntity.Builder {
+  internal class Builder(result: DefaultPropEntityData?) : ModifiableWorkspaceEntityBase<DefaultPropEntity, DefaultPropEntityData>(result),
+                                                           DefaultPropEntity.Builder {
     internal constructor() : this(DefaultPropEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -205,7 +204,8 @@ internal class DefaultPropEntityData : WorkspaceEntityData<DefaultPropEntity>() 
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.DefaultPropEntity") as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.DefaultPropEntity"
+    ) as EntityMetadata
   }
 
   override fun clone(): DefaultPropEntityData {

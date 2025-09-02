@@ -9,7 +9,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.workspaceModel.core.fileIndex.impl.OptionalExclusionUtil
+import com.intellij.workspaceModel.ide.OptionalExclusionUtil
 
 internal class MarkAsContentRootAction : DumbAwareAction() {
 

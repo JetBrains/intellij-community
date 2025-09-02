@@ -15,26 +15,27 @@
  */
 package com.siyeh.ig.psiutils;
 
-import com.intellij.codeInsight.daemon.impl.analysis.PatternsInSwitchBlockHighlightingModel;
+import com.intellij.codeInsight.ExpressionUtil;
+import com.intellij.java.codeserver.core.JavaPsiSwitchUtil;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.JavaPsiPatternUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ipp.psiutils.ErrorUtil;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 
+import static com.intellij.java.codeserver.core.JavaPatternExhaustivenessUtil.hasExhaustivenessError;
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
 import static com.siyeh.ig.callMatcher.CallMatcher.instanceCall;
 
@@ -65,7 +66,7 @@ public final class SwitchUtils {
    * @return a negative number if a default case was encountered.
    */
   public static int calculateBranchCount(@NotNull PsiSwitchBlock block) {
-    List<PsiElement> switchBranches = getSwitchBranches(block);
+    List<PsiElement> switchBranches = JavaPsiSwitchUtil.getSwitchBranches(block);
     if (switchBranches.isEmpty()) return 0;
     int branches = 0;
     boolean defaultFound = false;
@@ -89,27 +90,6 @@ public final class SwitchUtils {
       return 0;
     }
     return defaultFound ? -branches - 1 : branches;
-  }
-
-  /**
-   * @param block the switch block
-   * @return a list of switch branches consisting of either {@link PsiSwitchLabelStatementBase} or {@link PsiCaseLabelElement}
-   */
-  public static @NotNull List<PsiElement> getSwitchBranches(@NotNull PsiSwitchBlock block) {
-    final PsiCodeBlock body = block.getBody();
-    if (body == null) return Collections.emptyList();
-    List<PsiElement> result = new SmartList<>();
-    for (PsiSwitchLabelStatementBase child : PsiTreeUtil.getChildrenOfTypeAsList(body, PsiSwitchLabelStatementBase.class)) {
-      if (child.isDefaultCase()) {
-        result.add(child);
-      }
-      else {
-        PsiCaseLabelElementList labelElementList = child.getCaseLabelElementList();
-        if (labelElementList == null) continue;
-        Collections.addAll(result, labelElementList.getElements());
-      }
-    }
-    return result;
   }
 
   /**
@@ -345,33 +325,7 @@ public final class SwitchUtils {
    */
   @Contract(pure = true)
   public static boolean isRuleFormatSwitch(@NotNull PsiSwitchBlock block) {
-    if (!PsiUtil.isAvailable(JavaFeature.ENHANCED_SWITCH, block)) {
-      return false;
-    }
-
-    final PsiCodeBlock switchBody = block.getBody();
-    if (switchBody != null) {
-      for (var child = switchBody.getFirstChild(); child != null; child = child.getNextSibling()) {
-        if (child instanceof PsiSwitchLabelStatementBase && !isBeingCompleted((PsiSwitchLabelStatementBase)child)) {
-          return child instanceof PsiSwitchLabeledRuleStatement;
-        }
-      }
-    }
-
-    return true;
-  }
-
-  /**
-   * Checks if the label is being completed and there are no other case label elements in the list of the case label's elements
-   * @param label the label to analyze
-   * @return true if the label is currently being completed
-   */
-  @Contract(pure = true)
-  private static boolean isBeingCompleted(@NotNull PsiSwitchLabelStatementBase label) {
-    if (!(label.getLastChild() instanceof PsiErrorElement)) return false;
-
-    final PsiCaseLabelElementList list = label.getCaseLabelElementList();
-    return list != null && list.getElements().length == 1;
+    return PsiUtil.isRuleFormatSwitch(block);
   }
 
   public static boolean canBeSwitchSelectorExpression(PsiExpression expression, LanguageLevel languageLevel) {
@@ -560,36 +514,6 @@ public final class SwitchUtils {
     else {
       return null;
     }
-  }
-
-  /**
-   * @param switchBlock a switch statement or expression
-   * @return either default switch label statement {@link PsiSwitchLabelStatementBase}, or {@link PsiDefaultCaseLabelElement},
-   * or null, if nothing was found.
-   */
-  public static @Nullable PsiElement findDefaultElement(@NotNull PsiSwitchBlock switchBlock) {
-    PsiCodeBlock body = switchBlock.getBody();
-    if (body == null) return null;
-    for (PsiStatement statement : body.getStatements()) {
-      PsiSwitchLabelStatementBase switchLabelStatement = ObjectUtils.tryCast(statement, PsiSwitchLabelStatementBase.class);
-      if (switchLabelStatement == null) continue;
-      PsiElement defaultElement = findDefaultElement(switchLabelStatement);
-      if (defaultElement != null) return defaultElement;
-    }
-    return null;
-  }
-
-  /**
-   * @param label a switch label statement
-   * @return either default switch label statement {@link PsiSwitchLabelStatementBase}, or {@link PsiDefaultCaseLabelElement},
-   * or null, if nothing was found.
-   */
-  public static @Nullable PsiElement findDefaultElement(@NotNull PsiSwitchLabelStatementBase label) {
-    if (label.isDefaultCase()) return label;
-    PsiCaseLabelElementList labelElementList = label.getCaseLabelElementList();
-    if (labelElementList == null) return null;
-    return ContainerUtil.find(labelElementList.getElements(),
-                              labelElement -> labelElement instanceof PsiDefaultCaseLabelElement);
   }
 
   public static @Nullable @NonNls String createPatternCaseText(PsiExpression expression){
@@ -795,7 +719,7 @@ public final class SwitchUtils {
    * @return list of enum constants which are targets of the specified label; empty list if the supplied element is not a switch label,
    * or it is not an enum switch.
    */
-  public static @NotNull List<PsiEnumConstant> findEnumConstants(PsiSwitchLabelStatementBase label) {
+  public static @NotNull @Unmodifiable List<PsiEnumConstant> findEnumConstants(PsiSwitchLabelStatementBase label) {
     if (label == null) {
       return Collections.emptyList();
     }
@@ -913,7 +837,7 @@ public final class SwitchUtils {
    * @param statement The switch statement to analyze.
    * @return A list of unreachable branches that can be safely removed.
    */
-  public static List<PsiCaseLabelElement> findRemovableUnreachableBranches(PsiCaseLabelElement reachableLabel,
+  public static @Unmodifiable List<PsiCaseLabelElement> findRemovableUnreachableBranches(PsiCaseLabelElement reachableLabel,
                                                                            PsiSwitchBlock statement) {
     PsiSwitchLabelStatementBase labelStatement = PsiTreeUtil.getParentOfType(reachableLabel, PsiSwitchLabelStatementBase.class);
     List<PsiSwitchLabelStatementBase> allBranches =
@@ -944,7 +868,7 @@ public final class SwitchUtils {
     if (unreachableElements.isEmpty() || hasDefault) {
       return unreachableElements;
     }
-    boolean isEnhancedSwitch = JavaPsiSwitchUtil.isEnhancedSwitch(statement);
+    boolean isEnhancedSwitch = ExpressionUtil.isEnhancedSwitch(statement);
     if (isEnhancedSwitch) {
       PsiExpression expression = statement.getExpression();
       if (expression == null) {
@@ -960,7 +884,7 @@ public final class SwitchUtils {
         boolean isDominated = false;
         for (int j = i + 1; j < unreachableElements.size(); j++) {
           PsiCaseLabelElement nextElement = unreachableElements.get(j);
-          isDominated = PatternsInSwitchBlockHighlightingModel.isDominated(currentElement, nextElement, selectorType);
+          isDominated = JavaPsiSwitchUtil.isDominated(currentElement, nextElement, selectorType);
           if (!isDominated) {
             break;
           }
@@ -974,6 +898,88 @@ public final class SwitchUtils {
     }
     return unreachableElements;
   }
+
+  /**
+   * Evaluates the exhaustiveness state of a switch block.
+   *
+   * @param switchBlock                          the PsiSwitchBlock to evaluate
+   * @param considerNestedDeconstructionPatterns flag indicating whether to consider nested deconstruction patterns. It is necessary to take into account,
+   *                                             because nested deconstruction patterns don't cover null values
+   * @return exhaustiveness state.
+   */
+  public static @NotNull SwitchExhaustivenessState evaluateSwitchCompleteness(@NotNull PsiSwitchBlock switchBlock,
+                                                                              boolean considerNestedDeconstructionPatterns) {
+    PsiExpression selector = switchBlock.getExpression();
+    if (selector == null) return SwitchExhaustivenessState.MALFORMED;
+    PsiType selectorType = selector.getType();
+    if (selectorType == null) return SwitchExhaustivenessState.MALFORMED;
+    PsiCodeBlock switchBody = switchBlock.getBody();
+    if (switchBody == null) return SwitchExhaustivenessState.MALFORMED;
+    List<PsiCaseLabelElement> labelElements = StreamEx.of(JavaPsiSwitchUtil.getSwitchBranches(switchBlock)).select(PsiCaseLabelElement.class)
+      .filter(element -> !(element instanceof PsiDefaultCaseLabelElement)).toList();
+    if (labelElements.isEmpty()) return SwitchExhaustivenessState.EMPTY;
+    boolean needToCheckCompleteness = ExpressionUtil.isEnhancedSwitch(switchBlock);
+    boolean isEnumSelector = JavaPsiSwitchUtil.getSwitchSelectorKind(selectorType) == JavaPsiSwitchUtil.SelectorKind.ENUM;
+    if (ContainerUtil.find(labelElements, element -> JavaPsiPatternUtil.isUnconditionalForType(element, selectorType)) != null) {
+      return SwitchExhaustivenessState.EXHAUSTIVE_NO_DEFAULT;
+    }
+    if (JavaPsiSwitchUtil.isBooleanSwitchWithTrueAndFalse(switchBlock)) {
+      return SwitchExhaustivenessState.EXHAUSTIVE_NO_DEFAULT;
+    }
+    if (!needToCheckCompleteness && !isEnumSelector) return SwitchExhaustivenessState.INCOMPLETE;
+    // It is necessary because deconstruction patterns don't cover cases 
+    // when some of their components are null and deconstructionPattern too
+    if (!considerNestedDeconstructionPatterns) {
+      labelElements = ContainerUtil.filter(
+        labelElements, label -> !(label instanceof PsiDeconstructionPattern deconstructionPattern &&
+                                  ContainerUtil.or(
+                                    deconstructionPattern.getDeconstructionList().getDeconstructionComponents(),
+                                    component -> component instanceof PsiDeconstructionPattern)));
+    }
+    boolean hasError = hasExhaustivenessError(switchBlock, labelElements);
+    // if a switch block is needed to check completeness and switch is incomplete we let highlighting to inform about it as it's a compilation error
+    if (!hasError) {
+      return SwitchExhaustivenessState.EXHAUSTIVE_CAN_ADD_DEFAULT;
+    }
+    if (needToCheckCompleteness) {
+      return SwitchExhaustivenessState.UNNECESSARY;
+    }
+    return SwitchExhaustivenessState.INCOMPLETE;
+  }
+
+  /**
+   * State of switch exhaustiveness.
+   */
+  public enum SwitchExhaustivenessState {
+    /**
+     * Switch is malformed and produces a compilation error (no body, no selector, etc.),
+     * no exhaustiveness analysis is performed
+     */
+    MALFORMED,
+    /**
+     * Switch contains no labels (except probably default label)
+     */
+    EMPTY,
+    /**
+     * Switch should not be exhaustive (classic switch statement)
+     */
+    UNNECESSARY,
+    /**
+     * Switch is not exhaustive
+     */
+    INCOMPLETE,
+    /**
+     * Switch is exhaustive (complete), and adding a default branch would be a compilation error.
+     * This includes a switch over boolean having both true and false branches, 
+     * or a switch that has an unconditional pattern branch.
+     */
+    EXHAUSTIVE_NO_DEFAULT,
+    /**
+     * Switch is exhaustive (complete), but it's possible to add a default branch.
+     */
+    EXHAUSTIVE_CAN_ADD_DEFAULT
+  }
+
   private static class LabelSearchVisitor extends JavaRecursiveElementWalkingVisitor {
 
     private final String m_labelName;

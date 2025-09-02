@@ -137,6 +137,11 @@ public final class ActionUrl implements JDOMExternalizable {
   }
 
   public @Nullable AnAction getComponentAction() {
+    AnAction action = calculateComponentAction();
+    return action instanceof NonCustomizableAction ? null : action;
+  }
+
+  private @Nullable AnAction calculateComponentAction() {
     Object component = getComponent();
     if (component instanceof Separator o) {
       return o;

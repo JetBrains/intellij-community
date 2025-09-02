@@ -241,9 +241,9 @@ public class WolfTheProblemSolverTest extends DaemonAnalyzerTestCase {
     documentManager.commitAllDocuments();
     FileEditor fileEditor = FileEditorManagerEx.getInstanceEx(getProject()).openFile(virtualFile, false)[0];
     Editor editor = ((TextEditor)fileEditor).getEditor();
-    PsiFile file = documentManager.getPsiFile(editor.getDocument());
+    PsiFile psiFile = documentManager.getPsiFile(editor.getDocument());
 
-    List<HighlightInfo> infos = CodeInsightTestFixtureImpl.instantiateAndRun(file, editor, new int[0], false);
+    List<HighlightInfo> infos = CodeInsightTestFixtureImpl.instantiateAndRun(psiFile, editor, new int[0], false);
     myWolfTheProblemSolver.waitForFilesQueuedForInvalidationAreProcessed();
     return filter(infos, HighlightSeverity.ERROR);
   }

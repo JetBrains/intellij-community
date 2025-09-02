@@ -93,7 +93,7 @@ internal class PsiElementBackgroundListCellRenderer(
 
           var minWidth = 0
           minWidth += insets.left + insets.right
-          minWidth += icon.iconWidth
+          minWidth += icon?.iconWidth ?: 0
           minWidth += iconTextGap
           minWidth += getFontMetrics(font).stringWidth("...")
           minimumSize = JBUI.size(minWidth, minimumSize.height)

@@ -73,8 +73,8 @@ public class CachingComparingClassifier extends ComparingClassifier<LookupElemen
   @Override
   public void addElement(@NotNull LookupElement t, @NotNull ProcessingContext context) {
     Comparable<?> weight = myWeigher.weigh(t, context.get(CompletionLookupArranger.WEIGHING_CONTEXT));
-    if (weight instanceof ForceableComparable) {
-      ((ForceableComparable)weight).force();
+    if (weight instanceof ForceableComparable forceableComparable) {
+      forceableComparable.force();
     }
     synchronized (this) {
       if (!myWeigher.isPrefixDependent() && myPrimitive) {

@@ -4,6 +4,8 @@ import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.ClientIdContextElement
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.session.TerminalCloseEvent
@@ -80,7 +82,7 @@ internal class TerminalTabsManager(private val project: Project, private val cor
       )
 
       val updatedTab = tab.copy(
-        shellCommand = result.configuredOptions.shellCommand,
+        shellCommand = options.shellCommand,
         workingDirectory = result.configuredOptions.workingDirectory,
         sessionId = result.sessionId,
         portForwardingId = portForwardingId,
@@ -196,5 +198,7 @@ internal class TerminalTabsManager(private val project: Project, private val cor
     fun getInstance(project: Project): TerminalTabsManager {
       return project.service()
     }
+
+    private val LOG: Logger = logger<TerminalTabsManager>()
   }
 }

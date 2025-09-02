@@ -159,21 +159,21 @@ public class CompletionData {
   }
 
   public static @NotNull LookupElement objectToLookupItem(final @NotNull Object object) {
-    if (object instanceof LookupElement) return (LookupElement)object;
+    if (object instanceof LookupElement lookupElement) return lookupElement;
 
     String s = null;
     TailType tailType = TailTypes.noneType();
-    if (object instanceof PsiElement){
-      s = PsiUtilCore.getName((PsiElement)object);
+    if (object instanceof PsiElement psiElement){
+      s = PsiUtilCore.getName(psiElement);
     }
-    else if (object instanceof PsiMetaData) {
-      s = ((PsiMetaData)object).getName();
+    else if (object instanceof PsiMetaData metaData) {
+      s = metaData.getName();
     }
-    else if (object instanceof String) {
-      s = (String)object;
+    else if (object instanceof String string) {
+      s = string;
     }
-    else if (object instanceof PresentableLookupValue) {
-      s = ((PresentableLookupValue)object).getPresentation();
+    else if (object instanceof PresentableLookupValue lookupValue) {
+      s = lookupValue.getPresentation();
     }
     if (s == null) {
       throw PluginException.createByClass("Null string for object: " + object + " of " + object.getClass(), null, object.getClass());
@@ -211,13 +211,13 @@ public class CompletionData {
   }
 
   protected void completeReference(PsiReference reference, PsiElement position, Set<? super LookupElement> set, TailType tailType, ElementFilter filter, CompletionVariant variant) {
-    if (reference instanceof PsiMultiReference) {
-      for (PsiReference ref : getReferences((PsiMultiReference)reference)) {
+    if (reference instanceof PsiMultiReference multiReference) {
+      for (PsiReference ref : getReferences(multiReference)) {
         completeReference(ref, position, set, tailType, filter, variant);
       }
     }
-    else if (reference instanceof PsiReferencesWrapper) {
-      for (PsiReference ref : ((PsiReferencesWrapper)reference).getReferences()) {
+    else if (reference instanceof PsiReferencesWrapper wrapper) {
+      for (PsiReference ref : wrapper.getReferences()) {
         completeReference(ref, position, set, tailType, filter, variant);
       }
     }
@@ -235,8 +235,8 @@ public class CompletionData {
           }
         }
         else {
-          if (completion instanceof LookupItem) {
-            final Object o = ((LookupItem<?>)completion).getObject();
+          if (completion instanceof LookupItem<?> lookupItem) {
+            final Object o = lookupItem.getObject();
             if (o instanceof PsiElement) {
               if (!filter.isClassAcceptable(o.getClass()) || !filter.isAcceptable(o, position)) continue;
             }

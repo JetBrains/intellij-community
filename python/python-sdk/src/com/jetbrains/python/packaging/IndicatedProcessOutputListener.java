@@ -9,7 +9,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class IndicatedProcessOutputListener extends ProcessAdapter {
+public final class IndicatedProcessOutputListener extends ProcessAdapter {
   private final @NotNull ProgressIndicator myIndicator;
 
   public IndicatedProcessOutputListener(@NotNull ProgressIndicator indicator) {

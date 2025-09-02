@@ -1,16 +1,14 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints.ui;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.popup.util.DetailView;
+import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointManager;
-import com.intellij.xdebugger.impl.DebuggerSupport;
-import com.intellij.xdebugger.impl.XDebuggerSupport;
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
-import com.intellij.xdebugger.impl.breakpoints.XDependentBreakpointManager;
+import com.intellij.xdebugger.impl.breakpoints.*;
+import com.intellij.xdebugger.impl.frame.XDebugManagerProxy;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,6 +17,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 @ApiStatus.Internal
 public class XMasterBreakpointPanel extends XBreakpointPropertiesSubPanel {
@@ -30,13 +29,15 @@ public class XMasterBreakpointPanel extends XBreakpointPropertiesSubPanel {
   private JPanel myMainPanel;
 
   private BreakpointChooser myMasterBreakpointChooser;
-  private XDependentBreakpointManager myDependentBreakpointManager;
+  private XDependentBreakpointManagerProxy myDependentBreakpointManager;
 
-  private List<BreakpointItem> getBreakpointItemsExceptMy() {
-    List<BreakpointItem> items = new ArrayList<>();
-    DebuggerSupport.getDebuggerSupport(XDebuggerSupport.class).getBreakpointPanelProvider().provideBreakpointItems(myProject, items);
+  private static List<BreakpointItem> getBreakpointItemsExceptMy(
+    XBreakpointManagerProxy breakpointManager,
+    XBreakpointProxy breakpoint
+  ) {
+    List<BreakpointItem> items = breakpointManager.getAllBreakpointItems();
     for (BreakpointItem item : items) {
-      if (item.getBreakpoint() == myBreakpoint) {
+      if (Objects.equals(item.getBreakpoint(), breakpoint)) {
         items.remove(item);
         break;
       }
@@ -47,22 +48,23 @@ public class XMasterBreakpointPanel extends XBreakpointPropertiesSubPanel {
   }
 
   @Override
-  public void init(Project project, XBreakpointManager breakpointManager, @NotNull XBreakpointBase breakpoint) {
-    super.init(project, breakpointManager, breakpoint);
-    myDependentBreakpointManager = ((XBreakpointManagerImpl)breakpointManager).getDependentBreakpointManager();
+  public void init(Project project, @NotNull XBreakpointProxy breakpoint) {
+    super.init(project, breakpoint);
+    XBreakpointManagerProxy breakpointManager = XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project);
+    myDependentBreakpointManager = breakpointManager.getDependentBreakpointManager();
     myMasterBreakpointChooser = new BreakpointChooser(project, new BreakpointChooser.Delegate() {
       @Override
       public void breakpointChosen(Project project, BreakpointItem breakpointItem) {
         updateAfterBreakpointHitPanel();
       }
-    }, null, getBreakpointItemsExceptMy());
+    }, null, getBreakpointItemsExceptMy(breakpointManager, breakpoint));
 
     myMasterBreakpointComboBoxPanel.add(myMasterBreakpointChooser.getComponent(), BorderLayout.CENTER);
   }
 
   @Override
   public boolean lightVariant(boolean showAllOptions) {
-    XBreakpoint<?> masterBreakpoint = myDependentBreakpointManager.getMasterBreakpoint(myBreakpoint);
+    XBreakpointProxy masterBreakpoint = myDependentBreakpointManager.getMasterBreakpoint(myBreakpoint);
     if (!showAllOptions && masterBreakpoint == null) {
       myMainPanel.setVisible(false);
       return true;
@@ -77,7 +79,7 @@ public class XMasterBreakpointPanel extends XBreakpointPropertiesSubPanel {
 
   @Override
   void loadProperties() {
-    XBreakpoint<?> masterBreakpoint = myDependentBreakpointManager.getMasterBreakpoint(myBreakpoint);
+    XBreakpointProxy masterBreakpoint = myDependentBreakpointManager.getMasterBreakpoint(myBreakpoint);
     if (masterBreakpoint != null) {
       myMasterBreakpointChooser.setSelectedBreakpoint(masterBreakpoint);
       myLeaveEnabledRadioButton.setSelected(myDependentBreakpointManager.isLeaveEnabled(myBreakpoint));
@@ -87,7 +89,7 @@ public class XMasterBreakpointPanel extends XBreakpointPropertiesSubPanel {
 
   @Override
   void saveProperties() {
-    XBreakpoint<?> masterBreakpoint = (XBreakpoint<?>)myMasterBreakpointChooser.getSelectedBreakpoint();
+    XBreakpointProxy masterBreakpoint = myMasterBreakpointChooser.getSelectedBreakpoint();
     if (masterBreakpoint == null) {
       myDependentBreakpointManager.clearMasterBreakpoint(myBreakpoint);
     }

@@ -29,11 +29,13 @@ import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.testFramework.DumbModeTestUtils;
 import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 import com.intellij.util.DocumentUtil;
@@ -47,6 +49,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @SuppressWarnings("SpellCheckingInspection")
 public class LiveTemplateTest extends LiveTemplateTestCase {
@@ -355,15 +358,20 @@ public class LiveTemplateTest extends LiveTemplateTestCase {
   }
 
   public void testOtherContext() {
-    configureFromFileText("a.java", "class Foo { <caret>xxx }");
-    assertInstanceOf(assertOneElement(
-                       TemplateManagerImpl.getApplicableContextTypes(TemplateActionContext.expanding(myFixture.getFile(), getEditor()))),
-                     JavaCodeContextType.Declaration.class);
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, () -> {
 
-    configureFromFileText("a.txt", "class Foo { <caret>xxx }");
-    assertInstanceOf(assertOneElement(
-                       TemplateManagerImpl.getApplicableContextTypes(TemplateActionContext.expanding(myFixture.getFile(), getEditor()))),
-                     EverywhereContextType.class);
+      configureFromFileText("a.java", "class Foo { <caret>xxx }");
+      Set<TemplateContextType> types =
+        TemplateManagerImpl.getApplicableContextTypes(TemplateActionContext.expanding(myFixture.getFile(), getEditor()));
+      assertEquals(2, types.size());
+      assertTrue(types.contains(TemplateContextTypes.getByClass(JavaCodeContextType.Declaration.class)));
+      assertTrue(types.contains(TemplateContextTypes.getByClass(JavaCodeContextType.NormalClassDeclarationBeforeShortMainMethod.class)));
+
+      configureFromFileText("a.txt", "class Foo { <caret>xxx }");
+      assertInstanceOf(assertOneElement(
+                         TemplateManagerImpl.getApplicableContextTypes(TemplateActionContext.expanding(myFixture.getFile(), getEditor()))),
+                       EverywhereContextType.class);
+    });
   }
 
   public void testJavaOtherContext() {
@@ -461,10 +469,12 @@ public class LiveTemplateTest extends LiveTemplateTestCase {
   }
 
   public void testListTemplatesSearchesPrefixInDescription() {
-    myFixture.configureByText("a.java", "class A { main<caret> }");
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, () -> {
+      myFixture.configureByText("a.java", "class A { main<caret> }");
 
-    new ListTemplatesHandler().invoke(getProject(), getEditor(), myFixture.getFile());
-    assertEquals(List.of("main", "psvm"), myFixture.getLookupElementStrings());
+      new ListTemplatesHandler().invoke(getProject(), getEditor(), myFixture.getFile());
+      assertEquals(List.of("main", "psvm"), myFixture.getLookupElementStrings());
+    });
   }
 
   public void testListTemplatesAction() {

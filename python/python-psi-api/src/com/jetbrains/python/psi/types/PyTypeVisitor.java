@@ -43,7 +43,8 @@ public abstract class PyTypeVisitor<T> {
   }
 
   public T visitPyClassLikeType(@NotNull PyClassLikeType classLikeType) {
-    return visitPyCallableType(classLikeType);
+    // Don't treat PyClassLikeType as PyCallableType. It's usually not what a visitor's user expects.
+    return visitPyType(classLikeType);
   }
 
   public T visitPyFunctionType(@NotNull PyFunctionType functionType) {
@@ -72,6 +73,10 @@ public abstract class PyTypeVisitor<T> {
 
   public T visitPyCallableParameterListType(@NotNull PyCallableParameterListType callableParameterListType) {
     return visitPyType(callableParameterListType);
+  }
+  
+  public T visitPyNeverType(@NotNull PyNeverType neverType) {
+    return visitPyType(neverType);
   }
 
   public T visitUnknownType() {

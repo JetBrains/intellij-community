@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -28,7 +28,7 @@ public class UsernamePasswordCallback extends AuthCallbackCase {
 
   protected AuthenticationData myAuthentication;
 
-  UsernamePasswordCallback(@NotNull AuthenticationService authenticationService, Url url) {
+  public UsernamePasswordCallback(@NotNull AuthenticationService authenticationService, Url url) {
     super(authenticationService, url);
   }
 
@@ -48,7 +48,7 @@ public class UsernamePasswordCallback extends AuthCallbackCase {
   }
 
   @Override
-  boolean getCredentials(String errText) {
+  public boolean getCredentials(String errText) {
     myAuthentication = myAuthenticationService.requestCredentials(myUrl != null ? myUrl : parseUrlFromError(errText), getType());
 
     return myAuthentication != null;

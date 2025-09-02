@@ -8,7 +8,6 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.vcs.editor.ComplexPathVirtualFileSystem
 import com.intellij.vcs.editor.GsonComplexPathSerializer
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
-import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContextRepository
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 
 internal class GHPRVirtualFileSystem : ComplexPathVirtualFileSystem<GHPRVirtualFileSystem.GHPRFilePath>(
@@ -16,28 +15,32 @@ internal class GHPRVirtualFileSystem : ComplexPathVirtualFileSystem<GHPRVirtualF
 ) {
   override fun getProtocol() = PROTOCOL
 
-  override fun findOrCreateFile(project: Project, path: GHPRFilePath): VirtualFile? {
-    val filesManager = GHPRDataContextRepository.getInstance(project).findContext(path.repository)?.filesManager ?: return null
-    val pullRequest = path.prId
-    return when {
-      pullRequest != null -> if(path.isDiff) filesManager.findDiffFile(pullRequest) else filesManager.findTimelineFile(pullRequest)
-      path.isDiff -> filesManager.createOrGetNewPRDiffFile()
+  override fun findOrCreateFile(project: Project, path: GHPRFilePath): VirtualFile? =
+    when {
+      path.prId != null -> {
+        if (path.isDiff) GHPRDiffVirtualFile(path.sessionId, project, path.repository, path.prId)
+        else GHPRTimelineVirtualFile(path.sessionId, project, path.repository, path.prId)
+      }
+      path.isDiff -> GHNewPRDiffVirtualFile(path.sessionId, project, path.repository)
       else -> null
     }
-  }
 
-  fun getPath(fileManagerId: String,
-              project: Project,
-              repository: GHRepositoryCoordinates,
-              id: GHPRIdentifier?,
-              isDiff: Boolean = false): String =
+  fun getPath(
+    fileManagerId: String,
+    project: Project,
+    repository: GHRepositoryCoordinates,
+    id: GHPRIdentifier?,
+    isDiff: Boolean = false,
+  ): String =
     getPath(GHPRFilePath(fileManagerId, project.locationHash, repository, id, isDiff))
 
-  data class GHPRFilePath(override val sessionId: String,
-                          override val projectHash: String,
-                          val repository: GHRepositoryCoordinates,
-                          val prId: GHPRIdentifier?,
-                          val isDiff: Boolean) : ComplexPath
+  data class GHPRFilePath(
+    override val sessionId: String,
+    override val projectHash: String,
+    val repository: GHRepositoryCoordinates,
+    val prId: GHPRIdentifier?,
+    val isDiff: Boolean,
+  ) : ComplexPath
 
   companion object {
     private const val PROTOCOL = "ghpr"

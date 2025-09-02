@@ -27,7 +27,7 @@ class PsiViewerApiMethodsReflectionProvider : PsiViewerApiMethod.Provider {
 fun psiViewerApiReflectionMethods(clazz: Class<*>): List<Method> {
   return clazz.declaredMethods
     .filter {
-      Modifier.isPublic(it.modifiers) && it.parameterCount == 0 && it.name != "hashCode" && !it.name.endsWith("\$default")
+      !it.isBridge && Modifier.isPublic(it.modifiers) && it.parameterCount == 0 && it.name != "hashCode" && !it.name.endsWith("\$default")
     }
 }
 

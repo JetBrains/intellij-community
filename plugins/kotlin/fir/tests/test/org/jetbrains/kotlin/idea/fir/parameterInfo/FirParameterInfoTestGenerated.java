@@ -135,6 +135,16 @@ public abstract class FirParameterInfoTestGenerated extends AbstractFirParameter
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("brokenLambdaArgument.kt")
+        public void testBrokenLambdaArgument() throws Exception {
+            runTest("../../idea/tests/testData/parameterInfo/functionCall/brokenLambdaArgument.kt");
+        }
+
+        @TestMetadata("brokenLambdaArgument2.kt")
+        public void testBrokenLambdaArgument2() throws Exception {
+            runTest("../../idea/tests/testData/parameterInfo/functionCall/brokenLambdaArgument2.kt");
+        }
+
         @TestMetadata("Conflicting.kt")
         public void testConflicting() throws Exception {
             runTest("../../idea/tests/testData/parameterInfo/functionCall/Conflicting.kt");
@@ -553,6 +563,16 @@ public abstract class FirParameterInfoTestGenerated extends AbstractFirParameter
         @TestMetadata("UnresolvedCurrent.kt")
         public void testUnresolvedCurrent() throws Exception {
             runTest("../../idea/tests/testData/parameterInfo/functionCall/UnresolvedCurrent.kt");
+        }
+
+        @TestMetadata("UnsafeCallOfExtensionOnNullableReceiver.kt")
+        public void testUnsafeCallOfExtensionOnNullableReceiver() throws Exception {
+            runTest("../../idea/tests/testData/parameterInfo/functionCall/UnsafeCallOfExtensionOnNullableReceiver.kt");
+        }
+
+        @TestMetadata("UnsafeCallOfExtensionOnNullableReceiverWithOverloads.kt")
+        public void testUnsafeCallOfExtensionOnNullableReceiverWithOverloads() throws Exception {
+            runTest("../../idea/tests/testData/parameterInfo/functionCall/UnsafeCallOfExtensionOnNullableReceiverWithOverloads.kt");
         }
 
         @TestMetadata("UpdateOnTyping.kt")

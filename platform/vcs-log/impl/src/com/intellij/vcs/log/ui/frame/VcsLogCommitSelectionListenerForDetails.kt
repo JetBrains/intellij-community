@@ -9,10 +9,7 @@ import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.containers.MultiMap
-import com.intellij.vcs.log.CommitId
-import com.intellij.vcs.log.VcsCommitMetadata
-import com.intellij.vcs.log.VcsLogBundle
-import com.intellij.vcs.log.VcsRef
+import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.ContainingBranchesGetter
 import com.intellij.vcs.log.data.VcsCommitExternalStatus
 import com.intellij.vcs.log.data.VcsLogData
@@ -23,9 +20,11 @@ import com.intellij.vcs.log.ui.details.commit.CommitDetailsPanel
 import com.intellij.vcs.log.ui.details.commit.CommitDetailsPanel.RootColor
 import com.intellij.vcs.log.ui.frame.CommitPresentationUtil.CommitPresentation
 import com.intellij.vcs.log.util.VcsLogUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
-internal class VcsLogCommitSelectionListenerForDetails(
+@ApiStatus.Internal
+class VcsLogCommitSelectionListenerForDetails(
   private val logData: VcsLogData,
   private val colorManager: VcsLogColorManager,
   private val detailsPanel: CommitDetailsListPanel,
@@ -48,8 +47,8 @@ internal class VcsLogCommitSelectionListenerForDetails(
     cancelLoading()
   }
 
-  override fun onDetailsLoaded(hashedCommitsIds: List<Int>, detailsList: List<VcsCommitMetadata>) {
-    val detailsList = detailsList.take(MAX_COMMITS_TO_LOAD)
+  override fun onDetailsLoaded(hashedCommitsIds: List<VcsLogCommitStorageIndex>, details: List<VcsCommitMetadata>) {
+    val detailsList = details.take(MAX_COMMITS_TO_LOAD)
     //TODO: replace with detailsPanel.setCommits
     val commitIds = detailsList.map { CommitId(it.id, it.root) }
     detailsPanel.rebuildPanel(commitIds)

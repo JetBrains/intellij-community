@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide
 
 import com.intellij.diagnostic.PluginException
@@ -7,11 +7,11 @@ import com.intellij.openapi.diagnostic.logger
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * Use extension point `com.intellij.applicationInitializedListener` to register listener.
+ * Do not use this extension point.
+ * Use specific extension points, lazy listeners, or services instead.
+ *
  * Please note - you cannot use [com.intellij.openapi.extensions.ExtensionPointName.findExtension] for this extension point
  * because this extension point is cleared up after app loading.
- *
- * Not part of [com.intellij.ide.ApplicationLoadListener] to avoid class loading before application initialization.
  */
 @Suppress("DeprecatedCallableAddReplaceWith")
 @ApiStatus.Internal

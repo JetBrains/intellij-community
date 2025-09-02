@@ -42,7 +42,8 @@ public abstract class StubTreeLoader {
     return false;
   }
 
-  protected @Nullable IndexingStampInfo getIndexingStampInfo(@NotNull VirtualFile file) {
+  @ApiStatus.Internal
+  public @Nullable IndexingStampInfo getIndexingStampInfo(@NotNull VirtualFile file) {
     return null;
   }
 

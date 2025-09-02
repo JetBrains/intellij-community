@@ -13,5 +13,8 @@
     <completion.contributor language="kotlin"
                             implementationClass="com.intellij.compose.ide.plugin.k2.completion.K2ComposeModifierCompletionContributor"
                             order="first, before KotlinCompletionContributor"/>
+
+    <codeInsight.lineMarkerProvider language="kotlin"
+                                    implementationClass="com.intellij.compose.ide.plugin.k2.K2ComposeColorLineMarkerProviderDescriptor"/>
   </extensions>
 </idea-plugin>

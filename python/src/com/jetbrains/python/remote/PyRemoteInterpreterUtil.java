@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.remote;
 
 import com.google.common.collect.Lists;
@@ -25,6 +25,8 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 
+import static com.jetbrains.python.PythonBinaryKt.PYTHON_VERSION_ARG;
+
 public final class PyRemoteInterpreterUtil {
   /**
    * @param nullForUnparsableVersion if version returns by python can't be parsed -- return null instead of exception
@@ -45,7 +47,7 @@ public final class PyRemoteInterpreterUtil {
           ProcessOutput processOutput;
           try {
             try {
-              String[] command = {data.getInterpreterPath(), PythonSdkFlavor.PYTHON_VERSION_ARG};
+              String[] command = {data.getInterpreterPath(), PYTHON_VERSION_ARG};
               processOutput = PyRemoteProcessStarterManagerUtil.getManager(data).executeRemoteProcess(myProject, command, null,
                                                                                                       data, new PyRemotePathMapper());
               if (processOutput.getExitCode() == 0) {

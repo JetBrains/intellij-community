@@ -9,6 +9,8 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
+import com.intellij.xdebugger.hotswap.SourceFileChangesCollector
+import com.intellij.xdebugger.hotswap.SourceFileChangesListener
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel

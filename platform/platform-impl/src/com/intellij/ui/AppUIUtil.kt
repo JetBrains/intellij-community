@@ -429,21 +429,57 @@ object AppUIUtil {
                                       width: Int,
                                       xStart: Int = 0,
                                       yStart: Int = 0): TexturePaint {
-    val imgHeight = 2
-    val image = ImageUtil.createImage(graphics, width, imgHeight, BufferedImage.TYPE_INT_ARGB)
+    return createGradientTexture(graphics, colorStart, colorEnd, width, 2, xStart, yStart) { image, colorStart16, delta16, pixels ->
+      for (x in 0 until image.width) {
+        val rel = x * 1.0 / (image.width - 1)
+        val curColor = colorStart16 + delta16 * rel
+        for (y in 0 until image.height) {
+          pixels[y][x] = curColor
+        }
+      }
+    }
+  }
+
+  fun createVerticalGradientTexture(graphics: Graphics,
+                                    colorStart: Color,
+                                    colorEnd: Color,
+                                    height: Int,
+                                    xStart: Int = 0,
+                                    yStart: Int = 0): TexturePaint {
+    return createGradientTexture(graphics, colorStart, colorEnd, 2, height, xStart, yStart) { image, colorStart16, delta16, pixels ->
+      for (y in 0 until image.height) {
+        val rel = y * 1.0 / (image.height - 1)
+        val curColor = colorStart16 + delta16 * rel
+        for (x in 0 until image.width) {
+          pixels[y][x] = curColor
+        }
+      }
+    }
+  }
+
+  private fun createGradientTexture(
+    graphics: Graphics,
+    colorStart: Color,
+    colorEnd: Color,
+    width: Int,
+    height: Int,
+    xStart: Int = 0,
+    yStart: Int = 0,
+    pixelsFunction: (
+      image: BufferedImage,
+      colorStart16: Color16,
+      delta16: Color16,
+      pixels: Array<Array<Color16>>,
+    ) -> Unit,
+  ): TexturePaint {
+    val image = ImageUtil.createImage(graphics, width, height, BufferedImage.TYPE_INT_ARGB)
 
     val pixels: Array<Array<Color16>> = Array(image.height) { Array(image.width) { Color16.TRANSPARENT } }
 
     val colorStart16 = colorStart.toColor16()
     val colorEnd16 = colorEnd.toColor16()
     val delta16 = colorEnd16 - colorStart16
-    for (x in 0 until image.width) {
-      val rel = x * 1.0 / (image.width - 1)
-      val curColor = colorStart16 + delta16 * rel
-      for (y in 0 until image.height) {
-        pixels[y][x] = curColor
-      }
-    }
+    pixelsFunction(image, colorStart16, delta16, pixels)
 
     val coefficients = doubleArrayOf(7.0 / 16, 3.0 / 16, 5.0 / 16, 1.0 / 16)
     for (y in 0 until image.height) {
@@ -468,6 +504,6 @@ object AppUIUtil {
       }
     }
 
-    return TexturePaint(image, Rectangle(xStart, yStart, width, imgHeight))
+    return TexturePaint(image, Rectangle(xStart, yStart, width, height))
   }
 }

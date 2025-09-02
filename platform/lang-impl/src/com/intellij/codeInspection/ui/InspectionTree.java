@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -139,8 +139,8 @@ public final class InspectionTree extends Tree {
     TreePath commonPath = TreePathUtil.findCommonAncestor(getSelectionPaths());
     if (commonPath == null) return null;
     for (Object n : commonPath.getPath()) {
-      if (n instanceof InspectionGroupNode) {
-        return getGroupPath((InspectionGroupNode)n);
+      if (n instanceof InspectionGroupNode node) {
+        return getGroupPath(node);
       }
     }
     return null;
@@ -171,10 +171,10 @@ public final class InspectionTree extends Tree {
           return null;
         }
         InspectionToolWrapper<?,?> wrapper = null;
-        if (node instanceof InspectionNode) {
-          wrapper = ((InspectionNode)node).getToolWrapper();
-        } else if (node instanceof SuppressableInspectionTreeNode) {
-          wrapper = ((SuppressableInspectionTreeNode)node).getPresentation().getToolWrapper();
+        if (node instanceof InspectionNode n) {
+          wrapper = n.getToolWrapper();
+        } else if (node instanceof SuppressableInspectionTreeNode n) {
+          wrapper = n.getPresentation().getToolWrapper();
         }
         if (wrapper == null || !allowDummy && getContext().getPresentation(wrapper).isDummy()) {
           continue;
@@ -206,11 +206,11 @@ public final class InspectionTree extends Tree {
       }
 
       InspectionToolWrapper<?,?> wrapper = null;
-      if (node instanceof InspectionNode) {
-        wrapper = ((InspectionNode)node).getToolWrapper();
+      if (node instanceof InspectionNode n) {
+        wrapper = n.getToolWrapper();
       }
-      else if (node instanceof SuppressableInspectionTreeNode) {
-        wrapper = ((SuppressableInspectionTreeNode)node).getPresentation().getToolWrapper();
+      else if (node instanceof SuppressableInspectionTreeNode n) {
+        wrapper = n.getPresentation().getToolWrapper();
       }
       if (wrapper != null) {
         if (resultWrapper == null) {
@@ -226,11 +226,11 @@ public final class InspectionTree extends Tree {
 
   private static @Nullable InspectionToolWrapper<?,?> getToolWrapper(InspectionTreeNode node) {
     while (node != null) {
-      if (node instanceof InspectionNode) {
-        return ((InspectionNode)node).getToolWrapper();
+      if (node instanceof InspectionNode n) {
+        return n.getToolWrapper();
       }
-      else if (node instanceof SuppressableInspectionTreeNode) {
-        return ((SuppressableInspectionTreeNode)node).getPresentation().getToolWrapper();
+      else if (node instanceof SuppressableInspectionTreeNode n) {
+        return n.getPresentation().getToolWrapper();
       }
       node = node.getParent();
     }
@@ -287,23 +287,30 @@ public final class InspectionTree extends Tree {
     final TreePath[] paths = getSelectionPaths();
     final TreePath ancestor = TreePathUtil.findCommonAncestor(paths);
     if (ancestor == null) return null;
-    final Object node = ancestor.getLastPathComponent();
-    return node instanceof RefElementNode ? ((RefElementNode)node).getElement() : null;
+    return ancestor.getLastPathComponent() instanceof RefElementNode n ? n.getElement() : null;
   }
 
   public RefEntity @NotNull [] getSelectedElements() {
+    return getSelectedElements(true);
+  }
+
+  public RefEntity @NotNull [] getSelectedElements(boolean allowResolved) {
     TreePath[] selectionPaths = getSelectionPaths();
     if (selectionPaths == null) return RefEntity.EMPTY_ELEMENTS_ARRAY;
-    return getElementsFromSelection(selectionPaths);
+    return getElementsFromSelection(selectionPaths, allowResolved);
   }
 
   RefEntity @NotNull [] getElementsFromSelection(TreePath @NotNull [] selectionPaths) {
+    return getElementsFromSelection(selectionPaths, true);
+  }
+
+  private RefEntity @NotNull [] getElementsFromSelection(TreePath @NotNull [] selectionPaths, boolean allowResolved) {
     InspectionToolWrapper<?,?> toolWrapper = getSelectedToolWrapper(true, selectionPaths);
     if (toolWrapper == null) return RefEntity.EMPTY_ELEMENTS_ARRAY;
     Set<RefEntity> result = new LinkedHashSet<>();
     for (TreePath selectionPath : selectionPaths) {
       final InspectionTreeNode node = (InspectionTreeNode)selectionPath.getLastPathComponent();
-      addElementsInNode(node, result);
+      addElementsInNode(node, result, allowResolved);
     }
     return ArrayUtil.reverseArray(result.toArray(RefEntity.EMPTY_ELEMENTS_ARRAY));
   }
@@ -318,19 +325,21 @@ public final class InspectionTree extends Tree {
     if (path != null) TreeUtil.promiseSelect(this, path);
   }
 
-  private static void addElementsInNode(@NotNull InspectionTreeNode node, @NotNull Set<? super RefEntity> out) {
+  private static void addElementsInNode(@NotNull InspectionTreeNode node, @NotNull Set<? super RefEntity> out, boolean allowResolved) {
     if (!node.isValid()) return;
-    if (node instanceof RefElementNode) {
-      final RefEntity element = ((RefElementNode)node).getElement();
-      out.add(element);
+    if (node instanceof RefElementNode refNode) {
+      if (isNodeValidAndIncluded(refNode, allowResolved)) {
+        out.add(refNode.getElement());
+      }
     }
-    if (node instanceof ProblemDescriptionNode) {
-      final RefEntity element = ((ProblemDescriptionNode)node).getElement();
-      out.add(element);
+    if (node instanceof ProblemDescriptionNode problemNode) {
+      if (isNodeValidAndIncluded(problemNode, allowResolved)) {
+        out.add(problemNode.getElement());
+      }
     }
 
     for (InspectionTreeNode child : node.getChildren()) {
-      addElementsInNode(child, out);
+      addElementsInNode(child, out, allowResolved);
     }
   }
 
@@ -362,7 +371,8 @@ public final class InspectionTree extends Tree {
      if (selectedNodes == null) {
        return CommonProblemDescriptor.EMPTY_ARRAY;
      }
-     List<CommonProblemDescriptor[]> descriptors = getSelectedDescriptors(false, null, false, ContainerUtil.map(selectedNodes, o -> (InspectionTreeNode)o));
+     List<CommonProblemDescriptor[]> descriptors =
+       getSelectedDescriptors(false, null, false, ContainerUtil.map(selectedNodes, o -> (InspectionTreeNode)o));
      return BatchModeDescriptorsUtil.flattenDescriptors(descriptors);
   }
   
@@ -383,8 +393,8 @@ public final class InspectionTree extends Tree {
     final List<CommonProblemDescriptor[]> descriptors = new ArrayList<>();
     for (Map.Entry<Object, Collection<CommonProblemDescriptor>> entry : parentToChildNode.entrySet()) {
       Object key = entry.getKey();
-      if (readOnlyFilesSink != null && key instanceof VirtualFile && !((VirtualFile)key).isWritable()) {
-        readOnlyFilesSink.add((VirtualFile)key);
+      if (readOnlyFilesSink != null && key instanceof VirtualFile file && !file.isWritable()) {
+        readOnlyFilesSink.add(file);
       }
       Stream<CommonProblemDescriptor> stream = entry.getValue().stream();
       if (sortedByPosition) {
@@ -465,7 +475,7 @@ public final class InspectionTree extends Tree {
     return count;
   }
 
-  private static boolean isNodeValidAndIncluded(ProblemDescriptionNode node, boolean allowResolved) {
+  private static boolean isNodeValidAndIncluded(SuppressableInspectionTreeNode node, boolean allowResolved) {
     return node.isValid() && (allowResolved ||
                               (!node.isExcluded() &&
                                !node.isAlreadySuppressedFromView() &&
@@ -541,11 +551,14 @@ public final class InspectionTree extends Tree {
       InspectionToolPresentation presentation = problemDescriptionNode.getPresentation();
       return descriptor == null || presentation.isExcluded(descriptor) || presentation.isProblemResolved(descriptor);
     }
-    if (node instanceof InspectionGroupNode || node instanceof InspectionSeverityGroupNode || node instanceof InspectionModuleNode || node instanceof InspectionPackageNode) {
+    if (node instanceof InspectionGroupNode
+        || node instanceof InspectionSeverityGroupNode
+        || node instanceof InspectionModuleNode
+        || node instanceof InspectionPackageNode) {
       return ContainerUtil.and(node.getChildren(), this::shouldDelete);
     }
-    if (node instanceof InspectionNode) {
-      InspectionToolResultExporter presentation = myView.getGlobalInspectionContext().getPresentation(((InspectionNode)node).getToolWrapper());
+    if (node instanceof InspectionNode inspectionNode) {
+      InspectionToolResultExporter presentation = myView.getGlobalInspectionContext().getPresentation(inspectionNode.getToolWrapper());
       SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> problemElements = presentation.getProblemElements();
       if (problemElements.isEmpty()) {
         return true;
@@ -563,16 +576,16 @@ public final class InspectionTree extends Tree {
     List<String> path = new ArrayList<>(2);
     while (true) {
       InspectionTreeNode parent = node.getParent();
-      if (!(parent instanceof InspectionGroupNode)) break;
-      node = (InspectionGroupNode)parent;
+      if (!(parent instanceof InspectionGroupNode groupNode)) break;
+      node = groupNode;
       path.add(node.getSubGroup());
     }
     return ArrayUtilRt.toStringArray(path);
   }
 
   private static @Nullable Object getVirtualFileOrEntity(@Nullable RefEntity entity) {
-    if (entity instanceof RefElement) {
-      SmartPsiElementPointer<?> pointer = ((RefElement)entity).getPointer();
+    if (entity instanceof RefElement element) {
+      SmartPsiElementPointer<?> pointer = element.getPointer();
       if (pointer != null) {
         VirtualFile file = pointer.getVirtualFile();
         if (file != null) {
@@ -598,7 +611,7 @@ public final class InspectionTree extends Tree {
     if (nodes != null) {
       HashSet<RefEntity> entities = new HashSet<>();
       for (Object node : nodes) {
-        addElementsInNode((InspectionTreeNode)node, entities);
+        addElementsInNode((InspectionTreeNode)node, entities, true);
       }
       return entities.toArray(entities.toArray(RefEntity.EMPTY_ELEMENTS_ARRAY));
     }
@@ -739,8 +752,8 @@ public final class InspectionTree extends Tree {
       if (node instanceof RefElementNode refNode) {
         final RefEntity element = refNode.getElement();
         if (element == null || !element.isValid()) return null;
-        if (element instanceof RefElement) {
-          return getOpenFileDescriptor((RefElement)element);
+        if (element instanceof RefElement ref) {
+          return getOpenFileDescriptor(ref);
         }
       }
       else if (node instanceof ProblemDescriptionNode problemNode) {
@@ -753,11 +766,11 @@ public final class InspectionTree extends Tree {
       return null;
     }
 
-    private static @Nullable Navigatable navigate(final CommonProblemDescriptor descriptor) {
+    private static @Nullable Navigatable navigate(CommonProblemDescriptor descriptor) {
       return InspectionResultsView.getSelectedNavigatable(descriptor);
     }
 
-    private static @Nullable Navigatable getOpenFileDescriptor(final @NotNull RefElement refElement) {
+    private static @Nullable Navigatable getOpenFileDescriptor(@NotNull RefElement refElement) {
       PsiElement psiElement = refElement.getPsiElement();
       if (psiElement == null) return null;
       final PsiFile containingFile = psiElement.getContainingFile();

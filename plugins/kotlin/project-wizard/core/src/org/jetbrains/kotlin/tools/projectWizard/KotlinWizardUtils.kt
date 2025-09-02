@@ -2,8 +2,10 @@
 package org.jetbrains.kotlin.tools.projectWizard
 
 import com.intellij.ide.BrowserUtil
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Kotlin.logKmpWizardLinkClicked
 import com.intellij.ide.wizard.NewProjectWizardStep
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.TopGap
 import org.jetbrains.annotations.ApiStatus
@@ -18,7 +20,19 @@ fun NewProjectWizardStep.addMultiPlatformLink(builder: Panel) {
             )
         ) {
             logKmpWizardLinkClicked()
-            BrowserUtil.browse(it.url)
+
+            val isKmpPluginEnabled = PluginId.findId(KotlinMultiplatformPluginId)
+                ?.let { pluginId ->
+                    PluginManagerCore.isLoaded(pluginId) && !PluginManagerCore.isDisabled(pluginId)
+                } ?: false
+            when {
+                isKmpPluginEnabled -> context.requestSwitchTo(KotlinMultiplatformWizardPlaceId)
+                else -> BrowserUtil.browse(it.url)
+            }
         }
     }.topGap(TopGap.SMALL)
 }
+
+private const val KotlinMultiplatformPluginId: String = "com.jetbrains.kmm"
+
+private const val KotlinMultiplatformWizardPlaceId: String = "Kotlin Multiplatform"

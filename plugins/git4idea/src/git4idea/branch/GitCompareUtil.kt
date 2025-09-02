@@ -2,6 +2,7 @@
 package git4idea.branch
 
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.vcs.log.VcsLogCommitStorageIndex
 import com.intellij.vcs.log.data.index.IndexDataGetter
 import com.intellij.vcs.log.impl.HashImpl
 import com.intellij.vcs.log.util.IntCollectionUtil
@@ -35,7 +36,7 @@ fun IndexDataGetter.match(root: VirtualFile,
 private const val suffixStart = "cherry picked from commit" //NON-NLS
 private val suffixPattern = Pattern.compile("$suffixStart.*\\)")
 
-private fun IndexDataGetter.selectSourceCommits(targetCommit: Int,
+private fun IndexDataGetter.selectSourceCommits(targetCommit: VcsLogCommitStorageIndex,
                                                 root: VirtualFile,
                                                 sourceCandidates: IntSet,
                                                 sourceCandidatesExtended: IntSet,

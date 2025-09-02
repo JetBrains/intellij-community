@@ -131,6 +131,8 @@ public class PyKnownDecorator {
   public final static PyKnownDecorator TYPING_DEPRECATED = new PyKnownDecorator("typing_extensions.deprecated");
   public final static PyKnownDecorator TYPING_NO_TYPE_CHECK = new PyKnownDecorator("typing.no_type_check");
   public final static PyKnownDecorator TYPING_NO_TYPE_CHECK_EXT = new PyKnownDecorator("typing_extensions.no_type_check");
+  public final static PyKnownDecorator TYPING_DATACLASS_TRANSFORM = new PyKnownDecorator("typing.dataclass_transform");
+  public final static PyKnownDecorator TYPING_DATACLASS_TRANSFORM_EXT = new PyKnownDecorator("typing_extensions.dataclass_transform");
 
   public final static PyKnownDecorator WARNING_DEPRECATED = new PyKnownDecorator("warnings.deprecated");
 

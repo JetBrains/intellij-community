@@ -48,11 +48,11 @@ public class ImportClassFix extends ImportClassFixBase<PsiJavaCodeReferenceEleme
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
     List<? extends PsiClass> classesToImport = getClassesToImport(true);
     if (classesToImport.isEmpty()) return IntentionPreviewInfo.EMPTY;
     PsiClass firstClassToImport = classesToImport.get(0);
-    PsiJavaCodeReferenceElement ref = PsiTreeUtil.findSameElementInCopy(getReference(), file);
+    PsiJavaCodeReferenceElement ref = PsiTreeUtil.findSameElementInCopy(getReference(), psiFile);
     bindReference(ref, firstClassToImport);
     return IntentionPreviewInfo.DIFF;
   }

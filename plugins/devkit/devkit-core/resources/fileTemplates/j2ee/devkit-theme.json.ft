@@ -1,13 +1,11 @@
 {
-  "name": "${context.getProperty("pluginTitle")}",
-  "author": "YourCompany",
-  "dark": true,
-
-  "colors": {
-    "primaryRed": "#821010"
-  },
-
-  "ui": {
-    "Button.background": "primaryRed"
-  }
+    "name": "${context.getProperty("pluginTitle")}",
+    "author": "YourCompany",
+    "dark": true,
+    "colors": {
+        "primaryRed": "#821010"
+    },
+    "ui": {
+        "Button.background": "primaryRed"
+    }
 }

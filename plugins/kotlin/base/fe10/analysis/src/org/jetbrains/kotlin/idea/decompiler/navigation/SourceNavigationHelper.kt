@@ -19,9 +19,9 @@ import org.jetbrains.kotlin.fileClasses.fileClassInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.*
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.BinaryModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
-import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptDependenciesInfo
 import org.jetbrains.kotlin.idea.caches.project.binariesScope
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
+import org.jetbrains.kotlin.idea.core.script.dependencies.ScriptDependenciesInfo
 import org.jetbrains.kotlin.idea.decompiler.navigation.MemberMatching.receiverAndParametersShortTypesMatch
 import org.jetbrains.kotlin.idea.decompiler.navigation.MemberMatching.sameReceiverPresenceAndParametersCount
 import org.jetbrains.kotlin.idea.stubindex.*

@@ -1,11 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullabilityAnnotationInfo;
 import com.intellij.codeInsight.NullableNotNullManager;
-import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
+import com.intellij.codeInsight.intention.AddAnnotationModCommandAction;
 import com.intellij.codeInsight.options.JavaInspectionButtons;
 import com.intellij.codeInsight.options.JavaInspectionControls;
 import com.intellij.codeInspection.CommonQuickFixBundle;
@@ -13,6 +13,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.OptionalUtil;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
@@ -91,8 +92,8 @@ public final class ReturnNullInspection extends BaseInspection {
     }
 
     final NullableNotNullManager manager = NullableNotNullManager.getInstance(elt.getProject());
-    return new AddAnnotationPsiFix(manager.getDefaultNullable(), method,
-                                   ArrayUtilRt.toStringArray(manager.getNotNulls()));
+    return LocalQuickFix.from(new AddAnnotationModCommandAction(manager.getDefaultNullable(), method,
+                                                                ArrayUtilRt.toStringArray(manager.getNotNulls())));
   }
 
   @Override
@@ -137,7 +138,7 @@ public final class ReturnNullInspection extends BaseInspection {
     public void visitLiteralExpression(@NotNull PsiLiteralExpression value) {
       super.visitLiteralExpression(value);
       final String text = value.getText();
-      if (!PsiKeyword.NULL.equals(text)) {
+      if (!JavaKeywords.NULL.equals(text)) {
         return;
       }
       final PsiElement parent = ExpressionUtils.getPassThroughParent(value);

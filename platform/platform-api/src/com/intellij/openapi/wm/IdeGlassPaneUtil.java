@@ -32,7 +32,7 @@ public final class IdeGlassPaneUtil {
 
     Component gp = root.getGlassPane();
     if (!(gp instanceof IdeGlassPane)) {
-      throw new IllegalArgumentException("Glass pane should be " + IdeGlassPane.class.getName());
+      throw new IllegalArgumentException("Glass pane should be " + IdeGlassPane.class.getName() + " but was " + gp + " in " + root);
     }
     return (IdeGlassPane)gp;
   }

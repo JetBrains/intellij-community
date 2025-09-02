@@ -1,10 +1,21 @@
 def get_jvm_flags(flags):
     return [
+        # Memory
         # "-XX:+UseZGC",
         # "-XX:+ZGenerational",
-        "-Xms2g",
-        "-Xmx16g",
-        "-XX:ReservedCodeCacheSize=512m",
+        "-Xms4g",
+        "-Xmx20g",
+        # IJ PSI cache
+        "-XX:SoftRefLRUPolicyMSPerMB=50",
+        # Code Cache
+        "-XX:NonProfiledCodeHeapSize=512m",
+        "-XX:ProfiledCodeHeapSize=512m",
+        "-XX:ReservedCodeCacheSize=2048m",
+        # Prevent JVM logging warnings and errors to stdout because it breaks the protocol between Bazel and the worker process
+        "-XX:+DisplayVMOutputToStderr",
+        "-Xlog:disable",
+        "-Xlog:all=warning:stderr:uptime,level,tags",
+        # Headless
         "-Djava.awt.headless=true",
         "-Dapple.awt.UIElement=true",
         # IJ PHM
@@ -17,9 +28,10 @@ def get_jvm_flags(flags):
         # kotlin compiler
         "-Dkotlin.environment.keepalive=true",
         "-Didea.io.use.nio2=true",
-        # a new one is quite buggy (broken in netty 4.2.0-RC3, so we use RC2)
-        "-Dio.netty.allocator.type=pooled",
+        # https://github.com/netty/netty/issues/11532
+        "-Dio.netty.tryReflectionSetAccessible=true",
         # see TargetConfigurationDigestProperty.KOTLIN_VERSION - we invalidate cache if kotlinc version changed
         "-Dkotlin.jps.skip.cache.version.check=true",
-        "-Djps.track.library.dependencies=true",
+        # Set UTF-8 by default as per https://openjdk.org/jeps/400
+        "-Dfile.encoding=UTF-8",
     ] + flags

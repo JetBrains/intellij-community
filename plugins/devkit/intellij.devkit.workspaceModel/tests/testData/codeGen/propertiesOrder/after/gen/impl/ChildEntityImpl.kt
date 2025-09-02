@@ -18,7 +18,7 @@ import com.intellij.workspaceModel.test.api.DerivedDerivedDataClass
 import com.intellij.workspaceModel.test.api.SimpleId
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(6)
+@GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ChildEntityImpl(private val dataSource: ChildEntityData) : ChildEntity, WorkspaceEntityBase(dataSource) {
 

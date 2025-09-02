@@ -21,7 +21,6 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.AppIcon
 import com.intellij.util.ExceptionUtil
@@ -29,16 +28,25 @@ import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.io.getHostName
 import com.intellij.util.io.origin
 import com.intellij.util.io.referrer
-import com.intellij.util.net.NetUtils
-import com.intellij.util.text.nullize
 import com.intellij.xml.util.XmlStringUtil
 import io.netty.buffer.ByteBufInputStream
 import io.netty.buffer.Unpooled
 import io.netty.channel.Channel
 import io.netty.channel.ChannelHandlerContext
-import io.netty.handler.codec.http.*
+import io.netty.handler.codec.http.FullHttpRequest
+import io.netty.handler.codec.http.HttpHeaders
+import io.netty.handler.codec.http.HttpMethod
+import io.netty.handler.codec.http.HttpRequest
+import io.netty.handler.codec.http.HttpResponse
+import io.netty.handler.codec.http.HttpResponseStatus
+import io.netty.handler.codec.http.HttpUtil
+import io.netty.handler.codec.http.QueryStringDecoder
 import org.jetbrains.builtInWebServer.BuiltInWebServerAuth
-import org.jetbrains.io.*
+import org.jetbrains.io.addNoCache
+import org.jetbrains.io.response
+import org.jetbrains.io.responseStatus
+import org.jetbrains.io.send
+import org.jetbrains.io.sendPlainText
 import java.awt.Window
 import java.io.IOException
 import java.io.OutputStream
@@ -111,12 +119,12 @@ abstract class RestService : HttpRequestHandler() {
 
     @Suppress("SameParameterValue")
     @JvmStatic
-    fun getStringParameter(name: String, urlDecoder: QueryStringDecoder): String? =
-      urlDecoder.parameters()[name]?.lastOrNull()
+    fun getStringParameter(name: String, urlDecoder: QueryStringDecoder): String? = urlDecoder.parameters()[name]?.lastOrNull()
 
     @JvmStatic
-    fun getIntParameter(name: String, urlDecoder: QueryStringDecoder): Int =
-      StringUtilRt.parseInt(getStringParameter(name, urlDecoder).nullize(nullizeSpaces = true), -1)
+    fun getIntParameter(name: String, urlDecoder: QueryStringDecoder): Int {
+      return getStringParameter(name, urlDecoder)?.ifBlank { null }?.toIntOrNull() ?: -1
+    }
 
     @JvmOverloads
     @JvmStatic
@@ -275,32 +283,39 @@ abstract class RestService : HttpRequestHandler() {
     }
 
     val referrer = request.origin ?: request.referrer
-    val (host, scheme) = try {
-      if (referrer == null)
-        null to ""
-      else
-        with(URI(referrer)) {
-          host.nullize() to scheme
-        }
+    val host: String?
+    val scheme: String?
+    if (referrer.isNullOrBlank()) {
+      host = null
+      scheme = null
     }
-    catch (_: URISyntaxException) {
-      return false
+    else {
+      try {
+        val uri = URI(referrer)
+        host = uri.host.ifBlank { null }
+        scheme = uri.scheme.ifBlank { null }
+      }
+      catch (_: URISyntaxException) {
+        return false
+      }
     }
 
     val lock = hostLocks.computeIfAbsent(host ?: "") { Object() }
     synchronized(lock) {
-      if (host != null) {
-        if (NetUtils.isLocalhost(host)) {
-          return true
-        }
-        else {
-          trustedOrigins.getIfPresent(host to scheme)?.let {
-            return it
-          }
+      if (host == null || scheme == null) {
+        if (isBlockUnknownHosts) {
+          return false
         }
       }
-      else if (isBlockUnknownHosts) {
-        return false
+      else if (isLocalhost(host)) {
+        return true
+      }
+
+      val key = if (host == null || scheme == null) null else host to scheme
+      if (key != null) {
+        trustedOrigins.getIfPresent(key)?.let {
+          return it
+        }
       }
 
       var isTrusted = false
@@ -312,35 +327,42 @@ abstract class RestService : HttpRequestHandler() {
             else -> IdeBundle.message("warning.use.rest.api.0.and.trust.host.1", getServiceName(), host)
           }
           isTrusted = showYesNoDialog(message, "title.use.rest.api")
-          if (host != null) {
-            trustedOrigins.put(host to scheme, isTrusted)
+          if (key != null) {
+            trustedOrigins.put(key, isTrusted)
           }
           else if (!isTrusted) {
             isBlockUnknownHosts = showYesNoDialog(IdeBundle.message("warning.use.rest.api.block.unknown.hosts"), "title.use.rest.api")
           }
-        }, ModalityState.any())
+        },
+        ModalityState.any(),
+      )
       return isTrusted
     }
   }
 
   fun isHostInPredefinedHosts(request: HttpRequest, trustedPredefinedHosts: Set<String>, systemPropertyKey: String): Boolean {
     val origin = request.origin
-    val originHost = try {
-      if (origin == null) null else URI(origin).takeIf { it.scheme == "https" }?.host.nullize()
+    val originHost = if (origin == null) {
+      null
     }
-    catch (_: URISyntaxException) {
-      return false
+    else {
+      try {
+        URI(origin).takeIf { it.scheme == "https" }?.host?.ifBlank { null }
+      }
+      catch (_: URISyntaxException) {
+        return false
+      }
     }
 
     val hostName = getHostName(request)
-    if (hostName != null && !NetUtils.isLocalhost(hostName)) {
+    if (hostName != null && !isLocalhost(hostName)) {
       LOG.error("Expected 'request.hostName' to be localhost. hostName='$hostName', origin='$origin'")
     }
 
     return (originHost != null && (
       trustedPredefinedHosts.contains(originHost) ||
-      System.getProperty(systemPropertyKey, "").split(",").contains(originHost) ||
-      NetUtils.isLocalhost(originHost)))
+      System.getProperty(systemPropertyKey, "").splitToSequence(',').contains(originHost) ||
+      isLocalhost(originHost)))
   }
 
   /**
@@ -353,4 +375,8 @@ abstract class RestService : HttpRequestHandler() {
 fun HttpResponseStatus.orInSafeMode(safeStatus: HttpResponseStatus): HttpResponseStatus = when {
   Registry.`is`("ide.http.server.response.actual.status", false) || ApplicationManager.getApplication()?.isUnitTestMode == true -> this
   else -> safeStatus
+}
+
+private fun isLocalhost(hostName: @NlsSafe String): Boolean {
+  return hostName.equals("localhost", ignoreCase = true) || hostName == "127.0.0.1" || hostName == "::1"
 }

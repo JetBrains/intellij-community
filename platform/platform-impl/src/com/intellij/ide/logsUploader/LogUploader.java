@@ -5,19 +5,17 @@ import com.fasterxml.jackson.jr.ob.JSON;
 import com.intellij.ide.IdeBundle;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
-import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.StreamUtil;
-import com.intellij.util.io.HttpRequests;
-import com.intellij.util.net.NetUtils;
+import com.intellij.util.net.PlatformHttpClient;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.BufferedInputStream;
 import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.nio.file.Files;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.file.Path;
 import java.util.Map;
 
@@ -34,40 +32,43 @@ public final class LogUploader {
   }
 
   public static @NotNull String uploadFile(@NotNull Path file, @NotNull String fileName) throws IOException {
-    var requestObj = JSON.std.asString(Map.of(
-      "filename", fileName,
-      "method", "put",
-      "contentType", BYTES_CONTENT_TYPE
-    ));
-    var responseObj = HttpRequests.post(SERVICE_URL + "/sign", JSON_CONTENT_TYPE + "; charset=utf-8")
-      .accept(JSON_CONTENT_TYPE)
-      .connect(request -> {
-        request.write(requestObj);
-        var response = StreamUtil.readText(request.getReader());
-        return JSON.std.mapFrom(response);
-      });
+    try {
+      var client = PlatformHttpClient.client();
 
-    var uploadUrl = responseObj.get("url").toString();
-    @SuppressWarnings("unchecked")
-    var headers = (Map<String, String>)responseObj.get("headers");
-    var id = responseObj.get("folderName").toString();
+      var requestObj = JSON.std.asString(Map.of(
+        "filename", fileName,
+        "method", "put",
+        "contentType", BYTES_CONTENT_TYPE
+      ));
+      var request = PlatformHttpClient.requestBuilder(new URI(SERVICE_URL + "/sign"))
+        .header("Content-Type", JSON_CONTENT_TYPE + "; charset=utf-8")
+        .header("Accept", JSON_CONTENT_TYPE)
+        .POST(HttpRequest.BodyPublishers.ofString(requestObj))
+        .build();
+      var response = PlatformHttpClient.checkResponse(client.send(request, HttpResponse.BodyHandlers.ofString()));
+      var responseObj = JSON.std.mapFrom(response.body());
 
-    @SuppressWarnings("UsagesOfObsoleteApi")
-    var indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
-    HttpRequests.put(uploadUrl, "application/octet-stream")
-      .productNameAsUserAgent()
-      .tuner(urlConnection -> headers.forEach((k, v) -> urlConnection.addRequestProperty(k, v)))
-      .connect(it -> {
-        var http = ((HttpURLConnection)it.getConnection());
-        var length = Files.size(file);
-        http.setFixedLengthStreamingMode(length);
-        try (var outputStream = http.getOutputStream(); var inputStream = new BufferedInputStream(Files.newInputStream(file), 64 * 1024)) {
-          NetUtils.copyStreamContent(indicator, inputStream, outputStream, length);
-        }
-        return null;
-      });
+      var uploadUrl = responseObj.get("url").toString();
+      @SuppressWarnings("unchecked")
+      var headers = (Map<String, String>)responseObj.get("headers");
+      var id = responseObj.get("folderName").toString();
 
-    return id;
+      var builder = PlatformHttpClient.requestBuilder(new URI(uploadUrl));
+      headers.forEach(builder::header);
+      request = builder
+        .header("Content-Type", BYTES_CONTENT_TYPE)
+        .PUT(HttpRequest.BodyPublishers.ofFile(file))
+        .build();
+      PlatformHttpClient.checkResponse(client.send(request, HttpResponse.BodyHandlers.discarding()));
+
+      return id;
+    }
+    catch (URISyntaxException e) {
+      throw new IOException(e);
+    }
+    catch (InterruptedException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public static void notify(@Nullable Project project, @NotNull String id) {

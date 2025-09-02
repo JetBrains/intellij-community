@@ -1,13 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.history
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsException
-import com.intellij.openapi.vcs.VcsScope
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.helpers.use
+import com.intellij.platform.vcs.impl.shared.telemetry.VcsScope
 import com.intellij.util.ArrayUtil
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.VcsLogObjectsFactory
@@ -15,7 +15,7 @@ import com.intellij.vcs.log.impl.HashImpl
 import git4idea.GitCommit
 import git4idea.commands.Git
 import git4idea.commands.GitLineHandler
-import git4idea.telemetry.GitTelemetrySpan
+import git4idea.telemetry.GitBackendTelemetrySpan
 import java.util.function.Consumer
 
 internal abstract class GitDetailsCollector<R : GitLogRecord, C : VcsCommitMetadata>(protected val project: Project,
@@ -88,7 +88,7 @@ internal abstract class GitDetailsCollector<R : GitLogRecord, C : VcsCommitMetad
     handler.endOptions()
 
     TelemetryManager.getInstance().getTracer(VcsScope)
-      .spanBuilder(GitTelemetrySpan.Log.LoadingFullCommitDetails.name)
+      .spanBuilder(GitBackendTelemetrySpan.Log.LoadingFullCommitDetails.name)
       .use { span ->
         span.setAttribute("rootName", root.name)
 

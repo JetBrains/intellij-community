@@ -161,6 +161,3 @@ com.intellij.dvcs.repo.RepositoryManager
 - a:removeExternalRepository(com.intellij.openapi.vfs.VirtualFile):V
 - a:updateAllRepositories():V
 - a:updateRepository(com.intellij.openapi.vfs.VirtualFile):V
-f:com.intellij.dvcs.ui.DvcsBundle
-- s:message(java.lang.String,java.lang.Object[]):java.lang.String
-- s:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier

@@ -54,8 +54,8 @@ public class AddMavenDependencyQuickFix implements IntentionAction, LowPriorityA
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return myRef.isValid() && MavenDomUtil.findContainingProject(file) != null && looksLikeClassName(getReferenceText());
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    return myRef.isValid() && MavenDomUtil.findContainingProject(psiFile) != null && looksLikeClassName(getReferenceText());
   }
 
   private static boolean looksLikeClassName(@Nullable String text) {
@@ -65,10 +65,10 @@ public class AddMavenDependencyQuickFix implements IntentionAction, LowPriorityA
   }
 
   @Override
-  public void invoke(final @NotNull Project project, Editor editor, final PsiFile file) throws IncorrectOperationException {
+  public void invoke(final @NotNull Project project, Editor editor, final PsiFile psiFile) throws IncorrectOperationException {
     if (!myRef.isValid()) return;
 
-    MavenProject mavenProject = MavenDomUtil.findContainingProject(file);
+    MavenProject mavenProject = MavenDomUtil.findContainingProject(psiFile);
     if (mavenProject == null) return;
 
     final List<MavenId> ids = MavenArtifactSearchDialog.searchForClass(project, getReferenceText());
@@ -81,7 +81,7 @@ public class AddMavenDependencyQuickFix implements IntentionAction, LowPriorityA
       MavenDomBundle.message("maven.dom.quickfix.add.maven.dependency")).run(() -> {
       boolean isTestSource = false;
 
-      VirtualFile virtualFile = file.getOriginalFile().getVirtualFile();
+      VirtualFile virtualFile = psiFile.getOriginalFile().getVirtualFile();
       if (virtualFile != null) {
         isTestSource = ProjectRootManager.getInstance(project).getFileIndex().isInTestSourceContent(virtualFile);
       }

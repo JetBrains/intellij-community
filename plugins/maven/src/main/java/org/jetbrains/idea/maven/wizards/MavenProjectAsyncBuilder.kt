@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.wizards
 
-import com.intellij.ide.impl.isTrusted
+import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeIntentReadAction
@@ -15,7 +15,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
@@ -25,6 +24,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.backend.observation.launchTracked
 import com.intellij.platform.backend.observation.trackActivity
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
@@ -32,7 +32,6 @@ import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.reportRawProgress
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.importing.MavenImportUtil
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
@@ -42,7 +41,10 @@ import org.jetbrains.idea.maven.project.actions.LookForNestedToggleAction
 import org.jetbrains.idea.maven.server.MavenWrapperDownloader
 import org.jetbrains.idea.maven.server.MavenWrapperSupport.Companion.getWrapperDistributionUrl
 import org.jetbrains.idea.maven.telemetry.tracer
-import org.jetbrains.idea.maven.utils.*
+import org.jetbrains.idea.maven.utils.FileFinder
+import org.jetbrains.idea.maven.utils.MavenActivityKey
+import org.jetbrains.idea.maven.utils.MavenAsyncUtil
+import org.jetbrains.idea.maven.utils.MavenUtil
 import java.nio.file.Path
 
 class MavenProjectAsyncBuilder {
@@ -91,14 +93,14 @@ class MavenProjectAsyncBuilder {
     val generalSettings = directProjectsSettings.generalSettings.clone()
 
     if (isVeryNewProject) {
-      blockingContext { ExternalProjectsManagerImpl.setupCreatedProject(project) }
+      ExternalProjectsManagerImpl.setupCreatedProject(project)
     }
 
     if (createDummyModule) {
       val previewModule = createPreviewModule(project, rootDirectory)
       // do not update all modules because it can take a lot of time (freeze at project opening)
       val cs =  project.service<CoroutineService>().coroutineScope
-      cs.launch {
+      cs.launchTracked {
         project.trackActivity(MavenActivityKey) {
           doCommit(project,
                    importProjectFile,
@@ -157,14 +159,15 @@ class MavenProjectAsyncBuilder {
 
     generalSettings.updateFromMavenConfig(files)
     updateMavenSettingsFromEnvironment(project, generalSettings, importingSettings)
+    MavenSettingsCache.getInstance(project).reloadAsync()
 
     val manager = MavenProjectsManager.getInstance(project)
 
-    if (project.isTrusted()) {
+    if (TrustedProjects.isProjectTrusted(project)) {
       withBackgroundProgress(project, MavenProjectBundle.message("maven.installing.wrapper"), false) {
         withContext(Dispatchers.IO) {
           tracer.spanBuilder("checkOrInstallMavenWrapper").useWithScope {
-            MavenWrapperDownloader.checkOrInstallForSync(project, rootDirectory.toString(), false);
+            MavenWrapperDownloader.checkOrInstallForSync(project, rootDirectory.toString(), false)
           }
         }
       }

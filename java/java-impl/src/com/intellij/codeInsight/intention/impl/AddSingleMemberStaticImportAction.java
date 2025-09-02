@@ -96,7 +96,7 @@ public final class AddSingleMemberStaticImportAction extends PsiUpdateModCommand
                     else return null;
                   }
                 }
-                else if (method == null && call.getMethodExpression().multiResolve(false).length > 0) {
+                else if (method == null && call.multiResolve(false).length > 0) {
                   return null;
                 }
               }

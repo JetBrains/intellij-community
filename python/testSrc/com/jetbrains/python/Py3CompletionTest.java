@@ -389,6 +389,36 @@ public class Py3CompletionTest extends PyTestCase {
     );
   }
 
+  // PY-55691
+  public void testAttrsClassMembersProvider() {
+    runWithAdditionalClassEntryInSdkRoots(
+      "../packages",
+      () -> {
+        doTestByText(
+          """
+             import attrs
+             
+             @attrs.define
+             class User:
+                 password: str
+             
+             User().__at<caret>"""
+        );
+
+        myFixture.checkResult(
+          """
+             import attrs
+             
+             @attrs.define
+             class User:
+                 password: str
+             
+             User().__attrs_attrs__"""
+        );
+      }
+    );
+  }
+
   //PY-28332
   public void testImportNamespacePackageInMultipleRoots() {
     doMultiFileTest(Arrays.asList("root1/src", "root2/src"));
@@ -798,6 +828,37 @@ public class Py3CompletionTest extends PyTestCase {
       """, ignored -> {
       doTest();
     });
+  }
+
+  // PY-81420
+  public void testTypeVarDefaultType() {
+    final List<String> suggested =
+      doTestByText("""
+                     from typing import TypeVar, Generic
+                     T = TypeVar('T', default=str)
+                     class Test(Generic[T]):
+                        def foo(self, x: T):
+                            x.<caret>
+                     """);
+    assertNotNull(suggested);
+    assertContainsElements(suggested, "find", "join");
+  }
+
+  // PY-81420
+  public void testTypeVarDefaultTypeNewSyntax() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON312,
+      () -> {
+        final List<String> suggestedNew =
+          doTestByText("""
+                     class Test[T = str]:
+                         def foo(self, x: T):
+                             x.<caret>
+                     """);
+        assertNotNull(suggestedNew);
+        assertContainsElements(suggestedNew, "find", "join");
+      }
+    );
   }
 
   private void doTestVariants(String @NotNull ... expected) {

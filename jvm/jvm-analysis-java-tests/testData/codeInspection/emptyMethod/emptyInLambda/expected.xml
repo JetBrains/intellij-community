@@ -2,8 +2,9 @@
 <problems>
   <problem>
     <file>Test.java</file>
-    <line>2</line>
-    <description>All implementations of this method are empty</description>
+    <line>4</line>
+    <problem_class>Empty method</problem_class>
+    <description>The method is empty</description>
   </problem>
 </problems>
 

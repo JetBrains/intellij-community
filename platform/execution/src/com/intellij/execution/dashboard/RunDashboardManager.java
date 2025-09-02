@@ -10,6 +10,7 @@ import com.intellij.ui.content.ContentManager;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.util.List;
@@ -42,6 +43,7 @@ public interface RunDashboardManager {
   boolean isShowInDashboard(@NotNull RunConfiguration runConfiguration);
 
   @NotNull
+  @Unmodifiable
   Set<String> getTypes();
 
   void setTypes(Set<String> types);

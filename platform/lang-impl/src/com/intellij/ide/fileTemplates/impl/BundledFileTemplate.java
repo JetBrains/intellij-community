@@ -1,9 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.fileTemplates.impl;
 
 import com.intellij.ide.fileTemplates.PluginBundledTemplate;
 import com.intellij.openapi.extensions.PluginDescriptor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
 /**
  * @author Eugene Zhuravlev
@@ -86,7 +88,9 @@ public final class BundledFileTemplate extends FileTemplateBase implements Plugi
     }
   }
 
-  void revertToDefaults() {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public void revertToDefaults() {
     setText(null);
     setReformatCode(DEFAULT_REFORMAT_CODE_VALUE);
     setLiveTemplateEnabled(isLiveTemplateEnabledByDefault());

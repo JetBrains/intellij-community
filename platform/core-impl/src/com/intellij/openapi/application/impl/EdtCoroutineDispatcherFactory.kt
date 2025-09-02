@@ -15,7 +15,7 @@ internal class EdtCoroutineDispatcherFactory : MainDispatcherFactory {
       EdtCoroutineDispatcher.Main
     }
     else {
-      EdtCoroutineDispatcher.Locking
+      EdtCoroutineDispatcher.LockWrapping
     }
   }
 }

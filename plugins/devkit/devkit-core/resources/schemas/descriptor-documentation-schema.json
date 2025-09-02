@@ -44,6 +44,10 @@
             "type": "string"
           }
         },
+        "namespace": {
+          "type": "string",
+          "description": "Element namespace."
+        },
         "since": {
           "type": "string",
           "description": "Version since the element is available."
@@ -58,15 +62,23 @@
         },
         "deprecationNote": {
           "type": "string",
-          "description": "Deprecation note for the element. Supports Writerside Markdown format."
+          "description": "Deprecation note for the element. Supports Writerside Markdown format.",
+          "x-intellij-language-injection": "Markdown"
         },
         "description": {
           "type": "string",
-          "description": "Description of the element. Supports Writerside Markdown format."
+          "description": "Description of the element. Supports Writerside Markdown format.",
+          "x-intellij-language-injection": "Markdown"
+        },
+        "internalNote": {
+          "type": "string",
+          "description": "The element is internal if it or any parent element has an internalNote value defined. Internal elements are for JetBrains internal use only. If not specified, the closest parent's internalNote is used. Supports Writerside Markdown format.",
+          "x-intellij-language-injection": "Markdown"
         },
         "sdkDocsSupportDetails": {
           "type": "string",
-          "description": "Support details. It is rendered only in SDK documentation. Use it when additional information about support is needed. Supports Writerside Markdown format."
+          "description": "Support details. It is rendered only in SDK documentation. Use it when additional information about support is needed. Supports Writerside Markdown format.",
+          "x-intellij-language-injection": "Markdown"
         },
         "attributes": {
           "type": "array",
@@ -81,7 +93,8 @@
         },
         "childrenDescription": {
           "type": "string",
-          "description": "Description of child elements. Use it when children elements can't be included in the descriptor documentation (for example, they are dynamic), or additional information is needed. Supports Writerside Markdown format."
+          "description": "Description of child elements. Use it when children elements can't be included in the descriptor documentation (for example, they are dynamic), or additional information is needed. Supports Writerside Markdown format.",
+          "x-intellij-language-injection": "Markdown"
         },
         "children": {
           "type": "array",
@@ -94,7 +107,8 @@
           "type": "array",
           "description": "Array of reference page links associated with the element. Supports Writerside Markdown format.",
           "items": {
-            "type": "string"
+            "type": "string",
+            "x-intellij-language-injection": "Markdown"
           }
         },
         "requirement": {
@@ -102,14 +116,19 @@
         },
         "defaultValue": {
           "type": "string",
-          "description": "Default value for the element, if applicable. Supports Writerside Markdown format."
+          "description": "Default value for the element, if applicable. Supports Writerside Markdown format.",
+          "x-intellij-language-injection": "Markdown"
         },
         "examples": {
           "type": "array",
           "description": "Examples for the element. Supports Writerside Markdown format.",
           "items": {
-            "type": "string"
+            "type": "string",
+            "x-intellij-language-injection": "Markdown"
           }
+        },
+        "renderContexts": {
+          "$ref": "#/definitions/RenderContexts"
         }
       },
       "required": ["name"],
@@ -121,17 +140,42 @@
         "required": {
           "type": "string",
           "description": "Element requirement.",
-          "enum": ["yes", "no", "yes_for_paid", "unknown"]
+          "enum": [
+            "yes",
+            "no",
+            "yes_for_paid",
+            "unknown"
+          ]
         },
         "details": {
           "type": "array",
           "description": "Additional details about the requirement. Supports Writerside Markdown format.",
           "items": {
-            "type": "string"
+            "type": "string",
+            "x-intellij-language-injection": "Markdown"
           }
         }
       },
       "additionalProperties": false
+    },
+    "RenderContexts": {
+      "type": "array",
+      "description": "Contexts in which the element or attribute can be rendered. If not specified, all contexts are applied by default: doc_provider (documentation provider in the IDE), sdk_docs (https://plugins.jetbrains.com/docs/intellij). Note that if a context is excluded in the element, its children elements and attributes are also excluded and can't override this.",
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "doc_provider",
+          "sdk_docs"
+        ],
+        "x-intellij-enum-metadata": {
+          "doc_provider": {
+            "description": "Documentation provider in the IDE."
+          },
+          "sdk_docs": {
+            "description": "IntelliJ Platform Plugin SDK Documentation (https://plugins.jetbrains.com/docs/intellij)."
+          }
+        }
+      }
     },
     "AttributeWrapper": {
       "type": "object",
@@ -163,18 +207,29 @@
         },
         "deprecationNote": {
           "type": "string",
-          "description": "Deprecation note for the attribute. Supports Writerside Markdown format."
+          "description": "Deprecation note for the attribute. Supports Writerside Markdown format.",
+          "x-intellij-language-injection": "Markdown"
         },
         "requirement": {
           "$ref": "#/definitions/Requirement"
         },
         "description": {
           "type": "string",
-          "description": "Description of the attribute. Supports Writerside Markdown format."
+          "description": "Description of the attribute. Supports Writerside Markdown format.",
+          "x-intellij-language-injection": "Markdown"
+        },
+        "internalNote": {
+          "type": "string",
+          "description": "The attribute is internal if it or any parent element has an internalNote value defined. Internal elements and attributes are for JetBrains internal use only. If not specified, the closest parent's internalNote is used. Supports Writerside Markdown format.",
+          "x-intellij-language-injection": "Markdown"
         },
         "defaultValue": {
           "type": "string",
-          "description": "Default value for the attribute, if applicable. Supports Writerside Markdown format."
+          "description": "Default value for the attribute, if applicable. Supports Writerside Markdown format.",
+          "x-intellij-language-injection": "Markdown"
+        },
+        "renderContexts": {
+          "$ref": "#/definitions/RenderContexts"
         }
       },
       "required": ["name"],

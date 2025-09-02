@@ -81,7 +81,7 @@ public final class CopySpecWalker {
         @SuppressWarnings("SSBasedInspection")
         Object destPath = resolverMetaclass.respondsTo(resolver, "getDestPath").get(0).invoke(resolver, new Object[0]);
 
-        final String relativePath = GradleReflectionUtil.reflectiveCall(destPath, "getPathString", String.class);
+        final String relativePath = GradleReflectionUtil.getValue(destPath, "getPathString", String.class);
 
         Collection<Object> sourcePaths = getSourcePaths(resolver);
         if (sourcePaths == null) {
@@ -97,7 +97,7 @@ public final class CopySpecWalker {
           }
         }
 
-        FileTree sourceTree = GradleReflectionUtil.reflectiveCall(resolver, "getSource", FileTree.class);
+        FileTree sourceTree = GradleReflectionUtil.getValue(resolver, "getSource", FileTree.class);
         sourceTree.visit(new FileVisitor() {
           @Override
           public void visitDir(FileVisitDetails dirDetails) {

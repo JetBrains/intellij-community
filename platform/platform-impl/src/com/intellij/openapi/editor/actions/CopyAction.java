@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.textarea.TextComponentEditor;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.project.Project;
@@ -133,6 +134,7 @@ public final class CopyAction extends TextComponentEditorAction implements HintM
   }
 
   private static void highlightSelections(@NotNull Editor editor, @NotNull Project project) {
+    if (editor instanceof TextComponentEditor) return;
     HighlightManager highlightManager = HighlightManager.getInstance(project);
     editor.getCaretModel().runForEachCaret(caret -> {
       if (caret.hasSelection()) {

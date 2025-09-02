@@ -6,6 +6,8 @@ f:com.intellij.formatting.Indent$Type
 - *sf:OUTDENT_SPACES:com.intellij.formatting.Indent$Type
 c:com.intellij.openapi.editor.EditorModificationUtilEx
 - *s:calcAfterLineEnd(com.intellij.openapi.editor.Editor,I,com.intellij.openapi.editor.LogicalPosition,com.intellij.openapi.editor.VisualPosition):I
+f:com.intellij.psi.codeStyle.CodeStyleSettingsChangeEvent
+- *:getSettings():com.intellij.psi.codeStyle.CodeStyleSettings
 *:com.intellij.psi.codeStyle.CommentStyleSettings
 - a:isBlockCommentIncludesSpace():Z
 - a:isLineCommentFollowedWithSpace():Z
@@ -28,8 +30,11 @@ c:com.intellij.psi.codeStyle.PackageEntry
 - *sf:ALL_MODULE_IMPORTS:com.intellij.psi.codeStyle.PackageEntry
 *:com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- acceptsFileIndentOptionsProviders():Z
+- getActivatingAction(com.intellij.psi.codeStyle.modifier.CodeStyleStatusBarUIContributor,com.intellij.psi.PsiFile):com.intellij.openapi.actionSystem.AnAction
 - getDisablingFunction(com.intellij.openapi.project.Project):java.util.function.Consumer
 - a:getName():java.lang.String
 - a:getStatusBarUiContributor(com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings):com.intellij.psi.codeStyle.modifier.CodeStyleStatusBarUIContributor
 - mayOverrideSettingsOf(com.intellij.openapi.project.Project):Z
 - a:modifySettings(com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings,com.intellij.psi.PsiFile):Z
+- modifySettingsAndUiCustomization(com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings,com.intellij.psi.PsiFile):Z

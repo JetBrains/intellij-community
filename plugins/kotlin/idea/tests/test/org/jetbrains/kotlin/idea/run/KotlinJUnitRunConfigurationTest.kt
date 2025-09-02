@@ -12,7 +12,10 @@ import com.intellij.execution.junit.JUnitConfiguration
 import com.intellij.execution.junit.TestInClassConfigurationProducer
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.isFile
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
+import com.intellij.psi.impl.file.PsiDirectoryFactory
 import com.intellij.refactoring.RefactoringFactory
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.util.allScope
@@ -132,10 +135,22 @@ class KotlinJUnitRunConfigurationTest : AbstractRunConfigurationBaseTest() {
 }
 
 fun getConfiguration(file: VirtualFile, project: Project, pattern: String): ConfigurationFromContext {
-    val psiFile = PsiManager.getInstance(project).findFile(file) ?: error("PsiFile not found for $file")
-    val offset = psiFile.text.indexOf(pattern)
-    val psiElement = psiFile.findElementAt(offset)
-    val location = PsiLocation(psiElement)
+    val location: PsiLocation<PsiElement?> =
+        when {
+          file.isFile -> {
+              val psiFile = PsiManager.getInstance(project).findFile(file) ?: error("PsiFile not found for $file")
+              val offset = psiFile.text.indexOf(pattern)
+              val psiElement = psiFile.findElementAt(offset)
+              PsiLocation(psiElement)
+          }
+          file.isDirectory -> {
+              val directory = PsiDirectoryFactory.getInstance(project).createDirectory(file)
+              PsiLocation(directory)
+          }
+          else -> {
+              error("")
+          }
+        }
     val context = ConfigurationContext.createEmptyContextForLocation(location)
     return context.configurationsFromContext.orEmpty().singleOrNull() ?: error("Configuration not found for pattern $pattern")
 }

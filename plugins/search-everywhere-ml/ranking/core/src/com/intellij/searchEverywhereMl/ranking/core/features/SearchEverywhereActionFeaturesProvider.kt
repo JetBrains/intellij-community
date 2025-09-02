@@ -3,6 +3,7 @@ package com.intellij.searchEverywhereMl.ranking.core.features
 
 import com.intellij.ide.actions.SearchEverywhereBaseAction
 import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellCheckResult
 import com.intellij.ide.actions.searcheverywhere.TopHitSEContributor
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.ide.util.gotoByName.GotoActionModel.ActionWrapper
@@ -107,7 +108,8 @@ internal class SearchEverywhereActionFeaturesProvider :
                                   currentTime: Long,
                                   searchQuery: String,
                                   elementPriority: Int,
-                                  cache: FeaturesProviderCache?): List<EventPair<*>> {
+                                  cache: FeaturesProviderCache?,
+                                  correction: SearchEverywhereSpellCheckResult): List<EventPair<*>> {
     val value = if (element is GotoActionModel.MatchedValue) element.value else element
     val action = getAnAction(value) ?: return emptyList()
 

@@ -30,6 +30,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.ConcurrencyUtil;
@@ -68,9 +69,7 @@ public final class HighlightManagerImpl extends HighlightManager {
 
   @Contract("_, true -> !null")
   private static Set<RangeHighlighter> getEditorHighlighters(@NotNull Editor editor, boolean toCreate) {
-    if (editor instanceof EditorWindow) {
-      editor = ((EditorWindow)editor).getDelegate();
-    }
+    editor = InjectedLanguageEditorUtil.getTopLevelEditor(editor);
     return toCreate ? ConcurrencyUtil.computeIfAbsent(editor, HIGHLIGHTER_SET_KEY, () -> new HashSet<>())
                     : editor.getUserData(HIGHLIGHTER_SET_KEY);
   }
@@ -280,9 +279,7 @@ public final class HighlightManagerImpl extends HighlightManager {
     }
 
     Color scrollMarkColor = getScrollMarkColor(attributes, editor.getColorsScheme());
-    if (editor instanceof EditorWindow) {
-      editor = ((EditorWindow)editor).getDelegate();
-    }
+    editor = InjectedLanguageEditorUtil.getTopLevelEditor(editor);
 
     for (PsiElement element : elements) {
       TextRange range = element.getTextRange();

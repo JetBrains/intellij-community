@@ -4,7 +4,6 @@ package com.intellij.execution.target
 import com.intellij.execution.ExecutionException
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.blockingContext
 
 
 /**
@@ -13,7 +12,7 @@ import com.intellij.openapi.progress.blockingContext
 suspend fun TargetEnvironment.createProcessWithResult(commandLine: TargetedCommandLine,
                                                       indicator: ProgressIndicator = EmptyProgressIndicator()): Result<Process> {
   try {
-    return Result.success(blockingContext { createProcess(commandLine, indicator) })
+    return Result.success(createProcess(commandLine, indicator))
   }
   catch (e: ExecutionException) {
     return Result.failure(e)

@@ -11,8 +11,8 @@ import com.intellij.vcs.log.VcsLogDetailsFilter
 import com.intellij.vcs.log.VcsLogFilterCollection
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.graph.PermanentGraph
-import com.intellij.vcs.log.impl.VcsLogNavigationUtil.waitForRefresh
 import com.intellij.vcs.log.impl.VcsProjectLog
+import com.intellij.vcs.log.impl.waitForRefresh
 import com.intellij.vcs.log.visible.CommitCountStage
 import com.intellij.vcs.log.visible.VcsLogFiltererImpl
 import com.intellij.vcs.log.visible.VisiblePack

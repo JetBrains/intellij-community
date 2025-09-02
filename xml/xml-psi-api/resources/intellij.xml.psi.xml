@@ -1,0 +1,27 @@
+<idea-plugin>
+  <extensionPoints>
+    <extensionPoint name="xml.schemaProvider" interface="com.intellij.xml.XmlSchemaProvider" dynamic="true"/>
+    <extensionPoint name="xml.xmlTypedHandlersAdditionalSupport" interface="com.intellij.openapi.editor.XmlTypedHandlersAdditionalSupport" dynamic="true"/>
+    <extensionPoint name="xml.xmlCustomTagHighlightingStrategy" interface="com.intellij.openapi.editor.XmlCustomTagHighlightingStrategy" dynamic="true"/>
+    <extensionPoint name="xml.fileNSInfoProvider" interface="com.intellij.psi.xml.XmlFileNSInfoProvider" dynamic="true"/>
+    <extensionPoint name="standardResourceProvider" interface="com.intellij.javaee.StandardResourceProvider" dynamic="true"/>
+    <extensionPoint name="standardResource" beanClass="com.intellij.javaee.StandardResourceEP" dynamic="true"/>
+    <extensionPoint name="xml.namedReferenceProvider"
+                    dynamic="true"
+                    beanClass="com.intellij.xml.XmlNamedReferenceProviderBean">
+      <with attribute="hostElementClass" implements="com.intellij.psi.xml.XmlNamedReferenceHost"/>
+      <with attribute="targetClass" implements="com.intellij.model.Symbol"/>
+      <with attribute="implementationClass" implements="com.intellij.model.psi.PsiSymbolReferenceProvider"/>
+    </extensionPoint>
+    <extensionPoint name="xml.autoPopupEnabler"
+                    interface="com.intellij.xml.psi.codeInsight.XmlAutoPopupEnabler"
+                    dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <patterns.patternClass className="com.intellij.patterns.XmlPatterns" alias="xml"/>
+    <inspection.basicVisitor class="com.intellij.psi.XmlElementVisitor"/>
+
+    <polySymbols.enableInLanguage language="HtmlCompatible"/>
+  </extensions>
+</idea-plugin>

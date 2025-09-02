@@ -40,13 +40,13 @@ public class UpgradeSdkFix implements IntentionAction {
 
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    Module module = ModuleUtilCore.findModuleForFile(file);
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    Module module = ModuleUtilCore.findModuleForFile(psiFile);
     return module != null && !JavaSdkUtil.isLanguageLevelAcceptable(project, module, myLevel);
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
     JavaSdkVersion required = JavaSdkVersion.fromLanguageLevel(myLevel);
     SdkPopupFactory
       .newBuilder()
@@ -56,16 +56,16 @@ public class UpgradeSdkFix implements IntentionAction {
         final var version = JavaSdkVersionUtil.getJavaSdkVersion(sdk);
         return version != null && version.isAtLeast(required);
       })
-      .updateSdkForFile(file)
+      .updateSdkForFile(psiFile)
       .onSdkSelected(sdk -> ApplicationManager.getApplication()
         .invokeLater(() -> new IncreaseLanguageLevelFix(myLevel)
-        .invoke(project, editor, file), ModalityState.nonModal(), project.getDisposed()))
+        .invoke(project, editor, psiFile), ModalityState.nonModal(), project.getDisposed()))
       .buildPopup()
       .showInBestPositionFor(editor);
   }
 
   @Override
-  public @Nullable PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
+  public @Nullable PsiElement getElementToMakeWritable(@NotNull PsiFile psiFile) {
     return null;
   }
 

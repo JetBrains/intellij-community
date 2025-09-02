@@ -5,10 +5,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
-import com.intellij.platform.feedback.FeedbackSurvey
-import com.intellij.platform.feedback.FeedbackSurveyType
-import com.intellij.platform.feedback.InIdeFeedbackSurveyConfig
-import com.intellij.platform.feedback.InIdeFeedbackSurveyType
+import com.intellij.platform.feedback.*
 import com.intellij.platform.feedback.dialog.BlockBasedFeedbackDialog
 import com.intellij.platform.feedback.dialog.SystemDataJsonSerializable
 import com.intellij.platform.feedback.impl.OnDemandFeedbackResolver
@@ -58,22 +55,24 @@ internal class ReworkedTerminalFeedbackSurvey : FeedbackSurvey() {
 }
 
 @ApiStatus.Internal
-object ReworkedTerminalSurveyConfig : InIdeFeedbackSurveyConfig {
-  override val surveyId: String = "reworked_terminal"
+object ReworkedTerminalSurveyConfig : InIdeFeedbackSurveyConfig, ActionBasedFeedbackConfig {
+  override val surveyId: String
+    get() = "reworked_terminal"
 
-  override fun createFeedbackDialog(project: Project, forTest: Boolean): BlockBasedFeedbackDialog<out SystemDataJsonSerializable> {
-    return ReworkedTerminalFeedbackDialog(project, forTest)
-  }
-
-  override fun updateStateAfterDialogClosedOk(project: Project) { }
-
-  override val lastDayOfFeedbackCollection: LocalDate = LocalDate(2025, 7, 15)
+  override val lastDayOfFeedbackCollection: LocalDate = LocalDate(2025, 11, 15)
 
   override val requireIdeEAP: Boolean = false
 
   override fun checkIdeIsSuitable(): Boolean = PlatformUtils.isJetBrainsProduct()
 
-  override fun checkExtraConditionSatisfied(project: Project): Boolean {
+  override fun createFeedbackDialog(project: Project, forTest: Boolean): BlockBasedFeedbackDialog<out SystemDataJsonSerializable> {
+    return ReworkedTerminalFeedbackDialog(project, forTest)
+  }
+
+  // always true because separate conditions are used for actions and for 
+  override fun checkExtraConditionSatisfied(project: Project): Boolean = true
+
+  override fun checkExtraConditionSatisfiedForNotification(project: Project): Boolean {
     val usageStorage = TerminalUsageLocalStorage.getInstance()
     // Show notification if the user has executed enough commands or if the reworked terminal is being disabled.
     return !usageStorage.state.feedbackNotificationShown &&
@@ -83,7 +82,7 @@ object ReworkedTerminalSurveyConfig : InIdeFeedbackSurveyConfig {
            )
   }
 
-  override fun checkExtraConditionSatisfiedForExplicitUserAction(project: Project): Boolean {
+  override fun checkExtraConditionSatisfiedForAction(project: Project): Boolean {
     // Explicitly sending feedback is only enabled when the reworked terminal is enabled.
     return TerminalOptionsProvider.instance.terminalEngine == TerminalEngine.REWORKED
   }
@@ -97,4 +96,6 @@ object ReworkedTerminalSurveyConfig : InIdeFeedbackSurveyConfig {
   override fun updateStateAfterNotificationShowed(project: Project) {
     TerminalUsageLocalStorage.getInstance().recordFeedbackNotificationShown()
   }
+
+  override fun updateStateAfterDialogClosedOk(project: Project) { }
 }

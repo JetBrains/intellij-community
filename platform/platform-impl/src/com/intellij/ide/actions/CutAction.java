@@ -7,12 +7,19 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.platform.ide.core.permissions.Permission;
+import com.intellij.platform.ide.core.permissions.RequiresPermissions;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
-public class CutAction extends DumbAwareAction implements LightEditCompatible {
+import java.util.Collection;
+import java.util.Collections;
+
+import static com.intellij.openapi.vfs.FilePermissionsKt.getProjectFilesWrite;
+
+public class CutAction extends DumbAwareAction implements LightEditCompatible, RequiresPermissions {
   public CutAction() {
     setEnabledInModalContext(true);
   }
@@ -29,6 +36,11 @@ public class CutAction extends DumbAwareAction implements LightEditCompatible {
       return;
     }
     provider.performCut(e.getDataContext());
+  }
+
+  @Override
+  public @NotNull Collection<@NotNull Permission> getRequiredPermissions() {
+    return Collections.singletonList(getProjectFilesWrite());
   }
 
   private static CutProvider getAvailableCutProvider(@NotNull AnActionEvent e) {

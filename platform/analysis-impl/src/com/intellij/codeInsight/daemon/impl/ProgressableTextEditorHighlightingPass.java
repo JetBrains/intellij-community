@@ -6,6 +6,7 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -22,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.concurrent.atomic.AtomicLong;
 
 public abstract class ProgressableTextEditorHighlightingPass extends TextEditorHighlightingPass {
+  private static final Logger LOG = Logger.getInstance(ProgressableTextEditorHighlightingPass.class);
   private volatile boolean myFinished;
   private volatile long myProgressLimit;
   private final AtomicLong myProgressCount = new AtomicLong();
@@ -85,12 +87,33 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
     ProgressManager.checkCanceled();
     myFinished = false;
     try {
-      collectInformationWithProgress(progress);
+      HighlightingSession session = getHighlightingSession();
+      if (session.getProgressIndicator() == progress) {
+        collectInformationWithProgress(progress);
+      }
+      else {
+        LOG.debug("Skipped running the 2nd copy of " + this + "; myProgress=" + progress + "; session progress=" + session.getProgressIndicator());
+        // It seems we're running the second copy of this pass - there must be several file editors opened for the same document.
+        // Just skip all the work, to avoid doing it twice and step on each other toes, that would cause stuck/leaking highlighters.
+        // When the first copy is finished, all other editors will be repainted with the corresponding highlighters.
+        // Do not wait for the first copy to complete, to avoid thread starvation and deadlocks,
+        // when the first copy decides to paralellize stuff and FJP tries to steal other tasks and invokes this method
+        // and blocks waiting for the first copy to complete, which it'll never do because it's waiting.
+      }
     }
     finally {
       if (myFile != null) {
         sessionFinished();
       }
+    }
+  }
+
+  @Override
+  @ApiStatus.Internal
+  public void markUpToDateIfStillValid(@NotNull DaemonProgressIndicator progress) {
+    HighlightingSession session = getHighlightingSession();
+    if (session.getProgressIndicator() == progress) {
+      super.markUpToDateIfStillValid(progress);
     }
   }
 
@@ -127,6 +150,7 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
     return myFinished;
   }
 
+  @SuppressWarnings("NullableProblems")
   public @Nullable("null means do not show progress") @Nls String getPresentableName() {
     return myPresentableName;
   }

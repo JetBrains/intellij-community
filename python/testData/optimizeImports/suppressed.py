@@ -1,2 +1,2 @@
-#noinspection PyUnresolvedReferences
+#noinspection PyUnusedImports
 import sys

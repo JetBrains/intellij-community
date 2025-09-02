@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.runToolbar
 
 import com.intellij.execution.Executor
@@ -7,15 +7,11 @@ import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
-import com.intellij.openapi.diagnostic.Logger
-import org.jetbrains.annotations.ApiStatus
+import com.intellij.openapi.diagnostic.logger
 
-@ApiStatus.Internal
-class RunToolbarProcessMainAction(process: RunToolbarProcess, executor: Executor) : RunToolbarProcessAction(process, executor) {
-  companion object {
-    private val LOG = Logger.getInstance(RunToolbarProcessMainAction::class.java)
-  }
+private val LOG = logger<RunToolbarProcessMainAction>()
 
+internal class RunToolbarProcessMainAction(process: RunToolbarProcess, executor: Executor) : RunToolbarProcessAction(process, executor) {
   init {
     templatePresentation.putClientProperty(ActionButtonWithText.SHORTCUT_SHOULD_SHOWN, true)
   }

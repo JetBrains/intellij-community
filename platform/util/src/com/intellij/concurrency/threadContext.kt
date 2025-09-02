@@ -10,8 +10,13 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.Cancellation
 import com.intellij.util.Processor
 import com.intellij.util.SystemProperties
-import com.intellij.util.concurrency.*
-import kotlinx.coroutines.*
+import com.intellij.util.concurrency.captureCallableThreadContext
+import com.intellij.util.concurrency.capturePropagationContext
+import com.intellij.util.concurrency.captureRunnableThreadContext
+import com.intellij.util.concurrency.isCheckContextAssertions
+import kotlinx.coroutines.InternalCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.Runnable
 import kotlinx.coroutines.internal.intellij.IntellijCoroutines
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
@@ -90,9 +95,6 @@ private val tlCoroutineContext: ThreadLocal<InstalledThreadContext> = ThreadLoca
 }
 
 private inline fun currentThreadContextOrFallback(getter: (CoroutineContext?) -> CoroutineContext?): CoroutineContext? {
-  if (!useImplicitBlockingContext) {
-    return tlCoroutineContext.get().context
-  }
   @OptIn(InternalCoroutinesApi::class)
   val suspendingContext = IntellijCoroutines.currentThreadCoroutineContext()
   val (snapshot, overridingContext) = tlCoroutineContext.get()
@@ -150,7 +152,7 @@ private val VIOLATORS : List<String> = listOf(
   "com.intellij.ide.ui.popup",
   "com.intellij.ui",
   "org.jetbrains.io",
-  "com.intellij.javascript.webSymbols.nodejs.WebTypesNpmLoader",
+  "com.intellij.javascript.polySymbols.nodejs.WebTypesNpmLoader",
   "com.intellij.tasks",
   "com.intellij.util.concurrency.Invoker",
   /**
@@ -448,29 +450,6 @@ fun <T> captureThreadContextProcessor(processor: Processor<T>): Processor<T> {
  */
 @Internal
 interface InternalCoroutineContextKey<T : CoroutineContext.Element> : CoroutineContext.Key<T>
-
-/**
- * Strips off internal elements from thread contexts.
- * If you need to compare contexts by equality, most likely you need to use this method.
- */
-@ApiStatus.Internal
-fun getContextSkeleton(context: CoroutineContext): Set<CoroutineContext.Element> {
-  checkContextInstalled()
-  return context.fold(HashSet()) { acc, element ->
-    when (element.key) {
-      Job -> Unit
-      // It is normal to have multiple `BlockingJob` in the context.
-      // But treating them as separate leads to non-mergeable updates in MergingUpdateQueue
-      // An ideal solution would be to provide a way to merge several thread contexts under one, but there is no real need in it yet.
-      BlockingJob -> Unit
-      CoroutineName -> Unit
-      is InternalCoroutineContextKey<*> -> Unit
-      @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE") kotlinx.coroutines.CoroutineId -> Unit
-      else -> acc.add(element)
-    }
-    acc
-  }
-}
 
 /**
  * Same as [captureCallableThreadContext] but for [Callable].

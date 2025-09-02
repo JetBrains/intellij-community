@@ -544,7 +544,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     dependentIndicators.forEach(ProgressIndicator::cancel);
   }
 
-  private void inspectFile(@NotNull PsiFile file,
+  private void inspectFile(@NotNull PsiFile psiFile,
                            @NotNull TextRange restrictRange,
                            @NotNull InspectionManager inspectionManager,
                            @NotNull Map<String, InspectionToolWrapper<?, ?>> wrappersMap,
@@ -577,14 +577,14 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     if (isIgnoredFile(file)) {
         return;
     }
-    Document document = PsiDocumentManager.getInstance(getProject()).getDocument(file);
+    Document document = PsiDocumentManager.getInstance(getProject()).getDocument(psiFile);
     if (document == null) return;
     DaemonProgressIndicator progressIndicator = assertUnderDaemonProgress();
-    HighlightingSessionImpl.runInsideHighlightingSession(file, FileViewProviderUtil.getCodeInsightContext(file), null, new ProperTextRange(file.getTextRange()), false, session -> {
-      InspectionProfileWrapper.runWithCustomInspectionWrapper(file, __ -> new InspectionProfileWrapper(getCurrentProfile()), () -> {
+    HighlightingSessionImpl.runInsideHighlightingSession(psiFile, FileViewProviderUtil.getCodeInsightContext(psiFile), null, new ProperTextRange(psiFile.getTextRange()), false, session -> {
+      InspectionProfileWrapper.runWithCustomInspectionWrapper(psiFile, __ -> new InspectionProfileWrapper(getCurrentProfile()), () -> {
         try {
           Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> map =
-            runInspectionEngine(localTools, file, restrictRange, restrictRange, inspectInjectedPsi,
+            runInspectionEngine(localTools, psiFile, restrictRange, restrictRange, inspectInjectedPsi,
                                        progressIndicator, PairProcessor.alwaysTrue());
           for (Map.Entry<LocalInspectionToolWrapper, List<ProblemDescriptor>> entry : map.entrySet()) {
             List<ProblemDescriptor> descriptors = entry.getValue();
@@ -603,23 +603,23 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
           JobLauncher.getInstance()
             .invokeConcurrentlyUnderProgress(globalSimpleTools, progressIndicator, toolWrapper -> {
               GlobalInspectionTool tool = toolWrapper.getTool();
-              ProblemsHolder holder = new ProblemsHolder(inspectionManager, file, false);
+              ProblemsHolder holder = new ProblemsHolder(inspectionManager, psiFile, false);
               ProblemDescriptionsProcessor problemDescriptionProcessor = getProblemDescriptionProcessor(toolWrapper, wrappersMap);
               InspectionEventsKt.reportToQodanaWhenInspectionFinished(
                 getInspectionEventPublisher(),
                 toolWrapper,
                 true,
-                file,
+                psiFile,
                 getProject(),
                 () -> {
-                  tool.checkFile(file, inspectionManager, holder, this, problemDescriptionProcessor);
+                  tool.checkFile(psiFile, inspectionManager, holder, this, problemDescriptionProcessor);
                   return holder.getResultCount();
                 });
               InspectionToolResultExporter toolPresentation = getPresentation(toolWrapper);
               BatchModeDescriptorsUtil.addProblemDescriptors(holder.getResults(), false, this, null, toolPresentation, CONVERT);
               return true;
             });
-          VirtualFile virtualFile = file.getVirtualFile();
+          VirtualFile virtualFile = psiFile.getVirtualFile();
           String displayUrl =
             ProjectUtilCore.displayUrlRelativeToProject(virtualFile, virtualFile.getPresentableUrl(), getProject(), true, false);
           incrementJobDoneAmount(getStdJobDescriptors().LOCAL_ANALYSIS, displayUrl);
@@ -628,10 +628,10 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
           throw e;
         }
         catch (Throwable e) {
-          LOG.error("In file: " + file.getViewProvider().getVirtualFile().getPath(), e);
+          LOG.error("In file: " + psiFile.getViewProvider().getVirtualFile().getPath(), e);
         }
         finally {
-          InjectedLanguageManager.getInstance(getProject()).dropFileCaches(file);
+          InjectedLanguageManager.getInstance(getProject()).dropFileCaches(psiFile);
         }
       });
     });
@@ -1182,18 +1182,18 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
         private int myCount;
 
         @Override
-        public void visitFile(@NotNull PsiFile file) {
+        public void visitFile(@NotNull PsiFile psiFile) {
           if (LOG.isDebugEnabled()) {
-            LOG.debug("Code cleanup: searching for problems in file " + file);
+            LOG.debug("Code cleanup: searching for problems in file " + psiFile);
           }
 
-          progressIndicator.setText(AbstractLayoutCodeProcessor.getPresentablePath(getProject(), file));
+          progressIndicator.setText(AbstractLayoutCodeProcessor.getPresentablePath(getProject(), psiFile));
           progressIndicator.setFraction((double)++myCount / fileCount);
 
-          if (isBinary(file)) return;
+          if (isBinary(psiFile)) return;
           List<LocalInspectionToolWrapper> lTools = new ArrayList<>();
           for (Tools tools : inspectionTools) {
-            InspectionToolWrapper<?, ?> tool = tools.getEnabledTool(file, includeDoNotShow);
+            InspectionToolWrapper<?, ?> tool = tools.getEnabledTool(psiFile, includeDoNotShow);
             if (tool != null && profile instanceof InspectionProfileImpl profileImpl) {
               @NotNull Set<InspectionToolWrapper<?, ?>> other = new HashSet<>();
               profileImpl.collectDependentInspections(tool, other, getProject());
@@ -1214,9 +1214,9 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
           }
 
           if (!lTools.isEmpty()) {
-            InspectionProfileWrapper.runWithCustomInspectionWrapper(file,
+            InspectionProfileWrapper.runWithCustomInspectionWrapper(psiFile,
                 p -> new InspectionProfileWrapper(profile, ((InspectionProfileImpl)p).getProfileManager()),
-                () -> findProblemsInFile(file, lTools, range, searchScope, descriptors, files, shouldApplyFix));
+                                                                    () -> findProblemsInFile(psiFile, lTools, range, searchScope, descriptors, files, shouldApplyFix));
           }
         }
       }));

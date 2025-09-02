@@ -3,7 +3,7 @@ import uuid
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from datetime import date, time, timedelta
 from datetime import datetime as real_datetime
-from typing import Any, ClassVar, Generic, Literal, Protocol, TypeVar, overload, type_check_only
+from typing import Any, ClassVar, Generic, Literal, Protocol, TypeAlias, TypeVar, overload, type_check_only
 
 from django import forms
 from django.core import validators  # due to weird mypy.stubtest error
@@ -13,11 +13,12 @@ from django.db.models import Model
 from django.db.models.expressions import Col, Combinable, Expression, Func
 from django.db.models.fields.reverse_related import ForeignObjectRel
 from django.db.models.query_utils import Q, RegisterLookupMixin
+from django.db.models.sql.compiler import SQLCompiler, _AsSqlType, _ParamsT
 from django.forms import Widget
-from django.utils.choices import BlankChoiceIterator, _Choice, _ChoiceNamedGroup, _Choices, _ChoicesCallable
+from django.utils.choices import BlankChoiceIterator, _Choice, _ChoiceNamedGroup, _ChoicesCallable, _ChoicesInput
 from django.utils.datastructures import DictWrapper
 from django.utils.functional import _Getter, _StrOrPromise, cached_property
-from typing_extensions import Self, TypeAlias
+from typing_extensions import Self
 
 class Empty: ...
 class NOT_PROVIDED: ...
@@ -26,6 +27,7 @@ BLANK_CHOICE_DASH: list[tuple[str, str]]
 
 _ChoicesList: TypeAlias = Sequence[_Choice] | Sequence[_ChoiceNamedGroup]
 _LimitChoicesTo: TypeAlias = Q | dict[str, Any]
+_LimitChoicesToCallable: TypeAlias = Callable[[], _LimitChoicesTo]
 
 _F = TypeVar("_F", bound=Field, covariant=True)
 
@@ -39,7 +41,7 @@ class _FieldDescriptor(Protocol[_F]):
     @property
     def field(self) -> _F: ...
 
-_AllLimitChoicesTo: TypeAlias = _LimitChoicesTo | _ChoicesCallable  # noqa: PYI047
+_AllLimitChoicesTo: TypeAlias = _LimitChoicesTo | _LimitChoicesToCallable | _ChoicesCallable  # noqa: PYI047
 _ErrorMessagesMapping: TypeAlias = Mapping[str, _StrOrPromise]
 _ErrorMessagesDict: TypeAlias = dict[str, _StrOrPromise]
 
@@ -128,7 +130,7 @@ class Field(RegisterLookupMixin, Generic[_ST, _GT]):
     model: type[Model]
     name: str
     verbose_name: _StrOrPromise
-    description: str | _Getter[str]
+    description: _StrOrPromise | _Getter[_StrOrPromise]
     blank: bool
     null: bool
     unique: bool
@@ -146,7 +148,7 @@ class Field(RegisterLookupMixin, Generic[_ST, _GT]):
     creation_counter: int
     auto_creation_counter: int
     default_validators: Sequence[validators._ValidatorCallable]
-    default_error_messages: _ErrorMessagesDict
+    default_error_messages: ClassVar[_ErrorMessagesDict]
     hidden: bool
     system_check_removed_details: Any | None
     system_check_deprecated_details: Any | None
@@ -168,7 +170,7 @@ class Field(RegisterLookupMixin, Generic[_ST, _GT]):
         unique_for_date: str | None = None,
         unique_for_month: str | None = None,
         unique_for_year: str | None = None,
-        choices: _Choices | None = None,
+        choices: _ChoicesInput | None = None,
         help_text: _StrOrPromise = "",
         db_column: str | None = None,
         db_tablespace: str | None = None,
@@ -188,6 +190,7 @@ class Field(RegisterLookupMixin, Generic[_ST, _GT]):
     # non-Model instances
     @overload
     def __get__(self, instance: Any, owner: Any) -> Self: ...
+    def select_format(self, compiler: SQLCompiler, sql: str, params: _ParamsT) -> _AsSqlType: ...
     def deconstruct(self) -> tuple[str, str, Sequence[Any], dict[str, Any]]: ...
     def set_attributes_from_name(self, name: str) -> None: ...
     def db_type_parameters(self, connection: BaseDatabaseWrapper) -> DictWrapper: ...
@@ -221,7 +224,6 @@ class Field(RegisterLookupMixin, Generic[_ST, _GT]):
         limit_choices_to: _LimitChoicesTo | None = None,
         ordering: Sequence[str] = (),
     ) -> BlankChoiceIterator | _ChoicesList: ...
-    def _get_flatchoices(self) -> list[_Choice]: ...
     @property
     def flatchoices(self) -> list[_Choice]: ...
     def has_default(self) -> bool: ...
@@ -234,7 +236,7 @@ class Field(RegisterLookupMixin, Generic[_ST, _GT]):
     def get_attname(self) -> str: ...
     def get_attname_column(self) -> tuple[str, str]: ...
     def value_to_string(self, obj: Model) -> str: ...
-    def slice_expression(self, expression: Expression, start: int, end: int | None) -> Func: ...
+    def slice_expression(self, expression: Expression, start: int, length: int | None) -> Func: ...
 
 class IntegerField(Field[_ST, _GT]):
     _pyi_private_set_type: float | int | str | Combinable
@@ -282,7 +284,7 @@ class DecimalField(Field[_ST, _GT]):
         editable: bool = ...,
         auto_created: bool = ...,
         serialize: bool = ...,
-        choices: _Choices | None = ...,
+        choices: _ChoicesInput | None = ...,
         help_text: _StrOrPromise = ...,
         db_column: str | None = ...,
         db_comment: str | None = ...,
@@ -314,7 +316,7 @@ class CharField(Field[_ST, _GT]):
         unique_for_date: str | None = ...,
         unique_for_month: str | None = ...,
         unique_for_year: str | None = ...,
-        choices: _Choices | None = ...,
+        choices: _ChoicesInput | None = ...,
         help_text: _StrOrPromise = ...,
         db_column: str | None = ...,
         db_comment: str | None = ...,
@@ -344,7 +346,7 @@ class SlugField(CharField[_ST, _GT]):
         unique_for_date: str | None = ...,
         unique_for_month: str | None = ...,
         unique_for_year: str | None = ...,
-        choices: _Choices | None = ...,
+        choices: _ChoicesInput | None = ...,
         help_text: _StrOrPromise = ...,
         db_column: str | None = ...,
         db_comment: str | None = ...,
@@ -380,7 +382,7 @@ class URLField(CharField[_ST, _GT]):
         unique_for_date: str | None = ...,
         unique_for_month: str | None = ...,
         unique_for_year: str | None = ...,
-        choices: _Choices | None = ...,
+        choices: _ChoicesInput | None = ...,
         help_text: _StrOrPromise = ...,
         db_column: str | None = ...,
         db_comment: str | None = ...,
@@ -413,7 +415,7 @@ class TextField(Field[_ST, _GT]):
         unique_for_date: str | None = ...,
         unique_for_month: str | None = ...,
         unique_for_year: str | None = ...,
-        choices: _Choices | None = ...,
+        choices: _ChoicesInput | None = ...,
         help_text: _StrOrPromise = ...,
         db_column: str | None = ...,
         db_comment: str | None = ...,
@@ -442,7 +444,7 @@ class GenericIPAddressField(Field[_ST, _GT]):
     _pyi_private_set_type: str | int | Callable[..., Any] | Combinable
     _pyi_private_get_type: str
 
-    default_error_messages: _ErrorMessagesDict
+    default_error_messages: ClassVar[_ErrorMessagesDict]
     unpack_ipv4: bool
     protocol: str
     def __init__(
@@ -461,7 +463,7 @@ class GenericIPAddressField(Field[_ST, _GT]):
         editable: bool = ...,
         auto_created: bool = ...,
         serialize: bool = ...,
-        choices: _Choices | None = ...,
+        choices: _ChoicesInput | None = ...,
         help_text: _StrOrPromise = ...,
         db_column: str | None = ...,
         db_comment: str | None = ...,
@@ -496,7 +498,7 @@ class DateField(DateTimeCheckMixin, Field[_ST, _GT]):
         editable: bool = ...,
         auto_created: bool = ...,
         serialize: bool = ...,
-        choices: _Choices | None = ...,
+        choices: _ChoicesInput | None = ...,
         help_text: _StrOrPromise = ...,
         db_column: str | None = ...,
         db_comment: str | None = ...,
@@ -504,6 +506,7 @@ class DateField(DateTimeCheckMixin, Field[_ST, _GT]):
         validators: Iterable[validators._ValidatorCallable] = ...,
         error_messages: _ErrorMessagesMapping | None = ...,
     ) -> None: ...
+    def contribute_to_class(self, cls: type[Model], name: str, **kwargs: Any) -> None: ...  # type: ignore[override]
 
 class TimeField(DateTimeCheckMixin, Field[_ST, _GT]):
     _pyi_private_set_type: str | time | real_datetime | Combinable
@@ -527,7 +530,7 @@ class TimeField(DateTimeCheckMixin, Field[_ST, _GT]):
         editable: bool = ...,
         auto_created: bool = ...,
         serialize: bool = ...,
-        choices: _Choices | None = ...,
+        choices: _ChoicesInput | None = ...,
         help_text: _StrOrPromise = ...,
         db_column: str | None = ...,
         db_comment: str | None = ...,
@@ -564,7 +567,7 @@ class UUIDField(Field[_ST, _GT]):
         unique_for_date: str | None = ...,
         unique_for_month: str | None = ...,
         unique_for_year: str | None = ...,
-        choices: _Choices | None = ...,
+        choices: _ChoicesInput | None = ...,
         help_text: _StrOrPromise = ...,
         db_column: str | None = ...,
         db_comment: str | None = ...,
@@ -601,7 +604,7 @@ class FilePathField(Field[_ST, _GT]):
         editable: bool = ...,
         auto_created: bool = ...,
         serialize: bool = ...,
-        choices: _Choices | None = ...,
+        choices: _ChoicesInput | None = ...,
         help_text: _StrOrPromise = ...,
         db_column: str | None = ...,
         db_comment: str | None = ...,
@@ -619,13 +622,49 @@ class DurationField(Field[_ST, _GT]):
 class AutoFieldMixin:
     db_returning: bool
     def deconstruct(self) -> tuple[str, str, Sequence[Any], dict[str, Any]]: ...
+    def contribute_to_class(self, cls: type[Model], name: str, **kwargs: Any) -> None: ...
 
 class AutoFieldMeta(type): ...
 
-class AutoField(AutoFieldMixin, IntegerField[_ST, _GT], metaclass=AutoFieldMeta):
+class AutoField(AutoFieldMixin, IntegerField[_ST, _GT], metaclass=AutoFieldMeta):  # type: ignore[misc]
     _pyi_private_set_type: Combinable | int | str
     _pyi_private_get_type: int
     _pyi_lookup_exact_type: str | int
 
-class BigAutoField(AutoFieldMixin, BigIntegerField[_ST, _GT]): ...
-class SmallAutoField(AutoFieldMixin, SmallIntegerField[_ST, _GT]): ...
+class BigAutoField(AutoFieldMixin, BigIntegerField[_ST, _GT]): ...  # type: ignore[misc]
+class SmallAutoField(AutoFieldMixin, SmallIntegerField[_ST, _GT]): ...  # type: ignore[misc]
+
+__all__ = [
+    "AutoField",
+    "BLANK_CHOICE_DASH",
+    "BigAutoField",
+    "BigIntegerField",
+    "BinaryField",
+    "BooleanField",
+    "CharField",
+    "CommaSeparatedIntegerField",
+    "DateField",
+    "DateTimeField",
+    "DecimalField",
+    "DurationField",
+    "EmailField",
+    "Empty",
+    "Field",
+    "FilePathField",
+    "FloatField",
+    "GenericIPAddressField",
+    "IPAddressField",
+    "IntegerField",
+    "NOT_PROVIDED",
+    "NullBooleanField",
+    "PositiveBigIntegerField",
+    "PositiveIntegerField",
+    "PositiveSmallIntegerField",
+    "SlugField",
+    "SmallAutoField",
+    "SmallIntegerField",
+    "TextField",
+    "TimeField",
+    "URLField",
+    "UUIDField",
+]

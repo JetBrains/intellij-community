@@ -1,16 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
-import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.ex.EntryPointsManager
 import com.intellij.codeInspection.ex.EntryPointsManagerBase
-import com.intellij.codeInspection.util.IntentionFamilyName
-import com.intellij.modcommand.ActionContext
-import com.intellij.modcommand.ModPsiUpdater
-import com.intellij.modcommand.Presentation
-import com.intellij.modcommand.PsiUpdateModCommandAction
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiNameIdentifierOwner
@@ -31,8 +25,9 @@ import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKot
 import org.jetbrains.kotlin.idea.codeinsight.utils.canBePrivate
 import org.jetbrains.kotlin.idea.codeinsight.utils.isInheritable
 import org.jetbrains.kotlin.idea.codeinsight.utils.toVisibility
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.asQuickFix
 import org.jetbrains.kotlin.idea.highlighting.K2UnusedSymbolUtil
-import org.jetbrains.kotlin.idea.quickfix.RemoveModifierFixBase
+import org.jetbrains.kotlin.idea.quickfix.AddModifierFix
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.isOverridable
 import org.jetbrains.kotlin.idea.search.isCheapEnoughToSearchConsideringOperators
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -178,23 +173,7 @@ class K2MemberVisibilityCanBePrivateInspection : AbstractKotlinInspection() {
             declaration.visibilityModifier() ?: nameElement,
             KotlinBundle.message("0.1.could.be.private", member, declaration.getName().toString()),
             ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-            LocalQuickFix.from(AddPrivateModifierFix(modifierListOwner))!!
+            AddModifierFix(modifierListOwner, KtTokens.PRIVATE_KEYWORD).asQuickFix(),
         )
-    }
-
-    private class AddPrivateModifierFix(element: KtModifierListOwner) : PsiUpdateModCommandAction<KtModifierListOwner>(element) {
-        override fun getPresentation(context: ActionContext, element: KtModifierListOwner): Presentation {
-            val actionName = KotlinBundle.message(
-                "fix.add.modifier.text",
-                RemoveModifierFixBase.getElementName(element),
-                KtTokens.PRIVATE_KEYWORD.value
-            )
-            return Presentation.of(actionName)
-        }
-
-        override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("fix.add.modifier.family")
-
-        override fun invoke(context: ActionContext, element: KtModifierListOwner, updater: ModPsiUpdater): Unit =
-            element.addModifier(KtTokens.PRIVATE_KEYWORD)
     }
 }

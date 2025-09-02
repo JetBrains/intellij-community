@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts.kotli
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts.kotlinStdlibJdk8
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts.kotlinStdlibJdk8Sources
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts.kotlinStdlibSources
-import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
+import org.jetbrains.kotlin.idea.core.script.k1.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs

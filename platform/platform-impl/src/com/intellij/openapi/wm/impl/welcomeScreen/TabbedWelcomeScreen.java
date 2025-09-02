@@ -16,6 +16,7 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UpdateScaleHelper;
+import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -34,9 +35,15 @@ public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
   private final WelcomeScreenLeftPanel myLeftSidebar;
   private final CardLayoutPanel<WelcomeScreenTab, WelcomeScreenTab, JPanel> mainPanel;
   private Disposable currentDisposable = null;
+  private ProjectsTab myProjectsTab = null;
 
   TabbedWelcomeScreen() {
-    this(WelcomeTabFactory.WELCOME_TAB_FACTORY_EP.getExtensionList(), new TreeWelcomeScreenLeftPanel(), true, true);
+    this(true);
+  }
+
+  @ApiStatus.Internal
+  public TabbedWelcomeScreen(boolean addLogo) {
+    this(WelcomeTabFactory.WELCOME_TAB_FACTORY_EP.getExtensionList(), new TreeWelcomeScreenLeftPanel(), addLogo, true);
   }
 
   public TabbedWelcomeScreen(List<? extends WelcomeTabFactory> welcomeTabFactories,
@@ -77,7 +84,7 @@ public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
       centralPanel.add(mainPanelToolbar, BorderLayout.SOUTH);
     }
 
-    add(leftSidebarHolder, BorderLayout.WEST);
+    add(createLeftPanel(leftSidebarHolder), BorderLayout.WEST);
     add(centralPanel, BorderLayout.CENTER);
 
     if (ExperimentalUI.isNewUI()) {
@@ -86,6 +93,13 @@ public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
     }
 
     loadTabs(welcomeTabFactories);
+  }
+
+  @ApiStatus.Internal
+  protected @NotNull BorderLayoutPanel createLeftPanel(JPanel content) {
+    BorderLayoutPanel panel = new BorderLayoutPanel();
+    panel.addToCenter(content);
+    return panel;
   }
 
   @Override
@@ -121,6 +135,7 @@ public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
 
   private void loadTabs(List<? extends WelcomeTabFactory> welcomeTabFactories) {
     myLeftSidebar.removeAllTabs();
+    myProjectsTab = null;
     if (currentDisposable != null) {
       Disposer.dispose(currentDisposable);
     }
@@ -129,6 +144,9 @@ public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
       if (tabFactory.isApplicable()) {
         for (WelcomeScreenTab alsoTab : tabFactory.createWelcomeTabs(this, currentDisposable)) {
           myLeftSidebar.addRootTab(alsoTab);
+          if (alsoTab instanceof ProjectsTab) {
+            myProjectsTab = (ProjectsTab)alsoTab;
+          }
         }
       }
     }
@@ -137,6 +155,11 @@ public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
 
   public void setTabListVisible(boolean visible) {
     leftSidebarHolder.setVisible(visible);
+  }
+
+  @ApiStatus.Internal
+  public void switchToProjectsTab() {
+    if (myProjectsTab != null) myLeftSidebar.selectTab(myProjectsTab);
   }
 
   @ApiStatus.Experimental

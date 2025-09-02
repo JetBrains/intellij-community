@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight;
 
 import com.intellij.codeInsight.BaseExternalAnnotationsManager;
@@ -20,7 +20,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PsiTestUtil;
@@ -29,6 +31,7 @@ import com.intellij.testFramework.fixtures.MavenDependencyUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MostlySingularMultiMap;
 import com.intellij.xml.util.XmlUtil;
+import com.siyeh.ig.psiutils.ClassUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -38,11 +41,13 @@ import org.jetbrains.idea.eclipse.util.PathUtil;
 import javax.xml.bind.annotation.XmlElement;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 public class ExternalAnnotationsManagerTest extends LightPlatformTestCase {
   private static final Set<String> KNOWN_EXCEPTIONS = Set.of(
-    "java.util.stream.Stream<T> generate(java.util.function.Supplier<T>)" // replaced with Supplier<? extends T> in JDK11
+    "java.util.stream.Stream<T> generate(java.util.function.Supplier<T>)", // replaced with Supplier<? extends T> in JDK11
+    "java.nio.charset.Charset charset()" // in java.io.PrintStream since JDK18, but test runs on JDK17
   );
 
   private final DefaultLightProjectDescriptor myDescriptor = new DefaultLightProjectDescriptor() {
@@ -127,8 +132,61 @@ public class ExternalAnnotationsManagerTest extends LightPlatformTestCase {
             fail("Invalid typePath: " + error, psiFile, externalName);
           }
         }
+        else {
+          if (listOwner != null) {
+            if ("org.intellij.lang.annotations.MagicConstant".equals(nameText)) {
+              String typeText = getType(listOwner).getCanonicalText();
+              assertTrue(externalName, "int".equals(typeText) || "long".equals(typeText) || "java.lang.String".equals(typeText));
+            }
+            else if ("org.jetbrains.annotations.Nullable".equals(nameText)
+                     || "org.jetbrains.annotations.NotNull".equals(nameText)
+                     || "org.jetbrains.annotations.UnknownNullability".equals(nameText)
+                     || "org.intellij.lang.annotations.Flow".equals(nameText)) {
+              assertFalse(externalName, getType(listOwner) instanceof PsiPrimitiveType);
+            }
+            else if ("org.jetbrains.annotations.Contract".equals(nameText)) {
+              assertTrue(externalName, listOwner instanceof PsiMethod);
+            }
+            else if ("org.jetbrains.annotations.Range".equals(nameText)) {
+              assertTrue(externalName, ClassUtils.isIntegral(getType(listOwner)));
+            }
+            else if ("org.jetbrains.annotations.NonNls".equals(nameText) || "org.jetbrains.annotations.Nls".equals(nameText)) {
+              if (listOwner instanceof PsiClass
+                  || listOwner instanceof PsiPackage
+                  || "javax.swing.JComponent java.lang.Object getClientProperty(java.lang.Object) 0".equals(externalName)
+                  || "javax.swing.ActionMap javax.swing.Action get(java.lang.Object) 0".equals(externalName)
+                  || "javax.swing.ActionMap void put(java.lang.Object, javax.swing.Action) 0".equals(externalName)
+                  || "javax.swing.JComponent void putClientProperty(java.lang.Object, java.lang.Object) 0".equals(externalName)
+                  || "javax.swing.JComponent void putClientProperty(java.lang.Object, java.lang.Object) 1".equals(externalName)
+                  || "javax.swing.InputMap void put(javax.swing.KeyStroke, java.lang.Object) 1".equals(externalName)) {
+                // seems a little suspicious/weird but let it pass
+                continue;
+              }
+              String typeText = getType(listOwner).getCanonicalText();
+              assertTrue(externalName, "java.lang.String".equals(typeText)
+                                       || "java.lang.String...".equals(typeText)
+                                       || "java.lang.String[]".equals(typeText));
+            }
+            else if ("org.jetbrains.annotations.PropertyKey".equals(nameText)) {
+              String typeText = getType(listOwner).getCanonicalText();
+              assertEquals(externalName, "java.lang.String", typeText);
+            }
+            else if ("org.jetbrains.annotations.Unmodifiable".equals(nameText)
+                     || "org.jetbrains.annotations.UnmodifiableView".equals(nameText)) {
+              PsiType type = getType(listOwner);
+              assertTrue(InheritanceUtil.isInheritor(type, "java.util.Collection") || InheritanceUtil.isInheritor(type, "java.util.Map"));
+            }
+            else {
+              fail(externalName + " " + nameText);
+            }
+          }
+        }
       }
     }
+  }
+
+  private static @NotNull PsiType getType(@NotNull PsiModifierListOwner listOwner) {
+    return Objects.requireNonNull(PsiUtil.getTypeByPsiElement(listOwner), () -> String.valueOf(listOwner));
   }
 
   private static String validatePath(String pathString, PsiType type) {

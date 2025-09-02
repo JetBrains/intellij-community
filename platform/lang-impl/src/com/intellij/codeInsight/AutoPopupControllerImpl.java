@@ -102,21 +102,21 @@ public class AutoPopupControllerImpl extends AutoPopupController {
   }
 
   @Override
-  public void autoPopupMemberLookup(final Editor editor, final @Nullable Condition<? super PsiFile> condition) {
+  public void autoPopupMemberLookup(@NotNull Editor editor, @Nullable Condition<? super PsiFile> condition) {
     autoPopupMemberLookup(editor, CompletionType.BASIC, condition);
   }
 
   @Override
-  public void autoPopupMemberLookup(final Editor editor,
-                                    CompletionType completionType,
-                                    final @Nullable Condition<? super PsiFile> condition) {
+  public void autoPopupMemberLookup(@NotNull Editor editor,
+                                    @NotNull CompletionType completionType,
+                                    @Nullable Condition<? super PsiFile> condition) {
     scheduleAutoPopup(editor, completionType, condition);
   }
 
   @Override
   public void scheduleAutoPopup(@NotNull Editor editor,
                                 @NotNull CompletionType completionType,
-                                final @Nullable Condition<? super PsiFile> condition) {
+                                @Nullable Condition<? super PsiFile> condition) {
     if (ApplicationManager.getApplication().isUnitTestMode() && !TestModeFlags.is(CompletionAutoPopupHandler.ourTestingAutopopup)) {
       return;
     }
@@ -133,7 +133,7 @@ public class AutoPopupControllerImpl extends AutoPopupController {
       return;
     }
 
-    final CompletionProgressIndicator currentCompletion = CompletionServiceImpl.getCurrentCompletionProgressIndicator();
+    CompletionProgressIndicator currentCompletion = CompletionServiceImpl.getCurrentCompletionProgressIndicator();
     if (currentCompletion != null) {
       currentCompletion.closeAndFinish(true);
     }
@@ -142,7 +142,7 @@ public class AutoPopupControllerImpl extends AutoPopupController {
   }
 
   @Override
-  public void scheduleAutoPopup(final Editor editor) {
+  public void scheduleAutoPopup(@NotNull Editor editor) {
     scheduleAutoPopup(editor, CompletionType.BASIC, null);
   }
 
@@ -152,16 +152,16 @@ public class AutoPopupControllerImpl extends AutoPopupController {
   }
 
   @Override
-  public void autoPopupParameterInfo(final @NotNull Editor editor, final @Nullable PsiElement highlightedMethod) {
+  public void autoPopupParameterInfo(@NotNull Editor editor, @Nullable PsiElement highlightedMethod) {
     if (PowerSaveMode.isEnabled()) return;
 
     ThreadingAssertions.assertEventDispatchThread();
-    final CodeInsightSettings settings = CodeInsightSettings.getInstance();
+    CodeInsightSettings settings = CodeInsightSettings.getInstance();
     if (settings.AUTO_POPUP_PARAMETER_INFO) {
       AtomicInteger offset = new AtomicInteger(-1);
       ReadAction.nonBlocking(() -> {
           offset.set(editor.getCaretModel().getOffset());
-          final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
+          PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
           PsiFile file = documentManager.getPsiFile(editor.getDocument());
           if (file == null) return;
 

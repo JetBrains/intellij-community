@@ -60,7 +60,7 @@ import org.jdom.Namespace;
 import java.util.ArrayList;
 import java.util.EmptyStackException;
 
-class NamespaceStack {
+final class NamespaceStack {
   /**
    * The prefixes available
    */

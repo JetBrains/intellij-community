@@ -1,4 +1,4 @@
-// FIR_COMPARISON
+// IGNORE_K2
 // FIR_IDENTICAL
 fun returnFun(): String = ""
 

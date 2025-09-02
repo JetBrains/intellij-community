@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
-import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
@@ -20,7 +19,7 @@ import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.BooleanEntity
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(6)
+@GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class BooleanEntityImpl(private val dataSource: BooleanEntityData) : BooleanEntity, WorkspaceEntityBase(dataSource) {
 
@@ -49,8 +48,8 @@ internal class BooleanEntityImpl(private val dataSource: BooleanEntityData) : Bo
   }
 
 
-  internal class Builder(result: BooleanEntityData?) : ModifiableWorkspaceEntityBase<BooleanEntity, BooleanEntityData>(
-    result), BooleanEntity.Builder {
+  internal class Builder(result: BooleanEntityData?) : ModifiableWorkspaceEntityBase<BooleanEntity, BooleanEntityData>(result),
+                                                       BooleanEntity.Builder {
     internal constructor() : this(BooleanEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -142,7 +141,8 @@ internal class BooleanEntityData : WorkspaceEntityData<BooleanEntity>() {
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.BooleanEntity") as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.BooleanEntity"
+    ) as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

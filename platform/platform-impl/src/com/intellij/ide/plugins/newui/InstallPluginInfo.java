@@ -2,14 +2,17 @@
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.TaskInfo;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Alexander Lobas
@@ -18,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 final class InstallPluginInfo {
 
   public final @NotNull BgProgressIndicator indicator;
-  private final @NotNull IdeaPluginDescriptor myDescriptor;
+  private final @NotNull PluginUiModel myDescriptor;
   private @Nullable MyPluginModel myPluginModel;
   public final boolean install;
   private TaskInfo myStatusBarTaskInfo;
@@ -28,10 +31,10 @@ final class InstallPluginInfo {
   /**
    * Descriptor that has been loaded synchronously.
    */
-  private IdeaPluginDescriptorImpl myInstalledDescriptor;
+  private PluginUiModel myInstalledDescriptor;
 
   InstallPluginInfo(@NotNull BgProgressIndicator indicator,
-                    @NotNull IdeaPluginDescriptor descriptor,
+                    @NotNull PluginUiModel descriptor,
                     @NotNull MyPluginModel pluginModel,
                     boolean install) {
     this.indicator = indicator;
@@ -62,7 +65,8 @@ final class InstallPluginInfo {
     ourShowRestart = true;
   }
 
-  public synchronized void finish(boolean success, boolean cancel, boolean showErrors, boolean restartRequired) {
+  public synchronized void finish(boolean success, boolean cancel, boolean showErrors, boolean restartRequired,
+                                  @NotNull Map<PluginId, List<HtmlChunk>> errors) {
     if (myClosed) {
       return;
     }
@@ -78,7 +82,7 @@ final class InstallPluginInfo {
       }
     }
     else if (!cancel) {
-      myPluginModel.finishInstall(myDescriptor, myInstalledDescriptor, success, showErrors, restartRequired);
+      myPluginModel.finishInstall(myDescriptor, myInstalledDescriptor, errors, success, showErrors, restartRequired);
     }
   }
 
@@ -93,11 +97,11 @@ final class InstallPluginInfo {
     myClosed = true;
   }
 
-  public IdeaPluginDescriptor getDescriptor() {
+  public PluginUiModel getDescriptor() {
     return myDescriptor;
   }
 
-  public void setInstalledDescriptor(IdeaPluginDescriptorImpl installedDescriptor) {
-    this.myInstalledDescriptor = installedDescriptor;
+  public void setInstalledModel(PluginUiModel model) {
+    this.myInstalledDescriptor = model;
   }
 }

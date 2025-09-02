@@ -102,9 +102,8 @@ public class LibraryDataNodeSubstitutor {
           if (binaryPath.isFile()) {
             final LibraryData extractedLibrary = new LibraryData(libraryDependencyData.getOwner(), "");
             extractedLibrary.addPath(LibraryPathType.BINARY, path);
-            var gradleVersion = resolverContext.getProjectGradleVersion();
-            if (gradleHomeDir != null && gradleVersion != null) {
-              attachGradleSdkSources(binaryPath, extractedLibrary, gradleHomeDir, gradleVersion);
+            if (gradleHomeDir != null) {
+              attachGradleSdkSources(binaryPath, extractedLibrary, gradleHomeDir, resolverContext.getProjectGradleVersion());
             }
             LibraryDependencyData extractedDependencyData = new LibraryDependencyData(
               libraryDependencyData.getOwnerModule(), extractedLibrary, LibraryLevel.MODULE);

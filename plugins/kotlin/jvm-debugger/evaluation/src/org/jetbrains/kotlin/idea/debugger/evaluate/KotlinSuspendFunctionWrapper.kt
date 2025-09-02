@@ -7,11 +7,17 @@ import com.intellij.psi.PsiRecursiveElementVisitor
 import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.parentsOfType
 import com.intellij.util.concurrency.annotations.RequiresReadLock
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.resolution.KaCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaCallInfo
+import org.jetbrains.kotlin.analysis.api.resolution.KaErrorCallInfo
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.builtins.StandardNames
+import org.jetbrains.kotlin.idea.base.codeInsight.CallTarget
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinCallProcessor
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinCallTargetProcessor
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtElement
@@ -55,11 +61,31 @@ internal class KotlinSuspendFunctionWrapper(
 
     private fun isSuspendCall(element: PsiElement): Boolean {
         var result = false
-        KotlinCallProcessor.process(element) { target ->
-            if (target.symbol.let { it is KaNamedFunctionSymbol && it.isSuspend }) {
-                result = true
+        KotlinCallProcessor.process(element, object : KotlinCallTargetProcessor {
+
+            override fun KaSession.processCallTarget(target: CallTarget): Boolean {
+                if (target.symbol.let { it is KaNamedFunctionSymbol && it.isSuspend }) {
+                    result = true
+                }
+                return true
             }
-        }
+
+            override fun KaSession.processUnresolvedCall(element: KtElement, callInfo: KaCallInfo?): Boolean {
+                if (callInfo is KaErrorCallInfo
+                    && callInfo.candidateCalls.size == 1
+                    && callInfo.diagnostic.factoryName == "INVISIBLE_MEMBER"
+                ) {
+                    return processResolvedCall(this, element, callInfo.candidateCalls.single())
+                }
+                return true
+            }
+
+            private fun processResolvedCall(session: KaSession, element: KtElement, call: KaCall): Boolean {
+                val targetProcessor = this
+                return with(KotlinCallProcessor) { session.processResolvedCall(targetProcessor, element, call) }
+            }
+
+        })
         return result
     }
 

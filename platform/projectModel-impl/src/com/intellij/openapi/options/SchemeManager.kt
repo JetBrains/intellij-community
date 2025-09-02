@@ -8,6 +8,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.util.function.Predicate
 
+@ApiStatus.NonExtendable
 abstract class SchemeManager<T> {
   abstract val allSchemes: List<T>
 
@@ -28,11 +29,12 @@ abstract class SchemeManager<T> {
 
   abstract fun loadSchemes(): Collection<T>
 
-  fun reload() {
-    reload(retainFilter = null)
-  }
+  abstract fun reload()
 
-  abstract fun reload(retainFilter: ((scheme: T) -> Boolean)?)
+  @Deprecated(message = "Use reload()", replaceWith = ReplaceWith("reload()"))
+  open fun reload(retainFilter: ((scheme: T) -> Boolean)?) {
+    reload()
+  }
 
   fun addScheme(scheme: T) {
     addScheme(scheme, replaceExisting = true)

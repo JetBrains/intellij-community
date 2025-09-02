@@ -7,18 +7,19 @@ import com.intellij.platform.testFramework.assertion.moduleAssertion.DependencyA
 import com.intellij.platform.testFramework.assertion.moduleAssertion.DependencyAssertions.assertDependencies
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions.assertModuleEntity
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions.assertModules
-import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.useProjectAsync
-import org.jetbrains.idea.maven.model.MavenConstants
-import org.jetbrains.plugins.gradle.testFramework.util.DEFAULT_SYNC_TIMEOUT
+import kotlinx.coroutines.runBlocking
+import org.jetbrains.idea.maven.model.MavenConstants.SETTINGS_XML
 import org.junit.jupiter.api.Test
+import org.jetbrains.idea.maven.utils.MavenUtil.SYSTEM_ID as MAVEN_SYSTEM_ID
+import org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID as GRADLE_SYSTEM_ID
 
 class GradleMavenProjectsWorkspaceIntegrationTest : ExternalProjectsWorkspaceIntegrationTestCase() {
 
   @Test
-  fun `test library substitution with Maven application and Gradle library`(): Unit = timeoutRunBlocking(DEFAULT_SYNC_TIMEOUT) {
+  fun `test library substitution with Maven application and Gradle library`(): Unit = runBlocking {
     createMavenLibrary("workspace/repository", "org.example:gradle-lib:1.0-SNAPSHOT")
-    createMavenConfigFile("workspace/maven-app", "--settings=" + MavenConstants.SETTINGS_XML)
+    createMavenConfigFile("workspace/maven-app", "--settings=$SETTINGS_XML")
     createMavenSettingsFile("workspace/maven-app") {
       property("localRepository", testRoot.resolve("workspace/repository").toCanonicalPath())
     }
@@ -35,8 +36,8 @@ class GradleMavenProjectsWorkspaceIntegrationTest : ExternalProjectsWorkspaceInt
     openProject("workspace").useProjectAsync { project ->
       assertModules(project, "workspace")
 
-      linkProject(project, "workspace/maven-app")
-      linkProject(project, "workspace/gradle-lib")
+      linkProject(project, "workspace/maven-app", MAVEN_SYSTEM_ID)
+      linkProject(project, "workspace/gradle-lib", GRADLE_SYSTEM_ID)
 
       assertModules(project, "workspace", "maven-app",
                     "gradle-lib", "gradle-lib.main", "gradle-lib.test")
@@ -48,7 +49,7 @@ class GradleMavenProjectsWorkspaceIntegrationTest : ExternalProjectsWorkspaceInt
   }
 
   @Test
-  fun `test library substitution with Gradle application and Maven library`(): Unit = timeoutRunBlocking(DEFAULT_SYNC_TIMEOUT) {
+  fun `test library substitution with Gradle application and Maven library`(): Unit = runBlocking {
     createMavenLibrary("workspace/repository", "org.example:maven-lib:1.0-SNAPSHOT")
     createMavenPomFile("workspace/maven-lib", "org.example:maven-lib:1.0-SNAPSHOT")
     createGradleWrapper("workspace/gradle-app")
@@ -61,13 +62,11 @@ class GradleMavenProjectsWorkspaceIntegrationTest : ExternalProjectsWorkspaceInt
     openProject("workspace").useProjectAsync { project ->
       assertModules(project, "workspace")
 
-      linkProject(project, "workspace/gradle-app")
-      linkProject(project, "workspace/maven-lib")
+      linkProject(project, "workspace/gradle-app", GRADLE_SYSTEM_ID)
+      linkProject(project, "workspace/maven-lib", MAVEN_SYSTEM_ID)
 
-      assertModules(
-        project, "workspace", "maven-lib",
-        "gradle-app", "gradle-app.main", "gradle-app.test",
-      )
+      assertModules(project, "workspace", "maven-lib",
+                    "gradle-app", "gradle-app.main", "gradle-app.test")
       assertModuleEntity(project, "gradle-app.main") { module ->
         assertDependencies(module, INHERITED_SDK, MODULE_SOURCE,
                            "maven-lib")
@@ -76,7 +75,55 @@ class GradleMavenProjectsWorkspaceIntegrationTest : ExternalProjectsWorkspaceInt
   }
 
   @Test
-  fun `test library substitution with Gradle application and multi-language level Maven library`(): Unit = timeoutRunBlocking(DEFAULT_SYNC_TIMEOUT) {
+  fun `test library substitution with Gradle and Maven application and Gradle and Maven library`(): Unit = runBlocking {
+    createMavenConfigFile("workspace/maven-app", "--settings=$SETTINGS_XML")
+    createMavenSettingsFile("workspace/maven-app") {
+      property("localRepository", testRoot.resolve("workspace/repository").toCanonicalPath())
+    }
+    createMavenPomFile("workspace/maven-app", "org.example:maven-app:1.0-SNAPSHOT") {
+      dependency("compile", "org.example:maven-lib:1.0-SNAPSHOT")
+      dependency("compile", "org.example:gradle-lib:1.0-SNAPSHOT")
+    }
+    createMavenLibrary("workspace/repository", "org.example:maven-lib:1.0-SNAPSHOT")
+    createMavenPomFile("workspace/maven-lib", "org.example:maven-lib:1.0-SNAPSHOT")
+
+    createGradleWrapper("workspace/gradle-app")
+    createGradleBuildFile("workspace/gradle-app") {
+      withJavaPlugin()
+      withMavenLocal("workspace/repository")
+      addImplementationDependency("org.example:maven-lib:1.0-SNAPSHOT")
+      addImplementationDependency("org.example:gradle-lib:1.0-SNAPSHOT")
+    }
+    createMavenLibrary("workspace/repository", "org.example:gradle-lib:1.0-SNAPSHOT")
+    createGradleWrapper("workspace/gradle-lib")
+    createGradleBuildFile("workspace/gradle-lib") {
+      addGroup("org.example")
+      addVersion("1.0-SNAPSHOT")
+      withJavaLibraryPlugin()
+    }
+
+    openProject("workspace").useProjectAsync { project ->
+      linkProject(project, "workspace/maven-app", MAVEN_SYSTEM_ID)
+      linkProject(project, "workspace/maven-lib", MAVEN_SYSTEM_ID)
+      linkProject(project, "workspace/gradle-app", GRADLE_SYSTEM_ID)
+      linkProject(project, "workspace/gradle-lib", GRADLE_SYSTEM_ID)
+
+      assertModules(project, "workspace", "maven-app", "maven-lib",
+                    "gradle-app", "gradle-app.main", "gradle-app.test",
+                    "gradle-lib", "gradle-lib.main", "gradle-lib.test")
+      assertModuleEntity(project, "maven-app") { module ->
+        assertDependencies(module, INHERITED_SDK, MODULE_SOURCE,
+                           "maven-lib", "gradle-lib.main")
+      }
+      assertModuleEntity(project, "gradle-app.main") { module ->
+        assertDependencies(module, INHERITED_SDK, MODULE_SOURCE,
+                           "maven-lib", "gradle-lib.main")
+      }
+    }
+  }
+
+  @Test
+  fun `test library substitution with Gradle application and multi-language level Maven library`(): Unit = runBlocking {
     createMavenLibrary("workspace/repository", "org.example:maven-lib:1.0-SNAPSHOT")
     createMavenPomFile("workspace/maven-lib", "org.example:maven-lib:1.0-SNAPSHOT") {
       property("maven.compiler.source", "8")
@@ -92,8 +139,8 @@ class GradleMavenProjectsWorkspaceIntegrationTest : ExternalProjectsWorkspaceInt
     openProject("workspace").useProjectAsync { project ->
       assertModules(project, "workspace")
 
-      linkProject(project, "workspace/gradle-app")
-      linkProject(project, "workspace/maven-lib")
+      linkProject(project, "workspace/gradle-app", GRADLE_SYSTEM_ID)
+      linkProject(project, "workspace/maven-lib", MAVEN_SYSTEM_ID)
 
       assertModules(
         project, "workspace",

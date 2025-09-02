@@ -1,11 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistics.config
 
-import com.intellij.internal.statistic.config.bean.EventLogBucketRange
-import com.intellij.internal.statistic.config.bean.EventLogSendConfiguration
 import com.intellij.internal.statistic.config.eventLog.EventLogBuildType
 import com.intellij.internal.statistic.config.eventLog.EventLogBuildType.EAP
 import com.intellij.internal.statistic.config.eventLog.EventLogBuildType.RELEASE
+import com.jetbrains.fus.reporting.model.config.v4.ConfigurationBucketRange
 import org.junit.Test
 
 class EventLogConfigVersionParserTest : EventLogConfigBaseParserTest() {
@@ -20,10 +19,10 @@ class EventLogConfigVersionParserTest : EventLogConfigBaseParserTest() {
   }
 
   private fun doTestVersion(versions: String, expected: Map<String, String>,
-                            expectedConfig: Map<EventLogBuildType, EventLogSendConfiguration>? = null) {
+                            expectedConfig: Map<EventLogBuildType, List<ConfigurationBucketRange>>? = null) {
     val buildConfig = expectedConfig ?: mapOf(
-      EAP to EventLogSendConfiguration(listOf(EventLogBucketRange(0, 256))),
-      RELEASE to EventLogSendConfiguration(listOf(EventLogBucketRange(0, 256)))
+      EAP to listOf(ConfigurationBucketRange(0, 256)),
+      RELEASE to listOf(ConfigurationBucketRange(0, 256))
     )
 
     val config = """
@@ -549,7 +548,7 @@ class EventLogConfigVersionParserTest : EventLogConfigBaseParserTest() {
   @Test
   fun `test parse endpoint with last version applicable`() {
     val config = mapOf(
-      RELEASE to EventLogSendConfiguration(listOf(EventLogBucketRange(32, 64)))
+      RELEASE to listOf(ConfigurationBucketRange(32, 64))
     )
     doTestVersion("""
 {
@@ -578,7 +577,7 @@ class EventLogConfigVersionParserTest : EventLogConfigBaseParserTest() {
   @Test
   fun `test parse endpoint with middle version applicable`() {
     val config = mapOf(
-      RELEASE to EventLogSendConfiguration(listOf(EventLogBucketRange(32, 64)))
+      RELEASE to listOf(ConfigurationBucketRange(32, 64))
     )
     doTestVersion("""
 {
@@ -669,7 +668,7 @@ class EventLogConfigVersionParserTest : EventLogConfigBaseParserTest() {
   @Test
   fun `test parse endpoint with two last versions applicable`() {
     val config = mapOf(
-      RELEASE to EventLogSendConfiguration(listOf(EventLogBucketRange(32, 64)))
+      RELEASE to listOf(ConfigurationBucketRange(32, 64))
     )
     doTestVersion("""
 {

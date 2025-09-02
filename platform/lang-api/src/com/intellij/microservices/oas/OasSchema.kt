@@ -10,7 +10,7 @@ data class OasSchema(
   val enum: List<String>? = null,
   val required: List<String>? = null,
   val isNullable: Boolean = false,
-  val isItemsUnique: Boolean = false
+  val areItemsUnique: Boolean = false
 ) {
   class Builder(val type: OasSchemaType) {
     var format: OasSchemaFormat? = null

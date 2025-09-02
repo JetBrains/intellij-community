@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.completion;
 
 import com.intellij.JavaTestUtil;
@@ -642,7 +643,7 @@ public class JavadocCompletionTest extends LightFixtureCompletionTestCase {
     registrar.registerReferenceProvider(PlatformPatterns.psiElement(PsiDocTag.class), provider,
                                         PsiReferenceRegistrar.DEFAULT_PRIORITY, getTestRootDisposable());
     configureByFile("ReferenceProvider.java");
-    assertStringItems("1", "2", "3");
+    assertFirstStringItems("1", "2", "3");
   }
 
   public void test_complete_author_name() {
@@ -936,5 +937,31 @@ public class JavadocCompletionTest extends LightFixtureCompletionTestCase {
     assertTrue(strings.containsAll(Arrays.asList("java", "JShellLanguage", "JVM")));
   }
 
+  public void testInlineTagCompletionInTag() {
+    myFixture.configureByText("a.java", """
+    /**
+     * @see Foo <caret>
+     */
+     public class Foo {}
+    """);
+    myFixture.complete(CompletionType.BASIC, 0);
+    List<String> strings = myFixture.getLookupElementStrings();
+    assertNotEmpty(strings);
+    assertTrue(ContainerUtil.and(strings, s -> s.startsWith("{@")));
+  }
+
+  public void testTagCompletionAfterTag() {
+    myFixture.configureByText("a.java", """
+    /**
+     * @see Foo label
+     * <caret>
+     */
+     public class Foo {}
+    """);
+    myFixture.complete(CompletionType.BASIC, 0);
+    List<String> strings = myFixture.getLookupElementStrings();
+    assertNotEmpty(strings);
+    assertTrue(ContainerUtil.and(strings, s -> s.startsWith("@")));
+  }
 
 }

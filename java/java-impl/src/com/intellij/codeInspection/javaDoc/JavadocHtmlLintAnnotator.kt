@@ -43,8 +43,8 @@ class JavadocHtmlLintAnnotator : ExternalAnnotator<JavadocHtmlLintAnnotator.Info
 
   override fun getPairedBatchInspectionShortName(): String = JavadocHtmlLintInspection.SHORT_NAME
 
-  override fun collectInformation(file: PsiFile): Info? =
-    runReadAction { if (isJava8SourceFile(file) && "/**" in file.text) Info(file) else null }
+  override fun collectInformation(psiFile: PsiFile): Info? =
+    runReadAction { if (isJava8SourceFile(psiFile) && "/**" in psiFile.text) Info(psiFile) else null }
 
   override fun doAnnotate(collectedInfo: Info): Result? {
     val text = runReadAction { if (collectedInfo.file.isValid) collectedInfo.file.text else null } ?: return null
@@ -74,14 +74,14 @@ class JavadocHtmlLintAnnotator : ExternalAnnotator<JavadocHtmlLintAnnotator.Info
     }
   }
 
-  override fun apply(file: PsiFile, annotationResult: Result, holder: AnnotationHolder) {
-    val text = file.text
+  override fun apply(psiFile: PsiFile, annotationResult: Result, holder: AnnotationHolder) {
+    val text = psiFile.text
     val offsets = text.foldIndexed(mutableListOf(0)) { i, offsets, c -> if (c == '\n') offsets += (i + 1); offsets }
 
     for ((row, col, error, message) in annotationResult.annotations) {
       if (row < offsets.size) {
         val offset = offsets[row] + col
-        val element = file.findElementAt(offset)
+        val element = psiFile.findElementAt(offset)
         if (element != null && PsiTreeUtil.getParentOfType(element, PsiDocComment::class.java) != null) {
           val range = adjust(element, text, offset)
           val description = StringUtil.capitalize(message)

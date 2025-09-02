@@ -143,7 +143,7 @@ public abstract class SearchResultPanel {
 
           loading(false);
 
-          if (!myGroup.descriptors.isEmpty()) {
+          if (!myGroup.getDescriptors().isEmpty()) {
             myGroup.titleWithCount();
             try {
               PluginLogo.startBatchMode();
@@ -164,7 +164,7 @@ public abstract class SearchResultPanel {
     else {
       handleQuery(query, myGroup);
 
-      if (!myGroup.descriptors.isEmpty()) {
+      if (!myGroup.getDescriptors().isEmpty()) {
         myPanel.addGroup(myGroup);
         myGroup.titleWithCount();
         myPanel.initialSelection(false);
@@ -240,7 +240,7 @@ public abstract class SearchResultPanel {
     if (myPanel.isShowing() && !isLoading) {
       String pluginsTabName = IdeBundle.message(isMarketplace ? "plugin.manager.tab.marketplace" : "plugin.manager.tab.installed");
       String message = IdeBundle.message("plugins.configurable.search.result.0.plugins.found.in.1",
-                                         myGroup.descriptors.size(), pluginsTabName);
+                                         myGroup.getDescriptors().size(), pluginsTabName);
       AccessibleAnnouncerUtil.announce(myPanel, message, false);
     }
   }

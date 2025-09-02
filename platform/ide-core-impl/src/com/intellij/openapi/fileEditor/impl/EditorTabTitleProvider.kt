@@ -2,7 +2,6 @@
 package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
@@ -35,9 +34,7 @@ interface EditorTabTitleProvider : DumbAware {
     // Because it is quite extensively used when tabs are restored during project opening.
     // While implementations may perform long-running blocking operations, that may block all the threads of the coroutine pool.
     return withContext(limitedDispatcher) {
-      blockingContext {
-        getEditorTabTitle(project, file)
-      }
+      getEditorTabTitle(project, file)
     }
   }
 

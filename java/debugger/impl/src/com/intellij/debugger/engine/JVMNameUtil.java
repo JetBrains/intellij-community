@@ -479,7 +479,7 @@ public final class JVMNameUtil {
   }
 
   public static @Nullable String getClassVMName(@Nullable PsiClass containingClass) {
-    // no support for local classes for now
+    // no support for local classes for now. TODO: use JavaLocalClassesHelper
     if (containingClass == null) return null;
     if (containingClass instanceof PsiAnonymousClass) {
       String parentName = getClassVMName(PsiTreeUtil.getParentOfType(containingClass, PsiClass.class));

@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 public abstract class ModuleRootManagerEx extends ModuleRootManager {
+  @ApiStatus.Internal
   public static final ExtensionPointName<ModuleExtension> MODULE_EXTENSION_NAME = new ExtensionPointName<>("com.intellij.moduleExtension");
 
   @ApiStatus.Internal
@@ -31,6 +32,7 @@ public abstract class ModuleRootManagerEx extends ModuleRootManager {
   public abstract void dropCaches();
 
   public static ModuleRootManagerEx getInstanceEx(@NotNull Module module) {
-    return (ModuleRootManagerEx) module.getComponent(ModuleRootManager.class);
+    ProjectRootManager projectRootManager = ProjectRootManager.getInstance(module.getProject());
+    return (ModuleRootManagerEx)projectRootManager.getModuleRootManager(module);
   }
 }

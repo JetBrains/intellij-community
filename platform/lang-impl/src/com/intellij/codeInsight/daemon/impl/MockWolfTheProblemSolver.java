@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.daemon.impl;
 
@@ -88,8 +88,9 @@ public class MockWolfTheProblemSolver extends WolfTheProblemSolver {
   public void clearProblemsFromExternalSource(@NotNull VirtualFile file, @NotNull Object source) {
     if (myDelegate != null) myDelegate.clearProblemsFromExternalSource(file, source);
   }
+
   @TestOnly
-  void waitForFilesQueuedForInvalidationAreProcessed() {
+  public void waitForFilesQueuedForInvalidationAreProcessed() {
     ((WolfTheProblemSolverImpl)myDelegate).waitForFilesQueuedForInvalidationAreProcessed();
   }
 }

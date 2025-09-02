@@ -19,6 +19,7 @@ import org.languagetool.rules.IncorrectExample
 import org.languagetool.rules.Rule
 import org.languagetool.rules.patterns.AbstractPatternRule
 import org.languagetool.rules.patterns.PatternToken
+import org.languagetool.rules.patterns.RepeatedPatternRuleTransformer
 import org.languagetool.rules.spelling.hunspell.Hunspell
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
@@ -110,7 +111,7 @@ object LangTool : GrazieStateLifecycle {
       allSpellingCheckRules.forEach { rule -> disableRule(rule.id) }
 
       for (rule in allActiveRules) {
-        if (rule.hasTag(Tag.picky) && rule.id !in enabledRules) {
+        if (rule.isPicky() && rule.id !in enabledRules) {
           disableRule(rule.id)
         }
       }
@@ -127,6 +128,16 @@ object LangTool : GrazieStateLifecycle {
 
       this.language.disambiguator
     }
+  }
+
+  private fun Rule.isPicky(): Boolean {
+    // Workaround for https://github.com/languagetool-org/languagetool/issues/11376
+    if (this.hasTag(Tag.picky)) return true
+
+    if (this is RepeatedPatternRuleTransformer.RepeatedPatternRule) {
+      return this.wrappedRules.all { it.hasTag(Tag.picky) }
+    }
+    return false
   }
 
   private fun prepareForNoChunkTags(rule: Rule) {

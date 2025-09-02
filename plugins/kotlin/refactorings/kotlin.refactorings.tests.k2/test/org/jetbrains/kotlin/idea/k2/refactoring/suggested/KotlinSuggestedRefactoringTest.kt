@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
+import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtPsiFactory
@@ -42,6 +43,16 @@ class KotlinSuggestedRefactoringTest : BaseSuggestedRefactoringTest(), ExpectedP
 
     override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 
+    private fun doTestContextParameters(initialText: String,
+                                        expectedTextAfter: String,
+                                        usagesName: String,
+                                        expectedPresentation: String? = null,
+                                        editingActions: () -> Unit,) {
+        withCustomCompilerOptions("// COMPILER_ARGUMENTS: -Xcontext-parameters", project, module) {
+            doTestChangeSignature(initialText, expectedTextAfter, usagesName, expectedPresentation, editingActions)
+        }
+    }
+
     fun testAddParameter() {
         ignoreErrorsAfter = true
         doTestChangeSignature(
@@ -69,6 +80,113 @@ class KotlinSuggestedRefactoringTest : BaseSuggestedRefactoringTest(), ExpectedP
         }
     }
 
+    fun testAddParameterWithContexts() {
+        ignoreErrorsAfter = true
+        doTestContextParameters(
+            """
+                context(a: String, b: Int, c: Double)
+                fun foo(p1: Int<caret>) {
+                    foo(1)
+                }
+                context(a: String, b: Int, c: Double)
+                fun bar() {
+                    foo(2)
+                }
+            """.trimIndent(),
+            """
+                context(a: String, b: Int, c: Double)
+                fun foo(p1: Int, p2: Any<caret>) {
+                    foo(1, default0)
+                }
+                context(a: String, b: Int, c: Double)
+                fun bar() {
+                    foo(2, default0)
+                }
+            """.trimIndent(),
+            "usages",
+        ) {
+            type(", p2: Any")
+        }
+    }
+
+    fun testAddContextParameter() {
+        ignoreErrorsAfter = true
+        doTestContextParameters(
+            """
+                context(p1: Int<caret>)
+                fun foo() {
+                    with(1) {
+                      foo()
+                    }
+                }
+                context(p1: Int)
+                fun bar() {
+                    foo()
+                }
+            """.trimIndent(),
+            """
+                context(p1: Int, p2: Any)
+                fun foo() {
+                    with(1) {
+                        with(default0) {
+                            foo()
+                        }
+                    }
+                }
+                context(p1: Int)
+                fun bar() {
+                    with(default0) {
+                        foo()
+                    }
+                }
+            """.trimIndent(),
+            "usages",
+        ) {
+            type(", p2: Any")
+        }
+    }
+
+    fun testRemoveContextParameter() {
+        ignoreErrorsAfter = true
+        doTestContextParameters(
+            """
+                context(p1: Int, p2: Any<caret>)
+                fun foo() {
+                    with(1) {
+                        with("any") {
+                            foo()
+                        }
+                    }
+                }
+                context(p1: Int)
+                fun bar() {
+                    with("any") {
+                        foo()
+                    }
+                }
+            """.trimIndent(),
+            """
+                context(p1: Int)
+                fun foo() {
+                    with(1) {
+                        with("any") {
+                            foo()
+                        }
+                    }
+                }
+                context(p1: Int)
+                fun bar() {
+                    with("any") {
+                        foo()
+                    }
+                }
+            """.trimIndent(),
+            "usages",
+        ) {
+            deleteTextBeforeCaret(", p2: Any")
+        }
+    }
+
     fun testRemoveParameter() {
         doTestChangeSignature(
             """
@@ -85,6 +203,34 @@ class KotlinSuggestedRefactoringTest : BaseSuggestedRefactoringTest(), ExpectedP
                     foo(null)
                 }
                 
+                fun bar() {
+                    foo(1)
+                }
+            """.trimIndent(),
+            "usages"
+        ) {
+            deleteTextBeforeCaret(", p2: Int")
+        }
+    }
+
+    fun testRemoveParameterWithContext() {
+        doTestContextParameters(
+            """
+                context(a: String, b: Int, c: Double)
+                fun foo(p1: Any?, p2: Int<caret>) {
+                    foo(null, 1)
+                }
+                context(a: String, b: Int, c: Double)
+                fun bar() {
+                    foo(1, 2)
+                }
+            """.trimIndent(),
+            """
+                context(a: String, b: Int, c: Double)
+                fun foo(p1: Any?<caret>) {
+                    foo(null)
+                }
+                context(a: String, b: Int, c: Double)
                 fun bar() {
                     foo(1)
                 }

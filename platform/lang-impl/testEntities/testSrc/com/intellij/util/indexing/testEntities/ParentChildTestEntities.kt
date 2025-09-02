@@ -6,11 +6,11 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.annotations.Child
+import com.intellij.platform.workspace.storage.annotations.Parent
 
 
 interface ParentTestEntity : WorkspaceEntity {
-  val child: @Child ChildTestEntity?
+  val child: ChildTestEntity?
   val customParentProperty: String
 
   //region generated code
@@ -50,6 +50,7 @@ fun MutableEntityStorage.modifyParentTestEntity(
 //endregion
 
 interface ChildTestEntity : WorkspaceEntity {
+  @Parent
   val parent: ParentTestEntity
   val customChildProperty: String
 

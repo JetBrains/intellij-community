@@ -16,27 +16,16 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.util.ThrowableRunnable;
+import org.jetbrains.annotations.NotNull;
 
 public class CopyActionSimpleHandlerTest extends CopyActionTest {
-  private int myPrevValue;
-
   @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    myPrevValue = CodeInsightSettings.getInstance().ADD_IMPORTS_ON_PASTE;
-    CodeInsightSettings.getInstance().ADD_IMPORTS_ON_PASTE = CodeInsightSettings.NO;
-  }
-
-  @Override
-  public void tearDown() throws Exception {
-    try {
-      CodeInsightSettings.getInstance().ADD_IMPORTS_ON_PASTE = myPrevValue;
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      super.tearDown();
-    }
+  protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
+    CodeInsightSettings.runWithTemporarySettings(settings -> {
+      settings.ADD_IMPORTS_ON_PASTE = CodeInsightSettings.NO;
+      super.runTestRunnable(testRunnable);
+      return null;
+    });
   }
 }

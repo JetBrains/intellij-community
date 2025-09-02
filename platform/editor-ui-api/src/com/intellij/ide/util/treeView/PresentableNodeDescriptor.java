@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.treeView;
 
 import com.intellij.ide.projectView.PresentationData;
@@ -15,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.List;
 import java.util.Objects;
 
 public abstract class PresentableNodeDescriptor<E> extends NodeDescriptor<E>  {
@@ -171,73 +172,75 @@ public abstract class PresentableNodeDescriptor<E> extends NodeDescriptor<E>  {
     return StartupUiUtil.isUnderDarcula() ? ColorUtil.shift(UIUtil.getTreeBackground(), 1.1) : UIUtil.getTreeBackground().brighter();
   }
 
-  public static class ColoredFragment {
-    private final @NlsSafe String myText;
-    private final @NlsSafe String myToolTip;
-    private final SimpleTextAttributes myAttributes;
+  public static final class ColoredFragment {
+    private final @NotNull @NlsSafe String text;
+    private final @NlsSafe String toolTip;
+    private final SimpleTextAttributes attributes;
 
-    public ColoredFragment(@NlsSafe String aText, SimpleTextAttributes aAttributes) {
+    public ColoredFragment(@Nullable @NlsSafe String aText, SimpleTextAttributes aAttributes) {
       this(aText, null, aAttributes);
     }
 
-    public ColoredFragment(@NlsSafe String aText, @NlsSafe String toolTip, SimpleTextAttributes aAttributes) {
-      myText = aText == null? "" : aText;
-      myAttributes = aAttributes;
-      myToolTip = toolTip;
+    public ColoredFragment(@NlsSafe @Nullable String aText, @NlsSafe String toolTip, SimpleTextAttributes aAttributes) {
+      text = aText == null ? "" : aText;
+      attributes = aAttributes;
+      this.toolTip = toolTip;
     }
 
     public @NlsSafe String getToolTip() {
-      return myToolTip;
+      return toolTip;
     }
 
-    public @NlsSafe String getText() {
-      return myText;
+    public @NlsSafe @NotNull String getText() {
+      return text;
     }
 
     public SimpleTextAttributes getAttributes() {
-      return myAttributes;
+      return attributes;
     }
-
 
     @Override
     public boolean equals(final Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
 
-      final ColoredFragment that = (ColoredFragment)o;
-
+      ColoredFragment that = (ColoredFragment)o;
       return
-        Objects.equals(myAttributes, that.myAttributes) &&
-        Objects.equals(myText, that.myText) &&
-        Objects.equals(myToolTip, that.myToolTip);
+        Objects.equals(attributes, that.attributes) &&
+        Objects.equals(text, that.text) &&
+        Objects.equals(toolTip, that.toolTip);
     }
 
     @Override
     public int hashCode() {
-      int result = myText != null ? myText.hashCode() : 0;
-      result = 31 * result + (myToolTip != null ? myToolTip.hashCode() : 0);
-      result = 31 * result + (myAttributes != null ? myAttributes.hashCode() : 0);
+      int result = text.hashCode();
+      result = 31 * result + (toolTip != null ? toolTip.hashCode() : 0);
+      result = 31 * result + (attributes != null ? attributes.hashCode() : 0);
       return result;
     }
   }
 
   public @NlsSafe String getName() {
     String result = getColoredTextAsPlainText(getPresentation());
-    if (result != null) {
-      return result;
-    }
-    return myName;
+    return result == null ? myName : result;
   }
 
   @ApiStatus.Internal
   protected static @Nullable String getColoredTextAsPlainText(PresentationData presentation) {
-    if (!presentation.getColoredText().isEmpty()) {
+    List<ColoredFragment> textFragments = presentation.getColoredText();
+    int size = textFragments.size();
+    if (size == 0) {
+      return null;
+    }
+    else if (size == 1) {
+      return textFragments.get(0).getText();
+    }
+    else {
       StringBuilder result = new StringBuilder();
-      for (ColoredFragment each : presentation.getColoredText()) {
+      for (ColoredFragment each : textFragments) {
         result.append(each.getText());
       }
       return result.toString();
     }
-    return null;
   }
 }

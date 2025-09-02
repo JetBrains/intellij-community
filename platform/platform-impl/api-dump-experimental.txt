@@ -110,6 +110,7 @@ f:com.intellij.ide.plugins.PluginNode
 - show():V
 - uninstallingUI():V
 f:com.intellij.ide.wizard.UIWizardUtil
+- *sf:runAfterOpened(com.intellij.ide.wizard.NewProjectWizardStep,com.intellij.openapi.project.Project,kotlin.jvm.functions.Function1):V
 - *sf:setupProjectSafe(com.intellij.ide.wizard.NewProjectWizardStep,com.intellij.openapi.project.Project,java.lang.String,kotlin.jvm.functions.Function0):V
 f:com.intellij.openapi.actionSystem.ActionGroupUtil
 - *s:forceHideDisabledChildren(com.intellij.openapi.actionSystem.ActionGroup):com.intellij.openapi.actionSystem.ActionGroup
@@ -161,6 +162,27 @@ com.intellij.openapi.editor.impl.EditorGutterListener
 - *:hoverStarted(com.intellij.openapi.editor.impl.event.EditorGutterHoverEvent):V
 *:com.intellij.openapi.editor.impl.EditorHighlightingPredicate
 - a:shouldRender(com.intellij.openapi.editor.markup.RangeHighlighter):Z
+*f:com.intellij.openapi.editor.impl.EditorId
+- *sf:Companion:com.intellij.openapi.editor.impl.EditorId$Companion
+- <init>(fleet.util.UID):V
+- f:copy(fleet.util.UID):com.intellij.openapi.editor.impl.EditorId
+- bs:copy$default(com.intellij.openapi.editor.impl.EditorId,fleet.util.UID,I,java.lang.Object):com.intellij.openapi.editor.impl.EditorId
+- equals(java.lang.Object):Z
+- hashCode():I
+*bf:com.intellij.openapi.editor.impl.EditorId$$serializer
+- kotlinx.serialization.internal.GeneratedSerializer
+- sf:INSTANCE:com.intellij.openapi.editor.impl.EditorId$$serializer
+- f:childSerializers():kotlinx.serialization.KSerializer[]
+- f:deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.openapi.editor.impl.EditorId
+- f:getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- f:serialize(kotlinx.serialization.encoding.Encoder,com.intellij.openapi.editor.impl.EditorId):V
+*f:com.intellij.openapi.editor.impl.EditorId$Companion
+- f:serializer():kotlinx.serialization.KSerializer
+f:com.intellij.openapi.editor.impl.EditorIdKt
+- *sf:editorId(com.intellij.openapi.editor.Editor):com.intellij.openapi.editor.impl.EditorId
+- *sf:editorIdOrNull(com.intellij.openapi.editor.Editor):com.intellij.openapi.editor.impl.EditorId
+- *sf:findEditor(com.intellij.openapi.editor.impl.EditorId):com.intellij.openapi.editor.Editor
+- *sf:findEditorOrNull(com.intellij.openapi.editor.impl.EditorId):com.intellij.openapi.editor.Editor
 f:com.intellij.openapi.editor.impl.EditorImpl
 - com.intellij.openapi.util.UserDataHolderBase
 - com.intellij.diagnostic.Dumpable
@@ -171,6 +193,11 @@ f:com.intellij.openapi.editor.impl.EditorImpl
 - java.awt.event.FocusListener
 - *:addHighlightingPredicate(com.intellij.openapi.util.Key,com.intellij.openapi.editor.impl.EditorHighlightingPredicate):com.intellij.openapi.editor.impl.EditorHighlightingPredicate
 - *:removeHighlightingPredicate(com.intellij.openapi.util.Key):com.intellij.openapi.editor.impl.EditorHighlightingPredicate
+*f:com.intellij.openapi.editor.impl.EditorThreading
+- sf:INSTANCE:com.intellij.openapi.editor.impl.EditorThreading
+- sf:assertInteractionAllowed():V
+- sf:compute(com.intellij.openapi.util.ThrowableComputable):java.lang.Object
+- sf:run(java.lang.Runnable):V
 *f:com.intellij.openapi.editor.impl.event.EditorGutterHoverEvent
 - java.util.EventObject
 - <init>(com.intellij.openapi.editor.ex.EditorGutterComponentEx,com.intellij.openapi.editor.markup.GutterIconRenderer):V
@@ -215,18 +242,6 @@ f:com.intellij.openapi.editor.impl.EditorImpl
 - setCaretPosition(I):V
 - setText(java.lang.String):V
 - setTextToFile(com.intellij.openapi.fileChooser.ex.FileLookup$LookupFile):V
-*a:com.intellij.openapi.fileEditor.TextEditorWithPreviewProvider
-- com.intellij.openapi.fileEditor.AsyncFileEditorProvider
-- <init>(com.intellij.openapi.fileEditor.FileEditorProvider):V
-- accept(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):Z
-- acceptRequiresReadAction():Z
-- createEditor(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.fileEditor.FileEditor
-- f:createFileEditor(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.editor.Document,kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation):java.lang.Object
-- p:createSplitEditor(com.intellij.openapi.fileEditor.TextEditor,com.intellij.openapi.fileEditor.FileEditor):com.intellij.openapi.fileEditor.FileEditor
-- getEditorTypeId():java.lang.String
-- getPolicy():com.intellij.openapi.fileEditor.FileEditorPolicy
-- readState(org.jdom.Element,com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.fileEditor.FileEditorState
-- writeState(com.intellij.openapi.fileEditor.FileEditorState,com.intellij.openapi.project.Project,org.jdom.Element):V
 a:com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 - com.intellij.openapi.fileEditor.FileEditorManager
 - *a:openFile(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions,kotlin.coroutines.Continuation):java.lang.Object
@@ -430,7 +445,6 @@ f:com.intellij.ui.dsl.builder.components.ValidationTooltipKt
 - s:values():com.intellij.ui.dsl.builder.components.ValidationType[]
 f:com.intellij.util.SwingBindingsKt
 - *sf:bindSelectedTabIn(javax.swing.JTabbedPane,kotlinx.coroutines.flow.MutableStateFlow,kotlinx.coroutines.CoroutineScope):V
-- *sf:bindTextIn(javax.swing.text.JTextComponent,kotlinx.coroutines.flow.MutableStateFlow,kotlinx.coroutines.CoroutineScope):V
 *f:com.intellij.util.ui.RestartDialogImpl
 - *sf:Companion:com.intellij.util.ui.RestartDialogImpl$Companion
 - <init>():V

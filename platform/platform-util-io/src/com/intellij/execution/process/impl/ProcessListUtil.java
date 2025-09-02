@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process.impl;
 
 import com.intellij.execution.ExecutionException;
@@ -19,10 +19,7 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.ThreeState;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -401,7 +398,9 @@ public final class ProcessListUtil {
     return null;
   }
 
-  static @Nullable List<ProcessInfo> parseWinProcessListHelperOutput(@NotNull String output,
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public static @Nullable List<ProcessInfo> parseWinProcessListHelperOutput(@NotNull String output,
                                                                      @NotNull Map<Long, String> processOwners,
                                                                      @Nullable String currentUser) {
     String[] lines = StringUtil.splitByLines(output, false);
@@ -482,12 +481,16 @@ public final class ProcessListUtil {
     }
   }
 
-  static @Nullable List<ProcessInfo> getProcessListUsingWindowsWMIC() {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public static @Nullable List<ProcessInfo> getProcessListUsingWindowsWMIC() {
     return parseCommandOutput(Arrays.asList("wmic.exe", "path", "win32_process", "get", "Caption,Processid,ParentProcessId,Commandline,ExecutablePath"),
                               output -> parseWMICOutput(output, getProcessOwners(), getCurrentUser()));
   }
 
-  static @Nullable List<ProcessInfo> parseWMICOutput(@NotNull String output,
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public static @Nullable List<ProcessInfo> parseWMICOutput(@NotNull String output,
                                                      @NotNull Map<Long, String> processOwners,
                                                      @Nullable String currentUser) {
     List<ProcessInfo> result = new ArrayList<>();
@@ -538,12 +541,16 @@ public final class ProcessListUtil {
     return result;
   }
 
-  static @Nullable List<ProcessInfo> getProcessListUsingWindowsTaskList() {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public static @Nullable List<ProcessInfo> getProcessListUsingWindowsTaskList() {
     return parseCommandOutput(Arrays.asList("tasklist.exe", "/fo", "csv", "/nh", "/v"),
                               output -> parseListTasksOutput(output, getCurrentUser()));
   }
 
-  static @Nullable List<ProcessInfo> parseListTasksOutput(@NotNull String output, @Nullable String currentUser) {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public static @Nullable List<ProcessInfo> parseListTasksOutput(@NotNull String output, @Nullable String currentUser) {
     List<ProcessInfo> result = new ArrayList<>();
 
     CSVReader reader = new CSVReader(new StringReader(output));

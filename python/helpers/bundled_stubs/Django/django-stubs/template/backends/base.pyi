@@ -1,6 +1,7 @@
-from collections.abc import Iterator, Mapping
+from collections.abc import Iterator, Mapping, Sequence
 from typing import Any, Protocol, type_check_only
 
+from django.core.checks.messages import CheckMessage
 from django.http.request import HttpRequest
 from django.utils.functional import cached_property
 
@@ -9,6 +10,7 @@ class BaseEngine:
     dirs: list[str]
     app_dirs: bool
     def __init__(self, params: Mapping[str, Any]) -> None: ...
+    def check(self, **kwargs: Any) -> Sequence[CheckMessage]: ...
     @property
     def app_dirname(self) -> str: ...
     def from_string(self, template_code: str) -> _EngineTemplate: ...

@@ -41,8 +41,6 @@ c:com.intellij.codeInsight.folding.impl.EditorFoldingInfo
 com.intellij.codeInsight.folding.impl.ElementSignatureProvider
 - a:getSignature(com.intellij.psi.PsiElement):java.lang.String
 - a:restoreBySignature(com.intellij.psi.PsiFile,java.lang.String,java.lang.StringBuilder):com.intellij.psi.PsiElement
-f:com.intellij.codeInsight.folding.impl.FoldingUpdate
-- sf:INJECTED_CODE_FOLDING_ENABLED:com.intellij.openapi.util.Key
 c:com.intellij.codeInsight.folding.impl.OffsetsElementSignatureProvider
 - com.intellij.codeInsight.folding.impl.AbstractElementSignatureProvider
 - <init>():V

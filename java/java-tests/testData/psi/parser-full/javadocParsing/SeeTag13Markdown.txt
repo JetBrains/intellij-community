@@ -10,9 +10,7 @@ PsiJavaFile:SeeTag13Markdown.java
       PsiDocTag:@see
         PsiDocToken:DOC_TAG_NAME('@see')
         PsiWhiteSpace(' ')
-        PsiDocToken:DOC_COMMENT_DATA('<a href="package-summary.html')
-        PsiDocToken:DOC_SHARP('#')
-        PsiDocToken:DOC_COMMENT_DATA('charenc">Character encodings</a>')
+        PsiDocToken:DOC_COMMENT_DATA('<a href="package-summary.html#charenc">Character encodings</a>')
       PsiWhiteSpace('\n')
       PsiDocToken:DOC_COMMENT_LEADING_ASTERISKS('///')
     PsiWhiteSpace('\n')

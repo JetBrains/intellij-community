@@ -7,7 +7,7 @@ public class GeneratedEvaluationClass {
         this.instance = instance;
     }
 
-    public static int accessToFieldField1(Object object, Object value) {
+    public static int accessToFieldField1(Object object) {
         try {
             Class<?> klass = Class.forName("WithReflectionAccess");
             java.lang.reflect.Field member = null;
@@ -39,6 +39,6 @@ public class GeneratedEvaluationClass {
     }
 
     public void invoke() {
-        System.out.println(accessToFieldField1(instance, null));
+        System.out.println(accessToFieldField1(instance));
     }
 }

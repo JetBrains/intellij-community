@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.hierarchy.types
 
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor
@@ -56,7 +56,7 @@ class KotlinTypeHierarchyBrowser(project: Project, klass: KtClassOrObject) : Typ
         return element is KtClassOrObject
     }
 
-    override fun getComparator(): Comparator<NodeDescriptor<*>?>? {
+    override fun getComparator(): Comparator<NodeDescriptor<*>?> {
         return JavaHierarchyUtil.getComparator(myProject)
     }
 
@@ -85,7 +85,7 @@ class KotlinTypeHierarchyBrowser(project: Project, klass: KtClassOrObject) : Typ
         return psiElement is KtClassOrObject && psiElement.name != null || psiElement is PsiClass && psiElement.name != null
     }
 
-    override fun getQualifiedName(psiElement: PsiElement?): String? {
+    override fun getQualifiedName(psiElement: PsiElement?): String {
         return (psiElement as? KtClassOrObject)?.fqName?.asString() ?: (psiElement as? PsiClass)?.qualifiedName ?: ""
     }
 

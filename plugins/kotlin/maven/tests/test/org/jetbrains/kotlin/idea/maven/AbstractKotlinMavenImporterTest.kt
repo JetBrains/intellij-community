@@ -130,7 +130,7 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
         val module = getModule(projectName)
         val moduleInfo = if (isProduction) module.productionSourceInfo else module.testSourceInfo
 
-        val resolutionFacade = KotlinCacheService.getInstance(project).getResolutionFacadeByModuleInfo(moduleInfo!!, platform)!!
+        val resolutionFacade = KotlinCacheService.getInstance(project).getResolutionFacadeByModuleInfo(moduleInfo!!, platform)
         val moduleDescriptor = resolutionFacade.moduleDescriptor
 
         Assert.assertEquals("<$expectedName>", moduleDescriptor.stableName?.asString())
@@ -140,10 +140,6 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
 
     protected val facetSettings: IKotlinFacetSettings
         get() = facetSettings("project")
-
-    protected fun assertImporterStatePresent() {
-        assertNotNull("Kotlin importer component is not present", testFixture.module.getService(KotlinImporterComponent::class.java))
-    }
 
     class SimpleKotlinProject5 : AbstractKotlinMavenImporterTest() {
         @Test
@@ -165,7 +161,6 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             )
 
             assertModules("project")
-            assertImporterStatePresent()
             assertSources("project", "src/main/java")
             assertFalse(ArtifactUtil.areResourceFilesFromSourceRootsCopiedToOutput(getModule("project")))
         }
@@ -197,7 +192,6 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             )
 
             assertModules("project")
-            assertImporterStatePresent()
             assertSources("project", "src/main/kotlin")
         }
     }
@@ -265,7 +259,6 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             )
 
             assertModules("project")
-            assertImporterStatePresent()
 
             assertSources("project", "src/main/kotlin", "src/main/kotlin.jvm")
             assertTestSources("project", "src/test/java", "src/test/kotlin", "src/test/kotlin.jvm")
@@ -360,7 +353,6 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             )
 
             assertModules("project")
-            assertImporterStatePresent()
 
             assertSources("project", "src/main/java", "src/main/kotlin")
             assertTestSources("project", "src/test/java", "src/test/kotlin", "target/generated-sources/kapt/test")
@@ -452,7 +444,6 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             )
 
             assertModules("project")
-            assertImporterStatePresent()
 
             assertSources("project", "src/main/kotlin", "src/main/kotlin.jvm")
             assertTestSources("project", "src/test/java", "src/test/kotlin", "src/test/kotlin.jvm")
@@ -583,7 +574,6 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             )
 
             assertModules("project")
-            assertImporterStatePresent()
 
             assertSources("project", "src/main/kotlin")
             assertTestSources("project", "src/test/java", "src/test/kotlin", "src/test/kotlin.jvm")
@@ -709,7 +699,6 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             )
 
             assertModules("project")
-            assertImporterStatePresent()
 
             with(facetSettings) {
                 Assert.assertEquals("1.1", languageLevel!!.versionString)
@@ -790,8 +779,6 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             )
 
             assertModules("project")
-            assertImporterStatePresent()
-
             with(facetSettings) {
                 Assert.assertEquals("JVM 1.8", targetPlatform!!.oldFashionedDescription)
                 Assert.assertEquals("1.8", (compilerArguments as K2JVMCompilerArguments).jvmTarget)
@@ -848,7 +835,6 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             )
 
             assertModules("project")
-            assertImporterStatePresent()
 
             with(facetSettings) {
                 Assert.assertEquals("1.0", languageLevel!!.versionString)
@@ -923,7 +909,6 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             )
 
             assertModules("project")
-            assertImporterStatePresent()
 
             with(facetSettings) {
                 Assert.assertEquals("1.1", languageLevel!!.versionString)
@@ -1014,7 +999,6 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             Assert.assertEquals(KotlinJpsPluginSettings.fallbackVersionForOutdatedCompiler, KotlinJpsPluginSettings.jpsVersion(project))
 
             assertModules("project")
-            assertImporterStatePresent()
 
             val projectBasePath = projectsManager.projects.first().file.parent.path
 
@@ -1092,7 +1076,6 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             )
 
             assertModules("project")
-            assertImporterStatePresent()
 
             with(facetSettings) {
                 Assert.assertEquals("1.1", languageLevel!!.versionString)
@@ -1156,7 +1139,6 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             )
 
             assertModules("project")
-            assertImporterStatePresent()
 
             with(facetSettings) {
                 Assert.assertEquals("JVM 1.8", targetPlatform!!.oldFashionedDescription)
@@ -1183,7 +1165,7 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
                 }
             }
 
-            TestCase.assertNull(FacetManager.getInstance(module).allFacets.single().externalSource?.id)
+            assertNull(FacetManager.getInstance(module).allFacets.single().externalSource?.id)
 
             importProjectAsync(
                 """
@@ -1228,7 +1210,6 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             )
 
             assertModules("project")
-            assertImporterStatePresent()
 
             val externalSource = FacetManager.getInstance(module).allFacets.single().externalSource
             TestCase.assertEquals("Maven", externalSource?.id)
@@ -1282,7 +1263,6 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             )
 
             assertModules("project")
-            assertImporterStatePresent()
 
             Assert.assertEquals(JvmPlatforms.jvm6, facetSettings.targetPlatform)
 
@@ -1340,7 +1320,6 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             )
 
             assertModules("project")
-            assertImporterStatePresent()
 
             Assert.assertEquals(JvmPlatforms.jvm6, facetSettings.targetPlatform)
         }
@@ -1393,7 +1372,6 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             )
 
             assertModules("project")
-            assertImporterStatePresent()
 
             Assert.assertEquals(JvmPlatforms.jvm6, facetSettings.targetPlatform)
 
@@ -1452,7 +1430,6 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             )
 
             assertModules("project")
-            assertImporterStatePresent()
 
             Assert.assertTrue(facetSettings.targetPlatform.isJs())
 
@@ -1513,7 +1490,6 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             )
 
             assertModules("project")
-            assertImporterStatePresent()
 
             Assert.assertTrue(facetSettings.targetPlatform.isJs())
 
@@ -1579,7 +1555,6 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             )
 
             assertModules("project")
-            assertImporterStatePresent()
 
             Assert.assertTrue(facetSettings.targetPlatform.isJs())
 
@@ -1637,7 +1612,6 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             )
 
             assertModules("project")
-            assertImporterStatePresent()
 
             Assert.assertTrue(facetSettings.targetPlatform.isCommon())
 
@@ -1692,7 +1666,6 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             )
 
             assertModules("project")
-            assertImporterStatePresent()
 
             Assert.assertTrue(facetSettings.targetPlatform.isCommon())
 
@@ -1757,7 +1730,6 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             )
 
             assertModules("project")
-            assertImporterStatePresent()
 
             Assert.assertEquals(JvmPlatforms.jvm6, facetSettings.targetPlatform)
 
@@ -1816,7 +1788,6 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             )
 
             assertModules("project")
-            assertImporterStatePresent()
 
             Assert.assertTrue(facetSettings.targetPlatform.isJs())
 
@@ -1875,7 +1846,6 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             )
 
             assertModules("project")
-            assertImporterStatePresent()
 
             Assert.assertTrue(facetSettings.targetPlatform.isCommon())
 
@@ -1947,7 +1917,6 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             )
 
             assertModules("project")
-            assertImporterStatePresent()
 
             with(facetSettings) {
                 Assert.assertEquals(
@@ -2021,7 +1990,6 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             )
 
             assertModules("project")
-            assertImporterStatePresent()
 
             with(facetSettings) {
                 Assert.assertEquals("JVM 11", targetPlatform!!.oldFashionedDescription)
@@ -2247,7 +2215,6 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             importProjectsAsync(mainPom, modulePom1, modulePom2, modulePom3)
 
             assertModules("project", "myModule1", "myModule2", "myModule3")
-            assertImporterStatePresent()
 
             with(facetSettings("myModule1")) {
                 Assert.assertEquals("JVM 1.8", targetPlatform!!.oldFashionedDescription)
@@ -2377,7 +2344,6 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             }
 
             assertModules("project", "module1", "module2")
-            assertImporterStatePresent()
             assertEquals("", notifications.asText())
             // The highest of available versions should be picked
             assertEquals(kotlinMavenPluginVersion1, KotlinJpsPluginSettings.jpsVersion(project))
@@ -2444,7 +2410,6 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             )
 
             assertModules("project")
-            assertImporterStatePresent()
 
             // Fallback to bundled to unsupported version
             assertNotEquals(version, KotlinJpsPluginSettings.jpsVersion(project))
@@ -2697,7 +2662,6 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             importProjectsAsync(mainPom, commonModule1, commonModule2, jvmModule, jsModule)
 
             assertModules("project", "my-common-module1", "my-common-module2", "my-jvm-module", "my-js-module")
-            assertImporterStatePresent()
 
             with(facetSettings("my-common-module1")) {
                 Assert.assertEquals(CommonPlatforms.defaultCommonPlatform, targetPlatform)
@@ -2932,8 +2896,8 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             val dependencies = readAction {
                 (dummyFile.toPsiFile(project) as KtFile).analyzeAndGetResult().moduleDescriptor.allDependencyModules
             }
-            TestCase.assertTrue(dependencies.any { it.name.asString() == "<production sources for module module-with-java>" })
-            TestCase.assertTrue(dependencies.any { it.name.asString() == "<test sources for module module-with-java>" })
+            assertTrue(dependencies.any { it.name.asString() == "<production sources for module module-with-java>" })
+            assertTrue(dependencies.any { it.name.asString() == "<test sources for module module-with-java>" })
         }
     }
 
@@ -2985,7 +2949,6 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             )
 
             assertModules("project")
-            assertImporterStatePresent()
 
             with(facetSettings) {
                 Assert.assertEquals("-Xjsr305=strict", compilerSettings!!.additionalArguments)
@@ -3039,8 +3002,6 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             </build>
             """
             )
-
-            assertImporterStatePresent()
 
             // Check that we haven't lost internal argument during importing to facet
             Assert.assertEquals("-XXLanguage:+InlineClasses", facetSettings.compilerSettings?.additionalArguments)
@@ -3098,8 +3059,6 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             </build>
             """
             )
-
-            assertImporterStatePresent()
 
             checkStableModuleName("project", "project", JvmPlatforms.unspecifiedJvmPlatform, isProduction = true)
             checkStableModuleName("project", "project", JvmPlatforms.unspecifiedJvmPlatform, isProduction = false)
@@ -3174,7 +3133,6 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             )
 
             assertModules("project")
-            assertImporterStatePresent()
 
             with(facetSettings) {
                 Assert.assertEquals("-java-parameters", compilerSettings!!.additionalArguments)
@@ -3235,7 +3193,6 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             )
 
             assertModules("project")
-            assertImporterStatePresent()
 
             with(facetSettings) {
                 Assert.assertEquals("JVM 1.8", targetPlatform!!.oldFashionedDescription)
@@ -3293,7 +3250,6 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             )
 
             assertModules("project")
-            assertImporterStatePresent()
 
             Assert.assertTrue(facetSettings.targetPlatform.isJs())
 
@@ -3348,7 +3304,6 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             )
 
             assertModules("project")
-            assertImporterStatePresent()
 
             Assert.assertTrue(facetSettings.targetPlatform.isCommon())
 
@@ -3417,7 +3372,6 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             )
 
             assertModules("project")
-            assertImporterStatePresent()
 
             with(facetSettings) {
                 Assert.assertEquals(
@@ -3495,7 +3449,6 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
                 )
 
                 assertModules("project")
-                assertImporterStatePresent()
 
                 val moduleSDK = ModuleRootManager.getInstance(getModule("project")).sdk!!
                 Assert.assertTrue(moduleSDK.sdkType is JavaSdk)
@@ -3562,8 +3515,6 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             </build>
             """
             )
-
-            assertImporterStatePresent()
 
             // Note that we check name induced by '-output-file' -- may be it's not the best
             // decision, but we don't have a better one
@@ -3651,7 +3602,6 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
         }
 
         assertModules("project")
-        assertImporterStatePresent()
 
         return facetSettings to notifications
     }
@@ -3692,8 +3642,7 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
                 facetSettings.compilerSettings!!.additionalArguments
             )
             assertModules("project")
-            assertImporterStatePresent()
-            TestCase.assertEquals(
+            assertEquals(
                 listOf(
                     KotlinArtifacts.allopenCompilerPlugin,
                     KotlinArtifacts.kotlinxSerializationCompilerPlugin,
@@ -3754,7 +3703,6 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             )
 
             assertModules("project")
-            assertImporterStatePresent()
 
             with(facetSettings) {
                 Assert.assertEquals("JVM 1.8", targetPlatform!!.oldFashionedDescription)
@@ -3823,7 +3771,6 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             val compoundModule = "project"
 
             assertModules(compoundModule, mainModule, testModule)
-            assertImporterStatePresent()
 
             val mainKotlinFolder = "src/main/kotlin"
             val mainContentRoots = arrayOf(
@@ -3917,7 +3864,6 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             val compoundModule = "project"
 
             assertModules(compoundModule, mainModule, testModule)
-            assertImporterStatePresent()
 
             val mainModuleTestSources = getContentRoots(mainModule)
                 .flatMap { it.getSourceFolders(JavaSourceRootType.TEST_SOURCE) }

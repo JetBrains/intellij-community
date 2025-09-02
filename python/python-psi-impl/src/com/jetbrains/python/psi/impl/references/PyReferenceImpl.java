@@ -88,7 +88,8 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
   public ResolveResult @NotNull [] multiResolve(final boolean incompleteCode) {
     if (USE_CACHE) {
       final ResolveCache cache = ResolveCache.getInstance(getElement().getProject());
-      return cache.resolveWithCaching(this, CachingResolver.INSTANCE, true, incompleteCode);
+      final boolean actuallyIncomplete = incompleteCode || myContext.getTypeEvalContext().hasAssumptions();
+      return cache.resolveWithCaching(this, CachingResolver.INSTANCE, true, actuallyIncomplete);
     }
     else {
       return multiResolveInner();

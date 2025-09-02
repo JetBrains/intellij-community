@@ -21,6 +21,7 @@ import javax.swing.text.Document
 import javax.swing.text.JTextComponent
 import javax.swing.tree.TreeModel
 
+@Deprecated("Use setObservableProperty instead", ReplaceWith("setObservableProperty(this, value, parentDisposable)"))
 fun <T> ObservableMutableProperty<T>.set(value: T, parentDisposable: Disposable? = null) {
   val oldValue = get()
   set(value)

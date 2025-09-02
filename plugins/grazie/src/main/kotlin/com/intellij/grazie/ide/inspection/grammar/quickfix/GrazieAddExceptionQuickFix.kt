@@ -43,8 +43,8 @@ open class GrazieAddExceptionQuickFix(
 
   override fun startInWriteAction() = false
 
-  override fun applyFix(project: Project, file: PsiFile, editor: Editor?) {
-    val action = object : BasicUndoableAction(file.virtualFile) {
+  override fun applyFix(project: Project, psiFile: PsiFile, editor: Editor?) {
+    val action = object : BasicUndoableAction(psiFile.virtualFile) {
       override fun redo() {
         GrazieConfig.update { state ->
           state.copy(
@@ -65,7 +65,7 @@ open class GrazieAddExceptionQuickFix(
     action.redo()
 
     underlineRanges.forEach { underline ->
-      underline.range?.let { GrazieReplaceTypoQuickFix.removeHighlightersWithExactRange(file.viewProvider.document, project, it) }
+      underline.range?.let { GrazieReplaceTypoQuickFix.removeHighlightersWithExactRange(psiFile.viewProvider.document, project, it) }
     }
 
     UndoManager.getInstance(project).undoableActionPerformed(action)

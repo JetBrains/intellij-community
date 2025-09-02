@@ -547,12 +547,12 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
         }
 
         @Override
-        public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+        public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
             return myReference instanceof PrefixReference && myReference.getElement().isValid() && ((PrefixReference)myReference).isUnresolved();
         }
 
         @Override
-        public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+        public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
             final Set<String> prefix = Collections.singleton(myReference.getCanonicalText());
 
             final Map<String, String> myMap = myContextProvider.getNamespaceContext().myMap;

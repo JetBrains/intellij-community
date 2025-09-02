@@ -63,7 +63,7 @@ public class RenameWrongRefFix implements IntentionAction, LowPriorityAction {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
     if (!myRefExpr.isValid() || !BaseIntentionAction.canModify(myRefExpr)) return false;
     PsiElement refName = myRefExpr.getReferenceNameElement();
     if (refName == null) return false;
@@ -153,7 +153,7 @@ public class RenameWrongRefFix implements IntentionAction, LowPriorityAction {
    * Note that this method also called from rename handler {@link com.intellij.refactoring.rename.RenameWrongRefHandler}
    */
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) {
     PsiExpression qualifier = myRefExpr.getQualifierExpression();
 
     PsiExpression expression = (myRefExpr.getParent() instanceof PsiMethodCallExpression call) ? call : myRefExpr;
@@ -179,7 +179,7 @@ public class RenameWrongRefFix implements IntentionAction, LowPriorityAction {
     }
     final float proportion = EditorUtil.calcVerticalScrollProportion(editor);
     builder.run(editor, true);
-    if (file.isPhysical()) {
+    if (psiFile.isPhysical()) {
       EditorUtil.setVerticalScrollProportion(editor, proportion);
     }
   }

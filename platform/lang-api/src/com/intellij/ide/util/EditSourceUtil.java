@@ -5,12 +5,15 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.ide.navigation.NavigationOptions;
+import com.intellij.platform.ide.navigation.NavigationServiceKt;
 import com.intellij.pom.Navigatable;
 import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.psi.PsiElement;
@@ -93,7 +96,8 @@ public final class EditSourceUtil {
   public static boolean navigateToPsiElement(@NotNull PsiElement element) {
     Navigatable descriptor = getDescriptor(element);
     if (descriptor != null && descriptor.canNavigate()) {
-      descriptor.navigate(true);
+      Project project = element.getProject();
+      NavigationServiceKt.navigateBlocking(project, descriptor, NavigationOptions.requestFocus(), null);
     }
     return true;
   }

@@ -37,7 +37,7 @@ internal class PythonCommunityPluginBuilder(private val home: Path) {
     withContext(Dispatchers.IO) {
       Files.walkFileTree(buildContext.paths.artifactDir.resolve("${buildContext.applicationInfo.productCode}-plugins"),
                          object : SimpleFileVisitor<Path>() {
-                           override fun visitFile(file: Path, attrs: BasicFileAttributes?): FileVisitResult {
+                           override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
                              if (file.toString().endsWith(".zip")) {
                                builtPlugins.add(file)
                              }

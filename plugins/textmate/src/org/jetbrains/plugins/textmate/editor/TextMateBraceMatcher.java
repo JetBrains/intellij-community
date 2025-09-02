@@ -55,7 +55,7 @@ public class TextMateBraceMatcher implements BraceMatcher {
   }
 
   @Override
-  public int getCodeConstructStart(@NotNull PsiFile file, int openingBraceOffset) {
+  public int getCodeConstructStart(@NotNull PsiFile psiFile, int openingBraceOffset) {
     return openingBraceOffset;
   }
 }

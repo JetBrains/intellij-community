@@ -2,7 +2,6 @@
 // KEEP_ACTIONS_LIST_ORDER
 // K2_ACTIONS_LIST: Create extension function 'A<U>.foo'
 // K2_ACTIONS_LIST: Create member function 'A.foo'
-// K2_ACTIONS_LIST: Create property 'foo' as constructor parameter
 // K2_ACTIONS_LIST: Create annotation 'foo'
 
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable.CreateCallableFromUsageFix

@@ -43,13 +43,13 @@ internal class CreateFieldAction(
     return GroovyBundle.message(message, what, where)
   }
 
-  override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo {
+  override fun generatePreview(project: Project, editor: Editor, psiFile: PsiFile): IntentionPreviewInfo {
     val field = GroovyFieldRenderer(project, constantField, target, request).renderField()
     val className = myTargetPointer.element?.name
     return IntentionPreviewInfo.CustomDiff(GroovyFileType.GROOVY_FILE_TYPE, className, "", field.text)
   }
 
-  override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
+  override fun invoke(project: Project, editor: Editor?, psiFile: PsiFile?) {
     GroovyFieldRenderer(project, constantField, target, request).doRender()
   }
 }

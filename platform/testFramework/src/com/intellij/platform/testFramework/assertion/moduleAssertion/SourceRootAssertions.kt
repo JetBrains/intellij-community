@@ -6,15 +6,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.testFramework.assertion.collectionAssertion.CollectionAssertions.assertEqualsUnordered
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
-import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.jps.entities.SourceRootEntity
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
-import org.junit.jupiter.api.Assertions
 import java.nio.file.Path
-import java.util.ArrayList
 
 object SourceRootAssertions {
 
@@ -57,10 +54,10 @@ object SourceRootAssertions {
     expectedRoots: List<Path>,
     messageSupplier: (() -> String)? = null,
   ) {
-    val workspaceModel = project.workspaceModel
-    val storage = workspaceModel.currentSnapshot
-    val virtualFileUrlManager = workspaceModel.getVirtualFileUrlManager()
-    assertSourceRoots(virtualFileUrlManager, storage, moduleName, filter, expectedRoots, messageSupplier)
+    val virtualFileUrlManager = project.workspaceModel.getVirtualFileUrlManager()
+    ModuleAssertions.assertModuleEntity(project, moduleName) { module ->
+      assertSourceRoots(virtualFileUrlManager, module, filter, expectedRoots, messageSupplier)
+    }
   }
 
   @JvmStatic
@@ -84,12 +81,9 @@ object SourceRootAssertions {
     expectedRoots: List<Path>,
     messageSupplier: (() -> String)? = null,
   ) {
-    val moduleId = ModuleId(moduleName)
-    val moduleEntity = storage.resolve(moduleId)
-    Assertions.assertNotNull(moduleEntity) {
-      "The module '$moduleName' doesn't exist"
+    ModuleAssertions.assertModuleEntity(storage, moduleName) { module ->
+      assertSourceRoots(virtualFileUrlManager, module, filter, expectedRoots, messageSupplier)
     }
-    assertSourceRoots(virtualFileUrlManager, moduleEntity!!, filter, expectedRoots, messageSupplier)
   }
 
   @JvmStatic
@@ -140,6 +134,6 @@ object SourceRootAssertions {
         }
       }
     }
-    assertEqualsUnordered(actualRoots, expectedRoots, messageSupplier)
+    assertEqualsUnordered(expectedRoots, actualRoots, messageSupplier)
   }
 }

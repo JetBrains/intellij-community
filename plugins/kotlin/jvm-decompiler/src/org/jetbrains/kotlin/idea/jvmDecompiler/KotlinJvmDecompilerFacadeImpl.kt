@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.idea.jvmDecompiler
 
 import com.intellij.openapi.progress.ProgressManager
-import org.jetbrains.kotlin.idea.internal.KotlinJvmDecompilerFacade
+import org.jetbrains.kotlin.idea.jvm.shared.internal.KotlinJvmDecompilerFacade
 import org.jetbrains.kotlin.psi.KtFile
 
 internal class KotlinJvmDecompilerFacadeImpl: KotlinJvmDecompilerFacade {

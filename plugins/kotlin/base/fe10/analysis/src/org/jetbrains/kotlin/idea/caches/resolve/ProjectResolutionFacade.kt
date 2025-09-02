@@ -27,9 +27,9 @@ import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.NotUnderContentRootModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.checkValidity
-import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptDependenciesInfo
 import org.jetbrains.kotlin.idea.caches.project.getModuleInfosFromIdeaModel
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener
+import org.jetbrains.kotlin.idea.core.script.dependencies.ScriptDependenciesInfo
 import org.jetbrains.kotlin.js.resolve.diagnostics.ErrorsJs
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
@@ -153,7 +153,8 @@ internal class ProjectResolutionFacade(
           syntheticFilesByModule,
           delegateResolverForProject,
           with(KotlinModificationTrackerFactory.getInstance(project)) {
-              if (invalidateOnOOCB) createProjectWideOutOfBlockModificationTracker() else createLibrariesWideModificationTracker()
+              if (invalidateOnOOCB) createProjectWideSourceModificationTracker()
+              else createProjectWideLibraryModificationTracker()
           },
           settings
         )

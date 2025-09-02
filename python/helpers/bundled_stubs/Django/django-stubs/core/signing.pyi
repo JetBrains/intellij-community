@@ -1,7 +1,5 @@
 from datetime import timedelta
-from typing import Any, Protocol, overload, type_check_only
-
-from typing_extensions import deprecated
+from typing import Any, Protocol, type_check_only
 
 BASE62_ALPHABET: str
 
@@ -45,21 +43,9 @@ class Signer:
     sep: str
     salt: bytes | str
     algorithm: str
-    @overload
     def __init__(
         self,
         *,
-        key: bytes | str | None = None,
-        sep: str = ":",
-        salt: bytes | str | None = None,
-        algorithm: str | None = None,
-        fallback_keys: list[bytes | str] | None = None,
-    ) -> None: ...
-    @overload
-    @deprecated("Passing positional arguments to Signer is deprecated and will be removed in Django 5.1")
-    def __init__(
-        self,
-        *args: Any,
         key: bytes | str | None = None,
         sep: str = ":",
         salt: bytes | str | None = None,

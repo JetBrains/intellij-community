@@ -4,8 +4,8 @@ import com.intellij.cce.core.Language
 import com.intellij.cce.core.TokenProperties
 import com.intellij.cce.metric.ApiCallExtractor
 import com.intellij.cce.metric.ApiCallExtractorProvider
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileFactory
@@ -14,7 +14,7 @@ import com.jetbrains.python.psi.PyRecursiveElementVisitor
 import com.intellij.lang.Language as PlatformLanguage
 
 class PythonApiCallExtractor : ApiCallExtractor {
-  override suspend fun extractApiCalls(code: String, project: Project, tokenProperties: TokenProperties): List<String> {
+  override suspend fun extractApiCalls(code: String, allCodeSnippets: List<String>, project: Project, tokenProperties: TokenProperties): List<String> {
     val psiFile = edtWriteAction { parsePsiFile(project, code) }
     return readAction { extractApiCalls(psiFile) }
   }

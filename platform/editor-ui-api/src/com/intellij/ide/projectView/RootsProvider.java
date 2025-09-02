@@ -17,6 +17,7 @@ package com.intellij.ide.projectView;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 
@@ -30,6 +31,6 @@ public interface RootsProvider {
   /**
    * @return a collection of corresponding virtual files
    */
-  @NotNull
+  @NotNull @Unmodifiable
   Collection<VirtualFile> getRoots();
 }

@@ -17,7 +17,7 @@
     </description>
 
   <vendor>JetBrains</vendor>
-  <depends>com.intellij.modules.java</depends>
+  <depends>com.intellij.java</depends>
   <extensions defaultExtensionNs="com.intellij">
     <classpathStorageProvider implementation="org.jetbrains.idea.eclipse.config.EclipseClasspathStorageProvider"/>
     <workspaceModel.customModuleRootsSerializer implementation="org.jetbrains.idea.eclipse.config.EclipseModuleRootsSerializer"/>

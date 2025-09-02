@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes.replaceWith
 
@@ -41,7 +41,7 @@ import org.jetbrains.kotlin.idea.util.application.isDispatchThread
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.calls.util.getCalleeExpressionIfAny
 
-object DeprecationFixFactory {
+internal object DeprecationFixFactory {
     val deprecatedWarning = IntentionBased { diagnostics: KaFirDiagnostic.Deprecation ->
         val kaSymbol = diagnostics.reference as? KaDeclarationSymbol ?: return@IntentionBased emptyList()
         createDeprecation(kaSymbol, diagnostics.psi)
@@ -140,7 +140,9 @@ abstract class DeprecatedSymbolUsageFixBase(
         assert(!isDispatchThread()) {
             "${javaClass.name} should not be created on EDT"
         }
-        isUnitTypeReplacement = createReplacementExpression(element.project, replaceWith, element)?.let { analyze(element) { it.expressionType?.isUnitType } }
+        isUnitTypeReplacement = createReplacementExpression(element.project, replaceWith, element)?.let {
+            analyze(it) { it.expressionType?.isUnitType }
+        }
         isAvailable = buildUsageReplacementStrategy(
             element, replaceWith, isUnitTypeReplacement
         )?.let { it.createReplacer(element) != null } == true

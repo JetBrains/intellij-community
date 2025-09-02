@@ -156,6 +156,7 @@ class PyVirtualEnvTerminalCustomizer : LocalTerminalCustomizer() {
 
   private fun isPowerShell(shellName: String): Boolean = shellName in arrayOf("powershell.exe", "pwsh.exe")
 
+  @ApiStatus.Internal
   override fun getConfigurable(project: Project): UnnamedConfigurable = object : UnnamedConfigurable {
     val settings = PyVirtualEnvTerminalSettings.getInstance(project)
 
@@ -178,13 +179,14 @@ class PyVirtualEnvTerminalCustomizer : LocalTerminalCustomizer() {
 }
 
 @ApiStatus.Internal
-class SettingsState {
+internal class SettingsState {
   var virtualEnvActivate: Boolean = true
 }
 
 @Service(Service.Level.PROJECT)
 @State(name = "PyVirtualEnvTerminalCustomizer", storages = [(Storage("python-terminal.xml"))])
-class PyVirtualEnvTerminalSettings : PersistentStateComponent<SettingsState> {
+@ApiStatus.Internal
+internal class PyVirtualEnvTerminalSettings : PersistentStateComponent<SettingsState> {
   private var myState: SettingsState = SettingsState()
 
   var virtualEnvActivate: Boolean

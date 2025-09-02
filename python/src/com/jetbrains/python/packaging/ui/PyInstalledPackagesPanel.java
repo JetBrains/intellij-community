@@ -18,7 +18,10 @@ import com.intellij.webcore.packaging.InstalledPackagesPanel;
 import com.intellij.webcore.packaging.PackagesNotificationPanel;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.icons.PythonIcons;
-import com.jetbrains.python.packaging.*;
+import com.jetbrains.python.packaging.PyPackage;
+import com.jetbrains.python.packaging.PyPackageUtil;
+import com.jetbrains.python.packaging.PyPackagesNotificationPanel;
+import com.jetbrains.python.packaging.PyPackagingSettings;
 import com.jetbrains.python.packaging.bridge.PythonPackageManagementServiceBridge;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
@@ -28,6 +31,7 @@ import java.util.Set;
 
 
 public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
+  static String PYTHON = "python";
 
   public PyInstalledPackagesPanel(@NotNull Project project, @NotNull PackagesNotificationPanel area) {
     super(project, area);
@@ -81,7 +85,7 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
     if (PyPackageUtil.PIP.equals(name) ||
         PyPackageUtil.SETUPTOOLS.equals(name) ||
         PyPackageUtil.DISTRIBUTE.equals(name) ||
-        PyCondaPackageManagerImpl.PYTHON.equals(name)) {
+        PYTHON.equals(name)) {
       return false;
     }
     return true;
@@ -101,7 +105,7 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
   protected boolean canUpgradePackage(InstalledPackage pyPackage) {
     if (!PyPackageUtil.packageManagementEnabled(getSelectedSdk(), false, false)) return false;
 
-    return !PyCondaPackageManagerImpl.PYTHON.equals(pyPackage.getName());
+    return !PYTHON.equals(pyPackage.getName());
   }
 
   @Override

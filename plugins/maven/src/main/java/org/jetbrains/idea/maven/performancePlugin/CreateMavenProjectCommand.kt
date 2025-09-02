@@ -20,7 +20,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil
@@ -62,10 +61,8 @@ class CreateMavenProjectCommand(text: String, line: Int) : PerformanceCommandCor
           NewProjectUtil.setCompilerOutputPath(this, projectPath.resolve("out").toString())
         }
         wizardContext.projectJdk?.also { jdk ->
-          blockingContext {
-            ApplicationManager.getApplication().runWriteAction {
-              JavaSdkUtil.applyJdkToProject(this, jdk)
-            }
+          ApplicationManager.getApplication().runWriteAction {
+            JavaSdkUtil.applyJdkToProject(this, jdk)
           }
         }
       }

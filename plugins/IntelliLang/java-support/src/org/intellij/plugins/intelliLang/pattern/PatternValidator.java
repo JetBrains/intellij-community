@@ -15,9 +15,7 @@
  */
 package org.intellij.plugins.intelliLang.pattern;
 
-import com.intellij.codeInsight.intention.AddAnnotationFixWithoutArgFix;
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.util.Comparing;
@@ -204,17 +202,16 @@ public class PatternValidator extends LocalInspectionTool {
     else if (CHECK_NON_CONSTANT_VALUES) {
       for (PsiExpression expr : nonConstantElements) {
         final PsiElement e;
-        if (expr instanceof PsiReferenceExpression) {
-          e = ((PsiReferenceExpression)expr).resolve();
+        if (expr instanceof PsiReferenceExpression ref) {
+          e = ref.resolve();
         }
-        else if (expr instanceof PsiMethodCallExpression) {
-          e = ((PsiMethodCallExpression)expr).getMethodExpression().resolve();
+        else if (expr instanceof PsiMethodCallExpression call) {
+          e = call.getMethodExpression().resolve();
         }
         else {
           e = expr;
         }
         final PsiModifierListOwner owner = ObjectUtils.tryCast(e, PsiModifierListOwner.class);
-        List<LocalQuickFix> fixes = new SmartList<>();
         if (owner != null && PsiUtilEx.isLanguageAnnotationTarget(owner)) {
           PsiAnnotation[] resolvedAnnos =
             AnnotationUtilEx.getAnnotationFrom(owner, configuration.getAdvancedConfiguration().getPatternAnnotationPair(), true);
@@ -225,19 +222,8 @@ public class PatternValidator extends LocalInspectionTool {
             return;
           }
         }
-        if (holder.isOnTheFly()) {
-          final String classname = configuration.getAdvancedConfiguration().getSubstAnnotationPair().first;
-          if (owner != null && AddAnnotationFixWithoutArgFix.isApplicable(owner, classname)) {
-            fixes.add(new AddAnnotationFixWithoutArgFix(classname, owner));
-          } else {
-            fixes.add(new IntroduceVariableFix(false));
-          }
-        }
-        else {
-          fixes.add(new IntroduceVariableFix(false));
-        }
         holder.registerProblem(expr, IntelliLangBundle.message("inspection.pattern.validator.description"),
-                               fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
+                               new IntroduceVariableFix(false));
       }
     }
   }

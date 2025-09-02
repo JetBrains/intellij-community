@@ -18,9 +18,9 @@ class AiPlatformDatasetConverterTest {
       }
     }
     val actions = AiPlatformDatasetConverter(fileContentProvider).convert(listOf(
-        AiPlatformDatasetItem("suffix2_1", "golden2_1", "prefix2_1", AiPlatformDatasetMetadata(fileName2, "source")),
-        AiPlatformDatasetItem("suffix2_2", "golden2_2", "prefix2_2", AiPlatformDatasetMetadata(fileName2, "source")),
-        AiPlatformDatasetItem("suffix1", "golden1", "prefix1", AiPlatformDatasetMetadata(fileName1, "source")),
+        AiPlatformDatasetItem("suffix2_1", "golden2_1", "prefix2_1", AiPlatformDatasetMetadata("id_1",fileName2, "source")),
+        AiPlatformDatasetItem("suffix2_2", "golden2_2", "prefix2_2", AiPlatformDatasetMetadata("id_2", fileName2, "source")),
+        AiPlatformDatasetItem("suffix1", "golden1", "prefix1", AiPlatformDatasetMetadata("id_3", fileName1, "source")),
       )
     )
     assertEquals(2, actions.size)

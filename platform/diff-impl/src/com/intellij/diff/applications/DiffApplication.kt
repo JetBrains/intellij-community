@@ -41,7 +41,7 @@ private class DiffApplication : ApplicationStarterBase(/* ...possibleArgumentsCo
     }
 
   override suspend fun executeCommand(args: List<String>, currentDirectory: String?): CliResult {
-    val filePaths = args.subList(1, args.size)
+    val filePaths = args.drop(1).filter { it != "--wait" }
     val files = findFilesOrThrow(filePaths, currentDirectory)
     val project = guessProject(files)
     return withContext(Dispatchers.EDT) {

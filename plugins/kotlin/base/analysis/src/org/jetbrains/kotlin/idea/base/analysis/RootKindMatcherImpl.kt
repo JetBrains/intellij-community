@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.originalFileOrSelf
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindMatcher
@@ -28,7 +29,8 @@ import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.acceptedLocations
 import kotlin.script.experimental.api.ide
 
-internal class RootKindMatcherImpl(private val project: Project) : RootKindMatcher {
+@ApiStatus.Internal
+class RootKindMatcherImpl(private val project: Project) : RootKindMatcher {
     private val fileIndex by lazy { ProjectRootManager.getInstance(project).fileIndex }
 
     override fun matches(filter: RootKindFilter, virtualFile: VirtualFile): Boolean {

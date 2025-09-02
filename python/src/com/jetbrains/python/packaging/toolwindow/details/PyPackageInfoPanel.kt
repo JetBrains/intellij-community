@@ -60,7 +60,7 @@ class PyPackageInfoPanel(val project: Project) : Disposable {
     val service = project.service<PyPackagingToolWindowService>()
     updateJob = PyPackageCoroutine.getScope(project).launch {
       try {
-        val packageDetails = service.detailsForPackage(pyPackage)
+        val packageDetails = service.detailsForPackage(pyPackage) ?: return@launch
 
         withContext(Dispatchers.EDT) {
           infoController.setPackageDetails(packageDetails)

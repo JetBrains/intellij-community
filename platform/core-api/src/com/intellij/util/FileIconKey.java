@@ -15,18 +15,18 @@ import java.util.Objects;
 
 @ApiStatus.Internal
 public final class FileIconKey {
-  private final VirtualFile myFile;
-  private final Project myProject;
-  @Iconable.IconFlags private final int myFlags;
-  private final @Nullable Language myInitialLanguage;
-  private final long myStamp;
+  public final VirtualFile file;
+  public final Project project;
+  @Iconable.IconFlags public final int flags;
+  private final @Nullable Language initialLanguage;
+  private final long stamp;
 
-  FileIconKey(@NotNull VirtualFile file, @Nullable Project project, @Iconable.IconFlags int flags) {
-    myFile = file;
-    myProject = project;
-    myFlags = flags;
-    myInitialLanguage = myFile instanceof LightVirtualFile ? ((LightVirtualFile)myFile).getLanguage() : null;
-    myStamp = project == null ? 0 : PsiManager.getInstance(project).getModificationTracker().getModificationCount();
+  public FileIconKey(@NotNull VirtualFile file, @Nullable Project project, @Iconable.IconFlags int flags) {
+    this.file = file;
+    this.project = project;
+    this.flags = flags;
+    initialLanguage = this.file instanceof LightVirtualFile ? ((LightVirtualFile)this.file).getLanguage() : null;
+    stamp = project == null ? 0 : PsiManager.getInstance(project).getModificationTracker().getModificationCount();
   }
 
   @Override
@@ -35,30 +35,18 @@ public final class FileIconKey {
     if (!(o instanceof FileIconKey)) return false;
 
     FileIconKey that = (FileIconKey)o;
-    if (myFlags != that.myFlags) return false;
-    if (myStamp != that.myStamp) return false;
-    if (!myFile.equals(that.myFile)) return false;
-    if (!Objects.equals(myProject, that.myProject)) return false;
+    if (flags != that.flags) return false;
+    if (stamp != that.stamp) return false;
+    if (!file.equals(that.file)) return false;
+    if (!Objects.equals(project, that.project)) return false;
 
-    if (!Objects.equals(myInitialLanguage, that.myInitialLanguage)) return false;
+    if (!Objects.equals(initialLanguage, that.initialLanguage)) return false;
 
     return true;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(myFile, myProject, myFlags, myStamp);
-  }
-
-  VirtualFile getFile() {
-    return myFile;
-  }
-
-  Project getProject() {
-    return myProject;
-  }
-
-  @Iconable.IconFlags int getFlags() {
-    return myFlags;
+    return Objects.hash(file, project, flags, stamp);
   }
 }

@@ -5,10 +5,8 @@ package com.intellij.platform.testFramework.junit5.eel.impl
 
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.core.nio.fs.MultiRoutingFileSystem
-import com.intellij.platform.eel.EelApi
-import com.intellij.platform.eel.EelDescriptor
-import com.intellij.platform.eel.fs.EelFileSystemApi
-import com.intellij.platform.eel.getOrThrow
+import com.intellij.platform.eel.*
+import com.intellij.platform.eel.fs.createTemporaryDirectory
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.EelNioBridgeService
 import com.intellij.platform.eel.provider.asNioPath
@@ -36,16 +34,16 @@ internal val currentOs: EelPath.OS
     EelPath.OS.UNIX
   }
 
-internal fun eelApiByOs(fileSystem: EelUnitTestFileSystem, descriptor: EelTestDescriptor, os: EelPath.OS): EelApi {
+internal fun eelApiByOs(fileSystem: EelUnitTestFileSystem, descriptor: EelTestDescriptor, os: EelOsFamily): EelApi {
   return when (os) {
-    EelPath.OS.UNIX -> EelTestPosixApi(descriptor, fileSystem, fileSystem.fakeLocalRoot)
-    EelPath.OS.WINDOWS -> EelTestWindowsApi(descriptor, fileSystem, fileSystem.fakeLocalRoot)
+    EelOsFamily.Posix  -> EelTestPosixApi(descriptor, fileSystem, fileSystem.fakeLocalRoot)
+    EelOsFamily.Windows -> EelTestWindowsApi(descriptor, fileSystem, fileSystem.fakeLocalRoot)
   }
 }
 
 internal data class IsolatedFileSystemImpl(override val storageRoot: Path, override val eelDescriptor: EelDescriptor, override val eelApi: EelApi) : IsolatedFileSystem
 
-internal fun eelInitializer(os: EelPath.OS): TestFixtureInitializer<IsolatedFileSystem> = TestFixtureInitializer { initialized ->
+internal fun eelInitializer(os: EelOsFamily): TestFixtureInitializer<IsolatedFileSystem> = TestFixtureInitializer { initialized ->
   checkMultiRoutingFileSystem()
   val meaningfulDirName = "eel-fixture-${os.name.lowercase()}"
   val directory = Files.createTempDirectory(meaningfulDirName)
@@ -63,14 +61,14 @@ internal fun eelInitializer(os: EelPath.OS): TestFixtureInitializer<IsolatedFile
   val fakeLocalFileSystem = EelUnitTestFileSystem(EelUnitTestFileSystemProvider(defaultProvider), os, directory, fakeRoot)
   val apiRef = AtomicReference<EelApi>(null)
   val descriptor = EelTestDescriptor(Ksuid.generate().toString(), os, apiRef::get)
-  service.register(fakeRoot, descriptor, descriptor.id, true, (os == EelPath.OS.WINDOWS)) { _, _ ->
+  service.register(fakeRoot, descriptor, descriptor.id, true, (os.isWindows)) { _, _ ->
     fakeLocalFileSystem
   }
   val eelApi = eelApiByOs(fakeLocalFileSystem, descriptor, os)
   apiRef.set(eelApi)
   val root = Path.of(fakeRoot)
   initialized(IsolatedFileSystemImpl(root, descriptor, eelApi)) {
-    service.deregister(descriptor)
+    service.unregister(descriptor)
     directory.delete(true)
   }
 }
@@ -78,7 +76,7 @@ internal fun eelInitializer(os: EelPath.OS): TestFixtureInitializer<IsolatedFile
 internal fun eelTempDirectoryFixture(fileSystem: TestFixture<IsolatedFileSystem>): TestFixtureInitializer<Path> = TestFixtureInitializer { initialized ->
   val fsdata = fileSystem.init()
   val eelApi = fsdata.eelApi
-  val tempDir = eelApi.fs.createTemporaryDirectory(EelFileSystemApi.CreateTemporaryEntryOptions.Builder().build()).getOrThrow()
+  val tempDir = eelApi.fs.createTemporaryDirectory().getOrThrow()
   val nioTempDir = tempDir.asNioPath()
   initialized(nioTempDir) {
     nioTempDir.delete(true)

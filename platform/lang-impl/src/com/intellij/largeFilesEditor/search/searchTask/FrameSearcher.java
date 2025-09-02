@@ -8,6 +8,7 @@ import com.intellij.largeFilesEditor.search.Position;
 import com.intellij.largeFilesEditor.search.SearchResult;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.ArrayList;
 
@@ -37,7 +38,6 @@ public final class FrameSearcher {
   private char beforeFrameStartSymbol;
   private char afterFrameEndSymbol;
 
-
   public FrameSearcher(SearchTaskOptions options, SmartStringSearcher smartStringSearcher) {
     this.smartStringSearcher = smartStringSearcher;
     this.options = options;
@@ -48,7 +48,8 @@ public final class FrameSearcher {
     resultEndPos = new Position();
   }
 
-  void setFrame(long curPageNumber, char beforeFrameStartSymbol,
+  @VisibleForTesting
+  public void setFrame(long curPageNumber, char beforeFrameStartSymbol,
                 String curPageText, String tailText, char afterFrameEndSymbol) {
     this.curPageNumber = curPageNumber;
     this.beforeFrameStartSymbol = beforeFrameStartSymbol;

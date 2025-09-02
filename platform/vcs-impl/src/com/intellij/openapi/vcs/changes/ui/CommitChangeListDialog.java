@@ -27,7 +27,6 @@ import com.intellij.openapi.vcs.checkin.BeforeCheckinDialogHandler;
 import com.intellij.openapi.vcs.ui.CommitMessage;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.ui.JBColor;
-import com.intellij.ui.SplitterWithSecondHideable;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
@@ -255,7 +254,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     myLegend = new CommitLegendPanel(myChangesInfoCalculator);
     mySplitter = new Splitter(true);
     boolean nonFocusable = !UISettings.getInstance().getDisableMnemonicsInControls(); // Or that won't be keyboard accessible at all
-    myCommitOptions = new CommitOptionsPanel(myProject, () -> getDefaultCommitActionName(), nonFocusable, false);
+    myCommitOptions = new CommitOptionsPanel(myProject, () -> getDefaultCommitActionName(), nonFocusable, false, JBUI.Borders.empty());
     myCommitOptionsPanel = myCommitOptions.component;
     myWarningLabel = new JBLabel();
 
@@ -550,11 +549,6 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     return myProject;
   }
 
-  @Deprecated(forRemoval = true)
-  public @NotNull String getCommitMessage() {
-    return myCommitMessageArea.getText();
-  }
-
   // Used in plugins
   @SuppressWarnings("unused")
   public @NotNull List<RefreshableOnComponent> getAdditionalComponents() {
@@ -577,6 +571,11 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     myChangesInfoCalculator
       .update(getDisplayedChanges(), getIncludedChanges(), getDisplayedUnversionedFiles().size(), getIncludedUnversionedFiles().size());
     myLegend.update();
+  }
+
+  @Override
+  public @Nullable Dimension getInitialSize() {
+    return JBUI.DialogSizes.extraLarge();
   }
 
   @Override

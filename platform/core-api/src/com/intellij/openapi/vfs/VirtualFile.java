@@ -192,7 +192,8 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @return the presentable URL.
    * @see VirtualFileSystem#extractPresentableUrl
    */
-  public final @NotNull @NlsSafe String getPresentableUrl() {
+  @ApiStatus.NonExtendable
+  public @NotNull @NlsSafe String getPresentableUrl() {
     return getFileSystem().extractPresentableUrl(getPath());
   }
 

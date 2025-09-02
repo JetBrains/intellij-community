@@ -32,7 +32,7 @@ public final class SettingsEditorWrapper <Src, Dst> extends SettingsEditor<Src> 
 
   @Override
   public @NotNull JComponent createEditor() {
-    return myWrapped.createEditor();
+    return createEditorComponent(myWrapped);
   }
 
   @Override

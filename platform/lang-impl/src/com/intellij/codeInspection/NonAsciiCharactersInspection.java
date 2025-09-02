@@ -117,10 +117,10 @@ public final class NonAsciiCharactersInspection extends LocalInspectionTool {
       }
 
       @Override
-      public void visitFile(@NotNull PsiFile file) {
-        super.visitFile(file);
+      public void visitFile(@NotNull PsiFile psiFile) {
+        super.visitFile(psiFile);
         if (CHECK_FOR_FILES_CONTAINING_BOM) {
-          checkBOM(file, holder);
+          checkBOM(psiFile, holder);
         }
       }
     };

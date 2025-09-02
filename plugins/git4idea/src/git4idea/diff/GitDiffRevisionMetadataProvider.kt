@@ -2,7 +2,6 @@
 package git4idea.diff
 
 import com.github.benmanes.caffeine.cache.AsyncLoadingCache
-import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.diff.impl.DiffRevisionMetadataProvider
@@ -10,12 +9,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.changes.ContentRevision
-import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.vcs.log.VcsCommitMetadata
 import git4idea.GitContentRevision
 import git4idea.GitUtil
 import git4idea.history.GitLogUtil
 import git4idea.index.vfs.filePath
+import git4idea.util.CaffeineUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.future.future
@@ -32,9 +31,8 @@ internal class GitDiffRevisionMetadataProvider : DiffRevisionMetadataProvider {
 
 @Service(Service.Level.PROJECT)
 internal data class GitDiffRevisionMetadataInProject(val project: Project, val scope: CoroutineScope) {
-  private val cache: AsyncLoadingCache<CommitInRepo, Optional<VcsCommitMetadata>> = Caffeine.newBuilder()
+  private val cache: AsyncLoadingCache<CommitInRepo, Optional<VcsCommitMetadata>> = CaffeineUtil.withIoExecutor()
     .expireAfterAccess(EXPIRE_IN)
-    .executor(AppExecutorUtil.getAppExecutorService())
     .buildAsync { key, executor -> scope.future { loadMetadata(key) } }
 
   suspend fun get(revision: String, file: FilePath): VcsCommitMetadata? {

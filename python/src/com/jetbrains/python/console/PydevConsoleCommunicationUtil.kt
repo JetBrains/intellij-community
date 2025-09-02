@@ -39,8 +39,8 @@ fun createPyDebugValue(value: DebugValue, frameAccessor: PyFrameAccessor): PyDeb
     dataFrameDebugValue
   }
   else PyDebugValue(value.name, value.type, value.qualifier, value.value ?: "",
-                    value.isContainer, value.shape, value.isReturnedValue, value.isIPythonHidden, value.isErrorOnEval,
-                    value.typeRendererId, frameAccessor)
+                    value.isContainer, value.shape, value.arrayElementType, value.isReturnedValue, value.isIPythonHidden,
+                    value.isErrorOnEval, value.typeRendererId, frameAccessor)
 }
 
 fun createArrayChunk(response: GetArrayResponse, frameAccessor: PyFrameAccessor): ArrayChunk {

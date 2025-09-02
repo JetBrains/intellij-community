@@ -20,16 +20,16 @@ import java.util.function.BooleanSupplier;
 
 public final class JavaReferenceImporter implements ReferenceImporter {
   @Override
-  public BooleanSupplier computeAutoImportAtOffset(@NotNull Editor editor, @NotNull PsiFile file, int offset, boolean allowCaretNearReference) {
+  public BooleanSupplier computeAutoImportAtOffset(@NotNull Editor editor, @NotNull PsiFile psiFile, int offset, boolean allowCaretNearReference) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
-    if (!file.getViewProvider().getLanguages().contains(JavaLanguage.INSTANCE)) {
+    if (!psiFile.getViewProvider().getLanguages().contains(JavaLanguage.INSTANCE)) {
       return null;
     }
     Document document = editor.getDocument();
     int lineNumber = document.getLineNumber(offset);
     int lineEndOffset = document.getLineEndOffset(lineNumber);
-    if (editor.isDisposed() || file.getProject().isDisposed()) return null;
-    ImportClassFix fix = computeImportFix(file, offset, lineEndOffset);
+    if (editor.isDisposed() || psiFile.getProject().isDisposed()) return null;
+    ImportClassFix fix = computeImportFix(psiFile, offset, lineEndOffset);
     if (fix == null) return null;
     return () -> {
       ImportClassFixBase.Result result = fix.doFix(editor, false, true, true);
@@ -37,13 +37,13 @@ public final class JavaReferenceImporter implements ReferenceImporter {
     };
   }
 
-  private static ImportClassFix computeImportFix(@NotNull PsiFile file, int startOffset, int endOffset) {
+  private static ImportClassFix computeImportFix(@NotNull PsiFile psiFile, int startOffset, int endOffset) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
-    List<PsiElement> elements = CollectHighlightsUtil.getElementsInRange(file, startOffset, endOffset);
+    List<PsiElement> elements = CollectHighlightsUtil.getElementsInRange(psiFile, startOffset, endOffset);
     for (PsiElement element : elements) {
       if (element instanceof PsiJavaCodeReferenceElement ref) {
         ImportClassFix fix = new ImportClassFix(ref);
-        if (fix.isAvailable(file.getProject(), null, file)) {
+        if (fix.isAvailable(psiFile.getProject(), null, psiFile)) {
           return fix;
         }
       }
@@ -53,7 +53,7 @@ public final class JavaReferenceImporter implements ReferenceImporter {
   }
 
   @Override
-  public boolean isAddUnambiguousImportsOnTheFlyEnabled(@NotNull PsiFile file) {
-    return file.getViewProvider().getLanguages().contains(JavaLanguage.INSTANCE) && CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY;
+  public boolean isAddUnambiguousImportsOnTheFlyEnabled(@NotNull PsiFile psiFile) {
+    return psiFile.getViewProvider().getLanguages().contains(JavaLanguage.INSTANCE) && CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY;
   }
 }

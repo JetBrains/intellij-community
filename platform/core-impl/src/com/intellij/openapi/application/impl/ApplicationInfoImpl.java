@@ -18,6 +18,7 @@ import com.intellij.util.xml.dom.XmlElement;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.text.MessageFormat;
 import java.time.LocalDate;
@@ -103,7 +104,9 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   @NonInjectable
-  ApplicationInfoImpl(@NotNull XmlElement element) {
+  @ApiStatus.Internal
+  @VisibleForTesting
+  public ApplicationInfoImpl(@NotNull XmlElement element) {
     // the behavior of this method must be consistent with the `idea/ApplicationInfo.xsd` schema
     for (XmlElement child : element.children) {
       switch (child.name) {

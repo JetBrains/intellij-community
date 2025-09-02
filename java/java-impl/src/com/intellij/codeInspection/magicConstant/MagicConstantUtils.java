@@ -5,6 +5,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -13,7 +14,10 @@ import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.StreamEx;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -118,6 +122,78 @@ public final class MagicConstantUtils {
   }
 
   /**
+   * Generates a user-friendly textual representation of a value based on magic constant annotations, if possible.
+   * Must be run inside the read action
+   * 
+   * @param val   value (number or string) which may have a magic constant representation
+   * @param owner an owner that produced this value (either the variable which stores it, or a method which returns it)
+   * @return a textual representation of the magic constant; null if non-applicable
+   */
+  @RequiresReadLock
+  public static @Nullable String getPresentableText(Object val, @NotNull PsiModifierListOwner owner) {
+    if (!(val instanceof String) &&
+        !(val instanceof Integer) &&
+        !(val instanceof Long) &&
+        !(val instanceof Short) &&
+        !(val instanceof Byte)) {
+      return null;
+    }
+    PsiType type = PsiUtil.getTypeByPsiElement(owner);
+    if (type == null) return null;
+    AllowedValues allowedValues = getAllowedValues(owner, type, owner);
+    if (allowedValues == null) return null;
+
+    if (!allowedValues.isFlagSet()) {
+      for (PsiAnnotationMemberValue value : allowedValues.getValues()) {
+        if (value instanceof PsiExpression expression) {
+          Object constantValue = JavaConstantExpressionEvaluator.computeConstantExpression(expression, null, false);
+          if (val.equals(constantValue)) {
+            return expression instanceof PsiReferenceExpression ref ? ref.getReferenceName() : expression.getText();
+          }
+        }
+      }
+    }
+    else {
+      if (!(val instanceof Number number)) return null;
+
+      // try to find ored flags
+      long remainingFlags = number.longValue();
+      List<PsiAnnotationMemberValue> flags = new ArrayList<>();
+      for (PsiAnnotationMemberValue value : allowedValues.getValues()) {
+        if (value instanceof PsiExpression expression) {
+          Long constantValue = evaluateLongConstant(expression);
+          if (constantValue == null) {
+            continue;
+          }
+          if ((remainingFlags & constantValue) == constantValue) {
+            flags.add(value);
+            remainingFlags &= ~constantValue;
+          }
+        }
+      }
+      if (remainingFlags == 0) {
+        // found flags to combine with OR, suggest the fix
+        if (flags.size() > 1) {
+          for (int i = flags.size() - 1; i >= 0; i--) {
+            PsiAnnotationMemberValue flag = flags.get(i);
+            Long flagValue = evaluateLongConstant((PsiExpression)flag);
+            if (flagValue != null && flagValue == 0) {
+              // no sense in ORing with '0'
+              flags.remove(i);
+            }
+          }
+        }
+        if (!flags.isEmpty()) {
+          return StreamEx.of(flags)
+            .map(flag -> flag instanceof PsiReferenceExpression ref ? ref.getReferenceName() : flag.getText())
+            .joining(" | ");
+        }
+      }
+    }
+    return null;
+  }
+
+  /**
    * @param element element with possible MagicConstant annotation
    * @param type    element type
    * @param context context where annotation is applied (to check the accessibility of magic constant)
@@ -132,7 +208,8 @@ public final class MagicConstantUtils {
   static @Nullable AllowedValues getAllowedValues(@NotNull PsiModifierListOwner element,
                                                   @Nullable PsiType type,
                                                   @Nullable PsiElement context,
-                                                  @Nullable Set<? super PsiClass> visited) {
+                                                  @Nullable Set<? super PsiModifierListOwner> visited) {
+    if (visited != null && visited.size() > 5) return null; // Avoid too deep traversal
     PsiManager manager = element.getManager();
     for (PsiAnnotation annotation : getAllAnnotations(element)) {
       if (type != null && MagicConstant.class.getName().equals(annotation.getQualifiedName())) {
@@ -152,6 +229,29 @@ public final class MagicConstantUtils {
       AllowedValues values = getAllowedValues(aClass, type, context, visited);
       if (values != null) {
         return values;
+      }
+    }
+    
+    if (element instanceof PsiLocalVariable localVariable) {
+      PsiExpression initializer = PsiUtil.skipParenthesizedExprDown(localVariable.getInitializer());
+      if (initializer != null) {
+        PsiModifierListOwner target = null;
+        if (initializer instanceof PsiMethodCallExpression call) {
+          target = call.resolveMethod();
+        } else if (initializer instanceof PsiReferenceExpression ref) {
+          target = ObjectUtils.tryCast(ref.resolve(), PsiVariable.class);
+        }
+        if (target != null) {
+          PsiElement block = PsiUtil.getVariableCodeBlock(localVariable, null);
+          if (block != null && ControlFlowUtil.isEffectivelyFinal(localVariable, block)) {
+            if (visited == null) {
+              visited = new HashSet<>();
+            }
+            if (visited.add(target)) {
+              return getAllowedValues(target, type, context, visited);
+            }
+          }
+        }
       }
     }
 
@@ -276,6 +376,17 @@ public final class MagicConstantUtils {
       e2 = ((PsiReference)e2).resolve();
     }
     return manager.areElementsEquivalent(e2, e1);
+  }
+
+  static Long evaluateLongConstant(@NotNull PsiExpression expression) {
+    Object constantValue = JavaConstantExpressionEvaluator.computeConstantExpression(expression, null, false);
+    if (constantValue instanceof Long ||
+        constantValue instanceof Integer ||
+        constantValue instanceof Short ||
+        constantValue instanceof Byte) {
+      return ((Number)constantValue).longValue();
+    }
+    return null;
   }
 
   public static class AllowedValues {

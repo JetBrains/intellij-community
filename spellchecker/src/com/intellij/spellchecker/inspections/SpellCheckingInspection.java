@@ -11,23 +11,35 @@ import com.intellij.lang.refactoring.NamesValidator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.spellchecker.SpellCheckerManager;
-import com.intellij.spellchecker.tokenizer.*;
+import com.intellij.spellchecker.grazie.diacritic.Diacritics;
+import com.intellij.spellchecker.tokenizer.LanguageSpellchecking;
+import com.intellij.spellchecker.tokenizer.SpellcheckingStrategy;
+import com.intellij.spellchecker.tokenizer.SuppressibleSpellcheckingStrategy;
+import com.intellij.spellchecker.tokenizer.TokenConsumer;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.text.StringSearcher;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Pattern;
 
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
@@ -38,8 +50,7 @@ public final class SpellCheckingInspection extends LocalInspectionTool implement
   @Override
   public SuppressQuickFix @NotNull [] getBatchSuppressActions(@Nullable PsiElement element) {
     if (element != null) {
-      final Language language = element.getLanguage();
-      SpellcheckingStrategy strategy = getSpellcheckingStrategy(element, language);
+      SpellcheckingStrategy strategy = getSpellcheckingStrategy(element);
       if (strategy instanceof SuppressibleSpellcheckingStrategy) {
         return ((SuppressibleSpellcheckingStrategy)strategy).getSuppressActions(element, getShortName());
       }
@@ -47,9 +58,9 @@ public final class SpellCheckingInspection extends LocalInspectionTool implement
     return super.getBatchSuppressActions(element);
   }
 
-  private static SpellcheckingStrategy getSpellcheckingStrategy(@NotNull PsiElement element, @NotNull Language language) {
+  public static SpellcheckingStrategy getSpellcheckingStrategy(@NotNull PsiElement element) {
     DumbService dumbService = DumbService.getInstance(element.getProject());
-    for (SpellcheckingStrategy strategy : LanguageSpellchecking.INSTANCE.allForLanguage(language)) {
+    for (SpellcheckingStrategy strategy : LanguageSpellchecking.INSTANCE.allForLanguage(element.getLanguage())) {
       if (dumbService.isUsableInCurrentContext(strategy) && strategy.isMyContext(element)) {
         return strategy;
       }
@@ -59,8 +70,7 @@ public final class SpellCheckingInspection extends LocalInspectionTool implement
 
   @Override
   public boolean isSuppressedFor(@NotNull PsiElement element) {
-    final Language language = element.getLanguage();
-    SpellcheckingStrategy strategy = getSpellcheckingStrategy(element, language);
+    SpellcheckingStrategy strategy = getSpellcheckingStrategy(element);
     if (strategy instanceof SuppressibleSpellcheckingStrategy) {
       return ((SuppressibleSpellcheckingStrategy)strategy).isSuppressedFor(element, getShortName());
     }
@@ -84,9 +94,8 @@ public final class SpellCheckingInspection extends LocalInspectionTool implement
     if (!Registry.is("spellchecker.inspection.enabled", true) || InspectionProfileManager.hasTooLowSeverity(session, this)) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
-    final SpellCheckerManager manager = SpellCheckerManager.getInstance(holder.getProject());
+    SpellCheckerManager manager = SpellCheckerManager.getInstance(holder.getProject());
     var scope = buildAllowedScopes();
-
     return new PsiElementVisitor() {
       @Override
       public void visitElement(final @NotNull PsiElement element) {
@@ -97,32 +106,45 @@ public final class SpellCheckingInspection extends LocalInspectionTool implement
           return;
         }
 
-        final Language language = element.getLanguage();
-        var strategy = getSpellcheckingStrategy(element, language);
-        if(strategy == null)
-          return;
-
-        if(!strategy.elementFitsScope(element, scope))
-          return;
-
-        PsiFile containingFile = holder.getFile();
-        if (Boolean.TRUE.equals(containingFile.getUserData(InjectedLanguageManager.FRANKENSTEIN_INJECTION))) {
+        var strategy = getSpellcheckingStrategy(element);
+        if (strategy == null) {
           return;
         }
 
-        tokenize(element, language, new MyTokenConsumer(manager, holder, LanguageNamesValidation.INSTANCE.forLanguage(language)), scope);
+        if (!strategy.elementFitsScope(element, scope)) {
+          return;
+        }
+
+        PsiFile containingFile = holder.getFile();
+        if (InjectedLanguageManager.getInstance(containingFile.getProject()).isFrankensteinInjection(containingFile)) {
+          return;
+        }
+
+        inspect(element, strategy, holder);
       }
     };
   }
 
+  private void inspect(@NotNull PsiElement element,
+                       @NotNull SpellcheckingStrategy strategy,
+                       @NotNull ProblemsHolder holder) {
+    SpellCheckerManager manager = SpellCheckerManager.getInstance(holder.getProject());
+    Set<SpellCheckingScope> scopes = buildAllowedScopes();
+    tokenize(element, new MyTokenConsumer(manager, strategy, holder, LanguageNamesValidation.INSTANCE.forLanguage(element.getLanguage())),
+             scopes);
+  }
+
   private Set<SpellCheckingScope> buildAllowedScopes() {
     var result = new HashSet<SpellCheckingScope>();
-    if(processLiterals)
+    if (processLiterals) {
       result.add(SpellCheckingScope.Literals);
-    if(processComments)
+    }
+    if (processComments) {
       result.add(SpellCheckingScope.Comments);
-    if(processCode)
+    }
+    if (processCode) {
       result.add(SpellCheckingScope.Code);
+    }
     return result;
   }
 
@@ -130,20 +152,21 @@ public final class SpellCheckingInspection extends LocalInspectionTool implement
    * Splits element text in tokens according to spell checker strategy of given language
    *
    * @param element  Psi element
-   * @param language Usually element.getLanguage()
    * @param consumer the consumer of tokens
    */
-  public static void tokenize(final @NotNull PsiElement element,
-                              final @NotNull Language language,
+  public static void tokenize(@NotNull PsiElement element,
                               TokenConsumer consumer, Set<SpellCheckingScope> allowedScopes) {
-    SpellcheckingStrategy factoryByLanguage = getSpellcheckingStrategy(element, language);
+    SpellcheckingStrategy factoryByLanguage = getSpellcheckingStrategy(element);
     if (factoryByLanguage == null) {
       return;
     }
     tokenize(factoryByLanguage, element, consumer, allowedScopes);
   }
 
-  private static void tokenize(SpellcheckingStrategy strategy, PsiElement element, TokenConsumer consumer, Set<SpellCheckingScope> allowedScopes) {
+  private static void tokenize(SpellcheckingStrategy strategy,
+                               PsiElement element,
+                               TokenConsumer consumer,
+                               Set<SpellCheckingScope> allowedScopes) {
     var tokenizer = strategy.getTokenizer(element, allowedScopes);
     //noinspection unchecked
     tokenizer.tokenize(element, consumer);
@@ -160,11 +183,11 @@ public final class SpellCheckingInspection extends LocalInspectionTool implement
 
   private static void addRegularDescriptor(@NotNull PsiElement element, @NotNull TextRange textRange, @NotNull ProblemsHolder holder,
                                            boolean useRename, String wordWithTypo) {
-    SpellcheckingStrategy strategy = getSpellcheckingStrategy(element, element.getLanguage());
+    SpellcheckingStrategy strategy = getSpellcheckingStrategy(element);
 
     LocalQuickFix[] fixes = strategy != null
-                                   ? strategy.getRegularFixes(element, textRange, useRename, wordWithTypo)
-                                   : SpellcheckingStrategy.getDefaultRegularFixes(useRename, wordWithTypo, element, textRange);
+                            ? strategy.getRegularFixes(element, textRange, useRename, wordWithTypo)
+                            : SpellcheckingStrategy.getDefaultRegularFixes(useRename, wordWithTypo, element, textRange);
 
     final ProblemDescriptor problemDescriptor = createProblemDescriptor(element, textRange, fixes, true);
     holder.registerProblem(problemDescriptor);
@@ -193,17 +216,22 @@ public final class SpellCheckingInspection extends LocalInspectionTool implement
   }
 
   private static final class MyTokenConsumer extends TokenConsumer implements Consumer<TextRange> {
+    private static final Pattern NON_ENGLISH_LETTERS = Pattern.compile(".*[^a-zA-Z].*");
+
     private final Set<String> myAlreadyChecked = CollectionFactory.createSmallMemoryFootprintSet();
     private final SpellCheckerManager myManager;
     private final ProblemsHolder myHolder;
     private final NamesValidator myNamesValidator;
+    private final SpellcheckingStrategy myStrategy;
+    private boolean myCodeLike;
     private PsiElement myElement;
     private String myText;
     private boolean myUseRename;
     private int myOffset;
 
-    MyTokenConsumer(SpellCheckerManager manager, ProblemsHolder holder, NamesValidator namesValidator) {
+    MyTokenConsumer(SpellCheckerManager manager, SpellcheckingStrategy strategy, ProblemsHolder holder, NamesValidator namesValidator) {
       myManager = manager;
+      myStrategy = strategy;
       myHolder = holder;
       myNamesValidator = namesValidator;
     }
@@ -219,6 +247,7 @@ public final class SpellCheckingInspection extends LocalInspectionTool implement
       myText = text;
       myUseRename = useRename;
       myOffset = offset;
+      myCodeLike = myStrategy.elementFitsScope(myElement, Set.of(SpellCheckingScope.Code));
       splitter.split(text, rangeToCheck, this);
     }
 
@@ -232,28 +261,75 @@ public final class SpellCheckingInspection extends LocalInspectionTool implement
       }
 
       boolean keyword = myNamesValidator.isKeyword(word, myElement.getProject());
-      if (keyword) {
+      if (keyword || !hasProblem(word) || hasSameNamedReferenceInFile(word)) {
         return;
       }
 
-      if (myManager.hasProblem(word)) {
-        //Use tokenizer to generate accurate range in element (e.g. in case of escape sequences in element)
-        SpellcheckingStrategy strategy = getSpellcheckingStrategy(myElement, myElement.getLanguage());
+      range = myStrategy.getTokenizer(myElement)
+        .getHighlightingRange(myElement, myOffset, range);
+      assert range.getStartOffset() >= 0;
 
-        Tokenizer<?> tokenizer = strategy != null ? strategy.getTokenizer(myElement) : null;
-        if (tokenizer != null) {
-          range = tokenizer.getHighlightingRange(myElement, myOffset, range);
-        }
-        assert range.getStartOffset() >= 0;
+      if (!myHolder.isOnTheFly()) {
+        myAlreadyChecked.add(word);
+      }
+      registerProblem(myHolder, myElement, range, myUseRename, word);
+    }
 
-        if (myHolder.isOnTheFly()) {
-          addRegularDescriptor(myElement, range, myHolder, myUseRename, word);
-        }
-        else {
-          myAlreadyChecked.add(word);
-          addBatchDescriptor(myElement, range, word, myHolder);
+    private boolean hasSameNamedReferenceInFile(String word) {
+      if (!myStrategy.elementFitsScope(myElement, Set.of(SpellCheckingScope.Comments))) {
+        return false;
+      }
+
+      PsiFile file = myElement.getContainingFile();
+      Map<String, Boolean> references = CachedValuesManager.getProjectPsiDependentCache(file, (psi) -> new ConcurrentHashMap<>());
+      return references.computeIfAbsent(word, key -> hasSameNamedReferencesInFile(file, key));
+    }
+
+    private static boolean hasSameNamedReferencesInFile(PsiFile file, String word) {
+      int[] occurrences = new StringSearcher(word, true, true).findAllOccurrences(file.getText());
+      if (occurrences.length <= 1) {
+        return false;
+      }
+
+      for (int occurrence : occurrences) {
+        PsiReference reference = file.findReferenceAt(occurrence);
+        PsiElement resolvedReference = reference != null ? reference.resolve() : null;
+        if (reference != null && resolvedReference != null && reference.getElement() != resolvedReference) {
+          return true;
         }
       }
+      return false;
+    }
+
+    private boolean hasProblem(String word) {
+      if (!myManager.hasProblem(word)) {
+        return false;
+      }
+
+      // If the word isn't "code" or contains letters outside the English alphabet,
+      // then diacritic check should be skipped
+      if (!myCodeLike || NON_ENGLISH_LETTERS.matcher(word).matches()) {
+        return true;
+      }
+
+      Project project = myElement.getProject();
+      return SpellCheckerManager.getInstance(project).getSuggestions(word)
+        .stream()
+        .filter(suggestion -> RenameUtil.isValidName(project, myElement, suggestion))
+        .noneMatch(suggestion -> Diacritics.equalsIgnoringDiacritics(word, suggestion));
+    }
+  }
+
+  private static void registerProblem(@NotNull ProblemsHolder holder,
+                                      @NotNull PsiElement element,
+                                      @NotNull TextRange range,
+                                      boolean useRename,
+                                      String word) {
+    if (holder.isOnTheFly()) {
+      addRegularDescriptor(element, range, holder, useRename, word);
+    }
+    else {
+      addBatchDescriptor(element, range, word, holder);
     }
   }
 

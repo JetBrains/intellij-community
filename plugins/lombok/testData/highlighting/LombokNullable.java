@@ -12,7 +12,7 @@ public class LombokNullable {
     @Nonnull
     private String value;
 
-    public static void main(String[] args) {
+    public static void main() {
         String value = Math.random() > 0.5 ? null : "xx";
 
         LombokNullable test = LombokNullable.builder()
@@ -33,7 +33,7 @@ class LombokNullableConstructor {
         this.value = value;
     }
 
-    public static void main(String[] args) {
+    public static void main() {
         String value = Math.random() > 0.5 ? null : "xx";
 
         LombokNullableConstructor test = LombokNullableConstructor.builder()
@@ -52,7 +52,7 @@ record LombokNullableRecord(@Nonnull String foo) {
                 .build();
     }
 
-    public static void main(String[] args) {
+    public static void main() {
       final LombokNullableRecord myNullableRecord = LombokNullableRecord.of(null);
       System.out.println(myNullableRecord);
     }

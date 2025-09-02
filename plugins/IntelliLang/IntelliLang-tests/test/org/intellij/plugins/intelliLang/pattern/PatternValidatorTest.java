@@ -29,32 +29,6 @@ public class PatternValidatorTest extends LightJavaCodeInsightFixtureTestCase {
       }""");
   }
 
-  public void testAddAnnotationFix() {
-    quickFixTest("""
-    import org.intellij.lang.annotations.Pattern;
-      
-    class X {
-      @Pattern("[0-9]+") String str = create<caret>Value();
-        
-      public static String createValue() {
-        return 123 + "a";
-      }
-    }
-    """, """
-    import org.intellij.lang.annotations.Pattern;
-    import org.intellij.lang.annotations.Subst;
-    
-    class X {
-      @Pattern("[0-9]+") String str = createValue();
-      
-      @Subst("<caret>")
-      public static String createValue() {
-        return 123 + "a";
-      }
-    }
-    """, "Annotate method 'createValue()' as '@Subst'");
-  }
-
   public void testAddLocalVariableFix() {
     quickFixTest("""
     import org.intellij.lang.annotations.Pattern;

@@ -17,6 +17,7 @@ package com.siyeh.ig.performance;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
@@ -62,8 +63,8 @@ public final class BooleanConstructorInspection extends BaseInspection implement
 
   private static class BooleanConstructorFix extends PsiUpdateModCommandQuickFix {
 
-    private static final String TRUE = '\"' + PsiKeyword.TRUE + '\"';
-    private static final String FALSE = '\"' + PsiKeyword.FALSE + '\"';
+    private static final String TRUE = '\"' + JavaKeywords.TRUE + '\"';
+    private static final String FALSE = '\"' + JavaKeywords.FALSE + '\"';
 
     @Override
     public @NotNull String getFamilyName() {
@@ -89,10 +90,10 @@ public final class BooleanConstructorInspection extends BaseInspection implement
       final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(expression);
       CommentTracker tracker = new CommentTracker();
       final @NonNls String newExpression;
-      if (PsiKeyword.TRUE.equals(text) || TRUE.equalsIgnoreCase(text)) {
+      if (JavaKeywords.TRUE.equals(text) || TRUE.equalsIgnoreCase(text)) {
         newExpression = "java.lang.Boolean.TRUE";
       }
-      else if (PsiKeyword.FALSE.equals(text) || FALSE.equalsIgnoreCase(text)) {
+      else if (JavaKeywords.FALSE.equals(text) || FALSE.equalsIgnoreCase(text)) {
         newExpression = "java.lang.Boolean.FALSE";
       }
       else if (languageLevel.equals(LanguageLevel.JDK_1_3)) {

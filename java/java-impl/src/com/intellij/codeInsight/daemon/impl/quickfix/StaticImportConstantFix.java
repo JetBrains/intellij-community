@@ -23,8 +23,8 @@ import java.util.List;
 
 @ApiStatus.Internal
 public class StaticImportConstantFix extends StaticImportMemberFix<PsiField, PsiJavaCodeReferenceElement> implements HighPriorityAction {
-  StaticImportConstantFix(@NotNull PsiFile file, @NotNull PsiJavaCodeReferenceElement referenceElement) {
-    super(file, referenceElement);
+  StaticImportConstantFix(@NotNull PsiFile psiFile, @NotNull PsiJavaCodeReferenceElement referenceElement) {
+    super(psiFile, referenceElement);
   }
 
   @Override
@@ -45,8 +45,8 @@ public class StaticImportConstantFix extends StaticImportMemberFix<PsiField, Psi
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    return generatePreview(file, (__, field) -> AddSingleMemberStaticImportAction.bindAllClassRefs(file, field, field.getName(), field.getContainingClass()));
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    return generatePreview(psiFile, (__, field) -> AddSingleMemberStaticImportAction.bindAllClassRefs(psiFile, field, field.getName(), field.getContainingClass()));
   }
 
   @Override

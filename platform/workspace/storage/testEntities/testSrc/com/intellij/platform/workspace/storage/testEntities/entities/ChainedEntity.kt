@@ -6,11 +6,11 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.annotations.Child
+import com.intellij.platform.workspace.storage.annotations.Parent
 
 
 interface ChainedParentEntity : WorkspaceEntity {
-  val child: List<@Child ChainedEntity>
+  val child: List<ChainedEntity>
 
   //region generated code
   @GeneratedCodeApiVersion(3)
@@ -47,8 +47,10 @@ fun MutableEntityStorage.modifyChainedParentEntity(
 
 interface ChainedEntity : WorkspaceEntity {
   val data: String
+  @Parent
   val parent: ChainedEntity?
-  val child: @Child ChainedEntity?
+  val child: ChainedEntity?
+  @Parent
   val generalParent: ChainedParentEntity?
 
   //region generated code

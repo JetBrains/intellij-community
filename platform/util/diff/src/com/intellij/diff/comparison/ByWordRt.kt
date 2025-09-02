@@ -18,11 +18,11 @@ import com.intellij.diff.tools.util.text.LineOffsets
 import com.intellij.diff.util.DiffRangeUtil
 import com.intellij.diff.util.MergeRange
 import com.intellij.diff.util.Range
-import com.intellij.openapi.util.Couple
-import com.intellij.openapi.util.text.Strings
 import com.intellij.util.IntPair
 import com.intellij.util.text.MergingCharSequence
 import org.jetbrains.annotations.ApiStatus
+import kotlin.jvm.JvmField
+import kotlin.jvm.JvmStatic
 
 object ByWordRt {
   @JvmStatic
@@ -357,7 +357,7 @@ object ByWordRt {
             if (ch == '\n') {
               break
             }
-            if (!Strings.isWhiteSpace(ch)) break@outer
+            if (!ch.isSpaceEnterOrTab()) break@outer
             index++
           }
           if (index == end) break@outer
@@ -384,7 +384,7 @@ object ByWordRt {
             if (ch == '\n') {
               break
             }
-            if (!Strings.isWhiteSpace(ch)) break@outer
+            if (!ch.isSpaceEnterOrTab()) break@outer
             index--
           }
           if (index < start) break@outer
@@ -508,7 +508,7 @@ object ByWordRt {
     text21: CharSequence,
     text22: CharSequence,
     indicator: CancellationChecker,
-  ): Couple<FairDiffIterable> {
+  ): Pair<FairDiffIterable, FairDiffIterable> {
     val text2: CharSequence = MergingCharSequence(text21, text22)
     val changes = ByCharRt.comparePunctuation(text1, text2, indicator)
 
@@ -516,10 +516,10 @@ object ByWordRt {
 
     val iterable1 = DiffIterableUtil.fair(DiffIterableUtil.createUnchanged(ranges.first, text1.length, text21.length))
     val iterable2 = DiffIterableUtil.fair(DiffIterableUtil.createUnchanged(ranges.second, text1.length, text22.length))
-    return Couple.of(iterable1, iterable2)
+    return Pair(iterable1, iterable2)
   }
 
-  private fun splitIterable2Side(changes: FairDiffIterable, offset: Int): Couple<List<Range>> {
+  private fun splitIterable2Side(changes: FairDiffIterable, offset: Int): Pair<List<Range>, List<Range>> {
     val ranges1 = ArrayList<Range>()
     val ranges2 = ArrayList<Range>()
     for (ch in changes.iterateUnchanged()) {
@@ -535,7 +535,7 @@ object ByWordRt {
         ranges2.add(Range(ch.start1 + len2, ch.end1, 0, ch.end2 - offset))
       }
     }
-    return Couple.of(ranges1, ranges2)
+    return Pair(ranges1, ranges2)
   }
 
   @JvmStatic
@@ -551,13 +551,13 @@ object ByWordRt {
     var start = start
     if (start < 0) return false
     if (start == text.length) return false
-    if (!Strings.isWhiteSpace(text[start])) return false
+    if (!text[start].isSpaceEnterOrTab()) return false
 
     start--
     while (start >= 0) {
       val c = text[start]
       if (c == '\n') return true
-      if (!Strings.isWhiteSpace(c)) return false
+      if (!c.isSpaceEnterOrTab()) return false
       start--
     }
     return true
@@ -567,12 +567,12 @@ object ByWordRt {
     var end = end
     if (end < 0) return false
     if (end == text.length) return false
-    if (!Strings.isWhiteSpace(text[end])) return false
+    if (!text[end].isSpaceEnterOrTab()) return false
 
     while (end < text.length) {
       val c = text[end]
       if (c == '\n') return true
-      if (!Strings.isWhiteSpace(c)) return false
+      if (!c.isSpaceEnterOrTab()) return false
       end++
     }
     return true
@@ -601,8 +601,8 @@ object ByWordRt {
     var wordHash = 0
 
     while (offset < len) {
-      val ch = Character.codePointAt(text, offset)
-      val charCount = Character.charCount(ch)
+      val ch = text.codePointAt(offset)
+      val charCount = ch.charCount()
 
       val isAlpha = isAlpha(ch)
       val isWordPart = isAlpha && !isContinuousScript(ch)
@@ -727,7 +727,7 @@ object ByWordRt {
     }
 
     fun matchForward(start1: Int, start2: Int, end1: Int, end2: Int) {
-      assert(lastStart1 == -1 && lastStart2 == -1 && lastEnd1 == -1 && lastEnd2 == -1)
+      check(lastStart1 == -1 && lastStart2 == -1 && lastEnd1 == -1 && lastEnd2 == -1)
 
       lastStart1 = start1
       lastStart2 = start2
@@ -736,16 +736,16 @@ object ByWordRt {
     }
 
     fun matchBackward(start1: Int, start2: Int, end1: Int, end2: Int) {
-      assert(lastStart1 != -1 && lastStart2 != -1 && lastEnd1 != -1 && lastEnd2 != -1)
+      check(lastStart1 != -1 && lastStart2 != -1 && lastEnd1 != -1 && lastEnd2 != -1)
 
       if (lastStart1 == start1 && lastStart2 == start2) { // pair of adjustment matched words, match gap between ("A B" - "A B")
-        assert(lastEnd1 == end1 && lastEnd2 == end2)
+        check(lastEnd1 == end1 && lastEnd2 == end2)
 
         matchRange(start1, start2, end1, end2)
         return
       }
       if (lastStart1 < start1 && lastStart2 < start2) { // pair of matched words, with few unmatched ones between ("A X B" - "A Y B")
-        assert(lastEnd1 <= start1 && lastEnd2 <= start2)
+        check(lastEnd1 <= start1 && lastEnd2 <= start2)
 
         matchRange(lastStart1, lastStart2, lastEnd1, lastEnd2)
         matchRange(start1, start2, end1, end2)
@@ -1053,7 +1053,7 @@ object ByWordRt {
 
     override fun equals(other: Any?): Boolean {
       if (this === other) return true
-      if (other == null || javaClass != other.javaClass) return false
+      if (other == null || this::class != other::class) return false
 
       val word = other as WordChunk
 
@@ -1073,13 +1073,13 @@ object ByWordRt {
 
     override fun equals(other: Any?): Boolean {
       if (this === other) return true
-      if (other == null || javaClass != other.javaClass) return false
+      if (other == null || this::class != other::class) return false
 
       return true
     }
 
     override fun hashCode(): Int {
-      return javaClass.hashCode()
+      return this::class.hashCode()
     }
   }
 

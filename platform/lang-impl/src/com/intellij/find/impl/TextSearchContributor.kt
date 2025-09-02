@@ -229,6 +229,9 @@ open class TextSearchContributor(val event: AnActionEvent) : WeightedSearchEvery
 
     override fun canToggleEverywhere() = if (everywhereScope == projectScope) false
     else selectedScopeDescriptor.scopeEquals(everywhereScope) || selectedScopeDescriptor.scopeEquals(projectScope)
+
+    override fun getEverywhereScopeName(): String = everywhereScope.displayName
+    override fun getProjectScopeName(): String? = projectScope?.displayName
   }
 
   override fun dispose() {
@@ -270,11 +273,12 @@ open class TextSearchContributor(val event: AnActionEvent) : WeightedSearchEvery
   }
 
   companion object {
-    private const val ID = "TextSearchContributor"
+    @ApiStatus.Internal
+    const val ID: String = "TextSearchContributor"
     private const val ADVANCED_OPTION_ID = "se.text.search"
     private val SE_TEXT_SELECTED_SCOPE = Key.create<String>("SE_TEXT_SELECTED_SCOPE")
 
-    private fun enabled() = AdvancedSettings.getBoolean(ADVANCED_OPTION_ID)
+    fun enabled(): Boolean = AdvancedSettings.getBoolean(ADVANCED_OPTION_ID)
 
     class Factory : SearchEverywhereContributorFactory<SearchEverywhereItem> {
       override fun isAvailable(project: Project): Boolean = enabled()

@@ -114,13 +114,6 @@ private class ResolutionFacadeWithDebugInfo(
         return delegate.getResolverForProject()
     }
 
-    @FrontendInternals
-    override fun <T : Any> getFrontendService(moduleDescriptor: ModuleDescriptor, serviceClass: Class<T>): T {
-        return wrapExceptions({ ResolvingWhat(serviceClass = serviceClass, moduleDescriptor = moduleDescriptor) }) {
-            delegate.getFrontendService(moduleDescriptor, serviceClass)
-        }
-    }
-
     private inline fun <R> wrapExceptions(resolvingWhat: () -> ResolvingWhat, body: () -> R): R {
         try {
             return body()

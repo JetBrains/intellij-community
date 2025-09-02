@@ -24,9 +24,9 @@ import java.util.List;
 
 public class XMLExternalAnnotator extends ExternalAnnotator<XMLExternalAnnotator.MyHost, XMLExternalAnnotator.MyHost> {
   @Override
-  public @Nullable MyHost collectInformation(@NotNull PsiFile file) {
-    if (!(file instanceof XmlFile)) return null;
-    final XmlDocument document = ((XmlFile)file).getDocument();
+  public @Nullable MyHost collectInformation(@NotNull PsiFile psiFile) {
+    if (!(psiFile instanceof XmlFile)) return null;
+    final XmlDocument document = ((XmlFile)psiFile).getDocument();
     if (document == null) return null;
     XmlTag rootTag = document.getRootTag();
     XmlNSDescriptor nsDescriptor = rootTag == null ? null : rootTag.getNSDescriptor(rootTag.getNamespace(), false);
@@ -45,7 +45,7 @@ public class XMLExternalAnnotator extends ExternalAnnotator<XMLExternalAnnotator
   }
 
   @Override
-  public void apply(@NotNull PsiFile file, MyHost annotationResult, @NotNull AnnotationHolder holder) {
+  public void apply(@NotNull PsiFile psiFile, MyHost annotationResult, @NotNull AnnotationHolder holder) {
     annotationResult.apply(holder);
   }
 

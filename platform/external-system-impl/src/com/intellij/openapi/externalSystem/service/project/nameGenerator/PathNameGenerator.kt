@@ -10,7 +10,6 @@ class PathNameGenerator private constructor(
   private val name: String,
   private val path: Path,
   private val delimiter: String,
-  private val maxFileDepth: Int
 ) {
 
   fun generate(): Iterable<String> {
@@ -20,7 +19,7 @@ class PathNameGenerator private constructor(
     var duplicateCandidate = name
     var i = pathParts.size - 1
     var j = 0
-    while (i >= 0 && j < maxFileDepth) {
+    while (i >= 0 && j < MAX_FILE_DEPTH) {
       val part = pathParts[i]
 
       // do not add prefix which was already included into the name (e.g. as a result of deduplication on the external system side)
@@ -56,8 +55,8 @@ class PathNameGenerator private constructor(
     private const val MAX_FILE_DEPTH = 3
 
     @JvmStatic
-    fun generate(name: String, path: Path, delimiter: String, maxFileDepth: Int = MAX_FILE_DEPTH): Iterable<String> {
-      return PathNameGenerator(name, path, delimiter, maxFileDepth).generate()
+    fun generate(name: String, path: Path, delimiter: String): Iterable<String> {
+      return PathNameGenerator(name, path, delimiter).generate()
     }
   }
 }

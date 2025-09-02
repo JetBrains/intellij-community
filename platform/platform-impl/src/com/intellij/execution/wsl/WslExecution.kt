@@ -43,9 +43,8 @@ fun WSLDistribution.executeInShellAndGetCommandOnlyStdout(commandLine: GeneralCo
   }
   val output: ProcessOutput = executeOnWsl(commandLine, options, timeout, processHandlerCustomizer)
   val stdout = output.stdout
-  val markerText = prefixText + LineSeparator.LF.separatorString
-  val index = PATTERN.find(stdout)?.range?.first ?: -1
-  if (index < 0) {
+  val match = PATTERN.find(stdout)
+  if (match == null) {
     val application = ApplicationManager.getApplication()
     if (application == null || application.isInternal || application.isUnitTestMode) {
       LOG.error("Cannot find '$prefixText' in stdout: $output, command: ${commandLine.commandLineString}")
@@ -60,7 +59,7 @@ fun WSLDistribution.executeInShellAndGetCommandOnlyStdout(commandLine: GeneralCo
     }
     return output
   }
-  return ProcessOutput(stdout.substring(index + markerText.length),
+  return ProcessOutput(stdout.substring(match.range.last + 1),
                        output.stderr,
                        output.exitCode,
                        output.isTimeout,

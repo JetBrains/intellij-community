@@ -22,17 +22,20 @@ internal class JavaModuleDataService : AbstractProjectDataService<JavaModuleData
     toImport: Collection<DataNode<JavaModuleData>>,
     projectData: ProjectData?,
     project: Project,
-    modelsProvider: IdeModifiableModelsProvider
+    modelsProvider: IdeModifiableModelsProvider,
   ) {
     if (projectData == null) return
     for (javaModuleNode in toImport) {
       val moduleNode = javaModuleNode.getParent(ModuleData::class.java) ?: continue
       val module = moduleNode.getUserData(AbstractModuleDataService.MODULE_KEY) ?: continue
+      val moduleData = moduleNode.data
       val javaModuleData = javaModuleNode.data
 
       importLanguageLevel(module, javaModuleData, modelsProvider)
       importTargetBytecodeVersion(module, javaModuleData)
       importCompilerArguments(module, javaModuleData)
+
+      modelsProvider.setModuleCoordinates(module, moduleData)
     }
   }
 

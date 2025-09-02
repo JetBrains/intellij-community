@@ -4,14 +4,17 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.io.PosixFilePermissionsUtil
+import com.intellij.util.text.nullize
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.apache.commons.compress.archivers.zip.ZipFile
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.JvmArchitecture
+import org.jetbrains.intellij.build.LibcImpl
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper
+import org.jetbrains.intellij.build.io.runProcess
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
 import java.io.BufferedInputStream
@@ -26,6 +29,7 @@ import kotlin.io.path.name
 interface OsSpecificDistributionBuilder {
   val context: BuildContext
   val targetOs: OsFamily
+  val targetLibcImpl: LibcImpl
 
   suspend fun copyFilesForOsDistribution(targetPath: Path, arch: JvmArchitecture)
 
@@ -33,11 +37,11 @@ interface OsSpecificDistributionBuilder {
 
   suspend fun writeProductInfoFile(targetDir: Path, arch: JvmArchitecture): Path
 
-  fun generateExecutableFilesPatterns(includeRuntime: Boolean, arch: JvmArchitecture): Sequence<String> = emptySequence()
+  fun generateExecutableFilesPatterns(includeRuntime: Boolean, arch: JvmArchitecture, libc: LibcImpl): Sequence<String> = emptySequence()
 
-  fun generateExecutableFilesMatchers(includeRuntime: Boolean, arch: JvmArchitecture): Map<PathMatcher, String> {
+  fun generateExecutableFilesMatchers(includeRuntime: Boolean, arch: JvmArchitecture, libc: LibcImpl = targetLibcImpl): Map<PathMatcher, String> {
     val fileSystem = FileSystems.getDefault()
-    return generateExecutableFilesPatterns(includeRuntime, arch)
+    return generateExecutableFilesPatterns(includeRuntime, arch, libc)
       .distinct()
       .map(FileUtil::toSystemIndependentName)
       .associateBy {
@@ -45,14 +49,15 @@ interface OsSpecificDistributionBuilder {
       }
   }
 
-  suspend fun checkExecutablePermissions(distribution: Path, root: String, includeRuntime: Boolean = true, arch: JvmArchitecture) {
+  suspend fun checkExecutablePermissions(distribution: Path, root: String, includeRuntime: Boolean = true, arch: JvmArchitecture, libc: LibcImpl) {
     spanBuilder("Permissions check for ${distribution.name}").use {
-      val patterns = generateExecutableFilesMatchers(includeRuntime, arch)
+      val patterns = generateExecutableFilesMatchers(includeRuntime, arch, libc)
       val matchedFiles = when {
         patterns.isEmpty() -> return@use
         SystemInfoRt.isWindows && distribution.isDirectory() -> return@use
         distribution.isDirectory() -> checkDirectory(distribution.resolve(root), patterns.keys)
         "$distribution".endsWith(".tar.gz") -> checkTar(distribution, root, patterns.keys)
+        "$distribution".endsWith(".snap") -> checkSnap(distribution, root, patterns.keys)
         else -> checkZip(distribution, root, patterns.keys)
       }
       val notValid = matchedFiles.filterNot { it.isValid }
@@ -136,6 +141,38 @@ interface OsSpecificDistributionBuilder {
         }
       }.toList()
     }
+  }
+
+  private suspend fun checkSnap(distribution: Path, root: String, patterns: Collection<PathMatcher>): List<MatchedFile> {
+    val stdout = ArrayList<String>()
+    val extractionRoot = "ROOT"
+    runProcess(listOf("unsquashfs", "-llnumeric", "-dest", extractionRoot, "$distribution"), inheritOut = false, stdOutConsumer = {
+      it.nullize()?.trim()?.let { stdout.add(it) }
+    }, stdErrConsumer = context.messages::warning)
+
+    val matched = mutableListOf<MatchedFile>()
+    val extractionPrefix = "$extractionRoot/"
+
+    for (line in stdout) {
+      if (line.isEmpty()) continue
+      if (line[0] == 'd') continue // directory
+      if (line[0] == 'l') continue // symlink
+      if (line[0] != '-') continue // regular file
+      // `-rw-r--r-- 0/0                    1820 2025-03-11 15:19 ROOT/Install-Linux-tar.txt`
+      val i = line.indexOf(extractionPrefix)
+      if (i == -1) continue // preamble
+      val path = line.substring(i + extractionPrefix.length)
+      var entryPath = Path.of(path)
+      if (!root.isEmpty()) {
+        entryPath = Path.of(root).relativize(entryPath)
+      }
+      val matchedPatterns = patterns.filter { it.matches(entryPath) }
+      if (matchedPatterns.isNotEmpty()) {
+        matched.add(MatchedFile(path, line.startsWith("-rwx"), matchedPatterns))
+      }
+    }
+
+    return matched
   }
 
   companion object {

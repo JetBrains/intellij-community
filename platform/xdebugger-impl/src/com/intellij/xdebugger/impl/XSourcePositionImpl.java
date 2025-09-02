@@ -42,18 +42,16 @@ public abstract class XSourcePositionImpl implements XSourcePosition {
 
     return new XSourcePositionImpl(file) {
       private final NotNullLazyValue<Integer> myLine = NotNullLazyValue.atomicLazy(() -> {
-        return ReadAction.compute(() -> {
-          Document document = FileDocumentManager.getInstance().getDocument(file);
-          if (document == null) {
-            return -1;
-          }
-          return DocumentUtil.isValidOffset(offset, document) ? document.getLineNumber(offset) : -1;
-        });
+        Document document = FileDocumentManager.getInstance().getDocument(file);
+        if (document == null) {
+          return -1;
+        }
+        return DocumentUtil.isValidOffset(offset, document) ? document.getLineNumber(offset) : -1;
       });
 
       @Override
       public int getLine() {
-        return myLine.getValue();
+        return getOrComputeLazyValue(myLine);
       }
 
       @Override
@@ -80,20 +78,18 @@ public abstract class XSourcePositionImpl implements XSourcePosition {
 
     return new XSourcePositionImpl(file) {
       private final NotNullLazyValue<XSourcePosition> myDelegate = NotNullLazyValue.atomicLazy(() -> {
-        return ReadAction.compute(() -> {
-          PsiElement elem = pointer.getElement();
-          return XSourcePositionImpl.createByOffset(pointer.getVirtualFile(), elem != null ? elem.getTextOffset() : -1);
-        });
+        PsiElement elem = pointer.getElement();
+        return createByOffset(pointer.getVirtualFile(), elem != null ? elem.getTextOffset() : -1);
       });
 
       @Override
       public int getLine() {
-        return myDelegate.getValue().getLine();
+        return getOrComputeLazyValue(myDelegate).getLine();
       }
 
       @Override
       public int getOffset() {
-        return myDelegate.getValue().getOffset();
+        return getOrComputeLazyValue(myDelegate).getOffset();
       }
 
       @Override
@@ -130,27 +126,25 @@ public abstract class XSourcePositionImpl implements XSourcePosition {
 
     return new XSourcePositionImpl(file) {
       private final NotNullLazyValue<Integer> myOffset = NotNullLazyValue.atomicLazy(() -> {
-        return ReadAction.compute(() -> {
-          int offset;
-          if (file instanceof LightVirtualFile || file instanceof HttpVirtualFile) {
+        int offset;
+        if (file instanceof LightVirtualFile || file instanceof HttpVirtualFile) {
+          return -1;
+        }
+        else {
+          Document document = FileDocumentManager.getInstance().getDocument(file);
+          if (document == null) {
             return -1;
           }
-          else {
-            Document document = FileDocumentManager.getInstance().getDocument(file);
-            if (document == null) {
-              return -1;
-            }
-            int l = Math.max(0, line);
-            int c = Math.max(0, column);
+          int l = Math.max(0, line);
+          int c = Math.max(0, column);
 
-            offset = l < document.getLineCount() ? document.getLineStartOffset(l) + c : -1;
+          offset = l < document.getLineCount() ? document.getLineStartOffset(l) + c : -1;
 
-            if (offset >= document.getTextLength()) {
-              offset = document.getTextLength() - 1;
-            }
+          if (offset >= document.getTextLength()) {
+            offset = document.getTextLength() - 1;
           }
-          return offset;
-        });
+        }
+        return offset;
       });
 
       @Override
@@ -160,7 +154,7 @@ public abstract class XSourcePositionImpl implements XSourcePosition {
 
       @Override
       public int getOffset() {
-        return myOffset.getValue();
+        return getOrComputeLazyValue(myOffset);
       }
     };
   }
@@ -173,5 +167,16 @@ public abstract class XSourcePositionImpl implements XSourcePosition {
   @Override
   public String toString() {
     return "XSourcePositionImpl[" + myFile + ":" + getLine() + "(" + getOffset() + ")]";
+  }
+
+
+  /**
+   * If the value is computed, returns it, otherwise computes the value inside a read action and returns it.
+   */
+  private static @NotNull <T> T getOrComputeLazyValue(@NotNull NotNullLazyValue<T> lazyValue) {
+    if (lazyValue.isComputed()) {
+      return lazyValue.getValue();
+    }
+    return ReadAction.compute(() -> lazyValue.getValue());
   }
 }

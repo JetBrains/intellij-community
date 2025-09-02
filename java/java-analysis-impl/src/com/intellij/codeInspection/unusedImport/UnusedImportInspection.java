@@ -30,12 +30,12 @@ public final class UnusedImportInspection extends GlobalSimpleInspectionTool {
   public static final @NonNls String SHORT_NAME = "UNUSED_IMPORT";
 
   @Override
-  public void checkFile(@NotNull PsiFile file,
+  public void checkFile(@NotNull PsiFile psiFile,
                         @NotNull InspectionManager manager,
                         @NotNull ProblemsHolder problemsHolder,
                         @NotNull GlobalInspectionContext globalContext,
                         @NotNull ProblemDescriptionsProcessor problemDescriptionsProcessor) {
-    if (!(file instanceof PsiJavaFile javaFile) || FileTypeUtils.isInServerPageFile(file)) return;
+    if (!(psiFile instanceof PsiJavaFile javaFile) || FileTypeUtils.isInServerPageFile(psiFile)) return;
     final ImportsAreUsedVisitor visitor = new ImportsAreUsedVisitor(javaFile);
     javaFile.accept(visitor);
     PsiPolyVariantReference reference;

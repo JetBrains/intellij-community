@@ -9,7 +9,6 @@ import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.navbar.NavBarVmItem.Companion.SELECTED_ITEMS
@@ -23,8 +22,10 @@ import com.intellij.ui.*
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.popup.PopupOwner
 import com.intellij.ui.speedSearch.SpeedSearchSupply
+import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.ui.EDT
+import com.intellij.util.ui.RawSwingDispatcher
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.accessibility.AccessibleContextUtil
@@ -160,6 +161,7 @@ class NewNavBarPanel(
       field = value
     }
 
+  @OptIn(AwaitCancellationAndInvoke::class)
   private fun showPopup(cs: CoroutineScope, itemComponentIndex: Int, vm: NavBarPopupVm<*>) {
     NavBarShowPopup.log(project)
     val itemComponent = myItemComponents[itemComponentIndex]
@@ -238,6 +240,7 @@ class NewNavBarPanel(
     return accessibleContext
   }
 
+  @Suppress("RedundantInnerClassModifier")
   private inner class AccessibleNewNavBarPanel : AccessibleJPanel() {
     override fun getAccessibleRole(): AccessibleRole = AccessibilityUtils.GROUPED_ELEMENTS
   }

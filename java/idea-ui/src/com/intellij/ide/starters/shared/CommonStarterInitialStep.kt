@@ -144,6 +144,7 @@ abstract class CommonStarterInitialStep(
       projectWizardJdkComboBox(
         this, sdkProperty, sdkDownloadTaskProperty,
         locationProperty,
+        null,
         { sdk -> wizardContext.projectJdk = sdk },
         wizardContext.disposable,
         wizardContext.projectJdk,

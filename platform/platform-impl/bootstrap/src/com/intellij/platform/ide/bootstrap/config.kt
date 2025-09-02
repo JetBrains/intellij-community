@@ -7,13 +7,13 @@ import com.intellij.idea.AppMode
 import com.intellij.openapi.application.ConfigImportHelper
 import com.intellij.openapi.application.CustomConfigMigrationOption
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.ui.ExperimentalUI
+import com.intellij.util.ui.RawSwingDispatcher
 import kotlinx.coroutines.*
 import java.io.File
 import java.nio.file.Files

@@ -17,6 +17,7 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -29,7 +30,10 @@ import com.intellij.psi.impl.java.stubs.index.JavaAnnotationIndex;
 import com.intellij.psi.search.DelegatingGlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.CachedValueProvider.Result;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
@@ -130,28 +134,19 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
 
   @Override
   @NotNull
-  List<String> getDefaultNullables() {
+  public List<String> getDefaultNullables() {
     return new ArrayList<>(myDefaultNullables.keySet());
   }
 
   @Override
   @NotNull
-  List<String> getDefaultNotNulls() {
+  public List<String> getDefaultNotNulls() {
     return new ArrayList<>(myDefaultNotNulls.keySet());
   }
 
   @Override
   public @NotNull Optional<Nullability> getAnnotationNullability(String name) {
-    if (myNotNulls.contains(name)) {
-      return Optional.of(Nullability.NOT_NULL);
-    }
-    if (myNullables.contains(name)) {
-      return Optional.of(Nullability.NULLABLE);
-    }
-    if (myDefaultUnknowns.containsKey(name)) {
-      return Optional.of(Nullability.UNKNOWN);
-    }
-    return Optional.empty();
+    return Optional.ofNullable(getAllNullabilityAnnotationsWithNickNames().getNullability(name));
   }
 
   @Override
@@ -299,44 +294,66 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
   }
 
   @Override
-  @Nullable
-  NullabilityAnnotationInfo getNullityDefault(@NotNull PsiModifierListOwner container,
-                                              PsiAnnotation.TargetType @NotNull [] placeTargetTypes,
-                                              @NotNull PsiElement context, boolean superPackage) {
-    PsiModifierList modifierList = container.getModifierList();
-    if (modifierList == null) return null;
-    for (PsiAnnotation annotation : modifierList.getAnnotations()) {
-      if (container instanceof PsiPackage) {
-        VirtualFile annotationFile = PsiUtilCore.getVirtualFile(annotation);
-        VirtualFile ownerFile = PsiUtilCore.getVirtualFile(context);
-        if (annotationFile != null && ownerFile != null && !annotationFile.equals(ownerFile)) {
-          ProjectFileIndex index = ProjectRootManager.getInstance(container.getProject()).getFileIndex();
-          VirtualFile annotationRoot = index.getClassRootForFile(annotationFile);
-          VirtualFile ownerRoot = index.getClassRootForFile(ownerFile);
-          if (ownerRoot != null && !ownerRoot.equals(annotationRoot)) {
-            continue;
+  protected @NotNull ContextNullabilityInfo findNullityDefaultOnPackage(PsiAnnotation.TargetType @NotNull [] placeTargetTypes,
+                                                                        PsiFile file) {
+    boolean superPackage = false;
+    ContextNullabilityInfo info = ContextNullabilityInfo.EMPTY;
+    ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
+    VirtualFile vFile = file.getVirtualFile();
+    if (vFile == null) return info;
+    VirtualFile root = index.getSourceRootForFile(vFile);
+    boolean compiled = false;
+    if (root == null) {
+      root = index.getClassRootForFile(vFile);
+      if (root == null) return info;
+      compiled = true;
+    }
+    // Single-file source root -- no package-info processing for now
+    if (root.equals(vFile)) return info;
+    PsiDirectory directory = file.getContainingDirectory();
+    while (directory != null) {
+      PsiFile packageFile = directory.findFile(compiled ? PsiPackage.PACKAGE_INFO_CLS_FILE : PsiPackage.PACKAGE_INFO_FILE);
+      if (packageFile instanceof PsiJavaFile javaFile) {
+        PsiPackageStatement stmt = javaFile.getPackageStatement();
+        if (stmt != null) {
+          PsiModifierList modifierList = stmt.getAnnotationList();
+          if (modifierList != null) {
+            for (PsiAnnotation annotation : modifierList.getAnnotations()) {
+              info = info.orElse(checkNullityDefault(annotation, placeTargetTypes, superPackage));
+            }
           }
         }
       }
-      NullabilityAnnotationInfo result = checkNullityDefault(annotation, context, placeTargetTypes, superPackage);
-      if (result != null) {
-        return result;
-      }
+      if (root.equals(directory.getVirtualFile())) break;
+      directory = directory.getParentDirectory();
+      superPackage = true;
     }
-    return null;
+    return info;
   }
 
-  private @Nullable NullabilityAnnotationInfo checkNullityDefault(@NotNull PsiAnnotation annotation,
-                                                                  @NotNull PsiElement context,
-                                                                  PsiAnnotation.TargetType @NotNull [] placeTargetTypes,
-                                                                  boolean superPackage) {
-    for (AnnotationPackageSupport support : myAnnotationSupports) {
-      NullabilityAnnotationInfo info = support.getNullabilityByContainerAnnotation(annotation, context, placeTargetTypes, superPackage);
-      if (info != null) {
-        return info;
+  @Override
+  protected @NotNull ContextNullabilityInfo getNullityDefault(@NotNull PsiModifierListOwner container,
+                                                              PsiAnnotation.TargetType @NotNull [] placeTargetTypes) {
+    LOG.assertTrue(!(container instanceof PsiPackage)); // Packages are handled separately in findNullityDefaultOnPackage
+    ContextNullabilityInfo res = ContextNullabilityInfo.EMPTY;
+    PsiModifierList modifierList = container.getModifierList();
+    if (modifierList != null) {
+      for (PsiAnnotation annotation : modifierList.getAnnotations()) {
+        ContextNullabilityInfo info = checkNullityDefault(annotation, placeTargetTypes, false);
+        res = res.orElse(info);
       }
     }
-    return null;
+    return res;
+  }
+
+  private @NotNull ContextNullabilityInfo checkNullityDefault(@NotNull PsiAnnotation annotation,
+                                                              PsiAnnotation.TargetType @NotNull [] placeTargetTypes,
+                                                              boolean superPackage) {
+    ContextNullabilityInfo info = ContextNullabilityInfo.EMPTY;
+    for (AnnotationPackageSupport support : myAnnotationSupports) {
+      info = info.orElse(support.getNullabilityByContainerAnnotation(annotation, placeTargetTypes, superPackage));
+    }
+    return info;
   }
 
   private @Unmodifiable @NotNull List<String> filterNickNames(@NotNull Nullability nullability) {
@@ -344,14 +361,16 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
   }
 
   @Override
-  protected @NotNull List<String> getNullablesWithNickNames() {
+  @NotNull
+  public List<String> getNullablesWithNickNames() {
     return CachedValuesManager.getManager(myProject).getCachedValue(myProject, () ->
       Result.create(StreamEx.of(getNullables(), filterNickNames(Nullability.NULLABLE)).toFlatList(Function.identity()),
                                         PsiModificationTracker.MODIFICATION_COUNT));
   }
 
   @Override
-  protected @NotNull List<String> getNotNullsWithNickNames() {
+  @NotNull
+  public List<String> getNotNullsWithNickNames() {
     return CachedValuesManager.getManager(myProject).getCachedValue(myProject, () ->
       Result.create(StreamEx.of(getNotNulls(), filterNickNames(Nullability.NOT_NULL)).toFlatList(Function.identity()),
                                         PsiModificationTracker.MODIFICATION_COUNT));
@@ -359,39 +378,38 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
 
   @Override
   protected @NotNull NullabilityAnnotationDataHolder getAllNullabilityAnnotationsWithNickNames() {
+    if (DumbService.isDumb(myProject) || myProject.isDefault()) {
+      // Searching for nullability nicknames is not available in the dumb mode or for default project
+      return NullabilityAnnotationDataHolder.fromMap(getNullabilityMap());
+    }
     return CachedValuesManager.getManager(myProject).getCachedValue(myProject, () -> {
-      Map<String, Nullability> result = new HashMap<>();
-      for (String qName : myDefaultAll) {
-        result.put(qName, null);
-      }
-      for (String qName : getNotNulls()) {
-        result.put(qName, Nullability.NOT_NULL);
-      }
-      for (String qName : getNullables()) {
-        result.put(qName, Nullability.NULLABLE);
-      }
-      for (String qName : myDefaultUnknowns.keySet()) {
-        result.put(qName, Nullability.UNKNOWN);
-      }
+      Map<String, Nullability> result = getNullabilityMap();
       for (PsiClass aClass : getAllNullabilityNickNames()) {
         String qName = aClass.getQualifiedName();
         if (qName != null) {
           result.putIfAbsent(qName, Jsr305Support.getNickNamedNullability(aClass));
         }
       }
-      NullabilityAnnotationDataHolder holder = new NullabilityAnnotationDataHolder() {
-        @Override
-        public Set<String> qualifiedNames() {
-          return result.keySet();
-        }
-
-        @Override
-        public @Nullable Nullability getNullability(String annotation) {
-          return result.get(annotation);
-        }
-      };
+      NullabilityAnnotationDataHolder holder = NullabilityAnnotationDataHolder.fromMap(result);
       return Result.create(holder, PsiModificationTracker.MODIFICATION_COUNT);
     });
+  }
+
+  private @NotNull Map<String, Nullability> getNullabilityMap() {
+    Map<String, Nullability> result = new HashMap<>();
+    for (String qName : myDefaultAll) {
+      result.put(qName, null);
+    }
+    for (String qName : getNotNulls()) {
+      result.put(qName, Nullability.NOT_NULL);
+    }
+    for (String qName : getNullables()) {
+      result.put(qName, Nullability.NULLABLE);
+    }
+    for (String qName : myDefaultUnknowns.keySet()) {
+      result.put(qName, Nullability.UNKNOWN);
+    }
+    return result;
   }
 
   @Override
@@ -411,13 +429,13 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
   }
 
   @Override
-  protected @Nullable NullabilityAnnotationInfo findNullityDefaultOnModule(PsiAnnotation.@NotNull TargetType @NotNull [] targetTypes,
-                                                                           @NotNull PsiElement element) {
+  protected @NotNull ContextNullabilityInfo findNullityDefaultOnModule(PsiAnnotation.@NotNull TargetType @NotNull [] targetTypes,
+                                                                       @NotNull PsiElement element) {
     PsiJavaModule module = JavaPsiModuleUtil.findDescriptorByElement(element);
     if (module != null) {
-      return getNullityDefault(module, targetTypes, element, false);
+      return getNullityDefault(module, targetTypes);
     }
-    return null;
+    return ContextNullabilityInfo.EMPTY;
   }
   
   public @NotNull OptionController getOptionController() {

@@ -9,15 +9,10 @@ import org.jetbrains.annotations.Nls
 
 internal class CompositeMarker(
   markerId: Int,
-  builder: ParsingTreeBuilder,
+  builder: SyntaxTreeBuilderImpl,
 ) : ProductionMarker(markerId, builder), SyntaxTreeBuilder.Marker {
 
-  @get:JvmName("_getType") // avoiding clash with API method getType
-  @set:JvmName("_setType")
   lateinit var type: SyntaxElementType
-
-  @get:JvmName("_getType") // avoiding clash with API method getEndIndex
-  @set:JvmName("_setType")
   var endIndex: Int = -1
 
   override fun isErrorMarker(): Boolean = false
@@ -29,7 +24,7 @@ internal class CompositeMarker(
       val startOffset = getStartOffset() - builder.startOffset
       val endOffset = getEndOffset() - builder.startOffset
       val text = originalText.subSequence(startOffset, endOffset)
-      assert(text.length == endOffset - startOffset)
+      check(text.length == endOffset - startOffset)
       return text
     }
 
@@ -42,14 +37,14 @@ internal class CompositeMarker(
   }
 
   override fun getEndOffset(): Int =
-    builder.myLexStarts[endIndex] + builder.startOffset
+    builder.lexStart(endIndex) + builder.startOffset
 
-  override fun getEndIndex(): Int = endIndex
+  override fun getEndTokenIndex(): Int = endIndex
 
   override fun getErrorMessage(): String? =
-    if (getTokenType() == SyntaxTokenTypes.ERROR_ELEMENT) builder.myOptionalData.getDoneError(markerId) else null
+    if (getNodeType() === SyntaxTokenTypes.ERROR_ELEMENT) builder.myOptionalData.getDoneError(markerId) else null
 
-  override fun getTokenType(): SyntaxElementType =
+  override fun getNodeType(): SyntaxElementType =
     type
 
   override fun precede(): SyntaxTreeBuilder.Marker {
@@ -66,7 +61,7 @@ internal class CompositeMarker(
   }
 
   override fun done(type: SyntaxElementType) {
-    if (type == SyntaxTokenTypes.ERROR_ELEMENT) {
+    if (type === SyntaxTokenTypes.ERROR_ELEMENT) {
       builder.logger.warn("Error elements with empty message are discouraged. Please use builder.error() instead", RuntimeException())
     }
     this@CompositeMarker.type = type
@@ -79,7 +74,7 @@ internal class CompositeMarker(
   }
 
   override fun doneBefore(type: SyntaxElementType, before: SyntaxTreeBuilder.Marker) {
-    if (type == SyntaxTokenTypes.ERROR_ELEMENT) {
+    if (type === SyntaxTokenTypes.ERROR_ELEMENT) {
       builder.logger.warn("Error elements with empty message are discouraged. Please use builder.errorBefore() instead", RuntimeException())
     }
     this@CompositeMarker.type = type
@@ -90,7 +85,7 @@ internal class CompositeMarker(
     val marker = before as CompositeMarker
     val errorNode = builder.pool.allocateErrorNode()
     errorNode.setErrorMessage(errorMessage)
-    errorNode._startIndex = marker.getStartIndex()
+    errorNode.startIndex = marker.getStartTokenIndex()
     builder.myProduction.addBefore(errorNode, marker)
     doneBefore(type, before)
   }
@@ -127,7 +122,7 @@ internal class CompositeMarker(
     get() = endIndex != -1
 
   override fun toString(): String {
-    if (getStartIndex() < 0) return "<dropped>"
+    if (getStartTokenIndex() < 0) return "<dropped>"
     val isDone = isDone
     val originalText = builder.text
     val startOffset = getStartOffset() - builder.startOffset
@@ -137,8 +132,8 @@ internal class CompositeMarker(
   }
 
   override fun getLexemeIndex(done: Boolean): Int =
-    if (done) endIndex else _startIndex
+    if (done) endIndex else startIndex
 
   override fun setLexemeIndex(value: Int, done: Boolean) =
-    if (done) endIndex = value else _startIndex = value
+    if (done) endIndex = value else startIndex = value
 }

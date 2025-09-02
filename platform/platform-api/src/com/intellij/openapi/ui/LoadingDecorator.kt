@@ -9,7 +9,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.ComponentManagerEx
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBLayeredPane
@@ -18,7 +17,6 @@ import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.util.animation.FloatConsumer
 import com.intellij.util.ui.*
 import kotlinx.coroutines.*
-import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import java.awt.*
 import java.awt.image.BufferedImage
@@ -36,15 +34,19 @@ open class LoadingDecorator @JvmOverloads constructor(
     val OVERLAY_BACKGROUND: Color = JBColor.namedColor("BigSpinner.background", JBColor.PanelBackground)
   }
 
-  constructor(content: JComponent?,
-              parent: Disposable,
-              startDelayMs: Int,
-              useMinimumSize: Boolean = false,
-              icon: AsyncProcessIcon) : this(content = content,
-                                             parent = parent,
-                                             startDelayMs = startDelayMs,
-                                             useMinimumSize = useMinimumSize,
-                                             icon = icon as AnimatedIcon)
+  constructor(
+    content: JComponent?,
+    parent: Disposable,
+    startDelayMs: Int,
+    useMinimumSize: Boolean = false,
+    icon: AsyncProcessIcon,
+  ) : this(
+    content = content,
+    parent = parent,
+    startDelayMs = startDelayMs,
+    useMinimumSize = useMinimumSize,
+    icon = icon as AnimatedIcon,
+  )
 
   var overlayBackground: Color? = null
 
@@ -77,7 +79,7 @@ open class LoadingDecorator @JvmOverloads constructor(
     pane.add(content, JLayeredPane.DEFAULT_LAYER, 0)
     Disposer.register(parent) {
       fadeOutAnimator.dispose()
-      loadingLayer.progress.dispose()
+      Disposer.dispose(loadingLayer.progress)
       startRequestJob?.cancel()
     }
   }
@@ -95,7 +97,7 @@ open class LoadingDecorator @JvmOverloads constructor(
 
      We need to add / remove the loading layer on demand to preserve the blit-based scrolling.
 
-     Blit-acceleration copies as much of the rendered area as possible and then repaints only newly exposed region.
+     Blit-acceleration copies as much of the rendered area as possible and then repaints only a newly exposed region.
      This helps to improve scrolling performance and to reduce CPU usage (especially if drawing is compute-intensive). */
   private fun addLoadingLayerOnDemand() {
     if (pane !== loadingLayer.parent) {
@@ -129,9 +131,7 @@ open class LoadingDecorator @JvmOverloads constructor(
       startRequestJob = (ApplicationManager.getApplication() as ComponentManagerEx).getCoroutineScope().launch {
         delay((startDelayMs - (System.currentTimeMillis() - scheduledTime)).coerceAtLeast(0))
         withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-          blockingContext {
-            doStartLoading(takeSnapshot)
-          }
+          doStartLoading(takeSnapshot)
         }
       }
     }
@@ -157,13 +157,11 @@ open class LoadingDecorator @JvmOverloads constructor(
     pane.repaint()
   }
 
-  private inner class LoadingLayer(processIcon: AnimatedIcon) : JPanel() {
+  private inner class LoadingLayer(@JvmField val progress: AnimatedIcon) : JPanel() {
     val text = JLabel("", SwingConstants.CENTER)
 
     private var snapshot: BufferedImage? = null
     private var snapshotBg: Color? = null
-
-    val progress: AnimatedIcon
 
     val isLoading: Boolean
       get() = _visible
@@ -176,9 +174,8 @@ open class LoadingDecorator @JvmOverloads constructor(
     init {
       isOpaque = false
       isVisible = false
-      progress = processIcon
       progress.isOpaque = false
-      textComponent = customizeLoadingLayer(this, text, progress)
+      textComponent = customizeLoadingLayer(parent = this, text = text, icon = progress)
       progress.suspend()
     }
 
@@ -193,7 +190,7 @@ open class LoadingDecorator @JvmOverloads constructor(
         isVisible = true
         currentAlpha = -1f
         if (takeSnapshot && width > 0 && height > 0) {
-          snapshot = ImageUtil.createImage(graphics, width, height, BufferedImage.TYPE_INT_RGB)
+          snapshot = ImageUtil.createImage(GraphicsUtil.safelyGetGraphics(this), width, height, BufferedImage.TYPE_INT_RGB)
           val g = snapshot!!.createGraphics()
           pane.paint(g)
           val opaque = UIUtil.findNearestOpaque(this)
@@ -218,9 +215,11 @@ open class LoadingDecorator @JvmOverloads constructor(
     }
 
     override fun paintComponent(g: Graphics) {
+      val snapshot = snapshot
       if (snapshot != null) {
-        if (snapshot!!.width == width && snapshot!!.height == height) {
+        if (snapshot.width == width && snapshot.height == height) {
           g.drawImage(snapshot, 0, 0, width, height, null)
+          @Suppress("UseJBColor")
           g.color = Color(200, 200, 200, 240)
           g.fillRect(0, 0, width, height)
           return
@@ -229,7 +228,7 @@ open class LoadingDecorator @JvmOverloads constructor(
           disposeSnapshot()
         }
       }
-      val background = if (snapshotBg == null) overlayBackground else snapshotBg
+      val background = snapshotBg ?: overlayBackground
       if (background != null) {
         g.color = background
         g.fillRect(0, 0, width, height)
@@ -252,11 +251,15 @@ open class LoadingDecorator @JvmOverloads constructor(
   interface CursorAware
 }
 
-@Internal
-class LoadingLayerAnimator(
+private class LoadingLayerAnimator(
   private val setAlpha: FloatConsumer,
   private val end: () -> Unit,
-) : Animator("Loading", 10, if (RemoteDesktopService.isRemoteSession()) 2500 else 500, false) {
+) : Animator(
+  name = "Loading",
+  totalFrames = 10,
+  cycleDuration = if (RemoteDesktopService.isRemoteSession()) 2500 else 500,
+  isRepeatable = false,
+) {
   override fun paintNow(frame: Int, totalFrames: Int, cycle: Int) {
     setAlpha.accept(1f - (frame.toFloat() / totalFrames.toFloat()))
   }

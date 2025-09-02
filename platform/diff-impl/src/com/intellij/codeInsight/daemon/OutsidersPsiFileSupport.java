@@ -35,8 +35,8 @@ public final class OutsidersPsiFileSupport {
   @ApiStatus.Internal
   public static class HighlightFilter implements HighlightInfoFilter {
     @Override
-    public boolean accept(@NotNull HighlightInfo info, @Nullable PsiFile file) {
-      if (!isOutsiderFile(file)) return true;
+    public boolean accept(@NotNull HighlightInfo info, @Nullable PsiFile psiFile) {
+      if (!isOutsiderFile(psiFile)) return true;
       if (info.getSeverity() == HighlightSeverity.ERROR) return false;
       return true;
     }
@@ -45,8 +45,8 @@ public final class OutsidersPsiFileSupport {
   @ApiStatus.Internal
   public static class IntentionFilter implements IntentionActionFilter {
     @Override
-    public boolean accept(@NotNull IntentionAction intentionAction, @Nullable PsiFile file) {
-      return !isOutsiderFile(file);
+    public boolean accept(@NotNull IntentionAction intentionAction, @Nullable PsiFile psiFile) {
+      return !isOutsiderFile(psiFile);
     }
   }
 

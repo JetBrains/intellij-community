@@ -2,9 +2,11 @@
 package com.jetbrains.python.statistics
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
+import com.intellij.internal.statistic.eventLog.events.BooleanEventField
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
+import com.intellij.internal.statistic.eventLog.events.StringEventField
 import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.openapi.module.Module
@@ -14,6 +16,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.util.asSafely
 import com.jetbrains.python.PythonLanguage
 import com.jetbrains.python.extensions.getSdk
+import com.jetbrains.python.hatch.sdk.isHatch
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase
 import com.jetbrains.python.sdk.PySdkUtil
@@ -30,13 +33,13 @@ import com.jetbrains.python.statistics.InterpreterType.*
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import com.jetbrains.python.venvReader.VirtualEnvReader
 
-val Project.modules get() = ModuleManager.getInstance(this).modules
-val Project.sdks get() = modules.mapNotNull(Module::getSdk)
+val Project.modules: Array<Module> get() = ModuleManager.getInstance(this).modules
+val Project.sdks: List<Sdk> get() = modules.mapNotNull(Module::getSdk)
 
 /**
- * Adds python language and interpreter version if module has sdk
+ * Adds python language and interpreter version if the module has sdk
  */
-fun getPythonSpecificInfo(module: Module) =
+fun getPythonSpecificInfo(module: Module): List<EventPair<*>> =
   module.getSdk()?.let { sdk -> getPythonSpecificInfo(sdk) } ?: emptyList()
 
 /**
@@ -68,8 +71,8 @@ fun registerPythonSpecificEvent(group: EventLogGroup, eventId: String, vararg ex
                                    *extraFields)
 }
 
-val PYTHON_VERSION = EventFields.StringValidatedByRegexpReference("python_version", "version")
-val PYTHON_IMPLEMENTATION = EventFields.String("python_implementation", listOf("Python"))
+val PYTHON_VERSION: StringEventField = EventFields.StringValidatedByRegexpReference("python_version", "version")
+val PYTHON_IMPLEMENTATION: StringEventField = EventFields.String("python_implementation", listOf("Python"))
 
 
 enum class InterpreterTarget(val value: String) {
@@ -92,7 +95,7 @@ enum class InterpreterTarget(val value: String) {
   TARGET_WSL("wsl"),
 }
 
-val EXECUTION_TYPE = EventFields.String("executionType", listOf(
+val EXECUTION_TYPE: StringEventField = EventFields.String("executionType", listOf(
   LOCAL.value,
   REMOTE_DOCKER.value,
   REMOTE_DOCKER_COMPOSE.value,
@@ -122,11 +125,14 @@ enum class InterpreterCreationMode(val value: String) {
   NA("not_applicable"),
 }
 
-val INTERPRETER_TYPE = EventFields.String("interpreterType", InterpreterType.entries.map { it.value } )
+val INTERPRETER_TYPE: StringEventField = EventFields.String("interpreterType", InterpreterType.entries.map { it.value })
 
-val INTERPRETER_CREATION_MODE = EventFields.String("interpreter_creation_mode", listOf(SIMPLE.value,
-                                                                                       CUSTOM.value,
-                                                                                       NA.value))
+val INTERPRETER_CREATION_MODE: StringEventField = EventFields.String(
+  "interpreter_creation_mode",
+  listOf(SIMPLE.value, CUSTOM.value, NA.value)
+)
+
+internal val PREVIOUSLY_CONFIGURED: BooleanEventField = EventFields.Boolean("previously_configured")
 
 
 private val Sdk.pythonImplementation: String get() = PythonSdkFlavor.getFlavor(this)?.name ?: "Python"
@@ -145,6 +151,7 @@ val Sdk.interpreterType: InterpreterType
     isPipEnv -> PIPENV
     isUv -> UV
     isPoetry -> POETRY
+    isHatch -> HATCH
     PythonSdkUtil.isConda(this) || this.sdkAdditionalData.asSafely<PythonSdkAdditionalData>()?.flavor is CondaEnvSdkFlavor -> CONDAVENV
     VirtualEnvReader.Instance.isPyenvSdk(getHomePath()) -> PYENV
     PythonSdkUtil.isVirtualEnv(this) -> VIRTUALENV

@@ -10,7 +10,6 @@ import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.inspections.quickfix.PyRemoveAssignmentQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.search.PyOverridingMethodsSearch;
-import com.jetbrains.python.psi.types.PyNoneType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.sdk.PythonSdkUtil;
@@ -19,6 +18,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static com.jetbrains.python.psi.types.PyNoneTypeKt.isNoneType;
 
 /**
  * User: ktisha
@@ -51,9 +52,9 @@ public final class PyNoneFunctionAssignmentInspection extends PyInspection {
         final PyType type = myTypeEvalContext.getType(value);
         final PyExpression callee = call.getCallee();
 
-        if (type instanceof PyNoneType && callee != null) {
+        if (isNoneType(type) && callee != null) {
           final Condition<PyCallable> ignoredCallable =
-            callable -> myTypeEvalContext.getReturnType(callable) != PyNoneType.INSTANCE ||
+            callable -> !isNoneType(myTypeEvalContext.getReturnType(callable)) ||
                         PythonSdkUtil.isElementInSkeletons(callable) ||
                         callable instanceof PyFunction && hasInheritors((PyFunction)callable);
 

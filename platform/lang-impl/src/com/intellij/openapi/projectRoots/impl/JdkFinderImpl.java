@@ -8,6 +8,7 @@ import com.intellij.platform.eel.provider.LocalEelDescriptor;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -24,7 +25,7 @@ public final class JdkFinderImpl implements JdkFinder {
   }
 
   @Override
-  public @NotNull List<@NotNull String> suggestHomePaths(@Nullable Project project) {
+  public @NotNull @Unmodifiable List<@NotNull String> suggestHomePaths(@Nullable Project project) {
     return JavaHomeFinder.suggestHomePaths(project == null ? LocalEelDescriptor.INSTANCE : EelProviderUtil.getEelDescriptor(project),
                                            false);
   }

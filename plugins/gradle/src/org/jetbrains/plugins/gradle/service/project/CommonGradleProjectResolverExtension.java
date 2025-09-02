@@ -830,8 +830,7 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
     throws IllegalStateException {
 
     final GradleExecutionSettings gradleExecutionSettings = resolverContext.getSettings();
-    final String projectGradleVersion = resolverContext.getProjectGradleVersion();
-    if (projectGradleVersion != null && GradleVersionUtil.isGradleOlderThan(projectGradleVersion, "4.0")) {
+    if (GradleVersionUtil.isGradleOlderThan(resolverContext.getGradleVersion(), "4.0")) {
       final IdeaModule dependencyModule = getDependencyModuleByReflection(dependency);
       if (dependencyModule != null) {
         final ModuleData moduleData =

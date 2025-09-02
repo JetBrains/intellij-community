@@ -2,24 +2,21 @@ package com.intellij.python.hatch.runtime
 
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.provider.localEel
-import com.intellij.python.community.execService.EelProcessInteractiveHandler
-import com.intellij.python.community.execService.ExecOptions
-import com.intellij.python.community.execService.ExecService
-import com.intellij.python.community.execService.ProcessOutputTransformer
-import com.intellij.python.community.execService.WhatToExec.Binary
+import com.intellij.python.community.execService.*
 import com.intellij.python.hatch.*
 import com.intellij.python.hatch.cli.HatchCli
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.PythonHomePath
 import com.jetbrains.python.Result
-import com.jetbrains.python.errorProcessing.PyError
+import com.jetbrains.python.errorProcessing.PyExecResult
+import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.resolvePythonBinary
 import java.nio.file.Path
 import kotlin.io.path.isDirectory
 import kotlin.io.path.isExecutable
 
 class HatchRuntime(
-  val hatchBinary: Binary,
+  val hatchBinary: Path,
   val execOptions: ExecOptions,
   private val execService: ExecService = ExecService(),
 ) {
@@ -57,17 +54,17 @@ class HatchRuntime(
    * Pure execution of [hatchBinary] with command line [arguments] and [execOptions] by [execService]
    * Doesn't make any validation of stdout/stderr content.
    */
-  internal suspend fun <T> execute(vararg arguments: String, processOutputTransformer: ProcessOutputTransformer<T>): Result<T, PyError.ExecException> {
-    return execService.execute(hatchBinary, arguments.toList(), execOptions, processOutputTransformer)
+  internal suspend fun <T> execute(vararg arguments: String, processOutputTransformer: ProcessOutputTransformer<T>): PyExecResult<T> {
+    return execService.execute(hatchBinary, arguments.toList(), execOptions, processOutputTransformer = processOutputTransformer)
   }
 
-  internal suspend fun <T> executeInteractive(vararg arguments: String, eelProcessInteractiveHandler: EelProcessInteractiveHandler<T>): Result<T, PyError.ExecException> {
-    return execService.executeInteractive(hatchBinary, arguments.toList(), execOptions, eelProcessInteractiveHandler)
+  internal suspend fun <T> executeInteractive(vararg arguments: String, processSemiInteractiveFun: ProcessSemiInteractiveFun<T>): PyExecResult<T> {
+    return execService.executeAdvanced(hatchBinary, { addArgs(*arguments) }, execOptions, processSemiInteractiveHandler(code = processSemiInteractiveFun))
   }
 
-  internal suspend fun resolvePythonVirtualEnvironment(pythonHomePath: PythonHomePath): Result<PythonVirtualEnvironment, PyError> {
+  internal suspend fun resolvePythonVirtualEnvironment(pythonHomePath: PythonHomePath): PyResult<PythonVirtualEnvironment> {
     val pythonVersion = pythonHomePath.takeIf { it.isDirectory() }?.resolvePythonBinary()?.let { pythonBinaryPath ->
-      execService.execGetStdout(Binary(pythonBinaryPath), listOf("--version")).getOr { return it }.trim()
+      execService.execGetStdout(pythonBinaryPath, listOf("--version")).getOr { return it }.trim()
     }
     val pythonVirtualEnvironment = when {
       pythonVersion == null -> PythonVirtualEnvironment.NotExisting(pythonHomePath)
@@ -101,7 +98,7 @@ suspend fun createHatchRuntime(
   val actualEnvVars = defaultVariables + envVars
 
   val runtime = HatchRuntime(
-    hatchBinary = Binary(actualHatchExecutable),
+    hatchBinary = actualHatchExecutable,
     execOptions = ExecOptions(
       env = actualEnvVars,
       workingDirectory = workingDirectoryPath

@@ -43,7 +43,7 @@ public class PyInvertBooleanTest extends PyTestCase {
 
     final InvertBooleanAction action = new InvertBooleanAction();
     final AnActionEvent event = TestActionEvent.createTestEvent(action);
-    ActionUtil.performDumbAwareUpdate(action, event, false);
+    ActionUtil.updateAction(action, event);
     assertTrue(event.getPresentation().isEnabledAndVisible());
 
     final PsiNamedElement target = (PsiNamedElement)element;

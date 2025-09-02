@@ -3,8 +3,10 @@ package com.jetbrains.python.pyi;
 
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.codeInsight.PyCustomMember;
-import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsClassMembersProvider;
 import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.PyClassMembersProviderBase;
 import com.jetbrains.python.psi.types.PyClassType;
@@ -13,8 +15,10 @@ import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 public final class PyiClassMembersProvider extends PyClassMembersProviderBase implements PyOverridingAncestorsClassMembersProvider {
   @Override
@@ -22,7 +26,7 @@ public final class PyiClassMembersProvider extends PyClassMembersProviderBase im
     final PyClass cls = classType.getPyClass();
     final PsiElement pythonStub = PyiUtil.getPythonStub(cls);
     if (pythonStub instanceof PyClass) {
-      return PyUserSkeletonsClassMembersProvider.getClassMembers((PyClass)pythonStub, classType.isDefinition());
+      return getClassMembers((PyClass)pythonStub, classType.isDefinition());
     }
     return Collections.emptyList();
   }
@@ -35,8 +39,57 @@ public final class PyiClassMembersProvider extends PyClassMembersProviderBase im
     final PyClass cls = type.getPyClass();
     final PsiElement pythonStub = PyiUtil.getPythonStub(cls);
     if (pythonStub instanceof PyClass) {
-      return PyUserSkeletonsClassMembersProvider.findClassMember((PyClass)pythonStub, name, type.isDefinition());
+      return findClassMember((PyClass)pythonStub, name, type.isDefinition());
     }
     return null;
+  }
+
+  public static PsiElement findClassMember(@NotNull PyClass cls, @NotNull String name, boolean isDefinition) {
+    final PyFunction function = cls.findMethodByName(name, false, null);
+    if (function != null) {
+      final PyUtil.MethodFlags methodFlags = PyUtil.MethodFlags.of(function);
+      final boolean instanceMethod = methodFlags == null || methodFlags.isInstanceMethod();
+      if (isDefinition ^ instanceMethod) {
+        return function;
+      }
+    }
+    if (!isDefinition) {
+      final PyTargetExpression instanceAttribute = cls.findInstanceAttribute(name, false);
+      if (instanceAttribute != null) {
+        return instanceAttribute;
+      }
+    }
+    final PyTargetExpression classAttribute = cls.findClassAttribute(name, false, null);
+    if (classAttribute != null) {
+      return classAttribute;
+    }
+    return null;
+  }
+
+  public static Collection<PyCustomMember> getClassMembers(@NotNull PyClass cls, boolean isDefinition) {
+    final List<PyCustomMember> result = new ArrayList<>();
+    for (PyFunction function : cls.getMethods()) {
+      final String name = function.getName();
+      final PyUtil.MethodFlags methodFlags = PyUtil.MethodFlags.of(function);
+      final boolean instanceMethod = methodFlags == null || methodFlags.isInstanceMethod();
+      if (name != null && (isDefinition ^ instanceMethod)) {
+        result.add(new PyCustomMember(name, function));
+      }
+    }
+    if (!isDefinition) {
+      for (PyTargetExpression attribute : cls.getInstanceAttributes()) {
+        final String name = attribute.getName();
+        if (name != null) {
+          result.add(new PyCustomMember(name, attribute));
+        }
+      }
+    }
+    for (PyTargetExpression attribute : cls.getClassAttributes()) {
+      final String name = attribute.getName();
+      if (name != null) {
+        result.add(new PyCustomMember(name, attribute));
+      }
+    }
+    return result;
   }
 }

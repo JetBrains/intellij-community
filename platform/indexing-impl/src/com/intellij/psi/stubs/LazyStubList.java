@@ -35,17 +35,17 @@ final class LazyStubList extends StubList {
   }
 
   @Override
-  void addStub(@NotNull StubBase<?> stub, @Nullable StubBase<?> parent, @Nullable IElementType type) {
+  public void addStub(@NotNull StubBase<?> stub, @Nullable StubBase<?> parent, @Nullable IElementType type) {
     // stub is lazily created, so we already know all structures, so do nothing
   }
 
-  void addLazyStub(IElementType type, int childIndex, int parentIndex) {
+  public void addLazyStub(IElementType type, int childIndex, int parentIndex) {
     addStub(childIndex, parentIndex, type.getIndex());
     mySize++;
   }
 
   @Override
-  boolean areChildrenNonAdjacent(int childId, int parentId) {
+  public boolean areChildrenNonAdjacent(int childId, int parentId) {
     return false;
   }
 

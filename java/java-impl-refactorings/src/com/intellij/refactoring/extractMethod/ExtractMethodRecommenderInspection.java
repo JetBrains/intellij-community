@@ -186,16 +186,16 @@ public final class ExtractMethodRecommenderInspection extends AbstractBaseJavaLo
 
       private static @NotNull TextRange getRange(PsiStatement[] statements) {
         PsiElement start = statements[0];
-        while (true) {
-          PsiElement prev = PsiTreeUtil.skipWhitespacesBackward(start);
-          if (prev instanceof PsiComment &&
-              SuppressionUtil.getStatementToolSuppressedIn(statements[0], "ExtractMethodRecommender", PsiStatement.class) == null) {
-            start = prev;
-          }
-          else {
-            break;
-          }
-        }
+        //while (true) {
+        //  PsiElement prev = PsiTreeUtil.skipWhitespacesBackward(start);
+        //  if (prev instanceof PsiComment &&
+        //      SuppressionUtil.getStatementToolSuppressedIn(statements[0], "ExtractMethodRecommender", PsiStatement.class) == null) {
+        //    start = prev;
+        //  }
+        //  else {
+        //    break;
+        //  }
+        //}
         int startOffset = start.getTextRangeInParent().getStartOffset();
         int endOffset = statements[statements.length - 1].getTextRangeInParent().getEndOffset();
         return TextRange.create(startOffset, endOffset);

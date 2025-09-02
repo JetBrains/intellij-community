@@ -14,7 +14,6 @@ elements:
       name: idea-plugin
       requirement:
         required: yes
-      #language=Markdown
       description: The <path>plugin.xml</path> file root element.
 
       attributes:
@@ -22,11 +21,9 @@ elements:
             name: url
             requirement:
               required: no
-              #language=Markdown
               details:
                 - &ignoredInAdditionalPluginXml |
                   ignored in an [additional config file](#additional-plugin-configuration-files)
-            #language=Markdown
             description: |
               The link to the plugin homepage displayed on the plugin page in
               the [JetBrains Marketplace](https://plugins.jetbrains.com).
@@ -34,17 +31,42 @@ elements:
             name: require-restart
             requirement:
               required: no
-            #language=Markdown
             defaultValue: |
               `false`
-            #language=Markdown
             description: |
               The boolean value determining whether the plugin installation, update, or uninstallation requires an IDE restart
               (see [Dynamic Plugins](https://plugins.jetbrains.com/docs/intellij/dynamic-plugins.html) for details).
+        - attribute:
+            name: package
+            renderContexts: [doc_provider]
+            requirement:
+              required: no
+            description: |
+              Defines a JVM package where all module's classes are located.
+              Packages are included recursively, for example, `com.example` implies `com.example.sub`.
+              
+              If a package is specified, then all module [dependencies](#element:idea-plugin__dependencies) of the plugin must also specify a package, and it must be
+              different. For example, if `com.example` is set for the main plugin descriptor, `com.example` cannot be used for any
+              module dependency.
+            internalNote: &plugin_model_v2_internal_note |
+              This item is part of the [_Plugin Model_](https://youtrack.jetbrains.com/articles/IJPL-A-31){internal},
+              which is not recommended to be used in third-party plugins in the current state.
+        - attribute:
+            name: dependent-on-core
+            renderContexts: [doc_provider]
+            requirement:
+              required: no
+            description: |
+              Determines whether the main classloader of the core plugin is used as the parent classloader for the current content module.
+              If set to `false`, the Java platform classloader is used as the parent classloader.
+  
+              The attribute is effective only for content modules in the core (`com.intellij`) plugin.
+            internalNote: This item is internal and should be used only in modules implemented by JetBrains.
+            defaultValue: |
+              `true`
       children:
         - element:
             name: id
-            #language=Markdown
             description: |
               A unique identifier of the plugin.
               It should be a fully qualified name similar to Java packages and must not collide with the ID of existing plugins.
@@ -56,7 +78,6 @@ elements:
               {style="warning"}
             requirement:
               required: no
-              #language=Markdown
               details:
                 - *ignoredInAdditionalPluginXml
                 - |
@@ -66,9 +87,7 @@ elements:
                   ([2.x](https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin-tasks.html#patchPluginXml),
                   [1.x](https://plugins.jetbrains.com/docs/intellij/tools-gradle-intellij-plugin.html#tasks-patchpluginxml))
                   is enabled and configured.
-            #language=Markdown
             defaultValue: Value of the [`<name>`](#element:idea-plugin__name) element.
-            #language=Markdown
             examples:
               - |
                 ```xml
@@ -76,18 +95,41 @@ elements:
                 ```
 
         - element:
+            name: module
+            renderContexts: [doc_provider]
+            description: |
+              Defines the current plugin's alias.
+              
+              The alias can be used instead of the plugin [ID](#element:idea-plugin__id) in [`depends`](#element:idea-plugin__depends)
+              or [`dependencies/plugin@id`](#element:idea-plugin__dependencies__plugin__id).
+              
+              Aliases are usually added to core plugins and work as markers of the corresponding IDEs.
+              For example, `com.intellij.modules.ruby-capable` alias is declared in core plugins for IntelliJ IDEA Ultimate and RubyMine,
+              and the Ruby plugin has a dependency on that alias.
+              It makes the Ruby plugin compatible with IntelliJ IDEA Ultimate and RubyMine only and prevents it from being installed in other IDEs.
+              
+              Aliases can be also used for compatibility reasons in regular plugins and modules.
+              
+              Avoid adding new aliases and using them for other reasons.
+            internalNote: *plugin_model_v2_internal_note
+            attributes:
+              - attribute:
+                  name: value
+                  requirement:
+                    required: yes
+                  description: |
+                    The alias value. It must be unique.
+
+        - element:
             name: name
-            #language=Markdown
             references:
               - |
-                [JetBrains Marketplace: Plugin Name](https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-name)
-            #language=Markdown
+                [JetBrains Marketplace: Plugin Name](https://plugins.jetbrains.com/docs/marketplace/best-practices-for-listing.html#plugin-name)
             description: The user-visible plugin display name (Title Case).
             requirement:
               required: yes
               details:
                 - *ignoredInAdditionalPluginXml
-            #language=Markdown
             examples:
               - |
                 ```xml
@@ -96,11 +138,9 @@ elements:
 
         - element:
             name: version
-            #language=Markdown
             references:
               - |
                 [JetBrains Marketplace: Semantic Versioning](https://plugins.jetbrains.com/docs/marketplace/semver.html)
-            #language=Markdown
             description: |
               The plugin version displayed in the <control>Plugins</control> settings dialog and on the
               [JetBrains Marketplace](https://plugins.jetbrains.com) plugin page.
@@ -110,7 +150,6 @@ elements:
               details:
                 - *ignoredInAdditionalPluginXml
                 - *patchXmlGradleTask
-            #language=Markdown
             examples:
               - |
                 ```xml
@@ -119,18 +158,15 @@ elements:
 
         - element:
             name: product-descriptor
-            #language=Markdown
             references:
               - |
                 [JetBrains Marketplace: How to add required parameters for paid plugins](https://plugins.jetbrains.com/docs/marketplace/add-required-parameters.html)
-            #language=Markdown
             description: |
               [Paid](https://plugins.jetbrains.com/build-and-market) or
               [Freemium](https://plugins.jetbrains.com/docs/marketplace/freemium.html) plugin descriptor.
             requirement:
               # noinspection YAMLIncompatibleTypes
               required: yes_for_paid
-              #language=Markdown
               details:
                 - *ignoredInAdditionalPluginXml
                 - |
@@ -140,22 +176,19 @@ elements:
                   name: code
                   requirement:
                     required: yes
-                  #language=Markdown
                   description: |
                     The plugin product code used in the JetBrains Sales System.
                     The code must be agreed with JetBrains in advance and follow
-                    [the requirements](https://plugins.jetbrains.com/docs/marketplace/obtain-a-product-code-from-jetbrains.html).
+                    [the requirements](https://plugins.jetbrains.com/docs/marketplace/add-required-parameters.html).
               - attribute:
                   name: release-date
                   requirement:
                     required: yes
-                  #language=Markdown
                   description: Date of the major version release in the `YYYYMMDD` format.
               - attribute:
                   name: release-version
                   requirement:
                     required: yes
-                  #language=Markdown
                   description: |
                     A major version in a specific number format, for example, `20242` for the 2024.2 major release.<br/>
                     See [`release-version` constraints](https://plugins.jetbrains.com/docs/marketplace/versioning-of-paid-plugins.html#release-version-constraints) for more details.
@@ -163,29 +196,23 @@ elements:
                   name: optional
                   requirement:
                     required: no
-                  #language=Markdown
                   description: |
                     The boolean value determining whether the plugin is
                     a [Freemium](https://plugins.jetbrains.com/docs/marketplace/freemium.html) plugin.
-                  #language=Markdown
                   defaultValue: |
                     `false`
               - attribute:
                   name: eap
                   requirement:
                     required: no
-                  #language=Markdown
                   description: Specifies the boolean value determining whether the plugin is an EAP release.
-                  #language=Markdown
                   defaultValue: |
                     `false`
         - element:
             name: idea-version
-            #language=Markdown
             references:
               - |
                 [Build Number Ranges](https://plugins.jetbrains.com/docs/intellij/build-number-ranges.html)
-            #language=Markdown
             description: The plugin's range of compatible IntelliJ-based IDE versions.
             requirement:
               required: yes
@@ -197,18 +224,15 @@ elements:
                   name: since-build
                   requirement:
                     required: yes
-                  #language=Markdown
                   description: The lowest IDE version compatible with the plugin.
               - attribute:
                   name: until-build
                   requirement:
                     required: no
-                  #language=Markdown
                   description: |
                     The highest IDE version compatible with the plugin.
                     Undefined value declares compatibility with all the IDEs since the version specified by the [`since-build`](#attribute:idea-plugin__idea-version__since-build)
                     (also with the future builds that may cause incompatibility errors).
-            #language=Markdown
             examples:
               - | # code snippets must have 4 spaces indent here
                 Compatibility with a specific build number (2021.3.3) and higher versions:
@@ -224,11 +248,9 @@ elements:
 
         - element:
             name: vendor
-            #language=Markdown
             references:
               - |
-                [JetBrains Marketplace: Contacts and Resources](https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#contacts-and-resources)
-            #language=Markdown
+                [JetBrains Marketplace: Contacts and Resources](https://plugins.jetbrains.com/docs/marketplace/best-practices-for-listing.html#contacts-and-resources)
             description: |
               The vendor name or organization ID (if created) in the <control>Plugins</control> settings dialog and on
               the [JetBrains Marketplace](https://plugins.jetbrains.com) plugin page.
@@ -241,7 +263,6 @@ elements:
                   name: url
                   requirement:
                     required: no
-                  #language=Markdown
                   description: |
                     The URL to the vendor's homepage.
                     Supports `https://` and `http://` scheme links.
@@ -249,9 +270,7 @@ elements:
                   name: email
                   requirement:
                     required: no
-                  #language=Markdown
                   description: The vendor's email address.
-            #language=Markdown
             examples:
               - | # code snippets must have 4 spaces indent here
                 Personal vendor with an email address provided:
@@ -270,11 +289,9 @@ elements:
 
         - element:
             name: description
-            #language=Markdown
             references:
               - |
-                [JetBrains Marketplace: Plugin Description](https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-description)
-            #language=Markdown
+                [JetBrains Marketplace: Plugin Description](https://plugins.jetbrains.com/docs/marketplace/best-practices-for-listing.html#plugin-description)
             description: |
               The plugin description displayed on the [JetBrains Marketplace](https://plugins.jetbrains.com) plugin page and in
               the <control>Plugins</control> settings dialog.
@@ -286,7 +303,6 @@ elements:
               details:
                 - *ignoredInAdditionalPluginXml
                 - *patchXmlGradleTask
-            #language=Markdown
             examples:
               - |
                 ```xml
@@ -304,11 +320,9 @@ elements:
 
         - element:
             name: change-notes
-            #language=Markdown
             references:
               - |
-                [JetBrains Marketplace: Change Notes](https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#change-notes)
-            #language=Markdown
+                [JetBrains Marketplace: Change Notes](https://plugins.jetbrains.com/docs/marketplace/best-practices-for-listing.html#change-notes)
             description: |
               A short summary of new features, bugfixes, and changes provided with the latest plugin version.
               Change notes are displayed on the [JetBrains Marketplace](https://plugins.jetbrains.com) plugin page and in
@@ -321,7 +335,6 @@ elements:
               details:
                 - *ignoredInAdditionalPluginXml
                 - *patchXmlGradleTask
-            #language=Markdown
             examples:
               - |
                 ```xml
@@ -341,20 +354,17 @@ elements:
 
         - element:
             name: depends
-            #language=Markdown
             references:
               - |
                 [Plugin Dependencies](https://plugins.jetbrains.com/docs/intellij/plugin-dependencies.html)
               - |
                 [Modules Specific to Functionality](https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html#modules-specific-to-functionality)
-            #language=Markdown
             description: |
               Specifies a dependency on another plugin or a module of an IntelliJ Platform-based product.
               A single [`<idea-plugin>`](#element:idea-plugin) element can contain multiple `<depends>` elements.
 
             requirement:
               required: no
-              #language=Markdown
               details:
                 - |
                   in most cases dependency on the
@@ -365,7 +375,6 @@ elements:
                   name: optional
                   requirement:
                     required: no
-                  #language=Markdown
                   description: |
                     Boolean value defining whether the dependency is optional to load the plugin in the IDE.
                     If the dependency plugin is not installed in the current IDE, and `optional` is:
@@ -374,15 +383,12 @@ elements:
               - attribute:
                   name: config-file
                   requirement:
-                    #language=Markdown
                     details:
                       - required when [`optional`](#attribute:idea-plugin__depends__optional) is `true`
-                  #language=Markdown
                   description: |
                     Relative path to an
                     [additional configuration file](#additional-plugin-configuration-files),
                     loaded only if the dependency plugin is installed in the current IDE.
-            #language=Markdown
             examples:
             - |
               Required plugin dependency:
@@ -420,34 +426,161 @@ elements:
                   ```
 
         - element:
+            name: dependencies
+            renderContexts: [doc_provider]
+            description: |
+              Defines the dependencies of the module.
+              
+              A dependency from an `optional` or `on-demand`
+              [content](#element:idea-plugin__content) [module](#element:idea-plugin__content__module)
+              to the main module of the containing plugin is added automatically.
+              
+              Circular dependencies aren't allowed: if a set of modules forms a dependency cycle, plugins which contain modules
+              from the cycle will fail to load.
+            internalNote: *plugin_model_v2_internal_note
+            children:
+              - element:
+                  name: module
+                  description: |
+                    A dependency on another module.
+                  examples:
+                    - |
+                      ```xml
+                      <dependencies>
+                        <module name="com.example.core"/>
+                      </dependencies>
+                      ```
+                  attributes:
+                    - attribute:
+                        name: name
+                        requirement:
+                          required: yes
+                        description: |
+                          The name of the module to depend on.
+              - element:
+                  name: plugin
+                  description: |
+                    Declares a dependency on the main module of another plugin.
+                  attributes:
+                    - attribute:
+                        name: id
+                        requirement:
+                          required: yes
+                        description: |
+                          The [ID](#element:idea-plugin__id) or [alias](#element:idea-plugin__module) of the plugin to depend on.
+                  examples:
+                    - |
+                      ```xml
+                      <dependencies>
+                        <plugin id="com.example.plugin.id"/>
+                      </dependencies>
+                      ```
+
+        - element:
             name: incompatible-with
             since: "2020.2"
-            #language=Markdown
             references:
               - |
                 [Declaring Incompatibility with Module](https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html#declaring-incompatibility-with-module)
-            #language=Markdown
             description: |
               Declares incompatibility with a provided module.
             requirement:
               required: no
               details:
                 - *ignoredInAdditionalPluginXml
-            #language=Markdown
             examples:
-            - |
-              ```xml
-              <incompatible-with>
-                com.intellij.modules.appcode.ide
-              </incompatible-with>
-              ```
+              - |
+                ```xml
+                <incompatible-with>
+                  com.intellij.modules.appcode.ide
+                </incompatible-with>
+                ```
+
+        - element:
+            name: content
+            renderContexts: [doc_provider]
+            description: |
+              Defines the content modules of the plugin.
+              
+              The module which contains the plugin descriptor (<path>plugin.xml</path>) is included implicitly.
+            internalNote: *plugin_model_v2_internal_note
+            requirement:
+              required: no
+            examples:
+              - |
+                ```xml
+                <content>
+                  <module name="com.example.core" loading="required"/>
+                  <module name="com.example.git"/>
+                  <module name="com.example.i18n"/>
+                </content>
+                ```
+            children:
+              - element:
+                  name: module
+                  description: |
+                    A content module to include in the plugin.<br/>
+                    Content modules contain components implementing the plugin functionality.
+                    Each content module's components are loaded with its own classloader (unless overridden with
+                    [`loading="embedded"`](#attribute:idea-plugin__content__module__loading)).
+                  requirement:
+                    required: no
+                  examples:
+                    - |
+                      A module with the implicit `optional` [`loading`](#attribute:idea-plugin__content__module__loading) behavior:
+                          ```xml
+                          <module name="com.example.core"/>
+                          ```
+                    - |
+                      A required module that will fail to load the plugin if it is unavailable:
+                          ```xml
+                          <module name="com.example.core" loading="required"/>
+                          ```
+                  attributes:
+                    - attribute:
+                        name: name
+                        description: The name of a JPS module to include in the plugin.
+                        requirement:
+                          required: yes
+                    - attribute:
+                        name: loading
+                        description: |
+                          Specifies when a content module of a plugin should be loaded.
+                          Allowed values:
+                          - `required` - the module is a required part of the plugin.
+                            If the module cannot be loaded because some of its dependencies aren't available, the whole plugin isn't
+                            loaded, and an error is shown to the user.
+                          - `embedded` - the same as `required`, but also puts the module's classes to the main plugin JAR and loads them
+                            using the main plugin classloader.
+                            **This is an internal temporary option added to simplify the migration of some existing plugins.
+                            For new modules, use `required` instead.**
+                          - `optional` - the module is an optional part of the plugin.
+                            If the module cannot be loaded, it is skipped and doesn't prevent other modules from the plugin from being
+                            loaded.
+                          - `on-demand` - the module is used by other modules of the plugin and doesn't provide user-visible functionality
+                            itself.
+                            The module is loaded if and only if another `required` or `optional` module, which depends on it, is loaded.
+                            **This option isn't implemented yet and currently behaves the same way as `optional`.**
+                        defaultValue: |
+                          `optional`
+                    - attribute:
+                        name: os
+                        description: |
+                          Allows restricting the loading of a module to specific operating system.
+                          Supported values:
+                          - `freebsd`
+                          - `linux`
+                          - `mac`
+                          - `unix`
+                          - `windows`
+                          
+                          For example, `os="windows"` allows the module to load only on Windows.
+
         - element:
             name: extensions
-            #language=Markdown
             references:
               - |
                 [Extensions](https://plugins.jetbrains.com/docs/intellij/plugin-extensions.html)
-            #language=Markdown
             description: Defines the plugin extensions.
             requirement:
               required: no
@@ -456,12 +589,10 @@ elements:
                   name: defaultExtensionNs
                   requirement:
                     required: no
-                  #language=Markdown
                   description: |
                     Default extensions namespace.
                     It allows skipping the common prefix in fully qualified extension point names.
                     Usually, the `com.intellij` namespace is used when the plugin implements IntelliJ Platform extensions.
-            #language=Markdown
             examples:
               - |
                 Extensions' declaration with a default namespace:
@@ -479,7 +610,6 @@ elements:
                           implementation="com.example.MyExtension"/>
                     </extensions>
                     ```
-            #language=Markdown
             childrenDescription: |
               The children elements are registrations of instances
               of [extension points](#element:idea-plugin__extensionPoints__extensionPoint) provided by the IntelliJ Platform or plugins.
@@ -495,7 +625,6 @@ elements:
               - element:
                   name: "*"
                   descriptiveName: "An Extension"
-                  #language=Markdown
                   description: |
                     An extension instance registered under [`<extensions>`](#element:idea-plugin__extensions).
                     
@@ -506,7 +635,6 @@ elements:
                         name: id
                         requirement:
                           required: no
-                        #language=Markdown
                         description: |
                           Unique extension identifier.
                           It allows for referencing an extension in other attributes, for example, in
@@ -519,7 +647,6 @@ elements:
                         name: order
                         requirement:
                           required: no
-                        #language=Markdown
                         description: |
                           Allows for ordering the extension relative to other instances of the same extension point.
                           Supported values:
@@ -537,7 +664,6 @@ elements:
                         name: os
                         requirement:
                           required: no
-                        #language=Markdown
                         description: |
                           Allows restricting an extension to a given OS.
                           Supported values:
@@ -550,11 +676,9 @@ elements:
                           For example, `os="windows"` registers the extension on Windows only.
         - element:
             name: extensionPoints
-            #language=Markdown
             references:
               - |
                 [Extension Points](https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html)
-            #language=Markdown
             description: |
               Extension points defined by the plugin.
             requirement:
@@ -562,11 +686,9 @@ elements:
             children:
               - element:
                   name: extensionPoint
-                  #language=Markdown
                   references:
                     - |
                       [Declaring Extension Points](https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html#declaring-extension-points)
-                  #language=Markdown
                   description: |
                     A single extension point entry of the [`<extensionPoints>`](#element:idea-plugin__extensionPoints) defined by the plugin.
                     A single [`<extensionPoints>`](#element:idea-plugin__extensionPoints) element can contain multiple `<extensionPoint>` elements.
@@ -576,11 +698,9 @@ elements:
                     - attribute:
                         name: name
                         requirement:
-                          #language=Markdown
                           details:
                             - |
                               `name` or [`qualifiedName`](#attribute:idea-plugin__extensionPoints__extensionPoint__qualifiedName) is **required**
-                        #language=Markdown
                         description: |
                           The extension point name that should be unique in the scope of the plugin, e.g., `myExtension`.
                           The fully qualified name of the extension point is built at runtime by prepending the value of the `name`
@@ -593,11 +713,9 @@ elements:
                     - attribute:
                         name: qualifiedName
                         requirement:
-                          #language=Markdown
                           details:
                             - |
                               [`name`](#attribute:idea-plugin__extensionPoints__extensionPoint__name) or `qualifiedName` is **required**
-                        #language=Markdown
                         description: |
                           The fully qualified name of the extension point.
                           It should be unique between different plugins, and it is recommended to include a plugin ID to guarantee uniqueness,
@@ -606,22 +724,18 @@ elements:
                     - attribute:
                         name: interface
                         requirement:
-                          #language=Markdown
                           details:
                             - |
                               `interface` or [`beanClass`](#attribute:idea-plugin__extensionPoints__extensionPoint__beanClass) is **required**
-                        #language=Markdown
                         description: |
                           The fully qualified name of the interface to be implemented for extending the plugin's functionality.<br/>
                           Only one of the `interface` and [`beanClass`](#attribute:idea-plugin__extensionPoints__extensionPoint__beanClass) attributes can be specified.
                     - attribute:
                         name: beanClass
                         requirement:
-                          #language=Markdown
                           details:
                             - |
                               [`interface`](#attribute:idea-plugin__extensionPoints__extensionPoint__interface) or `beanClass` is **required**
-                        #language=Markdown
                         description: |
                           The fully qualified name of the extension point bean class providing additional information to the plugin.<br/>
                           The bean class specifies one or several properties annotated with the
@@ -636,31 +750,31 @@ elements:
                         name: dynamic
                         requirement:
                           required: no
-                        #language=Markdown
                         description: |
                           Boolean value defining whether the extension point meets the requirements to be
                           [dynamic](https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html#dynamic-extension-points),
                           which is a prerequisite for [dynamic plugins](https://plugins.jetbrains.com/docs/intellij/dynamic-plugins.html).
-                        #language=Markdown
                         defaultValue: |
                           `false`
                     - attribute:
                         name: area
                         requirement:
                           required: no
-                        #language=Markdown
                         description: |
                           The scope in which the [extension](https://plugins.jetbrains.com/docs/intellij/plugin-extensions.html) is
                           instantiated.
-                          It is not recommended to use non-default values.
+                          
                           Allowed values:
                             - `IDEA_APPLICATION` _(default)_
                             - `IDEA_PROJECT`
                             - `IDEA_MODULE` (**deprecated**)
+                          
+                          **It is strongly recommended not to introduce new project- and module-level extension points.**
+                          If an extension point needs to operate on a `Project` or `Module` instance, declare an application-level extension
+                          point and pass the instance as a method parameter.
                   children:
                     - element:
                         name: with
-                        #language=Markdown
                         description: |
                           Specifies the required parent type for class names provided in extension point tags or attributes.
                           A single [`<extensionPoint>`](#element:idea-plugin__extensionPoints__extensionPoint) element can contain
@@ -671,11 +785,9 @@ elements:
                           - attribute:
                               name: tag
                               requirement:
-                                #language=Markdown
                                 details:
                                   - |
                                     `tag` or [`attribute`](#attribute:idea-plugin__extensionPoints__extensionPoint__with__attribute) is **required**
-                              #language=Markdown
                               description: |
                                 The name of the tag holding the fully qualified name of the class which parent type will be limited
                                 by the type provided in the [`implements`](#attribute:idea-plugin__extensionPoints__extensionPoint__with__implements) attribute.<br/>
@@ -683,11 +795,9 @@ elements:
                           - attribute:
                               name: attribute
                               requirement:
-                                #language=Markdown
                                 details:
                                   - |
                                     [`tag`](#attribute:idea-plugin__extensionPoints__extensionPoint__with__tag) or `attribute` is **required**
-                              #language=Markdown
                               description: |
                                 The name of the attribute holding the fully qualified name of the class which parent type will be limited
                                 by the type provided in the [`implements`](#attribute:idea-plugin__extensionPoints__extensionPoint__with__implements) attribute.<br/>
@@ -696,12 +806,10 @@ elements:
                               name: implements
                               requirement:
                                 required: yes
-                              #language=Markdown
                               description: |
                                 The fully qualified name of the parent type limiting the type provided in the place specified by
                                 [`tag`](#attribute:idea-plugin__extensionPoints__extensionPoint__with__tag) or
                                 [`attribute`](#attribute:idea-plugin__extensionPoints__extensionPoint__with__attribute).
-                        #language=Markdown
                         examples:
                           - |
                             An extension point which restricts the type provided in a `myClass` attribute to be an instance
@@ -734,16 +842,64 @@ elements:
                             
                             - `com.example.MyCustomType` must be a subtype of `com.example.ParentType`
                             - `com.example.MyComparable` must be a subtype of `java.lang.Comparable`
+              - element:
+                  name: &xIncludeName xi:include
+                  namespace: &xIncludeNamespace xi="http://www.w3.org/2001/XInclude"
+                  renderContexts: [doc_provider]
+                  description: |
+                    Allows including extension points of another plugin descriptor in this descriptor with
+                    [XInclude](http://www.w3.org/2001/XInclude) standard.
+                    
+                    The inclusion of extension points is supported for internal purposes and shouldn't be used by third party plugins.
+                  requirement:
+                    required: no
+                  attributes:
+                    - attribute:
+                        name: href
+                        requirement:
+                          required: no
+                        description: Path of the plugin descriptor file to include `extensionPoints` content from.
+                    - attribute:
+                        name: xpointer
+                        requirement:
+                          required: no
+                        deprecatedSince: '2021.2'
+                        deprecationNote: |
+                          The `xpointer` attribute must be `xpointer(/idea-plugin/extensionPoints/*)` or not defined.
+                        description: Extensions points pointer to include.
+                        defaultValue: |
+                          `xpointer(/idea-plugin/extensionPoints/*)`
+                  children:
+                    - element: &xIncludeFallback
+                        name: xi:fallback
+                        namespace: *xIncludeNamespace
+                        description: |
+                          Indicates that including the specified file is optional.
+
+                          If the file referenced in [`href`](#attribute:idea-plugin__xi:include__href) is not found and the `xi:fallback`
+                          element
+                          is missing, the plugin will fail to load.
+                        requirement:
+                          required: no
+                        examples:
+                          - |
+                              ```xml
+                              <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+                                ...
+                                <xi:include href="/META-INF/optional-plugin.xml">
+                                  <xi:fallback/>
+                                </xi:include>
+                                ...
+                              </idea-plugin>
+                              ```
         - element:
             name: resource-bundle
-            #language=Markdown
             description: |
               A resource bundle to be used with message key attributes in extension declarations and for
-              [action and group localization](https://plugins.jetbrains.com/docs/intellij/basic-action-system.html#localizing-actions-and-groups).
+              [action and group localization](https://plugins.jetbrains.com/docs/intellij/action-system.html#localizing-actions-and-groups).
               A single [`<idea-plugin>`](#element:idea-plugin) element can contain multiple `<resource-bundle>` elements.
             requirement:
               required: no
-            #language=Markdown
             examples:
               - |
                 To load the content of <path>messages/Bundle.properties</path> bundle, declare:
@@ -752,11 +908,9 @@ elements:
                   ```
         - element:
             name: actions
-            #language=Markdown
             references:
               - |
-                [Actions](https://plugins.jetbrains.com/docs/intellij/basic-action-system.html)
-            #language=Markdown
+                [Actions](https://plugins.jetbrains.com/docs/intellij/action-system.html)
             description: |
               Defines the plugin actions.
             requirement:
@@ -767,12 +921,10 @@ elements:
                   since: "2020.1"
                   requirement:
                     required: no
-                  #language=Markdown
                   description: |
                     Defines the dedicated actions resource bundle.
-                    See [Localizing Actions and Groups](https://plugins.jetbrains.com/docs/intellij/basic-action-system.html#localizing-actions-and-groups)
+                    See [Localizing Actions and Groups](https://plugins.jetbrains.com/docs/intellij/action-system.html#localizing-actions-and-groups)
                     for more details.
-            #language=Markdown
             examples:
               - |
                 ```xml
@@ -787,11 +939,9 @@ elements:
               - element: &action
                   name: action
                   sdkDocsFixedPath: [idea-plugin, actions, action]
-                  #language=Markdown
                   references:
                     - |
-                      [Registering Actions in plugin.xml](https://plugins.jetbrains.com/docs/intellij/basic-action-system.html#registering-actions-in-pluginxml)
-                  #language=Markdown
+                      [Registering Actions in plugin.xml](https://plugins.jetbrains.com/docs/intellij/action-system.html#registering-actions-in-pluginxml)
                   description: |
                     A single action entry of the [`<actions>`](#element:idea-plugin__actions) implemented by the plugin.
                     A single `<actions>` element can contain multiple `<action>` elements.
@@ -804,7 +954,6 @@ elements:
                           required: no
                           details:
                             - defaults to the action class short name if not specified
-                        #language=Markdown
                         description: |
                           A unique action identifier.
                           It is recommended to specify the `id` attribute explicitly.<br/>
@@ -814,32 +963,27 @@ elements:
                         name: class
                         requirement:
                           required: yes
-                        #language=Markdown
                         description: |
                           The fully qualified name of the action implementation class.
                     - attribute:
                         name: text
                         requirement:
-                          #language=Markdown
                           details:
                             - |
                               **required** if the action is not
-                              [localized](https://plugins.jetbrains.com/docs/intellij/basic-action-system.html#localizing-actions-and-groups)
-                        #language=Markdown
+                              [localized](https://plugins.jetbrains.com/docs/intellij/action-system.html#localizing-actions-and-groups)
                         description: |
                           The default long-version text to be displayed for the action (tooltip for toolbar button or text for menu item).
                     - attribute:
                         name: description
                         requirement:
                           required: no
-                        #language=Markdown
                         description: |
                           The text which is displayed in the status bar when the action is focused.
                     - attribute:
                         name: icon
                         requirement:
                           required: no
-                        #language=Markdown
                         description: |
                           The icon that is displayed on the toolbar button or next to the action menu item.
                           See [Working with Icons](https://plugins.jetbrains.com/docs/intellij/icons.html) for more information
@@ -848,11 +992,9 @@ elements:
                         name: use-shortcut-of
                         requirement:
                           required: no
-                        #language=Markdown
                         description: |
                           The ID of the action whose keyboard shortcut this action will use.
 
-                  #language=Markdown
                   examples:
                     - |
                       Action declaring explicit `text`:
@@ -881,7 +1023,6 @@ elements:
                     - element: &addToGroup
                         name: add-to-group
                         sdkDocsFixedPath: [idea-plugin, actions, action, add-to-group]
-                        #language=Markdown
                         description: |
                           Specifies that the action should be added to an existing [`<group>`](#element:idea-plugin__actions__group).
                           A single action can be added to multiple groups.
@@ -892,7 +1033,6 @@ elements:
                               name: group-id
                               requirement:
                                 required: yes
-                              #language=Markdown
                               description: |
                                 Specifies the ID of the [`<group>`](#element:idea-plugin__actions__group) to which the action is added.
                                 The group must be an implementation of the
@@ -902,7 +1042,6 @@ elements:
                               name: anchor
                               requirement:
                                 required: no
-                              #language=Markdown
                               description: |
                                 Specifies the position of the action relative to other actions.
                                 Allowed values:
@@ -913,13 +1052,10 @@ elements:
                           - attribute:
                               name: relative-to-action
                               requirement:
-                                #language=Markdown
                                 details:
                                   - |
                                     **required** if [`anchor`](#attribute:idea-plugin__actions__action__anchor) is `before`/`after`
-                              #language=Markdown
                               description: The action before or after which the current action is inserted.
-                        #language=Markdown
                         examples:
                           - |
                             ```xml
@@ -931,7 +1067,6 @@ elements:
                     - element:
                         name: keyboard-shortcut
                         sdkDocsFixedPath: [idea-plugin, actions, action, keyboard-shortcut]
-                        #language=Markdown
                         description: |
                           Specifies the keyboard shortcut for the action.
                           A single action can have several keyboard shortcuts.
@@ -942,7 +1077,6 @@ elements:
                               name: keymap
                               requirement:
                                 required: yes
-                              #language=Markdown
                               description: |
                                 Specifies the keymap for which the action shortcut is active.
                                 IDs of the standard keymaps are defined as constants in the
@@ -952,7 +1086,6 @@ elements:
                               name: first-keystroke
                               requirement:
                                 required: yes
-                              #language=Markdown
                               description: |
                                 Specifies the first keystroke of the action shortcut.
                                 The keystrokes are specified according to the regular Swing rules.
@@ -960,23 +1093,19 @@ elements:
                               name: second-keystroke
                               requirement:
                                 required: no
-                              #language=Markdown
                               description: Specifies the second keystroke of the action shortcut.
                           - attribute:
                               name: remove
                               requirement:
                                 required: no
-                              #language=Markdown
                               description: Removes a shortcut from the specified action.
                           - attribute:
                               name: replace-all
                               requirement:
                                 required: no
-                              #language=Markdown
                               description: |
                                 Removes all keyboard and mouse shortcuts from the specified action before adding
                                 the specified shortcut.
-                        #language=Markdown
                         examples:
                           - |
                             Add the first and second keystrokes to all keymaps:
@@ -1007,7 +1136,6 @@ elements:
                     - element:
                         name: mouse-shortcut
                         sdkDocsFixedPath: [idea-plugin, actions, action, mouse-shortcut]
-                        #language=Markdown
                         description: |
                           Specifies the mouse shortcut for the action.
                           A single action can have several mouse shortcuts.
@@ -1018,7 +1146,6 @@ elements:
                               name: keymap
                               requirement:
                                 required: yes
-                              #language=Markdown
                               description: |
                                 Specifies the keymap for which the action shortcut is active.
                                 IDs of the standard keymaps are defined as constants in the
@@ -1028,7 +1155,6 @@ elements:
                               name: keystroke
                               requirement:
                                 required: yes
-                              #language=Markdown
                               description: |
                                 Specifies the clicks and modifiers for the action.
                                 It is defined as a sequence of words separated by spaces:
@@ -1039,17 +1165,14 @@ elements:
                               name: remove
                               requirement:
                                 required: no
-                              #language=Markdown
                               description: Removes a shortcut from the specified action.
                           - attribute:
                               name: replace-all
                               requirement:
                                 required: no
-                              #language=Markdown
                               description: |
                                 Removes all keyboard and mouse shortcuts from the specified action before adding
                                 the specified shortcut.
-                        #language=Markdown
                         examples:
                           - |
                             Add the shortcut to all keymaps:
@@ -1078,10 +1201,8 @@ elements:
                         name: override-text
                         sdkDocsFixedPath: [idea-plugin, actions, action, override-text]
                         since: "2020.1"
-                        #language=Markdown
                         description: |
                           Defines an alternate menu action or group text depending on context: menu location, toolbar, and other.
-                        #language=Markdown
                         sdkDocsSupportDetails: |
                           2020.1+ for actions<br/>
                           2020.3+ for groups
@@ -1092,27 +1213,21 @@ elements:
                               name: place
                               requirement:
                                 required: yes
-                              #language=Markdown
                               description: Declares where the alternate text should be used.
                           - attribute:
                               name: text
                               requirement:
-                                #language=Markdown
                                 details:
                                   - |
                                     `text` or [`use-text-of-place`](#attribute:idea-plugin__actions__action__override-text__use-text-of-place) is **required**
-                              #language=Markdown
                               description: Defines the text to be displayed for the action.
                           - attribute:
                               name: use-text-of-place
                               requirement:
-                                #language=Markdown
                                 details:
                                   - |
                                     [`text`](#attribute:idea-plugin__actions__action__override-text__text) or `use-text-of-place` is **required**
-                              #language=Markdown
                               description: Defines a location whose text should be displayed for this action.
-                        #language=Markdown
                         examples:
                           - |
                             Explicitly overridden text:
@@ -1145,7 +1260,6 @@ elements:
                         name: synonym
                         sdkDocsFixedPath: [idea-plugin, actions, action, synonym]
                         since: "2020.3"
-                        #language=Markdown
                         description: |
                           Defines an alternative text for searching the action in <ui-path>Help | Find Action...</ui-path> or
                           <ui-path>Navigate | Search Everywhere</ui-path> popups.
@@ -1156,22 +1270,17 @@ elements:
                           - attribute:
                               name: key
                               requirement:
-                                #language=Markdown
                                 details:
                                   - |
                                     `key` or [`text`](#attribute:idea-plugin__actions__action__synonym__text) is **required**
-                              #language=Markdown
-                              description: The key of the synonym text provided in a [message bundle](https://plugins.jetbrains.com/docs/intellij/basic-action-system.html#localizing-actions-and-groups).
+                              description: The key of the synonym text provided in a [message bundle](https://plugins.jetbrains.com/docs/intellij/action-system.html#localizing-actions-and-groups).
                           - attribute:
                               name: text
                               requirement:
-                                #language=Markdown
                                 details:
                                   - |
                                     [`key`](#attribute:idea-plugin__actions__action__synonym__key) or `text` is **required**
-                              #language=Markdown
                               description: The synonym text.
-                        #language=Markdown
                         examples:
                           - |
                             ```xml
@@ -1182,7 +1291,6 @@ elements:
                     - element:
                         name: abbreviation
                         sdkDocsFixedPath: [idea-plugin, actions, action, abbreviation]
-                        #language=Markdown
                         description: |
                           Defines an abbreviation for searching the action in <ui-path>Help | Find Action...</ui-path> or
                           <ui-path>Navigate | Search Everywhere</ui-path> popups.
@@ -1194,9 +1302,7 @@ elements:
                               name: value
                               requirement:
                                 required: yes
-                              #language=Markdown
                               description: The abbreviation value.
-                        #language=Markdown
                         examples:
                           - |
                             ```xml
@@ -1205,11 +1311,9 @@ elements:
                             ```
               - element:
                   name: group
-                  #language=Markdown
                   references:
                     - |
-                      [Grouping Actions](https://plugins.jetbrains.com/docs/intellij/basic-action-system.html#grouping-actions)
-                  #language=Markdown
+                      [Grouping Actions](https://plugins.jetbrains.com/docs/intellij/action-system.html#grouping-actions)
                   description: |
                     Defines an action group.
                     The [`<action>`](#element:idea-plugin__actions__action), `<group>` and [`<separator>`](#element:idea-plugin__actions__group__separator) elements defined inside the group are automatically included in it.
@@ -1221,7 +1325,6 @@ elements:
                         name: id
                         requirement:
                           required: yes
-                        #language=Markdown
                         description: |
                           A unique group identifier.
                           The group identifier must be unique between different plugins.
@@ -1230,7 +1333,6 @@ elements:
                         name: class
                         requirement:
                           required: no
-                        #language=Markdown
                         description: |
                           The fully qualified name of the group implementation class.
                           If not specified,
@@ -1239,26 +1341,22 @@ elements:
                     - attribute:
                         name: text
                         requirement:
-                          #language=Markdown
                           details:
                             - |
                               **required** if the [`popup`](#attribute:idea-plugin__actions__group__popup) is `true` and the group is not
-                              [localized](https://plugins.jetbrains.com/docs/intellij/basic-action-system.html#localizing-actions-and-groups)
-                        #language=Markdown
+                              [localized](https://plugins.jetbrains.com/docs/intellij/action-system.html#localizing-actions-and-groups)
                         description: |
                           The default long-version text to be displayed for the group (text for the menu item showing the submenu).
                     - attribute:
                         name: description
                         requirement:
                           required: no
-                        #language=Markdown
                         description: |
                           The text which is displayed in the status bar when the group is focused.
                     - attribute:
                         name: icon
                         requirement:
                           required: no
-                        #language=Markdown
                         description: |
                           The icon that is displayed next to the group menu item.
                           See [Working with Icons](https://plugins.jetbrains.com/docs/intellij/icons.html) for more information about defining
@@ -1267,7 +1365,6 @@ elements:
                         name: popup
                         requirement:
                           required: no
-                        #language=Markdown
                         description: |
                           Boolean flag defining whether the group items are presented in the submenu popup.
                             - `true` - group actions are placed in a submenu
@@ -1276,7 +1373,6 @@ elements:
                         name: compact
                         requirement:
                           required: no
-                        #language=Markdown
                         description: |
                           Boolean flag defining whether disabled actions within this group are hidden.
                           If the value is:
@@ -1286,7 +1382,6 @@ elements:
                         name: use-shortcut-of
                         requirement:
                           required: no
-                        #language=Markdown
                         description: |
                           The ID of the action whose keyboard shortcut this group will use.
                     - attribute:
@@ -1294,15 +1389,12 @@ elements:
                         since: "2020.3"
                         requirement:
                           required: no
-                        #language=Markdown
                         description: |
                           Boolean flag defining whether the group is displayed in <ui-path>Help&nbsp;|&nbsp;Find Action...</ui-path>
                           or <ui-path>Navigate | Search Everywhere</ui-path> popups.
-                        #language=Markdown
                         defaultValue: |
                           `true`
 
-                  #language=Markdown
                   examples:
                     - |
                       Group declaring explicit [`text`](#attribute:idea-plugin__actions__group__text):
@@ -1340,7 +1432,6 @@ elements:
                     - element: &reference
                         name: reference
                         sdkDocsFixedPath: [idea-plugin, actions, group, reference]
-                        #language=Markdown
                         description: |
                           Allows adding an existing action to the group.
                           The element can be used directly under the [`<actions>`](#element:idea-plugin__actions) element, or in
@@ -1352,18 +1443,14 @@ elements:
                               name: ref
                               requirement:
                                 required: yes
-                              #language=Markdown
                               description: The ID of the action to add to a group.
                           - attribute:
                               name: id
                               requirement:
                                 required: no
-                              #language=Markdown
                               deprecationNote: |
                                 Use [`ref`](#attribute:idea-plugin__actions__reference__ref) instead.
-                              #language=Markdown
                               description: The ID of the action to add to a group.
-                        #language=Markdown
                         examples:
                           - |
                             An action reference in a group:
@@ -1385,7 +1472,6 @@ elements:
                           - element: *addToGroup
                     - element:
                         name: separator
-                        #language=Markdown
                         description: |
                           Defines a separator between actions in a group.
                           The element can be used directly under the [`<actions>`](#element:idea-plugin__actions) element with the child
@@ -1398,7 +1484,6 @@ elements:
                               name: text
                               requirement:
                                 required: no
-                              #language=Markdown
                               description: |
                                 Text displayed on the separator.
                                 Separator text is displayed only in specific contexts such as popup menus, toolbars, etc.
@@ -1406,13 +1491,11 @@ elements:
                               name: key
                               requirement:
                                 required: no
-                              #language=Markdown
                               description: |
-                                The [message key]([message key](https://plugins.jetbrains.com/docs/intellij/basic-action-system.html#localizing-actions-and-groups)) for the separator text.
+                                The [message key](https://plugins.jetbrains.com/docs/intellij/action-system.html#localizing-actions-and-groups) for the separator text.
                                 The message bundle for use should be registered via the [`resource-bundle`](#attribute:idea-plugin__actions__resource-bundle) attribute of
                                 the [`<actions>`](#element:idea-plugin__actions) element.
                                 The attribute is ignored if the [`text`](#attribute:idea-plugin__group__separator) attribute is specified.
-                        #language=Markdown
                         examples:
                           - |
                             A separator dividing two actions in a group:
@@ -1451,11 +1534,9 @@ elements:
         - element:
             name: applicationListeners
             since: "2019.3"
-            #language=Markdown
             references:
               - |
                 [Defining Application-Level Listeners](https://plugins.jetbrains.com/docs/intellij/plugin-listeners.html#defining-application-level-listeners)
-            #language=Markdown
             description: |
               Defines the application-level listeners.
             requirement:
@@ -1465,11 +1546,9 @@ elements:
                   name: listener
                   sdkDocsFixedPath: [idea-plugin, applicationListeners, listener]
                   since: "2019.3"
-                  #language=Markdown
                   references:
                     - |
                       [Listeners](https://plugins.jetbrains.com/docs/intellij/plugin-listeners.html)
-                  #language=Markdown
                   description: |
                     Defines a single application or project-level listener.
                     A single [`<applicationListeners>`](#element:idea-plugin__applicationListeners) or
@@ -1481,14 +1560,12 @@ elements:
                         name: topic
                         requirement:
                           required: yes
-                        #language=Markdown
                         description: |
                           The fully qualified name of the listener interface corresponding to the type of received events.
                     - attribute:
                         name: class
                         requirement:
                           required: yes
-                        #language=Markdown
                         description: |
                           The fully qualified name of the class implementing the listener interface that receives and handles the events.
                     - attribute:
@@ -1496,7 +1573,6 @@ elements:
                         since: "2020.1"
                         requirement:
                           required: no
-                        #language=Markdown
                         description: |
                           Restricts listener instantiation to a specific operating system.
                           Allowed values:
@@ -1509,23 +1585,18 @@ elements:
                         name: activeInTestMode
                         requirement:
                           required: no
-                        #language=Markdown
                         description: |
                           Boolean flag defining whether the listener should be instantiated in test mode.
-                        #language=Markdown
                         defaultValue: |
                           `true`
                     - attribute:
                         name: activeInHeadlessMode
                         requirement:
                           required: no
-                        #language=Markdown
                         description: |
                           Boolean flag defining whether the listener should be instantiated in headless mode.
-                        #language=Markdown
                         defaultValue: |
                           `true`
-                  #language=Markdown
                   examples:
                     - |
                       ```xml
@@ -1538,11 +1609,9 @@ elements:
         - element:
             name: projectListeners
             since: "2019.3"
-            #language=Markdown
             references:
               - |
                 [Defining Project-Level Listeners](https://plugins.jetbrains.com/docs/intellij/plugin-listeners.html#defining-project-level-listeners)
-            #language=Markdown
             description: |
               Defines the project-level listeners.
             requirement:
@@ -1552,11 +1621,9 @@ elements:
         - element:
             name: application-components
             deprecatedSince: &componentsDeprecatedSince "2020.1"
-            #language=Markdown
             deprecationNote: &componentsDeprecationNote |
               Do not use it in new plugins.
               See [Components](https://plugins.jetbrains.com/docs/intellij/plugin-components.html) for the migration guide.
-            #language=Markdown
             description: Defines a list of application [components](https://plugins.jetbrains.com/docs/intellij/plugin-components.html).
             requirement:
               required: no
@@ -1566,7 +1633,6 @@ elements:
                   sdkDocsFixedPath: [idea-plugin, application-components, component]
                   deprecatedSince: *componentsDeprecatedSince
                   deprecationNote: *componentsDeprecationNote
-                  #language=Markdown
                   description: |
                     Defines a single application, project, or
                     module [component](https://plugins.jetbrains.com/docs/intellij/plugin-components.html).
@@ -1581,7 +1647,6 @@ elements:
                         sdkDocsFixedPath: [idea-plugin, application-components, component, implementation-class]
                         deprecatedSince: *componentsDeprecatedSince
                         deprecationNote: *componentsDeprecationNote
-                        #language=Markdown
                         description: The fully qualified name of the component implementation class.
                         requirement:
                           required: yes
@@ -1590,7 +1655,6 @@ elements:
                         sdkDocsFixedPath: [idea-plugin, application-components, component, interface-class]
                         deprecatedSince: *componentsDeprecatedSince
                         deprecationNote: *componentsDeprecationNote
-                        #language=Markdown
                         description: |
                           The fully qualified name of the component interface class. If not specified, the interface will be the same as
                           defined by [`<implementation-class>`](#element:idea-plugin__application-components__component__interface-class) element.
@@ -1601,7 +1665,6 @@ elements:
                         sdkDocsFixedPath: [idea-plugin, application-components, component, headless-implementation-class]
                         deprecatedSince: *componentsDeprecatedSince
                         deprecationNote: *componentsDeprecationNote
-                        #language=Markdown
                         description: |
                           The fully qualified name of the component implementation class to be used when the IDE runs in headless mode.
                         requirement:
@@ -1611,7 +1674,6 @@ elements:
                         sdkDocsFixedPath: [idea-plugin, application-components, component, option]
                         deprecatedSince: *componentsDeprecatedSince
                         deprecationNote: *componentsDeprecationNote
-                        #language=Markdown
                         description: |
                           Allows to provide additional component options.
                           A single [`<component>`](#element:idea-plugin__application-components__component) element can contain multiple `<option>` elements.
@@ -1634,17 +1696,87 @@ elements:
                         sdkDocsFixedPath: [idea-plugin, application-components, component, loadForDefaultProject]
                         deprecatedSince: *componentsDeprecatedSince
                         deprecationNote: *componentsDeprecationNote
-                        #language=Markdown
                         description: |
                           If present, the component is instantiated also for the default project. It takes effect only when used inside
                           [`<project-components>`](#element:idea-plugin__project-components) element.
                         requirement:
                           required: no
+                    - element:
+                        name: skipForDefaultProject
+                        sdkDocsFixedPath: [idea-plugin, application-components, component, skipForDefaultProject]
+                        deprecatedSince: *componentsDeprecatedSince
+                        deprecationNote: *componentsDeprecationNote
+                        description: |
+                          In the past, if present, the component was not loaded for the default project.
+
+                          Currently, project components aren't loaded in the default project by default, so this element has no effect.
+                          Use [`<loadForDefaultProject>`](#element:idea-plugin__application-components__component__loadForDefaultProject)
+                          if it is required to load a component in the default project.
+                        requirement:
+                          required: no
+        - element:
+            name: *xIncludeName
+            namespace: *xIncludeNamespace
+            description: |
+              Allows including content of another plugin descriptor in this descriptor with
+              [XInclude](http://www.w3.org/2001/XInclude) standard.
+            requirement:
+              required: no
+            attributes:
+              - attribute:
+                  name: href
+                  requirement:
+                    required: no
+                  description: Path of the plugin descriptor file to include.
+              - attribute:
+                  name: xpointer
+                  requirement:
+                    required: no
+                  deprecatedSince: '2021.2'
+                  deprecationNote: |
+                    The `xpointer` attribute must be `xpointer(/idea-plugin/*)` or not defined.
+                  description: Elements pointer to include.
+                  defaultValue: |
+                    `xpointer(/idea-plugin/*)`
+            examples:
+              - |
+                Given a plugin descriptor:
+                
+                ```xml
+                <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+                  <id>com.example.myplugin</id>
+                  <name>Example</name>
+                  <xi:include href="/META-INF/another-plugin.xml"/>
+                  ...
+                </idea-plugin>
+                ```
+                
+                and <path>/META-INF/another-plugin.xml</path>:
+                
+                ```xml
+                <idea-plugin>
+                  <extensions>...</extensions>
+                  <actions>...</actions>
+                </idea-plugin>
+                ```
+                
+                The effective plugin descriptor loaded to memory will contain the following elements:
+                
+                ```xml
+                <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+                  <id>com.example.myplugin</id>
+                  <name>Example</name>
+                  <extensions>...</extensions>
+                  <actions>...</actions>
+                  ...
+                </idea-plugin>
+                ```
+            children:
+              - element: *xIncludeFallback
         - element:
             name: project-components
             deprecatedSince: *componentsDeprecatedSince
             deprecationNote: *componentsDeprecationNote
-            #language=Markdown
             description: Defines a list of project [components](https://plugins.jetbrains.com/docs/intellij/plugin-components.html).
             requirement:
               required: no
@@ -1654,7 +1786,6 @@ elements:
             name: module-components
             deprecatedSince: *componentsDeprecatedSince
             deprecationNote: *componentsDeprecationNote
-            #language=Markdown
             description: Defines a list of module [components](https://plugins.jetbrains.com/docs/intellij/plugin-components.html).
             requirement:
               required: no

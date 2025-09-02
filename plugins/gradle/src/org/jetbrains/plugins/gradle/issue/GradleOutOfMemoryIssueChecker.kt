@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.issue
 
 import com.intellij.build.BuildConsoleUtils.getMessageTitle
@@ -16,13 +16,11 @@ import org.jetbrains.plugins.gradle.service.execution.gradleUserHomeDir
 import org.jetbrains.plugins.gradle.settings.GradleSystemSettings
 import org.jetbrains.plugins.gradle.util.GradleBundle
 import java.nio.file.Paths
-import java.util.*
 import java.util.function.BiPredicate
 import kotlin.io.path.isRegularFile
 
 @ApiStatus.Experimental
-class GradleOutOfMemoryIssueChecker : GradleIssueChecker {
-
+private class GradleOutOfMemoryIssueChecker : GradleIssueChecker {
   override fun check(issueData: GradleIssueData): BuildIssue? {
     // do not report OOM errors not related to Gradle tooling
     if (issueData.error !is org.gradle.tooling.GradleConnectionException) return null
@@ -62,11 +60,11 @@ class GradleOutOfMemoryIssueChecker : GradleIssueChecker {
 
     val issueDescription = StringBuilder()
     if (issueData.filePosition != null) {
-      val fileName = issueData.filePosition.file.name
+      val fileName = issueData.filePosition.file?.name ?: ""
       val fileTypePrefix = if (fileName.endsWith("gradle", true) || fileName.endsWith("gradle.kts", true)) "Build file " else ""
       issueDescription.appendLine("""
       * Where:
-      $fileTypePrefix'${issueData.filePosition.file.path}' line: ${issueData.filePosition.startLine + 1}
+      $fileTypePrefix'${issueData.filePosition.file?.path}' line: ${issueData.filePosition.startLine + 1}
 
     """.trimIndent())
     }

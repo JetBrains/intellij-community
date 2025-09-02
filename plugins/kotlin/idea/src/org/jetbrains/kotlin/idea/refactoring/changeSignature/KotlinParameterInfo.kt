@@ -6,9 +6,9 @@ import com.intellij.psi.PsiReference
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.impl.AnonymousFunctionDescriptor
 import org.jetbrains.kotlin.idea.base.psi.copied
+import org.jetbrains.kotlin.idea.base.psi.setDefaultValue
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.core.compareDescriptors
-import org.jetbrains.kotlin.idea.core.setDefaultValue
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.usages.KotlinCallableDefinitionUsage
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -42,6 +42,7 @@ class KotlinParameterInfo(
     override var defaultValueAsDefaultParameter: Boolean = false,
     override var valOrVar: KotlinValVar = defaultValOrVar(callableDescriptor),
     val modifierList: KtModifierList? = null,
+    override var isContextParameter: Boolean = false,
 ) : KotlinModifiableParameterInfo {
     private var _defaultValueForParameter: KtExpression? = null
     fun setDefaultValueForParameter(expression: KtExpression?) {

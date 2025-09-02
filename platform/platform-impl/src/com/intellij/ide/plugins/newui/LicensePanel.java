@@ -4,9 +4,7 @@ package com.intellij.ide.plugins.newui;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
-import com.intellij.ide.plugins.PluginNode;
 import com.intellij.openapi.application.IdeUrlTrackingParametersProvider;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
@@ -27,7 +25,6 @@ import java.awt.*;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
-import java.util.List;
 import java.util.function.Supplier;
 
 /**
@@ -153,34 +150,33 @@ public final class LicensePanel extends NonOpaquePanel {
   }
 
   public void showBuyPluginWithText(@NotNull @Nls String text, boolean warning, boolean errorColor,
-                                    @NotNull Supplier<? extends IdeaPluginDescriptor> getPlugin, boolean forUpdate,
+                                    @NotNull Supplier<PluginUiModel> getPlugin, boolean forUpdate,
                                     boolean makePanelVisible) {
     setText(text, warning, errorColor);
     showBuyPlugin(getPlugin, forUpdate);
     setVisible(makePanelVisible);
   }
 
-  private void showBuyPlugin(@NotNull Supplier<? extends IdeaPluginDescriptor> getPlugin, boolean forUpdate) {
-    IdeaPluginDescriptor plugin = getPlugin.get();
+  private void showBuyPlugin(@NotNull Supplier<PluginUiModel> getPlugin, boolean forUpdate) {
+    PluginUiModel plugin = getPlugin.get();
 
     setLink(IdeBundle.message("plugins.configurable.buy.the.license"), () ->
-      BrowserUtil.browse(IdeUrlTrackingParametersProvider.getInstance().augmentUrl("https://plugins.jetbrains.com/purchase-link/" + plugin.getProductCode())), true);
+      BrowserUtil.browse(IdeUrlTrackingParametersProvider.getInstance()
+                           .augmentUrl("https://plugins.jetbrains.com/purchase-link/" + plugin.getProductCode())), true);
 
     if (forUpdate) {
       updateLink(IdeBundle.message("label.plugin.paid"), false);
     }
 
-    if (plugin instanceof PluginNode) {
-      List<String> tags = ((PluginNode)plugin).getTags();
-      if (tags.contains(Tags.Freemium.name())) {
-        updateLink(IdeBundle.message(forUpdate ? "label.plugin.freemium" : "plugins.configurable.activate.trial.for.full.access"), false);
-        return;
-      }
+    if (plugin.getTags().contains(Tags.Freemium.name())) {
+      updateLink(IdeBundle.message(forUpdate ? "label.plugin.freemium" : "plugins.configurable.activate.trial.for.full.access"), false);
+      return;
     }
+
     if (forUpdate) {
       return;
     }
-    PluginPriceService.getPrice(plugin, price -> updateLink(IdeBundle.message("plugins.configurable.buy.the.license.from.0", price), false), price -> {
+    PluginPriceService.getPrice(plugin.getProductCode(), price -> updateLink(IdeBundle.message("plugins.configurable.buy.the.license.from.0", price), false), price -> {
       if (plugin == getPlugin.get()) {
         updateLink(IdeBundle.message("plugins.configurable.buy.the.license.from.0", price), true);
       }
@@ -193,9 +189,7 @@ public final class LicensePanel extends NonOpaquePanel {
       ArrayUtil.contains(productCodeOrPluginId, "DPN", "DC", "DPA", "PDB", "PWS", "PGO", "PPS", "PPC", "PRB", "PSW", "Pythonid");
   }
 
-  public static boolean shouldSkipPluginLicenseDescriptionPublishing(@NotNull IdeaPluginDescriptor plugin) {
-    return "AIP".equals(plugin.getProductCode()) &&
-           (plugin instanceof PluginNode) &&
-           ((PluginNode)plugin).getTags().contains(Tags.Freemium.name());
+  public static boolean shouldSkipPluginLicenseDescriptionPublishing(@NotNull PluginUiModel plugin) {
+    return "AIP".equals(plugin.getProductCode()) && plugin.getTags().contains(Tags.Freemium.name());
   }
 }

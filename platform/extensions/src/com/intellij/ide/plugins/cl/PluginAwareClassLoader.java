@@ -9,6 +9,7 @@ import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.ApiStatus.NonExtendable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.nio.file.Path;
 import java.util.Collection;
@@ -37,7 +38,8 @@ public interface PluginAwareClassLoader {
   long getLoadedClassCount();
 
   @Internal
-  @NotNull Collection<Path> getFiles();
+  @NotNull @Unmodifiable
+  Collection<Path> getFiles();
 
   @Internal
   @MagicConstant(intValues = {ACTIVE, UNLOAD_IN_PROGRESS})

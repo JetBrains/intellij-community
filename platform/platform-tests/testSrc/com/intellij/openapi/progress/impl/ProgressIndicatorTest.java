@@ -16,6 +16,7 @@ import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.testFramework.BombedProgressIndicator;
 import com.intellij.testFramework.LightPlatformTestCase;
@@ -1150,6 +1151,7 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
   }
 
   public void testEmptyProgressIndicatorPointsToTheCauseOfCancellation() {
+    Registry.get("ide.rich.cancellation.traces").setValue(true, getTestRootDisposable());
     EmptyProgressIndicator indicator = new EmptyProgressIndicator();
     notableStacktrace(indicator);
     try {

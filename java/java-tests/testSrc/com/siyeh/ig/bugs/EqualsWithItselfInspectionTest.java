@@ -2,36 +2,30 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.codeInspection.ui.OptionAccessor;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
 public class EqualsWithItselfInspectionTest extends LightJavaInspectionTestCase {
 
+  private EqualsWithItselfInspection myInspection;
+
   public void testEqualsWithItself() {
     doTest();
   }
 
   public void testEqualsWithItself_ignoreNonFinalClassesInTest() {
+    myInspection.ignoreNonFinalClassesInTest = true;
     doTest();
   }
 
-  @Nullable
   @Override
-  protected InspectionProfileEntry getInspection() {
-    EqualsWithItselfInspection inspection = new EqualsWithItselfInspection();
-    inspection.ignoreNonFinalClassesInTest = false;
-    String option = StringUtil.substringAfter(getName(), "_");
-    if(option != null) {
-      new OptionAccessor.Default(inspection).setOption(option, true);
-    }
-    return inspection;
+  protected @NotNull InspectionProfileEntry getInspection() {
+    myInspection = new EqualsWithItselfInspection();
+    return myInspection;
   }
 
   @Override
@@ -42,7 +36,7 @@ public class EqualsWithItselfInspectionTest extends LightJavaInspectionTestCase 
   @SuppressWarnings({"unchecked", "rawtypes", "NonFinalUtilityClass"})
   @Override
   protected String[] getEnvironmentClasses() {
-    return new String[] {"""
+    return new String[]{"""
      package org.junit.jupiter.api;
      public class Assertions{
      	public static void assertEquals(Object expected, Object actual) {}

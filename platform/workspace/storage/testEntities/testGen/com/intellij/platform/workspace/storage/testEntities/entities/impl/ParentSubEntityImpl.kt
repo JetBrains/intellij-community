@@ -9,7 +9,7 @@ import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
-import com.intellij.platform.workspace.storage.annotations.Child
+import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
@@ -22,18 +22,15 @@ import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStor
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.ChildSubEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.ParentSubEntity
-import kotlin.jvm.JvmName
-import kotlin.jvm.JvmOverloads
-import kotlin.jvm.JvmStatic
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(6)
+@GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ParentSubEntityImpl(private val dataSource: ParentSubEntityData) : ParentSubEntity, WorkspaceEntityBase(dataSource) {
 
   private companion object {
-    internal val CHILD_CONNECTION_ID: ConnectionId = ConnectionId.create(ParentSubEntity::class.java, ChildSubEntity::class.java,
-                                                                         ConnectionId.ConnectionType.ONE_TO_ONE, false)
+    internal val CHILD_CONNECTION_ID: ConnectionId =
+      ConnectionId.create(ParentSubEntity::class.java, ChildSubEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
 
     private val connections = listOf<ConnectionId>(
       CHILD_CONNECTION_ID,
@@ -61,8 +58,8 @@ internal class ParentSubEntityImpl(private val dataSource: ParentSubEntityData) 
   }
 
 
-  internal class Builder(result: ParentSubEntityData?) : ModifiableWorkspaceEntityBase<ParentSubEntity, ParentSubEntityData>(
-    result), ParentSubEntity.Builder {
+  internal class Builder(result: ParentSubEntityData?) : ModifiableWorkspaceEntityBase<ParentSubEntity, ParentSubEntityData>(result),
+                                                         ParentSubEntity.Builder {
     internal constructor() : this(ParentSubEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -194,7 +191,8 @@ internal class ParentSubEntityData : WorkspaceEntityData<ParentSubEntity>() {
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.ParentSubEntity") as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.ParentSubEntity"
+    ) as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

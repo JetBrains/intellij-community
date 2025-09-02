@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.ForEachParameterNotUsedInspection.UnusedForEachParameterInfo
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.refactoring.moveFunctionLiteralOutsideParentheses
 import org.jetbrains.kotlin.idea.refactoring.util.setParameterListIfAny
 import org.jetbrains.kotlin.name.CallableId
@@ -48,6 +49,10 @@ internal class ForEachParameterNotUsedInspection :
         /* onTheFly = */ onTheFly,
         /* ...fixes = */ *createQuickFixes(element, context).toTypedArray()
     )
+
+    override fun getApplicableRanges(element: KtCallExpression): List<TextRange> {
+        return ApplicabilityRanges.calleeExpression(element)
+    }
 
     private fun createQuickFixes(
         element: KtCallExpression,

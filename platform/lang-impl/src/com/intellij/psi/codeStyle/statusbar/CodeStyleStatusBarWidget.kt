@@ -3,6 +3,9 @@ package com.intellij.psi.codeStyle.statusbar
 
 import com.intellij.application.options.CodeStyle
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.application.ApplicationBundle
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.impl.EditorImpl.CODE_STYLE_SETTINGS
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListPopup
@@ -13,6 +16,7 @@ import com.intellij.openapi.wm.impl.status.EditorBasedStatusBarPopup
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.codeStyle.*
+import com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier
 import com.intellij.psi.codeStyle.modifier.CodeStyleStatusBarUIContributor
 import com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings
 import com.intellij.util.messages.MessageBusConnection
@@ -29,35 +33,56 @@ class CodeStyleStatusBarWidget(project: Project) : EditorBasedStatusBarPopup(pro
       return WidgetState.HIDDEN
     }
 
-    val psiFile = getPsiFile() ?: return WidgetState.HIDDEN
-    val settings = CodeStyle.getSettings(psiFile)
-    val indentOptions = CodeStyle.getIndentOptions(psiFile)
-    return if (settings is TransientCodeStyleSettings) {
-      createWidgetState(psiFile = psiFile, indentOptions = indentOptions, uiContributor = getUiContributor(settings))
+    val editor = getEditor()
+    val psiFile = editor?.getPsiFile() ?: return WidgetState.HIDDEN
+    val settings = editor.getUserData(CODE_STYLE_SETTINGS) ?: CodeStyle.getSettings(psiFile)
+    val indentOptions = settings.getIndentOptionsByFile(psiFile)
+    if (settings is TransientCodeStyleSettings) {
+      val uiContributorFromModifier = getUiContributor(settings)
+      if (uiContributorFromModifier != null) {
+        return createWidgetState(psiFile = psiFile, indentOptions = indentOptions, uiContributor = uiContributorFromModifier)
+      }
     }
-    else {
-      createWidgetState(psiFile = psiFile, indentOptions = indentOptions, uiContributor = getUiContributor(file, indentOptions))
-    }
+    return createWidgetState(psiFile = psiFile, indentOptions = indentOptions, uiContributor = getUiContributor(file, indentOptions))
   }
 
-  private fun getPsiFile(): PsiFile? {
-    val editor = getEditor() ?: return null
-    val project = project.takeIf { !it.isDisposed } ?: return null
-    return PsiDocumentManager.getInstance(project).getPsiFile(editor.document)
+  private fun Editor.getPsiFile(): PsiFile? {
+    val project = this@CodeStyleStatusBarWidget.project.takeIf { !it.isDisposed } ?: return null
+    return PsiDocumentManager.getInstance(project).getPsiFile(this.document)
   }
 
   override fun createPopup(context: DataContext): ListPopup? {
     val state = getWidgetState(context.getData(CommonDataKeys.VIRTUAL_FILE))
     val editor = getEditor()
-    val psiFile = getPsiFile()
+    val psiFile = editor?.getPsiFile()
     if (state is MyWidgetState && editor != null && psiFile != null) {
       val uiContributor = state.uiContributor
-      val actions = getActions(uiContributor, psiFile)
-      val actionGroup: ActionGroup = object : ActionGroup() {
-        override fun getChildren(e: AnActionEvent?): Array<AnAction> = actions
+      val actions = ArrayList<AnAction>()
+      actions.addAll(getActions(uiContributor, psiFile))
+      for (modifier in CodeStyleSettingsModifier.EP_NAME.extensionList) {
+        val activatingAction = modifier.getActivatingAction(uiContributor, psiFile)
+        if (activatingAction != null) {
+          actions.add(activatingAction)
+        }
+      }
+      for (provider in FileIndentOptionsProvider.EP_NAME.extensionList) {
+        val activatingAction = provider.getActivatingAction(uiContributor, psiFile)
+        if (activatingAction != null) {
+          actions.add(activatingAction)
+        }
       }
 
-      return JBPopupFactory.getInstance().createActionGroupPopup(uiContributor?.actionGroupTitle,
+      val actionGroup: ActionGroup = object : ActionGroup() {
+        override fun getChildren(e: AnActionEvent?): Array<AnAction> = actions.toTypedArray()
+      }
+
+      val popupTitle = if (uiContributor != null) {
+        uiContributor.actionGroupTitle
+      }
+      else {
+        ApplicationBundle.message("code.style.language.settings.indent.provider", psiFile.language.displayName)
+      }
+      return JBPopupFactory.getInstance().createActionGroupPopup(popupTitle,
                                                                  actionGroup,
                                                                  context,
                                                                  JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.ui.preview.jcef
 
 import com.intellij.ide.ui.UISettingsListener
@@ -22,6 +22,7 @@ import com.intellij.ui.jcef.JBCefApp
 import com.intellij.ui.jcef.JBCefClient
 import com.intellij.ui.jcef.JCEFHtmlPanel
 import com.intellij.util.application
+import com.intellij.util.io.DigestUtil
 import com.intellij.util.net.NetUtils
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collectLatest
@@ -58,13 +59,10 @@ class MarkdownJCEFHtmlPanel(
 ) : JCEFHtmlPanel(isOffScreenRendering(), null, null), MarkdownHtmlPanelEx, UserDataHolder by UserDataHolderBase() {
   constructor() : this(null, null)
 
-  private val pageBaseName = "markdown-preview-index-${hashCode()}.html"
-
+  private val pageBaseName = "markdown-preview-index-${DigestUtil.randomToken()}.html"
   private val resourceProvider = MyAggregatingResourceProvider()
-  private val browserPipe: BrowserPipe = JcefBrowserPipeImpl(
-    this,
-    injectionAllowedUrls = listOf(PreviewStaticServer.getStaticUrl(resourceProvider, pageBaseName))
-  )
+  private val pageUrl = PreviewStaticServer.getStaticUrl(resourceProvider, pageBaseName)
+  private val browserPipe: BrowserPipe = JcefBrowserPipeImpl(browser = this, injectionAllowedUrls = listOf(pageUrl))
 
   private val scrollListeners = ArrayList<MarkdownHtmlPanel.ScrollListener>()
 
@@ -78,40 +76,21 @@ class MarkdownJCEFHtmlPanel(
       .sorted()
   }
 
-  private val scripts
-    get() = baseScripts + currentExtensions.flatMap { it.scripts }
-
-  private val styles
-    get() = currentExtensions.flatMap { it.styles }
-
-  private val scriptingLines
-    get() = scripts.joinToString("\n") {
-      "<script src=\"${PreviewStaticServer.getStaticUrl(resourceProvider, it)}\"></script>"
-    }
-
-  private val stylesLines
-    get() = styles.joinToString("\n") {
-      "<link rel=\"stylesheet\" href=\"${PreviewStaticServer.getStaticUrl(resourceProvider, it)}\"/>"
-    }
-
-  private val contentSecurityPolicy get() = PreviewStaticServer.createCSP(
-    scripts.map { PreviewStaticServer.getStaticUrl(resourceProvider, it) },
-    styles.map { PreviewStaticServer.getStaticUrl(resourceProvider, it) }
-  )
-
   private val updateHandler = MarkdownUpdateHandler.Debounced()
 
   private fun buildIndexContent(): String {
+    val scripts = (baseScripts + currentExtensions.flatMap { it.scripts }).map { PreviewStaticServer.getStaticUrl(resourceProvider, it) }
+    val styles = currentExtensions.flatMap { it.styles }.map { PreviewStaticServer.getStaticUrl(resourceProvider, it) }
     // language=HTML
     return """
       <!DOCTYPE html>
       <html>
         <head>
           <title>IntelliJ Markdown Preview</title>
-          <meta http-equiv="Content-Security-Policy" content="$contentSecurityPolicy"/>
+          <meta http-equiv="Content-Security-Policy" content="${PreviewStaticServer.createCSP(scripts, styles)}"/>
           <meta name="markdown-position-attribute-name" content="${HtmlGenerator.SRC_ATTRIBUTE_NAME}"/>
-          $scriptingLines
-          $stylesLines
+          ${scripts.joinToString("\n") { "<script src=\"${it}\"></script>" }}
+          ${styles.joinToString("\n") { "<link rel=\"stylesheet\" href=\"${it}\"/>" }}
         </head>
       </html>
     """
@@ -119,7 +98,7 @@ class MarkdownJCEFHtmlPanel(
 
   private suspend fun loadIndexContent() {
     reloadExtensions()
-    waitForPageLoad(PreviewStaticServer.getStaticUrl(resourceProvider, pageBaseName))
+    waitForPageLoad(pageUrl)
   }
 
   private var previousRenderClosure: String = ""
@@ -420,13 +399,11 @@ class MarkdownJCEFHtmlPanel(
         """.trimIndent())
         return true
       }
-      val targetPageUrl = PreviewStaticServer.getStaticUrl(resourceProvider, pageBaseName)
-      val requestedUrl = request.url
-      if (requestedUrl != targetPageUrl) {
+      if (request.url != pageUrl) {
         logger.warn("""
-          Canceling request for an external page with url: $requestedUrl.
+          Canceling request for an external page with url: ${request.url}.
           Current page url: ${browser.url}
-          Target safe url: $targetPageUrl
+          Target safe url: ${pageUrl}
         """.trimIndent())
         return true
       }

@@ -11,6 +11,8 @@ import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.io.*
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.asFlow
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.io.IOException
@@ -46,6 +48,18 @@ class ManagedPersistentCache<K, V> @OptIn(ExperimentalCoroutinesApi::class) cons
       map.put(key, value)
     }
     forceAsync()
+  }
+
+  override suspend fun entries(): Flow<Pair<K, V>> {
+    // Implementation detail: flow could not be used here since processExistingKeys is not suspendable
+    return buildList {
+      withPersistentMap(opName = "entries") { map ->
+        map.processExistingKeys { key ->
+          add(key to map.get(key)!!)
+          true
+        }
+      }
+    }.asFlow()
   }
 
   override suspend fun get(key: K): V? {

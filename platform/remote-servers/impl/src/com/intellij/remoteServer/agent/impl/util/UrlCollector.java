@@ -6,8 +6,8 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 /**
@@ -19,7 +19,7 @@ public class UrlCollector {
 
   private List<File> myFiles;
 
-  public URL[] collect(@NotNull Collection<? extends File> libraries) {
+  public URL[] collect(List<Path> libraries) {
     List<File> files = collectFiles(libraries);
     URL[] result = new URL[files.size()];
     for (int i = 0; i < files.size(); i++) {
@@ -33,9 +33,10 @@ public class UrlCollector {
     return result;
   }
 
-  public List<File> collectFiles(Collection<? extends File> libraries) {
+  public List<File> collectFiles(List<Path> libraries) {
     myFiles = new ArrayList<>();
-    for (File library : libraries) {
+    for (Path path : libraries) {
+      File library = path.toFile();
       if (library.exists()) {
         addFile(library);
         if (library.isDirectory()) {

@@ -26,9 +26,9 @@ public class RunLineMarkerJava23Test extends RunLineMarkerJava22Test {
 
   public void testStaticMainMethodInSuperClass() {
     myFixture.addClass("public class B { public static void main(String[] args) {} }");
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_23, () -> {
+    IdeaTestUtil.withLevel(getModule(), getDisabledLevel(), () -> {
       myFixture.configureByText("MainTest.java", """
-        class A implements B {}
+        class A extends B {}
         """);
       List<GutterMark> marks = myFixture.findAllGutters();
       assertEquals(1, marks.size());
@@ -36,7 +36,7 @@ public class RunLineMarkerJava23Test extends RunLineMarkerJava22Test {
   }
 
   public void testBasic() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_23, () -> {
+    IdeaTestUtil.withLevel(getModule(),  getDisabledLevel(), () -> {
       myFixture.configureByText("MainTest.java", """
         class A{
           public static void main<caret>(String[] args) {

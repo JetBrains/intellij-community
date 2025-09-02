@@ -10,7 +10,6 @@
         <entry key="kotlinc.analysis-api-impl-base-tests" value="kotlin.util.compiler-classpath" />
         <entry key="kotlinc.analysis-api-k2" value="kotlin.util.compiler-classpath" />
         <entry key="kotlinc.analysis-api-k2-tests" value="kotlin.util.compiler-classpath" />
-        <entry key="kotlinc.android-extensions-compiler-plugin" value="kotlin.util.compiler-classpath" />
         <entry key="kotlinc.incremental-compilation-impl-tests" value="kotlin.util.compiler-classpath" />
         <entry key="kotlinc.kotlin-build-common-tests" value="kotlin.util.compiler-classpath" />
         <entry key="kotlinc.kotlin-compiler-cli" value="kotlin.util.compiler-classpath" />
@@ -26,6 +25,7 @@
         <entry key="kotlinc.kotlin-scripting-dependencies" value="kotlin.util.compiler-classpath" />
         <entry key="kotlinc.kotlin-scripting-jvm" value="kotlin.util.compiler-classpath" />
         <entry key="kotlinc.kotlinx-serialization-compiler-plugin" value="kotlin.util.compiler-classpath" />
+        <entry key="kotlinc.kotlin-dataframe-compiler-plugin" value="kotlin.util.compiler-classpath" />
         <entry key="kotlinc.lombok-compiler-plugin" value="kotlin.util.compiler-classpath" />
         <entry key="kotlinc.low-level-api-fir" value="kotlin.util.compiler-classpath" />
         <entry key="kotlinc.noarg-compiler-plugin" value="kotlin.util.compiler-classpath" />

@@ -12,6 +12,12 @@ import com.intellij.openapi.vfs.VirtualFile
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 
+/**
+ * Keeps track of a user's usage statistics regarding file type usage.
+ * These statistics are used as an input to ML models, and as such they need to be persisted between IDE updates and upgrades.
+ *
+ * This class is implemented as a project service. Use the [FileTypeUsageSummaryProvider] to get the service.
+ */
 @State(name = "FileTypeUsageLocalSummary", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)], reportStatistic = false)
 private class FileTypeUsageLocalSummary : PersistentStateComponent<FileTypeUsageLocalSummaryState>,
                                           FileTypeUsageSummaryProvider,

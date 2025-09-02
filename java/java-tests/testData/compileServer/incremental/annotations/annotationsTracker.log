@@ -36,6 +36,7 @@ out/production/AnnotationsTracker/D3Sub.class
 out/production/AnnotationsTracker/D3Sub2.class
 out/production/AnnotationsTracker/D4Sub.class
 out/production/AnnotationsTracker/D4Sub2.class
+out/production/AnnotationsTracker/D5Sub.class
 out/production/AnnotationsTracker/D5Sub2.class
 End of files
 Compiling files:
@@ -56,5 +57,6 @@ src/D3Sub.java
 src/D3Sub2.java
 src/D4Sub.java
 src/D4Sub2.java
+src/D5Sub.java
 src/D5Sub2.java
 End of files

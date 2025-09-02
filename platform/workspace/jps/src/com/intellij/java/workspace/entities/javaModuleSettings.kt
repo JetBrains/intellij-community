@@ -7,12 +7,13 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.annotations.Default
+import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.annotations.NonNls
 
 interface JavaModuleSettingsEntity: WorkspaceEntity {
+  @Parent
   val module: ModuleEntity
 
   val inheritedCompilerOutput: Boolean
@@ -66,9 +67,9 @@ fun MutableEntityStorage.modifyJavaModuleSettingsEntity(
   return modifyEntity(JavaModuleSettingsEntity.Builder::class.java, entity, modification)
 }
 
-var ModuleEntity.Builder.javaSettings: @Child JavaModuleSettingsEntity.Builder?
+var ModuleEntity.Builder.javaSettings: JavaModuleSettingsEntity.Builder?
   by WorkspaceEntity.extensionBuilder(JavaModuleSettingsEntity::class.java)
 //endregion
 
-val ModuleEntity.javaSettings: @Child JavaModuleSettingsEntity?
+val ModuleEntity.javaSettings: JavaModuleSettingsEntity?
   by WorkspaceEntity.extension()

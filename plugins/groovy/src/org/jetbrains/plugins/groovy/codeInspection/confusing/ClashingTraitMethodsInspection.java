@@ -30,17 +30,21 @@ public final class ClashingTraitMethodsInspection extends ClashingTraitMethodsIn
 
     @Override
     public void applyFix(@NotNull Project project, final @NotNull ProblemDescriptor descriptor) {
-      PsiElement element = descriptor.getPsiElement();
-      PsiElement parent = element.getParent();
-      if (parent instanceof GrTypeDefinition aClass && aClass.getNameIdentifierGroovy() == element) {
+      declareExplicitImplementation(descriptor);
+    }
+  }
 
-        final List<ClashingMethod> clashingMethods = collectClassingMethods(aClass);
+  private static void declareExplicitImplementation(@NotNull ProblemDescriptor descriptor) {
+    PsiElement element = descriptor.getPsiElement();
+    PsiElement parent = element.getParent();
+    if (parent instanceof GrTypeDefinition aClass && aClass.getNameIdentifierGroovy() == element) {
 
-        for (ClashingMethod method : clashingMethods) {
-          PsiMethod traitMethod = method.getSignature().getMethod();
-          LOG.assertTrue(traitMethod instanceof GrTraitMethod);
-          OverrideImplementUtil.overrideOrImplement(aClass, traitMethod);
-        }
+      final List<ClashingMethod> clashingMethods = collectClassingMethods(aClass);
+
+      for (ClashingMethod method : clashingMethods) {
+        PsiMethod traitMethod = method.getSignature().getMethod();
+        LOG.assertTrue(traitMethod instanceof GrTraitMethod);
+        OverrideImplementUtil.overrideOrImplement(aClass, traitMethod);
       }
     }
   }

@@ -198,8 +198,8 @@ public class CyclicDependenciesBuilder{
     if (myPackages.isEmpty()) {
       final PsiManager psiManager = PsiManager.getInstance(getProject());
       getScope().accept(new PsiRecursiveElementVisitor() {
-        @Override public void visitFile(@NotNull PsiFile file) {
-          if (file instanceof PsiJavaFile psiJavaFile) {
+        @Override public void visitFile(@NotNull PsiFile psiFile) {
+          if (psiFile instanceof PsiJavaFile psiJavaFile) {
             final PsiPackage aPackage = JavaPsiFacade.getInstance(psiManager.getProject()).findPackage(psiJavaFile.getPackageName());
             if (aPackage != null) {
               myPackages.put(aPackage.getQualifiedName(), aPackage);

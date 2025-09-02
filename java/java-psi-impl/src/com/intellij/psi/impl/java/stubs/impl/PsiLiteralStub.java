@@ -1,7 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.java.stubs.impl;
 
-import com.intellij.lang.java.lexer.JavaLexer;
+import com.intellij.lang.java.JavaParserDefinition;
+import com.intellij.lexer.Lexer;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
@@ -26,7 +27,7 @@ public class PsiLiteralStub extends StubBase<PsiLiteralExpressionImpl> {
   public @NotNull IElementType getLiteralType() {
     IElementType type = myLiteralType;
     if (type == null) {
-      JavaLexer lexer = new JavaLexer(LanguageLevel.HIGHEST);
+      Lexer lexer = JavaParserDefinition.createLexer(LanguageLevel.HIGHEST);
       lexer.start(myLiteralText);
       myLiteralType = type = lexer.getTokenType();
       assert type != null : myLiteralText;

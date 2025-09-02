@@ -6,7 +6,7 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.annotations.Child
+import com.intellij.platform.workspace.storage.annotations.Parent
 import org.jetbrains.annotations.NonNls
 
 data class FacetEntityTypeId(val name: @NonNls String)
@@ -21,17 +21,19 @@ interface FacetEntity : ModuleSettingsFacetBridgeEntity {
   val typeId: FacetEntityTypeId
   val configurationXmlTag: @NonNls String?
 
+  @Parent
   val module: ModuleEntity
 
   // underlyingFacet is a parent facet!!
+  @Parent
   val underlyingFacet: FacetEntity?
 
   //region generated code
   @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<FacetEntity>, ModuleSettingsFacetBridgeEntity.Builder<FacetEntity> {
     override var entitySource: EntitySource
-    override var name: String
     override var moduleId: ModuleId
+    override var name: String
     var typeId: FacetEntityTypeId
     var configurationXmlTag: String?
     var module: ModuleEntity.Builder
@@ -43,23 +45,37 @@ interface FacetEntity : ModuleSettingsFacetBridgeEntity {
     @JvmStatic
     @JvmName("create")
     operator fun invoke(
-      name: String,
       moduleId: ModuleId,
+      name: String,
       typeId: FacetEntityTypeId,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
     ): Builder {
       val builder = builder()
-      builder.name = name
       builder.moduleId = moduleId
+      builder.name = name
       builder.typeId = typeId
       builder.entitySource = entitySource
       init?.invoke(builder)
       return builder
     }
+
+    @Deprecated(
+      message = "This method is deprecated and will be removed in next major release",
+      replaceWith = ReplaceWith("invoke(moduleId, name, typeId, entitySource, init)"),
+    )
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
+    fun create(
+      name: String,
+      moduleId: ModuleId,
+      typeId: FacetEntityTypeId,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): Builder = invoke(moduleId, name, typeId, entitySource, init)
   }
   //endregion
-
 }
 
 //region generated code
@@ -70,9 +86,9 @@ fun MutableEntityStorage.modifyFacetEntity(
   return modifyEntity(FacetEntity.Builder::class.java, entity, modification)
 }
 
-var FacetEntity.Builder.childrenFacets: @Child List<FacetEntity.Builder>
+var FacetEntity.Builder.childrenFacets: List<FacetEntity.Builder>
   by WorkspaceEntity.extensionBuilder(FacetEntity::class.java)
 //endregion
 
-val FacetEntity.childrenFacets: List<@Child FacetEntity>
+val FacetEntity.childrenFacets: List<FacetEntity>
     by WorkspaceEntity.extension()

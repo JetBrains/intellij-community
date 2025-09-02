@@ -16,7 +16,7 @@ import org.jetbrains.annotations.ApiStatus
 private const val ACTION_ID = "LoadUnloadModules"
 
 @ApiStatus.Internal
-class LoadUnloadModulesAction : DumbAwareAction(actionText(ACTION_ID)) {
+open class LoadUnloadModulesAction : DumbAwareAction(actionText(ACTION_ID)) {
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = isEnabled(e)
   }

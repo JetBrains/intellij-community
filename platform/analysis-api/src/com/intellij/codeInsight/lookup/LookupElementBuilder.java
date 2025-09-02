@@ -89,8 +89,8 @@ public final class LookupElementBuilder extends LookupElement {
   }
 
   public static @NotNull LookupElementBuilder create(@NotNull Object lookupObject, @NotNull String lookupString) {
-    if (lookupObject instanceof PsiElement) {
-      PsiUtilCore.ensureValid((PsiElement)lookupObject);
+    if (lookupObject instanceof PsiElement psiElement) {
+      PsiUtilCore.ensureValid(psiElement);
     }
     return new LookupElementBuilder(lookupString, lookupObject);
   }

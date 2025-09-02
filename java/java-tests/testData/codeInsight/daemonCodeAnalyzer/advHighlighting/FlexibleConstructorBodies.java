@@ -49,7 +49,7 @@ class B extends A {
   B(boolean b, int i) {
     <error descr="Cannot reference 'super' before superclass constructor is called">super</error>.i = i;
     <error descr="Cannot reference 'this' before superclass constructor is called">this</error>.i = i;
-    if (false) <error descr="return not allowed before 'super()' call">return;</error>
+    if (false) <error descr="'return' not allowed before 'super()' call">return;</error>
     super(i);
   }
 
@@ -193,5 +193,37 @@ class InitializeField {
     <error descr="Cannot assign initialized field 'InitializeField.i' before superclass constructor is called">this.i</error> =  1;
     <error descr="Cannot assign initialized field 'InitializeField.i' before superclass constructor is called">InitializeField.this.i</error> = 1;
     super();
+  }
+}
+class Person {
+
+  Person(Other other) {
+  }
+
+  Person() {
+    Other o = new Other(<error descr="Cannot call 'Object.hashCode()' before superclass constructor is called">hashCode</error>()) {};
+    this(o);
+  }
+
+  Person(int i) {
+    this(new Other(<error descr="Cannot call 'Object.hashCode()' before superclass constructor is called">hashCode</error>()));
+  }
+}
+class Other {
+  Other(int x) {}
+}
+class Machine {
+  private final boolean big;
+  Machine(boolean big) {
+    this.big = big;
+  }
+
+  Machine() {
+    <error descr="Cannot assign final field 'big' before chained constructor call">big</error> = false;
+    this(false);
+  }
+
+  Machine(int size) {
+    this(<error descr="Cannot assign final field 'big' before chained constructor call">big</error> = size > 10);
   }
 }

@@ -5,9 +5,9 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.configurations.ParamsGroup;
-import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
@@ -90,7 +90,7 @@ public abstract class RestCommandLineState extends PythonCommandLineState {
     final Runnable afterTask = getAfterTask();
     ProcessHandler processHandler = PythonProcessRunner.createProcess(commandLine, false);
     if (afterTask != null) {
-      processHandler.addProcessListener(new ProcessAdapter() {
+      processHandler.addProcessListener(new ProcessListener() {
         @Override
         public void processTerminated(@NotNull ProcessEvent event) {
           ApplicationManager.getApplication().invokeLater(afterTask);
@@ -105,7 +105,7 @@ public abstract class RestCommandLineState extends PythonCommandLineState {
     Runnable afterTask = getAfterTask();
     ProcessHandler processHandler = super.startProcess(builder);
     if (afterTask != null) {
-      processHandler.addProcessListener(new ProcessAdapter() {
+      processHandler.addProcessListener(new ProcessListener() {
         @Override
         public void processTerminated(@NotNull ProcessEvent event) {
           ApplicationManager.getApplication().invokeLater(afterTask);

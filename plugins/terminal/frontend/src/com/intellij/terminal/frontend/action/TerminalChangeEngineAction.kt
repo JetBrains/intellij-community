@@ -1,11 +1,9 @@
 package com.intellij.terminal.frontend.action
 
 import com.intellij.configurationStore.saveSettingsForRemoteDevelopment
-import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.KeepPopupOnPerform
-import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.ui.ExperimentalUI
 import com.intellij.util.application
@@ -35,7 +33,11 @@ internal sealed class TerminalChangeEngineAction(private val engine: TerminalEng
       saveSettingsForRemoteDevelopment(application)
 
       val startupFusInfo = TerminalStartupFusInfo(TerminalOpeningWay.SWITCH_ENGINE)
-      TerminalToolWindowManager.getInstance(project).createNewSession(startupFusInfo)
+      TerminalToolWindowManager.getInstance(project).createNewTab(
+        TerminalOptionsProvider.instance.terminalEngine,
+        startupFusInfo,
+        null
+      )
     }
   }
 

@@ -15,7 +15,6 @@ import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.databind.json.JsonMapper
 import com.fasterxml.jackson.module.kotlin.kotlinModule
 import java.io.IOException
-import java.io.Reader
 import java.io.Writer
 
 object SerializationHelper {
@@ -54,15 +53,6 @@ object SerializationHelper {
       .build()
   }
 
-  private val DESERIALIZATION_MAPPER: JsonMapper by lazy {
-    JsonMapper
-      .builder()
-      .enable(DeserializationFeature.USE_LONG_FOR_INTS)
-      .enable(JsonParser.Feature.STRICT_DUPLICATE_DETECTION)
-      .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-      .build()
-  }
-
   private val DESERIALIZATION_WITH_KOTLIN_MAPPER: JsonMapper by lazy {
     JsonMapper
       .builder()
@@ -98,17 +88,6 @@ object SerializationHelper {
   @Throws(JsonProcessingException::class)
   fun serializeToSingleLine(value: Any?): String {
     return SERIALIZATION_TO_SINGLE_LINE_MAPPER.writeValueAsString(value)
-  }
-
-  /**
-   * Method that can be used to deserialize any Java value, using Reader provided.
-   *
-   * @throws IOException
-   * @throws StreamReadException
-   * @throws DatabindException
-   */
-  fun <T> deserialize(src: Reader, valueType: Class<T>): T {
-    return DESERIALIZATION_MAPPER.readValue(src, valueType)
   }
 
   /**

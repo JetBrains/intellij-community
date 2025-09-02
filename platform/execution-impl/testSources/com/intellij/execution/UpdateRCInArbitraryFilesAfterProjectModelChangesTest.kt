@@ -5,6 +5,7 @@ import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.testFramework.*
 import com.intellij.testFramework.rules.ProjectModelRule
+import com.intellij.testFramework.rules.TempDirectory
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.ClassRule
 import org.junit.Rule
@@ -23,12 +24,16 @@ class UpdateRCInArbitraryFilesAfterProjectModelChangesTest {
 
   @JvmField
   @Rule
+  val baseNonProjectDir: TempDirectory = TempDirectory()
+
+  @JvmField
+  @Rule
   val logging = TestLoggerFactory.createTestWatcher()
   @Test
   fun `add and remove module`() {
-    val file = projectModel.baseProjectDir.newVirtualFile("m/a.run.xml", generateRunXmlFileText("a"))
+    val file = baseNonProjectDir.newVirtualFile("m/a.run.xml", generateRunXmlFileText("a"))
     assertThat(runConfigurations).isEmpty()
-    val module = projectModel.createModule("m")
+    val module = projectModel.createModule("m", baseNonProjectDir.rootPath)
     ModuleRootModificationUtil.addContentRoot(module, file.parent.path)
     IndexingTestUtil.waitUntilIndexesAreReady(projectModel.project)
     assertThat(runConfigurations.single().name).isEqualTo("a")

@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.performancePlugin.commands
 
 import com.intellij.find.FindManager
@@ -6,7 +7,6 @@ import com.intellij.find.findUsages.FindUsagesOptions
 import com.intellij.find.usages.impl.searchTargets
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.ui.playback.PlaybackContext
@@ -51,15 +51,24 @@ class FindUsagesInBackgroundCommand(text: String, line: Int) : PerformanceComman
           throw Exception("No editor is opened")
         }
 
-        val (offset, scope) = writeIntentReadAction {
-          Pair(editor.caretModel.offset, FindUsagesOptions.findScopeByName(project, null, options.scope))
+        val scope = readAction {
+          FindUsagesOptions.findScopeByName(project, null, options.scope)
+        }
+
+        val rangeMarker = readAction {
+          editor.document.createRangeMarker(editor.caretModel.offset, editor.caretModel.offset)
         }
 
         val searchTargets = readAction {
-          PsiDocumentManager.getInstance(project).getPsiFile(editor.document)?.let { searchTargets(it, offset) }
+          PsiDocumentManager.getInstance(project).getPsiFile(editor.document)?.let { searchTargets(it, rangeMarker.startOffset) }
         }
 
-        val element = getElement(project, editor, offset)
+        val element = getElement(project, editor, rangeMarker)
+
+        if (!elementName.isNullOrEmpty()) {
+          val foundElementName = readAction { (element as PsiNamedElement).name }
+          check(foundElementName != null && foundElementName == elementName) { "Found element name $foundElementName does not correspond to expected $elementName" }
+        }
 
         val firstUsageSpan = PerformanceTestSpan
           .getTracer(isWarmupMode)
@@ -82,10 +91,6 @@ class FindUsagesInBackgroundCommand(text: String, line: Int) : PerformanceComman
           findUsages(false, project, scope, target)
         }
         else if (element != null) {
-          if (!elementName.isNullOrEmpty()) {
-            val foundElementName = readAction { (element as PsiNamedElement).name }
-            check(foundElementName != null && foundElementName == elementName) { "Found element name $foundElementName does not correspond to expected $elementName" }
-          }
           FindManager.getInstance(project).findUsages(element)
         }
       }

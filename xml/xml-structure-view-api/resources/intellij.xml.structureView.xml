@@ -1,0 +1,16 @@
+<idea-plugin>
+  <dependencies>
+    <module name="intellij.platform.backend"/>
+    <module name="intellij.xml.psi"/>
+  </dependencies>
+
+  <extensionPoints>
+    <extensionPoint name="xmlStructureViewBuilderProvider"
+                    interface="com.intellij.ide.structureView.xml.XmlStructureViewBuilderProvider"
+                    dynamic="true"/>
+
+    <extensionPoint name="xmlStructureViewElementProvider"
+                    interface="com.intellij.ide.structureView.xml.XmlStructureViewElementProvider"
+                    dynamic="true"/>
+  </extensionPoints>
+</idea-plugin>

@@ -5,8 +5,8 @@ pub mod utils;
 #[cfg(test)]
 mod tests {
     use std::{env, fs};
-    use std::collections::HashMap;
-    use std::path::PathBuf;
+    use std::collections::{HashMap, HashSet};
+    use std::path::{PathBuf, MAIN_SEPARATOR};
     use xplat_launcher::{get_caches_home, jvm_property};
     use crate::utils::*;
 
@@ -68,6 +68,8 @@ mod tests {
         assert!(classpath.contains("app.jar"), "app.jar is not present in classpath: {}", classpath);
         let os_specific_jar = format!("boot-{}.jar", env::consts::OS);
         assert!(classpath.contains(&os_specific_jar), "{} is not present in classpath: {}", os_specific_jar, classpath);
+        let separators = classpath.chars().filter(|c| *c == '/' || *c == '\\').collect::<HashSet<char>>();
+        assert_eq!(separators, HashSet::from([MAIN_SEPARATOR]), "Unexpected directory separators in {}", classpath);
     }
 
     fn assert_startup_error(result: &LauncherRunResult, message: &str) {
@@ -127,6 +129,12 @@ mod tests {
         let test = prepare_test_env(LauncherLocation::Standard);
 
         let dump = run_launcher_ext(&test, LauncherRunSpec::standard().with_dump().assert_status()).dump();
+
+        let user_home_property = jvm_property!("user.home.macro.test", "");
+        let vm_option = dump.vmOptions.iter().find(|s| s.starts_with(&user_home_property))
+            .unwrap_or_else(|| panic!("'{}' is not in {:?}", user_home_property, dump.vmOptions));
+        let path = vm_option.split_once('=').unwrap().1;
+        assert!(!path.contains("USER_HOME"), "unexpanded: {vm_option}");
 
         let ide_home_property = jvm_property!("ide.home.macro.test", "");
         let vm_option = dump.vmOptions.iter().find(|s| s.starts_with(&ide_home_property))

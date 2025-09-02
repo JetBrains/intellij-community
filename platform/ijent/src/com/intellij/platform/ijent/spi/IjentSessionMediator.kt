@@ -1,4 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:OptIn(IntellijInternalApi::class)
+
 package com.intellij.platform.ijent.spi
 
 import com.intellij.openapi.diagnostic.Attachment
@@ -6,8 +8,10 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.progress.Cancellation.ensureActive
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.platform.ijent.IjentUnavailableException
 import com.intellij.platform.ijent.coroutineNameAppended
+import com.intellij.platform.ijent.spi.IjentSessionMediator.ProcessExitPolicy.*
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.blockingDispatcher
@@ -37,24 +41,39 @@ import kotlin.time.toKotlinDuration
  * No matter if IJent exits expectedly or not, an attempt to do anything with [ijentProcessScope] after the IJent has exited
  * throws [IjentUnavailableException].
  */
-class IjentSessionMediator private constructor(
+abstract class IjentSessionMediator private constructor(
   val ijentProcessScope: CoroutineScope,
   val process: Process,
   val processExit: Deferred<Unit>,
 ) {
-  enum class ExpectedErrorCode {
-    /** During initialization, even a sudden successful exit is an error. */
-    NO,
+  /**
+   * Defines how process exits should be handled in terms of error reporting.
+   * Used to determine whether a process termination should be treated as an error.
+   */
+  enum class ProcessExitPolicy {
+    /** 
+     * Treat any exit as an error.
+     * Used during initialization when process must stay alive.
+     */
+    ERROR,
 
-    /** IJent should exit with code 0 only if it has been terminated explicitly from the IDE side. */
-    ZERO,
+    /** 
+     * Check exit code to determine if it's an error.
+     * Normal termination with expected exit codes is allowed.
+     */
+    CHECK_CODE,
 
-    /** If the process is being destroyed explicitly, on demand, there's no reason to report errors. */
-    ANY,
+    /** 
+     * Normal shutdown, never treat as error.
+     * Used during intentional process termination.
+     */
+    NORMAL,
   }
 
+  internal abstract suspend fun isExpectedProcessExit(exitCode: Int): Boolean
+
   @Volatile
-  var expectedErrorCode = ExpectedErrorCode.NO
+  internal var myExitPolicy: ProcessExitPolicy = ERROR
 
   companion object {
     /**
@@ -66,9 +85,7 @@ class IjentSessionMediator private constructor(
      * Nothing happens with [parentScope] if IJent exits expectedly, f.i., after [com.intellij.platform.ijent.IjentApi.close].
      */
     @OptIn(DelicateCoroutinesApi::class)
-    fun create(parentScope: CoroutineScope, process: Process, ijentLabel: String): IjentSessionMediator {
-      // TODO What about https://youtrack.jetbrains.com/issue/IJPL-156891 ?
-
+    fun create(parentScope: CoroutineScope, process: Process, ijentLabel: String, isExpectedProcessExit: suspend (exitCode: Int) -> Boolean = { it == 0 }): IjentSessionMediator {
       require(parentScope.coroutineContext[Job] != null) {
         "Scope $parentScope has no Job"
       }
@@ -131,7 +148,9 @@ class IjentSessionMediator private constructor(
 
       val processExit = CompletableDeferred<Unit>()
 
-      val mediator = IjentSessionMediator(ijentProcessScope, process, processExit)
+      val mediator = object : IjentSessionMediator(ijentProcessScope, process, processExit) {
+        override suspend fun isExpectedProcessExit(exitCode: Int): Boolean = isExpectedProcessExit(exitCode)
+      }
 
       val awaiterScope = ijentProcessScope.launch(context = context + ijentProcessScope.coroutineNameAppended("exit awaiter scope")) {
         ijentProcessExitAwaiter(ijentLabel, mediator, lastStderrMessages)
@@ -216,7 +235,16 @@ private fun logIjentStderr(ijentLabel: String, line: String) {
   val (rawRemoteDateTime, level, message) =
     ijentLogMessageRegex.matchEntire(line)?.destructured
     ?: run {
-      LOG.info("$ijentLabel log: $line")
+      val message = "$ijentLabel log: $line"
+      // It's important to always log such messages,
+      // but if logs are supposed to be written to a separate file in debug level,
+      // they're logged in debug level.
+      if (LOG.isDebugEnabled) {
+        LOG.debug(message)
+      }
+      else {
+        LOG.info(message)
+      }
       return
     }
 
@@ -260,10 +288,10 @@ private suspend fun ijentProcessExitAwaiter(
   val exitCode = mediator.process.exitValue()
   LOG.debug { "IJent process $ijentLabel exited with code $exitCode" }
 
-  val isExitExpected = when (mediator.expectedErrorCode) {
-    IjentSessionMediator.ExpectedErrorCode.NO -> false
-    IjentSessionMediator.ExpectedErrorCode.ZERO -> exitCode == 0
-    IjentSessionMediator.ExpectedErrorCode.ANY -> true
+  val isExitExpected = when (mediator.myExitPolicy) {
+    ERROR -> false
+    CHECK_CODE -> mediator.isExpectedProcessExit(exitCode)
+    NORMAL -> true
   }
 
   throw if (isExitExpected) {
@@ -317,7 +345,7 @@ private suspend fun ijentProcessFinalizer(ijentLabel: String, mediator: IjentSes
     throw IjentUnavailableException.ClosedByApplication(message, cause)
   }
   finally {
-    mediator.expectedErrorCode = IjentSessionMediator.ExpectedErrorCode.ANY
+    mediator.myExitPolicy = NORMAL
     val process = mediator.process
     if (process.isAlive) {
       GlobalScope.launch(Dispatchers.IO + CoroutineName("$ijentLabel destruction")) {

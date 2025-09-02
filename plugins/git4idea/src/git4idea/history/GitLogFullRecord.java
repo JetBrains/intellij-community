@@ -9,6 +9,7 @@ import com.intellij.vcs.log.impl.VcsFileStatusInfo;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.*;
 
@@ -37,8 +38,8 @@ public final class GitLogFullRecord extends GitLogRecord {
     return myStatusInfo;
   }
 
-  @NotNull
-  List<FilePath> getFilePaths(@NotNull VirtualFile root) {
+  @VisibleForTesting
+  public @NotNull List<FilePath> getFilePaths(@NotNull VirtualFile root) {
     List<FilePath> res = new ArrayList<>();
     String prefix = root.getPath() + "/";
     for (String strPath : getPaths()) {
@@ -47,8 +48,8 @@ public final class GitLogFullRecord extends GitLogRecord {
     return res;
   }
 
-  @NotNull
-  List<Change> parseChanges(@NotNull Project project, @NotNull VirtualFile vcsRoot) {
+  @VisibleForTesting
+  public @NotNull List<Change> parseChanges(@NotNull Project project, @NotNull VirtualFile vcsRoot) {
     String[] hashes = getParentsHashes();
     return GitChangesParser.parse(project, vcsRoot, myStatusInfo, getHash(), getDate(), hashes.length == 0 ? null : hashes[0]);
   }

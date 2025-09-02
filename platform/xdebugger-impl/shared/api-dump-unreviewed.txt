@@ -1,0 +1,11 @@
+e:com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
+- java.lang.Enum
+- sf:Companion:com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType$Companion
+- sf:MOUSE_ALT_OVER_HINT:com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
+- sf:MOUSE_CLICK_HINT:com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
+- sf:MOUSE_OVER_HINT:com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
+- s:values():com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType[]
+f:com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType$Companion
+- f:serializer():kotlinx.serialization.KSerializer

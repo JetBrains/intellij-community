@@ -919,19 +919,19 @@ public final class CreateFromUsageUtils {
     return isInNamedElement || element.getTextRange().contains(offset-1);
   }
 
-  public static void addClassesWithMember(final String memberName, final PsiFile file, final Set<? super String> possibleClassNames, final boolean method,
+  public static void addClassesWithMember(final String memberName, final PsiFile psiFile, final Set<? super String> possibleClassNames, final boolean method,
                                           final boolean staticAccess) {
-    addClassesWithMember(memberName, file, possibleClassNames, method, staticAccess, true);
+    addClassesWithMember(memberName, psiFile, possibleClassNames, method, staticAccess, true);
   }
 
-  public static void addClassesWithMember(final String memberName, final PsiFile file, final Set<? super String> possibleClassNames, final boolean method,
+  public static void addClassesWithMember(final String memberName, final PsiFile psiFile, final Set<? super String> possibleClassNames, final boolean method,
                                           final boolean staticAccess,
                                           final boolean addObjectInheritors) {
-    final Project project = file.getProject();
-    final Module moduleForFile = ModuleUtilCore.findModuleForPsiElement(file);
+    final Project project = psiFile.getProject();
+    final Module moduleForFile = ModuleUtilCore.findModuleForPsiElement(psiFile);
     if (moduleForFile == null) return;
 
-    final GlobalSearchScope searchScope = ReadAction.compute(file::getResolveScope);
+    final GlobalSearchScope searchScope = ReadAction.compute(psiFile::getResolveScope);
     GlobalSearchScope descendantsSearchScope = GlobalSearchScope.moduleWithDependenciesScope(moduleForFile);
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
     final PsiShortNamesCache cache = PsiShortNamesCache.getInstance(project);
@@ -1045,9 +1045,9 @@ public final class CreateFromUsageUtils {
       assert editor != null;
       Document document = editor.getDocument();
       PsiDocumentManager.getInstance(project).commitDocument(document);
-      PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
-      assert file != null;
-      PsiElement elementAt = file.findElementAt(offset);
+      PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
+      assert psiFile != null;
+      PsiElement elementAt = psiFile.findElementAt(offset);
       Set<String> parameterNames = getPeerNames(elementAt);
       if (parameterNames == null) return LookupElement.EMPTY_ARRAY;
 

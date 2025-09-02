@@ -45,12 +45,12 @@ public class LocalQuickFixAsIntentionAdapter implements IntentionAction, Customi
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
     return myProblemDescriptor.getStartElement() != null;
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
     myFix.applyFix(project, myProblemDescriptor);
   }
 
@@ -67,37 +67,37 @@ public class LocalQuickFixAsIntentionAdapter implements IntentionAction, Customi
   @Override
   public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project,
                                                        @NotNull Editor editor,
-                                                       @NotNull PsiFile file) {
-    return myFix.generatePreview(project, myProblemDescriptor.getDescriptorForPreview(file));
+                                                       @NotNull PsiFile psiFile) {
+    return myFix.generatePreview(project, myProblemDescriptor.getDescriptorForPreview(psiFile));
   }
 
   @Override
   public boolean isShowSubmenu() {
-    return myFix instanceof CustomizableIntentionAction ? ((CustomizableIntentionAction)myFix).isShowSubmenu()
+    return myFix instanceof CustomizableIntentionAction customizable? customizable.isShowSubmenu()
                                                         : CustomizableIntentionAction.super.isShowSubmenu();
   }
 
   @Override
   public boolean isSelectable() {
-    return myFix instanceof CustomizableIntentionAction ? ((CustomizableIntentionAction)myFix).isSelectable()
+    return myFix instanceof CustomizableIntentionAction customizable? customizable.isSelectable()
                                                         : CustomizableIntentionAction.super.isSelectable();
   }
 
   @Override
   public boolean isShowIcon() {
-    return myFix instanceof CustomizableIntentionAction ? ((CustomizableIntentionAction)myFix).isShowIcon()
+    return myFix instanceof CustomizableIntentionAction customizable? customizable.isShowIcon()
                                                         : CustomizableIntentionAction.super.isShowIcon();
   }
 
   @Override
   public String getTooltipText() {
-    return myFix instanceof CustomizableIntentionAction ? ((CustomizableIntentionAction)myFix).getTooltipText()
+    return myFix instanceof CustomizableIntentionAction customizable? customizable.getTooltipText()
                                                         : CustomizableIntentionAction.super.getTooltipText();
   }
 
   @Override
   public @NotNull List<RangeToHighlight> getRangesToHighlight(@NotNull Editor editor, @NotNull PsiFile file) {
-    return myFix instanceof CustomizableIntentionAction ? ((CustomizableIntentionAction)myFix).getRangesToHighlight(editor, file)
+    return myFix instanceof CustomizableIntentionAction customizable? customizable.getRangesToHighlight(editor, file)
                                                         : CustomizableIntentionAction.super.getRangesToHighlight(editor, file);
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notification.impl
 
 import com.intellij.internal.statistic.beans.MetricEvent
@@ -6,6 +6,7 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
 import com.intellij.notification.NotificationGroupManager
+import com.intellij.openapi.components.serviceAsync
 
 internal class NotificationSettingsCollector : ApplicationUsagesCollector() {
   private val GROUP = EventLogGroup("notification.settings", 2)
@@ -23,9 +24,9 @@ internal class NotificationSettingsCollector : ApplicationUsagesCollector() {
 
   override fun getGroup(): EventLogGroup = GROUP
 
-  override fun getMetrics(): Set<MetricEvent> {
+  override suspend fun getMetricsAsync(): Set<MetricEvent> {
     val result = mutableSetOf<MetricEvent>()
-    for (group in NotificationGroupManager.getInstance().registeredNotificationGroups) {
+    for (group in serviceAsync<NotificationGroupManager>().registeredNotificationGroups) {
       val changedSettings = NotificationsConfigurationImpl.getSettings(group.displayId)
       val defaultSettings = NotificationSettings(group.displayId, group.displayType, group.isLogByDefault, false)
       if (changedSettings != defaultSettings) {

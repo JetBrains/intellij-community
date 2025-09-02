@@ -9,6 +9,7 @@ import com.intellij.openapi.externalSystem.autolink.forEachExtensionSafeAsync
 import com.intellij.openapi.externalSystem.util.performAction
 import com.intellij.openapi.externalSystem.util.performOpenAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.testFramework.utils.vfs.getDirectory
 import org.jetbrains.plugins.gradle.action.ImportProjectFromScriptAction
 import org.jetbrains.plugins.gradle.testFramework.GradleTestCase
@@ -24,7 +25,7 @@ abstract class GradleOpenProjectTestCase : GradleTestCase() {
       performOpenAction(
         action = ImportProjectAction(),
         systemId = GradleConstants.SYSTEM_ID,
-        selectedFile = testRoot.getSettingsFile(projectInfo.relativePath, projectInfo.useKotlinDsl)
+        selectedFile = testRoot.getSettingsFile(projectInfo.relativePath, projectInfo.gradleDsl)
       )
     }
   }
@@ -41,7 +42,7 @@ abstract class GradleOpenProjectTestCase : GradleTestCase() {
   }
 
   suspend fun attachMavenProject(project: Project, relativePath: String) {
-    val projectPath = testRoot.getDirectory(relativePath).toNioPath().toString()
+    val projectPath = testPath.resolve(relativePath).toCanonicalPath()
     EP_NAME.forEachExtensionSafeAsync { extension ->
       if (extension.systemId == IntellijMavenUtil.SYSTEM_ID) {
         extension.linkAndLoadProjectAsync(project, projectPath)

@@ -12,5 +12,5 @@ import java.nio.file.Path
 
 internal fun Path.getEelApiBlocking(): EelApi {
   @Suppress("RAW_RUN_BLOCKING")
-  return runBlocking { getEelDescriptor().upgrade() }
+  return runBlocking { getEelDescriptor().toEelApi() }
 }

@@ -1,2 +1,3 @@
 <idea-plugin>
+  <resource-bundle>messages.DvcsBundle</resource-bundle>
 </idea-plugin>

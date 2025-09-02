@@ -22,15 +22,16 @@ public final class PathClassLoader extends UrlClassLoader {
 
   static {
     boolean defineClassUsingBytes = Boolean.parseBoolean(System.getProperty("idea.define.class.using.byte.array", "false"));
+    ZipFilePool zipPool = ZipFilePool.PATH_CLASSLOADER_POOL;
     if (!defineClassUsingBytes && System.getProperty("os.name").toLowerCase(Locale.ENGLISH).startsWith("windows")) {
       RESOURCE_FILE_FACTORY = file -> {
         String path = file.toString();
-        return new ZipResourceFile(file, path.length() > 2 && path.charAt(0) == '\\' && path.charAt(1) == '\\');
+        return new ZipResourceFile(file, path.length() > 2 && path.charAt(0) == '\\' && path.charAt(1) == '\\', zipPool);
       };
     }
     else {
       RESOURCE_FILE_FACTORY = file -> {
-        return new ZipResourceFile(file, defineClassUsingBytes);
+        return new ZipResourceFile(file, defineClassUsingBytes, zipPool);
       };
     }
   }
@@ -55,7 +56,7 @@ public final class PathClassLoader extends UrlClassLoader {
     byte @Nullable [] transform(ClassLoader loader, String className, byte[] classBytes);
   }
 
-  @SuppressWarnings("unused")
+  @SuppressWarnings("unused") // accessed through reflection in ClassLoaderConfigurator
   public static Function<Path, ResourceFile> getResourceFileFactory() {
     return RESOURCE_FILE_FACTORY;
   }

@@ -1977,21 +1977,19 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    """);
   }
 
-  // PY-53105
+  // PY-53105, PY-76865
   public void testVariadicGenericStarArgsOfVariadicGeneric() {
     doTestByText("""
                    from typing import Tuple, TypeVarTuple
 
                    Ts = TypeVarTuple('Ts')
 
-
                    def foo(*args: Tuple[*Ts]): ...
-
 
                    foo((0,), (1,))
                    foo((0,), <warning descr="Expected type 'tuple[int]' (matched generic type 'tuple[*Ts]'), got 'tuple[int, int]' instead">(1, 2)</warning>)
-                   # *tuple[int | str] is inferred for *Ts
-                   foo((0,), ('1',))
+                   # Should fail according to https://typing.python.org/en/latest/spec/generics.html#type-variable-tuple-equality
+                   foo((0,), <warning descr="Expected type 'tuple[int]' (matched generic type 'tuple[*Ts]'), got 'tuple[str]' instead">('1',)</warning>)
                    """);
   }
 
@@ -2265,7 +2263,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    def f(x: IntGetter):
                        pass
                    
-                   box: Box[str] = ...
+                   box: Box[str]
                    f(<warning descr="Expected type 'IntGetter', got 'Box[str]' instead">box</warning>)
                    """);
   }
@@ -2287,7 +2285,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    def f(x: Getter[int]):
                        pass
                    
-                   box: Box[str] = ...
+                   box: Box[str]
                    f(<warning descr="Expected type 'Getter[int]', got 'Box[str]' instead">box</warning>)
                    """);
   }
@@ -2728,6 +2726,150 @@ def foo(param: str | int) -> TypeGuard[str]:
                    """);
   }
 
+  public void testExplicitlyParameterizedGenericConstructorCall() {
+    doTestByText("""
+                   class A[T]:
+                       def __init__(self, v: T) -> None: ...
+
+                   A[int](<warning descr="Expected type 'int' (matched generic type 'T'), got 'str' instead">""</warning>)
+                   """);
+  }
+
+  public void testGenericInstanceAttribute() {
+    doTestByText("""
+                   from typing import Self
+                   
+                   class Node[T]:
+                       x: T
+
+                   Node[int].<warning descr="Access to generic instance variables via class is ambiguous">x</warning> = 1
+                   Node[int].<warning descr="Access to generic instance variables via class is ambiguous">x</warning>
+                   Node.<warning descr="Access to generic instance variables via class is ambiguous">x</warning> = 1
+                   Node.<warning descr="Access to generic instance variables via class is ambiguous">x</warning>
+
+                   p = Node[int]()
+                   type(p).<warning descr="Access to generic instance variables via class is ambiguous">x</warning>
+                   i: int = p.x
+                   j: int = Node[int]().x
+                   p.x = 1
+                   
+                   class A:
+                       attr1: list[int]
+                       attr2: list[Self]
+                       attr3: Self
+                   
+                   A.attr1
+                   A.attr2
+                   A.attr3
+                   """);
+  }
+
+  public void testGenericInstanceAttribute2() {
+    doTestByText("""
+                   class Node[T]:
+                       m: map[str, list[T]]
+                   
+                   Node[int].<warning descr="Access to generic instance variables via class is ambiguous">m</warning> = {}
+                   Node[int].<warning descr="Access to generic instance variables via class is ambiguous">m</warning>
+                   Node.<warning descr="Access to generic instance variables via class is ambiguous">m</warning> # TODO = {}
+                   Node.<warning descr="Access to generic instance variables via class is ambiguous">m</warning>
+                   """);
+  }
+
+  // PY-79733
+  public void testLiteralTypeInferredForComprehensions() {
+    doTestByText("""
+                   from typing import Literal
+                   
+                   
+                   def func(strings: list[str]):
+                       l1: list[Literal[1]] = [1 for x in strings]
+                       l2: list[Literal[1]] = <warning descr="Expected type 'list[Literal[1]]', got 'list[Literal[2]]' instead">[2 for x in strings]</warning>
+                       s1: set[Literal[1]] = {1 for x in strings}
+                       s2: set[Literal[1]] = <warning descr="Expected type 'set[Literal[1]]', got 'set[Literal[2]]' instead">{2 for x in strings}</warning>
+                       d1: dict[str, Literal[1]] = {x: 1 for x in strings}
+                       d2: dict[str, Literal[1]] = <warning descr="Expected type 'dict[str, Literal[1]]', got 'dict[str, Literal[2]]' instead">{x: 2 for x in strings}</warning>
+                   """);
+  }
+
+  // PY-79733
+  public void testTypedDictTypeInferredForComprehensions() {
+    doTestByText("""
+                   from typing import TypedDict
+                   
+                   
+                   class Foo(TypedDict):
+                       foo: str
+                   
+                   
+                   foo: Foo = {"foo": "bar"}
+                   foo_list1: list[Foo] = [{"foo": bar} for bar in ["bar"]]
+                   foo_list2: list[Foo] = <warning descr="Expected type 'list[Foo]', got 'list[dict[str, str]]' instead">[{"foo": bar, "buz": "qux"} for bar in ["bar"]]</warning>
+                   foo_set1: set[Foo] = {{"foo": bar} for bar in ["bar"]}
+                   foo_set2: set[Foo] = <warning descr="Expected type 'set[Foo]', got 'set[dict[str, str]]' instead">{{"foo": bar, "buz": "qux"} for bar in ["bar"]}</warning>
+                   foo_dict1: dict[str, Foo] = {bar: {"foo": bar} for bar in ["bar"]}
+                   foo_dict2: dict[str, Foo] = <warning descr="Expected type 'dict[str, Foo]', got 'dict[str, dict[str, str]]' instead">{bar: {"foo": bar, "buz": "qux"} for bar in ["bar"]}</warning>
+                   """);
+  }
+
+  public void testTupleTypesAreCovariantOnAssignment() {
+    doTestByText("""
+                   def func(p1: tuple[int, int], p2: tuple[float, complex]):
+                       t1: tuple[float, complex] = p1
+                       t2: tuple[int, int] = <warning descr="Expected type 'tuple[int, int]', got 'tuple[float, complex]' instead">p2</warning>
+                   """);
+  }
+
+  public void testTupleAnyIsBidirectionallyCompatibleWithAnyTuple() {
+    doTestByText("""
+                   from typing import Any
+                   def func(p1: tuple[Any], p2: tuple[float]):
+                       v1: tuple[Any] = p2
+                       v2: tuple[float] = p1
+                   """);
+  }
+
+  public void testTupleAnyArbitraryLengthCanBeAssignedToAnyTuple() {
+    doTestByText("""
+                   from typing import Any
+                   def func(p1: tuple[Any, ...]):
+                       v1: tuple[float, float] = p1
+                       v2: tuple[float, ...] = p1
+                   """);
+  }
+
+  public void testTupleAnyArbitraryLengthIsAssignableFromAnyTuple() {
+    doTestByText("""
+                   from typing import Any
+                   def func(p1: tuple[float, float]):
+                       v1: tuple[Any, ...] = p1
+                   """);
+  }
+
+  public void testHomogeneousUnpackedTupleIsAssignableToHomogeneousTuple() {
+    doTestByText("""
+                   def func(p1: tuple[int, *tuple[int, ...]]):
+                       v1: tuple[int, ...] = p1
+                   """);
+  }
+
+  public void testHomogeneousUnpackedTupleIsNotAssignableToNonHomogeneousTupleOfSize1() {
+    doTestByText("""
+                   def func(p: tuple[int, *tuple[int, ...]]):
+                       v: tuple[int] = <warning>p</warning>
+                   """);
+  }
+
+  // PY-80436
+  public void testEllipsis() {
+    doTestByText("""
+                   from types import EllipsisType
+                   e: EllipsisType
+                   e = ...
+                   e = Ellipsis
+                   """);
+  }
+
   // PY-76845
   public void testNamedTupleCompatibleWithTuple() {
     doTestByText("""
@@ -2750,6 +2892,106 @@ def foo(param: str | int) -> TypeGuard[str]:
                    def f(**kwargs: Literal[1]): ...
                    f(a=1)
                    f(<warning descr="Expected type 'Literal[1]', got 'Literal[2]' instead">a=2</warning>)
+                   """);
+  }
+
+  // PY-55691
+  public void testAttrsDataclassProtocolMatchingDefine() {
+    runWithAdditionalClassEntryInSdkRoots("packages", () ->
+      doTestByText("""
+                     import attrs
+                     
+                     @attrs.define
+                     class User:
+                         password: str
+                     
+                     attrs.fields(User)
+                     """)
+    );
+  }
+
+  // PY-55691
+  public void testAttrsDataclassProtocolMatchingFrozen() {
+    runWithAdditionalClassEntryInSdkRoots("packages", () ->
+      doTestByText("""
+                     import attrs
+                     
+                     @attrs.frozen
+                     class User:
+                         password: str
+                     
+                     attrs.fields(User)
+                     """)
+    );
+  }
+
+  // PY-76854
+  public void testNonHashableDataclassAssignedToHashable() {
+    doTestByText("""
+                   from dataclasses import dataclass
+                   from typing import Hashable
+                   
+                   
+                   @dataclass
+                   class DC:
+                       a: int
+                   
+                   
+                   v: Hashable = <warning descr="Expected type 'Hashable', got 'DC' instead">DC(0)</warning>
+                   
+                   @dataclass(eq=True)
+                   class DC2:
+                       a: int
+                   
+                   
+                   v2: Hashable = <warning descr="Expected type 'Hashable', got 'DC2' instead">DC2(0)</warning>
+                   """);
+  }
+
+  // PY-76854
+  public void testHashableDataclassAssignedToHashable() {
+    doTestByText("""
+                   from dataclasses import dataclass
+                   from typing import Hashable
+                   
+                   
+                   @dataclass(eq=True, frozen=True)
+                   class DC:
+                       a: int
+                   
+                   
+                   v: Hashable = DC(0)
+                   
+                   @dataclass(eq=True)
+                   class DC2:
+                       a: int
+                   
+                       def __hash__(self) -> int:
+                           return 0
+                   
+                   
+                   v2: Hashable = DC2(0)
+                   
+                   @dataclass(unsafe_hash=True)
+                   class DC3:
+                       a: int
+                   
+                   
+                   v3: Hashable = DC3(0)
+                   
+                   @dataclass(eq=False, frozen=True)
+                   class DC4:
+                       a: int
+                   
+                   
+                   v4: Hashable = DC4(0)
+                   
+                   @dataclass(eq=False)
+                   class DC5:
+                       a: int
+                   
+                   
+                   v5: Hashable = DC5(0)
                    """);
   }
 }

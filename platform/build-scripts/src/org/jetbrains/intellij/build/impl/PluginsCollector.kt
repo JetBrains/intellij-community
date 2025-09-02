@@ -15,7 +15,8 @@ suspend fun collectCompatiblePluginsToPublish(builtinModuleData: BuiltinModulesF
   val availableModulesAndPlugins = HashSet<String>(builtinModuleData.layout.size)
   builtinModuleData.layout.mapTo(availableModulesAndPlugins) { it.name }
 
-  val descriptorMap = collectPluginDescriptors(skipImplementationDetails = true, skipBundled = true, honorCompatiblePluginsToIgnore = true, context)
+  val minimal = System.getProperty("intellij.build.minimal").toBoolean()
+  val descriptorMap = collectPluginDescriptors(skipImplementationDetails = !minimal, skipBundled = true, honorCompatiblePluginsToIgnore = true, context)
   val descriptorMapWithBundled = collectPluginDescriptors(skipImplementationDetails = true, skipBundled = false, honorCompatiblePluginsToIgnore = true, context)
 
   // While collecting PluginDescriptor maps above, we may have chosen incorrect PluginLayout.
@@ -131,6 +132,18 @@ suspend fun collectPluginDescriptors(
       "Module '$moduleName': '$pluginXml' is empty"
     }
 
+    if (xml.getChildTextTrim("id") == "com.intellij") {
+      Span.current().addEvent(
+        "skip module",
+        Attributes.of(
+          AttributeKey.stringKey("name"), moduleName,
+          AttributeKey.stringKey("reason"), "product descriptor",
+          AttributeKey.stringKey("pluginXml"), pluginXml.toString(),
+        ),
+      )
+      continue
+    }
+
     if (skipImplementationDetails && xml.getAttributeValue("implementation-detail") == "true") {
       Span.current().addEvent(
         "skip module",
@@ -147,7 +160,8 @@ suspend fun collectPluginDescriptors(
     if (xml.getChildren("content").any { contentElement ->
         contentElement.getChildren("module").any {
           val name = it.getAttributeValue("name", "")
-          name.startsWith("intellij.platform.vcs.") || name == "intellij.ide.startup.importSettings"
+          //intellij.platform.vcs.*.split modules are currently included in the CodeWithMe plugin
+          name.startsWith("intellij.platform.vcs.") && !name.endsWith(".split") || name == "intellij.ide.startup.importSettings"
         }
       }) {
       Span.current().addEvent(

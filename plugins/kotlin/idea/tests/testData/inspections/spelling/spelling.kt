@@ -1,6 +1,6 @@
-fun xyzzyy(): String {
+fun xxyyzz(): String {
     // this one is about xyzzyy
-    val s = "xyzzyy ${xyzzyy()} \n good\tbad\n"
+    val s = "xyzzyy ${spelling()} \n good\tbad\n"
     /* xyzzyy in a block comment */
     /** xyzzyy in a documentation comment */
     fun bar() {}

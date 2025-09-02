@@ -19,6 +19,8 @@
                    groupBundle="messages.GradleInspectionBundle" groupKey="inspection.style"
                    enabledByDefault="true"
                    implementationClass="org.jetbrains.plugins.gradle.codeInspection.toml.UnusedVersionCatalogEntryInspection"/>
+  <lang.inspectionSuppressor language="TOML"
+                             implementationClass="org.jetbrains.plugins.gradle.codeInspection.toml.GradleTomlInspectionSuppressor"/>
 
 
 </extensions>

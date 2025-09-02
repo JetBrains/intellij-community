@@ -280,7 +280,8 @@ public class SSAConstructorSparseEx {
     for (DirectNode pred : node.predecessors) {
       SFormsFastMapDirect mapOut = getFilteredOutMap(node.id, pred.id, dgraph, node.id);
       if (mapNew.isEmpty()) {
-        mapNew = mapOut.getCopy();
+        //mapOut should always be new!
+        mapNew = mapOut;
       }
       else {
         mergeMaps(mapNew, mapOut);

@@ -16,8 +16,8 @@ internal class KaSourceModuleForOutsiderImpl(
     override val originalVirtualFile: VirtualFile?,
     override val project: Project,
 ) : KaSourceModuleBase(), KaSourceModuleForOutsider {
-    override val contentScope: GlobalSearchScope
-        get() = adjustContentScope(super.contentScope)
+    override val baseContentScope: GlobalSearchScope
+        get() = adjustContentScope(super.baseContentScope)
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

@@ -16,7 +16,7 @@ object GHReviewersUtils {
     ghostUser: GHUser
   ): Map<GHPullRequestRequestedReviewer, ReviewState> {
     val result = mutableMapOf<GHPullRequestRequestedReviewer, ReviewState>()
-    reviews.associate { (it.author as? GHUser ?: ghostUser) to it.state } // latest review state by reviewer
+    reviews.associate { (it.author as? GHPullRequestRequestedReviewer ?: ghostUser) to it.state } // latest review state by reviewer
       .forEach { (reviewer, reviewState) ->
         if (reviewer != author) {
           if (reviewState == GHPullRequestReviewState.APPROVED) {

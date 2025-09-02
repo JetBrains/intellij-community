@@ -71,8 +71,8 @@ public class ForwardDependenciesBuilder extends DependenciesBuilder {
       final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(getProject()).getFileIndex();
       getScope().acceptIdempotentVisitor(new PsiRecursiveElementVisitor() {
         @Override
-        public void visitFile(final @NotNull PsiFile file) {
-          visit(file, fileIndex, psiManager);
+        public void visitFile(final @NotNull PsiFile psiFile) {
+          visit(psiFile, fileIndex, psiManager);
         }
       });
       return null;
@@ -129,7 +129,7 @@ public class ForwardDependenciesBuilder extends DependenciesBuilder {
                   && (fileIndex.isInContent(depFile) || fileIndex.isInLibrary(depFile))
                   && (myTargetScope == null || myTargetScope.contains(depFile))) {
                 final PsiElement navigationElement = dependencyFile.getNavigationElement();
-                PsiFile navigationFile = navigationElement instanceof PsiFile ? (PsiFile)navigationElement : dependencyFile;
+                PsiFile navigationFile = navigationElement instanceof PsiFile navPsiFile ? navPsiFile : dependencyFile;
                 if (navigationFile.isPhysical()) {
                   found.add(navigationFile);
                 }

@@ -12,7 +12,10 @@ import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.BuildMessages
+import org.jetbrains.intellij.build.CompilationContext
+import org.jetbrains.intellij.build.NoMoreRetriesException
+import org.jetbrains.intellij.build.forEachConcurrent
 import org.jetbrains.intellij.build.http2Client.Http2ClientConnection
 import org.jetbrains.intellij.build.http2Client.ZstdCompressContextPool
 import org.jetbrains.intellij.build.http2Client.upload
@@ -20,7 +23,13 @@ import org.jetbrains.intellij.build.http2Client.withHttp2ClientConnectionFactory
 import org.jetbrains.intellij.build.io.copyFile
 import org.jetbrains.intellij.build.io.moveFile
 import org.jetbrains.intellij.build.io.zipWithCompression
-import org.jetbrains.intellij.build.jpsCache.*
+import org.jetbrains.intellij.build.jpsCache.awsS3Cli
+import org.jetbrains.intellij.build.jpsCache.getAllCompilationOutputs
+import org.jetbrains.intellij.build.jpsCache.jpsCacheAuthHeader
+import org.jetbrains.intellij.build.jpsCache.jpsCacheCommit
+import org.jetbrains.intellij.build.jpsCache.jpsCacheS3Dir
+import org.jetbrains.intellij.build.jpsCache.jpsCacheUploadUrl
+import org.jetbrains.intellij.build.retryWithExponentialBackOff
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
 import org.jetbrains.jps.incremental.storage.BuildTargetSourcesState
@@ -181,7 +190,6 @@ private suspend fun uploadJpsData(
 ) {
   val urlPath = "$urlPathPrefix/caches/$commitHash.zip.zstd"
   if (forceUpload || !checkExists(connection = connection, urlPath = urlPath, logIfExists = true)) {
-    // Level 9 is optimal, the same as for compilation parts. Levels beyond 9 consume more time without a significant reduction in size
     connection.upload(path = urlPath, file = jpsDataDir, zstdCompressContextPool = zstdCompressContextPool, isDir = true)
   }
 }

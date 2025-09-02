@@ -222,7 +222,7 @@ val DEFAULT_EXPRESSION_TYPES_LIST: Array<Class<out UExpression>> = arrayOf(UExpr
 fun getPossiblePsiSourceTypes(language: Language, vararg uastTypes: Class<out UElement>): ClassSet<PsiElement> =
   UastFacade.findPlugin(language)?.getPossiblePsiSourceTypes(*uastTypes) ?: emptyClassSet()
 
-private fun getFirstUElement(psiElement: PsiElement, strict: Boolean = false): UElement? {
+fun getFirstUElement(psiElement: PsiElement, strict: Boolean = false): UElement? {
   val startingElement = if (strict) psiElement.parent else psiElement
   val parentSequence = generateSequence(startingElement, PsiElement::getParent)
   return parentSequence.mapNotNull { it.toUElement() }.firstOrNull()

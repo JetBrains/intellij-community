@@ -38,11 +38,22 @@ class NotebookCellInlayManager private constructor(
 
   private var initialized = false
 
-  val cells: List<EditorCell> get() = notebook.cells
+  val cells: List<EditorCell>
+    get() = notebook.cells
 
-  val endNotebookInlays: List<EditorNotebookEndInlay> = EditorNotebookEndInlayProvider.create(this)
+  var endNotebookInlays: List<EditorNotebookEndInlay> = EditorNotebookEndInlayProvider.create(this)
 
   internal val views: MutableMap<EditorCell, EditorCellView> = mutableMapOf()
+
+  fun refresh() {
+    endNotebookInlays.forEach { Disposer.dispose(it) }
+    endNotebookInlays = EditorNotebookEndInlayProvider.create(this)
+
+    for (cell in cells) {
+      disposeCellView(cell)
+      updateCellVisibility(cell, cell.isUnfolded.get())
+    }
+  }
 
   private val cellViewEventListeners = EventDispatcher.create(EditorCellViewEventListener::class.java)
 
@@ -125,7 +136,6 @@ class NotebookCellInlayManager private constructor(
     setupFoldingListener()
     setupSelectionUI()
 
-
     notebook.addCellEventsListener(this, object : EditorCellEventListener {
       override fun onEditorCellEvents(events: List<EditorCellEvent>) {
         updateUI(events)
@@ -159,7 +169,6 @@ class NotebookCellInlayManager private constructor(
     else
       return -1
   }
-
 
   private fun comparePointWithCellByLogicalLine(point: Point, cell: EditorCell): Int {
     val line = editor.xyToLogicalPosition(point).line
@@ -242,7 +251,6 @@ class NotebookCellInlayManager private constructor(
     }
   }
 
-
   private fun setupFoldingListener() {
     val foldingModel = editor.foldingModel
     foldingModel.addListener(object : FoldingListener {
@@ -269,7 +277,7 @@ class NotebookCellInlayManager private constructor(
         this.changedRegions.clear()
         val removedRegions = removedRegions.filter { editor.foldingModel.getCollapsedRegionAtOffset(it.startOffset) == null }
         this.removedRegions.clear()
-        update { ctx ->
+        update {
           changedRegions.forEach { region ->
             editorCells(region).forEach {
               it.isUnfolded.set(region.isExpanded)
@@ -408,7 +416,6 @@ class NotebookCellInlayManager private constructor(
         fixInlaysOffsetsAfterNewCellInsert(change, ctx)
       }
     }
-
   }
 
   private fun fixInlaysOffsetsAfterNewCellInsert(change: NotebookIntervalPointersEvent.OnInserted, ctx: UpdateContext) {

@@ -14,9 +14,12 @@ import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import com.intellij.xdebugger.impl.XDebuggerWatchesManager;
 import com.intellij.xdebugger.impl.evaluate.quick.common.DebuggerTreeCreator;
 import com.intellij.xdebugger.impl.evaluate.quick.common.XDebuggerTreePopup;
+import com.intellij.xdebugger.impl.frame.XDebugSessionProxy;
+import com.intellij.xdebugger.impl.frame.XDebugSessionProxyKeeperKt;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promises;
@@ -26,14 +29,14 @@ import java.util.Collections;
 
 public class XDebuggerTreeInlayPopup<D> extends XDebuggerTreePopup<D> {
   private final @NotNull XSourcePosition myPresentationPosition;
-  private final @NotNull XDebugSession mySession;
+  private final @NotNull XDebugSessionProxy mySession;
   private final @NotNull XValueNodeImpl myValueNode;
 
   private XDebuggerTreeInlayPopup(@NotNull DebuggerTreeCreator<D> creator,
                                   @NotNull Editor editor,
                                   @NotNull Point point,
                                   @NotNull XSourcePosition presentationPosition,
-                                  @NotNull XDebugSession session,
+                                  @NotNull XDebugSessionProxy session,
                                   @Nullable Runnable hideRunnable,
                                   @NotNull XValueNodeImpl valueNode) {
     super(creator, editor, point, session.getProject(), hideRunnable);
@@ -104,7 +107,7 @@ public class XDebuggerTreeInlayPopup<D> extends XDebuggerTreePopup<D> {
       InlineWatchNodeImpl watch = (InlineWatchNodeImpl)myValueNode;
       XDebuggerWatchesManager watchesManager =
         ((XDebuggerManagerImpl)XDebuggerManager.getInstance(mySession.getProject())).getWatchesManager();
-      XDebugSession session = DebuggerUIUtil.getSession(e);
+      XDebugSessionProxy session = DebuggerUIUtil.getSessionProxy(e);
       if (session != null) {
         if (myPopup != null) {
           myPopup.cancel();
@@ -115,6 +118,10 @@ public class XDebuggerTreeInlayPopup<D> extends XDebuggerTreePopup<D> {
     }
   }
 
+  /**
+   * Use {@link #showTreePopup(DebuggerTreeCreator, Object, XValueNodeImpl, Editor, Point, XSourcePosition, XDebugSessionProxy, Runnable)} instead.
+   */
+  @ApiStatus.Obsolete
   public static <D> void showTreePopup(DebuggerTreeCreator<D> creator,
                                        D initialItem,
                                        XValueNodeImpl valueNode,
@@ -122,6 +129,19 @@ public class XDebuggerTreeInlayPopup<D> extends XDebuggerTreePopup<D> {
                                        @NotNull Point point,
                                        @NotNull XSourcePosition position,
                                        @NotNull XDebugSession session,
+                                       Runnable hideRunnable) {
+    XDebugSessionProxy proxy = XDebugSessionProxyKeeperKt.asProxy(session);
+    new XDebuggerTreeInlayPopup<>(creator, editor, point, position, proxy, hideRunnable, valueNode).show(initialItem);
+  }
+
+  @ApiStatus.Internal
+  public static <D> void showTreePopup(DebuggerTreeCreator<D> creator,
+                                       D initialItem,
+                                       XValueNodeImpl valueNode,
+                                       @NotNull Editor editor,
+                                       @NotNull Point point,
+                                       @NotNull XSourcePosition position,
+                                       @NotNull XDebugSessionProxy session,
                                        Runnable hideRunnable) {
     new XDebuggerTreeInlayPopup<>(creator, editor, point, position, session, hideRunnable, valueNode).show(initialItem);
   }

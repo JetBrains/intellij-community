@@ -1,8 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary;
 
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.light.LightClassReference;
 import com.intellij.psi.tree.IElementType;
@@ -75,7 +79,7 @@ public class GrThrowsClauseImpl extends GrReferenceListImpl implements GrThrowsC
   public PsiElement add(@NotNull PsiElement element) throws IncorrectOperationException {
     if (element instanceof GrCodeReferenceElement || element instanceof PsiJavaCodeReferenceElement) {
       if (findChildByClass(GrCodeReferenceElement.class) == null) {
-        getNode().addLeaf(GroovyTokenTypes.kTHROWS, PsiKeyword.THROWS, null);
+        getNode().addLeaf(GroovyTokenTypes.kTHROWS, JavaKeywords.THROWS, null);
       }
       else {
         PsiElement lastChild = getLastChild();

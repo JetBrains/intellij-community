@@ -3,10 +3,12 @@ package com.intellij.codeInsight.completion.command.commands
 
 import com.intellij.analysis.AnalysisBundle.message
 import com.intellij.codeInsight.completion.command.CompletionCommand
+import com.intellij.codeInsight.completion.command.CompletionCommandWithPreview
 import com.intellij.codeInsight.completion.command.HighlightInfoLookup
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler.availableFor
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInspection.InspectionEngine
 import com.intellij.codeInspection.InspectionEngine.inspectEx
 import com.intellij.codeInspection.ProblemDescriptor
@@ -32,21 +34,21 @@ import javax.swing.Icon
 
 internal class DirectInspectionFixCompletionCommand(
   private val inspectionId: String,
-  override val name: @Nls String,
+  override val presentableName: @Nls String,
   override val priority: Int?,
   override val icon: Icon?,
   override val highlightInfo: HighlightInfoLookup,
-) : CompletionCommand() {
-
-  override val i18nName: @Nls String
-    get() = name
+  private val targetOffset: Int,
+  private val previewProvider: () -> IntentionPreviewInfo?,
+) : CompletionCommand(), CompletionCommandWithPreview {
 
   override fun execute(offset: Int, psiFile: PsiFile, editor: Editor?) {
     if (editor == null) return
+    //todo merge with error finder
     val injectedLanguageManager = InjectedLanguageManager.getInstance(psiFile.project)
     val topLevelFile = injectedLanguageManager.getTopLevelFile(psiFile)
     val topLevelEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor)
-    val topLevelOffset = injectedLanguageManager.injectedToHost(psiFile, offset)
+    val topLevelOffset = injectedLanguageManager.injectedToHost(psiFile, targetOffset)
     val isInjected = topLevelFile != psiFile
 
     val action: IntentionAction? = runWithModalProgressBlocking(psiFile.project, message("scanning.scope.progress.title")) {
@@ -70,7 +72,7 @@ internal class DirectInspectionFixCompletionCommand(
                       })
           }
           else {
-            val textRange = getLineRange(psiFile, offset)
+            val textRange = getLineRange(psiFile, targetOffset)
             InspectionEngine.inspectElements(listOf(inspectionTool), psiFile, textRange, true, true, indicator,
                                              PsiTreeUtil.collectElements(psiFile) { it.textRange.intersects(textRange) }.toList(), fun(_: LocalInspectionToolWrapper, _: ProblemDescriptor): Boolean {
               return true
@@ -89,7 +91,7 @@ internal class DirectInspectionFixCompletionCommand(
             val fixes = descriptor.fixes ?: continue
             for (i in 0..fixes.size - 1) {
               val intentionAction = wrap(descriptor, i)
-              if (intentionAction.text == name && availableFor(psiFile, editor, offset, intentionAction)) {
+              if (intentionAction.text == presentableName && availableFor(psiFile, editor, targetOffset, intentionAction)) {
                 return@readAction intentionAction
               }
             }
@@ -100,6 +102,23 @@ internal class DirectInspectionFixCompletionCommand(
       return@runWithModalProgressBlocking result
     }
     if (action == null) return
-    ShowIntentionActionsHandler.chooseActionAndInvoke(topLevelFile, topLevelEditor, action, name)
+    val marker = editor.document.createRangeMarker(offset, offset)
+    val targetMarker = editor.document.createRangeMarker(targetOffset, targetOffset)
+    editor.caretModel.moveToOffset(targetOffset)
+    ShowIntentionActionsHandler.chooseActionAndInvoke(topLevelFile, topLevelEditor, action, presentableName)
+    if (targetMarker.isValid && targetMarker.startOffset != editor.caretModel.offset) {
+      //probably, intention moves the cursor
+      return
+    }
+    if (marker.isValid) {
+      editor.caretModel.moveToOffset(marker.endOffset)
+    }
+    else {
+      editor.caretModel.moveToOffset(offset)
+    }
+  }
+
+  override fun getPreview(): IntentionPreviewInfo? {
+    return previewProvider()
   }
 }

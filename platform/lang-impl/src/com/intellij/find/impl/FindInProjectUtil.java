@@ -25,7 +25,7 @@ import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.progress.util.TooManyUsagesStatus;
-import com.intellij.openapi.project.DumbServiceImpl;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LibraryOrderEntry;
@@ -35,6 +35,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
@@ -51,10 +52,7 @@ import com.intellij.usages.UsageView;
 import com.intellij.usages.UsageViewPresentation;
 import com.intellij.util.PatternUtil;
 import com.intellij.util.Processor;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.PropertyKey;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.util.*;
@@ -66,6 +64,9 @@ import static org.jetbrains.annotations.Nls.Capitalization.Title;
 
 public final class FindInProjectUtil {
   private static final int USAGES_PER_READ_ACTION = 100;
+
+  @ApiStatus.Experimental
+  public static final Key<Boolean> FIND_IN_FILES_SEARCH_IN_NON_INDEXABLE = Key.create("find.in.files.non.indexable");
 
   private FindInProjectUtil() {}
 
@@ -87,7 +88,7 @@ public final class FindInProjectUtil {
       if (session != null) editor = session.getEditor();
     }
     PsiElement psiElement = null;
-    if (project != null && editor == null && !DumbServiceImpl.getInstance(project).isDumb()) {
+    if (project != null && editor == null && !DumbService.getInstance(project).isDumb()) {
       try {
         psiElement = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
       }
@@ -98,6 +99,7 @@ public final class FindInProjectUtil {
 
     if (psiElement instanceof PsiDirectory) {
       directoryName = ((PsiDirectory)psiElement).getVirtualFile().getPresentableUrl();
+      if (directoryName.isEmpty()) directoryName = null;
     }
 
     if (directoryName == null && psiElement instanceof PsiDirectoryContainer) {
@@ -480,7 +482,7 @@ public final class FindInProjectUtil {
     }
   }
 
-  public static class StringUsageTarget implements ConfigurableUsageTarget, ItemPresentation, DataProvider {
+  public static class StringUsageTarget implements ConfigurableUsageTarget, ItemPresentation, UiDataProvider {
     protected final @NotNull Project myProject;
     protected final @NotNull FindModel myFindModel;
 
@@ -539,18 +541,10 @@ public final class FindInProjectUtil {
     }
 
     @Override
-    public @Nullable Object getData(@NotNull String dataId) {
-      if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
-        return (DataProvider)slowId -> getSlowData(slowId);
-      }
-      return null;
-    }
-
-    private @Nullable Object getSlowData(@NotNull String dataId) {
-      if (UsageView.USAGE_SCOPE.is(dataId)) {
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      sink.lazy(UsageView.USAGE_SCOPE, () -> {
         return getScopeFromModel(myProject, myFindModel);
-      }
-      return null;
+      });
     }
   }
 
@@ -594,6 +588,10 @@ public final class FindInProjectUtil {
       }
     }
     outSourceRoots.addAll(otherSourceRoots);
+  }
+
+  public static @NotNull GlobalSearchScope getGlobalSearchScope(@NotNull Project project, @NotNull FindModel findModel) {
+    return GlobalSearchScopeUtil.toGlobalSearchScope(getScopeFromModel(project, findModel), project);
   }
 
   static @NotNull SearchScope getScopeFromModel(@NotNull Project project, @NotNull FindModel findModel) {

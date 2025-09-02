@@ -18,6 +18,7 @@ package com.siyeh.ig.errorhandling;
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
@@ -145,7 +146,7 @@ public final class EmptyFinallyBlockInspection extends BaseInspection implements
       final PsiElement[] children = statement.getChildren();
       for (final PsiElement child : children) {
         final String childText = child.getText();
-        if (PsiKeyword.FINALLY.equals(childText)) {
+        if (JavaKeywords.FINALLY.equals(childText)) {
           final boolean canDeleteTry = statement.getCatchBlocks().length == 0 && statement.getResourceList() == null;
           registerError(child, Boolean.valueOf(canDeleteTry));
           return;

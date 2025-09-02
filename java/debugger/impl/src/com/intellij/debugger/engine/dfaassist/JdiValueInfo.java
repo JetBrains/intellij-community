@@ -108,9 +108,9 @@ interface JdiValueInfo {
       return new StringConstant(stringReference.value());
     }
     if (value instanceof DfaAssistProvider.BoxedValue boxedValue) {
-      DfConstantType<?> wrappedConstant = primitiveConstant(boxedValue.value());
+      DfConstantType<?> wrappedConstant = primitiveConstant(boxedValue.getValue());
       if (wrappedConstant != null) {
-        return new ObjectWithSpecialField(boxedValue.type(), SpecialField.UNBOX, new PrimitiveConstant(wrappedConstant));
+        return new ObjectWithSpecialField(boxedValue.getType(), SpecialField.UNBOX, new PrimitiveConstant(wrappedConstant));
       }
     }
     if (value instanceof ObjectReference ref) {

@@ -2,6 +2,7 @@
 package com.intellij.platform.navbar.backend.impl
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.platform.navbar.NavBarItemPresentationData
 import com.intellij.platform.navbar.backend.NavBarItem
@@ -10,6 +11,7 @@ import com.intellij.platform.navbar.backend.NavBarItemProvider
 fun NavBarItem.pathToItem(): List<NavBarItem> {
   ApplicationManager.getApplication().assertReadAccessAllowed()
   return generateSequence(this) {
+    ProgressManager.checkCanceled()
     it.findParent()
   }.toList().asReversed()
 }

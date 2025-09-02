@@ -16,13 +16,13 @@
 package com.siyeh.ig.errorhandling;
 
 import com.intellij.codeInsight.options.JavaClassValidator;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.SuppressForTestsScopeFix;
 import com.siyeh.ig.psiutils.LibraryUtil;
 import com.siyeh.ig.ui.ExternalizableStringSet;
@@ -64,7 +64,7 @@ public final class BadExceptionDeclaredInspection extends BaseInspection {
   }
 
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     final PsiElement context = (PsiElement)infos[0];
     return SuppressForTestsScopeFix.build(this, context);
   }

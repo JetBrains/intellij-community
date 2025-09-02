@@ -1,9 +1,11 @@
-from typing import Any
+from typing import Any, ClassVar
 
 from django.core.management.base import BaseCommand, OutputWrapper
+from django.db.migrations.autodetector import MigrationAutodetector
 from django.db.migrations.loader import MigrationLoader
 
 class Command(BaseCommand):
+    autodetector: ClassVar[type[MigrationAutodetector]]
     verbosity: int
     interactive: bool
     dry_run: bool

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing.workspaceModel.impl
 
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
@@ -17,7 +17,7 @@ internal object MetadataStorageImpl: MetadataStorageBase() {
         
         var typeMetadata: StorageTypeMetadata
         
-        typeMetadata = FinalClassMetadata.ObjectMetadata(fqName = "org.jetbrains.idea.maven.importing.workspaceModel.MavenProjectsTreeEntitySource", properties = listOf(OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "virtualFileUrl", valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = true, typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")), withDefault = false)), supertypes = listOf("com.intellij.platform.workspace.storage.EntitySource"))
+        typeMetadata = FinalClassMetadata.ObjectMetadata(fqName = "org.jetbrains.idea.maven.importing.workspaceModel.MavenEntitySource", properties = listOf(OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "virtualFileUrl", valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = true, typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")), withDefault = false)), supertypes = listOf("com.intellij.platform.workspace.storage.EntitySource"))
         
         addMetadata(typeMetadata)
         
@@ -29,8 +29,8 @@ OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = 
 
     override fun initializeMetadataHash() {
         addMetadataHash(typeFqn = "org.jetbrains.idea.maven.importing.workspaceModel.MavenProjectsTreeSettingsEntity", metadataHash = -2066553308)
-        addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.EntitySource", metadataHash = 1542509216)
-        addMetadataHash(typeFqn = "org.jetbrains.idea.maven.importing.workspaceModel.MavenProjectsTreeEntitySource", metadataHash = -2057748756)
+        addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.EntitySource", metadataHash = -1237028792)
+        addMetadataHash(typeFqn = "org.jetbrains.idea.maven.importing.workspaceModel.MavenEntitySource", metadataHash = 582639044)
     }
 
 }

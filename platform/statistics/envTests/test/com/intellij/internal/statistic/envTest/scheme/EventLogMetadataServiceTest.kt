@@ -3,24 +3,22 @@ package com.intellij.internal.statistic.envTest.scheme
 
 import com.intellij.internal.statistic.envTest.StatisticsServiceBaseTest
 import com.intellij.internal.statistic.eventLog.EventLogBuild.EVENT_LOG_BUILD_PRODUCER
-import com.intellij.internal.statistic.eventLog.connection.EventLogBasicConnectionSettings
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupFilterRules
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupFilterRules.BuildRange
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupFilterRules.VersionRange
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupsFilterRules
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataLoadException
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataUtils
-import junit.framework.TestCase
+import com.jetbrains.fus.reporting.model.http.StatsBasicConnectionSettings
 
-private val SETTINGS = EventLogBasicConnectionSettings("Test IntelliJ")
-
+private val SETTINGS = StatsBasicConnectionSettings("Test IntelliJ")
 internal class EventLogMetadataServiceTest : StatisticsServiceBaseTest() {
 
   fun `test load metadata succeed`() {
     val metadataUrl = getMetadataUrl("IC.json")
     val content = EventLogMetadataUtils.loadMetadataFromServer(metadataUrl, SETTINGS)
-    TestCase.assertNotNull(content)
-    TestCase.assertTrue(content.isNotEmpty())
+    assertNotNull(content)
+    assertTrue(content.isNotEmpty())
   }
 
   fun `test load metadata fail because product code does not exists`() {
@@ -32,14 +30,14 @@ internal class EventLogMetadataServiceTest : StatisticsServiceBaseTest() {
     catch (e: Exception) {
       exception = e
     }
-    TestCase.assertNotNull(exception)
-    TestCase.assertTrue(exception is EventLogMetadataLoadException)
+    assertNotNull(exception)
+    assertTrue(exception is EventLogMetadataLoadException)
   }
 
   fun `test get last modified metadata`() {
     val metadataUrl = getMetadataUrl()
     val lastModified = EventLogMetadataUtils.lastModifiedMetadata(metadataUrl, SETTINGS)
-    TestCase.assertEquals(1589968216000, lastModified)
+    assertEquals(1589968216000, lastModified)
   }
 
   fun `test load and parse metadata`() {
@@ -50,21 +48,21 @@ internal class EventLogMetadataServiceTest : StatisticsServiceBaseTest() {
 
     val metadataUrl = getMetadataUrl()
     val actual = EventLogMetadataUtils.loadAndParseGroupsFilterRules(metadataUrl, SETTINGS)
-    TestCase.assertEquals(EventGroupsFilterRules.create(expected, EVENT_LOG_BUILD_PRODUCER), actual)
+    assertEquals(EventGroupsFilterRules.create(expected, EVENT_LOG_BUILD_PRODUCER), actual)
   }
 
   fun `test failed loading and parsing metadata because url is unreachable`() {
     val metadataUrl = getMetadataUrl("AB.json")
     val actual = EventLogMetadataUtils.loadAndParseGroupsFilterRules(metadataUrl, SETTINGS)
-    TestCase.assertNotNull(actual)
-    TestCase.assertTrue(actual.isEmpty)
+    assertNotNull(actual)
+    assertTrue(actual.isEmpty)
   }
 
   fun `test failed loading and parsing metadata because its invalid`() {
     val metadataUrl = getMetadataUrl("invalid-metadata.json")
     val actual = EventLogMetadataUtils.loadAndParseGroupsFilterRules(metadataUrl, SETTINGS)
-    TestCase.assertNotNull(actual)
-    TestCase.assertTrue(actual.isEmpty)
+    assertNotNull(actual)
+    assertTrue(actual.isEmpty)
   }
 
   private fun getMetadataUrl(path: String? = null): String {

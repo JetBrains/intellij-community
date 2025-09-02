@@ -2,7 +2,11 @@
 package org.jetbrains.plugins.javaFX
 
 import com.intellij.ide.starters.local.StarterModuleBuilder.Companion.setupTestModule
-import com.intellij.ide.starters.shared.*
+import com.intellij.ide.starters.shared.GRADLE_PROJECT
+import com.intellij.ide.starters.shared.GROOVY_STARTER_LANGUAGE
+import com.intellij.ide.starters.shared.JAVA_STARTER_LANGUAGE
+import com.intellij.ide.starters.shared.JUNIT_TEST_RUNNER
+import com.intellij.ide.starters.shared.MAVEN_PROJECT
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_11
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase4
 import org.jetbrains.plugins.javaFX.wizard.JavaFxModuleBuilder
@@ -10,7 +14,7 @@ import org.junit.Test
 
 class JavaFxModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_11) {
   @Test
-  fun emptyMavenProject() {
+  fun emptyJavaMavenProject() {
     JavaFxModuleBuilder().setupTestModule(fixture.module) {
       language = JAVA_STARTER_LANGUAGE
       projectType = MAVEN_PROJECT
@@ -37,11 +41,8 @@ class JavaFxModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_11) {
               stage.setScene(scene);
               stage.show();
           }
-
-          public static void main(String[] args) {
-              launch();
-          }
       }
+
     """.trimIndent())
 
     val dlr = "\$"
@@ -59,19 +60,19 @@ class JavaFxModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_11) {
 
           <properties>
               <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-              <junit.version>5.10.2</junit.version>
+              <junit.version>5.12.1</junit.version>
           </properties>
 
           <dependencies>
               <dependency>
                   <groupId>org.openjfx</groupId>
                   <artifactId>javafx-controls</artifactId>
-                  <version>17.0.6</version>
+                  <version>17.0.14</version>
               </dependency>
               <dependency>
                   <groupId>org.openjfx</groupId>
                   <artifactId>javafx-fxml</artifactId>
-                  <version>17.0.6</version>
+                  <version>17.0.14</version>
               </dependency>
 
               <dependency>
@@ -134,28 +135,43 @@ class JavaFxModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_11) {
       isCreatingNewProject = true
     }
 
+    expectFile("src/main/java/com/example/demo/Launcher.java", """
+      package com.example.demo;
+
+      import javafx.application.Application;
+
+      public class Launcher {
+          public static void main(String[] args) {
+              Application.launch(HelloApplication.class, args);
+          }
+      }
+
+    """.trimIndent())
+
     expectFile("src/main/java/com/example/demo/HelloController.java", """
       package com.example.demo;
 
       import javafx.fxml.FXML;
       import javafx.scene.control.Label;
-      
+
       public class HelloController {
           @FXML
           private Label welcomeText;
-      
+
           @FXML
           protected void onHelloButtonClick() {
               welcomeText.setText("Welcome to JavaFX Application!");
           }
       }
+
     """.trimIndent())
+
     val dlr = "\$"
     expectFile("build.gradle.kts", """
       plugins {
           java
           application
-          id("org.javamodularity.moduleplugin") version "1.8.12"
+          id("org.javamodularity.moduleplugin") version "1.8.15"
           id("org.openjfx.javafxplugin") version "0.0.13"
           id("org.beryx.jlink") version "2.25.0"
       }
@@ -167,7 +183,7 @@ class JavaFxModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_11) {
           mavenCentral()
       }
       
-      val junitVersion = "5.10.2"
+      val junitVersion = "5.12.1"
       
       java {
           toolchain {
@@ -185,7 +201,7 @@ class JavaFxModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_11) {
       }
       
       javafx {
-          version = "17.0.6"
+          version = "17.0.14"
           modules = listOf("javafx.controls", "javafx.fxml")
       }
       
@@ -245,7 +261,7 @@ class JavaFxModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_11) {
           java
           application
           groovy
-          id("org.javamodularity.moduleplugin") version "1.8.12"
+          id("org.javamodularity.moduleplugin") version "1.8.15"
           id("org.openjfx.javafxplugin") version "0.0.13"
           id("org.beryx.jlink") version "2.25.0"
       }
@@ -257,7 +273,7 @@ class JavaFxModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_11) {
           mavenCentral()
       }
       
-      val junitVersion = "5.10.2"
+      val junitVersion = "5.12.1"
       
       java {
           toolchain {
@@ -275,7 +291,7 @@ class JavaFxModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_11) {
       }
       
       javafx {
-          version = "17.0.6"
+          version = "17.0.14"
           modules = listOf("javafx.controls", "javafx.fxml")
       }
       

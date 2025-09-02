@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.DynamicBundle;
@@ -55,20 +55,6 @@ public final class Presentation implements Cloneable {
   public static final @NonNls String PROP_VISIBLE = "visible";
   public static final @NonNls String PROP_ENABLED = "enabled";
   // Do not add Key constants here, especially with PROP_ prefix. Find a better place.
-
-  /** Use {@link com.intellij.openapi.actionSystem.ex.ActionUtil#SECONDARY_TEXT} instead */
-  @Deprecated(forRemoval = true)
-  public static final @NonNls Key<@Nls String> PROP_VALUE = Key.create("SECONDARY_TEXT");
-
-  /** @deprecated The feature is dropped. See {@link com.intellij.ide.actions.WeighingActionGroup} */
-  @Deprecated(forRemoval = true)
-  public static final double DEFAULT_WEIGHT = 0;
-  /** @deprecated The feature is dropped. See {@link com.intellij.ide.actions.WeighingActionGroup} */
-  @Deprecated(forRemoval = true)
-  public static final double HIGHER_WEIGHT = 42;
-  /** @deprecated The feature is dropped. See {@link com.intellij.ide.actions.WeighingActionGroup} */
-  @Deprecated(forRemoval = true)
-  public static final double EVEN_HIGHER_WEIGHT = 239;
 
   private static final int IS_ENABLED = 0x1;
   private static final int IS_VISIBLE = 0x2;
@@ -297,7 +283,7 @@ public final class Presentation implements Cloneable {
   }
 
   @ApiStatus.Internal // do not expose
-  void copyUnsetTemplateProperties(@NotNull Presentation other) {
+  public void copyUnsetTemplateProperties(@NotNull Presentation other) {
     if (icon == null) {
       icon = other.icon;
     }
@@ -679,12 +665,6 @@ public final class Presentation implements Cloneable {
       myUserMap = value == null ? myUserMap.minus(key) : myUserMap.plus(key, value);
     }
     fireObjectPropertyChange(key, oldValue, value);
-  }
-
-  /** @deprecated The feature is dropped. See {@link com.intellij.ide.actions.WeighingActionGroup} */
-  @Deprecated(forRemoval = true)
-  public double getWeight() {
-    return DEFAULT_WEIGHT;
   }
 
   /** @deprecated The feature is dropped. See {@link com.intellij.ide.actions.WeighingActionGroup} */

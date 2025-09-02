@@ -7,6 +7,7 @@ import com.intellij.psi.meta.PsiPresentableMetaData;
 import com.intellij.psi.meta.PsiWritableMetaData;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,6 +54,11 @@ public class DomMetaData<T extends DomElement> implements PsiWritableMetaData, P
 
   protected @Nullable GenericDomValue getNameElement(final T t) {
     return myElement.getGenericInfo().getNameDomElement(t);
+  }
+  
+  @ApiStatus.Internal
+  public static <T extends DomElement> @Nullable GenericDomValue<?> getNameElement(@NotNull DomMetaData<T> domMetaData, T element) {
+    return domMetaData.getNameElement(element);
   }
 
   @Override

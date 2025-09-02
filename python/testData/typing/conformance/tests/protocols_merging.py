@@ -49,8 +49,8 @@ s3: SizedAndClosable1 = SizedAndClosable3()  # OK
 s4: SizedAndClosable2 = SizedAndClosable3()  # OK
 s5: Sized = SCConcrete1()  # OK
 
-s6: SizedAndClosable1 = SCConcrete2()  # E: doesn't implement close
-s7: SizedAndClosable2 = SCConcrete2()  # E: doesn't implement close
+s6: SizedAndClosable1 = SCConcrete2()  # E: doesn't implement `__len__`
+s7: SizedAndClosable2 = SCConcrete2()  # E: doesn't implement `__len__`
 s8: SizedAndClosable3 = SCConcrete2()  # E: SizedAndClosable3 is not a protocol
 
 

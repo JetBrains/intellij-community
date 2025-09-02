@@ -132,12 +132,13 @@ public class EditorTestFixture {
   public boolean performEditorAction(@NotNull String actionId, @Nullable AnActionEvent actionEvent) {
     ActionManagerEx managerEx = ActionManagerEx.getInstanceEx();
     AnAction action = managerEx.getAction(actionId);
-    AnActionEvent event = actionEvent != null ? actionEvent
-                                              : new AnActionEvent(null, getEditorDataContext(), ActionPlaces.UNKNOWN, new Presentation(), managerEx, 0);
+    AnActionEvent event =
+      actionEvent != null ? actionEvent :
+      new AnActionEvent(null, getEditorDataContext(), ActionPlaces.UNKNOWN, new Presentation(), managerEx, 0);
     PerformWithDocumentsCommitted.commitDocumentsIfNeeded(action, event);
-    ActionUtil.performDumbAwareUpdate(action, event, false);
+    ActionUtil.updateAction(action, event);
     if (event.getPresentation().isEnabled()) {
-      ActionUtil.performActionDumbAwareWithCallbacks(action, event);
+      ActionUtil.performAction(action, event);
       LOG.info("performEditorAction(): performing action '" + event.getActionManager().getId(action) + "'");
       return true;
     }

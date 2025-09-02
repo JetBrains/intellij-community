@@ -1,0 +1,14 @@
+<idea-plugin>
+  <dependencies>
+    <module name="intellij.platform.backend"/>
+  </dependencies>
+
+  <extensionPoints>
+    <extensionPoint name="xml.xmlSuppressionProvider" interface="com.intellij.codeInspection.XmlSuppressionProvider" dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <xml.xmlSuppressionProvider implementation="com.intellij.codeInspection.DefaultXmlSuppressionProvider" order="last"/>
+    <lang.inspectionSuppressor language="XML" implementationClass="com.intellij.codeInspection.XmlInspectionSuppressor"/>
+  </extensions>
+</idea-plugin>

@@ -7,8 +7,9 @@ import com.intellij.diff.comparison.iterables.DiffIterable
 import com.intellij.diff.comparison.iterables.DiffIterableUtil
 import com.intellij.diff.comparison.iterables.FairDiffIterable
 import com.intellij.diff.util.Range
-import it.unimi.dsi.fastutil.ints.IntArrayList
-import it.unimi.dsi.fastutil.ints.IntList
+import com.intellij.util.fastutil.ints.IntArrayList
+import com.intellij.util.fastutil.ints.toArray
+import kotlin.jvm.JvmStatic
 
 object ByCharRt {
   @JvmStatic
@@ -41,8 +42,8 @@ object ByCharRt {
       offset1 = end1
       offset2 = end2
     }
-    assert(offset1 == text1.length)
-    assert(offset2 == text2.length)
+    check(offset1 == text1.length)
+    check(offset2 == text2.length)
 
     return DiffIterableUtil.fair(builder.finish())
   }
@@ -216,33 +217,33 @@ object ByCharRt {
   // Misc
   //
   private fun getAllCodePoints(text: CharSequence): IntArray {
-    val list: IntList = IntArrayList(text.length)
+    val list = IntArrayList(text.length)
 
     val len = text.length
     var offset = 0
 
     while (offset < len) {
-      val ch = Character.codePointAt(text, offset)
-      val charCount = Character.charCount(ch)
+      val ch = text.codePointAt(offset)
+      val charCount = ch.charCount()
 
       list.add(ch)
 
       offset += charCount
     }
 
-    return list.toIntArray()
+    return list.toArray()
   }
 
   private fun getNonSpaceCodePoints(text: CharSequence): CodePointsOffsets {
-    val codePoints: IntList = IntArrayList(text.length)
-    val offsets: IntList = IntArrayList(text.length)
+    val codePoints = IntArrayList(text.length)
+    val offsets = IntArrayList(text.length)
 
     val len = text.length
     var offset = 0
 
     while (offset < len) {
-      val ch = Character.codePointAt(text, offset)
-      val charCount = Character.charCount(ch)
+      val ch = text.codePointAt(offset)
+      val charCount = ch.charCount()
 
       if (!isWhiteSpaceCodePoint(ch)) {
         codePoints.add(ch)
@@ -252,12 +253,12 @@ object ByCharRt {
       offset += charCount
     }
 
-    return CodePointsOffsets(codePoints.toIntArray(), offsets.toIntArray())
+    return CodePointsOffsets(codePoints.toArray(), offsets.toArray())
   }
 
   private fun getPunctuationChars(text: CharSequence): CodePointsOffsets {
-    val codePoints: IntList = IntArrayList(text.length)
-    val offsets: IntList = IntArrayList(text.length)
+    val codePoints = IntArrayList(text.length)
+    val offsets = IntArrayList(text.length)
 
     for (i in text.indices) {
       val c = text[i]
@@ -267,13 +268,13 @@ object ByCharRt {
       }
     }
 
-    return CodePointsOffsets(codePoints.toIntArray(), offsets.toIntArray())
+    return CodePointsOffsets(codePoints.toArray(), offsets.toArray())
   }
 
   private fun countChars(codePoints: IntArray, start: Int, end: Int): Int {
     var count = 0
     for (i in start until end) {
-      count += Character.charCount(codePoints[i])
+      count += codePoints[i].charCount()
     }
     return count
   }
@@ -284,7 +285,7 @@ object ByCharRt {
     }
 
     fun charOffsetAfter(index: Int): Int {
-      return offsets[index] + Character.charCount(codePoints[index])
+      return offsets[index] + codePoints[index].charCount()
     }
   }
 }

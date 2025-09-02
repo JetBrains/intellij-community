@@ -5,7 +5,6 @@ import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.smartReadAction
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.AsyncPromise
@@ -77,9 +76,7 @@ abstract class ProjectUsagesCollector : FeatureUsagesCollector() {
       }
     }
     else {
-      blockingContext {
-        getMetrics(project)
-      }
+      getMetrics(project)
     }
   }
 

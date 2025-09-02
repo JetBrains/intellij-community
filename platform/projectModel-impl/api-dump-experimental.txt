@@ -30,12 +30,13 @@
 - s:values():com.intellij.workspaceModel.core.fileIndex.EntityStorageKind[]
 *:com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 - *sf:Companion:com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex$Companion
-- a:findFileSet(com.intellij.openapi.vfs.VirtualFile,Z,Z,Z,Z,Z):com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet
-- a:findFileSetWithCustomData(com.intellij.openapi.vfs.VirtualFile,Z,Z,Z,Z,Z,java.lang.Class):com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData
+- a:findFileSet(com.intellij.openapi.vfs.VirtualFile,Z,Z,Z,Z,Z,Z):com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet
+- a:findFileSetWithCustomData(com.intellij.openapi.vfs.VirtualFile,Z,Z,Z,Z,Z,Z,java.lang.Class):com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData
 - a:getContentFileSetRoot(com.intellij.openapi.vfs.VirtualFile,Z):com.intellij.openapi.vfs.VirtualFile
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 - a:isInContent(com.intellij.openapi.vfs.VirtualFile):Z
 - a:isInWorkspace(com.intellij.openapi.vfs.VirtualFile):Z
+- a:isIndexable(com.intellij.openapi.vfs.VirtualFile):Z
 - a:isUrlInContent(java.lang.String):com.intellij.util.ThreeState
 *f:com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex$Companion
 - f:getInstance(com.intellij.openapi.project.Project):com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
@@ -47,12 +48,14 @@
 *e:com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
 - java.lang.Enum
 - sf:CONTENT:com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
+- sf:CONTENT_NON_INDEXABLE:com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
 - sf:CUSTOM:com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
 - sf:EXTERNAL:com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
 - sf:EXTERNAL_SOURCE:com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
 - sf:TEST_CONTENT:com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
 - s:getEntries():kotlin.enums.EnumEntries
 - f:isContent():Z
+- f:isIndexable():Z
 - s:valueOf(java.lang.String):com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
 - s:values():com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind[]
 *:com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet
@@ -70,3 +73,4 @@
 *:com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData
 - com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet
 - a:getData():com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetData
+- a:getRecursive():Z

@@ -2,14 +2,22 @@
 package com.intellij.terminal.frontend
 
 import com.google.common.base.Ascii
+import com.intellij.codeInsight.lookup.LookupManager
+import com.intellij.codeInsight.lookup.impl.BackspaceHandler
+import com.intellij.codeInsight.lookup.impl.LookupActionHandler
+import com.intellij.codeInsight.lookup.impl.LookupImpl
+import com.intellij.codeInsight.lookup.impl.LookupTypedHandler
+import com.intellij.ide.DataManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.psi.util.PsiUtilBase
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.session.TerminalState
 import com.jediterm.terminal.emulator.mouse.MouseButtonCodes
 import com.jediterm.terminal.emulator.mouse.MouseButtonModifierFlags
 import com.jediterm.terminal.emulator.mouse.MouseFormat
 import com.jediterm.terminal.emulator.mouse.MouseMode
+import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalUsageLocalStorage
 import java.awt.Point
@@ -33,6 +41,8 @@ internal open class TerminalEventsHandlerImpl(
   private val terminalInput: TerminalInput,
   private val settings: JBTerminalSystemSettingsProviderBase,
   private val scrollingModel: TerminalOutputScrollingModel?,
+  private val outputModel: TerminalOutputModel,
+  private val typeAhead: TerminalTypeAhead?,
 ) : TerminalEventsHandler {
   private var ignoreNextKeyTypedEvent: Boolean = false
   private var lastMotionReport: Point? = null
@@ -40,7 +50,11 @@ internal open class TerminalEventsHandlerImpl(
   private val terminalState: TerminalState
     get() = sessionModel.terminalState.value
 
+  private val vfsSynchronizer: TerminalVfsSynchronizer?
+    get() = editor.getUserData(TerminalVfsSynchronizer.KEY)
+
   override fun keyTyped(e: TimedKeyEvent) {
+    updateLookupOnTyping(e.original.keyChar)
     val selectionModel = editor.selectionModel
     if (selectionModel.hasSelection()) {
       selectionModel.removeSelection()
@@ -72,8 +86,14 @@ internal open class TerminalEventsHandlerImpl(
 
   private fun processTerminalKeyPressed(e: TimedKeyEvent): Boolean {
     try {
+      vfsSynchronizer?.handleKeyPressed(e.original)
+
       val keyCode = e.original.keyCode
       val keyChar = e.original.keyChar
+      updateLookupOnAction(keyCode)
+      if (isNoModifiers(e.original) && keyCode == KeyEvent.VK_BACK_SPACE) {
+        typeAhead?.backspace()
+      }
 
       // numLock does not change the code sent by keypad VK_DELETE,
       // although it send the char '.'
@@ -124,14 +144,24 @@ internal open class TerminalEventsHandlerImpl(
       // Command + backtick is a short-cut on Mac OSX, so we shouldn't type anything
       return false
     }
+    val typedString = keyChar.toString()
     if (e.original.id == KeyEvent.KEY_TYPED) {
-      terminalInput.sendTrackedString(keyChar.toString(), eventTime = e.initTime)
+      typeAhead?.stringTyped(typedString)
+      terminalInput.sendTrackedString(typedString, eventTime = e.initTime)
     }
-    else terminalInput.sendString(keyChar.toString())
+    else terminalInput.sendString(typedString)
 
     scrollingModel?.scrollToCursor(force = true)
 
     return true
+  }
+
+  private fun isNoModifiers(e: KeyEvent): Boolean {
+    val modifiersEx = e.modifiersEx
+    return modifiersEx and InputEvent.ALT_DOWN_MASK == 0
+           && modifiersEx and InputEvent.ALT_GRAPH_DOWN_MASK == 0
+           && modifiersEx and InputEvent.CTRL_DOWN_MASK == 0
+           && modifiersEx and InputEvent.SHIFT_DOWN_MASK == 0
   }
 
   private fun isAltPressedOnly(e: KeyEvent): Boolean {
@@ -155,6 +185,37 @@ internal open class TerminalEventsHandlerImpl(
            keycode == KeyEvent.VK_END ||
            keycode == KeyEvent.VK_PAGE_UP ||
            keycode == KeyEvent.VK_PAGE_DOWN
+  }
+
+  private fun updateLookupOnAction(keycode: Int) {
+    val caret = editor.getCaretModel().getCurrentCaret()
+    val offset = outputModel.cursorOffsetState.value
+    val lookup = LookupManager.getActiveLookup(editor) as LookupImpl?
+    if (lookup == null) {
+      return
+    }
+
+    val newOffset = when (keycode) {
+      KeyEvent.VK_LEFT -> offset - 1
+      KeyEvent.VK_BACK_SPACE -> offset - 1
+      else -> offset
+    }
+    lookup.performGuardedChange(Runnable { editor.caretModel.moveToOffset(newOffset) })
+
+    val handler = when (keycode) {
+      KeyEvent.VK_LEFT -> {
+        LookupActionHandler.LeftHandler(null)
+      }
+      KeyEvent.VK_RIGHT -> {
+        LookupActionHandler.RightHandler(null)
+      }
+      KeyEvent.VK_BACK_SPACE -> {
+        BackspaceHandler(null)
+      }
+      else -> return
+    }
+
+    handler.execute(editor, caret, DataManager.getInstance().getDataContext(editor.getComponent()))
   }
 
   private fun simpleMapKeyCodeToChar(e: KeyEvent): Char {
@@ -233,7 +294,7 @@ internal open class TerminalEventsHandlerImpl(
       // mousePressed() handles mouse wheel using SCROLLDOWN and SCROLLUP buttons
       mousePressed(x, y, event)
     }
-    if (terminalState.isAlternateScreenBuffer && settings.sendArrowKeysInAlternativeMode()) {
+    else if (terminalState.isAlternateScreenBuffer && settings.sendArrowKeysInAlternativeMode()) {
       //Send Arrow keys instead
       val arrowKeys = if (event.wheelRotation < 0) {
         encodingManager.getCode(KeyEvent.VK_UP, 0)
@@ -316,6 +377,24 @@ internal open class TerminalEventsHandlerImpl(
     }
     LOG.debug(mouseFormat.toString() + " (" + charset + ") report : " + button + ", " + x + "x" + y + " = " + command)
     return command.toByteArray(Charset.forName(charset))
+  }
+
+  private fun updateLookupOnTyping(charTyped: Char) {
+    val project = editor.project ?: return
+    val lookup = LookupManager.getActiveLookup(editor)
+    if (lookup != null) {
+      if (charTyped.code != KeyEvent.VK_BACK_SPACE) {
+        val psiFile = PsiUtilBase.getPsiFileInEditor(editor, project)
+        LookupTypedHandler.beforeCharTyped(
+          charTyped,
+          project,
+          editor,
+          editor,
+          psiFile,
+          Runnable { }
+        )
+      }
+    }
   }
 
   companion object {

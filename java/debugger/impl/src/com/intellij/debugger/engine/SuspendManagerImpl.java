@@ -46,9 +46,9 @@ public class SuspendManagerImpl implements SuspendManager {
 
   public SuspendManagerImpl(@NotNull DebugProcessImpl debugProcess) {
     myDebugProcess = debugProcess;
-    myDebugProcess.addDebugProcessListener(new DebugProcessAdapterImpl() {
+    myDebugProcess.addDebugProcessListener(new DebugProcessListener() {
       @Override
-      public void processDetached(DebugProcessImpl process, boolean closedByUser) {
+      public void processDetached(@NotNull DebugProcess process, boolean closedByUser) {
         myEventContexts.forEach(Disposer::dispose);
         myEventContexts.clear();
         myPausedContexts.forEach(Disposer::dispose);
@@ -319,7 +319,7 @@ public class SuspendManagerImpl implements SuspendManager {
       }
       else {
         LOG.debug("vote paused");
-        myDebugProcess.cancelRunToCursorBreakpoint();
+        myDebugProcess.cancelSteppingBreakpoints();
         if (!Registry.is("debugger.keep.step.requests")) {
           ThreadReferenceProxyImpl thread = suspendContext.getEventThread();
           myDebugProcess.deleteStepRequests(suspendContext.getVirtualMachineProxy().eventRequestManager(),

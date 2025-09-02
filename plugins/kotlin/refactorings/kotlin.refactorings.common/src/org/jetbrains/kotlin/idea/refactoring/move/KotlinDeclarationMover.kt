@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.refactoring.move
 
 import com.intellij.psi.search.LocalSearchScope
@@ -22,7 +22,7 @@ interface KotlinDeclarationMover {
      * If the source container is a companion object that is empty after moving, it is deleted after the move.
      */
     object Default : KotlinDeclarationMover {
-        override fun moveDeclaration(originalElement: KtNamedDeclaration, targetContainer: KtElement): KtNamedDeclaration? {
+        override fun moveDeclaration(originalElement: KtNamedDeclaration, targetContainer: KtElement): KtNamedDeclaration {
             @Suppress("DuplicatedCode") // this is a duplicate of the K1 counterpart, which remains for compatibility reasons
             return when (targetContainer) {
                 is KtFile -> {

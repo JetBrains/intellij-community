@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.SimpleTextAttributes;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -90,7 +91,8 @@ public abstract class NewRunConfigurationTreePopupFactory {
     };
   }
 
-  static boolean isEditableInDumbMode(@NotNull Object element) {
+  @ApiStatus.Internal
+  public static boolean isEditableInDumbMode(@NotNull Object element) {
     if (element instanceof ConfigurationFactory) {
       return ((ConfigurationFactory)element).isEditableInDumbMode();
     }

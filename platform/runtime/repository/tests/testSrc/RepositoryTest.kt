@@ -6,13 +6,12 @@ import com.intellij.platform.runtime.repository.impl.RuntimeModuleRepositoryImpl
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDescriptor
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleRepositoryData
 import com.intellij.platform.runtime.repository.serialization.RuntimeModuleRepositorySerialization
-import com.intellij.project.IntelliJProjectConfiguration
+import com.intellij.project.IntelliJProjectConfiguration.Companion.getLocalMavenRepo
 import com.intellij.testFramework.rules.TempDirectoryExtension
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
-import org.junit.jupiter.params.ParameterizedTest
-import org.junit.jupiter.params.provider.ValueSource
+import org.junitpioneer.jupiter.cartesian.CartesianTest
 import java.nio.file.Path
 import kotlin.io.path.Path
 
@@ -103,7 +102,7 @@ class RepositoryTest {
     val repository = createRepository(
       tempDirectory.rootPath,
       RawRuntimeModuleDescriptor.create("ij.foo", listOf("\$PROJECT_DIR$/foo.jar"), emptyList()),
-      RawRuntimeModuleDescriptor.create("ij.bar", listOf("\$MAVEN_REPOSITORY$/bar/bar.jar"), emptyList()),
+      RawRuntimeModuleDescriptor.create("ij.bar", listOf("${getLocalMavenRepo()}/bar/bar.jar"), emptyList()),
     )
     
     //ensure that tempDirectory will be treated as the project root if 'idea.home.path' isn't specified explicitly
@@ -120,7 +119,7 @@ class RepositoryTest {
     assertTrue(fooJarPath in possibleExpectedPaths, "$fooJarPath is not in $possibleExpectedPaths")
     
     val bar = repository.getModule(RuntimeModuleId.raw("ij.bar"))
-    assertEquals(listOf(IntelliJProjectConfiguration.getLocalMavenRepo().resolve("bar/bar.jar")), bar.resourceRootPaths)
+    assertEquals(listOf(getLocalMavenRepo().resolve("bar/bar.jar")), bar.resourceRootPaths)
   }
 
   @Test
@@ -153,18 +152,27 @@ class RepositoryTest {
     assertEquals(listOf("bar.jar", "foo.jar", "baz.jar").map { tempDirectory.rootPath.resolve(it) }, classpath)
   }
 
-  @ParameterizedTest(name = "stored bootstrap module = {0}")
-  @ValueSource(strings = ["", "ij.foo", "ij.bar"])
-  fun `bootstrap classpath`(storedBootstrapModule: String) {
+  @CartesianTest(name = "stored bootstrap module = {0}, loadFromCompact = {1}")
+  fun `bootstrap classpath`(
+    @CartesianTest.Values(strings = ["", "ij.foo", "ij.bar"]) storedBootstrapModule: String, 
+    @CartesianTest.Values(booleans = [true, false]) loadFromCompact: Boolean
+  ) {
     val descriptors = arrayOf(
       RawRuntimeModuleDescriptor.create("ij.foo", listOf("foo.jar"), emptyList()),
       RawRuntimeModuleDescriptor.create("ij.bar", listOf("bar.jar"), listOf("ij.foo")),
     )
     val basePath = tempDirectory.rootPath
-    val moduleDescriptorsJarPath = basePath.resolve("module-descriptors.jar")
     val bootstrapModuleName = storedBootstrapModule.takeIf { it.isNotEmpty() }
-    RuntimeModuleRepositorySerialization.saveToJar(descriptors.asList(), bootstrapModuleName, moduleDescriptorsJarPath, 0)
-    val repository = RuntimeModuleRepository.create(moduleDescriptorsJarPath)
+    val filePath: Path
+    if (loadFromCompact) {
+      filePath = basePath.resolve("module-descriptors.dat")
+      RuntimeModuleRepositorySerialization.saveToCompactFile(descriptors.asList(), bootstrapModuleName, filePath, 0)
+    }
+    else {
+      filePath = basePath.resolve("module-descriptors.jar")
+      RuntimeModuleRepositorySerialization.saveToJar(descriptors.asList(), bootstrapModuleName, filePath, 0)
+    }
+    val repository = RuntimeModuleRepository.create(filePath)
     assertEquals(listOf(basePath.resolve("bar.jar"), basePath.resolve("foo.jar")), repository.getBootstrapClasspath("ij.bar"))
   }
   

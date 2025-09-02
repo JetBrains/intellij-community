@@ -256,6 +256,14 @@ object KotlinSdk : ResolveLibrary(
     null,
 ), ResolveSdk
 
+object KotlinReflect : ResolveLibrary(
+    "kotlin-reflect",
+    { TestKotlinArtifacts.kotlinReflect },
+    JvmPlatforms.defaultJvmPlatform,
+    null,
+    { TestKotlinArtifacts.kotlinReflectSources },
+)
+
 open class ResolveDependency(val to: ResolveModule, val kind: Kind) {
     open class Builder {
         var to: ResolveModule.Builder = ResolveModule.Builder()

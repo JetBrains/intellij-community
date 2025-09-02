@@ -6,13 +6,13 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.annotations.Child
+import com.intellij.platform.workspace.storage.annotations.Parent
 
 
 interface MainEntityToParent : WorkspaceEntity {
   val x: String
-  val child: @Child AttachedEntityToParent?
-  val childNullableParent: @Child AttachedEntityToNullableParent?
+  val child: AttachedEntityToParent?
+  val childNullableParent: AttachedEntityToNullableParent?
 
   //region generated code
   @GeneratedCodeApiVersion(3)
@@ -90,10 +90,12 @@ fun MutableEntityStorage.modifyAttachedEntityToParent(
   return modifyEntity(AttachedEntityToParent.Builder::class.java, entity, modification)
 }
 
+@Parent
 var AttachedEntityToParent.Builder.ref: MainEntityToParent.Builder
   by WorkspaceEntity.extensionBuilder(MainEntityToParent::class.java)
 //endregion
 
+@Parent
 val AttachedEntityToParent.ref: MainEntityToParent
     by WorkspaceEntity.extension()
 
@@ -135,9 +137,11 @@ fun MutableEntityStorage.modifyAttachedEntityToNullableParent(
   return modifyEntity(AttachedEntityToNullableParent.Builder::class.java, entity, modification)
 }
 
+@Parent
 var AttachedEntityToNullableParent.Builder.nullableRef: MainEntityToParent.Builder?
   by WorkspaceEntity.extensionBuilder(MainEntityToParent::class.java)
 //endregion
 
+@Parent
 val AttachedEntityToNullableParent.nullableRef: MainEntityToParent?
   by WorkspaceEntity.extension()

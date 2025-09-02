@@ -5,7 +5,9 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.settingsSync.core.auth.SettingsSyncAuthService
 import com.intellij.settingsSync.core.communicator.SettingsSyncCommunicatorProvider
 import com.intellij.settingsSync.core.communicator.SettingsSyncUserData
-import org.junit.Assert
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.withTimeout
 import java.awt.Component
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
@@ -13,13 +15,12 @@ import java.io.IOException
 import java.io.InputStream
 import java.time.Instant
 import java.util.*
-import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicInteger
 import javax.swing.Icon
-import kotlin.isInitialized
+import kotlin.time.Duration.Companion.seconds
 
-internal val MOCK_CODE = "MOCK"
-internal val DUMMY_USER_ID = "dummyUserId"
+internal const val MOCK_CODE = "MOCK"
+internal const val DUMMY_USER_ID = "dummyUserId"
 
 internal class MockRemoteCommunicator(override val userId: String) : AbstractServerCommunicator() {
   private val filesAndVersions = mutableMapOf<String, Version>()
@@ -28,13 +29,13 @@ internal class MockRemoteCommunicator(override val userId: String) : AbstractSer
   var isConnected = true
   var wasDisposed = false
 
-  private lateinit var pushedLatch: CountDownLatch
+  private lateinit var pushedLatch: CompletableDeferred<Unit>
   private lateinit var pushedSnapshot: SettingsSnapshot
 
   fun settingsPushed(snapshot: SettingsSnapshot) {
     if (::pushedLatch.isInitialized) {
       pushedSnapshot = snapshot
-      pushedLatch.countDown()
+      pushedLatch.complete(Unit)
     }
   }
 
@@ -81,10 +82,17 @@ internal class MockRemoteCommunicator(override val userId: String) : AbstractSer
     LOG.warn("Removed version for file $filePath")
   }
 
-  fun awaitForPush(testExecution: () -> Unit): SettingsSnapshot {
-    pushedLatch = CountDownLatch(1)
+  suspend fun awaitForPush(testExecution: suspend () -> Unit): SettingsSnapshot {
+    pushedLatch = CompletableDeferred()
     testExecution()
-    Assert.assertTrue("Didn't await until changes are pushed", pushedLatch.wait())
+    try {
+      withTimeout(getDefaultTimeoutInSeconds().seconds) {
+        pushedLatch.join()
+      }
+    }
+    catch (e: TimeoutCancellationException) {
+      throw RuntimeException("Didn't await until changes are pushed", e)
+    }
     return pushedSnapshot
   }
 

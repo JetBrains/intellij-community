@@ -23,7 +23,7 @@ internal class ChangeVersionPackageAction : DumbAwareAction() {
     val pkg = e.selectedPackage as? InstalledPackage ?: return
     val service = PyPackagingToolWindowService.getInstance(project)
     PyPackageCoroutine.getIoScope(project).launch {
-      val details = service.detailsForPackage(pkg)
+      val details = service.detailsForPackage(pkg) ?: return@launch
       withContext(Dispatchers.EDT) {
         PyPackagesUiComponents.createAvailableVersionsPopup(pkg, details, project).show(
           RelativePoint(e.inputEvent as MouseEvent))

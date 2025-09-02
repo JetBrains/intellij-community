@@ -86,15 +86,17 @@ abstract class FileReportGenerator(
     return "JSON.parse(pako.ungzip(atob(`${zipJson(json)}`), { to: 'string' }))"
   }
 
-  protected fun zipJson(json: String): String {
-    val resultStream = ByteArrayOutputStream()
-    OutputStreamWriter(GZIPOutputStream(Base64.getEncoder().wrap(resultStream))).use {
-      it.write(json)
-    }
-    return resultStream.toString()
-  }
+  protected fun zipJson(json: String): String = zipString(json)
 
   protected fun formatDouble(d: Double): String = DecimalFormat("0.##").format(d)
+}
+
+internal fun zipString(string: String): String {
+  val resultStream = ByteArrayOutputStream()
+  OutputStreamWriter(GZIPOutputStream(Base64.getEncoder().wrap(resultStream))).use {
+    it.write(string)
+  }
+  return resultStream.toString()
 }
 
 private val sessionSerializer = SessionSerializer()

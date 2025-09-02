@@ -27,8 +27,8 @@ public interface PackageSet {
   boolean contains(@NotNull PsiFile file, NamedScopesHolder holder);
 
   default boolean contains(@NotNull PsiFileSystemItem file, NamedScopesHolder holder) {
-    if (file instanceof PsiFile) {
-      return contains((PsiFile)file, holder);
+    if (file instanceof PsiFile psiFile) {
+      return contains(psiFile, holder);
     }
     else {
       return false;

@@ -18,17 +18,17 @@ package org.jetbrains.idea.maven.model;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class MavenBuildBase implements Serializable {
   private String myFinalName;
   private String myDefaultGoal;
   private String myDirectory;
-  private @NotNull List<@NotNull MavenResource> myResources = Collections.emptyList();
-  private @NotNull List<@NotNull MavenResource> myTestResources = Collections.emptyList();
-  private @NotNull List<@NotNull String> myFilters = Collections.emptyList();
+  private @NotNull List<@NotNull MavenResource> myResources = new CopyOnWriteArrayList<>();
+  private @NotNull List<@NotNull MavenResource> myTestResources = new CopyOnWriteArrayList<>();
+  private @NotNull List<@NotNull String> myFilters = new CopyOnWriteArrayList<>();
 
   public String getFinalName() {
     return myFinalName;
@@ -55,26 +55,26 @@ public class MavenBuildBase implements Serializable {
   }
 
   public @NotNull List<@NotNull MavenResource> getResources() {
-    return myResources;
+    return Collections.unmodifiableList(myResources);
   }
 
   public void setResources(@NotNull List<@NotNull MavenResource> resources) {
-    myResources = new ArrayList<>(resources);
+    myResources = new CopyOnWriteArrayList<>(resources);
   }
 
   public @NotNull List<@NotNull MavenResource> getTestResources() {
-    return myTestResources;
+    return Collections.unmodifiableList(myTestResources);
   }
 
   public void setTestResources(@NotNull List<@NotNull MavenResource> testResources) {
-    myTestResources = new ArrayList<>(testResources);
+    myTestResources = new CopyOnWriteArrayList<>(testResources);
   }
 
   public @NotNull List<@NotNull String> getFilters() {
-    return myFilters;
+    return Collections.unmodifiableList(myFilters);
   }
 
   public void setFilters(@NotNull List<@NotNull String> filters) {
-    myFilters = new ArrayList<>(filters);
+    myFilters = new CopyOnWriteArrayList<>(filters);
   }
 }

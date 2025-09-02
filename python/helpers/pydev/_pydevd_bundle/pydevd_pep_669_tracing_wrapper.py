@@ -18,6 +18,7 @@ else:
 sys.modules['_pydevd_bundle.pydevd_pep_669_tracing'] = mod
 
 enable_pep669_monitoring = mod.enable_pep669_monitoring
+disable_pep669_monitoring = mod.disable_pep669_monitoring
 global_cache_skips = mod.global_cache_skips
 global_cache_frame_skips = mod.global_cache_frame_skips
 

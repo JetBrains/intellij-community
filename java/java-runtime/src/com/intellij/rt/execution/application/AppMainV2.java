@@ -120,10 +120,12 @@ public final class AppMainV2 {
    * - MainMethodStatus.WithoutArgs: the method is the main method and does not accept any parameters
    */
   private static MainMethodStatus getMainMethodStatus(Method method, MainMethodSearchMode mode) {
-    if ("main".equals(method.getName()) ) {
+    if ("main".equals(method.getName())) {
       if (!Modifier.isPrivate(method.getModifiers())) {
         if (mode == MainMethodSearchMode.ALL_METHOD ||
-            (mode == MainMethodSearchMode.STATIC_METHOD && Modifier.isStatic(method.getModifiers()))) {
+            (mode == MainMethodSearchMode.STATIC_METHOD && Modifier.isStatic(method.getModifiers())) ||
+            (mode == MainMethodSearchMode.NON_STATIC_METHOD && !Modifier.isStatic(method.getModifiers()))
+        ) {
           Class<?>[] parameterTypes = method.getParameterTypes();
           if (parameterTypes.length == 1 && parameterTypes[0] == String[].class) {
             return MainMethodStatus.WithArgs;

@@ -5,7 +5,6 @@ import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
 import com.intellij.find.EditorSearchSession;
 import com.intellij.find.FindManager;
 import com.intellij.find.FindModel;
-import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Caret;
@@ -14,6 +13,7 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,7 +33,7 @@ public final class EscapeHandler extends EditorActionHandler {
     if (editor.getCaretModel().getCaretCount() == 1) {
       // Search results highlighting is disabled when the search popup is hidden from the screen,
       // but in tests it is not working, so we need to disable it manually.
-      var realEditor = editor instanceof EditorWindow window ? window.getDelegate() : editor;
+      var realEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor);
       var searchSession = EditorSearchSession.get(realEditor);
       if (searchSession != null) {
         searchSession.disableLivePreview();

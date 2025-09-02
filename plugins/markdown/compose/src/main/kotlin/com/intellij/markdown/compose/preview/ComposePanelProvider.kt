@@ -20,11 +20,11 @@ private class ComposePanelProvider : MarkdownHtmlPanelProvider() {
   }
 
   override fun isAvailable(): AvailabilityInfo {
-    if (Registry.`is`("markdown.experimental.use.compose.for.preview", false) && !AppMode.isRemoteDevHost()) {
+    if (Registry.`is`("enable.markdown.compose.preview.renderer.choice", false) && !AppMode.isRemoteDevHost()) {
       return AvailabilityInfo.AVAILABLE
     }
     return AvailabilityInfo.UNAVAILABLE
   }
 
-  override fun getProviderInfo() = ProviderInfo("Compose-based", ComposePanelProvider::class.java.name)
+  override fun getProviderInfo() = ProviderInfo("Compose (experimental)", ComposePanelProvider::class.java.name)
 }

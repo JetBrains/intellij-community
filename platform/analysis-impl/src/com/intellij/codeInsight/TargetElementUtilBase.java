@@ -88,12 +88,12 @@ public final class TargetElementUtilBase {
 
   private static @Nullable TargetElementEvaluatorEx getElementEvaluatorsEx(@NotNull Language language) {
     TargetElementEvaluator result = TARGET_ELEMENT_EVALUATOR.forLanguage(language);
-    return result instanceof TargetElementEvaluatorEx ? (TargetElementEvaluatorEx)result : null;
+    return result instanceof TargetElementEvaluatorEx target ? target : null;
   }
 
   public static @Nullable TargetElementEvaluatorEx2 getElementEvaluatorsEx2(@NotNull Language language) {
     TargetElementEvaluator result = TARGET_ELEMENT_EVALUATOR.forLanguage(language);
-    return result instanceof TargetElementEvaluatorEx2 ? (TargetElementEvaluatorEx2)result : null;
+    return result instanceof TargetElementEvaluatorEx2 target ? target : null;
   }
 
   @ApiStatus.Internal

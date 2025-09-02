@@ -32,6 +32,9 @@ object InlineDataKeys {
     @JvmStatic
     val PARAMETER_VALUE_KEY = Key<Name>("PARAMETER_VALUE")
 
+    @JvmStatic
+    val NON_LOCAL_JUMP_KEY = Key<NonLocalJumpToken>("NON_LOCAL_JUMP")
+
     fun clearUserData(it: KtElement) {
         it.putCopyableUserData(CommentHolder.COMMENTS_TO_RESTORE_KEY, null)
         it.putCopyableUserData(USER_CODE_KEY, null)
@@ -45,5 +48,6 @@ object InlineDataKeys {
         it.putCopyableUserData(MAKE_ARGUMENT_NAMED_KEY, null)
         it.putCopyableUserData(DEFAULT_PARAMETER_VALUE_KEY, null)
         it.putCopyableUserData(PARAMETER_VALUE_KEY, null)
+        it.putCopyableUserData(NON_LOCAL_JUMP_KEY, null)
     }
 }

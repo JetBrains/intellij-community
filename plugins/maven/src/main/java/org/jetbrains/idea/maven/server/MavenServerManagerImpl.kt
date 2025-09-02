@@ -2,12 +2,11 @@
 package org.jetbrains.idea.maven.server
 
 import com.intellij.ide.AppLifecycleListener
-import com.intellij.ide.impl.isTrusted
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.ide.trustedProjects.TrustedProjectsListener
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
@@ -43,7 +42,6 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Consumer
 import java.util.function.Predicate
 import kotlin.io.path.exists
-import kotlin.io.path.isDirectory
 
 internal class MavenServerManagerImpl : MavenServerManager {
   private val myMultimoduleDirToConnectorMap: MutableMap<String, MavenServerConnector> = HashMap()
@@ -77,14 +75,14 @@ internal class MavenServerManagerImpl : MavenServerManager {
       override fun onProjectTrusted(project: Project) {
         val manager = MavenProjectsManager.getInstance(project)
         if (manager.isMavenizedProject) {
-          MavenUtil.restartMavenConnectors(project, true, Predicate { it.isDummy() })
+          MavenUtil.shutdownMavenConnectors(project, Predicate { it.isDummy() })
         }
       }
 
       override fun onProjectUntrusted(project: Project) {
         val manager = MavenProjectsManager.getInstance(project)
         if (manager.isMavenizedProject) {
-          MavenUtil.restartMavenConnectors(project, true) { it.isDummy() }
+          MavenUtil.shutdownMavenConnectors(project) { it.isDummy() }
         }
       }
 
@@ -109,7 +107,7 @@ internal class MavenServerManagerImpl : MavenServerManager {
     return set
   }
 
-  override fun restartMavenConnectors(project: Project, wait: Boolean, condition: Predicate<MavenServerConnector>) {
+  override fun shutdownMavenConnectors(project: Project, condition: Predicate<MavenServerConnector>) {
     val connectorsToShutDown: MutableList<MavenServerConnector> = ArrayList()
     synchronized(myMultimoduleDirToConnectorMap) {
       getAllConnectors().forEach(
@@ -123,16 +121,11 @@ internal class MavenServerManagerImpl : MavenServerManager {
         })
     }
     MavenProjectsManager.getInstance(project).embeddersManager.reset()
-    stopConnectors(project, wait, connectorsToShutDown)
+    stopConnectors(project, connectorsToShutDown)
   }
 
-  private fun stopConnectors(project: Project, wait: Boolean, connectors: List<MavenServerConnector>) {
-    runBlockingMaybeCancellable{
-      val taskCancellation = TaskCancellation.nonCancellable()
-      withBackgroundProgress(project, SyncBundle.message("maven.sync.restarting"), taskCancellation) {
-        connectors.forEach(Consumer { it: MavenServerConnector -> it.stop(wait) })
-      }
-    }
+  private fun stopConnectors(project: Project, connectors: List<MavenServerConnector>) {
+    connectors.forEach(Consumer { it: MavenServerConnector -> it.stop(false) })
   }
 
   private fun doGetConnector(project: Project, workingDirectory: String, jdk: Sdk): MavenServerConnector {
@@ -164,14 +157,10 @@ internal class MavenServerManagerImpl : MavenServerManager {
   }
 
   override suspend fun getConnector(project: Project, workingDirectory: String, jdk: Sdk): MavenServerConnector {
-    var connector = blockingContext {
-      doGetConnector(project, workingDirectory, jdk)
-    }
+    var connector = doGetConnector(project, workingDirectory, jdk)
     if (!connector.ping()) {
       shutdownConnector(connector, true)
-      connector = blockingContext {
-        doGetConnector(project, workingDirectory, jdk)
-      }
+      connector = doGetConnector(project, workingDirectory, jdk)
     }
     return connector
   }
@@ -215,7 +204,7 @@ internal class MavenServerManagerImpl : MavenServerManager {
     val vmOptions = MavenDistributionsCache.getInstance(project).getVmOptions(multimoduleDirectory)
     val debugPort = freeDebugPort
     val connector: MavenServerConnector
-    if (project.isTrusted() || project.isDefault) {
+    if (TrustedProjects.isProjectTrusted(project) || project.isDefault) {
       val connectorFactory = ApplicationManager.getApplication().getService(
         MavenServerConnectorFactory::class.java)
       connector = connectorFactory.create(project, jdk, vmOptions, debugPort, distribution, multimoduleDirectory)
@@ -298,9 +287,7 @@ internal class MavenServerManagerImpl : MavenServerManager {
     if (eventListenerJar != null) {
       return eventListenerJar
     }
-    val pluginFileOrDir = Path.of(PathUtil.getJarPathForClass(MavenServerManager::class.java))
-    val root = pluginFileOrDir.parent
-    if (pluginFileOrDir.isDirectory()) {
+    if (MavenUtil.isRunningFromSources()) {
       eventListenerJar = eventSpyPathForLocalBuild
       if (!eventListenerJar!!.exists()) {
         MavenLog.LOG.warn("""
@@ -311,6 +298,8 @@ internal class MavenServerManagerImpl : MavenServerManager {
       }
     }
     else {
+      val pluginFileOrDir = Path.of(PathUtil.getJarPathForClass(MavenServerManager::class.java))
+      val root = pluginFileOrDir.parent
       eventListenerJar = root.resolve("maven-event-listener.jar")
       if (!eventListenerJar!!.exists()) {
         MavenLog.LOG.warn("Event listener does not exist at " + eventListenerJar +
@@ -467,8 +456,7 @@ internal class MavenServerManagerImpl : MavenServerManager {
 
     private val eventSpyPathForLocalBuild: Path
       get() {
-        val root = Path.of(PathUtil.getJarPathForClass(MavenServerManager::class.java))
-        return root.parent.resolve("intellij.maven.server.eventListener")
+        return MavenUtil.locateModuleOutput("intellij.maven.server.eventListener")!!
       }
   }
 }

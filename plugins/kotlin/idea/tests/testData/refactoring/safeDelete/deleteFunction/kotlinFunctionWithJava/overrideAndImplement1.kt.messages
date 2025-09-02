@@ -1,1 +1,1 @@
-function B.foo() implements method Z.foo().
+Function B.foo() implements method Z.foo().

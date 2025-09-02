@@ -10,7 +10,6 @@ import com.intellij.idea.AppMode
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.platform.diagnostic.telemetry.impl.span
@@ -25,6 +24,7 @@ import com.intellij.util.JBHiDPIScaledImage
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.lang.ByteBufferCleaner
 import com.intellij.util.ui.ImageUtil
+import com.intellij.util.ui.RawSwingDispatcher
 import com.intellij.util.ui.StartupUiUtil
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal

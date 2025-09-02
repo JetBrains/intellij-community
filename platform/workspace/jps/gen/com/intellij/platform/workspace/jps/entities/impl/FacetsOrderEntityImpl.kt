@@ -12,7 +12,7 @@ import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
-import com.intellij.platform.workspace.storage.annotations.Child
+import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
@@ -29,13 +29,13 @@ import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(6)
+@GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class FacetsOrderEntityImpl(private val dataSource: FacetsOrderEntityData) : FacetsOrderEntity, WorkspaceEntityBase(dataSource) {
 
   private companion object {
-    internal val MODULEENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, FacetsOrderEntity::class.java,
-                                                                                ConnectionId.ConnectionType.ONE_TO_ONE, false)
+    internal val MODULEENTITY_CONNECTION_ID: ConnectionId =
+      ConnectionId.create(ModuleEntity::class.java, FacetsOrderEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
 
     private val connections = listOf<ConnectionId>(
       MODULEENTITY_CONNECTION_ID,
@@ -63,8 +63,8 @@ internal class FacetsOrderEntityImpl(private val dataSource: FacetsOrderEntityDa
   }
 
 
-  internal class Builder(result: FacetsOrderEntityData?) : ModifiableWorkspaceEntityBase<FacetsOrderEntity, FacetsOrderEntityData>(
-    result), FacetsOrderEntity.Builder {
+  internal class Builder(result: FacetsOrderEntityData?) : ModifiableWorkspaceEntityBase<FacetsOrderEntity, FacetsOrderEntityData>(result),
+                                                           FacetsOrderEntity.Builder {
     internal constructor() : this(FacetsOrderEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {

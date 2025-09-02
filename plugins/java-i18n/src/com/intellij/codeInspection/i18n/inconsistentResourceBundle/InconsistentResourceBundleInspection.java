@@ -84,13 +84,13 @@ public final class InconsistentResourceBundleInspection extends GlobalSimpleInsp
   }
 
   @Override
-  public void checkFile(@NotNull PsiFile file,
+  public void checkFile(@NotNull PsiFile psiFile,
                         @NotNull InspectionManager manager,
                         @NotNull ProblemsHolder problemsHolder,
                         @NotNull GlobalInspectionContext globalContext,
                         @NotNull ProblemDescriptionsProcessor problemDescriptionsProcessor) {
     Set<ResourceBundle> visitedBundles = globalContext.getUserData(VISITED_BUNDLES_KEY);
-    if (!(file instanceof PropertiesFile propertiesFile)) return;
+    if (!(psiFile instanceof PropertiesFile propertiesFile)) return;
     ResourceBundle resourceBundle = propertiesFile.getResourceBundle();
     assert visitedBundles != null;
     if (!visitedBundles.add(resourceBundle)) return;

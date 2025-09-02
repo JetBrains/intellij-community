@@ -1,6 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remote;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -41,7 +42,7 @@ public abstract class RemoteSdkFactoryImpl<T extends RemoteSdkAdditionalData> im
     var modifiableAdditionalData = sdkModificator.getSdkAdditionalData();
     if (!(modifiableAdditionalData instanceof RemoteSdkAdditionalData remoteSdkAdditionalData)) {
       LOG.error("Expected remote additional data, got " + modifiableAdditionalData + " in " + sdk);
-      throw new RemoteSdkException("Internal error");
+      throw new RemoteSdkException(ExecutionBundle.message("dialog.message.internal.error"));
     }
     remoteSdkAdditionalData.setValid(true);
 

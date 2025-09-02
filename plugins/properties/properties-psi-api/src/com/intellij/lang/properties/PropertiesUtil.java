@@ -14,6 +14,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -74,7 +75,8 @@ public class PropertiesUtil {
     return commonPrefix;
   }
 
-  static @NotNull String getDefaultBaseName(final @NotNull PsiFile file) {
+  @ApiStatus.Internal
+  public static @NotNull String getDefaultBaseName(final @NotNull PsiFile file) {
     return CachedValuesManager.getCachedValue(file, new CachedValueProvider<>() {
       @Override
       public @NotNull Result<String> compute() {
@@ -175,6 +177,22 @@ public class PropertiesUtil {
     return result;
   }
 
+  @ApiStatus.Internal
+  public static boolean isAlphaSorted(final @NotNull Collection<? extends IProperty> properties) {
+    String previousKey = null;
+    for (IProperty property : properties) {
+      final String key = property.getKey();
+      if (key == null) {
+        return false;
+      }
+      if (previousKey != null && String.CASE_INSENSITIVE_ORDER.compare(previousKey, key) > 0) {
+        return false;
+      }
+      previousKey = key;
+    }
+    return true;
+  }
+
   public static boolean isUnescapedBackSlashAtTheEnd (String text) {
     boolean result = false;
     for (int i = text.length()-1; i>=0; i--) {
@@ -188,7 +206,8 @@ public class PropertiesUtil {
     return result;
   }
 
-  static @Nullable String getPackageQualifiedName(@NotNull PsiDirectory directory) {
+  @ApiStatus.Internal
+  public static @Nullable String getPackageQualifiedName(@NotNull PsiDirectory directory) {
     return ProjectRootManager.getInstance(directory.getProject()).getFileIndex().getPackageNameByDirectory(directory.getVirtualFile());
   }
 

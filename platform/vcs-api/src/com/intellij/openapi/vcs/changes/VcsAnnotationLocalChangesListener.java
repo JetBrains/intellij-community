@@ -29,22 +29,6 @@ public interface VcsAnnotationLocalChangesListener {
 
   void unregisterAnnotation(@NotNull FileAnnotation annotation);
 
-  /**
-   * @deprecated Use {@link #registerAnnotation(FileAnnotation)}
-   */
-  @Deprecated(forRemoval = true)
-  default void registerAnnotation(@NotNull VirtualFile file, @NotNull FileAnnotation annotation) {
-    registerAnnotation(annotation);
-  }
-
-  /**
-   * @deprecated Use {@link #unregisterAnnotation(FileAnnotation)}
-   */
-  @Deprecated(forRemoval = true)
-  default void unregisterAnnotation(@NotNull VirtualFile file, @NotNull FileAnnotation annotation) {
-    unregisterAnnotation(annotation);
-  }
-
   void reloadAnnotations();
 
   void reloadAnnotationsForVcs(@NotNull VcsKey key);

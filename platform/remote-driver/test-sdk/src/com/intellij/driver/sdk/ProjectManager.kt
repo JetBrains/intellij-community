@@ -11,8 +11,8 @@ interface ProjectManager {
   fun getDefaultProject(): Project
 }
 
-fun Driver.getOpenProjects(): List<Project> {
-  return service<ProjectManager>().getOpenProjects().toList()
+fun Driver.getOpenProjects(rdTarget: RdTarget = RdTarget.DEFAULT): List<Project> {
+  return service<ProjectManager>(rdTarget).getOpenProjects().toList()
 }
 
 fun Driver.getDefaultProject(): Project {
@@ -35,7 +35,7 @@ fun Driver.isProjectOpened(project: Project? = null): Boolean {
 
     if (projectToCheck?.isInitialized() == true) {
       val ideFrame = getIdeFrame(projectToCheck)
-      return@withContext ideFrame?.getComponent()?.isVisible() == true
+      return@withContext ideFrame?.getComponent()?.isShowing() == true
     }
     return@withContext false
   }

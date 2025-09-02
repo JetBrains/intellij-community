@@ -2,31 +2,15 @@
 package com.intellij.openapi.options.colors.pages;
 
 import com.intellij.codeHighlighting.RainbowHighlighter;
-import com.intellij.ide.highlighter.JavaFileHighlighter;
-import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.highlighter.JavaHighlightingColors;
+import com.intellij.java.frontend.codeInsight.highlighting.JavaColorSettingsPageBase;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.options.colors.RainbowColorSettingsPage;
-import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-
-public final class JavaColorSettingsPage extends AbstractBasicJavaColorSettingsPage implements RainbowColorSettingsPage{
-
-  @Override
-  public Icon getIcon() {
-    return JavaFileType.INSTANCE.getIcon();
-  }
-
-  @Override
-  public @NotNull SyntaxHighlighter getHighlighter() {
-    return new JavaFileHighlighter(LanguageLevel.HIGHEST);
-  }
-
+public final class JavaColorSettingsPage extends JavaColorSettingsPageBase implements RainbowColorSettingsPage{
   @Override
   public @NotNull String getDemoText() {
     return

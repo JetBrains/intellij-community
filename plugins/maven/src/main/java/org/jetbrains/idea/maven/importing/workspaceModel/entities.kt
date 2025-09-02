@@ -8,7 +8,7 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 
-object MavenProjectsTreeEntitySource : EntitySource
+object MavenEntitySource : EntitySource
 
 interface MavenProjectsTreeSettingsEntity: WorkspaceEntity {
   val importedFilePaths: List<String>

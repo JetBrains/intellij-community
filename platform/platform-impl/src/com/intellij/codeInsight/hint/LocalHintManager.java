@@ -448,7 +448,7 @@ public final class LocalHintManager implements ClientHintManager {
   private final class MyAnActionListener implements AnActionListener {
     @Override
     public void beforeActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event) {
-      if (action instanceof HintManagerImpl.ActionToIgnore) return;
+      if (HintManagerImpl.isActionToIgnore(action)) return;
 
       AnAction escapeAction = ActionManagerEx.getInstanceEx().getAction(IdeActions.ACTION_EDITOR_ESCAPE);
       if (action == escapeAction) return;

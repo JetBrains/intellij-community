@@ -40,26 +40,30 @@ abstract class KotlinFixtureCompletionBaseTestCase : KotlinLightCodeInsightFixtu
 
         val fileText = FileUtil.loadFile(actualTestFile, true)
 
-        withCustomCompilerOptions(fileText, project, module) {
-            assertTrue("\"<caret>\" is missing in file \"$testPath\"", fileText.contains("<caret>"))
-            ConfigLibraryUtil.configureLibrariesByDirective(module, fileText)
+        configureRegistryAndRun(project, fileText) {
+            withCustomCompilerOptions(fileText, project, module) {
+                assertTrue("\"<caret>\" is missing in file \"$testPath\"", fileText.contains("<caret>"))
+                ConfigLibraryUtil.configureLibrariesByDirective(module, fileText)
 
-            executeTest {
-                if (ExpectedCompletionUtils.shouldRunHighlightingBeforeCompletion(fileText)) {
-                    myFixture.doHighlighting()
+                executeTest {
+                    if (ExpectedCompletionUtils.shouldRunHighlightingBeforeCompletion(fileText)) {
+                        myFixture.doHighlighting()
+                    }
+                    testCompletion(
+                        fileText,
+                        getPlatform(),
+                        { completionType, count -> complete(completionType, count) },
+                        defaultCompletionType(),
+                        defaultInvocationCount(),
+                        additionalValidDirectives = CompilerTestDirectives.ALL_COMPILER_TEST_DIRECTIVES
+                                + listOf(
+                            IgnoreTests.DIRECTIVES.FIR_IDENTICAL, IgnoreTests.DIRECTIVES.IGNORE_K2,
+                            IgnoreTests.DIRECTIVES.IGNORE_K1
+                        )
+                                + listOf(CONFIGURE_LIBRARY_PREFIX, "WITH_STDLIB")
+                                + listOf("PLATFORM:", "FILE:", "MAIN") // Supporting Multiplatform directives
+                    )
                 }
-                testCompletion(
-                    fileText,
-                    getPlatform(),
-                    { completionType, count -> complete(completionType, count) },
-                    defaultCompletionType(),
-                    defaultInvocationCount(),
-                    additionalValidDirectives = CompilerTestDirectives.ALL_COMPILER_TEST_DIRECTIVES
-                            + listOf(IgnoreTests.DIRECTIVES.FIR_IDENTICAL, IgnoreTests.DIRECTIVES.IGNORE_K2,
-                                     IgnoreTests.DIRECTIVES.IGNORE_K1)
-                            + listOf(CONFIGURE_LIBRARY_PREFIX, "WITH_STDLIB")
-                    + listOf("PLATFORM:", "FILE:", "MAIN") // Supporting Multiplatform directives
-                )
             }
         }
     }

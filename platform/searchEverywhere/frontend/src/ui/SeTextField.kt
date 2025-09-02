@@ -5,7 +5,7 @@ import com.intellij.ui.searchComponents.ExtendableSearchTextField
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
-class SeTextField : ExtendableSearchTextField() {
+open class SeTextField : ExtendableSearchTextField() {
   init {
     isOpaque = true
   }

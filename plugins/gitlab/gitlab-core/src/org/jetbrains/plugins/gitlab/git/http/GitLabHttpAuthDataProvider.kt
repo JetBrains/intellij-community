@@ -17,6 +17,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gitlab.GitLabServersManager
 import org.jetbrains.plugins.gitlab.api.GitLabServerPath
+import org.jetbrains.plugins.gitlab.authentication.GitLabLoginSource
 import org.jetbrains.plugins.gitlab.authentication.GitLabLoginUtil
 import org.jetbrains.plugins.gitlab.authentication.LoginResult
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
@@ -77,7 +78,7 @@ private suspend fun GitLabAccountManager.tryCreateAccount(
   val isGitLabServer = service<GitLabServersManager>().checkIsGitLabServer(server)
   if (!isGitLabServer) return LoginResult.OtherMethod
   return withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-    GitLabLoginUtil.logInViaToken(project, null, server, login, ::isAccountUnique)
+    GitLabLoginUtil.logInViaToken(project, null, server, login, loginSource = GitLabLoginSource.GIT,::isAccountUnique)
   }
 }
 
@@ -87,7 +88,7 @@ private suspend fun GitLabAccountManager.reLogInWithAccount(
   account: GitLabAccount,
   login: String?,
 ): LoginResult = withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-  GitLabLoginUtil.updateToken(project, null, account, login, ::isAccountUnique)
+  GitLabLoginUtil.updateToken(project, null, account, login, loginSource = GitLabLoginSource.GIT, ::isAccountUnique)
 }
 
 private suspend fun GitLabAccountManager.selectAccountAndLogIn(
@@ -101,7 +102,7 @@ private suspend fun GitLabAccountManager.selectAccountAndLogIn(
                 ?: return@withContext LoginResult.Failure
   val token = accountsWithTokens[account]
   if (token == null) {
-    GitLabLoginUtil.updateToken(project, null, account, login, ::isAccountUnique)
+    GitLabLoginUtil.updateToken(project, null, account, login, loginSource = GitLabLoginSource.GIT, ::isAccountUnique)
   }
   else {
     LoginResult.Success(account, token)

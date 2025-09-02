@@ -8,6 +8,7 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 
@@ -34,6 +35,7 @@ public interface TestFinder {
    * @return found tests for class
    */
   @NotNull
+  @Unmodifiable
   Collection<PsiElement> findTestsForClass(@NotNull PsiElement element);
 
   /**
@@ -43,7 +45,7 @@ public interface TestFinder {
    * @return found classes for test
    */
   @NotNull
-  Collection<PsiElement> findClassesForTest(@NotNull PsiElement element);
+  @Unmodifiable Collection<PsiElement> findClassesForTest(@NotNull PsiElement element);
 
   boolean isTest(@NotNull PsiElement element);
 

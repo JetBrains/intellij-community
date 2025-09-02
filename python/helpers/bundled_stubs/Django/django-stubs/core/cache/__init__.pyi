@@ -20,3 +20,13 @@ def close_caches(**kwargs: Any) -> None: ...
 caches: CacheHandler
 # Actually ConnectionProxy, but quacks exactly like BaseCache, it's not worth distinguishing the two.
 cache: BaseCache
+
+__all__ = [
+    "cache",
+    "caches",
+    "DEFAULT_CACHE_ALIAS",
+    "InvalidCacheBackendError",
+    "CacheKeyWarning",
+    "BaseCache",
+    "InvalidCacheKey",
+]

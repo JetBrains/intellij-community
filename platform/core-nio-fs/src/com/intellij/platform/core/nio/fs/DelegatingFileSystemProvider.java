@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.core.nio.fs;
 
 import org.jetbrains.annotations.Contract;
@@ -32,7 +32,8 @@ import java.util.concurrent.ExecutorService;
 public abstract class DelegatingFileSystemProvider<
   P extends DelegatingFileSystemProvider<P, F>,
   F extends DelegatingFileSystem<P>
-  > extends FileSystemProvider {
+  > extends FileSystemProvider
+  implements RoutingAwareFileSystemProvider {
 
   /**
    * @return A delegating file system which is bound to this provider.
@@ -49,37 +50,44 @@ public abstract class DelegatingFileSystemProvider<
   protected abstract @NotNull FileSystemProvider getDelegate(@Nullable Path path1, @Nullable Path path2);
 
   /**
-   * @param path A path that the original file system accepts and produces.
+   * @param delegatePath A path that the original file system accepts and produces.
    * @return Some wrapped path that {@link DelegatingFileSystem} and {@link DelegatingFileSystemProvider} expect.
    */
   @Contract("null -> null; !null -> !null")
-  protected abstract @Nullable Path toDelegatePath(@Nullable Path path);
+  protected abstract @Nullable Path wrapDelegatePath(@Nullable Path delegatePath);
 
   /**
    * @param path A wrapped path that {@link DelegatingFileSystem} and {@link DelegatingFileSystemProvider} expect.
    * @return A path that the original file system accepts and produces.
    */
   @Contract("null -> null; !null -> !null")
-  protected abstract @Nullable Path fromDelegatePath(@Nullable Path path);
+  protected abstract @Nullable Path toDelegatePath(@Nullable Path path);
+
+  @Override
+  public boolean canHandleRouting(@NotNull Path path) {
+    FileSystemProvider delegate = getDelegate(path, null);
+    return path.getFileSystem().provider().equals(delegate) ||
+           delegate instanceof RoutingAwareFileSystemProvider rafsp && rafsp.canHandleRouting(path);
+  }
 
   @Override
   public @Nullable F newFileSystem(Path path, Map<String, ?> env) throws IOException {
-    return wrapDelegateFileSystem(getDelegate(path, null).newFileSystem(fromDelegatePath(path), env));
+    return wrapDelegateFileSystem(getDelegate(path, null).newFileSystem(toDelegatePath(path), env));
   }
 
   @Override
   public InputStream newInputStream(Path path, OpenOption... options) throws IOException {
-    return getDelegate(path, null).newInputStream(fromDelegatePath(path), options);
+    return getDelegate(path, null).newInputStream(toDelegatePath(path), options);
   }
 
   @Override
   public OutputStream newOutputStream(Path path, OpenOption... options) throws IOException {
-    return getDelegate(path, null).newOutputStream(fromDelegatePath(path), options);
+    return getDelegate(path, null).newOutputStream(toDelegatePath(path), options);
   }
 
   @Override
   public FileChannel newFileChannel(Path path, Set<? extends OpenOption> options, FileAttribute<?>... attrs) throws IOException {
-    return getDelegate(path, null).newFileChannel(fromDelegatePath(path), options, attrs);
+    return getDelegate(path, null).newFileChannel(toDelegatePath(path), options, attrs);
   }
 
   @Override
@@ -89,27 +97,27 @@ public abstract class DelegatingFileSystemProvider<
     ExecutorService executor,
     FileAttribute<?>... attrs
   ) throws IOException {
-    return getDelegate(path, null).newAsynchronousFileChannel(fromDelegatePath(path), options, executor, attrs);
+    return getDelegate(path, null).newAsynchronousFileChannel(toDelegatePath(path), options, executor, attrs);
   }
 
   @Override
   public void createSymbolicLink(Path link, Path target, FileAttribute<?>... attrs) throws IOException {
-    getDelegate(link, target).createSymbolicLink(fromDelegatePath(link), fromDelegatePath(target), attrs);
+    getDelegate(link, target).createSymbolicLink(toDelegatePath(link), toDelegatePath(target), attrs);
   }
 
   @Override
   public void createLink(Path link, Path existing) throws IOException {
-    getDelegate(link, existing).createLink(fromDelegatePath(link), fromDelegatePath(existing));
+    getDelegate(link, existing).createLink(toDelegatePath(link), toDelegatePath(existing));
   }
 
   @Override
   public boolean deleteIfExists(Path path) throws IOException {
-    return getDelegate(path, null).deleteIfExists(fromDelegatePath(path));
+    return getDelegate(path, null).deleteIfExists(toDelegatePath(path));
   }
 
   @Override
   public Path readSymbolicLink(Path link) throws IOException {
-    return toDelegatePath(getDelegate(link, null).readSymbolicLink(fromDelegatePath(link)));
+    return wrapDelegatePath(getDelegate(link, null).readSymbolicLink(toDelegatePath(link)));
   }
 
   @Override
@@ -129,12 +137,12 @@ public abstract class DelegatingFileSystemProvider<
 
   @Override
   public @NotNull Path getPath(@NotNull URI uri) {
-    return toDelegatePath(getDelegate(null, null).getPath(uri));
+    return wrapDelegatePath(getDelegate(null, null).getPath(uri));
   }
 
   @Override
   public SeekableByteChannel newByteChannel(Path path, Set<? extends OpenOption> options, FileAttribute<?>... attrs) throws IOException {
-    return getDelegate(path, null).newByteChannel(fromDelegatePath(path), options, attrs);
+    return getDelegate(path, null).newByteChannel(toDelegatePath(path), options, attrs);
   }
 
   @Override
@@ -142,7 +150,7 @@ public abstract class DelegatingFileSystemProvider<
     return new DirectoryStream<Path>() {
       final DirectoryStream<Path> myStream = getDelegate(dir, null)
         .newDirectoryStream(
-          fromDelegatePath(dir),
+          toDelegatePath(dir),
           craftFilter(filter)
         );
 
@@ -158,7 +166,7 @@ public abstract class DelegatingFileSystemProvider<
 
           @Override
           public Path next() {
-            return toDelegatePath(myIterator.next());
+            return wrapDelegatePath(myIterator.next());
           }
         };
       }
@@ -176,71 +184,71 @@ public abstract class DelegatingFileSystemProvider<
       return null;
     }
     if (BasicFileAttributesHolder2.FetchAttributesFilter.isFetchAttributesFilter(originalFilter)) {
-      return (BasicFileAttributesHolder2.FetchAttributesFilter)p -> originalFilter.accept(fromDelegatePath(p));
+      return (BasicFileAttributesHolder2.FetchAttributesFilter)p -> originalFilter.accept(wrapDelegatePath(p));
     }
     else {
-      return p -> originalFilter.accept(fromDelegatePath(p));
+      return p -> originalFilter.accept(wrapDelegatePath(p));
     }
   }
 
   @Override
   public void createDirectory(Path dir, FileAttribute<?>... attrs) throws IOException {
-    getDelegate(dir, null).createDirectory(fromDelegatePath(dir), attrs);
+    getDelegate(dir, null).createDirectory(toDelegatePath(dir), attrs);
   }
 
   @Override
   public void delete(Path path) throws IOException {
-    getDelegate(path, null).delete(fromDelegatePath(path));
+    getDelegate(path, null).delete(toDelegatePath(path));
   }
 
   @Override
   public void copy(Path source, Path target, CopyOption... options) throws IOException {
-    getDelegate(source, target).copy(fromDelegatePath(source), fromDelegatePath(target), options);
+    getDelegate(source, target).copy(toDelegatePath(source), toDelegatePath(target), options);
   }
 
   @Override
   public void move(Path source, Path target, CopyOption... options) throws IOException {
-    getDelegate(source, target).move(fromDelegatePath(source), fromDelegatePath(target), options);
+    getDelegate(source, target).move(toDelegatePath(source), toDelegatePath(target), options);
   }
 
   @Override
   public boolean isSameFile(Path path, Path path2) throws IOException {
-    return getDelegate(path, path2).isSameFile(fromDelegatePath(path), fromDelegatePath(path2));
+    return getDelegate(path, path2).isSameFile(toDelegatePath(path), toDelegatePath(path2));
   }
 
   @Override
   public boolean isHidden(Path path) throws IOException {
-    return getDelegate(path, null).isHidden(fromDelegatePath(path));
+    return getDelegate(path, null).isHidden(toDelegatePath(path));
   }
 
   @Override
   public FileStore getFileStore(Path path) throws IOException {
-    return getDelegate(path, null).getFileStore(fromDelegatePath(path));
+    return getDelegate(path, null).getFileStore(toDelegatePath(path));
   }
 
   @Override
   public void checkAccess(Path path, AccessMode... modes) throws IOException {
-    getDelegate(path, null).checkAccess(fromDelegatePath(path), modes);
+    getDelegate(path, null).checkAccess(toDelegatePath(path), modes);
   }
 
   @Override
   public <V extends FileAttributeView> V getFileAttributeView(Path path, Class<V> type, LinkOption... options) {
-    return getDelegate(path, null).getFileAttributeView(fromDelegatePath(path), type, options);
+    return getDelegate(path, null).getFileAttributeView(toDelegatePath(path), type, options);
   }
 
   @Override
   public <A extends BasicFileAttributes> A readAttributes(Path path, Class<A> type, LinkOption... options) throws IOException {
-    return getDelegate(path, null).readAttributes(fromDelegatePath(path), type, options);
+    return getDelegate(path, null).readAttributes(toDelegatePath(path), type, options);
   }
 
   @Override
   public Map<String, Object> readAttributes(Path path, String attributes, LinkOption... options) throws IOException {
-    return getDelegate(path, null).readAttributes(fromDelegatePath(path), attributes, options);
+    return getDelegate(path, null).readAttributes(toDelegatePath(path), attributes, options);
   }
 
   @Override
   public void setAttribute(Path path, String attribute, Object value, LinkOption... options) throws IOException {
-    getDelegate(path, null).setAttribute(fromDelegatePath(path), attribute, value, options);
+    getDelegate(path, null).setAttribute(toDelegatePath(path), attribute, value, options);
   }
 
   /** Used in {@link sun.nio.ch.UnixDomainSockets#getPathBytes}. */

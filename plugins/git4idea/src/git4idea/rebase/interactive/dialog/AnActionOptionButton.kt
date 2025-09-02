@@ -7,7 +7,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.AnActionWrapper
 import com.intellij.openapi.actionSystem.Presentation
-import com.intellij.openapi.actionSystem.ex.ActionUtil.performActionDumbAwareWithCallbacks
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.ui.components.JBOptionButton
 import com.intellij.util.ui.JBInsets
@@ -64,7 +64,7 @@ internal class AnActionOptionButton(
     override fun actionPerformed(e: ActionEvent?) {
       val context = DataManager.getInstance().getDataContext(component)
       val event = AnActionEvent.createFromAnAction(action, null, GitInteractiveRebaseDialog.PLACE, context)
-      performActionDumbAwareWithCallbacks(action, event)
+      ActionUtil.performAction(action, event)
     }
   }
 }

@@ -4,7 +4,6 @@ package com.intellij.openapi.vfs.newvfs.persistent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.concurrency.AppExecutorUtil
 import kotlinx.coroutines.*
@@ -35,9 +34,7 @@ private class ExecuteOnCoroutine(coroutineScope: CoroutineScope) : VFSAsyncTaskE
 
   override fun <T> async(task: Callable<T>): CompletableFuture<T> {
     return supervisorScope.async {
-      blockingContext {
-        task.call()
-      }
+      task.call()
     }.asCompletableFuture()
   }
 }

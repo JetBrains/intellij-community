@@ -176,8 +176,7 @@ public final class GradleProjectResolverUtil {
                                                              @NotNull ProjectResolverContext resolverCtx) {
     Boolean isSupported = IS_INCLUDED_BUILD_TASK_RUN_SUPPORTED.get(project);
     if (isSupported == null) {
-      String gradleVersion = resolverCtx.getProjectGradleVersion();
-      isSupported = gradleVersion != null && GradleVersionUtil.isGradleAtLeast(gradleVersion, "6.8");
+      isSupported = GradleVersionUtil.isGradleAtLeast(resolverCtx.getGradleVersion(), "6.8");
       IS_INCLUDED_BUILD_TASK_RUN_SUPPORTED.set(project, isSupported);
     }
     return isSupported;

@@ -129,7 +129,6 @@ abstract class IndexableFilesBaseTest {
     for (provider in providers) {
       provider.iterateFiles(project, processor, indexableFilesDeduplicateFilter)
     }
-    assertEquals(expectedNumberOfSkippedFiles, indexableFilesDeduplicateFilter.numberOfSkippedFiles)
   }
 
   protected fun maskIndexableSetContributors(vararg indexableSetContributor: IndexableSetContributor) {

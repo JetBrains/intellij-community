@@ -42,13 +42,14 @@ import static org.junit.Assert.assertArrayEquals;
 /**
  * Base super class for tests that check various IJ editor functionality on managed document modification.
  * <p/>
- * It's main purpose is to provide utility methods like fold regions addition and setup; typing etc. 
+ * Its main purpose is to provide utility methods like fold regions addition and setup; typing etc.
  */
+@SuppressWarnings({"UnusedReturnValue", "SameParameterValue", "rawtypes"})
 public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCase {
   public static final int TEST_CHAR_WIDTH = 10; // char width matches the one in EditorTestUtil.configureSoftWraps
   public static final int TEST_LINE_HEIGHT = 10;
   public static final int TEST_DESCENT = 2;
-  
+
   public static final String LOREM_IPSUM =
     "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.";
 
@@ -78,7 +79,7 @@ public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCas
   protected void initText(@NotNull @NonNls String fileText) {
     init(fileText, PlainTextFileType.INSTANCE);
   }
-  
+
   protected void init(@NotNull @NonNls String fileText, @NotNull FileType type) {
     String name = getFileName(type);
     assertFileTypeResolved(type, name);
@@ -86,7 +87,7 @@ public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCas
   }
 
   private String getFileName(@NotNull FileType type) {
-    return getTestName(false) + "."+type.getDefaultExtension();
+    return getTestName(false) + "." + type.getDefaultExtension();
   }
 
   protected static void assertFileTypeResolved(@NotNull FileType type, @NotNull String path) {
@@ -155,7 +156,7 @@ public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCas
     int actualRangeCount = selectionStarts.length;
     int[][] actualRanges = new int[actualRangeCount][];
     for (int i = 0; i < actualRangeCount; i++) {
-      actualRanges[i] = new int[] {selectionStarts[i], selectionEnds[i]};
+      actualRanges[i] = new int[]{selectionStarts[i], selectionEnds[i]};
     }
     assertEquals("Wrong selected ranges", Arrays.deepToString(ranges), Arrays.deepToString(actualRanges));
   }
@@ -171,7 +172,7 @@ public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCas
   /**
    * Verifies visual positions of carets and their selection ranges. It's assumed that for each caret its position and selection range
    * are within the same visual line.
-   *
+   * <p>
    * For each caret its visual position and visual positions of selection start an and should be provided in the following order:
    * line, caretColumn, selectionStartColumn, selectionEndColumn
    */

@@ -1,4 +1,5 @@
 // "Convert to record class" "true"
+// no "true-preview" above because of IDEA-369873
 final class <caret>R {
     final int first;
     final String second;

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.dependencies
 
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
@@ -18,7 +18,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.nio.file.attribute.PosixFilePermissions
-import java.util.*
+import java.util.Properties
 import java.util.logging.Logger
 import javax.xml.parsers.DocumentBuilder
 import javax.xml.parsers.DocumentBuilderFactory
@@ -37,7 +37,7 @@ object BuildDependenciesUtil {
   private val LOG = Logger.getLogger(BuildDependenciesUtil::class.java.name)
   private val octal_0111 = "111".toInt(8)
 
-  val isWindows = System.getProperty("os.name").lowercase().startsWith("windows")
+  val isWindows: Boolean = System.getProperty("os.name").startsWith("windows", ignoreCase = true)
 
   @Suppress("HttpUrlsUsage")
   fun createDocumentBuilder(): DocumentBuilder {
@@ -323,20 +323,20 @@ object BuildDependenciesUtil {
     }
     return sb.toString()
   }
+}
 
-  private interface ArchiveContent {
-    val nextEntry: Entry?
-  }
+private interface ArchiveContent {
+  val nextEntry: Entry?
+}
 
-  private interface Entry {
-    enum class Type { FILE, DIR, SYMLINK }
+private interface Entry {
+  enum class Type { FILE, DIR, SYMLINK }
 
-    val type: Type
-    val name: String
-    val isExecutable: Boolean
-    val linkTarget: String?
-    val inputStream: InputStream
-  }
+  val type: Type
+  val name: String
+  val isExecutable: Boolean
+  val linkTarget: String?
+  val inputStream: InputStream
 }
 
 private class EntryNameConverter(private val archiveFile: Path, private val target: Path, private val stripRoot: Boolean) {

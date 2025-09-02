@@ -4,7 +4,6 @@ package com.intellij.projectImport
 import com.intellij.ide.IdeCoreBundle
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageConstants
 import com.intellij.openapi.ui.MessageDialogBuilder.Companion.yesNoCancel
@@ -117,9 +116,7 @@ abstract class ProjectOpenProcessor {
    */
   open suspend fun importProjectAfterwardsAsync(project: Project, file: VirtualFile) {
     withContext(Dispatchers.EDT) {
-      blockingContext {
-        importProjectAfterwards(project, file)
-      }
+      importProjectAfterwards(project, file)
     }
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation;
 
 import com.intellij.CommonBundle;
@@ -63,7 +63,7 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
 
     if (aClass instanceof PsiImplicitClass) {
       Messages.showMessageDialog(project,
-                                 JavaBundle.message("error.attempt.to.generate.constructor.for.anonymous.class"),
+                                 JavaBundle.message("error.attempt.to.generate.constructor.for.implicit.class"),
                                  CommonBundle.getErrorTitle(),
                                  Messages.getErrorIcon());
       return null;

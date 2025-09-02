@@ -1,8 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.PackageIndex;
 import com.intellij.openapi.util.text.StringUtil;
@@ -207,10 +208,10 @@ class ModuleInfoModifyUsageDetector extends ModuleInfoUsageDetector {
   private static @NotNull String formModuleStatementText(@NotNull PsiPackageAccessibilityStatement.Role role, @NotNull Set<String> moduleRefNames, @NotNull String packageName) {
     String roleText = null;
     if (role == PsiPackageAccessibilityStatement.Role.EXPORTS) {
-      roleText = PsiKeyword.EXPORTS;
+      roleText = JavaKeywords.EXPORTS;
     }
     else if (role == PsiPackageAccessibilityStatement.Role.OPENS) {
-      roleText = PsiKeyword.OPENS;
+      roleText = JavaKeywords.OPENS;
     }
     assert roleText != null;
     String moduleRefsText;

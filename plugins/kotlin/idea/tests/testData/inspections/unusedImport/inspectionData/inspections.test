@@ -1,3 +1,0 @@
-// INSPECTION_CLASS: org.jetbrains.kotlin.idea.codeInsight.inspections.shared.KotlinUnusedImportInspection
-// RUNTIME_WITH_FULL_JDK
-// COMPILER_PLUGIN_OPTIONS: plugin:org.jetbrains.kotlin.assignment:annotation=test.assignment.SupportsKotlinAssignmentOverloading

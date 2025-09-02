@@ -1,14 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor;
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.UIUtil;
+import kotlinx.coroutines.flow.StateFlow;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,6 +32,9 @@ public abstract class FileEditorManager {
 
   public abstract @Nullable FileEditorComposite getComposite(@NotNull VirtualFile file);
 
+  @ApiStatus.Experimental
+  public abstract boolean canOpenFile(@NotNull VirtualFile file);
+
   /**
    * @param file file to open. The file should be valid.
    * @return array of opened editors
@@ -44,7 +46,7 @@ public abstract class FileEditorManager {
     openFile(file, true);
   }
 
-  public abstract @NotNull List<@NotNull FileEditor> openFile(@NotNull VirtualFile file);
+  public abstract @NotNull @Unmodifiable List<@NotNull FileEditor> openFile(@NotNull VirtualFile file);
 
   /**
    * Opens a file.
@@ -133,11 +135,18 @@ public abstract class FileEditorManager {
    * but at the same time editor notifications should be shown to all users.
    */
   @ApiStatus.Experimental
-  public abstract @NotNull List<VirtualFile> getOpenFilesWithRemotes();
+  public abstract @NotNull @Unmodifiable List<VirtualFile> getOpenFilesWithRemotes();
 
   public boolean hasOpenFiles() {
     return getOpenFiles().length > 0;
   }
+
+  /**
+   * Get a file currently being edited
+   * Can depend on the current focus location and selection
+   */
+  @ApiStatus.Experimental
+  public abstract @Nullable VirtualFile getCurrentFile();
 
   /**
    * @return files currently selected. The method returns an empty array if there are no selected files.
@@ -155,7 +164,7 @@ public abstract class FileEditorManager {
    * The method returns an empty array if no editors are open.
    */
   @ApiStatus.Experimental
-  public @NotNull Collection<FileEditor> getSelectedEditorWithRemotes() {
+  public @NotNull @Unmodifiable Collection<FileEditor> getSelectedEditorWithRemotes() {
     return List.of(getSelectedEditors());
   }
 
@@ -166,6 +175,9 @@ public abstract class FileEditorManager {
     VirtualFile[] files = getSelectedFiles();
     return files.length == 0 ? null : getSelectedEditor(files[0]);
   }
+
+  @ApiStatus.Experimental
+  public abstract @NotNull StateFlow<@Nullable FileEditor> getSelectedEditorFlow();
 
   /**
    * @return editor which is currently selected for a given file.
@@ -178,7 +190,7 @@ public abstract class FileEditorManager {
    */
   public abstract FileEditor @NotNull [] getEditors(@NotNull VirtualFile file);
 
-  public @NotNull List<FileEditor> getEditorList(@NotNull VirtualFile file) {
+  public @NotNull @Unmodifiable List<FileEditor> getEditorList(@NotNull VirtualFile file) {
     return Arrays.asList(getEditors(file));
   }
 
@@ -260,27 +272,12 @@ public abstract class FileEditorManager {
   }
 
   @RequiresEdt
-  public abstract @NotNull List<FileEditor> openFileEditor(@NotNull FileEditorNavigatable descriptor, boolean focusEditor);
+  public abstract @NotNull @Unmodifiable List<FileEditor> openFileEditor(@NotNull FileEditorNavigatable descriptor, boolean focusEditor);
 
   /**
    * @return the project which the file editor manager is associated with.
    */
   public abstract @NotNull Project getProject();
-
-  /**
-   * @deprecated Use {@link com.intellij.openapi.actionSystem.UiDataRule} instead.
-   */
-  @Deprecated(forRemoval = true)
-  public abstract void registerExtraEditorDataProvider(@NotNull EditorDataProvider provider, @Nullable Disposable parentDisposable);
-
-  /**
-   * Returns data associated with given editor/caret context. Data providers are registered via
-   * {@link #registerExtraEditorDataProvider(EditorDataProvider, Disposable)} method.
-   *
-   * @deprecated Use {@link com.intellij.openapi.actionSystem.UiDataRule} instead.
-   */
-  @Deprecated(forRemoval = true)
-  public abstract @Nullable Object getData(@NotNull String dataId, @NotNull Editor editor, @NotNull Caret caret);
 
   /**
    * Selects a specified file editor tab for the specified editor.

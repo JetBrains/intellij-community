@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.whatsNew.reaction
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
@@ -18,18 +19,7 @@ internal object ReactionCollector : CounterUsagesCollector() {
 
   fun reactedPerformed(project: Project?, place: String?, type: ReactionType, action: ReationAction) {
     reacted.log(project, place, type, action)
-    LegacyReactionCollector.reacted.log(project, place, type, action)
   }
-
-  override fun getGroup(): EventLogGroup = eventLogGroup
-}
-
-internal object LegacyReactionCollector : CounterUsagesCollector() {
-  private val eventLogGroup: EventLogGroup = EventLogGroup("rider.reactions", 3)
-  internal val reacted = eventLogGroup.registerEvent("reacted",
-                                                     EventFields.ActionPlace,
-                                                     EventFields.Enum(("type"), ReactionType::class.java),
-                                                     EventFields.Enum("action", ReationAction::class.java))
 
   override fun getGroup(): EventLogGroup = eventLogGroup
 }

@@ -3,7 +3,6 @@
 // ERROR: Expected condition of type Boolean
 // K2_AFTER_ERROR: Condition of type 'Boolean' expected.
 // K2_AFTER_ERROR: Condition of type 'Boolean' expected.
-// K2_AFTER_ERROR: Type inference failed. The value of the type parameter 'T' must be mentioned in input types (argument types, receiver type, or expected type). Try to specify it explicitly.
 fun test(i: Int, j: Int) {
     var b = false
     when {

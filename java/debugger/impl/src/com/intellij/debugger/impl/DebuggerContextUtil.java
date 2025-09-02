@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl;
 
-import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPass;
+import com.intellij.codeInsight.daemon.impl.IdentifierHighlightingComputer;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.SuspendContextImpl;
@@ -80,7 +80,7 @@ public final class DebuggerContextUtil {
     }
 
     return findNearest(context, file, searchScope ->
-      IdentifierHighlighterPass.getUsages(psi, searchScope, false));
+      IdentifierHighlightingComputer.getUsages(psi, searchScope, false));
   }
 
   /**

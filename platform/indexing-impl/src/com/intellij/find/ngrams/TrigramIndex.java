@@ -2,10 +2,8 @@
 package com.intellij.find.ngrams;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ThreadLocalCachedIntArray;
 import com.intellij.openapi.util.text.TrigramBuilder;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.storage.sharding.ShardableIndexExtension;
 import com.intellij.util.io.DataExternalizer;
@@ -52,13 +50,6 @@ public final class TrigramIndex extends ScalarIndexExtension<Integer> implements
   @Override
   public int getCacheSize() {
     return 64 * super.getCacheSize();
-  }
-
-  @Internal
-  public static boolean isIndexable(@NotNull VirtualFile file, @NotNull Project project) {
-    IndexedFileImpl indexedFile = new IndexedFileImpl(file, project);
-    TrigramIndexFilter trigramIndexFilter = ApplicationManager.getApplication().getService(TrigramIndexFilter.class);
-    return trigramIndexFilter.acceptInput(indexedFile);
   }
 
   @Override
@@ -133,15 +124,10 @@ public final class TrigramIndex extends ScalarIndexExtension<Integer> implements
             buffer[ptr++] = i;
           }
         }
+
         Arrays.sort(buffer, 0, numberOfValues);
 
-        DataInputOutputUtil.writeINT(out, numberOfValues);
-        int prev = 0;
-        for (ptr = 0; ptr < numberOfValues; ++ptr) {
-          int cur = buffer[ptr];
-          DataInputOutputUtil.writeLONG(out, (long)cur - prev);
-          prev = cur;
-        }
+        DataInputOutputUtil.writeDiffCompressed(out, buffer, numberOfValues);
       }
 
       @Override

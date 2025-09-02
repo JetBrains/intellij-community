@@ -97,7 +97,8 @@ public final class FileUtilRt {
     return true;
   }
 
-  protected interface SymlinkResolver {
+  @ApiStatus.Internal
+  public interface SymlinkResolver {
     @NotNull
     String resolveSymlinksAndCanonicalize(@NotNull String path, char separatorChar, boolean removeLastSlash);
     boolean isSymlink(@NotNull CharSequence path);
@@ -115,7 +116,8 @@ public final class FileUtilRt {
   }
 
   @Contract("null, _, _, _ -> null; !null,_,_,_->!null")
-  static String toCanonicalPath(@Nullable String path,
+  @ApiStatus.Internal
+  public static String toCanonicalPath(@Nullable String path,
                                           char separatorChar,
                                           boolean removeLastSlash,
                                           @Nullable SymlinkResolver resolver) {
@@ -597,7 +599,8 @@ public final class FileUtilRt {
   }
 
   @TestOnly
-  static void resetCanonicalTempPathCache(@NotNull String tempPath) {
+  @ApiStatus.Internal
+  public static void resetCanonicalTempPathCache(@NotNull String tempPath) {
     ourCanonicalTempPathCache = tempPath;
   }
 
@@ -804,7 +807,8 @@ public final class FileUtilRt {
     void beforeDeleting(Path path);
   }
 
-  static void deleteRecursively(@NotNull Path path, @Nullable final DeleteRecursivelyCallback callback) throws IOException {
+  @ApiStatus.Internal
+  public static void deleteRecursively(@NotNull Path path, @Nullable final DeleteRecursivelyCallback callback) throws IOException {
     if (!Files.exists(path, LinkOption.NOFOLLOW_LINKS)) {
       return;
     }
@@ -917,13 +921,7 @@ public final class FileUtilRt {
   }
 
   private static DirectoryNotEmptyException directoryNotEmptyExceptionWithMoreDiagnostic(@NotNull Path path) throws IOException {
-    DirectoryStream.Filter<Path> alwaysTrue = new DirectoryStream.Filter<Path>() {
-      @Override
-      public boolean accept(Path entry) {
-        return true;
-      }
-    };
-    try (DirectoryStream<Path> children = Files.newDirectoryStream(path, alwaysTrue)) {
+    try (DirectoryStream<Path> children = Files.newDirectoryStream(path)) {
       StringBuilder sb = new StringBuilder();
       for (Path child : children) {
         sb.append(child.getFileName()).append(", ");
@@ -951,7 +949,8 @@ public final class FileUtilRt {
     return null;
   }
 
-  static boolean deleteFile(@NotNull final File file) {
+  @ApiStatus.Internal
+  public static boolean deleteFile(@NotNull final File file) {
     Boolean result = doIOOperation(new RepeatableIOOperation<Boolean, RuntimeException>() {
       @Override
       public Boolean execute(boolean lastAttempt) {

@@ -34,7 +34,8 @@ import org.jetbrains.kotlin.idea.highlighter.markers.KotlinLineMarkerOptions
 import org.jetbrains.kotlin.idea.k2.codeinsight.KotlinGoToSuperDeclarationsHandler
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.isInheritable
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.isOverridable
-import org.jetbrains.kotlin.idea.searching.inheritors.findAllOverridings
+import org.jetbrains.kotlin.idea.searching.inheritors.hasAnyInheritors
+import org.jetbrains.kotlin.idea.searching.inheritors.hasAnyOverridings
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
@@ -74,8 +75,7 @@ class KotlinLineMarkerProvider : AbstractKotlinLineMarkerProvider() {
         val isAbstract = CallableOverridingsTooltip.isAbstract(element, klass)
         val gutter = if (isAbstract) KotlinLineMarkerOptions.implementedOption else KotlinLineMarkerOptions.overriddenOption
         if (!gutter.isEnabled) return
-        if (element.findAllOverridings().firstOrNull() == null &&
-            (element.hasBody() || !isUsedSamInterface(klass))) return
+        if (!element.hasAnyOverridings() && (element.hasBody() || !isUsedSamInterface(klass))) return
 
         val anchor = element.nameIdentifier ?: element
 
@@ -146,8 +146,7 @@ class KotlinLineMarkerProvider : AbstractKotlinLineMarkerProvider() {
         val gutter = if (isInterface) KotlinLineMarkerOptions.implementedOption else KotlinLineMarkerOptions.overriddenOption
         if (!gutter.isEnabled) return
 
-        if (!KotlinFindUsagesSupport.searchInheritors(element, element.useScope, searchDeeply = false).iterator().hasNext() &&
-            !isUsedSamInterface(element)) return
+        if (!element.hasAnyInheritors() && !isUsedSamInterface(element)) return
 
         val icon = gutter.icon ?: return
 

@@ -45,7 +45,8 @@ public final class StubTreeBuilder {
 
   private StubTreeBuilder() { }
 
-  static boolean requiresContentToFindBuilder(@NotNull FileType fileType) {
+  @ApiStatus.Internal
+  public static boolean requiresContentToFindBuilder(@NotNull FileType fileType) {
     BinaryFileStubBuilder builder = BinaryFileStubBuilders.INSTANCE.forFileType(fileType);
     return builder instanceof BinaryFileStubBuilder.CompositeBinaryFileStubBuilder<?>;
   }

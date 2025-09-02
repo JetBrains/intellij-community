@@ -16,7 +16,6 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.fileTypes.FileTypes
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.libraries.LibraryUtil
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService
@@ -124,9 +123,7 @@ open class PsiFileNode(project: Project?, value: PsiFile, viewSettings: ViewSett
       if (orderEntry != null) {
         val projectSettingsService = project.serviceAsync<ProjectSettingsService>()
         withContext(Dispatchers.EDT) {
-          blockingContext {
-            projectSettingsService.openLibraryOrSdkSettings(orderEntry)
-          }
+          projectSettingsService.openLibraryOrSdkSettings(orderEntry)
         }
         return
       }

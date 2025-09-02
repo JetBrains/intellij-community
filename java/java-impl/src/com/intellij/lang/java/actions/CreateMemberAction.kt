@@ -18,24 +18,24 @@ internal abstract class CreateTargetAction<T : PsiElement>(
   @Suppress("UNCHECKED_CAST")
   protected val target: T get() = startElement as T
 
-  final override fun isAvailable(project: Project, file: PsiFile, editor: Editor?, startElement: PsiElement, endElement: PsiElement): Boolean {
-    return isAvailable(project, file, target)
+  final override fun isAvailable(project: Project, psiFile: PsiFile, editor: Editor?, startElement: PsiElement, endElement: PsiElement): Boolean {
+    return isAvailable(project, psiFile, target)
   }
 
-  final override fun isAvailable(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement): Boolean {
-    return isAvailable(project, file, target)
+  final override fun isAvailable(project: Project, psiFile: PsiFile, startElement: PsiElement, endElement: PsiElement): Boolean {
+    return isAvailable(project, psiFile, target)
   }
 
   open fun isAvailable(project: Project, file: PsiFile, target: T): Boolean {
     return request.isValid
   }
 
-  final override fun invoke(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement) {
-    invoke(project, file, target)
+  final override fun invoke(project: Project, psiFile: PsiFile, startElement: PsiElement, endElement: PsiElement) {
+    invoke(project, psiFile, target)
   }
 
-  final override fun invoke(project: Project, file: PsiFile, editor: Editor?, startElement: PsiElement, endElement: PsiElement) {
-    invoke(project, file, target)
+  final override fun invoke(project: Project, psiFile: PsiFile, editor: Editor?, startElement: PsiElement, endElement: PsiElement) {
+    invoke(project, psiFile, target)
   }
 
   abstract fun invoke(project: Project, file: PsiFile, target: T)

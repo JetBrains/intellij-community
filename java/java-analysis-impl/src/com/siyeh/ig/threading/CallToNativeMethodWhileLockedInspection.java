@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2025 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,8 +28,7 @@ public final class CallToNativeMethodWhileLockedInspection extends BaseInspectio
 
   @Override
   protected @NotNull String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "call.to.native.method.while.locked.problem.descriptor");
+    return InspectionGadgetsBundle.message("call.to.native.method.while.locked.problem.descriptor");
   }
 
   @Override
@@ -43,14 +42,14 @@ public final class CallToNativeMethodWhileLockedInspection extends BaseInspectio
       Set.of(CommonClassNames.JAVA_LANG_OBJECT, "java.lang.System", "sun.misc.Unsafe", "java.lang.invoke.MethodHandle");
 
     @Override
-    public void visitMethodCallExpression(
-      @NotNull PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       final PsiMethod method = expression.resolveMethod();
       if (method == null || !method.hasModifierProperty(PsiModifier.NATIVE)) return;
 
       final PsiClass containingClass = method.getContainingClass();
       if (containingClass == null) return;
-      if (EXCLUDED_CLASS_NAMES.contains(containingClass.getQualifiedName())) return;
+      String name = containingClass.getQualifiedName();
+      if (name != null && EXCLUDED_CLASS_NAMES.contains(name)) return;
 
       if (!SynchronizationUtil.isInSynchronizedContext(expression)) return;
       registerMethodCallError(expression);

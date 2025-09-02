@@ -30,8 +30,12 @@ public class CommentFormatter {
   private final Project myProject;
 
   public CommentFormatter(@NotNull PsiFile file) {
+    this(file, null);
+  }
+
+  public CommentFormatter(@NotNull PsiFile file, @Nullable PsiDocComment oldComment) {
     mySettings = CodeStyle.getSettings(file);
-    myParser = new JDParser(mySettings);
+    myParser = new JDParser(mySettings, oldComment);
     myProject = file.getProject();
   }
 

@@ -1,1 +1,2 @@
 Class A uses class B which will be inaccessible after move
+Class A uses class B which will be inaccessible after move

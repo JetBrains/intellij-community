@@ -120,6 +120,11 @@ public class K2MultiModuleMoveTestGenerated extends AbstractK2MultiModuleMoveTes
         runTest("../../idea/tests/testData/refactoring/moveMultiModule/movePackageToUnrelatedModuleConflict/movePackageToUnrelatedModuleConflict.test");
     }
 
+    @TestMetadata("moveProtectedToDifferentModule/moveProtectedToDifferentModule.test")
+    public void testMoveProtectedToDifferentModule_MoveProtectedToDifferentModule() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveMultiModule/moveProtectedToDifferentModule/moveProtectedToDifferentModule.test");
+    }
+
     @TestMetadata("moveRefToLibTypeAliasImplementingLibExpectClass/moveRefToLibTypeAliasImplementingLibExpectClass.test")
     public void testMoveRefToLibTypeAliasImplementingLibExpectClass_MoveRefToLibTypeAliasImplementingLibExpectClass() throws Exception {
         runTest("../../idea/tests/testData/refactoring/moveMultiModule/moveRefToLibTypeAliasImplementingLibExpectClass/moveRefToLibTypeAliasImplementingLibExpectClass.test");

@@ -43,12 +43,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 @ApiStatus.Internal
-public final class ExternalToolPass extends ProgressableTextEditorHighlightingPass implements DumbAware {
+final class ExternalToolPass extends ProgressableTextEditorHighlightingPass implements DumbAware {
   private static final Logger LOG = Logger.getInstance(ExternalToolPass.class);
 
   private final List<MyData<?,?>> myAnnotationData = Collections.synchronizedList(new ArrayList<>());
@@ -69,13 +68,13 @@ public final class ExternalToolPass extends ProgressableTextEditorHighlightingPa
     }
   }
 
-  ExternalToolPass(@NotNull PsiFile file,
+  ExternalToolPass(@NotNull PsiFile psiFile,
                    @NotNull Document document,
                    @Nullable Editor editor,
                    int startOffset,
                    int endOffset,
                    @NotNull HighlightInfoProcessor processor) {
-    super(file.getProject(), document, LangBundle.message("pass.external.annotators"), file, editor, new TextRange(startOffset, endOffset), false, processor);
+    super(psiFile.getProject(), document, LangBundle.message("pass.external.annotators"), psiFile, editor, new TextRange(startOffset, endOffset), false, processor);
   }
 
   @Override
@@ -280,7 +279,7 @@ public final class ExternalToolPass extends ProgressableTextEditorHighlightingPa
     HighlightingSessionImpl.runInsideHighlightingSession(myFile, getContext(), getColorsScheme(), ProperTextRange.create(myFile.getTextRange()), false, session -> {
       // use the method which doesn't retrieve a HighlightingSession from the indicator, because we likely destroyed the one already
       BackgroundUpdateHighlightersUtil.setHighlightersInRange(myRestrictRange, highlights, markupModel, getId(), session);
-      DaemonCodeAnalyzerEx.getInstanceEx(myProject).getFileStatusMap().markFileUpToDate(myDocument, getContext(), getId());
+      DaemonCodeAnalyzerEx.getInstanceEx(myProject).getFileStatusMap().markFileUpToDate(myDocument, getContext(), getId(), session.getProgressIndicator());
       myHighlightInfos = highlights;
     });
   }

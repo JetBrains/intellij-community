@@ -18,11 +18,11 @@ import org.jetbrains.annotations.Nullable;
 @ApiStatus.Internal
 public abstract class BaseExtResourceAction extends BaseIntentionAction {
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!(file instanceof XmlFile)) return false;
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    if (!(psiFile instanceof XmlFile)) return false;
 
     int offset = editor.getCaretModel().getOffset();
-    String uri = findUri(file, offset);
+    String uri = findUri(psiFile, offset);
     if (uri == null || !isAcceptableUri(uri)) return false;
 
     setText(XmlBundle.message(getQuickFixKeyId()));
@@ -41,29 +41,29 @@ public abstract class BaseExtResourceAction extends BaseIntentionAction {
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
     int offset = editor.getCaretModel().getOffset();
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-    final String uri = findUri(file, offset);
+    final String uri = findUri(psiFile, offset);
     if (uri == null) return;
 
-    doInvoke(file, offset, uri, editor);
+    doInvoke(psiFile, offset, uri, editor);
   }
 
-  protected abstract void doInvoke(final @NotNull PsiFile file, final int offset, final @NotNull String uri, final Editor editor)
+  protected abstract void doInvoke(final @NotNull PsiFile psiFile, final int offset, final @NotNull String uri, final Editor editor)
     throws IncorrectOperationException;
 
-  public static @Nullable @NlsSafe String findUri(PsiFile file, int offset) {
-    PsiElement element = file.findElementAt(offset);
+  public static @Nullable @NlsSafe String findUri(PsiFile psiFile, int offset) {
+    PsiElement element = psiFile.findElementAt(offset);
     if (element == null ||
         element instanceof PsiWhiteSpace ) {
       return null;
     }
 
-    PsiReference currentRef = file.getViewProvider().findReferenceAt(offset, file.getLanguage());
-    if (currentRef == null) currentRef = file.getViewProvider().findReferenceAt(offset);
+    PsiReference currentRef = psiFile.getViewProvider().findReferenceAt(offset, psiFile.getLanguage());
+    if (currentRef == null) currentRef = psiFile.getViewProvider().findReferenceAt(offset);
     if (currentRef instanceof URLReference ||
         currentRef instanceof DependentNSReference) {
       return currentRef.getCanonicalText();

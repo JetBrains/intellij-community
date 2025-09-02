@@ -165,6 +165,27 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     assertEquals("[before:true, after:false]", fileToDeleteListener.log.toString());
   }
 
+  @Test//IJPL-176784
+  public void testDeleteFileAndRecreateWithAnotherCase() {
+    VirtualFilePointerListener pointersListener = new LoggingListener();
+
+    File fileToDelete = tempDir.newFile("lower-case.txt");
+    VirtualFilePointer pointerToFileToDelete = createPointerByFile(fileToDelete, pointersListener);
+    assertTrue(pointerToFileToDelete.isValid());
+    VfsTestUtil.deleteFile(getVirtualFile(fileToDelete));
+    assertFalse(pointerToFileToDelete.isValid());
+
+    File fileToReCreate = tempDir.newFile("lower-case.txt");
+    VirtualFilePointer pointerToFileToReCreate = createPointerByFile(fileToReCreate, pointersListener);
+    assertTrue(pointerToFileToReCreate.isValid());
+    VfsTestUtil.deleteFile(getVirtualFile(fileToReCreate));
+    assertFalse(pointerToFileToReCreate.isValid());
+
+    File fileToReCreateWithAnotherCase = tempDir.newFile("LOWER-CASE.txt");
+    VirtualFilePointer pointerToFileToReCreateAnotherCase = createPointerByFile(fileToReCreateWithAnotherCase, pointersListener);
+    assertTrue(pointerToFileToReCreateAnotherCase.isValid());
+  }
+
   @IJIgnore(issue = "IJPL-149673")
   @Test
   public void testSwitchingVfs() {
@@ -228,7 +249,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
       public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
-        Object url = ((VirtualFilePointerImpl)pointer).getNode().getFileOrUrl();
+        Object url = ((VirtualFilePointerImpl)pointer).getNodeForTesting().getFileOrUrl();
         assertTrue(url.toString(), url instanceof String);
         assertFalse(pointer.isValid());
       }
@@ -781,7 +802,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
         try {
           ready.countDown();
           while (run.get()) {
-            bb.getNode().update(((VirtualFilePointerImpl)fileToCreatePointer).getNode(), fakeRoot, "test", null);
+            bb.getNodeForTesting().update(((VirtualFilePointerImpl)fileToCreatePointer).getNodeForTesting(), fakeRoot, "test", null);
           }
         }
         catch (Throwable e) {
@@ -1315,6 +1336,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     assertTrue(pointer.getUrl(), pointer.getUrl().endsWith(path));
     assertEquals("allopen-compiler-plugin.jar", pointer.getFileName());
   }
+
   @Test
   public void testJarUrlContainingInvalidExclamationInTheMiddleMustNotCrashAnything() {
     File root = tempDir.getRoot();
@@ -1338,7 +1360,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     assertEquals(expectedPointerRelativeUrl, StringUtil.trimStart(pointer.getUrl(), "jar://" + tempRoot + "/" + abc));
     String expectedPointerFileNameToCheck = expectedPointerFileName == null ? abc : expectedPointerFileName;
     assertEquals(expectedPointerFileNameToCheck, pointer.getFileName());
-    assertEquals(JarFileSystem.getInstance(), ((VirtualFilePointerImpl)pointer).getNode().fs);
+    assertEquals(JarFileSystem.getInstance(), ((VirtualFilePointerImpl)pointer).getFileSystemForTesting());
     assertFalse(pointer.isValid());
 
     File jar = IoTestUtil.createTestJar(new File(tempRoot+"/"+abc), List.of(Pair.create(expectedPathInsideJar, new byte[]{' ', ' '})));
@@ -1354,7 +1376,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     VirtualFilePointer pointer = VirtualFilePointerManager.getInstance().create(sourceUrl, disposable, null);
     assertEquals(expectedPointerUrl, pointer.getUrl());
     assertEquals(expectedPointerFileName, pointer.getFileName());
-    assertEquals(JarFileSystem.getInstance(), ((VirtualFilePointerImpl)pointer).getNode().fs);
+    assertEquals(JarFileSystem.getInstance(), ((VirtualFilePointerImpl)pointer).getFileSystemForTesting());
     assertFalse(pointer.isValid());
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage;
 
 import com.intellij.CommonBundle;
@@ -23,6 +23,7 @@ import com.intellij.execution.wsl.WslPath;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.java.coverage.JavaCoverageBundle;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
@@ -69,6 +70,7 @@ import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CancellationException;
 import java.util.stream.IntStream;
@@ -247,18 +249,14 @@ public class JavaCoverageEngine extends CoverageEngine {
   }
 
   @Override
-  public @Nullable CoverageSuite createCoverageSuite(final @NotNull CoverageRunner covRunner,
-                                                     final @NotNull String name,
-                                                     final @NotNull CoverageFileProvider coverageDataFileProvider,
-                                                     String[] filters,
-                                                     long lastCoverageTimeStamp,
-                                                     String suiteToMerge,
-                                                     boolean coverageByTestEnabled,
-                                                     boolean branchCoverage,
-                                                     boolean trackTestFolders, Project project) {
-
-    return createSuite(covRunner, name, coverageDataFileProvider, filters, null, lastCoverageTimeStamp, coverageByTestEnabled,
-                       branchCoverage, trackTestFolders, project);
+  public @Nullable CoverageSuite createCoverageSuite(@NotNull String name,
+                                                     @NotNull Project project,
+                                                     @NotNull CoverageRunner runner,
+                                                     @NotNull CoverageFileProvider fileProvider,
+                                                     long timestamp) {
+    JavaCoverageOptionsProvider optionsProvider = JavaCoverageOptionsProvider.getInstance(project);
+    return createSuite(runner, name, fileProvider, null, null, timestamp, false,
+                       optionsProvider.getBranchCoverage(), optionsProvider.getTestModulesCoverage(), project);
   }
 
   @Override
@@ -268,22 +266,23 @@ public class JavaCoverageEngine extends CoverageEngine {
     if (runner == null) return null;
     // set here for correct createFileProvider call
     config.setCoverageRunner(runner);
-    return createCoverageSuite(runner, config.createSuiteName(), config.createFileProvider(), config);
+    return super.createCoverageSuite(config);
   }
 
   @Override
-  public CoverageSuite createCoverageSuite(@NotNull CoverageRunner covRunner,
-                                           @NotNull String name,
-                                           @NotNull CoverageFileProvider coverageDataFileProvider,
-                                           @NotNull CoverageEnabledConfiguration config) {
+  public @Nullable CoverageSuite createCoverageSuite(@NotNull String name,
+                                                     @NotNull Project project,
+                                                     @NotNull CoverageRunner runner,
+                                                     @NotNull CoverageFileProvider fileProvider,
+                                                     long timestamp,
+                                                     @NotNull CoverageEnabledConfiguration config) {
     if (config instanceof JavaCoverageEnabledConfiguration javaConfig) {
-      Project project = config.getConfiguration().getProject();
       JavaCoverageOptionsProvider optionsProvider = JavaCoverageOptionsProvider.getInstance(project);
-      return createSuite(covRunner,
-                         name, coverageDataFileProvider,
+      return createSuite(runner,
+                         name, fileProvider,
                          javaConfig.getPatterns(),
                          javaConfig.getExcludePatterns(),
-                         javaConfig.createTimestamp(),
+                         timestamp,
                          optionsProvider.getTestTracking() && canHavePerTestCoverage(config.getConfiguration()),
                          optionsProvider.getBranchCoverage(),
                          optionsProvider.getTestModulesCoverage(),
@@ -601,10 +600,10 @@ public class JavaCoverageEngine extends CoverageEngine {
     buf.append("\n").append(indent).append(preprocessExpression(expression.getExpression()));
     boolean reverse = expression.isReversed();
     int trueHits = reverse ? jumpData.getFalseHits() : jumpData.getTrueHits();
-    buf.append("\n").append(indent).append(indent).append(PsiKeyword.TRUE).append(" ").append(CoverageBundle.message("hits.message", trueHits));
+    buf.append("\n").append(indent).append(indent).append(JavaKeywords.TRUE).append(" ").append(CoverageBundle.message("hits.message", trueHits));
 
     int falseHits = reverse ? jumpData.getTrueHits() : jumpData.getFalseHits();
-    buf.append("\n").append(indent).append(indent).append(PsiKeyword.FALSE).append(" ").append(CoverageBundle.message("hits.message", falseHits));
+    buf.append("\n").append(indent).append(indent).append(JavaKeywords.FALSE).append(" ").append(CoverageBundle.message("hits.message", falseHits));
   }
 
   private static void addSwitchDataInfo(StringBuilder buf, SwitchData switchData, SwitchCoverageExpression expression, int coverageStatus) {
@@ -616,12 +615,12 @@ public class JavaCoverageEngine extends CoverageEngine {
                    : Integer.toString(switchData.getKeys()[i]);
       int switchHits = switchData.getHits()[i];
       allBranchesHit &= switchHits > 0;
-      buf.append("\n").append(indent).append(indent).append(PsiKeyword.CASE).append(" ").append(key).append(": ").append(switchHits);
+      buf.append("\n").append(indent).append(indent).append(JavaKeywords.CASE).append(" ").append(key).append(": ").append(switchHits);
     }
     int defaultHits = switchData.getDefaultHits();
     boolean defaultCausesLinePartiallyCovered = allBranchesHit && coverageStatus != LineCoverage.FULL;
     if (expression.getHasDefault() || defaultCausesLinePartiallyCovered || defaultHits > 0) {
-      buf.append("\n").append(indent).append(indent).append(PsiKeyword.DEFAULT).append(": ").append(defaultHits);
+      buf.append("\n").append(indent).append(indent).append(JavaKeywords.DEFAULT).append(": ").append(defaultHits);
     }
   }
 
@@ -729,7 +728,7 @@ public class JavaCoverageEngine extends CoverageEngine {
           return;
         }
         if (settings.OPEN_IN_BROWSER) {
-          BrowserUtil.browse(new File(settings.OUTPUT_DIRECTORY, "index.html"));
+          BrowserUtil.browse(Path.of(settings.OUTPUT_DIRECTORY, "index.html"));
         }
       }
     });

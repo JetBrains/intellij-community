@@ -1,9 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.search;
 
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
-import com.intellij.codeInsight.multiverse.CodeInsightContextKt;
 import com.intellij.codeInsight.multiverse.CodeInsightContextManager;
+import com.intellij.codeInsight.multiverse.CodeInsightContexts;
 import com.intellij.concurrency.AsyncFuture;
 import com.intellij.concurrency.AsyncUtil;
 import com.intellij.concurrency.JobLauncher;
@@ -613,16 +613,16 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
       List<CodeInsightContext> allContexts;
       boolean skipDefaultContext;
-      if (CodeInsightContextKt.isSharedSourceSupportEnabled(myManager.getProject())) {
+      if (CodeInsightContexts.isSharedSourceSupportEnabled(myManager.getProject())) {
         allContexts = CodeInsightContextManager.getInstance(myManager.getProject()).getCodeInsightContexts(vfile);
-        skipDefaultContext = ContainerUtil.find(allContexts, c -> c != CodeInsightContextKt.defaultContext()) != null;
+        skipDefaultContext = ContainerUtil.find(allContexts, c -> c != CodeInsightContexts.defaultContext()) != null;
       }
       else {
-        allContexts = Collections.singletonList(CodeInsightContextKt.defaultContext());
+        allContexts = Collections.singletonList(CodeInsightContexts.defaultContext());
         skipDefaultContext = false;
       }
       for (CodeInsightContext context : allContexts) {
-        if (skipDefaultContext && context == CodeInsightContextKt.defaultContext()) continue;
+        if (skipDefaultContext && context == CodeInsightContexts.defaultContext()) continue;
 
         PsiFile psiFile = myManager.findFile(vfile, context);
 

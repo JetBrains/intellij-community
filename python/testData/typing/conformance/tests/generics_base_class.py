@@ -71,3 +71,28 @@ class BadClass1(Generic[T, T]):  # E
 
 class GoodClass1(dict[T, T]):  # OK
     pass
+
+# > Type variables are applied to the defined class in the order in which
+# > they first appear in any generic base classes.
+
+T1 = TypeVar("T1")
+T2 = TypeVar("T2")
+T3 = TypeVar("T3")
+
+class Parent1(Generic[T1, T2]): ...
+class Parent2(Generic[T1, T2]): ...
+class Child(Parent1[T1, T3], Parent2[T2, T3]): ...
+
+def takes_parent1(x: Parent1[int, bytes]): ...
+def takes_parent2(x: Parent2[str, bytes]): ...
+
+child: Child[int, bytes, str] = Child()
+takes_parent1(child)  # OK
+takes_parent2(child)  # OK
+
+# > A type checker should report an error when the type variable order is
+# > inconsistent.
+
+class Grandparent(Generic[T1, T2]): ...
+class Parent(Grandparent[T1, T2]): ...
+class BadChild(Parent[T1, T2], Grandparent[T2, T1]): ...  # E

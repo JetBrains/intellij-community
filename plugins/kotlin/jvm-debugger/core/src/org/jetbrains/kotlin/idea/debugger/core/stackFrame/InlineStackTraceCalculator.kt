@@ -116,7 +116,7 @@ class KotlinStackFrameInfo(
     }
 }
 
-fun StackFrame.computeKotlinStackFrameInfos(): List<KotlinStackFrameInfo> {
+fun StackFrame.computeKotlinStackFrameInfos(alwaysComputeCallLocations: Boolean = false): List<KotlinStackFrameInfo> {
     val location = location()
     val method = location.safeMethod() ?: return emptyList()
 
@@ -124,7 +124,7 @@ fun StackFrame.computeKotlinStackFrameInfos(): List<KotlinStackFrameInfo> {
         it.variable.isVisible(this)
     }
 
-    val stackFrameInfos = if (shouldComputeStackFrameInfosUsingTheOldScheme(allVisibleVariables)) {
+    val stackFrameInfos = if (shouldComputeStackFrameInfosUsingTheOldScheme(allVisibleVariables) || alwaysComputeCallLocations) {
         computeStackFrameInfosWithCallLocations(location, method, allVisibleVariables)
     } else {
         computeStackFrameInfosUsingScopeNumbers(location, method, allVisibleVariables) ?:

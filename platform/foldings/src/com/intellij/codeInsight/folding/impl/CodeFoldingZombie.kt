@@ -8,10 +8,13 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.FoldRegion
 import com.intellij.openapi.editor.FoldingGroup
 import com.intellij.openapi.editor.ex.FoldingModelEx
+import com.intellij.openapi.editor.impl.FoldingKeys.AUTO_CREATED_ZOMBIE
+import com.intellij.openapi.editor.impl.FoldingKeys.ZOMBIE_REGION_KEY
 import com.intellij.openapi.editor.impl.FoldingModelImpl
-import com.intellij.openapi.editor.impl.FoldingModelImpl.ZOMBIE_REGION_KEY
 import com.intellij.openapi.editor.impl.zombie.Zombie
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import java.text.BreakIterator
 
 internal class CodeFoldingZombie(
   val regions: List<CodeFoldingRegion>,
@@ -28,14 +31,24 @@ internal class CodeFoldingZombie(
         val regionState = CodeFoldingRegion(
           foldRegion.startOffset,
           foldRegion.endOffset,
-          foldRegion.placeholderText,
+          createPlaceholderText(foldRegion.placeholderText),
           foldRegion.group?.id,
           foldRegion.shouldNeverExpand(),
           foldRegion.isExpanded,
+          CodeFoldingManagerImpl.isAutoCreated(foldRegion)
         )
         putRegion(regionState, regions, groupedRegions)
       }
       return CodeFoldingZombie(regions, groupedRegions)
+    }
+
+    private fun createPlaceholderText(text: String): String {
+      return if (Registry.`is`("cache.folding.model.hide.placeholder")) {
+        CodeFoldingRegion.PLACEHOLDER_SYMBOL.repeat(text.graphemeCount())
+      }
+      else {
+        text
+      }
     }
 
     fun putRegion(
@@ -97,13 +110,16 @@ internal class CodeFoldingZombie(
   }
 
   private fun applyRegion(foldingModel: FoldingModelEx, regionState: CodeFoldingRegion, group: FoldingGroup?): Boolean {
-    val (start, end, placeholder, _, neverExpands, isExpanded) = regionState
+    val (start, end, placeholder, _, neverExpands, isExpanded, isAutoCreated) = regionState
     val region: FoldRegion? = foldingModel.createFoldRegion(start, end, placeholder, group, neverExpands)
     if (region != null) {
       if (region.isExpanded != isExpanded) {
         region.isExpanded = isExpanded
       }
       region.putUserData(ZOMBIE_REGION_KEY, true)
+      if (isAutoCreated) {
+        region.putUserData(AUTO_CREATED_ZOMBIE, true)
+      }
       return true
     }
     return false
@@ -112,6 +128,7 @@ internal class CodeFoldingZombie(
   private fun setZombieRaised(foldingModel: FoldingModelEx, zombieRaised: Boolean) {
     if (zombieRaised && foldingModel is FoldingModelImpl) {
       foldingModel.isZombieRaised.set(true)
+      foldingModel.isAutoCreatedZombieRaised.set(true)
     }
   }
 
@@ -127,9 +144,25 @@ internal data class CodeFoldingRegion(
   val groupId: Long?,
   val neverExpands: Boolean,
   val isExpanded: Boolean,
+  val isAutoCreated: Boolean,
 ) {
+    companion object {
+      const val PLACEHOLDER_SYMBOL = " "
+    }
   override fun toString(): String {
     val groupStr = if (groupId == null) "" else " $groupId,"
-    return "($startOffset-$endOffset,$groupStr '$placeholderText', ${(if (isExpanded) "-" else "+")})"
+    return "($startOffset-$endOffset,$groupStr '$placeholderText', ${(if (isExpanded) "-" else "+")}, ${if (isAutoCreated) "AUTO" else "MANUAL"})"
   }
+}
+
+private fun String.graphemeCount(): Int {
+  val iterator = BreakIterator.getCharacterInstance()
+  iterator.setText(this)
+
+  var count = 0
+  while (iterator.next() != BreakIterator.DONE) {
+    count++
+  }
+
+  return count
 }

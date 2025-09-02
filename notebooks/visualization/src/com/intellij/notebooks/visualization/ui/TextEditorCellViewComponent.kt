@@ -64,7 +64,7 @@ class TextEditorCellViewComponent(private val cell: EditorCell) : EditorCellView
       updateGutterIcons()
     }
 
-    cell.isUnfolded.afterDistinctChange(this) { isUnfolded ->
+    cell.isUnfolded.afterDistinctChange(this) {
       updateGutterIcons()
     }
 
@@ -98,7 +98,7 @@ class TextEditorCellViewComponent(private val cell: EditorCell) : EditorCellView
     this.highlighter = highlighter
   }
 
-  override fun dispose(): Unit = editor.updateManager.update { ctx ->
+  override fun dispose(): Unit = editor.updateManager.update {
     disposeExistingHighlighter()
   }
 

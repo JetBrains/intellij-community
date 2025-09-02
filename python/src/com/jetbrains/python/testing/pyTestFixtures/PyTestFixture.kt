@@ -274,7 +274,12 @@ private fun getFixtureFromPytestPlugins(targetFile: PyFile, fixtureCandidates: L
     is PyParenthesizedExpression -> assignedValue.children.find { it is PyTupleExpression }?.let { tuple ->
       (tuple as PyTupleExpression).elements.mapNotNull { resolve(it) }
     } ?: emptyList()
-    else -> emptyList()
+    else -> {
+      // `pytest_plugins` is not parsable, most likely looks like `pytest_plugins = create_pytest_plugins()`
+      // In that case it is better to return any suitable fixtureCandidate
+      val candidate = fixtureCandidates.firstOrNull() ?: return null
+      return NamedFixtureLink(candidate, null)
+    }
   }
 
   if (fixtures.isEmpty()) return null

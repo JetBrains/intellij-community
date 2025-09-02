@@ -1,0 +1,33 @@
+*f:com.intellij.openapi.util.text.StringsKmp
+- sf:equalsIgnoreWhitespaces(java.lang.CharSequence,java.lang.CharSequence):Z
+- sf:equalsTrimWhitespaces(java.lang.CharSequence,java.lang.CharSequence):Z
+- sf:stringHashCode(java.lang.CharSequence):I
+- sf:stringHashCode(java.lang.CharSequence,I,I):I
+- sf:stringHashCode(java.lang.CharSequence,I,I,I):I
+- sf:stringHashCode(C[],I,I):I
+- bs:stringHashCode$default(java.lang.CharSequence,I,I,I,I,java.lang.Object):I
+- sf:stringHashCodeIgnoreWhitespaces(java.lang.CharSequence):I
+*f:com.intellij.util.text.CharArrayUtilKmp
+- sf:INSTANCE:com.intellij.util.text.CharArrayUtilKmp
+- sf:containLineBreaks(java.lang.CharSequence):Z
+- sf:containLineBreaks(java.lang.CharSequence,I):Z
+- sf:containLineBreaks(java.lang.CharSequence,I,I):Z
+- bs:containLineBreaks$default(java.lang.CharSequence,I,I,I,java.lang.Object):Z
+- sf:fromSequence(java.lang.CharSequence):C[]
+- sf:fromSequence(java.lang.CharSequence,I,I):C[]
+- sf:fromSequenceWithoutCopying(java.lang.CharSequence):C[]
+- sf:getChars(java.lang.CharSequence,C[],I):V
+- sf:getChars(java.lang.CharSequence,C[],I,I):V
+- sf:getChars(java.lang.CharSequence,C[],I,I,I):V
+- bs:getChars$default(java.lang.CharSequence,C[],I,I,I,I,java.lang.Object):V
+- sf:regionMatches(java.lang.CharSequence,I,I,java.lang.CharSequence):Z
+- sf:regionMatches(java.lang.CharSequence,I,java.lang.CharSequence):Z
+- sf:regionMatches(C[],I,I,java.lang.CharSequence):Z
+- sf:shiftBackward(java.lang.CharSequence,I,I,java.lang.String):I
+- sf:shiftBackward(java.lang.CharSequence,I,java.lang.String):I
+- sf:shiftBackward(C[],I,java.lang.String):I
+- sf:shiftBackwardUntil(java.lang.CharSequence,I,java.lang.String):I
+- sf:shiftForward(java.lang.CharSequence,java.lang.String,I):I
+- sf:shiftForward(java.lang.CharSequence,java.lang.String,I,I):I
+- bs:shiftForward$default(java.lang.CharSequence,java.lang.String,I,I,I,java.lang.Object):I
+- sf:shiftForwardUntil(java.lang.CharSequence,I,java.lang.String):I

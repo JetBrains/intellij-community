@@ -6,7 +6,6 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.task.ExecuteRunConfigurationTask
 import org.jetbrains.kotlin.idea.run.KotlinRunConfiguration
 import org.jetbrains.plugins.gradle.execution.build.GradleBaseApplicationEnvironmentProvider
@@ -20,8 +19,7 @@ import org.jetbrains.plugins.gradle.util.GradleConstants
 class KotlinGradleAppEnvProvider : GradleBaseApplicationEnvironmentProvider<KotlinRunConfiguration>() {
 
     override fun isApplicable(task: ExecuteRunConfigurationTask): Boolean {
-        val enabled = Registry.`is`("kotlin.gradle-run.enabled", false)
-        return enabled && task.runProfile is KotlinRunConfiguration
+        return task.runProfile is KotlinRunConfiguration
     }
 
     override fun generateInitScript(params: GradleInitScriptParameters): String? {
@@ -54,10 +52,12 @@ internal fun generateInitScript(params: GradleInitScriptParameters): String? {
     val initScript = """
     def gradleProjectId = '$gradleProjectId'
     def runAppTaskName = '${params.runAppTaskName}'
-    def mainClass = '${params.mainClass}'
+    def mainClassToRun = '${params.mainClass}'
     def javaExePath = '${params.javaExePath}'
     def _workingDir = ${if (params.workingDirectory.isNullOrEmpty()) "null\n" else "'${params.workingDirectory}'\n"}
     def sourceSetName = '${params.sourceSetName}'
+    
+    def isOlderThan64 = GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("6.4")) < 0
 
     allprojects {
         afterEvaluate { project ->
@@ -76,8 +76,13 @@ internal fun generateInitScript(params: GradleInitScriptParameters): String? {
                     } else {
                         classpath = project.sourceSets[sourceSetName].runtimeClasspath
                     }
+                    
+                    if (isOlderThan64) {
+                        main = mainClassToRun
+                    } else {
+                        mainClass = mainClassToRun
+                    }
     
-                    main = mainClass
                     ${params.params}
                     if(_workingDir) workingDir = _workingDir
                     standardInput = System.in

@@ -7,7 +7,9 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
+import com.intellij.util.messages.Topic
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
 
 private object XmlTagHelper {
   const val BLACKLISTS = "blacklists"
@@ -151,6 +153,7 @@ class ParameterNameHintsSettings : PersistentStateComponent<Element> {
         disabledLanguages.add(languageId)
       }
     }
+    fireExcludeListChanged(null)
   }
 
   companion object {
@@ -184,11 +187,32 @@ class ParameterNameHintsSettings : PersistentStateComponent<Element> {
   private fun setRemovedPatterns(language: Language, removed: Set<String>) {
     val key = language.displayName
     removedPatterns[key] = removed
+    fireExcludeListChanged(language)
   }
 
   private fun setAddedPatterns(language: Language, added: Set<String>) {
     val key = language.displayName
     addedPatterns[key] = added
+    fireExcludeListChanged(language)
+  }
+
+  private fun fireExcludeListChanged(language: Language?) {
+    ApplicationManager.getApplication().messageBus.syncPublisher(ExcludeListListener.TOPIC).excludeListChanged(language)
+  }
+
+  @ApiStatus.Experimental
+  interface ExcludeListListener {
+    companion object {
+      @JvmField
+      @Topic.AppLevel
+      val TOPIC: Topic<ExcludeListListener> = Topic(ExcludeListListener::class.java)
+    }
+
+    /** Fired after the exclude list for [language] has changed.
+     *
+     * @param language The language whose exclude list has changed.
+     * `null` if the exclude list for all languages should be considered as changed. */
+    fun excludeListChanged(language: Language?)
   }
 
 }

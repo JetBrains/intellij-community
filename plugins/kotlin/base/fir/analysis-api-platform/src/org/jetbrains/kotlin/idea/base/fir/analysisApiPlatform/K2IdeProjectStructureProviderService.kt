@@ -3,10 +3,10 @@ package org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ModificationTracker
+import org.jetbrains.kotlin.analysis.api.platform.modification.publishGlobalSourceOutOfBlockModificationEvent
 import org.jetbrains.kotlin.idea.base.projectStructure.ProjectStructureProviderService
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
 import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
-import org.jetbrains.kotlin.idea.util.publishGlobalSourceOutOfBlockModification
 
 internal class K2IdeProjectStructureProviderService(private val project: Project) : ProjectStructureProviderService {
     @OptIn(K1ModeProjectStructureApi::class)
@@ -17,6 +17,6 @@ internal class K2IdeProjectStructureProviderService(private val project: Project
     }
 
     override fun incOutOfBlockModificationCount() {
-        project.publishGlobalSourceOutOfBlockModification()
+        project.publishGlobalSourceOutOfBlockModificationEvent()
     }
 }

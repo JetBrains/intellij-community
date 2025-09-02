@@ -1049,169 +1049,6 @@ as an example
       )
     }
 
-    function plotFilePageCacheLockFreeCharts() {
-      if (!document.loadedAndParsedData.parsedCSV) {
-        console.log("Error: .loadedAndParsedData is not loaded")
-        return
-      }
-      const totalNativeBytesAllocated = extractTimeSeries("FilePageCacheLockFree.totalNativeBytesAllocated")
-      const totalNativeBytesReclaimed = extractTimeSeries("FilePageCacheLockFree.totalNativeBytesReclaimed")
-      const totalHeapBytesAllocated = extractTimeSeries("FilePageCacheLockFree.totalHeapBytesAllocated")
-      const totalHeapBytesReclaimed = extractTimeSeries("FilePageCacheLockFree.totalHeapBytesReclaimed")
-
-      const nativeBytesInUse = extractTimeSeries("FilePageCacheLockFree.nativeBytesInUse")
-      const heapBytesInUse = extractTimeSeries("FilePageCacheLockFree.heapBytesInUse")
-
-      const totalPagesAllocated = extractTimeSeries("FilePageCacheLockFree.totalPagesAllocated")
-      const totalPagesReclaimed = extractTimeSeries("FilePageCacheLockFree.totalPagesReclaimed")
-      const totalPagesHandedOver = extractTimeSeries("FilePageCacheLockFree.totalPagesHandedOver")
-      const totalPageAllocationsWaited = extractTimeSeries("FilePageCacheLockFree.totalPageAllocationsWaited")
-
-      const totalPagesWritten = extractTimeSeries("FilePageCacheLockFree.totalPagesWritten")
-      const totalPagesRequested = extractTimeSeries("FilePageCacheLockFree.totalPagesRequested")
-
-      const totalBytesRequested = extractTimeSeries("FilePageCacheLockFree.totalBytesRequested")
-      const totalBytesRead = extractTimeSeries("FilePageCacheLockFree.totalBytesRead")
-      const totalBytesWritten = extractTimeSeries("FilePageCacheLockFree.totalBytesWritten")
-
-      const totalPagesRequestsMs = extractTimeSeries("FilePageCacheLockFree.totalPagesRequestsMs")
-      const totalPagesReadMs = extractTimeSeries("FilePageCacheLockFree.totalPagesReadMs")
-      const totalPagesWriteMs = extractTimeSeries("FilePageCacheLockFree.totalPagesWriteMs")
-
-      const housekeeperTurnsDone = extractTimeSeries("FilePageCacheLockFree.housekeeperTurnsDone")
-      const housekeeperTurnsSkipped = extractTimeSeries("FilePageCacheLockFree.housekeeperTurnsSkipped")
-      const housekeeperTimeSpentMs = extractTimeSeries("FilePageCacheLockFree.housekeeperTimeSpentMs")
-
-      const totalClosedStoragesReclaimed = extractTimeSeries("FilePageCacheLockFree.totalClosedStoragesReclaimed")
-
-      console.log("FPC native bytes allocated: " + totalNativeBytesAllocated)
-
-      // const pageLoadsPercent = pageLoads.plus(pageMisses).div(totalPagesRequested).mulScalar(100)
-
-      plotTimeSeries(
-        'Page count: requested, allocated, reclaimed...',
-        $("#filePageCacheLockFree_PageCounts"),
-        [
-          {name: 'Pages requested by app', color: 'green', series: totalPagesRequested, visible: 'legendonly'},
-          {name: 'Pages allocated', color: 'red', series: totalPagesAllocated},
-          {name: 'Pages reclaimed', color: 'blue', series: totalPagesReclaimed},
-          {name: 'Pages reused immediately', color: 'cyan', series: totalPagesHandedOver},
-          {name: 'Pages written on disk', color: 'magenta', series: totalPagesWritten},
-          {name: 'Pages allocation waited', color: 'orange', series: totalPageAllocationsWaited}
-        ],
-        /*yaxis: */ {
-          title: '',
-          autorange: true
-        }
-      )
-
-      plotTimeSeries(
-        'Page timings',
-        $("#filePageCacheLockFree_PageTimings"),
-        [
-          {name: 'Total time of page requests', color: 'blue', series: totalPagesRequestsMs.mulScalar(1e-3)},
-          {name: 'Total time of page reads', color: 'green', series: totalPagesReadMs.mulScalar(1e-3)},
-          {name: 'Total time of page writes', color: 'red', series: totalPagesWriteMs.mulScalar(1e-3)}
-        ],
-        /*yaxis: */ {
-          title: 'sec',
-          autorange: true
-        }
-      )
-
-      plotTimeSeries(
-        'Data flows',
-        $("#filePageCacheLockFree_PageBytes"),
-        [
-          {
-            name: 'Total bytes requested by app', color: 'blue', series: totalBytesRequested.mulScalar(1e-6),
-            visible: 'legendonly'
-          },//usually not representative
-          {name: 'Total bytes read', color: 'green', series: totalBytesRead.mulScalar(1e-6)},
-          {name: 'Total bytes written', color: 'red', series: totalBytesWritten.mulScalar(1e-6)}
-        ],
-        /*yaxis: */ {
-          title: 'Mb',
-          autorange: true
-        }
-      )
-
-      plotTimeSeries(
-        'Caching efficiency',
-        $("#filePageCacheLockFree_Caching"),
-        [
-          {name: 'Cache hits', color: 'green',
-            series: totalPagesRequested.minus(totalPagesAllocated).div(totalPagesRequested).mulScalar(100)
-          },
-          {name: 'Cache misses', color: 'red',
-            series: totalPagesAllocated.div(totalPagesRequested).mulScalar(100)
-          }
-        ],
-        /*yaxis: */ {
-          title: '%',
-          autorange: false,
-          range: [0, 100]
-        }
-      )
-
-      //MAYBE RC: read/write _speeds_ feel to be more representative (i.e. to detect slow storage). But
-      //          in practice numbers are quite irregular -- likely because since OS-level caching plays
-      //          too big role.
-      // plotTimeSeries(
-      //   'Data flows',
-      //   $("#filePageCacheLockFree_PageBytes"),
-      //   [
-      //     {name: 'Requested by app', color: 'blue',
-      //       series: totalBytesRequested.mulScalar(1e-6).div(totalPagesRequestsMs.mulScalar(1e-3)),
-      //       visible: 'legendonly'},//usually not representative
-      //     {name: 'Read', color: 'green', series: totalBytesRead.mulScalar(1e-6).div(totalPagesReadMs.mulScalar(1e-3))},
-      //     {name: 'Written', color: 'red', series: totalBytesWritten.mulScalar(1e-6).div(totalPagesWriteMs.mulScalar(1e-3))}
-      //   ],
-      //   /*yaxis: */ {
-      //     title: 'Mb/sec',
-      //     autorange: true
-      //   }
-      // )
-
-      plotTimeSeries(
-        'Memory used by page buffers: Heap vs Off-heap (Native)',
-        $("#filePageCacheLockFree_HeapVsNativeMemoryUsed"),
-        [
-          {name: 'Off-heap memory in use', color: 'blue', series: nativeBytesInUse.mulScalar(1e-6)},
-          {name: 'Heap memory in use', color: 'red', series: heapBytesInUse.mulScalar(1e-6)}
-        ],
-        /*yaxis: */ {
-          title: 'Mb',
-          autorange: true
-        }
-      )
-
-      plotTimeSeries(
-        'Housekeeper thread activity',
-        $("#filePageCacheLockFree_Housekeeper"),
-        [
-          {name: 'Turns done', color: 'green', series: housekeeperTurnsDone},
-          {name: 'Turns skipped', color: 'blue', series: housekeeperTurnsSkipped, visible: 'legendonly'}
-        ],
-        /*yaxis: */ {
-          title: '',
-          autorange: true
-        }
-      )
-
-      plotTimeSeries(
-        'Housekeeper thread times',
-        $("#filePageCacheLockFree_HousekeeperTimes"),
-        [
-          {name: 'Time spent', color: 'green', series: housekeeperTimeSpentMs.mulScalar(1e-3)}
-        ],
-        /*yaxis: */ {
-          title: 'sec',
-          autorange: true
-        }
-      )
-    }
-
     //====== 'Custom' plot: =================
 
     /** namesOfSeriesToPlot: array of strings, names of time series in a document.loadedAndParsedData.parsedCSV */
@@ -1267,8 +1104,7 @@ as an example
       plotFlushQueueCharts,
       plotReadWriteActionsChart,
       plotIndexesCharts,
-      plotFilePageCacheCharts,
-      plotFilePageCacheLockFreeCharts
+      plotFilePageCacheCharts
     ]
   </script>
 
@@ -1581,24 +1417,6 @@ as an example
     <div id="directBufferAllocator_Counts_Chart" class="plot hideable"></div>
     <div id="directBufferAllocator_Bytes_Chart" class="plot hideable"></div>
 
-
-  </div>
-
-  <div id="filePageCacheLockFree" class="blockOfPlots">
-
-    <div class="caption">FilePageCache (New):</div>
-
-    <div id="filePageCacheLockFree_PageCounts" class="plot hideable"></div>
-
-    <div id="filePageCacheLockFree_PageTimings" class="plot hideable"></div>
-    <div id="filePageCacheLockFree_PageBytes" class="plot hideable"></div>
-
-    <div id="filePageCacheLockFree_Caching" class="plot hideable"></div>
-
-    <div id="filePageCacheLockFree_HeapVsNativeMemoryUsed" class="plot hideable"></div>
-
-    <div id="filePageCacheLockFree_Housekeeper" class="plot hideable"></div>
-    <div id="filePageCacheLockFree_HousekeeperTimes" class="plot hideable"></div>
 
   </div>
 

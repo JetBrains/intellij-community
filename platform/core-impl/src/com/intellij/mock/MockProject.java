@@ -2,16 +2,25 @@
 package com.intellij.mock;
 
 import com.intellij.diagnostic.ActivityCategory;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.ComponentManager;
+import com.intellij.openapi.client.ClientKind;
 import com.intellij.openapi.components.ComponentManagerEx;
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.ServiceDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.util.coroutines.CoroutineScopeKt;
+import kotlin.ParameterName;
+import kotlin.Unit;
 import kotlin.coroutines.EmptyCoroutineContext;
+import kotlin.jvm.functions.Function1;
+import kotlin.jvm.functions.Function2;
+import kotlin.jvm.functions.Function3;
+import kotlin.sequences.Sequence;
 import kotlinx.coroutines.CoroutineScope;
 import kotlinx.coroutines.GlobalScope;
 import org.jetbrains.annotations.ApiStatus.Internal;
@@ -19,13 +28,14 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
+import org.picocontainer.ComponentAdapter;
 import org.picocontainer.PicoContainer;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CancellationException;
 
-public class MockProject extends MockComponentManager implements Project, ComponentManagerEx {
+public class MockProject extends MockComponentManager implements Project {
   private static final Logger LOG = Logger.getInstance(MockProject.class);
   private VirtualFile myBaseDir;
   private final CoroutineScope myCoroutineScope;
@@ -63,11 +73,6 @@ public class MockProject extends MockComponentManager implements Project, Compon
   @Override
   public @NotNull CoroutineScope getCoroutineScope() {
     return myCoroutineScope;
-  }
-
-  @Override
-  public ComponentManager getActualComponentManager() {
-    return this;
   }
 
   @Override

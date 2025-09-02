@@ -2,6 +2,7 @@
 package com.intellij.grazie.ide.language
 
 import com.intellij.grazie.GrazieTestBase
+import com.intellij.grazie.jlanguage.Lang
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
@@ -27,6 +28,7 @@ class JavaSupportTest : GrazieTestBase() {
   }
 
   fun `test grammar check in comments`() {
+    configureGrazieSettings(setOf(Lang.AMERICAN_ENGLISH, Lang.GERMANY_GERMAN, Lang.UKRAINIAN, Lang.BELARUSIAN))
     runHighlightTestForFile("ide/language/java/Comments.java")
   }
 
@@ -54,5 +56,60 @@ class JavaSupportTest : GrazieTestBase() {
     Benchmark.newBenchmark("highlighting") {
       myFixture.checkHighlighting()
     }.setup { psiManager.dropPsiCaches() }.start()
+  }
+
+  fun testCommentIsNotHighlightedIfThereIsReference() {
+    runHighlightTestForFile("ide/language/java/VectorablexxClass.java")
+  }
+
+  fun `test spellchecking normalization`() {
+    runHighlightTestForFile("ide/language/java/Normalization.java")
+  }
+
+  fun `test multiline compounds`() {
+    doTest(
+      """
+        public class Main {
+          /**
+           * I use {@code awaitility} to poll any eve<caret>ntually-      
+           * consistent results for a short period.
+           */
+          int consistency;
+        }
+      """.trimIndent(),
+      """
+        public class Main {
+          /**
+           * I use {@code awaitility} to poll any eventually-consistent results for a short period.
+           */
+          int consistency;
+        }
+      """.trimIndent(),
+      "eventually-consistent"
+    )
+    doTest(
+      """
+        public class Main {
+          // Du bestellst ein Paket bei einem Online         
+          // -Sh<caret>op. Direkt nach der Bestellung steht auf der Website.
+          double onlineShop;
+        }
+      """.trimIndent(),
+      """
+        public class Main {
+          // Du bestellst ein Paket bei einem Online-Shop. Direkt nach der Bestellung steht auf der Website.
+          double onlineShop;
+        }
+      """.trimIndent(),
+      "Online-Shop"
+      )
+  }
+
+  private fun doTest(beforeText: String, afterText: String, hint: String) {
+    myFixture.configureByText("a.java", beforeText)
+    val intentionAction = myFixture.findSingleIntention(hint)
+    assertNotNull(intentionAction)
+    myFixture.launchAction(intentionAction)
+    myFixture.checkResult(afterText)
   }
 }

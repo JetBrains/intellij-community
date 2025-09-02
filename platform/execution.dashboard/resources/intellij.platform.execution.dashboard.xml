@@ -1,8 +1,10 @@
-<idea-plugin package="com.intellij.platform.execution.dashboard">
+<idea-plugin>
   <dependencies>
     <module name="intellij.platform.execution.serviceView"/>
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
+    <serviceViewContributor implementation="com.intellij.platform.execution.dashboard.RunDashboardServiceViewContributor"/>
+
     <projectService serviceInterface="com.intellij.execution.dashboard.RunDashboardManager"
                     serviceImplementation="com.intellij.platform.execution.dashboard.RunDashboardManagerImpl"/>
     <backgroundPostStartupActivity implementation="com.intellij.platform.execution.dashboard.RunDashboardCheckerActivity"/>
@@ -16,7 +18,6 @@
     <runDashboardGroupingRule id="folder" order="after status"
                               implementation="com.intellij.platform.execution.dashboard.tree.FolderDashboardGroupingRule"/>
     <actionPromoter implementation="com.intellij.platform.execution.dashboard.actions.RunDashboardActionPromoter"/>
-    <serviceViewContributor implementation="com.intellij.platform.execution.dashboard.RunDashboardServiceViewContributor"/>
   </extensions>
   <extensions defaultExtensionNs="com.intellij.statistics">
     <projectUsagesCollector implementation="com.intellij.platform.execution.dashboard.RunDashboardUsagesCollector"/>

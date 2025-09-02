@@ -19,8 +19,8 @@ public class CapturingProcessRunner {
   }
 
   public CapturingProcessRunner(@NotNull BaseProcessHandler<?> processHandler,
-                                @NotNull Function<? super ProcessOutput, ? extends ProcessAdapter> processAdapterProducer) {
-    this((ProcessHandler)processHandler, processAdapterProducer);
+                                @NotNull Function<? super ProcessOutput, ? extends ProcessListener> processListenerProducer) {
+    this((ProcessHandler)processHandler, processListenerProducer);
   }
 
   public CapturingProcessRunner(@NotNull ProcessHandler processHandler) {
@@ -28,10 +28,10 @@ public class CapturingProcessRunner {
   }
 
   public CapturingProcessRunner(@NotNull ProcessHandler processHandler,
-                                @NotNull Function<? super ProcessOutput, ? extends ProcessAdapter> processAdapterProducer) {
+                                @NotNull Function<? super ProcessOutput, ? extends ProcessListener> processListenerProducer) {
     myOutput = new ProcessOutput();
     myProcessHandler = processHandler;
-    myProcessHandler.addProcessListener(processAdapterProducer.apply(myOutput));
+    myProcessHandler.addProcessListener(processListenerProducer.apply(myOutput));
   }
 
   @RequiresBackgroundThread(generateAssertion = false)

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.diagnostic.PluginException;
@@ -50,6 +50,7 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
   public static final Tag LOCALLY_DELETED_NODE_TAG = new VcsBundleTag("changes.nodetitle.locally.deleted.files");
 
   protected static final int CONFLICTS_SORT_WEIGHT = 0;
+  protected static final int RESOLVED_CONFLICTS_SORT_WEIGHT = 0;
   protected static final int DEFAULT_CHANGE_LIST_SORT_WEIGHT = 1;
   protected static final int CHANGE_LIST_SORT_WEIGHT = 2;
   protected static final int REPOSITORY_SORT_WEIGHT = 3;
@@ -484,7 +485,8 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
     FilePath getNodeFilePath();
   }
 
-  interface NodeWithCollapsedParents {
+  @ApiStatus.Internal
+  public interface NodeWithCollapsedParents {
     @ApiStatus.Internal
     void addCollapsedParent(@NotNull ChangesBrowserNode<?> parentNode);
   }

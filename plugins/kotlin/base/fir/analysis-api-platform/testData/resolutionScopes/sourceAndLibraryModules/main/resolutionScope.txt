@@ -1,0 +1,22 @@
+UnionScope
+    CombinedSourceAndClassRootsScope
+        roots:
+            main
+            dependency1
+            dependency2
+    FilesScope
+        files:
+            annotation.kotlin_builtins
+            atomics.kotlin_builtins
+            collections.kotlin_builtins
+            coroutines.kotlin_builtins
+            internal.kotlin_builtins
+            kotlin.kotlin_builtins
+            ranges.kotlin_builtins
+            reflect.kotlin_builtins
+    IntersectionScope
+        CombinedSourceAndClassRootsScope
+            roots:
+                library1.jar
+                library2.jar
+        KaFirJvmLibraryRestrictionScope

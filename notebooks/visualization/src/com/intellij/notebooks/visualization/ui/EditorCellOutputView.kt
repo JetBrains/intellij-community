@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notebooks.visualization.ui
 
 import com.intellij.notebooks.ui.bind
@@ -5,6 +6,7 @@ import com.intellij.notebooks.visualization.outputs.NotebookOutputInlayShowable
 import com.intellij.notebooks.visualization.outputs.impl.CollapsingComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.util.Disposer
 import org.jetbrains.annotations.TestOnly
 import java.awt.Rectangle
@@ -18,6 +20,7 @@ class EditorCellOutputView internal constructor(
   private val output: EditorCellOutput,
   private val component: CollapsingComponent,
   private val toDispose: Disposable?,
+  internal val gutterRenderer: GutterIconRenderer?,
 ) : EditorCellViewComponent() {
 
   var collapsed: Boolean
@@ -43,7 +46,8 @@ class EditorCellOutputView internal constructor(
   private fun saveSize() {
     val size = if (component.hasBeenManuallyResized) {
       component.customSize
-    } else {
+    }
+    else {
       component.calculateInnerSize()
     }
     output.size.set(EditorCellOutputSize(size, collapsed, component.maximized, component.hasBeenManuallyResized))
@@ -56,7 +60,8 @@ class EditorCellOutputView internal constructor(
       if (size.resized) {
         component.customSize = size.size
         component.initialSize = null
-      } else {
+      }
+      else {
         component.customSize = null
         component.initialSize = size.size
       }

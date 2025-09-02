@@ -45,7 +45,7 @@ public final class JavaModuleDefinitionInspection extends AbstractBaseJavaLocalI
         PsiJavaModuleReference ref = refElement.getReference();
         if (refElement.getParent() instanceof PsiPackageAccessibilityStatement &&
             ref != null && ref.multiResolve(true).length == 0) {
-          String message = JavaErrorKinds.MODULE_NOT_FOUND.create(refElement).description().toString();
+          String message = JavaErrorKinds.MODULE_NOT_FOUND.create(refElement).description();
           holder.registerProblem(refElement, message);
         }
       }
@@ -66,7 +66,7 @@ public final class JavaModuleDefinitionInspection extends AbstractBaseJavaLocalI
         var kind = state == JavaPsiModuleUtil.PackageReferenceState.PACKAGE_NOT_FOUND
                    ? JavaErrorKinds.MODULE_REFERENCE_PACKAGE_NOT_FOUND
                    : JavaErrorKinds.MODULE_REFERENCE_PACKAGE_EMPTY;
-        String message = kind.create(statement).description().toString();
+        String message = kind.create(statement).description();
         String packageName = statement.getPackageName();
         Module module = ModuleUtilCore.findModuleForFile(holder.getFile());
         IntentionAction action =

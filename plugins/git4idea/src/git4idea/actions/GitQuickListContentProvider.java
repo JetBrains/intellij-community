@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.actions;
 
 import com.intellij.dvcs.actions.DvcsQuickListContentProvider;
@@ -26,6 +26,7 @@ public class GitQuickListContentProvider extends DvcsQuickListContentProvider {
     add("Git.Unstash", manager, actions);
 
     add("ChangesView.AddUnversioned", manager, actions);
+    add("Vcs.CopyCurrentBranchName", manager, actions);
     add("Git.ResolveConflicts", manager, actions);
 
     add("Git.Unshallow", manager, actions);

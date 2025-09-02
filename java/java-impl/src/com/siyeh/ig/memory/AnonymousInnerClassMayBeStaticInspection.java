@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2023 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2025 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,7 +78,7 @@ public final class AnonymousInnerClassMayBeStaticInspection extends BaseInspecti
         // strictly speaking can be named static inner class but not when part of the current containing class
         return;
       }
-      final InnerClassReferenceVisitor visitor = new InnerClassReferenceVisitor(anonymousClass);
+      final InnerClassReferenceVisitor visitor = new InnerClassReferenceVisitor(anonymousClass, true);
       anonymousClass.accept(visitor);
       if (!visitor.canInnerClassBeStatic()) {
         return;
@@ -106,7 +106,7 @@ public final class AnonymousInnerClassMayBeStaticInspection extends BaseInspecti
           return;
         }
         final PsiElement target = reference.resolve();
-        if (!(target instanceof PsiClass) || !PsiUtil.isLocalClass((PsiClass)target)) {
+        if (!(target instanceof PsiClass aClass) || !PsiUtil.isLocalClass(aClass)) {
           return;
         }
         referenceToLocalClass = true;

@@ -15,7 +15,7 @@ import java.util.Map;
 /**
  * @author Vitaliy.Bibaev
  */
-public class TerminationStateImpl extends StateBase implements PrevAwareState {
+final class TerminationStateImpl extends StateBase implements PrevAwareState {
   private final TraceElement myResult;
   private final StreamCall myPrevCall;
   private final Map<TraceElement, List<TraceElement>> myToPrev;

@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Set;
@@ -62,7 +63,7 @@ public abstract class FileIndexFacade {
    * @return descriptions of all modules which are unloaded from the project
    * @see UnloadedModuleDescription
    */
-  public abstract @NotNull Collection<UnloadedModuleDescription> getUnloadedModuleDescriptions();
+  public abstract @NotNull @Unmodifiable Collection<UnloadedModuleDescription> getUnloadedModuleDescriptions();
 
   /**
    * Returns {@code true} if the {@code file} is {@link #isInContent} except when it's in {@link #isInLibraryClasses} and not in {@link #isInLibrarySource}.

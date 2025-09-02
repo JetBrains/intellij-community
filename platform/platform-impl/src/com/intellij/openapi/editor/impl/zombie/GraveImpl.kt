@@ -3,18 +3,15 @@ package com.intellij.openapi.editor.impl.zombie
 
 import com.dynatrace.hash4j.hashing.Hashing
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.getProjectCacheFileName
 import com.intellij.util.io.DataExternalizer
 import com.intellij.util.io.DataInputOutputUtil.readLONG
 import com.intellij.util.io.DataInputOutputUtil.writeLONG
 import com.intellij.util.io.EnumeratorIntegerDescriptor
-import com.intellij.util.io.PersistentMapBuilder
 import com.intellij.util.io.cache.ManagedCache
-import com.intellij.util.io.cache.ManagedPersistentCache
+import com.intellij.util.io.cache.ManagedCacheFactory
 import kotlinx.coroutines.CoroutineScope
 import java.io.DataInput
 import java.io.DataOutput
-import java.nio.file.Path
 
 typealias Cache<Z> = ManagedCache<Int, FingerprintedZombie<Z>>
 
@@ -40,27 +37,16 @@ class GraveImpl<Z : Zombie> (
   }
 
   private fun createCache(): Cache<Z> {
-    val (cacheName, cachePath) = cacheNameAndPath()
-    val builder = PersistentMapBuilder.newBuilder(
-      cachePath,
+    val cacheFactory = ManagedCacheFactory.getInstance()
+    return cacheFactory.createCache(
+      project,
+      necropolisPath(),
+      graveName,
       EnumeratorIntegerDescriptor.INSTANCE,
       FingerprintedExternalizer(necromancy),
-    ).withVersion(necromancy.spellLevel())
-    return if (necromancy.isDeepBury()) {
-      ManagedPersistentCache(cacheName, builder, coroutineScope)
-    } else {
-      // TODO: heap implementation
-      ManagedPersistentCache(cacheName, builder, coroutineScope)
-    }
-  }
-
-  private fun cacheNameAndPath(): Pair<String, Path> {
-    // IJPL-157893 the cache should survive project renaming
-    val projectName = project.getProjectCacheFileName(hashSeparator="-")
-    val projectPath = necropolisPath().resolve(projectName)
-    val cacheName = "$graveName-$projectName" // name should be unique across the application
-    val cachePath = projectPath.resolve(graveName).resolve(graveName)
-    return cacheName to cachePath
+      necromancy.spellLevel(),
+      coroutineScope,
+    )
   }
 }
 
@@ -79,7 +65,7 @@ data class FingerprintedZombieImpl<Z : Zombie>(
   override fun zombie(): Z = zombie
 }
 
-internal class FingerprintedExternalizer<Z : Zombie>(
+private class FingerprintedExternalizer<Z : Zombie>(
   private val necromancy: Necromancy<Z>,
 ) : DataExternalizer<FingerprintedZombie<Z>> {
 

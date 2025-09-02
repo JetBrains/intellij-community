@@ -20,6 +20,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.codeserver.core.JavaPsiReferenceUtil;
 import com.intellij.java.codeserver.core.JavaPsiReferenceUtil.ForwardReferenceProblem;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
@@ -124,7 +125,7 @@ public final class UnnecessaryThisInspection extends BaseInspection implements C
       }
       final PsiElement parent = expression.getParent();
       if (qualifier == null) {
-        if (referenceName.equals(PsiKeyword.YIELD) && parent instanceof PsiMethodCallExpression) {
+        if (referenceName.equals(JavaKeywords.YIELD) && parent instanceof PsiMethodCallExpression) {
           // Qualifier might be required since Java 14, so don't warn
           return;
         }

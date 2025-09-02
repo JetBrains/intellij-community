@@ -13,8 +13,11 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiFile
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.selected
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
@@ -47,17 +50,19 @@ class DeclarativeHintsProviderSettingsModel(
       MutableOption(it, enabled)
     }
 
-  private val _cases: List<ImmediateConfigurable.Case> = options.map { option ->
-    ImmediateConfigurable.Case(option.description.getName(providerDescription),
-                               option.description.requireOptionId(),
-                               loadFromSettings = {
-                                 option.isEnabled
-                               },
-                               onUserChanged = { newValue ->
-                                 option.isEnabled = newValue
-                               },
-                               extendedDescription = option.description.getDescription(providerDescription))
-  }
+  private val _cases: List<ImmediateConfigurable.Case> = options
+    .filter { it.description.showInTree }
+    .map { option ->
+      ImmediateConfigurable.Case(option.description.getName(providerDescription),
+                                 option.description.requireOptionId(),
+                                 loadFromSettings = {
+                                   option.isEnabled
+                                 },
+                                 onUserChanged = { newValue ->
+                                   option.isEnabled = newValue
+                                 },
+                                 extendedDescription = option.description.getDescription(providerDescription))
+    }
 
   override val group: InlayGroup = providerDescription.requiredGroup()
 
@@ -65,7 +70,22 @@ class DeclarativeHintsProviderSettingsModel(
     get() = providerDescription.getProviderName()
 
   override val component: JComponent
-    get() = customSettingsProvider.createComponent(project, language)
+    get() = panel {
+      options.filter { !it.description.showInTree }.forEach { opt ->
+        row {
+          checkBox(opt.description.getName(providerDescription))
+            .selected(opt.isEnabled)
+            .onChanged {
+              opt.isEnabled = it.isSelected
+              onChangeListener!!.settingsChanged()
+            }
+            .component.toolTipText = opt.description.getDescription(providerDescription)
+        }
+      }
+      row {
+        cell(customSettingsProvider.createComponent(project, language))
+      }
+    }
 
   override val description: String?
     get() = providerDescription.getDescription()
@@ -102,39 +122,39 @@ class DeclarativeHintsProviderSettingsModel(
 
   @RequiresBackgroundThread
   override fun collectData(editor: Editor, file: PsiFile): Runnable {
-    val providerId = providerDescription.requiredProviderId()
-
-    val enabledOptions = providerDescription.options.associateBy(keySelector = { it.requireOptionId() },
-                                                                 valueTransform = { true }) // we enable all the options
     val previewEntries = file.getUserData(PREVIEW_ENTRIES)
+    if (previewEntries == null) return EmptyRunnable.getInstance()
+    return collectFromExtractedHints(editor, file, previewEntries)
+  }
 
-    val caseId = previewEntries?.caseId
-    val enabled = if (caseId != null) {
-      options.find { it.description.optionId == caseId }!!.isEnabled
+  private fun collectFromExtractedHints(editor: Editor, file: PsiFile, previewEntries: PreviewEntries): Runnable {
+    val sourceId = "preview.extractedHints"
+    val sink = PreviewInlayTreeSink(providerDescription, isEnabled, options, sourceId)
+    val caseId = previewEntries.caseId
+    if (caseId != null) {
+      val opt = options.findOrError(caseId, providerDescription)
+      sink.startOption(opt)
     }
-    else {
-      isEnabled
-    }
-
-    val pass =
-      DeclarativeInlayHintsPass(file, editor, listOf(InlayProviderPassInfo(object : InlayHintsProvider {
-      override fun createCollector(file: PsiFile, editor: Editor): InlayHintsCollector {
-        return object: OwnBypassCollector {
-          override fun collectHintsForFile(file: PsiFile, sink: InlayTreeSink) {
-            if (previewEntries == null) return
-            for ((position, content, hintFormat) in previewEntries.hintInfos) {
-              sink.addPresentation(position, hintFormat = hintFormat) {
-                text(content)
-              }
-            }
+    for (hintInfo in previewEntries.extractedHintInfos) {
+      for (diff in hintInfo.activeOptionDiff) {
+        when (diff) {
+          DeclarativeHintsDumpUtil.ExtractedHintInfo.ActiveOptionDiff.End -> {
+            sink.endOption()
+          }
+          is DeclarativeHintsDumpUtil.ExtractedHintInfo.ActiveOptionDiff.Start -> {
+            val opt = sink.options.findOrError(diff.id, providerDescription)
+            sink.startOption(opt)
           }
         }
       }
-    }, providerId, enabledOptions)), false, !enabled)
-
-    pass.doCollectInformation(EmptyProgressIndicator())
+      sink.addPresentation(hintInfo.position, hintInfo.hintFormat, true) {
+        text(hintInfo.text)
+      }
+    }
+    val inlayData = sink.finish()
+    val preprocessed = DeclarativeInlayHintsPass.preprocessCollectedInlayData(inlayData, editor.document)
     return Runnable {
-      pass.doApplyInformationToEditor()
+      DeclarativeInlayHintsPass.applyInlayData(editor, project, preprocessed, sourceId)
     }
   }
 
@@ -188,7 +208,7 @@ class DeclarativeHintsProviderSettingsModel(
     for (option in options) {
       option.isEnabled = (settings.isOptionEnabled(option.description.requireOptionId(), id) ?: option.description.enabledByDefault)
     }
-    settings.setProviderEnabled(providerDescription.requiredProviderId(), isProviderEnabledInSettings())
+    isEnabled = isProviderEnabledInSettings()
     customSettingsProvider.persistSettings(project, savedSettings, language)
   }
 
@@ -199,9 +219,7 @@ class DeclarativeHintsProviderSettingsModel(
   override val cases: List<ImmediateConfigurable.Case>
     get() = _cases
 
-  private class MutableOption(val description: InlayProviderOption, var isEnabled: Boolean)
-
-  private class PreviewEntries(val caseId: String?, val hintInfos: List<DeclarativeHintsDumpUtil.ExtractedHintInfo>)
+  private class PreviewEntries(val caseId: String?, val extractedHintInfos: List<DeclarativeHintsDumpUtil.ExtractedHintInfo>)
 
   private class DefaultSettingsProvider : InlayHintsCustomSettingsProvider<Unit> {
     private val component by lazy { JPanel() }
@@ -225,3 +243,46 @@ class DeclarativeHintsProviderSettingsModel(
 
   }
 }
+
+private class MutableOption(val description: InlayProviderOption, var isEnabled: Boolean)
+
+private class PreviewInlayTreeSink(
+  val providerBean: InlayHintsProviderExtensionBean,
+  val providerEnabled: Boolean,
+  val options: List<MutableOption>,
+  val sourceId: String
+) {
+  private val inlayData = mutableListOf<InlayData>()
+
+  private val activeOptions = ArrayList<MutableOption>()
+
+  fun addPresentation(position: InlayPosition, hintFormat: HintFormat, enabled: Boolean, builder: PresentationTreeBuilder.() -> Unit) {
+    val b = PresentationTreeBuilderImpl.createRoot(position)
+    b.builder()
+    val tree = b.complete()
+    inlayData.add(InlayData(
+      position = position,
+      tooltip = null,
+      hintFormat = hintFormat,
+      tree = tree,
+      providerId = providerBean.requiredProviderId(),
+      disabled = !enabled || !providerEnabled || activeOptions.any { !it.isEnabled },
+      payloads = null,
+      providerClass = providerBean.instance.javaClass,
+      sourceId = sourceId
+    ))
+  }
+
+  fun startOption(option: MutableOption) {
+    activeOptions.add(option)
+  }
+
+  fun endOption() {
+    activeOptions.removeLast()
+  }
+
+  fun finish(): List<InlayData> = inlayData
+}
+
+private fun List<MutableOption>.findOrError(id: String, providerBean: InlayHintsProviderExtensionBean): MutableOption =
+  find { it.description.optionId == id } ?: error("Option $id not found for provider ${providerBean.requiredProviderId()}")

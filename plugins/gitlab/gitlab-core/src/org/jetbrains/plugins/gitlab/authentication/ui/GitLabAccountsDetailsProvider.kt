@@ -9,6 +9,7 @@ import com.intellij.openapi.components.service
 import icons.CollaborationToolsIcons
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gitlab.GitLabServersManager
 import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
@@ -20,12 +21,13 @@ import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.GitLabSelectorErr
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import java.awt.Image
 
-internal class GitLabAccountsDetailsProvider private constructor(
+@ApiStatus.Internal
+class GitLabAccountsDetailsProvider private constructor(
   scope: CoroutineScope,
   private val apiClientSupplier: suspend (GitLabAccount) -> GitLabApi?
 ) : LazyLoadingAccountsDetailsProvider<GitLabAccount, GitLabUserDTO>(scope, CollaborationToolsIcons.Review.DefaultAvatar) {
 
-  constructor(
+  internal constructor(
     scope: CoroutineScope,
     accountsModel: GitLabAccountsListModel,
     apiClientSupplier: suspend (GitLabAccount) -> GitLabApi?

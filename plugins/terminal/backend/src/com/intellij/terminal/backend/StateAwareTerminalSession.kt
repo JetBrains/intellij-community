@@ -32,9 +32,9 @@ import kotlin.time.TimeSource
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 internal class StateAwareTerminalSession(
-  private val delegate: TerminalSession,
-  private val coroutineScope: CoroutineScope,
-) : TerminalSession {
+  private val delegate: BackendTerminalSession,
+  override val coroutineScope: CoroutineScope,
+) : BackendTerminalSession {
   private val outputFlow = MutableSharedFlow<VersionedEvents>(replay = 1)
   private val modelsLock = Mutex()
 
@@ -107,6 +107,8 @@ internal class StateAwareTerminalSession(
 
   override val isClosed: Boolean
     get() = delegate.isClosed
+
+  override suspend fun hasRunningCommands(): Boolean = delegate.hasRunningCommands()
 
   private suspend fun handleOriginalEvents(events: List<TerminalOutputEvent>) {
     val versionedEvents = VersionedEvents(events)

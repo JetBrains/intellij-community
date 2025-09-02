@@ -33,6 +33,7 @@ import java.util.*;
 import java.util.function.Predicate;
 
 import static com.jetbrains.python.psi.impl.PyCallExpressionHelper.getCalleeType;
+import static com.jetbrains.python.psi.types.PyNoneTypeKt.isNoneType;
 
 /**
  * Implements reference expression PSI.
@@ -40,6 +41,8 @@ import static com.jetbrains.python.psi.impl.PyCallExpressionHelper.getCalleeType
 public class PyReferenceExpressionImpl extends PyElementImpl implements PyReferenceExpression {
 
   private static final Logger LOG = Logger.getInstance(PyReferenceExpressionImpl.class);
+
+  private static final int MAX_CFG_ITERATIONS = 30;
 
   private volatile @Nullable QualifiedName myQualifiedName = null;
 
@@ -49,7 +52,6 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
 
   @Override
   public @NotNull PsiPolyVariantReference getReference() {
-    //noinspection InstanceofIncompatibleInterface
     assert !(this instanceof StubBasedPsiElement);
     final TypeEvalContext context = TypeEvalContext.codeAnalysis(getProject(), getContainingFile());
     return getReference(PyResolveContext.defaultContext(context));
@@ -192,7 +194,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     }
 
     final PyType typeFromTargets = getTypeFromTargets(context);
-    if (qualified && typeFromTargets instanceof PyNoneType) {
+    if (qualified && isNoneType(typeFromTargets)) {
       return null;
     }
     final Ref<PyType> descriptorType = PyDescriptorTypeUtil.getDunderGetReturnType(this, typeFromTargets, context);
@@ -371,10 +373,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
           }
           final var substitutions = PyTypeChecker.unifyGenericCall(qualifier, Collections.emptyMap(), context);
           if (substitutions != null) {
-            final PyType substituted = PyTypeChecker.substitute(type, substitutions, context);
-            if (substituted != null) {
-              return substituted;
-            }
+            return PyTypeChecker.substitute(type, substitutions, context);
           }
         }
       }
@@ -395,7 +394,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     if (target instanceof PyTargetExpression) {
       final String name = ((PyTargetExpression)target).getName();
       if (PyNames.NONE.equals(name)) {
-        return PyNoneType.INSTANCE;
+        return PyBuiltinCache.getInstance(target).getNoneType();
       }
       if (PyNames.TRUE.equals(name) || PyNames.FALSE.equals(name)) {
         return PyBuiltinCache.getInstance(target).getBoolType();
@@ -475,26 +474,30 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       // null means empty set of possible types, Ref(null) means Any
       final @Nullable Ref<PyType> combinedType = StreamEx.of(defs)
         .map(instr -> {
+          if (instr.getElement() == anchor) {
+            // exclude recursive definition (example: type of 'i++' inside a loop)
+            return null;
+          }
           if (instr instanceof ReadWriteInstruction readWriteInstruction) {
             return readWriteInstruction.getType(context, anchor);
           }
           if (instr instanceof ConditionalInstruction conditionalInstruction) {
-             if (context.getType((PyTypedElement)conditionalInstruction.getCondition()) instanceof PyNarrowedType narrowedType
-                 && narrowedType.isBound()) {
-               var arguments = narrowedType.getOriginal().getArguments(null);
-               if (!arguments.isEmpty()) {
-                 var firstArgument = arguments.get(0);
-                 PyType type = narrowedType.getNarrowedType();
-                 if (firstArgument instanceof PyReferenceExpression && type != null) {
-                   @Nullable PyType initial = context.getType(firstArgument);
-                   boolean positive = conditionalInstruction.getResult() ^ narrowedType.getNegated();
-                   if (narrowedType.getTypeIs()) {
-                     return PyTypeAssertionEvaluator.createAssertionType(initial, type, positive, context);
-                   }
-                   return Ref.create((positive) ? type : initial);
-                 }
-               }
-             }
+            if (context.getType((PyTypedElement)conditionalInstruction.getCondition()) instanceof PyNarrowedType narrowedType
+                && narrowedType.isBound()) {
+              var arguments = narrowedType.getOriginal().getArguments(null);
+              if (!arguments.isEmpty()) {
+                var firstArgument = arguments.get(0);
+                PyType type = narrowedType.getNarrowedType();
+                if (firstArgument instanceof PyReferenceExpression && type != null) {
+                  @Nullable PyType initial = context.getType(firstArgument);
+                  boolean positive = conditionalInstruction.getResult() ^ narrowedType.getNegated();
+                  if (narrowedType.getTypeIs()) {
+                    return PyTypeAssertionEvaluator.createAssertionType(initial, type, positive, false, context);
+                  }
+                  return Ref.create((positive) ? type : initial);
+                }
+              }
+            }
           }
           return null;
         })
@@ -546,4 +549,3 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     }
   }
 }
-

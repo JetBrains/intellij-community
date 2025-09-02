@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename.naming;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -7,8 +7,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.text.NameUtilCore;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.*;
 
@@ -57,7 +59,9 @@ public final class NameSuggester {
     return -1;
   }
 
-  List<Pair<String, String>> getChanges() {
+  @ApiStatus.Internal
+  @VisibleForTesting
+  public List<Pair<String, String>> getChanges() {
     final ArrayList<Pair<String, String>> result = new ArrayList<>();
     for (int i = myChanges.size() - 1; i >= 0; i--) {
       final OriginalToNewChange change = myChanges.get(i);

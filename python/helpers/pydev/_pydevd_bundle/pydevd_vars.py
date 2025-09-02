@@ -589,17 +589,26 @@ def array_to_xml(array, name, roffset, coffset, rows, cols, format):
     return xml
 
 
-def tensor_to_xml(tensor, name, roffset, coffset, rows, cols, format):
+def tf_to_xml(tensor, name, roffset, coffset, rows, cols, format):
     try:
         return array_to_xml(tensor.numpy(), name, roffset, coffset, rows, cols, format)
     except TypeError:
         return array_to_xml(tensor.to_dense().numpy(), name, roffset, coffset, rows, cols, format)
 
 
-def sparse_tensor_to_xml(tensor, name, roffset, coffset, rows, cols, format):
+def torch_to_xml(tensor, name, roffset, coffset, rows, cols, format):
+    try:
+        if tensor.requires_grad:
+            tensor = tensor.detach()
+        return array_to_xml(tensor.numpy(), name, roffset, coffset, rows, cols, format)
+    except TypeError:
+        return array_to_xml(tensor.to_dense().numpy(), name, roffset, coffset, rows, cols, format)
+
+
+def tf_sparse_to_xml(tensor, name, roffset, coffset, rows, cols, format):
     try:
         import tensorflow as tf
-        return tensor_to_xml(tf.sparse.to_dense(tf.sparse.reorder(tensor)), name, roffset, coffset, rows, cols, format)
+        return tf_to_xml(tf.sparse.to_dense(tf.sparse.reorder(tensor)), name, roffset, coffset, rows, cols, format)
     except ImportError:
         pass
 
@@ -829,7 +838,7 @@ def array_data_to_xml(rows, cols, get_row, format):
 
 def slice_to_xml(slice, rows, cols, format, type, bounds):
     return '<array slice=\"%s\" rows=\"%s\" cols=\"%s\" format=\"%s\" type=\"%s\" max=\"%s\" min=\"%s\"/>' % \
-           (slice, rows, cols, quote(format), type, quote(str(bounds[1])), quote(str(bounds[0])))
+           (quote(slice), rows, cols, quote(format), type, quote(str(bounds[1])), quote(str(bounds[0])))
 
 
 def header_data_to_xml(rows, cols, dtypes, col_bounds, col_to_format, df, dim):
@@ -861,10 +870,10 @@ TYPE_TO_XML_CONVERTERS = {
     "Series": dataframe_to_xml,
     "GeoDataFrame": dataframe_to_xml,
     "GeoSeries": dataframe_to_xml,
-    "EagerTensor": tensor_to_xml,
-    "ResourceVariable": tensor_to_xml,
-    "SparseTensor": sparse_tensor_to_xml,
-    "Tensor": tensor_to_xml,
+    "EagerTensor": tf_to_xml,
+    "ResourceVariable": tf_to_xml,
+    "SparseTensor": tf_sparse_to_xml,
+    "Tensor": torch_to_xml,
     "Dataset": dataset_to_xml
 }
 

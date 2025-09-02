@@ -41,16 +41,16 @@ abstract class CodeStyleSettingsCustomDataSynchronizer<T : CustomCodeStyleSettin
 
   final override fun getValues(project: Project, virtualFile: VirtualFile): Flow<ByteArray> {
     return project.messageBus.subscribeAsFlow(CodeStyleSettingsListener.TOPIC) {
-      trySend(Unit)
+      trySend(null)
       object : CodeStyleSettingsListener {
         override fun codeStyleSettingsChanged(event: CodeStyleSettingsChangeEvent) {
           if (event.project != project ||
               event.virtualFile != null && event.virtualFile != virtualFile) return
-          trySend(Unit)
+          trySend(event.settings)
         }
       }
     }.mapNotNull {
-      val (common, custom) = getActiveCodeStyleSettings(project, virtualFile) ?: return@mapNotNull null
+      val (common, custom) = getActiveCodeStyleSettings(project, virtualFile, it) ?: return@mapNotNull null
 
       val provider = LanguageCodeStyleProvider.forLanguage(language) ?: run {
         LOG.trace { "Cannot find LanguageCodeStyleProvider for lang ${language}. provider.id=$id" }
@@ -92,7 +92,7 @@ abstract class CodeStyleSettingsCustomDataSynchronizer<T : CustomCodeStyleSettin
       return
     }
 
-    val (common, custom) = getActiveCodeStyleSettings(project, virtualFile) ?: return
+    val (common, custom) = getActiveCodeStyleSettings(project, virtualFile, null) ?: return
 
     val provider = LanguageCodeStyleProvider.forLanguage(language) ?: run {
       LOG.trace { "Cannot find LanguageCodeStyleProvider for lang ${language}. provider.id=$id" }
@@ -131,14 +131,21 @@ abstract class CodeStyleSettingsCustomDataSynchronizer<T : CustomCodeStyleSettin
   }
 
   private suspend fun getActiveCodeStyleSettings(project: Project,
-                                                 virtualFile: VirtualFile): Pair<CommonCodeStyleSettings, T>? {
+                                                 virtualFile: VirtualFile,
+                                                 eventSettings: CodeStyleSettings?): Pair<CommonCodeStyleSettings, T>? {
     return readAction {
-      val psiFile = VirtualFileCustomDataProvider.getPsiFileSafe(virtualFile, project) ?: run {
-        LOG.trace { "Cannot get PSI file for ${virtualFile.path}. provider.id=$id" }
-        return@readAction null
+      val settings = if (eventSettings != null) {
+        eventSettings
       }
-      val common = CodeStyle.getSettings(psiFile).getCommonSettings(language)
-      val custom = CodeStyle.getSettings(psiFile).getCustomSettings(customCodeStyleSettingsClass)
+      else {
+        val psiFile = VirtualFileCustomDataProvider.getPsiFileSafe(virtualFile, project) ?: run {
+          LOG.trace { "Cannot get PSI file for ${virtualFile.path}. provider.id=$id" }
+          return@readAction null
+        }
+        CodeStyle.getSettings(psiFile)
+      }
+      val common = settings.getCommonSettings(language)
+      val custom = settings.getCustomSettings(customCodeStyleSettingsClass)
       Pair(common, custom)
     }
   }

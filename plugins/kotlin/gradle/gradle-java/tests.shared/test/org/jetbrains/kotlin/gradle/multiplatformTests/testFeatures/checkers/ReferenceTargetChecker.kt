@@ -7,7 +7,7 @@ import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.ProjectScope
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.runInEdtAndGet
-import org.jetbrains.kotlin.gradle.multiplatformTests.KotlinMppTestsContext
+import org.jetbrains.kotlin.gradle.multiplatformTests.KotlinSyncTestsContext
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestConfigurationDslScope
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.highlighting.TestFeatureWithFileMarkup
 import org.jetbrains.kotlin.gradle.multiplatformTests.writeAccess
@@ -32,7 +32,7 @@ object ReferenceTargetChecker : TestFeatureWithFileMarkup<ReferenceTargetChecker
         return ReferenceTargetCheckerConfig()
     }
 
-    override fun KotlinMppTestsContext.afterImport() {
+    override fun KotlinSyncTestsContext.afterImport() {
         runInEdtAndGet {
             val allKotlinFiles = FileTypeIndex.getFiles(KotlinFileType.INSTANCE, ProjectScope.getProjectScope(testProject))
             for (virtualFile in allKotlinFiles) {
@@ -52,7 +52,7 @@ object ReferenceTargetChecker : TestFeatureWithFileMarkup<ReferenceTargetChecker
         }
     }
 
-    override fun KotlinMppTestsContext.restoreMarkup(text: String, editor: Editor): String? {
+    override fun KotlinSyncTestsContext.restoreMarkup(text: String, editor: Editor): String? {
         val caretOffset = editor.caretModel.offset.takeIf { it > 0 } ?: return null
         if (caretOffset > text.length) return null
 

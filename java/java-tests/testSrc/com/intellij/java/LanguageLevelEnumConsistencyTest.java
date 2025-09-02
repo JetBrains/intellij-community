@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java;
 
 import com.intellij.util.containers.ContainerUtil;
@@ -17,7 +17,7 @@ import static org.junit.Assert.assertEquals;
 public class LanguageLevelEnumConsistencyTest {
   @Test
   public void constants() {
-    List<String> ideConstants = ContainerUtil.map(com.intellij.pom.java.LanguageLevel.values(), Enum::name);
+    List<String> ideConstants = ContainerUtil.map(com.intellij.pom.java.LanguageLevel.getEntries(), Enum::name);
     List<String> jpsConstants = ContainerUtil.map(LanguageLevel.values(), Enum::name);
     assertEquals(ideConstants, jpsConstants);
   }

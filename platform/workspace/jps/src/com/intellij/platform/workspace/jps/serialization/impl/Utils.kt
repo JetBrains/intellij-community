@@ -22,6 +22,7 @@ internal fun <T, K> sortByOrderEntity(orderOfItems: List<K>?, elementsByKey: Mut
 
 //todo reuse toPath from VirtualFileUrlManagerUtil.kt
 fun VirtualFileUrl.toPath(): Path = Path.of(JpsPathUtil.urlToPath(url))
+
 internal fun toConfigLocation(file: Path, virtualFileManager: VirtualFileUrlManager): JpsProjectConfigLocation {
   if (FileUtil.extensionEquals(file.fileName.toString(), "ipr")) {
     val iprFile = file.toVirtualFileUrl(virtualFileManager)

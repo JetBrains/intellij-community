@@ -30,10 +30,7 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FindSymbolParameters;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
+import org.jetbrains.annotations.*;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
@@ -58,7 +55,8 @@ public final class TestDataGuessByExistingFilesUtil {
    * @param testDataPath test data path if present (e.g. obtained from @TestDataPath annotation value)
    * @return List of existing test data files for the given test if it's possible to guess them; empty List otherwise
    */
-  static @NotNull List<TestDataFile> collectTestDataByExistingFiles(@NotNull PsiMethod psiMethod, @Nullable String testDataPath) {
+  @VisibleForTesting
+  public static @NotNull List<TestDataFile> collectTestDataByExistingFiles(@NotNull PsiMethod psiMethod, @Nullable String testDataPath) {
     Application application = ApplicationManager.getApplication();
     if (!application.isUnitTestMode() && application.isHeadlessEnvironment()) {
       // shouldn't be invoked under these conditions anyway, just for additional safety
@@ -69,7 +67,8 @@ public final class TestDataGuessByExistingFilesUtil {
     return ReadAction.compute(() -> buildDescriptorFromExistingTestData(psiMethod, testDataPath).restoreFiles());
   }
 
-  static @NotNull List<TestDataFile> guessTestDataName(PsiMethod method) {
+  @VisibleForTesting
+  public static @NotNull List<TestDataFile> guessTestDataName(PsiMethod method) {
     String testName = getTestName(method);
     if (testName == null) return Collections.emptyList();
     PsiClass psiClass = method.getContainingClass();
@@ -407,7 +406,7 @@ public final class TestDataGuessByExistingFilesUtil {
     }
   }
 
-  private static class TestDataDescriptor {
+  private static final class TestDataDescriptor {
     private static final TestDataDescriptor NOTHING_FOUND = new TestDataDescriptor(Collections.emptyList());
 
     private final List<TestLocationDescriptor> myDescriptors = new ArrayList<>();

@@ -3,6 +3,7 @@ package com.intellij.dev.psiViewer.properties
 import com.intellij.dev.psiViewer.PsiViewerSettings
 import com.intellij.dev.psiViewer.properties.tree.PsiViewerPropertiesTreeViewModel
 import com.intellij.dev.psiViewer.properties.tree.PsiViewerPropertyNode
+import com.intellij.dev.psiViewer.properties.tree.nodes.apiMethods.PsiViewerApiMethod
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.progress.asContextElement
@@ -20,6 +21,7 @@ import java.util.function.Consumer
 class PsiViewerPropertiesTabViewModel(
   project: Project,
   _scope: CoroutineScope,
+  rootPsiFile: PsiFile?,
   settings: PsiViewerSettings,
   private val psiElementInMainTreeSelector: Consumer<PsiElement>
 ) {
@@ -29,7 +31,19 @@ class PsiViewerPropertiesTabViewModel(
 
   private class ContextHolder(val context: PsiViewerPropertyNode.Context)
 
-  private val currentContext = MutableStateFlow(ContextHolder(PsiViewerPropertyNode.Context(project, settings.showEmptyProperties, this::getPsiSelectorInMainTree)))
+  private val currentContext = MutableStateFlow(
+    ContextHolder(
+      PsiViewerPropertyNode.Context(
+        project,
+        rootPsiFile,
+        settings.showEmptyProperties,
+        apiMethodProviders = PsiViewerApiMethod.Provider.EP_NAME.extensionList,
+        psiSelectorInMainTree = this::getPsiSelectorInMainTree,
+        currentDepth = PsiViewerPropertyNode.Context.Depth(0, 0, 0),
+        depthLimit = PsiViewerPropertyNode.Context.Depth(Int.MAX_VALUE, Int.MAX_VALUE, Int.MAX_VALUE)
+      )
+    )
+  )
 
   private val selectedPsiElement = MutableStateFlow<PsiElement?>(null)
 

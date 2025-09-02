@@ -3,18 +3,28 @@ package com.intellij.cce.evaluable
 
 import com.intellij.cce.actions.ProjectActionsEnvironment
 import com.intellij.cce.core.Language
-import com.intellij.cce.evaluation.*
+import com.intellij.cce.evaluation.EvaluationEnvironment
+import com.intellij.cce.evaluation.EvaluationRootInfo
+import com.intellij.cce.evaluation.EvaluationStep
+import com.intellij.cce.evaluation.SetupSdkPreferences
+import com.intellij.cce.evaluation.SetupSdkStepFactory
+import com.intellij.cce.evaluation.step.CheckProjectSdkStep
 import com.intellij.cce.interpreter.FeatureInvoker
 import com.intellij.cce.processor.GenerateActionsProcessor
 import com.intellij.cce.report.BasicFileReportGenerator
 import com.intellij.cce.report.FileReportGenerator
 import com.intellij.cce.report.GeneratorDirectories
 import com.intellij.cce.workspace.Config
+import com.intellij.cce.workspace.EvaluationWorkspace
 import com.intellij.cce.workspace.storages.FeaturesStorage
 import com.intellij.cce.workspace.storages.FullLineLogsStorage
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 
 abstract class EvaluableFeatureBase<T : EvaluationStrategy>(override val name: String) : EvaluableFeature<T> {
+  open val setupSdkPreferences: SetupSdkPreferences = SetupSdkPreferences(
+    resolveDeps = false
+  )
 
   /**
    * how to prepare the context before the feature invocation
@@ -31,16 +41,32 @@ abstract class EvaluableFeatureBase<T : EvaluationStrategy>(override val name: S
   override fun getEvaluationSteps(config: Config): List<EvaluationStep> =
     getEvaluationSteps(Language.resolve(actions(config).language), config.strategy())
 
-  override fun getFileReportGenerator(filterName: String,
-                                      comparisonFilterName: String,
-                                      featuresStorages: List<FeaturesStorage>,
-                                      fullLineStorages: List<FullLineLogsStorage>,
-                                      dirs: GeneratorDirectories): FileReportGenerator =
+  open fun getSetupSteps(project: Project, language: Language, strategy: T): List<EvaluationStep> =
+    defaultSetupSteps(project, language, setupSdkPreferences)
+
+  open fun getFileReportGenerator(
+    filterName: String,
+    comparisonFilterName: String,
+    featuresStorages: List<FeaturesStorage>,
+    fullLineStorages: List<FullLineLogsStorage>,
+    dirs: GeneratorDirectories,
+  ): FileReportGenerator =
     BasicFileReportGenerator(filterName, comparisonFilterName, featuresStorages, dirs)
+
+  override fun getFileReportGenerator(
+    filterName: String,
+    comparisonFilterName: String,
+    inputWorkpaces: List<EvaluationWorkspace>,
+    dirs: GeneratorDirectories,
+  ): FileReportGenerator {
+    val featuresStorages = inputWorkpaces.map { it.featuresStorage }
+    val fullLineStorages = inputWorkpaces.map { it.fullLineLogsStorage }
+    return getFileReportGenerator(filterName, comparisonFilterName, featuresStorages, fullLineStorages, dirs)
+  }
 
   override fun getPreliminaryEvaluationSteps(): List<EvaluationStep> = emptyList()
 
-  override fun prepareEnvironment(config: Config): EvaluationEnvironment {
+  override fun prepareEnvironment(config: Config, outputWorkspace: EvaluationWorkspace): EvaluationEnvironment {
     val actions = actions(config)
     val strategy = config.strategy<T>()
     return ProjectActionsEnvironment.open(actions.projectPath) { project ->
@@ -52,6 +78,7 @@ abstract class EvaluableFeatureBase<T : EvaluationStrategy>(override val name: S
         EvaluationRootInfo(true),
         project,
         getGenerateActionsProcessor(strategy, project),
+        getSetupSteps(project, Language.resolve(actions.language), strategy),
         name,
         featureInvoker = getFeatureInvoker(project, Language.resolve(actions.language), strategy)
       )
@@ -60,4 +87,10 @@ abstract class EvaluableFeatureBase<T : EvaluationStrategy>(override val name: S
 
   private fun actions(config: Config) =
     config.actions ?: throw IllegalStateException("Configuration missing project description (actions)")
+}
+
+fun defaultSetupSteps(project: Project, language: Language, preferences: SetupSdkPreferences): List<EvaluationStep> {
+  val setupSteps = SetupSdkStepFactory.forLanguage(project, language)?.steps(preferences) ?: emptyList()
+  val checkStep = CheckProjectSdkStep(project, language.displayName).takeUnless { Registry.`is`("evaluation.plugin.disable.sdk.check") }
+  return setupSteps + listOfNotNull(checkStep)
 }

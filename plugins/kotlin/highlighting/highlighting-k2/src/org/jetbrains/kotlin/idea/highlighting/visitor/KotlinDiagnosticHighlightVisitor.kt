@@ -237,6 +237,8 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor, HighlightRangeExtensi
             builder.registerFix(quickFixInfo, options, null, null, null)
         }
 
+        registerLazyFixes(builder, quickFixService, diagnostic)
+
         if (
             diagnostic is KaFirDiagnostic.UnresolvedImport ||
             diagnostic is KaFirDiagnostic.UnresolvedReference ||
@@ -258,6 +260,34 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor, HighlightRangeExtensi
         }
 
         return builder
+    }
+
+    private fun KaSession.registerLazyFixes(
+        builder: HighlightInfo.Builder,
+        quickFixService: KotlinQuickFixService,
+        originalDiagnostic: KaDiagnosticWithPsi<*>,
+    ) {
+        if (!with(quickFixService) { canProduceLazyQuickFixesFor(originalDiagnostic) }) return
+
+        val diagnosticPsiPointer = originalDiagnostic.psi.createSmartPointer()
+        val diagnosticFactoryName = originalDiagnostic.factoryName
+
+        builder.registerLazyFixes { registrar ->
+            val restoredPsi = diagnosticPsiPointer.element as? KtElement ?: return@registerLazyFixes
+
+            analyze(restoredPsi) {
+                @OptIn(KaExperimentalApi::class)
+                val restoredDiagnostics = restoredPsi
+                    .diagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
+                    .filter { it.factoryName == diagnosticFactoryName }
+
+                for (diagnostic in restoredDiagnostics) {
+                    for (quickFix in with(quickFixService) { getLazyQuickFixesFor(diagnostic) }) {
+                        registrar.register(quickFix)
+                    }
+                }
+            }
+        }
     }
 
     private fun KaSession.createHighlightInfo(

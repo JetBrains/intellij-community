@@ -38,7 +38,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 @ApiStatus.Internal
-public final class B implements AnnotationBuilder {
+final class B implements AnnotationBuilder {
   private final @NotNull AnnotationHolderImpl myHolder;
   private final @Nls String message;
   private final @NotNull PsiElement myCurrentElement;

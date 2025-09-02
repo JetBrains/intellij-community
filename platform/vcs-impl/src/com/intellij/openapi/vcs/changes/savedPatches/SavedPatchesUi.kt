@@ -2,31 +2,33 @@
 package com.intellij.openapi.vcs.changes.savedPatches
 
 import com.intellij.diff.tools.util.DiffDataKeys
-import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.shouldHaveSplitterDiffPreview
-import com.intellij.ui.*
+import com.intellij.ui.OnePixelSplitter
+import com.intellij.ui.PopupHandler
+import com.intellij.ui.ScrollPaneFactory
 import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.Processor
-import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.ProportionKey
 import com.intellij.util.ui.TwoKeySplitter
 import com.intellij.util.ui.components.BorderLayoutPanel
-import com.intellij.vcs.commit.CommitActionsPanel
 import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import java.awt.Component
-import java.awt.FlowLayout
-import javax.swing.*
-import javax.swing.border.CompoundBorder
+import javax.swing.JComponent
+import javax.swing.JPanel
+import javax.swing.JTree
+import javax.swing.ScrollPaneConstants
 
+@ApiStatus.Internal
 open class SavedPatchesUi(
   private val project: Project,
-  @ApiStatus.Internal val providers: List<SavedPatchesProvider<*>>,
+  val providers: List<SavedPatchesProvider<*>>,
   private val isVertical: () -> Boolean,
   private val isWithSplitDiffPreview: () -> Boolean,
   private val isShowDiffWithLocal: () -> Boolean,
@@ -65,7 +67,7 @@ open class SavedPatchesUi(
       return@Processor true
     }
 
-    val bottomToolbar = buildBottomToolbar()
+    val bottomToolbar = SavedPatchesComponents.buildBottomToolbar(patchesTree, ::selectedProvider, this, this)
 
     patchesTree.addSelectionListener {
       changesBrowser.selectPatchObject(selectedPatchObjectOrNull())
@@ -84,7 +86,7 @@ open class SavedPatchesUi(
     treeChangesSplitter.firstComponent = treePanel
     treeChangesSplitter.secondComponent = BorderLayoutPanel().apply {
       addToCenter(changesBrowser)
-      addToBottom(createBottomComponent(bottomToolbar))
+      addToBottom(SavedPatchesComponents.createBottomComponent(bottomToolbar))
     }
     providers.forEach { provider ->
       provider.subscribeToPatchesListChanges(this) {
@@ -101,40 +103,6 @@ open class SavedPatchesUi(
     add(treeDiffSplitter, BorderLayout.CENTER)
 
     Disposer.register(disposable, this)
-  }
-
-  private fun createBottomComponent(bottomToolbar: ActionToolbar): JComponent {
-    val bottomPanel = JPanel(FlowLayout(FlowLayout.LEFT, 0, 0)).apply {
-      border = CompoundBorder(IdeBorderFactory.createBorder(SideBorder.TOP),
-                              JBUI.Borders.empty(7, 5))
-    }
-    bottomPanel.add(bottomToolbar.component)
-    bottomPanel.add(JLabel(AllIcons.General.ContextHelp).apply {
-      border = JBUI.Borders.empty(1)
-      toolTipText = VcsBundle.message("saved.patch.apply.pop.help.tooltip")
-    })
-    return bottomPanel
-  }
-
-  private fun buildBottomToolbar(): ActionToolbar {
-    val applyAction = object : JButtonActionWrapper(VcsBundle.message("saved.patch.apply.action"), true) {
-      override fun getDelegate(): AnAction {
-        return selectedProvider().applyAction
-      }
-    }.apply {
-      registerCustomShortcutSet(CommitActionsPanel.DEFAULT_COMMIT_ACTION_SHORTCUT, this@SavedPatchesUi, this@SavedPatchesUi)
-    }
-    val popAction = object : JButtonActionWrapper(VcsBundle.message("saved.patch.pop.action"), false) {
-      override fun getDelegate(): AnAction {
-        return selectedProvider().popAction
-      }
-    }
-    val toolbarGroup = DefaultActionGroup()
-    toolbarGroup.add(applyAction)
-    toolbarGroup.add(popAction)
-    val toolbar = ActionManager.getInstance().createActionToolbar(SAVED_PATCHES_UI_PLACE, toolbarGroup, true)
-    toolbar.targetComponent = patchesTree
-    return toolbar
   }
 
   fun updateLayout() {
@@ -179,6 +147,7 @@ open class SavedPatchesUi(
     sink[SAVED_PATCH_SELECTED_PATCH] = selectedPatchObjectOrNull()
     sink[SAVED_PATCHES_UI] = this
     sink[SAVED_PATCH_CHANGES] = changesBrowser.getSavedPatchChanges()
+    sink[SAVED_PATCHES_BROWSER] = changesBrowser
   }
 
   private fun selectedPatchObjectOrNull() = patchesTree.selectedPatchObjects().firstOrNull()
@@ -205,7 +174,8 @@ open class SavedPatchesUi(
 
   companion object {
     const val SAVED_PATCHES_UI_PLACE = "SavedPatchesUiPlace"
-    val SAVED_PATCHES_UI = DataKey.create<SavedPatchesUi>("SavedPatchesUi")
+    val SAVED_PATCHES_UI = DataKey.create<JComponent>("SavedPatchesUi")
+    val SAVED_PATCHES_BROWSER = DataKey.create<SavedPatchesChangesBrowser>("SavedPatchesChangesBrowser")
     val SAVED_PATCH_CHANGES = DataKey.create<Iterable<SavedPatchesProvider.ChangeObject>>("SavedPatchChanges")
     val SAVED_PATCH_SELECTED_CHANGES = DataKey.create<Iterable<SavedPatchesProvider.ChangeObject>>("SavedPatchSelectedChanges")
     val SAVED_PATCH_SELECTED_PATCH = DataKey.create<SavedPatchesProvider.PatchObject<*>>("SavedPatchSelectedPatches")

@@ -480,6 +480,10 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
             }
             myFocusPoint = null;
           }
+          // RD case: BackendPopupWindow
+          if (e.getOppositeComponent() instanceof JWindow) {
+            return;
+          }
           cancelListUpdater(); // cancel thread as early as possible
           myHideAlarm.addRequest(() -> {
             JBPopup popup = JBPopupFactory.getInstance().getChildFocusedPopup(e.getComponent());

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac.touchbar;
 
 import com.intellij.execution.ExecutionException;
@@ -15,9 +15,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -26,6 +24,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.concurrent.Future;
 
+@ApiStatus.Internal
 public final class Helpers {
   private static final Logger LOG = Logger.getInstance(Helpers.class);
   private static final String MODEL_ID_PREFIX = "Model Identifier:";
@@ -44,7 +43,8 @@ public final class Helpers {
     );
   }
 
-  static boolean isTouchBarServerRunning() {
+  @VisibleForTesting
+  public static boolean isTouchBarServerRunning() {
     final GeneralCommandLine cmdLine = new GeneralCommandLine("pgrep", TB_SERVER_PROCESS)
       .withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.SYSTEM);
     try {

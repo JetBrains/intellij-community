@@ -130,15 +130,15 @@ public final class ValidationTestRulesPersistedStorage implements IntellijValida
   }
 
   private static void copyRules(@NotNull GroupRemoteRule to, @NotNull GroupRemoteRule from) {
-    if (to.enums == null) {
-      to.enums = new HashMap<>();
+    if (to.getEnums() == null) {
+      to.setEnums(new HashMap<>());
     }
     if (to.regexps == null) {
       to.regexps = new HashMap<>();
     }
 
-    if (from.enums != null) {
-      to.enums.putAll(from.enums);
+    if (from.getEnums() != null) {
+      to.getEnums().putAll(from.getEnums());
     }
     if (from.regexps != null) {
       to.regexps.putAll(from.regexps);

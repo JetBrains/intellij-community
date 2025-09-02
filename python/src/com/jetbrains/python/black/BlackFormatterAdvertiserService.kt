@@ -16,6 +16,7 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.black.configuration.BlackFormatterConfigurable
 import com.jetbrains.python.black.configuration.BlackFormatterConfiguration
 import com.jetbrains.python.sdk.pythonSdk
+import com.jetbrains.python.statistics.BlackFormatterIntegrationIdsHolder.Companion.BLACK_FORMATTER_SUPPORT
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
@@ -69,7 +70,7 @@ class BlackFormatterAdvertiserService private constructor() {
 
     val notification = NotificationGroupManager.getInstance().getNotificationGroup(BlackFormattingService.NOTIFICATION_GROUP_ID)
       .createNotification(PyBundle.message("black.advertising.service.notification.title"), message, NotificationType.INFORMATION)
-      .setDisplayId("black.formatter")
+      .setDisplayId(BLACK_FORMATTER_SUPPORT)
       .setSuggestionType(true)
       .setImportantSuggestion(true)
       .addAction(NotificationAction

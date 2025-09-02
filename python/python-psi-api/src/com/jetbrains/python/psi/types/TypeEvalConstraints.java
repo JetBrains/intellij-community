@@ -1,7 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.psi.types;
 
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
@@ -15,7 +16,8 @@ import java.util.Objects;
  *
  * @author Ilya.Kazakevich
  */
-class TypeEvalConstraints {
+@ApiStatus.Internal
+public final class TypeEvalConstraints {
   final boolean myAllowDataFlow;
   final boolean myAllowStubToAST;
   final boolean myAllowCallContext;

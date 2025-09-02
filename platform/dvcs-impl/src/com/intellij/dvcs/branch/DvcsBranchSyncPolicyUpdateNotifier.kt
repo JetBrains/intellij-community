@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.branch
 
 import com.intellij.dvcs.DvcsNotificationIdsHolder
@@ -11,16 +11,15 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.VcsNotifier
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class DvcsBranchSyncPolicyUpdateNotifier<Repo : Repository>(
   private val project: Project,
-  private val vcs: AbstractVcs,
   private val dvcsSyncSettings: DvcsSyncSettings,
   private val repositoryManager: AbstractRepositoryManager<Repo>,
 ) {
-
   fun initBranchSyncPolicyIfNotInitialized() {
     if (repositoryManager.moreThanOneRoot() && dvcsSyncSettings.syncSetting == DvcsSyncSettings.Value.NOT_DECIDED) {
       if (repositoryManager.shouldProposeSyncControl()) {
@@ -43,7 +42,7 @@ class DvcsBranchSyncPolicyUpdateNotifier<Repo : Repository>(
           NotificationAction.create(DvcsBundle.message("action.NotificationAction.DvcsBranchPopup.text.disable")
           ) { _: AnActionEvent?, notification: Notification ->
             ShowSettingsUtil.getInstance().showSettingsDialog(project,
-                                                              vcs.displayName)
+                                                              repositoryManager.vcs.displayName)
             if (dvcsSyncSettings.syncSetting == DvcsSyncSettings.Value.DONT_SYNC) {
               notification.expire()
             }

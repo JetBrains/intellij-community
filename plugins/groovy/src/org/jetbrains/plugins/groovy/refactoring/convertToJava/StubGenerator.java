@@ -278,7 +278,7 @@ public final class StubGenerator implements ClassItemGenerator {
       return resolveResult;
     }
 
-    final GroovyResolveResult[] results = constructorInvocation.multiResolve(false);
+    final GroovyResolveResult[] results = constructorInvocation.multiResolveGroovy(false);
     if (results.length > 0) {
       int i = 0;
       while (results.length > i + 1) {

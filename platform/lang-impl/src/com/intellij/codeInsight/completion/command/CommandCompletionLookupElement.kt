@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.completion.command
 
 import com.intellij.codeInsight.TargetElementUtil
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy.NEVER_AUTOCOMPLETE
 import com.intellij.codeInsight.lookup.LookupElement
@@ -15,18 +16,21 @@ import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 import javax.swing.Icon
 
 /**
  * Represents a specialized lookup element intended for usage in command completion scenarios.
  */
 @ApiStatus.Internal
-internal class CommandCompletionLookupElement(
+class CommandCompletionLookupElement(
   lookupElement: LookupElement,
+  val command: CompletionCommand,
   val hostStartOffset: Int,
   val suffix: String,
   val icon: Icon?,
   val highlighting: HighlightInfoLookup?,
+  val useLookupString: Boolean = true,
 ) : LookupElementDecorator<LookupElement>(lookupElement) {
   override fun isWorthShowingInAutoPopup(): Boolean {
     return true
@@ -34,6 +38,14 @@ internal class CommandCompletionLookupElement(
 
   override fun getAutoCompletionPolicy(): AutoCompletionPolicy? {
     return NEVER_AUTOCOMPLETE
+  }
+
+  @VisibleForTesting
+  val hasPreview: Boolean = command is CompletionCommandWithPreview
+
+  @get:VisibleForTesting
+  val preview: IntentionPreviewInfo? by lazy {
+    (command as? CompletionCommandWithPreview)?.getPreview()
   }
 }
 

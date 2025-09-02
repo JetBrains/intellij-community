@@ -15,7 +15,7 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.SymbolicEntityId
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
-import com.intellij.platform.workspace.storage.annotations.Child
+import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.SoftLinkable
@@ -34,14 +34,14 @@ import org.jetbrains.annotations.NonNls
 
 @Internal
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(6)
+@GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class TestModulePropertiesEntityImpl(private val dataSource: TestModulePropertiesEntityData) : TestModulePropertiesEntity, WorkspaceEntityBase(
-  dataSource) {
+internal class TestModulePropertiesEntityImpl(private val dataSource: TestModulePropertiesEntityData) : TestModulePropertiesEntity,
+                                                                                                        WorkspaceEntityBase(dataSource) {
 
   private companion object {
-    internal val MODULE_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, TestModulePropertiesEntity::class.java,
-                                                                          ConnectionId.ConnectionType.ONE_TO_ONE, false)
+    internal val MODULE_CONNECTION_ID: ConnectionId =
+      ConnectionId.create(ModuleEntity::class.java, TestModulePropertiesEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
 
     private val connections = listOf<ConnectionId>(
       MODULE_CONNECTION_ID,
@@ -69,8 +69,8 @@ internal class TestModulePropertiesEntityImpl(private val dataSource: TestModule
   }
 
 
-  internal class Builder(result: TestModulePropertiesEntityData?) : ModifiableWorkspaceEntityBase<TestModulePropertiesEntity, TestModulePropertiesEntityData>(
-    result), TestModulePropertiesEntity.Builder {
+  internal class Builder(result: TestModulePropertiesEntityData?) :
+    ModifiableWorkspaceEntityBase<TestModulePropertiesEntity, TestModulePropertiesEntityData>(result), TestModulePropertiesEntity.Builder {
     internal constructor() : this(TestModulePropertiesEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -250,7 +250,8 @@ internal class TestModulePropertiesEntityData : WorkspaceEntityData<TestModulePr
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.jps.entities.TestModulePropertiesEntity") as EntityMetadata
+      "com.intellij.platform.workspace.jps.entities.TestModulePropertiesEntity"
+    ) as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

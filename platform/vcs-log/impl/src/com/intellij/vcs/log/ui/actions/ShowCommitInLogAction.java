@@ -5,10 +5,6 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.PerformInBackgroundOption;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsActions;
@@ -18,12 +14,13 @@ import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.CommitId;
+import com.intellij.vcs.log.VcsLogBundle;
+import com.intellij.vcs.log.VcsLogCommitSelection;
+import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.impl.HashImpl;
-import com.intellij.vcs.log.impl.VcsLogContentUtil;
 import com.intellij.vcs.log.impl.VcsLogNavigationUtil;
 import com.intellij.vcs.log.impl.VcsProjectLog;
-import com.intellij.vcs.log.ui.VcsLogUiEx;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -31,9 +28,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 
 @ApiStatus.Internal
 public class ShowCommitInLogAction extends DumbAwareAction {
@@ -54,7 +48,7 @@ public class ShowCommitInLogAction extends DumbAwareAction {
       return;
     }
 
-    jumpToRevision(project, HashImpl.build(revision.asString()));
+    VcsProjectLog.showRevisionInMainLog(project, HashImpl.build(revision.asString()));
   }
 
   protected @Nullable VcsRevisionNumber getRevisionNumber(@NotNull AnActionEvent event) {
@@ -92,37 +86,5 @@ public class ShowCommitInLogAction extends DumbAwareAction {
       if (vcs != null) return VcsLogBundle.message("action.Vcs.Log.SelectInLog.text.template", vcs.getDisplayName());
     }
     return VcsLogBundle.message("action.Vcs.Log.SelectInLog.text");
-  }
-
-  /**
-   * Consider using {@link VcsLogNavigationUtil#jumpToRevisionAsync} when the root is known
-   */
-  @ApiStatus.Internal
-  public static void jumpToRevision(@NotNull Project project, @NotNull Hash hash) {
-    VcsLogContentUtil.runInMainLog(project, logUi -> jumpToRevisionUnderProgress(project, logUi, hash));
-  }
-
-  private static void jumpToRevisionUnderProgress(@NotNull Project project,
-                                                  @NotNull VcsLogUiEx logUi,
-                                                  @NotNull Hash hash) {
-    Future<Boolean> future = VcsLogNavigationUtil.jumpToHash(logUi, hash.asString(), false, true);
-    if (!future.isDone()) {
-      ProgressManager.getInstance().run(new Task.Backgroundable(project,
-                                                                VcsLogBundle.message("vcs.log.show.commit.in.log.process", hash.toShortString()),
-                                                                false/*can not cancel*/,
-                                                                PerformInBackgroundOption.ALWAYS_BACKGROUND) {
-        @Override
-        public void run(@NotNull ProgressIndicator indicator) {
-          try {
-            future.get();
-          }
-          catch (CancellationException | InterruptedException ignored) {
-          }
-          catch (ExecutionException e) {
-            LOG.error(e);
-          }
-        }
-      });
-    }
   }
 }

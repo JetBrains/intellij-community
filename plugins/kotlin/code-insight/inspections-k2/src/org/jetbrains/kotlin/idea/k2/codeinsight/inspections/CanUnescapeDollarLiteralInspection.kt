@@ -15,8 +15,10 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.canBeStartOfIdentifierOrBlock
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.createStringTemplate
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.findTextRangesInParentForEscapedDollars
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.isEscapedDollar
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.templatePrefixLength
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.isSingleQuoted
 
@@ -47,7 +49,6 @@ class CanUnescapeDollarLiteralInspection :
             element: KtStringTemplateExpression,
             updater: ModPsiUpdater,
         ) {
-            val prefixLength = element.interpolationPrefix?.textLength ?: 0
             if (element.text != context.oldText) return
 
             val psiFactory = KtPsiFactory(project)
@@ -55,34 +56,10 @@ class CanUnescapeDollarLiteralInspection :
                 element.entries[entryIndexToReplace].replace(psiFactory.createLiteralStringTemplateEntry("$"))
             }
             val updatedTemplateText = element.entries.joinToString("") { it.text }
-            val recreatedTemplate = createReplacementTemplate(
-                psiFactory, updatedTemplateText, prefixLength,
-                isSingleQuoted = element.isSingleQuoted(),
+            val recreatedTemplate = psiFactory.createStringTemplate(
+                updatedTemplateText, element.templatePrefixLength, !element.isSingleQuoted()
             )
             element.replace(recreatedTemplate)
-        }
-
-        private fun createReplacementTemplate(
-            ktPsiFactory: KtPsiFactory,
-            updatedTemplateText: String,
-            prefixLength: Int,
-            isSingleQuoted: Boolean,
-        ): KtStringTemplateExpression {
-            return when {
-                prefixLength > 0 -> {
-                    ktPsiFactory.createMultiDollarStringTemplate(updatedTemplateText, prefixLength, forceMultiQuoted = !isSingleQuoted)
-                }
-
-                else -> {
-                    if (isSingleQuoted) {
-                        ktPsiFactory.createStringTemplate(updatedTemplateText)
-                    } else {
-                        // KTIJ-31681
-                        val quote = "\"\"\""
-                        ktPsiFactory.createExpression("$quote$updatedTemplateText$quote") as KtStringTemplateExpression
-                    }
-                }
-            }
         }
     }
 
@@ -92,7 +69,7 @@ class CanUnescapeDollarLiteralInspection :
     }
 
     override fun getApplicableRanges(element: KtStringTemplateExpression): List<TextRange> {
-        return element.findTextRangesInParentForEscapedDollars()
+        return element.findTextRangesInParentForEscapedDollars(includeUnsafe = false)
     }
 
     override fun buildVisitor(
@@ -113,7 +90,7 @@ class CanUnescapeDollarLiteralInspection :
      * However, it's still safe to replace all the dollars before the unsafe one.
      */
     override fun KaSession.prepareContext(element: KtStringTemplateExpression): Context? {
-        val prefixLength = element.interpolationPrefix?.textLength ?: 0
+        val prefixLength = element.templatePrefixLength
         var sequentialDollarsCounter = 0
         val confirmedReplaceableIndices = mutableSetOf<Int>()
         val candidateReplaceableIndices = mutableListOf<Int>()

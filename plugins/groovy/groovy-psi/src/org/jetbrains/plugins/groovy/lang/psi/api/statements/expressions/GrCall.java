@@ -38,12 +38,12 @@ public interface GrCall extends GroovyPsiElement {
   }
 
   default @Nullable PsiMethod resolveMethod() {
-    return PsiImplUtil.extractUniqueElement(multiResolve(false));
+    return PsiImplUtil.extractUniqueElement(multiResolveGroovy(false));
   }
 
   default @NotNull GroovyResolveResult advancedResolve() {
-    return PsiImplUtil.extractUniqueResult(multiResolve(false));
+    return PsiImplUtil.extractUniqueResult(multiResolveGroovy(false));
   }
 
-  GroovyResolveResult @NotNull [] multiResolve(boolean incompleteCode);
+  GroovyResolveResult @NotNull [] multiResolveGroovy(boolean incompleteCode);
 }

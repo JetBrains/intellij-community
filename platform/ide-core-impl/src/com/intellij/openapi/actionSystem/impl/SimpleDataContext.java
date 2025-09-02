@@ -88,7 +88,7 @@ public final class SimpleDataContext extends CustomizedDataContext {
     }
 
     /** @deprecated Shall not be used since the introduction of {@link IdeUiService#createAsyncDataContext(DataContext)} */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     public @NotNull Builder addAll(@NotNull DataContext dataContext, DataKey<?> @NotNull ... keys) {
       if (keys.length == 0) {
         throw new IllegalArgumentException("Keys argument must not be empty");

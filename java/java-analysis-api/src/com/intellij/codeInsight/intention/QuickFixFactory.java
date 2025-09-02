@@ -78,9 +78,9 @@ public abstract class QuickFixFactory {
                                                                                                     @NotNull PsiType newType,
                                                                                                     boolean fixWholeHierarchy);
 
-  public abstract @NotNull LocalQuickFixAndIntentionActionOnPsiElement createExtendsListFix(@NotNull PsiClass aClass,
-                                                                                            @NotNull PsiClassType typeToExtendFrom,
-                                                                                            boolean toAdd);
+  public abstract @NotNull ModCommandAction createExtendsListFix(@NotNull PsiClass aClass,
+                                                                 @NotNull PsiClassType typeToExtendFrom,
+                                                                 boolean toAdd);
 
   public abstract @NotNull LocalQuickFixAndIntentionActionOnPsiElement createRemoveUnusedParameterFix(@NotNull PsiParameter parameter);
 
@@ -170,10 +170,6 @@ public abstract class QuickFixFactory {
   public abstract @NotNull IntentionAction createUpgradeSdkFor(@NotNull LanguageLevel level);
 
   public abstract @NotNull IntentionAction createChangeParameterClassFix(@NotNull PsiClass aClass, @NotNull PsiClassType type);
-
-  public abstract @NotNull IntentionAction createReplaceInaccessibleFieldWithGetterSetterFix(@NotNull PsiReferenceExpression element,
-                                                                                             @NotNull PsiMethod getter,
-                                                                                             boolean isSetter);
 
   public abstract @NotNull IntentionAction createSurroundWithArrayFix(@Nullable PsiCall methodCall, @Nullable PsiExpression expression);
 
@@ -282,7 +278,7 @@ public abstract class QuickFixFactory {
 
   public abstract @NotNull IntentionAction createCreateAnnotationMethodFromUsageFix(@NotNull PsiNameValuePair pair);
 
-  public abstract @NotNull IntentionAction createOptimizeImportsFix(boolean fixOnTheFly, @NotNull PsiFile file);
+  public abstract @NotNull ModCommandAction createOptimizeImportsFix(boolean fixOnTheFly, @NotNull PsiFile file);
 
   public abstract @NotNull IntentionAction createSafeDeleteUnusedParameterInHierarchyFix(@NotNull PsiParameter parameter, boolean excludingHierarchy);
 
@@ -342,7 +338,7 @@ public abstract class QuickFixFactory {
   public abstract @NotNull LocalQuickFixAndIntentionActionOnPsiElement createAccessStaticViaInstanceFix(@NotNull PsiReferenceExpression methodRef,
                                                                                                         @NotNull JavaResolveResult result);
 
-  public abstract @NotNull IntentionAction createWrapWithAdapterFix(@Nullable PsiType type, @NotNull PsiExpression expression);
+  public abstract @NotNull ModCommandAction createWrapWithAdapterFix(@Nullable PsiType type, @NotNull PsiExpression expression);
 
   public abstract @Nullable IntentionAction createCreateClassInPackageInModuleFix(@NotNull Module module, @Nullable String packageName);
 

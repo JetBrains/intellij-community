@@ -146,7 +146,7 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
   private TypeDfaState handleArgument(TypeDfaState state, ArgumentsInstruction instruction, int descriptorId, Collection<Argument> arguments) {
     return updateVariableType(state, instruction, descriptorId, () -> {
       DFAType result = state.getNotNullDFAType(descriptorId);
-      final GroovyResolveResult[] results = instruction.getElement().multiResolve(false);
+      final GroovyResolveResult[] results = instruction.getElement().multiResolveGroovy(false);
       for (GroovyResolveResult variant : results) {
         if (!(variant instanceof GroovyMethodResult)) continue;
 

@@ -176,13 +176,13 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
 
 
     @Override
-    public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+    public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
       MavenIndicesManager.getInstance(project).scheduleUpdateContentAll(true);
     }
 
     @Override
-    public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-      return MavenUtil.isPomFile(project, file.getVirtualFile())
+    public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+      return MavenUtil.isPomFile(project, psiFile.getVirtualFile())
              && ContainerUtil.exists(MavenIndexUtils.getRemoteRepositoriesNoResolve(project), r -> !Objects.equals(r.getName(), "central"));
     }
   }

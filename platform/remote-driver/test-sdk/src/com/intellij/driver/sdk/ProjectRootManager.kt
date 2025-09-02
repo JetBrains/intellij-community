@@ -23,7 +23,7 @@ interface FrontendProjectRootManager {
 
 fun Driver.findFile(relativePath: String, project: Project? = null): VirtualFile? {
   return withReadAction {
-    if (isRemoteIdeMode) {
+    if (isRemDevMode) {
       service<FrontendProjectRootManager>(project ?: singleProject()).getContentRoots()
         .firstNotNullOfOrNull { it.findFileByRelativePath(relativePath) }
     } else {

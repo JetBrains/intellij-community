@@ -35,6 +35,14 @@ abstract class SchemeManagerBase<T: Scheme, in MUTABLE_SCHEME : T>(internal val 
 
   override fun setCurrent(scheme: T?, notify: Boolean, processChangeSynchronously: Boolean) {
     LOG.debug { "setCurrent: scheme=$scheme" }
+    if (LOG.isDebugEnabled) {
+      val builder = StringBuilder()
+      val trace = Thread.currentThread().stackTrace
+      for (element in trace) {
+        builder.append("\tat $element\n")
+      }
+      LOG.debug("Scheme has been changed. Current stacktrace $builder")
+    }
     currentPendingSchemeName = null
 
     val oldCurrent = activeScheme

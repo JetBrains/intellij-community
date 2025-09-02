@@ -1,14 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.java.JavaParserDefinition;
-import com.intellij.lang.java.lexer.BasicJavaLexer;
-import com.intellij.lang.java.lexer.JavaDocLexer;
-import com.intellij.lang.java.lexer.JavaTypeEscapeLexer;
-import com.intellij.lang.java.parser.JavaParser;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.impl.source.BasicJavaDocElementType;
 import com.intellij.psi.impl.source.javadoc.*;
 import com.intellij.psi.tree.IElementType;
@@ -23,6 +16,9 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.function.Supplier;
 
+/**
+ * @see com.intellij.java.syntax.element.JavaDocSyntaxElementType
+ */
 public interface JavaDocElementType {
   final class JavaDocCompositeElementType extends BasicJavaDocElementType.JavaDocCompositeElementType {
     private JavaDocCompositeElementType(@NonNls @NotNull String debugName, @NotNull Supplier<? extends ASTNode> nodeClass, IElementType parentElementType) {
@@ -59,34 +55,18 @@ public interface JavaDocElementType {
   IElementType DOC_SNIPPET_ATTRIBUTE_VALUE = new JavaDocParentProviderElementType("DOC_SNIPPET_ATTRIBUTE_VALUE", BasicJavaDocElementType.BASIC_DOC_SNIPPET_ATTRIBUTE_VALUE);
   IElementType DOC_MARKDOWN_CODE_BLOCK = new JavaDocCompositeElementType("DOC_CODE_BLOCK", () -> new PsiMarkdownCodeBlockImpl(), BasicJavaDocElementType.BASIC_DOC_MARKDOWN_CODE_BLOCK);
   IElementType DOC_MARKDOWN_REFERENCE_LINK = new JavaDocCompositeElementType("DOC_REFERENCE_LINK", () -> new PsiMarkdownReferenceLinkImpl(), BasicJavaDocElementType.BASIC_DOC_MARKDOWN_REFERENCE_LINK);
+  IElementType DOC_MARKDOWN_REFERENCE_LABEL = new JavaDocCompositeElementType("DOC_REFERENCE_LABEL", () -> new PsiMarkdownReferenceLabelImpl(), BasicJavaDocElementType.BASIC_DOC_MARKDOWN_REFERENCE_LABEL);
 
-  ILazyParseableElementType DOC_REFERENCE_HOLDER = new BasicJavaDocElementType.DocReferenceHolderElementType(
-    () -> JavaParser.INSTANCE,
-    (level) -> (JavaDocLexer)JavaParserDefinition.createDocLexer(level),
-    (level) -> (BasicJavaLexer)JavaParserDefinition.createLexer(level)
-  );
-
-  ILazyParseableElementType DOC_TYPE_HOLDER = new BasicJavaDocElementType.DocTypeHolderElementType(
-    () -> JavaParser.INSTANCE,
-    (level) -> (JavaDocLexer)JavaParserDefinition.createDocLexer(level),
-    (level) -> (JavaTypeEscapeLexer)JavaParserDefinition.createLexerWithMarkdownEscape(level)
-  );
-
-  ILazyParseableElementType DOC_COMMENT = new BasicJavaDocElementType.DocCommentElementType(
-    (level) -> (JavaDocLexer)JavaParserDefinition.createDocLexer(level),
-    (level) -> (BasicJavaLexer)JavaParserDefinition.createLexer(level),
-    JavaDocElementTypeFactory.INSTANCE,
-    (project -> {
-      LanguageLevel level = project != null ? LanguageLevelProjectExtension.getInstance(project).getLanguageLevel() : LanguageLevel.HIGHEST;
-      return JavaParserDefinition.createLexer(level);
-    })
-  ) {
+  ILazyParseableElementType DOC_REFERENCE_HOLDER = new BasicJavaDocElementType.DocReferenceHolderElementType();
+  ILazyParseableElementType DOC_TYPE_HOLDER = new BasicJavaDocElementType.DocTypeHolderElementType();
+  ILazyParseableElementType DOC_COMMENT = new BasicJavaDocElementType.DocCommentElementType() {
     @Override
     public ASTNode createNode(final CharSequence text) {
       return new PsiDocCommentImpl(text);
     }
   };
 
+  @SuppressWarnings("unused") // used in plugins
   TokenSet ALL_JAVADOC_ELEMENTS = TokenSet.create(DOC_TAG, DOC_INLINE_TAG, DOC_METHOD_OR_FIELD_REF, DOC_PARAMETER_REF, DOC_TAG_VALUE_ELEMENT,
                                                   DOC_REFERENCE_HOLDER, DOC_TYPE_HOLDER, DOC_COMMENT);
 }

@@ -9,9 +9,9 @@ import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.navigation.PsiElementNavigationItem;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.UiCompatibleDataProvider;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
@@ -39,7 +39,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public class PsiElement2UsageTargetAdapter
-  implements PsiElementUsageTarget, DataProvider, PsiElementNavigationItem, ItemPresentation, ConfigurableUsageTarget {
+  implements PsiElementUsageTarget, UiCompatibleDataProvider, PsiElementNavigationItem, ItemPresentation, ConfigurableUsageTarget {
   private final SmartPsiElementPointer<?> myPointer;
   protected final @NotNull FindUsagesOptions myOptions;
   private String myPresentableText;
@@ -187,24 +187,12 @@ public class PsiElement2UsageTargetAdapter
   }
 
   @Override
-  public @Nullable Object getData(@NotNull String dataId) {
-    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
-      return (DataProvider)this::getSlowData;
-    }
-    else if (UsageView.USAGE_SCOPE.is(dataId)) {
-      return myOptions.searchScope;
-    }
-    return null;
-  }
-
-  private @Nullable Object getSlowData(@NotNull String dataId) {
-    if (UsageView.USAGE_INFO_KEY.is(dataId)) {
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(UsageView.USAGE_SCOPE, myOptions.searchScope);
+    sink.lazy(UsageView.USAGE_INFO_KEY, () -> {
       PsiElement element = getElement();
-      if (element != null && element.getTextRange() != null) {
-        return new UsageInfo(element);
-      }
-    }
-    return null;
+      return element != null && element.getTextRange() != null ? new UsageInfo(element) : null;
+    });
   }
 
   @Override

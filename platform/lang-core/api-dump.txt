@@ -604,7 +604,6 @@ com.intellij.openapi.roots.ui.configuration.FacetsProvider
 - a:getAllFacets(com.intellij.openapi.module.Module):com.intellij.facet.Facet[]
 - a:getFacetsByType(com.intellij.openapi.module.Module,com.intellij.facet.FacetTypeId):java.util.Collection
 com.intellij.openapi.roots.ui.configuration.ModuleConfigurationEditorProvider
-- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:createEditors(com.intellij.openapi.roots.ui.configuration.ModuleConfigurationState):com.intellij.openapi.module.ModuleConfigurationEditor[]
 com.intellij.openapi.roots.ui.configuration.ModuleConfigurationEditorProviderEx
 - com.intellij.openapi.roots.ui.configuration.ModuleConfigurationEditorProvider

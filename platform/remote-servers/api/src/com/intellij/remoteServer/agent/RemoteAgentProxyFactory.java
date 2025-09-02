@@ -3,11 +3,11 @@ package com.intellij.remoteServer.agent;
 
 import org.jetbrains.annotations.ApiStatus;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.util.List;
 
 @ApiStatus.Internal
 public interface RemoteAgentProxyFactory {
 
-  <T> T createProxy(List<File> libraries, Class<T> agentInterface, String agentClassName) throws Exception;
+  <T> T createProxy(List<Path> libraries, Class<T> agentInterface, String agentClassName) throws Exception;
 }

@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFileFactory
+import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions
 import com.intellij.psi.codeStyle.DetectableIndentOptionsProvider
 import com.intellij.psi.codeStyle.TimeStampedIndentOptions
@@ -48,7 +49,7 @@ class Test {
   fun `test store valid timestamped options in document when detecting indents`() {
     val file = PsiFileFactory.getInstance(project).createFileFromText("Test.java", JavaFileType.INSTANCE, code, 0, true)
     val detectableOptionsProvider = object : DetectableIndentOptionsProvider() {
-      override fun scheduleDetectionInBackground(project: Project, document: Document, indentOptions: TimeStampedIndentOptions) {
+      override fun scheduleDetectionInBackground(project: Project, document: Document, indentOptions: TimeStampedIndentOptions, settings: CodeStyleSettings) {
         //just do nothing, so default indent options will be kept (same as very long indent detection calculation)
       }
     }
@@ -58,7 +59,7 @@ class Test {
     val options = detectableOptionsProvider.getIndentOptions(file.project, settings, file.virtualFile)
 
     val document = PsiDocumentManager.getInstance(project).getDocument(file)!!
-    val indentOptions = detectableOptionsProvider.getValidCachedIndentOptions(file.project, file.virtualFile, document)!!
+    val indentOptions = detectableOptionsProvider.getValidCachedIndentOptions(file.project, file.virtualFile, document, settings)!!
 
     @Suppress("SuspiciousEqualsCombination")
     assert(options == indentOptions && options === indentOptions)

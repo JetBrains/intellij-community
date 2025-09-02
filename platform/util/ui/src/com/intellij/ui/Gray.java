@@ -1,13 +1,17 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.util.ui.PresentableColor;
+import org.jetbrains.annotations.ApiStatus;
+
 import java.awt.*;
 
 /**
  * @author Konstantin Bulenkov
  */
 @SuppressWarnings({"InspectionUsingGrayColors", "UnusedDeclaration"})
-public final class Gray extends Color {
+public final class Gray extends Color implements PresentableColor {
   private Gray(int num) {
     super(num, num, num);
   }
@@ -23,6 +27,12 @@ public final class Gray extends Color {
 
     assert 0 <= alpha && alpha <= 255 : "Alpha " + alpha + "is incorrect. Alpha should be in range 0..255";
     return new Gray(getRed(), alpha);
+  }
+
+  @Override
+  @ApiStatus.Internal
+  public @NlsSafe String getPresentableName() {
+    return String.format("Gray(%s, %s)", getRed(), getAlpha());
   }
 
   public static Gray get(int gray) {

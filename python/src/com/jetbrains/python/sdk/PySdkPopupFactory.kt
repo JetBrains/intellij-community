@@ -2,10 +2,7 @@
 package com.jetbrains.python.sdk
 
 import com.intellij.ide.DataManager
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.projectRoots.Sdk
@@ -91,6 +88,9 @@ class PySdkPopupFactory(val module: Module) {
         switchToSdk(module, sdk, currentSdk)
       }
     })
+    ActionManager.getInstance().getAction("Python.NewInterpreter.Extra")?.let {
+      addNewInterpreterPopupGroup.add(it)
+    }
     group.add(addNewInterpreterPopupGroup)
     group.addSeparator()
     group.add(InterpreterSettingsAction())

@@ -1,7 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk;
 
-import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.target.TargetEnvironmentConfiguration;
 import com.intellij.ide.DataManager;
@@ -23,13 +22,11 @@ import com.intellij.openapi.util.KeyWithDefaultValue;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.reference.SoftReference;
 import com.intellij.remote.ExceptionFix;
-import com.intellij.remote.VagrantNotStartedException;
 import com.intellij.remote.ext.LanguageCaseCollector;
 import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
@@ -45,7 +42,7 @@ import com.jetbrains.python.remote.PyRemoteInterpreterUtil;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.sdk.add.PyAddSdkDialog;
-import com.jetbrains.python.sdk.add.v1.PyDetectedSdkAdditionalData;
+import com.jetbrains.python.target.PyDetectedSdkAdditionalData;
 import com.jetbrains.python.sdk.flavors.CPythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.target.PyInterpreterVersionUtil;
@@ -61,11 +58,12 @@ import java.lang.ref.WeakReference;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.execution.target.TargetBasedSdks.loadTargetConfiguration;
+import static com.jetbrains.python.statistics.PythonSDKUpdaterIdsHolder.REFRESH_SKELETONS_FOR_REMOTE_INTERPRETER_FAILED;
 
 /**
  * Class should be final and singleton since some code checks its instance by ref.
@@ -79,9 +77,6 @@ public final class PythonSdkType extends SdkType {
   @ApiStatus.Internal public static final @NotNull Key<Boolean> MOCK_PY_MARKER_KEY = KeyWithDefaultValue.create("MOCK_PY_MARKER_KEY", true);
 
   private static final Logger LOG = Logger.getInstance(PythonSdkType.class);
-
-  private static final int MINUTE = 60 * 1000; // 60 seconds, used with script timeouts
-  private static final @NonNls String SKELETONS_TOPIC = "Skeletons";
 
   private static final Key<WeakReference<Component>> SDK_CREATOR_COMPONENT_KEY = Key.create("#com.jetbrains.python.sdk.creatorComponent");
 
@@ -316,7 +311,9 @@ public final class PythonSdkType extends SdkType {
    * @return whether provided Python interpreter path corresponds to custom Python SDK
    */
   @Contract(pure = true)
-  static boolean isCustomPythonSdkHomePath(@NotNull String homePath) {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public static boolean isCustomPythonSdkHomePath(@NotNull String homePath) {
     return CustomSdkHomePattern.isCustomPythonSdkHomePath(homePath);
   }
 
@@ -373,29 +370,7 @@ public final class PythonSdkType extends SdkType {
   public static void notifyRemoteSdkSkeletonsFail(final InvalidSdkException e, final @Nullable Runnable restartAction) {
     NotificationListener notificationListener;
     String notificationMessage;
-    if (e.getCause() instanceof VagrantNotStartedException) {
-      notificationListener =
-        (notification, event) -> {
-          final PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
-          if (manager != null) {
-            try {
-              VagrantNotStartedException cause = (VagrantNotStartedException)e.getCause();
-              manager.runVagrant(cause.getVagrantFolder(), cause.getMachineName());
-            }
-            catch (ExecutionException e1) {
-              throw new RuntimeException(e1);
-            }
-          }
-          if (restartAction != null) {
-            restartAction.run();
-          }
-        };
-      notificationMessage = new HtmlBuilder()
-        .append(e.getMessage())
-        .appendLink("#", PyBundle.message("python.vagrant.refresh.skeletons"))
-        .toString();
-    }
-    else if (ExceptionUtil.causedBy(e, ExceptionFix.class)) {
+    if (ExceptionUtil.causedBy(e, ExceptionFix.class)) {
       final ExceptionFix fix = ExceptionUtil.findCause(e, ExceptionFix.class);
       notificationListener =
         (notification, event) -> {
@@ -413,7 +388,7 @@ public final class PythonSdkType extends SdkType {
 
     Notification notification =
       new Notification("Python SDK Updater", PyBundle.message("sdk.gen.failed.notification.title"), notificationMessage,
-                       NotificationType.WARNING);
+                       NotificationType.WARNING).setDisplayId(REFRESH_SKELETONS_FOR_REMOTE_INTERPRETER_FAILED);
     if (notificationListener != null) notification.setListener(notificationListener);
     notification.notify(null);
   }

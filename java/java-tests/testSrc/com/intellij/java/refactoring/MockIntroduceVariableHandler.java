@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.openapi.editor.Editor;
@@ -11,6 +11,7 @@ import com.intellij.refactoring.introduceVariable.InputValidator;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableSettings;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -98,7 +99,7 @@ class MockIntroduceVariableHandler extends IntroduceVariableBase {
 
   @Override
   protected void showErrorMessage(Project project, Editor editor, String message) {
-    throw new RuntimeException("Error message:" + message);
+    throw new CommonRefactoringUtil.RefactoringErrorHintException(message);
   }
 
   private PsiType findType(final PsiType[] candidates, PsiType defaultType) {

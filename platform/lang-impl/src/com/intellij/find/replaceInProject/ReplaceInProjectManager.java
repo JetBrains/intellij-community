@@ -4,6 +4,7 @@ package com.intellij.find.replaceInProject;
 import com.intellij.find.*;
 import com.intellij.find.actions.FindInPathAction;
 import com.intellij.find.findInProject.FindInProjectManager;
+import com.intellij.find.impl.FindAndReplaceExecutor;
 import com.intellij.find.impl.FindInProjectUtil;
 import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.history.LocalHistory;
@@ -41,6 +42,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.usageView.UsageViewContentManager;
 import com.intellij.usages.*;
 import com.intellij.usages.impl.UsageViewImpl;
+import com.intellij.usages.rules.UsageDocumentProcessor;
 import com.intellij.usages.rules.UsageInFile;
 import com.intellij.util.AdapterProcessor;
 import com.intellij.util.containers.ContainerUtil;
@@ -108,6 +110,7 @@ public class ReplaceInProjectManager {
 
     final boolean isOpenInNewTabEnabled;
     final boolean toOpenInNewTab;
+    boolean stringToFindChanged = false;
     final Content selectedContent = UsageViewContentManager.getInstance(myProject).getSelectedContent(true);
     if (selectedContent != null && selectedContent.isPinned()) {
       toOpenInNewTab = true;
@@ -119,22 +122,22 @@ public class ReplaceInProjectManager {
     }
     if (model == null) {
       findModel = findManager.getFindInProjectModel().clone();
+      String initialString = findModel.getStringToFind();
       findModel.setReplaceState(true);
       findModel.setOpenInNewTabEnabled(isOpenInNewTabEnabled);
       findModel.setOpenInNewTab(toOpenInNewTab);
       initModel(findModel, dataContext);
+      stringToFindChanged = !Objects.equals(initialString, findModel.getStringToFind());
     }
     else {
       findModel = model;
       findModel.setOpenInNewTabEnabled(isOpenInNewTabEnabled);
     }
 
+    FindUsagesCollector.findPopupShown(dataContext, findModel, stringToFindChanged);
     findManager.showFindDialog(findModel, () -> {
-      if (findModel.isReplaceState()) {
-        replaceInPath(findModel);
-      } else {
-        FindInProjectManager.getInstance(myProject).findInPath(findModel);
-      }
+      FindUsagesCollector.replaceAllInvoked();
+      FindAndReplaceExecutor.getInstance().performFindAllOrReplaceAll(findModel, myProject);
     });
   }
 
@@ -244,7 +247,7 @@ public class ReplaceInProjectManager {
   }
 
   private static @Unmodifiable Set<VirtualFile> getFiles(@NotNull Collection<Usage> usages) {
-    return ContainerUtil.map2Set(usages, usage -> ((UsageInfo2UsageAdapter)usage).getFile());
+    return ContainerUtil.map2Set(usages, usage -> ((UsageInFile)usage).getFile());
   }
 
   private void addReplaceActions(final ReplaceContext replaceContext) {
@@ -304,7 +307,7 @@ public class ReplaceInProjectManager {
 
       private Set<Usage> getSelectedUsages() {
         UsageView usageView = replaceContext.getUsageView();
-        Set<Usage> selectedUsages = usageView.getSelectedUsages();
+        Set<Usage> selectedUsages = new HashSet<>(usageView.getSelectedUsages());
         selectedUsages.removeAll(usageView.getExcludedUsages());
         return selectedUsages;
       }
@@ -398,10 +401,10 @@ public class ReplaceInProjectManager {
         return false;
       }
 
-      final Document document = ((UsageInfo2UsageAdapter)usage).getDocument();
+      final Document document = ((UsageDocumentProcessor)usage).getDocument();
       if (document == null || !document.isWritable()) return false;
 
-      return ((UsageInfo2UsageAdapter)usage).processRangeMarkers(segment -> {
+      return ((UsageDocumentProcessor)usage).processRangeMarkers(segment -> {
         final int textOffset = segment.getStartOffset();
         final int textEndOffset = segment.getEndOffset();
         final Ref<String> stringToReplace = Ref.create();

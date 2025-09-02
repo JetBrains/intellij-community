@@ -1,12 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.annoPackages;
 
+import com.intellij.codeInsight.ContextNullabilityInfo;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullabilityAnnotationInfo;
 import com.intellij.psi.*;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
@@ -26,10 +26,9 @@ final class FindBugsAnnotationSupport implements AnnotationPackageSupport {
   }
 
   @Override
-  public @Nullable NullabilityAnnotationInfo getNullabilityByContainerAnnotation(@NotNull PsiAnnotation anno,
-                                                                                 @NotNull PsiElement context,
-                                                                                 PsiAnnotation.TargetType @NotNull [] types,
-                                                                                 boolean superPackage) {
+  public @NotNull ContextNullabilityInfo getNullabilityByContainerAnnotation(@NotNull PsiAnnotation anno,
+                                                                             PsiAnnotation.TargetType @NotNull [] types,
+                                                                             boolean superPackage) {
     if (!superPackage && 
         anno.hasQualifiedName(DEFAULT_ANNOTATION_FOR_PARAMETERS) && 
         ArrayUtil.contains(PsiAnnotation.TargetType.PARAMETER, types)) {
@@ -41,14 +40,14 @@ final class FindBugsAnnotationSupport implements AnnotationPackageSupport {
         if (resolved != null) {
           String qualifiedName = resolved.getQualifiedName();
           if (NON_NULL.equals(qualifiedName)) {
-            return new NullabilityAnnotationInfo(anno, Nullability.NOT_NULL, true);
+            return ContextNullabilityInfo.constant(new NullabilityAnnotationInfo(anno, Nullability.NOT_NULL, true));
           }
           if (NULLABLE.equals(qualifiedName)) {
-            return new NullabilityAnnotationInfo(anno, Nullability.NULLABLE, true);
+            return ContextNullabilityInfo.constant(new NullabilityAnnotationInfo(anno, Nullability.NULLABLE, true));
           }
         }
       }
     }
-    return null;
+    return ContextNullabilityInfo.EMPTY;
   }
 }

@@ -27,6 +27,7 @@ public final class WindowWrapperBuilder {
   private @Nullable @NlsContexts.DialogTitle String title;
   private @Nullable Computable<JComponent> myPreferredFocusedComponent;
   private @NonNls @Nullable String myDimensionServiceKey;
+  private @Nullable Dimension myInitialSize;
   private @Nullable Runnable myOnShowCallback;
   private @Nullable BooleanGetter myOnCloseHandler;
 
@@ -62,6 +63,11 @@ public final class WindowWrapperBuilder {
 
   public @NotNull WindowWrapperBuilder setDimensionServiceKey(@NonNls @Nullable String dimensionServiceKey) {
     myDimensionServiceKey = dimensionServiceKey;
+    return this;
+  }
+
+  public @NotNull WindowWrapperBuilder setInitialSize(@NotNull Dimension size) {
+    myInitialSize = size;
     return this;
   }
 
@@ -102,7 +108,8 @@ public final class WindowWrapperBuilder {
       myDialog = builder.myParent != null
                  ? new MyDialogWrapper(builder.myParent, builder.myComponent)
                  : new MyDialogWrapper(builder.myProject, builder.myComponent);
-      myDialog.setParameters(builder.myDimensionServiceKey, builder.myPreferredFocusedComponent, builder.myOnCloseHandler);
+      myDialog.setParameters(builder.myDimensionServiceKey, builder.myInitialSize, builder.myPreferredFocusedComponent,
+                             builder.myOnCloseHandler);
 
       installOnShowCallback(myDialog.getWindow(), builder.myOnShowCallback);
 
@@ -170,6 +177,7 @@ public final class WindowWrapperBuilder {
     private static final class MyDialogWrapper extends DialogWrapper {
       private final @NotNull JComponent myComponent;
       private @Nullable @NonNls String myDimensionServiceKey;
+      private @Nullable Dimension myInitialSize;
       private @Nullable Computable<? extends JComponent> myPreferredFocusedComponent;
       private @Nullable BooleanGetter myOnCloseHandler;
 
@@ -189,9 +197,11 @@ public final class WindowWrapperBuilder {
       }
 
       public void setParameters(@Nullable @NonNls String dimensionServiceKey,
+                                @Nullable Dimension initialSize,
                                 @Nullable Computable<? extends JComponent> preferredFocusedComponent,
                                 @Nullable BooleanGetter onCloseHandler) {
         myDimensionServiceKey = dimensionServiceKey;
+        myInitialSize = initialSize;
         myPreferredFocusedComponent = preferredFocusedComponent;
         myOnCloseHandler = onCloseHandler;
       }
@@ -220,6 +230,11 @@ public final class WindowWrapperBuilder {
       @Override
       protected @Nullable String getDimensionServiceKey() {
         return myDimensionServiceKey;
+      }
+
+      @Override
+      public @Nullable Dimension getInitialSize() {
+        return myInitialSize == null ? super.getInitialSize() : myInitialSize;
       }
 
       @Override

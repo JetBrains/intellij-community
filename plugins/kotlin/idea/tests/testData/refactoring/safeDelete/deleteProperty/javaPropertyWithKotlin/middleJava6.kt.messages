@@ -1,1 +1,1 @@
-method C.setFoo(String) implements property B.foo.
+Method C.setFoo(String) implements property B.foo.

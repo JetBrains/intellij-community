@@ -49,18 +49,6 @@ c:com.intellij.execution.rmi.RemoteServer$Jndi
 - <init>():V
 - getInitialContext(java.util.Hashtable):javax.naming.Context
 - invoke(java.lang.Object,java.lang.reflect.Method,java.lang.Object[]):java.lang.Object
-f:com.intellij.execution.rmi.ssl.DefaultSslSocketFactory
-- javax.net.ssl.SSLSocketFactory
-- <init>():V
-- <init>(java.lang.String):V
-- <init>(Z):V
-- createSocket(java.lang.String,I):java.net.Socket
-- createSocket(java.lang.String,I,java.net.InetAddress,I):java.net.Socket
-- createSocket(java.net.InetAddress,I):java.net.Socket
-- createSocket(java.net.InetAddress,I,java.net.InetAddress,I):java.net.Socket
-- createSocket(java.net.Socket,java.lang.String,I,Z):java.net.Socket
-- getDefaultCipherSuites():java.lang.String[]
-- getSupportedCipherSuites():java.lang.String[]
 f:com.intellij.execution.rmi.ssl.SslKeyStore
 - java.security.KeyStoreSpi
 - sf:SSL_DEFERRED_CA_LOADING:java.lang.String
@@ -72,17 +60,6 @@ f:com.intellij.execution.rmi.ssl.SslKeyStore
 - s:getUserKey():java.security.Key
 - s:loadKey(java.lang.String,java.lang.String,java.lang.String,C[]):V
 - s:setDefault():V
-f:com.intellij.execution.rmi.ssl.SslSocketFactory
-- javax.net.ssl.SSLSocketFactory
-- <init>():V
-- createSocket(java.lang.String,I):java.net.Socket
-- createSocket(java.lang.String,I,java.net.InetAddress,I):java.net.Socket
-- createSocket(java.net.InetAddress,I):java.net.Socket
-- createSocket(java.net.InetAddress,I,java.net.InetAddress,I):java.net.Socket
-- createSocket(java.net.Socket,java.lang.String,I,Z):java.net.Socket
-- s:createTrustManagers(java.lang.String):javax.net.ssl.TrustManager[]
-- getDefaultCipherSuites():java.lang.String[]
-- getSupportedCipherSuites():java.lang.String[]
 f:com.intellij.execution.rmi.ssl.SslTrustStore
 - java.security.KeyStoreSpi
 - <init>():V
@@ -192,6 +169,7 @@ f:com.intellij.openapi.util.io.DataInputOutputUtilRt
 f:com.intellij.openapi.util.io.FileTooBigException
 - java.io.IOException
 - <init>(java.lang.String):V
+- <init>(java.lang.String,java.lang.Throwable):V
 f:com.intellij.openapi.util.io.FileUtilRt
 - sf:LARGE_FILE_PREVIEW_SIZE:I
 - sf:LARGE_FOR_CONTENT_LOADING:I
@@ -264,8 +242,6 @@ com.intellij.openapi.util.io.FileUtilRt$RepeatableIOOperation
 f:com.intellij.openapi.util.text.StringHash
 - s:buz(java.lang.CharSequence):J
 - s:calc(java.lang.String):J
-- s:calc(B[]):J
-- s:murmur(java.lang.CharSequence):I
 - s:murmur(java.lang.CharSequence,I):I
 f:com.intellij.openapi.util.text.StringUtilRt
 - s:charsEqualIgnoreCase(C,C):Z
@@ -367,7 +343,6 @@ com.intellij.util.ThrowableRunnable
 f:com.intellij.util.containers.ContainerUtilRt
 - <init>():V
 - s:emptyList():java.util.List
-- s:newArrayList():java.util.ArrayList
 - s:newArrayList(java.lang.Object[]):java.util.ArrayList
 - s:newLinkedHashSet(java.lang.Object[]):java.util.LinkedHashSet
 c:com.intellij.util.containers.Stack

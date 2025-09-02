@@ -73,5 +73,9 @@ internal class PlainTerminalView(
     session.commandExecutionManager.sendCommandToExecute(shellCommand)
   }
 
+  override fun getText(): CharSequence {
+    return view.getText()
+  }
+
   override fun dispose() {}
 }

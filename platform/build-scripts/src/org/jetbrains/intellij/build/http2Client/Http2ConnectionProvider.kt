@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("SSBasedInspection")
 
 package org.jetbrains.intellij.build.http2Client
@@ -12,21 +12,37 @@ import io.netty.channel.ChannelInitializer
 import io.netty.channel.EventLoop
 import io.netty.handler.codec.http.HttpResponseStatus
 import io.netty.handler.codec.http.HttpStatusClass
-import io.netty.handler.codec.http2.*
+import io.netty.handler.codec.http2.Http2ConnectionAdapter
+import io.netty.handler.codec.http2.Http2Error
+import io.netty.handler.codec.http2.Http2Exception
+import io.netty.handler.codec.http2.Http2FrameCodec
+import io.netty.handler.codec.http2.Http2FrameCodecBuilder
+import io.netty.handler.codec.http2.Http2MultiplexHandler
+import io.netty.handler.codec.http2.Http2StreamChannel
+import io.netty.handler.codec.http2.Http2StreamChannelBootstrap
 import io.netty.handler.ssl.SslContext
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.Runnable
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.job
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import java.net.InetSocketAddress
 import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.coroutineContext
 import kotlin.random.Random
-import kotlin.random.asJavaRandom
 
 internal class UnexpectedHttpStatus(urlPath: CharSequence?, @JvmField val status: HttpResponseStatus)
   : RuntimeException("Unexpected HTTP response status: $status" + (if (urlPath == null) "" else " (urlPath=$urlPath)"))
@@ -125,7 +141,6 @@ internal class Http2ConnectionProvider(
 
   suspend fun <T> stream(block: suspend (streamChannel: Http2StreamChannel, result: CompletableDeferred<T>) -> Unit): T {
     var attempt = 1
-    var currentDelay = 1_000L
     var suppressedExceptions: MutableList<Throwable>? = null
     while (true) {
       var currentConnection: ConnectionState? = null
@@ -170,11 +185,10 @@ internal class Http2ConnectionProvider(
         }
         suppressedExceptions.add(e)
 
-        val nextDelay = RetryService.nextDelay(currentDelay)
-        Span.current().recordException(e, Attributes.of(AttributeKey.longKey("attemptIndex"), attempt.toLong(), AttributeKey.longKey("nextDelay"), nextDelay))
+        Span.current().recordException(e, Attributes.of(AttributeKey.longKey("attemptIndex"), attempt.toLong()))
 
-        delay(nextDelay)
-        currentDelay = (currentDelay * 2).coerceAtMost(32_000)
+
+        delay(Random.nextLong(300, attempt * 3_000L))
       }
 
       attempt++
@@ -192,7 +206,7 @@ internal class Http2ConnectionProvider(
         }
       }
       Http2Error.ENHANCE_YOUR_CALM -> {
-        delay(RetryService.nextDelay(1_000L))
+        delay(5000)
         Span.current().addEvent("enhance your calm", Attributes.of(AttributeKey.longKey("attempt"), attempt.toLong(), AttributeKey.stringKey("name"), error.name))
       }
       else -> {
@@ -206,32 +220,28 @@ internal class Http2ConnectionProvider(
       }
     }
   }
+}
 
-  // must be called with ioDispatcher
-  private suspend fun <T> openStreamAndConsume(
-    connectionState: ConnectionState,
-    block: suspend (streamChannel: Http2StreamChannel, result: CompletableDeferred<T>) -> Unit,
-  ): T {
-    val streamChannel = connectionState.bootstrap.open().cancellableAwait()
-    try {
-      // must be canceled when the parent context is canceled
-      val deferred = CompletableDeferred<T>(parent = coroutineContext.job)
-      block(streamChannel, deferred)
-      // Ensure the stream is closed before completing the operation.
-      // This prevents the risk of opening more streams than intended,
-      // especially when there is a limit on the number of parallel executed tasks.
-      // Also, avoid explicitly closing the stream in case of a successful operation.
-      streamChannel.closeFuture().joinCancellable(cancelFutureOnCancellation = false)
-      // 1. writer must send the last data frame with endStream=true
-      // 2. stream now has the half-closed state - we listen for server header response with endStream
-      // 3. our ChannelInboundHandler above checks status and Netty closes the stream (as endStream was sent by both client and server)
-      return deferred.await()
-    }
-    finally {
-      if (streamChannel.isOpen && connectionState.coroutineScope.isActive) {
-        withContext(NonCancellable) {
-          streamChannel.close().joinNonCancellable()
-        }
+// must be called with ioDispatcher
+private suspend fun <T> openStreamAndConsume(
+  connectionState: ConnectionState,
+  block: suspend (streamChannel: Http2StreamChannel, result: CompletableDeferred<T>) -> Unit,
+): T {
+  val streamChannel = connectionState.bootstrap.open().cancellableAwait()
+  try {
+    // must be canceled when the parent context is canceled
+    val deferred = CompletableDeferred<T>(parent = coroutineContext.job)
+    block(streamChannel, deferred)
+
+    // 1. writer must send the last data frame with endStream=true
+    // 2. stream now has the half-closed state - we listen for server header response with endStream
+    // 3. our ChannelInboundHandler above checks status and Netty closes the stream (as endStream was sent by both client and server)
+    return deferred.await()
+  }
+  finally {
+    if (streamChannel.isOpen && connectionState.coroutineScope.isActive) {
+      withContext(NonCancellable) {
+        streamChannel.close().joinNonCancellable()
       }
     }
   }
@@ -260,14 +270,4 @@ internal class EventLoopCoroutineDispatcher(@JvmField val eventLoop: EventLoop) 
   }
 
   override fun isDispatchNeeded(context: CoroutineContext) = !eventLoop.inEventLoop()
-}
-
-private object RetryService {
-  private val random by lazy { Random.asJavaRandom() }
-
-  fun nextDelay(currentDelay: Long): Long {
-    val jitter = random.nextGaussian(2000.0, 500.0).toLong()
-    // ensure no negative delay
-    return (currentDelay + jitter).coerceAtLeast(100)
-  }
 }

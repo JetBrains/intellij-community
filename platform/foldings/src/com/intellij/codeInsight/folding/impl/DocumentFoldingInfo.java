@@ -37,7 +37,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.intellij.openapi.editor.impl.FoldingModelImpl.ZOMBIE_BITTEN_KEY;
+import static com.intellij.openapi.editor.impl.FoldingKeys.ZOMBIE_BITTEN_KEY;
+import static com.intellij.openapi.editor.impl.FoldingKeys.ZOMBIE_REGION_KEY;
 
 final class DocumentFoldingInfo implements CodeFoldingState {
   private static final Logger LOG = Logger.getInstance(DocumentFoldingInfo.class);
@@ -68,7 +69,7 @@ final class DocumentFoldingInfo implements CodeFoldingState {
 
     FoldRegion[] foldRegions = editor.getFoldingModel().getAllFoldRegions();
     for (FoldRegion region : foldRegions) {
-      if (!region.isValid() || region.shouldNeverExpand()) continue;
+      if (!region.isValid() || region.shouldNeverExpand() || CodeFoldingManagerImpl.isNotPersistent(region)) continue;
       boolean expanded = region.isExpanded();
       String signature = region.getUserData(UpdateFoldRegionsOperation.SIGNATURE);
       if (Strings.areSameInstance(signature, UpdateFoldRegionsOperation.NO_SIGNATURE)) continue;
@@ -139,7 +140,9 @@ final class DocumentFoldingInfo implements CodeFoldingState {
       }
 
       boolean state = info != null && info.expanded;
-      region.setExpanded(state);
+      if (region.getUserData(ZOMBIE_BITTEN_KEY) == null && region.getUserData(ZOMBIE_REGION_KEY) == null) {
+        region.setExpanded(state);
+      }
     }
   }
 

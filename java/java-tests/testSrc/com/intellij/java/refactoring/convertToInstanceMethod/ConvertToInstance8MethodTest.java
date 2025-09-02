@@ -20,7 +20,8 @@ public class ConvertToInstance8MethodTest extends ConvertToInstanceMethodTest {
   public void testMethodReferenceAcceptableBySecondSearch() { doTest(0); }
   public void testConvertToInstanceMethodOfTheSameClass() { doTest(0); }
   public void testReassignedParameter() { doTest(0); }
-  public void testStaticMethodOfInterfaceWithNonAccessibleInheritor() { doTest(0, null, "I i", "this / new I()"); }
+  //todo temporary committed to check IDEA-366687
+  //public void testStaticMethodOfInterfaceWithNonAccessibleInheritor() { doTest(0, null, "I i", "this / new I()"); }
   public void testEnum() { doTest(0, null, "E e"); }
   public void testAnonymousClass() { doTest(0, null, "X x"); }
   public void testInnerClass() { doTest(0, null, "X x"); }

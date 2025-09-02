@@ -16,10 +16,7 @@ import com.intellij.util.PathUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.URLUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -42,7 +39,6 @@ public final class FilePartNodeRoot extends FilePartNode {
   CharSequence getName() {
     return "";
   }
-
 
   @NotNull
   NodeToUpdate findOrCreateByFile(@NotNull VirtualFile file) {
@@ -137,6 +133,7 @@ public final class FilePartNodeRoot extends FilePartNode {
     return result;
   }
 
+  /** Find a pointer to the given path, taking into account case-sensitivity of fs, or create a new pointer, if existing not found */
   @NotNull
   NodeToUpdate findOrCreateByPath(@NotNull String path, @NotNull NewVirtualFileSystem fs) {
     NewVirtualFileSystem currentFS;
@@ -250,7 +247,7 @@ public final class FilePartNodeRoot extends FilePartNode {
                                                   @Nullable VirtualFile currentFile,
                                                   @NotNull String name) {
     if (currentFile == null) {
-      return new UrlPartNode(name, myUrl(currentNode.myFileOrUrl), currentFS);
+      return new UrlPartNode(name, urlOf(currentNode.fileOrUrl), currentFS);
     }
     int nameId = name.equals(JarFileSystem.JAR_SEPARATOR) ? JAR_SEPARATOR_NAME_ID : getNameId(currentFile);
     return new FilePartNode(nameId, currentFile, currentFS);
@@ -329,12 +326,12 @@ public final class FilePartNodeRoot extends FilePartNode {
   }
 
   void removePointer(@NotNull VirtualFilePointerImpl pointer) {
-    FilePartNode node = pointer.getNode();
+    FilePartNode node = pointer.myNode;
     int remainingLeaves = node.removeLeaf(pointer);
     if (remainingLeaves == 0) {
-      VirtualFile file = myFile(node.myFileOrUrl);
+      VirtualFile file = fileOrNull(node.fileOrUrl);
       if (file == null) {
-        removeEmptyNodesByPath(VfsUtilCore.urlToPath(myUrl(node.myFileOrUrl)));
+        removeEmptyNodesByPath(VfsUtilCore.urlToPath(urlOf(node.fileOrUrl)));
       }
       else {
         List<VirtualFile> parts = getHierarchy(file);
@@ -349,7 +346,8 @@ public final class FilePartNodeRoot extends FilePartNode {
     }
   }
 
-  static @NotNull FilePartNodeRoot createFakeRoot(@NotNull NewVirtualFileSystem fs) {
+  @VisibleForTesting
+  public static @NotNull FilePartNodeRoot createFakeRoot(@NotNull NewVirtualFileSystem fs) {
     return new FilePartNodeRoot(fs);
   }
 }

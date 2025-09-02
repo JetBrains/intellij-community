@@ -4,10 +4,9 @@ package com.intellij.diff.merge;
 import com.intellij.CommonBundle;
 import com.intellij.diff.DiffManagerEx;
 import com.intellij.diff.DiffNotificationIdsHolder;
-import com.intellij.diff.actions.impl.NextDifferenceAction;
-import com.intellij.diff.actions.impl.PrevDifferenceAction;
+import com.intellij.diff.actions.impl.DiffNextDifferenceAction;
+import com.intellij.diff.actions.impl.DiffPreviousDifferenceAction;
 import com.intellij.diff.tools.util.DiffDataKeys;
-import com.intellij.diff.tools.util.PrevNextDifferenceIterable;
 import com.intellij.diff.util.DiffPlaces;
 import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.DiffUtil;
@@ -245,8 +244,11 @@ public abstract class MergeRequestProcessor implements Disposable {
 
   protected @NotNull DefaultActionGroup collectToolbarActions(@Nullable List<? extends AnAction> viewerActions) {
     DefaultActionGroup group = new DefaultActionGroup();
-
-    List<AnAction> navigationActions = Arrays.asList(new MyPrevDifferenceAction(), new MyNextDifferenceAction());
+    ActionManager actionManager = ActionManager.getInstance();
+    List<AnAction> navigationActions = Arrays.asList(
+      actionManager.getAction(DiffPreviousDifferenceAction.ID),
+      actionManager.getAction(DiffNextDifferenceAction.ID)
+    );
     DiffUtil.addActionBlock(group, navigationActions);
 
     DiffUtil.addActionBlock(group, viewerActions);
@@ -457,72 +459,6 @@ public abstract class MergeRequestProcessor implements Disposable {
 
   private void requestFocusInWindow() {
     DiffUtil.requestFocusInWindow(getPreferredFocusedComponent());
-  }
-
-  //
-  // Navigation
-  //
-
-  private static class MyNextDifferenceAction extends NextDifferenceAction {
-    @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.EDT;
-    }
-
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      if (!ActionPlaces.DIFF_TOOLBAR.equals(e.getPlace())) {
-        e.getPresentation().setEnabled(true);
-        return;
-      }
-
-      PrevNextDifferenceIterable iterable = e.getData(DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE);
-      if (iterable != null && iterable.canGoNext()) {
-        e.getPresentation().setEnabled(true);
-        return;
-      }
-
-      e.getPresentation().setEnabled(false);
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      PrevNextDifferenceIterable iterable = e.getData(DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE);
-      if (iterable != null && iterable.canGoNext()) {
-        iterable.goNext();
-      }
-    }
-  }
-
-  private static class MyPrevDifferenceAction extends PrevDifferenceAction {
-    @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.EDT;
-    }
-
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      if (!ActionPlaces.DIFF_TOOLBAR.equals(e.getPlace())) {
-        e.getPresentation().setEnabled(true);
-        return;
-      }
-
-      PrevNextDifferenceIterable iterable = e.getData(DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE);
-      if (iterable != null && iterable.canGoPrev()) {
-        e.getPresentation().setEnabled(true);
-        return;
-      }
-
-      e.getPresentation().setEnabled(false);
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      PrevNextDifferenceIterable iterable = e.getData(DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE);
-      if (iterable != null && iterable.canGoPrev()) {
-        iterable.goPrev();
-      }
-    }
   }
 
   //

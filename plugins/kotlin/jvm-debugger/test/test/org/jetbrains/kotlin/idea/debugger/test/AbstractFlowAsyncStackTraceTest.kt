@@ -16,7 +16,7 @@ abstract class AbstractFlowAsyncStackTraceTest : AbstractAsyncStackTraceTest() {
     ) {
         XDebuggerSettingManagerImpl.getInstanceImpl().dataViewSettings.isShowLibraryStackFrames = false
         doWhenXSessionPausedThenResume {
-            printAsyncStackTrace()
+            printAsyncStackTrace(false)
         }
     }
 

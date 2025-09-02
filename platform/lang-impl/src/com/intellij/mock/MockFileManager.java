@@ -12,6 +12,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 import java.util.Map;
@@ -116,7 +117,7 @@ public final class MockFileManager implements FileManager {
 
   @ApiStatus.Experimental
   @Override
-  public @NotNull List<@NotNull FileViewProvider> findCachedViewProviders(@NotNull VirtualFile vFile) {
+  public @NotNull @Unmodifiable List<@NotNull FileViewProvider> findCachedViewProviders(@NotNull VirtualFile vFile) {
     return ContainerUtil.createMaybeSingletonList(myViewProviders.get(vFile));
   }
 }

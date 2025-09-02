@@ -66,11 +66,12 @@ public final class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
   private volatile @Nullable ProviderAndData myProviderAndData = null;
   private volatile boolean myCredentialHelperShouldBeUsed = false;
 
-  GitHttpGuiAuthenticator(@NotNull Project project,
-                          @NotNull Collection<String> urls,
-                          @NotNull File workingDirectory,
-                          @NotNull AuthenticationGate authenticationGate,
-                          @NotNull AuthenticationMode authenticationMode) {
+  @VisibleForTesting
+  public GitHttpGuiAuthenticator(@NotNull Project project,
+                                 @NotNull Collection<String> urls,
+                                 @NotNull File workingDirectory,
+                                 @NotNull AuthenticationGate authenticationGate,
+                                 @NotNull AuthenticationMode authenticationMode) {
     myProject = project;
     myPresetUrl = findFirstHttpUrl(urls);
     myWorkingDirectory = workingDirectory;
@@ -177,9 +178,8 @@ public final class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     });
   }
 
-  static class CredentialHelperShouldBeUsedException extends RuntimeException implements ControlFlowException {
+  static final class CredentialHelperShouldBeUsedException extends RuntimeException implements ControlFlowException {
   }
-
 
   private @NotNull List<AuthDataProvider> getProviders(@NotNull String urlWithoutUsername) {
     List<AuthDataProvider> delegates = new ArrayList<>();

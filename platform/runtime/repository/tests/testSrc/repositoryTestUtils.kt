@@ -16,8 +16,8 @@ fun DirectoryContentBuilder.xml(name: String, @Language("XML") content: String) 
 }
 
 fun createRepository(basePath: Path, vararg descriptors: RawRuntimeModuleDescriptor): RuntimeModuleRepository {
-  val moduleDescriptorsJarPath = basePath.resolve("module-descriptors.jar")
-  return RuntimeModuleRepositoryImpl(moduleDescriptorsJarPath, 
+  val moduleDescriptorsPath = basePath.resolve("module-descriptors.dat")
+  return RuntimeModuleRepositoryImpl(moduleDescriptorsPath,
                                      RawRuntimeModuleRepositoryData(descriptors.associateBy { it.id }, basePath, null))
 }
 

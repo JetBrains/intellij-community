@@ -1,0 +1,15 @@
+// AFTER-WARNING: Parameter 'a' is never used
+fun <T> doSomething(a: T) {}
+
+fun foo() {
+    if (true)
+        /*
+        comment
+        comment
+        */
+        <caret>doSomething("test")
+        // comment
+    else {
+        doSomething("else test")
+    }
+}

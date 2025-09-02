@@ -16,7 +16,7 @@ import javax.swing.*
 import javax.swing.event.DocumentEvent
 import kotlin.math.pow
 
-internal class ShowPoweredProgressAction : AnAction("Show Powered Progress") {
+internal class ShowPoweredProgressAction : AnAction() {
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 

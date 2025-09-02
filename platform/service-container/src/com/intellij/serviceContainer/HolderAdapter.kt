@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.serviceContainer
 
 import com.intellij.platform.instanceContainer.internal.InstanceHolder
@@ -13,6 +13,6 @@ internal class HolderAdapter(
   override fun getComponentImplementation(): Class<*> = holder.instanceClass()
 
   override fun getComponentInstance(): Any {
-    return checkNotNull(holder.getOrCreateInstanceBlocking(debugString = key.toString(), keyClass = null))
+    return checkNotNull(getOrCreateInstanceBlocking(holder = holder, debugString = key.toString(), keyClass = null))
   }
 }

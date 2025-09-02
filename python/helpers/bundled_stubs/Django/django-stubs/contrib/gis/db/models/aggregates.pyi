@@ -4,6 +4,8 @@ from django.db.backends.base.base import BaseDatabaseWrapper
 from django.db.models import Aggregate
 from django.db.models.sql.compiler import SQLCompiler, _AsSqlType
 
+__all__ = ["Collect", "Extent", "Extent3D", "MakeLine", "Union"]
+
 class GeoAggregate(Aggregate):
     is_extent: bool
     def as_oracle(self, compiler: SQLCompiler, connection: BaseDatabaseWrapper, **extra_context: Any) -> _AsSqlType: ...

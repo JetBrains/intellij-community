@@ -80,7 +80,7 @@ public sealed class RangeHighlighterImpl extends RangeMarkerImpl implements Rang
     setFlag(TARGET_AREA_IS_EXACT_MASK, target == HighlighterTargetArea.EXACT_RANGE);
     myModel = model;
 
-    registerInTree(start, end, greedyToLeft, greedyToRight, layer);
+    registerInTree((DocumentEx)model.getDocument(), start, end, greedyToLeft, greedyToRight, layer);
     if (LOG.isDebugEnabled()) {
       LOG.debug("RangeHighlighterImpl: create " + this);
     }
@@ -439,7 +439,7 @@ public sealed class RangeHighlighterImpl extends RangeMarkerImpl implements Rang
   }
 
   @Override
-  protected void registerInTree(int start, int end, boolean greedyToLeft, boolean greedyToRight, int layer) {
+  protected void registerInTree(@NotNull DocumentEx document, int start, int end, boolean greedyToLeft, boolean greedyToRight, int layer) {
     // we store highlighters in MarkupModel
     myModel.addRangeHighlighter(this, start, end, greedyToLeft, greedyToRight, layer);
   }

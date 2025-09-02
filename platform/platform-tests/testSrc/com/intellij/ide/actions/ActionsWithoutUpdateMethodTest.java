@@ -12,15 +12,11 @@ import com.intellij.testFramework.LightPlatformTestCase;
 import java.lang.reflect.Method;
 import java.util.*;
 
-/**
- * @author Konstantin Bulenkov
- */
 public class ActionsWithoutUpdateMethodTest extends LightPlatformTestCase {
   private static final List<String> PLATFORM_WIDE_ACTIONS = Arrays.asList(
     "TestGestureAction",
     "Synchronize",
     "SaveAll",
-    "MaintenanceAction",
     "ShowProjectStructureSettings",
     "FocusEditor",
     "SearchEverywhere",

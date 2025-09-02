@@ -58,6 +58,9 @@ assert_type(Circle.from_config({}), Circle)
 class Container(Generic[T]):
     value: T
 
+    def __init__(self, value: T) -> None:
+        self.value = value
+
     def set_value(self, value: T) -> Self: ...
 
     # This should generate an error because Self isn't subscriptable.

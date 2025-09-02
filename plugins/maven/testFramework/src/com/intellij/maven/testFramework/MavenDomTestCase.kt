@@ -109,6 +109,11 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
     return readAction { PsiManager.getInstance(project).findFile(f!!)!! }
   }
 
+  protected suspend fun findPsiFileAndGetText(f: VirtualFile?): String? {
+    if (f == null) return null
+    return readAction { PsiManager.getInstance(project).findFile(f)?.text }
+  }
+
   protected suspend fun configureProjectPom(@Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String?) {
     val file = createProjectPom(xml!!)
     configTest(file)

@@ -3,8 +3,8 @@ package com.intellij.platform.tests.eelHelpers;
 
 import org.jetbrains.annotations.TestOnly;
 
-import static com.intellij.platform.tests.eelHelpers.network.NetworkHelperKt.startNetworkClientHelper;
-import static com.intellij.platform.tests.eelHelpers.network.NetworkHelperKt.startNetworkConnectionHelper;
+import static com.intellij.platform.tests.eelHelpers.network.NetworkHelperKt.startNetworkServer;
+import static com.intellij.platform.tests.eelHelpers.network.NetworkHelperKt.startNetworkClient;
 import static com.intellij.platform.tests.eelHelpers.ttyAndExit.TtyAndExitHelperKt.startTtyAndExitHelper;
 
 /**
@@ -22,16 +22,16 @@ public final class EelHelper {
       case TTY -> {
         startTtyAndExitHelper();
       }
-      case NETWORK_CLIENT -> {
-        startNetworkClientHelper();
+      case NETWORK_SERVER -> {
+        startNetworkServer();
       }
-      case NETWORK_CONNECTION -> {
-        startNetworkConnectionHelper();
+      case NETWORK_CLIENT -> {
+        startNetworkClient();
       }
     }
   }
 
   public enum HelperMode {
-    TTY, NETWORK_CLIENT, NETWORK_CONNECTION
+    TTY, NETWORK_SERVER, NETWORK_CLIENT
   }
 }

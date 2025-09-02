@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface MainHighlightingPassFactory extends TextEditorHighlightingPassFactory {
   @Nullable
-  TextEditorHighlightingPass createMainHighlightingPass(@NotNull PsiFile file,
+  TextEditorHighlightingPass createMainHighlightingPass(@NotNull PsiFile psiFile,
                                                         @NotNull Document document,
                                                         @NotNull HighlightInfoProcessor highlightInfoProcessor);
 }

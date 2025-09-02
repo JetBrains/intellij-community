@@ -297,7 +297,7 @@ public final class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
   private void setFixedColumnWidth(final int columnIndex, String sampleText) {
     final TableColumn column = myEntryTable.getTableHeader().getColumnModel().getColumn(columnIndex);
     final FontMetrics fontMetrics = myEntryTable.getFontMetrics(myEntryTable.getFont());
-    final int width = fontMetrics.stringWidth(" " + sampleText + " ") + JBUIScale.scale(4);
+    final int width = fontMetrics.stringWidth(" " + sampleText + " ") + JBUIScale.scale(10);
     column.setPreferredWidth(width);
     column.setMinWidth(width);
     column.setResizable(false);

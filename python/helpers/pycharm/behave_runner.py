@@ -15,6 +15,7 @@ import sys
 import traceback
 from behave.formatter.base import Formatter
 from behave.model import Step, ScenarioOutline, Feature, Scenario
+from behave.formatter import _registry
 from behave.tag_expression import TagExpression
 from _jb_django_behave import run_as_django_behave
 import _bdd_utils
@@ -238,7 +239,7 @@ class _BehaveRunner(_bdd_utils.BddRunner):
         for feature in features_to_run:
             assert isinstance(feature, Feature), feature
             scenarios = []
-            for scenario in feature.scenarios:
+            for scenario in feature.walk_scenarios():
                 try:
                     scenario.tags.extend(feature.tags)
                 except AttributeError:
@@ -252,7 +253,42 @@ class _BehaveRunner(_bdd_utils.BddRunner):
         return features_to_run
 
 
-if __name__ == "__main__":
+def _register_null_formatter(format_name):
+    class _Null(Formatter):
+        """
+        Null formater to prevent stdout output
+        """
+        pass
+
+    _registry.register_as(format_name, _Null)
+
+
+def _register_teamcity_formatter(format_name, base_dir):
+    custom_messages = tcmessages.TeamcityServiceMessages()
+
+    # Not safe to import it in old mode
+    from teamcity.jb_behave_formatter import TeamcityFormatter
+
+    class TeamcityFormatterWithLocation(TeamcityFormatter):
+
+        def _report_suite_started(self, suite, suite_name):
+            location = suite.location
+            custom_messages.testSuiteStarted(
+                suite_name,
+                _bdd_utils.get_location(base_dir, location.filename, location.line)
+            )
+
+        def _report_test_started(self, test, test_name):
+            location = test.location
+            custom_messages.testStarted(
+                test_name,
+                _bdd_utils.get_location(base_dir, location.filename, location.line)
+            )
+
+    _registry.register_as(format_name, TeamcityFormatterWithLocation)
+
+
+def main():
     # TODO: support all other params instead
     command_args = list(filter(None, sys.argv[1:]))
     if command_args:
@@ -269,40 +305,14 @@ if __name__ == "__main__":
 
     # New version supports 1.2.6 only
     use_old_runner = "PYCHARM_BEHAVE_OLD_RUNNER" in os.environ
-    from behave.formatter import _registry
 
-    FORMAT_NAME = "com.jetbrains.pycharm.formatter"
+    format_name = "com.jetbrains.pycharm.formatter"
     if use_old_runner:
-        class _Null(Formatter):
-            """
-            Null formater to prevent stdout output
-            """
-            pass
-
-
-        _registry.register_as(FORMAT_NAME, _Null)
+        _register_null_formatter(format_name)
     else:
-        custom_messages = tcmessages.TeamcityServiceMessages()
-        # Not safe to import it in old mode
-        from teamcity.jb_behave_formatter import TeamcityFormatter
+        _register_teamcity_formatter(format_name, base_dir)
 
-
-        class TeamcityFormatterWithLocation(TeamcityFormatter):
-
-            def _report_suite_started(self, suite, suite_name):
-                location = suite.location
-                custom_messages.testSuiteStarted(suite_name,
-                                                 _bdd_utils.get_location(base_dir, location.filename, location.line))
-
-            def _report_test_started(self, test, test_name):
-                location = test.location
-                custom_messages.testStarted(test_name,
-                                            _bdd_utils.get_location(base_dir, location.filename, location.line))
-
-
-        _registry.register_as(FORMAT_NAME, TeamcityFormatterWithLocation)
-
-    my_config.format = [FORMAT_NAME]  # To prevent output to stdout
+    my_config.format = [format_name]  # To prevent output to stdout
     my_config.reporters = []  # To prevent summary to stdout
     my_config.stdout_capture = False  # For test output
     my_config.stderr_capture = False  # For test output
@@ -318,5 +328,9 @@ if __name__ == "__main__":
         raise Exception("Nothing to run in {0}".format(what_to_run))
 
     # Run as Django if supported, run plain otherwise
-    if not run_as_django_behave(FORMAT_NAME, what_to_run, command_args):
+    if not run_as_django_behave(format_name, what_to_run, command_args):
         _BehaveRunner(my_config, base_dir, use_old_runner).run()
+
+
+if __name__ == "__main__":
+    main()

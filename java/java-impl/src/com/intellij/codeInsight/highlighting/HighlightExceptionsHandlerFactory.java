@@ -1,8 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -17,23 +18,23 @@ import static com.intellij.openapi.util.Predicates.alwaysTrue;
 
 public final class HighlightExceptionsHandlerFactory extends HighlightUsagesHandlerFactoryBase {
   @Override
-  public HighlightUsagesHandlerBase createHighlightUsagesHandler(@NotNull Editor editor, @NotNull PsiFile file, @NotNull PsiElement target) {
+  public HighlightUsagesHandlerBase createHighlightUsagesHandler(@NotNull Editor editor, @NotNull PsiFile psiFile, @NotNull PsiElement target) {
     if (target instanceof PsiKeyword) {
       PsiElement parent = target.getParent();
-      if (PsiKeyword.TRY.equals(target.getText()) && parent instanceof PsiTryStatement) {
-        return createHighlightTryHandler(editor, file, target, parent);
+      if (JavaKeywords.TRY.equals(target.getText()) && parent instanceof PsiTryStatement) {
+        return createHighlightTryHandler(editor, psiFile, target, parent);
       }
-      if (PsiKeyword.CATCH.equals(target.getText()) && parent instanceof PsiCatchSection) {
-        return createHighlightCatchHandler(editor, file, target, parent);
+      if (JavaKeywords.CATCH.equals(target.getText()) && parent instanceof PsiCatchSection) {
+        return createHighlightCatchHandler(editor, psiFile, target, parent);
       }
-      if (PsiKeyword.THROWS.equals(target.getText())) {
-        return createThrowsHandler(editor, file, target);
+      if (JavaKeywords.THROWS.equals(target.getText())) {
+        return createThrowsHandler(editor, psiFile, target);
       }
     }
     if (target instanceof PsiIdentifier) {
       PsiElement parent = target.getParent();
       if (parent instanceof PsiJavaCodeReferenceElement) {
-        return createHighlightExceptionUsagesFromThrowsHandler(editor, file, target, (PsiJavaCodeReferenceElement)parent);
+        return createHighlightExceptionUsagesFromThrowsHandler(editor, psiFile, target, (PsiJavaCodeReferenceElement)parent);
       }
     }
     return null;

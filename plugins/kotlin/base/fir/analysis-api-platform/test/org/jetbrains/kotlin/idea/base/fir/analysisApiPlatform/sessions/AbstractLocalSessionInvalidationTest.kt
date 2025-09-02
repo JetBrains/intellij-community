@@ -6,7 +6,7 @@ import com.intellij.openapi.application.runWriteAction
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.LLFirModuleSession
 import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.LLFirSession
-import org.jetbrains.kotlin.idea.util.publishModuleOutOfBlockModification
+import org.jetbrains.kotlin.idea.util.publishModuleOutOfBlockModificationEvent
 
 /**
  * Checks that the correct sessions are invalidated after publishing modification events for select modules, determined by the test project
@@ -17,7 +17,7 @@ abstract class AbstractLocalSessionInvalidationTest : AbstractSessionInvalidatio
         val modulesToMakeOOBM = testProjectStructure.modulesToMakeOOBM.map(modulesByName::getValue)
         runWriteAction {
             modulesToMakeOOBM.forEach { module ->
-                module.publishModuleOutOfBlockModification()
+                module.publishModuleOutOfBlockModificationEvent()
             }
         }
     }

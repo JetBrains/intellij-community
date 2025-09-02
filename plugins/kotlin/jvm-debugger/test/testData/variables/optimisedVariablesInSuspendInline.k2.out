@@ -15,13 +15,9 @@ optimisedVariablesInSuspendInline.kt:17
 CoroutinePreflightFrame invokeSuspend (optimisedVariablesInSuspendInline.kt:17)
     JavaValue[local] a: java.lang.String = a (optimisedVariablesInSuspendInline.kt:9)
     JavaValue[continuation] b = b
-    JavaValue[continuation] $i$f$foo = 0
-    JavaValue[continuation] $i$f$inlineBlock = 0
-    JavaValue[continuation] $i$a$-inlineBlock-OptimisedVariablesInSuspendInlineKt$foo$2 = 0
 optimisedVariablesInSuspendInline.kt:19
 CoroutinePreflightFrame invokeSuspend (optimisedVariablesInSuspendInline.kt:19)
     JavaValue[local] a: java.lang.String = a (optimisedVariablesInSuspendInline.kt:9)
-    JavaValue[continuation] $i$f$foo = 0
 Disconnected from the target VM
 
 Process finished with exit code 0

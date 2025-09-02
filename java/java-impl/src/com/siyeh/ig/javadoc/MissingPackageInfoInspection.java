@@ -20,7 +20,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.BaseSharedLocalInspection;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PackageGlobalInspection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,7 +32,7 @@ import javax.swing.*;
 public final class MissingPackageInfoInspection extends PackageGlobalInspection {
 
   @Override
-  public @Nullable LocalInspectionTool getSharedLocalInspectionTool() {
+  public @NotNull LocalInspectionTool getSharedLocalInspectionTool() {
     return new LocalMissingPackageInfoInspection(this);
   }
 
@@ -52,11 +51,11 @@ public final class MissingPackageInfoInspection extends PackageGlobalInspection 
       return null;
     }
     if (aPackage != null && PsiUtil.isLanguageLevel5OrHigher(aPackage)) {
-      return new CommonProblemDescriptor[] {
+      return new CommonProblemDescriptor[]{
         inspectionManager.createProblemDescriptor(InspectionGadgetsBundle.message("missing.package.info.problem.descriptor", packageName))};
     }
     else {
-      return new CommonProblemDescriptor[] {
+      return new CommonProblemDescriptor[]{
         inspectionManager.createProblemDescriptor(InspectionGadgetsBundle.message("missing.package.html.problem.descriptor", packageName))};
     }
   }
@@ -69,8 +68,8 @@ public final class MissingPackageInfoInspection extends PackageGlobalInspection 
     }
 
     @Override
-    protected @Nullable InspectionGadgetsFix buildFix(Object... infos) {
-      return new InspectionGadgetsFix() {
+    protected @Nullable LocalQuickFix buildFix(Object... infos) {
+      return new LocalQuickFix() {
         @Override
         public @NotNull String getFamilyName() {
           return InspectionGadgetsBundle.message("create.package.info.java.family.name");
@@ -82,7 +81,10 @@ public final class MissingPackageInfoInspection extends PackageGlobalInspection 
         }
 
         @Override
-        protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+        public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+          final PsiElement problemElement = descriptor.getPsiElement();
+          if (problemElement == null || !problemElement.isValid()) return;
+
           DataManager.getInstance()
                      .getDataContextFromFocusAsync()
                      .onSuccess(context -> {

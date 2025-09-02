@@ -61,6 +61,9 @@ class ExtractModuleFromPackageDialog(private val project: Project, moduleName: S
             .component
         }
       }
+      row {
+        comment(JavaUiBundle.message("dialog.comment.compile.modules"))
+      }
     }
     nameField.select(nameField.text.lastIndexOf('.') + 1, nameField.text.length)
     return panel

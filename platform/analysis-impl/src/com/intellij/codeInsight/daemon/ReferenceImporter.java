@@ -23,12 +23,12 @@ public interface ReferenceImporter {
    * @return true if this extension found an unresolved reference at the current caret offset and successfully imported it.
    * (for example, in case of Java, the plugin added the corresponding import statement to this file, thus making this reference valid)
    */
-  default boolean autoImportReferenceAtCursor(@NotNull Editor editor, @NotNull PsiFile file) {
+  default boolean autoImportReferenceAtCursor(@NotNull Editor editor, @NotNull PsiFile psiFile) {
     ThreadingAssertions.assertEventDispatchThread();
     Future<BooleanSupplier> future = ApplicationManager.getApplication().executeOnPooledThread(() -> ReadAction.compute(() -> {
-      if (editor.isDisposed() || file.getProject().isDisposed()) return null;
+      if (editor.isDisposed() || psiFile.getProject().isDisposed()) return null;
       int offset = editor.getCaretModel().getOffset();
-      return computeAutoImportAtOffset(editor, file, offset, true);
+      return computeAutoImportAtOffset(editor, psiFile, offset, true);
     }));
     try {
       BooleanSupplier fix = future.get();
@@ -51,7 +51,7 @@ public interface ReferenceImporter {
    * to reduce freezes and improve responsiveness.
    */
   @ApiStatus.Experimental
-  default BooleanSupplier computeAutoImportAtOffset(@NotNull Editor editor, @NotNull PsiFile file, int offset, boolean allowCaretNearReference) {
+  default BooleanSupplier computeAutoImportAtOffset(@NotNull Editor editor, @NotNull PsiFile psiFile, int offset, boolean allowCaretNearReference) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     return null;
   }
@@ -63,7 +63,7 @@ public interface ReferenceImporter {
    * @return true if the {@code file} is of type your plugin supports (i.e. {@link #autoImportReferenceAtCursor} will work for this file)
    * and the "add imports on the fly" feature is enabled for this file (e.g., "Settings|Auto Imports|Java|Add imports on the fly" option is on for the Java files).
    */
-  default boolean isAddUnambiguousImportsOnTheFlyEnabled(@NotNull PsiFile file) {
+  default boolean isAddUnambiguousImportsOnTheFlyEnabled(@NotNull PsiFile psiFile) {
     return false;
   }
 }

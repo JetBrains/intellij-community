@@ -5,6 +5,7 @@ import com.intellij.model.Symbol;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 
@@ -29,7 +30,7 @@ final class ImmediatePsiSymbolReference implements PsiSymbolReference {
   }
 
   @Override
-  public @NotNull Collection<? extends Symbol> resolveReference() {
+  public @NotNull @Unmodifiable Collection<? extends Symbol> resolveReference() {
     return myTargets;
   }
 }

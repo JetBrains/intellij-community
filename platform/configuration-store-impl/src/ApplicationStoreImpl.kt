@@ -6,6 +6,7 @@ import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.appSystemDir
 import com.intellij.openapi.application.impl.ApplicationImpl
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.StateStorageOperation
 import com.intellij.openapi.components.StoragePathMacros
@@ -18,7 +19,6 @@ import com.intellij.platform.settings.SettingsController
 import com.intellij.platform.workspace.jps.serialization.impl.ApplicationStoreJpsContentReader
 import com.intellij.platform.workspace.jps.serialization.impl.JpsAppFileContentWriter
 import com.intellij.platform.workspace.jps.serialization.impl.JpsFileContentReader
-import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.util.LineSeparator
 import com.intellij.util.asSafely
 import com.intellij.workspaceModel.ide.JpsGlobalModelSynchronizer
@@ -37,8 +37,10 @@ const val APP_CONFIG: String = "\$APP_CONFIG\$"
 @VisibleForTesting
 @Suppress("NonDefaultConstructor")
 open class ApplicationStoreImpl(private val app: Application) : ComponentStoreWithExtraComponents(), ApplicationStoreJpsContentReader {
-  override val storageManager: StateStorageManagerImpl =
-    ApplicationStateStorageManager(pathMacroManager = PathMacroManager.getInstance(app), controller = app.getService(SettingsController::class.java))
+  override val storageManager: StateStorageManagerImpl = ApplicationStateStorageManager(
+    pathMacroManager = PathMacroManager.getInstance(app),
+    controller = app.getService(SettingsController::class.java),
+  )
 
   @Volatile
   final override var isStoreInitialized: Boolean = false
@@ -47,8 +49,8 @@ open class ApplicationStoreImpl(private val app: Application) : ComponentStoreWi
   override val allowSavingWithoutModifications: Boolean
     get() = true
 
-  override val serviceContainer: ComponentManagerImpl
-    get() = app as ComponentManagerImpl
+  override val serviceContainer: ComponentManagerEx
+    get() = app as ComponentManagerEx
 
   // a number of app components require some state, so we load the default state in test mode
   override val loadPolicy: StateLoadPolicy
@@ -118,12 +120,17 @@ class ApplicationStateStorageManager(pathMacroManager: PathMacroManager? = null,
     }
   }
 
-  override fun normalizeFileSpec(fileSpec: String): String =
-    removeMacroIfStartsWith(path = super.normalizeFileSpec(fileSpec), macro = APP_CONFIG)
+  override fun normalizeFileSpec(fileSpec: String): String = removeMacroIfStartsWith(path = super.normalizeFileSpec(fileSpec), macro = APP_CONFIG)
 
-  override fun expandMacro(collapsedPath: String): Path =
-    if (collapsedPath[0] == '$') super.expandMacro(collapsedPath)
-    else macros[0].value.resolve(collapsedPath)  // APP_CONFIG is the first macro
+  override fun expandMacro(collapsedPath: String): Path {
+    if (collapsedPath[0] == '$') {
+      return super.expandMacro(collapsedPath)
+    }
+    else {
+      // APP_CONFIG is the first macro
+      return macros[0].value.resolve(collapsedPath)
+    }
+  }
 }
 
 private class ApplicationPathMacroManager : PathMacroManager(null)

@@ -18,6 +18,7 @@ import com.intellij.util.io.HttpSecurityUtil
 import com.intellij.util.io.RequestBuilder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.github.api.data.GithubErrorMessage
 import org.jetbrains.plugins.github.exceptions.*
@@ -239,6 +240,7 @@ sealed class GithubApiRequestExecutor {
 
   @Service
   class Factory {
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("Server must be provided to match URL for authorization")
     fun create(token: String): GithubApiRequestExecutor = create(true) { token }
 

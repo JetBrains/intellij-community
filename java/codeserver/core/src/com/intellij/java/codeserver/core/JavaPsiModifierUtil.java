@@ -5,7 +5,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,67 +19,57 @@ import java.util.Set;
  */
 public final class JavaPsiModifierUtil {
   
-  private static final Map<String, Set<String>> ourInterfaceIncompatibleModifiers = ContainerUtil.<String, Set<String>>immutableMapBuilder()
-    .put(PsiModifier.ABSTRACT, ContainerUtil.immutableSet())
-    .put(PsiModifier.PACKAGE_LOCAL, ContainerUtil.immutableSet(PsiModifier.PRIVATE, PsiModifier.PUBLIC, PsiModifier.PROTECTED))
-    .put(PsiModifier.PRIVATE, ContainerUtil.immutableSet(PsiModifier.PACKAGE_LOCAL, PsiModifier.PUBLIC, PsiModifier.PROTECTED))
-    .put(PsiModifier.PUBLIC, ContainerUtil.immutableSet(PsiModifier.PACKAGE_LOCAL, PsiModifier.PRIVATE, PsiModifier.PROTECTED))
-    .put(PsiModifier.PROTECTED, ContainerUtil.immutableSet(PsiModifier.PACKAGE_LOCAL, PsiModifier.PUBLIC, PsiModifier.PRIVATE))
-    .put(PsiModifier.STRICTFP, ContainerUtil.immutableSet())
-    .put(PsiModifier.STATIC, ContainerUtil.immutableSet())
-    .put(PsiModifier.SEALED, ContainerUtil.immutableSet(PsiModifier.NON_SEALED))
-    .put(PsiModifier.NON_SEALED, ContainerUtil.immutableSet(PsiModifier.SEALED))
-    .build();
-  private static final Map<String, Set<String>> ourMethodIncompatibleModifiers = ContainerUtil.<String, Set<String>>immutableMapBuilder()
-    .put(PsiModifier.ABSTRACT, ContainerUtil.immutableSet(
+  private static final Map<String, Set<String>> ourInterfaceIncompatibleModifiers = Map.of(
+    PsiModifier.ABSTRACT, Set.of(),
+    PsiModifier.PACKAGE_LOCAL, Set.of(PsiModifier.PRIVATE, PsiModifier.PUBLIC, PsiModifier.PROTECTED),
+    PsiModifier.PRIVATE, Set.of(PsiModifier.PACKAGE_LOCAL, PsiModifier.PUBLIC, PsiModifier.PROTECTED),
+    PsiModifier.PUBLIC, Set.of(PsiModifier.PACKAGE_LOCAL, PsiModifier.PRIVATE, PsiModifier.PROTECTED),
+    PsiModifier.PROTECTED, Set.of(PsiModifier.PACKAGE_LOCAL, PsiModifier.PUBLIC, PsiModifier.PRIVATE),
+    PsiModifier.STRICTFP, Set.of(),
+    PsiModifier.STATIC, Set.of(),
+    PsiModifier.SEALED, Set.of(PsiModifier.NON_SEALED),
+    PsiModifier.NON_SEALED, Set.of(PsiModifier.SEALED));
+  private static final Map<String, Set<String>> ourMethodIncompatibleModifiers = Map.ofEntries(
+    Map.entry(PsiModifier.ABSTRACT, Set.of(
       PsiModifier.NATIVE, PsiModifier.STATIC, PsiModifier.FINAL, PsiModifier.PRIVATE, PsiModifier.STRICTFP, PsiModifier.SYNCHRONIZED,
-      PsiModifier.DEFAULT))
-    .put(PsiModifier.NATIVE, ContainerUtil.immutableSet(PsiModifier.ABSTRACT, PsiModifier.STRICTFP))
-    .put(PsiModifier.PACKAGE_LOCAL, ContainerUtil.immutableSet(PsiModifier.PRIVATE, PsiModifier.PUBLIC, PsiModifier.PROTECTED))
-    .put(PsiModifier.PRIVATE, ContainerUtil.immutableSet(PsiModifier.PACKAGE_LOCAL, PsiModifier.PUBLIC, PsiModifier.PROTECTED))
-    .put(PsiModifier.PUBLIC, ContainerUtil.immutableSet(PsiModifier.PACKAGE_LOCAL, PsiModifier.PRIVATE, PsiModifier.PROTECTED))
-    .put(PsiModifier.PROTECTED, ContainerUtil.immutableSet(PsiModifier.PACKAGE_LOCAL, PsiModifier.PUBLIC, PsiModifier.PRIVATE))
-    .put(PsiModifier.STATIC, ContainerUtil.immutableSet(PsiModifier.ABSTRACT, PsiModifier.DEFAULT))
-    .put(PsiModifier.DEFAULT, ContainerUtil.immutableSet(PsiModifier.ABSTRACT, PsiModifier.STATIC, PsiModifier.PRIVATE))
-    .put(PsiModifier.SYNCHRONIZED, ContainerUtil.immutableSet(PsiModifier.ABSTRACT))
-    .put(PsiModifier.STRICTFP, ContainerUtil.immutableSet(PsiModifier.ABSTRACT))
-    .put(PsiModifier.FINAL, ContainerUtil.immutableSet(PsiModifier.ABSTRACT))
-    .build();
-  
-  private static final Map<String, Set<String>> ourFieldIncompatibleModifiers = ContainerUtil.<String, Set<String>>immutableMapBuilder()
-    .put(PsiModifier.FINAL, ContainerUtil.immutableSet(PsiModifier.VOLATILE))
-    .put(PsiModifier.PACKAGE_LOCAL, ContainerUtil.immutableSet(PsiModifier.PRIVATE, PsiModifier.PUBLIC, PsiModifier.PROTECTED))
-    .put(PsiModifier.PRIVATE, ContainerUtil.immutableSet(PsiModifier.PACKAGE_LOCAL, PsiModifier.PUBLIC, PsiModifier.PROTECTED))
-    .put(PsiModifier.PUBLIC, ContainerUtil.immutableSet(PsiModifier.PACKAGE_LOCAL, PsiModifier.PRIVATE, PsiModifier.PROTECTED))
-    .put(PsiModifier.PROTECTED, ContainerUtil.immutableSet(PsiModifier.PACKAGE_LOCAL, PsiModifier.PUBLIC, PsiModifier.PRIVATE))
-    .put(PsiModifier.STATIC, ContainerUtil.immutableSet())
-    .put(PsiModifier.TRANSIENT, ContainerUtil.immutableSet())
-    .put(PsiModifier.VOLATILE, ContainerUtil.immutableSet(PsiModifier.FINAL))
-    .build();
-  private static final Map<String, Set<String>> ourClassIncompatibleModifiers = ContainerUtil.<String, Set<String>>immutableMapBuilder()
-    .put(PsiModifier.ABSTRACT, ContainerUtil.immutableSet(PsiModifier.FINAL))
-    .put(PsiModifier.FINAL, ContainerUtil.immutableSet(PsiModifier.ABSTRACT, PsiModifier.SEALED, PsiModifier.NON_SEALED))
-    .put(PsiModifier.PACKAGE_LOCAL, ContainerUtil.immutableSet(PsiModifier.PRIVATE, PsiModifier.PUBLIC, PsiModifier.PROTECTED))
-    .put(PsiModifier.PRIVATE, ContainerUtil.immutableSet(PsiModifier.PACKAGE_LOCAL, PsiModifier.PUBLIC, PsiModifier.PROTECTED))
-    .put(PsiModifier.PUBLIC, ContainerUtil.immutableSet(PsiModifier.PACKAGE_LOCAL, PsiModifier.PRIVATE, PsiModifier.PROTECTED))
-    .put(PsiModifier.PROTECTED, ContainerUtil.immutableSet(PsiModifier.PACKAGE_LOCAL, PsiModifier.PUBLIC, PsiModifier.PRIVATE))
-    .put(PsiModifier.STRICTFP, ContainerUtil.immutableSet())
-    .put(PsiModifier.STATIC, ContainerUtil.immutableSet())
-    .put(PsiModifier.SEALED, ContainerUtil.immutableSet(PsiModifier.FINAL, PsiModifier.NON_SEALED))
-    .put(PsiModifier.NON_SEALED, ContainerUtil.immutableSet(PsiModifier.FINAL, PsiModifier.SEALED))
-    .put(PsiModifier.VALUE, ContainerUtil.immutableSet())
-    .build();
-  private static final Map<String, Set<String>> ourClassInitializerIncompatibleModifiers =
-    ContainerUtil.<String, Set<String>>immutableMapBuilder()
-      .put(PsiModifier.STATIC, ContainerUtil.immutableSet())
-      .build();
-  private static final Map<String, Set<String>> ourModuleIncompatibleModifiers = ContainerUtil.<String, Set<String>>immutableMapBuilder()
-    .put(PsiModifier.OPEN, ContainerUtil.immutableSet())
-    .build();
-  private static final Map<String, Set<String>> ourRequiresIncompatibleModifiers = ContainerUtil.<String, Set<String>>immutableMapBuilder()
-    .put(PsiModifier.STATIC, ContainerUtil.immutableSet())
-    .put(PsiModifier.TRANSITIVE, ContainerUtil.immutableSet())
-    .build();
+      PsiModifier.DEFAULT)),
+    Map.entry(PsiModifier.NATIVE, Set.of(PsiModifier.ABSTRACT, PsiModifier.STRICTFP)),
+    Map.entry(PsiModifier.PACKAGE_LOCAL, Set.of(PsiModifier.PRIVATE, PsiModifier.PUBLIC, PsiModifier.PROTECTED)),
+    Map.entry(PsiModifier.PRIVATE, Set.of(PsiModifier.PACKAGE_LOCAL, PsiModifier.PUBLIC, PsiModifier.PROTECTED)),
+    Map.entry(PsiModifier.PUBLIC, Set.of(PsiModifier.PACKAGE_LOCAL, PsiModifier.PRIVATE, PsiModifier.PROTECTED)),
+    Map.entry(PsiModifier.PROTECTED, Set.of(PsiModifier.PACKAGE_LOCAL, PsiModifier.PUBLIC, PsiModifier.PRIVATE)),
+    Map.entry(PsiModifier.STATIC, Set.of(PsiModifier.ABSTRACT, PsiModifier.DEFAULT)),
+    Map.entry(PsiModifier.DEFAULT, Set.of(PsiModifier.ABSTRACT, PsiModifier.STATIC, PsiModifier.PRIVATE)),
+    Map.entry(PsiModifier.SYNCHRONIZED, Set.of(PsiModifier.ABSTRACT)),
+    Map.entry(PsiModifier.STRICTFP, Set.of(PsiModifier.ABSTRACT)),
+    Map.entry(PsiModifier.FINAL, Set.of(PsiModifier.ABSTRACT)));
+  private static final Map<String, Set<String>> ourFieldIncompatibleModifiers = Map.of(
+    PsiModifier.FINAL, Set.of(PsiModifier.VOLATILE),
+    PsiModifier.PACKAGE_LOCAL, Set.of(PsiModifier.PRIVATE, PsiModifier.PUBLIC, PsiModifier.PROTECTED),
+    PsiModifier.PRIVATE, Set.of(PsiModifier.PACKAGE_LOCAL, PsiModifier.PUBLIC, PsiModifier.PROTECTED),
+    PsiModifier.PUBLIC, Set.of(PsiModifier.PACKAGE_LOCAL, PsiModifier.PRIVATE, PsiModifier.PROTECTED),
+    PsiModifier.PROTECTED, Set.of(PsiModifier.PACKAGE_LOCAL, PsiModifier.PUBLIC, PsiModifier.PRIVATE),
+    PsiModifier.STATIC, Set.of(),
+    PsiModifier.TRANSIENT, Set.of(),
+    PsiModifier.VOLATILE, Set.of(PsiModifier.FINAL));
+  private static final Map<String, Set<String>> ourClassIncompatibleModifiers = Map.ofEntries(
+    Map.entry(PsiModifier.ABSTRACT, Set.of(PsiModifier.FINAL)),
+    Map.entry(PsiModifier.FINAL, Set.of(PsiModifier.ABSTRACT, PsiModifier.SEALED, PsiModifier.NON_SEALED)),
+    Map.entry(PsiModifier.PACKAGE_LOCAL, Set.of(PsiModifier.PRIVATE, PsiModifier.PUBLIC, PsiModifier.PROTECTED)),
+    Map.entry(PsiModifier.PRIVATE, Set.of(PsiModifier.PACKAGE_LOCAL, PsiModifier.PUBLIC, PsiModifier.PROTECTED)),
+    Map.entry(PsiModifier.PUBLIC, Set.of(PsiModifier.PACKAGE_LOCAL, PsiModifier.PRIVATE, PsiModifier.PROTECTED)),
+    Map.entry(PsiModifier.PROTECTED, Set.of(PsiModifier.PACKAGE_LOCAL, PsiModifier.PUBLIC, PsiModifier.PRIVATE)),
+    Map.entry(PsiModifier.STRICTFP, Set.of()),
+    Map.entry(PsiModifier.STATIC, Set.of()),
+    Map.entry(PsiModifier.SEALED, Set.of(PsiModifier.FINAL, PsiModifier.NON_SEALED)),
+    Map.entry(PsiModifier.NON_SEALED, Set.of(PsiModifier.FINAL, PsiModifier.SEALED)),
+    Map.entry(PsiModifier.VALUE, Set.of())
+  );
+  private static final Map<String, Set<String>> ourClassInitializerIncompatibleModifiers = Map.of(PsiModifier.STATIC, Set.of());
+  private static final Map<String, Set<String>> ourModuleIncompatibleModifiers = Map.of(PsiModifier.OPEN, Set.of());
+  private static final Map<String, Set<String>> ourRequiresIncompatibleModifiers = Map.of(
+    PsiModifier.STATIC, Set.of(),
+    PsiModifier.TRANSITIVE, Set.of());
 
   private static String getIncompatibleModifier(@NotNull String modifier,
                                                 @NotNull PsiModifierList modifierList,

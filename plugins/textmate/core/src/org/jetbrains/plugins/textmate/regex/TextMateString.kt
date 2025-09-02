@@ -1,21 +1,11 @@
 package org.jetbrains.plugins.textmate.regex
 
-import java.nio.ByteBuffer
-import java.nio.CharBuffer
-
 class TextMateString private constructor(val bytes: ByteArray) {
   val id: Any = Any()
 
   companion object {
     fun fromString(string: String): TextMateString {
-      return TextMateString(string.toByteArray(Charsets.UTF_8))
-    }
-
-    fun fromCharSequence(string: CharSequence): TextMateString {
-      val byteBuffer = Charsets.UTF_8.encode(CharBuffer.wrap(string))
-      val bytes = ByteArray(byteBuffer.remaining())
-      byteBuffer.get(bytes)
-      return TextMateString(bytes)
+      return TextMateString(string.encodeToByteArray())
     }
   }
 
@@ -25,22 +15,22 @@ class TextMateString private constructor(val bytes: ByteArray) {
     return TextMateRange(startOffset, endOffset)
   }
 
-  private fun charOffsetByByteOffset(stringBytes: ByteArray, startByteOffset: Int, targetByteOffset: Int): Int {
-    if (targetByteOffset <= 0) {
-      return 0
+  fun charOffsetByByteOffset(stringBytes: ByteArray, startByteOffset: Int, targetByteOffset: Int): Int {
+    return if (targetByteOffset <= 0) {
+      0
     }
-    return Charsets.UTF_8.decode(ByteBuffer.wrap(stringBytes, startByteOffset, targetByteOffset - startByteOffset)).remaining()
+    else {
+      stringBytes.decodeToString(startByteOffset, targetByteOffset).length
+    }
   }
 
   override fun hashCode(): Int {
     return bytes.contentHashCode()
   }
 
-
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
-    if (javaClass != other?.javaClass) return false
-    other as TextMateString
+    if (other !is TextMateString) return false
     return bytes.contentEquals(other.bytes)
   }
 }

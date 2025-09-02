@@ -15,8 +15,6 @@
  */
 package org.intellij.lang.xpath;
 
-import com.intellij.testFramework.ExpectedHighlightingData;
-
 public class XPath2TypeTest extends XPath2HighlightingTestBase {
 
   public void testQNameToQName() {
@@ -96,7 +94,7 @@ public class XPath2TypeTest extends XPath2HighlightingTestBase {
   }
 
   public void testToNumericIDEA67335() {
-    ExpectedHighlightingData.expectedDuplicatedHighlighting(this::doXPathHighlighting);
+    doXPathHighlighting();
   }
 
   public void testBooleanComparisonIDEA67348() {

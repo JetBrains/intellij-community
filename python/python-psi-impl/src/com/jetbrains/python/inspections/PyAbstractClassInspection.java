@@ -17,8 +17,8 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PythonUiService;
 import com.jetbrains.python.codeInsight.typing.PyProtocolsKt;
-import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyClassImpl;
 import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
 import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.refactoring.PyPsiRefactoringUtil;
@@ -49,7 +49,7 @@ public final class PyAbstractClassInspection extends PyInspection {
       if (node.getCallee() instanceof PyReferenceExpression calleeReferenceExpression) {
         QualifiedResolveResult resolveResult = calleeReferenceExpression.followAssignmentsChain(getResolveContext());
         if (resolveResult.getElement() instanceof PyClass pyClass) {
-          if (canHaveAbstractMethods(pyClass)) {
+          if (PyClassImpl.canHaveAbstractMethods(pyClass, myTypeEvalContext)) {
             boolean hasAbstractMethod =
               ContainerUtil.exists(pyClass.getMethods(), method -> PyKnownDecoratorUtil.hasAbstractDecorator(method, myTypeEvalContext));
             if (hasAbstractMethod || !getAllSuperAbstractMethods(pyClass).isEmpty()) {
@@ -84,7 +84,7 @@ public final class PyAbstractClassInspection extends PyInspection {
         }
       }
 
-      if (!canHaveAbstractMethods(pyClass)) {
+      if (!PyClassImpl.canHaveAbstractMethods(pyClass, myTypeEvalContext)) {
         for (PyDecorator decorator : abstractDecorators) {
           final SmartList<LocalQuickFix> quickFixes = new SmartList<>();
           addMakeClassAbstractFixes(pyClass, quickFixes);
@@ -112,17 +112,6 @@ public final class PyAbstractClassInspection extends PyInspection {
                           quickFixes.toArray(LocalQuickFix.EMPTY_ARRAY));
         }
       }
-    }
-
-    private boolean canHaveAbstractMethods(@NotNull PyClass pyClass) {
-      PyClassLikeType metaClassType = pyClass.getMetaClassType(true, myTypeEvalContext);
-      if (metaClassType != null && PyNames.ABC_META.equals(metaClassType.getClassQName())) {
-        return true;
-      }
-      return pyClass.getAncestorTypes(myTypeEvalContext).stream()
-        .filter(Objects::nonNull)
-        .map(PyClassLikeType::getClassQName)
-        .anyMatch(qName -> PyTypingTypeProvider.PROTOCOL.equals(qName) || PyTypingTypeProvider.PROTOCOL_EXT.equals(qName));
     }
 
     private boolean isAbstract(@NotNull PyClass pyClass) {

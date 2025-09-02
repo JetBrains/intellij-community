@@ -1,0 +1,10 @@
+<!-- Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->
+<svg width="8" height="8" viewBox="0 0 8 8" xmlns="http://www.w3.org/2000/svg">
+ <rect x=".333" y=".333" width="7.33" height="7.33" rx="1" fill="#25324d" stroke="#548af7" stroke-width=".8"/>
+ <g transform="matrix(.8 0 0 .8 1e-4 1e-4)" fill="#548af7" stroke-width=".8">
+  <rect x="3.33" y="1.67" width="1.67" height="1.67" rx=".417"/>
+  <rect x="3.33" y="5" width="1.67" height="1.67" rx=".417"/>
+  <rect x="5" y="6.67" width="1.67" height="1.67" rx=".417"/>
+  <rect x="5" y="3.33" width="1.67" height="1.67" rx=".417"/>
+ </g>
+</svg>

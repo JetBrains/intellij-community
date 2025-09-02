@@ -28,16 +28,18 @@ import org.intellij.lang.annotations.Language;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.*;
 import sun.font.FontUtilities;
+import sun.swing.SwingUtilities2;
 
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
-import javax.swing.FocusManager;
 import javax.swing.*;
+import javax.swing.FocusManager;
 import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
 import javax.swing.plaf.ButtonUI;
 import javax.swing.plaf.ComboBoxUI;
+import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.FontUIResource;
 import javax.swing.plaf.basic.BasicComboBoxUI;
 import javax.swing.plaf.basic.BasicRadioButtonUI;
@@ -63,13 +65,12 @@ import java.lang.reflect.Method;
 import java.net.URL;
 import java.text.NumberFormat;
 import java.text.ParseException;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
-
 @SuppressWarnings("StaticMethodOnlyUsedInOneClass")
 public final class UIUtil {
   public static final @NlsSafe String BORDER_LINE = "<hr size=1 noshade>";
@@ -208,16 +209,6 @@ public final class UIUtil {
   public static final char MNEMONIC = BundleBase.MNEMONIC;
   public static final @NlsSafe String HTML_MIME = "text/html";
   public static final @NonNls String TABLE_FOCUS_CELL_BACKGROUND_PROPERTY = "Table.focusCellBackground";
-  /**
-   * Prevent component DataContext from returning parent editor
-   * Useful for components that are manually painted over the editor to prevent shortcuts from falling-through to editor
-   * <p>
-   * Usage: {@code component.putClientProperty(HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, Boolean.TRUE)}
-   *
-   * @deprecated Use {@link com.intellij.openapi.actionSystem.CustomizedDataContext#EXPLICIT_NULL} instead.
-   */
-  @Deprecated(forRemoval = true)
-  public static final @NonNls String HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY = "AuxEditorComponent";
   public static final @NonNls String CENTER_TOOLTIP_DEFAULT = "ToCenterTooltip";
   public static final @NonNls String CENTER_TOOLTIP_STRICT = "ToCenterTooltip.default";
 
@@ -413,6 +404,20 @@ public final class UIUtil {
     FontRenderContext frc = g.getFontRenderContext();
     Rectangle stringBounds = font.getStringBounds(string.isEmpty() ? " " : string, frc).getBounds();
     return (int)(centerY - stringBounds.height / 2.0 - stringBounds.y);
+  }
+
+  public static int computeStringWidth(@NotNull JComponent c, @Nullable String string) {
+    Font font = c.getFont();
+    if (font == null) font = getLabelFont();
+    return computeStringWidth(c, c.getFontMetrics(font), string);
+  }
+
+  /**
+   * Helper method that hides dependency on Swing.
+   * To be used in pair with the {@link SwingUtilities2#drawString}, that is commonly used by {@link ComponentUI} implementations..
+   */
+  public static int computeStringWidth(@NotNull JComponent c, @NotNull FontMetrics fontMetrics, @Nullable String string) {
+    return SwingUtilities2.stringWidth(c, fontMetrics, string);
   }
 
   public static void drawLabelDottedRectangle(final @NotNull JLabel label, final @NotNull Graphics g) {
@@ -866,15 +871,6 @@ public final class UIUtil {
 
   public static Font getOptionPaneMessageFont() {
     return UIManager.getFont("OptionPane.messageFont");
-  }
-
-  /**
-   * @deprecated Use {@link FontUtil#getMenuFont()}
-   */
-  @Deprecated(forRemoval = true)
-  @SuppressWarnings("unused")
-  public static Font getMenuFont() {
-    return FontUtil.getMenuFont();
   }
 
   /**
@@ -3345,6 +3341,16 @@ public final class UIUtil {
     String s = Integer.toHexString(i);
     if (s.length() < 2) s = "0" + s;
     return s;
+  }
+
+  @ApiStatus.Experimental
+  public static boolean equalColors(@Nullable Color color1, @Nullable Color color2) {
+    return ComparableColor.equalColors(color1, color2);
+  }
+
+  @ApiStatus.Experimental
+  public static int colorHashCode(@Nullable Color color) {
+    return ComparableColor.colorHashCode(color);
   }
 
   public static boolean isXServerOnWindows() {

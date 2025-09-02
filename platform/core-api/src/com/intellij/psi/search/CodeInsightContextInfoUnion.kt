@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search
 
 import com.intellij.codeInsight.multiverse.CodeInsightContext
@@ -11,7 +11,7 @@ internal fun createCodeInsightContextInfoUnion(scopes: Array<out GlobalSearchSco
   return CodeInsightContextInfoUnion(scopes)
 }
 
-// todo ijpl-339 what shall we do if two scopes contain a file,
+// todo IJPL-339 what shall we do if two scopes contain a file,
 //  but only one of the scopes is context-aware,
 //  so we get contexts only from the another one.
 //  shall we somehow inform about that???

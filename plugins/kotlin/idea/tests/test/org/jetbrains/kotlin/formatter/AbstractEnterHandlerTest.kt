@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.codeStyle.lineIndent.LineIndentProvider
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil
 import com.intellij.testFramework.EditorTestUtil
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
@@ -147,7 +148,7 @@ abstract class AbstractEnterHandlerTest : KotlinLightPlatformCodeInsightTestCase
     ) {
         configureByFile(beforeFilePath)
         executeAction(IdeActions.ACTION_EDITOR_ENTER)
-        val editor = editor.safeAs<EditorWindow>()?.delegate ?: editor
+        val editor = InjectedLanguageEditorUtil.getTopLevelEditor(editor)
         var actualTextWithCaret = StringBuilder(editor.document.text)
         for (caret in editor.caretModel.allCarets.asReversed()) {
             actualTextWithCaret = actualTextWithCaret.insert(

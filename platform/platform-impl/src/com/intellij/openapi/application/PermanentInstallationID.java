@@ -1,12 +1,14 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.util.system.OS;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
@@ -42,7 +44,7 @@ public final class PermanentInstallationID {
       var preferences = Preferences.userRoot().node(nodeName);
 
       installationId = preferences.get(INSTALLATION_ID_KEY, "");
-      if (installationId.isBlank()) {
+      if (!isValid(installationId)) {
         installationId = !oldValue.isBlank() ? oldValue : UUID.randomUUID().toString();
         preferences.put(INSTALLATION_ID_KEY, installationId);
       }
@@ -51,9 +53,9 @@ public final class PermanentInstallationID {
         return installationId;
       }
 
-      // for Windows attempt to use PermanentUserId, so that DotNet products and IDEA would use the same ID.
-      if (SystemInfo.isWindows) {
-        installationId = syncWithSharedFile("PermanentUserId", installationId, preferences, INSTALLATION_ID_KEY);
+      // on Windows, try to use the `PermanentUserId` file, for .NET and IJ products to share the same ID
+      if (OS.CURRENT == OS.Windows) {
+        installationId = syncWithSharedFile(installationId, preferences);
       }
 
       // make sure values in older location and in the new location are the same
@@ -64,7 +66,7 @@ public final class PermanentInstallationID {
     catch (Throwable t) {
       // should not happen
       LOG.info("Unexpected error initializing Installation ID", t);
-      if (installationId.isBlank()) {
+      if (!isValid(installationId)) {
         installationId = UUID.randomUUID().toString();
       }
     }
@@ -72,30 +74,37 @@ public final class PermanentInstallationID {
     return installationId;
   }
 
-  @SuppressWarnings({"SameParameterValue", "DuplicatedCode"})
-  private static String syncWithSharedFile(String fileName, String installationId, Preferences preferences, String prefKey) {
+  @SuppressWarnings("DuplicatedCode")
+  private static String syncWithSharedFile(String installationId, Preferences preferences) {
     var appdata = System.getenv("APPDATA");
     if (appdata != null) {
       try {
-        var permanentIdFile = Path.of(appdata, "JetBrains", fileName);
-        Files.createDirectories(permanentIdFile.getParent());
+        var permanentIdFile = Path.of(appdata, "JetBrains/PermanentUserId");
         try {
           var bytes = Files.readAllBytes(permanentIdFile);
           var offset = CharsetToolkit.hasUTF8Bom(bytes) ? CharsetToolkit.UTF8_BOM.length : 0;
-          var fromFile = new String(bytes, offset, bytes.length - offset, StandardCharsets.UTF_8);
-          if (!fromFile.equals(installationId)) {
-            installationId = fromFile;
-            preferences.put(prefKey, installationId);
+          var fromFile = Strings.trimEnd(new String(bytes, offset, bytes.length - offset, StandardCharsets.UTF_8), '\0');
+          if (!fromFile.equals(installationId) && isValid(fromFile)) {
+            preferences.put(INSTALLATION_ID_KEY, installationId);
+            return fromFile;
           }
         }
-        catch (NoSuchFileException ignored) {
-          Files.writeString(permanentIdFile, installationId);
-        }
+        catch (NoSuchFileException | IllegalArgumentException ignored) { }
+        Files.createDirectories(permanentIdFile.getParent());
+        Files.writeString(permanentIdFile, installationId);
       }
-      catch (Throwable t) {
-        LOG.info("Error synchronizing Installation ID", t);
-      }
+      catch (IOException ignored) { }
     }
     return installationId;
+  }
+
+  private static boolean isValid(String id) {
+    try {
+      UUID.fromString(id);
+      return true;
+    }
+    catch (Exception ignored) {
+      return false;
+    }
   }
 }

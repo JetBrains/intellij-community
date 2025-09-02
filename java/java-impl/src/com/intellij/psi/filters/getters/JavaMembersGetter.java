@@ -132,19 +132,19 @@ public class JavaMembersGetter extends MembersGetter {
   }
 
   private static @Nullable PsiClass getCalledClass(@Nullable PsiElement call) {
-    if (call instanceof PsiMethodCallExpression) {
-      for (final JavaResolveResult result : ((PsiMethodCallExpression)call).getMethodExpression().multiResolve(true)) {
+    if (call instanceof PsiMethodCallExpression methodCall) {
+      for (final JavaResolveResult result : methodCall.multiResolve(true)) {
         final PsiElement element = result.getElement();
-        if (element instanceof PsiMethod) {
-          final PsiClass aClass = ((PsiMethod)element).getContainingClass();
+        if (element instanceof PsiMethod method) {
+          final PsiClass aClass = method.getContainingClass();
           if (aClass != null && !CommonClassNames.JAVA_LANG_MATH.equals(aClass.getQualifiedName())) {
             return aClass;
           }
         }
       }
     }
-    if (call instanceof PsiNewExpression) {
-      final PsiJavaCodeReferenceElement reference = ((PsiNewExpression)call).getClassReference();
+    if (call instanceof PsiNewExpression newExpression) {
+      final PsiJavaCodeReferenceElement reference = newExpression.getClassReference();
       if (reference != null) {
         for (final JavaResolveResult result : reference.multiResolve(true)) {
           final PsiElement element = result.getElement();

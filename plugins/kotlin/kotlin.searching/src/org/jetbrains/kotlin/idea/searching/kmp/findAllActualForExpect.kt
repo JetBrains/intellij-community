@@ -18,9 +18,10 @@ import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelPropertyFqnNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelTypeAliasFqNameIndex
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
 
 @RequiresBackgroundThread(generateAssertion = false)
-fun KtDeclaration.findAllActualForExpect(searchScope: SearchScope = runReadAction { useScope }): Sequence<SmartPsiElementPointer<KtDeclaration>> {
+fun KtDeclaration.findAllActualForExpect(searchScope: SearchScope = runReadAction { useScope }, compatibleOnly: Boolean = true): Sequence<SmartPsiElementPointer<KtDeclaration>> {
     val declaration = this
     val scope = searchScope as? GlobalSearchScope ?: return emptySequence()
     val containingClassOrObjectOrSelf = parentOfType<KtClassOrObject>(withSelf = true)
@@ -28,9 +29,9 @@ fun KtDeclaration.findAllActualForExpect(searchScope: SearchScope = runReadActio
     containingClassOrObjectOrSelf?.fqName?.let { fqName ->
         val fqNameAsString = fqName.asString()
         val targetDeclarations = KotlinFullClassNameIndex.getAllElements(fqNameAsString, project, scope) {
-            it.matchesWithExpect(containingClassOrObjectOrSelf)
+            it.matchesWithExpect(containingClassOrObjectOrSelf, compatibleOnly)
         } + KotlinTopLevelTypeAliasFqNameIndex.getAllElements(fqNameAsString, project, scope) {
-            it.matchesWithExpect(containingClassOrObjectOrSelf)
+            it.matchesWithExpect(containingClassOrObjectOrSelf, compatibleOnly)
         }
 
         return targetDeclarations.mapNotNull { targetDeclaration ->
@@ -39,10 +40,13 @@ fun KtDeclaration.findAllActualForExpect(searchScope: SearchScope = runReadActio
                 is KtConstructor<*> -> {
                     if (targetDeclaration is KtClass) {
                         val primaryConstructor = targetDeclaration.primaryConstructor
-                        if (primaryConstructor?.matchesWithExpect(declaration) == true) {
+                        if (primaryConstructor?.matchesWithExpect(declaration, compatibleOnly) == true) {
                             primaryConstructor
                         } else {
-                            val secondaryConstructor = targetDeclaration.secondaryConstructors.find { it.matchesWithExpect(declaration) }
+                            val secondaryConstructor = targetDeclaration.secondaryConstructors.find { it.matchesWithExpect(
+                                declaration,
+                                compatibleOnly
+                            ) }
                             if (secondaryConstructor != null) secondaryConstructor else if (declaration.valueParameters.isEmpty()) targetDeclaration else null
                         }
                     } else null
@@ -50,7 +54,7 @@ fun KtDeclaration.findAllActualForExpect(searchScope: SearchScope = runReadActio
                 is KtNamedDeclaration ->
                     when (targetDeclaration) {
                         is KtClassOrObject -> targetDeclaration.declarations.firstOrNull {
-                            it is KtNamedDeclaration && it.name == declaration.name && it.matchesWithExpect(declaration)
+                            it is KtNamedDeclaration && it.name == declaration.name && it.matchesWithExpect(declaration, compatibleOnly)
                         }
                         else -> null
                     }
@@ -65,11 +69,11 @@ fun KtDeclaration.findAllActualForExpect(searchScope: SearchScope = runReadActio
     val topLevelFqName = packageFqName.child(Name.identifier(name)).asString()
     return when (declaration) {
         is KtNamedFunction -> KotlinTopLevelFunctionFqnNameIndex.getAllElements(topLevelFqName, project, scope) {
-            it.matchesWithExpect(declaration)
+            it.matchesWithExpect(declaration, compatibleOnly)
         }
 
         is KtProperty -> KotlinTopLevelPropertyFqnNameIndex.getAllElements(topLevelFqName, project, scope) {
-            it.matchesWithExpect(declaration)
+            it.matchesWithExpect(declaration, compatibleOnly)
         }
 
         else -> emptySequence()
@@ -77,10 +81,19 @@ fun KtDeclaration.findAllActualForExpect(searchScope: SearchScope = runReadActio
 }
 
 @OptIn(KaExperimentalApi::class)
-private fun KtDeclaration.matchesWithExpect(expectDeclaration: KtDeclaration): Boolean {
+private fun KtDeclaration.matchesWithExpect(expectDeclaration: KtDeclaration, compatibleOnly: Boolean): Boolean {
     val declaration = this
-    return declaration.isEffectivelyActual() && analyze(declaration) {
+    if (compatibleOnly) {
+        if (!declaration.isEffectivelyActual()) {
+            return false
+        }
+    } else {
+        if (declaration.isExpectDeclaration()) {
+            return false
+        }
+    }
+    return analyze(declaration) {
         val symbol: KaDeclarationSymbol = declaration.symbol
-        return symbol.getExpectsForActual().any { it.psi == expectDeclaration }
+        symbol.getExpectsForActual().any { it.psi == expectDeclaration }
     }
 }

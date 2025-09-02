@@ -32,8 +32,8 @@ final class NasueousGeneralHighlightingPass extends GeneralHighlightingPass {
   }
 
   @Override
-  protected @NotNull HighlightInfoHolder createInfoHolder(@NotNull PsiFile file) {
-    return new HighlightInfoHolder(file) {
+  protected @NotNull HighlightInfoHolder createInfoHolder(@NotNull PsiFile psiFile) {
+    return new HighlightInfoHolder(psiFile) {
       @Override
       public boolean add(@Nullable HighlightInfo info) {
         if (info != null && info.getSeverity() == HighlightSeverity.ERROR) {

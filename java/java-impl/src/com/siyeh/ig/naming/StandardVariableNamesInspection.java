@@ -110,6 +110,7 @@ public final class StandardVariableNamesInspection extends BaseInspection {
     public void visitVariable(@NotNull PsiVariable variable) {
       super.visitVariable(variable);
       final String variableName = variable.getName();
+      if (variableName == null) return;
       final String expectedType = s_expectedTypes.get(variableName);
       if (expectedType == null) {
         return;

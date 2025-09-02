@@ -41,11 +41,11 @@ public final class AddGradleDslDependencyAction extends CodeInsightAction {
   }
 
   @Override
-  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
     if (packageSearchPluginEnabled()) return false;
-    if (file instanceof PsiCompiledElement) return false;
-    if (!GradleFileType.isGradleFile(file)) return false;
-    return !GradleConstants.SETTINGS_FILE_NAME.equals(file.getName());
+    if (psiFile instanceof PsiCompiledElement) return false;
+    if (!GradleFileType.isGradleFile(psiFile)) return false;
+    return !GradleConstants.SETTINGS_FILE_NAME.equals(psiFile.getName());
   }
 
   private static @NotNull Boolean packageSearchPluginEnabled() {

@@ -230,7 +230,7 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
    * @param action the action to add
    * @return this ToolbarDecorator
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public @NotNull ToolbarDecorator addExtraAction(@NotNull AnActionButton action) {
     myExtraActions.add(action);
     return this;
@@ -357,7 +357,7 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
   }
 
   /** @deprecated Use {@link #addExtraActions(AnAction...)} */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public @NotNull ToolbarDecorator setActionGroup(@NotNull ActionGroup actionGroup) {
     AnAction[] actions = actionGroup instanceof DefaultActionGroup o ? o.getChildren(ActionManager.getInstance()) :
                          actionGroup.getChildren(null);

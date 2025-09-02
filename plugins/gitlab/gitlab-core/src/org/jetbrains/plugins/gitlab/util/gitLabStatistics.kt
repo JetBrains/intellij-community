@@ -16,6 +16,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gitlab.GitLabProjectsManager
 import org.jetbrains.plugins.gitlab.api.*
 import org.jetbrains.plugins.gitlab.api.request.isProjectForked
@@ -26,8 +27,8 @@ import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestMetri
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.getMergeRequestMetrics
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersValue
 
-@PublishedApi
-internal object GitLabStatistics {
+@ApiStatus.Internal
+object GitLabStatistics {
   //region Application
   private val STATE_GROUP = EventLogGroup("vcs.gitlab", 1)
 
@@ -101,7 +102,7 @@ internal object GitLabStatistics {
   //endregion
 
   //region Counters
-  private val COUNTERS_GROUP = EventLogGroup("vcs.gitlab.counters", version = 24)
+  private val COUNTERS_GROUP = EventLogGroup("vcs.gitlab.counters", version = 25)
 
   /**
    * Server metadata was fetched
@@ -328,6 +329,7 @@ enum class GitLabApiRequestName {
   REST_GET_PROJECT_IS_FORKED,
   REST_GET_PROJECT_NAMESPACE,
   REST_GET_PROJECT_USERS,
+  REST_CREATE_PROJECT,
   REST_GET_COMMIT,
   REST_GET_COMMIT_DIFF,
   REST_GET_MERGE_REQUEST_DIFF,
@@ -361,6 +363,8 @@ enum class GitLabApiRequestName {
   GQL_GET_PROJECT_IS_FORKED,
   GQL_GET_MEMBER_PROJECTS_FOR_CLONE,
   GQL_GET_MEMBER_PROJECTS_FOR_SNIPPETS,
+  GQL_GET_MEMBER_NAMESPACES,
+  GQL_GET_MEMBER_NAMESPACES_OLD,
   GQL_TOGGLE_MERGE_REQUEST_DISCUSSION_RESOLVE,
   GQL_AWARD_EMOJI_TOGGLE,
   GQL_CREATE_NOTE,
@@ -392,6 +396,8 @@ enum class GitLabApiRequestName {
       GitLabGQLQuery.GET_PROJECT_IS_FORKED -> GQL_GET_PROJECT_IS_FORKED
       GitLabGQLQuery.GET_MEMBER_PROJECTS_FOR_CLONE -> GQL_GET_MEMBER_PROJECTS_FOR_CLONE
       GitLabGQLQuery.GET_MEMBER_PROJECTS_FOR_SNIPPETS -> GQL_GET_MEMBER_PROJECTS_FOR_SNIPPETS
+      GitLabGQLQuery.GET_MEMBER_NAMESPACES -> GQL_GET_MEMBER_NAMESPACES
+      GitLabGQLQuery.GET_MEMBER_NAMESPACES_OLD -> GQL_GET_MEMBER_NAMESPACES_OLD
       GitLabGQLQuery.TOGGLE_MERGE_REQUEST_DISCUSSION_RESOLVE -> GQL_TOGGLE_MERGE_REQUEST_DISCUSSION_RESOLVE
       GitLabGQLQuery.AWARD_EMOJI_TOGGLE -> GQL_AWARD_EMOJI_TOGGLE
       GitLabGQLQuery.CREATE_NOTE -> GQL_CREATE_NOTE

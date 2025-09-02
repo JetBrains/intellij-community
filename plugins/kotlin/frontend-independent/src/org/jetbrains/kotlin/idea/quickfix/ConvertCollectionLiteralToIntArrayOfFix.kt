@@ -31,7 +31,7 @@ class ConvertCollectionLiteralToIntArrayOfFix(
     companion object {
         fun createIfApplicable(element: PsiElement, unsupportedFeature: String): ModCommandAction? {
             return element
-                .takeIf { unsupportedFeature == "Collection literals outside of annotations" }
+                .takeIf { unsupportedFeature.startsWith("Collection literals") }
                 ?.let { it as? KtCollectionLiteralExpression }
                 ?.let(::ConvertCollectionLiteralToIntArrayOfFix)
         }

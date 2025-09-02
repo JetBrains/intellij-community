@@ -4,13 +4,13 @@ package org.jetbrains.plugins.github.pullrequest.ui.list
 import org.jetbrains.plugins.github.pullrequest.GHPRListViewModel
 
 interface GHPRListController {
-  fun refreshList()
+  fun reloadList()
 }
 
 internal class GHPRListControllerImpl(private val listVm: GHPRListViewModel)
   : GHPRListController {
 
-  override fun refreshList() {
-    listVm.refresh()
+  override fun reloadList() {
+    listVm.reload()
   }
 }

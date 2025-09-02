@@ -29,11 +29,11 @@ abstract class KotlinDescriptorTestCaseWithStackFrames : KotlinDescriptorTestCas
         out(INDENT_VARIABLES, "(${variables.joinToString()})")
     }
 
-    private fun out(text: String) {
+    protected fun out(text: String) {
         println(text, ProcessOutputTypes.SYSTEM)
     }
 
-    private fun out(indent: Int, text: String) {
+    protected fun out(indent: Int, text: String) {
         println("\t".repeat(indent) + text, ProcessOutputTypes.SYSTEM)
     }
 

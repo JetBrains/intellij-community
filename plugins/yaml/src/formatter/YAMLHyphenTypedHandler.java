@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.formatter;
 
 import com.intellij.codeInsight.editorActions.TypedHandlerDelegate;
@@ -20,12 +20,9 @@ import org.jetbrains.yaml.YAMLTokenTypes;
 import org.jetbrains.yaml.psi.YAMLFile;
 import org.jetbrains.yaml.psi.YAMLSequence;
 
-import static org.jetbrains.yaml.settingsSync.YamlBackendExtensionSuppressorKt.shouldDoNothingInBackendMode;
-
 public class YAMLHyphenTypedHandler extends TypedHandlerDelegate {
   @Override
   public @NotNull Result charTyped(char c, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    if (shouldDoNothingInBackendMode()) return Result.CONTINUE;
     autoIndentHyphen(c, project, editor, file);
     return Result.CONTINUE;
   }

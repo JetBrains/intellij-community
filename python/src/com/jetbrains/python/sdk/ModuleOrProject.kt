@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk
 
 import com.intellij.openapi.module.Module
@@ -34,6 +34,12 @@ sealed class ModuleOrProject(val project: Project) {
   class ProjectOnly(project: Project) : ModuleOrProject(project)
   class ModuleAndProject(val module: Module) : ModuleOrProject(module.project)
 }
+
+val ModuleOrProject.moduleIfExists: Module?
+  get() = when (this) {
+    is ModuleOrProject.ModuleAndProject -> module
+    is ModuleOrProject.ProjectOnly -> null
+  }
 
 val ModuleOrProject.destructured: Pair<Project, Module?>
   get() = when (this) {

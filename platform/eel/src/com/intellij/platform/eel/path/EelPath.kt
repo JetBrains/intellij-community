@@ -1,9 +1,14 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.path
 
 import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.EelOsFamily
 import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.path.EelPath.OS
+import org.jetbrains.annotations.ApiStatus
+
+@get:ApiStatus.Internal
+val EelPath.platform: EelOsFamily get() = descriptor.osFamily
 
 /**
  * An interface for **absolute** paths on some environment.
@@ -15,6 +20,7 @@ import com.intellij.platform.eel.path.EelPath.OS
  *
  * All operations listed here do not require I/O.
  */
+@ApiStatus.Experimental
 sealed interface EelPath {
   companion object {
     @Throws(EelPathException::class)
@@ -25,6 +31,7 @@ sealed interface EelPath {
 
     @Throws(EelPathException::class)
     @JvmStatic
+    @ApiStatus.Internal
     fun build(parts: List<String>, descriptor: EelDescriptor): EelPath {
       return ArrayListEelAbsolutePath.build(parts, descriptor)
     }
@@ -138,6 +145,7 @@ sealed interface EelPath {
    *  EelPath.parse("C:\\abc\").os == EelPath.OS.WINDOWS
    *  ```
    */
+  @get:ApiStatus.Internal
   val os: OS
 
   /**
@@ -154,21 +162,31 @@ sealed interface EelPath {
 
   fun toDebugString(): String
 
+  /**
+   * @return path in the particular eel, i.e.: `/foo` or `c:\bar`
+   */
   override fun toString(): String
 
+  @ApiStatus.Internal
   enum class OS {
     WINDOWS, UNIX
   }
 }
 
+@ApiStatus.Internal
 operator fun EelPath.div(part: String): EelPath = resolve(part)
 
+@ApiStatus.Experimental
+class EelPathException(val raw: String, val reason: String) : RuntimeException("`$raw`: $reason")
+
+@get:ApiStatus.Internal
 val OS.pathSeparator: String
   get() = when (this) {
     OS.UNIX -> ":"
     OS.WINDOWS -> ";"
   }
 
+@get:ApiStatus.Internal
 val EelPlatform.pathOs: OS
   get() = when (this) {
     is EelPlatform.Posix -> OS.UNIX
@@ -178,11 +196,9 @@ val EelPlatform.pathOs: OS
 private val UNIX_DIRECTORY_SEPARATORS = charArrayOf('/')
 private val WINDOWS_DIRECTORY_SEPARATORS = charArrayOf('/', '\\')
 
+@get:ApiStatus.Internal
 val OS.directorySeparators: CharArray
   get() = when (this) {
     OS.UNIX -> UNIX_DIRECTORY_SEPARATORS
     OS.WINDOWS -> WINDOWS_DIRECTORY_SEPARATORS
-}
-
-
-class EelPathException(val raw: String, val reason: String) : RuntimeException("`$raw`: $reason")
+  }

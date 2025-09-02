@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.rules
 
 import com.intellij.ide.plugins.PluginManagerCore
@@ -28,7 +28,9 @@ private class TestComponent : SimplePersistentStateComponent<TestComponent.TestC
 }
 
 @ApiStatus.Internal
-fun checkDefaultProjectAsTemplate(task: (checkTask: (project: Project, defaultProjectTemplateShouldBeApplied: Boolean) -> Unit) -> Unit) {
+suspend fun checkDefaultProjectAsTemplate(
+  task: suspend (checkTask: suspend (project: Project, defaultProjectTemplateShouldBeApplied: Boolean) -> Unit) -> Unit,
+) {
   val defaultTestComponent = TestComponent()
   val defaultStateStore = ProjectManager.getInstance().defaultProject.service<IComponentStore>()
   defaultStateStore.initComponent(component = defaultTestComponent, serviceDescriptor = null, pluginId = PluginManagerCore.CORE_ID)
@@ -50,6 +52,7 @@ fun checkDefaultProjectAsTemplate(task: (checkTask: (project: Project, defaultPr
   }
   finally {
     // clear state
+    @Suppress("TestOnlyProblems")
     defaultStateStore.removeComponent(TEST_COMPONENT_NAME)
   }
 }

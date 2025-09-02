@@ -114,8 +114,6 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
     "ResizeToolWindowUp",
     "ResizeToolWindowDown",
     "MaximizeToolWindow",
-    
-    "MaintenanceAction",
 
     "TerminalIncreaseFontSize",
     "TerminalDecreaseFontSize",

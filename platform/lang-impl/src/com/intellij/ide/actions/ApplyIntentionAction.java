@@ -23,24 +23,24 @@ public final class ApplyIntentionAction extends AnAction {
 
   private final IntentionAction myAction;
   private final Editor myEditor;
-  private final PsiFile myFile;
+  private final PsiFile myPsiFile;
 
-  public ApplyIntentionAction(final HighlightInfo.IntentionActionDescriptor descriptor, @NlsActions.ActionText String text, Editor editor, PsiFile file) {
-    this(descriptor.getAction(), text, editor, file);
+  public ApplyIntentionAction(final HighlightInfo.IntentionActionDescriptor descriptor, @NlsActions.ActionText String text, Editor editor, PsiFile psiFile) {
+    this(descriptor.getAction(), text, editor, psiFile);
   }
 
-  public ApplyIntentionAction(final IntentionAction action, @NlsActions.ActionText String text, Editor editor, PsiFile file) {
+  public ApplyIntentionAction(final IntentionAction action, @NlsActions.ActionText String text, Editor editor, PsiFile psiFile) {
     super("");
     getTemplatePresentation().setText(text, false);
     myAction = action;
     myEditor = editor;
-    myFile = file;
+    myPsiFile = psiFile;
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    PsiDocumentManager.getInstance(myFile.getProject()).commitAllDocuments();
-    ShowIntentionActionsHandler.chooseActionAndInvoke(myFile, myEditor, myAction, myAction.getText(), IntentionSource.SEARCH_EVERYWHERE);
+    PsiDocumentManager.getInstance(myPsiFile.getProject()).commitAllDocuments();
+    ShowIntentionActionsHandler.chooseActionAndInvoke(myPsiFile, myEditor, myAction, myAction.getText(), IntentionSource.SEARCH_EVERYWHERE);
   }
 
   public String getName() {

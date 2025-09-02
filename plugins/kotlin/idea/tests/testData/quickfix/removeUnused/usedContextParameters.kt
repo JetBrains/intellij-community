@@ -1,4 +1,4 @@
-// "Safe delete 'myContext'" "false"
+// "Safe delete parameter 'myContext'" "false"
 // COMPILER_ARGUMENTS: -Xcontext-parameters
 // LANGUAGE_VERSION: 2.2
 

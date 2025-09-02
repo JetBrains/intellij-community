@@ -1,27 +1,20 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.execution.telemetry
 
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.diagnostic.telemetry.OtlpConfiguration
 import com.intellij.platform.diagnostic.telemetry.impl.agent.AgentConfiguration
 import com.intellij.platform.diagnostic.telemetry.impl.agent.TelemetryAgentProvider
 import com.intellij.platform.diagnostic.telemetry.impl.agent.TelemetryAgentResolver
 import com.intellij.platform.diagnostic.telemetry.rt.context.TelemetryContext
-import org.gradle.tooling.LongRunningOperation
-import org.gradle.tooling.model.build.BuildEnvironment
+import org.jetbrains.plugins.gradle.service.execution.GradleExecutionContext
 import org.jetbrains.plugins.gradle.service.project.GradleExecutionHelperExtension
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
 
 class GradleTelemetryAgentProvidingExecutionHelperExtension : GradleExecutionHelperExtension {
 
-  override fun prepareForExecution(
-    id: ExternalSystemTaskId,
-    operation: LongRunningOperation,
-    settings: GradleExecutionSettings,
-    buildEnvironment: BuildEnvironment?,
-  ) {
+  override fun configureSettings(settings: GradleExecutionSettings, context: GradleExecutionContext) {
     if (!Registry.`is`("gradle.daemon.opentelemetry.agent.enabled", false)) {
       return
     }
@@ -32,9 +25,9 @@ class GradleTelemetryAgentProvidingExecutionHelperExtension : GradleExecutionHel
       context = TelemetryContext.current(),
       traceEndpoint = traceEndpoint,
       agentLocation = agentLocation,
-      settings = AgentConfiguration.Settings.withoutMetrics()
+      settings = AgentConfiguration.Settings.builder().build()
     )
     val jvmArgs = TelemetryAgentProvider.getJvmArgs(configuration)
-    operation.addJvmArguments(jvmArgs)
+    settings.withVmOptions(jvmArgs)
   }
 }

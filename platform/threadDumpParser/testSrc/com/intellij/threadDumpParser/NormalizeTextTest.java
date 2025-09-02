@@ -1,11 +1,14 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.threadDumpParser;
 
-import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
+import org.junit.Test;
 
-public class NormalizeTextTest extends TestCase {
-  public void testCausedBy() {
+import static org.junit.Assert.assertEquals;
+
+public class NormalizeTextTest {
+  @Test
+	public void testCausedBy() {
     doTest("""
              javax.faces.FacesException: Error calling action method of component with id _id6:_id10
                      at java.lang.Th
@@ -21,7 +24,8 @@ public class NormalizeTextTest extends TestCase {
                      at org.apache.myfaces.application.ActionListenerImpl.processAction(ActionListenerImpl.java:63)""");
   }
 
-  public void testThreadNames() {
+  @Test
+	public void testThreadNames() {
     doTest("""
              "Background process" prio=6 tid=0x21193b88 nid=0x11ea4 waiting on condition [0x2
              2cbf000..0x22cbfd68]
@@ -56,7 +60,8 @@ public class NormalizeTextTest extends TestCase {
                      at java.lang.Thread.run(Thread.java:595)""");
   }
 
-  public void testLocked() {
+  @Test
+	public void testLocked() {
     doTest("""
                     at com.intellij.lang.jsp.JspFileViewProviderImpl.getKeyPrefixes(JspFileV
              iewProviderImpl.java:76)
@@ -75,7 +80,8 @@ public class NormalizeTextTest extends TestCase {
              """);
   }
 
-  public void testAtSplit() {
+  @Test
+	public void testAtSplit() {
     doTest("""
              java.lang.Throwable
              at
@@ -89,7 +95,8 @@ public class NormalizeTextTest extends TestCase {
              at com.intellij.openapi.util.objectTree.ObjectTree.getNodeFor(ObjectTree.java:79)""");
   }
 
-  public void testSplitMergedLines() {
+  @Test
+	public void testSplitMergedLines() {
     doTest("org.apache.velocity.exception.MethodInvocationException " +
            "at org.apache.velocity.runtime.parser.node.ASTMethod.execute(ASTMethod.java:246) " +
            "at org.apache.velocity.runtime.parser.node.ASTReference.execute(ASTReference.java:175) " +
@@ -120,7 +127,8 @@ public class NormalizeTextTest extends TestCase {
              at org.apache.velocity.Template.merge(Template.java:256)""");
   }
 
-  public void testWithoutAt() {
+  @Test
+	public void testWithoutAt() {
     doTest("""
               java.util.concurrent.ForkJoinTask$AdaptedRunnableAction.exec(ForkJoinTask.java:1407)
               java.util.concurrent.ForkJoinTask.doExec(ForkJoinTask.java:289)
@@ -134,7 +142,8 @@ public class NormalizeTextTest extends TestCase {
              """);
   }
 
-  public void testDoNotMergeWords() {
+  @Test
+	public void testDoNotMergeWords() {
     String text = """
       "Performance watcher" #35 prio=1 os_prio=-2 tid=0x3ea60c00 nid=0xbfc
       waiting on condition [0x445ef000]
@@ -168,7 +177,8 @@ public class NormalizeTextTest extends TestCase {
     assertEquals(2, ThreadDumpParser.parse(ThreadDumpParser.normalizeText(text)).size());
   }
 
-  public void testJsonEscapes() {
+  @Test
+	public void testJsonEscapes() {
     doTest("""
              c:\\some\\path
               "error": "java.lang.RuntimeException: Error creating table\\n\\tat org.kablambda.aws.dynamodb.DBImpl.createTable(DBImpl.java:63)\\n\\tat org.kablambda.aws.handler.InstallHandler.lambda$new$1(InstallHandler.java:16)\\n\\tat org.kablambda.aws.handler.PathHandler.handle(PathHandler.java:26)\\n\\tat

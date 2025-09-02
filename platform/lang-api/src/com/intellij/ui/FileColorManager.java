@@ -30,7 +30,7 @@ public abstract class FileColorManager {
 
   public abstract @Unmodifiable Collection<@NonNls String> getColorIDs();
 
-  public abstract Collection<@Nls String> getColorNames();
+  public abstract @Unmodifiable Collection<@Nls String> getColorNames();
 
   public abstract @Nullable Color getFileColor(final @NotNull VirtualFile file);
 

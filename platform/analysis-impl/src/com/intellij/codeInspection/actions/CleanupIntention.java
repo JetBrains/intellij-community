@@ -35,20 +35,20 @@ public abstract class CleanupIntention implements IntentionAction, LowPriorityAc
   }
 
   @Override
-  public void invoke(final @NotNull Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-    if (!FileModificationService.getInstance().preparePsiElementForWrite(file)) return;
+  public void invoke(final @NotNull Project project, final Editor editor, final PsiFile psiFile) throws IncorrectOperationException {
+    if (!FileModificationService.getInstance().preparePsiElementForWrite(psiFile)) return;
     final InspectionManager managerEx = InspectionManager.getInstance(project);
     final GlobalInspectionContextBase globalContext = (GlobalInspectionContextBase)managerEx.createNewGlobalContext();
-    final AnalysisScope scope = getScope(project, InjectedLanguageManager.getInstance(project).getTopLevelFile(file));
+    final AnalysisScope scope = getScope(project, InjectedLanguageManager.getInstance(project).getTopLevelFile(psiFile));
     if (scope != null) {
       globalContext.codeCleanup(scope, InspectionProjectProfileManager.getInstance(project).getCurrentProfile(), getText(), null, false);
     }
   }
 
-  protected abstract @Nullable AnalysisScope getScope(Project project, PsiFile file);
+  protected abstract @Nullable AnalysisScope getScope(Project project, PsiFile psiFile);
 
   @Override
-  public boolean isAvailable(final @NotNull Project project, final Editor editor, final PsiFile file) {
+  public boolean isAvailable(final @NotNull Project project, final Editor editor, final PsiFile psiFile) {
     return true;
   }
 

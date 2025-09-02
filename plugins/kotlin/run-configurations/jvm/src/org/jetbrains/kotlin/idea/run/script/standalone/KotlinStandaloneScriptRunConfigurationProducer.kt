@@ -5,12 +5,14 @@ package org.jetbrains.kotlin.idea.run.script.standalone
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.LazyRunConfigurationProducer
 import com.intellij.execution.configurations.ConfigurationFactory
+import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.isRunnableKotlinScript
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 
+@InternalIgnoreDependencyViolation
 class KotlinStandaloneScriptRunConfigurationProducer :
     LazyRunConfigurationProducer<KotlinStandaloneScriptRunConfiguration>() {
     override fun setupConfigurationFromContext(

@@ -46,6 +46,7 @@ private class MyGoToChangePopupAction(val model: CombinedDiffModel) : Presentabl
 class CombinedDiffPreviewModel {
   companion object {
     @JvmStatic
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("Use prepareCombinedBlocksFromWrappers", ReplaceWith("prepareCombinedBlocksFromWrappers(project, changes)"))
     fun prepareCombinedDiffModelRequests(project: Project, changes: List<Wrapper>): List<CombinedBlockProducer> {
       return prepareCombinedBlocksFromWrappers(project, changes)

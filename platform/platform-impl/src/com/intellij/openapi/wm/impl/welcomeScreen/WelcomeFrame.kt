@@ -15,7 +15,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.help.HelpManager
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
@@ -24,6 +23,7 @@ import com.intellij.openapi.util.DimensionService
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.*
+import com.intellij.openapi.wm.ex.NoProjectStateHandler
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl
 import com.intellij.openapi.wm.impl.WindowManagerImpl
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
@@ -202,15 +202,19 @@ class WelcomeFrame : JFrame(), IdeFrame, AccessibleContextAccessor, DisposableWi
         return
       }
 
+      val customHandler = NoProjectStateHandler.EP_NAME.lazySequence().firstOrNull { it.canHandle() }
+      if (customHandler != null) {
+        customHandler.handle()
+        return
+      }
+
       val show = prepareToShow() ?: return
       service<CoreUiCoroutineScopeHolder>().coroutineScope.launch(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
         val windowManager = serviceAsync<WindowManager>() as? WindowManagerImpl ?: return@launch
-        blockingContext {
-          windowManager.disposeRootFrame()
-          if (windowManager.projectFrameHelpers.isEmpty()) {
-            show()
-            lifecyclePublisher?.welcomeScreenDisplayed()
-          }
+        windowManager.disposeRootFrame()
+        if (windowManager.projectFrameHelpers.isEmpty()) {
+          show()
+          lifecyclePublisher?.welcomeScreenDisplayed()
         }
       }
     }

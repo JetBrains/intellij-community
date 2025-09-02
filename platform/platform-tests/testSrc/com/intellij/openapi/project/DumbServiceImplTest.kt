@@ -9,7 +9,6 @@ import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.DumbServiceImpl.Companion.IDEA_FORCE_DUMB_QUEUE_TASKS
@@ -18,8 +17,8 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileImpl
 import com.intellij.platform.ide.progress.withModalProgress
-import com.intellij.psi.PsiManager
-import com.intellij.psi.impl.PsiManagerImpl
+import com.intellij.platform.util.coroutines.childScope
+import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.testFramework.*
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
 import com.intellij.util.ArrayUtil
@@ -148,7 +147,7 @@ class DumbServiceImplTest {
     }
   }
 
-  private fun DumbServiceImpl.queue(task: (ProgressIndicator) -> Unit) {
+  private fun DumbService.queue(task: (ProgressIndicator) -> Unit) {
     queueTask(object : DumbModeTask() {
       override fun performInDumbMode(indicator: ProgressIndicator) = task(indicator)
     })
@@ -268,7 +267,7 @@ class DumbServiceImplTest {
     phaser.arriveAndDeregister()
   }
 
-  private val dumbService by lazy { DumbServiceImpl.getInstance(project) }
+  private val dumbService by lazy { DumbService.getInstance(project) }
 
   @Test
   @RunsInEdt
@@ -286,7 +285,7 @@ class DumbServiceImplTest {
     val child = vDir.children[0]
     assertEquals("JSP", child.fileType.name)
     assertFalse((child as VirtualFileImpl).isCharsetSet)
-    assertNull((project.service<PsiManager>() as PsiManagerImpl).fileManager.getCachedPsiFile(child))
+    assertNull(PsiManagerEx.getInstanceEx(project).fileManager.getCachedPsiFile(child))
 
     val started = AtomicBoolean()
     val finished = AtomicBoolean()
@@ -381,8 +380,9 @@ class DumbServiceImplTest {
 
   @Test
   fun `test dispose cancels all the tasks submitted via queueTask from other threads with no race`() = runBlocking {
+    val serviceScope = childScope("DumbServiceImpl")
     // pass empty publisher to make sure that shared SmartModeScheduler is not affected
-    val dumbService = DumbServiceImpl(project, object : DumbService.DumbModeListener {}, this)
+    val dumbService = DumbServiceImpl(project, object : DumbService.DumbModeListener {}, serviceScope)
 
     val queuedTaskInvoked = AtomicBoolean(false)
     val dumbTaskFinished = CountDownLatch(1)
@@ -414,6 +414,7 @@ class DumbServiceImplTest {
     dumbTaskFinished.awaitOrThrow(5, "DumbModeTask didn't dispose in 5 seconds")
 
     assertFalse(queuedTaskInvoked.get())
+    serviceScope.cancel()
   }
 
   @Test
@@ -783,20 +784,18 @@ class DumbServiceImplTest {
   fun `DumbService_queue works when invoked from undispatched EDT via blockingContext`() {
     runInEdtAndWait {
       CoroutineScope(Job()).launch(Dispatchers.EDT, start = CoroutineStart.UNDISPATCHED) {
-        blockingContext {
-          val taskStarted = CountDownLatch(1)
-          val taskFinished = CountDownLatch(1)
-          dumbService.queue {
-            taskStarted.countDown()
-            taskFinished.awaitOrThrow(5, "Test didn't finish dumb mode. Finish it on timeout.")
-          }
-          assertTrue("Should become dumb immediately, when on EDT", DumbService.isDumb(project))
-          PlatformTestUtil.waitWithEventsDispatching("Dumb task didn't start after 5 seconds.", { taskStarted.count == 0L }, 5)
-          assertTrue("Should be dumb when running dumb task", DumbService.isDumb(project))
-          taskFinished.countDown()
-
-          DumbModeTestUtils.waitForSmartMode(project)
+        val taskStarted = CountDownLatch(1)
+        val taskFinished = CountDownLatch(1)
+        dumbService.queue {
+          taskStarted.countDown()
+          taskFinished.awaitOrThrow(5, "Test didn't finish dumb mode. Finish it on timeout.")
         }
+        assertTrue("Should become dumb immediately, when on EDT", DumbService.isDumb(project))
+        PlatformTestUtil.waitWithEventsDispatching("Dumb task didn't start after 5 seconds.", { taskStarted.count == 0L }, 5)
+        assertTrue("Should be dumb when running dumb task", DumbService.isDumb(project))
+        taskFinished.countDown()
+
+        DumbModeTestUtils.waitForSmartMode(project)
       }.invokeOnCompletion { t ->
         if (t != null) {
           throw AssertionError(t)
@@ -809,7 +808,7 @@ class DumbServiceImplTest {
   fun `DumbService_runInDumbMode should properly handle coroutine cancellation`() = runBlocking(Dispatchers.EDT) {
     val dumbTaskStarted = Job()
     val dumbTask = launch(Dispatchers.Default) {
-      DumbServiceImpl.getInstance(project).runInDumbMode("Test dumb task that awaits cancellation") {
+      dumbService.runInDumbMode("Test dumb task that awaits cancellation") {
         dumbTaskStarted.complete()
         awaitCancellation()
       }
@@ -817,9 +816,9 @@ class DumbServiceImplTest {
     withTimeout(10.seconds) {
       dumbTaskStarted.join()
 
-      DumbServiceImpl.getInstance(project).isDumbAsFlow.first { isDumb -> isDumb }
+      dumbService.state.first { it.isDumb }
       dumbTask.cancel("Cancel dumb task")
-      DumbServiceImpl.getInstance(project).isDumbAsFlow.first { isDumb -> !isDumb }
+      dumbService.state.first { !it.isDumb }
     }
     return@runBlocking
   }

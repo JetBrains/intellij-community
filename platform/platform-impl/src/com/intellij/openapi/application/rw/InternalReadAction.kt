@@ -3,13 +3,11 @@ package com.intellij.openapi.application.rw
 
 import com.intellij.concurrency.ContextAwareRunnable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.ReadAction.CannotReadException
 import com.intellij.openapi.application.ReadConstraint
 import com.intellij.openapi.application.ex.ApplicationEx
-import com.intellij.openapi.application.isLockStoredInContext
-import com.intellij.openapi.progress.blockingContext
+import com.intellij.platform.locking.impl.getGlobalThreadingSupport
 import kotlinx.coroutines.*
 import kotlin.coroutines.coroutineContext
 import kotlin.coroutines.resume
@@ -31,10 +29,7 @@ internal class InternalReadAction<T>(
         check(unsatisfiedConstraint == null) {
           "Cannot suspend until constraints are satisfied while holding the read lock: $unsatisfiedConstraint"
         }
-        return blockingContext {
-          // To copy permit from context to thread local
-          ReadAction.compute<T, Throwable>(action)
-        }
+        return ReadAction.compute<T, Throwable>(action)
       }
       coroutineScope {
         readLoop()
@@ -42,7 +37,7 @@ internal class InternalReadAction<T>(
     }
     else {
       // Third condition is check for lock consistency
-      if (isLockStoredInContext && application.hasLockStateInContext(currentCoroutineContext()) && application.isReadAccessAllowed) {
+      if (application.isParallelizedReadAction(currentCoroutineContext()) && application.isReadAccessAllowed) {
         val unsatisfiedConstraint = findUnsatisfiedConstraint()
         check(unsatisfiedConstraint == null) {
           "Cannot suspend until constraints are satisfied while holding the read lock: $unsatisfiedConstraint"
@@ -53,9 +48,7 @@ internal class InternalReadAction<T>(
         }
       }
       withContext(Dispatchers.Default) {
-        check(!application.isReadAccessAllowed) {
-          "This thread unexpectedly holds the read lock"
-        }
+        application.assertReadAccessNotAllowed()
         readLoop()
       }
     }
@@ -95,13 +88,11 @@ internal class InternalReadAction<T>(
   }
 
   private suspend fun tryReadBlocking(): ReadResult<T> {
-    return blockingContext {
-      var result: ReadResult<T>? = null
-      application.tryRunReadAction {
-        result = insideReadAction()
-      }
-      result ?: ReadResult.WritePending
+    var result: ReadResult<T>? = null
+    application.tryRunReadAction {
+      result = insideReadAction()
     }
+    return result ?: ReadResult.WritePending
   }
 
   private suspend fun tryReadCancellable(): ReadResult<T> = try {
@@ -137,11 +128,9 @@ private sealed class ReadResult<out T> {
 private suspend fun yieldToPendingWriteActions() {
   // the runnable is executed on the write thread _after_ the current or pending write action
   yieldUntilRun { runnable ->
-    // Even if there is a modal dialog shown,
-    // it doesn't make sense to yield until it's finished
-    // to run a read action concurrently in background
-    // => yield until the current WA finishes in any modality.
-    ApplicationManager.getApplication().invokeLater(runnable, ModalityState.any())
+    getGlobalThreadingSupport().runWhenWriteActionIsCompleted {
+      runnable.run()
+    }
   }
 }
 

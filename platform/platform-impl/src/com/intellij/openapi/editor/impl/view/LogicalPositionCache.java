@@ -12,6 +12,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.DocumentUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -199,7 +200,8 @@ public final class LogicalPositionCache implements PrioritizedDocumentListener, 
     if (myLines == null) myView.getEditor().throwDisposalError("Editor is already disposed");
   }
 
-  synchronized void validateState() {
+  @VisibleForTesting
+  public synchronized void validateState() {
     int lineCount = myDocument.getLineCount();
     int cacheSize = myLines.size();
     if (cacheSize != lineCount) throw new IllegalStateException("Line count: " + lineCount + ", cache size: " + cacheSize);

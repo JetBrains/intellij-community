@@ -111,11 +111,6 @@ class PythonDoctestDebuggingTest : PyEnvTestCase() {
       return runConfiguration
     }
 
-    override fun createCommandLinePatchers(runner: PyDebugRunner, pyState: PythonCommandLineState,
-                                           profile: RunProfile, serverLocalPort: Int): Array<CommandLinePatcher> {
-      return runner.createCommandLinePatchers(project, pyState, profile, serverLocalPort)
-    }
-
     companion object {
       private const val RELATIVE_PATH = "/debug/"
       private const val DEFAULT_TEST_FILE = "test_doctest.py"

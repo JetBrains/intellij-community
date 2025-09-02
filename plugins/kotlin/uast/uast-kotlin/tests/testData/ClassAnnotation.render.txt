@@ -7,7 +7,7 @@ public abstract annotation MyAnnotation {
 }
 
 public final class B {
-    @null public static final var Companion: B.Companion
+    @null @MyAnnotation(text = "companion") public static final var Companion: B.Companion
     public fun B() = UastEmptyExpression
     public static final class InB {
         public fun InB() = UastEmptyExpression
@@ -18,6 +18,6 @@ public final class B {
 }
 
 public final class Obj {
-    @null public static final var INSTANCE: Obj
+    @null @MyAnnotation(text = "object") public static final var INSTANCE: Obj
     private fun Obj() = UastEmptyExpression
 }

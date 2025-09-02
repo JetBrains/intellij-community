@@ -1,8 +1,8 @@
 1 errors:
 [1]: ------------------------------
 Dependency on plugin must be specified using `plugin` and not `module` (
-  entry=XmlElement(name=module, attributes={name=intellij.dependent}, children=[], content=null),
-  referencingDescriptorFile=/dependent/META-INF/plugin.xml
+  entry=ModuleDependency(moduleName=intellij.dependent),
+  referencingDescriptorFile=dependent/META-INF/plugin.xml
 )
 
 Proposed fix:
@@ -10,5 +10,4 @@ Proposed fix:
 Change dependency element to:
 
 <plugin id="dependent"/>
-
 -----------------------------------

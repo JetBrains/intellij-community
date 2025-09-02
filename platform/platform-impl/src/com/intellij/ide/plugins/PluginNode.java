@@ -237,10 +237,12 @@ public final class PluginNode implements IdeaPluginDescriptor {
     this.vendor = vendor;
   }
 
+  @ApiStatus.Internal
   public @Nullable PluginNodeVendorDetails getVendorDetails() {
     return vendorDetails;
   }
 
+  @ApiStatus.Internal
   public void setVendorDetails(@Nullable PluginNodeVendorDetails vendorDetails) {
     this.vendorDetails = vendorDetails;
   }
@@ -470,6 +472,10 @@ public final class PluginNode implements IdeaPluginDescriptor {
     myDependencies.add(new PluginNodeDependency(PluginId.getId(id), optional));
   }
 
+  public void addDepends(@NotNull PluginId id, boolean optional) {
+    myDependencies.add(new PluginNodeDependency(id, optional));
+  }
+
   @Override
   public @NotNull List<IdeaPluginDependency> getDependencies() {
     return myDependencies;
@@ -524,11 +530,13 @@ public final class PluginNode implements IdeaPluginDescriptor {
     this.untilBuild = untilBuild;
   }
 
+  @Deprecated
   @Override
   public boolean isEnabled() {
     return myEnabled;
   }
 
+  @Deprecated
   @Override
   public void setEnabled(boolean enabled) {
     myEnabled = enabled;

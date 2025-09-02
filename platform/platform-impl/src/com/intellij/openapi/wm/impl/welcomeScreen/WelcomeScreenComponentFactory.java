@@ -34,13 +34,11 @@ import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.list.SelectablePanel;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.IconUtil;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.messages.SimpleMessageBusConnection;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextDelegate;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
@@ -57,11 +55,34 @@ import java.util.*;
 public final class WelcomeScreenComponentFactory {
   static @NotNull JComponent createSmallLogo() {
     ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
+    String welcomeScreenLogoUrl = appInfo.getApplicationSvgIconUrl();
+    Icon icon = IconLoader.getIcon(welcomeScreenLogoUrl, WelcomeScreenComponentFactory.class.getClassLoader());
+
+    ActionLink copyAbout = new ActionLink("", EmptyIcon.ICON_16, createCopyAboutAction());
+    copyAbout.setHoveringIcon(AllIcons.Actions.Copy);
+    copyAbout.setToolTipText(IdeBundle.message("welcome.screen.copy.about.action.text"));
+
+    JComponent panel = createSmallLogo(icon, copyAbout);
+    panel.addMouseListener(new MouseAdapter() {
+      @Override
+      public void mouseEntered(MouseEvent e) {
+        copyAbout.setIcon(AllIcons.Actions.Copy);
+      }
+
+      @Override
+      public void mouseExited(MouseEvent e) {
+        copyAbout.setIcon(EmptyIcon.ICON_16);
+      }
+    });
+    return panel;
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull JComponent createSmallLogo(Icon icon, Component actionComponent) {
+    ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
 
     NonOpaquePanel panel = new NonOpaquePanel(new BorderLayout());
 
-    String welcomeScreenLogoUrl = appInfo.getApplicationSvgIconUrl();
-    Icon icon = IconLoader.getIcon(welcomeScreenLogoUrl, WelcomeScreenComponentFactory.class.getClassLoader());
     JLabel logo = new JLabel() {
       @Override
       public void updateUI() {
@@ -80,10 +101,6 @@ public final class WelcomeScreenComponentFactory {
     appName.setForeground(JBColor.foreground());
     appName.setFont(JBFont.create(appName.getFont().deriveFont(Font.PLAIN), false));
 
-    ActionLink copyAbout = new ActionLink("", EmptyIcon.ICON_16, createCopyAboutAction());
-    copyAbout.setHoveringIcon(AllIcons.Actions.Copy);
-    copyAbout.setToolTipText(IdeBundle.message("welcome.screen.copy.about.action.text"));
-
     String appVersion = appInfo.getFullVersion();
 
     if (appInfo.isEAP() && !appInfo.getBuild().isSnapshot()) {
@@ -96,23 +113,12 @@ public final class WelcomeScreenComponentFactory {
     NonOpaquePanel textPanel = new NonOpaquePanel();
     textPanel.setLayout(new VerticalFlowLayout(0, 0));
     textPanel.setBorder(JBUI.Borders.empty(28, 10, 25, 10));
-    JPanel namePanel = JBUI.Panels.simplePanel(appName).andTransparent().addToRight(copyAbout);
+    JPanel namePanel = JBUI.Panels.simplePanel(appName).andTransparent().addToRight(actionComponent);
     textPanel.add(namePanel);
     textPanel.add(version);
     panel.add(textPanel, BorderLayout.CENTER);
     panel.setToolTipText(IdeBundle.message("about.box.build.number", appInfo.getBuild()));
 
-    panel.addMouseListener(new MouseAdapter() {
-      @Override
-      public void mouseEntered(MouseEvent e) {
-        copyAbout.setIcon(AllIcons.Actions.Copy);
-      }
-
-      @Override
-      public void mouseExited(MouseEvent e) {
-        copyAbout.setIcon(EmptyIcon.ICON_16);
-      }
-    });
     return panel;
   }
 
@@ -429,6 +435,10 @@ public final class WelcomeScreenComponentFactory {
   }
 
   static @Nullable JComponent getSinglePromotion(boolean isEmptyState) {
+    // Welcome screen promotions are not desirable in MPS and/or IDEs built with MPS
+    if (PlatformUtils.isMPS()) {
+      return null;
+    }
     StartPagePromoter[] extensions = StartPagePromoter.START_PAGE_PROMOTER_EP.getExtensions();
     List<StartPagePromoter> promoters = new ArrayList<>();
     int maxPriorityLevel = Integer.MIN_VALUE;

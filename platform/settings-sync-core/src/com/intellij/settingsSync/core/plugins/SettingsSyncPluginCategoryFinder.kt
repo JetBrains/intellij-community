@@ -24,7 +24,7 @@ internal object SettingsSyncPluginCategoryFinder {
 
   private fun containsOnlyUIExtensions(descriptor: IdeaPluginDescriptor) : Boolean {
     if (descriptor is IdeaPluginDescriptorImpl) {
-      return descriptor.epNameToExtensions?.all {
+      return descriptor.extensions?.all {
         UI_EXTENSIONS.contains(it.key)
       } ?: false
     }

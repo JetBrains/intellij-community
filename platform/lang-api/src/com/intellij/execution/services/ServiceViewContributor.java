@@ -3,6 +3,7 @@ package com.intellij.execution.services;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -37,4 +38,11 @@ public interface ServiceViewContributor<T> {
   /// @return a [ServiceViewDescriptor] for the child node [T]
   @NotNull
   ServiceViewDescriptor getServiceDescriptor(@NotNull Project project, @NotNull T service);
+
+  /// @see ServiceViewEmptyTreeSuggestion
+  @ApiStatus.Internal
+  @Nullable
+  default ServiceViewEmptyTreeSuggestion getEmptyTreeSuggestion() {
+    return null;
+  }
 }

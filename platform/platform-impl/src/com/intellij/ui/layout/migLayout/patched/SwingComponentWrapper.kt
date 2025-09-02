@@ -36,11 +36,16 @@ package com.intellij.ui.layout.migLayout.patched
 import com.intellij.ide.ui.laf.VisualPaddingsProvider
 import com.intellij.openapi.ui.ComponentWithBrowseButton
 import com.intellij.util.ThreeState
+import com.intellij.util.ui.GraphicsUtil
 import net.miginfocom.layout.ComponentWrapper
 import net.miginfocom.layout.ContainerWrapper
 import net.miginfocom.layout.LayoutUtil
 import net.miginfocom.layout.PlatformDefaults
-import java.awt.*
+import java.awt.BasicStroke
+import java.awt.Color
+import java.awt.Graphics2D
+import java.awt.HeadlessException
+import java.awt.Point
 import javax.swing.JComponent
 import javax.swing.JEditorPane
 import javax.swing.JTextArea
@@ -233,7 +238,7 @@ internal open class SwingComponentWrapper(private val c: JComponent) : Component
       return
     }
 
-    val g = c.graphics as? Graphics2D ?: return
+    val g = GraphicsUtil.safelyGetGraphics(c) as? Graphics2D ?: return
 
     g.paint = DB_COMP_OUTLINE
     g.stroke = BasicStroke(1f, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 10f, floatArrayOf(2f, 4f), 0f)

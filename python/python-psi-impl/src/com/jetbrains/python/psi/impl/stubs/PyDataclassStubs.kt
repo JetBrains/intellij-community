@@ -32,6 +32,7 @@ class PyDataclassStubImpl(
   private val order: Boolean?,
   private val unsafeHash: Boolean?,
   private val frozen: Boolean?,
+  private val matchArgs: Boolean?,
   private val kwOnly: Boolean?,
 ) : PyDataclassStub {
 
@@ -45,6 +46,7 @@ class PyDataclassStubImpl(
       order = null,
       unsafeHash = null,
       frozen = null,
+      matchArgs = null,
       kwOnly = null
     )
 
@@ -62,9 +64,10 @@ class PyDataclassStubImpl(
       val order = DataInputOutputUtil.readNullable(stream, stream::readBoolean)
       val unsafeHash = DataInputOutputUtil.readNullable(stream, stream::readBoolean)
       val frozen = DataInputOutputUtil.readNullable(stream, stream::readBoolean)
+      val matchArgs = DataInputOutputUtil.readNullable(stream, stream::readBoolean)
       val kwOnly = DataInputOutputUtil.readNullable(stream, stream::readBoolean)
 
-      return PyDataclassStubImpl(type, decoratorName, init, repr, eq, order, unsafeHash, frozen, kwOnly)
+      return PyDataclassStubImpl(type, decoratorName, init, repr, eq, order, unsafeHash, frozen, matchArgs, kwOnly)
     }
   }
 
@@ -79,6 +82,7 @@ class PyDataclassStubImpl(
     DataInputOutputUtil.writeNullable(stream, order, stream::writeBoolean)
     DataInputOutputUtil.writeNullable(stream, unsafeHash, stream::writeBoolean)
     DataInputOutputUtil.writeNullable(stream, frozen, stream::writeBoolean)
+    DataInputOutputUtil.writeNullable(stream, matchArgs, stream::writeBoolean)
     DataInputOutputUtil.writeNullable(stream, kwOnly, stream::writeBoolean)
   }
 
@@ -90,6 +94,7 @@ class PyDataclassStubImpl(
   override fun orderValue(): Boolean? = order
   override fun unsafeHashValue(): Boolean? = unsafeHash
   override fun frozenValue(): Boolean? = frozen
+  override fun matchArgsValue(): Boolean? = matchArgs
   override fun kwOnly(): Boolean? = kwOnly
   
   override fun toString(): String {
@@ -102,6 +107,7 @@ class PyDataclassStubImpl(
            "order=$order, " +
            "unsafeHash=$unsafeHash, " +
            "frozen=$frozen, " +
+           "matchArgs=$matchArgs, " +
            "kwOnly=$kwOnly" +
            ")"
   }

@@ -7,11 +7,11 @@ import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Abstract
-import com.intellij.platform.workspace.storage.annotations.Child
+import com.intellij.platform.workspace.storage.annotations.Parent
 
 interface ParentWithLinkToAbstractChild : WorkspaceEntity {
   val data: String
-  val child: @Child AbstractChildWithLinkToParentEntity?
+  val child: AbstractChildWithLinkToParentEntity?
 
   //region generated code
   @GeneratedCodeApiVersion(3)
@@ -80,6 +80,7 @@ interface AbstractChildWithLinkToParentEntity : WorkspaceEntity {
 }
 
 //region generated code
+@Parent
 var AbstractChildWithLinkToParentEntity.Builder<out AbstractChildWithLinkToParentEntity>.parent: ParentWithLinkToAbstractChild.Builder?
   by WorkspaceEntity.extensionBuilder(ParentWithLinkToAbstractChild::class.java)
 //endregion
@@ -87,7 +88,8 @@ var AbstractChildWithLinkToParentEntity.Builder<out AbstractChildWithLinkToParen
 interface SpecificChildWithLinkToParentEntity : AbstractChildWithLinkToParentEntity {
   //region generated code
   @GeneratedCodeApiVersion(3)
-  interface Builder : WorkspaceEntity.Builder<SpecificChildWithLinkToParentEntity>, AbstractChildWithLinkToParentEntity.Builder<SpecificChildWithLinkToParentEntity> {
+  interface Builder : WorkspaceEntity.Builder<SpecificChildWithLinkToParentEntity>,
+                      AbstractChildWithLinkToParentEntity.Builder<SpecificChildWithLinkToParentEntity> {
     override var entitySource: EntitySource
     override var data: String
   }
@@ -120,5 +122,5 @@ fun MutableEntityStorage.modifySpecificChildWithLinkToParentEntity(
 }
 //endregion
 
-
+@Parent
 val AbstractChildWithLinkToParentEntity.parent: ParentWithLinkToAbstractChild? by WorkspaceEntity.extension()

@@ -50,7 +50,9 @@ public class IElementType {
     push(init);
   }
 
-  static IElementType @NotNull [] push(IElementType @NotNull [] types) {
+  @ApiStatus.Internal
+  @VisibleForTesting
+  public static IElementType @NotNull [] push(IElementType @NotNull [] types) {
     synchronized (lock) {
       IElementType[] oldRegistry = ourRegistry;
       ourRegistry = types;
@@ -168,7 +170,7 @@ public class IElementType {
 
   /**
    * Controls whitespace balancing behavior of PsiBuilder.
-   * <p>By default, empty composite elements (containing no children) are bounded to the right (previous) neighbour, forming following tree:
+   * <p>By default, empty composite elements (containing no children) are bounded to the right (previous) neighbor, forming the following tree:
    * <pre>
    *  [previous_element]
    *  [whitespace]
@@ -176,7 +178,7 @@ public class IElementType {
    *    &lt;empty&gt;
    *  [next_element]
    * </pre>
-   * <p>Left-bound elements are bounded to the left (next) neighbour instead:
+   * <p>Left-bound elements are bounded to the left (next) neighbor instead:
    * <pre>
    *  [previous_element]
    *  [empty_element]
@@ -221,7 +223,8 @@ public class IElementType {
   }
 
   @TestOnly
-  static short getAllocatedTypesCount() {
+  @ApiStatus.Internal
+  public static short getAllocatedTypesCount() {
     synchronized (lock) {
       return size;
     }
@@ -252,7 +255,7 @@ public class IElementType {
    * @return the list of matching element types.
    */
   @ApiStatus.Internal
-  public static <R> @NotNull List<@NotNull R> mapNotNull(@NotNull Function<IElementType, ? extends R> p) {
+  public static <R> @NotNull @Unmodifiable List<@NotNull R> mapNotNull(@NotNull Function<? super IElementType, ? extends R> p) {
     List<R> matches = new ArrayList<>();
     for (IElementType value : ourRegistry) {
       if (value != null) {

@@ -3,6 +3,7 @@ package com.intellij.usages;
 
 import com.intellij.navigation.NavigationItem;
 import com.intellij.navigation.NavigationItemFileStatus;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.psi.PsiElement;
@@ -11,13 +12,13 @@ import com.intellij.psi.SmartPsiElementPointer;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.Objects;
 
 /**
  * @author Maxim.Mossienko
  */
 public class PsiElementUsageGroupBase<T extends PsiElement & NavigationItem> implements UsageGroup, NamedPresentably {
   private final SmartPsiElementPointer<T> myElementPointer;
+  @NotNull
   private final @NlsSafe String myName;
   private final Icon myIcon;
 
@@ -88,22 +89,15 @@ public class PsiElementUsageGroupBase<T extends PsiElement & NavigationItem> imp
 
   @Override
   public int compareTo(final @NotNull UsageGroup o) {
-    String name;
-    if (o instanceof NamedPresentably) {
-      name = ((NamedPresentably)o).getPresentableName();
-    } else {
-      name = o.getPresentableGroupText();
-    }
+    String name = o instanceof NamedPresentably presentably ? presentably.getPresentableName() : o.getPresentableGroupText();
     return myName.compareToIgnoreCase(name);
   }
 
   @Override
   public boolean equals(final Object obj) {
-    if (!(obj instanceof PsiElementUsageGroupBase group)) return false;
-    if (isValid() && group.isValid()) {
-      return getElement().getManager().areElementsEquivalent(getElement(), group.getElement());
-    }
-    return Objects.equals(myName, group.myName);
+    if (!(obj instanceof PsiElementUsageGroupBase<?> group)) return false;
+    return ReadAction.compute(()->isValid() && group.isValid() && getElement().getManager().areElementsEquivalent(getElement(), group.getElement())
+                                  || myName.equals(group.myName));
   }
 
   @Override

@@ -285,7 +285,7 @@ public class ContentEntryTreeEditor {
 
   private static final class SelectInProjectViewAction extends DumbAwareAction {
     private SelectInProjectViewAction() {
-      super(ActionsBundle.messagePointer("action.SelectInProjectView.text"));
+      super(ActionsBundle.messagePointer("action.SelectInProjectView.directory.text"));
       copyShortcutFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE));
     }
 
@@ -311,7 +311,12 @@ public class ContentEntryTreeEditor {
         return;
       }
 
-      e.getPresentation().setEnabled(!ArrayUtil.isEmpty(virtualFiles));
+      VirtualFile file = ArrayUtil.getFirstElement(virtualFiles);
+
+      e.getPresentation().setEnabled(file != null);
+      e.getPresentation().setText(file != null && !file.isDirectory()
+                                  ? ActionsBundle.messagePointer("action.SelectInProjectView.text")
+                                  : ActionsBundle.messagePointer("action.SelectInProjectView.directory.text"));
     }
 
     @Override

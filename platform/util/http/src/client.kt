@@ -5,6 +5,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.engine.java.Java
 import io.ktor.client.plugins.HttpRequestRetry
 import io.ktor.client.plugins.HttpTimeout
+import io.ktor.client.request.headers
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.content.ByteArrayContent
@@ -35,15 +36,21 @@ sealed interface ContentType {
 private class ContentTypeImpl(@JvmField val contentType: io.ktor.http.ContentType) : ContentType
 
 @ApiStatus.Internal
-suspend fun httpPost(url: String, contentLength: Long, contentType: ContentType, body: suspend OutputStream.() -> Unit) {
+suspend fun httpPost(url: String, contentLength: Long, contentType: ContentType, body: suspend OutputStream.() -> Unit, authorizationHeader: String? = null) {
   httpClient.post(url) {
+    headers {
+      authorizationHeader?.let { append("Authorization", it) }
+    }
     setBody(OutputStreamContent(body, (contentType as ContentTypeImpl).contentType, status = null, contentLength))
   }
 }
 
 @ApiStatus.Internal
-suspend fun httpPost(url: String, contentType: ContentType, body: ByteArray) {
+suspend fun httpPost(url: String, contentType: ContentType, body: ByteArray, authorizationHeader: String? = null) {
   httpClient.post(url) {
+    headers {
+      authorizationHeader?.let { append("Authorization", it) }
+    }
     setBody(ByteArrayContent(body, (contentType as ContentTypeImpl).contentType))
   }
 }

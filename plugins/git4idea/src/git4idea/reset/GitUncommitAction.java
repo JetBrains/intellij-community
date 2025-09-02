@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.reset;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
@@ -52,7 +53,7 @@ public class GitUncommitAction extends GitSingleCommitEditingAction {
     VcsShortCommitDetails commit = commitEditingData.getSelectedCommit();
     LocalChangeList targetList;
     if (ChangeListManager.getInstance(project).areChangeListsEnabled()) {
-      ChangeListChooser chooser = new ChangeListChooser(project, GitBundle.message("git.undo.action.select.target.changelist.title"));
+      ChangeListChooser chooser = new MyChangeListChooser(project, GitBundle.message("git.undo.action.select.target.changelist.title"));
       chooser.setSuggestedName(commit.getSubject());
       if (!chooser.showAndGet()) return;
 
@@ -111,5 +112,16 @@ public class GitUncommitAction extends GitSingleCommitEditingAction {
         }
       }
     }.queue();
+  }
+
+  private static class MyChangeListChooser extends ChangeListChooser {
+    MyChangeListChooser(@NotNull Project project, @NlsContexts.DialogTitle String title) {
+      super(project, title);
+    }
+
+    @Override
+    final protected @NotNull String getHelpId() {
+      return "reference.dialogs.vcs.undo.commit";
+    }
   }
 }

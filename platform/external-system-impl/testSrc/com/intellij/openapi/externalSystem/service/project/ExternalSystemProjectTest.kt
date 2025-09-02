@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.platform.externalSystem.testFramework.ExternalSystemProjectTestCase
 import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestCase.collectRootsInside
 import com.intellij.platform.externalSystem.testFramework.toDataNode
+import com.intellij.platform.testFramework.assertion.moduleAssertion.ContentRootAssertions
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.util.PathUtil
@@ -36,6 +37,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.entry
 import org.junit.Test
 import java.io.File
+import kotlin.io.path.Path
 
 class ExternalSystemProjectTest : ExternalSystemProjectTestCase() {
 
@@ -87,11 +89,9 @@ class ExternalSystemProjectTest : ExternalSystemProjectTestCase() {
       withPathNameStrategy("root", "root/1")
       withPathNameStrategy("root", "temp/root/1")
       withPathNameStrategy("root", "dummy/temp/root/1")
-      withPathNameStrategy("root", "dummy/dummy/temp/root/1")
       withPathNameStrategy("root", "root/2")
       withPathNameStrategy("root", "root/3")
       withPathNameStrategy("root", "another/root")
-      withPathNameStrategy("root", "another/notRoot")
       withPathNameStrategy("root", "root/root/root")
       withPathNameStrategy("root", "root/root/root/root")
       withPathNameStrategy("root", "yetanother/root/root")
@@ -105,7 +105,7 @@ class ExternalSystemProjectTest : ExternalSystemProjectTestCase() {
     applyProjectModel(projectModel)
 
     val expectedNames = arrayOf(
-      "root", "1.root",  "root.1.root", "temp.root.1.root", "dummy.temp.root.1.root", "2.root", "3.root", "another.root", "notRoot.root", "root.root", "root.root.root", "yetanother.root.root",
+      "root", "1.root",  "root.1.root", "temp.root.1.root", "2.root", "3.root", "another.root", "root.root", "root.root.root", "yetanother.root.root",
       "group-root", "root.group-root", "group.root.group-root", "my-group.root.group-root"
     )
     assertOrderedEquals(modelsProvider.modules.map { it.name }, *expectedNames)
@@ -444,6 +444,25 @@ class ExternalSystemProjectTest : ExternalSystemProjectTestCase() {
       }
     )
     assertSourcePackagePrefix("module", "src/main/java", "org.jetbrains")
+  }
+
+  @Test
+  fun `test no content root in a module without content roots during a subsequent refresh`() {
+    val contentRoot = "$projectPath/some/root"
+    applyProjectModel(
+      project {
+        module {
+          contentRoot(contentRoot)
+        }
+      }
+    )
+    ContentRootAssertions.assertContentRoots(project, "module", Path(contentRoot))
+    applyProjectModel(
+      project {
+        module { }
+      }
+    )
+    ContentRootAssertions.assertContentRoots(project, "module")
   }
 
   @Test

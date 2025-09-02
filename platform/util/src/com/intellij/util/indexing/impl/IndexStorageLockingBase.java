@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl;
 
 import com.intellij.openapi.progress.Cancellation;
@@ -35,6 +35,9 @@ public abstract class IndexStorageLockingBase {
   public static final boolean MAKE_INDEX_LOOKUP_CANCELLABLE = getBooleanProperty("intellij.index.cancellable-lookup", true);
 
   private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+  //cache the handles to avoid allocations on fast path:
+  private transient final LockStamp readLockUnlockHandle = lock.readLock()::unlock;
+  private transient final LockStamp writeLockUnlockHandle = lock.writeLock()::unlock;
 
   protected IndexStorageLockingBase() {
   }
@@ -47,8 +50,8 @@ public abstract class IndexStorageLockingBase {
     else {
       readLock.lock();
     }
-    
-    return readLock::unlock;
+
+    return readLockUnlockHandle;
   }
 
 
@@ -77,7 +80,7 @@ public abstract class IndexStorageLockingBase {
   protected @NotNull LockStamp lockForWrite() {
     ReentrantReadWriteLock.WriteLock writeLock = lock.writeLock();
     writeLock.lock();
-    return writeLock::unlock;
+    return writeLockUnlockHandle;
   }
 
   protected <R, E extends Exception> R withReadLock(@NotNull ThrowableComputable<R, E> computation) throws E {

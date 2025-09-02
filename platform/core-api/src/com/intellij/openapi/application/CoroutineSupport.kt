@@ -7,7 +7,5 @@ import kotlin.coroutines.CoroutineContext
 @Internal
 interface CoroutineSupport {
 
-  fun edtDispatcher(): CoroutineContext
-
-  fun uiDispatcher(): CoroutineContext
+  fun uiDispatcher(kind: UiDispatcherKind, immediate: Boolean): CoroutineContext
 }

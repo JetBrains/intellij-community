@@ -30,7 +30,7 @@ interface UastIdentifiersTestBase : UastFileComparisonTestBase,
         return getRefNamesFile(filePath, "$pluginSuffix${TXT}")
     }
 
-    // TODO: ideally, we don't want this kind of whitelist.
+    // TODO: ideally, we don't want this kind of allowList.
     fun isExpectedToFail(filePath: String): Boolean {
         return false
     }

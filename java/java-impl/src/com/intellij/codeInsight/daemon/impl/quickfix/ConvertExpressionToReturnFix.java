@@ -1,8 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInspection.CommonQuickFixBundle;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.Presentation;
@@ -10,7 +11,6 @@ import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.PsiStatement;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
@@ -42,6 +42,6 @@ public class ConvertExpressionToReturnFix extends PsiUpdateModCommandAction<PsiE
 
   @Override
   public @NotNull String getFamilyName() {
-    return CommonQuickFixBundle.message("fix.insert.x", PsiKeyword.RETURN);
+    return CommonQuickFixBundle.message("fix.insert.x", JavaKeywords.RETURN);
   }
 }

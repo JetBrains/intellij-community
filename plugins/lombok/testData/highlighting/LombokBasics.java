@@ -15,7 +15,7 @@ public final class LombokBasics {
     if (this <warning descr="Object values are compared using '==', not 'equals()'">==</warning> other) {} // equals is implicitly defined
   }
 
-  public static void main(String[] args) {
+  public static void main() {
     new LombokBasics(10).test(new LombokBasics(12));
   }
 }

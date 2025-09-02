@@ -41,8 +41,8 @@ v3: Array[Time, Batch, Height, Width] = Array(
 
 v4: Array[Height, Width] = Array(Height(1))  # E
 v5: Array[Batch, Height, Width] = Array((Batch(1), Width(1)))  # E
-v6: Array[Time, Batch, Height, Width] = Array(  # E
-    (Time(1), Batch(1), Width(1), Height(1))
+v6: Array[Time, Batch, Height, Width] = Array(  # E[v6]
+    (Time(1), Batch(1), Width(1), Height(1))  # E[v6]
 )
 
 

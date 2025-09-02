@@ -25,8 +25,12 @@ import static com.intellij.lang.PsiBuilderUtil.*;
 import static com.intellij.lang.java.parser.BasicJavaParserUtil.*;
 import static com.intellij.psi.impl.source.BasicElementTypes.*;
 
-//suppress to be clear, what type is used
-@SuppressWarnings("UnnecessarilyQualifiedStaticUsage")
+/**
+ * @deprecated Use the new Java syntax library instead.
+ *             See {@link com.intellij.java.syntax.parser.JavaParser}
+ */
+@Deprecated
+@SuppressWarnings("UnnecessarilyQualifiedStaticUsage") //suppress to be clear, what type is used
 @ApiStatus.Experimental
 public class BasicPrattExpressionParser {
   private final Map<IElementType, ParserData> ourInfixParsers;

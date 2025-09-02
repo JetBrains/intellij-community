@@ -6,6 +6,7 @@ package com.intellij.platform.fileEditor
 import com.intellij.ide.util.treeView.findCachedImageIcon
 import com.intellij.openapi.fileEditor.impl.*
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.vfs.FileIdAdapter
 import com.intellij.platform.ide.IdeFingerprint
 import com.intellij.util.xmlb.jdomToJson
 import kotlinx.serialization.Serializable
@@ -25,6 +26,9 @@ class FileEntry(
   @JvmField val pinned: Boolean,
   @JvmField val currentInTab: Boolean,
   @JvmField val url: String,
+  @JvmField val id: Int?,
+  @JvmField val managingFsCreationTimestamp: Long?,
+  @JvmField val protocol: String?,
   @JvmField val selectedProvider: String?,
   val ideFingerprint: IdeFingerprint?,
   @JvmField val isPreview: Boolean,
@@ -65,9 +69,12 @@ internal fun parseFileEntry(fileElement: Element, storedIdeFingerprint: IdeFinge
     currentInTab = fileElement.getAttributeBooleanValue(CURRENT_IN_TAB),
     isPreview = historyElement.getAttributeBooleanValue(PREVIEW_ATTRIBUTE),
     url = historyElement.getAttributeValue(HistoryEntry.FILE_ATTRIBUTE),
+    id = historyElement.getAttributeValue(HistoryEntry.FILE_ID_ATTRIBUTE)?.toIntOrNull(),
     selectedProvider = selectedProvider,
     providers = providers,
     ideFingerprint = storedIdeFingerprint,
+    managingFsCreationTimestamp = historyElement.getAttributeValue(HistoryEntry.MANAGING_FS_ATTRIBUTE)?.toLongOrNull(),
+    protocol = historyElement.getAttributeValue(HistoryEntry.PROTOCOL_ATTRIBUTE)
   )
 }
 
@@ -76,6 +83,11 @@ internal fun writeWindow(result: Element, window: EditorWindow, delayedStates: M
   val serializer = FileEntryTab.serializer()
   for (tab in window.tabbedPane.tabs.tabs) {
     val composite = tab.composite
+
+    if (!FileIdAdapter.getInstance().shouldSaveEditorState(composite.file)) {
+      continue
+    }
+
     val fileElement = Element("file")
 
     val delayedState = delayedStates.get(composite)

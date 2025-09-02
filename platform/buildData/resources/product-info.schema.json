@@ -45,6 +45,10 @@
       "description": "Short company name as used in config paths, e.g. ~/.config/JetBrains/...",
       "type": "string"
     },
+    "majorVersionReleaseDate": {
+      "description": "Date when the current major version was firstly released, in yyyyMMdd format.",
+      "type": "string"
+    },
     "launch": {
       "description": "Specifies how the IDE can be launched",
       "type": "array",

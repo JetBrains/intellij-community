@@ -31,8 +31,8 @@ public final class MethodUpAction extends BaseCodeInsightAction implements DumbA
   }
 
   @Override
-  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, final @NotNull PsiFile file) {
-    return checkValidForFile(file);
+  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, final @NotNull PsiFile psiFile) {
+    return checkValidForFile(psiFile);
   }
 
   static boolean checkValidForFile(final PsiFile file) {

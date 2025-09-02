@@ -5,6 +5,9 @@ package com.intellij.ui;
 import com.intellij.CommonBundle;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.dsl.builder.DslComponentProperty;
+import com.intellij.ui.dsl.builder.VerticalComponentGap;
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps;
 import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.StatusText;
@@ -38,6 +41,8 @@ public abstract class AddDeleteListPanel<T> extends PanelWithButtons implements 
     }
     myList.setCellRenderer(getListCellRenderer());
     initPanel();
+    putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGaps.EMPTY);
+    putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, VerticalComponentGap.BOTH);
   }
 
   @Override

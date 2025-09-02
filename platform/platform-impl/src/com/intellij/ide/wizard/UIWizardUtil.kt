@@ -5,12 +5,13 @@ package com.intellij.ide.wizard
 
 import com.intellij.ide.util.projectWizard.ProjectBuilder
 import com.intellij.ide.util.projectWizard.WizardContext
+import com.intellij.ide.wizard.AbstractNewProjectWizardBuilder.Companion.addPostCommitAction
+import com.intellij.ide.wizard.AbstractNewProjectWizardBuilder.Companion.commitByBuilder
+import com.intellij.ide.wizard.AbstractNewProjectWizardBuilder.Companion.postCommitByBuilder
 import com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.startup.StartupManager
@@ -29,8 +30,10 @@ import java.util.concurrent.CancellationException
 import javax.swing.JLabel
 
 
+@get:ApiStatus.Internal
 val WizardContext.projectOrDefault: Project get() = project ?: ProjectManager.getInstance().defaultProject
 
+@ApiStatus.Internal
 @ApiStatus.ScheduledForRemoval
 @Deprecated(
   message = "Use NewProjectWizardChainStep.nextStep instead",
@@ -45,6 +48,7 @@ fun <T1, T2, T3> T1.chain(f1: (T1) -> T2, f2: (T2) -> T3): NewProjectWizardStep
     .nextStep(f2)
 }
 
+@ApiStatus.Internal
 @ApiStatus.ScheduledForRemoval
 @Deprecated(
   message = "Use NewProjectWizardChainStep.nextStep instead",
@@ -60,6 +64,11 @@ fun <T1, T2, T3, T4> T1.chain(f1: (T1) -> T2, f2: (T2) -> T3, f3: (T3) -> T4): N
     .nextStep(f3)
 }
 
+/**
+ * A little bit hacky solution, looking forward to a better idea
+ */
+@ApiStatus.Experimental
+@ApiStatus.Internal
 fun DialogPanel.setMinimumWidthForAllRowLabels(width: Int) {
   UIUtil.uiTraverser(this).asSequence()
     .filterIsInstance<JLabel>()
@@ -86,7 +95,7 @@ fun DialogPanel.withVisualPadding(topField: Boolean = false): DialogPanel {
  * Notifies user-visible error if [execution] is failed.
  */
 @ApiStatus.Experimental
-fun NewProjectWizardStep.setupProjectSafe(
+inline fun NewProjectWizardStep.setupProjectSafe(
   project: Project,
   errorMessage: @NlsContexts.DialogMessage String,
   execution: () -> Unit
@@ -95,9 +104,6 @@ fun NewProjectWizardStep.setupProjectSafe(
     execution()
   }
   catch (ex: CancellationException) {
-    throw ex
-  }
-  catch (ex: ProcessCanceledException) {
     throw ex
   }
   catch (ex: Exception) {
@@ -113,24 +119,31 @@ fun NewProjectWizardStep.setupProjectSafe(
   }
 }
 
-@ApiStatus.Internal
-fun whenProjectCreated(project: Project, action: () -> Unit) {
-  if (ApplicationManager.getApplication().isUnitTestMode) {
-    action()
-  }
-  else {
-    StartupManager.getInstance(project).runAfterOpened {
-      ApplicationManager.getApplication().invokeLater(action, project.disposed)
-    }
-  }
+/**
+ * Schedules activity executed on the pooled thread after the project is opened.
+ * The runnable will be executed in the current thread if the project is already opened.
+ *
+ * Note: The target project can be changed if the created project is attached to the multi-project workspace.
+ * Therefore, use the project, from the [callback] parameter.
+ *
+ * @see ProjectBuilder.postCommit
+ * @see StartupManager.runAfterOpened
+ */
+@ApiStatus.Experimental
+fun NewProjectWizardStep.runAfterOpened(project: Project, callback: (Project) -> Unit) {
+  addPostCommitAction(callback)
+  // The StartupManager#runAfterOpened callback will be skipped, in case of attaching to the multi-project workspace.
+  StartupManager.getInstance(project).runAfterOpened { callback(project) }
 }
 
 /**
- * This is a workaround for https://youtrack.jetbrains.com/issue/IDEA-286690
+ * Bridges the [ProjectBuilder] and [NewProjectWizardStep] abstractions.
+ *
+ * @param builder is a legacy abstraction for defining a new project wizard UI and project generator.
  */
 @ApiStatus.Internal
+@ApiStatus.Obsolete
 fun NewProjectWizardStep.setupProjectFromBuilder(project: Project, builder: ProjectBuilder): Module? {
-  val model = context.getUserData(NewProjectWizardStep.MODIFIABLE_MODULE_MODEL_KEY)
-  return builder.commit(project, model)?.firstOrNull()
+  return commitByBuilder(builder, project).firstOrNull()
+    .also { postCommitByBuilder(builder) }
 }
-

@@ -5,6 +5,7 @@ import com.intellij.collaboration.async.cancelAndJoinSilently
 import com.intellij.collaboration.util.ResultUtil.runCatchingUser
 import com.intellij.ide.BrowserUtil
 import com.intellij.notification.NotificationListener
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -26,6 +27,7 @@ import org.jetbrains.plugins.gitlab.api.data.GitLabVisibilityLevel
 import org.jetbrains.plugins.gitlab.api.dto.GitLabSnippetBlobAction
 import org.jetbrains.plugins.gitlab.api.getResultOrThrow
 import org.jetbrains.plugins.gitlab.api.request.getCurrentUser
+import org.jetbrains.plugins.gitlab.authentication.GitLabLoginSource
 import org.jetbrains.plugins.gitlab.authentication.GitLabLoginUtil
 import org.jetbrains.plugins.gitlab.authentication.LoginResult
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
@@ -104,7 +106,7 @@ internal class GitLabSnippetService(private val project: Project, private val se
   private suspend fun attemptLogin(accountManager: GitLabAccountManager): Boolean {
     return coroutineScope {
       async(Dispatchers.Main) {
-        val (account, token) = GitLabLoginUtil.logInViaToken(project, null) { server, name ->
+        val (account, token) = GitLabLoginUtil.logInViaToken(project, null, loginSource = GitLabLoginSource.SNIPPET) { server, name ->
           GitLabLoginUtil.isAccountUnique(accountManager.accountsState.value, server, name)
         }.asSafely<LoginResult.Success>() ?: return@async false
 
@@ -122,8 +124,8 @@ internal class GitLabSnippetService(private val project: Project, private val se
                                      accountManager: GitLabAccountManager,
                                      result: GitLabCreateSnippetResult): GitLabApi? {
     return coroutineScope {
-      async(Dispatchers.Main) {
-        val loginResult = GitLabLoginUtil.updateToken(project, null, result.account) { server, name ->
+      async(Dispatchers.EDT) {
+        val loginResult = GitLabLoginUtil.updateToken(project, null, result.account, loginSource = GitLabLoginSource.SNIPPET) { server, name ->
           GitLabLoginUtil.isAccountUnique(accountManager.accountsState.value, server, name)
         }.asSafely<LoginResult.Success>() ?: return@async null
 

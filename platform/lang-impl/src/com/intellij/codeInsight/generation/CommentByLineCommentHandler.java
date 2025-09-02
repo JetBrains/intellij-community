@@ -6,7 +6,6 @@ import com.intellij.codeInsight.CommentUtil;
 import com.intellij.codeInsight.actions.MultiCaretCodeInsightActionHandler;
 import com.intellij.formatting.IndentData;
 import com.intellij.ide.highlighter.custom.SyntaxTable;
-import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -28,6 +27,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CommentStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.impl.source.tree.injected.InjectedCaret;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.DocumentUtil;
@@ -66,7 +66,7 @@ public final class CommentByLineCommentHandler extends MultiCaretCodeInsightActi
 
     if (context != null && shouldCommentInHostFile(file, context)) {
       file = context.getContainingFile();
-      editor = editor instanceof EditorWindow ? ((EditorWindow)editor).getDelegate() : editor;
+      editor = InjectedLanguageEditorUtil.getTopLevelEditor(editor);
       caret = caret instanceof InjectedCaret ? ((InjectedCaret)caret).getDelegate() : caret;
     }
 

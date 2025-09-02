@@ -75,11 +75,10 @@ private fun getDataWithColumnsNames(value: String): String? {
     !inSingleQuotes && !inDoubleQuotes && char == ']'
   }
 
-  return if (index != -1) {
-    value.substring(0, index + 1)
-  }
-  else {
-    null
+  return when {
+    index != -1 -> value.substring(0, index + 1)
+    value.endsWith("...") -> value.substring(0, value.length - 3)
+    else -> null
   }
 }
 

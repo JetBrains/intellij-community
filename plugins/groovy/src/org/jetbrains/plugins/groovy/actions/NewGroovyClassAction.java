@@ -4,7 +4,7 @@ package org.jetbrains.plugins.groovy.actions;
 import com.intellij.ide.IdeView;
 import com.intellij.ide.actions.CreateFileFromTemplateDialog;
 import com.intellij.ide.actions.JavaCreateTemplateInPackageAction;
-import com.intellij.ide.actions.WeighingNewActionGroup;
+import com.intellij.ide.actions.WeighingActionGroup;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.openapi.actionSystem.*;
@@ -32,12 +32,12 @@ import static org.jetbrains.plugins.groovy.projectRoots.RootTypesKt.ROOT_TYPES;
 
 final class NewGroovyClassAction extends JavaCreateTemplateInPackageAction<GrTypeDefinition> implements DumbAware {
   NewGroovyClassAction() {
-    super(GroovyBundle.messagePointer("new.class.action.text"), GroovyBundle.messagePointer("new.class.action.description"),
-          () -> JetgroovyIcons.Groovy.Class, ROOT_TYPES);
+    super(ROOT_TYPES);
   }
 
   @Override
-  protected void buildDialog(@NotNull Project project, PsiDirectory directory, CreateFileFromTemplateDialog.Builder builder) {
+  protected void buildDialog(@NotNull Project project, @NotNull PsiDirectory directory,
+                             @NotNull CreateFileFromTemplateDialog.Builder builder) {
     builder
       .setTitle(GroovyBundle.message("new.class.dialog.title"))
       .addKind(GroovyBundle.message("new.class.list.item.class"), JetgroovyIcons.Groovy.Class, GroovyTemplates.GROOVY_CLASS)
@@ -78,13 +78,13 @@ final class NewGroovyClassAction extends JavaCreateTemplateInPackageAction<GrTyp
   }
 
   @Override
-  protected boolean isAvailable(DataContext dataContext) {
+  protected boolean isAvailable(@NotNull DataContext dataContext) {
     return super.isAvailable(dataContext) && LibrariesUtil.hasGroovySdk(PlatformCoreDataKeys.MODULE.getData(dataContext));
   }
 
   @Override
   protected String getActionName(PsiDirectory directory, @NotNull String newName, String templateName) {
-    return GroovyBundle.message("new.class.action.text");
+    return GroovyBundle.message("action.Groovy.NewClass.text");
   }
 
   @Override
@@ -108,7 +108,7 @@ final class NewGroovyClassAction extends JavaCreateTemplateInPackageAction<GrTyp
       if (projectFileIndex.isInSourceContent(dir.getVirtualFile()) && checkPackageExists(dir)) {
         for (GroovySourceFolderDetector detector : GroovySourceFolderDetector.EP_NAME.getExtensions()) {
           if (detector.isGroovySourceFolder(dir)) {
-            presentation.putClientProperty(WeighingNewActionGroup.WEIGHT_KEY, WeighingNewActionGroup.HIGHER_WEIGHT);
+            presentation.putClientProperty(WeighingActionGroup.WEIGHT_KEY, WeighingActionGroup.HIGHER_WEIGHT);
             break;
           }
         }

@@ -3,6 +3,7 @@ package com.intellij.ide.plugins
 
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.util.messages.Topic
+import org.jetbrains.annotations.ApiStatus
 
 @Deprecated("Use DynamicPluginVetoer instead")
 class CannotUnloadPluginException(value: String) : ProcessCanceledException(RuntimeException(value))
@@ -14,10 +15,18 @@ interface DynamicPluginListener {
     val TOPIC: Topic<DynamicPluginListener> = Topic(DynamicPluginListener::class.java, Topic.BroadcastDirection.TO_DIRECT_CHILDREN, true)
   }
 
+  @ApiStatus.Experimental
+  fun beforePluginsLoaded() {
+  }
+
   fun beforePluginLoaded(pluginDescriptor: IdeaPluginDescriptor) {
   }
 
   fun pluginLoaded(pluginDescriptor: IdeaPluginDescriptor) {
+  }
+
+  @ApiStatus.Experimental
+  fun pluginsLoaded() {
   }
 
   /**

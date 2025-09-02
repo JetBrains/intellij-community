@@ -2,7 +2,7 @@
 package com.intellij.xdebugger.impl.ui
 
 import com.intellij.execution.actions.CreateAction
-import com.intellij.execution.runners.ExecutionEnvironment
+import com.intellij.execution.runners.ExecutionEnvironmentProxy
 import com.intellij.execution.runners.RunContentBuilder
 import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl
 import com.intellij.icons.AllIcons
@@ -19,23 +19,23 @@ import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.openapi.wm.impl.content.SingleContentSupplier
 import com.intellij.xdebugger.XDebuggerBundle
-import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.actions.XDebuggerActions
+import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.function.Supplier
 import javax.swing.Icon
 
 @Internal
 open class XDebugSessionTabNewUI(
-  session: XDebugSessionImpl,
+  session: XDebugSessionProxy,
   icon: Icon?,
-  environment: ExecutionEnvironment?
-) : XDebugSessionTab(session, icon, environment, false) {
+  environmentProxy: ExecutionEnvironmentProxy?,
+) : XDebugSessionTab(session, icon, environmentProxy, false) {
 
   private var mySingleContentSupplier: SingleContentSupplier? = null
   private var toolbarGroup: DefaultActionGroup? = null
 
-  override fun initDebuggerTab(session: XDebugSessionImpl) {
+  override fun initDebuggerTab(session: XDebugSessionProxy) {
     ui.defaults.initTabDefaults(0, XDebuggerBundle.message("xdebugger.threads.vars.tab.title"), null)
     createDefaultTabs(session)
     addDebugToolwindowActions(session.project)
@@ -43,14 +43,15 @@ open class XDebugSessionTabNewUI(
       override fun schemaChanged() {
         if (isSingleContent()) {
           updateToolbars()
-        } else {
+        }
+        else {
           initToolbars(session)
         }
       }
     })
   }
 
-  override fun initToolbars(session: XDebugSessionImpl) {
+  override fun initToolbars(session: XDebugSessionProxy) {
     val isVerticalToolbar = Registry.get("debugger.new.tool.window.layout.toolbar").isOptionEnabled("Vertical")
     (myUi as? RunnerLayoutUiImpl)?.also {
       it.setLeftToolbarVisible(isVerticalToolbar)
@@ -77,7 +78,8 @@ open class XDebugSessionTabNewUI(
 
     if (isVerticalToolbar) {
       myUi.options.setLeftToolbar(toolbar, ActionPlaces.DEBUGGER_TOOLBAR)
-    } else {
+    }
+    else {
       myUi.options.setTopLeftToolbar(toolbar, ActionPlaces.DEBUGGER_TOOLBAR)
     }
   }
@@ -88,12 +90,11 @@ open class XDebugSessionTabNewUI(
     toolbar.removeAll()
 
     val headerGroup = getCustomizedActionGroup(XDebuggerActions.TOOL_WINDOW_TOP_TOOLBAR_3_GROUP)
-    val headerActions = (headerGroup as CustomisedActionGroup).defaultChildrenOrStubs
-    RunContentBuilder.addAvoidingDuplicates(toolbar, headerActions)
+    RunContentBuilder.addAvoidingDuplicates(toolbar, headerGroup)
 
     val more = RunContentBuilder.createToolbarMoreActionGroup(toolbar)
     val moreGroup = getCustomizedActionGroup(XDebuggerActions.TOOL_WINDOW_TOP_TOOLBAR_3_EXTRA_GROUP)
-    RunContentBuilder.addAvoidingDuplicates(more, (moreGroup as CustomisedActionGroup).defaultChildrenOrStubs)
+    RunContentBuilder.addAvoidingDuplicates(more, moreGroup)
     more.addSeparator()
 
     // reversed because it was like this in the original tab

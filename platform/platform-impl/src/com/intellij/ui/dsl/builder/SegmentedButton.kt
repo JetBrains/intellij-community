@@ -9,6 +9,7 @@ import com.intellij.ui.dsl.validation.CellValidation
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
+import javax.swing.JComponent
 
 /**
  * Represents segmented button or combobox depending on number of buttons and screen reader mode. Screen reader mode always uses combobox
@@ -54,6 +55,9 @@ interface SegmentedButton<T> : CellBase<SegmentedButton<T>> {
   var items: Collection<T>
 
   var selectedItem: T?
+
+  @get:ApiStatus.Internal
+  val component: JComponent?
 
   /**
    * Updates presentations of provided [items]

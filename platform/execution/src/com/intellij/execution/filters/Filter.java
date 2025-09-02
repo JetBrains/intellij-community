@@ -14,6 +14,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.util.ui.NamedColorUtil;
 import kotlin.Lazy;
 import kotlin.LazyKt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,7 +47,17 @@ public interface Filter extends PossiblyDumbAware {
                   final @Nullable HyperlinkInfo hyperlinkInfo,
                   final @Nullable TextAttributes highlightAttributes,
                   final @Nullable TextAttributes followedHyperlinkAttributes) {
-      super(highlightStartOffset, highlightEndOffset, hyperlinkInfo, highlightAttributes, followedHyperlinkAttributes);
+      this(highlightStartOffset, highlightEndOffset, hyperlinkInfo, highlightAttributes, followedHyperlinkAttributes, null);
+    }
+
+    @ApiStatus.Internal
+    public Result(final int highlightStartOffset,
+                  final int highlightEndOffset,
+                  final @Nullable HyperlinkInfo hyperlinkInfo,
+                  final @Nullable TextAttributes highlightAttributes,
+                  final @Nullable TextAttributes followedHyperlinkAttributes,
+                  final @Nullable TextAttributes hoveredHyperlinkAttributes) {
+      super(highlightStartOffset, highlightEndOffset, hyperlinkInfo, highlightAttributes, followedHyperlinkAttributes, hoveredHyperlinkAttributes);
       myResultItems = null;
     }
 
@@ -154,6 +165,7 @@ public interface Filter extends PossiblyDumbAware {
     private final @Nullable HyperlinkInfo hyperlinkInfo;
 
     private final TextAttributes myFollowedHyperlinkAttributes;
+    private final TextAttributes myHoveredHyperlinkAttributes;
 
     public ResultItem(final int highlightStartOffset, final int highlightEndOffset, final @Nullable HyperlinkInfo hyperlinkInfo) {
       this(highlightStartOffset, highlightEndOffset, hyperlinkInfo, null, null);
@@ -180,12 +192,23 @@ public interface Filter extends PossiblyDumbAware {
                       final @Nullable HyperlinkInfo hyperlinkInfo,
                       final @Nullable TextAttributes highlightAttributes,
                       final @Nullable TextAttributes followedHyperlinkAttributes) {
+      this(highlightStartOffset, highlightEndOffset, hyperlinkInfo, highlightAttributes, followedHyperlinkAttributes, null);
+    }
+
+    @ApiStatus.Internal
+    public ResultItem(final int highlightStartOffset,
+                      final int highlightEndOffset,
+                      final @Nullable HyperlinkInfo hyperlinkInfo,
+                      final @Nullable TextAttributes highlightAttributes,
+                      final @Nullable TextAttributes followedHyperlinkAttributes,
+                      final @Nullable TextAttributes hoveredHyperlinkAttributes) {
       this.highlightStartOffset = highlightStartOffset;
       this.highlightEndOffset = highlightEndOffset;
       TextRange.assertProperRange(highlightStartOffset, highlightEndOffset, "");
       this.hyperlinkInfo = hyperlinkInfo;
       this.highlightAttributes = highlightAttributes;
       myFollowedHyperlinkAttributes = followedHyperlinkAttributes;
+      myHoveredHyperlinkAttributes = hoveredHyperlinkAttributes;
     }
 
     public int getHighlightStartOffset() {
@@ -202,6 +225,11 @@ public interface Filter extends PossiblyDumbAware {
 
     public @Nullable TextAttributes getFollowedHyperlinkAttributes() {
       return myFollowedHyperlinkAttributes;
+    }
+
+    @ApiStatus.Internal
+    public @Nullable TextAttributes getHoveredHyperlinkAttributes() {
+      return myHoveredHyperlinkAttributes;
     }
 
     public @Nullable HyperlinkInfo getHyperlinkInfo() {

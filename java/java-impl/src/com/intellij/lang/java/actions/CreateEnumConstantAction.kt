@@ -31,7 +31,7 @@ internal class CreateEnumConstantAction(
 
   override fun getText(): String = CommonQuickFixBundle.message("fix.create.title.x", JavaElementKind.ENUM_CONSTANT.`object`(), request.fieldName)
 
-  override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo {
+  override fun generatePreview(project: Project, editor: Editor, psiFile: PsiFile): IntentionPreviewInfo {
     val constructor = target.constructors.firstOrNull()
     val hasParameters = constructor?.parameters?.isNotEmpty() ?: false
     val text = if (hasParameters) "${request.fieldName}(...)" else request.fieldName

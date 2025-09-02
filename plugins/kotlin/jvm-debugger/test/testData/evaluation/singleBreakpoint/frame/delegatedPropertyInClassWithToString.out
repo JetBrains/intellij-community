@@ -7,7 +7,7 @@ KotlinStackFrame (delegatedPropertyInClassWithToString.kt:8)
     JavaValue[local] a: delegatedPropertyInClassWithToString.A = KotlinTest (delegatedPropertyInClassWithToString.kt:6)
         JavaValue[field] prop$delegate: delegatedPropertyInClassWithToString.MyDelegate = delegatedPropertyInClassWithToString.MyDelegate@hashCode (delegatedPropertyInClassWithToString.kt:12)
             DummyMessageValueNode = Class has no properties
-        JavaValue[getter] prop: int (delegatedPropertyInClassWithToString.kt:12)
+        JavaValue[getter delegatedPropertyInClassWithToString.A.getProp()] prop: int (delegatedPropertyInClassWithToString.kt:12)
 Disconnected from the target VM
 
 Process finished with exit code 0

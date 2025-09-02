@@ -10,6 +10,7 @@ import com.intellij.codeInspection.options.OptPane.checkbox
 import com.intellij.codeInspection.options.OptPane.pane
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.idea.base.psi.getLineCount
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
@@ -41,6 +42,11 @@ class LiftReturnOrAssignmentInspection @JvmOverloads constructor(private val ski
                 val states = Util.getState(expression, skipLongExpressions, reportOnlyIfSingleStatement) ?: return
                 if (expression.isUsedAsExpression(expression.analyze(BodyResolveMode.PARTIAL_WITH_CFA))) return
                 states.forEach { state ->
+                    if (expression is KtIfExpression && PsiTreeUtil.getParentOfType(state.highlightElement, KtIfExpression::class.java, true) != expression
+                        || expression is KtTryExpression && PsiTreeUtil.getParentOfType(state.highlightElement, KtTryExpression::class.java, true) != expression) {
+                        // already highlighted when visited nested if/try
+                        return@forEach
+                    }
                     registerProblem(
                         expression,
                         state.keyword,

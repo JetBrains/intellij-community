@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.application.ReadAction;
@@ -26,8 +26,6 @@ import java.util.Objects;
  * <p/>
  * Example: consider that the user selects all text at editor (Ctrl+A), copies it to the buffer (Ctrl+C) and performs paste (Ctrl+V).
  * All document text is replaced then but in essence it's the same, hence, we may want particular range markers to be still valid.
- *
- * @author max
  */
 class PersistentRangeMarker extends RangeMarkerImpl {
   private @NotNull LinesCols myLinesCols;

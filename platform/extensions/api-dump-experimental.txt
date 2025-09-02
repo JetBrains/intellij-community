@@ -9,9 +9,6 @@
 - s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.openapi.client.ClientKind
 - s:values():com.intellij.openapi.client.ClientKind[]
-f:com.intellij.openapi.extensions.ExtensionPointName
-- com.intellij.openapi.extensions.BaseExtensionPointName
-- *f:computeIfAbsent(java.lang.Class,java.util.function.Supplier):java.lang.Object
 com.intellij.openapi.extensions.PluginDescriptor
 - *:getClassLoader():java.lang.ClassLoader
 f:com.intellij.openapi.extensions.ProjectExtensionPointName

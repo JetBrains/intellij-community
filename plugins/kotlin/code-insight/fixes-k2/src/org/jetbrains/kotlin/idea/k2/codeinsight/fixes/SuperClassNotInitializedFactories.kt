@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.codeInsight.intention.PriorityAction
@@ -16,7 +16,6 @@ import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
-import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.defaultValue
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.psi.replaced
@@ -111,7 +110,7 @@ internal object SuperClassNotInitializedFactories {
 
     private class ParameterInfo(
         val renderedName: String,
-        val parameterType: KaType,
+        val parameterType: String,
         val parameterGenerationInfo: ParameterGenerationInfo,
         val varargInfo: VarargInfo,
     ) {
@@ -164,7 +163,7 @@ internal object SuperClassNotInitializedFactories {
             return KotlinBundle.message("add.constructor.parameters.from.superclass")
         }
 
-        override fun getPresentation(context: ActionContext, element: KtSuperTypeEntry): Presentation? {
+        override fun getPresentation(context: ActionContext, element: KtSuperTypeEntry): Presentation {
             return Presentation.of(
                 KotlinBundle.message("add.constructor.parameters.from.0.1", superClassName, renderedTypesForName)
             )
@@ -216,7 +215,7 @@ internal object SuperClassNotInitializedFactories {
         val renderedTypesForName = parametersInfo.joinToString(separator = ", ", prefix = "(", postfix = ")") { parameterInfo ->
             // INVARIANT position to keep types without approximation — shown in the quick fix name to distinguish between constructors
             "vararg ".takeIf { parameterInfo.isVararg }.orEmpty() +
-                    parameterInfo.parameterType.render(KaTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT)
+                    parameterInfo.parameterType
         }
 
         return AddParametersFix(
@@ -249,7 +248,7 @@ internal object SuperClassNotInitializedFactories {
                 }
                 return ParameterInfo(
                     renderedName = renderedName,
-                    parameterType = superParameterType,
+                    parameterType = superParameterType.render(KaTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT),
                     parameterGenerationInfo = ParameterGenerationInfo.Reused,
                     varargInfo = varargInfo,
                 )
@@ -263,7 +262,7 @@ internal object SuperClassNotInitializedFactories {
             val parameterText = "$varargKeywordOrEmpty$renderedName: ${renderedType}$defaultValueText"
             return ParameterInfo(
                 renderedName = renderedName,
-                parameterType = superParameterType,
+                parameterType = superParameterType.render(KaTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT),
                 parameterGenerationInfo = ParameterGenerationInfo.New(parameterText),
                 varargInfo = if (isVararg) VarargInfo.VarargWithSpread else VarargInfo.NotVararg,
             )

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.j2k.old.post.processing
 
@@ -30,10 +30,10 @@ import org.jetbrains.kotlin.idea.intentions.branchedTransformations.intentions.F
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.isTrivialStatementBody
 import org.jetbrains.kotlin.idea.quickfix.RemoveModifierFixBase
 import org.jetbrains.kotlin.idea.quickfix.RemoveUselessCastFix
-import org.jetbrains.kotlin.idea.quickfix.asKotlinIntentionActionsFactory
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.j2k.OldJ2KPostProcessingRegistrar
 import org.jetbrains.kotlin.j2k.OldJ2kPostProcessing
+import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getChildOfType
@@ -111,10 +111,10 @@ internal class OldJ2KPostProcessingRegistrarImpl : OldJ2KPostProcessingRegistrar
         }
 
         registerDiagnosticBasedProcessing<KtTypeProjection>(Errors.REDUNDANT_PROJECTION) { _, diagnostic ->
-            val fix = RemoveModifierFixBase.createRemoveProjectionFactory(true)
-                .asKotlinIntentionActionsFactory()
-                .createActions(diagnostic).single() as RemoveModifierFixBase
-            fix.invoke()
+            val projection = diagnostic.psiElement as KtTypeProjection
+            val elementType = projection.projectionToken?.node?.elementType as? KtModifierKeywordToken
+                ?: return@registerDiagnosticBasedProcessing
+            RemoveModifierFixBase.invokeImpl(projection, elementType)
         }
 
         registerDiagnosticBasedProcessingFactory(

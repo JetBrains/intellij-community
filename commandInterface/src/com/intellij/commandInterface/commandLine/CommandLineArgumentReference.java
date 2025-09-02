@@ -17,7 +17,7 @@ import java.util.Collection;
  *
  * @author Ilya.Kazakevich
  */
-public final class CommandLineArgumentReference extends CommandLineElementReference<CommandLineArgument> {
+final class CommandLineArgumentReference extends CommandLineElementReference<CommandLineArgument> {
   CommandLineArgumentReference(final @NotNull CommandLineArgument element) {
     super(element);
   }

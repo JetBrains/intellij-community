@@ -17,6 +17,7 @@ public final class UIPluginGroup {
   public List<ListPluginComponent> plugins = new ArrayList<>();
   public boolean excluded;
 
+  @Deprecated
   public @Nullable ListPluginComponent findComponent(@NotNull IdeaPluginDescriptor descriptor) {
     return findComponent(descriptor.getPluginId());
   }

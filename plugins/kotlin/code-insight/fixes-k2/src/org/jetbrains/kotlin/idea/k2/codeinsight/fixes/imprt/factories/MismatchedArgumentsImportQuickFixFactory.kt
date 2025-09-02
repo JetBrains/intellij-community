@@ -26,7 +26,7 @@ internal object MismatchedArgumentsImportQuickFixFactory : AbstractImportQuickFi
             is KaFirDiagnostic.NamedParameterNotFound,
             is KaFirDiagnostic.NoneApplicable,
             is KaFirDiagnostic.WrongNumberOfTypeArguments,
-            is KaFirDiagnostic.NewInferenceNoInformationForParameter -> {
+            is KaFirDiagnostic.CannotInferParameterType -> {
 
                 val originalDiagnosticPsi = diagnostic.psi
 

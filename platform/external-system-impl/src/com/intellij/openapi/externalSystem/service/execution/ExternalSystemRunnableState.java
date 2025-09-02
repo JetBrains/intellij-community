@@ -34,6 +34,7 @@ import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemTaskEx
 import com.intellij.openapi.externalSystem.service.execution.configuration.ExternalSystemRunConfigurationExtensionManager;
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemExecuteTaskTask;
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager;
+import com.intellij.openapi.externalSystem.service.project.trusted.ExternalSystemTrustedProjectDialog;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -180,12 +181,12 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
     if (myProject.isDisposed()) return null;
 
     ProjectSystemId externalSystemId = mySettings.getExternalSystemId();
-    if (!confirmLoadingUntrustedProject(myProject, externalSystemId)) {
+    if (!ExternalSystemTrustedProjectDialog.confirmLoadingUntrustedProject(myProject, externalSystemId)) {
       String externalSystemName = externalSystemId.getReadableName();
       throw new ExecutionException(ExternalSystemBundle.message("untrusted.project.notification.execution.error", externalSystemName));
     }
 
-    String jvmParametersSetup = getJvmParametersSetup();
+    String jvmParametersSetup = getJvmAgentsSetup();
 
     ApplicationManager.getApplication().assertWriteIntentLockAcquired();
     FileDocumentManager.getInstance().saveAllDocuments();
@@ -412,27 +413,25 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
     }
   }
 
-  private @Nullable String getJvmParametersSetup() throws ExecutionException {
+  private @Nullable String getJvmAgentsSetup() throws ExecutionException {
     var extensionsJP = new SimpleJavaParameters();
     var runConfigurationExtensionManager = ExternalSystemRunConfigurationExtensionManager.getInstance();
     runConfigurationExtensionManager.updateVMParameters(myConfiguration, extensionsJP, myEnv.getRunnerSettings(), myEnv.getExecutor());
 
     String jvmParametersSetup = "";
-    if (myDebugPort <= 0) {
-      final ParametersList allVMParameters = new ParametersList();
-      final ParametersList data = myEnv.getUserData(ExternalSystemTaskExecutionSettings.JVM_AGENT_SETUP_KEY);
-      if (data != null) {
-        for (String parameter : data.getList()) {
-          if (parameter.startsWith("-agentlib:")) continue;
-          if (parameter.startsWith("-agentpath:")) continue;
-          if (parameter.startsWith("-javaagent:")) continue;
-          throw new ExecutionException(ExternalSystemBundle.message("run.invalid.jvm.agent.configuration", parameter));
-        }
-        allVMParameters.addAll(data.getParameters());
+    final ParametersList allVMParameters = new ParametersList();
+    final ParametersList data = myEnv.getUserData(ExternalSystemTaskExecutionSettings.JVM_AGENT_SETUP_KEY);
+    if (data != null) {
+      for (String parameter : data.getList()) {
+        if (parameter.startsWith("-agentlib:")) continue;
+        if (parameter.startsWith("-agentpath:")) continue;
+        if (parameter.startsWith("-javaagent:")) continue;
+        throw new ExecutionException(ExternalSystemBundle.message("run.invalid.jvm.agent.configuration", parameter));
       }
-      allVMParameters.addAll(extensionsJP.getVMParametersList().getParameters());
-      jvmParametersSetup = allVMParameters.getParametersString();
+      allVMParameters.addAll(data.getParameters());
     }
+    allVMParameters.addAll(extensionsJP.getVMParametersList().getParameters());
+    jvmParametersSetup = allVMParameters.getParametersString();
     return nullize(jvmParametersSetup);
   }
 

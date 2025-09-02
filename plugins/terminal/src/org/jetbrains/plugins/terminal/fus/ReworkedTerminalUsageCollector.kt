@@ -25,7 +25,7 @@ private const val GROUP_ID = "terminal"
 object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP = EventLogGroup(GROUP_ID, 9)
+  private val GROUP = EventLogGroup(GROUP_ID, 10)
 
   private val OS_VERSION_FIELD = EventFields.StringValidatedByRegexpReference("os-version", "version")
   private val SHELL_STR_FIELD = EventFields.String("shell", KNOWN_SHELLS.toList())
@@ -155,6 +155,12 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
     "startup.first.output.latency",
     "From the moment of UI interaction to showing the first meaningful output (any non-whitespace symbols)",
     TERMINAL_OPENING_WAY,
+    DURATION_FIELD,
+  )
+
+  private val tabClosingCheckLatency = GROUP.registerVarargEvent(
+    "tab.closing.check.latency",
+    "From the moment of UI interaction to closing the terminal tab or showing the confirmation dialog (reported for all terminal engines)",
     DURATION_FIELD,
   )
 
@@ -291,6 +297,10 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
       TERMINAL_OPENING_WAY with openingWay,
       DURATION_FIELD with duration,
     )
+  }
+
+  fun logTabClosingCheckLatency(duration: Duration) {
+    tabClosingCheckLatency.log(DURATION_FIELD with duration)
   }
 }
 

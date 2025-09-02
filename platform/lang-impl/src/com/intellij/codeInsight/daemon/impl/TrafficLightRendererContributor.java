@@ -11,5 +11,5 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface TrafficLightRendererContributor {
   @Nullable
-  TrafficLightRenderer createRenderer(@NotNull Editor editor, @Nullable PsiFile file);
+  TrafficLightRenderer createRenderer(@NotNull Editor editor, @Nullable PsiFile psiFile);
 }

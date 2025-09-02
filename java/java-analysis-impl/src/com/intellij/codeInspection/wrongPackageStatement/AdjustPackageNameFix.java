@@ -36,7 +36,7 @@ public class AdjustPackageNameFix extends ModCommandQuickFix {
     return ModCommand.psiUpdate(element, (e, updater) -> applyFix(e, origFile, directory));
   }
 
-  private static void applyFix(@NotNull PsiElement element, @NotNull PsiFile origFile, @NotNull PsiDirectory directory) {
+  public static void applyFix(@NotNull PsiElement element, @NotNull PsiFile origFile, @NotNull PsiDirectory directory) {
     PsiFile file = element.getContainingFile();
     PsiPackage myTargetPackage = JavaDirectoryService.getInstance().getPackage(directory);
     if (myTargetPackage == null) return;

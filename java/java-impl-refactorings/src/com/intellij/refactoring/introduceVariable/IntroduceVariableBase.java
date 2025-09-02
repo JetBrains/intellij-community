@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceVariable;
 
 import com.intellij.codeInsight.CodeInsightUtil;
@@ -55,6 +55,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
@@ -292,6 +293,15 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       if (errorMessage != null) {
         showErrorMessage(project, editor, RefactoringBundle.getCannotRefactorMessage(errorMessage));
         return false;
+      }
+      PsiExpression topLevelExpression = ExpressionUtils.getTopLevelExpression(expr);
+      if (topLevelExpression.getParent() instanceof PsiField f) {
+        PsiClass containingClass = f.getContainingClass();
+        if (containingClass != null && containingClass.isInterface()) {
+          String message = JavaRefactoringBundle.message("introduce.variable.message.cannot.extract.variable.in.interface");
+          showErrorMessage(project, editor, RefactoringBundle.getCannotRefactorMessage(message));
+          return false;
+        }
       }
     }
 

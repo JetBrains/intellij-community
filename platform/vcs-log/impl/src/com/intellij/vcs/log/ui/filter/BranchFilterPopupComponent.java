@@ -112,7 +112,7 @@ public final class BranchFilterPopupComponent extends MultipleValueFilterPopupCo
   }
 
   @Override
-  protected @NotNull List<String> getAllValues() {
+  protected @NotNull @Unmodifiable List<String> getAllValues() {
     Collection<VcsRef> branches = myFilterModel.getDataPack().getRefs().getBranches();
     if (myBranchFilterModel.getVisibleRoots() != null) {
       branches = ContainerUtil.filter(branches, branch -> myBranchFilterModel.getVisibleRoots().contains(branch.getRoot()));

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef
 
 import com.intellij.ide.plugins.DynamicPluginListener
@@ -29,13 +29,13 @@ private class JBCefStartup(coroutineScope: CoroutineScope) {
   }
 
   private suspend fun doInit() {
-    @Suppress("SpellCheckingInspection") val isPreinit = ApplicationManager.getApplication().serviceAsync<RegistryManager>()
-      .get("ide.browser.jcef.preinit")
+    @Suppress("SpellCheckingInspection")
+    val isPreinit = RegistryManager.getInstanceAsync().get("ide.browser.jcef.preinit")
     if (isPreinit.asBoolean() && JBCefApp.isSupported()) {
       try {
         STARTUP_CLIENT = JBCefApp.getInstance().createClient()
       }
-      catch (ignore: IllegalStateException) {
+      catch (_: IllegalStateException) {
       }
     }
     else {
@@ -43,7 +43,7 @@ private class JBCefStartup(coroutineScope: CoroutineScope) {
       //This code enables pre initialization of JCEF on macOS if and only if JavaFX Runtime plugin is installed
       val id = "com.intellij.javafx"
       val javaFX = PluginId.findId(id)
-      if (javaFX == null || PluginManager.getInstance().findEnabledPlugin(javaFX) == null) {
+      if (javaFX == null || serviceAsync<PluginManager>().findEnabledPlugin(javaFX) == null) {
         ApplicationManager.getApplication().messageBus.connect()
           .subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
             override fun pluginLoaded(pluginDescriptor: IdeaPluginDescriptor) {

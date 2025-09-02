@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
@@ -31,6 +32,7 @@ import org.jetbrains.annotations.*;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 
 import static com.intellij.openapi.util.text.HtmlChunk.tag;
@@ -86,6 +88,10 @@ public class ModCommandBatchExecutorImpl implements ModCommandExecutor {
       String message = executeDelete(deleteFile);
       return message == null ? Result.SUCCESS : new Error(message);
     }
+    if (command instanceof ModMoveFile moveFile) {
+      String message = executeMove(moveFile);
+      return message == null ? Result.SUCCESS : new Error(message);
+    }
     if (command instanceof ModCompositeCommand cmp) {
       BatchExecutionResult result = Result.NOTHING;
       for (ModCommand subCommand : cmp.commands()) {
@@ -97,12 +103,6 @@ public class ModCommandBatchExecutorImpl implements ModCommandExecutor {
     if (command instanceof ModChooseAction chooser) {
       return executeChooseInBatch(context, chooser);
     }
-    if (command instanceof ModChooseMember member) {
-      ModCommand nextCommand = ProgressManager.getInstance().runProcessWithProgressSynchronously(
-        () -> ReadAction.nonBlocking(() -> member.nextCommand().apply(member.defaultSelection())).executeSynchronously(),
-        member.title(), true, context.project());
-      executeInBatch(context, nextCommand);
-    }
     if (command instanceof ModNavigate || command instanceof ModHighlight ||
         command instanceof ModCopyToClipboard || command instanceof ModStartRename ||
         command instanceof ModStartTemplate || command instanceof ModUpdateSystemOptions ||
@@ -112,6 +112,9 @@ public class ModCommandBatchExecutorImpl implements ModCommandExecutor {
     if (command instanceof ModShowConflicts) {
       return Result.CONFLICTS;
     }
+    if (command instanceof ModEditOptions<?> editOptions) {
+      return bypassEditOptions(editOptions, context);
+    }
     if (command instanceof ModDisplayMessage message) {
       if (message.kind() == ModDisplayMessage.MessageKind.ERROR) {
         return new Error(message.messageText());
@@ -119,6 +122,11 @@ public class ModCommandBatchExecutorImpl implements ModCommandExecutor {
       return Result.INTERACTIVE;
     }
     throw new IllegalArgumentException("Unknown command: " + command);
+  }
+
+  private <T extends OptionContainer> BatchExecutionResult bypassEditOptions(@NotNull ModEditOptions<T> options, @NotNull ActionContext context) {
+    if (!options.canUseDefaults()) return Result.INTERACTIVE;
+    return doExecuteInBatch(context, options.nextCommand().apply(options.containerSupplier().get()));
   }
 
   private BatchExecutionResult executeChooseInBatch(@NotNull ActionContext context, ModChooseAction chooser) {
@@ -136,7 +144,7 @@ public class ModCommandBatchExecutorImpl implements ModCommandExecutor {
     return executeInBatch(context, next);
   }
 
-  protected @Nls String executeDelete(ModDeleteFile file) {
+  protected @Nls String executeDelete(@NotNull ModDeleteFile file) {
     try {
       WriteAction.run(() -> file.file().delete(this));
       return null;
@@ -146,11 +154,52 @@ public class ModCommandBatchExecutorImpl implements ModCommandExecutor {
     }
   }
 
+  protected @Nls String executeMove(@NotNull ModMoveFile file) {
+    VirtualFile source = actualize(file.file());
+    FutureVirtualFile target = file.targetFile();
+    VirtualFile parent = actualize(target.getParent());
+    return WriteAction.compute(() -> {
+      VirtualFile origParent = source.getParent();
+      if (parent != null && !parent.equals(origParent)) {
+        try {
+          source.move(this, parent);
+        }
+        catch (IOException e) {
+          return AnalysisBundle.message("modcommand.executor.cannot.move.file",
+                                        source.getPath(), parent.getPath(), e.getLocalizedMessage());
+        }
+      }
+      if (!target.getName().equals(source.getName())) {
+        try {
+          source.rename(this, target.getName());
+        }
+        catch (IOException e) {
+          if (origParent != null && !origParent.equals(parent)) {
+            try {
+              // Try to rollback 'move' in case if rename failed
+              source.move(this, origParent);
+            }
+            catch (IOException ignored) {
+              // Ignore move exception 
+            }
+          }
+          return AnalysisBundle.message("modcommand.executor.cannot.rename.file",
+                                        source.getPath(), target.getName(), e.getLocalizedMessage());
+        }
+      }
+      return null;
+    });
+  }
+
   protected @Nls String executeCreate(@NotNull Project project, @NotNull ModCreateFile create) {
     FutureVirtualFile file = create.file();
     VirtualFile parent = actualize(file.getParent());
     try {
       return WriteAction.compute(() -> {
+        if (create.content() instanceof ModCreateFile.Directory) {
+          parent.createChildDirectory(this, file.getName());
+          return null;
+        }
         VirtualFile newFile = parent.createChildData(this, file.getName());
         if (create.content() instanceof ModCreateFile.Text text) {
           PsiFile psiFile = PsiManager.getInstance(project).findFile(newFile);
@@ -239,6 +288,8 @@ public class ModCommandBatchExecutorImpl implements ModCommandExecutor {
     PsiFile file = context.file();
     List<IntentionPreviewInfo.CustomDiff> customDiffList = new ArrayList<>();
     IntentionPreviewInfo navigateInfo = IntentionPreviewInfo.EMPTY;
+    List<@NlsSafe String> createdDirs = new ArrayList<>();
+    List<HtmlChunk> fsActions = new ArrayList<>();
     for (ModCommand command : modCommand.unpack()) {
       if (command instanceof ModUpdateFileText modFile) {
         VirtualFile vFile = modFile.file();
@@ -253,13 +304,17 @@ public class ModCommandBatchExecutorImpl implements ModCommandExecutor {
       }
       else if (command instanceof ModCreateFile createFile) {
         VirtualFile vFile = createFile.file();
-        String content =
-          createFile.content() instanceof ModCreateFile.Text text ? text.text() : AnalysisBundle.message("preview.binary.content");
-        customDiffList.add(new IntentionPreviewInfo.CustomDiff(vFile.getFileType(),
-                                                               getFileNamePresentation(project, vFile),
-                                                               "",
-                                                               content,
-                                                               true));
+        if (createFile.content() instanceof ModCreateFile.Directory) {
+          createdDirs.add(getFileNamePresentation(project, vFile));
+        } else {
+          String content =
+            createFile.content() instanceof ModCreateFile.Text text ? text.text() : AnalysisBundle.message("preview.binary.content");
+          customDiffList.add(new IntentionPreviewInfo.CustomDiff(vFile.getFileType(),
+                                                                 getFileNamePresentation(project, vFile),
+                                                                 "",
+                                                                 content,
+                                                                 true));
+        }
       }
       else if (command instanceof ModNavigate navigate && navigate.caret() != -1) {
         VirtualFile virtualFile = navigate.file();
@@ -273,8 +328,8 @@ public class ModCommandBatchExecutorImpl implements ModCommandExecutor {
       else if (command instanceof ModChooseAction target) {
         return getChoosePreview(context, target);
       }
-      else if (command instanceof ModChooseMember target) {
-        return getPreview(target.nextCommand().apply(target.defaultSelection()), context);
+      else if (command instanceof ModEditOptions<?> target) {
+        return getEditOptionsPreview(context, target);
       }
       else if (command instanceof ModDisplayMessage message) {
         if (message.kind() == ModDisplayMessage.MessageKind.ERROR) {
@@ -294,18 +349,61 @@ public class ModCommandBatchExecutorImpl implements ModCommandExecutor {
         navigateInfo = new IntentionPreviewInfo.Html(text(
           AnalysisBundle.message("preview.open.url", StringUtil.shortenTextWithEllipsis(openUrl.url(), 50, 10))));
       }
+      else if (command instanceof ModMoveFile moveFile) {
+        FutureVirtualFile targetFile = moveFile.targetFile();
+        IntentionPreviewInfo.Html html;
+        if (targetFile.getName().equals(moveFile.file().getName())) {
+          html = (IntentionPreviewInfo.Html)IntentionPreviewInfo.moveToDirectory(moveFile.file(), targetFile.getParent());
+        } else {
+          html = (IntentionPreviewInfo.Html)IntentionPreviewInfo.rename(moveFile.file(), targetFile.getName());
+        }
+        fsActions.add(html.content());
+      }
       else if (command instanceof ModUpdateSystemOptions options) {
         HtmlChunk preview = createOptionsPreview(context, options);
         navigateInfo = preview.isEmpty() ? IntentionPreviewInfo.EMPTY : new IntentionPreviewInfo.Html(preview);
       }
     }
-    return customDiffList.isEmpty() ? navigateInfo :
-           customDiffList.size() == 1 ? customDiffList.get(0) :
+    customDiffList.sort(Comparator.comparing(diff -> diff.fileName() != null));
+    if (customDiffList.isEmpty()) {
+      HtmlBuilder builder = new HtmlBuilder();
+      if (!createdDirs.isEmpty()) {
+        if (createdDirs.size() == 1) {
+          builder.append(AnalysisBundle.message("preview.create.directory", createdDirs.get(0))).br();
+        } else {
+          builder.append(tag("p").addText(AnalysisBundle.message("preview.create.directories")).children(
+              ContainerUtil.map(createdDirs, text -> new HtmlBuilder().br()
+                .appendRaw("&bull; ") //NON-NLS
+                .append(text)
+                .toFragment()))
+          );
+        }
+      }
+      if (!fsActions.isEmpty()) {
+        if (!builder.isEmpty()) builder.br();
+        fsActions.forEach(builder::append);
+      }
+      if (!builder.isEmpty()) {
+        return new IntentionPreviewInfo.Html(builder.toFragment());
+      }
+      return navigateInfo;
+    }
+    return customDiffList.size() == 1 ? customDiffList.get(0) :
            new IntentionPreviewInfo.MultiFileDiff(customDiffList);
   }
 
+  private @NotNull <T extends OptionContainer> IntentionPreviewInfo getEditOptionsPreview(@NotNull ActionContext context,
+                                                                                          @NotNull ModEditOptions<T> target) {
+    return getPreview(target.nextCommand().apply(target.containerSupplier().get()), context);
+  }
+
   protected @NotNull String getFileNamePresentation(Project project, VirtualFile file) {
-    return file.getName();
+    StringBuilder presentation = new StringBuilder(file.getName());
+    while (file.getParent() instanceof FutureVirtualFile parent) {
+      presentation.insert(0, parent.getName() + "/");
+      file = parent;
+    }
+    return presentation.toString();
   }
 
   private static @NotNull IntentionPreviewInfo getChoosePreview(@NotNull ActionContext context, @NotNull ModChooseAction target) {
@@ -369,6 +467,9 @@ public class ModCommandBatchExecutorImpl implements ModCommandExecutor {
       List<?> oldList = (List<?>)option.oldValue();
       //noinspection unchecked
       return IntentionPreviewInfo.addListOption((List<String>)list, optList.label().label(), value -> !oldList.contains(value)).content();
+    }
+    if (newValue == null) {
+      throw new IllegalStateException("Null value is not supported");
     }
     throw new IllegalStateException("Value of type " + newValue.getClass() + " is not supported");
   }

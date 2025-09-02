@@ -21,6 +21,7 @@ import java.util.*
 class DaemonTooltipActionProvider : TooltipActionProvider {
   override fun getTooltipAction(info: HighlightInfo, editor: Editor, psiFile: PsiFile): TooltipAction? {
     val intention = extractMostPriorityFixFromHighlightInfo(info, editor, psiFile) ?: return null
+    EventTrackingIntentionAction.unwrap(intention)?.suggestionShown(psiFile.project, editor, psiFile)
     return wrapIntentionToTooltipAction(intention, info, editor)
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.ui;
 
 import com.intellij.icons.AllIcons;
@@ -34,6 +34,7 @@ import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.*;
 import com.intellij.usages.impl.UsagePreviewPanel;
 import com.intellij.usages.impl.UsageViewImpl;
+import com.intellij.usages.rules.UsageFilteringRule;
 import com.intellij.usages.rules.UsageGroupingRuleProvider;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.SmartList;
@@ -170,6 +171,8 @@ public class ConflictsDialog extends DialogWrapper implements ConflictsDialogBas
       presentation.setNonCodeUsageAvailable(false);
       UsageViewImpl usageView = (UsageViewImpl)UsageViewManager.getInstance(myProject)
         .createUsageView(UsageTarget.EMPTY_ARRAY, createUsages(), presentation, null);
+      usageView.setFilteringRules(UsageFilteringRule.EMPTY_ARRAY);
+      usageView.expandAll();
       Disposer.register(getDisposable(), usageView);
       myTree = usageView.getTree();
       myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
@@ -277,14 +280,12 @@ public class ConflictsDialog extends DialogWrapper implements ConflictsDialogBas
 
   private List<AnAction> createGroupingActions(UsageView usageView, JComponent component) {
     List<AnAction> list = new ArrayList<>();
+    list.add(new Separator(UsageViewBundle.message("action.group.by.title")));
     ActionManager actionManager = ActionManager.getInstance();
-    AnAction groupByUsageTypeAction = actionManager.getAction("UsageGrouping.UsageType");
     for (UsageGroupingRuleProvider provider : UsageGroupingRuleProvider.EP_NAME.getExtensionList()) {
       for (@NotNull AnAction action : provider.createGroupingActions(usageView)) {
-        if (action != groupByUsageTypeAction) {
-          action.registerCustomShortcutSet(component, getDisposable());
-          list.add(action);
-        }
+        action.registerCustomShortcutSet(component, getDisposable());
+        list.add(action);
       }
     }
     AnAction groupByModuleAction = ActionManager.getInstance().getAction("UsageGrouping.Module");
@@ -320,6 +321,11 @@ public class ConflictsDialog extends DialogWrapper implements ConflictsDialogBas
           @Override
           public @NlsSafe String getTooltipText() {
             return myUpdatedDialog ? "<html><body style='width: 300px'>" + usagePresentation.getPlainText() + "</body></html>" : null;
+          }
+
+          @Override
+          public boolean equals(Object o) {
+            return this == o;
           }
         };
         Usage usage = new UsageInfo2UsageAdapter(usageInfo) {

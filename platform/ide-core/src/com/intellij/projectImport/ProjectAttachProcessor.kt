@@ -4,7 +4,6 @@ package com.intellij.projectImport
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import kotlinx.coroutines.Dispatchers
@@ -40,9 +39,7 @@ open class ProjectAttachProcessor {
   @Experimental
   open suspend fun attachToProjectAsync(project: Project, projectDir: Path, callback: ProjectOpenedCallback?): Boolean {
     return withContext(Dispatchers.EDT) {
-      blockingContext {
-        attachToProject(project = project, projectDir = projectDir, callback = callback)
-      }
+      attachToProject(project = project, projectDir = projectDir, callback = callback)
     }
   }
 

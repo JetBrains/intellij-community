@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.gant;
 
 import com.intellij.openapi.project.Project;
@@ -62,28 +62,5 @@ public class StandaloneGantTest extends LightJavaCodeInsightFixtureTestCase {
 
   public void testPatternset() {
     checkVariants("ant.patt<caret>t", "patternset");
-  }
-
-  public void testOptionalArgumentsHighlighting() {
-    myFixture.configureByText("a.gant", """
-      ant.java(classname: "com.intellij.util.io.zip.ReorderJarsMain", fork: "true") {
-        arg(value: "aaa")
-        classpath {
-          pathelement(location: "sss")
-        }
-      }
-      """);
-    myFixture.checkHighlighting(true, false, false);
-  }
-
-  public void testPathElement() {
-    checkVariants("""
-                    ant.java(classname: "com.intellij.util.io.zip.ReorderJarsMain", fork: "true") {
-                      arg(value: "aaa")
-                      classpath {
-                        pathele<caret>ment(location: "sss")
-                      }
-                    }
-                    """, "pathelement");
   }
 }

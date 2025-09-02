@@ -4,19 +4,15 @@ package com.intellij.codeInsight.hints;
 
 import com.intellij.codeInsight.hints.filtering.Matcher;
 import com.intellij.codeInsight.hints.filtering.MatcherConstructor;
-import com.intellij.codeInsight.hints.settings.Diff;
-import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings;
+import com.intellij.codeInsight.hints.parameters.ParameterHintsExcludeListService;
 import com.intellij.lang.Language;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static com.intellij.codeInsight.hints.HintUtilsKt.getLanguageForSettingKey;
 
 public final class MethodInfoExcludeListFilter implements HintInfoFilter {
   private final List<Matcher> myMatchers;
@@ -28,9 +24,12 @@ public final class MethodInfoExcludeListFilter implements HintInfoFilter {
       .collect(Collectors.toList());
   }
 
+  public MethodInfoExcludeListFilter(@NotNull List<Matcher> matchers) {
+    myMatchers = matchers;
+  }
+
   public static @NotNull MethodInfoExcludeListFilter forLanguage(@NotNull Language language) {
-    Set<String> list = fullExcludelist(language);
-    return new MethodInfoExcludeListFilter(list);
+    return new MethodInfoExcludeListFilter(ParameterHintsExcludeListService.getInstance().getMatchers(language));
   }
 
   @Override
@@ -40,29 +39,4 @@ public final class MethodInfoExcludeListFilter implements HintInfoFilter {
     }
     return false;
   }
-
-  private static @NotNull @Unmodifiable Set<String> fullExcludelist(Language language) {
-    InlayParameterHintsProvider provider = InlayParameterHintsExtension.INSTANCE.forLanguage(language);
-    if (provider == null) {
-      return Collections.emptySet();
-    }
-
-    Set<String> excludeList = excludeList(language);
-    Language dependentLanguage = provider.getBlackListDependencyLanguage();
-    if (dependentLanguage != null) {
-      excludeList = ContainerUtil.union(excludeList, excludeList(dependentLanguage));
-    }
-    return excludeList;
-  }
-
-  private static @NotNull Set<String> excludeList(@NotNull Language language) {
-    InlayParameterHintsProvider provider = InlayParameterHintsExtension.INSTANCE.forLanguage(language);
-    if (provider != null) {
-      ParameterNameHintsSettings settings = ParameterNameHintsSettings.getInstance();
-      Diff diff = settings.getExcludeListDiff(getLanguageForSettingKey(language));
-      return diff.applyOn(provider.getDefaultBlackList());
-    }
-    return Collections.emptySet();
-  }
-
 }

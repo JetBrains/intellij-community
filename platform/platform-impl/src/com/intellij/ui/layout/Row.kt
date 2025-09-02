@@ -49,11 +49,6 @@ interface RowBuilder : BaseBuilder {
 @ApiStatus.ScheduledForRemoval
 @Deprecated("Use Kotlin UI DSL Version 2")
 abstract class Row : Cell(), RowBuilder {
-  @get:Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-  @get:ApiStatus.ScheduledForRemoval
-  @set:Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-  @set:ApiStatus.ScheduledForRemoval
-  abstract var enabled: Boolean
 
   @get:Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
   @get:ApiStatus.ScheduledForRemoval

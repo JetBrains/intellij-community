@@ -16,7 +16,9 @@
 package git4idea.http;
 
 import externalApp.ExternalApp;
+import externalApp.ExternalAppEntry;
 import externalApp.ExternalAppUtil;
+import externalApp.ExternalCli;
 
 /**
  * <p>This is a program that would be called by Git when an HTTP connection is needed, that requires authorization,
@@ -40,40 +42,46 @@ import externalApp.ExternalAppUtil;
  *
  * @author Kirill Likhodedov
  */
-public class GitAskPassApp implements ExternalApp {
+public class GitAskPassApp implements ExternalApp, ExternalCli {
 
-  @SuppressWarnings("UseOfSystemOutOrSystemErr")
-  public static void main(String[] args) {
+  @Override
+  public int entryPoint(ExternalAppEntry entry) {
     try {
-      if (args.length < 1) {
+      if (entry.getArgs().length < 1) {
         throw new IllegalArgumentException("No arguments specified!");
       }
 
-      String handlerId = ExternalAppUtil.getEnv(GitAskPassAppHandler.IJ_ASK_PASS_HANDLER_ENV);
-      int xmlRpcPort = ExternalAppUtil.getEnvInt(GitAskPassAppHandler.IJ_ASK_PASS_PORT_ENV);
+      String handlerId = ExternalAppUtil.getEnv(GitAskPassAppHandler.IJ_ASK_PASS_HANDLER_ENV, entry.getEnvironment());
+      int xmlRpcPort = ExternalAppUtil.getEnvInt(GitAskPassAppHandler.IJ_ASK_PASS_PORT_ENV, entry.getEnvironment());
 
-      String description = args[0];
+      String description = entry.getArgs()[0];
 
       ExternalAppUtil.Result result = ExternalAppUtil.sendIdeRequest(GitAskPassAppHandler.ENTRY_POINT_NAME, xmlRpcPort,
                                                                      handlerId, description);
       if (result.isError) {
-        System.err.println(result.getPresentableError());
-        System.exit(1);
+        entry.getStderr().println(result.getPresentableError());
+        return 1;
       }
 
       String ans = result.response;
       if (ans == null) {
-        System.err.println("Authentication request was cancelled");
-        System.exit(0);
+        entry.getStderr().println("Authentication request was cancelled");
+        return 0;
       }
 
-      System.out.println(ans);
-      System.exit(0);
+      entry.getStdout().println(ans);
+      return 0;
     }
     catch (Throwable t) {
-      t.printStackTrace(System.err);
-      System.err.println("Could not communicate with IDE: " + t.getMessage());
-      System.exit(1);
+      t.printStackTrace(entry.getStderr());
+      entry.getStderr().println("Could not communicate with IDE: " + t.getMessage());
+      return 1;
     }
+  }
+
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
+  public static void main(String[] args) {
+    var exitCode = new GitAskPassApp().entryPoint(ExternalAppEntry.fromMain(args));
+    System.exit(exitCode);
   }
 }

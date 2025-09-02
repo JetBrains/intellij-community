@@ -7,6 +7,7 @@ import com.intellij.util.JBHiDPIScaledImage;
 import com.intellij.util.RetinaImage;
 import com.jetbrains.JBR;
 import com.jetbrains.cef.SharedMemory;
+import com.jetbrains.cef.SharedMemoryCache;
 import org.cef.browser.CefBrowser;
 import org.cef.handler.CefNativeRenderHandler;
 import org.jetbrains.annotations.NotNull;
@@ -19,55 +20,25 @@ import java.awt.image.VolatileImage;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.IntBuffer;
-import java.util.ArrayList;
-import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.ConcurrentHashMap;
 
 @SuppressWarnings("NonPrivateFieldAccessedInSynchronizedContext")
 class JBCefNativeOsrHandler extends JBCefOsrHandler implements CefNativeRenderHandler {
-  private static final int CLEAN_CACHE_TIME_MS = Integer.getInteger("jcef.remote.osr.clean_cache_time_ms", 10*1000); // 10 sec
   private static final boolean FORCE_USE_SOFTWARE_RENDERING;
 
   static {
-    if (SystemInfoRt.isMac || SystemInfoRt.isLinux)
-      FORCE_USE_SOFTWARE_RENDERING = Boolean.getBoolean("jcef.remote.use_software_rendering");
-    else
-      FORCE_USE_SOFTWARE_RENDERING = !Boolean.getBoolean("jcef.remote.enable_hardware_rendering"); // NOTE: temporary enabled until fixed IJPL-161293
+    FORCE_USE_SOFTWARE_RENDERING = !Boolean.getBoolean("jcef.remote.enable_hardware_rendering"); // NOTE: temporary enabled until fixed IJPL-161293, IJPL-182455
   }
 
-  private final Map<String, SharedMemory.WithRaster> mySharedMemCache = new ConcurrentHashMap<>();
+  private final SharedMemoryCache mySharedMemCache = new SharedMemoryCache();
   private SharedMemory.WithRaster myCurrentFrame;
-  private volatile boolean myIsDisposed = false;
 
   JBCefNativeOsrHandler(@NotNull JComponent component, @NotNull Function<? super JComponent, ? extends Rectangle> screenBoundsProvider) {
     super(component, screenBoundsProvider);
   }
 
   @Override
-  public synchronized void disposeNativeResources() {
-    if (myIsDisposed)
-      return;
-
-    myIsDisposed = true;
-    mySharedMemCache.clear();
-  }
-
-  private void cleanCacheIfNecessary() {
-    final long timeMs = System.currentTimeMillis();
-    if (mySharedMemCache.size() < 2)
-      return;
-
-    ArrayList<String> toRemove = new ArrayList<>();
-    for (Map.Entry<String, SharedMemory.WithRaster> item: mySharedMemCache.entrySet()) {
-      if (timeMs - item.getValue().lasUsedMs > CLEAN_CACHE_TIME_MS) {
-        toRemove.add(item.getKey());
-      }
-    }
-    for (String name: toRemove) {
-      mySharedMemCache.remove(name);
-    }
-  }
+  public synchronized void disposeNativeResources() {}
 
   @Override
   public void onPaintWithSharedMem(CefBrowser browser,
@@ -77,22 +48,10 @@ class JBCefNativeOsrHandler extends JBCefOsrHandler implements CefNativeRenderHa
                                    long sharedMemHandle,
                                    int width,
                                    int height) {
-    SharedMemory.WithRaster mem = mySharedMemCache.get(sharedMemName);
-    if (mem == null) {
-      cleanCacheIfNecessary();
-      mem = new SharedMemory.WithRaster(sharedMemName, sharedMemHandle);
-      synchronized (this) {
-        // Use synchronization to avoid leak (when disposeNativeRes is called just before putting into cache).
-        if (myIsDisposed)
-          return;
-        mySharedMemCache.put(sharedMemName, mem);
-      }
-    }
-
+    SharedMemory.WithRaster mem = mySharedMemCache.get(sharedMemName, sharedMemHandle);
     mem.setWidth(width);
     mem.setHeight(height);
     mem.setDirtyRectsCount(dirtyRectsCount);
-    mem.lasUsedMs = System.currentTimeMillis();
 
     if (popup) {
       JBHiDPIScaledImage image = myPopupImage;
@@ -144,7 +103,7 @@ class JBCefNativeOsrHandler extends JBCefOsrHandler implements CefNativeRenderHa
     synchronized (frame) {
       try {
         frame.lock();
-        if (!FORCE_USE_SOFTWARE_RENDERING && JBR.isNativeRasterLoaderSupported()) {
+        if (useNativeRasterLoader()) {
           JBR.getNativeRasterLoader().loadNativeRaster(vi, frame.getPtr(), frame.getWidth(), frame.getHeight(),
                                                        frame.getPtr() + frame.getRectsOffset(),
                                                        frame.getDirtyRectsCount());
@@ -234,5 +193,32 @@ class JBCefNativeOsrHandler extends JBCefOsrHandler implements CefNativeRenderHa
       src.position(offsetSrc).get(dst, offsetDst, dw - x0);
     else
       src.position(offsetSrc).get(dst, offsetDst, x1 - x0);
+  }
+
+  private static Boolean useNativeRasterLoader() {
+    return !FORCE_USE_SOFTWARE_RENDERING && JBR.isNativeRasterLoaderSupported();
+  }
+
+  @Override
+  Color getColorAt(int x, int y) {
+    if (!useNativeRasterLoader()) {
+      return super.getColorAt(x, y);
+    }
+
+    if (myCurrentFrame == null) {
+      return null;
+    }
+    try {
+      myCurrentFrame.lock();
+
+      ByteBuffer byteBuffer = myCurrentFrame.wrapRaster();
+      if (x < 0 || x >= myCurrentFrame.getWidth() || y < 0 || y >= myCurrentFrame.getHeight()) {
+        return null;
+      }
+      Color color = new Color(byteBuffer.order(ByteOrder.LITTLE_ENDIAN).asIntBuffer().get(y * myCurrentFrame.getWidth() + x), true);
+      return color;
+    } finally {
+      myCurrentFrame.unlock();
+    }
   }
 }

@@ -51,7 +51,8 @@ object GradleSyncProjectConfigurator {
       |  externalProjectPath = $externalProjectPath
     """.trimMargin()
     TELEMETRY.spanBuilder(configuratorName).use {
-      val project = context.project()
+      checkCanceled()
+      val project = context.project
       val workspaceModel = project.workspaceModel
       val storageSnapshot = workspaceModel.currentSnapshot
       val storage = MutableEntityStorage.from(storageSnapshot)
@@ -73,16 +74,8 @@ object GradleSyncProjectConfigurator {
     }
   }
 
+  @Deprecated("Use ProjectResolverContext#getProject instead")
   suspend fun ProjectResolverContext.project(): Project {
-    return externalSystemTaskId.project()
-  }
-
-  private suspend fun ExternalSystemTaskId.project(): Project {
-    checkCanceled()
-    val project = findProject()
-    if (project == null) {
-      throw AlreadyDisposedException("Project $ideProjectId is closed")
-    }
     return project
   }
 }

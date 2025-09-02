@@ -12,13 +12,20 @@ import java.util.stream.Stream;
 
 final class ChangedVirtualDirectory extends LightVirtualFile {
   private final @NotNull Map<@NotNull String, @NotNull LightVirtualFile> myAddedChildren = new LinkedHashMap<>();
+  private final VirtualFile myParent;
 
   ChangedVirtualDirectory(@NotNull VirtualFile original) {
     super(original, "", original.getModificationStamp());
     if (!original.isDirectory()) {
       throw new IllegalArgumentException();
     }
+    myParent = original.getParent();
     super.setOriginalFile(original);
+  }
+  
+  ChangedVirtualDirectory(@NotNull ChangedVirtualDirectory parent, @NotNull String name) {
+    super(name);
+    myParent = parent;
   }
 
   @Override
@@ -33,7 +40,7 @@ final class ChangedVirtualDirectory extends LightVirtualFile {
 
   @Override
   public VirtualFile getParent() {
-    return getOriginalFile().getParent();
+    return myParent;
   }
 
   @Override
@@ -44,12 +51,16 @@ final class ChangedVirtualDirectory extends LightVirtualFile {
   @Override
   public @Nullable VirtualFile findChild(@NotNull String name) {
     VirtualFile child = myAddedChildren.get(name);
-    return child == null ? getOriginalFile().findChild(name) : child;
+    if (child != null) return child;
+    VirtualFile originalFile = getOriginalFile();
+    return originalFile != null ? originalFile.findChild(name) : null;
   }
 
   @Override
   public VirtualFile[] getChildren() {
-    return Stream.concat(Stream.of(getOriginalFile()), myAddedChildren.values().stream())
+    VirtualFile originalFile = getOriginalFile();
+    if (originalFile == null) return myAddedChildren.values().toArray(EMPTY_ARRAY);
+    return Stream.concat(Stream.of(originalFile), myAddedChildren.values().stream())
       .toArray(VirtualFile[]::new);
   }
 
@@ -65,7 +76,12 @@ final class ChangedVirtualDirectory extends LightVirtualFile {
 
   @Override
   public @NotNull VirtualFile createChildDirectory(Object requestor, @NotNull String name) {
-    throw new UnsupportedOperationException();
+    if (findChild(name) != null) {
+      throw new IllegalArgumentException("Child exists: " + name);
+    }
+    LightVirtualFile file = new ChangedVirtualDirectory(this, name);
+    myAddedChildren.put(name, file);
+    return file;
   }
 
   @NotNull Map<@NotNull String, @NotNull LightVirtualFile> getAddedChildren() {

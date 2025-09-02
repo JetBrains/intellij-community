@@ -1,7 +1,7 @@
 // FIR_COMPARISON
 // FIR_IDENTICAL
 
-@Dep<caret>
+@Depr<caret>
 fun foo() { }
 
 // INVOCATION_COUNT: 1

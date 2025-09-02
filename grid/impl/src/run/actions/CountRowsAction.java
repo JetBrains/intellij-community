@@ -30,7 +30,7 @@ import java.awt.*;
 import java.util.Objects;
 
 import static com.intellij.database.datagrid.GridUtil.hidePageActions;
-import static com.intellij.database.run.actions.ChangePageSizeActionGroup.format;
+import static com.intellij.database.run.actions.ChangePageSizeUtilKt.format;
 
 public class CountRowsAction extends IconWithTextAction implements CustomComponentAction, GridAction {
   @Override

@@ -2,4 +2,6 @@ fragment projectForClone on Project {
   nameWithNamespace
   fullPath
   httpUrlToRepo
+  sshUrlToRepo
+  description
 }

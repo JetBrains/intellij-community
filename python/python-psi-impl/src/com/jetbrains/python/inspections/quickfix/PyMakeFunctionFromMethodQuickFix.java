@@ -9,19 +9,14 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.util.ObjectUtils;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.codeInsight.PyPsiIndexUtil;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper;
-import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesVisitor;
-import com.jetbrains.python.inspections.unresolvedReference.SimplePyUnresolvedReferencesInspection;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
-import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -108,22 +103,7 @@ public class PyMakeFunctionFromMethodQuickFix implements LocalQuickFix {
 
   private static void removeFormerImport(final @NotNull PsiFile usageFile, boolean addImport) {
     if (usageFile instanceof PyFile && addImport) {
-      final PsiFile contextFile = FileContextUtil.getContextFile(usageFile);
-      final PsiFile file = ObjectUtils.chooseNotNull(contextFile, usageFile);
-      TypeEvalContext context = TypeEvalContext.codeAnalysis(file.getProject(), file);
-
-      final PyUnresolvedReferencesVisitor visitor = new SimplePyUnresolvedReferencesInspection.Visitor(
-        null, new SimplePyUnresolvedReferencesInspection(), context, PythonLanguageLevelPusher.getLanguageLevelForFile(usageFile)
-      );
-      usageFile.accept(new PyRecursiveElementVisitor() {
-        @Override
-        public void visitPyElement(@NotNull PyElement node) {
-          super.visitPyElement(node);
-          node.accept(visitor);
-        }
-      });
-
-      visitor.optimizeImports();
+      PyClassRefactoringUtil.optimizeImports(usageFile);
     }
   }
 

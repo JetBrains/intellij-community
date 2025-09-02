@@ -177,16 +177,16 @@ public final class UpdateCopyrightAction extends BaseAnalysisAction {
     public void run(final @NotNull ProgressIndicator indicator) {
       myScope.accept(new PsiElementVisitor() {
         @Override
-        public void visitFile(final @NotNull PsiFile file) {
+        public void visitFile(final @NotNull PsiFile psiFile) {
           if (indicator.isCanceled()) {
             return;
           }
-          final Module module = ModuleUtilCore.findModuleForPsiElement(file);
-          final UpdateCopyrightProcessor processor = new UpdateCopyrightProcessor(file.getProject(), module, file);
+          final Module module = ModuleUtilCore.findModuleForPsiElement(psiFile);
+          final UpdateCopyrightProcessor processor = new UpdateCopyrightProcessor(psiFile.getProject(), module, psiFile);
           
-          final Runnable runnable = processor.preprocessFile(file, myAllowReplacement);
+          final Runnable runnable = processor.preprocessFile(psiFile, myAllowReplacement);
           if (runnable != EmptyRunnable.getInstance()) {
-            preparations.put(file, runnable);
+            preparations.put(psiFile, runnable);
           }
         }
       });

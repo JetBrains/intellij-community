@@ -21,6 +21,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -64,7 +65,8 @@ public class ConvertToInstanceMethodHandler implements RefactoringActionHandler,
     }
   }
 
-  private static Object @NotNull [] calculatePossibleInstanceQualifiers(@NotNull PsiMethod method) {
+  @VisibleForTesting
+  public static Object @NotNull [] calculatePossibleInstanceQualifiers(@NotNull PsiMethod method) {
     if (!method.hasModifierProperty(PsiModifier.STATIC)) {
       throw new CommonRefactoringUtil.RefactoringErrorHintException(
         JavaRefactoringBundle.message("convertToInstanceMethod.method.is.not.static", method.getName()));

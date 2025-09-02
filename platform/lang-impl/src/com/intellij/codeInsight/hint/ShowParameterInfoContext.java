@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class ShowParameterInfoContext implements CreateParameterInfoContext {
   private final Editor myEditor;
-  private final PsiFile myFile;
+  private final PsiFile myPsiFile;
   private final Project myProject;
   private final int myOffset;
   private final int myParameterListStart;
@@ -26,22 +26,22 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
   private boolean myRequestFocus;
 
   public ShowParameterInfoContext(final Editor editor, final Project project,
-                                  final PsiFile file, int offset, int parameterListStart) {
-    this(editor, project, file, offset, parameterListStart, false);
+                                  final PsiFile psiFile, int offset, int parameterListStart) {
+    this(editor, project, psiFile, offset, parameterListStart, false);
   }
 
   public ShowParameterInfoContext(final Editor editor, final Project project,
-                                  final PsiFile file, int offset, int parameterListStart,
+                                  final PsiFile psiFile, int offset, int parameterListStart,
                                   boolean requestFocus) {
-    this(editor, project, file, offset, parameterListStart, requestFocus, false);
+    this(editor, project, psiFile, offset, parameterListStart, requestFocus, false);
   }
 
   public ShowParameterInfoContext(final Editor editor, final Project project,
-                                  final PsiFile file, int offset, int parameterListStart,
+                                  final PsiFile psiFile, int offset, int parameterListStart,
                                   boolean requestFocus, boolean singleParameterInfo) {
     myEditor = editor;
     myProject = project;
-    myFile = file;
+    myPsiFile = psiFile;
     myParameterListStart = parameterListStart;
     myOffset = offset;
     myRequestFocus = requestFocus;
@@ -55,7 +55,7 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
 
   @Override
   public PsiFile getFile() {
-    return myFile;
+    return myPsiFile;
   }
 
   @Override

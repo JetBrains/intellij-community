@@ -161,7 +161,6 @@ object CommentInputActionsComponentFactory {
         // installed as AnAction, bc otherwise Esc is stolen by editor
         val anAction = if (overrideEditorAction) action.toAnAction() else action.toAnActionWithEditorPromotion()
         try {
-          putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
           anAction.registerCustomShortcutSet(shortcut, component)
           awaitCancellation()
         }

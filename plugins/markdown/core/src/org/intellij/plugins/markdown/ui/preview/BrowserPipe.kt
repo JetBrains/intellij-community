@@ -15,15 +15,7 @@ import org.jetbrains.annotations.ApiStatus
  */
 interface BrowserPipe: Disposable {
   interface Handler {
-    @ApiStatus.ScheduledForRemoval
-    @Deprecated(message = "Use #processMessageReceived instead", replaceWith = ReplaceWith("processMessageReceived()"))
-    fun messageReceived(data: String): Unit = throw UnsupportedOperationException()
-
-    fun processMessageReceived(data: String): Boolean {
-      messageReceived(data)
-      // continue to iterate over the rest handlers
-      return true
-    }
+    fun processMessageReceived(data: String): Boolean
   }
 
   /**

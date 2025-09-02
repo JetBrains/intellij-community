@@ -61,7 +61,7 @@ public class ExtractMethodObject4DebuggerReflectionTest extends LightRefactoring
   }
 
   public void testLanguageLevelImplicitClasses() {
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), () -> {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
       String testName = getTestName(false);
       String pathToSource = "/" + testName + ".java";
       try {

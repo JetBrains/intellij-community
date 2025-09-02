@@ -7,6 +7,9 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+/// Utilities for formatting Cucumber runtime output to render nicely in the IntelliJ test runner. SM stands for Service Messages.
+/// 
+/// @see <a href="https://www.jetbrains.com/help/teamcity/service-messages.html">Service Messages (TeamCity Docs)</a>
 public final class CucumberJvmSMFormatterUtil {
   public static final String TEAMCITY_PREFIX = "##teamcity";
 

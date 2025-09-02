@@ -11,7 +11,7 @@ CoroutinePreflightFrame invokeSuspend (sequenceLambda.kt:15)
         JavaValue[field] nextValue: java.lang.Object = null (SequenceBuilder.!EXT!)
         JavaValue[field] nextIterator: java.util.Iterator = null (SequenceBuilder.!EXT!)
         JavaValue[field] nextStep: kotlin.coroutines.Continuation = null (SequenceBuilder.!EXT!)
-        JavaValue[getter] context: kotlin.coroutines.CoroutineContext (SequenceBuilder.!EXT!)
+        JavaValue[getter kotlin.sequences.SequenceBuilderIterator.getContext()] context: kotlin.coroutines.CoroutineContext (SequenceBuilder.!EXT!)
     JavaValue[local] result: Unit@uniqueID = kotlin.Unit
         DummyMessageValueNode = No fields to display
 Disconnected from the target VM

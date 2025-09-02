@@ -19,12 +19,14 @@ import com.intellij.codeInspection.CustomSuppressableInspectionTool;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.SuppressIntentionAction;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-abstract class XsltInspection extends LocalInspectionTool implements CustomSuppressableInspectionTool {
+@ApiStatus.Internal
+public abstract class XsltInspection extends LocalInspectionTool implements CustomSuppressableInspectionTool {
   @Override
   public SuppressIntentionAction @NotNull [] getSuppressActions(@Nullable PsiElement psiElement) {
     final List<SuppressIntentionAction> actions = InspectionUtil.getSuppressActions(this, false);

@@ -1,2 +1,0 @@
-def copy(x):
-    pass

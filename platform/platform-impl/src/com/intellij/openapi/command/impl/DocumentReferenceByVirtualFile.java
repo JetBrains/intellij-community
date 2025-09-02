@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Internal
 public final class DocumentReferenceByVirtualFile implements DocumentReference {
-  private VirtualFile myFile;
+  private @NotNull VirtualFile myFile;
 
   DocumentReferenceByVirtualFile(@NotNull VirtualFile file) {
     myFile = file;
@@ -30,10 +30,10 @@ public final class DocumentReferenceByVirtualFile implements DocumentReference {
 
   @Override
   public String toString() {
-    return myFile.toString();
+    return myFile.getName();
   }
 
-  public void update(VirtualFile f) {
+  public void update(@NotNull VirtualFile f) {
     myFile = f;
   }
 }

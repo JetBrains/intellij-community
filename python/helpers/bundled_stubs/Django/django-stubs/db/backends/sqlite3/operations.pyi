@@ -1,4 +1,4 @@
-from collections.abc import Callable, Iterable
+from collections.abc import Callable
 from typing import Any
 from uuid import UUID
 
@@ -6,7 +6,6 @@ from django.db.backends.base.operations import BaseDatabaseOperations
 
 class DatabaseOperations(BaseDatabaseOperations):
     jsonfield_datatype_values: frozenset[str]
-    def bulk_insert_sql(self, fields: Any, placeholder_rows: Iterable[str]) -> str: ...
     def convert_booleanfield_value(self, value: Any, expression: Any, connection: Any) -> Any: ...
     def convert_datefield_value(self, value: Any, expression: Any, connection: Any) -> Any: ...
     def convert_datetimefield_value(self, value: Any, expression: Any, connection: Any) -> Any | None: ...

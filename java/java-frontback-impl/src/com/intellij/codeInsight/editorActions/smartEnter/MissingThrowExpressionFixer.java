@@ -15,9 +15,10 @@ public class MissingThrowExpressionFixer implements Fixer {
     throws IncorrectOperationException {
     if (BasicJavaAstTreeUtil.is(astNode, BASIC_THROW_STATEMENT)) {
       ASTNode expression = BasicJavaAstTreeUtil.getExpression(astNode);
-      if (expression != null &&
-          startLine(editor, astNode) == startLine(editor, expression)) {
-        return;
+      if (expression != null) {
+        int expressionLine = startLine(editor, expression);
+        if (startLine(editor, astNode) == expressionLine) return;
+        if (editor.getDocument().getLineNumber(editor.getCaretModel().getOffset()) == expressionLine) return;
       }
 
       final int startOffset = astNode.getTextRange().getStartOffset();

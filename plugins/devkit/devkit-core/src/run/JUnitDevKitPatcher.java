@@ -146,7 +146,7 @@ public final class JUnitDevKitPatcher extends JUnitPatcher {
     javaParameters.getClassPath().addFirst(libPath + "resources.jar");
   }
 
-  static void appendAddOpensWhenNeeded(@NotNull Project project, @NotNull Sdk jdk, @NotNull ParametersList vm) {
+  public static void appendAddOpensWhenNeeded(@NotNull Project project, @NotNull Sdk jdk, @NotNull ParametersList vm) {
     var sdkVersion = jdk.getSdkType() instanceof JavaSdk javaSdk ? javaSdk.getVersion(jdk) : null;
     if (sdkVersion != null && sdkVersion.isAtLeast(JavaSdkVersion.JDK_17)) {
       var scope = ProjectScope.getContentScope(project);
@@ -160,7 +160,7 @@ public final class JUnitDevKitPatcher extends JUnitPatcher {
         var file = files.iterator().next();
         String projectFilePath =
           Objects.requireNonNull(project.getProjectFilePath(), "Run configurations should not be invoked on the default project");
-        EelApi eelApi = EelProviderUtil.upgradeBlocking(EelProviderUtil.getEelDescriptor(Path.of(projectFilePath)));
+        EelApi eelApi = EelProviderUtil.toEelApiBlocking(EelProviderUtil.getEelDescriptor(Path.of(projectFilePath)));
         OS targetOs = EelProviderUtil.systemOs(eelApi);
         try (var stream = file.getInputStream()) {
           JavaModuleOptions.readOptions(stream, targetOs).forEach(vm::add);

@@ -6,6 +6,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.Collection;
 import java.util.List;
@@ -28,13 +29,14 @@ public final class ThrottlingListenerWrapper implements SearchListener, Disposab
   private final SearchEventsBuffer buffer = new SearchEventsBuffer();
   private final SearchListener delegateListener;
 
-
-  ThrottlingListenerWrapper(int throttlingDelay, SearchListener delegate) {
+  @VisibleForTesting
+  public ThrottlingListenerWrapper(int throttlingDelay, SearchListener delegate) {
     delegateListener = delegate;
     myThrottlingDelay = throttlingDelay;
   }
 
-  ThrottlingListenerWrapper(SearchListener delegateListener) {
+  @VisibleForTesting
+  public ThrottlingListenerWrapper(SearchListener delegateListener) {
     this(DEFAULT_THROTTLING_TIMEOUT, delegateListener);
   }
 

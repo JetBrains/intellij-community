@@ -9,8 +9,10 @@ import com.intellij.ide.impl.OpenUntrustedProjectChoice
 import com.intellij.ide.impl.TRUSTED_PROJECTS_HELP_TOPIC
 import com.intellij.ide.impl.TrustedPathsSettings
 import com.intellij.ide.impl.TrustedProjectsStatistics
+import com.intellij.ide.trustedProjects.impl.TrustedProjectStartupDialog
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
@@ -100,10 +102,10 @@ object TrustedProjectsDialog {
 
   suspend fun confirmLoadingUntrustedProjectAsync(
     project: Project,
-    title: @NlsContexts.DialogTitle String,
-    message: @NlsContexts.DialogMessage String,
-    trustButtonText: @NlsContexts.Button String,
-    distrustButtonText: @NlsContexts.Button String
+    title: @NlsContexts.DialogTitle String = IdeBundle.message("untrusted.project.general.dialog.title"),
+    message: @NlsContexts.DialogMessage String = IdeBundle.message("untrusted.project.open.dialog.text", ApplicationInfoEx.getInstanceEx().fullApplicationName),
+    trustButtonText: @NlsContexts.Button String = IdeBundle.message("untrusted.project.dialog.trust.button"),
+    distrustButtonText: @NlsContexts.Button String = IdeBundle.message("untrusted.project.dialog.distrust.button"),
   ): Boolean {
     val locatedProject = TrustedProjectsLocator.locateProject(project)
     if (TrustedProjects.isProjectTrusted(locatedProject)) {
@@ -127,14 +129,14 @@ object TrustedProjectsDialog {
     return answer
   }
 
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use async method instead")
+  @JvmStatic
+  @ApiStatus.Obsolete
   fun confirmLoadingUntrustedProject(
     project: Project,
-    title: @NlsContexts.DialogTitle String,
-    message: @NlsContexts.DialogMessage String,
-    trustButtonText: @NlsContexts.Button String,
-    distrustButtonText: @NlsContexts.Button String
+    title: @NlsContexts.DialogTitle String = IdeBundle.message("untrusted.project.general.dialog.title"),
+    message: @NlsContexts.DialogMessage String = IdeBundle.message("untrusted.project.open.dialog.text", ApplicationInfoEx.getInstanceEx().fullApplicationName),
+    trustButtonText: @NlsContexts.Button String = IdeBundle.message("untrusted.project.dialog.trust.button"),
+    distrustButtonText: @NlsContexts.Button String = IdeBundle.message("untrusted.project.dialog.distrust.button"),
   ): Boolean {
     val locatedProject = TrustedProjectsLocator.locateProject(project)
     if (TrustedProjects.isProjectTrusted(locatedProject)) {

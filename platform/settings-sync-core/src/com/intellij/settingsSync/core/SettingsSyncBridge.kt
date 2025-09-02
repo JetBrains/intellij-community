@@ -555,20 +555,16 @@ class SettingsSyncBridge(
   }
 
   @TestOnly
-  fun waitForAllExecuted() {
-    runBlocking {
-      processPendingEvents(force = true)
-      val startTime = System.currentTimeMillis()
-      while (System.currentTimeMillis() - startTime < 10000 && queueSize > 0) {
-        delay(10)
-      }
-      if (queueSize > 0) {
-        LOG.warn("Queue size > 0 !!!!!!")
-      }
+  suspend fun waitForAllExecuted() {
+    processPendingEvents(force = true)
+    val startTime = System.currentTimeMillis()
+    while (System.currentTimeMillis() - startTime < 10000 && queueSize > 0) {
+      delay(10)
+    }
+    if (queueSize > 0) {
+      LOG.warn("Queue size > 0 !!!!!!")
     }
   }
-
-
 
   @TestOnly
   internal fun stop() {

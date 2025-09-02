@@ -61,8 +61,8 @@ internal fun getStateText(component: JComponent, vararg additionalStates: @Nls S
   return getStateText(*states)
 }
 
-internal fun Cell<AbstractButton>.applyStateText() {
-  component.text = getStateText(component)
+internal fun Cell<AbstractButton>.applyStateText(vararg additionalStates: @Nls String?) {
+  component.text = getStateText(component, additionalStates = additionalStates)
 }
 
 internal fun <T : JComponent> Panel.withStateLabel(vararg additionalStates: @Nls String?, init: Row.() -> Cell<T>) {

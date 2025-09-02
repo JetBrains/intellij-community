@@ -11,6 +11,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,7 +22,7 @@ public class RemoteAgentManagerImpl extends RemoteAgentManager {
 
   @Override
   public <T extends RemoteAgent> T createAgent(RemoteAgentProxyFactory agentProxyFactory,
-                                               List<? extends File> instanceLibraries,
+                                               List<Path> instanceLibraries,
                                                List<Class<?>> commonJarClasses,
                                                String specificsRuntimeModuleName,
                                                String specificsBuildJarPath,
@@ -51,8 +52,8 @@ public class RemoteAgentManagerImpl extends RemoteAgentManager {
 
   private static class AgentBuilderImpl<T extends RemoteAgent> extends Builder<T> {
     private final List<Class<?>> myRtClasses = new ArrayList<>();
-    private final List<File> myInstanceLibraries = new ArrayList<>();
-    private final List<File> myModuleDependencies = new ArrayList<>();
+    private final List<Path> myInstanceLibraries = new ArrayList<>();
+    private final List<Path> myModuleDependencies = new ArrayList<>();
 
     private final RemoteAgentProxyFactory myAgentProxyFactory;
     private final Class<T> myAgentInterface;
@@ -73,12 +74,12 @@ public class RemoteAgentManagerImpl extends RemoteAgentManager {
 
     @Override
     public T buildAgent(@NotNull String agentClassName) throws Exception {
-      List<File> libraries = listLibraryFiles();
+      @NotNull List<Path> libraries = listLibraryFiles();
       return myAgentProxyFactory.createProxy(libraries, myAgentInterface, agentClassName);
     }
 
-    private @NotNull List<File> listLibraryFiles() {
-      List<File> result = new ArrayList<>(myInstanceLibraries);
+    private @NotNull List<Path> listLibraryFiles() {
+      List<Path> result = new ArrayList<>(myInstanceLibraries);
 
       List<Class<?>> allRtClasses = new ArrayList<>(myRtClasses);
       allRtClasses.add(RemoteAgent.class);
@@ -86,7 +87,7 @@ public class RemoteAgentManagerImpl extends RemoteAgentManager {
       allRtClasses.add(myAgentInterface);
 
       for (Class<?> clazz : allRtClasses) {
-        result.add(new File(PathUtil.getJarPathForClass(clazz)));
+        result.add(Path.of(PathUtil.getJarPathForClass(clazz)));
       }
 
       result.addAll(myModuleDependencies);
@@ -101,7 +102,7 @@ public class RemoteAgentManagerImpl extends RemoteAgentManager {
     }
 
     @Override
-    public Builder<T> withInstanceLibraries(@NotNull List<? extends File> libraries) {
+    public Builder<T> withInstanceLibraries(List<Path> libraries) {
       myInstanceLibraries.addAll(libraries);
       return this;
     }
@@ -109,11 +110,11 @@ public class RemoteAgentManagerImpl extends RemoteAgentManager {
     @Override
     public Builder<T> withModuleDependency(@NotNull String runtimeModuleName, @NotNull String buildPathToJar) {
       if (myRunningFromSources) {
-        File specificsModule = new File(myAllPluginsRoot, runtimeModuleName);
+        Path specificsModule = Path.of(myAllPluginsRoot).resolve(runtimeModuleName);
         myModuleDependencies.add(specificsModule);
       }
       else {
-        File specificsDir = new File(myAllPluginsRoot, FileUtil.toSystemDependentName(buildPathToJar));
+        Path specificsDir = Path.of(myAllPluginsRoot).resolve(FileUtil.toSystemDependentName(buildPathToJar));
         myModuleDependencies.add(specificsDir);
       }
       return this;

@@ -36,8 +36,8 @@ class YAMLInlineCollectionIntentionAction : PsiElementBaseIntentionAction(), Low
 
   override fun getFamilyName(): String = text
 
-  override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo {
-    val element: PsiElement = getElement(editor, file) ?: return IntentionPreviewInfo.EMPTY
+  override fun generatePreview(project: Project, editor: Editor, psiFile: PsiFile): IntentionPreviewInfo {
+    val element: PsiElement = getElement(editor, psiFile) ?: return IntentionPreviewInfo.EMPTY
     var collectionPointer: SmartPsiElementPointer<PsiElement>? = null
     var expandedElement: PsiElement? = null
     runBlockingCancellable {

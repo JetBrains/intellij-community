@@ -8,7 +8,6 @@ import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.openapi.roots.impl.ModuleLibraryTableBase
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
-import com.intellij.openapi.util.Disposer
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
 import com.intellij.platform.workspace.jps.entities.*
@@ -158,9 +157,9 @@ internal class ModifiableModuleLibraryTableBridge(private val modifiableModel: M
     }
 
     modifiableModel.diff.removeEntity(libraryEntity)
-    Disposer.dispose(library)
+    LibraryBridgeImpl.disposeLibrary(library)
     if (copyBridgeForDispose != null) {
-      Disposer.dispose(copyBridgeForDispose!!)
+      LibraryBridgeImpl.disposeLibrary(copyBridgeForDispose!!)
     }
   }
 
@@ -173,7 +172,7 @@ internal class ModifiableModuleLibraryTableBridge(private val modifiableModel: M
         mutableLibraryMap.addMapping(mutableLibraryMap.getEntities(it as LibraryBridge).single(), originalLibrary)
       }
 
-      Disposer.dispose(it)
+      LibraryBridgeImpl.disposeLibrary(it)
     }
   }
 
@@ -186,7 +185,7 @@ internal class ModifiableModuleLibraryTableBridge(private val modifiableModel: M
       if (!changedLibs.contains(originBridge.libraryId) && originBridge.hasSameContent(copyBridge)) {
         val mutableLibraryMap = modifiableModel.diff.mutableLibraryMap
         mutableLibraryMap.addMapping(mutableLibraryMap.getEntities(copyBridge as LibraryBridge).single(), originBridge)
-        Disposer.dispose(copyBridge)
+        LibraryBridgeImpl.disposeLibrary(copyBridge)
       }
     }
   }
@@ -216,7 +215,7 @@ internal class ModifiableModuleLibraryTableBridge(private val modifiableModel: M
       actualBridge.entityStorage = storage
       actualBridge.libraryTable = ModuleRootComponentBridge.getInstance(module).moduleLibraryTable
       actualBridge.clearTargetBuilder()
-      Disposer.dispose(outdatedBridge)
+      LibraryBridgeImpl.disposeLibrary(outdatedBridge)
     }
   }
 

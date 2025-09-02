@@ -32,9 +32,9 @@ public class DisableHighlightingIntentionAction extends IntentionAndQuickFixActi
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
     InspectionProfileImpl profile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
-    HighlightSeverity usedSeverity = profile.getErrorLevel(HighlightDisplayKey.find(myShortName), file).getSeverity();
+    HighlightSeverity usedSeverity = profile.getErrorLevel(HighlightDisplayKey.find(myShortName), psiFile).getSeverity();
     return usedSeverity.compareTo(HighlightSeverity.INFORMATION) > 0;
   }
 
@@ -44,7 +44,7 @@ public class DisableHighlightingIntentionAction extends IntentionAndQuickFixActi
   }
 
   @Override
-  public void applyFix(@NotNull Project project, PsiFile file, @Nullable Editor editor) {
+  public void applyFix(@NotNull Project project, PsiFile psiFile, @Nullable Editor editor) {
     InspectionProfileModifiableModelKt.modifyAndCommitProjectProfile(project, it -> {
       ToolsImpl tools = it.getToolsOrNull(myShortName, project);
       if (tools != null) {

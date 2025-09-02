@@ -23,7 +23,6 @@ import com.intellij.openapi.project.impl.projectMethodType
 import com.intellij.platform.kernel.util.kernelCoroutineContext
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.serviceContainer.ComponentManagerImpl
-import com.intellij.serviceContainer.PrecomputedExtensionModel
 import com.intellij.serviceContainer.executeRegisterTaskForOldContent
 import com.intellij.serviceContainer.findConstructorOrNull
 import com.intellij.util.SystemProperties
@@ -52,8 +51,10 @@ abstract class ClientSessionImpl(
   ),
   additionalContext = clientId.asContextElement(),
 ), ClientSession {
-  final override val isLightServiceSupported: Boolean = false
-  final override val isMessageBusSupported: Boolean = false
+  final override val isLightServiceSupported: Boolean
+    get() = false
+  final override val isMessageBusSupported: Boolean
+    get() = false
 
   init {
     @Suppress("LeakingThis")
@@ -96,10 +97,11 @@ abstract class ClientSessionImpl(
   /**
    * only per-client services are supported (no components, extensions, listeners)
    */
-  final override fun registerComponents(modules: List<IdeaPluginDescriptorImpl>,
-                                        app: Application?,
-                                        precomputedExtensionModel: PrecomputedExtensionModel?,
-                                        listenerCallbacks: MutableList<in Runnable>?) {
+  final override fun registerComponents(
+    modules: List<IdeaPluginDescriptorImpl>,
+    app: Application?,
+    listenerCallbacks: MutableList<in Runnable>?
+  ) {
     for (rootModule in modules) {
       registerServices(getContainerDescriptor(rootModule).services, rootModule)
       executeRegisterTaskForOldContent(rootModule) { module ->
@@ -156,15 +158,13 @@ abstract class ClientSessionImpl(
   override val componentStore: IComponentStore
     get() = sharedComponentManager.componentStore
 
-  final override suspend fun _getComponentStore(): IComponentStore = componentStore
-
   @Deprecated("sessions don't have their own message bus", level = DeprecationLevel.ERROR)
   final override fun getMessageBus(): MessageBus {
     error("Not supported")
   }
 
   final override fun toString(): String {
-    return "${javaClass.name}(type=${type}, clientId=$clientId)"
+    return "${javaClass.name}(type=$type, clientId=$clientId)"
   }
 
   override fun debugString(short: Boolean): String {

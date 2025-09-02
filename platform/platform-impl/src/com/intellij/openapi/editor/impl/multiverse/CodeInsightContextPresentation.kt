@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.multiverse
 
 import com.intellij.codeInsight.multiverse.CodeInsightContext
@@ -12,16 +12,16 @@ import javax.swing.Icon
 
 private val CODE_INSIGHT_CONTEXT_PRESENTATION_EP: ExtensionPointName<CodeInsightContextPresentationProvider<out CodeInsightContext>> = ExtensionPointName.create("com.intellij.multiverse.codeInsightContextPresentationProvider")
 
-// todo ijpl-339 mark experimental
+// todo IJPL-339 mark experimental
 @ApiStatus.Internal
 data class CodeInsightContextPresentation(
   val context: CodeInsightContext,
-  val text: @Nls String, // todo ijpl-339 capitalization???
+  val text: @Nls String, // todo IJPL-339 capitalization???
   val icon: Icon?,
 )
 
 
-// todo ijpl-339 mark experimental
+// todo IJPL-339 mark experimental
 @ApiStatus.Internal
 fun createCodeInsightContextPresentation(codeInsightContext: CodeInsightContext, project: Project): CodeInsightContextPresentation {
   val (icon, presentableText) = CODE_INSIGHT_CONTEXT_PRESENTATION_EP.computeSafeIfAny { provider ->

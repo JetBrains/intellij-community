@@ -16,7 +16,7 @@
 package com.intellij.java.parser.partial;
 
 import com.intellij.java.parser.JavaParsingTestConfigurator;
-import com.intellij.lang.java.parser.JavaParser;
+import com.intellij.java.syntax.parser.JavaParser;
 
 public class ModuleParserTest extends AbstractBasicModuleParserTest {
   public ModuleParserTest() {
@@ -25,6 +25,6 @@ public class ModuleParserTest extends AbstractBasicModuleParserTest {
 
   @Override
   protected void doParserTest(String text) {
-    doParserTest(text, builder -> JavaParser.INSTANCE.getFileParser().parse(builder));
+    doParserTest(text, (builder, languageLevel) -> new JavaParser(languageLevel).getFileParser().parse(builder));
   }
 }

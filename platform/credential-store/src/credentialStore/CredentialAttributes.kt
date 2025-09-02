@@ -3,6 +3,7 @@ package com.intellij.credentialStore
 
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.text.nullize
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Contract
 
 const val SERVICE_NAME_PREFIX: String = "IntelliJ Platform"
@@ -53,6 +54,7 @@ data class CredentialAttributes(
   constructor(serviceName: String, userName: String?, requestor: Class<*>?, isPasswordMemoryOnly: Boolean, i: Int, m: kotlin.jvm.internal.DefaultConstructorMarker?)
     : this(serviceName, userName, isPasswordMemoryOnly, cacheDeniedItems = true)
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("use one of (service name [, ...]) constructors", level = DeprecationLevel.ERROR)
   @Suppress("unused")
   constructor(serviceName: String, userName: String?, requestor: Class<*>?, isPasswordMemoryOnly: Boolean, cacheDeniedItems: Boolean, i: Int, m: kotlin.jvm.internal.DefaultConstructorMarker?) :

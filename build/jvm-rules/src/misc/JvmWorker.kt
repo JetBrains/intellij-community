@@ -4,16 +4,22 @@ package org.jetbrains.bazel.jvm
 import io.opentelemetry.api.trace.Tracer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.jetbrains.intellij.build.io.*
+import org.jetbrains.intellij.build.io.AddDirEntriesMode
+import org.jetbrains.intellij.build.io.PackageIndexBuilder
+import org.jetbrains.intellij.build.io.zipWriter
 import java.io.File
 import java.io.Writer
-import java.nio.channels.FileChannel
 import java.nio.file.Path
 
 object JvmWorker : WorkRequestExecutor<WorkRequest> {
   @JvmStatic
   fun main(startupArgs: Array<String>) {
-    processRequests(startupArgs = startupArgs, executor = this, reader = WorkRequestReaderWithoutDigest(System.`in`), serviceName = "jvm-worker")
+    processRequests(
+      startupArgs = startupArgs,
+      executorFactory = { _, _ -> this },
+      reader = WorkRequestReaderWithoutDigest(System.`in`),
+      serviceName = "jvm-worker",
+    )
   }
 
   override suspend fun execute(request: WorkRequest, writer: Writer, baseDir: Path, tracer: Tracer): Int {
@@ -23,7 +29,7 @@ object JvmWorker : WorkRequestExecutor<WorkRequest> {
       return 1
     }
 
-    val command = args.first().split('|', limit = 5)
+    val command = args.first().split('|', limit = 6)
     @Suppress("SpellCheckingInspection")
     require(command.size > 2 && command[0] == "--flagfile=") {
       "Command format is incorrect: $command"
@@ -32,36 +38,23 @@ object JvmWorker : WorkRequestExecutor<WorkRequest> {
     val output = command[2]
     when (taskKind) {
       "jar" -> {
-        var stripPrefix = command[3]
+        val addPrefix = command[3]
+        var stripPrefix = command[4]
         if (stripPrefix == "" && request.inputPaths.isNotEmpty()) {
           val p = request.inputPaths.first()
-          stripPrefix = command[4]
+          stripPrefix = command[5]
           val index = p.indexOf(stripPrefix)
           require(index != -1)
-          stripPrefix = p.substring(0, index + stripPrefix.length)
+          stripPrefix = p.take(index + stripPrefix.length)
         }
         createZip(
           outJar = Path.of(output),
           inputs = request.inputPaths,
           baseDir = baseDir,
+          addPrefix = addPrefix,
           stripPrefix = stripPrefix,
         )
 
-        return 0
-      }
-
-      "jdeps" -> {
-        val inputs = request.inputPaths.asSequence()
-          .filter { it.endsWith(".jdeps") }
-          .map { baseDir.resolve(it) }
-        //Files.writeString(Path.of("${System.getProperty("user.home")}/f.txt"), inputs.joinToString("\n") { it.toString() })
-        mergeJdeps(
-          consoleOutput = writer,
-          label = command[3],
-          output = Path.of(output),
-          reportUnusedDeps = command[4],
-          inputs = inputs,
-        )
         return 0
       }
 
@@ -73,19 +66,23 @@ object JvmWorker : WorkRequestExecutor<WorkRequest> {
   }
 }
 
-private suspend fun createZip(outJar: Path, inputs: Array<String>, baseDir: Path, stripPrefix: String) {
+private suspend fun createZip(outJar: Path, inputs: Array<String>, baseDir: Path, addPrefix: String, stripPrefix: String) {
   //Files.writeString(Path.of("${System.getProperty("user.home")}/f.txt"), stripPrefix + "\n" + inputs.joinToString("\n") { it.toString() })
+
+  require(!addPrefix.endsWith('/')) {
+    "addPrefix must not end with '/': $addPrefix"
+  }
+  val addPrefixWithSlash = addPrefix.let { if (it.isEmpty()) "" else "$it/" }
 
   val stripPrefixWithSlash = stripPrefix.let { if (it.isEmpty()) "" else "$it/" }
   val files = ArrayList<String>(inputs.size)
   for (input in inputs) {
-    val p = input
-    if (!p.startsWith(stripPrefixWithSlash)) {
-      // input can contain jdeps/our jar in the end
+    if (!input.startsWith(stripPrefixWithSlash)) {
+      // input can contain our jar in the end
       continue
     }
 
-    files.add(p.substring(stripPrefixWithSlash.length))
+    files.add(input.substring(stripPrefixWithSlash.length).replace(File.separatorChar, '/'))
   }
 
   files.sort()
@@ -94,17 +91,13 @@ private suspend fun createZip(outJar: Path, inputs: Array<String>, baseDir: Path
   //Files.writeString(Path.of("/tmp/f2.txt"), stripPrefixWithSlash + "\n" + files.joinToString("\n") { it.toString() })
 
   withContext(Dispatchers.IO) {
-    val packageIndexBuilder = PackageIndexBuilder()
-    ZipArchiveOutputStream(
-      channel = FileChannel.open(outJar, W_OVERWRITE),
-      zipIndexWriter = ZipIndexWriter(packageIndexBuilder.indexWriter)
-    ).use { stream ->
+    val packageIndexBuilder = PackageIndexBuilder(AddDirEntriesMode.RESOURCE_ONLY)
+    zipWriter(targetFile = outJar, packageIndexBuilder = packageIndexBuilder, overwrite = true).use { stream ->
       for (path in files) {
-        val name = path.replace(File.separatorChar, '/')
-        packageIndexBuilder.addFile(name = name, addClassDir = false)
-        stream.file(nameString = name, file = root.resolve(path))
+        val name = addPrefixWithSlash + path
+        packageIndexBuilder.addFile(name = name)
+        stream.fileWithoutCrc(path = name.toByteArray(), file = root.resolve(path))
       }
-      packageIndexBuilder.writePackageIndex(stream = stream, addDirEntriesMode = AddDirEntriesMode.RESOURCE_ONLY)
     }
   }
 }

@@ -139,17 +139,13 @@ public class TypeEqualityConstraint implements ConstraintFormula {
     if (o == null || getClass() != o.getClass()) return false;
 
     TypeEqualityConstraint that = (TypeEqualityConstraint)o;
-
-    if (myS != null ? !myS.equals(that.myS) : that.myS != null) return false;
-    if (myT != null ? !myT.equals(that.myT) : that.myT != null) return false;
-
-    return true;
+    return ConstraintUtil.typesEqual(myS, that.myS) && ConstraintUtil.typesEqual(myT, that.myT);
   }
 
   @Override
   public int hashCode() {
-    int result = myT != null ? myT.hashCode() : 0;
-    result = 31 * result + (myS != null ? myS.hashCode() : 0);
+    int result = ConstraintUtil.typeHashCode(myT);
+    result = 31 * result + ConstraintUtil.typeHashCode(myS);
     return result;
   }
 

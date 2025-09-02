@@ -29,13 +29,13 @@ public final class AlphaUnsortedPropertiesFileInspection extends LocalInspection
   public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new PsiElementVisitor() {
       @Override
-      public void visitFile(@NotNull PsiFile file) {
-        var propertiesFile = findPropertiesFile(file);
+      public void visitFile(@NotNull PsiFile psiFile) {
+        var propertiesFile = findPropertiesFile(psiFile);
         if (propertiesFile == null) return;
         var resourceBundle = propertiesFile.getResourceBundle();
         final String resourceBundleBaseName = resourceBundle.getBaseName();
         if (!isResourceBundleAlphaSortedExceptOneFile(resourceBundle, propertiesFile)) {
-          holder.registerProblem(file,
+          holder.registerProblem(psiFile,
                                  PropertiesBundle.message("inspection.alpha.unsorted.properties.file.description1", resourceBundleBaseName),
                                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                  new PropertiesSorterQuickFix(false));
@@ -43,7 +43,7 @@ public final class AlphaUnsortedPropertiesFileInspection extends LocalInspection
         }
         if (!propertiesFile.isAlphaSorted()) {
           PropertiesSorterQuickFix fix = new PropertiesSorterQuickFix(true);
-          holder.registerProblem(file, PropertiesBundle.message("inspection.alpha.unsorted.properties.file.description"),
+          holder.registerProblem(psiFile, PropertiesBundle.message("inspection.alpha.unsorted.properties.file.description"),
                                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING, fix);
         }
       }

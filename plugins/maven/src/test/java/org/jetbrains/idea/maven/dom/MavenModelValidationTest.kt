@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.dom
 
+import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.psi.PsiFile
@@ -8,7 +9,10 @@ import com.intellij.testFramework.UsefulTestCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import org.jetbrains.idea.maven.dom.inspections.MavenModelVersionMissedInspection
+import org.jetbrains.idea.maven.dom.inspections.MavenParentMissedVersionInspection
 import org.junit.Test
+import java.lang.Class
 
 class MavenModelValidationTest : MavenDomWithIndicesTestCase() {
   override fun setUp() = runBlocking {
@@ -110,8 +114,22 @@ class MavenModelValidationTest : MavenDomWithIndicesTestCase() {
                            <artifactId>foo</artifactId>
                          </project>
                          """.trimIndent())
+    fixture.enableInspections(listOf(MavenModelVersionMissedInspection ::class.java))
     checkHighlighting()
   }
+
+  @Test
+  fun testAbsentModelVersionFor410XsdNoError() = runBlocking {
+    fixture.saveText(projectPom,
+                     """
+                         <project xmlns="http://maven.apache.org/POM/4.1.0"         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"         xsi:schemaLocation="http://maven.apache.org/POM/4.1.0 http://maven.apache.org/xsd/maven-4.1.0.xsd">
+                           <artifactId>foo</artifactId>
+                         </project>
+                         """.trimIndent())
+    fixture.enableInspections(listOf(MavenModelVersionMissedInspection ::class.java))
+    checkHighlighting()
+  }
+
 
   @Test
   fun testAbsentArtifactId() = runBlocking {

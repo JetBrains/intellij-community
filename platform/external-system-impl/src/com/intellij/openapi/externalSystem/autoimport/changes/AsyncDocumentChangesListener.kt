@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.autoimport.changes
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
@@ -11,7 +10,7 @@ import com.intellij.openapi.observable.operation.core.AtomicOperationTrace
 import com.intellij.openapi.observable.operation.core.isOperationInProgress
 import com.intellij.openapi.observable.operation.core.whenOperationFinished
 import com.intellij.openapi.observable.operation.core.whenOperationStarted
-import com.intellij.psi.ExternalChangeAction
+import com.intellij.psi.ExternalChangeActionUtil
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -22,8 +21,7 @@ class AsyncDocumentChangesListener(
 
   private val bulkUpdateOperation = AtomicOperationTrace(name = "Bulk document update operation")
 
-  private fun isExternalModification() =
-    ApplicationManager.getApplication().hasWriteAction(ExternalChangeAction::class.java)
+  private fun isExternalModification() = ExternalChangeActionUtil.isExternalChangeInProgress()
 
   override fun documentChanged(event: DocumentEvent) {
     if (isIgnoreExternalChanges && isExternalModification()) return

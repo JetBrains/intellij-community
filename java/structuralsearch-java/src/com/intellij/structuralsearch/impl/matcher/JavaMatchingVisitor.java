@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.impl.matcher;
 
 import com.intellij.dupLocator.iterators.ArrayBackedNodeIterator;
@@ -9,6 +9,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
+import com.intellij.psi.javadoc.PsiDocTagValue;
+import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -18,7 +20,6 @@ import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.impl.matcher.handlers.LiteralWithSubstitutionHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler;
-import com.intellij.structuralsearch.impl.matcher.iterators.DocValuesIterator;
 import com.intellij.structuralsearch.impl.matcher.iterators.HierarchyNodeIterator;
 import com.intellij.structuralsearch.impl.matcher.predicates.MatchPredicate;
 import com.intellij.structuralsearch.impl.matcher.predicates.NotPredicate;
@@ -192,34 +193,37 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
 
     if (!isTypedVar && !myMatchingVisitor.setResult(tag.getName().equals(other.getName()))) return;
 
-    PsiElement psiDocTagValue = tag.getValueElement();
-    boolean isTypedValue = false;
+    PsiElement psiDocTagValue = Arrays.stream(tag.getDataElements()).findFirst().orElse(null);
 
     if (psiDocTagValue != null) {
-      final PsiElement[] children = psiDocTagValue.getChildren();
-      if (children.length == 1) {
-        psiDocTagValue = children[0];
-      }
-      isTypedValue = pattern.isTypedVar(psiDocTagValue);
-
-      if (isTypedValue) {
-        if (other.getValueElement() != null) {
-          if (!myMatchingVisitor.setResult(myMatchingVisitor.handleTypedElement(psiDocTagValue, other.getValueElement()))) return;
-        }
-        else {
-          if (!myMatchingVisitor.setResult(myMatchingVisitor.allowsAbsenceOfMatch(psiDocTagValue))) return;
+      if (psiDocTagValue instanceof PsiDocTagValue) {
+        final PsiElement[] children = psiDocTagValue.getChildren();
+        if (children.length == 1) {
+          psiDocTagValue = children[0];
         }
       }
-    }
 
-    if (!isTypedValue && !myMatchingVisitor.setResult(myMatchingVisitor.matchInAnyOrder(new DocValuesIterator(tag.getFirstChild()),
-                                                                                        new DocValuesIterator(other.getFirstChild())))) {
-      return;
+      if (pattern.isTypedVar(psiDocTagValue) && other.getDataElements().length == 0) {
+        myMatchingVisitor.setResult(myMatchingVisitor.allowsAbsenceOfMatch(psiDocTagValue));
+        return;
+      }
     }
 
     if (isTypedVar) {
       myMatchingVisitor.setResult(myMatchingVisitor.handleTypedElement(tag.getNameElement(), other.getNameElement()));
     }
+
+    myMatchingVisitor.setResult(myMatchingVisitor.matchOptionally(tag.getDataElements(), other.getDataElements()));
+  }
+
+  @Override
+  public void visitDocTagValue(@NotNull PsiDocTagValue value) {
+    myMatchingVisitor.setResult(substituteOrMatchText(value, myMatchingVisitor.getMatchContext()));
+  }
+
+  @Override
+  public void visitDocToken(@NotNull PsiDocToken token) {
+    myMatchingVisitor.setResult(substituteOrMatchText(token, myMatchingVisitor.getMatchContext()));
   }
 
   @Override
@@ -678,6 +682,16 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     return context.getOptions().isLooseMatching() && element instanceof PsiExpression
            ? PsiUtil.skipParenthesizedExprDown((PsiExpression)element)
            : element;
+  }
+
+  private boolean substituteOrMatchText(@NotNull PsiElement element, @NotNull MatchContext context) {
+    final var handler = context.getPattern().getHandler(element);
+    final PsiElement other = myMatchingVisitor.getElement();
+    if (handler instanceof SubstitutionHandler substitutionHandler) {
+      return substitutionHandler.handle(other, context);
+    } else {
+      return myMatchingVisitor.matchText(element, other);
+    }
   }
 
   private static int getArrayDimensions(PsiElement element) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.lightEdit.LightEdit;
@@ -16,13 +16,15 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Objects;
 
-abstract class TabNavigationActionBase extends AnAction implements DumbAware, ActionRemoteBehaviorSpecification.Frontend {
+@ApiStatus.Internal
+public abstract class TabNavigationActionBase extends AnAction implements DumbAware, ActionRemoteBehaviorSpecification.Frontend {
   private static final Logger LOG = Logger.getInstance(TabNavigationActionBase.class);
 
   enum NavigationType {NUM1, NUM2, NUM3, NUM4, NUM5, NUM6, NUM7, NUM8, NUM9, PREV, NEXT, LAST}
@@ -167,62 +169,62 @@ abstract class TabNavigationActionBase extends AnAction implements DumbAware, Ac
     }
   }
 
-  public static final class GoToTab1Action extends GoToTabAction {
+  static final class GoToTab1Action extends GoToTabAction {
     private GoToTab1Action() {
       super(NavigationType.NUM1);
     }
   }
 
-  public static final class GoToTab2Action extends GoToTabAction {
+  static final class GoToTab2Action extends GoToTabAction {
     private GoToTab2Action() {
       super(NavigationType.NUM2);
     }
   }
 
-  public static final class GoToTab3Action extends GoToTabAction {
+  static final class GoToTab3Action extends GoToTabAction {
     private GoToTab3Action() {
       super(NavigationType.NUM3);
     }
   }
 
-  public static final class GoToTab4Action extends GoToTabAction {
+  static final class GoToTab4Action extends GoToTabAction {
     private GoToTab4Action() {
       super(NavigationType.NUM4);
     }
   }
 
-  public static final class GoToTab5Action extends GoToTabAction {
+  static final class GoToTab5Action extends GoToTabAction {
     private GoToTab5Action() {
       super(NavigationType.NUM5);
     }
   }
 
-  public static final class GoToTab6Action extends GoToTabAction {
+  static final class GoToTab6Action extends GoToTabAction {
     private GoToTab6Action() {
       super(NavigationType.NUM6);
     }
   }
 
-  public static final class GoToTab7Action extends GoToTabAction {
+  static final class GoToTab7Action extends GoToTabAction {
     private GoToTab7Action() {
       super(NavigationType.NUM7);
     }
   }
 
-  public static final class GoToTab8Action extends GoToTabAction {
+  static final class GoToTab8Action extends GoToTabAction {
     private GoToTab8Action() {
       super(NavigationType.NUM8);
     }
   }
 
-  public static final class GoToTab9Action extends GoToTabAction {
+  static final class GoToTab9Action extends GoToTabAction {
     private GoToTab9Action() {
       super(NavigationType.NUM9);
     }
   }
 
-  public static final class GoToLastTabAction extends GoToTabAction {
-    public GoToLastTabAction() {
+  static final class GoToLastTabAction extends GoToTabAction {
+    GoToLastTabAction() {
       super(NavigationType.LAST);
     }
   }

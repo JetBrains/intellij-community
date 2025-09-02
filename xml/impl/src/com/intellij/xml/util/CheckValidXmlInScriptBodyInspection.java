@@ -8,12 +8,16 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.xml.XmlBundle;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Maxim Mossienko
  */
 public class CheckValidXmlInScriptBodyInspection extends CheckValidXmlInScriptBodyInspectionBase {
+  private static final @NonNls String AMP_ENTITY_REFERENCE = "&amp;";
+  private static final @NonNls String LT_ENTITY_REFERENCE = "&lt;";
+
   @Override
   protected InsertQuotedCharacterQuickFix createFix(PsiElement psiElement, int offsetInElement) {
     return new InsertQuotedCharacterQuickFix(psiElement, offsetInElement);

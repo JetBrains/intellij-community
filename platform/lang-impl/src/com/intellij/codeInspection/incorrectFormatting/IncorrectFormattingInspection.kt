@@ -73,9 +73,9 @@ class IncorrectFormattingInspection(
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
     return object : PsiElementVisitor() {
-      override fun visitFile(file: PsiFile) {
+      override fun visitFile(psiFile: PsiFile) {
         val context = session.globalInspectionContext()
-        val problemDescriptors = getResultsForFile(file, holder.manager, isOnTheFly, context)
+        val problemDescriptors = getResultsForFile(psiFile, holder.manager, isOnTheFly, context)
         if (problemDescriptors != null) {
           for (descriptor in problemDescriptors) {
             holder.registerProblem(descriptor)

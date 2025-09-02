@@ -30,8 +30,8 @@ public class KotlinMultifileNavigationTestGenerated extends AbstractKotlinMultif
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
-    @TestMetadata("KTIJ_32930")
-    public void testKTIJ_32930() throws Exception {
-        runTest("testData/multifile/KTIJ_32930/");
+    @TestMetadata("TopLevelPropertyNameCollision")
+    public void testTopLevelPropertyNameCollision() throws Exception {
+        runTest("testData/multifile/TopLevelPropertyNameCollision/");
     }
 }

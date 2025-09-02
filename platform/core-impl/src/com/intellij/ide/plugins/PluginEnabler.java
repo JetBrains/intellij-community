@@ -19,6 +19,9 @@ public interface PluginEnabler {
     void setIgnoredDisabledPlugins(boolean ignoredDisabledPlugins);
   }
 
+  /**
+   * Manages the persistent disabled/enabled flag of plugins, does not load/unload plugins.
+   */
   Headless HEADLESS = new DisabledPluginsState();
 
   static @NotNull PluginEnabler getInstance() {
@@ -41,10 +44,10 @@ public interface PluginEnabler {
   boolean disable(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors);
 
   default boolean enableById(@NotNull Set<PluginId> pluginIds) {
-    return enable(IdeaPluginDescriptorImplKt.toPluginDescriptors(pluginIds));
+    return enable(PluginUtils.toPluginDescriptors(pluginIds));
   }
 
   default boolean disableById(@NotNull Set<PluginId> pluginIds) {
-    return disable(IdeaPluginDescriptorImplKt.toPluginDescriptors(pluginIds));
+    return disable(PluginUtils.toPluginDescriptors(pluginIds));
   }
 }

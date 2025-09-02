@@ -30,9 +30,9 @@ public final class ShowExpressionTypeAction extends BaseCodeInsightAction implem
   }
 
   @Override
-  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, final @NotNull PsiFile file) {
-    Language language = PsiUtilCore.getLanguageAtOffset(file, editor.getCaretModel().getOffset());
-    return !ShowExpressionTypeHandler.getHandlers(project, language, file.getViewProvider().getBaseLanguage()).isEmpty();
+  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, final @NotNull PsiFile psiFile) {
+    Language language = PsiUtilCore.getLanguageAtOffset(psiFile, editor.getCaretModel().getOffset());
+    return !ShowExpressionTypeHandler.getHandlers(project, language, psiFile.getViewProvider().getBaseLanguage()).isEmpty();
   }
 
   @Override

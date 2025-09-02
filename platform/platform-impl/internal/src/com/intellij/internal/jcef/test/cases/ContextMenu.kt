@@ -3,6 +3,7 @@ package com.intellij.internal.jcef.test.cases
 
 import com.intellij.internal.jcef.test.JBCefTestAppFrame
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.Disposer
 import com.intellij.ui.jcef.JBCefBrowserBase
 import com.intellij.ui.jcef.JBCefBrowserBuilder
 import org.cef.browser.CefBrowser
@@ -24,6 +25,7 @@ internal class ContextMenu : JBCefTestAppFrame.TestCase() {
 
   override fun initializeImpl() {
     myBrowser = JBCefBrowserBuilder().setUrl("https://duckduckgo.com/").build()
+    Disposer.register(this, myBrowser!!)
     enableBasicContextMenu(myEnableBasicContextMenuCheckbox.isSelected)
     enableCustomContextMenu(myEnableCustomMenuCheckbox.isSelected)
 

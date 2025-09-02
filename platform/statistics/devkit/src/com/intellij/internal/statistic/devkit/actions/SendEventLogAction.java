@@ -43,6 +43,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static com.intellij.openapi.command.WriteCommandAction.writeCommandAction;
 
@@ -89,21 +90,21 @@ final class SendEventLogAction extends AnAction {
         String recorderId = StringUtil.trim(Registry.stringValue("usage.statistics.test.action.recorder.id"));
         return EventLogStatisticsService.send(
           EventLogInternalSendConfig.createByRecorder(recorderId, true),
-          new EventLogTestSettingsService(recorderId),
+          new EventLogTestSettingsClient(recorderId),
           new EventLogTestResultDecorator()
         );
       }
     });
   }
 
-  private static final class EventLogTestSettingsService extends EventLogUploadSettingsService implements EventLogSettingsService {
-    private EventLogTestSettingsService(@NotNull String recorderId) {
-      super(recorderId, new EventLogTestApplication());
+  private static final class EventLogTestSettingsClient extends EventLogUploadSettingsClient {
+    private EventLogTestSettingsClient(@NotNull String recorderId) {
+      super(recorderId, new EventLogTestApplication(), TimeUnit.MINUTES.toMillis(10));
     }
 
     @Override
-    public @NotNull LogEventFilter getEventFilter(@NotNull LogEventFilter base, @NotNull EventLogBuildType type) {
-      LogEventFilter filter = super.getEventFilter(base, type);
+    public @NotNull LogEventFilter provideEventFilter(@NotNull LogEventFilter base, @NotNull EventLogBuildType type) {
+      LogEventFilter filter = super.provideEventFilter(base, type);
       if (filter instanceof LogEventCompositeFilter) {
         LogEventFilter[] withoutSnapshot = Arrays.stream(((LogEventCompositeFilter)filter).getFilters())
           .filter(f -> f != LogEventSnapshotBuildFilter.INSTANCE)

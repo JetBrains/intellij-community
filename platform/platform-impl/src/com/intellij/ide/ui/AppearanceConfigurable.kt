@@ -123,7 +123,7 @@ private val cdDnDWithAlt
 private val cdUseTransparentMode
   get() = CheckboxDescriptor(message("checkbox.use.transparent.mode.for.floating.windows"), settings.state::enableAlphaMode)
 private val cdUseContrastToolbars
-  get() = CheckboxDescriptor(message("checkbox.acessibility.contrast.scrollbars"), settings::useContrastScrollbars)
+  get() = CheckboxDescriptor(message("checkbox.accessibility.contrast.scrollbars"), settings::useContrastScrollbars)
 private val cdFullPathsInTitleBar
   get() = CheckboxDescriptor(message("checkbox.full.paths.in.window.header"), settings::fullPathsInWindowHeader)
 private val cdShowMenuIcons
@@ -162,6 +162,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
     lafProperty.afterChange(disposable!!) {
       ApplicationManager.getApplication().invokeLater {
         QuickChangeLookAndFeel.switchLafAndUpdateUI(lafManager, lafManager.findLaf(it.themeId), true)
+        LafManager.getInstance().checkRestart()
       }
     }
     syncThemeProperty.afterChange(disposable!!) {
@@ -170,8 +171,6 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
     }
 
     return panel {
-      useNewComboBoxRenderer()
-
       val autodetectSupportedPredicate = ComponentPredicate.fromValue(lafManager.autodetectSupported)
       val syncThemeAndEditorSchemePredicate = autodetectSupportedPredicate.and(ComponentPredicate.fromObservableProperty(syncThemeProperty, disposable))
 
@@ -232,7 +231,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
       group(message("title.accessibility")) {
         row(message("combobox.ide.scale.percent")) {
           val defaultScale = UISettingsUtils.defaultScale(false)
-          var resetZoom: Cell<ActionLink>? = null
+          lateinit var resetZoom: Cell<ActionLink>
 
           val model = IdeScaleTransformer.Settings.createIdeScaleComboboxModel()
           comboBox(model)
@@ -242,7 +241,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
 
               IdeScaleTransformer.Settings.scaleFromPercentStringValue(it.item, false)?.let { scale ->
                 logIdeZoomChanged(scale, false)
-                resetZoom?.visible(scale.percentValue != defaultScale.percentValue)
+                resetZoom.visible(scale.percentValue != defaultScale.percentValue)
                 settings.ideScale = scale
                 invokeLater {
                   // Invoke later to avoid NPE in JComboBox.repaint()
@@ -269,10 +268,10 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
           resetZoom = link(message("ide.scale.reset.link")) {
             model.selectedItem = defaultScale.percentStringValue
           }.apply { visible(settings.ideScale.percentValue != defaultScale.percentValue) }
-        }.topGap(TopGap.SMALL)
+        }
 
         row {
-          var resetCustomFont: (() -> Unit)? = null
+          lateinit var resetCustomFont: (() -> Unit)
 
           val useCustomCheckbox = checkBox(message("checkbox.override.default.laf.fonts"))
             .gap(RightGap.SMALL)
@@ -286,7 +285,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
               }
             }
             .onChanged { checkbox ->
-              if (!checkbox.isSelected) resetCustomFont?.invoke()
+              if (!checkbox.isSelected) resetCustomFont.invoke()
             }
 
           val fontFace = cell(FontComboBox())
@@ -459,7 +458,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
 
         if (!SystemInfo.isMac && ExperimentalUI.isNewUI()) {
           row  {
-            comboBox(model = CollectionComboBoxModel<MainMenuDisplayMode>(MainMenuDisplayMode.entries)/* SimpleListCellRenderer<MainMenuDisplayMode>.create { label, value, _ -> label.text = value.description  }*/  )
+            comboBox(model = CollectionComboBoxModel(MainMenuDisplayMode.entries))
               .label(message("main.menu.combobox.label"))
               .bindItem(settings::mainMenuDisplayMode.toNullableProperty())
               .apply {
@@ -510,12 +509,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
             )
             twoColumnsRow(
               {
-                checkBox(cdWidescreenToolWindowLayout).apply {
-                  enabled(!NotRoamableUiSettings.getInstance().xNextStripe)
-                  if(NotRoamableUiSettings.getInstance().xNextStripe) {
-                    comment(message("xnext.comment.unavailable"))
-                  }
-                }
+                checkBox(cdWidescreenToolWindowLayout)
                   .gap(RightGap.SMALL)
                 contextHelp(message("checkbox.widescreen.tool.window.layout.description"))
               },

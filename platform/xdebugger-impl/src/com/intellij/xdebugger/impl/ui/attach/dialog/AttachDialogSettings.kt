@@ -4,6 +4,7 @@ package com.intellij.xdebugger.impl.ui.attach.dialog
 import com.intellij.icons.AllIcons
 import com.intellij.ide.actions.NonEmptyActionGroup
 import com.intellij.openapi.actionSystem.RightAlignedToolbarAction
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.TooltipDescriptionProvider
 import com.intellij.openapi.project.DumbAware
 import com.intellij.ui.ExperimentalUI
@@ -15,5 +16,6 @@ class AttachDialogSettings : NonEmptyActionGroup(), RightAlignedToolbarAction, T
     templatePresentation.icon =
       if (ExperimentalUI.isNewUI()) AllIcons.Actions.More
       else AllIcons.General.GearPlain
+    templatePresentation.putClientProperty(ActionUtil.HIDE_DROPDOWN_ICON, true)
   }
 }

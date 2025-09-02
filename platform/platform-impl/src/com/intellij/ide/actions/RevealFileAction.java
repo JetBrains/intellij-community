@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.execution.process.CapturingProcessHandler;
@@ -23,7 +23,6 @@ import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.util.SystemProperties;
@@ -32,11 +31,11 @@ import com.sun.jna.Pointer;
 import com.sun.jna.platform.win32.*;
 import com.sun.jna.win32.StdCallLibrary;
 import com.sun.jna.win32.W32APIOptions;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
-import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
@@ -163,8 +162,10 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
     return null;
   }
 
-  /** @see #openFile(Path) */
-  public static void openFile(@NotNull File file) {
+  /** Please use #openFile(Path) */
+  @ApiStatus.Obsolete
+  @SuppressWarnings({"UnnecessaryFullyQualifiedName", "IO_FILE_USAGE"})
+  public static void openFile(@NotNull java.io.File file) {
     openFile(file.toPath());
   }
 
@@ -182,8 +183,10 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
     }
   }
 
-  /** @see #openDirectory(Path) */
-  public static void openDirectory(@NotNull File directory) {
+  /** Please use #openDirectory(Path) */
+  @ApiStatus.Obsolete
+  @SuppressWarnings({"UnnecessaryFullyQualifiedName", "IO_FILE_USAGE"})
+  public static void openDirectory(@NotNull java.io.File directory) {
     doOpen(directory.toPath(), null);
   }
 
@@ -324,7 +327,7 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
               var lines = Files.readAllLines(desktopFile.get());
               fmApp = lines.stream()
                 .filter(line -> line.startsWith("Exec="))
-                .map(line -> line.substring(5).split(" ")[0])
+                .map(line -> getExecCommand(line.substring(5)))
                 .findFirst().orElse(null);
               fmName = lines.stream()
                 .filter(line -> line.startsWith("Name="))
@@ -342,19 +345,31 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
     }
 
     private static String getXdgDataDirectories() {
-      return StringUtil.defaultIfEmpty(System.getenv("XDG_DATA_HOME"), SystemProperties.getUserHome() + "/.local/share") + ':' +
-             StringUtil.defaultIfEmpty(System.getenv("XDG_DATA_DIRS"), "/usr/local/share:/usr/share");
+      return requireNonNullElse(System.getenv("XDG_DATA_HOME"), SystemProperties.getUserHome() + "/.local/share") + ':' +
+             requireNonNullElse(System.getenv("XDG_DATA_DIRS"), "/usr/local/share:/usr/share");
+    }
+
+    private static String getExecCommand(String value) {
+      if (value.startsWith("\"")) {
+        int p = value.lastIndexOf('\"');
+        if (p > 1) {
+          return value.substring(1, p);
+        }
+      }
+      return value.split(" ")[0];
     }
   }
 
   //<editor-fold desc="Deprecated stuff.">
   /** @deprecated trivial to implement, just inline */
   @Deprecated(forRemoval = true)
-  public static void showDialog(Project project,
-                                @NlsContexts.DialogMessage String message,
-                                @NlsContexts.DialogTitle String title,
-                                @NotNull File file,
-                                @SuppressWarnings("removal") @Nullable DialogWrapper.DoNotAskOption option) {
+  public static void showDialog(
+    Project project,
+    @NlsContexts.DialogMessage String message,
+    @NlsContexts.DialogTitle String title,
+    @SuppressWarnings({"UnnecessaryFullyQualifiedName", "IO_FILE_USAGE"}) @NotNull java.io.File file,
+    @SuppressWarnings("removal") @Nullable DialogWrapper.DoNotAskOption option
+  ) {
     if (MessageDialogBuilder.okCancel(title, message)
       .yesText(getActionName(null))
       .noText(IdeBundle.message("action.close"))

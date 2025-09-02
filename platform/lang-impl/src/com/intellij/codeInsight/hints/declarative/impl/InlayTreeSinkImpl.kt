@@ -4,6 +4,7 @@ package com.intellij.codeInsight.hints.declarative.impl
 import com.intellij.codeInsight.hints.declarative.*
 import com.intellij.diagnostic.PluginException
 import com.intellij.openapi.util.NlsContexts
+import org.jetbrains.annotations.ApiStatus
 
 
 /**
@@ -13,6 +14,7 @@ import com.intellij.openapi.util.NlsContexts
  * @param enabledOptions an exhaustive set of options
  * @param providerClass used for diagnostics only
  */
+@ApiStatus.Internal
 class InlayTreeSinkImpl(
   private val providerId: String,
   private val enabledOptions: Map<String, Boolean>,

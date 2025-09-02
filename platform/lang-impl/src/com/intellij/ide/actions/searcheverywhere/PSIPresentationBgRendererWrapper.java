@@ -107,6 +107,12 @@ public final class PSIPresentationBgRendererWrapper implements WeightedSearchEve
     return new WrapperRenderer((list, o) -> renderer.getItemMatchers(list, o));
   }
 
+  @ApiStatus.Internal
+  public PsiElementListCellRenderer.ItemMatchers getNonComponentItemMatchers(@NotNull Function<Object, PsiElementListCellRenderer.ItemMatchers> matcherProvider, @NotNull Object value) {
+    PsiElementListCellRenderer<?> renderer = (PsiElementListCellRenderer<?>)myDelegate.getElementsRenderer();
+    return renderer.getNonComponentItemMatchers(matcherProvider, value);
+  }
+
   private static FoundItemDescriptor<Object> element2presentation(FoundItemDescriptor<Object> elementDescriptor,
                                                            Function<? super PsiElement, ? extends TargetPresentation> psiPresentationCalculator,
                                                            @Nullable SearchEverywherePresentationProvider<Object> rendererPresentationProvider) {
@@ -182,6 +188,12 @@ public final class PSIPresentationBgRendererWrapper implements WeightedSearchEve
     public TargetPresentation getPresentation() {
       return second;
     }
+
+    @Override public String toString() {
+      return "An item with precalculated presentation, breakdown:\n" +
+             "Text: " + getPresentation().getPresentableText() + "\n" +
+             "Original item, class: " + getItem().getClass().getSimpleName() + "\n";
+    }
   }
 
   public static final class PsiItemWithPresentation extends ItemWithPresentation<PsiElement> {
@@ -249,7 +261,7 @@ public final class PSIPresentationBgRendererWrapper implements WeightedSearchEve
                                     - getPreferredSize().width;
             if (locationLabel != null) containerMaxWidth -= locationLabel.getPreferredSize().width;
 
-            @NlsSafe String containerText = PaintUtil.cutContainerText(presentation.getContainerText(), containerMaxWidth, fm);
+            @NlsSafe String containerText = PaintUtil.cutContainerText(presentation.getContainerText(), containerMaxWidth, this);
             SimpleTextAttributes containerAttributes = presentation.getContainerTextAttributes() != null
                                                        ? SimpleTextAttributes.fromTextAttributes(presentation.getContainerTextAttributes())
                                                        : SimpleTextAttributes.GRAYED_ATTRIBUTES;

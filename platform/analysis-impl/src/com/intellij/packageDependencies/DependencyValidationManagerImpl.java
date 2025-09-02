@@ -64,8 +64,8 @@ public final class DependencyValidationManagerImpl extends DependencyValidationM
   @Override
   public NamedScope getPredefinedScope(@NotNull String name) {
     for (CustomScopesProvider scopesProvider : CustomScopesProvider.CUSTOM_SCOPES_PROVIDER.getExtensions(myProject)) {
-      final NamedScope scope = scopesProvider instanceof CustomScopesProviderEx
-                               ? ((CustomScopesProviderEx)scopesProvider).getCustomScope(name)
+      final NamedScope scope = scopesProvider instanceof CustomScopesProviderEx providerEx
+                               ? providerEx.getCustomScope(name)
                                : CustomScopesProviderEx.findPredefinedScope(name, scopesProvider.getFilteredScopes());
       if (scope != null) {
         return scope;

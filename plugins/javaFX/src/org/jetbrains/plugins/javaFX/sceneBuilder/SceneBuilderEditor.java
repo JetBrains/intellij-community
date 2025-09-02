@@ -23,9 +23,9 @@ import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.util.CurrentJavaVersion;
 import com.intellij.util.download.DownloadableFileService;
 import com.intellij.util.download.FileDownloader;
-import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -106,7 +106,7 @@ public final class SceneBuilderEditor extends UserDataHolderBase implements File
     myErrorNotification.clear();
     myErrorStack.setText("");
 
-    if (JavaVersion.current().feature > 11 &&
+    if (CurrentJavaVersion.currentJavaVersion().feature > 11 &&
         e instanceof NoClassDefFoundError &&
         !SceneBuilderUtil.getSceneBuilder11Path().toFile().isFile()) {
       myErrorNotification.setText(JavaFXBundle.message("javafx.scene.builder.editor.failed.to.open.file.error"));
@@ -142,7 +142,7 @@ public final class SceneBuilderEditor extends UserDataHolderBase implements File
       myLayout.show(myPanel, ERROR_CARD);
       return;
     }
-    if (JavaVersion.current().feature > 11) {
+    if (CurrentJavaVersion.currentJavaVersion().feature > 11) {
       try {
         Class.forName(JavaFxCommonNames.JAVAFX_SCENE_NODE);
       }

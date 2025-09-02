@@ -9,6 +9,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.plugins.terminal.TerminalEngine
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
+import org.jetbrains.plugins.terminal.TerminalTabState
 import org.jetbrains.plugins.terminal.TerminalToolWindowManager
 
 /**
@@ -26,7 +27,13 @@ internal class RevealFileInReworkedTerminalAction : DumbAwareAction(), ActionRem
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     val file = getSelectedFile(e) ?: return
-    TerminalToolWindowManager.getInstance(project).openTerminalIn(file)
+    val tabState = TerminalTabState()
+    tabState.myWorkingDirectory = file.path
+    TerminalToolWindowManager.getInstance(project).createNewTab(
+      TerminalEngine.REWORKED,
+      null,
+      tabState
+    )
   }
 
   override fun update(e: AnActionEvent) {

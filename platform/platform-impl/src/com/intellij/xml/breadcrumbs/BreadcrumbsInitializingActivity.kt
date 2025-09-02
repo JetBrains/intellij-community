@@ -20,7 +20,6 @@ import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileTypes.FileTypeEvent
 import com.intellij.openapi.fileTypes.FileTypeListener
 import com.intellij.openapi.fileTypes.FileTypeManager
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.Disposer
@@ -60,9 +59,7 @@ private class BreadcrumbsInitializingActivity : ProjectActivity {
       for (fileEditor in fileEditorManager.getAllEditorList(virtualFile)) {
         if (fileEditor is TextEditor) {
           withContext(Dispatchers.EDT) {
-            blockingContext {
-              reinitBreadcrumbComponent(fileEditor = fileEditor, fileEditorManager = fileEditorManager, file = virtualFile, above = above)
-            }
+            reinitBreadcrumbComponent(fileEditor = fileEditor, fileEditorManager = fileEditorManager, file = virtualFile, above = above)
           }
         }
       }

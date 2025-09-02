@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.impl.ui
 
 import com.intellij.diff.DiffEditorTitleCustomizer
@@ -10,6 +10,7 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.FilePathSplittingPolicy
 import com.intellij.util.ui.JBUI.scale
 import com.intellij.util.ui.UIUtil
+import com.intellij.xml.util.XmlStringUtil
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 import java.awt.GridBagConstraints
@@ -86,13 +87,13 @@ private class DiffFilePathLabel(path: String, fullPath: @NlsSafe String) : JBLab
   init {
     isAllowAutoWrapping = true
     setCopyable(true)
-    toolTipText = fullPath
+    toolTipText = XmlStringUtil.escapeString(fullPath)
     foreground = UIUtil.getContextHelpForeground()
   }
 
   override fun setSize(d: Dimension) {
     super.setSize(d)
-    text = SplitBySeparatorKeepFileNamePolicy.getOptimalTextForComponent(file, this, d.width)
+    text = XmlStringUtil.escapeString(SplitBySeparatorKeepFileNamePolicy.getOptimalTextForComponent (file, this, d.width))
   }
 
   // Fully managed by the parent.

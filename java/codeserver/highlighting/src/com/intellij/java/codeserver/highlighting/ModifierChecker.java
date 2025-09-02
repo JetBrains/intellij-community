@@ -178,9 +178,7 @@ final class ModifierChecker {
     }
   }
 
-  void reportAccessProblem(@NotNull PsiJavaCodeReferenceElement ref,
-                           @NotNull PsiModifierListOwner resolved,
-                           @NotNull JavaResolveResult result) {
+  void reportAccessProblem(@NotNull PsiElement ref, @NotNull PsiModifierListOwner resolved, @NotNull JavaResolveResult result) {
     result = withElement(result, resolved);
     if (resolved.hasModifierProperty(PsiModifier.PRIVATE)) {
       myVisitor.report(JavaErrorKinds.ACCESS_PRIVATE.create(ref, result));
@@ -202,13 +200,9 @@ final class ModifierChecker {
       return;
     }
 
-    checkModuleAccess(resolved, ref);
+    myVisitor.myModuleChecker.checkModuleAccess(resolved, ref);
     if (myVisitor.hasErrorResults()) return;
     myVisitor.report(JavaErrorKinds.ACCESS_GENERIC_PROBLEM.create(ref, result));
-  }
-
-  private void checkModuleAccess(@NotNull PsiModifierListOwner resolved, @NotNull PsiElement ref) {
-    // TODO: JPMS
   }
 
   private static @NotNull JavaResolveResult withElement(@NotNull JavaResolveResult original, @NotNull PsiElement newElement) {

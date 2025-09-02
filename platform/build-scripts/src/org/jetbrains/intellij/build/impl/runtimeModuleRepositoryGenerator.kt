@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.devkit.runtimeModuleRepository.jps.build.RuntimeModuleRepositoryBuildConstants.COMPACT_REPOSITORY_FILE_NAME
 import com.intellij.devkit.runtimeModuleRepository.jps.build.RuntimeModuleRepositoryBuildConstants.GENERATOR_VERSION
 import com.intellij.devkit.runtimeModuleRepository.jps.build.RuntimeModuleRepositoryBuildConstants.JAR_REPOSITORY_FILE_NAME
 import com.intellij.devkit.runtimeModuleRepository.jps.build.RuntimeModuleRepositoryValidator
@@ -15,13 +16,18 @@ import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.impl.projectStructureMapping.*
+import org.jetbrains.intellij.build.impl.projectStructureMapping.CustomAssetEntry
+import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
+import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleLibraryFileEntry
+import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleOutputEntry
+import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleTestOutputEntry
+import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectLibraryEntry
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import java.io.IOException
 import java.nio.file.Path
 import kotlin.io.path.Path
+import kotlin.io.path.createDirectories
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.name
 import kotlin.io.path.pathString
@@ -38,7 +44,7 @@ internal suspend fun generateRuntimeModuleRepository(entries: Sequence<Distribut
 
   val repositoryEntries = ArrayList<RuntimeModuleRepositoryEntry>()
   val osSpecificDistPaths = listOf(null to context.paths.distAllDir) +
-                            SUPPORTED_DISTRIBUTIONS.map { it to getOsAndArchSpecificDistDirectory(osFamily = it.os, arch = it.arch, context = context) }
+                            SUPPORTED_DISTRIBUTIONS.map { it to getOsAndArchSpecificDistDirectory(osFamily = it.os, arch = it.arch, libc = it.libcImpl, context = context) }
   for (entry in entries) {
     val (distribution, rootPath) = osSpecificDistPaths.find { entry.path.startsWith(it.second) } ?: continue
 
@@ -56,7 +62,7 @@ internal suspend fun generateRuntimeModuleRepository(entries: Sequence<Distribut
   }
   else {
     for (distribution in SUPPORTED_DISTRIBUTIONS) {
-      val targetDirectory = getOsAndArchSpecificDistDirectory(osFamily = distribution.os, arch = distribution.arch, context = context)
+      val targetDirectory = getOsAndArchSpecificDistDirectory(osFamily = distribution.os, arch = distribution.arch, libc = distribution.libcImpl, context = context)
       val actualEntries = repositoryEntries.filter { it.distribution == null || it.distribution == distribution }
       generateRepositoryForDistribution(
         targetDirectory = targetDirectory,
@@ -98,20 +104,20 @@ suspend fun generateRuntimeModuleRepositoryForDevBuild(entries: Sequence<Distrib
 
 /**
  * Merges module repositories for different OS to a common one which can be used in the cross-platform distribution. 
- * @return path to the generated repository or `null` if [distAllPath] already contains a common module repository file which is used for all OSes
+ * @return path to the directory with the generated repository file or `null` if [distAllPath] already contains a common module repository file which is used for all OSes
  */
 internal fun generateCrossPlatformRepository(distAllPath: Path, osSpecificDistPaths: List<Path>, context: BuildContext): Path? {
-  val commonRepositoryFile = distAllPath.resolve(MODULE_DESCRIPTORS_JAR_PATH)
+  val commonRepositoryFile = distAllPath.resolve(MODULE_DESCRIPTORS_COMPACT_PATH)
   if (commonRepositoryFile.exists()) {
     return null
   }
   
   val repositories = osSpecificDistPaths.map { osSpecificDistPath ->
-    val repositoryFile = osSpecificDistPath.resolve(MODULE_DESCRIPTORS_JAR_PATH)
+    val repositoryFile = osSpecificDistPath.resolve(MODULE_DESCRIPTORS_COMPACT_PATH)
     if (!repositoryFile.exists()) {
       context.messages.error("Cannot generate runtime module repository for cross-platform distribution: $repositoryFile doesn't exist")
     }
-    RuntimeModuleRepositorySerialization.loadFromJar(repositoryFile)
+    RuntimeModuleRepositorySerialization.loadFromCompactFile(repositoryFile)
   }
   val commonIds = repositories.map { it.allIds }.reduce { a, b -> a.intersect(b) }
   val commonDescriptors = ArrayList<RawRuntimeModuleDescriptor>()
@@ -126,9 +132,9 @@ internal fun generateCrossPlatformRepository(distAllPath: Path, osSpecificDistPa
     }
     commonDescriptors.add(RawRuntimeModuleDescriptor.create(moduleId, commonResourcePaths.toList(), commonDependencies))
   }
-  val targetFile = context.paths.tempDir.resolve("cross-platform-module-repository").resolve(JAR_REPOSITORY_FILE_NAME)
-  saveModuleRepository(commonDescriptors, targetFile)
-  return targetFile
+  val targetDir = context.paths.tempDir.resolve("cross-platform-module-repository")
+  saveModuleRepository(commonDescriptors, targetDir)
+  return targetDir
 }
 
 private data class RuntimeModuleRepositoryEntry(
@@ -182,7 +188,7 @@ private suspend fun generateRepositoryForDistribution(
       }
     }
     val actualResourcePaths = resourcePaths.mapTo(ArrayList()) {
-      if (it.startsWith("$MODULES_DIR_NAME/")) it.removePrefix("$MODULES_DIR_NAME/") else "../$it"
+      if (it.startsWith("$RUNTIME_REPOSITORY_MODULES_DIR_NAME/")) it.removePrefix("$RUNTIME_REPOSITORY_MODULES_DIR_NAME/") else "../$it"
     }
     distDescriptors.add(RawRuntimeModuleDescriptor.create(moduleId.stringId, actualResourcePaths, actualDependencies))
   }
@@ -204,13 +210,16 @@ private suspend fun generateRepositoryForDistribution(
     "Runtime module repository has ${errors.size} ${StringUtil.pluralize("error", errors.size)}:\n" + errors.joinToString("\n")
   }
   withContext(Dispatchers.IO) {
-    saveModuleRepository(distDescriptors = distDescriptors, targetFile = targetDirectory.resolve(MODULE_DESCRIPTORS_JAR_PATH))
+    saveModuleRepository(distDescriptors = distDescriptors, targetDirectory = targetDirectory.resolve(RUNTIME_REPOSITORY_MODULES_DIR_NAME))
   }
 }
 
-private fun saveModuleRepository(distDescriptors: List<RawRuntimeModuleDescriptor>, targetFile: Path) {
+private fun saveModuleRepository(distDescriptors: List<RawRuntimeModuleDescriptor>, targetDirectory: Path) {
   try {
-    RuntimeModuleRepositorySerialization.saveToJar(distDescriptors, "intellij.platform.bootstrap", targetFile, GENERATOR_VERSION)
+    val bootstrapModuleName = "intellij.platform.bootstrap"
+    targetDirectory.createDirectories()
+    RuntimeModuleRepositorySerialization.saveToCompactFile(distDescriptors, bootstrapModuleName, targetDirectory.resolve(COMPACT_REPOSITORY_FILE_NAME), GENERATOR_VERSION)
+    RuntimeModuleRepositorySerialization.saveToJar(distDescriptors, bootstrapModuleName, targetDirectory.resolve(JAR_REPOSITORY_FILE_NAME), GENERATOR_VERSION)
   }
   catch (e: IOException) {
     throw RuntimeException("Failed to save runtime module repository: ${e.message}", e)
@@ -337,8 +346,9 @@ private fun DistributionFileEntry.getRuntimeModuleId(): RuntimeModuleId? {
   }
 }
 
-private const val MODULES_DIR_NAME = "modules"
-const val MODULE_DESCRIPTORS_JAR_PATH: String = "$MODULES_DIR_NAME/$JAR_REPOSITORY_FILE_NAME" 
+internal const val RUNTIME_REPOSITORY_MODULES_DIR_NAME = "modules"
+internal const val MODULE_DESCRIPTORS_JAR_PATH: String = "$RUNTIME_REPOSITORY_MODULES_DIR_NAME/$JAR_REPOSITORY_FILE_NAME" 
+const val MODULE_DESCRIPTORS_COMPACT_PATH: String = "$RUNTIME_REPOSITORY_MODULES_DIR_NAME/$COMPACT_REPOSITORY_FILE_NAME" 
 
 private val dependenciesToSkip = mapOf(
   //may be removed when IJPL-125 is fixed

@@ -54,12 +54,12 @@ public class CreateAnnotationMethodFromUsageFix extends CreateFromUsageBaseFix {
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
     chooseTargetClass(project, editor, this::invokeImpl);
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
     PsiNameValuePair nameValuePair = getNameValuePair();
     List<PsiClass> classes = filterTargetClasses(nameValuePair, project);
     if (nameValuePair == null || classes.isEmpty()) return IntentionPreviewInfo.EMPTY;

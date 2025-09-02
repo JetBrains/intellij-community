@@ -2,8 +2,11 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.testFramework.LightProjectDescriptor;
+import org.jetbrains.annotations.NotNull;
+
+import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_21_ANNOTATED;
 
 public class CreateLocalFromUsageTest extends LightQuickFixParameterizedTestCase {
   @Override
@@ -12,9 +15,13 @@ public class CreateLocalFromUsageTest extends LightQuickFixParameterizedTestCase
   }
 
   @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_21_ANNOTATED;
+  }
+
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
-    setLanguageLevel(LanguageLevel.JDK_21);
     JavaCodeStyleSettings.getInstance(getProject()).GENERATE_FINAL_LOCALS = getTestName(true).contains("final");
   }
 }

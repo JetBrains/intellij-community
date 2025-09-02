@@ -1118,7 +1118,7 @@ public final class PyUtil {
     return null;
   }
 
-  public static @Nullable List<String> strListValue(PyExpression value) {
+  public static @Nullable List<@NotNull String> strListValue(@Nullable PyExpression value) {
     return PyUtilCore.strListValue(value);
   }
 
@@ -1182,7 +1182,7 @@ public final class PyUtil {
         return builtinCache.getBoolType();
       }
       case NONE -> {
-        return PyNoneType.INSTANCE;
+        return builtinCache.getNoneType();
       }
       default -> throw new IllegalArgumentException();
     }
@@ -1286,30 +1286,11 @@ public final class PyUtil {
   }
 
   public static @Nullable PsiElement findPrevAtOffset(PsiFile psiFile, int caretOffset, @NotNull Class<? extends PsiElement> @NotNull ... toSkip) {
-    PsiElement element;
-    if (caretOffset < 0) {
-      return null;
-    }
-    int lineStartOffset = 0;
-    final Document document = PsiDocumentManager.getInstance(psiFile.getProject()).getDocument(psiFile);
-    if (document != null) {
-      int lineNumber = document.getLineNumber(caretOffset);
-      lineStartOffset = document.getLineStartOffset(lineNumber);
-    }
-    do {
-      caretOffset--;
-      element = psiFile.findElementAt(caretOffset);
-    }
-    while (caretOffset >= lineStartOffset && PsiTreeUtil.instanceOf(element, toSkip));
-    return PsiTreeUtil.instanceOf(element, toSkip) ? null : element;
+    return PyUtilCore.findPrevAtOffset(psiFile, caretOffset, toSkip);
   }
 
   public static @Nullable PsiElement findNonWhitespaceAtOffset(PsiFile psiFile, int caretOffset) {
-    PsiElement element = findNextAtOffset(psiFile, caretOffset, PsiWhiteSpace.class);
-    if (element == null) {
-      element = findPrevAtOffset(psiFile, caretOffset - 1, PsiWhiteSpace.class);
-    }
-    return element;
+    return PyUtilCore.findNonWhitespaceAtOffset(psiFile, caretOffset);
   }
 
   public static @Nullable PsiElement findElementAtOffset(PsiFile psiFile, int caretOffset) {
@@ -1321,22 +1302,7 @@ public final class PyUtil {
   }
 
   public static @Nullable PsiElement findNextAtOffset(final @NotNull PsiFile psiFile, int caretOffset, @NotNull Class<? extends PsiElement> @NotNull ... toSkip) {
-    PsiElement element = psiFile.findElementAt(caretOffset);
-    if (element == null) {
-      return null;
-    }
-
-    final Document document = PsiDocumentManager.getInstance(psiFile.getProject()).getDocument(psiFile);
-    int lineEndOffset = 0;
-    if (document != null) {
-      int lineNumber = document.getLineNumber(caretOffset);
-      lineEndOffset = document.getLineEndOffset(lineNumber);
-    }
-    while (caretOffset < lineEndOffset && PsiTreeUtil.instanceOf(element, toSkip)) {
-      caretOffset++;
-      element = psiFile.findElementAt(caretOffset);
-    }
-    return PsiTreeUtil.instanceOf(element, toSkip) ? null : element;
+    return PyUtilCore.findNextAtOffset(psiFile, caretOffset, toSkip);
   }
 
 
@@ -1455,7 +1421,7 @@ public final class PyUtil {
   public static boolean isInitOrNewMethod(@Nullable PsiElement element) {
     return PyUtilCore.isInitOrNewMethod(element);
   }
-  
+
   /**
    * @return true if passed {@code element} is a method (this means a function inside a class) named {@code __init__},
    * {@code __init_subclass__}, or {@code __new__}.
@@ -1564,7 +1530,7 @@ public final class PyUtil {
     }
     if (stmt instanceof PyExpressionStatement) {
       final PyExpression expression = ((PyExpressionStatement)stmt).getExpression();
-      if (expression instanceof PyNoneLiteralExpression && ((PyNoneLiteralExpression)expression).isEllipsis()) {
+      if (expression instanceof PyEllipsisLiteralExpression) {
         return true;
       }
     }

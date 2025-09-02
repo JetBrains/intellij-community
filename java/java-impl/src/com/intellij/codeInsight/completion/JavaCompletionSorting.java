@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
@@ -6,6 +6,7 @@ import com.intellij.codeInsight.ExpectedTypeInfoImpl;
 import com.intellij.codeInsight.completion.impl.CompletionSorterImpl;
 import com.intellij.codeInsight.completion.impl.LiftShorterItemsClassifier;
 import com.intellij.codeInsight.lookup.*;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -249,8 +250,8 @@ public final class JavaCompletionSorting {
     if (hasNonVoid(expectedInfos)) {
       if (item.getObject() instanceof PsiKeyword) {
         String keyword = ((PsiKeyword)item.getObject()).getText();
-        if (PsiKeyword.NEW.equals(keyword) && !(position.getParent() instanceof PsiMethodReferenceExpression) ||
-            PsiKeyword.NULL.equals(keyword)) {
+        if (JavaKeywords.NEW.equals(keyword) && !(position.getParent() instanceof PsiMethodReferenceExpression) ||
+            JavaKeywords.NULL.equals(keyword)) {
           return ExpectedTypeMatching.maybeExpected;
         }
       }

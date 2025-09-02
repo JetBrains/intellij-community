@@ -1,27 +1,30 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.command.commands
 
+import com.intellij.codeInsight.CodeInsightBundle
+import com.intellij.codeInsight.completion.command.CommandCompletionProviderContext
+import com.intellij.codeInsight.completion.command.getCommandContext
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 
-/**
- * Represents an abstract completion command specifically designed for navigating to declarations
- * in the code editor.
- */
-abstract class AbstractGoToDeclarationCompletionCommand : AbstractActionCompletionCommand("GotoDeclarationOnly",
-                                                                         "Go to Declaration",
-                                                                         ActionsBundle.message("action.GotoDeclarationOnly.text"),
-                                                                         null) {
-  final override fun supportsReadOnly(): Boolean  = true
+abstract class AbstractGoToDeclarationCompletionCommandProvider :
+  ActionCommandProvider(actionId = "GotoDeclaration",
+                        synonyms = listOf("Go to declaration", "Find declaration"),
+                        presentableName = CodeInsightBundle.message("command.completion.GotoDeclaration.text"),
+                        icon = null,
+                        priority = -100,
+                        previewText = ActionsBundle.message("action.GotoDeclaration.description")) {
+
+  final override fun supportsReadOnly(): Boolean = true
 
   final override fun isApplicable(offset: Int, psiFile: PsiFile, editor: Editor?): Boolean {
     return super.isApplicable(offset, psiFile, editor) && hasToShow(offset, psiFile)
   }
 
   private fun hasToShow(offset: Int, psiFile: PsiFile): Boolean {
-    val context = (getContext(offset, psiFile)) ?: return false
+    val context = (getCommandContext(offset, psiFile)) ?: return false
     return canNavigateToDeclaration(context)
   }
 
@@ -32,4 +35,8 @@ abstract class AbstractGoToDeclarationCompletionCommand : AbstractActionCompleti
    * @return true if navigation to the declaration is possible, false otherwise
    */
   abstract fun canNavigateToDeclaration(context: PsiElement): Boolean
+
+  override fun createCommand(context: CommandCompletionProviderContext): ActionCompletionCommand? {
+    return createCommandWithNameIdentifier(context)
+  }
 }

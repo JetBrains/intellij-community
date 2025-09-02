@@ -19,6 +19,7 @@ import com.intellij.openapi.util.registry.Registry;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 import org.junit.runners.Parameterized;
 
 import java.util.*;
@@ -142,10 +143,10 @@ class TestFacetConfigurationImporter implements FacetConfigurationImporter<Facet
 
   @NotNull
   @Override
-  public Collection<Facet> process(@NotNull Module module,
-                                   @NotNull String name,
-                                   @NotNull Map<String, Object> cfg,
-                                   @NotNull FacetManager facetManager) {
+  public @Unmodifiable Collection<Facet> process(@NotNull Module module,
+                                                 @NotNull String name,
+                                                 @NotNull Map<String, Object> cfg,
+                                                 @NotNull FacetManager facetManager) {
     myConfigs.put(name, cfg);
     return Collections.emptySet();
   }

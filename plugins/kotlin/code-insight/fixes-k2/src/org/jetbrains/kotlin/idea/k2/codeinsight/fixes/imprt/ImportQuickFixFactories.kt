@@ -43,7 +43,7 @@ object ImportQuickFixFactories {
     val wrongNumberOfTypeArgumentsFactory: KotlinQuickFixFactory.IntentionBased<KaFirDiagnostic.WrongNumberOfTypeArguments> =
         ImportQuickFixProvider.upcast()
 
-    val newInferenceNoInformationForParameterFactory: KotlinQuickFixFactory.IntentionBased<KaFirDiagnostic.NewInferenceNoInformationForParameter> =
+    val newInferenceNoInformationForParameterFactory: KotlinQuickFixFactory.IntentionBased<KaFirDiagnostic.CannotInferParameterType> =
         ImportQuickFixProvider.upcast()
 
     val noGetMethodFactory: KotlinQuickFixFactory.IntentionBased<KaFirDiagnostic.NoGetMethod> =

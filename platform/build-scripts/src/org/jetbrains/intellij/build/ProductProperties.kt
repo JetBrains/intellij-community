@@ -6,7 +6,9 @@ import com.intellij.platform.runtime.product.ProductMode
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationResult
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
+import com.jetbrains.plugin.structure.base.problems.InvalidPluginIDProblem
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
+import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
@@ -430,6 +432,11 @@ abstract class ProductProperties {
   var qodanaProductProperties: QodanaProductProperties? = null
 
   /**
+   * Custom compatible build range for all plugins build together with a product distribution
+   */
+  var customCompatibleBuildRange: CompatibleBuildRange? = null
+
+  /**
    * Additional validation can be performed here for [BuildOptions.VALIDATE_PLUGINS_TO_BE_PUBLISHED] step.
    * Please do not ignore validation failures here, they will fail CI builds anyway.
    * @param pluginId may be null if missing or a plugin descriptor is malformed
@@ -437,8 +444,28 @@ abstract class ProductProperties {
    */
   open fun validatePlugin(pluginId: String?, result: PluginCreationResult<IdePlugin>, context: BuildContext): List<PluginProblem> {
     return when (result) {
-      is PluginCreationSuccess -> result.unacceptableWarnings
+      is PluginCreationSuccess -> buildList {
+        addAll(result.unacceptableWarnings)
+        if (result.plugin.pluginVersion == null) {
+          add(PropertyNotSpecified("version"))
+        }
+        val id = result.plugin.pluginId
+        if (id == null) {
+          add(PropertyNotSpecified("id"))
+        }
+        else if (!PLUGIN_ID_REGEX.matches(id)) {
+          add(InvalidPluginIDProblem(id))
+        }
+      }
       is PluginCreationFail -> result.errorsAndWarnings
     }
+  }
+
+  private companion object {
+    /**
+     * From https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html#idea-plugin__id:
+     * > Please use characters, numbers, and '.'/'-'/'_' symbols only and keep it reasonably short.
+     */
+    val PLUGIN_ID_REGEX: Regex = "^[\\w.-]+$".toRegex()
   }
 }

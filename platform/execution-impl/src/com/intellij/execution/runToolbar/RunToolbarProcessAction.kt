@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.runToolbar
 
 import com.intellij.execution.Executor
@@ -8,14 +8,13 @@ import com.intellij.execution.actions.ExecutorAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
-import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
-open class RunToolbarProcessAction(override val process: RunToolbarProcess, val executor: Executor) : ExecutorAction(executor), ExecutorRunToolbarAction, DumbAware {
-
-  override fun displayTextInToolbar(): Boolean {
-    return true
-  }
+internal open class RunToolbarProcessAction(
+  override val process: RunToolbarProcess,
+  @JvmField protected val executor: Executor,
+) : ExecutorAction(executor), ExecutorRunToolbarAction, DumbAware {
+  override fun displayTextInToolbar(): Boolean = true
 
   override fun getInformativeIcon(project: Project,
                                   selectedConfiguration: RunnerAndConfigurationSettings,
@@ -52,9 +51,7 @@ open class RunToolbarProcessAction(override val process: RunToolbarProcess, val 
     }
   }
 
-  override fun getSelectedConfiguration(e: AnActionEvent): RunnerAndConfigurationSettings? {
-    return e.configuration()
-  }
+  override fun getSelectedConfiguration(e: AnActionEvent): RunnerAndConfigurationSettings? = e.configuration()
 
   protected fun canRun(e: AnActionEvent): Boolean {
     return e.project?.let { project ->
@@ -65,8 +62,7 @@ open class RunToolbarProcessAction(override val process: RunToolbarProcess, val 
   }
 }
 
-@ApiStatus.Internal
-class RunToolbarGroupProcessAction(process: RunToolbarProcess, executor: Executor) : RunToolbarProcessAction(process, executor) {
+internal class RunToolbarGroupProcessAction(process: RunToolbarProcess, executor: Executor) : RunToolbarProcessAction(process, executor) {
   override fun update(e: AnActionEvent) {
     super.update(e)
     e.presentation.isEnabledAndVisible = e.presentation.isEnabled

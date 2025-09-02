@@ -18,6 +18,7 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.application.migrations.JpaBuddyMigration242;
 import com.intellij.openapi.application.migrations.NotebooksMigration242;
 import com.intellij.openapi.application.migrations.PythonProMigration242;
+import com.intellij.openapi.application.migrations.SpaceMigration252;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
@@ -78,7 +79,7 @@ import java.util.zip.ZipFile;
 
 import static com.intellij.ide.CommandLineProcessorKt.isIdeStartupWizardEnabled;
 import static com.intellij.ide.SpecialConfigFiles.*;
-import static com.intellij.ide.plugins.BundledPluginsStateKt.BUNDLED_PLUGINS_FILENAME;
+import static com.intellij.ide.plugins.BundledPluginsState.BUNDLED_PLUGINS_FILENAME;
 import static com.intellij.openapi.application.ImportOldConfigsState.InitialImportScenario.*;
 import static com.intellij.openapi.application.migrations.Localization242Kt.enableL10nIfPluginInstalled;
 import static com.intellij.openapi.application.migrations.PluginMigrationKt.MIGRATION_INSTALLED_PLUGINS_TXT;
@@ -180,7 +181,8 @@ public final class ConfigImportHelper {
               if (Files.isRegularFile(newConfigDir.resolve(disabledPluginsFileName))) {
                 currentlyDisabledPlugins = Files.readAllLines(newConfigDir.resolve(disabledPluginsFileName));
               }
-              else if (!DisabledPluginsState.DISABLED_PLUGINS_FILENAME.equals(disabledPluginsFileName) &&Files.isRegularFile(newConfigDir.resolve(DisabledPluginsState.DISABLED_PLUGINS_FILENAME))){
+              else if (!DisabledPluginsState.DISABLED_PLUGINS_FILENAME.equals(disabledPluginsFileName) &&
+                       Files.isRegularFile(newConfigDir.resolve(DisabledPluginsState.DISABLED_PLUGINS_FILENAME))){
                 currentlyDisabledPlugins = Files.readAllLines(newConfigDir.resolve(DisabledPluginsState.DISABLED_PLUGINS_FILENAME));
               }
             }
@@ -336,8 +338,8 @@ public final class ConfigImportHelper {
     var configImportOptions = new ConfigImportOptions(log);
     configImportOptions.importSettings = settings;
     configImportOptions.mergeVmOptions = customMigrationOption instanceof CustomConfigMigrationOption.MergeConfigs;
-
-        /* in remote dev host mode UI cannot be shown before `Application` is initialized because it replaces the standard `awt.toolkit`
+        
+        /* in remote dev host mode UI cannot be shown before `Application` is initialized because it replaces the standard `awt.toolkit` 
            with com.intellij.platform.impl.toolkit.IdeToolkit which depends on `Application` */
     configImportOptions.setHeadless(AppMode.isRemoteDevHost());
     return configImportOptions;
@@ -373,7 +375,8 @@ public final class ConfigImportHelper {
     log.info(builder.toString());
   }
 
-  static @Nullable ConfigImportSettings findCustomConfigImportSettings() {
+  @ApiStatus.Internal
+  public static @Nullable ConfigImportSettings findCustomConfigImportSettings() {
     try {
       String customProviderName = "com.intellij.openapi.application." + PlatformUtils.getPlatformPrefix() + "ConfigImportSettings";
       @SuppressWarnings("unchecked")
@@ -579,7 +582,7 @@ public final class ConfigImportHelper {
     }
 
     @Unmodifiable
-    @NotNull List<Path> getPaths() {
+    public @NotNull List<Path> getPaths() {
       return ContainerUtil.map(directories, it -> it.first);
     }
 
@@ -595,7 +598,7 @@ public final class ConfigImportHelper {
       return getNameWithVersion(config);
     }
 
-    @NotNull List<Path> findRelatedDirectories(@NotNull Path config, boolean forAutoClean) {
+    public @NotNull List<Path> findRelatedDirectories(@NotNull Path config, boolean forAutoClean) {
       return getRelatedDirectories(config, forAutoClean);
     }
   }
@@ -606,13 +609,31 @@ public final class ConfigImportHelper {
     return directories.fromSameProduct && directories.directories.size() > 1;
   }
 
-  static @NotNull ConfigDirsSearchResult findConfigDirectories(@NotNull Path newConfigDir) {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public static @NotNull ConfigDirsSearchResult findConfigDirectories(@NotNull Path newConfigDir) {
     return findConfigDirectories(newConfigDir, null, List.of());
   }
 
-  static @NotNull ConfigDirsSearchResult findConfigDirectories(@NotNull Path newConfigDir,
-                                                               @Nullable ConfigImportSettings settings,
-                                                               @NotNull List<String> otherProductPrefixes) {
+  @ApiStatus.Internal
+  public static @Nullable FileTime getConfigLastModifiedTime(@NotNull Path configDir) {
+    FileTime max = null;
+    for (String name : OPTIONS) {
+      try {
+        FileTime cur = Files.getLastModifiedTime(configDir.resolve(name));
+        if (max == null || cur.compareTo(max) > 0) {
+          max = cur;
+        }
+      }
+      catch (IOException ignore) { }
+    }
+    return max;
+  }
+
+  @VisibleForTesting
+  public static @NotNull ConfigDirsSearchResult findConfigDirectories(@NotNull Path newConfigDir,
+                                                                      @Nullable ConfigImportSettings settings,
+                                                                      @NotNull List<String> otherProductPrefixes) {
     // looking for existing config directories ...
     Set<Path> homes = new HashSet<>();
     homes.add(newConfigDir.getParent());  // ... in the vicinity of the new config directory
@@ -686,17 +707,7 @@ public final class ConfigImportHelper {
       Path candidate = child, config = child.resolve(CONFIG);
       if (Files.isDirectory(config)) candidate = config;
 
-      FileTime max = null;
-      for (String name : OPTIONS) {
-        try {
-          FileTime cur = Files.getLastModifiedTime(candidate.resolve(name));
-          if (max == null || cur.compareTo(max) > 0) {
-            max = cur;
-          }
-        }
-        catch (IOException ignore) { }
-      }
-
+      FileTime max = getConfigLastModifiedTime(candidate);
       lastModified.add(new Pair<>(candidate, max != null ? max : FileTime.fromMillis(0)));
     }
 
@@ -993,12 +1004,12 @@ public final class ConfigImportHelper {
   }
 
   @VisibleForTesting
-  static void doImport(@NotNull Path oldConfigDir,
-                       @NotNull Path newConfigDir,
-                       @Nullable Path oldIdeHome,
-                       @NotNull Path oldPluginsDir,
-                       @NotNull Path newPluginsDir,
-                       @NotNull ConfigImportOptions options) throws IOException {
+  public static void doImport(@NotNull Path oldConfigDir,
+                              @NotNull Path newConfigDir,
+                              @Nullable Path oldIdeHome,
+                              @NotNull Path oldPluginsDir,
+                              @NotNull Path newPluginsDir,
+                              @NotNull ConfigImportOptions options) throws IOException {
     Logger log = options.log;
     if (Files.isRegularFile(oldConfigDir)) {
       new Decompressor.Zip(oldConfigDir).extract(newConfigDir);
@@ -1010,7 +1021,9 @@ public final class ConfigImportHelper {
     Files.walkFileTree(oldConfigDir, new SimpleFileVisitor<>() {
       @Override
       public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
-        return blockImport(dir, oldConfigDir, newConfigDir, oldPluginsDir, options.importSettings) ? FileVisitResult.SKIP_SUBTREE : FileVisitResult.CONTINUE;
+        return blockImport(dir, oldConfigDir, newConfigDir, oldPluginsDir, options.importSettings)
+               ? FileVisitResult.SKIP_SUBTREE
+               : FileVisitResult.CONTINUE;
       }
 
       @Override
@@ -1102,14 +1115,6 @@ public final class ConfigImportHelper {
       return;
     }
 
-    Path disabledPluginsFile = oldConfigDir.resolve(DisabledPluginsState.DISABLED_PLUGINS_FILENAME);
-    Set<PluginId> disabledPlugins =
-      Files.exists(disabledPluginsFile) ? DisabledPluginsState.Companion.loadDisabledPlugins(disabledPluginsFile) : Set.of();
-    for (IdeaPluginDescriptor pluginToMigrate : pluginsToMigrate) {
-      if (disabledPlugins.contains(pluginToMigrate.getPluginId())) {
-        pluginToMigrate.setEnabled(false);
-      }
-    }
     if (options.importSettings != null) {
       options.importSettings.processPluginsToMigrate(newConfigDir, oldConfigDir, oldPluginsDir, 
                                                      options, brokenPluginVersions,
@@ -1163,8 +1168,14 @@ public final class ConfigImportHelper {
        * in production, if bundledPluginPath is null, the path from our IDE instance (!) bundled plugin path is used instead
        * so it looks like in production we effectively use bundled plugin path from the current IDE, not from the old one
        */
-      oldIdeLoadingResult = PluginDescriptorLoader.loadDescriptorsFromOtherIde(
-        oldPluginsDir, options.bundledPluginPath, brokenPluginVersions, options.compatibleBuildNumber);
+      var pluginLists = PluginDescriptorLoader.loadDescriptorsFromOtherIde(
+        oldPluginsDir, options.bundledPluginPath, options.compatibleBuildNumber
+      );
+      var initContext = new ProductPluginInitContext(
+        options.compatibleBuildNumber, Collections.emptySet(), Collections.emptySet(), brokenPluginVersions
+      );
+      oldIdeLoadingResult = new PluginLoadingResult();
+      oldIdeLoadingResult.initAndAddAll(pluginLists, initContext);
     }
     catch (ExecutionException | InterruptedException e) {
       return false;
@@ -1210,6 +1221,7 @@ public final class ConfigImportHelper {
     new PythonProMigration242().migratePlugins(options);
     new NotebooksMigration242().migratePlugins(options);
     new JpaBuddyMigration242().migratePlugins(options);
+    new SpaceMigration252().migratePlugins(options);
   }
 
   private static void migrateGlobalPlugins(Path newConfigDir,
@@ -1270,7 +1282,7 @@ public final class ConfigImportHelper {
       }
 
       try {
-        IdeaPluginDescriptorImpl descriptor = PluginDescriptorLoader.loadDescriptorFromArtifact(Paths.get(source), null);
+        IdeaPluginDescriptorImpl descriptor = PluginDescriptorLoader.loadAndInitDescriptorFromArtifact(Paths.get(source), null);
         if (descriptor != null) {
           result.add(descriptor.getPluginId());
         }
@@ -1499,7 +1511,8 @@ public final class ConfigImportHelper {
     return true;
   }
 
-  static void setKeymapIfNeeded(@NotNull Path oldConfigDir, @NotNull Path newConfigDir, @NotNull Logger log) {
+  @VisibleForTesting
+  public static void setKeymapIfNeeded(@NotNull Path oldConfigDir, @NotNull Path newConfigDir, @NotNull Logger log) {
     String nameWithVersion = getNameWithVersion(oldConfigDir);
     Matcher m = matchNameWithVersion(nameWithVersion);
     if (m.matches() && VersionComparatorUtil.compare("2019.1", m.group(1)) >= 0) {
@@ -1731,25 +1744,25 @@ public final class ConfigImportHelper {
   private static String defaultConfigPath(String selector) {
     return newOrUnknown(selector) ? PathManager.getDefaultConfigPathFor(selector) :
            SystemInfoRt.isMac ? SystemProperties.getUserHome() + "/Library/Preferences/" + selector
-                              : SystemProperties.getUserHome() + "/." + selector + '/' + CONFIG;
+                            : SystemProperties.getUserHome() + "/." + selector + '/' + CONFIG;
   }
 
   private static String defaultPluginsPath(String selector) {
     return newOrUnknown(selector) ? PathManager.getDefaultPluginPathFor(selector) :
            SystemInfoRt.isMac ? SystemProperties.getUserHome() + "/Library/Application Support/" + selector
-                              : SystemProperties.getUserHome() + "/." + selector + '/' + CONFIG + '/' + PLUGINS;
+                            : SystemProperties.getUserHome() + "/." + selector + '/' + CONFIG + '/' + PLUGINS;
   }
 
   private static String defaultSystemPath(String selector) {
     return newOrUnknown(selector) ? PathManager.getDefaultSystemPathFor(selector) :
            SystemInfoRt.isMac ? SystemProperties.getUserHome() + "/Library/Caches/" + selector
-                              : SystemProperties.getUserHome() + "/." + selector + '/' + SYSTEM;
+                            : SystemProperties.getUserHome() + "/." + selector + '/' + SYSTEM;
   }
 
   private static String defaultLogsPath(String selector) {
     return newOrUnknown(selector) ? PathManager.getDefaultLogPathFor(selector) :
            SystemInfoRt.isMac ? SystemProperties.getUserHome() + "/Library/Logs/" + selector
-                              : SystemProperties.getUserHome() + "/." + selector + '/' + SYSTEM + "/logs";
+                            : SystemProperties.getUserHome() + "/." + selector + '/' + SYSTEM + "/logs";
   }
 
   private static boolean newOrUnknown(String selector) {

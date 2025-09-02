@@ -10,6 +10,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.Toggleable
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.FloatingToolbar
 import com.intellij.openapi.actionSystem.impl.MoreActionGroup
@@ -34,8 +35,10 @@ import com.intellij.ui.LightweightHint
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.awt.AnchoredPoint
 import com.intellij.ui.popup.util.PopupImplUtil
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 import java.awt.IllegalComponentStateException
 import java.awt.Point
@@ -176,7 +179,7 @@ class CodeFloatingToolbar(
     val hint = super.createHint()
     val buttons = UIUtil.findComponentsOfType(hint.component, ActionButton::class.java)
     buttons.forEach { button ->
-      button.presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true)
+      button.presentation.putClientProperty(ActionUtil.HIDE_DROPDOWN_ICON, true)
       showMenuPopupOnMouseHover(button)
     }
     return hint
@@ -289,6 +292,12 @@ class CodeFloatingToolbar(
       }
     })
     return disposable
+  }
+
+  @RequiresEdt
+  @ApiStatus.Internal
+  fun cancelActivePopup() {
+    activeMenuPopup?.cancel()
   }
 
   private fun showMenuPopupOnMouseHover(button: ActionButton) {

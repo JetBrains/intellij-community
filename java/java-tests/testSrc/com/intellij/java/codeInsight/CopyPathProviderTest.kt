@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.rules.ProjectModelExtension
+import com.intellij.testFramework.rules.TempDirectoryExtension
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
@@ -23,6 +24,10 @@ class CopyPathProviderTest {
   @JvmField
   @RegisterExtension
   val projectModel: ProjectModelExtension = ProjectModelExtension()
+
+  @JvmField
+  @RegisterExtension
+  val baseNonProjectDir: TempDirectoryExtension = TempDirectoryExtension()
 
   lateinit var module: Module
   lateinit var rootDir: VirtualFile
@@ -47,7 +52,7 @@ class CopyPathProviderTest {
   
   @Test
   fun `file not in project`() = runBlocking {
-    val file = projectModel.baseProjectDir.newVirtualFile("root/dir/a.txt")
+    val file = baseNonProjectDir.newVirtualFile("root/dir/a.txt")
     readAction {
       assertNull(getPathFromContentRoot(file))
       assertNull(getPathFromSourceRoot(file))

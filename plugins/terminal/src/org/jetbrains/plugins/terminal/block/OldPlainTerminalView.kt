@@ -57,5 +57,9 @@ internal class OldPlainTerminalView(project: Project,
     widget.executeCommand(shellCommand)
   }
 
+  override fun getText(): CharSequence {
+    return widget.text
+  }
+
   override fun dispose() {}
 }

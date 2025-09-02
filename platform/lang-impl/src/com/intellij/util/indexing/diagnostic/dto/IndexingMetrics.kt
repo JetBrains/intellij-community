@@ -148,6 +148,16 @@ data class IndexingMetrics(val jsonIndexDiagnostics: List<JsonIndexingActivityDi
       }.computeAverageSpeed()
     }
 
+  val numberOfIndexedFilesPerFileType: Map<String, Int>
+    get() {
+      return indexingHistories.flatMap { history ->
+        history.totalStatsPerFileType.map {
+          Pair(it.fileType, it.totalNumberOfFiles)
+        }
+      }.groupBy({ (fileType, _) -> fileType }, { (_, numberOfFiles) -> numberOfFiles })
+        .mapValues { (_, values) -> values.sum() }
+    }
+
   private fun Collection<Triple<String, Double, JsonFileSize>>.computeAverageSpeed(): Map<String, Int> = groupBy { it.first }.mapValues { entry ->
     JsonProcessingSpeed(entry.value.sumOf { it.third.bytes }, entry.value.sumOf { it.second.toLong() }).toKiloBytesPerSecond()
   }
@@ -231,19 +241,21 @@ fun IndexingMetrics.getListOfIndexingMetrics(): List<IndexingMetric> {
     IndexingMetric.Duration("scanningTimeWithoutPauses", durationMillis = totalScanFilesTimeWithoutPauses.toInt()),
     IndexingMetric.Duration("pausedTimeInIndexingOrScanning", durationMillis = totalPausedTime.toInt()),
     IndexingMetric.Duration("dumbModeTimeWithPauses", durationMillis = totalDumbModeTimeWithPauses.toInt()),
+    IndexingMetric.Counter("numberOfScannedFiles", value = totalNumberOfScannedFiles),
     IndexingMetric.Counter("numberOfIndexedFiles", value = numberOfIndexedFiles),
     IndexingMetric.Counter("numberOfIndexedFilesWritingIndexValue", value = totalNumberOfIndexedFilesWritingIndexValues),
     IndexingMetric.Counter("numberOfIndexedFilesWithNothingToWrite", value = totalNumberOfIndexedFilesWithNothingToWrite),
     IndexingMetric.Counter("numberOfFilesIndexedByExtensions", value = numberOfFilesFullyIndexedByExtensions),
     IndexingMetric.Counter("numberOfFilesIndexedWithoutExtensions",
-                                  value = (numberOfIndexedFiles - numberOfFilesFullyIndexedByExtensions)),
+                           value = (numberOfIndexedFiles - numberOfFilesFullyIndexedByExtensions)),
     IndexingMetric.Counter("numberOfRunsOfScannning", value = totalNumberOfRunsOfScanning),
     IndexingMetric.Counter("numberOfRunsOfIndexing", value = totalNumberOfRunsOfIndexing)
   ) + getProcessingSpeedOfFileTypes(processingSpeedPerFileTypeAvg, "Avg") +
          getProcessingSpeedOfFileTypes(processingSpeedPerFileTypeWorst, "Worst") +
          getProcessingSpeedOfBaseLanguages(processingSpeedPerBaseLanguageAvg, "Avg") +
          getProcessingSpeedOfBaseLanguages(processingSpeedPerBaseLanguageWorst, "Worst") +
-         getProcessingTimeOfFileType(processingTimePerFileType)
+         getProcessingTimeOfFileType(processingTimePerFileType) +
+         getNumberOfIndexedFilesOfFileTypes(numberOfIndexedFilesPerFileType)
 }
 
 
@@ -260,4 +272,9 @@ private fun getProcessingSpeedOfBaseLanguages(mapBaseLanguageToSpeed: Map<String
 private fun getProcessingTimeOfFileType(mapFileTypeToDuration: Map<String, Long>): List<IndexingMetric> =
   mapFileTypeToDuration.map {
     IndexingMetric.Duration("processingTime#${it.key}", durationMillis = TimeUnit.NANOSECONDS.toMillis(it.value.toLong()).toInt())
+  }
+
+private fun getNumberOfIndexedFilesOfFileTypes(mapFileTypeToSpeed: Map<String, Int>): List<IndexingMetric> =
+  mapFileTypeToSpeed.map {
+    IndexingMetric.Counter("numberOfIndexedFiles#${it.key}", value = it.value)
   }

@@ -35,7 +35,6 @@ public final class PyEditorHandlerConfig {
     PyAstArgumentList.class,
     PyAstParameterList.class,
     PyAstDecoratorList.class,
-    PyAstSliceExpression.class,
     PyAstSubscriptionExpression.class,
     PyAstGeneratorExpression.class,
     PyAstGroupPattern.class,

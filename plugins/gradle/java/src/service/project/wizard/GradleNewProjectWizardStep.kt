@@ -23,6 +23,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.externalSystem.util.ui.DataView
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.util.bindEnumStorage
 import com.intellij.openapi.observable.util.not
 import com.intellij.openapi.observable.util.toUiPathProperty
@@ -78,15 +79,14 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
   where ParentStep : NewProjectWizardStep,
         ParentStep : NewProjectWizardBaseData {
 
-  final override val sdkProperty = propertyGraph.property<Sdk?>(null)
-  final override val sdkDownloadTaskProperty = propertyGraph.property<SdkDownloadTask?>(null)
-  final override val gradleDslProperty = propertyGraph.property(GradleDsl.KOTLIN)
+  final override val sdkProperty: GraphProperty<Sdk?> = propertyGraph.property(null)
+  final override val sdkDownloadTaskProperty: GraphProperty<SdkDownloadTask?> = propertyGraph.property(null)
+  final override val gradleDslProperty: GraphProperty<GradleDsl> = propertyGraph.property(GradleDsl.KOTLIN)
     .bindEnumStorage("NewProjectWizard.gradleDslState")
 
-
-  final override var sdk by sdkProperty
-  final override var sdkDownloadTask by sdkDownloadTaskProperty
-  final override var gradleDsl by gradleDslProperty
+  final override var sdk: Sdk? by sdkProperty
+  final override var sdkDownloadTask: SdkDownloadTask? by sdkDownloadTaskProperty
+  final override var gradleDsl: GradleDsl by gradleDslProperty
 
   private val distributionTypeProperty = propertyGraph.lazyProperty { suggestDistributionType() }
   private val gradleVersionProperty = propertyGraph.lazyProperty { suggestGradleVersion() }
@@ -122,7 +122,9 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
     }
   }
 
-  override fun createView(data: ProjectData) = GradleDataView(data)
+  override fun createView(data: ProjectData): GradleDataView {
+    return GradleDataView(data)
+  }
 
   protected fun setupJavaSdkUI(builder: Panel) {
     builder.row(JavaUiBundle.message("label.project.wizard.new.project.jdk")) {

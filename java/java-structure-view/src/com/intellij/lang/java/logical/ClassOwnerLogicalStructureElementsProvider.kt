@@ -14,8 +14,8 @@ class ClassOwnerLogicalStructureElementsProvider: LogicalStructureElementsProvid
       if (!psiClass.isValid) continue
       val convertedModels = LogicalStructureElementsProvider.getProviders(psiClass)
         .filterIsInstance<PsiClassLogicalElementProvider<Any>>()
-        .map { it.convert(psiClass) }
-        .filterNotNull()
+        .mapNotNull { it.convert(psiClass) }
+        .toList()
       if (convertedModels.count() > 0) {
         convertedModels.forEach { result.add(it) }
         convertedAtLeastOne = true

@@ -231,8 +231,10 @@ public @interface NotNull {
             if (configureFiles) {
                 configureFiles()
             }
-            doRefactoring(configure)
-            compareEditorsWithExpectedData()
+            withCustomCompilerOptions(file.text, project, module) {
+                doRefactoring(configure)
+                compareEditorsWithExpectedData()
+            }
         }
     }
 
@@ -403,13 +405,6 @@ public @interface NotNull {
               "test function for ${file.name} not found",
               fileName in functionNames,
             )
-        }
-    }
-
-    fun testPreferContainedInClass() {
-        configureFiles()
-        doTestWithIgnoredDirective {
-            assertEquals("param", createChangeInfo().newParameters[0].name)
         }
     }
 
@@ -587,11 +582,19 @@ public @interface NotNull {
         addNewIntParameterWithValue(true)
     }
 
+    fun testAddNewLastParameterWithDefaultValueSkipFirstDefaultValue() = doTest {
+        addNewIntParameterWithValue(true)
+    }
+
     fun testAddNewLastParameterWithDefaultValue2() = doTest {
         addNewIntParameterWithValue(true)
     }
 
     fun testAddNewLastParameterWithDefaultValue3() = doTest {
+        addNewIntParameterWithValue(true)
+    }
+
+    fun testAddParameterToOperator() = doTest {
         addNewIntParameterWithValue(true)
     }
 

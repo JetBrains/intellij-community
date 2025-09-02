@@ -5,6 +5,10 @@ import java.util.Arrays;
 import java.util.List;
 
 public final class MavenConstants {
+  public static final String MAVEN_4_XLMNS = "http://maven.apache.org/POM/4.1.0";
+  public static final String MAVEN_4_XLMNS_HTTPS = "https://maven.apache.org/POM/4.1.0";
+  public static final String MAVEN_4_XSD = "https://maven.apache.org/xsd/maven-4.1.0.xsd";
+  public static final String MAVEN_4_XSD_HTTPS = "http://maven.apache.org/xsd/maven-4.1.0.xsd";
   public static final String POM_EXTENSION = "pom";
   public static final String POM_XML = "pom.xml";
 

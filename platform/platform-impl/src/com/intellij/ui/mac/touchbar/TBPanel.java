@@ -9,6 +9,7 @@ import com.intellij.ui.mac.foundation.ID;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import javax.swing.*;
 import java.awt.*;
@@ -40,7 +41,8 @@ public class TBPanel implements NSTLibrary.ItemCreator {
     myStats = null;
   }
 
-  TBPanel(@NotNull String touchbarName) {
+  @VisibleForTesting
+  public TBPanel(@NotNull String touchbarName) {
     this(touchbarName, null, false);
   }
 
@@ -120,13 +122,15 @@ public class TBPanel implements NSTLibrary.ItemCreator {
     return item.createNativePeer();
   }
 
-  void setTo(@Nullable Window window) {
+  @VisibleForTesting
+  public void setTo(@Nullable Window window) {
     synchronized (this) {
       NST.setTouchBar(window, myNativePeer);
     }
   }
 
-  void release() {
+  @VisibleForTesting
+  public void release() {
     final long startNs = myStats != null ? System.nanoTime() : 0;
     myItems.releaseAll();
 
@@ -145,15 +149,13 @@ public class TBPanel implements NSTLibrary.ItemCreator {
   //
   // NOTE: must call 'selectVisibleItemsToShow' after touchbar filling
   //
-  @NotNull
-  TBItemButton addButton() {
+  public @NotNull TBItemButton addButton() {
     @NotNull TBItemButton butt = new TBItemButton(myItemListener, myStats != null ? myStats.getActionStats("simple_button") : null);
     myItems.addItem(butt);
     return butt;
   }
 
-  @NotNull
-  TBItem addItem(@NotNull TBItem item) {
+  public @NotNull TBItem addItem(@NotNull TBItem item) {
     return addItem(item, null);
   }
 
@@ -163,19 +165,21 @@ public class TBPanel implements NSTLibrary.ItemCreator {
     return item;
   }
 
-  @NotNull
-  TBItemScrubber addScrubber() {
+  @VisibleForTesting
+  public @NotNull TBItemScrubber addScrubber() {
     final int defaultScrubberWidth = 500;
     @NotNull TBItemScrubber scrub = new TBItemScrubber(myItemListener, myStats, defaultScrubberWidth);
     myItems.addItem(scrub);
     return scrub;
   }
 
-  void addSpacing(boolean large) { myItems.addSpacing(large); }
+  @VisibleForTesting
+  public void addSpacing(boolean large) { myItems.addSpacing(large); }
 
   void addFlexibleSpacing() { myItems.addFlexibleSpacing(); }
 
-  void selectVisibleItemsToShow() {
+  @VisibleForTesting
+  public void selectVisibleItemsToShow() {
     if (myItems.isEmpty()) {
       if (myVisibleIds != null && myVisibleIds.length > 0) {
         synchronized (this) {

@@ -17,6 +17,7 @@ import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.codeInsight.codeFragment.PyCodeFragment;
 import com.jetbrains.python.codeInsight.codeFragment.PyCodeFragmentUtil;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
@@ -30,7 +31,24 @@ public class PyExtractMethodHandler implements RefactoringActionHandler {
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     // select editor text fragment
     if (!editor.getSelectionModel().hasSelection()) {
-      editor.getSelectionModel().selectLineAtCaret();
+      // Get the current offset where the caret is positioned
+      int caretOffset = editor.getCaretModel().getOffset();
+
+      // Find PsiElement at caret
+      PsiElement element = file.findElementAt(caretOffset);
+
+      if (element != null) {
+        PyCallExpression callExpression = PsiTreeUtil.getParentOfType(element, false, PyCallExpression.class);
+        if (callExpression != null) {
+          int startOffset = callExpression.getTextRange().getStartOffset();
+          int endOffset = callExpression.getTextRange().getEndOffset();
+          editor.getSelectionModel().setSelection(startOffset, endOffset);
+        }
+      }
+      else {
+        // Default behavior: select the line at caret
+        editor.getSelectionModel().selectLineAtCaret();
+      }
     }
     invokeOnEditor(project, editor, file);
   }
@@ -80,7 +98,7 @@ public class PyExtractMethodHandler implements RefactoringActionHandler {
       }
       final PyCodeFragment fragment;
       try {
-        fragment = PyCodeFragmentUtil.createCodeFragment(owner, element1, element2);
+        fragment = PyCodeFragmentUtil.createCodeFragment(owner, element1, element2, null);
       }
       catch (CannotCreateCodeFragmentException e) {
         CommonRefactoringUtil.showErrorHint(project, editor, e.getMessage(),
@@ -99,7 +117,7 @@ public class PyExtractMethodHandler implements RefactoringActionHandler {
       }
       final PyCodeFragment fragment;
       try {
-        fragment = PyCodeFragmentUtil.createCodeFragment(owner, element1, element2);
+        fragment = PyCodeFragmentUtil.createCodeFragment(owner, element1, element2, expression);
       }
       catch (CannotCreateCodeFragmentException e) {
         CommonRefactoringUtil.showErrorHint(project, editor, e.getMessage(),
@@ -141,6 +159,17 @@ public class PyExtractMethodHandler implements RefactoringActionHandler {
     // return elements if they are really first and last elements of statements
     if (element1 == PsiTreeUtil.getDeepestFirst(statement1) &&
         element2 == PyPsiUtils.getPrevSignificantLeaf(PsiTreeUtil.getDeepestLast(statement2), !(element2 instanceof PsiComment))) {
+      return Couple.of(statement1, statement2);
+    }
+
+    // multi-line function call
+    boolean isLeftParen = "(".equals(element2.getText());
+    PsiElement prevSignificantLeaf = PyPsiUtils.getPrevSignificantLeaf(
+      PsiTreeUtil.getDeepestLast(statement2),
+      !(statement2 instanceof PsiComment)
+    );
+    boolean isRightParen = prevSignificantLeaf != null && ")".equals(prevSignificantLeaf.getText());
+    if (isLeftParen && isRightParen) {
       return Couple.of(statement1, statement2);
     }
     return null;

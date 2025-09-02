@@ -104,22 +104,17 @@ final class SameSignatureCallParametersProvider {
   private static Set<Pair<PsiMethod, PsiSubstitutor>> getCallCandidates(PsiCall expression) {
     PsiMethod chosenMethod = CompletionMemory.getChosenMethod(expression);
     Set<Pair<PsiMethod, PsiSubstitutor>> candidates = new LinkedHashSet<>();
-    JavaResolveResult[] results;
-    if (expression instanceof PsiMethodCallExpression) {
-      results = ((PsiMethodCallExpression)expression).getMethodExpression().multiResolve(false);
-    } else {
-      results = new JavaResolveResult[]{expression.resolveMethodGenerics()};
-    }
+    JavaResolveResult[] results = expression.multiResolve(false);
 
     PsiMethod toExclude =
       JavaPsiConstructorUtil.isConstructorCall(expression) ? PsiTreeUtil.getParentOfType(expression, PsiMethod.class) : null;
 
     for (final JavaResolveResult candidate : results) {
       final PsiElement element = candidate.getElement();
-      if (element instanceof PsiMethod) {
-        final PsiClass psiClass = ((PsiMethod)element).getContainingClass();
+      if (element instanceof PsiMethod method) {
+        final PsiClass psiClass = method.getContainingClass();
         if (psiClass != null) {
-          for (Pair<PsiMethod, PsiSubstitutor> overload : psiClass.findMethodsAndTheirSubstitutorsByName(((PsiMethod)element).getName(), true)) {
+          for (Pair<PsiMethod, PsiSubstitutor> overload : psiClass.findMethodsAndTheirSubstitutorsByName(method.getName(), true)) {
             if (overload.first != toExclude && (chosenMethod == null || chosenMethod.isEquivalentTo(overload.first))) {
               candidates.add(Pair.create(overload.first, candidate.getSubstitutor().putAll(overload.second)));
             }

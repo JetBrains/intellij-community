@@ -1,0 +1,12 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.polySymbols.query
+
+import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.PolySymbolModifier
+
+interface PolySymbolMatchCustomizer {
+
+  fun mergeModifiers(current: Set<PolySymbolModifier>?, toMerge: Set<PolySymbolModifier>, symbol: PolySymbol): Set<PolySymbolModifier>? =
+    null
+
+}

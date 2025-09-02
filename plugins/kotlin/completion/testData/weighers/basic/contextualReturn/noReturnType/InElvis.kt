@@ -6,6 +6,5 @@ fun usage(a: Int?) {
     return
 }
 
-// IGNORE_K2
 // ORDER: return
 // ORDER: returnFun

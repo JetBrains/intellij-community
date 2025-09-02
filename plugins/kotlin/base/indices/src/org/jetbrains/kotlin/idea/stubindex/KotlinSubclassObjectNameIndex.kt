@@ -21,4 +21,8 @@ class KotlinSubclassObjectNameIndex internal constructor() : StringStubIndexExte
     }
 
     override fun getKey(): StubIndexKey<String, KtObjectDeclaration> = indexKey
+
+    override fun getVersion(): Int = super.getVersion() + 1
+
+    override fun traceKeyHashToVirtualFileMapping(): Boolean = true
 }

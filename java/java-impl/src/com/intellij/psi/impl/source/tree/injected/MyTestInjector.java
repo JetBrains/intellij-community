@@ -270,6 +270,9 @@ public class MyTestInjector {
         if ("xml".equals(variable.getName())) {
           placesToInject.addPlace(XMLLanguage.INSTANCE, textRangeToInject(host), null, null);
         }
+        if ("xmlWithLongPrefixSuffix".equals(variable.getName())) {
+          placesToInject.addPlace(XMLLanguage.INSTANCE, textRangeToInject(host), "<aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa><bbbbbbbbbbbbb><cccccccccccc>", "</cccccccccccc></bbbbbbbbbbbbb></aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa>");
+        }
         if ("js".equals(variable.getName())) { // with prefix/suffix
           placesToInject.addPlace(js, textRangeToInject(host), "function foo(doc,window) {", "}");
         }

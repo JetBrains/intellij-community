@@ -2,6 +2,7 @@ package com.intellij.cce.fus
 
 import com.intellij.internal.statistic.eventLog.*
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use
@@ -15,11 +16,14 @@ object MockFUSCollector {
                            action: () -> T): Pair<List<LogEvent>, T> {
 
     val mockLoggerProvider = MockStatisticsEventLoggerProvider("ML")
+    val llmcLoggerProvider = MockStatisticsEventLoggerProvider("LLMC")
     (StatisticsEventLoggerProvider.EP_NAME.point as ExtensionPointImpl<StatisticsEventLoggerProvider>)
-      .maskAll(listOf(mockLoggerProvider), parentDisposable, true)
+      .maskAll(listOf(mockLoggerProvider, llmcLoggerProvider), parentDisposable, true)
     val actionResult = action()
     return mockLoggerProvider.getLoggedEvents() to actionResult
   }
+
+  fun isMocked(logger: StatisticsEventLogger): Boolean = logger is MockStatisticsEventLoggerProvider.MockStatisticsEventLogger
 }
 
 private class MockStatisticsEventLoggerProvider(recorderId: String) : StatisticsEventLoggerProvider(recorderId,
@@ -28,7 +32,7 @@ private class MockStatisticsEventLoggerProvider(recorderId: String) : Statistics
                                                                                                     DEFAULT_MAX_FILE_SIZE_BYTES,
                                                                                                     false,
                                                                                                     true) {
-  override val logger: MockStatisticsEventLogger = MockStatisticsEventLogger()
+  override val logger: MockStatisticsEventLogger = MockStatisticsEventLogger(recorderId)
 
   override fun isRecordEnabled(): Boolean = true
 
@@ -36,7 +40,8 @@ private class MockStatisticsEventLoggerProvider(recorderId: String) : Statistics
 
   fun getLoggedEvents(): List<LogEvent> = logger.logged
 
-  class MockStatisticsEventLogger(private val session: String = "mockSession",
+  class MockStatisticsEventLogger(private val recorderId: String,
+                                  private val session: String = "mockSession",
                                   private val build: String = "999.999",
                                   private val bucket: String = "1",
                                   private val recorderVersion: String = "1") : StatisticsEventLogger {
@@ -49,6 +54,9 @@ private class MockStatisticsEventLoggerProvider(recorderId: String) : Statistics
                               data)
         .escape()
       logged.add(event)
+      ApplicationManager.getApplication().getService(EventLogListenersManager::class.java)
+        .notifySubscribers(recorderId, event, eventId, data, false)
+
       return CompletableFuture.completedFuture(null)
     }
 

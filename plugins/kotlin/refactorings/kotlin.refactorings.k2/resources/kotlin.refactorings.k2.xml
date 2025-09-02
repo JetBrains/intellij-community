@@ -18,7 +18,18 @@
                         serviceInterface="org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfoSupport"/>
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.k2.refactoring.K2ReferenceMutateService"
                         serviceInterface="org.jetbrains.kotlin.idea.references.KtReferenceMutateService"/>
-    <lang.refactoringSupport language="kotlin" 
+    <applicationService
+            serviceInterface="org.jetbrains.kotlin.idea.refactoring.pushDown.KotlinPushDownProcessorProvider"
+            serviceImplementation="org.jetbrains.kotlin.idea.k2.refactoring.pushDown.K2PushDownProcessorProvider"/>
+    <refactoring.pullUpHelperFactory language="kotlin"
+                                     implementationClass="org.jetbrains.kotlin.idea.k2.refactoring.pullUp.K2PullUpHelperFactory"/>
+    <applicationService
+            serviceInterface="org.jetbrains.kotlin.idea.refactoring.pullUp.KotlinPullUpConflictSearcher"
+            serviceImplementation="org.jetbrains.kotlin.idea.k2.refactoring.pullUp.K2PullUpConflictSearcher"/>
+    <applicationService
+            serviceInterface="org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfoStorageSupport"
+            serviceImplementation="org.jetbrains.kotlin.idea.k2.refactoring.pullUp.K2MemberInfoStorageSupport"/>
+    <lang.refactoringSupport language="kotlin"
                              implementationClass="org.jetbrains.kotlin.idea.k2.refactoring.KotlinFirRefactoringSupportProvider"/>
     <refactoring.safeDeleteProcessor
             id="kotlinFirProcessor"
@@ -89,3 +100,4 @@
 
   </actions>
 </idea-plugin>
+

@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.terminal.frontend
 
+import com.intellij.codeInsight.completion.CompletionPhase
+import com.intellij.codeInsight.highlighting.BackgroundHighlightingUtil
 import com.intellij.find.SearchReplaceComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -18,7 +20,8 @@ import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.SoftWrapModelImpl
 import com.intellij.openapi.editor.impl.softwrap.EmptySoftWrapPainter
-import com.intellij.openapi.observable.util.addFocusListener
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFocusManager
@@ -75,6 +78,7 @@ internal class ReworkedTerminalView(
 
   private val outputEditor: EditorEx
   private val alternateBufferEditor: EditorEx
+  private val outputModel: TerminalOutputModelImpl
   private val scrollingModel: TerminalOutputScrollingModel
 
   private val terminalPanel: TerminalPanel
@@ -111,6 +115,7 @@ internal class ReworkedTerminalView(
       sessionModel,
       encodingManager,
       terminalInput,
+      typeAhead = null,
       coroutineScope.childScope("TerminalAlternateBufferModel"),
       scrollingModel = null,
       fusCursorPaintingListener,
@@ -119,10 +124,14 @@ internal class ReworkedTerminalView(
     )
 
     outputEditor = createOutputEditor(settings, parentDisposable = this)
-    val outputModel = TerminalOutputModelImpl(outputEditor.document, maxOutputLength = TerminalUiUtils.getDefaultMaxOutputLength())
+    outputEditor.putUserData(TerminalInput.KEY, terminalInput)
+    outputModel = TerminalOutputModelImpl(outputEditor.document, maxOutputLength = TerminalUiUtils.getDefaultMaxOutputLength())
+    updatePsiOnOutputModelChange(project, outputModel, coroutineScope.childScope("TerminalOutputPsiUpdater"))
+
     scrollingModel = TerminalOutputScrollingModelImpl(outputEditor, outputModel, sessionModel, coroutineScope.childScope("TerminalOutputScrollingModel"))
     outputEditor.putUserData(TerminalOutputScrollingModel.KEY, scrollingModel)
 
+    val typeAhead = TerminalTypeAhead(outputModel)
     configureOutputEditor(
       project,
       editor = outputEditor,
@@ -131,6 +140,7 @@ internal class ReworkedTerminalView(
       sessionModel,
       encodingManager,
       terminalInput,
+      typeAhead,
       coroutineScope.childScope("TerminalOutputModel"),
       scrollingModel,
       fusCursorPaintingListener,
@@ -138,10 +148,14 @@ internal class ReworkedTerminalView(
       withTopAndBottomInsets = true,
     )
 
+    outputEditor.putUserData(TerminalSessionModel.KEY, sessionModel)
     terminalSearchController = TerminalSearchController(project)
 
     blocksModel = TerminalBlocksModelImpl(outputEditor.document)
     TerminalBlocksDecorator(outputEditor, blocksModel, scrollingModel, coroutineScope.childScope("TerminalBlocksDecorator"))
+    outputEditor.putUserData(TerminalBlocksModel.KEY, blocksModel)
+
+    outputEditor.putUserData(CompletionPhase.CUSTOM_CODE_COMPLETION_ACTION_ID, "Terminal.CommandCompletion")
 
     val fusActivity = FrontendLatencyService.getInstance().startFrontendOutputActivity(
       outputEditor = outputEditor as EditorImpl,
@@ -149,6 +163,7 @@ internal class ReworkedTerminalView(
     )
 
     controller = TerminalSessionController(
+      project,
       sessionModel,
       outputModel,
       alternateBufferModel,
@@ -157,6 +172,7 @@ internal class ReworkedTerminalView(
       coroutineScope.childScope("TerminalSessionController"),
       fusActivity,
     )
+    controller.addShellIntegrationListener(this, typeAhead)
 
     sessionFuture.thenAccept { session ->
       controller.handleEvents(session)
@@ -168,7 +184,14 @@ internal class ReworkedTerminalView(
     listenPanelSizeChanges()
     listenAlternateBufferSwitch()
 
-    TerminalVfsSynchronizer.install(controller, ::addFocusListener, this)
+    val synchronizer = TerminalVfsSynchronizer(
+      controller,
+      outputModel,
+      sessionModel,
+      terminalPanel,
+      coroutineScope.childScope("TerminalVfsSynchronizer"),
+    )
+    outputEditor.putUserData(TerminalVfsSynchronizer.KEY, synchronizer)
   }
 
   override fun addTerminationCallback(onTerminated: Runnable, parentDisposable: Disposable) {
@@ -182,12 +205,8 @@ internal class ReworkedTerminalView(
     terminalInput.sendBytes(bytes)
   }
 
-  override fun isCommandRunning(): Boolean {
-    // Will work only if there is a shell integration.
-    // If there is no shell integration, then it is always false.
-    val session = sessionFuture.getNow(null) ?: return false
-    return blocksModel.blocks.last().outputStartOffset != -1
-           && !session.isClosed
+  override fun getText(): CharSequence {
+    return getCurEditor().document.immutableCharSequence
   }
 
   override fun getTerminalSize(): TermSize? {
@@ -272,6 +291,7 @@ internal class ReworkedTerminalView(
     sessionModel: TerminalSessionModel,
     encodingManager: TerminalKeyEncodingManager,
     terminalInput: TerminalInput,
+    typeAhead: TerminalTypeAhead?,
     coroutineScope: CoroutineScope,
     scrollingModel: TerminalOutputScrollingModel?,
     fusCursorPainterListener: TerminalFusCursorPainterListener?,
@@ -312,7 +332,7 @@ internal class ReworkedTerminalView(
       addTopAndBottomInsets(editor)
     }
 
-    val eventsHandler = TerminalEventsHandlerImpl(sessionModel, editor, encodingManager, terminalInput, settings, scrollingModel)
+    val eventsHandler = TerminalEventsHandlerImpl(sessionModel, editor, encodingManager, terminalInput, settings, scrollingModel, model, typeAhead)
     setupKeyEventDispatcher(editor, settings, eventsHandler, parentDisposable)
     setupMouseListener(editor, sessionModel, settings, eventsHandler, parentDisposable)
 
@@ -343,11 +363,14 @@ internal class ReworkedTerminalView(
   }
 
   private fun createOutputEditor(settings: JBTerminalSystemSettingsProviderBase, parentDisposable: Disposable): EditorEx {
-    val document = DocumentImpl("", true)
+    val document = createDocument(withLanguage = true)
     val editor = createEditor(document, settings, parentDisposable)
     editor.putUserData(TerminalDataContextUtils.IS_OUTPUT_MODEL_EDITOR_KEY, true)
     editor.settings.isUseSoftWraps = true
     editor.useTerminalDefaultBackground(parentDisposable = this)
+
+    BackgroundHighlightingUtil.disableBackgroundHighlightingForeverIn(editor)
+    TextEditorProvider.putTextEditor(editor, TerminalOutputTextEditor(editor))
 
     Disposer.register(parentDisposable) {
       EditorFactory.getInstance().releaseEditor(editor)
@@ -356,7 +379,7 @@ internal class ReworkedTerminalView(
   }
 
   private fun createAlternateBufferEditor(settings: JBTerminalSystemSettingsProviderBase, parentDisposable: Disposable): EditorEx {
-    val document = DocumentImpl("", true)
+    val document = createDocument(withLanguage = false)
     val editor = createEditor(document, settings, parentDisposable)
     editor.putUserData(TerminalDataContextUtils.IS_ALTERNATE_BUFFER_MODEL_EDITOR_KEY, true)
     editor.useTerminalDefaultBackground(parentDisposable = this)
@@ -411,14 +434,17 @@ internal class ReworkedTerminalView(
     }
   }
 
+  private fun createDocument(withLanguage: Boolean): Document {
+    return if (withLanguage) {
+      FileDocumentManager.getInstance().getDocument(TerminalOutputVirtualFile())!!
+    }
+    else DocumentImpl("", true)
+  }
+
   override fun dispose() {}
 
   override fun connectToTty(ttyConnector: TtyConnector, initialTermSize: TermSize) {
     error("connectToTty is not supported in ReworkedTerminalView")
-  }
-
-  private fun addFocusListener(parentDisposable: Disposable, listener: FocusListener) {
-    terminalPanel.addFocusListener(parentDisposable, listener)
   }
 
   private inner class TerminalPanel(initialContent: Editor) : BorderLayoutPanel(), UiDataProvider, TerminalPanelMarker {
@@ -445,7 +471,8 @@ internal class ReworkedTerminalView(
 
     override fun uiDataSnapshot(sink: DataSink) {
       sink[CommonDataKeys.EDITOR] = curEditor
-      sink[TerminalInput.KEY] = terminalInput
+      sink[TerminalInput.DATA_KEY] = terminalInput
+      sink[TerminalOutputModel.KEY] = outputModel
       sink[TerminalSearchController.KEY] = terminalSearchController
     }
 

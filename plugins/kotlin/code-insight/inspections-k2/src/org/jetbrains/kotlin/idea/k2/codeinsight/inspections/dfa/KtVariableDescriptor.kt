@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections.dfa
 
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.JvmVariableDescriptor
+import com.intellij.codeInspection.dataFlow.types.DfPrimitiveType
 import com.intellij.codeInspection.dataFlow.types.DfType
 import com.intellij.codeInspection.dataFlow.value.DfaValue
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory
@@ -48,7 +49,11 @@ class KtVariableDescriptor(
                 is KaPropertySymbol, is KaJavaFieldSymbol -> return@analyze symbol.isVal
                 is KaLocalVariableSymbol -> {
                     if (symbol.isVal) return@analyze true
-                    val psiElement = symbol.psi?.parent as? KtElement
+                    val psiElement = when (val declaration = symbol.psi) {
+                        is KtProperty -> declaration.parent
+                        is KtDestructuringDeclarationEntry -> (declaration.parent as? KtDestructuringDeclaration)?.parent
+                        else -> null
+                    } as? KtElement
                     if (psiElement == null) return@analyze true
                     return@analyze psiElement
                 }
@@ -60,6 +65,17 @@ class KtVariableDescriptor(
             is KtElement -> !getVariablesChangedInNestedFunctions(result).contains(this@KtVariableDescriptor)
             else -> false
         }
+    }
+
+    override fun createValue(
+        factory: DfaValueFactory,
+        qualifier: DfaValue?
+    ): DfaValue {
+        if (qualifier is DfaVariableValue) {
+            if (qualifier.dfType is DfPrimitiveType) return factory.unknown
+            return factory.varFactory.createVariableValue(this, qualifier)
+        }
+        return factory.unknown
     }
 
     override fun isInlineClassReference(): Boolean = inline
@@ -134,7 +150,7 @@ class KtVariableDescriptor(
                     PsiTreeUtil.processElements(scope) { e ->
                         if (e !is KtSimpleNameExpression || !e.readWriteAccess(false).isWrite) return@processElements true
                         val target = e.mainReference.resolve()
-                        if (target !is KtProperty || !target.isLocal ||
+                        if (!(target is KtProperty && target.isLocal || target is KtDestructuringDeclarationEntry) ||
                             !PsiTreeUtil.isAncestor(scope, target, true)
                         ) return@processElements true
                         var parentScope: KtFunction?
@@ -150,7 +166,7 @@ class KtVariableDescriptor(
                             break
                         }
                         if (parentScope != null && PsiTreeUtil.isAncestor(scope, parentScope, true)) {
-                            result.add(target.symbol.variableDescriptor())
+                            result.add((target.symbol as KaVariableSymbol).variableDescriptor())
                         }
                         return@processElements true
                     }

@@ -6,11 +6,13 @@ import com.intellij.psi.impl.cache.TypeAnnotationContainer;
 import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.compiled.ClsJavaCodeReferenceElementImpl;
 import com.intellij.psi.impl.java.stubs.JavaClassReferenceListElementType;
+import com.intellij.psi.impl.java.stubs.JavaStubElementType;
 import com.intellij.psi.impl.java.stubs.PsiClassReferenceListStub;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.tree.java.IJavaElementType;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -21,7 +23,7 @@ public class PsiClassReferenceListStubImpl extends StubBase<PsiReferenceList> im
   private final TypeInfo @NotNull [] myInfos;
   private volatile PsiClassType [] myTypes;
 
-  public PsiClassReferenceListStubImpl(@NotNull JavaClassReferenceListElementType type, StubElement parent, String @NotNull [] names) {
+  public PsiClassReferenceListStubImpl(@NotNull IJavaElementType type, StubElement parent, String @NotNull [] names) {
     this(type, parent, ContainerUtil.map2Array(
       ContainerUtil.filter(names, PsiClassReferenceListStubImpl::isCorrectGenericSequence),
       TypeInfo.class,
@@ -29,7 +31,7 @@ public class PsiClassReferenceListStubImpl extends StubBase<PsiReferenceList> im
     );
   }
 
-  public PsiClassReferenceListStubImpl(@NotNull JavaClassReferenceListElementType type, StubElement parent, 
+  public PsiClassReferenceListStubImpl(@NotNull IJavaElementType type, StubElement parent,
                                        TypeInfo @NotNull [] infos) {
     super(parent, type);
     for (TypeInfo info : infos) {
@@ -49,7 +51,7 @@ public class PsiClassReferenceListStubImpl extends StubBase<PsiReferenceList> im
   }
   
   private boolean shouldSkipSoleObject() {
-    final boolean compiled = ((JavaClassReferenceListElementType)getStubType()).isCompiled(this);
+    final boolean compiled = JavaStubElementType.isCompiled(this);
     return compiled && myInfos.length == 1 && myInfos[0].getKind() == TypeInfo.TypeKind.JAVA_LANG_OBJECT &&
            myInfos[0].getTypeAnnotations() == TypeAnnotationContainer.EMPTY;
   }
@@ -57,7 +59,7 @@ public class PsiClassReferenceListStubImpl extends StubBase<PsiReferenceList> im
   private PsiClassType @NotNull [] createTypes() {
     PsiClassType[] types = myInfos.length == 0 ? PsiClassType.EMPTY_ARRAY : new PsiClassType[myInfos.length];
 
-    final boolean compiled = ((JavaClassReferenceListElementType)getStubType()).isCompiled(this);
+    final boolean compiled = JavaStubElementType.isCompiled(this);
     if (compiled) {
       if (shouldSkipSoleObject()) return PsiClassType.EMPTY_ARRAY;
       for (int i = 0; i < types.length; i++) {
@@ -122,7 +124,7 @@ public class PsiClassReferenceListStubImpl extends StubBase<PsiReferenceList> im
 
   @Override
   public @NotNull PsiReferenceList.Role getRole() {
-    return JavaClassReferenceListElementType.elementTypeToRole(getStubType());
+    return JavaClassReferenceListElementType.elementTypeToRole(getElementType());
   }
 
   @Override

@@ -6,7 +6,7 @@ from django.http.response import HttpResponse, HttpResponseBase
 from django.urls.resolvers import URLResolver
 
 def convert_exception_to_response(
-    get_response: Callable[[HttpRequest], HttpResponseBase | Awaitable[HttpResponseBase]]
+    get_response: Callable[[HttpRequest], HttpResponseBase | Awaitable[HttpResponseBase]],
 ) -> Callable[[HttpRequest], HttpResponseBase | Awaitable[HttpResponseBase]]: ...
 def response_for_exception(request: HttpRequest, exc: Exception) -> HttpResponse: ...
 def get_exception_response(

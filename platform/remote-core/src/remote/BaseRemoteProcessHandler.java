@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remote;
 
 import com.intellij.execution.CommandLineUtil;
@@ -54,7 +54,7 @@ public class BaseRemoteProcessHandler<T extends RemoteProcess> extends BaseProce
   public void startNotify() {
     notifyTextAvailable(getCommandLineForLog() + '\n', ProcessOutputTypes.SYSTEM);
 
-    addProcessListener(new ProcessAdapter() {
+    addProcessListener(new ProcessListener() {
       @Override
       public void startNotified(final @NotNull ProcessEvent event) {
         try {

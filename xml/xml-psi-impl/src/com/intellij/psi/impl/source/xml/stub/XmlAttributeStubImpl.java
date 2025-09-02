@@ -3,6 +3,7 @@ package com.intellij.psi.impl.source.xml.stub;
 
 import com.intellij.psi.impl.source.xml.XmlStubBasedAttribute;
 import com.intellij.psi.stubs.*;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,7 +19,7 @@ public class XmlAttributeStubImpl extends StubBase<XmlStubBasedAttribute> implem
 
   public XmlAttributeStubImpl(@Nullable StubElement<?> parent,
                        @NotNull StubInputStream dataStream,
-                       @NotNull IStubElementType<? extends XmlAttributeStubImpl, ? extends XmlStubBasedAttribute> elementType)
+                       @NotNull IElementType elementType)
     throws IOException {
     super(parent, elementType);
     name = notNull(StringRef.toString(dataStream.readName()), "");
@@ -27,13 +28,13 @@ public class XmlAttributeStubImpl extends StubBase<XmlStubBasedAttribute> implem
 
   public XmlAttributeStubImpl(@NotNull XmlStubBasedAttribute psi,
                        @Nullable StubElement<?> parent,
-                       @NotNull IStubElementType<? extends XmlAttributeStubImpl, ? extends XmlStubBasedAttribute> elementType) {
+                       @NotNull IElementType elementType) {
     super(parent, elementType);
     name = psi.getName();
     value = psi.getValue();
   }
 
-  void serialize(StubOutputStream stream) throws IOException {
+  public void serialize(StubOutputStream stream) throws IOException {
     stream.writeName(name);
     stream.writeName(value);
   }

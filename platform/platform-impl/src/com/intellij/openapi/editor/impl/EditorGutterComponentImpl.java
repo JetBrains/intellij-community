@@ -38,6 +38,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.impl.InternalUICustomization;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.ColorKey;
@@ -72,6 +73,8 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
+import com.intellij.platform.ide.core.permissions.Permission;
+import com.intellij.platform.ide.core.permissions.RequiresPermissions;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.*;
@@ -380,7 +383,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
 
   @Override
   public void paintComponent(Graphics g_) {
-    ReadAction.run(() -> {
+    EditorThreading.run(() -> {
       Rectangle clip = g_.getClipBounds();
       if (clip == null || clip.isEmpty()) {
         return;
@@ -666,7 +669,15 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
 
   private void paintLineMarkers(Graphics2D g, int firstVisibleOffset, int lastVisibleOffset, int firstVisibleLine, int lastVisibleLine) {
     if (isLineMarkersShown()) {
-      paintGutterRenderers(g, firstVisibleOffset, lastVisibleOffset, firstVisibleLine, lastVisibleLine);
+      InternalUICustomization service = InternalUICustomization.getInstance();
+      Graphics graphics = g.create();
+      Graphics2D g2 = (Graphics2D) ((service != null) ? service.preserveGraphics(graphics) : graphics);
+      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+      try {
+        paintGutterRenderers(g2, firstVisibleOffset, lastVisibleOffset, firstVisibleLine, lastVisibleLine);
+      } finally {
+        g2.dispose();
+      }
     }
   }
 
@@ -1241,7 +1252,6 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
   public @Nullable Rectangle getActiveGutterRendererRectangle(int lineNum, String accessibleName) {
     int firstVisibleOffset = myEditor.visualLineStartOffset(lineNum);
     int lastVisibleOffset = EditorUtil.getVisualLineEndOffset(myEditor, lineNum);
-    List<Pair<ActiveGutterRenderer, Rectangle>> rectangles = new ArrayList<>();
     Rectangle[] rectangle = {null};
     processRangeHighlighters(firstVisibleOffset, lastVisibleOffset, highlighter -> {
       LineMarkerRenderer renderer = highlighter.getLineMarkerRenderer();
@@ -2408,7 +2418,9 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
 
   private boolean checkDumbAware(@NotNull Object possiblyDumbAware) {
     Project project = myEditor.getProject();
-    return project != null && DumbService.getInstance(project).isUsableInCurrentContext(possiblyDumbAware);
+    return project == null
+           ? DumbService.isDumbAware(possiblyDumbAware)
+           : DumbService.getInstance(project).isUsableInCurrentContext(possiblyDumbAware);
   }
 
   private void notifyNotDumbAware() {
@@ -2432,9 +2444,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
     addLoadingIconForGutterMark(info);
 
     AnActionEvent actionEvent = AnActionEvent.createFromAnAction(action, e, place, context);
-    if (ActionUtil.lastUpdateAndCheckDumb(action, actionEvent, true)) {
-      ActionUtil.performActionDumbAwareWithCallbacks(action, actionEvent);
-    }
+    ActionUtil.performAction(action, actionEvent);
   }
 
   @Override
@@ -2512,7 +2522,8 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
     updateSize();
   }
 
-  private final class CloseAnnotationsAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification.BackendOnly {
+  private final class CloseAnnotationsAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification.BackendOnly,
+                                                                                RequiresPermissions {
     CloseAnnotationsAction() {
       super(EditorBundle.messagePointer("close.editor.annotations.action.name"));
     }
@@ -2520,6 +2531,11 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       closeAllAnnotations();
+    }
+
+    @Override
+    public @NotNull Collection<@NotNull Permission> getRequiredPermissions() {
+      return List.of();
     }
   }
 

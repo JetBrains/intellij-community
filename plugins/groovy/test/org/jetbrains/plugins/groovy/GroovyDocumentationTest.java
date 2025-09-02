@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy;
 
 import com.intellij.codeInsight.navigation.CtrlMouseHandler;
@@ -47,7 +47,7 @@ public class GroovyDocumentationTest extends LightJavaCodeInsightFixtureTestCase
         """,
       """
         <div class="bottom"><icon src="AllIcons.Nodes.Class">&nbsp;<a href="psi_element://Gr"><code><span style="color:#000000;">Gr</span></code></a></div><div class='definition'><pre><span style="color:#000043;font-weight:bold;">void</span>&nbsp;<span style="color:#000000;">foo</span><span style="">(</span><span style="">)</span></pre></div><div class='content'>
-             Use <a href="psi_element://Gr#bar()"><code><span style="color:#0000ff;">bar</span><span style="">()</span></code></a> from class <a href="psi_element://Gr"><code><span style="color:#0000ff;">Gr</span></code></a> instead
+             Use <a href="psi_element://Gr#bar()"><code>#bar()</code></a> from class <a href="psi_element://Gr"><code><span style="color:#0000ff;">Gr</span></code></a> instead
            </div><table class='sections'></table>""");
   }
 
@@ -62,7 +62,7 @@ public class GroovyDocumentationTest extends LightJavaCodeInsightFixtureTestCase
              """,
            """
              <div class="bottom"><icon src="AllIcons.Nodes.Class">&nbsp;<a href="psi_element://_"><code><span style="color:#000000;">_</span></code></a></div><div class='definition'><pre><a href="psi_element://java.lang.Object"><code><span style="color:#000000;">Object</span></code></a>&nbsp;<span style="color:#000000;">docs</span><span style="">(</span><span style="">)</span></pre></div><div class='content'>
-                check this out <a href="psi_element://java.lang.CharSequence"><code><span style="color:#0000ff;">character sequences</span></code></a>
+                check this out <a href="psi_element://java.lang.CharSequence"><code>character sequences</code></a>
               </div><table class='sections'></table>""");
   }
 
@@ -71,7 +71,7 @@ public class GroovyDocumentationTest extends LightJavaCodeInsightFixtureTestCase
       """
         class Main {
           /**
-           * Link 1: {@link #foo(String[])}\s
+           * Link 1: {@link #foo(String[])}
            * <p>
            * Link 2: {@link #bar(String[])}
            * <p>
@@ -86,11 +86,11 @@ public class GroovyDocumentationTest extends LightJavaCodeInsightFixtureTestCase
         """,
       """
         <div class="bottom"><icon src="AllIcons.Nodes.Class">&nbsp;<a href="psi_element://Main"><code><span style="color:#000000;">Main</span></code></a></div><div class='definition'><pre><span style="color:#000043;font-weight:bold;">static</span>&nbsp;<span style="color:#000043;font-weight:bold;">void</span>&nbsp;<span style="color:#000000;">docs</span><span style="">(</span><span style="">)</span></pre></div><div class='content'>
-             Link 1: <a href="psi_element://Main#foo(java.lang.String[])"><code><span style="color:#0000ff;">foo</span><span style="">(String[])</span></code></a>\s
+             Link 1: <a href="psi_element://Main#foo(java.lang.String[])"><code>#foo(String[])</code></a>
              <p>
-             Link 2: <a href="psi_element://Main#bar(java.lang.String[])"><code><span style="color:#0000ff;">bar</span><span style="">(String[])</span></code></a>
+             Link 2: <a href="psi_element://Main#bar(java.lang.String[])"><code>#bar(String[])</code></a>
              <p>
-             Link 3: <a href="psi_element://Main#bar(java.lang.String[], java.lang.Integer)"><code><span style="color:#0000ff;">bar</span><span style="">(String[],&#32;Integer)</span></code></a>
+             Link 3: <a href="psi_element://Main#bar(java.lang.String[], java.lang.Integer)"><code>#bar(String[],Integer)</code></a>
            </div><table class='sections'></table>""");
   }
 

@@ -1,6 +1,6 @@
 import p.List;
 
-public static void main(Strin<caret>g[] args) {
+void ma<caret>in() {
     List a = null;
-    System.out.println("Hello, world!");
+    IO.println("Hello, world!");
 }

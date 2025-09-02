@@ -6,5 +6,5 @@ import org.jetbrains.annotations.NotNull;
 
 
 public interface TestModeFlagListener {
-  void testModeFlagChanged(@NotNull Key<?> key, Object value);
+  <T> void testModeFlagChanged(@NotNull Key<T> key, T value);
 }

@@ -103,8 +103,8 @@ public class BackwardDependenciesBuilder extends DependenciesBuilder {
           PsiFile file = psiManager.findFile(virtualFile);
           if (file != null) {
             final PsiElement navigationElement = file.getNavigationElement();
-            if (navigationElement instanceof PsiFile) {
-              file = (PsiFile)navigationElement;
+            if (navigationElement instanceof PsiFile psiFile) {
+              file = psiFile;
             }
             final Map<PsiFile, Set<PsiFile>> dependencies = builder.getDependencies();
             for (final PsiFile psiFile : dependencies.keySet()) {

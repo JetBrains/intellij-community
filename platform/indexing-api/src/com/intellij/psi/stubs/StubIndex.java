@@ -14,11 +14,8 @@ import com.intellij.util.Processors;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.IdFilter;
-import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.*;
 import org.jetbrains.annotations.ApiStatus.Internal;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Supplier;
@@ -40,10 +37,10 @@ public abstract class StubIndex {
    * @deprecated use {@link #getElements(StubIndexKey, Object, Project, GlobalSearchScope, Class)}
    */
   @Deprecated(forRemoval = true)
-  <Key, Psi extends PsiElement> Collection<Psi> get(@NotNull StubIndexKey<Key, Psi> indexKey,
-                                                    @NotNull Key key,
-                                                    @NotNull Project project,
-                                                    final @Nullable GlobalSearchScope scope) {
+  @Unmodifiable <Key, Psi extends PsiElement> Collection<Psi> get(@NotNull StubIndexKey<Key, Psi> indexKey,
+                                                                  @NotNull Key key,
+                                                                  @NotNull Project project,
+                                                                  final @Nullable GlobalSearchScope scope) {
     List<Psi> result = new SmartList<>();
     processElements(indexKey, key, project, scope, (Class<Psi>)PsiElement.class, Processors.cancelableCollectProcessor(result));
     return result;
@@ -68,7 +65,7 @@ public abstract class StubIndex {
     return processElements(indexKey, key, project, scope, requiredClass, processor);
   }
 
-  public abstract @NotNull <Key> Collection<Key> getAllKeys(@NotNull StubIndexKey<Key, ?> indexKey, @NotNull Project project);
+  public abstract @NotNull @Unmodifiable <Key> Collection<Key> getAllKeys(@NotNull StubIndexKey<Key, ?> indexKey, @NotNull Project project);
 
   public <K> boolean processAllKeys(@NotNull StubIndexKey<K, ?> indexKey, @NotNull Project project, @NotNull Processor<? super K> processor) {
     return processAllKeys(indexKey, processor, GlobalSearchScope.allScope(project), null);
@@ -85,20 +82,20 @@ public abstract class StubIndex {
     return processAllKeys(indexKey, Objects.requireNonNull(scope.getProject()), processor);
   }
 
-  public static @NotNull <Key, Psi extends PsiElement> Collection<Psi> getElements(@NotNull StubIndexKey<Key, Psi> indexKey,
-                                                                                   @NotNull Key key,
-                                                                                   final @NotNull Project project,
-                                                                                   final @Nullable GlobalSearchScope scope,
-                                                                                   @NotNull Class<Psi> requiredClass) {
+  public static @NotNull @Unmodifiable <Key, Psi extends PsiElement> Collection<Psi> getElements(@NotNull StubIndexKey<Key, Psi> indexKey,
+                                                                                                 @NotNull Key key,
+                                                                                                 final @NotNull Project project,
+                                                                                                 final @Nullable GlobalSearchScope scope,
+                                                                                                 @NotNull Class<Psi> requiredClass) {
     return getElements(indexKey, key, project, scope, null, requiredClass);
   }
 
-  public static @NotNull <Key, Psi extends PsiElement> Collection<Psi> getElements(@NotNull StubIndexKey<Key, Psi> indexKey,
-                                                                                   @NotNull Key key,
-                                                                                   final @NotNull Project project,
-                                                                                   final @Nullable GlobalSearchScope scope,
-                                                                                   @Nullable IdFilter idFilter,
-                                                                                   @NotNull Class<Psi> requiredClass) {
+  public static @NotNull @Unmodifiable <Key, Psi extends PsiElement> Collection<Psi> getElements(@NotNull StubIndexKey<Key, Psi> indexKey,
+                                                                                                 @NotNull Key key,
+                                                                                                 final @NotNull Project project,
+                                                                                                 final @Nullable GlobalSearchScope scope,
+                                                                                                 @Nullable IdFilter idFilter,
+                                                                                                 @NotNull Class<Psi> requiredClass) {
     final List<Psi> result = new SmartList<>();
     Processor<Psi> processor = Processors.cancelableCollectProcessor(result);
     getInstance().processElements(indexKey, key, project, scope, idFilter, requiredClass, processor);
@@ -117,10 +114,10 @@ public abstract class StubIndex {
    * @deprecated use {@link StubIndex#getContainingFilesIterator(StubIndexKey, Object, Project, GlobalSearchScope)}
    */
   @Deprecated(forRemoval = true)
-  public @NotNull <Key> Set<VirtualFile> getContainingFiles(@NotNull StubIndexKey<Key, ?> indexKey,
-                                                   @NotNull @NonNls Key dataKey,
-                                                   @NotNull Project project,
-                                                   @NotNull GlobalSearchScope scope) {
+  public @NotNull <Key> @Unmodifiable Set<VirtualFile> getContainingFiles(@NotNull StubIndexKey<Key, ?> indexKey,
+                                                                          @NotNull @NonNls Key dataKey,
+                                                                          @NotNull Project project,
+                                                                          @NotNull GlobalSearchScope scope) {
     return ContainerUtil.newHashSet(getContainingFilesIterator(indexKey, dataKey, project, scope));
   }
 

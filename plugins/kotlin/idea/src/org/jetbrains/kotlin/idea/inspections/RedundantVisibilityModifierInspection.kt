@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.inspections
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool
-import com.intellij.codeInspection.IntentionWrapper
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
@@ -14,6 +13,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.asQuickFix
 import org.jetbrains.kotlin.idea.core.implicitVisibility
 import org.jetbrains.kotlin.idea.inspections.RedundantVisibilityModifierInspection.Holder.getRedundantVisibility
 import org.jetbrains.kotlin.idea.quickfix.RemoveModifierFixBase
@@ -37,7 +37,7 @@ class RedundantVisibilityModifierInspection : AbstractKotlinInspection(), Cleanu
             holder.registerProblem(
                 visibilityModifier,
                 KotlinBundle.message("redundant.visibility.modifier"),
-                IntentionWrapper(RemoveModifierFixBase(declaration, redundantVisibility, isRedundant = true))
+                RemoveModifierFixBase(declaration, redundantVisibility, isRedundant = true).asQuickFix(),
             )
         })
 

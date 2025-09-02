@@ -28,9 +28,8 @@ import javax.swing.tree.TreePath
 import kotlin.math.min
 
 class SettingsSyncPromotion : SettingsDialogListener {
-  override fun afterApply(settingsEditor: AbstractEditor) {
-    if (settingsEditor !is SettingsEditor
-        || SettingsSyncSettings.Companion.getInstance().syncEnabled
+  override fun afterApply(settingsEditor: SettingsEditor, modifiedConfigurableIds: Set<String>) {
+    if (SettingsSyncSettings.Companion.getInstance().syncEnabled
         || SettingsSyncLocalSettings.Companion.getInstance().knownAndAppliedServerId != null
         || !Registry.Companion.`is`("settingsSync.promotion.in.settings", false)) {
       return

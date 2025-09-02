@@ -19,10 +19,7 @@ import com.intellij.util.Suppressions;
 import com.intellij.util.TimeoutUtil;
 import com.sun.jna.platform.win32.WinDef;
 import com.sun.tools.attach.VirtualMachine;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.VisibleForTesting;
+import org.jetbrains.annotations.*;
 
 import java.io.*;
 import java.net.*;
@@ -32,6 +29,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -43,8 +41,10 @@ import static java.util.Objects.requireNonNullElse;
  * The class ensures that only one IDE instance is running on the given pair of configuration/cache directories
  * and participates in the CLI bypassing arguments and relaying back exit codes and error messages.
  */
-final class DirectoryLock {
-  static final class CannotActivateException extends Exception implements ExceptionWithAttachments {
+@ApiStatus.Internal
+public final class DirectoryLock {
+  @ApiStatus.Internal
+  public static final class CannotActivateException extends Exception implements ExceptionWithAttachments {
     private final @Nls String myMessage;
     private final Attachment[] myAttachments;
 
@@ -62,7 +62,7 @@ final class DirectoryLock {
     }
 
     @Override
-    public Attachment @NotNull [] getAttachments() {
+    public @NotNull Attachment @NotNull [] getAttachments() {
       return myAttachments;
     }
   }
@@ -93,7 +93,7 @@ final class DirectoryLock {
 
   private volatile @Nullable ServerSocketChannel myServerChannel = null;
 
-  DirectoryLock(@NotNull Path configPath, @NotNull Path systemPath, @NotNull Function<List<String>, CliResult> processor) {
+  public DirectoryLock(@NotNull Path configPath, @NotNull Path systemPath, @NotNull Function<List<String>, CliResult> processor) {
     myPortFile = systemPath.resolve(SpecialConfigFiles.PORT_FILE);
     myLockFile = configPath.resolve(SpecialConfigFiles.LOCK_FILE);
 
@@ -148,7 +148,7 @@ final class DirectoryLock {
    * Returns {@code null} on successfully locking the directories, a non-null value on successfully activating another instance,
    * or throws a {@link CannotActivateException}.
    */
-  @Nullable CliResult lockOrActivate(@NotNull Path currentDirectory, @NotNull List<String> args) throws CannotActivateException, IOException {
+  public @Nullable CliResult lockOrActivate(@NotNull Path currentDirectory, @NotNull List<String> args) throws CannotActivateException, IOException {
     var configDir = NioFiles.createDirectories(myLockFile.getParent());
     var systemDir = NioFiles.createDirectories(myPortFile.getParent());
     if (Files.isSameFile(systemDir, configDir)) {
@@ -227,7 +227,8 @@ final class DirectoryLock {
     throw cae;
   }
 
-  void dispose() {
+  @VisibleForTesting
+  public void dispose() {
     dispose(true);
   }
 
@@ -399,7 +400,7 @@ final class DirectoryLock {
 
   //<editor-fold desc="Helpers">
   @VisibleForTesting
-  @Nullable Path getRedirectedPortFile() {
+  public @Nullable Path getRedirectedPortFile() {
     return myRedirectedPortFile;
   }
 
@@ -410,6 +411,7 @@ final class DirectoryLock {
   @SuppressWarnings("StringBufferReplaceableByString")
   private String diagnostic() {
     var sb = new StringBuilder();
+    sb.append("Timestamp: ").append(LocalDateTime.now()).append('\n');
     sb.append("Port file: ").append(myPortFile).append('\n');
     sb.append("Redirected: ").append(myRedirectedPortFile).append('\n');
     sb.append("Fallback: ").append(myFallbackMode).append('\n');

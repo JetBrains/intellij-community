@@ -68,6 +68,20 @@ open class MarketplacePluginDownloadService {
       })
   }
 
+  fun checkPluginCanBeDownloaded(pluginUrl: String, indicator: ProgressIndicator?): Boolean {
+    try {
+      return HttpRequests.request(pluginUrl)
+        .setHeadersViaTuner()
+        .gzip(false)
+        .productNameAsUserAgent()
+        .connect { request ->
+          request.readError() == null
+        }
+    } catch (_: IOException) {
+      return false
+    }
+  }
+
   @Throws(IOException::class)
   fun downloadPluginViaBlockMap(pluginUrl: String, prevPlugin: Path, indicator: ProgressIndicator?): Path {
     val prevPluginArchive = getPrevPluginArchive(prevPlugin)

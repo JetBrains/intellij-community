@@ -115,16 +115,15 @@ internal class VariablesHighlightingVisitor(holder: HighlightInfoHolder, binding
                   KotlinBaseHighlightingBundle.message("smart.cast.to.0", DescriptorRenderer.FQ_NAMES_IN_TYPES.renderType(defaultType))
                 )
             } else if (smartCast is MultipleSmartCasts) {
-                for ((call, type) in smartCast.map) {
-                    highlightName(
-                      getSmartCastTarget(expression),
-                      KotlinHighlightInfoTypeSemanticNames.SMART_CAST_VALUE,
-                      KotlinBaseFe10HighlightingBundle.message(
+                val messages = smartCast.map.map { (call, type) ->
+                    KotlinBaseFe10HighlightingBundle.message(
                         "smart.cast.to.0.for.1.call",
                         DescriptorRenderer.FQ_NAMES_IN_TYPES.renderType(type),
-                        (call?.callElement as? PsiNamedElement)?.name?:"null"
-                      )
+                        (call?.callElement as? PsiNamedElement)?.name ?: "null"
                     )
+                }.toSet()
+                for (message in messages) {
+                    highlightName(getSmartCastTarget(expression), KotlinHighlightInfoTypeSemanticNames.SMART_CAST_VALUE, message)
                 }
             }
         }
@@ -181,7 +180,9 @@ internal class VariablesHighlightingVisitor(holder: HighlightInfoHolder, binding
             val declaration = elementToHighlight.parent
             if (descriptor is LocalVariableDescriptor && descriptor !is SyntheticFieldDescriptor && !(
                                 declaration is KtProperty && declaration.nameIdentifier == elementToHighlight && textAttributesForKtPropertyDeclaration(declaration) == KotlinHighlightInfoTypeSemanticNames.LOCAL_VARIABLE
-                                || declaration is KtDestructuringDeclarationEntry && declaration.nameIdentifier == elementToHighlight)) {
+                                || declaration is KtDestructuringDeclarationEntry && declaration.nameIdentifier == elementToHighlight
+                                || declaration is KtParameter
+                    )) {
                 // local was highlighted in DeclarationHighlightingVisitor
                 highlightName(elementToHighlight, KotlinHighlightInfoTypeSemanticNames.LOCAL_VARIABLE)
             }

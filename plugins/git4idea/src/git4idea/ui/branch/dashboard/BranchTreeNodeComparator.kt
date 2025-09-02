@@ -1,11 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch.dashboard
 
-import com.intellij.openapi.util.text.NaturalComparator
+import git4idea.GitReference
 
 internal val BranchTreeNodeComparator = compareBy<BranchNodeDescriptor> {
   getOrderWeight(it)
-} then compareBy(NaturalComparator.INSTANCE) {
+} then compareBy(GitReference.REFS_NAMES_COMPARATOR) {
   it.displayName
 }
 

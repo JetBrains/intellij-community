@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.remote.impl;
 
 import com.intellij.openapi.externalSystem.model.DataNode;
@@ -17,7 +17,7 @@ import java.util.*;
  * <p/>
  * Thread-safe.
  */
-public class GradleLibraryNamesMixer {
+public final class GradleLibraryNamesMixer {
 
   /**
    * Holds mappings like {@code ('file name'; boolean)} where {@code 'file name'} defines 'too common' file/dir
@@ -184,7 +184,7 @@ public class GradleLibraryNamesMixer {
   /**
    * Wraps target library and hold auxiliary information required for the processing.
    */
-  private static class Wrapped {
+  private static final class Wrapped {
     /** Holds list of files that may be used for name generation. */
     public final Set<File> files = new HashSet<>();
     /** File that was used for the current name generation. */

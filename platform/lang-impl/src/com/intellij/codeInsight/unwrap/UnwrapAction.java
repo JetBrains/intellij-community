@@ -21,7 +21,7 @@ final class UnwrapAction extends BaseCodeInsightAction{
   }
 
   @Override
-  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    return !LanguageUnwrappers.INSTANCE.allForLanguage(file.getLanguage()).isEmpty();
+  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    return !LanguageUnwrappers.INSTANCE.allForLanguage(psiFile.getLanguage()).isEmpty();
   }
 }

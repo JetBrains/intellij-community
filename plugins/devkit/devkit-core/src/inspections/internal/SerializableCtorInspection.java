@@ -30,7 +30,8 @@ public final class SerializableCtorInspection extends DevKitUastInspectionBase {
 
   private static final String PROPERTY_MAPPING_ANNOTATION = "com.intellij.serialization.PropertyMapping";
 
-  SerializableCtorInspection() {
+  @VisibleForTesting
+  public SerializableCtorInspection() {
     super(UClass.class);
   }
 

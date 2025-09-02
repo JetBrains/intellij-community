@@ -1,0 +1,13 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+
+context(c1: String)
+fun foo(c2: Int) {
+}
+
+fun bar() {
+    with("baz") {
+        with(42) {
+            foo(this)
+        }
+    }
+}

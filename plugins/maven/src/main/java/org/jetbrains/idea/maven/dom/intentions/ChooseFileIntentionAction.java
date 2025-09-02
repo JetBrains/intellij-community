@@ -46,15 +46,15 @@ public final class ChooseFileIntentionAction implements IntentionAction {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!MavenDomUtil.isMavenFile(file)) return false;
-    MavenDomDependency dep = getDependency(file, editor);
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    if (!MavenDomUtil.isMavenFile(psiFile)) return false;
+    MavenDomDependency dep = getDependency(psiFile, editor);
     return dep != null && "system".equals(dep.getScope().getStringValue());
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    final MavenDomDependency dep = getDependency(file, editor);
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
+    final MavenDomDependency dep = getDependency(psiFile, editor);
 
     final VirtualFile[] files;
     if (myFileChooser == null) {
@@ -72,7 +72,7 @@ public final class ChooseFileIntentionAction implements IntentionAction {
     if (selectedFile == null) return;
 
     if (dep != null) {
-      if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
+      if (!FileModificationService.getInstance().prepareFileForWrite(psiFile)) return;
       WriteCommandAction.writeCommandAction(project).run(() -> dep.getSystemPath().setValue(selectedFile));
     }
   }

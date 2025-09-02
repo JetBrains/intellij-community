@@ -113,19 +113,16 @@
 
     <group id="ExternalSystemView.DependencyMenu" popup="true"/>
 
-    <group id="ExternalSystemView.ActionsToolbar.LeftPanel">
+    <group id="ExternalSystemView.ActionsToolbar.SyncPanel">
       <reference ref="ExternalSystem.RefreshAllProjects"/>
-<!--      <reference ref="ExternalSystem.AttachProject"/>-->
-      <reference ref="ExternalSystem.DetachProject"/>
-      <!--<reference ref="ExternalSystem.Run/>-->
-    </group>
-    <group id="ExternalSystemView.ActionsToolbar.CenterPanel">
-      <separator/>
-      <reference ref="ExternalSystem.ExpandAll"/>
-      <reference ref="ExternalSystem.CollapseAll"/>
       <reference ref="ExternalSystem.SelectProjectDataToImport"/>
     </group>
-    <group id="ExternalSystemView.ActionsToolbar.RightPanel">
+    <group id="ExternalSystemView.ActionsToolbar.AttachProjectPanel">
+      <reference ref="ExternalSystem.DetachProject"/>
+    </group>
+    <group id="ExternalSystemView.ActionsToolbar.OtherActionsPanel">
+    </group>
+    <group id="ExternalSystemView.ActionsToolbar.RunPanel">
     </group>
 
     <group id="ExternalSystemView.TaskActivationGroup">
@@ -139,11 +136,16 @@
     </group>
 
     <group id="ExternalSystemView.ActionsToolbar">
-      <reference ref="ExternalSystemView.ActionsToolbar.LeftPanel"/>
+      <reference ref="ExternalSystemView.ActionsToolbar.SyncPanel"/>
       <separator/>
-      <reference ref="ExternalSystemView.ActionsToolbar.CenterPanel"/>
+      <reference ref="ExternalSystemView.ActionsToolbar.AttachProjectPanel"/>
       <separator/>
-      <reference ref="ExternalSystemView.ActionsToolbar.RightPanel"/>
+      <reference ref="ExternalSystemView.ActionsToolbar.RunPanel"/>
+      <separator/>
+      <reference ref="ExternalSystemView.ActionsToolbar.OtherActionsPanel"/>
+      <separator/>
+      <reference ref="ExternalSystem.ExpandAll"/>
+      <reference ref="ExternalSystem.CollapseAll"/>
       <separator/>
       <reference ref="ExternalSystem.ShowSettingsGroup"/>
     </group>

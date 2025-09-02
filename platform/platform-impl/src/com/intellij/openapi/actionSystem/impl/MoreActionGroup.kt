@@ -7,13 +7,14 @@ import com.intellij.openapi.actionSystem.ActionUiKind
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 
 open class MoreActionGroup : DefaultActionGroup() {
   init {
     templatePresentation.isPopupGroup = true
     @Suppress("UnresolvedPluginConfigReference") // "fake" group
     templatePresentation.setText(ActionsBundle.groupText("MoreActionGroup"))
-    templatePresentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true)
+    templatePresentation.putClientProperty(ActionUtil.HIDE_DROPDOWN_ICON, true)
     templatePresentation.isHideGroupIfEmpty = true
   }
 

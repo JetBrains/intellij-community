@@ -72,7 +72,7 @@ open class IdeErrorsDialog @ApiStatus.Internal constructor(
   private val myMessagePool: MessagePool,
   private val myProject: Project?,
   private val ijProject: Boolean,
-  defaultMessage: LogMessage?
+  defaultMessage: LogMessage?,
 ) : DialogWrapper(myProject, true), MessagePoolListener, UiDataProvider {
   private val myAcceptedNotices: MutableSet<String>
   private val myMessageClusters: MutableList<MessageCluster> = ArrayList() // exceptions with the same stacktrace
@@ -398,7 +398,10 @@ open class IdeErrorsDialog @ApiStatus.Internal constructor(
     val pluginId = cluster.pluginId
     val plugin = cluster.plugin
     val info = StringBuilder()
-    if (pluginId != null) {
+    if (t is RemoteSerializedThrowable) {
+      info.append("[backend] ")
+    }
+    if (pluginId != null && !t.isSpecialBackendException()) {
       val name = if (plugin != null) plugin.name else pluginId.toString()
       if (plugin != null && (!plugin.isBundled || plugin.allowBundledUpdate())) {
         info.append(DiagnosticBundle.message("error.list.message.blame.plugin.version", name, plugin.version))
@@ -407,17 +410,17 @@ open class IdeErrorsDialog @ApiStatus.Internal constructor(
         info.append(DiagnosticBundle.message("error.list.message.blame.plugin", name))
       }
     }
-    else if (t is AbstractMethodError) {
+    else if (t.isInstance<AbstractMethodError>()) {
       info.append(DiagnosticBundle.message("error.list.message.blame.unknown.plugin"))
     }
-    else if (t is Freeze) {
+    else if (t.isInstance<Freeze>()) {
       info.append(DiagnosticBundle.message("error.list.message.blame.freeze"))
     }
-    else if (t is JBRCrash) {
+    else if (t.isInstance<JBRCrash>()) {
       info.append(DiagnosticBundle.message("error.list.message.blame.jbr.crash"))
     }
-    else if (t is KotlinCompilerCrash) {
-      info.append(DiagnosticBundle.message("error.list.message.blame.kotlin.crash")).append(' ').append(t.version)
+    else if (t.isInstance<KotlinCompilerCrash>()) {
+      info.append(DiagnosticBundle.message("error.list.message.blame.kotlin.crash")).append(' ').append(t.kotlinVersionOrEmpty)
     }
     else {
       info.append(DiagnosticBundle.message("error.list.message.blame.core", ApplicationNamesInfo.getInstance().productName))
@@ -777,7 +780,13 @@ open class IdeErrorsDialog @ApiStatus.Internal constructor(
     "Your effort and dedication don’t go unnoticed. Thank you!",
     "Thank you for making such a big difference with your actions!",
     "I feel so fortunate to have someone like you in my life!",
-    "I’m just grateful to be a part of this journey with you. Stay awesome."
+    "I’m just grateful to be a part of this journey with you. Stay awesome.",
+    "Your presence alone makes a difference—never forget that!",
+    "You’re a gift to those around you. Stay incredible!",
+    "I truly appreciate everything you do—you're amazing!",
+    "You make even the toughest days feel lighter. Thank you!",
+    "The world needs more people like you!",
+    "Thank you for chipping in. Together, we can achieve anything.",
   )
 
   private fun notifySuccessReportAll() {
@@ -861,6 +870,20 @@ open class IdeErrorsDialog @ApiStatus.Internal constructor(
         get() = if (ApplicationManager.getApplication().isInternal) DEFAULT else REPORT_AND_CLEAR_ALL
     }
   }
+
+  private inline fun <reified T : Throwable> Throwable.isBackendInstance() =
+    this is RemoteSerializedThrowable && classFqn == T::class.qualifiedName
+
+  private inline fun <reified T : Throwable> Throwable.isInstance() = this is T || isBackendInstance<T>()
+
+  // Since we do not handle Freezes/Abstract Methods/JBR Crashes gracefully for now. TODO: IJPL-182368
+  private fun Throwable.isSpecialBackendException() =
+    this is RemoteSerializedThrowable &&
+    (isInstance<AbstractMethodError>() || isInstance<Freeze>() || isInstance<JBRCrash>() || isInstance<KotlinCompilerCrash>())
+
+  // This is a very hacky method, since no actual cast is done for `RemoteSerializedThrowable``
+  private val Throwable.kotlinVersionOrEmpty: String
+    get() = (this as? KotlinCompilerCrash)?.version.orEmpty()
 
   @ApiStatus.Internal
   companion object {

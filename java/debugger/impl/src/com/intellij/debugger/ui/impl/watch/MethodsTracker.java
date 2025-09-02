@@ -7,26 +7,41 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.concurrent.CompletableFuture;
+
 /**
  * @author Eugene Zhuravlev
  */
 public class MethodsTracker {
   @SuppressWarnings("SSBasedInspection") private final Object2IntOpenHashMap<Method> myMethodCounter = new Object2IntOpenHashMap<>();
   private final Int2ObjectMap<MethodOccurrence> myCache = new Int2ObjectOpenHashMap<>();
+  private final CompletableFuture<Void> myFinished = new CompletableFuture<>();
 
   public final class MethodOccurrence {
     private final @Nullable Method myMethod;
     private final int myIndex;
-    private final int myFrameIndex;
 
-    private MethodOccurrence(@Nullable Method method, int index, int frameIndex) {
+    private MethodOccurrence(@Nullable Method method, int index) {
       myMethod = method;
       myIndex = index;
-      myFrameIndex = frameIndex;
     }
 
     public @Nullable Method getMethod() {
       return myMethod;
+    }
+
+    /**
+     * @return recursion index, or 0 if this is not a recursive call
+     */
+    public CompletableFuture<Integer> getExactRecursiveIndex() {
+      if (myMethod == null) {
+        return CompletableFuture.completedFuture(0);
+      }
+      return getExactOccurrenceCount(myMethod).thenApply(occurrenceCount -> {
+                                                           if (occurrenceCount <= 1) return -1;
+                                                           return occurrenceCount - myIndex;
+                                                         }
+      );
     }
 
     public int getIndex() {
@@ -37,24 +52,20 @@ public class MethodsTracker {
       return myMethod != null && getOccurrenceCount(myMethod) > 1;
     }
 
-    // check that all methods are not native to be able to drop a frame
-    public boolean canDrop() {
-      for (int i = 0; i <= myFrameIndex + 1; i++) {
-        MethodOccurrence occurrence = myCache.get(i);
-        Method method = occurrence != null ? occurrence.myMethod : null;
-        if (method == null || method.isNative()) {
-          return false;
-        }
-      }
-      return true;
+    MethodOccurrence getMethodOccurrence(int frameIndex) {
+      return myCache.get(frameIndex);
     }
+  }
+
+  public void finish() {
+    myFinished.complete(null);
   }
 
   public MethodOccurrence getMethodOccurrence(int frameIndex, @Nullable Method method) {
     return myCache.computeIfAbsent(frameIndex, __ -> {
       synchronized (myMethodCounter) {
         int occurrence = method != null ? myMethodCounter.addTo(method, 1) : 0;
-        return new MethodOccurrence(method, occurrence, frameIndex);
+        return new MethodOccurrence(method, occurrence);
       }
     });
   }
@@ -63,5 +74,9 @@ public class MethodsTracker {
     synchronized (myMethodCounter) {
       return myMethodCounter.getInt(method);
     }
+  }
+
+  private CompletableFuture<Integer> getExactOccurrenceCount(@Nullable Method method) {
+    return myFinished.thenApply(__ -> myMethodCounter.getInt(method));
   }
 }

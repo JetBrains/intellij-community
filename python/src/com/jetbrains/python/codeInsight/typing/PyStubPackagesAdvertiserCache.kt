@@ -8,7 +8,8 @@ import com.google.common.cache.LoadingCache
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.projectRoots.Sdk
-import com.jetbrains.python.packaging.PyPackageManager
+import com.jetbrains.python.packaging.common.PythonPackageManagementListener
+import com.jetbrains.python.packaging.management.PythonPackageManager.Companion.PACKAGE_MANAGEMENT_TOPIC
 import java.time.Duration
 
 @Service
@@ -28,7 +29,11 @@ class PyStubPackagesAdvertiserCache {
 
   init {
     val connection = ApplicationManager.getApplication().messageBus.connect()
-    connection.subscribe(PyPackageManager.PACKAGE_MANAGER_TOPIC, PyPackageManager.Listener { cache.invalidate(it) })
+    connection.subscribe(PACKAGE_MANAGEMENT_TOPIC, object : PythonPackageManagementListener {
+      override fun packagesChanged(sdk: Sdk) {
+        cache.invalidate(sdk)
+      }
+    })
   }
 
   fun forSdk(sdk: Sdk): Cache<String, StubPackagesForSource> {

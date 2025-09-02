@@ -9,9 +9,11 @@ import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.XCollection
 import com.intellij.vcs.log.impl.VcsLogUiProperties.VcsLogUiProperty
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import java.util.*
 
+@Internal
 @State(name = "Vcs.Log.Tabs.Properties", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])
 @Service(Service.Level.PROJECT)
 class VcsLogProjectTabsProperties : PersistentStateComponent<VcsLogProjectTabsProperties.State?>, VcsLogTabsProperties {

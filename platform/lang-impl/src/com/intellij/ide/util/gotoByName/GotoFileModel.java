@@ -37,6 +37,7 @@ import javax.swing.*;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 /**
@@ -145,7 +146,12 @@ public class GotoFileModel extends FilteringGotoByModel<FileTypeRef> implements 
     return new GotoFileCellRenderer(myMaxSize) {
       @Override
       public @NotNull ItemMatchers getItemMatchers(@NotNull JList list, @NotNull Object value) {
-        ItemMatchers defaultMatchers = super.getItemMatchers(list, value);
+        return getNonComponentItemMatchers((v) -> { return super.getItemMatchers(list, v); }, value);
+      }
+
+      @Override
+      public @NotNull ItemMatchers getNonComponentItemMatchers(@NotNull Function<Object, ItemMatchers> matcherProvider, @NotNull Object value) {
+        ItemMatchers defaultMatchers = matcherProvider.apply(value);
         if (!(value instanceof PsiFileSystemItem)) return defaultMatchers;
 
         return convertToFileItemMatchers(defaultMatchers, (PsiFileSystemItem) value, GotoFileModel.this);

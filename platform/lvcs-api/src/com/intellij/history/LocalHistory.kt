@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.history
 
 import com.intellij.openapi.application.ApplicationManager
@@ -74,8 +74,7 @@ abstract class LocalHistory {
 
   /**
    * Puts a system label to mark a certain point in local history.
-   * Note that system labels added inside the [LocalHistoryAction] are not visible,
-   * also they are not visible in the experimental "Activity" tool window.
+   * Note that system labels can be visible or not depending on the UI settings.
    *
    * @param project the project where the event occurred
    * @param name the name of the label
@@ -86,8 +85,7 @@ abstract class LocalHistory {
 
   /**
    * Puts a system label to mark a certain point in local history.
-   * Note that system labels added inside the [LocalHistoryAction] are not visible,
-   * also they are not visible in the experimental "Activity" tool window.
+   * Note that system labels can be visible or not depending on the UI settings.
    *
    * @param project the project where the event occurred
    * @param name the name of the label

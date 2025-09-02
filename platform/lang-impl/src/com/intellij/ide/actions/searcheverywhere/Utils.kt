@@ -27,20 +27,10 @@ fun fetchWeightedElementsMixing(
   finalConsumer: Processor<in FoundItemDescriptor<Any>>,
   vararg fetchers: (String, ProgressIndicator, Processor<in FoundItemDescriptor<Any>>) -> Unit,
 ) {
-  val itemPool = mutableListOf<FoundItemDescriptor<Any>>()
-  val adderClosure = { it: FoundItemDescriptor<Any> -> itemPool.add(it) }
-
-  fetchers.forEach { fetcher -> fetcher(pattern, progressIndicator, adderClosure) }
-
-  itemPool.sortBy { -it.weight }
-
-  @Suppress("DEPRECATION")
-  indicatorRunBlockingCancellable(progressIndicator) {
-    readAction { itemPool.forEach { if (!finalConsumer.process(it)) return@readAction } }
-  }
+  fetchers.forEach { fetcher -> fetcher(pattern, progressIndicator, finalConsumer) }
 }
 
 @ApiStatus.Internal
 @Suppress("UNCHECKED_CAST")
-fun <T> makeTypeErasingConsumer(processor: Processor<in FoundItemDescriptor<Any>>) =
+fun <T> makeTypeErasingConsumer(processor: Processor<in FoundItemDescriptor<Any>>): (FoundItemDescriptor<T>) -> Boolean =
   { genericDescriptor: FoundItemDescriptor<T> -> (genericDescriptor as? FoundItemDescriptor<Any>)?.let { processor.process(it) } == true }

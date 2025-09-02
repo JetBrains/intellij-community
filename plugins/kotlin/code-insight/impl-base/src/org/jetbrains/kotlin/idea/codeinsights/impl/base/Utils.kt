@@ -2,6 +2,9 @@
 
 package org.jetbrains.kotlin.idea.codeinsights.impl.base
 
+import com.intellij.codeInspection.LocalQuickFix
+import com.intellij.modcommand.ModCommandAction
+import com.intellij.modcommand.ModCommandService
 import com.intellij.psi.ElementManipulators
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.search.GlobalSearchScope
@@ -15,7 +18,6 @@ import org.jetbrains.kotlin.idea.base.psi.appendDotQualifiedSelector
 import org.jetbrains.kotlin.idea.base.psi.getSingleUnwrappedStatementOrThis
 import org.jetbrains.kotlin.idea.base.psi.isOneLiner
 import org.jetbrains.kotlin.idea.base.psi.replaced
-import org.jetbrains.kotlin.idea.core.script.configuration.DefaultScriptingSupport
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport
 import org.jetbrains.kotlin.idea.search.isCheapEnoughToSearchConsideringOperators
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -25,6 +27,7 @@ import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForReceiver
+import org.jetbrains.kotlin.scripting.definitions.ScriptConfigurationsProvider
 
 fun KtExpression.isComplexInitializer(): Boolean {
     fun KtExpression.isElvisExpression(): Boolean = this is KtBinaryExpression && operationToken == KtTokens.ELVIS
@@ -52,7 +55,9 @@ fun isCheapEnoughToSearchUsages(declaration: KtNamedDeclaration): PsiSearchHelpe
     val project = declaration.project
     val psiSearchHelper = PsiSearchHelper.getInstance(project)
 
-    if (!KotlinSearchUsagesSupport.getInstance(project).findScriptsWithUsages(declaration) { DefaultScriptingSupport.getInstance(project).isLoadedFromCache(it) }) {
+    if (!KotlinSearchUsagesSupport.getInstance(project).findScriptsWithUsages(declaration) {
+        ScriptConfigurationsProvider.getInstance(project)?.getScriptConfiguration(it) != null
+    }) {
         // Not all script configurations are loaded; behave like it is used
         return PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES
     }
@@ -203,3 +208,10 @@ tailrec fun KtExpression.replaceVariableCallsWithExplicitInvokeCalls(variableCal
 
     return qualified.replaceVariableCallsWithExplicitInvokeCalls(variableCalls)
 }
+
+fun ModCommandAction.asQuickFix(): LocalQuickFix {
+    return ModCommandService.getInstance().wrapToQuickFix(this)
+}
+
+fun KtNamedDeclaration.isExplicitlyIgnoredByName(): Boolean =
+    name?.let { it == "_" } != false

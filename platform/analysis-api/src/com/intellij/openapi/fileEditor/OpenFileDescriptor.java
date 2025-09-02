@@ -1,7 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor;
 
-import com.intellij.codeInsight.multiverse.*;
+import com.intellij.codeInsight.multiverse.CodeInsightContext;
+import com.intellij.codeInsight.multiverse.CodeInsightContexts;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
+import com.intellij.codeInsight.multiverse.SingleEditorContext;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.project.Project;
@@ -32,26 +35,26 @@ public class OpenFileDescriptor implements FileEditorNavigatable, Comparable<Ope
   private boolean myUsePreviewTab;
   private ScrollType myScrollType = ScrollType.CENTER;
 
-  // todo ijpl-339 design properly
+  // todo IJPL-339 design properly
   @ApiStatus.Internal
   public OpenFileDescriptor(@NotNull Project project, @NotNull VirtualFile file, @NotNull CodeInsightContext context, int offset) {
     this(project, file, context, -1, -1, offset, false);
   }
 
   public OpenFileDescriptor(@NotNull Project project, @NotNull VirtualFile file, int offset) {
-    this(project, file, CodeInsightContextKt.anyContext(), - 1, -1, offset, false);
+    this(project, file, CodeInsightContexts.anyContext(), - 1, -1, offset, false);
   }
 
   public OpenFileDescriptor(@NotNull Project project, @NotNull VirtualFile file, int logicalLine, int logicalColumn) {
-    this(project, file, CodeInsightContextKt.anyContext(), logicalLine, logicalColumn, -1, false);
+    this(project, file, CodeInsightContexts.anyContext(), logicalLine, logicalColumn, -1, false);
   }
 
   public OpenFileDescriptor(@NotNull Project project, @NotNull VirtualFile file, int logicalLine, int logicalColumn, boolean persistent) {
-    this(project, file, CodeInsightContextKt.anyContext(), logicalLine, logicalColumn, -1, persistent);
+    this(project, file, CodeInsightContexts.anyContext(), logicalLine, logicalColumn, -1, persistent);
   }
 
   public OpenFileDescriptor(@NotNull Project project, @NotNull VirtualFile file) {
-    this(project, file, CodeInsightContextKt.anyContext(), -1, -1, -1, false);
+    this(project, file, CodeInsightContexts.anyContext(), -1, -1, -1, false);
   }
 
   private OpenFileDescriptor(
@@ -147,9 +150,9 @@ public class OpenFileDescriptor implements FileEditorNavigatable, Comparable<Ope
       });
     }
 
-    if (CodeInsightContextKt.isSharedSourceSupportEnabled(descriptor.getProject())) {
+    if (CodeInsightContexts.isSharedSourceSupportEnabled(descriptor.getProject())) {
       CodeInsightContext context = descriptor.getContext();
-      if (context != CodeInsightContextKt.anyContext()) {
+      if (context != CodeInsightContexts.anyContext()) {
         EditorContextManager.getInstance(descriptor.getProject()).setEditorContext(e, new SingleEditorContext(context));
       }
     }

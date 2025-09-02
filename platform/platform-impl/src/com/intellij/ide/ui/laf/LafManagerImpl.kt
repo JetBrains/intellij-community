@@ -19,8 +19,9 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionMenu
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ex.ApplicationInfoEx
-import com.intellij.openapi.application.impl.RawSwingDispatcher
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
@@ -45,9 +46,11 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl
+import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.ui.*
 import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
+import com.intellij.ui.icons.getDisabledIcon
 import com.intellij.ui.mac.MacFullScreenControlsManager
 import com.intellij.ui.popup.HeavyWeightPopup
 import com.intellij.ui.scale.JBUIScale.getFontScale
@@ -74,6 +77,7 @@ import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
+import java.util.function.Function
 import java.util.function.Supplier
 import javax.swing.*
 import javax.swing.plaf.FontUIResource
@@ -128,6 +132,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   private var themeDetector: SystemDarkThemeDetector? = null
   private var isFirstSetup = true
   private var autodetect = false
+  private var isRestartRequired = false
 
   // we remember the last used editor scheme for each laf to restore it after switching laf
   private var rememberSchemeForLaf = true
@@ -179,7 +184,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     isFirstSetup = false
 
     if (EDT.isCurrentThreadEdt()) {
-      initInEdt()
+      initInEdt(ExperimentalUI.getInstance())
       addListeners()
     }
     else {
@@ -190,12 +195,12 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   @Internal
   suspend fun applyInitState() {
     span("laf initialization in EDT", RawSwingDispatcher) {
-      initInEdt()
+      initInEdt(serviceAsync<ExperimentalUI>())
     }
     addListeners()
   }
 
-  private fun initInEdt() {
+  private fun initInEdt(experimentalUi: ExperimentalUI) {
     val theme = currentTheme!!
     if (!theme.isInitialized) {
       doSetLaF(theme = theme, installEditorScheme = false)
@@ -203,7 +208,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     selectComboboxModel()
 
     runActivity("new ui configuration") {
-      ExperimentalUI.getInstance().lookAndFeelChanged()
+      experimentalUi.lookAndFeelChanged()
     }
 
     updateUI(isFirstSetup = true)
@@ -272,7 +277,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
 
     SwingUtilities.invokeLater {
       val currentScheme = EditorColorsManager.getInstance().globalScheme
-      if (currentScheme.baseName != expectedScheme.baseName) {
+      if (expectedScheme != null && currentScheme.baseName != expectedScheme.baseName) {
         EditorColorsManager.getInstance().setGlobalScheme(expectedScheme)
       }
     }
@@ -493,12 +498,32 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   }
 
   override fun getLookAndFeelCellRenderer(component: JComponent): ListCellRenderer<LafReference> {
+    val welcomeMode = WelcomeFrame.getInstance() != null
     return listCellRenderer {
+      toolTipText = null
       text(value.name)
       if (value.themeId.isEmpty()) {
         separator { }
       }
       else {
+        for (group in lafComboBoxModel.value.groupedThemes.infos) {
+          val theme = group.items.find { info -> info.id == value.themeId}
+          if (theme != null) {
+            if (theme.isRestartRequired()) {
+              icon(AllIcons.General.Beta)
+              if (!welcomeMode && value.themeId != currentTheme?.id && group.items.find { info -> info.id == currentTheme?.id} == null) {
+                icon(getDisabledIcon(AllIcons.Actions.Restart, null))
+                toolTipText = IdeBundle.message("ide.restart.required.comment")
+              }
+            }
+            else if (!welcomeMode && value.themeId != currentTheme?.id && currentTheme?.isRestartRequired() == true) {
+              icon(getDisabledIcon(AllIcons.Actions.Restart, null))
+              toolTipText = IdeBundle.message("ide.restart.required.comment")
+            }
+            break
+          }
+        }
+
         val groupWithSameFirstItem = lafComboBoxModel.value.groupedThemes.infos.firstOrNull { value.themeId == it.items.firstOrNull()?.id }
         if (groupWithSameFirstItem != null) {
           separator {
@@ -569,6 +594,39 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
       ActionToolbarImpl.updateAllToolbarsImmediately()
     }
     isFirstSetup = false
+
+    isRestartRequired = checkRestart(lookAndFeelInfo, oldLaf)
+  }
+
+  private fun checkRestart(lookAndFeelInfo: UIThemeLookAndFeelInfo, oldLaf: UIThemeLookAndFeelInfo?): Boolean {
+    if (WelcomeFrame.getInstance() != null) {
+      return false
+    }
+    if (!lookAndFeelInfo.isRestartRequired() && oldLaf?.isRestartRequired() == false) {
+      return false
+    }
+    if (lookAndFeelInfo.isRestartRequired() && oldLaf?.isRestartRequired() == true) {
+      val infos = ThemeListProvider.getInstance().getShownThemes().infos
+      val group = infos.find { info -> info.items.find { element -> element.id == lookAndFeelInfo.id } != null }
+      if (group != null && group.items.find { element -> element.id == oldLaf.id } != null) {
+        return false
+      }
+    }
+    return true
+  }
+
+  @Internal
+  override fun checkRestart() {
+    if (isRestartRequired) {
+      isRestartRequired = false
+
+      if (PluginManagerConfigurable.showRestartDialog(IdeBundle.message("dialog.title.restart.required"), Function {
+          IdeBundle.message("dialog.message.must.be.restarted.for.changes.to.take.effect",
+                            ApplicationNamesInfo.getInstance().fullProductName)
+        }) == Messages.YES) {
+        ApplicationManagerEx.getApplicationEx().restart(true)
+      }
+    }
   }
 
   @Suppress("unused")
@@ -912,9 +970,11 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
               listOf( Separator(), GetMoreLafAction())).toTypedArray()
     }
 
-    private fun createThemeActions(separatorText: @NlsContexts.Separator String,
-                                   lafs: List<UIThemeLookAndFeelInfo>,
-                                   isDark: Boolean): Collection<AnAction> {
+    private fun createThemeActions(
+      separatorText: @NlsContexts.Separator String,
+      lafs: List<UIThemeLookAndFeelInfo>,
+      isDark: Boolean,
+    ): Collection<AnAction> {
       if (lafs.isEmpty()) {
         return emptyList()
       }
@@ -928,7 +988,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     }
   }
 
-  private inner class GetMoreLafAction : DumbAwareAction(IdeBundle.message("link.get.more.themes")) {
+  private class GetMoreLafAction : DumbAwareAction(IdeBundle.message("link.get.more.themes")) {
     override fun actionPerformed(e: AnActionEvent) {
       val themeTag = "/tag:Theme"
       val settings = Settings.KEY.getData(e.dataContext)
@@ -975,9 +1035,11 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
       }.toTypedArray()
     }
 
-    private fun createSchemeActions(separatorText: @NlsContexts.Separator String?,
-                                    schemes: List<EditorColorsScheme>,
-                                    isDark: Boolean): Collection<AnAction> {
+    private fun createSchemeActions(
+      separatorText: @NlsContexts.Separator String?,
+      schemes: List<EditorColorsScheme>,
+      isDark: Boolean,
+    ): Collection<AnAction> {
       if (schemes.isEmpty()) {
         return emptyList()
       }
@@ -988,8 +1050,10 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
       return result
     }
 
-    private inner class SchemeToggleAction(val scheme: EditorColorsScheme,
-                                           private val isDark: Boolean)
+    private inner class SchemeToggleAction(
+      val scheme: EditorColorsScheme,
+      private val isDark: Boolean,
+    )
       : DumbAwareToggleAction(scheme.displayName) {
 
       override fun getActionUpdateThread() = ActionUpdateThread.BGT
@@ -1018,9 +1082,11 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     (if (isDark) defaultDarkLaf.editorSchemeId else defaultLightLaf.editorSchemeId)
     ?: defaultNonLaFSchemeName(isDark)
 
-  private inner class LafToggleAction(name: @Nls String?,
-                                      private val themeId: String,
-                                      private val isDark: Boolean) : DumbAwareToggleAction(name) {
+  private inner class LafToggleAction(
+    name: @Nls String?,
+    private val themeId: String,
+    private val isDark: Boolean,
+  ) : DumbAwareToggleAction(name) {
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
     override fun isSelected(e: AnActionEvent): Boolean {

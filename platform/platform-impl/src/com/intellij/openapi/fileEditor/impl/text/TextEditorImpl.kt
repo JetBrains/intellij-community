@@ -10,6 +10,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
@@ -37,7 +38,6 @@ import com.intellij.platform.util.coroutines.attachAsChildTo
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.serviceContainer.ComponentManagerImpl
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
@@ -97,7 +97,7 @@ open class TextEditorImpl @Internal constructor(
         try {
           val customizer = extension.instance ?: continue
           val scope = asyncLoader.coroutineScope.childScope(extension.implementationClassName)
-          scope.attachAsChildTo((project as ComponentManagerImpl).pluginCoroutineScope(customizer::class.java.classLoader))
+          scope.attachAsChildTo((project as ComponentManagerEx).pluginCoroutineScope(customizer::class.java.classLoader))
           scope.launch {
             customizer.execute(textEditor = this@TextEditorImpl)
           }

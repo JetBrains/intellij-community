@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tools;
 
 import com.intellij.execution.ExecutionException;
@@ -97,7 +97,7 @@ public class ToolRunProfile implements ModuleRunProfile{
         final ProcessHandler processHandler = result.getProcessHandler();
         if (processHandler != null) {
           processHandler.addProcessListener(new ToolProcessAdapter(project, myTool.synchronizeAfterExecution(), getName()));
-          processHandler.addProcessListener(new ProcessAdapter() {
+          processHandler.addProcessListener(new ProcessListener() {
             @Override
             public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
               if ((outputType == ProcessOutputTypes.STDOUT && myTool.isShowConsoleOnStdOut())

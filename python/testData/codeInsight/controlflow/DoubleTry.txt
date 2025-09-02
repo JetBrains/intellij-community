@@ -2,26 +2,27 @@
 1(2) element: PyTryExceptStatement
 2(3,5) element: PyTryPart
 3(4,5) element: PyFromImportStatement
-4(5,9) WRITE ACCESS: lsprof
+4(5,10) WRITE ACCESS: lsprof
 5(6) element: PyExceptPart
 6(7) READ ACCESS: ImportError
-7(8) raise: PyRaiseStatement
-8(26) READ ACCESS: Error
-9(10) element: PyAssignmentStatement
-10(11) WRITE ACCESS: p
-11(12) element: PyTryExceptStatement
-12(13,17) element: PyTryPart
-13(14,17) element: PyReturnStatement
-14(17) READ ACCESS: foo
-15(16,17) element: PyAssignmentStatement
-16(17,21) WRITE ACCESS: x
-17(18) element: PyFinallyPart
-18(19) element: PyPrintStatement
-19(20) READ ACCESS: p
-20(26) finally fail exit
-21(22) element: PyFinallyPart
-22(23) element: PyPrintStatement
-23(24) READ ACCESS: p
-24(25) element: PyAssignmentStatement
-25(26) WRITE ACCESS: y
-26() element: null
+7(8) element: PyRaiseStatement
+8(9) READ ACCESS: Error
+9(27) raise: PyRaiseStatement
+10(11) element: PyAssignmentStatement
+11(12) WRITE ACCESS: p
+12(13) element: PyTryExceptStatement
+13(14,18) element: PyTryPart
+14(15,18) element: PyReturnStatement
+15(18) READ ACCESS: foo
+16(17,18) element: PyAssignmentStatement
+17(18,22) WRITE ACCESS: x
+18(19) element: PyFinallyPart
+19(20) element: PyPrintStatement
+20(21) READ ACCESS: p
+21(27) finally fail exit
+22(23) element: PyFinallyPart
+23(24) element: PyPrintStatement
+24(25) READ ACCESS: p
+25(26) element: PyAssignmentStatement
+26(27) WRITE ACCESS: y
+27() element: null

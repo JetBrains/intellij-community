@@ -18,6 +18,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import javax.swing.*;
 import java.util.HashSet;
@@ -69,8 +70,8 @@ public final class ShShellcheckInspection extends LocalInspectionTool implements
     return myOptionsPanel;
   }
 
-  @NotNull
-  Set<@NlsSafe String> getDisabledInspections() {
+  @VisibleForTesting
+  public @NotNull Set<@NlsSafe String> getDisabledInspections() {
     return new HashSet<>(myDisabledInspections);
   }
 
@@ -87,7 +88,8 @@ public final class ShShellcheckInspection extends LocalInspectionTool implements
     }
   }
 
-  static @NotNull ShShellcheckInspection findShShellcheckInspection(@NotNull PsiElement element) {
+  @VisibleForTesting
+  public static @NotNull ShShellcheckInspection findShShellcheckInspection(@NotNull PsiElement element) {
     InspectionProfile profile = InspectionProjectProfileManager.getInstance(element.getProject()).getCurrentProfile();
     ShShellcheckInspection tool = (ShShellcheckInspection)profile.getUnwrappedTool(SHORT_NAME, element);
     return tool == null ? new ShShellcheckInspection() : tool;

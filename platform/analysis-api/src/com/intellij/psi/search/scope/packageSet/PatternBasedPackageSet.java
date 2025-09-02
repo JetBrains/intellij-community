@@ -93,8 +93,8 @@ public abstract class PatternBasedPackageSet extends PackageSetBase {
     if (libPattern != null) {
       final List<OrderEntry> entries = fileIndex.getOrderEntriesForFile(file);
       for (OrderEntry orderEntry : entries) {
-        if (orderEntry instanceof LibraryOrderEntry) {
-          final String libraryName = ((LibraryOrderEntry)orderEntry).getLibraryName();
+        if (orderEntry instanceof LibraryOrderEntry libraryOrderEntry) {
+          final String libraryName = libraryOrderEntry.getLibraryName();
           if (libraryName != null) {
             if (libPattern.matcher(libraryName).matches()) return true;
           } else {
@@ -102,8 +102,8 @@ public abstract class PatternBasedPackageSet extends PackageSetBase {
             final String fileName = new File(presentableName).getName();
             if (libPattern.matcher(fileName).matches()) return true;
           }
-        } else if (orderEntry instanceof JdkOrderEntry) {
-          final String jdkName = ((JdkOrderEntry)orderEntry).getJdkName();
+        } else if (orderEntry instanceof JdkOrderEntry jdkOrderEntry) {
+          final String jdkName = jdkOrderEntry.getJdkName();
           if (jdkName != null && libPattern.matcher(jdkName).matches()) return true;
         }
       }

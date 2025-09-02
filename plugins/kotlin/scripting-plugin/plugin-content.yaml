@@ -1,23 +1,24 @@
 - name: lib/kotlin-scripting-plugin.jar
-  projectLibraries:
-  - name: kotlinc.kotlin-script-runtime
-    files:
-    - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-script-runtime/2/kotlin-script-runtime-2.jar
-  - name: kotlinc.kotlin-scripting-jvm
-    files:
-    - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/2/kotlin-scripting-jvm-2.jar
   modules:
   - name: kotlin.jsr223
   - name: kotlin.scripting-plugin
 - name: lib/kotlinc.kotlin-compiler-common.jar
-  projectLibraries:
-  - name: kotlinc.kotlin-compiler-common
-    files:
-    - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-common-for-ide/2/kotlin-compiler-common-for-ide-2.jar
-    reason: withProjectLibrary
+  library: kotlinc.kotlin-compiler-common
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-common-for-ide/2/kotlin-compiler-common-for-ide-2.jar
+  reason: withProjectLibrary
 - name: lib/kotlinc.kotlin-compiler-fe10.jar
-  projectLibraries:
-  - name: kotlinc.kotlin-compiler-fe10
-    files:
-    - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-fe10-for-ide/2/kotlin-compiler-fe10-for-ide-2.jar
-    reason: withProjectLibrary
+  library: kotlinc.kotlin-compiler-fe10
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-fe10-for-ide/2/kotlin-compiler-fe10-for-ide-2.jar
+  reason: withProjectLibrary
+- name: lib/kotlinc.kotlin-script-runtime.jar
+  library: kotlinc.kotlin-script-runtime
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-script-runtime/2/kotlin-script-runtime-2.jar
+  reason: <- kotlin.jsr223
+- name: lib/kotlinc.kotlin-scripting-jvm.jar
+  library: kotlinc.kotlin-scripting-jvm
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/2/kotlin-scripting-jvm-2.jar
+  reason: <- kotlin.jsr223

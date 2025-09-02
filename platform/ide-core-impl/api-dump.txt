@@ -1,0 +1,84 @@
+com.intellij.ide.fileTemplates.FileTemplate
+- java.lang.Cloneable
+- sf:ATTRIBUTE_CALL_SUPER:java.lang.String
+- sf:ATTRIBUTE_CLASS_NAME:java.lang.String
+- sf:ATTRIBUTE_DEFAULT_RETURN_VALUE:java.lang.String
+- sf:ATTRIBUTE_DESCRIPTION:java.lang.String
+- sf:ATTRIBUTE_DIR_PATH:java.lang.String
+- sf:ATTRIBUTE_DISPLAY_NAME:java.lang.String
+- sf:ATTRIBUTE_EXCEPTION:java.lang.String
+- sf:ATTRIBUTE_EXCEPTION_TYPE:java.lang.String
+- sf:ATTRIBUTE_EXPRESSION:java.lang.String
+- sf:ATTRIBUTE_EXPRESSION_TYPE:java.lang.String
+- sf:ATTRIBUTE_FILE_NAME:java.lang.String
+- sf:ATTRIBUTE_FILE_PATH:java.lang.String
+- sf:ATTRIBUTE_METHOD_NAME:java.lang.String
+- sf:ATTRIBUTE_NAME:java.lang.String
+- sf:ATTRIBUTE_PACKAGE_NAME:java.lang.String
+- sf:ATTRIBUTE_PLAIN_CALL_SUPER:java.lang.String
+- sf:ATTRIBUTE_RETURN_TYPE:java.lang.String
+- sf:ATTRIBUTE_SIMPLE_CLASS_NAME:java.lang.String
+- sf:EMPTY_ARRAY:com.intellij.ide.fileTemplates.FileTemplate[]
+- sf:ourEncoding:java.lang.String
+- a:clone():com.intellij.ide.fileTemplates.FileTemplate
+- getChildren():com.intellij.ide.fileTemplates.FileTemplate[]
+- a:getDescription():java.lang.String
+- a:getExtension():java.lang.String
+- getFileName():java.lang.String
+- a:getName():java.lang.String
+- a:getText():java.lang.String
+- a:getText(java.util.Map):java.lang.String
+- a:getText(java.util.Properties):java.lang.String
+- a:getUnsetAttributes(java.util.Properties,com.intellij.openapi.project.Project):java.lang.String[]
+- a:isDefault():Z
+- a:isLiveTemplateEnabled():Z
+- a:isReformatCode():Z
+- a:isTemplateOfType(com.intellij.openapi.fileTypes.FileType):Z
+- setChildren(com.intellij.ide.fileTemplates.FileTemplate[]):V
+- a:setExtension(java.lang.String):V
+- setFileName(java.lang.String):V
+- a:setLiveTemplateEnabled(Z):V
+- a:setName(java.lang.String):V
+- a:setReformatCode(Z):V
+- a:setText(java.lang.String):V
+com.intellij.ide.impl.dataRules.GetDataRule
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- a:getData(com.intellij.openapi.actionSystem.DataProvider):java.lang.Object
+com.intellij.ide.script.IdeScriptEngine
+- a:eval(java.lang.String):java.lang.Object
+- a:getBinding(java.lang.String):java.lang.Object
+- a:getFileExtensions():java.util.List
+- a:getLanguage():java.lang.String
+- a:getStdErr():java.io.Writer
+- a:getStdIn():java.io.Reader
+- a:getStdOut():java.io.Writer
+- a:setBinding(java.lang.String,java.lang.Object):V
+- a:setStdErr(java.io.Writer):V
+- a:setStdIn(java.io.Reader):V
+- a:setStdOut(java.io.Writer):V
+com.intellij.openapi.fileEditor.impl.EditorTabColorProvider
+- com.intellij.openapi.project.PossiblyDumbAware
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- a:getEditorTabColor(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.awt.Color
+- getProjectViewColor(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.awt.Color
+com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider
+- com.intellij.openapi.project.DumbAware
+- sf:Companion:com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider$Companion
+- a:getEditorTabTitle(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.lang.String
+- getEditorTabTooltipText(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.lang.String
+com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessExtension
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- isNotWritable(com.intellij.openapi.vfs.VirtualFile):Z
+- isWritable(com.intellij.openapi.vfs.VirtualFile):Z
+com.intellij.openapi.progress.util.PingProgress
+- a:interact():V
+- s:interactWithEdtProgress():V
+com.intellij.openapi.project.ex.ProjectEx
+- com.intellij.openapi.project.Project
+- sf:NAME_FILE:java.lang.String
+- getCreationTrace():java.lang.String
+- isLight():Z
+- a:setProjectName(java.lang.String):V
+com.intellij.openapi.project.ex.ProjectNameProvider
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+com.intellij.openapi.vfs.ex.temp.TempFileSystemMarker

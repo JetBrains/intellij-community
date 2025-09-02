@@ -11,15 +11,10 @@ __all__ = (
     "Storage",
     "DefaultStorage",
     "default_storage",
-    "get_storage_class",
     "InvalidStorageError",
     "StorageHandler",
     "storages",
 )
-
-GET_STORAGE_CLASS_DEPRECATED_MSG: str
-
-def get_storage_class(import_path: str | None = None) -> type[Storage]: ...
 
 class DefaultStorage(LazyObject): ...
 

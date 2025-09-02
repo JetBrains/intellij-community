@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.memory.agent;
 
 import com.intellij.debugger.engine.DebugProcess;
@@ -31,10 +31,6 @@ public interface MemoryAgent {
       return MemoryAgentImpl.DISABLED;
     }
     return MemoryAgentInitializer.getAgent(evaluationContext);
-  }
-
-  static boolean isAgentLoaded(@NotNull DebugProcess debugProcess) {
-    return MemoryAgentInitializer.isAgentLoaded(debugProcess);
   }
 
   static boolean isAgentEnabled(@NotNull DebugProcess debugProcess) {

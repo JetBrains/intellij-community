@@ -1,4 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment")
+
 package com.intellij.serialization
 
 import com.amazon.ion.Timestamp
@@ -25,6 +27,7 @@ internal class IonBindingProducer(override val propertyCollector: PropertyCollec
       classToRootBindingFactory.put(ByteArray::class.java) { ByteArrayBinding() }
 
       classToRootBindingFactory.put(java.lang.Short::class.java) { ShortNumberAsObjectBinding() }
+      @Suppress("RemoveRedundantQualifierName")
       classToRootBindingFactory.put(java.lang.Integer::class.java) { IntNumberAsObjectBinding() }
       classToRootBindingFactory.put(java.lang.Long::class.java) { LongNumberAsObjectBinding() }
 
@@ -87,9 +90,6 @@ internal class IonBindingProducer(override val propertyCollector: PropertyCollec
     val type = accessor.genericType
 
     val isGenericArray = type is GenericArrayType
-          //GenericArrayType genericArrayType = (GenericArrayType)type;
-          //TypeVariable typeVariable = (TypeVariable)genericArrayType.getGenericComponentType();
-          //return (Class<?>)typeVariable.getBounds()[0];
 
     // PrimitiveBinding can serialize conditionally, but for the sake of optimization, use special bindings to avoid comparison for each value
     // yes - if field typed as Object, Number and Boolean types are not supported (because bean binding will be created)

@@ -40,6 +40,16 @@ public class KtParameterHintsProviderTestGenerated extends AbstractKtParameterHi
         runTest("../../idea/tests/testData/codeInsight/hints/arguments/functionalTypes.kt");
     }
 
+    @TestMetadata("invokeCallsParameterNames.kt")
+    public void testInvokeCallsParameterNames() throws Exception {
+        runTest("../../idea/tests/testData/codeInsight/hints/arguments/invokeCallsParameterNames.kt");
+    }
+
+    @TestMetadata("invokeCallsParameterNamesWithContextReceivers.kt")
+    public void testInvokeCallsParameterNamesWithContextReceivers() throws Exception {
+        runTest("../../idea/tests/testData/codeInsight/hints/arguments/invokeCallsParameterNamesWithContextReceivers.kt");
+    }
+
     @TestMetadata("javaParameters.kt")
     public void testJavaParameters() throws Exception {
         runTest("../../idea/tests/testData/codeInsight/hints/arguments/javaParameters.kt");

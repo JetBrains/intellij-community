@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.idea.devkit.inspections
 
@@ -34,18 +34,19 @@ internal const val DESCRIPTION_SUFFIX = ".description"
 @NonNls
 internal const val RESTART_REQUIRED_SUFFIX = ".restartRequired"
 
-internal fun isImplicitUsageKey(keyName: String): Boolean =
-  keyName.endsWith(DESCRIPTION_SUFFIX) ||
-  keyName.endsWith(RESTART_REQUIRED_SUFFIX)
+internal fun isImplicitUsageKey(keyName: String): Boolean {
+  return keyName.endsWith(DESCRIPTION_SUFFIX) ||
+         keyName.endsWith(RESTART_REQUIRED_SUFFIX)
+}
 
-internal fun isRegistryPropertiesFile(psiFile: PsiFile): Boolean =
-  IntelliJProjectUtil.isIntelliJPlatformProject(psiFile.project) && psiFile.name == REGISTRY_PROPERTIES_FILENAME
+internal fun isRegistryPropertiesFile(psiFile: PsiFile): Boolean {
+  return IntelliJProjectUtil.isIntelliJPlatformProject(psiFile.project) && psiFile.name == REGISTRY_PROPERTIES_FILENAME
+}
 
 /**
  * Highlights key in `registry.properties` without matching `key.description` entry + corresponding quickfix.
  */
-internal class RegistryPropertiesAnnotator : Annotator, DumbAware {
-
+private class RegistryPropertiesAnnotator : Annotator, DumbAware {
   @NonNls
   private val PLUGIN_GROUP_NAMES = setOf(
     "appcode", "cidr", "clion",
@@ -54,7 +55,9 @@ internal class RegistryPropertiesAnnotator : Annotator, DumbAware {
     "java", "javac", "uast", "junit4", "dsm",
     "js", "javascript", "typescript", "nodejs", "eslint", "jest",
     "ruby", "rubymine",
-    "groovy", "grails", "python", "php", "kotlin"
+    "groovy", "grails", "python", "php",
+    "kotlin", "spring", "jupyter", "dataspell", "javafx",
+    "maven", "gradle", "android", "eclipse"
   )
 
   override fun annotate(element: PsiElement, holder: AnnotationHolder) {
@@ -71,8 +74,15 @@ internal class RegistryPropertiesAnnotator : Annotator, DumbAware {
     }
 
     val groupName = propertyName.substringBefore('.').lowercase(Locale.getDefault())
+
     if (PLUGIN_GROUP_NAMES.contains(groupName) ||
-        propertyName.startsWith("editor.config.")) {
+        propertyName.startsWith("editor.config.") ||
+        propertyName.startsWith("debugger.kotlin.") ||
+        propertyName.startsWith("debugger.enable.kotlin.") ||
+        propertyName.startsWith("ide.java.") ||
+        propertyName.startsWith("execution.java.") ||
+        propertyName.startsWith("debugger.log.jdi.")) {
+
       holder.newAnnotation(HighlightSeverity.ERROR, DevKitBundle.message("registry.properties.annotator.plugin.keys.use.ep"))
         .withFix(ShowEPDeclarationIntention(propertyName)).create()
     }
@@ -89,18 +99,18 @@ internal class RegistryPropertiesAnnotator : Annotator, DumbAware {
   private class ShowEPDeclarationIntention(private val propertyName: String) : IntentionAction, DumbAware {
     override fun startInWriteAction(): Boolean = false
 
-    override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo {
+    override fun generatePreview(project: Project, editor: Editor, psiFile: PsiFile): IntentionPreviewInfo {
       return IntentionPreviewInfo.EMPTY
     }
 
     override fun getFamilyName(): String = DevKitBundle.message("registry.properties.annotator.show.ep.family.name")
 
-    override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean = true
+    override fun isAvailable(project: Project, editor: Editor?, psiFile: PsiFile?): Boolean = true
 
     override fun getText(): String = DevKitBundle.message("registry.properties.annotator.show.ep.name", propertyName)
 
-    override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
-      val propertiesFile = file as PropertiesFile
+    override fun invoke(project: Project, editor: Editor?, psiFile: PsiFile?) {
+      val propertiesFile = psiFile as PropertiesFile
       val defaultValue = propertiesFile.findPropertyByKey(propertyName)!!.value
       val description = propertiesFile.findPropertyByKey(propertyName + DESCRIPTION_SUFFIX)?.value
       @NonNls var restartRequiredText = ""
@@ -127,11 +137,11 @@ internal class RegistryPropertiesAnnotator : Annotator, DumbAware {
     @Nls
     override fun getFamilyName(): String = DevKitBundle.message("registry.properties.annotator.add.description.family.name")
 
-    override fun isAvailable(project: Project, editor: Editor, file: PsiFile): Boolean = true
+    override fun isAvailable(project: Project, editor: Editor, psiFile: PsiFile): Boolean = true
 
     @Throws(IncorrectOperationException::class)
-    override fun invoke(project: Project, editor: Editor, file: PsiFile) {
-      val propertiesFile = file as PropertiesFile
+    override fun invoke(project: Project, editor: Editor, psiFile: PsiFile) {
+      val propertiesFile = psiFile as PropertiesFile
 
       val originalProperty = propertiesFile.findPropertyByKey(myPropertyName) as PropertyImpl?
       val descriptionProperty = propertiesFile.addPropertyAfter(myPropertyName + DESCRIPTION_SUFFIX, "Description", originalProperty)

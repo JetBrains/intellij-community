@@ -5,28 +5,29 @@
   <version>1.0</version>
 
   <properties>
-    <gradle.version>8.11</gradle.version>
+    <gradle.version>8.13</gradle.version>
     <maven.version>3.8.5</maven.version>
-    <maven.wrapper.version>3.1.0</maven.wrapper.version>
-    <junit.version>5.10.2</junit.version>
-    <kotlin.version>1.9.23</kotlin.version>
-    <javamodularity.version>1.8.12</javamodularity.version>
+    <maven.wrapper.version>3.3.2</maven.wrapper.version>
+    <junit.version>5.12.1</junit.version>
+    <kotlin.version>2.1.20</kotlin.version>
+    <javamodularity.version>1.8.15</javamodularity.version>
 
-    <!-- OpenJFX release trains -->
-    <fx.default.version>17.0.6</fx.default.version>
-    <fx11.version>17.0.6</fx11.version>
-    <fx12.version>17.0.6</fx12.version>
-    <fx13.version>17.0.6</fx13.version>
-    <fx14.version>17.0.6</fx14.version>
-    <fx15.version>17.0.6</fx15.version>
-    <fx16.version>17.0.6</fx16.version>
-    <fx17.version>17.0.6</fx17.version>
+    <!-- OpenJFX release trains. See https://gluonhq.com/products/javafx -->
+    <fx.default.version>21.0.6</fx.default.version>
+    <fx11.version>17.0.14</fx11.version>
+    <fx12.version>17.0.14</fx12.version>
+    <fx13.version>17.0.14</fx13.version>
+    <fx14.version>17.0.14</fx14.version>
+    <fx15.version>17.0.14</fx15.version>
+    <fx16.version>17.0.14</fx16.version>
+    <fx17.version>17.0.14</fx17.version>
     <fx18.version>18.0.2</fx18.version>
-    <fx19.version>19.0.2</fx19.version>
-    <fx20.version>20.0.1</fx20.version>
-    <fx21.version>21</fx21.version>
+    <fx19.version>19.0.2.1</fx19.version>
+    <fx20.version>20.0.2</fx20.version>
+    <fx21.version>21.0.6</fx21.version>
     <fx22.version>22.0.1</fx22.version>
 
+    <!-- See https://github.com/almasb/fxgl/wiki -->
     <fxgl11.version>11.17</fxgl11.version>
     <fxgl17.version>17.3</fxgl17.version>
     <fxgl21.version>21.1</fxgl21.version>
@@ -68,7 +69,7 @@
       <dependency>
         <groupId>net.synedra</groupId>
         <artifactId>validatorfx</artifactId>
-        <version>0.5.0</version>
+        <version>0.6.1</version>
       </dependency>
       <dependency>
         <groupId>org.kordamp.ikonli</groupId>
@@ -83,7 +84,7 @@
       <dependency>
         <groupId>eu.hansolo</groupId>
         <artifactId>tilesfx</artifactId>
-        <version>21.0.3</version>
+        <version>21.0.9</version>
       </dependency>
       <dependency>
         <groupId>com.github.almasb</groupId>

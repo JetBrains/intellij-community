@@ -4,7 +4,6 @@ package com.intellij.util
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.containers.nullize
 import com.intellij.util.lang.CompoundRuntimeException
-import org.jetbrains.annotations.ApiStatus
 
 fun throwIfNotEmpty(errors: List<Throwable?>?) {
   val exceptions = errors?.filterNotNull().nullize() ?: return
@@ -25,22 +24,4 @@ fun throwIfNotEmpty(errors: List<Throwable?>?) {
     throw throwable
   }
   throw result.singleOrNull() ?: CompoundRuntimeException(result)
-}
-
-@ApiStatus.Internal
-fun getErrorsAsString(errors: List<Throwable>, includeStackTrace: Boolean = true): CharSequence {
-  val sb = StringBuilder()
-  sb.append("${errors.size} errors:\n")
-  for (i in errors.indices) {
-    sb.append("[").append(i + 1).append("]: ------------------------------\n")
-    val error = errors[i]
-    val line = if (includeStackTrace) ExceptionUtil.getThrowableText(error) else error.message!!
-    sb.append(line)
-    if (!line.endsWith('\n')) {
-      sb.append('\n')
-    }
-  }
-  sb.append("-".repeat(5))
-  sb.append("------------------------------\n")
-  return sb
 }

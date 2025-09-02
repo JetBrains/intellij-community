@@ -89,6 +89,11 @@
     <actionConfigurationCustomizer implementation="com.intellij.execution.runToolbar.MyActionConfigurationCustomizer"/>
 
     <advancedSetting id="terminal.show.application.title" default="false" groupKey="group.advanced.settings.terminal"/>
+
+    <registryKey defaultValue="false"
+                 description="Run implementation for split mode."
+                 key="run.toolwindow.split.enabled"
+                 restartRequired="true"/>
   </extensions>
   <extensionPoints>
     <extensionPoint interface="com.intellij.execution.DisplayDescriptorChooser"
@@ -101,6 +106,9 @@
                     dynamic="true" />
     <extensionPoint qualifiedName="com.intellij.multilaunch.condition.template"
                     interface="com.intellij.execution.multilaunch.execution.conditions.ConditionTemplate"
+                    dynamic="true" />
+    <extensionPoint qualifiedName="com.intellij.execution.impl.runSessionService"
+                    interface="com.intellij.execution.RunSessionService"
                     dynamic="true" />
   </extensionPoints>
   <projectListeners>

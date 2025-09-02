@@ -14,9 +14,9 @@ abstract class EvaluationVisitorBase(override val language: Language, override v
                                          ?: throw PsiConverterException("Invoke 'accept' with visitor on PSI first")
 
 
-  override fun visitFile(node: PsiFile) {
-    codeFragment = CodeFragment(node.textOffset, node.textLength).also {
-      node.accept(createPsiVisitor(it))
+  override fun visitFile(psiFile: PsiFile) {
+    codeFragment = CodeFragment(psiFile.textOffset, psiFile.textLength).also {
+      psiFile.accept(createPsiVisitor(it))
     }
   }
 
@@ -26,3 +26,5 @@ abstract class EvaluationVisitorBase(override val language: Language, override v
 abstract class CodeGenerationVisitorBase(language: Language) : EvaluationVisitorBase(language, "code-generation")
 
 abstract class RenameVisitorBase(language: Language) : EvaluationVisitorBase(language, "rename")
+
+abstract class SandboxFeaturesVisitorBase(language: Language) : EvaluationVisitorBase(language, "sandbox-evaluation")

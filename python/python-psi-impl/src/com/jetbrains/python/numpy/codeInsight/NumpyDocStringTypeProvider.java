@@ -352,7 +352,10 @@ public final class NumpyDocStringTypeProvider extends PyTypeProviderBase {
       }
     }
     if (!types.isEmpty() && withoutOptional != null) {
-      types.add(PyNoneType.INSTANCE);
+      PyType noneType = PyBuiltinCache.getInstance(anchor).getNoneType();
+      if (noneType != null) {
+        types.add(noneType);
+      }
     }
     return getPsiFacade(anchor).createUnionType(types);
   }

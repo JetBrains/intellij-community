@@ -88,9 +88,11 @@ public interface PsiMethod extends PsiMember, PsiNameIdentifierOwner, PsiModifie
   boolean isConstructor();
 
   /**
-   * Checks if the method accepts a variable number of arguments.
+   * Checks if the method accepts a variable number of arguments. 
+   * The method is considered to be a variable arity method only if its last
+   * parameter is declared as such (using the ellipsis type). 
    *
-   * @return true if the method is varargs, false otherwise.
+   * @return true if the method is a variable arity method, false otherwise.
    */
   @Override
   boolean isVarArgs();

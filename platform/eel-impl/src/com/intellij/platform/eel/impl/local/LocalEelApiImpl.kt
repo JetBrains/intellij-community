@@ -15,8 +15,7 @@ import com.intellij.platform.eel.impl.fs.EelUserPosixInfoImpl
 import com.intellij.platform.eel.impl.fs.EelUserWindowsInfoImpl
 import com.intellij.platform.eel.impl.fs.PosixNioBasedEelFileSystemApi
 import com.intellij.platform.eel.impl.fs.WindowsNioBasedEelFileSystemApi
-import com.intellij.platform.eel.impl.local.tunnels.EelLocalTunnelsPosixApi
-import com.intellij.platform.eel.impl.local.tunnels.EelLocalTunnelsWindowsApi
+import com.intellij.platform.eel.impl.local.tunnels.EelLocalTunnelsApiImpl
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.*
 import com.intellij.platform.eel.provider.utils.toEelArch
@@ -28,16 +27,18 @@ import java.io.File
 import java.nio.file.FileSystem
 import java.nio.file.FileSystems
 import java.nio.file.Path
+import kotlin.random.Random
 
 internal class LocalWindowsEelApiImpl(nioFs: FileSystem = FileSystems.getDefault()) : LocalWindowsEelApi {
   init {
     check(SystemInfo.isWindows)
   }
 
-  override val tunnels: EelTunnelsWindowsApi get() = EelLocalTunnelsWindowsApi
+  override val platform: EelPlatform.Windows = EelPlatform.Windows(CpuArch.CURRENT.toEelArch())
+
+  override val tunnels: EelTunnelsWindowsApi get() = EelLocalTunnelsApiImpl
   override val descriptor: EelDescriptor get() = LocalEelDescriptor
-  override val platform: EelPlatform.Windows get() = EelPlatform.Windows(CpuArch.CURRENT.toEelArch())
-  override val exec: EelExecApi = EelLocalExecApi()
+  override val exec: EelLocalExecWindowsApi = EelLocalExecWindowsApi()
   override val userInfo: EelUserWindowsInfo = EelUserWindowsInfoImpl(getLocalUserHome())
   override val archive: EelArchiveApi = LocalEelArchiveApiImpl
 
@@ -61,8 +62,6 @@ class LocalPosixEelApiImpl(private val nioFs: FileSystem = FileSystems.getDefaul
     check(SystemInfo.isUnix)
   }
 
-  override val tunnels: EelTunnelsPosixApi get() = EelLocalTunnelsPosixApi
-  override val descriptor: EelDescriptor get() = LocalEelDescriptor
   override val platform: EelPlatform.Posix
     get() {
       val arch = CpuArch.CURRENT.toEelArch()
@@ -77,7 +76,10 @@ class LocalPosixEelApiImpl(private val nioFs: FileSystem = FileSystems.getDefaul
       }
     }
 
-  override val exec: EelExecApi = EelLocalExecApi()
+  override val tunnels: EelTunnelsPosixApi get() = EelLocalTunnelsApiImpl
+  override val descriptor: EelDescriptor get() = LocalEelDescriptor
+
+  override val exec: EelExecPosixApi = EelLocalExecPosixApi()
   override val archive: EelArchiveApi = LocalEelArchiveApiImpl
 
   override val userInfo: EelUserPosixInfo = run {
@@ -100,11 +102,13 @@ class LocalPosixEelApiImpl(private val nioFs: FileSystem = FileSystems.getDefaul
   }
 }
 
+@OptIn(ExperimentalStdlibApi::class)
 private fun doCreateTemporaryDirectory(
   options: EelFileSystemApi.CreateTemporaryEntryOptions,
 ): EelResult<EelPath, CreateTemporaryEntryError> {
   return doCreateTemporaryEntry(options) { dir, prefix, suffix, deleteOnExit ->
-    FileUtil.createTempDirectory(dir, prefix, suffix, deleteOnExit)
+    // dir / Prefix + Random + Optional_Suffix
+    FileUtil.createTempDirectory(dir, prefix + Random.nextBytes(16).toHexString(), suffix, deleteOnExit)
   }
 }
 

@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.indices
 
 import com.intellij.openapi.application.ApplicationManager
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.indices.MavenIndicesManager.Companion.addArchetype
 import org.jetbrains.idea.maven.indices.MavenIndicesManager.Companion.getInstance
 import org.jetbrains.idea.maven.indices.MavenIndicesManager.MavenIndexerListener
@@ -9,9 +10,9 @@ import org.jetbrains.idea.maven.model.MavenArchetype
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.model.MavenRepositoryInfo
 import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.jetbrains.idea.maven.project.MavenSettingsCache
 import org.junit.Test
 import java.io.File
-import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CountDownLatch
@@ -71,10 +72,11 @@ class MavenIndicesManagerTest : MavenIndicesTestCase() {
 
   @Test
   @OptIn(ExperimentalPathApi::class)
-  fun testAddingFilesToIndex() {
+  fun testAddingFilesToIndex() = runBlocking{
     val localRepo = myIndicesFixture!!.repositoryHelper.getTestData("local2")
 
     MavenProjectsManager.getInstance(project).getGeneralSettings().setLocalRepository(localRepo.toString())
+    MavenSettingsCache.getInstance(project).reloadAsync()
     myIndicesFixture!!.indicesManager.scheduleUpdateIndicesListAndWait()
     myIndicesFixture!!.indicesManager.waitForGavUpdateCompleted()
     val localIndex = myIndicesFixture!!.indicesManager.getCommonGavIndex()

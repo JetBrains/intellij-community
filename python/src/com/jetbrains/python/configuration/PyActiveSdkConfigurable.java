@@ -3,15 +3,12 @@ package com.jetbrains.python.configuration;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.IdeBundle;
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
@@ -21,24 +18,16 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.ui.ComboBox;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.DialogWrapperDialog;
 import com.intellij.openapi.ui.FixedSizeButton;
-import com.intellij.openapi.ui.popup.IconButton;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.*;
 import com.intellij.ui.components.DropDownLink;
-import com.intellij.ui.components.panels.HorizontalLayout;
-import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.NullableConsumer;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.webcore.packaging.PackagesNotificationPanel;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.packaging.PyPackageManagers;
@@ -50,8 +39,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.HyperlinkEvent;
-import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.util.ArrayList;
@@ -59,7 +46,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
-import static com.intellij.codeInsight.hint.HintUtil.PROMOTION_PANE_KEY;
 import static com.jetbrains.python.sdk.PySdkRenderingKt.groupModuleSdksByTypes;
 
 public class PyActiveSdkConfigurable implements UnnamedConfigurable {
@@ -204,13 +190,6 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
       customizer.first.customizeActiveSdkPanel(project, sdkComboBox, result, c, customizer.second);
     }
 
-    c.insets = JBUI.insets(2, 2, 0, 2);
-    c.gridx = 0;
-    c.gridy++;
-    c.gridwidth = 3;
-    c.weightx = 0.0;
-    result.add(buildToolWindowAdvertisement(project), c);
-
     c.gridx = 0;
     c.gridy++;
     c.weighty = 1.;
@@ -246,44 +225,6 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     final PyPackageManagers packageManagers = PyPackageManagers.getInstance();
     myPackagesPanel.updatePackages(sdk != null ? packageManagers.getManagementService(myProject, sdk) : null);
     myPackagesPanel.updateNotifications(sdk);
-  }
-
-  private static JComponent buildToolWindowAdvertisement(Project project) {
-    var promotionKey = "PY_PACKAGES_AD_HIDDEN";
-    if (PropertiesComponent.getInstance().isValueSet(promotionKey)) return new JLabel("  ");
-    var panel = new BorderLayoutPanel();
-    panel.setBorder(JBUI.Borders.empty(7));
-    panel.setAlignmentX(Component.LEFT_ALIGNMENT);
-    JLabel label = new JLabel(PyBundle.message("python.packaging.toolwindow.advertisement"));
-    label.setIcon(AllIcons.Ide.Gift);
-    panel.addToCenter(label);
-    panel.setBackground(EditorColorsManager.getInstance().getGlobalScheme().getColor(PROMOTION_PANE_KEY));
-    panel.setMinimumSize(new Dimension(400, panel.getMinimumSize().height));
-
-    var linkPanel = new NonOpaquePanel(new HorizontalLayout(12));
-    HyperlinkLabel link = new HyperlinkLabel(PyBundle.message("python.packaging.open.toolwindow.link"));
-    link.addHyperlinkListener(new HyperlinkListener() {
-      @Override
-      public void hyperlinkUpdate(HyperlinkEvent e) {
-        Window window = ComponentUtil.getActiveWindow();
-        if (window instanceof DialogWrapperDialog dialog) {
-          dialog.getDialogWrapper().close(DialogWrapper.CANCEL_EXIT_CODE);
-          ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow("Python Packages");
-          if (toolWindow != null) toolWindow.show();
-        }
-      }
-    });
-    linkPanel.add(link);
-    var closeAction = new InplaceButton(
-      new IconButton(IdeBundle.message("do.not.ask.me.again"), AllIcons.Actions.Close, AllIcons.Actions.CloseHovered),
-      e -> {
-        PropertiesComponent.getInstance().setValue(promotionKey, true);
-        panel.removeAll();
-        panel.setBackground(JBColor.background());
-      });
-    linkPanel.add(closeAction);
-    panel.addToRight(linkPanel);
-    return panel;
   }
 
   /**

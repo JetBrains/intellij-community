@@ -32,7 +32,7 @@ public class TextSplitter extends BaseSplitter {
     "(_|" + letter + ")*+" // more letters and underscores
   );
   @Override
-  public void split(@Nullable String text, @NotNull TextRange range, Consumer<TextRange> consumer) {
+  public void split(@Nullable String text, @NotNull TextRange range, @NotNull Consumer<TextRange> consumer) {
     if (text == null || StringUtil.isEmpty(text)) {
       return;
     }

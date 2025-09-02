@@ -7,8 +7,8 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.util.Disposer
 import com.intellij.vcs.log.data.index.*
-import com.intellij.vcs.log.impl.VcsLogNavigationUtil.waitForRefresh
 import com.intellij.vcs.log.impl.VcsProjectLog.Companion.getInstance
+import com.intellij.vcs.log.impl.waitForRefresh
 import com.intellij.vcs.log.util.PersistentUtil
 import com.jetbrains.performancePlugin.commands.PerformanceCommandCoroutineAdapter
 import com.jetbrains.performancePlugin.commands.Waiter

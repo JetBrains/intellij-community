@@ -28,7 +28,7 @@ object ApplicabilityRanges {
     private fun modifier(
         element: KtModifierListOwner,
         tokens: TokenSet,
-    ) = ApplicabilityRange.single(element) { it.modifierList?.getModifier(tokens) }
+    ): List<TextRange> = ApplicabilityRange.single(element) { it.modifierList?.getModifier(tokens) }
 
     fun calleeExpression(element: KtCallExpression): List<TextRange> =
         ApplicabilityRange.single(element) { it.calleeExpression }
@@ -82,5 +82,13 @@ object ApplicabilityRanges {
         }
 
         return listOf(textRange)
+    }
+
+    fun destructuringDeclarationParens(element: KtDestructuringDeclaration): List<TextRange> {
+        val lPar = element.lPar ?: return emptyList()
+        val rPar = element.rPar ?: return emptyList()
+        return listOf(
+            lPar.textRangeIn(element).union(rPar.textRangeIn(element))
+        )
     }
 }

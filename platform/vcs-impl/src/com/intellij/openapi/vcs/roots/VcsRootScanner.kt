@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.roots
 
-import com.intellij.ide.impl.isTrusted
+import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.ide.trustedProjects.TrustedProjectsListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
@@ -195,7 +195,7 @@ class VcsRootScanner(private val project: Project, coroutineScope: CoroutineScop
       if (ApplicationManager.getApplication().isUnitTestMode) {
         return
       }
-      if (!project.isTrusted()) {
+      if (!TrustedProjects.isProjectTrusted(project)) {
         // vcs is disabled
         return
       }

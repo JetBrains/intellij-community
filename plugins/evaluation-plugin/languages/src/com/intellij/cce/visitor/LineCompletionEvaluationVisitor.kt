@@ -80,9 +80,9 @@ interface LineCompletionAllEvaluationVisitor : LineCompletionEvaluationVisitor {
       super.visitComment(comment)
     }
 
-    override fun visitFile(file: PsiFile) {
-      processor.visitFile(file)
-      super.visitFile(file)
+    override fun visitFile(psiFile: PsiFile) {
+      processor.visitFile(psiFile)
+      super.visitFile(psiFile)
     }
 
     override fun visitWhiteSpace(space: PsiWhiteSpace) {

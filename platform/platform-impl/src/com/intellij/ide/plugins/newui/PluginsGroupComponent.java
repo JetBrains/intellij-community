@@ -2,8 +2,8 @@
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.accessibility.AccessibilityUtils;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -73,7 +73,9 @@ public abstract class PluginsGroupComponent extends JBPanelWithEmptyText {
     });
   }
 
-  protected abstract @NotNull ListPluginComponent createListComponent(@NotNull IdeaPluginDescriptor descriptor, @NotNull PluginsGroup group);
+  protected abstract @NotNull ListPluginComponent createListComponent(@NotNull PluginUiModel model,
+                                                                      @NotNull PluginsGroup group,
+                                                                      @NotNull List<HtmlChunk> errors);
 
   public final @NotNull List<UIPluginGroup> getGroups() {
     return Collections.unmodifiableList(myGroups);
@@ -100,33 +102,33 @@ public abstract class PluginsGroupComponent extends JBPanelWithEmptyText {
   }
 
   public void addGroup(@NotNull PluginsGroup group, int groupIndex) {
-    addGroup(group, group.descriptors, groupIndex);
+    addGroup(group, group.getModels(), groupIndex);
   }
 
   public void addLazyGroup(@NotNull PluginsGroup group, @NotNull JScrollBar scrollBar, int gapSize, @NotNull Runnable uiCallback) {
-    if (group.descriptors.size() <= gapSize) {
+    if (group.getModels().size() <= gapSize) {
       addGroup(group);
     }
     else {
-      addGroup(group, group.descriptors.subList(0, gapSize), -1);
+      addGroup(group, group.getModels().subList(0, gapSize), -1);
       AdjustmentListener listener = new AdjustmentListener() {
         @Override
         public void adjustmentValueChanged(AdjustmentEvent e) {
           if ((scrollBar.getValue() + scrollBar.getVisibleAmount()) >= scrollBar.getMaximum()) {
             int fromIndex = group.ui.plugins.size();
-            int toIndex = Math.min(fromIndex + gapSize, group.descriptors.size());
+            int toIndex = Math.min(fromIndex + gapSize, group.getDescriptors().size());
             ListPluginComponent lastComponent = group.ui.plugins.get(fromIndex - 1);
             int uiIndex = getComponentIndex(lastComponent);
             int eventIndex = myEventHandler.getCellIndex(lastComponent);
             try {
               PluginLogo.startBatchMode();
-              addToGroup(group, group.descriptors.subList(fromIndex, toIndex), uiIndex, eventIndex);
+              addToGroup(group, group.getModels().subList(fromIndex, toIndex), uiIndex, eventIndex);
             }
             finally {
               PluginLogo.endBatchMode();
             }
 
-            if (group.descriptors.size() == group.ui.plugins.size()) {
+            if (group.getDescriptors().size() == group.ui.plugins.size()) {
               scrollBar.removeAdjustmentListener(this);
               group.clearCallback = null;
             }
@@ -145,7 +147,7 @@ public abstract class PluginsGroupComponent extends JBPanelWithEmptyText {
   private static final Color SECTION_HEADER_BACKGROUND =
     JBColor.namedColor("Plugins.SectionHeader.background", new JBColor(0xF7F7F7, 0x3C3F41));
 
-  private void addGroup(@NotNull PluginsGroup group, @NotNull List<? extends IdeaPluginDescriptor> descriptors, int groupIndex) {
+  private void addGroup(@NotNull PluginsGroup group, @NotNull List<PluginUiModel> models, int groupIndex) {
     UIPluginGroup uiGroup = new UIPluginGroup();
     group.ui = uiGroup;
     myGroups.add(groupIndex == -1 ? myGroups.size() : groupIndex, uiGroup);
@@ -229,7 +231,7 @@ public abstract class PluginsGroupComponent extends JBPanelWithEmptyText {
 
     uiGroup.panel = panel;
 
-    addToGroup(group, descriptors, index, eventIndex);
+    addToGroup(group, models, index, eventIndex);
   }
 
   private int getEventIndexForGroup(int groupIndex) {
@@ -243,11 +245,11 @@ public abstract class PluginsGroupComponent extends JBPanelWithEmptyText {
   }
 
   private void addToGroup(@NotNull PluginsGroup group,
-                          @NotNull List<? extends IdeaPluginDescriptor> descriptors,
+                          @NotNull List<PluginUiModel> models,
                           int index,
                           int eventIndex) {
-    for (IdeaPluginDescriptor descriptor : descriptors) {
-      ListPluginComponent pluginComponent = createListComponent(descriptor, group);
+    for (PluginUiModel pluginUiModel : models) {
+      ListPluginComponent pluginComponent = createListComponent(pluginUiModel, group, group.getErrors(pluginUiModel));
       group.ui.plugins.add(pluginComponent);
       add(pluginComponent, index);
       myEventHandler.addCell(pluginComponent, eventIndex);
@@ -261,8 +263,8 @@ public abstract class PluginsGroupComponent extends JBPanelWithEmptyText {
     }
   }
 
-  public void addToGroup(@NotNull PluginsGroup group, @NotNull IdeaPluginDescriptor descriptor) {
-    int index = group.addWithIndex(descriptor);
+  public void addToGroup(@NotNull PluginsGroup group, @NotNull PluginUiModel model) {
+    int index = group.addWithIndex(model);
     ListPluginComponent anchor = null;
     int uiIndex = -1;
 
@@ -279,7 +281,7 @@ public abstract class PluginsGroupComponent extends JBPanelWithEmptyText {
       uiIndex = getComponentIndex(anchor);
     }
 
-    ListPluginComponent pluginComponent = createListComponent(descriptor, group);
+    ListPluginComponent pluginComponent = createListComponent(model, group, group.getErrors(model));
     group.ui.plugins.add(index, pluginComponent);
     add(pluginComponent, uiIndex);
     myEventHandler.addCell(pluginComponent, anchor);
@@ -300,8 +302,8 @@ public abstract class PluginsGroupComponent extends JBPanelWithEmptyText {
     group.clear();
   }
 
-  public void removeFromGroup(@NotNull PluginsGroup group, @NotNull IdeaPluginDescriptor descriptor) {
-    int index = ContainerUtil.indexOf(group.ui.plugins, component -> component.getPluginDescriptor() == descriptor);
+  public void removeFromGroup(@NotNull PluginsGroup group, @NotNull PluginUiModel descriptor) {
+    int index = ContainerUtil.indexOf(group.ui.plugins, component -> component.getPluginModel() == descriptor);
     assert index != -1;
     ListPluginComponent component = group.ui.plugins.remove(index);
     component.close();
@@ -310,7 +312,7 @@ public abstract class PluginsGroupComponent extends JBPanelWithEmptyText {
     if (component.getSelection() == EventHandler.SelectionType.SELECTION) {
       myEventHandler.updateSelection();
     }
-    group.descriptors.remove(descriptor);
+    group.removeDescriptor(descriptor);
   }
 
   private int getComponentIndex(@NotNull Component component) {

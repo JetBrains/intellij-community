@@ -74,8 +74,8 @@ final class EscapeEntitiesAction extends BaseCodeInsightAction implements CodeIn
   }
 
   @Override
-  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    return file instanceof XmlFile;
+  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    return psiFile instanceof XmlFile;
   }
 
   @Override
@@ -84,11 +84,11 @@ final class EscapeEntitiesAction extends BaseCodeInsightAction implements CodeIn
   }
 
   @Override
-  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
     int[] starts = editor.getSelectionModel().getBlockSelectionStarts();
     int[] ends = editor.getSelectionModel().getBlockSelectionEnds();
     final Document document = editor.getDocument();
-    XmlFile xmlFile = (XmlFile)file;
+    XmlFile xmlFile = (XmlFile)psiFile;
     Int2ObjectMap<String> map = computeMap(xmlFile);
     for (int i = starts.length - 1; i >= 0; i--) {
       final int start = starts[i];

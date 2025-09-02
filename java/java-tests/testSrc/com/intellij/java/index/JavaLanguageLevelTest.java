@@ -1,11 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.index;
 
-import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.impl.JavaLanguageLevelPusher;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.impl.java.stubs.JavaStubDefinition;
 import com.intellij.psi.stubs.SerializedStubTree;
 import com.intellij.psi.stubs.StubUpdatingIndex;
 import com.intellij.testFramework.PsiTestUtil;
@@ -20,7 +20,7 @@ public class JavaLanguageLevelTest extends LightJavaCodeInsightFixtureTestCase {
 
     assertFalse(ProjectFileIndex.getInstance(getProject()).isInSourceContent(file));
     assertNull(level);
-    assertFalse(JavaParserDefinition.JAVA_FILE.shouldBuildStubFor(file));
+    assertFalse(JavaStubDefinition.shouldBuildStubForFile(file));
     assertNull(getIndexedStub(file));
 
     PsiTestUtil.addSourceContentToRoots(myFixture.getModule(), file.getParent());
@@ -29,7 +29,7 @@ public class JavaLanguageLevelTest extends LightJavaCodeInsightFixtureTestCase {
 
       assertTrue(ProjectFileIndex.getInstance(getProject()).isInSourceContent(file));
       assertEquals(LanguageLevel.HIGHEST, level2);
-      assertTrue(JavaParserDefinition.JAVA_FILE.shouldBuildStubFor(file));
+      assertTrue(JavaStubDefinition.shouldBuildStubForFile(file));
       assertNotNull(getIndexedStub(file));
     }
     finally {

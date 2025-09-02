@@ -12,6 +12,9 @@ a:com.intellij.execution.ExecutionManager
 - *a:executePreparationTasks(com.intellij.execution.runners.ExecutionEnvironment,com.intellij.execution.configurations.RunProfileState):org.jetbrains.concurrency.Promise
 a:com.intellij.execution.Executor
 - *:isSupportedOnTarget():Z
+f:com.intellij.execution.PermissionsKt
+- *sf:getFullRunAccess():com.intellij.platform.ide.core.permissions.Permission
+- *sf:getRunViewAccess():com.intellij.platform.ide.core.permissions.Permission
 *f:com.intellij.execution.configurations.JavaTargetDependentParameters
 - <init>():V
 - addParameter(java.util.function.Function):V

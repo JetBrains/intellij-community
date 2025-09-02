@@ -78,7 +78,7 @@ public class CopyrightProjectConfigurable extends SearchableConfigurable.Parent.
   }
 
   @Override
-  protected Configurable[] buildConfigurables() {
+  protected @NotNull Configurable @NotNull [] buildConfigurables() {
     return new Configurable[]{myProfilesPanel, new CopyrightFormattingConfigurable(project)};
   }
 

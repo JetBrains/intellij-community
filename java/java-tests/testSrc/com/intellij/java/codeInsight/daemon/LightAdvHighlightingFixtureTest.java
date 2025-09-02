@@ -292,6 +292,45 @@ public class LightAdvHighlightingFixtureTest extends LightJavaCodeInsightFixture
     doTest();
   }
 
+  public void testGenericParameterAnotherPackage() { // IDEA-352818
+    myFixture.addClass("""
+      package foo;
+      
+      import java.util.List;
+      
+      @SuppressWarnings("ClassEscapesDefinedScope")
+      public final class Foo {
+          public static List<PackagePrivate> foo() {
+              return List.of(new PackagePrivate());
+          }
+      
+          static class PackagePrivate implements Runnable {
+              @Override
+              public void run() {
+                  System.out.println("PackagePrivate.run");
+              }
+          }
+      }""");
+    myFixture.configureByText("Bar.java", """
+      package bar;
+      
+      import foo.Foo;
+      
+      import java.util.List;
+      
+      final class Bar {
+        public static void main(String[] args) {
+          Runnable first = getFirst(Foo.foo());
+          first.run();
+        }
+      
+        private static <T> T getFirst(List<T> list) {
+          return list.get(0);
+        }
+      }""");
+    myFixture.checkHighlighting();
+  }
+
   private void doTest() {
     myFixture.configureByFile(getTestName(false) + ".java");
     myFixture.checkHighlighting();

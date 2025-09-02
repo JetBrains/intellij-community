@@ -34,7 +34,7 @@ class ForceUpdateSnapshotsImportQuickFix : BuildIssueQuickFix {
   override val id: String = ID
 
   override fun runQuickFix(project: Project, dataContext: DataContext): CompletableFuture<*> {
-    MavenUtil.restartMavenConnectors(project, false)
+    MavenUtil.shutdownMavenConnectors(project)
     MavenProjectsManager.getInstance(project).apply {
       forceUpdateSnapshots = true
       forceUpdateProjects()

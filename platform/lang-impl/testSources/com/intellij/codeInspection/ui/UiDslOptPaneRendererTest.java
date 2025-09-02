@@ -1,18 +1,21 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.options.OptDropdown;
+import com.intellij.codeInspection.options.OptMultiSelector;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.options.PlainMessage;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.testFramework.junit5.TestDisposable;
 import com.intellij.ui.ContextHelpLabel;
 import com.intellij.ui.SeparatorComponent;
+import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.fields.ExpandableTextField;
 import com.intellij.util.containers.ContainerUtil;
@@ -21,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
 import javax.swing.*;
+import java.util.List;
 
 import static com.intellij.codeInspection.options.OptPane.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -261,5 +265,71 @@ public class UiDslOptPaneRendererTest {
     ExpandableTextField field = UIUtil.findComponentOfType(component, ExpandableTextField.class);
     String text = field.getText();
     assertEquals("hello,world", text);
+  }
+
+  private static class StringElement implements OptMultiSelector.OptElement {
+    private final String s;
+
+    private StringElement(String s) { this.s = s; }
+
+    @Override
+    public @NotNull String getText() { return s; }
+  }
+
+  private static class MyMultiSelectorInspection extends LocalInspectionTool {
+    public List<StringElement> elements = List.of(new StringElement("String"), new StringElement("Integer"), new StringElement("Double"));
+    public List<StringElement> chosen = List.of(elements.get(0));
+
+    @Override
+    public @NotNull OptPane getOptionsPane() {
+      return pane(
+        multiSelector("chosen", elements, OptMultiSelector.SelectionMode.SINGLE)
+      );
+    }
+  }
+
+  @Test
+  public void testMultiSelectorControl1() {
+    MyMultiSelectorInspection inspection = new MyMultiSelectorInspection();
+    JComponent component = render(inspection);
+    //noinspection unchecked
+    JBList<OptMultiSelector.OptElement> list = UIUtil.findComponentOfType(component, JBList.class);
+    assertEquals(inspection.chosen, list.getSelectedValuesList());
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      list.setSelectedIndex(1);
+    });
+    assertEquals("Integer", list.getSelectedValue().getText());
+    assertEquals("Integer", inspection.chosen.get(0).getText());
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      list.setSelectedIndices(new int[]{0, 2});
+    });
+    assertEquals(1, list.getSelectedValuesList().size());
+  }
+
+  private static class MyMultiSelectorInspection2 extends LocalInspectionTool {
+    public List<StringElement> elements = List.of(new StringElement("String"), new StringElement("Integer"), new StringElement("Double"));
+    public List<StringElement> chosen = List.of();
+
+    @Override
+    public @NotNull OptPane getOptionsPane() {
+      return pane(
+        multiSelector("chosen", elements, OptMultiSelector.SelectionMode.MULTIPLE_OR_EMPTY)
+      );
+    }
+  }
+
+  @Test
+  public void testMultiSelectorControl2() {
+    MyMultiSelectorInspection2 inspection = new MyMultiSelectorInspection2();
+    JComponent component = render(inspection);
+    //noinspection unchecked
+    JBList<OptMultiSelector.OptElement> list = UIUtil.findComponentOfType(component, JBList.class);
+    assertEquals(inspection.chosen, list.getSelectedValuesList());
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      list.setSelectedIndices(new int[]{0, 2});
+    });
+    assertEquals("String", list.getSelectedValuesList().get(0).getText());
+    assertEquals("Double", list.getSelectedValuesList().get(1).getText());
+    assertEquals(inspection.chosen, list.getSelectedValuesList());
   }
 }

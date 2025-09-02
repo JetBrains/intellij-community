@@ -1,7 +1,7 @@
 package test.pkg
 
 public final class Test {
-    @org.jetbrains.annotations.Nullable @kotlin.Deprecated(message = "no more property", level = DeprecationLevel.HIDDEN) private var pOld_getter_deprecatedOnProperty: java.lang.String = null
+    @org.jetbrains.annotations.Nullable private var pOld_getter_deprecatedOnProperty: java.lang.String = null
     @org.jetbrains.annotations.Nullable private var pOld_getter_deprecatedOnGetter: java.lang.String = null
     @org.jetbrains.annotations.Nullable private var pOld_getter_deprecatedOnSetter: java.lang.String = null
     @org.jetbrains.annotations.Nullable private var pNew_getter: java.lang.String = null
@@ -19,7 +19,6 @@ public final class Test {
             if (var8a4c2ed8 != null) var8a4c2ed8 else "null?"
         }
     }
-    @kotlin.Deprecated(message = "no more property", level = DeprecationLevel.HIDDEN)
     public final fun setPOld_getter_deprecatedOnProperty(@org.jetbrains.annotations.Nullable <set-?>: java.lang.String) : void = UastEmptyExpression
     @kotlin.Deprecated(message = "no more getter", level = DeprecationLevel.HIDDEN)
     public final fun getPOld_getter_deprecatedOnGetter() : java.lang.String {

@@ -3,6 +3,7 @@ package com.intellij.refactoring.rename;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.InputValidatorEx;
@@ -29,6 +30,7 @@ import com.intellij.ui.table.JBTable;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.UsageViewPresentation;
 import com.intellij.usages.impl.UsagePreviewPanel;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -104,6 +106,11 @@ public class AutomaticRenamingDialog extends DialogWrapper {
   @Override
   protected String getDimensionServiceKey() {
     return "#com.intellij.refactoring.rename.AutomaticRenamingDialog";
+  }
+
+  @Override
+  public @Nullable Dimension getInitialSize() {
+    return JBUI.DialogSizes.large();
   }
 
   @Override
@@ -206,7 +213,9 @@ public class AutomaticRenamingDialog extends DialogWrapper {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       SwingUtilities.invokeLater(() -> {
         if (myTableModel.getRowCount() != 0) {
-          myTable.getSelectionModel().addSelectionInterval(0, 0);
+          ReadAction.run(() -> {
+            myTable.getSelectionModel().addSelectionInterval(0, 0);
+          });
         }
       });
     }

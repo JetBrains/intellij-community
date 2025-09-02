@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring
 
@@ -14,9 +14,9 @@ import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KtPsiClassWrapper
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
-import org.jetbrains.kotlin.psi.NotNullableUserDataProperty
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.util.findElementsByCommentPrefix
+import org.jetbrains.kotlin.psi.NotNullableUserDataProperty
 import java.io.File
 
 abstract class AbstractMemberPullPushTest : KotlinLightCodeInsightFixtureTestCase() {
@@ -25,7 +25,7 @@ abstract class AbstractMemberPullPushTest : KotlinLightCodeInsightFixtureTestCas
     protected fun doTest(path: String, action: (mainFile: PsiFile) -> Unit) {
         val mainFile = File(path)
         val afterFile = File("$path.after")
-        val conflictFile = File("$path.messages")
+        val conflictFile = getConflictFile(path)
 
         fixture.testDataPath = mainFile.parent
 
@@ -59,6 +59,16 @@ abstract class AbstractMemberPullPushTest : KotlinLightCodeInsightFixtureTestCas
             }
             KotlinTestUtils.assertEqualsToFile(conflictFile, message)
         }
+    }
+
+    private fun getConflictFile(path: String): File {
+        val suffix = getSuffix()
+        val conflictFile = if (suffix != null) File("$path.messages.$suffix") else null
+        return conflictFile?.takeIf { it.exists() } ?: File("$path.messages")
+    }
+
+    protected open fun getSuffix(): String? {
+        return null
     }
 }
 

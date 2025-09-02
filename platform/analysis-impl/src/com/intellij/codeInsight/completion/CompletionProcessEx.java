@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.UserDataHolderEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,7 +18,7 @@ import java.util.function.Supplier;
 
 
 @ApiStatus.Internal
-public interface CompletionProcessEx extends CompletionProcessBase {
+public interface CompletionProcessEx extends CompletionProcessBase, UserDataHolderEx {
   @NotNull
   Project getProject();
 

@@ -1,32 +1,9 @@
-# Stubs for django.conf.urls (Python 3.5)
-from collections.abc import Callable, Sequence
-from typing import Any, overload
-
-from django.http.response import HttpResponse, HttpResponseBase
-from django.urls import URLPattern, URLResolver
 from django.urls import include as include
-from typing_extensions import TypeAlias
+from django.views import defaults
 
-handler400: str | Callable[..., HttpResponse]
-handler403: str | Callable[..., HttpResponse]
-handler404: str | Callable[..., HttpResponse]
-handler500: str | Callable[..., HttpResponse]
+__all__ = ["handler400", "handler403", "handler404", "handler500", "include"]
 
-_IncludedURLConf: TypeAlias = tuple[Sequence[URLResolver | URLPattern], str | None, str | None]
-
-# Deprecated
-@overload
-def url(
-    regex: str, view: Callable[..., HttpResponseBase], kwargs: dict[str, Any] | None = ..., name: str | None = ...
-) -> URLPattern: ...
-@overload
-def url(
-    regex: str, view: _IncludedURLConf, kwargs: dict[str, Any] | None = ..., name: str | None = ...
-) -> URLResolver: ...
-@overload
-def url(
-    regex: str,
-    view: Sequence[URLResolver | str],
-    kwargs: dict[str, Any] | None = ...,
-    name: str | None = ...,
-) -> URLResolver: ...
+handler400 = defaults.bad_request
+handler403 = defaults.permission_denied
+handler404 = defaults.page_not_found
+handler500 = defaults.server_error

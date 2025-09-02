@@ -37,6 +37,7 @@ import java.util.Set;
 
 public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel implements HierarchyBrowser, Disposable {
   protected final Project myProject;
+  private final @NotNull ExporterToTextFileHierarchy myExporter = new ExporterToTextFileHierarchy(this);
   protected Content myContent;
 
   private final AutoScrollToSourceHandler myAutoScrollToSourceHandler;
@@ -91,7 +92,7 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
     actionGroup.add(actionManager.getAction(IdeActions.ACTION_EXPAND_ALL));
     actionGroup.add(actionManager.getAction(IdeActions.ACTION_COLLAPSE_ALL));
     actionGroup.add(actionManager.getAction(PinToolwindowTabAction.ACTION_NAME));
-    actionGroup.add(CommonActionsManager.getInstance().createExportToTextFileAction(new ExporterToTextFileHierarchy(this)));
+    actionGroup.add(CommonActionsManager.getInstance().createExportToTextFileAction(myExporter));
     actionGroup.add(new CloseAction());
   }
 
@@ -202,6 +203,7 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
 
     sink.set(PlatformDataKeys.TREE_EXPANDER, tree == null ? null : new DefaultTreeExpander(tree));
     sink.set(PlatformCoreDataKeys.SELECTED_ITEMS, selection);
+    sink.set(PlatformDataKeys.EXPORTER_TO_TEXT_FILE, myExporter);
 
     sink.lazy(CommonDataKeys.PSI_ELEMENT, () -> {
       PsiElement anElement = selection.length > 0 ? getElementFromDescriptor(selection[0]) : null;

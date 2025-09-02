@@ -28,7 +28,8 @@ abstract class KotlinSuggestedRefactoringSupportBase : SuggestedRefactoringSuppo
                     return anchor.nameIdentifier?.textRange
                 }
 
-                val start = anchor.receiverTypeReference?.textRange?.startOffset
+                val start = anchor.modifierList?.contextReceiverList?.textRange?.startOffset
+                    ?: anchor.receiverTypeReference?.textRange?.startOffset
                     ?: anchor.nameIdentifier?.textRange?.startOffset
                     ?: return null
                 val end = (anchor.typeReference ?: anchor.valueParameterList ?: anchor.nameIdentifier)
@@ -139,7 +140,8 @@ data class KotlinSignatureAdditionalData(
 
 data class KotlinParameterAdditionalData(
     val defaultValue: String?,
-    val modifiers: String
+    val modifiers: String,
+    val isContextParameter: Boolean = false,
 ) : SuggestedRefactoringSupport.ParameterAdditionalData
 
 val Signature.receiverType: String?
@@ -150,3 +152,6 @@ val Parameter.defaultValue: String?
 
 val Parameter.modifiers: String
     get() = (additionalData as KotlinParameterAdditionalData?)?.modifiers ?: ""
+
+val Parameter.isContextParameter: Boolean
+    get() = (additionalData as KotlinParameterAdditionalData?)?.isContextParameter ?: false

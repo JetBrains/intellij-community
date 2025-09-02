@@ -65,12 +65,7 @@ public abstract class DependenciesIndexedStatusServiceBaseTest {
   public final ExternalResource dependenciesIndexedStatusServiceEnabler = new ExternalResource() {
     @Override
     protected void before() {
-      TestModeFlags.set(DependenciesIndexedStatusService.ENFORCEMENT_USAGE_TEST_MODE_FLAG, true);
-    }
-
-    @Override
-    protected void after() {
-      TestModeFlags.set(DependenciesIndexedStatusService.ENFORCEMENT_USAGE_TEST_MODE_FLAG, false);
+      TestModeFlags.set(DependenciesIndexedStatusService.ENFORCEMENT_USAGE_TEST_MODE_FLAG, true, disposableRule.getDisposable());
     }
   };
 

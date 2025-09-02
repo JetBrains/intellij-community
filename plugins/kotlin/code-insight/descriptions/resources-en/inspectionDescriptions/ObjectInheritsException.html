@@ -1,0 +1,13 @@
+<html>
+<body>
+Reports object inherited from <code>Exception</code> because exceptions are inherently stateful, containing information like the stacktrace.
+<p><b>Example:</b></p>
+<pre><code>
+object MyEx: Exception()
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+class MyEx: Exception()
+</code></pre>
+</body>
+</html>

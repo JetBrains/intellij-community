@@ -1,8 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.gradleJava.run
 
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
+import com.intellij.openapi.module.Module
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
@@ -10,12 +14,15 @@ import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.types.symbol
+import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
+import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getCallNameExpression
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
+import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_PROJECT
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_TASK_CONTAINER
 import org.jetbrains.plugins.gradle.util.GradleConstants.KOTLIN_DSL_SCRIPT_EXTENSION
@@ -122,3 +129,41 @@ private fun isMethodOfProject(methodName: String, fqClassName: FqName) =
     (methodName == "task") && (fqClassName == FqName(GRADLE_API_PROJECT)
             || fqClassName == FqName(GRADLE_KOTLIN_PROJECT_DELEGATE)
             || fqClassName == FqName("Build_gradle")) // Could be resolved instead of ProjectDelegate on Gradle 6.0
+
+fun KtNamedFunction.getKMPGradleConfigurationName(runTask: KotlinJvmRunTaskData): String =
+    "${getConfigurationName()} [${runTask.targetName}]"
+
+fun KtNamedFunction.getConfigurationName(): String? = ReadAction.compute<Module, Throwable> { module }?.getSubprojectNameOfGradleRoot() ?: name
+
+@RequiresReadLock
+fun kmpJvmGradleTaskParameters(function: KtNamedFunction): String = "${mainClassScriptParameter(function)} $quietParameter"
+
+@RequiresReadLock
+internal fun mainClassScriptParameter(function: KtFunction): String = "-DmainClass=${function.containingKtFile.javaFileFacadeFqName}"
+
+/**
+ * Returns the name of the direct subproject of the Gradle root project in which this module is located in.
+ *
+ * For example, for both modules "SomeKMPProject.composeApp.desktopMain" and "SomeKMPProject.composeApp.wasmJsMain"
+ * the return value would be "composeApp".
+ */
+private fun Module.getSubprojectNameOfGradleRoot(): String? = name.split(".").getOrNull(1)
+
+fun configureKmpJvmRunConfigurationFromMainFunction(
+    configuration: GradleRunConfiguration,
+    function: KtNamedFunction,
+    runTask: KotlinJvmRunTaskData,
+    module: Module
+) {
+    configuration.name = function.getKMPGradleConfigurationName(runTask)
+    configuration.isDebugAllEnabled = false
+    configuration.isDebugServerProcess = false
+
+    configuration.settings.apply {
+        externalProjectPath = ExternalSystemApiUtil.getExternalProjectPath(module)
+        taskNames = listOf(runTask.taskName)
+        scriptParameters = ReadAction.compute<String, Throwable> { kmpJvmGradleTaskParameters(function) }
+    }
+}
+
+private const val quietParameter: String = "--quiet"

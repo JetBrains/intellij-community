@@ -32,22 +32,4 @@ public final class DotEnvPsiUtil {
             return "";
         }
     }
-
-    public static String getName(DotEnvProperty element) {
-        return getKeyText(element);
-    }
-
-    public static PsiElement setName(DotEnvProperty element, @NotNull String newName) {
-        ASTNode keyNode = element.getNode().findChildByType(DotEnvTypes.KEY);
-        if (keyNode != null) {
-            DotEnvProperty property = DotEnvElementFactory.createProperty(element.getProject(), newName);
-            ASTNode newKeyNode = property.getFirstChild().getNode();
-            element.getNode().replaceChild(keyNode, newKeyNode);
-        }
-        return element;
-    }
-
-    public static PsiElement getNameIdentifier(DotEnvProperty element) {
-        return element.getKey();
-    }
 }

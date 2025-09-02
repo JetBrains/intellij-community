@@ -88,6 +88,16 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
             runTest("../../idea/tests/testData/refactoring/extractFunction/basic/delegatingFunction.kt");
         }
 
+        @TestMetadata("destructuringEntry.kt")
+        public void testDestructuringEntry() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/extractFunction/basic/destructuringEntry.kt");
+        }
+
+        @TestMetadata("emptySpaces.kt")
+        public void testEmptySpaces() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/extractFunction/basic/emptySpaces.kt");
+        }
+
         @TestMetadata("enumQualifier.kt")
         public void testEnumQualifier() throws Exception {
             runTest("../../idea/tests/testData/refactoring/extractFunction/basic/enumQualifier.kt");
@@ -298,6 +308,11 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
             runTest("../../idea/tests/testData/refactoring/extractFunction/basic/quotedName.kt");
         }
 
+        @TestMetadata("receiverParameter.kt")
+        public void testReceiverParameter() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/extractFunction/basic/receiverParameter.kt");
+        }
+
         @TestMetadata("refInReturn.kt")
         public void testRefInReturn() throws Exception {
             runTest("../../idea/tests/testData/refactoring/extractFunction/basic/refInReturn.kt");
@@ -331,6 +346,11 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
         @TestMetadata("suspendCallInsideSuspendContinuation.kt")
         public void testSuspendCallInsideSuspendContinuation() throws Exception {
             runTest("../../idea/tests/testData/refactoring/extractFunction/basic/suspendCallInsideSuspendContinuation.kt");
+        }
+
+        @TestMetadata("suspendCallLocal.kt")
+        public void testSuspendCallLocal() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/extractFunction/basic/suspendCallLocal.kt");
         }
 
         @TestMetadata("suspendCallWithExtractedParameter.kt")
@@ -1039,6 +1059,11 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
             @TestMetadata("multipleReturnsWithDefault.kt")
             public void testMultipleReturnsWithDefault() throws Exception {
                 runTest("../../idea/tests/testData/refactoring/extractFunction/controlFlow/unextractable/multipleReturnsWithDefault.kt");
+            }
+
+            @TestMetadata("returnAndOutputValue.kt")
+            public void testReturnAndOutputValue() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/extractFunction/controlFlow/unextractable/returnAndOutputValue.kt");
             }
 
             @TestMetadata("unmatchedReturnTargets.kt")
@@ -1879,6 +1904,11 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
                 runTest("../../idea/tests/testData/refactoring/extractFunction/parameters/misc/classObject.kt");
             }
 
+            @TestMetadata("dataClassCopy.kt")
+            public void testDataClassCopy() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/extractFunction/parameters/misc/dataClassCopy.kt");
+            }
+
             @TestMetadata("differentReceivers.kt")
             public void testDifferentReceivers() throws Exception {
                 runTest("../../idea/tests/testData/refactoring/extractFunction/parameters/misc/differentReceivers.kt");
@@ -2032,6 +2062,11 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
             @TestMetadata("smartCastInsideUnqualified.kt")
             public void testSmartCastInsideUnqualified() throws Exception {
                 runTest("../../idea/tests/testData/refactoring/extractFunction/parameters/misc/smartCastInsideUnqualified.kt");
+            }
+
+            @TestMetadata("suspendReceiverType.kt")
+            public void testSuspendReceiverType() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/extractFunction/parameters/misc/suspendReceiverType.kt");
             }
 
             @TestMetadata("thisInObject.kt")

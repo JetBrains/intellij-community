@@ -1,15 +1,17 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog", "ReplaceGetOrSet")
 @file:Internal
-@file:OptIn(SettingsInternalApi::class)
+@file:OptIn(SettingsInternalApi::class, IntellijInternalApi::class)
 
 package com.intellij.configurationStore
 
 import com.intellij.codeWithMe.ClientId
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.impl.stores.ComponentStorageUtil
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.WriteExternalException
 import com.intellij.openapi.vfs.LargeFileWriteRequestor

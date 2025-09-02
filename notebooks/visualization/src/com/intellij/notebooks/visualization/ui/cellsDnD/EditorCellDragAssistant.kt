@@ -69,8 +69,9 @@ class EditorCellDragAssistant(
 
   private fun handleKeyPressedDuringDrag(keyEvent: KeyEvent) {
     when (keyEvent.keyCode) {
-      KeyEvent.VK_ESCAPE -> cancelDrag()
-      KeyEvent.VK_UP, KeyEvent.VK_DOWN, KeyEvent.VK_LEFT, KeyEvent.VK_RIGHT -> cancelDrag()
+      KeyEvent.VK_ESCAPE,
+      KeyEvent.VK_UP, KeyEvent.VK_DOWN, KeyEvent.VK_LEFT, KeyEvent.VK_RIGHT,
+        -> cancelDrag()
     }
   }
 
@@ -94,7 +95,7 @@ class EditorCellDragAssistant(
     if (dragPreview == null) {
       dragPreview = CellDragCellPreviewWindow(getPlaceholderText(), editor)
       dragPreview?.isVisible = true
-      foldDraggedCell()
+      foldDraggedCellIfNeeded()
     }
 
     dragPreview?.followCursor(e.locationOnScreen)
@@ -158,7 +159,12 @@ class EditorCellDragAssistant(
     updateDropIndicator(cellUnderCursor)
   }
 
-  private fun foldDraggedCell() {
+  private fun foldDraggedCellIfNeeded() {
+    // We dont need to fold small cell. 10 lines - chosen empirically and can be changed.
+    val cellLines = cellInput.cell.interval.lines
+    if (cellLines.last - cellLines.first < 10) {
+      return
+    }
     inputFoldedState = cellInput.folded
     if (!inputFoldedState) foldInput()
 

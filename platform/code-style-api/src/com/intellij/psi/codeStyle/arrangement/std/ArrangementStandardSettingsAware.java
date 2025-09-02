@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle.arrangement.std;
 
 import com.intellij.lang.Language;
@@ -6,6 +6,7 @@ import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.arrangement.Rearranger;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryMatcher;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
@@ -14,6 +15,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.util.Collection;
@@ -78,13 +80,14 @@ public interface ArrangementStandardSettingsAware {
    *            'public' modifier is deselected if returned collection contains set of all supported visibility modifiers
    */
   @NotNull
+  @Unmodifiable
   Collection<Set<ArrangementSettingsToken>> getMutexes();
 
   /**
    * Helps to create links from the 'Actions on Save' page in Settings (Preferences) to the Arrangement tab of the language-specific
    * Code Style page.
    */
-  default @NotNull Collection<ArrangementTabInfo> getArrangementTabInfos() {
+  default @NotNull @Unmodifiable Collection<ArrangementTabInfo> getArrangementTabInfos() {
     ExtensionPoint<KeyedLazyInstance<Rearranger<?>>> point = Rearranger.EXTENSION.getPoint();
     if (point == null) return Collections.emptyList();
 
@@ -96,7 +99,7 @@ public interface ArrangementStandardSettingsAware {
     LanguageFileType fileType = FileTypeRegistry.getInstance().findFileTypeByLanguage(language);
     Icon icon = fileType != null ? fileType.getIcon() : null;
 
-    return List.of(new ArrangementTabInfo(icon, language.getDisplayName(), language.getDisplayName()));
+    return List.of(new ArrangementTabInfo(icon, language.getDisplayName(), CodeStyleSettings.generateConfigurableIdByLanguage(language)));
   }
 
   class ArrangementTabInfo {
@@ -108,9 +111,7 @@ public interface ArrangementStandardSettingsAware {
      * This information is used to create links from the 'Actions on Save' page in Settings (Preferences) to the Arrangement tab of the
      * language-specific Code Style page.
      *
-     * @param configurableId must be equal to what the {@link com.intellij.psi.codeStyle.CodeStyleSettingsProvider#getConfigurableDisplayName()}
-     *                       returns for the corresponding language-specific Code Style page. By default, it is {@link Language#getDisplayName()}
-     *                       but some configurables override this method.
+     * @param configurableId must be equal to the configurable id of the corresponding configurable, to locate its Code Style page.
      */
     public ArrangementTabInfo(@Nullable Icon icon, @NotNull @NlsSafe String languageDisplayName, @NotNull @NonNls String configurableId) {
       this.icon = icon;

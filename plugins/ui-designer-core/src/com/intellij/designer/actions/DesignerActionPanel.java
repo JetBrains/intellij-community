@@ -25,7 +25,7 @@ import java.util.List;
 /**
  * @author Alexander Lobas
  */
-public class DesignerActionPanel implements DataProvider {
+public class DesignerActionPanel implements UiDataProvider {
   public static final String TOOLBAR = "DesignerToolbar";
 
   private final DefaultActionGroup myActionGroup;
@@ -225,17 +225,13 @@ public class DesignerActionPanel implements DataProvider {
   }
 
   @Override
-  public Object getData(@NotNull @NonNls String dataId) {
-    if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId) ||
-        PlatformDataKeys.CUT_PROVIDER.is(dataId) ||
-        PlatformDataKeys.COPY_PROVIDER.is(dataId) ||
-        PlatformDataKeys.PASTE_PROVIDER.is(dataId)) {
-      JTable table = DesignerToolWindowManager.getInstance(myDesigner).getPropertyTable();
-      Component focusOwner = IdeFocusManager.getInstance(myDesigner.getProject()).getFocusOwner();
-      if (!UIUtil.isAncestor(table, focusOwner)) {
-        return myCommonEditActionsProvider;
-      }
-    }
-    return null;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    JTable table = DesignerToolWindowManager.getInstance(myDesigner).getPropertyTable();
+    Component focusOwner = IdeFocusManager.getInstance(myDesigner.getProject()).getFocusOwner();
+    if (UIUtil.isAncestor(table, focusOwner)) return;
+    sink.set(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, myCommonEditActionsProvider);
+    sink.set(PlatformDataKeys.CUT_PROVIDER, myCommonEditActionsProvider);
+    sink.set(PlatformDataKeys.COPY_PROVIDER, myCommonEditActionsProvider);
+    sink.set(PlatformDataKeys.PASTE_PROVIDER, myCommonEditActionsProvider);
   }
 }

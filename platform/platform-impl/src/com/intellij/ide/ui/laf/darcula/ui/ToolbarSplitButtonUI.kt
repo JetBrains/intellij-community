@@ -75,13 +75,13 @@ class ToolbarSplitButtonUI : AbstractToolbarComboUI(), PropertyChangeListener {
     assert(!StringUtil.isEmpty(text) || rightIcons.isEmpty()) { "Right icons are only allowed when text is not empty" }
 
     val innerRect = SwingUtilities.calculateInnerArea(c, null)
-    val g2 = g.create(innerRect.x, innerRect.y, innerRect.width, innerRect.height) as Graphics2D
-    val paintRect = Rectangle(0, 0, innerRect.width, innerRect.height )
+    val paintRect = Rectangle(innerRect)
     JBInsets.removeFrom(paintRect, button.leftPartMargin.getTopBottom())
     paintRect.cutLeft(c.leftPartMargin.left)
-
     val maxTextWidth = calcMaxTextWidth(button, innerRect)
+    val g2 = g.create() as Graphics2D
     try {
+      g2.clip(paintRect)
       GraphicsUtil.setupAAPainting(g2)
 
       //paint left icons
@@ -92,7 +92,7 @@ class ToolbarSplitButtonUI : AbstractToolbarComboUI(), PropertyChangeListener {
 
       ///paint text
       if (!StringUtil.isEmpty(text) && maxTextWidth > 0) {
-        if (!leftIcons.isEmpty()) paintRect.cutLeft(ICON_TEXT_GAP)
+        if (!leftIcons.isEmpty()) paintRect.cutLeft(button.iconTextGap)
         val textRect = Rectangle(paintRect.x, paintRect.y, maxTextWidth, paintRect.height)
         drawText(button, text!!, g2, textRect)
         paintRect.cutLeft(maxTextWidth)
@@ -100,7 +100,7 @@ class ToolbarSplitButtonUI : AbstractToolbarComboUI(), PropertyChangeListener {
 
       //paint right icons
       if (!rightIcons.isEmpty()) {
-        paintRect.cutLeft(ICON_TEXT_GAP)
+        paintRect.cutLeft(button.iconTextGap)
         val iconsRect = paintIcons(rightIcons, button, g2, paintRect)
         paintRect.cutLeft(iconsRect.width)
       }
@@ -135,12 +135,12 @@ class ToolbarSplitButtonUI : AbstractToolbarComboUI(), PropertyChangeListener {
     assert(!StringUtil.isEmpty(button.text) || rightIcons.isEmpty()) {"Right icons are only allowed when text is not empty"}
 
     if (!leftIcons.isEmpty()) {
-      res.width += calcIconsWidth(leftIcons, BETWEEN_ICONS_GAP)
+      res.width += calcIconsWidth(leftIcons, button.betweenIconsGap)
       res.height = leftIcons.maxOf { it.iconHeight } + lMargin.top + lMargin.bottom
     }
 
     if (!StringUtil.isEmpty(button.text)) {
-      if (!leftIcons.isEmpty()) res.width += ICON_TEXT_GAP
+      if (!leftIcons.isEmpty()) res.width += button.iconTextGap
       val metrics = c.getFontMetrics(c.getFont())
       val text = getText(button)
       res.width += metrics.stringWidth(text!!)
@@ -148,8 +148,8 @@ class ToolbarSplitButtonUI : AbstractToolbarComboUI(), PropertyChangeListener {
     }
 
     if (!rightIcons.isEmpty()) {
-      res.width += ICON_TEXT_GAP
-      res.width += calcIconsWidth(rightIcons, BETWEEN_ICONS_GAP)
+      res.width += button.iconTextGap
+      res.width += calcIconsWidth(rightIcons, button.betweenIconsGap)
       res.height = max(res.height, rightIcons.maxOf { it.iconHeight } + lMargin.top + lMargin.bottom)
     }
 
@@ -172,12 +172,12 @@ class ToolbarSplitButtonUI : AbstractToolbarComboUI(), PropertyChangeListener {
   private fun calcMaxTextWidth(button: ToolbarSplitButton, innerRect: Rectangle): Int {
     var otherElementsWidth = 0
 
-    var left = calcIconsWidth(button.leftIcons, BETWEEN_ICONS_GAP)
-    if (left > 0) left += ICON_TEXT_GAP
+    var left = calcIconsWidth(button.leftIcons, button.betweenIconsGap)
+    if (left > 0) left += button.iconTextGap
     otherElementsWidth += left
 
-    var right = calcIconsWidth(button.rightIcons, BETWEEN_ICONS_GAP)
-    if (right > 0) right += ICON_TEXT_GAP
+    var right = calcIconsWidth(button.rightIcons, button.betweenIconsGap)
+    if (right > 0) right += button.iconTextGap
     otherElementsWidth += right
 
     val sMargin = button.separatorMargin

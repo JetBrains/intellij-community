@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.move.processor.conflict
 
 import com.intellij.openapi.diagnostic.ControlFlowException
@@ -11,6 +11,7 @@ import com.intellij.refactoring.util.MoveRenameUsageInfo
 import com.intellij.refactoring.util.RefactoringUIUtil
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.containers.toMultiMap
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
@@ -28,9 +29,9 @@ import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDesc
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.tryFindConflict
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.usages.K2MoveRenameUsageInfo.Companion.internalUsageElements
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.usages.K2MoveRenameUsageInfo.Companion.internalUsageInfo
-import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.willBeMoved
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.willNotBeMoved
 import org.jetbrains.kotlin.idea.refactoring.getContainer
+import org.jetbrains.kotlin.idea.refactoring.pullUp.willBeMoved
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
@@ -60,7 +61,8 @@ private fun MoveRenameUsageInfo.isVisibleBeforeMove(): Boolean {
     }
 }
 
-private fun PsiNamedElement.isVisibleTo(usage: PsiElement): Boolean {
+@ApiStatus.Internal
+fun PsiNamedElement.isVisibleTo(usage: PsiElement): Boolean {
     return if (usage is KtElement) {
         analyze(usage) { isVisibleTo(usage) }
     } else {
@@ -207,7 +209,7 @@ fun checkVisibilityConflictsForInternalUsages(
                 val usageElement = usageInfo.element as? KtElement ?: return@tryFindConflict null
                 val referencedDeclaration = usageInfo.upToDateReferencedElement as? PsiNamedElement ?: return@tryFindConflict null
                 val isVisible = if (referencedDeclaration is KtNamedDeclaration) {
-                    analyze(referencedDeclaration) {
+                    analyze(usageElement) {
                         val referencedDeclarationKaModule = referencedDeclaration.module?.toKaSourceModuleForProductionOrTest()
                         val symbol = referencedDeclaration.symbol
                         val visibility = if (symbol is KaConstructorSymbol) {

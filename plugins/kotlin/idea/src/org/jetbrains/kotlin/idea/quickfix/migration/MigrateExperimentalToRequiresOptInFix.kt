@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.quickfix.migration
 
 import com.intellij.codeInsight.intention.IntentionAction
@@ -68,7 +68,7 @@ class MigrateExperimentalToRequiresOptInFix(
             if (annotationDescriptor.fqName == FqNames.OptInFqNames.OLD_EXPERIMENTAL_FQ_NAME) {
                 val annotationOwner = annotationEntry.getStrictParentOfType<KtModifierListOwner>() ?: return null
                 if (annotationOwner.findAnnotation(OptInNames.REQUIRES_OPT_IN_FQ_NAME) != null)
-                    return RemoveAnnotationFix(KotlinBundle.message("fix.opt_in.migrate.experimental.annotation.remove"), annotationEntry)
+                    return RemoveAnnotationFix(KotlinBundle.message("fix.opt_in.migrate.experimental.annotation.remove"), annotationEntry).asIntention()
 
                 val requiresOptInInnerText = when (annotationDescriptor.getEnumValue("level")?.enumEntryName?.asString()) {
                     "ERROR" -> "level = RequiresOptIn.Level.ERROR"

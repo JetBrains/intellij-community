@@ -17,9 +17,11 @@ package org.intellij.lang.xpath.completion;
 
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.LookupElement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-abstract class AbstractLookup extends LookupElement {
+@ApiStatus.Internal
+public abstract class AbstractLookup extends LookupElement {
     protected final String myName;
     protected final String myPresentation;
 

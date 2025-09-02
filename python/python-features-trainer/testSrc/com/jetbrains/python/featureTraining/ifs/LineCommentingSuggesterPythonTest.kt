@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.python.featuresTrainer.ifs
+package com.jetbrains.python.featureTraining.ifs
 
-import junit.framework.TestCase
 import training.featuresSuggester.FeatureSuggesterTest
 import training.featuresSuggester.FeatureSuggesterTestUtils.insertNewLineAt
 import training.featuresSuggester.FeatureSuggesterTestUtils.moveCaretToLogicalPosition
@@ -59,7 +58,7 @@ class LineCommentingSuggesterPythonTest : FeatureSuggesterTest() {
     }
 
     testInvokeLater(myFixture.project) {
-      TestCase.assertTrue(expectedSuggestion is NoSuggestion)
+      assertTrue(expectedSuggestion is NoSuggestion)
     }
   }
 
@@ -74,7 +73,7 @@ class LineCommentingSuggesterPythonTest : FeatureSuggesterTest() {
     }
 
     testInvokeLater(myFixture.project) {
-      TestCase.assertTrue(expectedSuggestion is NoSuggestion)
+      assertTrue(expectedSuggestion is NoSuggestion)
     }
   }
 
@@ -96,7 +95,7 @@ class LineCommentingSuggesterPythonTest : FeatureSuggesterTest() {
     }
 
     testInvokeLater(myFixture.project) {
-      TestCase.assertTrue(expectedSuggestion is NoSuggestion)
+      assertTrue(expectedSuggestion is NoSuggestion)
     }
   }
 }

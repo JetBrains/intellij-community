@@ -17,6 +17,14 @@ class XMLSupportTest : GrazieTestBase() {
     runHighlightTestForFile("ide/language/xml/Example.xml")
   }
 
+  fun `test typo checks and self references xml file`() {
+    runHighlightTestForFile("ide/language/xml/SelfReferenceExample.xml")
+  }
+
+  fun `test typo checks when comments are before root tag xml file`() {
+    runHighlightTestForFile("ide/language/xml/Comment.xml")
+  }
+
   fun `test no grammar checks in svg file`() {
     runHighlightTestForFile("ide/language/xml/Example.svg")
   }
@@ -26,4 +34,11 @@ class XMLSupportTest : GrazieTestBase() {
     runHighlightTestForFile("ide/language/xml/Example.html")
   }
 
+  fun `test typo checks and self references html file`() {
+    runHighlightTestForFile("ide/language/xml/SelfReferenceExample.html")
+  }
+
+  fun `test typo checks when comments are before root tag html file`() {
+    runHighlightTestForFile("ide/language/xml/Comment.html")
+  }
 }

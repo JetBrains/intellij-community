@@ -19,6 +19,6 @@ open class FrontendNavigateToSourceAction(private val focusToEditor: Boolean = t
   }
 
   override fun update(e: AnActionEvent) {
-    super.update(e)
+    e.presentation.isEnabledAndVisible = NAVIGATABLE_ARRAY.getData(e.dataContext).orEmpty().isNotEmpty()
   }
 }

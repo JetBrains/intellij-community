@@ -15,11 +15,13 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.util.QualifiedName
 import com.intellij.ui.*
+import com.intellij.ui.components.JBLabel
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.LabelPosition
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.table.JBTable
 import com.intellij.util.textCompletion.TextFieldWithCompletion
+import com.intellij.util.ui.JBUI
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.impl.XSourcePositionImpl
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl
@@ -91,6 +93,14 @@ class PyUserTypeRenderersConfigurable : SearchableConfigurable {
         myRendererChooser.selectElements(listOf(first))
       }
       myMainPanel.removeAll()
+      val border = IdeBorderFactory.createEmptyBorder(JBUI.insets(10, 0))
+      val message = PyBundle.message("configurable.PyUserTypeRenderersConfigurable.description")
+
+      myMainPanel.add(
+        JBUI.Panels.simplePanel(JBLabel(message)).withBorder(border),
+        BorderLayout.NORTH
+      )
+
       myMainPanel.add(splitter, BorderLayout.CENTER)
     }
     return myMainPanel
@@ -163,6 +173,8 @@ class PyUserTypeRenderersConfigurable : SearchableConfigurable {
   override fun getDisplayName(): String = PyBundle.message("configurable.PyUserTypeRenderersConfigurable.display.name")
 
   override fun getId(): String = CONFIGURABLE_ID
+
+  override fun getHelpTopic(): String = "reference.idesettings.debugger.typerenderers"
 
   private fun setupRendererChooser() {
     myRendererChooser.emptyText.text = PyBundle.message("form.debugger.variables.view.user.type.renderers.no.renderers")

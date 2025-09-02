@@ -1,0 +1,9 @@
+LineBreakpoint created at lambdaRightBrace.kt:8
+Run Java
+Connected to the target VM
+lambdaRightBrace.kt:8
+lambdaRightBrace.kt:9
+Compile bytecode for i + s.length
+Disconnected from the target VM
+
+Process finished with exit code 0

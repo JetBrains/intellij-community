@@ -171,7 +171,7 @@ class KeyHashLogTest {
       UsefulTestCase.assertEquals(setOf("qwe", "asd").toHashes(), resultForProjectAndLibraryFilter)
 
       val resultForSubProjectFilterCached = it.getSuitableKeyHashes(setOf(1).toFilter(FilterScopeType.OTHER), project)
-      UsefulTestCase.assertEquals(setOf("qwe", "asd").toHashes(), resultForSubProjectFilterCached)
+      UsefulTestCase.assertEquals(setOf("qwe").toHashes(), resultForSubProjectFilterCached)
 
       val resultForProjectFilter = it.getSuitableKeyHashes(setOf(1).toFilter(FilterScopeType.PROJECT), project)
       UsefulTestCase.assertEquals(setOf("qwe").toHashes(), resultForProjectFilter)

@@ -5,6 +5,8 @@ import com.intellij.ide.RecentProjectsManager
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ExitStarter
 import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
@@ -13,6 +15,7 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.ProjectFrameHelper
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.ui.ComponentUtil
+import com.intellij.util.PlatformUtils
 
 /**
  * @author Konstantin Bulenkov
@@ -39,6 +42,10 @@ abstract class CloseProjectsActionBase : DumbAwareAction(), ActionRemoteBehavior
         RecentProjectsManager.getInstance().updateLastProjectPath()
       }
 
+    showWelcomeFrameIfNeeded()
+  }
+
+  protected open fun showWelcomeFrameIfNeeded() {
     WelcomeFrame.showIfNoProjectOpened()
   }
 
@@ -47,7 +54,7 @@ abstract class CloseProjectsActionBase : DumbAwareAction(), ActionRemoteBehavior
     e.presentation.isEnabledAndVisible = project != null && !project.isDefault && shouldShow(e)
   }
 
-  private fun getProjectEvenIfNotInitialized(e: AnActionEvent): Project? {
+  protected fun getProjectEvenIfNotInitialized(e: AnActionEvent): Project? {
     return e.project ?: ProjectFrameHelper.getFrameHelper(
       ComponentUtil.getWindow(e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT)))?.project
   }

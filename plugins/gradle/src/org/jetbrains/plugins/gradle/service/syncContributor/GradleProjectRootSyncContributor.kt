@@ -16,7 +16,6 @@ import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncContributor
-import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncProjectConfigurator.project
 import org.jetbrains.plugins.gradle.service.syncContributor.entitites.GradleLinkedProjectEntitySource
 import java.nio.file.Path
 
@@ -38,8 +37,8 @@ class GradleProjectRootSyncContributor : GradleSyncContributor {
     }
   }
 
-  private suspend fun configureProjectRoot(context: ProjectResolverContext, storage: MutableEntityStorage) {
-    val project = context.project()
+  private fun configureProjectRoot(context: ProjectResolverContext, storage: MutableEntityStorage) {
+    val project = context.project
     val virtualFileUrlManager = project.workspaceModel.getVirtualFileUrlManager()
 
     val linkedProjectRootPath = Path.of(context.projectPath)
@@ -122,8 +121,8 @@ class GradleProjectRootSyncContributor : GradleSyncContributor {
    * The [GradleContentRootSyncContributor] has the complete information to configure the accurate build roots.
    * They will be used as project roots in the result project model.
    */
-  private suspend fun removeProjectRoot(context: ProjectResolverContext, storage: MutableEntityStorage) {
-    val project = context.project()
+  private fun removeProjectRoot(context: ProjectResolverContext, storage: MutableEntityStorage) {
+    val project = context.project
     val virtualFileUrlManager = project.workspaceModel.getVirtualFileUrlManager()
 
     val linkedProjectRootPath = Path.of(context.projectPath)

@@ -3,7 +3,7 @@ package com.siyeh.ig.numeric;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.lang.java.parser.BasicExpressionParser;
+import com.intellij.lang.java.parser.JavaBinaryOperations;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
@@ -171,7 +171,7 @@ public final class UnnecessaryExplicitNumericCastInspection extends BaseInspecti
           }
         }
       }
-      else if (BasicExpressionParser.SHIFT_OPS.contains(tokenType)) {
+      else if (JavaBinaryOperations.SHIFT_OPS.contains(tokenType)) {
         final PsiExpression firstOperand = polyadicExpression.getOperands()[0];
         if (!PsiTreeUtil.isAncestor(firstOperand, expression, false)) {
           return true;

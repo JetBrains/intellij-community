@@ -3,10 +3,14 @@ package com.intellij.database.run.ui.grid;
 import com.intellij.database.run.ui.ResultViewWithRows;
 import com.intellij.idea.AppMode;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.impl.InternalUICustomization;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.ui.*;
+import com.intellij.ui.CellRendererPanel;
+import com.intellij.ui.ExpandedItemRendererComponentWrapper;
+import com.intellij.ui.Graphics2DDelegate;
+import com.intellij.ui.Gray;
 import com.intellij.util.SingleAlarm;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.SLRUMap;
@@ -165,6 +169,11 @@ public final class TableCellImageCache {
         // cell renderers which re-create their component for rendering
         removeAll();
         add(originalComponent);
+      }
+
+      InternalUICustomization customization = InternalUICustomization.getInstance();
+      if (customization != null) {
+        customization.configureRendererComponent(this);
       }
 
       return this;

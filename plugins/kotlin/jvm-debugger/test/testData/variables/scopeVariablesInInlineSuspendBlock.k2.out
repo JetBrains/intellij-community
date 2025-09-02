@@ -1,0 +1,19 @@
+LineBreakpoint created at scopeVariablesInInlineSuspendBlock.kt:13
+LineBreakpoint created at scopeVariablesInInlineSuspendBlock.kt:15
+LineBreakpoint created at scopeVariablesInInlineSuspendBlock.kt:19
+Run Java
+Connected to the target VM
+scopeVariablesInInlineSuspendBlock.kt:13
+CoroutinePreflightFrame invokeSuspend (scopeVariablesInInlineSuspendBlock.kt:13)
+    JavaValue[local] a: java.lang.String = a (scopeVariablesInInlineSuspendBlock.kt:9)
+    JavaValue[local] b: java.lang.String = b (scopeVariablesInInlineSuspendBlock.kt:11)
+scopeVariablesInInlineSuspendBlock.kt:15
+CoroutinePreflightFrame invokeSuspend (scopeVariablesInInlineSuspendBlock.kt:15)
+    JavaValue[continuation] a = a
+    JavaValue[continuation] b = b
+scopeVariablesInInlineSuspendBlock.kt:19
+CoroutinePreflightFrame invokeSuspend (scopeVariablesInInlineSuspendBlock.kt:19)
+    JavaValue[local] a: java.lang.String = a (scopeVariablesInInlineSuspendBlock.kt:9)
+Disconnected from the target VM
+
+Process finished with exit code 0

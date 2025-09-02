@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.git.lesson
 
-import com.intellij.diff.editor.DiffEditorTabFilesManager
+import com.intellij.diff.editor.DiffEditorTabFilesUtil
 import com.intellij.diff.tools.util.SimpleDiffPanel
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.project.Project
@@ -57,7 +57,7 @@ internal class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLess
 
     prepareRuntimeTask l@{
       val property = SHOW_GIT_BRANCHES_LOG_PROPERTY
-      val logUiProperties = VcsProjectLog.getInstance(project).mainLogUi?.properties ?: return@l
+      val logUiProperties = VcsProjectLog.getInstance(project).mainUi?.properties ?: return@l
       showGitBranchesBackup = logUiProperties[property]
       logUiProperties[property] = true
     }
@@ -87,7 +87,7 @@ internal class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLess
     }
 
     task {
-      val logUiProperties = VcsProjectLog.getInstance(project).mainLogUi?.properties
+      val logUiProperties = VcsProjectLog.getInstance(project).mainUi?.properties
       val choice = if (logUiProperties == null || !logUiProperties[CHANGE_LOG_FILTER_ON_BRANCH_SELECTION_PROPERTY]) 1 else 0
       text(GitLessonsBundle.message("git.project.history.apply.branch.filter", choice))
       text(GitLessonsBundle.message("git.project.history.click.head.tooltip", choice),
@@ -163,7 +163,7 @@ internal class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLess
         ui.selectedRow == 0
       }
       restoreState {
-        val vcsLogUi = VcsProjectLog.getInstance(project).mainLogUi ?: return@restoreState false
+        val vcsLogUi = VcsProjectLog.getInstance(project).mainUi ?: return@restoreState false
         vcsLogUi.filterUi.textFilterComponent.text == ""
       }
       showWarningIfGitWindowClosed()
@@ -204,7 +204,7 @@ internal class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLess
       }
     }
 
-    if (DiffEditorTabFilesManager.isDiffInWindow) {
+    if (DiffEditorTabFilesUtil.isDiffInWindow) {
       task("EditorEscape") {
         text(GitLessonsBundle.message("git.project.history.close.diff", action(it)))
         stateCheck { previous.ui?.isShowing != true }
@@ -217,7 +217,7 @@ internal class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLess
 
   override fun onLessonEnd(project: Project, lessonEndInfo: LessonEndInfo) {
     if (showGitBranchesBackup != null) {
-      val logUiProperties = VcsProjectLog.getInstance(project).mainLogUi?.properties ?: error("Failed to get MainVcsLogUiProperties")
+      val logUiProperties = VcsProjectLog.getInstance(project).mainUi?.properties ?: error("Failed to get MainVcsLogUiProperties")
       logUiProperties[SHOW_GIT_BRANCHES_LOG_PROPERTY] = showGitBranchesBackup!!
     }
   }

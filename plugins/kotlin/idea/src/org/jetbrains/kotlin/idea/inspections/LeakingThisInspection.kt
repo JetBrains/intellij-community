@@ -14,7 +14,8 @@ import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeWithContentNonSourceRootCode
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
-import org.jetbrains.kotlin.idea.quickfix.AddModifierFixFE10
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.asQuickFix
+import org.jetbrains.kotlin.idea.quickfix.AddModifierFixMpp
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
@@ -100,7 +101,7 @@ class LeakingThisInspection : AbstractKotlinInspection() {
         val useScope = declaration.useScope
         if (DefinitionsScopedSearch.search(declaration, useScope).findFirst() != null) return null
         if ((declaration.containingClassOrObject as? KtClass)?.isInterface() == true) return null
-        return AddModifierFixFE10(declaration, KtTokens.FINAL_KEYWORD)
+        return AddModifierFixMpp(declaration, KtTokens.FINAL_KEYWORD).asQuickFix()
     }
 }
 

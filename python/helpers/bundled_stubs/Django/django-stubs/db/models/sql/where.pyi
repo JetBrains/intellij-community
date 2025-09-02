@@ -1,16 +1,16 @@
 from collections.abc import Sequence
-from typing import Any
+from typing import Any, Final
 
 from django.db.backends.base.base import BaseDatabaseWrapper
 from django.db.models.expressions import Expression
 from django.db.models.fields import BooleanField
-from django.db.models.sql.compiler import SQLCompiler, _AsSqlType
-from django.db.models.sql.query import Query
+from django.db.models.sql.compiler import SQLCompiler, _AsSqlType, _ParamsT
 from django.utils import tree
 from django.utils.functional import cached_property
 
-AND: str
-OR: str
+AND: Final = "AND"
+OR: Final = "OR"
+XOR: Final = "XOR"
 
 class WhereNode(tree.Node):
     connector: str
@@ -27,12 +27,14 @@ class WhereNode(tree.Node):
     def resolve_expression(self, *args: Any, **kwargs: Any) -> WhereNode: ...
     @cached_property
     def output_field(self) -> BooleanField: ...
+    def get_refs(self) -> set[str]: ...
     @cached_property
     def contains_aggregate(self) -> bool: ...
     @cached_property
     def contains_over_clause(self) -> bool: ...
     @property
     def is_summary(self) -> bool: ...
+    def select_format(self, compiler: SQLCompiler, sql: str, params: _ParamsT) -> _AsSqlType: ...
 
 class NothingNode:
     contains_aggregate: bool
@@ -48,12 +50,3 @@ class ExtraWhere:
     def as_sql(
         self, compiler: SQLCompiler | None = None, connection: BaseDatabaseWrapper | None = None
     ) -> _AsSqlType: ...
-
-class SubqueryConstraint:
-    contains_aggregate: bool
-    alias: str
-    columns: list[str]
-    targets: list[str]
-    query_object: Query
-    def __init__(self, alias: str, columns: list[str], targets: list[str], query_object: Query) -> None: ...
-    def as_sql(self, compiler: SQLCompiler, connection: BaseDatabaseWrapper) -> _AsSqlType: ...

@@ -24,7 +24,7 @@ fun testExceptions(): Nothing {
     requireNotNull(Cancellation.currentJob()).ensureActive()
   }
   val jce = assertThrows<CeProcessCanceledException> {
-    ProgressManager.checkCanceled()
+    Cancellation.checkCancelled()
   }
   assertSame(ce, jce.cause)
   throw jce

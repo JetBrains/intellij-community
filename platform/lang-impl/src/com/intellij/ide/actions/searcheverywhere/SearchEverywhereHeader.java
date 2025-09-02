@@ -20,6 +20,7 @@ import com.intellij.ui.IdeUICustomization;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
+import kotlin.jvm.functions.Function2;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -30,7 +31,6 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
-import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -93,13 +93,13 @@ public final class SearchEverywhereHeader {
   }
 
   @ApiStatus.Internal
-  public void changeScope(@NotNull BiFunction<? super ScopeDescriptor, ? super List<ScopeDescriptor>, @Nullable ScopeDescriptor> processor) {
+  public void changeScope(@NotNull Function2<? super @NotNull ScopeDescriptor, ? super @NotNull List<? extends @NotNull ScopeDescriptor>, ? extends @Nullable ScopeDescriptor> processor) {
     if (mySelectedTab.everywhereAction == null) return;
     if (mySelectedTab.everywhereAction instanceof ScopeChooserAction sca) {
       List<ScopeDescriptor> scopes = new ArrayList<>();
       sca.processScopes(scopes::add);
       ScopeDescriptor currentScope = sca.getSelectedScope();
-      ScopeDescriptor newScope = processor.apply(currentScope, scopes);
+      ScopeDescriptor newScope = processor.invoke(currentScope, scopes);
       if (newScope != null && newScope != currentScope) {
         sca.onScopeSelected(newScope);
         myToolbar.updateActionsImmediately();
@@ -146,7 +146,8 @@ public final class SearchEverywhereHeader {
           SearchEverywhereUsageTriggerCollector.TAB_SWITCHED.log(myProject,
                                                                  SearchEverywhereUsageTriggerCollector.CONTRIBUTOR_ID_FIELD.with(
                                                                    tab.getReportableID()),
-                                                                 EventFields.InputEventByMouseEvent.with(e));
+                                                                 EventFields.InputEventByMouseEvent.with(e),
+                                                                 SearchEverywhereUsageTriggerCollector.IS_SPLIT.with(false));
         }
       });
       contributorsPanel.add(tabLabel);
@@ -168,7 +169,9 @@ public final class SearchEverywhereHeader {
         SETab selectedTab = myTabs.get(newUIHeaderView.tabbedPane.getSelectedIndex());
         switchToTab(selectedTab);
         SearchEverywhereUsageTriggerCollector.TAB_SWITCHED.log(
-          myProject, SearchEverywhereUsageTriggerCollector.CONTRIBUTOR_ID_FIELD.with(selectedTab.getReportableID()));
+          myProject,
+          SearchEverywhereUsageTriggerCollector.CONTRIBUTOR_ID_FIELD.with(selectedTab.getReportableID()),
+          SearchEverywhereUsageTriggerCollector.IS_SPLIT.with(false));
         if (SearchEverywhereUI.isExtendedInfoEnabled()) {
           ApplicationManager.getApplication().getMessageBus().syncPublisher(SETabSwitcherListener.Companion.getSE_TAB_TOPIC())
             .tabSwitched(new SETabSwitcherListener.SETabSwitchedEvent(selectedTab));
@@ -350,7 +353,7 @@ public final class SearchEverywhereHeader {
       }
     }, new PreviewAction(), new SearchEverywhereFiltersAction<>(filter, onChanged, new ContributorFilterCollector()));
     return new SETab(SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID,
-                     IdeBundle.message("searcheverywhere.allelements.tab.name"),
+                     IdeBundle.message("searcheverywhere.all.elements.tab.name"),
                      contributors, actions, filter);
   }
 

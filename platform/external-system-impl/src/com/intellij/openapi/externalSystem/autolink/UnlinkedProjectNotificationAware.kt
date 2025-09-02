@@ -37,11 +37,11 @@ class UnlinkedProjectNotificationAware(
 
   fun notificationNotify(projectId: ExternalSystemProjectId, callback: () -> Unit) {
     if (projectId.systemId.id in disabledNotifications) {
-      LOG.debug(projectId.debugName + ": notification has been disabled")
+      LOG.debug("$projectId: notification has been disabled")
       return
     }
     if (projectId in notifiedNotifications.keys) {
-      LOG.debug(projectId.debugName + ": notification has been already notified")
+      LOG.debug("$projectId: notification has been already notified")
       return
     }
 
@@ -61,10 +61,10 @@ class UnlinkedProjectNotificationAware(
         .addAction(createSimpleExpiring(textProvider.getUPNSkipActionText()) { disableNotification(projectId) })
         .whenExpired {
           notifiedNotifications.remove(projectId)
-          LOG.debug(projectId.debugName + ": notification is expired")
+          LOG.debug("$projectId: notification is expired")
         }.apply {
           notify(project)
-          LOG.debug(projectId.debugName + ": notification is notified")
+          LOG.debug("$projectId: notification is notified")
         }
     }
   }
@@ -108,7 +108,7 @@ The correct usage:
 
   private fun disableNotification(projectId: ExternalSystemProjectId) {
     disabledNotifications.add(projectId.systemId.id)
-    LOG.debug(projectId.debugName + ": notification is disabled")
+    LOG.debug("$projectId: notification is disabled")
   }
 
   fun notificationExpire(projectId: ExternalSystemProjectId) {

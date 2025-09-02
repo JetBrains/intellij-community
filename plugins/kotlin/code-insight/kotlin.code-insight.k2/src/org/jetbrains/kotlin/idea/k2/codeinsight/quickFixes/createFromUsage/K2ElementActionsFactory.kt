@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage
 
 import com.intellij.codeInsight.intention.IntentionAction
@@ -8,6 +8,7 @@ import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.lang.java.JavaLanguage
+import com.intellij.lang.java.beans.PropertyKind
 import com.intellij.lang.jvm.*
 import com.intellij.lang.jvm.actions.*
 import com.intellij.openapi.editor.Editor
@@ -15,6 +16,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl
 import com.intellij.psi.util.PropertyUtil
+import com.intellij.psi.util.PropertyUtilBase
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.asJava.toLightAnnotation
@@ -137,7 +139,7 @@ class K2ElementActionsFactory : JvmElementActionsFactory() {
 
         if (request.modifier == JvmModifier.FINAL && !request.shouldBePresent()) {
             return listOf(
-                AddModifierFix(kModifierOwner, KtTokens.OPEN_KEYWORD)
+                AddModifierFix(kModifierOwner, KtTokens.OPEN_KEYWORD).asIntention()
             )
         }
         return emptyList()
@@ -149,10 +151,50 @@ class K2ElementActionsFactory : JvmElementActionsFactory() {
 
         val ktRequest = request as? CreateMethodFromKotlinUsageRequest
         if (ktRequest?.isExtension == true) {
+            // Regular java classes have no companions
+            if (ktRequest.isForCompanion && ktRequest.targetClass is PsiClass) return emptyList()
+
             container = container.containingKtFile
         }
+
+        val methodName = request.methodName
+        val targetClassName = targetClass.name
+
+        val nameAndKind = PropertyUtilBase.getPropertyNameAndKind(methodName)
+        if (nameAndKind != null) {
+            val setterRequired = nameAndKind.second == PropertyKind.SETTER
+            val expectedParameters = request.expectedParameters
+            val returnTypes = request.returnType
+
+            fun getCreatedPropertyType(): ExpectedType? {
+                if (setterRequired) {
+                    val jvmPsiConversionHelper = JvmPsiConversionHelper.getInstance(container.project)
+                    if (returnTypes.any { jvmPsiConversionHelper.convertType(it.theType) != PsiTypes.voidType() }) return null
+                    val expectedParameter = expectedParameters.singleOrNull() ?: return null
+                    return expectedParameter.expectedTypes.firstOrNull()
+                } else if (expectedParameters.isEmpty()) {
+                    return returnTypes.firstOrNull()
+                } else {
+                    return null
+                }
+            }
+
+            val propertyType = getCreatedPropertyType()
+            if (propertyType != null) {
+                return createAddPropertyActions(
+                    targetContainer = container,
+                    modifiers = request.modifiers,
+                    propertyType = propertyType,
+                    propertyName = nameAndKind.first,
+                    setterRequired = setterRequired,
+                    classOrFileName = targetClassName,
+                    annotations = request.annotations.toList()
+                )
+            }
+        }
+
         val actionText = if (ktRequest == null)
-            KotlinBundle.message("add.method.0.to.1", request.methodName, targetClass.name.toString()) else CreateKotlinCallableActionTextBuilder.build(
+            KotlinBundle.message("add.method.0.to.1", methodName, targetClassName.toString()) else CreateKotlinCallableActionTextBuilder.build(
             KotlinBundle.message("text.function"), request
         )
         val isContainerAbstract = container.isAbstractClass()
@@ -398,3 +440,44 @@ private fun renderAttributeValue(
             }
         }
     }
+
+private fun createAddPropertyActions(
+    targetContainer: KtElement,
+    modifiers: Collection<JvmModifier>,
+    propertyType: ExpectedType,
+    propertyName: String,
+    setterRequired: Boolean,
+    classOrFileName: String?,
+    annotations: List<AnnotationRequest>,
+): List<IntentionAction> {
+    val request = fieldRequest(
+        fieldName = propertyName,
+        annotations = annotations,
+        modifiers = modifiers,
+        fieldType = listOf(propertyType),
+        targetSubstitutor = PsiJvmSubstitutor(targetContainer.project, PsiSubstitutor.EMPTY),
+        initializer = null,
+        isConstant = false,
+    )
+
+    val action = K2CreatePropertyFromUsageBuilder.generatePropertyAction(
+        targetContainer = targetContainer,
+        classOrFileName = classOrFileName,
+        request = request,
+        lateinit = false,
+    )
+
+    val actions = if (setterRequired) {
+        listOf(
+            action, K2CreatePropertyFromUsageBuilder.generatePropertyAction(
+                targetContainer = targetContainer,
+                classOrFileName = classOrFileName,
+                request = request,
+                lateinit = true,
+            )
+        )
+    } else {
+        listOf(action)
+    }
+    return actions
+}

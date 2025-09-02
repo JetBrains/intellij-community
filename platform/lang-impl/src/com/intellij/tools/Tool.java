@@ -14,8 +14,6 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.util.ExecutionErrorDialog;
 import com.intellij.execution.wsl.WSLCommandLineOptions;
 import com.intellij.execution.wsl.WSLDistribution;
-import com.intellij.execution.wsl.WslMacroPathConverter;
-import com.intellij.execution.wsl.WslPath;
 import com.intellij.ide.macro.Macro;
 import com.intellij.ide.macro.MacroManager;
 import com.intellij.ide.macro.MacroPathConverter;
@@ -31,16 +29,18 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
+import com.intellij.platform.eel.provider.utils.JEelUtils;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Objects;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.*;
 
 public class Tool implements SchemeElement {
   private static final Logger LOG = Logger.getInstance(Tool.class);
@@ -346,43 +346,37 @@ public class Tool implements SchemeElement {
                                      ? new PtyCommandLine().withConsoleMode(true)
                                      : new GeneralCommandLine();
     try {
-      String exePath = MacroManager.getInstance().expandMacrosInString(getProgram(), true, dataContext);
-      exePath = MacroManager.getInstance().expandMacrosInString(exePath, false, dataContext);
-      if (exePath == null) return null;
+      String exePathStr = MacroManager.getInstance().expandMacrosInString(getProgram(), true, dataContext);
+      exePathStr = MacroManager.getInstance().expandMacrosInString(exePathStr, false, dataContext);
+      if (exePathStr == null) return null;
 
-      WSLDistribution wsl = WslPath.getDistributionByWindowsUncPath(exePath);
-      MacroPathConverter pathConverter = null;
-      if (wsl != null) {
-        pathConverter = new WslMacroPathConverter(wsl);
-        dataContext = SimpleDataContext.getSimpleContext(MacroManager.PATH_CONVERTER_KEY, pathConverter, dataContext);
+      String workingDir = MacroManager.getInstance().expandMacrosInString(getWorkingDirectory(), true, dataContext);
+      final String workDirExpanded = MacroManager.getInstance().expandMacrosInString(workingDir, false, dataContext);
+      final var workDirPath = !StringUtil.isEmpty(workDirExpanded) ? Path.of(workDirExpanded) : null;
+      if (workDirPath != null) {
+        commandLine.withWorkingDirectory(workDirPath);
       }
 
-      String paramString = MacroManager.getInstance().expandMacrosInString(getParameters(), true, dataContext);
-      String workingDir = MacroManager.getInstance().expandMacrosInString(getWorkingDirectory(), true, dataContext);
+      Path exePath = Path.of(exePathStr);
+      DataContext paramContext = SimpleDataContext
+        .builder()
+        .add(MacroManager.PATH_CONVERTER_KEY, new EelMacroPathConverter())
+        .add(MacroManager.CONTEXT_PATH, getContextPath(exePath, workDirPath))
+        .setParent(dataContext)
+        .build();
+
+      String paramString = MacroManager.getInstance().expandMacrosInString(getParameters(), true, paramContext);
 
       commandLine.getParametersList().addParametersString(
-        MacroManager.getInstance().expandMacrosInString(paramString, false, dataContext));
-      final String workDirExpanded = MacroManager.getInstance().expandMacrosInString(workingDir, false, dataContext);
-      if (!StringUtil.isEmpty(workDirExpanded)) {
-        commandLine.setWorkDirectory(workDirExpanded);
-      }
+        MacroManager.getInstance().expandMacrosInString(paramString, false, paramContext));
 
-      File exeFile = new File(exePath);
-      if (exeFile.isDirectory() && exeFile.getName().endsWith(".app")) {
-        commandLine.setExePath("open");
-        commandLine.getParametersList().prependAll("-a", exePath);
-      }
-      else if (wsl != null) {
-        try {
-          commandLine = createWslCommandLine(CommonDataKeys.PROJECT.getData(dataContext), wsl, commandLine, workDirExpanded,
-                                             pathConverter.convertPath(exePath));
-        }
-        catch (ExecutionException e) {
-          LOG.error("Failed to create wsl command line", e);
-        }
+      if (Files.isDirectory(exePath) && exePath.getFileName().endsWith(".app")) {
+        commandLine.withExePath("open");
+        commandLine.getParametersList().prependAll("-a", exePath.toString());
       }
       else {
-        commandLine.setExePath(exePath);
+        var eelPath = JEelUtils.toEelPath(exePath);
+        commandLine.withExePath(eelPath != null ? eelPath.toString() : exePathStr);
       }
     }
     catch (Macro.ExecutionCancelledException ignored) {
@@ -417,6 +411,10 @@ public class Tool implements SchemeElement {
     return ACTION_ID_PREFIX;
   }
 
+  /**
+   * @deprecated Consider using EelAPI, this method is not needed then
+   */
+  @Deprecated
   public static @NotNull GeneralCommandLine createWslCommandLine(@Nullable Project project,
                                                                  @NotNull WSLDistribution wsl,
                                                                  @NotNull GeneralCommandLine cmd,
@@ -434,5 +432,29 @@ public class Tool implements SchemeElement {
     // run command in interactive shell so that shell rc files are executed and configure proper environment
     wslOptions.setExecuteCommandInInteractiveShell(true);
     return wsl.patchCommandLine(cmd, project, wslOptions);
+  }
+
+  private static class EelMacroPathConverter implements MacroPathConverter {
+
+    @Override
+    public @NotNull String convertPath(@NotNull String path) {
+      if (!path.isEmpty()) {
+        var eelPath = JEelUtils.toEelPath(Path.of(path));
+        if (eelPath != null) return eelPath.toString();
+      }
+      return path;
+    }
+
+    @Override
+    public @NotNull String convertPathList(@NotNull String pathList) {
+      List<String> paths = StringUtil.split(pathList, File.pathSeparator);
+      return Strings.join(ContainerUtil.map(paths, p -> convertPath(p)), ":");
+    }
+  }
+
+  private static @Nullable Path getContextPath(@NotNull Path cmd, @Nullable Path workDir) {
+    if(JEelUtils.toEelPath(cmd) != null) return cmd;
+    if (workDir != null && JEelUtils.toEelPath(workDir) != null) return workDir;
+    return null;
   }
 }

@@ -2,17 +2,12 @@
 package com.intellij.platform.workspace.storage.testEntities.entities
 
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
-import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.annotations.Child
+import com.intellij.platform.workspace.storage.annotations.Parent
 
 interface TreeMultiparentRootEntity : WorkspaceEntityWithSymbolicId {
   val data: String
 
-  val children: List<@Child TreeMultiparentLeafEntity>
+  val children: List<TreeMultiparentLeafEntity>
 
   override val symbolicId: TreeMultiparentSymbolicId
     get() = TreeMultiparentSymbolicId(data)
@@ -56,9 +51,11 @@ fun MutableEntityStorage.modifyTreeMultiparentRootEntity(
 interface TreeMultiparentLeafEntity : WorkspaceEntity {
   val data: String
 
+  @Parent
   val mainParent: TreeMultiparentRootEntity?
+  @Parent
   val leafParent: TreeMultiparentLeafEntity?
-  val children: List<@Child TreeMultiparentLeafEntity>
+  val children: List<TreeMultiparentLeafEntity>
 
   //region generated code
   @GeneratedCodeApiVersion(3)

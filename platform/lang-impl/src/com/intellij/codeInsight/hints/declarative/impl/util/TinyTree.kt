@@ -77,6 +77,10 @@ class TinyTree<T> private constructor(
     payload.set(index.toInt(), nodePayload)
   }
 
+  fun setDataPayload(data: T, index: Byte) {
+    this.data[index.toInt()] = data
+  }
+
   fun processChildren(index: Byte, f: (index: Byte) -> Boolean) {
     var currentChildIndex = firstChild.getByte(index.toInt())
     while (currentChildIndex != NO_ELEMENT) {
@@ -100,6 +104,19 @@ class TinyTree<T> private constructor(
       currentThisChildIndex = nextChild.getByte(currentThisChildIndex.toInt())
       currentOtherChildIndex = other.nextChild.getByte(currentOtherChildIndex.toInt())
     }
+  }
+
+  fun isSameAs(
+    other: TinyTree<T>,
+    isPayloadSame: (Byte, Byte) -> Boolean = { a, b -> a == b },
+    isDataSame: (T, T) -> Boolean = { a, b -> a == b },
+  ): Boolean {
+    if (size != other.size) return false
+    if (firstChild != other.firstChild) return false
+    if (nextChild != other.nextChild) return false
+    if (!payload.indices.all { isPayloadSame(payload.getByte(it), other.payload.getByte(it)) }) return false
+    if (!data.indices.all { isDataSame(data[it], other.data[it]) }) return false
+    return true
   }
 
   val size: Int

@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
@@ -32,11 +31,32 @@ import java.util.Map;
 
 import static com.intellij.openapi.util.NlsContexts.DialogMessage;
 
+/**
+ * <h3>Lifecycle</h3>
+ * <p>
+ * A simple implementation of this class might have the following lifecycle:
+ *
+ * <ol>
+ *   <li>{@link #canProcessElement(PsiElement)} is called to determine if this RenameProcessor can be used to rename the element</li>
+ *   <li>If yes, {@link #findReferences} is called with on that element to find references to it that also should be renamed
+ *   (it is what {@code usages} are in the next call)
+ *   </li>
+ *   <li>{@link #renameElement(PsiElement element, String newName, UsageInfo[] usages, RefactoringElementListener)} is called, with the new
+ *   step name entered in the rename dialog and a list of usages.
+ * <p>
+ *   It has to rename the element and all its usages. Should not perform duplicate work that findReferences has already done.
+ *   </li>
+ * </ol>
+ * <p>
+ * The class follows the <i>Chain of Responsibility</i> design pattern - when a rename operation is requested, the platform iterates through
+ * all registered processors and uses the first one that returns true from {@link #canProcessElement}.
+ *
+ * @see RenameHandler
+ * @see RenameProcessor
+ */
 public abstract class RenamePsiElementProcessorBase {
-  private static final Logger LOG = Logger.getInstance(RenamePsiElementProcessorBase.class);
-
-  public static final ExtensionPointName<RenamePsiElementProcessorBase>
-    EP_NAME = ExtensionPointName.create("com.intellij.renamePsiElementProcessor");
+  public static final ExtensionPointName<RenamePsiElementProcessorBase> EP_NAME =
+    ExtensionPointName.create("com.intellij.renamePsiElementProcessor");
 
   public abstract boolean canProcessElement(@NotNull PsiElement element);
 
@@ -44,7 +64,7 @@ public abstract class RenamePsiElementProcessorBase {
                                               @NotNull PsiElement element,
                                               @Nullable PsiElement nameSuggestionContext,
                                               @Nullable Editor editor) {
-    for (RenameRefactoringDialogProvider dialogProvider: RenameRefactoringDialogProvider.EP_NAME.getExtensionList()) {
+    for (RenameRefactoringDialogProvider dialogProvider : RenameRefactoringDialogProvider.EP_NAME.getExtensionList()) {
       if (dialogProvider.isApplicable(this)) {
         return dialogProvider.createDialog(project, element, nameSuggestionContext, editor);
       }
@@ -91,8 +111,8 @@ public abstract class RenamePsiElementProcessorBase {
    * <p>
    * Expected to be called from EDT.
    *
-   * @param element the base element for the refactoring.
-   * @param newName the name into which the element is being renamed.
+   * @param element    the base element for the refactoring.
+   * @param newName    the name into which the element is being renamed.
    * @param allRenames the map (from element to its new name) into which all additional elements to be renamed should be stored.
    */
   public void prepareRenaming(@NotNull PsiElement element, @NotNull String newName, @NotNull Map<PsiElement, String> allRenames) {
@@ -113,9 +133,9 @@ public abstract class RenamePsiElementProcessorBase {
   /**
    * Entry point for finding conflicts.
    *
-   * @param element primary element being renamed
-   * @param newName new name of primary element
-   * @param conflicts map to put conflicts
+   * @param element    primary element being renamed
+   * @param newName    new name of the primary element
+   * @param conflicts  map to put conflicts
    * @param allRenames other elements being renamed with their new names; not expected to be modified
    */
   public void findExistingNameConflicts(@NotNull PsiElement element,
@@ -190,7 +210,7 @@ public abstract class RenamePsiElementProcessorBase {
     }
   }
 
-  public boolean showRenamePreviewButton(@NotNull PsiElement psiElement){
+  public boolean showRenamePreviewButton(@NotNull PsiElement psiElement) {
     return true;
   }
 
@@ -199,7 +219,7 @@ public abstract class RenamePsiElementProcessorBase {
    * of an inherited method).
    *
    * @param element the element on which the refactoring was invoked.
-   * @param editor the editor in which the refactoring was invoked.
+   * @param editor  the editor in which the refactoring was invoked.
    * @return the element to rename, or null if the rename refactoring should be canceled.
    */
   public @Nullable PsiElement substituteElementToRename(@NotNull PsiElement element, @Nullable Editor editor) {
@@ -207,12 +227,16 @@ public abstract class RenamePsiElementProcessorBase {
   }
 
   /**
-   * Substitutes element to be renamed and initiate rename procedure. Should be used in order to prevent modal dialogs to appear during inplace rename
-   * @param element the element on which refactoring was invoked
-   * @param editor the editor in which inplace refactoring was invoked
-   * @param renameCallback rename procedure which should be called on the chosen substitution
+   * Substitutes the element to be renamed and initiates the rename procedure.
+   * Should be used to prevent modal dialogs from appearing during inplace rename.
+   *
+   * @param element        the element on which refactoring was invoked
+   * @param editor         the editor in which inplace refactoring was invoked
+   * @param renameCallback the rename callback to be called on the chosen substitution
    */
-  public void substituteElementToRename(final @NotNull PsiElement element, @NotNull Editor editor, @NotNull Pass<? super PsiElement> renameCallback) {
+  public void substituteElementToRename(final @NotNull PsiElement element,
+                                        @NotNull Editor editor,
+                                        @NotNull Pass<? super PsiElement> renameCallback) {
     final PsiElement psiElement = substituteElementToRename(element, editor);
     if (psiElement == null) return;
     if (!PsiElementRenameHandler.canRename(psiElement.getProject(), editor, psiElement)) return;
@@ -228,6 +252,7 @@ public abstract class RenamePsiElementProcessorBase {
   /**
    * Use this method to force showing preview for custom processors.
    * This method is always called after prepareRenaming()
+   *
    * @return force show preview
    */
   public boolean forcesShowPreview() {
@@ -242,7 +267,8 @@ public abstract class RenamePsiElementProcessorBase {
     return RenameUtilBase.createMoveRenameUsageInfo(element, ref, referenceElement);
   }
 
-  public interface DefaultRenamePsiElementProcessor {}
+  public interface DefaultRenamePsiElementProcessor {
+  }
 
   private static class MyRenamePsiElementProcessorBase extends RenamePsiElementProcessorBase implements DefaultRenamePsiElementProcessor {
     @Override

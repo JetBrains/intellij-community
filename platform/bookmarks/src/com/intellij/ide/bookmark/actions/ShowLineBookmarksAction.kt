@@ -10,6 +10,7 @@ import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Disposer
+import com.intellij.ui.popup.AbstractPopup
 import com.intellij.util.ui.JBUI
 
 internal class ShowLineBookmarksAction : DumbAwareAction() {
@@ -40,6 +41,7 @@ internal class ShowLineBookmarksAction : DumbAwareAction() {
       .setResizable(true)
       .setNormalWindowLevel(true)
       .createPopup()
+    popup.content.putClientProperty(AbstractPopup.FIRST_TIME_SIZE, JBUI.DialogSizes.large())
 
     event.bookmarksManager?.assignedTypes?.forEach { panel.registerBookmarkTypeAction(panel, it) { popup.closeOk(null) } }
 

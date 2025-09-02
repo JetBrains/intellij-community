@@ -197,9 +197,9 @@ abstract class AbstractRunConfigurationBaseTest : KotlinCodeInsightTestCase(),
         val testOutputDir: VirtualFile
     )
 
-    protected fun createConfigurationFromMain(project: Project, mainFqn: String): KotlinRunConfiguration {
+    protected fun createConfigurationFromMain(project: Project, mainFqn: String, save: Boolean = false): KotlinRunConfiguration {
         val mainFunction = findMainFunction(project, mainFqn)
-        return createConfigurationFromElement(mainFunction) as KotlinRunConfiguration
+        return createConfigurationFromElement(mainFunction, save) as KotlinRunConfiguration
     }
 
     protected fun findMainFunction(
@@ -208,15 +208,15 @@ abstract class AbstractRunConfigurationBaseTest : KotlinCodeInsightTestCase(),
     ): KtNamedFunction {
         val scope = project.allScope()
         val mainFunction =
-            KotlinTopLevelFunctionFqnNameIndex.get(mainFqn, project, scope).firstOrNull()
+            KotlinTopLevelFunctionFqnNameIndex[mainFqn, project, scope].firstOrNull()
                 ?: run {
                     val className = StringUtil.getPackageName(mainFqn)
                     val shortName = StringUtil.getShortName(mainFqn)
-                    KotlinFullClassNameIndex.get(className, project, scope)
+                    KotlinFullClassNameIndex[className, project, scope]
                         .flatMap { it.declarations }
                         .filterIsInstance<KtNamedFunction>()
                         .firstOrNull { it.name == shortName }
-                } ?: error("unable to look up top level function $mainFqn")
+                } ?: error("unable to look up main function by fqName: $mainFqn")
         return mainFunction
     }
 }

@@ -2,10 +2,13 @@
 package com.intellij.toolWindow.xNext.toolbar.actions.toolbar
 
 import com.intellij.openapi.actionSystem.ActionButtonComponent
+import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.HeaderToolbarButtonLook
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
+import java.awt.Color
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.Rectangle
@@ -14,7 +17,9 @@ import java.awt.geom.Area
 import java.awt.geom.RoundRectangle2D
 import javax.swing.JComponent
 
-internal class XNextToolWindowButtonLook : HeaderToolbarButtonLook() {
+@ApiStatus.Experimental
+@ApiStatus.Internal
+class XNextToolWindowButtonLook : HeaderToolbarButtonLook() {
     override fun paintBorder(g: Graphics, component: JComponent?, state: Int) {
       val g = IdeBackgroundUtil.getOriginalGraphics(g)
       super.paintBorder(g, component, state)
@@ -33,7 +38,10 @@ internal class XNextToolWindowButtonLook : HeaderToolbarButtonLook() {
           rect.height -= JBUI.scale(2)
           shape.subtract(Area(rect))
 
-          g2.color = JBUI.CurrentTheme.DefaultTabs.underlineColor()
+          rect.height = JBUI.scale(2)
+
+          g2.paint = InternalUICustomization.getInstance()?.aiComponentMarker?.getCustomDefaultButtonFillPaint(component, rect, JBUI.CurrentTheme.DefaultTabs.underlineColor())
+
           g2.fill(shape)
         } finally {
           g2.dispose()
@@ -41,4 +49,9 @@ internal class XNextToolWindowButtonLook : HeaderToolbarButtonLook() {
       }
 
     }
+
+  override fun paintLookBackground(g_: Graphics, rect: Rectangle, color: Color) {
+    val g = IdeBackgroundUtil.getOriginalGraphics(g_)
+    super.paintLookBackground(g, rect, color)
   }
+}

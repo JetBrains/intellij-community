@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.scripting.gradle
 
@@ -6,7 +6,7 @@ import org.gradle.api.internal.file.IdentityFileResolver
 import org.gradle.groovy.scripts.TextResourceScriptSource
 import org.gradle.internal.exceptions.LocationAwareException
 import org.gradle.internal.resource.UriTextResource
-import org.jetbrains.kotlin.idea.gradleJava.scripting.importing.parsePositionFromException
+import org.jetbrains.kotlin.gradle.scripting.shared.importing.parsePositionFromException
 import org.junit.Test
 import kotlin.io.path.createTempDirectory
 import kotlin.io.path.deleteExisting

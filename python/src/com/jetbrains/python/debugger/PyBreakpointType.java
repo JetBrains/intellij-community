@@ -6,5 +6,5 @@ import com.intellij.openapi.project.Project;
 
 
 public interface PyBreakpointType {
-  boolean canPutInDocument(Project project, Document document);
+  boolean isBreakpointTypeAllowedInDocument(Project project, Document document);
 }

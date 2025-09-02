@@ -3,6 +3,8 @@ package com.intellij.openapi.actionSystem;
 
 /**
  * Marker interface for {@link ActionGroup} with dynamic calculated {@link ActionGroup#getChildren(AnActionEvent)}
+ * @deprecated Not needed. Everything works out of the box without it.
  */
+@Deprecated(forRemoval = true)
 public interface DynamicActionGroup {
 }

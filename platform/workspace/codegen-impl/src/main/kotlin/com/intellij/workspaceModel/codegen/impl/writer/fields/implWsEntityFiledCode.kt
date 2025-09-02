@@ -174,10 +174,10 @@ internal val ObjProperty<*, *>.referencedField: ObjProperty<*, *>
     val referencedField = declaredReferenceFromChild[0]
     if (this.valueType.getRefType().child == referencedField.valueType.getRefType().child) {
       val (childStr, fix) = if (this.valueType.getRefType().child) {
-        "child" to "Have you @Child annotation on both sides?"
+        "child" to "Probably @Parent annotation is missing from one of the properties."
       }
       else {
-        "parent" to "Did you forget to add @Child annotation?"
+        "parent" to "Probably both properties are annotated with @Parent, while only one should be."
       }
       error("Both fields ${receiver.name}#$name and ${ref.target.name}#${referencedField.name} are marked as $childStr. $fix")
     }

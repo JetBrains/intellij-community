@@ -50,25 +50,25 @@ import java.awt.Color
 import java.awt.Graphics2D
 import java.awt.RenderingHints
 import java.awt.Window
-import java.nio.file.Path
 import java.util.*
 import javax.swing.Icon
 import javax.swing.JComponent
 import kotlin.math.abs
 
 @Service(Service.Level.PROJECT)
-private class ProjectWindowCustomizerIconCache(private val project: Project) {
+private class ProjectWindowCustomizerIconCache(private val project: Project, coroutineScope: CoroutineScope) {
   val cachedIcon: SynchronizedClearableLazy<Icon> = SynchronizedClearableLazy { getIconRaw() }
 
   init {
-    val busConnection = project.messageBus.simpleConnect()
-    busConnection.subscribe(UISettingsListener.TOPIC, UISettingsListener {
+    val projectConnection = project.messageBus.connect(coroutineScope)
+    val appConnection = ApplicationManager.getApplication().messageBus.connect(coroutineScope)
+    projectConnection.subscribe(UISettingsListener.TOPIC, UISettingsListener {
       cachedIcon.drop()
     })
-    busConnection.subscribe(LafManagerListener.TOPIC, LafManagerListener {
+    appConnection.subscribe(LafManagerListener.TOPIC, LafManagerListener {
       cachedIcon.drop()
     })
-    busConnection.subscribe(ProjectNameListener.TOPIC, object: ProjectNameListener {
+    projectConnection.subscribe(ProjectNameListener.TOPIC, object: ProjectNameListener {
       override fun nameChanged(newName: String?) {
         cachedIcon.drop()
       }
@@ -77,7 +77,7 @@ private class ProjectWindowCustomizerIconCache(private val project: Project) {
 
   private fun getIconRaw(): Icon {
     val path = ProjectWindowCustomizerService.projectPath(project) ?: ""
-    val size = JBUI.CurrentTheme.Toolbar.experimentalToolbarButtonIconSize()
+    val size = JBUI.CurrentTheme.Toolbar.recentProjectAvatarIconSize()
     return RecentProjectsManagerBase.getInstanceEx().getProjectIcon(path = path, isProjectValid = true, unscaledIconSize = size, name = project.name)
   }
 }
@@ -116,7 +116,7 @@ class ProjectWindowCustomizerService : Disposable {
     }
 
     @Internal
-    fun projectPath(project: Project): String? = RecentProjectsManagerBase.getInstanceEx().getProjectPath(project) ?: project.basePath
+    fun projectPath(project: Project): String? = RecentProjectsManagerBase.getInstanceEx().getProjectPath(project)
   }
 
   private var wasGradientPainted = isForceColorfulToolbar()
@@ -342,7 +342,7 @@ class ProjectWindowCustomizerService : Disposable {
 
   fun isAvailable(): Boolean {
     return !DistractionFreeModeController.shouldMinimizeCustomHeader() &&
-           InternalUICustomization.getInstance().isProjectCustomDecorationActive &&
+           InternalUICustomization.getInstance()?.isProjectCustomDecorationActive != false &&
            (PlatformUtils.isRider () || Registry.`is`("ide.colorful.toolbar", true))
   }
 
@@ -369,11 +369,16 @@ class ProjectWindowCustomizerService : Disposable {
     listeners.forEach { it(isActive()) }
   }
 
+  private fun doPaint(): Boolean {
+    val customization = InternalUICustomization.getInstance()
+    return customization == null || customization.isProjectCustomDecorationGradientPaint
+  }
+
   /**
    * @return true if method painted something
    */
   fun paint(window: Window, parent: JComponent, g: Graphics2D): Boolean {
-    if (!isActive()) return false
+    if (!isActive() || !doPaint()) return false
 
     val frameHelper = ProjectFrameHelper.getFrameHelper(window) ?: return false
     val project = frameHelper.project ?: return false
@@ -403,10 +408,13 @@ class ProjectWindowCustomizerService : Disposable {
     val rightX = leftX + leftWidth
     val rightWidth = alignIntToInt(length, ctx, PaintUtil.RoundingMode.CEIL, null)
 
-    g.paint = leftGradientCache.getTexture(g, leftWidth, parent.background, blendedColor, leftX)
+    val leftGradientTexture = leftGradientCache.getHorizontalTexture(g, leftWidth, parent.background, blendedColor, leftX)
+    val rightGradientTexture = rightGradientCache.getHorizontalTexture(g, rightWidth, blendedColor, parent.background, rightX)
+
+    g.paint = leftGradientTexture
     g.fillRect(leftX, 0, leftWidth, height)
 
-    g.paint = rightGradientCache.getTexture(g, rightWidth, blendedColor, parent.background, rightX)
+    g.paint = rightGradientTexture
     g.fillRect(rightX, 0, rightWidth, height)
 
     return true
@@ -569,9 +577,9 @@ private class RecentProjectColorStorage(override val projectPath: String): Proje
     var info = info
     if (info == null) info = RecentProjectColorInfo()
     block(info)
-    RecentProjectsManagerBase.getInstanceEx().updateProjectColor(Path.of(projectPath), info)
+    RecentProjectsManagerBase.getInstanceEx().updateProjectColor(projectPath, info)
   }
 
   private val info: RecentProjectColorInfo? get() =
-    RecentProjectsManagerBase.getInstanceEx().getProjectMetaInfo(Path.of(projectPath))?.colorInfo
+    RecentProjectsManagerBase.getInstanceEx().getProjectMetaInfo(projectPath)?.colorInfo
 }

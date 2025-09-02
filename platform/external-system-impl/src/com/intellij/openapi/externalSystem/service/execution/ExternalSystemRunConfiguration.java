@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.execution;
 
 import com.intellij.build.BuildProgressListener;
@@ -10,8 +10,7 @@ import com.intellij.execution.console.DuplexConsoleView;
 import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.runners.FakeRerunAction;
+import com.intellij.execution.runners.*;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
@@ -303,15 +302,16 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
     @Override
     public void update(@NotNull AnActionEvent event) {
       Presentation presentation = event.getPresentation();
-      ExecutionEnvironment environment = getEnvironment(event);
+      ExecutionEnvironmentProxy environment = getEnvironmentProxy(event);
       if (environment != null) {
         presentation.setText(ExecutionBundle.messagePointer("rerun.configuration.action.name",
-                                                     StringUtil.escapeMnemonics(environment.getRunProfile().getName())));
-        Icon icon = ExecutionManagerImpl.isProcessRunning(getDescriptor(event))
+                                                            StringUtil.escapeMnemonics(environment.getRunProfileName())));
+        RunContentDescriptor descriptor = getDescriptor(event);
+        Icon icon = (descriptor != null && ExecutionManagerImpl.isProcessRunning(getDescriptor(event)))
                     ? AllIcons.Actions.Restart
                     : myProgressListener instanceof BuildViewManager
                       ? AllIcons.Actions.Compile
-                      : environment.getExecutor().getIcon();
+                      : environment.getIcon();
         presentation.setIcon(icon);
         presentation.setEnabled(isEnabled(event));
         return;
@@ -326,8 +326,8 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
     }
 
     @Override
-    protected ExecutionEnvironment getEnvironment(@NotNull AnActionEvent event) {
-      return myEnvironment;
+    protected ExecutionEnvironmentProxy getEnvironmentProxy(@NotNull AnActionEvent event) {
+      return new BackendExecutionEnvironmentProxy(myEnvironment);
     }
   }
 }

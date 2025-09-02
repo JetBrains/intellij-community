@@ -28,6 +28,10 @@ class KotlinGrazieSupportTest28 : GrazieTestBase() {
         runHighlightTestForFile("grazie/StringLiterals.kt")
     }
 
+    fun `test umlauts doesn't produce false positives`() {
+        runHighlightTestForFile("grazie/Umlauts.kt")
+    }
+
     fun `test text extraction in string literals`() {
         val file = myFixture.configureByText("a.kt", "val s = \"foo $" + "{injection} bar\" ")
         val content = TextExtractor.findTextAt(file, 10, TextContent.TextDomain.ALL)

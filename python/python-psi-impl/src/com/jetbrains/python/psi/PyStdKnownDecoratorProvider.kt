@@ -35,6 +35,8 @@ class PyStdKnownDecoratorProvider : PyKnownDecoratorProvider {
       PyKnownDecorator.TYPING_DEPRECATED,
       PyKnownDecorator.TYPING_NO_TYPE_CHECK,
       PyKnownDecorator.TYPING_NO_TYPE_CHECK_EXT,
+      PyKnownDecorator.TYPING_DATACLASS_TRANSFORM,
+      PyKnownDecorator.TYPING_DATACLASS_TRANSFORM_EXT,
       PyKnownDecorator.WARNING_DEPRECATED,
       PyKnownDecorator.REPRLIB_RECURSIVE_REPR,
       PyKnownDecorator.PYRAMID_DECORATOR_REIFY,

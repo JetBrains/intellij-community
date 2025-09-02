@@ -1,8 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module.impl.scopes;
 
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
-import com.intellij.codeInsight.multiverse.CodeInsightContextKt;
+import com.intellij.codeInsight.multiverse.CodeInsightContexts;
 import com.intellij.codeInsight.multiverse.ModuleContext;
 import com.intellij.codeInsight.multiverse.ProjectModelContextBridge;
 import com.intellij.openapi.module.Module;
@@ -24,10 +24,7 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSetQueue;
 import com.intellij.util.containers.MultiMap;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -43,7 +40,8 @@ public final class ModuleWithDependentsScope extends GlobalSearchScope implement
   private static final Key<CachedValue<VirtualFileEnumeration>> CACHED_FILE_ID_ENUMERATIONS_KEY =
     Key.create("CACHED_FILE_ID_ENUMERATIONS");
 
-  ModuleWithDependentsScope(@NotNull Module module) {
+  @VisibleForTesting
+  public ModuleWithDependentsScope(@NotNull Module module) {
     this(module.getProject(), Collections.singleton(module));
   }
 
@@ -86,14 +84,14 @@ public final class ModuleWithDependentsScope extends GlobalSearchScope implement
       ModuleIndex index = new ModuleIndex();
       for (Module module : ModuleManager.getInstance(project).getModules()) {
         for (OrderEntry orderEntry : ModuleRootManager.getInstance(module).getOrderEntries()) {
-          if (orderEntry instanceof ModuleOrderEntry) {
-            Module referenced = ((ModuleOrderEntry)orderEntry).getModule();
+          if (orderEntry instanceof ModuleOrderEntry moduleOrderEntry) {
+            Module referenced = moduleOrderEntry.getModule();
             if (referenced != null) {
               index.allUsages.putValue(referenced, module);
-              if (((ModuleOrderEntry)orderEntry).isExported()) {
+              if (moduleOrderEntry.isExported()) {
                 index.exportingUsages.putValue(referenced, module);
               }
-              if (((ModuleOrderEntry)orderEntry).isProductionOnTestDependency()) {
+              if (moduleOrderEntry.isProductionOnTestDependency()) {
                 index.productionOnTestUsages.putValue(referenced, module);
               }
             }
@@ -106,7 +104,7 @@ public final class ModuleWithDependentsScope extends GlobalSearchScope implement
 
   @Override
   public boolean contains(@NotNull VirtualFile file) {
-    return contains(file, CodeInsightContextKt.anyContext(), false);
+    return contains(file, CodeInsightContexts.anyContext(), false);
   }
 
   @Override
@@ -123,7 +121,7 @@ public final class ModuleWithDependentsScope extends GlobalSearchScope implement
     Set<Module> modulesOfFile = myProjectFileIndex.getModulesForFile(file, true);
     Collection<Module> containingModulesOfScope = ContainerUtil.intersection(myModules, modulesOfFile);
     if (containingModulesOfScope.isEmpty()) {
-      return CodeInsightContextAwareSearchScopesKt.DoesNotContainFileInfo();
+      return CodeInsightContextAwareSearchScopes.DoesNotContainFileInfo();
     }
 
     if (fromTests) {
@@ -131,10 +129,10 @@ public final class ModuleWithDependentsScope extends GlobalSearchScope implement
       if (testModuleIntersection.isEmpty()) {
         Project project = Objects.requireNonNull(getProject()); // project is notnull.
         if (TestSourcesFilter.isTestSources(file, project)) {
-          return CodeInsightContextAwareSearchScopesKt.NoContextFileInfo();
+          return CodeInsightContextAwareSearchScopes.NoContextFileInfo();
         }
         else {
-          return CodeInsightContextAwareSearchScopesKt.DoesNotContainFileInfo();
+          return CodeInsightContextAwareSearchScopes.DoesNotContainFileInfo();
         }
       }
       else {
@@ -150,7 +148,7 @@ public final class ModuleWithDependentsScope extends GlobalSearchScope implement
     Project project = Objects.requireNonNull(getProject()); // project is notnull.
     ProjectModelContextBridge bridge = ProjectModelContextBridge.getInstance(project);
     List<ModuleContext> contexts = ContainerUtil.mapNotNull(testModuleIntersection, m -> bridge.getContext(m));
-    return CodeInsightContextAwareSearchScopesKt.createContainingContextFileInfo(contexts);
+    return CodeInsightContextAwareSearchScopes.createContainingContextFileInfo(contexts);
   }
 
   @ApiStatus.Internal
@@ -161,18 +159,18 @@ public final class ModuleWithDependentsScope extends GlobalSearchScope implement
 
   boolean contains(@NotNull VirtualFile file, @NotNull CodeInsightContext context, boolean fromTests) {
     Set<Module> modules;
-    if (CodeInsightContextKt.isSharedSourceSupportEnabled(Objects.requireNonNull(getProject()))) {
-      if (context == CodeInsightContextKt.anyContext()) {
+    if (CodeInsightContexts.isSharedSourceSupportEnabled(Objects.requireNonNull(getProject()))) {
+      if (context == CodeInsightContexts.anyContext()) {
         modules = myProjectFileIndex.getModulesForFile(file, true);
         if (modules.isEmpty()) {
           return false;
         }
       }
       else {
-        if (!(context instanceof ModuleContext)) {
+        if (!(context instanceof ModuleContext moduleContext)) {
           return false;
         }
-        Module module = ((ModuleContext)context).getModule();
+        Module module = moduleContext.getModule();
         if (module == null) {
           return false;
         }
@@ -226,7 +224,7 @@ public final class ModuleWithDependentsScope extends GlobalSearchScope implement
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    return o instanceof ModuleWithDependentsScope && myModules.equals(((ModuleWithDependentsScope)o).myModules);
+    return o instanceof ModuleWithDependentsScope moduleWithDependentsScope && myModules.equals(moduleWithDependentsScope.myModules);
   }
 
   @Override

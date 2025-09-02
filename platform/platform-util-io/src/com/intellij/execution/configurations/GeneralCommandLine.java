@@ -39,7 +39,7 @@ import java.util.function.Function;
 
 import static com.intellij.execution.util.ExecUtil.startProcessBlockingUsingEel;
 import static com.intellij.platform.eel.provider.EelProviderUtil.getEelDescriptor;
-import static com.intellij.platform.eel.provider.EelProviderUtil.upgradeBlocking;
+import static com.intellij.platform.eel.provider.EelProviderUtil.toEelApiBlocking;
 
 /**
  * OS-independent way of executing external processes with complex parameters.
@@ -156,6 +156,18 @@ public class GeneralCommandLine implements UserDataHolder {
   @ApiStatus.Obsolete(since = "2024.2")
   public void setExePath(@NotNull String exePath) {
     withExePath(exePath);
+  }
+
+  /**
+   * Turns the command line into parameters of a new one.
+   * Case in point &ndash; running a process with lower priority: {@code commandLine.withWrappingCommand("nice", "-n", "10")}.
+   */
+  @ApiStatus.Experimental
+  public @NotNull GeneralCommandLine withWrappingCommand(@NotNull String command, @NotNull String @NotNull ... args) {
+    if (myExePath == null || myExePath.isBlank()) throw new IllegalStateException("Executable is not set yet");
+    myProgramParams.prepend(myExePath);
+    myProgramParams.prependAll(args);
+    return withExePath(command);
   }
 
   /** Please use {@link #getWorkingDirectory()}. */
@@ -387,10 +399,7 @@ public class GeneralCommandLine implements UserDataHolder {
     }
 
     try {
-      var commands = myProcessCreator != null || tryGetEel() != null
-                     ? ContainerUtil.concat(List.of(myExePath), myProgramParams.getList())
-                     : validateAndPrepareCommandLineForLocalRun();
-      var process = startProcess(commands);
+      var process = startProcess();
       String pidString = null;
       if (LOG.isDebugEnabled()) {
         try {
@@ -412,6 +421,16 @@ public class GeneralCommandLine implements UserDataHolder {
       }
       throw new ProcessNotCreatedException(e.getMessage(), e, this);
     }
+  }
+
+  @ApiStatus.Internal
+  @ApiStatus.OverrideOnly
+  protected @NotNull Process startProcess() throws ExecutionException, IOException {
+    var commands = myProcessCreator != null || tryGetEel() != null
+                   ? ContainerUtil.concat(List.of(myExePath), myProgramParams.getList())
+                   : validateAndPrepareCommandLineForLocalRun();
+    var process = startProcess(commands);
+    return process;
   }
 
   /**
@@ -467,11 +486,11 @@ public class GeneralCommandLine implements UserDataHolder {
       eelApi = null;
     }
     else if (getEelDescriptor(exePath) != LocalEelDescriptor.INSTANCE) { // fast check
-      eelApi = upgradeBlocking(getEelDescriptor(exePath));
+      eelApi = toEelApiBlocking(getEelDescriptor(exePath));
     }
     else if (workingDirectory != null) {
       if (getEelDescriptor(workingDirectory) != LocalEelDescriptor.INSTANCE) { // also try to compute non-local EelApi from working dir
-        eelApi = upgradeBlocking(getEelDescriptor(workingDirectory));
+        eelApi = toEelApiBlocking(getEelDescriptor(workingDirectory));
       }
       else {
         eelApi = null;
@@ -562,7 +581,7 @@ public class GeneralCommandLine implements UserDataHolder {
     else {
       ptyOptions = null;
     }
-    return startProcessBlockingUsingEel(eelApi.getExec(), processBuilder, ptyOptions);
+    return startProcessBlockingUsingEel(eelApi.getExec(), processBuilder, ptyOptions, isPassParentEnvironment());
   }
 
   /** @deprecated please override {@link #createProcess(ProcessBuilder)} instead. */

@@ -1,7 +1,7 @@
 import functools
 from collections.abc import Callable, Iterator, Sequence
 from http.cookies import SimpleCookie
-from typing import Any
+from typing import Any, TypeAlias
 
 from django.core.handlers.wsgi import WSGIRequest
 from django.http import HttpResponse
@@ -10,7 +10,6 @@ from django.template.base import Template
 from django.template.context import RequestContext
 from django.test.client import Client
 from django.utils.datastructures import _ListOrTuple
-from typing_extensions import TypeAlias
 
 _TemplateForResponseT: TypeAlias = _ListOrTuple[str] | Template | str
 

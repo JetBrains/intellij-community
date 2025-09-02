@@ -85,7 +85,7 @@ internal fun getReferenceRanges(elementAtPointer: PsiElement): List<TextRange> {
   val range = elementAtPointer.textRange
               ?: throw AssertionError("Null range for " + elementAtPointer + " of " + elementAtPointer.javaClass)
   if (textOffset < range.startOffset || textOffset < 0) {
-    LOG.error("Invalid text offset " + textOffset + " of element " + elementAtPointer + " of " + elementAtPointer.javaClass)
+    codeInsightLogger.error("Invalid text offset " + textOffset + " of element " + elementAtPointer + " of " + elementAtPointer.javaClass)
     textOffset = range.startOffset
   }
   return listOf(TextRange(textOffset, range.endOffset))

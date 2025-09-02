@@ -265,10 +265,8 @@ fun PsiElement.getReceiverTypeSearcherInfo(isDestructionDeclarationSearch: Boole
 }
 
 fun KtFile.getDefaultImports(): List<ImportPath> {
-    val moduleInfo = this.moduleInfoOrNull ?: return emptyList()
-    val languageVersionSettings = project.service<LanguageSettingsProvider>().getLanguageVersionSettings(moduleInfo, project)
     return platform
         .findAnalyzerServices(project)
-        .getDefaultImports(languageVersionSettings, includeLowPriorityImports = true)
+        .getDefaultImports(includeLowPriorityImports = true)
 }
 

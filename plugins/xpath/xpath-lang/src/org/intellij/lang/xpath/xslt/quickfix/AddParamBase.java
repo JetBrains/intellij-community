@@ -38,7 +38,7 @@ public abstract class AddParamBase extends AbstractFix {
     }
 
     @Override
-    public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+    public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
         final XmlTag templateTag = findTemplateTag();
         assert templateTag != null;
 

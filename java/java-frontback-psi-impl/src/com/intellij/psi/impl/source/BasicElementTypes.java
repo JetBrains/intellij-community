@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
+import com.intellij.java.syntax.element.SyntaxElementTypes;
 import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.tree.ParentAwareTokenSet;
@@ -14,6 +15,7 @@ import com.intellij.psi.tree.TokenSet;
  * It's checked with {@link com.intellij.java.parser.FrontBackElementTypeTest#testJavaTokenSet()}
  *
  * @see ParentAwareTokenSet
+ * @see SyntaxElementTypes
  */
 @SuppressWarnings("unused")
 public interface BasicElementTypes extends JavaTokenType, JavaDocTokenType, BasicJavaElementType, BasicJavaDocElementType {

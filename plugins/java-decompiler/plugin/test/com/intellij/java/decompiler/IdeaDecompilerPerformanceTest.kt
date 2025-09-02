@@ -8,7 +8,7 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import com.intellij.util.SystemProperties
-import com.intellij.util.lang.JavaVersion
+import com.intellij.util.currentJavaVersion
 import org.jetbrains.java.decompiler.DecompilerPreset
 import org.jetbrains.java.decompiler.IdeaDecompiler
 import org.jetbrains.java.decompiler.IdeaDecompilerSettings
@@ -37,7 +37,7 @@ class IdeaDecompilerPerformanceTest : LightJavaCodeInsightFixtureTestCase() {
 
   fun testPerformance() {
     val decompiler = IdeaDecompiler()
-    val jrt = JavaVersion.current().feature >= 9
+    val jrt = currentJavaVersion().feature >= 9
     val base = if (jrt) "jrt://${SystemProperties.getJavaHome()}!/java.desktop/" else "jar://${SystemProperties.getJavaHome()}/lib/rt.jar!/"
     val file = VirtualFileManager.getInstance().findFileByUrl(base + "javax/swing/JTable.class")!!
     Benchmark.newBenchmark("decompiling JTable.class") { decompiler.getText(file) }.start()

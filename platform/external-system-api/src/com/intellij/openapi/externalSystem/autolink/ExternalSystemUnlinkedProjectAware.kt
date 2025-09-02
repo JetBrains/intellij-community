@@ -6,7 +6,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import kotlinx.coroutines.Dispatchers
@@ -32,10 +31,8 @@ interface ExternalSystemUnlinkedProjectAware {
 
   suspend fun linkAndLoadProjectAsync(project: Project, externalProjectPath: String) {
     withContext(Dispatchers.EDT) {
-      blockingContext {
-        @Suppress("DEPRECATION")
-        linkAndLoadProject(project, externalProjectPath)
-      }
+      @Suppress("DEPRECATION")
+      linkAndLoadProject(project, externalProjectPath)
     }
   }
 

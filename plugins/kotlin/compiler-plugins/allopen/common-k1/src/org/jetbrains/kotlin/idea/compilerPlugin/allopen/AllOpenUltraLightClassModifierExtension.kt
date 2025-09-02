@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.idea.compilerPlugin.allopen
  */
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiModifier
 import org.jetbrains.kotlin.allopen.AbstractAllOpenDeclarationAttributeAltererExtension
@@ -24,6 +25,7 @@ import org.jetbrains.kotlin.psi.psiUtil.isPropertyParameter
 import org.jetbrains.kotlin.util.isAnnotated
 import org.jetbrains.kotlin.util.isOrdinaryClass
 
+@InternalIgnoreDependencyViolation
 private class AllOpenUltraLightClassModifierExtension(project: Project) :
     AnnotationBasedExtension,
     UltraLightClassModifierExtension {

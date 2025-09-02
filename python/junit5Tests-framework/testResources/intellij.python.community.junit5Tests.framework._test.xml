@@ -1,0 +1,7 @@
+<idea-plugin>
+  <dependencies>
+    <module name="intellij.libraries.testcontainers"/>
+    <module name="intellij.platform.testFramework.junit5"/>
+    <module name="intellij.python.community.testFramework.testEnv"/>
+  </dependencies>
+</idea-plugin>

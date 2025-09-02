@@ -16,9 +16,11 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 
 @ApiStatus.Internal
-internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
-                         var spacingConfiguration: SpacingConfiguration,
-                         private val parent: RowImpl?) : CellBaseImpl<Panel>(), Panel {
+internal class PanelImpl(
+  private val dialogPanelConfig: DialogPanelConfig,
+  var spacingConfiguration: SpacingConfiguration,
+  private val parent: RowImpl?,
+) : CellBaseImpl<Panel>(), Panel {
 
   val rows: List<RowImpl>
     get() = _rows
@@ -48,7 +50,8 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
     val result: RowImpl
     if (label == null) {
       result = RowImpl(dialogPanelConfig, panelContext, this, RowLayout.INDEPENDENT)
-    } else {
+    }
+    else {
       label.putClientProperty(DslComponentProperty.ROW_LABEL, true)
       result = RowImpl(dialogPanelConfig, panelContext, this, RowLayout.LABEL_ALIGNED)
       result.cell(label)
@@ -170,14 +173,15 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
         }
       }.align(AlignY.FILL)
     }
-    result.internalTopGap = spacingConfiguration.verticalMediumGap
-    result.internalBottomGap = spacingConfiguration.verticalMediumGap
+    result.internalGaps = UnscaledGapsY(top = spacingConfiguration.verticalMediumGap, bottom = spacingConfiguration.verticalMediumGap)
 
     return result
   }
 
-  override fun groupRowsRange(title: String?, indent: Boolean, topGroupGap: Boolean?, bottomGroupGap: Boolean?,
-                              init: Panel.() -> Unit): RowsRangeImpl {
+  override fun groupRowsRange(
+    title: String?, indent: Boolean, topGroupGap: Boolean?, bottomGroupGap: Boolean?,
+    init: Panel.() -> Unit,
+  ): RowsRangeImpl {
     val result = createRowRange()
     createSeparatorRow(title)
     if (indent) {
@@ -205,8 +209,7 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
     }
 
     result.expanded = false
-    result.internalTopGap = spacingConfiguration.verticalMediumGap
-    result.internalBottomGap = spacingConfiguration.verticalMediumGap
+    result.internalGaps = UnscaledGapsY(top = spacingConfiguration.verticalMediumGap, bottom = spacingConfiguration.verticalMediumGap)
     _rows.add(result)
 
     return result
@@ -223,7 +226,7 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
           label(title)
             .applyToComponent { putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, VerticalComponentGap(bottom = false)) }
         }
-        row.internalBottomGap = spacingConfiguration.buttonGroupHeaderBottomGap
+        row.internalGaps = UnscaledGapsY(bottom = spacingConfiguration.buttonGroupHeaderBottomGap)
       }
 
       if (indent) {
@@ -258,10 +261,6 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
   override fun customizeSpacingConfiguration(spacingConfiguration: SpacingConfiguration, init: Panel.() -> Unit) {
     this.spacingConfiguration = spacingConfiguration
     this.init()
-  }
-
-  override fun useNewComboBoxRenderer() {
-    dialogPanelConfig.useComboBoxNewRenderer = true
   }
 
   @Deprecated("Use customize(UnscaledGaps) instead")
@@ -325,13 +324,6 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
   fun isVisible(row: RowImpl): Boolean {
     val rowIndex = rows.indexOf(row)
     return visible && isRowFromVisibleRange(rowIndex) && (parent == null || parent.isVisible())
-  }
-
-  @Deprecated("Use align(AlignX.LEFT/CENTER/RIGHT/FILL) method instead")
-  @ApiStatus.ScheduledForRemoval
-  override fun horizontalAlign(horizontalAlign: HorizontalAlign): PanelImpl {
-    super.horizontalAlign(horizontalAlign)
-    return this
   }
 
   @Deprecated("Use align(AlignY.TOP/CENTER/BOTTOM/FILL) method instead")
@@ -402,7 +394,7 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
 
   private fun setTopGroupGap(row: RowImpl, topGap: Boolean?) {
     if (topGap == null) {
-      row.internalTopGap = spacingConfiguration.verticalMediumGap
+      row.internalGaps = row.internalGaps.copy(top = spacingConfiguration.verticalMediumGap)
     }
     else {
       row.topGap(if (topGap) TopGap.MEDIUM else TopGap.NONE)
@@ -411,7 +403,7 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
 
   private fun setBottomGroupGap(row: RowImpl, bottomGap: Boolean?) {
     if (bottomGap == null) {
-      row.internalBottomGap = spacingConfiguration.verticalMediumGap
+      row.internalGaps = row.internalGaps.copy(bottom = spacingConfiguration.verticalMediumGap)
     }
     else {
       row.bottomGap(if (bottomGap) BottomGap.MEDIUM else BottomGap.NONE)
@@ -429,7 +421,7 @@ internal data class PanelContext(
   /**
    * Number of [SpacingConfiguration.horizontalIndent] indents before each row in the panel
    */
-  val indentCount: Int = 0
+  val indentCount: Int = 0,
 )
 
 private fun Panel.createSeparatorRow(@NlsContexts.Separator title: String?): Row {

@@ -12,13 +12,13 @@ abstract class SelfIdentificationVisitor : EvaluationVisitor, PsiElementVisitor(
 
   override fun getFile(): CodeFragment = codeFragment
 
-  override fun visitFile(file: PsiFile) {
-    codeFragment = CodeFragment(file.textOffset, file.textLength).apply {
-      spacedLines(file.text).forEach {
+  override fun visitFile(psiFile: PsiFile) {
+    codeFragment = CodeFragment(psiFile.textOffset, psiFile.textLength).apply {
+      spacedLines(psiFile.text).forEach {
         addChild(it)
       }
     }
-    super.visitFile(file)
+    super.visitFile(psiFile)
   }
 
   private fun spacedLines(text: String): List<CodeToken> {

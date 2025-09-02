@@ -26,12 +26,14 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
 @ApiStatus.NonExtendable
 public interface LibraryEx extends Library {
   @NotNull
+  @Unmodifiable
   List<String> getInvalidRootUrls(@NotNull OrderRootType type);
 
   boolean isDisposed();

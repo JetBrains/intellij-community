@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.build.events.MessageEvent
@@ -28,8 +28,8 @@ import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.jps.entities.exModuleOptions
 import com.intellij.platform.workspace.storage.entities
 import com.intellij.pom.java.AcceptedLanguageLevelsSettings
+import com.intellij.pom.java.JavaRelease
 import com.intellij.pom.java.LanguageLevel
-import com.intellij.pom.java.LanguageLevel.HIGHEST
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.text.VersionComparatorUtil
 import com.intellij.workspaceModel.ide.legacyBridge.findModuleEntity
@@ -144,7 +144,7 @@ object MavenImportUtil {
         getTargetLanguageLevel(it),
         getTestTargetLanguageLevel(it)
       )
-    }.filterNotNull().maxWithOrNull(Comparator.naturalOrder()) ?: HIGHEST
+    }.filterNotNull().maxWithOrNull(Comparator.naturalOrder()) ?: JavaRelease.getHighest()
     return maxLevel
   }
 
@@ -280,7 +280,7 @@ object MavenImportUtil {
       if (highestAcceptedLevel.isLessThan(level)) {
         MavenProjectsManager.getInstance(project).getSyncConsole().addBuildIssue(NonAcceptedJavaLevelIssue(level), MessageEvent.Kind.WARNING)
       }
-      level = if (highestAcceptedLevel.isAtLeast(level)) LanguageLevel.HIGHEST else highestAcceptedLevel
+      level = if (highestAcceptedLevel.isAtLeast(level)) JavaRelease.getHighest() else highestAcceptedLevel
     }
     return level
   }

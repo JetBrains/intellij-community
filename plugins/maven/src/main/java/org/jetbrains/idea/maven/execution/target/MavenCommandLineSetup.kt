@@ -15,6 +15,7 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.Key
@@ -22,6 +23,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil.*
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.platform.eel.annotations.NativePath
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.util.text.nullize
@@ -35,10 +37,10 @@ import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.project.MavenGeneralSettings
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.jetbrains.idea.maven.project.MavenSettingsCache
 import org.jetbrains.idea.maven.server.MavenServerEmbedder
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.utils.MavenUtil
-import org.jetbrains.idea.maven.utils.MavenUtil.getJdkForImporter
 import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -46,9 +48,11 @@ import java.util.*
 
 private const val JAVA_HOME_ENV_KEY = "JAVA_HOME"
 
-class MavenCommandLineSetup(private val project: Project,
-                            private val name: @NlsSafe String,
-                            private val request: TargetEnvironmentRequest) {
+class MavenCommandLineSetup(
+  private val project: Project,
+  private val name: @NlsSafe String,
+  private val request: TargetEnvironmentRequest,
+) {
 
   val commandLine = TargetedCommandLineBuilder(request)
   val platform = request.targetPlatform.platform
@@ -107,29 +111,47 @@ class MavenCommandLineSetup(private val project: Project,
   }
 
   private fun setupTargetJavaRuntime(runnerSettings: MavenRunnerSettings) {
-    val javaHomePath: String? =
-      when {
-        runnerSettings.jreName != MavenRunnerSettings.USE_PROJECT_JDK -> runnerSettings.jreName
-        defaultJavaRuntimeConfiguration?.homePath?.isNotBlank() == true -> defaultJavaRuntimeConfiguration.homePath
-        else -> null
-      } ?: runBlockingCancellable { calculateJavaHome() }
-    if (javaHomePath != null) {
-      commandLine.addEnvironmentVariable(JAVA_HOME_ENV_KEY, javaHomePath)
+    @NativePath
+    var targetJavaHome: String? = null
+    if (runnerSettings.jreName != MavenRunnerSettings.USE_PROJECT_JDK) {
+      val jdkPath = ProjectJdkTable.getInstance(project)
+        .findJdk(runnerSettings.jreName)
+        ?.homePath
+      if (isValidJavaHomePath(jdkPath)) {
+        targetJavaHome = jdkPath!!.asTargetPathString()
+      }
+    } else if (isValidJavaHomePath(defaultJavaRuntimeConfiguration?.homePath)) {
+       targetJavaHome = defaultJavaRuntimeConfiguration?.homePath!!.asTargetPathString()
+    }
+
+    if (targetJavaHome == null) {
+      targetJavaHome = runBlockingCancellable { calculateTargetJavaHome() }
+    }
+    if (targetJavaHome != null) {
+      commandLine.addEnvironmentVariable(JAVA_HOME_ENV_KEY, targetJavaHome)
     }
   }
 
-  private suspend fun calculateJavaHome(): String? {
+  private fun isValidJavaHomePath(javaHomePath: String?) : Boolean {
+    if (javaHomePath == null || javaHomePath.isBlank()) {
+      return false
+    }
+    if (Path.of(javaHomePath).getEelDescriptor() != project.getEelDescriptor()) {
+      throw CantRunException(message("maven.target.run.incompatible.jdk", javaHomePath, name))
+    }
+    return true
+  }
+
+  private suspend fun calculateTargetJavaHome(): @NativePath String? {
     val descriptor = project.getEelDescriptor()
-    val eel = descriptor.upgrade()
+    val eel = descriptor.toEelApi()
     val targetEnv = eel.exec.fetchLoginShellEnvVariables()
     val targetJavaHome = targetEnv[JAVA_HOME_ENV_KEY]
     if (targetJavaHome != null) {
       return targetJavaHome
     }
-    val jdk = ProjectRootManager.getInstance(project).getProjectSdk() ?: getJdkForImporter(project)
-    return jdk.homePath?.let { Path.of(it) }
-      ?.asEelPath()
-      ?.toString()
+    val jdk = ProjectRootManager.getInstance(project).getProjectSdk()
+    return jdk?.homePath?.asTargetPathString()
   }
 
   private fun setupMavenExtClassPath() {
@@ -194,13 +216,17 @@ class MavenCommandLineSetup(private val project: Project,
     generalSettings.checksumPolicy.commandLineOption.nullize(true)?.also { commandLine.addParameter(it) }
 
     if (generalSettings.userSettingsFile.isNotBlank()) {
-      commandLine.addParameters("-s", generalSettings.userSettingsFile)
+      commandLine.addParameters("-s", generalSettings.userSettingsFile.asTargetPathString())
     }
-    generalSettings.localRepository.nullize(true)?.also { commandLine.addParameter("-Dmaven.repo.local=$it") }
+    if (generalSettings.localRepository.isNotBlank()) {
+      commandLine.addParameter("-Dmaven.repo.local=${MavenSettingsCache.getInstance(project).getEffectiveUserLocalRepo()}")
+    }
   }
 
-  private fun setupTargetEnvironmentVariables(settings: MavenRunConfiguration.MavenSettings,
-                                              mavenOptsValues: MutableList<TargetValue<String>>) {
+  private fun setupTargetEnvironmentVariables(
+    settings: MavenRunConfiguration.MavenSettings,
+    mavenOptsValues: MutableList<TargetValue<String>>,
+  ) {
     val runnerSettings = mavenRunnerSettings(settings)
     runnerSettings.environmentProperties.forEach { (name, value) ->
       if (MAVEN_OPTS == name) {
@@ -222,9 +248,11 @@ class MavenCommandLineSetup(private val project: Project,
     return settings.myRunnerSettings ?: MavenRunner.getInstance(project).state
   }
 
-  private fun upload(uploadRoot: TargetEnvironment.UploadRoot,
-                     uploadPathString: String,
-                     uploadRelativePath: String): TargetValue<String> {
+  private fun upload(
+    uploadRoot: TargetEnvironment.UploadRoot,
+    uploadPathString: String,
+    uploadRelativePath: String,
+  ): TargetValue<String> {
     val result = DeferredTargetValue(uploadPathString)
     dependingOnEnvironmentPromise += environmentPromise.then { (environment, progress) ->
       val volume = environment.uploadVolumes.getValue(uploadRoot)
@@ -241,7 +269,7 @@ class MavenCommandLineSetup(private val project: Project,
 
   private fun setupTargetProjectDirectories(settings: MavenRunConfiguration.MavenSettings) {
     val mavenProjectsManager = MavenProjectsManager.getInstance(project)
-    val file = settings.myRunnerParameters?.let { VfsUtil.findFileByIoFile(it.workingDirFile, false) } ?: throw CantRunException(
+    val file = settings.myRunnerParameters?.let { VfsUtil.findFile(Path.of(it.workingDirPath), false) } ?: throw CantRunException(
       message("maven.target.message.unable.to.use.working.directory", name))
     val module = ReadAction.compute<Module?, Throwable> { ProjectFileIndex.getInstance(project).getModuleForFile(file) }
                  ?: throw CantRunException(
@@ -314,4 +342,6 @@ class MavenCommandLineSetup(private val project: Project,
     @JvmStatic
     val setupKey = Key.create<MavenCommandLineSetup>("org.jetbrains.idea.maven.execution.target.MavenCommandLineSetup")
   }
+
+  private fun @NativePath String.asTargetPathString(): String = Path.of(this).asEelPath().toString()
 }

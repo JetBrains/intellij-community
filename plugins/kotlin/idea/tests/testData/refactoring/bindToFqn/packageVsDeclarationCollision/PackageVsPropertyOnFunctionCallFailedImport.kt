@@ -1,0 +1,21 @@
+// FILE: foo/Main.kt
+// BIND_TO test.MyClass
+// BIND_RESULT test.MyClass()
+package foo
+
+val test: Int = 10
+
+class MyClass
+
+fun usage() {
+    MyClass()
+    // The result here will be incorrect, but the auto-importer cannot possibly reference the class
+    // without causing a conflict or using import aliases.
+    // What's important is that the root prefix is stripped properly after a failed import.
+    <caret>UNRESOLVED()
+}
+
+// FILE: test/MyClass.kt
+package test
+
+class MyClass

@@ -1,14 +1,15 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.env.debug.tests;
 
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.intellij.idea.TestFor;
 import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.env.debug.tasks.PyDebuggerTask;
+import com.jetbrains.env.debug.tasks.PyTestDebuggingTask;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
+import java.util.Collections;
 import java.util.Set;
 
 public class PythonDebugConsoleTest extends PyEnvTestCase {
@@ -66,7 +67,7 @@ public class PythonDebugConsoleTest extends PyEnvTestCase {
   public void testUpdateSeriesInDebugConsole() {
     runPythonTest(new PyDebuggerTask("/debug", "test_update_series_in_debug_console.py") {
       @Override
-      public void before() throws Exception {
+      public void before() {
         toggleBreakpoint(11);
       }
 
@@ -87,7 +88,7 @@ public class PythonDebugConsoleTest extends PyEnvTestCase {
       @NotNull
       @Override
       public Set<String> getTags() {
-        return ImmutableSet.of("pandas");
+        return Collections.singleton("pandas");
       }
     });
   }
@@ -131,15 +132,10 @@ public class PythonDebugConsoleTest extends PyEnvTestCase {
 
   @Test
   public void testDebugConsolePytest() {
-    runPythonTest(new PyDebuggerTask("/debug", "test_debug_console_pytest.py") {
+    runPythonTest(new PyTestDebuggingTask("/debug", "test_debug_console_pytest.py", null) {
       @Override
       public void before() {
         toggleBreakpoint(getFilePath(getScriptName()), 4);
-      }
-
-      @Override
-      protected boolean usePytestRunner() {
-        return true;
       }
 
       @Override

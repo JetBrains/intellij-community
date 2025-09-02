@@ -347,7 +347,7 @@ object GitRemoteBranchesUtil {
    * Returns the [preferredName] if it is not taken or adds a numerical index to it
    */
   private fun findNameForRemote(repository: GitRepository, preferredName: String): String? {
-    val exitingNames = repository.remotes.mapTo(mutableSetOf(), GitRemote::getName)
+    val exitingNames = repository.remotes.mapTo(mutableSetOf(), GitRemote::name)
     if (!exitingNames.contains(preferredName)) {
       return preferredName
     }

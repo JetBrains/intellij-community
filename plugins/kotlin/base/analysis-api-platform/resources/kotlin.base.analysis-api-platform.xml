@@ -1,5 +1,12 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.base.analysisApiPlatform">
   <extensions defaultExtensionNs="com.intellij">
+    <registryKey
+            defaultValue="true"
+            description="Enables support for Analysis API-based resolution during dumb mode."
+            key="kotlin.analysis.allowRestrictedAnalysis"
+            restartRequired="true"
+    />
+
     <applicationService
             serviceInterface="org.jetbrains.kotlin.analysis.api.platform.permissions.KotlinAnalysisPermissionOptions"
             serviceImplementation="org.jetbrains.kotlin.analysis.api.platform.permissions.KotlinDefaultAnalysisPermissionOptions"/>
@@ -31,32 +38,44 @@
             serviceInterface="org.jetbrains.kotlin.analysis.api.platform.packages.KotlinPackagePartProviderFactory"
             serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.IdeKotlinPackagePartProviderFactory"/>
     <projectService
-            serviceInterface="org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinResolutionScopeProvider"
-            serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.IdeKotlinByModulesResolutionScopeProvider"/>
+            serviceInterface="org.jetbrains.kotlin.analysis.api.platform.java.KotlinJavaModuleAccessibilityChecker"
+            serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.java.IdeKotlinJavaModuleAccessibilityChecker"/>
     <projectService
-            serviceInterface="org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinGlobalSearchScopeMerger"
-            serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.IdeKotlinGlobalSearchScopeMerger"/>
+            serviceInterface="org.jetbrains.kotlin.analysis.api.platform.java.KotlinJavaModuleAnnotationsProvider"
+            serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.java.IdeKotlinJavaModuleAnnotationsProvider"/>
+    <projectService
+            serviceInterface="org.jetbrains.kotlin.analysis.api.platform.restrictedAnalysis.KotlinRestrictedAnalysisService"
+            serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.IdeKotlinRestrictedAnalysisService"/>
     <projectService
             serviceInterface="org.jetbrains.kotlin.analysis.api.platform.statistics.KotlinOpenTelemetryProvider"
             serviceImplementation="org.jetbrains.kotlin.analysis.api.platform.statistics.KotlinGlobalOpenTelemetryProvider"/>
     <projectService
             serviceInterface="org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinModuleOutputProvider"
-            serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.IdeKotlinModuleOutputProvider"/>
+            serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.projectStructure.IdeKotlinModuleOutputProvider"/>
 
     <postStartupActivity
             implementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.IdeKotlinStatisticsStartupActivity"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
-    <kotlinResolutionScopeEnlarger implementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.IdeKotlinResolveScopeEnlargerBridge"/>
+    <kotlinContentScopeRefiner implementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.projectStructure.scopes.IdeKotlinResolveScopeEnlargerBridge"/>
+
+    <kotlinGlobalSearchScopeMergeStrategy
+            implementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.projectStructure.scopes.IdeKotlinUnionScopeMergeStrategy"
+            order="first"/>
+
+    <!-- We merge intersection scopes right after flattening union scopes. This allows the merger to profit from nested union scopes being
+         flattened (which may contain intersection scopes), while also cutting down on the number of scopes passed to later mergers. -->
+    <kotlinGlobalSearchScopeMergeStrategy
+            implementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.projectStructure.scopes.IdeKotlinIntersectionScopeMergeStrategy"
+            order="first"/>
+
+    <kotlinGlobalSearchScopeMergeStrategy implementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.projectStructure.scopes.IdeKotlinCombinableSourceAndClassRootsScopeMergeStrategy"/>
   </extensions>
 
   <projectListeners>
     <listener
-            class="org.jetbrains.kotlin.idea.base.analysisApiPlatform.IdeKotlinModulePackageNamesProvider$ModuleStateModificationListener"
-            topic="org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModuleStateModificationListener"/>
-    <listener
-            class="org.jetbrains.kotlin.idea.base.analysisApiPlatform.IdeKotlinModulePackageNamesProvider$GlobalModuleStateModificationListener"
-            topic="org.jetbrains.kotlin.analysis.api.platform.modification.KotlinGlobalModuleStateModificationListener"/>
+            class="org.jetbrains.kotlin.idea.base.analysisApiPlatform.IdeKotlinModulePackageNamesProvider$ModificationEventListener"
+            topic="org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationEventListener"/>
   </projectListeners>
 </idea-plugin>

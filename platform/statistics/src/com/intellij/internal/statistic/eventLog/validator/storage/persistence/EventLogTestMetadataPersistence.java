@@ -129,7 +129,7 @@ public final class EventLogTestMetadataPersistence extends BaseEventLogMetadataP
     for (String datum : eventData) {
       dataRules.put(datum, new HashSet<>(Collections.singletonList(TEST_RULE)));
     }
-    rule.event_data = dataRules;
+    rule.setEvent_data(dataRules);
     group.rules = rule;
     return group;
   }

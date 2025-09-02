@@ -69,12 +69,12 @@ public class ConfigurableExtensionPointUtilTest extends LightPlatformTestCase {
       List.of(node("first",
                                       node("first.first",
                                            node("first.first.first"),
+                                           node("first.first.fourth"), // default is alphabetically sorted
                                            node("first.first.second",
                                                 node("first.first.second.first"),
                                                 node("first.first.second.second")
                                            ),
-                                           node("first.first.third"),
-                                           node("first.first.fourth")
+                                           node("first.first.third")
                                       ),
                                       node("first.second",
                                            node("first.second.first",
@@ -82,9 +82,9 @@ public class ConfigurableExtensionPointUtilTest extends LightPlatformTestCase {
                                                 node("first.second.first.second"),
                                                 node("first.second.first.third")
                                            ),
+                                           node("first.second.fourth"), // default is alphabetically sorted
                                            node("first.second.second"),
-                                           node("first.second.third"),
-                                           node("first.second.fourth")
+                                           node("first.second.third")
                                       )
                                  ),
                                  node("2nd",
@@ -218,16 +218,16 @@ public class ConfigurableExtensionPointUtilTest extends LightPlatformTestCase {
                              node("s4"),
                              node("s5"),
                              node("s6")),
-                        node("unsorted",
+                        node("unsorted", // default is alphabetically sorted
                              node("u1"),
-                             node("u9"),
                              node("u2"),
-                             node("u8"),
                              node("u3"),
-                             node("u7"),
                              node("u4"),
+                             node("u5"),
                              node("u6"),
-                             node("u5")))),
+                             node("u7"),
+                             node("u8"),
+                             node("u9")))),
                  build(
                    wrapConfigurable("sorted"),
                    wrapConfigurable("unsorted"),
@@ -257,12 +257,12 @@ public class ConfigurableExtensionPointUtilTest extends LightPlatformTestCase {
                         node("first",
                              node("first.first",
                                   node("first.first.first"),
+                                  node("first.first.fourth"), // default is alphabetically sorted
                                   node("first.first.second",
                                        node("first.first.second.first"),
                                        node("first.first.second.second")
                                   ),
-                                  node("first.first.third"),
-                                  node("first.first.fourth")
+                                  node("first.first.third")
                              ),
                              node("first.second",
                                   node("first.second.first",
@@ -270,9 +270,9 @@ public class ConfigurableExtensionPointUtilTest extends LightPlatformTestCase {
                                        node("first.second.first.second"),
                                        node("first.second.first.third")
                                   ),
+                                  node("first.second.fourth"), // default is alphabetically sorted
                                   node("first.second.second"),
-                                  node("first.second.third"),
-                                  node("first.second.fourth")
+                                  node("first.second.third")
                              )
                         ),
                         node("2nd",

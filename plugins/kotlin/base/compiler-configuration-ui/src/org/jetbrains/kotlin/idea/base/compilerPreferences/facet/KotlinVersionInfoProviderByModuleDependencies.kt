@@ -17,12 +17,6 @@ class KotlinVersionInfoProviderByModuleDependencies : KotlinVersionInfoProvider 
 
     override fun getCompilerVersion(): IdeKotlinVersion = KotlinPluginLayout.standaloneCompilerVersion
 
-    override fun getLibraryVersions(
-        module: Module,
-        platformKind: IdePlatformKind,
-        rootModel: ModuleRootModel?
-    ): Collection<IdeKotlinVersion> = getLibraryVersionsSequence(module, platformKind, rootModel).toList()
-
     override fun getLibraryVersionsSequence(
         module: Module,
         platformKind: IdePlatformKind,

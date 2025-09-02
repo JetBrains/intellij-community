@@ -1,11 +1,14 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight;
 
-import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
+import com.intellij.codeInsight.intention.AddAnnotationModCommandAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.i18n.I18nInspection;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommandExecutor;
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JavaModuleExternalPaths;
@@ -13,7 +16,6 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -67,10 +69,13 @@ public class ExternalAnnotationsTest extends UsefulTestCase {
   }
 
   public void testAddedAnnotationInCodeWhenAlreadyPresent() {
-    PsiFile file = myFixture.configureByFile("src/withAnnotation/Foo.java");
+    myFixture.configureByFile("src/withAnnotation/Foo.java");
     PsiMethod method = PsiTreeUtil.getParentOfType(myFixture.getElementAtCaret(), PsiMethod.class, false);
     assertNotNull(method);
-    AddAnnotationPsiFix.createAddNullableFix(method).invoke(myFixture.getProject(), file, method, method);
+    ActionContext context = myFixture.getActionContext();
+    ModCommandExecutor.executeInteractively(
+      context, "", myFixture.getEditor(),
+      () -> AddAnnotationModCommandAction.createAddNullableFix(method).perform(context));
     myFixture.checkResultByFile("src/withAnnotation/Foo_after.java");
   }
 
@@ -114,6 +119,7 @@ public class ExternalAnnotationsTest extends UsefulTestCase {
     assertNotNull(action);
 
     myFixture.launchAction(action);
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
 
     myFixture.checkResultByFile("src/fromSrc/Foo_after.java");
     myFixture.checkResultByFile("content/anno/fromSrc/annotations.xml",

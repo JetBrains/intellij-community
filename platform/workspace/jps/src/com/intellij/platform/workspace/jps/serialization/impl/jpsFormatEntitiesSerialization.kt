@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.jps.serialization.impl
 
 import com.intellij.openapi.components.ExpandMacroToPathMap
@@ -24,6 +24,7 @@ import org.jetbrains.annotations.TestOnly
  */
 interface JpsFileContentReader {
   fun loadComponent(fileUrl: String, componentName: String, customModuleFilePath: String? = null): Element?
+
   fun getExpandMacroMap(fileUrl: String): ExpandMacroToPathMap
 }
 
@@ -34,7 +35,7 @@ interface JpsFileContentWriter {
 
   /**
    * In contrast to `saveComponent` (which accumulates changes), this method rewrites file content as a whole at one shot.
-   * (i.e. two subsequent invocations of `saveFile` will rewrite each other's work, instead of complementing it)
+   * (i.e., two subsequent invocations of `saveFile` will rewrite each other's work, instead of complementing it)
    */
   fun saveFile(fileUrl: String, writer: (WritableJpsFileContent) -> Unit) {
     writer(object : WritableJpsFileContent {

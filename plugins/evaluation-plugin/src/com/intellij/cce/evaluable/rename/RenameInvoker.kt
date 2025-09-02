@@ -25,18 +25,17 @@ import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.actions.RenameElementAction
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring
-import java.util.*
 
 class RenameInvoker(private val project: Project,
                     private val language: Language,
                     private val strategy: RenameStrategy) : FeatureInvoker {
 
-  override fun callFeature(expectedText: String, offset: Int, properties: TokenProperties): Session = readActionInSmartMode(project) {
+  override fun callFeature(expectedText: String, offset: Int, properties: TokenProperties, sessionId: String): Session = readActionInSmartMode(project) {
     val openedEditor = getEditor(project) ?: throw IllegalStateException("No open editor")
 
     LOG.info("Call rename. Expected text: $expectedText. ${positionToString(openedEditor)}")
     val lookup = getSuggestions(expectedText, openedEditor)
-    return@readActionInSmartMode createSession(offset, expectedText, properties, lookup)
+    return@readActionInSmartMode createSession(offset, expectedText, properties, lookup, sessionId)
   }
 
   override fun comparator(generated: String, expected: String, ): Boolean {
@@ -104,9 +103,8 @@ class RenameInvoker(private val project: Project,
     }
   }
 
-  private fun createSession(position: Int, expectedText: String, nodeProperties: TokenProperties, lookup: Lookup): Session {
-    val sessionUuid = UUID.randomUUID().toString()
-    val session = Session(position, expectedText, expectedText.length, nodeProperties, sessionUuid)
+  private fun createSession(position: Int, expectedText: String, nodeProperties: TokenProperties, lookup: Lookup, sessionId: String): Session {
+    val session = Session(position, expectedText, expectedText.length, nodeProperties, sessionId)
     session.addLookup(lookup)
     return session
   }

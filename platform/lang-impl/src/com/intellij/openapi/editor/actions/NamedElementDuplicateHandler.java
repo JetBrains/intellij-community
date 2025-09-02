@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
@@ -29,6 +29,14 @@ public final class NamedElementDuplicateHandler extends EditorWriteActionHandler
   @Override
   protected boolean isEnabledForCaret(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
     return myOriginal.isEnabled(editor, caret, dataContext);
+  }
+
+  @Override
+  public boolean reverseCaretOrder() {
+    if (myOriginal instanceof EditorWriteActionHandler handler) {
+      return handler.reverseCaretOrder();
+    }
+    return false;
   }
 
   @Override
@@ -63,8 +71,8 @@ public final class NamedElementDuplicateHandler extends EditorWriteActionHandler
       if (range == null || psi instanceof PsiFile || !toDuplicate.contains(psi.getTextRange())) {
         break;
       }
-      if (psi instanceof PsiNameIdentifierOwner) {
-        named = ((PsiNameIdentifierOwner)psi).getNameIdentifier();
+      if (psi instanceof PsiNameIdentifierOwner owner) {
+        named = owner.getNameIdentifier();
       }
       psi = psi.getParent();
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 
 package org.jetbrains.intellij.build.kotlin
@@ -9,8 +9,12 @@ import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.ProductProperties
 import org.jetbrains.intellij.build.createBuildTasks
-import org.jetbrains.intellij.build.impl.*
+import org.jetbrains.intellij.build.impl.BuildContextImpl
 import org.jetbrains.intellij.build.impl.BuildUtils.checkedReplace
+import org.jetbrains.intellij.build.impl.PluginLayout
+import org.jetbrains.intellij.build.impl.PluginVersionEvaluator
+import org.jetbrains.intellij.build.impl.PluginVersionEvaluatorResult
+import org.jetbrains.intellij.build.impl.consumeDataByPrefix
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import java.nio.file.Path
 
@@ -19,7 +23,7 @@ object KotlinPluginBuilder {
    * Module which contains META-INF/plugin.xml
    */
   const val MAIN_KOTLIN_PLUGIN_MODULE: String = "kotlin.plugin"
-  const val MAIN_FRONTEND_MODULE_NAME: String = "kotlin.frontend"
+  const val MAIN_FRONTEND_MODULE_NAME: String = "kotlin.frontend.split"
 
   val MODULES: List<String> = java.util.List.of(
     "kotlin.plugin.common",
@@ -36,6 +40,8 @@ object KotlinPluginBuilder {
     "kotlin.base.project-structure",
     "kotlin.base.external-build-system",
     "kotlin.base.scripting",
+    "kotlin.base.scripting.k1",
+    "kotlin.base.scripting.k2",
     "kotlin.base.analysis-api-platform",
     "kotlin.base.analysis",
     "kotlin.base.code-insight",
@@ -55,7 +61,9 @@ object KotlinPluginBuilder {
     "kotlin.ide",
     "kotlin.idea",
     "kotlin.fir.frontend-independent",
-    "kotlin.jvm",
+    "kotlin.jvm.shared",
+    "kotlin.jvm.k2",
+    "kotlin.jvm.k1",
     "kotlin.compiler-reference-index",
     "kotlin.compiler-plugins.parcelize.common",
     "kotlin.compiler-plugins.parcelize.k1",
@@ -99,6 +107,9 @@ Android Studio: workaround for b/218317110 */
     "kotlin.gradle.gradle-java",
     "kotlin.gradle.gradle-java.k1",
     "kotlin.gradle.gradle-java.k2",
+    "kotlin.gradle.scripting.k1",
+    "kotlin.gradle.scripting.k2",
+    "kotlin.gradle.scripting.shared",
     "kotlin.gradle.code-insight-groovy",
     "kotlin.gradle.code-insight-toml",
     "kotlin.native",
@@ -228,6 +239,7 @@ Android Studio: workaround for b/218317110 */
     "kotlinc.kotlin-compiler-fir",
     "kotlinc.low-level-api-fir",
     "kotlinc.symbol-light-classes",
+    "kotlin-metadata",
   ) + KOTLIN_SCRIPTING_LIBRARIES
 
   private val GRADLE_TOOLING_MODULES = java.util.List.of(
@@ -242,7 +254,6 @@ Android Studio: workaround for b/218317110 */
   )
 
   private val COMPILER_PLUGINS = java.util.List.of(
-    "kotlinc.android-extensions-compiler-plugin",
     "kotlinc.allopen-compiler-plugin",
     "kotlinc.noarg-compiler-plugin",
     "kotlinc.sam-with-receiver-compiler-plugin",
@@ -253,6 +264,7 @@ Android Studio: workaround for b/218317110 */
     "kotlinc.lombok-compiler-plugin",
     "kotlinc.compose-compiler-plugin",
     "kotlinc.js-plain-objects-compiler-plugin",
+    "kotlinc.kotlin-dataframe-compiler-plugin",
   )
 
   fun kotlinPlugin(ultimateSources: KotlinUltimateSources, addition: ((PluginLayout.PluginLayoutSpec) -> Unit)? = null): PluginLayout {
@@ -288,7 +300,7 @@ Android Studio: workaround for b/218317110 */
       }
 
       for (library in COMPILER_PLUGINS) {
-        spec.withProjectLibrary(library, LibraryPackMode.STANDALONE_MERGED)
+        spec.withProjectLibrary(library)
       }
 
       if (ultimateSources == KotlinUltimateSources.WITH_ULTIMATE_MODULES) {
@@ -419,21 +431,18 @@ Android Studio: workaround for b/218317110 */
   fun kotlinFrontendPlugin(): PluginLayout {
     return PluginLayout.plugin(MAIN_FRONTEND_MODULE_NAME) { spec ->
       spec.withModules(MODULES_SHARED_WITH_CLIENT)
-      spec.withProjectLibrary("kotlinc.kotlin-compiler-common", LibraryPackMode.STANDALONE_MERGED)
+      spec.withProjectLibrary("kotlinc.kotlin-compiler-common")
     }
   }
 
   fun kotlinScriptingPlugin(addition: ((PluginLayout.PluginLayoutSpec) -> Unit)? = null): PluginLayout {
     val mainModuleName = "kotlin.scripting-plugin"
-    return PluginLayout.plugin(mainModuleName) { spec ->
+    return PluginLayout.pluginAutoWithCustomDirName(mainModuleName) { spec ->
       spec.directoryName = "KotlinScripting"
       spec.mainJarName = "kotlin-scripting-plugin.jar"
 
       spec.withModule("kotlin.jsr223")
 
-      for (libraryName in KOTLIN_SCRIPTING_LIBRARIES) {
-        spec.withProjectLibraryUnpackedIntoJar(libraryName, spec.mainJarName)
-      }
       withKotlincKotlinCompilerCommonLibrary(spec, mainModuleName)
       spec.withProjectLibrary("kotlinc.kotlin-compiler-fe10")
       withKotlincInPluginDirectory(spec = spec)
@@ -447,7 +456,7 @@ Android Studio: workaround for b/218317110 */
 
 private fun withKotlincKotlinCompilerCommonLibrary(spec: PluginLayout.PluginLayoutSpec, mainPluginModule: String) {
   val kotlincKotlinCompilerCommon = "kotlinc.kotlin-compiler-common"
-  spec.withProjectLibrary(kotlincKotlinCompilerCommon, LibraryPackMode.STANDALONE_MERGED)
+  spec.withProjectLibrary(kotlincKotlinCompilerCommon)
 
   spec.withPatch { patcher, context ->
     val library = context.project.libraryCollection.findLibrary(kotlincKotlinCompilerCommon)!!

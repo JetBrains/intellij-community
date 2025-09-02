@@ -8,9 +8,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.ui.components.ActionLink
 import git4idea.remote.hosting.ui.RepositoryAndAccountSelectorComponentFactory
 import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.AuthorizationType
 import org.jetbrains.plugins.github.authentication.GHAccountsUtil
+import org.jetbrains.plugins.github.authentication.GHLoginSource
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.ui.GHAccountsDetailsProvider
 import org.jetbrains.plugins.github.i18n.GithubBundle
@@ -21,13 +23,17 @@ import javax.swing.AbstractAction
 import javax.swing.JButton
 import javax.swing.JComponent
 
-class GHRepositoryAndAccountSelectorComponentFactory internal constructor(private val project: Project,
-                                                                          private val vm: GHRepositoryAndAccountSelectorViewModel,
-                                                                          private val accountManager: GHAccountManager) {
+@ApiStatus.Internal
+class GHRepositoryAndAccountSelectorComponentFactory(
+  private val project: Project,
+  private val vm: GHRepositoryAndAccountSelectorViewModel,
+  private val accountManager: GHAccountManager,
+  private val loginSource: GHLoginSource
+) {
 
   fun create(scope: CoroutineScope): JComponent {
     val accountDetailsProvider = GHAccountsDetailsProvider(scope, accountManager)
-    val errorPresenter = GHSelectorErrorStatusPresenter(project) {
+    val errorPresenter = GHSelectorErrorStatusPresenter(project, loginSource) {
       vm.submitSelection()
     }
 
@@ -113,13 +119,14 @@ class GHRepositoryAndAccountSelectorComponentFactory internal constructor(privat
       return GHAccountsUtil.requestNewAccount(GithubServerPath.DEFAULT_SERVER,
                                               null,
                                               project,
-                                              authType = authType
+                                              authType = authType,
+                                              loginSource = loginSource
       )?.account?.also {
         vm.accountSelectionState.value = it
       } != null
     }
     else if (vm.missingCredentialsState.value == true) {
-      return GHAccountsUtil.requestReLogin(account, project, authType = authType) != null
+      return GHAccountsUtil.requestReLogin(account, project, authType = authType, loginSource = loginSource) != null
     }
     return false
   }
@@ -128,12 +135,12 @@ class GHRepositoryAndAccountSelectorComponentFactory internal constructor(privat
     val server = repo.repository.serverPath
     val account = vm.accountSelectionState.value
     if (account == null || forceNew) {
-      return GHAccountsUtil.requestNewAccount(server, login = null, project = project)?.also {
+      return GHAccountsUtil.requestNewAccount(server, login = null, project = project, loginSource = loginSource)?.also {
         vm.accountSelectionState.value = it.account
       } != null
     }
     else if (vm.missingCredentialsState.value == true) {
-      return GHAccountsUtil.requestReLogin(account, project, authType = AuthorizationType.TOKEN) != null
+      return GHAccountsUtil.requestReLogin(account, project, authType = AuthorizationType.TOKEN, loginSource = loginSource) != null
     }
     return false
   }

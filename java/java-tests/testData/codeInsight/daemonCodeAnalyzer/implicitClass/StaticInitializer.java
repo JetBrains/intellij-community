@@ -1,4 +1,4 @@
-<error descr="Initializers are not allowed in implicitly declared classes" textAttributesKey="ERRORS_ATTRIBUTES">static {
+<error descr="Initializers are not allowed in compact source files" textAttributesKey="ERRORS_ATTRIBUTES">static {
 
 }</error>
 

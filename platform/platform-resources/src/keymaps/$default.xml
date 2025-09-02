@@ -1073,6 +1073,9 @@
   <action id="Vcs.ShowMessageHistory">
     <keyboard-shortcut first-keystroke="control M"/>
   </action>
+  <action id="ChangesView.ShowCommitOptions">
+    <keyboard-shortcut first-keystroke="control O"/>
+  </action>
   <action id="CodeInspection.OnEditor">
     <keyboard-shortcut first-keystroke="alt shift I"/>
   </action>
@@ -1105,9 +1108,6 @@
 
   <action id="PopupHector">
     <keyboard-shortcut first-keystroke="ctrl alt shift H"/>
-  </action>
-  <action id="MaintenanceAction">
-    <keyboard-shortcut first-keystroke="ctrl alt shift SLASH"/>
   </action>
   <action id="Switcher">
     <keyboard-shortcut first-keystroke="ctrl TAB"/>

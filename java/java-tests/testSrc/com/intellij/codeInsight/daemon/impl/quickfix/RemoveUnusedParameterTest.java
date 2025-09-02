@@ -3,9 +3,15 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
+import com.intellij.pom.java.LanguageLevel;
 
 
 public class RemoveUnusedParameterTest extends LightQuickFixParameterizedTestCase {
+
+  @Override
+  protected LanguageLevel getLanguageLevel() {
+    return LanguageLevel.JDK_24;
+  }
 
   @Override
   protected void setUp() throws Exception {

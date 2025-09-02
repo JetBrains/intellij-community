@@ -35,10 +35,10 @@ class MavenFolderResolver(private val project: Project) {
     resolveFolders(projects, progressReporter)
 
     //actually a fix for https://youtrack.jetbrains.com/issue/IDEA-286455 to be rewritten, see IDEA-294209
-    MavenUtil.restartMavenConnectors(project, false) { c: MavenServerConnector ->
+    MavenUtil.shutdownMavenConnectors(project) { c: MavenServerConnector ->
       val sdk = c.jdk
-      val version = sdk.versionString ?: return@restartMavenConnectors false
-      if (JavaVersion.parse(version).isAtLeast(17)) return@restartMavenConnectors true
+      val version = sdk.versionString ?: return@shutdownMavenConnectors false
+      if (JavaVersion.parse(version).isAtLeast(17)) return@shutdownMavenConnectors true
       false
     }
 

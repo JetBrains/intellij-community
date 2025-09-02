@@ -20,7 +20,7 @@ class BlockingContextTest : CancellationTest() {
     val job = coroutineContext.job
     assertEquals(job, Cancellation.currentJob())
     blockingContext {
-      assertCurrentJobIsChildOf(job)
+      assertEquals(job, Cancellation.currentJob())
     }
     assertEquals(job, Cancellation.currentJob())
   }

@@ -62,6 +62,7 @@ f:com.intellij.psi.impl.cache.impl.id.IdDataConsumer
 com.intellij.psi.impl.cache.impl.id.IdIndexer
 - com.intellij.util.indexing.DataIndexer
 - getVersion():I
+- a:map(com.intellij.util.indexing.FileContent):java.util.Map
 f:com.intellij.psi.impl.cache.impl.id.IdTableBuilding
 - s:createCustomFileTypeScanner(com.intellij.ide.highlighter.custom.SyntaxTable):com.intellij.lang.cacheBuilder.WordsScanner
 - s:createDefaultIndexer(com.intellij.lang.cacheBuilder.WordsScanner):com.intellij.psi.impl.cache.impl.id.IdIndexer

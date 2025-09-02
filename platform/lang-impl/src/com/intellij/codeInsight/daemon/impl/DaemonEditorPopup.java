@@ -42,8 +42,8 @@ public final class DaemonEditorPopup extends PopupHandler {
   @Override
   public void invokePopup(Component comp, int x, int y) {
     if (ApplicationManager.getApplication() == null) return;
-    PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
-    if (file == null) return;
+    PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
+    if (psiFile == null) return;
 
     ActionManager actionManager = ActionManager.getInstance();
     DefaultActionGroup actionGroup = new DefaultActionGroup();
@@ -85,7 +85,7 @@ public final class DaemonEditorPopup extends PopupHandler {
       });
     }
     ActionPopupMenu editorPopup = actionManager.createActionPopupMenu(ActionPlaces.RIGHT_EDITOR_GUTTER_POPUP, actionGroup);
-    if (DaemonCodeAnalyzer.getInstance(myProject).isHighlightingAvailable(file)) {
+    if (DaemonCodeAnalyzer.getInstance(myProject).isHighlightingAvailable(psiFile)) {
       UIEventLogger.DaemonEditorPopupInvoked.log(myProject);
       editorPopup.getComponent().show(comp, x, y);
     }

@@ -1,10 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions.smartEnter;
 
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.impl.source.BasicJavaAstTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +34,7 @@ public class MissingIfBranchesFixer implements Fixer {
                             @NotNull ASTNode beforeBranch,
                             @Nullable ASTNode branch) {
     if (BasicJavaAstTreeUtil.is(branch, BASIC_BLOCK_STATEMENT) ||
-        PsiKeyword.ELSE.equals(beforeBranch.getText()) && BasicJavaAstTreeUtil.is(branch, BASIC_IF_STATEMENT)) {
+        JavaKeywords.ELSE.equals(beforeBranch.getText()) && BasicJavaAstTreeUtil.is(branch, BASIC_IF_STATEMENT)) {
       return;
     }
     boolean transformingOneLiner = branch != null && (startLine(doc, beforeBranch) == startLine(doc, branch) ||

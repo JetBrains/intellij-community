@@ -35,13 +35,13 @@ object TestKotlinArtifacts {
     }
 
     private fun getJar(artifactId: String): File =
-        downloadOrReportUnavailability(artifactId, kotlinCLibrariesVersion)
+        downloadKotlinArtifactOrReportUnavailability(artifactId, kotlinCLibrariesVersion)
 
     private fun getKlib(artifactId: String): File =
-        downloadOrReportUnavailability(artifactId, kotlinCLibrariesVersion, suffix = ".klib")
+        downloadKotlinArtifactOrReportUnavailability(artifactId, kotlinCLibrariesVersion, suffix = ".klib")
 
     private fun getSourcesJar(artifactId: String, extraSuffix: String = ""): File {
-        return downloadOrReportUnavailability(artifactId, kotlinCLibrariesVersion, suffix = "$extraSuffix-sources.jar")
+        return downloadKotlinArtifactOrReportUnavailability(artifactId, kotlinCLibrariesVersion, suffix = "$extraSuffix-sources.jar")
             .copyTo(                                       // Some tests hardcode jar names in their test data
                 File(PathManager.getCommunityHomePath())   // (KotlinReferenceTypeHintsProviderTestGenerated).
                     .resolve("out")                        // That's why we need to strip version from the jar name
@@ -51,7 +51,6 @@ object TestKotlinArtifacts {
             )
     }
 
-    @JvmStatic val androidExtensionsRuntime: File by lazy { getJar("android-extensions-compiler-plugin-for-ide") }
     @JvmStatic val kotlinAnnotationsJvm: File by lazy { getJar("kotlin-annotations-jvm") }
     @JvmStatic val kotlinCompiler: File by lazy { getJar("kotlin-compiler") }
     @JvmStatic val kotlinDaemon: File by lazy { getJar("kotlin-daemon") }
@@ -77,7 +76,7 @@ object TestKotlinArtifacts {
             val archiveFile = baseDir.resolve(artefactName)
             val archiveFilePath = archiveFile.toPath()
             archiveFile.deleteRecursively()
-            val stdlibAllJar = downloadOrReportUnavailability("kotlin-stdlib", kotlinCLibrariesVersion, suffix = "-all.jar")
+            val stdlibAllJar = downloadKotlinArtifactOrReportUnavailability("kotlin-stdlib", kotlinCLibrariesVersion, suffix = "-all.jar")
             stdlibAllJar.toPath().unzipTo(archiveFilePath)
 
             val unpackedCommonMain = archiveFilePath.resolve("commonMain").toFile()
@@ -93,11 +92,15 @@ object TestKotlinArtifacts {
     @JvmStatic val kotlinStdlibJdk8Sources: File by lazy { getSourcesJar("kotlin-stdlib-jdk8") }
     @JvmStatic val kotlinStdlibJs: File by lazy { getKlib("kotlin-stdlib-js") }
     // The latest published kotlin-stdlib-js with both .knm and .kjsm roots
-    @JvmStatic val kotlinStdlibJsLegacyJar: File by lazy { downloadOrReportUnavailability("kotlin-stdlib-js", "1.9.22") }
+    @JvmStatic val kotlinStdlibJsLegacyJar: File by lazy { downloadKotlinArtifactOrReportUnavailability("kotlin-stdlib-js", "1.9.22") }
     @JvmStatic val kotlinDomApiCompat: File by lazy { getKlib("kotlin-dom-api-compat") }
     @JvmStatic val kotlinStdlibWasmJs: File by lazy { getKlib("kotlin-stdlib-wasm-js") }
     @JvmStatic val kotlinStdlibWasmWasi: File by lazy { getKlib("kotlin-stdlib-wasm-wasi") }
     @JvmStatic val kotlinStdlibSources: File by lazy { getSourcesJar("kotlin-stdlib") }
+    @JvmStatic val kotlinStdlibLegacy1922: File by lazy { downloadKotlinArtifactOrReportUnavailability("kotlin-stdlib", "1.9.22") }
+    // In 1.x, `kotlin-stdlib-common` still contained `.kotlin_metadata` files. 2.x versions of the library contain `.knm` files, since it's
+    // now a klib.
+    @JvmStatic val kotlinStdlibCommonLegacy1922: File by lazy { downloadKotlinArtifactOrReportUnavailability("kotlin-stdlib-common", "1.9.22") }
     @JvmStatic val kotlinTest: File by lazy { getJar("kotlin-test") }
     @JvmStatic val kotlinTestJs: File by lazy { getKlib("kotlin-test-js") }
     @JvmStatic val kotlinTestJunit: File by lazy { getJar("kotlin-test-junit") }
@@ -108,7 +111,7 @@ object TestKotlinArtifacts {
     }
     @JvmStatic val jetbrainsAnnotations: File by lazy { getLibraryFile("org.jetbrains", "annotations", "jetbrains_annotations.xml") }
     @JvmStatic val jsr305: File by lazy { getLibraryFile("com.google.code.findbugs", "jsr305", "jsr305.xml") }
-    @JvmStatic val junit3: File by lazy { getLibraryFile("junit", "junit", "JUnit3.xml") }
+    @JvmStatic val junit3: File by lazy { KotlinArtifactsDownloader.downloadMavenArtifact("junit","junit", "3.8.2") ?: error("cannot download junit3") }
     @JvmStatic val kotlinxCoroutines: File by lazy {
         PathManager.getJarForClass(TestKotlinArtifacts::class.java.classLoader.loadClass("kotlinx.coroutines.CoroutineScope"))!!.toFile()
     }
@@ -147,7 +150,7 @@ object TestKotlinArtifacts {
 
     @JvmStatic
     val jsIrRuntimeDir: File by lazy {
-        downloadOrReportUnavailability(
+        downloadKotlinArtifactOrReportUnavailability(
             "js-ir-runtime-for-ide",
             KotlinMavenUtils.findLibraryVersion("kotlinc_kotlin_jps_plugin_tests.xml"),
             suffix = ".klib"
@@ -160,7 +163,7 @@ object TestKotlinArtifacts {
     }
 
     private fun downloadAndUnpack(libraryFileName: String, artifactId: String, dirName: String): File {
-        val jar = downloadOrReportUnavailability(artifactId, KotlinMavenUtils.findLibraryVersion(libraryFileName))
+        val jar = downloadKotlinArtifactOrReportUnavailability(artifactId, KotlinMavenUtils.findLibraryVersion(libraryFileName))
         return LazyZipUnpacker(File(PathManager.getCommunityHomePath()).resolve("out").resolve(dirName)).lazyUnpack(jar)
     }
 
@@ -225,7 +228,7 @@ object TestKotlinArtifacts {
  * See [org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider.setUpWithKotlinPlugin] where we unwrap the exception if it happens during class initialization
  */
 @JvmOverloads
-fun downloadOrReportUnavailability(artifactId: String, version: String, suffix: String = ".jar"): File =
+fun downloadKotlinArtifactOrReportUnavailability(artifactId: String, version: String, suffix: String = ".jar"): File =
     KotlinArtifactsDownloader.downloadArtifactForIdeFromSources(artifactId, version, suffix)
         ?: ExternalResourcesChecker.reportUnavailability<Nothing>(
             KotlinArtifactsDownloader::downloadArtifactForIdeFromSources.name + ": $artifactId-$version$suffix",

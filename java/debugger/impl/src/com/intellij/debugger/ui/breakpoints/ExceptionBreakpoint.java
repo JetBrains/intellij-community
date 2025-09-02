@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Class ExceptionBreakpoint
@@ -85,7 +85,17 @@ public class ExceptionBreakpoint extends Breakpoint<JavaExceptionBreakpointPrope
 
   @Override
   public PsiClass getPsiClass() {
-    return ReadAction.compute(() -> getQualifiedName() != null ? DebuggerUtils.findClass(getQualifiedName(), myProject, GlobalSearchScope.allScope(myProject)) : null);
+    return ReadAction.compute(() -> {
+      if (myProject.isDisposed()) {
+        return null;
+      }
+
+      String qualifiedName = getQualifiedName();
+      if (qualifiedName == null) {
+        return null;
+      }
+      return DebuggerUtils.findClass(qualifiedName, myProject, GlobalSearchScope.allScope(myProject));
+    });
   }
 
   @Override

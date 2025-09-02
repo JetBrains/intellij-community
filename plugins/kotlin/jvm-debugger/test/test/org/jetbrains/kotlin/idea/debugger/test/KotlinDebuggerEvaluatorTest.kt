@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.debugger.test
 
 import com.intellij.debugger.ui.JVMDebuggerEvaluatorTest
+import com.intellij.idea.TestFor
 
 /**
  * See also [AbstractSelectExpressionForDebuggerTest].
@@ -69,6 +70,13 @@ class KotlinDebuggerEvaluatorTest : JVMDebuggerEvaluatorTest() {
     fun testFields() {
         doTestRange("class Abc { int aa; void foo() { Abc ins = new Abc(); i<caret>ns.aa;}}", expressionWithoutSideEffects("ins"))
         doTestRange("class Abc { int aa; void foo() { Abc ins = new Abc(); ins.a<caret>a;}}", expressionWithoutSideEffects("ins.aa"))
+    }
+
+    fun testContextParameters() {
+        doTestRange("context(c<caret>tx: String) fun f1(arg: String): String = ctx + arg",
+                    expressionWithoutSideEffects("ctx"))
+        doTestRange("context(ctx: String) fun f1(arg: String): String = c<caret>tx + arg",
+                    expressionWithoutSideEffects("ctx"))
     }
 
     fun testMethods() {
@@ -139,6 +147,16 @@ class KotlinDebuggerEvaluatorTest : JVMDebuggerEvaluatorTest() {
 
     fun testTextBlock() {
         doTestRangeExpression("val a = \"\"\"\nx<caret>xx\n\"\"\"", expressionWithSideEffects("\"\"\"\nxxx\n\"\"\""))
+    }
+
+    @TestFor(issues = ["IDEA-368508"])
+    fun testLabels() {
+        doTestRangeExpression("run la<caret>bel@{ return@label }", noExpressions())
+        doTestRangeExpression("run label<caret>@{ return@label }", noExpressions())
+        doTestRangeExpression("run label@<caret>{ return@label }", noExpressions())
+        doTestRangeExpression("run label@{ return<caret>@label }", noExpressions())
+        doTestRangeExpression("run label@{ return@<caret>label }", noExpressions())
+        doTestRangeExpression("run label@{ return@la<caret>bel }", noExpressions())
     }
 
     //////////// Utility methods

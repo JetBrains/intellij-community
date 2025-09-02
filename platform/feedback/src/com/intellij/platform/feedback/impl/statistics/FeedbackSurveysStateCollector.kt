@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.feedback.impl.statistics
 
 import com.intellij.internal.statistic.beans.MetricEvent
@@ -7,8 +7,7 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
 import com.intellij.platform.feedback.impl.state.CommonFeedbackSurveyService
 
-class FeedbackSurveysStateCollector : ApplicationUsagesCollector() {
-
+private class FeedbackSurveysStateCollector : ApplicationUsagesCollector() {
   private val GROUP = EventLogGroup("feedback.surveys.state", 1)
   private val NUMBER_FEEDBACK_SURVEY_SHOWS = GROUP.registerEvent(
     "number.of.notifications.shown",
@@ -32,8 +31,8 @@ class FeedbackSurveysStateCollector : ApplicationUsagesCollector() {
 
   override fun getGroup(): EventLogGroup = GROUP
 
-  override fun getMetrics(): Set<MetricEvent> {
-    val result: MutableSet<MetricEvent> = mutableSetOf()
+  override suspend fun getMetricsAsync(): Set<MetricEvent> {
+    val result = mutableSetOf<MetricEvent>()
 
     for (it in CommonFeedbackSurveyService.getNumberShowsForAllSurveys().entries) {
       result.add(NUMBER_FEEDBACK_SURVEY_SHOWS.metric(it.key, it.value))

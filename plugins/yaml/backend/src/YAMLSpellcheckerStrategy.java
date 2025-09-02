@@ -20,7 +20,11 @@ import org.jetbrains.yaml.psi.YAMLKeyValue;
 import org.jetbrains.yaml.psi.YAMLQuotedText;
 import org.jetbrains.yaml.psi.YAMLScalar;
 
+import java.util.regex.Pattern;
+
 final class YAMLSpellcheckerStrategy extends SpellcheckingStrategy implements DumbAware {
+
+  private static final Pattern CODE_LIKE_PATTERN = Pattern.compile("[\"']?" + CODE_IDENTIFIER_LIKE + "[\"']?");
 
   private final Tokenizer<YAMLQuotedText> myQuotedTextTokenizer = new Tokenizer<>() {
     @Override
@@ -66,6 +70,11 @@ final class YAMLSpellcheckerStrategy extends SpellcheckingStrategy implements Du
       }
     }
     return super.getTokenizer(element);
+  }
+
+  @Override
+  protected boolean isLiteral(@NotNull PsiElement element) {
+    return super.isLiteral(element) || !super.isComment(element) && !CODE_LIKE_PATTERN.matcher(element.getText()).matches();
   }
 
   private static class JsonSchemaSpellcheckerClientForYaml extends JsonSchemaSpellcheckerClient {

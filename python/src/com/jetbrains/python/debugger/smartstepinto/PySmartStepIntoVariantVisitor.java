@@ -18,8 +18,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static com.jetbrains.python.PyNames.BUILTINS_MODULES;
+
 public class PySmartStepIntoVariantVisitor extends PyRecursiveElementVisitor {
-  private static final @NotNull @NonNls ImmutableSet<String> BUILTINS_MODULES = ImmutableSet.of("builtins.py", "__builtin__.py");
   private static final String RERAISE = "RERAISE";
 
   int myVariantIndex = -1;

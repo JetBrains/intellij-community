@@ -37,7 +37,7 @@ public class ComplexUndoTest extends EditorUndoTestCase {
       fail("Exception expected");
     }
     catch (Exception e) {
-      assertStartsWith("Following files affected by this action have been already changed:", e.getMessage());
+      assertStartsWith("The following files affected by this action have been already changed:", e.getMessage());
     }
   }
 

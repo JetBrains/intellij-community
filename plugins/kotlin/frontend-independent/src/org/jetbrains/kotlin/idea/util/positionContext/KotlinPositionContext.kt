@@ -89,6 +89,7 @@ class KotlinTypeNameReferencePositionContext(
     val typeReference: KtTypeReference?,
 ) : KotlinSimpleNameReferencePositionContext()
 
+
 class KotlinAnnotationTypeNameReferencePositionContext(
     override val position: PsiElement,
     override val reference: KtSimpleNameReference,
@@ -137,7 +138,18 @@ class KotlinExpressionNameReferencePositionContext(
     override val reference: KtSimpleNameReference,
     override val nameExpression: KtSimpleNameExpression,
     override val explicitReceiver: KtExpression?
-) : KotlinSimpleNameReferencePositionContext()
+) : KotlinSimpleNameReferencePositionContext() {
+
+    constructor(
+        nameExpression: KtSimpleNameExpression,
+        explicitReceiver: KtExpression? = null,
+    ) : this(
+        position = nameExpression.getReferencedNameElement(),
+        reference = nameExpression.mainReference,
+        nameExpression = nameExpression,
+        explicitReceiver = explicitReceiver,
+    )
+}
 
 class KotlinInfixCallPositionContext(
     override val position: PsiElement,
@@ -148,10 +160,10 @@ class KotlinInfixCallPositionContext(
 
 /**
  * Represents an operator call - binary or unary, postfix or prefix.
- * 
+ *
  * [nameExpression] does not represent any name in this case - it references
  * an operator reference, like `+`, `+=` or unary `-`.
- * 
+ *
  * [explicitReceiver] points to the main expression in the operator call:
  * - the LHS in the binary call (except for the `contains` operator, where the receiver is on the RHS)
  * - the underlying expression in the unary call
@@ -338,7 +350,7 @@ object KotlinPositionContextDetector {
                     KotlinOperatorCallPositionContext(position, reference, nameExpression, explicitReceiver)
                 }
             }
-            
+
             parent is KtUnaryExpression && parent.operationReference == nameExpression ->
                 KotlinOperatorCallPositionContext(position, reference, nameExpression, explicitReceiver)
 

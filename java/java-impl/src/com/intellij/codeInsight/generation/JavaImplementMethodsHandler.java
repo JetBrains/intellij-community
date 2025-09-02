@@ -32,8 +32,9 @@ public final class JavaImplementMethodsHandler implements ContextAwareActionHand
   }
 
   @Override
-  public void invoke(final @NotNull Project project, final @NotNull Editor editor, final @NotNull PsiFile file) {
-    PsiClass aClass = OverrideImplementUtil.getContextClass(project, editor, file, PsiUtil.isAvailable(JavaFeature.EXTENSION_METHODS, file));
+  public void invoke(final @NotNull Project project, final @NotNull Editor editor, final @NotNull PsiFile psiFile) {
+    PsiClass aClass = OverrideImplementUtil.getContextClass(project, editor, psiFile, PsiUtil.isAvailable(JavaFeature.EXTENSION_METHODS,
+                                                                                                          psiFile));
     if (aClass == null) {
       return;
     }

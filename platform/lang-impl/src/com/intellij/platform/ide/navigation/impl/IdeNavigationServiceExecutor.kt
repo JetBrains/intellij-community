@@ -5,7 +5,6 @@ import com.intellij.ide.projectView.impl.nodes.PsiFileNode
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.components.service
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.navigation.impl.RawNavigationRequest
 import kotlinx.coroutines.Dispatchers
@@ -23,11 +22,9 @@ open class IdeNavigationServiceExecutor {
     }
     else {
       withContext(Dispatchers.EDT) {
-        blockingContext {
-          //readaction is not enough
-          WriteIntentReadAction.run {
-            navigatable.navigate(requestFocus)
-          }
+        //readaction is not enough
+        WriteIntentReadAction.run {
+          navigatable.navigate(requestFocus)
         }
       }
     }

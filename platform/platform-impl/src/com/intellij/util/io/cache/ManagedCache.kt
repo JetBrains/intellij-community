@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io.cache
 
+import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus.Internal
 
 /**
@@ -15,4 +16,5 @@ interface ManagedCache<K, V> {
   suspend fun put(key: K, value: V)
   suspend fun get(key: K): V?
   suspend fun remove(key: K)
+  suspend fun entries(): Flow<Pair<K, V>>
 }

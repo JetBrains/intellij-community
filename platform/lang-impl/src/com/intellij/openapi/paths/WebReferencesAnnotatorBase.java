@@ -56,8 +56,8 @@ public abstract class WebReferencesAnnotatorBase extends ExternalAnnotator<WebRe
   }
 
   @Override
-  public MyInfo[] collectInformation(@NotNull PsiFile file) {
-    final WebReference[] references = collectWebReferences(file);
+  public MyInfo[] collectInformation(@NotNull PsiFile psiFile) {
+    final WebReference[] references = collectWebReferences(psiFile);
     final MyInfo[] infos = new MyInfo[references.length];
 
     for (int i = 0; i < infos.length; i++) {
@@ -96,12 +96,12 @@ public abstract class WebReferencesAnnotatorBase extends ExternalAnnotator<WebRe
   }
 
   @Override
-  public void apply(@NotNull PsiFile file, MyInfo[] infos, @NotNull AnnotationHolder holder) {
+  public void apply(@NotNull PsiFile psiFile, MyInfo[] infos, @NotNull AnnotationHolder holder) {
     if (infos == null || infos.length == 0) {
       return;
     }
 
-    final HighlightDisplayLevel displayLevel = getHighlightDisplayLevel(file);
+    final HighlightDisplayLevel displayLevel = getHighlightDisplayLevel(psiFile);
 
     for (MyInfo info : infos) {
       if (!info.myResult) {

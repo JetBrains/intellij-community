@@ -54,7 +54,7 @@ public abstract class TabLayout {
     return Registry.doubleValue("ide.tabbedPane.dragOutMultiplier");
   }
 
-  public abstract int getDropIndexFor(Point point);
+  public abstract int getDropIndexFor(@NotNull Point point);
 
   public static int getMaxPinnedTabWidth() {
     return JBUI.scale(Registry.intValue("ide.editor.max.pinned.tab.width", 2000));

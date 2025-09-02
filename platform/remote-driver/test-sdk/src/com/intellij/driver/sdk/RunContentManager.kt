@@ -9,6 +9,7 @@ fun Driver.getRunContentManager(project: Project) = service(RunContentManager::c
 @Remote("com.intellij.execution.ui.RunContentManager")
 interface RunContentManager {
   fun getAllDescriptors(): List<RunContentDescriptorRef>
+  fun getSelectedContent(): RunContentDescriptorRef?
 }
 
 @Remote("com.intellij.execution.ui.RunContentDescriptor")
@@ -22,4 +23,5 @@ interface ProcessHandlerRef {
   fun isProcessTerminated(): Boolean
   fun isProcessTerminating(): Boolean
   fun waitFor(millis: Long): Boolean
+  fun destroyProcess()
 }

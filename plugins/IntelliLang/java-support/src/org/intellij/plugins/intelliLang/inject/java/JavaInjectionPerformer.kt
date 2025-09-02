@@ -14,6 +14,7 @@ import com.intellij.util.SmartList
 import org.intellij.plugins.intelliLang.inject.InjectedLanguage
 import org.intellij.plugins.intelliLang.inject.InjectorUtils
 import org.intellij.plugins.intelliLang.inject.InjectorUtils.InjectionInfo
+import org.intellij.plugins.intelliLang.inject.registerSupport
 
 class JavaInjectionPerformer : LanguageInjectionPerformer {
   override fun isPrimary(): Boolean = true
@@ -49,10 +50,10 @@ class JavaInjectionPerformer : LanguageInjectionPerformer {
       infos.add(InjectionInfo(operand, injectionPart, ElementManipulators.getValueTextRange(operand)))
     }
 
-    InjectorUtils.registerInjection(language, containingFile, infos, registrar)
-
-    injection.supportId?.let { InjectorUtils.findInjectionSupport(it) }?.let {
-      InjectorUtils.registerSupport(it, false, context, language)
+    InjectorUtils.registerInjection(language, containingFile, infos, registrar) { registrar ->
+      injection.supportId
+        ?.let { InjectorUtils.findInjectionSupport(it) }
+        ?.let { registrar.registerSupport(it, false) }
     }
     return true
   }

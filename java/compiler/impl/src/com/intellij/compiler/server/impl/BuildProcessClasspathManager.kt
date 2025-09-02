@@ -57,7 +57,7 @@ class BuildProcessClasspathManager(parentDisposable: Disposable) {
       if (rawClasspath != lastRawClasspath) {
         if (LOG.isDebugEnabled) {
           LOG.debug("buildProcessAppClassPath: $appClassPath")
-          LOG.debug("buildProcessPluginClassPath: $appClassPath")
+          LOG.debug("buildProcessPluginClassPath: $pluginClassPath")
         }
 
         lastRawClasspath = rawClasspath

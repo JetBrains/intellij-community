@@ -11,6 +11,7 @@ import com.intellij.util.lang.JavaVersion;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.jps.model.java.JdkVersionDetector;
 
 import java.io.File;
@@ -78,12 +79,12 @@ public class SimpleJavaSdkType extends SdkType implements JavaSdkType {
   }
 
   @Override
-  public @NotNull Collection<String> suggestHomePaths() {
+  public @NotNull @Unmodifiable Collection<String> suggestHomePaths() {
     return suggestHomePaths(null);
   }
 
   @Override
-  public @NotNull Collection<String> suggestHomePaths(@Nullable Project project) {
+  public @NotNull @Unmodifiable Collection<String> suggestHomePaths(@Nullable Project project) {
     //there is no need to search for JDKs if there is JavaSdkImpl registered
     if (!notSimpleJavaSdkTypeIfAlternativeExists().test(this)) {
       return Collections.emptyList();

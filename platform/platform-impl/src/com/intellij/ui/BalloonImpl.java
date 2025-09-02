@@ -634,7 +634,7 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
       ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(AnActionListener.TOPIC, new AnActionListener() {
         @Override
         public void beforeActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event) {
-          if (myHideOnAction && !(action instanceof HintManagerImpl.ActionToIgnore)) {
+          if (myHideOnAction && !HintManagerImpl.isActionToIgnore(action)) {
             hide();
           }
         }

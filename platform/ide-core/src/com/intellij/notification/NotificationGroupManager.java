@@ -3,6 +3,7 @@ package com.intellij.notification;
 
 import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 
@@ -11,7 +12,8 @@ public interface NotificationGroupManager {
 
   boolean isGroupRegistered(@NotNull String groupId);
 
-  @NotNull Collection<NotificationGroup> getRegisteredNotificationGroups();
+  @NotNull @Unmodifiable
+  Collection<NotificationGroup> getRegisteredNotificationGroups();
 
   boolean isRegisteredNotificationId(@NotNull String notificationId);
 

@@ -37,7 +37,8 @@ public final class ProjectNode extends ProjectsGroupNode implements MavenProject
 
   private @NlsContexts.Tooltip String myTooltipCache;
 
-  ProjectNode(MavenProjectsStructure structure, @NotNull MavenProject mavenProject) {
+  @VisibleForTesting
+  public ProjectNode(MavenProjectsStructure structure, @NotNull MavenProject mavenProject) {
     super(structure, null);
     myMavenProject = mavenProject;
 

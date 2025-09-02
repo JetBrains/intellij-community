@@ -5,10 +5,10 @@ import com.intellij.extapi.psi.StubBasedPsiElementBase;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.cache.TypeInfo;
-import com.intellij.psi.impl.java.stubs.JavaClassElementType;
 import com.intellij.psi.impl.java.stubs.PsiClassStub;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.tree.java.IJavaElementType;
 import com.intellij.util.BitUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,7 +36,7 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
   private final short myFlags;
   private String mySourceFileName;
 
-  public PsiClassStubImpl(@NotNull JavaClassElementType type,
+  public PsiClassStubImpl(@NotNull IJavaElementType type,
                           StubElement parent,
                           @Nullable String qualifiedName,
                           @Nullable String name,
@@ -45,7 +45,7 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
     this(type, parent, TypeInfo.fromString(qualifiedName), name, baseRefText, flags);
   }
 
-  public PsiClassStubImpl(@NotNull JavaClassElementType type,
+  public PsiClassStubImpl(@NotNull IJavaElementType  type,
                           StubElement parent,
                           @NotNull TypeInfo typeInfo,
                           @Nullable String name,

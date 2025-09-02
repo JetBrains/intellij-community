@@ -20,6 +20,7 @@ import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyTokenTypes;
@@ -28,7 +29,7 @@ import com.jetbrains.python.psi.PyBinaryExpression;
 import com.jetbrains.python.psi.PyConditionalStatementPart;
 import com.jetbrains.python.psi.PyElementType;
 import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.types.PyNoneType;
+import com.jetbrains.python.psi.types.PyNoneTypeKt;
 import com.jetbrains.python.psi.types.PyUnionType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
@@ -116,7 +117,7 @@ public final class PySimplifyBooleanCheckInspection extends PyInspection {
                                    ? unionType.getMembers()
                                    : null;
 
-      final var isOptional = unionMembers != null && unionMembers.contains(PyNoneType.INSTANCE);
+      final var isOptional = unionMembers != null && ContainerUtil.exists(unionMembers, PyNoneTypeKt::isNoneType);
 
       // if the union is `X | Y | None` or just `X | Y` then it is unsafe to simplify
       if (isOptional && unionMembers.size() > 2 || !isOptional && unionMembers != null) {

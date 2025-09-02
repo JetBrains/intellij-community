@@ -4,9 +4,11 @@ package org.jetbrains.kotlin.nj2k.conversions
 
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.j2k.ConverterContext
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.nj2k.*
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.parsing.KotlinExpressionParsing
+import org.jetbrains.kotlin.psi.KtPsiUtil
 
 /**
  * Analogous to `RemoveUnnecessaryParenthesesIntention`.
@@ -117,7 +119,9 @@ class RemoveUnnecessaryParenthesesConversion(context: ConverterContext) : Recurs
      * Based on `org.jetbrains.kotlin.psi.KtPsiUtil#getPriority`
      */
     private fun getPriority(expression: JKElement): Int {
-        val maxPriority = KotlinExpressionParsing.Precedence.entries.size + 1
+        if (expression is JKSuperExpression) {
+            return KtPsiUtil.MAX_PRIORITY
+        }
 
         if (expression is JKPostfixExpression ||
             expression is JKQualifiedExpression ||
@@ -125,31 +129,30 @@ class RemoveUnnecessaryParenthesesConversion(context: ConverterContext) : Recurs
             expression is JKMethodReferenceExpression ||
             expression is JKArrayAccessExpression
         ) {
-            return maxPriority - 1
+            return KtPsiUtil.MAX_PRIORITY - 1
         }
 
-        if (expression is JKPrefixExpression || expression is JKLabeledExpression) return maxPriority - 2
+        if (expression is JKPrefixExpression || expression is JKLabeledExpression || expression is JKIfElseExpression) {
+            return KtPsiUtil.MAX_PRIORITY - 2
+        }
 
-        if (expression is JKIfElseExpression) return KotlinExpressionParsing.Precedence.ASSIGNMENT.ordinal
+        if (expression is JKBinaryExpression) {
+            val operatorToken = expression.operator.token
+            val operatorElementType = JKOperatorToken.toKtElementType(operatorToken)
 
-        if (expression is JKSuperExpression) return maxPriority
+            val binaryOperation = operatorElementType ?: if (operatorToken is JKKtWordOperatorToken) {
+                // all infix functions (e.g. `shl`, `until`) are JKKtWordOperatorTokens
+                KtTokens.IDENTIFIER
+            } else {
+                null
+            }
 
-        if (expression !is JKBinaryExpression) return maxPriority
-
-        val operatorToken = expression.operator.token
-        val operatorElementType = JKOperatorToken.toKtElementType(operatorToken)
-            // all infix functions (e.g. `shl`, `until`) are JKKtWordOperatorTokens
-            ?: return if (operatorToken is JKKtWordOperatorToken) KotlinExpressionParsing.Precedence.SIMPLE_NAME.ordinal else maxPriority
-
-        for (precedence in KotlinExpressionParsing.Precedence.entries) {
-            if (precedence != KotlinExpressionParsing.Precedence.PREFIX &&
-                precedence != KotlinExpressionParsing.Precedence.POSTFIX &&
-                (precedence.operations.contains(operatorElementType))
-            ) {
-                return maxPriority - precedence.ordinal - 1
+            val binaryOperationPrecedence = KotlinExpressionParsing.TOKEN_TO_BINARY_PRECEDENCE_MAP[binaryOperation];
+            if (binaryOperationPrecedence != null) {
+                return (KtPsiUtil.MAX_PRIORITY - 3) - binaryOperationPrecedence.ordinal;
             }
         }
 
-        return maxPriority
+        return KtPsiUtil.MAX_PRIORITY
     }
 }

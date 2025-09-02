@@ -9,7 +9,7 @@ import com.intellij.pom.tree.events.impl.TreeChangeEventImpl;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
-import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.PsiManagerEx;
 import org.jetbrains.annotations.NotNull;
 
 public final class PsiEventWrapperAspect implements PomModelAspect {
@@ -32,7 +32,7 @@ public final class PsiEventWrapperAspect implements PomModelAspect {
       changeSet.fireEvents();
     }
     else {
-      ((PsiManagerImpl)file.getManager()).afterChange(false);
+      ((PsiManagerEx)file.getManager()).afterChange(false);
     }
   }
 

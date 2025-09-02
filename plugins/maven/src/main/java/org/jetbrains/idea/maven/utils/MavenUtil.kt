@@ -22,7 +22,7 @@ import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkEx
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil
 import com.intellij.openapi.externalSystem.service.execution.InvalidJavaHomeException
 import com.intellij.openapi.externalSystem.service.execution.InvalidSdkException
-import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
+import com.intellij.openapi.externalSystem.service.project.trusted.ExternalSystemTrustedProjectDialog
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.module.Module
@@ -41,6 +41,7 @@ import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.*
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.Registry.Companion.`is`
 import com.intellij.openapi.util.text.StringUtil
@@ -49,10 +50,7 @@ import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.LocalEelApi
 import com.intellij.platform.eel.fs.getPath
-import com.intellij.platform.eel.provider.asNioPath
-import com.intellij.platform.eel.provider.getEelDescriptor
-import com.intellij.platform.eel.provider.localEel
-import com.intellij.platform.eel.provider.upgradeBlocking
+import com.intellij.platform.eel.provider.*
 import com.intellij.platform.eel.provider.utils.fetchLoginShellEnvVariablesBlocking
 import com.intellij.psi.PsiManager
 import com.intellij.serviceContainer.AlreadyDisposedException
@@ -77,15 +75,12 @@ import org.jetbrains.idea.maven.dom.MavenDomUtil
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings
 import org.jetbrains.idea.maven.execution.SyncBundle
 import org.jetbrains.idea.maven.model.MavenConstants
-import org.jetbrains.idea.maven.model.MavenConstants.MODEL_VERSION_4_0_0
+import org.jetbrains.idea.maven.model.MavenConstants.*
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.model.MavenProjectProblem
 import org.jetbrains.idea.maven.project.*
-import org.jetbrains.idea.maven.server.MavenDistributionsCache
-import org.jetbrains.idea.maven.server.MavenServerConnector
-import org.jetbrains.idea.maven.server.MavenServerEmbedder
+import org.jetbrains.idea.maven.server.*
 import org.jetbrains.idea.maven.server.MavenServerManager.Companion.getInstance
-import org.jetbrains.idea.maven.server.MavenServerUtil
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil.readPluginInfo
 import org.jetbrains.idea.maven.utils.MavenEelUtil.resolveLocalRepositoryBlocking
 import org.jetbrains.idea.maven.utils.MavenEelUtil.resolveM2Dir
@@ -114,7 +109,8 @@ import java.util.stream.Stream
 import java.util.zip.CRC32
 import javax.xml.parsers.ParserConfigurationException
 import javax.xml.parsers.SAXParserFactory
-import kotlin.Throws
+import kotlin.io.path.exists
+import kotlin.io.path.isDirectory
 
 object MavenUtil {
   interface MavenTaskHandler {
@@ -137,8 +133,10 @@ object MavenUtil {
 
   @ApiStatus.Experimental
   const val MAVEN_NAME: @NlsSafe String = "Maven"
+
   @JvmField
   val MAVEN_NAME_UPCASE: @NonNls String = MAVEN_NAME.uppercase(Locale.getDefault())
+
   @JvmField
   val SYSTEM_ID: ProjectSystemId = ProjectSystemId(MAVEN_NAME_UPCASE)
   const val MAVEN_NOTIFICATION_GROUP: String = MAVEN_NAME
@@ -149,7 +147,10 @@ object MavenUtil {
   const val BIN_DIR: String = "bin"
   const val CONF_DIR: String = "conf"
   const val M2_CONF_FILE: String = "m2.conf"
+  const val M2_DAEMON_CONF_FILE: String = "mvnd-daemon.conf"
   const val MVN_FILE: String = "mvn"
+  const val MVND_FILE: String = "mvnd"
+  const val MVND_EXE_FILE: String = "mvnd.exe"
   const val REPOSITORY_DIR: String = "repository"
   const val LIB_DIR: String = "lib"
   const val CLIENT_ARTIFACT_SUFFIX: String = "-client"
@@ -501,7 +502,7 @@ object MavenUtil {
       if (sdk != null && sdk.getSdkType() is JavaSdk) {
         val javaSdk = sdk.getSdkType() as JavaSdk
         val version: JavaSdkVersion? = javaSdk.getVersion(sdk)
-        val description = if (version == null) null else version.getDescription()
+        val description = if (version == null) null else version.description
         val shouldSetLangLevel = version != null && version.isAtLeast(JavaSdkVersion.JDK_1_6)
         conditions.setProperty("SHOULD_SET_LANG_LEVEL", shouldSetLangLevel.toString())
         properties.setProperty("COMPILER_LEVEL_SOURCE", description)
@@ -747,7 +748,7 @@ object MavenUtil {
   fun getSystemMavenHomeVariants(project: Project): MutableList<MavenHomeType> {
     val result = ArrayList<MavenHomeType>()
 
-    val eel = project.getEelDescriptor().upgradeBlocking()
+    val eel = project.getEelDescriptor().toEelApiBlocking()
     val envs = eel.exec.fetchLoginShellEnvVariablesBlocking()
 
     val m2home = envs.get(ENV_M2_HOME)
@@ -918,25 +919,51 @@ object MavenUtil {
     return str == null || str.isBlank()
   }
 
+  @JvmStatic
+  fun isValidMavenDaemon(daemonHome: Path?): Boolean {
+    if (daemonHome == null) return false
+    return filesInBin(daemonHome).let {
+      (it.contains(MVND_FILE) || it.contains(MVND_EXE_FILE)) &&
+      (it.contains(M2_DAEMON_CONF_FILE))
+    }
+  }
+
+  @JvmStatic
+  fun extractMvnFromDaemon(daemonHome: Path?): Path? {
+    if (daemonHome == null) return null
+    val mvnDir = daemonHome.resolve("mvn")
+    if (mvnDir.isDirectory() && isValidMavenHome(mvnDir)) return mvnDir
+    //macos brew
+    val libexecMvnDir = daemonHome.resolve("libexec").resolve("mvn")
+    if (libexecMvnDir.isDirectory() && isValidMavenHome(libexecMvnDir)) return libexecMvnDir
+    return null
+  }
+
 
   @JvmStatic
   fun isValidMavenHome(home: Path?): Boolean {
     if (home == null) return false
+    return filesInBin(home).let {
+      it.contains(M2_CONF_FILE) && it.contains(MVN_FILE)
+    }
+  }
+
+  private fun filesInBin(home: Path): Set<String> {
     try {
       val binDir: Path = home.resolve(BIN_DIR)
-      if (!Files.isDirectory(binDir)) return false
+      if (!Files.isDirectory(binDir)) return emptySet()
 
       Files.newDirectoryStream(binDir).use { stream ->
-        val set: MutableSet<String?> = HashSet<String?>()
+        val set = HashSet<String>()
         for (entry in stream) {
-          set.add(entry.getFileName().toString())
+          set.add(entry.fileName.toString())
         }
-        return set.contains(M2_CONF_FILE) && set.contains(MVN_FILE)
+        return set
       }
     }
     catch (ignored: Exception) {
     }
-    return false
+    return emptySet()
   }
 
   @Deprecated("")
@@ -961,7 +988,9 @@ object MavenUtil {
   fun getMavenHomePath(mavenHome: StaticResolvedMavenHomeType): Path? {
     if (mavenHome is MavenInSpecificPath) {
       val file = Path.of(mavenHome.mavenHome)
-      return if (isValidMavenHome(file)) file else null
+      if (isValidMavenHome(file)) return file
+      if (isValidMavenDaemon(file)) return extractMvnFromDaemon(file)
+      return null
     }
     for (e in MavenVersionAwareSupportExtension.MAVEN_VERSION_SUPPORT.extensionList) {
       val file = e.getMavenHomeFile(mavenHome)
@@ -1051,7 +1080,7 @@ object MavenUtil {
   }
 
   fun resolveM2Dir(project: Project?): Path {
-    val eel = if (project != null) project.getEelDescriptor().upgradeBlocking() else null
+    val eel = if (project != null) project.getEelDescriptor().toEelApiBlocking() else null
     return eel.resolveM2Dir()
   }
 
@@ -1103,14 +1132,16 @@ object MavenUtil {
       return Path.of(forcedM2Home)
     }
 
-    val api = if (path == null) localEel else path.getEelApiBlocking()
-    val result: Path = api.resolveM2Dir().resolve(REPOSITORY_DIR)
-
-    try {
-      return result.toRealPath()
+    val api = if (path == null || path.getEelDescriptor() is LocalEelDescriptor) localEel else path.getEelApiBlocking()
+    val m2DirPath = api.resolveM2Dir()
+    val settingsPath: Path = m2DirPath.resolve(SETTINGS_XML)
+    val defaultRepo = m2DirPath.resolve(REPOSITORY_DIR)
+    if (!settingsPath.exists()) {
+      return defaultRepo
     }
-    catch (e: IOException) {
-      return result
+    else {
+      val repoPath = getRepositoryFromSettings(settingsPath) ?: return defaultRepo
+      return api.fs.getPath(repoPath).asNioPath()
     }
   }
 
@@ -1430,22 +1461,21 @@ object MavenUtil {
   }
 
   fun isProjectTrustedEnoughToImport(project: Project): Boolean {
-    return ExternalSystemUtil.confirmLoadingUntrustedProject(project, SYSTEM_ID)
+    return ExternalSystemTrustedProjectDialog.confirmLoadingUntrustedProject(project, SYSTEM_ID)
   }
 
   /**
-   * @param project   Project required to restart connectors
-   * @param wait      if true, then maven server(s) restarted synchronously
-   * @param condition only connectors satisfied for this predicate will be restarted
+   * closes connectors and removes them out of maven server manager. Connector processes will be close asynchronouly
+   * @param project   Project required to shut down connectors
+   * @param condition only connectors satisfied for this predicate will be shut down
    */
   @JvmOverloads
   @JvmStatic
-  fun restartMavenConnectors(
+  fun shutdownMavenConnectors(
     project: Project,
-    wait: Boolean,
     condition: Predicate<MavenServerConnector> = Predicate { c: MavenServerConnector -> java.lang.Boolean.TRUE },
   ) {
-    getInstance().restartMavenConnectors(project, wait, condition)
+    getInstance().shutdownMavenConnectors(project, condition)
   }
 
   @JvmStatic
@@ -1597,17 +1627,6 @@ object MavenUtil {
 
     return ModuleRootManager.getInstance(module).getSdk()
   }
-
-/*    @JvmStatic
-  fun <K, V : MutableMap<*, *>?> getOrCreate(map: MutableMap<K?, V?>, key: K?): V {
-    var res = map.get(key)
-    if (res == null) {
-      res = HashMap<Any?, Any?>() as V
-      map.put(key, res)
-    }
-
-    return res
-  }*/
 
   @JvmStatic
   fun isMavenModule(module: Module?): Boolean {
@@ -1928,5 +1947,47 @@ object MavenUtil {
       result.add(Path.of(PathUtil.getJarPathForClass(c)))
     }
     return result
+  }
+
+
+  /**
+   * Static state to calculate module output when running IDEA from sources
+   */
+  private val archivedClassesLocation = PathManager.getArchivedCompliedClassesLocation()
+  private val mapping = PathManager.getArchivedCompiledClassesMapping()
+  private val path = PathManager.getJarForClass(MavenServerManager::class.java)?.parent
+
+  /**
+   * Locate output of an IDEA module if running from sources.
+   * @return path to the module output: can point to a directory or a jar file.
+   * `null` if not running from sources or if module cannot be located
+   */
+  @JvmStatic
+  fun locateModuleOutput(moduleName: String): Path? {
+    if (!isRunningFromSources()) return null
+    if (archivedClassesLocation != null && mapping != null) {
+      return mapping["production/$moduleName"]?.toNioPathOrNull()
+    }
+    else {
+      return path?.resolve(moduleName)
+    }
+  }
+
+  @JvmStatic
+  fun isRunningFromSources(): Boolean {
+    return path != null && (path.endsWith("production") || path.parent.endsWith("production"))
+  }
+
+  fun isMaven410(xmlns: String?, schemaLocation: String?): Boolean {
+    if (xmlns == null || schemaLocation == null) return false
+    val schemaLocations = schemaLocation.split(' ')
+    return (xmlns == MAVEN_4_XLMNS || xmlns == MAVEN_4_XLMNS_HTTPS)
+           && schemaLocations.all {
+      it == MAVEN_4_XLMNS ||
+      it == MAVEN_4_XLMNS_HTTPS ||
+      it == MAVEN_4_XSD ||
+      it == MAVEN_4_XSD_HTTPS
+    }
+
   }
 }

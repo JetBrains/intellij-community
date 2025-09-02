@@ -18,7 +18,7 @@ import java.util.stream.Stream;
 public final class VfsUsageCollector extends CounterUsagesCollector {
   private static final int DURATION_THRESHOLD_MS = 100;
 
-  private static final EventLogGroup GROUP_VFS = new EventLogGroup("vfs", 18);
+  private static final EventLogGroup GROUP_VFS = new EventLogGroup("vfs", 19);
 
   private static final LongEventField FIELD_WAIT_MS = EventFields.Long("wait_ms");  // -1 for synchronous refresh/events
 

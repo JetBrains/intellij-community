@@ -1,0 +1,11 @@
+<!--suppress PluginXmlValidity -->
+<idea-plugin>
+  <dependencies>
+    <module name="intellij.java.execution.impl.shared"/>
+    <module name="intellij.platform.frontend"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <editorFloatingToolbarProvider implementation="com.intellij.java.execution.impl.frontend.JavaAutoRunFloatingToolbarProvider"/>
+  </extensions>
+</idea-plugin>

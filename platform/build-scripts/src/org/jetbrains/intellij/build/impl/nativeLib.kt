@@ -14,15 +14,25 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.VisibleForTesting
-import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.BuildOptions
+import org.jetbrains.intellij.build.DistFile
+import org.jetbrains.intellij.build.JvmArchitecture
+import org.jetbrains.intellij.build.LocalDistFileContent
+import org.jetbrains.intellij.build.OsFamily
+import org.jetbrains.intellij.build.SignNativeFileMode
+import org.jetbrains.intellij.build.SignTool
+import org.jetbrains.intellij.build.ZipSource
 import org.jetbrains.intellij.build.impl.NativeFileArchitecture.*
 import org.jetbrains.intellij.build.io.W_CREATE_NEW
+import org.jetbrains.intellij.build.isWindows
 import java.nio.channels.FileChannel
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.attribute.PosixFilePermission
 import java.nio.file.attribute.PosixFilePermissions
-import java.util.*
+import java.util.EnumSet
+import java.util.TreeMap
 
 /**
  * Set of native files that shouldn't be signed.
@@ -166,8 +176,14 @@ private suspend fun unpackNativeLibraries(
     targetArch = context.options.targetArch
   }
   else {
-    targetOs = null
-    targetArch = null
+    if (context.options.targetOs.isNotEmpty()) {
+      targetOs = context.options.targetOs
+      targetArch = context.options.targetArch
+    }
+    else {
+      targetOs = null
+      targetArch = null
+    }
   }
 
   val nativeFileMatcher = NativeFilesMatcher(paths, targetOs, targetArch)
@@ -186,7 +202,8 @@ private suspend fun unpackNativeLibraries(
         null
       }
       else {
-        signTool.getPresignedLibraryFile(path = path, libName = libName, libVersion = libVersion, context = context)
+        val presignedFile = signTool.getPresignedLibraryFile(path = path, libName = libName, libVersion = libVersion, context = context)
+        presignedFile ?: error("Presigned file is not found. Path='$path', libName='$libName', libVersion='$libVersion'")
       }
 
       // add an executable flag for native packaged files without an extension on POSIX OS (as it can be executed directly, opposite to lib)

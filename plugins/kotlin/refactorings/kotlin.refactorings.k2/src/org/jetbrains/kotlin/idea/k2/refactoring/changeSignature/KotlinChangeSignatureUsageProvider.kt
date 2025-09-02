@@ -10,11 +10,20 @@ import com.intellij.refactoring.changeSignature.ChangeInfo
 import com.intellij.refactoring.changeSignature.ChangeSignatureUsageProvider
 import com.intellij.refactoring.changeSignature.JavaChangeInfo
 import com.intellij.usageView.UsageInfo
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.impl.base.references.KaBaseSimpleNameReference
+import org.jetbrains.kotlin.analysis.api.resolution.KaSymbolBasedReference
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.*
 import org.jetbrains.kotlin.idea.references.KtArrayAccessReference
 import org.jetbrains.kotlin.idea.references.KtInvokeFunctionReference
+import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.util.match
@@ -65,6 +74,12 @@ class KotlinChangeSignatureUsageProvider : ChangeSignatureUsageProvider {
                     )
                 when {
                     callElementParent != null -> {
+                        val isCopyOfDataClass = analyze(element) {
+                            val functionSymbol = (reference as? KtSimpleNameReference)?.resolveToSymbol() as? KaNamedFunctionSymbol
+                            functionSymbol?.origin == KaSymbolOrigin.SOURCE_MEMBER_GENERATED &&
+                                    functionSymbol.name.asString() == "copy" && (functionSymbol.containingSymbol as? KaNamedClassSymbol)?.isData == true
+                        }
+                        if (isCopyOfDataClass) return null
                         isCaller(changeInfo, reference.resolve())
                         val callers = (changeInfo as? JavaChangeInfo)?.methodsToPropagateParameters
                         if (callers != null && callers.isNotEmpty()) {

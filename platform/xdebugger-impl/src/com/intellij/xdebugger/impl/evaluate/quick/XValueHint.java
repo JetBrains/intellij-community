@@ -38,8 +38,10 @@ import com.intellij.xdebugger.frame.XValuePlace;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.actions.handlers.XDebuggerEvaluateActionHandler;
+import com.intellij.xdebugger.impl.evaluate.ValueLookupManagerController;
 import com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint;
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType;
+import com.intellij.xdebugger.impl.frame.XDebugSessionProxy;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.XValueTextProvider;
@@ -86,6 +88,20 @@ public class XValueHint extends AbstractValueHint {
 
   @ApiStatus.Internal
   public XValueHint(@NotNull Project project,
+                    @NotNull Editor editor,
+                    @NotNull Point point,
+                    @NotNull ValueHintType type,
+                    int offset,
+                    @NotNull ExpressionInfo expressionInfo,
+                    @NotNull XDebuggerEvaluator evaluator,
+                    @NotNull XDebugSessionProxy sessionProxy,
+                    boolean fromKeyboard) {
+    this(project, sessionProxy.getEditorsProvider(), editor, point, type, offset, expressionInfo, evaluator,
+         sessionProxy.getValueMarkers(), sessionProxy.getCurrentPosition(), fromKeyboard);
+  }
+
+  @ApiStatus.Internal
+  public XValueHint(@NotNull Project project,
                        @NotNull XDebuggerEditorsProvider editorsProvider,
                        @NotNull Editor editor,
                        @NotNull Point point,
@@ -97,8 +113,7 @@ public class XValueHint extends AbstractValueHint {
     this(project, editorsProvider, editor, point, type, offset, expressionInfo, evaluator, null, null, fromKeyboard);
   }
 
-  @ApiStatus.Internal
-  public XValueHint(@NotNull Project project,
+  private XValueHint(@NotNull Project project,
                      @NotNull XDebuggerEditorsProvider editorsProvider,
                      @NotNull Editor editor,
                      @NotNull Point point,
@@ -315,6 +330,9 @@ public class XValueHint extends AbstractValueHint {
         }
         else {
           hideCurrentHint();
+        }
+        if (getType() == ValueHintType.MOUSE_OVER_HINT) {
+          ValueLookupManagerController.getInstance(getProject()).showEditorInfoTooltip(getEditorMouseEvent());
         }
       });
       LOG.debug("Cannot evaluate '" + myExpression + "':" + errorMessage);

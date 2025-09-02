@@ -4,8 +4,8 @@ package org.jetbrains.kotlin.idea.script
 
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jdom.output.XMLOutputter
-import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionsManager
-import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
+import org.jetbrains.kotlin.idea.core.script.k1.ScriptDefinitionsManager
+import org.jetbrains.kotlin.idea.core.script.k1.settings.KotlinScriptingSettingsImpl
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
 import org.junit.internal.runners.JUnit38ClassRunner
@@ -16,8 +16,8 @@ class ScriptOptionsSaveTest : KotlinLightCodeInsightFixtureTestCase() {
 
     fun testSaveAutoReload() {
       val project = myFixture.project
-      val settings = KotlinScriptingSettings.getInstance(project)
-      val definition = ScriptDefinitionsManager.getInstance(project).allDefinitions.first()
+      val settings = KotlinScriptingSettingsImpl.getInstance(project)
+      val definition = ScriptDefinitionsManager.getInstance(project).getDefinitions().first()
       val initialAutoReload = settings.autoReloadConfigurations(definition)
 
       settings.setAutoReloadConfigurations(definition, !initialAutoReload)
@@ -35,9 +35,9 @@ class ScriptOptionsSaveTest : KotlinLightCodeInsightFixtureTestCase() {
 
     fun testSaveScriptDefinitionOff() {
       val project = myFixture.project
-      val scriptDefinition = ScriptDefinitionsManager.getInstance(project).allDefinitions.first()
+      val scriptDefinition = ScriptDefinitionsManager.getInstance(project).getDefinitions().first()
 
-      val settings = KotlinScriptingSettings.getInstance(project)
+      val settings = KotlinScriptingSettingsImpl.getInstance(project)
 
       val initialIsEnabled = settings.isScriptDefinitionEnabled(scriptDefinition)
 

@@ -2,10 +2,9 @@
 
 package com.intellij.tasks.actions;
 
-import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -19,6 +18,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
+import com.intellij.openapi.wm.impl.ExpandableComboAction;
 import com.intellij.tasks.ChangeListInfo;
 import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.TaskBundle;
@@ -29,7 +29,6 @@ import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,26 +43,7 @@ import java.util.List;
 /**
  * @author Dmitry Avdeev
  */
-public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
-  @Override
-  public @NotNull JComponent createCustomComponent(final @NotNull Presentation presentation, @NotNull String place) {
-    return new ComboBoxButton(presentation) {
-      @Override
-      protected @NotNull JBPopup createPopup(Runnable onDispose) {
-        return SwitchTaskAction.createPopup(DataManager.getInstance().getDataContext(this), onDispose, false);
-      }
-
-      @Override
-      public Dimension getMinimumSize() {
-        var result = super.getMinimumSize();
-        var font = getFont();
-        if (font == null) return result;
-        result.width = UIUtil.computeTextComponentMinimumSize(result.width, getText(), getFontMetrics(font));
-        return result;
-      }
-    };
-  }
-
+public class SwitchTaskAction extends ExpandableComboAction implements DumbAware {
   @Override
   public void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
@@ -81,8 +61,9 @@ public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
         String s = getText(activeTask);
         presentation.setEnabledAndVisible(true);
         presentation.setText(s, false);
-        presentation.setIcon(activeTask.getIcon());
-        presentation.setDescription(activeTask.getSummary());
+        Icon icon = activeTask.getIcon();
+        presentation.setIcon(icon.getIconWidth() == 0 ? null : icon);
+        presentation.setDescription(KeymapUtil.createTooltipText(activeTask.getSummary(), this));
       }
       else {
         presentation.setEnabledAndVisible(false);
@@ -92,6 +73,14 @@ public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
       presentation.setEnabledAndVisible(true);
       presentation.copyFrom(getTemplatePresentation());
     }
+  }
+
+  @Override
+  public @Nullable JBPopup createPopup(@NotNull AnActionEvent event) {
+    DataContext dataContext = event.getDataContext();
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    assert project != null;
+    return createPopup(dataContext, null, !"MainToolbar".equals(event.getPlace()));
   }
 
   public static boolean isTaskManagerComboInToolbarEnabledAndVisible(LocalTask activeTask, TaskManager taskManager) {
@@ -112,15 +101,6 @@ public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
   private static @NlsActions.ActionText String getText(LocalTask activeTask) {
     String text = activeTask.getPresentableName();
     return StringUtil.first(text, 50, true);
-  }
-
-  @Override
-  public void actionPerformed(@NotNull AnActionEvent e) {
-    DataContext dataContext = e.getDataContext();
-    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    assert project != null;
-    ListPopup popup = createPopup(dataContext, null, true);
-    popup.showCenteredInCurrentWindow(project);
   }
 
   private static ListPopup createPopup(@NotNull DataContext dataContext,

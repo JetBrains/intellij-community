@@ -16,20 +16,23 @@ import com.intellij.ui.dsl.builder.Panel
 import com.intellij.util.text.nullize
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.ErrorSink
-import com.jetbrains.python.errorProcessing.PyError
+import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.hatch.sdk.createSdk
 import com.jetbrains.python.onSuccess
 import com.jetbrains.python.sdk.add.v2.CustomNewEnvironmentCreator
 import com.jetbrains.python.sdk.add.v2.PythonMutableTargetAddInterpreterModel
 import com.jetbrains.python.statistics.InterpreterType
+import kotlinx.coroutines.CoroutineScope
 import java.nio.file.Path
 
 internal class HatchNewEnvironmentCreator(
   override val model: PythonMutableTargetAddInterpreterModel,
-) : CustomNewEnvironmentCreator("hatch", model) {
+  errorSink: ErrorSink,
+) : CustomNewEnvironmentCreator("hatch", model, errorSink) {
   override val interpreterType: InterpreterType = InterpreterType.HATCH
   override val executable: ObservableMutableProperty<String> = propertyGraph.property(model.state.hatchExecutable.get())
   private val hatchEnvironmentProperty: ObservableMutableProperty<HatchVirtualEnvironment?> = propertyGraph.property(null)
+  private lateinit var hatchFormFields: HatchFormFields
 
   init {
     propertyGraph.dependsOn(executable, model.state.hatchExecutable, deleteWhenChildModified = false) {
@@ -37,10 +40,8 @@ internal class HatchNewEnvironmentCreator(
     }
   }
 
-  override val installationVersion: String? = null
-
-  override fun buildOptions(panel: Panel, validationRequestor: DialogValidationRequestor, errorSink: ErrorSink) {
-    panel.buildHatchFormFields(
+  override fun setupUI(panel: Panel, validationRequestor: DialogValidationRequestor) {
+    hatchFormFields = panel.buildHatchFormFields(
       model = model,
       hatchExecutableProperty = executable,
       hatchEnvironmentProperty = hatchEnvironmentProperty,
@@ -48,9 +49,13 @@ internal class HatchNewEnvironmentCreator(
       validationRequestor = validationRequestor,
       isGenerateNewMode = true,
       installHatchActionLink = createInstallFix(errorSink)
-    ) {
-      basePythonComboBox = it
-    }
+    )
+    basePythonComboBox = requireNotNull(hatchFormFields.basePythonComboBox)
+  }
+
+  override fun onShown(scope: CoroutineScope) {
+    super.onShown(scope)
+    hatchFormFields.onShown(scope, model, state, isFilterOnlyExisting = false)
   }
 
   override fun savePathToExecutableToProperties(path: Path?) {
@@ -58,7 +63,7 @@ internal class HatchNewEnvironmentCreator(
     HatchConfiguration.persistPathForTarget(hatchExecutablePath = savingPath)
   }
 
-  override suspend fun createPythonModuleStructure(module: Module): Result<Unit, PyError> {
+  override suspend fun createPythonModuleStructure(module: Module): PyResult<Unit> {
     val hatchExecutablePath = executable.get().toPath().getOr { return it }
     val hatchService = module.getHatchService(hatchExecutablePath = hatchExecutablePath).getOr { return it }
 
@@ -76,7 +81,7 @@ internal class HatchNewEnvironmentCreator(
     return Result.success(Unit)
   }
 
-  override suspend fun setupEnvSdk(project: Project, module: Module?, baseSdks: List<Sdk>, projectPath: String, homePath: String?, installPackages: Boolean): Result<Sdk, PyError> {
+  override suspend fun setupEnvSdk(project: Project, module: Module?, baseSdks: List<Sdk>, projectPath: String, homePath: String?, installPackages: Boolean): PyResult<Sdk> {
     val hatchEnv = hatchEnvironmentProperty.get()?.hatchEnvironment
                    ?: return Result.failure(HatchUIError.HatchEnvironmentIsNotSelected())
 

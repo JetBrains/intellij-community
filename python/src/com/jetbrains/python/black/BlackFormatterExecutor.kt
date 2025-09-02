@@ -1,7 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.black
 
-import com.intellij.execution.process.*
+import com.intellij.execution.process.CapturingProcessAdapter
+import com.intellij.execution.process.CapturingProcessHandler
+import com.intellij.execution.process.ProcessEvent
+import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.target.*
 import com.intellij.execution.target.local.LocalTargetEnvironment
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
@@ -163,7 +166,7 @@ class BlackFormatterExecutor(private val project: Project,
   }
 
   private fun writeToStdinListener(text: String, charset: Charset): ProcessListener {
-    return object : ProcessAdapter() {
+    return object : ProcessListener {
       override fun startNotified(event: ProcessEvent) {
         try {
           val processInput = event.processHandler.processInput

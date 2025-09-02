@@ -10,5 +10,5 @@ public interface DaemonCodeAnalysisStatus {
   @TestOnly
   boolean isRunningOrPending();
   @TestOnly
-  boolean isAllAnalysisFinished(PsiFile file);
+  boolean isAllAnalysisFinished(PsiFile psiFile);
 }

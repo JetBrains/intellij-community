@@ -410,7 +410,7 @@ public final class VcsLogUtil {
    * @see VcsLogUtil#requestToLoadMore(VcsLogUiEx, Runnable)
    */
   public static boolean canRequestMore(@NotNull VisiblePack visiblePack) {
-    if (!visiblePack.canRequestMore()) return false;
+    if (!visiblePack.getCanRequestMore()) return false;
     return !isMoreRequested(visiblePack);
   }
 

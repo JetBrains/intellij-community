@@ -59,29 +59,29 @@ public class IncreaseLanguageLevelFix implements IntentionAction, LocalQuickFix,
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    Module module = Objects.requireNonNull(ModuleUtilCore.findModuleForFile(file.getOriginalFile()));
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    Module module = Objects.requireNonNull(ModuleUtilCore.findModuleForFile(psiFile.getOriginalFile()));
     return new IntentionPreviewInfo.Html(
       JavaBundle.message("increase.language.level.preview.description", module.getName(), myLevel.toJavaVersion()));
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    Module module = ModuleUtilCore.findModuleForFile(file);
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    Module module = ModuleUtilCore.findModuleForFile(psiFile);
     return module != null && JavaSdkUtil.isLanguageLevelAcceptable(project, module, myLevel);
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
     if (!AcceptedLanguageLevelsSettings.isLanguageLevelAccepted(myLevel)) {
       JComponent component = editor == null ? null : editor.getComponent();
       if (AcceptedLanguageLevelsSettings.checkAccepted(component, myLevel) == null) {
         return;
       }
     }
-    Module module = Objects.requireNonNull(ModuleUtilCore.findModuleForFile(file));
+    Module module = Objects.requireNonNull(ModuleUtilCore.findModuleForFile(psiFile));
     LanguageLevel oldLevel = LanguageLevelUtil.getCustomLanguageLevel(module);
-    VirtualFile vFile = file.getVirtualFile();
+    VirtualFile vFile = psiFile.getVirtualFile();
     WriteCommandAction.runWriteCommandAction(project, getText(), null, () -> {
       JavaProjectModelModificationService.getInstance(project).changeLanguageLevel(module, myLevel, true);
       if (oldLevel != null) {
@@ -101,7 +101,7 @@ public class IncreaseLanguageLevelFix implements IntentionAction, LocalQuickFix,
   }
 
   @Override
-  public @Nullable PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
+  public @Nullable PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
     return null;
   }
 

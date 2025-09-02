@@ -1,4 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:OptIn(IntellijInternalApi::class)
+
 package com.intellij.compiler.backwardRefs
 
 import com.intellij.compiler.impl.CompileDriver
@@ -8,10 +10,10 @@ import com.intellij.openapi.compiler.CompilerManager
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
+import com.intellij.openapi.util.IntellijInternalApi
 import kotlinx.coroutines.ensureActive
 import kotlin.coroutines.coroutineContext
 
@@ -28,9 +30,7 @@ internal class IsUpToDateCheckStartupActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
     val logger = thisLogger()
 
-    val isUpToDateConsumers = blockingContext {
-      IsUpToDateCheckConsumer.EP_NAME.extensionList.filter { it.isApplicable(project) }
-    }
+    val isUpToDateConsumers = IsUpToDateCheckConsumer.EP_NAME.extensionList.filter { it.isApplicable(project) }
     if (isUpToDateConsumers.isEmpty()) {
       logger.info("suitable consumer is not found")
       return

@@ -29,7 +29,7 @@ object GradleKotlinTestUtils {
         repositories.add("mavenLocal()")
         repositories.addUrl("https://cache-redirector.jetbrains.com/repo.maven.apache.org/maven2/")
         repositories.addUrl("https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/bootstrap")
-        repositories.addUrl("https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-ide-plugin-dependencies")
+        repositories.addUrl("https://cache-redirector.jetbrains.com/intellij-dependencies")
         repositories.addUrl("https://cache-redirector.jetbrains.com/dl.google.com.android.maven2/")
         repositories.addUrl("https://cache-redirector.jetbrains.com/plugins.gradle.org/m2/")
 
@@ -68,7 +68,7 @@ object GradleKotlinTestUtils {
                 }
                 
                 /* Repository used to resolve manual deployments of KGP (specifically to be resolved by IJ import tests) */
-                maven("https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-ide-plugin-dependencies") {
+                maven("https://cache-redirector.jetbrains.com/intellij-dependencies") {
                     content {
                         includeVersionByRegex(".*jetbrains.*", ".*", "$kotlinVersion")
                     }

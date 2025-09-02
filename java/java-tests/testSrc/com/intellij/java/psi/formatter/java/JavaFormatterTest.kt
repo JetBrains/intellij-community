@@ -662,6 +662,7 @@ class Test {
 
   fun testDocComment2() {
     settings.KEEP_SIMPLE_METHODS_IN_ONE_LINE = true
+    javaSettings.JD_KEEP_EMPTY_LINES = false
     doTextTest("class Test {\n" +
                "/**\n" +
                "*\n" +

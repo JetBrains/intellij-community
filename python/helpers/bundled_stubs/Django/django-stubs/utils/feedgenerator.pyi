@@ -1,13 +1,24 @@
 import datetime
 from collections.abc import Sequence
-from typing import Any
+from typing import Any, TypeAlias
 
 from django.utils.xmlutils import SimplerXMLGenerator
-from typing_extensions import TypeAlias
 
 def rfc2822_date(date: datetime.date) -> str: ...
 def rfc3339_date(date: datetime.date) -> str: ...
 def get_tag_uri(url: str, date: datetime.date | None) -> str: ...
+
+class Stylesheet:
+    def __init__(
+        self,
+        url: str,
+        mimetype: str = ...,
+        media: str = ...,
+    ) -> None: ...
+    @property
+    def url(self) -> str: ...
+    @property
+    def mimetype(self) -> str: ...
 
 class SyndicationFeed:
     feed: dict[str, Any]
@@ -27,6 +38,7 @@ class SyndicationFeed:
         feed_copyright: str | None = ...,
         feed_guid: str | None = ...,
         ttl: int | None = ...,
+        stylesheets: list[Stylesheet] | None = ...,
         **kwargs: Any,
     ) -> None: ...
     def add_item(
@@ -51,6 +63,7 @@ class SyndicationFeed:
     def num_items(self) -> int: ...
     def root_attributes(self) -> dict[Any, Any]: ...
     def add_root_elements(self, handler: SimplerXMLGenerator) -> None: ...
+    def add_stylesheets(self, handler: SimplerXMLGenerator) -> None: ...
     def item_attributes(self, item: dict[str, Any]) -> dict[Any, Any]: ...
     def add_item_elements(
         self,

@@ -1,6 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.actions;
 
+import com.intellij.ide.ActivityTracker;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -10,6 +11,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import git4idea.GitVcs;
+import git4idea.branch.GitBranchIncomingOutgoingManager;
 import git4idea.fetch.GitFetchResult;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
@@ -42,6 +44,7 @@ public class GitFetch extends DumbAwareAction {
 
   @RequiresEdt
   protected void onFetchFinished(@NotNull Project project, @NotNull GitFetchResult result) {
+    GitBranchIncomingOutgoingManager.getInstance(project).forceUpdateBranches(() -> ActivityTracker.getInstance().inc());
     result.showNotification();
   }
 

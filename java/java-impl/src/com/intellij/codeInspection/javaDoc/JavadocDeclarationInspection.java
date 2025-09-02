@@ -1,14 +1,14 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.javaDoc;
 
 import com.intellij.codeInsight.daemon.impl.analysis.IncreaseLanguageLevelFix;
-import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightErrorFilter;
 import com.intellij.codeInsight.daemon.impl.quickfix.DeleteElementFix;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.javadoc.SnippetMarkup;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.JavaBundle;
+import com.intellij.java.codeserver.highlighting.JavaSyntaxErrorChecker;
 import com.intellij.lang.ASTNode;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
@@ -97,7 +97,7 @@ public final class JavadocDeclarationInspection extends LocalInspectionTool {
 
       @Override
       public void visitErrorElement(@NotNull PsiErrorElement element) {
-        if (IGNORE_SYNTAX_ERRORS || !JavaHighlightErrorFilter.isJavaDocProblem(element)) return;
+        if (IGNORE_SYNTAX_ERRORS || !JavaSyntaxErrorChecker.isJavaDocProblem(element)) return;
         PsiElement parent = element.getParent();
         TextRange range = element.getTextRangeInParent();
         if (range.isEmpty()) {
@@ -466,7 +466,7 @@ public final class JavadocDeclarationInspection extends LocalInspectionTool {
     holder.registerProblem(nameElement, JavaBundle.message("inspection.javadoc.problem.pointing.to.itself"));
   }
 
-  private static final TokenSet SEE_TAG_REFS = TokenSet.create(JavaDocElementType.DOC_REFERENCE_HOLDER, JavaDocElementType.DOC_METHOD_OR_FIELD_REF);
+  private static final TokenSet SEE_TAG_REFS = TokenSet.create(JavaDocElementType.DOC_REFERENCE_HOLDER, JavaDocElementType.DOC_METHOD_OR_FIELD_REF, JavaDocElementType.DOC_TAG_VALUE_ELEMENT);
 
   private static boolean isValidSeeRef(PsiElement... elements) {
     int referenceNumber = 0;
@@ -547,7 +547,7 @@ public final class JavadocDeclarationInspection extends LocalInspectionTool {
 
   private static boolean isEmptyTag(PsiDocTag tag) {
     return Stream.of(tag.getChildren())
-      .filter(e -> e instanceof PsiDocToken && ((PsiDocToken)e).getTokenType() == JavaDocTokenType.DOC_COMMENT_DATA ||
+      .filter(e -> PsiDocToken.isDocToken(e, JavaDocTokenType.DOC_COMMENT_DATA) ||
                    e instanceof PsiDocTagValue ||
                    e instanceof PsiInlineDocTag)
       .allMatch(JavadocDeclarationInspection::isEmpty);
@@ -555,7 +555,7 @@ public final class JavadocDeclarationInspection extends LocalInspectionTool {
 
   private static boolean isEmptyThrowsTag(PsiDocTag tag) {
     return Stream.of(tag.getChildren())
-      .filter(e -> e instanceof PsiDocToken && ((PsiDocToken)e).getTokenType() == JavaDocTokenType.DOC_COMMENT_DATA)
+      .filter(e -> PsiDocToken.isDocToken(e, JavaDocTokenType.DOC_COMMENT_DATA))
       .allMatch(JavadocDeclarationInspection::isEmpty);
   }
 

@@ -1,5 +1,5 @@
-<error descr="Implicitly declared class contains no 'main' method"><error descr="Package statement is not allowed for implicitly declared class">package pack.bar;</error>
+<error descr="Package statement is not allowed in compact source files">package pack.bar;</error>
 
 void foo() {
 
-}</error>
+}

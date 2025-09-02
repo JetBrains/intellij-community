@@ -2,38 +2,30 @@ package com.intellij.driver.sdk.ui.components.common.popups
 
 import com.intellij.driver.client.Remote
 import com.intellij.driver.model.OnDispatcher
-import com.intellij.driver.sdk.ActionManager
-import com.intellij.driver.sdk.ActionUtils
-import com.intellij.driver.sdk.AnAction
-import com.intellij.driver.sdk.step
-import com.intellij.driver.sdk.ui.AccessibleNameCellRendererReader
+import com.intellij.driver.sdk.*
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.components.elements.*
 import com.intellij.driver.sdk.ui.should
 import com.intellij.driver.sdk.ui.xQuery
-import com.intellij.driver.sdk.waitFor
 import org.intellij.lang.annotations.Language
-import javax.swing.JList
 import kotlin.time.Duration.Companion.seconds
 
 
-fun Finder.searchEverywherePopup(@Language("xpath") xpath: String? = null, block: SearchEverywherePopupUI.() -> Unit = {}) =
-  x(xpath ?: xQuery { componentWithChild(byClass("HeavyWeightWindow"), byClass("SearchEverywhereUI")) }, SearchEverywherePopupUI::class.java).apply(block)
+fun Finder.searchEverywherePopup(isSplit: Boolean = false, @Language("xpath") xpath: String? = null, block: SearchEverywherePopupUI.() -> Unit = {}): SearchEverywherePopupUI =
+  if (isSplit) x(xpath ?: xQuery { componentWithChild(byClass("HeavyWeightWindow"), byClass("SePopupContentPane")) }, SearchEverywhereSplitPopupUI::class.java).apply(block)
+  else x(xpath ?: xQuery { componentWithChild(byClass("HeavyWeightWindow"), byClass("SearchEverywhereUI")) }, SearchEverywherePopupUI::class.java).apply(block)
 
-class SearchEverywherePopupUI(data: ComponentData) : PopupUiComponent(data) {
-  val resultsList by lazy {
-    x(JListUiComponent::class.java) { byType(JList::class.java) }.apply {
-      replaceCellRendererReader(driver.new(AccessibleNameCellRendererReader::class))
-    }
-  }
-  val searchField: JTextFieldUI = textField { byType("com.intellij.ide.actions.BigPopupUI${"$"}SearchField") }
-  val includeNonProjectItemsCheckBox = checkBox { byAccessibleName("Include non-project items") }
+open class SearchEverywherePopupUI(data: ComponentData) : PopupUiComponent(data) {
+  val resultsList: JListUiComponent = accessibleList()
+  open val searchField: JTextFieldUI = textField { byType("com.intellij.ide.actions.BigPopupUI${"$"}SearchField") }
+  val includeNonProjectItemsCheckBox: JCheckBoxUi = checkBox { byAccessibleName("Include non-project items") }
   val openInFindToolWindowButton: ActionButtonUi = actionButtonByXpath(xQuery { byAccessibleName("Open in Find Tool Window") })
-  val previewButton = actionButtonByXpath(xQuery { byAccessibleName("Preview") })
-  val searchEverywhereUi = x(SearchEveryWhereUi::class.java) { byType("com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI") }
-  val openInRightSplitActionLink = x { byAccessibleName("Open In Right Split") }
+  val previewButton: ActionButtonUi = actionButtonByXpath(xQuery { byAccessibleName("Preview") })
+  val typeFilterButton: ActionButtonUi = actionButtonByXpath(xQuery { byAccessibleName("Filter") })
+  val searchEverywhereUi: SearchEveryWhereUi = x(SearchEveryWhereUi::class.java) { byType("com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI") }
+  val openInRightSplitActionLink: UiComponent = x { byAccessibleName("Open In Right Split") }
 
   fun invokeSelectAction() {
     invokeActionWithShortcut("[pressed ENTER]")
@@ -82,6 +74,14 @@ class SearchEverywherePopupUI(data: ComponentData) : PopupUiComponent(data) {
     waitFor("Popup is closed") { notPresent() }
   }
 
+  fun switchTypeFilters(types: List<String>) {
+    typeFilterButton.click()
+    types.forEach { type ->
+      searchEverywhereTypeFilterPopup().clickType(type)
+    }
+    typeFilterButton.click()
+  }
+
   private fun invokeActionWithShortcut(shortcut: String, chooser: (List<AnAction>) -> AnAction? = { it.singleOrNull() }) {
     val action = driver.utility(ActionUtils::class).getActions(searchEverywhereUi.component).filter {
       it.getShortcutSet().getShortcuts().singleOrNull()?.toString() == shortcut
@@ -111,5 +111,20 @@ class SearchEverywherePopupUI(data: ComponentData) : PopupUiComponent(data) {
   interface SearchEverywhereUiComponent {
     fun getSelectedTabID(): String
     fun closePopup()
+  }
+}
+
+class SearchEverywhereSplitPopupUI(data: ComponentData) : SearchEverywherePopupUI(data) {
+  override val searchField: JTextFieldUI = textField { byClass("SeTextField") }
+}
+
+
+fun Finder.searchEverywhereTypeFilterPopup(@Language("xpath") xpath: String? = null, block: SearchEverywhereTypeFilterUI.() -> Unit = {}): SearchEverywhereTypeFilterUI =
+  x(xpath ?: xQuery { componentWithChild(byClass("HeavyWeightWindow"), byClass("ElementsChooser")) }, SearchEverywhereTypeFilterUI::class.java).apply(block)
+
+class SearchEverywhereTypeFilterUI(data: ComponentData) : UiComponent(data) {
+  fun clickType(type: String) {
+    val actionsLabelRowColumn = table().findRowColumn { it == type }
+    table().clickCell(actionsLabelRowColumn.first, actionsLabelRowColumn.second - 1)
   }
 }

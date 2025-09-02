@@ -171,7 +171,8 @@ public final class MessageFormatUtil {
   }
 
   @VisibleForTesting
-  static @NotNull List<MessageFormatError> checkQuote(@NotNull String string) {
+  @ApiStatus.Internal
+  public static @NotNull List<MessageFormatError> checkQuote(@NotNull String string) {
     List<MessageFormatError> errors = new ArrayList<>();
     int fromIndex = 0;
     while (true) {
@@ -215,7 +216,8 @@ public final class MessageFormatUtil {
   }
 
   @VisibleForTesting
-  static @NotNull MessageHolder parseMessageHolder(@NotNull String pattern) {
+  @ApiStatus.Internal
+  public static @NotNull MessageHolder parseMessageHolder(@NotNull String pattern) {
     MessageHolder holder = new MessageHolder(pattern);
     while (!holder.hasRuntimeError && holder.hasNext()) {
       char ch = holder.nextPool();
@@ -485,18 +487,16 @@ public final class MessageFormatUtil {
       messageFormatElement = element;
     }
 
-    @Nullable
-    MessageFormatElement getMessageFormatElement() {
+    public @Nullable MessageFormatElement getMessageFormatElement() {
       return messageFormatElement;
     }
 
     @VisibleForTesting
-    String getText() {
+    public String getText() {
       return text.toString();
     }
 
-    @NotNull
-    MessageFormatParsedType getParsedType() {
+    public @NotNull MessageFormatParsedType getParsedType() {
       return parsedType;
     }
 
@@ -522,7 +522,7 @@ public final class MessageFormatUtil {
     private @Nullable Integer index;
     private @Nullable MessageFormatType formatType;
 
-    @Nullable Integer getIndex() {
+    public @Nullable Integer getIndex() {
       return index;
     }
 
@@ -614,11 +614,11 @@ public final class MessageFormatUtil {
       parts.add(new MessageFormatPart(0, MessageFormatParsedType.STRING, null));
     }
 
-    List<MessageFormatPart> getParts() {
+    public List<MessageFormatPart> getParts() {
       return parts;
     }
 
-    List<MessageFormatError> getErrors() {
+    public List<MessageFormatError> getErrors() {
       return errors;
     }
 

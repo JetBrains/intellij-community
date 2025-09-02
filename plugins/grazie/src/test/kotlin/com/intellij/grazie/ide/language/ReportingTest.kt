@@ -142,8 +142,8 @@ class ReportingTest : BasePlatformTestCase() {
   private open class MockIntention: IntentionAction {
     override fun getText() = "mock intention"
     override fun getFamilyName() = text
-    override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?) = true
-    override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {}
+    override fun isAvailable(project: Project, editor: Editor?, psiFile: PsiFile?) = true
+    override fun invoke(project: Project, editor: Editor?, psiFile: PsiFile?) {}
     override fun startInWriteAction() = false
   }
 

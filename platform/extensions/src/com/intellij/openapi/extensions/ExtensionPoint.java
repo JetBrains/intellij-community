@@ -1,13 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.extensions;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.impl.ExtensionComponentAdapter;
 import kotlinx.coroutines.CoroutineScope;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.util.List;
 import java.util.function.BiPredicate;
@@ -41,7 +38,8 @@ public interface ExtensionPoint<T> {
    */
   T @NotNull [] getExtensions();
 
-  @NotNull List<T> getExtensionList();
+  @NotNull @Unmodifiable
+  List<T> getExtensionList();
 
   int size();
 
@@ -67,7 +65,17 @@ public interface ExtensionPoint<T> {
    */
   boolean unregisterExtensions(@NotNull BiPredicate<String, ExtensionComponentAdapter> extensionClassNameFilter, boolean stopAfterFirstMatch);
 
-  void addExtensionPointListener(@NotNull ExtensionPointListener<T> listener, boolean invokeForLoadedExtensions, @Nullable Disposable parentDisposable);
+  /**
+   * @deprecated Use {@link #addExtensionPointListener(CoroutineScope, boolean, ExtensionPointListener)}
+   */
+  @Deprecated
+  void addExtensionPointListener(@NotNull ExtensionPointListener<T> listener,
+                                 boolean invokeForLoadedExtensions,
+                                 @Nullable Disposable parentDisposable);
+
+  void addExtensionPointListener(@NotNull CoroutineScope coroutineScope,
+                                 boolean invokeForLoadedExtensions,
+                                 @NotNull ExtensionPointListener<T> listener);
 
   /**
    * Consider using {@link ExtensionPointName#addChangeListener}

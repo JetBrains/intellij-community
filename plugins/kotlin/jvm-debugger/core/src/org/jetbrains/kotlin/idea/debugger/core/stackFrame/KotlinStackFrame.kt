@@ -7,7 +7,6 @@ import com.intellij.debugger.engine.JavaValue
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.jdi.LocalVariableProxyImpl
 import com.intellij.debugger.jdi.StackFrameProxyImpl
-import com.intellij.debugger.ui.impl.watch.MethodsTracker
 import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl
 import com.intellij.xdebugger.frame.XValueChildrenList
 import com.sun.jdi.ObjectReference
@@ -32,7 +31,7 @@ open class KotlinStackFrame(
     private val kotlinVariableViewService = ToggleKotlinVariablesState.getService()
 
     constructor(frame: StackFrameProxyImpl, visibleVariables: List<LocalVariableProxyImpl>) :
-            this(StackFrameDescriptorImpl(frame, MethodsTracker()), visibleVariables)
+            this(StackFrameDescriptorImpl(frame), visibleVariables)
 
     override fun buildLocalVariables(
         evaluationContext: EvaluationContextImpl,

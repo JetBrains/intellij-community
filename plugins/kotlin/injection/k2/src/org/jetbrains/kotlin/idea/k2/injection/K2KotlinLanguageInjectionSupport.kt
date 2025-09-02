@@ -10,11 +10,12 @@ import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.psi.KtModifierListOwner
 
 internal class K2KotlinLanguageInjectionSupport: KotlinLanguageInjectionSupportBase() {
-    override fun KtModifierListOwner.findAnnotation(name: FqName): KtAnnotationEntry? = findAnnotation(ClassId.topLevel(name))
+    override fun KtModifierListOwner.findAnnotation(name: FqName): KtAnnotationEntry? =
+        findAnnotation(ClassId.topLevel(name))
 
     override fun KtModifierListOwner.addAnnotation(name: FqName, templateString: String) {
         addAnnotation(ClassId.topLevel(name), templateString)
     }
 
-    override fun getPatternClasses() = arrayOf(KotlinPatterns::class.java)
+    override fun getPatternClasses(): Array<Class<KotlinPatterns>> = arrayOf(KotlinPatterns::class.java)
 }

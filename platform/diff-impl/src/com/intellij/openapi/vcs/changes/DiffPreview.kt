@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes
 
+import com.intellij.diff.editor.DiffEditorTabFilesUtil
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
@@ -38,6 +39,7 @@ interface DiffPreview {
      */
     @JvmStatic
     fun closePreviewFile(project: Project, previewFile: VirtualFile) {
+      DiffEditorTabFilesUtil.setForceOpeningsInNewWindow(previewFile, null)
       val editorManager = FileEditorManager.getInstance(project) as FileEditorManagerImpl
       editorManager.closeFile(previewFile, closeAllCopies = true, moveFocus = true)
     }

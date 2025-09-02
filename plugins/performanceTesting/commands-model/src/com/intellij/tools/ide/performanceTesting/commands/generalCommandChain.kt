@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tools.ide.performanceTesting.commands
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
@@ -77,6 +78,7 @@ fun <T : CommandChain> T.openFile(
   warmup: Boolean = false,
   disableCodeAnalysis: Boolean = false,
   useWaitForCodeAnalysisCode: Boolean = true,
+  forbidDownloadingSourcesOnNavigation: Boolean = false,
 ): T = apply {
   val command = mutableListOf("${CMD_PREFIX}openFile", "-file ${relativePath.replace(" ", "SPACE_SYMBOL")}")
   if (timeoutInSeconds != 0L) {
@@ -94,6 +96,9 @@ fun <T : CommandChain> T.openFile(
   if (useWaitForCodeAnalysisCode) {
     command.add("-unwfca")
   }
+  if (forbidDownloadingSourcesOnNavigation) {
+    command.add("-forbidDownloadingSourcesOnNavigation")
+  }
 
   addCommand(*command.toTypedArray())
 }
@@ -102,9 +107,8 @@ fun <T : CommandChain> T.openRandomFile(extension: String): T = apply {
   addCommand("${CMD_PREFIX}openRandomFile", extension)
 }
 
-fun <T : CommandChain> T.openProject(projectPath: Path, openInNewWindow: Boolean = true, detectProjectLeak: Boolean = false): T = apply {
-  if (detectProjectLeak && openInNewWindow) throw IllegalArgumentException("To analyze the project leak, we need to close the project")
-  addCommand("${CMD_PREFIX}openProject", projectPath.toString(), (!openInNewWindow).toString(), detectProjectLeak.toString())
+fun <T : CommandChain> T.openProject(projectPath: Path, openInNewWindow: Boolean = true): T = apply {
+  addCommand("${CMD_PREFIX}openProject", projectPath.toString(), (!openInNewWindow).toString())
 }
 
 fun <T : CommandChain> T.reopenProject(): T = apply {
@@ -113,6 +117,12 @@ fun <T : CommandChain> T.reopenProject(): T = apply {
 
 fun <T : CommandChain> T.closeProject(): T = apply {
   addCommand("${CMD_PREFIX}closeProject")
+}
+
+/** @see com.jetbrains.performancePlugin.commands.CloseOtherProjectsCommand */
+@Suppress("KDocUnresolvedReference")
+fun <T : CommandChain> T.closeOtherProjects(): T = apply {
+  addCommand("${CMD_PREFIX}closeOtherProjects")
 }
 
 fun <T : CommandChain> T.storeIndices(): T = apply {
@@ -771,6 +781,10 @@ fun <T : CommandChain> T.setRegistry(registry: String, value: String): T = apply
   addCommand("${CMD_PREFIX}set $registry=$value")
 }
 
+fun <T : CommandChain> T.setRegistrySelectedOption(registry: String, optionValue: String): T = apply {
+  addCommand("${CMD_PREFIX}set $registry=[option]$optionValue")
+}
+
 fun <T : CommandChain> T.validateGradleMatrixCompatibility(): T = apply {
   addCommand("${CMD_PREFIX}validateGradleMatrixCompatibility")
 }
@@ -844,8 +858,12 @@ fun <T : CommandChain> T.moveDeclarations(moveDeclarationData: MoveDeclarationsD
   addCommand("${CMD_PREFIX}moveDeclarations $jsonData")
 }
 
-fun <T : CommandChain> T.performGC(): T = apply {
-  addCommand("${CMD_PREFIX}performGC")
+fun <T : CommandChain> T.performSystemGC(): T = apply {
+  addCommand("${CMD_PREFIX}performSystemGC")
+}
+
+fun <T : CommandChain> T.performJBRFullGC(): T = apply {
+  addCommand("${CMD_PREFIX}performJBRFullGC")
 }
 
 fun <T : CommandChain> T.copy(): T = apply {
@@ -1010,10 +1028,6 @@ fun <T : CommandChain> T.checkChatBotResponse(textToCheck: String): T = apply {
   addCommand("${CMD_PREFIX}checkResponseContains ${textToCheck}")
 }
 
-fun <T : CommandChain> T.authenticateInGrazie(token: String): T = apply {
-  addCommand("${CMD_PREFIX}authenticateInGrazie ${token}")
-}
-
 fun <T : CommandChain> T.waitFullLineModelLoaded(language: String): T = apply {
   addCommand("${CMD_PREFIX}waitFullLineModelLoaded ${language}")
 }
@@ -1118,6 +1132,10 @@ fun <T : CommandChain> T.gitCommitFile(pathToFile: String, commitMessage: String
 
 fun <T : CommandChain> T.gitRollbackFile(pathToFile: String): T = apply {
   addCommand("${CMD_PREFIX}gitRollbackFile ${pathToFile}")
+}
+
+fun <T: CommandChain> T.vcsDisableConfirmationPopup(): T = apply {
+  addCommand("${CMD_PREFIX}vcsDisableConfirmationPopup")
 }
 
 fun <T : CommandChain> T.replaceText(startOffset: Int? = null, endOffset: Int? = null, newText: String? = null): T = apply {
@@ -1261,6 +1279,52 @@ fun <T : CommandChain> T.waitForVfsRefreshSelectedEditor(): T = apply {
   addCommand("${CMD_PREFIX}waitForVfsRefreshSelectedEditor")
 }
 
+/** @see com.jetbrains.performancePlugin.commands.FindInFilesCommand */
+@Suppress("KDocUnresolvedReference")
+fun <T : CommandChain> T.findInFiles(queries: List<String> = listOf()): T = apply {
+  addCommand("${CMD_PREFIX}findInFiles ${queries.joinToString(";")}")
+}
+
 fun <T : CommandChain> T.closeLookup(): T = apply {
   addCommand("${CMD_PREFIX}closeLookup")
+}
+
+/** @see com.intellij.java.performancePlugin.RenameDirectoryAsPackageCommand */
+@Suppress("KDocUnresolvedReference", "unused")
+enum class RenameDirectoryAsPackageTarget { DIRECTORY, MODULE, PROJECT }
+fun <T : CommandChain> T.renameDirectoryAsPackage(directory: String, newName: String, whereToRename: RenameDirectoryAsPackageTarget): T = apply {
+  addCommand("${CMD_PREFIX}renameDirectoryAsPackage $directory $newName $whereToRename")
+}
+
+/** @see com.intellij.java.performancePlugin.ChangeJavaSignatureCommand */
+@Suppress("KDocUnresolvedReference")
+enum class ChangeJavaSignatureAction { ADD_PARAMETER }
+fun <T : CommandChain> T.changeJavaSignature(action: ChangeJavaSignatureAction, name: String): T = apply {
+  addCommand("${CMD_PREFIX}changeJavaSignature $action $name")
+}
+
+/** @see com.intellij.java.performancePlugin.InlineJavaMethodCommand */
+@Suppress("KDocUnresolvedReference")
+fun <T : CommandChain> T.inlineJavaMethod(): T = apply {
+  addCommand("${CMD_PREFIX}inlineJavaMethod")
+}
+
+/** @see com.intellij.java.performancePlugin.MoveClassToPackageCommand */
+@Suppress("KDocUnresolvedReference")
+fun <T : CommandChain> T.moveClassToPackage(targetPackage: String): T = apply {
+  addCommand("${CMD_PREFIX}moveClassToPackage $targetPackage")
+}
+
+fun <T : CommandChain> T.openProblemViewPanel(): T = apply {
+  addCommand("${CMD_PREFIX}openProblemViewPanel")
+}
+
+fun <T : CommandChain> T.assertProblemViewCount(expectedProblemCount: Int): T = apply {
+  addCommand("${CMD_PREFIX}assertProblemsViewCount $expectedProblemCount")
+}
+
+/** @see com.jetbrains.performancePlugin.commands.DetectProjectLeaksCommand */
+@Suppress("KDocUnresolvedReference")
+fun <T : CommandChain> T.detectProjectLeaks(): T = apply {
+  addCommand("${CMD_PREFIX}detectProjectLeaks")
 }

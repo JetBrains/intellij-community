@@ -9,16 +9,16 @@ import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pycharm.community.ide.impl.newProjectWizard.welcome.PyWelcome
-import com.jetbrains.python.Result
-import com.jetbrains.python.errorProcessing.PyError
+import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.newProjectWizard.PyV3ProjectTypeSpecificSettings
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 class PyV3EmptyProjectSettings(var generateWelcomeScript: Boolean = false) : PyV3ProjectTypeSpecificSettings {
 
-  override suspend fun generateProject(module: Module, baseDir: VirtualFile, sdk: Sdk): Result<Unit, PyError> {
-    if (!generateWelcomeScript) return Result.success(Unit)
+  override suspend fun generateProject(module: Module, baseDir: VirtualFile, sdk: Sdk): PyResult<Unit> {
+    if (!generateWelcomeScript)
+      return PyResult.success(Unit)
 
     val sourceRoot = module.rootManager.sourceRoots.firstOrNull() ?: baseDir
     val file = edtWriteAction {
@@ -30,7 +30,7 @@ class PyV3EmptyProjectSettings(var generateWelcomeScript: Boolean = false) : PyV
       }
     }
 
-    return Result.success(Unit)
+    return PyResult.success(Unit)
   }
 
   override fun toString(): String {

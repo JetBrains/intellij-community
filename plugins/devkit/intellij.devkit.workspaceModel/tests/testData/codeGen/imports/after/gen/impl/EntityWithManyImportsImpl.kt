@@ -2,7 +2,7 @@
 package com.intellij.workspaceModel.test.api.impl
 
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.annotations.Child
+import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
@@ -20,7 +20,7 @@ import com.intellij.workspaceModel.test.api.SimpleId
 import java.net.URL
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(6)
+@GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class EntityWithManyImportsImpl(private val dataSource: EntityWithManyImportsData) : EntityWithManyImports,
                                                                                               WorkspaceEntityBase(dataSource) {

@@ -3,6 +3,7 @@ package com.intellij.diff.tools.util.base;
 
 import com.intellij.diff.comparison.ComparisonPolicy;
 import com.intellij.openapi.diff.DiffBundle;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
@@ -12,7 +13,8 @@ public enum IgnorePolicy {
   TRIM_WHITESPACES("option.ignore.policy.trim"),
   IGNORE_WHITESPACES("option.ignore.policy.whitespaces"),
   IGNORE_WHITESPACES_CHUNKS("option.ignore.policy.whitespaces.empty.lines"),
-  FORMATTING("option.ignore.policy.formatting");
+  FORMATTING("option.ignore.policy.formatting"),
+  @ApiStatus.Experimental IGNORE_LANGUAGE_SPECIFIC_CHANGES("option.ignore.policy.language.specific.changes");
 
   private final @NotNull String myTextKey;
 
@@ -26,10 +28,14 @@ public enum IgnorePolicy {
 
   public @NotNull ComparisonPolicy getComparisonPolicy() {
     return switch (this) {
-      case DEFAULT, FORMATTING -> ComparisonPolicy.DEFAULT;
+      case DEFAULT, FORMATTING, IGNORE_LANGUAGE_SPECIFIC_CHANGES -> ComparisonPolicy.DEFAULT;
       case TRIM_WHITESPACES -> ComparisonPolicy.TRIM_WHITESPACES;
       case IGNORE_WHITESPACES, IGNORE_WHITESPACES_CHUNKS -> ComparisonPolicy.IGNORE_WHITESPACES;
     };
+  }
+
+  public boolean isShouldSquash() {
+    return this != IGNORE_LANGUAGE_SPECIFIC_CHANGES;
   }
 
   public boolean isShouldTrimChunks() {

@@ -344,6 +344,7 @@
       <reference ref="Vcs.ShowDiffWithLocal.Before"/>
       <reference ref="Vcs.EditSource"/>
       <reference ref="Vcs.OpenRepositoryVersion"/>
+      <separator/>
       <reference ref="Vcs.RevertSelectedChanges"/>
       <reference ref="Vcs.ApplySelectedChanges"/>
       <reference ref="ChangesView.CreatePatchFromChanges"/>
@@ -641,6 +642,12 @@
       <add-to-group group-id="VcsGeneral.KeymapGroup"/>
     </group>
 
+    <action id="CommitView.CloseWindowedFloatingTwOnCommit"
+            class="com.intellij.openapi.vcs.changes.ui.CloseWindowedFloatingTwOnCommitAction">
+      <override-text place="ToolwindowPopup"/>
+      <add-to-group group-id="CommitView.GearActions" anchor="last"/>
+    </action>
+
     <group id="LocalChangesView.GearActions">
       <group id="LocalChangesView.ShowOnDoubleClick" popup="true" searchable="false" class="com.intellij.ide.actions.NonEmptyActionGroup">
         <reference ref="CommitView.ShowOnDoubleClick.EditorPreview"/>
@@ -694,5 +701,11 @@
     <action id="MarkFileDirty" internal="true" class="com.intellij.openapi.vcs.changes.actions.MarkFileDirtyAction">
       <add-to-group group-id="Internal.VFS"/>
     </action>
+  </actions>
+
+  <actions resource-bundle="messages.VcsBundle">
+    <action id="Vcs.Commit.CloseDialog"
+            class="com.intellij.openapi.vcs.changes.actions.CloseCommitDialogAction"
+            use-shortcut-of="EditorEscape"/>
   </actions>
 </idea-plugin>

@@ -1,0 +1,1901 @@
+/bin/sh /mnt/agent/work/9412f1f43ea67e7/ide/plugins/maven/lib/maven3/bin/mvn -Didea.version=2025.2 -Dmaven.ext.class.path=/mnt/agent/work/9412f1f43ea67e7/ide/plugins/maven/lib/maven-event-listener.jar -Djansi.passthrough=true -Dstyle.color=always -Dtest=com.fasterxml.jackson.core.filter.BasicParserFilteringTest test
+[IJ]-1-ProjectDiscoveryStarted-[IJ]-id=unknown
+[INFO] Scanning for projects...
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.fasterxml.jackson:jackson-parent:pom:2.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.fasterxml:oss-parent:pom:28-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.scm:maven-scm-provider-gitexe:pom:1.9.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.scm:maven-scm-providers-git:pom:1.9.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.scm:maven-scm-providers:pom:1.9.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.scm:maven-scm:pom:1.9.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-parent:pom:24-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache:apache:pom:14-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=commons-io:commons-io:pom:2.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.commons:commons-parent:pom:24-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache:apache:pom:9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=commons-lang:commons-lang:pom:2.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.commons:commons-parent:pom:17-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache:apache:pom:7-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.scm:maven-scm-provider-git-commons:pom:1.9.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.scm:maven-scm-api:pom:1.9.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-utils:pom:3.0.15-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus:pom:3.3.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.spice:spice-parent:pom:17-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.forge:forge-parent:pom:10-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.scm:maven-scm-provider-gitexe:jar:1.9.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=commons-io:commons-io:jar:2.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=commons-lang:commons-lang:jar:2.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.scm:maven-scm-provider-git-commons:jar:1.9.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.scm:maven-scm-api:jar:1.9.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-utils:jar:3.0.15-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.scm:maven-scm-manager-plexus:pom:1.9.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.scm:maven-scm-managers:pom:1.9.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-container-default:pom:1.0-alpha-9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-containers:pom:1.0.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus:pom:1.0.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=junit:junit:pom:4.8.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=classworlds:classworlds:pom:1.1-alpha-2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.scm:maven-scm-manager-plexus:jar:1.9.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-container-default:jar:1.0-alpha-9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=junit:junit:jar:4.8.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=classworlds:classworlds:jar:1.1-alpha-2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.scm:maven-scm-api:jar:1.9.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-utils:jar:3.0.15-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.kathrynhuxtable.maven.wagon:wagon-gitsite:pom:0.3.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.scm:maven-scm-api:pom:1.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.scm:maven-scm:pom:1.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-parent:pom:15-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache:apache:pom:6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-utils:pom:1.5.8-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus:pom:2.0.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.scm:maven-scm-manager-plexus:pom:1.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.scm:maven-scm-managers:pom:1.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-container-default:pom:1.5.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-containers:pom:1.5.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus:pom:2.0.5-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-classworlds:pom:2.2.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus:pom:2.0.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.xbean:xbean-reflect:pom:3.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.xbean:xbean:pom:3.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache:apache:pom:4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=log4j:log4j:pom:1.2.12-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=commons-logging:commons-logging-api:pom:1.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.google.collections:google-collections:pom:1.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.google:google:pom:1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=junit:junit:pom:3.8.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.scm:maven-scm-provider-gitexe:pom:1.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.scm:maven-scm-providers-git:pom:1.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.scm:maven-scm-providers:pom:1.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=regexp:regexp:pom:1.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.scm:maven-scm-provider-git-commons:pom:1.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.wagon:wagon-provider-api:pom:1.0-beta-6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.wagon:wagon:pom:1.0-beta-6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-parent:pom:11-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache:apache:pom:5-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.kathrynhuxtable.maven.wagon:wagon-gitsite:jar:0.3.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.scm:maven-scm-api:jar:1.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-utils:jar:1.5.8-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.scm:maven-scm-manager-plexus:jar:1.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.scm:maven-scm-provider-gitexe:jar:1.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=regexp:regexp:jar:1.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.scm:maven-scm-provider-git-commons:jar:1.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.wagon:wagon-provider-api:jar:1.0-beta-6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.felix:maven-bundle-plugin:pom:2.5.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.felix:felix-parent:pom:2.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=biz.aQute.bnd:bndlib:pom:2.3.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=biz.aQute.bnd:parent:pom:2.3.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.osgi:org.osgi.core:pom:4.3.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.felix:org.apache.felix.bundlerepository:pom:1.6.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.osgi:org.osgi.core:pom:4.1.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.easymock:easymock:pom:2.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.felix:org.apache.felix.utils:pom:1.6.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.osgi:org.osgi.compendium:pom:4.2.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-core:pom:2.0.7-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven:pom:2.0.7-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-parent:pom:5-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache:apache:pom:3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-settings:pom:2.0.7-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-model:pom:2.0.7-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-utils:pom:1.4.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus:pom:1.0.11-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-container-default:pom:1.0-alpha-9-stable-1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-utils:pom:1.0.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-plugin-parameter-documenter:pom:2.0.7-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.reporting:maven-reporting-api:pom:2.0.7-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.reporting:maven-reporting:pom:2.0.7-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.doxia:doxia-sink-api:pom:1.0-alpha-7-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.doxia:doxia:pom:1.0-alpha-7-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-profile:pom:2.0.7-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-artifact:pom:2.0.7-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-repository-metadata:pom:2.0.7-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-error-diagnostics:pom:2.0.7-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-project:pom:2.0.7-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-artifact-manager:pom:2.0.7-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-plugin-registry:pom:2.0.7-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=commons-cli:commons-cli:pom:1.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-plugin-api:pom:2.0.7-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-plugin-descriptor:pom:2.0.7-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-interactivity-api:pom:1.0-alpha-4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-monitor:pom:2.0.7-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=classworlds:classworlds:pom:1.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-archiver:pom:2.5-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.shared:maven-shared-components:pom:17-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-parent:pom:21-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache:apache:pom:10-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-artifact:pom:2.0.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven:pom:2.0.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-model:pom:2.0.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-core:pom:2.0.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-settings:pom:2.0.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-plugin-parameter-documenter:pom:2.0.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.reporting:maven-reporting-api:pom:2.0.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.reporting:maven-reporting:pom:2.0.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-profile:pom:2.0.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-repository-metadata:pom:2.0.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-error-diagnostics:pom:2.0.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-project:pom:2.0.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-artifact-manager:pom:2.0.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-plugin-registry:pom:2.0.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-plugin-api:pom:2.0.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-plugin-descriptor:pom:2.0.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-monitor:pom:2.0.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-archiver:pom:2.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-utils:pom:3.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.spice:spice-parent:pom:16-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.forge:forge-parent:pom:5-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-io:pom:2.0.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-components:pom:1.1.19-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus:pom:3.0.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-interpolation:pom:1.15-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.shared:maven-dependency-tree:pom:2.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.shared:maven-shared-components:pom:19-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-parent:pom:23-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache:apache:pom:13-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-project:pom:2.2.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven:pom:2.2.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-settings:pom:2.2.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-model:pom:2.2.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-utils:pom:1.5.15-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-interpolation:pom:1.11-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-components:pom:1.1.14-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-profile:pom:2.2.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-artifact-manager:pom:2.2.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-repository-metadata:pom:2.2.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-artifact:pom:2.2.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=backport-util-concurrent:backport-util-concurrent:pom:3.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-plugin-registry:pom:2.2.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-component-annotations:pom:1.5.5-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-containers:pom:1.5.5-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus:pom:2.0.7-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.eclipse.aether:aether-util:pom:0.9.0.M2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.eclipse.aether:aether:pom:0.9.0.M2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-utils:pom:3.0.10-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus:pom:3.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.doxia:doxia-sink-api:pom:1.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.doxia:doxia:pom:1.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-parent:pom:10-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.doxia:doxia-site-renderer:pom:1.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.doxia:doxia-sitetools:pom:1.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.doxia:doxia-core:pom:1.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-utils:pom:1.5.7-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-container-default:pom:1.0-alpha-30-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-containers:pom:1.0-alpha-30-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-utils:pom:1.4.5-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-classworlds:pom:1.2-alpha-9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus:pom:1.0.10-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-i18n:pom:1.0-beta-7-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-components:pom:1.1.12-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-velocity:pom:1.1.7-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-container-default:pom:1.0-alpha-20-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-containers:pom:1.0-alpha-20-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-utils:pom:1.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus:pom:1.0.8-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-classworlds:pom:1.2-alpha-7-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus:pom:1.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.velocity:velocity:pom:1.5-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=commons-collections:commons-collections:pom:3.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=commons-lang:commons-lang:pom:2.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=oro:oro:pom:2.0.8-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.doxia:doxia-decoration-model:pom:1.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=commons-collections:commons-collections:pom:3.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.doxia:doxia-module-apt:pom:1.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.doxia:doxia-modules:pom:1.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.doxia:doxia-module-fml:pom:1.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.doxia:doxia-module-xdoc:pom:1.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.doxia:doxia-module-xhtml:pom:1.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.felix:maven-bundle-plugin:jar:2.5.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=biz.aQute.bnd:bndlib:jar:2.3.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.osgi:org.osgi.core:jar:4.3.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.felix:org.apache.felix.bundlerepository:jar:1.6.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.easymock:easymock:jar:2.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.felix:org.apache.felix.utils:jar:1.6.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.osgi:org.osgi.compendium:jar:4.2.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-core:jar:2.0.7-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-settings:jar:2.0.7-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-plugin-parameter-documenter:jar:2.0.7-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.reporting:maven-reporting-api:jar:2.0.7-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-profile:jar:2.0.7-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-model:jar:2.0.7-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-artifact:jar:2.0.7-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-container-default:jar:1.0-alpha-9-stable-1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=junit:junit:jar:3.8.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-repository-metadata:jar:2.0.7-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-error-diagnostics:jar:2.0.7-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-project:jar:2.0.7-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-plugin-registry:jar:2.0.7-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=commons-cli:commons-cli:jar:1.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-plugin-api:jar:2.0.7-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-plugin-descriptor:jar:2.0.7-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-interactivity-api:jar:1.0-alpha-4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-artifact-manager:jar:2.0.7-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-monitor:jar:2.0.7-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=classworlds:classworlds:jar:1.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-archiver:jar:2.5-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-archiver:jar:2.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-io:jar:2.0.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-interpolation:jar:1.15-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.shared:maven-dependency-tree:jar:2.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-component-annotations:jar:1.5.5-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.eclipse.aether:aether-util:jar:0.9.0.M2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-utils:jar:3.0.10-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.doxia:doxia-sink-api:jar:1.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.doxia:doxia-site-renderer:jar:1.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.doxia:doxia-core:jar:1.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-i18n:jar:1.0-beta-7-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-velocity:jar:1.1.7-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.velocity:velocity:jar:1.5-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=commons-lang:commons-lang:jar:2.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=oro:oro:jar:2.0.8-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.doxia:doxia-decoration-model:jar:1.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=commons-collections:commons-collections:jar:3.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.doxia:doxia-module-apt:jar:1.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.doxia:doxia-module-fml:jar:1.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.doxia:doxia-module-xdoc:jar:1.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.doxia:doxia-module-xhtml:jar:1.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.fasterxml.jackson:jackson-parent:pom:2.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.felix:maven-bundle-plugin:pom:3.2.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.felix:felix-parent:pom:4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache:apache:pom:17-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=biz.aQute.bnd:biz.aQute.bndlib:pom:3.2.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.easymock:easymock:pom:3.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.easymock:easymock-parent:pom:3.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.objenesis:objenesis:pom:2.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.objenesis:objenesis-parent:pom:2.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-core:pom:2.2.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=junit:junit:pom:4.12-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.hamcrest:hamcrest-core:pom:1.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.hamcrest:hamcrest-parent:pom:1.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-plugin-parameter-documenter:pom:2.2.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.slf4j:slf4j-jdk14:pom:1.5.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.slf4j:slf4j-parent:pom:1.5.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.slf4j:slf4j-api:pom:1.5.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.slf4j:jcl-over-slf4j:pom:1.5.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.reporting:maven-reporting-api:pom:2.2.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.reporting:maven-reporting:pom:2.2.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.doxia:doxia-sink-api:pom:1.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.doxia:doxia:pom:1.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.doxia:doxia-logging-api:pom:1.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-error-diagnostics:pom:2.2.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=commons-cli:commons-cli:pom:1.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.commons:commons-parent:pom:11-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-plugin-api:pom:2.2.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-plugin-descriptor:pom:2.2.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-monitor:pom:2.2.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.plexus:plexus-sec-dispatcher:pom:1.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.spice:spice-parent:pom:12-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.forge:forge-parent:pom:4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-utils:pom:1.5.5-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.plexus:plexus-cipher:pom:1.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.plexus:plexus-build-api:pom:0.0.7-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.spice:spice-parent:pom:15-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.jdom:jdom:pom:1.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.felix:maven-bundle-plugin:jar:3.2.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.osgi:org.osgi.core:jar:4.3.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=biz.aQute.bnd:biz.aQute.bndlib:jar:3.2.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.felix:org.apache.felix.bundlerepository:jar:1.6.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.easymock:easymock:jar:3.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.objenesis:objenesis:jar:2.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.felix:org.apache.felix.utils:jar:1.6.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.osgi:org.osgi.compendium:jar:4.2.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-core:jar:2.2.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-settings:jar:2.2.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-plugin-parameter-documenter:jar:2.2.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.slf4j:slf4j-jdk14:jar:1.5.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.slf4j:slf4j-api:jar:1.5.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.slf4j:jcl-over-slf4j:jar:1.5.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.reporting:maven-reporting-api:jar:2.2.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.doxia:doxia-logging-api:jar:1.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-profile:jar:2.2.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-model:jar:2.2.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-artifact:jar:2.2.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-container-default:jar:1.0-alpha-9-stable-1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=junit:junit:jar:4.12-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.hamcrest:hamcrest-core:jar:1.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-repository-metadata:jar:2.2.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-error-diagnostics:jar:2.2.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-project:jar:2.2.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-plugin-registry:jar:2.2.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=commons-cli:commons-cli:jar:1.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-plugin-api:jar:2.2.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-plugin-descriptor:jar:2.2.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-interactivity-api:jar:1.0-alpha-4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-artifact-manager:jar:2.2.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=backport-util-concurrent:backport-util-concurrent:jar:3.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-monitor:jar:2.2.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=classworlds:classworlds:jar:1.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.plexus:plexus-sec-dispatcher:jar:1.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.plexus:plexus-cipher:jar:1.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-archiver:jar:2.5-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-archiver:jar:2.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-io:jar:2.0.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-interpolation:jar:1.15-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.shared:maven-dependency-tree:jar:2.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-component-annotations:jar:1.5.5-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.eclipse.aether:aether-util:jar:0.9.0.M2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-utils:jar:3.0.10-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.plexus:plexus-build-api:jar:0.0.7-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.doxia:doxia-sink-api:jar:1.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.doxia:doxia-site-renderer:jar:1.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.doxia:doxia-core:jar:1.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-i18n:jar:1.0-beta-7-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-velocity:jar:1.1.7-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.velocity:velocity:jar:1.5-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=commons-lang:commons-lang:jar:2.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=oro:oro:jar:2.0.8-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.doxia:doxia-decoration-model:jar:1.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=commons-collections:commons-collections:jar:3.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.doxia:doxia-module-apt:jar:1.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.doxia:doxia-module-fml:jar:1.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.doxia:doxia-module-xdoc:jar:1.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.doxia:doxia-module-xhtml:jar:1.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.jdom:jdom:jar:1.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.fasterxml:oss-parent:pom:28-[IJ]-error=
+[IJ]-1-SessionStarted-[IJ]-id=com.fasterxml.jackson.core:jackson-core:bundle:2.9.0-SNAPSHOT-[IJ]-projects=com.fasterxml.jackson.core:jackson-core:2.9.0-SNAPSHOT&&
+[IJ]-1-ProjectStarted-[IJ]-id=com.fasterxml.jackson.core:jackson-core:bundle:2.9.0-SNAPSHOT
+[INFO]
+[INFO] --------------< com.fasterxml.jackson.core:jackson-core >---------------
+[INFO] Building Jackson-core 2.9.0-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] -------------------------------[ bundle ]-------------------------------
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.plugins:maven-site-plugin:pom:3.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.plugins:maven-plugins:pom:22-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.plugins:maven-site-plugin:jar:3.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.plugins:maven-enforcer-plugin:pom:1.3.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.enforcer:enforcer:pom:1.3.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.plugins:maven-enforcer-plugin:jar:1.3.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.mojo:build-helper-maven-plugin:pom:1.7-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.mojo:mojo-parent:pom:28-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus:codehaus-parent:pom:3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.mojo:build-helper-maven-plugin:jar:1.7-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.google.code.maven-replacer-plugin:replacer:pom:1.5.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.oss:oss-parent:pom:7-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.google.code.maven-replacer-plugin:replacer:jar:1.5.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.plugins:maven-resources-plugin:pom:2.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.plugins:maven-plugins:pom:23-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-parent:pom:22-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache:apache:pom:11-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.plugins:maven-resources-plugin:jar:2.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.plugins:maven-compiler-plugin:pom:3.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.plugins:maven-plugins:pom:25-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.plugins:maven-compiler-plugin:jar:3.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.plugins:maven-surefire-plugin:pom:2.17-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.surefire:surefire:pom:2.17-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.plugins:maven-surefire-plugin:jar:2.17-[IJ]-error=
+[IJ]-1-DependencyResolutionRequest-[IJ]-id=com.fasterxml.jackson.core:jackson-core:bundle:2.9.0-SNAPSHOT
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=junit:junit:jar:4.12-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.hamcrest:hamcrest-core:jar:1.3-[IJ]-error=
+[IJ]-1-DependencyResolutionResult-[IJ]-error=
+[IJ]-1-MojoStarted-[IJ]-source=LIFECYCLE-[IJ]-goal=enforce-[IJ]-id=com.fasterxml.jackson.core:jackson-core:bundle:2.9.0-SNAPSHOT-[IJ]-error=
+[INFO]
+[INFO] --- enforcer:1.3.1:enforce (enforce-java) @ jackson-core ---
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.plugins:maven-enforcer-plugin:pom:1.3.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-artifact:pom:2.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven:pom:2.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-parent:pom:8-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-plugin-api:pom:2.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-project:pom:2.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-settings:pom:2.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-model:pom:2.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=junit:junit:pom:4.11-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-profile:pom:2.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-artifact-manager:pom:2.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-repository-metadata:pom:2.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-plugin-registry:pom:2.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-core:pom:2.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-plugin-parameter-documenter:pom:2.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.reporting:maven-reporting-api:pom:2.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.reporting:maven-reporting:pom:2.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.doxia:doxia-sink-api:pom:1.0-alpha-10-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.doxia:doxia:pom:1.0-alpha-10-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-parent:pom:6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-error-diagnostics:pom:2.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-plugin-descriptor:pom:2.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-monitor:pom:2.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=commons-lang:commons-lang:pom:2.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.enforcer:enforcer-api:pom:1.3.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.enforcer:enforcer-rules:pom:1.3.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.shared:maven-common-artifact-filters:pom:1.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-model:pom:2.0.8-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven:pom:2.0.8-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-container-default:pom:1.5.5-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.beanshell:bsh:pom:2.0b4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.beanshell:beanshell:pom:2.0b4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-i18n:pom:1.0-beta-6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-components:pom:1.1.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-container-default:pom:1.0-alpha-8-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.plugins:maven-enforcer-plugin:jar:1.3.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-artifact:jar:2.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-plugin-api:jar:2.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-project:jar:2.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-settings:jar:2.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-profile:jar:2.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-model:jar:2.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-artifact-manager:jar:2.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-plugin-registry:jar:2.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-container-default:jar:1.0-alpha-9-stable-1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-core:jar:2.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-plugin-parameter-documenter:jar:2.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.reporting:maven-reporting-api:jar:2.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.doxia:doxia-sink-api:jar:1.0-alpha-10-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-repository-metadata:jar:2.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-error-diagnostics:jar:2.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=commons-cli:commons-cli:jar:1.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-plugin-descriptor:jar:2.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-interactivity-api:jar:1.0-alpha-4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-monitor:jar:2.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=classworlds:classworlds:jar:1.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-utils:jar:1.5.8-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=commons-lang:commons-lang:jar:2.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.enforcer:enforcer-api:jar:1.3.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.enforcer:enforcer-rules:jar:1.3.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.shared:maven-common-artifact-filters:jar:1.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.beanshell:bsh:jar:2.0b4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.shared:maven-dependency-tree:jar:2.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-component-annotations:jar:1.5.5-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.eclipse.aether:aether-util:jar:0.9.0.M2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-i18n:jar:1.0-beta-6-[IJ]-error=
+[IJ]-1-ARTIFACT_DOWNLOADING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-artifact:jar:2.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_DOWNLOADING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-plugin-api:jar:2.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_DOWNLOADING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-project:jar:2.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_DOWNLOADING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-settings:jar:2.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_DOWNLOADING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-profile:jar:2.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_DOWNLOADING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-model:jar:2.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_DOWNLOADING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-artifact-manager:jar:2.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_DOWNLOADING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-plugin-registry:jar:2.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_DOWNLOADING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-core:jar:2.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_DOWNLOADING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-plugin-parameter-documenter:jar:2.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_DOWNLOADING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.reporting:maven-reporting-api:jar:2.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_DOWNLOADING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.doxia:doxia-sink-api:jar:1.0-alpha-10-[IJ]-error=
+[IJ]-1-ARTIFACT_DOWNLOADING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-repository-metadata:jar:2.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_DOWNLOADING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-error-diagnostics:jar:2.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_DOWNLOADING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-plugin-descriptor:jar:2.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_DOWNLOADING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-monitor:jar:2.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_DOWNLOADING-[IJ]-path=-[IJ]-artifactCoord=commons-lang:commons-lang:jar:2.3-[IJ]-error=
+[IJ]-1-ARTIFACT_DOWNLOADING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.enforcer:enforcer-api:jar:1.3.1-[IJ]-error=
+[IJ]-1-ARTIFACT_DOWNLOADING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.enforcer:enforcer-rules:jar:1.3.1-[IJ]-error=
+[IJ]-1-ARTIFACT_DOWNLOADING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.shared:maven-common-artifact-filters:jar:1.4-[IJ]-error=
+[IJ]-1-ARTIFACT_DOWNLOADING-[IJ]-path=-[IJ]-artifactCoord=org.beanshell:bsh:jar:2.0b4-[IJ]-error=
+[IJ]-1-ARTIFACT_DOWNLOADING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-i18n:jar:1.0-beta-6-[IJ]-error=
+Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-artifact/2.0.9/maven-artifact-2.0.9.jar
+Progress (1): 16/89 kB
+Progress (1): 33/89 kB
+Progress (1): 49/89 kB
+Progress (1): 66/89 kB
+Progress (1): 82/89 kB
+Progress (1): 89 kB
+
+Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-artifact/2.0.9/maven-artifact-2.0.9.jar (89 kB at 342 kB/s)
+Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-plugin-api/2.0.9/maven-plugin-api-2.0.9.jar
+Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-settings/2.0.9/maven-settings-2.0.9.jar
+Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-profile/2.0.9/maven-profile-2.0.9.jar
+Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-model/2.0.9/maven-model-2.0.9.jar
+Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-project/2.0.9/maven-project-2.0.9.jar
+Progress (1): 16/49 kB
+Progress (1): 33/49 kB
+Progress (1): 49 kB
+
+Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-settings/2.0.9/maven-settings-2.0.9.jar (49 kB at 1.6 MB/s)
+Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-artifact-manager/2.0.9/maven-artifact-manager-2.0.9.jar
+Progress (1): 1.4/13 kB
+Progress (1): 2.8/13 kB
+Progress (1): 4.1/13 kB
+Progress (1): 5.5/13 kB
+Progress (1): 6.9/13 kB
+Progress (1): 8.3/13 kB
+Progress (2): 8.3/13 kB | 1.4/35 kB
+Progress (2): 9.7/13 kB | 1.4/35 kB
+Progress (2): 11/13 kB | 1.4/35 kB
+Progress (2): 12/13 kB | 1.4/35 kB
+Progress (2): 13 kB | 1.4/35 kB
+Progress (2): 13 kB | 2.8/35 kB
+Progress (2): 13 kB | 4.1/35 kB
+
+Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-plugin-api/2.0.9/maven-plugin-api-2.0.9.jar (13 kB at 286 kB/s)
+Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-plugin-registry/2.0.9/maven-plugin-registry-2.0.9.jar
+Progress (2): 4.1/35 kB | 1.4/122 kB
+Progress (2): 5.5/35 kB | 1.4/122 kB
+Progress (3): 5.5/35 kB | 1.4/122 kB | 16/87 kB
+Progress (3): 6.9/35 kB | 1.4/122 kB | 16/87 kB
+Progress (3): 6.9/35 kB | 2.8/122 kB | 16/87 kB
+Progress (3): 6.9/35 kB | 4.1/122 kB | 16/87 kB
+Progress (4): 6.9/35 kB | 4.1/122 kB | 16/87 kB | 16/58 kB
+Progress (4): 6.9/35 kB | 5.5/122 kB | 16/87 kB | 16/58 kB
+Progress (4): 6.9/35 kB | 6.9/122 kB | 16/87 kB | 16/58 kB
+Progress (4): 6.9/35 kB | 8.3/122 kB | 16/87 kB | 16/58 kB
+Progress (5): 6.9/35 kB | 8.3/122 kB | 16/87 kB | 16/58 kB | 1.4/29 kB
+Progress (5): 6.9/35 kB | 8.3/122 kB | 16/87 kB | 16/58 kB | 2.8/29 kB
+Progress (5): 6.9/35 kB | 8.3/122 kB | 33/87 kB | 16/58 kB | 2.8/29 kB
+Progress (5): 6.9/35 kB | 8.3/122 kB | 33/87 kB | 33/58 kB | 2.8/29 kB
+Progress (5): 8.3/35 kB | 8.3/122 kB | 33/87 kB | 33/58 kB | 2.8/29 kB
+Progress (5): 9.7/35 kB | 8.3/122 kB | 33/87 kB | 33/58 kB | 2.8/29 kB
+Progress (5): 11/35 kB | 8.3/122 kB | 33/87 kB | 33/58 kB | 2.8/29 kB
+Progress (5): 12/35 kB | 8.3/122 kB | 33/87 kB | 33/58 kB | 2.8/29 kB
+Progress (5): 12/35 kB | 8.3/122 kB | 33/87 kB | 49/58 kB | 2.8/29 kB
+Progress (5): 14/35 kB | 8.3/122 kB | 33/87 kB | 49/58 kB | 2.8/29 kB
+Progress (5): 15/35 kB | 8.3/122 kB | 33/87 kB | 49/58 kB | 2.8/29 kB
+Progress (5): 17/35 kB | 8.3/122 kB | 33/87 kB | 49/58 kB | 2.8/29 kB
+Progress (5): 17/35 kB | 8.3/122 kB | 33/87 kB | 58 kB | 2.8/29 kB
+Progress (5): 18/35 kB | 8.3/122 kB | 33/87 kB | 58 kB | 2.8/29 kB
+Progress (5): 19/35 kB | 8.3/122 kB | 33/87 kB | 58 kB | 2.8/29 kB
+Progress (5): 19/35 kB | 9.7/122 kB | 33/87 kB | 58 kB | 2.8/29 kB
+Progress (5): 19/35 kB | 9.7/122 kB | 49/87 kB | 58 kB | 2.8/29 kB
+Progress (5): 19/35 kB | 11/122 kB | 49/87 kB | 58 kB | 2.8/29 kB
+Progress (5): 19/35 kB | 12/122 kB | 49/87 kB | 58 kB | 2.8/29 kB
+Progress (5): 21/35 kB | 12/122 kB | 49/87 kB | 58 kB | 2.8/29 kB
+Progress (5): 21/35 kB | 14/122 kB | 49/87 kB | 58 kB | 2.8/29 kB
+Progress (5): 22/35 kB | 14/122 kB | 49/87 kB | 58 kB | 2.8/29 kB
+Progress (5): 22/35 kB | 14/122 kB | 49/87 kB | 58 kB | 4.1/29 kB
+Progress (5): 23/35 kB | 14/122 kB | 49/87 kB | 58 kB | 4.1/29 kB
+Progress (5): 23/35 kB | 14/122 kB | 49/87 kB | 58 kB | 5.5/29 kB
+Progress (5): 25/35 kB | 14/122 kB | 49/87 kB | 58 kB | 5.5/29 kB
+Progress (5): 25/35 kB | 14/122 kB | 49/87 kB | 58 kB | 6.9/29 kB
+Progress (5): 26/35 kB | 14/122 kB | 49/87 kB | 58 kB | 6.9/29 kB
+Progress (5): 26/35 kB | 14/122 kB | 49/87 kB | 58 kB | 8.3/29 kB
+Progress (5): 28/35 kB | 14/122 kB | 49/87 kB | 58 kB | 8.3/29 kB
+Progress (5): 29/35 kB | 14/122 kB | 49/87 kB | 58 kB | 8.3/29 kB
+Progress (5): 29/35 kB | 15/122 kB | 49/87 kB | 58 kB | 8.3/29 kB
+Progress (5): 29/35 kB | 15/122 kB | 66/87 kB | 58 kB | 8.3/29 kB
+
+Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-artifact-manager/2.0.9/maven-artifact-manager-2.0.9.jar (58 kB at 761 kB/s)
+Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-core/2.0.9/maven-core-2.0.9.jar
+Progress (4): 29/35 kB | 16/122 kB | 66/87 kB | 8.3/29 kB
+Progress (4): 29/35 kB | 16/122 kB | 66/87 kB | 9.7/29 kB
+Progress (4): 29/35 kB | 16/122 kB | 82/87 kB | 9.7/29 kB
+Progress (4): 29/35 kB | 16/122 kB | 82/87 kB | 11/29 kB
+Progress (4): 29/35 kB | 16/122 kB | 82/87 kB | 12/29 kB
+Progress (4): 29/35 kB | 16/122 kB | 87 kB | 12/29 kB
+Progress (4): 29/35 kB | 16/122 kB | 87 kB | 14/29 kB
+Progress (4): 29/35 kB | 16/122 kB | 87 kB | 15/29 kB
+Progress (4): 29/35 kB | 16/122 kB | 87 kB | 17/29 kB
+Progress (4): 29/35 kB | 16/122 kB | 87 kB | 18/29 kB
+
+Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-model/2.0.9/maven-model-2.0.9.jar (87 kB at 1.0 MB/s)
+Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-plugin-parameter-documenter/2.0.9/maven-plugin-parameter-documenter-2.0.9.jar
+Progress (3): 29/35 kB | 16/122 kB | 19/29 kB
+Progress (3): 29/35 kB | 16/122 kB | 21/29 kB
+Progress (3): 29/35 kB | 16/122 kB | 22/29 kB
+Progress (3): 29/35 kB | 16/122 kB | 23/29 kB
+Progress (3): 30/35 kB | 16/122 kB | 23/29 kB
+Progress (3): 30/35 kB | 16/122 kB | 25/29 kB
+Progress (3): 30/35 kB | 32/122 kB | 25/29 kB
+Progress (3): 32/35 kB | 32/122 kB | 25/29 kB
+Progress (3): 32/35 kB | 32/122 kB | 26/29 kB
+Progress (3): 33/35 kB | 32/122 kB | 26/29 kB
+Progress (3): 33/35 kB | 32/122 kB | 28/29 kB
+Progress (3): 34/35 kB | 32/122 kB | 28/29 kB
+Progress (3): 34/35 kB | 32/122 kB | 29/29 kB
+Progress (3): 34/35 kB | 32/122 kB | 29 kB
+Progress (3): 35 kB | 32/122 kB | 29 kB
+
+Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-plugin-registry/2.0.9/maven-plugin-registry-2.0.9.jar (29 kB at 334 kB/s)
+Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/reporting/maven-reporting-api/2.0.9/maven-reporting-api-2.0.9.jar
+Progress (3): 35 kB | 32/122 kB | 16/160 kB
+Progress (3): 35 kB | 49/122 kB | 16/160 kB
+Progress (3): 35 kB | 49/122 kB | 32/160 kB
+Progress (3): 35 kB | 65/122 kB | 32/160 kB
+Progress (3): 35 kB | 81/122 kB | 32/160 kB
+
+Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-profile/2.0.9/maven-profile-2.0.9.jar (35 kB at 361 kB/s)
+Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/doxia/doxia-sink-api/1.0-alpha-10/doxia-sink-api-1.0-alpha-10.jar
+Progress (2): 81/122 kB | 49/160 kB
+Progress (2): 81/122 kB | 65/160 kB
+Progress (2): 98/122 kB | 65/160 kB
+Progress (2): 98/122 kB | 78/160 kB
+Progress (2): 114/122 kB | 78/160 kB
+Progress (2): 114/122 kB | 94/160 kB
+Progress (2): 122 kB | 94/160 kB
+
+Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-project/2.0.9/maven-project-2.0.9.jar (122 kB at 1.2 MB/s)
+Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-repository-metadata/2.0.9/maven-repository-metadata-2.0.9.jar
+Progress (1): 111/160 kB
+Progress (1): 127/160 kB
+Progress (2): 127/160 kB | 16/25 kB
+Progress (2): 127/160 kB | 25 kB
+Progress (2): 143/160 kB | 25 kB
+
+Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-repository-metadata/2.0.9/maven-repository-metadata-2.0.9.jar (25 kB at 259 kB/s)
+Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-error-diagnostics/2.0.9/maven-error-diagnostics-2.0.9.jar
+Progress (1): 160 kB
+Progress (2): 160 kB | 1.4/10 kB
+Progress (2): 160 kB | 2.8/10 kB
+Progress (2): 160 kB | 4.1/10 kB
+Progress (2): 160 kB | 5.5/10 kB
+Progress (2): 160 kB | 6.9/10 kB
+Progress (2): 160 kB | 8.3/10 kB
+Progress (2): 160 kB | 9.7/10 kB
+Progress (2): 160 kB | 10 kB
+Progress (3): 160 kB | 10 kB | 9.9 kB
+
+Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/doxia/doxia-sink-api/1.0-alpha-10/doxia-sink-api-1.0-alpha-10.jar (9.9 kB at 101 kB/s)
+Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-plugin-descriptor/2.0.9/maven-plugin-descriptor-2.0.9.jar
+Progress (3): 160 kB | 10 kB | 14 kB
+
+Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/reporting/maven-reporting-api/2.0.9/maven-reporting-api-2.0.9.jar (10 kB at 99 kB/s)
+Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-error-diagnostics/2.0.9/maven-error-diagnostics-2.0.9.jar (14 kB at 135 kB/s)
+Downloading from central: https://repo.maven.apache.org/maven2/commons-lang/commons-lang/2.3/commons-lang-2.3.jar
+Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-monitor/2.0.9/maven-monitor-2.0.9.jar
+Progress (2): 160 kB | 16/37 kB
+Progress (2): 160 kB | 32/37 kB
+Progress (2): 160 kB | 37 kB
+
+Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-plugin-descriptor/2.0.9/maven-plugin-descriptor-2.0.9.jar (37 kB at 346 kB/s)
+Progress (2): 160 kB | 16/245 kB
+Progress (3): 160 kB | 16/245 kB | 1.4/10 kB
+Progress (3): 160 kB | 16/245 kB | 2.8/10 kB
+Progress (3): 160 kB | 16/245 kB | 4.1/10 kB
+Progress (3): 160 kB | 16/245 kB | 5.5/10 kB
+Progress (3): 160 kB | 16/245 kB | 6.9/10 kB
+Progress (3): 160 kB | 16/245 kB | 8.3/10 kB
+Progress (3): 160 kB | 16/245 kB | 9.7/10 kB
+Progress (3): 160 kB | 16/245 kB | 10 kB
+
+Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-monitor/2.0.9/maven-monitor-2.0.9.jar (10 kB at 95 kB/s)
+Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/enforcer/enforcer-api/1.3.1/enforcer-api-1.3.1.jar
+Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/enforcer/enforcer-rules/1.3.1/enforcer-rules-1.3.1.jar
+Progress (2): 160 kB | 33/245 kB
+
+Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-core/2.0.9/maven-core-2.0.9.jar (160 kB at 1.4 MB/s)
+Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/shared/maven-common-artifact-filters/1.4/maven-common-artifact-filters-1.4.jar
+Progress (2): 33/245 kB | 1.4/21 kB
+Progress (2): 33/245 kB | 2.8/21 kB
+Progress (2): 33/245 kB | 4.1/21 kB
+Progress (3): 33/245 kB | 4.1/21 kB | 9.8 kB
+Progress (3): 33/245 kB | 5.5/21 kB | 9.8 kB
+Progress (3): 33/245 kB | 6.9/21 kB | 9.8 kB
+Progress (3): 33/245 kB | 8.3/21 kB | 9.8 kB
+Progress (3): 33/245 kB | 9.7/21 kB | 9.8 kB
+Progress (3): 33/245 kB | 11/21 kB | 9.8 kB
+Progress (3): 33/245 kB | 12/21 kB | 9.8 kB
+Progress (3): 33/245 kB | 14/21 kB | 9.8 kB
+Progress (3): 33/245 kB | 15/21 kB | 9.8 kB
+Progress (3): 33/245 kB | 17/21 kB | 9.8 kB
+Progress (3): 33/245 kB | 18/21 kB | 9.8 kB
+Progress (3): 33/245 kB | 19/21 kB | 9.8 kB
+Progress (3): 33/245 kB | 21/21 kB | 9.8 kB
+Progress (3): 33/245 kB | 21 kB | 9.8 kB
+
+Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-plugin-parameter-documenter/2.0.9/maven-plugin-parameter-documenter-2.0.9.jar (21 kB at 174 kB/s)
+Downloading from central: https://repo.maven.apache.org/maven2/org/beanshell/bsh/2.0b4/bsh-2.0b4.jar
+Progress (2): 49/245 kB | 9.8 kB
+Progress (3): 49/245 kB | 9.8 kB | 16/87 kB
+Progress (3): 49/245 kB | 9.8 kB | 33/87 kB
+Progress (3): 66/245 kB | 9.8 kB | 33/87 kB
+Progress (3): 82/245 kB | 9.8 kB | 33/87 kB
+Progress (4): 82/245 kB | 9.8 kB | 33/87 kB | 16/32 kB
+Progress (4): 98/245 kB | 9.8 kB | 33/87 kB | 16/32 kB
+Progress (4): 98/245 kB | 9.8 kB | 33/87 kB | 32 kB
+Progress (4): 115/245 kB | 9.8 kB | 33/87 kB | 32 kB
+
+Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/shared/maven-common-artifact-filters/1.4/maven-common-artifact-filters-1.4.jar (32 kB at 249 kB/s)
+Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/enforcer/enforcer-api/1.3.1/enforcer-api-1.3.1.jar (9.8 kB at 77 kB/s)
+Downloading from central: https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-i18n/1.0-beta-6/plexus-i18n-1.0-beta-6.jar
+Progress (2): 131/245 kB | 33/87 kB
+Progress (3): 131/245 kB | 33/87 kB | 16/282 kB
+Progress (3): 131/245 kB | 33/87 kB | 33/282 kB
+Progress (3): 131/245 kB | 49/87 kB | 33/282 kB
+Progress (3): 131/245 kB | 66/87 kB | 33/282 kB
+Progress (3): 131/245 kB | 66/87 kB | 49/282 kB
+Progress (3): 131/245 kB | 82/87 kB | 49/282 kB
+Progress (3): 131/245 kB | 87 kB | 49/282 kB
+Progress (3): 131/245 kB | 87 kB | 66/282 kB
+
+Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/enforcer/enforcer-rules/1.3.1/enforcer-rules-1.3.1.jar (87 kB at 665 kB/s)
+Progress (3): 131/245 kB | 66/282 kB | 12 kB
+
+Downloaded from central: https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-i18n/1.0-beta-6/plexus-i18n-1.0-beta-6.jar (12 kB at 91 kB/s)
+Progress (2): 147/245 kB | 66/282 kB
+Progress (2): 147/245 kB | 82/282 kB
+Progress (2): 164/245 kB | 82/282 kB
+Progress (2): 180/245 kB | 82/282 kB
+Progress (2): 180/245 kB | 98/282 kB
+Progress (2): 197/245 kB | 98/282 kB
+Progress (2): 213/245 kB | 98/282 kB
+Progress (2): 229/245 kB | 98/282 kB
+Progress (2): 229/245 kB | 115/282 kB
+Progress (2): 245 kB | 115/282 kB
+
+Downloaded from central: https://repo.maven.apache.org/maven2/commons-lang/commons-lang/2.3/commons-lang-2.3.jar (245 kB at 1.8 MB/s)
+Progress (1): 131/282 kB
+Progress (1): 147/282 kB
+Progress (1): 164/282 kB
+Progress (1): 180/282 kB
+Progress (1): 197/282 kB
+Progress (1): 213/282 kB
+Progress (1): 229/282 kB
+Progress (1): 246/282 kB
+Progress (1): 262/282 kB
+Progress (1): 279/282 kB
+Progress (1): 282 kB
+
+Downloaded from central: https://repo.maven.apache.org/maven2/org/beanshell/bsh/2.0b4/bsh-2.0b4.jar (282 kB at 1.9 MB/s)
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.felix:maven-bundle-plugin:pom:2.5.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.felix:maven-bundle-plugin:jar:2.5.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.fasterxml.jackson:jackson-parent:pom:2.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.fasterxml:oss-parent:pom:28-[IJ]-error=
+[IJ]-1-MojoSucceeded-[IJ]-source=LIFECYCLE-[IJ]-goal=enforce-[IJ]-id=com.fasterxml.jackson.core:jackson-core:bundle:2.9.0-SNAPSHOT-[IJ]-error=
+[IJ]-1-MojoStarted-[IJ]-source=LIFECYCLE-[IJ]-goal=add-source-[IJ]-id=com.fasterxml.jackson.core:jackson-core:bundle:2.9.0-SNAPSHOT-[IJ]-error=
+[INFO]
+[INFO] --- build-helper:1.7:add-source (add-generated-sources) @ jackson-core ---
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.mojo:build-helper-maven-plugin:pom:1.7-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=junit:junit:pom:3.8.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-plugin-api:pom:2.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven:pom:2.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.mojo:build-helper-maven-plugin:jar:1.7-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-model:jar:2.0.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-project:jar:2.0.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-settings:jar:2.0.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-profile:jar:2.0.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-artifact-manager:jar:2.0.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-plugin-registry:jar:2.0.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-container-default:jar:1.0-alpha-9-stable-1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-core:jar:2.0.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-plugin-parameter-documenter:jar:2.0.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.reporting:maven-reporting-api:jar:2.0.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.doxia:doxia-sink-api:jar:1.0-alpha-7-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-repository-metadata:jar:2.0.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-error-diagnostics:jar:2.0.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=commons-cli:commons-cli:jar:1.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-plugin-descriptor:jar:2.0.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-interactivity-api:jar:1.0-alpha-4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-monitor:jar:2.0.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=classworlds:classworlds:jar:1.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-plugin-api:jar:2.0.6-[IJ]-error=
+[INFO] Artifact org.apache.maven:maven-plugin-api:jar:2.0.6 is present in the local repository, but cached from a remote repository ID that is unavailable in current build context, verifying that is downloadable from [central (https://repo.maven.apache.org/maven2, default, releases), maven-default-http-blocker (http://0.0.0.0/, default, snapshots, blocked)]
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-artifact:jar:2.0.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-utils:jar:1.5.8-[IJ]-error=
+[INFO] Artifact org.apache.maven:maven-plugin-api:jar:2.0.6 is present in the local repository, but cached from a remote repository ID that is unavailable in current build context, verifying that is downloadable from [central (https://repo.maven.apache.org/maven2, default, releases), maven-default-http-blocker (http://0.0.0.0/, default, snapshots, blocked)]
+[IJ]-1-ARTIFACT_DOWNLOADING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-project:jar:2.0.6-[IJ]-error=
+[IJ]-1-ARTIFACT_DOWNLOADING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-settings:jar:2.0.6-[IJ]-error=
+[IJ]-1-ARTIFACT_DOWNLOADING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-profile:jar:2.0.6-[IJ]-error=
+[IJ]-1-ARTIFACT_DOWNLOADING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-artifact-manager:jar:2.0.6-[IJ]-error=
+[IJ]-1-ARTIFACT_DOWNLOADING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-plugin-registry:jar:2.0.6-[IJ]-error=
+[IJ]-1-ARTIFACT_DOWNLOADING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-plugin-parameter-documenter:jar:2.0.6-[IJ]-error=
+[IJ]-1-ARTIFACT_DOWNLOADING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.reporting:maven-reporting-api:jar:2.0.6-[IJ]-error=
+[IJ]-1-ARTIFACT_DOWNLOADING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-repository-metadata:jar:2.0.6-[IJ]-error=
+[IJ]-1-ARTIFACT_DOWNLOADING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-error-diagnostics:jar:2.0.6-[IJ]-error=
+[IJ]-1-ARTIFACT_DOWNLOADING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-plugin-descriptor:jar:2.0.6-[IJ]-error=
+[IJ]-1-ARTIFACT_DOWNLOADING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-monitor:jar:2.0.6-[IJ]-error=
+[IJ]-1-ARTIFACT_DOWNLOADING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-plugin-api:jar:2.0.6-[IJ]-error=
+Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-project/2.0.6/maven-project-2.0.6.jar
+Progress (1): 16/116 kB
+Progress (1): 33/116 kB
+Progress (1): 49/116 kB
+Progress (1): 66/116 kB
+Progress (1): 82/116 kB
+Progress (1): 98/116 kB
+Progress (1): 115/116 kB
+Progress (1): 116 kB
+
+Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-project/2.0.6/maven-project-2.0.6.jar (116 kB at 15 MB/s)
+Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-settings/2.0.6/maven-settings-2.0.6.jar
+Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-profile/2.0.6/maven-profile-2.0.6.jar
+Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-artifact-manager/2.0.6/maven-artifact-manager-2.0.6.jar
+Progress (1): 16/49 kB
+
+Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-plugin-registry/2.0.6/maven-plugin-registry-2.0.6.jar
+Progress (1): 33/49 kB
+Progress (1): 49 kB
+
+Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-settings/2.0.6/maven-settings-2.0.6.jar (49 kB at 8.2 MB/s)
+Progress (1): 16/57 kB
+Progress (1): 33/57 kB
+Progress (1): 49/57 kB
+Progress (1): 57 kB
+
+Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/reporting/maven-reporting-api/2.0.6/maven-reporting-api-2.0.6.jar
+Progress (2): 57 kB | 16/29 kB
+
+Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-plugin-parameter-documenter/2.0.6/maven-plugin-parameter-documenter-2.0.6.jar
+Progress (3): 57 kB | 16/29 kB | 16/35 kB
+Progress (3): 57 kB | 16/29 kB | 33/35 kB
+Progress (3): 57 kB | 16/29 kB | 35 kB
+
+Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-profile/2.0.6/maven-profile-2.0.6.jar (35 kB at 1.9 MB/s)
+Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-repository-metadata/2.0.6/maven-repository-metadata-2.0.6.jar
+Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-artifact-manager/2.0.6/maven-artifact-manager-2.0.6.jar (57 kB at 3.1 MB/s)
+Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-error-diagnostics/2.0.6/maven-error-diagnostics-2.0.6.jar
+Progress (2): 16/29 kB | 16/21 kB
+Progress (2): 16/29 kB | 21 kB
+Progress (2): 29 kB | 21 kB
+
+Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-plugin-parameter-documenter/2.0.6/maven-plugin-parameter-documenter-2.0.6.jar (21 kB at 1.1 MB/s)
+Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-plugin-descriptor/2.0.6/maven-plugin-descriptor-2.0.6.jar
+Progress (2): 29 kB | 16/24 kB
+
+Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-plugin-registry/2.0.6/maven-plugin-registry-2.0.6.jar (29 kB at 1.4 MB/s)
+Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-monitor/2.0.6/maven-monitor-2.0.6.jar
+Progress (1): 24 kB
+
+Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-repository-metadata/2.0.6/maven-repository-metadata-2.0.6.jar (24 kB at 1.7 MB/s)
+Progress (1): 14 kB
+
+Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-plugin-api/2.0.6/maven-plugin-api-2.0.6.jar
+Progress (2): 14 kB | 9.9 kB
+
+Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-error-diagnostics/2.0.6/maven-error-diagnostics-2.0.6.jar (14 kB at 801 kB/s)
+Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/reporting/maven-reporting-api/2.0.6/maven-reporting-api-2.0.6.jar (9.9 kB at 552 kB/s)
+Progress (1): 16/37 kB
+Progress (1): 33/37 kB
+Progress (1): 37 kB
+
+Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-plugin-api/2.0.6/maven-plugin-api-2.0.6.jar (0 B at 0 B/s)
+Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-plugin-descriptor/2.0.6/maven-plugin-descriptor-2.0.6.jar (37 kB at 1.6 MB/s)
+Progress (1): 10 kB
+
+Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-monitor/2.0.6/maven-monitor-2.0.6.jar (10 kB at 427 kB/s)
+[INFO] Source directory: /mnt/agent/work/9412f1f43ea67e7/evaluation-project/target/generated-sources added.
+[IJ]-1-MojoSucceeded-[IJ]-source=LIFECYCLE-[IJ]-goal=add-source-[IJ]-id=com.fasterxml.jackson.core:jackson-core:bundle:2.9.0-SNAPSHOT-[IJ]-error=
+[IJ]-1-MojoStarted-[IJ]-source=LIFECYCLE-[IJ]-goal=replace-[IJ]-id=com.fasterxml.jackson.core:jackson-core:bundle:2.9.0-SNAPSHOT-[IJ]-error=
+[INFO]
+[INFO] --- replacer:1.5.2:replace (process-packageVersion) @ jackson-core ---
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.google.code.maven-replacer-plugin:replacer:pom:1.5.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-plugin-api:pom:3.0.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven:pom:3.0.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-model:pom:3.0.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-utils:pom:2.0.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-artifact:pom:3.0.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.sisu:sisu-inject-plexus:pom:2.1.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.sisu.inject:guice-plexus:pom:2.1.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.sisu.inject:guice-bean:pom:2.1.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.sisu:sisu-inject:pom:2.1.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.sisu:sisu-parent:pom:2.1.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.forge:forge-parent:pom:7-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-classworlds:pom:2.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-utils:pom:2.0.5-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus:pom:2.0.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.sisu:sisu-inject-bean:pom:2.1.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.sisu:sisu-guice:pom:2.9.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.sisu.inject:guice-parent:pom:2.9.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.forge:forge-parent:pom:6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.ant:ant:pom:1.8.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.ant:ant-parent:pom:1.8.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.ant:ant-launcher:pom:1.8.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=commons-io:commons-io:pom:2.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.commons:commons-parent:pom:22-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=xerces:xercesImpl:pom:2.8.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache:apache:pom:1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=xml-apis:xml-apis:pom:1.3.03-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.google.code.maven-replacer-plugin:replacer:jar:1.5.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-plugin-api:jar:3.0.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-model:jar:3.0.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-utils:jar:2.0.6-[IJ]-error=
+[INFO] Artifact org.codehaus.plexus:plexus-utils:jar:2.0.6 is present in the local repository, but cached from a remote repository ID that is unavailable in current build context, verifying that is downloadable from [central (https://repo.maven.apache.org/maven2, default, releases), sonatype-nexus-snapshots (https://oss.sonatype.org/content/repositories/snapshots, default, snapshots), maven-default-http-blocker (http://0.0.0.0/, default, snapshots, blocked)]
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-artifact:jar:3.0.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.sisu:sisu-inject-plexus:jar:2.1.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-component-annotations:jar:1.5.5-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-classworlds:jar:2.4-[IJ]-error=
+[INFO] Artifact org.codehaus.plexus:plexus-classworlds:jar:2.4 is present in the local repository, but cached from a remote repository ID that is unavailable in current build context, verifying that is downloadable from [central (https://repo.maven.apache.org/maven2, default, releases), sonatype-nexus-snapshots (https://oss.sonatype.org/content/repositories/snapshots, default, snapshots), maven-default-http-blocker (http://0.0.0.0/, default, snapshots, blocked)]
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.sisu:sisu-inject-bean:jar:2.1.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.sisu:sisu-guice:jar:no_aop:2.9.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.ant:ant:jar:1.8.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.ant:ant-launcher:jar:1.8.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=commons-lang:commons-lang:jar:2.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=commons-io:commons-io:jar:2.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=xerces:xercesImpl:jar:2.8.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=xml-apis:xml-apis:jar:1.3.03-[IJ]-error=
+[INFO] Artifact org.codehaus.plexus:plexus-utils:jar:2.0.6 is present in the local repository, but cached from a remote repository ID that is unavailable in current build context, verifying that is downloadable from [central (https://repo.maven.apache.org/maven2, default, releases), sonatype-nexus-snapshots (https://oss.sonatype.org/content/repositories/snapshots, default, snapshots), maven-default-http-blocker (http://0.0.0.0/, default, snapshots, blocked)]
+[INFO] Artifact org.codehaus.plexus:plexus-classworlds:jar:2.4 is present in the local repository, but cached from a remote repository ID that is unavailable in current build context, verifying that is downloadable from [central (https://repo.maven.apache.org/maven2, default, releases), sonatype-nexus-snapshots (https://oss.sonatype.org/content/repositories/snapshots, default, snapshots), maven-default-http-blocker (http://0.0.0.0/, default, snapshots, blocked)]
+[IJ]-1-ARTIFACT_DOWNLOADING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-plugin-api:jar:3.0.3-[IJ]-error=
+[IJ]-1-ARTIFACT_DOWNLOADING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-model:jar:3.0.3-[IJ]-error=
+[IJ]-1-ARTIFACT_DOWNLOADING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-utils:jar:2.0.6-[IJ]-error=
+[IJ]-1-ARTIFACT_DOWNLOADING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-artifact:jar:3.0.3-[IJ]-error=
+[IJ]-1-ARTIFACT_DOWNLOADING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.sisu:sisu-inject-plexus:jar:2.1.1-[IJ]-error=
+[IJ]-1-ARTIFACT_DOWNLOADING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-classworlds:jar:2.4-[IJ]-error=
+[IJ]-1-ARTIFACT_DOWNLOADING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.sisu:sisu-inject-bean:jar:2.1.1-[IJ]-error=
+[IJ]-1-ARTIFACT_DOWNLOADING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.sisu:sisu-guice:jar:no_aop:2.9.4-[IJ]-error=
+[IJ]-1-ARTIFACT_DOWNLOADING-[IJ]-path=-[IJ]-artifactCoord=org.apache.ant:ant:jar:1.8.2-[IJ]-error=
+[IJ]-1-ARTIFACT_DOWNLOADING-[IJ]-path=-[IJ]-artifactCoord=org.apache.ant:ant-launcher:jar:1.8.2-[IJ]-error=
+[IJ]-1-ARTIFACT_DOWNLOADING-[IJ]-path=-[IJ]-artifactCoord=commons-io:commons-io:jar:2.1-[IJ]-error=
+[IJ]-1-ARTIFACT_DOWNLOADING-[IJ]-path=-[IJ]-artifactCoord=xerces:xercesImpl:jar:2.8.0-[IJ]-error=
+[IJ]-1-ARTIFACT_DOWNLOADING-[IJ]-path=-[IJ]-artifactCoord=xml-apis:xml-apis:jar:1.3.03-[IJ]-error=
+Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-plugin-api/3.0.3/maven-plugin-api-3.0.3.jar
+Progress (1): 16/49 kB
+Progress (1): 32/49 kB
+Progress (1): 49/49 kB
+Progress (1): 49 kB
+
+Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-plugin-api/3.0.3/maven-plugin-api-3.0.3.jar (49 kB at 8.2 MB/s)
+Downloading from central: https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-utils/2.0.6/plexus-utils-2.0.6.jar
+Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-model/3.0.3/maven-model-3.0.3.jar
+Progress (1): 16/163 kB
+Progress (1): 33/163 kB
+
+Downloaded from central: https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-utils/2.0.6/plexus-utils-2.0.6.jar (0 B at 0 B/s)
+Progress (1): 49/163 kB
+Progress (1): 62/163 kB
+Progress (1): 78/163 kB
+Progress (1): 95/163 kB
+Progress (1): 111/163 kB
+Progress (1): 128/163 kB
+Progress (1): 144/163 kB
+Progress (1): 160/163 kB
+Progress (1): 163 kB
+
+Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-model/3.0.3/maven-model-3.0.3.jar (163 kB at 18 MB/s)
+Downloading from central: https://repo.maven.apache.org/maven2/org/sonatype/sisu/sisu-inject-plexus/2.1.1/sisu-inject-plexus-2.1.1.jar
+Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-artifact/3.0.3/maven-artifact-3.0.3.jar
+Downloading from central: https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-classworlds/2.4/plexus-classworlds-2.4.jar
+Downloading from central: https://repo.maven.apache.org/maven2/org/sonatype/sisu/sisu-inject-bean/2.1.1/sisu-inject-bean-2.1.1.jar
+Downloading from central: https://repo.maven.apache.org/maven2/org/sonatype/sisu/sisu-guice/2.9.4/sisu-guice-2.9.4-no_aop.jar
+Progress (1): 16/196 kB
+Progress (1): 33/196 kB
+Progress (1): 49/196 kB
+Progress (1): 63/196 kB
+Progress (1): 79/196 kB
+Progress (2): 79/196 kB | 16/52 kB
+Progress (2): 95/196 kB | 16/52 kB
+Progress (2): 112/196 kB | 16/52 kB
+Progress (2): 112/196 kB | 33/52 kB
+Progress (2): 128/196 kB | 33/52 kB
+Progress (2): 144/196 kB | 33/52 kB
+Progress (3): 144/196 kB | 33/52 kB | 16/230 kB
+Progress (3): 144/196 kB | 49/52 kB | 16/230 kB
+Progress (3): 161/196 kB | 49/52 kB | 16/230 kB
+Progress (3): 161/196 kB | 52 kB | 16/230 kB
+Progress (3): 177/196 kB | 52 kB | 16/230 kB
+Progress (3): 177/196 kB | 52 kB | 33/230 kB
+Progress (3): 194/196 kB | 52 kB | 33/230 kB
+Progress (3): 196 kB | 52 kB | 33/230 kB
+Progress (3): 196 kB | 52 kB | 49/230 kB
+Progress (3): 196 kB | 52 kB | 62/230 kB
+
+Downloaded from central: https://repo.maven.apache.org/maven2/org/sonatype/sisu/sisu-inject-plexus/2.1.1/sisu-inject-plexus-2.1.1.jar (196 kB at 15 MB/s)
+Downloading from central: https://repo.maven.apache.org/maven2/org/apache/ant/ant/1.8.2/ant-1.8.2.jar
+Progress (2): 52 kB | 79/230 kB
+Progress (2): 52 kB | 95/230 kB
+
+Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-artifact/3.0.3/maven-artifact-3.0.3.jar (52 kB at 2.1 MB/s)
+Downloading from central: https://repo.maven.apache.org/maven2/org/apache/ant/ant-launcher/1.8.2/ant-launcher-1.8.2.jar
+Progress (2): 95/230 kB | 16/484 kB
+Progress (2): 95/230 kB | 33/484 kB
+Progress (2): 95/230 kB | 49/484 kB
+Progress (2): 95/230 kB | 64/484 kB
+Progress (2): 112/230 kB | 64/484 kB
+Progress (2): 112/230 kB | 80/484 kB
+Progress (2): 128/230 kB | 80/484 kB
+Progress (2): 128/230 kB | 97/484 kB
+Progress (2): 144/230 kB | 97/484 kB
+Progress (2): 161/230 kB | 97/484 kB
+Progress (2): 161/230 kB | 113/484 kB
+Progress (2): 177/230 kB | 113/484 kB
+Progress (2): 177/230 kB | 129/484 kB
+
+Downloaded from central: https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-classworlds/2.4/plexus-classworlds-2.4.jar (0 B at 0 B/s)
+Progress (2): 177/230 kB | 146/484 kB
+
+Downloading from central: https://repo.maven.apache.org/maven2/commons-io/commons-io/2.1/commons-io-2.1.jar
+Progress (2): 177/230 kB | 162/484 kB
+Progress (2): 194/230 kB | 162/484 kB
+Progress (2): 210/230 kB | 162/484 kB
+Progress (2): 210/230 kB | 179/484 kB
+Progress (2): 226/230 kB | 179/484 kB
+Progress (2): 226/230 kB | 195/484 kB
+Progress (2): 230 kB | 195/484 kB
+Progress (2): 230 kB | 211/484 kB
+Progress (2): 230 kB | 228/484 kB
+Progress (2): 230 kB | 244/484 kB
+Progress (3): 230 kB | 244/484 kB | 16/163 kB
+Progress (3): 230 kB | 260/484 kB | 16/163 kB
+Progress (3): 230 kB | 260/484 kB | 33/163 kB
+Progress (3): 230 kB | 277/484 kB | 33/163 kB
+Progress (3): 230 kB | 293/484 kB | 33/163 kB
+Progress (3): 230 kB | 293/484 kB | 49/163 kB
+Progress (3): 230 kB | 310/484 kB | 49/163 kB
+Progress (3): 230 kB | 310/484 kB | 66/163 kB
+Progress (4): 230 kB | 310/484 kB | 66/163 kB | 12 kB
+Progress (4): 230 kB | 310/484 kB | 82/163 kB | 12 kB
+Progress (4): 230 kB | 310/484 kB | 98/163 kB | 12 kB
+
+Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/ant/ant-launcher/1.8.2/ant-launcher-1.8.2.jar (12 kB at 456 kB/s)
+Progress (3): 230 kB | 326/484 kB | 98/163 kB
+
+Downloading from central: https://repo.maven.apache.org/maven2/xerces/xercesImpl/2.8.0/xercesImpl-2.8.0.jar
+Progress (3): 230 kB | 326/484 kB | 115/163 kB
+Progress (3): 230 kB | 342/484 kB | 115/163 kB
+
+Downloaded from central: https://repo.maven.apache.org/maven2/org/sonatype/sisu/sisu-inject-bean/2.1.1/sisu-inject-bean-2.1.1.jar (230 kB at 7.9 MB/s)
+Progress (2): 359/484 kB | 115/163 kB
+Progress (3): 359/484 kB | 115/163 kB | 0/1.9 MB
+Progress (3): 375/484 kB | 115/163 kB | 0/1.9 MB
+Progress (3): 392/484 kB | 115/163 kB | 0/1.9 MB
+Progress (3): 392/484 kB | 115/163 kB | 0/1.9 MB
+Progress (3): 392/484 kB | 115/163 kB | 0/1.9 MB
+Progress (3): 408/484 kB | 115/163 kB | 0/1.9 MB
+Progress (3): 408/484 kB | 115/163 kB | 0.1/1.9 MB
+Progress (3): 424/484 kB | 115/163 kB | 0.1/1.9 MB
+Progress (3): 424/484 kB | 115/163 kB | 0.1/1.9 MB
+Progress (3): 424/484 kB | 115/163 kB | 0.1/1.9 MB
+Progress (3): 424/484 kB | 115/163 kB | 0.1/1.9 MB
+Progress (3): 424/484 kB | 115/163 kB | 0.1/1.9 MB
+Progress (4): 424/484 kB | 115/163 kB | 0.1/1.9 MB | 0/1.2 MB
+Progress (4): 424/484 kB | 115/163 kB | 0.1/1.9 MB | 0/1.2 MB
+Progress (4): 424/484 kB | 115/163 kB | 0.1/1.9 MB | 0/1.2 MB
+Progress (4): 424/484 kB | 115/163 kB | 0.2/1.9 MB | 0/1.2 MB
+Progress (4): 424/484 kB | 115/163 kB | 0.2/1.9 MB | 0/1.2 MB
+Progress (4): 424/484 kB | 115/163 kB | 0.2/1.9 MB | 0.1/1.2 MB
+Progress (4): 441/484 kB | 115/163 kB | 0.2/1.9 MB | 0.1/1.2 MB
+Progress (4): 441/484 kB | 115/163 kB | 0.2/1.9 MB | 0.1/1.2 MB
+Progress (4): 441/484 kB | 115/163 kB | 0.2/1.9 MB | 0.1/1.2 MB
+Progress (4): 441/484 kB | 115/163 kB | 0.2/1.9 MB | 0.1/1.2 MB
+Progress (4): 441/484 kB | 115/163 kB | 0.2/1.9 MB | 0.1/1.2 MB
+Progress (4): 441/484 kB | 115/163 kB | 0.2/1.9 MB | 0.1/1.2 MB
+Progress (4): 457/484 kB | 115/163 kB | 0.2/1.9 MB | 0.1/1.2 MB
+Progress (4): 473/484 kB | 115/163 kB | 0.2/1.9 MB | 0.1/1.2 MB
+Progress (4): 473/484 kB | 115/163 kB | 0.2/1.9 MB | 0.1/1.2 MB
+Progress (4): 484 kB | 115/163 kB | 0.2/1.9 MB | 0.1/1.2 MB
+Progress (4): 484 kB | 115/163 kB | 0.2/1.9 MB | 0.1/1.2 MB
+Progress (4): 484 kB | 115/163 kB | 0.2/1.9 MB | 0.1/1.2 MB
+Progress (4): 484 kB | 115/163 kB | 0.2/1.9 MB | 0.1/1.2 MB
+Progress (4): 484 kB | 115/163 kB | 0.3/1.9 MB | 0.1/1.2 MB
+Progress (4): 484 kB | 115/163 kB | 0.3/1.9 MB | 0.1/1.2 MB
+Progress (4): 484 kB | 115/163 kB | 0.3/1.9 MB | 0.2/1.2 MB
+
+Downloaded from central: https://repo.maven.apache.org/maven2/org/sonatype/sisu/sisu-guice/2.9.4/sisu-guice-2.9.4-no_aop.jar (484 kB at 12 MB/s)
+Downloading from central: https://repo.maven.apache.org/maven2/xml-apis/xml-apis/1.3.03/xml-apis-1.3.03.jar
+Progress (3): 115/163 kB | 0.3/1.9 MB | 0.2/1.2 MB
+Progress (3): 115/163 kB | 0.3/1.9 MB | 0.2/1.2 MB
+Progress (3): 115/163 kB | 0.3/1.9 MB | 0.2/1.2 MB
+Progress (3): 115/163 kB | 0.3/1.9 MB | 0.2/1.2 MB
+Progress (3): 115/163 kB | 0.3/1.9 MB | 0.2/1.2 MB
+Progress (3): 131/163 kB | 0.3/1.9 MB | 0.2/1.2 MB
+Progress (3): 147/163 kB | 0.3/1.9 MB | 0.2/1.2 MB
+Progress (3): 147/163 kB | 0.3/1.9 MB | 0.2/1.2 MB
+Progress (3): 163 kB | 0.3/1.9 MB | 0.2/1.2 MB
+Progress (3): 163 kB | 0.3/1.9 MB | 0.2/1.2 MB
+
+Downloaded from central: https://repo.maven.apache.org/maven2/commons-io/commons-io/2.1/commons-io-2.1.jar (163 kB at 3.8 MB/s)
+Progress (2): 0.3/1.9 MB | 0.2/1.2 MB
+Progress (3): 0.3/1.9 MB | 0.2/1.2 MB | 16/195 kB
+Progress (3): 0.3/1.9 MB | 0.2/1.2 MB | 33/195 kB
+Progress (3): 0.3/1.9 MB | 0.2/1.2 MB | 49/195 kB
+Progress (3): 0.3/1.9 MB | 0.2/1.2 MB | 66/195 kB
+Progress (3): 0.3/1.9 MB | 0.2/1.2 MB | 66/195 kB
+Progress (3): 0.3/1.9 MB | 0.3/1.2 MB | 66/195 kB
+Progress (3): 0.3/1.9 MB | 0.3/1.2 MB | 66/195 kB
+Progress (3): 0.3/1.9 MB | 0.3/1.2 MB | 82/195 kB
+Progress (3): 0.4/1.9 MB | 0.3/1.2 MB | 82/195 kB
+Progress (3): 0.4/1.9 MB | 0.3/1.2 MB | 82/195 kB
+Progress (3): 0.4/1.9 MB | 0.3/1.2 MB | 98/195 kB
+Progress (3): 0.4/1.9 MB | 0.3/1.2 MB | 98/195 kB
+Progress (3): 0.4/1.9 MB | 0.3/1.2 MB | 115/195 kB
+Progress (3): 0.4/1.9 MB | 0.3/1.2 MB | 115/195 kB
+Progress (3): 0.4/1.9 MB | 0.3/1.2 MB | 131/195 kB
+Progress (3): 0.4/1.9 MB | 0.3/1.2 MB | 131/195 kB
+Progress (3): 0.4/1.9 MB | 0.3/1.2 MB | 147/195 kB
+Progress (3): 0.4/1.9 MB | 0.3/1.2 MB | 147/195 kB
+Progress (3): 0.4/1.9 MB | 0.3/1.2 MB | 164/195 kB
+Progress (3): 0.4/1.9 MB | 0.3/1.2 MB | 180/195 kB
+Progress (3): 0.4/1.9 MB | 0.3/1.2 MB | 180/195 kB
+Progress (3): 0.4/1.9 MB | 0.3/1.2 MB | 195 kB
+Progress (3): 0.4/1.9 MB | 0.4/1.2 MB | 195 kB
+Progress (3): 0.4/1.9 MB | 0.4/1.2 MB | 195 kB
+
+Downloaded from central: https://repo.maven.apache.org/maven2/xml-apis/xml-apis/1.3.03/xml-apis-1.3.03.jar (195 kB at 4.0 MB/s)
+Progress (2): 0.4/1.9 MB | 0.4/1.2 MB
+Progress (2): 0.4/1.9 MB | 0.4/1.2 MB
+Progress (2): 0.4/1.9 MB | 0.4/1.2 MB
+Progress (2): 0.4/1.9 MB | 0.4/1.2 MB
+Progress (2): 0.4/1.9 MB | 0.4/1.2 MB
+Progress (2): 0.4/1.9 MB | 0.4/1.2 MB
+Progress (2): 0.5/1.9 MB | 0.4/1.2 MB
+Progress (2): 0.5/1.9 MB | 0.4/1.2 MB
+Progress (2): 0.5/1.9 MB | 0.4/1.2 MB
+Progress (2): 0.5/1.9 MB | 0.5/1.2 MB
+Progress (2): 0.5/1.9 MB | 0.5/1.2 MB
+Progress (2): 0.5/1.9 MB | 0.5/1.2 MB
+Progress (2): 0.5/1.9 MB | 0.5/1.2 MB
+Progress (2): 0.5/1.9 MB | 0.5/1.2 MB
+Progress (2): 0.5/1.9 MB | 0.5/1.2 MB
+Progress (2): 0.5/1.9 MB | 0.5/1.2 MB
+Progress (2): 0.5/1.9 MB | 0.6/1.2 MB
+Progress (2): 0.5/1.9 MB | 0.6/1.2 MB
+Progress (2): 0.5/1.9 MB | 0.6/1.2 MB
+Progress (2): 0.5/1.9 MB | 0.6/1.2 MB
+Progress (2): 0.5/1.9 MB | 0.6/1.2 MB
+Progress (2): 0.5/1.9 MB | 0.6/1.2 MB
+Progress (2): 0.5/1.9 MB | 0.6/1.2 MB
+Progress (2): 0.5/1.9 MB | 0.6/1.2 MB
+Progress (2): 0.5/1.9 MB | 0.6/1.2 MB
+Progress (2): 0.5/1.9 MB | 0.6/1.2 MB
+Progress (2): 0.5/1.9 MB | 0.7/1.2 MB
+Progress (2): 0.5/1.9 MB | 0.7/1.2 MB
+Progress (2): 0.5/1.9 MB | 0.7/1.2 MB
+Progress (2): 0.6/1.9 MB | 0.7/1.2 MB
+Progress (2): 0.6/1.9 MB | 0.7/1.2 MB
+Progress (2): 0.6/1.9 MB | 0.7/1.2 MB
+Progress (2): 0.6/1.9 MB | 0.7/1.2 MB
+Progress (2): 0.6/1.9 MB | 0.7/1.2 MB
+Progress (2): 0.6/1.9 MB | 0.7/1.2 MB
+Progress (2): 0.6/1.9 MB | 0.8/1.2 MB
+Progress (2): 0.6/1.9 MB | 0.8/1.2 MB
+Progress (2): 0.6/1.9 MB | 0.8/1.2 MB
+Progress (2): 0.6/1.9 MB | 0.8/1.2 MB
+Progress (2): 0.6/1.9 MB | 0.8/1.2 MB
+Progress (2): 0.6/1.9 MB | 0.8/1.2 MB
+Progress (2): 0.6/1.9 MB | 0.8/1.2 MB
+Progress (2): 0.6/1.9 MB | 0.8/1.2 MB
+Progress (2): 0.6/1.9 MB | 0.8/1.2 MB
+Progress (2): 0.6/1.9 MB | 0.8/1.2 MB
+Progress (2): 0.6/1.9 MB | 0.9/1.2 MB
+Progress (2): 0.7/1.9 MB | 0.9/1.2 MB
+Progress (2): 0.7/1.9 MB | 0.9/1.2 MB
+Progress (2): 0.7/1.9 MB | 0.9/1.2 MB
+Progress (2): 0.7/1.9 MB | 0.9/1.2 MB
+Progress (2): 0.7/1.9 MB | 0.9/1.2 MB
+Progress (2): 0.7/1.9 MB | 0.9/1.2 MB
+Progress (2): 0.7/1.9 MB | 0.9/1.2 MB
+Progress (2): 0.7/1.9 MB | 0.9/1.2 MB
+Progress (2): 0.7/1.9 MB | 0.9/1.2 MB
+Progress (2): 0.7/1.9 MB | 0.9/1.2 MB
+Progress (2): 0.8/1.9 MB | 0.9/1.2 MB
+Progress (2): 0.8/1.9 MB | 0.9/1.2 MB
+Progress (2): 0.8/1.9 MB | 0.9/1.2 MB
+Progress (2): 0.8/1.9 MB | 1.0/1.2 MB
+Progress (2): 0.8/1.9 MB | 1.0/1.2 MB
+Progress (2): 0.8/1.9 MB | 1.0/1.2 MB
+Progress (2): 0.8/1.9 MB | 1.0/1.2 MB
+Progress (2): 0.8/1.9 MB | 1.0/1.2 MB
+Progress (2): 0.8/1.9 MB | 1.0/1.2 MB
+Progress (2): 0.8/1.9 MB | 1.0/1.2 MB
+Progress (2): 0.8/1.9 MB | 1.1/1.2 MB
+Progress (2): 0.8/1.9 MB | 1.1/1.2 MB
+Progress (2): 0.8/1.9 MB | 1.1/1.2 MB
+Progress (2): 0.8/1.9 MB | 1.1/1.2 MB
+Progress (2): 0.8/1.9 MB | 1.1/1.2 MB
+Progress (2): 0.8/1.9 MB | 1.1/1.2 MB
+Progress (2): 0.8/1.9 MB | 1.1/1.2 MB
+Progress (2): 0.9/1.9 MB | 1.1/1.2 MB
+Progress (2): 0.9/1.9 MB | 1.1/1.2 MB
+Progress (2): 0.9/1.9 MB | 1.1/1.2 MB
+Progress (2): 0.9/1.9 MB | 1.1/1.2 MB
+Progress (2): 0.9/1.9 MB | 1.2/1.2 MB
+Progress (2): 0.9/1.9 MB | 1.2/1.2 MB
+Progress (2): 0.9/1.9 MB | 1.2/1.2 MB
+Progress (2): 0.9/1.9 MB | 1.2/1.2 MB
+Progress (2): 0.9/1.9 MB | 1.2/1.2 MB
+Progress (2): 0.9/1.9 MB | 1.2 MB
+Progress (2): 0.9/1.9 MB | 1.2 MB
+Progress (2): 0.9/1.9 MB | 1.2 MB
+Progress (2): 0.9/1.9 MB | 1.2 MB
+
+Downloaded from central: https://repo.maven.apache.org/maven2/xerces/xercesImpl/2.8.0/xercesImpl-2.8.0.jar (1.2 MB at 15 MB/s)
+Progress (1): 1.0/1.9 MB
+Progress (1): 1.0/1.9 MB
+Progress (1): 1.0/1.9 MB
+Progress (1): 1.0/1.9 MB
+Progress (1): 1.0/1.9 MB
+Progress (1): 1.0/1.9 MB
+Progress (1): 1.1/1.9 MB
+Progress (1): 1.1/1.9 MB
+Progress (1): 1.1/1.9 MB
+Progress (1): 1.1/1.9 MB
+Progress (1): 1.1/1.9 MB
+Progress (1): 1.1/1.9 MB
+Progress (1): 1.2/1.9 MB
+Progress (1): 1.2/1.9 MB
+Progress (1): 1.2/1.9 MB
+Progress (1): 1.2/1.9 MB
+Progress (1): 1.2/1.9 MB
+Progress (1): 1.2/1.9 MB
+Progress (1): 1.3/1.9 MB
+Progress (1): 1.3/1.9 MB
+Progress (1): 1.3/1.9 MB
+Progress (1): 1.3/1.9 MB
+Progress (1): 1.3/1.9 MB
+Progress (1): 1.3/1.9 MB
+Progress (1): 1.4/1.9 MB
+Progress (1): 1.4/1.9 MB
+Progress (1): 1.4/1.9 MB
+Progress (1): 1.4/1.9 MB
+Progress (1): 1.4/1.9 MB
+Progress (1): 1.4/1.9 MB
+Progress (1): 1.5/1.9 MB
+Progress (1): 1.5/1.9 MB
+Progress (1): 1.5/1.9 MB
+Progress (1): 1.5/1.9 MB
+Progress (1): 1.5/1.9 MB
+Progress (1): 1.5/1.9 MB
+Progress (1): 1.5/1.9 MB
+Progress (1): 1.6/1.9 MB
+Progress (1): 1.6/1.9 MB
+Progress (1): 1.6/1.9 MB
+Progress (1): 1.6/1.9 MB
+Progress (1): 1.6/1.9 MB
+Progress (1): 1.6/1.9 MB
+Progress (1): 1.7/1.9 MB
+Progress (1): 1.7/1.9 MB
+Progress (1): 1.7/1.9 MB
+Progress (1): 1.7/1.9 MB
+Progress (1): 1.7/1.9 MB
+Progress (1): 1.7/1.9 MB
+Progress (1): 1.8/1.9 MB
+Progress (1): 1.8/1.9 MB
+Progress (1): 1.8/1.9 MB
+Progress (1): 1.8/1.9 MB
+Progress (1): 1.8/1.9 MB
+Progress (1): 1.8/1.9 MB
+Progress (1): 1.9/1.9 MB
+Progress (1): 1.9/1.9 MB
+Progress (1): 1.9/1.9 MB
+Progress (1): 1.9/1.9 MB
+Progress (1): 1.9/1.9 MB
+Progress (1): 1.9 MB
+
+Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/ant/ant/1.8.2/ant-1.8.2.jar (1.9 MB at 17 MB/s)
+[INFO] Replacement run on 1 file.
+[IJ]-1-MojoSucceeded-[IJ]-source=LIFECYCLE-[IJ]-goal=replace-[IJ]-id=com.fasterxml.jackson.core:jackson-core:bundle:2.9.0-SNAPSHOT-[IJ]-error=
+[IJ]-1-MojoStarted-[IJ]-source=LIFECYCLE-[IJ]-goal=resources-[IJ]-id=com.fasterxml.jackson.core:jackson-core:bundle:2.9.0-SNAPSHOT-[IJ]-error=
+[INFO]
+[INFO] --- resources:2.6:resources (default-resources) @ jackson-core ---
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.plugins:maven-resources-plugin:pom:2.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.shared:maven-filtering:pom:1.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-interpolation:pom:1.12-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.plexus:plexus-build-api:pom:0.0.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.spice:spice-parent:pom:10-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.forge:forge-parent:pom:3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-interpolation:pom:1.13-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-components:pom:1.1.15-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.plugins:maven-resources-plugin:jar:2.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-plugin-api:jar:2.0.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-project:jar:2.0.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-profile:jar:2.0.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-artifact-manager:jar:2.0.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-plugin-registry:jar:2.0.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-core:jar:2.0.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-plugin-parameter-documenter:jar:2.0.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.reporting:maven-reporting-api:jar:2.0.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.doxia:doxia-sink-api:jar:1.0-alpha-7-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-repository-metadata:jar:2.0.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-error-diagnostics:jar:2.0.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=commons-cli:commons-cli:jar:1.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-plugin-descriptor:jar:2.0.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-interactivity-api:jar:1.0-alpha-4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=classworlds:classworlds:jar:1.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-artifact:jar:2.0.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-settings:jar:2.0.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-model:jar:2.0.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-monitor:jar:2.0.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-container-default:jar:1.0-alpha-9-stable-1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=junit:junit:jar:3.8.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-utils:jar:2.0.5-[IJ]-error=
+[INFO] Artifact org.codehaus.plexus:plexus-utils:jar:2.0.5 is present in the local repository, but cached from a remote repository ID that is unavailable in current build context, verifying that is downloadable from [central (https://repo.maven.apache.org/maven2, default, releases), maven-default-http-blocker (http://0.0.0.0/, default, snapshots, blocked)]
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.shared:maven-filtering:jar:1.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.plexus:plexus-build-api:jar:0.0.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-interpolation:jar:1.13-[IJ]-error=
+[INFO] Artifact org.codehaus.plexus:plexus-utils:jar:2.0.5 is present in the local repository, but cached from a remote repository ID that is unavailable in current build context, verifying that is downloadable from [central (https://repo.maven.apache.org/maven2, default, releases), maven-default-http-blocker (http://0.0.0.0/, default, snapshots, blocked)]
+[IJ]-1-ARTIFACT_DOWNLOADING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-utils:jar:2.0.5-[IJ]-error=
+[IJ]-1-ARTIFACT_DOWNLOADING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.shared:maven-filtering:jar:1.1-[IJ]-error=
+[IJ]-1-ARTIFACT_DOWNLOADING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.plexus:plexus-build-api:jar:0.0.4-[IJ]-error=
+[IJ]-1-ARTIFACT_DOWNLOADING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-interpolation:jar:1.13-[IJ]-error=
+Downloading from central: https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-utils/2.0.5/plexus-utils-2.0.5.jar
+Downloaded from central: https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-utils/2.0.5/plexus-utils-2.0.5.jar (0 B at 0 B/s)
+Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/shared/maven-filtering/1.1/maven-filtering-1.1.jar
+Downloading from central: https://repo.maven.apache.org/maven2/org/sonatype/plexus/plexus-build-api/0.0.4/plexus-build-api-0.0.4.jar
+Downloading from central: https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-interpolation/1.13/plexus-interpolation-1.13.jar
+Progress (1): 16/43 kB
+Progress (1): 32/43 kB
+Progress (1): 43 kB
+Progress (2): 43 kB | 6.8 kB
+
+Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/shared/maven-filtering/1.1/maven-filtering-1.1.jar (43 kB at 7.2 MB/s)
+Progress (2): 6.8 kB | 16/61 kB
+Progress (2): 6.8 kB | 33/61 kB
+Progress (2): 6.8 kB | 49/61 kB
+Progress (2): 6.8 kB | 61 kB
+
+Downloaded from central: https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-interpolation/1.13/plexus-interpolation-1.13.jar (61 kB at 7.6 MB/s)
+Downloaded from central: https://repo.maven.apache.org/maven2/org/sonatype/plexus/plexus-build-api/0.0.4/plexus-build-api-0.0.4.jar (6.8 kB at 757 kB/s)
+[INFO] Using 'UTF-8' encoding to copy filtered resources.
+[INFO] Copying 3 resources
+[IJ]-1-MojoSucceeded-[IJ]-source=LIFECYCLE-[IJ]-goal=resources-[IJ]-id=com.fasterxml.jackson.core:jackson-core:bundle:2.9.0-SNAPSHOT-[IJ]-error=
+[IJ]-1-MojoStarted-[IJ]-source=LIFECYCLE-[IJ]-goal=compile-[IJ]-id=com.fasterxml.jackson.core:jackson-core:bundle:2.9.0-SNAPSHOT-[IJ]-error=
+[INFO]
+[INFO] --- compiler:3.2:compile (default-compile) @ jackson-core ---
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.plugins:maven-compiler-plugin:pom:3.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-utils:pom:1.5.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-toolchain:pom:1.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.shared:maven-shared-utils:pom:0.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.shared:maven-shared-components:pom:18-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.google.code.findbugs:jsr305:pom:2.0.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.shared:maven-shared-incremental:pom:1.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-plugin-api:pom:2.2.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven:pom:2.2.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-core:pom:2.2.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-settings:pom:2.2.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-model:pom:2.2.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-plugin-parameter-documenter:pom:2.2.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-profile:pom:2.2.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-artifact:pom:2.2.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-repository-metadata:pom:2.2.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-error-diagnostics:pom:2.2.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-project:pom:2.2.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-artifact-manager:pom:2.2.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-plugin-registry:pom:2.2.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-plugin-descriptor:pom:2.2.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-monitor:pom:2.2.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-compiler-api:pom:2.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-compiler:pom:2.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-components:pom:1.3.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-compiler-manager:pom:2.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-compiler-javac:pom:2.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-compilers:pom:2.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.plugins:maven-compiler-plugin:jar:3.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-plugin-api:jar:2.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-artifact:jar:2.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-utils:jar:1.5.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-core:jar:2.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-settings:jar:2.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-plugin-parameter-documenter:jar:2.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-profile:jar:2.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-model:jar:2.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-repository-metadata:jar:2.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-error-diagnostics:jar:2.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-project:jar:2.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-plugin-registry:jar:2.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-plugin-descriptor:jar:2.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-artifact-manager:jar:2.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-monitor:jar:2.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-toolchain:jar:1.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.shared:maven-shared-utils:jar:0.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.google.code.findbugs:jsr305:jar:2.0.1-[IJ]-error=
+[INFO] Artifact com.google.code.findbugs:jsr305:jar:2.0.1 is present in the local repository, but cached from a remote repository ID that is unavailable in current build context, verifying that is downloadable from [central (https://repo.maven.apache.org/maven2, default, releases), plexus-snapshots (https://oss.sonatype.org/content/repositories/plexus-snapshots, default, snapshots), maven-default-http-blocker (http://0.0.0.0/, default, snapshots, blocked)]
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.shared:maven-shared-incremental:jar:1.1-[IJ]-error=
+[INFO] Artifact org.apache.maven.shared:maven-shared-incremental:jar:1.1 is present in the local repository, but cached from a remote repository ID that is unavailable in current build context, verifying that is downloadable from [central (https://repo.maven.apache.org/maven2, default, releases), plexus-snapshots (https://oss.sonatype.org/content/repositories/plexus-snapshots, default, snapshots), maven-default-http-blocker (http://0.0.0.0/, default, snapshots, blocked)]
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-component-annotations:jar:1.5.5-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-compiler-api:jar:2.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-compiler-manager:jar:2.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-compiler-javac:jar:2.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-container-default:jar:1.5.5-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-classworlds:jar:2.2.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.xbean:xbean-reflect:jar:3.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=log4j:log4j:jar:1.2.12-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=commons-logging:commons-logging-api:jar:1.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.google.collections:google-collections:jar:1.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=junit:junit:jar:3.8.2-[IJ]-error=
+[INFO] Artifact junit:junit:jar:3.8.2 is present in the local repository, but cached from a remote repository ID that is unavailable in current build context, verifying that is downloadable from [central (https://repo.maven.apache.org/maven2, default, releases), plexus-snapshots (https://oss.sonatype.org/content/repositories/plexus-snapshots, default, snapshots), maven-default-http-blocker (http://0.0.0.0/, default, snapshots, blocked)]
+[INFO] Artifact com.google.code.findbugs:jsr305:jar:2.0.1 is present in the local repository, but cached from a remote repository ID that is unavailable in current build context, verifying that is downloadable from [central (https://repo.maven.apache.org/maven2, default, releases), plexus-snapshots (https://oss.sonatype.org/content/repositories/plexus-snapshots, default, snapshots), maven-default-http-blocker (http://0.0.0.0/, default, snapshots, blocked)]
+[INFO] Artifact org.apache.maven.shared:maven-shared-incremental:jar:1.1 is present in the local repository, but cached from a remote repository ID that is unavailable in current build context, verifying that is downloadable from [central (https://repo.maven.apache.org/maven2, default, releases), plexus-snapshots (https://oss.sonatype.org/content/repositories/plexus-snapshots, default, snapshots), maven-default-http-blocker (http://0.0.0.0/, default, snapshots, blocked)]
+[INFO] Artifact junit:junit:jar:3.8.2 is present in the local repository, but cached from a remote repository ID that is unavailable in current build context, verifying that is downloadable from [central (https://repo.maven.apache.org/maven2, default, releases), plexus-snapshots (https://oss.sonatype.org/content/repositories/plexus-snapshots, default, snapshots), maven-default-http-blocker (http://0.0.0.0/, default, snapshots, blocked)]
+[IJ]-1-ARTIFACT_DOWNLOADING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-utils:jar:1.5.1-[IJ]-error=
+[IJ]-1-ARTIFACT_DOWNLOADING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-toolchain:jar:1.0-[IJ]-error=
+[IJ]-1-ARTIFACT_DOWNLOADING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.shared:maven-shared-utils:jar:0.1-[IJ]-error=
+[IJ]-1-ARTIFACT_DOWNLOADING-[IJ]-path=-[IJ]-artifactCoord=com.google.code.findbugs:jsr305:jar:2.0.1-[IJ]-error=
+[IJ]-1-ARTIFACT_DOWNLOADING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.shared:maven-shared-incremental:jar:1.1-[IJ]-error=
+[IJ]-1-ARTIFACT_DOWNLOADING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-compiler-api:jar:2.4-[IJ]-error=
+[IJ]-1-ARTIFACT_DOWNLOADING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-compiler-manager:jar:2.4-[IJ]-error=
+[IJ]-1-ARTIFACT_DOWNLOADING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-compiler-javac:jar:2.4-[IJ]-error=
+[IJ]-1-ARTIFACT_DOWNLOADING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-container-default:jar:1.5.5-[IJ]-error=
+[IJ]-1-ARTIFACT_DOWNLOADING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-classworlds:jar:2.2.2-[IJ]-error=
+[IJ]-1-ARTIFACT_DOWNLOADING-[IJ]-path=-[IJ]-artifactCoord=org.apache.xbean:xbean-reflect:jar:3.4-[IJ]-error=
+[IJ]-1-ARTIFACT_DOWNLOADING-[IJ]-path=-[IJ]-artifactCoord=log4j:log4j:jar:1.2.12-[IJ]-error=
+[IJ]-1-ARTIFACT_DOWNLOADING-[IJ]-path=-[IJ]-artifactCoord=commons-logging:commons-logging-api:jar:1.1-[IJ]-error=
+[IJ]-1-ARTIFACT_DOWNLOADING-[IJ]-path=-[IJ]-artifactCoord=com.google.collections:google-collections:jar:1.0-[IJ]-error=
+[IJ]-1-ARTIFACT_DOWNLOADING-[IJ]-path=-[IJ]-artifactCoord=junit:junit:jar:3.8.2-[IJ]-error=
+Downloading from central: https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-utils/1.5.1/plexus-utils-1.5.1.jar
+Progress (1): 16/211 kB
+Progress (1): 33/211 kB
+Progress (1): 49/211 kB
+Progress (1): 65/211 kB
+Progress (1): 82/211 kB
+Progress (1): 98/211 kB
+Progress (1): 114/211 kB
+Progress (1): 131/211 kB
+Progress (1): 147/211 kB
+Progress (1): 164/211 kB
+Progress (1): 180/211 kB
+Progress (1): 196/211 kB
+Progress (1): 211 kB
+
+Downloaded from central: https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-utils/1.5.1/plexus-utils-1.5.1.jar (211 kB at 26 MB/s)
+Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-toolchain/1.0/maven-toolchain-1.0.jar
+Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/shared/maven-shared-utils/0.1/maven-shared-utils-0.1.jar
+Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/shared/maven-shared-incremental/1.1/maven-shared-incremental-1.1.jar
+Downloading from central: https://repo.maven.apache.org/maven2/com/google/code/findbugs/jsr305/2.0.1/jsr305-2.0.1.jar
+Downloading from central: https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-compiler-api/2.4/plexus-compiler-api-2.4.jar
+Downloaded from central: https://repo.maven.apache.org/maven2/com/google/code/findbugs/jsr305/2.0.1/jsr305-2.0.1.jar (0 B at 0 B/s)
+Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/shared/maven-shared-incremental/1.1/maven-shared-incremental-1.1.jar (0 B at 0 B/s)
+Downloading from central: https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-compiler-manager/2.4/plexus-compiler-manager-2.4.jar
+Downloading from central: https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-compiler-javac/2.4/plexus-compiler-javac-2.4.jar
+Progress (1): 16/33 kB
+Progress (2): 16/33 kB | 16/155 kB
+Progress (2): 32/33 kB | 16/155 kB
+Progress (2): 32/33 kB | 33/155 kB
+Progress (2): 33 kB | 33/155 kB
+Progress (2): 33 kB | 49/155 kB
+Progress (2): 33 kB | 66/155 kB
+Progress (2): 33 kB | 82/155 kB
+
+Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-toolchain/1.0/maven-toolchain-1.0.jar (33 kB at 3.7 MB/s)
+Downloading from central: https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-container-default/1.5.5/plexus-container-default-1.5.5.jar
+Progress (1): 98/155 kB
+Progress (1): 115/155 kB
+Progress (1): 131/155 kB
+Progress (1): 147/155 kB
+Progress (1): 155 kB
+
+Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/shared/maven-shared-utils/0.1/maven-shared-utils-0.1.jar (155 kB at 17 MB/s)
+Downloading from central: https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-classworlds/2.2.2/plexus-classworlds-2.2.2.jar
+Progress (1): 16/19 kB
+Progress (1): 19 kB
+
+Downloaded from central: https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-compiler-javac/2.4/plexus-compiler-javac-2.4.jar (19 kB at 2.8 MB/s)
+Downloading from central: https://repo.maven.apache.org/maven2/org/apache/xbean/xbean-reflect/3.4/xbean-reflect-3.4.jar
+Progress (1): 16/217 kB
+Progress (1): 33/217 kB
+Progress (2): 33/217 kB | 16/25 kB
+Progress (2): 49/217 kB | 16/25 kB
+Progress (3): 49/217 kB | 16/25 kB | 16/46 kB
+Progress (3): 62/217 kB | 16/25 kB | 16/46 kB
+Progress (3): 62/217 kB | 25 kB | 16/46 kB
+Progress (3): 78/217 kB | 25 kB | 16/46 kB
+Progress (3): 78/217 kB | 25 kB | 32/46 kB
+Progress (3): 95/217 kB | 25 kB | 32/46 kB
+Progress (3): 95/217 kB | 25 kB | 46 kB
+Progress (3): 111/217 kB | 25 kB | 46 kB
+Progress (3): 128/217 kB | 25 kB | 46 kB
+
+Downloaded from central: https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-classworlds/2.2.2/plexus-classworlds-2.2.2.jar (46 kB at 4.6 MB/s)
+Downloading from central: https://repo.maven.apache.org/maven2/log4j/log4j/1.2.12/log4j-1.2.12.jar
+Progress (2): 144/217 kB | 25 kB
+Progress (2): 160/217 kB | 25 kB
+
+Downloaded from central: https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-compiler-api/2.4/plexus-compiler-api-2.4.jar (25 kB at 1.8 MB/s)
+Progress (1): 177/217 kB
+Progress (1): 193/217 kB
+
+Downloading from central: https://repo.maven.apache.org/maven2/commons-logging/commons-logging-api/1.1/commons-logging-api-1.1.jar
+Progress (1): 209/217 kB
+Progress (1): 217 kB
+Progress (2): 217 kB | 4.6 kB
+Progress (3): 217 kB | 4.6 kB | 16/134 kB
+
+Downloaded from central: https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-container-default/1.5.5/plexus-container-default-1.5.5.jar (217 kB at 14 MB/s)
+Downloading from central: https://repo.maven.apache.org/maven2/com/google/collections/google-collections/1.0/google-collections-1.0.jar
+Progress (3): 4.6 kB | 16/134 kB | 16/358 kB
+Progress (3): 4.6 kB | 16/134 kB | 33/358 kB
+
+Downloaded from central: https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-compiler-manager/2.4/plexus-compiler-manager-2.4.jar (4.6 kB at 254 kB/s)
+Progress (2): 16/134 kB | 49/358 kB
+
+Downloading from central: https://repo.maven.apache.org/maven2/junit/junit/3.8.2/junit-3.8.2.jar
+Progress (3): 16/134 kB | 49/358 kB | 9.6/640 kB
+Progress (3): 33/134 kB | 49/358 kB | 9.6/640 kB
+Progress (3): 49/134 kB | 49/358 kB | 9.6/640 kB
+Progress (3): 63/134 kB | 49/358 kB | 9.6/640 kB
+Progress (3): 63/134 kB | 62/358 kB | 9.6/640 kB
+Progress (3): 63/134 kB | 62/358 kB | 26/640 kB
+Progress (3): 63/134 kB | 79/358 kB | 26/640 kB
+Progress (3): 63/134 kB | 95/358 kB | 26/640 kB
+Progress (3): 63/134 kB | 95/358 kB | 42/640 kB
+Progress (3): 80/134 kB | 95/358 kB | 42/640 kB
+
+Downloaded from central: https://repo.maven.apache.org/maven2/junit/junit/3.8.2/junit-3.8.2.jar (0 B at 0 B/s)
+Progress (3): 80/134 kB | 95/358 kB | 59/640 kB
+Progress (3): 96/134 kB | 95/358 kB | 59/640 kB
+Progress (3): 96/134 kB | 112/358 kB | 59/640 kB
+Progress (3): 96/134 kB | 128/358 kB | 59/640 kB
+Progress (3): 96/134 kB | 144/358 kB | 59/640 kB
+Progress (3): 112/134 kB | 144/358 kB | 59/640 kB
+Progress (3): 112/134 kB | 144/358 kB | 75/640 kB
+Progress (3): 112/134 kB | 144/358 kB | 92/640 kB
+Progress (3): 129/134 kB | 144/358 kB | 92/640 kB
+Progress (3): 129/134 kB | 144/358 kB | 108/640 kB
+Progress (3): 129/134 kB | 144/358 kB | 124/640 kB
+Progress (3): 129/134 kB | 161/358 kB | 124/640 kB
+Progress (3): 129/134 kB | 161/358 kB | 141/640 kB
+Progress (3): 134 kB | 161/358 kB | 141/640 kB
+Progress (3): 134 kB | 161/358 kB | 157/640 kB
+Progress (3): 134 kB | 161/358 kB | 173/640 kB
+Progress (3): 134 kB | 161/358 kB | 190/640 kB
+Progress (3): 134 kB | 161/358 kB | 206/640 kB
+Progress (3): 134 kB | 161/358 kB | 223/640 kB
+Progress (3): 134 kB | 177/358 kB | 223/640 kB
+Progress (3): 134 kB | 177/358 kB | 239/640 kB
+Progress (3): 134 kB | 193/358 kB | 239/640 kB
+Progress (3): 134 kB | 193/358 kB | 255/640 kB
+Progress (3): 134 kB | 210/358 kB | 255/640 kB
+Progress (3): 134 kB | 210/358 kB | 272/640 kB
+Progress (4): 134 kB | 210/358 kB | 272/640 kB | 16/45 kB
+
+Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/xbean/xbean-reflect/3.4/xbean-reflect-3.4.jar (134 kB at 4.6 MB/s)
+Progress (3): 210/358 kB | 272/640 kB | 32/45 kB
+Progress (3): 210/358 kB | 272/640 kB | 45 kB
+Progress (3): 210/358 kB | 288/640 kB | 45 kB
+Progress (3): 210/358 kB | 305/640 kB | 45 kB
+Progress (3): 226/358 kB | 305/640 kB | 45 kB
+
+Downloaded from central: https://repo.maven.apache.org/maven2/commons-logging/commons-logging-api/1.1/commons-logging-api-1.1.jar (45 kB at 1.5 MB/s)
+Progress (2): 243/358 kB | 305/640 kB
+Progress (2): 243/358 kB | 321/640 kB
+Progress (2): 259/358 kB | 321/640 kB
+Progress (2): 259/358 kB | 337/640 kB
+Progress (2): 259/358 kB | 354/640 kB
+Progress (2): 275/358 kB | 354/640 kB
+Progress (2): 275/358 kB | 370/640 kB
+Progress (2): 275/358 kB | 386/640 kB
+Progress (2): 275/358 kB | 403/640 kB
+Progress (2): 292/358 kB | 403/640 kB
+Progress (2): 292/358 kB | 419/640 kB
+Progress (2): 292/358 kB | 436/640 kB
+Progress (2): 308/358 kB | 436/640 kB
+Progress (2): 308/358 kB | 452/640 kB
+Progress (2): 308/358 kB | 468/640 kB
+Progress (2): 325/358 kB | 468/640 kB
+Progress (2): 341/358 kB | 468/640 kB
+Progress (2): 357/358 kB | 468/640 kB
+Progress (2): 357/358 kB | 485/640 kB
+Progress (2): 358 kB | 485/640 kB
+Progress (2): 358 kB | 501/640 kB
+Progress (2): 358 kB | 518/640 kB
+Progress (2): 358 kB | 534/640 kB
+
+Downloaded from central: https://repo.maven.apache.org/maven2/log4j/log4j/1.2.12/log4j-1.2.12.jar (358 kB at 9.9 MB/s)
+Progress (1): 550/640 kB
+Progress (1): 567/640 kB
+Progress (1): 583/640 kB
+Progress (1): 599/640 kB
+Progress (1): 616/640 kB
+Progress (1): 632/640 kB
+Progress (1): 640 kB
+
+Downloaded from central: https://repo.maven.apache.org/maven2/com/google/collections/google-collections/1.0/google-collections-1.0.jar (640 kB at 17 MB/s)
+[INFO] Changes detected - recompiling the module!
+[INFO] Compiling 98 source files to /mnt/agent/work/9412f1f43ea67e7/evaluation-project/target/classes
+[WARNING] bootstrap class path not set in conjunction with -source 6
+[WARNING] source value 6 is obsolete and will be removed in a future release
+[WARNING] target value 1.6 is obsolete and will be removed in a future release
+[WARNING] To suppress warnings about obsolete options, use -Xlint:-options.
+[WARNING] /mnt/agent/work/9412f1f43ea67e7/evaluation-project/src/main/java/com/fasterxml/jackson/core/util/VersionUtil.java:[77,40] newInstance() in java.lang.Class has been deprecated
+[IJ]-1-MojoSucceeded-[IJ]-source=LIFECYCLE-[IJ]-goal=compile-[IJ]-id=com.fasterxml.jackson.core:jackson-core:bundle:2.9.0-SNAPSHOT-[IJ]-error=
+[IJ]-1-MojoStarted-[IJ]-source=LIFECYCLE-[IJ]-goal=testResources-[IJ]-id=com.fasterxml.jackson.core:jackson-core:bundle:2.9.0-SNAPSHOT-[IJ]-error=
+[INFO]
+[INFO] --- resources:2.6:testResources (default-testResources) @ jackson-core ---
+[INFO] Using 'UTF-8' encoding to copy filtered resources.
+[INFO] Copying 2 resources
+[IJ]-1-MojoSucceeded-[IJ]-source=LIFECYCLE-[IJ]-goal=testResources-[IJ]-id=com.fasterxml.jackson.core:jackson-core:bundle:2.9.0-SNAPSHOT-[IJ]-error=
+[IJ]-1-MojoStarted-[IJ]-source=LIFECYCLE-[IJ]-goal=testCompile-[IJ]-id=com.fasterxml.jackson.core:jackson-core:bundle:2.9.0-SNAPSHOT-[IJ]-error=
+[INFO]
+[INFO] --- compiler:3.2:testCompile (default-testCompile) @ jackson-core ---
+[INFO] Changes detected - recompiling the module!
+[INFO] Compiling 120 source files to /mnt/agent/work/9412f1f43ea67e7/evaluation-project/target/test-classes
+[WARNING] bootstrap class path not set in conjunction with -source 6
+[WARNING] source value 6 is obsolete and will be removed in a future release
+[WARNING] target value 1.6 is obsolete and will be removed in a future release
+[WARNING] To suppress warnings about obsolete options, use -Xlint:-options.
+[IJ]-1-MojoSucceeded-[IJ]-source=LIFECYCLE-[IJ]-goal=testCompile-[IJ]-id=com.fasterxml.jackson.core:jackson-core:bundle:2.9.0-SNAPSHOT-[IJ]-error=
+[IJ]-1-MojoStarted-[IJ]-source=LIFECYCLE-[IJ]-goal=test-[IJ]-id=com.fasterxml.jackson.core:jackson-core:bundle:2.9.0-SNAPSHOT-[IJ]-error=
+[INFO]
+[INFO] --- surefire:2.17:test (default-test) @ jackson-core ---
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.plugins:maven-surefire-plugin:pom:2.17-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.surefire:maven-surefire-common:pom:2.17-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.plugin-tools:maven-plugin-annotations:pom:3.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.plugin-tools:maven-plugin-tools:pom:3.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.surefire:surefire-api:pom:2.17-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.surefire:surefire-booter:pom:2.17-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-toolchain:pom:2.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.commons:commons-lang3:pom:3.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.plugins:maven-surefire-plugin:jar:2.17-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-plugin-api:jar:2.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.surefire:maven-surefire-common:jar:2.17-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.surefire:surefire-booter:jar:2.17-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-artifact:jar:2.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-utils:jar:1.5.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-plugin-descriptor:jar:2.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-container-default:jar:1.0-alpha-9-stable-1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-project:jar:2.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-settings:jar:2.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-profile:jar:2.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-artifact-manager:jar:2.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-plugin-registry:jar:2.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-model:jar:2.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-core:jar:2.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-plugin-parameter-documenter:jar:2.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.reporting:maven-reporting-api:jar:2.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-repository-metadata:jar:2.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-error-diagnostics:jar:2.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-monitor:jar:2.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=classworlds:classworlds:jar:1.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.commons:commons-lang3:jar:3.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.surefire:surefire-api:jar:2.17-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-toolchain:jar:2.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.plugin-tools:maven-plugin-annotations:jar:3.2-[IJ]-error=
+[IJ]-1-ARTIFACT_DOWNLOADING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.surefire:maven-surefire-common:jar:2.17-[IJ]-error=
+[IJ]-1-ARTIFACT_DOWNLOADING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.surefire:surefire-booter:jar:2.17-[IJ]-error=
+[IJ]-1-ARTIFACT_DOWNLOADING-[IJ]-path=-[IJ]-artifactCoord=org.apache.commons:commons-lang3:jar:3.1-[IJ]-error=
+[IJ]-1-ARTIFACT_DOWNLOADING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.surefire:surefire-api:jar:2.17-[IJ]-error=
+[IJ]-1-ARTIFACT_DOWNLOADING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-toolchain:jar:2.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_DOWNLOADING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.plugin-tools:maven-plugin-annotations:jar:3.2-[IJ]-error=
+Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/surefire/maven-surefire-common/2.17/maven-surefire-common-2.17.jar
+Progress (1): 16/265 kB
+Progress (1): 33/265 kB
+Progress (1): 49/265 kB
+Progress (1): 66/265 kB
+Progress (1): 82/265 kB
+Progress (1): 98/265 kB
+Progress (1): 115/265 kB
+Progress (1): 131/265 kB
+Progress (1): 147/265 kB
+Progress (1): 164/265 kB
+Progress (1): 180/265 kB
+Progress (1): 197/265 kB
+Progress (1): 213/265 kB
+Progress (1): 229/265 kB
+Progress (1): 246/265 kB
+Progress (1): 251/265 kB
+Progress (1): 265 kB
+
+Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/surefire/maven-surefire-common/2.17/maven-surefire-common-2.17.jar (265 kB at 27 MB/s)
+Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/surefire/surefire-booter/2.17/surefire-booter-2.17.jar
+Downloading from central: https://repo.maven.apache.org/maven2/org/apache/commons/commons-lang3/3.1/commons-lang3-3.1.jar
+Progress (1): 16/40 kB
+Progress (1): 33/40 kB
+Progress (1): 40 kB
+
+Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/surefire/surefire-booter/2.17/surefire-booter-2.17.jar (40 kB at 5.7 MB/s)
+Progress (1): 16/316 kB
+Progress (1): 33/316 kB
+Progress (1): 49/316 kB
+Progress (1): 64/316 kB
+Progress (1): 81/316 kB
+Progress (1): 97/316 kB
+Progress (1): 114/316 kB
+
+Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/surefire/surefire-api/2.17/surefire-api-2.17.jar
+Progress (1): 130/316 kB
+Progress (1): 146/316 kB
+Progress (1): 163/316 kB
+Progress (1): 179/316 kB
+Progress (1): 196/316 kB
+Progress (1): 212/316 kB
+Progress (1): 228/316 kB
+Progress (1): 245/316 kB
+Progress (1): 261/316 kB
+Progress (1): 277/316 kB
+Progress (1): 294/316 kB
+Progress (1): 310/316 kB
+Progress (1): 316 kB
+
+Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/plugin-tools/maven-plugin-annotations/3.2/maven-plugin-annotations-3.2.jar
+Progress (2): 316 kB | 16/147 kB
+Progress (2): 316 kB | 32/147 kB
+Progress (2): 316 kB | 49/147 kB
+Progress (2): 316 kB | 65/147 kB
+Progress (2): 316 kB | 81/147 kB
+Progress (2): 316 kB | 98/147 kB
+Progress (2): 316 kB | 114/147 kB
+
+Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/commons/commons-lang3/3.1/commons-lang3-3.1.jar (316 kB at 18 MB/s)
+Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-toolchain/2.0.9/maven-toolchain-2.0.9.jar
+Progress (2): 114/147 kB | 15 kB
+Progress (2): 131/147 kB | 15 kB
+Progress (2): 147/147 kB | 15 kB
+Progress (2): 147 kB | 15 kB
+
+Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/plugin-tools/maven-plugin-annotations/3.2/maven-plugin-annotations-3.2.jar (15 kB at 2.5 MB/s)
+Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/surefire/surefire-api/2.17/surefire-api-2.17.jar (147 kB at 9.2 MB/s)
+Progress (1): 16/38 kB
+Progress (1): 33/38 kB
+Progress (1): 38 kB
+
+Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-toolchain/2.0.9/maven-toolchain-2.0.9.jar (38 kB at 2.7 MB/s)
+[INFO] Surefire report directory: /mnt/agent/work/9412f1f43ea67e7/evaluation-project/target/surefire-reports
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.surefire:surefire-booter:pom:2.17-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.surefire:surefire:pom:2.17-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-parent:pom:23-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache:apache:pom:13-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.surefire:surefire-api:pom:2.17-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.surefire:surefire:pom:2.17-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-parent:pom:23-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache:apache:pom:13-[IJ]-error=
+[IJ]-44-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.surefire:surefire-api:jar:2.17-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.surefire:surefire-junit4:pom:2.17-[IJ]-error=
+[IJ]-1-ARTIFACT_DOWNLOADING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.surefire:surefire-junit4:pom:2.17-[IJ]-error=
+Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/surefire/surefire-junit4/2.17/surefire-junit4-2.17.pom
+Progress (1): 2.5 kB
+
+Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/surefire/surefire-junit4/2.17/surefire-junit4-2.17.pom (2.5 kB at 623 kB/s)
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.surefire:surefire-providers:pom:2.17-[IJ]-error=
+[IJ]-1-ARTIFACT_DOWNLOADING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.surefire:surefire-providers:pom:2.17-[IJ]-error=
+Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/surefire/surefire-providers/2.17/surefire-providers-2.17.pom
+Progress (1): 2.4 kB
+
+Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/surefire/surefire-providers/2.17/surefire-providers-2.17.pom (2.4 kB at 476 kB/s)
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.surefire:surefire-providers:pom:2.17-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.surefire:surefire:pom:2.17-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-parent:pom:23-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache:apache:pom:13-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.surefire:surefire-api:pom:2.17-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.surefire:surefire:pom:2.17-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-parent:pom:23-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache:apache:pom:13-[IJ]-error=
+[IJ]-45-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.surefire:surefire-junit4:jar:2.17-[IJ]-error=
+[IJ]-45-ARTIFACT_DOWNLOADING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.surefire:surefire-junit4:jar:2.17-[IJ]-error=
+Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/surefire/surefire-junit4/2.17/surefire-junit4-2.17.jar
+[IJ]-46-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.surefire:surefire-api:jar:2.17-[IJ]-error=
+Progress (1): 16/64 kB
+Progress (1): 32/64 kB
+Progress (1): 49/64 kB
+Progress (1): 64 kB
+
+Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/surefire/surefire-junit4/2.17/surefire-junit4-2.17.jar (64 kB at 9.2 MB/s)
+
+-------------------------------------------------------
+ T E S T S
+-------------------------------------------------------
+Running com.fasterxml.jackson.core.filter.BasicParserFilteringTest
+Tests run: 16, Failures: 12, Errors: 0, Skipped: 0, Time elapsed: 0.074 sec <<< FAILURE! - in com.fasterxml.jackson.core.filter.BasicParserFilteringTest
+testSingleMatchFilteringWithPath(com.fasterxml.jackson.core.filter.BasicParserFilteringTest)  Time elapsed: 0.02 sec  <<< FAILURE!
+junit.framework.AssertionFailedError: expected:<1> but was:<2>
+	at junit.framework.Assert.fail(Assert.java:57)
+	at junit.framework.Assert.failNotEquals(Assert.java:329)
+	at junit.framework.Assert.assertEquals(Assert.java:78)
+	at junit.framework.Assert.assertEquals(Assert.java:234)
+	at junit.framework.Assert.assertEquals(Assert.java:241)
+	at junit.framework.TestCase.assertEquals(TestCase.java:409)
+	at com.fasterxml.jackson.core.filter.BasicParserFilteringTest.testSingleMatchFilteringWithPath(BasicParserFilteringTest.java:105)
+
+testAllowMultipleMatchesWithPath1(com.fasterxml.jackson.core.filter.BasicParserFilteringTest)  Time elapsed: 0 sec  <<< FAILURE!
+junit.framework.AssertionFailedError: expected:<3> but was:<6>
+	at junit.framework.Assert.fail(Assert.java:57)
+	at junit.framework.Assert.failNotEquals(Assert.java:329)
+	at junit.framework.Assert.assertEquals(Assert.java:78)
+	at junit.framework.Assert.assertEquals(Assert.java:234)
+	at junit.framework.Assert.assertEquals(Assert.java:241)
+	at junit.framework.TestCase.assertEquals(TestCase.java:409)
+	at com.fasterxml.jackson.core.filter.BasicParserFilteringTest.testAllowMultipleMatchesWithPath1(BasicParserFilteringTest.java:166)
+
+testAllowMultipleMatchesWithPath2(com.fasterxml.jackson.core.filter.BasicParserFilteringTest)  Time elapsed: 0.001 sec  <<< FAILURE!
+junit.framework.AssertionFailedError: expected:<2> but was:<0>
+	at junit.framework.Assert.fail(Assert.java:57)
+	at junit.framework.Assert.failNotEquals(Assert.java:329)
+	at junit.framework.Assert.assertEquals(Assert.java:78)
+	at junit.framework.Assert.assertEquals(Assert.java:234)
+	at junit.framework.Assert.assertEquals(Assert.java:241)
+	at junit.framework.TestCase.assertEquals(TestCase.java:409)
+	at com.fasterxml.jackson.core.filter.BasicParserFilteringTest.testAllowMultipleMatchesWithPath2(BasicParserFilteringTest.java:182)
+
+testMultipleMatchFilteringWithPath1(com.fasterxml.jackson.core.filter.BasicParserFilteringTest)  Time elapsed: 0.001 sec  <<< FAILURE!
+junit.framework.AssertionFailedError: expected:<2> but was:<4>
+	at junit.framework.Assert.fail(Assert.java:57)
+	at junit.framework.Assert.failNotEquals(Assert.java:329)
+	at junit.framework.Assert.assertEquals(Assert.java:78)
+	at junit.framework.Assert.assertEquals(Assert.java:234)
+	at junit.framework.Assert.assertEquals(Assert.java:241)
+	at junit.framework.TestCase.assertEquals(TestCase.java:409)
+	at com.fasterxml.jackson.core.filter.BasicParserFilteringTest.testMultipleMatchFilteringWithPath1(BasicParserFilteringTest.java:194)
+
+testMultipleMatchFilteringWithPath2(com.fasterxml.jackson.core.filter.BasicParserFilteringTest)  Time elapsed: 0.001 sec  <<< FAILURE!
+junit.framework.AssertionFailedError: expected:<2> but was:<4>
+	at junit.framework.Assert.fail(Assert.java:57)
+	at junit.framework.Assert.failNotEquals(Assert.java:329)
+	at junit.framework.Assert.assertEquals(Assert.java:78)
+	at junit.framework.Assert.assertEquals(Assert.java:234)
+	at junit.framework.Assert.assertEquals(Assert.java:241)
+	at junit.framework.TestCase.assertEquals(TestCase.java:409)
+	at com.fasterxml.jackson.core.filter.BasicParserFilteringTest.testMultipleMatchFilteringWithPath2(BasicParserFilteringTest.java:209)
+
+testMultipleMatchFilteringWithPath3(com.fasterxml.jackson.core.filter.BasicParserFilteringTest)  Time elapsed: 0.002 sec  <<< FAILURE!
+junit.framework.AssertionFailedError: expected:<2> but was:<4>
+	at junit.framework.Assert.fail(Assert.java:57)
+	at junit.framework.Assert.failNotEquals(Assert.java:329)
+	at junit.framework.Assert.assertEquals(Assert.java:78)
+	at junit.framework.Assert.assertEquals(Assert.java:234)
+	at junit.framework.Assert.assertEquals(Assert.java:241)
+	at junit.framework.TestCase.assertEquals(TestCase.java:409)
+	at com.fasterxml.jackson.core.filter.BasicParserFilteringTest.testMultipleMatchFilteringWithPath3(BasicParserFilteringTest.java:222)
+
+testSingleMatchFilteringWithoutPath(com.fasterxml.jackson.core.filter.BasicParserFilteringTest)  Time elapsed: 0.001 sec  <<< FAILURE!
+junit.framework.AssertionFailedError: expected:<1> but was:<0>
+	at junit.framework.Assert.fail(Assert.java:57)
+	at junit.framework.Assert.failNotEquals(Assert.java:329)
+	at junit.framework.Assert.assertEquals(Assert.java:78)
+	at junit.framework.Assert.assertEquals(Assert.java:234)
+	at junit.framework.Assert.assertEquals(Assert.java:241)
+	at junit.framework.TestCase.assertEquals(TestCase.java:409)
+	at com.fasterxml.jackson.core.filter.BasicParserFilteringTest.testSingleMatchFilteringWithoutPath(BasicParserFilteringTest.java:91)
+
+testNotAllowMultipleMatchesWithoutPath1(com.fasterxml.jackson.core.filter.BasicParserFilteringTest)  Time elapsed: 0.001 sec  <<< FAILURE!
+junit.framework.AssertionFailedError: expected:<1> but was:<0>
+	at junit.framework.Assert.fail(Assert.java:57)
+	at junit.framework.Assert.failNotEquals(Assert.java:329)
+	at junit.framework.Assert.assertEquals(Assert.java:78)
+	at junit.framework.Assert.assertEquals(Assert.java:234)
+	at junit.framework.Assert.assertEquals(Assert.java:241)
+	at junit.framework.TestCase.assertEquals(TestCase.java:409)
+	at com.fasterxml.jackson.core.filter.BasicParserFilteringTest.testNotAllowMultipleMatchesWithoutPath1(BasicParserFilteringTest.java:120)
+
+testNotAllowMultipleMatchesWithoutPath2(com.fasterxml.jackson.core.filter.BasicParserFilteringTest)  Time elapsed: 0.002 sec  <<< FAILURE!
+junit.framework.ComparisonFailure: expected:<2[]> but was:<2[ 4]>
+	at junit.framework.Assert.assertEquals(Assert.java:100)
+	at junit.framework.Assert.assertEquals(Assert.java:107)
+	at junit.framework.TestCase.assertEquals(TestCase.java:269)
+	at com.fasterxml.jackson.core.filter.BasicParserFilteringTest.testNotAllowMultipleMatchesWithoutPath2(BasicParserFilteringTest.java:134)
+
+testIndexMatchWithPath1(com.fasterxml.jackson.core.filter.BasicParserFilteringTest)  Time elapsed: 0 sec  <<< FAILURE!
+junit.framework.AssertionFailedError: expected:<1> but was:<0>
+	at junit.framework.Assert.fail(Assert.java:57)
+	at junit.framework.Assert.failNotEquals(Assert.java:329)
+	at junit.framework.Assert.assertEquals(Assert.java:78)
+	at junit.framework.Assert.assertEquals(Assert.java:234)
+	at junit.framework.Assert.assertEquals(Assert.java:241)
+	at junit.framework.TestCase.assertEquals(TestCase.java:409)
+	at com.fasterxml.jackson.core.filter.BasicParserFilteringTest.testIndexMatchWithPath1(BasicParserFilteringTest.java:232)
+
+testIndexMatchWithPath2(com.fasterxml.jackson.core.filter.BasicParserFilteringTest)  Time elapsed: 0.001 sec  <<< FAILURE!
+junit.framework.AssertionFailedError: expected:<2> but was:<0>
+	at junit.framework.Assert.fail(Assert.java:57)
+	at junit.framework.Assert.failNotEquals(Assert.java:329)
+	at junit.framework.Assert.assertEquals(Assert.java:78)
+	at junit.framework.Assert.assertEquals(Assert.java:234)
+	at junit.framework.Assert.assertEquals(Assert.java:241)
+	at junit.framework.TestCase.assertEquals(TestCase.java:409)
+	at com.fasterxml.jackson.core.filter.BasicParserFilteringTest.testIndexMatchWithPath2(BasicParserFilteringTest.java:247)
+
+testAllowMultipleMatchesWithoutPath(com.fasterxml.jackson.core.filter.BasicParserFilteringTest)  Time elapsed: 0.001 sec  <<< FAILURE!
+junit.framework.AssertionFailedError: expected:<3> but was:<2>
+	at junit.framework.Assert.fail(Assert.java:57)
+	at junit.framework.Assert.failNotEquals(Assert.java:329)
+	at junit.framework.Assert.assertEquals(Assert.java:78)
+	at junit.framework.Assert.assertEquals(Assert.java:234)
+	at junit.framework.Assert.assertEquals(Assert.java:241)
+	at junit.framework.TestCase.assertEquals(TestCase.java:409)
+	at com.fasterxml.jackson.core.filter.BasicParserFilteringTest.testAllowMultipleMatchesWithoutPath(BasicParserFilteringTest.java:150)
+
+
+Results :
+
+Failed tests:
+  BasicParserFilteringTest.testSingleMatchFilteringWithPath:105 expected:<1> but was:<2>
+  BasicParserFilteringTest.testAllowMultipleMatchesWithPath1:166 expected:<3> but was:<6>
+  BasicParserFilteringTest.testAllowMultipleMatchesWithPath2:182 expected:<2> but was:<0>
+  BasicParserFilteringTest.testMultipleMatchFilteringWithPath1:194 expected:<2> but was:<4>
+  BasicParserFilteringTest.testMultipleMatchFilteringWithPath2:209 expected:<2> but was:<4>
+  BasicParserFilteringTest.testMultipleMatchFilteringWithPath3:222 expected:<2> but was:<4>
+  BasicParserFilteringTest.testSingleMatchFilteringWithoutPath:91 expected:<1> but was:<0>
+  BasicParserFilteringTest.testNotAllowMultipleMatchesWithoutPath1:120 expected:<1> but was:<0>
+  BasicParserFilteringTest.testNotAllowMultipleMatchesWithoutPath2:134 expected:<2[]> but was:<2[ 4]>
+  BasicParserFilteringTest.testIndexMatchWithPath1:232 expected:<1> but was:<0>
+  BasicParserFilteringTest.testIndexMatchWithPath2:247 expected:<2> but was:<0>
+  BasicParserFilteringTest.testAllowMultipleMatchesWithoutPath:150 expected:<3> but was:<2>
+
+Tests run: 16, Failures: 12, Errors: 0, Skipped: 0
+
+[IJ]-1-INTERR-[IJ]-error=org/apache/commons/lang3/exception/ExceptionUtilsorg.jetbrains.maven.server.IntellijMavenSpy.getErrorMessage(IntellijMavenSpy.java:131)-[N]-org.jetbrains.maven.server.IntellijMavenSpy.onExecutionEvent(IntellijMavenSpy.java:113)-[N]-org.jetbrains.maven.server.IntellijMavenSpy.onEvent(IntellijMavenSpy.java:51)-[N]-org.apache.maven.eventspy.internal.EventSpyDispatcher.onEvent(EventSpyDispatcher.java:86)-[N]-org.apache.maven.eventspy.internal.EventSpyExecutionListener.mojoFailed(EventSpyExecutionListener.java:120)-[N]-org.apache.maven.lifecycle.internal.DefaultExecutionEventCatapult.fire(DefaultExecutionEventCatapult.java:83)-[N]-org.apache.maven.lifecycle.internal.MojoExecutor.doExecute2(MojoExecutor.java:338)-[N]-org.apache.maven.lifecycle.internal.MojoExecutor.doExecute(MojoExecutor.java:316)-[N]-org.apache.maven.lifecycle.internal.MojoExecutor.execute(MojoExecutor.java:212)-[N]-org.apache.maven.lifecycle.internal.MojoExecutor.execute(MojoExecutor.java:174)-[N]-org.apache.maven.lifecycle.internal.MojoExecutor.access$000(MojoExecutor.java:75)-[N]-org.apache.maven.lifecycle.internal.MojoExecutor$1.run(MojoExecutor.java:162)-[N]-org.apache.maven.plugin.DefaultMojosExecutionStrategy.execute(DefaultMojosExecutionStrategy.java:39)-[N]-org.apache.maven.lifecycle.internal.MojoExecutor.execute(MojoExecutor.java:159)-[N]-org.apache.maven.lifecycle.internal.LifecycleModuleBuilder.buildProject(LifecycleModuleBuilder.java:105)-[N]-org.apache.maven.lifecycle.internal.LifecycleModuleBuilder.buildProject(LifecycleModuleBuilder.java:73)-[N]-org.apache.maven.lifecycle.internal.builder.singlethreaded.SingleThreadedBuilder.build(SingleThreadedBuilder.java:53)-[N]-org.apache.maven.lifecycle.internal.LifecycleStarter.execute(LifecycleStarter.java:118)-[N]-org.apache.maven.DefaultMaven.doExecute(DefaultMaven.java:261)-[N]-org.apache.maven.DefaultMaven.doExecute(DefaultMaven.java:173)-[N]-org.apache.maven.DefaultMaven.execute(DefaultMaven.java:101)-[N]-org.apache.maven.cli.MavenCli.execute(MavenCli.java:906)-[N]-org.apache.maven.cli.MavenCli.doMain(MavenCli.java:283)-[N]-org.apache.maven.cli.MavenCli.main(MavenCli.java:206)-[N]-java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)-[N]-java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)-[N]-java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)-[N]-java.base/java.lang.reflect.Method.invoke(Method.java:566)-[N]-org.codehaus.plexus.classworlds.launcher.Launcher.launchEnhanced(Launcher.java:255)-[N]-org.codehaus.plexus.classworlds.launcher.Launcher.launch(Launcher.java:201)-[N]-org.codehaus.plexus.classworlds.launcher.Launcher.mainWithExitCode(Launcher.java:361)-[N]-org.codehaus.plexus.classworlds.launcher.Launcher.main(Launcher.java:314)-[N]-
+[IJ]-1-ProjectFailed-[IJ]-id=com.fasterxml.jackson.core:jackson-core:bundle:2.9.0-SNAPSHOT
+[IJ]-1-SessionEnded-[IJ]-id=unknown
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  6.525 s
+[INFO] Finished at: 2025-06-11T20:48:26Z
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-surefire-plugin:2.17:test (default-test) on project jackson-core: There are test failures.
+[ERROR]
+[ERROR] Please refer to /mnt/agent/work/9412f1f43ea67e7/evaluation-project/target/surefire-reports for the individual test results.
+[ERROR] -> [Help 1]
+[ERROR]
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR]
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException
+

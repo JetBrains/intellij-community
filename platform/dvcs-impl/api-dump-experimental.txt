@@ -6,7 +6,7 @@ f:com.intellij.dvcs.push.PushController
 c:com.intellij.dvcs.push.ui.VcsPushDialog
 - com.intellij.openapi.ui.DialogWrapper
 - com.intellij.dvcs.push.ui.VcsPushUi
-- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.UiDataProvider
 - *:getCustomParams():java.util.Map
 com.intellij.dvcs.push.ui.VcsPushUi
 - *:hasWarnings():Z

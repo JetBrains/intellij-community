@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl;
 
 import com.intellij.execution.process.ProcessOutputType;
@@ -173,23 +173,23 @@ public class MockProcessStreamsSynchronizerTest extends LightPlatformTestCase {
     }
 
     @Override
-    long getNanoTime() {
+    protected long getNanoTime() {
       return myNowTimeNano;
     }
 
     @Override
-    boolean isProcessingScheduled() {
+    protected boolean isProcessingScheduled() {
       return myNextScheduledProcessingTimeNano != -1;
     }
 
     @Override
-    void scheduleProcessPendingChunks(long delayNano) {
+    protected void scheduleProcessPendingChunks(long delayNano) {
       Assert.assertEquals(-1, myNextScheduledProcessingTimeNano);
       myNextScheduledProcessingTimeNano = myNowTimeNano + delayNano;
     }
 
     @Override
-    void waitForAllFlushed() {
+    public void waitForAllFlushed() {
       LOG.error("Use #advanceTimeTo for " + MockProcessStreamsSynchronizer.class);
     }
 

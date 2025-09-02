@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.GraphGenerator;
@@ -157,6 +158,7 @@ public final class JarsBuilder {
 
     final Set<String> writtenPaths = new HashSet<>();
     try {
+      MultiMap<String, String> serviceMap = new MultiMap<>();
       if (manifest != null) {
         addManifestEntry(jarOutputStream, manifest, writtenPaths);
       }
@@ -167,14 +169,15 @@ public final class JarsBuilder {
           final ArtifactRootDescriptor descriptor = (ArtifactRootDescriptor)pair.getSecond();
           final int rootIndex = descriptor.getRootIndex();
           if (descriptor instanceof FileBasedArtifactRootDescriptor) {
-            addFileToJar(jarOutputStream, jarFile, descriptor.getRootFile(), descriptor.getFilter(), relativePath, targetJarPath, writtenPaths,
-                         packedFilePaths, rootIndex);
+            addFileToJar(jarOutputStream, jarFile, descriptor.getRootFile(), descriptor.getFilter(),
+                         relativePath, targetJarPath, writtenPaths,
+                         packedFilePaths, rootIndex, serviceMap);
           }
           else {
             final String filePath = FileUtil.toSystemIndependentName(descriptor.getRootFile().getAbsolutePath());
             packedFilePaths.add(filePath);
             myOutSrcMapping.appendData(targetJarPath, rootIndex, filePath);
-            extractFileAndAddToJar(jarOutputStream, (JarBasedArtifactRootDescriptor)descriptor, relativePath, writtenPaths);
+            extractFileAndAddToJar(jarOutputStream, (JarBasedArtifactRootDescriptor)descriptor, relativePath, writtenPaths, serviceMap);
           }
         }
         else {
@@ -182,11 +185,22 @@ public final class JarsBuilder {
           File nestedJarFile = myBuiltJars.get(nestedJar);
           if (nestedJarFile != null) {
             addFileToJar(jarOutputStream, jarFile, nestedJarFile, SourceFileFilter.ALL, relativePath, targetJarPath, writtenPaths,
-                         packedFilePaths, -1);
+                         packedFilePaths, -1, serviceMap);
           }
           else {
             LOG.debug("nested JAR file " + relativePath + " for " + jar.getPresentableDestination() + " not found");
           }
+        }
+      }
+      for (String relativePath : serviceMap.keySet()) {
+        File file = File.createTempFile("service", "tmp");
+        try {
+          FileUtil.writeToFile(file, StringUtil.join(serviceMap.get(relativePath), "\n"));
+          long timestamp = buildDateInMillis != null ? buildDateInMillis : FSOperations.lastModified(file);
+          ZipUtil.addFileToZip(jarOutputStream, file, relativePath, writtenPaths, null, timestamp);
+        }
+        finally {
+          file.delete();
         }
       }
 
@@ -289,8 +303,11 @@ public final class JarsBuilder {
     }
   }
 
-  private void extractFileAndAddToJar(final JarOutputStream jarOutputStream, final JarBasedArtifactRootDescriptor root,
-                                      final String relativeOutputPath, final Set<? super String> writtenPaths)
+  private void extractFileAndAddToJar(final JarOutputStream jarOutputStream,
+                                      final JarBasedArtifactRootDescriptor root,
+                                      final String relativeOutputPath,
+                                      final Set<? super String> writtenPaths,
+                                      MultiMap<String, String> serviceMap)
     throws IOException {
     final long timestamp = buildDateInMillis != null ? buildDateInMillis : FSOperations.lastModified(root.getRootFile());
     root.processEntries(new JarBasedArtifactRootDescriptor.EntryProcessor() {
@@ -302,6 +319,11 @@ public final class JarsBuilder {
         if (inputStream == null) {
           if (!pathInJar.endsWith("/")) {
             addDirectoryEntry(jarOutputStream, pathInJar + "/", writtenPaths);
+          }
+        }
+        else if (pathInJar.contains("META-INF/services/")) {
+          for (String line : StringUtil.splitByLines(FileUtil.loadTextAndClose(inputStream), false)) {
+            serviceMap.putValue(relativePath, line);
           }
         }
         else if (writtenPaths.add(pathInJar)) {
@@ -332,13 +354,14 @@ public final class JarsBuilder {
 
   private void addFileToJar(final @NotNull JarOutputStream jarOutputStream, final @NotNull File jarFile, @NotNull File file,
                             SourceFileFilter filter, @NotNull String relativePath, String targetJarPath,
-                            final @NotNull Set<? super String> writtenPaths, List<? super String> packedFilePaths, final int rootIndex) throws IOException {
+                            final @NotNull Set<? super String> writtenPaths, List<? super String> packedFilePaths, final int rootIndex,
+                            MultiMap<String, String> serviceMap) throws IOException {
     if (!file.exists() || FileUtil.isAncestor(file, jarFile, false)) {
       return;
     }
 
     relativePath = addParentDirectories(jarOutputStream, writtenPaths, relativePath);
-    addFileOrDirRecursively(jarOutputStream, file, filter, relativePath, targetJarPath, writtenPaths, packedFilePaths, rootIndex);
+    addFileOrDirRecursively(jarOutputStream, file, filter, relativePath, targetJarPath, writtenPaths, packedFilePaths, rootIndex, serviceMap);
   }
 
   private void addFileOrDirRecursively(@NotNull ZipOutputStream jarOutputStream,
@@ -348,7 +371,8 @@ public final class JarsBuilder {
                                        String targetJarPath,
                                        @NotNull Set<? super String> writtenItemRelativePaths,
                                        List<? super String> packedFilePaths,
-                                       int rootIndex) throws IOException {
+                                       int rootIndex,
+                                       MultiMap<String, String> serviceMap) throws IOException {
     final String filePath = FileUtil.toSystemIndependentName(file.getAbsolutePath());
     if (!filter.accept(filePath) || !filter.shouldBeCopied(filePath, myContext.getProjectDescriptor())) {
       return;
@@ -363,14 +387,23 @@ public final class JarsBuilder {
       if (children != null) {
         for (File child : children) {
           addFileOrDirRecursively(jarOutputStream, child, filter, directoryPath + child.getName(), targetJarPath, writtenItemRelativePaths,
-                                  packedFilePaths, rootIndex);
+                                  packedFilePaths, rootIndex, serviceMap);
         }
       }
       return;
     }
 
-    final long timestamp = buildDateInMillis != null ? buildDateInMillis : FSOperations.lastModified(file);
-    final boolean added = ZipUtil.addFileToZip(jarOutputStream, file, relativePath, writtenItemRelativePaths, null, timestamp);
+    boolean added;
+    if (relativePath.startsWith("META-INF/services/")) {
+      for (String line : StringUtil.splitByLines(FileUtil.loadFile(file), false)) {
+        serviceMap.putValue(relativePath, line);
+      }
+      added = true;
+    }
+    else {
+      long timestamp = buildDateInMillis != null ? buildDateInMillis : FSOperations.lastModified(file);
+      added = ZipUtil.addFileToZip(jarOutputStream, file, relativePath, writtenItemRelativePaths, null, timestamp);
+    }
     if (rootIndex != -1) {
       myOutSrcMapping.appendData(targetJarPath, rootIndex, filePath);
       if (added) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.index;
 
 import com.intellij.openapi.util.Disposer;
@@ -7,7 +7,10 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.PsiFileWithStubSupport;
-import com.intellij.psi.stubs.*;
+import com.intellij.psi.stubs.PsiFileStub;
+import com.intellij.psi.stubs.SerializationManagerEx;
+import com.intellij.psi.stubs.SerializationManagerImpl;
+import com.intellij.psi.stubs.Stub;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.util.io.PersistentStringEnumerator;
 
@@ -30,29 +33,32 @@ public class StubReSerializationTest extends JavaCodeInsightFixtureTestCase {
       }
     }
 
-    SerializationManagerImpl externalSerializationManager = new SerializationManagerImpl(externalStubEnumerator, false);
-    try {
-      PsiFileStub stub = createStub();
+    HelperKt.executeWithScope(coroutineScope -> {
+      SerializationManagerImpl externalSerializationManager = new SerializationManagerImpl(externalStubEnumerator, false, coroutineScope);
+      try {
+        PsiFileStub stub = createStub();
 
-      BufferExposingByteArrayOutputStream out = new BufferExposingByteArrayOutputStream();
-      serializationManager.serialize(stub, out);
-      byte[] serialized = out.toByteArray();
+        BufferExposingByteArrayOutputStream out = new BufferExposingByteArrayOutputStream();
+        serializationManager.serialize(stub, out);
+        byte[] serialized = out.toByteArray();
 
-      BufferExposingByteArrayOutputStream externallySerializedOut = new BufferExposingByteArrayOutputStream();
-      serializationManager.reSerialize(new ByteArrayInputStream(serialized), externallySerializedOut, externalSerializationManager);
-      byte[] externalStub = externallySerializedOut.toByteArray();
-      assertFalse(Arrays.equals(serialized, externalStub));
+        BufferExposingByteArrayOutputStream externallySerializedOut = new BufferExposingByteArrayOutputStream();
+        serializationManager.reSerialize(new ByteArrayInputStream(serialized), externallySerializedOut, externalSerializationManager);
+        byte[] externalStub = externallySerializedOut.toByteArray();
+        assertFalse(Arrays.equals(serialized, externalStub));
 
-      Stub stubFromExternSerializationManager = externalSerializationManager.deserialize(new ByteArrayInputStream(externalStub));
-      assertEquals(DebugUtil.stubTreeToString(stub), DebugUtil.stubTreeToString(stubFromExternSerializationManager));
+        Stub stubFromExternSerializationManager = externalSerializationManager.deserialize(new ByteArrayInputStream(externalStub));
+        assertEquals(DebugUtil.stubTreeToString(stub), DebugUtil.stubTreeToString(stubFromExternSerializationManager));
 
-      BufferExposingByteArrayOutputStream initialOut = new BufferExposingByteArrayOutputStream();
-      externalSerializationManager.reSerialize(new ByteArrayInputStream(externalStub), initialOut, serializationManager);
-      byte[] initialSerializedStub = initialOut.toByteArray();
-      assertOrderedEquals(serialized, initialSerializedStub);
-    } finally {
-      Disposer.dispose(externalSerializationManager);
-    }
+        BufferExposingByteArrayOutputStream initialOut = new BufferExposingByteArrayOutputStream();
+        externalSerializationManager.reSerialize(new ByteArrayInputStream(externalStub), initialOut, serializationManager);
+        byte[] initialSerializedStub = initialOut.toByteArray();
+        assertOrderedEquals(serialized, initialSerializedStub);
+      }
+      finally {
+        Disposer.dispose(externalSerializationManager);
+      }
+    });
   }
 
   public void testIdenticalReSerialization() throws Exception {

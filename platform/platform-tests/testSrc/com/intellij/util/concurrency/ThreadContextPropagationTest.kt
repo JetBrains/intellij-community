@@ -24,7 +24,6 @@ import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.jupiter.api.extension.InvocationInterceptor
 import org.junit.jupiter.api.extension.ReflectiveInvocationContext
-import java.lang.Runnable
 import java.lang.reflect.Method
 import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicBoolean
@@ -39,7 +38,6 @@ import kotlin.test.assertTrue
 
 @TestApplication
 @ExtendWith(ThreadContextPropagationTest.Enabler::class)
-@ExtendWith(ImplicitBlockingContextTest.Enabler::class)
 class ThreadContextPropagationTest {
 
   class Enabler : InvocationInterceptor {

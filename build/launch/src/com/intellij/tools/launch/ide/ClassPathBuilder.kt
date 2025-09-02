@@ -16,6 +16,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
 import java.util.logging.Logger
+import kotlin.io.path.name
 import kotlin.io.path.pathString
 
 class ClassPathBuilder(private val paths: PathsProvider, private val modulesToScopes: Map<String, JpsJavaClasspathKind>) {
@@ -113,6 +114,10 @@ class ClassPathBuilder(private val paths: PathsProvider, private val modulesToSc
 
   private fun Collection<Path>.replaceWithArchivedIfNeeded(): Collection<Path> {
     val mapping = PathManager.getArchivedCompiledClassesMapping() ?: return this
-    return map { path -> if (Files.isRegularFile(path)) path else mapping[path.pathString]?.let { Path.of(it) } ?: path }
+    return map { path ->
+      if (Files.isRegularFile(path)) path
+      // path is absolute, mapping contains only the last two path elements
+      else mapping[path.parent.name + "/" + path.name]?.let { Path.of(it) } ?: path
+    }
   }
 }

@@ -6,8 +6,8 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.execution.process.KillableProcessHandler;
 import com.intellij.execution.process.OSProcessHandler;
-import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
@@ -80,13 +80,14 @@ public abstract class GitTextHandler extends GitHandler {
         return null;
       }
       myHandler = createProcess(myCommandLine);
+      listeners().processStarted();
       return myHandler.getProcess();
     }
   }
 
   @Override
   protected void startHandlingStreams() {
-    myHandler.addProcessListener(new ProcessAdapter() {
+    myHandler.addProcessListener(new ProcessListener() {
       @Override
       public void processTerminated(final @NotNull ProcessEvent event) {
         final int exitCode = event.getExitCode();

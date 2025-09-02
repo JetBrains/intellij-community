@@ -7,11 +7,12 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.ToggleAction
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAware
 
 private const val DOUBLE_CLICK_SETTING = "run.dashboard.double.click.run"
 
-class RunDashboardDoubleClickRunAction : ToggleAction(), DumbAware {
+class RunDashboardDoubleClickRunAction : ToggleAction(), DumbAware, ActionRemoteBehaviorSpecification.Frontend {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {

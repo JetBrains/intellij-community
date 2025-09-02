@@ -24,6 +24,7 @@ import com.intellij.util.ui.EdtInvocationManager
 import com.intellij.util.ui.update.UiNotifyConnector.Companion.installOn
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.ApiStatus.Obsolete
@@ -342,18 +343,18 @@ open class MergingUpdateQueue @JvmOverloads constructor(
 
       isFlushing = true
       try {
-        val all = flushScheduledUpdates() ?: return@scheduleTask
 
         try {
-          coroutineContext.ensureActive()
+          currentCoroutineContext().ensureActive()
         } catch (e : CancellationException) {
-          all.forEachGuaranteed(Update::setRejected)
+          if (waiterForMerge.isDisposed) {
+            flushScheduledUpdates()?.forEachGuaranteed(Update::setRejected)
+          }
           throw e
         }
 
-        for (update in all) {
-          update.setProcessed()
-        }
+        val all = flushScheduledUpdates() ?: return@scheduleTask
+
         all.sortWith(priorityComparator)
         executeUpdates(all)
       }
@@ -373,11 +374,22 @@ open class MergingUpdateQueue @JvmOverloads constructor(
       try {
         coroutineContext.ensureActive()
       } catch (e : CancellationException) {
-        updates.subList(i, updates.size).forEachGuaranteed(Update::setRejected)
+        val remainingUpdates = updates.subList(i, updates.size)
+        if (waiterForMerge.isDisposed) {
+          remainingUpdates.forEachGuaranteed(Update::setRejected)
+        }
+        else {
+          // caused by forced restart
+          synchronized(scheduledUpdates) {
+            remainingUpdates.forEachGuaranteed(this::put)
+          }
+        }
         throw e
       }
 
       val update = updates[i++]
+
+      update.setProcessed()
 
       if (isExpired(update)) {
         update.setRejected()

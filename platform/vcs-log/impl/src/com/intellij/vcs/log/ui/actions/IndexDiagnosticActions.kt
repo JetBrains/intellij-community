@@ -14,6 +14,7 @@ import com.intellij.util.text.DateFormatUtil
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.VcsLogCommitSelection
 import com.intellij.vcs.log.VcsLogDataKeys
+import com.intellij.vcs.log.VcsLogCommitStorageIndex
 import com.intellij.vcs.log.data.AbstractDataGetter.Companion.getCommitDetails
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.data.index.IndexDiagnostic.getDiffFor
@@ -68,7 +69,7 @@ internal abstract class IndexDiagnosticActionBase(dynamicText: Supplier<@NlsActi
   }
 
   abstract fun update(e: AnActionEvent, logManager: VcsLogManager)
-  abstract fun getCommitsToCheck(e: AnActionEvent, logManager: VcsLogManager): List<Int>
+  abstract fun getCommitsToCheck(e: AnActionEvent, logManager: VcsLogManager): List<VcsLogCommitStorageIndex>
 }
 
 internal class CheckSelectedCommits :
@@ -85,7 +86,7 @@ internal class CheckSelectedCommits :
     e.presentation.isEnabled = selectedCommits.isNotEmpty()
   }
 
-  private fun getSelectedCommits(vcsLogData: VcsLogData, selection: VcsLogCommitSelection, reportNotIndexed: Boolean): List<Int> {
+  private fun getSelectedCommits(vcsLogData: VcsLogData, selection: VcsLogCommitSelection, reportNotIndexed: Boolean): List<VcsLogCommitStorageIndex> {
     val selectedCommits = selection.ids
     if (selectedCommits.isEmpty()) return emptyList()
 
@@ -97,7 +98,7 @@ internal class CheckSelectedCommits :
     return selectedIndexedCommits
   }
 
-  override fun getCommitsToCheck(e: AnActionEvent, logManager: VcsLogManager): List<Int> {
+  override fun getCommitsToCheck(e: AnActionEvent, logManager: VcsLogManager): List<VcsLogCommitStorageIndex> {
     return getSelectedCommits(logManager.dataManager, e.getRequiredData(VcsLogDataKeys.VCS_LOG_COMMIT_SELECTION), true)
   }
 }
@@ -115,7 +116,7 @@ internal class CheckOldCommits : IndexDiagnosticActionBase(VcsLogBundle.messageP
                                rootsForIndexing.any { logManager.dataManager.index.isIndexed(it) }
   }
 
-  override fun getCommitsToCheck(e: AnActionEvent, logManager: VcsLogManager): List<Int> {
+  override fun getCommitsToCheck(e: AnActionEvent, logManager: VcsLogManager): List<VcsLogCommitStorageIndex> {
     val indexedRoots = logManager.dataManager.index.indexingRoots.filter {
       logManager.dataManager.index.isIndexed(it)
     }

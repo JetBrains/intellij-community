@@ -1,0 +1,13 @@
+<idea-plugin>
+  <dependencies>
+    <module name="intellij.platform.frontend"/>
+    <module name="intellij.markdown"/>
+  </dependencies>
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="org.intellij.plugins.markdown.ui.preview.accessor.MarkdownLinkOpener"
+                        serviceImplementation="com.intellij.markdown.frontend.preview.accessor.impl.MarkdownLinkOpenerImpl"/>
+    <registryKey key="markdown.open.link.fallback"
+                 defaultValue="false"
+                 description="Should fallback to Markdown link opening implementation before the split."/>
+  </extensions>
+</idea-plugin>

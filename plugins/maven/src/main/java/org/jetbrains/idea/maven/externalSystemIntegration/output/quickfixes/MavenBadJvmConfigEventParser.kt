@@ -67,11 +67,11 @@ class MavenImportBadJvmConfigEventParser : MavenImportLoggedEventParser {
 
   override fun processLogLine(project: Project,
                               logLine: String,
-                              reader: BuildOutputInstantReader,
+                              reader: BuildOutputInstantReader?,
                               messageConsumer: Consumer<in BuildEvent>): Boolean {
     var errorLine = logLine
     if (logLine.startsWith(MavenJvmConfigBuildIssue.VM_INIT_ERROR)) {
-      val causeLine = reader.readLine() ?: ""
+      val causeLine = reader?.readLine() ?: ""
       if (causeLine.isNotEmpty()) {
         errorLine += "\n$causeLine"
       }

@@ -11,7 +11,10 @@ import com.intellij.codeInsight.template.impl.*;
 import com.intellij.codeInsight.template.macro.*;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.impl.DocumentImpl;
+import com.intellij.pom.java.JavaFeature;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -295,9 +298,9 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
     Set<TemplateContextType> contextTypeSet = TemplateManagerImpl
       .getApplicableContextTypes(TemplateActionContext.expanding(myFixture.getFile(), myFixture.getEditor()));
     List<Class<? extends TemplateContextType>> applicableContextTypesClasses = ContainerUtil.map(contextTypeSet, TemplateContextType::getClass);
-    List<Class<JavaCodeContextType.Declaration>> declarationTypes = Arrays.asList(JavaCodeContextType.Declaration.class);
+    List<Class<? extends JavaCodeContextType>> declarationTypes = Arrays.asList(JavaCodeContextType.Declaration.class, JavaCodeContextType.NormalClassDeclarationAfterShortMainMethod.class);
 
-    assertEquals(applicableContextTypesClasses, declarationTypes);
+    assertEquals(declarationTypes, applicableContextTypesClasses);
   }
 
   public void testJavaStatementContext() {
@@ -335,8 +338,44 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
     assertTrue(isApplicable("class Foo {{ \"\"\"<caret>\"\"\" }}", template));
   }
 
-  public void testJavaDeclarationContext() {
+  public void testJavaNormalClassDeclarationContextWithInstanceMethod() {
+    final TemplateImpl template = TemplateSettings.getInstance().getTemplate("psvm", "Java//Instance 'main' methods for normal classes");
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_CLASSES.getStandardLevel(), () -> {
+      assertTrue(isApplicable("class Foo { <caret>xxx }", template));
+      assertTrue(isApplicable("class Foo { <caret>xxx String[] foo(String[] bar) {} }", template));
+      assertFalse(isApplicable("<caret>", template));
+      assertFalse(isApplicable("int a = 1; <caret>", template));
+    });
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_8, () -> {
+      assertFalse(isApplicable("class Foo { <caret>xxx }", template));
+    });
+  }
+
+  public void testJavaNormalClassDeclarationContextWithoutInstanceMethod() {
     final TemplateImpl template = TemplateSettings.getInstance().getTemplate("psvm", "Java");
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_8, () -> {
+      assertTrue(isApplicable("class Foo { <caret>xxx }", template));
+      assertTrue(isApplicable("class Foo { <caret>xxx String[] foo(String[] bar) {} }", template));
+      assertFalse(isApplicable("<caret>", template));
+      assertFalse(isApplicable("int a = 1; <caret>", template));
+    });
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_CLASSES.getStandardLevel(), () -> {
+      assertFalse(isApplicable("class Foo { <caret>xxx }", template));
+    });
+  }
+
+  public void testImplicitClassDeclarationContext() {
+    final TemplateImpl template = TemplateSettings.getInstance().getTemplate("psvm", "Java//Instance 'main' methods for implicitly declared classes");
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_CLASSES.getStandardLevel(), ()->{
+      assertFalse(isApplicable("class Foo { <caret>xxx }", template));
+      assertFalse(isApplicable("class Foo { <caret>xxx String[] foo(String[] bar) {} }", template));
+      assertTrue(isApplicable("<caret>xxx", template));
+      assertTrue(isApplicable("int a = 1; <caret>xxx", template));
+    });
+  }
+
+  public void testJavaDeclarationContext() {
+    final TemplateImpl template = TemplateSettings.getInstance().getTemplate("psf", "Java");
     assertFalse(isApplicable("class Foo {{ <caret>xxx }}", template));
     assertFalse(isApplicable("class Foo {{ <caret>xxx }}", template));
     assertFalse(isApplicable("class Foo {{ if (a <caret>xxx) }}", template));
@@ -768,6 +807,175 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
           }
         }
         """);
+  }
+
+  public void testPsvmWithString() {
+    IdeaTestUtil.withLevel(
+      getModule(),
+      JavaFeature.IMPLICIT_CLASSES.getStandardLevel(),
+      () -> {
+        myFixture.configureByText(
+          "a.java",
+            """
+            <caret>
+            """);
+        final TemplateImpl template =
+          TemplateSettings.getInstance().getTemplate("psvma", "Java//Instance 'main' methods for implicitly declared classes");
+        startTemplate(template);
+        myFixture.checkResult(
+            """
+            void main(String[] args) {
+                <caret>
+            }
+            """);
+      }
+    );
+  }
+
+  public void testPsvmWithoutString() {
+    IdeaTestUtil.withLevel(
+      getModule(),
+      JavaFeature.IMPLICIT_CLASSES.getStandardLevel(),
+      () -> {
+        myFixture.configureByText(
+          "a.java",
+            """
+            class A{
+            <caret>
+            }
+            """);
+        final TemplateImpl template = TemplateSettings.getInstance().getTemplate("main", "Java//Instance 'main' methods for normal classes");
+        startTemplate(template);
+        myFixture.checkResult(
+            """
+            class A{
+                static void main() {
+                    <caret>
+                }
+            }
+            """);
+      }
+    );
+  }
+
+  public void testIOP() {
+    IdeaTestUtil.withLevel(
+      getModule(),
+      JavaFeature.JAVA_LANG_IO.getStandardLevel(),
+      () -> {
+        myFixture.configureByText(
+          "a.java",
+          """
+          class A{
+            public static void main(String[] args) {
+              <caret>
+            }
+          }
+          """);
+        final TemplateImpl template = TemplateSettings.getInstance().getTemplate("iop", "Java");
+        startTemplate(template);
+        myFixture.checkResult(
+          """
+          class A{
+            public static void main(String[] args) {
+                IO.println(<caret>);
+            }
+          }
+          """);
+      }
+    );
+  }
+
+  public void testIOR() {
+    IdeaTestUtil.withLevel(
+      getModule(),
+      JavaFeature.JAVA_LANG_IO.getStandardLevel(),
+      () -> {
+        myFixture.configureByText(
+          "a.java",
+          """
+          class A{
+            public static void main(String[] args) {
+                <caret>
+            }
+          }""");
+        final TemplateImpl template = TemplateSettings.getInstance().getTemplate("ior", "Java");
+        startTemplate(template);
+        myFixture.checkResult(
+          """
+          class A{
+            public static void main(String[] args) {
+                IO.readln(<caret>);
+            }
+          }""");
+      }
+    );
+  }
+
+  public void testSTSSAvailable() {
+    final TemplateImpl template = TemplateSettings.getInstance().getTemplate("stss", "Java");
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_20, () -> {
+      assertFalse(isApplicable("class Foo {void x(){ <caret>JUNK }", template));
+    });
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, () -> {
+      assertFalse(isApplicable("class Foo {void x(){ <caret>JUNK }", template));
+    });
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21_PREVIEW, () -> {
+      assertTrue(isApplicable("class Foo {void x(){ <caret>JUNK }", template));
+    });
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_24_PREVIEW, () -> {
+      assertTrue(isApplicable("class Foo {void x(){ <caret>JUNK }", template));
+    });
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_25, () -> {
+      assertFalse(isApplicable("class Foo {void x(){ <caret>JUNK }", template));
+    });
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_25_PREVIEW, () -> {
+      assertFalse(isApplicable("class Foo {void x(){ <caret>JUNK }", template));
+    });
+  }
+
+  public void testSTSAvailable() {
+    final TemplateImpl template = TemplateSettings.getInstance().getTemplate("sts", "Java");
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_20, () -> {
+      assertFalse(isApplicable("class Foo {void x(){ <caret>JUNK }", template));
+    });
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, () -> {
+      assertFalse(isApplicable("class Foo {void x(){ <caret>JUNK }", template));
+    });
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21_PREVIEW, () -> {
+      assertFalse(isApplicable("class Foo {void x(){ <caret>JUNK }", template));
+    });
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_24_PREVIEW, () -> {
+      assertFalse(isApplicable("class Foo {void x(){ <caret>JUNK }", template));
+    });
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_25, () -> {
+      assertFalse(isApplicable("class Foo {void x(){ <caret>JUNK }", template));
+    });
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_25_PREVIEW, () -> {
+      assertTrue(isApplicable("class Foo {void x(){ <caret>JUNK }", template));
+    });
+  }
+
+  public void testIOPAvailable() {
+    final TemplateImpl template =
+      TemplateSettings.getInstance().getTemplate("iop", "Java");
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.JAVA_LANG_IO.getStandardLevel(), () -> {
+      assertTrue(isApplicable("class Foo {void x(){ <caret>JUNK }", template));
+    });
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, () -> {
+      assertFalse(isApplicable("class Foo {void x(){ <caret>JUNK }", template));
+    });
+  }
+
+  public void testIORAvailable() {
+    final TemplateImpl template =
+      TemplateSettings.getInstance().getTemplate("ior", "Java");
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.JAVA_LANG_IO.getStandardLevel(), () -> {
+      assertTrue(isApplicable("class Foo {void x(){ <caret>JUNK }", template));
+    });
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, () -> {
+      assertFalse(isApplicable("class Foo {void x(){ <caret>JUNK }", template));
+    });
   }
 
   @Override

@@ -841,6 +841,32 @@ class K2DfaAssistTest : DfaAssistTest(), ExpectedPluginModeProvider {
         }
     }
 
+    @JvmInline
+    value class ValueInt(val i: Int)
+    
+    fun testIsValueClass() {
+        val text = """
+            package org.jetbrains.kotlin.idea.k2.debugger.test
+            
+            class K2DfaAssistTest {
+                @JvmInline
+                value class ValueInt(val i: Int)
+    
+                fun test(boxed: Any) {
+                    <caret>if (boxed is ValueInt && boxed.i > 0/*TRUE*/) println()
+    
+                    println("hello")
+                    println("why")
+                    println("i am")
+                    println("grayed out")
+                }
+            }
+        """.trimIndent()
+        doTest(text) { vm, frame ->
+            frame.addVariable("boxed", MockIntegerValue(vm, 42))
+        }
+    }
+
     private fun doTest(text: String, mockValues: BiConsumer<MockVirtualMachine, MockStackFrame>) {
         doTest(text, mockValues, "Test.kt")
     }

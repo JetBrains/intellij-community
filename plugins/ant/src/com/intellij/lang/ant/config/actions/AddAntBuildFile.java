@@ -88,7 +88,7 @@ public final class AddAntBuildFile extends AnAction {
     if (project != null) {
       final VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
       if (files != null) {
-        for (VirtualFile file : files) {
+        files: for (VirtualFile file : files) {
           final PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
           if (!(psiFile instanceof XmlFile xmlFile)) {
             continue;
@@ -109,6 +109,12 @@ public final class AddAntBuildFile extends AnAction {
           }
           if ("http://maven.apache.org/POM/4.0.0".equals(rootTag.getNamespace())) {
             continue;
+          }
+          for (XmlTag tag : rootTag.getSubTags()) {
+            String name = tag.getName();
+            if (name.equals("modelVersion")) continue files;
+            if (name.equals("groupId")) continue files;
+            if (name.equals("artifactId")) continue files;
           }
           // found at least one candidate file
           enable(presentation);

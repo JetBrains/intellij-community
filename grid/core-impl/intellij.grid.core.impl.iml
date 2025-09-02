@@ -9,8 +9,8 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="intellij.grid.types" exported="" />
-    <orderEntry type="module" module-name="intellij.grid.csv.core.impl" exported="" />
+    <orderEntry type="module" module-name="intellij.grid.types" />
+    <orderEntry type="module" module-name="intellij.grid.csv.core.impl" />
     <orderEntry type="module" module-name="intellij.grid" />
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />

@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class DefaultTerminalRunnerFactory {
   public @NotNull AbstractTerminalRunner<?> create(@NotNull Project project) {
-    return new LocalBlockTerminalRunner(project);
+    return new LocalTerminalDirectRunner(project);
   }
 
   /**

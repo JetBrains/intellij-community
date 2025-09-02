@@ -2,6 +2,7 @@
 package org.jetbrains.jps.devkit.threadingModelHelper;
 
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.org.objectweb.asm.*;
 import org.jetbrains.org.objectweb.asm.commons.Method;
 
@@ -87,7 +88,8 @@ public class TMHAssertionGenerator1 implements TMHAssertionGenerator {
       this(DEFAULT_ANNOTATION_CLASS_NAME, DEFAULT_APPLICATION_MANAGER_CLASS_NAME, DEFAULT_APPLICATION_CLASS_NAME);
     }
 
-    AssertEdt(String annotationClassName, String applicationManagerClassName, String applicationClassName) {
+    @VisibleForTesting
+    public AssertEdt(String annotationClassName, String applicationManagerClassName, String applicationClassName) {
       this(Type.getType("L" + annotationClassName + ";"),
           Type.getType("L" + applicationManagerClassName + ";"),
           Type.getType("L" + applicationClassName + ";"));
@@ -106,7 +108,7 @@ public class TMHAssertionGenerator1 implements TMHAssertionGenerator {
       this(DEFAULT_ANNOTATION_CLASS_NAME, DEFAULT_APPLICATION_MANAGER_CLASS_NAME, DEFAULT_APPLICATION_CLASS_NAME);
     }
 
-    AssertBackgroundThread(String annotationClassName, String applicationManagerClassName, String applicationClassName) {
+    public AssertBackgroundThread(String annotationClassName, String applicationManagerClassName, String applicationClassName) {
       this(Type.getType("L" + annotationClassName + ";"),
            Type.getType("L" + applicationManagerClassName + ";"),
            Type.getType("L" + applicationClassName + ";"));
@@ -127,7 +129,7 @@ public class TMHAssertionGenerator1 implements TMHAssertionGenerator {
           Type.getType("L" + DEFAULT_APPLICATION_CLASS_NAME + ";"));
     }
 
-    AssertReadAccess(String annotationClassName, String applicationManagerClassName, String applicationClassName) {
+    public AssertReadAccess(String annotationClassName, String applicationManagerClassName, String applicationClassName) {
       this(Type.getType("L" + annotationClassName + ";"),
            Type.getType("L" + applicationManagerClassName + ";"),
            Type.getType("L" + applicationClassName + ";"));
@@ -148,7 +150,8 @@ public class TMHAssertionGenerator1 implements TMHAssertionGenerator {
           Type.getType("L" + DEFAULT_APPLICATION_CLASS_NAME + ";"));
     }
 
-    AssertWriteAccess(String annotationClassName, String applicationManagerClassName, String applicationClassName) {
+    @VisibleForTesting
+    public AssertWriteAccess(String annotationClassName, String applicationManagerClassName, String applicationClassName) {
       this(Type.getType("L" + annotationClassName + ";"),
            Type.getType("L" + applicationManagerClassName + ";"),
            Type.getType("L" + applicationClassName + ";"));
@@ -167,7 +170,7 @@ public class TMHAssertionGenerator1 implements TMHAssertionGenerator {
       this(DEFAULT_ANNOTATION_CLASS_NAME, DEFAULT_APPLICATION_MANAGER_CLASS_NAME, DEFAULT_APPLICATION_CLASS_NAME);
     }
 
-    AssertNoReadAccess(String annotationClassName, String applicationManagerClassName, String applicationClassName) {
+    public AssertNoReadAccess(String annotationClassName, String applicationManagerClassName, String applicationClassName) {
       this(Type.getType("L" + annotationClassName + ";"),
            Type.getType("L" + applicationManagerClassName + ";"),
            Type.getType("L" + applicationClassName + ";"));
@@ -178,7 +181,8 @@ public class TMHAssertionGenerator1 implements TMHAssertionGenerator {
     }
   }
 
-  static Set<? extends TMHAssertionGenerator> generators() {
+  @VisibleForTesting
+  public static Set<? extends TMHAssertionGenerator> generators() {
     return Set.of(
       new TMHAssertionGenerator1.AssertEdt(),
       new TMHAssertionGenerator1.AssertBackgroundThread(),

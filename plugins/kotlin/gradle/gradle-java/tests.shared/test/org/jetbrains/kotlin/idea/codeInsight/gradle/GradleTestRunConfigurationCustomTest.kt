@@ -3,12 +3,13 @@
 package org.jetbrains.kotlin.idea.codeInsight.gradle
 
 import com.intellij.openapi.application.runReadAction
-import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestCase
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestCase
 import com.intellij.testFramework.runInEdtAndWait
 import org.jetbrains.kotlin.gradle.textWithoutTags
 import org.jetbrains.kotlin.idea.gradleJava.run.KotlinJvmTestClassGradleConfigurationProducer
 import org.jetbrains.kotlin.idea.gradleJava.run.KotlinJvmTestMethodGradleConfigurationProducer
+import org.jetbrains.kotlin.idea.gradleJava.testing.KotlinAllInPackageGradleConfigurationProducer
 import org.jetbrains.kotlin.idea.run.getConfiguration
 import org.jetbrains.plugins.gradle.execution.test.runner.TestClassGradleConfigurationProducer
 import org.jetbrains.plugins.gradle.execution.test.runner.TestMethodGradleConfigurationProducer
@@ -41,6 +42,21 @@ class GradleTestRunConfigurationCustomTest16 : KotlinGradleImportingTestCase() {
                 val kotlinFunctionConfiguration = getConfiguration(kotlinFile, myProject, "testA")
                 assert(kotlinFunctionConfiguration.isProducedBy(KotlinJvmTestMethodGradleConfigurationProducer::class.java))
                 assert(kotlinFunctionConfiguration.configuration.name == "MyKotlinTest.testA")
+            }
+        }
+    }
+
+    @Test
+    @TargetVersions("4.7+")
+    fun testAllInPackageWithImplicitPackagePrefix() {
+        val files = importProjectFromTestData()
+
+        runInEdtAndWait {
+            runReadAction {
+                val kotlinFile = files.first { it.name == "MyKotlinTest.kt" }
+                val kotlinPackageConfiguration = getConfiguration(kotlinFile.parent, myProject, "")
+                assertEquals("Tests in 'my.company.pkg'", kotlinPackageConfiguration.configuration.name)
+                assertTrue(kotlinPackageConfiguration.isProducedBy(KotlinAllInPackageGradleConfigurationProducer::class.java))
             }
         }
     }

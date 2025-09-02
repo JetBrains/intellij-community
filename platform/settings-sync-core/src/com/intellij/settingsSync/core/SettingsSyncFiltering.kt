@@ -4,12 +4,12 @@ import com.intellij.configurationStore.getPerOsSettingsStorageFolderName
 import com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ComponentCategorizer
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.components.State
 import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions
 import com.intellij.openapi.options.SchemeManagerFactory
-import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.settingsSync.core.config.EDITOR_FONT_SUBCATEGORY_ID
 import java.util.concurrent.ConcurrentHashMap
 
@@ -105,7 +105,7 @@ private fun getSubCategory(fileSpec: String): String? {
 }
 
 private fun findComponentClasses(fileSpec: String): List<Class<PersistentStateComponent<Any>>> {
-  val componentManager = ApplicationManager.getApplication() as ComponentManagerImpl
+  val componentManager = ApplicationManager.getApplication() as ComponentManagerEx
   val componentClasses = ArrayList<Class<PersistentStateComponent<Any>>>()
   componentManager.processAllImplementationClasses { aClass, _ ->
     if (PersistentStateComponent::class.java.isAssignableFrom(aClass)) {

@@ -71,6 +71,23 @@ interface IjentDeployingStrategy {
    */
   fun close()
 
+  /**
+   * Validates if a process exit code indicates normal termination.
+   *
+   * Called when [ProcessExitPolicy] is [CHECK_CODE] to determine if termination should raise [IjentUnavailableException].
+   * By default, only exit code 0 is considered normal.
+   *
+   * Common case in containerized environments: when stopping container, all processes receive SIGKILL (137).
+   * To avoid false error reporting, we check container state:
+   * - container.isRunning=false: normal container stop
+   * - container.isRunning=true: process killed unexpectedly
+   *
+   * @param exitCode The exit code returned by the process
+   * @return true if termination is normal, false to trigger error handling
+   * @see ProcessExitPolicy
+   */
+  suspend fun isExpectedProcessExit(exitCode: Int): Boolean = exitCode == 0
+
   interface Posix : IjentDeployingStrategy {
     /** @see [IjentDeployingStrategy.getTargetPlatform] */
     override suspend fun getTargetPlatform(): EelPlatform.Posix

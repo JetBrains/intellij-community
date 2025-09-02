@@ -9,6 +9,7 @@ import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.PackageIndex;
 import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.JavaFeature;
@@ -20,8 +21,13 @@ import com.intellij.ui.IconManager;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
+import javax.swing.*;
 import java.util.Map;
+import java.util.Set;
+import java.util.function.Supplier;
 
 /**
  * The standard "New Class" action for Java.
@@ -32,8 +38,16 @@ public class CreateClassAction extends JavaCreateTemplateInPackageAction<PsiClas
           IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Class), true);
   }
 
+  public CreateClassAction(@NotNull Supplier<String> text,
+                           @NotNull Supplier<String> description,
+                           @Nullable Supplier<? extends @Nullable Icon> icon,
+                           Set<? extends JpsModuleSourceRootType<?>> rootTypes) {
+    super(text, description, icon, rootTypes);
+  }
+
   @Override
-  protected void buildDialog(@NotNull Project project, @NotNull PsiDirectory directory, CreateFileFromTemplateDialog.Builder builder) {
+  protected void buildDialog(@NotNull Project project, @NotNull PsiDirectory directory,
+                             @NotNull CreateFileFromTemplateDialog.Builder builder) {
     builder
       .setTitle(JavaBundle.message("action.create.new.class"))
       .addKind(JavaPsiBundle.message("node.class.tooltip"), IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Class), JavaTemplateUtil.INTERNAL_CLASS_TEMPLATE_NAME)
@@ -53,6 +67,16 @@ public class CreateClassAction extends JavaCreateTemplateInPackageAction<PsiClas
     builder.addKind(JavaPsiBundle.message("node.exception.tooltip"), PlatformIcons.EXCEPTION_CLASS_ICON,
                     JavaTemplateUtil.INTERNAL_EXCEPTION_TYPE_TEMPLATE_NAME);
 
+    if (JavaFeature.IMPLICIT_CLASSES.isSufficient(level)) {
+      IconManager iconManager = IconManager.getInstance();
+      Icon icon = iconManager.createLayered(
+        iconManager.getPlatformIcon(com.intellij.ui.PlatformIcons.Class),
+        iconManager.getPlatformIcon(com.intellij.ui.PlatformIcons.FinalMark),
+        iconManager.getPlatformIcon(com.intellij.ui.PlatformIcons.RunnableMark)
+      );
+      builder.addKind(JavaPsiBundle.message("node.simple.source.file.tooltip"), icon, JavaTemplateUtil.INTERNAL_SIMPLE_SOURCE_FILE);
+    }
+
     PsiDirectory[] dirs = {directory};
     for (FileTemplate template : FileTemplateManager.getInstance(project).getAllTemplates()) {
       @NotNull CreateFromTemplateHandler handler = FileTemplateUtil.findHandler(template);
@@ -63,29 +87,7 @@ public class CreateClassAction extends JavaCreateTemplateInPackageAction<PsiClas
       }
     }
 
-    builder.setValidator(new InputValidatorEx() {
-      @Override
-      public String getErrorText(String inputString) {
-        if (!inputString.isEmpty() && !PsiNameHelper.getInstance(project).isQualifiedName(inputString)) {
-          return JavaErrorBundle.message("create.class.action.this.not.valid.java.qualified.name");
-        }
-        String shortName = StringUtil.getShortName(inputString);
-        if (PsiTypesUtil.isRestrictedIdentifier(shortName, level)) {
-          return JavaErrorBundle.message("restricted.identifier", shortName);
-        }
-        return null;
-      }
-
-      @Override
-      public boolean checkInput(String inputString) {
-        return true;
-      }
-
-      @Override
-      public boolean canClose(String inputString) {
-        return !StringUtil.isEmptyOrSpaces(inputString) && getErrorText(inputString) == null;
-      }
-    });
+    builder.setValidator(new CreateClassValidator(project, level));
   }
 
   @Override
@@ -112,6 +114,17 @@ public class CreateClassAction extends JavaCreateTemplateInPackageAction<PsiClas
 
   @Override
   protected final PsiClass doCreate(PsiDirectory dir, String className, String templateName) throws IncorrectOperationException {
+    if (JavaTemplateUtil.INTERNAL_SIMPLE_SOURCE_FILE.equals(templateName)) {
+      Project project = dir.getProject();
+      PsiDirectory current = dir;
+      PackageIndex instance = PackageIndex.getInstance(project);
+      while (current != null) {
+        if ("".equals(instance.getPackageName(current.getVirtualFile()))) {
+          return JavaDirectoryService.getInstance().createClass(current, className, templateName, true);
+        }
+        current = current.getParentDirectory();
+      }
+    }
     return JavaDirectoryService.getInstance().createClass(dir, className, templateName, true);
   }
 
@@ -131,5 +144,37 @@ public class CreateClassAction extends JavaCreateTemplateInPackageAction<PsiClas
   protected void postProcess(@NotNull PsiClass createdElement, String templateName, Map<String, String> customProperties) {
     // This override is necessary for plugin compatibility
     super.postProcess(createdElement, templateName, customProperties);
+  }
+
+  static class CreateClassValidator implements InputValidatorEx {
+    private final Project project;
+    private final LanguageLevel level;
+
+    CreateClassValidator(Project project, LanguageLevel level) {
+      this.project = project;
+      this.level = level;
+    }
+
+    @Override
+    public String getErrorText(String inputString) {
+      if (!inputString.isEmpty() && !PsiNameHelper.getInstance(project).isQualifiedName(inputString)) {
+        return JavaErrorBundle.message("create.class.action.this.not.valid.java.qualified.name");
+      }
+      String shortName = StringUtil.getShortName(inputString);
+      if (PsiTypesUtil.isRestrictedIdentifier(shortName, level)) {
+        return JavaErrorBundle.message("restricted.identifier", shortName);
+      }
+      return null;
+    }
+
+    @Override
+    public boolean checkInput(String inputString) {
+      return true;
+    }
+
+    @Override
+    public boolean canClose(String inputString) {
+      return !StringUtil.isEmptyOrSpaces(inputString) && getErrorText(inputString) == null;
+    }
   }
 }

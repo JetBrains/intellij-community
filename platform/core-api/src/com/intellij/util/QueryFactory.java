@@ -3,6 +3,7 @@ package com.intellij.util;
 
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -24,7 +25,7 @@ public class QueryFactory<Result, Parameters> {
     return new ExecutorsQuery<>(parameters, getExecutors());
   }
 
-  protected @NotNull List<QueryExecutor<Result, Parameters>> getExecutors() {
+  protected @NotNull @Unmodifiable List<QueryExecutor<Result, Parameters>> getExecutors() {
     return myExecutors;
   }
 

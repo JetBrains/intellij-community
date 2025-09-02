@@ -21,6 +21,6 @@
 
   <extensions defaultExtensionNs="org.intellij.intelliLang">
     <languageSupport implementation="org.jetbrains.kotlin.idea.injection.KotlinLanguageInjectionSupport"/>
-    <injectionConfig config="injection/kotlinInjections.xml"/>
+    <injectionConfig config="injection/kotlinInjections.k1.xml"/>
   </extensions>
 </idea-plugin>

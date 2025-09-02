@@ -1,2 +1,2 @@
-function B.foo() implements method A.foo().
-function B.foo() implements method Z.foo().
+Function B.foo() implements method A.foo().
+Function B.foo() implements method Z.foo().

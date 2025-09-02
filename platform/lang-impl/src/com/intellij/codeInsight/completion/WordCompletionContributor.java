@@ -46,8 +46,7 @@ public class WordCompletionContributor extends CompletionContributor implements 
                                                CompletionParameters parameters,
                                                Set<String> excludes,
                                                boolean allowEmptyPrefix) {
-    if (parameters.getProcess() instanceof CompletionProgressIndicator cpi &&
-        Boolean.TRUE.equals(cpi.getUserData(BaseCompletionService.FORBID_WORD_COMPLETION))) {
+    if (Boolean.TRUE.equals(((CompletionProcessEx)parameters.getProcess()).getUserData(BaseCompletionService.FORBID_WORD_COMPLETION))) {
       return;
     }
 
@@ -135,8 +134,7 @@ public class WordCompletionContributor extends CompletionContributor implements 
       return false;
     }
 
-    if (parameters.getProcess() instanceof CompletionProgressIndicator cpi &&
-        Boolean.TRUE.equals(cpi.getUserData(BaseCompletionService.FORBID_WORD_COMPLETION))) {
+    if (Boolean.TRUE.equals(((CompletionProcessEx)parameters.getProcess()).getUserData(BaseCompletionService.FORBID_WORD_COMPLETION))) {
       return false;
     }
 

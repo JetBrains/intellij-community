@@ -20,6 +20,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Divider;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.ui.OnePixelSplitter;
@@ -32,6 +33,7 @@ import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,7 +48,8 @@ import java.util.stream.Collectors;
 /**
  * @author Alexander Lobas
  */
-final class PluginUpdateDialog extends DialogWrapper {
+@ApiStatus.Internal
+public final class PluginUpdateDialog extends DialogWrapper {
   private final @NotNull Collection<PluginDownloader> myDownloaders;
   private final boolean myPlatformUpdate;
   private final MyPluginModel myPluginModel;
@@ -59,21 +62,21 @@ final class PluginUpdateDialog extends DialogWrapper {
 
   private @Nullable Runnable myFinishCallback;
 
-  PluginUpdateDialog(@Nullable Project project,
+  public PluginUpdateDialog(@Nullable Project project,
                      @NotNull Collection<PluginDownloader> downloaders,
-                     @Nullable Collection<PluginNode> customRepositoryPlugins) {
+                     @Nullable Collection<PluginUiModel> customRepositoryPlugins) {
     this(project, downloaders, customRepositoryPlugins, false);
     setTitle(IdeBundle.message("dialog.title.plugin.updates"));
   }
 
-  PluginUpdateDialog(@Nullable Project project, @NotNull Collection<PluginDownloader> updatesForPlugins) {
+  public PluginUpdateDialog(@Nullable Project project, @NotNull Collection<PluginDownloader> updatesForPlugins) {
     this(project, updatesForPlugins, null, true);
     setTitle(IdeBundle.message("updates.dialog.title", ApplicationNamesInfo.getInstance().getFullProductName()));
   }
 
   private PluginUpdateDialog(@Nullable Project project,
                              Collection<PluginDownloader> downloaders,
-                             @Nullable Collection<PluginNode> customRepositoryPlugins,
+                             @Nullable Collection<PluginUiModel> customRepositoryPlugins,
                              boolean platformUpdate) {
     super(project, true);
 
@@ -95,7 +98,7 @@ final class PluginUpdateDialog extends DialogWrapper {
       }
 
       @Override
-      protected @NotNull Collection<PluginNode> getCustomRepoPlugins() {
+      protected @NotNull Collection<PluginUiModel> getCustomRepoPlugins() {
         return customRepositoryPlugins != null ? customRepositoryPlugins : super.getCustomRepoPlugins();
       }
     };
@@ -107,25 +110,29 @@ final class PluginUpdateDialog extends DialogWrapper {
     });
 
     //noinspection unchecked
-    myDetailsPage = new PluginDetailsPageComponent(myPluginModel, LinkListener.NULL, true);
+    myDetailsPage = new PluginDetailsPageComponent(new PluginModelFacade(myPluginModel), LinkListener.NULL, true);
     myDetailsPage.setOnlyUpdateMode();
 
     MultiSelectionEventHandler eventHandler = new MultiSelectionEventHandler();
 
     myPluginsPanel = new PluginsGroupComponent(eventHandler) {
       @Override
-      protected @NotNull ListPluginComponent createListComponent(@NotNull IdeaPluginDescriptor descriptor, @NotNull PluginsGroup group) {
-        if (!(descriptor instanceof PluginNode)) {
-          PluginNode node = new PluginNode(descriptor.getPluginId(), descriptor.getName(), "0");
-          node.setDescription(descriptor.getDescription());
-          node.setChangeNotes(descriptor.getChangeNotes());
-          node.setVersion(descriptor.getVersion());
-          node.setVendor(descriptor.getVendor());
-          node.setVendorDetails(descriptor.getOrganization());
-          node.setDependencies(descriptor.getDependencies());
-          descriptor = node;
+      protected @NotNull ListPluginComponent createListComponent(@NotNull PluginUiModel model,
+                                                                 @NotNull PluginsGroup group,
+                                                                 @NotNull List<HtmlChunk> errors) {
+        if (!(model.isFromMarketplace())) {
+          PluginNode node = new PluginNode(model.getPluginId(), model.getName(), "0");
+          node.setDescription(model.getDescription());
+          node.setChangeNotes(model.getChangeNotes());
+          node.setVersion(model.getVersion());
+          node.setVendor(model.getVendor());
+          node.setVendorDetails(model.getOrganization());
+          List<PluginDependencyImpl> dependencies =
+            ContainerUtil.map(model.getDependencies(), it -> new PluginDependencyImpl(it.getPluginId(), null, it.isOptional()));
+          node.setDependencies(dependencies);
+          model = new PluginUiModelAdapter(node);
         }
-        @SuppressWarnings("unchecked") ListPluginComponent component = new ListPluginComponent(myPluginModel, descriptor, group, LinkListener.NULL, true);
+        @SuppressWarnings("unchecked") ListPluginComponent component = new ListPluginComponent(new PluginModelFacade(myPluginModel), model, group, LinkListener.NULL, errors, true);
         component.setOnlyUpdateMode();
         component.getChooseUpdateButton().addActionListener(e -> updateButtons());
         return component;
@@ -135,7 +142,7 @@ final class PluginUpdateDialog extends DialogWrapper {
     myPluginsPanel.setSelectionListener(__ -> myDetailsPage.showPlugins(myPluginsPanel.getSelection()));
 
     for (PluginDownloader plugin : downloaders) {
-      myGroup.descriptors.add(plugin.getDescriptor());
+      myGroup.addDescriptor(plugin.getDescriptor());
     }
     myGroup.sortByName();
     myPluginsPanel.addGroup(myGroup);

@@ -15,22 +15,23 @@ import org.jetbrains.plugins.github.api.data.GHNode
 import java.util.*
 
 @GraphQLFragment("/graphql/fragment/pullRequestReviewThread.graphql")
-data class GHPullRequestReviewThread(override val id: String,
-                                     val isResolved: Boolean,
-                                     val isOutdated: Boolean,
-                                     val path: String,
-                                     @JsonProperty("diffSide") val side: Side,
-                                     val line: Int?,
-                                     val originalLine: Int?,
-                                     @JsonProperty("startDiffSide") val startSide: Side?,
-                                     val startLine: Int?,
-                                     val originalStartLine: Int?,
-                                     // To be precise: the elements of this list can be null, but should practically never be...
-                                     @JsonProperty("comments") private val commentsNodes: GraphQLNodesDTO<GHPullRequestReviewComment>,
-                                     val viewerCanReply: Boolean,
-                                     val viewerCanResolve: Boolean,
-                                     val viewerCanUnresolve: Boolean)
-  : GHNode(id) {
+data class GHPullRequestReviewThread(
+  override val id: String,
+  val isResolved: Boolean,
+  val isOutdated: Boolean,
+  val path: String,
+  @JsonProperty("diffSide") val side: Side,
+  val line: Int?,
+  val originalLine: Int?,
+  @JsonProperty("startDiffSide") val startSide: Side?,
+  val startLine: Int?,
+  val originalStartLine: Int?,
+  // To be precise: the elements of this list can be null, but should practically never be...
+  @JsonProperty("comments") private val commentsNodes: GraphQLNodesDTO<GHPullRequestReviewComment>,
+  val viewerCanReply: Boolean,
+  val viewerCanResolve: Boolean,
+  val viewerCanUnresolve: Boolean,
+) : GHNode(id) {
   @JsonIgnore
   val comments: List<GHPullRequestReviewComment> = commentsNodes.nodes
   @JsonIgnore
@@ -59,39 +60,48 @@ fun GHPullRequestReviewThread.isVisible(viewOption: DiscussionsViewOption): Bool
     DiscussionsViewOption.DONT_SHOW -> false
   }
 
+fun GHPullRequestReviewThread.mapToLeftSideLine(diffData: GitTextFilePatchWithHistory): Int? =
+  mapToSidedLine(diffData, Side.LEFT)
+
+fun GHPullRequestReviewThread.mapToRightSideLine(diffData: GitTextFilePatchWithHistory): Int? =
+  mapToSidedLine(diffData, Side.RIGHT)
+
+private fun GHPullRequestReviewThread.mapToSidedLine(diffData: GitTextFilePatchWithHistory, side: Side): Int? {
+  val threadData = this
+  if (threadData.line == null && threadData.originalLine == null) return null
+
+  val lineIndex = threadData.line ?: threadData.originalLine ?: return null
+  val fromCommitSha = fromCommitSha(diffData) ?: return null
+
+  return diffData.forcefullyMapLine(fromCommitSha, lineIndex - 1, side)
+}
+
+// TODO: Write tests to illustrate and check the working of location mapping :'(
 fun GHPullRequestReviewThread.mapToLocation(diffData: GitTextFilePatchWithHistory, sideBias: Side? = null): DiffLineLocation? {
   val threadData = this
   if (threadData.line == null && threadData.originalLine == null) return null
 
-  return if (threadData.line != null) {
-    val commitSha = threadData.commit?.oid ?: return null
-    if (!diffData.contains(commitSha, threadData.path)) return null
-    when (threadData.side) {
-      Side.RIGHT -> {
-        diffData.mapLine(commitSha, threadData.line - 1, sideBias ?: Side.RIGHT)
-      }
-      Side.LEFT -> {
-        diffData.fileHistory.findStartCommit()?.let { baseSha ->
-          diffData.mapLine(baseSha, threadData.line - 1, sideBias ?: Side.LEFT)
-        }
-      }
-    }
+  val lineIndex = threadData.line ?: threadData.originalLine ?: return null
+  val fromCommitSha = fromCommitSha(diffData) ?: return null
+
+  val sideBias = sideBias ?: threadData.side
+
+  return diffData.mapLine(fromCommitSha, lineIndex - 1, sideBias)
+}
+
+private fun GHPullRequestReviewThread.fromCommitSha(diffData: GitTextFilePatchWithHistory): String? {
+  val threadData = this
+
+  return if (threadData.line != null) when (threadData.side) {
+    Side.RIGHT -> threadData.commit?.oid
+    Side.LEFT -> diffData.fileHistory.findStartCommit()
   }
   else if (threadData.originalLine != null) {
     val originalCommitSha = threadData.originalCommit?.oid ?: return null
-    if (!diffData.contains(originalCommitSha, threadData.path)) return null
     when (threadData.side) {
-      Side.RIGHT -> {
-        diffData.mapLine(originalCommitSha, threadData.originalLine - 1, sideBias ?: Side.RIGHT)
-      }
-      Side.LEFT -> {
-        diffData.fileHistory.findFirstParent(originalCommitSha)?.let { parentSha ->
-          diffData.mapLine(parentSha, threadData.originalLine - 1, sideBias ?: Side.LEFT)
-        }
-      }
+      Side.RIGHT -> originalCommitSha
+      Side.LEFT -> diffData.fileHistory.findFirstParent(originalCommitSha)
     }
   }
-  else {
-    null
-  }
+  else null
 }

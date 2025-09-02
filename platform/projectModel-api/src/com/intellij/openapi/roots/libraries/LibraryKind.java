@@ -59,7 +59,7 @@ public class LibraryKind {
    * @deprecated it's better to store instance of {@code LibraryKind} instead of looking it by ID; if you really need to find an instance by
    * its ID, use {@link LibraryKindRegistry#findKindById(String)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static LibraryKind findById(String kindId) {
     return LibraryKindRegistry.getInstance().findKindById(kindId);
   }

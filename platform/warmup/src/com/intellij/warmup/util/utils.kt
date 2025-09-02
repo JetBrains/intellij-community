@@ -8,7 +8,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.waitForSmartMode
@@ -105,16 +104,12 @@ internal suspend fun checkProjectRoots(project: Project) {
 
 
 internal suspend fun getProjectFile(args: OpenProjectArgs): VirtualFile {
-  val vfsProject = blockingContext {
-    VirtualFileManager.getInstance().refreshAndFindFileByNioPath(args.projectDir)
-    ?: throw RuntimeException("Project path ${args.projectDir} is not found")
-  }
+  val vfsProject = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(args.projectDir)
+                   ?: throw RuntimeException("Project path ${args.projectDir} is not found")
 
   runTaskAndLogTime("refresh VFS") {
     WarmupLogger.logInfo("Refreshing VFS ${args.projectDir}...")
-    blockingContext {
-      VfsUtil.markDirtyAndRefresh(false, true, true, args.projectDir.toFile())
-    }
+    VfsUtil.markDirtyAndRefresh(false, true, true, args.projectDir.toFile())
   }
   return vfsProject
 }

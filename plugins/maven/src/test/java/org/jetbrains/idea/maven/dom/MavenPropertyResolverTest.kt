@@ -329,6 +329,49 @@ class MavenPropertyResolverTest : MavenMultiVersionImportingTestCase() {
     assertEquals("parent-id", resolve("\${parent.artifactId}", file))
   }
 
+  @Test
+  fun testResolveMavenCoordinatesWithDependencyPropertiesPlugin() = runBlocking {
+    importProjectAsync("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <dependencies>
+                      <dependency>
+                          <groupId>mygroup</groupId>
+                          <artifactId>myartifact</artifactId>
+                          <version>1.0</version>
+                      </dependency>
+                      <dependency>
+                          <groupId>anothergroup</groupId>
+                          <artifactId>anotherartifact</artifactId>
+                          <version>1.0</version>
+                          <type>type</type>
+                          <classifier>classifier</classifier>
+                      </dependency>
+                    </dependencies>
+                    <build>
+                      <plugins>
+                        <plugin>
+                           <groupId>org.apache.maven.plugins</groupId>
+                           <artifactId>maven-dependency-plugin</artifactId>
+                           <executions>
+                             <execution>
+                               <goals>
+                                 <goal>properties</goal>
+                               </goals>
+                             </execution>
+                           </executions>
+                          </plugin>
+                       </plugins>
+                    </build>
+                    """.trimIndent())
+    val pathFirst = repositoryPath.resolve("mygroup/myartifact/1.0/myartifact-1.0.jar").toAbsolutePath().toString()
+    val pathAnother = repositoryPath.resolve("anothergroup/anotherartifact/1.0/anotherartifact-1.0-classifier.type").toAbsolutePath().toString()
+    assertEquals(pathFirst, resolve("\${mygroup:myartifact:jar}", projectPom))
+    assertEquals(pathAnother, resolve("\${anothergroup:anotherartifact:type:classifier}", projectPom))
+
+  }
+
   private suspend fun resolve(text: String, f: VirtualFile): String {
     return readAction { MavenPropertyResolver.resolve(text, MavenDomUtil.getMavenDomProjectModel(project, f)) }
   }

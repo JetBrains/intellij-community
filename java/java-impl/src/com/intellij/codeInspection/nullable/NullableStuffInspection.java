@@ -70,7 +70,7 @@ public class NullableStuffInspection extends NullableStuffInspectionBase {
     }
 
     @Override
-    public void invoke(@NotNull Project project, @NotNull PsiFile file, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
+    public void invoke(@NotNull Project project, @NotNull PsiFile psiFile, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
       PsiParameter p = (PsiParameter)startElement;
       final PsiMethod method = PsiTreeUtil.getParentOfType(p, PsiMethod.class);
       if (method == null) return;

@@ -149,7 +149,8 @@ fun createStatusResponse(
 
   val message = responseStatus.toString()
 
-  val builder = @NlsSafe StringBuilder()
+  @NlsSafe
+  val builder = StringBuilder()
   if (usePlainText) {
     builder.append(message)
     if (description != null) {

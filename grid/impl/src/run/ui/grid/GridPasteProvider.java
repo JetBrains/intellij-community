@@ -26,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.datatransfer.DataFlavor;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import static com.intellij.database.csv.ui.CsvRecordFormatForm.DELIMITERS;
 import static com.intellij.database.datagrid.GridUtil.addRows;
@@ -78,21 +79,48 @@ public class GridPasteProvider implements PasteProvider {
     int colOffset = minCol - data.getFirstColumnIdx();
     int count = myGrid.getDataModel(DATA_WITH_MUTATIONS).getRowCount();
     addRows(myGrid, Math.max(0, maxRow - count + 1));
+
+    List<Exception> conversionExceptions = new ArrayList<>();
+
     List<CellMutation.Builder> conversions = JBIterable.from(data.getConversions())
       .map(conversion -> conversion
         .copy()
         .secondGrid(myGrid)
         .offset(rowOffset, colOffset)
         .build())
+      .filter(Objects::nonNull)
       .filter(DataTypeConversion::isValid)
-      .map(c -> GridHelper.get(myGrid).isMixedTypeColumns(myGrid) ? c.build() : c.convert(BaseConversionGraph.get(myGrid)))
+      .map(c -> {
+        try {
+          return GridHelper.get(myGrid).isMixedTypeColumns(myGrid)
+                 ? c.build()
+                 : c.convert(BaseConversionGraph.get(myGrid));
+        } catch (Exception e) {
+          conversionExceptions.add(e);
+          return null;
+        }
+      })
+      .filter(Objects::nonNull)
       .toList();
+
     myGrid.getDataSupport().finishBuildingAndApply(conversions);
-    if (pasteType != null) {
-      Notification notification = createNotification(pasteType, csvFormat);
-      if (notification != null) {
-        notification.addAction(new ChoosePasteFormatAction(DataGridBundle.message("group.Console.TableResult.PasteFormat.change.paste.format")))
-          .notify(myGrid.getProject());
+    if (!conversionExceptions.isEmpty()) {
+      String error = conversionExceptions.size() == 1
+                     ? conversionExceptions.get(0).getMessage()
+                     : DataGridBundle.message("group.Console.TableResult.PasteError.multiple.text", conversionExceptions.size());
+      Notification errorNotification = DataGridNotifications.PASTE_GROUP
+        .createNotification(DataGridBundle.message("group.Console.TableResult.PasteError.title"),
+                            error,
+                            NotificationType.ERROR);
+      errorNotification.notify(myGrid.getProject());
+    } else {
+      if (pasteType != null) {
+        Notification notification = createNotification(pasteType, csvFormat);
+        if (notification != null) {
+          notification.addAction(
+              new ChoosePasteFormatAction(DataGridBundle.message("group.Console.TableResult.PasteFormat.change.paste.format")))
+            .notify(myGrid.getProject());
+        }
       }
     }
   }

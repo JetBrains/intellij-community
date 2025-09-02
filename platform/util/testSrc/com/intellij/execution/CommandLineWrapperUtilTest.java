@@ -51,4 +51,17 @@ public class CommandLineWrapperUtilTest {
       FileUtil.delete(tempDirectory);
     }
   }
+
+  @Test
+  public void shouldQuoteSpecialSymbolsInArgsFile() {
+    assertEquals("simple_string", CommandLineWrapperUtil.quoteArg("simple_string"));
+    assertEquals("\"'\"singlequote", CommandLineWrapperUtil.quoteArg("'singlequote"));
+    assertEquals("\"\\\"\"doublequote", CommandLineWrapperUtil.quoteArg("\"doublequote"));
+    assertEquals("space\" \"string", CommandLineWrapperUtil.quoteArg("space string"));
+    assertEquals("hash\"#\"string", CommandLineWrapperUtil.quoteArg("hash#string"));
+    assertEquals("\"\\n\"newline\"\\n\"", CommandLineWrapperUtil.quoteArg("\nnewline\n"));
+    assertEquals("caret\"\\r\"return", CommandLineWrapperUtil.quoteArg("caret\rreturn"));
+    assertEquals("\"\\t\"ta\"\\t\"b", CommandLineWrapperUtil.quoteArg("\tta\tb"));
+    assertEquals("formfeed\"\\f\"", CommandLineWrapperUtil.quoteArg("formfeed\f"));
+  }
 }

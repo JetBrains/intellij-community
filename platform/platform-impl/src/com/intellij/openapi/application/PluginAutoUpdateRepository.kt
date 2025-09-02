@@ -160,7 +160,7 @@ private class PluginsAutoUpdateRepositoryViewAction : AnAction() {
       cs.launch(Dispatchers.IO) {
         updatePath.copy(getAutoUpdateDirPath().resolve(updatePath.fileName))
         PluginAutoUpdateRepository.addUpdates(mapOf(
-          pluginDescriptor.pluginId to PluginUpdateInfo(pluginDescriptor.path.absolutePathString(), updatePath.fileName.toString())
+          pluginDescriptor.pluginId to PluginUpdateInfo(pluginDescriptor.pluginPath.absolutePathString(), updatePath.fileName.toString())
         ))
         updateState()
       }
@@ -191,7 +191,7 @@ private class PluginsAutoUpdateRepositoryViewAction : AnAction() {
               )
             }
           }
-        }.cancelOnDispose(disposable, false)
+        }.cancelOnDispose(disposable)
       }
       separator()
       row {

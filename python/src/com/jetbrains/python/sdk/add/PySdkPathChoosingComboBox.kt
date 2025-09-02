@@ -29,15 +29,39 @@ import com.intellij.ui.components.fields.ExtendableTextComponent
 import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.util.PathUtil
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.sdk.PySdkListCellRenderer
 import com.jetbrains.python.sdk.PythonSdkType
-import com.jetbrains.python.sdk.add.v1.PySdkListCellRendererExt
-import com.jetbrains.python.sdk.add.v1.asComboBoxItem
-import com.jetbrains.python.sdk.add.v1.createDetectedSdk
+import com.jetbrains.python.target.createDetectedSdk
 import com.jetbrains.python.ui.targetPathEditor.ManualPathEntryDialog
+import java.awt.Component
 import java.awt.event.ActionListener
 import java.util.function.Supplier
 import javax.swing.JComboBox
+import javax.swing.JList
+import javax.swing.ListCellRenderer
 import javax.swing.plaf.basic.BasicComboBoxEditor
+
+/**
+ * Adapt [PySdkListCellRenderer] for the list with [PySdkComboBoxItem] items
+ * rather than with [com.intellij.openapi.projectRoots.Sdk] items.
+ */
+private class PySdkListCellRendererExt : ListCellRenderer<PySdkComboBoxItem> {
+  private val component = PySdkListCellRenderer()
+
+  override fun getListCellRendererComponent(list: JList<out PySdkComboBoxItem>?,
+                                            value: PySdkComboBoxItem?,
+                                            index: Int,
+                                            isSelected: Boolean,
+                                            cellHasFocus: Boolean): Component {
+    val convertedValue = value?.run {
+      when (this) {
+        is NewPySdkComboBoxItem -> title
+        is ExistingPySdkComboBoxItem -> sdk
+      }
+    }
+    return component.getListCellRendererComponent(list, convertedValue, index, isSelected, cellHasFocus)
+  }
+}
 
 /**
  * A combobox with browse button for choosing a path to SDK, also capable of showing progress indicator.
@@ -132,11 +156,11 @@ class PySdkPathChoosingComboBox @JvmOverloads constructor(
 
   fun addSdkItemOnTop(sdk: Sdk) {
     val position = if (newPySdkComboBoxItem == null) 0 else 1
-    childComponent.insertItemAt(sdk.asComboBoxItem(), position)
+    childComponent.insertItemAt(ExistingPySdkComboBoxItem(sdk), position)
   }
 
   fun addSdkItem(sdk: Sdk) {
-    childComponent.addItem(sdk.asComboBoxItem())
+    childComponent.addItem(ExistingPySdkComboBoxItem(sdk))
   }
 
   fun setBusy(busy: Boolean) {
@@ -165,7 +189,7 @@ class PySdkPathChoosingComboBox @JvmOverloads constructor(
     }
 
     private fun buildSdkArray(sdks: List<Sdk>, newPySdkComboBoxItem: NewPySdkComboBoxItem?): Array<PySdkComboBoxItem> =
-      (listOfNotNull(newPySdkComboBoxItem) + sdks.map { it.asComboBoxItem() }).toTypedArray()
+      (listOfNotNull(newPySdkComboBoxItem) + sdks.map { ExistingPySdkComboBoxItem(it) }).toTypedArray()
 
     private fun PySdkComboBoxItem.getText(): String = when (this) {
       is NewPySdkComboBoxItem -> title

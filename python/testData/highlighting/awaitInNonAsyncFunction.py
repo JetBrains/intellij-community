@@ -1,6 +1,6 @@
 import asyncio
 
-def example():
+def await_example():
     <error descr="'await' outside async function">await<caret></error> asyncio.sleep(1)
 
 async def example_correct():

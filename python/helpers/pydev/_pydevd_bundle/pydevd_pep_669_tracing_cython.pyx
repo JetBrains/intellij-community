@@ -441,7 +441,7 @@ def call_callback(code, instruction_offset, callable, arg0):
     # print('ENTER: CALL ', code.co_filename, frame.f_lineno, code.co_name)
 
     try:
-        if py_db._finish_debugging_session:
+        if py_db.pydb_disposed:
             return monitoring.DISABLE
 
         try:
@@ -512,7 +512,7 @@ def py_start_callback(code, instruction_offset):
             return
 
     try:
-        if py_db._finish_debugging_session:
+        if py_db.pydb_disposed:
             return monitoring.DISABLE
 
         if not thread_info.trace or not thread_info.is_thread_alive():
@@ -672,7 +672,7 @@ def py_line_callback(code, line_number):
         if py_db is None:
             return monitoring.DISABLE
 
-        if py_db._finish_debugging_session:
+        if py_db.pydb_disposed:
             return monitoring.DISABLE
 
         stop_frame = info.pydev_step_stop
@@ -1034,3 +1034,22 @@ def py_return_callback(code, instruction_offset, retval):
 
     if py_db.quitting:
         raise KeyboardInterrupt()
+
+def disable_pep669_monitoring(all_threads=False):
+    if all_threads:
+        monitoring.set_events(monitoring.DEBUGGER_ID, 0)
+        monitoring.register_callback(monitoring.DEBUGGER_ID, monitoring.events.PY_START, None)
+        monitoring.register_callback(monitoring.DEBUGGER_ID, monitoring.events.LINE, None)
+        monitoring.register_callback(monitoring.DEBUGGER_ID, monitoring.events.PY_RETURN, None)
+        monitoring.register_callback(monitoring.DEBUGGER_ID, monitoring.events.RAISE, None)
+        monitoring.register_callback(monitoring.DEBUGGER_ID, monitoring.events.CALL, None)
+        monitoring.free_tool_id(monitoring.DEBUGGER_ID)
+    else:
+        try:
+            thread_info = _thread_local_info.thread_info
+        except:
+            thread_info = _get_thread_info(False, 1)
+            if thread_info is None:
+                return
+        # print('stop monitoring, thread=', thread_info.thread)
+        thread_info.trace = False

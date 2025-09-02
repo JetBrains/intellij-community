@@ -1,33 +1,33 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog;
 
-import com.intellij.internal.statistic.eventLog.connection.EventLogConnectionSettings;
 import com.intellij.internal.statistic.eventLog.connection.EventLogStatisticsService;
 import com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogMetadataSettingsPersistence;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
+import com.jetbrains.fus.reporting.model.http.StatsConnectionSettings;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-
 import static com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil.getEventLogProvider;
 
 @ApiStatus.Internal
 public class EventLogInternalApplicationInfo implements EventLogApplicationInfo {
+  public static final String EVENT_LOG_SETTINGS_REGION_CODE = "not_set";
+
   private static final DataCollectorDebugLogger LOG =
     new InternalDataCollectorDebugLogger(Logger.getInstance(EventLogStatisticsService.class));
-  public static final String EVENT_LOG_SETTINGS_URL_TEMPLATE = "https://resources.jetbrains.com/storage/fus/config/v4/%s/%s.json";
 
   private final boolean myIsTestSendEndpoint;
   private final boolean myIsTestConfig;
   private final DataCollectorSystemEventLogger myEventLogger;
-  private final EventLogAppConnectionSettings myConnectionSettings;
+  private final StatsConnectionSettings myConnectionSettings;
 
   public EventLogInternalApplicationInfo(boolean isTestConfig, boolean isTestSendEndpoint) {
     myIsTestConfig = isTestConfig;
     myIsTestSendEndpoint = isTestSendEndpoint;
-    myConnectionSettings = new EventLogAppConnectionSettings();
+    myConnectionSettings = new StatsAppConnectionSettings();
     myEventLogger = new DataCollectorSystemEventLogger() {
       @Override
       public void logLoadingConfigFailed(@NotNull String recorderId, @NotNull Throwable exception) {
@@ -39,9 +39,9 @@ public class EventLogInternalApplicationInfo implements EventLogApplicationInfo 
   }
 
   @Override
-  public @NotNull String getTemplateUrl() {
-    final String regionUrl = StatisticsRegionUrlMapperService.Companion.getInstance().getRegionUrl();
-    return regionUrl == null ? EVENT_LOG_SETTINGS_URL_TEMPLATE : regionUrl;
+  public @NotNull String getRegionalCode() {
+    final String regionCode = StatisticsRegionSettingsService.Companion.getInstance().getRegionCode();
+    return regionCode == null ? EVENT_LOG_SETTINGS_REGION_CODE : regionCode;
   }
 
   @Override
@@ -64,7 +64,7 @@ public class EventLogInternalApplicationInfo implements EventLogApplicationInfo 
   }
 
   @Override
-  public @NotNull EventLogConnectionSettings getConnectionSettings() {
+  public @NotNull StatsConnectionSettings getConnectionSettings() {
     return myConnectionSettings;
   }
 

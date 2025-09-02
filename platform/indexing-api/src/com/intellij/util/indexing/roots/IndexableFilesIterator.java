@@ -6,10 +6,7 @@ import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Debug;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.*;
 
 import java.util.Set;
 
@@ -77,5 +74,6 @@ public interface IndexableFilesIterator {
                        @NotNull ContentIterator fileIterator,
                        @NotNull VirtualFileFilter fileFilter);
 
-  @NotNull Set<String> getRootUrls(@NotNull Project project);
+  @NotNull @Unmodifiable
+  Set<String> getRootUrls(@NotNull Project project);
 }

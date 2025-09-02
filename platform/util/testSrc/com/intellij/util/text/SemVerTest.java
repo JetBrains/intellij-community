@@ -34,6 +34,12 @@ public class SemVerTest {
     assertParsed("1.0.0-alpha", 1, 0, 0, "alpha");
     assertParsed("1.0.0-0.3.7", 1, 0, 0, "0.3.7");
     assertParsed("1.0.0-x.7.z.92", 1, 0, 0, "x.7.z.92");
+    assertParsed("0.1.2-rc-1+Build-0.1.2", 0, 1, 2, "rc-1", "Build-0.1.2");
+    assertParsed("3.4.5+Build-3.4.5", 3, 4, 5, null, "Build-3.4.5");
+    assertParsed("6.7.8+Build-0.1.2-rc2", 6, 7, 8, null, "Build-0.1.2-rc2");
+    assertParsed("9.10.11+", 9, 10, 11, null, "");
+    assertParsed("11.12.13+-", 11, 12, 13, null, "-");
+    assertParsed("14.15.16-+", 14, 15, 16, "", "");
 
     assertNotParsed(null);
     assertNotParsed("");
@@ -71,6 +77,10 @@ public class SemVerTest {
     assertPrecedence("1.2.3-a.cbc.100", "1.2.3-a.cca.1");
     assertPrecedence("1.2.3-a.cb.1", "1.2.3-a.cba.1");
 
+    // Build metadata doesn't affect precedence https://semver.org/#spec-item-11
+    assertEqualPrecedence("1.0.0+Build-0.1.2", "1.0.0+Build-3.4.5");
+    assertEqualPrecedence("1.0.0-a.b.c+Build-0.1.2", "1.0.0-a.b.c+Build-3.4.5");
+
     // Example from SemVer documentation https://semver.org/#spec-item-11
     assertPrecedence("1.0.0-alpha", "1.0.0-alpha.1");
     assertPrecedence("1.0.0-alpha.1", "1.0.0-alpha.beta");
@@ -104,6 +114,13 @@ public class SemVerTest {
     Assert.assertTrue(v1.isGreaterOrEqualThan(v2));
   }
 
+  private static void assertEqualPrecedence(String s1, String s2) {
+    SemVer v1 = parse(s1);
+    SemVer v2 = parse(s2);
+    assertThat(v1).isNotEqualTo(v2);
+    assertThat(v1).isEqualByComparingTo(v2);
+  }
+
   private static void assertPrecedence(String lesserVersion, String higherVersion) {
     SemVer v1 = parse(lesserVersion);
     SemVer v2 = parse(higherVersion);
@@ -120,6 +137,15 @@ public class SemVerTest {
                                    int expectedPatch,
                                    @Nullable String expectedPreRelease) {
     assertThat(parse(version)).isEqualTo(new SemVer(version, expectedMajor, expectedMinor, expectedPatch, expectedPreRelease));
+  }
+
+  private static void assertParsed(@NotNull String version,
+                                   int expectedMajor,
+                                   int expectedMinor,
+                                   int expectedPatch,
+                                   @Nullable String expectedPreRelease,
+                                   @Nullable String expectedBuild) {
+    assertThat(parse(version)).isEqualTo(new SemVer(version, expectedMajor, expectedMinor, expectedPatch, expectedPreRelease, expectedBuild));
   }
 
   private static void assertNotParsed(String version) {

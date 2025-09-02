@@ -58,10 +58,10 @@ public final class EditInspectionToolsSettingsInSuppressedPlaceIntention impleme
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    String suppressedId = getSuppressedId(editor, file);
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    String suppressedId = getSuppressedId(editor, psiFile);
     if (suppressedId != null) {
-      InspectionToolWrapper toolWrapper = getTool(project, file, suppressedId);
+      InspectionToolWrapper toolWrapper = getTool(project, psiFile, suppressedId);
       if (toolWrapper == null) return false;
       myDisplayName = toolWrapper.getDisplayName();
     }
@@ -76,8 +76,8 @@ public final class EditInspectionToolsSettingsInSuppressedPlaceIntention impleme
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    InspectionToolWrapper toolWrapper = getTool(project, file, getSuppressedId(editor, file));
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
+    InspectionToolWrapper toolWrapper = getTool(project, psiFile, getSuppressedId(editor, psiFile));
     if (toolWrapper == null) return;
     final InspectionProjectProfileManager projectProfileManager = InspectionProjectProfileManager.getInstance(project);
     final InspectionProfileImpl inspectionProfile = projectProfileManager.getCurrentProfile();
@@ -90,7 +90,7 @@ public final class EditInspectionToolsSettingsInSuppressedPlaceIntention impleme
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
     return new IntentionPreviewInfo.Html(InspectionsBundle.message("edit.inspection.options.preview", myDisplayName));
   }
 }

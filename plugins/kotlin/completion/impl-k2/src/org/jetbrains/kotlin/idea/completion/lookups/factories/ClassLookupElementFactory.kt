@@ -5,12 +5,14 @@ package org.jetbrains.kotlin.idea.completion.lookups.factories
 import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.nameOrAnonymous
 import org.jetbrains.kotlin.idea.base.analysis.withRootPrefixIfNeeded
 import org.jetbrains.kotlin.idea.completion.lookups.*
-import org.jetbrains.kotlin.idea.completion.lookups.TailTextProvider.getTailText
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.renderer.render
@@ -25,13 +27,44 @@ internal object ClassLookupElementFactory {
         val name = symbol.nameOrAnonymous
         return LookupElementBuilder.create(ClassifierLookupObject(name, importingStrategy), name.asString())
             .withInsertHandler(ClassifierInsertionHandler)
-            .withTailText(getTailText(symbol))
+            .withTailText(TailTextProvider.getTailText(symbol))
             .let { withClassifierSymbolInfo(symbol, it) }
+    }
+
+    context(KaSession)
+    @OptIn(KaExperimentalApi::class)
+    fun createConstructorLookup(
+        containingSymbol: KaNamedClassSymbol,
+        constructorSymbols: List<KaConstructorSymbol>,
+        importingStrategy: ImportStrategy,
+    ): LookupElementBuilder {
+        val name = containingSymbol.nameOrAnonymous
+        val singleConstructor = constructorSymbols.singleOrNull()
+        val valueParameters = singleConstructor?.valueParameters?.map { it.asSignature() }
+
+        val options = CallableInsertionOptions(
+            importingStrategy = importingStrategy,
+            insertionStrategy = CallableInsertionStrategy.AsCall
+        )
+
+        val lookupObject = FunctionCallLookupObject(
+            shortName = name,
+            options = options,
+            renderedDeclaration = valueParameters?.let { CompletionShortNamesRenderer.renderFunctionParameters(it) } ?: "(...)",
+            hasReceiver = false,
+            inputValueArgumentsAreRequired = constructorSymbols.size > 1 || valueParameters?.isNotEmpty() == true,
+            inputTypeArgumentsAreRequired = false,
+        )
+        return LookupElementBuilder.create(lookupObject, name.asString())
+            .withInsertHandler(FunctionInsertionHandler)
+            .appendTailText(lookupObject.renderedDeclaration, true)
+            .appendTailText(TailTextProvider.getTailText(containingSymbol), true)
+            .let { withClassifierSymbolInfo(containingSymbol, it) }
     }
 }
 
 
-private data class ClassifierLookupObject(
+internal data class ClassifierLookupObject(
     override val shortName: Name,
     val importingStrategy: ImportStrategy
 ) : KotlinLookupObject
@@ -49,12 +82,18 @@ private object ClassifierInsertionHandler : QuotedNamesAwareInsertionHandler() {
         super.handleInsert(context, item)
 
         if (importingStrategy is ImportStrategy.InsertFqNameAndShorten) {
-            val fqNameRendered = importingStrategy.fqName
+            val shortenCommand = item.shortenCommand
+                ?.takeUnless { it.isEmpty }
+
+            val fqName = importingStrategy.fqName
                 .withRootPrefixIfNeeded()
-                .render()
-            context.insertAndShortenReferencesInStringUsingTemporarySuffix(fqNameRendered)
+
+            context.insertAndShortenReferencesInStringUsingTemporarySuffix(
+                string = fqName.render(),
+                shortenCommand = shortenCommand,
+            )
         } else if (importingStrategy is ImportStrategy.AddImport) {
-            addImportIfRequired(targetFile, importingStrategy.nameToImport)
+            addImportIfRequired(context, importingStrategy.nameToImport)
         }
     }
 }

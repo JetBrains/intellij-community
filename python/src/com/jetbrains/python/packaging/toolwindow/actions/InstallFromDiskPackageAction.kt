@@ -10,22 +10,25 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.ui.components.dialog
 import com.intellij.ui.dsl.builder.*
 import com.jetbrains.python.PyBundle.message
-import com.jetbrains.python.packaging.common.PythonLocalPackageSpecification
+import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
+import java.net.URI
 
 internal class InstallFromDiskPackageAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
 
     val service = PyPackagingToolWindowService.getInstance(project)
-    val specification = showInstallFromDiscDialog(project) ?: return
-    PyPackageCoroutine.launch(project) {
-      service.installPackage(specification)
+    showInstallFromDiscDialog(project)?.let { (location, editable) ->
+      PyPackageCoroutine.launch(project) {
+        val options = if (editable) listOf("-e") else emptyList()
+        service.installPackage(PythonPackageInstallRequest.ByLocation(location), options)
+      }
     }
   }
 
-  private fun showInstallFromDiscDialog(project: Project): PythonLocalPackageSpecification? {
+  private fun showInstallFromDiscDialog(project: Project): Pair<URI, Boolean>? {
     val service = PyPackagingToolWindowService.getInstance(project)
     var editable = false
 
@@ -46,7 +49,7 @@ internal class InstallFromDiskPackageAction : DumbAwareAction() {
     }
 
     val shouldInstall = dialog(message("python.toolwindow.packages.add.package.dialog.title"), panel, project = service.project, resizable = true).showAndGet()
-    return if (shouldInstall) PythonLocalPackageSpecification(textField.text, textField.text, editable) else null
+    return if (shouldInstall) URI("file://${textField.text}") to editable else null
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT

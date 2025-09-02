@@ -17,10 +17,11 @@ public abstract class CanBeFinalHandler {
 
   /**
    * @param member a member (field or method) to check whether it's allowed to be final
-   * @return false if a current extension prohibit marking this member as final.
+   * @return false if this extension prohibits marking this member as final.
    * Must return true for every member that is unknown to the current extension.
-   * Note that if the field is written explicitly, it will be detected by inspection itself,
-   * so no need to specially handle explicitly written fields here.
+   * <p>
+   * If the field is written explicitly, it is detected by the inspection itself,
+   * so implementations of this method shouldn't care about such a case.
    */
   public abstract boolean canBeFinal(@NotNull PsiMember member);
 

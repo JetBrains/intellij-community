@@ -54,7 +54,7 @@ public abstract class LocalQuickFixOnPsiElement implements LocalQuickFix, Clonea
 
   // validity of startElement/endElement must be checked before calling this
   public boolean isAvailable(@NotNull Project project,
-                             @NotNull PsiFile file,
+                             @NotNull PsiFile psiFile,
                              @NotNull PsiElement startElement,
                              @NotNull PsiElement endElement) {
     return true;
@@ -64,12 +64,12 @@ public abstract class LocalQuickFixOnPsiElement implements LocalQuickFix, Clonea
     if (myStartElement == null) return false;
     final PsiElement startElement = myStartElement.getElement();
     final PsiElement endElement = myEndElement == null ? startElement : myEndElement.getElement();
-    PsiFile file = myStartElement.getContainingFile();
+    PsiFile psiFile = myStartElement.getContainingFile();
     Project project = myStartElement.getProject();
     return startElement != null &&
            endElement != null &&
-           file != null &&
-           isAvailable(project, file, startElement, endElement);
+           psiFile != null &&
+           isAvailable(project, psiFile, startElement, endElement);
   }
 
   public PsiElement getStartElement() {
@@ -92,13 +92,13 @@ public abstract class LocalQuickFixOnPsiElement implements LocalQuickFix, Clonea
     final PsiElement startElement = myStartElement.getElement();
     final PsiElement endElement = myEndElement == null ? startElement : myEndElement.getElement();
     if (startElement == null || endElement == null) return;
-    PsiFile file = startElement.getContainingFile();
-    if (file == null) return;
-    invoke(file.getProject(), file, startElement, endElement);
+    PsiFile psiFile = startElement.getContainingFile();
+    if (psiFile == null) return;
+    invoke(psiFile.getProject(), psiFile, startElement, endElement);
   }
 
   public abstract void invoke(@NotNull Project project,
-                              @NotNull PsiFile file,
+                              @NotNull PsiFile psiFile,
                               @NotNull PsiElement startElement,
                               @NotNull PsiElement endElement);
 

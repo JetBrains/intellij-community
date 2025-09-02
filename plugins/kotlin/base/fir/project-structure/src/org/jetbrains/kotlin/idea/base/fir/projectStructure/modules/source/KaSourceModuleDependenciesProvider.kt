@@ -14,10 +14,12 @@ import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.caches.project.cacheByClassInvalidatingOnRootModifications
 import org.jetbrains.kotlin.idea.base.facet.additionalVisibleModules
 import org.jetbrains.kotlin.idea.base.facet.implementedModules
+import org.jetbrains.kotlin.idea.base.facet.isHMPPEnabled
 import org.jetbrains.kotlin.idea.base.fir.projectStructure.KotlinExportedDependenciesCollector
 import org.jetbrains.kotlin.idea.base.fir.projectStructure.modules.library.KaLibraryModuleImpl
 import org.jetbrains.kotlin.idea.base.projectStructure.*
 import org.jetbrains.kotlin.idea.base.projectStructure.kmp.HmppSourceModuleDependencyFilter
+import org.jetbrains.kotlin.idea.base.projectStructure.kmp.NonHmppSourceModuleDependenciesFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.kmp.SourceModuleDependenciesFilterCandidate
 import org.jetbrains.kotlin.konan.library.KONAN_STDLIB_NAME
 import org.jetbrains.kotlin.utils.addIfNotNull
@@ -160,6 +162,17 @@ internal class KaSourceModuleDependenciesProvider(private val project: Project) 
     }
 
     private fun ModuleDependency.collectExportedDependencies(kind: KaSourceModuleKind, to: MutableCollection<KaModule>) {
+        val exportedDependenciesAvailable = when (scope) {
+            DependencyScope.COMPILE,
+            DependencyScope.PROVIDED -> true
+
+            DependencyScope.TEST -> kind == KaSourceModuleKind.TEST
+
+            DependencyScope.RUNTIME -> false
+        }
+
+        if (!exportedDependenciesAvailable) return
+
         for (dependency in KotlinExportedDependenciesCollector.getInstance(project).getExportedDependencies(this)) {
             when (dependency) {
                 is LibraryDependency -> {
@@ -202,7 +215,10 @@ internal class KaSourceModuleDependenciesProvider(private val project: Project) 
     }
 
     private fun KaSourceModuleBase.canDependOn(other: KaModule): Boolean {
-        val dependencyFilter = HmppSourceModuleDependencyFilter(targetPlatform)
+        val dependencyFilter = when {
+            module.isHMPPEnabled -> HmppSourceModuleDependencyFilter(targetPlatform)
+            else -> NonHmppSourceModuleDependenciesFilter(targetPlatform)
+        }
         return dependencyFilter.isSupportedDependency(other.toDependencyCandidate())
     }
 

@@ -2,15 +2,7 @@
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.ConnectionId
-import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
-import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
-import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
-import com.intellij.platform.workspace.storage.annotations.Child
+import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
@@ -25,15 +17,15 @@ import com.intellij.platform.workspace.storage.testEntities.entities.OoChildWith
 import com.intellij.platform.workspace.storage.testEntities.entities.OoParentWithoutPidEntity
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(6)
+@GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class OoParentWithoutPidEntityImpl(private val dataSource: OoParentWithoutPidEntityData) : OoParentWithoutPidEntity, WorkspaceEntityBase(
-  dataSource) {
+internal class OoParentWithoutPidEntityImpl(private val dataSource: OoParentWithoutPidEntityData) : OoParentWithoutPidEntity,
+                                                                                                    WorkspaceEntityBase(dataSource) {
 
   private companion object {
-    internal val CHILDONE_CONNECTION_ID: ConnectionId = ConnectionId.create(OoParentWithoutPidEntity::class.java,
-                                                                            OoChildWithPidEntity::class.java,
-                                                                            ConnectionId.ConnectionType.ONE_TO_ONE, false)
+    internal val CHILDONE_CONNECTION_ID: ConnectionId = ConnectionId.create(
+      OoParentWithoutPidEntity::class.java, OoChildWithPidEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false
+    )
 
     private val connections = listOf<ConnectionId>(
       CHILDONE_CONNECTION_ID,
@@ -61,8 +53,8 @@ internal class OoParentWithoutPidEntityImpl(private val dataSource: OoParentWith
   }
 
 
-  internal class Builder(result: OoParentWithoutPidEntityData?) : ModifiableWorkspaceEntityBase<OoParentWithoutPidEntity, OoParentWithoutPidEntityData>(
-    result), OoParentWithoutPidEntity.Builder {
+  internal class Builder(result: OoParentWithoutPidEntityData?) :
+    ModifiableWorkspaceEntityBase<OoParentWithoutPidEntity, OoParentWithoutPidEntityData>(result), OoParentWithoutPidEntity.Builder {
     internal constructor() : this(OoParentWithoutPidEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -194,7 +186,8 @@ internal class OoParentWithoutPidEntityData : WorkspaceEntityData<OoParentWithou
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.OoParentWithoutPidEntity") as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.OoParentWithoutPidEntity"
+    ) as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

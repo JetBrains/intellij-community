@@ -18,5 +18,6 @@ package com.intellij.platform.workspace.storage.annotations
  * always added and removed together. So it's simpler to just put all properties from the child entity to the parent entity instead. If you
  * want to group several related properties, you may extract them to a separate data class instead of defining such a child entity.
  */
+@Deprecated("Use @Parent annotation in the child entity instead")
 @Target(AnnotationTarget.PROPERTY, AnnotationTarget.TYPE)
 public annotation class Child

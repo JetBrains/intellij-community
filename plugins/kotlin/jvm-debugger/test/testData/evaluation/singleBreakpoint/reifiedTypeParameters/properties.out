@@ -1,0 +1,8 @@
+LineBreakpoint created at properties.kt:9
+Run Java
+Connected to the target VM
+properties.kt:9
+Compile bytecode for T::class.simpleName + "_" + R::class.simpleName
+Disconnected from the target VM
+
+Process finished with exit code 0

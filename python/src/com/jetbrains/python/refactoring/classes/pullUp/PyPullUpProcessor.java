@@ -13,11 +13,9 @@ import java.util.Collection;
 
 @ApiStatus.Internal
 public final class PyPullUpProcessor extends PyMembersRefactoringBaseProcessor {
-
-  PyPullUpProcessor(final @NotNull PyClass from, final @NotNull PyClass to, final @NotNull Collection<PyMemberInfo<PyElement>> membersToMove) {
+  public PyPullUpProcessor(final @NotNull PyClass from, final @NotNull PyClass to, final @NotNull Collection<PyMemberInfo<PyElement>> membersToMove) {
     super(from.getProject(), membersToMove, from, to);
   }
-
 
   @Override
   protected @NotNull String getCommandName() {

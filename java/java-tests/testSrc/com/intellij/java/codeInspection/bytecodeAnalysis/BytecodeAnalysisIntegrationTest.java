@@ -293,8 +293,9 @@ public class BytecodeAnalysisIntegrationTest extends LightJavaCodeInsightFixture
           .mapKeyValue((externalName, content) -> "<item name='" + StringUtil.escapeXmlEntities(externalName) +
                                                   "'>\n" + content.trim() + "\n</item>\n")
           .joining("", "<root>\n", "</root>");
+        PsiDirectory directory = getPsiManager().findDirectory(root);
         WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-          XmlFile xml = ExternalAnnotationsManagerImpl.createAnnotationsXml(root, packageName, getPsiManager());
+          XmlFile xml = ExternalAnnotationsManagerImpl.createAnnotationsXml(null, directory, packageName);
           if (xml == null) throw new IllegalStateException("Unable to get XML for package " + packageName + "; root = " + root);
           xml.getVirtualFile().refresh(false, false);
           PsiDocumentManager documentManager = PsiDocumentManager.getInstance(getProject());

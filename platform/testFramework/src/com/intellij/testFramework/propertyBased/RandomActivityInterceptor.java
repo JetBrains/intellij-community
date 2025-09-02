@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.propertyBased;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.refactoring.ui.ConflictsDialog;
@@ -66,6 +67,8 @@ public class RandomActivityInterceptor extends UiInterceptors.UiInterceptor<Obje
       popup.closeOk(null);
     } else if (component instanceof ConflictsDialog) {
       // Do nothing, just ignore conflicts
+    } else if (component instanceof DialogWrapper dialogWrapper) {
+      dialogWrapper.performOKAction();
     } else {
       throw new UnsupportedOperationException(
         String.format("Cannot intercept UI component %s (class: %s)", component, component.getClass()));

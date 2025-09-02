@@ -7,4 +7,4 @@ import org.jetbrains.annotations.ApiStatus
  * Container for flags that resolve cases when both debuggers can provide the same functionality, and we have to choose between them
  */
 @ApiStatus.Internal
-data class XMixedModeProcessesConfiguration(val useLowDebugProcessConsole: Boolean, val useLowDebugProcessDetachBehavior : Boolean)
+data class XMixedModeProcessesConfiguration(val useLowDebugProcessConsole: Boolean)

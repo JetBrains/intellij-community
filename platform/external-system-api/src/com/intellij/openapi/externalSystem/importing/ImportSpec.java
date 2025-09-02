@@ -45,6 +45,10 @@ public interface ImportSpec {
 
   boolean isPreviewMode();
 
+  boolean shouldImportProjectData();
+
+  boolean shouldSelectProjectDataToImport();
+
   boolean shouldCreateDirectoriesForEmptyContentRoots();
 
   boolean isActivateBuildToolWindowOnStart();
@@ -58,6 +62,12 @@ public interface ImportSpec {
 
   @Nullable
   String getArguments();
+
+  @Nullable
+  ProjectResolverPolicy getProjectResolverPolicy();
+
+  @Nullable
+  Runnable getRerunAction();
 
   @Nullable
   UserDataHolderBase getUserData();

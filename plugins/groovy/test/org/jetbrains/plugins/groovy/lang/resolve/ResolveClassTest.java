@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.openapi.util.RecursionManager;
@@ -338,7 +338,7 @@ public class ResolveClassTest extends GroovyResolveTestCase {
       
       class foo {
         public static void main(args) {
-          x<caret>yz()      //should resolve to inner class
+          x<caret>yz()      //should resolve to different file
         }
       
         static class Bar {
@@ -351,7 +351,7 @@ public class ResolveClassTest extends GroovyResolveTestCase {
     UsefulTestCase.assertInstanceOf(resolved, PsiMethod.class);
 
     PsiClass clazz = ((PsiMember)resolved).getContainingClass();
-    Assert.assertNotNull(clazz.getContainingClass());
+    assertEquals("Bar.groovy", clazz.getContainingFile().getName());
   }
 
   public void testCollisionOfClassAndPackage3() {

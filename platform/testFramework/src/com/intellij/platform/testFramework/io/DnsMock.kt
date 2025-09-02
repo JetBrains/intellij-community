@@ -2,7 +2,7 @@
 package com.intellij.platform.testFramework.io
 
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.lang.JavaVersion
+import com.intellij.util.currentJavaVersion
 import org.junit.rules.ExternalResource
 import java.io.File
 import java.net.InetAddress
@@ -20,7 +20,7 @@ class DnsMock : ExternalResource() {
   }
 
   private val delegate: DnsMockDelegate =
-    if (JavaVersion.current().isAtLeast(21))
+    if (currentJavaVersion().isAtLeast(21))
       DnsMockJdk21
     else
       DnsMockJdk17

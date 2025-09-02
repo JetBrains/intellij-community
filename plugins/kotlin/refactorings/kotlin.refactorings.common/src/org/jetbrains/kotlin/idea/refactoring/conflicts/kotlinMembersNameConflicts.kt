@@ -99,13 +99,14 @@ fun checkDeclarationNewNameConflicts(
     result: MutableList<UsageInfo>,
     filterCandidate: (KaDeclarationSymbol) -> Boolean
 ) {
+    @OptIn(KaExperimentalApi::class)
     fun getPotentialConflictCandidates(symbol: KaDeclarationSymbol, declaration: KtNamedDeclaration, newName: Name): Sequence<KaDeclarationSymbol> {
         val containingSymbol = symbol.containingDeclaration ?: findPackage(declaration.containingKtFile.packageFqName)
 
-        if (symbol is KaValueParameterSymbol) {
+        if (symbol is KaValueParameterSymbol || symbol is KaContextParameterSymbol) {
             val functionLikeSymbol = containingSymbol as KaFunctionSymbol
             val locals = functionLikeSymbol.psi?.descendantsOfType<KtVariableDeclaration>()?.filter { it.nameAsName == newName }
-                ?.mapNotNull { it.symbol }?.asSequence() ?: emptySequence()
+                ?.mapNotNull { it.symbol } ?: emptySequence()
             return functionLikeSymbol.valueParameters.filter { it.name == newName }.asSequence() + locals
         }
 

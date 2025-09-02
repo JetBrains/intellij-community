@@ -1,9 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.intention.CommonIntentionAction;
 import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcommand.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -66,7 +67,7 @@ public class AddTypeArgumentsConditionalFix extends PsiUpdateModCommandAction<Ps
         withTypeArgsText = aClass.getQualifiedName();
       }
       else {
-        withTypeArgsText = PsiKeyword.THIS;
+        withTypeArgsText = JavaKeywords.THIS;
       }
     }
     withTypeArgsText += "." + typeArguments + call.getMethodExpression().getReferenceName();

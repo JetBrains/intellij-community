@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.test
 
@@ -10,24 +10,17 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.util.PathUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.ThrowableRunnable
-import com.jetbrains.jdi.SocketAttachingConnector
+import com.jetbrains.jdi.SocketListeningConnector
 import com.sun.jdi.ThreadReference
-import com.sun.jdi.VirtualMachine
 import org.jetbrains.kotlin.backend.common.output.OutputFile
 import org.jetbrains.kotlin.config.JvmClosureGenerationScheme
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
-import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.test.KotlinTestUtils
-import org.jetbrains.kotlin.idea.test.addRoot
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
+import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.incremental.isClassFile
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.BindingContext
 import java.io.File
-import java.io.IOException
-import java.net.Socket
 import kotlin.properties.Delegates
 
 abstract class LowLevelDebuggerTestBase : ExecutionTestCase(),
@@ -36,7 +29,6 @@ abstract class LowLevelDebuggerTestBase : ExecutionTestCase(),
     private companion object {
         private const val CLASSES_DIRECTORY_NAME = "classes"
         private const val DEBUG_ADDRESS = "127.0.0.1"
-        private const val DEBUG_PORT = 5115
     }
 
     private lateinit var testAppDirectory: File
@@ -103,7 +95,8 @@ abstract class LowLevelDebuggerTestBase : ExecutionTestCase(),
                 lambdasGenerationScheme,
                 languageVersion = chooseLanguageVersionForCompilation(compileWithK2),
                 enabledLanguageFeatures = emptyList(),
-                useInlineScopes = false
+                useInlineScopes = false,
+                jvmDefaultMode = null,
             )
         )
         compilerFacility.compileTestSourcesWithCli(
@@ -128,10 +121,15 @@ abstract class LowLevelDebuggerTestBase : ExecutionTestCase(),
                 }
             }
 
-            val process = startDebuggeeProcess(classesDir, skipLoadingClasses, outputFiles)
-            waitUntil { isPortOpen() }
+            val connector = SocketListeningConnector()
+            val args = connector.defaultArguments().apply {
+                getValue("localAddress").setValue(DEBUG_ADDRESS)
+            }
+            val port = connector.startListening(args).substringAfterLast(":")
 
-            val virtualMachine = attachDebugger()
+            val process = startDebuggeeProcess(classesDir, skipLoadingClasses, outputFiles, port)
+
+            val virtualMachine = connector.accept(args)
 
             try {
                 val mainThread = virtualMachine.allThreads().single { it.name() == "main" }
@@ -155,15 +153,6 @@ abstract class LowLevelDebuggerTestBase : ExecutionTestCase(),
         outputFiles: List<CompiledClassFile>,
     )
 
-    private fun isPortOpen(): Boolean {
-        return try {
-            Socket(DEBUG_ADDRESS, DEBUG_PORT).close()
-            true
-        } catch (e: IOException) {
-            false
-        }
-    }
-
     private fun areCompiledClassesLoaded(
         mainThread: ThreadReference,
         outputFiles: List<CompiledClassFile>,
@@ -184,8 +173,11 @@ abstract class LowLevelDebuggerTestBase : ExecutionTestCase(),
         return emptySet()
     }
 
-    private fun startDebuggeeProcess(classesDir: File, skipLoadingClasses: Set<String>,
-                                     outputFiles: List<CompiledClassFile>): Process {
+    private fun startDebuggeeProcess(classesDir: File,
+                                     skipLoadingClasses: Set<String>,
+                                     outputFiles: List<CompiledClassFile>,
+                                     port: String
+    ): Process {
         val classesToLoad = outputFiles
             .map { it.qualifiedName }
             .filter { it !in skipLoadingClasses }
@@ -198,7 +190,7 @@ abstract class LowLevelDebuggerTestBase : ExecutionTestCase(),
 
         val command = arrayOf(
             findJavaExecutable().absolutePath,
-            "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=$DEBUG_PORT",
+            "-agentlib:jdwp=transport=dt_socket,server=n,suspend=n,address=$port",
             "-ea",
             "-classpath", classpath.joinToString(File.pathSeparator),
             "-D${DebuggerMain.CLASSES_TO_LOAD}=$classesToLoad",
@@ -206,14 +198,6 @@ abstract class LowLevelDebuggerTestBase : ExecutionTestCase(),
         )
 
         return ProcessBuilder(*command).inheritIO().start()
-    }
-
-    private fun attachDebugger(): VirtualMachine {
-        val connector = SocketAttachingConnector()
-        return connector.attach(connector.defaultArguments().toMutableMap().apply {
-            getValue("port").setValue("$DEBUG_PORT")
-            getValue("hostname").setValue(DEBUG_ADDRESS)
-        })
     }
 
     private fun findJavaExecutable(): File {

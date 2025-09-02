@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.module.kotlin.KotlinFeature
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.internal.statistic.eventLog.*
+import com.intellij.internal.statistic.eventLog.LogSystemCollector.sendingForAllRecordersDisabledField
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupsFilterRules
 import com.intellij.internal.statistic.eventLog.uploader.EventLogUploadException.EventLogUploadErrorType.*
 import com.intellij.internal.statistic.uploader.EventLogUploaderOptions
@@ -18,12 +19,18 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.Strings
 import com.intellij.util.ArrayUtil
-import com.jetbrains.fus.reporting.model.metadata.EventGroupRemoteDescriptors
+import com.jetbrains.fus.reporting.configuration.ConfigurationClient
+import com.jetbrains.fus.reporting.connection.StatsHttpClient
+import com.jetbrains.fus.reporting.model.http.StatsConnectionSettings
+import com.jetbrains.fus.reporting.serialization.FusKotlinSerializer
+import kotlinx.serialization.StringFormat
+import kotlinx.serialization.json.Json
 import org.jetbrains.annotations.NotNull
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import kotlin.jvm.java
 import kotlin.reflect.full.IllegalCallableAccessException
 
 object EventLogExternalUploader {
@@ -45,7 +52,7 @@ object EventLogExternalUploader {
       tempDir.deleteRecursively()
     }
     catch (e: Exception) {
-      LOG.warn("Failed reading previous upload result: " + e.message)
+      LOG.warn("Statistics. External uploader. Failed reading previous upload result: " + e.message)
     }
   }
 
@@ -78,7 +85,8 @@ object EventLogExternalUploader {
   fun startExternalUpload(recordersProviders: List<StatisticsEventLoggerProvider>, isTestConfig: Boolean, isTestSendEndpoint: Boolean) {
     val enabledEventLoggerProviders = recordersProviders.filter { it.isSendEnabled() }
     if (enabledEventLoggerProviders.isEmpty()) {
-      LOG.info("Don't start external process because sending logs is disabled for all recorders")
+      LOG.info("Statistics. Don't start external uploader because sending logs is disabled for all recorders")
+      LogSystemCollector.externalUploaderLaunched.log(sendingForAllRecordersDisabledField.with(true))
       return
     }
     enabledEventLoggerProviders.forEach { it.eventLogSystemLogger.logExternalSendCommandCreationStarted() }
@@ -88,22 +96,22 @@ object EventLogExternalUploader {
       enabledEventLoggerProviders.forEach { it.eventLogSystemLogger.logExternalSendCommandCreationFinished(null) }
 
       if (LOG.isDebugEnabled) {
-        LOG.debug("Starting external process: '${command.joinToString(separator = " ")}'")
+        LOG.debug("Statistics. Starting external uploader: '${command.joinToString(separator = " ")}'")
       }
 
       Runtime.getRuntime().exec(command)
-      LOG.info("Started external process for uploading event log")
+      LOG.info("Statistics. Started external process for uploading event log")
     }
     catch (e: EventLogUploadException) {
       enabledEventLoggerProviders.forEach { it.eventLogSystemLogger.logExternalSendCommandCreationFinished(e.errorType) }
-      LOG.info(e)
+      LOG.info("Statistics. External uploader error: $e")
     }
   }
 
   private fun prepareUploadCommand(recorders: List<StatisticsEventLoggerProvider>, applicationInfo: EventLogApplicationInfo): Array<out String> {
     val sendConfigs = recorders.map { EventLogInternalSendConfig.createByRecorder(it.recorderId, false) }
     if (sendConfigs.isEmpty()) {
-      throw EventLogUploadException("No available logs to send", NO_LOGS)
+      throw EventLogUploadException("Statistics. External uploader. No available logs to send", NO_LOGS)
     }
 
     val tempDir = getOrCreateTempDir()
@@ -118,7 +126,12 @@ object EventLogExternalUploader {
       findLibraryByClass(KotlinFeature::class.java), // add jackson-kotlin-module
       findLibraryByClass(IllegalCallableAccessException::class.java), // add kotlin-reflect
       findLibraryByClass(EventGroupsFilterRules::class.java), // validation library
-      findLibraryByClass(EventGroupRemoteDescriptors::class.java) // model library
+      findLibraryByClass(StatsConnectionSettings::class.java), // com.jetbrains.fus.reporting.model
+      findLibraryByClass(ConfigurationClient::class.java), // com.jetbrains.fus.reporting.configuration
+      findLibraryByClass(FusKotlinSerializer::class.java), // com.jetbrains.fus.reporting.serialization
+      findLibraryByClass(StatsHttpClient::class.java), // com.jetbrains.fus.reporting.connection.StatsHttpClient
+      findLibraryByClass(Json::class.java), // kotlinx.serialization.json
+      findLibraryByClass(StringFormat::class.java) // kotlinx.serialization
     )
     val classpath = joinAsClasspath(libPaths.toList(), uploader)
 
@@ -135,6 +148,7 @@ object EventLogExternalUploader {
     addArgument(args, "-cp", classpath)
 
     args += "-Djava.io.tmpdir=${tempDir.path}"
+    //args += "-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:5005" Debug
     args += UPLOADER_MAIN_CLASS
 
     addArgument(args, IDE_TOKEN, Paths.get(PathManager.getSystemPath(), "token").toAbsolutePath().toString())
@@ -144,12 +158,12 @@ object EventLogExternalUploader {
       addRecorderConfiguration(args, config)
     }
 
-    addArgument(args, URL_OPTION, applicationInfo.templateUrl)
+    addArgument(args, REGIONAL_CODE_OPTION, applicationInfo.regionalCode)
     addArgument(args, PRODUCT_OPTION, applicationInfo.productCode)
     addArgument(args, PRODUCT_VERSION_OPTION, applicationInfo.productVersion)
     addArgument(args, BASELINE_VERSION, applicationInfo.baselineVersion.toString())
-    addArgument(args, USER_AGENT_OPTION, applicationInfo.connectionSettings.getUserAgent())
-    addArgument(args, EXTRA_HEADERS, ExtraHTTPHeadersParser.serialize(applicationInfo.connectionSettings.getExtraHeaders()))
+    addArgument(args, USER_AGENT_OPTION, applicationInfo.connectionSettings.provideUserAgent())
+    addArgument(args, EXTRA_HEADERS, ExtraHTTPHeadersParser.serialize(applicationInfo.connectionSettings.provideExtraHeaders()))
 
     if (applicationInfo.isInternal) {
       args += INTERNAL_OPTION
@@ -197,14 +211,15 @@ object EventLogExternalUploader {
 
   private fun findUploader(): Path {
     val uploader = if (PluginManagerCore.isRunningFromSources()) {
-      Paths.get(PathManager.getHomePath(), "out/artifacts/statistics-uploader.jar")
+        //Build -> Build Artifacts -> statistics-uploader -> Build
+        Paths.get(PathManager.getHomePath(), "out/artifacts/statistics-uploader.jar")
     }
     else {
       PathManager.getJarForClass(EventLogUploaderOptions::class.java)
     }
 
     if (uploader == null || !Files.isRegularFile(uploader)) {
-      throw EventLogUploadException("Cannot find uploader jar", NO_UPLOADER)
+      throw EventLogUploadException("Statistics. External uploader. Cannot find uploader jar", NO_UPLOADER)
     }
     return uploader
   }
@@ -213,7 +228,7 @@ object EventLogExternalUploader {
     val library = PathManager.getJarForClass(clazz)
 
     if (library == null || !Files.isRegularFile(library)) {
-      throw EventLogUploadException("Cannot find jar for $clazz", NO_UPLOADER)
+      throw EventLogUploadException("Statistics. External uploader. Cannot find jar for $clazz", NO_UPLOADER)
     }
     return library.toString()
   }
@@ -225,7 +240,7 @@ object EventLogExternalUploader {
   private fun getOrCreateTempDir(): File {
     val tempDir = getTempFile()
     if (!(tempDir.exists() || tempDir.mkdirs())) {
-      throw EventLogUploadException("Cannot create temp directory: $tempDir", NO_TEMP_FOLDER)
+      throw EventLogUploadException("Statistics. External uploader. Cannot create temp directory: $tempDir", NO_TEMP_FOLDER)
     }
     return tempDir
   }

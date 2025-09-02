@@ -274,6 +274,11 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
     return new ItemMatchers(MatcherHolder.getAssociatedMatcher(list), null);
   }
 
+  @ApiStatus.Internal
+  public @NotNull ItemMatchers getNonComponentItemMatchers(@NotNull Function<Object, ItemMatchers> matcherProvider, @NotNull Object value) {
+    return matcherProvider.apply(value);
+  }
+
   protected boolean customizeNonPsiElementLeftRenderer(ColoredListCellRenderer renderer,
                                                        JList list,
                                                        Object value,

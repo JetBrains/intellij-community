@@ -53,6 +53,11 @@ public class PyOptimizeImportsTest extends PyTestCase {
     doTest();
   }
 
+  // PY-4330
+  public void testSuppressedWithLegacyUnresolvedReferencesId() {
+    doTest();
+  }
+
   public void testSplit() {
     doTest();
   }

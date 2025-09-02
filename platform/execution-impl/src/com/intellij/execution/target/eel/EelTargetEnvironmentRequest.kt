@@ -14,7 +14,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.eel.*
-import com.intellij.platform.eel.fs.EelFileSystemApi
+import com.intellij.platform.eel.fs.createTemporaryDirectory
 import com.intellij.platform.eel.fs.getPath
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.asEelPath
@@ -52,6 +52,8 @@ class EelTargetType : TargetEnvironmentType<EelTargetEnvironmentRequest.Configur
 
   override val displayName: String = TARGET_TYPE_NAME
   override val icon: Icon = EMPTY_ICON
+
+  override fun isSystemCompatible(): Boolean = false
 
   override fun createEnvironmentRequest(project: Project?, config: EelTargetEnvironmentRequest.Configuration): TargetEnvironmentRequest {
     return EelTargetEnvironmentRequest(config)
@@ -150,8 +152,7 @@ private class EelTargetEnvironment(override val request: EelTargetEnvironmentReq
 
     request.localPortBindings.forEach { localPortBinding ->
       val acceptor = runBlockingMaybeCancellable {
-        val remoteAddress = EelTunnelsApi.HostAddress.Builder((localPortBinding.target ?: 0).toUShort()).build()
-        eel.tunnels.getAcceptorForRemotePort(remoteAddress).getOrThrow()
+        eel.tunnels.getAcceptorForRemotePort().port((localPortBinding.target ?: 0).toUShort()).eelIt()
       }
 
       val socket = Socket()
@@ -163,10 +164,10 @@ private class EelTargetEnvironment(override val request: EelTargetEnvironmentReq
           val connection = acceptor.incomingConnections.receive()
 
           launch {
-            copy(socket.consumeAsEelChannel(), connection.sendChannel).getOrThrow()  // TODO: Process error
+            copy(socket.consumeAsEelChannel(), connection.sendChannel)  // TODO: Process error
           }
           launch {
-            copy(connection.receiveChannel, socket.asEelChannel()).getOrThrow() // TODO: PRocess error
+            copy(connection.receiveChannel, socket.asEelChannel()) // TODO: PRocess error
           }
         }
 
@@ -189,10 +190,6 @@ private class EelTargetEnvironment(override val request: EelTargetEnvironmentReq
     override val localRoot: Path,
     override val targetRoot: String,
   ) : UploadableVolume, DownloadableVolume {
-    init {
-      val x = 1
-    }
-
     private fun targetRootPath(): Path {
       return eel.fs.getPath(targetRoot).asNioPath()
     }
@@ -239,13 +236,13 @@ private class EelTargetEnvironment(override val request: EelTargetEnvironmentReq
             }
             else {
               runBlockingMaybeCancellable {
-                val options = EelFileSystemApi.CreateTemporaryEntryOptions.Builder()
+                val options = eel.fs.createTemporaryDirectory()
 
                 targetRootPath.prefix?.let(options::prefix)
                 targetRootPath.parentDirectory?.let(eel.fs::getPath)?.let(options::parentDirectory)
                 options.deleteOnExit(true)
 
-                eel.fs.createTemporaryDirectory(options.build()).getOrThrow().toString()
+                options.getOrThrow().toString()
               }
             }
           }
@@ -260,31 +257,24 @@ private class EelTargetEnvironment(override val request: EelTargetEnvironmentReq
       }
 
       fun createFor(eel: EelApi, downloadRoot: DownloadRoot): EelVolume {
-        val target = downloadRoot.targetRootPath as TargetPath.Persistent // how could it be temp?
+        val localRootPath =
+          downloadRoot.localRootPath
+          ?: FileUtil.createTempDirectory("intellij-eel-target.", "").toPath()
 
-        if (downloadRoot.localRootPath == null) {
-          return EelVolume(
-            eel = eel,
-            localRoot = FileUtil.createTempDirectory("intellij-eel-target.", "").toPath(),
-            targetRoot = target.absolutePath,
-          )
-        }
-        else {
-          return createFor(eel, { downloadRoot.localRootPath!! }, { downloadRoot.targetRootPath })
-        }
+        return createFor(eel, { localRootPath }, { downloadRoot.targetRootPath })
       }
     }
   }
 
   override fun createProcess(commandLine: TargetedCommandLine, indicator: ProgressIndicator): Process {
     val command = commandLine.collectCommandsSynchronously()
-    val builder = EelExecApi.ExecuteProcessOptions.Builder(command.first())
+    val builder = eel.exec.spawnProcess(command.first())
 
     builder.args(command.drop(1))
     builder.env(commandLine.environmentVariables)
     builder.workingDirectory(commandLine.workingDirectory?.let { EelPath.parse(it, eel.descriptor) })
 
-    return runBlockingCancellable { eel.exec.execute(builder.build()).getOrThrow().convertToJavaProcess() }
+    return runBlockingCancellable { builder.eelIt().convertToJavaProcess() }
   }
 
   override val targetPlatform: TargetPlatform = request.targetPlatform

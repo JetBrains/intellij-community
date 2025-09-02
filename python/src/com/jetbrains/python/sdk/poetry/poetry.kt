@@ -7,20 +7,18 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.StandardFileSystems
-import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.util.PathUtil
-import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonModuleTypeBase
+import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.icons.PythonIcons
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.sdk.basePath
 import com.jetbrains.python.sdk.createSdk
 import com.jetbrains.python.sdk.getOrCreateAdditionalData
-import com.jetbrains.python.sdk.setAssociationToModule
+import com.jetbrains.python.venvReader.tryResolvePath
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.io.FileNotFoundException
 import java.nio.file.Path
 import java.util.regex.Pattern
 import kotlin.io.path.pathString
@@ -51,27 +49,21 @@ suspend fun setupPoetrySdkUnderProgress(
   python: String?,
   installPackages: Boolean,
   poetryPath: String? = null,
-): Result<Sdk> {
-  val projectPath = (newProjectPath ?: module?.basePath ?: project?.basePath)?.let { Path.of(it) }
-                    ?: return Result.failure(FileNotFoundException("Can't find path to project or module"))
+): PyResult<Sdk> {
+  val projectPath = (newProjectPath ?: module?.basePath ?: project?.basePath)?.let { tryResolvePath(it) }
+                    ?: return PyResult.localizedError("Can't find path to project or module")
 
-  val actualProject = project ?: module?.project
-  val pythonExecutablePath =  if (actualProject != null) {
-      withBackgroundProgress(actualProject, PyBundle.message("python.sdk.dialog.title.setting.up.poetry.environment"), true) {
-        setUpPoetry(projectPath, python, installPackages, poetryPath)
-      }
-  } else {
-    setUpPoetry(projectPath, python, installPackages, poetryPath)
-  }.getOrElse { return Result.failure(it) }
+  val pythonExecutablePath = setUpPoetry(projectPath, python, installPackages, poetryPath)
+    .getOr { return it }
 
-  val sdk = createSdk(
+  val result = createSdk(
     sdkHomePath = pythonExecutablePath,
     existingSdks = existingSdks,
     associatedProjectPath = projectPath.toString(),
     suggestedSdkName = suggestedSdkName(projectPath),
     sdkAdditionalData = PyPoetrySdkAdditionalData(projectPath)
   )
-  return sdk
+  return result
 }
 
 internal val Sdk.isPoetry: Boolean
@@ -87,17 +79,17 @@ internal fun allModules(project: Project?): List<Module> {
   }?.sortedBy { it.name } ?: emptyList()
 }
 
-private suspend fun setUpPoetry(projectPath: Path, python: String?, installPackages: Boolean, poetryPath: String? = null): Result<Path> {
+private suspend fun setUpPoetry(projectPath: Path, python: String?, installPackages: Boolean, poetryPath: String? = null): PyResult<Path> {
   val poetryExecutablePathString = when (poetryPath) {
     is String -> poetryPath
     else -> {
       val pyProjectToml = withContext(Dispatchers.IO) { StandardFileSystems.local().findFileByPath(projectPath.toString())?.findChild(PY_PROJECT_TOML) }
       val init = pyProjectToml?.let { getPyProjectTomlForPoetry(it) } == null
-      setupPoetry(projectPath, python, installPackages, init).getOrElse { return Result.failure(it) }
+      setupPoetry(projectPath, python, installPackages, init).getOr { return it }
     }
   }
 
-  return Result.success(Path.of(getPythonExecutable(poetryExecutablePathString)))
+  return PyResult.success(Path.of(getPythonExecutable(poetryExecutablePathString)))
 }
 
 fun parsePoetryShowOutdated(input: String): Map<String, PythonOutdatedPackage> {

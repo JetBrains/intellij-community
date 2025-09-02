@@ -117,6 +117,12 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     return myState;
   }
 
+  protected boolean wasMavenized() {
+    return !myState.originalFiles.isEmpty();
+  }
+
+
+
   @Override
   public void loadState(@NotNull MavenProjectsManagerState state) {
     myState = state;
@@ -153,15 +159,11 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
 
   @Deprecated(forRemoval = true)
   public File getLocalRepository() {
-      return getRepositoryPathUnderModalProgress().toFile();
-  }
-
-  public Path getRepositoryPathUnderModalProgress() {
-    return getGeneralSettings().getEffectiveRepositoryPathUnderModalProgress();
+      return MavenSettingsCache.getInstance(myProject).getEffectiveUserLocalRepo().toFile();
   }
 
   public Path getRepositoryPath() {
-    return getGeneralSettings().getEffectiveRepositoryPath();
+    return MavenSettingsCache.getInstance(myProject).getEffectiveUserLocalRepo();
   }
 
   @ApiStatus.Internal
@@ -198,22 +200,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       listenForExternalChanges();
       MavenIndicesManager.getInstance(myProject).scheduleUpdateIndicesList();
-    }
-  }
-
-  protected void onProjectStartup() {
-    if (!isNormalProject()) return;
-
-    boolean wasMavenized = !myState.originalFiles.isEmpty();
-    if (!wasMavenized) return;
-
-    initProjectsTree();
-    doInit();
-    doActivate();
-
-    if (!myProjectsTree.getManagedFilesPaths().isEmpty() && myProjectsTree.getRootProjects().isEmpty()) {
-      MavenLog.LOG.warn("MavenProjectsTree is inconsistent");
-      scheduleUpdateAllMavenProjects(MavenSyncSpec.full("MavenProjectsManager.onProjectStartup"));
     }
   }
 
@@ -257,6 +243,17 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     return mySyncConsole.get();
   }
 
+
+  protected void initOnProjectStartup() {
+    initProjectsTree();
+    doInit();
+    doActivate();
+
+    if (!myProjectsTree.getManagedFilesPaths().isEmpty() && myProjectsTree.getRootProjects().isEmpty()) {
+      MavenLog.LOG.warn("MavenProjectsTree is inconsistent");
+      scheduleUpdateAllMavenProjects(MavenSyncSpec.full("MavenProjectsManager.onProjectStartup"));
+    }
+  }
   private void initProjectsTree() {
     initLock.lock();
     try {

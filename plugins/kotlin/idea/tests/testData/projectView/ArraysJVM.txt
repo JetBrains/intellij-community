@@ -128,6 +128,7 @@ Navigation item file #1: kotlin-stdlib.jar!/kotlin/collections/ArraysKt__ArraysJ
      DeprecatedSinceKotlin
      DeprecationLevel
      DslMarker
+     ExperimentalContextParameters
      ExperimentalMultiplatform
      ExperimentalStdlibApi
      ExperimentalSubclassOptIn
@@ -135,6 +136,7 @@ Navigation item file #1: kotlin-stdlib.jar!/kotlin/collections/ArraysKt__ArraysJ
      ExposedCopyVisibility
      ExtensionFunctionType
      Function
+     IgnorableReturnValue
      InitializedLazyImpl
      kotlin.kotlin_builtins
      KotlinNothingValueException
@@ -144,6 +146,7 @@ Navigation item file #1: kotlin-stdlib.jar!/kotlin/collections/ArraysKt__ArraysJ
      Lazy
      LazyThreadSafetyMode
      Metadata
+     MustUseReturnValue
      NotImplementedError
      NoWhenBranchMatchedException
      OptIn
@@ -180,6 +183,9 @@ Navigation item file #1: kotlin-stdlib.jar!/kotlin/collections/ArraysKt__ArraysJ
      CharCodeJVMKt
      CharCodeKt
      CompareToKt
+     ContextParametersKt
+     ContextParametersKt__ContextKt
+     ContextParametersKt__ContextOfKt
      DeepRecursiveKt
      ExceptionsKt
      ExceptionsKt__ExceptionsKt

@@ -1,7 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl.storage;
 
-import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
@@ -21,6 +20,8 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static com.intellij.concurrency.ConcurrentCollectionFactory.createConcurrentIntObjectMap;
+
 /** In-memory index, with persistent index as a 'backend' storage -- so it is not really 'transient' */
 @Internal
 public class TransientFileContentIndex<Key, Value, FileCachedData extends VfsAwareMapReduceIndex.IndexerIdHolder>
@@ -28,8 +29,7 @@ public class TransientFileContentIndex<Key, Value, FileCachedData extends VfsAwa
   private static final Logger LOG = Logger.getInstance(TransientFileContentIndex.class);
 
   private final AtomicBoolean myInMemoryMode = new AtomicBoolean();
-  private final ConcurrentIntObjectMap<Map<Key, Value>> myInMemoryKeysAndValues =
-    ConcurrentCollectionFactory.createConcurrentIntObjectMap();
+  private final ConcurrentIntObjectMap<Map<Key, Value>> myInMemoryKeysAndValues = createConcurrentIntObjectMap();
 
 
   public TransientFileContentIndex(@NotNull FileBasedIndexExtension<Key, Value> extension,

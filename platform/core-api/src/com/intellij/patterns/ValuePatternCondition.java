@@ -16,6 +16,7 @@
 package com.intellij.patterns;
 
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 
@@ -25,5 +26,5 @@ public abstract class ValuePatternCondition<T> extends PatternCondition<T>{
     super(methodName);
   }
 
-  public abstract Collection<T> getValues();
+  public abstract @Unmodifiable Collection<T> getValues();
 }

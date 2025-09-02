@@ -1,5 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -245,7 +244,7 @@ public abstract class QuickFixAction extends AnAction implements CustomComponent
 
   private static RefEntity @NotNull [] getSelectedElements(InspectionResultsView view) {
     if (view == null) return RefEntity.EMPTY_ELEMENTS_ARRAY;
-    RefEntity[] selection = view.getTree().getSelectedElements();
+    RefEntity[] selection = view.getTree().getSelectedElements(false);
     PsiDocumentManager.getInstance(view.getProject()).commitAllDocuments();
     Arrays.sort(selection, InspectionResultsViewComparator::compareEntities);
     return selection;

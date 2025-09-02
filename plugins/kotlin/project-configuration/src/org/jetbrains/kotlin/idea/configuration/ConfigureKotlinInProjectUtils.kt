@@ -30,6 +30,7 @@ import com.intellij.psi.search.DelegatingGlobalSearchScope
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.indexing.DumbModeAccessType
+import com.intellij.workspaceModel.ide.legacyBridge.findSnapshotModuleEntity
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
@@ -47,6 +48,7 @@ import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.base.util.projectScope
 import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
+import org.jetbrains.kotlin.idea.core.script.KotlinScriptEntitySource
 import org.jetbrains.kotlin.idea.core.syncNonBlockingReadAction
 import org.jetbrains.kotlin.idea.projectConfiguration.KotlinNotConfiguredSuppressedModulesState
 import org.jetbrains.kotlin.idea.projectConfiguration.KotlinProjectConfigurationBundle
@@ -254,7 +256,8 @@ fun allConfigurators(): Array<KotlinProjectConfigurator> {
 }
 
 fun getCanBeConfiguredModules(project: Project, configurator: KotlinProjectConfigurator): List<Module> {
-    val projectModules = project.modules.asList()
+    val projectModules =
+        project.modules.asList().filter { module -> module.findSnapshotModuleEntity()?.entitySource !is KotlinScriptEntitySource }
     val result = mutableListOf<Module>()
     val progressIndicator = ProgressManager.getGlobalProgressIndicator()
     for ((index, module) in ModuleSourceRootMap(project).groupByBaseModules(projectModules).withIndex()) {
@@ -374,7 +377,7 @@ fun hasAnyKotlinRuntimeInScope(module: Module): Boolean {
             scope.hasKotlinJvmRuntime(module.project)
                     || runReadAction { hasKotlinJsKjsmFile(LibraryKindSearchScope(module, scope, KotlinJavaScriptLibraryKind)) }
                     || hasKotlinCommonRuntimeInScope(module)
-                    || hasKotlinCommonLegacyRuntimeInScope(scope)
+                    || hasKotlinCommonLegacyRuntimeInScope(scope, module.project)
                     || hasKotlinJsRuntimeInScope(module)
                     || hasKotlinWasmRuntimeInScope(module)
                     || hasKotlinWasmJsRuntimeInScope(module)
@@ -449,8 +452,8 @@ fun hasKotlinCommonRuntimeInScope(module: Module): Boolean {
 /**
  * Will check if kotlin is present as .kotlin_metadata (legacy) file
  */
-fun hasKotlinCommonLegacyRuntimeInScope(scope: GlobalSearchScope): Boolean {
-    return IdeVirtualFileFinder(scope).hasMetadataPackage(StandardNames.BUILT_INS_PACKAGE_FQ_NAME)
+fun hasKotlinCommonLegacyRuntimeInScope(scope: GlobalSearchScope, project: Project): Boolean {
+    return IdeVirtualFileFinder(scope, project).hasMetadataPackage(StandardNames.BUILT_INS_PACKAGE_FQ_NAME)
 }
 
 fun hasKotlinJsRuntimeInScope(module: Module): Boolean {

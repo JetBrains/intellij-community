@@ -17,6 +17,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider
 import com.intellij.openapi.wm.impl.welcomeScreen.NewWelcomeScreen
+import com.intellij.platform.ProjectGeneratorManager
 import com.intellij.ui.ExperimentalUI
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -49,6 +50,9 @@ open class NewProjectAction : AnAction(), DumbAware, NewProjectOrModuleAction {
 
   override fun actionPerformed(e: AnActionEvent) {
     service<NewProjectActionCoroutineScopeHolder>().coroutineScope.launch {
+      runCatching {
+        service<ProjectGeneratorManager>().initProjectGenerator(e.project)
+      }
       val wizard = withContext(Dispatchers.EDT) {
         NewProjectWizard(null, ModulesProvider.EMPTY_MODULES_PROVIDER, null)
       }

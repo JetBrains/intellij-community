@@ -14,6 +14,7 @@ import com.intellij.openapi.externalSystem.service.project.wizard.MavenizedNewPr
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.externalSystem.util.ui.DataView
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkDownloadTask
@@ -35,11 +36,11 @@ abstract class MavenNewProjectWizardStep<ParentStep>(parent: ParentStep) :
   where ParentStep : NewProjectWizardStep,
         ParentStep : NewProjectWizardBaseData {
 
-  final override val sdkProperty = propertyGraph.property<Sdk?>(null)
-  final override val sdkDownloadTaskProperty = propertyGraph.property<SdkDownloadTask?>(null)
+  final override val sdkProperty: GraphProperty<Sdk?> = propertyGraph.property(null)
+  final override val sdkDownloadTaskProperty: GraphProperty<SdkDownloadTask?> = propertyGraph.property(null)
 
-  final override var sdk by sdkProperty
-  final override var sdkDownloadTask by sdkDownloadTaskProperty
+  final override var sdk: Sdk? by sdkProperty
+  final override var sdkDownloadTask: SdkDownloadTask? by sdkDownloadTaskProperty
 
   protected fun setupJavaSdkUI(builder: Panel) {
     builder.row(JavaUiBundle.message("label.project.wizard.new.project.jdk")) {
@@ -49,7 +50,9 @@ abstract class MavenNewProjectWizardStep<ParentStep>(parent: ParentStep) :
     }.bottomGap(BottomGap.SMALL)
   }
 
-  override fun createView(data: MavenProject) = MavenDataView(data)
+  override fun createView(data: MavenProject): MavenDataView {
+    return MavenDataView(data)
+  }
 
   override fun findAllParents(): List<MavenProject> {
     val project = context.project ?: return emptyList()
@@ -103,8 +106,8 @@ abstract class MavenNewProjectWizardStep<ParentStep>(parent: ParentStep) :
     if (isCreatingNewProject) {
       if (sdkDownloadTask is JdkDownloadTask) {
         // Download the SDK on project creation
-        val sdkDownloadedFuture = project.service<JdkDownloadService>().scheduleDownloadJdkForNewProject(sdkDownloadTask)
-        builder.sdkDownloadedFuture = sdkDownloadedFuture;
+        builder.sdkDownloadedFuture = project.service<JdkDownloadService>()
+          .scheduleDownloadJdkForNewProject(sdkDownloadTask)
       }
     }
 

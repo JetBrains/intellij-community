@@ -25,7 +25,7 @@ final class ControlFlowChecker {
   private final @NotNull JavaErrorVisitor myVisitor;
   // map codeBlock->List of PsiReferenceExpression of uninitialized final variables
   private final Map<PsiElement, Collection<PsiReferenceExpression>> myUninitializedVarProblems = new HashMap<>();
-  // map codeBlock->List of PsiReferenceExpression of extra initialization of final variable
+  // map codeBlock->List of PsiReferenceExpression of extra initialization of the final variable
   private final Map<PsiElement, Collection<ControlFlowUtil.VariableInfo>> myFinalVarProblems = new HashMap<>();
 
   ControlFlowChecker(@NotNull JavaErrorVisitor visitor) { myVisitor = visitor; }

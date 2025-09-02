@@ -126,7 +126,7 @@ internal class LabeledListPanelHandle<T : Any>(cs: CoroutineScope,
   private suspend fun showEditPopup(parentComponent: JComponent): List<T> {
     val currentSet = vm.items.value.toSet()
     return ChooserPopupUtil.showAsyncMultipleChooserPopup(
-      RelativePoint.getSouthOf(parentComponent),
+      RelativePoint.getNorthEastOf(parentComponent),
       vm.getSelectableItemsBatchFlow(),
       getItemPresentation,
       currentSet::contains,

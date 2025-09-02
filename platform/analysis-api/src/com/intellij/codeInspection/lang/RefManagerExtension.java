@@ -15,6 +15,7 @@ import com.intellij.psi.PsiNamedElement;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -28,7 +29,7 @@ public interface RefManagerExtension<T> {
   @NotNull
   Key<T> getID();
 
-  default @NotNull Collection<Language> getLanguages() {
+  default @NotNull @Unmodifiable Collection<Language> getLanguages() {
     return Collections.singleton(getLanguage());
   }
 

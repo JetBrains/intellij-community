@@ -35,8 +35,8 @@ import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.hasExpectModifier
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
-abstract class AbstractKotlinCreateTestIntention : SelfTargetingRangeIntention<KtNamedDeclaration>(
-    KtNamedDeclaration::class.java,
+abstract class AbstractKotlinCreateTestIntention : SelfTargetingRangeIntention<KtElement>(
+    KtElement::class.java,
     KotlinBundle.lazyMessage("create.test")
 ) {
 
@@ -52,8 +52,19 @@ abstract class AbstractKotlinCreateTestIntention : SelfTargetingRangeIntention<K
         srcModule: Module
     )
 
-    override fun applicabilityRange(element: KtNamedDeclaration): TextRange? {
-        if (element.hasExpectModifier() || element.nameIdentifier == null) return null
+    @Deprecated("Kept for Backward compatibility, please override `applicabilityRange` function", level = DeprecationLevel.ERROR)
+    fun applicabilityRange(element: KtNamedDeclaration): TextRange? =
+        calculateApplicabilityRange(element)
+
+    override fun applicabilityRange(element: KtElement): TextRange? =
+        calculateApplicabilityRange(element)
+
+    private fun calculateApplicabilityRange(element: KtElement): TextRange? {
+        when (element) {
+            is KtNamedDeclaration -> if (element.hasExpectModifier() || element.nameIdentifier == null) return null
+            is KtFile -> {} // nothing
+            else -> return null
+        }
         val module: Module = ModuleUtilCore.findModuleForPsiElement(element) ?: return null
         if (!isApplicableForModule(module)) return null
 
@@ -73,6 +84,11 @@ abstract class AbstractKotlinCreateTestIntention : SelfTargetingRangeIntention<K
                     element.startOffset,
                     element.getSuperTypeList()?.startOffset ?: element.body?.startOffset ?: element.endOffset
                 )
+            }
+            element is KtFile -> {
+                // offer to create a test for a kotlin file only when there are top-level functions / properties
+                if (element.declarations.none { it is KtNamedFunction || it is KtProperty }) return null
+                TextRange(element.startOffset, element.endOffset)
             }
             element.parent !is KtFile -> null
             element is KtNamedFunction -> {
@@ -115,12 +131,7 @@ abstract class AbstractKotlinCreateTestIntention : SelfTargetingRangeIntention<K
         return klass
     }
 
-    override fun applyTo(element: KtNamedDeclaration, editor: Editor?) {
-        val lightClass = when (element) {
-            is KtClassOrObject -> element.toLightClass()
-            else -> element.containingKtFile.findFacadeClass()
-        } ?: return
-
+    override fun applyTo(element: KtElement, editor: Editor?) {
         object : CreateTestAction() {
             // Based on the com.intellij.testIntegration.createTest.CreateTestAction.CreateTestAction.invoke()
             override fun invoke(project: Project, editor: Editor?, element: PsiElement) {
@@ -139,12 +150,18 @@ abstract class AbstractKotlinCreateTestIntention : SelfTargetingRangeIntention<K
                     propertiesComponent.setValue("create.test.in.the.same.root", true)
                 }
 
-                val srcClass = getContainingClass(element) ?: return
+                val containingFile = element.containingFile
+                val lightClass = when (element) {
+                    is KtClassOrObject -> element.toLightClass()
+                    is KtElement -> (containingFile as? KtFile)?.findFacadeClass()
+                    else -> null
+                } ?: return
+                val srcClass = getContainingClass(lightClass) ?: return
 
-                val srcDir = element.containingFile.containingDirectory
+                val srcDir = containingFile.containingDirectory
                 val srcPackage = JavaDirectoryService.getInstance().getPackage(srcDir)
 
-                val dialog = KotlinCreateTestDialog(project, text, srcClass, srcPackage, srcModule)
+                val dialog = KotlinCreateTestDialog(project, text, element as? KtElement,srcClass, srcPackage, srcModule)
                 if (!dialog.showAndGet()) return
 
                 val existingClass =
@@ -155,23 +172,26 @@ abstract class AbstractKotlinCreateTestIntention : SelfTargetingRangeIntention<K
                     }
 
                 val generatedClass = project.executeCommand(CodeInsightBundle.message("intention.create.test"), this) {
-                    val generator = TestGenerators.INSTANCE.forLanguage(dialog.selectedTestFrameworkDescriptor.language)
-                    project.runWithAlternativeResolveEnabled {
-                        if (existingClass != null) {
-                            dialog.explicitClassName = getTempClassName(project, existingClass)
+                    TestGenerators.INSTANCE.allForLanguageWithDefault(dialog.selectedTestFrameworkDescriptor.language)
+                        .firstNotNullOfOrNull { generator ->
+                            project.runWithAlternativeResolveEnabled {
+                                if (existingClass != null) {
+                                    dialog.explicitClassName = getTempClassName(project, existingClass)
+                                }
+                                val generateTest = generator.generateTest(project, dialog)
+                                generateTest
+                            }
                         }
-                        generator.generateTest(project, dialog)
-                    }
                 } as? PsiClass ?: return
 
                 project.runWhenSmart {
-                    val containingFile = generatedClass.containingFile
-                    val generatedFile = containingFile as? PsiJavaFile ?: return@runWhenSmart
+                    val containingGeneratedFile = generatedClass.containingFile
+                    val generatedFile = containingGeneratedFile as? PsiJavaFile ?: return@runWhenSmart
 
                     convertClass(project, generatedClass, existingClass, generatedFile, srcModule)
                 }
             }
-        }.invoke(element.project, editor, lightClass)
+        }.invoke(element.project, editor, element)
     }
 }
 

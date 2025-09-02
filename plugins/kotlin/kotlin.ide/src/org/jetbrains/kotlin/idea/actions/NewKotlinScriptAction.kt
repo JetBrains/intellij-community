@@ -14,9 +14,8 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.PsiDirectory
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.core.script.k2.K2ScriptDefinitionProvider
-import org.jetbrains.kotlin.idea.core.script.k2.kotlinScriptTemplateInfo
-import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionProvider
+import org.jetbrains.kotlin.idea.core.script.getAllDefinitions
+import org.jetbrains.kotlin.idea.core.script.kotlinScriptTemplateInfo
 import javax.swing.Icon
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.ide
@@ -39,9 +38,9 @@ internal class NewKotlinScriptAction : AbstractNewKotlinFileAction(), DumbAware 
         with(builder) {
             setTitle(KotlinBundle.message("action.new.script.dialog.title"))
 
-            val scriptDefinitionProvider = ScriptDefinitionProvider.getInstance(project) as? K2ScriptDefinitionProvider
-            if (scriptDefinitionProvider != null) {
-                K2ScriptDefinitionProvider.getInstance(project).getAllDefinitions().mapNotNull {
+            val definitions = getAllDefinitions(project)
+            if (definitions.isNotEmpty()) {
+                definitions.mapNotNull {
                     it.compilationConfiguration[ScriptCompilationConfiguration.ide.kotlinScriptTemplateInfo]
                 }.distinct().forEach {
                     builder.addKind(it.title, it.icon, it.templateName)

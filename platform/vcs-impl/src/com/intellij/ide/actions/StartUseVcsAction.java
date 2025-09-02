@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
-import com.intellij.ide.impl.TrustedProjects;
+import com.intellij.ide.trustedProjects.TrustedProjects;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -48,7 +48,7 @@ public class StartUseVcsAction extends DumbAwareAction {
 
   protected @Nullable VirtualFile guessDirectory(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
-    if (project == null || !TrustedProjects.isTrusted(project)) return null;
+    if (project == null || !TrustedProjects.isProjectTrusted(project)) return null;
     ProjectLevelVcsManagerImpl manager = ProjectLevelVcsManagerImpl.getInstanceImpl(project);
     if (manager.haveVcses() && !manager.hasAnyMappings()) {
       VirtualFile targetDirectory = ProjectUtil.guessProjectDir(project);

@@ -1,8 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.file.impl;
 
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
-import com.intellij.codeInsight.multiverse.CodeInsightContextKt;
+import com.intellij.codeInsight.multiverse.CodeInsightContexts;
 import com.intellij.codeInsight.multiverse.ModuleContext;
 import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.java.codeserver.core.JavaPsiSingleFileSourceUtil;
@@ -32,7 +32,7 @@ public final class JavaResolveScopeProvider extends ResolveScopeProvider {
 
   @Override
   public @Nullable GlobalSearchScope getResolveScope(@NotNull VirtualFile file, @NotNull Project project) {
-    return getResolveScope(file, CodeInsightContextKt.anyContext(), project);
+    return getResolveScope(file, CodeInsightContexts.anyContext(), project);
   }
 
   @Override
@@ -54,11 +54,11 @@ public final class JavaResolveScopeProvider extends ResolveScopeProvider {
         }
       }
       Module module;
-      if (CodeInsightContextKt.isSharedSourceSupportEnabled(project) &&
-          context != CodeInsightContextKt.anyContext() &&
-          context != CodeInsightContextKt.defaultContext()
+      if (CodeInsightContexts.isSharedSourceSupportEnabled(project) &&
+          context != CodeInsightContexts.anyContext() &&
+          context != CodeInsightContexts.defaultContext()
       ) {
-        module = context instanceof ModuleContext ? ((ModuleContext)context).getModule() : null; //todo ijpl-339
+        module = context instanceof ModuleContext ? ((ModuleContext)context).getModule() : null; //todo IJPL-339
       }
       else {
         module = index.getModuleForFile(file);

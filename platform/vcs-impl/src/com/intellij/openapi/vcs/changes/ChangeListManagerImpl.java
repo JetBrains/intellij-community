@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.CommonBundle;
@@ -812,6 +812,27 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
   }
 
   @Override
+  public boolean isResolvedConflict(@NotNull FilePath file) {
+    VcsRoot vcsRoot = ProjectLevelVcsManager.getInstance(project).getVcsRootObjectFor(file);
+    if (vcsRoot == null) return false;
+
+    return ReadAction.compute(() -> {
+      synchronized (myDataLock) {
+        return myComposite.getResolvedMergeFilesHolder().containsFile(file, vcsRoot);
+      }
+    });
+  }
+
+  @Override
+  public @NotNull List<FilePath> getResolvedConflictPaths() {
+    return ReadAction.compute(() -> {
+      synchronized (myDataLock) {
+        return new ArrayList<>(myComposite.getResolvedMergeFilesHolder().getFiles());
+      }
+    });
+  }
+
+  @Override
   public @NotNull List<VirtualFile> getModifiedWithoutEditing() {
     return ReadAction.compute(() -> {
       synchronized (myDataLock) {
@@ -1177,6 +1198,7 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
     return ReadAction.compute(() -> {
       synchronized (myDataLock) {
         if (myComposite.getUnversionedFileHolder().containsFile(path, vcsRoot)) return FileStatus.UNKNOWN;
+        if (myComposite.getResolvedMergeFilesHolder().containsFile(path, vcsRoot)) return FileStatus.MERGE;
         if (file != null && myComposite.getModifiedWithoutEditingFileHolder().containsFile(file)) return FileStatus.HIJACKED;
         if (myComposite.getIgnoredFileHolder().containsFile(path, vcsRoot)) return FileStatus.IGNORED;
 

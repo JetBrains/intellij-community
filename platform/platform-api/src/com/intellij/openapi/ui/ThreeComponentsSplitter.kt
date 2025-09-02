@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("FunctionName")
 
 package com.intellij.openapi.ui
@@ -17,7 +17,6 @@ import com.intellij.ui.UIBundle
 import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.util.EventDispatcher
 import com.intellij.util.ui.*
-import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.awt.event.ComponentEvent
 import java.awt.event.ComponentListener
@@ -220,10 +219,6 @@ open class ThreeComponentsSplitter @JvmOverloads constructor(vertical: Boolean =
     }
   }
 
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use {@link #ThreeComponentsSplitter()}")
-  constructor(@Suppress("UNUSED_PARAMETER") parentDisposable: Disposable) : this(false)
-
   var dividerWidth: Int = if (onePixelDividers) 1 else 7
     set(width) {
       if (width < 0) {
@@ -283,11 +278,11 @@ open class ThreeComponentsSplitter @JvmOverloads constructor(vertical: Boolean =
 
   override fun isVisible(): Boolean = super.isVisible() && (firstVisible() || innerVisible() || lastVisible())
 
-  protected fun lastVisible(): Boolean = !Splitter.isNull(lastComponent) && lastComponent!!.isVisible
+  protected fun lastVisible(): Boolean = !NullableComponent.Check.isNull(lastComponent) && lastComponent!!.isVisible
 
-  private fun innerVisible(): Boolean = !Splitter.isNull(innerComponent) && innerComponent!!.isVisible
+  private fun innerVisible(): Boolean = !NullableComponent.Check.isNull(innerComponent) && innerComponent!!.isVisible
 
-  protected fun firstVisible(): Boolean = !Splitter.isNull(firstComponent) && firstComponent!!.isVisible
+  protected fun firstVisible(): Boolean = !NullableComponent.Check.isNull(firstComponent) && firstComponent!!.isVisible
 
   private fun visibleDividersCount(): Int {
     var count = 0
@@ -693,6 +688,7 @@ open class ThreeComponentsSplitter @JvmOverloads constructor(vertical: Boolean =
       }
     }
 
+    @Suppress("RedundantVisibilityModifier")
     public override fun processMouseMotionEvent(e: MouseEvent) {
       super.processMouseMotionEvent(e)
       if (!isShowing()) {
@@ -751,6 +747,7 @@ open class ThreeComponentsSplitter @JvmOverloads constructor(vertical: Boolean =
       return if (minSize <= maxSize) pos.coerceIn(minSize, maxSize) else pos
     }
 
+    @Suppress("RedundantVisibilityModifier")
     public override fun processMouseEvent(e: MouseEvent) {
       super.processMouseEvent(e)
       if (!isShowing()) {
@@ -854,7 +851,7 @@ open class ThreeComponentsSplitter @JvmOverloads constructor(vertical: Boolean =
 private val SplitGlueV = EmptyIcon.create(17, 6)
 
 private fun validateIfNeeded(c: JComponent?, rect: Rectangle) {
-  if (c != null && !Splitter.isNull(c)) {
+  if (c != null && !NullableComponent.Check.isNull(c)) {
     if (c.bounds != rect) {
       c.bounds = rect
       c.revalidate()

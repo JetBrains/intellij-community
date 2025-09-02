@@ -1,4 +1,4 @@
-class {{
+class X {{
   String s = """
     one
     <caret>two

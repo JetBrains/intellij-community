@@ -14,6 +14,7 @@ import com.intellij.psi.impl.file.PsiDirectoryImpl
 import com.jetbrains.performancePlugin.PerformanceTestSpan
 import com.jetbrains.performancePlugin.commands.PerformanceCommandCoroutineAdapter
 import com.intellij.performanceTesting.vcs.VcsTestUtil
+import com.intellij.psi.impl.PsiManagerEx
 import io.opentelemetry.context.Context
 import org.jetbrains.kotlin.idea.actions.createKotlinFileFromTemplate
 
@@ -43,7 +44,7 @@ internal class CreateKotlinFileCommand(text: String, line: Int) : PerformanceCom
     override suspend fun doExecute(context: PlaybackContext) {
         val (fileName, filePath, fileType) = extractCommandArgument(PREFIX).replace("\\s","").split(",")
         val directory = PsiDirectoryImpl(
-            PsiManager.getInstance(context.project) as PsiManagerImpl,
+            PsiManagerEx.getInstanceEx(context.project),
             (context.project.guessProjectDir() ?: throw RuntimeException("Root of the project was not found "))
                 .findDirectory(filePath) ?: throw RuntimeException("Can't find file $filePath")
         )

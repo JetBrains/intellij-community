@@ -31,15 +31,15 @@ public class TextToCDataIntention implements IntentionAction {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return file.getLanguage().isKindOf(XMLLanguage.INSTANCE) &&
-           getText(editor, file) != null &&
-           !file.getLanguage().isKindOf(HTMLLanguage.INSTANCE);
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    return psiFile.getLanguage().isKindOf(XMLLanguage.INSTANCE) &&
+           getText(editor, psiFile) != null &&
+           !psiFile.getLanguage().isKindOf(HTMLLanguage.INSTANCE);
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    PsiElement textElement = getText(editor, file);
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
+    PsiElement textElement = getText(editor, psiFile);
     if (textElement == null) return;
 
 
@@ -74,13 +74,13 @@ public class TextToCDataIntention implements IntentionAction {
     editor.getCaretModel().moveToOffset(begin + replacement.length());
   }
 
-  private static PsiElement getText(Editor editor, PsiFile file) {
+  private static PsiElement getText(Editor editor, PsiFile psiFile) {
     int offset = editor.getCaretModel().getOffset();
-    PsiElement element = file.findElementAt(offset);
+    PsiElement element = psiFile.findElementAt(offset);
     PsiElement parent = element != null ? element.getParent() : null;
     if (isText(parent)) return parent;
 
-    element = file.findElementAt(offset - 1);
+    element = psiFile.findElementAt(offset - 1);
     parent = element != null ? element.getParent() : null;
     if (isText(parent)) return parent;
     return null;

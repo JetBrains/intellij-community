@@ -17,7 +17,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.eel.fs.EelFileSystemApi
+import com.intellij.platform.eel.fs.createTemporaryDirectory
 import com.intellij.platform.eel.getOrThrow
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
@@ -202,16 +202,14 @@ open class MavenModuleBuilderHelper(
   private suspend fun generateFromArchetype(project: Project, pom: VirtualFile) {
     trigger(project, MavenActionsUsagesCollector.CREATE_MAVEN_PROJECT_FROM_ARCHETYPE)
 
-    val eel = project.getEelDescriptor().upgrade()
+    val eel = project.getEelDescriptor().toEelApi()
 
     val workingDir: Path = try {
-      val tmpOptions = EelFileSystemApi.CreateTemporaryEntryOptions.Builder().apply {
-        suffix("tmp")
-        prefix("archetype")
-        deleteOnExit(true)
-      }
-
-      eel.fs.createTemporaryDirectory(tmpOptions.build()).getOrThrow { throw IOException(it.message) }.asNioPath()
+      eel.fs.createTemporaryDirectory()
+        .suffix("tmp")
+        .prefix("archetype")
+        .deleteOnExit(true)
+        .getOrThrow { throw IOException(it.message) }.asNioPath()
     }
     catch (e: IOException) {
       showError(project, e)

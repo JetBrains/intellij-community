@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.flavors;
 
 import com.intellij.execution.ExecutionException;
@@ -13,8 +13,10 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.sdk.PyDetectedSdk;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,6 +29,7 @@ import java.util.Set;
 import static com.intellij.openapi.util.text.HtmlChunk.raw;
 import static com.intellij.openapi.util.text.HtmlChunk.text;
 
+@ApiStatus.Internal
 
 public final class MacPythonSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Empty> {
 
@@ -45,8 +48,9 @@ public final class MacPythonSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Empt
     return PyFlavorData.Empty.class;
   }
 
+  @RequiresBackgroundThread(generateAssertion = false)
   @Override
-  public @NotNull Collection<@NotNull Path> suggestLocalHomePaths(@Nullable Module module, @Nullable UserDataHolder context) {
+  protected @NotNull Collection<@NotNull Path> suggestLocalHomePathsImpl(@Nullable Module module, @Nullable UserDataHolder context) {
     Set<Path> candidates = new HashSet<>();
     collectPythonInstallations(Path.of("/Library/Frameworks/Python.framework/Versions"), candidates);
     collectPythonInstallations(Path.of("/System/Library/Frameworks/Python.framework/Versions"), candidates);

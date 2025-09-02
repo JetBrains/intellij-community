@@ -6,12 +6,18 @@ import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.ui.SimpleTextAttributes
 
 class PsiViewerPrimitiveNode(private val primitive: Any) : PsiViewerPropertyNode {
-  class Factory : PsiViewerPropertyNode.Factory {
-    override fun isMatchingType(clazz: Class<*>): Boolean {
+  companion object {
+    fun isPrimitive(clazz: Class<*>): Boolean {
       return clazz == String::class.java ||
              (clazz.isPrimitive && clazz != Void.TYPE) ||
              clazz.isEnum ||
              clazz in primitiveClassWrappers()
+    }
+  }
+
+  class Factory : PsiViewerPropertyNode.Factory {
+    override fun isMatchingType(clazz: Class<*>): Boolean {
+      return isPrimitive(clazz)
     }
 
     override suspend fun createNode(nodeContext: PsiViewerPropertyNode.Context, returnedValue: Any): PsiViewerPropertyNode {

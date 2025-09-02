@@ -45,6 +45,7 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.scopes.LexicalScope
 import org.jetbrains.kotlin.resolve.scopes.receivers.ImplicitReceiver
 import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlin.types.error.ErrorUtils
 import org.jetbrains.kotlin.types.isError
 import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
@@ -147,14 +148,14 @@ class CodeInliner (
         }
 
         if (elementToBeReplaced is KtSafeQualifiedExpression && receiverType?.isMarkedNullable != false) {
-            wrapCodeForSafeCall(receiver!!, receiverType, elementToBeReplaced)
+            wrapCodeForSafeCall(receiver!!, createTypeDescription(receiverType), elementToBeReplaced)
         } else if (callElement is KtBinaryExpression && callElement.operationToken == KtTokens.IDENTIFIER) {
             keepInfixFormIfPossible(importDescriptors.map { it.second })
         }
 
         codeToInline.convertToCallableReferenceIfNeeded(elementToBeReplaced)
 
-        introduceVariablesForParameters(elementToBeReplaced, receiver, receiverType, introduceValuesForParameters)
+        introduceVariablesForParameters(elementToBeReplaced, receiver, createTypeDescription(receiverType), introduceValuesForParameters)
 
         for ((importPath, importDescriptor) in importDescriptors) {
             ImportInsertHelper.getInstance(project).importDescriptor(file, importDescriptor, aliasName = importPath.importPath.alias)
@@ -250,13 +251,22 @@ class CodeInliner (
 
     override fun introduceValue(
         value: KtExpression,
-        valueType: KotlinType?,
+        valueType: TypeDescription?,
         usages: Collection<KtExpression>,
         expressionToBeReplaced: KtExpression,
         nameSuggestion: String?,
         safeCall: Boolean
     ) {
-        codeToInline.introduceValue(value, valueType, usages, expressionToBeReplaced, nameSuggestion, safeCall)
+        codeToInline.introduceValue(
+            value,
+            usages,
+            expressionToBeReplaced,
+            nameSuggestion,
+            safeCall,
+            valueType?.isContainingErrors == true,
+            valueType?.isMarkedNullable,
+            valueType?.valueTypePresentation
+        )
     }
 
     private fun keepInfixFormIfPossible(importDescriptors: List<DeclarationDescriptor>) {
@@ -275,13 +285,21 @@ class CodeInliner (
         codeToInline.mainExpression = psiFactory.createExpressionByPattern("$0 ${nameExpression.text} $1", receiver, argumentExpression)
     }
 
+    private fun createTypeDescription(type: KotlinType?): TypeDescription? {
+        if (type == null) return null
+        return TypeDescription(IdeDescriptorRenderers.SOURCE_CODE.renderType(type),
+                               ErrorUtils.containsErrorType(type),
+                               type.isMarkedNullable
+        )
+    }
+
     override fun argumentForParameter(parameter: ValueParameterDescriptor, callableDescriptor: CallableDescriptor): Argument? {
         if (callableDescriptor is PropertySetterDescriptor) {
             val valueAssigned = (callElement as? KtExpression)
                 ?.getQualifiedExpressionForSelectorOrThis()
                 ?.getAssignmentByLHS()
                 ?.right ?: return null
-            return Argument(valueAssigned, bindingContext.getType(valueAssigned))
+            return Argument(valueAssigned, createTypeDescription(bindingContext.getType(valueAssigned)))
         }
 
         when (val resolvedArgument = resolvedCall.valueArguments[parameter] ?: return null) {
@@ -302,7 +320,7 @@ class CodeInliner (
                     }
                 } ?: expression
 
-                return Argument(resultExpression, expressionType, isNamed = valueArgument.isNamed())
+                return Argument(resultExpression, createTypeDescription(expressionType), isNamed = valueArgument.isNamed())
             }
 
             is DefaultValueArgument -> {
@@ -327,7 +345,7 @@ class CodeInliner (
                 if (single?.getSpreadElement() != null) {
                     val expression = single.getArgumentExpression()!!
                     expression.putCopyableUserData(USER_CODE_KEY, Unit)
-                    return Argument(expression, bindingContext.getType(expression), isNamed = single.isNamed())
+                    return Argument(expression, createTypeDescription(bindingContext.getType(expression)), isNamed = single.isNamed())
                 }
 
                 val elementType = parameter.varargElementType!!
@@ -345,7 +363,7 @@ class CodeInliner (
                     }
                     appendFixedText(")")
                 }
-                return Argument(expression, parameter.type, isNamed = single?.isNamed() ?: false)
+                return Argument(expression, createTypeDescription(parameter.type), isNamed = single?.isNamed() ?: false)
             }
 
             else -> error("Unknown argument type: $resolvedArgument")

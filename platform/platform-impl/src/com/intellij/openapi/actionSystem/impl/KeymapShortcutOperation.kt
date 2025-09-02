@@ -8,10 +8,10 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.actionSystem.Shortcut
-import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.keymap.KeymapUtil
+import com.intellij.openapi.keymap.KeymapUtil.getKeyStroke
 import com.intellij.util.xml.dom.XmlElement
 import javax.swing.KeyStroke
 
@@ -66,7 +66,7 @@ internal fun processKeyboardShortcutNode(element: XmlElement,
     return
   }
 
-  val firstKeyStroke = ActionManagerEx.getKeyStroke(firstStrokeString)
+  val firstKeyStroke = getKeyStroke(firstStrokeString)
   if (firstKeyStroke == null) {
     reportActionError(module = module, message = "\"first-keystroke\" attribute has invalid value for action with id=$actionId")
     return
@@ -75,7 +75,7 @@ internal fun processKeyboardShortcutNode(element: XmlElement,
   var secondKeyStroke: KeyStroke? = null
   val secondStrokeString = element.attributes.get("second-keystroke")
   if (secondStrokeString != null) {
-    secondKeyStroke = ActionManagerEx.getKeyStroke(secondStrokeString)
+    secondKeyStroke = getKeyStroke(secondStrokeString)
     if (secondKeyStroke == null) {
       reportActionError(module = module, message = "\"second-keystroke\" attribute has invalid value for action with id=$actionId")
       return

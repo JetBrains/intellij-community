@@ -28,7 +28,7 @@ public final class MethodReferenceVisitor extends JavaRecursiveElementWalkingVis
   private boolean m_referencesStaticallyAccessible = true;
   private final PsiMember m_method;
 
-  MethodReferenceVisitor(PsiMember method) {
+  public MethodReferenceVisitor(PsiMember method) {
     m_method = method;
   }
 

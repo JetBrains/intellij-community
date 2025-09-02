@@ -1,10 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ijent
 
 import com.intellij.execution.process.SelfKiller
-import com.intellij.platform.ijent.IjentChildProcess
+import com.intellij.platform.eel.EelProcess
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import java.io.InputStream
 import java.io.OutputStream
@@ -19,7 +19,7 @@ import java.util.concurrent.TimeUnit
 @ApiStatus.Internal
 class IjentChildProcessAdapter(
   coroutineScope: CoroutineScope,
-  private val ijentChildProcess: IjentChildProcess,
+  private val ijentChildProcess: EelProcess,
 ) : Process(), SelfKiller {
   private val delegate = IjentChildProcessAdapterDelegate(
     coroutineScope,
@@ -44,7 +44,7 @@ class IjentChildProcessAdapter(
 
   override fun destroyForcibly(): Process = apply { delegate.destroyForcibly() }
 
-  override fun supportsNormalTermination(): Boolean = true
+  override fun supportsNormalTermination(): Boolean = delegate.supportsNormalTermination()
 
   override fun isAlive(): Boolean = delegate.isAlive()
 

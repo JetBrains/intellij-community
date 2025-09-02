@@ -10,6 +10,9 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.EventDispatcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.jetbrains.plugins.github.api.GHRepositoryPath
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequests
@@ -21,12 +24,14 @@ import java.util.concurrent.TimeUnit
 
 
 internal class GHPRListETagUpdateChecker(
+  parentCs: CoroutineScope,
   private val progressManager: ProgressManager,
   private val requestExecutor: GithubApiRequestExecutor,
   private val serverPath: GithubServerPath,
   private val repoPath: GHRepositoryPath,
 ) : GHPRListUpdatesChecker {
   companion object {
+    private const val REFRESH_ENABLED_KEY = "github.pr.list.automatic.refresh.enabled"
     private const val REFRESH_SECONDS_KEY = "github.pr.list.automatic.refresh.seconds"
   }
 
@@ -37,6 +42,13 @@ internal class GHPRListETagUpdateChecker(
   private var scheduler: ScheduledFuture<*>? = null
   private var progressIndicator: ProgressIndicator? = null
 
+  init {
+    parentCs.launch(Dispatchers.Main.immediate) {
+      scheduler?.cancel(true)
+      progressIndicator?.cancel()
+    }
+  }
+
   @Volatile
   private var lastETag: String? = null
     set(value) {
@@ -46,7 +58,7 @@ internal class GHPRListETagUpdateChecker(
     }
 
   override fun start() {
-    if (scheduler == null) {
+    if (scheduler == null && Registry.`is`(REFRESH_ENABLED_KEY, true)) {
       val secondsBetweenRefreshes = Registry.get(REFRESH_SECONDS_KEY).asInteger().toLong()
 
       val indicator = NonReusableEmptyProgressIndicator()
@@ -54,7 +66,8 @@ internal class GHPRListETagUpdateChecker(
       scheduler = JobScheduler.getScheduler().scheduleWithFixedDelay(
         {
           try {
-            lastETag = loadListETag(indicator)
+            val etag = loadListETag(indicator)
+            lastETag = etag
           }
           catch (_: Exception) {
             //ignore
@@ -75,12 +88,6 @@ internal class GHPRListETagUpdateChecker(
     progressIndicator = NonReusableEmptyProgressIndicator()
     lastETag = null
   }
-
-  override fun dispose() {
-    scheduler?.cancel(true)
-    progressIndicator?.cancel()
-  }
-
 
   override fun addOutdatedStateChangeListener(disposable: Disposable, listener: () -> Unit) =
     SimpleEventListener.addDisposableListener(outdatedEventDispatcher, disposable, listener)

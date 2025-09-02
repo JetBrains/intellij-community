@@ -3,10 +3,9 @@ package org.jetbrains.idea.maven.execution.run
 
 import com.intellij.openapi.project.Project
 import com.intellij.platform.eel.EelApi
-import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.utils.EelPathUtils.FileTransferAttributesStrategy.Companion.copyWithRequiredPosixPermissions
-import com.intellij.platform.eel.provider.utils.EelPathUtils.transferLocalContentToRemoteTempIfNeeded
+import com.intellij.platform.eel.provider.utils.EelPathUtils.transferContentsIfNonLocal
 import org.jetbrains.idea.maven.execution.MavenRunConfiguration
 import org.jetbrains.idea.maven.execution.target.MavenRuntimeTargetConfiguration
 import org.jetbrains.idea.maven.project.BundledMaven
@@ -20,15 +19,15 @@ internal class MavenRuntimeTargetResolver(private val project: Project, private 
     val mavenCache = MavenDistributionsCache.getInstance(project)
     val workingDirPath = configuration.runnerParameters.workingDirPath
     val mavenDistribution = mavenCache.getMavenDistribution(workingDirPath)
-    val mavenHomePath: EelPath = mavenDistribution.mavenHome.let {
+    val mavenHomePath = mavenDistribution.mavenHome.let {
       if (isBundledMavenRequired()) {
-        transferLocalContentToRemoteTempIfNeeded(eel, it, copyWithRequiredPosixPermissions(PosixFilePermission.OWNER_EXECUTE))
+        transferContentsIfNonLocal(eel, it, null, copyWithRequiredPosixPermissions(PosixFilePermission.OWNER_EXECUTE))
       }
       else {
-        it.asEelPath()
+        it
       }
     }
-    val effectiveMavenHome = mavenHomePath.toString()
+    val effectiveMavenHome = mavenHomePath.asEelPath().toString()
     val mavenVersion = mavenDistribution.version ?: ""
     val mavenConfig = MavenRuntimeTargetConfiguration()
     mavenConfig.homePath = effectiveMavenHome

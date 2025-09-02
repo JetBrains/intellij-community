@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 
 package com.intellij.ide.ui.search
@@ -7,6 +7,7 @@ import com.intellij.BundleBase.replaceMnemonicAmpersand
 import com.intellij.DynamicBundle
 import com.intellij.IntelliJResourceBundle
 import com.intellij._doResolveBundle
+import com.intellij.ide.plugins.ContentModuleDescriptor
 import com.intellij.ide.plugins.PluginManagerCore.getPluginSet
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar.AdditionalLocationProvider
@@ -201,15 +202,15 @@ private fun findBundle(classLoader: ClassLoader, locale: Locale, bundlePath: Str
 }
 
 private fun processSearchableOptions(processor: MySearchableOptionProcessor) {
-  val visited = Collections.newSetFromMap(IdentityHashMap<ClassLoader, Boolean>())
+  val xmlVisited = Collections.newSetFromMap(IdentityHashMap<ClassLoader, Boolean>())
   val serializer = ConfigurableEntry.serializer()
   for (module in getPluginSet().getEnabledModules()) {
     val classLoader = module.pluginClassLoader
-    if (classLoader !is UrlClassLoader || !visited.add(classLoader)) {
+    if (classLoader !is UrlClassLoader) {
       continue
     }
 
-    val classifier = if (module.moduleName == null) "p-${module.pluginId.idString}" else "m-${module.moduleName}"
+    val classifier = if (module !is ContentModuleDescriptor) "p-${module.pluginId.idString}" else "m-${module.moduleName}"
 
     val fileName = "$classifier-${SearchableOptionsRegistrar.SEARCHABLE_OPTIONS_XML_NAME}.json"
     val data = classLoader.getResourceAsBytes(fileName, false)
@@ -237,6 +238,9 @@ private fun processSearchableOptions(processor: MySearchableOptionProcessor) {
       continue
     }
 
+    if (!xmlVisited.add(classLoader)) {
+      continue
+    }
     val xmlName = "${SearchableOptionsRegistrar.SEARCHABLE_OPTIONS_XML_NAME}.xml"
     classLoader.processResources("search", Predicate { it.endsWith(xmlName) }) { _, stream ->
       try {

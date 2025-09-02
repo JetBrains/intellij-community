@@ -33,10 +33,10 @@ public final class XmlUnusedNamespaceInspection extends XmlSuppressableInspectio
     return new XmlElementVisitor() {
       @Override
       public void visitXmlAttribute(@NotNull XmlAttribute attribute) {
-        PsiFile file = holder.getFile();
-        if (!(file instanceof XmlFile)) return;
+        PsiFile psiFile = holder.getFile();
+        if (!(psiFile instanceof XmlFile)) return;
 
-        XmlRefCountHolder refCountHolder = XmlRefCountHolder.getRefCountHolder((XmlFile)file);
+        XmlRefCountHolder refCountHolder = XmlRefCountHolder.getRefCountHolder((XmlFile)psiFile);
         if (refCountHolder == null) return;
         @Nullable XmlTag parent = attribute.getParent();
         if (parent == null) return;
@@ -102,8 +102,8 @@ public final class XmlUnusedNamespaceInspection extends XmlSuppressableInspectio
       return;
     }
 
-    PsiFile file = element.getContainingFile();
-    Project project = file.getProject();
+    PsiFile psiFile = element.getContainingFile();
+    Project project = psiFile.getProject();
     SmartPsiElementPointer<XmlAttribute> pointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(attribute);
     for (PsiReference reference : references) {
       RemoveNamespaceDeclarationFix.removeReferenceText(reference);
@@ -111,7 +111,7 @@ public final class XmlUnusedNamespaceInspection extends XmlSuppressableInspectio
 
     // trimming the result
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-    Document document = file.getViewProvider().getDocument();
+    Document document = psiFile.getViewProvider().getDocument();
     assert document != null;
     documentManager.commitDocument(document);
     String trimmed = element.getValue().trim();
@@ -251,9 +251,9 @@ public final class XmlUnusedNamespaceInspection extends XmlSuppressableInspectio
 
     public static void reformatStartTag(Project project, SmartPsiElementPointer<? extends XmlTag> pointer) {
       PsiDocumentManager manager = PsiDocumentManager.getInstance(project);
-      PsiFile file = pointer.getContainingFile();
-      assert file != null;
-      Document document = file.getViewProvider().getDocument();
+      PsiFile psiFile = pointer.getContainingFile();
+      assert psiFile != null;
+      Document document = psiFile.getViewProvider().getDocument();
       assert document != null;
       manager.commitDocument(document);
       XmlTag tag = pointer.getElement();
@@ -297,11 +297,11 @@ public final class XmlUnusedNamespaceInspection extends XmlSuppressableInspectio
 
     public static void removeReferenceText(PsiReference ref) {
       PsiElement element = ref.getElement();
-      PsiFile file = element.getContainingFile();
+      PsiFile psiFile = element.getContainingFile();
       TextRange range = ref.getRangeInElement().shiftRight(element.getTextRange().getStartOffset());
-      Document document = file.getViewProvider().getDocument();
+      Document document = psiFile.getViewProvider().getDocument();
       assert document != null;
-      PsiDocumentManager.getInstance(file.getProject()).doPostponedOperationsAndUnblockDocument(document);
+      PsiDocumentManager.getInstance(psiFile.getProject()).doPostponedOperationsAndUnblockDocument(document);
       document.deleteString(range.getStartOffset(), range.getEndOffset());
     }
 

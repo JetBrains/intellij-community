@@ -105,7 +105,7 @@ public class PluginUpdatesService {
     }
   }
 
-  public void calculateUpdates(@NotNull Consumer<? super Collection<IdeaPluginDescriptor>> callback) {
+  public void calculateUpdates(@NotNull Consumer<? super Collection<PluginUiModel>> callback) {
     synchronized (ourLock) {
       if (myUpdateCallbacks == null) {
         myUpdateCallbacks = new ArrayList<>();
@@ -244,6 +244,7 @@ public class PluginUpdatesService {
     return InstalledPluginsState.getInstance().hasNewerVersion(pluginId);
   }
 
+
   public static @Nullable Collection<IdeaPluginDescriptor> getUpdates() {
     synchronized (ourLock) {
       if (!ourPrepared || ourPreparing) {
@@ -316,11 +317,11 @@ public class PluginUpdatesService {
   }
 
   private static @NotNull Consumer<InternalPluginResults> adaptDescriptorConsumerToUpdateResultConsumer(
-    @NotNull Consumer<? super Collection<IdeaPluginDescriptor>> consumer
+    @NotNull Consumer<? super Collection<PluginUiModel>> consumer
   ) {
     return updateResult -> {
       if (updateResult == null) consumer.accept(null);
-      else consumer.accept(ContainerUtil.map(updateResult.getPluginUpdates().getAll(), PluginDownloader::getDescriptor));
+      else consumer.accept(ContainerUtil.map(updateResult.getPluginUpdates().getAll(), downloader -> new PluginUiModelAdapter(downloader.getDescriptor())));
     };
   }
 }

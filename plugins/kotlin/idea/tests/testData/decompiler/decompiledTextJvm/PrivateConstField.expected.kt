@@ -5,12 +5,12 @@ package test
 
 public final class PrivateConstField public constructor() {
     private companion object {
-        public const final val CONST: kotlin.Int = COMPILED_CODE /* compiled code */
+        public const final val CONST: kotlin.Int = COMPILED_CODE /* compiled code */ /* hasBackingField: true */
 
-        @test.A @field:java.lang.Deprecated public const final val CONST_WITH_ANNOTATION: kotlin.Int = COMPILED_CODE /* compiled code */
+        @test.A @field:java.lang.Deprecated public const final val CONST_WITH_ANNOTATION: kotlin.Int = COMPILED_CODE /* compiled code */ /* hasBackingField: true */
 
-        public final val field: kotlin.Int /* compiled code */
+        public final val field: kotlin.Int /* compiled code */ /* hasBackingField: true */
 
-        @test.A public final val fieldWithAnnotation: kotlin.Int /* compiled code */
+        @test.A public final val fieldWithAnnotation: kotlin.Int /* compiled code */ /* hasBackingField: true */
     }
 }

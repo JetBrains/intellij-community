@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.facet
 
 import com.intellij.facet.Facet
@@ -70,7 +70,7 @@ class ModifiableFacetModelBridgeImpl(private val initialStorage: EntityStorage,
       diff.modifyModuleEntity(moduleEntity) module@{
         if (underlyingEntity != null) {
           diff.modifyFacetEntity(underlyingEntity) facet@{
-            val newFacet = diff addEntity FacetEntity(facet.name, moduleEntity.symbolicId, FacetEntityTypeId(facetTypeId), source) {
+            val newFacet = diff addEntity FacetEntity.invoke(moduleEntity.symbolicId, facet.name, FacetEntityTypeId(facetTypeId), source) {
               configurationXmlTag = facetConfigurationXml
               module = this@module
               underlyingFacet = this@facet
@@ -79,7 +79,7 @@ class ModifiableFacetModelBridgeImpl(private val initialStorage: EntityStorage,
           }
         }
         else {
-          val newFacet = diff addEntity FacetEntity(facet.name, moduleEntity.symbolicId, FacetEntityTypeId(facetTypeId), source) {
+          val newFacet = diff addEntity FacetEntity.invoke(moduleEntity.symbolicId, facet.name, FacetEntityTypeId(facetTypeId), source) {
             configurationXmlTag = facetConfigurationXml
             module = this@module
           }
@@ -174,9 +174,8 @@ class ModifiableFacetModelBridgeImpl(private val initialStorage: EntityStorage,
         facet as FacetBridge<*, *>
         facet.updateInStorage(diff)
       }
-    commonFacets.forEach { facet ->
-      mapping.getEntities(facet).forEach { facetEntity ->
-
+    for (facet in commonFacets) {
+      for (facetEntity in mapping.getEntities(facet)) {
         // Update external system of existing facets
         facetEntity as FacetEntity
         val facetExternalSource = facet.externalSource
@@ -219,11 +218,11 @@ class ModifiableFacetModelBridgeImpl(private val initialStorage: EntityStorage,
 
   override fun getAllFacets(): Array<Facet<*>> {
     val facetMapping = diff.facetMapping()
-    val facetEntities: MutableList<WorkspaceEntity> = mutableListOf()
+    val facetEntities = mutableListOf<WorkspaceEntity>()
     facetEntities.addAll(moduleEntity.facets)
-    WorkspaceFacetContributor.EP_NAME.extensions.forEach {
-      if (it.rootEntityType != FacetEntity::class.java) {
-        facetEntities.addAll(it.getRootEntitiesByModuleEntity(moduleEntity))
+    for (contributor in WorkspaceFacetContributor.EP_NAME.extensionList) {
+      if (contributor.rootEntityType != FacetEntity::class.java) {
+        facetEntities.addAll(contributor.getRootEntitiesByModuleEntity(moduleEntity))
       }
     }
     return facetEntities.mapNotNull { facetMapping.getDataByEntity(it) }.toList().toTypedArray()

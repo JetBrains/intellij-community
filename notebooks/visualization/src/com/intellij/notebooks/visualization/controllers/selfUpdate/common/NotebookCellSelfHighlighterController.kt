@@ -2,12 +2,12 @@
 package com.intellij.notebooks.visualization.controllers.selfUpdate.common
 
 import com.intellij.notebooks.ui.visualization.NotebookUtil.notebookAppearance
-import com.intellij.notebooks.ui.visualization.markerRenderers.NotebookLineMarkerRenderer
 import com.intellij.notebooks.visualization.controllers.selfUpdate.SelfManagedCellController
 import com.intellij.notebooks.visualization.ui.EditorCell
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
+import com.intellij.openapi.editor.markup.LineMarkerRenderer
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.util.Consumer
 
@@ -27,7 +27,7 @@ abstract class NotebookCellSelfHighlighterController(
   }
 
   open fun getHighlighterLayer(): Int = editor.notebookAppearance.cellBackgroundHighlightLayer
-  open fun createLineMarkerRender(rangeHighlighter: RangeHighlighterEx): NotebookLineMarkerRenderer? = null
+  open fun createLineMarkerRender(rangeHighlighter: RangeHighlighterEx): LineMarkerRenderer? = null
   open fun getTextAttribute(): TextAttributes? = null
   open fun customizeHighlighter(cellHighlighter: RangeHighlighterEx) {}
 

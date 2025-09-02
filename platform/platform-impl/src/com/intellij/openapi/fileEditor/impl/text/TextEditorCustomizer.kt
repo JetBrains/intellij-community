@@ -2,7 +2,6 @@
 package com.intellij.openapi.fileEditor.impl.text
 
 import com.intellij.openapi.fileEditor.TextEditor
-import com.intellij.openapi.progress.blockingContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.OverrideOnly
 
@@ -14,10 +13,8 @@ interface TextEditorCustomizer {
    * Executed inside a coroutine scope spanning from editor opening to editor closing (or plugin unloading).
    */
   suspend fun execute(textEditor: TextEditor) {
-    blockingContext {
-      @Suppress("DEPRECATION")
-      customize(textEditor)
-    }
+    @Suppress("DEPRECATION")
+    customize(textEditor)
   }
 
   @Suppress("DeprecatedCallableAddReplaceWith")

@@ -52,6 +52,7 @@ final class UngroupConfigurationsActions extends AnAction {
     List<RunDashboardService> services =
       RunDashboardManager.getInstance(project).getRunConfigurations();
 
+    // todo delegate to backend following part, ask Lera?
     final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(project);
     runManager.fireBeginUpdate();
     try {

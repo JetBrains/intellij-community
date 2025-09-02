@@ -19,8 +19,9 @@ interface RemoteSettingInfoProvider {
    * Returns a map of settings that should be synchronized between the host and a guest.
    *
    * Each entry is `(settingKey: String, info: RemoteSettingInfo)`, where `settingKey` can be:
-   * 1. Name of the PersistentStateComponent, e.g. `EditorSettings`.
-   * 2. Name of a component + name of the field, e.g. `GeneralSettings.confirmOpenNewProject2`.
+   * 1. Name of the PersistentStateComponent **with dots replaced with '-' characters**.
+   *    - Examples: `EditorSettings`, `Git-Settings` (from the original `Git.Settings` component name).
+   * 2. Name of a component + name of the field, e.g. `GeneralSettings.confirmOpenNewProject2`, or `Git-Settings.PATH_TO_GIT`.
    *
    * A couple notes about a field's name:
    * * It must be the name from a "state" class, not from a component itself. For example,
@@ -50,6 +51,8 @@ interface RemoteSettingInfoProvider {
    *   else -> mapOf("com.intellij.plugin.PluginSettings" to "com.intellij")
    * }
    * ```
+   *
+   * **Note**: All dots in the component name must be replaced with dashes, e.g. `Git.Settings` becomes `Git-Settings`.
    *
    * @param endpoint local endpoint where this method is called
    */

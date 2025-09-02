@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.memory.agent.ui;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -34,7 +34,7 @@ import java.util.*;
 
 import static com.intellij.debugger.memory.action.DebuggerTreeAction.getObjectReference;
 
-public class RetainedSizeDialog extends MemoryAgentDialog {
+public final class RetainedSizeDialog extends MemoryAgentDialog {
   private static final Icon HELD_OBJECTS_MARK_ICON = AllIcons.Nodes.Locked;
   public static final Color HELD_OBJECTS_BACKGROUND_COLOR;
 

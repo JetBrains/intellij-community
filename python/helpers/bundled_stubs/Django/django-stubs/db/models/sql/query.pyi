@@ -1,7 +1,6 @@
 import collections
-from collections import namedtuple
-from collections.abc import Iterable, Iterator, Sequence
-from typing import Any, Literal
+from collections.abc import Callable, Iterable, Iterator, Sequence
+from typing import Any, Literal, NamedTuple
 
 from django.db.backends.utils import CursorWrapper
 from django.db.models import Field, FilteredRelation, Model, Q
@@ -13,7 +12,13 @@ from django.db.models.sql.datastructures import BaseTable, Join
 from django.db.models.sql.where import WhereNode
 from django.utils.functional import cached_property
 
-JoinInfo = namedtuple("JoinInfo", ("final_field", "targets", "opts", "joins", "path", "transform_function"))
+class JoinInfo(NamedTuple):
+    final_field: Field
+    targets: tuple[Any, ...]
+    opts: Any
+    joins: list[str]
+    path: list[Any]
+    transform_function: Callable[[Field, str], Expression]
 
 class RawQuery:
     high_mark: int | None
@@ -66,6 +71,7 @@ class Query(BaseExpression):
     max_depth: int
     join_class: type[Join]
     values_select: tuple
+    selected: dict[str, int | str | Expression] | None
     annotation_select_mask: list[str] | None
     combinator: str | None
     combinator_all: bool
@@ -148,7 +154,7 @@ class Query(BaseExpression):
     ) -> tuple[WhereNode, Iterable[str]]: ...
     def add_select_col(self, col: Any, name: str) -> None: ...
     def add_filter(self, filter_lhs: tuple[str, Any], filter_rhs: tuple[str, Any]) -> None: ...
-    def add_q(self, q_object: Q) -> None: ...
+    def add_q(self, q_object: Q, reuse_all: bool = False) -> None: ...
     def build_where(self, filter_expr: Q | Expression | dict[str, str] | tuple[str, Any]) -> WhereNode: ...
     def add_filtered_relation(self, filtered_relation: FilteredRelation, alias: str) -> None: ...
     def setup_joins(
@@ -214,7 +220,7 @@ class Query(BaseExpression):
     def is_nullable(self, field: Field) -> bool: ...
     def check_filterable(self, expression: Any) -> None: ...
     def build_lookup(self, lookups: Sequence[str], lhs: Expression | Query, rhs: Any) -> Lookup: ...
-    def try_transform(self, lhs: Expression | Query, name: str) -> Transform: ...
+    def try_transform(self, lhs: Expression | Query, name: str, lookups: Sequence[str] | None = ...) -> Transform: ...
     def join(
         self,
         join: BaseTable | Join,
@@ -230,3 +236,5 @@ class JoinPromoter:
     def __init__(self, connector: str, num_children: int, negated: bool) -> None: ...
     def add_votes(self, votes: Iterable[str]) -> None: ...
     def update_join_types(self, query: Query) -> set[str]: ...
+
+__all__ = ["Query", "RawQuery"]

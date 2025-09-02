@@ -161,7 +161,7 @@ public interface Configurable extends UnnamedConfigurable {
    */
   @FunctionalInterface
   interface Composite {
-    Configurable @NotNull [] getConfigurables();
+    @NotNull Configurable @NotNull [] getConfigurables();
   }
 
   /**
@@ -220,7 +220,7 @@ public interface Configurable extends UnnamedConfigurable {
     /**
      * @return EPName-s that affect the configurable or configurable provider
      */
-    @NotNull Collection<BaseExtensionPointName<?>> getDependencies();
+    @NotNull @Unmodifiable Collection<BaseExtensionPointName<?>> getDependencies();
   }
 
   /**
@@ -254,6 +254,11 @@ public interface Configurable extends UnnamedConfigurable {
    */
   default void focusOn(@NotNull @Nls String label) {
 
+  }
+
+  @ApiStatus.Internal
+  interface ClassCastChecker {
+    <T> boolean tryToCast(@NotNull Class<T> type);
   }
 
   interface TopComponentController {

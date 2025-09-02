@@ -2,19 +2,22 @@
 package com.intellij.internal.inspector.accessibilityAudit
 
 import org.jetbrains.annotations.ApiStatus
-import javax.accessibility.AccessibleContext
+import javax.accessibility.Accessible
 import javax.accessibility.AccessibleRole
-
 
 @ApiStatus.Internal
 @ApiStatus.Experimental
 class AccessibleNameNotEmptyForIcon : UiInspectorAccessibilityInspection {
   override val propertyName: String = "AccessibleName"
-  override val severity: Severity = Severity.WARNING
+  override val severity: Severity = Severity.RECOMMENDATION
+  override var accessibleRole: AccessibleRole? = null
 
-  override fun passesInspection(context: AccessibleContext): Boolean {
+  override fun passesInspection(accessible: Accessible?): Boolean {
+    val context = accessible?.accessibleContext ?: return true
     if (context.accessibleRole == AccessibleRole.ICON) {
-      return !context.accessibleName.isNullOrEmpty()
+      val result = !context.accessibleName.isNullOrEmpty()
+      if (!result) accessibleRole = context.accessibleRole
+      return result
     }
     return true
   }

@@ -77,7 +77,7 @@ public final class JavaFxFieldToPropertyIntention extends PsiElementBaseIntentio
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
     // As the action spawns the search which could be very long, let's disable preview here
     return IntentionPreviewInfo.EMPTY;
   }

@@ -86,6 +86,8 @@ public final class X11UiUtil {
     "xmonad"
   );
 
+  private static String GSETTINGS_COMMAND = "gsettings";
+
   private static final ConcurrentHashMap<String, Boolean> unsupportedCommands = new ConcurrentHashMap<>();
 
   @SuppressWarnings("SpellCheckingInspection")
@@ -419,7 +421,7 @@ public final class X11UiUtil {
   @RequiresBackgroundThread
   public static @Nullable String getTheme() {
     if (SystemInfo.isGNOME) {
-      String result = exec("Cannot get gnome theme", "gsettings", "get", "org.gnome.desktop.interface", "gtk-theme");
+      String result = exec("Cannot get gnome theme", GSETTINGS_COMMAND, "get", "org.gnome.desktop.interface", "gtk-theme");
       return trimQuotes(result);
     }
 
@@ -445,7 +447,7 @@ public final class X11UiUtil {
   @ApiStatus.Internal
   @RequiresBackgroundThread
   public static @Nullable String getIconTheme() {
-    String result = exec("Cannot get icon theme", "gsettings", "get", "org.gnome.desktop.interface", "icon-theme");
+    String result = exec("Cannot get icon theme", GSETTINGS_COMMAND, "get", "org.gnome.desktop.interface", "icon-theme");
     return trimQuotes(result);
   }
 
@@ -457,7 +459,7 @@ public final class X11UiUtil {
   public static @Nullable String getWindowButtonsConfig() {
     if (SystemInfo.isGNOME || SystemInfo.isKDE) {
       String execResult =
-        exec("Cannot get gnome WM buttons layout", "gsettings", "get", "org.gnome.desktop.wm.preferences", "button-layout");
+        exec("Cannot get gnome WM buttons layout", GSETTINGS_COMMAND, "get", "org.gnome.desktop.wm.preferences", "button-layout");
       return trimQuotes(execResult);
     }
 
@@ -616,10 +618,14 @@ public final class X11UiUtil {
       return FileUtil.loadTextAndClose(process.getInputStream()).trim();
     }
     catch (Exception e) {
-      LOG.info(errorMessage, e);
-
-      if (e.getMessage().contains("No such file or directory")) {
+      String exceptionMessage = e.getMessage();
+      if (exceptionMessage.contains("No such file or directory")) {
         unsupportedCommands.put(command[0], true);
+
+        LOG.info(errorMessage + ": " + exceptionMessage);
+        LOG.trace(e);
+      } else {
+        LOG.info(errorMessage, e);
       }
 
       return null;

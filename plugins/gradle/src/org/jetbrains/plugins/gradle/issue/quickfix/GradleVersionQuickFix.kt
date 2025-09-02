@@ -3,7 +3,6 @@ package org.jetbrains.plugins.gradle.issue.quickfix
 
 import com.intellij.build.SyncViewManager
 import com.intellij.build.issue.BuildIssueQuickFix
-import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.ide.actions.ShowLogAction
 import com.intellij.ide.file.BatchFileChangeListener
 import com.intellij.notification.NotificationGroupManager
@@ -16,10 +15,9 @@ import com.intellij.openapi.externalSystem.service.notification.ExternalSystemNo
 import com.intellij.openapi.externalSystem.service.notification.NotificationCategory.WARNING
 import com.intellij.openapi.externalSystem.service.notification.NotificationData
 import com.intellij.openapi.externalSystem.service.notification.NotificationSource.PROJECT_SYNC
-import com.intellij.openapi.externalSystem.task.TaskCallback
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
-import com.intellij.openapi.externalSystem.util.ExternalSystemUtil.runTask
 import com.intellij.openapi.externalSystem.util.task.TaskExecutionSpec
+import com.intellij.openapi.externalSystem.util.task.TaskExecutionUtil
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolderBase
@@ -34,8 +32,8 @@ import kotlinx.coroutines.withContext
 import org.gradle.util.GradleVersion
 import org.gradle.wrapper.WrapperConfiguration
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.gradle.GradleCoroutineScope.gradleCoroutineScope
 import org.jetbrains.plugins.gradle.issue.quickfix.GradleWrapperSettingsOpenQuickFix.Companion.showWrapperPropertiesFile
-import org.jetbrains.plugins.gradle.service.coroutine.GradleCoroutineScopeProvider
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManager
 import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.settings.GradleSettings
@@ -62,20 +60,19 @@ class GradleVersionQuickFix(
   override val id: String = "fix_gradle_version_in_wrapper"
 
   override fun runQuickFix(project: Project, dataContext: DataContext): CompletableFuture<*> {
-    return GradleCoroutineScopeProvider.getInstance(project).cs
-      .launch {
-        runBatchChange(project) {
-          updateOrCreateWrapper(project)
-          showWrapperPropertiesFile(project)
-          resetProjectDistributionType(project)
-          runWrapperTask(project)
-          if (requestImport) {
-            delay(500) // todo remove when multiple-build view will be integrated into the BuildTreeConsoleView
-            val importFuture = ExternalSystemUtil.requestImport(project, projectPath, GradleConstants.SYSTEM_ID)
-            importFuture.await()
-          }
+    return project.gradleCoroutineScope.launch {
+      runBatchChange(project) {
+        updateOrCreateWrapper(project)
+        showWrapperPropertiesFile(project)
+        resetProjectDistributionType(project)
+        runWrapperTask(project)
+        if (requestImport) {
+          delay(500) // todo remove when multiple-build view will be integrated into the BuildTreeConsoleView
+          val importFuture = ExternalSystemUtil.requestImport(project, projectPath, GradleConstants.SYSTEM_ID)
+          importFuture.await()
         }
-      }.asCompletableFuture()
+      }
+    }.asCompletableFuture()
   }
 
   private fun resetProjectDistributionType(project: Project) {
@@ -158,23 +155,15 @@ class GradleVersionQuickFix(
     settings.vmOptions = gradleVmOptions
     settings.externalSystemIdString = GradleConstants.SYSTEM_ID.id
 
-    val future = CompletableFuture<Nothing>()
-    val task = TaskExecutionSpec.create(project, GradleConstants.SYSTEM_ID, DefaultRunExecutor.EXECUTOR_ID, settings)
-      .withActivateToolWindowBeforeRun(false)
-      .withProgressExecutionMode(NO_PROGRESS_ASYNC)
-      .withUserData(userData)
-      .withCallback(object : TaskCallback {
-        override fun onSuccess() {
-          future.complete(null)
-        }
-
-        override fun onFailure() {
-          future.completeExceptionally(RuntimeException("Wrapper task failed"))
-        }
-      })
-      .build()
-    runTask(task)
-    future.await()
+    TaskExecutionUtil.runTask(
+      TaskExecutionSpec.create()
+        .withProject(project)
+        .withSystemId(GradleConstants.SYSTEM_ID)
+        .withSettings(settings)
+        .withActivateToolWindowBeforeRun(false)
+        .withProgressExecutionMode(NO_PROGRESS_ASYNC)
+        .withUserData(userData)
+    )
   }
 
   private fun getWrapperConfiguration(wrapperPropertiesPath: Path?, gradleVersion: GradleVersion): WrapperConfiguration {

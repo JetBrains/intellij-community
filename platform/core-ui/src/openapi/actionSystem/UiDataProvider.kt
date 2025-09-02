@@ -233,3 +233,6 @@ interface DataSink {
     }
   }
 }
+
+@Suppress("NOTHING_TO_INLINE")
+inline operator fun <T> DataContext.get(key: DataKey<T>): T? = this.getData(key)

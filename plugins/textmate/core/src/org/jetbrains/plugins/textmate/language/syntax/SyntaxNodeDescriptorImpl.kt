@@ -9,12 +9,21 @@ internal class SyntaxNodeDescriptorImpl(
   private val captures: Array<Array<TextMateCapture?>?>?,
   private val stringAttributes: Array<CharSequence?>?,
 ) : SyntaxNodeDescriptor {
+  init {
+    require(stringAttributes == null || stringAttributes.size == Constants.StringKey.entries.size) {
+      "stringAttributes must be either null or define all StringKey entries"
+    }
+    require(captures == null || captures.size == Constants.CaptureKey.entries.size) {
+      "captures must be either null or define all CaptureKey entries"
+    }
+  }
+
   override fun getStringAttribute(key: Constants.StringKey): CharSequence? {
-    return stringAttributes?.get(key.ordinal)
+    return stringAttributes?.getOrNull(key.ordinal)
   }
 
   override fun getCaptureRules(key: Constants.CaptureKey): Array<TextMateCapture?>? {
-    return captures?.get(key.ordinal)
+    return captures?.getOrNull(key.ordinal)
   }
 
   override fun hasBackReference(key: Constants.StringKey): Boolean {

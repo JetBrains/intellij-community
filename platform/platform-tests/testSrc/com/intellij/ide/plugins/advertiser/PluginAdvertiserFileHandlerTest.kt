@@ -2,41 +2,58 @@
 package com.intellij.ide.plugins.advertiser
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.backgroundWriteAction
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.features.AnsiHighlighterDetector
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.moduleFixture
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.intellij.testFramework.junit5.fixture.sourceRootFixture
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
 
-internal class PluginAdvertiserFileHandlerTest : BasePlatformTestCase() {
-  fun testAnsiHandlerTxt() {
+@TestApplication
+class PluginAdvertiserFileHandlerTest {
+  private val project = projectFixture()
+  private val module = project.moduleFixture("src")
+  private val sourceRoot = module.sourceRootFixture()
+
+  @Test
+  fun testAnsiHandlerTxt(): Unit = timeoutRunBlocking {
     val file = makeAnsiFile("test.txt")
-
     val detector = AnsiHighlighterDetector()
-    assertTrue("txt file has ANSI codes", detector.isSupported(file))
+    assertThat(detector.isSupported(file))
+      .withFailMessage { "txt file has ANSI codes" }
+      .isTrue
   }
 
-  fun testAnsiHandlerLog() {
+  @Test
+  fun testAnsiHandlerLog(): Unit = timeoutRunBlocking {
     val file = makeAnsiFile("test.log")
-
     val detector = AnsiHighlighterDetector()
-    assertTrue("log file has ANSI codes", detector.isSupported(file))
+    assertThat(detector.isSupported(file))
+      .withFailMessage { "log file has ANSI codes" }
+      .isTrue
   }
 
-  fun testAnsiHandlerNoExtension() {
+  @Test
+  fun testAnsiHandlerNoExtension(): Unit = timeoutRunBlocking {
     val file = makeAnsiFile("test")
-
     val detector = AnsiHighlighterDetector()
-    assertFalse("The file without extension must not be analyzed", detector.isSupported(file))
+    assertThat(detector.isSupported(file))
+      .withFailMessage { "The file without extension must not be analyzed" }
+      .isFalse
   }
 
-  private fun makeAnsiFile(name: String): VirtualFile {
+  private suspend fun makeAnsiFile(name: String): VirtualFile {
     val logBytes = byteArrayOf(27, 91, 51, 49, 109, 72, 101, 108, 108, 111)
-    val file = myFixture.createFile(name, "")
-
-    ApplicationManager.getApplication().runWriteAction {
+    return backgroundWriteAction {
+      val file = sourceRoot.get().createFile(name).virtualFile
       file.getOutputStream(file).use {
         it.write(logBytes)
       }
+      file
     }
-    return file
   }
 }

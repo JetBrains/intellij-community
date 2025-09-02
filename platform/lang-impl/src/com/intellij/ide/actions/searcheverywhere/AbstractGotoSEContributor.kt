@@ -33,6 +33,7 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.DumbService.Companion.isDumb
 import com.intellij.openapi.project.DumbService.Companion.isDumbAware
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.backend.navigation.NavigationRequest
@@ -41,6 +42,7 @@ import com.intellij.platform.backend.navigation.impl.RawNavigationRequest
 import com.intellij.platform.ide.navigation.NavigationOptions
 import com.intellij.platform.ide.navigation.NavigationService
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.platform.util.coroutines.sync.OverflowSemaphore
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -51,11 +53,15 @@ import com.intellij.psi.search.SearchScope
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.IntPair
 import com.intellij.util.Processor
+import com.intellij.util.containers.map2Array
+import com.intellij.util.containers.toArray
 import com.intellij.util.indexing.FindSymbolParameters
 import it.unimi.dsi.fastutil.ints.IntArrayList
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import java.awt.event.InputEvent
 import java.util.*
 import java.util.regex.Matcher
@@ -74,7 +80,16 @@ private val ourPatternToDetectLinesAndColumns: Pattern = Pattern.compile(
 
 internal val patternToDetectAnonymousClasses: Pattern = Pattern.compile("([.\\w]+)((\\$\\d+)*(\\$)?)")
 
-abstract class AbstractGotoSEContributor protected constructor(event: AnActionEvent)
+// NavigationService is designed to process one navigation request at a time.
+// However, the current implementation of AbstractGotoSEContributor can potentially generate multiple concurrent navigation requests.
+// The semaphore ensures these requests are processed sequentially, maintaining the NavigationService's single-request-at-a-time contract.
+// See IJPL-188436
+private val semaphore: OverflowSemaphore = OverflowSemaphore(permits = 1, overflow = BufferOverflow.SUSPEND)
+
+abstract class AbstractGotoSEContributor @ApiStatus.Internal protected constructor(
+  event: AnActionEvent,
+  @ApiStatus.Internal val contributorModules: List<SearchEverywhereContributorModule>?
+)
   : WeightedSearchEverywhereContributor<Any>, ScopeSupporting, SearchEverywhereExtendedInfoProvider {
   @JvmField
   protected val myProject: Project = event.getRequiredData(CommonDataKeys.PROJECT)
@@ -89,14 +104,16 @@ abstract class AbstractGotoSEContributor protected constructor(event: AnActionEv
   @JvmField
   protected val myPsiContext: SmartPsiElementPointer<PsiElement?>?
 
-  @ApiStatus.Internal var contributorModules: List<SearchEverywhereContributorModule>? = null
 
-  @ApiStatus.Internal
-  protected constructor(event: AnActionEvent, contributorModules: List<SearchEverywhereContributorModule>?) : this(event) {
-    this.contributorModules = contributorModules
-  }
+  protected constructor(event: AnActionEvent) : this(event, null)
 
   init {
+    contributorModules?.let { modules ->
+      modules.forEach { module ->
+        Disposer.register(this, module)
+      }
+    }
+
     val context = GotoActionBase.getPsiContext(event)
     myPsiContext = if (context == null) null else SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(context)
 
@@ -259,6 +276,9 @@ abstract class AbstractGotoSEContributor protected constructor(event: AnActionEv
       override fun setScopeIsDefaultAndAutoSet(scopeDefaultAndAutoSet: Boolean) {
         isScopeDefaultAndAutoSet = scopeDefaultAndAutoSet
       }
+
+      override fun getEverywhereScopeName(): String = everywhereScope.displayName
+      override fun getProjectScopeName(): String = projectScope.displayName
     }
 
     currentSearchEverywhereAction = toggleAction
@@ -288,10 +308,27 @@ abstract class AbstractGotoSEContributor protected constructor(event: AnActionEv
     else o.displayName)
   }
 
+  private val fetchers =
+    (contributorModules?.map2Array<SearchEverywhereContributorModule, (String, ProgressIndicator, Processor<in FoundItemDescriptor<Any>>) -> Unit> {
+      { localPattern, localProgressIndicator, localConsumer -> it.perProductFetchWeightedElements(localPattern, localProgressIndicator, localConsumer) }
+    } ?: emptyArray()) + { localPattern, localProgressIndicator, localConsumer -> performByGotoContributorSearch(localPattern, localProgressIndicator, localConsumer) }
+
   override fun fetchWeightedElements(
     pattern: String,
     progressIndicator: ProgressIndicator,
     consumer: Processor<in FoundItemDescriptor<Any>>,
+  ) {
+    fetchWeightedElementsMixing(
+      pattern, progressIndicator, consumer,
+      // Ordering is important here
+      *fetchers
+    )
+  }
+
+  private fun performByGotoContributorSearch(
+    pattern: String,
+    progressIndicator: ProgressIndicator,
+    consumer: Processor<in FoundItemDescriptor<Any>>
   ) {
     if (!isEmptyPatternSupported && pattern.isEmpty()) {
       return
@@ -375,7 +412,11 @@ abstract class AbstractGotoSEContributor protected constructor(event: AnActionEv
       return true
     }
 
-    return consumer.process(FoundItemDescriptor(element, degree))
+    return consumer.process(
+      FoundItemDescriptor(
+        element, contributorModules?.firstNotNullOf { it.adjustFoundElementWeight(element, degree) } ?: degree
+      )
+    )
   }
 
   override fun getScope(): ScopeDescriptor = myScopeDescriptor
@@ -466,9 +507,8 @@ abstract class AbstractGotoSEContributor protected constructor(event: AnActionEv
     }
 
     return suspend {
-      @Suppress("DEPRECATION")
       val navigationOptions = NavigationOptions.defaultOptions()
-        .openInRightSplit((modifiers and InputEvent.SHIFT_MASK) != 0)
+        .openInRightSplit((modifiers and InputEvent.SHIFT_DOWN_MASK) != 0)
         .preserveCaret(true)
       if (extendedNavigatable == null) {
         if (file == null) {
@@ -478,20 +518,26 @@ abstract class AbstractGotoSEContributor protected constructor(event: AnActionEv
             // navigated through the Navigatable API.
             // This fallback is for items like that.
             val navRequest = RawNavigationRequest(navigatable, true)
-            project.serviceAsync<NavigationService>().navigate(navRequest, navigationOptions)
+            semaphore.withPermit {
+              project.serviceAsync<NavigationService>().navigate(navRequest, navigationOptions, null)
+            }
           } else {
             LOG.warn("Cannot navigate to invalid PsiElement (psiElement=$psiElement, selected=$selected)")
           }
         }
         else {
           createSourceNavigationRequest(element = psiElement, file = file, searchText = searchText)?.let {
-            project.serviceAsync<NavigationService>().navigate(it, navigationOptions)
+            semaphore.withPermit {
+              project.serviceAsync<NavigationService>().navigate(it, navigationOptions, null)
+            }
           }
         }
       }
       else {
-        project.serviceAsync<NavigationService>().navigate(extendedNavigatable, navigationOptions)
-        triggerLineOrColumnFeatureUsed(extendedNavigatable)
+        semaphore.withPermit {
+          project.serviceAsync<NavigationService>().navigate(extendedNavigatable, navigationOptions)
+          triggerLineOrColumnFeatureUsed(extendedNavigatable)
+        }
       }
     }
   }

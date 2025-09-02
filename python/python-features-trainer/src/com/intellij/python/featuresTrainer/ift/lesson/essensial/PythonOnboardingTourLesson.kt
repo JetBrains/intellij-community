@@ -225,17 +225,6 @@ class PythonOnboardingTourLesson :
       text(PythonLessonsBundle.message("python.onboarding.stop.debugging",
                                        icon(AllIcons.Actions.Suspend)))
       restoreIfModified(sample)
-      addFutureStep {
-        val process = XDebuggerManager.getInstance(project).currentSession?.debugProcess
-        val console = process?.createConsole() as? DuplexConsoleView<*, *>
-        if (console != null) {
-          // When debug process terminates the console tab become activated and brings focus.
-          // So, we need to finish this task only after tab is activated.
-          // And then focus will be returned to editor in the start of completion tasks.
-          console.addSwitchListener(DuplexConsoleListener { completeStep() }, taskDisposable)
-        }
-        else completeStep()
-      }
       stateCheck {
         XDebuggerManager.getInstance(project).currentSession == null
       }

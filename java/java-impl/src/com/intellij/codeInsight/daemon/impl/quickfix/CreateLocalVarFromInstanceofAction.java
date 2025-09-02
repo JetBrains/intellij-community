@@ -40,8 +40,8 @@ public final class CreateLocalVarFromInstanceofAction extends BaseIntentionActio
   private static final Logger LOG = Logger.getInstance(CreateLocalVarFromInstanceofAction.class);
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    PsiInstanceOfExpression instanceOfExpression = getInstanceOfExpressionAtCaret(file, editor.getCaretModel().getOffset());
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    PsiInstanceOfExpression instanceOfExpression = getInstanceOfExpressionAtCaret(psiFile, editor.getCaretModel().getOffset());
     if (instanceOfExpression == null) return false;
     PsiTypeElement checkType = instanceOfExpression.getCheckType();
     if (checkType == null) return false;
@@ -102,15 +102,15 @@ public final class CreateLocalVarFromInstanceofAction extends BaseIntentionActio
     return false;
   }
 
-  static @Nullable PsiInstanceOfExpression getInstanceOfExpressionAtCaret(PsiFile file, int caretOffset) {
-    PsiElement element = file.findElementAt(caretOffset);
+  static @Nullable PsiInstanceOfExpression getInstanceOfExpressionAtCaret(PsiFile psiFile, int caretOffset) {
+    PsiElement element = psiFile.findElementAt(caretOffset);
     if (element == null) return null;
     PsiInstanceOfExpression expression = PsiTreeUtil.getParentOfType(element, PsiInstanceOfExpression.class);
     if (expression != null) {
       return expression;
     }
     if (caretOffset > 0) {
-      PsiInstanceOfExpression prev = PsiTreeUtil.getParentOfType(file.findElementAt(caretOffset - 1), PsiInstanceOfExpression.class);
+      PsiInstanceOfExpression prev = PsiTreeUtil.getParentOfType(psiFile.findElementAt(caretOffset - 1), PsiInstanceOfExpression.class);
       if (prev != null) {
         return prev;
       }
@@ -181,9 +181,9 @@ public final class CreateLocalVarFromInstanceofAction extends BaseIntentionActio
   }
 
   @Override
-  public void invoke(final @NotNull Project project, final Editor editor, final PsiFile file) {
-    PsiInstanceOfExpression instanceOfExpression = getInstanceOfExpressionAtCaret(file, editor.getCaretModel().getOffset());
-    assert instanceOfExpression.getContainingFile() == file : instanceOfExpression.getContainingFile() + "; file="+file;
+  public void invoke(final @NotNull Project project, final Editor editor, final PsiFile psiFile) {
+    PsiInstanceOfExpression instanceOfExpression = getInstanceOfExpressionAtCaret(psiFile, editor.getCaretModel().getOffset());
+    assert instanceOfExpression.getContainingFile() == psiFile : instanceOfExpression.getContainingFile() + "; file=" + psiFile;
     try {
       final PsiStatement statementInside = isNegated(instanceOfExpression) ? null : getExpressionStatementInside(editor, instanceOfExpression.getOperand());
       PsiDeclarationStatement decl = createLocalVariableDeclaration(instanceOfExpression, statementInside);
@@ -202,7 +202,7 @@ public final class CreateLocalVarFromInstanceofAction extends BaseIntentionActio
       builder.setEndVariableAfter(localVariable.getNameIdentifier());
 
       Template template = generateTemplate(project, names);
-      Editor newEditor = CodeInsightUtil.positionCursor(project, file, identifier);
+      Editor newEditor = CodeInsightUtil.positionCursor(project, psiFile, identifier);
       if (newEditor == null) return;
       TextRange range = localVariable.getNameIdentifier().getTextRange();
       newEditor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
@@ -218,7 +218,7 @@ public final class CreateLocalVarFromInstanceofAction extends BaseIntentionActio
           final PsiVariable target = resolveHelper.resolveAccessibleReferencedVariable(value.getText(), instanceOfExpression);
           if (target instanceof PsiField field) {
             final CaretModel caretModel = editor.getCaretModel();
-            final PsiElement elementAt = file.findElementAt(caretModel.getOffset());
+            final PsiElement elementAt = psiFile.findElementAt(caretModel.getOffset());
             final PsiDeclarationStatement declarationStatement = PsiTreeUtil.getParentOfType(elementAt, PsiDeclarationStatement.class);
             if (declarationStatement != null) {
               final PsiLocalVariable variable = (PsiLocalVariable)declarationStatement.getDeclaredElements()[0];
@@ -251,14 +251,14 @@ public final class CreateLocalVarFromInstanceofAction extends BaseIntentionActio
             PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
 
             CaretModel caretModel = editor.getCaretModel();
-            PsiElement elementAt = file.findElementAt(caretModel.getOffset());
+            PsiElement elementAt = psiFile.findElementAt(caretModel.getOffset());
             PsiDeclarationStatement declarationStatement = PsiTreeUtil.getParentOfType(elementAt, PsiDeclarationStatement.class);
             if (declarationStatement != null) {
               caretModel.moveToOffset(declarationStatement.getTextRange().getEndOffset());
             }
             new EnterAction().getHandler().execute(editor, null, null);
           };
-          if (file.isPhysical()) {
+          if (psiFile.isPhysical()) {
             ApplicationManager.getApplication().runWriteAction(action);
           } else {
             action.run();

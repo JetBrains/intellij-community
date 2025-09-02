@@ -20,11 +20,19 @@ class SupportsGetAbsoluteUrl(Protocol):
 
 @overload
 def redirect(
-    to: Callable[..., Any] | str | SupportsGetAbsoluteUrl, *args: Any, permanent: Literal[True], **kwargs: Any
+    to: Callable[..., Any] | str | SupportsGetAbsoluteUrl,
+    *args: Any,
+    permanent: Literal[True],
+    preserve_request: bool = False,
+    **kwargs: Any,
 ) -> HttpResponsePermanentRedirect: ...
 @overload
 def redirect(
-    to: Callable[..., Any] | str | SupportsGetAbsoluteUrl, *args: Any, permanent: Literal[False] = ..., **kwargs: Any
+    to: Callable[..., Any] | str | SupportsGetAbsoluteUrl,
+    *args: Any,
+    permanent: Literal[False] = False,
+    preserve_request: bool = False,
+    **kwargs: Any,
 ) -> HttpResponseRedirect: ...
 @overload
 def redirect(

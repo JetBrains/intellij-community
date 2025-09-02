@@ -2,6 +2,7 @@
 package com.intellij.internal.statistic.devkit.toolwindow
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.NonEmptyActionGroup
 import com.intellij.internal.statistic.devkit.PlatformStatisticsDevkitIcons
 import com.intellij.internal.statistic.devkit.StatisticsDevKitUtil.DEFAULT_RECORDER
@@ -24,6 +25,11 @@ import javax.swing.Icon
  * Creates a toolwindow with feature usage statistics event log
  */
 private class StatisticsEventLogToolWindowFactory : ToolWindowFactory, DumbAware {
+  override fun init(toolWindow: ToolWindow) {
+    toolWindow.title = IdeBundle.message("toolwindow.stripe.Statistics_Event_Log")
+    toolWindow.stripeTitle = IdeBundle.message("toolwindow.stripe.Statistics_Event_Log")
+  }
+
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
     val recorders = StatisticsRecorderUtil.getRecordersInTestMode()
     if (recorders.isEmpty()) return
@@ -76,6 +82,7 @@ private fun createNewTab(project: Project, toolWindow: ToolWindow, recorderId: S
   val eventLogToolWindow = StatisticsEventLogToolWindow(project, recorderId)
   val content = ContentFactory.getInstance().createContent(eventLogToolWindow.component, recorderId, true)
   content.preferredFocusableComponent = eventLogToolWindow.component
+  content.toolwindowTitle = recorderId
   toolWindow.contentManager.addContent(content)
   toolWindow.contentManager.setSelectedContent(content)
   RecordStateStatisticsEventLogAction.checkLogRecordingEnabled(project, recorderId)

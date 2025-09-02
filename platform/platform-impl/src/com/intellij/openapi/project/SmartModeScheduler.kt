@@ -14,7 +14,6 @@ import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.concurrency.ThreadingAssertions
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -24,7 +23,6 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Async
 import java.util.*
 import java.util.concurrent.ConcurrentLinkedDeque
-import java.util.function.BooleanSupplier
 import java.util.function.Consumer
 
 /**
@@ -45,11 +43,10 @@ class SmartModeScheduler(private val project: Project, sc: CoroutineScope) : Dis
 
   private val myRunWhenSmartQueue: Deque<Runnable> = ConcurrentLinkedDeque()
 
-  private val dumbServiceImpl get() = DumbService.getInstance(project) as DumbServiceImpl
+  private val dumbService get() = DumbService.getInstance(project)
   private val filesScannerExecutor get() = UnindexedFilesScannerExecutor.getInstance(project)
-  private val projectDumbState: StateFlow<DumbServiceImpl.DumbState> = dumbServiceImpl.dumbStateAsFlow
+  private val projectDumbState: StateFlow<DumbService.DumbState> = dumbService.state
   private val projectScanningChanged: Flow<*> = filesScannerExecutor.startedOrStoppedEvent
-  internal val runWhenSmartCondition: BooleanSupplier = BooleanSupplier { getCurrentMode() == 0 }
 
   init {
     project.messageBus.simpleConnect().subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
@@ -68,7 +65,6 @@ class SmartModeScheduler(private val project: Project, sc: CoroutineScope) : Dis
       }
     }
 
-    sc.childScope()
     sc.launch {
       projectDumbState.collect {
         onStateChanged()
@@ -82,7 +78,7 @@ class SmartModeScheduler(private val project: Project, sc: CoroutineScope) : Dis
   }
 
   private fun onStateChanged() {
-    if (runWhenSmartCondition.asBoolean) {
+    if (canRunSmart()) {
       // Always reschedule execution to avoid unexpected write lock acquired.
       //
       // Note2: DumbService tracks modality by itself: exit event occurs in the same modality as the enter event.
@@ -91,8 +87,10 @@ class SmartModeScheduler(private val project: Project, sc: CoroutineScope) : Dis
     }
   }
 
+  internal fun canRunSmart(): Boolean = getCurrentMode() == 0
+
   fun runWhenSmart(runnable: Runnable) {
-    if (runWhenSmartCondition.asBoolean && ApplicationManager.getApplication().isDispatchThread) {
+    if (canRunSmart() && ApplicationManager.getApplication().isDispatchThread) {
       // Execute immediately only because some tests expect this behavior. No production need.
       runnable.run()
     }
@@ -110,7 +108,7 @@ class SmartModeScheduler(private val project: Project, sc: CoroutineScope) : Dis
 
     // It may happen that one of the pending runWhenSmart actions triggers new dumb mode;
     // in this case we should quit processing pending actions and postpone them until the newly started dumb mode finishes.
-    while (runWhenSmartCondition.asBoolean) {
+    while (canRunSmart()) {
       val runnable = myRunWhenSmartQueue.pollFirst() ?: break
       resetThreadContext().use {
         doRun(runnable)

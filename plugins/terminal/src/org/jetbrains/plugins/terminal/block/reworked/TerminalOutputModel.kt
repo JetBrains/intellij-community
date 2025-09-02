@@ -2,11 +2,13 @@
 package org.jetbrains.plugins.terminal.block.reworked
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.editor.Document
 import com.intellij.terminal.session.StyleRange
 import com.intellij.terminal.session.TerminalOutputModelState
 import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.terminal.block.output.HighlightingInfo
 import org.jetbrains.plugins.terminal.block.output.TerminalOutputHighlightingsSnapshot
 
 /**
@@ -21,10 +23,15 @@ interface TerminalOutputModel {
    */
   val cursorOffsetState: StateFlow<Int>
 
+  fun getAbsoluteLineIndex(documentOffset: Int): Long
+
   /**
    * Returns document ranges with corresponding text attributes.
    */
   fun getHighlightings(): TerminalOutputHighlightingsSnapshot
+
+  /** Returns null if there is no specific highlighting range at [documentOffset] */
+  fun getHighlightingAt(documentOffset: Int): HighlightingInfo?
 
   /**
    * [absoluteLineIndex] is the index of the line from the start of the terminal output.
@@ -35,10 +42,18 @@ interface TerminalOutputModel {
    * [absoluteLineIndex] is the index of the line from the start of the terminal output.
    */
   fun updateCursorPosition(absoluteLineIndex: Long, columnIndex: Int)
+  
+  fun insertAtCursor(text: String)
+
+  fun backspace()
 
   fun addListener(parentDisposable: Disposable, listener: TerminalOutputModelListener)
 
   fun dumpState(): TerminalOutputModelState
 
   fun restoreFromState(state: TerminalOutputModelState)
+
+  companion object {
+    val KEY: DataKey<TerminalOutputModel> = DataKey.create("TerminalOutputModel")
+  }
 }

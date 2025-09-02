@@ -38,6 +38,9 @@ public interface KotlinIcons {
     /** 16x16 */ @NotNull Icon OBJECT = KotlinBaseResourcesIcons.ObjectKotlin;
     Icon PARAMETER = IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Parameter);
     /** 12x12 */ @NotNull Icon SUSPEND_CALL = KotlinBaseResourcesIcons.SuspendCall;
+    /** 16x16 */ @NotNull Icon SUSPEND_FUNCTION = KotlinBaseResourcesIcons.SuspendFunction;
+    /** 16x16 */ @NotNull Icon SUSPEND_METHOD = KotlinBaseResourcesIcons.SuspendMethod;
+    /** 16x16 */ @NotNull Icon SUSPEND_DECLARATION = KotlinBaseResourcesIcons.SuspendDeclaration;
     /** 16x16 */ @NotNull Icon TYPE_ALIAS = KotlinBaseResourcesIcons.TypeAlias;
     Icon VAR = IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Variable);
     /** 16x16 */ @NotNull Icon VAL = KotlinBaseResourcesIcons.Value;

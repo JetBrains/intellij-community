@@ -1,0 +1,11 @@
+// SUGGESTED_NAMES: i, getM
+suspend fun foo(n: Int) = n
+
+suspend fun test() {
+    // SIBLING:
+    suspend fun i(): Int = foo(1)
+
+    val m = i()
+}
+
+// IGNORE_K1

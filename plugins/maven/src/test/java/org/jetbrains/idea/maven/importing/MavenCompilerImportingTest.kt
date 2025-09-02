@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.compiler.CompilerConfiguration
@@ -60,7 +60,10 @@ class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
     ideCompilerConfiguration = CompilerConfiguration.getInstance(project) as CompilerConfigurationImpl
     javacCompiler = ideCompilerConfiguration.defaultCompiler
     eclipseCompiler = ideCompilerConfiguration.registeredJavaCompilers.find { it is EclipseCompiler } as EclipseCompiler
-    AcceptedLanguageLevelsSettings.allowLevel(testRootDisposable, LanguageLevel.values()[LanguageLevel.HIGHEST.ordinal + 1])
+    AcceptedLanguageLevelsSettings.allowLevel(
+      testRootDisposable,
+      LanguageLevel.entries[LanguageLevel.HIGHEST.ordinal + 1]
+    )
   }
 
   @Test
@@ -287,7 +290,7 @@ class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
                    "  </plugins>" +
                    "</build>"))
     assertModules("project")
-    TestCase.assertEquals(LanguageLevel.values().get(LanguageLevel.HIGHEST.ordinal + 1), getLanguageLevelForModule())
+    assertEquals(LanguageLevel.entries[LanguageLevel.HIGHEST.ordinal + 1], getLanguageLevelForModule())
   }
 
   @Test
@@ -330,7 +333,7 @@ class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
                    "  </plugins>" +
                    "</build>"))
     assertModules("project")
-    TestCase.assertEquals(LanguageLevel.values().get(LanguageLevel.HIGHEST.ordinal + 1), getLanguageLevelForModule())
+    assertEquals(LanguageLevel.entries[LanguageLevel.HIGHEST.ordinal + 1], getLanguageLevelForModule())
   }
 
   @Test
@@ -1130,6 +1133,59 @@ class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
     assertUnorderedElementsAreEqual(ideCompilerConfiguration.getAdditionalOptions(getModule("project.test")),
                                     "-Averbose=true", "-parameters", "-bootclasspath", "rt.jar_path_here")
 
+  }
+
+  @Test
+  fun testCompilerArgumentsShouldBeSetForMainAndAdditionalSources() = runBlocking {
+    createProjectSubDir("src/main/java")
+    createProjectSubDir("src/main/java17")
+    importProjectAsync("""
+      <groupId>test</groupId>
+      <artifactId>project</artifactId>
+      <version>1</version>
+      <build>  
+        <plugins>
+          <plugin>   
+             <groupId>org.apache.maven.plugins</groupId>  
+             <artifactId>maven-compiler-plugin</artifactId>      
+             <executions>
+              <execution>
+                        <id>default-compile</id>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                        <configuration>
+                            <release>11</release>
+                        </configuration>
+                    </execution>
+
+                    <execution>
+                        <id>java17-compile</id>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                        <configuration>
+                            <release>17</release>
+                            <compileSourceRoots>
+                                <compileSourceRoot>${"$"}{project.basedir}/src/main/java17</compileSourceRoot>
+                            </compileSourceRoots>
+                            <multiReleaseOutput>true</multiReleaseOutput>
+                            <compilerArgs>
+                                <arg>--blablabla</arg>
+                            </compilerArgs>
+                        </configuration>
+                    </execution>
+             </executions>
+             
+          </plugin>
+        </plugins>
+      </build>""".trimIndent())
+
+    assertModules("project", "project.main", "project.test", "project.java17-compile")
+    assertUnorderedElementsAreEqual(ideCompilerConfiguration.getAdditionalOptions(getModule("project.main")))
+    assertUnorderedElementsAreEqual(ideCompilerConfiguration.getAdditionalOptions(getModule("project.java17-compile")),
+                                    "--blablabla")
   }
 
   @Test

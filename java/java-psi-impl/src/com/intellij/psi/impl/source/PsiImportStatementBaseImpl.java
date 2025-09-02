@@ -8,13 +8,13 @@ import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.impl.java.stubs.PsiImportStatementStub;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.JavaElementType;
-import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.psi.tree.java.IJavaElementType;
 import com.intellij.psi.util.PsiUtilCore;
 
 public abstract class PsiImportStatementBaseImpl extends JavaStubPsiElement<PsiImportStatementStub> implements PsiImportStatementBase{
   public static final PsiImportStatementBaseImpl[] EMPTY_ARRAY = new PsiImportStatementBaseImpl[0];
 
-  protected PsiImportStatementBaseImpl(PsiImportStatementStub stub, IStubElementType type) {
+  protected PsiImportStatementBaseImpl(PsiImportStatementStub stub, IJavaElementType type) {
     super(stub, type);
   }
 

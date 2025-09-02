@@ -46,3 +46,16 @@ def error(
     extra_tags: str = "",
     fail_silently: bool | str = False,
 ) -> None: ...
+
+__all__ = (
+    "add_message",
+    "get_messages",
+    "get_level",
+    "set_level",
+    "debug",
+    "info",
+    "success",
+    "warning",
+    "error",
+    "MessageFailure",
+)

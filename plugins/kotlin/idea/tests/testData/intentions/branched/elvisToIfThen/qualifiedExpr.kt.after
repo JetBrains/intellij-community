@@ -1,0 +1,5 @@
+// AFTER-WARNING: The expression is unused
+class A(val x: Int?) {}
+fun m(a: A) {
+    if (<caret>a.x != null) a.x else 42
+}

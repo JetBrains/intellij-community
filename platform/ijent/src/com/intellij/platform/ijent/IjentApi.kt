@@ -1,7 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent
 
 import com.intellij.platform.eel.EelApi
+import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.EelPosixApi
 import com.intellij.platform.eel.EelWindowsApi
 import com.intellij.platform.ijent.fs.IjentFileSystemApi
@@ -49,7 +50,7 @@ sealed interface IjentApi : EelApi, AutoCloseable {
   suspend fun waitUntilExit()
 
   /** Docs: [com.intellij.platform.eel.EelExecApi] */
-  override val exec: IjentExecApi
+  override val exec: EelExecApi
 
   override val fs: IjentFileSystemApi
 }

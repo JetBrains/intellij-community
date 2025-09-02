@@ -11,9 +11,7 @@ public final class ImmutableText extends Text {
   @SuppressWarnings("MethodDoesntCallSuperMethod")
   @Override
   public Text clone() {
-    Text text = new Text();
-    text.value = value;
-    return text;
+    return new Text(true, value);
   }
 
   @Override

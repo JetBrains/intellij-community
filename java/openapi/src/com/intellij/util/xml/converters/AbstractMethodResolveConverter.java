@@ -17,6 +17,7 @@ import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.ResolvingConverter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -28,7 +29,7 @@ public abstract class AbstractMethodResolveConverter<ParentType extends DomEleme
     myDomMethodClass = domMethodClass;
   }
 
-  protected abstract @NotNull Collection<PsiClass> getPsiClasses(final ParentType parent, final ConvertContext context);
+  protected abstract @NotNull @Unmodifiable Collection<PsiClass> getPsiClasses(final ParentType parent, final ConvertContext context);
 
   protected abstract @Nullable AbstractMethodParams getMethodParams(@NotNull ParentType parent);
 
@@ -101,7 +102,7 @@ public abstract class AbstractMethodResolveConverter<ParentType extends DomEleme
     return methodList;
   }
 
-  protected Collection<PsiMethod> getVariants(final PsiClass s) {
+  protected @Unmodifiable Collection<PsiMethod> getVariants(final PsiClass s) {
     return Arrays.asList(s.getAllMethods());
   }
 
@@ -115,7 +116,7 @@ public abstract class AbstractMethodResolveConverter<ParentType extends DomEleme
   }
 
   @Override
-  public @NotNull Set<String> getAdditionalVariants(@NotNull ConvertContext context) {
+  public @NotNull @Unmodifiable Set<String> getAdditionalVariants(@NotNull ConvertContext context) {
     return Collections.singleton(ALL_METHODS);
   }
 

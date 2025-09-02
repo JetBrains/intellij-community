@@ -8,6 +8,7 @@ import com.sun.jna.platform.win32.Kernel32.*
 import com.sun.jna.platform.win32.Ntifs
 import com.sun.jna.platform.win32.WinioctlUtil
 import com.sun.jna.ptr.IntByReference
+import org.jetbrains.annotations.ApiStatus
 import java.nio.ByteBuffer
 import java.nio.file.Path
 import kotlin.io.path.*
@@ -41,6 +42,8 @@ private const val storeMarker = "DesktopAppInstaller"
  * There may be several files linked to this product, we need only first.
  * And for 3.7 there could be ``PythonSoftwareFoundation.Python.3.7_(SOME_OTHER_UID)``.
  */
+
+@ApiStatus.Internal
 fun getAppxFiles(expectedProduct: String?, filePattern: Regex): Collection<Path> =
   userAppxFolder?.listDirectoryEntries()
     ?.filter { filePattern.matches(it.name) }

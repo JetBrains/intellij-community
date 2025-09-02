@@ -25,11 +25,11 @@ public final class DelegateMethodsAction extends BaseCodeInsightAction implement
   }
 
   @Override
-  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, final @NotNull PsiFile file) {
-    Language language = PsiUtilCore.getLanguageAtOffset(file, editor.getCaretModel().getOffset());
+  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, final @NotNull PsiFile psiFile) {
+    Language language = PsiUtilCore.getLanguageAtOffset(psiFile, editor.getCaretModel().getOffset());
     final LanguageCodeInsightActionHandler codeInsightActionHandler = CodeInsightActions.DELEGATE_METHODS.forLanguage(language);
     if (codeInsightActionHandler != null) {
-      return codeInsightActionHandler.isValidFor(editor, file);
+      return codeInsightActionHandler.isValidFor(editor, psiFile);
     }
     return false;
   }

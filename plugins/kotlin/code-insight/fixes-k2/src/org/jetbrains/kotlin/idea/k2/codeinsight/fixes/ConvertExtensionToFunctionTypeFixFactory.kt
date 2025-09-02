@@ -51,7 +51,7 @@ internal object ConvertExtensionToFunctionTypeFixFactory {
     }
 
     val superTypeIsExtensionFunctionType =
-        KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.SupertypeIsExtensionFunctionType ->
+        KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.SupertypeIsExtensionOrContextFunctionType ->
             val typeReference = diagnostic.psi as? KtTypeReference ?: return@ModCommandBased emptyList()
             listOfNotNull(createQuickFix(typeReference))
         }

@@ -8,6 +8,7 @@ import com.intellij.collaboration.ui.util.bindChildIn
 import com.intellij.collaboration.ui.util.bindTextIn
 import com.intellij.collaboration.ui.util.popup.awaitClose
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.actions.IncrementalFindAction
 import com.intellij.openapi.fileTypes.FileTypes
 import com.intellij.openapi.project.Project
@@ -38,7 +39,7 @@ import javax.swing.JPanel
 @ApiStatus.Internal
 abstract class CodeReviewSubmitPopupHandler<VM : CodeReviewSubmitViewModel> {
   suspend fun show(vm: VM, parentComponent: Component, above: Boolean = false) {
-    withContext(Dispatchers.Main) {
+    withContext(Dispatchers.EDT) {
       val container = createPopupComponent(vm, errorPresenter)
       val popup = createPopup(container)
 
@@ -53,7 +54,7 @@ abstract class CodeReviewSubmitPopupHandler<VM : CodeReviewSubmitViewModel> {
   }
 
   suspend fun show(vm: VM, project: Project) {
-    withContext(Dispatchers.Main) {
+    withContext(Dispatchers.EDT) {
       val container = createPopupComponent(vm, errorPresenter)
       val popup = createPopup(container)
 

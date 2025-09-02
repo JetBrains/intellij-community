@@ -244,6 +244,7 @@ public abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements Int
         delta += change;
       }
     }
+
     void clearDelta() {
       if (delta != 0) {
         setCachedValues(0, false, 0); // deltaUpToRoot is not valid anymore
@@ -286,8 +287,15 @@ public abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements Int
       return myTree;
     }
 
-    public @NotNull ReadWriteLock getTreeLock() {
-      return myTree.l;
+    @ApiStatus.Internal
+    protected void runUnderWriteLock(@NotNull Runnable runnable) {
+      myTree.l.writeLock().lock();
+      try {
+        runnable.run();
+      }
+      finally {
+        myTree.l.writeLock().unlock();
+      }
     }
 
     /**
@@ -386,6 +394,7 @@ public abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements Int
       return "wRef: " + get();
     }
   }
+
   private static final class StaticSupplier<T> implements Supplier<T> {
     private final T myT;
 
@@ -409,6 +418,7 @@ public abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements Int
       assert isAcquired(l.writeLock()) : l.writeLock();
     }
   }
+
   private static boolean isAcquired(@NotNull Lock l) {
     @NonNls String s = l.toString();
     return s.contains("Locked by thread");
@@ -430,6 +440,7 @@ public abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements Int
   protected abstract @NotNull IntervalNode<T> createNewNode(@NotNull T key, int start, int end,
                                                             boolean greedyToLeft, boolean greedyToRight, boolean stickingToRight, int layer);
   protected abstract IntervalNode<T> lookupNode(@NotNull T key);
+
   protected abstract void setNode(@NotNull T key, @Nullable IntervalNode<T> node);
 
   private int compareNodes(@NotNull IntervalNode<T> i1, int delta1, @NotNull IntervalNode<T> i2, int delta2, @NotNull List<? super IntervalNode<T>> invalid) {
@@ -1402,11 +1413,13 @@ public abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements Int
   }
 
   // combines iterators for two trees in one using the specified comparator
-  static @NotNull <T> MarkupIterator<T> mergingOverlappingIterator(@NotNull IntervalTreeImpl<T> tree1,
-                                                          @NotNull TextRange tree1Range,
-                                                          @NotNull IntervalTreeImpl<T> tree2,
-                                                          @NotNull TextRange tree2Range,
-                                                          @NotNull Comparator<? super T> comparator) {
+  @ApiStatus.Internal
+  public static @NotNull <T> MarkupIterator<T> mergingOverlappingIterator(
+    @NotNull IntervalTreeImpl<T> tree1,
+    @NotNull TextRange tree1Range,
+    @NotNull IntervalTreeImpl<T> tree2,
+    @NotNull TextRange tree2Range,
+    @NotNull Comparator<? super T> comparator) {
     MarkupIterator<T> exact = tree1.overlappingIterator(tree1Range);
     MarkupIterator<T> lines = tree2.overlappingIterator(tree2Range);
     return MarkupIterator.mergeIterators(exact, lines, comparator);

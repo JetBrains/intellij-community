@@ -30,11 +30,11 @@ public interface TooltipActionProvider {
 
 
   static @Nullable TooltipAction calcTooltipAction(@NotNull HighlightInfo info, @NotNull Project project, @NotNull Editor editor) {
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-    if (file == null) return null;
+    PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    if (psiFile == null) return null;
 
     return EP_NAME.getExtensionList().stream()
-      .map(extension -> extension.getTooltipAction(info, editor, file))
+      .map(extension -> extension.getTooltipAction(info, editor, psiFile))
       .filter(Objects::nonNull).findFirst().orElse(null);
   }
 

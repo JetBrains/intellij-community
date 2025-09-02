@@ -15,7 +15,9 @@ import com.intellij.util.Processor;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.indexing.FindSymbolParameters;
 import com.intellij.util.indexing.IdFilter;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
@@ -35,13 +37,21 @@ public final class DefaultFileNavigationContributor implements ChooseByNameContr
   public void processElementsWithName(@NotNull String name,
                                       @NotNull Processor<? super NavigationItem> processor,
                                       @NotNull FindSymbolParameters parameters) {
+    processElementsWithName(name, processor, parameters, parameters.getIdFilter());
+  }
+
+  @ApiStatus.Internal
+  public static void processElementsWithName(@NotNull String name,
+                                             @NotNull Processor<? super NavigationItem> processor,
+                                             @NotNull FindSymbolParameters parameters,
+                                             @Nullable IdFilter filter) {
     boolean globalSearch = parameters.getSearchScope().isSearchInLibraries();
     boolean directoriesOnly = isDirectoryOnlyPattern(parameters);
     boolean withFiles = !directoriesOnly;
     boolean withDirs = directoriesOnly || Registry.is("ide.goto.file.include.directories");
     PsiManager psiManager = PsiManager.getInstance(parameters.getProject());
     FilenameIndex.processFilesByNames(
-      Set.of(name), true, parameters.getSearchScope(), parameters.getIdFilter(), file -> {
+      Set.of(name), true, parameters.getSearchScope(), filter, file -> {
         if (!file.isValid()) return true;
         boolean isDir = file.isDirectory();
         if (!withFiles && !isDir || !withDirs && isDir) return true;

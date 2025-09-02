@@ -17,7 +17,7 @@ import com.intellij.workspaceModel.test.api.UnknownPropertyTypeEntity
 import java.util.Date
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(6)
+@GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class UnknownPropertyTypeEntityImpl(private val dataSource: UnknownPropertyTypeEntityData) : UnknownPropertyTypeEntity,
                                                                                                       WorkspaceEntityBase(dataSource) {

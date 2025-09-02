@@ -96,8 +96,6 @@ class VcsGeneralSettingsConfigurable(val project: Project) : BoundCompositeSearc
     VcsEP.EP_NAME.addChangeListener({ updateActiveVcses() }, disposable)
 
     return panel {
-      useNewComboBoxRenderer()
-
       group(message("settings.general.confirmation.group.title")) {
         row {
           val addConfirmation = vcsManager.getConfirmation(VcsConfiguration.StandardConfirmation.ADD)

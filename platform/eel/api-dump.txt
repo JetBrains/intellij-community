@@ -1,0 +1,8 @@
+f:com.intellij.platform.eel.EelExecApiHelpersKt
+f:com.intellij.platform.eel.EelExecApiKt
+f:com.intellij.platform.eel.EelExecPosixApiHelpersKt
+f:com.intellij.platform.eel.EelExecWindowsApiHelpersKt
+f:com.intellij.platform.eel.EelPlatformKt
+f:com.intellij.platform.eel.EelTunnelsApiHelpersKt
+f:com.intellij.platform.eel.EelTunnelsApiKt
+f:com.intellij.platform.eel.channels.EelSendChannelKt

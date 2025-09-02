@@ -6,11 +6,7 @@ import com.google.common.collect.Range
 import com.intellij.openapi.util.Version
 import com.intellij.psi.util.QualifiedName
 import com.jetbrains.python.PyTokenTypes
-import com.jetbrains.python.psi.PyBinaryExpression
-import com.jetbrains.python.psi.PyExpression
-import com.jetbrains.python.psi.PyNumericLiteralExpression
-import com.jetbrains.python.psi.PyReferenceExpression
-import com.jetbrains.python.psi.PyTupleExpression
+import com.jetbrains.python.psi.*
 import org.jetbrains.annotations.ApiStatus
 import java.math.BigInteger
 
@@ -22,7 +18,11 @@ object PyVersionCheck {
    * @see <a href="https://peps.python.org/pep-0484/#version-and-platform-checking">Version and Platform Checks</a>
    */
   @JvmStatic
-  fun convertToVersionRanges(expression: PyExpression): ImmutableRangeSet<Version>? {
+  fun convertToVersionRanges(ifPart: PyIfPart): ImmutableRangeSet<Version>? {
+    return ifPart.condition?.let(PyVersionCheck::convertToVersionRanges)
+  }
+
+  private fun convertToVersionRanges(expression: PyExpression): ImmutableRangeSet<Version>? {
     val binaryExpr = PyPsiUtils.flattenParens(expression) as? PyBinaryExpression ?: return null
     when (val operator = binaryExpr.operator) {
       PyTokenTypes.AND_KEYWORD, PyTokenTypes.OR_KEYWORD -> {

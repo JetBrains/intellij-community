@@ -1,10 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.flavors;
 
 import com.google.common.collect.Sets;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.venvReader.VirtualEnvReader;
 import org.jetbrains.annotations.ApiStatus;
@@ -17,6 +18,8 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
+@ApiStatus.Internal
 
 
 public final class UnixPythonSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Empty> {
@@ -42,8 +45,9 @@ public final class UnixPythonSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Emp
     return PyFlavorData.Empty.class;
   }
 
+  @RequiresBackgroundThread(generateAssertion = false)
   @Override
-  public @NotNull Collection<@NotNull Path> suggestLocalHomePaths(@Nullable Module module, @Nullable UserDataHolder context) {
+  protected @NotNull Collection<@NotNull Path> suggestLocalHomePathsImpl(@Nullable Module module, @Nullable UserDataHolder context) {
     return getDefaultUnixPythons();
   }
 
@@ -53,9 +57,7 @@ public final class UnixPythonSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Emp
 
   public static @NotNull List<Path> getDefaultUnixPythons(@Nullable Path rootPath) {
     var candidates = new ArrayList<Path>();
-    Arrays.stream(BIN_DIRECTORIES)
-      .map(Path::of)
-      .map(binDirectory -> optionallyChangeRoot(rootPath, binDirectory))
+    Arrays.stream(BIN_DIRECTORIES).map(Path::of).map(binDirectory -> optionallyChangeRoot(rootPath, binDirectory))
       .forEach(rootDir -> collectUnixPythons(rootDir, candidates));
 
     collectPyenvPythons(candidates);
@@ -71,10 +73,7 @@ public final class UnixPythonSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Emp
   public static void collectUnixPythons(@NotNull Path binDirectory, @NotNull Collection<Path> candidates) {
     try (var entries = Files.list(binDirectory)) {
       // Hack to exclude system python2
-      entries
-        .filter(path ->
-                  ContainerUtil.exists(SYS_PYTHON_FILE_NAMES, regex -> regex.matcher(path.getFileName().toString()).matches())
-        )
+      entries.filter(path -> ContainerUtil.exists(SYS_PYTHON_FILE_NAMES, regex -> regex.matcher(path.getFileName().toString()).matches()))
         .collect(Collectors.toCollection(() -> candidates));
     }
     catch (IOException ignored) {

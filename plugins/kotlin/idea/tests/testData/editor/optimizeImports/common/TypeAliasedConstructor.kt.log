@@ -1,0 +1,5 @@
+Additional checking of reference Getter: TypeAlias2
+Additional checking of reference KtSimpleNameReference: TypeAlias2
+Additional checking of reference Getter: TypeAlias5
+Additional checking of reference KtSimpleNameReference: TypeAlias5
+Additional checking of reference KtInvokeFunctionReference: TypeAlias2()

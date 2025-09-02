@@ -1,10 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.test.runner;
 
 import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.junit.InheritorChooser;
+import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -50,7 +51,7 @@ public class TestMethodGradleConfigurationProducer extends AbstractGradleTestRun
     if (location == null) return null;
     PsiMethod psiMethod = getPsiMethodForLocation(location);
     if (psiMethod == null) return null;
-    PsiClass psiClass = psiMethod.getContainingClass();
+    PsiClass psiClass = getContainingClass(location, psiMethod);
     if (psiClass == null || psiClass.getName() == null || psiClass.getQualifiedName() == null) return null;
     PsiFile psiFile = psiMethod.getContainingFile();
     if (psiFile == null) return null;
@@ -70,7 +71,7 @@ public class TestMethodGradleConfigurationProducer extends AbstractGradleTestRun
     @NotNull PsiMethod element,
     @NotNull List<? extends PsiClass> chosenElements
   ) {
-    PsiClass psiClass = Objects.requireNonNull(element.getContainingClass());
+    PsiClass psiClass = Objects.requireNonNull(getContainingClass(context.getLocation(), element));
     List<? extends PsiClass> elements = chosenElements.isEmpty() ? List.of(psiClass) : chosenElements;
     return StringUtil.join(elements, aClass -> aClass.getName() + "." + element.getName(), "|");
   }
@@ -81,7 +82,7 @@ public class TestMethodGradleConfigurationProducer extends AbstractGradleTestRun
     @NotNull PsiMethod element,
     @NotNull Consumer<List<PsiClass>> onElementsChosen
   ) {
-    PsiClass psiClass = Objects.requireNonNull(element.getContainingClass());
+    PsiClass psiClass = Objects.requireNonNull(getContainingClass(context.getLocation(), element));
     InheritorChooser.chooseAbstractClassInheritors(context, psiClass, onElementsChosen);
   }
 
@@ -94,7 +95,7 @@ public class TestMethodGradleConfigurationProducer extends AbstractGradleTestRun
     Project project = Objects.requireNonNull(context.getProject());
     Location<?> location = Objects.requireNonNull(context.getLocation());
     VirtualFile source = Objects.requireNonNull(element.getContainingFile().getVirtualFile());
-    PsiClass aClass = Objects.requireNonNull(element.getContainingClass());
+    PsiClass aClass = Objects.requireNonNull(getContainingClass(location, element));
     List<? extends PsiClass> elements = chosenElements.isEmpty() ? List.of(aClass) : chosenElements;
     List<TestTasksToRun> testsTasksToRun = new ArrayList<>();
     for (PsiClass psiClass : elements) {
@@ -102,5 +103,14 @@ public class TestMethodGradleConfigurationProducer extends AbstractGradleTestRun
       testsTasksToRun.addAll(ContainerUtil.map(findAllTestsTaskToRun(source, project), it -> new TestTasksToRun(it, testFilter)));
     }
     return testsTasksToRun;
+  }
+
+  private static @Nullable PsiClass getContainingClass(@Nullable Location<?> location, @NotNull PsiMethod element) {
+    if (location instanceof PsiMemberParameterizedLocation memberParameterizedLocation) {
+      return memberParameterizedLocation.getContainingClass();
+    }
+    else {
+      return element.getContainingClass();
+    }
   }
 }

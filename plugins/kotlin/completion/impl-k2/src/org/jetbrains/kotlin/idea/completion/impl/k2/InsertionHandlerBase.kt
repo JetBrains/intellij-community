@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.completion
 import com.intellij.codeInsight.completion.InsertHandler
 import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.psi.PsiDocumentManager
 import org.jetbrains.kotlin.idea.completion.lookups.KotlinLookupObject
 import org.jetbrains.kotlin.psi.KtFile
 import kotlin.reflect.KClass
@@ -23,4 +24,9 @@ internal abstract class InsertionHandlerBase<LO : KotlinLookupObject>(
     }
 
     abstract fun handleInsert(context: InsertionContext, item: LookupElement, ktFile: KtFile, lookupObject: LO)
+}
+
+
+internal fun InsertionContext.doPostponedOperationsAndUnblockDocument() {
+    PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document)
 }

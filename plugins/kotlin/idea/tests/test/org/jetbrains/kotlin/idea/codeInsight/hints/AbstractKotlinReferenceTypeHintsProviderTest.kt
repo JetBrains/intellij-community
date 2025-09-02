@@ -11,7 +11,7 @@ abstract class AbstractKotlinReferenceTypeHintsProviderTest : AbstractKotlinInla
         org.jetbrains.kotlin.idea.codeInsight.hints.declarative.KotlinReferencesTypeHintsProvider()
 
     override fun calculateOptions(fileContents: String): Map<String, Boolean> =
-        buildMap<String, Boolean> {
+        buildMap {
             put(SHOW_PROPERTY_TYPES.name, false)
             put(SHOW_LOCAL_VARIABLE_TYPES.name, false)
             put(SHOW_FUNCTION_RETURN_TYPES.name, false)

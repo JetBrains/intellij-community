@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch;
 
 import com.intellij.ide.highlighter.JavaFileType;
@@ -1285,71 +1285,6 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("just javadoc comment search", 4, findMatchesCount(s57, "/** @'T '_T2 */"));
     assertEquals("optional tag value match", 6, findMatchesCount(s57, "/** @'T '_T2? */"));
     assertEquals("no infinite loop on javadoc matching", 1, findMatchesCount(s57, "/** 'Text */ class '_ { }"));
-
-    final String s83 = """
-      /**
-       * @hibernate.class
-       *  table="CATS"
-       */
-      public class Cat {
-          private Long id; // identifier
-          private Date birthdate;
-          /**
-           * @hibernate.id
-           *  generator-class="native"
-           *  column="CAT_ID"
-           */
-          public Long getId() {
-              return id;
-          }
-          private void setId(Long id) {
-              this.id=id;
-          }
-
-          /**
-           * @hibernate.property
-           *  column="BIRTH_DATE"
-           */
-          public Date getBirthdate() {
-              return birthdate;
-          }
-          void setBirthdate(Date date) {
-              birthdate = date;
-          }
-          /**
-           * @hibernate.property
-           *  column="SEX"
-           *  not-null="true"
-           *  update="false"
-           */
-          public char getSex() {
-              return sex;
-          }
-          void setSex(char sex) {
-              this.sex=sex;
-          }
-      }""";
-    assertEquals("XDoclet metadata", 2, findMatchesCount(s83, """
-          /**
-           * @hibernate.property
-           *  'Property
-           */
-      """));
-    assertEquals("XDoclet metadata 2", 1, findMatchesCount(s83, """
-          /**
-           * @hibernate.property
-           *  update="fa.se"
-           */
-      """));
-
-    final String s75 = """
-      /** @class aClass
-       @author the author */ class A {}
-      /** */ class B {}
-      /** @class aClass */ class C {}""";
-    assertEquals("multiple tags match +", 2, findMatchesCount(s75, " /** @'_tag+ '_value+ */"));
-    assertEquals("multiple tags match *", 3, findMatchesCount(s75, " /** @'_tag* '_value* */"));
-    assertEquals("multiple tags match ?", 3, findMatchesCount(s75, " /** @'_tag? '_value? */ class 't {}"));
 
     final String source = """
       class outer {

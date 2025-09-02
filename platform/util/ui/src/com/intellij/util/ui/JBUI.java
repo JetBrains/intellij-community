@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.icons.AllIcons;
@@ -1053,6 +1053,10 @@ public final class JBUI {
           return "StatusBar.Breadcrumbs.navBarInsets";
         }
       }
+
+      public interface Progresses {
+        Color COUNTER = JBColor.namedColor("ProgressBar.counterColor", new JBColor(0x3574F0, 0x3574F0));
+      }
     }
 
     public static final class TextField {
@@ -1063,11 +1067,19 @@ public final class JBUI {
 
     public static final class ToolWindow {
       public static @NotNull Color background() {
-        return JBColor.namedColor("ToolWindow.background");
+        return JBColor.namedColor("ToolWindow.background", JBColor.PanelBackground);
+      }
+
+      public static @NotNull Color stripeBackground() {
+        return JBColor.namedColor("ToolWindow.Stripe.background", background());
       }
 
       public static @NotNull Color borderColor() {
-        return JBColor.border();
+        return JBColor.namedColor("ToolWindow.Stripe.borderColor", JBColor.border());
+      }
+
+      public static @NotNull Color mainBorderColor() {
+        return JBColor.namedColor("ToolWindow.borderColor", JBColor.border());
       }
 
       public static @NotNull Color underlinedTabForeground() {
@@ -1261,6 +1273,14 @@ public final class JBUI {
         return "MainToolbar.Button.iconSize";
       }
 
+      public static int recentProjectAvatarIconSize() {
+        return getInt(recentProjectAvatarIconSizeKey(), experimentalToolbarButtonIconSize());
+      }
+
+      public static @NotNull String recentProjectAvatarIconSizeKey() {
+        return "RecentProject.Avatar.iconSize";
+      }
+
       public static int defaultExperimentalToolbarButtonIconSize() {
         return 20;
       }
@@ -1336,6 +1356,9 @@ public final class JBUI {
     }
 
     public static final class MainToolbar {
+      public static @NotNull Color borderColor() {
+        return JBColor.namedColor("MainToolbar.borderColor", JBColor.border());
+      }
 
       public static final class Dropdown {
 

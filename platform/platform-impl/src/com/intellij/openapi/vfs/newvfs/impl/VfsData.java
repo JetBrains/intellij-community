@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationListener;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
+import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
@@ -83,11 +84,11 @@ public final class VfsData {
   private final ConcurrentBitSet invalidatedFileIds = ConcurrentBitSet.create();
 
   /**
-   * Records (fileIds) to be cleaned (namely: from {@link #changedParents} and {@link Segment#objectFieldsArray})
-   * As soon, as apt slots are cleaned -- so does this set.
+   * Records (fileIds) to be invalidated: removed from {@link #changedParents} and set 'dead' in {@link Segment#objectFieldsArray}).
+   * As soon, as apt slots are processed, this queue is cleared.
    * Guarded by {@link #deadMarker}
    */
-  private IntSet queueOfFileIdsToBeCleaned = new IntOpenHashSet();
+  private IntSet queueOfFileIdsToBeInvalidated = new IntOpenHashSet();
 
   private final IntObjectMap<VirtualDirectoryImpl> changedParents = ConcurrentCollectionFactory.createConcurrentIntObjectMap();
 
@@ -114,14 +115,15 @@ public final class VfsData {
 
   private void killInvalidatedFiles() {
     synchronized (deadMarker) {
-      if (!queueOfFileIdsToBeCleaned.isEmpty()) {
-        for (IntIterator iterator = queueOfFileIdsToBeCleaned.iterator(); iterator.hasNext(); ) {
+      if (!queueOfFileIdsToBeInvalidated.isEmpty()) {
+        for (IntIterator iterator = queueOfFileIdsToBeInvalidated.iterator(); iterator.hasNext(); ) {
           int id = iterator.nextInt();
           Segment segment = Objects.requireNonNull(getSegment(id, false));
           segment.objectFieldsArray.set(objectOffsetInSegment(id), deadMarker);
+          //skip cleaning segment.intFieldsArray since dead marker means slot is _not reusable_ in this session
           changedParents.remove(id);
         }
-        queueOfFileIdsToBeCleaned = new IntOpenHashSet();
+        queueOfFileIdsToBeInvalidated = new IntOpenHashSet();
       }
     }
   }
@@ -172,12 +174,6 @@ public final class VfsData {
     return segment != null && segment.objectFieldsArray.get(objectOffsetInSegment(id)) != null;
   }
 
-  public static final class FileAlreadyCreatedException extends RuntimeException {
-    private FileAlreadyCreatedException(@NotNull String message) {
-      super(message);
-    }
-  }
-
   @NotNull
   CharSequence getNameByFileId(int fileId) {
     return owningPersistentFS.peer().getName(fileId);
@@ -200,7 +196,7 @@ public final class VfsData {
   void invalidateFile(int id) {
     invalidatedFileIds.set(id);
     synchronized (deadMarker) {
-      queueOfFileIdsToBeCleaned.add(id);
+      queueOfFileIdsToBeInvalidated.add(id);
     }
   }
 
@@ -218,7 +214,7 @@ public final class VfsData {
   @ApiStatus.Internal
   public static final class Segment {
     private static final int INT_FIELDS_COUNT = 1;
-    private static final int FLAGS_FIELD_NO = 0;
+    private static final int FLAGS_AND_MOD_COUNT_FIELD_NO = 0;
 
     final @NotNull VfsData owningVfsData;
 
@@ -239,7 +235,8 @@ public final class VfsData {
     /** the reference is synchronized by read-write lock; clients outside read-action deserve to get outdated result */
     @Nullable Segment replacement;
 
-    Segment(@NotNull VfsData owningVfsData) {
+    @VisibleForTesting
+    public Segment(@NotNull VfsData owningVfsData) {
       this(owningVfsData, new AtomicReferenceArray<>(SEGMENT_SIZE), new AtomicIntegerArray(SEGMENT_SIZE * INT_FIELDS_COUNT));
     }
 
@@ -286,7 +283,7 @@ public final class VfsData {
       BitUtil.assertOneBitMask(mask);
       assert (mask & ~VirtualFileSystemEntry.ALL_FLAGS_MASK) == 0 : "Unexpected flag";
 
-      int offset = fieldOffset(fileId, FLAGS_FIELD_NO);
+      int offset = fieldOffset(fileId, FLAGS_AND_MOD_COUNT_FIELD_NO);
       return (intFieldsArray.get(offset) & mask) != 0;
     }
 
@@ -295,7 +292,7 @@ public final class VfsData {
         LOG.trace("Set flag " + Integer.toHexString(mask) + "=" + value + " for id=" + fileId);
       }
       assert (mask & ~VirtualFileSystemEntry.ALL_FLAGS_MASK) == 0 : "Unexpected flag";
-      int offset = fieldOffset(fileId, FLAGS_FIELD_NO);
+      int offset = fieldOffset(fileId, FLAGS_AND_MOD_COUNT_FIELD_NO);
       intFieldsArray.updateAndGet(offset, oldInt -> BitUtil.set(oldInt, mask, value));
     }
 
@@ -306,17 +303,22 @@ public final class VfsData {
       assert (combinedMask & ~VirtualFileSystemEntry.ALL_FLAGS_MASK) == 0 : "Unexpected flag";
       assert (~combinedMask & combinedValue) == 0 : "Value (" + Integer.toHexString(combinedValue) + ") set bits outside mask (" +
                                                     Integer.toHexString(combinedMask) + ")";
-      int offset = fieldOffset(fileId, FLAGS_FIELD_NO);
+      int offset = fieldOffset(fileId, FLAGS_AND_MOD_COUNT_FIELD_NO);
       intFieldsArray.updateAndGet(offset, oldInt -> oldInt & ~combinedMask | combinedValue);
     }
 
+    /**
+     * Transient content modification counter: different from {@link FSRecordsImpl#getModCount(int)} -- it is not persistent,
+     * and incremented only on file _content_ modification, while {@link FSRecordsImpl#getModCount(int)} is incremented on _any_
+     * file attribute/content/etc change.
+     */
     long getModificationStamp(int fileId) {
-      int offset = fieldOffset(fileId, FLAGS_FIELD_NO);
+      int offset = fieldOffset(fileId, FLAGS_AND_MOD_COUNT_FIELD_NO);
       return intFieldsArray.get(offset) & ~VirtualFileSystemEntry.ALL_FLAGS_MASK;
     }
 
     void setModificationStamp(int fileId, long stamp) {
-      int offset = fieldOffset(fileId, FLAGS_FIELD_NO);
+      int offset = fieldOffset(fileId, FLAGS_AND_MOD_COUNT_FIELD_NO);
       intFieldsArray.updateAndGet(offset, oldInt -> (oldInt & VirtualFileSystemEntry.ALL_FLAGS_MASK) |
                                                     ((int)stamp & ~VirtualFileSystemEntry.ALL_FLAGS_MASK));
     }
@@ -343,8 +345,14 @@ public final class VfsData {
 
         FSRecordsImpl vfsPeer = owningVfsData.owningPersistentFS.peer();
         int parentId = vfsPeer.getParent(fileId);
-        Segment parentSegment = owningVfsData.getSegment(parentId, false);
-        DirectoryData parentData = (DirectoryData)parentSegment.objectFieldsArray.get(objectOffsetInSegment(parentId));
+        DirectoryData parentData;
+        if (parentId == FSRecords.NULL_FILE_ID) {// => fileId is root
+          parentData = null;
+        }
+        else {
+          Segment parentSegment = owningVfsData.getSegment(parentId, false);
+          parentData = (DirectoryData)parentSegment.objectFieldsArray.get(objectOffsetInSegment(parentId));
+        }
 
         throw new FileAlreadyCreatedException(
           describeAlreadyCreatedFile(fileId)
@@ -515,6 +523,12 @@ public final class VfsData {
              ", myChildrenIds=" + Arrays.toString(childrenIds) +
              ", myAdoptedNames=" + adoptedNames +
              '}';
+    }
+  }
+
+  public static final class FileAlreadyCreatedException extends RuntimeException {
+    private FileAlreadyCreatedException(@NotNull String message) {
+      super(message);
     }
   }
 }

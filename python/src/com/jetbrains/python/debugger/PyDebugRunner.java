@@ -22,6 +22,7 @@ import com.intellij.execution.target.local.LocalTargetEnvironmentRequest;
 import com.intellij.execution.target.value.TargetEnvironmentFunctions;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.execution.ui.layout.LayoutAttractionPolicy;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.AppUIExecutor;
@@ -42,10 +43,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.net.NetUtils;
-import com.intellij.xdebugger.XDebugProcess;
-import com.intellij.xdebugger.XDebugProcessStarter;
-import com.intellij.xdebugger.XDebugSession;
-import com.intellij.xdebugger.XDebuggerManager;
+import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonHelper;
@@ -60,10 +58,7 @@ import com.jetbrains.python.sdk.PythonSdkUtil;
 import com.jetbrains.python.sdk.flavors.CPythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import kotlin.Unit;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
@@ -112,6 +107,8 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
   private static final @NonNls String PYTHON3_PYCACHE_PREFIX_OPTION = "pycache_prefix=";
 
   private static final Logger LOG = Logger.getInstance(PyDebugRunner.class);
+
+  private PyDebugProcess pyDebugProcess = null;
 
   @Override
   public @NotNull String getRunnerId() {
@@ -238,7 +235,7 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
       startSession(environment, new XDebugProcessStarter() {
         @Override
         public @NotNull XDebugProcess start(final @NotNull XDebugSession session) {
-          PyDebugProcess pyDebugProcess = createDebugProcess(session, serverSocket, result, pyState);
+          pyDebugProcess = createDebugProcess(session, serverSocket, result, pyState);
 
           createConsoleCommunicationAndSetupActions(environment.getProject(), result, pyDebugProcess, session);
           return pyDebugProcess;
@@ -246,9 +243,15 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
       });
 
     if (ExperimentalUI.isNewUI()) {
-      session.getUI().getDefaults().initContentAttraction(DebuggerContentInfo.CONSOLE_CONTENT,
-                                                          XDebuggerUIConstants.LAYOUT_VIEW_FINISH_CONDITION,
-                                                          new LayoutAttractionPolicy.FocusOnce());
+      RunnerLayoutUi sessionUi = session.getUI();
+      if (sessionUi != null) {
+        sessionUi.getDefaults().initContentAttraction(DebuggerContentInfo.CONSOLE_CONTENT,
+                                                      XDebuggerUIConstants.LAYOUT_VIEW_FINISH_CONDITION,
+                                                      new LayoutAttractionPolicy.FocusOnce());
+      }
+      else {
+        // TODO [Debugger.RunnerLayoutUi]
+      }
     }
     return session;
   }
@@ -266,9 +269,15 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
       });
 
     if (ExperimentalUI.isNewUI()) {
-      session.getUI().getDefaults().initContentAttraction(DebuggerContentInfo.CONSOLE_CONTENT,
-                                                          XDebuggerUIConstants.LAYOUT_VIEW_FINISH_CONDITION,
-                                                          new LayoutAttractionPolicy.FocusOnce());
+      RunnerLayoutUi sessionUi = session.getUI();
+      if (sessionUi != null) {
+        sessionUi.getDefaults().initContentAttraction(DebuggerContentInfo.CONSOLE_CONTENT,
+                                                      XDebuggerUIConstants.LAYOUT_VIEW_FINISH_CONDITION,
+                                                      new LayoutAttractionPolicy.FocusOnce());
+      }
+      else {
+        // TODO [Debugger.RunnerLayoutUi]
+      }
     }
     return session;
   }
@@ -360,6 +369,10 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
    */
   protected @NotNull Promise<@Nullable RunContentDescriptor> execute(@NotNull ExecutionEnvironment environment, @NotNull RunProfileState state)
     throws ExecutionException {
+    return execute(environment, state, null);
+  }
+
+  private @NotNull Promise<@Nullable RunContentDescriptor> execute(@NotNull ExecutionEnvironment environment, @NotNull RunProfileState state, @Nullable XDebugSessionListener sessionListener) {
     // aborts the execution of the run configuration if `.canRun` returns false
     // this is used for cases in which a user action prevents the execution; for example,
     // a warning dialog could be displayed to the user asking them if they wish to proceed with
@@ -370,6 +383,9 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
 
     return createSession(state, environment)
       .thenAsync(session -> AppUIExecutor.onUiThread().submit(() -> {
+        if (sessionListener != null) {
+          session.addSessionListener(sessionListener);
+        }
         initSession(session, state, environment.getExecutor());
         return session.getRunContentDescriptor();
       }));
@@ -377,22 +393,13 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
 
   @Override
   public void execute(@NotNull ExecutionEnvironment environment) throws ExecutionException {
-    var state = environment.getState();
-    if (state != null) {
-      ExecutionManager.getInstance(environment.getProject()).startRunProfile(environment, () -> {
-        try {
-          return executeWithLegacyWorkaround(environment, state);
-        }
-        catch (ExecutionException e) {
-          throw new RuntimeException(e.getMessage(), e);
-        }
-      });
-    }
+    exec(environment, null);
   }
 
   private @NotNull Promise<@Nullable RunContentDescriptor> executeWithLegacyWorkaround(
     @NotNull ExecutionEnvironment environment,
-    @NotNull RunProfileState state
+    @NotNull RunProfileState state,
+    @Nullable XDebugSessionListener sessionListener
   ) throws ExecutionException {
     boolean callExecute = true;
     try {
@@ -405,7 +412,7 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
       // It's not supposed to happen, but if it happens, asynchronous execute is called.
     }
     if (callExecute) {
-      return execute(environment, state);
+      return execute(environment, state, sessionListener);
     }
     return AppUIExecutor.onUiThread().submit(() -> doExecute(state, environment));
   }
@@ -481,7 +488,12 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
       public void inputRequested() {
         ApplicationManager.getApplication().invokeLater(() -> {
           if (session.getConsoleView() instanceof PythonDebugLanguageConsoleView debugConsoleView) {
-            selectConsoleTab(session.getRunContentDescriptor(), session.getUI().getContentManager(), true);
+            RunnerLayoutUi sessionUi = session.getUI();
+            if (sessionUi != null) {
+              selectConsoleTab(session.getRunContentDescriptor(), sessionUi.getContentManager(), true);
+            } else {
+              // TODO [Debugger.RunnerLayoutUi]
+            }
 
             if (pythonConsoleView.isVisible()) {
               requestFocus(true, null, pythonConsoleView, true);
@@ -942,7 +954,9 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
    * @param debuggerScript     the debugger script
    * @param serverPortOnTarget the server
    */
-  static void configureServerModeDebugConnectionParameters(@NotNull PythonExecution debuggerScript,
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public static void configureServerModeDebugConnectionParameters(@NotNull PythonExecution debuggerScript,
                                                            @NotNull Function<TargetEnvironment, HostPort> serverPortOnTarget) {
     // --port
     debuggerScript.addParameter(PORT_PARAM);
@@ -1130,6 +1144,36 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
     public @Nullable ServerSocket getServerSocketForDebugging() {
       return myServerSocketForDebugging;
     }
+  }
+
+  private void exec(@NotNull ExecutionEnvironment environment, @Nullable XDebugSessionListener sessionListener)
+    throws ExecutionException {
+    var state = environment.getState();
+    if (state != null) {
+      ExecutionManager.getInstance(environment.getProject()).startRunProfile(environment, () -> {
+        try {
+          return executeWithLegacyWorkaround(environment, state, sessionListener);
+        }
+        catch (ExecutionException e) {
+          throw new RuntimeException(e.getMessage(), e);
+        }
+      });
+    }
+  }
+
+  @TestOnly
+  public void executeWithListener(@NotNull ExecutionEnvironment environment, @Nullable XDebugSessionListener sessionListener) throws ExecutionException {
+    exec(environment, sessionListener);
+  }
+
+  @TestOnly
+  public @Nullable PyDebugProcess getProcess() {
+    return pyDebugProcess;
+  }
+
+  @TestOnly
+  public void resetProcess() {
+    pyDebugProcess = null;
   }
 
   /**

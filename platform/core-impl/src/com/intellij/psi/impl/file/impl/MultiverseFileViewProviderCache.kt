@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.file.impl
 
 import com.intellij.codeInsight.multiverse.CodeInsightContext
@@ -16,19 +16,19 @@ import java.util.function.Consumer
  */
 internal class MultiverseFileViewProviderCache : FileViewProviderCache {
 
-  // todo ijpl-339 we need atomic update for values of the maps???
+  // todo IJPL-339 we need atomic update for values of the maps???
 
-  // todo ijpl-339 don't store map for a single item
+  // todo IJPL-339 don't store map for a single item
   private val cache = AtomicMapCache<VirtualFile, FileProviderMap, FullCacheMap> {
     CollectionFactory.createConcurrentWeakValueMap()
   }
 
-  // todo ijpl-339 do clear only under write lock
+  // todo IJPL-339 do clear only under write lock
   override fun clear() {
     cache.invalidate()
   }
 
-  // todo ijpl-339 do read only under read lock
+  // todo IJPL-339 do read only under read lock
   override fun cacheOrGet(file: VirtualFile, context: CodeInsightContext, provider: FileViewProvider): FileViewProvider {
     val map = getFileProviderMap(file)
     return map.cacheOrGet(context, provider)

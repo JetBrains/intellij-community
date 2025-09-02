@@ -1,10 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.recovery;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.newvfs.persistent.*;
 import com.intellij.openapi.vfs.newvfs.persistent.VFSInitException.ErrorCategory;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.io.DataEnumerator;
 import com.intellij.util.io.ScannableDataEnumeratorEx;
 import com.intellij.util.io.storage.VFSContentStorage;
@@ -15,6 +14,7 @@ import java.util.List;
 
 import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFS.Flags.FREE_RECORD_FLAG;
 import static com.intellij.openapi.vfs.newvfs.persistent.VFSInitException.ErrorCategory.*;
+import static com.intellij.util.SystemProperties.getIntProperty;
 
 /**
  * Knows how to recover {@link ErrorCategory#NOT_CLOSED_PROPERLY} error category:
@@ -27,7 +27,7 @@ import static com.intellij.openapi.vfs.newvfs.persistent.VFSInitException.ErrorC
 public class NotClosedProperlyRecoverer implements VFSRecoverer {
   private static final Logger LOG = Logger.getInstance(NotClosedProperlyRecoverer.class);
 
-  private static final int MAX_ERRORS_TO_REPORT = SystemProperties.getIntProperty("NotClosedProperlyRecoverer.MAX_ERRORS_TO_REPORT", 64);
+  private static final int MAX_ERRORS_TO_REPORT = getIntProperty("NotClosedProperlyRecoverer.MAX_ERRORS_TO_REPORT", 64);
 
   @Override
   public void tryRecover(@NotNull PersistentFSLoader loader) {
@@ -112,7 +112,7 @@ public class NotClosedProperlyRecoverer implements VFSRecoverer {
       if (namesEnumeratorErrors > 0) {
         loader.problemsRecoveryFailed(notClosedProperlyErrors,
                                       NAME_STORAGE_INCOMPLETE,
-                                      namesEnumerator + " nameIds are not resolved");
+                                      namesEnumeratorErrors + " nameIds are not resolved");
       }
       if (attributesStorageErrors > 0) {
         loader.problemsRecoveryFailed(notClosedProperlyErrors,

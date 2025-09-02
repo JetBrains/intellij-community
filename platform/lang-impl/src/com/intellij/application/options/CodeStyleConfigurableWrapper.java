@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options;
 
 import com.intellij.application.options.codeStyle.CodeStyleMainPanel;
@@ -7,6 +7,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -108,7 +109,7 @@ public class CodeStyleConfigurableWrapper
 
   @Override
   public @NotNull String getId() {
-    return getConfigurableId(getDisplayName());
+    return myProvider.getConfigurableId();
   }
 
   @Override
@@ -172,7 +173,8 @@ public class CodeStyleConfigurableWrapper
     return myPanel != null ? () -> myPanel.highlightOptions(option) : null;
   }
 
-  public static @NotNull String getConfigurableId(String configurableDisplayName) {
-    return "preferences.sourceCode." + configurableDisplayName;
+  @ApiStatus.Internal
+  public CodeStyleSettingsProvider getSettingsProvider() {
+    return myProvider;
   }
 }

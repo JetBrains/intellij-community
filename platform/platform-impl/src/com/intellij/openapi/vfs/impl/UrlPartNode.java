@@ -1,7 +1,6 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl;
 
-import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import org.jetbrains.annotations.NonNls;
@@ -16,28 +15,31 @@ import org.jetbrains.annotations.NotNull;
 final class UrlPartNode extends FilePartNode {
   private final @NotNull String name;
 
-  UrlPartNode(@NotNull String name, @NotNull String parentUrl, @NotNull NewVirtualFileSystem fs) {
+  UrlPartNode(@NotNull String name,
+              @NotNull String parentUrl,
+              @NotNull NewVirtualFileSystem fs) {
     super(fs);
     this.name = name;
-    myFileOrUrl = childUrl(parentUrl, name, fs);
+    fileOrUrl = childUrl(parentUrl, name, fs);
     if (name.isEmpty()) {
       throw new IllegalArgumentException('\'' + name + '\'');
     }
   }
 
-  @NotNull
+
   @Override
-  CharSequence getName() {
+  @NotNull CharSequence getName() {
     return name;
   }
 
   @Override
-  boolean nameEqualTo(int nameId) {
-    return StringUtilRt.equal(getName(), fromNameId(nameId), SystemInfoRt.isFileSystemCaseSensitive);
+  boolean nameEqualTo(int nameId,
+                      @NotNull NewVirtualFileSystem childFs) {
+    return StringUtilRt.equal(getName(), fromNameId(nameId), childFs.isCaseSensitive());
   }
 
   @Override
   public @NonNls String toString() {
-    return "UrlPartNode: '"+getName() + "'; children:"+children.length;
+    return "UrlPartNode: '" + getName() + "'; children:" + children.length;
   }
 }

@@ -6,6 +6,7 @@ import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 import java.util.Map;
@@ -38,13 +39,14 @@ public interface BookmarksManager {
   /**
    * @return list of groups containing the specified bookmark
    */
-  @NotNull List<BookmarkGroup> getGroups(@NotNull Bookmark bookmark);
+  @NotNull @Unmodifiable List<BookmarkGroup> getGroups(@NotNull Bookmark bookmark);
 
   @Nullable BookmarkGroup addGroup(@NotNull String name, boolean isDefault);
 
   @Nullable Bookmark getBookmark(@NotNull BookmarkType type);
 
-  @NotNull Set<BookmarkType> getAssignedTypes();
+  @NotNull @Unmodifiable
+  Set<BookmarkType> getAssignedTypes();
 
   /**
    * @return a bookmark type or {@code null} if the bookmark is not set

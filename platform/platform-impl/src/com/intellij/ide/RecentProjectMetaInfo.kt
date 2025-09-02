@@ -11,6 +11,7 @@ import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.MapAnnotation
 import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.util.xmlb.annotations.Property
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Rectangle
 
 class RecentProjectMetaInfo : BaseState() {
@@ -45,7 +46,9 @@ class RecentProjectMetaInfo : BaseState() {
   var projectWorkspaceId: String? by string()
 
   @get:Property(surroundWithTag = false)
-  internal var frame: FrameInfo? by property()
+  @get:ApiStatus.Internal
+  @set:ApiStatus.Internal
+  var frame: FrameInfo? by property()
   @IntellijInternalApi
   val windowBounds: Rectangle?
     get() = frame?.bounds

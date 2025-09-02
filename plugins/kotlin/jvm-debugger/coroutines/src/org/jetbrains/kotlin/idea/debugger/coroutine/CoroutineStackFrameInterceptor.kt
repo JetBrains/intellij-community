@@ -2,12 +2,7 @@
 
 package org.jetbrains.kotlin.idea.debugger.coroutine
 
-import com.intellij.debugger.actions.AsyncStacksToggleAction
-import com.intellij.debugger.engine.DebugProcessImpl
-import com.intellij.debugger.engine.DebuggerManagerThreadImpl
-import com.intellij.debugger.engine.MethodInvokeUtils
-import com.intellij.debugger.engine.SuspendContextImpl
-import com.intellij.debugger.engine.SuspendManagerUtil
+import com.intellij.debugger.engine.*
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.impl.DebuggerUtilsImpl
 import com.intellij.debugger.impl.HelperClassNotAvailableException
@@ -27,7 +22,6 @@ import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
 import org.jetbrains.kotlin.idea.debugger.core.KotlinDebuggerCoreBundle
 import org.jetbrains.kotlin.idea.debugger.core.StackFrameInterceptor
 import org.jetbrains.kotlin.idea.debugger.core.stepping.CoroutineFilter
-import org.jetbrains.kotlin.idea.debugger.coroutine.data.SuspendExitMode
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.SkipCoroutineStackFrameProxyImpl
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.CoroutineStackFrameLight
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.DebugMetadata
@@ -41,7 +35,8 @@ private class CoroutineStackFrameInterceptor : StackFrameInterceptor {
         DebuggerManagerThreadImpl.assertIsManagerThread()
         if (debugProcess.xdebugProcess?.session !is XDebugSessionImpl
             || frame is SkipCoroutineStackFrameProxyImpl
-            || !AsyncStacksToggleAction.isAsyncStacksEnabled(debugProcess.xdebugProcess?.session as XDebugSessionImpl)) {
+            || !AsyncStacksUtils.isAsyncStacksEnabled(debugProcess.xdebugProcess?.session as XDebugSessionImpl)
+        ) {
             return null
         }
         // skip -1 line in invokeSuspend and main
@@ -53,16 +48,15 @@ private class CoroutineStackFrameInterceptor : StackFrameInterceptor {
 
         val suspendContext = SuspendManagerUtil.getContextForEvaluation(debugProcess.suspendManager) ?: return null
 
-        val (isSuspendFrame, isFirst) = CoroutineFrameBuilder.isFirstSuspendFrame(frame)
-        if (!isSuspendFrame) {
-            return null
-        }
+        val isSuspendFrame = extractContinuation(frame) != null
 
-        if (!isFirst) {
+        if (!isSuspendFrame) return null
+
+        // only get the information for the first suspend frame
+        if (anySuspendFramesBefore(frame)) {
             return emptyList() // skip
         }
 
-        // only get the information for the first suspend frame
         val stackFrame = CoroutineFrameBuilder.coroutineExitFrame(frame, suspendContext) ?: return null
 
         if (Registry.`is`("debugger.kotlin.auto.show.coroutines.view")) {
@@ -72,8 +66,14 @@ private class CoroutineStackFrameInterceptor : StackFrameInterceptor {
         if (!threadAndContextSupportsEvaluation(suspendContext, frame)) {
             return listOf(stackFrame)
         }
-        val frameItemLists = CoroutineFrameBuilder.build(stackFrame, suspendContext, withPreFrames = false)
+        val frameItemLists = CoroutineFrameBuilder.build(stackFrame, withPreFrames = false)
         return listOf(stackFrame) + frameItemLists.frames.mapNotNull { it.createFrame(debugProcess) }
+    }
+
+    private fun anySuspendFramesBefore(frame: StackFrameProxyImpl): Boolean {
+        val frames = frame.threadProxy().frames()
+        val frameIndex = frames.indexOf(frame)
+        return frames.subList(0, frameIndex).any { extractContinuation(it) != null  }
     }
 
     override fun extractCoroutineFilter(suspendContext: SuspendContextImpl): CoroutineFilter? {
@@ -113,7 +113,7 @@ private class CoroutineStackFrameInterceptor : StackFrameInterceptor {
         defaultExecutionContext: DefaultExecutionContext
     ): CoroutineFilter? {
         // if continuation cannot be extracted, fall to CoroutineIdFilter
-        val currentContinuation = extractContinuation(frameProxy) ?: return null
+        val currentContinuation = extractContinuationOrCompletion(frameProxy) ?: return null
         // First try to get a ContinuationFilter from helper
         getContinuationFilterFromHelper(currentContinuation, defaultExecutionContext)?.let { return it }
         // If helper class failed
@@ -191,33 +191,9 @@ private class CoroutineStackFrameInterceptor : StackFrameInterceptor {
         return (result as ArrayReference).values.asSequence().map { (it as LongValue).value() }.toHashSet()
     }
 
-    private fun extractContinuation(frameProxy: StackFrameProxyImpl): ObjectReference? {
-        val suspendExitMode = frameProxy.location().getSuspendExitMode()
-        return when (suspendExitMode) {
-            SuspendExitMode.SUSPEND_LAMBDA -> {
-                frameProxy.thisVariableValue()?.let { return it }
-                // Extract the previous stack frame at BaseContinuationImpl#resumeWith where invokeSuspend is invoked
-                // and extract `this` reference to the current SuspendLambda there.
-                // This is a WA for this problem: IDEA-349851, KT-67136.
-                val prevStackFrame = frameProxy.threadProxy().frames().getOrNull(frameProxy.frameIndex + 1)
-                if (prevStackFrame == null) {
-                    thisLogger().error("[coroutine filtering]: Could not extract the previous stack frame for the frame ${frameProxy.stackFrame}:\n" +
-                                               "thread = ${frameProxy.threadProxy().name()} \n" +
-                                               "frames = ${frameProxy.threadProxy().frames()}")
-                    return null
-                }
-                prevStackFrame.thisObject()
-            }
-            // If the final call within a function body is a suspend call, and it's the only suspend call,
-            // then tail call optimization is applied, and no state machine is generated, hence only completion variable is available.
-            SuspendExitMode.SUSPEND_METHOD_PARAMETER -> frameProxy.continuationVariableValue() ?: frameProxy.completionVariableValue()
-            else -> null
-        }
-    }
-
     override fun callerLocation(suspendContext: SuspendContextImpl): Location? {
         val frameProxy = suspendContext.getStackFrameProxyImpl() ?: return null
-        val continuationObject = extractContinuation(frameProxy) ?: return null
+        val continuationObject = extractContinuationOrCompletion(frameProxy) ?: return null
         val executionContext = DefaultExecutionContext(suspendContext, frameProxy)
         val debugMetadata = DebugMetadata.instance(executionContext) ?: return null
         val callerFrame = callMethodFromHelper(CoroutinesDebugHelper::class.java, executionContext, "getCallerFrame", listOf(continuationObject))?: return null
@@ -227,6 +203,11 @@ private class CoroutineStackFrameInterceptor : StackFrameInterceptor {
 
     private fun SuspendContextImpl.getStackFrameProxyImpl(): StackFrameProxyImpl? =
         activeExecutionStack?.threadProxy?.frame(0) ?: this.frameProxy
+
+    // If the final call within a function body is a suspend call, and it's the only suspend call,
+    // then tail call optimization is applied, and no state machine is generated, hence only completion variable is available.
+    private fun extractContinuationOrCompletion(frameProxy: StackFrameProxyImpl): ObjectReference? =
+        extractContinuation(frameProxy) ?: frameProxy.completionVariableValue()
 
     /**
      * The coroutine filter which defines a coroutine by the set of ids of coroutines running on the current thread.

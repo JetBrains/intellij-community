@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.util.InspectionMessage;
@@ -30,12 +30,12 @@ public interface CommonProblemDescriptor {
       }
       TextRange range1 = pd1.getTextRangeInElement();
       TextRange range2 = pd2.getTextRangeInElement();
-      diff = Segment.BY_START_OFFSET_THEN_END_OFFSET.compare(range1 == null ? TextRange.EMPTY_RANGE : range1, range2 == null ? TextRange.EMPTY_RANGE : range2);
+      diff = Segment.BY_START_OFFSET_THEN_END_OFFSET.compare(range2 == null ? TextRange.EMPTY_RANGE : range2, range1 == null ? TextRange.EMPTY_RANGE : range1);
       if (diff != 0) {
         return diff;
       }
     }
-    return c1.getDescriptionTemplate().compareTo(c2.getDescriptionTemplate());
+    return c2.getDescriptionTemplate().compareTo(c1.getDescriptionTemplate());
   };
 
   CommonProblemDescriptor[] EMPTY_ARRAY = new CommonProblemDescriptor[0];

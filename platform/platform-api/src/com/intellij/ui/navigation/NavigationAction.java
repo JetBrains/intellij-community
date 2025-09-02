@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.ShadowAction;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,7 +17,6 @@ import javax.swing.*;
  *
  * @see History
  */
-@ApiStatus.Internal
 public abstract class NavigationAction extends AnAction implements DumbAware {
   protected NavigationAction(JComponent c, String originalActionID, @NotNull Disposable parentDisposable) {
     new ShadowAction(this, originalActionID, c,  parentDisposable);

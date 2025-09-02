@@ -30,7 +30,7 @@ object JdkDownloadUtil {
 
   suspend fun pickJdkItemAndPath(project: Project, filter: (JdkItem) -> Boolean): Pair<JdkItem, Path>? {
     val wsl = project.basePath?.let { WslPath.getDistributionByWindowsUncPath(it) }
-    val eel = if (Registry.`is`("java.home.finder.use.eel")) project.getEelDescriptor().upgrade() else null
+    val eel = if (Registry.`is`("java.home.finder.use.eel")) project.getEelDescriptor().toEelApi() else null
     val jdkPredicate = when {
       eel != null -> JdkPredicate.forEel(eel)
       wsl != null -> JdkPredicate.forWSL()

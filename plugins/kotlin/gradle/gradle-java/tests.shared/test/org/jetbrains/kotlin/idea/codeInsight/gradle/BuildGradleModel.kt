@@ -66,7 +66,7 @@ fun <T : Any> buildGradleModel(
     )
 
     connector.connect().use { gradleConnection ->
-        val buildAction = GradleModelFetchAction()
+        val buildAction = GradleModelFetchAction(gradleVersion)
             .addProjectImportModelProviders(
                 GradleClassProjectModelProvider.createAll(
                     clazz.java,

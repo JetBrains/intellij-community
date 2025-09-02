@@ -69,25 +69,26 @@ private fun hasExecutableCodeImpl(
     var isApplicable = false
     val checked = HashSet<PsiElement>()
 
-    visitElements(fun(element: PsiElement): Boolean {
+    visitElements { element ->
         if (element is PsiWhiteSpace || element.getParentOfType<PsiComment>(false) != null || !element.isValid) {
-            return true
+            return@visitElements true
         }
         val parent = getParentToAnalyze(element)
         if (!checked.add(parent)) {
-            return true
+            return@visitElements true
         }
 
-        val result = checker(parent)
+        @Suppress("USELESS_ELVIS")
+        val result = checker(parent) ?: return@visitElements true
 
         if (result.shouldStop && !result.isApplicable) {
             isApplicable = false
-            return false
+            return@visitElements false
         }
 
         isApplicable = isApplicable or result.isApplicable
-        return !result.shouldStop
-    })
+        return@visitElements !result.shouldStop
+    }
     return isApplicable
 }
 

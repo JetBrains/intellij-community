@@ -56,6 +56,13 @@ public interface OptionContainer {
    * @see OptionController#fieldsOf(Object)
    */
   default @NotNull OptionController getOptionController() {
-    return OptionController.fieldsOf(this);
+    return OptionController.fieldsOf(this).withRootPane(this::getOptionsPane);
+  }
+
+  /**
+   * @return OptPane to edit this container
+   */
+  default @NotNull OptPane getOptionsPane() {
+    return OptPane.EMPTY;
   }
 }

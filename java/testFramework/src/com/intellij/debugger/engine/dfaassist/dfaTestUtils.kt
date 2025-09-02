@@ -2,21 +2,22 @@
 package com.intellij.debugger.engine.dfaassist
 
 import com.intellij.debugger.engine.MockDebugProcess
-import com.intellij.debugger.engine.events.DebuggerCommandImpl
+import com.intellij.debugger.engine.withDebugContext
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.debugger.mockJDI.MockStackFrame
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPointerManager
+import kotlinx.coroutines.runBlocking
 
+@Suppress("RAW_RUN_BLOCKING")
 internal fun getDfaRunnerNow(element: PsiElement, process: MockDebugProcess, frame: MockStackFrame): DebuggerDfaRunner? {
-  var runner: DebuggerDfaRunner? = null
   val pointer = SmartPointerManager.createPointer<PsiElement?>(element)
-  process.managerThread.invokeAndWait(object : DebuggerCommandImpl() {
-    override suspend fun actionSuspend() {
-      val threadProxy = process.getVirtualMachineProxy().allThreads().firstOrNull() ?: return
+  val managerThread = process.managerThread
+  return runBlocking {
+    withDebugContext(managerThread) {
+      val threadProxy = process.virtualMachineProxy.allThreads().firstOrNull() ?: return@withDebugContext null
       val frameProxy = StackFrameProxyImpl(threadProxy, frame, 1)
-      runner = createDfaRunner(frameProxy, pointer)
+      createDfaRunner(frameProxy, pointer)
     }
-  })
-  return runner
+  }
 }

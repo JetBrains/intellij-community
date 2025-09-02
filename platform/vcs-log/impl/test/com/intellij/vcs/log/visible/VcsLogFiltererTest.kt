@@ -239,13 +239,13 @@ class VcsLogFiltererTest {
     assertEquals(0, visiblePack.visibleGraph.visibleCommitCount, "Graph should be empty, but was: $graph")
   }
 
-  private fun GraphCommit<Int>.toVcsCommit(storage: VcsLogStorage) = TimedVcsCommitImpl(storage.getCommitId(this.id)!!.hash, storage.getHashes(this.parents), 1)
+  private fun GraphCommit<VcsLogCommitStorageIndex>.toVcsCommit(storage: VcsLogStorage) = TimedVcsCommitImpl(storage.getCommitId(this.id)!!.hash, storage.getHashes(this.parents), 1)
 
-  private fun assertDoesNotContain(graph: VisibleGraph<Int>, id: Int) {
+  private fun assertDoesNotContain(graph: VisibleGraph<VcsLogCommitStorageIndex>, id: VcsLogCommitStorageIndex) {
     assertNull((1..graph.visibleCommitCount).firstOrNull { graph.getRowInfo(it - 1).commit == id })
   }
 
-  private fun assertCommits(graph: VisibleGraph<Int>, vararg ids: Int) {
+  private fun assertCommits(graph: VisibleGraph<VcsLogCommitStorageIndex>, vararg ids: Int) {
     assertEquals(ids.size, graph.visibleCommitCount, "Incorrect number of commits in graph: $graph. Expected: ${ids.asList()}")
     ids.forEachIndexed { index, id ->
       val actual = graph.getRowInfo(index).commit
@@ -253,19 +253,19 @@ class VcsLogFiltererTest {
     }
   }
 
-  data class Ref(val name: String, val commit: Int)
+  data class Ref(val name: String, val commit: VcsLogCommitStorageIndex)
   data class CommitMetaData(val user: VcsUser? = DEFAULT_USER, val subject: String = "default commit message")
 
-  data class SingleRootGraph(val commits: List<GraphCommit<Int>>,
+  data class SingleRootGraph(val commits: List<GraphCommit<VcsLogCommitStorageIndex>>,
                              val refs: Set<Ref>,
-                             val data: HashMap<GraphCommit<Int>, CommitMetaData>)
+                             val data: HashMap<GraphCommit<VcsLogCommitStorageIndex>, CommitMetaData>)
 
   inner class MultiRootGraph(private val graphsByRoots: Map<VirtualFile, SingleRootGraph>) {
 
     val roots = graphsByRoots.keys
     var providers: Map<VirtualFile, TestVcsLogProvider> = graphsByRoots.mapValues { TestVcsLogProvider() }
 
-    val commits: Map<VirtualFile, List<GraphCommit<Int>>> = graphsByRoots.mapValues { it.value.commits }
+    val commits: Map<VirtualFile, List<GraphCommit<VcsLogCommitStorageIndex>>> = graphsByRoots.mapValues { it.value.commits }
     val allCommits = commits.values.flatten()
     val hashMap = ConstantVcsLogStorage(commits, graphsByRoots.mapValues { it.value.refs })
 
@@ -294,7 +294,7 @@ class VcsLogFiltererTest {
 
     private fun newTrivialDataGetter(): DataGetter<VcsFullCommitDetails> {
       return object : DataGetter<VcsFullCommitDetails> {
-        override fun loadCommitsData(hashes: MutableList<Int>,
+        override fun loadCommitsData(hashes: MutableList<VcsLogCommitStorageIndex>,
                                      consumer: Consumer<in MutableList<VcsFullCommitDetails>>,
                                      errorConsumer: Consumer<in Throwable>,
                                      indicator: ProgressIndicator?) {
@@ -311,7 +311,7 @@ class VcsLogFiltererTest {
     }
   }
 
-  fun VcsLogStorage.getHashes(ids: List<Int>) = ids.map { getCommitId(it)!!.hash }
+  fun VcsLogStorage.getHashes(ids: List<VcsLogCommitStorageIndex>) = ids.map { getCommitId(it)!!.hash }
 
   private fun graph(f: GraphBuilder.() -> Unit): MultiRootGraph {
     return multiRootGraph {
@@ -341,28 +341,28 @@ class VcsLogFiltererTest {
   }
 
   inner class GraphBuilder {
-    val commits = ArrayList<GraphCommit<Int>>()
+    val commits = ArrayList<GraphCommit<VcsLogCommitStorageIndex>>()
     val refs = HashSet<Ref>()
-    val data = HashMap<GraphCommit<Int>, CommitMetaData>()
+    val data = HashMap<GraphCommit<VcsLogCommitStorageIndex>, CommitMetaData>()
 
-    operator fun Int.invoke(vararg id: Int): GraphCommit<Int> {
+    operator fun Int.invoke(vararg id: Int): GraphCommit<VcsLogCommitStorageIndex> {
       val commit = GraphCommitImpl.createCommit(this, id.toList(), this.toLong())
       commits.add(commit)
       data[commit] = CommitMetaData()
       return commit
     }
 
-    operator fun GraphCommit<Int>.times(name: String): GraphCommit<Int> {
+    operator fun GraphCommit<VcsLogCommitStorageIndex>.times(name: String): GraphCommit<VcsLogCommitStorageIndex> {
       refs.add(Ref(name, this.id))
       return this
     }
 
-    operator fun GraphCommit<Int>.plus(name: String): GraphCommit<Int> {
+    operator fun GraphCommit<VcsLogCommitStorageIndex>.plus(name: String): GraphCommit<VcsLogCommitStorageIndex> {
       data[this] = CommitMetaData(VcsUserImpl(name, "$name@example.com"))
       return this
     }
 
-    operator fun GraphCommit<Int>.plus(user: VcsUser?): GraphCommit<Int> {
+    operator fun GraphCommit<VcsLogCommitStorageIndex>.plus(user: VcsUser?): GraphCommit<VcsLogCommitStorageIndex> {
       data[this] = CommitMetaData(user)
       return this
     }
@@ -370,12 +370,12 @@ class VcsLogFiltererTest {
     fun done() = SingleRootGraph(commits, refs, data)
   }
 
-  class ConstantVcsLogStorage(private val commitsByRoot: Map<VirtualFile, List<GraphCommit<Int>>>,
+  class ConstantVcsLogStorage(private val commitsByRoot: Map<VirtualFile, List<GraphCommit<VcsLogCommitStorageIndex>>>,
                               private val refsByRoot: Map<VirtualFile, Set<Ref>>) : VcsLogStorage {
 
     val storagesByRoot = generate()
 
-    data class SingleRootStorage(val hashes: Map<Int, Hash>, val refs: Map<Int, VcsRef>) {
+    data class SingleRootStorage(val hashes: Map<VcsLogCommitStorageIndex, Hash>, val refs: Map<Int, VcsRef>) {
       val hashesReversed = hashes.entries.associate { Pair(it.value, it.key) }
       val refsReversed = refs.entries.associate { Pair(it.value, it.key) }
     }
@@ -384,7 +384,7 @@ class VcsLogFiltererTest {
       var commitIndex = 1
       var refIndex = 1
       return commitsByRoot.mapValues { (root, commits) ->
-        val hashes : Map<Int, Hash> = commits.associate {
+        val hashes : Map<VcsLogCommitStorageIndex, Hash> = commits.associate {
           val currentIndex = commitIndex
           commitIndex++
           val hash = generateHashForIndex(currentIndex)
@@ -419,7 +419,7 @@ class VcsLogFiltererTest {
 
     override fun getCommitIndex(hash: Hash, root: VirtualFile) = storagesByRoot.getValue(root).hashesReversed.getValue(hash)
 
-    override fun getCommitId(commitIndex: Int): CommitId {
+    override fun getCommitId(commitIndex: VcsLogCommitStorageIndex): CommitId {
       return storagesByRoot.entries.firstNotNullOf { (root, storage) ->
         val hash = storage.hashes[commitIndex]
         if (hash != null) CommitId(hash, root) else null

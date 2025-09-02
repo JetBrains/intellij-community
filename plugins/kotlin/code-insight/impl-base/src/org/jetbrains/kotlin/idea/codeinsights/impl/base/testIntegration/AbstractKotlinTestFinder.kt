@@ -9,7 +9,9 @@ import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiNamedElement
+import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiShortNamesCache
 import com.intellij.psi.util.PsiUtilCore
@@ -22,12 +24,17 @@ import com.intellij.util.CommonProcessors
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
+import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.stubindex.KotlinClassShortNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinFileFacadeShortNameIndex
+import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelFunctionFqnNameIndex
+import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelPropertyFqnNameIndex
 import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinPsiBasedTestFramework
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import java.util.regex.Pattern
@@ -41,6 +48,18 @@ abstract class AbstractKotlinTestFinder : TestFinder {
             return if (!isResolvable(it)) null else it
         }
 
+        from.parentsWithSelf.firstNotNullOfOrNull {
+            if (it is KtNamedFunction && it.isTopLevel || it is KtProperty && it.isTopLevel) {
+                return it
+            } else {
+                null
+            }
+        }
+
+        return findSourceElementInFile(from)
+    }
+
+    private fun findSourceElementInFile(from: PsiElement): PsiElement? {
         (from.containingFile as? KtFile)?.let { return it }
 
         return TestIntegrationUtils.findOuterClass(from)
@@ -62,9 +81,15 @@ abstract class AbstractKotlinTestFinder : TestFinder {
     }
 
     override fun findClassesForTest(element: PsiElement): Collection<PsiElement> {
-        val klass = findSourceElement(element) ?: return emptySet()
+        val sourceElement =
+            findSourceElement(element)?.takeUnless { it is KtNamedFunction }
+                ?: findSourceElementInFile(element)
+                ?: return emptySet()
 
-        val klassName = klass.findClassName()
+        val containingFile = element.containingFile
+        val sourcePackageName = (containingFile as? KtFile)?.packageFqName?.asString()
+
+        val potentialName = findPotentialNames(sourceElement).firstOrNull() ?: return emptySet()
 
         val scope = getSearchScope(element, true)
 
@@ -73,15 +98,46 @@ abstract class AbstractKotlinTestFinder : TestFinder {
 
         val frameworks = TestFrameworks.getInstance()
         val classesWithWeights = ArrayList<Pair<out PsiNamedElement, Int>>()
-        for (candidateNameWithWeight in TestFinderHelper.collectPossibleClassNamesWithWeights(klassName)) {
+        val psiManager = PsiManager.getInstance(project)
+        val collectPossibleNamesWithWeights = TestFinderHelper.collectPossibleClassNamesWithWeights(potentialName)
+
+        fun addElementWithWeight(element: PsiNamedElement, proximity: Int) {
+            val candidatePackageName = (element.containingFile as? KtFile)?.packageFqName?.asString()
+            val packageProximity =
+                if (candidatePackageName != null && sourcePackageName != null) {
+                    TestFinderHelper.calcTestNameProximity(sourcePackageName, candidatePackageName)
+                } else {
+                    0
+                }
+            classesWithWeights.add(Pair.create(element, packageProximity + proximity))
+        }
+
+        fun addKotlinTopLevelFunction(n: String, proximity: Int) {
+            val key = (sourcePackageName.takeUnless { it.isNullOrEmpty() }?.let { "$it." } ?: "") + n
+            KotlinTopLevelFunctionFqnNameIndex.processElements(key, project, scope) {
+                addElementWithWeight(it, proximity)
+                true
+            }
+        }
+
+        fun addKotlinTopLevelProperties(n: String, proximity: Int) {
+            val key = (sourcePackageName.takeUnless { it.isNullOrEmpty() }?.let { "$it." } ?: "") + n
+            KotlinTopLevelPropertyFqnNameIndex.processElements(key, project, scope) {
+                addElementWithWeight(it, proximity)
+                true
+            }
+        }
+
+        for (candidateNameWithWeight in collectPossibleNamesWithWeights) {
             val name = candidateNameWithWeight.first
+            val weight = candidateNameWithWeight.second
             for (eachClass in cache.getClassesByName(name, scope)) {
                 if (eachClass.isAnnotationType || frameworks.isTestClass(eachClass)) continue
 
                 if (eachClass is KtLightClassForFacade) {
-                    eachClass.files.mapTo(classesWithWeights) { Pair.create(it, candidateNameWithWeight.second) }
+                    eachClass.files.mapTo(classesWithWeights) { Pair.create(it, weight) }
                 } else if (eachClass.isPhysical || eachClass is KtLightClass) {
-                    classesWithWeights.add(Pair.create(eachClass, candidateNameWithWeight.second))
+                    classesWithWeights.add(Pair.create(eachClass, weight))
                 }
             }
 
@@ -92,46 +148,70 @@ abstract class AbstractKotlinTestFinder : TestFinder {
                             framework.isTestClass(ktClassOrObject)
                         }
                     if (notATest) {
-                        classesWithWeights.add(Pair.create(ktClassOrObject, candidateNameWithWeight.second))
+                        addElementWithWeight(ktClassOrObject, weight)
                     }
                 }
                 true
             }
 
             KotlinFileFacadeShortNameIndex.processElements(name, project, scope, null) { ktFile ->
-                classesWithWeights.add(Pair.create(ktFile, candidateNameWithWeight.second))
+                addElementWithWeight(ktFile, weight)
+                true
+            }
+
+            addKotlinTopLevelFunction(name, weight)
+            if (name.first().isUpperCase()) {
+                addKotlinTopLevelFunction(name.replaceFirstChar {  it.lowercase() }, weight + 10)
+            }
+
+            addKotlinTopLevelProperties(name, weight)
+            if (name.first().isUpperCase()) {
+                addKotlinTopLevelProperties(name.replaceFirstChar {  it.lowercase() }, weight + 10)
+            }
+
+            FilenameIndex.processFilesByName(name + KotlinFileType.DOT_DEFAULT_EXTENSION, false, scope) { virtualFile ->
+                if (virtualFile == containingFile.virtualFile) return@processFilesByName true
+                val ktFile = psiManager.findFile(virtualFile) as? KtFile
+                ktFile?.let {
+                    addElementWithWeight(it, weight + 10)
+                }
+                true
             }
         }
 
-        return TestFinderHelper.getSortedElements(classesWithWeights, false)
+        return TestFinderHelper.getSortedElements(classesWithWeights, true)
     }
 
     override fun findTestsForClass(element: PsiElement): Collection<PsiElement> {
-        val klass = findSourceElement(element) ?: return emptySet()
+        val sourceElement = findSourceElement(element) ?: return emptySet()
+        val sourcePackageName = (sourceElement.containingFile as? KtFile)?.packageFqName?.asString()
 
         val classesWithProximities = ArrayList<Pair<out PsiNamedElement, Int>>()
         val processor = CommonProcessors.CollectProcessor(classesWithProximities)
 
-        val klassName = klass.findClassName()
-        val pattern = Pattern.compile(".*" + StringUtil.escapeToRegexp(klassName) + ".*", Pattern.CASE_INSENSITIVE)
-
-        val scope = getSearchScope(klass, false)
+        val potentialNames = findPotentialNames(sourceElement)
+        val sourceName = potentialNames.firstOrNull() ?: return emptySet()
+        val scope = getSearchScope(sourceElement, false)
         val frameworks = TestFrameworks.getInstance()
+        val project = sourceElement.project
 
+        val patterns = potentialNames
+            .map { Pattern.compile(".*" + StringUtil.escapeToRegexp(it) + ".*", Pattern.CASE_INSENSITIVE) }
 
         val classNamesProcessor = object : CommonProcessors.CollectProcessor<String>() {
             override fun accept(t: String?): Boolean {
-                return t?.let { pattern.matcher(it).matches() } ?: false
+                return t?.let { patterns.any { it.matcher(t).matches() } } == true
             }
         }
-        val project = klass.project
+
         var cache = PsiShortNamesCache.getInstance(project)
-
-        cache.processAllClassNames(classNamesProcessor)
-
+        cache.processAllClassNames(classNamesProcessor, scope, null)
         cache = cache.withoutLanguages(KotlinLanguage.INSTANCE)
-        for (candidateName in classNamesProcessor.results) {
-            for (candidateClass in cache.getClassesByName(candidateName, scope)) {
+
+        val results = classNamesProcessor.results
+        for (candidateName in results) {
+            val classesByName = cache.getClassesByName(candidateName, scope)
+            for (candidateClass in classesByName) {
                 if (!candidateClass.isPhysical && candidateClass !is KtLightClass) {
                     continue
                 }
@@ -139,7 +219,8 @@ abstract class AbstractKotlinTestFinder : TestFinder {
                     continue
                 }
 
-                processor.process(Pair.create(candidateClass, TestFinderHelper.calcTestNameProximity(klassName, candidateName)))
+                processor.process(Pair.create(candidateClass,
+                                              TestFinderHelper.calcTestNameProximity(sourceName, candidateName)))
             }
 
             KotlinClassShortNameIndex.processElements(candidateName, project, scope, null) { ktClassOrObject: KtClassOrObject ->
@@ -149,26 +230,40 @@ abstract class AbstractKotlinTestFinder : TestFinder {
                     }
 
                 if (isPotentialTest) {
+                    val candidatePackageName = ktClassOrObject.containingKtFile.packageFqName.asString()
+                    val proximity =
+                        (sourcePackageName?.let { TestFinderHelper.calcTestNameProximity(it, candidatePackageName) } ?: 0) +
+                        TestFinderHelper.calcTestNameProximity(sourceName, candidateName)
                     processor.process(
-                        Pair.create<KtClassOrObject, Int>(
-                            ktClassOrObject,
-                            TestFinderHelper.calcTestNameProximity(klassName, candidateName)
-                        )
+                        Pair.create<KtClassOrObject, Int>(ktClassOrObject, proximity)
                     )
                 }
                 true
             }
         }
-
         return TestFinderHelper.getSortedElements(classesWithProximities, true)
     }
 
-    private fun PsiElement.findClassName(): String =
-        when(this) {
-            is KtClassOrObject -> name
-            is PsiClass -> name
-            is KtFile -> javaFileFacadeFqName.shortName().asString()
-            else -> null
+    private fun findPotentialNames(element: PsiElement): Collection<String> =
+        when(element) {
+            is KtNamedFunction, is KtProperty -> buildSet {
+                element.name?.let(::add)
+                findSourceElementInFile(element)?.let {
+                    this += findPotentialNames( it )
+                }
+            }
+            is KtClassOrObject, is PsiClass -> {
+                listOfNotNull(element.name)
+            }
+            is KtFile -> {
+                setOf(element.javaFileFacadeFqName.shortName().asString(), element.name.substringBefore('.'))
+            }
+            is PsiNamedElement -> {
+                listOfNotNull(element.name)
+            }
+            else -> {
+                null
+            }
         } ?: throw KotlinExceptionWithAttachments("non-anonymous psiElement ${javaClass.name} is expected")
-            .withPsiAttachment("element", this)
+            .withPsiAttachment("element", element)
 }

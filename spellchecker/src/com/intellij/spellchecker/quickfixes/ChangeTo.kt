@@ -1,12 +1,14 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.spellchecker.quickfixes
 
+import com.intellij.codeInsight.intention.EventTrackingIntentionAction
 import com.intellij.codeInsight.intention.FileModifier
 import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInsight.intention.choice.ChoiceTitleIntentionAction
 import com.intellij.codeInsight.intention.choice.ChoiceVariantIntentionAction
 import com.intellij.codeInsight.intention.choice.DefaultIntentionActionWithChoice
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
+import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.DocumentMarkupModel
@@ -20,10 +22,25 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.util.startOffset
+import com.intellij.spellchecker.statistics.SpellcheckerActionStatistics
+import com.intellij.spellchecker.statistics.SpellcheckerRateTracker
 import com.intellij.spellchecker.util.SpellCheckerBundle
 import com.intellij.util.concurrency.ThreadingAssertions
 
-internal class ChangeTo(typo: String, element: PsiElement, private val range: TextRange) : DefaultIntentionActionWithChoice, LazySuggestions(typo) {
+internal class ChangeTo(
+  typo: String,
+  element: PsiElement,
+  private val range: TextRange,
+  private val tracker: SpellcheckerRateTracker?,
+) : DefaultIntentionActionWithChoice, LazySuggestions(typo) {
+  // To prevent API breakage
+  constructor(typo: String, element: PsiElement, range: TextRange) : this(
+    typo,
+    element,
+    range,
+    null,
+  )
+
   private val pointer = SmartPointerManager.getInstance(element.project).createSmartPsiElementPointer(element, element.containingFile)
 
   companion object {
@@ -37,12 +54,12 @@ internal class ChangeTo(typo: String, element: PsiElement, private val range: Te
 
   override fun getTitle(): ChoiceTitleIntentionAction = ChangeToTitleAction
 
-  private inner class ChangeToVariantAction(
-    override val index: Int
-  ) : ChoiceVariantIntentionAction(), HighPriorityAction, DumbAware {
+  private open inner class ChangeToVariantAction(
+    override val index: Int,
+    private val tracker: SpellcheckerRateTracker? = null,
+  ) : ChoiceVariantIntentionAction(), HighPriorityAction, EventTrackingIntentionAction {
 
-    @NlsSafe
-    private var suggestion: String? = null
+    private var suggestion: @NlsSafe String? = null
 
     override fun getName(): String = suggestion ?: ""
 
@@ -50,25 +67,27 @@ internal class ChangeTo(typo: String, element: PsiElement, private val range: Te
 
     override fun getFamilyName(): String = fixName
 
-    override fun isAvailable(project: Project, editor: Editor?, file: PsiFile): Boolean {
+    override fun isAvailable(project: Project, editor: Editor?, psiFile: PsiFile): Boolean {
       val suggestions = getSuggestions(project)
       if (suggestions.size <= index) return false
-      if (getRange(file.viewProvider.document) == null) return false
+      if (getRange(psiFile.viewProvider.document) == null) return false
       suggestion = suggestions[index]
       return true
     }
 
-    override fun applyFix(project: Project, file: PsiFile, editor: Editor?) {
+    override fun applyFix(project: Project, psiFile: PsiFile, editor: Editor?) {
+      tracker?.let { SpellcheckerActionStatistics.changeToPerformed(it, index, getSuggestions(project).size) }
+      performFix(project, psiFile)
+    }
+
+    protected fun performFix(project: Project, psiFile: PsiFile) {
       val suggestion = suggestion ?: return
-
-      val document = file.viewProvider.document
+      val document = psiFile.viewProvider.document
       val myRange = getRange(document) ?: return
-
       removeHighlightersWithExactRange(document, project, myRange)
-
       document.replaceString(myRange.startOffset, myRange.endOffset, suggestion)
     }
-    
+
     private fun getRange(document: Document): TextRange? {
       val element = pointer.element ?: return null
       val range = range.shiftRight(element.startOffset)
@@ -80,17 +99,28 @@ internal class ChangeTo(typo: String, element: PsiElement, private val range: Te
     }
 
     override fun getFileModifierForPreview(target: PsiFile): FileModifier {
-      return this
+      return ForPreview()
     }
 
     override fun startInWriteAction(): Boolean = true
+
+    override fun suggestionShown(project: Project, editor: Editor, psiFile: PsiFile) {
+      if (tracker != null && tracker.markShown()) {
+        SpellcheckerActionStatistics.suggestionShown(tracker)
+      }
+    }
+  }
+
+  private open inner class ForPreview() : ChangeToVariantAction(-1) {
+    override fun applyFix(project: Project, psiFile: PsiFile, editor: Editor?) {
+      performFix(project, psiFile)
+    }
   }
 
 
   override fun getVariants(): List<ChoiceVariantIntentionAction> {
     val limit = Registry.intValue("spellchecker.corrections.limit")
-
-    return (0 until limit).map { ChangeToVariantAction(it) }
+    return (0 until limit).map { ChangeToVariantAction(it, tracker) }
   }
 
   /**
@@ -101,14 +131,14 @@ internal class ChangeTo(typo: String, element: PsiElement, private val range: Te
    * they'll be restored when the new highlighting pass is finished.
    * This method currently works in O(total highlighter count in file) time.
    */
-  fun removeHighlightersWithExactRange(document: Document, project: Project, range: Segment) {
+  private fun removeHighlightersWithExactRange(document: Document, project: Project, range: Segment) {
     if (IntentionPreviewUtils.isIntentionPreviewActive()) return
     ThreadingAssertions.assertEventDispatchThread()
     val model = DocumentMarkupModel.forDocument(document, project, false) ?: return
 
     for (highlighter in model.allHighlighters) {
-      if (TextRange.areSegmentsEqual(range, highlighter!!)) {
-        model.removeHighlighter(highlighter!!)
+      if (TextRange.areSegmentsEqual(range, highlighter)) {
+        model.removeHighlighter(highlighter)
       }
     }
   }

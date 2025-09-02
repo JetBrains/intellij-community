@@ -6,6 +6,7 @@ import com.intellij.openapi.extensions.RequiredElement;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Set;
@@ -43,7 +44,7 @@ public final class BasicInspectionVisitorBean {
     }, null);
   }
 
-  public static @NotNull Collection<String> getVisitorClasses() {
+  public static @NotNull @Unmodifiable Collection<String> getVisitorClasses() {
     Set<String> set = ourClasses;
     if (set != null) return set;
 

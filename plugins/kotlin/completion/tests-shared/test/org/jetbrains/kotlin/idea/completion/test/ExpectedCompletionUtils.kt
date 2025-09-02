@@ -141,6 +141,7 @@ object ExpectedCompletionUtils {
     private const val COMPLETION_TYPE_PREFIX = "COMPLETION_TYPE:"
 
     val KNOWN_PREFIXES: List<String> = ImmutableList.of(
+        "REGISTRY:",
         "LANGUAGE_VERSION:",
         EXIST_LINE_PREFIX,
         ABSENT_LINE_PREFIX,

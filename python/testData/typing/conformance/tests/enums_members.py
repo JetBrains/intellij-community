@@ -19,6 +19,10 @@ class Pet(Enum):  # E?: Uninitialized attributes (pyre)
     CAT = 1  # Member attribute
     DOG = 2  # Member attribute
 
+    def __init__(self, genus: str, species: str) -> None:
+        self.genus = genus
+        self.species = species
+
 
 assert_type(Pet.genus, str)
 assert_type(Pet.species, str)

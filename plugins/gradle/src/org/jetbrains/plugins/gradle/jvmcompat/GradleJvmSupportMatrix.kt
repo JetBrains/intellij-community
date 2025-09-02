@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.jvmcompat
 
 import com.intellij.openapi.components.State
@@ -27,7 +27,7 @@ class GradleJvmSupportMatrix : IdeVersionedDataStorage<GradleCompatibilityState>
   private fun applyState(state: GradleCompatibilityState) {
     compatibility = getCompatibilityRanges(state)
     supportedGradleVersions = state.supportedGradleVersions.map(GradleVersion::version)
-    supportedJavaVersions = state.supportedJavaVersions.map(JavaVersion::parse)
+    supportedJavaVersions = state.supportedJavaVersions.mapNotNull(JavaVersion::tryParse)
   }
 
   init {
@@ -37,11 +37,13 @@ class GradleJvmSupportMatrix : IdeVersionedDataStorage<GradleCompatibilityState>
   override fun newState(): GradleCompatibilityState = GradleCompatibilityState()
 
   private fun getCompatibilityRanges(data: GradleCompatibilityState): List<Pair<Ranges<JavaVersion>, Ranges<GradleVersion>>> {
-    return data.compatibility.map { entry ->
+    return data.compatibility.mapNotNull { entry ->
       val gradleVersionInfo = entry.gradleVersionInfo ?: ""
       val javaVersionInfo = entry.javaVersionInfo ?: ""
       val gradleRange = IdeVersionedDataParser.parseRange(gradleVersionInfo.split(','), GradleVersion::version)
-      val javaRange = IdeVersionedDataParser.parseRange(javaVersionInfo.split(','), JavaVersion::parse)
+      val javaRange = runCatching {
+        IdeVersionedDataParser.parseRange(javaVersionInfo.split(','), JavaVersion::parse)
+      }.getOrNull() ?: return@mapNotNull null
       javaRange to gradleRange
     }
   }

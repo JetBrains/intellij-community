@@ -26,9 +26,9 @@ public class SurroundWithEmmetAction extends BaseCodeInsightAction {
   }
 
   @Override
-  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
     return EmmetOptions.getInstance().isEmmetEnabled() &&
-           TemplateManagerImpl.isApplicable(new ZenCodingTemplate(), TemplateActionContext.surrounding(file, editor));
+           TemplateManagerImpl.isApplicable(new ZenCodingTemplate(), TemplateActionContext.surrounding(psiFile, editor));
   }
 
   @Override
@@ -38,7 +38,7 @@ public class SurroundWithEmmetAction extends BaseCodeInsightAction {
 
   private static class SurroundWithEmmetHandler implements CodeInsightActionHandler {
     @Override
-    public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
       SelectionModel selectionModel = editor.getSelectionModel();
       if (!selectionModel.hasSelection()) {
         SurroundWithHandler.selectLogicalLineContentsAtCaret(editor);
@@ -46,7 +46,7 @@ public class SurroundWithEmmetAction extends BaseCodeInsightAction {
 
       ZenCodingTemplate emmetCustomTemplate = CustomLiveTemplate.EP_NAME.findExtension(ZenCodingTemplate.class);
       if (emmetCustomTemplate != null) {
-        new WrapWithCustomTemplateAction(emmetCustomTemplate, editor, file, new HashSet<>()).perform();
+        new WrapWithCustomTemplateAction(emmetCustomTemplate, editor, psiFile, new HashSet<>()).perform();
       }
       else if (!ApplicationManager.getApplication().isUnitTestMode()) {
         HintManager.getInstance().showErrorHint(editor, XmlBundle.message("emmet.action.surround.error.hint"));

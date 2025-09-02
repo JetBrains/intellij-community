@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.diagnostic.PluginException;
@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Objects;
 
 @ApiStatus.Internal
-public class StubBuilderType {
+public final class StubBuilderType {
   private static final Logger LOG = Logger.getInstance(StubBuilderType.class);
   private final LanguageStubDescriptor myStubDescriptor;
   private final List<String> myProperties;
@@ -39,7 +39,7 @@ public class StubBuilderType {
     myProperties = Collections.emptyList();
   }
 
-  StubBuilderType(@NotNull BinaryFileStubBuilder.CompositeBinaryFileStubBuilder binaryFileStubBuilder,
+  StubBuilderType(@NotNull BinaryFileStubBuilder.CompositeBinaryFileStubBuilder<?> binaryFileStubBuilder,
                   @Nullable Object binarySubBuilder) {
     myStubDescriptor = null;
     myBinaryFileStubBuilder = binaryFileStubBuilder;
@@ -47,7 +47,7 @@ public class StubBuilderType {
     myProperties = Collections.emptyList();
   }
 
-  @NotNull Class<?> getClassToBlameInCaseOfException() {
+  public @NotNull Class<?> getClassToBlameInCaseOfException() {
     if (myStubDescriptor != null) {
       return myStubDescriptor.getFileElementType().getClass();
     }

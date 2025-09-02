@@ -23,8 +23,18 @@ import os
 _DOCTEST_MODULES_ARG = "--doctest-modules"
 
 def _add_module_to_target(module_name, python_parts):
-    # Doctest: Add module name to path_to_file.py::module_name.class_name.fun_name
-    return module_name + "." + python_parts
+    # Doctest: Find the fully qualified name of the target module by checking each
+    # directory level if they have an __init__.py file
+    fully_qualified_name = []
+    path = os.path.abspath(module_name.replace("/", os.sep))
+    while True:
+        fully_qualified_name.insert(0, os.path.basename(path))
+        path = os.path.dirname(path)
+        init_py_path = os.path.join(path, "__init__.py")
+        if not os.path.exists(init_py_path):
+            break
+
+    return  ".".join(fully_qualified_name) + "." + python_parts
 
 
 if __name__ == '__main__':

@@ -1,25 +1,29 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal;
 
+import com.intellij.execution.process.LocalProcessService;
 import com.intellij.execution.process.LocalPtyOptions;
-import com.intellij.execution.process.ProcessService;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.containers.CollectionFactory;
 import com.jediterm.core.util.TermSize;
 import com.jediterm.terminal.TtyConnector;
 import com.pty4j.PtyProcess;
+import kotlin.Pair;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector;
 import org.jetbrains.plugins.terminal.fus.TerminalUsageTriggerCollector;
 import org.jetbrains.plugins.terminal.runner.LocalOptionsConfigurer;
 import org.jetbrains.plugins.terminal.runner.LocalShellIntegrationInjector;
 import org.jetbrains.plugins.terminal.runner.LocalTerminalStartCommandBuilder;
+import org.jetbrains.plugins.terminal.shell_integration.TerminalPSReadLineUpdateUtil;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -31,6 +35,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import static org.jetbrains.plugins.terminal.LocalBlockTerminalRunner.*;
+import static org.jetbrains.plugins.terminal.TerminalStartupKt.shouldUseEelApi;
+import static org.jetbrains.plugins.terminal.TerminalStartupKt.startProcess;
 import static org.jetbrains.plugins.terminal.util.ShellNameUtil.*;
 
 public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess> {
@@ -41,6 +47,19 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   public static final List<String> LOGIN_CLI_OPTIONS = List.of(LOGIN_CLI_OPTION, "-l");
 
   protected final Charset myDefaultCharset;
+
+  /**
+   * A workaround to pass some additional information ({@link ShellProcessHolder})
+   * from {@link #createProcess(ShellStartupOptions)} to {@link #createTtyConnector(PtyProcess)}.
+   * <p>
+   * This map references {@code PtyProcess} objects weakly, so no memory leaks are possible
+   * as long as {@code ShellProcessHolder} and {@code PtyProcess} are not strongly reachable
+   * from other GC roots.
+   * <p>
+   * TODO merge {@link #createProcess(ShellStartupOptions)} and {@link #createTtyConnector(PtyProcess)} into
+   *     a single {@code createTtyConnector(ShellStartupOptions)} and remove this workaround
+   */
+  private final Map<PtyProcess, ShellProcessHolder> myProcessHolderMap = CollectionFactory.createConcurrentWeakMap();
 
   public LocalTerminalDirectRunner(Project project) {
     super(project);
@@ -59,6 +78,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
                                                                             isGenOneTerminalEnabled(),
                                                                             isGenTwoTerminalEnabled());
     }
+    updatedOptions = TerminalPSReadLineUpdateUtil.configureOptions(updatedOptions);
     return applyTerminalCustomizers(updatedOptions);
   }
 
@@ -101,21 +121,34 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
       TerminalUsageTriggerCollector.triggerLocalShellStarted(myProject, command, isBlockTerminal);
     }
 
+    Path workingDirPath = null;
+    try {
+      workingDirPath = Path.of(workingDir);
+    }
+    catch (InvalidPathException ignored) {
+    }
     try {
       long startNano = System.nanoTime();
-      PtyProcess process = (PtyProcess)ProcessService.getInstance().startPtyProcess(
-        command,
-        workingDir,
-        envs,
-        LocalPtyOptions.defaults().builder()
-          .initialColumns(initialTermSize != null ? initialTermSize.getColumns() : -1)
-          .initialRows(initialTermSize != null ? initialTermSize.getRows() : -1)
-          .build(),
-        null,
-        false,
-        false,
-        false
-      );
+      PtyProcess process;
+      if (workingDirPath != null && shouldUseEelApi()) {
+        Pair<PtyProcess, ShellProcessHolder> processPair = startProcess(
+          List.of(command), envs, workingDirPath, Objects.requireNonNull(initialTermSize)
+        );
+        myProcessHolderMap.put(processPair.getFirst(), processPair.getSecond());
+        process = processPair.getFirst();
+      }
+      else {
+        process = (PtyProcess)LocalProcessService.getInstance().startPtyProcess(
+          List.of(command),
+          workingDir,
+          envs,
+          LocalPtyOptions.defaults().builder()
+            .initialColumns(initialTermSize != null ? initialTermSize.getColumns() : -1)
+            .initialRows(initialTermSize != null ? initialTermSize.getRows() : -1)
+            .build(),
+          false
+        );
+      }
       LOG.info("Started " + process.getClass().getName() + " in " + TimeoutUtil.getDurationMillis(startNano) + " ms from "
                + stringifyProcessInfo(command, workingDir, initialTermSize, envs, !LOG.isDebugEnabled()));
       return process;
@@ -165,9 +198,14 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     }
   }
 
+  @ApiStatus.Internal
+  protected @Nullable ShellProcessHolder getHolder(@NotNull PtyProcess process) {
+    return myProcessHolderMap.remove(process);
+  }
+
   @Override
   public @NotNull TtyConnector createTtyConnector(@NotNull PtyProcess process) {
-    return new LocalTerminalTtyConnector(process, myDefaultCharset);
+    return new LocalTerminalTtyConnector(process, myDefaultCharset, getHolder(process));
   }
 
   @Override
@@ -192,35 +230,29 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     return false;
   }
 
+  @ApiStatus.Internal
+  protected boolean isGenTwoTerminalEnabled() {
+    return false;
+  }
+
   private @NotNull String getShellPath() {
     return TerminalProjectOptionsProvider.getInstance(myProject).getShellPath();
   }
 
-  /** @deprecated to be removed */
   @ApiStatus.Internal
-  @Deprecated(forRemoval = true)
-  public @NotNull List<String> getCommand(@NotNull String shellPath,
-                                                 @NotNull Map<String, String> envs,
-                                                 boolean shellIntegration) {
-    List<String> command = LocalTerminalStartCommandBuilder.convertShellPathToCommand(shellPath);
-    if (shellIntegration) {
-      ShellStartupOptions options = injectShellIntegration(command, envs);
-      return Objects.requireNonNull(options.getShellCommand());
-    }
-    return command;
-  }
-
-  @NotNull ShellStartupOptions injectShellIntegration(@NotNull List<String> shellCommand,
+  @VisibleForTesting
+  public @NotNull ShellStartupOptions injectShellIntegration(@NotNull List<String> shellCommand,
                                                              @NotNull Map<String, String> envs) {
     ShellStartupOptions options = new ShellStartupOptions.Builder().shellCommand(shellCommand).envVariables(envs).build();
     return LocalShellIntegrationInjector.injectShellIntegration(options, isGenOneTerminalEnabled(), isGenTwoTerminalEnabled());
   }
 
   /**
-   * @return true if block terminal can be used with the provided shell name
+   * @return true if we should source advanced shell integration for the specified shell.
+   * This integration makes available such advanced terminal features as command blocks.
    */
   @ApiStatus.Internal
-  public static boolean isBlockTerminalSupported(@NotNull String shellName) {
+  public static boolean supportsBlocksShellIntegration(@NotNull String shellName) {
     if (isPowerShell(shellName)) {
       return SystemInfo.isWin11OrNewer && Registry.is(BLOCK_TERMINAL_POWERSHELL_WIN11_REGISTRY, false) ||
              SystemInfo.isWin10OrNewer && !SystemInfo.isWin11OrNewer && Registry.is(BLOCK_TERMINAL_POWERSHELL_WIN10_REGISTRY, false) ||
@@ -231,5 +263,4 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
            || shellName.equals(ZSH_NAME)
            || shellName.equals(FISH_NAME) && Registry.is(BLOCK_TERMINAL_FISH_REGISTRY, false);
   }
-
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast
 
 import com.intellij.lang.Language
@@ -14,8 +14,6 @@ import org.jetbrains.uast.util.classSetOf
  * Extension to provide UAST (Unified Abstract Syntax Tree) language support. UAST is an abstraction layer on PSI of different JVM
  * languages. It provides a unified API for working with common language elements like classes and method declarations, literal values and
  * control flow operators.
- *
- * @see org.jetbrains.uast.generate.UastCodeGenerationPlugin for UAST code generation.
  */
 @JvmDefaultWithCompatibility
 interface UastLanguagePlugin {

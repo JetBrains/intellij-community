@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.update
 
 import com.intellij.openapi.progress.ProgressIndicator
@@ -22,12 +22,13 @@ import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.update.GitUpdateEnvironment.performUpdate
 
-internal class GitUpdateExecutionProcess(private val project: Project,
-                                         private val repositories: Collection<GitRepository>,
-                                         private val updateConfig: Map<GitRepository, GitBranchPair>,
-                                         private val updateMethod: UpdateMethod,
-                                         private val shouldSetAsUpstream: Boolean = false) {
-
+internal class GitUpdateExecutionProcess(
+  private val project: Project,
+  private val repositories: Collection<GitRepository>,
+  private val updateConfig: Map<GitRepository, GitBranchPair>,
+  private val updateMethod: UpdateMethod,
+  private val shouldSetAsUpstream: Boolean = false,
+) {
   fun execute() {
     if (updateConfig.isEmpty()) {
       VcsNotifier.getInstance(project).notifyMinorWarning(UPDATE_NOTHING_TO_UPDATE,
@@ -40,7 +41,14 @@ internal class GitUpdateExecutionProcess(private val project: Project,
     val roots = vcsToRoots.values.flatten().toArray(emptyArray())
 
     ProgressManager.getInstance()
-      .run(UpdateExecution(project, vcsToRoots, roots, updateConfig, updateMethod, shouldSetAsUpstream))
+      .run(UpdateExecution(
+        project = project,
+        vcsToRoots = vcsToRoots,
+        roots = roots,
+        updateConfig = updateConfig,
+        updateMethod = updateMethod,
+        shouldSetAsUpstream = shouldSetAsUpstream,
+      ))
   }
 
   private fun getVcsRoots(repositories: Collection<GitRepository>): Map<AbstractVcs, Collection<FilePath>> {
@@ -48,37 +56,42 @@ internal class GitUpdateExecutionProcess(private val project: Project,
       repo.vcs to listOf(VcsUtil.getFilePath(repo.root))
     }
   }
+}
 
-  internal class UpdateExecution(project: Project,
-                                 vcsToRoots: Map<AbstractVcs, Collection<FilePath>>,
-                                 private val roots: Array<FilePath>,
-                                 private val updateConfig: Map<GitRepository, GitBranchPair>,
-                                 private val updateMethod: UpdateMethod,
-                                 private val shouldSetAsUpstream: Boolean = false)
-    : AbstractCommonUpdateAction.Updater(project, roots, vcsToRoots, ActionInfo.UPDATE, GitBundle.message("progress.title.update")) {
-
-    override fun performUpdate(progressIndicator: ProgressIndicator, updateEnvironment: UpdateEnvironment?,
-                               files: MutableCollection<FilePath>?, refContext: Ref<SequentialUpdatesContext>?): UpdateSession {
-      if (shouldSetAsUpstream) {
-        updateConfig.forEach { (repository, branchPair) -> setBranchUpstream(repository, branchPair) }
-      }
-
-      return performUpdate(project, roots, myUpdatedFiles, progressIndicator, updateMethod, updateConfig)
+private class UpdateExecution(
+  project: Project,
+  vcsToRoots: Map<AbstractVcs, Collection<FilePath>>,
+  private val roots: Array<FilePath>,
+  private val updateConfig: Map<GitRepository, GitBranchPair>,
+  private val updateMethod: UpdateMethod,
+  private val shouldSetAsUpstream: Boolean = false,
+)
+  : AbstractCommonUpdateAction.Updater(project, roots, vcsToRoots, ActionInfo.UPDATE, GitBundle.message("progress.title.update")) {
+  override fun performUpdate(
+    progressIndicator: ProgressIndicator?,
+    updateEnvironment: UpdateEnvironment,
+    files: Collection<FilePath>,
+    refContext: Ref<SequentialUpdatesContext>,
+  ): UpdateSession {
+    if (shouldSetAsUpstream) {
+      updateConfig.forEach { (repository, branchPair) -> setBranchUpstream(repository, branchPair) }
     }
 
-    private fun setBranchUpstream(repository: GitRepository, branchConfig: GitBranchPair) {
-      val handler = GitLineHandler(project, repository.root, GitCommand.BRANCH)
-      handler.setSilent(false)
-      val (local, remote) = branchConfig
-      handler.addParameters("--set-upstream-to", remote.name, local.name)
+    return performUpdate(project, roots, updatedFiles, progressIndicator, updateMethod, updateConfig)
+  }
 
-      val result = Git.getInstance().runCommand(handler)
-      if (!result.success()) {
-        VcsNotifier.getInstance(project).notifyError(BRANCH_SET_UPSTREAM_ERROR,
-                                                     GitBundle.message("update.process.error.notification.title"),
-                                                     result.errorOutputAsHtmlString,
-                                                     true)
-      }
+  private fun setBranchUpstream(repository: GitRepository, branchConfig: GitBranchPair) {
+    val handler = GitLineHandler(project, repository.root, GitCommand.BRANCH)
+    handler.setSilent(false)
+    val (local, remote) = branchConfig
+    handler.addParameters("--set-upstream-to", remote.name, local.name)
+
+    val result = Git.getInstance().runCommand(handler)
+    if (!result.success()) {
+      VcsNotifier.getInstance(project).notifyError(BRANCH_SET_UPSTREAM_ERROR,
+                                                   GitBundle.message("update.process.error.notification.title"),
+                                                   result.errorOutputAsHtmlString,
+                                                   true)
     }
   }
 }

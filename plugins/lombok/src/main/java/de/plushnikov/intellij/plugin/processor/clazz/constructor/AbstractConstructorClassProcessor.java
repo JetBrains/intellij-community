@@ -1,11 +1,13 @@
 package de.plushnikov.intellij.plugin.processor.clazz.constructor;
 
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightMessageUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.SafeDeleteFix;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.RecordAugmentProvider;
 import com.intellij.psi.impl.light.LightReferenceListBuilder;
 import com.intellij.psi.impl.light.LightTypeParameterBuilder;
+import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.containers.ContainerUtil;
 import de.plushnikov.intellij.plugin.LombokClassNames;
@@ -16,6 +18,7 @@ import de.plushnikov.intellij.plugin.processor.clazz.AbstractClassProcessor;
 import de.plushnikov.intellij.plugin.processor.field.AccessorsInfo;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightParameter;
+import de.plushnikov.intellij.plugin.quickfix.PsiQuickFixFactory;
 import de.plushnikov.intellij.plugin.thirdparty.LombokAddNullAnnotations;
 import de.plushnikov.intellij.plugin.thirdparty.LombokCopyableAnnotations;
 import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
@@ -69,7 +72,13 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
     boolean result = true;
     if (psiClass.isAnnotationType() || psiClass.isInterface() || psiClass.isRecord()) {
       builder.addErrorMessage("inspection.message.annotation.only.supported.on.class.or.enum.type",
-                              StringUtil.getShortName(getSupportedAnnotationClasses()[0]));
+                              StringUtil.getShortName(getSupportedAnnotationClasses()[0]))
+        .withLocalQuickFixes(
+          () -> {
+            final var annotationFqn = Arrays.stream(getSupportedAnnotationClasses()).findFirst().orElse(null);
+            return PsiQuickFixFactory.createDeleteAnnotationFix(psiClass, annotationFqn);
+          }
+        );
       result = false;
     }
     return result;
@@ -149,11 +158,24 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
     if (null != existedMethod) {
       if (paramTypes.isEmpty()) {
         builder.addErrorMessage("inspection.message.constructor.without.parameters.already.defined")
-          .withLocalQuickFixes(() -> new SafeDeleteFix(existedMethod));
+          .withLocalQuickFixes(
+            () -> new SafeDeleteFix(existedMethod),
+            () -> {
+              final var annotationFqn = Arrays.stream(getSupportedAnnotationClasses()).findFirst().orElse(null);
+              return PsiQuickFixFactory.createDeleteAnnotationFix(psiClass, annotationFqn);
+            }
+          );
       }
       else {
-        builder.addErrorMessage("inspection.message.constructor.with.d.parameters.already.defined", paramTypes.size())
-          .withLocalQuickFixes(() -> new SafeDeleteFix(existedMethod));
+        final String name = HighlightMessageUtil.getSymbolName(existedMethod, PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_TYPE);
+        builder.addErrorMessage("inspection.message.constructor.with.d.parameters.already.defined", name)
+          .withLocalQuickFixes(
+            () -> new SafeDeleteFix(existedMethod),
+            () -> {
+              final var annotationFqn = Arrays.stream(getSupportedAnnotationClasses()).findFirst().orElse(null);
+              return PsiQuickFixFactory.createDeleteAnnotationFix(psiClass, annotationFqn);
+            }
+          );
       }
       result = false;
     }

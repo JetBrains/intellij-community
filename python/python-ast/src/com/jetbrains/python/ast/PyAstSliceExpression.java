@@ -8,6 +8,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
+@SuppressWarnings("MissingDeprecatedAnnotation")
+@Deprecated(forRemoval = true)
 @ApiStatus.Experimental
 public interface PyAstSliceExpression extends PyAstExpression {
   default @NotNull PyAstExpression getOperand() {

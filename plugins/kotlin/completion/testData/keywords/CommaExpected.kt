@@ -7,6 +7,7 @@ fun foo() {
 // EXIST: !in
 // EXIST: !is
 // EXIST: as
+// EXIST: as?
 // EXIST: in
 // EXIST: is
 // NOTHING_ELSE

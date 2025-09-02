@@ -274,7 +274,7 @@ public abstract class AbstractVcs extends StartedActivated {
    * @return true if the path is managed by this VCS, false otherwise.
    * @deprecated Use {@link VcsRootChecker} instead.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public boolean fileIsUnderVcs(FilePath filePath) {
     return true;
   }
@@ -736,14 +736,6 @@ public abstract class AbstractVcs extends StartedActivated {
    */
   public boolean arePartialChangelistsSupported() {
     return false;
-  }
-
-  /**
-   * @deprecated dead code
-   */
-  @Deprecated(forRemoval = true)
-  public CheckoutProvider getCheckoutProvider() {
-    return null;
   }
 
   @Override

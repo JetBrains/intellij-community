@@ -26,6 +26,6 @@ data class EvalDataPresentation<in T>(
 enum class PresentationCategory(val priority: Int, val displayName: String) {
   RESULT(0, "Results"),
   METRIC(1, "Metrics"),
-  EXECUTION(2, "Execution"),
+  EXECUTION(2, "Invocation"),
   ANALYSIS(3, "Analysis"),
 }

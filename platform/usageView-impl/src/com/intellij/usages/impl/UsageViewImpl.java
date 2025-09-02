@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.impl;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -100,6 +100,7 @@ public class UsageViewImpl implements UsageViewEx {
   private final UsageViewPresentation myPresentation;
   private final UsageTarget[] myTargets;
   private UsageGroupingRule[] myGroupingRules;
+  private UsageFilteringRule[] myFilteringRules;
   private final UsageFilteringRuleState myFilteringRulesState = UsageFilteringRuleStateService.createFilteringRuleState();
   private final Supplier<? extends UsageSearcher> myUsageSearcherFactory;
   private final @NotNull Project myProject;
@@ -134,6 +135,13 @@ public class UsageViewImpl implements UsageViewEx {
   @ApiStatus.Internal
   public int getFilteredOutNodeCount() {
     return myBuilder.getFilteredUsagesCount();
+  }
+
+  @ApiStatus.Internal
+  public void setFilteringRules(UsageFilteringRule @NotNull [] rules) {
+    myFilteringRules = rules;
+    myBuilder.setFilteringRules(rules);
+    rulesChanged();
   }
 
   private static int compareByFileAndOffset(@NotNull Usage o1, @NotNull Usage o2) {
@@ -571,7 +579,8 @@ public class UsageViewImpl implements UsageViewEx {
               continue;
             }
             synchronized (childNode) {
-              List<Node> swingChildren = ((GroupNode)parentNode).getSwingChildren();
+              GroupNode parentGroupNode = (GroupNode)parentNode;
+              List<Node> swingChildren = parentGroupNode.getSwingChildren();
               boolean contains = swingChildren.contains(childNode);
               if (!contains) {
                 nodesToFire.add(childNode);
@@ -581,7 +590,7 @@ public class UsageViewImpl implements UsageViewEx {
                 indicesToFire.add(swingChildren.indexOf(change.childNode));
 
                 if (childNode instanceof UsageNode) {
-                  ((GroupNode)parentNode).incrementUsageCount(1);
+                  parentGroupNode.incrementUsageCount(1);
                 }
               }
             }
@@ -617,11 +626,6 @@ public class UsageViewImpl implements UsageViewEx {
     }
   }
 
-  private int getVisibleRowCount() {
-    ThreadingAssertions.assertEventDispatchThread();
-    return TreeUtil.getVisibleRowCount(myTree);
-  }
-
   private void setupCentralPanel() {
     ThreadingAssertions.assertEventDispatchThread();
 
@@ -646,7 +650,8 @@ public class UsageViewImpl implements UsageViewEx {
       tabbedPane.setTabComponentInsets(null);
 
       UsageContextPanel.Provider[] extensions = UsageContextPanel.Provider.EP_NAME.getExtensions(myProject);
-      List<UsageContextPanel.Provider> myUsageContextPanelProviders = ContainerUtil.filter(extensions, provider -> provider.isAvailableFor(this));
+      List<UsageContextPanel.Provider> myUsageContextPanelProviders =
+        ContainerUtil.filter(extensions, provider -> ReadAction.compute(() -> provider.isAvailableFor(this)));
       Map<@NlsContexts.TabTitle String, JComponent> components = new LinkedHashMap<>();
       for (UsageContextPanel.Provider provider : myUsageContextPanelProviders) {
         JComponent component;
@@ -726,6 +731,9 @@ public class UsageViewImpl implements UsageViewEx {
   }
 
   protected UsageFilteringRule @NotNull [] getActiveFilteringRules(Project project) {
+    if (myFilteringRules != null) {
+      return myFilteringRules;
+    }
     List<UsageFilteringRuleProvider> providers = UsageFilteringRuleProvider.EP_NAME.getExtensionList();
     List<UsageFilteringRule> list = new ArrayList<>(providers.size());
     for (UsageFilteringRule rule : UsageFilteringRules.usageFilteringRules(project)) {
@@ -974,14 +982,14 @@ public class UsageViewImpl implements UsageViewEx {
     }
     sortGroupingActions(list);
     moveActionTo(list, UsageViewBundle.message("action.group.by.module"),
-                 UsageViewBundle.message("action.flatten.modules"), true);
+                 UsageViewBundle.message("action.flatten.modules"));
     return list.toArray(AnAction.EMPTY_ARRAY);
   }
 
+  @ApiStatus.Internal
   protected static void moveActionTo(@NotNull List<AnAction> list,
                                      @NotNull String actionText,
-                                     @NotNull String targetActionText,
-                                     boolean before) {
+                                     @NotNull String targetActionText) {
     if (Objects.equals(actionText, targetActionText)) {
       return;
     }
@@ -995,7 +1003,7 @@ public class UsageViewImpl implements UsageViewEx {
       if (actionIndex != -1 && targetIndex != -1) {
         if (actionIndex < targetIndex) targetIndex--;
         AnAction anAction = list.remove(actionIndex);
-        list.add(before ? targetIndex : targetIndex + 1, anAction);
+        list.add(targetIndex, anAction);
         return;
       }
     }
@@ -1269,7 +1277,9 @@ public class UsageViewImpl implements UsageViewEx {
     }
   }
 
-  void drainQueuedUsageNodes() {
+  @ApiStatus.Internal
+  @VisibleForTesting
+  public void drainQueuedUsageNodes() {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     UIUtil.invokeAndWaitIfNeeded(this::fireEvents);
   }

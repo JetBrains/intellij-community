@@ -16,12 +16,9 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.ListPopup;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
 
 @ApiStatus.Internal
 public final class IntentionFUSCollector extends CounterUsagesCollector {
@@ -102,30 +99,26 @@ public final class IntentionFUSCollector extends CounterUsagesCollector {
     return ReportingClassSubstitutor.getClassToReport(action);
   }
 
-  public static void reportShownIntentions(@NotNull Project project,
-                                           @NotNull ListPopup popup,
-                                           @NotNull Language language,
-                                           @NotNull Editor editor,
-                                           @NotNull IntentionSource source) {
-    @SuppressWarnings("unchecked") List<IntentionActionWithTextCaching> values = popup.getListStep().getValues();
+  public static void reportShownIntention(@NotNull Project project,
+                                          @NotNull IntentionActionWithTextCaching intention,
+                                          @NotNull Language language,
+                                          @NotNull Editor editor,
+                                          @NotNull IntentionSource source,
+                                          int position) {
     boolean dumb = DumbService.isDumb(project);
-    for (int i = 0; i < values.size(); i++) {
-      IntentionActionWithTextCaching intention = values.get(i);
-      Class<?> clazz = getOriginalHandlerClass(intention.getAction());
-      PluginInfo info = PluginInfoDetectorKt.getPluginInfo(clazz);
-
-      SHOWN.log(
-        project,
-        EventFields.PluginInfo.with(info),
-        ID_FIELD.with(clazz),
-        EventFields.Language.with(language),
-        POSITION_FIELD.with(i),
-        INSPECTION_ID_FIELD.with(intention.getToolId()),
-        DISTANCE_FIELD.with(getDistance(editor, intention.getFixOffset())),
-        EventFields.Dumb.with(dumb),
-        SOURCE_FIELD.with(source)
-      );
-    }
+    Class<?> clazz = getOriginalHandlerClass(intention.getAction());
+    PluginInfo info = PluginInfoDetectorKt.getPluginInfo(clazz);
+    SHOWN.log(
+      project,
+      EventFields.PluginInfo.with(info),
+      ID_FIELD.with(clazz),
+      EventFields.Language.with(language),
+      POSITION_FIELD.with(position),
+      INSPECTION_ID_FIELD.with(intention.getToolId()),
+      DISTANCE_FIELD.with(getDistance(editor, intention.getFixOffset())),
+      EventFields.Dumb.with(dumb),
+      SOURCE_FIELD.with(source)
+    );
   }
 
   private static int getDistance(@Nullable Editor editor, int fixOffset) {

@@ -43,32 +43,32 @@ class AddGradleDslPluginActionHandler implements CodeInsightActionHandler {
   }
 
   @Override
-  public void invoke(final @NotNull Project project, final @NotNull Editor editor, final @NotNull PsiFile file) {
+  public void invoke(final @NotNull Project project, final @NotNull Editor editor, final @NotNull PsiFile psiFile) {
     if (!EditorModificationUtil.checkModificationAllowed(editor)) return;
-    if (!FileModificationService.getInstance().preparePsiElementsForWrite(file)) return;
+    if (!FileModificationService.getInstance().preparePsiElementsForWrite(psiFile)) return;
 
     final JBList<PluginDescriptor> list = new JBList<>(myPlugins);
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     list.setCellRenderer(new MyListCellRenderer());
     Runnable runnable = () -> {
       final PluginDescriptor selected = list.getSelectedValue();
-      WriteCommandAction.writeCommandAction(project, file).withName(GradleBundle.message("gradle.codeInsight.action.apply_plugin.text"))
+      WriteCommandAction.writeCommandAction(project, psiFile).withName(GradleBundle.message("gradle.codeInsight.action.apply_plugin.text"))
                         .run(() -> {
                           if (selected == null) return;
                           GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(project);
                           GrStatement grStatement =
                             factory.createStatementFromText(String.format("apply plugin: '%s'", selected.name()), null);
 
-                          PsiElement anchor = file.findElementAt(editor.getCaretModel().getOffset());
+                          PsiElement anchor = psiFile.findElementAt(editor.getCaretModel().getOffset());
                           PsiElement currentElement = PsiTreeUtil.getParentOfType(anchor, GrClosableBlock.class, GroovyFile.class);
                           if (currentElement != null) {
                             currentElement.addAfter(grStatement, anchor);
                           }
                           else {
-                            file.addAfter(grStatement, file.findElementAt(editor.getCaretModel().getOffset() - 1));
+                            psiFile.addAfter(grStatement, psiFile.findElementAt(editor.getCaretModel().getOffset() - 1));
                           }
                           PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-                          Document document = documentManager.getDocument(file);
+                          Document document = documentManager.getDocument(psiFile);
                           if (document != null) {
                             documentManager.commitDocument(document);
                           }

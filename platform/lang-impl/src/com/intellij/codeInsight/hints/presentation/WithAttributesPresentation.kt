@@ -26,16 +26,16 @@ class WithAttributesPresentation(presentation: InlayPresentation,
     }
     else {
       val result = attributes.clone()
-      if (result.foregroundColor == null) {
+      if (result.foregroundColor != other.foregroundColor && other.foregroundColor != null) {
         result.foregroundColor = other.foregroundColor
       }
-      if (result.backgroundColor == null) {
+      if (result.backgroundColor != other.backgroundColor && other.backgroundColor != null) {
         result.backgroundColor = other.backgroundColor
       }
-      if (result.effectType == null) {
+      if (result.effectType != other.effectType && other.effectType != null) {
         result.effectType = other.effectType
       }
-      if (result.effectColor == null) {
+      if (result.effectColor != other.effectColor && other.effectColor != null) {
         result.effectColor = other.effectColor
       }
       super.paint(g, result)

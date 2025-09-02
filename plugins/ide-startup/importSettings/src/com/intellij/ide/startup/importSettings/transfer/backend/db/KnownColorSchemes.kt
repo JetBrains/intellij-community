@@ -7,9 +7,9 @@ import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.editor.colors.EditorColorsManager
 
 object KnownColorSchemes {
-  val Light: BundledEditorColorScheme? = findScheme("Light")
-  val Darcula: BundledEditorColorScheme? = findScheme("Dark")
-  val HighContrast: BundledEditorColorScheme? = findScheme("High contrast")
+  val Light: BundledEditorColorScheme? by lazy { findScheme("Light") }
+  val Darcula: BundledEditorColorScheme? by lazy { findScheme("Dark") }
+  val HighContrast: BundledEditorColorScheme? by lazy { findScheme("High contrast") }
 
   private fun findScheme(name: String): BundledEditorColorScheme? = BundledEditorColorScheme.fromManager(name) ?: run {
     val names = logger.runAndLogException { EditorColorsManager.getInstance().allSchemes.joinToString(", ", "\"", "\"") { it.name } }

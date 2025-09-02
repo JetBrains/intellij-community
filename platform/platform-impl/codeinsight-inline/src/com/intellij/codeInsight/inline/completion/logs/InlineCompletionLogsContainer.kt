@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.inline.completion.logs
 
 import com.intellij.codeInsight.inline.completion.InlineCompletionEapSupport
+import com.intellij.codeInsight.inline.completion.statistics.LocalStatistics
 import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.eventLog.events.ObjectEventData
@@ -95,7 +96,7 @@ class InlineCompletionLogsContainer() {
    * If you have to launch expensive computation and don't want to pause your main execution (especially if you are on EDT) use [addAsync].
    */
   fun add(value: EventPair<*>) {
-    val phase = requireNotNull(InlineCompletionLogs.Session.eventFieldProperties[value.field.name]?.phase) {
+    val phase = requireNotNull(InlineCompletionLogs.Session.phaseByName[value.field.name]) {
       "Cannot find phase for ${value.field.name}"
     }
     logs[phase]!!.add(value)
@@ -116,28 +117,30 @@ class InlineCompletionLogsContainer() {
    * Await for this function completion before exit from the inline completion request and process next typings or next requests.
    * Should be very fast.
    */
-  fun logCurrent() {
+  fun logCurrent(extraLogger: CustomRequestIdLogger? = null) {
     cancelAsyncAdds()
 
-    InlineCompletionLogs.Session.SESSION_EVENT.log(project = project, // log function is asynchronous, so it's ok to launch it even on EDT
-                                                   logs.filter { it.value.isNotEmpty() }.mapNotNull { (phase, logs) ->
-
-        // for release, log only basic fields for most of the requests and very rarely log everything.
-        val filteredEvents = if (getShouldSendFullLogs()) {
-          logs
-        } else {
-          logs.filter { pair -> InlineCompletionLogs.Session.isBasic(pair) }
-        }
-
-        val logPhaseObject = InlineCompletionLogs.Session.phases[phase]
-        if (logPhaseObject != null) {
-          logPhaseObject.with(ObjectEventData(filteredEvents.toList()))
-        } else {
-          logger.error("ObjectEventField is not found for $phase, FUS event may be configured incorrectly!")
-          null
-        }
+    val filteredEvents = logs.filter { it.value.isNotEmpty() }.mapValues { (_, logs) ->
+      // for release, log only basic fields for most of the requests and very rarely log everything.
+      if (getShouldSendFullLogs()) {
+        logs
+      } else {
+        logs.filter { pair -> InlineCompletionLogs.Session.isBasic(pair) }
       }
-    )
+    }
+
+    // log function is asynchronous, so it's ok to launch it even on EDT
+    InlineCompletionLogs.Session.SESSION_EVENT.log(project = project, filteredEvents.mapNotNull { (phase, events) ->
+      val logPhaseObject = InlineCompletionLogs.Session.phases[phase]
+      if (logPhaseObject != null) {
+        logPhaseObject.with(ObjectEventData(events.toList()))
+      } else {
+        logger.error("ObjectEventField is not found for $phase, FUS event may be configured incorrectly!")
+        null
+      }
+    })
+    extraLogger?.log(project, filteredEvents)
+    logs.map { it.value }.flatten().forEach { LocalStatistics.getInstance().saveIfRegistered(it) }
     logs.forEach { (_, events) -> events.clear() }
   }
 
@@ -154,6 +157,11 @@ class InlineCompletionLogsContainer() {
   suspend fun awaitAndGetCurrentLogs(): List<EventPair<*>> {
     awaitAllAlreadyRunningAsyncAdds()
     return logs.values.flatten()
+  }
+
+  suspend fun awaitAndGetCurrentLogsPhased(): Map<Phase, List<EventPair<*>>> {
+    awaitAllAlreadyRunningAsyncAdds()
+    return logs.mapValues { it.value.toList() }
   }
 
   companion object {

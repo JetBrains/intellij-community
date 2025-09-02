@@ -12,6 +12,7 @@ import com.intellij.openapi.command.undo.UndoUtil
 import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.impl.DocumentImpl
+import com.intellij.openapi.editor.impl.EditorThreading
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
@@ -68,7 +69,7 @@ abstract class LineStatusTrackerBase<R : Range>(
   override val virtualFile: VirtualFile? get() = null
 
   override fun getRanges(): List<R>? {
-    ApplicationManager.getApplication().assertReadAccessAllowed() // is not needed - but without it results are useless
+    EditorThreading.assertInteractionAllowed() // is not needed - but without it results are useless
     return blockOperations.getRanges()
   }
 

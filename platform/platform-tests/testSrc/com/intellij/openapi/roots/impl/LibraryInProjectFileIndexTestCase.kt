@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.junit5.RunInEdt
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.rules.ProjectModelExtension
+import com.intellij.testFramework.rules.TempDirectoryExtension
 import com.intellij.util.io.directoryContent
 import com.intellij.util.io.generate
 import com.intellij.util.io.generateInVirtualTempDir
@@ -38,6 +39,10 @@ abstract class LibraryInProjectFileIndexTestCase {
   @RegisterExtension
   val projectModel: ProjectModelExtension = ProjectModelExtension()
 
+  @RegisterExtension
+  @JvmField
+  val baseLibraryDir: TempDirectoryExtension = TempDirectoryExtension()
+
   protected abstract val worksViaWorkspaceModel: Boolean
   protected abstract val libraryTable: LibraryTable?
   protected abstract fun createLibrary(name: String = "lib", setup: (LibraryEx.ModifiableModelEx) -> Unit = {}): LibraryEx
@@ -55,14 +60,14 @@ abstract class LibraryInProjectFileIndexTestCase {
   @BeforeEach
   internal fun setUp() {
     module = projectModel.createModule()
-    root = projectModel.baseProjectDir.newVirtualDirectory("lib")
+    root = baseLibraryDir.newVirtualDirectory("lib")
   }
 
   @Test
   fun `library roots`() {
-    val srcRoot = projectModel.baseProjectDir.newVirtualDirectory("lib-src")
-    val docRoot = projectModel.baseProjectDir.newVirtualDirectory("lib-doc")
-    val excludedRoot = projectModel.baseProjectDir.newVirtualDirectory("lib/lib-exc")
+    val srcRoot = baseLibraryDir.newVirtualDirectory("lib-src")
+    val docRoot = baseLibraryDir.newVirtualDirectory("lib-doc")
+    val excludedRoot = baseLibraryDir.newVirtualDirectory("lib/lib-exc")
     val library = createLibrary {
       it.addRoot(root, OrderRootType.CLASSES)
       it.addRoot(srcRoot, OrderRootType.SOURCES)
@@ -151,7 +156,7 @@ abstract class LibraryInProjectFileIndexTestCase {
     val library = createLibrary {
       it.addRoot(root, OrderRootType.CLASSES)
     }
-    val excludedRoot = projectModel.baseProjectDir.newVirtualDirectory("lib/exc")
+    val excludedRoot = baseLibraryDir.newVirtualDirectory("lib/exc")
     addDependency(library)
     fileIndex.assertScope(excludedRoot, IN_LIBRARY)
 
@@ -237,8 +242,8 @@ abstract class LibraryInProjectFileIndexTestCase {
   @ParameterizedTest(name = "same library = {0}")
   @ValueSource(booleans = [false, true])
   fun `nested library roots`(sameLibrary: Boolean) {
-    val innerFile = projectModel.baseProjectDir.newVirtualDirectory("outer/inner/inner.txt")
-    val outerFile = projectModel.baseProjectDir.newVirtualDirectory("outer/outer.txt")
+    val innerFile = baseLibraryDir.newVirtualDirectory("outer/inner/inner.txt")
+    val outerFile = baseLibraryDir.newVirtualDirectory("outer/outer.txt")
     val outerClassesRoot = outerFile.parent
     val innerSourceRoot = innerFile.parent
     if (sameLibrary) {

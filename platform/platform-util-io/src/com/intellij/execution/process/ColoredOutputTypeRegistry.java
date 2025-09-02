@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -40,7 +40,7 @@ public abstract class ColoredOutputTypeRegistry {
   */
   public abstract @NotNull ProcessOutputType getOutputType(@NonNls String attribute, @NotNull Key streamType);
 
-  abstract @NotNull ProcessOutputType getOutputType(@NotNull AnsiTerminalEmulator terminal, @NotNull Key streamType);
+  public abstract @NotNull ProcessOutputType getOutputType(@NotNull AnsiTerminalEmulator terminal, @NotNull Key streamType);
 
   public static ColoredOutputTypeRegistry getInstance() {
     return ApplicationManager.getApplication().getService(ColoredOutputTypeRegistry.class);

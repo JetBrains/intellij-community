@@ -1,13 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.types;
 
-import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.RecursionManager;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.ResolveResult;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
@@ -167,6 +163,14 @@ public final class PyTypeChecker {
       return Optional.of(match(callableParameterListType, actual, context));
     }
 
+    if (actual instanceof PyNeverType) {
+      return Optional.of(true);
+    }
+
+    if (expected instanceof PyNeverType) {
+      return Optional.of(false);
+    }
+
     if (actual instanceof PyUnionType) {
       return Optional.of(match(expected, (PyUnionType)actual, context));
     }
@@ -200,11 +204,6 @@ public final class PyTypeChecker {
       if (match.isPresent()) {
         return match;
       }
-    }
-
-    // remove after making PyNoneType inheriting PyClassType
-    if (expected instanceof PyNoneType) {
-      return Optional.of(actual instanceof PyNoneType);
     }
 
     if (expected instanceof PyModuleType) {
@@ -544,18 +543,15 @@ public final class PyTypeChecker {
     GenericSubstitutions substitutions = collectTypeSubstitutions(actual, matchContext.context);
 
     MatchContext protocolContext = new MatchContext(matchContext.context, new GenericSubstitutions(), matchContext.reversedSubstitutions);
-    for (kotlin.Pair<PyTypedElement, List<RatedResolveResult>> pair : PyProtocolsKt.inspectProtocolSubclass(expected, actual, matchContext.context)) {
-      final List<RatedResolveResult> subclassElements = pair.getSecond();
-      if (ContainerUtil.isEmpty(subclassElements)) {
+    for (kotlin.Pair<PyTypedElement, List<PyTypedResolveResult>> pair : PyProtocolsKt.inspectProtocolSubclass(expected, actual, matchContext.context)) {
+      final List<PyType> subclassElementTypes = ContainerUtil.map(pair.getSecond(), member -> member.getType());
+      if (ContainerUtil.isEmpty(subclassElementTypes)) {
         return false;
       }
 
       final PyType protocolElementType = dropSelfIfNeeded(expected, matchContext.context.getType(pair.getFirst()), matchContext.context);
       final boolean elementResult = StreamEx
-        .of(subclassElements)
-        .map(ResolveResult::getElement)
-        .select(PyTypedElement.class)
-        .map(matchContext.context::getType)
+        .of(subclassElementTypes)
         .map(type -> dropSelfIfNeeded(actual, type, matchContext.context))
         .map(type -> substitute(type, substitutions, matchContext.context))
         .anyMatch(
@@ -603,20 +599,36 @@ public final class PyTypeChecker {
     return elementType;
   }
 
+  // https://typing.python.org/en/latest/spec/tuples.html#type-compatibility-rules
   private static @NotNull Optional<Boolean> match(@NotNull PyTupleType expected, @NotNull PyTupleType actual, @NotNull MatchContext context) {
+    if (actual.isHomogeneous()) {
+      // The type tuple[Any, ...] is consistent with any tuple
+      final PyType elementType = actual.getIteratedItemType();
+      if (elementType == null) {
+        return Optional.of(true);
+      }
+    }
     // TODO Delegate to UnpackedTupleType here, once it's introduced
     if (!expected.isHomogeneous() && !actual.isHomogeneous()) {
+      Condition<PyType> isUnbound =
+        type -> (type instanceof PyUnpackedTupleType unpacked && unpacked.isUnbound()) || type instanceof PyTypeVarTupleType;
+      boolean expectedContainsUnboundTypes =
+        ContainerUtil.exists(expected.getElementTypes(), isUnbound);
+      boolean actualContainsUnboundTypes =
+        ContainerUtil.exists(actual.getElementTypes(), isUnbound);
+
+      if (actualContainsUnboundTypes && !expectedContainsUnboundTypes) {
+        return Optional.of(false);
+      }
+
       return Optional.of(matchTypeParameters(expected.getElementTypes(), actual.getElementTypes(), context));
     }
 
     if (expected.isHomogeneous() && !actual.isHomogeneous()) {
       final PyType expectedElementType = expected.getIteratedItemType();
-      for (int i = 0; i < actual.getElementCount(); i++) {
-        if (!match(expectedElementType, actual.getElementType(i), context).orElse(true)) {
-          return Optional.of(false);
-        }
-      }
-      return Optional.of(true);
+      return Optional.of(
+        PyTypeUtil.toStream(actual.getIteratedItemType()).allMatch(type -> match(expectedElementType, type, context).orElse(true))
+      );
     }
 
     if (!expected.isHomogeneous() && actual.isHomogeneous()) {
@@ -862,33 +874,30 @@ public final class PyTypeChecker {
           assert entry.getValue() instanceof PyPositionalVariadicType;
           result.typeVarTuples.put(typeVarTuple, (PyPositionalVariadicType)entry.getValue());
         }
-        else if (entry.getKey() instanceof PyParamSpecType specType) {
-          assert entry.getValue() instanceof PyCallableParameterVariadicType;
-          result.paramSpecs.put(specType, (PyCallableParameterVariadicType)entry.getValue());
+        else if (entry.getKey() instanceof PyParamSpecType specType && entry.getValue() instanceof PyCallableParameterVariadicType paramSpecType) {
+          result.paramSpecs.put(specType, paramSpecType);
         }
       }
-      if (!classType.isDefinition()) {
-        PyCollectionType genericDefinitionType = as(provider.getGenericType(classType.getPyClass(), context), PyCollectionType.class);
-        // TODO Re-use PyTypeParameterMapping, at the moment C[*Ts] <- C leads to *Ts being mapped to *tuple[], which breaks inference later on
-        if (genericDefinitionType != null) {
-          List<PyType> definitionTypeParameters = genericDefinitionType.getElementTypes();
-          if (!(classType instanceof PyCollectionType genericType)) {
-            for (PyType typeParameter : definitionTypeParameters) {
-              if (typeParameter instanceof PyTypeVarTupleType typeVarTupleType) {
-                result.typeVarTuples.put(typeVarTupleType, null);
-              }
-              else if (typeParameter instanceof PyParamSpecType paramSpecType) {
-                result.paramSpecs.put(paramSpecType, null);
-              }
-              else if (typeParameter instanceof PyTypeVarType typeVarType) {
-                result.typeVars.put(typeVarType, null);
-              }
+      PyCollectionType genericDefinitionType = as(provider.getGenericType(classType.getPyClass(), context), PyCollectionType.class);
+      // TODO Re-use PyTypeParameterMapping, at the moment C[*Ts] <- C leads to *Ts being mapped to *tuple[], which breaks inference later on
+      if (genericDefinitionType != null) {
+        List<PyType> definitionTypeParameters = genericDefinitionType.getElementTypes();
+        if (!(classType instanceof PyCollectionType genericType)) {
+          for (PyType typeParameter : definitionTypeParameters) {
+            if (typeParameter instanceof PyTypeVarTupleType typeVarTupleType) {
+              result.typeVarTuples.put(typeVarTupleType, null);
+            }
+            else if (typeParameter instanceof PyParamSpecType paramSpecType) {
+              result.paramSpecs.put(paramSpecType, null);
+            }
+            else if (typeParameter instanceof PyTypeVarType typeVarType) {
+              result.typeVars.put(typeVarType, null);
             }
           }
-          else {
-            mapTypeParametersToSubstitutions(result, definitionTypeParameters, genericType.getElementTypes(),
-                                             Option.MAP_UNMATCHED_EXPECTED_TYPES_TO_ANY);
-          }
+        }
+        else {
+          mapTypeParametersToSubstitutions(result, definitionTypeParameters, genericType.getElementTypes(),
+                                           Option.MAP_UNMATCHED_EXPECTED_TYPES_TO_ANY);
         }
       }
       if (!result.typeVars.isEmpty() || !result.typeVarTuples.isEmpty() || !result.paramSpecs.isEmpty()) {
@@ -1434,15 +1443,14 @@ public final class PyTypeChecker {
   }
 
   public static @NotNull GenericSubstitutions unifyReceiver(@Nullable PyExpression receiver, @NotNull TypeEvalContext context) {
-    final var substitutions = new GenericSubstitutions();
     if (receiver != null) {
       PyType receiverType = context.getType(receiver);
       return unifyReceiver(receiverType, context);
     }
-    return substitutions;
+    return new GenericSubstitutions();
   }
 
-  static @NotNull GenericSubstitutions unifyReceiver(@Nullable PyType receiverType, @NotNull TypeEvalContext context) {
+  public static @NotNull GenericSubstitutions unifyReceiver(@Nullable PyType receiverType, @NotNull TypeEvalContext context) {
     // Collect generic params of object type
     final var substitutions = new GenericSubstitutions();
     if (receiverType != null) {

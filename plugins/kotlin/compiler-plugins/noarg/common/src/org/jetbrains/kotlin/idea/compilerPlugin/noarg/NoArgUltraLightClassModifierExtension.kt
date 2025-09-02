@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.compilerPlugin.noarg
 
+import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.asJava.UltraLightClassModifierExtension
 import org.jetbrains.kotlin.asJava.classes.KtUltraLightClass
@@ -13,15 +14,16 @@ import org.jetbrains.kotlin.descriptors.impl.ClassConstructorDescriptorImpl
 import org.jetbrains.kotlin.extensions.AnnotationBasedExtension
 import org.jetbrains.kotlin.idea.compilerPlugin.CachedAnnotationNames
 import org.jetbrains.kotlin.idea.compilerPlugin.getAnnotationNames
+import org.jetbrains.kotlin.name.JvmStandardClassIds.JVM_OVERLOADS_FQ_NAME
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtModifierListOwner
 import org.jetbrains.kotlin.psi.allConstructors
 import org.jetbrains.kotlin.resolve.descriptorUtil.builtIns
-import org.jetbrains.kotlin.resolve.jvm.annotations.findJvmOverloadsAnnotation
 import org.jetbrains.kotlin.util.isAnnotated
 import org.jetbrains.kotlin.util.isOrdinaryClass
 
+@InternalIgnoreDependencyViolation
 private class NoArgUltraLightClassModifierExtension(project: Project) :
     AnnotationBasedExtension,
     UltraLightClassModifierExtension {
@@ -73,9 +75,9 @@ private class NoArgUltraLightClassModifierExtension(project: Project) :
     }
 
     private fun isZeroParameterConstructor(constructor: ClassConstructorDescriptor): Boolean {
-        val parameters = constructor.valueParameters
-        return parameters.isEmpty() ||
-               (parameters.all { it.declaresDefaultValue() } && (constructor.isPrimary || constructor.findJvmOverloadsAnnotation() != null))
+        val parameters = constructor.valueParameters.ifEmpty { return true }
+        return parameters.all { it.declaresDefaultValue() } &&
+                (constructor.isPrimary || constructor.annotations.hasAnnotation(JVM_OVERLOADS_FQ_NAME))
     }
 
     private fun createNoArgConstructorDescriptor(containingClass: ClassDescriptor): ConstructorDescriptor =

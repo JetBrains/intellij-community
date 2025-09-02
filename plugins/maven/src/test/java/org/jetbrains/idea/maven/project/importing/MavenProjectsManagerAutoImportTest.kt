@@ -1,6 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project.importing
 
+import com.intellij.idea.IJIgnore
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.WriteAction
@@ -20,6 +21,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.jetbrains.idea.maven.project.MavenSettingsCache
 import org.junit.Test
 import java.io.IOException
 import java.nio.file.Path
@@ -41,7 +43,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
     val repoPath = Path.of(temp, "tmpRepo")
     repoPath.createDirectories()
     val repo = repoPath.toRealPath().toCanonicalPath()
-    assertEquals(repo, mavenGeneralSettings.effectiveRepositoryPath.toCanonicalPath())
+    assertEquals(repo, MavenSettingsCache.getInstance(project).getEffectiveUserLocalRepo().toCanonicalPath())
     importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -226,7 +228,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
                       ${repo1.toString()}</localRepository>
                       """.trimIndent())
     }
-    assertEquals(repo1, mavenGeneralSettings.effectiveRepositoryPath)
+    assertEquals(repo1, MavenSettingsCache.getInstance(project).getEffectiveUserLocalRepo())
     val repo2 = Path.of(dir.toString(), "localRepo2")
     waitForImportWithinTimeout {
       updateSettingsXml("""
@@ -234,7 +236,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
                       ${repo2.toString()}</localRepository>
                       """.trimIndent())
     }
-    assertEquals(repo2, mavenGeneralSettings.effectiveRepositoryPath)
+    assertEquals(repo2, MavenSettingsCache.getInstance(project).getEffectiveUserLocalRepo())
   }
 
   @Test
@@ -550,6 +552,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
     assertModuleLibDeps("m1", "Maven: test:m2:1")
   }
 
+  @IJIgnore(issue = "IDEA-370031")
   @Test
   fun testUpdatingProjectsWhenAbsentManagedProjectFileAppears() = runBlocking {
     importProjectAsync("""

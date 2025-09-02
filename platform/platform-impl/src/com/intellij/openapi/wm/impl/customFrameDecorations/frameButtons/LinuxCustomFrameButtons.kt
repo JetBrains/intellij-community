@@ -2,6 +2,7 @@
 package com.intellij.openapi.wm.impl.customFrameDecorations.frameButtons
 
 import com.intellij.ide.ui.UISettings
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil
 import com.intellij.util.ui.JBUI.CurrentTheme
 import java.awt.Dimension
 import java.awt.FlowLayout
@@ -67,10 +68,13 @@ private class TitleButtonsPanel : JPanel(FlowLayout(FlowLayout.LEADING, 0, 0)) {
 
   private fun updateScaledPreferredSize() {
     components.forEach { (it as? JComponent)?.setScaledPreferredSize() }
+    revalidate()
+    repaint()
   }
 
   private fun JComponent.setScaledPreferredSize() {
     val size = CurrentTheme.TitlePane.buttonPreferredSize(UISettings.defFontScale).clone() as Dimension
+    size.height = CustomWindowHeaderUtil.getPreferredWindowHeaderHeight(isCompactMode)
     preferredSize = Dimension(size.width, size.height)
   }
 

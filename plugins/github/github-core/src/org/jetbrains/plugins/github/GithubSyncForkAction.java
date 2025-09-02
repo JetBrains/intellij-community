@@ -39,6 +39,7 @@ import org.jetbrains.plugins.github.api.GithubApiRequests;
 import org.jetbrains.plugins.github.api.GithubServerPath;
 import org.jetbrains.plugins.github.api.data.GithubRepo;
 import org.jetbrains.plugins.github.api.data.GithubRepoDetailed;
+import org.jetbrains.plugins.github.authentication.GHLoginSource;
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager;
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount;
 import org.jetbrains.plugins.github.authentication.ui.GithubChooseAccountDialog;
@@ -111,7 +112,7 @@ public class GithubSyncForkAction extends DumbAwareAction {
     List<GithubAccount> accounts = ContainerUtil.filter(accountManager.getAccountsState().getValue(),
                                                         account -> serverPath.equals(account.getServer()));
     if (accounts.isEmpty()) {
-      githubAccount = GHCompatibilityUtil.requestNewAccountForServer(serverPath, project);
+      githubAccount = GHCompatibilityUtil.requestNewAccountForServer(serverPath, project, GHLoginSource.SYNC_FORK);
     }
     else if (accounts.size() == 1) {
       githubAccount = accounts.get(0);
@@ -179,7 +180,7 @@ public class GithubSyncForkAction extends DumbAwareAction {
 
     @Override
     public void run(@NotNull ProgressIndicator indicator) {
-      String token = GHCompatibilityUtil.getOrRequestToken(myAccount, myProject);
+      String token = GHCompatibilityUtil.getOrRequestToken(myAccount, myProject, GHLoginSource.SYNC_FORK);
       if (token == null) return;
       GithubApiRequestExecutor executor = GithubApiRequestExecutor.Factory.getInstance().create(myAccount.getServer(), token);
 

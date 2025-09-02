@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.facet.impl.ProjectFacetsConfigurator;
@@ -20,6 +20,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.ui.configuration.impl.ModuleConfigurationEditorProviderEp;
 import com.intellij.platform.workspace.storage.MutableEntityStorage;
 import com.intellij.ui.navigation.History;
 import com.intellij.ui.navigation.Place;
@@ -43,8 +44,11 @@ import java.util.List;
  * @author Eugene Zhuravlev
  */
 public abstract class ModuleEditor implements Place.Navigator, Disposable {
+  private static final ExtensionPointName<ModuleConfigurationEditorProviderEp> EP_NAME =
+    new ExtensionPointName<>("com.intellij.moduleConfigurationEditorProvider");
+
   private static final Logger LOG = Logger.getInstance(ModuleEditor.class);
-  private static final ExtensionPointName<ModuleConfigurableEP> MODULE_CONFIGURABLES = ExtensionPointName.create("com.intellij.moduleConfigurable");
+  private static final ExtensionPointName<ModuleConfigurableEP> MODULE_CONFIGURABLES = new ExtensionPointName<>("com.intellij.moduleConfigurable");
   public static final String SELECTED_EDITOR_NAME = "selectedEditor";
 
   private final Project myProject;
@@ -155,11 +159,10 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
     return false;
   }
 
-  private void createEditors(@Nullable Module module) {
-    if (module == null) return;
-
+  private void createEditors(@NotNull Module module) {
     ModuleConfigurationState state = createModuleConfigurationState();
-    for (ModuleConfigurationEditorProvider provider : ModuleConfigurationEditorProvider.EP_NAME.getExtensionList(module)) {
+    for (ModuleConfigurationEditorProviderEp providerEp : EP_NAME.getExtensionList()) {
+      ModuleConfigurationEditorProvider provider = providerEp.getOrCreateInstance(module);
       ModuleConfigurationEditor[] editors = provider.createEditors(state);
       if (editors.length > 0 && provider instanceof ModuleConfigurationEditorProviderEx &&
           ((ModuleConfigurationEditorProviderEx)provider).isCompleteEditorSet()) {
@@ -191,7 +194,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
   private static final Set<Class<?>> ourReportedDeprecatedClasses = new HashSet<>();
   private static void reportDeprecatedModuleEditor(@NotNull Class<?> aClass) {
     if (ourReportedDeprecatedClasses.add(aClass)) {
-      LOG.warn(aClass.getName() + " uses deprecated way to register itself as a module editor. " + ModuleConfigurationEditorProvider.class.getName() + " extension point should be used instead");
+      LOG.error(aClass.getName() + " uses deprecated way to register itself as a module editor. " + ModuleConfigurationEditorProvider.class.getName() + " extension point should be used instead");
     }
   }
 
@@ -215,12 +218,16 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
   }
 
   private @NotNull JPanel createPanel() {
-    getModifiableRootModel(); //initialize model if needed
+    // initialize model if needed
+    getModifiableRootModel();
     getModifiableRootModelProxy();
 
     myGenericSettingsPanel = new ModuleEditorPanel();
 
-    createEditors(getModule());
+    Module module = getModule();
+    if (module  != null) {
+      createEditors(module);
+    }
 
     final JComponent component = createCenterPanel();
     myGenericSettingsPanel.add(component, BorderLayout.CENTER);

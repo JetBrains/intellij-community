@@ -15,10 +15,15 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.SoftAssertions
-import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.BuildMessages
+import org.jetbrains.intellij.build.BuildOptions
+import org.jetbrains.intellij.build.ProductProperties
+import org.jetbrains.intellij.build.ProprietaryBuildTools
+import org.jetbrains.intellij.build.closeKtorClient
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper.isUnderTeamCity
+import org.jetbrains.intellij.build.getDevModeOrTestBuildDateInSeconds
 import org.jetbrains.intellij.build.impl.BuildContextImpl
-import org.jetbrains.intellij.build.impl.SnapshotBuildNumber
 import org.jetbrains.intellij.build.impl.buildDistributions
 import org.jetbrains.intellij.build.telemetry.JaegerJsonSpanExporterManager
 import org.jetbrains.intellij.build.telemetry.TraceManager
@@ -30,41 +35,58 @@ import java.net.http.HttpConnectTimeoutException
 import java.nio.file.Files
 import java.nio.file.Path
 
-fun createBuildOptionsForTest(productProperties: ProductProperties, homeDir: Path, skipDependencySetup: Boolean = false, testInfo: TestInfo? = null): BuildOptions {
+fun createBuildOptionsForTest(
+  productProperties: ProductProperties,
+  homeDir: Path,
+  skipDependencySetup: Boolean = false,
+  buildCrossPlatformDistribution: Boolean = false,
+  testInfo: TestInfo? = null,
+): BuildOptions {
+  
   val outDir = createTestBuildOutDir(productProperties)
   val options = BuildOptions(
     cleanOutDir = false,
     useCompiledClassesFromProjectOutput = true,
     jarCacheDir = homeDir.resolve("out/dev-run/jar-cache"),
-    compressZipFiles = false,
+    buildDateInSeconds = getDevModeOrTestBuildDateInSeconds(),
   )
-  customizeBuildOptionsForTest(options, outDir, skipDependencySetup, testInfo)
+  customizeBuildOptionsForTest(options = options, outDir = outDir, skipDependencySetup = skipDependencySetup, buildCrossPlatformDistribution = buildCrossPlatformDistribution, testInfo = testInfo)
   return options
 }
 
-fun createTestBuildOutDir(productProperties: ProductProperties): Path =
-  Files.createTempDirectory("test-build-${productProperties.baseFileName}")
+fun createTestBuildOutDir(productProperties: ProductProperties): Path {
+  return Files.createTempDirectory("test-build-${productProperties.baseFileName}")
+}
 
-private inline fun createBuildOptionsForTest(productProperties: ProductProperties, homeDir: Path, testInfo: TestInfo, customizer: (BuildOptions) -> Unit): BuildOptions {
-  val options = createBuildOptionsForTest(productProperties, homeDir, testInfo = testInfo)
+private inline fun createBuildOptionsForTest(productProperties: ProductProperties, homeDir: Path, testInfo: TestInfo, buildCrossPlatformDistribution: Boolean, customizer: (BuildOptions) -> Unit): BuildOptions {
+  val options = createBuildOptionsForTest(productProperties = productProperties, homeDir = homeDir, testInfo = testInfo, buildCrossPlatformDistribution = buildCrossPlatformDistribution)
   customizer(options)
   return options
 }
 
-fun customizeBuildOptionsForTest(options: BuildOptions, outDir: Path, skipDependencySetup: Boolean = false, testInfo: TestInfo?) {
+fun customizeBuildOptionsForTest(options: BuildOptions, outDir: Path, skipDependencySetup: Boolean = false, buildCrossPlatformDistribution: Boolean = false, testInfo: TestInfo?) {
   options.skipDependencySetup = skipDependencySetup
   options.isTestBuild = true
-  options.buildNumber = "${SnapshotBuildNumber.BASE}.1"  // differs from [SnapshotBuildNumber] to closer match the production
   options.buildStepsToSkip += listOf(
     BuildOptions.LIBRARY_URL_CHECK_STEP,
     BuildOptions.TEAMCITY_ARTIFACTS_PUBLICATION_STEP,
-    BuildOptions.OS_SPECIFIC_DISTRIBUTIONS_STEP,
     BuildOptions.LINUX_TAR_GZ_WITHOUT_BUNDLED_RUNTIME_STEP,
     BuildOptions.WIN_SIGN_STEP,
     BuildOptions.MAC_SIGN_STEP,
     BuildOptions.MAC_NOTARIZE_STEP,
     BuildOptions.MAC_DMG_STEP,
   )
+  if (buildCrossPlatformDistribution) {
+    //to build cross-platform distribution, we need to copy OS-specific files, but there is no need to build actual OS-specific archives
+    options.buildStepsToSkip += listOf(
+      BuildOptions.LINUX_ARTIFACTS_STEP,
+      BuildOptions.MAC_ARTIFACTS_STEP,
+      BuildOptions.WINDOWS_ARTIFACTS_STEP,
+    )
+  }
+  else {
+    options.buildStepsToSkip += listOf(BuildOptions.OS_SPECIFIC_DISTRIBUTIONS_STEP)
+  }
   options.buildUnixSnaps = false
   options.outRootDir = outDir
   options.useCompiledClassesFromProjectOutput = true
@@ -82,7 +104,7 @@ suspend inline fun createBuildContext(
 ): BuildContext {
   val options = createBuildOptionsForTest(productProperties, homeDir)
   buildOptionsCustomizer(options)
-  return BuildContextImpl.createContext(homeDir, productProperties, proprietaryBuildTools = buildTools, options = options)
+  return BuildContextImpl.createContext(projectHome = homeDir, productProperties = productProperties, proprietaryBuildTools = buildTools, options = options)
 }
 
 fun runTestBuild(
@@ -92,7 +114,14 @@ fun runTestBuild(
   testInfo: TestInfo,
   buildOptionsCustomizer: (BuildOptions) -> Unit = {},
 ) {
-  runTestBuild(homePath, productProperties, testInfo, buildTools, isReproducibilityTestAllowed = true, buildOptionsCustomizer = buildOptionsCustomizer)
+  runTestBuild(
+    homeDir = homePath,
+    productProperties = productProperties,
+    testInfo = testInfo,
+    buildTools = buildTools,
+    isReproducibilityTestAllowed = true,
+    buildOptionsCustomizer = buildOptionsCustomizer,
+  )
 }
 
 fun runTestBuild(
@@ -101,6 +130,8 @@ fun runTestBuild(
   testInfo: TestInfo,
   buildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
   isReproducibilityTestAllowed: Boolean = true,
+  checkIntegrityOfEmbeddedFrontend: Boolean = true,
+  buildCrossPlatformDistribution: Boolean = false,
   build: suspend (BuildContext) -> Unit = { buildDistributions(context = it) },
   onSuccess: suspend (BuildContext) -> Unit = {},
   buildOptionsCustomizer: (BuildOptions) -> Unit = {}
@@ -115,17 +146,19 @@ fun runTestBuild(
             productProperties,
             setupTracer = false,
             buildTools,
-            createBuildOptionsForTest(productProperties, homeDir, testInfo, buildOptionsCustomizer).also {
+            createBuildOptionsForTest(productProperties = productProperties, homeDir = homeDir, testInfo = testInfo, 
+                                      buildCrossPlatformDistribution = buildCrossPlatformDistribution, customizer = buildOptionsCustomizer).also {
               reproducibilityTest.configure(it)
             }
           ),
           traceSpanName = "${testInfo.spanName}#${iterationNumber}",
           writeTelemetry = false,
+          checkIntegrityOfEmbeddedFrontend = checkIntegrityOfEmbeddedFrontend,
           build = { context ->
             build(context)
             onSuccess(context)
             reproducibilityTest.iterationFinished(iterationNumber, context)
-          }
+          },
         )
       }
     }
@@ -133,18 +166,20 @@ fun runTestBuild(
   else {
     doRunTestBuild(
       context = BuildContextImpl.createContext(
-        homeDir,
-        productProperties,
+        projectHome = homeDir,
+        productProperties = productProperties,
         setupTracer = false,
-        buildTools,
-        createBuildOptionsForTest(productProperties, homeDir, testInfo, buildOptionsCustomizer),
+        proprietaryBuildTools = buildTools,
+        options = createBuildOptionsForTest(productProperties = productProperties, homeDir = homeDir, testInfo = testInfo, 
+                                            buildCrossPlatformDistribution = buildCrossPlatformDistribution, customizer = buildOptionsCustomizer),
       ),
       writeTelemetry = true,
+      checkIntegrityOfEmbeddedFrontend = checkIntegrityOfEmbeddedFrontend,
       traceSpanName = testInfo.spanName,
       build = { context ->
         build(context)
         onSuccess(context)
-      }
+      },
     )
   }
 }
@@ -155,12 +190,14 @@ suspend fun runTestBuild(
   context: suspend () -> BuildContext,
   build: suspend (BuildContext) -> Unit = { buildDistributions(it) }
 ) {
-  doRunTestBuild(context(), testInfo.spanName, writeTelemetry = true, build)
+  doRunTestBuild(context = context(), traceSpanName = testInfo.spanName, writeTelemetry = true, checkIntegrityOfEmbeddedFrontend = true, build = build)
 }
 
 private val defaultLogFactory = Logger.getFactory()
 
-private suspend fun doRunTestBuild(context: BuildContext, traceSpanName: String, writeTelemetry: Boolean, build: suspend (context: BuildContext) -> Unit) {
+private suspend fun doRunTestBuild(context: BuildContext, traceSpanName: String, writeTelemetry: Boolean,
+                                   checkIntegrityOfEmbeddedFrontend: Boolean,
+                                   build: suspend (context: BuildContext) -> Unit) {
   var outDir: Path? = null
   var traceFile: Path? = null
   var error: Throwable? = null
@@ -176,13 +213,19 @@ private suspend fun doRunTestBuild(context: BuildContext, traceSpanName: String,
       }
       try {
         build(context)
-        val frontendRootModule = context.productProperties.embeddedFrontendRootModule
-        if (frontendRootModule != null && context.generateRuntimeModuleRepository) {
-          val softly = SoftAssertions()
-          RuntimeModuleRepositoryChecker.checkIntegrityOfEmbeddedFrontend(frontendRootModule, context, softly)
-          checkKeymapPluginsAreBundledWithFrontend(frontendRootModule, context, softly)
-          softly.assertAll()
+
+        val softly = SoftAssertions()
+        if (checkIntegrityOfEmbeddedFrontend) {
+          val frontendRootModule = context.productProperties.embeddedFrontendRootModule
+          if (frontendRootModule != null && context.generateRuntimeModuleRepository) {
+            RuntimeModuleRepositoryChecker.checkProductModules(productModulesModule = frontendRootModule, context = context, softly = softly)
+            RuntimeModuleRepositoryChecker.checkIntegrityOfEmbeddedFrontend(frontendRootModule, context, softly)
+            checkKeymapPluginsAreBundledWithFrontend(frontendRootModule, context, softly)
+          }
         }
+
+        checkPrivatePluginModulesAreNotBundled(context, softly)
+        softly.assertAll()
       }
       catch (e: CancellationException) {
         throw e

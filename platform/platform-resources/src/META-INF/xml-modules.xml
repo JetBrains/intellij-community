@@ -1,0 +1,13 @@
+<idea-plugin>
+  <content>
+    <module name="intellij.xml.dom" loading="embedded"/>
+    <module name="intellij.xml.dom.impl" loading="embedded"/>
+    <module name="intellij.xml.structureView" loading="embedded"/>
+    <module name="intellij.xml.structureView.impl" loading="embedded"/>
+    <module name="intellij.xml.psi" loading="embedded"/>
+    <module name="intellij.xml.psi.impl" loading="embedded"/>
+    <module name="intellij.xml.analysis" loading="embedded"/>
+    <module name="intellij.xml.frontback.impl" loading="embedded"/>
+    <module name="intellij.relaxng"/>
+  </content>
+</idea-plugin>

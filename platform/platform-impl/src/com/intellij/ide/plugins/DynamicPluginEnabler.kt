@@ -6,8 +6,10 @@ import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollect
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.progress.util.PotemkinProgress
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import java.util.concurrent.CopyOnWriteArrayList
 import javax.swing.JComponent
 
@@ -41,8 +43,12 @@ class DynamicPluginEnabler : PluginEnabler {
   override fun enable(descriptors: Collection<IdeaPluginDescriptor>): Boolean =
     enable(descriptors, project = null)
 
+  fun enable(descriptors: Collection<IdeaPluginDescriptor>, project: Project? = null): Boolean =
+    enable(descriptors = descriptors, progressTitle = null, project = project)
+
   fun enable(
     descriptors: Collection<IdeaPluginDescriptor>,
+    progressTitle: @Nls String?,
     project: Project? = null,
   ): Boolean {
     if (descriptors.any { !PluginManagerCore.isCompatible(it) }) {
@@ -59,7 +65,16 @@ class DynamicPluginEnabler : PluginEnabler {
 
     PluginEnabler.HEADLESS.enable(descriptors)
     val installedDescriptors = findInstalledPlugins(descriptors) ?: return false
-    val pluginsLoaded = DynamicPlugins.loadPlugins(installedDescriptors, project)
+    val pluginsLoaded = if (progressTitle == null) {
+      DynamicPlugins.loadPlugins(installedDescriptors, project)
+    } else {
+      val progress = PotemkinProgress(progressTitle, project, null, null)
+      var result = false
+      progress.runInSwingThread {
+        result = DynamicPlugins.loadPlugins(installedDescriptors, project)
+      }
+      result
+    }
 
     for (listener in pluginEnableStateChangedListeners) {
       try {

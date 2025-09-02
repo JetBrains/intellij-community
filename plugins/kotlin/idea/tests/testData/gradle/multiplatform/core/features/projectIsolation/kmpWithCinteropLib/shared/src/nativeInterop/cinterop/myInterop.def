@@ -1,0 +1,2 @@
+headers = myInterop.h
+compilerOpts = -I${projectRootDir}/libs/include

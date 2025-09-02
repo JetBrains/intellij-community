@@ -1,8 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree;
 
+import com.intellij.java.syntax.parser.JavaParser;
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.java.parser.JavaParser;
 import com.intellij.lang.java.parser.JavaParserUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -27,7 +27,7 @@ public final class JavaTreeGenerator implements TreeGenerator {
   private static final Logger LOG = Logger.getInstance(JavaTreeGenerator.class);
 
   private static final JavaParserUtil.ParserWrapper MOD_LIST =
-    builder -> JavaParser.INSTANCE.getDeclarationParser().parseModifierList(builder);
+    (builder, languageLevel) -> new JavaParser(languageLevel).getDeclarationParser().parseModifierList(builder);
 
   @Override
   public @Nullable TreeElement generateTreeFor(@NotNull PsiElement original, final @NotNull CharTable table, final @NotNull PsiManager manager) {

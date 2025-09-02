@@ -298,7 +298,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
     if (myBusyIcon != null) {
       remove(myBusyIcon);
-      myBusyIcon.dispose();
+      Disposer.dispose(myBusyIcon);
       myBusyIcon = null;
     }
     myUISettingsListener.disconnect();

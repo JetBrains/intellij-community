@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.idea.KtIconProvider.getIcon
 import org.jetbrains.kotlin.idea.core.util.KotlinIdeaCoreBundle
 import org.jetbrains.kotlin.name.StandardClassIds
+import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
 
 @ApiStatus.Internal
@@ -26,6 +27,7 @@ open class KtOverrideMembersHandler : KtGenerateMembersHandler(false) {
 context(KaSession)
 @OptIn(KaExperimentalApi::class)
 private fun collectMembers(classOrObject: KtClassOrObject): List<KtClassMember> {
+    if (classOrObject is KtClass && classOrObject.isAnnotation()) return emptyList()
     val classSymbol = (classOrObject.symbol as? KaEnumEntrySymbol)?.enumEntryInitializer as? KaClassSymbol ?: classOrObject.classSymbol ?: return emptyList()
     return getOverridableMembers(classSymbol).map { (symbol, bodyType, containingSymbol) ->
         @NlsSafe
@@ -93,7 +95,7 @@ private fun collectMembers(classOrObject: KtClassOrObject): List<KtClassMember> 
                             }
                         }
                         (classOrObjectSymbol as? KaNamedClassSymbol)?.isInline == true &&
-                                containingSymbol?.classId == StandardClassIds.Any -> {
+                                symbolToProcess.origin == KaSymbolOrigin.SOURCE_MEMBER_GENERATED -> {
                             if ((symbolToProcess as? KaNamedFunctionSymbol)?.name?.asString() in listOf("equals", "hashCode")) {
                                 continue
                             } else {

@@ -1,5 +1,5 @@
 // IGNORE_FE10_BINDING_BY_FIR
 fun test(foo: Int?, bar: Int): Int? {
-    var i = foo ?: return bar
+    val i = foo ?: return bar
     return i
 }

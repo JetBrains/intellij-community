@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.local;
 
-import com.intellij.ide.plugins.DynamicPluginsTestUtil;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
@@ -22,6 +21,7 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.platform.testFramework.DynamicPluginTestUtilsKt;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestActionEvent;
@@ -370,7 +370,7 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
     EdtTestUtil.runInEdtAndWait(() -> {
       assertNotNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(copiedJar));
 
-      var fsRegistration = DynamicPluginsTestUtil.loadExtensionWithText(fsExtText, "com.intellij");
+      var fsRegistration = DynamicPluginTestUtilsKt.loadExtensionWithText(fsExtText, "com.intellij");
       try {
         Disposer.register(fsRegistration, JarFileSystemImpl::cleanupForNextTest);
 

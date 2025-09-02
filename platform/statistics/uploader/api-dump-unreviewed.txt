@@ -17,9 +17,6 @@ f:com.intellij.internal.statistic.eventLog.EventLogFile
 - hashCode():I
 f:com.intellij.internal.statistic.eventLog.EventLogFile$Companion
 - f:create(java.nio.file.Path,com.intellij.internal.statistic.config.eventLog.EventLogBuildType,java.lang.String):com.intellij.internal.statistic.eventLog.EventLogFile
-com.intellij.internal.statistic.eventLog.EventLogFilesProvider
-- a:getLogFiles():java.util.List
-- a:getLogFilesExceptActive():java.util.List
 com.intellij.internal.statistic.eventLog.EventLogSendConfig
 - a:getBucket():I
 - a:getDeviceId():java.lang.String

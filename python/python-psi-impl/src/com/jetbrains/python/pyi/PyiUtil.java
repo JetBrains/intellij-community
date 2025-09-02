@@ -41,10 +41,6 @@ import java.util.List;
 public final class PyiUtil {
   private PyiUtil() {}
 
-  public static boolean isInsideStubAnnotation(@NotNull PsiElement element) {
-    return isInsideStub(element) && PsiTreeUtil.getParentOfType(element, PyAnnotation.class, true, ScopeOwner.class) != null;
-  }
-
   public static boolean isInsideStub(@NotNull PsiElement element) {
     return PyiUtilCore.isInsideStub(element);
   }

@@ -13,6 +13,7 @@ import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.rules.ProjectModelExtension
+import com.intellij.testFramework.rules.TempDirectoryExtension
 import com.intellij.testFramework.workspaceModel.update
 import com.intellij.util.indexing.testEntities.IndexingTestEntity
 import com.intellij.workspaceModel.core.fileIndex.impl.ModuleRelatedRootData
@@ -29,6 +30,10 @@ class CustomContentFileSetTest {
   @JvmField
   @RegisterExtension
   val projectModel: ProjectModelExtension = ProjectModelExtension()
+
+  @JvmField
+  @RegisterExtension
+  val baseNonProjectDir: TempDirectoryExtension = TempDirectoryExtension()
 
   private val fileIndex
     get() = WorkspaceFileIndex.getInstance(projectModel.project)
@@ -50,7 +55,7 @@ class CustomContentFileSetTest {
 
   @Test
   fun `add and remove entity with custom content file set`() = runBlocking {
-    val file = projectModel.baseProjectDir.newVirtualFile("root/a.txt")
+    val file = baseNonProjectDir.newVirtualFile("root/a.txt")
     val root = file.parent
     readAction {
       assertFalse(fileIndex.isInContent(root))

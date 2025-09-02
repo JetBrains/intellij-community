@@ -5,6 +5,7 @@ import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.java.codeserver.core.JavaPsiReferenceUtil;
 import com.intellij.java.codeserver.highlighting.errors.*;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -94,9 +95,23 @@ final class ExpressionChecker {
   void checkCreateInnerClassFromStaticContext(@NotNull PsiElement element,
                                               @NotNull PsiElement placeToSearchEnclosingFrom,
                                               @NotNull PsiClass aClass) {
-    if (!PsiUtil.isInnerClass(aClass)) return;
+    if (aClass.hasModifierProperty(PsiModifier.STATIC)) return;
     PsiClass outerClass = aClass.getContainingClass();
-    if (outerClass == null) return;
+    if (outerClass == null) {
+      if (!(aClass.getParent() instanceof PsiDeclarationStatement)) return; // local class
+      PsiMember scope = PsiTreeUtil.getParentOfType(aClass, PsiMember.class);
+      if (scope == null) return;
+      if (scope.hasModifierProperty(PsiModifier.STATIC)) {
+        PsiModifierListOwner enclosingStaticElement = PsiUtil.getEnclosingStaticElement(element, null);
+        assert enclosingStaticElement != null;
+        if (enclosingStaticElement != scope) {
+          myVisitor.report(JavaErrorKinds.INSTANTIATION_LOCAL_CLASS_WRONG_STATIC_CONTEXT.create(element, aClass));
+        }
+        return;
+      }
+      outerClass = scope.getContainingClass();
+      if (outerClass == null) return;
+    }
 
     if (outerClass instanceof PsiSyntheticClass ||
         InheritanceUtil.hasEnclosingInstanceInScope(outerClass, placeToSearchEnclosingFrom, true, false)) {
@@ -119,7 +134,7 @@ final class ExpressionChecker {
   }
 
   /**
-   * @return true if there's no assignatbility problem reported
+   * @return true if there's no assignability problem reported
    */
   boolean checkAssignability(@Nullable PsiType lType,
                              @Nullable PsiType rType,
@@ -141,8 +156,7 @@ final class ExpressionChecker {
     if (expression != null && myVisitor.isIncompleteModel() && IncompleteModelUtil.isPotentiallyConvertible(lType, expression)) {
       return true;
     }
-    myVisitor.report(JavaErrorKinds.TYPE_INCOMPATIBLE.create(elementToHighlight, new JavaIncompatibleTypeErrorContext(lType, rType)));
-    return false;
+    return myVisitor.reportIncompatibleType(lType, rType, elementToHighlight);
   }
 
   void checkMustBeBoolean(@NotNull PsiExpression expr) {
@@ -157,7 +171,7 @@ final class ExpressionChecker {
         if (type == null && myVisitor.isIncompleteModel() && IncompleteModelUtil.mayHaveUnknownTypeDueToPendingReference(expr)) {
           return;
         }
-        myVisitor.report(JavaErrorKinds.TYPE_INCOMPATIBLE.create(expr, new JavaIncompatibleTypeErrorContext(PsiTypes.booleanType(), type)));
+        myVisitor.reportIncompatibleType(PsiTypes.booleanType(), type, expr);
       }
     }
   }
@@ -331,10 +345,16 @@ final class ExpressionChecker {
 
     if (mismatchedExpressions.size() == list.getExpressions().length || mismatchedExpressions.isEmpty()) {
       PsiElement anchor = list.getTextRange().isEmpty() ? ObjectUtils.notNull(list.getPrevSibling(), list) : list;
+      if (!mismatchedExpressions.isEmpty() && !context.argCountMismatch() &&
+          ContainerUtil.and(mismatchedExpressions, e -> e.getType() instanceof PsiLambdaParameterType)) {
+        // Likely, the problem is induced
+        return;
+      }
       myVisitor.report(JavaErrorKinds.CALL_WRONG_ARGUMENTS.create(anchor, context));
     }
     else {
       for (PsiExpression wrongArg : mismatchedExpressions) {
+        if (wrongArg.getType() instanceof PsiLambdaParameterType) continue;
         myVisitor.report(JavaErrorKinds.CALL_WRONG_ARGUMENTS.create(wrongArg, context));
       }
     }
@@ -344,9 +364,9 @@ final class ExpressionChecker {
     PsiMethod method = info.getElement();
     PsiClass targetClass = PsiUtil.resolveClassInClassTypeOnly(method.getReturnType());
     if (targetClass instanceof PsiTypeParameter typeParameter && typeParameter.getOwner() == method) {
-      PsiClass inferred = PsiUtil.resolveClassInClassTypeOnly(info.getSubstitutor().substitute(typeParameter));
-      if (inferred != null && !PsiUtil.isAccessible(inferred, methodCall, null)) {
-        myVisitor.report(JavaErrorKinds.TYPE_INACCESSIBLE.create(methodCall.getArgumentList(), inferred));
+      PsiClass targetType = PsiUtil.resolveClassInClassTypeOnly(InferenceSession.getTargetTypeByParent(methodCall));
+      if (targetType != null && !PsiUtil.isAccessible(targetType, methodCall, null)) {
+        myVisitor.report(JavaErrorKinds.TYPE_INACCESSIBLE.create(methodCall.getArgumentList(), targetType));
       }
     }
   }
@@ -366,7 +386,7 @@ final class ExpressionChecker {
     PsiClassType processorType = factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_STRING_TEMPLATE_PROCESSOR, processor.getResolveScope());
     if (!TypeConversionUtil.isAssignable(processorType, type)) {
       if (myVisitor.isIncompleteModel() && IncompleteModelUtil.isPotentiallyConvertible(processorType, processor)) return;
-      myVisitor.report(JavaErrorKinds.TYPE_INCOMPATIBLE.create(processor, new JavaIncompatibleTypeErrorContext(processorType, type)));
+      myVisitor.reportIncompatibleType(processorType, type, processor);
       return;
     }
 
@@ -400,7 +420,7 @@ final class ExpressionChecker {
     }
 
     PsiJavaCodeReferenceElement classReference = expression.getClassOrAnonymousClassReference();
-    checkConstructorCall(typeResult, expression, classType, classReference);
+    checkConstructorCall(typeResult, expression, classReference);
   }
 
   void checkAmbiguousConstructorCall(@NotNull PsiJavaCodeReferenceElement ref, PsiElement resolved) {
@@ -410,7 +430,7 @@ final class ExpressionChecker {
       if (newExpression.resolveMethod() == null && !PsiTreeUtil.findChildrenOfType(argumentList, PsiFunctionalExpression.class).isEmpty()) {
         PsiType type = newExpression.getType();
         if (type instanceof PsiClassType classType) {
-          checkConstructorCall(classType.resolveGenerics(), newExpression, type, newExpression.getClassReference());
+          checkConstructorCall(classType.resolveGenerics(), newExpression, newExpression.getClassReference());
         }
       }
     }
@@ -419,8 +439,18 @@ final class ExpressionChecker {
   void checkConstructorCallProblems(@NotNull PsiMethodCallExpression methodCall) {
     if (!JavaPsiConstructorUtil.isConstructorCall(methodCall)) return;
     PsiMethod method = PsiTreeUtil.getParentOfType(methodCall, PsiMethod.class, true, PsiClass.class, PsiLambdaExpression.class);
-    if (method == null || !method.isConstructor()) {
+    PsiMethod contextMethod =
+      method != null ? method : PsiTreeUtil.getContextOfType(methodCall, PsiMethod.class, true, PsiClass.class, PsiLambdaExpression.class);
+    if (contextMethod == null || !contextMethod.isConstructor()) {
       myVisitor.report(JavaErrorKinds.CALL_CONSTRUCTOR_ONLY_ALLOWED_IN_CONSTRUCTOR.create(methodCall));
+      return;
+    }
+    if (JavaPsiRecordUtil.isCompactConstructor(contextMethod) || JavaPsiRecordUtil.isExplicitCanonicalConstructor(contextMethod)) {
+      myVisitor.report(JavaErrorKinds.CALL_CONSTRUCTOR_RECORD_IN_CANONICAL.create(methodCall));
+      return;
+    }
+    if (method == null) {
+      // Do not report other errors for detached constructor call, as they are likely non-relevant
       return;
     }
     PsiMethodCallExpression constructorCall = JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(method);
@@ -431,10 +461,6 @@ final class ExpressionChecker {
     PsiElement codeBlock = methodCall.getParent().getParent();
     if (!(codeBlock instanceof PsiCodeBlock) || !(codeBlock.getParent() instanceof PsiMethod)) {
       myVisitor.report(JavaErrorKinds.CALL_CONSTRUCTOR_MUST_BE_TOP_LEVEL_STATEMENT.create(methodCall));
-      return;
-    }
-    if (JavaPsiRecordUtil.isCompactConstructor(method) || JavaPsiRecordUtil.isExplicitCanonicalConstructor(method)) {
-      myVisitor.report(JavaErrorKinds.CALL_CONSTRUCTOR_RECORD_IN_CANONICAL.create(methodCall));
       return;
     }
     PsiStatement prevStatement = PsiTreeUtil.getPrevSiblingOfType(methodCall.getParent(), PsiStatement.class);
@@ -566,7 +592,7 @@ final class ExpressionChecker {
         return;
       }
       if (myVisitor.isIncompleteModel() && IncompleteModelUtil.isPotentiallyConvertible(lType, rExpr)) return;
-      myVisitor.report(JavaErrorKinds.TYPE_INCOMPATIBLE.create(rExpr, new JavaIncompatibleTypeErrorContext(lType, type)));
+      myVisitor.reportIncompatibleType(lType, type, rExpr);
     }
   }
 
@@ -895,61 +921,8 @@ final class ExpressionChecker {
     }
 
     if (resolved == null) {
-      // do not highlight unknown packages (javac does not care), Javadoc, and module references (checked elsewhere)
-      PsiJavaCodeReferenceElement parent = getOuterReferenceParent(ref);
-      PsiElement outerParent = parent.getParent();
-      if (outerParent instanceof PsiPackageStatement ||
-          result.isPackagePrefixPackageReference() ||
-          PsiUtil.isInsideJavadocComment(ref) ||
-          parent.resolve() instanceof PsiMember ||
-          outerParent instanceof PsiPackageAccessibilityStatement) {
-        return;
-      }
-
-      //do not highlight module keyword if the statement is not complete
-      //see com.intellij.lang.java.parser.BasicFileParser.parseImportStatement
-      if (PsiKeyword.MODULE.equals(ref.getText()) && refParent instanceof PsiImportStatement &&
-          PsiUtil.isAvailable(JavaFeature.MODULE_IMPORT_DECLARATIONS, ref)) {
-        PsiElement importKeywordExpected = PsiTreeUtil.skipWhitespacesAndCommentsBackward(ref);
-        PsiElement errorElementExpected = PsiTreeUtil.skipWhitespacesAndCommentsForward(ref);
-        if (importKeywordExpected instanceof PsiKeyword keyword &&
-            keyword.textMatches(PsiKeyword.IMPORT) &&
-            errorElementExpected instanceof PsiErrorElement errorElement &&
-            JavaPsiBundle.message("expected.identifier.or.semicolon").equals(errorElement.getErrorDescription())) {
-          return;
-        }
-      }
-
-      JavaResolveResult[] results = ref.multiResolve(true);
-      if (results.length > 1) {
-        if (ref instanceof PsiMethodReferenceExpression methodRef &&
-            myVisitor.isIncompleteModel() && IncompleteModelUtil.isUnresolvedClassType(methodRef.getFunctionalInterfaceType())) {
-          return;
-        }
-        myVisitor.report(JavaErrorKinds.REFERENCE_AMBIGUOUS.create(ref, Arrays.asList(results)));
-      }
-      else {
-        boolean definitelyIncorrect = false;
-        if (ref instanceof PsiReferenceExpression expression) {
-          PsiExpression qualifierExpression = expression.getQualifierExpression();
-          if (qualifierExpression != null) {
-            PsiType type = qualifierExpression.getType();
-            if (type instanceof PsiPrimitiveType primitiveType && !primitiveType.equals(PsiTypes.nullType())) {
-              myVisitor.report(JavaErrorKinds.REFERENCE_QUALIFIER_PRIMITIVE.create(ref, primitiveType));
-              return;
-            }
-          }
-        }
-        else if (ImplicitClassSearch.search(ref.getQualifiedName(), myVisitor.project(), ref.getResolveScope()).findFirst() != null) {
-          myVisitor.report(JavaErrorKinds.REFERENCE_IMPLICIT_CLASS.create(ref));
-          return;
-        }
-        if (!definitelyIncorrect && myVisitor.isIncompleteModel() && IncompleteModelUtil.canBePendingReference(ref)) {
-          myVisitor.report(JavaErrorKinds.REFERENCE_PENDING.create(refName));
-          return;
-        }
-        myVisitor.report(JavaErrorKinds.REFERENCE_UNRESOLVED.create(ref));
-      }
+      checkUnresolvedReference(ref, result);
+      return;
     }
     if (resolved instanceof PsiClass psiClass &&
         psiClass.getContainingClass() == null &&
@@ -962,9 +935,84 @@ final class ExpressionChecker {
     if ((resolved instanceof PsiLocalVariable || resolved instanceof PsiParameter) && !(resolved instanceof ImplicitVariable)) {
       myVisitor.myControlFlowChecker.checkVariableMustBeFinal((PsiVariable)resolved, ref);
     }
+    boolean skipValidityChecks =
+      PsiUtil.isInsideJavadocComment(ref) ||
+      PsiTreeUtil.getParentOfType(ref, PsiPackageStatement.class, true) != null ||
+      resolved instanceof PsiPackage && ref.getParent() instanceof PsiJavaCodeReferenceElement;
+
+    if (skipValidityChecks) return;
+
+    if (!result.isAccessible() && resolved instanceof PsiModifierListOwner owner) {
+      myVisitor.myModifierChecker.reportAccessProblem(ref, owner, result);
+      return;
+    }
+    if (!result.isStaticsScopeCorrect()) {
+      myVisitor.report(JavaErrorKinds.REFERENCE_NON_STATIC_FROM_STATIC_CONTEXT.create(ref, resolved));
+    }
+    if (resolved instanceof PsiModifierListOwner owner) {
+      myVisitor.myModuleChecker.checkModuleAccess(owner, ref);
+    }
   }
 
-  private static boolean favorParentReport(@NotNull PsiCall methodCall, @NotNull String errorMessage) {
+  private void checkUnresolvedReference(@NotNull PsiJavaCodeReferenceElement ref, @NotNull JavaResolveResult result) {
+    // do not highlight unknown packages (javac does not care), Javadoc, and module references (checked elsewhere)
+    PsiJavaCodeReferenceElement parent = getOuterReferenceParent(ref);
+    PsiElement outerParent = parent.getParent();
+    if (outerParent instanceof PsiPackageStatement ||
+        result.isPackagePrefixPackageReference() ||
+        PsiUtil.isInsideJavadocComment(ref) ||
+        parent.resolve() instanceof PsiMember ||
+        outerParent instanceof PsiPackageAccessibilityStatement) {
+      return;
+    }
+
+    //do not highlight the 'module' keyword if the statement is not complete
+    //see com.intellij.lang.java.parser.BasicFileParser.parseImportStatement
+    if (JavaKeywords.MODULE.equals(ref.getText()) && ref.getParent() instanceof PsiImportStatement &&
+        PsiUtil.isAvailable(JavaFeature.MODULE_IMPORT_DECLARATIONS, ref)) {
+      PsiElement importKeywordExpected = PsiTreeUtil.skipWhitespacesAndCommentsBackward(ref);
+      PsiElement errorElementExpected = PsiTreeUtil.skipWhitespacesAndCommentsForward(ref);
+      if (importKeywordExpected instanceof PsiKeyword keyword &&
+          keyword.textMatches(JavaKeywords.IMPORT) &&
+          errorElementExpected instanceof PsiErrorElement errorElement &&
+          JavaPsiBundle.message("expected.identifier.or.semicolon").equals(errorElement.getErrorDescription())) {
+        return;
+      }
+    }
+
+    JavaResolveResult[] results = ref.multiResolve(true);
+    if (results.length > 1) {
+      if (ref instanceof PsiMethodReferenceExpression methodRef &&
+          myVisitor.isIncompleteModel() && IncompleteModelUtil.isUnresolvedClassType(methodRef.getFunctionalInterfaceType())) {
+        return;
+      }
+      myVisitor.report(JavaErrorKinds.REFERENCE_AMBIGUOUS.create(ref, Arrays.asList(results)));
+    }
+    else {
+      boolean definitelyIncorrect = false;
+      if (ref instanceof PsiReferenceExpression expression) {
+        PsiExpression qualifierExpression = expression.getQualifierExpression();
+        if (qualifierExpression != null) {
+          PsiType type = qualifierExpression.getType();
+          if (type instanceof PsiPrimitiveType primitiveType && !primitiveType.equals(PsiTypes.nullType())) {
+            myVisitor.report(JavaErrorKinds.REFERENCE_QUALIFIER_PRIMITIVE.create(ref, primitiveType));
+            return;
+          }
+        }
+      }
+      else if (ImplicitClassSearch.search(ref.getQualifiedName(), myVisitor.project(), ref.getResolveScope()).findFirst() != null) {
+        myVisitor.report(JavaErrorKinds.REFERENCE_IMPLICIT_CLASS.create(ref));
+        return;
+      }
+      if (!definitelyIncorrect && myVisitor.isIncompleteModel() && IncompleteModelUtil.canBePendingReference(ref)) {
+        myVisitor.report(JavaErrorKinds.REFERENCE_PENDING.create(requireNonNull(ref.getReferenceNameElement())));
+        return;
+      }
+      myVisitor.report(JavaErrorKinds.REFERENCE_UNRESOLVED.create(ref));
+    }
+  }
+
+  static boolean favorParentReport(@NotNull PsiCall methodCall, @NotNull String errorMessage) {
     // Parent resolve failed as well, and it's likely more informative.
     // Suppress this error to allow reporting from parent
     return (errorMessage.equals(JavaPsiBundle.message("error.incompatible.type.failed.to.resolve.argument")) ||
@@ -981,16 +1029,16 @@ final class ExpressionChecker {
           call.resolveMethodGenerics() instanceof MethodCandidateInfo info &&
           info.getInferenceErrorMessage() != null) {
         // Possibly inapplicable method reference due to the surrounding call inference failure:
-        // suppress method reference error in order to display more relevant inference error.
+        // suppress method reference error in order to display a more relevant inference error.
         return true;
       }
     }
     return false;
   }
 
-  private void checkIncompatibleType(@NotNull PsiCall methodCall,
-                                     @NotNull MethodCandidateInfo resolveResult,
-                                     @NotNull PsiElement elementToHighlight) {
+  void checkIncompatibleType(@NotNull PsiCall methodCall,
+                             @NotNull MethodCandidateInfo resolveResult,
+                             @NotNull PsiElement elementToHighlight) {
     String errorMessage = resolveResult.getInferenceErrorMessage();
     if (errorMessage == null) return;
     if (favorParentReport(methodCall, errorMessage)) return;
@@ -1097,7 +1145,6 @@ final class ExpressionChecker {
 
   void checkConstructorCall(@NotNull PsiClassType.ClassResolveResult typeResolveResult,
                             @NotNull PsiConstructorCall constructorCall,
-                            @NotNull PsiType type,
                             @Nullable PsiJavaCodeReferenceElement classReference) {
     PsiExpressionList list = constructorCall.getArgumentList();
     if (list == null) return;
@@ -1131,13 +1178,7 @@ final class ExpressionChecker {
       }
       return;
     }
-    PsiElement place = list;
-    if (constructorCall instanceof PsiNewExpression newExpression) {
-      PsiAnonymousClass anonymousClass = newExpression.getAnonymousClass();
-      if (anonymousClass != null) place = anonymousClass;
-    }
-
-    JavaResolveResult[] results = resolveHelper.multiResolveConstructor((PsiClassType)type, list, place);
+    JavaResolveResult[] results = constructorCall.multiResolve(false);
     MethodCandidateInfo result = null;
     if (results.length == 1) result = (MethodCandidateInfo)results[0];
 
@@ -1366,7 +1407,7 @@ final class ExpressionChecker {
       }
       // cannot derive type of conditional expression
       // elseType will never be cast-able to thenType, so no quick fix here
-      myVisitor.report(JavaErrorKinds.TYPE_INCOMPATIBLE.create(expression, new JavaIncompatibleTypeErrorContext(thenType, type)));
+      myVisitor.reportIncompatibleType(thenType, type, expression);
     }
   }
 
@@ -1440,7 +1481,7 @@ final class ExpressionChecker {
     PsiElement parent = expression.getParent();
     if (expression instanceof PsiJavaCodeReferenceElement referenceElement) {
       // redirected ctr
-      if (PsiKeyword.THIS.equals(referenceElement.getReferenceName())
+      if (JavaKeywords.THIS.equals(referenceElement.getReferenceName())
           && resolved instanceof PsiMethod psiMethod
           && psiMethod.isConstructor()) {
         return;
@@ -1493,7 +1534,7 @@ final class ExpressionChecker {
                 && PsiUtil.isInnerClass(superClass)
                 && InheritanceUtil.isInheritorOrSelf(referencedClass, superClass.getContainingClass(), true)) {
               // by default super() is considered "this"-qualified
-              resolvedName = PsiKeyword.THIS;
+              resolvedName = JavaKeywords.THIS;
             }
             else {
               return;
@@ -1503,8 +1544,8 @@ final class ExpressionChecker {
             resolvedName = qualifier.getText();
           }
         }
-        else if (PsiKeyword.THIS.equals(name)) {
-          resolvedName = PsiKeyword.THIS;
+        else if (JavaKeywords.THIS.equals(name)) {
+          resolvedName = JavaKeywords.THIS;
         }
         else {
           resolvedName = PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY,
@@ -1525,7 +1566,7 @@ final class ExpressionChecker {
     }
     else if (expression instanceof PsiQualifiedExpression qualifiedExpression) {
       referencedClass = PsiUtil.resolveClassInType(qualifiedExpression.getType());
-      String keyword = expression instanceof PsiThisExpression ? PsiKeyword.THIS : PsiKeyword.SUPER;
+      String keyword = expression instanceof PsiThisExpression ? JavaKeywords.THIS : JavaKeywords.SUPER;
       PsiJavaCodeReferenceElement qualifier = qualifiedExpression.getQualifier();
       resolvedName = qualifier != null && qualifier.resolve() instanceof PsiClass aClass
                      ? PsiFormatUtil.formatClass(aClass, PsiFormatUtilBase.SHOW_NAME) + "." + keyword
@@ -1576,10 +1617,10 @@ final class ExpressionChecker {
     }
     if (!(expression instanceof PsiThisExpression) && !(expression instanceof PsiSuperExpression) ||
         ((PsiQualifiedExpression)expression).getQualifier() == null) {
-      PsiClass expressionClass = PsiTreeUtil.getParentOfType(expression, PsiClass.class, true);
+      PsiClass expressionClass = PsiUtil.getContainingClass(expression);
       while (expressionClass != null && parentClass != expressionClass) {
         if (InheritanceUtil.isInheritorOrSelf(expressionClass, referencedClass, true)) return;
-        expressionClass = PsiTreeUtil.getParentOfType(expressionClass, PsiClass.class, true);
+        expressionClass = PsiUtil.getContainingClass(expressionClass);
       }
     }
 

@@ -12,6 +12,7 @@ import com.intellij.l10n.LocalizationUtil;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.util.ResourceUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -183,7 +184,11 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
       InputStream descriptionStream = getDescriptionStream();
       if (descriptionStream != null) {
         //noinspection HardCodedStringLiteral(IDEA-249976)
-        return insertAddendum(ResourceUtil.loadText(descriptionStream), getTool().getDescriptionAddendum());
+        return insertAddendum(ResourceUtil.loadText(descriptionStream),
+                              new HtmlBuilder()
+                                .append(getTool().getDescriptionAddendum())
+                                .append(HtmlChunk.p().child(HtmlChunk.tag("small").addText("Inspection ID: " + getShortName())))
+                                .toFragment());
       }
       return null;
     }

@@ -204,8 +204,7 @@ public final class ExternalSystemApiUtil {
     return ContainerUtil.groupBy(nodes, node -> node.getDataNode(key));
   }
 
-  @SuppressWarnings("unchecked")
-  public static @NotNull <T> Collection<DataNode<T>> getChildren(@NotNull DataNode<?> node, @NotNull Key<T> key) {
+  public static @NotNull @Unmodifiable <T> Collection<DataNode<T>> getChildren(@NotNull DataNode<?> node, @NotNull Key<T> key) {
     Collection<DataNode<T>> result = null;
     for (DataNode<?> child : node.getChildren()) {
       if (!key.equals(child.getKey())) {
@@ -280,7 +279,7 @@ public final class ExternalSystemApiUtil {
     }
   }
 
-  public static @NotNull <T> Collection<DataNode<T>> findAll(@NotNull DataNode<?> parent, @NotNull Key<T> key) {
+  public static @NotNull @Unmodifiable <T> Collection<DataNode<T>> findAll(@NotNull DataNode<?> parent, @NotNull Key<T> key) {
     return getChildren(parent, key);
   }
 

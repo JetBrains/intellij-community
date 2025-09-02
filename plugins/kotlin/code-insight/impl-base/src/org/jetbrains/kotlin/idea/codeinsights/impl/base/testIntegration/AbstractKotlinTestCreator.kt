@@ -7,18 +7,18 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.testIntegration.TestCreator
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
-import org.jetbrains.kotlin.psi.KtClassOrObject
-import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.parents
 
 abstract class AbstractKotlinTestCreator : TestCreator {
-    private fun getTarget(editor: Editor, file: PsiFile): KtNamedDeclaration? {
-        return file.findElementAt(editor.caretModel.offset)?.parents
-            ?.firstOrNull { it is KtClassOrObject || it is KtNamedDeclaration && it.parent is KtFile } as? KtNamedDeclaration
+    private fun getTarget(editor: Editor, file: PsiFile): KtElement? {
+        val ktElement = file.findElementAt(editor.caretModel.offset)?.parents
+            ?.firstOrNull { it is KtClassOrObject || it is KtNamedDeclaration && it.parent is KtFile || it is KtFile } as? KtElement
+        // offer to create a test for a kotlin file only when there are top-level functions / properties
+        return ktElement.takeIf { e -> e !is KtFile || e.declarations.any { it is KtNamedFunction || it is KtProperty } }
     }
 
-    protected abstract fun createTestIntention(): SelfTargetingRangeIntention<KtNamedDeclaration>
+    protected abstract fun createTestIntention(): SelfTargetingRangeIntention<KtElement>
 
     override fun isAvailable(project: Project, editor: Editor, file: PsiFile): Boolean {
         val declaration = getTarget(editor, file) ?: return false

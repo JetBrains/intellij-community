@@ -7,6 +7,7 @@ import com.intellij.debugger.impl.DebuggerUtilsImpl.logError
 import com.intellij.rt.debugger.coroutines.CoroutinesDebugHelper
 import com.sun.jdi.ArrayReference
 import com.sun.jdi.StringReference
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
 import org.jetbrains.kotlin.idea.debugger.coroutine.callMethodFromHelper
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutineInfoCache
@@ -25,9 +26,9 @@ class CoroutineDebugProbesProxy(val suspendContext: SuspendContextImpl) {
         DebuggerManagerThreadImpl.assertIsManagerThread()
         val coroutineInfoCache = CoroutineInfoCache()
         try {
-            val executionContext = suspendContext.executionContext() ?: return coroutineInfoCache.fail()
+            val executionContext = suspendContext.executionContext()
             val coroutineInfos =
-                CoroutinesInfoFromJsonAndReferencesProvider(executionContext).dumpCoroutinesInfo()
+                CoroutinesInfoFromJsonAndReferencesProvider(executionContext).dumpCoroutinesWithStacktraces()
                     ?: CoroutineLibraryAgent2Proxy.instance(executionContext)?.dumpCoroutinesInfo()
                     ?: emptyList()
             coroutineInfoCache.ok(coroutineInfos)
@@ -46,9 +47,13 @@ class CoroutineDebugProbesProxy(val suspendContext: SuspendContextImpl) {
      * array[2 * i] = info.job
      * array[2 * i + 1] = info.parent
      *
+     * NOTE: only coroutines which are captured in the coroutine dump will be shown in the Coroutine View,
+     * jobs which do not correspond to any captured coroutine will not be shown (e.g., jobs of completing coroutines or scope coroutines).
+     *
      * The corresponding properties [CoroutineInfoData.job] and [CoroutineInfoData.parentJob] are set to the obtained values.
      */
-    internal fun fetchAndSetJobsAndParentsForCoroutines(infos: List<CoroutineInfoData>): Boolean {
+    @ApiStatus.Internal
+    fun fetchAndSetJobsAndParentsForCoroutines(infos: List<CoroutineInfoData>): Boolean {
         val executionContext = suspendContext.executionContext() ?: return false
         val debugCoroutineInfos = infos.map { it.debugCoroutineInfoRef }
         val array = callMethodFromHelper(CoroutinesDebugHelper::class.java, executionContext, "getJobsAndParentsForCoroutines", debugCoroutineInfos)

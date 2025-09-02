@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
-import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
@@ -23,7 +22,7 @@ import com.intellij.platform.workspace.storage.testEntities.entities.SetVFUEntit
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(6)
+@GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class SetVFUEntityImpl(private val dataSource: SetVFUEntityData) : SetVFUEntity, WorkspaceEntityBase(dataSource) {
 
@@ -58,8 +57,8 @@ internal class SetVFUEntityImpl(private val dataSource: SetVFUEntityData) : SetV
   }
 
 
-  internal class Builder(result: SetVFUEntityData?) : ModifiableWorkspaceEntityBase<SetVFUEntity, SetVFUEntityData>(
-    result), SetVFUEntity.Builder {
+  internal class Builder(result: SetVFUEntityData?) : ModifiableWorkspaceEntityBase<SetVFUEntity, SetVFUEntityData>(result),
+                                                      SetVFUEntity.Builder {
     internal constructor() : this(SetVFUEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -192,7 +191,8 @@ internal class SetVFUEntityData : WorkspaceEntityData<SetVFUEntity>() {
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.SetVFUEntity") as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.SetVFUEntity"
+    ) as EntityMetadata
   }
 
   override fun clone(): SetVFUEntityData {

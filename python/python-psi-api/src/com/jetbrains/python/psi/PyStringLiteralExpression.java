@@ -48,6 +48,7 @@ public interface PyStringLiteralExpression extends PyAstStringLiteralExpression,
   /**
    * @return true if this element has single string node and its type is {@link com.jetbrains.python.PyTokenTypes#DOCSTRING}
    */
+  @Override
   boolean isDocString();
 
   /**

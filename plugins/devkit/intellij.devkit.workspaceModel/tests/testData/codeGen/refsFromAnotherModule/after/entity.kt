@@ -6,12 +6,12 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.annotations.Child
+import com.intellij.platform.workspace.storage.annotations.Parent
 
 interface ReferredEntity : WorkspaceEntity {
   val version: Int
   val name: String
-  val contentRoot: @Child ContentRootEntity?
+  val contentRoot: ContentRootEntity?
 
   //region generated code
   @GeneratedCodeApiVersion(3)
@@ -51,9 +51,10 @@ fun MutableEntityStorage.modifyReferredEntity(
   return modifyEntity(ReferredEntity.Builder::class.java, entity, modification)
 }
 
+@Parent
 var ContentRootEntity.Builder.ref: ReferredEntity.Builder
   by WorkspaceEntity.extensionBuilder(ReferredEntity::class.java)
 //endregion
 
-val ContentRootEntity.ref: ReferredEntity
+@Parent val ContentRootEntity.ref: ReferredEntity
   by WorkspaceEntity.extension()

@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.util
 
-import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
@@ -14,5 +14,5 @@ fun <T> runWithModalBlockingOrInBackground(project: Project, @NlsSafe msg: Strin
     return runWithModalProgressBlocking(project, msg, action)
   }
 
-  return runBlockingCancellable(action)
+  return runBlockingMaybeCancellable(action)
 }

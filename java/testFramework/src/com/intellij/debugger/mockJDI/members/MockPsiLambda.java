@@ -5,6 +5,7 @@ import com.intellij.debugger.mockJDI.MockLocalVariable;
 import com.intellij.debugger.mockJDI.MockMirror;
 import com.intellij.debugger.mockJDI.MockVirtualMachine;
 import com.intellij.debugger.mockJDI.types.MockType;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.LambdaUtil;
 import com.intellij.psi.PsiLambdaExpression;
 import com.intellij.psi.PsiMethod;
@@ -41,15 +42,16 @@ public class MockPsiLambda extends MockMirror implements Method {
   @Override
   public @Unmodifiable List<String> argumentTypeNames() {
     // Captured values are not yet supported in mock
-    return ContainerUtil.map(myPsiLambdaExpression.getParameterList().getParameters(), parameter -> parameter.getType().getCanonicalText());
+    return ReadAction.compute(() -> ContainerUtil.map(myPsiLambdaExpression.getParameterList().getParameters(),
+                                                      parameter -> parameter.getType().getCanonicalText()));
   }
 
   @Override
   public @Unmodifiable List<Type> argumentTypes() {
-    return ContainerUtil.map(
+    return ReadAction.compute(() -> ContainerUtil.map(
       myPsiLambdaExpression.getParameterList().getParameters(),
       parameter -> MockType.createType(myVirtualMachine, parameter.getType())
-    );
+    ));
   }
 
   @Override
@@ -144,7 +146,7 @@ public class MockPsiLambda extends MockMirror implements Method {
 
   @Override
   public String name() {
-    return "lambda$" + myDeclaringMethod.getName() + "$mock";
+    return "lambda$" + ReadAction.compute(() -> myDeclaringMethod.getName()) + "$mock";
   }
 
   @Override

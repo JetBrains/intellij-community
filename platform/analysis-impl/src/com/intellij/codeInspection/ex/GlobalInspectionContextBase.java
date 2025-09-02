@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -33,10 +33,7 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashingStrategy;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -112,7 +109,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
 
   @Override
   public boolean shouldCheck(@NotNull RefEntity entity, @NotNull GlobalInspectionTool tool) {
-    return !(entity instanceof RefElementImpl) || isToCheckMember((RefElementImpl)entity, tool);
+    return !(entity instanceof RefElementImpl refElement) || isToCheckMember(refElement, tool);
   }
 
   @Override
@@ -159,7 +156,9 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
     myJobDescriptors.clear();
   }
 
-  boolean areToolsInitialized() {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public boolean areToolsInitialized() {
     return myTools != null;
   }
 
@@ -276,13 +275,14 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
   @RequiresBackgroundThread
   public void performInspectionsWithProgress(@NotNull AnalysisScope scope, boolean runGlobalToolsOnly, boolean isOfflineInspections) {
     myProgressIndicator = ProgressManager.getInstance().getProgressIndicator();
-    if (!(myProgressIndicator instanceof ProgressIndicatorEx) || !(myProgressIndicator instanceof ProgressIndicatorWithDelayedPresentation)) {
+    if (!(myProgressIndicator instanceof ProgressIndicatorEx indicatorEx) || !(myProgressIndicator instanceof ProgressIndicatorWithDelayedPresentation)) {
       throw new IllegalStateException("Inspections must be run under ProgressWindow but got: "+myProgressIndicator);
     }
     myProgressIndicator.setIndeterminate(false);
-    ((ProgressIndicatorEx)myProgressIndicator).addStateDelegate(new AbstractProgressIndicatorExBase(){
+    indicatorEx.addStateDelegate(new AbstractProgressIndicatorExBase(){
       @Override
       public void cancel() {
+        LOG.info("Cancelling inspection progress");
         super.cancel();
         canceled();
       }
@@ -372,8 +372,8 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
     for (Tools tool : lArray) {
       LocalInspectionToolWrapper toolWrapper = (LocalInspectionToolWrapper)tool.getTool();
       LocalInspectionTool localTool = toolWrapper.getTool();
-      if (localTool instanceof PairedUnfairLocalInspectionTool) {
-        String batchShortName = ((PairedUnfairLocalInspectionTool)localTool).getInspectionForBatchShortName();
+      if (localTool instanceof PairedUnfairLocalInspectionTool unfair) {
+        String batchShortName = unfair.getInspectionForBatchShortName();
         InspectionProfile currentProfile = getCurrentProfile();
         InspectionToolWrapper<?, ?> batchInspection;
         InspectionToolWrapper<?, ?> pairedWrapper = currentProfile.getInspectionTool(batchShortName, getProject());
@@ -411,10 +411,10 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
   }
 
   protected void classifyTool(@NotNull List<? super Tools> outGlobalTools,
-                                   @NotNull List<? super Tools> outLocalTools,
-                                   @NotNull List<? super Tools> outGlobalSimpleTools,
-                                   @NotNull Tools currentTools,
-                                   @NotNull InspectionToolWrapper<?,?> toolWrapper) {
+                              @NotNull List<? super Tools> outLocalTools,
+                              @NotNull List<? super Tools> outGlobalSimpleTools,
+                              @NotNull Tools currentTools,
+                              @NotNull InspectionToolWrapper<?,?> toolWrapper) {
     if (toolWrapper instanceof LocalInspectionToolWrapper) {
       outLocalTools.add(currentTools);
     }
@@ -547,9 +547,9 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
   public static @NotNull DaemonProgressIndicator assertUnderDaemonProgress() {
     ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
     ProgressIndicator original = indicator == null ? null : ProgressWrapper.unwrapAll(indicator);
-    if (!(original instanceof DaemonProgressIndicator)) {
+    if (!(original instanceof DaemonProgressIndicator daemon)) {
       throw new IllegalStateException("must be run under DaemonProgressIndicator, but got: " + (original == null ? "null" : ": " +original.getClass()) + ": "+ original);
     }
-    return (DaemonProgressIndicator)original;
+    return daemon;
   }
 }

@@ -76,12 +76,23 @@ interface TaskExecutionSpec {
   val activateToolWindowOnFailure: Boolean
 
   companion object {
+
     @JvmStatic
+    fun create(): TaskExecutionSpecBuilder {
+      return TaskExecutionSpecBuilderImpl()
+    }
+
+    @JvmStatic
+    @Deprecated("Use the TaskExecutionSpec#create() function instead")
     fun create(project: Project,
                systemId: ProjectSystemId,
                executorId: String,
                settings: ExternalSystemTaskExecutionSettings): TaskExecutionSpecBuilder {
-      return TaskExecutionSpecBuilderImpl(project = project, systemId = systemId, executorId = executorId, settings = settings)
+      return create()
+        .withProject(project)
+        .withSystemId(systemId)
+        .withExecutorId(executorId)
+        .withSettings(settings)
     }
   }
 }

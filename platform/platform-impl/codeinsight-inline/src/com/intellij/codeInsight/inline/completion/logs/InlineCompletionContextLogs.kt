@@ -4,12 +4,7 @@ package com.intellij.codeInsight.inline.completion.logs
 import com.intellij.codeInsight.inline.completion.InlineCompletionRequest
 import com.intellij.codeInsight.inline.completion.features.InlineCompletionFeaturesCollector
 import com.intellij.codeInsight.inline.completion.features.InlineCompletionFeaturesScopeAnalyzer.ScopeType
-import com.intellij.codeInsight.inline.completion.logs.statistics.AcceptanceRateFactorsComponent
-import com.intellij.codeInsight.inline.completion.logs.statistics.AcceptanceRateFeatures
-import com.intellij.codeInsight.inline.completion.logs.statistics.CompletionFinishTypeFeatures
-import com.intellij.codeInsight.inline.completion.logs.statistics.PrefixLengthFeatures
-import com.intellij.codeInsight.inline.completion.logs.statistics.TimeBetweenTypingFeatures
-import kotlin.time.Duration
+import com.intellij.codeInsight.inline.completion.logs.statistics.*
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
@@ -21,6 +16,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.util.parents
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import kotlin.math.abs
+import kotlin.time.Duration
 
 internal object InlineCompletionContextLogs {
   @RequiresReadLock
@@ -268,7 +264,7 @@ internal object InlineCompletionContextLogs {
     val tracker = TypingSpeedTracker.getInstance()
     tracker.getTimeSinceLastTyping()?.let {
       add(Logs.TIME_SINCE_LAST_TYPING with it)
-      addAll(tracker.getTypingSpeedEventPairs().map { it.first })
+      addAll(tracker.getTypingSpeedEventPairs())
     }
   }
 

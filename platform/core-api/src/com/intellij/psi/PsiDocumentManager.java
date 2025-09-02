@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
@@ -45,7 +45,7 @@ public abstract class PsiDocumentManager {
    * @return the PSI file instance.
    */
 
-  // todo ijpl-339 rework usages
+  // todo IJPL-339 rework usages
   @RequiresBackgroundThread(generateAssertion = false)
   public abstract @Nullable PsiFile getPsiFile(@NotNull Document document);
 
@@ -89,13 +89,13 @@ public abstract class PsiDocumentManager {
    * Before a modified document is committed, accessing its PSI may return elements
    * corresponding to original (unmodified) state of the document.<p/>
    * <p>
-   * Should be called in UI thread in a write-safe context (see {@link com.intellij.openapi.application.TransactionGuard})
+   * Should be called on EDT in a write-safe context (see {@link com.intellij.openapi.application.TransactionGuard})
    */
   public abstract void commitAllDocuments();
 
   /**
    * Commits all modified but not committed documents under modal dialog (see {@link PsiDocumentManager#commitAllDocuments()}
-   * Should be called in UI thread and outside write-action
+   * Should be called on EDT and outside write-action
    *
    * @return true if the operation completed successfully, false if it was canceled.
    */
@@ -112,7 +112,7 @@ public abstract class PsiDocumentManager {
    * Before a modified document is committed, accessing its PSI may return elements corresponding to the original (unmodified) state of
    * the document.<p/>
    * <p>
-   * For documents with event-system-enabled PSI ({@link FileViewProvider#isEventSystemEnabled()}), should be called in UI thread in
+   * For documents with event-system-enabled PSI ({@link FileViewProvider#isEventSystemEnabled()}), should be called on EDT in
    * a write-safe context (see {@link com.intellij.openapi.application.TransactionGuard}).
    * For other documents, it can be called in background thread with read access. It's the responsibility of the caller to properly
    * synchronize that PSI and ensure no other threads are reading or modifying it concurrently.

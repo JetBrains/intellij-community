@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.streamMigration;
 
 import com.intellij.codeInspection.LambdaCanBeMethodReferenceInspection;
@@ -16,10 +16,10 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.codeInspection.streamMigration.CollectMigration.getAddedElementType;
 
-class ForEachMigration extends BaseStreamApiMigration {
+final class ForEachMigration extends BaseStreamApiMigration {
   private static final Logger LOG = Logger.getInstance(ForEachMigration.class);
 
-  protected ForEachMigration(boolean shouldWarn, String forEachMethodName) {
+  ForEachMigration(boolean shouldWarn, String forEachMethodName) {
     super(shouldWarn, forEachMethodName);
   }
 

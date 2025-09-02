@@ -85,7 +85,7 @@ public final class ThreadingAssertions {
    * @see com.intellij.util.concurrency.annotations.RequiresEdt
    */
   public static void assertEventDispatchThread() {
-    if (!EDT.isCurrentThreadEdt()) {
+    if (!EDT.isCurrentThreadEdt() && !EDT.isDisableEdtChecks()) {
       throwThreadAccessException(MUST_EXECUTE_IN_EDT);
     }
   }
@@ -97,7 +97,7 @@ public final class ThreadingAssertions {
    */
   @Obsolete
   public static void softAssertEventDispatchThread() {
-    if (!EDT.isCurrentThreadEdt()) {
+    if (!EDT.isCurrentThreadEdt() && !EDT.isDisableEdtChecks()) {
       getLogger().error(createThreadAccessException(MUST_EXECUTE_IN_EDT));
     }
   }
@@ -108,7 +108,7 @@ public final class ThreadingAssertions {
    * @see com.intellij.util.concurrency.annotations.RequiresBackgroundThread
    */
   public static void assertBackgroundThread() {
-    if (EDT.isCurrentThreadEdt()) {
+    if (EDT.isCurrentThreadEdt() && !EDT.isDisableEdtChecks()) {
       throwThreadAccessException(MUST_NOT_EXECUTE_IN_EDT);
     }
   }
@@ -120,7 +120,7 @@ public final class ThreadingAssertions {
    */
   @Obsolete
   public static void softAssertBackgroundThread() {
-    if (EDT.isCurrentThreadEdt()) {
+    if (EDT.isCurrentThreadEdt() && EDT.isDisableEdtChecks()) {
       getLogger().error(createThreadAccessException(MUST_NOT_EXECUTE_IN_EDT));
     }
   }

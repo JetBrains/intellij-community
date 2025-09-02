@@ -4,9 +4,15 @@ package com.jetbrains.python.inspections;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.pyi.PyiFileType;
 import org.jetbrains.annotations.NotNull;
 
 public class PyFinalInspectionTest extends PyInspectionTestCase {
+
+  // PY-79743
+  public void testImportedVariableFinalReassignment() {
+    doMultiFileTest();
+  }
 
   // PY-34945
   public void testSubclassingFinalClass() {
@@ -106,6 +112,55 @@ public class PyFinalInspectionTest extends PyInspectionTestCase {
     );
   }
 
+  public void testOverridingOverloadedFinalMethod2() {
+    doTestByText("""
+                   from typing import final, overload
+      
+                   class Base:
+                       @overload
+                       def foo(self, x: int) -> int: ...
+                   
+                       @overload
+                       def foo(self, x: str) -> str: ...
+                   
+                       @final
+                       def foo(self, x: int | str) -> int | str:
+                           pass
+                   
+                   class Derived(Base):
+                       @overload
+                       def foo(self, x: int) -> int: ...
+                   
+                       @overload
+                       def foo(self, x: str) -> str: ...
+                   
+                       def <warning descr="'aaa.Base.foo' is marked as '@final' and should not be overridden">foo</warning>(self, x: int | str) -> int | str:
+                           pass""");
+  }
+
+  public void testOverridingOverloadedFinalMethodNoImplementation() {
+    final PsiFile currentFile = myFixture.configureByText(PyiFileType.INSTANCE, """
+      from typing import final, overload
+      
+      class Base:
+          @overload
+          @final
+          def foo(self, x: int) -> int: ...
+      
+          @overload
+          def foo(self, x: str) -> str: ...
+      
+      class Derived(Base):
+          @overload
+          def <warning descr="'aaa.Base.foo' is marked as '@final' and should not be overridden">foo</warning>(self, x: int) -> int: ...
+      
+          @overload
+          def foo(self, x: str) -> str: ..."""
+    );
+    configureInspection();
+    assertSdkRootsNotParsed(currentFile);
+  }
+
   // PY-34945
   public void testFinalNonMethodFunction() {
     doTestByText("""
@@ -173,46 +228,6 @@ public class PyFinalInspectionTest extends PyInspectionTestCase {
 
   // PY-34945
   public void testOmittedAssignedValueInStubOnClassLevel() {
-    final PsiFile currentFile = myFixture.configureByFile(getTestFilePath() + "i");
-    configureInspection();
-    assertSdkRootsNotParsed(currentFile);
-  }
-
-  // PY-34945
-  public void testOverloadedFinalMethod() {
-    runWithLanguageLevel(
-      LanguageLevel.PYTHON35,
-      () -> doTestByText("""
-                           from typing import overload
-                           from typing_extensions import final
-
-                           class A:
-                               @overload
-                               def foo(self, a: int) -> int: ...
-
-                               @overload
-                               def foo(self, a: str) -> str: ...
-
-                               @final
-                               def foo(self, a):
-                                   pass
-
-                           class B:
-                               @final
-                               @overload
-                               def <warning descr="'@final' should be placed on the implementation">foo</warning>(self, a: int) -> int: ...
-
-                               @overload
-                               def foo(self, a: str) -> str: ...
-
-                               def foo(self, a):
-                                   pass
-                           """)
-    );
-  }
-
-  // PY-34945
-  public void testOverloadedFinalMethodInStub() {
     final PsiFile currentFile = myFixture.configureByFile(getTestFilePath() + "i");
     configureInspection();
     assertSdkRootsNotParsed(currentFile);

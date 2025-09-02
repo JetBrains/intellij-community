@@ -30,6 +30,10 @@ public final class AnActionResult {
     return this == IGNORED;
   }
 
+  public boolean isFailed() {
+    return myFailureCause != null;
+  }
+
   @ApiStatus.Internal
   public @NotNull Throwable getFailureCause() {
     if (myFailureCause == null) {

@@ -2,45 +2,29 @@
 package org.jetbrains.kotlin.idea.util
 
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.psi.tree.IElementType
 import org.jetbrains.kotlin.parsing.KotlinExpressionParsing
-import org.jetbrains.kotlin.parsing.KotlinExpressionParsing.Precedence.POSTFIX
-import org.jetbrains.kotlin.parsing.KotlinExpressionParsing.Precedence.PREFIX
 import org.jetbrains.kotlin.psi.*
-import java.util.*
 
 object PsiPrecedences {
     private val LOG = Logger.getInstance(PsiPrecedences::class.java)
 
-    private val precedence: Map<IElementType, Int>
-
-    init {
-        val builder = HashMap<IElementType, Int>()
-        for ((i, record) in KotlinExpressionParsing.Precedence.values().withIndex()) {
-            for (elementType in record.operations.types) {
-                builder[elementType] = i
-            }
-        }
-        precedence = builder
-    }
-
-    private val PRECEDENCE_OF_ATOMIC_EXPRESSION: Int = -1
-    private val PRECEDENCE_OF_PREFIX_EXPRESSION: Int = PREFIX.ordinal
-    private val PRECEDENCE_OF_POSTFIX_EXPRESSION: Int = POSTFIX.ordinal
+    private const val PRECEDENCE_OF_ATOMIC_EXPRESSION: Int = -1
 
     fun getPrecedence(expression: KtExpression): Int {
         return when (expression) {
             is KtAnnotatedExpression,
             is KtLabeledExpression,
-            is KtPrefixExpression -> PRECEDENCE_OF_PREFIX_EXPRESSION
-            is KtPostfixExpression -> PRECEDENCE_OF_POSTFIX_EXPRESSION
+            is KtPostfixExpression -> 0
+            is KtPrefixExpression -> 1
             is KtOperationExpression -> {
                 val operation = expression.operationReference.getReferencedNameElementType()
-                val precedenceNumber = precedence[operation]
-                if (precedenceNumber == null) {
+                val binaryOperationPrecedence = KotlinExpressionParsing.TOKEN_TO_BINARY_PRECEDENCE_MAP[operation]
+                if (binaryOperationPrecedence == null) {
                     LOG.error("No precedence for operation: $operation")
-                    precedence.size
-                } else precedenceNumber
+                    14 // Number of unary (2) and binary (12) precedences
+                } else {
+                    binaryOperationPrecedence.ordinal
+                }
             }
             else -> PRECEDENCE_OF_ATOMIC_EXPRESSION
         }

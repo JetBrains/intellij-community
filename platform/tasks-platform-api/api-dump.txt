@@ -1,0 +1,6 @@
+com.intellij.tasks.TaskListener
+- java.util.EventListener
+- a:taskActivated(com.intellij.tasks.LocalTask):V
+- a:taskAdded(com.intellij.tasks.LocalTask):V
+- a:taskDeactivated(com.intellij.tasks.LocalTask):V
+- a:taskRemoved(com.intellij.tasks.LocalTask):V

@@ -9,7 +9,7 @@ class Test1 {
     default void foo(T x) { }
   }
 
-  class <error descr="Class 'D' must either be declared abstract or implement abstract method 'foo(String)' in 'A'">D</error> implements C<String> { }
+  <error descr="Class 'D' must either be declared abstract or implement abstract method 'foo(String)' in 'A'">class D implements C<String></error> { }
   interface E extends C<String> { }
 }
 
@@ -23,7 +23,7 @@ class Test2 {
     void foo(T x);
   }
 
-  <error descr="Class 'D' must either be declared abstract or implement abstract method 'foo(T)' in 'C'">class <error descr="Class 'D' must either be declared abstract or implement abstract method 'foo(T)' in 'C'">D</error> implements C<String></error> {}
+  <error descr="Class 'D' must either be declared abstract or implement abstract method 'foo(T)' in 'C'">class D implements C<String></error> {}
   interface E extends C<String> {}
 }
 
@@ -66,7 +66,7 @@ class Test5 {
     default void foo(T x) { }
   }
 
-  class <error descr="Class 'D' must either be declared abstract or implement abstract method 'foo(String)' in 'A'">D</error> extends B implements C<String> { }
+  <error descr="Class 'D' must either be declared abstract or implement abstract method 'foo(String)' in 'A'">class D extends B implements C<String></error> { }
 }
 
 

@@ -1,0 +1,21 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+// IGNORE_K2
+
+interface Foo {
+    context(p1: Int)
+    fun String.foo() {}
+}
+
+fun Foo.bar(a: Any) {
+    with(1) {
+        a.toString().foo()
+    }
+}
+
+fun baz(f: Foo) {
+    with(f) {
+        with(2) {
+            "baz".foo()
+        }
+    }
+}

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.javaDoc;
 
 import com.intellij.codeInspection.LocalInspectionTool;
@@ -72,8 +72,7 @@ public final class JavadocBlankLinesInspection extends LocalInspectionTool {
 
   private static boolean isAfterParagraphOrBlockTag(PsiElement element) {
     PsiElement prevSibling = element.getPrevSibling();
-    if (!(prevSibling instanceof PsiDocToken)) return true;
-    if (((PsiDocToken)prevSibling).getTokenType() != JavaDocTokenType.DOC_COMMENT_DATA) return true;
+    if (!PsiDocToken.isDocToken(prevSibling, JavaDocTokenType.DOC_COMMENT_DATA)) return true;
     String text = prevSibling.getText();
     return endsWithHtmlBlockTag(text) || isNullOrBlockTag(prevSibling);
   }
@@ -82,15 +81,12 @@ public final class JavadocBlankLinesInspection extends LocalInspectionTool {
     PsiElement nextSibling = skipWhitespacesAndLeadingAsterisksForward(element);
     if (nextSibling == null) return true;
     String text = nextSibling.getText();
-    return isNullOrBlockTag(nextSibling) ||
-           startsWithHtmlBlockTag(text) ||
-           isNullOrBlockTag(nextSibling.getNextSibling());
+    return isNullOrBlockTag(nextSibling) || startsWithHtmlBlockTag(text) || isNullOrBlockTag(nextSibling.getNextSibling());
   }
 
   private static PsiElement skipWhitespacesAndLeadingAsterisksForward(PsiElement element) {
     for (PsiElement e = element.getNextSibling(); e != null; e = e.getNextSibling()) {
-      if (!(e instanceof PsiWhiteSpace ||
-            e instanceof PsiDocToken docToken && docToken.getTokenType() == JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS)) {
+      if (!(e instanceof PsiWhiteSpace) && !PsiDocToken.isDocToken(e, JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS)) {
         return e;
       }
     }

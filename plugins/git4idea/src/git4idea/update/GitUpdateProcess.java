@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.update;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -40,10 +40,7 @@ import git4idea.rebase.GitRebaseUtils;
 import git4idea.rebase.GitRebaser;
 import git4idea.repo.*;
 import git4idea.util.GitPreservingProcess;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 
@@ -59,6 +56,7 @@ import static git4idea.util.GitUIUtil.code;
  *
  * The class is not thread-safe and is stateful. It is intended to be used only once.
  */
+@ApiStatus.Internal
 public final class GitUpdateProcess {
   private static final Logger LOG = Logger.getInstance(GitUpdateProcess.class);
 
@@ -456,7 +454,7 @@ public final class GitUpdateProcess {
   }
 
   @VisibleForTesting
-  static @NlsContexts.NotificationContent @NotNull String getDetachedHeadErrorNotificationContent(@NotNull GitRepository repository) {
+  public static @NlsContexts.NotificationContent @NotNull String getDetachedHeadErrorNotificationContent(@NotNull GitRepository repository) {
     return GitBundle.message("notification.content.detached.state.in.root.checkout.branch", mention(repository));
   }
 
@@ -465,7 +463,7 @@ public final class GitUpdateProcess {
   }
 
   @VisibleForTesting
-  static @NlsContexts.NotificationContent @NotNull String getNoTrackedBranchError(@NotNull GitRepository repository, @NotNull @NlsSafe String branchName) {
+  public static @NlsContexts.NotificationContent @NotNull String getNoTrackedBranchError(@NotNull GitRepository repository, @NotNull @NlsSafe String branchName) {
     return GitBundle.message("notification.content.branch.in.repo.has.no.tracked.branch", code(branchName), mention(repository));
   }
 

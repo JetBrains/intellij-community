@@ -25,7 +25,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.uast.UastVisitorAdapter;
 import com.intellij.util.LazyInitializer.LazyValue;
-import com.intellij.util.ObjectUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -204,7 +203,7 @@ public final class RefJavaManagerImpl extends RefJavaManager {
       ref.initializeIfNeeded();
       return (RefElement)ref;
     });
-    return result instanceof RefParameter ? (RefParameter)result : null;
+    return result instanceof RefParameter p ? p : null;
   }
 
   @Override
@@ -449,11 +448,9 @@ public final class RefJavaManagerImpl extends RefJavaManager {
         myRefManager.buildReferences(refElement);
       }
 
-      PsiModifierListOwner javaModifiersListOwner = ObjectUtils.tryCast(node.getJavaPsi(), PsiModifierListOwner.class);
-      if (javaModifiersListOwner != null) {
+      if (node.getJavaPsi() instanceof PsiModifierListOwner modifierListOwner) {
         PsiAnnotation externalAnnotation =
-          myExternalAnnotationsManager.findExternalAnnotation(javaModifiersListOwner,
-                                                              BatchSuppressManager.SUPPRESS_INSPECTIONS_ANNOTATION_NAME);
+          myExternalAnnotationsManager.findExternalAnnotation(modifierListOwner, BatchSuppressManager.SUPPRESS_INSPECTIONS_ANNOTATION_NAME);
         UAnnotation uAnnotation = UastContextKt.toUElement(externalAnnotation, UAnnotation.class);
         if (uAnnotation != null) {
           retrieveSuppressions(uAnnotation, node);

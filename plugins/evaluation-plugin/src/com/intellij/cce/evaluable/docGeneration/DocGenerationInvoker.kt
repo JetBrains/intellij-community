@@ -13,14 +13,14 @@ import com.intellij.psi.PsiDocumentManager
 class DocGenerationInvoker(private val project: Project,
                            private val language: Language,
                            private val strategy: DocGenerationStrategy) : FeatureInvoker {
-  override fun callFeature(expectedText: String, offset: Int, properties: TokenProperties): Session {
+  override fun callFeature(expectedText: String, offset: Int, properties: TokenProperties, sessionId: String): Session {
     val editor = runReadAction {
       getEditorSafe(project)
     }
     runInEdt {
       PsiDocumentManager.getInstance(project).commitDocument(editor.document)
     }
-    val session = Session(offset, expectedText, expectedText.length, TokenProperties.UNKNOWN)
+    val session = Session(offset, expectedText, expectedText.length, TokenProperties.UNKNOWN, sessionId)
     val lookup = getSuggestions(expectedText, editor, strategy.suggestionsProvider)
     val docProperties = properties as DocumentationProperties
 

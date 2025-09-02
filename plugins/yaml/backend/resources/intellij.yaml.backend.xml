@@ -1,9 +1,11 @@
 <idea-plugin>
   <dependencies>
     <plugin id="com.intellij.modules.lang"/>
-    <plugin id="com.intellij.modules.json"/>
-    <plugin id="com.intellij.platform.experimental.backend"/>
+    <module name="intellij.json.backend"/>
+    <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.searchEverywhere.backend"/>
     <module name="intellij.yaml"/>
+    <module name="intellij.spellchecker"/>
   </dependencies>
   
   <extensions defaultExtensionNs="com.intellij">
@@ -17,7 +19,6 @@
     <registryKey key="yaml.injection.async.indent" defaultValue="true"
                  description="Performs asynchronous indent when typing 'enter' in code injected into YAML"/>
     <lang.findUsagesProvider language="yaml" id="yamlFindUsagesProvider" implementationClass="org.jetbrains.yaml.YAMLFindUsagesProvider"/>
-    <editor.backspaceModeOverride language="yaml" implementationClass="com.intellij.codeInsight.editorActions.SmartBackspaceDisabler"/>
     <lang.psiStructureViewFactory language="yaml" implementationClass="org.jetbrains.yaml.structureView.YAMLStructureViewFactory"/>
     <qualifiedNameProvider implementation="org.jetbrains.yaml.navigation.YAMLQualifiedNameProvider"/>
     <pom.declarationSearcher implementation="org.jetbrains.yaml.navigation.YAMLScalarKeyDeclarationSearcher"/>
@@ -132,6 +133,10 @@
 
   <extensions defaultExtensionNs="com.intellij.spellchecker">
     <support language="yaml" implementationClass="org.jetbrains.yaml.YAMLSpellcheckerStrategy"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij">
+  <searchEverywhere.itemsProviderFactory implementation="org.jetbrains.yaml.searchEverywhere.SeYAMLKeysProviderFactory"/>
   </extensions>
 
   <extensionPoints>

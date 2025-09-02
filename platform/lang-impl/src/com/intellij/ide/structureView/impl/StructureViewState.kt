@@ -5,10 +5,12 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.util.xmlb.XmlSerializerUtil
+import org.jetbrains.annotations.ApiStatus
 
 @Service(Service.Level.PROJECT)
 @State(name = "StructureViewState", storages = [(Storage(value = StoragePathMacros.WORKSPACE_FILE))])
-internal class StructureViewState : PersistentStateComponent<StructureViewState> {
+@ApiStatus.Internal
+class StructureViewState : PersistentStateComponent<StructureViewState> {
   companion object {
     @JvmStatic
     fun getInstance(project: Project): StructureViewState = project.service()

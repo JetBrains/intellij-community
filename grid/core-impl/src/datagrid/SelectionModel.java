@@ -46,6 +46,8 @@ public interface SelectionModel<Row, Column> {
 
   void selectWholeColumn();
 
+  void clearSelection();
+
   @NotNull
   ModelIndex<Row> getSelectedRow();
 

@@ -12,7 +12,6 @@ import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import one.util.streamex.StreamEx;
@@ -49,7 +48,6 @@ public final class PySearchScopeBuilder {
   private static final Set<String> THIRD_PARTY_PACKAGE_ROOT_NAMES = Set.of(PyNames.SITE_PACKAGES, PyNames.DIST_PACKAGES);
 
   private boolean myExcludeStdlibTests = false;
-  private boolean myExcludePythonSkeletonsStubs = false;
   private boolean myExcludeThirdPartyBundledDeps = false;
   private boolean myExcludeThirdPartyTests = false;
   private final @NotNull Project myProject;
@@ -85,15 +83,6 @@ public final class PySearchScopeBuilder {
   }
 
   /**
-   * Excludes the legacy <a href="https://github.com/JetBrains/python-skeletons">python-skeletons</a> (aka "user skeletons")
-   * stubs from the resulting scope.
-   */
-  public @NotNull PySearchScopeBuilder excludePythonSkeletonsStubs() {
-    myExcludePythonSkeletonsStubs = true;
-    return this;
-  }
-
-  /**
    * Excludes "vendored" dependencies bundled with third-party packages from the resulting scope, e.g. the content of "pip/_vendor".
    */
   public @NotNull PySearchScopeBuilder excludeThirdPartyPackageBundledDependencies() {
@@ -116,9 +105,6 @@ public final class PySearchScopeBuilder {
     GlobalSearchScope scope = GlobalSearchScope.allScope(myProject);
     if (myExcludeStdlibTests) {
       scope = scope.intersectWith(GlobalSearchScope.notScope(buildStdlibTestsScope()));
-    }
-    if (myExcludePythonSkeletonsStubs) {
-      scope = scope.intersectWith(GlobalSearchScope.notScope(buildPythonSkeletonsStubsScope()));
     }
     if (myExcludeThirdPartyTests || myExcludeThirdPartyBundledDeps) {
       scope = scope.intersectWith(GlobalSearchScope.notScope(new QualifiedNameFinder.QualifiedNameBasedScope(myProject) {
@@ -152,10 +138,6 @@ public final class PySearchScopeBuilder {
       }
     }
     return GlobalSearchScope.EMPTY_SCOPE;
-  }
-
-  private @NotNull GlobalSearchScope buildPythonSkeletonsStubsScope() {
-    return PyUserSkeletonsUtil.getUserSkeletonsDirectoryScope(myProject);
   }
 
   private static @Nullable Sdk findPythonSdkForElement(@NotNull PsiElement element) {

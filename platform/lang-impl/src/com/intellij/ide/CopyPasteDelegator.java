@@ -1,5 +1,4 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 package com.intellij.ide;
 
 import com.intellij.openapi.actionSystem.*;
@@ -136,7 +135,9 @@ public class CopyPasteDelegator implements CopyPasteSupport {
       }
     }
 
-    boolean performDefaultPaste(@NotNull DataContext dataContext) {
+    @VisibleForTesting
+    @ApiStatus.Internal
+    public boolean performDefaultPaste(@NotNull DataContext dataContext) {
       final boolean[] isCopied = new boolean[1];
       final PsiElement[] elements = PsiCopyPasteManager.getInstance().getElements(isCopied);
       if (elements == null) return false;

@@ -1,15 +1,16 @@
 load("@rules_java//java:defs.bzl", _JavaInfo = "JavaInfo")
-load("@rules_kotlin//kotlin/internal:defs.bzl", _KtJvmInfo = "KtJvmInfo")
+load("@rules_kotlin//kotlin/internal:defs.bzl", "KtPluginConfiguration", _KtCompilerPluginInfo = "KtCompilerPluginInfo", _KtJvmInfo = "KtJvmInfo")
 load("//:rules/common-attrs.bzl", "add_dicts", "common_attr", "common_outputs", "common_toolchains")
 load("//:rules/impl/compile.bzl", "kt_jvm_produce_jar_actions")
 
 visibility("private")
 
-def _make_providers(ctx, providers):
-    files = [ctx.outputs.jar]
-    if providers.java.outputs.jdeps:
-        files.append(providers.java.outputs.jdeps)
+def _jvm_library(ctx):
+    if ctx.attr.neverlink and ctx.attr.runtime_deps:
+        fail("runtime_deps and neverlink is nonsensical.", attr = "runtime_deps")
 
+    providers = kt_jvm_produce_jar_actions(ctx, False)
+    files = [ctx.outputs.jar]
     return [
         providers.java,
         providers.kt,
@@ -25,12 +26,6 @@ def _make_providers(ctx, providers):
         ),
     ]
 
-def _jvm_library(ctx):
-    if ctx.attr.neverlink and ctx.attr.runtime_deps:
-        fail("runtime_deps and neverlink is nonsensical.", attr = "runtime_deps")
-
-    return _make_providers(ctx, kt_jvm_produce_jar_actions(ctx, "kt_jvm_library"))
-
 jvm_library = rule(
     doc = """This rule compiles and links Kotlin and Java sources into a .jar file.""",
     attrs = add_dicts(common_attr, {
@@ -38,8 +33,18 @@ jvm_library = rule(
             doc = """The list of source files that are processed to create the target, this can contain both Java and Kotlin
                      files. Java analysis occurs first so Kotlin classes may depend on Java classes in the same compilation unit.""",
             default = [],
-            allow_files = [".kt", ".java"],
+            allow_files = [".kt", ".java", ".form"],
             mandatory = True,
+        ),
+        "exported_compiler_plugins": attr.label_list(
+            doc = """\
+    Exported compiler plugins.
+
+    Compiler plugins listed here will be treated as if they were added in the plugins attribute
+    of any targets that directly depend on this target. Unlike `java_plugin`s exported_plugins,
+    this is not transitive""",
+            default = [],
+            providers = [[_KtCompilerPluginInfo]],
         ),
         "exports": attr.label_list(
             doc = """\
@@ -59,12 +64,6 @@ jvm_library = rule(
             allow_single_file = True,
             cfg = "target",
             default = Label("@rules_kotlin//third_party:empty.jar"),
-        ),
-        "_empty_jdeps": attr.label(
-            doc = """Empty jdeps for exporting JavaInfos.""",
-            allow_single_file = True,
-            cfg = "target",
-            default = Label("@rules_kotlin//third_party:empty.jdeps"),
         ),
     }),
     outputs = common_outputs,

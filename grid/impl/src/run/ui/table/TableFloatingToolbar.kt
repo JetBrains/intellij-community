@@ -17,6 +17,7 @@ import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.progress.checkCanceled
+import com.intellij.ui.ClientProperty
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.HintHint
 import com.intellij.ui.JBColor
@@ -66,7 +67,7 @@ class TableFloatingToolbar(private val tableResultView: TableResultView, private
     component.border = JBUI.Borders.empty()
     targetComponent = tableResultView
     isReservePlaceAutoPopupIcon = false
-    putClientProperty(ActionToolbarImpl.SUPPRESS_FAST_TRACK, true)
+    ClientProperty.put(this, ActionToolbarImpl.SUPPRESS_FAST_TRACK, true)
   }
 
   private val panel = BorderLayoutPanel().addToCenter(actionToolbar.component).apply {

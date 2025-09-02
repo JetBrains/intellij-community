@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.ide.highlighter.ProjectFileType
@@ -6,8 +6,8 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.openapi.components.impl.stores.stateStore
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
@@ -36,7 +36,7 @@ class DefaultProjectStoreTest {
   @JvmField @Rule val fsRule = InMemoryFsRule()
 
   @Test
-  fun `new project from default - file-based storage`() {
+  fun `new project from default - file-based storage`() = runBlocking(Dispatchers.Default) {
     checkDefaultProjectAsTemplate { checkTask ->
       val project = openAsNewProjectAndUseDefaultSettings(fsRule.fs.getPath("/test${ProjectFileType.DOT_DEFAULT_EXTENSION}"))
       project.useProject {
@@ -46,7 +46,7 @@ class DefaultProjectStoreTest {
   }
 
   @Test
-  fun `new project from default - directory-based storage`() {
+  fun `new project from default - directory-based storage`() = runBlocking(Dispatchers.Default) {
     checkDefaultProjectAsTemplate { checkTask ->
       // obviously, the project must be directory-based also
       val project = openAsNewProjectAndUseDefaultSettings(fsRule.fs.getPath("/test"))

@@ -2,10 +2,12 @@
 package com.intellij.codeInspection.classCanBeRecord;
 
 import com.intellij.codeInspection.AddToInspectionOptionListFix;
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.classCanBeRecord.ConvertToRecordFix.RecordCandidate;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.options.OptionController;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.compiler.JavaCompilerBundle;
@@ -19,7 +21,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -27,13 +29,17 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import static com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
+import static com.intellij.codeInspection.ProblemHighlightType.INFORMATION;
+import static com.intellij.codeInspection.classCanBeRecord.ClassCanBeRecordInspection.ConversionStrategy.*;
 import static com.intellij.codeInspection.options.OptPane.*;
 
-public final class ClassCanBeRecordInspection extends BaseInspection {
+public final class ClassCanBeRecordInspection extends BaseInspection implements CleanupLocalInspectionTool {
   private static final List<String> IGNORED_ANNOTATIONS = List.of("io.micronaut.*", "jakarta.*", "javax.*", "org.springframework.*");
 
-  public @NotNull ConversionStrategy myConversionStrategy = ConversionStrategy.DO_NOT_SUGGEST;
+  public @NotNull ConversionStrategy myConversionStrategy = SHOW_AFFECTED_MEMBERS;
   public boolean suggestAccessorsRenaming = true;
+
   public List<@NlsSafe String> myIgnoredAnnotations = new ArrayList<>();
 
   public ClassCanBeRecordInspection() {
@@ -64,10 +70,10 @@ public final class ClassCanBeRecordInspection extends BaseInspection {
   @Override
   protected LocalQuickFix @NotNull [] buildFixes(Object... infos) {
     List<LocalQuickFix> fixes = new SmartList<>();
-    fixes.add(new ConvertToRecordFix(myConversionStrategy == ConversionStrategy.SHOW_AFFECTED_MEMBERS, suggestAccessorsRenaming,
-                                     myIgnoredAnnotations));
-    boolean isOnTheFly = (boolean)infos[0];
-    if (isOnTheFly) {
+
+    boolean suggestQuickFix = (boolean)infos[0];
+    if (suggestQuickFix) {
+      fixes.add(new ConvertToRecordFix(suggestAccessorsRenaming, myIgnoredAnnotations));
       PsiClass psiClass = ObjectUtils.tryCast(infos[1], PsiClass.class);
       if (psiClass != null) {
         PsiAnnotation[] annotations = psiClass.getAnnotations();
@@ -78,7 +84,8 @@ public final class ClassCanBeRecordInspection extends BaseInspection {
             if (fqn != null) {
               fixes.add(new AddToInspectionOptionListFix<>(
                 this, JavaBundle.message("class.can.be.record.suppress.conversion.if.annotated.fix.name", fqn),
-                fqn, tool -> tool.myIgnoredAnnotations));
+                fqn, tool -> tool.myIgnoredAnnotations)
+              );
             }
           }
         }
@@ -89,12 +96,25 @@ public final class ClassCanBeRecordInspection extends BaseInspection {
 
   @Override
   public @NotNull OptPane getOptionsPane() {
+    //noinspection InjectedReferences
     return pane(
       checkbox("suggestAccessorsRenaming", JavaBundle.message("class.can.be.record.suggest.renaming.accessors")),
-      dropdown("myConversionStrategy", JavaBundle.message("class.can.be.record.conversion.make.member.more.accessible"),
-               ConversionStrategy.class, ConversionStrategy::getMessage),
+      checkbox("noHighlightingFixAvailable", JavaBundle.message("class.can.be.record.record.highlight.when.semantics.change")).description(
+        JavaBundle.message("class.can.be.record.record.highlight.when.semantics.change.description")),
       stringList("myIgnoredAnnotations", JavaBundle.message("class.can.be.record.suppress.conversion.if.annotated"))
         .description(HtmlChunk.raw(JavaCompilerBundle.message("class.can.be.record.suppress.conversion.if.annotated.description"))));
+  }
+
+  @Override
+  public @NotNull OptionController getOptionController() {
+    return super.getOptionController()
+      .onValue(
+        "noHighlightingFixAvailable",
+        () -> myConversionStrategy == DO_NOT_SUGGEST,
+        (newValue) -> {
+          myConversionStrategy = newValue ? DO_NOT_SUGGEST : SHOW_AFFECTED_MEMBERS;
+        }
+      );
   }
 
   private static class ClassCanBeRecordVisitor extends BaseInspectionVisitor {
@@ -115,34 +135,41 @@ public final class ClassCanBeRecordInspection extends BaseInspection {
       super.visitClass(aClass);
       PsiIdentifier classIdentifier = aClass.getNameIdentifier();
       if (classIdentifier == null) return;
-      RecordCandidate recordCandidate = ConvertToRecordFix.getClassDefinition(aClass, mySuggestAccessorsRenaming, myIgnoredAnnotations);
+      RecordCandidate recordCandidate = ConvertToRecordFix.tryCreateRecordCandidate(aClass, mySuggestAccessorsRenaming, myIgnoredAnnotations);
       if (recordCandidate == null) return;
-      boolean necessaryCheckConflicts = myConversionStrategy == ConversionStrategy.DO_NOT_SUGGEST ||
-                  myConversionStrategy == ConversionStrategy.SHOW_AFFECTED_MEMBERS && !isOnTheFly();
-      if (necessaryCheckConflicts && !ConvertToRecordProcessor.findConflicts(recordCandidate).isEmpty()) {
-        if (myConversionStrategy == ConversionStrategy.DO_NOT_SUGGEST) {
-          registerError(classIdentifier, ProblemHighlightType.INFORMATION, true, aClass);
+
+      boolean suggestQuickFix = true;
+      boolean noHighlightingButKeepFixAvailable = myConversionStrategy == DO_NOT_SUGGEST || myConversionStrategy == SILENTLY;
+      boolean isConflictFree = ConvertToRecordProcessor.findConflicts(recordCandidate).isEmpty();
+      ProblemHighlightType highlightType = GENERIC_ERROR_OR_WARNING;
+      if (!isConflictFree) {
+        if (noHighlightingButKeepFixAvailable) {
+          highlightType = INFORMATION;
         }
-        return;
+        if (!isOnTheFly()) {
+          // Don't suggest a quick-fix if there are conflicts and we're running in batch (=not "on the fly") mode
+          suggestQuickFix = false;
+        }
       }
-      registerError(classIdentifier, isOnTheFly(), aClass);
+
+      registerError(classIdentifier, highlightType, suggestQuickFix, aClass);
     }
   }
 
+  /// This enum (and its values) has been preserved for backward compatibility.
+  ///
+  /// Highlighting is always enabled when conversion to record will not weaken accessibility (of course, as long as the inspection is enabled).
+  /// Conflicts view is always shown when accessibility would be weakened.
   public enum ConversionStrategy {
-    DO_NOT_SUGGEST("class.can.be.record.conversion.strategy.do.not.convert"),
-    SHOW_AFFECTED_MEMBERS("class.can.be.record.conversion.strategy.show.members"),
-    SILENTLY("class.can.be.record.conversion.strategy.convert.silently");
+    /// Do not report a problem but keep the fix available.
+    DO_NOT_SUGGEST,
 
-    private final @Nls String messageKey;
+    /// Report a problem, together with the fix.
+    SHOW_AFFECTED_MEMBERS,
 
-    ConversionStrategy(@Nls String messageKey) {
-      this.messageKey = messageKey;
-    }
-
-    @Nls
-    String getMessage() {
-      return JavaBundle.message(messageKey);
-    }
+    /**
+     * Kept for backward compatibility but no longer visible in the UI.
+     */
+    @ApiStatus.Obsolete SILENTLY,
   }
 }

@@ -16,12 +16,23 @@ import com.intellij.lang.jvm.actions.CreateFieldRequest
 import com.intellij.lang.jvm.actions.JvmActionGroup
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.psi.*
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiElementFactory
+import com.intellij.psi.PsiField
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiLambdaExpressionType
+import com.intellij.psi.PsiLambdaParameterType
+import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypes
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.presentation.java.ClassPresentationUtil.getNameForClass
 import com.intellij.psi.util.JavaElementKind
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
+import com.intellij.psi.util.TypeConversionUtil
 
 internal class CreateFieldAction(target: PsiClass, request: CreateFieldRequest) : CreateFieldActionBase(target, request) {
 
@@ -71,7 +82,8 @@ internal class JavaFieldRenderer(
     var fieldType = if (expectedTypes.isNotEmpty()) expectedTypes[0].type else PsiTypes.intType()
     //something completely broken in this file, let's propose default value - Object
     if (fieldType is PsiLambdaParameterType ||
-        fieldType is PsiLambdaExpressionType) fieldType = PsiType.getJavaLangObject(targetClass.manager, targetClass.getResolveScope())
+        fieldType is PsiLambdaExpressionType ||
+        TypeConversionUtil.isNullType(fieldType)) fieldType = PsiType.getJavaLangObject(targetClass.manager, targetClass.getResolveScope())
     val field = JavaPsiFacade.getElementFactory(project).createField(request.fieldName, fieldType)
 
     // clean template modifiers

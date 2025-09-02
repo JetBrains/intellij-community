@@ -12,7 +12,10 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.function.Predicate;
 
 /**
@@ -158,6 +161,18 @@ public abstract class PsiElementFinder implements PossiblyDumbAware {
                                            @NotNull GlobalSearchScope scope,
                                            @NotNull Processor<? super PsiDirectory> consumer,
                                            boolean includeLibrarySources) {
+    return true;
+  }
+
+  /**
+   * @param psiPackage package to search
+   * @param scope scope to search in
+   * @param consumer processor that processes every single-file source root that belongs to this package
+   * @return true if the consumer never returned false
+   */
+  public boolean processPackageFiles(@NotNull PsiPackage psiPackage,
+                                     @NotNull GlobalSearchScope scope,
+                                     @NotNull Processor<? super PsiFile> consumer) {
     return true;
   }
 

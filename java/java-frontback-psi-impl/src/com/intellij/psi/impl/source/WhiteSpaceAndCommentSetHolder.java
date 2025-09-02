@@ -17,6 +17,7 @@ import static com.intellij.psi.impl.source.BasicJavaDocElementType.BASIC_DOC_COM
 import static com.intellij.psi.tree.ParentAwareTokenSet.create;
 import static com.intellij.psi.tree.ParentAwareTokenSet.orSet;
 
+@Deprecated
 public class WhiteSpaceAndCommentSetHolder {
   public static final WhiteSpaceAndCommentSetHolder INSTANCE = new WhiteSpaceAndCommentSetHolder();
   private static final ParentAwareTokenSet PRECEDING_COMMENT_SET =

@@ -41,7 +41,7 @@ suspend fun SdkLookupProvider.resolveJdkInfo(project: Project?, projectSdk: Sdk?
 
 private suspend fun SdkLookupProvider.resolveJavaHomeJdkInfo(project: Project?): SdkInfo {
   val eelDescriptor = project?.getEelDescriptor() ?: LocalEelDescriptor
-  val eel = eelDescriptor.upgrade()
+  val eel = eelDescriptor.toEelApi()
   val environment = eel.exec.fetchLoginShellEnvVariables()
   val jdkPathEnvValue = environment[JAVA_HOME]
   if (jdkPathEnvValue == null) {

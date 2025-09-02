@@ -6,13 +6,12 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.annotations.Child
+import com.intellij.platform.workspace.storage.annotations.Parent
 
 
 interface ParentWithNulls : WorkspaceEntity {
   val parentData: String
 
-  @Child
   val child: ChildWithNulls?
 
   //region generated code
@@ -90,9 +89,11 @@ fun MutableEntityStorage.modifyChildWithNulls(
   return modifyEntity(ChildWithNulls.Builder::class.java, entity, modification)
 }
 
+@Parent
 var ChildWithNulls.Builder.parentEntity: ParentWithNulls.Builder?
   by WorkspaceEntity.extensionBuilder(ParentWithNulls::class.java)
 //endregion
 
+@Parent
 val ChildWithNulls.parentEntity: ParentWithNulls?
     by WorkspaceEntity.extension()

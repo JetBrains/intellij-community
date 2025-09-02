@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.fetch
 
 import com.intellij.dvcs.MultiMessage
@@ -33,7 +33,6 @@ import git4idea.commands.GitLineHandlerListener
 import git4idea.config.GitConfigUtil
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRemote
-import git4idea.repo.GitRemote.ORIGIN
 import git4idea.repo.GitRepository
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
@@ -63,7 +62,7 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
       else -> {
         // this emulates behavior of the native `git fetch`:
         // if current branch doesn't give a hint, then return "origin"; if there is no "origin", don't guess and fail
-        repository.currentBranch?.findTrackedBranch(repository)?.remote ?: findRemoteByName(repository, ORIGIN)
+        repository.currentBranch?.findTrackedBranch(repository)?.remote ?: findRemoteByName(repository, GitRemote.ORIGIN)
       }
     }
   }
@@ -132,6 +131,7 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
         val successFetchesMap = succeedResults.groupBy({ it.repository }, { it.remote })
         if (successFetchesMap.isNotEmpty()) {
           GitFetchHandler.afterSuccessfulFetch(project, successFetchesMap, progressManager.progressIndicator ?: EmptyProgressIndicator())
+          successFetchesMap.keys.forEach { it.tagHolder.reload() }
         }
         activity.finished()
         FetchResultImpl(project, VcsNotifier.getInstance(project), mergedResults)
@@ -256,6 +256,8 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
     val params = buildList {
       if (fetchTarget.refspec != null) add(fetchTarget.refspec)
       add(recurseSubmodules)
+      val fetchTagsParam = fetchTarget.fetchTagsMode.param
+      if (fetchTagsParam != null) add(fetchTagsParam)
       if (fetchTarget.unshallow) add("--unshallow")
     }.toTypedArray()
 
@@ -305,7 +307,7 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
        Such cases are rare, and can be handled when actual problem is reported.
      */
     private fun multiRemoteMessage(remoteInPrefix: Boolean) =
-      MultiMessage(results.keys, GitRemote::getName, GitRemote::getName, remoteInPrefix)
+      MultiMessage(results.keys, GitRemote::name, GitRemote::name, remoteInPrefix)
   }
 
   private class SingleRemoteResult(val repository: GitRepository, val remote: GitRemote, val error: @Nls String?, val prunedRefs: List<String>) {

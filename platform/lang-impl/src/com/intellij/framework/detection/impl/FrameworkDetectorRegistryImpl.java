@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.framework.detection.impl;
 
 import com.intellij.framework.FrameworkType;
@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.FileContent;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,8 +28,8 @@ public final class FrameworkDetectorRegistryImpl extends FrameworkDetectorRegist
 
   private final Object myInitializationLock = new Object();
 
-  public FrameworkDetectorRegistryImpl() {
-    FrameworkDetector.EP_NAME.addChangeListener(() -> onDetectorsChanged(), this);
+  public FrameworkDetectorRegistryImpl(@NotNull CoroutineScope coroutineScope) {
+    FrameworkDetector.EP_NAME.addChangeListener(coroutineScope, this::onDetectorsChanged);
   }
 
   private synchronized void ensureDetectorsLoaded() {

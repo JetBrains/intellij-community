@@ -1,11 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.completion;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
-import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.template.JavaCodeContextType;
@@ -38,12 +37,13 @@ import com.intellij.openapi.options.advanced.AdvancedSettingsImpl;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.statistics.impl.StatisticsManagerImpl;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.NeedsIndex;
-import com.intellij.testFramework.TestModeFlags;
 import com.intellij.testFramework.common.ThreadUtil;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
@@ -1146,7 +1146,6 @@ public class JavaAutoPopupTest extends JavaCompletionAutoPopupTestCase {
     myFixture.configureByText("a.java", "class Foo <caret>");
     type("ext");
 
-    TestModeFlags.set(CompletionAutoPopupHandler.ourTestingAutopopup, false);
     edt(() -> myFixture.completeBasic());
     assertNull(String.valueOf(myFixture.getLookupElementStrings()), getLookup());
     myFixture.checkResult("class Foo extends <caret>");
@@ -1156,7 +1155,6 @@ public class JavaAutoPopupTest extends JavaCompletionAutoPopupTestCase {
     myFixture.configureByText("a.java", "class Foo {<caret>}");
     type("pr");
 
-    TestModeFlags.set(CompletionAutoPopupHandler.ourTestingAutopopup, false);
     edt(() -> myFixture.completeBasic());
     myFixture.checkResult("class Foo {pr<caret>}");
 
@@ -1519,11 +1517,13 @@ public class JavaAutoPopupTest extends JavaCompletionAutoPopupTestCase {
   }
 
   public void testQuickBackspaceEnter() {
-    myFixture.configureByText("a.java", "<caret>");
-    type("cl");
-    assertEquals(myFixture.getLookupElementStrings(), List.of("class"));
-    myFixture.type("\b\n");
-    myFixture.checkResult("class <caret>");
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, () -> {
+      myFixture.configureByText("a.java", "<caret>");
+      type("cl");
+      assertEquals(myFixture.getLookupElementStrings(), List.of("class"));
+      myFixture.type("\b\n");
+      myFixture.checkResult("class <caret>");
+    });
   }
 
   public void test_new_primitive_array_in_Object_variable() {

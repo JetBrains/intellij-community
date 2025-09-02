@@ -5,11 +5,8 @@ import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.sun.jna.platform.win32.User32;
-import org.jetbrains.annotations.ApiStatus;
 
-@ApiStatus.Internal
-public final class RemoteDesktopDetector extends RemoteDesktopService {
-  private static final Logger LOG = Logger.getInstance(RemoteDesktopDetector.class);
+final class RemoteDesktopDetector extends RemoteDesktopService {
   private volatile boolean myFailureDetected;
   private volatile boolean myRemoteDesktopConnected;
 
@@ -26,12 +23,12 @@ public final class RemoteDesktopDetector extends RemoteDesktopService {
         // This might not work in all cases, but hopefully is a more reliable method than the current one (checking for font smoothing)
         // see https://msdn.microsoft.com/en-us/library/aa380798%28v=vs.85%29.aspx
         myRemoteDesktopConnected = User32.INSTANCE.GetSystemMetrics(0x1000) != 0; // 0x1000 is SM_REMOTESESSION
-        LOG.debug("Detected remote desktop: ", myRemoteDesktopConnected);
+        Logger.getInstance(RemoteDesktopDetector.class).debug("Detected remote desktop: ", myRemoteDesktopConnected);
       }
       catch (Throwable e) {
         myRemoteDesktopConnected = false;
         myFailureDetected = true;
-        LOG.warn("Error while calling GetSystemMetrics", e);
+        Logger.getInstance(RemoteDesktopDetector.class).warn("Error while calling GetSystemMetrics", e);
       }
     }
   }

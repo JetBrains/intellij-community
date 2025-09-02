@@ -13,4 +13,5 @@ fun test(a: Any) {
 // EXIST: is Foo
 // EXIST: is Bar
 // ABSENT: Bar
+// ABSENT: Foo
 // EXIST: buildList

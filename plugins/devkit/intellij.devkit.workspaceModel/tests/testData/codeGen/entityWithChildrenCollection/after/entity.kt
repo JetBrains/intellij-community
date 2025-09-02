@@ -5,11 +5,11 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.annotations.Child
+import com.intellij.platform.workspace.storage.annotations.Parent
 
 interface ChildrenCollectionFieldEntity : WorkspaceEntity {
   val name: String
-  val childrenEntitiesCollection: List<@Child SimpleEntity>
+  val childrenEntitiesCollection: List<SimpleEntity>
 
   //region generated code
   @GeneratedCodeApiVersion(3)
@@ -51,7 +51,7 @@ interface SimpleEntity : WorkspaceEntity {
   val version: Int
   val name: String
   val isSimple: Boolean
-  val parent: ChildrenCollectionFieldEntity
+  @Parent val parent: ChildrenCollectionFieldEntity
 
   //region generated code
   @GeneratedCodeApiVersion(3)

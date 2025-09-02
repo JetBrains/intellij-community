@@ -67,6 +67,9 @@ private fun pluginXml(buildContext: BuildContext, version: String): String {
   <description>$productName Web Help for offline use: when help is invoked, pages are delivered via built-in Web server. In the plugin settings (Settings | Tools | $productName Help), you can opt to always use built-in help, even when Internet connection is available.</description>
 
   <depends>$productModuleDep</depends>
+  <dependencies>
+    <module name="intellij.libraries.lucene.common"/>
+  </dependencies>
   <resource-bundle>messages.BuiltInHelpBundle</resource-bundle>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -99,11 +102,11 @@ private suspend fun buildResourcesForHelpPlugin(resourceRoot: Path, classPath: L
       )
     }
     writeNewZipWithoutIndex(file = assetJar, compress = true) { zipCreator ->
-      val archiver = ZipArchiver(zipCreator)
+      val archiver = ZipArchiver()
       archiver.setRootDir(resourceRoot)
-      archiveDir(startDir = resourceRoot.resolve("topics"), addFile = { archiver.addFile(it) })
-      archiveDir(startDir = resourceRoot.resolve("images"), addFile = { archiver.addFile(it) })
-      archiveDir(startDir = resourceRoot.resolve("search"), addFile = { archiver.addFile(it) })
+      archiveDir(startDir = resourceRoot.resolve("topics"), addFile = { archiver.addFile(it, zipCreator) })
+      archiveDir(startDir = resourceRoot.resolve("images"), addFile = { archiver.addFile(it, zipCreator) })
+      archiveDir(startDir = resourceRoot.resolve("search"), addFile = { archiver.addFile(it, zipCreator) })
     }
   }
 }

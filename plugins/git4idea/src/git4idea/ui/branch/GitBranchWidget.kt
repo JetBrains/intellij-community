@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch
 
 import com.intellij.dvcs.repo.Repository
@@ -20,20 +20,20 @@ import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetSettings
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager
 import com.intellij.ui.ExperimentalUI
 import com.intellij.util.messages.MessageBusConnection
+import com.intellij.vcs.git.shared.GitDisplayName
+import com.intellij.vcs.git.shared.branch.calcTooltip
 import git4idea.GitBranchesUsageCollector.branchWidgetClicked
 import git4idea.GitUtil
-import git4idea.GitVcs
 import git4idea.branch.GitBranchIncomingOutgoingManager
 import git4idea.branch.GitBranchIncomingOutgoingManager.GitIncomingOutgoingListener
 import git4idea.branch.GitBranchUtil
-import git4idea.branch.calcTooltip
 import git4idea.config.GitVcsSettings
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
 import git4idea.repo.GitRepositoryManager
 import git4idea.ui.branch.BranchIconUtil.Companion.getBranchIcon
-import git4idea.ui.branch.popup.GitBranchesTreePopup
+import git4idea.ui.branch.popup.GitBranchesTreePopupOnBackend
 import org.jetbrains.annotations.NonNls
 import javax.swing.Icon
 
@@ -43,7 +43,7 @@ private const val ID: @NonNls String = "git"
  * A status bar widget which displays the current branch for a file currently open in the editor.
  */
 // used externally
-open class GitBranchWidget(project: Project) : DvcsStatusWidget<GitRepository>(project, GitVcs.DISPLAY_NAME.get()) {
+open class GitBranchWidget(project: Project) : DvcsStatusWidget<GitRepository>(project, GitDisplayName.NAME) {
   override fun registerCustomListeners(connection: MessageBusConnection) {
     super.registerCustomListeners(connection)
 
@@ -67,7 +67,7 @@ open class GitBranchWidget(project: Project) : DvcsStatusWidget<GitRepository>(p
 
   override fun getWidgetPopup(project: Project, repository: GitRepository): JBPopup {
     branchWidgetClicked()
-    return GitBranchesTreePopup.create(project, repository)
+    return GitBranchesTreePopupOnBackend.create(project, repository)
   }
 
   override fun rememberRecentRoot(path: String) {

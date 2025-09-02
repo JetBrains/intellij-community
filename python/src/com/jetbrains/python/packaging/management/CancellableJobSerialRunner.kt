@@ -9,7 +9,7 @@ import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.getOrCreateUserDataUnsafe
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.jetbrains.python.errorProcessing.PyError
-import com.jetbrains.python.Result
+import com.jetbrains.python.errorProcessing.PyResult
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -47,8 +47,8 @@ internal object CancellableJobSerialRunner {
     project: Project,
     holder: UserDataHolder,
     title: @ProgressTitle String,
-    runnable: suspend () -> Result<V, PyError>,
-  ): Result<V, PyError> {
+    runnable: suspend () -> PyResult<V>,
+  ): PyResult<V> {
 
     val mutex = getMutex(holder)
 

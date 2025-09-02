@@ -24,6 +24,8 @@
     <extensionPoint name="postQuickFixTaskService" interface="com.intellij.formatting.service.PostQuickFixTaskService" dynamic="true"/>
     <extensionPoint name="preFormatProcessor" interface="com.intellij.psi.impl.source.codeStyle.PreFormatProcessor" dynamic="true"/>
     <extensionPoint name="postFormatProcessor" interface="com.intellij.psi.impl.source.codeStyle.PostFormatProcessor" dynamic="true"/>
+    <extensionPoint name="postFormatPopupCustomization" interface="com.intellij.psi.impl.source.codeStyle.PostFormatPopupCustomization" dynamic="true"/>
+    <extensionPoint name="adjustCodeStyleSettingsHandler" interface="com.intellij.psi.impl.source.codeStyle.AdjustCodeStyleSettingsHandler" dynamic="true"/>
     <extensionPoint name="disabledIndentRangesProvider" interface="com.intellij.psi.impl.source.DisabledIndentRangesProvider"
                     dynamic="true"/>
     <extensionPoint name="codeStyleSettingsModifier" interface="com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier"

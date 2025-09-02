@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.application.ApplicationManager
@@ -7,7 +7,6 @@ import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.platform.settings.SettingsController
-import com.intellij.serviceContainer.ComponentManagerImpl
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import java.io.InputStream
@@ -33,10 +32,9 @@ internal class DefaultProjectStoreImpl(override val project: Project) : Componen
     val file = ApplicationManager.getApplication().stateStore.storageManager.expandMacro(PROJECT_DEFAULT_FILE_SPEC)
     DefaultProjectStorage(file, PROJECT_DEFAULT_FILE_SPEC, PathMacroManager.getInstance(project), compoundStreamProvider)
   }
-  override val isStoreInitialized: Boolean = true
 
-  override val serviceContainer: ComponentManagerImpl
-    get() = project as ComponentManagerImpl
+  override val serviceContainer: ComponentManagerEx
+    get() = project as ComponentManagerEx
 
   override val storageManager: StateStorageManager = object : StateStorageManager {
     override val componentManager: ComponentManager?

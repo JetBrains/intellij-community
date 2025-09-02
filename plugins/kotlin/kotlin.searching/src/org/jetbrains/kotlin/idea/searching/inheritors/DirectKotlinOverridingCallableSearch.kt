@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.searching.inheritors
 
 import com.intellij.model.search.SearchService
@@ -114,7 +114,7 @@ internal class DirectKotlinOverridingMethodDelegatedSearcher : Searcher<SearchPa
 
         return methods.map<PsiMethod, Query<PsiElement>> { lightMethod ->
             EVERYTHING_BUT_KOTLIN.createQuery(JavaOverridingMethodsSearcherFromKotlinParameters(lightMethod, parameters.searchScope, true))
-                .flatMapping<PsiElement?> { psiMethod ->
+                .flatMapping { psiMethod ->
                     object : AbstractQuery<PsiElement>() {
                         override fun processResults(consumer: Processor<in PsiElement>): Boolean = runReadAction {
                             if (psiMethod.hierarchicalMethodSignature.superSignatures.any { hs -> hs.method.isEquivalentTo(lightMethod) }) {

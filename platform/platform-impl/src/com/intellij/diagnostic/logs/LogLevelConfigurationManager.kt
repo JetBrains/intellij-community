@@ -1,12 +1,24 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic.logs
 
-import com.intellij.openapi.components.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.components.SerializablePersistentStateComponent
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.IdeaLogRecordFormatter
+import com.intellij.openapi.diagnostic.JulLogger
+import com.intellij.openapi.diagnostic.RollingFileHandler
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.util.io.FileUtil.sanitizeFileName
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus.Internal
+import java.nio.file.Path
 import java.util.logging.Level
+import java.util.logging.LogRecord
 
 /**
  * Allows applying & persisting custom log debug categories
@@ -22,9 +34,10 @@ class LogLevelConfigurationManager : SerializablePersistentStateComponent<LogLev
   companion object {
     private val LOG = logger<LogLevelConfigurationManager>()
 
-    private const val LOG_DEBUG_CATEGORIES_SYSTEM_PROPERTY = "idea.log.debug.categories"
-    private const val LOG_TRACE_CATEGORIES_SYSTEM_PROPERTY = "idea.log.trace.categories"
-    private const val LOG_ALL_CATEGORIES_SYSTEM_PROPERTY = "idea.log.all.categories"
+    internal const val LOG_DEBUG_CATEGORIES_SYSTEM_PROPERTY = "idea.log.debug.categories"
+    internal const val LOG_TRACE_CATEGORIES_SYSTEM_PROPERTY = "idea.log.trace.categories"
+    internal const val LOG_ALL_CATEGORIES_SYSTEM_PROPERTY = "idea.log.all.categories"
+    internal const val LOG_SEPARATE_FILE_CATEGORIES_SYSTEM_PROPERTY = "idea.log.separate.file.categories"
 
     @JvmStatic
     fun getInstance(): LogLevelConfigurationManager = service()
@@ -44,8 +57,14 @@ class LogLevelConfigurationManager : SerializablePersistentStateComponent<LogLev
     }
   }
 
-  private val customizedLoggers = mutableListOf<java.util.logging.Logger>()
+  private val customizedLoggers = hashMapOf<String, java.util.logging.Logger>()
   private val lock = Object()
+
+  @Internal
+  fun setCategories(state: State) {
+    cleanCurrentCategories()
+    addCategories(state)
+  }
 
   fun setCategories(categories: List<LogCategory>) {
     cleanCurrentCategories()
@@ -53,17 +72,27 @@ class LogLevelConfigurationManager : SerializablePersistentStateComponent<LogLev
   }
 
   fun addCategories(categories: List<LogCategory>) {
-    val appliedCategories = applyCategories(categories)
+    addCategories(State(categories = categories))
+  }
+
+  @Internal
+  fun addCategories(state: State) {
+    val appliedCategories = applyState(state)
     updateState {
-      it.copy(categories = appliedCategories)
+      appliedCategories
     }
     Listener.EP_NAME.forEachExtensionSafe { it.onCategoriesChanged() }
   }
 
   private fun String.toTrimmed(): String = trimStart('#')
 
-  private fun applyCategories(categories: List<LogCategory>): List<LogCategory> {
-    val updatedCategoriesToLevel = updatedCategoriesToLevel(categories)
+  private fun getJulLoggerFromCache(category: String): java.util.logging.Logger =
+    synchronized(lock) {
+      customizedLoggers.computeIfAbsent(category, java.util.logging.Logger::getLogger)
+    }
+
+  private fun applyState(state: State): State {
+    val updatedCategoriesToLevel = updatedCategoriesToLevel(state.categories)
     updatedCategoriesToLevel.forEach { (category, level) ->
       val loggerLevel = when (level) {
         DebugLogLevel.DEBUG -> Level.FINE
@@ -75,16 +104,84 @@ class LogLevelConfigurationManager : SerializablePersistentStateComponent<LogLev
       addLogger("#${category}", loggerLevel, level)
       addLogger(category, loggerLevel, level)
     }
-    return updatedCategoriesToLevel.map { LogCategory(it.key, it.value) }
+
+    val allObservedCategories = updatedCategoriesToLevel.keys union this.state.categories.map { it.category.toTrimmed() }
+    val categoriesWithSeparateFiles = state.categoriesWithSeparateFiles.map { it.toTrimmed() } intersect allObservedCategories
+
+    for (category in allObservedCategories) {
+      val enable = category in categoriesWithSeparateFiles
+      setSeparateFile(getJulLoggerFromCache("#$category"), enable)
+      setSeparateFile(getJulLoggerFromCache(category), enable)
+    }
+
+    return State(
+      categories = updatedCategoriesToLevel.map { LogCategory(it.key, it.value) },
+      categoriesWithSeparateFiles = categoriesWithSeparateFiles,
+    )
   }
 
   private fun addLogger(trimmed: String, loggerLevel: Level?, level: DebugLogLevel) {
-    val logger = java.util.logging.Logger.getLogger(trimmed)
+    val logger = getJulLoggerFromCache(trimmed)
     logger.level = loggerLevel
-    synchronized(lock) {
-      customizedLoggers.add(logger)
-    }
     LOG.info("Level ${level.name} is set for the following category: $trimmed")
+  }
+
+  private fun setSeparateFile(logger: java.util.logging.Logger, enable: Boolean) {
+    val existingHandler = logger.handlers.find { it is SeparateFileHandler }
+    when {
+      enable && existingHandler == null -> {
+        logger.useParentHandlers = false
+        logger.addHandler(SeparateFileHandler(logger.name, logger.parent))
+        LOG.info("Debug logs are written in a separate file for the following category: ${logger.name}")
+      }
+      !enable && existingHandler != null -> {
+        logger.useParentHandlers = true
+        logger.removeHandler(existingHandler)
+        LOG.info("Debug logs are not written anymore in a separate file for the following category: ${logger.name}")
+      }
+    }
+  }
+
+  private class SeparateFileHandler(
+    private val category: String,
+    private val parentLogger: java.util.logging.Logger?,
+  ) : java.util.logging.Handler() {
+    private val separateHandler = lazy {
+      val logRoot =
+        if (ApplicationManager.getApplication()?.isUnitTestMode == true)
+          PathManager.getSystemDir().resolve("testlog")
+        else
+          Path.of(PathManager.getLogPath())
+      val logFileName = "idea_${sanitizeFileName(IdeaLogRecordFormatter.smartAbbreviate(category.trimStart('#')), true, ".")}.log"
+      val handler = RollingFileHandler(
+        logPath = logRoot.resolve(logFileName),
+        limit = JulLogger.LOG_FILE_SIZE_LIMIT,
+        count = JulLogger.LOG_FILE_COUNT,
+        append = true,
+      )
+      handler.level = Level.ALL
+      handler.formatter = java.util.logging.Logger.getLogger("").handlers.first { it is RollingFileHandler }.formatter
+      handler
+    }
+
+    override fun publish(record: LogRecord) {
+      if (record.level.intValue() >= Level.INFO.intValue()) {
+        parentLogger?.log(record)
+      }
+      separateHandler.value.publish(record)
+    }
+
+    override fun flush() {
+      if (separateHandler.isInitialized()) {
+        separateHandler.value.flush()
+      }
+    }
+
+    override fun close() {
+      if (separateHandler.isInitialized()) {
+        separateHandler.value.close()
+      }
+    }
   }
 
   private fun updatedCategoriesToLevel(categoriesToUpdate: List<LogCategory>): Map<String, DebugLogLevel> {
@@ -101,8 +198,9 @@ class LogLevelConfigurationManager : SerializablePersistentStateComponent<LogLev
 
   private fun cleanCurrentCategories() {
     synchronized(lock) {
-      for (category in customizedLoggers) {
-        category.level = null
+      for ((category, logger) in customizedLoggers) {
+        setSeparateFile(logger, false)
+        logger.level = null
       }
       customizedLoggers.clear()
     }
@@ -114,31 +212,51 @@ class LogLevelConfigurationManager : SerializablePersistentStateComponent<LogLev
   fun getCategories(): List<LogCategory> = this.state.categories
 
   @Serializable
-  data class State(@JvmField val categories: List<LogCategory> = listOf())
+  @Internal
+  data class State(
+    @JvmField val categories: List<LogCategory> = listOf(),
+    @JvmField val categoriesWithSeparateFiles: Set<String> = setOf(),
+  )
 
+  @Internal
   override fun loadState(state: State) {
     super.loadState(state)
-    val categories = state.categories + collectCategoriesFromSystemProperties()
-    applyCategories(categories)
+    val fromSystemProperties = collectStateFromSystemProperties()
+    applyState(State(
+      categories = state.categories + fromSystemProperties.categories,
+      categoriesWithSeparateFiles = state.categoriesWithSeparateFiles + fromSystemProperties.categoriesWithSeparateFiles,
+    ))
   }
 
   override fun noStateLoaded() {
-    val categories = collectCategoriesFromSystemProperties()
-    applyCategories(categories)
+    val categories = collectStateFromSystemProperties()
+    applyState(categories)
   }
 
-  private fun collectCategoriesFromSystemProperties(): List<LogCategory> {
+  private fun collectStateFromSystemProperties(): State {
     val categories = mutableListOf<LogCategory>()
     // add categories from system properties (e.g., for tests on CI server)
     categories.addAll(fromString(System.getProperty(LOG_DEBUG_CATEGORIES_SYSTEM_PROPERTY), DebugLogLevel.DEBUG))
     categories.addAll(fromString(System.getProperty(LOG_TRACE_CATEGORIES_SYSTEM_PROPERTY), DebugLogLevel.TRACE))
     categories.addAll(fromString(System.getProperty(LOG_ALL_CATEGORIES_SYSTEM_PROPERTY), DebugLogLevel.ALL))
-    return categories
+    return State(
+      categories = categories,
+      categoriesWithSeparateFiles = separateFileFromString(System.getProperty(LOG_SEPARATE_FILE_CATEGORIES_SYSTEM_PROPERTY)),
+    )
   }
 
   private fun fromString(text: String?, level: DebugLogLevel): List<LogCategory> {
-    if (text == null) {
-      return emptyList()
+    val categories = splitCategories(text) ?: return emptyList<LogCategory>()
+    return categories.mapNotNull { if (it.isBlank()) null else LogCategory(it, level) }
+  }
+
+  private fun separateFileFromString(text: String?): Set<String> =
+    splitCategories(text)?.toHashSet()
+    ?: emptySet()
+
+  private fun splitCategories(text: String?): List<String>? {
+    if (text.isNullOrBlank()) {
+      return null
     }
 
     val byNewlines = text.lines()
@@ -146,7 +264,6 @@ class LogLevelConfigurationManager : SerializablePersistentStateComponent<LogLev
     if (byCommas.size > 1 && byNewlines.size > 1) {
       LOG.error("Mixed commas and newlines as category separators: $text")
     }
-    val categories = if (byCommas.size > byNewlines.size) byCommas else byNewlines
-    return categories.mapNotNull { if (it.isBlank()) null else LogCategory(it, level) }
+    return if (byCommas.size > byNewlines.size) byCommas else byNewlines
   }
 }

@@ -4,12 +4,11 @@ interface I {
 }
 
 open class A {
-    fun foo(i1: Int)
+    open fun foo(i1: Int) {}
 }
 
-class B: A {
+class B: A() {
     override fun foo(i1: Int) {
         i1
     }
 }
-// IGNORE_K1

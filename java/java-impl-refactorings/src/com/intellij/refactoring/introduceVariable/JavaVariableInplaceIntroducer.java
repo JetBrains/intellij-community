@@ -35,6 +35,7 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.AbstractJavaInplaceIntroducer;
 import com.intellij.refactoring.IntroduceVariableUtil;
 import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.refactoring.rename.ResolveSnapshotProvider;
 import com.intellij.refactoring.rename.inplace.SelectableInlayPresentation;
 import com.intellij.refactoring.rename.inplace.TemplateInlayUtil;
@@ -136,6 +137,18 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
   protected void restoreState(@NotNull PsiVariable psiField) {
     if (myDeleteSelf) return;
     super.restoreState(psiField);
+  }
+
+  @Override
+  protected RangeMarker createMarker(PsiElement element) {
+    int length = myEditor.getDocument().getTextLength();
+    if (element.getTextRange().getEndOffset() > length) {
+      RangeMarker marker = ElementToWorkOn.TEXT_RANGE.get(element);
+      if (marker != null) {
+        return marker;
+      }
+    }
+    return super.createMarker(element);
   }
 
   @Override

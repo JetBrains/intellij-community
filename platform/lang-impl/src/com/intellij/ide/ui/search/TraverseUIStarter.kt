@@ -16,6 +16,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
+import com.intellij.ide.plugins.contentModuleName
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar.SEARCHABLE_OPTIONS_XML_NAME
 import com.intellij.idea.AppMode
 import com.intellij.l10n.LocalizationUtil
@@ -365,7 +366,7 @@ private fun getSetIdByPluginDescriptor(pluginDescriptor: PluginDescriptor): Opti
   else {
     return OptionSetId(
       pluginId = pluginDescriptor.pluginId,
-      moduleName = (pluginDescriptor as IdeaPluginDescriptorImpl).moduleName?.takeIf { !it.contains('/') },
+      moduleName = (pluginDescriptor as IdeaPluginDescriptorImpl).contentModuleName?.takeIf { !it.contains('/') },
     )
   }
 }

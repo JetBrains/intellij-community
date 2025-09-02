@@ -57,7 +57,7 @@ public class MethodParameterFix extends LocalQuickFixAndIntentionActionOnPsiElem
 
   @Override
   public boolean isAvailable(@NotNull Project project,
-                             @NotNull PsiFile file,
+                             @NotNull PsiFile psiFile,
                              @NotNull PsiElement startElement,
                              @NotNull PsiElement endElement) {
     final PsiMethod myMethod = (PsiMethod)startElement;
@@ -70,7 +70,7 @@ public class MethodParameterFix extends LocalQuickFixAndIntentionActionOnPsiElem
 
   @Override
   public void invoke(final @NotNull Project project,
-                     final @NotNull PsiFile file,
+                     final @NotNull PsiFile psiFile,
                      @Nullable Editor editor,
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
@@ -91,7 +91,7 @@ public class MethodParameterFix extends LocalQuickFixAndIntentionActionOnPsiElem
       processor.run();
 
 
-      UndoUtil.markPsiFileForUndo(file);
+      UndoUtil.markPsiFileForUndo(psiFile);
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
@@ -129,8 +129,8 @@ public class MethodParameterFix extends LocalQuickFixAndIntentionActionOnPsiElem
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    final PsiMethod method = PsiTreeUtil.findSameElementInCopy((PsiMethod)getStartElement(), file);
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    final PsiMethod method = PsiTreeUtil.findSameElementInCopy((PsiMethod)getStartElement(), psiFile);
     PsiTypeElement typeElement = method.getParameterList().getParameters()[myIndex].getTypeElement();
     if (typeElement == null) return IntentionPreviewInfo.EMPTY;
     PsiElementFactory factory = PsiElementFactory.getInstance(project);

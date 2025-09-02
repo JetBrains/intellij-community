@@ -10,7 +10,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.GHAccountsUtil
+import org.jetbrains.plugins.github.authentication.GHLoginData
 import org.jetbrains.plugins.github.authentication.GHLoginRequest
+import org.jetbrains.plugins.github.authentication.GHLoginSource
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import javax.swing.JComponent
@@ -22,7 +24,7 @@ internal class GHAccountsPanelActionsController(private val project: Project, pr
 
   override fun addAccount(parentComponent: JComponent, point: RelativePoint?) {
     val loginModel = AccountsListModelLoginModel(model)
-    val group = GHAccountsUtil.createAddAccountActionGroup(loginModel, project, parentComponent)
+    val group = GHAccountsUtil.createAddAccountActionGroup(loginModel, project, parentComponent, GHLoginSource.SETTINGS)
 
 
     val actualPoint = point ?: RelativePoint.getCenterOf(parentComponent)
@@ -35,7 +37,7 @@ internal class GHAccountsPanelActionsController(private val project: Project, pr
   override fun editAccount(parentComponent: JComponent, account: GithubAccount) {
     val loginModel = AccountsListModelLoginModel(model, account)
     GHAccountsUtil.login(loginModel,
-                         GHLoginRequest(server = account.server, isServerEditable = false),
+                         GHLoginRequest(server = account.server, isServerEditable = false, loginData = GHLoginData(GHLoginSource.SETTINGS)),
                          project, parentComponent)
   }
 

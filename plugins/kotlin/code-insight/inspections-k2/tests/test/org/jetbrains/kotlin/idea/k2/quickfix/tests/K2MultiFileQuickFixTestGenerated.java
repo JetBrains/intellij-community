@@ -68,121 +68,198 @@ public abstract class K2MultiFileQuickFixTestGenerated extends AbstractK2MultiFi
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../../idea/tests/testData/quickfix/changeSignature/jk")
-    public static class Jk extends AbstractK2MultiFileQuickFixTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
+    @TestMetadata("../../../idea/tests/testData/quickfix/changeSignature")
+    public abstract static class ChangeSignature extends AbstractK2MultiFileQuickFixTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/quickfix/changeSignature/jk")
+        public static class Jk extends AbstractK2MultiFileQuickFixTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
+            }
+
+            @TestMetadata("jkAddFunctionParameter.before.Main.java")
+            public void testJkAddFunctionParameter() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/changeSignature/jk/jkAddFunctionParameter.before.Main.java");
+            }
+
+            @TestMetadata("jkAddImplicitPrimaryConstructorParameter.before.Main.java")
+            public void testJkAddImplicitPrimaryConstructorParameter() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/changeSignature/jk/jkAddImplicitPrimaryConstructorParameter.before.Main.java");
+            }
+
+            @TestMetadata("jkAddPrimaryConstructorParameter.before.Main.java")
+            public void testJkAddPrimaryConstructorParameter() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/changeSignature/jk/jkAddPrimaryConstructorParameter.before.Main.java");
+            }
+
+            @TestMetadata("jkAddSecondaryConstructorParameter.before.Main.java")
+            public void testJkAddSecondaryConstructorParameter() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/changeSignature/jk/jkAddSecondaryConstructorParameter.before.Main.java");
+            }
+
+            @TestMetadata("jkAddSuperPrimaryConstructorParameter.before.Main.java")
+            public void testJkAddSuperPrimaryConstructorParameter() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/changeSignature/jk/jkAddSuperPrimaryConstructorParameter.before.Main.java");
+            }
+
+            @TestMetadata("jkAddSuperPrimaryConstructorParameterOnUnresolvedCall.before.Main.java")
+            public void testJkAddSuperPrimaryConstructorParameterOnUnresolvedCall() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/changeSignature/jk/jkAddSuperPrimaryConstructorParameterOnUnresolvedCall.before.Main.java");
+            }
+
+            @TestMetadata("jkAddSuperSecondaryConstructor.before.Main.java")
+            public void testJkAddSuperSecondaryConstructor() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/changeSignature/jk/jkAddSuperSecondaryConstructor.before.Main.java");
+            }
+
+            @TestMetadata("jkAddSuperSecondaryConstructorOnUnresolvedCall.before.Main.java")
+            public void testJkAddSuperSecondaryConstructorOnUnresolvedCall() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/changeSignature/jk/jkAddSuperSecondaryConstructorOnUnresolvedCall.before.Main.java");
+            }
+
+            @TestMetadata("jkChangeFunctionParameter.before.Main.java")
+            public void testJkChangeFunctionParameter() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/changeSignature/jk/jkChangeFunctionParameter.before.Main.java");
+            }
+
+            @TestMetadata("jkChangePrimaryConstructorParameter.before.Main.java")
+            public void testJkChangePrimaryConstructorParameter() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/changeSignature/jk/jkChangePrimaryConstructorParameter.before.Main.java");
+            }
+
+            @TestMetadata("jkChangeSecondaryConstructorParameter.before.Main.java")
+            public void testJkChangeSecondaryConstructorParameter() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/changeSignature/jk/jkChangeSecondaryConstructorParameter.before.Main.java");
+            }
+
+            @TestMetadata("jkChangeSuperPrimaryConstructorParameter.before.Main.java")
+            public void testJkChangeSuperPrimaryConstructorParameter() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/changeSignature/jk/jkChangeSuperPrimaryConstructorParameter.before.Main.java");
+            }
+
+            @TestMetadata("jkChangeSuperPrimaryConstructorParameterOnUnresolvedCall.before.Main.java")
+            public void testJkChangeSuperPrimaryConstructorParameterOnUnresolvedCall() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/changeSignature/jk/jkChangeSuperPrimaryConstructorParameterOnUnresolvedCall.before.Main.java");
+            }
+
+            @TestMetadata("jkKeepValOnAddingParameter1.before.Main.java")
+            public void testJkKeepValOnAddingParameter1() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/changeSignature/jk/jkKeepValOnAddingParameter1.before.Main.java");
+            }
+
+            @TestMetadata("jkKeepValOnAddingParameter2.before.Main.java")
+            public void testJkKeepValOnAddingParameter2() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/changeSignature/jk/jkKeepValOnAddingParameter2.before.Main.java");
+            }
+
+            @TestMetadata("jkKeepValOnParameterTypeChange.before.Main.java")
+            public void testJkKeepValOnParameterTypeChange() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/changeSignature/jk/jkKeepValOnParameterTypeChange.before.Main.java");
+            }
+
+            @TestMetadata("jkRemoveFunctionParameter.before.Main.java")
+            public void testJkRemoveFunctionParameter() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/changeSignature/jk/jkRemoveFunctionParameter.before.Main.java");
+            }
+
+            @TestMetadata("jkRemovePrimaryConstructorParameter.before.Main.java")
+            public void testJkRemovePrimaryConstructorParameter() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/changeSignature/jk/jkRemovePrimaryConstructorParameter.before.Main.java");
+            }
+
+            @TestMetadata("jkRemoveSecondaryConstructorParameter.before.Main.java")
+            public void testJkRemoveSecondaryConstructorParameter() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/changeSignature/jk/jkRemoveSecondaryConstructorParameter.before.Main.java");
+            }
+
+            @TestMetadata("jkRemoveSuperPrimaryConstructorParameter.before.Main.java")
+            public void testJkRemoveSuperPrimaryConstructorParameter() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/changeSignature/jk/jkRemoveSuperPrimaryConstructorParameter.before.Main.java");
+            }
+
+            @TestMetadata("jkRemoveSuperPrimaryConstructorParameterOnUnresolvedCall.before.Main.java")
+            public void testJkRemoveSuperPrimaryConstructorParameterOnUnresolvedCall() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/changeSignature/jk/jkRemoveSuperPrimaryConstructorParameterOnUnresolvedCall.before.Main.java");
+            }
         }
 
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/quickfix/changeSignature/kj")
+        public static class Kj extends AbstractK2MultiFileQuickFixTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
+            }
+
+            @TestMetadata("addConstructorParameter.before.Main.kt")
+            public void testAddConstructorParameter() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/changeSignature/kj/addConstructorParameter.before.Main.kt");
+            }
+
+            @TestMetadata("addMethodParameter.before.Main.kt")
+            public void testAddMethodParameter() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/changeSignature/kj/addMethodParameter.before.Main.kt");
+            }
         }
 
-        @TestMetadata("jkAddFunctionParameter.before.Main.java")
-        public void testJkAddFunctionParameter() throws Exception {
-            runTest("../../../idea/tests/testData/quickfix/changeSignature/jk/jkAddFunctionParameter.before.Main.java");
-        }
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/quickfix/changeSignature")
+        public static class Uncategorized extends AbstractK2MultiFileQuickFixTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
 
-        @TestMetadata("jkAddImplicitPrimaryConstructorParameter.before.Main.java")
-        public void testJkAddImplicitPrimaryConstructorParameter() throws Exception {
-            runTest("../../../idea/tests/testData/quickfix/changeSignature/jk/jkAddImplicitPrimaryConstructorParameter.before.Main.java");
-        }
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
+            }
 
-        @TestMetadata("jkAddPrimaryConstructorParameter.before.Main.java")
-        public void testJkAddPrimaryConstructorParameter() throws Exception {
-            runTest("../../../idea/tests/testData/quickfix/changeSignature/jk/jkAddPrimaryConstructorParameter.before.Main.java");
-        }
+            @TestMetadata("addJavaMethodParameter.before.Main.kt")
+            public void testAddJavaMethodParameter() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/changeSignature/addJavaMethodParameter.before.Main.kt");
+            }
 
-        @TestMetadata("jkAddSecondaryConstructorParameter.before.Main.java")
-        public void testJkAddSecondaryConstructorParameter() throws Exception {
-            runTest("../../../idea/tests/testData/quickfix/changeSignature/jk/jkAddSecondaryConstructorParameter.before.Main.java");
-        }
+            @TestMetadata("addParameterWithImport.before.Main.kt")
+            public void testAddParameterWithImport() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/changeSignature/addParameterWithImport.before.Main.kt");
+            }
 
-        @TestMetadata("jkAddSuperPrimaryConstructorParameter.before.Main.java")
-        public void testJkAddSuperPrimaryConstructorParameter() throws Exception {
-            runTest("../../../idea/tests/testData/quickfix/changeSignature/jk/jkAddSuperPrimaryConstructorParameter.before.Main.java");
-        }
+            @TestMetadata("addSecondParameter.before.Main.kt")
+            public void testAddSecondParameter() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/changeSignature/addSecondParameter.before.Main.kt");
+            }
 
-        @TestMetadata("jkAddSuperPrimaryConstructorParameterOnUnresolvedCall.before.Main.java")
-        public void testJkAddSuperPrimaryConstructorParameterOnUnresolvedCall() throws Exception {
-            runTest("../../../idea/tests/testData/quickfix/changeSignature/jk/jkAddSuperPrimaryConstructorParameterOnUnresolvedCall.before.Main.java");
-        }
+            @TestMetadata("addSecondParameter1.before.Main.kt")
+            public void testAddSecondParameter1() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/changeSignature/addSecondParameter1.before.Main.kt");
+            }
 
-        @TestMetadata("jkAddSuperSecondaryConstructor.before.Main.java")
-        public void testJkAddSuperSecondaryConstructor() throws Exception {
-            runTest("../../../idea/tests/testData/quickfix/changeSignature/jk/jkAddSuperSecondaryConstructor.before.Main.java");
-        }
+            @TestMetadata("changeParameter.before.Main.kt")
+            public void testChangeParameter() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/changeSignature/changeParameter.before.Main.kt");
+            }
 
-        @TestMetadata("jkAddSuperSecondaryConstructorOnUnresolvedCall.before.Main.java")
-        public void testJkAddSuperSecondaryConstructorOnUnresolvedCall() throws Exception {
-            runTest("../../../idea/tests/testData/quickfix/changeSignature/jk/jkAddSuperSecondaryConstructorOnUnresolvedCall.before.Main.java");
-        }
+            @TestMetadata("matchFunctionLiteralWithSAMType.before.Main.kt")
+            public void testMatchFunctionLiteralWithSAMType() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/changeSignature/matchFunctionLiteralWithSAMType.before.Main.kt");
+            }
 
-        @TestMetadata("jkChangeFunctionParameter.before.Main.java")
-        public void testJkChangeFunctionParameter() throws Exception {
-            runTest("../../../idea/tests/testData/quickfix/changeSignature/jk/jkChangeFunctionParameter.before.Main.java");
-        }
-
-        @TestMetadata("jkChangePrimaryConstructorParameter.before.Main.java")
-        public void testJkChangePrimaryConstructorParameter() throws Exception {
-            runTest("../../../idea/tests/testData/quickfix/changeSignature/jk/jkChangePrimaryConstructorParameter.before.Main.java");
-        }
-
-        @TestMetadata("jkChangeSecondaryConstructorParameter.before.Main.java")
-        public void testJkChangeSecondaryConstructorParameter() throws Exception {
-            runTest("../../../idea/tests/testData/quickfix/changeSignature/jk/jkChangeSecondaryConstructorParameter.before.Main.java");
-        }
-
-        @TestMetadata("jkChangeSuperPrimaryConstructorParameter.before.Main.java")
-        public void testJkChangeSuperPrimaryConstructorParameter() throws Exception {
-            runTest("../../../idea/tests/testData/quickfix/changeSignature/jk/jkChangeSuperPrimaryConstructorParameter.before.Main.java");
-        }
-
-        @TestMetadata("jkChangeSuperPrimaryConstructorParameterOnUnresolvedCall.before.Main.java")
-        public void testJkChangeSuperPrimaryConstructorParameterOnUnresolvedCall() throws Exception {
-            runTest("../../../idea/tests/testData/quickfix/changeSignature/jk/jkChangeSuperPrimaryConstructorParameterOnUnresolvedCall.before.Main.java");
-        }
-
-        @TestMetadata("jkKeepValOnAddingParameter1.before.Main.java")
-        public void testJkKeepValOnAddingParameter1() throws Exception {
-            runTest("../../../idea/tests/testData/quickfix/changeSignature/jk/jkKeepValOnAddingParameter1.before.Main.java");
-        }
-
-        @TestMetadata("jkKeepValOnAddingParameter2.before.Main.java")
-        public void testJkKeepValOnAddingParameter2() throws Exception {
-            runTest("../../../idea/tests/testData/quickfix/changeSignature/jk/jkKeepValOnAddingParameter2.before.Main.java");
-        }
-
-        @TestMetadata("jkKeepValOnParameterTypeChange.before.Main.java")
-        public void testJkKeepValOnParameterTypeChange() throws Exception {
-            runTest("../../../idea/tests/testData/quickfix/changeSignature/jk/jkKeepValOnParameterTypeChange.before.Main.java");
-        }
-
-        @TestMetadata("jkRemoveFunctionParameter.before.Main.java")
-        public void testJkRemoveFunctionParameter() throws Exception {
-            runTest("../../../idea/tests/testData/quickfix/changeSignature/jk/jkRemoveFunctionParameter.before.Main.java");
-        }
-
-        @TestMetadata("jkRemovePrimaryConstructorParameter.before.Main.java")
-        public void testJkRemovePrimaryConstructorParameter() throws Exception {
-            runTest("../../../idea/tests/testData/quickfix/changeSignature/jk/jkRemovePrimaryConstructorParameter.before.Main.java");
-        }
-
-        @TestMetadata("jkRemoveSecondaryConstructorParameter.before.Main.java")
-        public void testJkRemoveSecondaryConstructorParameter() throws Exception {
-            runTest("../../../idea/tests/testData/quickfix/changeSignature/jk/jkRemoveSecondaryConstructorParameter.before.Main.java");
-        }
-
-        @TestMetadata("jkRemoveSuperPrimaryConstructorParameter.before.Main.java")
-        public void testJkRemoveSuperPrimaryConstructorParameter() throws Exception {
-            runTest("../../../idea/tests/testData/quickfix/changeSignature/jk/jkRemoveSuperPrimaryConstructorParameter.before.Main.java");
-        }
-
-        @TestMetadata("jkRemoveSuperPrimaryConstructorParameterOnUnresolvedCall.before.Main.java")
-        public void testJkRemoveSuperPrimaryConstructorParameterOnUnresolvedCall() throws Exception {
-            runTest("../../../idea/tests/testData/quickfix/changeSignature/jk/jkRemoveSuperPrimaryConstructorParameterOnUnresolvedCall.before.Main.java");
+            @TestMetadata("removeJavaMethodParameter.before.Main.kt")
+            public void testRemoveJavaMethodParameter() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/changeSignature/removeJavaMethodParameter.before.Main.kt");
+            }
         }
     }
 }

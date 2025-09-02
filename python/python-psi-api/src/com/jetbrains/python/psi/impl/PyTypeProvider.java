@@ -5,12 +5,16 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.PyCallableType;
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyTypedResolveResult;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.Map;
 
 
@@ -72,4 +76,11 @@ public interface PyTypeProvider {
   @Nullable Ref<@Nullable PyCallableType> prepareCalleeTypeForCall(@Nullable PyType type,
                                                                    @NotNull PyCallExpression call,
                                                                    @NotNull TypeEvalContext context);
+
+  @ApiStatus.Experimental
+  @Nullable List<@NotNull PyTypedResolveResult> getMemberTypes(@NotNull PyType type,
+                                                               @NotNull String name,
+                                                               @Nullable PyExpression location,
+                                                               @NotNull AccessDirection direction,
+                                                               @NotNull PyResolveContext context);
 }

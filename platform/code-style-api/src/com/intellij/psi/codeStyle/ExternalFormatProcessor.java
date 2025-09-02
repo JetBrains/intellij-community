@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
@@ -82,7 +83,13 @@ public interface ExternalFormatProcessor {
   }
 
   static @Nullable ExternalFormatProcessor activeExternalFormatProcessor(@NotNull PsiFile source) {
-    return ContainerUtil.find(EP_NAME.getExtensionList(), efp -> efp.activeForFile(source));
+    final var activeExternalFormatProcessors = ContainerUtil.filter(EP_NAME.getExtensionList(), efp -> efp.activeForFile(source));
+    if (activeExternalFormatProcessors.size() > 1) {
+      final var log = Logger.getInstance(ExternalFormatProcessor.class);
+      log.warn("More than one active external format processor found for " + source.getName());
+    }
+
+    return ContainerUtil.getFirstItem(activeExternalFormatProcessors);
   }
 
   /**

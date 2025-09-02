@@ -780,6 +780,12 @@ public final class ActionsTree {
 
     final GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
 
+    if (ExperimentalUI.isNewUI()) {
+      new ShortcutTextList(shortcuts, abbreviations, tree, g).draw(bounds, g);
+      config.restore();
+      return;
+    }
+
     int totalWidth = 0;
     final FontMetrics metrics = tree.getFontMetrics(tree.getFont());
     if (shortcuts != null && shortcuts.length > 0) {

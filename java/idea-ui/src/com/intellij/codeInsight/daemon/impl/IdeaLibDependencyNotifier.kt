@@ -5,6 +5,7 @@ package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.ide.JavaUiBundle
 import com.intellij.jarRepository.JarRepositoryManager
+import com.intellij.jarRepository.RepositoryLibraryType
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
@@ -144,7 +145,7 @@ private fun convertToRepositoryLibraryAction(
         newLibraryConfig?.addRoots(libraryEditor)
 
         val newLibrary = LibraryEntity(library.name, library.tableId, java.util.List.of(), library.entitySource) {
-          typeId = LibraryTypeId("repository")
+          typeId = RepositoryLibraryType.LIBRARY_TYPE_ID
           libraryProperties = LibraryPropertiesEntity(library.entitySource) {
             propertiesXmlTag = """<properties maven-id="${artifact.mavenId}" />"""
           }

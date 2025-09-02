@@ -1,24 +1,24 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.coroutine.view
 
+import com.intellij.debugger.JavaDebuggerBundle
 import com.intellij.debugger.actions.ThreadDumpAction
 import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.impl.DebuggerContextImpl
 import com.intellij.debugger.impl.ThreadDumpItemsProvider
 import com.intellij.debugger.impl.ThreadDumpItemsProviderFactory
+import com.intellij.debugger.statistics.DebuggerStatistics
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.SimpleTextAttributes
-import com.intellij.unscramble.DumpItem
-import com.intellij.util.ui.UIUtil
+import com.intellij.unscramble.*
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.idea.debugger.coroutine.KotlinDebuggerCoroutinesBundle
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutineInfoData
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.State
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.CoroutineDebugProbesProxy
-import java.awt.Color
 import java.util.*
 import javax.swing.Icon
-import com.intellij.unscramble.MergeableToken
 
 /**
  * Provides the dump of coroutines in the Debug mode.
@@ -27,53 +27,68 @@ import com.intellij.unscramble.MergeableToken
 @ApiStatus.Internal
 class CoroutinesDumpAsyncProvider : ThreadDumpItemsProviderFactory() {
     override fun getProvider(context: DebuggerContextImpl): ThreadDumpItemsProvider = object : ThreadDumpItemsProvider {
-        private val vm = context.debugProcess!!.virtualMachineProxy
+        override val itemsName: String get() = JavaDebuggerBundle.message("thread.dump.coroutines.name")
 
-        private val enabled =
+        private val enabled: Boolean =
             Registry.`is`("debugger.kotlin.show.coroutines.in.threadDumpPanel") &&
                     // check that coroutines are in the project's classpath
-                    vm.classesByName("kotlinx.coroutines.debug.internal.DebugProbesImpl").isNotEmpty()
+                    context.debugProcess!!.virtualMachineProxy.classesByName("kotlinx.coroutines.debug.internal.DebugProbesImpl").isNotEmpty()
 
-        override fun requiresEvaluation() = enabled
+        override val requiresEvaluation get() = enabled
 
-        override fun getItems(suspendContext: SuspendContextImpl?): List<DumpItem> {
-            if (!enabled) return emptyList()
-
-            val coroutinesCache = CoroutineDebugProbesProxy(suspendContext!!).dumpCoroutines()
-            return if (coroutinesCache.isOk()) coroutinesCache.cache.map { CoroutineDumpItem(it) } else emptyList()
+        override fun getItems(suspendContext: SuspendContextImpl?): List<MergeableDumpItem> {
+            return (
+              if (!enabled) emptyList()
+              else {
+                val coroutinesCache = CoroutineDebugProbesProxy(suspendContext!!).dumpCoroutines()
+                if (coroutinesCache.isOk()) coroutinesCache.cache.map { CoroutineDumpItem(it) } else emptyList()
+              })
+              .also {
+                DebuggerStatistics.logCoroutineDump(context.project, it.size)
+              }
         }
     }
 }
 
-private class CoroutineDumpItem(private val info: CoroutineInfoData) : DumpItem {
+private class CoroutineDumpItem(info: CoroutineInfoData) : MergeableDumpItem {
 
     override val name: String = info.name + ":" + info.id
 
     override val stateDesc: String = " (${info.state.name.lowercase()})"
 
+    override val iconToolTip: String
+        get() = KotlinDebuggerCoroutinesBundle.message("dump.item.coroutine.tooltip")
+
+    private val dispatcher = info.dispatcher
+
     override val stackTrace: String =
         info.coroutineDescriptor + "\n" +
-                info.continuationStackFrames.joinToString(prefix = "\t", separator = "\n") { ThreadDumpAction.renderLocation(it.location) }
+                info.lastObservedStackTrace.joinToString(prefix = "\t", separator = "\n\t") { ThreadDumpAction.renderLocation(it) }
 
     override val interestLevel: Int = when {
-        info.continuationStackFrames.isEmpty() -> -10
+        info.lastObservedStackTrace.isEmpty() -> -10
         else -> stackTrace.count { it == '\n' }
     }
 
-    override val icon: Icon = when (info.state) {
-        State.SUSPENDED -> AllIcons.Debugger.ThreadFrozen
-        State.RUNNING -> AllIcons.Debugger.ThreadRunning
-        State.CREATED, State.UNKNOWN -> AllIcons.Debugger.ThreadGroup
-    }
+    override val isDeadLocked: Boolean
+        get() = false
+
+    override val awaitingDumpItems: Set<DumpItem>
+        get() = emptySet()
+
+    override val icon: Icon =
+        IconsCache.getIconWithVirtualOverlay(
+            when (info.state) {
+                State.SUSPENDED -> AllIcons.Debugger.ThreadFrozen
+                State.RUNNING -> AllIcons.Debugger.ThreadRunning
+                State.CREATED, State.UNKNOWN -> AllIcons.Debugger.ThreadGroup
+            }
+        )
 
     override val attributes: SimpleTextAttributes = when (info.state) {
         State.SUSPENDED -> DumpItem.SLEEPING_ATTRIBUTES
         State.RUNNING -> DumpItem.RUNNING_ATTRIBUTES
         State.CREATED, State.UNKNOWN -> DumpItem.UNINTERESTING_ATTRIBUTES
-    }
-
-    override fun getBackgroundColor(selectedItem: DumpItem?): Color? {
-        return UIUtil.getListBackground()
     }
 
     override val mergeableToken: MergeableToken get() = CoroutinesMergeableToken()
@@ -86,17 +101,17 @@ private class CoroutineDumpItem(private val info: CoroutineInfoData) : DumpItem 
 
         override fun equals(other: Any?): Boolean {
             if (other !is CoroutinesMergeableToken) return false
-            val otherInfo = other.item.info
-            if (info.state != otherInfo.state) return false
-            if (info.dispatcher != otherInfo.dispatcher) return false
+            val otherItem = other.item
+            if (stateDesc != otherItem.stateDesc) return false
+            if (dispatcher != otherItem.dispatcher) return false
             if (this.comparableStackTrace != other.comparableStackTrace) return false
             return true
         }
 
         override fun hashCode(): Int {
             return Objects.hash(
-                info.state,
-                info.dispatcher,
+                stateDesc,
+                dispatcher,
                 comparableStackTrace
             )
         }

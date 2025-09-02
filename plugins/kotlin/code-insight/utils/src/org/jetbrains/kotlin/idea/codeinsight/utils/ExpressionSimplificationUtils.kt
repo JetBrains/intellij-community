@@ -1,8 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
 import com.intellij.psi.tree.IElementType
-import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
@@ -33,14 +32,15 @@ object NegatedBinaryExpressionSimplificationUtils {
         }
     }
 
-    context(KaSession)
     fun KtBinaryExpression.canBeInverted(): Boolean {
         val operation = this.operationReference.getReferencedNameElementType()
         if (operation != KtTokens.LT && operation != KtTokens.LTEQ && operation != KtTokens.GT && operation != KtTokens.GTEQ) return true
 
-        fun KaType?.isFloatingPoint() = this != null && (isFloatType || isDoubleType)
+        analyze(this) {
+            fun KaType?.isFloatingPoint() = this != null && (isFloatType || isDoubleType)
 
-        return !left?.expressionType.isFloatingPoint() && !right?.expressionType.isFloatingPoint()
+            return !left?.expressionType.isFloatingPoint() && !right?.expressionType.isFloatingPoint()
+        }
     }
 
     fun KtPrefixExpression.canBeSimplified(): Boolean {

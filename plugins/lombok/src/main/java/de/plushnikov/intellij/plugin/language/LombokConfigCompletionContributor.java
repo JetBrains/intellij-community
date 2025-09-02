@@ -21,7 +21,8 @@ public final class LombokConfigCompletionContributor extends CompletionContribut
 
   private static final String LOMBOK_EQUALS_AND_HASH_CODE_CALL_SUPER = ConfigKey.EQUALSANDHASHCODE_CALL_SUPER.getConfigKey();
   private static final String LOMBOK_TOSTRING_CALL_SUPER = ConfigKey.TOSTRING_CALL_SUPER.getConfigKey();
-  private static final String LOMBOK_ACCESSORS_JAVA_BEANS_SPEC_CAPITALIZATION = ConfigKey.ACCESSORS_JAVA_BEANS_SPEC_CAPITALIZATION.getConfigKey();
+  private static final String LOMBOK_ACCESSORS_JAVA_BEANS_SPEC_CAPITALIZATION =
+    ConfigKey.ACCESSORS_JAVA_BEANS_SPEC_CAPITALIZATION.getConfigKey();
   private static final String LOMBOK_ADD_NULL_ANNOTATIONS = ConfigKey.ADD_NULL_ANNOTATIONS.getConfigKey();
 
   public LombokConfigCompletionContributor() {
@@ -44,19 +45,49 @@ public final class LombokConfigCompletionContributor extends CompletionContribut
       ConfigKey.ADD_LOMBOK_GENERATED_ANNOTATION.getConfigKey());
 
     final Collection<String> flagUsageOptions = Set.of(
-      "lombok.accessors.flagUsage", "lombok.allArgsConstructor.flagUsage", "lombok.anyConstructor.flagUsage",
-      "lombok.builder.flagUsage", "lombok.cleanup.flagUsage", "lombok.data.flagUsage", "lombok.delegate.flagUsage",
-      "lombok.equalsAndHashCode.flagUsage", "lombok.experimental.flagUsage", "lombok.extensionMethod.flagUsage",
-      "lombok.fieldDefaults.flagUsage", "lombok.getter.flagUsage", "lombok.getter.lazy.flagUsage",
-      "lombok.log.apacheCommons.flagUsage", "lombok.log.flagUsage", "lombok.log.javaUtilLogging.flagUsage",
-      "lombok.log.log4j.flagUsage", "lombok.log.log4j2.flagUsage", "lombok.log.slf4j.flagUsage",
-      "lombok.log.xslf4j.flagUsage", "lombok.log.jbosslog.flagUsage", "lombok.log.flogger.flagUsage",
-      "lombok.noArgsConstructor.flagUsage", "lombok.nonNull.flagUsage",
-      "lombok.requiredArgsConstructor.flagUsage", "lombok.setter.flagUsage", "lombok.sneakyThrows.flagUsage",
-      "lombok.synchronized.flagUsage", "lombok.toString.flagUsage", "lombok.val.flagUsage", "lombok.value.flagUsage",
-      "lombok.wither.flagUsage");
-
-    final Collection<String> flagUsageAllowable = Set.of("lombok.var.flagUsage");
+      ConfigKey.ACCESSORS_FLAG_USAGE.getConfigKey(),
+      ConfigKey.ALL_ARGS_CONSTRUCTOR_FLAG_USAGE.getConfigKey(),
+      ConfigKey.ANY_CONSTRUCTOR_FLAG_USAGE.getConfigKey(),
+      ConfigKey.BUILDER_FLAG_USAGE.getConfigKey(),
+      ConfigKey.SUPER_BUILDER_FLAG_USAGE.getConfigKey(),
+      ConfigKey.CLEANUP_FLAG_USAGE.getConfigKey(),
+      ConfigKey.DATA_FLAG_USAGE.getConfigKey(),
+      ConfigKey.DELEGATE_FLAG_USAGE.getConfigKey(),
+      ConfigKey.EQUALS_AND_HASHCODE_FLAG_USAGE.getConfigKey(),
+      ConfigKey.EXPERIMENTAL_FLAG_USAGE.getConfigKey(),
+      ConfigKey.EXTENSION_METHOD_FLAG_USAGE.getConfigKey(),
+      ConfigKey.FIELD_DEFAULTS_FLAG_USAGE.getConfigKey(),
+      ConfigKey.FIELD_NAME_CONSTANT_FLAG_USAGE.getConfigKey(),
+      ConfigKey.GETTER_FLAG_USAGE.getConfigKey(),
+      ConfigKey.GETTER_LAZY_FLAG_USAGE.getConfigKey(),
+      ConfigKey.HELPER_FLAG_USAGE.getConfigKey(),
+      ConfigKey.JACKSONIZED_FLAG_USAGE.getConfigKey(),
+      ConfigKey.LOCKED_FLAG_USAGE.getConfigKey(),
+      ConfigKey.LOG_APACHE_COMMONS_FLAG_USAGE.getConfigKey(),
+      ConfigKey.LOG_CUSTOM_USAGE.getConfigKey(),
+      ConfigKey.LOG_FLAG_USAGE.getConfigKey(),
+      ConfigKey.LOG_FLOGGER_FLAG_USAGE.getConfigKey(),
+      ConfigKey.LOG_JAVA_UTIL_LOGGING_FLAG_USAGE.getConfigKey(),
+      ConfigKey.LOG_JBOSSLOG_FLAG_USAGE.getConfigKey(),
+      ConfigKey.LOG_LOG4J_FLAG_USAGE.getConfigKey(),
+      ConfigKey.LOG_LOG4J2_FLAG_USAGE.getConfigKey(),
+      ConfigKey.LOG_SLF4J_FLAG_USAGE.getConfigKey(),
+      ConfigKey.LOG_XSLF4J_FLAG_USAGE.getConfigKey(),
+      ConfigKey.NO_ARGS_CONSTRUCTOR_FLAG_USAGE.getConfigKey(),
+      ConfigKey.NONNULL_FLAG_USAGE.getConfigKey(),
+      ConfigKey.ONX_FLAG_USAGE.getConfigKey(),
+      ConfigKey.REQUIRED_ARGS_CONSTRUCTOR_FLAG_USAGE.getConfigKey(),
+      ConfigKey.SETTER_FLAG_USAGE.getConfigKey(),
+      ConfigKey.SNEAKY_THROWS_FLAG_USAGE.getConfigKey(),
+      ConfigKey.STANDARD_EXCEPTION_FLAG_USAGE.getConfigKey(),
+      ConfigKey.SYNCHRONIZED_FLAG_USAGE.getConfigKey(),
+      ConfigKey.TOSTRING_FLAG_USAGE.getConfigKey(),
+      ConfigKey.UTILITY_CLASS_FLAG_USAGE.getConfigKey(),
+      ConfigKey.VAL_FLAG_USAGE.getConfigKey(),
+      ConfigKey.VALUE_FLAG_USAGE.getConfigKey(),
+      ConfigKey.VAR_FLAG_USAGE.getConfigKey(),
+      ConfigKey.WITH_FLAG_USAGE.getConfigKey(),
+      ConfigKey.WITHBY_FLAG_USAGE.getConfigKey());
 
     final Collection<String> otherOptions = Set.of(
       ConfigKey.ACCESSORS_PREFIX.getConfigKey(), LOMBOK_ACCESSORS_JAVA_BEANS_SPEC_CAPITALIZATION,
@@ -70,7 +101,6 @@ public final class LombokConfigCompletionContributor extends CompletionContribut
 
     final Collection<String> allOptions = new HashSet<>(booleanOptions);
     allOptions.addAll(flagUsageOptions);
-    allOptions.addAll(flagUsageAllowable);
     allOptions.addAll(otherOptions);
 
     extend(CompletionType.BASIC,
@@ -88,12 +118,9 @@ public final class LombokConfigCompletionContributor extends CompletionContribut
                    resultSet.addElement(LookupElementBuilder.create("false"));
                  }
                  else if (flagUsageOptions.contains(configPropertyKey)) {
-                   resultSet.addElement(LookupElementBuilder.create("WARNING"));
-                   resultSet.addElement(LookupElementBuilder.create("ERROR"));
-                 }
-                 else if (flagUsageAllowable.contains(configPropertyKey)) {
                    resultSet.addElement(LookupElementBuilder.create("ALLOW"));
                    resultSet.addElement(LookupElementBuilder.create("WARNING"));
+                   resultSet.addElement(LookupElementBuilder.create("ERROR"));
                  }
                  else if (LOMBOK_EQUALS_AND_HASH_CODE_CALL_SUPER.equals(configPropertyKey) ||
                           LOMBOK_TOSTRING_CALL_SUPER.equals(configPropertyKey)) {

@@ -13,3 +13,21 @@ from django.contrib.gis.gdal.raster.source import GDALRaster as GDALRaster
 from django.contrib.gis.gdal.srs import AxisOrder as AxisOrder
 from django.contrib.gis.gdal.srs import CoordTransform as CoordTransform
 from django.contrib.gis.gdal.srs import SpatialReference as SpatialReference
+
+__all__ = (
+    "AxisOrder",
+    "Driver",
+    "DataSource",
+    "CoordTransform",
+    "Envelope",
+    "GDALException",
+    "GDALRaster",
+    "GDAL_VERSION",
+    "OGRGeometry",
+    "OGRGeomType",
+    "SpatialReference",
+    "SRSException",
+    "check_err",
+    "gdal_version",
+    "gdal_full_version",
+)

@@ -1,17 +1,17 @@
 <html>
 <body>
-Reports implicitly declared classes and suggests replacing them with regular classes.
+Reports compact source files and suggests replacing them with regular classes.
 <p><b>Example (in file Sample.java):</b></p>
 <pre><code>
-  public static void main() {
-      System.out.println("Hello, world!");
+  void main() {
+      String a = "Hello, world!";
   }
 </code></pre>
 <p>After the quick-fix is applied:</p>
 <pre><code>
 public class Sample {
-    public static void main() {
-        System.out.println("Hello, world!");
+    void main() {
+        String a = "Hello, world!";
     }
 }
 </code></pre>

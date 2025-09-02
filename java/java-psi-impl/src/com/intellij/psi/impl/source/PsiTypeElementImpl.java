@@ -97,12 +97,10 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
       else if (PsiUtil.isJavaToken(child, JavaTokenType.LBRACKET)) {
         assert type != null : this;
         arrayComponentAnnotations.add(createProvider(annotations));
-        annotations = new SmartList<>();
       }
       else if (PsiUtil.isJavaToken(child, JavaTokenType.ELLIPSIS)) {
         assert type != null : this;
         arrayComponentAnnotations.add(createProvider(annotations));
-        annotations = new SmartList<>();
         ellipsis = true;
       }
 

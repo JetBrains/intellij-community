@@ -3,7 +3,7 @@ package org.jetbrains.plugins.javaFX.fxml;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.Validator;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightNamesUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.ide.highlighter.JavaFileType;
@@ -611,7 +611,7 @@ public final class JavaFxPsiUtil {
   private static boolean unableToCoerceError(@NotNull PsiType targetType, @NotNull PsiClass fromClass,
                                              @NotNull BiConsumer<? super String, ? super Validator.ValidationHost.ErrorType> messageConsumer) {
     messageConsumer.accept(
-      JavaFXBundle.message("unable.to.coerce.error", HighlightUtil.formatClass(fromClass), targetType.getCanonicalText()),
+      JavaFXBundle.message("unable.to.coerce.error", HighlightNamesUtil.formatClass(fromClass), targetType.getCanonicalText()),
       Validator.ValidationHost.ErrorType.ERROR);
     return false;
   }
@@ -619,7 +619,7 @@ public final class JavaFxPsiUtil {
   private static boolean unrelatedTypesWarning(@NotNull PsiType targetType, @NotNull PsiClass fromClass,
                                                @NotNull BiConsumer<? super @InspectionMessage String, ? super Validator.ValidationHost.ErrorType> messageConsumer) {
     messageConsumer.accept(
-      JavaFXBundle.message("conversion.between.unrelated.types.error", HighlightUtil.formatClass(fromClass), targetType.getCanonicalText()),
+      JavaFXBundle.message("conversion.between.unrelated.types.error", HighlightNamesUtil.formatClass(fromClass), targetType.getCanonicalText()),
       Validator.ValidationHost.ErrorType.WARNING);
     return true;
   }

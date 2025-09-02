@@ -6,4 +6,4 @@ public final enum class <1><2>Color private constructor(rgb: kotlin.Int) : kotli
 
     BLUE;
 
-    public final val <4>rgb: kotlin.Int /* compiled code */
+    public final val <4>rgb: kotlin.Int /* compiled code */ /* hasBackingField: true */

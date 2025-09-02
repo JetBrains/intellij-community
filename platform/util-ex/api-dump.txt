@@ -1,0 +1,4 @@
+com.intellij.util.ResettableLazy
+- a:getValue():java.lang.Object
+- a:getValue(java.lang.Object,kotlin.reflect.KProperty):java.lang.Object
+- a:reset():V

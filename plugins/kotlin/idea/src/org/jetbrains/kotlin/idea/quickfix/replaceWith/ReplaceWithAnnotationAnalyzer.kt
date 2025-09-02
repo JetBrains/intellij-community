@@ -120,7 +120,7 @@ object ReplaceWithAnnotationAnalyzer {
         val module = resolutionFacade.moduleDescriptor
         val explicitImportsScope = buildExplicitImportsScope(importFqNames(replaceWith), resolutionFacade, module)
         val languageVersionSettings = resolutionFacade.languageVersionSettings
-        val defaultImportsScopes = buildDefaultImportsScopes(resolutionFacade, module, languageVersionSettings)
+        val defaultImportsScopes = buildDefaultImportsScopes(resolutionFacade, module)
 
         return getResolutionScope(
             symbolDescriptor, symbolDescriptor, listOf(explicitImportsScope), defaultImportsScopes, languageVersionSettings
@@ -129,12 +129,11 @@ object ReplaceWithAnnotationAnalyzer {
 
     private fun buildDefaultImportsScopes(
         resolutionFacade: ResolutionFacade,
-        module: ModuleDescriptor,
-        languageVersionSettings: LanguageVersionSettings
+        module: ModuleDescriptor
     ): List<ImportingScope> {
         val allDefaultImports =
             resolutionFacade.frontendService<TargetPlatform>().findAnalyzerServices(resolutionFacade.project)
-                .getDefaultImports(languageVersionSettings, includeLowPriorityImports = true)
+                .getDefaultImports(includeLowPriorityImports = true)
         val (allUnderImports, aliasImports) = allDefaultImports.partition { it.isAllUnder }
         // this solution doesn't support aliased default imports with a different alias
         // TODO: Create import directives from ImportPath, create ImportResolver, create LazyResolverScope, see FileScopeProviderImpl

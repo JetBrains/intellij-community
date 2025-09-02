@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.uast.kotlin
 
@@ -138,7 +138,7 @@ class FirKotlinUastLanguagePlugin : UastLanguagePlugin {
     override fun getConstructorCallExpression(
         element: PsiElement,
         fqName: String
-    ): UastLanguagePlugin.ResolvedConstructor? {
+    ): UastLanguagePlugin.ResolvedConstructor {
         TODO("Not yet implemented")
     }
 
@@ -146,7 +146,7 @@ class FirKotlinUastLanguagePlugin : UastLanguagePlugin {
         element: PsiElement,
         containingClassFqName: String?,
         methodName: String
-    ): UastLanguagePlugin.ResolvedMethod? {
+    ): UastLanguagePlugin.ResolvedMethod {
         TODO("Not yet implemented")
     }
 

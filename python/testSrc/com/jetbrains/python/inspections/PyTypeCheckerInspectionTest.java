@@ -650,30 +650,30 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
 
 
                    def func31(value):
-                       if value and None and value != 1:
+                       if value and None and value * 1:
                            pass
 
 
                    def func32(value):
-                       if value is value and value != 1:
+                       if value is value and value * 1:
                            pass
 
 
                    def func33(value):
-                       if None is None and value != 1:
+                       if None is None and value * 1:
                            pass
 
 
                    def func34(value):
                        a = 2
-                       if a is a and value != 1:
+                       if a is a and value * 1:
                            pass
 
 
-                   func31(<warning descr="Expected type '{__ne__}', got 'None' instead">None</warning>)
-                   func32(<warning descr="Expected type '{__ne__}', got 'None' instead">None</warning>)
-                   func33(<warning descr="Expected type '{__ne__}', got 'None' instead">None</warning>)
-                   func34(<warning descr="Expected type '{__ne__}', got 'None' instead">None</warning>)""");
+                   func31(<warning descr="Type 'None' doesn't have expected attribute '__mul__'">None</warning>)
+                   func32(<warning descr="Type 'None' doesn't have expected attribute '__mul__'">None</warning>)
+                   func33(<warning descr="Type 'None' doesn't have expected attribute '__mul__'">None</warning>)
+                   func34(<warning descr="Type 'None' doesn't have expected attribute '__mul__'">None</warning>)""");
   }
 
   // PY-29704
@@ -1435,13 +1435,13 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                            y = {}
                            z = {'foo': 'bar'}
                            n = {"foo": "", "quux": 3}
-                           f(<warning descr="Expected type 'C', got 'dict' instead">y</warning>)
+                           f(<warning descr="Expected type 'C', got 'dict[Any, Any]' instead">y</warning>)
                            f(<warning descr="Expected type 'C', got 'dict[str, str | int]' instead">n</warning>)
                            f(<warning descr="Expected type 'C', got 'dict[str, str]' instead">z</warning>)
-                           f(<warning descr="Expected type 'C', got 'dict' instead">x=y</warning>)
+                           f(<warning descr="Expected type 'C', got 'dict[Any, Any]' instead">x=y</warning>)
                            f(<warning descr="Expected type 'C', got 'dict[str, str | int]' instead">x=n</warning>)
                            f(<warning descr="Expected type 'C', got 'dict[str, str]' instead">x=z</warning>)
-                           z2: C = <warning descr="Expected type 'C', got 'dict' instead">y</warning>
+                           z2: C = <warning descr="Expected type 'C', got 'dict[Any, Any]' instead">y</warning>
                            z2: C = <warning descr="Expected type 'C', got 'dict[str, str | int]' instead">n</warning>
                            z2: C = <warning descr="Expected type 'C', got 'dict[str, str]' instead">z</warning>
                            """)
@@ -1505,8 +1505,8 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                                    'd': {}
                                }
                            }
-                           s2: HardDict = {'a': 'xx', 'd': <warning descr="Expected type 'NotSoHardDict', got 'dict[str, str | dict[str, int | dict]]' instead">t1</warning>}
-                           s3: HardDict = <warning descr="Expected type 'HardDict', got 'dict[str, str | dict[str, int | dict]]' instead">t1</warning>
+                           s2: HardDict = {'a': 'xx', 'd': <warning descr="Expected type 'NotSoHardDict', got 'dict[str, str | dict[str, int | dict[Any, Any]]]' instead">t1</warning>}
+                           s3: HardDict = <warning descr="Expected type 'HardDict', got 'dict[str, str | dict[str, int | dict[Any, Any]]]' instead">t1</warning>
                            s4: HardDict = <warning descr="TypedDict 'HardDict' has missing key: 'a'">{
                                'd': {
                                    'a': 'a',
@@ -1566,11 +1566,11 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
       LanguageLevel.getLatest(),
       () -> doTestByText("""
                            from typing import NoReturn
-                                                      
+                           
                            class Test:
                                def __init__(self) -> NoReturn:
                                    raise Exception()
-                                                      
+                           
                            """)
     );
   }
@@ -1582,7 +1582,7 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
       () -> doTestByText("""
                            def foo[T: str](p: T):
                                return p
-                                                      
+                           
                            expr = foo(<warning descr="Expected type 'T ≤: str', got 'int' instead">42</warning>)
                            """)
     );
@@ -1595,7 +1595,7 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
       () -> doTestByText("""
                            def foo[T: (str, bool)](p: T):
                                return p
-                                                      
+                           
                            expr = foo(<warning descr="Expected type 'T ≤: str | bool', got 'int' instead">42</warning>)
                            """)
     );
@@ -1626,5 +1626,19 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
 
   public void testGeneratorTypeHint() {
     runWithLanguageLevel(LanguageLevel.getLatest(), this::doTest);
+  }
+
+  // PY-80427
+  public void testNoneTypeType() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON312,
+      () ->
+        doTestByText("""
+                 from types import NoneType
+                 
+                 x: NoneType = None
+                 y: type[NoneType] = type(None)
+                 z: type[None] = NoneType
+                 """));
   }
 }

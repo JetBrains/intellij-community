@@ -299,6 +299,20 @@ public class CFGBuilder {
   }
 
   /**
+   * Generate instructions to apply a boolean 'not' operation to top stack value
+   * <p>
+   * Stack before: ... value
+   * <p>
+   * Stack after: ... not(value)
+   * 
+   * @return this builder
+   */
+  public CFGBuilder not() {
+    add(new NotInstruction(null));
+    return this;
+  }
+  
+  /**
    * Generate instructions to perform an Class.isInstance operation
    * <p>
    * Stack before: ... object class_object

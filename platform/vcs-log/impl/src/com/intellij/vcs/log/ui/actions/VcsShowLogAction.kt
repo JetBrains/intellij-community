@@ -4,12 +4,12 @@ package com.intellij.vcs.log.ui.actions
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.vcs.VcsShowToolWindowTabAction
 import com.intellij.vcs.log.VcsLogBundle
-import com.intellij.vcs.log.impl.VcsLogContentProvider
+import com.intellij.vcs.log.impl.VcsLogContentUtil
 import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.util.VcsLogUtil
 
 internal class VcsShowLogAction : VcsShowToolWindowTabAction() {
-  override val tabName: String get() = VcsLogContentProvider.TAB_NAME
+  override val tabName: String get() = VcsLogContentUtil.MAIN_LOG_TAB_NAME
 
   override fun update(e: AnActionEvent) {
     super.update(e)

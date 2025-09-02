@@ -306,7 +306,7 @@ private fun readPluginsDir(pluginsDirPath: Path): List<PluginNode> {
   return try {
     pluginsXml.inputStream().use {
       MarketplaceRequests.parsePluginList(it)
-    }
+    }.map { it.getDescriptor() as PluginNode }
   }
   catch (e: Exception) {
     LOG.error("Failed to parse $pluginsXml", e)

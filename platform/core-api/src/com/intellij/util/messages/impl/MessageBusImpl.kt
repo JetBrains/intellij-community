@@ -1,9 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package com.intellij.util.messages.impl
 
 import com.intellij.codeWithMe.ClientId
+import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.isMessageBusErrorPropagationEnabled
 import com.intellij.openapi.application.isMessageBusThrowsWhenDisposed
@@ -21,6 +22,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.job
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import java.lang.invoke.MethodHandle
 import java.lang.reflect.InvocationHandler
@@ -32,8 +34,10 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Predicate
 
+private val EMPTY_MAP = HashMap<String, MutableList<PluginListenerDescriptor>>()
+
 @Internal
-open class MessageBusImpl : MessageBus {
+open class MessageBusImpl : MessageBus, MessageBusEx {
   interface MessageHandlerHolder {
     val isDisposed: Boolean
 
@@ -42,10 +46,8 @@ open class MessageBusImpl : MessageBus {
     fun disconnectIfNeeded(predicate: Predicate<Class<*>>)
   }
 
-  companion object {
-    @JvmField
-    internal val LOG: Logger = logger<MessageBusImpl>()
-  }
+  @Volatile
+  private var topicClassToListenerDescriptor: MutableMap<String, MutableList<PluginListenerDescriptor>> = EMPTY_MAP
 
   @JvmField
   internal val publisherCache: ConcurrentMap<Topic<*>, Any> = ConcurrentHashMap()
@@ -90,12 +92,64 @@ open class MessageBusImpl : MessageBus {
     parentBus = null
   }
 
+  companion object {
+    @JvmField
+    internal val LOG: Logger = logger<MessageBusImpl>()
+  }
+
   override val parent: MessageBus?
     get() = parentBus
 
   override fun toString(): String = "MessageBus(owner=$owner, disposeState= $disposeState)"
 
   override fun connect(): MessageBusConnection = connect(connectionDisposable!!)
+
+  override fun clearPublisherCache() {
+    publisherCache.clear()
+  }
+
+  @TestOnly
+  override fun clearAllSubscriberCache() {
+    LOG.assertTrue(rootBus !== this)
+
+    rootBus.subscriberCache.clear()
+    subscriberCache.clear()
+  }
+
+  /**
+   * Must be a concurrent map, because remove operation may be concurrently performed (synchronized only per topic).
+   */
+  final override fun setLazyListeners(map: ConcurrentMap<String, MutableList<PluginListenerDescriptor>>) {
+    val topicClassToListenerDescriptor = topicClassToListenerDescriptor
+    if (topicClassToListenerDescriptor === EMPTY_MAP) {
+      this.topicClassToListenerDescriptor = map
+    }
+    else {
+      topicClassToListenerDescriptor.putAll(map)
+      // adding a project level listener to an app level topic is not recommended but supported
+      if (rootBus !== this) {
+        rootBus.subscriberCache.clear()
+      }
+      subscriberCache.clear()
+    }
+  }
+
+  final override fun unsubscribeLazyListeners(module: IdeaPluginDescriptor, listenerDescriptors: List<ListenerDescriptor>) {
+    val isChanged = unsubscribeLazyListeners(
+      module = module,
+      listenerDescriptors = listenerDescriptors,
+      topicClassToListenerDescriptor = topicClassToListenerDescriptor,
+      subscribers = subscribers,
+    )
+    if (isChanged) {
+      // we can check it more precisely, but for simplicity, just clearing all
+      // adding a project level listener for an app level topic is not recommended but supported
+      if (rootBus !== this) {
+        rootBus.subscriberCache.clear()
+      }
+      subscriberCache.clear()
+    }
+  }
 
   override fun connect(parentDisposable: Disposable): MessageBusConnection {
     checkDisposed()
@@ -145,18 +199,7 @@ open class MessageBusImpl : MessageBus {
   }
 
   internal open fun <L> createPublisher(topic: Topic<L>, direction: BroadcastDirection): MessagePublisher<L> {
-    return when (direction) {
-      BroadcastDirection.TO_PARENT -> ToParentMessagePublisher(topic, this)
-      BroadcastDirection.TO_DIRECT_CHILDREN -> {
-        throw IllegalArgumentException("Broadcast direction TO_DIRECT_CHILDREN is allowed only for app level message bus. " +
-                                       "Please publish to app level message bus or change topic broadcast direction to NONE or TO_PARENT")
-      }
-      else -> {
-        LOG.error("Topic ${topic.listenerClass.name} broadcast direction TO_CHILDREN is not allowed for module level message bus. " +
-                  "Please change to NONE or TO_PARENT")
-        MessagePublisher(topic, this)
-      }
-    }
+    return if (direction == BroadcastDirection.TO_PARENT) ToParentMessagePublisher(topic, this) else MessagePublisher(topic, this)
   }
 
   fun disposeConnectionChildren() {
@@ -230,6 +273,15 @@ open class MessageBusImpl : MessageBus {
   }
 
   internal open fun doComputeSubscribers(topic: Topic<*>, result: MutableList<in Any>, subscribeLazyListeners: Boolean) {
+    if (subscribeLazyListeners && topicClassToListenerDescriptor !== EMPTY_MAP && topic.listenerClass !== Runnable::class.java) {
+      subscribeLazyListeners(
+        topic = topic,
+        topicClassToListenerDescriptor = topicClassToListenerDescriptor,
+        subscribers = subscribers,
+        owner = owner,
+      )
+    }
+
     // todo check that handler implements method (not a default implementation)
     for (subscriber in subscribers) {
       if (!subscriber.isDisposed) {
@@ -306,7 +358,7 @@ open class MessageBusImpl : MessageBus {
 
     val newJobs = deliverImmediately(connection, jobs) ?: return
 
-    // add to queue to ensure that hasUndeliveredEvents works correctly
+    // add to the queue to ensure that hasUndeliveredEvents works correctly
     for (i in newJobs.indices.reversed()) {
       jobs.addFirst(newJobs[i])
     }
@@ -328,7 +380,7 @@ open class MessageBusImpl : MessageBus {
     messageDeliveryListeners.remove(listener)
   }
 
-  open fun disconnectPluginConnections(predicate: Predicate<Class<*>>) {
+  override fun disconnectPluginConnections(predicate: Predicate<Class<*>>) {
     for (holder in subscribers) {
       holder.disconnectIfNeeded(predicate)
     }
@@ -423,10 +475,8 @@ private fun pumpWaiting(jobQueue: MessageQueue) {
 
   while (true) {
     job = jobQueue.queue.pollFirst() ?: break
-    if (job.bus.isDisposed) {
-      MessageBusImpl.LOG.error("Accessing disposed message bus ${job.bus} (job=$job)")
-    }
-    else {
+    // queue is thread-local, so we can access disposed message buses, and a light project may be temporarily disposed.
+    if (!job.bus.isDisposed) {
       error = deliverMessage(job = job, jobQueue = jobQueue, prevError = error)
     }
   }
@@ -459,7 +509,7 @@ private fun deliverMessage(job: Message, jobQueue: MessageQueue, prevError: Thro
         )
       }
       if (++index != job.currentHandlerIndex) {
-        // handler published some events, and message queue including a current job was processed as a result, so, stop processing
+        // handler published some events, and a message queue including a current job was processed as a result, so, stop processing
         return error
       }
     }
@@ -488,8 +538,8 @@ internal open class MessagePublisher<L>(
     }
 
     if (publish(method = method, args = args, queue = queue)) {
-      // we must deliver messages now, even if currently processing message queue, because if published as part of handler invocation,
-      // the handler code expects that message will be delivered immediately after publishing
+      // we must deliver messages now, even if currently processing the message queue, because if published as part of handler invocation,
+      // the handler code expects that the message will be delivered immediately after publishing
       pumpWaiting(queue)
     }
     return NA
@@ -605,7 +655,7 @@ internal class ToParentMessagePublisher<L>(topic: Topic<L>, bus: MessageBusImpl)
 /**
  * For `TO_DIRECT_CHILDREN` broadcast direction we don't need special clean logic because cache is computed per bus, exactly as for
  * `NONE`` broadcast direction.
- * And on publish, direct children of buses are queried to get message handlers.
+ * And on publication, direct children of buses are queried to get message handlers.
  */
 private fun clearSubscriberCacheOnConnectionTerminated(topicAndHandlerPairs: Array<Any>, bus: MessageBusImpl): Boolean {
   var isChildClearingNeeded = false

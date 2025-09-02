@@ -14,7 +14,7 @@ internal class ErrorNode(
 ) : NodeBase(markerId, index, data, parent) {
 
   override fun getLexemeIndex(done: Boolean): Int {
-    assert(!done)
+    require(!done)
     return startIndex
   }
 

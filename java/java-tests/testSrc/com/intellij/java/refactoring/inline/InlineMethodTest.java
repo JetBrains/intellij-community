@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring.inline;
 
 import com.intellij.JavaTestUtil;
@@ -267,8 +267,9 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   }
 
   public void testInSuperCall() {
-    doTestConflict("Inline cannot be applied to multiline method in constructor call");
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_22_PREVIEW, () -> doTest());
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, () -> doTestConflict("Inline cannot be applied to multiline method in constructor call"));
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_22_PREVIEW, this::doTest);
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_25, this::doTest);
   }
 
   public void testMethodReferenceInsideMethodCall() {
@@ -394,7 +395,8 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   }
 
   public void testUnableToInlineCodeBlockToSuper() {
-    doTestConflict("Inline cannot be applied to multiline method in constructor call");
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21,
+                           () -> doTestConflict("Inline cannot be applied to multiline method in constructor call"));
   }
 
   public void testRedundantCastOnMethodReferenceToLambda() {
@@ -625,6 +627,31 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   public void testInlineSingleImplementationCastOnThisUnnecessary() {
     TestDialogManager.setTestDialog(TestDialog.YES, getTestRootDisposable());
     doTest();
+  }
+  
+  public void testAutomaticGetterUse() {
+    TestDialogManager.setTestDialog(TestDialog.YES, getTestRootDisposable());
+    BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(() -> doTest());
+  }
+  
+  public void testNoAutomaticGetterUseGetterDoesDifferentThing() {
+    TestDialogManager.setTestDialog(TestDialog.YES, getTestRootDisposable());
+    BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(() -> doTest());
+  }
+  
+  public void testNoAutomaticGetterUseAccessibleField() {
+    TestDialogManager.setTestDialog(TestDialog.YES, getTestRootDisposable());
+    doTest();
+  }
+  
+  public void testAutomaticGetterSetterUse() {
+    TestDialogManager.setTestDialog(TestDialog.YES, getTestRootDisposable());
+    BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(() -> doTest());
+  }
+
+  public void testAutomaticGetterUsePreferRecordAccessor() {
+    TestDialogManager.setTestDialog(TestDialog.YES, getTestRootDisposable());
+    BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(() -> doTest());
   }
 
   @Override

@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.base.platforms.library
 
 import com.intellij.ide.JavaUiBundle
 import com.intellij.openapi.extensions.Extensions
+import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileElement
 import com.intellij.openapi.project.Project
@@ -26,6 +27,7 @@ import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
 import javax.swing.Icon
 import javax.swing.JComponent
 
+@InternalIgnoreDependencyViolation
 class JSLibraryType : LibraryType<DummyLibraryProperties>(KotlinJavaScriptLibraryKind) {
     override fun createPropertiesEditor(editorComponent: LibraryEditorComponent<DummyLibraryProperties>): LibraryPropertiesEditor? {
         return null

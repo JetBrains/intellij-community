@@ -36,7 +36,7 @@ public final class HippieWordCompletionHandler implements CodeInsightActionHandl
   }
 
   @Override
-  public void invoke(@NotNull Project project, final @NotNull Editor editor, @NotNull PsiFile file) {
+  public void invoke(@NotNull Project project, final @NotNull Editor editor, @NotNull PsiFile psiFile) {
     if (!EditorModificationUtil.requestWriting(editor)) {
       return;
     }
@@ -72,7 +72,7 @@ public final class HippieWordCompletionHandler implements CodeInsightActionHandl
       data.startOffset = completionState.lastStartOffset;
     }
 
-    CompletionVariant nextVariant = computeNextVariant(editor, oldPrefix, lastProposedVariant, data, file, fromOtherFiles, false);
+    CompletionVariant nextVariant = computeNextVariant(editor, oldPrefix, lastProposedVariant, data, psiFile, fromOtherFiles, false);
     if (nextVariant == null) {
       insertStringForEachCaret(editor, oldPrefix, caretOffset - data.startOffset);
       editor.putUserData(KEY_STATE, null);

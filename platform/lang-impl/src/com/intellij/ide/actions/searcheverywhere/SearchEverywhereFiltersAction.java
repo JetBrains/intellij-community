@@ -42,7 +42,7 @@ public class SearchEverywhereFiltersAction<T> extends ShowFilterAction {
   }
 
   @Override
-  protected boolean isActive() {
+  public boolean isActive() {
     return filter.getAllElements().size() != filter.getSelectedElements().size();
   }
 

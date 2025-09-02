@@ -191,8 +191,11 @@ public fun TabStrip(
     }
 }
 
-/** Only used to keep compatibility. **DON'T USE IT.** */
 @ExperimentalJewelApi
+@Deprecated(
+    "Use the version with explicit MutableInteractionSource",
+    ReplaceWith("TabStrip(tabs, style, modifier, enabled, interactionSource)"),
+)
 @Composable
 public fun TabStrip(tabs: List<TabData>, style: TabStyle, modifier: Modifier = Modifier, enabled: Boolean = true) {
     TabStrip(tabs, style, modifier, enabled, remember { MutableInteractionSource() })

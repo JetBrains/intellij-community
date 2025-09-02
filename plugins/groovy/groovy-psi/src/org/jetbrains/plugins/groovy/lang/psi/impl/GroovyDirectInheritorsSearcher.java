@@ -4,12 +4,14 @@ package org.jetbrains.plugins.groovy.lang.psi.impl;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.search.RelaxedDirectInheritorChecker;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopeUtil;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.util.PsiUtilCore;
@@ -27,6 +29,15 @@ import java.util.Collections;
 import java.util.List;
 
 public final class GroovyDirectInheritorsSearcher implements QueryExecutor<PsiClass, DirectClassInheritorsSearch.SearchParameters> {
+  /**
+   * During inheritance checks across Groovy classes, some ast transformations might be applied to them. These transformations, in turn
+   * may call inheritance checks again, so endless recursion is created. Put this key into the base class to skip inheritance checks.
+   *
+   * @see ClassInheritorsSearch.SearchParameters#isCheckInheritance()
+   * @see DirectClassInheritorsSearch.SearchParameters#isCheckInheritance()
+   * @see org.jetbrains.plugins.groovy.transformations.AstTransformationSupport
+   */
+  public static final Key<Boolean> IGNORE_INHERITANCE_CHECK = Key.create("IGNORE_CHECK_INHERITANCE");
 
   private static @NotNull List<PsiClass> getDerivingClassCandidates(PsiClass clazz, GlobalSearchScope scope, boolean includeAnonymous) {
     final String name = clazz.getName();
@@ -59,9 +70,9 @@ public final class GroovyDirectInheritorsSearcher implements QueryExecutor<PsiCl
 
     if (!candidates.isEmpty()) {
       RelaxedDirectInheritorChecker checker = dumbService.runReadActionInSmartMode(() -> new RelaxedDirectInheritorChecker(clazz));
-
+      boolean shouldSkipInheritanceChecks = shouldSkipInheritanceChecks(queryParameters);
       for (PsiClass candidate : candidates) {
-        if (!queryParameters.isCheckInheritance() || dumbService.runReadActionInSmartMode(() -> checker.checkInheritance(candidate))) {
+        if (shouldSkipInheritanceChecks || (!queryParameters.isCheckInheritance() || dumbService.runReadActionInSmartMode(() -> checker.checkInheritance(candidate)))) {
           if (!consumer.process(candidate)) {
             return false;
           }
@@ -69,5 +80,15 @@ public final class GroovyDirectInheritorsSearcher implements QueryExecutor<PsiCl
       }
     }
     return true;
+  }
+
+  private static boolean shouldSkipInheritanceChecks(@NotNull DirectClassInheritorsSearch.SearchParameters queryParameters) {
+    if (Boolean.TRUE.equals(queryParameters.getClassToProcess().getUserData(IGNORE_INHERITANCE_CHECK))) return true;
+
+    ClassInheritorsSearch.SearchParameters originalParameters = queryParameters.getOriginalParameters();
+    if (originalParameters == null) return false;
+
+    PsiClass baseClass = originalParameters.getClassToProcess();
+    return Boolean.TRUE.equals(baseClass.getUserData(IGNORE_INHERITANCE_CHECK));
   }
 }

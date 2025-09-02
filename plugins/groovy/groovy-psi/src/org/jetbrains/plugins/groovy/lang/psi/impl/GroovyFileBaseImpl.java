@@ -54,7 +54,7 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
   private final CachedValue<DeclarationHolder> myDeclarationsCache;
   private final DeclarationHolder myAllCachedDeclarations;
 
-  protected GroovyFileBaseImpl(FileViewProvider viewProvider, @NotNull Language language) {
+  protected GroovyFileBaseImpl(@NotNull FileViewProvider viewProvider, @NotNull Language language) {
     super(viewProvider, language);
     CachedValuesManager cachedValuesManager = CachedValuesManager.getManager(viewProvider.getManager().getProject());
     myAnnotationsCache = cachedValuesManager.createCachedValue(() -> Result.create(
@@ -68,7 +68,7 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
       myDeclarationsCache.getValue().processDeclarations(processor, state, place);
   }
 
-  public GroovyFileBaseImpl(IFileElementType root, IFileElementType root1, FileViewProvider provider) {
+  public GroovyFileBaseImpl(@NotNull IFileElementType root, @NotNull IFileElementType root1, @NotNull FileViewProvider provider) {
     this(provider, root.getLanguage());
     init(root, root1);
   }

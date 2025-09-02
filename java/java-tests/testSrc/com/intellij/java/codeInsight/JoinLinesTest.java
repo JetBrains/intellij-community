@@ -38,6 +38,7 @@ public class JoinLinesTest extends LightJavaCodeInsightTestCase {
   public void testDeclarationAndCallSelfRef() { doTest(); }
   public void testAssignmentAndCall() { doTest(); }
   public void testLambdaExpression() { doTest(); }
+  public void testSwitchLabeledRule() { doTest(); }
 
   public void testDeclarationAndReassignmentWithCall() { doTest(); }
   public void testAssignmentAndReassignmentWithCall() { doTest(); }

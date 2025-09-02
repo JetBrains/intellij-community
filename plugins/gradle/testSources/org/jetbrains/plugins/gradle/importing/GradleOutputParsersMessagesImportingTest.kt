@@ -390,7 +390,7 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
                              "   Cannot get property 'foo' on null object")
 
     val filePath = FileUtil.toSystemDependentName(myProjectConfig.path)
-    assertSyncViewSelectedNode("Cannot get property 'foo' on null object", true) {
+    assertSyncViewSelectedNode("Cannot get property 'foo' on null object") {
       val trySuggestion = when {
         isGradleAtLeast("8.2") ->
           """|> Run with --debug option to get more log output.
@@ -430,8 +430,8 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
         assertNodeWithDeprecatedGradleWarning()
       }
     }
-    assertSyncViewSelectedNode("finished", false) {
-      val text = it!!.lineSequence()
+    assertSyncViewNode("finished") {
+      val text = it.lineSequence()
         .dropWhile { s -> s == "Starting Gradle Daemon..."
                           || s.startsWith("Gradle Daemon started in")
                           || s.startsWith("Download ") }
@@ -452,14 +452,14 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
     overrideGradleUserHome(".gradle")
 
     importProject()
-    assertSyncViewSelectedNode("finished", false) {
+    assertSyncViewNode("finished") {
       assertThat(it)
         .containsOnlyOnce("Starting Gradle Daemon...")
         .containsOnlyOnce("Gradle Daemon started in")
     }
 
     importProject()
-    assertSyncViewSelectedNode("finished", false) {
+    assertSyncViewNode("finished") {
       assertThat(it)
         .doesNotContain("Starting Gradle Daemon...")
         .doesNotContain("Gradle Daemon started in")
@@ -483,7 +483,7 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
       }
     }
 
-    assertSyncViewSelectedNode("finished", false) {
+    assertSyncViewNode("finished") {
       assertThat(it)
         .contains("Message with level DEBUG",
                   "Message with level INFO",

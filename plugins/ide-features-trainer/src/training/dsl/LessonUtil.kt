@@ -12,7 +12,6 @@ import com.intellij.execution.ui.UIExperiment
 import com.intellij.execution.ui.layout.impl.RunnerLayoutSettings
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.impl.DataManagerImpl
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ex.ActionUtil
@@ -800,7 +799,7 @@ fun LessonContext.sdkConfigurationTasks() {
 
 fun TaskRuntimeContext.addNewRunConfigurationFromContext(editConfiguration: (RunConfiguration) -> Unit = {}) {
   val runManager = RunManager.getInstance(project) as RunManagerImpl
-  val dataContext = DataManagerImpl.getInstance().getDataContext(editor.component)
+  val dataContext = DataManager.getInstance().getDataContext(editor.component)
   val configurationsFromContext = ConfigurationContext.getFromContext(dataContext, ActionPlaces.UNKNOWN).configurationsFromContext
   val configurationSettings = configurationsFromContext?.singleOrNull() ?.configurationSettings ?: return
   val runConfiguration = configurationSettings.configuration.clone()
@@ -831,7 +830,7 @@ fun showEndOfLessonDialogAndFeedbackForm(onboardingLesson: Lesson, lessonEndInfo
         dataContextPromise.onSuccess { context ->
           invokeLater {
             val event = AnActionEvent.createFromAnAction(closeAction, null, ActionPlaces.LEARN_TOOLWINDOW, context)
-            ActionUtil.performActionDumbAwareWithCallbacks(closeAction, event)
+            ActionUtil.performAction(closeAction, event)
           }
         }
       }

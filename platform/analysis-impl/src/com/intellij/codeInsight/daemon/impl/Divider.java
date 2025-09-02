@@ -48,12 +48,12 @@ public final class Divider {
   private record CachedStampedMap(long modificationStamp, @NotNull ConcurrentLongObjectMap<Reference<DividedElements>> elements) {}
   private static final Key<CachedStampedMap> CACHED_DIVIDED_ELEMENTS_KEY = Key.create("CACHED_DIVIDED_ELEMENTS");
 
-  public static void divideInsideAndOutsideAllRoots(@NotNull PsiFile file,
+  public static void divideInsideAndOutsideAllRoots(@NotNull PsiFile psiFile,
                                                     @NotNull TextRange restrictRange,
                                                     @NotNull TextRange priorityRange,
                                                     @Nullable Predicate<? super PsiFile> rootFilter,
                                                     @NotNull Processor<? super DividedElements> processor) {
-    FileViewProvider viewProvider = file.getViewProvider();
+    FileViewProvider viewProvider = psiFile.getViewProvider();
     for (PsiFile root : viewProvider.getAllFiles()) {
       if (rootFilter == null || !rootFilter.test(root)) {
         continue;

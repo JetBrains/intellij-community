@@ -12,7 +12,7 @@ public interface EventLogUploaderOptions {
   String ID_REVISION_OPTION = "--id-revision-";
   String ESCAPING_OPTION = "--escape-";
 
-  String URL_OPTION = "--url";
+  String REGIONAL_CODE_OPTION = "--regional-code";
   String PRODUCT_OPTION = "--product";
   String PRODUCT_VERSION_OPTION = "--product-version";
   String BASELINE_VERSION = "--baseline-version";

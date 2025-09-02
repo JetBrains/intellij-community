@@ -23,6 +23,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
+import org.jetbrains.concurrency.rejectedPromise
 import org.jetbrains.idea.maven.aether.RetryProvider
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
 import org.jetbrains.jps.model.serialization.JpsMavenSettings
@@ -48,7 +49,7 @@ class JarHttpDownloaderJps(val project: Project, val coroutineScope: CoroutineSc
     @JvmStatic
     fun getInstance(project: Project): JarHttpDownloaderJps = project.service<JarHttpDownloaderJps>()
 
-    private fun collectRelativePathsForJarHttpDownloaderOrLog(library: LibraryEx): CollectResult {
+    private fun collectRelativePathsForJarHttpDownloaderOrLog(project: Project?, library: LibraryEx): CollectResult {
       if (library.getKind() != RepositoryLibraryType.REPOSITORY_LIBRARY_KIND) {
         return CollectResult.Failure("Library '${library.name}' is not a repository library")
       }
@@ -71,12 +72,14 @@ class JarHttpDownloaderJps(val project: Project, val coroutineScope: CoroutineSc
       // 1. canonical path (symlinks can be resolved or not resolved)
       // 2. in tests, JarRepositoryManager.localRepositoryPath can be overridden
       val possibleMavenLocalRepositoryRoots = listOfNotNull(
+
         // could be overridden, like in tests
+        project?.let { JarRepositoryManager.getJPSLocalMavenRepositoryForIdeaProject(it).toString() },
+
         JarRepositoryManager.getLocalRepositoryPath().path,
 
         // always returns a canonical path (symlinks resolved), so can be anything even if it was not overridden
         PathMacroManager.getInstance(ApplicationManager.getApplication()).expandPath(JarRepositoryManager.MAVEN_REPOSITORY_MACRO),
-
         // in some cases, we may receive a non-canonical path (without symlinks resolved)
         JpsMavenSettings.getMavenRepositoryPath(),
       ).map { Path.of(FileUtil.toSystemDependentName(it)).normalize() }
@@ -134,7 +137,7 @@ class JarHttpDownloaderJps(val project: Project, val coroutineScope: CoroutineSc
 
     @TestOnly
     fun whyLibraryCouldNotBeDownloaded(library: LibraryEx): String? {
-      val result = collectRelativePathsForJarHttpDownloaderOrLog(library)
+      val result = collectRelativePathsForJarHttpDownloaderOrLog(null, library)
       return if (result is CollectResult.Failure) result.reason else null
     }
   }
@@ -180,28 +183,30 @@ class JarHttpDownloaderJps(val project: Project, val coroutineScope: CoroutineSc
     }
   }
 
-  /**
-   * return null if `library` could not be downloaded by JarHttpDownloader
-   */
-  fun downloadLibraryFilesAsync(library: LibraryEx): Promise<*>? {
-    val relativePaths = when (val result = collectRelativePathsForJarHttpDownloaderOrLog(library)) {
+  fun downloadLibraryFilesAsync(library: LibraryEx): Promise<*> {
+    val relativePaths = when (val result = collectRelativePathsForJarHttpDownloaderOrLog(project, library)) {
       is CollectResult.Failure -> {
-        LOG.debug(result.reason)
-        return null
+        return rejectedPromise<Unit>(result.reason)
       }
       is CollectResult.Success -> result.files
     }
 
     LOG.debug("Downloading library '${library.name}'")
 
-    val localRepository = JarRepositoryManager.getLocalRepositoryPath().toPath()
+    val localRepository = JarRepositoryManager.getJPSLocalMavenRepositoryForIdeaProject(project)
     val remoteRepositories = RemoteRepositoriesConfiguration.getInstance(project).repositories
 
     // TODO Needs some tests on cancellation, it's not supported well
     //  it should work both way: cancelling promise should cancel downloading
     //  and cancelling coroutineScope should cancel promise (make it fail with CancellationException)
 
-    val promise = AsyncPromise<Unit>()
+    val promise = object : AsyncPromise<Unit>() {
+      // Do not call Logger.error which may cause exception re-throwing in UNIT TESTS and
+      // breaking of the following try { catch {} } code
+      // Example: a race between executing launch {} code and setting onError on the promise
+      // (which disables error logging too)
+      override fun shouldLogErrors(): Boolean = false
+    }
 
     coroutineScope.launch {
       val remotes = remoteRepositories

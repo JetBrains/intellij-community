@@ -266,6 +266,10 @@ open class PyAstElementVisitor : PsiElementVisitor() {
     visitPyElement(node)
   }
 
+  open fun visitPyEllipsisLiteralExpression(node: PyAstEllipsisLiteralExpression) {
+    visitPyElement(node)
+  }
+
   open fun visitPyBoolLiteralExpression(node: PyAstBoolLiteralExpression) {
     visitPyElement(node)
   }

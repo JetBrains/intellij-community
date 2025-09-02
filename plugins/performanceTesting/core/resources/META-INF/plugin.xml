@@ -1,8 +1,8 @@
-<idea-plugin package="com.jetbrains.performancePlugin">
+<idea-plugin package="com.jetbrains.performancePlugin" allow-bundled-update="true">
   <id>com.jetbrains.performancePlugin</id>
   <name>Performance Testing</name>
   <vendor>JetBrains</vendor>
-  <category>Other Tools</category>
+  <category>Platform Development</category>
   <resource-bundle>messages.PerformanceTestingBundle</resource-bundle>
 
   <description><![CDATA[
@@ -14,6 +14,10 @@
     <module name="intellij.performanceTesting.remoteDriver"/>
     <module name="intellij.performanceTesting.vcs"/>
     <module name="intellij.performanceTesting.frontend"/>
+    <module name="intellij.tools.ide.starter.bus" loading="embedded"/>
+    <module name="intellij.driver.model" loading="embedded"/>
+    <module name="intellij.driver.impl" loading="embedded"/>
+    <module name="intellij.driver.client" loading="embedded"/>
   </content>
 
   <dependencies>

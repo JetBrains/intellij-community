@@ -20,6 +20,7 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.awt.RelativePoint
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gitlab.api.SinceGitLab
 import org.jetbrains.plugins.gitlab.api.dto.GitLabCiJobDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabReviewerDTO
@@ -36,7 +37,8 @@ import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabMergeRequestReviewer
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import org.jetbrains.plugins.gitlab.util.GitLabCoroutineUtil
 
-internal interface GitLabMergeRequestReviewFlowViewModel : CodeReviewFlowViewModel<GitLabReviewerDTO> {
+@ApiStatus.Internal
+interface GitLabMergeRequestReviewFlowViewModel : CodeReviewFlowViewModel<GitLabReviewerDTO> {
   val isBusy: Flow<Boolean>
 
   val allowsMultipleReviewers: Flow<Boolean>

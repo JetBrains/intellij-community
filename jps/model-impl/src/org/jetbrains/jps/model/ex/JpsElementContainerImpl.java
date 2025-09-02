@@ -98,12 +98,12 @@ public final class JpsElementContainerImpl extends JpsElementContainerEx impleme
   }
 
   @Override
-  protected Object getDataLock() {
+  public Object getDataLock() {
     return myDataLock;
   }
 
   @Override
-  protected Map<JpsElementChildRole<?>, JpsElement> getElementsMap() {
+  public Map<JpsElementChildRole<?>, JpsElement> getElementsMap() {
     return myElements;
   }
 }

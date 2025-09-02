@@ -10,18 +10,18 @@ import com.intellij.vcs.log.util.VcsLogUtil
 import java.awt.BorderLayout
 import javax.swing.JComponent
 
-internal class GitCompareBranchesFile(project: Project,
-                                      name: String,
-                                      path: GitCompareBranchesVirtualFileSystem.ComplexPath,
+internal class GitCompareBranchesFile(name: String,
+                                      val pathId: GitCompareBranchesVirtualFileSystem.ComplexPath,
                                       private val compareBranchesUiFactory: () -> GitCompareBranchesUi) :
   VcsLogFile(name), VirtualFilePathWrapper {
-  private val pathId = GitCompareBranchesFilesManager.createPath(project, path.sessionId, path.ranges, path.roots)
   private val fileSystemInstance = GitCompareBranchesVirtualFileSystem.getInstance()
 
   override fun createMainComponent(project: Project): JComponent {
     val panel = JBPanelWithEmptyText(BorderLayout()).withEmptyText(VcsLogBundle.message("vcs.log.is.loading"))
     VcsLogUtil.runWhenVcsAndLogIsReady(project) { logManger ->
-      val component = compareBranchesUiFactory().create(logManger)
+      val component = compareBranchesUiFactory().create(logManger) {
+        GitCompareBranchesFilesManager.getInstance(project).closeFile(this)
+      }
       panel.add(component, BorderLayout.CENTER)
     }
     return panel

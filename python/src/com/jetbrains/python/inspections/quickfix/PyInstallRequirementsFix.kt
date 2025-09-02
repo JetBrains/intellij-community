@@ -1,13 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inspections.quickfix
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.core.CoreBundle
 import com.intellij.model.SideEffectGuard
 import com.intellij.model.SideEffectGuard.Companion.checkSideEffectAllowed
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.Messages
@@ -15,8 +13,10 @@ import com.intellij.openapi.util.text.StringUtil
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.inspections.PyInterpreterInspection
 import com.jetbrains.python.inspections.requirement.RunningPackagingTasksListener
-import com.jetbrains.python.packaging.PyPackageManagerUI
 import com.jetbrains.python.packaging.PyRequirement
+import com.jetbrains.python.packaging.management.ui.PythonPackageManagerUI
+import com.jetbrains.python.packaging.management.ui.installPyRequirementsBackground
+import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.adminPermissionsNeeded
 import com.jetbrains.python.ui.PyUiUtil
@@ -24,7 +24,6 @@ import org.jetbrains.annotations.Nls
 
 internal class PyInstallRequirementsFix(
   private val quickFixName: @Nls String?,
-  private val module: Module,
   private val sdk: Sdk,
   private val unsatisfied: List<PyRequirement>,
   private val installOptions: List<String> = emptyList(),
@@ -39,15 +38,13 @@ internal class PyInstallRequirementsFix(
     if (hasAdminPermissionsAndConfigureInterpreter(project, descriptor, sdk)) return
     checkSideEffectAllowed(SideEffectGuard.EffectType.PROJECT_MODEL)
     PyUiUtil.clearFileLevelInspectionResults(descriptor.psiElement.containingFile)
-    installRequirements(project, unsatisfied, descriptor)
-  }
+    PyPackageCoroutine.launch(project) {
+      listener?.started()
+      val pythonPackageManagerUI = PythonPackageManagerUI.forSdk(project, sdk)
+      pythonPackageManagerUI.installPyRequirementsBackground(unsatisfied, installOptions)
+      listener?.finished(emptyList())
+    }
 
-  private fun installRequirements(project: Project, requirements: List<PyRequirement>, descriptor: ProblemDescriptor) {
-    val file = descriptor.psiElement.containingFile ?: return
-    val listener = listener ?: RunningPackagingTasksListener(module)
-    val ui = PyPackageManagerUI(project, sdk, listener)
-    ui.install(requirements, installOptions)
-    DaemonCodeAnalyzer.getInstance(project).restart(file)
   }
 
   private fun hasAdminPermissionsAndConfigureInterpreter(

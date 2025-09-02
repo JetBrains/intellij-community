@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.documentation
 
 import com.intellij.openapi.application.PathManager
@@ -17,10 +17,14 @@ import org.yaml.snakeyaml.Yaml
 import org.yaml.snakeyaml.constructor.Constructor
 import org.yaml.snakeyaml.nodes.Node
 import org.yaml.snakeyaml.representer.Representer
-import java.io.File
 import java.net.SocketTimeoutException
+import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.io.path.createDirectories
+import kotlin.io.path.exists
+import kotlin.io.path.readText
+import kotlin.io.path.writeText
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.seconds
 
@@ -74,8 +78,8 @@ internal class DocumentationContentProvider(private val coroutineScope: Coroutin
     }
   }
 
-  private fun getCachedFile(relativeCachePath: String): File {
-    return PathManager.getSystemDir().resolve("devkit/$relativeCachePath").toFile()
+  private fun getCachedFile(relativeCachePath: String): Path {
+    return PathManager.getSystemDir().resolve("devkit/$relativeCachePath")
   }
 
   fun downloadContentAsync(coordinates: DocumentationDataCoordinates) {
@@ -86,7 +90,7 @@ internal class DocumentationContentProvider(private val coroutineScope: Coroutin
       try {
         val yamlContent = request.readString()
         getCachedFile(coordinates.localPath).run {
-          parentFile.run { if (!exists()) mkdirs() }
+          parent.run { if (!exists()) createDirectories() }
           writeText(yamlContent)
           contentCache.remove(coordinates) // so it is refreshed on the next content request
         }
@@ -127,7 +131,7 @@ internal class DocumentationContentProvider(private val coroutineScope: Coroutin
     val constructor = DescriptorDocumentationConstructor(loaderOptions)
     // DumperOptions pointed in the deprecation message doesn't support skipping missing properties
     return Yaml(constructor, representer).load<DocumentationContent>(yamlContent)
-      ?.takeIf { it.elements.isNotEmpty() == true }
+      ?.takeIf { it.elements.isNotEmpty() }
   }
 
   fun initializeContentDownload() {
@@ -162,7 +166,7 @@ private class DescriptorDocumentationConstructor(loaderOptions: LoaderOptions) :
     for (elementWrapper in content.elements) {
       val element = elementWrapper.element ?: continue
       copyReusedObjectsExceptContainingItself(elementWrapper, null, mutableListOf())
-      fillElementPathsRecursively(element, emptyList())
+      fillElementParentsAndPathsRecursively(null, element, emptyList())
       fillSelfContainingElementsRecursively(elementWrapper)
     }
   }
@@ -188,7 +192,7 @@ private class DescriptorDocumentationConstructor(loaderOptions: LoaderOptions) :
   ) {
     val element = elementWrapper.element ?: return
     val parent = parentWrapper?.element
-    if (parentWrapper != null && parent != null && alreadyUsedElements.contains(elementWrapper) && element.containsItself == false) {
+    if (parentWrapper != null && parent != null && alreadyUsedElements.contains(elementWrapper) && !element.containsItself) {
       val elementCopy = element.copy()
       val wrapperCopy = ElementWrapper(elementCopy)
       parent.children = parent.children.replace(elementWrapper, wrapperCopy)
@@ -203,22 +207,27 @@ private class DescriptorDocumentationConstructor(loaderOptions: LoaderOptions) :
     return map { if (it === old) new else it }
   }
 
-
-  private fun fillElementPathsRecursively(element: Element, parentPath: List<String>) {
+  private fun fillElementParentsAndPathsRecursively(parent: Element?, element: Element, parentPath: List<String>) {
     val elementPath = parentPath + element.name!!
     // If an element is aliased and referenced in YAML, the same instance is shared.
-    // For this reason, set the path only if it is empty, so we get the shortest paths filled.
+    // For this reason, set the parent/path only if it is null/empty, so we get the shortest paths filled.
+    if (element.parent == null) {
+      element.parent = parent
+    }
     if (element.path.isEmpty()) {
       element.path = elementPath
     }
     for (attribute in element.attributes.mapNotNull { it.attribute }) {
+      if (attribute.parent == null) {
+        attribute.parent = element
+      }
       if (attribute.path.isEmpty()) {
         val attributePath = elementPath + attribute.name!!
         attribute.path = attributePath
       }
     }
     for (child in element.children) {
-      fillElementPathsRecursively(child.element!!, elementPath)
+      fillElementParentsAndPathsRecursively(element, child.element!!, elementPath)
     }
   }
 

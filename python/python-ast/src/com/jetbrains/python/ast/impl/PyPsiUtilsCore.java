@@ -140,4 +140,15 @@ public final class PyPsiUtilsCore {
     }
     return expr;
   }
+
+  /**
+   * Returns ancestor of the element that is also direct child of the given super parent.
+   *
+   * @param element     element to start search from
+   * @param superParent direct parent of the desired ancestor
+   * @return described element or {@code null} if it doesn't exist
+   */
+  public static @Nullable PsiElement getParentRightBefore(@NotNull PsiElement element, final @NotNull PsiElement superParent) {
+    return PsiTreeUtil.findFirstParent(element, false, element1 -> element1.getParent() == superParent);
+  }
 }

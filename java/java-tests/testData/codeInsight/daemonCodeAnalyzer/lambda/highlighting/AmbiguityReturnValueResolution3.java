@@ -8,8 +8,8 @@ class Test {
         IntStream mi = sp.map(Inner::foo);
         Stream<Integer> mI = sp.map(Inner::fooBoxed);
 
-        IntStream li = sp.map<error descr="Ambiguous method call: both 'Stream.map(Function<? super Inner, ?>)' and 'Stream.map(IntFunction<? super Inner>)' match">(inner->inner.<error descr="Cannot resolve method 'foo()'">foo</error>())</error>;
-        Stream<Integer> lI = sp.map<error descr="Ambiguous method call: both 'Stream.map(Function<? super Inner, ?>)' and 'Stream.map(IntFunction<? super Inner>)' match">(inner -> inner.<error descr="Cannot resolve method 'fooBoxed()'">fooBoxed</error>())</error>;
+        IntStream li = sp.map<error descr="Ambiguous method call: both 'Stream.map(Function<? super Inner, ?>)' and 'Stream.map(IntFunction<? super Inner>)' match">(inner->inner.foo())</error>;
+        Stream<Integer> lI = sp.map<error descr="Ambiguous method call: both 'Stream.map(Function<? super Inner, ?>)' and 'Stream.map(IntFunction<? super Inner>)' match">(inner -> inner.fooBoxed())</error>;
     }
 
     interface Stream<T> {

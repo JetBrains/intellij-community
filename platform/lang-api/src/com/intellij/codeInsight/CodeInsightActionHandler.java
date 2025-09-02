@@ -24,7 +24,7 @@ public interface CodeInsightActionHandler extends FileModifier {
    *
    * @param project the project where action is invoked.
    * @param editor  the editor where action is invoked.
-   * @param file    the file open in the editor.
+   * @param psiFile    the file open in the editor.
    */
-  void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file);
+  void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile);
 }

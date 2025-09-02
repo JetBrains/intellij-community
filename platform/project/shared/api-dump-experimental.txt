@@ -1,0 +1,23 @@
+*f:com.intellij.platform.project.ProjectId
+- *sf:Companion:com.intellij.platform.project.ProjectId$Companion
+- <init>(fleet.util.UID):V
+- f:copy(fleet.util.UID):com.intellij.platform.project.ProjectId
+- bs:copy$default(com.intellij.platform.project.ProjectId,fleet.util.UID,I,java.lang.Object):com.intellij.platform.project.ProjectId
+- equals(java.lang.Object):Z
+- hashCode():I
+*bf:com.intellij.platform.project.ProjectId$$serializer
+- kotlinx.serialization.internal.GeneratedSerializer
+- sf:INSTANCE:com.intellij.platform.project.ProjectId$$serializer
+- f:childSerializers():kotlinx.serialization.KSerializer[]
+- f:deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.platform.project.ProjectId
+- f:getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- f:serialize(kotlinx.serialization.encoding.Encoder,com.intellij.platform.project.ProjectId):V
+*f:com.intellij.platform.project.ProjectId$Companion
+- f:serializer():kotlinx.serialization.KSerializer
+f:com.intellij.platform.project.ProjectIdKt
+- *sf:findProject(com.intellij.platform.project.ProjectId):com.intellij.openapi.project.Project
+- *sf:findProjectOrNull(com.intellij.platform.project.ProjectId):com.intellij.openapi.project.Project
+- *sf:findProjectOrNullWithLogError(com.intellij.platform.project.ProjectId,com.intellij.openapi.diagnostic.Logger):com.intellij.openapi.project.Project
+- *sf:projectId(com.intellij.openapi.project.Project):com.intellij.platform.project.ProjectId
+- *sf:projectIdOrNull(com.intellij.openapi.project.Project):com.intellij.platform.project.ProjectId
+- *sf:projectIdOrNullWithLogError(com.intellij.openapi.project.Project,com.intellij.openapi.diagnostic.Logger):com.intellij.platform.project.ProjectId

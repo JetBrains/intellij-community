@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.html.impl.util;
 
 import com.intellij.openapi.util.Key;
@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+
 public final class MicrodataUtil {
   public static final Key<List<String>> ITEM_PROP_KEYS = Key.create("microdata.prop");
   public static final String ITEM_REF = "itemref";
@@ -141,11 +142,11 @@ public final class MicrodataUtil {
     }
   }
 
-  public static class CollectNamesByMicrodataVisitor extends CollectNamesVisitor {
-    protected final String myType;
+  static final class CollectNamesByMicrodataVisitor extends CollectNamesVisitor {
+    private final String myType;
     private boolean myCollecting = false;
 
-    public CollectNamesByMicrodataVisitor(String type) {
+    CollectNamesByMicrodataVisitor(String type) {
       myType = type;
     }
 
@@ -169,7 +170,7 @@ public final class MicrodataUtil {
     }
   }
 
-  public static class CollectNamesFromSchemaOrgVisitor extends CollectNamesVisitor {
+  static final class CollectNamesFromSchemaOrgVisitor extends CollectNamesVisitor {
     @Override
     public void visitXmlTag(@NotNull XmlTag tag) {
       super.visitXmlTag(tag);

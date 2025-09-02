@@ -119,4 +119,7 @@ public abstract class ProjectRootManager extends SimpleModificationTracker {
    * @param sdkTypeName the {@link SdkTypeId#getName()} of the SDK type
    */
   public abstract void setProjectSdkName(@NotNull String name, @NotNull String sdkTypeName);
+
+  @ApiStatus.Internal
+  public abstract ModuleRootManager getModuleRootManager(@NotNull Module module);
 }

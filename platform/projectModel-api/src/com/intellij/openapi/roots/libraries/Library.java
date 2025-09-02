@@ -25,7 +25,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.*;
 
 @ApiStatus.NonExtendable
-public interface Library extends JDOMExternalizable, Disposable, ProjectModelElement {
+public interface Library extends JDOMExternalizable, ProjectModelElement {
   Library[] EMPTY_ARRAY = new Library[0];
 
   /**

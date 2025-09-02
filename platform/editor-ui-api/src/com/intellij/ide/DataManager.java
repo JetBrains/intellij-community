@@ -107,8 +107,10 @@ public abstract class DataManager {
    * <p>
    * Use {@link UiDataProvider#wrapComponent(JComponent, UiDataProvider)} for simple cases.
    * Use {@link EdtNoGetDataProvider} as a temporary type-safe and performant solution.
+   *
+   * @deprecated Use {@link UiDataProvider} or {@link UiDataProvider#wrapComponent}
    */
-  @ApiStatus.Obsolete
+  @Deprecated
   public static void registerDataProvider(@NotNull JComponent component, @NotNull DataProvider provider) {
     if (component instanceof UiDataProvider) {
       LOG.warn(String.format("Registering CLIENT_PROPERTY_DATA_PROVIDER on component implementing UiDataProvider. " +
@@ -126,14 +128,14 @@ public abstract class DataManager {
     component.putClientProperty(CLIENT_PROPERTY_DATA_PROVIDER, provider);
   }
 
-  /** Most components now implement {@link UiDataProvider} */
-  @ApiStatus.Obsolete
+  /** @deprecated Use {@link UiDataProvider} or {@link UiDataProvider#wrapComponent} */
+  @Deprecated(forRemoval = true)
   public static @Nullable DataProvider getDataProvider(@NotNull JComponent component) {
     return (DataProvider)component.getClientProperty(CLIENT_PROPERTY_DATA_PROVIDER);
   }
 
-  /** Most components now implement {@link UiDataProvider} */
-  @ApiStatus.Obsolete
+  /** @deprecated Use {@link UiDataProvider} or {@link UiDataProvider#wrapComponent} */
+  @Deprecated(forRemoval = true)
   public static void removeDataProvider(@NotNull JComponent component) {
     component.putClientProperty(CLIENT_PROPERTY_DATA_PROVIDER, null);
   }

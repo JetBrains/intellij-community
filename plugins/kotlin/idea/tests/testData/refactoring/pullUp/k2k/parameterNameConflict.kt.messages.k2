@@ -1,0 +1,1 @@
+Property 'val x: String' would conflict with the primary constructor parameter 'x: Int' in the superclass.

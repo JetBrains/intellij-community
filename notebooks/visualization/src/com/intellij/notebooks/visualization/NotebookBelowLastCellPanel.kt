@@ -45,7 +45,7 @@ class NotebookBelowLastCellPanel(
   }
 
   private inner class HighlightableTopBorder(private val borderHeight: Int) : JBEmptyBorder(borderHeight, 0, 0, 0) {
-    override fun paintBorder(c: java.awt.Component?, g: Graphics?, x: Int, y: Int, width: Int, height: Int) {
+    override fun paintBorder(c: java.awt.Component?, g: Graphics, x: Int, y: Int, width: Int, height: Int) {
       super.paintBorder(c, g, x, y, width, height)
       if (isHighlighted) {
         val g2d = g as Graphics2D

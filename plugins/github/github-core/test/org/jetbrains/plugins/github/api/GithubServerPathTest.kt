@@ -20,8 +20,9 @@ class GithubServerPathDataResidencyTest(
       arrayOf("okta.ghe.com", true),
       arrayOf("bla.bla.com", false),
       arrayOf("bla.com", false),
-      arrayOf("GHE.com", true),
+      arrayOf("GHE.com", false),
       arrayOf("TENANT.GHE.COM", true),
+      arrayOf("aghe.com", false),
     )
   }
 
@@ -41,6 +42,7 @@ class GithubServerPathApiPathTest(
     val tests = arrayOf<Array<Any>>(
       arrayOf("github.com", "https://api.github.com"),
       arrayOf("github.com/", "https://api.github.com"),
+      arrayOf("agithub.com", "https://agithub.com/api/v3"),
       arrayOf("tenant.ghe.com", "https://api.tenant.ghe.com"),
       arrayOf("bla.com", "https://bla.com/api/v3"),
       arrayOf("bla.com/", "https://bla.com/api/v3"),

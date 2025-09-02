@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.ide.IdeEventQueue;
@@ -16,6 +16,7 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import java.lang.reflect.InvocationTargetException;
 
+import static com.intellij.openapi.application.impl.AppImplKt.rethrowCheckedExceptions;
 import static com.intellij.testFramework.UITestUtil.setupEventQueue;
 
 public final class EdtTestUtil {
@@ -61,10 +62,7 @@ public final class EdtTestUtil {
     else if (EDT.isCurrentThreadEdt()) {
       if (writeIntent) {
         setupEventQueue();
-        IdeEventQueue.getInstance().getThreadingSupport().runWriteIntentReadAction(() -> {
-          runnable.run();
-          return null;
-        });
+        IdeEventQueue.getInstance().getThreadingSupport().runWriteIntentReadAction(rethrowCheckedExceptions(runnable));
       }
       else {
         runnable.run();
@@ -77,10 +75,7 @@ public final class EdtTestUtil {
                  () -> {
                    try {
                      setupEventQueue();
-                     IdeEventQueue.getInstance().getThreadingSupport().runWriteIntentReadAction(() -> {
-                       runnable.run();
-                       return null;
-                     });
+                     IdeEventQueue.getInstance().getThreadingSupport().runWriteIntentReadAction(rethrowCheckedExceptions(runnable));
                    }
                    catch (Throwable e) {
                      //noinspection unchecked

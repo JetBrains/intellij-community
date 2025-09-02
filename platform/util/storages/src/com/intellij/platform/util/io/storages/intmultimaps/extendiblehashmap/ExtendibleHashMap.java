@@ -411,7 +411,7 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
    * in a header
    */
   @VisibleForTesting
-  static int[] slotIndexesForSegment(int segmentHashSuffix,
+  public static int[] slotIndexesForSegment(int segmentHashSuffix,
                                      byte segmentHashSuffixDepth,
                                      byte globalHashSuffixDepth) {
     assert (segmentHashSuffix & ~suffixMask(segmentHashSuffixDepth)) == 0;
@@ -766,7 +766,8 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
       }
     }
 
-    HashMapSegmentLayout(@NotNull BufferSource bufferSource,
+    @VisibleForTesting
+    public HashMapSegmentLayout(@NotNull BufferSource bufferSource,
                          int segmentIndex,
                          int segmentSize) throws IOException {
       this(segmentIndex, segmentSize,

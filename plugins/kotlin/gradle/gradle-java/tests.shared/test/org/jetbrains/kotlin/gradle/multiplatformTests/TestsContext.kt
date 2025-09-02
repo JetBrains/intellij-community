@@ -3,18 +3,12 @@ package org.jetbrains.kotlin.gradle.multiplatformTests
 
 import com.intellij.openapi.project.Project
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
-import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.TestTasksChecker
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.workspace.GeneralWorkspaceChecks
-import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import org.junit.runner.Description
 import java.io.File
 
-interface KotlinMppTestsContext {
-    val gradleVersion: GradleVersion
-    val kgpVersion: KotlinToolingVersion
-    val agpVersion: String
-
+interface KotlinSyncTestsContext {
     val description: Description
 
     /**
@@ -38,30 +32,31 @@ interface KotlinMppTestsContext {
     val testFeatures: List<TestFeature<*>>
 
     val enabledFeatures: List<TestFeature<*>>
+
+    val testProperties: KotlinTestProperties
 }
 
-class KotlinMppTestsContextImpl(
+/**
+ * Basic implementation of [KotlinSyncTestsContext].
+ *
+ * It is not a drag-and-drop implementation. It meant to be used together with [AbstractKotlinMppGradleImportingTest]-like
+ * runners that properly initialize lateinits, vars, etc.
+ *
+ * It leaves only [testProperties] not implemented, allowing for covariant overrides in inheritors
+ * to provide more specific type
+ */
+abstract class AbstractKotlinSyncTestsContext(
     override val testFeatures: List<TestFeature<*>>
-) : KotlinMppTestsContext {
+) : KotlinSyncTestsContext {
     override val testConfiguration: TestConfiguration = TestConfiguration()
-    internal val testProperties: KotlinTestProperties = KotlinTestProperties.construct(testConfiguration)
 
     override lateinit var description: Description
     override lateinit var testProjectRoot: File
     override lateinit var testProject: Project
     override lateinit var gradleJdkPath: File
 
-    internal var mutableCodeInsightTestFixture: CodeInsightTestFixture? = null
+    var mutableCodeInsightTestFixture: CodeInsightTestFixture? = null
     override val codeInsightTestFixture: CodeInsightTestFixture get() = mutableCodeInsightTestFixture!!
-
-    override val gradleVersion: GradleVersion
-        get() = testProperties.gradleVersion
-
-    override val kgpVersion: KotlinToolingVersion
-        get() = testProperties.kotlinGradlePluginVersion
-
-    override val agpVersion: String
-        get() = testProperties.agpVersion
 
     override val testDataDirectory: File by lazy { computeTestDataDirectory(description) }
 
@@ -70,13 +65,26 @@ class KotlinMppTestsContextImpl(
             val config = testConfiguration.getConfiguration(GeneralWorkspaceChecks)
 
             return testFeatures.filter { feature ->
-                // Temporary mute TEST_TASKS checks due to issues with hosts on CI. See KT-56332
-                if (feature is TestTasksChecker) return@filter false
-
                 if (config.disableCheckers != null && feature in config.disableCheckers!!) return@filter false
                 if (config.onlyCheckers != null) return@filter feature in config.onlyCheckers!!
 
                 feature.isEnabledByDefault()
             }
         }
+}
+
+
+class KotlinMppTestsContext(
+    testFeatures: List<TestFeature<*>>
+) : AbstractKotlinSyncTestsContext(testFeatures) {
+    override val testProperties: KotlinMppTestProperties = KotlinMppTestProperties.construct(testConfiguration)
+
+    override lateinit var description: Description
+    override lateinit var testProjectRoot: File
+    override lateinit var testProject: Project
+    override lateinit var gradleJdkPath: File
+
+    // Additionally mute TEST_TASKS checks due to issues with hosts on CI. See KT-56332
+    override val enabledFeatures: List<TestFeature<*>>
+        get() = super.enabledFeatures.filter { it !is TestTasksChecker }
 }

@@ -42,6 +42,7 @@ import javax.swing.*;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Runs the IDE with the debugger.
@@ -221,6 +222,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
   }
 
   protected static String toDisplayableString(SourcePosition sourcePosition) {
+    if (sourcePosition == null) return "unknown source position";
     int line = sourcePosition.getLine();
     if (line >= 0) {
       line++;
@@ -236,7 +238,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
   protected void printContext(@NotNull String prefix, StackFrameContext context) {
     ApplicationManager.getApplication().runReadAction(() -> {
       if (context.getFrameProxy() != null) {
-        systemPrintln(prefix + toDisplayableString(Objects.requireNonNull(PositionUtil.getSourcePosition(context))));
+        systemPrintln(prefix + toDisplayableString(PositionUtil.getSourcePosition(context)));
       }
       else {
         systemPrintln("Context thread is null");
@@ -336,11 +338,12 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
   private void pumpDebuggerThread(InvokeRatherLaterRequest request) {
     if (request.invokesN == RATHER_LATER_INVOKES_N) {
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        var commands = request.myDebugProcess.getManagerThread().getUnfinishedCommands();
-        while (!commands.isEmpty()) {
+        DebuggerManagerThreadImpl managerThread = request.myDebugProcess.getManagerThread();
+        AtomicInteger counter = managerThread.getDispatchedCommandsCounter$intellij_java_debugger_impl();
+        while (counter.get() != 0) {
           TimeoutUtil.sleep(1);
         }
-        request.myDebugProcess.getManagerThread().schedule(request.myDebuggerCommand);
+        managerThread.schedule(request.myDebuggerCommand);
       });
     }
     else {

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.io
 
 import com.intellij.openapi.util.text.Formats
@@ -6,7 +6,6 @@ import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.io.IOException
 import java.nio.channels.FileChannel
 import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
@@ -89,52 +88,6 @@ private class CopyDirectoryVisitor(
     val targetFile = sourceToTargetFile(sourceFile)
     Files.copy(sourceFile, targetFile, StandardCopyOption.COPY_ATTRIBUTES, LinkOption.NOFOLLOW_LINKS)
     return FileVisitResult.CONTINUE
-  }
-}
-
-fun deleteDir(startDir: Path) {
-  if (!Files.exists(startDir)) {
-    return
-  }
-
-  Files.walkFileTree(startDir, object : SimpleFileVisitor<Path>() {
-    override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
-      deleteFile(file)
-      return FileVisitResult.CONTINUE
-    }
-
-    override fun postVisitDirectory(dir: Path, exception: IOException?): FileVisitResult {
-      if (exception != null) {
-        throw exception
-      }
-
-      Files.deleteIfExists(dir)
-      return FileVisitResult.CONTINUE
-    }
-  })
-}
-
-private fun deleteFile(file: Path) {
-  // repeated delete is required for bad OS like Windows
-  val maxAttemptCount = 10
-  var attemptCount = 0
-  while (true) {
-    try {
-      Files.deleteIfExists(file)
-      return
-    }
-    catch (e: IOException) {
-      if (++attemptCount == maxAttemptCount) {
-        throw e
-      }
-
-      try {
-        Thread.sleep(10)
-      }
-      catch (_: InterruptedException) {
-        throw e
-      }
-    }
   }
 }
 

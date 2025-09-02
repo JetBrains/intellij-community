@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.backend.navigation
 
 import com.intellij.codeInsight.multiverse.CodeInsightContext
@@ -28,7 +28,7 @@ interface NavigationRequests {
   @RequiresBackgroundThread
   fun sourceNavigationRequest(project: Project, file: VirtualFile, offset: Int, elementRange: TextRange?): NavigationRequest?
 
-  // todo ijpl-339 design request
+  // todo IJPL-339 design request
   @RequiresReadLock
   @RequiresBackgroundThread
   fun sharedSourceNavigationRequest(project: Project, file: VirtualFile, context: CodeInsightContext, offset: Int, elementRange: TextRange?): NavigationRequest?

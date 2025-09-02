@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui.attach.dialog.items
 
 import com.intellij.ui.SimpleTextAttributes
@@ -10,7 +10,7 @@ import com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogAllDebuggersFilt
 import java.awt.Component
 import java.awt.Graphics
 
-class AttachDialogEmptyText(private val owner: JBTable, private val filters: AttachToProcessElementsFilters): StatusText(owner) {
+internal class AttachDialogEmptyText(private val owner: JBTable, private val filters: AttachToProcessElementsFilters): StatusText(owner) {
 
   init {
     owner.putClientProperty(UIUtil.NOT_IN_HIERARCHY_COMPONENTS, wrappedFragmentsIterable)

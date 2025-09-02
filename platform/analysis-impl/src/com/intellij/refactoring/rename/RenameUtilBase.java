@@ -30,10 +30,10 @@ public final class RenameUtilBase {
                                                  UsageInfo[] usages,
                                                  @Nullable RefactoringElementListener listener) {
     PsiWritableMetaData writableMetaData = null;
-    if (namedElement instanceof PsiMetaOwner) {
-      final PsiMetaData metaData = ((PsiMetaOwner)namedElement).getMetaData();
-      if (metaData instanceof PsiWritableMetaData) {
-        writableMetaData = (PsiWritableMetaData)metaData;
+    if (namedElement instanceof PsiMetaOwner owner) {
+      final PsiMetaData metaData = owner.getMetaData();
+      if (metaData instanceof PsiWritableMetaData writableMeta) {
+        writableMetaData = writableMeta;
       }
     }
     if (writableMetaData == null && !(namedElement instanceof PsiNamedElement)) {
@@ -73,7 +73,7 @@ public final class RenameUtilBase {
   public static void renameReference(@NotNull PsiElement namedElement, String newName, @NotNull PsiReference ref) {
     if (ref instanceof BindablePsiReference) {
       boolean fallback = true;
-      if (!(ref instanceof FragmentaryPsiReference && ((FragmentaryPsiReference)ref).isFragmentOnlyRename())) {
+      if (!(ref instanceof FragmentaryPsiReference f && f.isFragmentOnlyRename())) {
         try {
           ref.bindToElement(namedElement);
           fallback = false;
@@ -103,7 +103,7 @@ public final class RenameUtilBase {
                                    ref.getRangeInElement().getEndOffset(),
                                    element,
                                    ref.resolve() == null &&
-                                   !(ref instanceof PsiPolyVariantReference &&
-                                     ((PsiPolyVariantReference)ref).multiResolve(true).length > 0));
+                                   !(ref instanceof PsiPolyVariantReference poly &&
+                                     poly.multiResolve(true).length > 0));
   }
 }

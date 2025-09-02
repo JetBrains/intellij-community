@@ -3,6 +3,7 @@ package com.intellij.psi.tree;
 
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Set;
 
@@ -13,6 +14,7 @@ import java.util.Set;
  */
 public interface ParentProviderElementType {
   @NotNull
+  @Unmodifiable
   Set<IElementType> getParents();
 
 

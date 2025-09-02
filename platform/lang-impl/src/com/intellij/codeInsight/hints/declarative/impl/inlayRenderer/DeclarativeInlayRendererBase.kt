@@ -38,7 +38,8 @@ abstract class DeclarativeInlayRendererBase<Model>(
   abstract val presentationLists: List<InlayPresentationList>
 
   @RequiresEdt
-  internal fun updateModel(newModel: Model) {
+  @ApiStatus.Internal
+  fun updateModel(newModel: Model) {
     view.updateModel(newModel)
   }
 
@@ -72,7 +73,8 @@ abstract class DeclarativeInlayRendererBase<Model>(
     return "DummyActionGroup"
   }
 
-  internal fun toInlayData(needUpToDateOffsets: Boolean = true): List<InlayData> {
+  @ApiStatus.Internal
+  fun toInlayData(needUpToDateOffsets: Boolean = true): List<InlayData> {
     // this.inlay should always be initialized right after construction.
     // However, InlayModel.Listener.onAdded will be called before that can happen,
     // and someone (e.g., rem-dev backend) might want to serialize right away;

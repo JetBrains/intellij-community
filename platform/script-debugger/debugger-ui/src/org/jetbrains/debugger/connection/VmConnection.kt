@@ -8,7 +8,6 @@ import com.intellij.util.EventDispatcher
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.socketConnection.ConnectionState
 import com.intellij.util.io.socketConnection.ConnectionStatus
-import com.intellij.util.io.socketConnection.SocketConnectionListener
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.concurrency.*
 import org.jetbrains.debugger.DebugEventListener
@@ -63,11 +62,6 @@ abstract class VmConnection<T : Vm> : Disposable {
 
   fun stateChanged(listener: (ConnectionState) -> Unit) {
     connectionDispatcher.add(listener)
-  }
-
-  // backward compatibility, go debugger
-  fun addListener(listener: SocketConnectionListener) {
-    stateChanged { listener.statusChanged(it.status) }
   }
 
   protected val debugEventListener: DebugEventListener

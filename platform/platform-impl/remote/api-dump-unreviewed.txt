@@ -49,13 +49,6 @@ e:com.intellij.remote.RemoteConnectionType
 - s:findByName(java.lang.String):com.intellij.remote.RemoteConnectionType
 - s:valueOf(java.lang.String):com.intellij.remote.RemoteConnectionType
 - s:values():com.intellij.remote.RemoteConnectionType[]
-com.intellij.remote.RemoteConnector
-- getAdditionalData():java.lang.String
-- a:getConnectorKey():java.lang.Object
-- a:getId():java.lang.String
-- a:getName():java.lang.String
-- a:getType():com.intellij.remote.RemoteConnectionType
-- a:produceRemoteCredentials(com.intellij.util.Consumer):V
 com.intellij.remote.RemoteMappingsListener
 - sf:REMOTE_MAPPINGS_CHANGED:com.intellij.util.messages.Topic
 - a:mappingsChanged():V

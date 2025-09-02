@@ -126,11 +126,11 @@ abstract class KtSearchEverywhereEqualityProviderTest : LightJavaCodeInsightFixt
 
         val (x, y) = items(psiFile)
 
-        val action1 = KtSearchEverywhereEqualityProvider().compareItems(
+        val action1 = KtSearchEverywhereEqualityProvider().compareItemsCollection(
             newItem = SearchEverywhereFoundElementInfo(x, 0, null),
             alreadyFoundItems = listOf(SearchEverywhereFoundElementInfo(y, 0, null))
         )
-        val action2 = KtSearchEverywhereEqualityProvider().compareItems(
+        val action2 = KtSearchEverywhereEqualityProvider().compareItemsCollection(
             newItem = SearchEverywhereFoundElementInfo(y, 0, null),
             alreadyFoundItems = listOf(SearchEverywhereFoundElementInfo(x, 0, null))
         )

@@ -5,7 +5,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
@@ -67,9 +66,7 @@ internal open class SaveSessionProducerManager(private val isUseVfsForWrite: Boo
         saveSession(saveSession, syncList, saveResult)
       }
       if (!events.isNullOrEmpty()) {
-        blockingContext {
-          RefreshQueue.getInstance().processEvents(false, events)
-        }
+        RefreshQueue.getInstance().processEvents(false, events)
       }
     }
   }

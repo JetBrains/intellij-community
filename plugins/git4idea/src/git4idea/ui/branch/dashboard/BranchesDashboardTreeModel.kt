@@ -1,10 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch.dashboard
 
+import com.intellij.collaboration.async.nestedDisposable
 import com.intellij.dvcs.branch.DvcsBranchManager
 import com.intellij.dvcs.branch.DvcsBranchManager.DvcsBranchManagerListener
 import com.intellij.dvcs.branch.GroupingKey
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
@@ -12,35 +14,101 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.util.coroutines.sync.OverflowSemaphore
 import com.intellij.util.ThreeState
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.vcs.log.data.DataPackChangeListener
 import com.intellij.vcs.log.data.VcsLogData
 import git4idea.GitLocalBranch
 import git4idea.branch.GitBranchIncomingOutgoingManager
 import git4idea.branch.GitBranchIncomingOutgoingManager.GitIncomingOutgoingListener
+import git4idea.config.GitVcsSettings
 import git4idea.fetch.GitFetchInProgressListener
 import git4idea.i18n.GitBundle.message
 import git4idea.repo.GitRepositoryManager
 import git4idea.repo.GitTagHolder
 import git4idea.repo.GitTagLoaderListener
 import git4idea.ui.branch.GitBranchManager
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import kotlin.properties.Delegates.observable
 
-internal interface BranchesDashboardTreeModel : BranchesTreeModel {
+@ApiStatus.Internal
+interface BranchesDashboardTreeModel : BranchesTreeModel {
   var showOnlyMy: Boolean
 }
 
-internal class BranchesDashboardTreeModelImpl(private val logData: VcsLogData)
-  : BranchesTreeModelBase(), BranchesDashboardTreeModel, Disposable {
+@ApiStatus.Internal
+class SyncBranchesDashboardTreeModel(logData: VcsLogData)
+  : BranchesDashboardTreeModelBase(logData), BranchesDashboardTreeModel {
+  init {
+    updateBranchesTree()
+  }
 
-  private val project: Project = logData.project
+  override fun refreshTree() {
+    val treeNodes = NodeDescriptorsModel.buildTreeNodes(
+      project,
+      refs,
+      if (showOnlyMy) { ref -> (ref as? BranchInfo)?.isMy == ThreeState.YES } else { _ -> true },
+      groupingConfig,
+    )
+    setTree(treeNodes)
+  }
+}
 
-  private val refs = RefsCollection(hashSetOf<BranchInfo>(), hashSetOf<BranchInfo>(), hashSetOf<RefInfo>())
+@ApiStatus.Internal
+class AsyncBranchesDashboardTreeModel(private val cs: CoroutineScope, logData: VcsLogData)
+  : BranchesDashboardTreeModelBase(logData), BranchesDashboardTreeModel {
+  private val refreshMutex = OverflowSemaphore(1)
 
-  override val groupingConfig = with(project.service<GitBranchManager>()) {
+  init {
+    Disposer.register(cs.nestedDisposable(), this)
+    updateBranchesTree()
+  }
+
+  override fun refreshTree() {
+    startLoading()
+    cs.launch(Dispatchers.UI) {
+      try {
+        val treeNodes = refreshMutex.withPermit {
+          val refs = refs.copy()
+          val showOnlyMy = showOnlyMy
+          val groupingConfig = groupingConfig.toMap()
+
+          withContext(Dispatchers.Default) {
+            NodeDescriptorsModel.buildTreeNodes(
+              project,
+              refs,
+              if (showOnlyMy) { ref -> (ref as? BranchInfo)?.isMy == ThreeState.YES } else { _ -> true },
+              groupingConfig,
+            )
+          }
+        }
+        setTree(treeNodes)
+      }
+      finally {
+        finishLoading()
+      }
+    }
+  }
+}
+
+@ApiStatus.Internal
+abstract class BranchesDashboardTreeModelBase(
+  private val logData: VcsLogData,
+) : BranchesTreeModelBase(), BranchesDashboardTreeModel, Disposable {
+
+  protected val project: Project = logData.project
+
+  internal val refs: RefsCollection = RefsCollection(hashSetOf<BranchInfo>(), hashSetOf<BranchInfo>(), hashSetOf<RefInfo>())
+
+  override val groupingConfig: MutableMap<GroupingKey, Boolean> = with(GitVcsSettings.getInstance(project)) {
     hashMapOf(
-      GroupingKey.GROUPING_BY_DIRECTORY to isGroupingEnabled(GroupingKey.GROUPING_BY_DIRECTORY),
-      GroupingKey.GROUPING_BY_REPOSITORY to isGroupingEnabled(GroupingKey.GROUPING_BY_REPOSITORY)
+      GroupingKey.GROUPING_BY_DIRECTORY to branchSettings.isGroupingEnabled(GroupingKey.GROUPING_BY_DIRECTORY),
+      GroupingKey.GROUPING_BY_REPOSITORY to branchSettings.isGroupingEnabled(GroupingKey.GROUPING_BY_REPOSITORY)
     )
   }.toMutableMap()
 
@@ -80,7 +148,7 @@ internal class BranchesDashboardTreeModelImpl(private val logData: VcsLogData)
     })
     project.messageBus.connect(this)
       .subscribe(GitBranchIncomingOutgoingManager.GIT_INCOMING_OUTGOING_CHANGED, GitIncomingOutgoingListener {
-        runInEdt { updateBranchesIncomingOutgoingState() }
+        updateBranchesIncomingOutgoingState()
       })
 
     val changeListener = DataPackChangeListener { updateBranchesTree() }
@@ -93,7 +161,6 @@ internal class BranchesDashboardTreeModelImpl(private val logData: VcsLogData)
       override fun fetchStarted() = runInEdt { startLoading() }
       override fun fetchFinished() = runInEdt { finishLoading() }
     })
-    updateBranchesTree()
   }
 
   override fun dispose() {
@@ -101,16 +168,10 @@ internal class BranchesDashboardTreeModelImpl(private val logData: VcsLogData)
     rootsToFilter = null
   }
 
-  private fun refreshTree() {
-    setTree(NodeDescriptorsModel.buildTreeNodes(
-      project,
-      refs,
-      if (showOnlyMy) { ref -> (ref as? BranchInfo)?.isMy == ThreeState.YES } else { _ -> true },
-      groupingConfig,
-    ))
-  }
+  protected abstract fun refreshTree()
 
-  private fun updateBranchesTree() {
+  @RequiresEdt
+  protected fun updateBranchesTree() {
     val forceReload = groupingConfig[GroupingKey.GROUPING_BY_REPOSITORY] == true
     val changed = reloadBranches(forceReload)
     if (changed) {
@@ -179,7 +240,9 @@ internal class BranchesDashboardTreeModelImpl(private val logData: VcsLogData)
       localBranch.incomingOutgoingState = incomingOutgoing
     }
 
-    refreshTree()
+    runInEdt {
+      onTreeDataChange()
+    }
   }
 
   private fun updateBranchesIsMyState() {

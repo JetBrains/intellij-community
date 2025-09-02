@@ -2,21 +2,14 @@
 package com.intellij.openapi.application
 
 import org.jetbrains.annotations.ApiStatus
-import java.lang.NumberFormatException
-
-/**
- * - `false` means that lock permits are bound only to threads
- * - `true` means that lock permits also stored in coroutine contexts
- */
-@get:ApiStatus.Internal
-val isLockStoredInContext: Boolean = System.getProperty("ide.store.lock.in.context", "true").toBoolean()
 
 /**
  * - `false` means that [backgroundWriteAction] will perform write actions from a non-modal context on a background thread
  * - `true` means that [backgroundWriteAction] will perform write actions in and old way (on EDT)
  */
 @ApiStatus.Internal
-val useBackgroundWriteAction: Boolean = System.getProperty("idea.background.write.action.enabled", "false").toBoolean()
+val useBackgroundWriteAction: Boolean = System.getProperty("idea.background.write.action.enabled", "true").toBoolean()
+
 
 /**
  * - `false` means wrong action chains are ignored and not reported
@@ -26,6 +19,9 @@ val useBackgroundWriteAction: Boolean = System.getProperty("idea.background.writ
  */
 @get:ApiStatus.Internal
 val reportInvalidActionChains: Boolean = System.getProperty("ijpl.report.invalid.action.chains", "false").toBoolean()
+
+@get:ApiStatus.Internal
+val installSuvorovProgress: Boolean = System.getProperty("ide.install.suvorov.progress", "true").toBoolean()
 
 /**
  * Represents the deadline before blocking read lock acquisition starts compensating parallelism for coroutine worker threads

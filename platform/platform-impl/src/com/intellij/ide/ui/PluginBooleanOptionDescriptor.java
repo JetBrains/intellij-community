@@ -3,6 +3,7 @@ package com.intellij.ide.ui;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.*;
+import com.intellij.ide.plugins.newui.DefaultUiPluginManagerController;
 import com.intellij.ide.plugins.newui.MyPluginModel;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.NotABooleanOptionDescription;
@@ -62,9 +63,10 @@ public final class PluginBooleanOptionDescriptor extends BooleanOptionDescriptio
     }
 
     Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap = PluginManagerCore.INSTANCE.buildPluginIdMap();
+    Map<@NotNull String, @NotNull ContentModuleDescriptor> contentModuleIdMap = PluginManagerCore.getPluginSet().buildContentModuleIdMap();
     Collection<? extends IdeaPluginDescriptor> autoSwitchedDescriptors = enable ?
-                                                                         getDependenciesToEnable(descriptors, pluginIdMap) :
-                                                                         getDependentsToDisable(descriptors, pluginIdMap);
+                                                                         getDependenciesToEnable(descriptors, pluginIdMap, contentModuleIdMap) :
+                                                                         getDependentsToDisable(descriptors, pluginIdMap, contentModuleIdMap);
 
     PluginEnabler pluginEnabler = PluginEnabler.getInstance();
     boolean appliedWithoutRestart = enable ?
@@ -105,7 +107,7 @@ public final class PluginBooleanOptionDescriptor extends BooleanOptionDescriptio
         }
       });
 
-    Set<PluginId> pluginIds = IdeaPluginDescriptorImplKt.toPluginIdSet(descriptors);
+    Set<PluginId> pluginIds = PluginUtils.toPluginIdSet(descriptors);
 
     DisabledPluginsState.Companion.addDisablePluginListener(new Runnable() {
       @Override
@@ -130,7 +132,8 @@ public final class PluginBooleanOptionDescriptor extends BooleanOptionDescriptio
   }
 
   private static @NotNull Collection<? extends IdeaPluginDescriptor> getDependenciesToEnable(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors,
-                                                                                             @NotNull Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap) {
+                                                                                             @NotNull Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap,
+                                                                                             @NotNull Map<String, ContentModuleDescriptor> contentModuleIdMap) {
     Set<IdeaPluginDescriptor> result = new LinkedHashSet<>();
 
     for (IdeaPluginDescriptor descriptor : descriptors) {
@@ -140,9 +143,10 @@ public final class PluginBooleanOptionDescriptor extends BooleanOptionDescriptio
         continue;
       }
 
-      PluginManagerCore.INSTANCE.processAllNonOptionalDependencies((IdeaPluginDescriptorImpl)descriptor, pluginIdMap, dependency ->
+      PluginManagerCore.INSTANCE.processAllNonOptionalDependencies((IdeaPluginDescriptorImpl)descriptor, pluginIdMap, contentModuleIdMap, dependency ->
         PluginManagerCore.CORE_ID.equals(dependency.getPluginId()) ||
-        (PluginManagerCore.ULTIMATE_PLUGIN_ID.equals(dependency.getPluginId()) && PluginManagerCore.isDisabled(PluginManagerCore.ULTIMATE_PLUGIN_ID)) ||
+        (PluginManagerCore.ULTIMATE_PLUGIN_ID.equals(dependency.getPluginId()) &&
+         PluginManagerCore.isDisabled(PluginManagerCore.ULTIMATE_PLUGIN_ID)) ||
         dependency.isEnabled() ||
         !result.add(dependency) ?
         FileVisitResult.SKIP_SUBTREE /* if descriptor has already been added/enabled, no need to process its dependencies */ :
@@ -153,14 +157,15 @@ public final class PluginBooleanOptionDescriptor extends BooleanOptionDescriptio
   }
 
   private static @NotNull Collection<? extends IdeaPluginDescriptor> getDependentsToDisable(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors,
-                                                                                            @NotNull Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap) {
+                                                                                            @NotNull Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap,
+                                                                                            @NotNull Map<String, ContentModuleDescriptor> contentModuleIdMap) {
     Set<IdeaPluginDescriptor> result = new LinkedHashSet<>();
     ApplicationInfoEx applicationInfo = ApplicationInfoEx.getInstanceEx();
 
     for (IdeaPluginDescriptor descriptor : descriptors) {
       result.add(descriptor);
 
-      result.addAll(MyPluginModel.getDependents(descriptor, applicationInfo, pluginIdMap));
+      result.addAll(DefaultUiPluginManagerController.INSTANCE.getDependents(descriptor.getPluginId(), applicationInfo, pluginIdMap, contentModuleIdMap));
     }
 
     return Collections.unmodifiableSet(result);

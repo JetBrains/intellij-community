@@ -1,9 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistics.config
 
-import com.intellij.internal.statistic.config.bean.EventLogBucketRange
-import com.intellij.internal.statistic.config.bean.EventLogSendConfiguration
 import com.intellij.internal.statistic.config.eventLog.EventLogBuildType
+import com.jetbrains.fus.reporting.model.config.v4.ConfigurationBucketRange
 import org.junit.Test
 
 class EventLogConfigOptionsParserTest : EventLogConfigBaseParserTest() {
@@ -15,8 +14,8 @@ class EventLogConfigOptionsParserTest : EventLogConfigBaseParserTest() {
 
   private fun doTestOptions(options: String, expected: Map<String, String>) {
     val buildConfig = mapOf(
-      EventLogBuildType.EAP to EventLogSendConfiguration(listOf(EventLogBucketRange(0, 256))),
-      EventLogBuildType.RELEASE to EventLogSendConfiguration(listOf(EventLogBucketRange(0, 256)))
+      EventLogBuildType.EAP to listOf(ConfigurationBucketRange(0, 256)),
+      EventLogBuildType.RELEASE to listOf(ConfigurationBucketRange(0, 256))
     )
     val config = """
 {

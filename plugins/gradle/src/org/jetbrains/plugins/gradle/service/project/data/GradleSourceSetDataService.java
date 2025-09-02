@@ -1,27 +1,18 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.project.data;
 
-import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
-import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.service.project.manage.AbstractModuleDataService;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
-import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
-import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
-
-import java.util.Collection;
-import java.util.List;
 
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.getSettings;
 import static org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID;
@@ -38,28 +29,8 @@ public final class GradleSourceSetDataService extends AbstractModuleDataService<
   }
 
   @Override
-  public @NotNull Computable<Collection<Module>> computeOrphanData(final @NotNull Collection<? extends DataNode<GradleSourceSetData>> toImport,
-                                                                   final @NotNull ProjectData projectData,
-                                                                   final @NotNull Project project,
-                                                                   final @NotNull IdeModifiableModelsProvider modelsProvider) {
-    return () -> {
-      List<Module> orphanIdeModules = new SmartList<>();
-
-      for (Module module : modelsProvider.getModules()) {
-        if (module.isDisposed()) continue;
-        if (!ExternalSystemApiUtil.isExternalSystemAwareModule(projectData.getOwner(), module)) continue;
-        if (!GradleConstants.GRADLE_SOURCE_SET_MODULE_TYPE_KEY.equals(ExternalSystemApiUtil.getExternalModuleType(module))) continue;
-
-        final String rootProjectPath = ExternalSystemApiUtil.getExternalRootProjectPath(module);
-        if (projectData.getLinkedExternalProjectPath().equals(rootProjectPath)) {
-          if (module.getUserData(AbstractModuleDataService.MODULE_DATA_KEY) == null) {
-            orphanIdeModules.add(module);
-          }
-        }
-      }
-
-      return orphanIdeModules;
-    };
+  public @NotNull String getExternalModuleType() {
+    return GradleConstants.GRADLE_SOURCE_SET_MODULE_TYPE_KEY;
   }
 
   @Override
@@ -99,11 +70,5 @@ public final class GradleSourceSetDataService extends AbstractModuleDataService<
         return nextModuleNameCandidate;
       }
     }
-  }
-
-  @Override
-  protected void setModuleOptions(Module module, DataNode<GradleSourceSetData> moduleDataNode) {
-    super.setModuleOptions(module, moduleDataNode);
-    ExternalSystemModulePropertyManager.getInstance(module).setExternalModuleType(GradleConstants.GRADLE_SOURCE_SET_MODULE_TYPE_KEY);
   }
 }

@@ -8,9 +8,9 @@ private val maxActionLength = 30
 
 
 @ApiStatus.Internal
-fun getAsPartOfArtifactsFileName(text: String): String =
-  text
-    .replace("[^a-zA-Z.]".toRegex(), "_")
+fun getAsPartOfArtifactsFileName(agentId: String): String =
+  agentId
+    .replace("[^a-zA-Z0-9.]".toRegex(), "_")
     .replace("_+".toRegex(), "_")
 
 @ApiStatus.Internal

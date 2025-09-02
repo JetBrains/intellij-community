@@ -69,12 +69,12 @@ public abstract class AbstractBasicJavaSmartEnterProcessor extends SmartEnterPro
   private static class TooManyAttemptsException extends Exception {
   }
 
-  private final AbstractBasicJavadocFixer myJavadocFixer;
+  private final JavadocFixer myJavadocFixer;
 
   protected AbstractBasicJavaSmartEnterProcessor(@NotNull List<Fixer> fixers,
                                                  EnterProcessor @NotNull [] enterProcessors,
                                                  EnterProcessor @NotNull [] afterCompletionEnterProcessors,
-                                                 @NotNull AbstractBasicJavadocFixer thinJavadocFixer,
+                                                 @NotNull JavadocFixer thinJavadocFixer,
                                                  @NotNull EnterProcessor breakerEnterProcessor) {
     myBreakerEnterProcessor = breakerEnterProcessor;
     ourFixers = fixers;
@@ -106,7 +106,7 @@ public abstract class AbstractBasicJavaSmartEnterProcessor extends SmartEnterPro
       document.replaceString(0, document.getTextLength(), textForRollback);
     }
     catch (Exception e) {
-      e.printStackTrace();
+      LOG.error(e);
     }
     finally {
       editor.putUserData(SMART_ENTER_TIMESTAMP, null);
@@ -206,12 +206,12 @@ public abstract class AbstractBasicJavaSmartEnterProcessor extends SmartEnterPro
 
     if (myFirstErrorOffset != Integer.MAX_VALUE) {
       editor.getCaretModel().moveToOffset(myFirstErrorOffset);
-      reformat(editor, atCaret);
+      reformat(atCaret);
       return;
     }
 
     final RangeMarker rangeMarker = createRangeMarker(atCaret);
-    reformat(editor, atCaret);
+    reformat(atCaret);
     commit(editor);
 
     if (!mySkipEnter) {
@@ -355,10 +355,6 @@ public abstract class AbstractBasicJavaSmartEnterProcessor extends SmartEnterPro
   protected void reformatAndMove(@NotNull Editor editor, @Nullable PsiElement elt, int caretOffset) {
     reformat(elt);
     editor.getCaretModel().moveToOffset(caretOffset - 1);
-  }
-
-  protected void reformat(@NotNull Editor editor, @Nullable PsiElement elt) {
-    reformat(elt);
   }
 
   private void reformatBlockParentIfNeeded(@NotNull Editor editor, @NotNull PsiFile file) {

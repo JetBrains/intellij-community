@@ -479,6 +479,7 @@ public final class PinyinMatcher extends MinusculeMatcher {
     "0(\u00B74\u00AD5~7547--\u01E07)\u00C7))0)###(665\"7\u010Bl#6\u00C73++#05\u01ED-)6#6\u0113#\u0101-ll06" +
     "6\u00F4%46#7$#)\u008B##(6)+\"37*6#04\u00D4/\u00A8\u00D66++'*$+$+'*\u01A50\"'6#()56                   " +
     "          2         '3,    '$                     !3-";
+  private static final int END_CODE_POINT = BASE_CODE_POINT + DATA.length();
 
   private static final String[] ENCODING_ARRAY = ENCODING.split(",");
 
@@ -495,26 +496,32 @@ public final class PinyinMatcher extends MinusculeMatcher {
 
   @Override
   public FList<TextRange> matchingFragments(@NotNull String name) {
-    int maxOffset = name.length() - myPattern.length();
-    for (int start = 0; start <= maxOffset; start++) {
-      if (hasMatchAt(name, start)) {
-        return FList.singleton(TextRange.create(start, start + myPattern.length()));
+    String pattern = myPattern;
+    int patternLength = pattern.length();
+    int nameLength = name.length();
+    int maxOffset = nameLength - patternLength;
+    int start = 0;
+    for (; start <= maxOffset; start++) {
+      char c = name.charAt(start);
+      if (c >= BASE_CODE_POINT && c < END_CODE_POINT) {
+        break;
       }
     }
-    return null;
-  }
-
-  private boolean hasMatchAt(@NotNull String name, int start) {
-    int end = myPattern.length() + start;
-    if (end > name.length()) return false;
-    int i;
-    for (i = start; i < end; i++) {
-      char c = name.charAt(i);
-      if (c < BASE_CODE_POINT || c >= BASE_CODE_POINT + DATA.length()) return false;
-      int code = DATA.charAt(c - BASE_CODE_POINT) - BASE_CHAR;
-      if (code < 0 || ENCODING_ARRAY[code].indexOf(myPattern.charAt(i - start)) == -1) return false;
+    OUTER:
+    for (int end = start + patternLength; start <= maxOffset && end <= nameLength; start++, end++) {
+      for (int i = start; i < end; i++) {
+        char c = name.charAt(i);
+        if (c < BASE_CODE_POINT || c >= END_CODE_POINT) {
+          continue OUTER;
+        }
+        int code = DATA.charAt(c - BASE_CODE_POINT) - BASE_CHAR;
+        if (code < 0 || ENCODING_ARRAY[code].indexOf(pattern.charAt(i - start)) == -1) {
+          continue OUTER;
+        }
+      }
+      return FList.singleton(TextRange.create(start, start + patternLength));
     }
-    return true;
+    return null;
   }
 
   @Override

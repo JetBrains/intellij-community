@@ -42,7 +42,7 @@ public class DummyHolderViewProvider extends AbstractFileViewProvider {
   }
 
   @Override
-  protected @Nullable PsiFile getPsiInner(Language target) {
+  protected @Nullable PsiFile getPsiInner(@NotNull Language target) {
     return getCachedPsi(target);
   }
 

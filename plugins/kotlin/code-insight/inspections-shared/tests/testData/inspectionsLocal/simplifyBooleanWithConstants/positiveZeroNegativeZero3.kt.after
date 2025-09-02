@@ -4,6 +4,3 @@
 fun foo() {
     true
 }
-
-// IGNORE_K2 
-// (see KT-73758)

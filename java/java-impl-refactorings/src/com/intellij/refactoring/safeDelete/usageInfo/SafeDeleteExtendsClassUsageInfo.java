@@ -12,6 +12,7 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Objects;
@@ -72,7 +73,7 @@ public class SafeDeleteExtendsClassUsageInfo extends SafeDeleteReferenceUsageInf
           String extendingClassName = Objects.requireNonNull(myExtendingClass.getQualifiedName());
           if (classToExtend.getPermitsList() == null) {
             if (classToExtend.getContainingFile() != myExtendingClass.getContainingFile()) {
-              Collection<String> missingInheritors = SealedUtils.findSameFileInheritors(classToExtend, classToRemove);
+              Collection<String> missingInheritors = new ArrayList<>(SealedUtils.findSameFileInheritors(classToExtend, classToRemove));
               missingInheritors.add(extendingClassName);
               SealedUtils.fillPermitsList(classToExtend, missingInheritors);
             }

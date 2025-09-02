@@ -4,7 +4,6 @@ package com.intellij.spellchecker.dictionary;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -21,9 +20,14 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.intellij.openapi.util.io.FileUtilRt.extensionEquals;
+import static com.intellij.spellchecker.SpellCheckerManagerKt.isDic;
+
 public class CustomDictionaryTest extends SpellcheckerInspectionTestCase {
   private static final String TEST_DIC = "test.dic";
   private static final String NEW_TEST_DIC = "new_" + TEST_DIC;
+  private static final String TEST_TXT = "test.txt";
+  private static final String TEST_EXTENSIONLESS = "test";
   private static final String TEST_DIC_AFTER = TEST_DIC + ".after";
   public static final String TEMP = "temp";
   private SpellCheckerSettings settings;
@@ -45,7 +49,7 @@ public class CustomDictionaryTest extends SpellcheckerInspectionTestCase {
 
     List<String> testDictionaries = new ArrayList<>();
     VfsUtilCore.processFilesRecursively(dictDir, file -> {
-      if (FileUtilRt.extensionEquals(file.getPath(), "dic")) {
+      if (isDic(file.getName())) {
         testDictionaries.add(PathUtil.toSystemDependentName(file.getPath()));
       }
       return true;
@@ -88,8 +92,8 @@ public class CustomDictionaryTest extends SpellcheckerInspectionTestCase {
     return dictDir.findChild(TEST_DIC_AFTER);
   }
 
-  private void modifyDictContent(String newContent) throws IOException {
-    WriteAction.run(() -> VfsUtil.saveText(dictDir.findChild(TEST_DIC), newContent));
+  private void modifyDictContent(String dictName, String newContent) throws IOException {
+    WriteAction.run(() -> VfsUtil.saveText(dictDir.findChild(dictName), newContent));
   }
 
   private void doBeforeCheck() {
@@ -100,9 +104,13 @@ public class CustomDictionaryTest extends SpellcheckerInspectionTestCase {
     doTest(Paths.get(getTestName(true), "test.after.php").toString());
   }
 
-  private void doTest() throws IOException {
+  private void doDictTest() throws IOException {
+    doDictTest(TEST_DIC);
+  }
+
+  private void doDictTest(String dictName) throws IOException {
     doBeforeCheck();
-    modifyDictContent(VfsUtilCore.loadText(getTestDictionaryAfter()));
+    modifyDictContent(dictName, VfsUtilCore.loadText(getTestDictionaryAfter()));
     doAfterCheck();
   }
 
@@ -153,23 +161,31 @@ public class CustomDictionaryTest extends SpellcheckerInspectionTestCase {
   }
 
   public void testAddToCustomDic() throws IOException {
-    doTest();
+    doDictTest();
+  }
+
+  public void testAddTxtToCustomDic() throws IOException {
+    doDictTest(TEST_TXT);
+  }
+
+  public void testAddExtensionlessToCustomDic() throws IOException {
+    doDictTest(TEST_EXTENSIONLESS);
   }
 
   public void testAddAnotherToCustomDic() throws IOException {
-    doTest();
+    doDictTest();
   }
 
   public void testRemoveFromCustomDic() throws IOException {
-    doTest();
+    doDictTest();
   }
 
   public void testAddSeveralWords() throws IOException {
-    doTest();
+    doDictTest();
   }
 
   public void testModifyDict() throws IOException {
-    doTest();
+    doDictTest();
   }
 
   public void testUtf8Dict() throws IOException {
@@ -213,6 +229,12 @@ public class CustomDictionaryTest extends SpellcheckerInspectionTestCase {
   public void testRenameToTxt() throws IOException {
     doBeforeCheck();
     WriteAction.run(() -> getTestDictionaryFile().rename(this, "test.txt"));
+    doAfterCheck();
+  }
+
+  public void testRenameToExtensionless() throws IOException {
+    doBeforeCheck();
+    WriteAction.run(() -> getTestDictionaryFile().rename(this, "test"));
     doAfterCheck();
   }
 

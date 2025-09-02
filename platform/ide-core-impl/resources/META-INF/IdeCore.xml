@@ -1,11 +1,16 @@
+<!--suppress PluginXmlRegistrationCheck -->
 <idea-plugin>
   <extensionPoints>
     <extensionPoint name="applicationInitializedListener" interface="com.intellij.ide.ApplicationInitializedListener" dynamic="false"/>
+    <!-- The platform skips such listeners on dynamic loading/unloading of plugins assuming it is safe -->
+    <extensionPoint name="dynamicApplicationInitializedListener" interface="com.intellij.ide.ApplicationInitializedListener" dynamic="true"/>
+
     <extensionPoint name="applicationActivity" interface="com.intellij.ide.ApplicationActivity" dynamic="false"/>
     <extensionPoint name="registryKey" beanClass="com.intellij.openapi.util.registry.RegistryKeyBean" dynamic="true"/>
     <extensionPoint name="notificationGroup" beanClass="com.intellij.notification.impl.NotificationGroupEP" dynamic="true"/>
     <extensionPoint name="registry.managed" interface="com.intellij.openapi.util.registry.ManagedRegistry" dynamic="false"/>
   </extensionPoints>
+
   <extensions defaultExtensionNs="com.intellij">
     <activityTracker implementation="com.intellij.util.MergingUpdateQueueActivityTracker"/>
     <applicationService serviceInterface="com.intellij.util.ui.update.MergingUpdateQueueTracker"

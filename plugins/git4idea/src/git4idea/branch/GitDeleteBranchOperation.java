@@ -26,7 +26,6 @@ import git4idea.commands.*;
 import git4idea.config.GitSharedSettings;
 import git4idea.history.GitHistoryUtils;
 import git4idea.i18n.GitBundle;
-import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.*;
 
@@ -55,8 +54,8 @@ public class GitDeleteBranchOperation extends GitBranchOperation {
 
   private final @NotNull String myBranchName;
   private final @NotNull VcsNotifier myNotifier;
-  private final @NotNull Map<GitRepository, GitRemoteBranch> myTrackedBranches;
 
+  private final @NotNull GitUpstreamBranches myUpstreamBranches;
   private final @NotNull Map<GitRepository, UnmergedBranchInfo> myUnmergedToBranches;
   private final @Unmodifiable @NotNull Map<GitRepository, String> myDeletedBranchTips;
 
@@ -65,7 +64,7 @@ public class GitDeleteBranchOperation extends GitBranchOperation {
     super(project, git, uiHandler, repositories);
     myBranchName = branchName;
     myNotifier = VcsNotifier.getInstance(myProject);
-    myTrackedBranches = findTrackedBranches(repositories, branchName);
+    myUpstreamBranches = new GitUpstreamBranches(repositories, branchName, myGit);
     myUnmergedToBranches = new HashMap<>();
     myDeletedBranchTips = ContainerUtil.map2MapNotNull(repositories, (GitRepository repo) -> {
       GitBranchesCollection branches = repo.getBranches();
@@ -143,8 +142,8 @@ public class GitDeleteBranchOperation extends GitBranchOperation {
     if (unmergedCommits) {
       notification.addAction(NotificationAction.createSimple(() -> getViewCommits(), () -> viewUnmergedCommitsInBackground(notification)));
     }
-    if (!myTrackedBranches.isEmpty() &&
-        hasNoOtherTrackingBranch(myTrackedBranches, myBranchName) &&
+    if (!myUpstreamBranches.get().isEmpty() &&
+        hasNoOtherTrackingBranch(myUpstreamBranches.get(), myBranchName) &&
         trackedBranchIsNotProtected()) {
       notification.addAction(NotificationAction.createSimple(() -> getDeleteTrackedBranch(), () -> {
         notification.expire();
@@ -155,7 +154,7 @@ public class GitDeleteBranchOperation extends GitBranchOperation {
   }
 
   private boolean trackedBranchIsNotProtected() {
-    return myTrackedBranches.values().stream()
+    return myUpstreamBranches.get().values().stream()
       .noneMatch(branch -> GitSharedSettings.getInstance(myProject).isBranchProtected(branch.getNameForRemoteOperations()));
   }
 
@@ -193,15 +192,7 @@ public class GitDeleteBranchOperation extends GitBranchOperation {
       GitCommandResult res = myGit.branchCreate(repository, myBranchName, myDeletedBranchTips.get(repository));
       result.append(repository, res);
 
-      // restore tracking
-      GitRemoteBranch trackedBranch = myTrackedBranches.get(repository);
-      if (trackedBranch != null) {
-        GitCommandResult setTrackResult = myGit.setUpstream(repository, trackedBranch.getNameForLocalOperations(), myBranchName);
-        if (!setTrackResult.success()) {
-          LOG.warn("Couldn't set " + myBranchName + " to track " + trackedBranch + " in " + repository.getRoot().getName() + ": " +
-                   setTrackResult.getErrorOutputAsJoinedString());
-        }
-      }
+      myUpstreamBranches.restoreUpstream(repository);
 
       refresh(repository);
     }
@@ -273,16 +264,6 @@ public class GitDeleteBranchOperation extends GitBranchOperation {
     return Collections.emptyList();
   }
 
-  private static @NotNull Map<GitRepository, GitRemoteBranch> findTrackedBranches(@NotNull Collection<? extends GitRepository> repositories,
-                                                                                  @NotNull String localBranchName) {
-    Map<GitRepository, GitRemoteBranch> trackedBranches = new HashMap<>();
-    for (GitRepository repository : repositories) {
-      GitBranchTrackInfo trackInfo = GitBranchUtil.getTrackInfo(repository, localBranchName);
-      if (trackInfo != null) trackedBranches.put(repository, trackInfo.getRemoteBranch());
-    }
-    return trackedBranches;
-  }
-
   // warning: not deleting branch 'feature' that is not yet merged to
   //          'refs/remotes/origin/feature', even though it is merged to HEAD.
   // error: The branch 'feature' is not fully merged.
@@ -325,8 +306,8 @@ public class GitDeleteBranchOperation extends GitBranchOperation {
 
   private @NotNull MultiMap<String, GitRepository> groupTrackedBranchesByName() {
     MultiMap<String, GitRepository> trackedBranchNames = MultiMap.create();
-    for (GitRepository repository : myTrackedBranches.keySet()) {
-      GitRemoteBranch trackedBranch = myTrackedBranches.get(repository);
+    for (GitRepository repository : myUpstreamBranches.get().keySet()) {
+      GitRemoteBranch trackedBranch = myUpstreamBranches.get().get(repository);
       if (trackedBranch != null) {
         trackedBranchNames.putValue(trackedBranch.getNameForLocalOperations(), repository);
       }

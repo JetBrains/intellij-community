@@ -5,20 +5,18 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.codeInspection.util.IntentionName;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
+/**
+ * @deprecated use {@link ExtendsListModCommandFix}
+ */
+@Deprecated
 public class ExtendsListFix extends LocalQuickFixAndIntentionActionOnPsiElement {
-  private static final Logger LOG = Logger.getInstance(ExtendsListFix.class);
-
   // we don't modify this class
   @SafeFieldForPreview protected final @Nullable SmartPsiElementPointer<PsiClass> myClassToExtendFromPointer;
   private final boolean myToAdd;
@@ -26,10 +24,14 @@ public class ExtendsListFix extends LocalQuickFixAndIntentionActionOnPsiElement 
   private final PsiClassType myTypeToExtendFrom;
   private final @IntentionName String myName;
 
+  // Used in plugins
+  @SuppressWarnings("unused")
   public ExtendsListFix(@NotNull PsiClass aClass, @NotNull PsiClassType typeToExtendFrom, boolean toAdd) {
     this(aClass, typeToExtendFrom.resolve(), typeToExtendFrom, toAdd);
   }
 
+  // Used in plugins
+  @SuppressWarnings("unused")
   public ExtendsListFix(@NotNull PsiClass aClass, @NotNull PsiClass classToExtendFrom, boolean toAdd) {
     this(aClass, classToExtendFrom, JavaPsiFacade.getElementFactory(aClass.getProject()).createType(classToExtendFrom), toAdd);
   }
@@ -70,7 +72,7 @@ public class ExtendsListFix extends LocalQuickFixAndIntentionActionOnPsiElement 
 
   @Override
   public boolean isAvailable(@NotNull Project project,
-                             @NotNull PsiFile file,
+                             @NotNull PsiFile psiFile,
                              @NotNull PsiElement startElement,
                              @NotNull PsiElement endElement) {
     if (!myTypeToExtendFrom.isValid()) return false;
@@ -90,88 +92,11 @@ public class ExtendsListFix extends LocalQuickFixAndIntentionActionOnPsiElement 
 
   @Override
   public void invoke(@NotNull Project project,
-                     @NotNull PsiFile file,
+                     @NotNull PsiFile psiFile,
                      @Nullable Editor editor,
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
     final PsiClass myClass = (PsiClass)startElement;
-    invokeImpl(myClass);
-  }
-
-  protected void invokeImpl(PsiClass myClass) {
-    PsiClass classToExtendFrom = myClassToExtendFromPointer != null ? myClassToExtendFromPointer.getElement() : null;
-
-    PsiReferenceList extendsList = !(myClass instanceof PsiTypeParameter) && classToExtendFrom != null &&
-                                   myClass.isInterface() != classToExtendFrom.isInterface() ?
-                                   myClass.getImplementsList() : myClass.getExtendsList();
-    PsiReferenceList otherList = extendsList == myClass.getImplementsList() ?
-                                 myClass.getExtendsList() : myClass.getImplementsList();
-    try {
-      if (extendsList != null) {
-        modifyList(extendsList, myToAdd, -1, myTypeToExtendFrom);
-      }
-      if (otherList != null) {
-        modifyList(otherList, false, -1, myTypeToExtendFrom);
-      }
-    }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
-    }
-  }
-
-  /**
-   * @param position to add new class to or -1 if add to the end
-   */
-  static void modifyList(@NotNull PsiReferenceList extendsList, boolean add, int position, @NotNull PsiClassType myTypeToExtendFrom) {
-    PsiClass classToExtendFrom = myTypeToExtendFrom.resolve();
-    if (classToExtendFrom == null) return;
-
-    PsiJavaCodeReferenceElement[] referenceElements = extendsList.getReferenceElements();
-    boolean alreadyExtends = false;
-
-    for (PsiJavaCodeReferenceElement referenceElement : referenceElements) {
-      if (referenceElement.getManager().areElementsEquivalent(classToExtendFrom, referenceElement.resolve())) {
-        alreadyExtends = true;
-        if (!add) {
-          referenceElement.delete();
-        }
-      }
-    }
-    PsiReferenceList list = extendsList;
-    Project project = extendsList.getProject();
-    if (add && !alreadyExtends) {
-      PsiElement anchor;
-      if (position == -1) {
-        anchor = referenceElements.length ==0 ? null : referenceElements[referenceElements.length-1];
-      }
-      else if (position == 0) {
-        anchor = null;
-      }
-      else {
-        anchor = referenceElements[position - 1];
-      }
-      PsiJavaCodeReferenceElement classReferenceElement = JavaPsiFacade.getElementFactory(project)
-        .createReferenceElementByType(myTypeToExtendFrom.annotate(TypeAnnotationProvider.EMPTY));
-      PsiElement element;
-      if (anchor == null) {
-        if (referenceElements.length == 0) {
-          element = extendsList.add(classReferenceElement);
-        }
-        else {
-          element = extendsList.addBefore(classReferenceElement, referenceElements[0]);
-        }
-      }
-      else {
-        element = extendsList.addAfter(classReferenceElement, anchor);
-      }
-      list = (PsiReferenceList) element.getParent();
-    }
-
-    //nothing was changed
-    if (!add && !alreadyExtends) {
-      return;
-    }
-
-    CodeStyleManager.getInstance(project).reformat(JavaCodeStyleManager.getInstance(project).shortenClassReferences(list));
+    new ExtendsListModCommandFix(myClass, myTypeToExtendFrom, myToAdd).invokeImpl(myClass);
   }
 }

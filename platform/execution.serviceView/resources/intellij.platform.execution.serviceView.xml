@@ -1,17 +1,22 @@
-<idea-plugin package="com.intellij.platform.execution.serviceView">
+<idea-plugin>
   <dependencies>
     <module name="intellij.platform.navbar.frontend"/>
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
+    <registryKey defaultValue="true" description="Enable monolith services toolwindow on backend"
+                 key="services.view.monolith.enabled" restartRequired="true"/>
+    <registryKey defaultValue="false" description="Enable split services toolwindow on frontend"
+                 key="services.view.split.enabled" restartRequired="true"/>
+
     <actionPromoter implementation="com.intellij.platform.execution.serviceView.ServiceViewActionPromoter"/>
     <navbar implementation="com.intellij.platform.execution.serviceView.ServiceViewNavBarExtension"/>
-    <postStartupActivity implementation="com.intellij.platform.execution.serviceView.ServiceViewStartupActivity"/>
-    <projectService serviceInterface="com.intellij.execution.services.ServiceViewManager"
-                    serviceImplementation="com.intellij.platform.execution.serviceView.ServiceViewManagerImpl"/>
     <projectService serviceInterface="com.intellij.execution.services.ServiceViewToolWindowFactory$CompatibilityDelegate"
                     serviceImplementation="com.intellij.platform.execution.serviceView.ServiceViewToolWindowManager"/>
+    <projectService serviceInterface="com.intellij.execution.services.ServiceViewManager"
+                    serviceImplementation="com.intellij.platform.execution.serviceView.ServiceViewManagerImpl"/>
     <applicationService serviceInterface="com.intellij.execution.services.ServiceViewDefaultDeleteProvider"
                         serviceImplementation="com.intellij.platform.execution.serviceView.ServiceViewDeleteProvider"/>
+    <postStartupActivity implementation="com.intellij.platform.execution.serviceView.ServiceViewStartupActivity"/>
   </extensions>
   <actions>
     <group id="ServiceViewTreeToolbar">

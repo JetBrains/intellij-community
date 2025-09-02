@@ -1,6 +1,5 @@
 package com.jetbrains.python.refactoring;
 
-import com.intellij.codeInsight.codeFragment.CodeFragment;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
@@ -9,11 +8,13 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.refactoring.extractMethod.ExtractMethodDecorator;
-import com.intellij.refactoring.extractMethod.ExtractMethodSettings;
 import com.intellij.refactoring.extractMethod.ExtractMethodValidator;
-import com.intellij.refactoring.util.AbstractVariableData;
+import com.jetbrains.python.codeInsight.codeFragment.PyCodeFragment;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.refactoring.extractmethod.PyExtractMethodSettings;
+import com.jetbrains.python.refactoring.extractmethod.PyExtractMethodUtil;
+import com.jetbrains.python.refactoring.extractmethod.PyVariableData;
 import com.jetbrains.python.refactoring.introduce.IntroduceOperation;
 import com.jetbrains.python.refactoring.introduce.IntroduceValidator;
 import org.jetbrains.annotations.ApiStatus;
@@ -46,29 +47,15 @@ public class PyRefactoringUiService {
     callback.accept(operation);
   }
 
-  public @Nullable <T> ExtractMethodSettings<T> showExtractMethodDialog(final Project project,
-                                                                        final String defaultName,
-                                                                        final CodeFragment fragment,
-                                                                        final T[] visibilityVariants,
-                                                                        final ExtractMethodValidator validator,
-                                                                        final ExtractMethodDecorator<T> decorator,
-                                                                        final FileType type, String helpId) {
-    return new ExtractMethodSettings<T>() {
-      @Override
-      public @NotNull String getMethodName() {
-        return defaultName;
-      }
-
-      @Override
-      public AbstractVariableData @NotNull [] getAbstractVariableData() {
-        return new AbstractVariableData[0];
-      }
-
-      @Override
-      public @Nullable T getVisibility() {
-        return null;
-      }
-    };
+  public @Nullable PyExtractMethodSettings showExtractMethodDialog(final Project project,
+                                                                   final String defaultName,
+                                                                   final PyCodeFragment fragment,
+                                                                   final Object[] visibilityVariants,
+                                                                   final ExtractMethodValidator validator,
+                                                                   final ExtractMethodDecorator<Object> decorator,
+                                                                   final FileType type, String helpId) {
+    return new PyExtractMethodSettings(defaultName, new PyVariableData[0], fragment.getOutputType(),
+                                       PyExtractMethodUtil.getAddTypeAnnotations(project));
   }
 
   public void showPyInlineFunctionDialog(@NotNull Project project,

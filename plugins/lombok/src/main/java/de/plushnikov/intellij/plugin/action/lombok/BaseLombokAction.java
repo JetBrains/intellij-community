@@ -15,8 +15,8 @@ public abstract class BaseLombokAction extends BaseGenerateAction {
   }
 
   @Override
-  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    return file.isWritable() && super.isValidForFile(project, editor, file) &&
+  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    return psiFile.isWritable() && super.isValidForFile(project, editor, psiFile) &&
            LombokLibraryUtil.hasLombokLibrary(project);
   }
 }

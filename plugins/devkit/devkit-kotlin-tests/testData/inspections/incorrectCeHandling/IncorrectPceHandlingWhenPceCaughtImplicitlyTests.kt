@@ -1,6 +1,7 @@
 import com.example.SubclassOfProcessCanceledException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
+import kotlin.coroutines.cancellation.CancellationException
 
 private val LOG = Logger.getInstance("any")
 
@@ -222,6 +223,24 @@ class IncorrectPceHandlingWhenPceCaughtImplicitlyTests {
     catch (e: Throwable) {
       LOG.error(e)
     }
+  }
+
+  // IJPL-192063
+  fun foo() {
+    try {
+      bar()
+    }
+    catch (e: CancellationException) {
+      throw e
+    }
+    catch (e: java.lang.Exception) {
+      e.printStackTrace()
+    }
+  }
+
+  @kotlin.Throws(com.intellij.openapi.progress.ProcessCanceledException::class)
+  fun bar() {
+    throw com.intellij.openapi.progress.ProcessCanceledException()
   }
 
 }

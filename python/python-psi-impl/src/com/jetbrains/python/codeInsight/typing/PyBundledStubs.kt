@@ -3,7 +3,7 @@ package com.jetbrains.python.codeInsight.typing
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.jetbrains.python.PythonHelpersLocator
+import com.intellij.python.community.helpersLocator.PythonHelpersLocator
 
 object PyBundledStubs {
   private const val BUNDLED_STUBS_PATH = "bundled_stubs"
@@ -16,7 +16,7 @@ object PyBundledStubs {
    * The actual bundled stubs directory.
    */
   val root: VirtualFile? by lazy {
-    var helpersPath = PythonHelpersLocator.findPathStringInHelpers(BUNDLED_STUBS_PATH);
+    var helpersPath = PythonHelpersLocator.findPathStringInHelpers(BUNDLED_STUBS_PATH)
     if (helpersPath.isEmpty()) {
       return@lazy null
     }

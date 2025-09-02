@@ -97,7 +97,7 @@ public final class CustomFoldingSurroundDescriptor implements SurroundDescriptor
   }
 
   private static @Nullable PsiElement getParent(@Nullable PsiElement e) {
-    return e instanceof PsiFile ? e : skipParentsOfType(e, GeneratedParserUtilBase.DummyBlock.class);
+    return e instanceof PsiFile ? e : skipParentsOfType(e, DummyBlockType.DummyBlock.class);
   }
 
   private static @Nullable PsiElement lowerEndElementIfNeeded(@NotNull PsiElement start, @NotNull PsiElement end) {

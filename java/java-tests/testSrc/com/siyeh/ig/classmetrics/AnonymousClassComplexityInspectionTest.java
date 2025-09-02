@@ -17,6 +17,7 @@ package com.siyeh.ig.classmetrics;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.siyeh.ig.LightJavaInspectionTestCase;
+import com.siyeh.ig.classmetrics.impl.AnonymousClassComplexityInspection;
 import org.jetbrains.annotations.Nullable;
 
 /**

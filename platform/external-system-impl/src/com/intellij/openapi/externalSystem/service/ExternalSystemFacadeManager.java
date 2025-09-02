@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service;
 
 import com.intellij.openapi.Disposable;
@@ -140,7 +140,8 @@ public final class ExternalSystemFacadeManager {
   }
 
   @VisibleForTesting
-  ExternalSystemCommunicationManager getCommunicationManager(@NotNull ProjectSystemId externalSystemId) {
+  @ApiStatus.Internal
+  public ExternalSystemCommunicationManager getCommunicationManager(@NotNull ProjectSystemId externalSystemId) {
     final boolean currentInProcess = ExternalSystemApiUtil.isInProcessMode(externalSystemId);
     return currentInProcess ? myInProcessCommunicationManager : myRemoteCommunicationManager;
   }
@@ -241,8 +242,7 @@ public final class ExternalSystemFacadeManager {
     return false;
   }
 
-  private class MyHandler implements InvocationHandler {
-
+  private final class MyHandler implements InvocationHandler {
     private final @NotNull AtomicReference<IntegrationKey> myKey = new AtomicReference<>();
 
     MyHandler(@NotNull IntegrationKey key) {

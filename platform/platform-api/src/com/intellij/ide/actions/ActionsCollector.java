@@ -20,14 +20,14 @@ public abstract class ActionsCollector {
   /**
    * @deprecated Don't use this method directly
    *
-   * Actions executed with {@link ActionUtil#performActionDumbAwareWithCallbacks} are reported automatically.
+   * Actions executed with {@link ActionUtil#performAction} are reported automatically.
    */
   @Deprecated(forRemoval = true)
   public abstract void record(@Nullable String actionId, @Nullable InputEvent event, @NotNull Class context);
 
   /**
    * Don't use this method directly unless absolutely necessary.
-   * Prefer executing action with {@link ActionUtil#performActionDumbAwareWithCallbacks}
+   * Prefer executing action with {@link ActionUtil#performAction}
    * then it will be reported and its execution will be visible for other action listeners.
    *
    * Records action id for global actions or action class name for actions generated on runtime.

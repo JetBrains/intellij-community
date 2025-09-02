@@ -41,7 +41,6 @@ final class UnindexedFilesFinder {
   private final UpdatableIndex<FileType, Void, FileContent, ?> myFileTypeIndex;
   private final Collection<FileBasedIndexInfrastructureExtension.FileIndexingStatusProcessor> myStateProcessors;
   private final @Nullable BiPredicate<? super IndexedFile, ? super FileIndexingStamp> myForceReindexingTrigger;
-  private final FilesFilterScanningHandler myFilterHandler;
   private final boolean myShouldProcessUpToDateFiles;
   private final IndexingReasonExplanationLogger explanationLogger;
   private final ScanningRequestToken indexingRequest;
@@ -152,8 +151,7 @@ final class UnindexedFilesFinder {
   UnindexedFilesFinder(@NotNull Project project,
                        IndexingReasonExplanationLogger explanationLogger,
                        @Nullable BiPredicate<? super IndexedFile, ? super FileIndexingStamp> forceReindexingTrigger,
-                       ScanningRequestToken indexingRequest,
-                       @NotNull FilesFilterScanningHandler filterHandler) {
+                       ScanningRequestToken indexingRequest) {
     this.explanationLogger = explanationLogger;
     myProject = project;
     myFileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
@@ -167,7 +165,6 @@ final class UnindexedFilesFinder {
 
     myShouldProcessUpToDateFiles = ContainerUtil.find(myStateProcessors, p -> p.shouldProcessUpToDateFiles()) != null;
 
-    myFilterHandler = filterHandler;
     this.indexingRequest = indexingRequest;
   }
 
@@ -197,7 +194,6 @@ final class UnindexedFilesFinder {
 
     if (TRUST_INDEXING_FLAG) {
       if (IndexingFlag.isFileIndexed(file, indexingStamp)) {
-        myFilterHandler.addFileId(myProject, FileBasedIndex.getFileId(file));
         return new UnindexedFileStatusBuilder(applicationMode);
       }
     }
@@ -214,7 +210,6 @@ final class UnindexedFilesFinder {
 
       IndexedFileImpl indexedFile = new IndexedFileImpl(file, fileType, myProject);
       int inputId = FileBasedIndex.getFileId(file);
-      myFilterHandler.addFileId(myProject, inputId);
 
       if (IndexingFlag.isFileIndexed(file, indexingStamp)) {
         boolean wasInvalidated = false;

@@ -370,6 +370,9 @@ public final class PsiImplUtil {
     if (isInServerPage(file)) return maximalUseScope;
 
     PsiClass aClass = member.getContainingClass();
+    if (aClass instanceof PsiImplicitClass) {
+      return new LocalSearchScope(aClass);
+    }
     if (aClass instanceof PsiAnonymousClass && !(aClass instanceof PsiEnumConstantInitializer &&
                                                  member instanceof PsiMethod &&
                                                  member.hasModifierProperty(PsiModifier.PUBLIC) &&
@@ -391,12 +394,13 @@ public final class PsiImplUtil {
 
     if (aClass != null) {
       PsiElement parent = aClass.getParent();
-      while (parent instanceof PsiClass && !(parent instanceof PsiAnonymousClass)) {
+      while (parent instanceof PsiClass && !(parent instanceof PsiAnonymousClass) && !(parent instanceof PsiImplicitClass)) {
         parent = parent.getParent();
       }
       // members of local classes or of classes contained in anonymous or local classes have a small scope
       if (parent instanceof PsiAnonymousClass) return new LocalSearchScope(parent);
       if (parent instanceof PsiDeclarationStatement) return new LocalSearchScope(parent.getParent());
+      if (parent instanceof PsiImplicitClass) return new LocalSearchScope(parent);
     }
 
     PsiModifierList modifierList = (member instanceof PsiRecordComponent && aClass != null) ?
@@ -865,7 +869,9 @@ public final class PsiImplUtil {
     }
 
     // java.io.IO.* for implicit classes
-    if (PsiUtil.isAvailable(JavaFeature.IMPLICIT_IMPORT_IN_IMPLICIT_CLASSES, file) && file instanceof PsiJavaFile) {
+    if (PsiUtil.isAvailable(JavaFeature.IMPLICIT_IMPORT_IN_IMPLICIT_CLASSES, file) &&
+        !PsiUtil.isAvailable(JavaFeature.JAVA_LANG_IO, file) &&
+        file instanceof PsiJavaFile) {
       PsiClass[] classes = ((PsiJavaFile)file).getClasses();
       if (classes.length == 1 && classes[0] instanceof PsiImplicitClass) {
         implicitImports.add(ImplicitlyImportedStaticMember.create(project, JAVA_IO_IO, "*"));

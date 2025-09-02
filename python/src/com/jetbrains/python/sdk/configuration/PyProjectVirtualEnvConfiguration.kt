@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("PyProjectVirtualEnvConfiguration")
 
 package com.jetbrains.python.sdk.configuration
@@ -26,13 +26,14 @@ import com.jetbrains.python.packaging.PyPackageManager
 import com.jetbrains.python.packaging.PyPackageManagers
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.sdk.*
-import com.jetbrains.python.sdk.add.v1.PyAddSdkPanelBase
-import com.jetbrains.python.sdk.add.v1.PyAddSdkPanelBase.Companion.isLocal
-import com.jetbrains.python.sdk.add.v1.TargetPanelExtension
+import com.jetbrains.python.target.ui.PyAddSdkPanelBase
+import com.jetbrains.python.target.ui.PyAddSdkPanelBase.Companion.isLocal
+import com.jetbrains.python.target.ui.TargetPanelExtension
 import com.jetbrains.python.sdk.flavors.PyFlavorAndData
 import com.jetbrains.python.sdk.flavors.PyFlavorData
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import com.jetbrains.python.target.getInterpreterVersion
+import com.jetbrains.python.ui.pyModalBlocking
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -42,7 +43,7 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 @RequiresEdt
-fun createVirtualEnvSynchronously(
+fun createVirtualEnvAndSdkSynchronously(
   baseSdk: Sdk,
   existingSdks: List<Sdk>,
   venvRoot: String,
@@ -96,8 +97,8 @@ fun createVirtualEnvSynchronously(
 
   if (!makeShared) {
     when {
-      module != null -> venvSdk.setAssociationToModule(module)
-      projectPath != null -> venvSdk.setAssociationToPath(projectPath)
+      module != null -> pyModalBlocking { venvSdk.setAssociationToModule(module) }
+      projectPath != null -> pyModalBlocking { venvSdk.setAssociationToPath(projectPath) }
     }
   }
 
@@ -150,7 +151,7 @@ internal fun createSdkForTarget(
   if (PythonInterpreterTargetEnvironmentFactory.by(environmentConfiguration)?.needAssociateWithModule() == true) {
     // FIXME: multi module project support
     project?.modules?.firstOrNull()?.let {
-      sdk.setAssociationToModule(it)
+      sdk.setAssociationToModuleAsync(it)
     }
   }
 

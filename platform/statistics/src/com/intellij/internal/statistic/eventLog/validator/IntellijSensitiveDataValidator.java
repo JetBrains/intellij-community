@@ -104,6 +104,10 @@ public class IntellijSensitiveDataValidator extends SensitiveDataValidator<Intel
     CustomValidationRuleFactory.EP_NAME.addChangeListener(ourInstances::clear, null);
   }
 
+  public static void clearInstances() {
+    ourInstances.clear();
+  }
+
   public static @NotNull IntellijSensitiveDataValidator getInstance(@NotNull String recorderId) {
     return ourInstances.computeIfAbsent(
       recorderId,

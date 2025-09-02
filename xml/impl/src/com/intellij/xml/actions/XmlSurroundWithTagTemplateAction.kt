@@ -38,9 +38,9 @@ class XmlSurroundWithTagTemplateAction : SimpleCodeInsightAction() {
     e.presentation.isEnabled = createAction(editor, file) != null
   }
 
-  override fun invoke(project: Project, editor: Editor, file: PsiFile) {
+  override fun invoke(project: Project, editor: Editor, psiFile: PsiFile) {
     if (!FileDocumentManager.getInstance().requestWriting(editor.document, project)) return
-    createAction(editor, file)?.perform()
+    createAction(editor, psiFile)?.perform()
   }
 
   private fun createAction(editor: Editor, file: PsiFile): InvokeTemplateAction? {

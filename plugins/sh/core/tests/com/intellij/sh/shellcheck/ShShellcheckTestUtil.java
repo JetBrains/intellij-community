@@ -4,7 +4,7 @@ package com.intellij.sh.shellcheck;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.platform.eel.provider.EelProviderUtil;
 import com.intellij.sh.ShLanguage;
@@ -53,7 +53,7 @@ final class ShShellcheckTestUtil {
       .send(request, HttpResponse.BodyHandlers.ofFile(directory.resolve("shellcheck.tgz")));
     LOG.info("Getting " + link + ", status code: " + response.statusCode());
     Path archive = response.body();
-    String path = decompressShellcheck(archive.toFile(), directory.toFile(), localEel.getPlatform());
+    String path = decompressShellcheck(archive, directory, localEel.getPlatform());
     if (!path.isEmpty()) {
       NioFiles.setExecutable(Path.of(path));
       ShSettings.setShellcheckPath(project, path);
@@ -62,7 +62,7 @@ final class ShShellcheckTestUtil {
 
   static Path getShellcheckTestDir() {
     return IS_UNDER_TEAMCITY ?
-           Path.of(FileUtil.getTempDirectory(), ShLanguage.INSTANCE.getID()) :
+           Path.of(FileUtilRt.getTempDirectory(), ShLanguage.INSTANCE.getID()) :
            Path.of(PathManager.getTempPath(), "plugins", ShLanguage.INSTANCE.getID());
   }
 }

@@ -165,8 +165,7 @@ public final class JavaDocReferenceInspection extends LocalInspectionTool {
           PsiElement refHolder = reference.getParent();
           if (refHolder != null && refHolder.getNode().getElementType() == JavaDocElementType.DOC_REFERENCE_HOLDER) {
             PsiElement adjacent = refHolder.getNextSibling();
-            if (adjacent instanceof PsiDocToken &&
-                ((PsiDocToken)adjacent).getTokenType() == JavaDocTokenType.DOC_COMMENT_DATA &&
+            if (PsiDocToken.isDocToken(adjacent, JavaDocTokenType.DOC_COMMENT_DATA) &&
                 adjacent.getText().startsWith(URLUtil.SCHEME_SEPARATOR)) {
               PsiDocComment docComment = PsiTreeUtil.getParentOfType(reference, PsiDocComment.class);
               if (docComment != null) {

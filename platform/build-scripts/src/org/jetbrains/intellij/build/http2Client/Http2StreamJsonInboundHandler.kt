@@ -10,6 +10,7 @@ import io.netty.handler.codec.http.HttpHeaderNames
 import io.netty.handler.codec.http.HttpHeaderValues
 import io.netty.handler.codec.http.HttpMethod
 import io.netty.handler.codec.http.HttpResponseStatus
+import io.netty.handler.codec.http2.DefaultHttp2DataFrame
 import io.netty.handler.codec.http2.Http2DataFrame
 import io.netty.handler.codec.http2.Http2Headers
 import io.netty.handler.codec.http2.Http2HeadersFrame
@@ -92,7 +93,7 @@ private suspend fun <T : Any> Http2ClientConnection.post(path: AsciiString, data
       ),
       endStream = false,
     )
-    stream.writeData(ByteBufUtil.writeUtf8(bufferAllocator, data), endStream = true)
+    stream.writeAndFlush(DefaultHttp2DataFrame(ByteBufUtil.writeUtf8(bufferAllocator, data), true)).joinCancellable()
   }
 }
 

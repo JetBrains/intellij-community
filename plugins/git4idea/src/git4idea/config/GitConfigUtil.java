@@ -19,6 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -46,10 +47,9 @@ public final class GitConfigUtil {
   private GitConfigUtil() {
   }
 
-  public static void getValues(@NotNull Project project,
-                               @NotNull VirtualFile root,
-                               @Nullable @NonNls String keyMask,
-                               @NotNull Map<String, String> result) throws VcsException {
+  public static @NotNull Map<@NotNull String, @NotNull String> getValues(@NotNull Project project,
+                                                                         @NotNull VirtualFile root,
+                                                                         @Nullable @NonNls String keyMask) throws VcsException {
     GitLineHandler h = new GitLineHandler(project, root, GitCommand.CONFIG);
     h.setEnableInteractiveCallbacks(false);
     h.setSilent(true);
@@ -63,6 +63,7 @@ public final class GitConfigUtil {
     String output = Git.getInstance().runCommand(h).getOutputOrThrow();
     int start = 0;
     int pos;
+    Map<String, String> result = new HashMap<>();
     while ((pos = output.indexOf('\n', start)) != -1) {
       String key = output.substring(start, pos);
       start = pos + 1;
@@ -73,6 +74,7 @@ public final class GitConfigUtil {
       start = pos + 1;
       result.put(key, value);
     }
+    return result;
   }
 
 

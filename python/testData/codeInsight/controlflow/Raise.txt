@@ -1,14 +1,16 @@
 0(1) element: null
 1(2) element: PyTryExceptStatement
-2(3,6) element: PyTryPart
-3(4,6) raise: PyRaiseStatement
-4(5,6) READ ACCESS: Exception
-5(6,13) element: PyCallExpression: Exception
-6(7) element: PyExceptPart
-7(8) element: PyAssignmentStatement
-8(9) READ ACCESS: Exception
-9(10) element: PyCallExpression: Exception
-10(11) WRITE ACCESS: foo
-11(12) raise: PyRaiseStatement
-12(13) READ ACCESS: foo
-13() element: null
+2(3,7) element: PyTryPart
+3(4,7) element: PyRaiseStatement
+4(5,7) READ ACCESS: Exception
+5(6,7) element: PyCallExpression: Exception
+6(7,15) raise: PyRaiseStatement
+7(8) element: PyExceptPart
+8(9) element: PyAssignmentStatement
+9(10) READ ACCESS: Exception
+10(11) element: PyCallExpression: Exception
+11(12) WRITE ACCESS: foo
+12(13) element: PyRaiseStatement
+13(14) READ ACCESS: foo
+14(15) raise: PyRaiseStatement
+15() element: null

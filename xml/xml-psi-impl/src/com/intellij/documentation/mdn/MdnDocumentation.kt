@@ -24,8 +24,8 @@ import com.intellij.psi.impl.source.html.dtd.HtmlSymbolDeclaration
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.xml.*
 import com.intellij.util.asSafely
-import com.intellij.webSymbols.WebSymbolApiStatus
-import com.intellij.webSymbols.WebSymbolsBundle
+import com.intellij.polySymbols.PolySymbolApiStatus
+import com.intellij.polySymbols.PolySymbolsBundle
 import com.intellij.xml.frontback.impl.icons.XmlFrontbackImplIcons
 import com.intellij.xml.util.HtmlUtil
 import org.jetbrains.annotations.ApiStatus
@@ -184,7 +184,7 @@ private fun innerGetEventDoc(eventName: String): Pair<MdnDocumentation, MdnDomEv
 interface MdnSymbolDocumentation {
   val name: String
   val url: String?
-  val apiStatus: WebSymbolApiStatus
+  val apiStatus: PolySymbolApiStatus
   val description: String
   val sections: Map<@Nls String, @Nls String>
   val footnote: @Nls String?
@@ -208,15 +208,15 @@ class MdnSymbolDocumentationAdapter(
   override val url: String?
     get() = doc.url?.let { fixMdnUrls(it, source.lang) }
 
-  override val apiStatus: WebSymbolApiStatus
+  override val apiStatus: PolySymbolApiStatus
     get() = doc.status?.let {
       when {
-        it.contains(MdnApiStatus.Obsolete) -> WebSymbolApiStatus.Obsolete
-        it.contains(MdnApiStatus.Deprecated) -> WebSymbolApiStatus.Deprecated
-        it.contains(MdnApiStatus.Experimental) -> WebSymbolApiStatus.Experimental
+        it.contains(MdnApiStatus.Obsolete) -> PolySymbolApiStatus.Obsolete
+        it.contains(MdnApiStatus.Deprecated) -> PolySymbolApiStatus.Deprecated
+        it.contains(MdnApiStatus.Experimental) -> PolySymbolApiStatus.Experimental
         else -> null
       }
-    } ?: WebSymbolApiStatus.Stable
+    } ?: PolySymbolApiStatus.Stable
 
   override val description: String
     get() = renderBaseline() + capitalize(
@@ -246,7 +246,7 @@ class MdnSymbolDocumentationAdapter(
       }
       doc.status?.asSequence()
         ?.filter { it != MdnApiStatus.StandardTrack }
-        ?.map { Pair(WebSymbolsBundle.message("mdn.documentation.section.status." + it.name), "") }
+        ?.map { Pair(PolySymbolsBundle.message("mdn.documentation.section.status." + it.name), "") }
         ?.toMap(result)
       return result.map { (key, value) -> Pair(key.fixUrls(), value.fixUrls()) }.toMap()
     }
@@ -325,7 +325,7 @@ class MdnSymbolDocumentationAdapter(
                                         notSupportedEngines.map { it.displayName }.sorted().joinToString(", ")))
       }
       else {
-        (baseline.highDate ?: baseline.lowDate)?.dropWhile { !it.isDigit() }?.let { date ->
+        (baseline.lowDate ?: baseline.highDate )?.dropWhile { !it.isDigit() }?.let { date ->
           result.append("<p class='grayed'>")
           result.append(MdnBundle.message("mdn.documentation.baseline.since", date.takeWhile { it.isDigit() }))
         }

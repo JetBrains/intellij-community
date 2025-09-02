@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.MavenDependencyUtil
+import org.jetbrains.kotlin.build.joinToReadableString
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
@@ -312,7 +313,7 @@ class BlockingCallRelatedFixesTest : KotlinLightCodeInsightFixtureTestCase() {
         )
     }
 
-    fun `test no fixes in non-suspendable context`() {
+    fun `test no significantly valuable fixes in non-suspendable context`() {
         myFixture.configureByText(
             "noIntentions.kt",
             """
@@ -331,7 +332,8 @@ class BlockingCallRelatedFixesTest : KotlinLightCodeInsightFixtureTestCase() {
         """.trimIndent()
         )
         myFixture.checkHighlighting()
-        Assert.assertTrue(myFixture.availableIntentions.isEmpty())
+        val availableIntentions = myFixture.availableIntentions.map { it.familyName }
+        Assert.assertTrue(availableIntentions.joinToReadableString(), availableIntentions.contains("Create test"))
     }
 
     fun `test consider unknown contexts blocking intention`() {

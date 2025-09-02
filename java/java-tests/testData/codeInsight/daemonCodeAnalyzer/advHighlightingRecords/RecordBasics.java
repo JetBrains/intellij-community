@@ -22,8 +22,8 @@ class AnonymousExtendsJLR {
 <error descr="Class 'SuperInterface' must implement abstract method 'run()' in 'Runnable'">record SuperInterface() implements Runnable</error> {}
 interface I1 { default void run() {}}
 interface I2 { void run();}
-record <error descr="Class 'UnrelatedDefaults' must implement abstract method 'run()' in 'I2'">UnrelatedDefaults</error>() implements I1, I2 {}
-enum <error descr="Class 'UnrelatedDefaults2' must implement abstract method 'run()' in 'I2'">UnrelatedDefaults2</error> implements I1, I2 {}
+<error descr="Class 'UnrelatedDefaults' must implement abstract method 'run()' in 'I2'">record UnrelatedDefaults() implements I1, I2</error> {}
+<error descr="Class 'UnrelatedDefaults2' must implement abstract method 'run()' in 'I2'">enum UnrelatedDefaults2 implements I1, I2</error> {}
 
 record ComponentModifiers(
   <error descr="Modifier 'public' not allowed here">public</error> int x, 

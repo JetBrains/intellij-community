@@ -70,10 +70,6 @@ open class BeControlComponentBase(
     return frontendComponent.getBounds()
   }
 
-  override fun isVisible(): Boolean {
-    return frontendComponent.isVisible()
-  }
-
   override fun isShowing(): Boolean {
     return frontendComponent.isShowing()
   }

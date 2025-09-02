@@ -4,8 +4,6 @@ package com.intellij.python.langInjection;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
-import com.jetbrains.python.codeInsight.PyInjectionUtil;
 import com.jetbrains.python.codeInsight.PyInjectorBase;
 import com.jetbrains.python.psi.PyElement;
 import org.intellij.plugins.intelliLang.Configuration;
@@ -22,10 +20,7 @@ public final class PyConfigurationInjector extends PyInjectorBase {
   @Override
   public void getLanguagesToInject(@NotNull MultiHostRegistrar registrar, @NotNull PsiElement context) {
     if (!(context instanceof PyElement)) return;
-    final PyInjectionUtil.InjectionResult result = registerInjection(registrar, context);
-    if (!result.isStrict()) {
-      InjectorUtils.putInjectedFileUserData(context, getInjectedLanguage(context), InjectedLanguageUtil.FRANKENSTEIN_INJECTION, Boolean.TRUE);
-    }
+    registerInjection(registrar, context);
   }
 
   @Override

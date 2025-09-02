@@ -20,8 +20,8 @@ import org.jetbrains.annotations.NotNull;
 @ApiStatus.Internal
 public abstract class ShBaseGenerateAction extends CodeInsightAction implements CodeInsightActionHandler {
   @Override
-  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    return file.getLanguage().is(ShLanguage.INSTANCE);
+  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    return psiFile.getLanguage().is(ShLanguage.INSTANCE);
   }
 
   protected static void moveAtNewLineIfNeeded(@NotNull Editor editor) {

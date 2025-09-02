@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
-import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
@@ -10,7 +9,7 @@ import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
-import com.intellij.platform.workspace.storage.annotations.Child
+import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
@@ -26,17 +25,17 @@ import com.intellij.platform.workspace.storage.testEntities.entities.AttachedEnt
 import com.intellij.platform.workspace.storage.testEntities.entities.MainEntityToParent
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(6)
+@GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class MainEntityToParentImpl(private val dataSource: MainEntityToParentData) : MainEntityToParent, WorkspaceEntityBase(
-  dataSource) {
+internal class MainEntityToParentImpl(private val dataSource: MainEntityToParentData) : MainEntityToParent,
+                                                                                        WorkspaceEntityBase(dataSource) {
 
   private companion object {
-    internal val CHILD_CONNECTION_ID: ConnectionId = ConnectionId.create(MainEntityToParent::class.java, AttachedEntityToParent::class.java,
-                                                                         ConnectionId.ConnectionType.ONE_TO_ONE, false)
-    internal val CHILDNULLABLEPARENT_CONNECTION_ID: ConnectionId = ConnectionId.create(MainEntityToParent::class.java,
-                                                                                       AttachedEntityToNullableParent::class.java,
-                                                                                       ConnectionId.ConnectionType.ONE_TO_ONE, true)
+    internal val CHILD_CONNECTION_ID: ConnectionId =
+      ConnectionId.create(MainEntityToParent::class.java, AttachedEntityToParent::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
+    internal val CHILDNULLABLEPARENT_CONNECTION_ID: ConnectionId = ConnectionId.create(
+      MainEntityToParent::class.java, AttachedEntityToNullableParent::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, true
+    )
 
     private val connections = listOf<ConnectionId>(
       CHILD_CONNECTION_ID,
@@ -68,8 +67,8 @@ internal class MainEntityToParentImpl(private val dataSource: MainEntityToParent
   }
 
 
-  internal class Builder(result: MainEntityToParentData?) : ModifiableWorkspaceEntityBase<MainEntityToParent, MainEntityToParentData>(
-    result), MainEntityToParent.Builder {
+  internal class Builder(result: MainEntityToParentData?) :
+    ModifiableWorkspaceEntityBase<MainEntityToParent, MainEntityToParentData>(result), MainEntityToParent.Builder {
     internal constructor() : this(MainEntityToParentData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -176,8 +175,9 @@ internal class MainEntityToParentImpl(private val dataSource: MainEntityToParent
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getOneChildBuilder(CHILDNULLABLEPARENT_CONNECTION_ID,
-                                                                             this) as? AttachedEntityToNullableParent.Builder)
+          ((_diff as MutableEntityStorageInstrumentation).getOneChildBuilder(
+            CHILDNULLABLEPARENT_CONNECTION_ID, this
+          ) as? AttachedEntityToNullableParent.Builder)
           ?: (this.entityLinks[EntityLink(true, CHILDNULLABLEPARENT_CONNECTION_ID)] as? AttachedEntityToNullableParent.Builder)
         }
         else {
@@ -238,7 +238,8 @@ internal class MainEntityToParentData : WorkspaceEntityData<MainEntityToParent>(
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.MainEntityToParent") as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.MainEntityToParent"
+    ) as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

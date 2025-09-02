@@ -10,7 +10,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.impl.PsiManagerEx;
-import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
@@ -517,7 +516,7 @@ public class DomBasicsTest extends DomTestCase {
     MyElement element = getDomManager().getFileElement(xmlFile, MyElement.class).getRootElement().getChildElements().get(1);
     MyElement copy = element.createStableCopy();
 
-    ApplicationManager.getApplication().runWriteAction(() -> ((FileManagerImpl)PsiManagerEx.getInstanceEx(getProject()).getFileManager()).forceReload(file));
+    ApplicationManager.getApplication().runWriteAction(() -> PsiManagerEx.getInstanceEx(getProject()).getFileManagerEx().forceReload(file));
     
     assertFalse(element.isValid());
     assertTrue(copy.isValid());

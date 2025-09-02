@@ -3,6 +3,7 @@ package com.intellij.psi.impl.source.xml.stub;
 
 import com.intellij.psi.impl.source.xml.XmlStubBasedTag;
 import com.intellij.psi.stubs.*;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,7 +18,7 @@ public class XmlTagStubImpl extends StubBase<XmlStubBasedTag> implements XmlTagS
 
   public XmlTagStubImpl(@Nullable StubElement<?> parent,
                  @NotNull StubInputStream dataStream,
-                 @NotNull IStubElementType<? extends XmlTagStubImpl, ? extends XmlStubBasedTag> elementType)
+                 @NotNull IElementType elementType)
     throws IOException {
     super(parent, elementType);
     name = notNull(StringRef.toString(dataStream.readName()), "");
@@ -25,7 +26,7 @@ public class XmlTagStubImpl extends StubBase<XmlStubBasedTag> implements XmlTagS
 
   public XmlTagStubImpl(@NotNull XmlStubBasedTag psi,
                  @Nullable StubElement<?> parent,
-                 @NotNull IStubElementType<? extends XmlTagStubImpl, ? extends XmlStubBasedTag> elementType) {
+                 @NotNull IElementType elementType) {
     super(parent, elementType);
     name = psi.getName();
   }

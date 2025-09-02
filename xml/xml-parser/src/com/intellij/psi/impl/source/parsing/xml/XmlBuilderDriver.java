@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * @author max
@@ -24,26 +24,27 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class XmlBuilderDriver {
-  private final Stack<String> myNamespacesStack = new Stack<>();
-  private final Stack<String> myPrefixesStack = new Stack<>();
+  private final Stack<@NotNull String> myNamespacesStack = new Stack<>();
+  private final Stack<@NotNull String> myPrefixesStack = new Stack<>();
   private final CharSequence myText;
   private static final @NonNls String XMLNS = "xmlns";
   private static final @NonNls String XMLNS_COLON = "xmlns:";
 
-  public XmlBuilderDriver(final CharSequence text) {
+  public XmlBuilderDriver(@NotNull CharSequence text) {
     myText = text;
   }
 
-  protected CharSequence getText() {
+  protected @NotNull CharSequence getText() {
     return myText;
   }
 
-  public void addImplicitBinding(@NonNls @NotNull String prefix, @NonNls @NotNull String namespace) {
+  public void addImplicitBinding(@NonNls @NotNull String prefix,
+                                 @NonNls @NotNull String namespace) {
     myNamespacesStack.push(namespace);
     myPrefixesStack.push(prefix);
   }
 
-  public void build(XmlBuilder builder) {
+  public void build(@NotNull XmlBuilder builder) {
     PsiBuilder b = createBuilderAndParse();
 
     FlyweightCapableTreeStructure<LighterASTNode> structure = b.getLightTree();
@@ -58,20 +59,19 @@ public class XmlBuilderDriver {
       LighterASTNode child = children[i];
       final IElementType tt = child.getTokenType();
       if (tt instanceof IXmlTagElementType) {
-        processTagNode(b, structure, child, builder);
+        processTagNode(structure, child, builder);
       }
       else if (tt == XmlElementType.XML_PROLOG) {
-        processPrologNode(b, builder, structure, child);
+        processPrologNode(builder, structure, child);
       }
     }
 
     structure.disposeChildren(children, count);
   }
 
-  private void processPrologNode(PsiBuilder psiBuilder,
-                                 XmlBuilder builder,
-                                 FlyweightCapableTreeStructure<LighterASTNode> structure,
-                                 LighterASTNode prolog) {
+  private void processPrologNode(@NotNull XmlBuilder builder,
+                                 @NotNull FlyweightCapableTreeStructure<LighterASTNode> structure,
+                                 @NotNull LighterASTNode prolog) {
     final Ref<LighterASTNode[]> prologChildren = new Ref<>(null);
     final int prologChildrenCount = structure.getChildren(prolog, prologChildren);
     for (int i = 0; i < prologChildrenCount; i++) {
@@ -82,13 +82,14 @@ public class XmlBuilderDriver {
         break;
       }
       if (type == TokenType.ERROR_ELEMENT) {
-        processErrorNode(psiBuilder, node, builder);
+        processErrorNode(node, builder);
       }
     }
   }
 
-  private void processDoctypeNode(final XmlBuilder builder, final FlyweightCapableTreeStructure<LighterASTNode> structure,
-                                  final LighterASTNode doctype) {
+  private void processDoctypeNode(@NotNull XmlBuilder builder,
+                                  @NotNull FlyweightCapableTreeStructure<LighterASTNode> structure,
+                                  @NotNull LighterASTNode doctype) {
     final Ref<LighterASTNode[]> tokens = new Ref<>(null);
     final int tokenCount = structure.getChildren(doctype, tokens);
     if (tokenCount > 0) {
@@ -118,11 +119,11 @@ public class XmlBuilderDriver {
     }
   }
 
-  private CharSequence getTokenText(final LighterASTNode token) {
+  private @NotNull CharSequence getTokenText(@NotNull LighterASTNode token) {
     return myText.subSequence(token.getStartOffset(), token.getEndOffset());
   }
 
-  protected PsiBuilder createBuilderAndParse() {
+  protected @NotNull PsiBuilder createBuilderAndParse() {
     final ParserDefinition xmlParserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(XMLLanguage.INSTANCE);
     assert xmlParserDefinition != null;
 
@@ -131,17 +132,17 @@ public class XmlBuilderDriver {
     return b;
   }
 
-  private static void processErrorNode(PsiBuilder psiBuilder, LighterASTNode node, XmlBuilder builder) {
+  private static void processErrorNode(@NotNull LighterASTNode node,
+                                       @NotNull XmlBuilder builder) {
     assert node.getTokenType() == TokenType.ERROR_ELEMENT;
     String message = PsiBuilderImpl.getErrorMessage(node);
     assert message != null;
     builder.error(message, node.getStartOffset(), node.getEndOffset());
   }
 
-  private void processTagNode(PsiBuilder psiBuilder,
-                              FlyweightCapableTreeStructure<LighterASTNode> structure,
-                              LighterASTNode node,
-                              XmlBuilder builder) {
+  private void processTagNode(@NotNull FlyweightCapableTreeStructure<LighterASTNode> structure,
+                              @NotNull LighterASTNode node,
+                              @NotNull XmlBuilder builder) {
     final IElementType nodeTT = node.getTokenType();
     assert nodeTT instanceof IXmlTagElementType;
 
@@ -178,8 +179,8 @@ public class XmlBuilderDriver {
     for (int i = 0; i < count; i++) {
       LighterASTNode child = children[i];
       IElementType tt = child.getTokenType();
-      if (tt == TokenType.ERROR_ELEMENT) processErrorNode(psiBuilder, child, builder);
-      if (tt instanceof IXmlTagElementType) processTagNode(psiBuilder, structure, child, builder);
+      if (tt == TokenType.ERROR_ELEMENT) processErrorNode(child, builder);
+      if (tt instanceof IXmlTagElementType) processTagNode(structure, child, builder);
       if (processAttrs && tt instanceof IXmlAttributeElementType) processAttributeNode(child, structure, builder);
       if (processTexts && tt == XmlElementType.XML_TEXT) processTextNode(structure, child, builder);
       if (tt == XmlElementType.XML_ENTITY_REF) builder.entityRef(getTokenText(child), child.getStartOffset(), child.getEndOffset());
@@ -196,7 +197,9 @@ public class XmlBuilderDriver {
     structure.disposeChildren(children, count);
   }
 
-  private void processTextNode(FlyweightCapableTreeStructure<LighterASTNode> structure, LighterASTNode node, XmlBuilder builder) {
+  private void processTextNode(@NotNull FlyweightCapableTreeStructure<LighterASTNode> structure,
+                               @NotNull LighterASTNode node,
+                               @NotNull XmlBuilder builder) {
     final Ref<LighterASTNode[]> childrenRef = Ref.create(null);
     final int count = structure.getChildren(node, childrenRef);
     LighterASTNode[] children = childrenRef.get();
@@ -227,9 +230,9 @@ public class XmlBuilderDriver {
     structure.disposeChildren(children, count);
   }
 
-  private void processAttributeNode(final LighterASTNode attrNode,
-                                    FlyweightCapableTreeStructure<LighterASTNode> structure,
-                                    XmlBuilder builder) {
+  private void processAttributeNode(@NotNull LighterASTNode attrNode,
+                                    @NotNull FlyweightCapableTreeStructure<LighterASTNode> structure,
+                                    @NotNull XmlBuilder builder) {
     builder.attribute(
       getAttributeName(attrNode, structure),
       getAttributeValue(attrNode, structure),
@@ -238,7 +241,7 @@ public class XmlBuilderDriver {
     );
   }
 
-  private String getNamespace(final CharSequence tagName) {
+  private @NonNls String getNamespace(@NotNull CharSequence tagName) {
     final String namespacePrefix;
     int pos = StringUtil.indexOf(tagName, ':');
     if (pos == -1) {
@@ -255,7 +258,8 @@ public class XmlBuilderDriver {
     return "";
   }
 
-  private void checkForXmlns(LighterASTNode attrNode, FlyweightCapableTreeStructure<LighterASTNode> structure) {
+  private void checkForXmlns(@NotNull LighterASTNode attrNode,
+                             @NotNull FlyweightCapableTreeStructure<LighterASTNode> structure) {
     final CharSequence name = getAttributeName(attrNode, structure);
     if (Comparing.equal(name, XMLNS)) {
       myPrefixesStack.push("");
@@ -268,11 +272,13 @@ public class XmlBuilderDriver {
   }
 
 
-  private CharSequence getAttributeName(LighterASTNode attrNode, FlyweightCapableTreeStructure<LighterASTNode> structure) {
+  private @NotNull CharSequence getAttributeName(@NotNull LighterASTNode attrNode,
+                                                 @NotNull FlyweightCapableTreeStructure<LighterASTNode> structure) {
     return findTextByTokenType(attrNode, structure, XmlTokenType.XML_NAME);
   }
 
-  private CharSequence getAttributeValue(LighterASTNode attrNode, FlyweightCapableTreeStructure<LighterASTNode> structure) {
+  private @NotNull CharSequence getAttributeValue(@NotNull LighterASTNode attrNode,
+                                                  @NotNull FlyweightCapableTreeStructure<LighterASTNode> structure) {
     final CharSequence fullValue = findTextByTokenType(attrNode, structure, XmlElementType.XML_ATTRIBUTE_VALUE);
     int start = 0;
     if (!fullValue.isEmpty() && fullValue.charAt(0) == '\"') start++;
@@ -283,9 +289,9 @@ public class XmlBuilderDriver {
     return fullValue.subSequence(start, end);
   }
 
-  private CharSequence findTextByTokenType(LighterASTNode attrNode,
-                                           FlyweightCapableTreeStructure<LighterASTNode> structure,
-                                           IElementType tt) {
+  private @NotNull CharSequence findTextByTokenType(@NotNull LighterASTNode attrNode,
+                                                    @NotNull FlyweightCapableTreeStructure<LighterASTNode> structure,
+                                                    @NotNull IElementType tt) {
     final Ref<LighterASTNode[]> childrenRef = Ref.create(null);
     final int count = structure.getChildren(attrNode, childrenRef);
     LighterASTNode[] children = childrenRef.get();

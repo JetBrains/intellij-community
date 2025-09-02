@@ -7,6 +7,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.openapi.wm.impl.welcomeScreen.projectActions.RecentProjectsWelcomeScreenActionBase.Companion.getSelectedItems
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.CloneableProjectItem
+import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.ProviderRecentProjectItem
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectItem
 
 /**
@@ -15,6 +16,12 @@ import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectIt
 class MoveProjectToGroupActionGroup : DefaultActionGroup(), DumbAware {
   override fun getActionUpdateThread(): ActionUpdateThread {
     return ActionUpdateThread.EDT
+  }
+
+  override fun update(e: AnActionEvent) {
+    val items = getSelectedItems(e).orEmpty()
+    val isHidden = items.isNotEmpty() && items.all { it is ProviderRecentProjectItem }
+    e.presentation.isVisible = !isHidden
   }
 
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {

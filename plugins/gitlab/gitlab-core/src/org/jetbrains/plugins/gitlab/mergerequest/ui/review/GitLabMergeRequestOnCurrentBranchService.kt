@@ -6,13 +6,14 @@ import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
 import com.intellij.collaboration.util.getOrNull
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.Toggleable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.vcs.gitlab.icons.GitlabIcons
 import git4idea.branch.GitBranchSyncStatus
 import git4idea.branch.GitBranchUtil
 import git4idea.repo.GitRepository
@@ -21,9 +22,8 @@ import git4idea.ui.branch.GitCurrentBranchPresenter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
-import org.jetbrains.plugins.gitlab.GitlabIcons
+import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabProjectViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.editor.GitLabMergeRequestEditorReviewViewModel
-import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 
@@ -32,8 +32,8 @@ class GitLabMergeRequestOnCurrentBranchService(project: Project, cs: CoroutineSc
 
   @OptIn(ExperimentalCoroutinesApi::class)
   internal val mergeRequestReviewVmState: StateFlow<GitLabMergeRequestEditorReviewViewModel?> by lazy {
-    val toolWindowVm = project.service<GitLabToolWindowViewModel>()
-    toolWindowVm.projectVm.flatMapLatest {
+    val toolWindowVm = project.service<GitLabProjectViewModel>()
+    toolWindowVm.connectedProjectVm.flatMapLatest {
       it?.currentMergeRequestReviewVm ?: flowOf(null)
     }.onStart {
       toolWindowVm.loginIfPossible()
@@ -103,21 +103,25 @@ class GitLabMergeRequestOnCurrentBranchService(project: Project, cs: CoroutineSc
     }
   }
 
-  class ToggleReviewAction : DumbAwareAction(), Toggleable {
+  class ToggleReviewAction : DumbAwareToggleAction() {
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
     override fun update(e: AnActionEvent) {
       val vm = e.project?.let(::getCurrentVm)
-      if (vm == null || vm.localRepositorySyncStatus.value?.getOrNull()?.incoming == true) {
-        e.presentation.isEnabledAndVisible = false
-        return
+      val enabledAndVisible = vm != null && vm.localRepositorySyncStatus.value?.getOrNull()?.incoming != true
+      e.presentation.isEnabledAndVisible = enabledAndVisible
+      if (enabledAndVisible) {
+        super.update(e)
       }
-
-      Toggleable.setSelected(e.presentation, vm.discussionsViewOption.value != DiscussionsViewOption.DONT_SHOW)
     }
 
-    override fun actionPerformed(e: AnActionEvent) {
-      e.project?.let(::getCurrentVm)?.toggleReviewMode()
+    override fun isSelected(e: AnActionEvent): Boolean {
+      val viewOption = e.project?.let(::getCurrentVm)?.discussionsViewOption?.value
+      return viewOption != null && viewOption != DiscussionsViewOption.DONT_SHOW
+    }
+
+    override fun setSelected(e: AnActionEvent, state: Boolean) {
+      e.project?.let(::getCurrentVm)?.toggleReviewMode(state)
     }
   }
 }

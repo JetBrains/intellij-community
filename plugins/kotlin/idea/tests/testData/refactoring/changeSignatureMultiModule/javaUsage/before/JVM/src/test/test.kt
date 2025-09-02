@@ -1,7 +1,7 @@
 package test
 
 actual open class C {
-    actual fun m() { }
+    actual open fun m() { }
 }
 
 fun test() {

@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.git.lesson
 
-import com.intellij.diff.editor.DiffEditorTabFilesManager
+import com.intellij.diff.editor.DiffEditorTabFilesUtil
 import com.intellij.diff.impl.DiffWindowBase
 import com.intellij.diff.tools.util.DiffSplitter
 import com.intellij.ide.IdeBundle
@@ -248,7 +248,7 @@ class GitAnnotateLesson : GitLesson("Git.Annotate", GitLessonsBundle.message("gi
 
     task("EditorEscape") {
       text(GitLessonsBundle.message("git.annotate.close.all.windows",
-                                    if (DiffEditorTabFilesManager.isDiffInWindow) 0 else 1, action(it)))
+                                    if (DiffEditorTabFilesUtil.isDiffInWindow) 0 else 1, action(it)))
       stateCheck {
         firstDiffSplitter?.isShowing != true && secondDiffSplitter?.isShowing != true
       }

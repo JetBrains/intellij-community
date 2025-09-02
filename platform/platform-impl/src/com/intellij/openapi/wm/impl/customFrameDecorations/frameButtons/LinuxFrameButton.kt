@@ -98,7 +98,7 @@ internal class LinuxFrameButton(action: Action, private val type: Type) : JButto
   override fun updateUI() {
     setUI(BasicButtonUI())
     border = null
-    darkHeader = ColorUtil.isDark(InternalUICustomization.getInstanceOrNull()?.getMainToolbarBackground(true) ?: JBUI.CurrentTheme.CustomFrameDecorations.mainToolbarBackground(true))
+    darkHeader = ColorUtil.isDark(InternalUICustomization.getInstance()?.getMainToolbarBackground(true) ?: JBUI.CurrentTheme.CustomFrameDecorations.mainToolbarBackground(true))
     updateStyle()
   }
 

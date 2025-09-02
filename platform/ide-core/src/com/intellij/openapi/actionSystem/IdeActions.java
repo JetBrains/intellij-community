@@ -171,6 +171,7 @@ public interface IdeActions {
 
   String ACTION_FIND_USAGES = "FindUsages";
   String ACTION_FIND_IN_PATH = "FindInPath";
+  String ACTION_FIND_SELECTION_IN_PATH = "FindSelectionInPath";
   String ACTION_REPLACE_IN_PATH = "ReplaceInPath";
 
   String ACTION_TYPE_HIERARCHY = "TypeHierarchy";
@@ -287,6 +288,7 @@ public interface IdeActions {
   String ACTION_GOTO_TYPE_DECLARATION = "GotoTypeDeclaration";
   String ACTION_GOTO_IMPLEMENTATION = "GotoImplementation";
   String ACTION_GOTO_SUPER = "GotoSuperMethod";
+  String ACTION_GOTO_RELATED = "GotoRelated";
 
   String MODULE_SETTINGS = "ModuleSettings";
 

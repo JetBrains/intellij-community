@@ -8,16 +8,22 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.spellchecker.dictionary.Dictionary.LookupStatus
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.io.SafeFileOutputStream
+import com.jetbrains.python.Result
 import com.jetbrains.python.packaging.PyPIPackageUtil
 import com.jetbrains.python.packaging.cache.PythonPackageCache
 import com.jetbrains.python.packaging.common.PythonRankingAwarePackageNameComparator
+import com.jetbrains.python.packaging.normalizePackageName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.CheckReturnValue
 import java.io.BufferedReader
+import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
@@ -28,6 +34,7 @@ import java.util.*
 import kotlin.io.path.exists
 
 private val LOG = logger<PypiPackageCache>()
+private val ALPHABET_REGEX = Regex("[-a-z0-9]+")
 
 @ApiStatus.Internal
 @Service
@@ -36,6 +43,12 @@ class PypiPackageCache : PythonPackageCache<String> {
     get() = cache
 
   override operator fun contains(key: String): Boolean = key in cache
+
+  fun lookup(word: String): LookupStatus {
+    if (word in cache) return LookupStatus.Present
+    if (!ALPHABET_REGEX.matches(word.lowercase())) return LookupStatus.Alien
+    return LookupStatus.Absent
+  }
 
   override fun isEmpty(): Boolean = cache.isEmpty()
 
@@ -49,14 +62,11 @@ class PypiPackageCache : PythonPackageCache<String> {
 
   val filePath: Path = Paths.get(PathManager.getSystemPath(), "python_packages", "packages_v2.json")
 
-  suspend fun forceReloadCache() {
-    return reloadCache(true)
-  }
-
-  suspend fun reloadCache(force: Boolean = false) {
+  @CheckReturnValue
+  suspend fun reloadCache(force: Boolean = false): Result<Unit, IOException> {
     lock.withLock {
       if ((cache.isNotEmpty() && !force) || loadInProgress) {
-        return
+        return Result.success(Unit)
       }
 
       loadInProgress = true
@@ -65,7 +75,7 @@ class PypiPackageCache : PythonPackageCache<String> {
     try {
       withContext(Dispatchers.IO) {
         if (!tryLoadFromFile()) {
-          refresh()
+          return@withContext refresh()
         }
       }
     }
@@ -74,6 +84,7 @@ class PypiPackageCache : PythonPackageCache<String> {
         loadInProgress = false
       }
     }
+    return Result.success(Unit)
   }
 
   private suspend fun tryLoadFromFile(): Boolean {
@@ -96,21 +107,23 @@ class PypiPackageCache : PythonPackageCache<String> {
       }
 
       LOG.info("Package list loaded from file with ${packageList.size} entries")
-      cache = packageList
+      cache = packageList.map { normalizePackageName(it) }.toSet()
       true
     }
   }
 
-  private suspend fun refresh() {
+  @CheckReturnValue
+  private suspend fun refresh(): Result<Unit, IOException> {
     withContext(Dispatchers.IO) {
       LOG.info("Loading python packages from PyPi")
-      val pypiList = service<PypiPackageLoader>().loadPackages()
+      val pypiList = service<PypiPackageLoader>().loadPackages().getOr { return@withContext it }
       val newCache = TreeSet(PythonRankingAwarePackageNameComparator())
       newCache.addAll(pypiList)
 
       cache = newCache
       store()
     }
+    return Result.success(Unit)
   }
 
   private fun store() {
@@ -131,8 +144,18 @@ class PypiPackageCache : PythonPackageCache<String> {
     return expirationTime.isBefore(Instant.now())
   }
 
+
+  @ApiStatus.Internal
   @Service
   class PypiPackageLoader {
-    fun loadPackages(): Collection<String> = PyPIPackageUtil.parsePyPIListFromWeb(PyPIPackageUtil.PYPI_LIST_URL)
+    @RequiresBackgroundThread
+    fun loadPackages(): Result<Collection<String>, IOException> = try {
+      val pypiPackages = PyPIPackageUtil.parsePyPIListFromWeb(PyPIPackageUtil.PYPI_LIST_URL)
+        .map { normalizePackageName(it) }.toSet()
+      Result.success(pypiPackages)
+    }
+    catch (e: IOException) {
+      Result.failure(e)
+    }
   }
 }

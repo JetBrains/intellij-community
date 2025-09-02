@@ -1,0 +1,8 @@
+// COMPILER_ARGUMENTS: -Xwhen-guards
+
+fun test(param: Any) {
+    when (param) {
+        is Int /*1*/ if /*2*/ <caret>param /*3*/ < 0 /*4*/ || /*5*/ param > 10 /*6*/ -> /*7*/ println("foo") /*8*/
+        else -> println("bar")
+    }
+}

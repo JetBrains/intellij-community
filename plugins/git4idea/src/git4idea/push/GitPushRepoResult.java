@@ -1,13 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.push;
 
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitRemoteBranch;
 import git4idea.update.GitUpdateResult;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.Collections;
 import java.util.Comparator;
@@ -66,7 +64,9 @@ public final class GitPushRepoResult {
                                  target.getRemote().getName(), Collections.emptyList(), null, null);
   }
 
-  static @NotNull GitPushRepoResult tagPushResult(
+  @ApiStatus.Internal
+  @VisibleForTesting
+  public static @NotNull GitPushRepoResult tagPushResult(
     @NotNull GitPushNativeResult result, @NotNull GitPushSource.Tag source, @NotNull GitRemoteBranch target
   ) {
     Type resultType = convertType(result);
@@ -81,7 +81,9 @@ public final class GitPushRepoResult {
                                  result.getReason(), null);
   }
 
-  static @NotNull GitPushRepoResult addUpdateResult(GitPushRepoResult original, GitUpdateResult updateResult) {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public static @NotNull GitPushRepoResult addUpdateResult(GitPushRepoResult original, GitUpdateResult updateResult) {
     return new GitPushRepoResult(original.getType(), original.getNumberOfPushedCommits(), original.getSourceBranch(),
                                  original.getTargetBranch(), original.getTargetRemote(), original.getPushedTags(),
                                  original.getError(), updateResult);
@@ -104,8 +106,9 @@ public final class GitPushRepoResult {
     return myType;
   }
 
-  @Nullable
-  GitUpdateResult getUpdateResult() {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public @Nullable GitUpdateResult getUpdateResult() {
     return myUpdateResult;
   }
 
@@ -131,8 +134,9 @@ public final class GitPushRepoResult {
     return myError;
   }
 
-  @NotNull
-  List<@NlsSafe String> getPushedTags() {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public @NotNull List<@NlsSafe String> getPushedTags() {
     return myPushedTags;
   }
 

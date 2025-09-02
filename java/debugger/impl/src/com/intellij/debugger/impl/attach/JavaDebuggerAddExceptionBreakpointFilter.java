@@ -6,6 +6,7 @@ import com.intellij.codeInsight.hints.presentation.PresentationFactory;
 import com.intellij.codeInsight.hints.presentation.PresentationRenderer;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.actions.JavaDebuggerActionsCollector;
+import com.intellij.debugger.statistics.DebuggerStatistics;
 import com.intellij.debugger.ui.breakpoints.ExceptionBreakpoint;
 import com.intellij.debugger.ui.breakpoints.JavaExceptionBreakpointType;
 import com.intellij.execution.filters.Filter.ResultItem;
@@ -47,6 +48,7 @@ public final class JavaDebuggerAddExceptionBreakpointFilter implements JvmExcept
     @Override
     public EditorCustomElementRenderer createInlayRenderer(Editor editor) {
       PresentationFactory factory = new PresentationFactory(editor);
+      DebuggerStatistics.logThreadDumpTriggerException(editor.getProject(), myExceptionFqn);
       InlayPresentation presentation =
         factory.referenceOnHover(factory.roundWithBackground(factory.smallText("Create breakpoint")), (event, point) -> {
           JavaDebuggerActionsCollector.createExceptionBreakpointInlay.log();

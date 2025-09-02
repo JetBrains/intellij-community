@@ -1,19 +1,27 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.test.kotlin
 
 import com.intellij.core.CoreApplicationEnvironment
+import com.intellij.lang.LanguageExtensionPoint
 import com.intellij.mock.MockComponentManager
 import com.intellij.mock.MockProject
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteActionAndWait
+import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.openapi.extensions.Extensions
+import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.platform.syntax.psi.CommonElementTypeConverterFactory
+import com.intellij.platform.syntax.psi.ElementTypeConverterFactory
+import com.intellij.platform.syntax.psi.ElementTypeConverters
 import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiNameHelper
 import com.intellij.psi.impl.PsiNameHelperImpl
+import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.util.io.URLUtil
 import junit.framework.TestCase
@@ -124,6 +132,13 @@ abstract class AbstractKotlinUastTest : TestCase(),
     }
 
     private fun initializeCoreEnvironment() {
+        val extensionArea = ApplicationManager.getApplication().extensionArea as ExtensionsAreaImpl
+
+        val pluginDescriptor = DefaultPluginDescriptor(
+            PluginId.getId(javaClass.getName() + "." + name),
+            this::class.java.classLoader,
+        )
+
         CoreApplicationEnvironment.registerApplicationExtensionPoint(
             UastLanguagePlugin.EP,
             UastLanguagePlugin::class.java,
@@ -140,12 +155,22 @@ abstract class AbstractKotlinUastTest : TestCase(),
         )
         project.registerService(UastContext::class.java)
 
-        Extensions.getRootArea().getExtensionPoint(UastLanguagePlugin.EP)
+        extensionArea.getExtensionPoint(UastLanguagePlugin.EP)
             .registerExtension(JavaUastLanguagePlugin())
 
         AnalysisHandlerExtension.registerExtension(
             project,
             UastAnalysisHandlerExtension(),
+        )
+
+        extensionArea.registerFakeBeanPoint<ElementTypeConverterFactory>(ElementTypeConverters.instance.name, pluginDescriptor)
+        val languagePlugin: LanguageExtensionPoint<ElementTypeConverterFactory> =
+            LanguageExtensionPoint("any", CommonElementTypeConverterFactory())
+        languagePlugin.pluginDescriptor = pluginDescriptor
+        ExtensionTestUtil.addExtension(
+            extensionArea,
+            ElementTypeConverters.instance,
+            languagePlugin
         )
     }
 

@@ -34,6 +34,12 @@ class ClsPackageStatementImpl extends ClsElementImpl implements PsiPackageStatem
 
   @Override
   public PsiModifierList getAnnotationList() {
+    if (myFile != null && myFile.getName().equals("package-info.class")) {
+      PsiClass[] classes = myFile.getClasses();
+      if (classes.length == 1) {
+        return classes[0].getModifierList();
+      }
+    }
     throw new UnsupportedOperationException("Method not implemented");
   }
 

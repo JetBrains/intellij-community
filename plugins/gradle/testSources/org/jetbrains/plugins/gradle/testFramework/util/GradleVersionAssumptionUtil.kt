@@ -62,8 +62,15 @@ fun assumeThatJavaConventionsBlockIsSupported(gradleVersion: GradleVersion) {
     "Gradle ${gradleVersion.version} doesn't support java conventions block."
   }
 }
+
 fun assumeThatConfigurationCacheIsSupported(gradleVersion: GradleVersion) {
   assumeThatGradleIsAtLeast(gradleVersion, "8.1") {
-    "Gradle ${gradleVersion.version} doesn't stable configuration caches."
+    "Gradle ${gradleVersion.version} doesn't support stable configuration caches."
+  }
+}
+
+fun assumeThatIsolatedProjectsIsSupported(gradleVersion: GradleVersion) {
+  assumeThatGradleIsAtLeast(gradleVersion, "8.8") {
+    "Gradle ${gradleVersion.version} doesn't support isolated projects."
   }
 }

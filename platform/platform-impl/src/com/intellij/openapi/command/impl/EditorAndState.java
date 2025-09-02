@@ -4,11 +4,27 @@ package com.intellij.openapi.command.impl;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileEditor.FileEditorStateLevel;
+import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
 final class EditorAndState {
+
+  static @Nullable EditorAndState getStateFor(@Nullable Project project, @NotNull CurrentEditorProvider editorProvider) {
+    FileEditor editor = editorProvider.getCurrentEditor(project);
+    if (editor == null) {
+      return null;
+    }
+    if (!editor.isValid()) {
+      return null;
+    }
+    return new EditorAndState(editor, editor.getState(FileEditorStateLevel.UNDO));
+  }
+
   private final FileEditorState myState;
   private final VirtualFile myVirtualFile;
 
@@ -17,7 +33,7 @@ final class EditorAndState {
     myState = state;
   }
 
-  public boolean canBeAppliedTo(FileEditor editor) {
+  boolean canBeAppliedTo(FileEditor editor) {
     if (editor == null) return false;
     if (!Objects.equals(myVirtualFile, editor.getFile())) return false;
     if (myState == null) return false;
@@ -25,7 +41,7 @@ final class EditorAndState {
     return myState.getClass() == currentState.getClass();
   }
 
-  public FileEditorState getState() {
+  FileEditorState getState() {
     return myState;
   }
 }

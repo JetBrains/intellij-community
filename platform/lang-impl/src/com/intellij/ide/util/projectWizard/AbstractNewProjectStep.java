@@ -58,7 +58,7 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
   private WizardContext myWizardContext;
 
   protected AbstractNewProjectStep(@NotNull Customization<T> customization) {
-    super(Presentation.NULL_STRING, true);
+    super(ActionsBundle.message("action.WelcomeScreen.CreateNewProject.text"), true);
     myCustomization = customization;
     myCustomization.setProjectStep(this);
     updateActions();

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project.manage
 
 import com.intellij.ide.projectView.actions.MarkRootsManager
@@ -6,10 +6,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.WriteAction
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
-import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.openapi.components.*
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.ModuleListener
@@ -30,7 +27,6 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.toBuilder
-import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.MultiMap
@@ -103,11 +99,13 @@ class SourceFolderManagerImpl(
   }
 
   @TestOnly
-  fun isDisposed() = isDisposed
+  fun isDisposed(): Boolean = isDisposed
 
   @TestOnly
-  fun getSourceFolders(moduleName: String) = synchronized(mutex) {
-    sourceFoldersByModule[moduleName]?.sourceFolders
+  fun getSourceFolders(moduleName: String): MutableSet<String>? {
+    return synchronized(mutex) {
+      sourceFoldersByModule[moduleName]?.sourceFolders
+    }
   }
 
   private fun removeSourceFolder(url: String) {
@@ -149,9 +147,10 @@ class SourceFolderManagerImpl(
     }
 
     val job = coroutineScope.async {
+      val workspaceModel = project.serviceAsync<WorkspaceModel>()
       for ((key, values) in sourceFoldersToChange.keys.groupBy { it.project }) {
         withContext(Dispatchers.EDT) {
-          batchUpdateModelsInEdt(key, values) { model ->
+          batchUpdateModelsInEdt(key, values, workspaceModel) { model ->
             modifyModel(sourceFoldersToChange, model)
           }
         }
@@ -159,7 +158,6 @@ class SourceFolderManagerImpl(
     }
 
     if (ApplicationManager.getApplication().isUnitTestMode) {
-      ThreadingAssertions.assertEventDispatchThread()
       val completableFuture = job.asCompletableFuture()
       operationsStates.add(completableFuture)
       job.invokeOnCompletion {
@@ -194,9 +192,10 @@ class SourceFolderManagerImpl(
   }
 
   private fun updateSourceFolders(sourceFoldersToChange: Map<Module, List<Pair<VirtualFile, SourceFolderModel>>>) {
+    val workspaceModel = WorkspaceModel.getInstance(project)
     for ((key, values) in sourceFoldersToChange.keys.groupBy { it.project }) {
       ApplicationManager.getApplication().invokeAndWait {
-        batchUpdateModelsInEdt(key, values) { model ->
+        batchUpdateModelsInEdt(key, values, workspaceModel) { model ->
           modifyModel(sourceFoldersToChange, model)
         }
       }
@@ -223,9 +222,10 @@ class SourceFolderManagerImpl(
   private fun batchUpdateModelsInEdt(
     project: Project,
     modules: Collection<Module>,
+    workspaceModel: WorkspaceModel,
     modifier: (ModifiableRootModel) -> Unit,
   ) {
-    val diffBuilder = WorkspaceModel.getInstance(project).currentSnapshot.toBuilder()
+    val diffBuilder = workspaceModel.currentSnapshot.toBuilder()
     val modifiableRootModels = modules.asSequence().filter { !it.isDisposed }.map { module ->
       val moduleRootComponentBridge = ModuleRootManager.getInstance(module) as ModuleRootComponentBridge
       val modifiableRootModel = moduleRootComponentBridge.getModifiableModelForMultiCommit(ExternalSystemRootConfigurationAccessor(diffBuilder),
@@ -241,7 +241,7 @@ class SourceFolderManagerImpl(
         return@run
       }
 
-      WorkspaceModel.getInstance(project).updateProjectModel("Source folder manager: batch update models") { updater ->
+      workspaceModel.updateProjectModel("Source folder manager: batch update models") { updater ->
         updater.applyChangesFrom(diffBuilder)
       }
       modifiableRootModels.forEach { it.postCommit() }

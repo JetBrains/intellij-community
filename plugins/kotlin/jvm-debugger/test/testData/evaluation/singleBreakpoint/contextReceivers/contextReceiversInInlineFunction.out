@@ -14,6 +14,12 @@ Compile bytecode for foo2()
 Compile bytecode for this@Ctx1.bar()
 Compile bytecode for this@Ctx2.bar()
 InlineStackFrame foo (contextReceiversInInlineFunction.kt:31)
+    JavaValue[local] this (@Ctx1): forTests.Ctx1 = forTests.Ctx1@hashCode
+        JavaValue[field] name1: java.lang.String = ctx1 (contexts.kt:4)
+        JavaValue[field] name: java.lang.String = ctx1 (contexts.kt:5)
+    JavaValue[local] this (@Ctx2): forTests.Ctx2 = forTests.Ctx2@hashCode
+        JavaValue[field] name2: java.lang.String = ctx2 (contexts.kt:12)
+        JavaValue[field] name: java.lang.String = ctx2 (contexts.kt:13)
 InlineStackFrame lambda 'with' in 'main' (contextReceiversInInlineFunction.kt:37)
     JavaValue[local] this (@main_u24lambda_u241): forTests.Ctx1 = forTests.Ctx1@hashCode
         JavaValue[field] name1: java.lang.String = ctx1 (contexts.kt:4)

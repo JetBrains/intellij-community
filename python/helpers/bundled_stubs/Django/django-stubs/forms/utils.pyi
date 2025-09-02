@@ -1,7 +1,7 @@
 from collections import UserList
 from collections.abc import Mapping, Sequence
 from datetime import datetime
-from typing import Any
+from typing import Any, TypeAlias
 
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import UploadedFile
@@ -9,7 +9,6 @@ from django.forms.renderers import BaseRenderer
 from django.utils.datastructures import MultiValueDict
 from django.utils.functional import _StrOrPromise
 from django.utils.safestring import SafeString
-from typing_extensions import TypeAlias
 
 _DataT: TypeAlias = Mapping[str, Any]  # noqa: PYI047
 
@@ -63,11 +62,13 @@ class ErrorList(UserList[ValidationError | _StrOrPromise], RenderableErrorMixin)
     template_name_ul: str
     error_class: str
     renderer: BaseRenderer
+    field_name: str | None
     def __init__(
         self,
         initlist: ErrorList | Sequence[str | Exception] | None = None,
         error_class: str | None = None,
         renderer: BaseRenderer | None = None,
+        field_id: str | None = None,
     ) -> None: ...
     def as_data(self) -> list[ValidationError]: ...
     def get_json_data(self, escape_html: bool = False) -> list[dict[str, str]]: ...

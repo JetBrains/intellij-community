@@ -2,11 +2,13 @@
 package com.intellij.debugger.streams.core.lib;
 
 import com.intellij.debugger.streams.core.trace.CollectionTreeBuilder;
+import com.intellij.debugger.streams.core.trace.DebuggerCommandLauncher;
 import com.intellij.debugger.streams.core.trace.TraceExpressionBuilder;
 import com.intellij.debugger.streams.core.trace.XValueInterpreter;
 import com.intellij.debugger.streams.core.wrapper.StreamChainBuilder;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.xdebugger.XDebugSession;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,4 +41,7 @@ public interface LibrarySupportProvider {
 
   @NotNull
   LibrarySupport getLibrarySupport();
+
+  @NotNull
+  DebuggerCommandLauncher getDebuggerCommandLauncher(@NotNull XDebugSession session);
 }

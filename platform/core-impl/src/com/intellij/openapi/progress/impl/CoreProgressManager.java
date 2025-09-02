@@ -61,10 +61,10 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   private static final Map<ProgressIndicator, Set<Thread>> threadsUnderIndicator = new HashMap<>(); // guarded by threadsUnderIndicator
   // the active indicator for the thread id
   private static final ConcurrentLongObjectMap<ProgressIndicator> currentIndicators =
-    Java11Shim.Companion.getINSTANCE().createConcurrentLongObjectMap();
+    Java11Shim.INSTANCE.createConcurrentLongObjectMap();
   // top-level indicators for the thread id
   private static final ConcurrentLongObjectMap<ProgressIndicator> threadTopLevelIndicators =
-    Java11Shim.Companion.getINSTANCE().createConcurrentLongObjectMap();
+    Java11Shim.INSTANCE.createConcurrentLongObjectMap();
   // threads which are running under canceled indicator
   private static final Set<Thread> threadsUnderCanceledIndicator = new HashSet<>(); // guarded by threadsUnderIndicator
 
@@ -250,11 +250,12 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
     return  ((TitledIndicator)progress).getTitle();
   }
 
-  private static void logProcessIndicator(@Nullable ProgressIndicator progress, Boolean started) {
+  private static void logProcessIndicator(@Nullable ProgressIndicator progress, boolean started) {
     String progressText = getProgressIndicatorText(progress);
-    if (progressText == null) return;
     if (ApplicationManagerEx.isInIntegrationTest()) {
-      LOG.info("Progress indicator:" + (started ? "started" : "finished") + ":" + progressText);
+      if (progressText != null) {
+        LOG.info("Progress indicator:" + (started ? "started" : "finished") + ":" + progressText);
+      }
     }
   }
 

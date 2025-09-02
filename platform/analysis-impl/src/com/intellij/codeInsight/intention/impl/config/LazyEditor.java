@@ -26,17 +26,17 @@ import java.awt.geom.Point2D;
  */
 public class LazyEditor extends UserDataHolderBase implements Editor {
 
-  private final PsiFile myFile;
+  private final PsiFile myPsiFile;
   private Editor myEditor;
 
-  public LazyEditor(PsiFile file) {
-    myFile = file;
+  public LazyEditor(PsiFile psiFile) {
+    myPsiFile = psiFile;
   }
 
   private Editor getEditor() {
     if (myEditor == null) {
-      final Project project = myFile.getProject();
-      myEditor = FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, myFile.getVirtualFile(), 0), false);
+      final Project project = myPsiFile.getProject();
+      myEditor = FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, myPsiFile.getVirtualFile(), 0), false);
       assert myEditor != null;
     }
     return myEditor;

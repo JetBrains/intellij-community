@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.text;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -19,17 +19,23 @@ public final class SemVer implements Comparable<SemVer> {
   private final int myMinor;
   private final int myPatch;
   private final @Nullable String myPreRelease;
+  private final @Nullable String myBuildMeta;
 
   public SemVer(@NotNull String rawVersion, int major, int minor, int patch) {
-    this(rawVersion, major, minor, patch, null);
+    this(rawVersion, major, minor, patch, null, null);
   }
 
   public SemVer(@NotNull String rawVersion, int major, int minor, int patch, @Nullable String preRelease) {
+    this(rawVersion, major, minor, patch, preRelease, null);
+  }
+
+  public SemVer(@NotNull String rawVersion, int major, int minor, int patch, @Nullable String preRelease, @Nullable String buildMeta) {
     myRawVersion = rawVersion;
     myMajor = major;
     myMinor = minor;
     myPatch = patch;
     myPreRelease = preRelease;
+    myBuildMeta = buildMeta;
   }
 
   public @NotNull @NlsSafe String getRawVersion() {
@@ -52,8 +58,12 @@ public final class SemVer implements Comparable<SemVer> {
     return myPreRelease;
   }
 
+  public @Nullable @NlsSafe String getBuildMeta() {
+    return myBuildMeta;
+  }
+
   public @NotNull @NlsSafe String getParsedVersion() {
-    return myMajor + "." + myMinor + "." + myPatch + (myPreRelease != null ? "-" + myPreRelease : "");
+    return myMajor + "." + myMinor + "." + myPatch + (myPreRelease != null ? "-" + myPreRelease : "") + (myBuildMeta != null ? "+" + myBuildMeta : "");
   }
 
   @Override
@@ -93,7 +103,8 @@ public final class SemVer implements Comparable<SemVer> {
     return myMajor == semVer.myMajor
            && myMinor == semVer.myMinor
            && myPatch == semVer.myPatch
-           && Objects.equals(myPreRelease, semVer.myPreRelease);
+           && Objects.equals(myPreRelease, semVer.myPreRelease)
+           && Objects.equals(myBuildMeta, semVer.myBuildMeta);
   }
 
   @Override
@@ -103,6 +114,9 @@ public final class SemVer implements Comparable<SemVer> {
     result = 31 * result + myPatch;
     if (myPreRelease != null) {
       result = 31 * result + myPreRelease.hashCode();
+    }
+    if (myBuildMeta != null) {
+      result = 31 * result + myBuildMeta.hashCode();
     }
     return result;
   }
@@ -135,7 +149,6 @@ public final class SemVer implements Comparable<SemVer> {
 
       if (end1 < 0) end1 = length1;
       if (end2 < 0) end2 = length2;
-
 
       CharSequence segment1 = new CharSequenceSubSequence(pre1, start1, end1);
       CharSequence segment2 = new CharSequenceSubSequence(pre2, start2, end2);
@@ -180,15 +193,21 @@ public final class SemVer implements Comparable<SemVer> {
         int minorEndIdx = text.indexOf('.', majorEndIdx + 1);
         if (minorEndIdx >= 0) {
           int preReleaseIdx = text.indexOf('-', minorEndIdx + 1);
-          int patchEndIdx = preReleaseIdx >= 0 ? preReleaseIdx : text.length();
+          int buildMetaIdx = text.indexOf('+', minorEndIdx + 1);
+          int patchEndIdx = preReleaseIdx >= 0 && buildMetaIdx >= 0
+                            ? Math.min(preReleaseIdx, buildMetaIdx)
+                            : (preReleaseIdx >= 0 || buildMetaIdx >= 0 ? Math.max(preReleaseIdx, buildMetaIdx) : text.length());
 
           int major = StringUtilRt.parseInt(text.substring(0, majorEndIdx), -1);
           int minor = StringUtilRt.parseInt(text.substring(majorEndIdx + 1, minorEndIdx), -1);
           int patch = StringUtilRt.parseInt(text.substring(minorEndIdx + 1, patchEndIdx), -1);
-          String preRelease = preReleaseIdx >= 0 ? text.substring(preReleaseIdx + 1) : null;
+
+          String preRelease = preReleaseIdx >= 0 && (buildMetaIdx < 0 || preReleaseIdx < buildMetaIdx)
+                              ? text.substring(preReleaseIdx + 1, buildMetaIdx >= 0 ? buildMetaIdx : text.length()) : null;
+          String buildMeta = buildMetaIdx >= 0 ? text.substring(buildMetaIdx + 1) : null;
 
           if (major >= 0 && minor >= 0 && patch >= 0) {
-            return new SemVer(text, major, minor, patch, preRelease);
+            return new SemVer(text, major, minor, patch, preRelease, buildMeta);
           }
         }
       }

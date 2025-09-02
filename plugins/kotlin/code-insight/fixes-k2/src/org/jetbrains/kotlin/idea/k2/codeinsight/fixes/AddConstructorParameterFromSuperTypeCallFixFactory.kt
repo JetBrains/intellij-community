@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaParameterSymbol
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.AddConstructorParameterFromSuperTypeCallFix
+import org.jetbrains.kotlin.psi.KtEnumEntry
 import org.jetbrains.kotlin.psi.KtSuperTypeCallEntry
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.renderer.render
@@ -25,6 +26,8 @@ internal object AddConstructorParameterFromSuperTypeCallFixFactory {
         val parameterIndex = containingSymbol.valueParameters.indexOf(parameterSymbol)
         val superTypeCall = superTypeCallEntry.resolveToCall()?.singleConstructorCallOrNull() ?: return null
         val containingClass = superTypeCallEntry.containingClass() ?: return null
+        // Enum entries are classes but cannot have parameters added to their constructors.
+        if (containingClass is KtEnumEntry) return null
 
         if (parameterIndex != valueArgumentList.arguments.size) return null
         val primaryConstructor = containingClass.primaryConstructor

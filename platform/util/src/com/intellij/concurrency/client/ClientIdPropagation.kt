@@ -36,10 +36,12 @@ fun captureClientIdInRunnable(runnable: Runnable): Runnable = captureClientIdInR
 @ApiStatus.Internal
 fun <T> captureClientIdInCallable(callable: Callable<T>): Callable<T> = captureClientIdInCallableFun.get()(callable) as Callable<T>
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("ClientId propagation is handled by context propagation. You don't need to do it manually. The method will be removed soon.")
 @ApiStatus.Internal
 fun <T> captureClientIdInProcessor(processor: Processor<T>): Processor<T> = processor
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("ClientId propagation is handled by context propagation. You don't need to do it manually. The method will be removed soon.")
 @ApiStatus.Internal
 fun <T> captureClientId(action: () -> T): () -> T = action

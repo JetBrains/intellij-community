@@ -3,19 +3,20 @@ package com.intellij.lang;
 
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 @ApiStatus.Internal
-public final class LanguageExtensionWithAny<T> extends LanguageExtension<T> {
+public class LanguageExtensionWithAny<T> extends LanguageExtension<T> {
   public LanguageExtensionWithAny(String epName) {
     super(epName);
   }
 
   @Override
-  protected @NotNull List<T> buildExtensions(@NotNull String stringKey, @NotNull Language key) {
+  protected @NotNull @Unmodifiable List<T> buildExtensions(@NotNull String stringKey, @NotNull Language key) {
     return buildExtensions(getAllBaseLanguageIdsWithAny(key));
   }
 
@@ -34,7 +35,7 @@ public final class LanguageExtensionWithAny<T> extends LanguageExtension<T> {
     }
   }
 
-  private @NotNull Set<String> getAllBaseLanguageIdsWithAny(@NotNull Language key) {
+  private @NotNull @Unmodifiable Set<String> getAllBaseLanguageIdsWithAny(@NotNull Language key) {
     Set<String> allowed = new HashSet<>();
     while (key != null) {
       allowed.add(keyToString(key));

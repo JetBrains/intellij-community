@@ -156,7 +156,7 @@ object SourceRootPropertiesHelper {
       JpsJavaModelSerializerExtension.JAVA_RESOURCE_ROOT_ID, JpsJavaModelSerializerExtension.JAVA_TEST_RESOURCE_ROOT_ID -> {
         val javaResourceRoot = entity.asJavaResourceRoot()
         javaExtensionService.createResourceRootProperties(
-          javaResourceRoot?.relativeOutputPath ?: "", false)
+          javaResourceRoot?.relativeOutputPath ?: "", javaResourceRoot?.generated ?: false)
       }
 
       else -> loadCustomRootProperties(entity, rootType)

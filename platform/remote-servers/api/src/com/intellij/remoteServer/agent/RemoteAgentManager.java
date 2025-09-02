@@ -5,7 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.util.List;
 
 @ApiStatus.Internal
@@ -16,7 +16,7 @@ public abstract class RemoteAgentManager {
   }
 
   public abstract <T extends RemoteAgent> T createAgent(RemoteAgentProxyFactory agentProxyFactory,
-                                                        List<? extends File> instanceLibraries,
+                                                        List<Path> instanceLibraries,
                                                         List<Class<?>> commonJarClasses,
                                                         String specificsRuntimeModuleName,
                                                         String specificsBuildJarPath,
@@ -31,7 +31,7 @@ public abstract class RemoteAgentManager {
                                                                         @NotNull Class<?> pluginClass);
 
   public abstract static class Builder<T extends RemoteAgent> {
-    public abstract Builder<T> withInstanceLibraries(@NotNull List<? extends File> libraries);
+    public abstract Builder<T> withInstanceLibraries(List<Path> libraries);
 
     /**
      * @param rtClass "independent" class from *.rt module, without dependency to the rest of IDEA. Since the whole module

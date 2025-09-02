@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.SimplifyBooleanExpressionFix;
@@ -17,6 +17,7 @@ import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -101,9 +102,9 @@ public final class ConstantValueInspection extends AbstractBaseJavaLocalInspecti
       private void checkSwitchCaseGuard(@Nullable PsiExpression guard) {
         if (guard == null) return;
         if (BoolUtils.isTrue(guard)) {
-          LocalQuickFix fix = createSimplifyBooleanExpressionFix(guard, guard.textMatches(PsiKeyword.TRUE));
+          LocalQuickFix fix = createSimplifyBooleanExpressionFix(guard, guard.textMatches(JavaKeywords.TRUE));
           holder.registerProblem(guard, JavaAnalysisBundle
-            .message("dataflow.message.constant.no.ref", guard.textMatches(PsiKeyword.TRUE) ? 1 : 0), LocalQuickFix.notNullElements(fix));
+            .message("dataflow.message.constant.no.ref", guard.textMatches(JavaKeywords.TRUE) ? 1 : 0), LocalQuickFix.notNullElements(fix));
         }
       }
 
@@ -111,16 +112,16 @@ public final class ConstantValueInspection extends AbstractBaseJavaLocalInspecti
       public void visitIfStatement(@NotNull PsiIfStatement statement) {
         PsiExpression condition = PsiUtil.skipParenthesizedExprDown(statement.getCondition());
         if (BoolUtils.isBooleanLiteral(condition)) {
-          LocalQuickFix fix = createSimplifyBooleanExpressionFix(condition, condition.textMatches(PsiKeyword.TRUE));
+          LocalQuickFix fix = createSimplifyBooleanExpressionFix(condition, condition.textMatches(JavaKeywords.TRUE));
           holder.registerProblem(condition, JavaAnalysisBundle
-            .message("dataflow.message.constant.no.ref", condition.textMatches(PsiKeyword.TRUE) ? 1 : 0), LocalQuickFix.notNullElements(fix));
+            .message("dataflow.message.constant.no.ref", condition.textMatches(JavaKeywords.TRUE) ? 1 : 0), LocalQuickFix.notNullElements(fix));
         }
       }
 
       @Override
       public void visitDoWhileStatement(@NotNull PsiDoWhileStatement statement) {
         PsiExpression condition = PsiUtil.skipParenthesizedExprDown(statement.getCondition());
-        if (condition != null && condition.textMatches(PsiKeyword.FALSE)) {
+        if (condition != null && condition.textMatches(JavaKeywords.FALSE)) {
           LocalQuickFix fix = createSimplifyBooleanExpressionFix(condition, false);
           if (fix != null) {
             holder.registerProblem(condition, JavaAnalysisBundle.message("dataflow.message.constant.no.ref", 0),

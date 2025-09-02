@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.providers.vswin.utilities.registryUtils.impl
 
 import com.intellij.ide.startup.importSettings.providers.vswin.utilities.registryUtils.IRegistryKey
@@ -9,7 +9,6 @@ import com.jetbrains.rd.util.lifetime.throwIfNotAlive
 import com.sun.jna.platform.win32.Advapi32
 import com.sun.jna.platform.win32.Advapi32Util
 import com.sun.jna.platform.win32.WinReg
-import java.util.*
 
 typealias WinRegAction<T> = (WinReg.HKEY) -> T
 
@@ -24,13 +23,16 @@ class RegistryKey internal constructor(val key: String, private val registryRoot
     }
 
     override fun getStringValue(value: String): String? = tryExecuteWithHKEY(key, value) {
-        if (!Advapi32Util.registryKeyExists(it, key)) {
+        if (!Advapi32Util.registryValueExists(it, key, value)) {
             return@tryExecuteWithHKEY null
         }
         return@tryExecuteWithHKEY Advapi32Util.registryGetStringValue(it, key, value)
     }
     override fun getKeys(): List<String>? = tryExecuteWithHKEY(key) { Advapi32Util.registryGetKeys(it, key) }?.toList()
-    override fun getValues(): TreeMap<String, Any>? = tryExecuteWithHKEY(key) { Advapi32Util.registryGetValues(it, key) }
+    override fun getValues(): Map<String, Any>? = tryExecuteWithHKEY(key) {
+      if (!Advapi32Util.registryKeyExists(it, key)) return@tryExecuteWithHKEY null
+      Advapi32Util.registryGetValues(it, key)
+    }
 
     private fun <T> tryExecuteWithHKEY(vararg args: String, action: WinRegAction<T>): T? {
         return registryRoot.executeWithHKEY {

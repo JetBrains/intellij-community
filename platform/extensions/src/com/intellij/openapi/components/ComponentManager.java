@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.components;
 
 import com.intellij.diagnostic.ActivityCategory;
@@ -11,10 +11,7 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.util.messages.MessageBus;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.Collections;
 import java.util.List;
@@ -61,9 +58,6 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
   @ApiStatus.Internal
   boolean isInjectionForExtensionSupported();
 
-  /**
-   * @see com.intellij.application.Topics#subscribe
-   */
   @NotNull MessageBus getMessageBus();
 
   /**
@@ -90,7 +84,7 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
    */
   @ApiStatus.Internal
   @ApiStatus.Experimental
-  default @NotNull <T> List<T> getServices(@NotNull Class<T> serviceClass, ClientKind client) {
+  default @NotNull @Unmodifiable <T> List<T> getServices(@NotNull Class<T> serviceClass, ClientKind client) {
     T service = getService(serviceClass);
     //noinspection SSBasedInspection
     return service == null ? Collections.emptyList() : Collections.singletonList(service);

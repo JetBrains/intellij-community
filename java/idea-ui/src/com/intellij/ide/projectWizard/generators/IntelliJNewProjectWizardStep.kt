@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectWizard.generators
 
 import com.intellij.ide.JavaUiBundle
@@ -10,6 +10,7 @@ import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logS
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Intellij.logContentRootChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Intellij.logModuleFileLocationChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Intellij.logModuleNameChanged
+import com.intellij.ide.projectWizard.ProjectWizardJdkIntent
 import com.intellij.ide.projectWizard.projectWizardJdkComboBox
 import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.ide.util.projectWizard.ProjectWizardUtil
@@ -17,7 +18,7 @@ import com.intellij.ide.wizard.AbstractNewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardBaseData
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardStep.Companion.ADD_SAMPLE_CODE_PROPERTY_NAME
-import com.intellij.ide.wizard.NewProjectWizardStep.Companion.MODIFIABLE_MODULE_MODEL_KEY
+import com.intellij.ide.wizard.setupProjectFromBuilder
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.Module
@@ -46,6 +47,7 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
   where ParentStep : NewProjectWizardStep,
         ParentStep : NewProjectWizardBaseData {
 
+  final override val jdkIntentProperty = propertyGraph.property<ProjectWizardJdkIntent?>(null)
   final override val sdkProperty = propertyGraph.property<Sdk?>(null)
   final override val sdkDownloadTaskProperty = propertyGraph.property<SdkDownloadTask?>(null)
   final override val moduleNameProperty = propertyGraph.lazyProperty(::suggestModuleName)
@@ -54,6 +56,7 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
   final override val addSampleCodeProperty = propertyGraph.property(true)
     .bindBooleanStorage(ADD_SAMPLE_CODE_PROPERTY_NAME)
 
+  final override var jdkIntent by jdkIntentProperty
   final override var sdk by sdkProperty
   final override var sdkDownloadTask by sdkDownloadTaskProperty
   final override var moduleName by moduleNameProperty
@@ -230,10 +233,7 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
 
   fun setupProject(project: Project, builder: ModuleBuilder) {
     configureModuleBuilder(project, builder)
-
-    val model = context.getUserData(MODIFIABLE_MODULE_MODEL_KEY)
-    val module = builder.commit(project, model)?.singleOrNull()
-
-    module?.let(::startJdkDownloadIfNeeded)
+    setupProjectFromBuilder(project, builder)
+      ?.let(::startJdkDownloadIfNeeded)
   }
 }

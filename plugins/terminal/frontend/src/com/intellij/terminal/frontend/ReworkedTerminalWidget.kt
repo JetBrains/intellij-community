@@ -4,6 +4,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.terminal.TerminalTitle
 import com.intellij.terminal.session.TerminalSession
 import com.intellij.terminal.ui.TerminalWidget
@@ -68,8 +69,15 @@ internal class ReworkedTerminalWidget(
     view.sendCommandToExecute(shellCommand)
   }
 
+  override fun getText(): CharSequence {
+    return view.getText()
+  }
+
   override fun isCommandRunning(): Boolean {
-    return view.isCommandRunning()
+    val session = session ?: return false
+    return runWithModalProgressBlocking(project, "") {
+      session.hasRunningCommands()
+    }
   }
 
   override fun addTerminationCallback(onTerminated: Runnable, parentDisposable: Disposable) {

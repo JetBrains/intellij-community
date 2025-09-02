@@ -4,11 +4,14 @@ package org.jetbrains.plugins.gitlab.authentication.accounts
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.gitlab.authentication.GitLabLoginSource
 import org.jetbrains.plugins.gitlab.exception.GitLabHttpStatusErrorAction
 import javax.swing.Action
 
-internal interface GitLabAccountViewModel {
-  fun loginAction(): Action
+@ApiStatus.Internal
+interface GitLabAccountViewModel {
+  fun loginAction(loginSource: GitLabLoginSource): Action
 }
 
 internal class GitLabAccountViewModelImpl(
@@ -19,7 +22,7 @@ internal class GitLabAccountViewModelImpl(
 ) : GitLabAccountViewModel {
   private val cs: CoroutineScope = parentCs.childScope("GitLab Account VM")
 
-  override fun loginAction(): Action {
-    return GitLabHttpStatusErrorAction.LogInAgain(project, cs, account, accountManager)
+  override fun loginAction(loginSource: GitLabLoginSource): Action {
+    return GitLabHttpStatusErrorAction.LogInAgain(project, cs, account, accountManager, loginSource)
   }
 }

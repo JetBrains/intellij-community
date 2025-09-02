@@ -9,10 +9,10 @@ import com.jetbrains.python.mapResult
 import org.apache.tuweni.toml.TomlArray
 import org.apache.tuweni.toml.TomlTable
 import org.jetbrains.annotations.ApiStatus.Internal
-import org.toml.lang.psi.TomlKeyValue as PsiTomlKeyValue
-import org.toml.lang.psi.TomlTable as PsiTomlTable
-import org.toml.lang.psi.TomlLiteral as PsiTomlLiteral
 import kotlin.reflect.KClass
+import org.toml.lang.psi.TomlKeyValue as PsiTomlKeyValue
+import org.toml.lang.psi.TomlLiteral as PsiTomlLiteral
+import org.toml.lang.psi.TomlTable as PsiTomlTable
 
 /**
  * The error union used by [TomlTable.safeGet], [TomlTable.safeGetRequired] and [TomlTable.safeGetArr].

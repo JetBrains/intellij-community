@@ -288,20 +288,14 @@ private fun KotlinMppGradleProjectResolver.Context.createMppGradleSourceSetDataN
                 it.group = externalProject.group
                 it.version = externalProject.version
 
-                when (compilation.name) {
-                    KotlinCompilation.MAIN_COMPILATION_NAME -> {
-                        it.publication = ProjectId(externalProject.group, externalProject.name, externalProject.version)
-                    }
-
-                    KotlinCompilation.TEST_COMPILATION_NAME -> {
-                        it.productionModuleId = getInternalModuleName(
-                            gradleModule,
-                            externalProject,
-                            compilation,
-                            resolverCtx,
-                            KotlinCompilation.MAIN_COMPILATION_NAME
-                        )
-                    }
+                if (compilation.name == KotlinCompilation.TEST_COMPILATION_NAME) {
+                    it.productionModuleId = getInternalModuleName(
+                        gradleModule,
+                        externalProject,
+                        compilation,
+                        resolverCtx,
+                        KotlinCompilation.MAIN_COMPILATION_NAME
+                    )
                 }
 
                 it.ideModuleGroup = moduleGroup
@@ -365,12 +359,10 @@ private fun KotlinMppGradleProjectResolver.Context.createMppGradleSourceSetDataN
         targetData.moduleIds = compilationIds
     }
 
-    val ignoreCommonSourceSets by lazy { externalProject.notImportedCommonSourceSets() }
     for (sourceSet in mppModel.sourceSetsByName.values) {
         if (shouldDelegateToOtherPlugin(sourceSet)) continue
 
         val platform = sourceSet.actualPlatforms.platforms.singleOrNull()
-        if (platform == KotlinPlatform.COMMON && ignoreCommonSourceSets) continue
         val moduleId = KotlinModuleUtils.getKotlinModuleId(gradleModule, sourceSet, resolverCtx)
         val existingSourceSetDataNode = sourceSetMap[moduleId]?.first
         if (existingSourceSetDataNode?.kotlinSourceSetData != null) continue
@@ -558,13 +550,6 @@ private val IdeaModule.jdkNameIfAny
     } catch (e: UnsupportedMethodException) {
         null
     }
-
-private fun ExternalProject.notImportedCommonSourceSets() =
-    GradlePropertiesFileFacade.forExternalProject(this)
-        .readProperty(GradlePropertiesFileFacade.KOTLIN_NOT_IMPORTED_COMMON_SOURCE_SETS_SETTING)?.equals(
-            "true",
-            ignoreCase = true
-        ) ?: false
 
 private fun KotlinPlatform.isNotSupported() = IdePlatformKindTooling.getToolingIfAny(this) == null
 

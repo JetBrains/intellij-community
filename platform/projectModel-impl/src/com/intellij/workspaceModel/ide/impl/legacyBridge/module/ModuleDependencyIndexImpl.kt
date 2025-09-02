@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.ExtensionPointPriorityListener
 import com.intellij.openapi.extensions.PluginDescriptor
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
@@ -39,7 +40,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.util.function.Supplier
 
 @ApiStatus.Internal
-class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyIndex, Disposable {
+open class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyIndex, Disposable {
   companion object {
     @JvmStatic
     private val LOG = logger<ModuleDependencyIndexImpl>()
@@ -283,6 +284,7 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
     }
 
     fun hasDependencyOn(library: Library): Boolean {
+      ProgressManager.checkCanceled()
       return when (library) {
         is LibraryBridge -> hasDependencyOn(library.libraryId)
         is LibraryModifiableModelBridge -> hasDependencyOn(library.libraryId)

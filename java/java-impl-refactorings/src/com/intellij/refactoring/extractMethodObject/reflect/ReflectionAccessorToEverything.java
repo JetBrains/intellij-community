@@ -1,13 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethodObject.reflect;
 
 import com.intellij.psi.*;
 import com.intellij.refactoring.extractMethodObject.ItemToReplaceDescriptor;
-import com.intellij.refactoring.util.LambdaRefactoringUtil;
+import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 public class ReflectionAccessorToEverything {
@@ -20,20 +22,17 @@ public class ReflectionAccessorToEverything {
   }
 
   public void grantAccessThroughReflection(@NotNull PsiMethodCallExpression generatedMethodCall) {
-    MyInaccessibleMethodReferencesVisitor methodReferencesVisitor = new MyInaccessibleMethodReferencesVisitor();
-    myOuterClass.accept(methodReferencesVisitor);
-    methodReferencesVisitor.replaceAll();
-
-    MyInaccessibleItemsVisitor inaccessibleItemsVisitor = new MyInaccessibleItemsVisitor();
-    myOuterClass.accept(inaccessibleItemsVisitor);
-
-    inaccessibleItemsVisitor.myReplaceDescriptors
-      .forEach(descriptor -> descriptor.replace(myOuterClass, myElementFactory, generatedMethodCall));
+    replaceAll(new MyInaccessibleMethodReferencesVisitor(), generatedMethodCall);
+    replaceAll(new MyInaccessibleFieldVisitor(), generatedMethodCall);
+    replaceAll(new MyInaccessibleItemsVisitor(), generatedMethodCall);
   }
 
-  private class MyInaccessibleItemsVisitor extends JavaRecursiveElementVisitor {
-    private final List<ItemToReplaceDescriptor> myReplaceDescriptors = new ArrayList<>();
+  private void replaceAll(ReplaceVisitor visitor, @NotNull PsiMethodCallExpression generatedMethodCall) {
+    myOuterClass.accept(visitor);
+    visitor.getReplaceDescriptors().forEach(descriptor -> descriptor.replace(myOuterClass, myElementFactory, generatedMethodCall));
+  }
 
+  private class MyInaccessibleItemsVisitor extends ReplaceVisitor {
     @Override
     public void visitParameter(@NotNull PsiParameter parameter) {
       super.visitParameter(parameter);
@@ -84,28 +83,42 @@ public class ReflectionAccessorToEverything {
       super.visitMethodCallExpression(expression);
       addIfNotNull(MethodDescriptor.createIfInaccessible(myOuterClass, expression));
     }
+  }
 
-    private void addIfNotNull(@Nullable ItemToReplaceDescriptor descriptor) {
+  private class MyInaccessibleFieldVisitor extends ReplaceVisitor {
+    @Override
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
+      super.visitReferenceExpression(expression);
+      addIfNotNull(FieldDescriptor.createIfInaccessible(myOuterClass, expression));
+    }
+
+    @Override
+    public @Unmodifiable List<ItemToReplaceDescriptor> getReplaceDescriptors() {
+      // first access descriptors, then update descriptors
+      return ContainerUtil.sorted(super.getReplaceDescriptors(),
+                                  Comparator.comparing(d -> d instanceof FieldDescriptor fieldDescriptor && fieldDescriptor.isUpdate()));
+    }
+  }
+
+  private static class MyInaccessibleMethodReferencesVisitor extends ReplaceVisitor {
+    @Override
+    public void visitMethodReferenceExpression(@NotNull PsiMethodReferenceExpression expression) {
+      super.visitMethodReferenceExpression(expression);
+      addIfNotNull(MethodReferenceDescriptor.createIfInaccessible(expression));
+    }
+  }
+
+  private abstract static class ReplaceVisitor extends JavaRecursiveElementVisitor {
+    private final List<ItemToReplaceDescriptor> myReplaceDescriptors = new SmartList<>();
+
+    void addIfNotNull(@Nullable ItemToReplaceDescriptor descriptor) {
       if (descriptor != null) {
         myReplaceDescriptors.add(descriptor);
       }
     }
-  }
 
-  private static class MyInaccessibleMethodReferencesVisitor extends JavaRecursiveElementVisitor {
-    private final List<PsiMethodReferenceExpression> myMethodReferencesToReplace = new ArrayList<>();
-
-    @Override
-    public void visitMethodReferenceExpression(@NotNull PsiMethodReferenceExpression expression) {
-      if (!PsiReflectionAccessUtil.isAccessibleMethodReference(expression)) {
-        myMethodReferencesToReplace.add(expression);
-      }
-    }
-
-    private void replaceAll() {
-      for (PsiMethodReferenceExpression referenceExpression : myMethodReferencesToReplace) {
-        LambdaRefactoringUtil.convertMethodReferenceToLambda(referenceExpression, false, true);
-      }
+    public @Unmodifiable List<ItemToReplaceDescriptor> getReplaceDescriptors() {
+      return myReplaceDescriptors;
     }
   }
 }

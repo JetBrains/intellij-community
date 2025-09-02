@@ -121,7 +121,7 @@ public final class SettingsEntryPointAction extends ActionGroup
   public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setPerformGroup(true);
     e.getPresentation().setPopupGroup(true);
-    e.getPresentation().putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true);
+    e.getPresentation().putClientProperty(ActionUtil.HIDE_DROPDOWN_ICON, true);
     Presentation presentation = e.getPresentation();
     if (e.isFromActionToolbar()) {
       presentation.setText("");

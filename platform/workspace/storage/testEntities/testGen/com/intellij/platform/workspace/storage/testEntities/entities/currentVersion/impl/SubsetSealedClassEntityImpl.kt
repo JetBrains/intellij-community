@@ -20,10 +20,10 @@ import com.intellij.platform.workspace.storage.testEntities.entities.currentVers
 import com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.SubsetSealedClassEntity
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(6)
+@GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class SubsetSealedClassEntityImpl(private val dataSource: SubsetSealedClassEntityData) : SubsetSealedClassEntity, WorkspaceEntityBase(
-  dataSource) {
+internal class SubsetSealedClassEntityImpl(private val dataSource: SubsetSealedClassEntityData) : SubsetSealedClassEntity,
+                                                                                                  WorkspaceEntityBase(dataSource) {
 
   private companion object {
 
@@ -50,8 +50,8 @@ internal class SubsetSealedClassEntityImpl(private val dataSource: SubsetSealedC
   }
 
 
-  internal class Builder(result: SubsetSealedClassEntityData?) : ModifiableWorkspaceEntityBase<SubsetSealedClassEntity, SubsetSealedClassEntityData>(
-    result), SubsetSealedClassEntity.Builder {
+  internal class Builder(result: SubsetSealedClassEntityData?) :
+    ModifiableWorkspaceEntityBase<SubsetSealedClassEntity, SubsetSealedClassEntityData>(result), SubsetSealedClassEntity.Builder {
     internal constructor() : this(SubsetSealedClassEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -148,7 +148,8 @@ internal class SubsetSealedClassEntityData : WorkspaceEntityData<SubsetSealedCla
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.SubsetSealedClassEntity") as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.SubsetSealedClassEntity"
+    ) as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

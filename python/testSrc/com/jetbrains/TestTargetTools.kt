@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains
 
 import com.intellij.execution.processTools.getBareExecutionResult
@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.util.concurrency.ThreadingAssertions
+import com.jetbrains.python.PYTHON_VERSION_ARG
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.sdk.configureBuilderToRunPythonOnTarget
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
@@ -29,7 +30,7 @@ internal suspend fun getPythonVersion(sdk: Sdk, request: TargetEnvironmentReques
 internal suspend fun getPythonVersion(commandLineBuilder: TargetedCommandLineBuilder,
                                       flavor: PythonSdkFlavor<*>,
                                       request: TargetEnvironmentRequest): String? {
-  commandLineBuilder.addParameter(PythonSdkFlavor.PYTHON_VERSION_ARG)
+  commandLineBuilder.addParameter(PYTHON_VERSION_ARG)
   val commandLine = commandLineBuilder.build()
   val result = request
     .prepareEnvironment(TargetProgressIndicator.EMPTY)

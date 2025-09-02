@@ -130,7 +130,7 @@ public class LazyQuickFixTest extends LightQuickFixTestCase {
                 }
 
                 @Override
-                public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
+                public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) {
                   invoked = true;
                 }
               });
@@ -174,6 +174,7 @@ public class LazyQuickFixTest extends LightQuickFixTestCase {
     assertTrue(String.valueOf(infos), ContainerUtil.exists(infos, h-> "Cannot resolve method 'fooooo' in 'AClass'".equals(h.getDescription())));
     CodeInsightTestFixtureImpl.waitForLazyQuickFixesUnderCaret(getFile(), getEditor());
     assertSize(1, regFixCalled); // now must compute, since it's close to the caret
+    Disposer.dispose(resolveInBackground);
   }
 
   private static class MyLazyFixHighlightVisitor implements HighlightVisitor {
@@ -182,7 +183,7 @@ public class LazyQuickFixTest extends LightQuickFixTestCase {
     private HighlightInfoHolder myHolder;
 
     @Override
-    public boolean suitableForFile(@NotNull PsiFile file) {
+    public boolean suitableForFile(@NotNull PsiFile psiFile) {
       return true;
     }
 
@@ -202,7 +203,7 @@ public class LazyQuickFixTest extends LightQuickFixTestCase {
     }
 
     @Override
-    public boolean analyze(@NotNull PsiFile file,
+    public boolean analyze(@NotNull PsiFile psiFile,
                            boolean updateWholeFile,
                            @NotNull HighlightInfoHolder holder,
                            @NotNull Runnable action) {

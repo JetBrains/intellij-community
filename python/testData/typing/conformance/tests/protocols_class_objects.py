@@ -93,6 +93,9 @@ class ConcreteC2:
 class CMeta(type):
     attr1: int
 
+    def __init__(self, attr1: int) -> None:
+        self.attr1 = attr1
+
 
 class ConcreteC3(metaclass=CMeta):
     pass

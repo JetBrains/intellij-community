@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.jetbrains.performancePlugin.remotedriver.dataextractor
 
@@ -42,8 +42,8 @@ object TextParser {
     return thisText + ((currentComponent as? Container)?.components?.flatMap { gatherExtraTextRec(baseComponent, it) } ?: emptyList())
   }
 
-  fun parseCellRenderer(component: Component): List<String> {
-    val data = mutableListOf<String>()
+  fun parseCellRenderer(component: Component): List<TextData> {
+    val data = mutableListOf<TextData>()
 
     val g = CellReaderGraphics2d(graphics, data)
     parseData(g, component)

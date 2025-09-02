@@ -25,8 +25,8 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.SingleSelectionModel;
 import com.intellij.ui.*;
+import com.intellij.ui.SingleSelectionModel;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.content.Content;
@@ -53,6 +53,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+@ApiStatus.Internal
 public final class RangeSearch implements RangeSearchTask.Callback {
 
   public static final Key<RangeSearch> KEY = new Key<>("lfe.searchResultsToolWindow");
@@ -592,12 +593,12 @@ public final class RangeSearch implements RangeSearchTask.Callback {
   }
 
   @TestOnly
-  void addEdtRangeSearchEventsListener(EdtRangeSearchEventsListener listener) {
+  public void addEdtRangeSearchEventsListener(EdtRangeSearchEventsListener listener) {
     myEdtRangeSearchEventsListeners.add(listener);
   }
 
   @TestOnly
-  void removeEdtRangeSearchEventsListener(EdtRangeSearchEventsListener listener) {
+  public void removeEdtRangeSearchEventsListener(EdtRangeSearchEventsListener listener) {
     myEdtRangeSearchEventsListeners.remove(listener);
   }
 

@@ -31,6 +31,9 @@ public interface PyClassStub extends NamedStub<PyClass>, PyVersionSpecificStub {
   List<String> getSlots();
 
   @Nullable
+  List<String> getMatchArgs();
+
+  @Nullable
   String getDocString();
 
   @Nullable

@@ -1,8 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.startup;
 
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
 import kotlinx.coroutines.Job;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -17,16 +18,19 @@ public abstract class StartupManager {
   /**
    * @return Startup manager instance for the specified project.
    */
+  @RequiresBlockingContext
   public static StartupManager getInstance(@NotNull Project project) {
     return project.getService(StartupManager.class);
   }
 
   /**
-   * Registers an activity that is performed during the project load while the "Loading Project"
-   * progress bar is displayed.
+   * Registers an activity performed during the project load while the "Loading Project" progress bar is displayed.
    * You may NOT access PSI from this activity.
+   * @deprecated Do not use.
    */
   @ApiStatus.Internal
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public abstract void registerStartupActivity(@NotNull Runnable runnable);
 
   /**

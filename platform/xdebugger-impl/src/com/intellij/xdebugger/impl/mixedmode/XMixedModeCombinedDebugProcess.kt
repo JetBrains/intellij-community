@@ -9,7 +9,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.xdebugger.*
 import com.intellij.xdebugger.breakpoints.XBreakpointHandler
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
-import com.intellij.xdebugger.evaluation.XDebuggerEvaluator
 import com.intellij.xdebugger.frame.XDropFrameHandler
 import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.frame.XValueMarkerProvider
@@ -74,7 +73,7 @@ class XMixedModeCombinedDebugProcess(
       while (true) {
         when(val newState = stateMachine.stateChannel.receive()) {
           is BothStopped -> {
-            val ctx = XMixedModeSuspendContext(session, newState.low, newState.high, lowExtension, coroutineScope)
+            val ctx = XMixedModeSuspendContext(session, newState.low, newState.high, lowExtension, stateMachine.suspendContextCoroutine)
             withContext(Dispatchers.EDT) {
               positionReachedInProgress = true
               try {
@@ -308,5 +307,10 @@ class XMixedModeCombinedDebugProcess(
     val actionSuspendContext = if (isLowLevelStep) suspendContext.lowLevelDebugSuspendContext else suspendContext.highLevelDebugSuspendContext
     val state = if (isLowLevelStep) LowLevelRunToAddress(position, actionSuspendContext) else HighLevelRunToAddress(position, actionSuspendContext)
     this.stateMachine.set(state)
+  }
+
+  fun setNextStatement(position: XSourcePosition) {
+    assert(highExtension.belongsToMe(position.file)) // this operation isn't implemented for a low-level debug process
+    stateMachine.set(MixedModeProcessTransitionStateMachine.HighLevelSetNextStatementRequested(position))
   }
 }

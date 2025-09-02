@@ -1,0 +1,4 @@
+<idea-plugin>
+  <id>someId</id>
+  <depends optional="true" config-file="a.xml">a</depends>
+</idea-plugin>

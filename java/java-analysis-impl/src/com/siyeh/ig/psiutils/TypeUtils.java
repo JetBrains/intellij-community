@@ -16,6 +16,7 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInspection.util.OptionalUtil;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -320,11 +321,11 @@ public final class TypeUtils {
       return "(byte)0";
     }
     else if (PsiTypes.booleanType().equals(type)) {
-      return PsiKeyword.FALSE;
+      return JavaKeywords.FALSE;
     }
     else if (PsiTypes.charType().equals(type)) {
       return "'\0'";
     }
-    return PsiKeyword.NULL;
+    return JavaKeywords.NULL;
   }
 }

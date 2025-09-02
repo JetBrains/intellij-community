@@ -13,7 +13,6 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.roots.ProjectRootManager
-import com.intellij.util.SystemProperties
 
 internal class ProjectSdkDataService : AbstractProjectDataService<ProjectSdkData, Project?>() {
   override fun getTargetDataKey() = ProjectSdkData.KEY
@@ -26,8 +25,7 @@ internal class ProjectSdkDataService : AbstractProjectDataService<ProjectSdkData
   ) {
     if (toImport.isEmpty() || projectData == null) return
     require(toImport.size == 1) { String.format("Expected to get a single project but got %d: %s", toImport.size, toImport) }
-    if (!ExternalSystemApiUtil.isOneToOneMapping(project, projectData, modelsProvider.modules) &&
-        !SystemProperties.getBooleanProperty("gradle.force.project.sdk.import", false)) return
+    if (!ExternalSystemApiUtil.isOneToOneMapping(project, projectData, modelsProvider.modules)) return
     for (sdkDataNode in toImport) {
       ExternalSystemApiUtil.executeProjectChangeAction(project) {
         importProjectSdk(project, sdkDataNode.data)

@@ -8,11 +8,10 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.python.hatch.*
 import com.jetbrains.python.Result
-import com.jetbrains.python.errorProcessing.PyError
+import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.resolvePythonBinary
 import com.jetbrains.python.sdk.createSdk
 import com.jetbrains.python.sdk.persist
-import com.jetbrains.python.sdk.setAssociationToModule
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -20,7 +19,7 @@ import java.nio.file.Path
 import kotlin.io.path.name
 
 @ApiStatus.Internal
-suspend fun HatchVirtualEnvironment.createSdk(workingDirectoryPath: Path, module: Module?): Result<Sdk, PyError> {
+suspend fun HatchVirtualEnvironment.createSdk(workingDirectoryPath: Path, module: Module?): PyResult<Sdk> {
   val existingPythonEnvironment = pythonVirtualEnvironment as? PythonVirtualEnvironment.Existing
                                   ?: return Result.failure(BasePythonExecutableNotFoundHatchError(null as String?))
   val pythonHomePath = pythonVirtualEnvironment?.pythonHomePath
@@ -35,12 +34,9 @@ suspend fun HatchVirtualEnvironment.createSdk(workingDirectoryPath: Path, module
     associatedProjectPath = module?.project?.basePath,
     suggestedSdkName = existingPythonEnvironment.suggestHatchSdkName(),
     sdkAdditionalData = hatchSdkAdditionalData
-  ).getOrElse { exception ->
-    return Result.failure(EnvironmentCreationHatchError(exception.localizedMessage))
-  }
+  ).getOr { return it }
 
   withContext(Dispatchers.EDT) {
-    module?.let { sdk.setAssociationToModule(it) }
     sdk.persist()
   }
 

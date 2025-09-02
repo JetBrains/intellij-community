@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.events;
 
 import com.intellij.openapi.vfs.VirtualFile;
@@ -16,7 +16,8 @@ public final class VFileContentChangeEvent extends VFileEvent {
   private final long myOldLength;
   private final long myNewLength;
 
-  private static final int UNDEFINED_TIMESTAMP_OR_LENGTH = -1;
+  @ApiStatus.Internal
+  public static final int UNDEFINED_TIMESTAMP_OR_LENGTH = -1;
 
   /** @deprecated use {@link VFileContentChangeEvent#VFileContentChangeEvent(Object, VirtualFile, long, long)} */
   @Deprecated
@@ -26,6 +27,7 @@ public final class VFileContentChangeEvent extends VFileEvent {
     this(requestor, file, oldModificationStamp, newModificationStamp);
   }
 
+  /** if newModificationStamp == UNDEFINED_TIMESTAMP_OR_LENGTH (-1), the new modification stamp will be generated from {@link LocalTimeCounter}*/
   @ApiStatus.Internal
   public VFileContentChangeEvent(Object requestor, @NotNull VirtualFile file, long oldModificationStamp, long newModificationStamp) {
     this(requestor, file, oldModificationStamp, newModificationStamp, UNDEFINED_TIMESTAMP_OR_LENGTH, UNDEFINED_TIMESTAMP_OR_LENGTH,

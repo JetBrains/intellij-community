@@ -25,9 +25,16 @@ import org.jetbrains.jps.model.serialization.SerializationConstants
 class ExternalSystemModulePropertyManagerBridge(private val module: Module) : ExternalSystemModulePropertyManager() {
   private fun findEntity(): ExternalSystemModuleOptionsEntity? {
     val modelsProvider = module.getUserData(IdeModifiableModelsProviderImpl.MODIFIABLE_MODELS_PROVIDER_KEY)
-    val storage = if (modelsProvider != null) modelsProvider.actualStorageBuilder else (module as ModuleBridge).entityStorage.current
-    val moduleEntity = (module as ModuleBridge).findModuleEntity(storage)
-    return moduleEntity?.exModuleOptions
+    // This can be written in more compact form (see the code before this commit). We use this lengthy form because
+    // we want to see different stacktraces in IJPL-164556 when modelsProvider is null and not-null to localize the problem
+    return if (modelsProvider != null) {
+      val moduleEntity = (module as ModuleBridge).findModuleEntity(modelsProvider.actualStorageBuilder)
+      moduleEntity?.exModuleOptions
+    }
+    else {
+      val moduleEntity = (module as ModuleBridge).findModuleEntity(module.entityStorage.current)
+      moduleEntity?.exModuleOptions
+    }
   }
 
   @Synchronized

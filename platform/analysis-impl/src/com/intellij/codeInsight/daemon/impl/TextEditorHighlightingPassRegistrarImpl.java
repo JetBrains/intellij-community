@@ -34,6 +34,7 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -72,7 +73,8 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
     }, project);
   }
 
-  void reRegisterFactories() {
+  @VisibleForTesting
+  public void reRegisterFactories() {
     synchronized (this) {
       myRegisteredPassFactories.clear();
       myFrozenPassConfigs = null;
@@ -137,8 +139,8 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
     assert registered == null: "Pass id "+passId +" has already been registered in: "+ registered.passFactory;
     myRegisteredPassFactories.put(passId, info);
     myFrozenPassConfigs = null; // clear cache
-    if (factory instanceof DirtyScopeTrackingHighlightingPassFactory) {
-      myDirtyScopeTrackingFactories.add((DirtyScopeTrackingHighlightingPassFactory) factory);
+    if (factory instanceof DirtyScopeTrackingHighlightingPassFactory dirty) {
+      myDirtyScopeTrackingFactories.add(dirty);
     }
     return passId;
   }
@@ -173,13 +175,13 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
                                                                               @NotNull Editor editor,
                                                                               int @NotNull [] passesToIgnore) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
-    GlobalInspectionContextBase.assertUnderDaemonProgress();
+    DaemonProgressIndicator indicator = GlobalInspectionContextBase.assertUnderDaemonProgress();
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
     Document document = editor.getDocument();
     CodeInsightContext context = EditorContextManager.getEditorContext(editor, myProject);
-    PsiFile fileFromDoc = documentManager.getPsiFile(document, context);
-    if (!(fileFromDoc instanceof PsiCompiledElement)) {
-      assert fileFromDoc == psiFile : "Files are different: " + psiFile + ";" + fileFromDoc;
+    PsiFile psiFileFromDoc = documentManager.getPsiFile(document, context);
+    if (!(psiFileFromDoc instanceof PsiCompiledElement)) {
+      assert psiFileFromDoc == psiFile : "Files are different: " + psiFile + ";" + psiFileFromDoc;
       Document documentFromFile = documentManager.getDocument(psiFile);
       assert documentFromFile == document : "Documents are different. Doc: " + document + "; Doc from file: " + documentFromFile +"; File: "+psiFile +"; Virtual file: "+
                                             PsiUtilCore.getVirtualFile(psiFile);
@@ -236,7 +238,7 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
     FileStatusMap statusMap = daemonCodeAnalyzer.getFileStatusMap();
     for (int i = 0; i < passesRefusedToCreate.size(); i++) {
       int id = passesRefusedToCreate.getInt(i);
-      statusMap.markFileUpToDate(document, context, id);
+      statusMap.markFileUpToDate(document, context, id, indicator);
     }
     if (!shouldHighlightFile) {
       // in case when some extension prohibited highlighting, return empty pass to distinguish from error during pass creation and endless restart
@@ -257,8 +259,8 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
       PassConfig passConfig = frozenPassConfigs[passId];
       if (passConfig == null) continue;
       TextEditorHighlightingPassFactory factory = passConfig.passFactory;
-      if (factory instanceof MainHighlightingPassFactory) {
-        TextEditorHighlightingPass pass = ((MainHighlightingPassFactory)factory).createMainHighlightingPass(psiFile, document, highlightInfoProcessor);
+      if (factory instanceof MainHighlightingPassFactory main) {
+        TextEditorHighlightingPass pass = main.createMainHighlightingPass(psiFile, document, highlightInfoProcessor);
         if (pass != null) {
           pass.setContext(context);
           ids.add(pass);

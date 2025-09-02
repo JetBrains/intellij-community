@@ -44,7 +44,8 @@ final class ManageRecentProjectsAction extends DumbAwareAction {
     Disposable disposable = Disposer.newDisposable();
 
     RecentProjectFilteringTree recentProjectFilteringTree = RecentProjectPanelComponentFactory.createComponent(
-      disposable, List.of(ProjectCollectors.createRecentProjectsWithoutCurrentCollector(project))
+      disposable, List.of(ProjectCollectors.createRecentProjectsWithoutCurrentCollector(project)),
+      WelcomeScreenUIManager.getProjectsBackground()
     );
     Tree recentProjectTree = recentProjectFilteringTree.getTree();
     TreeUtil.selectFirstNode(recentProjectTree);

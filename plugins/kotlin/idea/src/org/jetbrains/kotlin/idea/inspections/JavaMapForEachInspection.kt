@@ -9,26 +9,18 @@ import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractApplicabilityBasedInspection
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections.JavaMapForEachInspectionUtils
 import org.jetbrains.kotlin.idea.inspections.collections.isMap
-import org.jetbrains.kotlin.idea.refactoring.getLastLambdaExpression
+import org.jetbrains.kotlin.idea.refactoring.singleLambdaArgumentExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
-import org.jetbrains.kotlin.psi.KtLambdaExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.synthetic.isResolvedWithSamConversions
 
-class JavaMapForEachInspection : AbstractApplicabilityBasedInspection<KtCallExpression>(
-    KtCallExpression::class.java
-) {
+class JavaMapForEachInspection : AbstractApplicabilityBasedInspection<KtCallExpression>(KtCallExpression::class.java) {
     override fun isApplicable(element: KtCallExpression): Boolean {
-        val calleeExpression = element.calleeExpression ?: return false
-        if (calleeExpression.text != "forEach") return false
-        if (element.valueArguments.size != 1) return false
-
-        val lambda = element.lambda() ?: return false
-        val lambdaParameters = lambda.valueParameters
-        if (lambdaParameters.size != 2 || lambdaParameters.any { it.destructuringDeclaration != null }) return false
+        if (!JavaMapForEachInspectionUtils.applicableByPsi(element)) return false
 
         val context = element.analyze(BodyResolveMode.PARTIAL)
         val resolvedCall = element.getResolvedCall(context) ?: return false
@@ -43,14 +35,10 @@ class JavaMapForEachInspection : AbstractApplicabilityBasedInspection<KtCallExpr
     override val defaultFixText get() = KotlinBundle.message("replace.with.kotlin.s.foreach")
 
     override fun applyTo(element: KtCallExpression, project: Project, editor: Editor?) {
-        val lambda = element.lambda() ?: return
+        val lambda = element.singleLambdaArgumentExpression() ?: return
         val valueParameters = lambda.valueParameters
         lambda.functionLiteral.valueParameterList?.replace(
             KtPsiFactory(project).createLambdaParameterList("(${valueParameters[0].text}, ${valueParameters[1].text})")
         )
-    }
-
-    private fun KtCallExpression.lambda(): KtLambdaExpression? {
-        return lambdaArguments.singleOrNull()?.getArgumentExpression() as? KtLambdaExpression ?: getLastLambdaExpression()
     }
 }

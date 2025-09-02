@@ -27,7 +27,6 @@ import java.util.concurrent.atomic.AtomicReference;
  * Use {@link AnnotationHolder} instead. The members of this class can suddenly change or disappear.
  */
 @ApiStatus.Internal
-@ApiStatus.NonExtendable
 public final class AnnotationHolderImpl extends SmartList<@NotNull Annotation> implements AnnotationHolder {
   private static final Logger LOG = Logger.getInstance(AnnotationHolderImpl.class);
   private final AnnotationSession myAnnotationSession;
@@ -130,14 +129,14 @@ public final class AnnotationHolderImpl extends SmartList<@NotNull Annotation> i
 
   private void assertMyFile(PsiElement node) {
     if (node == null) return;
-    PsiFile myFile = myAnnotationSession.getFile();
+    PsiFile psiFile = myAnnotationSession.getFile();
     PsiFile containingFile = node.getContainingFile();
     LOG.assertTrue(containingFile != null, node);
     VirtualFile containingVFile = containingFile.getVirtualFile();
-    VirtualFile myVFile = myFile.getVirtualFile();
+    VirtualFile myVFile = psiFile.getVirtualFile();
     if (!Comparing.equal(containingVFile, myVFile)) {
       LOG.error(
-        "Annotation must be registered for an element inside '" + myFile + "' which is in '" + myVFile + "'.\n" +
+        "Annotation must be registered for an element inside '" + psiFile + "' which is in '" + myVFile + "'.\n" +
         "Element passed: '" + node + "' is inside the '" + containingFile + "' which is in '" + containingVFile + "'");
     }
   }
@@ -229,10 +228,10 @@ public final class AnnotationHolderImpl extends SmartList<@NotNull Annotation> i
   }
 
   @ApiStatus.Internal
-  public <R> void applyExternalAnnotatorWithContext(@NotNull PsiFile file, R result) {
-    myCurrentElement.set(file);
+  public <R> void applyExternalAnnotatorWithContext(@NotNull PsiFile psiFile, R result) {
+    myCurrentElement.set(psiFile);
     //noinspection unchecked
-    ((ExternalAnnotator<?,R>)myAnnotator).apply(file, result, this);
+    ((ExternalAnnotator<?,R>)myAnnotator).apply(psiFile, result, this);
   }
 
   // to assert each AnnotationBuilder did call .create() in the end

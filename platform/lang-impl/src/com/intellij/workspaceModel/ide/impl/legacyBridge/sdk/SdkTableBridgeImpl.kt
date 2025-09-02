@@ -2,6 +2,7 @@
 package com.intellij.workspaceModel.ide.impl.legacyBridge.sdk
 
 import com.intellij.concurrency.resetThreadContext
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl
@@ -35,7 +36,7 @@ private val rootTypes = ConcurrentFactoryMap.createMap<String, SdkRootTypeId> { 
 class SdkTableBridgeImpl: SdkTableImplementationDelegate {
 
   override fun findSdkByName(name: String): Sdk? {
-    val globalWorkspaceModels = GlobalWorkspaceModel.getInstances()
+    val globalWorkspaceModels = GlobalWorkspaceModel.getInstancesBlocking()
     for (globalWorkspaceModel in globalWorkspaceModels) {
       val currentSnapshot = globalWorkspaceModel.currentSnapshot
       val sdkEntity = currentSnapshot.entities(SdkEntity::class.java)
@@ -46,7 +47,7 @@ class SdkTableBridgeImpl: SdkTableImplementationDelegate {
   }
 
   override fun getAllSdks(): List<Sdk> {
-    val globalWorkspaceModels = GlobalWorkspaceModel.getInstances()
+    val globalWorkspaceModels = GlobalWorkspaceModel.getInstancesBlocking()
     return globalWorkspaceModels.map {
       it.currentSnapshot
     }.flatMap { snapshot ->
@@ -55,7 +56,7 @@ class SdkTableBridgeImpl: SdkTableImplementationDelegate {
   }
 
   override fun createSdk(name: String, type: SdkTypeId, homePath: String?): Sdk {
-    return ProjectJdkImpl(name, type, homePath ?: "", null);
+    return ProjectJdkImpl(name, type, homePath ?: "", null)
   }
 
   override fun addNewSdk(sdk: Sdk) {
@@ -128,7 +129,7 @@ class SdkTableBridgeImpl: SdkTableImplementationDelegate {
   override fun saveOnDisk() {
     runBlocking {
       resetThreadContext().use {
-        (JpsGlobalModelSynchronizer.getInstance() as JpsGlobalModelSynchronizerImpl).saveSdkEntities()
+        (serviceAsync<JpsGlobalModelSynchronizer>() as JpsGlobalModelSynchronizerImpl).saveSdkEntities()
       }
     }
   }

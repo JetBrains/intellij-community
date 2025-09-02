@@ -50,7 +50,8 @@ class TextMateLineIndentProvider : LineIndentProvider {
 
     if (indentChange != null) {
       val baseLineIndent = prevLineText.indentOfLine(options)
-      return IndentInfo(0, baseLineIndent + indentChange * options.TAB_SIZE, 0).generateNewWhiteSpace(options)
+      val indent = maxOf(baseLineIndent + indentChange * options.TAB_SIZE, 0) // IDEA-356651 avoid negative
+      return IndentInfo(0, indent, 0).generateNewWhiteSpace(options)
     }
 
     return null

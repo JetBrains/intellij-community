@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2023 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2025 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -236,8 +236,7 @@ public final class MissingDeprecatedAnnotationInspection extends BaseInspection 
         return true;
       }
       for (PsiElement element : deprecatedTag.getDataElements()) {
-        if (element instanceof PsiDocTagValue ||
-            element instanceof PsiDocToken && ((PsiDocToken)element).getTokenType() == JavaDocTokenType.DOC_COMMENT_DATA) {
+        if (element instanceof PsiDocTagValue || PsiDocToken.isDocToken(element, JavaDocTokenType.DOC_COMMENT_DATA)) {
           return true;
         }
       }

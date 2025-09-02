@@ -5,7 +5,6 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.dsl.gridLayout.Gaps
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.layout.ComponentPredicate
@@ -25,10 +24,6 @@ interface Panel : CellBase<Panel> {
   override fun enabled(isEnabled: Boolean): Panel
 
   override fun enabledIf(predicate: ComponentPredicate): Panel
-
-  @Deprecated("Use align(AlignX.LEFT/CENTER/RIGHT/FILL) method instead", level = DeprecationLevel.HIDDEN)
-  @ApiStatus.ScheduledForRemoval
-  override fun horizontalAlign(horizontalAlign: HorizontalAlign): Panel
 
   @Deprecated("Use align(AlignY.TOP/CENTER/BOTTOM/FILL) method instead", level = DeprecationLevel.HIDDEN)
   @ApiStatus.ScheduledForRemoval
@@ -161,11 +156,4 @@ interface Panel : CellBase<Panel> {
    */
   fun customizeSpacingConfiguration(spacingConfiguration: SpacingConfiguration, init: Panel.() -> Unit)
 
-  /**
-   * Forces to use new [com.intellij.ui.dsl.listCellRenderer.textListCellRenderer] as the default renderer in combo boxes inside panel.
-   * In the near release [textListCellRenderer] will be used by default in Kotlin UI DSL and this method will be removed
-   */
-  @ApiStatus.Internal
-  @ApiStatus.Experimental
-  fun useNewComboBoxRenderer()
 }

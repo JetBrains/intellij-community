@@ -7,11 +7,11 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.awt.*;
 import java.util.function.Supplier;
 
 final class FileStatusImpl implements FileStatus {
-
   private final String myStatus;
   private final ColorKey myColorKey;
   private final Supplier<@Nls(capitalization = Nls.Capitalization.Sentence) String> myTextSupplier;
@@ -36,7 +36,9 @@ final class FileStatusImpl implements FileStatus {
 
   @Override
   public Color getColor() {
-    return EditorColorsManager.getInstance().getSchemeForCurrentUITheme().getColor(getColorKey());
+    Color themeColor = UIManager.getColor(FileStatusFactory.getFilestatusUiThemePrefix() + myStatus);
+    if (themeColor != null) return themeColor;
+    return EditorColorsManager.getInstance().getSchemeForCurrentUITheme().getColor(myColorKey);
   }
 
   @Override

@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.api.data.graphql.query
 
 import com.fasterxml.jackson.annotation.JsonIgnore
+import com.intellij.collaboration.api.dto.GraphQLConnectionDTO
 import com.intellij.collaboration.api.dto.GraphQLCursorPageInfoDTO
 import com.intellij.collaboration.api.dto.GraphQLPagedResponseDataDTO
 
@@ -14,5 +15,6 @@ open class GHGQLSearchQueryResponse<T>(val search: SearchConnection<T>)
   @JsonIgnore
   override val nodes: List<T> = search.nodes
 
-  class SearchConnection<T>(val pageInfo: GraphQLCursorPageInfoDTO, val nodes: List<T> = listOf())
+  class SearchConnection<T>(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<T> = listOf())
+    : GraphQLConnectionDTO<T>(pageInfo, nodes)
 }

@@ -55,7 +55,6 @@ private fun String.toReadable(): String = replace(" ", "<Space>").replace("\n", 
 
 @ApiStatus.Internal
 class RetypeLog {
-  val LOG: Logger = Logger.getInstance(RetypeLog::class.java)
   private val log = arrayListOf<String>()
   private var currentTyping: String? = null
   private var currentCompletion: String? = null
@@ -117,6 +116,8 @@ class RetypeLog {
     }
   }
 }
+
+private val LOG: Logger = Logger.getInstance(RetypeLog::class.java)
 
 class RetypeSession(
   private val project: Project,
@@ -539,11 +540,9 @@ class RetypeSession(
     val actionManager = ActionManagerEx.getInstanceEx()
     val action = actionManager.getAction(actionId)
     val event = AnActionEvent.createFromAnAction(action, null, "", editor.dataContext)
-    if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
-      ActionUtil.performDumbAwareWithCallbacks(action, event) {
-        LatencyRecorder.getInstance().recordLatencyAwareAction(editor, actionId, timerTick)
-        action.actionPerformed(event)
-      }
+    val result = ActionUtil.performAction(action, event)
+    if (result.isPerformed) {
+      LatencyRecorder.getInstance().recordLatencyAwareAction(editor, actionId, timerTick)
     }
   }
 

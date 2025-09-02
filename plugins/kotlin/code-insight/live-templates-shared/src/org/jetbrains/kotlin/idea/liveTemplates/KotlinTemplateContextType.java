@@ -5,10 +5,7 @@ package org.jetbrains.kotlin.idea.liveTemplates;
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.psi.PsiComment;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -164,9 +161,13 @@ public abstract class KotlinTemplateContextType extends TemplateContextType {
 
         @Override
         protected boolean isInContext(@NotNull PsiElement element) {
-            return element.getParent() instanceof KtExpression && !(element.getParent() instanceof KtConstantExpression) &&
-                   !(element.getParent().getParent() instanceof KtDotQualifiedExpression)
-                   && !(element.getParent() instanceof KtParameter);
+            PsiElement parent = element.getParent();
+            PsiElement nameIdentifier = parent instanceof PsiNameIdentifierOwner identifierOwner ? identifierOwner.getNameIdentifier() : null;
+            return element != nameIdentifier &&
+                   (parent instanceof KtExpression) &&
+                   !(parent instanceof KtConstantExpression) &&
+                   !(parent.getParent() instanceof KtDotQualifiedExpression) &&
+                   !(parent instanceof KtParameter);
         }
     }
 

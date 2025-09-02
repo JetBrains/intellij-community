@@ -354,6 +354,20 @@ object EventFields {
 
   @JvmStatic
   @JvmOverloads
+  fun LanguagesList(@NonNls @EventFieldName name: String, @NonNls description: String? = null): PrimitiveEventField<Collection<Language>> =
+    object : PrimitiveEventField<Collection<Language>>() {
+    override val name = name
+    override val description = description
+    override val validationRule: List<String>
+      get() = listOf("{util#lang}")
+
+    override fun addData(fuData: FeatureUsageData, value: Collection<Language>) {
+      fuData.addData(this.name, value.map { it.id })
+    }
+  }
+
+  @JvmStatic
+  @JvmOverloads
   inline fun <reified T : Enum<*>> EnumList(@NonNls @EventFieldName name: String, @NonNls description: String? = null, noinline transform: (T) -> String =
     defaultEnumTransform): EnumListEventField<T> = EnumListEventField(name, description, T::class.java, transform)
 
@@ -457,6 +471,22 @@ object EventFields {
       value: PluginInfo?,
     ) {
       fuData.addPluginInfo(value)
+    }
+  }
+
+  @JvmField
+  val AutomatedPluginVersion = object : PrimitiveEventField<PluginInfo?>() {
+    override val name: String
+      get() = "automated_plugin_version"
+
+    override val validationRule: List<String>
+      get() = listOf("{regexp#version}")
+
+    override fun addData(
+      fuData: FeatureUsageData,
+      value: PluginInfo?,
+    ) {
+      fuData.addAutomatedPluginVersion(value)
     }
   }
 

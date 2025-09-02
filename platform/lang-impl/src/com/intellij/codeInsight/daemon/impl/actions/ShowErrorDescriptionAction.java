@@ -29,7 +29,7 @@ public final class ShowErrorDescriptionAction extends BaseCodeInsightAction impl
   }
 
   @Override
-  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
     return ShowErrorDescriptionHandler.findInfoUnderCaret(project, editor) != null;
   }
 

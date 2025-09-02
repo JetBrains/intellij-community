@@ -13,9 +13,6 @@ class InstantShutdown {
   private var allowed: Boolean = true
 
   @RequiresEdt
-  fun isAllowed(): Boolean = allowed && Registry.`is`("ide.instant.shutdown", true)
-
-  @RequiresEdt
   fun <T> computeWithDisabledInstantShutdown(supplier: () -> T): T {
     val prevValue = allowed
     return try {
@@ -24,6 +21,17 @@ class InstantShutdown {
     }
     finally {
       allowed = prevValue
+    }
+  }
+
+  companion object {
+    @RequiresEdt
+    @JvmStatic
+    fun isAllowed(): Boolean {
+      if (!Registry.`is`("ide.instant.shutdown", true)) return false
+      val application = ApplicationManager.getApplication() ?: return true
+      val service = application.getServiceIfCreated<InstantShutdown>(InstantShutdown::class.java) ?: return true
+      return service.allowed
     }
   }
 }

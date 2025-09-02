@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.runners;
 
 import com.intellij.diagnostic.logging.LogConsoleManagerBase;
@@ -18,7 +18,7 @@ import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.impl.ActionButton;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.MoreActionGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -49,6 +49,9 @@ public abstract class RunTab implements Disposable {
   @ApiStatus.Experimental
   public static final Key<PreferredPlace> PREFERRED_PLACE = Key.create("RunTab.preferredActionPlace");
 
+  @ApiStatus.Internal
+  public static final DataKey<ExecutionEnvironmentProxy> EXECUTION_ENVIRONMENT_PROXY = DataKey.create("RunTab.executionEnvironmentProxy");
+
   @ApiStatus.Experimental
   public static final DataKey<RunTab> KEY = DataKey.create("RunTab");
 
@@ -59,6 +62,9 @@ public abstract class RunTab implements Disposable {
   protected ExecutionEnvironment myEnvironment;
   protected final Project myProject;
   protected final GlobalSearchScope mySearchScope;
+
+  @ApiStatus.Internal
+  protected ExecutionEnvironmentProxy myEnvironmentProxy;
 
   private LogConsoleManagerBase logConsoleManager;
 
@@ -84,13 +90,16 @@ public abstract class RunTab implements Disposable {
     mySearchScope = searchScope;
 
     myUi = RunnerLayoutUi.Factory.getInstance(project).create(runnerType, runnerTitle, sessionName, this);
-    myUi.getContentManager().addDataProvider((EdtNoGetDataProvider)sink -> {
+    myUi.getContentManager().addUiDataProvider(sink -> {
       sink.set(KEY, RunTab.this);
       sink.set(LangDataKeys.RUN_CONTENT_DESCRIPTOR, myRunContentDescriptor);
       sink.set(SingleContentSupplier.KEY, getSupplier());
       if (myEnvironment != null) {
         sink.set(ExecutionDataKeys.EXECUTION_ENVIRONMENT, myEnvironment);
         sink.set(LangDataKeys.RUN_PROFILE, myEnvironment.getRunProfile());
+      }
+      if (myEnvironmentProxy != null) {
+        sink.set(EXECUTION_ENVIRONMENT_PROXY, myEnvironmentProxy);
       }
     });
   }
@@ -174,7 +183,7 @@ public abstract class RunTab implements Disposable {
     public RunTabSupplier(@Nullable ActionGroup group) {
       myActionGroup = group;
       layoutActionGroup.setPopup(true);
-      layoutActionGroup.getTemplatePresentation().putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, Boolean.TRUE);
+      layoutActionGroup.getTemplatePresentation().putClientProperty(ActionUtil.HIDE_DROPDOWN_ICON, Boolean.TRUE);
     }
 
     @Override

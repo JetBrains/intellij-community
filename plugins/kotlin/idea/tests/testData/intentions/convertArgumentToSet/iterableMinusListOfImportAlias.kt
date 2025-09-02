@@ -1,5 +1,6 @@
 // WITH_STDLIB
 // IS_APPLICABLE: false
+// PROBLEM: none
 
 import kotlin.collections.listOf as someFunction
 

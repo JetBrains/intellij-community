@@ -8,7 +8,6 @@ import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor.*
-import com.intellij.openapi.vcs.changes.ChangesViewManager.ChangesViewToolWindowPanel
 import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool.ALLOW_EXCLUDE_FROM_COMMIT
 import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.MODIFIED_WITHOUT_EDITING_TAG
@@ -21,9 +20,11 @@ import com.intellij.vcs.commit.EditedCommitNode
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
-private fun wrap(project: Project,
-                 changesNodes: Iterable<ChangesBrowserNode<*>>,
-                 unversioned: Iterable<FilePath>): JBIterable<Wrapper> =
+private fun wrap(
+  project: Project,
+  changesNodes: Iterable<ChangesBrowserNode<*>>,
+  unversioned: Iterable<FilePath>,
+): JBIterable<Wrapper> =
   JBIterable.empty<Wrapper>()
     .append(JBIterable.from(changesNodes).map { wrapNode(project, it) }.filter(Objects::nonNull))
     .append(JBIterable.from(unversioned).map { UnversionedFileWrapper(it) })
@@ -63,10 +64,11 @@ private inline fun <reified T : ChangesBrowserNode<*>> findNodeOfType(node: Chan
   return null
 }
 
-internal class ChangesViewDiffPreviewProcessor(private val panel: ChangesViewManager.ChangesViewToolWindowPanel,
-                                              changesView: ChangesListView,
-                                              private val isInEditor: Boolean)
-  : TreeHandlerDiffRequestProcessor(if (isInEditor) DiffPlaces.DEFAULT else DiffPlaces.CHANGES_VIEW, changesView,
+@ApiStatus.Internal
+class ChangesViewDiffPreviewProcessor(
+  changesView: ChangesTree,
+  private val isInEditor: Boolean,
+) : TreeHandlerDiffRequestProcessor(if (isInEditor) DiffPlaces.DEFAULT else DiffPlaces.CHANGES_VIEW, changesView,
                                     ChangesViewDiffPreviewHandler) {
 
   init {
@@ -74,9 +76,6 @@ internal class ChangesViewDiffPreviewProcessor(private val panel: ChangesViewMan
 
     val busConnection = project.messageBus.connect(this)
     busConnection.subscribe(LineStatusTrackerSettingListener.TOPIC, MyLineStatusTrackerSettingsListener())
-
-    panel.addListener(MyCommitModeListener(), this)
-    setAllowExcludeFromCommit(panel.isAllowExcludeFromCommit)
 
     TreeHandlerChangesTreeTracker(tree, this, handler).track()
   }
@@ -87,7 +86,7 @@ internal class ChangesViewDiffPreviewProcessor(private val panel: ChangesViewMan
 
   override fun forceKeepCurrentFileWhileFocused(): Boolean = true
 
-  private fun setAllowExcludeFromCommit(value: Boolean) {
+  fun setAllowExcludeFromCommit(value: Boolean) {
     if (DiffUtil.isUserDataFlagSet(ALLOW_EXCLUDE_FROM_COMMIT, context) == value) return
     context.putUserData(ALLOW_EXCLUDE_FROM_COMMIT, value)
     fireDiffSettingsChanged()
@@ -101,12 +100,6 @@ internal class ChangesViewDiffPreviewProcessor(private val panel: ChangesViewMan
   private inner class MyLineStatusTrackerSettingsListener : LineStatusTrackerSettingListener {
     override fun settingsUpdated() {
       fireDiffSettingsChanged()
-    }
-  }
-
-  private inner class MyCommitModeListener : ChangesViewToolWindowPanel.Listener {
-    override fun allowExcludeFromCommitChanged() {
-      setAllowExcludeFromCommit(panel.isAllowExcludeFromCommit)
     }
   }
 }

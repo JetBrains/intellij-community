@@ -1174,10 +1174,22 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     }
   }
 
+  /**
+   * Returns the string to be used as the tooltip at the icon fragment (if there is an icon).
+   * By default this returns {@link IconWithToolTip#getToolTip(boolean)} if icon is an instance of {@link IconWithToolTip},
+   * otherwise {@code null}.
+   *
+   * @return a string containing the icon tooltip
+   */
+  @ApiStatus.Experimental
+  protected @Nls @Nullable String getIconToolTipText() {
+    return myIcon instanceof IconWithToolTip i ? i.getToolTip(false) : null;
+  }
+
   @Override
   public String getToolTipText(MouseEvent event) {
-    if (myIcon instanceof IconWithToolTip && findFragmentAt(event.getX()) == FRAGMENT_ICON) {
-      String iconToolTip = ((IconWithToolTip)myIcon).getToolTip(false);
+    if (myIcon != null && findFragmentAt(event.getX()) == FRAGMENT_ICON) {
+      String iconToolTip = getIconToolTipText();
       if (iconToolTip != null) {
         return StringUtil.capitalize(iconToolTip);
       }

@@ -158,8 +158,9 @@ class VcsRepositoryManager @ApiStatus.Internal constructor(
   }
 
   @ApiStatus.Internal
-  suspend fun ensureUpToDate() {
-    if (isStarted.compareAndSet(false, true)) {
+  suspend fun ensureUpToDate(force: Boolean = false) {
+    val wasNotStarted = isStarted.compareAndSet(false, true)
+    if (wasNotStarted || force) {
       updateScheduled.set(true)
       updateAlarm.addRequest({ checkAndUpdateRepositoryCollection(null) }, 0)
     }

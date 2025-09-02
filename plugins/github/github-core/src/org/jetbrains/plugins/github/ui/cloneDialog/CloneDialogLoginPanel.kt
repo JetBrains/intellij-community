@@ -33,6 +33,7 @@ import com.intellij.util.ui.JBUI.Panels.simplePanel
 import com.intellij.util.ui.UIUtil.getRegularPanelInsets
 import kotlinx.coroutines.*
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
+import org.jetbrains.plugins.github.authentication.*
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.ui.GithubLoginPanel
@@ -152,6 +153,7 @@ internal class CloneDialogLoginPanel(
     loginJob = cs.async(Dispatchers.Main.immediate + ModalityState.stateForComponent(this).asContextElement()) {
       try {
         val (login, token) = loginPanel.acquireLoginAndToken()
+        logEvent()
         val acc = account ?: GHAccountManager.createAccount(login, loginPanel.getServer())
         accountManager.updateAccount(acc, token)
         clearErrors()
@@ -162,6 +164,14 @@ internal class CloneDialogLoginPanel(
         doValidate()
       }
     }
+  }
+
+  private fun logEvent() {
+    GHLoginCollector.login(GHLoginData(
+      loginSource = GHLoginSource.CLONE,
+      authType = if (loginPanel.isOAuthUi()) GHAuthType.OAUTH else GHAuthType.TOKEN,
+      serverOffering = GHServerOffering.of(loginPanel.getServer()),
+    ))
   }
 
   private fun doValidate(): Boolean {

@@ -26,14 +26,12 @@ import org.jetbrains.kotlin.resolve.bindingContextUtil.getDataFlowInfoBefore
 import org.jetbrains.kotlin.resolve.descriptorUtil.isExtension
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.scopes.LexicalScope
-import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.error.ErrorUtils
 
 /**
  * Modifies [MutableCodeToInline] introducing a variable initialized by [value] and replacing all of [usages] with its use.
  * The variable must be initialized (and so the value is calculated) before any other code in [MutableCodeToInline].
  * @param value Value to use for variable initialization
- * @param valueType Type of the value
  * @param usages Usages to be replaced. This collection can be empty and in this case the actual variable is not needed.
  * But the expression [value] must be calculated because it may have side effects.
  * @param expressionToBeReplaced Expression to be replaced by the [MutableCodeToInline].
@@ -42,11 +40,13 @@ import org.jetbrains.kotlin.types.error.ErrorUtils
  */
 internal fun MutableCodeToInline.introduceValue(
     value: KtExpression,
-    valueType: KotlinType?,
     usages: Collection<KtExpression>,
     expressionToBeReplaced: KtExpression,
     nameSuggestion: String? = null,
-    safeCall: Boolean = false
+    safeCall: Boolean = false,
+    containsErrorType: Boolean,
+    isMarkedAsNullable: Boolean?,
+    valueTypeString: String?
 ) {
     assert(usages.all { it in this })
 
@@ -86,8 +86,14 @@ internal fun MutableCodeToInline.introduceValue(
             val declaration = psiFactory.createDeclarationByPattern<KtVariableDeclaration>("val $0 = $1", name, value)
             statementsBefore.add(0, declaration)
 
-            valueType?.takeIf {
-                variableNeedsExplicitType(value, valueType, expressionToBeReplaced, resolutionScope, bindingContext)
+            valueTypeString?.takeIf {
+                variableNeedsExplicitType(
+                    value,
+                    expressionToBeReplaced,
+                    resolutionScope,
+                    bindingContext,
+                    containsErrorType
+                )
             }?.let { explicitType ->
                 addPostInsertionAction(declaration) { it.setType(explicitType) }
             }
@@ -103,7 +109,7 @@ internal fun MutableCodeToInline.introduceValue(
 
         mainExpression = psiFactory.buildExpression {
             appendExpression(value)
-            if (valueType?.isMarkedNullable != false) {
+            if (isMarkedAsNullable != false) {
                 appendFixedText("?")
             }
 
@@ -130,12 +136,12 @@ fun String.nameHasConflictsInScope(lexicalScope: LexicalScope, languageVersionSe
 
 private fun variableNeedsExplicitType(
     initializer: KtExpression,
-    initializerType: KotlinType,
     context: KtExpression,
     resolutionScope: LexicalScope,
-    bindingContext: BindingContext
+    bindingContext: BindingContext,
+    containsErrorType: Boolean
 ): Boolean {
-    if (ErrorUtils.containsErrorType(initializerType)) return false
+    if (containsErrorType) return false
     val valueTypeWithoutExpectedType = initializer.computeTypeInContext(
         resolutionScope,
         context,

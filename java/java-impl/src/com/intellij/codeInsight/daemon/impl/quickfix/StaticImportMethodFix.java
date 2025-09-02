@@ -21,8 +21,8 @@ import java.util.Collections;
 import java.util.List;
 
 public class StaticImportMethodFix extends StaticImportMemberFix<PsiMethod, PsiMethodCallExpression> {
-  public StaticImportMethodFix(@NotNull PsiFile file, @NotNull PsiMethodCallExpression methodCallExpression) {
-    super(file, methodCallExpression);
+  public StaticImportMethodFix(@NotNull PsiFile psiFile, @NotNull PsiMethodCallExpression methodCallExpression) {
+    super(psiFile, methodCallExpression);
   }
 
   @Override
@@ -43,8 +43,8 @@ public class StaticImportMethodFix extends StaticImportMemberFix<PsiMethod, PsiM
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    return generatePreview(file, (__, method) -> AddSingleMemberStaticImportAction.bindAllClassRefs(file, method, method.getName(), method.getContainingClass()));
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    return generatePreview(psiFile, (__, method) -> AddSingleMemberStaticImportAction.bindAllClassRefs(psiFile, method, method.getName(), method.getContainingClass()));
   }
 
   @Override

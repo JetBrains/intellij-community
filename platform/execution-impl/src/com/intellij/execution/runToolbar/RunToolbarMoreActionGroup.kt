@@ -4,12 +4,12 @@ package com.intellij.execution.runToolbar
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.actionSystem.impl.ActionButton
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 
 class RunToolbarMoreActionGroup: DefaultActionGroup() {
   override fun update(e: AnActionEvent) {
     super.update(e)
-    e.presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, java.lang.Boolean.TRUE)
+    e.presentation.putClientProperty(ActionUtil.HIDE_DROPDOWN_ICON, java.lang.Boolean.TRUE)
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread {

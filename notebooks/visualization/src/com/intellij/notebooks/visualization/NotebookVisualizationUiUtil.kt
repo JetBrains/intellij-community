@@ -10,12 +10,23 @@ import com.intellij.util.SmartList
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.keyFMap.KeyFMap
 import java.awt.Graphics
+import java.awt.Graphics2D
 import javax.swing.JComponent
 import kotlin.math.max
 import kotlin.reflect.KProperty
 
 infix fun IntRange.hasIntersectionWith(other: IntRange): Boolean =
   !(first > other.last || last < other.first)
+
+inline fun Graphics.useG2D(handler: (Graphics2D) -> Unit) {
+  val g2d = this.create() as Graphics2D
+  try {
+    handler(g2d)
+  }
+  finally {
+    g2d.dispose()
+  }
+}
 
 inline fun <T, G : Graphics> G.use(handler: (g: G) -> T): T =
   try {

@@ -1,18 +1,17 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.management
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
+import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.PyPackageVersion
 import com.jetbrains.python.packaging.common.PythonPackageDetails
-import com.jetbrains.python.packaging.common.PythonPackageSpecification
+import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
 import com.jetbrains.python.packaging.repository.PyPackageRepository
 import org.jetbrains.annotations.TestOnly
 
 @TestOnly
 internal class TestPythonRepositoryManager(
   override val project: Project,
-  @Deprecated("Don't use sdk from here") override val sdk: Sdk
 ) : PythonRepositoryManager {
 
   private var packageNames: Set<String> = emptySet()
@@ -26,10 +25,6 @@ internal class TestPythonRepositoryManager(
   fun withPackageDetails(details: PythonPackageDetails?): TestPythonRepositoryManager {
     this.packageDetails = details
     return this
-  }
-
-  override fun buildPackageDetails(rawInfo: String?, spec: PythonPackageSpecification): PythonPackageDetails {
-    TODO("Not yet implemented")
   }
 
   override fun searchPackages(query: String, repository: PyPackageRepository): List<String> {
@@ -47,12 +42,11 @@ internal class TestPythonRepositoryManager(
     return packageNames
   }
 
-  override suspend fun getPackageDetails(pkg: PythonPackageSpecification): PythonPackageDetails {
-    assert(packageDetails != null)
-    return packageDetails!!
+  override suspend fun getPackageDetails(pkg: PythonRepositoryPackageSpecification): PyResult<PythonPackageDetails> {
+    return PyResult.success(checkNotNull(packageDetails))
   }
 
-  override suspend fun getLatestVersion(spec: PythonPackageSpecification): PyPackageVersion? {
+  override suspend fun getLatestVersion(spec: PythonRepositoryPackageSpecification): PyPackageVersion? {
     TODO("Not yet implemented")
   }
 
@@ -63,7 +57,7 @@ internal class TestPythonRepositoryManager(
   }
 }
 
-internal class TestPackageRepository(private val packages: Set<String>): PyPackageRepository("test repository", null, null) {
+internal class TestPackageRepository(private val packages: Set<String>) : PyPackageRepository("test repository", null, null) {
   override fun getPackages(): Set<String> {
     return packages
   }

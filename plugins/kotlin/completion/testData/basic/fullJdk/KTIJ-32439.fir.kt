@@ -1,5 +1,4 @@
 // FIR_COMPARISON
-// IGNORE_K2
 
 import java.util.zip.DeflaterOutputStream
 

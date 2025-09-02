@@ -4,7 +4,6 @@ package com.intellij.spellchecker.settings;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.spellchecker.ProjectDictionaryLayer;
 import com.intellij.spellchecker.util.SPFileUtil;
@@ -13,6 +12,8 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+
+import static com.intellij.spellchecker.SpellCheckerManagerKt.isDic;
 
 @State(name = "SpellCheckerSettings", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 @Service(Service.Level.PROJECT)
@@ -146,7 +147,7 @@ public final class SpellCheckerSettings implements PersistentStateComponent<Elem
           myOldDictionaryFoldersPaths.add(element.getAttributeValue(FOLDER_ATTR_NAME + i));
         }
         myOldDictionaryFoldersPaths.forEach(folder -> SPFileUtil.processFilesRecursively(folder, file -> {
-          if (FileUtilRt.extensionEquals(file, "dic")) {
+          if (isDic(file)) {
             myCustomDictionariesPaths.add(file);
           }
         }));

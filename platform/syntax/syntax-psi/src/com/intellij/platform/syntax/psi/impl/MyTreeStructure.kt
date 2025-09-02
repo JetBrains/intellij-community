@@ -115,7 +115,7 @@ internal class MyTreeStructure(
     var lastIdx = lastIdx
     lastIdx = min(lastIdx, data.lexemeCount)
     while (curToken < lastIdx) {
-      insertLeaf(data.convertedLexTypes[curToken], data, curToken, curToken + 1, false, parent)
+      insertLeaf(data.getLexemeType(curToken), data, curToken, curToken + 1, false, parent)
 
       curToken++
     }
@@ -152,7 +152,7 @@ internal class MyTreeStructure(
       }
       lexeme = token
     }
-    else if (startLexemeIndex == endLexemeIndex - 1 && type === data.convertedLexTypes[startLexemeIndex]) {
+    else if (startLexemeIndex == endLexemeIndex - 1 && type === data.getLexemeType(startLexemeIndex)) {
       val single = lexemePool.alloc()
       single.parentNode = parent
       single.lexemeIndex = startLexemeIndex

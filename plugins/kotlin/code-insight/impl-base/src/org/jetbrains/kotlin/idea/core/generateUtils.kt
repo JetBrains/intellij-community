@@ -67,7 +67,7 @@ class RestoreCaret<T : PsiElement>(beforeElement: T, val editor: Editor?) {
                 if (singleCaret != null) {
                     val caretOffset = singleCaret.offset
                     val textRange = element.textRange
-                    if (textRange.startOffset <= caretOffset && caretOffset <= textRange.endOffset) {
+                    if (textRange.containsInclusive(caretOffset)) {
                         val relative = caretOffset - element.startOffset
                         if (relative >= 0) {
                             return relative

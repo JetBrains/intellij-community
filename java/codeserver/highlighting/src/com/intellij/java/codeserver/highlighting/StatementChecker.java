@@ -6,7 +6,6 @@ import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.java.codeserver.core.JavaPsiVariableUtil;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
-import com.intellij.java.codeserver.highlighting.errors.JavaIncompatibleTypeErrorContext;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.IncompleteModelUtil;
@@ -191,8 +190,7 @@ final class StatementChecker {
     if (TypeConversionUtil.isAssignable(autoCloseable, type)) return;
     if (myVisitor.isIncompleteModel() && IncompleteModelUtil.isPotentiallyConvertible(autoCloseable, type, resource)) return;
 
-    myVisitor.report(JavaErrorKinds.TYPE_INCOMPATIBLE.create(
-      resource, new JavaIncompatibleTypeErrorContext(autoCloseable, type)));
+    myVisitor.reportIncompatibleType(autoCloseable, type, resource);
   }
   
   void checkBreakTarget(@NotNull PsiBreakStatement statement) {
@@ -335,8 +333,7 @@ final class StatementChecker {
     PsiType type = expression.getType();
     if (type == null) return;
     if (expression == assertStatement.getAssertCondition() && !TypeConversionUtil.isBooleanType(type)) {
-      myVisitor.report(JavaErrorKinds.TYPE_INCOMPATIBLE.create(
-        expression, new JavaIncompatibleTypeErrorContext(PsiTypes.booleanType(), type)));
+      myVisitor.reportIncompatibleType(PsiTypes.booleanType(), type, expression);
     }
     else if (expression == assertStatement.getAssertDescription() && TypeConversionUtil.isVoidType(type)) {
       myVisitor.report(JavaErrorKinds.TYPE_VOID_NOT_ALLOWED.create(expression));
@@ -350,7 +347,7 @@ final class StatementChecker {
       if (type == null) return;
       if (type instanceof PsiPrimitiveType || TypeConversionUtil.isNullType(type)) {
         PsiClassType objectType = PsiType.getJavaLangObject(myVisitor.file().getManager(), expression.getResolveScope());
-        myVisitor.report(JavaErrorKinds.TYPE_INCOMPATIBLE.create(expression, new JavaIncompatibleTypeErrorContext(objectType, type)));
+        myVisitor.reportIncompatibleType(objectType, type, expression);
       }
     }
   }

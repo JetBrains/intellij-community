@@ -28,6 +28,8 @@ class GHHostedRepositoriesManager(project: Project, cs: CoroutineScope) : Hosted
     val discoveredServersFlow = gitRemotesFlow.discoverServers(accountsServersFlow) { remote ->
       GitHostingUrlUtil.findServerAt(LOG, remote) {
         val server = GithubServerPath.from(it.toString())
+        if (server.isGheDataResidency) return@findServerAt server
+
         val metadata = runCatching { serviceAsync<GHEnterpriseServerMetadataLoader>().loadMetadata(server) }.getOrNull()
         if (metadata != null) server else null
       }

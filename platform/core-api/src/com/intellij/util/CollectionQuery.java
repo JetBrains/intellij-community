@@ -4,6 +4,7 @@ package com.intellij.util;
 
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -11,12 +12,12 @@ import java.util.Iterator;
 public class CollectionQuery<T> implements Query<T> {
   private final Collection<T> myCollection;
 
-  public CollectionQuery(final @NotNull Collection<T> collection) {
+  public CollectionQuery(final @NotNull @Unmodifiable Collection<T> collection) {
     myCollection = collection;
   }
 
   @Override
-  public @NotNull Collection<T> findAll() {
+  public @NotNull @Unmodifiable Collection<T> findAll() {
     return myCollection;
   }
 

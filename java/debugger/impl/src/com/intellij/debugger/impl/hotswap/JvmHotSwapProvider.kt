@@ -9,7 +9,12 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.xdebugger.impl.hotswap.*
+import com.intellij.xdebugger.hotswap.HotSwapProvider
+import com.intellij.xdebugger.hotswap.HotSwapSession
+import com.intellij.xdebugger.hotswap.SourceFileChangesCollector
+import com.intellij.xdebugger.hotswap.SourceFileChangesListener
+import com.intellij.xdebugger.impl.hotswap.SourceFileChangeFilter
+import com.intellij.xdebugger.impl.hotswap.SourceFileChangesCollectorImpl
 import kotlinx.coroutines.CoroutineScope
 
 internal class JvmHotSwapProvider(private val debuggerSession: DebuggerSession) : HotSwapProvider<VirtualFile> {
@@ -24,8 +29,6 @@ internal class JvmHotSwapProvider(private val debuggerSession: DebuggerSession) 
       coroutineScope, listener,
       FileExtensionFilter(jvmExtensions),
       InProjectFilter(session.project),
-      // TODO add another scope check
-      //SearchScopeFilter(debuggerSession.searchScope),
     )
   }
 

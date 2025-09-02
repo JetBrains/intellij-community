@@ -2,11 +2,9 @@
 package com.jetbrains.python.debugger.containerview;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.project.Project;
-import com.jetbrains.python.debugger.PyFrameAccessor;
 
 public abstract class PyDataViewPanelFactory {
   public static final ExtensionPointName<PyDataViewPanelFactory> EP_NAME = ExtensionPointName.create("Pythonid.dataViewPanelFactory");
 
-  public abstract PyDataViewerPanel createDataViewPanel(Project project, PyFrameAccessor frameAccessor);
+  public abstract PyDataViewerAbstractPanel createDataViewerPanel(PyDataViewerModel state);
 }

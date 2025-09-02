@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog
 
 import com.intellij.internal.statistic.eventLog.validator.IntellijSensitiveDataValidator
@@ -39,11 +39,9 @@ class LocalStatisticsFileEventLogger(
         val validator = IntellijSensitiveDataValidator.getInstance(recorderId)
         if (!validator.isGroupAllowed(group)) return@Runnable
         val data = dataProvider() ?: return@Runnable
-        val event = LogEvent("local", build, "", eventTime,
-                             LogEventGroup(group.id, group.version.toString()),
-                             recorderVersion,
-                             LogEventAction(eventId, isState, HashMap(data)))
-          .escapeExceptData()
+        val logEventGroup = LogEventGroup(group.id, group.version.toString())
+        val logEventAction = LogEventAction(eventId, isState, HashMap(data))
+        val event = LogEvent("local", build, "", eventTime, logEventGroup, recorderVersion, logEventAction).escapeExceptData()
         val validatedEvent = validator.validateEvent(event)
         if (validatedEvent != null) {
           log(validatedEvent, System.currentTimeMillis())
@@ -56,10 +54,10 @@ class LocalStatisticsFileEventLogger(
     }
   }
 
-  override fun computeAsync(computation: (backgroundThreadExecutor: Executor) -> Unit) = Unit
+  override fun computeAsync(computation: (backgroundThreadExecutor: Executor) -> Unit): Unit = Unit
 
-  override fun logAsync(group: EventLogGroup, eventId: String,
-                        data: Map<String, Any>, isState: Boolean) = logAsync(group, eventId, { data }, isState)
+  override fun logAsync(group: EventLogGroup, eventId: String, data: Map<String, Any>, isState: Boolean): CompletableFuture<Void> =
+    logAsync(group, eventId, { data }, isState)
 
   private fun log(event: LogEvent, createdTime: Long) {
     if (lastEvent != null && event.time - lastEventTime <= eventMergeTimeoutMs && mergeStrategy.shouldMerge(lastEvent!!.validatedEvent, event)) {
@@ -81,20 +79,20 @@ class LocalStatisticsFileEventLogger(
         event.data["last"] = lastEventTime
       }
       event.data["created"] = lastEventCreatedTime
-
-      ApplicationManager.getApplication().getService(EventLogListenersManager::class.java)
-        .notifySubscribers(recorderId, it.validatedEvent, it.rawEventId, it.rawData, true)
+      ApplicationManager.getApplication()
+        ?.getServiceIfCreated(EventLogListenersManager::class.java)
+        ?.notifySubscribers(recorderId, it.validatedEvent, it.rawEventId, it.rawData, true)
     }
     lastEvent = null
   }
 
-  override fun getActiveLogFile() = null
+  override fun getActiveLogFile(): Nothing? = null
 
-  override fun getLogFilesProvider() = EmptyEventLogFilesProvider
+  override fun getLogFilesProvider(): EmptyEventLogFilesProvider = EmptyEventLogFilesProvider
 
-  override fun cleanup() = Unit
+  override fun cleanup(): Unit = Unit
 
-  override fun rollOver() = Unit
+  override fun rollOver(): Unit = Unit
 
   override fun dispose() {
     lastEventFlushFuture?.cancel(false)
@@ -102,11 +100,7 @@ class LocalStatisticsFileEventLogger(
     logExecutor.shutdown()
   }
 
-  fun flush(): CompletableFuture<Void> {
-    return CompletableFuture.runAsync({ logLastEvent() }, logExecutor)
-  }
+  fun flush(): CompletableFuture<Void> = CompletableFuture.runAsync({ logLastEvent() }, logExecutor)
 
-  private data class FusEvent(val validatedEvent: LogEvent,
-                              val rawEventId: String?,
-                              val rawData: Map<String, Any>?)
+  private data class FusEvent(val validatedEvent: LogEvent, val rawEventId: String?, val rawData: Map<String, Any>?)
 }

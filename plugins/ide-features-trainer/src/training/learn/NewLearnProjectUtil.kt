@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.Messages
 import com.intellij.psi.codeStyle.CodeStyleSettings
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import training.lang.LangSupport
 import training.learn.exceptons.NoSdkException
 import training.project.ProjectUtils
@@ -17,6 +18,7 @@ import training.project.ProjectUtils
 object NewLearnProjectUtil {
   private val LOG = logger<NewLearnProjectUtil>()
 
+  @RequiresEdt
   fun createLearnProject(projectToClose: Project?,
                          langSupport: LangSupport,
                          selectedSdk: Sdk?,

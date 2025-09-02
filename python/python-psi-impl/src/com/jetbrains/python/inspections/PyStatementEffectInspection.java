@@ -154,7 +154,7 @@ public final class PyStatementEffectInspection extends PyInspection {
       else if (expression instanceof PyPrefixExpression prefixExpr) {
         return prefixExpr.getOperator() == PyTokenTypes.AWAIT_KEYWORD;
       }
-      else if (expression instanceof PyNoneLiteralExpression && ((PyNoneLiteralExpression)expression).isEllipsis()) {
+      else if (expression instanceof PyEllipsisLiteralExpression) {
         return true;
       }
       return false;

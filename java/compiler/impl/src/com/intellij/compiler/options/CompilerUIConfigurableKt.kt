@@ -16,6 +16,7 @@ import com.intellij.openapi.compiler.JavaCompilerBundle
 import com.intellij.openapi.options.DslConfigurableBase
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.DocumentAdapter
@@ -52,9 +53,7 @@ class CompilerUIConfigurableKt(val project: Project) : DslConfigurableBase(), Se
 
   private lateinit var configureAnnotations: JButton
 
-  override fun createPanel() = panel {
-    useNewComboBoxRenderer()
-
+  override fun createPanel(): DialogPanel = panel {
     row(JavaCompilerBundle.message("label.option.resource.patterns.text")) {
       resourcePatternsField = cell(RawCommandLineEditor(ParametersListUtil.COLON_LINE_PARSER, ParametersListUtil.COLON_LINE_JOINER))
         .comment(JavaCompilerBundle.message("compiler.ui.pattern.legend.text"))

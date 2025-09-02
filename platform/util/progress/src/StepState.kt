@@ -3,9 +3,11 @@ package com.intellij.platform.util.progress;
 
 import com.intellij.platform.util.progress.impl.ProgressText
 import kotlinx.serialization.Serializable
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 @Serializable
-internal data class StepState(
+data class StepState(
   override val fraction: Double?,
   override val text: ProgressText?,
   override val details: ProgressText?,

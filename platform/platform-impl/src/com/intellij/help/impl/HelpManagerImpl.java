@@ -9,29 +9,29 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.help.KeymapHelpIdPresenter;
 import com.intellij.openapi.help.WebHelpProvider;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.ide.customization.ExternalProductResourceUrls;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
+import static java.util.Objects.requireNonNullElse;
+
 public class HelpManagerImpl extends HelpManager {
-  private static final ExtensionPointName<WebHelpProvider>
-    WEB_HELP_PROVIDER_EP_NAME = ExtensionPointName.create("com.intellij.webHelpProvider");
+  private static final ExtensionPointName<WebHelpProvider> EP_NAME = ExtensionPointName.create("com.intellij.webHelpProvider");
 
   @Override
   public void invokeHelp(@Nullable String id) {
     logWillOpenHelpId(id);
-    String helpUrl = getHelpUrl(id);
+    var helpUrl = getHelpUrl(id);
     if (helpUrl != null) {
       BrowserUtil.browse(helpUrl);
     }
   }
 
   public static @Nullable String getHelpUrl(@Nullable String id) {
-    id = StringUtil.notNullize(id, "top");
+    id = requireNonNullElse(id, "top");
 
-    for (var provider : WEB_HELP_PROVIDER_EP_NAME.getExtensionList()) {
+    for (var provider : EP_NAME.getExtensionList()) {
       var prefix = provider.getHelpTopicPrefix();
       if (!prefix.isEmpty() && id.startsWith(prefix)) {
         var url = provider.getHelpPageUrl(id);

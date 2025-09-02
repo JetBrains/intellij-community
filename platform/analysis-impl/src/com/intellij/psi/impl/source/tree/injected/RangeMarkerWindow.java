@@ -21,7 +21,7 @@ public class RangeMarkerWindow implements RangeMarkerEx {
   private final int myStartShift;
   private final int myEndShift;
 
-  RangeMarkerWindow(@NotNull DocumentWindow documentWindow, int startOffset, int endOffset, boolean surviveOnExternalChange) {
+  public RangeMarkerWindow(@NotNull DocumentWindow documentWindow, int startOffset, int endOffset, boolean surviveOnExternalChange) {
     myDocumentWindow = documentWindow;
     TextRange hostRange = documentWindow.injectedToHost(new ProperTextRange(startOffset, endOffset));
     // shifts to be added to hostToInjected(hostMarker) offsets to get the target marker offsets, when the startOffset/endOffset lie inside prefix/suffix
@@ -34,8 +34,8 @@ public class RangeMarkerWindow implements RangeMarkerEx {
     }
   }
 
-  @NotNull
-  RangeMarker createHostRangeMarkerToTrack(@NotNull TextRange hostRange, boolean surviveOnExternalChange) {
+  @ApiStatus.Internal
+  public @NotNull RangeMarker createHostRangeMarkerToTrack(@NotNull TextRange hostRange, boolean surviveOnExternalChange) {
     return myDocumentWindow.getDelegate().createRangeMarker(hostRange.getStartOffset(), hostRange.getEndOffset(), surviveOnExternalChange);
   }
 

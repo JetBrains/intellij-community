@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.patterns.PlatformPatterns;
@@ -31,7 +31,7 @@ public final class JavadocCompletionConfidence extends CompletionConfidence {
       if (contextElement.textMatches("#")) {
         return ThreeState.NO;
       }
-      if (contextElement instanceof PsiDocToken token && token.getTokenType().equals(JavaDocTokenType.DOC_TAG_ATTRIBUTE_NAME) ||
+      if (PsiDocToken.isDocToken(contextElement, JavaDocTokenType.DOC_TAG_ATTRIBUTE_NAME) ||
           contextElement instanceof PsiSnippetAttributeValue) {
         return ThreeState.NO;
       }
@@ -39,10 +39,10 @@ public final class JavadocCompletionConfidence extends CompletionConfidence {
     return super.shouldSkipAutopopup(contextElement, psiFile, offset);
   }
 
-  private static boolean hasKnownReference(final PsiFile file, final int offset) {
+  private static boolean hasKnownReference(PsiFile file, int offset) {
     PsiReference reference = file.findReferenceAt(offset);
-    return reference instanceof PsiMultiReference
-           ? ContainerUtil.exists(((PsiMultiReference)reference).getReferences(), JavadocCompletionConfidence::isKnownReference)
+    return reference instanceof PsiMultiReference m
+           ? ContainerUtil.exists(m.getReferences(), JavadocCompletionConfidence::isKnownReference)
            : isKnownReference(reference);
   }
 

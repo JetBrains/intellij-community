@@ -2,11 +2,11 @@
 package org.jetbrains.plugins.gradle.quarantine.execution.test.events
 
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.testFramework.GradleExecutionTestCase
+import org.jetbrains.plugins.gradle.testFramework.GradleTestExecutionTestCase
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
 import org.junit.jupiter.params.ParameterizedTest
 
-class SpockGradleTestNavigationTest : GradleExecutionTestCase() {
+class SpockGradleTestNavigationTest : GradleTestExecutionTestCase() {
 
   @ParameterizedTest
   @AllGradleVersionsSource

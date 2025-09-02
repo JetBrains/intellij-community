@@ -1,0 +1,5 @@
+<idea-plugin>
+  <dependencies>
+    <module name="intellij.libraries.junit5.pioneer"/>
+  </dependencies>
+</idea-plugin>

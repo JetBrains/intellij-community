@@ -1,0 +1,5 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationInitializedListener implementation="com.intellij.platform.kernel.impl.KernelApplicationInitializedListener"/>
+  </extensions>
+</idea-plugin>

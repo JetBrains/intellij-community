@@ -43,8 +43,8 @@ class KotlinMavenImporterEx : KotlinMavenImporter(), MavenWorkspaceFacetConfigur
 
     private fun createWorkspaceEntity(module: ModuleEntity): KotlinSettingsEntity.Builder =
         KotlinSettingsEntity(
-            KotlinFacetType.INSTANCE.presentableName,
             module.symbolicId,
+            KotlinFacetType.INSTANCE.presentableName,
             emptyList(),
             emptyList(),
             true,

@@ -12,7 +12,9 @@ internal class ChangedStateEventsPanel(val project: Project,
                                        difference: Collection<LogEvent>,
                                        recorderId: String)
   : SimpleToolWindowPanel(false, true) {
-  private val consoleLog = StatisticsEventLogConsole(project, StatisticsLogFilterModel(), recorderId)
+  private val model = StatisticsLogFilterModel()
+  private val logFormatter = StatisticsEventLogFormatter(model)
+  private val consoleLog = StatisticsEventLogConsole(project, model, recorderId, logFormatter)
 
   init {
     setContent(consoleLog.component)

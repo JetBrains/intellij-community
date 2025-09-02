@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.graph.impl.facade.sort;
 
 import com.intellij.vcs.log.graph.api.EdgeFilter;
@@ -16,7 +16,7 @@ import java.util.List;
 
 import static com.intellij.util.containers.ContainerUtil.map;
 
-public class SortedBaseController implements LinearGraphController {
+public final class SortedBaseController implements LinearGraphController {
   private final @NotNull SortIndexMap mySortIndexMap;
   private final @NotNull LinearGraph mySortedGraph;
 
@@ -41,7 +41,7 @@ public class SortedBaseController implements LinearGraphController {
     return LinearGraphUtils.DEFAULT_GRAPH_ANSWER;
   }
 
-  public static class SortedLinearGraph implements LinearGraph {
+  public static final class SortedLinearGraph implements LinearGraph {
     private final @NotNull LinearGraph myLinearGraph;
     private final @NotNull SortIndexMap mySortIndexMap;
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.actions;
 
 import com.intellij.dvcs.repo.Repository;
@@ -23,8 +23,7 @@ import java.util.function.Supplier;
 
 import static git4idea.GitNotificationIdsHolder.MERGE_FAILED;
 
-public class GitMerge extends GitMergeAction {
-
+final class GitMerge extends GitMergeAction {
   @Override
   protected @NotNull String getActionName() {
     return GitBundle.message("merge.action.name");
@@ -49,7 +48,7 @@ public class GitMerge extends GitMergeAction {
     return MERGE_FAILED;
   }
 
-  protected @NotNull Supplier<GitLineHandler> getHandlerProvider(Project project, GitMergeDialog dialog) {
+  @NotNull Supplier<GitLineHandler> getHandlerProvider(Project project, GitMergeDialog dialog) {
     VirtualFile root = dialog.getSelectedRoot();
     Set<GitMergeOption> selectedOptions = dialog.getSelectedOptions();
     String commitMsg = dialog.getCommitMessage().trim();

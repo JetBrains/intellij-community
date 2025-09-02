@@ -6,12 +6,12 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.annotations.Child
+import com.intellij.platform.workspace.storage.annotations.Parent
 
 interface OneToOneRefEntity: WorkspaceEntity {
   val version: Int
   val text: String
-  @Child val anotherEntity: com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.AnotherOneToOneRefEntity?
+  val anotherEntity: com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.AnotherOneToOneRefEntity?
 
   //region generated code
   @GeneratedCodeApiVersion(3)
@@ -55,6 +55,7 @@ fun MutableEntityStorage.modifyOneToOneRefEntity(
 interface AnotherOneToOneRefEntity: WorkspaceEntity {
   val someString: String
   val boolean: Boolean
+  @Parent
   val parentEntity: com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.OneToOneRefEntity
 
   //region generated code

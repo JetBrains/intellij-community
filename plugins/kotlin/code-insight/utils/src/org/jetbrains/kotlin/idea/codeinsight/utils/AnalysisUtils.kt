@@ -1,13 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleFunctionCall
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
+import org.jetbrains.kotlin.psi.psiUtil.unwrapNullability
 import org.jetbrains.kotlin.resolve.ArrayFqNames
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
@@ -110,3 +111,63 @@ fun KtReference.resolveCompanionObjectShortReferenceToContainingClassSymbol(): K
 context(KaSession)
 fun KaCallableSymbol.canBeUsedAsExtension(): Boolean =
     isExtension || this is KaVariableSymbol && (returnType as? KaFunctionType)?.hasReceiver == true
+
+context (KaSession)
+fun KtExpression.resolveExpression(): KaSymbol? {
+    val reference = mainReference?:(this as? KtThisExpression)?.instanceReference?.mainReference
+    reference?.resolveToSymbol()?.let { return it }
+    val call = resolveToCall()?.calls?.singleOrNull() ?: return null
+    return if (call is KaCallableMemberCall<*, *>) call.symbol else null
+}
+
+/**
+ * A less fragile alternative to [KaSession.type] which should be safer to use on incomplete code. 
+ * 
+ * Can be used now in cases when exceptions occur too frequently, but should eventually become obsolete,
+ * as [KaSession.type] becomes less fragile.
+ * 
+ * See KT-77222 for more information.
+ * 
+ * N.B. This function should NOT be used everywhere - only in cases where exceptions are too frequent.
+ */
+context(KaSession)
+@get:ApiStatus.Internal
+val KtTypeReference.typeIfSafeToResolve: KaType?
+    get() {
+        if (!this.isSafeToResolve) return null
+
+        return this.type
+    }
+
+context(KaSession)
+private val KtTypeReference.isSafeToResolve: Boolean
+    get() {
+        val typeElement = this.typeElement?.unwrapNullability() ?: return false
+
+        return when (typeElement) {
+            is KtFunctionType -> {
+                val childrenTypeReferences = typeElement.typeArgumentsAsTypes
+                childrenTypeReferences.all { it.isSafeToResolve }
+            }
+            
+            is KtIntersectionType -> {
+                val intersectedTypeReferences = listOfNotNull(
+                    typeElement.getLeftTypeRef(),
+                    typeElement.getRightTypeRef(),
+                )
+                intersectedTypeReferences.all { it.isSafeToResolve }
+            }
+            
+            is KtUserType -> {
+                val typeNameExpression = typeElement.referenceExpression
+
+                // N.B. Currently, the `resolveToSymbols` function is less fragile 
+                // with incomplete types, that's why we rely on it here
+                typeNameExpression?.mainReference?.resolveToSymbols()?.isNotEmpty() == true
+            }
+            
+            // We currently assume that other `KtTypeElement`s are safe to resolve.
+            // If proved otherwise, this condition should become more restrictive.
+            else -> true
+        }
+    }

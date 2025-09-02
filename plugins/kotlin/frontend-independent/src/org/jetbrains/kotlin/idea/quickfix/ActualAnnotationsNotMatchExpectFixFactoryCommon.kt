@@ -1,12 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.quickfix
 
+import com.intellij.modcommand.ModCommandAction
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.base.psi.callableIdIfNotLocal
 import org.jetbrains.kotlin.idea.base.psi.classIdIfNonLocal
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixActionBase
 import org.jetbrains.kotlin.idea.inspections.RemoveAnnotationFix
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.*
@@ -23,7 +22,7 @@ object ActualAnnotationsNotMatchExpectFixFactoryCommon {
         KtTypeReference::class,
     )
 
-    fun createRemoveAnnotationFromExpectFix(expectAnnotationEntry: KtAnnotationEntry): QuickFixActionBase<*>? {
+    fun createRemoveAnnotationFromExpectFix(expectAnnotationEntry: KtAnnotationEntry): ModCommandAction? {
         val annotationName = expectAnnotationEntry.shortName ?: return null
         return RemoveAnnotationFix(
             KotlinBundle.message("fix.remove.mismatched.annotation.from.expect.declaration.may.change.semantics", annotationName),
@@ -38,7 +37,7 @@ object ActualAnnotationsNotMatchExpectFixFactoryCommon {
         actualAnnotationTargetElement: PsiElement?,
         incompatibilityType: ExpectActualAnnotationsIncompatibilityType<KtAnnotationEntry?>,
         annotationClassIdProvider: () -> ClassId?,
-    ): List<KotlinQuickFixAction<*>> {
+    ): List<ModCommandAction> {
         if (skipFakeOverrideAndTypealias(expectDeclaration, actualDeclaration)) {
             return emptyList()
         }
@@ -73,7 +72,7 @@ object ActualAnnotationsNotMatchExpectFixFactoryCommon {
 
     private fun createCopyFromExpectToActualFix(
         expectAnnotationEntry: KtAnnotationEntry, actualAnnotationTargetElement: PsiElement?, annotationClassIdProvider: () -> ClassId?
-    ): KotlinQuickFixAction<*>? {
+    ): ModCommandAction? {
         if (actualAnnotationTargetElement !is KtModifierListOwner) {
             return null
         }

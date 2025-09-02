@@ -170,7 +170,8 @@ object JarHttpDownloader {
 
     LOG.trace("Starting downloading '$url' to '$targetFile', headers=${headers.keys.sorted()}, expectedSha256=$expectedSha256")
 
-    val targetDirectory = targetFile.parent!!
+    val targetDirectory = targetFile.parent
+                          ?: error("Could not get parent directory for $targetFile")
 
     targetDirectory.createDirectories()
     val tempFile = Files.createTempFile(targetDirectory, "." + targetFile.name, ".tmp")

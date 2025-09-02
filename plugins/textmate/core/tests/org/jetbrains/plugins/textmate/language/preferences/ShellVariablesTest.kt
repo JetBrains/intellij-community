@@ -3,6 +3,7 @@ package org.jetbrains.plugins.textmate.language.preferences
 import org.jetbrains.plugins.textmate.Constants
 import org.jetbrains.plugins.textmate.TestUtil
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorWeigherImpl
+import org.jetbrains.plugins.textmate.plist.XmlPlistReaderForTests
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -26,15 +27,15 @@ class ShellVariablesTest {
 
   companion object {
     private fun loadVariables(bundleName: String): ShellVariablesRegistry {
-      val preferences = TestUtil.readBundle(bundleName).readPreferences().iterator()
+      val preferences = TestUtil.readBundle(bundleName, XmlPlistReaderForTests()).readPreferences().iterator()
       assertNotNull(preferences)
-      val variablesRegistry = ShellVariablesRegistryImpl(TextMateSelectorWeigherImpl())
+      val variablesRegistryBuilder = ShellVariablesRegistryBuilder(TextMateSelectorWeigherImpl())
       while (preferences.hasNext()) {
         for (variable in preferences.next().variables) {
-          variablesRegistry.addVariable(variable)
+          variablesRegistryBuilder.addVariable(variable)
         }
       }
-      return variablesRegistry
+      return variablesRegistryBuilder.build()
     }
   }
 }

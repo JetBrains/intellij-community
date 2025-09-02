@@ -17,13 +17,14 @@ import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
-import org.jetbrains.intellij.build.io.PackageIndexBuilder
-import org.jetbrains.intellij.build.io.readZipFile
-import org.jetbrains.intellij.build.io.suspendAwareReadZipFile
-import org.jetbrains.intellij.build.io.transformZipUsingTempFile
+import org.jetbrains.intellij.build.io.*
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
 import java.nio.ByteBuffer
@@ -32,22 +33,25 @@ import java.nio.channels.SeekableByteChannel
 import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.FileTime
-import java.util.*
+import java.util.EnumSet
 import java.util.concurrent.TimeUnit
 import kotlin.io.path.exists
 import kotlin.io.path.extension
 import kotlin.io.path.name
 import kotlin.io.path.relativeTo
 
-internal fun isMacLibrary(name: String): Boolean =
-  name.endsWith(".jnilib") ||
-  name.endsWith(".dylib") ||
-  name.endsWith(".so") ||
-  name.endsWith(".tbd")
+internal fun isMacLibrary(name: String): Boolean {
+  return name.endsWith(".jnilib") ||
+         name.endsWith(".dylib") ||
+         name.endsWith(".so") ||
+         name.endsWith(".tbd")
+}
 
-internal fun CoroutineScope.recursivelySignMacBinaries(root: Path,
-                                                       context: BuildContext,
-                                                       executableFileMatchers: Collection<PathMatcher> = emptyList()) {
+internal fun CoroutineScope.recursivelySignMacBinaries(
+  root: Path,
+  context: BuildContext,
+  executableFileMatchers: Collection<PathMatcher> = emptyList(),
+) {
   val archives = mutableListOf<Path>()
   val binaries = mutableListOf<Path>()
 
@@ -81,7 +85,7 @@ internal fun CoroutineScope.recursivelySignMacBinaries(root: Path,
 }
 
 private suspend fun signAndRepackZipIfMacSignaturesAreMissing(zip: Path, context: BuildContext) {
-  val filesToBeSigned = mutableMapOf<String, Path>()
+  val filesToBeSigned = LinkedHashMap<String, Path>()
   suspendAwareReadZipFile(zip) { name, dataSupplier ->
     if (!isMacLibrary(name)) {
       return@suspendAwareReadZipFile
@@ -95,9 +99,7 @@ private suspend fun signAndRepackZipIfMacSignaturesAreMissing(zip: Path, context
       if (!isSigned(byteChannel, name)) {
         data.reset()
         val fileToBeSigned = Files.createTempFile(context.paths.tempDir, name.replace('/', '-').takeLast(128), "")
-        FileChannel.open(fileToBeSigned, EnumSet.of(StandardOpenOption.WRITE)).use {
-          it.write(data)
-        }
+        writeToFile(fileToBeSigned, data)
         filesToBeSigned.put(name, fileToBeSigned)
       }
     }
@@ -107,9 +109,7 @@ private suspend fun signAndRepackZipIfMacSignaturesAreMissing(zip: Path, context
     return
   }
 
-  coroutineScope {
-    signMacBinaries(files = filesToBeSigned.values.toList(), context = context, checkPermissions = false)
-  }
+  signMacBinaries(files = filesToBeSigned.values.toList(), context = context, checkPermissions = false)
 
   copyZipReplacing(origin = zip, entries = filesToBeSigned, context = context)
   for (file in filesToBeSigned.values) {
@@ -122,8 +122,8 @@ private suspend fun copyZipReplacing(origin: Path, entries: Map<String, Path>, c
     .setAttribute("zip", origin.toString())
     .setAttribute(AttributeKey.stringArrayKey("unsigned"), entries.keys.toList())
     .use {
-      val packageIndexBuilder = PackageIndexBuilder()
-      transformZipUsingTempFile(file = origin, indexWriter = packageIndexBuilder.indexWriter) { zipWriter ->
+      val packageIndexBuilder = PackageIndexBuilder(AddDirEntriesMode.NONE)
+      writeZipUsingTempFile(file = origin, packageIndexBuilder) { zipWriter ->
         readZipFile(origin) { name, dataSupplier ->
           packageIndexBuilder.addFile(name)
           if (entries.containsKey(name)) {
@@ -132,8 +132,8 @@ private suspend fun copyZipReplacing(origin: Path, entries: Map<String, Path>, c
           else {
             zipWriter.uncompressedData(name, dataSupplier())
           }
+          ZipEntryProcessorResult.CONTINUE
         }
-        packageIndexBuilder.writePackageIndex(zipWriter)
       }
       Files.setLastModifiedTime(origin, FileTime.from(context.options.buildDateInSeconds, TimeUnit.SECONDS))
     }
@@ -157,10 +157,12 @@ internal fun signingOptions(contentType: String, context: BuildContext): Persist
   )
 }
 
-internal suspend fun signMacBinaries(files: List<Path>,
-                                     context: BuildContext,
-                                     checkPermissions: Boolean = true,
-                                     additionalOptions: Map<String, String> = emptyMap()) {
+internal suspend fun signMacBinaries(
+  files: List<Path>,
+  context: BuildContext,
+  checkPermissions: Boolean = true,
+  additionalOptions: Map<String, String> = emptyMap(),
+) {
   if (files.isEmpty() || !context.isMacCodeSignEnabled) {
     return
   }
@@ -199,12 +201,16 @@ internal suspend fun signData(data: ByteBuffer, context: BuildContext): Path {
   val options = signingOptions("application/x-mac-app-bin", context)
 
   val file = Files.createTempFile(context.paths.tempDir, "", "")
-  FileChannel.open(file, EnumSet.of(StandardOpenOption.WRITE)).use {
-    it.write(data)
-  }
+  writeToFile(file, data)
   context.proprietaryBuildTools.signTool.signFiles(files = listOf(file), context = context, options = options)
   check(isSigned(file)) { "Missing signature for $file" }
   return file
+}
+
+private fun writeToFile(file: Path?, data: ByteBuffer) {
+  FileChannel.open(file, WRITE_OPEN_OPTION).use { fileChannel ->
+    writeToFileChannelFully(channel = fileChannel, data = data)
+  }
 }
 
 private fun isMacBinary(path: Path): Boolean = isMacBinary(Files.newByteChannel(path))
@@ -217,24 +223,21 @@ internal suspend fun isSigned(path: Path): Boolean {
   }
 }
 
-internal fun isMacBinary(byteChannel: SeekableByteChannel): Boolean =
-  detectFileType(byteChannel).first == FileType.MachO
+internal fun isMacBinary(byteChannel: SeekableByteChannel): Boolean {
+  return detectFileType(byteChannel).first == FileType.MachO
+}
 
-private fun detectFileType(byteChannel: SeekableByteChannel): Pair<FileType, EnumSet<FileProperties>> =
-  byteChannel.use {
+private fun detectFileType(byteChannel: SeekableByteChannel): Pair<FileType, EnumSet<FileProperties>> {
+  return byteChannel.use {
     it.DetectFileType()
   }
+}
 
 /**
  * Assumes [isMacBinary].
  */
 internal suspend fun isSigned(byteChannel: SeekableByteChannel, binaryId: String): Boolean {
-  val verificationParams = SignatureVerificationParams(
-    signRootCertStore = null,
-    timestampRootCertStore = null,
-    buildChain = false,
-    withRevocationCheck = false
-  )
+  val verificationParams = SignatureVerificationParams(signRootCertStore = null, timestampRootCertStore = null, buildChain = false, withRevocationCheck = false)
   val binaries = MachoArch(byteChannel).Extract()
   return binaries.all { binary ->
     val signatureData = try {
@@ -268,7 +271,8 @@ internal suspend fun isSigned(byteChannel: SeekableByteChannel, binaryId: String
 }
 
 private class SignatureVerificationLog(val binaryId: String) : ILogger {
-  val span: Span = Span.current()
+  private val span: Span = Span.current()
+
   fun addEvent(str: String, category: String) {
     span.addEvent(str)
       .setAttribute("binary", binaryId)

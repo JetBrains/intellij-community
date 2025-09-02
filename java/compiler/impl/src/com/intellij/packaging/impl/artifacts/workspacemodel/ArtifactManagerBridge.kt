@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packaging.impl.artifacts.workspacemodel
 
 import com.intellij.compiler.server.BuildManager
@@ -6,7 +6,6 @@ import com.intellij.java.workspace.entities.ArtifactEntity
 import com.intellij.java.workspace.entities.ArtifactId
 import com.intellij.java.workspace.entities.CustomPackagingElementEntity
 import com.intellij.java.workspace.entities.modifyCustomPackagingElementEntity
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.diagnostic.logger
@@ -32,15 +31,16 @@ import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.ImmutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.containers.BidirectionalMap
 import com.intellij.util.xmlb.XmlSerializer
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import io.opentelemetry.api.metrics.Meter
+import kotlinx.coroutines.CoroutineScope
 
-class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), Disposable {
-
+class ArtifactManagerBridge(private val project: Project, coroutineScope: CoroutineScope) : ArtifactManager() {
   private val modificationTracker = SimpleModificationTracker()
 
   private val resolvingContext = DefaultPackagingElementResolvingContext(project)
@@ -48,7 +48,7 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
   internal val artifactWithDiffs: MutableList<ArtifactBridge> = mutableListOf()
 
   init {
-    DynamicArtifactExtensionsLoaderBridge(this).installListeners(this)
+    DynamicArtifactExtensionsLoaderBridge(this).installListeners(coroutineScope)
   }
 
   @RequiresReadLock
@@ -69,11 +69,9 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
     initBridges()
 
     val store = project.workspaceModel.currentSnapshot
-
     val artifactEntity = store.resolve(ArtifactId(name)) ?: return null
-
     return@addMeasuredTime store.artifactsMap.getDataByEntity(artifactEntity)
-                                 ?: error("All artifact bridges should be already created at this moment")
+                           ?: error("All artifact bridges should be already created at this moment")
   }
 
   override fun getArtifactByOriginal(artifact: Artifact): Artifact = artifact
@@ -99,7 +97,7 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
   @RequiresReadLock
   override fun getAllArtifactsIncludingInvalid(): List<Artifact> {
     // XXX @RequiresReadLock annotation doesn't work for kt now
-    ApplicationManager.getApplication().assertReadAccessAllowed()
+    ThreadingAssertions.assertReadAccess()
     initBridges()
 
     val storage = project.workspaceModel.currentSnapshot
@@ -176,28 +174,30 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
     val changedArtifacts: MutableList<ArtifactBridge> = mutableListOf()
 
     val modifiableToOriginal = BidirectionalMap<ArtifactBridge, ArtifactBridge>()
-    artifactModel.modifiableToOriginal.forEach { key, value -> modifiableToOriginal[key] = value }
+    for ((key, value) in artifactModel.modifiableToOriginal) {
+      modifiableToOriginal[key] = value
+    }
 
-    changes.forEach {
-      when (it) {
-        is EntityChange.Removed<*> -> current.artifactsMap.getDataByEntity(it.oldEntity)?.let { it1 -> removed.add(it1) }
+    for (change in changes) {
+      when (change) {
+        is EntityChange.Removed<*> -> current.artifactsMap.getDataByEntity(change.oldEntity)?.let { it1 -> removed.add(it1) }
         is EntityChange.Added -> Unit
         is EntityChange.Replaced -> {
           // Collect changes and transfer info from the modifiable bridge artifact to the original artifact
-          val originalArtifact = artifactModel.diff.artifactsMap.getDataByEntity(it.newEntity)!!
+          val originalArtifact = artifactModel.diff.artifactsMap.getDataByEntity(change.newEntity)!!
           val modifiableArtifact = modifiableToOriginal.getKeysByValue(originalArtifact)!!.single()
           if (modifiableArtifact !== originalArtifact) {
             changedArtifacts.add(modifiableArtifact)
           }
           originalArtifact.copyFrom(modifiableArtifact)
-          changed.add(Triple(originalArtifact, (it.oldEntity as ArtifactEntity).name, modifiableArtifact))
+          changed.add(Triple(originalArtifact, (change.oldEntity as ArtifactEntity).name, modifiableArtifact))
           originalArtifact.setActualStorage()
           modifiableToOriginal.remove(modifiableArtifact, originalArtifact)
         }
       }
     }
 
-    modifiableToOriginal.entries.forEach { (modifiable, original) ->
+    for ((modifiable, original) in modifiableToOriginal.entries) {
       if (modifiable !== original) {
         changedArtifacts.add(modifiable)
         val oldName = original.name
@@ -247,10 +247,13 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
 
     val publisher: ArtifactListener = project.messageBus.syncPublisher(TOPIC)
     ProjectRootManagerEx.getInstanceEx(project).mergeRootsChangesDuring {
-      //it's important to send 'removed' events before 'added'. Otherwise when artifacts are reloaded from xml artifact pointers will be damaged
+      // it's important to send 'removed' events before 'added'.
+      // Otherwise, when artifacts are reloaded from XML artifact pointers will be damaged
       removed.forEach { publisher.artifactRemoved(it) }
       added.forEach { publisher.artifactAdded(it) }
-      changed.forEach { (artifact, oldName) -> publisher.artifactChanged(artifact, oldName) }
+      for ((artifact, oldName) in changed) {
+        publisher.artifactChanged(artifact, oldName)
+      }
     }
 
     if (changes.isNotEmpty()) {
@@ -331,7 +334,7 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
     private val commitMs = MillisecondsMeasurer()
     private val dropMappingsMs = MillisecondsMeasurer()
 
-    private fun setupOpenTelemetryReporting(meter: Meter): Unit {
+    private fun setupOpenTelemetryReporting(meter: Meter) {
       val getArtifactsCounter = meter.counterBuilder("compiler.ArtifactManagerBridge.getArtifacts.ms")
         .setDescription("Total time spent in method").buildObserver()
       val findArtifactCounter = meter.counterBuilder("compiler.ArtifactManagerBridge.findArtifact.ms")
@@ -367,10 +370,6 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
     init {
       setupOpenTelemetryReporting(TelemetryManager.getMeter(Compiler))
     }
-  }
-
-  override fun dispose() {
-    // Anything here?
   }
 
   @RequiresWriteLock

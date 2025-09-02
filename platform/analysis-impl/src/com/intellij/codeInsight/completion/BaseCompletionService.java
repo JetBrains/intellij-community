@@ -56,8 +56,8 @@ public class BaseCompletionService extends CompletionService {
   public void setAdvertisementText(@Nullable @NlsContexts.PopupAdvertisement String text) {
     if (text == null) return;
 
-    if (apiCompletionProcess instanceof CompletionProcessEx) {
-      ((CompletionProcessEx)apiCompletionProcess).addAdvertisement(text, null);
+    if (apiCompletionProcess instanceof CompletionProcessEx processEx) {
+      processEx.addAdvertisement(text, null);
     }
   }
 
@@ -173,7 +173,7 @@ public class BaseCompletionService extends CompletionService {
     @Override
     public @NotNull CompletionResultSet caseInsensitive() {
       PrefixMatcher matcher = getPrefixMatcher();
-      boolean typoTolerant = matcher instanceof CamelHumpMatcher && ((CamelHumpMatcher)matcher).isTypoTolerant();
+      boolean typoTolerant = matcher instanceof CamelHumpMatcher camelHumpMatcher && camelHumpMatcher.isTypoTolerant();
       return withPrefixMatcher(createMatcher(matcher.getPrefix(), false, typoTolerant));
     }
 

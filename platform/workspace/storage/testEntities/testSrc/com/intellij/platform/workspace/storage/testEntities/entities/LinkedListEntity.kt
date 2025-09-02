@@ -2,11 +2,6 @@
 package com.intellij.platform.workspace.storage.testEntities.entities
 
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
-import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.WorkspaceEntity
 
 
 data class LinkedListEntityId(val name: String) : SymbolicEntityId<LinkedListEntity> {
@@ -59,4 +54,3 @@ fun MutableEntityStorage.modifyLinkedListEntity(
   return modifyEntity(LinkedListEntity.Builder::class.java, entity, modification)
 }
 //endregion
-

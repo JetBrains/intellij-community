@@ -92,6 +92,10 @@ public class UnusedImportsTest extends LightJavaCodeInsightFixtureTestCase {
     doTest();
   }
 
+  public void testUnresolvedReferenceAsVariableAndClass() {
+    doTest();
+  }
+
   public void testImportsForUsesAndProvidesInModuleInfo() {
     myFixture.addClass("""
                          package pkg.main.api;

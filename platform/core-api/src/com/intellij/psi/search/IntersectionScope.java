@@ -4,6 +4,7 @@ package com.intellij.psi.search;
 import com.intellij.core.CoreBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.UnloadedModuleDescription;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.impl.VirtualFileEnumeration;
 import com.intellij.psi.search.impl.VirtualFileEnumerationAware;
@@ -17,8 +18,8 @@ import java.util.Arrays;
 import java.util.Collection;
 
 final class IntersectionScope extends GlobalSearchScope implements VirtualFileEnumerationAware, CodeInsightContextAwareSearchScope {
-  private final GlobalSearchScope myScope1;
-  private final GlobalSearchScope myScope2;
+  final GlobalSearchScope myScope1;
+  final GlobalSearchScope myScope2;
 
   IntersectionScope(@NotNull GlobalSearchScope scope1, @NotNull GlobalSearchScope scope2) {
     super(scope1.getProject() == null ? scope2.getProject() : scope1.getProject());
@@ -44,7 +45,12 @@ final class IntersectionScope extends GlobalSearchScope implements VirtualFileEn
 
   @Override
   public boolean contains(@NotNull VirtualFile file) {
-    return myScope1.contains(file) && myScope2.contains(file);
+    boolean firstResult = myScope1.contains(file);
+    if (!firstResult) {
+      return false;
+    }
+    ProgressManager.checkCanceled();
+    return myScope2.contains(file);
   }
 
   @Override

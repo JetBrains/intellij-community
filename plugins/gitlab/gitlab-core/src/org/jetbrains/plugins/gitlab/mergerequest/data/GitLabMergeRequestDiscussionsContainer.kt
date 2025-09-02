@@ -16,7 +16,6 @@ import org.jetbrains.plugins.gitlab.api.dto.GitLabNoteDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabDiffPositionInput
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.*
-import org.jetbrains.plugins.gitlab.mergerequest.data.loaders.startGitLabGraphQLListLoaderIn
 import org.jetbrains.plugins.gitlab.mergerequest.data.loaders.startGitLabRestETagListLoaderIn
 import org.jetbrains.plugins.gitlab.util.GitLabApiRequestName
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
@@ -72,7 +71,7 @@ class GitLabMergeRequestDiscussionsContainerImpl(
   private val discussionEvents = MutableSharedFlow<Change<GitLabDiscussionDTO>>()
 
   private val discussionsDataHolder =
-    startGitLabGraphQLListLoaderIn(
+    GraphQLListLoader.startIn(
       cs,
       { it.id },
 
@@ -80,7 +79,7 @@ class GitLabMergeRequestDiscussionsContainerImpl(
       requestRefreshFlow = updateRequests,
       requestChangeFlow = discussionEvents,
 
-      isReversed = true
+      shouldTryToLoadAll = true
     ) { cursor ->
       api.graphQL.loadMergeRequestDiscussions(glProject, mr.iid, GraphQLRequestPagination(cursor))
     }

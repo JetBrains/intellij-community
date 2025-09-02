@@ -48,7 +48,7 @@ public interface UsageContextPanel extends Disposable {
   /**
    * @deprecated Use {@link #updateLayout(Project, List, UsageView)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   default void updateLayout(@NotNull List<? extends UsageInfo> infos, @NotNull UsageView usageView) {
     updateLayout(infos);
   }

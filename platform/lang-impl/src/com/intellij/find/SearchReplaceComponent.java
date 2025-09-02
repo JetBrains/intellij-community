@@ -658,7 +658,6 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     innerTextComponent.putClientProperty(
       TextComponentEmptyText.STATUS_VISIBLE_FUNCTION, (Predicate<JTextComponent>)(c -> c.getText().isEmpty() && c.isFocusOwner()));
 
-    innerTextComponent.putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, Boolean.TRUE);
     innerTextComponent.setBackground(UIUtil.getTextFieldBackground());
     JComponent finalTextComponent = innerTextComponent;
     innerTextComponent.addFocusListener(new FocusListener() {

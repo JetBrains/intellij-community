@@ -8,9 +8,4 @@ import org.intellij.lang.annotations.Language
 fun Finder.kubernetesTable(@Language("xpath") xpath: String? = null) =
   x(xpath ?: "//div[@class='KubernetesTable']", KubernetesTableUi::class.java)
 
-class KubernetesTableUi(data: ComponentData) : JTableUiComponent(data) {
-
-  fun getValueAt(row: Int, column: Int): String? {
-    return content()[row]?.get(column)
-  }
-}
+class KubernetesTableUi(data: ComponentData) : JTableUiComponent(data)

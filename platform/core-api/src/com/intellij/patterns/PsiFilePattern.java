@@ -1,12 +1,15 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.patterns;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.function.Predicate;
 
 /**
  * @see PlatformPatterns#psiFile()
@@ -54,6 +57,15 @@ public class PsiFilePattern<T extends PsiFile, Self extends PsiFilePattern<T, Se
       @Override
       public boolean accepts(@NotNull T file, ProcessingContext context) {
         return fileTypePattern.accepts(file.getFileType(), context);
+      }
+    });
+  }
+
+  public Self withLanguage(final Predicate<Language> languagePredicate) {
+    return with(new PatternCondition<T>("withLanguage") {
+      @Override
+      public boolean accepts(@NotNull T file, ProcessingContext context) {
+        return languagePredicate.test(file.getLanguage());
       }
     });
   }

@@ -38,7 +38,7 @@ import java.util.*;
 
 /**
  * Custom (aka dynamic) type that delegates calls to some classes you pass to it.
- * We say this this class <strong>mimics</strong> such classes.
+ * We say that this class <strong>mimics</strong> such classes.
  * To be used for cases like "type()".
  * It optionally filters methods using {@link Processor}
  *

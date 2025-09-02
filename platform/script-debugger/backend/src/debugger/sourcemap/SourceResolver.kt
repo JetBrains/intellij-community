@@ -34,7 +34,6 @@ interface SourceFileResolver {
 @ApiStatus.Internal
 class SourceResolver(
   private val rawSources: List<String>,
-  trimFileScheme: Boolean,
   baseUrl: Url?,
   baseUrlIsFile: Boolean = true,
   transformToLocalFileUrlIfPossible: Boolean = true,
@@ -196,8 +195,7 @@ fun doCanonicalize(url: String, baseUrl: Url, baseUrlIsFile: Boolean, asLocalFil
 
 private fun pathExistsSafe(path: String): Boolean = try {
   Path(path).exists()
-}
-catch (e: InvalidPathException) {
+} catch (e: InvalidPathException) {
   LOG.warn("Invalid path: $path", e)
   false
 }

@@ -6,6 +6,7 @@ import com.intellij.diff.comparison.InnerFragmentsPolicy;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.lang.DiffIgnoredRangeProvider;
+import com.intellij.diff.lang.DiffLangSpecificProvider;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.tools.util.base.HighlightPolicy;
 import com.intellij.diff.tools.util.base.IgnorePolicy;
@@ -17,16 +18,14 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.BitSet;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import static com.intellij.diff.tools.util.base.HighlightPolicy.*;
 import static com.intellij.diff.tools.util.base.IgnorePolicy.*;
@@ -39,9 +38,10 @@ public class SmartTextDiffProvider extends TwosideTextDiffProviderBase implement
   private final @Nullable Project myProject;
   private final @NotNull DiffContent myContent1;
   private final @NotNull DiffContent myContent2;
-  private final @NotNull DiffIgnoredRangeProvider myProvider;
+  private final @Nullable DiffIgnoredRangeProvider myProvider;
+  private final @Nullable DiffLangSpecificProvider myDiffProvider;
 
-  public static @Nullable TwosideTextDiffProvider create(@Nullable Project project,
+  public static @NotNull TwosideTextDiffProvider create(@Nullable Project project,
                                                          @NotNull ContentDiffRequest request,
                                                          @NotNull TextDiffSettings settings,
                                                          @NotNull Runnable rediff,
@@ -49,11 +49,13 @@ public class SmartTextDiffProvider extends TwosideTextDiffProviderBase implement
     DiffContent content1 = Side.LEFT.select(request.getContents());
     DiffContent content2 = Side.RIGHT.select(request.getContents());
     DiffIgnoredRangeProvider ignoredRangeProvider = getIgnoredRangeProvider(project, content1, content2);
-    if (ignoredRangeProvider == null) return null;
-    return new SmartTextDiffProvider(project, content1, content2, settings, rediff, disposable, ignoredRangeProvider);
+    DiffLangSpecificProvider diffProvider = DiffLangSpecificProvider.findApplicable(project, content1, content2);
+    IgnorePolicy[] ignorePolicies = getIgnorePolicies();
+    return new SmartTextDiffProvider(project, content1, content2, settings, rediff, disposable, ignoredRangeProvider, diffProvider,
+                                     ignorePolicies);
   }
 
-  public static @Nullable TwosideTextDiffProvider.NoIgnore createNoIgnore(@Nullable Project project,
+  public static @NotNull TwosideTextDiffProvider.NoIgnore createNoIgnore(@Nullable Project project,
                                                                           @NotNull ContentDiffRequest request,
                                                                           @NotNull TextDiffSettings settings,
                                                                           @NotNull Runnable rediff,
@@ -61,8 +63,17 @@ public class SmartTextDiffProvider extends TwosideTextDiffProviderBase implement
     DiffContent content1 = Side.LEFT.select(request.getContents());
     DiffContent content2 = Side.RIGHT.select(request.getContents());
     DiffIgnoredRangeProvider ignoredRangeProvider = getIgnoredRangeProvider(project, content1, content2);
-    if (ignoredRangeProvider == null) return null;
-    return new SmartTextDiffProvider.NoIgnore(project, content1, content2, settings, rediff, disposable, ignoredRangeProvider);
+    DiffLangSpecificProvider diffAdjuster = DiffLangSpecificProvider.findApplicable(project, content1, content2);
+    return new SmartTextDiffProvider.NoIgnore(project, content1, content2, settings, rediff, disposable, ignoredRangeProvider, diffAdjuster);
+  }
+
+  private static IgnorePolicy @NotNull [] getIgnorePolicies() {
+    if (Registry.is("diff.semantic.highlighting", false)) {
+      return ArrayUtil.append(IGNORE_POLICIES, IGNORE_LANGUAGE_SPECIFIC_CHANGES);
+    }
+    else {
+      return IGNORE_POLICIES;
+    }
   }
 
   private SmartTextDiffProvider(@Nullable Project project,
@@ -71,8 +82,10 @@ public class SmartTextDiffProvider extends TwosideTextDiffProviderBase implement
                                 @NotNull TextDiffSettings settings,
                                 @NotNull Runnable rediff,
                                 @NotNull Disposable disposable,
-                                @NotNull DiffIgnoredRangeProvider ignoredRangeProvider) {
-    this(project, content1, content2, settings, rediff, disposable, ignoredRangeProvider, IGNORE_POLICIES, HIGHLIGHT_POLICIES);
+                                @Nullable DiffIgnoredRangeProvider ignoredRangeProvider,
+                                @Nullable DiffLangSpecificProvider diffProvider,
+                                IgnorePolicy @NotNull [] ignorePolicies) {
+    this(project, content1, content2, settings, rediff, disposable, ignoredRangeProvider, diffProvider, ignorePolicies, HIGHLIGHT_POLICIES);
   }
 
   private SmartTextDiffProvider(@Nullable Project project,
@@ -81,7 +94,8 @@ public class SmartTextDiffProvider extends TwosideTextDiffProviderBase implement
                                 @NotNull TextDiffSettings settings,
                                 @NotNull Runnable rediff,
                                 @NotNull Disposable disposable,
-                                @NotNull DiffIgnoredRangeProvider ignoredRangeProvider,
+                                @Nullable DiffIgnoredRangeProvider ignoredRangeProvider,
+                                @Nullable DiffLangSpecificProvider diffProvider,
                                 IgnorePolicy @NotNull [] ignorePolicies,
                                 HighlightPolicy @NotNull [] highlightPolicies) {
     super(settings, rediff, disposable, ignorePolicies, highlightPolicies);
@@ -89,11 +103,13 @@ public class SmartTextDiffProvider extends TwosideTextDiffProviderBase implement
     myContent1 = content1;
     myContent2 = content2;
     myProvider = ignoredRangeProvider;
+    myDiffProvider = diffProvider;
   }
 
   @Override
   protected @Nullable String getText(@NotNull IgnorePolicy option) {
-    if (option == FORMATTING) return myProvider.getDescription();
+    if (isFormattingPolicyApplicable(option)) return Objects.requireNonNull(myProvider).getDescription();
+    if (isLanguageSpecificPolicyApplicable(option)) return Objects.requireNonNull(myDiffProvider).getDescription();
     return null;
   }
 
@@ -106,12 +122,34 @@ public class SmartTextDiffProvider extends TwosideTextDiffProviderBase implement
                                                         @NotNull IgnorePolicy ignorePolicy,
                                                         @NotNull HighlightPolicy highlightPolicy,
                                                         @NotNull ProgressIndicator indicator) {
-    if (ignorePolicy == FORMATTING) {
+    if (isFormattingPolicyApplicable(ignorePolicy)) {
       return compareIgnoreFormatting(text1, text2, lineOffsets1, lineOffsets2, linesRanges, highlightPolicy, indicator);
+    }
+    else if (isLanguageSpecificPolicyApplicable(ignorePolicy)) {
+      return compareIgnoreLanguageSpecificChanges(text1, text2, lineOffsets1, lineOffsets2, linesRanges, ignorePolicy, highlightPolicy, indicator);
     }
     else {
       return SimpleTextDiffProvider.compareRange(null, text1, text2, lineOffsets1, lineOffsets2, linesRanges,
                                                  ignorePolicy, highlightPolicy, indicator);
+    }
+  }
+
+  private @NotNull List<List<LineFragment>> compareIgnoreLanguageSpecificChanges(@NotNull CharSequence text1,
+                                                                                 @NotNull CharSequence text2,
+                                                                                 @NotNull LineOffsets lineOffsets1,
+                                                                                 @NotNull LineOffsets lineOffsets2,
+                                                                                 @Nullable List<? extends Range> linesRanges,
+                                                                                 @NotNull IgnorePolicy ignorePolicy,
+                                                                                 @NotNull HighlightPolicy highlightPolicy,
+                                                                                 @NotNull ProgressIndicator indicator) {
+    DiffLangSpecificProvider diffProvider = Objects.requireNonNull(myDiffProvider);
+    if (diffProvider.getShouldPrecalculateLineFragments()) {
+      List<List<LineFragment>> fragmentList =
+        SimpleTextDiffProvider.compareRange(null, text1, text2, lineOffsets1, lineOffsets2, linesRanges,
+                                            ignorePolicy, BY_LINE, indicator);
+      return diffProvider.getPatchedLineFragments(myProject, fragmentList, text1, text2, ignorePolicy, highlightPolicy, indicator);
+    } else {
+      return diffProvider.getLineFragments(myProject, text1, text2, ignorePolicy, highlightPolicy, indicator);
     }
   }
 
@@ -124,8 +162,8 @@ public class SmartTextDiffProvider extends TwosideTextDiffProviderBase implement
                                                                     @NotNull ProgressIndicator indicator) {
     InnerFragmentsPolicy fragmentsPolicy = highlightPolicy.getFragmentsPolicy();
 
-    List<TextRange> ignoredRanges1 = myProvider.getIgnoredRanges(myProject, text1, myContent1);
-    List<TextRange> ignoredRanges2 = myProvider.getIgnoredRanges(myProject, text2, myContent2);
+    List<TextRange> ignoredRanges1 = Objects.requireNonNull(myProvider).getIgnoredRanges(myProject, text1, myContent1);
+    List<TextRange> ignoredRanges2 = Objects.requireNonNull(myProvider).getIgnoredRanges(myProject, text2, myContent2);
 
     BitSet ignored1 = ComparisonManagerImpl.collectIgnoredRanges(ignoredRanges1);
     BitSet ignored2 = ComparisonManagerImpl.collectIgnoredRanges(ignoredRanges2);
@@ -144,6 +182,14 @@ public class SmartTextDiffProvider extends TwosideTextDiffProviderBase implement
       }
       return result;
     }
+  }
+
+  private boolean isFormattingPolicyApplicable(@NotNull IgnorePolicy ignorePolicy) {
+    return ignorePolicy == FORMATTING && myProvider != null;
+  }
+
+  private boolean isLanguageSpecificPolicyApplicable(@NotNull IgnorePolicy ignorePolicy) {
+    return ignorePolicy == IGNORE_LANGUAGE_SPECIFIC_CHANGES && myDiffProvider != null;
   }
 
   private static @Nullable DiffIgnoredRangeProvider getIgnoredRangeProvider(@Nullable Project project,
@@ -167,8 +213,9 @@ public class SmartTextDiffProvider extends TwosideTextDiffProviderBase implement
                      @NotNull TextDiffSettings settings,
                      @NotNull Runnable rediff,
                      @NotNull Disposable disposable,
-                     @NotNull DiffIgnoredRangeProvider ignoredRangeProvider) {
-      super(project, content1, content2, settings, rediff, disposable, ignoredRangeProvider,
+                     @Nullable DiffIgnoredRangeProvider ignoredRangeProvider,
+                     @Nullable DiffLangSpecificProvider diffProvider) {
+      super(project, content1, content2, settings, rediff, disposable, ignoredRangeProvider, diffProvider,
             IGNORE_POLICIES, ArrayUtil.remove(HIGHLIGHT_POLICIES, DO_NOT_HIGHLIGHT));
     }
 

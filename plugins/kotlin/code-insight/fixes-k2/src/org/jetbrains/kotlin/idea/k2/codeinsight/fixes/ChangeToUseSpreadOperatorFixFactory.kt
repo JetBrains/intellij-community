@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaCapturedType
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
@@ -33,7 +34,7 @@ internal object ChangeToUseSpreadOperatorFixFactory {
             return@ModCommandBased emptyList()
         }
 
-        val buildType = substituteTypeParameterTypesWithStarTypeProjections(diagnostic.expectedType) ?: return@ModCommandBased emptyList()
+        val buildType = substituteErrorAndTypeParameterTypesWithStarTypeProjections(diagnostic.expectedType) ?: return@ModCommandBased emptyList()
         if (!arrayElementType.isSubtypeOf(buildType)) return@ModCommandBased emptyList()
 
         listOf(
@@ -52,14 +53,14 @@ private fun KaType.unwrap(): KaType {
  * For instance, given Pair<T, Pair<Int, U>>, the function returns Pair<*, Pair<Int, *>>.
  */
 @OptIn(KaExperimentalApi::class)
-private fun KaSession.substituteTypeParameterTypesWithStarTypeProjections(type: KaType): KaType? {
+private fun KaSession.substituteErrorAndTypeParameterTypesWithStarTypeProjections(type: KaType): KaType? {
     return when (type) {
         is KaClassType -> buildClassType(type.symbol) {
             type.typeArguments.mapNotNull { it.type }.forEach {
-                if (it is KaTypeParameterType) {
+                if (it is KaTypeParameterType || it is KaErrorType) {
                     argument(buildStarTypeProjection())
                 } else {
-                    substituteTypeParameterTypesWithStarTypeProjections(it)?.let { type ->
+                    substituteErrorAndTypeParameterTypesWithStarTypeProjections(it)?.let { type ->
                         argument(type)
                     }
                 }

@@ -122,7 +122,7 @@ object ControlFlowBuilder {
             outParameters.mapTo(outputValues) { ParameterUpdate(it, modifiedVarDescriptors[it.name]!!) }
 
             if (outputValues.isNotEmpty()) {
-                if (jumpExpressions.isNotEmpty()) return outputAndExitsError
+                if (jumpExpressions.isNotEmpty() || valuedReturnExpressions.isNotEmpty() && outDeclarations.isNotEmpty()) return outputAndExitsError
 
                 val boxerFactory: (List<OutputValue<KotlinType>>) -> OutputValueBoxer<KotlinType> = when {
                     outputValues.size > 3 -> {

@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.template;
 
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Map;
@@ -16,7 +17,7 @@ public final class LiveTemplateContextsSnapshot {
     return myLiveTemplateIds.get(id);
   }
 
-  public Collection<LiveTemplateContext> getLiveTemplateContexts() {
+  public @Unmodifiable Collection<LiveTemplateContext> getLiveTemplateContexts() {
     return myLiveTemplateIds.values();
   }
 }

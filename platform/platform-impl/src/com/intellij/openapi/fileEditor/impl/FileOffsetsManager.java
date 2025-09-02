@@ -100,7 +100,7 @@ public final class FileOffsetsManager {
 
   // similar to com.intellij.openapi.fileEditor.impl.LoadTextUtil.loadText()
   private static @NotNull LineOffsets loadLineOffsets(final @NotNull VirtualFile file) {
-    assert !file.getFileType().isBinary();
+    assert !file.getFileType().isBinary() : "Cannot load line offsets for binary file: " + file.getPath() + " (" + file.getFileType() + ")";
 
     try {
       byte[] bytes = file.contentsToByteArray();

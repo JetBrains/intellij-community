@@ -29,6 +29,7 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
@@ -291,6 +292,14 @@ public abstract class ChangesBrowserBase extends JPanel implements UiCompatibleD
   public static void selectObjectWithTag(@NotNull ChangesTree tree,
                                          @NotNull Object userObject,
                                          @Nullable ChangesBrowserNode.Tag tag) {
+    TreePath path = findPathToObjectWithTag(tree, userObject, tag);
+    if (path == null) return;
+    TreeUtil.selectPath(tree, path, false);
+  }
+
+  public static @Nullable TreePath findPathToObjectWithTag(@NotNull ChangesTree tree,
+                                                           @NotNull Object userObject,
+                                                           @Nullable ChangesBrowserNode.Tag tag) {
     DefaultMutableTreeNode root = tree.getRoot();
     if (tag != null) {
       DefaultMutableTreeNode tagNode = TreeUtil.findNodeWithObject(root, tag);
@@ -299,8 +308,8 @@ public abstract class ChangesBrowserBase extends JPanel implements UiCompatibleD
       }
     }
     DefaultMutableTreeNode node = TreeUtil.findNodeWithObject(root, userObject);
-    if (node == null) return;
-    TreeUtil.selectPath(tree, TreeUtil.getPathFromRoot(node), false);
+    if (node == null) return null;
+    return TreeUtil.getPathFromRoot(node);
   }
 
   public static class ShowStandaloneDiff implements AnActionExtensionProvider {

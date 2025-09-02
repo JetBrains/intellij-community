@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.attach;
 
 import com.intellij.openapi.project.Project;
@@ -9,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 @ApiStatus.Experimental
+@ApiStatus.Internal
 public interface XAttachRecentItemsMatcher {
   @NotNull
   List<? extends AttachToProcessActionBase.AttachToProcessItem> getMatchingAttachItems(@NotNull AttachToProcessActionBase.RecentItem recentItem,

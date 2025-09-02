@@ -16,6 +16,7 @@
 package com.intellij.psi.impl.source.jsp.jspJava;
 
 import com.intellij.psi.PsiClassLevelDeclarationStatement;
+import com.intellij.psi.jsp.IJspClassLevelDeclarationStatement;
 
-public interface JspClassLevelDeclarationStatement extends PsiClassLevelDeclarationStatement {
+public interface JspClassLevelDeclarationStatement extends PsiClassLevelDeclarationStatement, IJspClassLevelDeclarationStatement {
 }

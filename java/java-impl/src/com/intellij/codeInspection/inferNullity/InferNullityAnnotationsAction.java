@@ -101,18 +101,18 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
       private final Set<Module> processed = new HashSet<>();
 
       @Override
-      public void visitFile(@NotNull PsiFile file) {
+      public void visitFile(@NotNull PsiFile psiFile) {
         fileCount[0]++;
         final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
-        final VirtualFile virtualFile = file.getVirtualFile();
+        final VirtualFile virtualFile = psiFile.getVirtualFile();
         if (virtualFile != null) {
           progressIndicator.setText2(ProjectUtil.calcRelativeToProjectPath(virtualFile, project));
         }
         progressIndicator.setText(AnalysisBundle.message("scanning.scope.progress.title"));
-        if (!(file instanceof PsiJavaFile)) return;
-        final Module module = ModuleUtilCore.findModuleForPsiElement(file);
+        if (!(psiFile instanceof PsiJavaFile)) return;
+        final Module module = ModuleUtilCore.findModuleForPsiElement(psiFile);
         if (module != null && processed.add(module)) {
-          if (PsiUtil.getLanguageLevel(file).compareTo(LanguageLevel.JDK_1_5) < 0) {
+          if (PsiUtil.getLanguageLevel(psiFile).compareTo(LanguageLevel.JDK_1_5) < 0) {
             modulesWithLL.add(module);
           }
           else if (javaPsiFacade.findClass(defaultNullable, GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module)) == null) {
@@ -208,9 +208,9 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
         int myFileCount;
 
         @Override
-        public void visitFile(final @NotNull PsiFile file) {
+        public void visitFile(final @NotNull PsiFile psiFile) {
           myFileCount++;
-          final VirtualFile virtualFile = file.getVirtualFile();
+          final VirtualFile virtualFile = psiFile.getVirtualFile();
           final FileViewProvider viewProvider = psiManager.findViewProvider(virtualFile);
           final Document document = viewProvider == null ? null : viewProvider.getDocument();
           if (document == null || virtualFile.getFileType().isBinary()) return; //do not inspect binary files
@@ -219,8 +219,8 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
             progressIndicator.setText2(ProjectUtil.calcRelativeToProjectPath(virtualFile, project));
             progressIndicator.setFraction(((double)myFileCount) / fileCount);
           }
-          if (file instanceof PsiJavaFile) {
-            inferrer.collect(file);
+          if (psiFile instanceof PsiJavaFile) {
+            inferrer.collect(psiFile);
           }
         }
       });

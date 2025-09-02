@@ -6,11 +6,11 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.annotations.Child
+import com.intellij.platform.workspace.storage.annotations.Parent
 
 interface OneToManyRefEntity: WorkspaceEntity {
   val someData: com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.OneToManyRefDataClass
-  @Child val anotherEntity: com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.AnotherOneToManyRefEntity? //Change is here, ONE_TO_MANY connection -> ONE_TO_ONE connection
+  val anotherEntity: com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.AnotherOneToManyRefEntity? //Change is here, ONE_TO_MANY connection -> ONE_TO_ONE connection
 
   //region generated code
   @GeneratedCodeApiVersion(3)
@@ -49,6 +49,7 @@ fun MutableEntityStorage.modifyOneToManyRefEntity(
 //endregion
 
 interface AnotherOneToManyRefEntity: WorkspaceEntity {
+  @Parent
   val parentEntity: com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.OneToManyRefEntity
   val version: Int
   val someData: com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.OneToManyRefDataClass

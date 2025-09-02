@@ -27,8 +27,8 @@ import org.jetbrains.annotations.NotNull;
 public abstract class PyBaseIntentionAction extends BaseIntentionAction {
 
   @Override
-  public final void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    doInvoke(project, editor, file);
+  public final void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
+    doInvoke(project, editor, psiFile);
   }
 
   public abstract void doInvoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException;

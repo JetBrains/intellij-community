@@ -6,10 +6,7 @@ import com.intellij.internal.statistic.eventLog.EventLogInternalApplicationInfo;
 import com.intellij.internal.statistic.eventLog.EventLogInternalSendConfig;
 import com.intellij.internal.statistic.eventLog.ExternalEventLogSettings;
 import com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil;
-import com.intellij.internal.statistic.eventLog.connection.EventLogSendListener;
-import com.intellij.internal.statistic.eventLog.connection.EventLogStatisticsService;
-import com.intellij.internal.statistic.eventLog.connection.EventLogUploadSettingsService;
-import com.intellij.internal.statistic.eventLog.connection.StatisticsService;
+import com.intellij.internal.statistic.eventLog.connection.*;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.NlsContexts;
@@ -119,8 +116,8 @@ public final class StatisticsUploadAssistant {
     );
   }
 
-  public static EventLogUploadSettingsService createExternalSettings(@NotNull String recorderId, boolean isTestConfig, boolean isTestSendEndpoint, long cacheTimeoutMs) {
-    return new EventLogUploadSettingsService(recorderId, new EventLogInternalApplicationInfo(isTestConfig, isTestSendEndpoint), cacheTimeoutMs);
+  public static EventLogSettingsClient createExternalSettings(@NotNull String recorderId, boolean isTestConfig, boolean isTestSendEndpoint, long cacheTimeoutMs) {
+    return new EventLogUploadSettingsClient(recorderId, new EventLogInternalApplicationInfo(isTestConfig, isTestSendEndpoint), cacheTimeoutMs);
   }
 
   public static boolean isTeamcityDetected() {

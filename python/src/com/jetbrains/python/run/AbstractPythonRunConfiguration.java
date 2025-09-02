@@ -179,11 +179,11 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
       if (!myUseModuleSdk) {
         if (StringUtil.isEmptyOrSpaces(getSdkHome())) {
           final Sdk projectSdk = ProjectRootManager.getInstance(getProject()).getProjectSdk();
-          if (projectSdk == null || !(projectSdk.getSdkType() instanceof PythonSdkType)) {
+          if (projectSdk == null || !PythonSdkUtil.isPythonSdk(projectSdk)) {
             throw new RuntimeConfigurationError(PyBundle.message("runcfg.unittest.no_sdk"));
           }
         }
-        else if (!PySdkExtKt.getSdkSeemsValid(mySdk)) {
+        else if (mySdk == null || !PySdkExtKt.getSdkSeemsValid(mySdk)) {
           throw new RuntimeConfigurationError(PyBundle.message("runcfg.unittest.no_valid_sdk"));
         }
       }

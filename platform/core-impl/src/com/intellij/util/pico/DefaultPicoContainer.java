@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.pico;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -231,11 +231,11 @@ public class DefaultPicoContainer implements MutablePicoContainer {
     return "DefaultPicoContainer" + (parent == null ? " (root)" : " (parent=" + parent + ")");
   }
 
-  public static final class InstanceComponentAdapter implements ComponentAdapter {
+  static final class InstanceComponentAdapter implements ComponentAdapter {
     private final Object componentKey;
     private final Object componentInstance;
 
-    public InstanceComponentAdapter(@NotNull Object componentKey, @NotNull Object componentInstance) {
+    InstanceComponentAdapter(@NotNull Object componentKey, @NotNull Object componentInstance) {
       this.componentKey = componentKey;
       this.componentInstance = componentInstance;
     }

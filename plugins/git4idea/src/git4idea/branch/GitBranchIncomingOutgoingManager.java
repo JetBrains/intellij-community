@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.branch;
 
 import com.intellij.concurrency.JobScheduler;
@@ -17,6 +17,7 @@ import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.platform.vcs.impl.shared.rpc.RepositoryId;
 import com.intellij.util.Alarm;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
@@ -28,6 +29,9 @@ import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.update.DisposableUpdate;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import com.intellij.vcs.git.shared.branch.GitInOutCountersInProject;
+import com.intellij.vcs.git.shared.branch.GitInOutCountersInRepo;
+import com.intellij.vcs.git.shared.branch.GitInOutProjectState;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.GitLocalBranch;
@@ -157,30 +161,30 @@ public final class GitBranchIncomingOutgoingManager implements GitRepositoryChan
   }
 
   @ApiStatus.Internal
-  public @NotNull IncomingOutgoingState getIncomingOutgoingState(@NotNull GitRepository repository,
-                                                                 @NotNull GitLocalBranch localBranch) {
+  public @NotNull GitInOutCountersInProject getIncomingOutgoingState(@NotNull GitRepository repository,
+                                                                     @NotNull GitLocalBranch localBranch) {
     return getIncomingOutgoingState(Collections.singleton(repository), localBranch);
   }
 
   @ApiStatus.Internal
-  public @NotNull IncomingOutgoingState getIncomingOutgoingState(@NotNull Collection<GitRepository> repositories,
-                                                                 @NotNull GitLocalBranch localBranch) {
-    if (repositories.isEmpty()) return IncomingOutgoingState.EMPTY;
+  public @NotNull GitInOutCountersInProject getIncomingOutgoingState(@NotNull Collection<GitRepository> repositories,
+                                                                     @NotNull GitLocalBranch localBranch) {
+    if (repositories.isEmpty()) return GitInOutCountersInProject.EMPTY;
 
-    Map<GitRepository, InOutRepoState> repoStates = repositories.stream()
+    Map<RepositoryId, GitInOutCountersInRepo> repoStates = repositories.stream()
       .map(r -> {
         Integer incoming = getIncomingFor(r, localBranch);
         Integer outgoing = getOutgoingFor(r, localBranch);
         if (incoming == null && outgoing == null) return null;
 
-        return new Pair<>(r, new InOutRepoState(incoming, outgoing));
+        return new Pair<>(r.getRpcId(), new GitInOutCountersInRepo(incoming, outgoing));
       })
       .filter(Objects::nonNull)
       .collect(Collectors.toMap(pair -> pair.first, pair -> pair.second));
 
-    if (repoStates.isEmpty()) return IncomingOutgoingState.EMPTY;
+    if (repoStates.isEmpty()) return GitInOutCountersInProject.EMPTY;
 
-    return new IncomingOutgoingState(repoStates);
+    return new GitInOutCountersInProject(repoStates);
   }
 
   public boolean shouldCheckIncoming() {
@@ -297,6 +301,23 @@ public final class GitBranchIncomingOutgoingManager implements GitRepositoryChan
       }
       BackgroundTaskUtil.syncPublisher(myProject, GIT_INCOMING_OUTGOING_CHANGED).incomingOutgoingInfoChanged();
     }));
+  }
+
+  @ApiStatus.Internal
+  public @NotNull GitInOutProjectState getState() {
+    return new GitInOutProjectState(mapState(myLocalBranchesWithIncoming), mapState(myLocalBranchesWithOutgoing));
+  }
+
+  private static @NotNull Map<RepositoryId, Map<String, Integer>> mapState(@NotNull Map<GitRepository, Map<GitLocalBranch, Integer>> projectState) {
+    var result = new HashMap<RepositoryId, Map<String, Integer>>();
+    projectState.forEach((repo, branches) -> result.put(repo.getRpcId(), remapLocalBranchToName(branches)));
+    return result;
+  }
+
+  private static @NotNull Map<String, Integer> remapLocalBranchToName(@NotNull Map<GitLocalBranch, Integer> repoState) {
+    Map<String, Integer> result = new HashMap<>();
+    repoState.forEach((localBranch, commits) -> result.put(localBranch.getName(), commits));
+    return result;
   }
 
   public @NotNull Collection<GitLocalBranch> getBranchesWithIncoming(@Nullable GitRepository repository) {

@@ -1,9 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui.util
 
+import com.intellij.collaboration.async.ComputedListChange
+import com.intellij.collaboration.async.changesFlow
 import com.intellij.collaboration.async.collectScoped
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.ui.ComboBoxWithActionsModel
+import com.intellij.collaboration.ui.setContentPreservingFocus
 import com.intellij.collaboration.ui.setHtmlBody
 import com.intellij.collaboration.ui.setItems
 import com.intellij.openapi.application.EDT
@@ -12,13 +15,23 @@ import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
+import com.intellij.openapi.observable.util.addDocumentListener
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.ui.CollectionListModel
+import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.MutableCollectionComboBoxModel
 import com.intellij.ui.components.JBList
+import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.dsl.builder.Cell
+import com.intellij.util.asDisposable
+import com.intellij.util.ui.launchOnShow
 import com.intellij.util.ui.showingScope
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
@@ -27,8 +40,10 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
+import java.awt.BorderLayout
 import java.awt.Color
 import javax.swing.*
 import javax.swing.border.Border
@@ -321,8 +336,32 @@ fun <D> Wrapper.bindContent(
   dataFlow: Flow<D>,
   componentFactory: CoroutineScope.(D) -> JComponent?,
 ) {
-  showingScope(debugName) {
-    bindContentImpl(dataFlow, componentFactory)
+  launchOnShow(debugName) {
+    bindContentImpl(dataFlow, null, componentFactory)
+  }
+}
+
+@ApiStatus.Internal
+fun <D> Wrapper.bindContent(
+  debugName: String,
+  dataFlow: Flow<D>,
+  defaultComponent: JComponent,
+  componentFactory: CoroutineScope.(D) -> JComponent?,
+) {
+  launchOnShow(debugName) {
+    bindContentImpl(dataFlow, defaultComponent, componentFactory)
+  }
+}
+
+@ApiStatus.Internal
+fun <D> Wrapper.bindContentIn(
+  scope: CoroutineScope,
+  dataFlow: Flow<D>,
+  defaultComponent: JComponent,
+  componentFactory: CoroutineScope.(D) -> JComponent?,
+) {
+  scope.launch(start = CoroutineStart.UNDISPATCHED) {
+    bindContentImpl(dataFlow, defaultComponent, componentFactory)
   }
 }
 
@@ -331,7 +370,7 @@ fun <D> Wrapper.bindContentIn(
   componentFactory: CoroutineScope.(D) -> JComponent?,
 ) {
   scope.launch(start = CoroutineStart.UNDISPATCHED) {
-    bindContentImpl(dataFlow, componentFactory)
+    bindContentImpl(dataFlow, null, componentFactory)
   }
 }
 
@@ -339,7 +378,7 @@ fun <D> Wrapper.bindContentIn(
 fun Wrapper.bindContent(
   debugName: String, contentFlow: Flow<JComponent?>,
 ) {
-  showingScope(debugName) {
+  launchOnShow(debugName) {
     contentFlow.collect {
       setContent(it)
       repaint()
@@ -349,20 +388,19 @@ fun Wrapper.bindContent(
 
 private suspend fun <D> Wrapper.bindContentImpl(
   dataFlow: Flow<D>,
+  defaultComponent: JComponent?,
   componentFactory: CoroutineScope.(D) -> JComponent?,
-) {
-  dataFlow.collectScoped {
-    val component = componentFactory(it) ?: return@collectScoped
-    setContent(component)
-    repaint()
-
-    try {
+): Nothing {
+  try {
+    dataFlow.collectScoped {
+      val component = componentFactory(it)
+      setContentPreservingFocus(component)
       awaitCancellation()
     }
-    finally {
-      setContent(null)
-      repaint()
-    }
+    awaitCancellation()
+  }
+  finally {
+    setContentPreservingFocus(defaultComponent)
   }
 }
 
@@ -442,7 +480,19 @@ fun <T> ComboBoxModel<T>.bindSelectedItemIn(scope: CoroutineScope, flow: Mutable
   }
 }
 
-fun <T> Cell<ComboBox<T>>.bindSelectedItemIn(scope: CoroutineScope, flow: MutableStateFlow<T?>) = applyToComponent {
+fun Cell<JBTextField>.bindTextIn(cs: CoroutineScope, flow: MutableStateFlow<String>): Cell<JBTextField> = applyToComponent {
+  // flow -> component
+  this@applyToComponent.bindTextIn(cs, flow)
+
+  // component -> flow
+  this@applyToComponent.document.addDocumentListener(cs.asDisposable(), object : DocumentAdapter() {
+    override fun textChanged(e: javax.swing.event.DocumentEvent) {
+      flow.value = text
+    }
+  })
+}
+
+fun <T> Cell<ComboBox<T>>.bindSelectedItemIn(scope: CoroutineScope, flow: MutableStateFlow<T?>): Cell<ComboBox<T>> = applyToComponent {
   model.bindSelectedItemIn(scope, flow)
 }
 
@@ -450,7 +500,7 @@ private typealias Block = CoroutineScope.() -> Unit
 
 @ApiStatus.Internal
 @Deprecated("It is much better to pass a proper scope where needed")
-class ActivatableCoroutineScopeProvider(private val context: () -> CoroutineContext = { Dispatchers.Main })
+class ActivatableCoroutineScopeProvider(private val context: () -> CoroutineContext = { Dispatchers.EDT })
   : Activatable {
 
   private var scope: CoroutineScope? = null
@@ -490,3 +540,107 @@ class ActivatableCoroutineScopeProvider(private val context: () -> CoroutineCont
     currentConnection = UiNotifyConnector.installOn(component, this, false)
   }
 }
+
+@ApiStatus.Internal
+fun <T> StateFlow<Iterable<T>>.toComboBoxModelIn(cs: CoroutineScope): ComboBoxModel<T> =
+  MutableCollectionComboBoxModel(mutableListOf<T>()).also { model ->
+    model.bindChangesIn(cs, this.changesFlow())
+  }
+
+@ApiStatus.Internal
+fun <T> StateFlow<Iterable<T>>.toListModelIn(cs: CoroutineScope): ListModel<T> =
+  CollectionListModel(mutableListOf<T>()).also { model ->
+    model.bindChangesIn(cs, this.changesFlow())
+  }
+
+private fun <T> CollectionListModel<T>.bindChangesIn(cs: CoroutineScope, changes: Flow<List<ComputedListChange<T>>>) {
+  val model = this
+  cs.launchNow {
+    model.removeAll()
+    changes.collect { changes ->
+      changes.forEach { change ->
+        when (change) {
+          is ComputedListChange.Remove -> model.removeRange(change.atIndex, change.atIndex + change.length - 1)
+          is ComputedListChange.Insert -> model.addAll(change.atIndex, change.values)
+        }
+      }
+    }
+  }
+}
+
+@ApiStatus.Internal
+interface ValidationBinding<T> {
+  val valueFlow: MutableStateFlow<T>
+  var value: T
+    get() = valueFlow.value
+    set(v) {
+      valueFlow.value = v
+    }
+
+  val validationError: String?
+  val validationRequests: Flow<Unit>?
+}
+
+@ApiStatus.Internal
+fun <T> MutableStateFlow<T>.validationBinding(
+  errorFlow: StateFlow<String?>,
+): ValidationBinding<T> = validationBinding(validationError = { errorFlow.value }, validationRequests = errorFlow.map { })
+
+@ApiStatus.Internal
+fun <T> MutableStateFlow<T>.validationBinding(
+  validationError: ((T) -> @NlsContexts.DialogMessage String?)? = null,
+  validationRequests: Flow<Unit>? = null,
+): ValidationBinding<T> = object : ValidationBinding<T> {
+  override var valueFlow: MutableStateFlow<T> = this@validationBinding
+
+  override val validationError: String?
+    get() = validationError?.invoke(value)
+  override val validationRequests: Flow<Unit>?
+    get() = validationRequests
+}
+
+@ApiStatus.Internal
+fun <JC : JComponent> Cell<JC>.bindValidationOnApplyIn(cs: CoroutineScope, binding: ValidationBinding<*>): Cell<JC> {
+  validationOnApply { binding.validationError?.let(::error) }
+
+  if (binding.validationRequests != null)
+    validationRequestor { callback -> cs.launchNow { binding.validationRequests?.collect { callback() } } }
+
+  return this
+}
+
+@ApiStatus.Internal
+abstract class DialogWrapperAsync(project: Project?) : DialogWrapper(project) {
+  abstract suspend fun CoroutineScope.createCenterPanelAsync(): DialogPanel
+
+  final override fun createCenterPanel(): JComponent? {
+    val panel = DialogPanel(BorderLayout())
+
+    panel.launchOnShow("${javaClass.name}#createCenterPanel") {
+      val cs = this
+      var integratedPanel: DialogPanel? = null
+      try {
+        val newPanel = cs.createCenterPanelAsync()
+        withContext(NonCancellable) {
+          panel.registerIntegratedPanel(newPanel)
+          panel.add(newPanel, BorderLayout.CENTER)
+          integratedPanel = newPanel
+        }
+
+        panel.revalidate()
+        panel.repaint()
+
+        awaitCancellation()
+      }
+      finally {
+        integratedPanel?.let {
+          panel.unregisterIntegratedPanel(it)
+          panel.remove(it)
+        }
+      }
+    }
+
+    return panel
+  }
+}
+

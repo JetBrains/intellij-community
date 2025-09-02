@@ -1,5 +1,5 @@
-// IGNORE_K2
 // BIND_TO foo.MyClass
+// BIND_RESULT MyClass()
 package foo
 
 val foo: Int = 10

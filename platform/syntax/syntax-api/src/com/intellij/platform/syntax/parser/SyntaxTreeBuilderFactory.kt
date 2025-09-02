@@ -1,15 +1,16 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.syntax.parser
 
+import com.intellij.platform.syntax.CancellationProvider
+import com.intellij.platform.syntax.Logger
 import com.intellij.platform.syntax.SyntaxElementType
-import com.intellij.platform.syntax.impl.builder.ParsingTreeBuilder
-import com.intellij.platform.syntax.lexer.Lexer
+import com.intellij.platform.syntax.asSyntaxElementTypeSet
+import com.intellij.platform.syntax.impl.builder.SyntaxTreeBuilderImpl
 import com.intellij.platform.syntax.lexer.TokenList
+import com.intellij.platform.syntax.logger.noopLogger
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilderFactory.Builder
-import com.intellij.platform.syntax.util.CancellationProvider
-import com.intellij.platform.syntax.util.Logger
-import com.intellij.platform.syntax.util.NoopLogger
 import org.jetbrains.annotations.ApiStatus
+import kotlin.jvm.JvmStatic
 
 /**
  * Factory for constructing a [SyntaxTreeBuilder]
@@ -19,10 +20,10 @@ object SyntaxTreeBuilderFactory {
   @JvmStatic
   fun builder(
     text: CharSequence,
+    tokenList: TokenList,
     whitespaces: Set<SyntaxElementType>,
     comments: Set<SyntaxElementType>,
-    lexer: Lexer,
-  ): Builder = BuilderImpl(lexer, text, whitespaces, comments)
+  ): Builder = BuilderImpl(tokenList, text, whitespaces, comments)
 
   interface Builder {
     /**
@@ -34,11 +35,6 @@ object SyntaxTreeBuilderFactory {
      * You can be notified about every skipped whitespace with this hook
      */
     fun withWhitespaceSkippedCallback(callback: WhitespaceSkippedCallback): Builder
-
-    /**
-     * Avoid lexing the text if you already have a lexing result
-     */
-    fun withCachedLexemes(cachedLexemes: TokenList?): Builder
 
     /**
      * in debug mode, some additional checks are performed
@@ -79,14 +75,13 @@ object SyntaxTreeBuilderFactory {
 }
 
 private class BuilderImpl(
-  private val lexer: Lexer,
+  private val tokenList: TokenList,
   private val text: CharSequence,
   private val whitespaces: Set<SyntaxElementType>,
   private val comments: Set<SyntaxElementType>,
 ) : Builder {
   private var startOffset: Int = 0
   private var whitespaceSkippedCallback: WhitespaceSkippedCallback? = null
-  private var cachedLexemes: TokenList? = null
   private var debugMode: Boolean = false
   private var language: String? = null
   private var cancellationProvider: CancellationProvider? = null
@@ -101,11 +96,6 @@ private class BuilderImpl(
 
   override fun withWhitespaceSkippedCallback(callback: WhitespaceSkippedCallback): Builder {
     this.whitespaceSkippedCallback = callback
-    return this
-  }
-
-  override fun withCachedLexemes(cachedLexemes: TokenList?): Builder {
-    this.cachedLexemes = cachedLexemes
     return this
   }
 
@@ -140,18 +130,17 @@ private class BuilderImpl(
   }
 
   override fun build(): SyntaxTreeBuilder {
-    val builder = ParsingTreeBuilder(
-      lexer = lexer,
+    val builder = SyntaxTreeBuilderImpl(
       text = text,
-      myWhitespaces = whitespaces,
-      myComments = comments,
+      myWhitespaces = whitespaces.asSyntaxElementTypeSet(),
+      myComments = comments.asSyntaxElementTypeSet(),
       startOffset = startOffset,
       myWhitespaceSkippedCallback = whitespaceSkippedCallback,
-      cachedLexemes = cachedLexemes,
+      tokens = tokenList,
       myDebugMode = debugMode,
       language = language,
       cancellationProvider = null,
-      logger = logger ?: NoopLogger,
+      logger = logger ?: noopLogger(),
       whitespaceOrCommentBindingPolicy = whitespaceOrCommentBindingPolicy ?: WhitespaceOrCommentBindingPolicy { false },
       opaquePolicy = opaquePolicy ?: OpaqueElementPolicy { null },
     )

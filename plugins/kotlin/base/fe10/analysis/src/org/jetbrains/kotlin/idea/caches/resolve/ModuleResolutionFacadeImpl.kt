@@ -134,12 +134,7 @@ internal class ModuleResolutionFacadeImpl(
         return projectFacade.resolverForModuleInfo(ideaModuleInfo).componentProvider.getService(serviceClass)
     }
 
-    @FrontendInternals
-    override fun <T : Any> getFrontendService(moduleDescriptor: ModuleDescriptor, serviceClass: Class<T>): T {
-        return projectFacade.resolverForDescriptor(moduleDescriptor).componentProvider.getService(serviceClass)
-    }
-
-    override fun getResolverForProject(): ResolverForProject<IdeaModuleInfo> {
+  override fun getResolverForProject(): ResolverForProject<IdeaModuleInfo> {
         return projectFacade.getResolverForProject()
     }
 

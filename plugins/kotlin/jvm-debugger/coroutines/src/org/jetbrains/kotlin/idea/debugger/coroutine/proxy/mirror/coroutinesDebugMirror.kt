@@ -15,6 +15,9 @@ class DebugProbesImpl private constructor(context: DefaultExecutionContext) :
     private val javaLangListMirror = JavaUtilAbstractCollection(context)
     private val coroutineInfo =
             CoroutineInfo.instance(context) ?: throw IllegalStateException("CoroutineInfo implementation not found.")
+
+    private val debugCoroutineInfo = DebugCoroutineInfo(context)
+
     private val debugProbesCoroutineOwner = DebugProbesImplCoroutineOwner(coroutineInfo, context)
 
     private val isInstalledInCoreMethod by MethodDelegate<BooleanValue>("isInstalled\$kotlinx_coroutines_debug", "()Z")
@@ -34,10 +37,10 @@ class DebugProbesImpl private constructor(context: DefaultExecutionContext) :
             isInstalledInCoreMethod.value(instance, context)?.booleanValue()  ?:
             false
 
-    fun dumpCoroutinesInfo(context: DefaultExecutionContext): List<MirrorOfCoroutineInfo> {
+    fun dumpCoroutinesInfo(context: DefaultExecutionContext): List<MirrorOfDebugCoroutineInfo> {
         instance ?: return emptyList()
         val referenceList = dumpMethod.mirror(instance, context) ?: return emptyList()
-        return referenceList.values.mapNotNull { coroutineInfo.mirror(it, context) }
+        return referenceList.values.mapNotNull { debugCoroutineInfo.mirror(it, context) }
     }
     
     fun getCoroutinesRunningOnCurrentThread(context: DefaultExecutionContext): Set<Long> {
@@ -147,6 +150,32 @@ class DebugCoroutineInfoImpl(context: DefaultExecutionContext) :
                 val creationStackTraceMirror = getCreationStackTrace.mirror(value, context)
                 creationStackTraceMirror?.values?.mapNotNull { stackTraceElement.mirror(it, context) } ?: emptyList()
             }
+        )
+    }
+}
+
+class DebugCoroutineInfo (context: DefaultExecutionContext) :
+    BaseMirror<ObjectReference, MirrorOfDebugCoroutineInfo>("kotlinx.coroutines.debug.internal.DebugCoroutineInfo", context) {
+    private val stackTraceElement = StackTraceElement(context)
+
+    private val coroutineContext by MethodMirrorDelegate("getContext", CoroutineContext(context))
+    private val sequenceNumber by MethodDelegate<LongValue>("getSequenceNumber")
+    private val state by MethodDelegate<StringReference>("getState")
+    private val lastObservedThread by MethodDelegate<ThreadReference>("getLastObservedThread")
+    private val lastObservedFrame by MethodDelegate<ObjectReference>("getLastObservedFrame")
+    private val creationStackTrace by MethodMirrorDelegate("getCreationStackTrace", JavaUtilAbstractCollection(context))
+    private val lastObservedStackTrace by MethodMirrorDelegate("lastObservedStackTrace", JavaUtilAbstractCollection(context))
+
+
+    override fun fetchMirror(value: ObjectReference, context: DefaultExecutionContext): MirrorOfDebugCoroutineInfo {
+        return MirrorOfDebugCoroutineInfo(
+            coroutineContext.mirror(value, context),
+            sequenceNumber.value(value, context)?.value(),
+            state.value(value, context)?.value(),
+            lastObservedThread.value(value, context),
+            lastObservedFrame.value(value, context),
+            creationStackTrace.mirror(value, context)?.values?.mapNotNull { stackTraceElement.mirror(it, context) } ?: emptyList(),
+            lastObservedStackTrace.mirror(value, context)?.values?.mapNotNull { stackTraceElement.mirror(it, context) } ?: emptyList()
         )
     }
 }

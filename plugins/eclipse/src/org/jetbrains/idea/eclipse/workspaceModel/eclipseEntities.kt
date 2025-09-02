@@ -6,20 +6,21 @@ import com.intellij.platform.workspace.jps.JpsFileEntitySource
 import com.intellij.platform.workspace.jps.JpsProjectConfigLocation
 import com.intellij.platform.workspace.jps.JpsProjectFileEntitySource
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
-import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
-import com.intellij.platform.workspace.storage.url.VirtualFileUrl
-import com.intellij.platform.workspace.storage.EntityType
-import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.annotations.Parent
+import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 
 
 /**
  * Stores data from [EclipseModuleManagerImpl] in workspace model
  */
 interface EclipseProjectPropertiesEntity : WorkspaceEntity {
+  @Parent
   val module: ModuleEntity
 
   val variablePaths: Map<String, String>
@@ -90,11 +91,11 @@ fun MutableEntityStorage.modifyEclipseProjectPropertiesEntity(
   return modifyEntity(EclipseProjectPropertiesEntity.Builder::class.java, entity, modification)
 }
 
-var ModuleEntity.Builder.eclipseProperties: @Child EclipseProjectPropertiesEntity.Builder?
+var ModuleEntity.Builder.eclipseProperties: EclipseProjectPropertiesEntity.Builder?
   by WorkspaceEntity.extensionBuilder(EclipseProjectPropertiesEntity::class.java)
 //endregion
 
-val ModuleEntity.eclipseProperties: @Child EclipseProjectPropertiesEntity?
+val ModuleEntity.eclipseProperties: EclipseProjectPropertiesEntity?
     by WorkspaceEntity.extension()
 
 data class EclipseProjectFile(

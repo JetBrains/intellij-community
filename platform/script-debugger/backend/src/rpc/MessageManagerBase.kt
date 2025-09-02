@@ -35,8 +35,3 @@ abstract class MessageManagerBase {
     closed = true
   }
 }
-
-@ApiStatus.Internal
-fun RequestCallback<*>.reject() {
-  onError(CONNECTION_CLOSED_MESSAGE)
-}

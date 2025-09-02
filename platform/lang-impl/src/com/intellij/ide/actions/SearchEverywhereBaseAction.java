@@ -44,6 +44,7 @@ public abstract class SearchEverywhereBaseAction extends AnAction implements Act
                                              boolean sendStatistics) {
     Project project = event.getProject();
     SearchEverywhereManager seManager = SearchEverywhereManager.getInstance(project);
+    boolean isSplit = seManager.isSplit();
 
     if (seManager.isShown()) {
       if (tabID.equals(seManager.getSelectedTabID())) {
@@ -54,14 +55,15 @@ public abstract class SearchEverywhereBaseAction extends AnAction implements Act
         if (sendStatistics) {
           SearchEverywhereUsageTriggerCollector.TAB_SWITCHED.log(project,
                                                                  SearchEverywhereUsageTriggerCollector.CONTRIBUTOR_ID_FIELD.with(tabID),
-                                                                 EventFields.InputEventByAnAction.with(event));
+                                                                 EventFields.InputEventByAnAction.with(event),
+                                                                 SearchEverywhereUsageTriggerCollector.IS_SPLIT.with(isSplit));
         }
       }
       return;
     }
 
     if (sendStatistics) {
-      SearchEverywhereUsageTriggerCollector.DIALOG_OPEN.log(project, tabID, event);
+      SearchEverywhereUsageTriggerCollector.DIALOG_OPEN.log(project, tabID, event, isSplit);
     }
     IdeEventQueue.getInstance().getPopupManager().closeAllPopups(false);
     String searchText = StringUtil.nullize(getInitialText(useEditorSelection, event).first);

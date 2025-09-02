@@ -238,7 +238,6 @@ public final class XPathAnnotator extends XPath2ElementVisitor implements Annota
       }
     }
 
-    checkExpression(myHolder, o);
     super.visitXPathBinaryExpression(o);
   }
 

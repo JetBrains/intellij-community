@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl;
 
 import com.intellij.execution.BeforeRunTask;
@@ -49,12 +49,12 @@ public final class ConfigurationSettingsEditorWrapper extends SettingsEditor<Run
     // RunConfigurationStorageUi for non-template settings is managed by com.intellij.execution.impl.SingleConfigurationConfigurable
     if (!project.isDefault() && settings.isTemplate()) {
       myRCStorageUi = new RunConfigurationStorageUi(project, () -> fireEditorStateChanged());
-      content = new ConfigurationSettingsEditorPanel(myRCStorageUi.createComponent());
+      content = new ConfigurationSettingsEditorPanel(myRCStorageUi.createComponent(), configurationEditor.isMaximizeEditorHeight());
       myRunOnTargetPanel = new RunOnTargetPanel(settings, this);
       myRunOnTargetPanel.buildUi(content.targetPanel, null);
     }
     else {
-      content = new ConfigurationSettingsEditorPanel(null);
+      content = new ConfigurationSettingsEditorPanel(null, configurationEditor.isMaximizeEditorHeight());
       myRCStorageUi = null;
       myRunOnTargetPanel = null;
     }

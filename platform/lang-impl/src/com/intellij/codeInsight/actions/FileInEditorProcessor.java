@@ -32,10 +32,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.impl.source.codeStyle.PostFormatPopupCustomization;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LightweightHint;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,14 +63,14 @@ public final class FileInEditorProcessor {
 
   private final @NotNull Project myProject;
 
-  private final @NotNull PsiFile myFile;
+  private final @NotNull PsiFile myPsiFile;
   private AbstractLayoutCodeProcessor myProcessor;
 
-  public FileInEditorProcessor(@NotNull PsiFile file,
+  public FileInEditorProcessor(@NotNull PsiFile psiFile,
                                @NotNull Editor editor,
                                @NotNull LayoutCodeOptions runOptions) {
-    myFile = file;
-    myProject = file.getProject();
+    myPsiFile = psiFile;
+    myProject = psiFile.getProject();
     myEditor = editor;
 
     myOptions = runOptions;
@@ -77,7 +79,7 @@ public final class FileInEditorProcessor {
   }
 
   public void processCode() {
-    if (!CodeStyle.isFormattingEnabled(myFile)) {
+    if (!CodeStyle.isFormattingEnabled(myPsiFile)) {
       if (!isInHeadlessMode() && !myEditor.isDisposed() && myEditor.getComponent().isShowing()) {
         showHint(myEditor, new DisabledFormattingMessageBuilder());
       }
@@ -85,10 +87,10 @@ public final class FileInEditorProcessor {
     }
 
     if (myOptions.isOptimizeImports() && myOptions.getTextRangeType() == VCS_CHANGED_TEXT) {
-      myProcessor = new OptimizeImportsProcessor(myProject, myFile);
+      myProcessor = new OptimizeImportsProcessor(myProject, myPsiFile);
     }
 
-    if (myProcessChangesTextOnly && !VcsFacade.getInstance().hasChanges(myFile)) {
+    if (myProcessChangesTextOnly && !VcsFacade.getInstance().hasChanges(myPsiFile)) {
       myNoChangesDetected = true;
     }
 
@@ -109,7 +111,7 @@ public final class FileInEditorProcessor {
         }
         if ((!myProcessSelectedText || Objects.requireNonNull(myProcessor.getInfoCollector()).getSecondFormatNotification() != null)
             && !isExternalFormatterInUse()) {
-          showHint(myEditor, new FormattedMessageBuilder());
+          showHint(myEditor, new FormattedMessageBuilder(myEditor, myPsiFile));
         }
       });
     }
@@ -119,15 +121,15 @@ public final class FileInEditorProcessor {
     if (myOptions.getTextRangeType() == TextRangeType.WHOLE_FILE) {
       CodeStyleSettingsManager.getInstance(myProject).notifyCodeStyleSettingsChanged();
       if (myOptions.isOptimizeImports()) {
-        CodeStyleCachingService.getInstance(myProject).scheduleWhenSettingsComputed(myFile, () -> {
-          new OptimizeImportsProcessor(myProject, myFile).run();
+        CodeStyleCachingService.getInstance(myProject).scheduleWhenSettingsComputed(myPsiFile, () -> {
+          new OptimizeImportsProcessor(myProject, myPsiFile).run();
         });
       }
     }
   }
 
   private boolean isExternalFormatterInUse() {
-    return !(FormattingServiceUtil.findService(myFile, true, myOptions.getTextRangeType() == TextRangeType.WHOLE_FILE)
+    return !(FormattingServiceUtil.findService(myPsiFile, true, myOptions.getTextRangeType() == TextRangeType.WHOLE_FILE)
                instanceof CoreFormattingService);
   }
 
@@ -163,14 +165,14 @@ public final class FileInEditorProcessor {
     }
     else {
       if (myProcessSelectedText) {
-        reformatCodeProcessor = new ReformatCodeProcessor(myFile, myEditor.getSelectionModel());
+        reformatCodeProcessor = new ReformatCodeProcessor(myPsiFile, myEditor.getSelectionModel());
       }
       else {
-        reformatCodeProcessor = new ReformatCodeProcessor(myFile, myProcessChangesTextOnly);
+        reformatCodeProcessor = new ReformatCodeProcessor(myPsiFile, myProcessChangesTextOnly);
       }
     }
     if (myOptions.doNotKeepLineBreaks()) {
-      reformatCodeProcessor.setDoNotKeepLineBreaks(myFile);
+      reformatCodeProcessor.setDoNotKeepLineBreaks(myPsiFile);
     }
     return reformatCodeProcessor;
   }
@@ -259,7 +261,7 @@ public final class FileInEditorProcessor {
   private final class DisabledFormattingMessageBuilder extends MessageBuilder {
     @Override
     public @NotNull String getMessage() {
-      VirtualFile virtualFile = myFile.getVirtualFile();
+      VirtualFile virtualFile = myPsiFile.getVirtualFile();
       String message = virtualFile == null ? LangBundle.message("formatter.unavailable.message")
                                            : LangBundle.message("formatter.unavailable.for.0.message", virtualFile.getName());
       return new HtmlBuilder().append(message).append(
@@ -296,6 +298,15 @@ public final class FileInEditorProcessor {
   }
 
   private final class FormattedMessageBuilder extends MessageBuilder {
+    Editor myEditor;
+    PostFormatPopupCustomization myPostFormatPopupCustomization;
+
+    private FormattedMessageBuilder(Editor editor, PsiFile psiFile) {
+      myEditor = editor;
+      myPostFormatPopupCustomization = ContainerUtil.find(PostFormatPopupCustomization.getEP_NAME().getExtensionList(),
+                                                          it -> it.isApplicableFor(psiFile, myProject));
+    }
+
     @Override
     public @NotNull String getMessage() {
       HtmlBuilder builder = new HtmlBuilder();
@@ -338,18 +349,27 @@ public final class FileInEditorProcessor {
           builder.append(notifications.getSecondFormatNotification()).br();
         }
       }
+      builder.append(getFooter());
+      return builder.wrapWith("html").toString();
+    }
+
+    private @NotNull HtmlChunk.Element getFooter() {
+      if (myPostFormatPopupCustomization != null) {
+        return HtmlChunk.span().addRaw(myPostFormatPopupCustomization.getPopupFooterMessage(myPsiFile, myProject));
+      }
 
       String shortcutText = KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction("ShowReformatFileDialog"));
       String color = ColorUtil.toHtmlColor(JBColor.gray);
 
-      builder.append(HtmlChunk.span("color:"+color)
-                              .child(HtmlChunk.raw(LangBundle.message("formatter.in.editor.link.show.reformat.dialog"))).addText(shortcutText));
-
-      return builder.wrapWith("html").toString();
+      return HtmlChunk.span("color:" + color)
+        .child(HtmlChunk.raw(LangBundle.message("formatter.in.editor.link.show.reformat.dialog"))).addText(shortcutText);
     }
 
     @Override
     public @NotNull Runnable getHyperlinkRunnable() {
+      if (myPostFormatPopupCustomization != null) {
+        return () -> myPostFormatPopupCustomization.handleFooterHyperlinkClick(myPsiFile, myProject);
+      }
       return new ShowReformatDialogRunnable(myEditor);
     }
   }

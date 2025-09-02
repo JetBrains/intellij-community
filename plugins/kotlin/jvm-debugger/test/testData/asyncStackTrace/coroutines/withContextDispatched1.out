@@ -1,0 +1,16 @@
+LineBreakpoint created at withContextDispatched1.kt:11
+Run Java
+Connected to the target VM
+withContextDispatched1.kt:11
+vvv stack trace vvv
+  invokeSuspend:11, WithContextDispatched1Kt$main$1$1
+  invokeSuspend:9, WithContextDispatched1Kt$main$1
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+  main:7, WithContextDispatched1Kt
+  main:-1, WithContextDispatched1Kt
+^^^ stack trace ^^^
+Disconnected from the target VM
+
+Process finished with exit code 0

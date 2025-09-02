@@ -27,5 +27,5 @@
 
   </extensions>
 
-  <depends optional="true" config-file="intellij.ml.models.local.java.xml">com.intellij.modules.java</depends>
+  <depends optional="true" config-file="intellij.ml.models.local.java.xml">com.intellij.java</depends>
 </idea-plugin>

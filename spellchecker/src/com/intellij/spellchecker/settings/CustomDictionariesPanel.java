@@ -22,15 +22,16 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
-import static com.intellij.openapi.util.io.FileUtilRt.extensionEquals;
+import static com.intellij.spellchecker.SpellCheckerManagerKt.isDic;
 import static com.intellij.ui.SimpleTextAttributes.GRAY_ATTRIBUTES;
 import static java.util.Arrays.asList;
 
 public final class CustomDictionariesPanel extends JPanel {
   private final SpellCheckerSettings mySettings;
+  private final @NotNull Project myProject;
   private final @NotNull SpellCheckerManager myManager;
   private final CustomDictionariesTableView myCustomDictionariesTableView;
   private final List<String> removedDictionaries = new ArrayList<>();
@@ -39,6 +40,7 @@ public final class CustomDictionariesPanel extends JPanel {
 
   public CustomDictionariesPanel(@NotNull SpellCheckerSettings settings, @NotNull Project project, @NotNull SpellCheckerManager manager) {
     mySettings = settings;
+    myProject = project;
     myManager = manager;
     defaultDictionaries = project.isDefault() ? new ArrayList<>() : asList(SpellCheckerBundle.message("app.dictionary"), SpellCheckerBundle
       .message("project.dictionary"));
@@ -103,7 +105,7 @@ public final class CustomDictionariesPanel extends JPanel {
     final FileChooserDescriptor fileChooserDescriptor = new FileChooserDescriptor(true, false, false, false, false, true) {
       @Override
       public boolean isFileSelectable(@Nullable VirtualFile file) {
-        return file != null && extensionEquals(file.getPath(), "dic");
+        return file != null && isDic(file.getName());
       }
     };
 
@@ -145,6 +147,7 @@ public final class CustomDictionariesPanel extends JPanel {
     }));
     mySettings.setCustomDictionariesPaths(newPaths);
     myManager.updateBundledDictionaries(ContainerUtil.filter(oldPaths, o -> !newPaths.contains(o)));
+    myProject.getMessageBus().syncPublisher(CustomDictionarySettingsListener.CUSTOM_DICTIONARY_SETTINGS_TOPIC).customDictionaryPathsChanged(newPaths);
   }
 
   public List<String> getValues() {

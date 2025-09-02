@@ -14,6 +14,7 @@ import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -42,9 +43,9 @@ public final class ShowControlFlowHandler implements CodeInsightActionHandler {
 
 
   @Override
-  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
     final int offset = editor.getCaretModel().getOffset();
-    final PsiElement position = file.findElementAt(offset);
+    final PsiElement position = psiFile.findElementAt(offset);
     if (position == null) {
       return;
     }
@@ -58,15 +59,10 @@ public final class ShowControlFlowHandler implements CodeInsightActionHandler {
           final VirtualFile fileByUrl = VirtualFileManager.getInstance().refreshAndFindFileByUrl(VfsUtilCore.pathToUrl(path));
           if (fileByUrl != null) {
             final AnAction openInBrowser = ActionManager.getInstance().getAction("OpenInBrowser");
-            DataContext dataContext = dataId -> {
-              if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
-                return fileByUrl;
-              }
-              if (CommonDataKeys.PROJECT.is(dataId)) {
-                return project;
-              }
-              return null;
-            };
+            DataContext dataContext = SimpleDataContext.builder()
+              .add(CommonDataKeys.VIRTUAL_FILE, fileByUrl)
+              .add(CommonDataKeys.PROJECT, project)
+              .build();
             final AnActionEvent action = AnActionEvent.createFromDataContext("ShowControlFlow", null, dataContext);
             openInBrowser.actionPerformed(action);
           }

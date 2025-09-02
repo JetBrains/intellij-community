@@ -6,12 +6,14 @@ import com.intellij.diff.chains.SimpleDiffRequestChain
 import com.intellij.diff.requests.ErrorDiffRequest
 import com.intellij.diff.requests.LoadingDiffRequest
 import com.intellij.diff.util.Side
+import org.jetbrains.annotations.ApiStatus
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
 typealias DiffLineLocation = Pair<Side, Int>
 
-internal object DiffUIUtil {
+@ApiStatus.Internal
+object DiffUIUtil {
   /**
    * Progress is delayed to avoid a flicker
    */

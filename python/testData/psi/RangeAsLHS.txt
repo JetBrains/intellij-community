@@ -10,16 +10,12 @@ PyFile:RangeAsLHS.py
       PsiElement(Py:RBRACKET)(']')
   PsiWhiteSpace('\n')
   PyAssignmentStatement
-    PySliceExpression
+    PySubscriptionExpression
       PyReferenceExpression: foo
         PsiElement(Py:IDENTIFIER)('foo')
       PsiElement(Py:LBRACKET)('[')
       PySliceItem
-        PyEmptyExpression
-          <empty list>
         PsiElement(Py:COLON)(':')
-        PyEmptyExpression
-          <empty list>
       PsiElement(Py:RBRACKET)(']')
     PsiWhiteSpace(' ')
     PsiElement(Py:EQ)('=')

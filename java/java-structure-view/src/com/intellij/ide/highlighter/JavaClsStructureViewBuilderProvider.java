@@ -3,6 +3,7 @@ package com.intellij.ide.highlighter;
 
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.StructureViewBuilderProvider;
+import com.intellij.ide.structureView.logical.PhysicalAndLogicalStructureViewBuilder;
 import com.intellij.lang.LanguageStructureViewBuilder;
 import com.intellij.lang.PsiStructureViewFactory;
 import com.intellij.openapi.fileTypes.FileType;
@@ -28,7 +29,8 @@ public class JavaClsStructureViewBuilderProvider implements StructureViewBuilder
       if (psiFile != null) {
         PsiStructureViewFactory factory = LanguageStructureViewBuilder.getInstance().forLanguage(psiFile.getLanguage());
         if (factory != null) {
-          return factory.getStructureViewBuilder(psiFile);
+          StructureViewBuilder physicalBuilder = factory.getStructureViewBuilder(psiFile);
+          return PhysicalAndLogicalStructureViewBuilder.Companion.wrapPhysicalBuilderIfPossible(physicalBuilder, psiFile);
         }
       }
     }

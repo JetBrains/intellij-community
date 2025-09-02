@@ -2,26 +2,36 @@
 package com.intellij.openapi.options.newEditor
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.idea.ActionsBundle
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ex.ActionUtil.getActionGroup
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.observable.properties.AtomicBooleanProperty
+import com.intellij.openapi.options.Configurable
+import com.intellij.openapi.options.ex.ConfigurableVisitor
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.util.Disposer
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.JBColor
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.components.JBLayeredPane
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.util.ui.JBUI
+import com.jetbrains.rd.util.concurrentMapOf
+import kotlinx.coroutines.*
 import java.awt.Dimension
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import javax.swing.*
+import kotlin.coroutines.EmptyCoroutineContext
 
 private const val PANEL_MAX_WIDTH = 1000
 private const val SEARCH_MAX_WIDTH = 400
@@ -87,6 +97,8 @@ internal fun SettingsDialog.createEditorToolbar(actions: List<Action>): DialogPa
   editorToolbar.minimumSize = JBUI.size(10, editorToolbar.minimumSize.height)
   editorToolbar.border = JBUI.Borders.compound(JBUI.Borders.customLineBottom(JBColor.border()),
                                                JBUI.Borders.customLineRight(JBColor.border()))
+  toolbar.targetComponent = editorToolbar
+
   return panel {
     row {
       cell(editorToolbar).resizableColumn()
@@ -137,3 +149,36 @@ internal fun SettingsEditor.createWrapperPanel(splitter: OnePixelSplitter) : Dia
   return panel
 }
 
+internal class ResetConfigurableHandler(
+  project: Project,
+  private val context: OptionsEditorContext,
+  coroutineScope: CoroutineScope,
+  disposable: Disposable,
+) {
+  private val jobs = concurrentMapOf<String, Job>()
+  private val properties = PropertiesComponent.getInstance(project)
+  private val myCoroutineScope: CoroutineScope = coroutineScope.childScope("ResetConfigurableHandler", EmptyCoroutineContext, true)
+
+  init {
+    Disposer.register(disposable, Disposable {
+      myCoroutineScope.cancel()
+    })
+  }
+
+  fun scheduleConfigurableReset(configurable: Configurable) {
+    val configurableId = ConfigurableVisitor.getId(configurable)
+    if (configurable.isModified()) {
+      myCoroutineScope.launch {
+        val job = this.coroutineContext[Job] ?: return@launch
+        jobs.put(configurableId, job)?.cancel()
+        delay(System.getProperty("settings.editor.reset.delay.seconds", "60").toLong() * 1000)
+        jobs.remove(configurableId, job)
+        if (properties.getValue(SettingsEditor.SELECTED_CONFIGURABLE) != configurableId) {
+          context.fireReset(configurable)
+          configurable.reset()
+        }
+      }
+    }
+  }
+
+}

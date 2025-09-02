@@ -127,6 +127,7 @@ elif use_cython is None:
             os.environ['PYDEVD_USE_CYTHON'] = 'NO'
             log_debug("Problems with cython extensions. Debugger speedups using cython are turned off")
             log_debug(traceback.format_exc())
+            from _pydevd_bundle.pydevd_additional_thread_info import set_additional_thread_info
 
 else:
     raise RuntimeError('Unexpected value for PYDEVD_USE_CYTHON: %s (accepted: YES, NO)' % (use_cython,))

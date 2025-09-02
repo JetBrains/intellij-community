@@ -15,7 +15,7 @@ import com.intellij.sh.ShLanguage;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.platform.eel.provider.EelProviderUtil.getEelDescriptor;
-import static com.intellij.platform.eel.provider.EelProviderUtil.upgradeBlocking;
+import static com.intellij.platform.eel.provider.EelProviderUtil.toEelApiBlocking;
 import static com.intellij.platform.eel.provider.utils.EelPathUtils.getNioPath;
 import static com.intellij.platform.eel.provider.utils.EelUtilsKt.fetchLoginShellEnvVariablesBlocking;
 import static java.nio.file.Files.exists;
@@ -63,7 +63,7 @@ public final class ShConfigurationType extends SimpleConfigurationType {
   }
 
   private static @NotNull String trivialDefaultShellDetection(final @NotNull EelDescriptor eelDescriptor) {
-    final var eel = upgradeBlocking(eelDescriptor);
+    final var eel = toEelApiBlocking(eelDescriptor);
     final var shell = fetchLoginShellEnvVariablesBlocking(eel.getExec()).get("SHELL");
 
     if (shell != null) {

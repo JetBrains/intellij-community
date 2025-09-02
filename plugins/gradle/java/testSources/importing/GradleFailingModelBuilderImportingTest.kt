@@ -22,7 +22,7 @@ class GradleFailingModelBuilderImportingTest : BuildViewMessagesImportingTestCas
         assertNodeWithDeprecatedGradleWarning()
       }
     }
-    assertSyncViewSelectedNode("root project 'project': Test import errors", false) {
+    assertSyncViewNode("root project 'project': Test import errors") {
       assertThat(it).startsWith("Unable to import Test model\n" +
                                 "\n" +
                                 "java.lang.RuntimeException: Boom! '\"{}}\n\t\n" +

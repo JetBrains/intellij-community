@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.actions;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -59,8 +59,7 @@ import static java.util.Collections.singletonList;
 import static java.util.Collections.singletonMap;
 
 abstract class GitMergeAction extends GitRepositoryAction {
-
-  protected static class DialogState {
+  protected static final class DialogState {
     final VirtualFile selectedRoot;
     final @NlsContexts.ProgressTitle String progressTitle;
     final Supplier<GitLineHandler> handlerProvider;

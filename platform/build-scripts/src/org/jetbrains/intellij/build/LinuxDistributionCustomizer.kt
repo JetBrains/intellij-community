@@ -33,7 +33,7 @@ open class LinuxDistributionCustomizer {
    */
   var extraExecutables: PersistentList<String> = persistentListOf()
 
-  open fun generateExecutableFilesPatterns(context: BuildContext, includeRuntime: Boolean, arch: JvmArchitecture): Sequence<String> {
+  open fun generateExecutableFilesPatterns(context: BuildContext, includeRuntime: Boolean, arch: JvmArchitecture, targetLibcImpl: LibcImpl): Sequence<String> {
     val basePatterns = sequenceOf(
       "bin/*.sh",
       "plugins/**/*.sh",
@@ -42,7 +42,12 @@ open class LinuxDistributionCustomizer {
       "bin/${context.productProperties.baseFileName}",
     )
     val rtPatterns = if (includeRuntime) {
-      context.bundledRuntime.executableFilesPatterns(OsFamily.LINUX, context.productProperties.runtimeDistribution)
+      val distribution = if (targetLibcImpl == LinuxLibcImpl.MUSL) {
+        JetBrainsRuntimeDistribution.LIGHTWEIGHT
+      } else {
+        context.productProperties.runtimeDistribution
+      }
+      context.bundledRuntime.executableFilesPatterns(OsFamily.LINUX, distribution)
     }
     else {
       emptySequence()

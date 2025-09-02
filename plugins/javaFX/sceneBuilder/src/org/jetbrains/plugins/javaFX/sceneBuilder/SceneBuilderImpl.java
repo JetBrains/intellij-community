@@ -27,8 +27,8 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.CurrentJavaVersion;
 import com.intellij.util.Query;
-import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.xml.NanoXmlBuilder;
 import com.intellij.util.xml.NanoXmlUtil;
 import com.oracle.javafx.scenebuilder.kit.editor.EditorController;
@@ -155,7 +155,7 @@ public class SceneBuilderImpl implements SceneBuilder {
       // Take custom components from libraries, but not from the project modules, because org.jetbrains.plugins.javaFX.sceneBuilder.SceneBuilder instantiates the components' classes.
       // Modules might be not compiled or may change since last compile, it's too expensive to keep track of that.
       final GlobalSearchScope scope = ProjectScope.getLibrariesScope(nodeClass.getProject());
-      final JavaSdkVersion ideJdkVersion = JavaSdkVersion.fromJavaVersion(JavaVersion.current());
+      final JavaSdkVersion ideJdkVersion = JavaSdkVersion.fromJavaVersion(CurrentJavaVersion.currentJavaVersion());
       final LanguageLevel ideLanguageLevel = ideJdkVersion != null ? ideJdkVersion.getMaxLanguageLevel() : null;
       final Query<PsiClass> query = ClassInheritorsSearch.search(nodeClass, scope, true, true, false);
       final Set<PsiClass> result = new HashSet<>();

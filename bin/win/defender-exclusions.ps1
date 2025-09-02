@@ -56,7 +56,7 @@ try {
   if (-not $exclusions) {
     $exclusions = @()
   } else {
-    $exclusions = Expand-Excluded $exclusions
+    $exclusions = @(Expand-Excluded $exclusions)
   }
 
   foreach ($path in $args) {

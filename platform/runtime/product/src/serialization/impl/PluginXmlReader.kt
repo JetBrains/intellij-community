@@ -23,7 +23,7 @@ fun loadPluginModules(
   try {
     val modules = ArrayList<RawIncludedRuntimeModule>()
     val addedModules = HashSet<String>()
-    modules.add(RawIncludedRuntimeModule(mainModule.moduleId, RuntimeModuleLoadingRule.REQUIRED))
+    modules.add(RawIncludedRuntimeModule(mainModule.moduleId, RuntimeModuleLoadingRule.EMBEDDED))
     addedModules.add(mainModule.moduleId.stringId)
     resourceFileResolver.readResourceFile(mainModule.moduleId, PLUGIN_XML_PATH).use { inputStream ->
       if (inputStream == null) {
@@ -56,7 +56,8 @@ fun loadPluginModules(
             val moduleName = nameAttribute.substringBefore('/')
             if (addedModules.add(moduleName)) {
               val loadingRule = when (loading) {
-                "required", "embedded" -> RuntimeModuleLoadingRule.REQUIRED
+                "required" -> RuntimeModuleLoadingRule.REQUIRED
+                "embedded" -> RuntimeModuleLoadingRule.EMBEDDED
                 "on-demand" -> RuntimeModuleLoadingRule.ON_DEMAND
                 else -> RuntimeModuleLoadingRule.OPTIONAL
               }    

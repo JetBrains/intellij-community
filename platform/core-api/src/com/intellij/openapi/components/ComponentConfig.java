@@ -15,8 +15,8 @@ public final class ComponentConfig {
   public final String interfaceClass;
   public final String headlessImplementationClass;
   public final ExtensionDescriptor.Os os;
-  public boolean loadForDefaultProject;
-  public boolean overrides;
+  public final boolean loadForDefaultProject;
+  public final boolean overrides;
   public final @Nullable Map<String, String> options;
 
   public ComponentConfig(@Nullable String interfaceClass,

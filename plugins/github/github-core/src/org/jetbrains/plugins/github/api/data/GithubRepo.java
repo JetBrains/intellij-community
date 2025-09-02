@@ -14,6 +14,7 @@ public class GithubRepo extends GithubRepoBasic {
 
   //more urls
   private String cloneUrl;
+  private @Nullable String sshUrl;
   //more urls
 
   private String homepage;
@@ -49,5 +50,9 @@ public class GithubRepo extends GithubRepoBasic {
 
   public @NotNull String getCloneUrl() {
     return cloneUrl;
+  }
+
+  public @Nullable String getSshUrl() {
+    return sshUrl;
   }
 }

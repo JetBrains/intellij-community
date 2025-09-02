@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Factory;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.util.Collection;
@@ -19,7 +20,7 @@ import java.util.Set;
 public abstract class CompositeSettingsEditor<Settings> extends SettingsEditor<Settings> {
   public static final Logger LOG = Logger.getInstance(CompositeSettingsEditor.class);
 
-  protected Collection<SettingsEditor<Settings>> myEditors = Collections.emptyList();
+  protected @Unmodifiable Collection<SettingsEditor<Settings>> myEditors = Collections.emptyList();
   private SettingsEditorListener<Settings> myChildSettingsListener;
   private SynchronizationController mySyncController;
   private boolean myIsDisposed;

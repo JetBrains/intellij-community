@@ -1,9 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.javadoc;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegateAdapter;
+import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.CaretModel;
@@ -21,10 +21,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public final class EnterInJavadocParamDescriptionHandler extends EnterHandlerDelegateAdapter {
-
-  private final JavadocHelper myHelper = JavadocHelper.getInstance();
-
+public final class EnterInJavadocParamDescriptionHandler implements EnterHandlerDelegate {
   @Override
   public Result postProcessEnter(final @NotNull PsiFile file, @NotNull Editor editor, @NotNull DataContext dataContext) {
     if (!(file instanceof PsiJavaFile)
@@ -39,7 +36,7 @@ public final class EnterInJavadocParamDescriptionHandler extends EnterHandlerDel
     }
     
     final Pair<JavadocHelper.JavadocParameterInfo,List<JavadocHelper.JavadocParameterInfo>> pair
-      = myHelper.parse(file, editor, caretOffset);
+      = JavadocHelper.parse(file, editor, caretOffset);
     if (pair.first == null || pair.first.parameterDescriptionStartPosition == null) {
       return Result.Continue;
     }
@@ -64,7 +61,7 @@ public final class EnterInJavadocParamDescriptionHandler extends EnterHandlerDel
       });
     } 
 
-    myHelper.navigate(desiredPosition, editor, file.getProject());
+    JavadocHelper.navigate(desiredPosition, editor, file.getProject());
     return Result.Stop;
   }
   

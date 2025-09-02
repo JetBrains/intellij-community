@@ -7,6 +7,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.FactoryMap;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyTypeProvider;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -79,6 +80,15 @@ public class PyTypeProviderBase implements PyTypeProvider {
   public @Nullable Ref<@Nullable PyCallableType> prepareCalleeTypeForCall(@Nullable PyType type,
                                                                           @NotNull PyCallExpression call,
                                                                           @NotNull TypeEvalContext context) {
+    return null;
+  }
+
+  @Override
+  public @Nullable List<@NotNull PyTypedResolveResult> getMemberTypes(@NotNull PyType type,
+                                                                     @NotNull String name,
+                                                                     @Nullable PyExpression location,
+                                                                     @NotNull AccessDirection direction,
+                                                                     @NotNull PyResolveContext context) {
     return null;
   }
 

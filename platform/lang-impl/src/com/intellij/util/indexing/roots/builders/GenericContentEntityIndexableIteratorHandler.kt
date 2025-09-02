@@ -24,7 +24,7 @@ class GenericContentEntityIndexableIteratorHandler : IndexableIteratorBuilderHan
       entry.value.fold(MutableIndexingUrlRootHolder()) { holder, builder ->
         holder.addRoots(builder.roots)
         return@fold holder
-      }.toRootHolder().let { if (it.isEmpty()) null else GenericContentEntityIteratorImpl(entry.key, it, entry.value[0].presentation) }
+      }.toRootHolder().let { if (it.isEmpty()) null else GenericContentEntityIteratorImpl(entry.key, it) }
     }
   }
 }

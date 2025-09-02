@@ -89,8 +89,8 @@ public final class FetchExtResourceAction extends BaseExtResourceAction {
     return uri.startsWith(HTTP_PROTOCOL) || uri.startsWith(FTP_PROTOCOL) || uri.startsWith(HTTPS_PROTOCOL);
   }
 
-  public static String findUrl(PsiFile file, int offset, String uri) {
-    final PsiElement currentElement = file.findElementAt(offset);
+  public static String findUrl(PsiFile psiFile, int offset, String uri) {
+    final PsiElement currentElement = psiFile.findElementAt(offset);
     final XmlAttribute attribute = PsiTreeUtil.getParentOfType(currentElement, XmlAttribute.class);
 
     if (attribute != null) {
@@ -147,10 +147,10 @@ public final class FetchExtResourceAction extends BaseExtResourceAction {
   }
 
   @Override
-  protected void doInvoke(final @NotNull PsiFile file, final int offset, final @NotNull String uri, final Editor editor)
+  protected void doInvoke(final @NotNull PsiFile psiFile, final int offset, final @NotNull String uri, final Editor editor)
     throws IncorrectOperationException {
-    final String url = findUrl(file, offset, uri);
-    final Project project = file.getProject();
+    final String url = findUrl(psiFile, offset, uri);
+    final Project project = psiFile.getProject();
 
     ProgressManager.getInstance().run(new Task.Backgroundable(project, XmlBundle.message(
       "xml.intention.fetch.progress.fetching.resource")) {
@@ -160,7 +160,7 @@ public final class FetchExtResourceAction extends BaseExtResourceAction {
           try {
             HttpConfigurable.getInstance().prepareURL(url);
             fetchDtd(project, uri, url, indicator);
-            ApplicationManager.getApplication().invokeLater(() -> DaemonCodeAnalyzer.getInstance(project).restart(file));
+            ApplicationManager.getApplication().invokeLater(() -> DaemonCodeAnalyzer.getInstance(project).restart(psiFile));
             return;
           }
           catch (IOException ex) {
@@ -469,11 +469,11 @@ public final class FetchExtResourceAction extends BaseExtResourceAction {
                                                           final PsiManager psiManager,
                                                           final String url) {
     return ReadAction.compute(() -> {
-      PsiFile file = psiManager.findFile(vFile);
+      PsiFile psiFile = psiManager.findFile(vFile);
 
-      if (file instanceof XmlFile) {
+      if (psiFile instanceof XmlFile) {
         PsiFile contextFile = contextVFile != null ? psiManager.findFile(contextVFile) : null;
-        return extractEmbeddedFileReferences((XmlFile)file, contextFile instanceof XmlFile ? (XmlFile)contextFile : null, url);
+        return extractEmbeddedFileReferences((XmlFile)psiFile, contextFile instanceof XmlFile ? (XmlFile)contextFile : null, url);
       }
 
       return Collections.emptySet();

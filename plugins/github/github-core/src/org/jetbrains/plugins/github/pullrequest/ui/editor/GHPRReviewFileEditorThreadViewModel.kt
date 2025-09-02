@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.ui.editor
 
 import com.intellij.collaboration.async.stateInNow
+import com.intellij.collaboration.util.RefComparisonChange
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -26,6 +27,7 @@ internal class MappedGHPRReviewEditorThreadViewModel(
 
   data class MappingData(
     val isVisible: Boolean,
+    val change: RefComparisonChange?,
     val line: Int?
   )
 }

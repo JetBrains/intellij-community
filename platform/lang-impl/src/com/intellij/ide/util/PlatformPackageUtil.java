@@ -11,7 +11,6 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.TestSourcesFilter;
-import com.intellij.openapi.roots.impl.DirectoryIndex;
 import com.intellij.openapi.roots.ui.configuration.CommonContentEntriesEditor;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.ui.Messages;
@@ -29,6 +28,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,7 +47,7 @@ public final class PlatformPackageUtil {
    */
   @ApiStatus.Internal
   public static String getPackageName(@NotNull VirtualFile directory, @NotNull Project project) {
-    return DirectoryIndex.getInstance(project).getPackageName(directory);
+    return WorkspaceFileIndexEx.getInstance(project).getPackageName(directory);
   }
 
   /**
@@ -56,7 +56,7 @@ public final class PlatformPackageUtil {
    */
   @ApiStatus.Internal
   public static @NotNull Query<VirtualFile> getDirectoriesByPackageName(@NotNull String packageName, boolean includeLibrarySources, @NotNull Project project) {
-    return DirectoryIndex.getInstance(project).getDirectoriesByPackageName(packageName, includeLibrarySources);
+    return WorkspaceFileIndexEx.getInstance(project).getDirectoriesByPackageName(packageName, includeLibrarySources);
   }
 
   /**
@@ -65,7 +65,7 @@ public final class PlatformPackageUtil {
    */
   @ApiStatus.Internal
   public static Query<VirtualFile> getDirectoriesByPackageName(@NotNull String packageName, @NotNull GlobalSearchScope scope, @NotNull Project project) {
-    return DirectoryIndex.getInstance(project).getDirectoriesByPackageName(packageName, true).filtering(scope::contains);
+    return WorkspaceFileIndexEx.getInstance(project).getDirectoriesByPackageName(packageName, true).filtering(scope::contains);
   }
 
 

@@ -182,8 +182,8 @@ public class ValProcessor extends AbstractProcessor {
 
     if (canInferType(typeElement)) {
       final PsiElement parent = typeElement.getParent();
-      if (parent instanceof PsiLocalVariable) {
-        psiType = processLocalVariableInitializer(((PsiLocalVariable) parent).getInitializer());
+      if (parent instanceof PsiLocalVariable parentAsLocalVariable) {
+        psiType = processLocalVariableInitializer(parentAsLocalVariable.getInitializer());
       } else {
         psiType = processParameterDeclaration(((PsiParameter) parent).getDeclarationScope());
       }

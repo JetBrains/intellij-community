@@ -1,5 +1,5 @@
 from typing import IO, Any
-from xml.sax.expatreader import ExpatParser as _ExpatParser  # type: ignore[import-not-found]
+from xml.sax.expatreader import ExpatParser
 
 from django.core.serializers import base
 
@@ -31,7 +31,7 @@ class Deserializer(base.Deserializer):
 
 def getInnerText(node: Any) -> str: ...
 
-class DefusedExpatParser(_ExpatParser):
+class DefusedExpatParser(ExpatParser):
     def __init__(self, *args: Any, **kwargs: Any) -> None: ...
     def start_doctype_decl(self, name: Any, sysid: Any, pubid: Any, has_internal_subset: Any) -> None: ...
     def entity_decl(

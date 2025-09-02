@@ -16,6 +16,7 @@ import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -60,7 +61,7 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
     return ModuleBasedConfigurationOptions.class;
   }
 
-  public abstract Collection<Module> getValidModules();
+  public abstract @Unmodifiable Collection<Module> getValidModules();
 
   public ConfigurationModule getConfigurationModule() {
     return myModule;
@@ -89,7 +90,7 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
     //}
   }
 
-  public Collection<Module> getAllModules() {
+  public @Unmodifiable Collection<Module> getAllModules() {
     return Arrays.asList(ModuleManager.getInstance(getProject()).getModules());
   }
 

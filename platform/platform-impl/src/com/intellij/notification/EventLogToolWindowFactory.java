@@ -7,7 +7,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowFactory;
 import org.jetbrains.annotations.NotNull;
 
-@Deprecated
+@Deprecated(forRemoval = true)
 public final class EventLogToolWindowFactory implements ToolWindowFactory, DumbAware {
   @Override
   public boolean isApplicable(@NotNull Project project) {

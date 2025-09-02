@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
+import com.intellij.codeInsight.TypeNullability;
 import com.intellij.lang.jvm.types.JvmPrimitiveType;
 import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind;
 import com.intellij.pom.java.LanguageLevel;
@@ -121,6 +122,13 @@ public final class PsiPrimitiveType extends PsiType.Stub implements JvmPrimitive
       if (!annotation.isValid()) return false;
     }
     return true;
+  }
+
+  @Override
+  public @NotNull TypeNullability getNullability() {
+    if (myKind == JvmPrimitiveTypeKind.VOID) return TypeNullability.UNKNOWN;
+    if (myKind == null) return TypeNullability.NULLABLE_MANDATED;
+    return TypeNullability.NOT_NULL_MANDATED;
   }
 
   @Override

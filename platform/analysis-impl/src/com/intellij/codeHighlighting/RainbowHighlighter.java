@@ -99,9 +99,9 @@ public class RainbowHighlighter {
 
   @Contract("_, null -> !null")
   public static @Nullable Boolean isRainbowEnabled(@Nullable TextAttributesScheme colorsScheme, @Nullable Language language) {
-    if (colorsScheme instanceof SchemeMetaInfo) {
+    if (colorsScheme instanceof SchemeMetaInfo metaInfo) {
       do {
-        String value = ((SchemeMetaInfo)colorsScheme).getMetaProperties().getProperty(getKey(language), INHERITED);
+        String value = metaInfo.getMetaProperties().getProperty(getKey(language), INHERITED);
         if (String.valueOf(true).equals(value)) return Boolean.TRUE;
         if (String.valueOf(false).equals(value)) return Boolean.FALSE;
         if (language == null) return DEFAULT_RAINBOW_ON;
@@ -135,15 +135,15 @@ public class RainbowHighlighter {
 
   @Contract(value = "null -> false", pure = true)
   public static boolean isRainbowKey(@Nullable Object key) {
-    return key instanceof String && ((String)key).startsWith(RAINBOW_TYPE);
+    return key instanceof String string && string.startsWith(RAINBOW_TYPE);
   }
 
   public static void transferRainbowState(@NotNull SchemeMetaInfo dst, @NotNull SchemeMetaInfo src) {
     Properties dstProps = dst.getMetaProperties();
     dstProps.entrySet().removeIf(entry -> isRainbowKey(entry.getKey()));
     src.getMetaProperties().forEach((Object key, Object value) -> {
-      if (isRainbowKey(key) && value instanceof String) {
-        dstProps.setProperty((String)key, (String)value);
+      if (isRainbowKey(key) && value instanceof String string) {
+        dstProps.setProperty((String)key, string);
       }
     });
   }
@@ -219,15 +219,15 @@ public class RainbowHighlighter {
       ContainerUtil.map(RAINBOW_COLOR_KEYS, key -> getRainbowColorFromAttribute(colorsScheme.getAttributes(key)));
     List<Color> rainbowColors = ColorGenerator.generateLinearColorSequence(stopRainbowColors, RAINBOW_COLORS_BETWEEN);
 
-    if (colorsScheme instanceof EditorColorsScheme) {
+    if (colorsScheme instanceof EditorColorsScheme editorColorsScheme) {
       EditorColorPalette palette = EditorColorPaletteFactory
         .getInstance()
-        .getPalette((EditorColorsScheme)colorsScheme, Language.ANY)
+        .getPalette(editorColorsScheme, Language.ANY)
         .collectColorsWithFilter(attr -> getRainbowColorFromAttribute(attr), true);
 
 
       List<Pair<Color, Double>> colorCircles = new ArrayList<>();
-      Color background = ((EditorColorsScheme)colorsScheme).getDefaultBackground();
+      Color background = editorColorsScheme.getDefaultBackground();
       boolean schemeIsDark = ColorUtil.isDark(background);
       double minDistanceWithOrdinal = schemeIsDark ? 0.06 : 0.10;
       double minDistanceWithDiagnostic = schemeIsDark ? 0.12 : 0.20;
@@ -241,7 +241,7 @@ public class RainbowHighlighter {
       for (int i = 0; i < RAINBOW_TEMP_KEYS.length; i++) {
         TextAttributesKey key = RAINBOW_TEMP_KEYS[i];
         TextAttributes attributes = createRainbowAttribute(rainbowColors.get(i));
-        ((EditorColorsScheme)colorsScheme).setAttributes(key, attributes);
+        editorColorsScheme.setAttributes(key, attributes);
       }
     }
     return rainbowColors.toArray(new Color[0]);

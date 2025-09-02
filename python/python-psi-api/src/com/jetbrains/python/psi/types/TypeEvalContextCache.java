@@ -36,4 +36,7 @@ public interface TypeEvalContextCache {
    */
   @NotNull
   TypeEvalContext getContext(@NotNull TypeEvalContext standard);
+
+  @NotNull
+  TypeEvalContext getLibraryContext(@NotNull TypeEvalContext standard);
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment")
 
 package com.intellij.openapi.vcs.impl
@@ -33,7 +33,7 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
@@ -481,8 +481,9 @@ class LineStatusTrackerManager(
   @RequiresEdt
   private fun releaseTracker(document: Document, wasUnbound: Boolean = false) {
     val data = trackers.remove(document) ?: return
-
-    project.messageBus.syncPublisher(TOPIC).onTrackerRemoved(data.tracker)
+    if (!project.isDisposed) {
+      project.messageBus.syncPublisher(TOPIC).onTrackerRemoved(data.tracker)
+    }
     unregisterTrackerInCLM(data, wasUnbound)
     data.tracker.release()
 
@@ -1102,7 +1103,7 @@ class LineStatusTrackerManager(
 
   @RequiresEdt
   internal fun notifyInactiveRangesDamaged(virtualFile: VirtualFile) {
-    if (filesWithDamagedInactiveRanges.contains(virtualFile) || virtualFile == FileEditorManagerEx.getInstanceEx(project).currentFile) {
+    if (filesWithDamagedInactiveRanges.contains(virtualFile) || virtualFile == FileEditorManager.getInstance(project).currentFile) {
       return
     }
     filesWithDamagedInactiveRanges.add(virtualFile)

@@ -45,8 +45,8 @@ public abstract class SuppressIntentionAction implements Iconable, IntentionActi
   }
 
   @Override
-  public final void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    PsiElement element = getElement(editor, file);
+  public final void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
+    PsiElement element = getElement(editor, psiFile);
     if (element != null) {
       invoke(project, editor, element);
     }
@@ -63,9 +63,9 @@ public abstract class SuppressIntentionAction implements Iconable, IntentionActi
   public abstract void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException;
 
   @Override
-  public final boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (file == null || editor == null) return false;
-    PsiElement element = getElement(editor, file);
+  public final boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    if (psiFile == null || editor == null) return false;
+    PsiElement element = getElement(editor, psiFile);
     return element != null && isAvailable(project, editor, element);
   }
 
@@ -91,7 +91,7 @@ public abstract class SuppressIntentionAction implements Iconable, IntentionActi
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
     // No preview is necessary for suppress action
     return IntentionPreviewInfo.EMPTY;
   }

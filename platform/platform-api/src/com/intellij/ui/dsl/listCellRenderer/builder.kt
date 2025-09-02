@@ -13,7 +13,7 @@ internal annotation class LcrDslMarker
  * Covers the most common kinds of renderers and provides all necessary functionality:
  *
  * * Rectangular selection and correct insets for old UI
- * * Rounded selection, correct insets and height for new UI
+ * * Rounded selection (including multi-selection), correct insets and height for new UI
  * * Uses correct colors for text in selected/unselected state
  * * Uses gray text and icons in disabled state
  * * Colored text has different color in selected state

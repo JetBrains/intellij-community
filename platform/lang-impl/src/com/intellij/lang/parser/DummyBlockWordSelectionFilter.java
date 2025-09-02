@@ -2,6 +2,7 @@
 package com.intellij.lang.parser;
 
 import com.intellij.openapi.util.Condition;
+import com.intellij.psi.DummyBlockType;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.ApiStatus;
 
@@ -12,6 +13,6 @@ import org.jetbrains.annotations.ApiStatus;
 public final class DummyBlockWordSelectionFilter implements Condition<PsiElement> {
   @Override
   public boolean value(PsiElement element) {
-    return !(element instanceof GeneratedParserUtilBase.DummyBlock);
+    return !(element instanceof DummyBlockType.DummyBlock);
   }
 }

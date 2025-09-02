@@ -1,4 +1,5 @@
 // BIND_TO B.Companion
+// BIND_RESULT B
 class A {
     companion object {
         fun foo() { }

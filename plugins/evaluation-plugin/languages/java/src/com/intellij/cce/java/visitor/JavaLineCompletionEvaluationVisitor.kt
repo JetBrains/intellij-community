@@ -10,15 +10,13 @@ import com.intellij.cce.visitor.LineCompletionVisitorHelper
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl
 
-
 class JavaLineCompletionVisitorFactory : LineCompletionVisitorFactory {
   override val language: Language = Language.JAVA
-  override fun createVisitor(featureName: String, mode: CompletionGolfMode): LineCompletionEvaluationVisitor {
+  override fun createVisitor(featureName: String, mode: CompletionGolfMode): LineCompletionEvaluationVisitor =
     when (mode) {
-      CompletionGolfMode.ALL -> throw UnsupportedOperationException("Completion Golf mode \"ALL\" is not supported for PHP completion.")
-      CompletionGolfMode.TOKENS -> return TokensVisitor(featureName)
+      CompletionGolfMode.ALL -> throw UnsupportedOperationException("Completion Golf mode \"ALL\" is not supported for Java completion.")
+      CompletionGolfMode.TOKENS -> TokensVisitor(featureName)
     }
-  }
 
   class TokensVisitor(override val feature: String) : LineCompletionEvaluationVisitor, JavaRecursiveElementVisitor() {
     private val visitorHelper = LineCompletionVisitorHelper()

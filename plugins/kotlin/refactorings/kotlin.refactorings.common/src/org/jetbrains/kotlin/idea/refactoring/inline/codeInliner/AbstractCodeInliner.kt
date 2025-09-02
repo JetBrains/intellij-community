@@ -86,17 +86,20 @@ abstract class AbstractCodeInliner<TCallElement : KtElement, Parameter : Any, Ko
         codeToInline.replaceExpression(qualified, callableReference)
     }
 
+    data class TypeDescription(val valueTypePresentation: String?, val isContainingErrors: Boolean, val isMarkedNullable: Boolean)
+
+
     inner class IntroduceValueForParameter(
         val parameter: Parameter,
         val value: KtExpression,
-        val valueType: KotlinType?
-    )
+        val valueType: TypeDescription?
+        )
 
     protected open fun KtCallElement.insertExplicitTypeArgument() {}
 
-    protected inner class Argument(
+    protected class Argument(
         val expression: KtExpression,
-        val expressionType: KotlinType?,
+        val expressionType: TypeDescription?,
         val isNamed: Boolean = false,
         val isDefaultValue: Boolean = false
     )
@@ -130,7 +133,7 @@ abstract class AbstractCodeInliner<TCallElement : KtElement, Parameter : Any, Ko
     protected abstract fun Parameter.name(): Name
     protected abstract fun introduceValue(
         value: KtExpression,
-        valueType: KotlinType?,
+        valueType: TypeDescription?,
         usages: Collection<KtExpression>,
         expressionToBeReplaced: KtExpression,
         nameSuggestion: String? = null,
@@ -140,7 +143,7 @@ abstract class AbstractCodeInliner<TCallElement : KtElement, Parameter : Any, Ko
     protected fun introduceVariablesForParameters(
         elementToBeReplaced: KtElement,
         receiver: KtExpression?,
-        receiverType: KotlinType?,
+        receiverType: TypeDescription?,
         introduceValuesForParameters: Collection<IntroduceValueForParameter>
     ) {
         if (elementToBeReplaced is KtExpression) {
@@ -153,9 +156,6 @@ abstract class AbstractCodeInliner<TCallElement : KtElement, Parameter : Any, Ko
 
             for (param in introduceValuesForParameters) {
                 val usagesReplaced = codeToInline.collectDescendantsOfType<KtExpression> { it.getCopyableUserData(PARAMETER_VALUE_KEY) == param.parameter.name() }
-                if (!usagesReplaced.isEmpty()) {
-                    val p = 0
-                }
                 introduceValue(
                     param.value,
                     param.valueType,
@@ -257,7 +257,7 @@ abstract class AbstractCodeInliner<TCallElement : KtElement, Parameter : Any, Ko
     }
 
     @OptIn(KaAllowAnalysisOnEdt::class, KaAllowAnalysisFromWriteAction::class)
-    fun wrapCodeForSafeCall(receiver: KtExpression, receiverType: KotlinType?, expressionToBeReplaced: KtExpression) {
+    fun wrapCodeForSafeCall(receiver: KtExpression, receiverType: TypeDescription?, expressionToBeReplaced: KtExpression) {
         if (codeToInline.statementsBefore.isEmpty()) {
             val qualified = codeToInline.mainExpression as? KtQualifiedExpression
             if (qualified != null) {

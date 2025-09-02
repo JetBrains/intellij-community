@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.configuration
 
+import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
@@ -13,6 +14,7 @@ import org.jetbrains.kotlin.idea.configuration.ui.KotlinConfigurationCheckerServ
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.statistics.KotlinJ2KOnboardingFUSCollector
 
+@InternalIgnoreDependencyViolation
 class KotlinExternalSystemSyncListener : ExternalSystemTaskNotificationListener {
     override fun onStart(projectPath: String, id: ExternalSystemTaskId) {
         val project = id.findResolvedProject() ?: return

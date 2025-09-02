@@ -52,12 +52,12 @@ public final class DuplicatePropertyInspection extends GlobalSimpleInspectionToo
   public boolean CHECK_DUPLICATE_KEYS_WITH_DIFFERENT_VALUES = true;
 
   @Override
-  public void checkFile(@NotNull PsiFile file,
+  public void checkFile(@NotNull PsiFile psiFile,
                         @NotNull InspectionManager manager,
                         @NotNull ProblemsHolder problemsHolder,
                         @NotNull GlobalInspectionContext globalContext,
                         @NotNull ProblemDescriptionsProcessor problemDescriptionsProcessor) {
-    checkFile(file, manager, (GlobalInspectionContextBase)globalContext, globalContext.getRefManager(), problemDescriptionsProcessor);
+    checkFile(psiFile, manager, (GlobalInspectionContextBase)globalContext, globalContext.getRefManager(), problemDescriptionsProcessor);
   }
 
   private static void surroundWithHref(@NotNull StringBuilder anchor, PsiElement element, final boolean isValue) {

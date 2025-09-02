@@ -82,8 +82,9 @@ internal class SettingsHistoryToolWindowFactory(private val corotineScope: Corou
         return@executeOnPooledThread
       }
 
-      showExternalGitLogInToolwindow(project, toolWindow, { SettingsHistoryLogUiFactory() }, GitVcs.getInstance(project),
-                                     listOf(virtualFile), "", "")
+      showExternalGitLogInToolwindow(project, toolWindow, {
+        createLogUi(SettingsHistoryLogUiFactory())
+      }, GitVcs.getInstance(project), listOf(virtualFile), "", "")
     }
   }
 }

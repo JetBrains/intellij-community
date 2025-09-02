@@ -34,6 +34,9 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <languageStubDefinition language="JAVA" implementationClass="com.intellij.psi.impl.java.stubs.JavaStubDefinition"/>
+
+    <stubElementRegistryExtension implementation="com.intellij.psi.impl.java.stubs.JavaStubRegistryExtension"/>
 
     <fileBasedIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaAutoModuleNameIndex"/>
     <fileBasedIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaSourceModuleNameIndex"/>
@@ -48,6 +51,7 @@
     <stubIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaMethodNameIndex"/>
     <stubIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaFullClassNameIndex"/>
     <stubIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaFieldNameIndex"/>
+    <stubIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaRecordComponentNameIndex"/>
     <stubIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaAnonymousClassBaseRefOccurenceIndex"/>
     <stubIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaAnnotationIndex"/>
     <stubIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaImplicitClassIndex"/>
@@ -85,5 +89,6 @@
     <indexingFlavor filetype="JAVA" implementationClass="com.intellij.index.JavaFileIndexingFlavor"/>
     <indexingFlavor filetype="CLASS" implementationClass="com.intellij.index.ClassFileIndexingFlavor"/>
     <indexingFlavor filetype="kotlin_builtins" implementationClass="com.intellij.index.KtBuiltInFileIndexingFlavorProvider"/>
+    <superMethodsSearch implementation="com.intellij.psi.impl.search.MethodSuperSearcher"/>
   </extensions>
 </idea-plugin>

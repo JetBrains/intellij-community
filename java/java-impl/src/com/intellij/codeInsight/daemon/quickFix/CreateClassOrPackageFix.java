@@ -102,12 +102,12 @@ public final class CreateClassOrPackageFix extends LocalQuickFixAndIntentionActi
 
   @Override
   public void invoke(final @NotNull Project project,
-                     final @NotNull PsiFile file,
+                     final @NotNull PsiFile psiFile,
                      @Nullable Editor editor,
                      final @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
-    if (isAvailable(project, null, file)) {
-      PsiDirectory directory = chooseDirectory(project, file);
+    if (isAvailable(project, null, psiFile)) {
+      PsiDirectory directory = chooseDirectory(project, psiFile);
       if (directory == null) return;
       WriteAction.run(() -> doCreate(directory, startElement));
     }

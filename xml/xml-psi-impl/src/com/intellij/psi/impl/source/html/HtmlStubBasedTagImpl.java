@@ -7,7 +7,7 @@ import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.xml.XmlStubBasedTag;
 import com.intellij.psi.impl.source.xml.XmlTagDelegate;
 import com.intellij.psi.impl.source.xml.stub.XmlTagStubImpl;
-import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.util.XmlUtil;
@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 public class HtmlStubBasedTagImpl extends XmlStubBasedTag implements HtmlTag {
 
   public HtmlStubBasedTagImpl(@NotNull XmlTagStubImpl stub,
-                              @NotNull IStubElementType<? extends XmlTagStubImpl, ? extends HtmlStubBasedTagImpl> nodeType) {
+                              @NotNull IElementType nodeType) {
     super(stub, nodeType);
   }
 

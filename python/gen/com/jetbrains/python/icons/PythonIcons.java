@@ -41,6 +41,7 @@ public final class PythonIcons {
     /** 16x16 */ public static final @NotNull Icon Pandas = load("icons/com/jetbrains/pythonCore/python/pandas.svg", -1188443833, 2);
     /** 16x16 */ public static final @NotNull Icon Polars = load("icons/com/jetbrains/pythonCore/python/polars.svg", 1700660876, 2);
     /** 16x16 */ public static final @NotNull Icon Pycharm = load("icons/com/jetbrains/pythonCore/python/pycharm.svg", 2014186643, 0);
+    /** 32x32 */ public static final @NotNull Icon Pycharm32 = load("icons/com/jetbrains/pythonCore/python/pycharm32.svg", -1800877862, 0);
     /** 16x16 */ public static final @NotNull Icon PythonClosed = load("icons/com/jetbrains/pythonCore/python/expui/pythonClosed.svg", "icons/com/jetbrains/pythonCore/python/pythonClosed.svg", -663368800, 0);
     /** 16x16 */ public static final @NotNull Icon PythonConsole = load("icons/com/jetbrains/pythonCore/python/expui/pythonConsole.svg", "icons/com/jetbrains/pythonCore/python/pythonConsole.svg", 2125468440, 0);
     /** 13x13 */ public static final @NotNull Icon PythonConsoleToolWindow = load("icons/com/jetbrains/pythonCore/python/expui/pythonConsoleToolWindow.svg", "icons/com/jetbrains/pythonCore/python/pythonConsoleToolWindow.svg", 1833337589, 2);
@@ -50,7 +51,6 @@ public final class PythonIcons {
     /** 16x16 */ public static final @NotNull Icon Ssh = load("icons/com/jetbrains/pythonCore/python/expui/ssh.svg", "icons/com/jetbrains/pythonCore/python/ssh.svg", 1941773502, 0);
     /** 16x16 */ public static final @NotNull Icon TemplateRoot = load("icons/com/jetbrains/pythonCore/python/expui/templateRoot.svg", "icons/com/jetbrains/pythonCore/python/templateRoot.svg", 6261950, 0);
     /** 16x16 */ public static final @NotNull Icon TensorFlow = load("icons/com/jetbrains/pythonCore/python/tensorFlow.svg", 1673568687, 2);
-    /** 16x16 */ public static final @NotNull Icon Vagrant = load("icons/com/jetbrains/pythonCore/python/expui/vagrant.svg", "icons/com/jetbrains/pythonCore/python/vagrant.svg", -820295927, 0);
     /** 16x16 */ public static final @NotNull Icon ViewAsImage = load("icons/com/jetbrains/pythonCore/python/viewAsImage.svg", -384883859, 2);
     /** 16x16 */ public static final @NotNull Icon Virtualenv = load("icons/com/jetbrains/pythonCore/python/expui/virtualEnv.svg", "icons/com/jetbrains/pythonCore/python/virtualenv.svg", 758230626, 0);
   }

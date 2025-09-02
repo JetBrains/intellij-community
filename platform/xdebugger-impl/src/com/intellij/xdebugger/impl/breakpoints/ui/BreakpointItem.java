@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints.ui;
 
 import com.intellij.openapi.project.Project;
@@ -8,22 +8,30 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.popup.util.ItemWrapper;
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy;
+import com.intellij.xdebugger.impl.rpc.XBreakpointId;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+@ApiStatus.Internal
 public abstract class BreakpointItem extends ItemWrapper implements Comparable<BreakpointItem>, Navigatable {
   public static final Key<Object> EDITOR_ONLY = Key.create("EditorOnly");
 
   public abstract void saveState();
 
-  public abstract Object getBreakpoint();
+  public abstract @Nullable XBreakpointProxy getBreakpoint();
 
   public abstract boolean isEnabled();
 
   public abstract void setEnabled(boolean state);
 
   public abstract boolean isDefaultBreakpoint();
+
+  @ApiStatus.Internal
+  public abstract @Nullable XBreakpointId getId();
 
   @Override
   public void updateAccessoryView(JComponent component) {

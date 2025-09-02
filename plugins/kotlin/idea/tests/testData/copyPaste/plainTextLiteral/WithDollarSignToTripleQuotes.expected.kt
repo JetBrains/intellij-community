@@ -1,1 +1,1 @@
-val a ="""literal hello ${'$'}${'$'}${'$'} hello literal"""
+val a ="""literal hello $$$ hello literal"""

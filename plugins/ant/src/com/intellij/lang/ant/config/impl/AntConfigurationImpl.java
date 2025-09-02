@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.config.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -49,6 +49,7 @@ import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.config.AbstractProperty;
 import com.intellij.util.config.ValueProperty;
+import kotlinx.coroutines.CoroutineScope;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -62,8 +63,10 @@ import java.util.concurrent.atomic.AtomicReference;
 
 @State(name = "AntConfiguration", storages = @Storage("ant.xml"), useLoadedStateAsExisting = false)
 public final class AntConfigurationImpl extends AntConfigurationBase implements PersistentStateComponent<Element>, Disposable {
+  private static final AsyncFileListener.ChangeApplier NO_OP = new AsyncFileListener.ChangeApplier() {};
   public static final ValueProperty<AntReference> DEFAULT_ANT = new ValueProperty<>("defaultAnt", AntReference.BUNDLED_ANT);
-  private static final ValueProperty<AntConfiguration> INSTANCE = new ValueProperty<>("$instance", null);
+  private static final ValueProperty<AntConfigurationImpl> INSTANCE = new ValueProperty<>("$instance", null);
+
   public static final AbstractProperty<String> DEFAULT_JDK_NAME = new AbstractProperty<@Nls String>() {
     @Override
     public String getName() {
@@ -81,8 +84,8 @@ public final class AntConfigurationImpl extends AntConfigurationBase implements 
         return null;
       }
 
-      AntConfiguration antConfiguration = INSTANCE.get(container);
-      return ProjectRootManager.getInstance(antConfiguration.getProject()).getProjectSdkName();
+      AntConfigurationImpl antConfiguration = INSTANCE.get(container);
+      return ProjectRootManager.getInstance(antConfiguration.project).getProjectSdkName();
     }
 
     @Override
@@ -109,8 +112,11 @@ public final class AntConfigurationImpl extends AntConfigurationBase implements 
   private final Map<VirtualFile, VirtualFile> myAntFileToContextFileMap = Collections.synchronizedMap(new HashMap<>());
   private final EventDispatcher<AntConfigurationListener> myEventDispatcher = EventDispatcher.create(AntConfigurationListener.class);
 
-  public AntConfigurationImpl(final Project project) {
-    super(project);
+  private final Project project;
+
+  public AntConfigurationImpl(@NotNull Project project, @NotNull CoroutineScope coroutineScope) {
+    this.project = project;
+
     getProperties().registerProperty(DEFAULT_ANT, AntReference.EXTERNALIZER);
     getProperties().rememberKey(INSTANCE);
     getProperties().rememberKey(DEFAULT_JDK_NAME);
@@ -142,11 +148,9 @@ public final class AntConfigurationImpl extends AntConfigurationBase implements 
       }
     });
 
-    VirtualFileManager.getInstance().addAsyncFileListener(new AsyncFileListener() {
-      private final ChangeApplier NO_OP = new ChangeApplier() {};
-
+    VirtualFileManager.getInstance().addAsyncFileListener(coroutineScope, new AsyncFileListener() {
       @Override
-      public @Nullable ChangeApplier prepareChange(@NotNull List<? extends @NotNull VFileEvent> events) {
+      public @NotNull ChangeApplier prepareChange(@NotNull List<? extends @NotNull VFileEvent> events) {
         Set<VirtualFile> toDelete = null;
         for (VFileEvent event : events) {
           if (event instanceof VFileDeleteEvent) {
@@ -170,13 +174,12 @@ public final class AntConfigurationImpl extends AntConfigurationBase implements 
         }
         return antFiles == null? NO_OP : new FileDeletionChangeApplier(toDelete, antFiles);
       }
-    }, this);
+    });
   }
 
   @Override
   public void dispose() {
   }
-
   @Override
   public Element getState() {
     final Element state = new Element("state");
@@ -219,7 +222,7 @@ public final class AntConfigurationImpl extends AntConfigurationBase implements 
         iterator.remove();
         String url = element.getAttributeValue(URL);
         if (url != null) {
-          files.add(Pair.create(element, url));
+          files.add(new Pair<>(element, url));
         }
       }
       myBuildFilesConfiguration.set(files);
@@ -242,7 +245,7 @@ public final class AntConfigurationImpl extends AntConfigurationBase implements 
       getProperties().readExternal(state);
     }
     finally {
-      queueInitialization();
+      queueInitialization(project);
     }
   }
 
@@ -251,14 +254,14 @@ public final class AntConfigurationImpl extends AntConfigurationBase implements 
     myInitialized = true;
   }
 
-  private void queueInitialization() {
-    StartupManager.getInstance(getProject()).runAfterOpened(() -> {
-      queueLater(new Task.Backgroundable(getProject(), AntBundle.message("progress.text.loading.ant.config"), false) {
+  private void queueInitialization(@NotNull Project project) {
+    StartupManager.getInstance(project).runAfterOpened(() -> {
+      queueLater(new Task.Backgroundable(project, AntBundle.message("progress.text.loading.ant.config"), false) {
         @Override
-        public void run(final @NotNull ProgressIndicator indicator) {
-          Project project = getProject();
-          if (project == null || project.isDisposed()) {
-            myInitialized = true; // ensure all clients waiting on isInitialized() are released
+        public void run(@NotNull ProgressIndicator indicator) {
+          if (project.isDisposed()) {
+            // ensure all clients waiting on isInitialized() are released
+            myInitialized = true;
             return;
           }
           List<Pair<Element, String>> configFiles = myBuildFilesConfiguration.getAndSet(null);
@@ -337,7 +340,7 @@ public final class AntConfigurationImpl extends AntConfigurationBase implements 
             }
             if (event != null) {
               try {
-                event.readExternal(e, getProject());
+                event.readExternal(e, project);
                 setTargetForEvent(buildFile, targetName, event);
               }
               catch (InvalidDataException readFailed) {
@@ -349,7 +352,7 @@ public final class AntConfigurationImpl extends AntConfigurationBase implements 
       }
       ReadAction.run(() -> {
         try {
-          AntWorkspaceConfiguration.getInstance(getProject()).loadFileProperties();
+          AntWorkspaceConfiguration.getInstance(project).loadFileProperties();
         }
         catch (InvalidDataException e) {
           LOG.error(e);
@@ -413,11 +416,11 @@ public final class AntConfigurationImpl extends AntConfigurationBase implements 
   }
 
   @Override
-  public @Nullable AntBuildFile addBuildFile(final VirtualFile file) throws AntNoFileException {
-    final Ref<AntBuildFile> result = Ref.create(null);
-    final Ref<AntNoFileException> ex = Ref.create(null);
+  public @Nullable AntBuildFile addBuildFile(@NotNull VirtualFile file) throws AntNoFileException {
+    final Ref<AntBuildFile> result = new Ref<>(null);
+    final Ref<AntNoFileException> ex = new Ref<>(null);
     final String title = AntBundle.message("dialog.title.register.ant.build.file", file.getPresentableUrl());
-    ProgressManager.getInstance().run(new Task.Modal(getProject(), title, false) {
+    ProgressManager.getInstance().run(new Task.Modal(project, title, false) {
       @Override
       public @NotNull NotificationInfo getNotificationInfo() {
         return new NotificationInfo("Ant", AntBundle.message("system.notification.title.ant.task.finished"), "");
@@ -600,7 +603,7 @@ public final class AntConfigurationImpl extends AntConfigurationBase implements 
         eventElement.setAttribute(EVENT_ELEMENT, event.getTypeId());
         eventElement.setAttribute(TARGET_ELEMENT, pair.second);
 
-        final String id = event.writeExternal(eventElement, getProject());
+        final String id = event.writeExternal(eventElement, project);
         if (savedEvents.contains(id)) continue;
         savedEvents.add(id);
 
@@ -635,18 +638,6 @@ public final class AntConfigurationImpl extends AntConfigurationBase implements 
     return model;
   }
 
-  @Override
-  public @Nullable AntBuildFile findBuildFileByActionId(final String id) {
-    for (AntBuildFile buildFile : myBuildFiles) {
-      AntBuildModelBase model = (AntBuildModelBase)buildFile.getModel();
-      if (id.equals(model.getDefaultTargetActionId())) {
-        return buildFile;
-      }
-      if (model.hasTargetWithActionId(id)) return buildFile;
-    }
-    return null;
-  }
-
   private AntBuildFileBase addBuildFileImpl(final VirtualFile file, @Nullable Element element) throws AntNoFileException {
     PsiFile xmlFile = myPsiManager.findFile(file);
     if (!(xmlFile instanceof XmlFile)) {
@@ -665,10 +656,10 @@ public final class AntConfigurationImpl extends AntConfigurationBase implements 
   }
 
   private void updateRegisteredActions() {
-    final Project project = getProject();
     if (project.isDisposed()) {
       return;
     }
+
     final List<Pair<String, AnAction>> actionList = new ArrayList<>();
     for (final AntBuildFileBase buildFile : myBuildFiles) {
       final AntBuildModelBase model = buildFile.getModel();
@@ -704,7 +695,7 @@ public final class AntConfigurationImpl extends AntConfigurationBase implements 
   }
 
   private AntWorkspaceConfiguration getAntWorkspaceConfiguration() {
-    return AntWorkspaceConfiguration.getInstance(getProject());
+    return AntWorkspaceConfiguration.getInstance(project);
   }
 
   private static void collectTargetActions(final AntBuildTarget[] targets,
@@ -858,7 +849,7 @@ public final class AntConfigurationImpl extends AntConfigurationBase implements 
     if (context == null) {
       return null;
     }
-    final PsiFile psiFile = PsiManager.getInstance(getProject()).findFile(context);
+    final PsiFile psiFile = PsiManager.getInstance(project).findFile(context);
     if (!(psiFile instanceof XmlFile xmlFile)) {
       return null;
     }

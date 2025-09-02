@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddRemainingW
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddRemainingWhenBranchesUtils.addRemainingWhenBranches
 import org.jetbrains.kotlin.psi.KtWhenExpression
 
-object AddWhenRemainingBranchFixFactories {
+internal object AddWhenRemainingBranchFixFactories {
 
     val noElseInWhen = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.NoElseInWhen ->
         val whenExpression = diagnostic.psi

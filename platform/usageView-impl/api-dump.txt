@@ -142,7 +142,6 @@ c:com.intellij.usages.impl.UsageViewImpl
 - p:isPreviewUsageActionEnabled():Z
 - isSearchInProgress():Z
 - isVisible(com.intellij.usages.Usage):Z
-- ps:moveActionTo(java.util.List,java.lang.String,java.lang.String,Z):V
 - refreshUsages():V
 - removeUsage(com.intellij.usages.Usage):V
 - removeUsagesBulk(java.util.Collection):V
@@ -174,7 +173,7 @@ c:com.intellij.usages.impl.rules.FileGroupingRule
 - getRank():I
 - isGroupingActionInverted():Z
 c:com.intellij.usages.impl.rules.FileGroupingRule$FileUsageGroup
-- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.UiDataProvider
 - com.intellij.usages.NamedPresentably
 - com.intellij.usages.UsageGroup
 - <init>(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):V
@@ -182,7 +181,6 @@ c:com.intellij.usages.impl.rules.FileGroupingRule$FileUsageGroup
 - canNavigateToSource():Z
 - compareTo(com.intellij.usages.UsageGroup):I
 - equals(java.lang.Object):Z
-- getData(java.lang.String):java.lang.Object
 - getFileStatus():com.intellij.openapi.vcs.FileStatus
 - getIcon():javax.swing.Icon
 - getPresentableGroupText():java.lang.String
@@ -190,6 +188,7 @@ c:com.intellij.usages.impl.rules.FileGroupingRule$FileUsageGroup
 - hashCode():I
 - isValid():Z
 - navigate(Z):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 - update():V
 a:com.intellij.usages.impl.rules.UsageGroupBase
 - com.intellij.usages.UsageGroup

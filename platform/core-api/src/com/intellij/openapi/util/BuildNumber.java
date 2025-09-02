@@ -41,6 +41,9 @@ public final class BuildNumber implements Comparable<BuildNumber> {
     return "__BUILD_NUMBER__".equals(value) || "__BUILD__".equals(value);
   }
 
+  /**
+   * @return an empty string if unknown
+   */
   public @NotNull String getProductCode() {
     return myProductCode;
   }

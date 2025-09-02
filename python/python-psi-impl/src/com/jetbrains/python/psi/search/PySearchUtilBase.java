@@ -41,7 +41,6 @@ public class PySearchUtilBase {
   public static @NotNull GlobalSearchScope defaultSuggestionScope(@NotNull PsiElement anchor) {
     return PySearchScopeBuilder.forPythonSdkOf(anchor)
       .excludeStandardLibraryTests()
-      .excludePythonSkeletonsStubs()
       .excludeThirdPartyPackageTests()
       .excludeThirdPartyPackageBundledDependencies()
       .build();

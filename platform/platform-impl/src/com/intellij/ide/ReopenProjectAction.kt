@@ -135,6 +135,8 @@ open class ReopenProjectAction @JvmOverloads constructor(
 
   override val projectIcon: Icon get() = RecentProjectsManagerBase.getInstanceEx().getProjectIcon(projectPath, true, 20)
 
+  override val providerIcon: Icon? get() = null
+
   override val activationTimestamp: Long? get() = myActivationTimestamp
 
   fun setProjectGroup(projectGroup: ProjectGroup?) {

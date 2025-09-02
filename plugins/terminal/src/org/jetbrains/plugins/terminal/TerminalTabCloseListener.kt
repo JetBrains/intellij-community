@@ -10,6 +10,8 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.ui.content.Content
+import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
+import kotlin.time.TimeSource
 
 class TerminalTabCloseListener(val content: Content,
                                val project: Project,
@@ -26,6 +28,7 @@ class TerminalTabCloseListener(val content: Content,
     }
 
     val widget = TerminalToolWindowManager.findWidgetByContent(content) ?: return true
+    val startTime = TimeSource.Monotonic.markNow()
     try {
       if (!widget.isCommandRunning()) {
         return true
@@ -33,6 +36,10 @@ class TerminalTabCloseListener(val content: Content,
     }
     catch (e: Exception) {
       LOG.error(e)
+    }
+    finally {
+      val checkDuration = startTime.elapsedNow()
+      ReworkedTerminalUsageCollector.logTabClosingCheckLatency(checkDuration)
     }
 
     val proxy = NopProcessHandler().apply { startNotify() }

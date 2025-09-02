@@ -2,7 +2,7 @@
 package com.intellij.platform.workspace.storage.impl
 
 import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.annotations.Child
+import com.intellij.platform.workspace.storage.annotations.Parent
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 import kotlin.reflect.KType
@@ -85,5 +85,5 @@ private val KType.isCollection: Boolean
 private val KProperty<*>.isChildProperty: Boolean
   get() {
     if (returnType.isCollection) return true
-    return returnType.annotations.any { it.annotationClass == Child::class }
+    return annotations.none { it.annotationClass == Parent::class }
   }

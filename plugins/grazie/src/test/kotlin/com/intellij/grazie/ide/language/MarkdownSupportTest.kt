@@ -27,4 +27,14 @@ class MarkdownSupportTest : GrazieTestBase() {
     myFixture.configureByText("a.md", text)
     myFixture.checkHighlighting()
   }
+
+  fun `test no style warning highlighting for picky passive voice rules`() {
+    myFixture.configureByText("a.md", """
+      Many objects are disposed automatically by the platform if they implement the Disposable interface. 
+      The most important type of such objects is services. Application-level services are automatically disposed 
+      by the platform when the IDE is closed or the plugin providing the service is unloaded.
+      Project-level services are disposed on project close or plugin upload events.
+    """.trimIndent())
+    myFixture.checkHighlighting()
+  }
 }

@@ -1,7 +1,8 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tools.ide.performanceTesting.commands
 
 /**
- * One or more commands, that will be "played" in sequence by IDE
+ * One or more commands that will be "played" in sequence by IDE
  */
 open class CommandChain : MarshallableCommand, Iterable<MarshallableCommand> {
   private val _chain = mutableListOf<MarshallableCommand>()

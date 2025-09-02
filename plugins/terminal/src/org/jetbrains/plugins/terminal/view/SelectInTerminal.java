@@ -9,9 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.terminal.TerminalBundle;
-import org.jetbrains.plugins.terminal.TerminalToolWindowFactory;
-import org.jetbrains.plugins.terminal.TerminalToolWindowManager;
+import org.jetbrains.plugins.terminal.*;
 
 /**
  * @see org.jetbrains.plugins.terminal.action.RevealFileInTerminalAction
@@ -32,7 +30,13 @@ public final class SelectInTerminal implements SelectInTarget, DumbAware {
   public void selectIn(SelectInContext context, boolean requestFocus) {
     Project project = context.getProject();
     VirtualFile selectedFile = context.getVirtualFile();
-    TerminalToolWindowManager.getInstance(project).openTerminalIn(selectedFile);
+    var tabState = new TerminalTabState();
+    tabState.myWorkingDirectory = selectedFile.getPath();
+    TerminalToolWindowManager.getInstance(project).createNewTab(
+      TerminalOptionsProvider.getInstance().getTerminalEngine(),
+      null,
+      tabState
+    );
   }
 
   @Override

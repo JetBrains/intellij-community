@@ -1,6 +1,7 @@
 package com.intellij.database.extractors;
 
 import com.intellij.database.datagrid.*;
+import com.intellij.database.run.ui.DataAccessType;
 import com.intellij.database.run.ui.grid.editors.GridCellEditorHelper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
@@ -180,6 +181,10 @@ public class ObjectFormatterUtil {
     return type == Types.BOOLEAN ||
            (isBit(column.getTypeName(), type) ||
             CommonClassNames.JAVA_LANG_BOOLEAN.equals(className)) && ((JdbcGridColumn)column).getSize() <= 1;
+  }
+
+  public static boolean isBooleanCell(@NotNull CoreGrid<GridRow, GridColumn> grid, @NotNull ModelIndex<GridRow> row, @NotNull ModelIndex<GridColumn> column) {
+    return isBooleanColumn(Objects.requireNonNull(grid.getDataModel(DataAccessType.DATABASE_DATA).getColumn(column)), GridCellEditorHelper.get(grid).guessJdbcTypeForEditing(grid, row, column));
   }
 
   public static boolean isNumericCell(@NotNull CoreGrid<GridRow, GridColumn> grid, @NotNull ModelIndex<GridRow> row, @NotNull ModelIndex<GridColumn> column) {

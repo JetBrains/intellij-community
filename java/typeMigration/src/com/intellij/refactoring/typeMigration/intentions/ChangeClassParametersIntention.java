@@ -7,6 +7,7 @@ import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.codeInsight.intention.impl.TypeExpression;
 import com.intellij.codeInsight.template.*;
 import com.intellij.codeInsight.template.impl.TemplateState;
+import com.intellij.java.codeserver.highlighting.JavaCompilationErrorBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -105,7 +106,7 @@ public final class ChangeClassParametersIntention extends PsiElementBaseIntentio
                 final PsiType targetParam = elementFactory.createTypeFromText(myNewType, aClass);
                 if (!(targetParam instanceof PsiClassType classType)) {
                   HintManager.getInstance().showErrorHint(editor,
-                                                          JavaErrorBundle.message("generics.type.argument.cannot.be.of.primitive.type"));
+                                                          JavaCompilationErrorBundle.message("type.argument.primitive"));
                   return;
                 }
                 final PsiClass target = classType.resolve();

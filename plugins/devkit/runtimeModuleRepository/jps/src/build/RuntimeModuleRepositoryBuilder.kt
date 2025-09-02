@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.runtimeModuleRepository.jps.build
 
+import com.intellij.devkit.runtimeModuleRepository.jps.build.RuntimeModuleRepositoryBuildConstants.COMPACT_REPOSITORY_FILE_NAME
 import com.intellij.devkit.runtimeModuleRepository.jps.build.RuntimeModuleRepositoryBuildConstants.GENERATOR_VERSION
 import com.intellij.devkit.runtimeModuleRepository.jps.build.RuntimeModuleRepositoryBuildConstants.JAR_REPOSITORY_FILE_NAME
 import com.intellij.devkit.runtimeModuleRepository.jps.impl.DevkitRuntimeModuleRepositoryJpsBundle
@@ -8,6 +9,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.runtime.repository.RuntimeModuleId
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDescriptor
 import com.intellij.platform.runtime.repository.serialization.RuntimeModuleRepositorySerialization
+import com.intellij.platform.runtime.repository.serialization.impl.CompactFileWriter
 import org.jetbrains.annotations.Nls
 import org.jetbrains.jps.builders.BuildOutputConsumer
 import org.jetbrains.jps.builders.BuildRootDescriptor
@@ -74,19 +76,27 @@ internal class RuntimeModuleRepositoryBuilder
       context.reportError(DevkitRuntimeModuleRepositoryJpsBundle.message("error.message.project.compiler.output.directory.is.not.specified"))
       return
     }
-    val outputPath = Path.of(JpsPathUtil.urlToOsPath (outputUrl), JAR_REPOSITORY_FILE_NAME)
-    val timeToSaveDescriptors = measureTimeMillis {
-      try {
-        RuntimeModuleRepositorySerialization.saveToJar(descriptors, null, outputPath, GENERATOR_VERSION)
-      }
-      catch (e: IOException) {
-        LOG.info(e)
-        context.reportError(DevkitRuntimeModuleRepositoryJpsBundle.message("error.message.failed.to.save.jar.file.0", e.message ?: ""))
-      }
-    }
+    val outputDir = Path.of(JpsPathUtil.urlToOsPath(outputUrl))
     val modulesXml = RuntimeModuleRepositoryTarget.getModulesXmlFile(project) ?: error("Project was not loaded from .idea")
-    outputConsumer.registerOutputFile(outputPath.toFile(), listOf(modulesXml.absolutePath))
-    LOG.info("${descriptors.size} descriptors are saved in ${timeToSaveDescriptors}ms")
+    try {
+      val jarRepositoryPath = outputDir.resolve(JAR_REPOSITORY_FILE_NAME)
+      val timeToSaveDescriptorsToJar = measureTimeMillis {
+        RuntimeModuleRepositorySerialization.saveToJar(descriptors, null, jarRepositoryPath, null, GENERATOR_VERSION)
+      }
+      outputConsumer.registerOutputFile(jarRepositoryPath.toFile(), listOf(modulesXml.absolutePath))
+      LOG.info("${descriptors.size} descriptors are saved to JAR in ${timeToSaveDescriptorsToJar}ms")
+
+      val compactRepositoryPath = outputDir.resolve(COMPACT_REPOSITORY_FILE_NAME)
+      val timeToSaveDescriptorsToCompactFile = measureTimeMillis {
+        CompactFileWriter.saveToFile(descriptors, null, null, GENERATOR_VERSION, compactRepositoryPath)
+      }
+      LOG.info("${descriptors.size} descriptors are saved in compact format in ${timeToSaveDescriptorsToCompactFile}ms")
+      outputConsumer.registerOutputFile(compactRepositoryPath.toFile(), listOf(modulesXml.absolutePath))
+    }
+    catch (e: IOException) {
+      LOG.info(e)
+      context.reportError(DevkitRuntimeModuleRepositoryJpsBundle.message("error.message.failed.to.save.repository.0", e.message ?: ""))
+    }
   }
 
   private fun CompileContext.reportError(message: @Nls String) {
@@ -143,7 +153,7 @@ internal class RuntimeModuleRepositoryBuilder
 
     for (module in project.modules) {
       //if a module doesn't have production sources, it still makes sense to generate a descriptor for it, because it may be used from code
-      if (!module.isTestOnly || module.hasProductionSources) {
+      if (!module.name.endsWith(RuntimeModuleId.TESTS_NAME_SUFFIX) || module.hasProductionSources) {
         descriptors.add(createProductionPartDescriptor(module, ::getRuntimeModuleName))
       }
       if (GENERATE_DESCRIPTORS_FOR_TEST_MODULES && module.hasTestSources) {
@@ -151,15 +161,6 @@ internal class RuntimeModuleRepositoryBuilder
       }
     }
   }
-
-  private val JpsModule.isTestOnly
-    get() = name.endsWith(RuntimeModuleId.TESTS_NAME_SUFFIX) ||
-            //todo align module names to get rid of these conditions
-            name.endsWith("all-tests") || name.endsWith(".test") || name.endsWith(".tests.main") || name.contains(".tests.") ||
-            name.endsWith("Tests") ||
-            name in setOf("kotlin.jvm-debugger.test.k2", "intellij.devkit.testFramework", "intellij.jupyter.testFramework",
-                          "kotlin-ultimate.spring-tests", "intellij.goland.tools", "intellij.kotlin.testsWithAndroidPlugin", "fleet")
-   
 
   private val JpsModule.hasTestSources
     get() = sourceRoots.any { it.rootType in JavaModuleSourceRootTypes.TESTS }

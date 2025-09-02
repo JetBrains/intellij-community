@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.builtInWebServer
 
 import com.github.benmanes.caffeine.cache.Caffeine
@@ -55,19 +55,10 @@ class BuiltInWebServerAuth {
   }
 
   // expire after access because we reuse tokens
-  private val tokens = Caffeine.newBuilder().expireAfterAccess(1, TimeUnit.MINUTES).build<String, Boolean>()
+  private val TOKEN_KEY = object : Any() { }
+  private val tokens = Caffeine.newBuilder().expireAfterAccess(1, TimeUnit.MINUTES).build<Any, String>()
 
-  fun acquireToken(): String {
-    var token = tokens.asMap().keys.firstOrNull()
-    if (token == null) {
-      token = DigestUtil.randomToken()
-      tokens.put(token, true)
-    } else {
-      // Update token's access time
-      tokens.getIfPresent(token)
-    }
-    return token
-  }
+  fun acquireToken(): String = tokens.get(TOKEN_KEY) { DigestUtil.randomToken() }
 
   internal fun validateToken(request: HttpRequest): HttpHeaders? {
     if (BuiltInServerOptions.getInstance().allowUnsignedRequests) {
@@ -103,7 +94,7 @@ class BuiltInWebServerAuth {
       ?: QueryStringDecoder(request.uri()).parameters()[TOKEN_PARAM_NAME]?.firstOrNull()
       ?: request.referrer?.let { QueryStringDecoder(it).parameters()[TOKEN_PARAM_NAME]?.firstOrNull() }
 
-    // we don't invalidate the token, allowing making further requests with it (required for `DocumentationComponent`)
-    return token != null && tokens.getIfPresent(token) != null
+    // we renew the token, allowing making further requests with it (required for `DocumentationComponent`)
+    return token != null && tokens.getIfPresent(TOKEN_KEY) == token
   }
 }

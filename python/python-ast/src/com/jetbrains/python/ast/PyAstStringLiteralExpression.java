@@ -252,4 +252,12 @@ public interface PyAstStringLiteralExpression extends PyAstLiteralExpression, St
       }
     };
   }
+
+  /**
+   * @return true if this element has single string node and its type is {@link com.jetbrains.python.PyTokenTypes#DOCSTRING}
+   */
+  default boolean isDocString() {
+    final List<ASTNode> stringNodes = getStringNodes();
+    return stringNodes.size() == 1 && stringNodes.get(0).getElementType() == PyTokenTypes.DOCSTRING;
+  }
 }

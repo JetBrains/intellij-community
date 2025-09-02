@@ -51,14 +51,14 @@ public final class ShowExpressionTypeHandler implements CodeInsightActionHandler
   }
 
   @Override
-  public void invoke(final @NotNull Project project, final @NotNull Editor editor, @NotNull PsiFile file) {
+  public void invoke(final @NotNull Project project, final @NotNull Editor editor, @NotNull PsiFile psiFile) {
     ThreadingAssertions.assertEventDispatchThread();
 
-    Language language = PsiUtilCore.getLanguageAtOffset(file, editor.getCaretModel().getOffset());
-    final Set<ExpressionTypeProvider> handlers = getHandlers(project, language, file.getViewProvider().getBaseLanguage());
+    Language language = PsiUtilCore.getLanguageAtOffset(psiFile, editor.getCaretModel().getOffset());
+    final Set<ExpressionTypeProvider> handlers = getHandlers(project, language, psiFile.getViewProvider().getBaseLanguage());
     if (handlers.isEmpty()) return;
 
-    Map<PsiElement, ExpressionTypeProvider> map = getExpressions(file, editor, handlers);
+    Map<PsiElement, ExpressionTypeProvider> map = getExpressions(psiFile, editor, handlers);
     Pass<PsiElement> callback = new Pass<>() {
       @Override
       public void pass(@NotNull PsiElement expression) {

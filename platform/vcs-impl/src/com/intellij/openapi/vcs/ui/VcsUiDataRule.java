@@ -5,7 +5,9 @@ import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.DataSnapshot;
 import com.intellij.openapi.actionSystem.UiDataRule;
+import com.intellij.openapi.vcs.VcsVirtualFilesRule;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.history.VcsRevisionNumberArrayRule;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,6 +21,8 @@ public class VcsUiDataRule implements UiDataRule {
   @Override
   public void uiDataSnapshot(@NotNull DataSink sink, @NotNull DataSnapshot snapshot) {
     sink.set(CHANGES_SELECTION, getListSelection(snapshot));
+    sink.lazyValue(VIRTUAL_FILES, dataProvider -> VcsVirtualFilesRule.getData(dataProvider));
+    sink.lazyValue(VCS_REVISION_NUMBERS, dataProvider -> VcsRevisionNumberArrayRule.getData(dataProvider));
   }
 
   private static @Nullable ListSelection<Change> getListSelection(@NotNull DataSnapshot snapshot) {

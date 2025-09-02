@@ -24,7 +24,7 @@ interface PyV3UIServices {
   val errorSink: ErrorSink
 
   /**
-   * Expand project tree on the left side of IDE
+   * Expand a project tree on the left side of IDE
    */
   suspend fun expandProjectTreeView(project: Project)
 }

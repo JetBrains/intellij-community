@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.io;
 
 import com.intellij.UtilBundle;
@@ -30,13 +30,15 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 import static java.nio.file.attribute.PosixFilePermission.*;
 
 /**
- * Utilities for working with {@link File}.
+ * Obsolete; please use NIO API instead ({@link Path}, {@link Files}, {@link NioFiles}, etc.)
  */
 @ApiStatus.NonExtendable
+@ApiStatus.Obsolete
 public class FileUtil {
   public static final String ASYNC_DELETE_EXTENSION = ".__del__";
 
@@ -357,18 +359,16 @@ public class FileUtil {
     return FileUtilRt.delete(file);
   }
 
+  /** @deprecated use {@link NioFiles#deleteRecursively} */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static void deleteRecursively(@NotNull Path file) throws IOException {
     FileUtilRt.deleteRecursively(file, null);
   }
 
-  /**
-   * Delete the path -- recursively, if it is a directory.
-   * Really insist: i.e. retry delete a few times with a timeout -- see {@link FileUtilRt#doDelete(Path)}
-   * for details of a single-file delete operation.
-   *
-   * @throws IOException exception if delete is not successful
-   * @see FileUtilRt#doDelete(Path)
-   */
+  /** @deprecated use {@link NioFiles#deleteRecursively} */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static void delete(@NotNull Path path) throws IOException {
     FileUtilRt.deleteRecursively(path, null);
   }
@@ -1169,6 +1169,16 @@ public class FileUtil {
     return null;
   }
 
+  public static @Nullable Path findFirstPathThatExist(String @NotNull ... paths) {
+    for (String path : paths) {
+      if (!Strings.isEmptyOrSpaces(path)) {
+        Path file = Paths.get(toSystemDependentName(path));
+        if (Files.exists(file)) return file;
+      }
+    }
+    return null;
+  }
+
   public static @NotNull List<File> findFilesByMask(@NotNull Pattern pattern, @NotNull File dir) {
     List<File> found = new ArrayList<>();
     File[] files = dir.listFiles();
@@ -1181,6 +1191,23 @@ public class FileUtil {
           found.add(file);
         }
       }
+    }
+    return found;
+  }
+
+  public static @NotNull List<Path> findPathsByMask(@NotNull Pattern pattern, @NotNull Path dir) {
+    List<Path> found = new ArrayList<>();
+    try (Stream<Path> files = Files.list(dir)) {
+      files.forEach(path -> {
+        if (Files.isDirectory(path)) {
+          found.addAll(findPathsByMask(pattern, path));
+        }
+        else if (pattern.matcher(path.getFileName().toString()).matches()) {
+          found.add(path);
+        }
+      });
+    }
+    catch (IOException ignored) {
     }
     return found;
   }

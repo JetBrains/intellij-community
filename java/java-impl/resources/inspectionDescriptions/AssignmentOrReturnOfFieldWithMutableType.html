@@ -1,6 +1,6 @@
 <html>
 <body>
-Reports return of, or assignment from a method parameter to an array or a mutable type like
+Reports return of, or assignment from a method parameter to a field of an array or a mutable type such as
 <code>Collection</code>, <code>Date</code>, <code>Map</code>, <code>Calendar</code>, etc.
 <p>Because such types are mutable, this construct may
   result in unexpected modifications of an object's state from outside the owning class. Although this construct may be useful for
@@ -14,32 +14,40 @@ Reports return of, or assignment from a method parameter to an array or a mutabl
   <li><code>com.google.common.collect.Multimap</code></li>
   <li><code>com.google.common.collect.Table</code></li>
 </ul>
-<p>The quick-fix adds a call to the field's <code>.clone()</code> method.</p>
+<p>The quick-fix adds a call to the field's <code>.clone()</code> method for arrays or uses an unmodifiable collection wrapper.</p>
 <p><b>Example:</b></p>
 <pre><code>
+  import java.util.*;
   class Log {
-    String[] messages;
-    ...
+    private String[] messages = {"one", "two", "three"};
+    private Map&lt;String, String&gt; map = new HashMap<>();
 
     String[] getMessages() {
       return messages; // warning: Return of String[] field 'messages'
+    }
+
+    Map&lt;String, String&gt; mapping() {
+      return map; // warning: Return of Map&lt;String, String&gt; field 'map'
     }
   }
 </code></pre>
 <p>After the quick-fix is applied:</p>
 <pre><code>
+  import java.util.*;
   class Log {
-    String[] messages;
-    ...
+    String[] messages = {"one", "two", "three"};
+    private Map&lt;String, String&gt; map = new HashMap<>();
 
     String[] getMessages() {
       return messages.clone();
+    }
+
+    Map&lt;String, String&gt; mapping() {
+      return Collections.unmodifiableMap(map);
     }
   }
 </code></pre>
 <!-- tooltip end -->
 <p>Use the <b>Ignore assignments in and returns from private methods</b> option to ignore assignments and returns in <code>private</code> methods.
-
-  <!--<p><small>New in 2017.3</small>-->
 </body>
 </html>

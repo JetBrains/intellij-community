@@ -12,6 +12,7 @@ import com.intellij.vcs.log.ui.table.GraphTableModel
 import com.intellij.vcs.log.ui.table.VcsLogCellController
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable
 import com.intellij.vcs.log.ui.table.VcsLogIconCellRenderer
+import com.intellij.vcs.log.ui.table.VcsLogTableIndex
 import com.intellij.vcs.log.ui.table.column.VcsLogColumn
 import com.intellij.vcs.log.ui.table.column.VcsLogCustomColumn
 import com.intellij.vcs.log.ui.table.column.util.VcsLogExternalStatusColumnService
@@ -88,7 +89,7 @@ interface VcsCommitExternalStatusProvider<T : VcsCommitExternalStatus> {
 
       override fun getStubValue(model: GraphTableModel) = getStubStatus()
 
-      override fun getValue(model: GraphTableModel, row: Int) =
+      override fun getValue(model: GraphTableModel, row: VcsLogTableIndex) =
         getExternalStatusColumnService().getStatus(model, row) ?: getStubValue(model)
 
       override fun createTableCellRenderer(table: VcsLogGraphTable): TableCellRenderer {

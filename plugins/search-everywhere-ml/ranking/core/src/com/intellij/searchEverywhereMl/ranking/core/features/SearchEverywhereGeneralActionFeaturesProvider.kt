@@ -2,6 +2,7 @@ package com.intellij.searchEverywhereMl.ranking.core.features
 
 import ai.grazie.emb.FloatTextEmbedding
 import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellCheckResult
 import com.intellij.ide.actions.searcheverywhere.TopHitSEContributor
 import com.intellij.ide.ui.search.OptionDescription
 import com.intellij.ide.util.gotoByName.GotoActionModel
@@ -37,7 +38,8 @@ internal class SearchEverywhereGeneralActionFeaturesProvider
                                   currentTime: Long,
                                   searchQuery: String,
                                   elementPriority: Int,
-                                  cache: FeaturesProviderCache?): List<EventPair<*>> {
+                                  cache: FeaturesProviderCache?,
+                                  correction: SearchEverywhereSpellCheckResult): List<EventPair<*>> {
     val data = arrayListOf<EventPair<*>>()
     data.addIfTrue(IS_HIGH_PRIORITY, isHighPriority(elementPriority))
 

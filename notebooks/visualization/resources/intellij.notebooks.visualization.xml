@@ -79,6 +79,10 @@
       qualifiedName="org.jetbrains.plugins.notebooks.editor.outputs.notebookOutputComponentWrapper"
       interface="com.intellij.notebooks.visualization.outputs.NotebookOutputComponentWrapper"
       dynamic="true"/>
+    <extensionPoint
+      qualifiedName="org.jetbrains.plugins.notebooks.editor.outputs.editorCellOutputsPreprocessor"
+      interface="com.intellij.notebooks.visualization.ui.EditorCellOutputsPreprocessor"
+      dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

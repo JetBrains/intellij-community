@@ -65,6 +65,7 @@ internal class ComposeResourcesXmlRenameHandler : RenameHandler, TitledHandler, 
     val property = getKotlinPropertyFromComposeResource(element) ?: return
     val newName = NEW_NAME_COMPOSE_RESOURCE.getData(dataContext)
     ResourceRenameDialog(project, property, null, editor, newName).show(dataContext)
+    ComposeResourcesUsageCollector.logAction(fusActionType, fusResourceBaseType, null)
   }
 
   override fun invoke(project: Project, elements: Array<out PsiElement>, dataContext: DataContext) {
@@ -74,6 +75,9 @@ internal class ComposeResourcesXmlRenameHandler : RenameHandler, TitledHandler, 
   }
 
   override fun getActionTitle(): @NlsActions.ActionText String? = ComposeIdeBundle.message("compose.resources.rename.string.values")
+
+  override val fusActionType: ComposeResourcesUsageCollector.ActionType
+    get() = ComposeResourcesUsageCollector.ActionType.RENAME
 }
 
 private class ResourceRenameDialog(

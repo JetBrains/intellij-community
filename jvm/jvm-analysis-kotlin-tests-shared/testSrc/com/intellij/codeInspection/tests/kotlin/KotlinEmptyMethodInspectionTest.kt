@@ -23,4 +23,8 @@ abstract class KotlinEmptyMethodInspectionTest : JvmInspectionTestBase(), Expect
   fun `test basic`() {
     myFixture.testInspection("basic", GlobalInspectionToolWrapper(inspection))
   }
+
+  fun `test accessors`() {
+    myFixture.testInspection("accessor", GlobalInspectionToolWrapper(inspection))
+  }
 }

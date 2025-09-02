@@ -50,21 +50,21 @@ public class SafeDeleteFix extends LocalQuickFixAndIntentionActionOnPsiElement {
 
   @Override
   public boolean isAvailable(@NotNull Project project,
-                             @NotNull PsiFile file,
+                             @NotNull PsiFile psiFile,
                              @Nullable Editor editor,
                              @NotNull PsiElement startElement,
                              @NotNull PsiElement endElement) {
     // Should not be available for injected file, otherwise preview won't work
-    return startElement.getContainingFile() == file;
+    return startElement.getContainingFile() == psiFile;
   }
   
   @Override
   public void invoke(@NotNull Project project,
-                     @NotNull PsiFile file,
+                     @NotNull PsiFile psiFile,
                      @Nullable Editor editor,
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
-    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
+    if (!FileModificationService.getInstance().prepareFileForWrite(psiFile)) return;
     final PsiElement[] elements = {startElement};
     if (startElement instanceof PsiParameter) {
       SafeDeleteProcessor.createInstance(project, null, elements, false, false, true).run();
@@ -74,11 +74,11 @@ public class SafeDeleteFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    PsiElement element = PsiTreeUtil.findSameElementInCopy(getStartElement(), file);
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    PsiElement element = PsiTreeUtil.findSameElementInCopy(getStartElement(), psiFile);
     PsiElement parent = element.getParent();
     if (parent instanceof PsiClassOwner classOwner && classOwner.getClasses().length == 1 && classOwner.getClasses()[0] == element) {
-      var doc = file.getViewProvider().getDocument();
+      var doc = psiFile.getViewProvider().getDocument();
       doc.deleteString(0, doc.getTextLength());
     }
     else {

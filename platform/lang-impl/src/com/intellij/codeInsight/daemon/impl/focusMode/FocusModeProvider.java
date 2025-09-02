@@ -20,5 +20,5 @@ public interface FocusModeProvider {
    */
   @NotNull
   @Unmodifiable
-  List<? extends Segment> calcFocusZones(@NotNull PsiFile file);
+  List<? extends Segment> calcFocusZones(@NotNull PsiFile psiFile);
 }

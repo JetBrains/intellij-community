@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.editorActions;
 
 import com.intellij.codeInsight.editorActions.AbstractMoveElementLeftRightTest;
@@ -57,6 +43,12 @@ public class MoveElementLeftRightTest extends AbstractMoveElementLeftRightTest {
   public void testMoveTwoParametersWithSelection() throws Exception {
     doTestFromLeftToRight("class C { void m() { java.util.Arrays.asList(\"<selection><caret>a\", \"b</selection>\", \"c\"); } }",
                           "class C { void m() { java.util.Arrays.asList(\"c\", \"<selection><caret>a\", \"b</selection>\"); } }");
+  }
+
+  public void testMoveTwoParametersWithMultiCaret() throws Exception {
+    doTestSingle(false,
+                 "class C { void m() { java.util.Arrays.asList(\"<caret>a\", \"<caret>b\", \"c\"); } }",
+                 "class C { void m() { java.util.Arrays.asList(\"c\", \"<caret>a\", \"<caret>b\"); } }");
   }
   
   public void testMovingMethodDeclaredParameters() throws Exception {

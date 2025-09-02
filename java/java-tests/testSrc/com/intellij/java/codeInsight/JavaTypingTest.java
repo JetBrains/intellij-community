@@ -105,4 +105,29 @@ public class JavaTypingTest extends AbstractBasicJavaTypingTest {
     setLanguageLevel(LanguageLevel.JDK_21);
     doTest('{');
   }
+
+  public void testOpenBracesAfterSwitchRuleStatementInStringLiteral() {
+    setLanguageLevel(LanguageLevel.JDK_21);
+    doTest('{');
+  }
+
+  public void testOpenBracesAfterSwitchRuleExpressionAssignmentInStringLiteral() {
+    setLanguageLevel(LanguageLevel.JDK_21);
+    doTest('{');
+  }
+
+  public void testOpenBracesAfterSwitchRuleExpressionInStringLiteral() {
+    setLanguageLevel(LanguageLevel.JDK_21);
+    doTest('{');
+  }
+
+  public void testOpenBracesAfterSwitchRuleExpressionInTextBlockLiteral() {
+    setLanguageLevel(LanguageLevel.JDK_21);
+    doTest('{');
+  }
+
+  public void testOpenBracesAfterSwitchRuleExpressionInCharLiteral() {
+    setLanguageLevel(LanguageLevel.JDK_21);
+    doTest('{');
+  }
 }

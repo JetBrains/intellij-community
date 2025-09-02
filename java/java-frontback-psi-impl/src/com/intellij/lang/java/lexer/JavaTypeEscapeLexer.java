@@ -13,7 +13,11 @@ import com.intellij.psi.tree.IElementType;
  * In reference links, array types are escaped:  "char\[\]" which the JavaLexer doesn't like
  * <p>
  * It does this by <em>covering up</em> a <i>BAD_CHARACTER</i> token if followed by <i>[</i> or <i>]</i>
+ *
+ * @deprecated Use the new Java syntax library instead.
+ *             See {@link com.intellij.java.syntax.parser.JavaParser}
  */
+@Deprecated
 public class JavaTypeEscapeLexer extends MergingLexerAdapterBase {
   private final MergeFunction myMergeFunction = new EscapeMarkdownFunction();
 

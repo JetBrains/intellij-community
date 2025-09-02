@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.annoPackages;
 
+import com.intellij.codeInsight.ContextNullabilityInfo;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullabilityAnnotationInfo;
 import com.intellij.psi.*;
@@ -8,7 +9,6 @@ import com.intellij.util.ArrayUtil;
 import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
@@ -27,11 +27,10 @@ final class EclipseAnnotationSupport implements AnnotationPackageSupport {
   private static final String[] DEFAULT_LOCATIONS = {"PARAMETER", "RETURN_TYPE", "FIELD", "TYPE_BOUND", "TYPE_ARGUMENT"};
 
   @Override
-  public @Nullable NullabilityAnnotationInfo getNullabilityByContainerAnnotation(@NotNull PsiAnnotation anno,
-                                                                                 @NotNull PsiElement context,
+  public @NotNull ContextNullabilityInfo getNullabilityByContainerAnnotation(@NotNull PsiAnnotation anno,
                                                                                  PsiAnnotation.TargetType @NotNull [] types,
                                                                                  boolean superPackage) {
-    if (superPackage) return null;
+    if (superPackage) return ContextNullabilityInfo.EMPTY;
     if (anno.hasQualifiedName(DEFAULT_NOT_NULL)) {
       PsiAnnotationMemberValue value = anno.findAttributeValue(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME);
       String[] targets = DEFAULT_LOCATIONS;
@@ -47,9 +46,10 @@ final class EclipseAnnotationSupport implements AnnotationPackageSupport {
       }
       boolean targetApplies = StreamEx.of(targets).map(TARGET_MAP::get).nonNull()
         .anyMatch(loc -> loc == PsiAnnotation.TargetType.TYPE_USE ? types.length == 1 && types[0] == loc : ArrayUtil.contains(loc, types));
-      return new NullabilityAnnotationInfo(anno, targetApplies ? Nullability.NOT_NULL : Nullability.UNKNOWN, true);
+      return ContextNullabilityInfo.constant(
+        new NullabilityAnnotationInfo(anno, targetApplies ? Nullability.NOT_NULL : Nullability.UNKNOWN, true));
     }
-    return null;
+    return ContextNullabilityInfo.EMPTY;
   }
 
   @Override

@@ -52,8 +52,18 @@ internal class BranchesTreeSelection(selectionPaths: Array<TreePath>?) {
       else null
     }
 
-  val logNavigatableNodeDescriptor: BranchNodeDescriptor.LogNavigatable?
-    get() = selectedNodeDescriptors.singleOrNull() as? BranchNodeDescriptor.LogNavigatable
+  val logNavigatableNodeDescriptor: VcsLogNavigatable?
+    get() = selectedNodes.firstNotNullOfOrNull { node ->
+      val nodeDescriptor = node.getNodeDescriptor()
+      when (nodeDescriptor) {
+        is BranchNodeDescriptor.Head -> VcsLogNavigatable.Branch(null, VcsLogUtil.HEAD)
+        is BranchNodeDescriptor.Branch -> VcsLogNavigatable.Branch(getParentRepository(node), nodeDescriptor.branchInfo.branchName)
+        is BranchNodeDescriptor.Ref -> VcsLogNavigatable.Ref(getParentRepository(node), nodeDescriptor.refInfo.refName)
+        else -> null
+      }
+    }
+
+  private fun getParentRepository(node: BranchTreeNode): GitRepository? = getSelectedRepositories(node).firstOrNull()
 
   fun getSelectedRepositories(branchInfo: BranchInfo): List<GitRepository> {
     val branchNode = selectedNodes.find { node ->

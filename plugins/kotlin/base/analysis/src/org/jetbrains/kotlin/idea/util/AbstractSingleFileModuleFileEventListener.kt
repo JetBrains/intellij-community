@@ -31,6 +31,9 @@ sealed class AbstractSingleFileModuleFileEventListener(private val project: Proj
     protected abstract fun processEvent(event: VFileEvent, module: KaModule)
 
     internal fun processEvents(events: List<VFileEvent>) {
+        if (!project.isInitialized || project.isDisposed) return
+
+        val projectFileIndex = ProjectFileIndex.getInstance(project)
         for (event in events) {
             val file = event.file ?: continue
             if (!isRelevantEvent(event, file)) continue
@@ -41,7 +44,7 @@ sealed class AbstractSingleFileModuleFileEventListener(private val project: Proj
             // need to check `isInContent` for non-Kotlin files, as we don't want to process them, and (2) for the common case where the
             // user has opened only one project and most Kotlin files are inside a source set, checking `!isInSourceContent` first excludes
             // most files in a single check, as opposed to checking `isInContent` first and then `!isInSourceContent`.
-            if (!ProjectFileIndex.getInstance(project).isInContent(file)) continue
+            if (!projectFileIndex.isInContent(file)) continue
 
             val module = file.getSingleFileModule() ?: continue
             processEvent(event, module)

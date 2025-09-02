@@ -1,8 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.xdebugger;
 
 import com.intellij.execution.configurations.RunProfile;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunnerLayoutUi;
@@ -127,6 +128,13 @@ public interface XDebugSession extends AbstractDebuggerSession {
   void positionReached(@NotNull XSuspendContext suspendContext);
 
   /**
+   * Call this method when the position is reached (e.g. after "Run to cursor" or "Step over" command)
+   */
+  default void positionReached(@NotNull XSuspendContext suspendContext, boolean attract) {
+    positionReached(suspendContext);
+  }
+
+  /**
    * Call this method when the session was resumed because of some external event, e.g. from the debugger console
    */
   void sessionResumed();
@@ -144,9 +152,13 @@ public interface XDebugSession extends AbstractDebuggerSession {
 
   void removeSessionListener(@NotNull XDebugSessionListener listener);
 
-  void reportError(@NotNull @NlsContexts.NotificationContent String message);
+  default void reportError(@NotNull @NlsContexts.NotificationContent String message) {
+    reportMessage(message, MessageType.ERROR);
+  }
 
-  void reportMessage(@NotNull @NlsContexts.NotificationContent String message, @NotNull MessageType type);
+  default void reportMessage(@NotNull @NlsContexts.NotificationContent String message, @NotNull MessageType type) {
+    reportMessage(message, type, null);
+  }
 
   void reportMessage(@NotNull @NlsContexts.NotificationContent String message, @NotNull MessageType type, @Nullable HyperlinkListener listener);
 
@@ -172,8 +184,10 @@ public interface XDebugSession extends AbstractDebuggerSession {
 
   ConsoleView getConsoleView();
 
-  RunnerLayoutUi getUI();
+  @Nullable RunnerLayoutUi getUI();
 
   @ApiStatus.Internal
   boolean isMixedMode();
+
+  @Nullable ExecutionEnvironment getExecutionEnvironment();
 }

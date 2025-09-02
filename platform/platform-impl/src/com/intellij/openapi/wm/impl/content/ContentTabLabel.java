@@ -59,9 +59,7 @@ public class ContentTabLabel extends ContentLabel {
       DataContext dataContext = DataManager.getInstance().getDataContext(this);
       for (AnAction action : myLayout.doubleClickActions) {
         AnActionEvent event = AnActionEvent.createFromInputEvent(e, ActionPlaces.UNKNOWN, null, dataContext);
-        if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
-          ActionUtil.performActionDumbAwareWithCallbacks(action, event);
-        }
+        ActionUtil.performAction(action, event);
       }
     }
   }

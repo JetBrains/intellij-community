@@ -15,6 +15,7 @@ import com.intellij.openapi.progress.impl.updateFromFlow
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
 import com.intellij.openapi.progress.util.ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.HtmlBuilder
@@ -27,6 +28,7 @@ import com.intellij.openapi.vcs.changes.InclusionListener
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.openapi.wm.ex.StatusBarEx
 import com.intellij.openapi.wm.ex.WindowManagerEx
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.util.progress.createProgressPipe
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.EditorTextComponent
@@ -41,6 +43,7 @@ import com.intellij.util.ui.JBUI.Borders.empty
 import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.accessibility.AccessibleAnnouncerUtil
+import com.intellij.vcs.VcsDisposable
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.debounce
@@ -73,8 +76,9 @@ private fun JBLabel.setWarning(@NlsContexts.Label warningText: String) {
   isVisible = true
 }
 
-open class CommitProgressPanel : CommitProgressUi, InclusionListener, DocumentListener, Disposable {
-  private val scope = CoroutineScope(SupervisorJob() + Dispatchers.EDT)
+@OptIn(FlowPreview::class)
+open class CommitProgressPanel(project: Project) : CommitProgressUi, InclusionListener, DocumentListener, Disposable {
+  private val scope = VcsDisposable.getInstance(project).coroutineScope.childScope("CommitProgressPanel", Dispatchers.EDT)
 
   private val taskInfo = CommitChecksTaskInfo()
   private val progressFlow = MutableStateFlow<InlineCommitChecksProgressIndicator?>(null)
@@ -90,7 +94,15 @@ open class CommitProgressPanel : CommitProgressUi, InclusionListener, DocumentLi
 
   override var isEmptyMessage by stateFlag()
   override var isEmptyChanges by stateFlag()
-  override var isDumbMode by stateFlag()
+
+  private val dumbModeFlow: MutableStateFlow<Boolean> = MutableStateFlow(false)
+  override var isDumbMode: Boolean by dumbModeFlow::value
+
+  init {
+    scope.launch {
+      dumbModeFlow.debounce(300).collect { update() }
+    }
+  }
 
   protected fun stateFlag(): ReadWriteProperty<Any?, Boolean> {
     return observable(false) { _, oldValue, newValue ->
@@ -316,10 +328,12 @@ sealed class CommitCheckFailure {
 
   open class WithDescription(val text: @NlsContexts.NotificationContent HtmlChunk) : CommitCheckFailure()
 
-  class WithDetails(text: @NlsContexts.NotificationContent HtmlChunk,
-                    val viewDetailsLinkText: @NlsContexts.NotificationContent String?,
-                    val viewDetailsActionText: @NlsContexts.NotificationContent String,
-                    val viewDetails: (place: CommitProblemPlace) -> Unit) : WithDescription(text)
+  class WithDetails(
+    text: @NlsContexts.NotificationContent HtmlChunk,
+    val viewDetailsLinkText: @NlsContexts.NotificationContent String?,
+    val viewDetailsActionText: @NlsContexts.NotificationContent String,
+    val viewDetails: (place: CommitProblemPlace) -> Unit,
+  ) : WithDescription(text)
 }
 
 private class FailuresPanel : JBPanel<FailuresPanel>() {

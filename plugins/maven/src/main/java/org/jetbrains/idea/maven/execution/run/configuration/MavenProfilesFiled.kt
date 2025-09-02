@@ -12,7 +12,6 @@ import com.intellij.openapi.externalSystem.service.ui.project.path.WorkingDirect
 import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.observable.util.bind
 import com.intellij.openapi.observable.util.transform
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.util.execution.ParametersListUtil
@@ -75,14 +74,12 @@ class MavenProfilesFiled(
   }
 
   private suspend fun getGlobalProfiles(project: Project): Collection<String> {
-    return blockingContext {
-      val projectsManager = MavenProjectsManager.getInstance(project)
-      projectsManager.availableProfiles
-    }
+    val projectsManager = MavenProjectsManager.getInstance(project)
+    return projectsManager.availableProfiles
   }
 
   private suspend fun getLocalProfiles(project: Project, workingDirectoryField: WorkingDirectoryField): Collection<String> {
-    val projectDirectory = blockingContext { workingDirectoryField.getWorkingDirectoryVirtualFile() }
+    val projectDirectory = workingDirectoryField.getWorkingDirectoryVirtualFile()
                            ?: return emptyList()
     val projectsManager = MavenProjectsManager.getInstance(project)
     val mavenProject = readAction { projectsManager.findContainingProject(projectDirectory) }

@@ -9,6 +9,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.data.GithubAuthenticatedUser
@@ -19,8 +20,9 @@ import java.time.temporal.ChronoUnit
 /**
  * Loads the account information or provides it from cache
  */
+@ApiStatus.Internal
 @Service(Service.Level.APP)
-internal class GHCachingAccountInformationProvider(serviceCs: CoroutineScope) {
+class GHCachingAccountInformationProvider(serviceCs: CoroutineScope) {
   private val cs = serviceCs.childScope()
 
   private val informationCache = Caffeine.newBuilder()

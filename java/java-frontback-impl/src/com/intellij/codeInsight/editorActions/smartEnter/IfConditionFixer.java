@@ -1,12 +1,12 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions.smartEnter;
 
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.impl.source.BasicJavaAstTreeUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
@@ -66,7 +66,7 @@ public class IfConditionFixer implements Fixer {
       PsiElement psi = BasicJavaAstTreeUtil.toPsi(astNode);
       if (psi != null) {
         PsiElement prevLeaf = PsiTreeUtil.prevVisibleLeaf(psi);
-        if (prevLeaf != null && prevLeaf.textMatches(PsiKeyword.IF)) {
+        if (prevLeaf != null && prevLeaf.textMatches(JavaKeywords.IF)) {
           Document doc = editor.getDocument();
           doc.insertString(astNode.getTextRange().getEndOffset(), ")");
           doc.insertString(astNode.getTextRange().getStartOffset(), "(");

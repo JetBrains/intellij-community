@@ -12,10 +12,12 @@ import com.intellij.psi.PsiNamedElement
 import com.intellij.util.PsiIconUtil
 import com.intellij.util.ui.StartupUiUtil
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.renderer.base.KaKeywordsRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaCallableReturnTypeFilter
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaDeclarationRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.bodies.KaParameterDefaultValueRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererKeywordFilter
@@ -24,15 +26,15 @@ import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callabl
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaNamedFunctionSymbolRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.classifiers.KaNamedClassSymbolRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.superTypes.KaSuperTypesFilter
-import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
+import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
+import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinIconProvider.getIconFor
 import org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightBundle
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.renderer.render
 import javax.swing.Icon
 
 private const val rightArrow = '\u2192'
@@ -66,8 +68,66 @@ internal class KotlinFirStructureElementPresentation(
             returnTypeFilter = KaCallableReturnTypeFilter.ALWAYS
             namedClassRenderer = KaNamedClassSymbolRenderer.AS_SOURCE_WITHOUT_PRIMARY_CONSTRUCTOR
             parameterDefaultValueRenderer = KaParameterDefaultValueRenderer.NO_DEFAULT_VALUE
-            constructorRenderer = KaConstructorSymbolRenderer.AS_RAW_SIGNATURE
-            namedFunctionRenderer = KaNamedFunctionSymbolRenderer.AS_RAW_SIGNATURE
+            // TODO: KTIJ-34535 custom impl of KaConstructorSymbolRenderer.AS_RAW_SIGNATURE to hit 2025.2 feature freeze window
+            constructorRenderer = object : KaConstructorSymbolRenderer {
+                override fun renderSymbol(
+                    analysisSession: KaSession,
+                    symbol: KaConstructorSymbol,
+                    declarationRenderer: KaDeclarationRenderer,
+                    printer: PrettyPrinter
+                ) {
+                    with(analysisSession) {
+                        printer {
+                            " ".separated(
+                                {
+                                    declarationRenderer.keywordsRenderer
+                                        .renderKeyword(analysisSession, KtTokens.CONSTRUCTOR_KEYWORD, symbol, printer)
+                                },
+                                {
+                                    symbol.containingDeclaration?.name?.let { printer.append(it.render()) }
+                                    printer.printCollection(symbol.valueParameters, prefix = "(", postfix = ")") {
+                                        withSuffix(if (it.isVararg) Typography.ellipsis.toString() else "") {
+                                            declarationRenderer.typeRenderer.renderType(analysisSession, it.returnType, printer)
+                                        }
+                                    }
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+            // TODO: KTIJ-34535 custom impl of KaNamedFunctionSymbolRenderer.AS_RAW_SIGNATURE to hit 2025.2 feature freeze window
+            namedFunctionRenderer = object : KaNamedFunctionSymbolRenderer {
+                override fun renderSymbol(
+                    analysisSession: KaSession,
+                    symbol: KaNamedFunctionSymbol,
+                    declarationRenderer: KaDeclarationRenderer,
+                    printer: PrettyPrinter
+                ) {
+                    printer {
+                        val receiverSymbol = symbol.receiverParameter
+                        if (receiverSymbol != null) {
+                            withSuffix(".") {
+                                declarationRenderer.callableReceiverRenderer
+                                    .renderReceiver(analysisSession, receiverSymbol, declarationRenderer, printer)
+                            }
+                        }
+
+                        declarationRenderer.nameRenderer.renderName(analysisSession, symbol, declarationRenderer, printer)
+
+                        printer.printCollection(symbol.valueParameters, prefix = "(", postfix = ")") {
+                            withSuffix(if (it.isVararg) Typography.ellipsis.toString() else "") {
+                                declarationRenderer.typeRenderer.renderType(analysisSession, it.returnType, printer)
+                            }
+                        }
+
+                        withPrefix(": ") {
+                            declarationRenderer.returnTypeRenderer
+                                .renderReturnType(analysisSession, symbol, declarationRenderer, printer)
+                        }
+                    }
+                }
+            }
         }
     }
 

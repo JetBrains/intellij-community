@@ -47,7 +47,6 @@ public class DeprecationInspection extends DeprecationInspectionBase {
   }
 
   @Override
-  @SuppressWarnings("PatternOverriddenByNonAnnotatedMethod")
   public @NotNull String getID() {
     return ID;
   }

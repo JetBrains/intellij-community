@@ -17,6 +17,7 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,6 +27,12 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.List;
 
+/**
+ * <h3>Obsolescence notice</h3>
+ * please use {@link ProgressComponent} to work with {@link com.intellij.openapi.progress.ProgressModel ProgressModel},
+ * not with obsolete {@link com.intellij.openapi.progress.ProgressIndicator ProgressIndicator}
+ */
+@ApiStatus.Obsolete
 public class InlineProgressIndicator extends ProgressIndicatorBase implements Disposable {
   protected final TextPanel text;
   protected final TextPanel text2;

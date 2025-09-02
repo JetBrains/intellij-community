@@ -31,8 +31,8 @@ final class FileReferenceCompletionImpl extends FileReferenceCompletion {
   private static final HashingStrategy<PsiElement> VARIANTS_HASHING_STRATEGY = new HashingStrategy<>() {
     @Override
     public int hashCode(@Nullable PsiElement object) {
-      if (object instanceof PsiNamedElement) {
-        String name = ((PsiNamedElement)object).getName();
+      if (object instanceof PsiNamedElement namedElement) {
+        String name = namedElement.getName();
         if (name != null) {
           return name.hashCode();
         }
@@ -42,8 +42,8 @@ final class FileReferenceCompletionImpl extends FileReferenceCompletion {
 
     @Override
     public boolean equals(@Nullable PsiElement o1, @Nullable PsiElement o2) {
-      if (o1 instanceof PsiNamedElement && o2 instanceof PsiNamedElement) {
-        return Objects.equals(((PsiNamedElement)o1).getName(), ((PsiNamedElement)o2).getName());
+      if (o1 instanceof PsiNamedElement namedElement1 && o2 instanceof PsiNamedElement namedElement2) {
+        return Objects.equals(namedElement1.getName(), namedElement2.getName());
       }
       return Objects.equals(o1, o2);
     }
@@ -69,12 +69,12 @@ final class FileReferenceCompletionImpl extends FileReferenceCompletion {
     List<Object> additionalItems = new ArrayList<>();
     for (PsiFileSystemItem context : reference.getContexts()) {
       for (final PsiElement child : context.getChildren()) {
-        if (child instanceof PsiFileSystemItem) {
-          processor.execute((PsiFileSystemItem)child);
+        if (child instanceof PsiFileSystemItem fileSystemItem) {
+          processor.execute(fileSystemItem);
         }
       }
-      if (context instanceof FileReferenceResolver) {
-        additionalItems.addAll(((FileReferenceResolver)context).getVariants(reference));
+      if (context instanceof FileReferenceResolver resolver) {
+        additionalItems.addAll(resolver.getVariants(reference));
       }
     }
 
@@ -88,9 +88,9 @@ final class FileReferenceCompletionImpl extends FileReferenceCompletion {
       if (item == null) {
         item = FileInfoManager.getFileLookupItem(candidate);
       }
-      if (candidate instanceof PsiFile && item instanceof LookupElement &&
-          types.length > 0 && ArrayUtil.contains(((PsiFile)candidate).getFileType(), types)) {
-        item = PrioritizedLookupElement.withPriority((LookupElement)item, Double.MAX_VALUE);
+      if (candidate instanceof PsiFile psiFile && item instanceof LookupElement lookupElement &&
+          types.length > 0 && ArrayUtil.contains(psiFile.getFileType(), types)) {
+        item = PrioritizedLookupElement.withPriority(lookupElement, Double.MAX_VALUE);
       }
       variants[i] = item;
     }

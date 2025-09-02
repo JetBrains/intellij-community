@@ -114,14 +114,6 @@ public class Messages {
   @SuppressWarnings("HardCodedStringLiteral") @Deprecated
   public static final String OK_BUTTON = "OK";
 
-  /** @deprecated Use {@link #getYesButton()} instead */
-  @SuppressWarnings("HardCodedStringLiteral") @Deprecated(forRemoval = true)
-  public static final String YES_BUTTON = "&Yes";
-
-  /** @deprecated Use {@link #getNoButton()} instead */
-  @SuppressWarnings("HardCodedStringLiteral") @Deprecated(forRemoval = true)
-  public static final String NO_BUTTON = "&No";
-
   /** @deprecated Use {@link #getCancelButton()} instead */
   @SuppressWarnings("HardCodedStringLiteral") @Deprecated
   public static final String CANCEL_BUTTON = "Cancel";
@@ -880,6 +872,17 @@ public class Messages {
                                                           @Nullable TextRange selection,
                                                           @Nullable @DetailedDescription String comment) {
     return MessagesService.getInstance().showInputDialog(project, null, message, title, icon, initialValue, validator, selection, comment);
+  }
+
+  public static @Nullable @NlsSafe String showInputDialog(@NotNull Component parentComponent,
+                                                          @DialogMessage String message,
+                                                          @DialogTitle String title,
+                                                          @Nullable Icon icon,
+                                                          @Nullable @NonNls String initialValue,
+                                                          @Nullable InputValidator validator,
+                                                          @Nullable TextRange selection,
+                                                          @Nullable @DetailedDescription String comment) {
+    return MessagesService.getInstance().showInputDialog(null, parentComponent, message, title, icon, initialValue, validator, selection, comment);
   }
 
   public static @Nullable @NlsSafe String showInputDialog(@NotNull Component parent,

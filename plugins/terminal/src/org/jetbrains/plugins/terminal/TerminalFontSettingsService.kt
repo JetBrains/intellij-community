@@ -3,18 +3,21 @@ package org.jetbrains.plugins.terminal
 
 import com.intellij.application.options.EditorFontsConstants
 import com.intellij.ide.ui.UISettingsUtils
+import com.intellij.ide.util.RunOnceUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.FontPreferences
-import com.intellij.openapi.editor.colors.impl.AppConsoleFontOptions
 import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions
 import com.intellij.openapi.editor.colors.impl.AppFontOptions
 import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl
 import com.intellij.openapi.editor.impl.FontFamilyService
 import com.intellij.openapi.util.Disposer
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.terminal.block.ui.updateFrontendSettingsAndSync
 import java.util.*
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.math.pow
@@ -25,7 +28,7 @@ import kotlin.math.roundToInt
   storages = [Storage("terminal-font.xml")],
 )
 @ApiStatus.Internal
-class TerminalFontSettingsService : AppFontOptions<TerminalFontSettingsState>() {
+class TerminalFontSettingsService(private val coroutineScope: CoroutineScope) : AppFontOptions<TerminalFontSettingsState>() {
   companion object {
     @JvmStatic fun getInstance(): TerminalFontSettingsService = service<TerminalFontSettingsService>()
 
@@ -52,7 +55,7 @@ class TerminalFontSettingsService : AppFontOptions<TerminalFontSettingsState>() 
 
     val newPreferences = FontPreferencesImpl()
     // start with the console preferences as the default
-    AppConsoleFontOptions.getInstance().fontPreferences.copyTo(newPreferences)
+    getConsoleFontPreferences().copyTo(newPreferences)
     // then overwrite the subset that the terminal settings provide
     settings.copyTo(newPreferences)
     // then apply the settings that aren't a part of FontPreferences
@@ -82,7 +85,10 @@ class TerminalFontSettingsService : AppFontOptions<TerminalFontSettingsState>() 
 
   override fun loadState(state: TerminalFontSettingsState) {
     columnSpacing = TerminalColumnSpacing.ofFloat(state.COLUMN_SPACING)
-    super.loadState(state)
+
+    if (!resetNonMonospacedFontsOnce(state)) {
+      super.loadState(state)
+    }
 
     // In the case of RemDev settings are synced from backend to frontend using `loadState` method.
     // So, notify the listeners on every `loadState` to not miss the change.
@@ -91,7 +97,8 @@ class TerminalFontSettingsService : AppFontOptions<TerminalFontSettingsState>() 
 
   override fun noStateLoaded() {
     // the state is mostly inherited from the console settings
-    val defaultState = TerminalFontSettingsState(AppConsoleFontOptions.getInstance().fontPreferences)
+    val consolePreferences = getConsoleFontPreferences()
+    val defaultState = TerminalFontSettingsState(consolePreferences)
     // except the line spacing: it is only inherited if it's different from the default, otherwise we use our own default
     val userSetConsoleLineSpacing = TerminalLineSpacing.ofFloat(defaultState.LINE_SPACING)
     val defaultConsoleLineSpacing = TerminalLineSpacing.ofFloat(FontPreferences.DEFAULT_LINE_SPACING)
@@ -99,6 +106,35 @@ class TerminalFontSettingsService : AppFontOptions<TerminalFontSettingsState>() 
       defaultState.LINE_SPACING = DEFAULT_TERMINAL_LINE_SPACING.floatValue
     }
     loadState(defaultState)
+  }
+
+  private fun getConsoleFontPreferences(): FontPreferences {
+    val colorsManager = EditorColorsManager.getInstance()
+    val currentScheme = colorsManager.activeVisibleScheme ?: colorsManager.defaultScheme
+    return currentScheme.consoleFontPreferences
+  }
+
+  /**
+   * Because of initial misconfiguration of the settings (IJPL-188621), non-monospaced fonts may be stored in the [storedState].
+   * This logic is intended to reset the font to the default value (from console settings) in this case.
+   * This reset will be performed only once, further calls will do nothing.
+   *
+   * @return whether reset was performed during this call.
+   */
+  fun resetNonMonospacedFontsOnce(storedState: TerminalFontSettingsState): Boolean {
+    return RunOnceUtil.runOnceForApp("TerminalFontSettingsService.fixStoredNonMonospacedFonts") {
+      updateFrontendSettingsAndSync(coroutineScope) {
+        val adjustedState = if (!FontFamilyService.isMonospaced(storedState.FONT_FAMILY)) {
+          val newState = TerminalFontSettingsState(getConsoleFontPreferences())
+          newState.FONT_SIZE_2D = storedState.FONT_SIZE_2D
+          newState.LINE_SPACING = storedState.LINE_SPACING
+          newState
+        }
+        else storedState
+
+        super.loadState(adjustedState)
+      }
+    }
   }
 
   private fun fireListeners() {

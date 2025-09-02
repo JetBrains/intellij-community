@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
-import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
@@ -10,7 +9,7 @@ import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
-import com.intellij.platform.workspace.storage.annotations.Child
+import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
@@ -20,7 +19,7 @@ import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.MainEntityList
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(6)
+@GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class MainEntityListImpl(private val dataSource: MainEntityListData) : MainEntityList, WorkspaceEntityBase(dataSource) {
 
@@ -49,8 +48,8 @@ internal class MainEntityListImpl(private val dataSource: MainEntityListData) : 
   }
 
 
-  internal class Builder(result: MainEntityListData?) : ModifiableWorkspaceEntityBase<MainEntityList, MainEntityListData>(
-    result), MainEntityList.Builder {
+  internal class Builder(result: MainEntityListData?) : ModifiableWorkspaceEntityBase<MainEntityList, MainEntityListData>(result),
+                                                        MainEntityList.Builder {
     internal constructor() : this(MainEntityListData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -146,7 +145,8 @@ internal class MainEntityListData : WorkspaceEntityData<MainEntityList>() {
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.MainEntityList") as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.MainEntityList"
+    ) as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

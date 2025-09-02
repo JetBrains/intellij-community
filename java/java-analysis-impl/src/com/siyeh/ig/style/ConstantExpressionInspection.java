@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
@@ -59,9 +59,14 @@ public final class ConstantExpressionInspection extends AbstractBaseJavaLocalIns
       }
       
       private void handle(@NotNull PsiExpression expression) {
-        if (expression instanceof PsiLiteralExpression) return;
-        // inspection disabled for long expressions because of performance issues on
-        // relatively common large string expressions.
+        if (expression instanceof PsiLiteralExpression
+            || expression instanceof PsiParenthesizedExpression
+            || expression instanceof PsiTypeCastExpression) {
+          // inspection disabled for long expressions because of performance issues on
+          // relatively common large string expressions.
+          // casts and parentheses are handled by other inspections
+          return;
+        }
         Object value = computeConstant(expression);
         if (value == null) return;
         if (value instanceof PsiField && !(value instanceof PsiEnumConstant)) return;
@@ -84,13 +89,11 @@ public final class ConstantExpressionInspection extends AbstractBaseJavaLocalIns
       }
 
       private @Nullable Object computeConstant(PsiExpression expression) {
-        if (expression.getTextLength() > MAX_EXPRESSION_LENGTH) return null;
-        if (expression.getType() == null) return null;
+        if (expression.getTextLength() > MAX_EXPRESSION_LENGTH || expression.getType() == null) return null;
         Object value = computeValue(expression);
         if (value == null) return null;
         final PsiExpression parent = getParentExpression(expression);
-        if (parent != null && computeValue(parent) != null) return null;
-        return value;
+        return (parent != null && computeValue(parent) != null) ? null : value;
       }
 
       private Object computeValue(PsiExpression expression) {
@@ -164,8 +167,8 @@ public final class ConstantExpressionInspection extends AbstractBaseJavaLocalIns
     else if (value instanceof Long) {
       newExpression = value.toString() + 'L';
     }
-    else if (value instanceof Double) {
-      final double v = ((Double)value).doubleValue();
+    else if (value instanceof Double d) {
+      final double v = d.doubleValue();
       if (Double.isNaN(v)) {
         newExpression = "java.lang.Double.NaN";
       }
@@ -181,8 +184,8 @@ public final class ConstantExpressionInspection extends AbstractBaseJavaLocalIns
         newExpression = Double.toString(v);
       }
     }
-    else if (value instanceof Float) {
-      final float v = ((Float)value).floatValue();
+    else if (value instanceof Float f) {
+      final float v = f.floatValue();
       if (Float.isNaN(v)) {
         newExpression = "java.lang.Float.NaN";
       }

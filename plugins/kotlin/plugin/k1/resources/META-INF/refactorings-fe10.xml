@@ -87,6 +87,16 @@
             language="JAVA"
             order="first"
             implementationClass="org.jetbrains.kotlin.idea.refactoring.pullUp.JavaToKotlinPullUpHelperFactory"/>
+    <applicationService
+            serviceInterface="org.jetbrains.kotlin.idea.refactoring.pullUp.KotlinPullUpConflictSearcher"
+            serviceImplementation="org.jetbrains.kotlin.idea.refactoring.pullUp.K1PullUpConflictSearcher"/>
+    <applicationService
+            serviceInterface="org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfoStorageSupport"
+            serviceImplementation="org.jetbrains.kotlin.idea.refactoring.memberInfo.K1MemberInfoStorageSupport"/>
+
+    <applicationService
+            serviceInterface="org.jetbrains.kotlin.idea.refactoring.pushDown.KotlinPushDownProcessorProvider"
+            serviceImplementation="org.jetbrains.kotlin.idea.refactoring.pushDown.K1PushDownProcessorProvider"/>
 
     <refactoring.pushDown
             language="kotlin"

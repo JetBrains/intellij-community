@@ -23,7 +23,6 @@ import javax.swing.*;
 import javax.swing.event.AncestorEvent;
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.geom.Point2D;
 import java.awt.im.InputMethodRequests;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
@@ -53,7 +52,8 @@ class JBCefOsrComponent extends JPanel {
   AtomicBoolean myScaleInitialized = new AtomicBoolean(false);
 
   private @NotNull Disposable myDisposable;
-  private @NotNull MouseWheelEventsAccumulator myWheelEventsAccumulator;
+
+  private final int WHEEL_ROTATION_FACTOR = RegistryManager.getInstance().intValue("ide.browser.jcef.osr.wheelRotation.factor");
 
   JBCefOsrComponent(boolean isMouseWheelEventEnabled) {
     setPreferredSize(JBCefBrowser.DEF_PREF_SIZE);
@@ -125,7 +125,6 @@ class JBCefOsrComponent extends JPanel {
     super.addNotify();
     myDisposable = Disposer.newDisposable();
     myResizeAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, myDisposable);
-    myWheelEventsAccumulator = new MouseWheelEventsAccumulator(myDisposable);
 
     ApplicationManager.getApplication().getMessageBus().connect(myDisposable).subscribe(UISettingsListener.TOPIC, uiSettings -> {
       onGraphicsConfigurationChanged();
@@ -208,11 +207,31 @@ class JBCefOsrComponent extends JPanel {
       return;
     }
 
+
     if (TouchScrollUtil.isTouchScroll(e)) {
       myBrowser.sendTouchEvent(new CefTouchEvent(0, e.getX(), e.getY(), 0, 0, 0, 0, getTouchEventType(e), e.getModifiersEx(),
                                                  CefTouchEvent.PointerType.UNKNOWN));
-    } else {
-      myWheelEventsAccumulator.push(e);
+    }
+    else {
+      double val = e.getPreciseWheelRotation() * WHEEL_ROTATION_FACTOR;
+      if (SystemInfoRt.isLinux || SystemInfoRt.isMac) {
+        val *= -1;
+      }
+      myBrowser.sendMouseWheelEvent(new MouseWheelEvent(
+        e.getComponent(),
+        e.getID(),
+        e.getWhen(),
+        e.getModifiersEx(),
+        ROUND.round(e.getX() / myScale),
+        ROUND.round(e.getY() / myScale),
+        ROUND.round(e.getXOnScreen() / myScale),
+        ROUND.round(e.getYOnScreen() / myScale),
+        e.getClickCount(),
+        e.isPopupTrigger(),
+        e.getScrollType(),
+        e.getScrollAmount(),
+        (int)val,
+        val));
     }
   }
 
@@ -269,107 +288,11 @@ class JBCefOsrComponent extends JPanel {
     }
   }
 
-  /**
-   * This class is an adapter between Java and CEF mouse wheel API.
-   * CEF scrolling performance in some applications(e.g. PDF viewer) might be not enough to handle every java screen in time.
-   * The purpose of this adapter is to reduce the number of events to handle by CEF.
-   * MouseWheelEventsAccumulator accumulates wheel events (by X and Y axis independent) during the time defined by TIMEOUT_MS and sends
-   * composed events to the browser on timeout or on reaching wheel rotation tolerance (defined by TOLERANCE).
-   * <p>
-   * In practice, this reduces the number of events by about two times
-   */
-  private class MouseWheelEventsAccumulator {
-    private final Composition myCompositionX, myCompositionY;
-    private final int wheelFactor = RegistryManager.getInstance().intValue("ide.browser.jcef.osr.wheelRotation.factor");
-    public static final int TIMEOUT_MS = 500;
-    public static final int TOLERANCE = 3;
+  Color getColorAt(int x, int y) {
+    return myRenderHandler.getColorAt(x, y);
+  }
 
-    MouseWheelEventsAccumulator(Disposable parent) {
-      myCompositionX = new Composition(parent);
-      myCompositionY = new Composition(parent);
-    }
-
-    void push(MouseWheelEvent event) {
-      if (event.getScrollType() == MouseWheelEvent.WHEEL_BLOCK_SCROLL) {
-        myBrowser.sendMouseWheelEvent(event);
-        return;
-      }
-
-      Composition composition = event.isShiftDown() ? myCompositionX : myCompositionY;
-      if (composition.lastEvent != null && !areHomogenous(composition.lastEvent, event)) {
-        commit(composition);
-        return;
-      }
-
-      if (composition.lastEvent == null) {
-        composition.myAlarm.addRequest(() -> commit(composition), TIMEOUT_MS);
-      }
-
-      composition.pendingScrollAmount += event.getScrollAmount();
-      composition.pendingPreciseWheelRotation += event.getPreciseWheelRotation();
-      composition.pendingClickCount += event.getClickCount();
-      composition.lastEvent = event;
-
-      if (Math.abs(composition.pendingPreciseWheelRotation * wheelFactor) > TOLERANCE * myScale) {
-        commit(composition);
-      }
-    }
-
-    private void commit(Composition composition) {
-      if (composition.lastEvent == null) return;
-
-      double val = composition.pendingPreciseWheelRotation * wheelFactor;
-      if (SystemInfoRt.isLinux || SystemInfoRt.isMac) {
-        val *= -1;
-      }
-      myBrowser.sendMouseWheelEvent(new MouseWheelEvent(
-        composition.lastEvent.getComponent(),
-        composition.lastEvent.getID(),
-        composition.lastEvent.getWhen(),
-        composition.lastEvent.getModifiersEx(),
-        ROUND.round(composition.lastEvent.getX() / myScale),
-        ROUND.round(composition.lastEvent.getY() / myScale),
-        ROUND.round(composition.lastEvent.getXOnScreen() / myScale),
-        ROUND.round(composition.lastEvent.getYOnScreen() / myScale),
-        composition.pendingClickCount,
-        composition.lastEvent.isPopupTrigger(),
-        composition.lastEvent.getScrollType(),
-        composition.pendingScrollAmount,
-        (int)val,
-        val));
-      composition.reset();
-    }
-
-    private static boolean areHomogenous(MouseWheelEvent e1, MouseWheelEvent e2) {
-      if (e1 == null || e2 == null) return false;
-
-      double distance = Point2D.distance(e1.getX(), e1.getY(), e2.getX(), e2.getY());
-      return e1.getComponent() == e2.getComponent() &&
-             e1.getID() == e2.getID() &&
-             e1.getModifiersEx() == e2.getModifiersEx() &&
-             e1.isPopupTrigger() == e2.isPopupTrigger() &&
-             e1.getScrollType() == e2.getScrollType() &&
-             distance < TOLERANCE;
-    }
-
-    private static class Composition {
-      private int pendingClickCount = 0;
-      private int pendingScrollAmount = 0;
-      private double pendingPreciseWheelRotation = 0.0;
-      private final Alarm myAlarm;
-      private @Nullable MouseWheelEvent lastEvent;
-
-      Composition(Disposable parent) {
-        myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, parent);
-      }
-
-      void reset() {
-        lastEvent = null;
-        pendingPreciseWheelRotation = 0;
-        pendingClickCount = 0;
-        pendingScrollAmount = 0;
-        myAlarm.cancelAllRequests();
-      }
-    }
+  double getPixelDensity() {
+    return myRenderHandler.getPixelDensity();
   }
 }

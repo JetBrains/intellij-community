@@ -61,7 +61,7 @@ public class ClsClassImpl extends ClsMemberImpl<PsiClassStub<?>> implements PsiE
 
   @Override
   public @NotNull PsiTypeParameterList getTypeParameterList() {
-    return Objects.requireNonNull(getStub().findChildStubByType(JavaStubElementTypes.TYPE_PARAMETER_LIST)).getPsi();
+    return (PsiTypeParameterList)Objects.requireNonNull(getStub().findChildStubByElementType(JavaStubElementTypes.TYPE_PARAMETER_LIST)).getPsi();
   }
 
   @Override
@@ -89,7 +89,7 @@ public class ClsClassImpl extends ClsMemberImpl<PsiClassStub<?>> implements PsiE
   }
 
   private PsiModifierList getModifierListInternal() {
-    return Objects.requireNonNull(getStub().findChildStubByType(JavaStubElementTypes.MODIFIER_LIST)).getPsi();
+    return (PsiModifierList)Objects.requireNonNull(getStub().findChildStubByElementType(JavaStubElementTypes.MODIFIER_LIST)).getPsi();
   }
 
   @Override
@@ -99,18 +99,18 @@ public class ClsClassImpl extends ClsMemberImpl<PsiClassStub<?>> implements PsiE
 
   @Override
   public @NotNull PsiReferenceList getExtendsList() {
-    return Objects.requireNonNull(getStub().findChildStubByType(JavaStubElementTypes.EXTENDS_LIST)).getPsi();
+    return (PsiReferenceList)Objects.requireNonNull(getStub().findChildStubByElementType(JavaStubElementTypes.EXTENDS_LIST)).getPsi();
   }
 
   @Override
   public @Nullable PsiReferenceList getPermitsList() {
-    PsiClassReferenceListStub type = getStub().findChildStubByType(JavaStubElementTypes.PERMITS_LIST);
+    PsiClassReferenceListStub type = (PsiClassReferenceListStub)getStub().findChildStubByElementType(JavaStubElementTypes.PERMITS_LIST);
     return type == null ? null : type.getPsi();
   }
 
   @Override
   public @NotNull PsiReferenceList getImplementsList() {
-    return Objects.requireNonNull(getStub().findChildStubByType(JavaStubElementTypes.IMPLEMENTS_LIST)).getPsi();
+    return (PsiReferenceList)Objects.requireNonNull(getStub().findChildStubByElementType(JavaStubElementTypes.IMPLEMENTS_LIST)).getPsi();
   }
 
   @Override
@@ -220,7 +220,7 @@ public class ClsClassImpl extends ClsMemberImpl<PsiClassStub<?>> implements PsiE
 
   @Override
   public @Nullable PsiRecordHeader getRecordHeader() {
-    PsiRecordHeaderStub headerStub = getStub().findChildStubByType(JavaStubElementTypes.RECORD_HEADER);
+    PsiRecordHeaderStub headerStub = (PsiRecordHeaderStub)getStub().findChildStubByElementType(JavaStubElementTypes.RECORD_HEADER);
     return headerStub == null ? null : headerStub.getPsi();
   }
 

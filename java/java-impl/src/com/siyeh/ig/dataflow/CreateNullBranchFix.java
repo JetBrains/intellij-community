@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.dataflow;
 
+import com.intellij.java.codeserver.core.JavaPsiSwitchUtil;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.pom.java.JavaFeature;
@@ -51,7 +52,7 @@ public final class CreateNullBranchFix extends BaseSwitchFix {
     if (selector == null) return;
     PsiType selectorType = selector.getType();
     if (selectorType == null) return;
-    List<PsiElement> branches = SwitchUtils.getSwitchBranches(switchBlock);
+    List<PsiElement> branches = JavaPsiSwitchUtil.getSwitchBranches(switchBlock);
     for (PsiElement branch : branches) {
       // just for the case if we already contain null, there is no need to apply the fix
       if (branch instanceof PsiExpression expression && TypeConversionUtil.isNullType(expression.getType())) return;

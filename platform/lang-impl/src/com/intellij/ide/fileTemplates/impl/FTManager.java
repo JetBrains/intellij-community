@@ -427,9 +427,8 @@ public final class FTManager {
     }
   }
 
-  @NotNull
   @TestOnly
-  Path getConfigRoot() {
+  public @NotNull Path getConfigRoot() {
     return templateDir;
   }
 

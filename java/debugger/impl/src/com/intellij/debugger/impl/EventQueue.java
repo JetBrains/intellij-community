@@ -1,9 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.engine.PossiblySyncCommand;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,13 +22,13 @@ public class EventQueue<E> {
 
   private volatile boolean myIsClosed = false;
 
+  private int myAsyncCommandsCounter = 0;
+
   public EventQueue(int countPriorities) {
     myLock = new ReentrantLock();
     myEventsAvailable = myLock.newCondition();
     myEvents = new LinkedList[countPriorities];
-    for (int i = 0; i < myEvents.length; i++) {
-      myEvents[i] = new LinkedList<E>();
-    }
+    Arrays.setAll(myEvents, i -> new LinkedList<E>());
   }
 
   public boolean pushBack(@NotNull E event, int priority) {
@@ -43,6 +42,7 @@ public class EventQueue<E> {
         return false;
       }
       getEventsList(priority).addFirst(event);
+      processAdd(event);
       myEventsAvailable.signalAll();
     }
     finally {
@@ -62,6 +62,7 @@ public class EventQueue<E> {
         return false;
       }
       getEventsList(priority).offer(event);
+      processAdd(event);
       myEventsAvailable.signalAll();
     }
     finally {
@@ -93,8 +94,9 @@ public class EventQueue<E> {
           throw new EventQueueClosedException();
         }
         for (int i = 0; i < myEvents.length; i++) {
-          final E event = getEventsList(i).poll();
+          E event = getEventsList(i).poll();
           if (event != null) {
+            processRemove(event);
             return event;
           }
         }
@@ -125,23 +127,52 @@ public class EventQueue<E> {
   }
 
   public @NotNull List<E> clearQueue() {
-    final List<E> allEvents = new ArrayList<>();
-    for (int i = 0; i < myEvents.length; i++) {
-      final LinkedList<E> eventList = getEventsList(i);
-      for (E event = eventList.poll(); event != null; event = eventList.poll()) {
-        allEvents.add(event);
+    myLock.lock();
+    try {
+      List<E> allEvents = new ArrayList<>();
+      for (int i = 0; i < myEvents.length; i++) {
+        LinkedList<E> eventList = getEventsList(i);
+        allEvents.addAll(eventList);
+        eventList.clear();
       }
+      allEvents.forEach(this::processRemove);
+      return allEvents;
     }
-    return allEvents;
+    finally {
+      myLock.unlock();
+    }
   }
 
   public boolean isEmpty() {
-    return ConcurrencyUtil.withLock(myLock, () -> ContainerUtil.and(myEvents, AbstractCollection::isEmpty));
+    myLock.lock();
+    try {
+      return ContainerUtil.and(myEvents, AbstractCollection::isEmpty);
+    }
+    finally {
+      myLock.unlock();
+    }
   }
 
   public boolean hasAsyncCommands() {
-    return ConcurrencyUtil.withLock(myLock, () ->
-      Arrays.stream(myEvents).flatMap(Collection::stream).anyMatch(c -> !(c instanceof PossiblySyncCommand)));
+    myLock.lock();
+    try {
+      return myAsyncCommandsCounter > 0;
+    }
+    finally {
+      myLock.unlock();
+    }
+  }
+
+  private void processAdd(@NotNull E event) {
+    if (!(event instanceof PossiblySyncCommand)) {
+      myAsyncCommandsCounter++;
+    }
+  }
+
+  private void processRemove(@NotNull E event) {
+    if (!(event instanceof PossiblySyncCommand)) {
+      LOG.assertTrue(--myAsyncCommandsCounter >= 0);
+    }
   }
 
   public void reopen() {

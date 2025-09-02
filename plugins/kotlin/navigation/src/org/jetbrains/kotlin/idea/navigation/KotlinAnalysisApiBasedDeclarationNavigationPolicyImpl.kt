@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAct
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinGlobalSearchScopeMerger
+import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KaGlobalSearchScopeMerger
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibrarySourceModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
@@ -149,11 +149,13 @@ internal class KotlinAnalysisApiBasedDeclarationNavigationPolicyImpl : KotlinDec
                         val packageFqName = declaration.containingKtFile.packageFqName.takeUnless { it.isRoot }?.asString()
                         val callableName = "${packageFqName?.let { "$it." }.orEmpty()}${declarationName}"
                         val project = module.project
-                        when (declaration) {
+                        val declarations = when (declaration) {
                             is KtNamedFunction -> KotlinTopLevelFunctionFqnNameIndex[callableName, project, scope]
                             is KtProperty -> KotlinTopLevelPropertyFqnNameIndex[callableName, project, scope]
                             else -> return null
                         }
+                        val targetPlatform = module.targetPlatform
+                        declarations.filter { it.matchesWithPlatform(targetPlatform) }
                     }
 
                     else -> {
@@ -306,7 +308,7 @@ internal class KotlinAnalysisApiBasedDeclarationNavigationPolicyImpl : KotlinDec
             add(contentScope)
             allDirectDependencies().filter { it.targetPlatform.isCommon() }.mapTo(this) { it.contentScope }
         }
-        return KotlinGlobalSearchScopeMerger.getInstance(project).union(scopes)
+        return KaGlobalSearchScopeMerger.getInstance(project).union(scopes)
     }
 
     companion object {

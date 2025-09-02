@@ -14,3 +14,21 @@ from .registry import Tags as Tags
 from .registry import register as register
 from .registry import run_checks as run_checks
 from .registry import tag_exists as tag_exists
+
+__all__ = [
+    "CheckMessage",
+    "Debug",
+    "Info",
+    "Warning",
+    "Error",
+    "Critical",
+    "DEBUG",
+    "INFO",
+    "WARNING",
+    "ERROR",
+    "CRITICAL",
+    "register",
+    "run_checks",
+    "tag_exists",
+    "Tags",
+]

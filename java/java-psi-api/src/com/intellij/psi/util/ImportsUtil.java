@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
 import com.intellij.openapi.project.Project;
@@ -99,7 +99,7 @@ public final class ImportsUtil {
    * @return a list of implicit import statements associated with the given Java file.
    */
   public static List<PsiImportStatementBase> getAllImplicitImports(@NotNull PsiJavaFile file) {
-    return CachedValuesManager.getProjectPsiDependentCache(file, javaFile -> {
+    List<PsiImportStatementBase> cache = CachedValuesManager.getProjectPsiDependentCache(file, javaFile -> {
       List<PsiImportStatementBase> results = new ArrayList<>();
       Project project = javaFile.getProject();
       PsiElementFactory factory = PsiElementFactory.getInstance(project);
@@ -112,5 +112,6 @@ public final class ImportsUtil {
       }
       return results;
     });
+    return new ArrayList<>(cache);
   }
 }

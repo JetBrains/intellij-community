@@ -14,8 +14,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static com.intellij.psi.JavaModuleSystem.PATCH_MODULE_OPTION;
-
 /**
  * Provides additional compiler options for a given module.
  * <p>
@@ -23,6 +21,7 @@ import static com.intellij.psi.JavaModuleSystem.PATCH_MODULE_OPTION;
  */
 public abstract class JavaCompilerConfigurationProxy {
   private static final ExtensionPointName<JavaCompilerConfigurationProxy> EP_NAME = new ExtensionPointName<>("com.intellij.javaCompilerConfigurationProxy");
+  private static final String PATCH_MODULE_OPTION = "--patch-module";
 
   /**
    * Returns additional compiler options applicable to the given module, if any.

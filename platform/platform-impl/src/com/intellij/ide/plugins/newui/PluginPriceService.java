@@ -38,21 +38,19 @@ public final class PluginPriceService {
   private static boolean myPrepared;
   private static boolean myPreparing;
 
-  public static void getPrice(@NotNull IdeaPluginDescriptor descriptor,
+  public static void getPrice(@Nullable String productCode,
                               @NotNull Consumer<? super String> callback,
                               @NotNull Consumer<? super String> asyncCallback) {
     checkAccess();
 
-    String code = descriptor.getProductCode();
-
     if (myPrepared) {
-      Object value = myPriceTable.get(code);
+      Object value = myPriceTable.get(productCode);
       if (value instanceof String) {
         callback.consume((String)value);
       }
     }
     else {
-      myPriceTable.put(code, asyncCallback);
+      myPriceTable.put(productCode, asyncCallback);
 
       if (!myPreparing) {
         myPreparing = true;

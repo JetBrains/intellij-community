@@ -15,8 +15,8 @@ internal class MarkdownFocusModeProvider: FocusModeProvider {
     MarkdownParagraph::class
   )
 
-  override fun calcFocusZones(file: PsiFile): List<Segment> {
-    val traverser = SyntaxTraverser.psiTraverser(file).postOrderDfsTraversal()
+  override fun calcFocusZones(psiFile: PsiFile): List<Segment> {
+    val traverser = SyntaxTraverser.psiTraverser(psiFile).postOrderDfsTraversal()
     val ranges = traverser.filter { it::class in types }.map { it.textRange }
     return ranges.toMutableList()
   }

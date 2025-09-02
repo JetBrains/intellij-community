@@ -9,8 +9,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Implement this in actions or action groups to flag that their {@link AnAction#beforeActionPerformedUpdate(AnActionEvent)}
- * and {@link AnAction#actionPerformed(AnActionEvent)} methods are to be called when all documents are committed.<p></p>
+ * Implement this in actions or action groups to flag that their
+ * {@link AnAction#actionPerformed(AnActionEvent)} method is to be called when all documents are committed.<p></p>
  * <p>
  * Prefer calling {@link PsiDocumentManager#commitAllDocuments()} in {@link AnAction#actionPerformed(AnActionEvent)}.
  */

@@ -52,7 +52,18 @@ public final class InspectionEngine {
     if (!tool.isAvailableForFile(holder.getFile())) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
-    PsiElementVisitor visitor = tool.buildVisitor(holder, isOnTheFly, session);
+    PsiElementVisitor visitor;
+    try {
+      visitor = tool.buildVisitor(holder, isOnTheFly, session);
+    }
+    catch (Throwable e) {
+      if (Logger.shouldRethrow(e)) {
+        throw e;
+      }
+      Throwable t = PluginException.createByClass("Inspection tool '"+tool.getShortName()+"' ("+tool.getClass()+") thrown exception from its buildVisitor()", e, tool.getClass());
+      LOG.error(t);
+      return PsiElementVisitor.EMPTY_VISITOR;
+    }
     //noinspection ConstantConditions
     if (visitor == null) {
       LOG.error("Tool " + tool + " (" + tool.getClass() + ") must not return null from the buildVisitor() method");
@@ -372,9 +383,9 @@ public final class InspectionEngine {
     List<ProblemDescriptor> result = new ArrayList<>();
     refManager.runInsideInspectionReadAction(() -> {
       try {
-        if (toolWrapper instanceof LocalInspectionToolWrapper) {
+        if (toolWrapper instanceof LocalInspectionToolWrapper local) {
           Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> problemDescriptors =
-            inspectEx(Collections.singletonList((LocalInspectionToolWrapper)toolWrapper), psiFile, psiFile.getTextRange(), psiFile.getTextRange(),
+            inspectEx(Collections.singletonList(local), psiFile, psiFile.getTextRange(), psiFile.getTextRange(),
                       false,
                       false, true, new EmptyProgressIndicator(), PairProcessor.alwaysTrue());
 
@@ -382,8 +393,8 @@ public final class InspectionEngine {
             result.addAll(group);
           }
         }
-        else if (toolWrapper instanceof GlobalInspectionToolWrapper) {
-          GlobalInspectionTool globalTool = ((GlobalInspectionToolWrapper)toolWrapper).getTool();
+        else if (toolWrapper instanceof GlobalInspectionToolWrapper global) {
+          GlobalInspectionTool globalTool = global.getTool();
           if (globalTool.isGlobalSimpleInspectionTool()) {
             ProblemsHolder problemsHolder = new ProblemsHolder(inspectionManager, psiFile, false);
             ProblemDescriptionsProcessor collectProcessor = new ProblemDescriptionsProcessor() {
@@ -404,8 +415,8 @@ public final class InspectionEngine {
 
               @Override
               public void addProblemElement(@Nullable RefEntity refEntity, CommonProblemDescriptor @NotNull ... commonProblemDescriptors) {
-                if (!(refEntity instanceof RefElement)) return;
-                PsiElement element = ((RefElement)refEntity).getPsiElement();
+                if (!(refEntity instanceof RefElement refElement)) return;
+                PsiElement element = refElement.getPsiElement();
                 convertToProblemDescriptors(element, commonProblemDescriptors, result);
               }
 
@@ -448,8 +459,8 @@ public final class InspectionEngine {
                                                   @NotNull CommonProblemDescriptor @NotNull [] commonProblemDescriptors,
                                                   @NotNull List<? super ProblemDescriptor> outDescriptors) {
     for (CommonProblemDescriptor common : commonProblemDescriptors) {
-      if (common instanceof ProblemDescriptor) {
-        outDescriptors.add((ProblemDescriptor)common);
+      if (common instanceof ProblemDescriptor problemDescriptor) {
+        outDescriptors.add(problemDescriptor);
       }
       else {
         ProblemDescriptorBase base =
@@ -484,7 +495,8 @@ public final class InspectionEngine {
     return dialectIds;
   }
 
-  private static @NotNull Set<String> calcElementDialectIds(@NotNull List<? extends PsiElement> elements) {
+  @ApiStatus.Internal
+  public static @NotNull Set<String> calcElementDialectIds(@NotNull List<? extends PsiElement> elements) {
     Set<String> dialectIds = new HashSet<>();
     Set<Language> processedLanguages = new HashSet<>();
     addDialects(elements, processedLanguages, dialectIds);

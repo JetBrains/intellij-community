@@ -24,5 +24,11 @@ public class EnvVariablesTableTest {
 
     assertEquals(0, EnvVariablesTable.parseEnvsFromText("test").size());
     assertEquals(1, EnvVariablesTable.parseEnvsFromText("test=test").size());
+
+    Map<String, String> map3 = EnvVariablesTable.parseEnvsFromText("var1=ffff;var2=C:\\CRM\\files\\;var3=aaaa");
+    assertEquals(3, map3.size());
+    assertEquals("ffff", map3.get("var1"));
+    assertEquals("C:\\CRM\\files\\", map3.get("var2"));
+    assertEquals("aaaa", map3.get("var3"));
   }
 }

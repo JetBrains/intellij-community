@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin allow-bundled-update="true">
   <id>intellij.webp</id>
   <vendor>JetBrains</vendor>
   <depends>com.intellij.modules.lang</depends>

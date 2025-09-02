@@ -197,6 +197,16 @@ public final class DefaultLanguageColorsPage implements RainbowColorSettingsPage
       DefaultLanguageHighlighterColors.INLAY_DEFAULT),
 
     new AttributesDescriptor(
+      OptionsBundle.messagePointer("options.attribute.descriptor.inlay.hint.inlay.button.default"),
+      DefaultLanguageHighlighterColors.INLAY_BUTTON_DEFAULT),
+    new AttributesDescriptor(
+      OptionsBundle.messagePointer("options.attribute.descriptor.inlay.hint.inlay.button.focused"),
+      DefaultLanguageHighlighterColors.INLAY_BUTTON_FOCUSED),
+    new AttributesDescriptor(
+      OptionsBundle.messagePointer("options.attribute.descriptor.inlay.hint.inlay.button.hovered"),
+      DefaultLanguageHighlighterColors.INLAY_BUTTON_HOVERED),
+
+    new AttributesDescriptor(
       OptionsBundle.messagePointer("options.attribute.descriptor.inlay.hint.text.without.background"),
       DefaultLanguageHighlighterColors.INLAY_TEXT_WITHOUT_BACKGROUND),
 

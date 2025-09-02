@@ -86,6 +86,11 @@ open class TestingOptions {
   var mainModule: String? = System.getProperty("intellij.build.test.main.module").nullize(nullizeSpaces = true) ?: OLD_MAIN_MODULE
 
   /**
+   * Abort tests execution if [mainModule] does not match the module specified in the Run Configuration from [testConfigurations].
+   */
+  var validateMainModule: Boolean = System.getProperty("intellij.build.test.main.module.validate")?.toBooleanStrict() ?: false
+
+  /**
    * Specifies a custom test suite, [BOOTSTRAP_SUITE_DEFAULT] is using by default.
    */
   var bootstrapSuite: String = System.getProperty("intellij.build.test.bootstrap.suite", BOOTSTRAP_SUITE_DEFAULT)
@@ -103,7 +108,7 @@ open class TestingOptions {
    * and allows to rerun only corresponding tests for desired method or class in your project.
    *
    *
-   * For the further information please see [IntelliJ Coverage repository](https://github.com/jetbrains/intellij-coverage).
+   * For more information, please see [IntelliJ Coverage repository](https://github.com/jetbrains/intellij-coverage).
    */
   var isTestDiscoveryEnabled: Boolean = getBooleanProperty("intellij.build.test.discovery.enabled", false)
 

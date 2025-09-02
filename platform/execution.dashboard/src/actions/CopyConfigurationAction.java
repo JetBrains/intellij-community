@@ -15,6 +15,7 @@ import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
@@ -22,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author konstantin.aleev
  */
-final class CopyConfigurationAction extends DumbAwareAction {
+final class CopyConfigurationAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification.Frontend {
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
@@ -68,8 +69,11 @@ final class CopyConfigurationAction extends DumbAwareAction {
       ((RunConfigurationBase<?>)configuration).onConfigurationCopied();
     }
 
+    // fixme: action touches backend state and triggers client dialog - ask Lera?
     if (RunDialog.editConfiguration(project, copiedSettings,
                                     ExecutionBundle.message("run.dashboard.edit.configuration.dialog.title"))) {
+
+      // todo rpc to backend
       runManager.addConfiguration(copiedSettings);
     }
   }

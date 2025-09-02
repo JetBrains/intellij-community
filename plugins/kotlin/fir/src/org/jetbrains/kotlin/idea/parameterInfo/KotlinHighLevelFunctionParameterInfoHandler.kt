@@ -35,8 +35,8 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.types.Variance
-import org.jetbrains.kotlin.utils.checkWithAttachment
 import java.awt.Color
+import kotlin.math.min
 import kotlin.reflect.KClass
 
 class KotlinHighLevelFunctionParameterInfoHandler :
@@ -388,23 +388,10 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
         if (context.parameterOwner == null || !context.parameterOwner.isValid) return false
         if (!argumentListClass.java.isInstance(context.parameterOwner)) return false
 
-        val currentArgumentIndex = context.currentParameterIndex
-        if (currentArgumentIndex < 0) return false
-
         val callInfo = itemToShow.callInfo ?: return false
+        val currentArgumentIndex = min(context.currentParameterIndex, callInfo.arguments.size)
+        if (currentArgumentIndex < 0) return false
         with(callInfo) {
-            // TODO: This matches FE 1.0 plugin behavior. Consider just returning false here
-            checkWithAttachment(
-                arguments.size >= currentArgumentIndex,
-                lazyMessage = {
-                    "currentArgumentIndex: $currentArgumentIndex has to be not more than number of arguments ${arguments.size}"
-                },
-                attachments = {
-                    it.withPsiAttachment("file.kt", callElement.containingFile)
-                    it.withAttachment("info.txt", itemToShow)
-                }
-            )
-
             var highlightStartOffset = -1
             var highlightEndOffset = -1
             var isDisabledBeforeHighlight = false

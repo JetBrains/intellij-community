@@ -46,15 +46,15 @@ public class AnnotationUtil {
     return findAnnotation(listOwner, set, skipExternal);
   }
 
-  public static @Nullable PsiAnnotation findAnnotation(@Nullable PsiModifierListOwner listOwner, @NotNull Set<String> annotationNames) {
+  public static @Nullable PsiAnnotation findAnnotation(@Nullable PsiModifierListOwner listOwner, @NotNull @Unmodifiable Set<String> annotationNames) {
     return findAnnotation(listOwner, (Collection<String>)annotationNames);
   }
 
-  public static @Nullable PsiAnnotation findAnnotation(@Nullable PsiModifierListOwner listOwner, @NotNull Collection<String> annotationNames) {
+  public static @Nullable PsiAnnotation findAnnotation(@Nullable PsiModifierListOwner listOwner, @NotNull @Unmodifiable Collection<String> annotationNames) {
     return findAnnotation(listOwner, annotationNames, false);
   }
 
-  public static @Nullable PsiAnnotation findAnnotation(@Nullable PsiModifierListOwner listOwner, @NotNull Collection<String> annotationNames, boolean skipExternal) {
+  public static @Nullable PsiAnnotation findAnnotation(@Nullable PsiModifierListOwner listOwner, @NotNull @Unmodifiable Collection<String> annotationNames, boolean skipExternal) {
     if (listOwner == null) return null;
     List<PsiAnnotation> result = findAllAnnotations(listOwner, annotationNames, skipExternal);
     return result.isEmpty() ? null : result.get(0);
@@ -71,7 +71,7 @@ public class AnnotationUtil {
    * @return all annotations of {@code listOwner}, including repeatable annotation
    * and annotations from several source roots, having FQ names from {@code annotationNames}.
    */
-  public static @NotNull List<PsiAnnotation> findAllAnnotations(@NotNull PsiModifierListOwner listOwner, @NotNull Collection<String> annotationNames,
+  public static @NotNull List<PsiAnnotation> findAllAnnotations(@NotNull PsiModifierListOwner listOwner, @NotNull @Unmodifiable Collection<String> annotationNames,
                                                        boolean skipExternal) {
     List<PsiAnnotation> ownAnnotations = findOwnAnnotations(listOwner, annotationNames);
     List<PsiAnnotation> nonCodeAnnotations = skipExternal ? null : findNonCodeAnnotations(listOwner, annotationNames);
@@ -146,7 +146,7 @@ public class AnnotationUtil {
     Key.create("NON_CODE_ANNOTATIONS");
 
   private static @Nullable List<PsiAnnotation> findNonCodeAnnotations(@NotNull PsiModifierListOwner element,
-                                                                      @NotNull Collection<String> annotationNames) {
+                                                                      @NotNull @Unmodifiable Collection<String> annotationNames) {
     if (element instanceof PsiLocalVariable) {
       // Non-code annotations for local variables are not supported: don't bother to search them
       return null;
@@ -165,7 +165,7 @@ public class AnnotationUtil {
     return map.get(annotationNames);
   }
 
-  public static PsiAnnotation @NotNull [] findAnnotations(@Nullable PsiModifierListOwner modifierListOwner, @NotNull Collection<String> annotationNames) {
+  public static PsiAnnotation @NotNull [] findAnnotations(@Nullable PsiModifierListOwner modifierListOwner, @NotNull @Unmodifiable Collection<String> annotationNames) {
     if (modifierListOwner == null) return PsiAnnotation.EMPTY_ARRAY;
     final PsiModifierList modifierList = modifierListOwner.getModifierList();
     if (modifierList == null) return PsiAnnotation.EMPTY_ARRAY;
@@ -181,7 +181,7 @@ public class AnnotationUtil {
     return result == null ? PsiAnnotation.EMPTY_ARRAY : result.toArray(PsiAnnotation.EMPTY_ARRAY);
   }
 
-  public static @NotNull <T extends PsiModifierListOwner> List<T> getSuperAnnotationOwners(@NotNull T element) {
+  public static @NotNull @Unmodifiable <T extends PsiModifierListOwner> List<T> getSuperAnnotationOwners(@NotNull T element) {
     PsiModifierListOwner listOwner = AnnotationCacheOwnerNormalizer.normalize(element);
     return CachedValuesManager.getCachedValue(listOwner, () -> {
       Set<PsiModifierListOwner> result = new LinkedHashSet<>();
@@ -212,12 +212,12 @@ public class AnnotationUtil {
     });
   }
 
-  public static @Nullable PsiAnnotation findAnnotationInHierarchy(final @NotNull PsiModifierListOwner listOwner, @NotNull Set<String> annotationNames) {
+  public static @Nullable PsiAnnotation findAnnotationInHierarchy(final @NotNull PsiModifierListOwner listOwner, @NotNull @Unmodifiable Set<String> annotationNames) {
     return findAnnotationInHierarchy(listOwner, annotationNames, false);
   }
 
   public static @Nullable PsiAnnotation findAnnotationInHierarchy(final @NotNull PsiModifierListOwner listOwner,
-                                                                  @NotNull Set<String> annotationNames, boolean skipExternal) {
+                                                                  @NotNull @Unmodifiable Set<String> annotationNames, boolean skipExternal) {
     AnnotationAndOwner result = findAnnotationAndOwnerInHierarchy(listOwner, annotationNames, skipExternal);
     return result == null ? null : result.annotation;
   }
@@ -232,9 +232,9 @@ public class AnnotationUtil {
     }
   }
 
-  static @Nullable AnnotationAndOwner findAnnotationAndOwnerInHierarchy(@NotNull PsiModifierListOwner listOwner,
-                                                                        @NotNull Set<String> annotationNames,
-                                                                        boolean skipExternal) {
+  private static @Nullable AnnotationAndOwner findAnnotationAndOwnerInHierarchy(@NotNull PsiModifierListOwner listOwner,
+                                                                                @NotNull @Unmodifiable Set<String> annotationNames,
+                                                                                boolean skipExternal) {
     PsiAnnotation directAnnotation = findAnnotation(listOwner, annotationNames, skipExternal);
     if (directAnnotation != null) return new AnnotationAndOwner(listOwner, directAnnotation);
 
@@ -298,7 +298,7 @@ public class AnnotationUtil {
   @Target({ElementType.PARAMETER, ElementType.METHOD})
   private @interface Flags { }
 
-  public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner, @NotNull Collection<String> annotations, @Flags int flags) {
+  public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner, @NotNull @Unmodifiable Collection<String> annotations, @Flags int flags) {
     return ContainerUtil.exists(annotations, annotation -> isAnnotated(listOwner, annotation, flags, null));
   }
 
@@ -401,7 +401,7 @@ public class AnnotationUtil {
    * @return {@code true} if annotated of at least one annotation from the annotations list
    */
   @Contract("null,_ -> false")
-  public static boolean checkAnnotatedUsingPatterns(@Nullable PsiModifierListOwner owner, @NotNull Collection<String> annotations) {
+  public static boolean checkAnnotatedUsingPatterns(@Nullable PsiModifierListOwner owner, @NotNull @Unmodifiable Collection<String> annotations) {
     final PsiModifierList modList;
     if (owner == null || (modList = owner.getModifierList()) == null) return false;
 
@@ -629,7 +629,7 @@ public class AnnotationUtil {
     return true;
   }
 
-  private static boolean fillValueMap(@NotNull PsiAnnotationParameterList parameterList, @NotNull Map<String, PsiAnnotationMemberValue> valueMap) {
+  private static boolean fillValueMap(@NotNull PsiAnnotationParameterList parameterList, @NotNull Map<? super String, ? super PsiAnnotationMemberValue> valueMap) {
     final PsiNameValuePair[] attributes1 = parameterList.getAttributes();
     for (PsiNameValuePair attribute : attributes1) {
       final PsiReference reference = attribute.getReference();
@@ -688,7 +688,7 @@ public class AnnotationUtil {
     return true;
   }
 
-  private static @NotNull Map<String, PsiAnnotation> buildAnnotationMap(PsiAnnotation @NotNull [] annotations) {
+  private static @NotNull @Unmodifiable Map<String, PsiAnnotation> buildAnnotationMap(PsiAnnotation @NotNull [] annotations) {
     final Map<String, PsiAnnotation> map = new HashMap<>();
     for (PsiAnnotation annotation : annotations) {
       map.put(annotation.getQualifiedName(), annotation);

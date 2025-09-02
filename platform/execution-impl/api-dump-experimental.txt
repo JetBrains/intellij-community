@@ -25,4 +25,5 @@ f:com.intellij.execution.util.EnvFilesUtilKt
 com.intellij.terminal.ui.TerminalWidget
 - com.intellij.openapi.ui.ComponentContainer
 - *a:getTerminalSizeInitializedFuture():java.util.concurrent.CompletableFuture
+- *:getText():java.lang.CharSequence
 - *:isCommandRunning():Z

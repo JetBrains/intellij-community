@@ -185,6 +185,11 @@ public class KotlinReferenceTypeHintsProviderTestGenerated extends AbstractKotli
         runTest("testData/codeInsight/hints/types/NestedClassWithoutImport.kt");
     }
 
+    @TestMetadata("ParameterNamesInFunctionTypes.kt")
+    public void testParameterNamesInFunctionTypes() throws Exception {
+        runTest("testData/codeInsight/hints/types/ParameterNamesInFunctionTypes.kt");
+    }
+
     @TestMetadata("ParameterType.kt")
     public void testParameterType() throws Exception {
         runTest("testData/codeInsight/hints/types/ParameterType.kt");

@@ -11,6 +11,7 @@ import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -27,7 +28,7 @@ public interface ClientHintManager {
     return ApplicationManager.getApplication().getService(ClientHintManager.class);
   }
 
-  static @NotNull List<ClientHintManager> getAllInstances() {
+  static @NotNull @Unmodifiable List<ClientHintManager> getAllInstances() {
     return ApplicationManager.getApplication().getServices(ClientHintManager.class, ClientKind.ALL);
   }
 

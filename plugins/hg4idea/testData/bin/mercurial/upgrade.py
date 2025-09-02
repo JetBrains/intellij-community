@@ -275,7 +275,7 @@ def upgraderepo(
             dstrepo = hg.repository(repoui, path=tmppath, create=True)
 
             with dstrepo.wlock(), dstrepo.lock():
-                backuppath = upgrade_engine.upgrade(
+                backuppath = upgrade_engine.toEelApi(
                     ui, repo, dstrepo, upgrade_op
                 )
 

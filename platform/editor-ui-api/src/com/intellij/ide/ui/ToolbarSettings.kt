@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui
 
 import com.intellij.openapi.application.ApplicationManager
@@ -6,6 +6,7 @@ import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.ReportValue
 import com.intellij.openapi.components.service
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.xmlb.annotations.OptionTag
 import org.jetbrains.annotations.ApiStatus
 
@@ -21,6 +22,7 @@ interface ToolbarSettings : PersistentStateComponent<ExperimentalToolbarSettings
     const val ROLLBACK_ACTION_ID: String = "RunToolbarRollbackToPrevious"
 
     @JvmStatic
+    @RequiresBlockingContext
     fun getInstance(): ToolbarSettings = ApplicationManager.getApplication().service<ToolbarSettings>()
   }
 

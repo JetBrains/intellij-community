@@ -21,7 +21,7 @@ import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfLongType;
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.lang.java.parser.BasicExpressionParser;
+import com.intellij.lang.java.parser.JavaBinaryOperations;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
@@ -144,7 +144,7 @@ public final class IntegerMultiplicationImplicitCastToLongInspection extends Bas
   }
 
   private static boolean isShiftToken(IElementType tokenType) {
-    return BasicExpressionParser.SHIFT_OPS.contains(tokenType);
+    return JavaBinaryOperations.SHIFT_OPS.contains(tokenType);
   }
 
   private static boolean isShiftEqToken(@NotNull IElementType tokenType) {

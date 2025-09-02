@@ -8,7 +8,7 @@ import com.intellij.openapi.util.getOrCreateUserData
 import com.intellij.openapi.util.registry.Registry
 import com.sun.jdi.ClassType
 
-private val HELPER_CLASS_CACHE_KEY = Key.create<HelperClassCache?>("HELPER_CLASS_CACHE_KEY")
+private val HELPER_CLASS_CACHE_KEY = Key.create<HelperClassCache>("HELPER_CLASS_CACHE_KEY")
 
 private class JdiHelperClassLoaderImpl : JdiHelperClassLoader {
   @Throws(EvaluateException::class)

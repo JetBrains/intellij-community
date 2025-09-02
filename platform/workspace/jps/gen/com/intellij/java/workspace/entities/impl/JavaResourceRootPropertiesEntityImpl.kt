@@ -12,7 +12,7 @@ import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
-import com.intellij.platform.workspace.storage.annotations.Child
+import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
@@ -25,15 +25,15 @@ import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStor
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(6)
+@GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class JavaResourceRootPropertiesEntityImpl(private val dataSource: JavaResourceRootPropertiesEntityData) : JavaResourceRootPropertiesEntity, WorkspaceEntityBase(
-  dataSource) {
+internal class JavaResourceRootPropertiesEntityImpl(private val dataSource: JavaResourceRootPropertiesEntityData) :
+  JavaResourceRootPropertiesEntity, WorkspaceEntityBase(dataSource) {
 
   private companion object {
-    internal val SOURCEROOT_CONNECTION_ID: ConnectionId = ConnectionId.create(SourceRootEntity::class.java,
-                                                                              JavaResourceRootPropertiesEntity::class.java,
-                                                                              ConnectionId.ConnectionType.ONE_TO_MANY, false)
+    internal val SOURCEROOT_CONNECTION_ID: ConnectionId = ConnectionId.create(
+      SourceRootEntity::class.java, JavaResourceRootPropertiesEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false
+    )
 
     private val connections = listOf<ConnectionId>(
       SOURCEROOT_CONNECTION_ID,
@@ -66,8 +66,9 @@ internal class JavaResourceRootPropertiesEntityImpl(private val dataSource: Java
   }
 
 
-  internal class Builder(result: JavaResourceRootPropertiesEntityData?) : ModifiableWorkspaceEntityBase<JavaResourceRootPropertiesEntity, JavaResourceRootPropertiesEntityData>(
-    result), JavaResourceRootPropertiesEntity.Builder {
+  internal class Builder(result: JavaResourceRootPropertiesEntityData?) :
+    ModifiableWorkspaceEntityBase<JavaResourceRootPropertiesEntity, JavaResourceRootPropertiesEntityData>(result),
+    JavaResourceRootPropertiesEntity.Builder {
     internal constructor() : this(JavaResourceRootPropertiesEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -224,7 +225,8 @@ internal class JavaResourceRootPropertiesEntityData : WorkspaceEntityData<JavaRe
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.java.workspace.entities.JavaResourceRootPropertiesEntity") as EntityMetadata
+      "com.intellij.java.workspace.entities.JavaResourceRootPropertiesEntity"
+    ) as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

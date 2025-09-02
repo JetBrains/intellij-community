@@ -16,7 +16,6 @@ import com.jetbrains.python.statistics.PyPackagesUsageCollector
 import org.jetbrains.annotations.Nls
 
 internal open class InstallPackageQuickFix(open val packageName: String) : LocalQuickFix {
-
   override fun getFamilyName(): @Nls String = PyBundle.message("python.unresolved.reference.inspection.install.package", packageName)
 
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
@@ -27,14 +26,11 @@ internal open class InstallPackageQuickFix(open val packageName: String) : Local
       val sdk = PythonSdkUtil.findPythonSdk(element) ?: return
 
       PyInstallRequirementsFix(
-        familyName, module, sdk,
+        familyName, sdk,
         listOf(pyRequirement(packageName)),
         listener = object : RunningPackagingTasksListener(module) {
           override fun finished(exceptions: List<ExecutionException>) {
-            super.finished(exceptions)
-            if (exceptions.isEmpty()) {
-              onSuccess(descriptor)
-            }
+            onSuccess(descriptor)
           }
         }
       ).applyFix(module.project, descriptor)

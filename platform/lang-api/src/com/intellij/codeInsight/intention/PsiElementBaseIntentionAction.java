@@ -20,9 +20,9 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class PsiElementBaseIntentionAction extends BaseIntentionAction {
   @Override
-  public final void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (editor == null || !checkFile(file)) return;
-    final PsiElement element = getElement(editor, file);
+  public final void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
+    if (editor == null || !checkFile(psiFile)) return;
+    final PsiElement element = getElement(editor, psiFile);
     if (element != null) {
       invoke(project, editor, element);
     }
@@ -46,9 +46,9 @@ public abstract class PsiElementBaseIntentionAction extends BaseIntentionAction 
   public abstract void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException;
 
   @Override
-  public final boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!checkFile(file)) return false;
-    final PsiElement element = editor == null ? null : getElement(editor, file);
+  public final boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    if (!checkFile(psiFile)) return false;
+    final PsiElement element = editor == null ? null : getElement(editor, psiFile);
     return element != null && isAvailable(project, editor, element);
   }
 

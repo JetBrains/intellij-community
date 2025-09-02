@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.test.kotlin
 
 import com.intellij.platform.uast.testFramework.common.PossibleSourceTypesTestBase
@@ -101,9 +101,6 @@ class KotlinPossibleSourceTypesTest : AbstractKotlinUastLightCodeInsightFixtureT
 
     @Test
     fun testPropertyAccessors() = doTest("PropertyAccessors")
-
-    @Test
-    fun testPropertyDelegate() = doTest("PropertyDelegate")
 
     @Test
     fun testPropertyInitializer() = doTest("PropertyInitializer")

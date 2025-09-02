@@ -26,7 +26,7 @@ import com.intellij.ide.IdleTracker;
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.ide.actions.RevealFileAction;
 import com.intellij.ide.file.BatchFileChangeListener;
-import com.intellij.ide.impl.TrustedProjects;
+import com.intellij.ide.trustedProjects.TrustedProjects;
 import com.intellij.l10n.LocalizationUtil;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
@@ -122,8 +122,8 @@ import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.incremental.storage.ProjectStamps;
 import org.jetbrains.jps.javac.ExternalJavacProcess;
-import org.jetbrains.jps.javac.Iterators;
 import org.jetbrains.jps.model.java.compiler.JavaCompilers;
+import org.jetbrains.jps.util.Iterators;
 import org.jvnet.winp.Priority;
 import org.jvnet.winp.WinProcess;
 
@@ -153,8 +153,7 @@ import java.util.stream.Collectors;
 import static com.intellij.ide.impl.ProjectUtil.getProjectForComponent;
 import static com.intellij.openapi.diagnostic.InMemoryHandler.IN_MEMORY_LOGGER_ADVANCED_SETTINGS_NAME;
 import static com.intellij.platform.eel.provider.EelNioBridgeServiceKt.asEelPath;
-import static com.intellij.platform.eel.provider.EelProviderUtil.upgradeBlocking;
-import static com.intellij.platform.eel.provider.utils.EelPathUtils.transferContentsIfNonLocal;
+import static com.intellij.platform.eel.provider.utils.EelPathUtils.transferLocalContentToRemote;
 import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
 
 public final class BuildManager implements Disposable {
@@ -742,7 +741,7 @@ public final class BuildManager implements Disposable {
       return false;
     }
     final CompilerWorkspaceConfiguration config = CompilerWorkspaceConfiguration.getInstance(project);
-    if (!config.MAKE_PROJECT_ON_SAVE || !TrustedProjects.isTrusted(project)) {
+    if (!config.MAKE_PROJECT_ON_SAVE || !TrustedProjects.isProjectTrusted(project)) {
       return false;
     }
     return config.allowAutoMakeWhileRunningApplication() || !hasRunningProcess(project);
@@ -921,8 +920,7 @@ public final class BuildManager implements Disposable {
         String optionsPath = PathManager.getOptionsPath();
 
         if (canUseEel() && !EelPathUtils.isProjectLocal(project)) {
-          final var eel = upgradeBlocking(eelDescriptor);
-          optionsPath = asEelPath(transferContentsIfNonLocal(eel, Path.of(optionsPath), null)).toString();
+          optionsPath = asEelPath(transferLocalContentToRemote(Path.of(optionsPath), new EelPathUtils.TransferTarget.Temporary(eelDescriptor))).toString();
         }
         else {
           optionsPath = pathMapper.apply(optionsPath);
@@ -1461,7 +1459,7 @@ public final class BuildManager implements Disposable {
 
       cmdLine.addParameter("-Dintellij.jps.use.workspace.model=true");
       WorkspaceModelCache cache = WorkspaceModelCache.getInstance(project);
-      GlobalWorkspaceModelCache globalCache = GlobalWorkspaceModelCache.getInstance();
+      GlobalWorkspaceModelCache globalCache = GlobalWorkspaceModelCache.Companion.getInstance();
       if (cache != null && globalCache != null) {
         //todo ensure that caches are up-to-date or use a different way to pass serialized workspace model to the build process
         cmdLine.addParameter("-Djps.workspace.storage.project.cache.path=" + cache.getCacheFile());
@@ -1763,6 +1761,9 @@ public final class BuildManager implements Disposable {
     if (SystemInfo.isUnix && lowPriority) {
       cmdLine.setUnixProcessPriority(10);
     }
+    if (SystemInfo.isLinux && Registry.is("compiler.process.new.session", true)) {
+      cmdLine.setStartNewSession();
+    }
 
     try {
       ApplicationManager.getApplication().getMessageBus().syncPublisher(BuildManagerListener.TOPIC).beforeBuildProcessStarted(project, sessionId);
@@ -1782,7 +1783,7 @@ public final class BuildManager implements Disposable {
         return BaseOutputReader.Options.BLOCKING;
       }
     };
-    processHandler.addProcessListener(new ProcessAdapter() {
+    processHandler.addProcessListener(new ProcessListener() {
       @Override
       public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
         // re-translate builder's output to idea.log

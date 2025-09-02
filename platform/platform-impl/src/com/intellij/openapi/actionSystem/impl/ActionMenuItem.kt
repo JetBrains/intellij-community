@@ -25,7 +25,6 @@ import com.intellij.ui.icons.getMenuBarIcon
 import com.intellij.ui.mac.screenmenu.Menu
 import com.intellij.ui.mac.screenmenu.MenuItem
 import com.intellij.ui.plaf.beg.BegMenuItemUI
-import com.intellij.ui.popup.KeepingPopupOpenAction
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.LafIconLookup.getDisabledIcon
 import com.intellij.util.ui.LafIconLookup.getIcon
@@ -66,7 +65,7 @@ class ActionMenuItem internal constructor(action: AnAction,
   var keepPopupOnPerform: KeepPopupOnPerform = KeepPopupOnPerform.Never
     private set
   val secondaryIcon: Icon?
-    get() = if (UISettings.getInstance().showIconsInMenus) presentation.getClientProperty(ActionMenu.SECONDARY_ICON) else null
+    get() = if (UISettings.getInstance().showIconsInMenus) presentation.getClientProperty(ActionUtil.SECONDARY_ICON) else null
 
   init {
     addActionListener(ActionListener { e -> performAction(e.modifiers) })
@@ -126,14 +125,12 @@ class ActionMenuItem internal constructor(action: AnAction,
     displayedMnemonicIndex = presentation.getDisplayedMnemonicIndex()
     updateIcon(presentation)
     description = presentation.description
-    keepPopupOnPerform =
-      if (actionRef.getAction() is KeepingPopupOpenAction) KeepPopupOnPerform.Always
-      else presentation.keepPopupOnPerform
+    keepPopupOnPerform = presentation.keepPopupOnPerform
     if (screenMenuItemPeer != null) {
       screenMenuItemPeer.setLabel(text, accelerator)
       screenMenuItemPeer.setEnabled(isEnabled)
     }
-    val shortcutSuffix = presentation.getClientProperty(ActionMenu.KEYBOARD_SHORTCUT_SUFFIX)
+    val shortcutSuffix = presentation.getClientProperty(ActionUtil.KEYBOARD_SHORTCUT_SUFFIX)
     val shortcut = defaultFirstShortcutText
     firstShortcutTextFromPresentation = if (shortcut.isNotEmpty() && !shortcutSuffix.isNullOrEmpty()) {
       shortcut + shortcutSuffix
@@ -198,7 +195,7 @@ class ActionMenuItem internal constructor(action: AnAction,
         state = isToggled
         screenMenuItemPeer?.setState(isToggled)
       }
-      val adjustedIcon = adjustIcon(presentation.icon)
+      val adjustedIcon = adjustIcon(presentation.icon, presentation)
       if (adjustedIcon != null) {
         setIcon(adjustedIcon)
       }
@@ -224,16 +221,16 @@ class ActionMenuItem internal constructor(action: AnAction,
       if (selected == null) {
         selected = icon
       }
-      setIcon(adjustIcon(if (presentation.isEnabled) icon else disabled))
-      setSelectedIcon(adjustIcon(selected))
-      setDisabledIcon(adjustIcon(disabled))
+      setIcon(adjustIcon(if (presentation.isEnabled) icon else disabled, presentation))
+      setSelectedIcon(adjustIcon(selected, presentation))
+      setDisabledIcon(adjustIcon(disabled, presentation))
     }
   }
 
-  private fun adjustIcon(icon: Icon?): Icon? {
+  private fun adjustIcon(icon: Icon?, presentation: Presentation): Icon? {
     val isMainMenu = ActionPlaces.MAIN_MENU == place
     return when {
-      isMainMenu && isShowNoIcons(actionRef.getAction()) -> null
+      isMainMenu && isShowNoIcons(actionRef.getAction(), presentation) -> null
       !isAligned || !isAlignedInGroup -> return icon
       isMainMenu && icon == null && SystemInfo.isMacSystemMenu -> EMPTY_MENU_ACTION_ICON
       else -> icon
@@ -269,9 +266,7 @@ class ActionMenuItem internal constructor(action: AnAction,
         context, presentation.clone(), place, uiKind,
         currentEvent as? InputEvent, modifiers,
         ActionManager.getInstance())
-      if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
-        ActionUtil.performActionDumbAwareWithCallbacks(action, event)
-      }
+      ActionUtil.performAction(action, event)
     }
   }
 }

@@ -30,7 +30,7 @@ async def coro():
     else:
         print('end')
 
-    async for i in <warning descr="Expected type 'collections.AsyncIterable', got 'list' instead">[]</warning>:
+    async for i in <warning descr="Expected type 'collections.AsyncIterable', got 'list[Any]' instead">[]</warning>:
         pass
 
 

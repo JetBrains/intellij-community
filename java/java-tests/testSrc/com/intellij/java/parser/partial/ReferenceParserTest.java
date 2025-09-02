@@ -2,8 +2,8 @@
 package com.intellij.java.parser.partial;
 
 import com.intellij.java.parser.JavaParsingTestConfigurator;
-import com.intellij.lang.java.parser.BasicReferenceParser;
-import com.intellij.lang.java.parser.JavaParser;
+import com.intellij.java.syntax.parser.JavaParser;
+import com.intellij.java.syntax.parser.ReferenceParser;
 
 public class ReferenceParserTest extends AbstractBasicReferenceParserTest {
   public ReferenceParserTest() {
@@ -12,17 +12,17 @@ public class ReferenceParserTest extends AbstractBasicReferenceParserTest {
 
   @Override
   protected void doRefParserTest(String text, boolean incomplete) {
-    doParserTest(text, builder -> JavaParser.INSTANCE.getReferenceParser().parseJavaCodeReference(builder, incomplete, false, false, false));
+    doParserTest(text, (builder, languageLevel) -> new JavaParser(languageLevel).getReferenceParser().parseJavaCodeReference(builder, incomplete, false, false, false));
   }
 
   @Override
   protected void doTypeParserTest(String text) {
-    int flags = BasicReferenceParser.ELLIPSIS | BasicReferenceParser.DIAMONDS | BasicReferenceParser.DISJUNCTIONS;
-    doParserTest(text, builder -> JavaParser.INSTANCE.getReferenceParser().parseType(builder, flags));
+    int flags = ReferenceParser.ELLIPSIS | ReferenceParser.DIAMONDS | ReferenceParser.DISJUNCTIONS;
+    doParserTest(text, (builder, languageLevel) -> new JavaParser(languageLevel).getReferenceParser().parseType(builder, flags));
   }
 
   @Override
   protected void doTypeParamsParserTest(String text) {
-    doParserTest(text, builder -> JavaParser.INSTANCE.getReferenceParser().parseTypeParameters(builder));
+    doParserTest(text, (builder, languageLevel) -> new JavaParser(languageLevel).getReferenceParser().parseTypeParameters(builder));
   }
 }

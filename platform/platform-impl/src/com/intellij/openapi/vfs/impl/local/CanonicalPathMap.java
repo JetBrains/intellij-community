@@ -11,6 +11,7 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.File;
 import java.util.*;
@@ -49,7 +50,8 @@ public final class CanonicalPathMap {
     myPathMappings = MultiMap.createConcurrentSet();
   }
 
-  @NotNull Pair<List<String>, List<String>> getCanonicalWatchRoots() {
+  @VisibleForTesting
+  public @NotNull Pair<List<String>, List<String>> getCanonicalWatchRoots() {
     initializeMappings();
 
     var canonicalPathMappings = new ConcurrentHashMap<String, String>();
@@ -109,7 +111,8 @@ public final class CanonicalPathMap {
     myInitialPathMappings = null;
   }
 
-  void addMapping(@NotNull Collection<? extends Pair<String, String>> mapping) {
+  @VisibleForTesting
+  public void addMapping(@NotNull Collection<? extends Pair<String, String>> mapping) {
     for (var pair : mapping) {
       var from = pair.first;
       var to = pair.second;
@@ -147,7 +150,8 @@ public final class CanonicalPathMap {
    * For recursive roots, if the path given to us is already the parent of the actual dirty path, we need to compare the path to the parent
    * of the recursive root because if the root itself was changed, we need to know about it.
    */
-  @NotNull Collection<String> mapToOriginalWatchRoots(@NotNull String reportedPath, boolean isExact) {
+  @VisibleForTesting
+  public @NotNull Collection<String> mapToOriginalWatchRoots(@NotNull String reportedPath, boolean isExact) {
     if (myOptimizedFlatWatchRoots.isEmpty() && myOptimizedRecursiveWatchRoots.isEmpty()) return Collections.emptyList();
 
     var affectedPaths = applyMapping(reportedPath);

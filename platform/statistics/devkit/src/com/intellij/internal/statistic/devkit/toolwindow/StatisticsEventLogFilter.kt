@@ -27,7 +27,6 @@ internal class StatisticsEventLogFilter(private val file: VirtualFile,
 
   companion object {
     val LOG_PATTERN: Pattern = Pattern.compile(
-      "\\[\"(?<groupId>.*)\", v\\d+]: \"(?<event>.*)\" (?<count>\\(count=\\d+\\))?\\s*(?<eventData>.*)")
+      "\\[\"(?<groupId>[^\"]+)\", v\\d+]: \"(?<event>[^\"]+)\"(?<count> \\(count=\\d+\\))?(?<eventData>(?s).*)")
   }
 }
-

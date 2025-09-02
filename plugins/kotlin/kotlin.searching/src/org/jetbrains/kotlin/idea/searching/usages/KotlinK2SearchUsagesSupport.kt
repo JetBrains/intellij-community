@@ -54,7 +54,7 @@ internal class KotlinK2SearchUsagesSupport(private val project: Project) : Kotli
                 //`org.jetbrains.kotlin.analysis.api.fir.FirDeserializedDeclarationSourceProvider`
                 val invokeSymbol = psiReference.resolveToSymbol() ?: return false
                 if (invokeSymbol is KaNamedFunctionSymbol && invokeSymbol.name == OperatorNameConventions.INVOKE) {
-                    val searchTargetContainerSymbol = searchTarget.symbol as? KaClassSymbol ?: return false
+                    val searchTargetContainerSymbol = searchTarget.symbol
 
                     fun KaClassSymbol.isInheritorOrSelf(
                         superSymbol: KaClassSymbol?
@@ -163,7 +163,7 @@ internal class KotlinK2SearchUsagesSupport(private val project: Project) : Kotli
                 } else if (candidateContainer != null && container != null) { //instance functions should be from the same class/function or same hierarchy
                     candidateContainer == container || container is KaClassSymbol && candidateContainer is KaClassSymbol && container.isSubClassOf(
                         candidateContainer
-                    )
+                    ) && !declarationSymbol.allOverriddenSymbols.contains(candidateSymbol)
                 } else false
             }
         }

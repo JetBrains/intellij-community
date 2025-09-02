@@ -27,7 +27,7 @@ internal object AddReturnToUnusedLastExpressionInFunctionFixFactory : KotlinSing
         val functionReturnType = function?.resolveToDescriptorIfAny()?.returnType?.takeIf { !it.isError } ?: return null
 
         if (!expressionType.isSubtypeOf(functionReturnType)) return null
-        return AddReturnToUnusedLastExpressionInFunctionFix(expression)
+        return AddReturnToUnusedLastExpressionInFunctionFix(expression).asIntention()
     }
 }
 

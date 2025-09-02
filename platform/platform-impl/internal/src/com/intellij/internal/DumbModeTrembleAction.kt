@@ -13,15 +13,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.TimeoutUtil
-import org.jetbrains.annotations.ApiStatus
 import java.util.*
-import kotlin.collections.map
 import kotlin.random.Random
-import kotlin.text.split
-import kotlin.text.toLong
 
-@ApiStatus.Internal
-class DumbModeTrembleAction : DumbAwareAction() {
+internal class DumbModeTrembleAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
 
@@ -34,7 +29,7 @@ class DumbModeTrembleAction : DumbAwareAction() {
     }
   }
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
     val project = e.project
@@ -49,90 +44,89 @@ class DumbModeTrembleAction : DumbAwareAction() {
     else
       InternalActionsBundle.message("enable.tremble.dumb.mode")
   }
+}
 
-  companion object {
-    private const val SETTING_REGISTRY_KEY = "action.dumb.tremble"
-    private const val DEFAULT_SETTINGS_STRING = "800_2000_200_400"
-    private val DEFAULT_SETTINGS = parseSettings(DEFAULT_SETTINGS_STRING)
+private const val SETTING_REGISTRY_KEY = "action.dumb.tremble"
+private const val DEFAULT_SETTINGS_STRING = "800_2000_200_400"
+private val DEFAULT_SETTINGS = parseSettings(DEFAULT_SETTINGS_STRING)
 
-    private val LOG = logger<DumbModeTrembleAction>()
-    private val DUMB_TREMBLE = Key.create<Boolean>("DumbModeTrembleAction")
+private val LOG = logger<DumbModeTrembleAction>()
+private val DUMB_TREMBLE = Key.create<Boolean>("DumbModeTrembleAction")
 
-    private fun dumbModeTremble(project: Project) {
-      val settings = readSettings()
+private fun dumbModeTremble(project: Project) {
+  val settings = readSettings()
 
-      ApplicationManager.getApplication().executeOnPooledThread {
-        LOG.info("Dumb Mode Tremble enabled")
-        while (isTrembleDumb(project)) {
-          TimeoutUtil.sleep(Random.nextLong(settings.disableMinMillis, settings.disableMaxMillis))
+  ApplicationManager.getApplication().executeOnPooledThread {
+    LOG.info("Dumb Mode Tremble enabled")
+    while (isTrembleDumb(project)) {
+      TimeoutUtil.sleep(Random.nextLong(settings.disableMinMillis, settings.disableMaxMillis))
 
-          DumbService.getInstance(project).queueTask(object : DumbModeTask() {
-            override fun performInDumbMode(indicator: ProgressIndicator) {
-              TimeoutUtil.sleep(Random.nextLong(settings.enableMinMillis, settings.enableMaxMillis))
-              indicator.checkCanceled()
-            }
-          })
+      DumbService.getInstance(project).queueTask(object : DumbModeTask() {
+        override fun performInDumbMode(indicator: ProgressIndicator) {
+          TimeoutUtil.sleep(Random.nextLong(settings.enableMinMillis, settings.enableMaxMillis))
+          indicator.checkCanceled()
         }
-        LOG.info("Dumb Mode Tremble disabled")
-      }
+      })
     }
-
-    private data class Settings(
-      val disableMinMillis: Long,
-      val disableMaxMillis: Long,
-      val enableMinMillis: Long,
-      val enableMaxMillis: Long
-    )
-
-    private fun parseSettings(settingsString: String): Settings {
-      val numberStrings = settingsString.split("_")
-      if (numberStrings.size != 4) {
-        LOG.error("Bad $SETTING_REGISTRY_KEY value: `$numberStrings`")
-        return DEFAULT_SETTINGS
-      }
-
-      val numbers = try {
-        numberStrings.map { it.toLong() }
-      }
-      catch (_: NumberFormatException) {
-        LOG.error("Can't parse longs in $SETTING_REGISTRY_KEY value: `$numberStrings`")
-        return DEFAULT_SETTINGS
-      }
-
-      val disableMinMillis = numbers[0]
-      val disableMaxMillis = numbers[1]
-      val enableMinMillis = numbers[2]
-      val enableMaxMillis = numbers[3]
-
-      if ((disableMinMillis in 0 until disableMaxMillis) && (enableMinMillis in 0 until enableMaxMillis)) {
-        return Settings(
-          disableMinMillis,
-          disableMaxMillis,
-          enableMinMillis,
-          enableMaxMillis
-        )
-      }
-
-      return DEFAULT_SETTINGS
-    }
-
-    private fun readSettings(): Settings {
-      val settingsString = try {
-        Registry.stringValue(SETTING_REGISTRY_KEY)
-      }
-      catch (_: MissingResourceException) {
-        return DEFAULT_SETTINGS
-      }
-
-      return parseSettings(settingsString)
-    }
-
-    private fun setTrembleDumb(project: Project, value: Boolean) {
-      project.putUserData(DUMB_TREMBLE, value)
-    }
-
-    private fun isTrembleDumb(project: Project): Boolean {
-      return project.getUserData(DUMB_TREMBLE) === java.lang.Boolean.TRUE
-    }
+    LOG.info("Dumb Mode Tremble disabled")
   }
+}
+
+private data class Settings(
+  val disableMinMillis: Long,
+  val disableMaxMillis: Long,
+  val enableMinMillis: Long,
+  val enableMaxMillis: Long
+)
+
+private fun parseSettings(settingsString: String): Settings {
+  val numberStrings = settingsString.split("_")
+  if (numberStrings.size != 4) {
+    LOG.error("Bad $SETTING_REGISTRY_KEY value: `$numberStrings`")
+    return DEFAULT_SETTINGS
+  }
+
+  val numbers = try {
+    numberStrings.map { it.toLong() }
+  }
+  catch (_: NumberFormatException) {
+    LOG.error("Can't parse longs in $SETTING_REGISTRY_KEY value: `$numberStrings`")
+    return DEFAULT_SETTINGS
+  }
+
+  val disableMinMillis = numbers[0]
+  val disableMaxMillis = numbers[1]
+  val enableMinMillis = numbers[2]
+  val enableMaxMillis = numbers[3]
+
+  if ((disableMinMillis in 0 until disableMaxMillis) && (enableMinMillis in 0 until enableMaxMillis)) {
+    return Settings(
+      disableMinMillis,
+      disableMaxMillis,
+      enableMinMillis,
+      enableMaxMillis
+    )
+  }
+
+  return DEFAULT_SETTINGS
+}
+
+private fun readSettings(): Settings {
+  val settingsString = try {
+    Registry.stringValue(SETTING_REGISTRY_KEY)
+  }
+  catch (_: MissingResourceException) {
+    return DEFAULT_SETTINGS
+  }
+
+  return parseSettings(settingsString)
+}
+
+private fun setTrembleDumb(project: Project, value: Boolean) {
+  project.putUserData(DUMB_TREMBLE, value)
+}
+
+private fun isTrembleDumb(project: Project): Boolean {
+  @Suppress("FORBIDDEN_IDENTITY_EQUALS_WARNING", "SSBasedInspection")
+  return project.getUserData(DUMB_TREMBLE) === java.lang.Boolean.TRUE
 }

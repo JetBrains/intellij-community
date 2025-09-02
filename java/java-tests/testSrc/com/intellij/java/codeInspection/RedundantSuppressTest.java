@@ -22,6 +22,7 @@ import com.siyeh.ig.inheritance.RefusedBequestInspection;
 import com.siyeh.ig.internationalization.UnnecessaryUnicodeEscapeInspection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Arrays;
 import java.util.List;
@@ -46,7 +47,7 @@ public class RedundantSuppressTest extends JavaInspectionTestCase {
 
     myWrapper = new GlobalInspectionToolWrapper(new RedundantSuppressInspection() {
       @Override
-      protected @NotNull List<InspectionToolWrapper<?, ?>> getInspectionTools(@NotNull PsiElement psiElement, @NotNull InspectionProfile profile) {
+      protected @NotNull @Unmodifiable List<InspectionToolWrapper<?, ?>> getInspectionTools(@NotNull PsiElement psiElement, @NotNull InspectionProfile profile) {
         return myInspectionToolWrappers;
       }
     });

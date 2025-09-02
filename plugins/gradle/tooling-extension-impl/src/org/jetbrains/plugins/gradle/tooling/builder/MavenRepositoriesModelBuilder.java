@@ -16,6 +16,10 @@ import org.jetbrains.plugins.gradle.tooling.internal.MavenRepositoryModelImpl;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * @deprecated this model builder will be replaced by {@link ProjectRepositoriesModelBuilder}.
+ */
+@Deprecated
 public class MavenRepositoriesModelBuilder implements ModelBuilderService {
   @Override
   public boolean canBuild(String modelName) {

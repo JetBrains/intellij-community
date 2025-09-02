@@ -34,7 +34,7 @@ abstract class CommandProcessor<INCOMING, INCOMING_WITH_SEQ : Any, SUCCESS_RESPO
   }
 
   @ApiStatus.Internal
-  final override fun <RESULT> doSend(message: Request<RESULT>, callback: RequestPromise<SUCCESS_RESPONSE, RESULT>) {
+  override fun <RESULT> doSend(message: Request<RESULT>, callback: RequestPromise<SUCCESS_RESPONSE, RESULT>) {
     messageManager.send(message, callback)
   }
 }
@@ -49,4 +49,8 @@ interface RequestCallback<SUCCESS_RESPONSE> {
   fun onError(error: Throwable)
 
   fun onError(error: String): Unit = onError(createError(error))
+
+  fun onCancel(error: Throwable?): Unit
+
+  fun onCancel(): Unit = onCancel(null)
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.lang.java.JavaLanguage;
@@ -42,6 +42,7 @@ import org.jetbrains.annotations.Unmodifiable;
 import javax.swing.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.Function;
 
 public final class PsiClassImplUtil {
   private static final Logger LOG = Logger.getInstance(PsiClassImplUtil.class);
@@ -284,6 +285,9 @@ public final class PsiClassImplUtil {
     SearchScope searchScope = PsiSearchScopeUtil.USE_SCOPE_KEY.get(file);
     if (searchScope != null) return searchScope;
     PsiClass containingClass = aClass.getContainingClass();
+    if (containingClass instanceof PsiImplicitClass) {
+      return new LocalSearchScope(containingClass);
+    }
     if (aClass.hasModifierProperty(PsiModifier.PUBLIC) ||
         aClass.hasModifierProperty(PsiModifier.PROTECTED)) {
       // If the containing class is not final, it's possible to expose nested class through public subclass of containing class 
@@ -310,6 +314,11 @@ public final class PsiClassImplUtil {
       if (aPackage != null) {
         SearchScope scope = PackageScope.packageScope(aPackage, false);
         scope = scope.intersectWith(maximalUseScope);
+        VirtualFile virtualFile = file.getVirtualFile();
+        if (virtualFile != null && !scope.contains(virtualFile)) {
+          // If the current declaration is in a scratch file, it's not included to package scope, so let's add it
+          scope = scope.union(new LocalSearchScope(file));
+        }
         return scope;
       }
 
@@ -319,17 +328,22 @@ public final class PsiClassImplUtil {
 
   public static boolean isMainOrPremainMethod(@NotNull PsiMethod method) {
     if ("main".equals(method.getName()) && PsiMethodUtil.isMainMethod(method)) {
-      return true;
+      PsiClass psiClass = method.getContainingClass();
+      PsiManager manager = method.getManager();
+      if (psiClass != null && manager != null) {
+        PsiMethod otherMethod = PsiMethodUtil.findMainMethod(psiClass);
+        //can be used not from this class
+        if (otherMethod == null) return true;
+        return manager.areElementsEquivalent(method, otherMethod);
+      }
     }
     String name = method.getName();
-    if (!("main".equals(name) || "premain".equals(name) || "agentmain".equals(name))) return false;
+    if (!("premain".equals(name) || "agentmain".equals(name))) return false;
     if (!PsiTypes.voidType().equals(method.getReturnType())) return false;
 
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(method.getProject());
     MethodSignature signature = method.getSignature(PsiSubstitutor.EMPTY);
     try {
-      MethodSignature main = createSignatureFromText(factory, "void main(String[] args);");
-      if (MethodSignatureUtil.areSignaturesEqual(signature, main)) return true;
       MethodSignature premain = createSignatureFromText(factory, "void premain(String args, java.lang.instrument.Instrumentation i);");
       if (MethodSignatureUtil.areSignaturesEqual(signature, premain)) return true;
       MethodSignature agentmain = createSignatureFromText(factory, "void agentmain(String args, java.lang.instrument.Instrumentation i);");
@@ -468,7 +482,7 @@ public final class PsiClassImplUtil {
                                                     String name,
                                                     @NotNull LanguageLevel languageLevel,
                                                     @NotNull GlobalSearchScope resolveScope) {
-    java.util.function.Function<PsiMember, PsiSubstitutor> finalSubstitutor = new java.util.function.Function<PsiMember, PsiSubstitutor>() {
+    Function<PsiMember, PsiSubstitutor> finalSubstitutor = new Function<PsiMember, PsiSubstitutor>() {
       final ScopedClassHierarchy hierarchy = ScopedClassHierarchy.getHierarchy(aClass, resolveScope);
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(aClass.getProject());
 

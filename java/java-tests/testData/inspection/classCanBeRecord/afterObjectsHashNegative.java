@@ -1,4 +1,4 @@
-// "Convert to record class" "true"
+// "Convert to record class" "true-preview"
 import java.util.Objects;
 
 record Test(boolean booleanValue, char charValue, String stringValue, long longValue, float floatValue,

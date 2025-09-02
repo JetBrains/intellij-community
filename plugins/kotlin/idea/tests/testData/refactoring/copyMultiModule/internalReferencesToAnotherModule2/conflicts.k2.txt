@@ -1,1 +1,2 @@
 Property b uses class B which will be inaccessible after move
+Property b uses class B which will be inaccessible after move

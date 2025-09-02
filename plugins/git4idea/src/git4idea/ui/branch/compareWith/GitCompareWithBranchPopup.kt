@@ -1,33 +1,37 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch.compareWith
 
 import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.util.ui.JBDimension
-import git4idea.GitLocalBranch
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.components.BorderLayoutPanel
+import com.intellij.vcs.git.shared.branch.popup.GitBranchesPopupActions
+import com.intellij.vcs.git.shared.branch.popup.GitBranchesPopupBase
+import com.intellij.vcs.git.shared.branch.popup.GitBranchesPopupStepBase
+import com.intellij.vcs.git.shared.branch.tree.GitBranchesTreeModel
+import com.intellij.vcs.git.shared.branch.tree.GitBranchesTreeRenderer
+import com.intellij.vcs.git.shared.branch.tree.GitBranchesTreeSingleRepoModel
+import com.intellij.vcs.git.shared.branch.tree.createTreePathFor
+import com.intellij.vcs.git.shared.repo.GitRepositoryModel
 import git4idea.GitReference
+import git4idea.GitStandardLocalBranch
+import git4idea.config.GitVcsSettings
 import git4idea.i18n.GitBundle
-import git4idea.repo.GitRepository
-import git4idea.ui.branch.popup.GitBranchesTreePopupBase
-import git4idea.ui.branch.popup.GitBranchesTreePopupMinimalRenderer
-import git4idea.ui.branch.popup.GitBranchesTreePopupStepBase
-import git4idea.ui.branch.tree.GitBranchesTreeModel
-import git4idea.ui.branch.tree.GitBranchesTreeRenderer
-import git4idea.ui.branch.tree.GitBranchesTreeShowTagsAction
-import git4idea.ui.branch.tree.GitBranchesTreeSingleRepoModel
-import git4idea.ui.branch.tree.createTreePathFor
 import java.util.function.Consumer
 import javax.swing.JComponent
+import javax.swing.JTree
 import javax.swing.tree.TreePath
 
-class GitCompareWithBranchPopupStep(
+internal class GitCompareWithBranchPopupStep(
   project: Project,
-  private val repository: GitRepository,
+  private val repository: GitRepositoryModel,
   private val onRefSelected: Consumer<GitReference>,
-) : GitBranchesTreePopupStepBase(project = project, selectedRepository = null, repositories = listOf(repository)) {
+) : GitBranchesPopupStepBase(project = project, selectedRepository = null, repositories = listOf(repository)) {
   private var finalRunnable: Runnable? = null
 
   override fun getFinalRunnable() = finalRunnable
@@ -57,48 +61,46 @@ class GitCompareWithBranchPopupStep(
   override fun getTitle(): String = DvcsBundle.message("popup.title.select.branch.to.compare")
 }
 
-private class GitCompareWithBranchesTreeModel(project: Project, repository: GitRepository) : GitBranchesTreeSingleRepoModel(project, repository, emptyList()) {
-  override fun getLocalBranches(): Collection<GitLocalBranch> = repository.branches.localBranches.skipCurrentBranch()
-  override fun getRecentBranches(): Collection<GitLocalBranch> = super.getRecentBranches().skipCurrentBranch()
+private class GitCompareWithBranchesTreeModel(project: Project, repository: GitRepositoryModel) : GitBranchesTreeSingleRepoModel(project, repository, emptyList()) {
+  override fun getLocalBranches(): Collection<GitStandardLocalBranch> = repository.state.localBranches.skipCurrentBranch()
+  override fun getRecentBranches(): Collection<GitStandardLocalBranch> = super.getRecentBranches().skipCurrentBranch()
 
-  private fun Collection<GitLocalBranch>.skipCurrentBranch(): Collection<GitLocalBranch> {
-    val currentBranch = repository.currentBranch
-    return this.filter { it != currentBranch }
-  }
+  private fun Collection<GitStandardLocalBranch>.skipCurrentBranch(): Collection<GitStandardLocalBranch> =
+    filter { repository.state.currentRef?.matches(it) == false }
 
   override fun getPreferredSelection(): TreePath? {
     return getPreferredBranch()?.let { createTreePathFor(this, it) }
   }
 }
 
-class GitCompareWithBranchPopup(
+internal class GitCompareWithBranchPopup(
   project: Project,
   step: GitCompareWithBranchPopupStep,
-) : GitBranchesTreePopupBase<GitCompareWithBranchPopupStep>(project = project,
-                                                            step = step,
-                                                            parent = null,
-                                                            parentValue = null,
-                                                            dimensionServiceKey = DIMENSION_SERVICE_KEY) {
+) : GitBranchesPopupBase<GitCompareWithBranchPopupStep>(project = project,
+                                                        step = step,
+                                                        parent = null,
+                                                        parentValue = null,
+                                                        dimensionServiceKey = DIMENSION_SERVICE_KEY) {
   init {
     minimumSize = JBDimension(350, 400)
   }
 
   override fun getSearchFiledEmptyText(): String = GitBundle.message(
     "git.compare.with.branch.search.field.empty.text",
-    if (GitBranchesTreeShowTagsAction.isSelected(project)) 1 else 0
+    if (GitVcsSettings.getInstance(project).showTags()) 1 else 0
   )
 
   override fun getTreeEmptyText(searchPattern: String?): String = GitBundle.message("git.compare.with.branch.search.not.found", searchPattern)
 
-  override fun createRenderer(treeStep: GitCompareWithBranchPopupStep): GitBranchesTreeRenderer =
-    GitBranchesTreePopupMinimalRenderer(treeStep)
+  override fun createRenderer(): GitBranchesTreeRenderer =
+    GitBranchesTreeMinimalRenderer(treeStep)
 
   override fun getOldUiHeaderComponent(c: JComponent?): JComponent? =
     super.getNewUiHeaderComponent(c)
 
   override fun getHeaderToolbar(): ActionToolbar {
     val settingsGroup = am.getAction(HEADER_SETTINGS_ACTION_GROUP)
-    return am.createActionToolbar(TOP_LEVEL_ACTION_PLACE, DefaultActionGroup(settingsGroup), true)
+    return am.createActionToolbar(GitBranchesPopupActions.MAIN_POPUP_ACTION_PLACE, DefaultActionGroup(settingsGroup), true)
       .apply {
         targetComponent = content
         setReservePlaceAutoPopupIcon(false)
@@ -106,8 +108,30 @@ class GitCompareWithBranchPopup(
       }
   }
 
+  // Shortcut actions are not supported in this popup
+  override fun createShortcutActionDataContext(): DataContext = DataContext.EMPTY_CONTEXT
+
   companion object {
     private const val DIMENSION_SERVICE_KEY = "Git.Compare.With.Branch.Popup"
     private const val HEADER_SETTINGS_ACTION_GROUP = "Git.Compare.With.Branch.Popup.Settings"
+  }
+}
+
+private class GitBranchesTreeMinimalRenderer(step: GitBranchesPopupStepBase) :
+  GitBranchesTreeRenderer(step, favoriteToggleOnClickSupported = false) {
+
+  override val mainPanel: BorderLayoutPanel =
+    JBUI.Panels.simplePanel(mainTextComponent).addToLeft(mainIconComponent).andTransparent()
+
+  override fun configureTreeCellComponent(
+    tree: JTree,
+    userObject: Any?,
+    value: Any?,
+    selected: Boolean,
+    expanded: Boolean,
+    leaf: Boolean,
+    row: Int,
+    hasFocus: Boolean,
+  ) {
   }
 }

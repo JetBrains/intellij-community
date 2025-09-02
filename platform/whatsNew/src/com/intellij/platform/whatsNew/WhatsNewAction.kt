@@ -9,15 +9,12 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.ApplicationNamesInfo
-import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
+import com.intellij.openapi.progress.currentThreadCoroutineScope
 import com.intellij.openapi.project.Project
 import com.intellij.platform.whatsNew.reaction.FUSReactionChecker
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import org.jetbrains.concurrency.await
 
@@ -28,12 +25,6 @@ internal class WhatsNewAction : AnAction(), com.intellij.openapi.project.DumbAwa
 
   private val REACTIONS_STATE = "whatsnew.reactions.state"
   private val reactionChecker = FUSReactionChecker(REACTIONS_STATE)
-
-  private val hasWhatsNewContent by lazy {
-    appScope.async {
-      WhatsNewContent.hasWhatsNewContent()
-    }
-  }
 
   suspend fun openWhatsNew(project: Project) {
     LOG.info("Open What's New page requested.")
@@ -55,9 +46,8 @@ internal class WhatsNewAction : AnAction(), com.intellij.openapi.project.DumbAwa
     return ActionUpdateThread.BGT
   }
 
-  @OptIn(ExperimentalCoroutinesApi::class)
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = if (hasWhatsNewContent.isCompleted) hasWhatsNewContent.getCompleted() else false
+    e.presentation.isEnabledAndVisible = service<WhatsNewStatus>().isContentAvailable
     e.presentation.setText(IdeBundle.messagePointer("whats.new.action.custom.text", ApplicationNamesInfo.getInstance().fullProductName))
     e.presentation.setDescription(IdeBundle.messagePointer("whats.new.action.custom.description", ApplicationNamesInfo.getInstance().fullProductName))
   }
@@ -65,7 +55,7 @@ internal class WhatsNewAction : AnAction(), com.intellij.openapi.project.DumbAwa
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project
     if (project != null) {
-      project.getScope().launch {
+      currentThreadCoroutineScope().launch {
         openWhatsNewPage(project, e.dataContext, true)
       }
     } else {
@@ -73,14 +63,5 @@ internal class WhatsNewAction : AnAction(), com.intellij.openapi.project.DumbAwa
     }
   }
 }
-
-@Service(Service.Level.PROJECT)
-private class ScopeProvider(val scope: CoroutineScope)
-private fun Project.getScope() = this.service<ScopeProvider>().scope
-
-@Service(Service.Level.APP)
-private class AppScopeProvider(val scope: CoroutineScope)
-private val appScope: CoroutineScope
-  get() = service<AppScopeProvider>().scope
 
 private val LOG = logger<WhatsNewAction>()

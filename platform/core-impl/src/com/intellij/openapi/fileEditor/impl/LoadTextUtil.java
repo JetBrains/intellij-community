@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -7,6 +7,7 @@ import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.fileTypes.CharsetUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.ByteArraySequence;
@@ -407,16 +408,17 @@ public final class LoadTextUtil {
     write(project, file, requestor, newText, -1);
   }
 
-  /**
-   * Normally, one should not use this method.
-   */
+  @ApiStatus.Internal
   public static void write(@Nullable Project project,
                            @NotNull VirtualFile virtualFile,
                            @NotNull Object requestor,
                            @NotNull String text,
-                           long newModificationStamp) throws IOException {
+                           long newModificationStamp,
+                           boolean applyTextTransformer) throws IOException {
     Charset existing = virtualFile.getCharset();
-    text = TextPresentationTransformers.toPersistent(text, virtualFile).toString();
+    if (applyTextTransformer) {
+      text = TextPresentationTransformers.toPersistent(text, virtualFile).toString();
+    }
     Pair.NonNull<Charset, byte[]> chosen = charsetForWriting(project, virtualFile, text, existing);
     Charset charset = chosen.first;
     byte[] buffer = chosen.second;
@@ -425,9 +427,22 @@ public final class LoadTextUtil {
     }
     restoreDetectedFromContentFlag(virtualFile, buffer);
 
-    try (OutputStream stream = virtualFile.getOutputStream(requestor, newModificationStamp, -1)) {
+    long newTimeStamp = Clock.isMocked() ? Clock.getTime() : -1;
+
+    try (OutputStream stream = virtualFile.getOutputStream(requestor, newModificationStamp, newTimeStamp)) {
       stream.write(buffer);
     }
+  }
+
+  /**
+   * Normally, one should not use this method.
+   */
+  public static void write(@Nullable Project project,
+                           @NotNull VirtualFile virtualFile,
+                           @NotNull Object requestor,
+                           @NotNull String text,
+                           long newModificationStamp) throws IOException {
+    write(project, virtualFile, requestor, text, newModificationStamp, true);
   }
 
   public static @NotNull Pair.NonNull<Charset, byte[]> charsetForWriting(@Nullable Project project,
@@ -585,7 +600,8 @@ public final class LoadTextUtil {
     }
   }
 
-  static @NotNull Set<String> detectAllLineSeparators(@NotNull VirtualFile virtualFile) {
+  @ApiStatus.Internal
+  public static @NotNull Set<String> detectAllLineSeparators(@NotNull VirtualFile virtualFile) {
     byte[] bytes;
     try {
       bytes = virtualFile.contentsToByteArray();

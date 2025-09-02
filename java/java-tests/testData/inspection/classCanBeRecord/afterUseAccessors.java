@@ -1,4 +1,5 @@
 // "Convert to record class" "true"
+// no "true-preview" above because of IDEA-369873
 public record SpreadSymbol(String symbol, int legs) {
 
     void fromClass() {

@@ -26,6 +26,8 @@ import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.platform.ide.core.permissions.Permission;
+import com.intellij.platform.ide.core.permissions.RequiresPermissions;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.SizedIcon;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -52,6 +54,7 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
+import static com.intellij.execution.PermissionsKt.getRunViewAccess;
 import static com.intellij.execution.ui.RunToolbarPopupKt.RUN_CONFIGURATION_KEY;
 
 public class RunConfigurationsComboBoxAction extends ComboBoxAction implements DumbAware {
@@ -461,7 +464,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
   }
 
   @ApiStatus.Internal
-  public static class RunCurrentFileAction extends ActionGroup implements DumbAware {
+  public static class RunCurrentFileAction extends ActionGroup implements DumbAware, RequiresPermissions {
 
     @Override
     public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
@@ -504,6 +507,11 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
       RunManager.getInstance(project).setSelectedConfiguration(null);
       updatePresentation(null, null, project, e.getPresentation(), e.getPlace());
     }
+
+    @Override
+    public @NotNull Collection<@NotNull Permission> getRequiredPermissions() {
+      return List.of(getRunViewAccess());
+    }
   }
 
 
@@ -545,7 +553,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
   }
 
   @ApiStatus.Internal
-  public static class SelectConfigAction extends ActionGroup implements DumbAware {
+  public static class SelectConfigAction extends ActionGroup implements DumbAware, RequiresPermissions {
     private final Project myProject;
     private final RunnerAndConfigurationSettings myConfiguration;
 
@@ -623,6 +631,11 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
       return ActionUpdateThread.BGT;
+    }
+
+    @Override
+    public @NotNull Collection<@NotNull Permission> getRequiredPermissions() {
+      return List.of(getRunViewAccess());
     }
   }
 }

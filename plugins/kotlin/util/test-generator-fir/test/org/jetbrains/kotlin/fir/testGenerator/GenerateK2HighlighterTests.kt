@@ -4,12 +4,19 @@ package org.jetbrains.kotlin.fir.testGenerator
 import org.jetbrains.kotlin.idea.k2.highlighting.*
 import org.jetbrains.kotlin.idea.test.kmp.KMPTestPlatform
 import org.jetbrains.kotlin.testGenerator.model.*
-import org.jetbrains.kotlin.testGenerator.model.GroupCategory.*
+import org.jetbrains.kotlin.testGenerator.model.GroupCategory.HIGHLIGHTING
 
 internal fun MutableTWorkspace.generateK2HighlighterTests() {
     testGroup("highlighting/highlighting-k2", category = HIGHLIGHTING, testDataPath = "../../idea/tests/testData") {
         testClass<AbstractK2HighlightingMetaInfoTest> {
-            model("highlighterMetaInfo", pattern = Patterns.KT_OR_KTS)
+            model("highlighterMetaInfo", pattern = Patterns.KT)
+        }
+        testClass<AbstractK2ScriptHighlightingMetaInfoTest> {
+            model("highlighterMetaInfo", pattern = Patterns.KTS)
+        }
+
+        testClass<AbstractK2MainKtsHighlightingTest> {
+            model("mainKts/highlighting", pattern = Patterns.MAIN_KTS)
         }
 
         testClass<AbstractK2HighlightingMetaInfoTest>(
@@ -17,13 +24,25 @@ internal fun MutableTWorkspace.generateK2HighlighterTests() {
             generatedPackagePostfix = "metaInfoKmp",
         ) {
             model(
-                "highlighterMetaInfo", pattern = Patterns.KT_OR_KTS,
+                "highlighterMetaInfo", pattern = Patterns.KT,
+                excludedDirectories = listOf("jvm")
+            )
+        }
+        testClass<AbstractK2ScriptHighlightingMetaInfoTest>(
+            platforms = KMPTestPlatform.ALL_SPECIFIED - KMPTestPlatform.Jvm,
+            generatedPackagePostfix = "metaInfoKmp",
+        ) {
+            model(
+                "highlighterMetaInfo", pattern = Patterns.KTS,
                 excludedDirectories = listOf("jvm")
             )
         }
 
         testClass<AbstractK2BundledCompilerPluginsHighlightingMetaInfoTest> {
-            model("highlighterMetaInfoWithBundledCompilerPlugins")
+            model("highlighterMetaInfoWithBundledCompilerPlugins", pattern = Patterns.KT)
+        }
+        testClass<AbstractK2BundledCompilerPluginsInScriptHighlightingMetaInfoTest> {
+            model("highlighterMetaInfoWithBundledCompilerPlugins", pattern = Patterns.KTS)
         }
 
         testClass<AbstractK2ComposeCompilerPluginCheckerTest> {

@@ -3,15 +3,9 @@ package com.intellij.platform.workspace.storage.testEntities.entities
 
 
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
-import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.annotations.Open
+import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
-
 
 data class OneSymbolicId(val name: String) : SymbolicEntityId<OneEntityWithSymbolicId> {
   override val presentableName: String
@@ -107,7 +101,7 @@ interface EntityWithSoftLinks : WorkspaceEntity {
 
   val deepSealedClass: DeepSealedOne
 
-  val children: List<@Child SoftLinkReferencedChild>
+  val children: List<SoftLinkReferencedChild>
 
   //region generated code
   @GeneratedCodeApiVersion(3)
@@ -177,6 +171,7 @@ fun MutableEntityStorage.modifyEntityWithSoftLinks(
 //endregion
 
 interface SoftLinkReferencedChild : WorkspaceEntity {
+  @Parent
   val parentEntity: EntityWithSoftLinks
 
   //region generated code

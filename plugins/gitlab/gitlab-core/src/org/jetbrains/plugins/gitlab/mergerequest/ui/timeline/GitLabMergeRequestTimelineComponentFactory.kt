@@ -34,7 +34,7 @@ import com.intellij.util.ui.JBUI.Borders
 import com.intellij.util.ui.StyleSheetUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.api.dto.*
@@ -141,7 +141,7 @@ internal object GitLabMergeRequestTimelineComponentFactory {
 
     val timelineOrErrorPanel = Wrapper()
 
-    val timelineItems = MutableSharedFlow<List<GitLabMergeRequestTimelineItemViewModel>>()
+    val timelineItems = MutableStateFlow<List<GitLabMergeRequestTimelineItemViewModel>>(listOf())
     val timelineItemContent = ComponentListPanelFactory.createVertical(cs, timelineItems,
                                                                        panelInitializer = {
                                                                          add(LoadingLabel().apply {

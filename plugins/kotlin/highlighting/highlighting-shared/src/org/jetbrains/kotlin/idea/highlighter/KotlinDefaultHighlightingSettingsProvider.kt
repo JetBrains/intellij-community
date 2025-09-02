@@ -28,9 +28,7 @@ class KotlinDefaultHighlightingSettingsProvider : DefaultHighlightingSettingProv
         return when {
             psiFile is KtFile ->
                 when {
-                    psiFile.isScript() && ScriptConfigurationsProvider.getInstance(project)?.getScriptConfigurationResult(psiFile) == null ->
-                        FileHighlightingSetting.SKIP_HIGHLIGHTING
-
+                    psiFile.isScript() -> FileHighlightingSetting.FORCE_HIGHLIGHTING
                     psiFile.isCompiled -> FileHighlightingSetting.SKIP_INSPECTION
                     !KotlinSupportAvailability.isSupported(psiFile) -> FileHighlightingSetting.SKIP_HIGHLIGHTING
                     RootKindFilter.libraryFiles.matches(project, file) -> FileHighlightingSetting.SKIP_INSPECTION

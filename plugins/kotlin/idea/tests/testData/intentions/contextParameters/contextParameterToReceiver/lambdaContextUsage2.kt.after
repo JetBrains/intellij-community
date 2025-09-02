@@ -1,0 +1,15 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+
+context(<caret>c1: Number, c2: String)
+fun foo(p1: Double) {
+}
+
+fun baz(fn: context(String, Int)() -> Unit) {
+}
+
+context(c1: String)
+fun bar() {
+    baz {
+        contextOf<Int>().foo(0.0)
+    }
+}

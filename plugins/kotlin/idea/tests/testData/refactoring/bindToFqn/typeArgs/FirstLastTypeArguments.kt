@@ -1,4 +1,5 @@
 // BIND_TO D.E.F
+// BIND_RESULT "D<Z, X>.E.F<Y>"
 class A<X, Y> {
     class B {
         class C<Z> {

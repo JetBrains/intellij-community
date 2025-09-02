@@ -5,7 +5,6 @@ import com.intellij.CommonBundle
 import com.intellij.diff.DiffContext
 import com.intellij.diff.DiffManagerEx
 import com.intellij.diff.DiffTool
-import com.intellij.diff.actions.impl.OpenInEditorAction
 import com.intellij.diff.impl.DiffRequestProcessor.getToolOrderFromSettings
 import com.intellij.diff.impl.DiffSettingsHolder.DiffSettings
 import com.intellij.diff.impl.ui.DiffToolChooser
@@ -263,7 +262,7 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, private val goToC
 
     override fun uiDataSnapshot(sink: DataSink) {
       sink[DiffDataKeys.DIFF_REQUEST] = getCurrentRequest()
-      sink[OpenInEditorAction.AFTER_NAVIGATE_CALLBACK] = Runnable { DiffUtil.minimizeDiffIfOpenedInWindow(this) }
+      sink[DiffDataKeys.NAVIGATION_CALLBACK] = Runnable { DiffUtil.minimizeDiffIfOpenedInWindow(this) }
       sink[CommonDataKeys.PROJECT] = context.project
       sink[PlatformCoreDataKeys.HELP_ID] = context.getUserData(DiffUserDataKeys.HELP_ID) ?: "reference.dialogs.diff.file"
       sink[DiffDataKeys.DIFF_CONTEXT] = context

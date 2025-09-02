@@ -11,52 +11,60 @@ import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.util.asDisposable
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import com.intellij.util.concurrency.SynchronizedClearableLazy
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.CopyOnWriteArrayList
-import java.util.concurrent.atomic.AtomicBoolean
 
 internal class CompositeFilterWrapper(private val project: Project, private val coroutineScope: CoroutineScope) {
   private val filtersUpdatedListeners: MutableList<() -> Unit> = CopyOnWriteArrayList()
 
-  private val filtersComputationInProgress: AtomicBoolean = AtomicBoolean(false)
+  private val customFilters: MutableList<Filter> = CopyOnWriteArrayList()
 
   @Volatile
   private var cachedFilter: CompositeFilter? = null
 
   @Volatile
-  private var filtersComputed: CompletableDeferred<Unit> = CompletableDeferred()
+  private var areFiltersInUse: Boolean = false
 
-  init {
-    ConsoleFilterProvider.FILTER_PROVIDERS.addChangeListener({
-                                                               cachedFilter = null
-                                                               filtersComputed = CompletableDeferred()
-                                                               scheduleFiltersComputation()
-                                                             }, coroutineScope.asDisposable())
-    scheduleFiltersComputation()
+  private val filterDeferredLazy: SynchronizedClearableLazy<Deferred<CompositeFilter>> = SynchronizedClearableLazy {
+    startFilterComputation()
   }
 
-  private fun scheduleFiltersComputation() {
-    if (filtersComputationInProgress.compareAndSet(false, true)) {
-      coroutineScope.launch {
-        val filters = readAction {
-          ConsoleViewUtil.computeConsoleFilters(project, null, GlobalSearchScope.allScope(project))
-        }
-        filtersComputationInProgress.set(false)
-        cachedFilter = CompositeFilter(project, filters).also {
-          it.setForceUseAllFilters(true)
-        }
-        withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-          fireFiltersUpdated()
-          filtersComputed.complete(Unit)
-        }
-      }
+  init {
+    ConsoleFilterProvider.FILTER_PROVIDERS.addChangeListener(coroutineScope) {
+      dropFilter()
     }
+  }
+
+  fun addFilter(filter: Filter) {
+    customFilters.add(filter)
+    dropFilter()
+  }
+
+  private fun dropFilter() {
+    cachedFilter = null
+    filterDeferredLazy.drop()
+    if (areFiltersInUse) {
+      // If filters have been requested already, there is some text in the editor.
+      // This text needs to be reprocessed with the updated filters.
+      // Trigger filter recomputation to fire the `filtersUpdated` event.
+      filterDeferredLazy.value
+    }
+  }
+
+  private fun startFilterComputation(): Deferred<CompositeFilter> = coroutineScope.async {
+    val filters = readAction {
+      ConsoleViewUtil.computeConsoleFilters(project, null, GlobalSearchScope.allScope(project))
+    }
+    val compositeFilter = CompositeFilter(project, customFilters + filters).also {
+      it.setForceUseAllFilters(true)
+    }
+    cachedFilter = compositeFilter
+    withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      fireFiltersUpdated()
+    }
+    compositeFilter
   }
 
   fun addFiltersUpdatedListener(listener: () -> Unit) {
@@ -77,12 +85,13 @@ internal class CompositeFilterWrapper(private val project: Project, private val 
     cachedFilter?.let {
       return it
     }
-    scheduleFiltersComputation()
+    areFiltersInUse = true
+    filterDeferredLazy.value
     return null
   }
 
   @TestOnly
   internal suspend fun awaitFiltersComputed() {
-    filtersComputed.await()
+    filterDeferredLazy.value.await()
   }
 }

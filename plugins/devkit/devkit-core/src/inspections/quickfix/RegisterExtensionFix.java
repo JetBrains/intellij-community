@@ -61,13 +61,13 @@ public class RegisterExtensionFix extends IntentionAndQuickFixAction {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, @Nullable Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, @Nullable Editor editor, PsiFile psiFile) {
     return editor != null && !DumbService.isDumb(project);
   }
 
   @Override
-  public void applyFix(@NotNull Project project, PsiFile file, @Nullable Editor editor) {
-    PluginDescriptorChooser.show(project, editor, file, element -> doFix(editor, element));
+  public void applyFix(@NotNull Project project, PsiFile psiFile, @Nullable Editor editor) {
+    PluginDescriptorChooser.show(project, editor, psiFile, element -> doFix(editor, element));
   }
 
   private void doFix(Editor editor, final DomFileElement<IdeaPlugin> element) {

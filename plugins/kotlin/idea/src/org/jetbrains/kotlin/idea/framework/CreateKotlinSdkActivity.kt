@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.framework
 
 import com.intellij.facet.ProjectFacetManager
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
@@ -21,14 +20,12 @@ private class CreateKotlinSdkActivity : ProjectActivity {
     override suspend fun execute(project: Project) {
         val modulesWithFacet = ProjectFacetManager.getInstance(project).getModulesWithFacet(KotlinFacetType.TYPE_ID)
         if (modulesWithFacet.isNotEmpty()) {
-            blockingContext {
-                KotlinSdkType.setUpIfNeeded {
-                    modulesWithFacet.any {
-                        val platform = it.platform
-                        platform.isJs() || platform.isNative() || platform.isCommon()
-                    }
-                }
+          KotlinSdkType.setUpIfNeeded {
+            modulesWithFacet.any {
+              val platform = it.platform
+              platform.isJs() || platform.isNative() || platform.isCommon()
             }
+          }
         }
     }
 }

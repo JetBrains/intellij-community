@@ -7,7 +7,7 @@ import com.jetbrains.python.debugger.array.AsyncArrayTableModel;
 import com.jetbrains.python.debugger.containerview.ColoredCellRenderer;
 import com.jetbrains.python.debugger.containerview.ColumnFilter;
 import com.jetbrains.python.debugger.containerview.DataViewStrategy;
-import com.jetbrains.python.debugger.containerview.PyDataViewerPanel;
+import com.jetbrains.python.debugger.containerview.PyDataViewerCommunityPanel;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -35,7 +35,7 @@ public class DataFrameViewStrategy extends DataViewStrategy {
   @Override
   public AsyncArrayTableModel createTableModel(int rowCount,
                                                int columnCount,
-                                               @NotNull PyDataViewerPanel dataProvider,
+                                               @NotNull PyDataViewerCommunityPanel dataProvider,
                                                @NotNull PyDebugValue debugValue) {
     return new DataFrameTableModel(rowCount, columnCount, dataProvider, debugValue, this);
   }

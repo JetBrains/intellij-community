@@ -4,10 +4,7 @@ package com.intellij.ide.projectWizard;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
 import com.intellij.ide.JavaUiBundle;
-import com.intellij.ide.projectWizard.projectTypeStep.LanguageGeneratorItem;
-import com.intellij.ide.projectWizard.projectTypeStep.ProjectTypeList;
-import com.intellij.ide.projectWizard.projectTypeStep.TemplateGroupItem;
-import com.intellij.ide.projectWizard.projectTypeStep.UserTemplateGroupItem;
+import com.intellij.ide.projectWizard.projectTypeStep.*;
 import com.intellij.ide.util.frameworkSupport.FrameworkRole;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportUtil;
 import com.intellij.ide.util.newProjectWizard.AddSupportForFrameworksPanel;
@@ -728,7 +725,7 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
 
   @TestOnly
   public static void resetGroupForTests() {
-    ProjectTypeList.resetStoredSelectionForTests();
+    ProjectTypeListKt.resetStoredSelectionForTests();
   }
 
   @Override

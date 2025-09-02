@@ -65,7 +65,7 @@ public final class RefreshLogAction extends RefreshAction {
 
   private static Attachment @NotNull [] collectDiagnosticInformation(@Nullable Project project, @NotNull VcsLogManager logManager) {
     List<Attachment> result = new ArrayList<>();
-    result.add(new Attachment("log-windows.txt", "Log Windows:\n" + logManager.getLogWindowsInformation()));
+    result.add(new Attachment("log-windows.txt", "Log Windows:\n" + logManager.getLogUiInformation()));
 
     if (project != null) {
       ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);

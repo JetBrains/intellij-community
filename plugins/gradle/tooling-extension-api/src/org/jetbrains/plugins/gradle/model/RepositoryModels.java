@@ -2,13 +2,16 @@
 package org.jetbrains.plugins.gradle.model;
 
 import org.jetbrains.annotations.NotNull;
+import com.intellij.gradle.toolingExtension.model.repositoryModel.ProjectRepositoriesModel;
 
 import java.io.Serializable;
 import java.util.List;
 
 /**
  * Container for Maven repositories of a given project
+ * @deprecated use {@link ProjectRepositoriesModel} instead.
  */
+@Deprecated
 public interface RepositoryModels extends Serializable {
 
   @NotNull

@@ -2,13 +2,13 @@
 package org.jetbrains.kotlin.gradle.multiplatformTests.workspace
 
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.gradle.multiplatformTests.KotlinTestProperties
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestConfiguration
-import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import java.io.File
 
 data class PrinterContext(
-  val project: Project,
-  val projectRoot: File,
-  val testConfiguration: TestConfiguration,
-  val kotlinGradlePluginVersion: KotlinToolingVersion,
+    val project: Project,
+    val projectRoot: File,
+    val testConfiguration: TestConfiguration,
+    val testProperties: KotlinTestProperties,
 )
