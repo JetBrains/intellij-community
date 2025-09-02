@@ -37,6 +37,7 @@ def main():
 # Builds Kotlinc (via Gradle).
 def build_kotlin_compiler(args):
     clean_args = ['clean', '--no-build-cache'] if args.clean else []
+    # The flags are similar to .idea/runConfigurations/Kotlin_Coop__Publish_compiler_for_ide_JARs.xml.
     cmd = [
         str(args.gradlew),
         f'--project-dir={args.kotlinc_dir}',
@@ -45,7 +46,6 @@ def build_kotlin_compiler(args):
         'publishIdeArtifacts',
         ':prepare:ide-plugin-dependencies:kotlin-dist-for-ide:publish',
         '-Ppublish.ide.plugin.dependencies=true',
-        '-PkotlinLanguageVersion=2.1',
         f'-PdeployVersion={args.kotlinc_version}',
         f'-Pbuild.number={args.kotlinc_version}',
         '-Pteamcity=true',  # Makes this a release build rather than a dev build.
