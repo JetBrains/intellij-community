@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.markup.GutterDraggableObject
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.debugger.impl.rpc.*
 import com.intellij.xdebugger.XDebuggerUtil
@@ -90,10 +91,10 @@ internal class FrontendXLineBreakpointProxy(
   }
 
   override fun setLine(line: Int) {
-    return setLine(line, visualLineMightBeChanged = true)
+    return positionChanged(line, null, visualLineMightBeChanged = true)
   }
 
-  private fun setLine(line: Int, visualLineMightBeChanged: Boolean) {
+  private fun positionChanged(line: Int, highlighterRange: TextRange?, visualLineMightBeChanged: Boolean) {
     val oldLine = getLine()
     if (oldLine != line) {
       // TODO IJPL-185322 support type.lineShouldBeChanged()
@@ -117,6 +118,11 @@ internal class FrontendXLineBreakpointProxy(
       }
     }
     else {
+      val highlightRange = getHighlightRange()
+      if (highlightRange !is XLineBreakpointHighlighterRange.Available) return // already invalidated
+      if (highlightRange.range == null) return // no need to invalidate full-line highlights
+      if (highlighterRange != null && highlighterRange == highlightRange.range) return // range is correct, no need to invalidate
+      // offset changed, invalidate the range
       updateLineBreakpointStateIfNeeded(
         newValue = lineBreakpointInfo.invalidateHighlightingRangeOrNull(),
         getter = { it.highlightingRange },
@@ -142,7 +148,9 @@ internal class FrontendXLineBreakpointProxy(
     val highlighter: RangeMarker? = visualRepresentation.rangeMarker
     if (highlighter != null && highlighter.isValid()) {
       lineSourcePosition = null // reset the source position even if the line number has not changed, as the offset may be cached inside
-      setLine(highlighter.getDocument().getLineNumber(highlighter.getStartOffset()), visualLineMightBeChanged = false)
+      val highlighterRange = highlighter.textRange
+      val line = highlighter.getDocument().getLineNumber(highlighter.getStartOffset())
+      positionChanged(line, highlighterRange, visualLineMightBeChanged = false)
     }
   }
 
