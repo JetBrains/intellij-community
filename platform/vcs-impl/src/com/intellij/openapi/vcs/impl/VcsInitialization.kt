@@ -66,8 +66,10 @@ class VcsInitialization(private val project: Project, private val coroutineScope
   private val initActivities = ArrayList<VcsStartupActivity>()
   private val postActivities = ArrayList<VcsStartupActivity>()
 
-  @Volatile
-  private var future: Job? = null
+  private val future: Job = coroutineScope.launch(CoroutineName("VcsInitialization"), CoroutineStart.LAZY) {
+    if (project.isDefault) throw CancellationException("VCS is not initialized for default project")
+    execute()
+  }
 
   init {
     if (ApplicationManager.getApplication().isUnitTestMode) {
@@ -79,11 +81,6 @@ class VcsInitialization(private val project: Project, private val coroutineScope
 
   companion object {
     fun getInstance(project: Project): VcsInitialization = project.service()
-  }
-
-  private fun startInitializationJob(job: Job) {
-    future = job
-    job.start()
   }
 
   fun add(vcsInitObject: VcsInitObject, runnable: Runnable) {
@@ -126,7 +123,7 @@ class VcsInitialization(private val project: Project, private val coroutineScope
     }
   }
 
-  internal suspend fun execute() {
+  private suspend fun execute() {
     LOG.assertTrue(!project.isDefault)
     try {
       runInitStep(current = Status.PENDING,
@@ -191,7 +188,6 @@ class VcsInitialization(private val project: Project, private val coroutineScope
   }
 
   private fun cancelBackgroundInitialization() {
-    val future = future ?: return
     future.cancel()
 
     // do not leave VCS initialization run in the background when the project is closed
@@ -214,6 +210,10 @@ class VcsInitialization(private val project: Project, private val coroutineScope
     if (!success) {
       LOG.warn("Failed to wait for VCS initialization cancellation for project $project", Throwable())
     }
+  }
+
+  suspend fun await() {
+    future.join()
   }
 
   @TestOnly
@@ -241,13 +241,7 @@ class VcsInitialization(private val project: Project, private val coroutineScope
 
   internal class StartUpActivity : ProjectActivity {
     override suspend fun execute(project: Project) {
-      val vcsInitialization = project.serviceAsync<VcsInitialization>()
-      coroutineScope {
-        val task = launch(context = CoroutineName("VcsInitialization"), start = CoroutineStart.LAZY) {
-          vcsInitialization.execute()
-        }
-        vcsInitialization.startInitializationJob(task)
-      }
+      project.serviceAsync<VcsInitialization>().await()
     }
   }
 
