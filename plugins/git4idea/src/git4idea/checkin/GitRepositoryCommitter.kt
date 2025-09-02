@@ -77,7 +77,7 @@ internal class GitRepositoryCommitter(val repository: GitRepository, private val
     catch (e: VcsException) {
       if (pinentryProblemDetector.isDetected) {
         project.service<GpgAgentConfigurationNotificator>()
-          .proposeCustomPinentryAgentConfiguration(isSuggestion = false, type = NotificationType.WARNING)
+          .proposeCustomPinentryAgentConfigurationSync(type = NotificationType.WARNING)
       }
       if (gpgProblemDetector.isDetected) {
         throw GitGpgCommitException(e)
