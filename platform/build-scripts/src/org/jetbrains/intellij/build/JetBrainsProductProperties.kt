@@ -20,6 +20,7 @@ import com.jetbrains.plugin.structure.intellij.problems.TemplateWordInPluginName
 import com.jetbrains.plugin.structure.intellij.verifiers.DEFAULT_ILLEGAL_PREFIXES
 import com.jetbrains.plugin.structure.intellij.verifiers.PRODUCT_ID_RESTRICTED_WORDS
 import kotlinx.collections.immutable.plus
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.SoftwareBillOfMaterials.Companion.Suppliers
 import org.jetbrains.intellij.build.impl.PlatformJarNames.PLATFORM_CORE_NIO_FS
 import org.jetbrains.jps.model.module.JpsModule
@@ -31,6 +32,15 @@ import java.util.function.BiPredicate
  * Describes a distribution of an IntelliJ-based IDE hosted in the IntelliJ repository.
  */
 abstract class JetBrainsProductProperties : ProductProperties() {
+  companion object {
+    @ApiStatus.Internal
+    fun isCommunityModule(module: JpsModule, context: BuildContext): Boolean {
+      return module.contentRootsList.urls.all { url ->
+        Path.of(JpsPathUtil.urlToPath(url)).startsWith(context.paths.communityHomeDir)
+      }
+    }
+  }
+
   init {
     scrambleMainJar = true
     includeIntoSourcesArchiveFilter = BiPredicate(::isCommunityModule)
@@ -40,10 +50,9 @@ abstract class JetBrainsProductProperties : ProductProperties() {
     productLayout.addPlatformSpec { layout, _ -> layout.withModule(IJENT_BOOT_CLASSPATH_MODULE, PLATFORM_CORE_NIO_FS) }
   }
 
-  protected fun isCommunityModule(module: JpsModule, context: BuildContext): Boolean =
-    module.contentRootsList.urls.all { url ->
-      Path.of(JpsPathUtil.urlToPath(url)).startsWith(context.paths.communityHomeDir)
-    }
+  protected fun isCommunityModule(module: JpsModule, context: BuildContext): Boolean {
+    return JetBrainsProductProperties.isCommunityModule(module, context)
+  }
 
   override suspend fun copyAdditionalFiles(context: BuildContext, targetDir: Path) { }
 

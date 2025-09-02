@@ -74,6 +74,9 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
       "intellij.platform.util.base.multiplatform",
       "intellij.platform.util.zip",
     ))
+    mavenArtifacts.validateForMavenCentralPublication = { module ->
+      JewelMavenArtifacts.isPublishedJewelModule(module)
+    }
     mavenArtifacts.patchCoordinates = { module, coordinates ->
       when {
         JewelMavenArtifacts.isPublishedJewelModule(module) -> JewelMavenArtifacts.patchCoordinates(module, coordinates)
