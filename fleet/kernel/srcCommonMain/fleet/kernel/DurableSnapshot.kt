@@ -8,6 +8,7 @@ import com.jetbrains.rhizomedb.Schema.Companion.NothingMask
 import com.jetbrains.rhizomedb.Schema.Companion.RefMask
 import com.jetbrains.rhizomedb.Schema.Companion.RequiredMask
 import com.jetbrains.rhizomedb.Schema.Companion.UniqueMask
+import com.jetbrains.rhizomedb.impl.attributeSerializer
 import com.jetbrains.rhizomedb.impl.generateSeed
 import fleet.kernel.rebase.deserialize
 import fleet.kernel.rebase.encodeDbValue
@@ -120,33 +121,41 @@ fun DbContext<Q>.buildDurableSnapshot(
       }
     }
   }) {
-    datoms.filter { it.attr != Entity.EntityObject.attr }.forEach { datom ->
-      val (e, a, v, t) = datom
-      curDatom = datom
-      val uid = requireNotNull(getOne(e, uidAttribute)) { "datom is not durable: ${displayDatom(datom)}" }
-      entities.computeShim(uid) { _: UID, m: MutableMap<DurableSnapshot.Attr, DurableSnapshot.OneOrMany>? ->
-        val map = (m ?: hashMapOf())
-        val attr = DurableSnapshot.Attr(attributeIdent(a)!!, a.schema.value)
-        when (a.schema.cardinality) {
-          Cardinality.One -> {
-            map[attr] = DurableSnapshot.OneOrMany.One(DurableSnapshot.VersionedValue(encodeDbValue(uidAttribute, a, v), t))
-          }
-          Cardinality.Many -> {
-            map.computeShim(attr) { _, existingValue ->
-              existingValue as DurableSnapshot.OneOrMany.Many?
-              val value = encodeDbValue(uidAttribute, a, v)
-              if (existingValue != null) {
-                DurableSnapshot.OneOrMany.Many(existingValue.values + DurableSnapshot.VersionedValue(value, t))
-              }
-              else {
-                DurableSnapshot.OneOrMany.Many(listOf(DurableSnapshot.VersionedValue(value, t)))
+    datoms
+      .filter { it.attr != Entity.EntityObject.attr }
+      .filterNot {
+        val optional = !it.attr.schema.required
+        val scalar = !it.attr.schema.isRef
+        val transient = attributeSerializer(it.attr) == null
+        scalar && optional && transient
+      }
+      .forEach { datom ->
+        val (e, a, v, t) = datom
+        curDatom = datom
+        val uid = requireNotNull(getOne(e, uidAttribute)) { "datom is not durable: ${displayDatom(datom)}" }
+        entities.computeShim(uid) { _: UID, m: MutableMap<DurableSnapshot.Attr, DurableSnapshot.OneOrMany>? ->
+          val map = (m ?: hashMapOf())
+          val attr = DurableSnapshot.Attr(attributeIdent(a)!!, a.schema.value)
+          when (a.schema.cardinality) {
+            Cardinality.One -> {
+              map[attr] = DurableSnapshot.OneOrMany.One(DurableSnapshot.VersionedValue(encodeDbValue(uidAttribute, a, v), t))
+            }
+            Cardinality.Many -> {
+              map.computeShim(attr) { _, existingValue ->
+                existingValue as DurableSnapshot.OneOrMany.Many?
+                val value = encodeDbValue(uidAttribute, a, v)
+                if (existingValue != null) {
+                  DurableSnapshot.OneOrMany.Many(existingValue.values + DurableSnapshot.VersionedValue(value, t))
+                }
+                else {
+                  DurableSnapshot.OneOrMany.Many(listOf(DurableSnapshot.VersionedValue(value, t)))
+                }
               }
             }
           }
+          map
         }
-        map
       }
-    }
   }
   return DurableSnapshot(entities = entities.map { DurableSnapshot.DurableEntity(it.key, it.value) })
 }
