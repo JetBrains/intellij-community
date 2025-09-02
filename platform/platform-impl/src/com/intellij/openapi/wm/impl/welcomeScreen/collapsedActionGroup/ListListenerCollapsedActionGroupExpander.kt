@@ -30,6 +30,7 @@ class ListListenerCollapsedActionGroupExpander private constructor(
     }
   }
 
+  /** Returns model index of nearest ActionGroup in given direction from startIndex.*/
   private fun getNotGroupIndexInDirection(startIndex: Int, direction: Int): Int {
     var i = startIndex + direction
     while (i >= 0 && i < model.size) {

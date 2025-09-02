@@ -210,7 +210,6 @@ public final class ActionGroupPanelWrapper {
 
   private static List<AnAction> getFlattenedActionGroups(ActionGroup actionGroup) {
     ArrayList<AnAction> flatActions = new ArrayList<>();
-    flatActions.add(actionGroup);
 
     if (actionGroup instanceof CollapsedActionGroup && ((CollapsedActionGroup)actionGroup).getCollapsed()) {
       return flatActions;
@@ -222,6 +221,10 @@ public final class ActionGroupPanelWrapper {
     }
     else {
       children = actionGroup.getChildren(null);
+    }
+
+    if (children.length != 0) {
+      flatActions.add(actionGroup);
     }
 
     for (AnAction child : children) {
@@ -237,13 +240,17 @@ public final class ActionGroupPanelWrapper {
 
   private static @NotNull List<AnAction> getFlattenedActionGroups(@NotNull ActionGroup actionGroup, @NotNull AnActionEvent event) {
     ArrayList<AnAction> flatActions = new ArrayList<>();
-    flatActions.add(actionGroup);
 
     if (actionGroup instanceof CollapsedActionGroup && ((CollapsedActionGroup)actionGroup).getCollapsed()) {
       return flatActions;
     }
 
-    for (AnAction action : event.getUpdateSession().children(actionGroup)) {
+    List<? extends AnAction> children = event.getUpdateSession().children(actionGroup);
+    if (!children.isEmpty()) {
+      flatActions.add(actionGroup);
+    }
+
+    for (AnAction action : children) {
       if (action instanceof ActionGroup g) {
         flatActions.addAll(getFlattenedActionGroups(g, event));
       }
