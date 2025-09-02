@@ -1,8 +1,8 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inspections
 
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.testFramework.LightProjectDescriptor
@@ -16,21 +16,33 @@ class PyInterpreterInspectionTest : PyTestCase() {
     val project = myFixture.project
     val module = myFixture.module
 
-    runWriteAction {
-      ModuleRootModificationUtil.setModuleSdk(module, null)
-      ProjectRootManager.getInstance(project).projectSdk = null
+    val projectRootManager = ProjectRootManager.getInstance(project)
+    val originalProjectSdk = projectRootManager.projectSdk
+    val originalModuleSdk = ModuleRootManager.getInstance(module).sdk
+
+    try {
+      runWriteAction {
+        ModuleRootModificationUtil.setModuleSdk(module, null)
+        projectRootManager.projectSdk = null
+      }
+
+      val expectedMsg = PyPsiBundle.message("INSP.interpreter.no.python.interpreter.configured.for.module")
+
+      myFixture.configureByText("test.py", "print('hello')\n")
+      myFixture.enableInspections(PyInterpreterInspection::class.java)
+
+      val highlights = myFixture.doHighlighting()
+      val warnings = highlights.filter { it.severity == HighlightSeverity.WARNING }
+      assertTrue(
+        "Expected to find interpreter warning produced by inspection, but got: ${warnings.map { it.description }}",
+        warnings.any { it.description == expectedMsg }
+      )
     }
-
-    val expectedMsg = PyPsiBundle.message("INSP.interpreter.no.python.interpreter.configured.for.module")
-
-    myFixture.configureByText("test.py", "print('hello')\n")
-    myFixture.enableInspections(PyInterpreterInspection::class.java)
-
-    val highlights = myFixture.doHighlighting()
-    val warnings = highlights.filter { it.severity == HighlightSeverity.WARNING }
-    assertTrue(
-      "Expected to find interpreter warning produced by inspection, but got: ${warnings.map { it.description }}",
-      warnings.any { it.description == expectedMsg }
-    )
+    finally {
+      runWriteAction {
+        ModuleRootModificationUtil.setModuleSdk(module, originalModuleSdk)
+        projectRootManager.projectSdk = originalProjectSdk
+      }
+    }
   }
 }
