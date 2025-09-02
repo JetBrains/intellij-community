@@ -755,6 +755,11 @@ public abstract class IdeLightClassesByFqNameTestGenerated extends AbstractIdeLi
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/HiddenDeprecatedInClass.kt"));
         }
 
+        @TestMetadata("HiddenDeprecatedInClassWithJavaLangDeprecated.kt")
+        public void testHiddenDeprecatedInClassWithJavaLangDeprecated() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/HiddenDeprecatedInClassWithJavaLangDeprecated.kt"));
+        }
+
         @TestMetadata("InheritingInterfaceDefaultImpls.kt")
         public void testInheritingInterfaceDefaultImpls() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/InheritingInterfaceDefaultImpls.kt"));
