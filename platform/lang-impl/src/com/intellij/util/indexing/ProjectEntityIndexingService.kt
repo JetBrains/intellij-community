@@ -95,12 +95,8 @@ class ProjectEntityIndexingService(
       ReadAction.nonBlocking(Callable {
         val iterators = ArrayList<IndexableFilesIterator>()
 
-        //for (fileSets in event.removedFileSets) {
-        //  generateIteratorsFromWFIChangedEvent(fileSets, event.storageBefore, iterators)
-        //}
-        for (fileSets in event.registeredFileSets) {
-          generateIteratorsFromWFIChangedEvent(fileSets, event.storageAfter, iterators)
-        }
+        //generateIteratorsFromWFIChangedEvent(event.removedFileSets, event.storageBefore, iterators)
+        generateIteratorsFromWFIChangedEvent(event.registeredFileSets, event.storageAfter, iterators)
 
         return@Callable if (iterators.isEmpty()) {
           CancelledScanning

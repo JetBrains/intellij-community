@@ -456,8 +456,8 @@ internal class WorkspaceFileIndexDataImpl(
     }
     resetFileCache()
     if (storeRegistrar.registeredFileSets.isNotEmpty() || removeRegistrar.removedFileSets.isNotEmpty()) {
-      val changeLog = WorkspaceFileIndexChangedEvent(removedFileSets = removeRegistrar.removedFileSets.values,
-                                                     registeredFileSets = storeRegistrar.registeredFileSets.values,
+      val changeLog = WorkspaceFileIndexChangedEvent(removedFileSets = removeRegistrar.removedFileSets.values.flatMapTo(HashSet()) { it },
+                                                     registeredFileSets = storeRegistrar.registeredFileSets.values.flatMapTo(HashSet()) { it },
                                                      storageBefore = event.storageBefore,
                                                      storageAfter = event.storageAfter,)
       project.messageBus.syncPublisher(WorkspaceFileIndexListener.TOPIC).workspaceFileIndexChanged(changeLog)
@@ -493,8 +493,8 @@ internal class WorkspaceFileIndexDataImpl(
 
     WorkspaceFileIndexDataMetrics.updateDirtyEntitiesTimeNanosec.addElapsedTime(start)
     if (storeRegistrar.registeredFileSets.isNotEmpty() || removeRegistrar.removedFileSets.isNotEmpty()) {
-      val changeLog = WorkspaceFileIndexChangedEvent(removedFileSets = removeRegistrar.removedFileSets.values,
-                                                     registeredFileSets = storeRegistrar.registeredFileSets.values,
+      val changeLog = WorkspaceFileIndexChangedEvent(removedFileSets = removeRegistrar.removedFileSets.values.flatMapTo(HashSet()) { it },
+                                                     registeredFileSets = storeRegistrar.registeredFileSets.values.flatMapTo(HashSet()) { it },
                                                      storageBefore = storage,
                                                      storageAfter = storage,)
       project.messageBus.syncPublisher(WorkspaceFileIndexListener.TOPIC).workspaceFileIndexChanged(changeLog)
