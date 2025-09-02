@@ -11,22 +11,21 @@ import kotlin.time.Duration.Companion.minutes
 private fun printHelp() {
     println(
         """
-            Usage: kotlin metalava-signatures.main.kts <command> [options]
-            Commands:
-              update     Generate and update API signature dumps.
-              validate   Validate the current signatures against previously generated ones.
-
-            Options:
-              --release <version>   Tells Metalava to create a versioned release archival dump (or validate against one).
-                                    If omitted, it will use the current Jewel API version from gradle.properties.                                    
-              --module <path>       Only checks/generates the dump for one module (e.g., ':ui').
-              --stable-only         Only run tasks for the stable API surface.
-              --experimental-only   Only run tasks for the experimental API surface.
-              --force               Forces a clean build before running the tasks.
-              --help                Display this help and exit.
+        |Usage: kotlin metalava-signatures.main.kts <command> [options]
+        |Commands:
+        |  update     Generate and update API signature dumps.
+        |  validate   Validate the current signatures against previously generated ones.
+        |
+        |Options:
+        |  --release <version>   Tells Metalava to create a versioned release archival dump (or validate against one).
+        |                        If omitted, it will use the current Jewel API version from gradle.properties.                                    
+        |  --module <path>       Only checks/generates the dump for one module (e.g., ':ui').
+        |  --stable-only         Only run tasks for the stable API surface.
+        |  --experimental-only   Only run tasks for the experimental API surface.
+        |  --force               Forces a clean build before running the tasks.
+        |  --help                Display this help and exit.
         """
-            .trimIndent()
-    )
+            .trimMargin())
 }
 
 print("⏳ Locating Jewel folder...")
@@ -99,6 +98,10 @@ while (argIterator.hasNext()) {
                 exitProcess(1)
             }
             taskPath = "$modulePath:"
+
+            if (!taskPath.startsWith(":")) {
+                taskPath = ":$taskPath"
+            }
         }
         "--stable-only" -> {
             if (apiSurface != null) {

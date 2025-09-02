@@ -24,9 +24,9 @@ High-level steps:
    ```
 5. Cherry-pick the changes to the target release branches (e.g., `252`)
    1. Make sure you've not included IJP major release-specific changes
-   2. Update the `ijp.target` entry in [`gradle.properties`](../gradle.properties)
-   3. Update the Kotlin version in the [Gradle version catalog](../gradle/libs.versions.toml) to match the IJP's Kotlin version
-   4. Update other related versions if needed
+   2. Update the Kotlin version in the [Gradle version catalog](../gradle/libs.versions.toml) to match the IJ Platform's Kotlin version
+   3. Update other related versions if needed
+   4. Run `./gradlew generateThemes --rerun-tasks` to update the standalone theme definitions
    5. Run all Gradle-based checks
    6. Run all IJ tests (e.g., via the `tests.cmd` script)
    7. Verify everything works in the Jewel Standalone sample (components, Markdown rendering)
@@ -36,8 +36,11 @@ High-level steps:
        ```shell
        ./scripts/metalava-signatures.sh --validate --release <new-release>
        ```
-   11. Open a MR for each cherry-pick branch on Space
-6. When both MRs are approved and merged, run the TeamCity job to publish the artefacts to Maven Central
+   11. Open a merge request for each cherry-pick branch on Space
+6. When both MRs are approved and merged:
+   1. Run the TeamCity job to publish the artefacts to Maven Central
+   2. Tag the commits the releases were cut from, with this format: `JEWEL-[Jewel version]-[major IJP version]`. For
+      example, for Jewel 0.30.0, `JEWEL-0.30.0-251` on the 251 branch and `JEWEL-0.30.0-252` on the 252 branch.
 
 ## Testing publishing locally
 

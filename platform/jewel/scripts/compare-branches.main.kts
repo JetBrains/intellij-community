@@ -105,7 +105,8 @@ class CompareBranchesCommand : SuspendingCliktCommand() {
         if (anyPathMissing) exitProcess(1)
 
         println(
-            "🔍 Comparing commits for paths '${Config.PATHS_TO_CHECK.joinToString()}' between '$branch1' and '$branch2' since $sinceDate..."
+            "🔍 Comparing commits for paths '${Config.PATHS_TO_CHECK.joinToString()}' between " +
+            "'$branch1' and '$branch2' since $sinceDate..."
         )
 
         val pathsArg = Config.PATHS_TO_CHECK.joinToString(separator = " ") { "-- $it" }
