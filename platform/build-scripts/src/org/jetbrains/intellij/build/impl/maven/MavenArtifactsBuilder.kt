@@ -320,7 +320,7 @@ open class MavenArtifactsBuilder(protected val context: BuildContext) {
     return generateMavenCoordinates(module.name, context.buildNumber)
   }
 
-  internal fun validate(builtArtifacts: Map<MavenArtifactData, List<Path>>) {
+  internal suspend fun validate(builtArtifacts: Map<MavenArtifactData, List<Path>>) {
     context.productProperties.mavenArtifacts.validate(context, builtArtifacts.map { (data, files) ->
       GeneratedMavenArtifacts(data.module, data.coordinates, files)
     })
