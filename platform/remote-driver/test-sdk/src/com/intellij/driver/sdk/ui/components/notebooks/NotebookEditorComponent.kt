@@ -251,11 +251,11 @@ fun Driver.createNewNotebook(name: String = "New Notebook", type: NotebookType) 
   }
 }
 
-fun Driver.closeJupyterVariablesToolwindow() {
+fun Driver.closeRightToolWindow(stripeButtonName: String) {
   ideFrame {
     val rightToolbar = xx(ToolWindowRightToolbarUi::class.java) { byClass("ToolWindowRightToolbar") }.list().firstOrNull()
-                      ?: return@ideFrame
-    val varsButton = rightToolbar.stripeButton("Jupyter Variables")
+                       ?: return@ideFrame
+    val varsButton = rightToolbar.stripeButton(stripeButtonName)
     if (varsButton.present()) {
       varsButton.close()
     }
