@@ -76,9 +76,14 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
      */
     const val TEST_MODULE_ID_PROPERTY_NAME: String = "lambda.test.module"
 
-    abstract class NamedLambda(private val lambdaIdeContext: LambdaIdeContext) {
+    abstract class NamedLambda<T : LambdaIdeContext>(private val lambdaIdeContext: T) {
       fun name(): String = this::class.qualifiedName ?: error("Can't get qualified name of lambda")
-      abstract suspend fun lambda(vararg args: Any?): Any
+      abstract suspend fun T.lambda(vararg args: Any?): Any
+      suspend fun runLambda(vararg args: Any?) {
+        with(lambdaIdeContext) {
+          lambda(args = args)
+        }
+      }
     }
   }
 
@@ -179,7 +184,7 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
           val namedLambdas = testClassCompanionObject
                                ?.nestedClasses
                                ?.filter { it.isSubclassOf(NamedLambda::class) }
-                               ?.map { it.constructors.single().call(ideContext) as NamedLambda }
+                               ?.map { it.constructors.single().call(ideContext) as NamedLambda<*> }
                              ?: error("Can't find any named lambda in the test class '${testClass.qualifiedName}'")
 
           try {
@@ -205,8 +210,8 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
 
               assert(ClientId.current == clientId) { "ClientId '${ClientId.current}' should equal $clientId one when after request focus" }
 
-              val result = runLogged(parameters.reference, 1.minutes) {
-                ideAction.lambda(parameters.parameters)
+              runLogged(parameters.reference, 1.minutes) {
+                ideAction.runLambda(parameters.parameters)
               }
 
               // Assert state
