@@ -90,7 +90,10 @@ class LogicalStructureViewModel private constructor(psiFile: PsiFile, editor: Ed
       if (treeElement.element == targetElement) {
         return TreeVisitor.Action.INTERRUPT
       }
-      else if (treeElement.element?.containingFile != targetElement.containingFile) {
+      (treeElement.getLogicalAssembledModel().model as? ExtendedLogicalObject)?.let {
+        if (it.canRepresentPsiElement(targetElement)) return TreeVisitor.Action.INTERRUPT
+      }
+      if (treeElement.element?.containingFile != targetElement.containingFile) {
         return TreeVisitor.Action.SKIP_CHILDREN
       }
       return TreeVisitor.Action.CONTINUE

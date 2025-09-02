@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.structureView.logical.model
 
+import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -14,6 +15,11 @@ interface ExtendedLogicalObject {
    * @return true - if elements are not equally themselves but are the same if threat them as parents.
    * This equality can break common rules for usual "equal", for example, symmetry rule
    */
-  fun isTheSameParent(other: Any?): Boolean
+  fun isTheSameParent(other: Any?): Boolean = false
+
+  /**
+   * If the element can represent additional elements different from what it is targeting
+   */
+  fun canRepresentPsiElement(psiElement: PsiElement): Boolean = false
 
 }
