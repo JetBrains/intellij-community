@@ -733,12 +733,14 @@ f:org.jetbrains.jewel.ui.component.SelectableIconButtonState$Companion
 f:org.jetbrains.jewel.ui.component.SimpleListItemKt
 - sf:SimpleListItem-0vH8DBg(org.jetbrains.jewel.ui.component.ListItemState,androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,org.jetbrains.jewel.ui.icon.IconKey,java.lang.String,org.jetbrains.jewel.ui.component.styling.SimpleListItemStyle,F,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I):V
 - sf:SimpleListItem-J1qPv4o(Z,Z,androidx.compose.ui.graphics.ColorFilter,java.util.List,androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,org.jetbrains.jewel.ui.icon.IconKey,java.lang.String,org.jetbrains.jewel.ui.component.styling.SimpleListItemStyle,F,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I,I):V
+- sf:SimpleListItem-ULtc_mU(androidx.compose.ui.text.AnnotatedString,Z,androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,Z,org.jetbrains.jewel.ui.icon.IconKey,java.lang.String,org.jetbrains.jewel.ui.component.styling.SimpleListItemStyle,F,androidx.compose.ui.graphics.ColorFilter,kotlin.jvm.functions.Function1,org.jetbrains.jewel.ui.painter.PainterHint[],androidx.compose.runtime.Composer,I,I,I):V
 - sf:SimpleListItem-Wu8B24Y(java.lang.String,org.jetbrains.jewel.ui.component.ListItemState,androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,org.jetbrains.jewel.ui.icon.IconKey,java.lang.String,org.jetbrains.jewel.ui.component.styling.SimpleListItemStyle,F,androidx.compose.ui.graphics.ColorFilter,org.jetbrains.jewel.ui.painter.PainterHint[],androidx.compose.runtime.Composer,I,I,I):V
 - sf:SimpleListItem-XFD2ZOI(java.lang.String,Z,Z,androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,org.jetbrains.jewel.ui.icon.IconKey,java.lang.String,org.jetbrains.jewel.ui.component.styling.SimpleListItemStyle,F,androidx.compose.ui.graphics.ColorFilter,org.jetbrains.jewel.ui.painter.PainterHint[],androidx.compose.runtime.Composer,I,I,I):V
 - sf:SimpleListItem-aqv2aB4(java.lang.String,Z,androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,Z,org.jetbrains.jewel.ui.icon.IconKey,java.lang.String,org.jetbrains.jewel.ui.component.styling.SimpleListItemStyle,F,androidx.compose.runtime.Composer,I,I):V
 - sf:SimpleListItem-eKw1uXw(java.lang.String,org.jetbrains.jewel.ui.component.ListItemState,androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,org.jetbrains.jewel.ui.icon.IconKey,java.lang.String,org.jetbrains.jewel.ui.component.styling.SimpleListItemStyle,F,androidx.compose.runtime.Composer,I,I):V
 - sf:SimpleListItem-gMrHQkA(Z,androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,Z,org.jetbrains.jewel.ui.icon.IconKey,java.lang.String,org.jetbrains.jewel.ui.component.styling.SimpleListItemStyle,F,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I):V
 - sf:SimpleListItem-tJlDC5Y(org.jetbrains.jewel.ui.component.ListItemState,androidx.compose.ui.graphics.ColorFilter,java.util.List,androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,org.jetbrains.jewel.ui.icon.IconKey,java.lang.String,org.jetbrains.jewel.ui.component.styling.SimpleListItemStyle,F,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I):V
+- sf:SimpleListItem-wn8IZOc(androidx.compose.ui.text.AnnotatedString,org.jetbrains.jewel.ui.component.ListItemState,androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,org.jetbrains.jewel.ui.icon.IconKey,java.lang.String,org.jetbrains.jewel.ui.component.styling.SimpleListItemStyle,F,androidx.compose.ui.graphics.ColorFilter,kotlin.jvm.functions.Function1,org.jetbrains.jewel.ui.painter.PainterHint[],androidx.compose.runtime.Composer,I,I,I):V
 f:org.jetbrains.jewel.ui.component.SliderKt
 - sf:Slider(F,kotlin.jvm.functions.Function1,androidx.compose.ui.Modifier,Z,kotlin.ranges.ClosedFloatingPointRange,I,kotlin.jvm.functions.Function0,androidx.compose.foundation.interaction.MutableInteractionSource,org.jetbrains.jewel.ui.component.styling.SliderStyle,androidx.compose.runtime.Composer,I,I):V
 f:org.jetbrains.jewel.ui.component.SliderState
@@ -769,6 +771,7 @@ f:org.jetbrains.jewel.ui.component.SliderState
 f:org.jetbrains.jewel.ui.component.SliderState$Companion
 - f:of-GPhM_18(Z,Z,Z,Z,Z):J
 - bs:of-GPhM_18$default(org.jetbrains.jewel.ui.component.SliderState$Companion,Z,Z,Z,Z,Z,I,java.lang.Object):J
+f:org.jetbrains.jewel.ui.component.SpeedSearchAreaKt
 f:org.jetbrains.jewel.ui.component.SplitLayoutKt
 - sf:HorizontalSplitLayout-Zv8xjqY(kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function2,androidx.compose.ui.Modifier,org.jetbrains.jewel.ui.component.styling.DividerStyle,F,F,F,org.jetbrains.jewel.ui.component.SplitLayoutState,androidx.compose.runtime.Composer,I,I):V
 - sf:VerticalSplitLayout-Zv8xjqY(kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function2,androidx.compose.ui.Modifier,org.jetbrains.jewel.ui.component.styling.DividerStyle,F,F,F,org.jetbrains.jewel.ui.component.SplitLayoutState,androidx.compose.runtime.Composer,I,I):V
@@ -952,6 +955,8 @@ org.jetbrains.jewel.ui.component.banner.BannerIconActionScope
 - bs:iconAction$default(org.jetbrains.jewel.ui.component.banner.BannerIconActionScope,org.jetbrains.jewel.ui.icon.IconKey,java.lang.String,java.lang.String,kotlin.jvm.functions.Function0,I,java.lang.Object):V
 org.jetbrains.jewel.ui.component.banner.BannerLinkActionScope
 - a:action(java.lang.String,kotlin.jvm.functions.Function0):V
+f:org.jetbrains.jewel.ui.component.search.HighlightKt
+f:org.jetbrains.jewel.ui.component.search.SpeedSearchableLazyColumnKt
 f:org.jetbrains.jewel.ui.component.styling.BannerColors
 - sf:$stable:I
 - sf:Companion:org.jetbrains.jewel.ui.component.styling.BannerColors$Companion
