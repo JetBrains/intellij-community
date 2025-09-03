@@ -13,10 +13,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.project.Project
+import com.intellij.ui.IconDeferrer
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.JBUI
+import kotlinx.coroutines.delay
+import org.jetbrains.icons.api.Icon
 import org.jetbrains.jewel.bridge.toComposeColor
 import org.jetbrains.jewel.foundation.LocalComponent
 import org.jetbrains.jewel.foundation.actionSystem.provideData
@@ -284,7 +288,7 @@ private fun IconsShowcase() {
     }
 
     IconButton(onClick = {}, Modifier.size(24.dp)) {
-      Icon(key = AllIconsKeys.Actions.Close, contentDescription = "Close")
+      Icon(AllIconsKeys.Actions.Close, "Close")
     }
 
     IconActionButton(
@@ -295,7 +299,23 @@ private fun IconsShowcase() {
       hints = arrayOf(Size(24)),
       tooltip = { Text("Hello there") },
     )
+
+    Box {
+      Icon(AllIcons.General.OpenDisk as Icon, "Build Load Changes")
+    }
+
+    Box {
+      Icon(deferedIcon as Icon, "Deferred Icon Sample")
+    }
   }
+}
+
+private val deferedIcon = IconDeferrer.getInstance().deferAsync(
+  AllIcons.General.Print,
+  "KABOOM-DEF_ICON_TST"
+) {
+  delay(10000)
+  AllIcons.General.GreenCheckmark
 }
 
 @Composable

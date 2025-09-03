@@ -24,6 +24,12 @@ import kotlinx.serialization.protobuf.ProtoBuf
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.icons.api.BitmapImageResource
+import org.jetbrains.icons.api.FitAreaScale
+import org.jetbrains.icons.api.ImageResource
+import org.jetbrains.icons.api.ImageScale
+import org.jetbrains.icons.api.PaintingApi
+import org.jetbrains.icons.api.RescalableImageResource
 import java.awt.*
 import java.awt.image.BufferedImage
 import java.awt.image.ImageFilter
@@ -73,7 +79,7 @@ open class CachedImageIcon private constructor(
   // isDark is not defined in most cases, and we use a global state at the call moment.
   private val attributes: IconAttributes = IconAttributes(),
   private val iconCache: ScaledIconCache = ScaledIconCache(),
-) : CopyableIcon, ScalableIcon, DarkIconProvider, IconPathProvider, IconWithToolTip {
+) : CopyableIcon, ScalableIcon, DarkIconProvider, IconPathProvider, IconWithToolTip, SwingIconImpl() {
   private var pathTransformModCount = -1
   private var loaderModCount = -1
 
@@ -115,7 +121,50 @@ open class CachedImageIcon private constructor(
 
   override fun getToolTip(composite: Boolean): String? = toolTip?.get()
 
-  final override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
+  private val imageResource = CachedImageIconResource(this)
+
+  override fun render(api: PaintingApi) {
+    val swing = api.swing()
+
+    if (swing != null) {
+      legacyPaintIcon(swing.c, swing.g, swing.x, swing.y)
+    } else {
+      val bounds = api.bounds
+      val scaled = imageResource.scale(FitAreaScale(bounds.width, bounds.height))
+      api.drawImage(scaled, 0, 0, bounds.width, bounds.height)
+    }
+  }
+
+  private class CachedImageIconResource(
+    val oldIcon: CachedImageIcon
+  ): ImageResource, RescalableImageResource {
+    private var cache: BitmapCache? = null
+
+    override fun scale(scale: ImageScale): BitmapImageResource {
+      if (cache?.isSame(scale, oldIcon.imageFlags, oldIcon.attributes.flags) != true) {
+        val awtImage = oldIcon.scaleBy(scale).getRealImage() ?: error("CachedImageIcon returned no image.")
+        val imageResource = ImageResource.fromAwtImage(awtImage)
+        cache = BitmapCache(imageResource, scale, oldIcon.imageFlags, oldIcon.attributes.flags)
+      }
+      return cache!!.image
+    }
+
+    private fun CachedImageIcon.scaleBy(scale: ImageScale): CachedImageIcon {
+      return scale(scale.calculateScalingFactorByBounds(iconWidth))
+    }
+
+    private class BitmapCache(
+      val image: BitmapImageResource,
+      val scale: ImageScale,
+      val flags: Int,
+      val attributeFlags: Int
+    ) {
+      fun isSame(scale: ImageScale, flags: Int, attributeFlags: Int): Boolean =
+        this.scale == scale && this.flags == flags && this.attributeFlags == attributeFlags
+    }
+  }
+
+  private fun legacyPaintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
     val gc = c?.graphicsConfiguration ?: (g as? Graphics2D)?.deviceConfiguration
 
     val graphicsScale = computeGraphicsScale(g, gc)
@@ -415,7 +464,6 @@ open class CachedImageIcon private constructor(
 
   override fun hashCode(): Int = Objects.hash(
     localFilterSupplier, colorPatcher, toolTip, scaleContext, originalLoader, attributes.flags)
-
 }
 
 @TestOnly

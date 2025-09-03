@@ -42,6 +42,7 @@ import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Supplier
 import java.util.function.ToIntFunction
+import javax.swing.Icon
 import javax.swing.*
 import kotlin.math.abs
 import kotlin.math.max

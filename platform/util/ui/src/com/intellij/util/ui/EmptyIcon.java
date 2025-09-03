@@ -5,6 +5,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.ui.scale.DerivedScaleType;
 import com.intellij.ui.scale.JBUIScale;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.icons.api.PaintingApi;
 
 import javax.swing.*;
 import javax.swing.plaf.UIResource;
@@ -21,7 +22,7 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * @see ColorIcon
  */
- public class EmptyIcon extends JBCachingScalableIcon<EmptyIcon> {
+ public class EmptyIcon extends JBCachingScalableIcon<EmptyIcon> implements org.jetbrains.icons.api.Icon {
   private static final Map<Pair<Integer, Boolean>, EmptyIcon> cache = new ConcurrentHashMap<>();
 
   public static final Icon ICON_18 = JBUIScale.scaleIcon(create(18));
@@ -123,6 +124,10 @@ import java.util.concurrent.ConcurrentHashMap;
 
   @Override
   public void paintIcon(Component component, Graphics g, int i, int j) {
+  }
+
+  @Override
+  public void render(@NotNull PaintingApi api) {
   }
 
   @Override

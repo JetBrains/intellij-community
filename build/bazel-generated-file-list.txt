@@ -477,6 +477,7 @@ platform/jbr
 platform/jewel/decorated-window
 platform/jewel/detekt-plugin
 platform/jewel/foundation
+platform/jewel/icons
 platform/jewel/ide-laf-bridge
 platform/jewel/int-ui/int-ui-decorated-window
 platform/jewel/int-ui/int-ui-standalone

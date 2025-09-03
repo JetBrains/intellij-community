@@ -219,6 +219,7 @@ internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedS
     "intellij.platform.util.classLoader",
     "intellij.platform.util.zip",
     "intellij.platform.boot",
+    "intellij.platform.icons.api",
     "intellij.platform.runtime.repository",
     "intellij.platform.runtime.loader",
   ), productLayout = productLayout, layout = layout)

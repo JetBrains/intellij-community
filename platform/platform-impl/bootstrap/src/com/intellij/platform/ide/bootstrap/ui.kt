@@ -19,6 +19,7 @@ import com.intellij.openapi.wm.WeakFocusStackManager
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.ui.AppUIUtil
 import com.intellij.ui.IconManager
+import com.intellij.ui.icons.AwtImageResourceProviderImpl
 import com.intellij.ui.icons.CoreIconManager
 import com.intellij.ui.isWindowIconAlreadyExternallySet
 import com.intellij.ui.scale.JBUIScale
@@ -28,6 +29,7 @@ import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.accessibility.ScreenReader
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.VisibleForTesting
+import org.jetbrains.icons.api.ImageResourceProvider
 import java.awt.Font
 import java.awt.GraphicsEnvironment
 import java.awt.Toolkit
@@ -43,6 +45,9 @@ internal suspend fun initUi(initAwtToolkitJob: Job, isHeadless: Boolean, asyncSc
   if (!isHeadless) {
     span("icon manager activation") {
       IconManager.activate(CoreIconManager())
+    }
+    span("image resource provider activation") {
+      ImageResourceProvider.activate(AwtImageResourceProviderImpl())
     }
   }
 

@@ -15,11 +15,13 @@ import javax.swing.JPanel
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.bridge.actionSystem.ComponentDataProviderBridge
 import org.jetbrains.jewel.bridge.component.JBPopupRenderer
+import org.jetbrains.jewel.bridge.icon.BridgeIconPainterProvider
 import org.jetbrains.jewel.bridge.theme.SwingBridgeTheme
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.LocalComponent as LocalComponentFoundation
 import org.jetbrains.jewel.foundation.util.JewelLogger
 import org.jetbrains.jewel.ui.component.LocalPopupRenderer
+import org.jetbrains.jewel.ui.icon.LocalIconPainterProvider
 import org.jetbrains.jewel.ui.util.LocalMessageResourceResolverProvider
 
 /**
@@ -52,6 +54,7 @@ public fun JewelComposePanel(config: ComposePanel.() -> Unit = {}, content: @Com
                 CompositionLocalProvider(
                     LocalComponentFoundation provides this@createJewelComposePanel,
                     LocalPopupRenderer provides JBPopupRenderer,
+                    LocalIconPainterProvider provides BridgeIconPainterProvider,
                 ) {
                     ComponentDataProviderBridge(jewelPanel, content = content)
                 }

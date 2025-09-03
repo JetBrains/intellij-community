@@ -19,9 +19,16 @@ import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBScalableIcon
 import com.intellij.util.ui.tree.TreeUtil
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
+import org.jetbrains.icons.api.DynamicIcon
+import org.jetbrains.icons.api.DynamicIconState
+import org.jetbrains.icons.api.PaintingApi
 import java.awt.Component
 import java.awt.Graphics
 import java.util.*
@@ -33,7 +40,9 @@ import kotlin.coroutines.resume
 
 private val repaintScheduler = DeferredIconRepaintScheduler()
 
-class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconWithToolTip, CopyableIcon {
+object DeferredIconState : DynamicIconState
+
+class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconWithToolTip, CopyableIcon, DynamicIcon {
   companion object {
     internal val EMPTY_ICON: Icon by lazy { EmptyIcon.create(16).withIconPreScaled(false) }
 
@@ -43,6 +52,8 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
       return DeferredIconImpl(baseIcon = baseIcon, param = param, needReadAction = false, evaluator = evaluator, listener = null)
     }
   }
+
+  override val onUpdate: MutableStateFlow<DynamicIconState?> = MutableStateFlow(null)
 
   private val delegateIcon: Icon
 
@@ -151,6 +162,27 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
     }
   }
 
+  override fun render(api: PaintingApi) {
+    val scaledDelegateIcon = scaledDelegateIcon
+    val swing = api.swing()
+    if (!(scaledDelegateIcon is DeferredIconImpl<*> && scaledDelegateIcon.containsDeferredIconsRecursively(2))) {
+      //SOE protection
+      SwingIconImpl.renderOldIcon(scaledDelegateIcon, api)
+    }
+    else {
+      logger<DeferredIconImpl<*>>().warn("Not painted, too many deferrals")
+    }
+
+    // TODO Migrate repaint logic to DynamicIcon api
+    if (swing != null) {
+      if (needScheduleEvaluation()) {
+        scheduleEvaluation(swing.c, swing.x, swing.y)
+      }
+    } else {
+      scheduleCalculationIfNeeded()
+    }
+  }
+
   override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
     val scaledDelegateIcon = scaledDelegateIcon
     if (!(scaledDelegateIcon is DeferredIconImpl<*> && scaledDelegateIcon.containsDeferredIconsRecursively(2))) {
@@ -237,8 +269,9 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
       scaledDelegateIcon = result
       modificationCount.incrementAndGet()
       checkDelegationDepth()
-
       evaluatedListener?.invoke(this@DeferredIconImpl, result)
+
+      onUpdate.emit(DeferredIconState)
 
       processRepaints(oldWidth = oldWidth, result = result)
       setDone(result)
