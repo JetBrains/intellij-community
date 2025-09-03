@@ -42,14 +42,14 @@ open class ChangeList(private val storage: ChangeListStorage) {
   }
 
   @Synchronized
-  fun beginChangeSet() {
+  fun beginChangeSet(): ChangeSet? {
     changeSetDepth++
-    if (changeSetDepth > 1) return
+    if (changeSetDepth > 1) return null
 
-    doBeginChangeSet()
+    return doBeginChangeSet()
   }
 
-  private fun doBeginChangeSet(): ChangeSet? {
+  fun doBeginChangeSet(): ChangeSet? {
     currentChangeSet = ChangeSet(nextId(), Clock.getTime())
     return currentChangeSet
   }
@@ -57,9 +57,7 @@ open class ChangeList(private val storage: ChangeListStorage) {
   @Synchronized
   fun forceBeginChangeSet(): ChangeSet? {
     val lastChangeSet = if (changeSetDepth > 0) doEndChangeSet(null, null) else null
-
     changeSetDepth++
-    doBeginChangeSet()
     return lastChangeSet
   }
 
