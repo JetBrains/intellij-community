@@ -2,11 +2,13 @@
 package com.intellij.psi.impl.source.javadoc;
 
 import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class PsiDocFragmentRef extends CompositePsiElement implements PsiDocTagValue, Constants {
   public PsiDocFragmentRef() {
@@ -21,5 +23,9 @@ public class PsiDocFragmentRef extends CompositePsiElement implements PsiDocTagV
     else {
       visitor.visitElement(this);
     }
+  }
+
+  public @Nullable PsiClass getScope() {
+    return PsiDocMethodOrFieldRef.getScope(this);
   }
 }

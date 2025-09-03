@@ -138,6 +138,12 @@ public class JavadocCompletionTest extends LightFixtureCompletionTestCase {
     assertTrue(getLookupElementStrings().containsAll(Arrays.asList("foo", "myName")));
   }
 
+  @NeedsIndex.Full
+  public void testSee7() {
+    configureByFile("See7.java");
+    assertTrue(getLookupElementStrings().containsAll(Arrays.asList("my-id1", "my-id2", "my-id3", "my-id4")));
+  }
+
   @NeedsIndex.ForStandardLibrary
   public void testIDEADEV10620() {
     configureByFile("IDEADEV10620.java");
