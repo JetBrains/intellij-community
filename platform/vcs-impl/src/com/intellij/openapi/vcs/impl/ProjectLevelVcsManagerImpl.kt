@@ -1,798 +1,652 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.vcs.impl;
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.vcs.impl
 
-import com.intellij.concurrency.ConcurrentCollectionFactory;
-import com.intellij.execution.ui.ConsoleViewContentType;
-import com.intellij.ide.trustedProjects.TrustedProjectsListener;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.FileIndexFacade;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.VcsAnnotationLocalChangesListener;
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
-import com.intellij.openapi.vcs.checkout.CompositeCheckoutListener;
-import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
-import com.intellij.openapi.vcs.history.VcsHistoryCache;
-import com.intellij.openapi.vcs.impl.projectlevelman.*;
-import com.intellij.openapi.vcs.update.ActionInfo;
-import com.intellij.openapi.vcs.update.UpdateInfoTree;
-import com.intellij.openapi.vcs.update.UpdatedFiles;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.project.ProjectKt;
-import com.intellij.ui.content.ContentManager;
-import com.intellij.util.ContentUtilEx;
-import com.intellij.util.Processor;
-import com.intellij.util.concurrency.ThreadingAssertions;
-import com.intellij.util.concurrency.annotations.RequiresEdt;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.text.DateFormatUtil;
-import com.intellij.vcs.console.VcsConsoleTabService;
-import com.intellij.vcsUtil.VcsImplUtil;
-import kotlin.Pair;
-import kotlinx.coroutines.CoroutineScope;
-import org.jdom.Element;
-import org.jetbrains.annotations.*;
+import com.intellij.concurrency.ConcurrentCollectionFactory
+import com.intellij.execution.ui.ConsoleViewContentType
+import com.intellij.ide.trustedProjects.TrustedProjectsListener
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.editor.markup.TextAttributes
+import com.intellij.openapi.fileTypes.FileTypeManager
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.FileIndexFacade
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.InvalidDataException
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.ThrowableComputable
+import com.intellij.openapi.util.WriteExternalException
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vcs.*
+import com.intellij.openapi.vcs.VcsConfiguration.StandardConfirmation
+import com.intellij.openapi.vcs.VcsConfiguration.StandardOption
+import com.intellij.openapi.vcs.changes.VcsAnnotationLocalChangesListener
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
+import com.intellij.openapi.vcs.checkout.CompositeCheckoutListener
+import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx
+import com.intellij.openapi.vcs.history.VcsHistoryCache
+import com.intellij.openapi.vcs.impl.projectlevelman.*
+import com.intellij.openapi.vcs.update.ActionInfo
+import com.intellij.openapi.vcs.update.UpdateInfoTree
+import com.intellij.openapi.vcs.update.UpdatedFiles
+import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.project.isDirectoryBased
+import com.intellij.project.stateStore
+import com.intellij.ui.content.ContentManager
+import com.intellij.util.ContentUtilEx
+import com.intellij.util.Processor
+import com.intellij.util.ThrowableRunnable
+import com.intellij.util.concurrency.ThreadingAssertions
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.text.DateFormatUtil
+import com.intellij.vcs.console.VcsConsoleTabService
+import com.intellij.vcsUtil.VcsImplUtil
+import kotlinx.coroutines.CoroutineScope
+import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.CalledInAny
+import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.TestOnly
+import java.io.File
+import java.util.*
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.function.Supplier
+import kotlin.Pair
 
-import java.io.File;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
+@State(name = "VcsDirectoryMappings", storages = [Storage("vcs.xml")])
+class ProjectLevelVcsManagerImpl(
+  private val project: Project,
+  coroutineScope: CoroutineScope,
+) : ProjectLevelVcsManagerEx(), PersistentStateComponent<Element>, Disposable {
+  private val mappingsHolder = NewMappings(project, this, coroutineScope)
+  private var mappingsLoaded = false
 
-@State(name = "VcsDirectoryMappings", storages = @Storage("vcs.xml"))
-public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx implements PersistentStateComponent<Element>, Disposable {
-  private static final Logger LOG = Logger.getInstance(ProjectLevelVcsManagerImpl.class);
+  private val backgroundOperationCounter = AtomicInteger()
+  private val backgroundRunningTasks = ConcurrentCollectionFactory.createConcurrentSet<ActionKey>()
 
-  private final NewMappings myMappings;
-  private final Project myProject;
+  override val annotationLocalChangesListener: VcsAnnotationLocalChangesListener
+    get() = project.service<VcsAnnotationLocalChangesListener>()
 
-  private static final @NonNls String ELEMENT_MAPPING = "mapping";
-  private static final @NonNls String ATTRIBUTE_DIRECTORY = "directory";
-  private static final @NonNls String ATTRIBUTE_VCS = "vcs";
-  private static final @NonNls String ELEMENT_ROOT_SETTINGS = "rootSettings";
-  private static final @NonNls String ATTRIBUTE_CLASS = "class";
+  override val vcsHistoryCache: VcsHistoryCache
+    get() = VcsCacheManager.getInstance(project).vcsHistoryCache
 
-  private boolean myMappingsLoaded;
+  override val contentRevisionCache: ContentRevisionCache
+    get() = VcsCacheManager.getInstance(project).contentRevisionCache
 
-  private final @NotNull AtomicInteger myBackgroundOperationCounter = new AtomicInteger();
-
-  private final Set<ActionKey> myBackgroundRunningTasks = ConcurrentCollectionFactory.createConcurrentSet();
-
-  public ProjectLevelVcsManagerImpl(@NotNull Project project, @NotNull CoroutineScope coroutineScope) {
-    myProject = project;
-
-    myMappings = new NewMappings(myProject, this, coroutineScope);
+  override fun dispose() {
+    Disposer.dispose(mappingsHolder)
   }
 
-  @Override
-  public void dispose() {
-    Disposer.dispose(myMappings);
-  }
-
-  public static ProjectLevelVcsManagerImpl getInstanceImpl(@NotNull Project project) {
-    return (ProjectLevelVcsManagerImpl)getInstance(project);
-  }
-
-  @TestOnly
-  public void registerVcs(AbstractVcs vcs) {
-    AllVcses.getInstance(myProject).registerManually(vcs);
-  }
-
-  @Override
-  public @Nullable AbstractVcs findVcsByName(@Nullable String name) {
-    if (name == null) return null;
-    AbstractVcs vcs = AllVcses.getInstance(myProject).getByName(name);
-    if (vcs == null && myProject.isDisposed()) {
+  override fun findVcsByName(name: String?): AbstractVcs? {
+    if (name == null) return null
+    val vcs = AllVcses.getInstance(project).getByName(name)
+    if (vcs == null && project.isDisposed()) {
       // Take readLock to avoid race between Project.isDisposed and Disposer.dispose.
-      ReadAction.run(ProgressManager::checkCanceled);
+      ReadAction.run(ThrowableRunnable { ProgressManager.checkCanceled() })
     }
-    return vcs;
+    return vcs
   }
 
-  @Override
-  public @Nullable VcsDescriptor getDescriptor(final String name) {
-    if (name == null) return null;
-    if (myProject.isDisposed()) return null;
-    return AllVcses.getInstance(myProject).getDescriptor(name);
+  override fun getDescriptor(vcsName: String?): VcsDescriptor? {
+    if (vcsName == null) return null
+    if (project.isDisposed()) return null
+    return AllVcses.getInstance(project).getDescriptor(vcsName)
   }
 
-  @Override
-  public void iterateVfUnderVcsRoot(VirtualFile file, Processor<? super VirtualFile> processor) {
-    VcsRootIterator.iterateVfUnderVcsRoot(myProject, file, processor);
+  override fun getAllVcss(): Array<VcsDescriptor> = AllVcses.getInstance(project).getAll()
+
+  override fun getAllSupportedVcss(): Array<AbstractVcs> = AllVcses.getInstance(project).getSupportedVcses()
+
+  fun haveVcses(): Boolean = !AllVcses.getInstance(project).isEmpty()
+
+  override fun checkAllFilesAreUnder(abstractVcs: AbstractVcs, files: Array<VirtualFile>?): Boolean {
+    if (files == null) return false
+    return files.all { getVcsFor(it) === abstractVcs }
   }
 
-  @Override
-  public VcsDescriptor[] getAllVcss() {
-    return AllVcses.getInstance(myProject).getAll();
+  @NlsSafe
+  override fun getShortNameForVcsRoot(file: VirtualFile): @NlsSafe String =
+    mappingsHolder.getShortNameFor(file)
+    ?: project.getBaseDir()?.let { VfsUtilCore.getRelativePath(file, it, File.separatorChar) }?.ifEmpty { file.getName() }
+    ?: file.presentableName
+
+  override fun getVcsFor(file: VirtualFile?): AbstractVcs? {
+    if (project.isDisposed()) return null
+    return mappingsHolder.getMappedRootFor(file)?.vcs
   }
 
-  @Override
-  public AbstractVcs @NotNull [] getAllSupportedVcss() {
-    return AllVcses.getInstance(myProject).getSupportedVcses();
+  override fun getVcsFor(file: FilePath?): AbstractVcs? {
+    if (project.isDisposed()) return null
+    return mappingsHolder.getMappedRootFor(file)?.vcs
   }
 
-  public boolean haveVcses() {
-    return !AllVcses.getInstance(myProject).isEmpty();
+  override fun getVcsRootFor(file: VirtualFile?): VirtualFile? {
+    if (file == null || project.isDisposed()) return null
+    return mappingsHolder.getMappedRootFor(file)?.root
   }
 
-  @Override
-  public @NotNull VcsAnnotationLocalChangesListener getAnnotationLocalChangesListener() {
-    return myProject.getService(VcsAnnotationLocalChangesListener.class);
+  override fun getVcsRootObjectFor(file: VirtualFile?): VcsRoot? {
+    if (file == null || project.isDisposed()) return null
+    return mappingsHolder.getMappedRootFor(file)?.let { VcsRoot(it.vcs, it.root) }
   }
 
-  @Override
-  public boolean checkAllFilesAreUnder(AbstractVcs abstractVcs, VirtualFile[] files) {
-    if (files == null) return false;
-    for (VirtualFile file : files) {
-      if (getVcsFor(file) != abstractVcs) {
-        return false;
+  override fun getVcsRootFor(file: FilePath?): VirtualFile? {
+    if (file == null || project.isDisposed()) return null
+    return mappingsHolder.getMappedRootFor(file)?.root
+  }
+
+  override fun getVcsRootObjectFor(file: FilePath?): VcsRoot? {
+    if (file == null || project.isDisposed()) return null
+
+    val root = mappingsHolder.getMappedRootFor(file)
+    return if (root != null) VcsRoot(root.vcs, root.root) else null
+  }
+
+  @get:ApiStatus.Internal
+  val vcsRootObjectsForDefaultMapping: List<VcsRoot>
+    get() =
+      mappingsHolder.allMappedRoots.filter { root ->
+        val vcs = root.vcs
+        root.mapping.isDefaultMapping && vcs != null && vcs.customConvertor == null
+      }.map {
+        VcsRoot(it.vcs, it.root)
       }
-    }
-    return true;
-  }
-
-  @Override
-  public @NotNull @NlsSafe String getShortNameForVcsRoot(@NotNull VirtualFile root) {
-    String shortName = myMappings.getShortNameFor(root);
-    if (shortName != null) return shortName;
-
-    VirtualFile projectDir = myProject.getBaseDir();
-    String relativePath = projectDir != null ? VfsUtilCore.getRelativePath(root, projectDir, File.separatorChar) : null;
-    if (relativePath != null) {
-      return relativePath.isEmpty() ? root.getName() : relativePath;
-    }
-
-    return root.getPresentableUrl();
-  }
-
-  @Override
-  public @Nullable AbstractVcs getVcsFor(@Nullable VirtualFile file) {
-    if (myProject.isDisposed()) return null;
-
-    NewMappings.MappedRoot root = myMappings.getMappedRootFor(file);
-    return root != null ? root.vcs : null;
-  }
-
-  @Override
-  public @Nullable AbstractVcs getVcsFor(@Nullable FilePath file) {
-    if (myProject.isDisposed()) return null;
-
-    NewMappings.MappedRoot root = myMappings.getMappedRootFor(file);
-    return root != null ? root.vcs : null;
-  }
-
-  @Override
-  public @Nullable VirtualFile getVcsRootFor(@Nullable VirtualFile file) {
-    if (file == null || myProject.isDisposed()) return null;
-
-    NewMappings.MappedRoot root = myMappings.getMappedRootFor(file);
-    return root != null ? root.root : null;
-  }
-
-  @Override
-  public @Nullable VcsRoot getVcsRootObjectFor(@Nullable VirtualFile file) {
-    if (file == null || myProject.isDisposed()) {
-      return null;
-    }
-
-    NewMappings.MappedRoot root = myMappings.getMappedRootFor(file);
-    return root != null ? new VcsRoot(root.vcs, root.root) : null;
-  }
-
-  @Override
-  public @Nullable VirtualFile getVcsRootFor(@Nullable FilePath file) {
-    if (file == null || myProject.isDisposed()) {
-      return null;
-    }
-
-    NewMappings.MappedRoot root = myMappings.getMappedRootFor(file);
-    return root != null ? root.root : null;
-  }
-
-  @Override
-  public VcsRoot getVcsRootObjectFor(@Nullable FilePath file) {
-    if (file == null || myProject.isDisposed()) return null;
-
-    NewMappings.MappedRoot root = myMappings.getMappedRootFor(file);
-    return root != null ? new VcsRoot(root.vcs, root.root) : null;
-  }
-
-  @ApiStatus.Internal
-  public @NotNull List<VcsRoot> getVcsRootObjectsForDefaultMapping() {
-    List<NewMappings.MappedRoot> detectedRoots = ContainerUtil.filter(myMappings.getAllMappedRoots(), root -> {
-      AbstractVcs vcs = root.vcs;
-      return root.mapping.isDefaultMapping() &&
-             vcs != null && vcs.getCustomConvertor() == null;
-    });
-    return ContainerUtil.map(detectedRoots, root -> new VcsRoot(root.vcs, root.root));
-  }
 
   @TestOnly
-  public void unregisterVcs(@NotNull AbstractVcs vcs) {
-    if (!ApplicationManager.getApplication().isUnitTestMode() && myMappings.haveActiveVcs(vcs.getName())) {
+  fun unregisterVcs(vcs: AbstractVcs) {
+    if (!ApplicationManager.getApplication().isUnitTestMode() && mappingsHolder.haveActiveVcs(vcs.name)) {
       // unlikely
-      LOG.warn("Active vcs '" + vcs.getName() + "' is being unregistered. Remove from mappings first.");
+      LOG.warn("Active vcs '${vcs.name}' is being unregistered. Remove from mappings first.")
     }
-    myMappings.beingUnregistered(vcs.getName());
-    AllVcses.getInstance(myProject).unregisterManually(vcs);
+    mappingsHolder.beingUnregistered(vcs.name)
+    AllVcses.getInstance(project).unregisterManually(vcs)
   }
 
-  @Override
-  public @Nullable ContentManager getContentManager() {
-    ToolWindow changes = ToolWindowManager.getInstance(myProject).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);
-    return changes == null ? null : changes.getContentManager();
+  @Suppress("OVERRIDE_DEPRECATION")
+  override val contentManager: ContentManager?
+    get() = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID)?.getContentManager()
+
+  override fun checkVcsIsActive(vcs: AbstractVcs): Boolean = checkVcsIsActive(vcs.name)
+
+  override fun checkVcsIsActive(vcsName: String?): Boolean = mappingsHolder.haveActiveVcs(vcsName)
+
+  override fun getAllActiveVcss(): Array<AbstractVcs> = mappingsHolder.activeVcses
+
+  override fun getSingleVCS(): AbstractVcs? = getAllActiveVcss().singleOrNull()
+
+  override fun hasActiveVcss(): Boolean = mappingsHolder.hasActiveVcss()
+
+  override fun areVcsesActivated(): Boolean = mappingsHolder.isActivated
+
+  override fun hasAnyMappings(): Boolean = !mappingsHolder.isEmpty
+
+  override fun getDirectoryMappings(): MutableList<VcsDirectoryMapping> {
+    return mappingsHolder.directoryMappings
   }
 
-  @Override
-  public boolean checkVcsIsActive(@NotNull AbstractVcs vcs) {
-    return checkVcsIsActive(vcs.getName());
+  override fun getDirectoryMappings(vcs: AbstractVcs): List<VcsDirectoryMapping> {
+    return mappingsHolder.getDirectoryMappings(vcs.name)
   }
 
-  @Override
-  public boolean checkVcsIsActive(final String vcsName) {
-    return myMappings.haveActiveVcs(vcsName);
+  override fun getDirectoryMappingFor(path: FilePath?): VcsDirectoryMapping? {
+    if (path == null || project.isDisposed()) return null
+    return mappingsHolder.getMappedRootFor(path)?.mapping
   }
 
-  @Override
-  public AbstractVcs @NotNull [] getAllActiveVcss() {
-    return myMappings.getActiveVcses();
+  private fun getDirectoryMappingFor(file: VirtualFile?): VcsDirectoryMapping? {
+    if (file == null || project.isDisposed()) return null
+    return mappingsHolder.getMappedRootFor(file)?.mapping
   }
 
-  @Override
-  public @Nullable AbstractVcs getSingleVCS() {
-    AbstractVcs[] vcses = getAllActiveVcss();
-    return vcses.length == 1 ? vcses[0] : null;
-  }
-
-  @Override
-  public boolean hasActiveVcss() {
-    return myMappings.hasActiveVcss();
-  }
-
-  @Override
-  public boolean areVcsesActivated() {
-    return myMappings.isActivated();
-  }
-
-  @Override
-  public boolean hasAnyMappings() {
-    return !myMappings.isEmpty();
-  }
-
-  @Deprecated
-  @Override
-  public void addMessageToConsoleWindow(final String message, final TextAttributes attributes) {
-    addMessageToConsoleWindow(message, new ConsoleViewContentType("", attributes));
-  }
-
-  @Override
-  public void addMessageToConsoleWindow(@Nullable String message, @NotNull ConsoleViewContentType contentType) {
-    VcsConsoleTabService.getInstance(myProject).addMessage(message, contentType);
-  }
-
-  @Override
-  public void addMessageToConsoleWindow(@Nullable VcsConsoleLine line) {
-    VcsConsoleTabService.getInstance(myProject).addMessage(line);
-  }
-
-  @RequiresEdt
-  @Override
-  public @Nullable UpdateInfoTree showUpdateProjectInfo(UpdatedFiles updatedFiles,
-                                                        String displayActionName,
-                                                        ActionInfo actionInfo,
-                                                        boolean canceled) {
-    if (!myProject.isOpen() || myProject.isDisposed()) return null;
-    ContentManager contentManager = getContentManager();
-    if (contentManager == null) {
-      return null;  // content manager is made null during dispose; flag is set later
-    }
-    final UpdateInfoTree updateInfoTree = new UpdateInfoTree(contentManager, myProject, updatedFiles, displayActionName, actionInfo);
-    String tabName = DateFormatUtil.formatDateTime(System.currentTimeMillis());
-    ContentUtilEx.addTabbedContent(contentManager, updateInfoTree, "Update Info",
-                                   VcsBundle.messagePointer("vcs.update.tab.name"), () -> tabName,
-                                   false, updateInfoTree);
-    updateInfoTree.expandRootChildren();
-    return updateInfoTree;
-  }
-
-  @Override
-  public List<VcsDirectoryMapping> getDirectoryMappings() {
-    return myMappings.getDirectoryMappings();
-  }
-
-  @Override
-  public List<VcsDirectoryMapping> getDirectoryMappings(final AbstractVcs vcs) {
-    return myMappings.getDirectoryMappings(vcs.getName());
-  }
-
-  @Override
-  public @Nullable VcsDirectoryMapping getDirectoryMappingFor(@Nullable FilePath file) {
-    if (file == null || myProject.isDisposed()) return null;
-
-    NewMappings.MappedRoot root = myMappings.getMappedRootFor(file);
-    return root != null ? root.mapping : null;
-  }
-
-  private @Nullable VcsDirectoryMapping getDirectoryMappingFor(@Nullable VirtualFile file) {
-    if (file == null || myProject.isDisposed()) return null;
-
-    NewMappings.MappedRoot root = myMappings.getMappedRootFor(file);
-    return root != null ? root.mapping : null;
-  }
-
-  @Override
-  public void setDirectoryMapping(@NotNull String path, @Nullable String activeVcsName) {
-    if (myMappingsLoaded) {
+  override fun setDirectoryMapping(path: @NonNls String, activeVcsName: @NonNls String?) {
+    if (mappingsLoaded) {
       // ignore per-module VCS settings if the mapping table was loaded from .ipr
-      return;
+      return
     }
-    myMappings.setMapping(FileUtil.toSystemIndependentName(path), activeVcsName);
+    mappingsHolder.setMapping(FileUtil.toSystemIndependentName(path), activeVcsName)
   }
 
-  public void registerNewDirectMappings(Collection<Pair<VirtualFile, AbstractVcs>> detectedRoots) {
-    var mappings = new ArrayList<>(myMappings.getDirectoryMappings());
-    var knownMappedRoots = mappings.stream().map(VcsDirectoryMapping::getDirectory).collect(Collectors.toSet());
-    var newMappings = detectedRoots.stream()
-      .map(pair -> new VcsDirectoryMapping(pair.component1().getPath(), pair.component2().getName()))
-      .filter(it -> !knownMappedRoots.contains(it.getDirectory())).toList();
-    mappings.addAll(newMappings);
-    setAutoDirectoryMappings(mappings);
+  fun registerNewDirectMappings(detectedRoots: Collection<Pair<VirtualFile, AbstractVcs>>) {
+    val mappings = mappingsHolder.directoryMappings.toMutableList()
+    val knownMappedRoots = mappings.mapTo(mutableSetOf()) { it.directory }
+
+    val newMappings = detectedRoots.asSequence().map { (file, vcs) ->
+      VcsDirectoryMapping(file.getPath(), vcs.name)
+    }.filter {
+      !knownMappedRoots.contains(it.directory)
+    }
+    mappings.addAll(newMappings)
+    setAutoDirectoryMappings(mappings)
   }
 
-  public void setAutoDirectoryMappings(@NotNull List<VcsDirectoryMapping> mappings) {
-    myMappings.setDirectoryMappings(mappings);
-    myMappings.cleanupMappings();
+  fun setAutoDirectoryMappings(mappings: List<VcsDirectoryMapping?>) {
+    mappingsHolder.setDirectoryMappings(mappings)
+    mappingsHolder.cleanupMappings()
   }
 
-  public void removeDirectoryMapping(@NotNull VcsDirectoryMapping mapping) {
-    myMappings.removeDirectoryMapping(mapping);
+  fun removeDirectoryMapping(mapping: VcsDirectoryMapping) {
+    mappingsHolder.removeDirectoryMapping(mapping)
   }
 
-  @Override
-  public void setDirectoryMappings(@NotNull List<VcsDirectoryMapping> items) {
-    myMappings.setDirectoryMappings(items);
+  override fun setDirectoryMappings(mappings: List<VcsDirectoryMapping>) {
+    mappingsHolder.setDirectoryMappings(mappings)
   }
 
-  @Override
-  public void scheduleMappedRootsUpdate() {
-    myMappings.scheduleMappedRootsUpdate();
+  override fun scheduleMappedRootsUpdate() {
+    mappingsHolder.scheduleMappedRootsUpdate()
   }
 
-  public void updateMappedVcsesImmediately() {
-    myMappings.updateMappedVcsesImmediately();
+  fun updateMappedVcsesImmediately() {
+    mappingsHolder.updateMappedVcsesImmediately()
   }
 
-  @Override
-  public void iterateVcsRoot(final VirtualFile root, final Processor<? super FilePath> iterator) {
-    VcsRootIterator.iterateVcsRoot(myProject, root, iterator);
+  override fun iterateVcsRoot(root: VirtualFile, iterator: Processor<in FilePath>) {
+    VcsRootIterator.iterateVcsRoot(project, root, iterator)
   }
 
-  @Override
-  public void iterateVcsRoot(VirtualFile root,
-                             Processor<? super FilePath> iterator,
-                             @Nullable VirtualFileFilter directoryFilter) {
-    VcsRootIterator.iterateVcsRoot(myProject, root, iterator, directoryFilter);
+  override fun iterateVcsRoot(root: VirtualFile, iterator: Processor<in FilePath>, directoryFilter: VirtualFileFilter?) {
+    VcsRootIterator.iterateVcsRoot(project, root, iterator, directoryFilter)
   }
 
-  @Override
-  public @NotNull VcsShowSettingOption getStandardOption(@NotNull VcsConfiguration.StandardOption option, @NotNull AbstractVcs vcs) {
-    final PersistentVcsShowSettingOption options = getOptions(option);
-    options.addApplicableVcs(vcs);
-    return options;
+  override fun iterateVfUnderVcsRoot(file: VirtualFile, processor: Processor<in VirtualFile>) {
+    VcsRootIterator.iterateVfUnderVcsRoot(project, file, processor)
   }
 
-  @Override
-  public @NotNull VcsShowConfirmationOption getStandardConfirmation(@NotNull VcsConfiguration.StandardConfirmation option,
-                                                                    AbstractVcs vcs) {
-    final PersistentVcsShowConfirmationOption result = getConfirmation(option);
+  override fun getStandardOption(option: StandardOption, vcs: AbstractVcs): VcsShowSettingOption {
+    val options = getOptions(option)
+    options.addApplicableVcs(vcs)
+    return options
+  }
+
+  override fun getStandardConfirmation(
+    option: StandardConfirmation,
+    vcs: AbstractVcs?,
+  ): VcsShowConfirmationOption {
+    val result = getConfirmation(option)
     if (vcs != null) {
-      result.addApplicableVcs(vcs);
+      result.addApplicableVcs(vcs)
     }
-    return result;
+    return result
   }
 
-  @Override
-  public @NotNull List<PersistentVcsShowConfirmationOption> getAllConfirmations() {
-    return getOptionsAndConfirmations().getAllConfirmations();
+  private val optionsAndConfirmations: OptionsAndConfirmations
+    get() = OptionsAndConfirmationsHolder.getInstance(project).optionsAndConfirmations
+
+  override val allConfirmations: List<PersistentVcsShowConfirmationOption>
+    get() = optionsAndConfirmations.allConfirmations
+
+  override fun getConfirmation(option: StandardConfirmation): PersistentVcsShowConfirmationOption =
+    optionsAndConfirmations.getConfirmation(option)
+
+  override fun getOptions(option: StandardOption): PersistentVcsShowSettingOption =
+    optionsAndConfirmations.getOption(option)
+
+  override val allOptions: List<PersistentVcsShowSettingOption>
+    get() = optionsAndConfirmations.allOptions
+
+  override val isBackgroundVcsOperationRunning: Boolean
+    get() = backgroundOperationCounter.get() > 0
+
+  override fun startBackgroundVcsOperation() {
+    backgroundOperationCounter.incrementAndGet()
   }
 
-  @Override
-  public @NotNull PersistentVcsShowConfirmationOption getConfirmation(VcsConfiguration.StandardConfirmation option) {
-    return getOptionsAndConfirmations().getConfirmation(option);
-  }
-
-  @Override
-  public @NotNull PersistentVcsShowSettingOption getOptions(VcsConfiguration.StandardOption option) {
-    return getOptionsAndConfirmations().getOption(option);
-  }
-
-  @Override
-  public @NotNull List<PersistentVcsShowSettingOption> getAllOptions() {
-    return getOptionsAndConfirmations().getAllOptions();
-  }
-
-  private @NotNull OptionsAndConfirmations getOptionsAndConfirmations() {
-    return OptionsAndConfirmationsHolder.getInstance(myProject).getOptionsAndConfirmations();
-  }
-
-  @Override
-  public void startBackgroundVcsOperation() {
-    myBackgroundOperationCounter.incrementAndGet();
-  }
-
-  @Override
-  public void stopBackgroundVcsOperation() {
+  override fun stopBackgroundVcsOperation() {
     // in fact, the condition is "should not be called under ApplicationManager.invokeLater() and similar"
-    ApplicationManager.getApplication().assertIsNonDispatchThread();
-    int counter = myBackgroundOperationCounter.getAndDecrement();
-    LOG.assertTrue(counter > 0, "myBackgroundOperationCounter was " + counter + " while should have been > 0");
+    ApplicationManager.getApplication().assertIsNonDispatchThread()
+    val counter = backgroundOperationCounter.getAndDecrement()
+    LOG.assertTrue(counter > 0, "myBackgroundOperationCounter was $counter while should have been > 0")
   }
 
-  @Override
-  public boolean isBackgroundVcsOperationRunning() {
-    return myBackgroundOperationCounter.get() > 0;
-  }
+  override fun getRootsUnderVcsWithoutFiltering(vcs: AbstractVcs): List<VirtualFile> = mappingsHolder.getMappingsAsFilesUnderVcs(vcs)
 
-  @Override
-  public List<VirtualFile> getRootsUnderVcsWithoutFiltering(@NotNull AbstractVcs vcs) {
-    return myMappings.getMappingsAsFilesUnderVcs(vcs);
-  }
+  override fun getRootsUnderVcs(vcs: AbstractVcs): Array<VirtualFile> = MappingsToRoots.getRootsUnderVcs(project, mappingsHolder, vcs)
 
-  @Override
-  public VirtualFile @NotNull [] getRootsUnderVcs(@NotNull AbstractVcs vcs) {
-    return MappingsToRoots.getRootsUnderVcs(myProject, myMappings, vcs);
-  }
-
-  @Override
-  public VirtualFile[] getAllVersionedRoots() {
-    List<VirtualFile> vFiles = new ArrayList<>();
-    final AbstractVcs[] vcses = myMappings.getActiveVcses();
-    for (AbstractVcs vcs : vcses) {
-      Collections.addAll(vFiles, getRootsUnderVcs(vcs));
+  override fun getAllVersionedRoots(): Array<VirtualFile> {
+    val vFiles = ArrayList<VirtualFile>()
+    val vcses = mappingsHolder.activeVcses
+    for (vcs in vcses) {
+      Collections.addAll(vFiles, *getRootsUnderVcs(vcs))
     }
-    return VfsUtilCore.toVirtualFileArray(vFiles);
+
+    return VfsUtilCore.toVirtualFileArray(vFiles)
   }
 
-  @Override
-  public VcsRoot @NotNull [] getAllVcsRoots() {
-    List<VcsRoot> vcsRoots = new ArrayList<>();
-    final AbstractVcs[] vcses = myMappings.getActiveVcses();
-    for (AbstractVcs vcs : vcses) {
-      final VirtualFile[] roots = getRootsUnderVcs(vcs);
-      for (VirtualFile root : roots) {
-        vcsRoots.add(new VcsRoot(vcs, root));
+  override fun getAllVcsRoots(): Array<VcsRoot> {
+    val vcsRoots = ArrayList<VcsRoot>()
+    val vcses = mappingsHolder.activeVcses
+    for (vcs in vcses) {
+      val roots = getRootsUnderVcs(vcs)
+      for (root in roots) {
+        vcsRoots.add(VcsRoot(vcs, root))
       }
     }
-    return vcsRoots.toArray(new VcsRoot[0]);
+    return vcsRoots.toTypedArray<VcsRoot>()
   }
 
-  @Override
-  public String getConsolidatedVcsName() {
-    AbstractVcs singleVcs = getSingleVCS();
-    return singleVcs != null ? singleVcs.getShortNameWithMnemonic() : VcsBundle.message("vcs.generic.name.with.mnemonic");
+  override fun getConsolidatedVcsName(): String {
+    val singleVcs = getSingleVCS()
+    return singleVcs?.shortNameWithMnemonic ?: VcsBundle.message("vcs.generic.name.with.mnemonic")
   }
 
-  @Override
-  public void notifyDirectoryMappingChanged() {
-    fireDirectoryMappingsChanged();
+  @Deprecated("A plugin should not need to call this.")
+  override fun notifyDirectoryMappingChanged() {
+    fireDirectoryMappingsChanged()
   }
 
-  @Override
-  public void loadState(@NotNull Element element) {
-    final List<VcsDirectoryMapping> mappingsList = new ArrayList<>();
-    for (Element child : element.getChildren(ELEMENT_MAPPING)) {
-      String vcsName = child.getAttributeValue(ATTRIBUTE_VCS);
-      String directory = child.getAttributeValue(ATTRIBUTE_DIRECTORY);
-      if (directory == null) continue;
+  override fun loadState(element: Element) {
+    val mappingsList: MutableList<VcsDirectoryMapping?> = ArrayList<VcsDirectoryMapping?>()
+    for (child in element.getChildren(ELEMENT_MAPPING)) {
+      val vcsName = child.getAttributeValue(ATTRIBUTE_VCS)
+      val directory = child.getAttributeValue(ATTRIBUTE_DIRECTORY)
+      if (directory == null) continue
 
-      VcsRootSettings rootSettings = null;
-      Element rootSettingsElement = child.getChild(ELEMENT_ROOT_SETTINGS);
+      var rootSettings: VcsRootSettings? = null
+      val rootSettingsElement = child.getChild(ELEMENT_ROOT_SETTINGS)
       if (rootSettingsElement != null) {
-        String className = rootSettingsElement.getAttributeValue(ATTRIBUTE_CLASS);
-        AbstractVcs vcsInstance = vcsName == null ? null : AllVcses.getInstance(myProject).getByName(vcsName);
+        val className = rootSettingsElement.getAttributeValue(ATTRIBUTE_CLASS)
+        val vcsInstance = if (vcsName == null) null else AllVcses.getInstance(project).getByName(vcsName)
         if (vcsInstance != null && className != null) {
-          rootSettings = vcsInstance.createEmptyVcsRootSettings();
+          rootSettings = vcsInstance.createEmptyVcsRootSettings()
           if (rootSettings != null) {
             try {
-              rootSettings.readExternal(rootSettingsElement);
+              rootSettings.readExternal(rootSettingsElement)
             }
-            catch (InvalidDataException e) {
-              LOG.error("Failed to load VCS root settings class " + className + " for VCS " + vcsInstance.getClass().getName(), e);
+            catch (e: InvalidDataException) {
+              LOG.error("Failed to load VCS root settings class " + className + " for VCS " + vcsInstance.javaClass.getName(), e)
             }
           }
         }
       }
 
-      VcsDirectoryMapping mapping = new VcsDirectoryMapping(directory, vcsName, rootSettings);
-      mappingsList.add(mapping);
+      val mapping = VcsDirectoryMapping(directory, vcsName, rootSettings)
+      mappingsList.add(mapping)
 
-      myMappingsLoaded |= !mapping.isDefaultMapping();
+      mappingsLoaded = mappingsLoaded or !mapping.isDefaultMapping
     }
-    myMappings.setDirectoryMappingsFromConfig(mappingsList);
+    mappingsHolder.setDirectoryMappingsFromConfig(mappingsList)
   }
 
-  @Override
-  public @NotNull Element getState() {
-    Element element = new Element("state");
-    for (VcsDirectoryMapping mapping : getDirectoryMappings()) {
-      VcsRootSettings rootSettings = mapping.getRootSettings();
-      if (rootSettings == null && mapping.isDefaultMapping() && mapping.isNoneMapping()) {
-        continue;
+  override fun getState(): Element {
+    val element = Element("state")
+    for (mapping in getDirectoryMappings()) {
+      val rootSettings = mapping.rootSettings
+      if (rootSettings == null && mapping.isDefaultMapping && mapping.isNoneMapping) {
+        continue
       }
 
-      Element child = new Element(ELEMENT_MAPPING);
-      child.setAttribute(ATTRIBUTE_DIRECTORY, mapping.getDirectory());
-      child.setAttribute(ATTRIBUTE_VCS, mapping.getVcs());
+      val child = Element(ELEMENT_MAPPING)
+      child.setAttribute(ATTRIBUTE_DIRECTORY, mapping.directory)
+      child.setAttribute(ATTRIBUTE_VCS, mapping.vcs)
       if (rootSettings != null) {
-        Element rootSettingsElement = new Element(ELEMENT_ROOT_SETTINGS);
-        rootSettingsElement.setAttribute(ATTRIBUTE_CLASS, rootSettings.getClass().getName());
+        val rootSettingsElement = Element(ELEMENT_ROOT_SETTINGS)
+        rootSettingsElement.setAttribute(ATTRIBUTE_CLASS, rootSettings.javaClass.getName())
         try {
-          rootSettings.writeExternal(rootSettingsElement);
-          child.addContent(rootSettingsElement);
+          rootSettings.writeExternal(rootSettingsElement)
+          child.addContent(rootSettingsElement)
         }
-        catch (WriteExternalException e) {
+        catch (e: WriteExternalException) {
           // don't add element
         }
       }
-      element.addContent(child);
+      element.addContent(child)
     }
-    return element;
+    return element
   }
 
   /**
    * Used to guess VCS for automatic mapping through a look into a working copy
    */
-  @Override
-  public @Nullable AbstractVcs findVersioningVcs(@NotNull VirtualFile file) {
-    Set<String> checkedVcses = new HashSet<>();
+  override fun findVersioningVcs(file: VirtualFile): AbstractVcs? {
+    val checkedVcses = HashSet<String>()
 
-    for (VcsRootChecker checker : VcsRootChecker.EXTENSION_POINT_NAME.getExtensionList()) {
-      String vcsName = checker.getSupportedVcs().getName();
-      checkedVcses.add(vcsName);
+    for (checker in VcsRootChecker.EXTENSION_POINT_NAME.extensionList) {
+      val vcsName = checker.getSupportedVcs().name
+      checkedVcses.add(vcsName)
 
       if (checker.isRoot(file)) {
-        return findVcsByName(vcsName);
+        return findVcsByName(vcsName)
       }
     }
 
-    String foundVcs = null;
-    for (VcsDescriptor vcsDescriptor : getAllVcss()) {
-      String vcsName = vcsDescriptor.getName();
-      if (checkedVcses.contains(vcsName)) continue;
+    var foundVcs: String? = null
+    for (vcsDescriptor in getAllVcss()) {
+      val vcsName = vcsDescriptor.name
+      if (checkedVcses.contains(vcsName)) continue
 
       if (vcsDescriptor.probablyUnderVcs(file)) {
         if (foundVcs != null) {
-          return null;
+          return null
         }
-        foundVcs = vcsName;
+        foundVcs = vcsName
       }
     }
-    return findVcsByName(foundVcs);
+    return findVcsByName(foundVcs)
   }
 
-  @Override
-  public @NotNull VcsRootChecker getRootChecker(@NotNull AbstractVcs vcs) {
-    for (VcsRootChecker checker : VcsRootChecker.EXTENSION_POINT_NAME.getIterable()) {
-      if (checker.getSupportedVcs().equals(vcs.getKeyInstanceMethod())) {
-        return checker;
+  override fun getRootChecker(vcs: AbstractVcs): VcsRootChecker {
+    for (checker in VcsRootChecker.EXTENSION_POINT_NAME.getIterable()) {
+      if (checker == null) break
+      if (checker.getSupportedVcs() == vcs.keyInstanceMethod) {
+        return checker
       }
     }
-    return new DefaultVcsRootChecker(vcs, getDescriptor(vcs.getName()));
+    return DefaultVcsRootChecker(vcs, getDescriptor(vcs.name))
   }
 
-  @Override
-  public CheckoutProvider.Listener getCompositeCheckoutListener() {
-    return new CompositeCheckoutListener(myProject);
-  }
+  override val compositeCheckoutListener: CheckoutProvider.Listener
+    get() = CompositeCheckoutListener(project)
 
-  @Override
-  public void fireDirectoryMappingsChanged() {
-    if (myProject.isOpen() && !myProject.isDisposed()) {
-      myMappings.notifyMappingsChanged();
+  @Suppress("OVERRIDE_DEPRECATION")
+  override fun fireDirectoryMappingsChanged() {
+    if (project.isOpen() && !project.isDisposed()) {
+      mappingsHolder.notifyMappingsChanged()
     }
   }
 
   /**
    * @return VCS name for default mapping, if any
    */
-  @Override
-  public @Nullable String haveDefaultMapping() {
-    return myMappings.haveDefaultMapping();
-  }
+  override fun haveDefaultMapping(): String? = mappingsHolder.haveDefaultMapping()
 
   @CalledInAny
-  boolean isBackgroundTaskRunning(Object @NotNull ... keys) {
-    return myBackgroundRunningTasks.contains(new ActionKey(keys));
+  fun isBackgroundTaskRunning(vararg keys: Any): Boolean = backgroundRunningTasks.contains(ActionKey(*keys))
+
+  @RequiresEdt
+  fun startBackgroundTask(vararg keys: Any) {
+    ThreadingAssertions.assertEventDispatchThread()
+    LOG.assertTrue(backgroundRunningTasks.add(ActionKey(*keys)))
   }
 
   @RequiresEdt
-  void startBackgroundTask(Object @NotNull ... keys) {
-    ThreadingAssertions.assertEventDispatchThread();
-    LOG.assertTrue(myBackgroundRunningTasks.add(new ActionKey(keys)));
-  }
-
-  @RequiresEdt
-  void stopBackgroundTask(Object @NotNull ... keys) {
-    ThreadingAssertions.assertEventDispatchThread();
-    LOG.assertTrue(myBackgroundRunningTasks.remove(new ActionKey(keys)));
+  fun stopBackgroundTask(vararg keys: Any) {
+    ThreadingAssertions.assertEventDispatchThread()
+    LOG.assertTrue(backgroundRunningTasks.remove(ActionKey(*keys)))
   }
 
   /**
-   * @see ProjectLevelVcsManager#runAfterInitialization(Runnable)
+   * @see com.intellij.openapi.vcs.ProjectLevelVcsManager.runAfterInitialization
    * @see VcsStartupActivity
    */
-  public void addInitializationRequest(@NotNull VcsInitObject vcsInitObject, @NotNull Runnable runnable) {
-    VcsInitialization.Companion.getInstance(myProject).add(vcsInitObject, runnable);
+  fun addInitializationRequest(vcsInitObject: VcsInitObject, runnable: Runnable) {
+    VcsInitialization.getInstance(project).add(vcsInitObject, runnable)
   }
 
-  @Override
-  public void runAfterInitialization(@NotNull Runnable runnable) {
-    addInitializationRequest(VcsInitObject.AFTER_COMMON, runnable);
+  override fun runAfterInitialization(runnable: Runnable) {
+    addInitializationRequest(VcsInitObject.AFTER_COMMON, runnable)
   }
 
-  @Override
-  public boolean isFileInContent(@Nullable VirtualFile vf) {
-    if (vf == null) {
-      return false;
-    }
-    return ReadAction.compute(() -> {
-      if (!vf.isValid()) return false;
-      FileIndexFacade fileIndex = FileIndexFacade.getInstance(myProject);
-      boolean isUnderProject = isFileInBaseDir(vf) ||
-                               isInDirectoryBasedRoot(vf) ||
-                               hasExplicitMapping(vf) ||
-                               fileIndex.isInContent(vf) ||
-                               (!Registry.is("ide.hide.excluded.files") && fileIndex.isExcludedFile(vf));
-      return isUnderProject && !isIgnored(vf);
-    });
+  override fun isFileInContent(vf: VirtualFile?): Boolean {
+    if (vf == null) return false
+    return ReadAction.compute(ThrowableComputable {
+      if (!vf.isValid()) return@ThrowableComputable false
+      val fileIndex = FileIndexFacade.getInstance(project)
+      val isUnderProject = isFileInBaseDir(vf) ||
+                           isInDirectoryBasedRoot(vf) ||
+                           hasExplicitMapping(vf) ||
+                           fileIndex.isInContent(vf) ||
+                           (!Registry.`is`("ide.hide.excluded.files") && fileIndex.isExcludedFile(vf))
+      isUnderProject && !isIgnored(vf)
+    })
   }
 
-  @Override
-  public boolean isIgnored(@NotNull VirtualFile vf) {
-    return ReadAction.compute(() -> {
-      if (myProject.isDisposed() || myProject.isDefault()) return false;
-      if (!vf.isValid()) return false;
-
-      if (Registry.is("ide.hide.excluded.files")) {
-        return FileIndexFacade.getInstance(myProject).isExcludedFile(vf);
+  override fun isIgnored(vf: VirtualFile): Boolean {
+    return ReadAction.compute(ThrowableComputable {
+      if (project.isDisposed() || project.isDefault) return@ThrowableComputable false
+      if (!vf.isValid()) return@ThrowableComputable false
+      if (Registry.`is`("ide.hide.excluded.files")) {
+        return@ThrowableComputable FileIndexFacade.getInstance(project).isExcludedFile(vf)
       }
       else {
-        return FileIndexFacade.getInstance(myProject).isUnderIgnored(vf);
+        return@ThrowableComputable FileIndexFacade.getInstance(project).isUnderIgnored(vf)
       }
-    });
+    })
   }
 
-  @Override
-  public boolean isIgnored(@NotNull FilePath filePath) {
-    return ReadAction.compute(() -> {
-      if (myProject.isDisposed() || myProject.isDefault()) return false;
-
-      if (Registry.is("ide.hide.excluded.files")) {
-        VirtualFile vf = VcsImplUtil.findValidParentAccurately(filePath);
-        return vf != null && FileIndexFacade.getInstance(myProject).isExcludedFile(vf);
+  override fun isIgnored(filePath: FilePath): Boolean {
+    return ReadAction.compute(ThrowableComputable {
+      if (project.isDisposed() || project.isDefault) return@ThrowableComputable false
+      if (Registry.`is`("ide.hide.excluded.files")) {
+        val vf = VcsImplUtil.findValidParentAccurately(filePath)
+        return@ThrowableComputable vf != null && FileIndexFacade.getInstance(project).isExcludedFile(vf)
       }
       else {
         // WARN: might differ from 'myExcludedIndex.isUnderIgnored' if whole content root is under folder with 'ignored' name.
-        FileTypeManager fileTypeManager = FileTypeManager.getInstance();
-        for (String name : StringUtil.tokenize(filePath.getPath(), "/")) {
+        val fileTypeManager = FileTypeManager.getInstance()
+        for (name in StringUtil.tokenize(filePath.getPath(), "/")) {
           if (fileTypeManager.isFileIgnored(name)) {
-            return true;
+            return@ThrowableComputable true
           }
         }
-        return false;
+        return@ThrowableComputable false
       }
-    });
+    })
   }
 
-  private boolean isInDirectoryBasedRoot(@NotNull VirtualFile file) {
-    if (ProjectKt.isDirectoryBased(myProject)) {
-      return ProjectKt.getStateStore(myProject).isProjectFile(file);
+  private fun isInDirectoryBasedRoot(file: VirtualFile): Boolean {
+    if (project.isDirectoryBased) {
+      return project.stateStore.isProjectFile(file)
     }
-    return false;
+    return false
   }
 
-  private boolean isFileInBaseDir(@NotNull VirtualFile file) {
-    VirtualFile baseDir = myProject.getBaseDir();
-    if (baseDir == null) {
-      return false;
-    }
+  private fun isFileInBaseDir(file: VirtualFile): Boolean {
+    val baseDir = project.getBaseDir() ?: return false
 
     if (file.isDirectory()) {
-      return baseDir.equals(file);
+      return baseDir == file
     }
     else {
-      return baseDir.equals(file.getParent());
+      return baseDir == file.getParent()
     }
   }
 
-  private boolean hasExplicitMapping(@NotNull VirtualFile vFile) {
-    final VcsDirectoryMapping mapping = getDirectoryMappingFor(vFile);
-    return mapping != null && !mapping.isDefaultMapping();
-  }
-
-  @Override
-  public VcsHistoryCache getVcsHistoryCache() {
-    return VcsCacheManager.getInstance(myProject).getVcsHistoryCache();
-  }
-
-  @Override
-  public ContentRevisionCache getContentRevisionCache() {
-    return VcsCacheManager.getInstance(myProject).getContentRevisionCache();
+  private fun hasExplicitMapping(vFile: VirtualFile): Boolean {
+    val mapping = getDirectoryMappingFor(vFile)
+    return mapping != null && !mapping.isDefaultMapping
   }
 
   @TestOnly
-  public void waitForInitialized() {
-    VcsInitialization.Companion.getInstance(myProject).waitFinished();
+  fun waitForInitialized() {
+    VcsInitialization.getInstance(project).waitFinished()
   }
 
-  @Override
-  public void showConsole(@Nullable Runnable then) {
-    VcsConsoleTabService.getInstance(myProject).showConsoleTab(true, null);
+  @Deprecated("Use {@link com.intellij.vcs.console.VcsConsoleTabService}")
+  override fun showConsole(then: Runnable?) {
+    VcsConsoleTabService.getInstance(project).showConsoleTab(true, null)
   }
 
-  @Override
-  public void scrollConsoleToTheEnd() {
-    VcsConsoleTabService.getInstance(myProject).showConsoleTabAndScrollToTheEnd();
+  @Deprecated("Use {@link com.intellij.vcs.console.VcsConsoleTabService}")
+  override fun scrollConsoleToTheEnd() {
+    VcsConsoleTabService.getInstance(project).showConsoleTabAndScrollToTheEnd()
   }
 
-  private static class ActionKey {
-    private final Object[] myObjects;
+  @Deprecated("")
+  override fun addMessageToConsoleWindow(message: String?, attributes: TextAttributes?) {
+    addMessageToConsoleWindow(message, ConsoleViewContentType("", attributes))
+  }
 
-    ActionKey(Object @NotNull ... objects) {
-      myObjects = objects;
+  override fun addMessageToConsoleWindow(message: String?, contentType: ConsoleViewContentType) {
+    VcsConsoleTabService.getInstance(project).addMessage(message, contentType)
+  }
+
+  override fun addMessageToConsoleWindow(line: VcsConsoleLine?) {
+    VcsConsoleTabService.getInstance(project).addMessage(line)
+  }
+
+  @RequiresEdt
+  override fun showUpdateProjectInfo(
+    updatedFiles: UpdatedFiles?,
+    displayActionName: String?,
+    actionInfo: ActionInfo?,
+    canceled: Boolean,
+  ): UpdateInfoTree? {
+    if (!project.isOpen() || project.isDisposed()) return null
+    val contentManager = contentManager ?: return null // content manager is made null during dispose; flag is set later
+    val updateInfoTree = UpdateInfoTree(contentManager, project, updatedFiles, displayActionName, actionInfo)
+    val tabName = DateFormatUtil.formatDateTime(System.currentTimeMillis())
+    ContentUtilEx.addTabbedContent(contentManager, updateInfoTree, "Update Info",
+                                   VcsBundle.messagePointer("vcs.update.tab.name"), Supplier { tabName },
+                                   false, updateInfoTree)
+    updateInfoTree.expandRootChildren()
+    return updateInfoTree
+  }
+
+  private class ActionKey(private vararg val objects: Any) {
+    override fun equals(other: Any?): Boolean {
+      if (other == null || javaClass != other.javaClass) return false
+      return objects.contentEquals((other as ActionKey).objects)
     }
 
-    @Override
-    public final boolean equals(Object o) {
-      if (o == null || getClass() != o.getClass()) return false;
-      return Arrays.equals(myObjects, ((ActionKey)o).myObjects);
+    override fun hashCode(): Int {
+      return objects.contentHashCode()
     }
 
-    @Override
-    public final int hashCode() {
-      return Arrays.hashCode(myObjects);
-    }
-
-    @Override
-    public String toString() {
-      return getClass() + " - " + Arrays.toString(myObjects);
+    override fun toString(): String {
+      return javaClass.toString() + " - " + objects.contentToString()
     }
   }
 
-  static final class ActivateVcsesStartupActivity implements VcsStartupActivity {
-    @Override
-    public void runActivity(@NotNull Project project) {
-      getInstanceImpl(project).myMappings.activateActiveVcses();
+  @TestOnly
+  fun registerVcs(vcs: AbstractVcs) {
+    AllVcses.getInstance(project).registerManually(vcs)
+  }
+
+  internal class ActivateVcsesStartupActivity : VcsStartupActivity {
+    override fun runActivity(project: Project) {
+      getInstanceImpl(project).mappingsHolder.activateActiveVcses()
     }
 
-    @Override
-    public int getOrder() {
-      return VcsInitObject.MAPPINGS.getOrder();
+    override val order: Int
+      get() = VcsInitObject.MAPPINGS.order
+  }
+
+  internal class TrustListener : TrustedProjectsListener {
+    override fun onProjectTrusted(project: Project) {
+      getInstanceImpl(project).updateMappedVcsesImmediately()
     }
   }
 
-  static final class TrustListener implements TrustedProjectsListener {
-    @Override
-    public void onProjectTrusted(@NotNull Project project) {
-      getInstanceImpl(project).updateMappedVcsesImmediately();
-    }
+  companion object {
+    private val LOG = Logger.getInstance(ProjectLevelVcsManagerImpl::class.java)
+
+    private const val ELEMENT_MAPPING: @NonNls String = "mapping"
+    private const val ATTRIBUTE_DIRECTORY: @NonNls String = "directory"
+    private const val ATTRIBUTE_VCS: @NonNls String = "vcs"
+    private const val ELEMENT_ROOT_SETTINGS: @NonNls String = "rootSettings"
+    private const val ATTRIBUTE_CLASS: @NonNls String = "class"
+
+    @JvmStatic
+    fun getInstanceImpl(project: Project): ProjectLevelVcsManagerImpl = getInstance(project) as ProjectLevelVcsManagerImpl
   }
 }

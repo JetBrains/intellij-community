@@ -3250,8 +3250,9 @@ f:com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
 - com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx
 - com.intellij.openapi.Disposable
 - com.intellij.openapi.components.PersistentStateComponent
+- sf:Companion:com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl$Companion
 - <init>(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope):V
-- addInitializationRequest(com.intellij.openapi.vcs.impl.VcsInitObject,java.lang.Runnable):V
+- f:addInitializationRequest(com.intellij.openapi.vcs.impl.VcsInitObject,java.lang.Runnable):V
 - addMessageToConsoleWindow(com.intellij.openapi.vcs.VcsConsoleLine):V
 - addMessageToConsoleWindow(java.lang.String,com.intellij.execution.ui.ConsoleViewContentType):V
 - addMessageToConsoleWindow(java.lang.String,com.intellij.openapi.editor.markup.TextAttributes):V
@@ -3280,7 +3281,7 @@ f:com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
 - getDirectoryMappingFor(com.intellij.openapi.vcs.FilePath):com.intellij.openapi.vcs.VcsDirectoryMapping
 - getDirectoryMappings():java.util.List
 - getDirectoryMappings(com.intellij.openapi.vcs.AbstractVcs):java.util.List
-- s:getInstanceImpl(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
+- sf:getInstanceImpl(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
 - getOptions(com.intellij.openapi.vcs.VcsConfiguration$StandardOption):com.intellij.openapi.vcs.impl.projectlevelman.PersistentVcsShowSettingOption
 - getRootChecker(com.intellij.openapi.vcs.AbstractVcs):com.intellij.openapi.vcs.VcsRootChecker
 - getRootsUnderVcs(com.intellij.openapi.vcs.AbstractVcs):com.intellij.openapi.vfs.VirtualFile[]
@@ -3300,7 +3301,8 @@ f:com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
 - hasActiveVcss():Z
 - hasAnyMappings():Z
 - haveDefaultMapping():java.lang.String
-- haveVcses():Z
+- f:haveVcses():Z
+- f:isBackgroundTaskRunning(java.lang.Object[]):Z
 - isBackgroundVcsOperationRunning():Z
 - isFileInContent(com.intellij.openapi.vfs.VirtualFile):Z
 - isIgnored(com.intellij.openapi.vcs.FilePath):Z
@@ -3310,22 +3312,26 @@ f:com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
 - iterateVfUnderVcsRoot(com.intellij.openapi.vfs.VirtualFile,com.intellij.util.Processor):V
 - loadState(org.jdom.Element):V
 - notifyDirectoryMappingChanged():V
-- registerNewDirectMappings(java.util.Collection):V
-- registerVcs(com.intellij.openapi.vcs.AbstractVcs):V
-- removeDirectoryMapping(com.intellij.openapi.vcs.VcsDirectoryMapping):V
+- f:registerNewDirectMappings(java.util.Collection):V
+- f:registerVcs(com.intellij.openapi.vcs.AbstractVcs):V
+- f:removeDirectoryMapping(com.intellij.openapi.vcs.VcsDirectoryMapping):V
 - runAfterInitialization(java.lang.Runnable):V
 - scheduleMappedRootsUpdate():V
 - scrollConsoleToTheEnd():V
-- setAutoDirectoryMappings(java.util.List):V
+- f:setAutoDirectoryMappings(java.util.List):V
 - setDirectoryMapping(java.lang.String,java.lang.String):V
 - setDirectoryMappings(java.util.List):V
 - showConsole(java.lang.Runnable):V
 - showUpdateProjectInfo(com.intellij.openapi.vcs.update.UpdatedFiles,java.lang.String,com.intellij.openapi.vcs.update.ActionInfo,Z):com.intellij.openapi.vcs.update.UpdateInfoTree
+- f:startBackgroundTask(java.lang.Object[]):V
 - startBackgroundVcsOperation():V
+- f:stopBackgroundTask(java.lang.Object[]):V
 - stopBackgroundVcsOperation():V
-- unregisterVcs(com.intellij.openapi.vcs.AbstractVcs):V
-- updateMappedVcsesImmediately():V
-- waitForInitialized():V
+- f:unregisterVcs(com.intellij.openapi.vcs.AbstractVcs):V
+- f:updateMappedVcsesImmediately():V
+- f:waitForInitialized():V
+f:com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl$Companion
+- f:getInstanceImpl(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
 f:com.intellij.openapi.vcs.impl.RepositoryBrowser
 - sf:INSTANCE:com.intellij.openapi.vcs.impl.RepositoryBrowser
 - sf:TOOLWINDOW_ID:java.lang.String
