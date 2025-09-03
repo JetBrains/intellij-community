@@ -13,14 +13,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiFile
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import javax.swing.JComponent
 
 @Internal
 class OpenInRightSplitAction : AnAction(), DumbAware, ActionRemoteBehaviorSpecification.Frontend {
   override fun actionPerformed(e: AnActionEvent) {
-    if (e.getData(OpenInRightSplitActionProvider.DATA_KEY)?.openInRightSplit() == true) {
+    if (e.getData(OpenInRightSplitActionProvider.DATA_KEY)?.openInRightSplit(e) == true) {
       return
     }
     val project = getEventProject(e) ?: return
@@ -118,5 +117,5 @@ interface OpenInRightSplitActionProvider {
   companion object {
     val DATA_KEY: DataKey<OpenInRightSplitActionProvider> = DataKey.create("OpenInRightSplitActionProvider")
   }
-  fun openInRightSplit(): Boolean
+  fun openInRightSplit(e: AnActionEvent): Boolean
 }
