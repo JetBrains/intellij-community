@@ -7,7 +7,7 @@ import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.client.*
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.Disposer
-import com.intellij.testFramework.junit5.RunMethodInEdt
+import com.intellij.testFramework.junit5.RunInEdt
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.util.application
@@ -16,13 +16,13 @@ import kotlin.test.assertContains
 import kotlin.test.assertTrue
 
 @TestApplication
+@RunInEdt(writeIntent = true)
 class ClientSessionManagerTest {
   private class TestSession(override val name: String, clientId: ClientId, application: ApplicationImpl) : ClientAppSessionImpl(clientId, ClientType.CONTROLLER, application) {
   }
 
   private fun createNewSession(name: String, clientId: ClientId) = TestSession(name, clientId, application as ApplicationImpl)
 
-  @RunMethodInEdt(writeIntent = RunMethodInEdt.WriteIntentMode.True)
   @Test
   fun `during registration of a new session, the previous one is disposed`(@TestDisposable disposable: Disposable) {
     val manager = service<ClientSessionsManager<ClientAppSession>>()
