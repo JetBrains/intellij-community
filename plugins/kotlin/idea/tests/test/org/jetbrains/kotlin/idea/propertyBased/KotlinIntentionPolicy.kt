@@ -38,6 +38,7 @@ internal class KotlinIntentionPolicy : IntentionPolicy() {
     private val skipPreviewIntentionClassNames =
         setOf(
             "org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ChangePackageIntention",
-            "org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ImportQuickFix"
+            "org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ImportQuickFix",
+            "org.jetbrains.kotlin.idea.quickfix.K2EnableUnsupportedFeatureFix"
         )
 }
