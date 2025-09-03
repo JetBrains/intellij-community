@@ -17,7 +17,7 @@ PsiJavaFile:Symbols03.java
             PsiReferenceParameterList
               <empty list>
         PsiWhiteSpace(' ')
-        PsiDocToken:DOC_COMMENT_DATA('~`!@#$%^&*()_+|\=-')
+        PsiDocToken:DOC_COMMENT_DATA('~`!@#$%^&*##()_+|\=-')
         PsiDocToken:DOC_INLINE_TAG_END('}')
       PsiDocToken:DOC_COMMENT_DATA('{')
       PsiDocToken:DOC_COMMENT_DATA('[]":;'?><,./')

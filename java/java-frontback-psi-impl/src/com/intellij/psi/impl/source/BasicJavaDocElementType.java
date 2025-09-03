@@ -34,6 +34,8 @@ public interface BasicJavaDocElementType {
   IElementType BASIC_DOC_TAG = new IJavaDocElementType("DOC_TAG");
   IElementType BASIC_DOC_INLINE_TAG = new IJavaDocElementType("DOC_INLINE_TAG");
   IElementType BASIC_DOC_METHOD_OR_FIELD_REF = new IJavaDocElementType("DOC_METHOD_OR_FIELD_REF");
+  IElementType BASIC_DOC_FRAGMENT_REF = new IJavaDocElementType("DOC_FRAGMENT_REF");
+  IElementType BASIC_DOC_FRAGMENT_NAME = new IJavaDocElementType("DOC_FRAGMENT_NAME");
   IElementType BASIC_DOC_PARAMETER_REF = new IJavaDocElementType("DOC_PARAMETER_REF");
   IElementType BASIC_DOC_TAG_VALUE_ELEMENT = new IJavaDocElementType("DOC_TAG_VALUE_ELEMENT");
   IElementType BASIC_DOC_SNIPPET_TAG = new IJavaDocElementType("DOC_SNIPPET_TAG");

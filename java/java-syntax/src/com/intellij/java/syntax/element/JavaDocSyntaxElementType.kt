@@ -14,6 +14,8 @@ object JavaDocSyntaxElementType {
   @JvmField val DOC_TAG: SyntaxElementType = SyntaxElementType("DOC_TAG")
   @JvmField val DOC_INLINE_TAG: SyntaxElementType = SyntaxElementType("DOC_INLINE_TAG")
   @JvmField val DOC_METHOD_OR_FIELD_REF: SyntaxElementType = SyntaxElementType("DOC_METHOD_OR_FIELD_REF")
+  @JvmField val DOC_FRAGMENT_REF: SyntaxElementType = SyntaxElementType("DOC_FRAGMENT_REF")
+  @JvmField val DOC_FRAGMENT_NAME: SyntaxElementType = SyntaxElementType("DOC_FRAGMENT_NAME")
   @JvmField val DOC_PARAMETER_REF: SyntaxElementType = SyntaxElementType("DOC_PARAMETER_REF")
   @JvmField val DOC_TAG_VALUE_ELEMENT: SyntaxElementType = SyntaxElementType("DOC_TAG_VALUE_ELEMENT")
   @JvmField val DOC_SNIPPET_TAG: SyntaxElementType = SyntaxElementType("DOC_SNIPPET_TAG")
