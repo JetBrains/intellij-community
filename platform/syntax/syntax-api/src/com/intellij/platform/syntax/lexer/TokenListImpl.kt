@@ -22,8 +22,8 @@ internal class TokenListImpl(
   val startIndex: Int = 0,
 ) : TokenList {
   init {
-    require(tokenCount < lexStarts.size)
-    require(tokenCount <= lexTypes.size)
+    require(startIndex + tokenCount < lexStarts.size)
+    require(startIndex + tokenCount <= lexTypes.size)
   }
 
   fun assertMatches(
@@ -35,13 +35,13 @@ internal class TokenListImpl(
     val sequence = Builder(text, lexer, cancellationProvider, logger).performLexing()
     check(tokenCount == sequence.tokenCount)
     for (j in 0 until tokenCount) {
-      if (sequence.lexStarts[j] != lexStarts[j] || sequence.lexTypes[j] !== lexTypes[j]) {
+      if (sequence.lexStarts[j] != lexStarts[startIndex + j] || sequence.lexTypes[j] !== lexTypes[startIndex + j]) {
         check(false)
       }
     }
 
     // check end offsets
-    if (sequence.lexStarts[tokenCount] != lexStarts[tokenCount]) {
+    if (sequence.lexStarts[tokenCount] != lexStarts[startIndex + tokenCount]) {
       check(false)
     }
   }
@@ -64,16 +64,16 @@ internal class TokenListImpl(
 
   override fun getTokenStart(index: Int): Int {
     require(index in 0 until tokenCount)
-    return lexStarts[index]
+    return lexStarts[startIndex + index]
   }
 
   override fun remap(index: Int, newValue: SyntaxElementType) {
     require(index in 0 until tokenCount)
-    lexTypes[index] = newValue
+    lexTypes[startIndex + index] = newValue
   }
 
   override fun getTokenEnd(index: Int): Int {
-    return lexStarts[index + 1]
+    return lexStarts[startIndex + index + 1]
   }
 }
 
