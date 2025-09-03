@@ -1270,7 +1270,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     }
     else {
       if (LOG.isTraceEnabled()) {
-        LOG.trace(new Throwable("Lookup hide: " + this + "; fireCanceled=" + fireCanceled + "; explicitly=" + explicitly));
+        LOG.trace("Lookup hide: " + this + "; fireCanceled=" + fireCanceled + "; explicitly=" + explicitly);
       }
 
       myHidden = true;
