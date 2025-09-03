@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.terminal.frontend
 
-import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
@@ -18,19 +17,20 @@ import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.DisposableWrapperList
 import kotlinx.coroutines.*
-import org.jetbrains.plugins.terminal.block.reworked.*
-import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isReworkedTerminalEditor
+import org.jetbrains.plugins.terminal.block.reworked.TerminalAliasesStorage
+import org.jetbrains.plugins.terminal.block.reworked.TerminalBlocksModel
+import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
+import org.jetbrains.plugins.terminal.block.reworked.TerminalShellIntegrationEventsListener
 import org.jetbrains.plugins.terminal.fus.*
 import java.awt.Toolkit
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.TimeSource
 
 internal class TerminalSessionController(
-  private val project: Project,
   private val sessionModel: TerminalSessionModel,
-  private val outputModel: TerminalOutputModel,
+  private val outputModelController: TerminalOutputModelController,
   private val outputHyperlinkFacade: FrontendTerminalHyperlinkFacade?,
-  private val alternateBufferModel: TerminalOutputModel,
+  private val alternateBufferModelController: TerminalOutputModelController,
   private val alternateBufferHyperlinkFacade: FrontendTerminalHyperlinkFacade?,
   private val blocksModel: TerminalBlocksModel,
   private val settings: JBTerminalSystemSettingsProviderBase,
@@ -81,25 +81,28 @@ internal class TerminalSessionController(
     when (event) {
       is TerminalInitialStateEvent -> {
         sessionModel.updateTerminalState(event.sessionState.toTerminalState())
-        updateOutputModel {
-          outputModel.restoreFromState(event.outputModelState.toState())
-          alternateBufferModel.restoreFromState(event.alternateBufferState.toState())
+        outputModelController.applyPendingUpdates()
+        alternateBufferModelController.applyPendingUpdates()
+        withContext(edtContext) {
+          outputModelController.model.restoreFromState(event.outputModelState.toState())
+          alternateBufferModelController.model.restoreFromState(event.alternateBufferState.toState())
           blocksModel.restoreFromState(event.blocksModelState.toState())
           outputHyperlinkFacade?.restoreFromState(event.outputHyperlinksState)
           alternateBufferHyperlinkFacade?.restoreFromState(event.alternateBufferHyperlinksState)
         }
       }
       is TerminalContentUpdatedEvent -> {
+        // todo: move to controller
         fusActivity.eventReceived(event)
-        updateOutputModel { model ->
+        updateOutputModel { controller ->
           fusActivity.beforeModelUpdate()
-          updateOutputModelContent(model, event)
+          updateOutputModelContent(controller, event)
           fusActivity.afterModelUpdate()
         }
       }
       is TerminalCursorPositionChangedEvent -> {
-        updateOutputModel { model ->
-          model.updateCursorPosition(event.logicalLineIndex, event.columnIndex)
+        updateOutputModel { controller ->
+          controller.updateCursorPosition(event)
         }
       }
       is TerminalStateChangedEvent -> {
@@ -116,24 +119,28 @@ internal class TerminalSessionController(
       }
       TerminalPromptStartedEvent -> {
         withContext(edtContext) {
-          blocksModel.promptStarted(outputModel.cursorOffsetState.value)
+          outputModelController.applyPendingUpdates()
+          blocksModel.promptStarted(outputModelController.model.cursorOffsetState.value)
         }
         shellIntegrationEventDispatcher.multicaster.promptStarted()
       }
       TerminalPromptFinishedEvent -> {
         withContext(edtContext) {
-          blocksModel.promptFinished(outputModel.cursorOffsetState.value)
+          outputModelController.applyPendingUpdates()
+          blocksModel.promptFinished(outputModelController.model.cursorOffsetState.value)
         }
         shellIntegrationEventDispatcher.multicaster.promptFinished()
       }
       is TerminalCommandStartedEvent -> {
         withContext(edtContext) {
-          blocksModel.commandStarted(outputModel.cursorOffsetState.value)
+          outputModelController.applyPendingUpdates()
+          blocksModel.commandStarted(outputModelController.model.cursorOffsetState.value)
         }
         shellIntegrationEventDispatcher.multicaster.commandStarted(event.command)
       }
       is TerminalCommandFinishedEvent -> {
         withContext(edtContext) {
+          outputModelController.applyPendingUpdates()
           blocksModel.commandFinished(event.exitCode)
         }
         shellIntegrationEventDispatcher.multicaster.commandFinished(event.command, event.exitCode, event.currentDirectory)
@@ -156,32 +163,29 @@ internal class TerminalSessionController(
     return if (event.isInAlternateBuffer) alternateBufferHyperlinkFacade else outputHyperlinkFacade
   }
 
-  private suspend fun updateOutputModel(block: (TerminalOutputModel) -> Unit) {
+  private suspend fun updateOutputModel(block: (TerminalOutputModelController) -> Unit) {
     withContext(edtContext) {
-      val doUpdate = Runnable {
-        block(getCurrentOutputModel())
-      }
-      val lookup = LookupManager.getInstance(project).activeLookup
-      if (lookup != null && lookup.editor.isReworkedTerminalEditor) {
-        lookup.performGuardedChange(doUpdate)
-      } else {
-        doUpdate.run()
-      }
+      val controller = getCurrentOutputModelController()
+      block(controller)
     }
   }
 
   @RequiresEdt
-  private fun updateOutputModelContent(model: TerminalOutputModel, event: TerminalContentUpdatedEvent) {
+  private fun updateOutputModelContent(controller: TerminalOutputModelController, event: TerminalContentUpdatedEvent) {
+    // todo: move to controller
     val startTime = TimeSource.Monotonic.markNow()
 
-    model.updateContent(event)
+    controller.updateContent(event)
 
     val latencyData = DurationAndTextLength(duration = startTime.elapsedNow(), textLength = event.text.length)
     documentUpdateLatencyReporter.update(latencyData)
   }
 
-  private fun getCurrentOutputModel(): TerminalOutputModel {
-    return if (sessionModel.terminalState.value.isAlternateScreenBuffer) alternateBufferModel else outputModel
+  private fun getCurrentOutputModelController(): TerminalOutputModelController {
+    return if (sessionModel.terminalState.value.isAlternateScreenBuffer) {
+      alternateBufferModelController
+    }
+    else outputModelController
   }
 
   fun addTerminationCallback(onTerminated: Runnable, parentDisposable: Disposable) {

@@ -124,7 +124,17 @@ class ReworkedTerminalView(
 
     alternateBufferEditor = TerminalEditorFactory.createAlternateBufferEditor(project, settings, parentDisposable = this)
     val alternateBufferModel = TerminalOutputModelImpl(alternateBufferEditor.document, maxOutputLength = 0)
-    val alternateBufferEventsHandler = TerminalEventsHandlerImpl(sessionModel, alternateBufferEditor, encodingManager, terminalInput, settings, null, alternateBufferModel)
+    val alternateBufferModelController = TerminalOutputModelControllerImpl(alternateBufferModel)
+    val alternateBufferEventsHandler = TerminalEventsHandlerImpl(
+      sessionModel,
+      alternateBufferEditor,
+      encodingManager,
+      terminalInput,
+      settings,
+      scrollingModel = null,
+      alternateBufferModel,
+      typeAhead = null,
+    )
     configureOutputEditor(
       project,
       editor = alternateBufferEditor,
@@ -156,7 +166,29 @@ class ReworkedTerminalView(
 
     scrollingModel = TerminalOutputScrollingModelImpl(outputEditor, outputModel, sessionModel, coroutineScope.childScope("TerminalOutputScrollingModel"))
     outputEditor.putUserData(TerminalOutputScrollingModel.KEY, scrollingModel)
-    outputEditorEventsHandler = TerminalEventsHandlerImpl(sessionModel, outputEditor, encodingManager, terminalInput, settings, scrollingModel, outputModel)
+
+    blocksModel = TerminalBlocksModelImpl(outputEditor.document)
+    outputEditor.putUserData(TerminalBlocksModel.KEY, blocksModel)
+    TerminalBlocksDecorator(outputEditor, blocksModel, scrollingModel, coroutineScope.childScope("TerminalBlocksDecorator"))
+
+    val outputModelController = TerminalTypeAheadOutputModelController(
+      project,
+      outputModel,
+      blocksModel,
+      coroutineScope.childScope("TerminalTypeAheadOutputModelController")
+    )
+    outputEditor.putUserData(TerminalTypeAhead.KEY, outputModelController)
+
+    outputEditorEventsHandler = TerminalEventsHandlerImpl(
+      sessionModel,
+      outputEditor,
+      encodingManager,
+      terminalInput,
+      settings,
+      scrollingModel,
+      outputModel,
+      typeAhead = outputModelController
+    )
 
     configureOutputEditor(
       project,
@@ -174,11 +206,6 @@ class ReworkedTerminalView(
     outputEditor.putUserData(TerminalSessionModel.KEY, sessionModel)
     terminalSearchController = TerminalSearchController(project)
 
-    blocksModel = TerminalBlocksModelImpl(outputEditor.document)
-    val typeAhead = TerminalTypeAhead(outputModel, blocksModel, outputEditor)
-    outputEditor.putUserData(TerminalTypeAhead.KEY, typeAhead)
-    TerminalBlocksDecorator(outputEditor, blocksModel, scrollingModel, coroutineScope.childScope("TerminalBlocksDecorator"))
-    outputEditor.putUserData(TerminalBlocksModel.KEY, blocksModel)
     outputHyperlinkFacade = if (isSplitHyperlinksSupportEnabled()) {
       FrontendTerminalHyperlinkFacade(
         isInAlternateBuffer = false,
@@ -202,11 +229,10 @@ class ReworkedTerminalView(
     val terminalAliasesStorage = TerminalAliasesStorage()
 
     controller = TerminalSessionController(
-      project,
       sessionModel,
-      outputModel,
+      outputModelController,
       outputHyperlinkFacade,
-      alternateBufferModel,
+      alternateBufferModelController,
       alternateBufferHyperlinkFacade,
       blocksModel,
       settings,

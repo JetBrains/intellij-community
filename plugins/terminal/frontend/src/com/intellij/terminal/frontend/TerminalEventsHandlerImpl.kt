@@ -49,15 +49,13 @@ internal open class TerminalEventsHandlerImpl(
   private val settings: JBTerminalSystemSettingsProviderBase,
   private val scrollingModel: TerminalOutputScrollingModel?,
   private val outputModel: TerminalOutputModel,
+  private val typeAhead: TerminalTypeAhead?,
 ) : TerminalEventsHandler {
   private var ignoreNextKeyTypedEvent: Boolean = false
   private var lastMotionReport: Point? = null
 
   private val terminalState: TerminalState
     get() = sessionModel.terminalState.value
-  
-  private val typeAhead: TerminalTypeAhead?
-    get() = editor.getUserData(TerminalTypeAhead.KEY)
 
   private val vfsSynchronizer: TerminalVfsSynchronizer?
     get() = editor.getUserData(TerminalVfsSynchronizer.KEY)
@@ -198,7 +196,7 @@ internal open class TerminalEventsHandlerImpl(
       editor.caretModel.moveToOffset(outputModel.cursorOffsetState.value)
       inlineCompletionTypingSession?.startTypingSession(editor)
 
-      typeAhead?.stringTyped(typedString)
+      typeAhead?.type(typedString)
       terminalInput.sendTrackedString(typedString, eventTime = e.initTime)
     }
     else terminalInput.sendString(typedString)
