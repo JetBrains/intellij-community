@@ -97,22 +97,14 @@ class ProjectLevelVcsManagerImpl(
     return vcs
   }
 
-  override fun getDescriptor(vcsName: String?): VcsDescriptor? {
-    if (vcsName == null) return null
-    if (project.isDisposed()) return null
-    return AllVcses.getInstance(project).getDescriptor(vcsName)
-  }
-
   override fun getAllVcss(): Array<VcsDescriptor> = AllVcses.getInstance(project).getAll()
 
   override fun getAllSupportedVcss(): Array<AbstractVcs> = AllVcses.getInstance(project).getSupportedVcses()
 
   fun haveVcses(): Boolean = !AllVcses.getInstance(project).isEmpty()
 
-  override fun checkAllFilesAreUnder(abstractVcs: AbstractVcs, files: Array<VirtualFile>?): Boolean {
-    if (files == null) return false
-    return files.all { getVcsFor(it) === abstractVcs }
-  }
+  override fun checkAllFilesAreUnder(abstractVcs: AbstractVcs, files: Array<VirtualFile>): Boolean =
+    files.all { getVcsFor(it) === abstractVcs }
 
   @NlsSafe
   override fun getShortNameForVcsRoot(file: VirtualFile): @NlsSafe String =
@@ -198,13 +190,13 @@ class ProjectLevelVcsManagerImpl(
     return mappingsHolder.getDirectoryMappings(vcs.name)
   }
 
-  override fun getDirectoryMappingFor(path: FilePath?): VcsDirectoryMapping? {
-    if (path == null || project.isDisposed()) return null
+  override fun getDirectoryMappingFor(path: FilePath): VcsDirectoryMapping? {
+    if (project.isDisposed()) return null
     return mappingsHolder.getMappedRootFor(path)?.mapping
   }
 
-  private fun getDirectoryMappingFor(file: VirtualFile?): VcsDirectoryMapping? {
-    if (file == null || project.isDisposed()) return null
+  private fun getDirectoryMappingFor(file: VirtualFile): VcsDirectoryMapping? {
+    if (project.isDisposed()) return null
     return mappingsHolder.getMappedRootFor(file)?.mapping
   }
 
@@ -442,6 +434,11 @@ class ProjectLevelVcsManagerImpl(
       }
     }
     return DefaultVcsRootChecker(vcs, getDescriptor(vcs.name))
+  }
+
+  private fun getDescriptor(vcsName: String): VcsDescriptor? {
+    if (project.isDisposed()) return null
+    return AllVcses.getInstance(project).getDescriptor(vcsName)
   }
 
   override val compositeCheckoutListener: CheckoutProvider.Listener

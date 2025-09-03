@@ -33,7 +33,7 @@ public abstract class BasicAction extends AnAction implements DumbAware {
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     VirtualFile[] files = getSelectedFiles(e);
-    if (isEmpty(files)) return;
+    if (files == null || isEmpty(files)) return;
 
     SvnVcs vcs = SvnVcs.getInstance(project);
     if (!ProjectLevelVcsManager.getInstance(project).checkAllFilesAreUnder(vcs, files)) return;

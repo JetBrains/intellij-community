@@ -29,8 +29,6 @@ abstract class ProjectLevelVcsManager {
    */
   abstract fun getAllVcss(): Array<VcsDescriptor>
 
-  abstract fun getDescriptor(@NonNls vcsName: @NonNls String?): VcsDescriptor?
-
   /**
    * Returns the version control system with the specified name.
    *
@@ -71,7 +69,7 @@ abstract class ProjectLevelVcsManager {
   /**
    * Checks if all given files are managed by the specified VCS.
    */
-  abstract fun checkAllFilesAreUnder(abstractVcs: AbstractVcs, files: Array<VirtualFile>?): Boolean
+  abstract fun checkAllFilesAreUnder(abstractVcs: AbstractVcs, files: Array<VirtualFile>): Boolean
 
   abstract fun getConsolidatedVcsName(): @Nls String
 
@@ -141,7 +139,7 @@ abstract class ProjectLevelVcsManager {
 
   abstract fun getDirectoryMappings(vcs: AbstractVcs): List<VcsDirectoryMapping>
 
-  abstract fun getDirectoryMappingFor(path: FilePath?): VcsDirectoryMapping?
+  abstract fun getDirectoryMappingFor(path: FilePath): VcsDirectoryMapping?
 
   /**
    * This method can be used only when initially loading the project configuration!
