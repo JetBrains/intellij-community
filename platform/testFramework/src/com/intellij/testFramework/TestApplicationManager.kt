@@ -17,6 +17,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.ApplicationImpl
+import com.intellij.openapi.application.impl.TestOnlyThreading
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.command.impl.UndoManagerImpl
 import com.intellij.openapi.command.undo.UndoManager
@@ -211,7 +212,11 @@ class TestApplicationManager private constructor() {
             }
           },
           { getInstanceIfCreated()?.dispose() },
-          { PlatformTestUtil.dispatchAllEventsInIdeEventQueue() },
+          {
+            TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack {
+              EDT.dispatchAllInvocationEvents()
+            }
+          },
         )
       }
 
