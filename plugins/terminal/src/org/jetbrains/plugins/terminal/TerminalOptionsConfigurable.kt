@@ -32,8 +32,8 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.Strings
+import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.terminal.TerminalUiSettingsManager
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.ExperimentalUI
@@ -70,6 +70,7 @@ import org.jetbrains.plugins.terminal.block.completion.TerminalCommandCompletion
 import org.jetbrains.plugins.terminal.block.feedback.askForFeedbackIfReworkedTerminalDisabled
 import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptStyle
 import org.jetbrains.plugins.terminal.block.reworked.TerminalCommandCompletion
+import org.jetbrains.plugins.terminal.runner.LocalShellIntegrationInjector
 import org.jetbrains.plugins.terminal.runner.LocalTerminalStartCommandBuilder
 import java.awt.Color
 import java.awt.Component
@@ -512,7 +513,7 @@ private fun isShellWithIntegration(text: String): Boolean {
   val shellPath = command.firstOrNull() ?: return false
   val shellName = PathUtil.getFileName(shellPath)
 
-  return LocalTerminalDirectRunner.supportsBlocksShellIntegration(shellName)
+  return LocalShellIntegrationInjector.supportsBlocksShellIntegration(shellName, LocalEelDescriptor /* to be replaced with proper EelDescriptor */)
 }
 
 private fun getDefaultValueColor(): Color {
