@@ -121,6 +121,7 @@ public final class ThreadLeakTracker {
       "Save classpath indexes for file loader",
       "Shared Index Hash Index Flushing Queue",
       "Signal Dispatcher",
+      "SystemPropertyWatcher", //started by sun.awt.UNIXToolkit.initSystemPropertyWatcher
       "tc-okhttp-stream", // Dockers "com.github.dockerjava.okhttp.UnixDomainSocket.recv"
       "testcontainers",
       "timer-int", //serverIm,
