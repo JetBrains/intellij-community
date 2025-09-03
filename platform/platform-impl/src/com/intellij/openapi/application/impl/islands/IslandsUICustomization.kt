@@ -496,6 +496,7 @@ internal class IslandsUICustomization : InternalUICustomization() {
       gg.color = getMainBackgroundColor()
       gg.fill(shape)
 
+      gg.color = JBColor.namedColor("Island.borderColor", getMainBackgroundColor())
       gg.stroke = BasicStroke(JBUIScale.scale(1f), BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND)
       gg.draw(border)
     }
