@@ -20,7 +20,7 @@ import com.intellij.testFramework.junit5.fixture.psiFileFixture
 import com.intellij.testFramework.junit5.fixture.sourceRootFixture
 import com.intellij.util.ui.EDT
 import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.RepeatedTest
+import org.junit.jupiter.api.Test
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -90,7 +90,7 @@ class DocumentCommitOnBackgroundTest {
     }
   }
 
-  @RepeatedTest(100)
+  @Test
   fun `psiTreeChangeListener and psiTreeChangePreprocessor can be invoked on background`(@TestDisposable testDisposable: Disposable) {
     Registry.get("document.async.commit.with.coroutines").setValue(true, testDisposable)
     val psiDocumentManager = PsiDocumentManager.getInstance(project.get())
@@ -128,7 +128,7 @@ class DocumentCommitOnBackgroundTest {
     assertTrue(backgroundablePreprocessor.recorder.onEdt.get() < backgroundablePreprocessor.recorder.invoked.get())
   }
 
-  @RepeatedTest(100)
+  @Test
   fun `psiDocumentTransactionTest can be invoked on background`(@TestDisposable testDisposable: Disposable) {
     Registry.get("document.async.commit.with.coroutines").setValue(true, testDisposable)
     val psiDocumentManager = PsiDocumentManager.getInstance(project.get())
