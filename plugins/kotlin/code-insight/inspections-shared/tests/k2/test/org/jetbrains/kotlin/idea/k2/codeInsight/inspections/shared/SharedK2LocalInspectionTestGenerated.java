@@ -2195,6 +2195,80 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
                 runTest("../testData/inspectionsLocal/coroutines/preferCurrentCoroutineContextToCoroutineContext/qualifiedUsage_getOperator.kt");
             }
         }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/inspectionsLocal/coroutines/suspendCoroutineLacksCancellationGuarantees")
+        public static class SuspendCoroutineLacksCancellationGuarantees extends AbstractSharedK2LocalInspectionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("basic.kt")
+            public void testBasic() throws Exception {
+                runTest("../testData/inspectionsLocal/coroutines/suspendCoroutineLacksCancellationGuarantees/basic.kt");
+            }
+
+            @TestMetadata("explicitNamedParameter.kt")
+            public void testExplicitNamedParameter() throws Exception {
+                runTest("../testData/inspectionsLocal/coroutines/suspendCoroutineLacksCancellationGuarantees/explicitNamedParameter.kt");
+            }
+
+            @TestMetadata("explicitTypeArgument.kt")
+            public void testExplicitTypeArgument() throws Exception {
+                runTest("../testData/inspectionsLocal/coroutines/suspendCoroutineLacksCancellationGuarantees/explicitTypeArgument.kt");
+            }
+
+            @TestMetadata("fullyQualifiedCall.kt")
+            public void testFullyQualifiedCall() throws Exception {
+                runTest("../testData/inspectionsLocal/coroutines/suspendCoroutineLacksCancellationGuarantees/fullyQualifiedCall.kt");
+            }
+
+            @TestMetadata("labeledReturn_explicitLabel.kt")
+            public void testLabeledReturn_explicitLabel() throws Exception {
+                runTest("../testData/inspectionsLocal/coroutines/suspendCoroutineLacksCancellationGuarantees/labeledReturn_explicitLabel.kt");
+            }
+
+            @TestMetadata("labeledReturn_explicitLabel_anonymousFunction.kt")
+            public void testLabeledReturn_explicitLabel_anonymousFunction() throws Exception {
+                runTest("../testData/inspectionsLocal/coroutines/suspendCoroutineLacksCancellationGuarantees/labeledReturn_explicitLabel_anonymousFunction.kt");
+            }
+
+            @TestMetadata("labeledReturn_implicitLabel.kt")
+            public void testLabeledReturn_implicitLabel() throws Exception {
+                runTest("../testData/inspectionsLocal/coroutines/suspendCoroutineLacksCancellationGuarantees/labeledReturn_implicitLabel.kt");
+            }
+
+            @TestMetadata("labeledReturn_implicitLabel_anonymousFunction.kt")
+            public void testLabeledReturn_implicitLabel_anonymousFunction() throws Exception {
+                runTest("../testData/inspectionsLocal/coroutines/suspendCoroutineLacksCancellationGuarantees/labeledReturn_implicitLabel_anonymousFunction.kt");
+            }
+
+            @TestMetadata("noCoroutinesDependency.kt")
+            public void testNoCoroutinesDependency() throws Exception {
+                runTest("../testData/inspectionsLocal/coroutines/suspendCoroutineLacksCancellationGuarantees/noCoroutinesDependency.kt");
+            }
+
+            @TestMetadata("noInspectionInsideLambda.kt")
+            public void testNoInspectionInsideLambda() throws Exception {
+                runTest("../testData/inspectionsLocal/coroutines/suspendCoroutineLacksCancellationGuarantees/noInspectionInsideLambda.kt");
+            }
+
+            @TestMetadata("noInspectionOnQualifier.kt")
+            public void testNoInspectionOnQualifier() throws Exception {
+                runTest("../testData/inspectionsLocal/coroutines/suspendCoroutineLacksCancellationGuarantees/noInspectionOnQualifier.kt");
+            }
+
+            @TestMetadata("nonLambdaArgument.kt")
+            public void testNonLambdaArgument() throws Exception {
+                runTest("../testData/inspectionsLocal/coroutines/suspendCoroutineLacksCancellationGuarantees/nonLambdaArgument.kt");
+            }
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)

@@ -260,6 +260,13 @@ val KtExpression.qualifiedCalleeExpressionTextRangeInThis: TextRange?
         return TextRange.create(0, calleeExpressionEnd)
     }
 
+/**
+ * Similar to [qualifiedCalleeExpressionTextRangeInThis], but it returns a [TextRange] relative to the whole document.
+ */
+@get:ApiStatus.Internal
+val KtExpression.qualifiedCalleeExpressionTextRange: TextRange?
+    get() = qualifiedCalleeExpressionTextRangeInThis?.shiftRight(startOffset)
+
 fun KtCallExpression.singleArgumentExpression(): KtExpression? {
     return valueArguments.singleOrNull()?.getArgumentExpression()
 }
