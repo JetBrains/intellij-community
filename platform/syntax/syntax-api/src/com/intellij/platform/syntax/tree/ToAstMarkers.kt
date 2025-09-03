@@ -13,113 +13,133 @@ import org.jetbrains.annotations.ApiStatus
 fun SyntaxTreeBuilder.toAstMarkers(): ASTMarkers {
   val productionResult = prepareProduction(this)
   val productions = productionResult.productionMarkers
-  val astMarkersResult = ASTMarkersImpl()
+  return AstMarkerBuilder(this, productions).build()
+}
 
-  if (productions.size == 0)
+private class AstMarkerBuilder(
+  private val builder: SyntaxTreeBuilder,
+  private val productions: ProductionMarkerList
+) {
+  private val astMarkersResult = ASTMarkersImpl()
+
+  fun build(): ASTMarkersImpl {
+    if (productions.size == 0) {
+      return astMarkersResult
+    }
+
+    processTree()
+    processLeafChameleons()
+
     return astMarkersResult
+  }
 
-  var lastErrorLexemeIndex = -1
-  val nodeProductionIndices = IntStack()
-  val astTreeIndices = IntStack()
+  private fun processTree() {
+    var lastErrorLexemeIndex = -1
+    val nodeProductionIndices = IntStack()
+    val astTreeIndices = IntStack()
 
-  var isInsideChameleon = false
-  var markersInsideChameleonCount = 0
+    var isInsideChameleon = false
+    var markersInsideChameleonCount = 0
 
-  for (i in 0 until productions.size) {
-    val item = productions.getMarker(i)
-    val isEndMarker = productions.isDoneMarker(i)
-    val isErrorMarker = item.isErrorMarker()
+    for (i in 0 until productions.size) {
+      val item = productions.getMarker(i)
+      val isEndMarker = productions.isDoneMarker(i)
+      val isErrorMarker = item.isErrorMarker()
 
-    when {
-      isEndMarker -> {
-        if (isInsideChameleon) {
-          if (markersInsideChameleonCount != 0) {
-            markersInsideChameleonCount -= 1
-            continue
+      when {
+        isEndMarker -> {
+          if (isInsideChameleon) {
+            if (markersInsideChameleonCount != 0) {
+              markersInsideChameleonCount -= 1
+              continue
+            }
+            else {
+              isInsideChameleon = false
+            }
           }
-          else {
-            isInsideChameleon = false
+          val nodeProductionStartIndex = nodeProductionIndices.pop()
+          val astIndexStart = astTreeIndices.pop()
+          val astIndexEnd = astMarkersResult.pushBack()
+
+          val prevLexemeIndex = if (astIndexStart > 0)
+            productions.getLexemeIndexAt(nodeProductionStartIndex - 1)
+          else 0
+
+          val lexemeStartIndex = productions.getLexemeIndexAt(nodeProductionStartIndex)
+          val lexemeEndIndex = productions.getLexemeIndexAt(i)
+
+          astMarkersResult.apply {
+            setMarker(
+              astIndexEnd,
+              (item as CompositeMarker).markerId,
+              MarkerKind.End,
+              collapsed = item.isCollapsed(),
+              null,
+              item.getNodeType()
+            )
+
+            setLexemeInfo(astIndexEnd, lexemeEndIndex - lexemeStartIndex, lexemeStartIndex - prevLexemeIndex)
+            setLexemeInfo(astIndexStart, lexemeEndIndex - lexemeStartIndex, lexemeStartIndex - prevLexemeIndex)
+
+            setMarkersCount(astIndexEnd, astIndexEnd - astIndexStart)
+            setMarkersCount(astIndexStart, astIndexEnd - astIndexStart)
           }
         }
-        val nodeProductionStartIndex = nodeProductionIndices.pop()
-        val astIndexStart = astTreeIndices.pop()
-        val astIndexEnd = astMarkersResult.pushBack()
 
-        val prevLexemeIndex = if (astIndexStart > 0)
-          productionResult.productionMarkers.getLexemeIndexAt(nodeProductionStartIndex - 1)
-        else 0
+        isErrorMarker -> {
+          val startLexemeIndex = item.getStartTokenIndex()
+          if (startLexemeIndex == lastErrorLexemeIndex) continue
+          val prevLexemeIndex = productions.getLexemeIndexAt(i - 1)
+          val startLexeme = item.getStartTokenIndex()
+          val endLexeme = item.getEndTokenIndex()
+          lastErrorLexemeIndex = startLexemeIndex
+          val index = astMarkersResult.pushBack()
+          astMarkersResult.setMarker(
+            index,
+            i,
+            MarkerKind.Error,
+            collapsed = false,
+            item.getErrorMessage(),
+            item.getNodeType()
+          )
+          astMarkersResult.setLexemeInfo(index, endLexeme - startLexeme, startLexeme - prevLexemeIndex)
+        }
 
-        val lexemeStartIndex = productionResult.productionMarkers.getLexemeIndexAt(nodeProductionStartIndex)
-        val lexemeEndIndex = productionResult.productionMarkers.getLexemeIndexAt(i)
+        else -> {
+          // start marker
+          if (isInsideChameleon) {
+            markersInsideChameleonCount += 1
+            continue
+          }
 
-        astMarkersResult.apply {
-          setMarker(
-            astIndexEnd,
-            (item as CompositeMarker).markerId,
-            MarkerKind.End,
+          val astTreeIndex = astMarkersResult.pushBack()
+          val markerId = (item as CompositeMarker).markerId
+          astMarkersResult.setMarker(
+            astTreeIndex,
+            markerId,
+            MarkerKind.Start,
             collapsed = item.isCollapsed(),
             null,
             item.getNodeType()
           )
-
-          setLexemeInfo(astIndexEnd, lexemeEndIndex - lexemeStartIndex, lexemeStartIndex - prevLexemeIndex)
-          setLexemeInfo(astIndexStart, lexemeEndIndex - lexemeStartIndex, lexemeStartIndex - prevLexemeIndex)
-
-          setMarkersCount(astIndexEnd, astIndexEnd - astIndexStart)
-          setMarkersCount(astIndexStart, astIndexEnd - astIndexStart)
+          if (item.getNodeType().isLazyParseable() && item.isCollapsed()) {
+            astMarkersResult.setChameleon(item.startIndex, newChameleonRef())
+            isInsideChameleon = true
+          }
+          astTreeIndices.push(astTreeIndex)
+          nodeProductionIndices.push(i)
         }
-      }
-
-      isErrorMarker -> {
-        val startLexemeIndex = item.getStartTokenIndex()
-        if (startLexemeIndex == lastErrorLexemeIndex) continue
-        val prevLexemeIndex = productionResult.productionMarkers.getLexemeIndexAt(i - 1)
-        val startLexeme = item.getStartTokenIndex()
-        val endLexeme = item.getEndTokenIndex()
-        lastErrorLexemeIndex = startLexemeIndex
-        val index = astMarkersResult.pushBack()
-        astMarkersResult.setMarker(
-          index,
-          i,
-          MarkerKind.Error,
-          collapsed = false,
-          item.getErrorMessage(),
-          item.getNodeType()
-        )
-        astMarkersResult.setLexemeInfo(index, endLexeme - startLexeme, startLexeme - prevLexemeIndex)
-      }
-
-      else -> {
-        // start marker
-        if (isInsideChameleon) {
-          markersInsideChameleonCount += 1
-          continue
-        }
-
-        val astTreeIndex = astMarkersResult.pushBack()
-        val markerId = (item as CompositeMarker).markerId
-        astMarkersResult.setMarker(
-          astTreeIndex,
-          markerId,
-          MarkerKind.Start,
-          collapsed = item.isCollapsed(),
-          null,
-          item.getNodeType()
-        )
-        if (item.getNodeType().isLazyParseable() && item.isCollapsed()) {
-          astMarkersResult.setChameleon(item.startIndex, newChameleonRef())
-          isInsideChameleon = true
-        }
-        astTreeIndices.push(astTreeIndex)
-        nodeProductionIndices.push(i)
       }
     }
   }
-  for (i in 0..<tokens.tokenCount) {
-    if (tokens.getTokenType(i)?.isLazyParseable() == true)
-      astMarkersResult.setChameleon(i, newChameleonRef())
+
+  private fun processLeafChameleons() {
+    for (i in 0..<builder.tokens.tokenCount) {
+      if (builder.tokens.getTokenType(i)?.isLazyParseable() == true) {
+        astMarkersResult.setChameleon(i, newChameleonRef())
+      }
+    }
   }
-  return astMarkersResult
 }
 
 private class IntStack(initialCapacity: Int = 5) {
