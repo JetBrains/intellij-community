@@ -48,7 +48,7 @@ internal class TokenListImpl(
 
   override fun getTokenType(index: Int): SyntaxElementType? {
     if (index !in 0 until tokenCount) return null
-    return lexTypes[index]
+    return lexTypes[startIndex + index]
   }
 
   override fun slice(start: Int, end: Int): TokenList {
