@@ -20,7 +20,7 @@ import com.intellij.testFramework.junit5.fixture.psiFileFixture
 import com.intellij.testFramework.junit5.fixture.sourceRootFixture
 import com.intellij.util.ui.EDT
 import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.RepeatedTest
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -30,8 +30,9 @@ class DocumentCommitOnBackgroundTest {
     val project = projectFixture(openAfterCreation = true)
     val module = project.moduleFixture()
     val sourceRoot = module.sourceRootFixture()
-    val file = sourceRoot.psiFileFixture("A.java", "class A {}")
   }
+
+  val file = sourceRoot.psiFileFixture("A.java", "class A {}")
 
   class Recorder {
     val invoked: AtomicInteger = AtomicInteger()
@@ -89,7 +90,7 @@ class DocumentCommitOnBackgroundTest {
     }
   }
 
-  @Test
+  @RepeatedTest(100)
   fun `psiTreeChangeListener and psiTreeChangePreprocessor can be invoked on background`(@TestDisposable testDisposable: Disposable) {
     Registry.get("document.async.commit.with.coroutines").setValue(true, testDisposable)
     val psiDocumentManager = PsiDocumentManager.getInstance(project.get())
@@ -108,7 +109,7 @@ class DocumentCommitOnBackgroundTest {
     invokeAndWaitIfNeeded {
       val file = file.get()
       val document = psiDocumentManager.getDocument(file)!!
-      WriteCommandAction.runWriteCommandAction(project.get(), { document.insertString(0, " ") })
+      WriteCommandAction.runWriteCommandAction(project.get()) { document.insertString(0, "def") }
       PlatformTestUtil.waitForAllDocumentsCommitted(10, TimeUnit.SECONDS)
     }
 
@@ -127,7 +128,7 @@ class DocumentCommitOnBackgroundTest {
     assertTrue(backgroundablePreprocessor.recorder.onEdt.get() < backgroundablePreprocessor.recorder.invoked.get())
   }
 
-  @Test
+  @RepeatedTest(100)
   fun `psiDocumentTransactionTest can be invoked on background`(@TestDisposable testDisposable: Disposable) {
     Registry.get("document.async.commit.with.coroutines").setValue(true, testDisposable)
     val psiDocumentManager = PsiDocumentManager.getInstance(project.get())
@@ -139,7 +140,7 @@ class DocumentCommitOnBackgroundTest {
     invokeAndWaitIfNeeded {
       val file = file.get()
       val document = psiDocumentManager.getDocument(file)!!
-      WriteCommandAction.runWriteCommandAction(project.get(), { document.insertString(0, " ") })
+      WriteCommandAction.runWriteCommandAction(project.get()) { document.insertString(0, "abc") }
       PlatformTestUtil.waitForAllDocumentsCommitted(10, TimeUnit.SECONDS)
     }
 
