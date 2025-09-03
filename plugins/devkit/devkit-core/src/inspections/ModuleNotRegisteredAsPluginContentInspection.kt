@@ -15,6 +15,7 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.XmlElementVisitor
 import com.intellij.psi.createSmartPointer
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.parentOfType
 import com.intellij.psi.xml.XmlFile
@@ -48,7 +49,8 @@ internal class ModuleNotRegisteredAsPluginContentInspection : LocalInspectionToo
 
   private fun isNotReferencedAsContentModule(xmlFile: XmlFile): Boolean {
     val moduleVirtualFile = xmlFile.virtualFile ?: return false
-    return PluginIdDependenciesIndex.findFilesIncludingContentModule(xmlFile.project, moduleVirtualFile).isEmpty()
+    val projectScope = GlobalSearchScope.projectScope(xmlFile.project)
+    return PluginIdDependenciesIndex.findFilesIncludingContentModule(moduleVirtualFile, projectScope).isEmpty()
   }
 
   private fun isNotXIncluded(file: XmlFile): Boolean {

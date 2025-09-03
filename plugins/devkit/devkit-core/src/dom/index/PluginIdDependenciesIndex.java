@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
@@ -135,8 +136,11 @@ public final class PluginIdDependenciesIndex extends PluginXmlIndexBase<String, 
   }
 
   public static Collection<VirtualFile> findFilesIncludingContentModule(Project project, VirtualFile file) {
-    return FileBasedIndex.getInstance().getContainingFiles(NAME, getContentIndexingKey(file.getNameWithoutExtension()),
-                                                      GlobalSearchScopesCore.projectProductionScope(project));
+    return findFilesIncludingContentModule(file, GlobalSearchScopesCore.projectProductionScope(project));
+  }
+
+  public static Collection<VirtualFile> findFilesIncludingContentModule(VirtualFile file, GlobalSearchScope scope) {
+    return FileBasedIndex.getInstance().getContainingFiles(NAME, getContentIndexingKey(file.getNameWithoutExtension()), scope);
   }
 
   private static String getDependsIndexingKey(@NotNull String filename) {
