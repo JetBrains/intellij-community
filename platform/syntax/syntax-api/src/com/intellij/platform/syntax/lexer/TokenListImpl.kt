@@ -15,8 +15,8 @@ import kotlin.time.measureTime
  * Also, it's guaranteed that [lexStarts] contains the end offset of the last token as `lexStarts[tokenCount]`.
  */
 internal class TokenListImpl(
-  internal val lexStarts: IntArray,
-  internal val lexTypes: Array<SyntaxElementType>,
+  val lexStarts: IntArray,
+  val lexTypes: Array<SyntaxElementType>,
   override val tokenCount: Int,
   override val tokenizedText: CharSequence,
   val startIndex: Int = 0,
