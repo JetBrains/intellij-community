@@ -9,7 +9,7 @@ import io.opentelemetry.api.trace.Tracer
 private const val FLEET_INSTRUMENTER_NAME = "fleet"
 
 //this is a single instance that they recommend to use in OTel docs
-val opentelemetry: OpenTelemetry by lazy { GlobalOpenTelemetry.get() }
+private val opentelemetry: OpenTelemetry by lazy { GlobalOpenTelemetry.get() }
 
 val tracer: Tracer
   get() = opentelemetry.getTracer(FLEET_INSTRUMENTER_NAME)

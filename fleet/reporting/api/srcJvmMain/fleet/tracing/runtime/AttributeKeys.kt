@@ -11,5 +11,3 @@ import kotlin.jvm.JvmName
 //@fleet.kernel.plugins.InternalInPluginModules(where = ["fleet.reporting.opentelemetry"])
 val THREAD_ID_KEY: AttributeKey<Long> = AttributeKey.longKey("threadId")
 
-//@fleet.kernel.plugins.InternalInPluginModules(where = ["fleet.reporting.opentelemetry"])
-val SCOPE_KEY: AttributeKey<Boolean> = AttributeKey.booleanKey("isScope")
