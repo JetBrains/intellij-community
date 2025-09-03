@@ -11,7 +11,7 @@ internal object TerminalFrontendDataContextUtils {
     get() = getData(TerminalInput.DATA_KEY)
 
   val AnActionEvent.terminalOutputModel: TerminalOutputModel?
-    get() = getData(TerminalOutputModel.KEY)
+    get() = getData(TerminalOutputModel.DATA_KEY)
 
   val DataContext.terminalSearchController: TerminalSearchController?
     get() = getData(TerminalSearchController.KEY)

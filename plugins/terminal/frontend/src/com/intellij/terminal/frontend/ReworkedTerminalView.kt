@@ -374,6 +374,8 @@ class ReworkedTerminalView(
   ) {
     val parentDisposable = coroutineScope.asDisposable() // same lifecycle as `this@ReworkedTerminalView`
 
+    editor.putUserData(TerminalOutputModel.KEY, outputModel)
+
     // Document modifications can change the scroll position.
     // Mark them with the corresponding flag to indicate that this change is not caused by the explicit user action.
     model.addListener(parentDisposable, object : TerminalOutputModelListener {
@@ -518,7 +520,7 @@ class ReworkedTerminalView(
     override fun uiDataSnapshot(sink: DataSink) {
       sink[TerminalActionUtil.EDITOR_KEY] = curEditor
       sink[TerminalInput.DATA_KEY] = terminalInput
-      sink[TerminalOutputModel.KEY] = outputModel
+      sink[TerminalOutputModel.DATA_KEY] = outputModel
       sink[TerminalSearchController.KEY] = terminalSearchController
       sink[TerminalSessionId.KEY] = (sessionFuture.getNow(null) as? FrontendTerminalSession?)?.id
       sink[IS_ALTERNATE_BUFFER_DATA_KEY] = isAlternateScreenBuffer

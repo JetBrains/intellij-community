@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.impl.FrozenDocument
+import com.intellij.openapi.util.Key
 import com.intellij.terminal.session.StyleRange
 import com.intellij.terminal.session.TerminalContentUpdatedEvent
 import com.intellij.terminal.session.TerminalOutputModelState
@@ -75,7 +76,8 @@ interface TerminalOutputModel {
   fun restoreFromState(state: TerminalOutputModelState)
 
   companion object {
-    val KEY: DataKey<TerminalOutputModel> = DataKey.create("TerminalOutputModel")
+    val KEY: Key<TerminalOutputModel> = Key.create("TerminalOutputModel")
+    val DATA_KEY: DataKey<TerminalOutputModel> = DataKey.create("TerminalOutputModel")
   }
 }
 

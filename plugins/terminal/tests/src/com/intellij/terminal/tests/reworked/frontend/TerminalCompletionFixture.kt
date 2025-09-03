@@ -121,7 +121,7 @@ class TerminalCompletionFixture(val project: Project, val testRootDisposable: Di
     val context = SimpleDataContext.builder()
       .add(CommonDataKeys.PROJECT, project)
       .add(CommonDataKeys.EDITOR, view.outputEditor)
-      .add(TerminalOutputModel.KEY, view.outputModel)
+      .add(TerminalOutputModel.DATA_KEY, view.outputModel)
       .build()
     val event = AnActionEvent.createEvent(action, context, null,
                                           "", ActionUiKind.NONE, null)
