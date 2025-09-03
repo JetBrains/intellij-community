@@ -45,7 +45,6 @@ import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
-import com.intellij.vcs.ViewUpdateInfoNotification;
 import com.intellij.vcs.console.VcsConsoleTabService;
 import com.intellij.vcsUtil.VcsImplUtil;
 import kotlin.Pair;
@@ -292,14 +291,6 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
   @Override
   public void addMessageToConsoleWindow(@Nullable VcsConsoleLine line) {
     VcsConsoleTabService.getInstance(myProject).addMessage(line);
-  }
-
-
-  @RequiresEdt
-  @Override
-  public void showProjectOperationInfo(final UpdatedFiles updatedFiles, String displayActionName) {
-    UpdateInfoTree tree = showUpdateProjectInfo(updatedFiles, displayActionName, ActionInfo.STATUS, false);
-    if (tree != null) ViewUpdateInfoNotification.focusUpdateInfoTree(myProject, tree);
   }
 
   @RequiresEdt

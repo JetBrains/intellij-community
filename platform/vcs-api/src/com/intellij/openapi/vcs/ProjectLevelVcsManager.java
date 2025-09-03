@@ -9,7 +9,6 @@ import com.intellij.openapi.vcs.changes.VcsAnnotationLocalChangesListener;
 import com.intellij.openapi.vcs.history.VcsHistoryCache;
 import com.intellij.openapi.vcs.impl.ContentRevisionCache;
 import com.intellij.openapi.vcs.impl.VcsDescriptor;
-import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
@@ -158,9 +157,6 @@ public abstract class ProjectLevelVcsManager {
 
   public abstract @NotNull VcsShowConfirmationOption getStandardConfirmation(@NotNull VcsConfiguration.StandardConfirmation option,
                                                                              AbstractVcs vcs);
-
-  @RequiresEdt
-  public abstract void showProjectOperationInfo(final UpdatedFiles updatedFiles, @Nls String displayActionName);
 
   /**
    * Marks the beginning of a background VCS operation (commit or update).
