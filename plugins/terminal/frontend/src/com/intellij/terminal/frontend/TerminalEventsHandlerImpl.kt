@@ -103,7 +103,7 @@ internal open class TerminalEventsHandlerImpl(
       }
     }
     val project = editor.project
-    if (project != null && typeAhead?.isDisabled() == false &&
+    if (project != null && typeAhead?.isEnabled() != false &&
         lookup == null &&
         editor.isOutputModelEditor &&
         (Character.isLetterOrDigit(charTyped) || charTyped == '-' || charTyped == File.separatorChar) &&

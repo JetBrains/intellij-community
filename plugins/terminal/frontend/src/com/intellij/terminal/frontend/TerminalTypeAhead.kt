@@ -18,14 +18,32 @@ internal class TerminalTypeAhead(
   private val blocksModel: TerminalBlocksModel,
   private val editor: Editor,
 ) {
+  fun stringTyped(string: String) {
+    if (!isEnabled()) return
+    updateOutputModel { outputModel.insertAtCursor(string) }
+    LOG.trace { "String typed prediction inserted: '$string'" }
+  }
   
-  companion object {
-    val KEY: Key<TerminalTypeAhead> = Key.create("TerminalTypeAhead")
-
-    private val LOG = logger<TerminalTypeAhead>()
+  fun backspace() {
+    if (!isEnabled()) return
+    val commandStartOffset = blocksModel.blocks.lastOrNull()?.commandStartOffset
+    if (commandStartOffset != null && outputModel.cursorOffsetState.value > commandStartOffset) {
+      updateOutputModel { outputModel.backspace() }
+      LOG.trace { "Backspace prediction applied" }
+    }
   }
 
-  private fun runUpdate(update: Runnable) {
+  fun isEnabled() = !PlatformUtils.isJetBrainsClient() && isEnabledInRegistry() && isTypingCommand()
+
+  private fun isEnabledInRegistry(): Boolean = Registry.`is`("terminal.type.ahead", false)
+
+  private fun isTypingCommand(): Boolean = blocksModel.blocks.lastOrNull()?.let { lastBlock ->
+    // The command start offset is where the prompt ends. If it's not there yet, it means the user can't type a command yet.
+    // The output start offset is -1 until the command starts executing. Once that happens, it means the user can't type anymore.
+    lastBlock.commandStartOffset >= 0 && lastBlock.outputStartOffset == -1
+  } == true
+
+  private fun updateOutputModel(update: Runnable) {
     val lookup = LookupManager.getActiveLookup(editor)
     if (lookup != null && lookup.editor.isReworkedTerminalEditor) {
       lookup.performGuardedChange(update)
@@ -35,30 +53,11 @@ internal class TerminalTypeAhead(
     }
   }
 
-  fun stringTyped(string: String) {
-    if (isDisabled()) return
-    runUpdate { outputModel.insertAtCursor(string) }
-    LOG.trace { "String typed prediction inserted: '$string'" }
+  companion object {
+    val KEY: Key<TerminalTypeAhead> = Key.create("TerminalTypeAhead")
+
+    private val LOG = logger<TerminalTypeAhead>()
   }
-  
-  fun backspace() {
-    if (isDisabled()) return
-    val commandStartOffset = blocksModel.blocks.lastOrNull()?.commandStartOffset
-    if (commandStartOffset != null && outputModel.cursorOffsetState.value > commandStartOffset) {
-      runUpdate {outputModel.backspace()}
-      LOG.trace { "Backspace prediction applied" }
-    }
-  }
-
-  fun isDisabled() = PlatformUtils.isJetBrainsClient() || isDisabledInRegistry() || !isTypingCommand()
-
-  private fun isDisabledInRegistry(): Boolean = !Registry.`is`("terminal.type.ahead", false)
-
-  private fun isTypingCommand(): Boolean = blocksModel.blocks.lastOrNull()?.let { lastBlock ->
-    // The command start offset is where the prompt ends. If it's not there yet, it means the user can't type a command yet.
-    // The output start offset is -1 until the command starts executing. Once that happens, it means the user can't type anymore.
-    lastBlock.commandStartOffset >= 0 && lastBlock.outputStartOffset == -1
-  } == true
 }
 
 private fun TerminalOutputModel.insertAtCursor(string: String) {
