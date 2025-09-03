@@ -21,8 +21,6 @@ jvm_library(
     "@lib//:kotlinx-coroutines-core",
     "@lib//:kotlinx-serialization-core",
     "@lib//:kotlinx-serialization-json",
-    "@lib//:opentelemetry",
-    "@lib//:opentelemetry-semconv",
     "//fleet/reporting/api",
     "//fleet/multiplatform.shims",
   ]
