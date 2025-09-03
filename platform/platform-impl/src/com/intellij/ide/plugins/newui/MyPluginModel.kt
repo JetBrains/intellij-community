@@ -450,7 +450,9 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
           component?.setInstalledPluginMarketplaceModel(descriptor)
         }
       }
-      myCancelInstallCallback?.invoke(descriptor)
+      else {
+        myCancelInstallCallback?.invoke(descriptor)
+      }
     }
     else if (success) {
       if (this.downloadedGroup != null && downloadedGroup!!.ui != null && restartRequired) {
@@ -1085,6 +1087,7 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
       return false
     }
 
+    @JvmStatic
     fun getErrors(errorCheckResults: Map<PluginId, CheckErrorsResult>): Map<PluginId, List<HtmlChunk>> {
       return errorCheckResults.mapValues { (_, checkResult) -> getErrors(checkResult) }
     }

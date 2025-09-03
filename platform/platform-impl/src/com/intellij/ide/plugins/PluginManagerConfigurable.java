@@ -11,6 +11,7 @@ import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.plugins.certificates.PluginCertificateManager;
 import com.intellij.ide.plugins.enums.PluginsGroupType;
 import com.intellij.ide.plugins.enums.SortBy;
+import com.intellij.ide.plugins.marketplace.CheckErrorsResult;
 import com.intellij.ide.plugins.marketplace.PluginSearchResult;
 import com.intellij.ide.plugins.newui.UiPluginManager;
 import com.intellij.ide.plugins.marketplace.ranking.MarketplaceLocalRanker;
@@ -1406,6 +1407,10 @@ public final class PluginManagerConfigurable
             }
 
             result.addModels(descriptors);
+            Map<PluginId, CheckErrorsResult> errors = UiPluginManager.getInstance()
+              .loadErrors(myPluginModelFacade.getModel().mySessionId.toString(),
+                          ContainerUtil.map(descriptors, PluginUiModel::getPluginId));
+            result.getPreloadedModel().setErrors(MyPluginModel.getErrors(errors));
             PluginManagerUsageCollector.performInstalledTabSearch(
               ProjectUtil.getActiveProject(), parser, result.getModels(), searchIndex, null);
 
@@ -2120,12 +2125,12 @@ public final class PluginManagerConfigurable
       if (myPluginModelFacade.getModel().createShutdownCallback) {
         installedPluginsState.setShutdownCallback(() -> {
           ApplicationManager.getApplication().invokeLater(() -> {
-            myPluginModelFacade.closeSession();
             if (ApplicationManager.getApplication().isExitInProgress()) return; // already shutting down
             if (myPluginManagerCustomizer != null) {
               myPluginManagerCustomizer.requestRestart(myPluginModelFacade, myTabHeaderComponent);
               return;
             }
+            myPluginModelFacade.closeSession();
             shutdownOrRestartApp();
           });
         });
@@ -2133,7 +2138,6 @@ public final class PluginManagerConfigurable
 
       if (myDisposer == null) {
         installedPluginsState.runShutdownCallback();
-        myPluginModelFacade.closeSession();
       }
     });
   }

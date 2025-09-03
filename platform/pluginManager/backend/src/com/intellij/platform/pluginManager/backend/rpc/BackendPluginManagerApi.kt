@@ -78,6 +78,13 @@ class BackendPluginManagerApi : PluginManagerApi {
     return DefaultUiPluginManagerController.getPluginsRequiresUltimateMap(pluginIds)
   }
 
+  override suspend fun loadErrors(
+    sessionId: String,
+    pluginIds: List<PluginId>,
+  ): Map<PluginId, CheckErrorsResult> {
+    return DefaultUiPluginManagerController.loadErrors(sessionId, pluginIds)
+  }
+
   override suspend fun getPluginInstallationState(pluginId: PluginId): PluginInstallationState {
     return DefaultUiPluginManagerController.getPluginInstallationState(pluginId)
   }

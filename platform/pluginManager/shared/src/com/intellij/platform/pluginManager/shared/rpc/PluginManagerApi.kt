@@ -57,6 +57,7 @@ interface PluginManagerApi : RemoteApi<Unit> {
   suspend fun getPluginInstallationStates(): Map<PluginId, PluginInstallationState>
   suspend fun checkPluginCanBeDownloaded(plugin: PluginDto): Boolean
   suspend fun loadErrors(sessionId: String): Map<PluginId, CheckErrorsResult>
+  suspend fun loadErrors(sessionId: String, pluginIds: List<PluginId>): Map<PluginId, CheckErrorsResult>
   suspend fun initSession(sessionId: String): InitSessionResult
   suspend fun isPluginEnabled(pluginId: PluginId): Boolean
   suspend fun findInstalledPlugins(plugins: Set<PluginId>): Map<PluginId, PluginDto>

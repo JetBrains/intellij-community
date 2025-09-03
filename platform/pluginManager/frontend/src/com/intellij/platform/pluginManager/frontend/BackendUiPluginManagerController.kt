@@ -158,6 +158,10 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
     return PluginManagerApi.getInstance().loadErrors(sessionId)
   }
 
+  override suspend fun loadErrors(sessionId: String, pluginIds: List<PluginId>): Map<PluginId, CheckErrorsResult> {
+    return PluginManagerApi.getInstance().loadErrors(sessionId, pluginIds)
+  }
+
   override fun connectToUpdateServiceWithCounter(sessionId: String, callback: (Int?) -> Unit): PluginUpdatesService {
     service<BackendRpcCoroutineContext>().coroutineScope.launch {
       PluginManagerApi.getInstance().subscribeToUpdatesCount(sessionId).collectLatest {
