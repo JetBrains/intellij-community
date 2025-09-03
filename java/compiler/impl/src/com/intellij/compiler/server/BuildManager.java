@@ -1533,7 +1533,7 @@ public final class BuildManager implements Disposable {
         try {
           cmdLine.addPathParameter(
             "-D" + GlobalOptions.EXTERNAL_PROJECT_CONFIG + '=',
-            cmdLine.copyProjectSpecificPathToTargetIfRequired(project, externalProjectConfig)
+            cmdLine.syncProjectSpecificPathWithTarget(project, externalProjectConfig)
           );
         }
         catch (NoSuchFileException ignored) {
