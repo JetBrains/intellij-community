@@ -141,6 +141,10 @@
                     interface="com.intellij.openapi.vcs.annotate.AnnotationGutterColumnProvider"
                     dynamic="true"/>
 
+    <extensionPoint name="vcsAnnotationCustomProvider"
+                    interface="com.intellij.openapi.vcs.actions.AnnotationCustomConfigurator"
+                    dynamic="true"/>
+
     <extensionPoint name="vcs.taskHandler"
                     interface="com.intellij.openapi.vcs.VcsTaskHandler"
                     area="IDEA_PROJECT"
