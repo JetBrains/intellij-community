@@ -8,6 +8,7 @@ import com.intellij.ide.structureView.customRegions.CustomRegionTreeElement;
 import com.intellij.ide.structureView.impl.StructureViewFactoryImpl;
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
 import com.intellij.ide.structureView.logical.LogicalStructureDataKeys;
+import com.intellij.ide.structureView.logical.impl.LogicalStructureElementsVisitor;
 import com.intellij.ide.structureView.logical.impl.LogicalStructureViewModel;
 import com.intellij.ide.structureView.logical.impl.LogicalStructureViewTreeElement;
 import com.intellij.ide.structureView.logical.model.LogicalPsiDescription;
@@ -473,7 +474,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
           if (psiDescriptions == null) {
             psiDescriptions = logicalStructureViewModel.getAssembledModel().getLogicalPsiDescriptions();
           }
-          return logicalStructureViewModel.visitPathForLogicalElementSelection(treeElement, element, psiDescriptions);
+          return LogicalStructureElementsVisitor.INSTANCE.visitPathForLogicalElementSelection(treeElement, element, psiDescriptions);
         }
         return visitPathForElementSelection(path, element, editorOffset, state);
       }

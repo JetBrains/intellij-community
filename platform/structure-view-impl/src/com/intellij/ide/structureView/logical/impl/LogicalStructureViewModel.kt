@@ -18,7 +18,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiTarget
 import com.intellij.ui.SimpleTextAttributes
-import com.intellij.ui.tree.TreeVisitor
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
@@ -75,32 +74,6 @@ class LogicalStructureViewModel private constructor(psiFile: PsiFile, editor: Ed
     return null
   }
 
-  fun visitPathForLogicalElementSelection(treeElement: StructureViewTreeElement, element: Any?, psiDescriptions: Set<LogicalPsiDescription>): TreeVisitor.Action {
-    if (element !is PsiElement) return TreeVisitor.Action.SKIP_CHILDREN
-    if (treeElement is ElementsBuilder.LogicalGroupStructureElement<*>) {
-      if (treeElement.grouper is ExternalElementsProvider<*, *>) {
-        return TreeVisitor.Action.SKIP_CHILDREN
-      }
-      return TreeVisitor.Action.CONTINUE
-    }
-    val targetElement = psiDescriptions.firstNotNullOfOrNull {
-      it.getSuitableElement(element)
-    } ?: return TreeVisitor.Action.SKIP_CHILDREN
-    if (treeElement is ElementsBuilder.PsiElementStructureElement<*>) {
-      if (treeElement.element == targetElement) {
-        return TreeVisitor.Action.INTERRUPT
-      }
-      (treeElement.getLogicalAssembledModel().model as? ExtendedLogicalObject)?.let {
-        if (it.canRepresentPsiElement(targetElement)) return TreeVisitor.Action.INTERRUPT
-      }
-      if (treeElement.element?.containingFile != targetElement.containingFile) {
-        return TreeVisitor.Action.SKIP_CHILDREN
-      }
-      return TreeVisitor.Action.CONTINUE
-    }
-    return TreeVisitor.Action.SKIP_CHILDREN
-  }
-
   private fun getModel(element: StructureViewTreeElement): Any? {
     return when (element) {
       is ElementsBuilder.LogicalGroupStructureElement<*> -> element.grouper
@@ -123,7 +96,8 @@ interface LogicalStructureViewTreeElement<T> : StructureViewTreeElement {
 
 }
 
-private class ElementsBuilder {
+@ApiStatus.Internal
+class ElementsBuilder {
 
   private val typePresentationService = TypePresentationService.getService()
   private val groupElements: MutableMap<LogicalStructureAssembledModel<*>, MutableMap<ExternalElementsProvider<*, *>, LogicalGroupStructureElement<*>>> = ConcurrentHashMap()
@@ -197,7 +171,7 @@ private class ElementsBuilder {
     }
   }
 
-  private fun getPresentationData(model: Any): PresentationData {
+  fun getPresentationData(model: Any): PresentationData {
     val presentationProvider = LogicalModelPresentationProvider.getForObject(model)
     if (presentationProvider == null) {
       return PresentationData(
