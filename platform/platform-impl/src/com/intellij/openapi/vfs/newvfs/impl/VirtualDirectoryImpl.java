@@ -708,9 +708,16 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
         }
       }
 
-      //childId not really belong to children:
+      //childId not really belong to children. It could be because
+      // - 'Orphan' file: child indeed has 'this' as it's parent, but 'this' doesn't count child as its child -- i.e. it is
+      //   VFS inconsistency, should be detected by VFSHealthCheck
+      // - Race condition: someone has removed the child from 'this' children while we climb up and down the hierarchy in
+      //   PersistentFSImpl.findFileById(). This is possible because in VFS we don't protect hierarchy walking with a single lock
+      //   But WA/RA _should_ be used to access VFS from the outside, which prohibits the race
+      int parentId = owningPersistentFS().peer().getParent(childId);
       LOG.error(
-        "[" + child + ", id: " + child.getId() + "] expected to be in [" + this + "].children=" + children + ", but absent. " +
+        "[" + child + ", id: " + child.getId() + ", parentId=" + parentId + "] " +
+        "expected to be in [" + this + ", id: " + getId() + "].children=" + children + " -- but absent. " +
         "childId in persistent children: " + isInPersistentChildren(pFS, getId(), childId) + " " +
         "-> refresh race or VFS inconsistency?"
       );
