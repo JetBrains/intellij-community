@@ -149,6 +149,7 @@
 - <init>(com.intellij.platform.syntax.parser.SyntaxTreeBuilder):V
 - advanceLexer():V
 - enforceCommentTokens(com.intellij.platform.syntax.SyntaxElementTypeSet):V
+- enforceCommentTokensInside(com.intellij.platform.syntax.SyntaxElementTypeSet,kotlin.jvm.functions.Function0):java.lang.Object
 - eof():Z
 - error(java.lang.String):V
 - getCurrentOffset():I
