@@ -6,7 +6,7 @@ import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.vcs.*
-import com.intellij.openapi.vcs.ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED
+import com.intellij.openapi.vcs.ProjectLevelVcsManager.Companion.VCS_CONFIGURATION_CHANGED
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache.COMMITTED_TOPIC
 import com.intellij.openapi.vcs.changes.committed.VcsConfigurationChangeListener.BRANCHES_CHANGED
 import com.intellij.openapi.vcs.changes.committed.VcsConfigurationChangeListener.BRANCHES_CHANGED_RESPONSE
@@ -19,7 +19,7 @@ import java.util.function.Predicate
 import java.util.function.Supplier
 
 private fun Project.getCommittedChangesProvider(): CommittedChangesProvider<*, *>? =
-  ProjectLevelVcsManager.getInstance(this).allActiveVcss
+  ProjectLevelVcsManager.getInstance(this).getAllActiveVcss()
     .filter { it.committedChangesProvider != null }
     .let {
       when {
@@ -82,7 +82,7 @@ internal class CommittedChangesViewManager(private val project: Project) : Chang
 
   internal class VisibilityPredicate : Predicate<Project> {
     override fun test(project: Project): Boolean {
-      return ProjectLevelVcsManager.getInstance(project).allActiveVcss.any { isCommittedChangesAvailable(it) }
+      return ProjectLevelVcsManager.getInstance(project).getAllActiveVcss().any { isCommittedChangesAvailable(it) }
     }
   }
 

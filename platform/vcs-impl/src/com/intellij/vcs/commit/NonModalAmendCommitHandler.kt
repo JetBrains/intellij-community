@@ -3,7 +3,7 @@ package com.intellij.vcs.commit
 
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.vcs.ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED
+import com.intellij.openapi.vcs.ProjectLevelVcsManager.Companion.VCS_CONFIGURATION_CHANGED
 import com.intellij.openapi.vcs.VcsListener
 import com.intellij.openapi.vcs.VcsRoot
 import com.intellij.openapi.vcs.changes.CommitContext

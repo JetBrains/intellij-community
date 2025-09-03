@@ -117,7 +117,7 @@ internal class GitWidgetApiImpl : GitWidgetApi {
         else gitRepository.getWidgetState()
       }
 
-      val allVcss = vcsManager.allActiveVcss
+      val allVcss = vcsManager.getAllActiveVcss()
       when {
         allVcss.isEmpty() -> return GitWidgetState.NoVcs(TrustedProjects.isProjectTrusted(project))
         allVcss.any { it.keyInstanceMethod == GitVcs.getKey() } -> return GitWidgetState.GitRepositoriesNotLoaded

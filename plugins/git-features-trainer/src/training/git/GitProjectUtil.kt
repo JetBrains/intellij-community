@@ -30,7 +30,7 @@ internal object GitProjectUtil {
     val learningProjectRoot = refreshAndGetProjectRoot()
     val gitProjectRoot = invokeAndWaitIfNeeded {
       runWriteAction {
-        ProjectLevelVcsManager.getInstance(project).directoryMappings = mutableListOf()
+        ProjectLevelVcsManager.getInstance(project).setDirectoryMappings(mutableListOf())
 
         learningProjectRoot.findChild("git")?.apply {
           findChild(".git")?.delete(this)

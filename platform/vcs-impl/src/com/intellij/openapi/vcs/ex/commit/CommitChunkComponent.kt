@@ -232,7 +232,7 @@ private class CommitChunkWorkflow(project: Project) : NonModalCommitWorkflow(pro
   lateinit var range: LocalRange
 
   init {
-    val vcses = ProjectLevelVcsManager.getInstance(project).allActiveVcss.toSet()
+    val vcses = ProjectLevelVcsManager.getInstance(project).getAllActiveVcss().toSet()
     updateVcses(vcses)
   }
 

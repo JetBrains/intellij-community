@@ -2912,7 +2912,7 @@ c:com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker$ListenerAdapter
 - <init>():V
 a:com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx
 - com.intellij.openapi.vcs.ProjectLevelVcsManager
-- sf:MAPPING_DETECTION_LOG:com.intellij.openapi.diagnostic.Logger
+- sf:Companion:com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx$Companion
 - sf:VCS_ACTIVATED:com.intellij.util.messages.Topic
 - <init>():V
 - a:fireDirectoryMappingsChanged():V
@@ -2920,12 +2920,14 @@ a:com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx
 - a:getAllOptions():java.util.List
 - a:getConfirmation(com.intellij.openapi.vcs.VcsConfiguration$StandardConfirmation):com.intellij.openapi.vcs.impl.projectlevelman.PersistentVcsShowConfirmationOption
 - a:getContentManager():com.intellij.ui.content.ContentManager
-- s:getInstanceEx(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx
+- sf:getInstanceEx(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx
 - a:getOptions(com.intellij.openapi.vcs.VcsConfiguration$StandardOption):com.intellij.openapi.vcs.impl.projectlevelman.PersistentVcsShowSettingOption
 - a:haveDefaultMapping():java.lang.String
 - a:notifyDirectoryMappingChanged():V
 - a:scheduleMappedRootsUpdate():V
 - a:showUpdateProjectInfo(com.intellij.openapi.vcs.update.UpdatedFiles,java.lang.String,com.intellij.openapi.vcs.update.ActionInfo,Z):com.intellij.openapi.vcs.update.UpdateInfoTree
+f:com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx$Companion
+- f:getInstanceEx(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx
 c:com.intellij.openapi.vcs.ex.RollbackLineStatusAction
 - com.intellij.openapi.project.DumbAwareAction
 - <init>():V
@@ -3318,7 +3320,6 @@ f:com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
 - setDirectoryMapping(java.lang.String,java.lang.String):V
 - setDirectoryMappings(java.util.List):V
 - showConsole(java.lang.Runnable):V
-- showProjectOperationInfo(com.intellij.openapi.vcs.update.UpdatedFiles,java.lang.String):V
 - showUpdateProjectInfo(com.intellij.openapi.vcs.update.UpdatedFiles,java.lang.String,com.intellij.openapi.vcs.update.ActionInfo,Z):com.intellij.openapi.vcs.update.UpdateInfoTree
 - startBackgroundVcsOperation():V
 - stopBackgroundVcsOperation():V

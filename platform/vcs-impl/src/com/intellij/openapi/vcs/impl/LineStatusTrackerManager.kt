@@ -400,7 +400,7 @@ class LineStatusTrackerManager(
   override fun arePartialChangelistsEnabled(): Boolean {
     if (!partialChangeListsEnabled) return false
 
-    return ProjectLevelVcsManager.getInstance(project).allActiveVcss
+    return ProjectLevelVcsManager.getInstance(project).getAllActiveVcss()
       .any { it.arePartialChangelistsSupported() }
   }
 

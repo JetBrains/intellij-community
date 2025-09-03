@@ -182,7 +182,7 @@ abstract class VcsProjectLogBase<M : VcsLogManager>(
     if (PlatformUtils.isQodana()) return null
 
     val projectLevelVcsManager = project.serviceAsync<ProjectLevelVcsManager>()
-    val logProviders = VcsLogManager.findLogProviders(projectLevelVcsManager.allVcsRoots.toList(), project)
+    val logProviders = VcsLogManager.findLogProviders(projectLevelVcsManager.getAllVcsRoots().toList(), project)
     if (logProviders.isEmpty()) return null
 
     return project.trackActivity(VcsActivityKey) {

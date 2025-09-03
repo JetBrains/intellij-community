@@ -50,7 +50,7 @@ internal class VcsMappingsApiImpl : VcsMappingsApi {
   }
 
   private fun getMappingsDto(vcsManager: ProjectLevelVcsManager): VcsMappingsDto {
-    val mappings = vcsManager.allVcsRoots.map {
+    val mappings = vcsManager.getAllVcsRoots().map {
       VcsMappingDto(
         root = VcsUtil.getFilePath(it.path).toDto(),
         vcs = it.vcs?.keyInstanceMethod,

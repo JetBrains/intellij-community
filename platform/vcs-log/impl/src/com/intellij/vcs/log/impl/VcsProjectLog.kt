@@ -117,7 +117,7 @@ abstract class VcsProjectLog internal constructor() { // not an interface due to
 
     @JvmStatic
     fun getLogProviders(project: Project): Map<VirtualFile, VcsLogProvider> {
-      return VcsLogManager.findLogProviders(ProjectLevelVcsManager.getInstance(project).allVcsRoots.toList(), project)
+      return VcsLogManager.findLogProviders(ProjectLevelVcsManager.getInstance(project).getAllVcsRoots().toList(), project)
     }
 
     @JvmStatic

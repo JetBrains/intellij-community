@@ -27,12 +27,12 @@ internal class VcsUsagesCollector : ProjectUsagesCollector() {
     val clm = ChangeListManager.getInstance(project)
     val projectBaseDir = project.basePath?.let { VcsUtil.getVirtualFile(it) }
 
-    for (vcs in vcsManager.allActiveVcss) {
+    for (vcs in vcsManager.getAllActiveVcss()) {
       val pluginInfo = getPluginInfo(vcs.javaClass)
       set.add(ACTIVE_VCS.metric(pluginInfo, vcs.name))
     }
 
-    for (mapping in vcsManager.directoryMappings) {
+    for (mapping in vcsManager.getDirectoryMappings()) {
       val vcsName = mapping.vcs.nullize(true)
       val vcs = vcsManager.findVcsByName(vcsName)
       val pluginInfo = vcs?.let { getPluginInfo(it.javaClass) }
@@ -52,13 +52,13 @@ internal class VcsUsagesCollector : ProjectUsagesCollector() {
     if (defaultVcs != null) {
       val pluginInfo = getPluginInfo(defaultVcs.javaClass)
 
-      val explicitRoots = vcsManager.directoryMappings
+      val explicitRoots = vcsManager.getDirectoryMappings()
         .filter { it.vcs == defaultVcs.name }
         .filter { it.directory.isNotEmpty() }
         .map { VcsUtil.getVirtualFile(it.directory) }
         .toSet()
 
-      val projectMappedRoots = vcsManager.allVcsRoots
+      val projectMappedRoots = vcsManager.getAllVcsRoots()
         .filter { it.vcs == defaultVcs }
         .filter { !explicitRoots.contains(it.path) }
 
@@ -67,7 +67,7 @@ internal class VcsUsagesCollector : ProjectUsagesCollector() {
       }
     }
 
-    set.add(MAPPED_ROOTS.metric(vcsManager.allVcsRoots.size))
+    set.add(MAPPED_ROOTS.metric(vcsManager.getAllVcsRoots().size))
     set.add(CHANGELISTS.metric(clm.changeListsNumber))
     set.add(UNVERSIONED_FILES.metric(clm.unversionedFilesPaths.size))
     set.add(IGNORED_FILES.metric(clm.ignoredFilePaths.size))

@@ -10,7 +10,7 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager
 internal class VcsMainMenuActionGroup : DefaultActionGroup(), DumbAware {
   override fun update(e: AnActionEvent) {
     val project = e.project ?: return
-    val vcs = ProjectLevelVcsManager.getInstance(project).singleVCS ?: return
+    val vcs = ProjectLevelVcsManager.getInstance(project).getSingleVCS() ?: return
     e.presentation.isEnabledAndVisible = !vcs.isWithCustomMenu
   }
 

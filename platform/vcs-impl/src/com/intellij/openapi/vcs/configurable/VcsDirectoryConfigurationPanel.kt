@@ -52,7 +52,7 @@ internal class VcsDirectoryConfigurationPanel(private val project: Project) : JP
   private val vcsConfiguration: VcsConfiguration = VcsConfiguration.getInstance(project)
   private val sharedProjectSettings: VcsSharedProjectSettings = VcsSharedProjectSettings.getInstance(project)
 
-  private val allSupportedVcss: List<AbstractVcs> = vcsManager.allSupportedVcss.asList()
+  private val allSupportedVcss: List<AbstractVcs> = vcsManager.getAllSupportedVcss().asList()
   private val vcsRootCheckers: Map<String, VcsRootChecker> =
     VcsRootChecker.EXTENSION_POINT_NAME.extensionList.associateBy { it.supportedVcs.name }
 
@@ -177,7 +177,7 @@ internal class VcsDirectoryConfigurationPanel(private val project: Project) : JP
     scopeFilterConfigurable.reset()
 
     val items = mutableListOf<RecordInfo>()
-    items.addAll(vcsManager.directoryMappings.map { createRegisteredInfo(it) })
+    items.addAll(vcsManager.getDirectoryMappings().map { createRegisteredInfo(it) })
     setDisplayedMappings(items)
 
     detectVcsMappingsCheckBox.isSelected = sharedProjectSettings.isDetectVcsMappingsAutomatically
@@ -317,7 +317,7 @@ internal class VcsDirectoryConfigurationPanel(private val project: Project) : JP
     panel.add(JBUI.Panels.simplePanel(detectVcsMappingsCheckBox).addToRight(detectVcsMappingsHintLabel),
               gb.nextLine().next().fillCellNone().anchor(GridBagConstraints.WEST))
 
-    if (!AbstractCommonUpdateAction.showsCustomNotification(vcsManager.allActiveVcss.asList())) {
+    if (!AbstractCommonUpdateAction.showsCustomNotification(vcsManager.getAllActiveVcss().asList())) {
       panel.add(scopeFilterConfigurable.createComponent(), gb.nextLine().next())
     }
     return panel
@@ -395,7 +395,7 @@ internal class VcsDirectoryConfigurationPanel(private val project: Project) : JP
   @Throws(ConfigurationException::class)
   fun apply() {
     adjustIgnoredRootsSettings()
-    vcsManager.directoryMappings = getModelMappings()
+    vcsManager.setDirectoryMappings(getModelMappings())
     scopeFilterConfigurable.apply()
     sharedProjectSettings.isDetectVcsMappingsAutomatically = detectVcsMappingsCheckBox.isSelected
     initializeModel()
@@ -403,7 +403,7 @@ internal class VcsDirectoryConfigurationPanel(private val project: Project) : JP
 
   private fun adjustIgnoredRootsSettings() {
     val newMappings = getModelMappings()
-    val previousMappings = vcsManager.directoryMappings
+    val previousMappings = vcsManager.getDirectoryMappings()
     vcsConfiguration.addIgnoredUnregisteredRoots(previousMappings
                                                    .filter { mapping -> !newMappings.contains(mapping) && !mapping.isDefaultMapping }
                                                    .map { mapping -> mapping.directory })
@@ -412,7 +412,7 @@ internal class VcsDirectoryConfigurationPanel(private val project: Project) : JP
 
   fun isModified(): Boolean {
     if (scopeFilterConfigurable.isModified) return true
-    return getModelMappings() != vcsManager.directoryMappings ||
+    return getModelMappings() != vcsManager.getDirectoryMappings() ||
            detectVcsMappingsCheckBox.isSelected != sharedProjectSettings.isDetectVcsMappingsAutomatically
   }
 
@@ -486,7 +486,7 @@ internal class VcsDirectoryConfigurationPanel(private val project: Project) : JP
   companion object {
     @JvmStatic
     fun buildVcsesComboBox(project: Project): ComboBox<AbstractVcs?> {
-      val allVcses = ProjectLevelVcsManager.getInstance(project).allSupportedVcss
+      val allVcses = ProjectLevelVcsManager.getInstance(project).getAllSupportedVcss()
       return buildVcsesComboBox(project, allVcses.asList())
     }
 

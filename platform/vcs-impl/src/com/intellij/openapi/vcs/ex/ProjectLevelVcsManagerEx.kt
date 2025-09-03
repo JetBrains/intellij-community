@@ -1,72 +1,68 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.vcs.ex;
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.vcs.ex
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsConfiguration;
-import com.intellij.openapi.vcs.impl.projectlevelman.NewMappings;
-import com.intellij.openapi.vcs.impl.projectlevelman.PersistentVcsShowConfirmationOption;
-import com.intellij.openapi.vcs.impl.projectlevelman.PersistentVcsShowSettingOption;
-import com.intellij.openapi.vcs.update.ActionInfo;
-import com.intellij.openapi.vcs.update.UpdateInfoTree;
-import com.intellij.openapi.vcs.update.UpdatedFiles;
-import com.intellij.ui.content.ContentManager;
-import com.intellij.util.concurrency.annotations.RequiresEdt;
-import com.intellij.util.messages.Topic;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.ProjectLevelVcsManager
+import com.intellij.openapi.vcs.VcsConfiguration.StandardConfirmation
+import com.intellij.openapi.vcs.VcsConfiguration.StandardOption
+import com.intellij.openapi.vcs.impl.projectlevelman.NewMappings
+import com.intellij.openapi.vcs.impl.projectlevelman.PersistentVcsShowConfirmationOption
+import com.intellij.openapi.vcs.impl.projectlevelman.PersistentVcsShowSettingOption
+import com.intellij.openapi.vcs.update.ActionInfo
+import com.intellij.openapi.vcs.update.UpdateInfoTree
+import com.intellij.openapi.vcs.update.UpdatedFiles
+import com.intellij.ui.content.ContentManager
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.messages.Topic
+import org.jetbrains.annotations.Nls
 
-import java.util.List;
+abstract class ProjectLevelVcsManagerEx : ProjectLevelVcsManager() {
+  abstract val allOptions: List<PersistentVcsShowSettingOption>
 
-public abstract class ProjectLevelVcsManagerEx extends ProjectLevelVcsManager {
-  @SuppressWarnings("LoggerInitializedWithForeignClass")
-  public static final Logger MAPPING_DETECTION_LOG = Logger.getInstance(NewMappings.class);
+  abstract fun getOptions(option: StandardOption): PersistentVcsShowSettingOption
 
-  @Topic.ProjectLevel
-  public static final Topic<VcsActivationListener> VCS_ACTIVATED =
-    new Topic<>(VcsActivationListener.class, Topic.BroadcastDirection.NONE);
+  abstract val allConfirmations: List<PersistentVcsShowConfirmationOption>
 
-  public static ProjectLevelVcsManagerEx getInstanceEx(Project project) {
-    return (ProjectLevelVcsManagerEx)ProjectLevelVcsManager.getInstance(project);
-  }
+  abstract fun getConfirmation(option: StandardConfirmation): PersistentVcsShowConfirmationOption
 
-  public abstract @Nullable ContentManager getContentManager();
+  @Deprecated("A plugin should not need to call this.")
+  abstract fun notifyDirectoryMappingChanged()
 
-  public abstract @NotNull PersistentVcsShowSettingOption getOptions(VcsConfiguration.StandardOption option);
-
-  public abstract @NotNull PersistentVcsShowConfirmationOption getConfirmation(VcsConfiguration.StandardConfirmation option);
-
-  public abstract @NotNull List<PersistentVcsShowSettingOption> getAllOptions();
-
-  public abstract @NotNull List<PersistentVcsShowConfirmationOption> getAllConfirmations();
-
-  /**
-   * @deprecated A plugin should not need to call this.
-   */
-  @Deprecated
-  public abstract void notifyDirectoryMappingChanged();
+  @Deprecated("Implementation detail")
+  abstract val contentManager: ContentManager?
 
   @RequiresEdt
-  public abstract @Nullable UpdateInfoTree showUpdateProjectInfo(UpdatedFiles updatedFiles,
-                                                                 @Nls String displayActionName,
-                                                                 ActionInfo actionInfo,
-                                                                 boolean canceled);
+  abstract fun showUpdateProjectInfo(
+    updatedFiles: UpdatedFiles?,
+    @Nls displayActionName: @Nls String?,
+    actionInfo: ActionInfo?,
+    canceled: Boolean,
+  ): UpdateInfoTree?
 
-  public abstract void scheduleMappedRootsUpdate();
+  abstract fun scheduleMappedRootsUpdate()
+
+  @Deprecated("A plugin should not need to call this.")
+  abstract fun fireDirectoryMappingsChanged()
 
   /**
-   * @deprecated A plugin should not need to call this.
-   */
-  @Deprecated
-  public abstract void fireDirectoryMappingsChanged();
-
-  /**
-   * @return {@link AbstractVcs#getName()} for &lt;Project&gt; mapping if configured;
+   * @return [com.intellij.openapi.vcs.AbstractVcs.getName] for &lt;Project&gt; mapping if configured;
    * empty string for &lt;None&gt; &lt;Project&gt; mapping;
    * null if no default mapping is configured.
    */
-  public abstract @Nullable String haveDefaultMapping();
+  abstract fun haveDefaultMapping(): String?
+
+  companion object {
+    @JvmField
+    internal val MAPPING_DETECTION_LOG: Logger = Logger.getInstance(NewMappings::class.java)
+
+    @JvmField
+    @Topic.ProjectLevel
+    val VCS_ACTIVATED: Topic<VcsActivationListener> = Topic(VcsActivationListener::class.java, Topic.BroadcastDirection.NONE)
+
+    @JvmStatic
+    fun getInstanceEx(project: Project): ProjectLevelVcsManagerEx {
+      return getInstance(project) as ProjectLevelVcsManagerEx
+    }
+  }
 }

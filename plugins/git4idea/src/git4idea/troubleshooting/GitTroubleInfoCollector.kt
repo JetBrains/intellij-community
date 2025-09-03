@@ -50,7 +50,7 @@ internal class GitTroubleInfoCollector : TroubleInfoCollector, PluginAware {
 
   private fun StringBuilder.writeMappings(project: Project) {
     val mappingAutoDetection = VcsSharedProjectSettings.getInstance(project).isDetectVcsMappingsAutomatically
-    val mappings = ProjectLevelVcsManager.getInstance(project).directoryMappings.map {
+    val mappings = ProjectLevelVcsManager.getInstance(project).getDirectoryMappings().map {
       "${it.vcs.ifEmpty { "No VCS" }} -> ${it.directory.ifEmpty { "<default>" }}"
     }
 
