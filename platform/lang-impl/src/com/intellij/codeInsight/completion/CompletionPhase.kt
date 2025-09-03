@@ -66,10 +66,10 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
   override fun dispose() {}
 
   class CommittingDocuments internal constructor(
-    prevIndicator: CompletionProgressIndicator?,
+    indicator: CompletionProgressIndicator?,
     editor: Editor,
     private val event: TypedEvent?
-  ) : CompletionPhase(prevIndicator) {
+  ) : CompletionPhase(indicator) {
     @JvmField
     internal var replaced: Boolean = false
 
