@@ -33,7 +33,6 @@ object TerminalEditorFactory {
   ): EditorImpl {
     val document = createDocument(withLanguage = true)
     val editor = createEditor(document, project, settings, parentDisposable)
-    editor.contentComponent.focusTraversalKeysEnabled = false
     editor.putUserData(TerminalDataContextUtils.IS_OUTPUT_MODEL_EDITOR_KEY, true)
     addTopAndBottomInsets(editor)
 
@@ -98,6 +97,7 @@ object TerminalEditorFactory {
     parentDisposable: Disposable,
   ): EditorImpl {
     val editor = TerminalUiUtils.createOutputEditor(document, project, settings, installContextMenu = false)
+    editor.contentComponent.focusTraversalKeysEnabled = false
     editor.contextMenuGroupId = "Terminal.ReworkedTerminalContextMenu"
     editor.useTerminalDefaultBackground(parentDisposable)
     configureSoftWraps(editor)
