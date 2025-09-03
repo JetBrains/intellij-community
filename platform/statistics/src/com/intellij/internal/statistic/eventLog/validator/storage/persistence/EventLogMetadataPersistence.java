@@ -236,6 +236,9 @@ public class EventLogMetadataPersistence extends BaseEventLogMetadataPersistence
       var path = getDefaultDictionariesDir();
       if (shouldInit) {
         initDictionaries(path);
+      } else if (!Files.exists(path)) {
+        // create directory in case it was deleted manually for some reason
+        Files.createDirectories(path);
       }
       return path;
     }
