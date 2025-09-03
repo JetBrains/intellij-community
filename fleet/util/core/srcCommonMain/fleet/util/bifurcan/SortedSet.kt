@@ -1,11 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package fleet.util
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package fleet.util.bifurcan
 
-import fleet.util.bifurcan.SortedMap
+import fleet.util.BifurcanVector
 
-/**
- * Override of io.lacuna.bifurcan.SortedSet with fixed linear/forked mode
- */
 class SortedSet<V>(val m: SortedMap<V, Unit?>) : Set<V> {
   fun comparator(): Comparator<V> {
     return m.comparator()
@@ -51,8 +48,8 @@ class SortedSet<V>(val m: SortedMap<V, Unit?>) : Set<V> {
     }
   }
 
-  override fun contains(value: V): Boolean {
-    return m.contains(value)
+  override fun contains(element: V): Boolean {
+    return m.contains(element)
   }
 
   override fun containsAll(elements: Collection<V>): Boolean {
@@ -98,4 +95,4 @@ class SortedSet<V>(val m: SortedMap<V, Unit?>) : Set<V> {
     }
 }
 
-fun <V : Comparable<V>> SortedSet() = SortedSet<V>(SortedMap<V, Unit?>())
+fun <V : Comparable<V>> SortedSet(): SortedSet<V> = SortedSet<V>(SortedMap())

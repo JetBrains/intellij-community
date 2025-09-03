@@ -2,13 +2,11 @@
 package fleet.util
 
 import fleet.util.bifurcan.SortedMap
+import fleet.util.bifurcan.SortedSet
 import fleet.util.logging.KLogger
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.transformWhile
-import kotlin.collections.component1
-import kotlin.collections.component2
-import kotlin.collections.forEach
 
 inline fun <T> Iterable<T>.forEachSafely(logger: KLogger, f: (T) -> Unit) {
   forEach {
