@@ -2,8 +2,10 @@
 package com.intellij.platform.vcs.changes
 
 import kotlinx.serialization.Serializable
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
+@ApiStatus.Experimental
 @Serializable
 sealed class ChangeListManagerState {
   abstract val fileHoldersState: FileHoldersState

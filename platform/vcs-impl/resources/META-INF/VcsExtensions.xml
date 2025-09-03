@@ -371,6 +371,10 @@
     <projectService
       serviceInterface="com.intellij.platform.vcs.impl.shared.changes.TreeModelBuilderEx"
       serviceImplementation="com.intellij.openapi.vcs.changes.ui.BackendChangesViewModelBuilderService"/>
+
+    <projectService
+      serviceInterface="com.intellij.openapi.vcs.changes.ChangesListManagerStateProvider"
+      serviceImplementation="com.intellij.openapi.vcs.changes.ChangesListManagerStateProviderImpl"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">

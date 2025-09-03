@@ -8,11 +8,13 @@ import com.intellij.platform.vcs.impl.shared.rpc.ChangeDto
 import com.intellij.platform.vcs.impl.shared.rpc.ChangeListDto
 import com.intellij.platform.vcs.impl.shared.rpc.ChangeListsApi
 import com.intellij.platform.vcs.impl.shared.rpc.ContentRevisionDto
+import com.intellij.vcs.rpc.ProjectScopeRpcHelper.getProjectScoped
 import com.intellij.vcs.rpc.ProjectScopeRpcHelper.projectScopedCallbackFlow
 import com.intellij.vcs.toDto
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.buffer
+import kotlinx.coroutines.flow.emptyFlow
 
 internal class ChangeListsApiImpl : ChangeListsApi {
   override suspend fun areChangeListsEnabled(projectId: ProjectId): Flow<Boolean> =
@@ -27,19 +29,8 @@ internal class ChangeListsApiImpl : ChangeListsApi {
     }.buffer(onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   override suspend fun getChangeListManagerState(projectId: ProjectId): Flow<ChangeListManagerState> =
-    projectScopedCallbackFlow(projectId) { project, messageBusConnection ->
-      val changeListManager = ChangeListManager.getInstance(project)
-
-      messageBusConnection.subscribe(VcsManagedFilesHolder.TOPIC, VcsManagedFilesHolder.VcsManagedFilesHolderListener {
-        trySend(ChangeListManager.getInstance(project).changeListManagerState)
-      })
-      messageBusConnection.subscribe(ChangesListManagerStateListener.TOPIC, ChangesListManagerStateListener.adapter {
-        trySend(ChangeListManager.getInstance(project).changeListManagerState)
-      })
-
-      send(changeListManager.changeListManagerState)
-    }.buffer(onBufferOverflow = BufferOverflow.DROP_OLDEST)
-
+    getProjectScoped(projectId) { project -> ChangesListManagerStateProvider.getInstance(project).state }
+    ?: emptyFlow()
 
   override suspend fun getChangeLists(projectId: ProjectId): Flow<List<ChangeListDto>> =
     projectScopedCallbackFlow(projectId) { project, messageBusConnection ->

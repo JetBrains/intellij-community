@@ -10,7 +10,6 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.platform.vcs.changes.ChangeListManagerState;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.*;
 
@@ -275,8 +274,6 @@ public abstract class ChangeListManager implements ChangeListModification {
    * @see #isFreezed()
    */
   public abstract boolean isFreezedWithNotification(@NlsContexts.DialogTitle @Nullable String modalTitle);
-
-  public abstract @NotNull ChangeListManagerState getChangeListManagerState();
 
   @Deprecated(forRemoval = true)
   public abstract void reopenFiles(@NotNull List<? extends FilePath> paths);

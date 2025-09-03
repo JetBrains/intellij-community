@@ -113,7 +113,7 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
   private @NotNull List<Supplier<@Nullable JComponent>> myAdditionalInfo = Collections.emptyList();
   private volatile boolean myShowLocalChangesInvalidated;
 
-  private volatile @Nls String myFreezeName;
+  private final @NotNull ChangesListManagerStateProviderImpl myStateProvider;
 
   private final @NotNull Set<String> myListsToBeDeletedSilently = new HashSet<>();
   private final @NotNull Set<String> myListsToBeDeleted = new HashSet<>();
@@ -130,6 +130,7 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
 
   public ChangeListManagerImpl(@NotNull Project project, @NotNull CoroutineScope coroutineScope) {
     this.project = project;
+    myStateProvider = ChangesListManagerStateProviderImpl.getInstance(project);
     myConflictTracker = new ChangelistConflictTracker(project, this);
 
     myComposite = FileHolderComposite.create(project);
@@ -153,6 +154,8 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
         scheduleAutomaticEmptyChangeListDeletion(oldList);
       }
     });
+
+    busConnection.subscribe(VcsManagedFilesHolder.TOPIC, () -> myStateProvider.setFileHolderState(getFileHoldersState()));
 
     VcsManagedFilesHolder.VCS_IGNORED_FILES_HOLDER_EP.addChangeListener(this.project, () -> {
       VcsDirtyScopeManager.getInstance(this.project).markEverythingDirty();
@@ -387,9 +390,8 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
     invokeAfterUpdate(false, () -> {
       myUpdater.setIgnoreBackgroundOperation(false);
       myUpdater.pause();
-      myFreezeName = reason;
+      myStateProvider.setFreezeReason(reason);
       sem.up();
-      project.getMessageBus().syncPublisher(ChangesListManagerStateListener.TOPIC).changesListManagerFrozen();
     });
 
     awaitWithCheckCanceled(sem, ProgressManager.getInstance().getProgressIndicator());
@@ -398,8 +400,7 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
   @Override
   public void unfreeze() {
     myUpdater.go();
-    myFreezeName = null;
-    project.getMessageBus().syncPublisher(ChangesListManagerStateListener.TOPIC).changesListManagerUnfrozen();
+    myStateProvider.setFreezeReason(null);
   }
 
   @Override
@@ -418,8 +419,9 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
   }
 
   @Override
-  public String isFreezed() {
-    return myFreezeName;
+  public @Nullable String isFreezed() {
+    ChangeListManagerState.Frozen frozen = ObjectUtils.tryCast(myStateProvider.getState().getValue(), ChangeListManagerState.Frozen.class);
+    return frozen == null ? null : frozen.getReason();
   }
 
   public void executeOnUpdaterThread(@NotNull Runnable r) {
@@ -506,6 +508,7 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
         synchronized (myDataLock) {
           dataHolder = new DataHolder(myComposite.copy(), new ChangeListUpdater(myWorker), wasEverythingDirty);
           myModifier.enterUpdate();
+          myStateProvider.setInUpdateMode(true);
           if (wasEverythingDirty) {
             myUpdateException = null;
             myAdditionalInfo = Collections.emptyList();
@@ -597,7 +600,8 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
 
         myDelayedNotificator.changedFileStatusChanged(!isInUpdate());
         myDelayedNotificator.changeListUpdateDone();
-        project.getMessageBus().syncPublisher(ChangesListManagerStateListener.TOPIC).updateFinished();
+
+        myStateProvider.setInUpdateMode(false);
         changesView.scheduleRefresh();
       }
       return true;
@@ -1562,7 +1566,7 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
   // (commit -> asynch synch VFS -> asynch vcs dirty scope)
   public void showLocalChangesInvalidated() {
     myShowLocalChangesInvalidated = true;
-    myWorker.getProject().getMessageBus().syncPublisher(ChangesListManagerStateListener.TOPIC).updateStarted();
+    myStateProvider.setInUpdateMode(true);
   }
 
   @ApiStatus.Internal
@@ -1633,19 +1637,6 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
       VcsBalloonProblemNotifier.showOverChangesView(project, freezeReason, MessageType.WARNING);
     }
     return true;
-  }
-
-  @Override
-  public @NotNull ChangeListManagerState getChangeListManagerState() {
-    String freezeReason = isFreezed();
-    ChangeListManagerState.FileHoldersState fileHoldersState = getFileHoldersState();
-    if (freezeReason != null) {
-      return new ChangeListManagerState.Frozen(freezeReason, fileHoldersState);
-    } else if (isInUpdate()) {
-      return new ChangeListManagerState.Updating(fileHoldersState);
-    } else {
-      return new ChangeListManagerState.Default(fileHoldersState);
-    }
   }
 
   private @NotNull ChangeListManagerState.FileHoldersState getFileHoldersState() {

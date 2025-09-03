@@ -951,7 +951,6 @@ a:com.intellij.openapi.vcs.changes.ChangeListManager
 - a:getChangeList(com.intellij.openapi.vcs.changes.Change):com.intellij.openapi.vcs.changes.LocalChangeList
 - a:getChangeList(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vcs.changes.LocalChangeList
 - a:getChangeList(java.lang.String):com.intellij.openapi.vcs.changes.LocalChangeList
-- a:getChangeListManagerState():com.intellij.platform.vcs.changes.ChangeListManagerState
 - a:getChangeListNameIfOnlyOne(com.intellij.openapi.vcs.changes.Change[]):java.lang.String
 - a:getChangeLists():java.util.List
 - a:getChangeLists(com.intellij.openapi.vcs.changes.Change):java.util.List
