@@ -16,10 +16,18 @@ internal class TraceDataCollectionConsentUI(
 
   override fun getForcedState(): ConsentForcedState? {
     val dataCollectionAgreement = DataCollectionAgreement.getInstance() ?: return null
-    return when (dataCollectionAgreement) {
+    val forcedState = when (dataCollectionAgreement) {
       DataCollectionAgreement.YES -> ConsentForcedState.AlwaysEnabled(null)
       DataCollectionAgreement.NOT_SET -> null
       DataCollectionAgreement.NO -> ConsentForcedState.ExternallyDisabled(null)
     }
+    if (forcedState != null) {
+      return forcedState
+    }
+    val externalSettings = AiDataCollectionExternalSettings.findSettingsImplementedByAiAssistant()
+    if (externalSettings != null && externalSettings.isForciblyDisabled()) {
+      return ConsentForcedState.ExternallyDisabled(null)
+    }
+    return null
   }
 }
