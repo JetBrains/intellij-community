@@ -71,6 +71,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.future.asCompletableFuture
+import kotlinx.coroutines.internal.intellij.IntellijCoroutines
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
@@ -1298,15 +1299,16 @@ internal inline fun <R> runBlockingForActionExpand(context: CoroutineContext = E
     // could prevent deadlocks caused by background write actions
     val (lockContextElement, cleanup) = getGlobalThreadingSupport().getPermitAsContextElement(ctx, !application.isWriteAccessAllowed)
     try {
-      @Suppress("RAW_RUN_BLOCKING")
-      runBlocking(ctx +
-                  context +
-                  lockContextElement +
-                  // sometimes action update runs inside a read action
-                  // Platform forbids switching to EDT under runBlocking and read action, but action subsystem handles it in its own way
-                  SafeForRunBlockingUnderReadAction +
-                  Context.current().asContextElement(),
-                  block)
+      @OptIn(InternalCoroutinesApi::class)
+      IntellijCoroutines.runBlockingWithParallelismCompensation(
+        ctx +
+        context +
+        lockContextElement +
+        // sometimes action update runs inside a read action
+        // Platform forbids switching to EDT under runBlocking and read action, but action subsystem handles it in its own way
+        SafeForRunBlockingUnderReadAction +
+        Context.current().asContextElement(),
+        block)
     }
     finally {
       cleanup()
