@@ -607,12 +607,6 @@ abstract class ComponentManagerImpl(
     }
   }
 
-  internal suspend fun initializeService(component: Any, serviceDescriptor: ServiceDescriptor?, pluginId: PluginId) {
-    initializeService(component = component, serviceDescriptor = serviceDescriptor, pluginId = pluginId) {
-      it()
-    }
-  }
-
   internal suspend inline fun initializeService(
     component: Any,
     serviceDescriptor: ServiceDescriptor?,
@@ -1733,5 +1727,21 @@ private class StartUpMessageDeliveryListener(
       return
     }
     logMessageBusDeliveryFunction(topic, messageName, handler, durationNanos)
+  }
+}
+
+internal suspend fun initializeComponentOrLightService(component: Any, pluginId: PluginId, componentManager: ComponentManagerImpl) {
+  if (component is Disposable) {
+    Disposer.register(componentManager.serviceParentDisposable, component)
+  }
+
+  @Suppress("DEPRECATION")
+  if (component is PersistentStateComponent<*> || component is SettingsSavingComponent || component is JDOMExternalizable) {
+    val componentStore = componentManager.componentStore
+    check(componentStore.isStoreInitialized || componentManager.getApplication()!!.isUnitTestMode) {
+      "You cannot get $component before component store is initialized"
+    }
+
+    componentStore.initComponent(component = component, serviceDescriptor = null, pluginId = pluginId)
   }
 }

@@ -3,10 +3,8 @@ package com.intellij.serviceContainer
 
 import com.intellij.ide.plugins.PluginUtil
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.util.Disposer
 import com.intellij.platform.instanceContainer.instantiation.instantiate
 import com.intellij.platform.instanceContainer.internal.DynamicInstanceSupport
 import com.intellij.platform.instanceContainer.internal.DynamicInstanceSupport.DynamicInstanceInitializer
@@ -50,10 +48,7 @@ internal class LightServiceInstanceSupport(
         instanceClass = instanceClass,
         supportedSignatures = componentManager.supportedSignaturesOfLightServiceConstructors,
       )
-      if (instance is Disposable) {
-        Disposer.register(componentManager.serviceParentDisposable, instance)
-      }
-      componentManager.initializeService(instance, serviceDescriptor = null, instanceClass.pluginId)
+      initializeComponentOrLightService(instance, instanceClass.pluginId, componentManager)
       return instance
     }
   }
