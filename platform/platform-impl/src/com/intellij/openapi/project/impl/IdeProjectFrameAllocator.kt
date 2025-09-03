@@ -53,6 +53,7 @@ import com.intellij.ui.ScreenUtil
 import com.intellij.util.PlatformUtils
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.messages.SimpleMessageBusConnection
+import com.intellij.util.ui.accessibility.ScreenReader
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
@@ -510,7 +511,9 @@ private suspend fun findAndOpenReadmeIfNeeded(project: Project) {
     }
     val readme = files.firstNotNullOfOrNull(projectDir::findFileByRelativePath) ?: return@runOnceForProject
     if (!readme.isDirectory) {
-      readme.putUserData(TextEditorWithPreview.DEFAULT_LAYOUT_FOR_FILE, TextEditorWithPreview.Layout.SHOW_PREVIEW)
+      // Screen readers don't support JCEF preview (IJPL-59438)
+      val layout = if (ScreenReader.isActive()) TextEditorWithPreview.Layout.SHOW_EDITOR_AND_PREVIEW else TextEditorWithPreview.Layout.SHOW_PREVIEW
+      readme.putUserData(TextEditorWithPreview.DEFAULT_LAYOUT_FOR_FILE, layout)
       (project.serviceAsync<FileEditorManager>() as FileEditorManagerEx).openFile(readme, FileEditorOpenOptions(requestFocus = true))
 
       readme.putUserData(README_OPENED_ON_START_TS, Instant.now())
