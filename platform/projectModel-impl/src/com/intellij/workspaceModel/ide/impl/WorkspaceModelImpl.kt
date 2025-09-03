@@ -192,6 +192,7 @@ open class WorkspaceModelImpl : WorkspaceModelInternal {
       collectChangesTimeMillis = measureTimeMillis {
         changes = (builder as MutableEntityStorageInstrumentation).collectChanges()
       }
+      val symbolicEntityIdsChanges = (builder as MutableEntityStorageInstrumentation).collectSymbolicEntityIdsChanges()
       initializingTimeMillis = measureTimeMillis {
         this.initializeBridges(changes, builder)
       }
@@ -204,7 +205,7 @@ open class WorkspaceModelImpl : WorkspaceModelInternal {
         before.assertConsistency()
         newStorage.assertConsistency()
       }
-      entityStorage.replace(newStorage, changes, this::onBeforeChanged, this::onChanged)
+      entityStorage.replace(newStorage, changes, symbolicEntityIdsChanges, this::onBeforeChanged, this::onChanged)
     }.apply {
       updateTimePreciseMs.duration.addAndGet(updateTimeMillis)
       preHandlersTimeMs.duration.addAndGet(preHandlersTimeMillis)
@@ -271,7 +272,7 @@ open class WorkspaceModelImpl : WorkspaceModelInternal {
         before.assertConsistency()
         newStorage.assertConsistency()
       }
-      entityStorage.replace(newStorage, changes, {}, {})
+      entityStorage.replace(newStorage, changes, builder.collectSymbolicEntityIdsChanges(),  {}, {})
     }.apply {
       updateTimePreciseMs.duration.addAndGet(updateTimeMillis)
       toSnapshotTimeMs.duration.addAndGet(toSnapshotTimeMillis)
@@ -358,7 +359,7 @@ open class WorkspaceModelImpl : WorkspaceModelInternal {
       startPreUpdateHandlers(before, builder)
       val changes = builder.collectChanges()
       val newStorage = builder.toSnapshot()
-      unloadedEntitiesStorage.replace(newStorage, changes, {}, ::onUnloadedEntitiesChanged)
+      unloadedEntitiesStorage.replace(newStorage, changes, builder.collectSymbolicEntityIdsChanges(),  {}, ::onUnloadedEntitiesChanged)
     }.apply { updateUnloadedEntitiesTimeMs.duration.addAndGet(this) }
 
     log.info("Unloaded entity storage updated in $time ms: $description")
@@ -383,7 +384,7 @@ open class WorkspaceModelImpl : WorkspaceModelInternal {
     replaceProjectModelTimeMs.addMeasuredTime {
       val builder = replacement.builder
       this.initializeBridges(replacement.changes, builder)
-      entityStorage.replace(builder.toSnapshot(), replacement.changes, this::onBeforeChanged, this::onChanged)
+      entityStorage.replace(builder.toSnapshot(), replacement.changes, replacement.symbolicEntityIdChanges, this::onBeforeChanged, this::onChanged)
       log.info("Project model updated to version ${entityStorage.pointer.version}: $description")
     }
     return true
@@ -400,10 +401,10 @@ open class WorkspaceModelImpl : WorkspaceModelInternal {
     fullReplaceProjectModelTimeMs.addMeasuredTime {
       val builder = mainStorageReplacement.builder
       this.initializeBridges(mainStorageReplacement.changes, builder)
-      entityStorage.replace(builder.toSnapshot(), mainStorageReplacement.changes, this::onBeforeChanged, this::onChanged)
+      entityStorage.replace(builder.toSnapshot(), mainStorageReplacement.changes, mainStorageReplacement.symbolicEntityIdChanges, this::onBeforeChanged, this::onChanged)
 
       val unloadBuilder = unloadStorageReplacement.builder
-      unloadedEntitiesStorage.replace(unloadBuilder.toSnapshot(), unloadStorageReplacement.changes, {}, ::onUnloadedEntitiesChanged)
+      unloadedEntitiesStorage.replace(unloadBuilder.toSnapshot(), unloadStorageReplacement.changes, unloadStorageReplacement.symbolicEntityIdChanges, {}, ::onUnloadedEntitiesChanged)
       log.info("Project model updated to version ${entityStorage.pointer.version}")
     }
     return true

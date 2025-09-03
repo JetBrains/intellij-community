@@ -28,7 +28,6 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.containers.ConcurrentBitSet
 import com.intellij.workspaceModel.core.fileIndex.*
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 
 @Suppress("DuplicatedCode")
 internal suspend fun initWorkspaceFileIndexData(
@@ -343,32 +342,10 @@ internal class WorkspaceFileIndexDataImpl(
       }
     }
 
-    fun processChangedEntity(oldEntity: E, newEntity: E) {
-      val previousDependencies = ObjectOpenHashSet<SymbolicEntityId<R>>()
-      val actualDependencies = ObjectOpenHashSet<SymbolicEntityId<R>>()
-
-      dependencyDescription.referencedEntitiesGetter(oldEntity).toCollection(previousDependencies)
-      dependencyDescription.referencedEntitiesGetter(newEntity).toCollection(actualDependencies)
-
-      (actualDependencies - previousDependencies).forEach { processAddedSymbolicEntityId(it) }
-      (previousDependencies - actualDependencies).forEach { processRemovedSymbolicEntityId(it) }
-    }
-
-    event.getChanges(dependencyDescription.referenceHolderClass).forEach { change ->
-      when (change) {
-        is EntityChange.Added<E> -> {
-          dependencyDescription.referencedEntitiesGetter(change.newEntity).forEach { referencedEntityId ->
-            processAddedSymbolicEntityId(referencedEntityId)
-          }
-        }
-        is EntityChange.Removed<E> -> {
-          dependencyDescription.referencedEntitiesGetter(change.oldEntity).forEach { referencedEntityId ->
-            processRemovedSymbolicEntityId(referencedEntityId)
-          }
-        }
-        is EntityChange.Replaced<E> -> {
-          processChangedEntity(change.oldEntity, change.newEntity)
-        }
+    event.getChangedReferences(dependencyDescription.referenceHolderClass, dependencyDescription.referenceSymbolicEntityIdClass).forEach {
+      when (it) {
+        is ReferenceChange.Added -> processAddedSymbolicEntityId(it.symbolicEntityId)
+        is ReferenceChange.Removed -> processRemovedSymbolicEntityId(it.symbolicEntityId)
       }
     }
   }

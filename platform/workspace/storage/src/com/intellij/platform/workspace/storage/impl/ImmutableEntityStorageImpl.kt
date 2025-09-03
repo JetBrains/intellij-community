@@ -263,6 +263,7 @@ internal class MutableEntityStorageImpl(
 
       // Update indexes
       indexes.entityAdded(newEntityData, symbolicId)
+      trackChangedSoftLinks()
     }
     finally {
       finishWriting()
@@ -356,6 +357,7 @@ internal class MutableEntityStorageImpl(
 
       if (modifiableEntity.changedProperty.isNotEmpty()) {
         this.indexes.updateSymbolicIdIndexes(this, updatedEntity, beforeSymbolicId, copiedData, modifiableEntity)
+        trackChangedSoftLinks()
       }
 
       updatedEntity
@@ -402,6 +404,22 @@ internal class MutableEntityStorageImpl(
     finally {
       finishWriting()
     }
+  }
+
+  override fun collectSymbolicEntityIdsChanges(): Map<Class<*>, Set<ReferenceChange<*>>> {
+    val result = mutableMapOf<Class<*>, MutableSet<ReferenceChange<*>>>()
+
+    for (entry in changeLog.addedSymbolicIds) {
+      val addedIds = entry.value.map { ReferenceChange.Added(it) }
+      result.computeIfAbsent(entry.key) { HashSet() }.addAll(addedIds)
+    }
+
+    for (entry in changeLog.removedSymbolicIds) {
+      val removedIds = entry.value.map { ReferenceChange.Removed(it) }
+      result.computeIfAbsent(entry.key) { HashSet() }.addAll(removedIds)
+    }
+
+    return result
   }
 
   override fun collectChanges(): Map<Class<*>, List<EntityChange<*>>> = collectChangesTimeMs.addMeasuredTime {
@@ -833,6 +851,7 @@ internal class MutableEntityStorageImpl(
     // Update indexes and generate changelog entry
     val entityData = entityDataByIdOrDie(id)
     if (entityData is SoftLinkable) indexes.removeFromSoftLinksIndex(entityData)
+    trackChangedSoftLinks()
     indexes.entityRemoved(id)
     this.changeLog.addRemoveEvent(id, originalEntityData)
 
@@ -886,6 +905,16 @@ internal class MutableEntityStorageImpl(
         accumulator.add(childId.id)
       }
     }
+  }
+
+  internal fun trackChangedSoftLinks() {
+    indexes.softLinks.addedValues().forEach { (k, v) ->
+      changeLog.addAddedIds(k.clazz.findWorkspaceEntity(), v)
+    }
+    indexes.softLinks.removedValues().forEach { (k, v) ->
+      changeLog.addRemovedIds(k.clazz.findWorkspaceEntity(), v)
+    }
+    indexes.softLinks.clearTrackedValues()
   }
 
   companion object {

@@ -24,6 +24,44 @@ data class ReferredTestEntityId(val name: String) : SymbolicEntityId<ReferredTes
 
 data class DependencyItem(val reference: ReferredTestEntityId)
 
+interface OneMoreWithReferenceTestEntity : WorkspaceEntity {
+  val references: List<DependencyItem>
+
+  //region generated code
+  @GeneratedCodeApiVersion(3)
+  interface Builder : WorkspaceEntity.Builder<OneMoreWithReferenceTestEntity> {
+    override var entitySource: EntitySource
+    var references: MutableList<DependencyItem>
+  }
+
+  companion object : EntityType<OneMoreWithReferenceTestEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
+    operator fun invoke(
+      references: List<DependencyItem>,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): Builder {
+      val builder = builder()
+      builder.references = references.toMutableWorkspaceList()
+      builder.entitySource = entitySource
+      init?.invoke(builder)
+      return builder
+    }
+  }
+  //endregion
+}
+
+//region generated code
+fun MutableEntityStorage.modifyOneMoreWithReferenceTestEntity(
+  entity: OneMoreWithReferenceTestEntity,
+  modification: OneMoreWithReferenceTestEntity.Builder.() -> Unit,
+): OneMoreWithReferenceTestEntity {
+  return modifyEntity(OneMoreWithReferenceTestEntity.Builder::class.java, entity, modification)
+}
+//endregion
+
 interface WithReferenceTestEntity : WorkspaceEntityWithSymbolicId {
   val name: @NlsSafe String
 

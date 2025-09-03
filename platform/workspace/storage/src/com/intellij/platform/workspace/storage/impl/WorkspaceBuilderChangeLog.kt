@@ -7,7 +7,9 @@ import com.intellij.platform.diagnostic.telemetry.JPS
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
 import com.intellij.platform.workspace.storage.ConnectionId
+import com.intellij.platform.workspace.storage.SymbolicEntityId
 import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.util.containers.CollectionFactory
 import io.opentelemetry.api.metrics.Meter
 import kotlinx.collections.immutable.*
 
@@ -17,6 +19,8 @@ internal class WorkspaceBuilderChangeLog {
   var modificationCount: Long = 0
 
   internal val changeLog: ChangeLog = LinkedHashMap()
+  internal val addedSymbolicIds = mutableMapOf<Class<*>, MutableSet<SymbolicEntityId<*>>>()
+  internal val removedSymbolicIds = mutableMapOf<Class<*>, MutableSet<SymbolicEntityId<*>>>()
 
   internal fun clear() {
     modificationCount++
@@ -465,6 +469,20 @@ internal class WorkspaceBuilderChangeLog {
         is ChangeEntry.RemoveEntity ->  error("Already removed ${removedEntityId.asString()}")
       }
     }
+  }
+
+  internal fun addAddedIds(entityInterface: Class<*>, addedIds: Set<SymbolicEntityId<*>>) {
+    if (addedIds.isEmpty()) return
+    removedSymbolicIds[entityInterface]?.removeAll(addedIds)
+    if (removedSymbolicIds[entityInterface]?.isEmpty() == true) removedSymbolicIds.remove(entityInterface)
+    addedSymbolicIds.computeIfAbsent(entityInterface) { CollectionFactory.createSmallMemoryFootprintSet() }.addAll(addedIds)
+  }
+
+  internal fun addRemovedIds(entityInterface: Class<*>, removedIds: Set<SymbolicEntityId<*>>) {
+    if (removedIds.isEmpty()) return
+    addedSymbolicIds[entityInterface]?.removeAll(removedIds)
+    if (addedSymbolicIds[entityInterface]?.isEmpty() == true) addedSymbolicIds.remove(entityInterface)
+    removedSymbolicIds.computeIfAbsent(entityInterface) { CollectionFactory.createSmallMemoryFootprintSet() }.addAll(removedIds)
   }
 
   companion object {

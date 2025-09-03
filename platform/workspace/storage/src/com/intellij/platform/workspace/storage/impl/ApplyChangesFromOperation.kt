@@ -61,7 +61,7 @@ internal class ApplyChangesFromOperation(val target: MutableEntityStorageImpl, v
           }
           // Restore links to soft references
           if (targetEntityData is SoftLinkable) target.indexes.updateSoftLinksIndex(targetEntityData)
-
+          target.trackChangedSoftLinks()
           // Keep adding "add" event before updating children and parents. Otherwise, we'll get a weird behaviour when we try to add
           //   "add" event on top of "modify" event that was generated while adding references.
           target.changeLog.addAddEvent(targetEntityId.id, targetEntityData)
@@ -86,6 +86,7 @@ internal class ApplyChangesFromOperation(val target: MutableEntityStorageImpl, v
             if (target.entityDataById(sourceEntityId.id) != null) {
               // As we generate a remove event for each cascade removed entities, we can remove entities one by one
               target.removeSingleEntity(sourceEntityId.id, true, true)
+              target.trackChangedSoftLinks()
             }
           }
         }
@@ -203,6 +204,7 @@ internal class ApplyChangesFromOperation(val target: MutableEntityStorageImpl, v
 
     // Restore soft references
     target.indexes.updateSymbolicIdIndexes(target, newTargetEntityData.createEntity(target), oldSymbolicId, newTargetEntityData)
+    target.trackChangedSoftLinks()
 
     val addedChildrenMap = HashMap<ConnectionId, MutableList<ChildEntityId>>()
     change.references?.newChildren?.forEach { addedChildrenMap.getOrPut(it.first) { ArrayList() }.add(it.second) }

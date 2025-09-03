@@ -9,7 +9,6 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileVisitor
 import com.intellij.platform.backend.workspace.virtualFile
-import com.intellij.platform.workspace.jps.entities.LibraryDependency
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.LibraryId
 import com.intellij.platform.workspace.jps.entities.LibraryRoot.InclusionOptions.*
@@ -57,11 +56,11 @@ class LibraryRootFileIndexContributor : WorkspaceFileIndexContributor<LibraryEnt
   }
 
   override val dependenciesOnOtherEntities: List<DependencyDescription<LibraryEntity>>
-    get() = listOf(
-      DependencyDescription.OnReference(ModuleEntity::class.java) { moduleEntity ->
-        moduleEntity.dependencies.asSequence().filterIsInstance<LibraryDependency>().map { it.library }
-      }
-    )
+    get() {
+      return listOf(
+        DependencyDescription.OnReference(ModuleEntity::class.java, LibraryId::class.java)
+      )
+    }
 
   private fun registerArchivesUnderRoot(root: VirtualFileUrl,
                                         registrar: WorkspaceFileSetRegistrar,
