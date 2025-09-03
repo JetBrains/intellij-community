@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.serviceContainer
 
+import com.intellij.configurationStore.ProjectIdManager
+import com.intellij.configurationStore.SettingsSavingComponent
 import com.intellij.diagnostic.PluginException
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -9,7 +11,6 @@ import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.Cancellation
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.instanceContainer.instantiation.InstantiationException
 import com.intellij.platform.instanceContainer.instantiation.instantiate
@@ -22,7 +23,7 @@ import java.util.concurrent.CancellationException
 internal abstract class ServiceInstanceInitializer(
   private val componentManager: ComponentManagerImpl,
   private val pluginId: PluginId,
-  private val serviceDescriptor: ServiceDescriptor?,
+  private val serviceDescriptor: ServiceDescriptor,
 ) : InstanceInitializer {
   override suspend fun createInstance(parentScope: CoroutineScope, instanceClass: Class<*>): Any {
     checkWriteAction(instanceClass)
@@ -49,9 +50,6 @@ internal abstract class ServiceInstanceInitializer(
     catch (e: CancellationException) {
       throw e
     }
-    catch (e: ProcessCanceledException) {
-      throw e
-    }
     catch (e: Throwable) {
       throw PluginException(e, pluginId)
     }
@@ -61,21 +59,10 @@ internal abstract class ServiceInstanceInitializer(
     }
 
     // do not call Cancellation.withNonCancelableSection or perform any other setup if the service doesn't need to be initialized
-    componentManager.initializeService(instance, serviceDescriptor, pluginId) { action ->
-      // If a service is requested during highlighting (under impatient=true),
-      // then it's initialization might be broken forever.
-      // Impatient reader is a property of thread (at the moment, before IJPL-53 is completed),
-      // so it leaks to initializeComponent call, where it might cause ReadMostlyRWLock.throwIfImpatient() to throw,
-      // for example, if a service obtains a read action in loadState.
-      // Non-cancellable section is required to silence throwIfImpatient().
-      // In general, we want initialization to be cancellable, and it must be canceled only on parent scope cancellation,
-      // which happens only on project/application shutdown, or on plugin unload.
-      Cancellation.withNonCancelableSection().use {
-        // loadState may invokeLater => don't capture the context
-        withStoredTemporaryContext(parentScope) {
-          action()
-        }
-      }
+    @Suppress("DEPRECATION")
+    if ((!componentManager.isPreInitialized(instance)) &&
+        (instance is PersistentStateComponent<*> || instance is SettingsSavingComponent || instance is com.intellij.openapi.util.JDOMExternalizable)) {
+      initializeService(instance, serviceDescriptor, pluginId, parentScope, componentManager)
     }
     return instance
   }
@@ -103,9 +90,10 @@ internal class ServiceClassInstanceInitializer(
   componentManager: ComponentManagerImpl,
   private val instanceClass: Class<*>,
   pluginId: PluginId,
-  serviceDescriptor: ServiceDescriptor?,
+  serviceDescriptor: ServiceDescriptor,
 ) : ServiceInstanceInitializer(componentManager, pluginId, serviceDescriptor) {
-  override val instanceClassName: String get() = instanceClass.name
+  override val instanceClassName: String
+    get() = instanceClass.name
 
   override fun loadInstanceClass(keyClass: Class<*>?): Class<*> = instanceClass
 }
@@ -126,3 +114,31 @@ private fun checkWriteAction(instanceClass: Class<*>) {
 @ApiStatus.Internal
 @JvmField
 var checkServiceFromWriteAccess: Boolean = true
+
+private suspend fun initializeService(
+  component: Any,
+  serviceDescriptor: ServiceDescriptor,
+  pluginId: PluginId,
+  parentScope: CoroutineScope,
+  componentManager: ComponentManagerImpl,
+) {
+  val componentStore = componentManager.componentStore
+  check(component is ProjectIdManager || componentStore.isStoreInitialized || componentManager.getApplication()!!.isUnitTestMode) {
+    "You cannot get $component before component store is initialized"
+  }
+
+  // If a service is requested during highlighting (under impatient=true),
+  // then it's initialization might be broken forever.
+  // Impatient reader is a property of thread (at the moment, before IJPL-53 is completed),
+  // so it leaks to initializeComponent call, where it might cause ReadMostlyRWLock.throwIfImpatient() to throw,
+  // for example, if a service obtains a read action in loadState.
+  // Non-cancellable section is required to silence throwIfImpatient().
+  // In general, we want initialization to be cancellable, and it must be canceled only on parent scope cancellation,
+  // which happens only on project/application shutdown, or on plugin unload.
+  Cancellation.withNonCancelableSection().use {
+    // loadState may invokeLater => don't capture the context
+    withStoredTemporaryContext(parentScope) {
+      componentStore.initComponentBlocking(component = component, serviceDescriptor = serviceDescriptor, pluginId = pluginId)
+    }
+  }
+}

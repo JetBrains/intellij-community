@@ -114,7 +114,7 @@ internal class DefaultProject : UserDataHolderBase(), Project, ComponentManagerE
     unregisterProjectId(this)
   }
   
-  override fun getMutableComponentContainer(): ComponentManager = delegate.getComponentManagerImpl()
+  override fun getMutableComponentContainer(): ComponentManager = delegate.getComponentManagerEx()
 
   @TestOnly
   fun disposeDefaultProjectAndCleanupComponentsForDynamicPluginTests() {

@@ -41,7 +41,6 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
-import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import java.util.regex.Pattern
 import javax.swing.Icon
@@ -460,7 +459,7 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
                 logger.info("Started importing plugins...")
                 restartRequired = true
                 val pluginsStartTime = System.currentTimeMillis()
-                importer.installPlugins(coroutineScope, progressIndicator, plugins2import)
+                importer.installPlugins(progressIndicator, plugins2import)
                 (System.currentTimeMillis() - pluginsStartTime).let {
                   logger.info("Plugins migrated in $it ms.")
                   ImportSettingsEventsCollector.jbPluginsImportTimeSpent(it)
