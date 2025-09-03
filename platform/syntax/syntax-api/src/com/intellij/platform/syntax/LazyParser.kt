@@ -51,7 +51,9 @@ fun interface LazyParser {
   fun canBeReparsedIncrementally(parsingContext: LazyParsingContext): Boolean = false
 
   /**
-   * Creates a lexer for the given node.
+   * Creates a custom lexer for the given node.
+   *
+   * You need to implement this method only if the lexer differs from the one specified in your [LanguageSyntaxDefinition]
    */
   fun createLexer(lexingContext: LazyLexingContext): Lexer? = null
 }
