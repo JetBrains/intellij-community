@@ -9,6 +9,14 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 interface ContentPreloadable {
-  /** Preload content asynchronously. Implementations should be idempotent and fast to no-op if already loaded. */
-  suspend fun preloadContent()
+  /**
+   * Asynchronously preloads the file content into a local cache.
+   *
+   * @param forceUpdate
+   * - `false` (default): do nothing if content is already cached; must not perform I/O.
+   * - `true`: refresh cached content from the backend, respecting any file-level restrictions.
+   *
+   * After preloading, content should be accessible via standard file access methods.
+   */
+  suspend fun preloadContent(forceUpdate: Boolean = false)
 }
