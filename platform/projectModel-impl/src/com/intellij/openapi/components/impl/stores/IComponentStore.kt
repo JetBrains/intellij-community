@@ -8,6 +8,7 @@ import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.NlsSafe
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
@@ -22,9 +23,7 @@ interface IComponentStore {
   fun setPath(path: Path) {
   }
 
-  fun initComponentBlocking(component: Any, serviceDescriptor: ServiceDescriptor?, pluginId: PluginId)
-
-  suspend fun initComponent(component: Any, serviceDescriptor: ServiceDescriptor?, pluginId: PluginId)
+  suspend fun initComponent(component: Any, serviceDescriptor: ServiceDescriptor?, pluginId: PluginId, parentScope: CoroutineScope? = null)
 
   fun unloadComponent(component: Any)
 

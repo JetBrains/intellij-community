@@ -5,6 +5,7 @@
 package com.intellij.configurationStore
 
 import com.intellij.codeWithMe.ClientId
+import com.intellij.concurrency.installTemporaryThreadContext
 import com.intellij.configurationStore.statistic.eventLog.FeatureUsageSettingsEvents
 import com.intellij.diagnostic.PluginException
 import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
@@ -37,9 +38,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.MessageBus
 import com.intellij.util.xmlb.SettingsInternalApi
 import com.intellij.util.xmlb.XmlSerializerUtil
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -121,51 +120,82 @@ abstract class ComponentStoreImpl : IComponentStore {
     storageManager.clearStorages()
   }
 
-  override suspend fun initComponent(component: Any, serviceDescriptor: ServiceDescriptor?, pluginId: PluginId) {
-    initComponentBlocking(component = component, serviceDescriptor = serviceDescriptor, pluginId = pluginId)
-  }
+  override suspend fun initComponent(component: Any, serviceDescriptor: ServiceDescriptor?, pluginId: PluginId, parentScope: CoroutineScope?) {
+    val nonCancelableInvocator: suspend (action: () -> Unit) -> Unit = if (parentScope == null) {
+      { it() }
+    }
+    else {
+      // If a service is requested during highlighting (under impatient=true),
+      // then it's initialization might be broken forever.
+      // Impatient reader is a property of thread (at the moment, before IJPL-53 is completed),
+      // so it leaks to initializeComponent call, where it might cause ReadMostlyRWLock.throwIfImpatient() to throw,
+      // for example, if a service obtains a read action in loadState.
+      // Non-cancellable section is required to silence throwIfImpatient().
+      // In general, we want initialization to be cancellable, and it must be canceled only on parent scope cancellation,
+      // which happens only on project/application shutdown, or on plugin unload.
+      // See LazyInstanceHolder.initialize
+      val existingCoroutineContext = currentCoroutineContext()
+      val curatedContext = parentScope.coroutineContext.fold(existingCoroutineContext) { newCtx, key -> newCtx.minusKey(key.key) };
+      { action ->
+        installTemporaryThreadContext(curatedContext).use {
+          action()
+        }
+      }
+    }
 
-  override fun initComponentBlocking(component: Any, serviceDescriptor: ServiceDescriptor?, pluginId: PluginId) {
     var componentName: String? = null
     try {
       @Suppress("DEPRECATION")
       if (component is PersistentStateComponent<*>) {
         val stateSpec = getStateSpec(component.javaClass)
         if (stateSpec == null) {
-          if (loadPolicy != StateLoadPolicy.LOAD) {
-            component.noStateLoaded()
-            component.initializeComponent()
-            return
+          if (loadPolicy == StateLoadPolicy.LOAD) {
+            val componentInfo = createComponentInfo(component = component, stateSpec = null, serviceDescriptor = serviceDescriptor, pluginId = pluginId)
+            val configurationSchemaKey = componentInfo.configurationSchemaKey
+                                         ?: throw UnsupportedOperationException("configurationSchemaKey must be specified for ${component.javaClass.name}")
+            @Suppress("UNCHECKED_CAST")
+            initComponentWithoutStateSpec(component as PersistentStateComponent<Any>, configurationSchemaKey, componentInfo.pluginId) {
+              nonCancelableInvocator(it)
+              component.initializeComponent()
+            }
           }
-
-          val componentInfo = createComponentInfo(component = component, stateSpec = null, serviceDescriptor = serviceDescriptor, pluginId = pluginId)
-          initComponent(info = componentInfo, changedStorages = null, reloadData = ThreeState.NO)
+          else {
+            nonCancelableInvocator {
+              component.noStateLoaded()
+              component.initializeComponent()
+            }
+          }
         }
         else {
           componentName = stateSpec.name
           val componentInfo = createComponentInfo(component, stateSpec, serviceDescriptor, pluginId)
           // still must be added to a component list to support explicit save later
-          if (!stateSpec.allowLoadInTests &&
-              !(loadPolicy == StateLoadPolicy.LOAD || (loadPolicy == StateLoadPolicy.LOAD_ONLY_DEFAULT && stateSpec.defaultStateAsResource))) {
-            component.noStateLoaded()
-            component.initializeComponent()
-            registerComponent(componentName, componentInfo)
-            return
-          }
+          if (stateSpec.allowLoadInTests || loadPolicy == StateLoadPolicy.LOAD || (loadPolicy == StateLoadPolicy.LOAD_ONLY_DEFAULT && stateSpec.defaultStateAsResource)) {
+            @Suppress("UNCHECKED_CAST")
+            doInitComponent(info = componentInfo, component = component as PersistentStateComponent<Any>, changedStorages = null, reloadData = ThreeState.NO) {
+              nonCancelableInvocator(it)
+              component.initializeComponent()
+            }
 
-          if (initComponent(info = componentInfo, changedStorages = null, reloadData = ThreeState.NO) && serviceDescriptor != null) {
             // if not service, so, component manager will check it later for all components
-            val project = project
-            if (project != null && project.isInitialized) {
-              val app = ApplicationManager.getApplication()
-              if (!app.isHeadlessEnvironment && !app.isUnitTestMode) {
-                notifyUnknownMacros(store = this, project, componentName = componentName)
+            if (serviceDescriptor != null) {
+              val project = project
+              if (project != null && project.isInitialized) {
+                val app = ApplicationManager.getApplication()
+                if (!app.isHeadlessEnvironment && !app.isUnitTestMode) {
+                  notifyUnknownMacros(store = this, project, componentName = componentName)
+                }
               }
+            }
+          }
+          else {
+            nonCancelableInvocator {
+              component.noStateLoaded()
+              component.initializeComponent()
             }
           }
           registerComponent(componentName, componentInfo)
         }
-        component.initializeComponent()
       }
       else if (loadPolicy == StateLoadPolicy.LOAD && component is com.intellij.openapi.util.JDOMExternalizable) {
         componentName = initJdom(component, pluginId)
@@ -465,44 +495,49 @@ abstract class ComponentStoreImpl : IComponentStore {
     }
   }
 
-  private fun initComponent(info: ComponentInfo, changedStorages: Set<StateStorage>?, reloadData: ThreeState): Boolean {
+  private fun initComponentImpl(info: ComponentInfo, changedStorages: Set<StateStorage>?, reloadData: ThreeState) {
     @Suppress("UNCHECKED_CAST")
     val component = info.component as PersistentStateComponent<Any>
     if (info.stateSpec == null) {
-      val configurationSchemaKey = info.configurationSchemaKey ?:
-          throw UnsupportedOperationException("configurationSchemaKey must be specified for ${component.javaClass.name}")
-      return initComponentWithoutStateSpec(component, configurationSchemaKey, info.pluginId)
+      val configurationSchemaKey = info.configurationSchemaKey ?: throw UnsupportedOperationException("configurationSchemaKey must be specified for ${component.javaClass.name}")
+      initComponentWithoutStateSpec(component, configurationSchemaKey, info.pluginId) {
+        it()
+      }
     }
     else {
-      doInitComponent(info, component, changedStorages, reloadData)
-      return true
+      doInitComponent(info, component, changedStorages, reloadData) {
+        it()
+      }
     }
   }
 
-  protected fun initComponentWithoutStateSpec(
+  protected inline fun initComponentWithoutStateSpec(
     component: PersistentStateComponent<Any>,
     configurationSchemaKey: String,
     pluginId: PluginId,
-  ): Boolean {
+    nonCancelableInvocator: (action: () -> Unit) -> Unit,
+  ) {
     val stateClass = ComponentSerializationUtil.getStateClass<Any>(component.javaClass)
     val storage = getReadOnlyStorage(component.javaClass, stateClass, configurationSchemaKey)
     val state = storage?.getState(component = component, componentName = "", pluginId = pluginId, stateClass = stateClass, mergeInto = null, reload = false)
-    if (state == null) {
-      component.noStateLoaded()
+    nonCancelableInvocator {
+      if (state == null) {
+        component.noStateLoaded()
+      }
+      else {
+        component.loadState(state)
+      }
     }
-    else {
-      component.loadState(state)
-    }
-    return true
   }
 
   protected open fun getReadOnlyStorage(componentClass: Class<Any>, stateClass: Class<Any>, configurationSchemaKey: String): StateStorage? = null
 
-  private fun doInitComponent(
+  private inline fun doInitComponent(
     info: ComponentInfo,
     component: PersistentStateComponent<Any>,
     changedStorages: Set<StateStorage>?,
     reloadData: ThreeState,
+    stateConsumer: (action: () -> Unit) -> Unit,
   ) {
     @Suppress("UNCHECKED_CAST")
     val stateClass: Class<Any> = when (component) {
@@ -554,7 +589,11 @@ abstract class ComponentStoreImpl : IComponentStore {
         if (!postLoadStateUpdateModificationCount) {
           info.updateModificationCount(info.currentModificationCount)
         }
-        component.loadState(state)
+
+        stateConsumer {
+          component.loadState(state)
+        }
+
         val stateAfterLoad = stateGetter.archiveState()
         if (isReportStatisticAllowed(stateSpec, storageSpec)) {
           featureUsageSettingManager.logConfigurationState(name, stateAfterLoad ?: state)
@@ -570,13 +609,19 @@ abstract class ComponentStoreImpl : IComponentStore {
     // we load the default state even if isLoadComponentState false - required for app components
     // (for example, at least one color scheme must exist)
     if (defaultState == null) {
-      component.noStateLoaded()
+      stateConsumer {
+        component.noStateLoaded()
+      }
     }
     else {
       if (!postLoadStateUpdateModificationCount) {
         info.updateModificationCount(info.currentModificationCount)
       }
-      component.loadState(defaultState)
+
+      stateConsumer {
+        component.loadState(defaultState)
+      }
+
       if (postLoadStateUpdateModificationCount) {
         info.updateModificationCount(info.currentModificationCount)
       }
@@ -703,7 +748,7 @@ abstract class ComponentStoreImpl : IComponentStore {
   private fun reloadPerClientState(
     componentClass: Class<out PersistentStateComponent<*>>,
     info: ComponentInfo,
-    changedStorages: Set<StateStorage>
+    changedStorages: Set<StateStorage>,
   ) {
     if (ClientId.isCurrentlyUnderLocalId) {
       throw AssertionError("This method must be called under remote client id")
@@ -719,7 +764,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     }
 
     val newInfo = ComponentInfoImpl(info.pluginId, perClientComponent, info.stateSpec)
-    initComponent(info = newInfo, changedStorages = changedStorages.ifEmpty { null }, reloadData = ThreeState.YES)
+    initComponentImpl(info = newInfo, changedStorages = changedStorages.ifEmpty { null }, reloadData = ThreeState.YES)
   }
 
   final override fun reloadState(componentClass: Class<out PersistentStateComponent<*>>) {
@@ -731,7 +776,7 @@ abstract class ComponentStoreImpl : IComponentStore {
         return
       }
 
-      initComponent(info = info, changedStorages = emptySet(), reloadData = ThreeState.YES)
+      initComponentImpl(info = info, changedStorages = emptySet(), reloadData = ThreeState.YES)
     }
   }
 
@@ -746,9 +791,9 @@ abstract class ComponentStoreImpl : IComponentStore {
       reloadPerClientState(component.javaClass, info, changedStorages)
       return true
     }
-    
+
     val isChangedStoragesEmpty = changedStorages.isEmpty()
-    initComponent(info = info, changedStorages = if (isChangedStoragesEmpty) null else changedStorages, reloadData = ThreeState.UNSURE)
+    initComponentImpl(info = info, changedStorages = if (isChangedStoragesEmpty) null else changedStorages, reloadData = ThreeState.UNSURE)
     return true
   }
 

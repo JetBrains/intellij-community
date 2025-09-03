@@ -36,18 +36,11 @@ abstract class ComponentStoreWithExtraComponents : ComponentStoreImpl() {
     result
   }
 
-  final override fun initComponentBlocking(component: Any, serviceDescriptor: ServiceDescriptor?, pluginId: PluginId) {
+  final override suspend fun initComponent(component: Any, serviceDescriptor: ServiceDescriptor?, pluginId: PluginId, parentScope: CoroutineScope? ) {
     if (component is SettingsSavingComponent) {
       asyncSettingsSavingComponents.drop()
     }
-    super.initComponentBlocking(component = component, serviceDescriptor = serviceDescriptor, pluginId = pluginId)
-  }
-
-  final override suspend fun initComponent(component: Any, serviceDescriptor: ServiceDescriptor?, pluginId: PluginId) {
-    if (component is SettingsSavingComponent) {
-      asyncSettingsSavingComponents.drop()
-    }
-    super.initComponent(component = component, serviceDescriptor = serviceDescriptor, pluginId = pluginId)
+    super.initComponent(component = component, serviceDescriptor = serviceDescriptor, pluginId = pluginId, parentScope = parentScope)
   }
 
   override fun unloadComponent(component: Any) {

@@ -127,7 +127,9 @@ private class MyProjectStore(project: Project) : ProjectWithModuleStoreImpl(proj
         configurationSchemaKey = storage.configurationSchemaKey,
         // todo not clear, is it ok, anyway, configuration script is used mostly for Core
         pluginId = PluginManagerCore.CORE_ID,
-      )
+      ) {
+        it()
+      }
     }
     return result
   }

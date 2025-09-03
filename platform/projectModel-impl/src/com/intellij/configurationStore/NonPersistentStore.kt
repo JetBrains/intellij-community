@@ -4,6 +4,7 @@ package com.intellij.configurationStore
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.extensions.PluginId
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
@@ -12,10 +13,12 @@ object NonPersistentStore : IComponentStore {
   override val storageManager: StateStorageManager
     get() = NonPersistentStateStorageManager
 
-  override fun initComponentBlocking(component: Any, serviceDescriptor: ServiceDescriptor?, pluginId: PluginId) {
-  }
-
-  override suspend fun initComponent(component: Any, serviceDescriptor: ServiceDescriptor?, pluginId: PluginId) {
+  override suspend fun initComponent(
+    component: Any,
+    serviceDescriptor: ServiceDescriptor?,
+    pluginId: PluginId,
+    parentScope: CoroutineScope?,
+  ) {
   }
 
   override fun unloadComponent(component: Any) {}
