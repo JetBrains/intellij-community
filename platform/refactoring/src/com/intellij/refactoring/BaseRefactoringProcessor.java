@@ -270,7 +270,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     }
     final Ref<UsageInfo[]> refUsages = new Ref<>();
     final Ref<Language> refErrorLanguage = new Ref<>();
-    final Ref<Boolean> refProcessCanceled = new Ref<>();
+    final Ref<ProcessCanceledException> refProcessCanceled = new Ref<>();
     final Ref<Boolean> anyException = new Ref<>();
     final Ref<Boolean> indexNotReadyException = new Ref<>();
 
@@ -284,11 +284,9 @@ public abstract class BaseRefactoringProcessor implements Runnable {
         refErrorLanguage.set(e.getElementLanguage());
       }
       catch (ProcessCanceledException e) {
-        // wrapping the PCE to ISE as our logging infrastructure doesn't allow logging PCEs.
-        IllegalStateException exception = new IllegalStateException(e);
-        LOG.error("PCE is not expected here", exception);
-
-        refProcessCanceled.set(Boolean.TRUE);
+        // PCE is expected here if the user actually has pressed the "Cancel" button in the modal progress.
+        // Let's save it for debugging purposes.
+        refProcessCanceled.set(e);
       }
       catch (IndexNotReadyException e) {
         indexNotReadyException.set(Boolean.TRUE);
@@ -318,6 +316,10 @@ public abstract class BaseRefactoringProcessor implements Runnable {
       return;
     }
     if (!refProcessCanceled.isNull()) {
+      // wrapping the PCE to ISE as our logging infrastructure doesn't allow logging PCEs.
+      IllegalStateException exception = new IllegalStateException(refProcessCanceled.get());
+      LOG.error("PCE was not expected here", exception);
+
       MessagesService.getInstance().showErrorDialog(myProject, RefactoringBundle.message("refactoring.index.corruption.notifiction"), RefactoringBundle.message("error.title"));
       return;
     }
