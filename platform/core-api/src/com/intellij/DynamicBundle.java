@@ -221,12 +221,16 @@ public class DynamicBundle extends AbstractBundle {
 
   @Override
   @ApiStatus.Internal
-  protected ResourceBundle getBundle(boolean isDefault, @NotNull ClassLoader classLoader, @NotNull String pathToBundle) {
+  protected ResourceBundle getBundle(boolean isDefault, @NotNull ClassLoader classLoader, @Nullable String pathToBundle) {
     ResourceBundle bundle = super.getBundle(isDefault, classLoader, pathToBundle);
     if (bundle == null || isDefault) {
       return bundle;
     }
 
+    if (pathToBundle == null) {
+      LOG.warn("Bundle without name cannot be properly cached: " + bundle);
+      return bundle;
+    }
     ResourceBundle bundleFromCache = getBundleFromCache(classLoader, pathToBundle);
     if (bundleFromCache == null) {
       // Return null to force findBundle execution which will properly resolve and cache the bundle

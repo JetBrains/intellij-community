@@ -171,7 +171,7 @@ open class AbstractBundle {
   }
 
   @ApiStatus.Internal
-  protected open fun getBundle(isDefault: Boolean, classLoader: ClassLoader, pathToBundle: String): ResourceBundle? = (if (isDefault) defaultBundle else bundle)?.get()
+  protected open fun getBundle(isDefault: Boolean, classLoader: ClassLoader, pathToBundle: String?): ResourceBundle? = (if (isDefault) defaultBundle else bundle)?.get()
 
   protected open fun findBundle(pathToBundle: @NonNls String, loader: ClassLoader, control: ResourceBundle.Control): ResourceBundle {
     return ResourceBundle.getBundle(pathToBundle, Locale.getDefault(), loader, control)
