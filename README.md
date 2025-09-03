@@ -1,11 +1,11 @@
 [![official JetBrains project](http://jb.gg/badges/official.svg)](https://github.com/JetBrains/.github/blob/main/profile/README.md) [![Build status](https://github.com/JetBrains/intellij-community/workflows/IntelliJ%20IDEA/badge.svg)](https://github.com/JetBrains/intellij-community/actions/workflows/IntelliJ_IDEA.yml)
 
-# IntelliJ IDEA Open Source
+# IntelliJ Open Source Repository
 
-This repository is the open-source part of the IntelliJ IDEA codebase.
+This repository is the open-source part of the JetBrains IDEs codebase.
 It also serves as the basis for [IntelliJ Platform development](https://www.jetbrains.com/opensource/idea). 
 
-These instructions will help you build IntelliJ IDEA from source code.
+These instructions will help you build and run open source parts of IntelliJ Platform / IntelliJ IDEA / PyCharm.
 
 If you are new to the community and would like to contribute code or help others learn, see [CONTRIBUTING.md](https://github.com/JetBrains/intellij-community/blob/master/CONTRIBUTING.md) to get started.
 
@@ -14,7 +14,7 @@ The following conventions will be used to refer to directories on your machine:
 * `<IDEA_HOME>` is the root directory for the **IntelliJ source code**.
 
 ___
-## Getting the IntelliJ IDEA Source Code
+## Getting the Source Code
 
 This section will guide you through getting the project sources and help avoid common issues in git config and other steps before opening it in the IDE.
 
@@ -30,9 +30,9 @@ This section will guide you through getting the project sources and help avoid c
 
 #### Clone Main Repository
 
-IntelliJ IDEA source code is available from the [GitHub repository](https://github.com/JetBrains/intellij-community), which can be cloned or downloaded as a zip file (based on a branch) into `<IDEA_HOME>`. 
-The **master** (_default_) branch contains the source code which will be used to create the next major version of IntelliJ IDEA. 
-The branch names and build numbers for older releases of IntelliJ IDEA can be found on the
+IntelliJ open source repository is available from the [GitHub repository](https://github.com/JetBrains/intellij-community), which can be cloned or downloaded as a zip file (based on a branch) into `<IDEA_HOME>`. 
+The **master** (_default_) branch contains the source code which will be used to create the next major version of all JetBrains IDEs. 
+The branch names and build numbers for older releases of JetBrains IDEs can be found on the
 [Build Number Ranges](https://plugins.jetbrains.com/docs/intellij/build-number-ranges.html) page.
 
 You can [clone this project](https://www.jetbrains.com/help/idea/manage-projects-hosted-on-github.html#clone-from-GitHub) directly using IntelliJ IDEA. 
