@@ -81,6 +81,10 @@ abstract class MavenMultiVersionImportingTestCase : MavenImportingTestCase() {
   }
 
 
+  protected fun assumeModel_4_0_0(message: String) {
+    Assume.assumeTrue(message, myMavenModelVersion == MavenConstants.MODEL_VERSION_4_0_0)
+  }
+
   protected fun assumeMaven3() {
     val version: String = getActualVersion(myMavenVersion!!)
     Assume.assumeTrue(version.startsWith("3."))
@@ -119,7 +123,7 @@ abstract class MavenMultiVersionImportingTestCase : MavenImportingTestCase() {
     }
     val actualMavenVersion = getActualVersion(myMavenVersion!!)
     if (isMaven4)
-    MavenLog.LOG.warn("Running test with Maven $actualMavenVersion")
+      MavenLog.LOG.warn("Running test with Maven $actualMavenVersion")
     myWrapperTestFixture = MavenWrapperTestFixture(project, actualMavenVersion)
     myWrapperTestFixture!!.setUp()
     modelVersion = myMavenModelVersion ?: MavenConstants.MODEL_VERSION_4_0_0
@@ -356,7 +360,7 @@ abstract class MavenMultiVersionImportingTestCase : MavenImportingTestCase() {
     // compare relative paths
     if (expectedPaths.all { !it.isAbsolute }) {
       val actualRelativePaths = actualPaths.map { basePath.relativize(it) }
-      assertSameElements("Unexpected list of source roots ", actualRelativePaths.map { it.toString() }, expectedPaths.map { it.toString()})
+      assertSameElements("Unexpected list of source roots ", actualRelativePaths.map { it.toString() }, expectedPaths.map { it.toString() })
       return
     }
 
