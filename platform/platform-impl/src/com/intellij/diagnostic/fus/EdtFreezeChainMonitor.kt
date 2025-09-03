@@ -325,9 +325,7 @@ class EdtFreezeChainMonitor(val scope: CoroutineScope) {
         // chain ends; also end if there were no events for a full window already captured by drop in blockedNs
         val duration = (nowNs - chainStartNs).nanoseconds
         if (duration.inWholeMilliseconds >= reportableMs()) { // avoid spurious tiny chains
-          if (SystemProperties.getBooleanProperty("ui.freeze.chain.logging.enabled", false)) {
-            thisLogger().info("Freeze chain detected: $duration (Read duration: ${totalReadInChainNs.nanoseconds}, $totalReadOps operations, Write duration: ${totalWriteInChainNs.nanoseconds}, $totalWriteOps operations)")
-          }
+          thisLogger().trace("Freeze chain detected: $duration (Read duration: ${totalReadInChainNs.nanoseconds}, $totalReadOps operations, Write duration: ${totalWriteInChainNs.nanoseconds}, $totalWriteOps operations)")
           testingConfig?.apply {
             val report = FreezeChainReport(
               durationNs = nowNs - chainStartNs,
