@@ -169,17 +169,18 @@ public class EventLogMetadataPersistence extends BaseEventLogMetadataPersistence
     return true;
   }
 
-  private void initAllBuiltinDictionaries(@NotNull Path file) throws IOException {
-    RemoteDictionaryList dictionaryList;
-    try (InputStream stream = getClass().getClassLoader().getResourceAsStream(builtinDictionariesPath() + "dictionaries.json")) {
+  private RemoteDictionaryList readBuiltinDictionaryList() throws IOException {
+    try (InputStream stream = getClass().getClassLoader().getResourceAsStream(builtinDictionariesPath() + DICTIONARIES_LIST_FILE)) {
       if (stream == null) {
-        LOG.trace("Cannot load builtin dictionaries list");
-        return;
+        return null;
       }
       String content = new String(stream.readAllBytes(), StandardCharsets.UTF_8);
-      dictionaryList = getRemoteDictionaryList(content);
+      return getRemoteDictionaryList(content);
     }
+  }
 
+  private void initAllBuiltinDictionaries(@NotNull Path file) throws IOException {
+    RemoteDictionaryList dictionaryList = readBuiltinDictionaryList();
     if (dictionaryList == null) {
       LOG.trace("Cannot load builtin dictionaries list");
       return;
@@ -283,9 +284,7 @@ public class EventLogMetadataPersistence extends BaseEventLogMetadataPersistence
     DictionaryStorage builtinDictionaryStorage = new SimpleDictionaryStorage(
       tempDictionaryDir.toFile(), Dictionary.AccessMode.RANDOM_FILE_ACCESS
     );
-    Path dictionariesList = Path.of(builtinDictionariesPath() + DICTIONARIES_LIST_FILE);
-    String dictionariesListJson = readJsonFileContent(dictionariesList);
-    RemoteDictionaryList builtinRemoteDictionaryList = getRemoteDictionaryList(dictionariesListJson);
+    RemoteDictionaryList builtinRemoteDictionaryList = readBuiltinDictionaryList();
 
     // no builtin dictionaries, so we can not initialize them
     if (builtinRemoteDictionaryList == null) {
