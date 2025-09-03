@@ -78,7 +78,7 @@ internal class CommandInsertHandler(private val completionCommand: CompletionCom
                                       startOffset)
 
     // Remove the command text after the dots
-    var commandStart = startOffset - actualIndex
+    var commandStart = 0.coerceAtLeast(startOffset - actualIndex)
 
     // Delete from commandStart to tailOffset
     document.deleteString(commandStart, tailOffset)

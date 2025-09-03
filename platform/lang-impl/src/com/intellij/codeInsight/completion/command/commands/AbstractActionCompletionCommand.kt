@@ -20,6 +20,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.util.SlowOperations
 import org.intellij.lang.annotations.Language
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.util.Locale.getDefault
 import javax.swing.Icon
@@ -166,7 +167,8 @@ open class ActionCompletionCommand(
       if (it.isLowerCase()) it.titlecase(getDefault()) else it.toString()
     }
 
-  private val action: AnAction? = ActionManager.getInstance().getAction(actionId)
+  @ApiStatus.Internal
+  protected open val action: AnAction? = ActionManager.getInstance().getAction(actionId)
 
   override val additionalInfo: String?
     get() {
