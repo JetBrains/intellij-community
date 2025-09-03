@@ -11,6 +11,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.InternalThreading
+import com.intellij.openapi.application.useDebouncedDrawingInSuvorovProgress
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.util.ui.NiceOverlayUi
 import com.intellij.openapi.util.Disposer
@@ -165,11 +166,23 @@ object SuvorovProgress {
       }, disposable)
 
     repostAllEvents()
+    var oldTimestamp = System.currentTimeMillis()
     try {
       while (!awaitedValue.isCompleted) {
-        niceOverlay.redrawMainComponent()
-        stealer.dispatchEvents(0)
-        Thread.sleep(10)
+        if (useDebouncedDrawingInSuvorovProgress) {
+          val newTimestamp = System.currentTimeMillis()
+          if (newTimestamp - oldTimestamp >= 10) {
+            // we do not want to redraw the UI too frequently
+            oldTimestamp = newTimestamp
+            niceOverlay.redrawMainComponent()
+          }
+          stealer.dispatchEvents(10)
+        }
+        else {
+          niceOverlay.redrawMainComponent()
+          stealer.dispatchEvents(0)
+          Thread.sleep(10)
+        }
       }
     }
     finally {
