@@ -131,15 +131,11 @@ internal class ConvertObjectLiteralToClassIntention : SelfTargetingRangeIntentio
             .run(editor, holder.data) { extractionResult ->
                 val functionDeclaration = extractionResult.declaration as KtFunction
                 if (functionDeclaration.valueParameters.isNotEmpty()) {
-                    val valKeyword = psiFactory.createValKeyword()
-                    val whiteSpace = psiFactory.createWhiteSpace()
                     newClass.createPrimaryConstructorParameterListIfAbsent()
                         .replaced(functionDeclaration.valueParameterList!!)
                         .parameters
                         .forEach {
-                            it.addAfter(whiteSpace, null)
-                            it.addAfter(valKeyword, null)
-                            it.addModifier(KtTokens.PRIVATE_KEYWORD)
+                            it.replace(psiFactory.createParameter("private val ${it.text}"))
                         }
                 }
 

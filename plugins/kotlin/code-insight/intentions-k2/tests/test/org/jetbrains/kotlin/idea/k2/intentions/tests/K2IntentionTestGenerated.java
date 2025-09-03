@@ -9556,6 +9556,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         public void testObjectLiteralWithCapture() throws Exception {
             runTest("../../../idea/tests/testData/intentions/convertObjectLiteralToClass/objectLiteralWithCapture.kt");
         }
+
+        @TestMetadata("severalParameters.kt")
+        public void testSeveralParameters() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertObjectLiteralToClass/severalParameters.kt");
+        }
     }
 
 

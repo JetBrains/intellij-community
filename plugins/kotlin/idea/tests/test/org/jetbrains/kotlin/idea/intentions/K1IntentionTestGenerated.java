@@ -6946,6 +6946,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
         public void testObjectLiteralWithCapture() throws Exception {
             runTest("testData/intentions/convertObjectLiteralToClass/objectLiteralWithCapture.kt");
         }
+
+        @TestMetadata("severalParameters.kt")
+        public void testSeveralParameters() throws Exception {
+            runTest("testData/intentions/convertObjectLiteralToClass/severalParameters.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
