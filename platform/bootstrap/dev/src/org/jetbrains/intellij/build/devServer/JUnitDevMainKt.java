@@ -42,7 +42,8 @@ public final class JUnitDevMainKt {
     if (jUnitStarterModule != null) System.setProperty("idea.dev.build.test.additional.modules", jUnitStarterModule);
 
     String testEntryPointModulePlugin = System.getProperty("idea.dev.build.test.entry.point.module") + ".plugin";
-    System.setProperty("additional.modules", testEntryPointModulePlugin);
+    String additionalModules = System.getProperty("additional.modules");
+    System.setProperty("additional.modules", (additionalModules != null ? additionalModules + "," : "") + testEntryPointModulePlugin);
 
     // separate method to not retain local variables like implClass
     if (!build(lookup, classLoader)) {
