@@ -60,8 +60,7 @@ class SeTextItemsProvider(project: Project, private val contributorWrapper: SeAs
     applyScope(scopeToApply)
 
     if (textFilter != null) {
-      // When `TextSearchContributor` disposes in local mode with the new SE,
-      // it updates `FindSettings.getInstance().fileMask` after `SeTextFilterEditor` sets it, so the value remains unchanged.
+      // Sync the file mask from the filter to the TextSearchContributor's JComboboxAction to prevent state conflicts
       contributorWrapper.contributor.getActions { }.filterIsInstance<JComboboxAction>().firstOrNull()?.onMaskChanged(textFilter.selectedType)
       // Apply type for the correct search
       findModel.fileFilter = textFilter.selectedType
