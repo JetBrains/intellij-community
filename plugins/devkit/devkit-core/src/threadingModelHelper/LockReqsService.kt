@@ -1,30 +1,84 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.threadingModelHelper
 
+import com.intellij.openapi.application.smartReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.psi.PsiMethod
+import com.intellij.openapi.progress.*
+import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiJavaFile
+import com.intellij.psi.SmartPsiElementPointer
 
 @Service(Service.Level.PROJECT)
 class LockReqsService(private val project: Project) {
 
-  private var _currentResult: AnalysisResult? = null
-  val currentResult: AnalysisResult?
-    get() = _currentResult
+  private val analyzer = LockReqsAnalyzerBFS()
+  private var _currentResults: List<AnalysisResult?> = emptyList()
+  val currentResults: List<AnalysisResult?>
+    get() = _currentResults
 
-  var onResultsUpdated: ((AnalysisResult?) -> Unit)? = null
 
-  fun updateResults(method: PsiMethod) {
-    val analyzer = LockReqsAnalyzerDFS()
-    _currentResult = analyzer.analyzeMethod(method)
-    onResultsUpdated?.invoke(_currentResult)
-
-    ToolWindowManager.getInstance(project).getToolWindow(TOOL_WINDOW_ID)?.show()
+  suspend fun analyzeMethod(methodPtr: SmartPsiElementPointer<PsiMethod>) {
+    withBackgroundProgress(project, "", true) {
+      val result = smartReadAction(project) {
+        val method = methodPtr.element ?: return@smartReadAction null
+        analyzer.analyzeMethod(method)
+      }
+      _currentResults = listOf(result)
+    }
   }
-  
+
+  suspend fun analyzeClass(psiPtr: SmartPsiElementPointer<PsiClass>) {
+    withBackgroundProgress(project, "", true) {
+      val results = smartReadAction(project) {
+        val psiClass = psiPtr.element ?: return@smartReadAction emptyList()
+        psiClass.methods.map { method ->
+          ProgressManager.checkCanceled()
+          analyzer.analyzeMethod(method)
+        }
+      }
+      _currentResults = results
+    }
+  }
+
+  suspend fun analyzeFile(filePtr: SmartPsiElementPointer<PsiJavaFile>) {
+    withBackgroundProgress(project, "", true) {
+      val results = smartReadAction(project) {
+        val psiFile = filePtr.element ?: return@smartReadAction emptyList()
+        psiFile.classes.flatMap { psiClass ->
+          psiClass.methods.map { method ->
+            ProgressManager.checkCanceled()
+            analyzer.analyzeMethod(method)
+          }
+        }
+      }
+      _currentResults = results
+    }
+  }
+
+  //private fun displayResults() {
+  //  _currentResults.forEach { result ->
+  //    println("Method: ${result?.method?.containingClass?.qualifiedName}.${result?.method?.name}")
+  //    result?.paths?.forEach { path ->
+  //      println("  Path: ${path.methodChain.joinToString(" -> ") { it.method.name }}")
+  //      println("  Requirement: ${path.lockRequirement}")
+  //    }
+  //  }
+  //}
+
+  //var onResultsUpdated: ((AnalysisResult?) -> Unit)? = null
+  //
+  //fun updateResults(method: PsiMethod) {
+  //  val analyzer = LockReqsAnalyzerDFS()
+  //  _currentResult = analyzer.analyzeMethod(method)
+  //  onResultsUpdated?.invoke(_currentResult)
+  //
+  //  ToolWindowManager.getInstance(project).getToolWindow(TOOL_WINDOW_ID)?.show()
+  //}
+
   companion object {
     const val TOOL_WINDOW_ID: String = "Lock Requirements"
   }
-
 }

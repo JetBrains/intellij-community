@@ -44,7 +44,7 @@ class LockReqsAnalyzerDFS(private val detector: LockReqsDetector = LockReqsDetec
     if (!detector.isAsyncDispatch(callee)) {
       when {
         detector.isMessageBusCall(callee) -> handleMessageBusCall(callee)
-        LockReqsPsiOps.canBeOverridden(callee) -> handlePolymorphic(callee)
+        context.config.includePolymorphic -> handlePolymorphic(callee)
         else -> traverseMethod(callee)
       }
     }

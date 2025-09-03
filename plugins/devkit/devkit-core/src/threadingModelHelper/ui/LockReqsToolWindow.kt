@@ -25,7 +25,7 @@ import org.jetbrains.idea.devkit.threadingModelHelper.LockReqsService
 internal fun LockReqsToolWindow(project: Project) {
   val service = remember(project) { project.service<LockReqsService>() }
 
-  val analysisResult: AnalysisResult? = service.currentResult
+  val analysisResult: AnalysisResult? = service.currentResults?.first()
 
   var searchQuery by rememberSaveable { mutableStateOf(TextFieldValue("")) }
   var selectedPath by remember { mutableStateOf<ExecutionPath?>(null) }

@@ -10,7 +10,9 @@ interface LockReqsRules {
   val asyncMethods: Set<String>
   val messageBusClasses: Set<String>
   val messageBusSyncMethods: Set<String>
+  val commonMethods: Set<String>
   val safeSwingMethods: Set<String>
+  val commonClassesQulified: Set<String>
 }
 
 class DefaultLockReqsRules : LockReqsRules {
@@ -71,6 +73,12 @@ class DefaultLockReqsRules : LockReqsRules {
 
   override val messageBusSyncMethods: Set<String> = setOf(
     "syncPublisher"
+  )
+
+  override val commonClassesQulified: Set<String> = setOf()
+
+    override val commonMethods: Set<String> = setOf(
+    "equals", "hashCode", "toString", "getMessagesBus","getFile", "getService", "getName"
   )
 
   override val safeSwingMethods: Set<String> = setOf()

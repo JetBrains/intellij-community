@@ -8,11 +8,12 @@ import com.intellij.psi.search.searches.ClassInheritorsSearch
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.openapi.project.Project
 import com.intellij.util.Processor
+import org.jetbrains.idea.devkit.threadingModelHelper.AnalysisResult
 import org.jetbrains.idea.devkit.threadingModelHelper.ExecutionPath
-import org.jetbrains.idea.devkit.threadingModelHelper.LockReqsAnalyzerDFS
+import org.jetbrains.idea.devkit.threadingModelHelper.LockReqsAnalyzerBFS
 import org.jetbrains.idea.devkit.threadingModelHelper.LockType
 
-class BFLReqsChecker(private val analyzer: LockReqsAnalyzerDFS = LockReqsAnalyzerDFS()) {
+class BFLReqsChecker(private val analyzer: LockReqsAnalyzerBFS = LockReqsAnalyzerBFS()) {
 
   data class CheckResult(
     val implementation: PsiClass,
@@ -28,19 +29,17 @@ class BFLReqsChecker(private val analyzer: LockReqsAnalyzerDFS = LockReqsAnalyze
     private const val TARGET_CLASS_NAME = "com.intellij.codeInsight.ExternalAnnotationsManagerImpl"
   }
 
-
-  fun runChecker(project: Project): List<CheckResult> {
-    return findAllImplementations(project).map { implementation ->
-      ReadAction.nonBlocking<CheckResult> {
-         checkImplementation(implementation)
-      }.executeSynchronously()
-    }
+  fun runChecker(project: Project): List<AnalysisResult> {
+    val targetClass = findTargetImplementation(project)
+    return ReadAction.nonBlocking<List<AnalysisResult>> {
+      targetClass.allMethods.map { analyzer.analyzeMethod(it) }
+    }.executeSynchronously()
   }
 
-  fun findTargetImplementation(project: Project, scope: GlobalSearchScope = GlobalSearchScope.projectScope(project)): List<PsiClass> {
+  fun findTargetImplementation(project: Project, scope: GlobalSearchScope = GlobalSearchScope.projectScope(project)): PsiClass {
     val javaPsiFacade = JavaPsiFacade.getInstance(project)
     val targetClass = javaPsiFacade.findClass(TARGET_CLASS_NAME, scope)!!
-    return listOf(targetClass)
+    return targetClass
   }
 
   fun findAllImplementations(project: Project, scope: GlobalSearchScope = GlobalSearchScope.projectScope(project)): List<PsiClass> {
@@ -48,7 +47,7 @@ class BFLReqsChecker(private val analyzer: LockReqsAnalyzerDFS = LockReqsAnalyze
     val javaPsiFacade = JavaPsiFacade.getInstance(project)
     val bulkFileListenerClass = javaPsiFacade.findClass(PARENT_CLASS_NAME, scope) ?: return emptyList()
     val query = ClassInheritorsSearch.search(bulkFileListenerClass, scope, true)
-    query.forEach(Processor {
+    query.allowParallelProcessing().forEach(Processor {
       if (implementations.size >= MAX_IMPLEMENTATIONS) return@Processor false
       implementations.add(it)
     })
@@ -65,7 +64,9 @@ class BFLReqsChecker(private val analyzer: LockReqsAnalyzerDFS = LockReqsAnalyze
   }
 
   private fun checkMethod(implementation: PsiClass, methodName: String, edtGlobalPaths: MutableList<ExecutionPath>): Boolean {
-    val method = implementation.findMethodsByName(methodName, false).firstOrNull() ?: return false
+    val methods = implementation.allMethods.filter { it.name == methodName }
+    val method = methods.firstOrNull() ?: return false
+
     val result = analyzer.analyzeMethod(method)
     val edtLocalPaths = result.paths.filter { it.lockRequirement.lockType == LockType.EDT }
     edtGlobalPaths.addAll(edtLocalPaths)

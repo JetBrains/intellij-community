@@ -58,4 +58,8 @@ class LockReqsDetector(private val patterns: LockReqsRules = DefaultLockReqsRule
     }
     return null
   }
+
+  fun isCommonMethod(method: PsiMethod): Boolean {
+    return method.name in patterns.commonMethods
+  }
 }

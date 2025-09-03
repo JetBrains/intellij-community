@@ -7,13 +7,9 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.search.GlobalSearchScope
 
-enum class LockType {
-  READ, WRITE, WRITE_INTENT, EDT, BGT, NO_READ
-}
+enum class LockType { READ, WRITE, WRITE_INTENT, EDT, BGT, NO_READ }
 
-enum class RequirementReason {
-  ANNOTATION, ASSERTION, SWING_COMPONENT, MESSAGE_BUS, IMPLICIT
-}
+enum class RequirementReason { ANNOTATION, ASSERTION, SWING_COMPONENT, MESSAGE_BUS, IMPLICIT }
 
 data class LockRequirement(val source: PsiElement, val lockType: LockType, val requirementReason: RequirementReason)
 
@@ -32,7 +28,7 @@ data class ExecutionPath(val methodChain: List<MethodCall>, val lockRequirement:
 
 data class AnalysisResult(val method: PsiMethod, val paths: Set<ExecutionPath>, val messageBusTopics: Set<PsiClass>, val swingComponents: Set<MethodSignature>)
 
-data class AnalysisConfig(val scope: GlobalSearchScope, val maxDepth: Int = 10, val maxImplementations: Int = 5) {
+data class AnalysisConfig(val scope: GlobalSearchScope, val maxDepth: Int = 30, val maxImplementations: Int = 30, val includePolymorphic: Boolean = true) {
   companion object {
     fun forProject(project: Project): AnalysisConfig = AnalysisConfig(scope = GlobalSearchScope.projectScope(project))
   }

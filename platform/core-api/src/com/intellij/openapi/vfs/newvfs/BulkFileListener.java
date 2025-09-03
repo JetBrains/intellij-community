@@ -15,7 +15,7 @@ import java.util.List;
  * Consider using {@link BulkFileListenerBackgroundable} to avoid changes in semantics depending on the version of the Platform.
  * </b>
  * <p>
- * Please use {@link com.intellij.openapi.vfs.AsyncFileListener} instead, unless you absolutely sure you need to receive events synchronously.
+ * Please use {@link com.intellij.openapi.vfs.AsyncFileListener} instead, unless you are absolutely sure you need to receive events synchronously.
  * <p>
  * To register this listener, use e.g. {@code project.getMessageBus().connect(disposable).subscribe(VirtualFileManager.VFS_CHANGES, listener)}
  * or define the listener in {@code plugin.xml} as an application listener (the preferred way):
