@@ -9037,8 +9037,8 @@ jvm_import(
 
 jvm_import(
   name = "sqlite",
-  jar = "@sqlite-jdbc-3_49_1_0_http//file",
-  source_jar = "@sqlite-jdbc-3_49_1_0-sources_http//file",
+  jar = "@sqlite-jdbc-3_50_3_0_http//file",
+  source_jar = "@sqlite-jdbc-3_50_3_0-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -9064,8 +9064,8 @@ jvm_import(
 
 jvm_import(
   name = "stream_ex",
-  jar = "@streamex-0_8_3_http//file",
-  source_jar = "@streamex-0_8_3-sources_http//file",
+  jar = "@streamex-0_8_4_http//file",
+  source_jar = "@streamex-0_8_4-sources_http//file",
   visibility = ["//visibility:public"]
 )
 

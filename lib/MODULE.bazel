@@ -13216,17 +13216,17 @@ http_file(
 )
 
 http_file(
-  name = "sqlite-jdbc-3_49_1_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/xerial/sqlite-jdbc/3.49.1.0/sqlite-jdbc-3.49.1.0.jar",
-  sha256 = "5c8609d2ca341deb8c6f71778974b5ba4995c7d32d7c7c89d9392a3e72c39291",
-  downloaded_file_path = "sqlite-jdbc-3.49.1.0.jar"
+  name = "sqlite-jdbc-3_50_3_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/xerial/sqlite-jdbc/3.50.3.0/sqlite-jdbc-3.50.3.0.jar",
+  sha256 = "a3f53a2aa15ae9425a9e793bbe9c8e5288febeb4b65ef5c1a4e80d4c2045cf08",
+  downloaded_file_path = "sqlite-jdbc-3.50.3.0.jar"
 )
 
 http_file(
-  name = "sqlite-jdbc-3_49_1_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/xerial/sqlite-jdbc/3.49.1.0/sqlite-jdbc-3.49.1.0-sources.jar",
-  sha256 = "d01f0122343efb1558143ed06525cd33244f5295b12317d7f46f5f2f3ddebae7",
-  downloaded_file_path = "sqlite-jdbc-3.49.1.0-sources.jar"
+  name = "sqlite-jdbc-3_50_3_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/xerial/sqlite-jdbc/3.50.3.0/sqlite-jdbc-3.50.3.0-sources.jar",
+  sha256 = "fc5dffd5a31b763cbd84d5b1eeafa3a058ce1fad99e35a599401c3f95271f8c9",
+  downloaded_file_path = "sqlite-jdbc-3.50.3.0-sources.jar"
 )
 
 http_file(
@@ -13251,17 +13251,17 @@ http_file(
 )
 
 http_file(
-  name = "streamex-0_8_3_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/one/util/streamex/0.8.3/streamex-0.8.3.jar",
-  sha256 = "029117d46bcb8b850ad36cff3540c1844e25b4d5352aadd982e8cd80ffb8677c",
-  downloaded_file_path = "streamex-0.8.3.jar"
+  name = "streamex-0_8_4_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/one/util/streamex/0.8.4/streamex-0.8.4.jar",
+  sha256 = "c8bcde95bb6c659bd611a5bc464380f38118a10a0443f3fc15304d91e5c9dd81",
+  downloaded_file_path = "streamex-0.8.4.jar"
 )
 
 http_file(
-  name = "streamex-0_8_3-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/one/util/streamex/0.8.3/streamex-0.8.3-sources.jar",
-  sha256 = "94db5168694592126120ad49b6db15106ceb38ede0241814e59e367bb3bec327",
-  downloaded_file_path = "streamex-0.8.3-sources.jar"
+  name = "streamex-0_8_4-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/one/util/streamex/0.8.4/streamex-0.8.4-sources.jar",
+  sha256 = "2069ec5afe5e7ca8281d8e2396274f8a8d4e29b7f418aac6b15f4b13a4ffd15f",
+  downloaded_file_path = "streamex-0.8.4-sources.jar"
 )
 
 http_file(
