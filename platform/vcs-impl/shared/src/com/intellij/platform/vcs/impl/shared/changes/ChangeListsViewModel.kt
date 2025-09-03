@@ -25,9 +25,6 @@ class ChangeListsViewModel(
   private val project: Project,
   private val cs: CoroutineScope,
 ) {
-  var initialized: Boolean = false
-    private set
-
   val areChangeListsEnabled: StateFlow<Boolean> = changeListsApiFlow(checkRegistry = false) { api, projectId ->
     emitAll(api.areChangeListsEnabled(projectId))
   }.stateIn(cs, SharingStarted.Eagerly, false)
