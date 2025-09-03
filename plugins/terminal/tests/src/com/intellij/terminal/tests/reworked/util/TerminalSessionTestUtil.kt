@@ -3,6 +3,7 @@ package com.intellij.terminal.tests.reworked.util
 import com.google.common.base.Ascii
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil
 import com.intellij.openapi.project.Project
+import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.terminal.backend.TerminalSessionsManager
 import com.intellij.terminal.backend.createTerminalSession
 import com.intellij.terminal.backend.startTerminalProcess
@@ -10,16 +11,21 @@ import com.intellij.terminal.session.TerminalOutputEvent
 import com.intellij.terminal.session.TerminalSession
 import com.intellij.terminal.tests.reworked.util.TerminalSessionTestUtil.createShellCommand
 import com.intellij.util.EnvironmentUtil
+import com.intellij.util.PathUtil
 import com.intellij.util.asDisposable
 import com.jediterm.core.util.TermSize
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
 import org.jetbrains.plugins.terminal.ShellStartupOptions
 import org.jetbrains.plugins.terminal.TerminalEngine
+import org.jetbrains.plugins.terminal.TerminalOptionsProvider
+import org.jetbrains.plugins.terminal.runner.LocalShellIntegrationInjector
 import org.jetbrains.plugins.terminal.runner.LocalTerminalStartCommandBuilder
+import org.junit.Assume
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -91,6 +97,12 @@ internal object TerminalSessionTestUtil {
       promptFinishedEventDeferred.await()
       flowCollectionJob.cancel()
     }
+  }
+
+  fun assumeCommandBlockShellIntegration(shellCommand: List<String>) {
+    assertThat(TerminalOptionsProvider.instance.shellIntegration).isTrue()
+    val shellName = PathUtil.getFileName(shellCommand.first())
+    Assume.assumeTrue(LocalShellIntegrationInjector.supportsBlocksShellIntegration(shellName, LocalEelDescriptor))
   }
 
   fun getShellPaths(): List<Path> {

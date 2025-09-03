@@ -398,6 +398,8 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
         options.builder().shellCommand(shellCommand).build()
       }
 
+      TerminalSessionTestUtil.assumeCommandBlockShellIntegration(allOptions.shellCommand!!)
+
       val session = TerminalSessionTestUtil.startTestTerminalSession(
         projectRule.project,
         allOptions,
