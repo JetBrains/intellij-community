@@ -560,6 +560,11 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     return getPlugins().map { it.pluginId }.associateWith { getErrors(session, it) }
   }
 
+  override suspend fun loadErrors(sessionId: String, pluginIds: List<PluginId>): Map<PluginId, CheckErrorsResult> {
+    val session = findSession(sessionId) ?: return emptyMap()
+    return pluginIds.associateWith { getErrors(session, it) }
+  }
+
   override suspend fun prepareToUninstall(pluginsToUninstall: List<PluginId>): PrepareToUninstallResult {
     val applicationInfo = ApplicationInfoEx.getInstanceEx()
     val idMap = buildPluginIdMap()

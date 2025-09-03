@@ -77,6 +77,12 @@ class UiPluginManager {
     return getController().loadErrors(sessionId)
   }
 
+  fun loadErrors(sessionId: String, pluginIds: List<PluginId>): Map<PluginId, CheckErrorsResult> {
+    return runBlockingMaybeCancellable {
+      getController().loadErrors(sessionId, pluginIds)
+    }
+  }
+
   suspend fun getPlugin(pluginId: PluginId): PluginUiModel? {
     return getController().getPlugin(pluginId)
   }
