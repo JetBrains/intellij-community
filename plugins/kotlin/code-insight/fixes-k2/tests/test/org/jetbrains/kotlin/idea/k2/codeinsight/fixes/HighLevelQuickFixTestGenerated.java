@@ -4974,6 +4974,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 runTest("../../../idea/tests/testData/quickfix/createFromUsage/createFunction/call/simple/inLambdaWithExpectedType5.kt");
             }
 
+            @TestMetadata("incompileableCode.kt")
+            public void testIncompileableCode() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/createFromUsage/createFunction/call/simple/incompileableCode.kt");
+            }
+
             @TestMetadata("insideIfCondition.kt")
             public void testInsideIfCondition() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/createFromUsage/createFunction/call/simple/insideIfCondition.kt");
