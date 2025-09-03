@@ -221,8 +221,10 @@ public fun JewelTheme.Companion.darkThemeDefinition(
 
 @Composable
 public fun ComponentStyling.default(): ComponentStyling = with {
+    // It's ok to use isDark here instead of instanceUuid, since we're building
+    // defaults that do not change except when isDark changes
     val isDark = JewelTheme.isDark
-    remember(JewelTheme.instanceUuid) {
+    remember(isDark) {
         if (isDark) {
             dark(transparentIconButtonStyle = IconButtonStyle.darkTransparentBackground())
         } else {
@@ -519,8 +521,10 @@ public fun ComponentStyling.light(
 
 @Composable
 public fun IntUiTheme(isDark: Boolean = false, swingCompatMode: Boolean = false, content: @Composable () -> Unit) {
+    // It's ok to use isDark here instead of instanceUuid, since we're building
+    // defaults that do not change except when isDark changes
     val themeDefinition =
-        remember(JewelTheme.instanceUuid) {
+        remember(isDark) {
             if (isDark) {
                 JewelTheme.darkThemeDefinition(disabledAppearanceValues = DisabledAppearanceValues.dark())
             } else {

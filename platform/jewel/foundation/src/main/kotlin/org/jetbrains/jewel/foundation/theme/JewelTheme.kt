@@ -86,7 +86,7 @@ public val LocalThemeName: ProvidableCompositionLocal<String> = staticCompositio
  * from all previous values.
  */
 public val LocalThemeInstanceUuid: ProvidableCompositionLocal<UUID> = staticCompositionLocalOf {
-    error("No ThemeInstanceUuid provided")
+    error("No ThemeInstanceUuid provided. Have you forgotten the theme?")
 }
 
 public val LocalContentColor: ProvidableCompositionLocal<Color> = staticCompositionLocalOf {
