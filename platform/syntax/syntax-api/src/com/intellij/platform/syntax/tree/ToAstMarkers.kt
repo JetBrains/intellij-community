@@ -146,7 +146,8 @@ private class AstMarkerBuilder(
 
   private fun processLeafChameleons() {
     for (i in 0..<builder.tokens.tokenCount) {
-      if (builder.tokens.getTokenType(i)?.isLazyParseable() == true) {
+      val type = builder.tokens.getTokenType(i) ?: continue
+      if (type.isLazyParseable()) {
         astMarkersResult.setChameleon(i, newChameleonRef())
       }
     }
