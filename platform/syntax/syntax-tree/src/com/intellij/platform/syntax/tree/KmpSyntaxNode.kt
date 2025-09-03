@@ -206,11 +206,15 @@ class KmpSyntaxNode internal constructor(
     parent.endLexemeIndex == this.endLexemeIndex &&
     parent.markerIndex == this.markerIndex
 
-  internal fun isChameleon(): Boolean = (isMarker &&
-                                         context.ast.kind(markerIndex) == MarkerKind.Start &&
-                                         context.ast.elementType(markerIndex).isLazyParseable() &&
-                                         context.ast.collapsed(markerIndex)) ||
-                                        (!isMarker && type.isLazyParseable())
+  internal fun isChameleon(): Boolean =
+    if (isMarker) {
+      context.ast.kind(markerIndex) == MarkerKind.Start &&
+      context.ast.elementType(markerIndex).isLazyParseable() &&
+      context.ast.collapsed(markerIndex)
+    }
+    else {
+      type.isLazyParseable()
+    }
 
   override fun lastChild(): SyntaxNode? = firstChild().lastSibling()
 
