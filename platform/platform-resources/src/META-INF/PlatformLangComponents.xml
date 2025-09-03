@@ -190,6 +190,9 @@
     <!--XNext-->
     <applicationService serviceInterface="com.intellij.openapi.application.impl.InternalUICustomization"
                         serviceImplementation="com.intellij.openapi.application.impl.islands.IslandsUICustomization"/>
+
+    <applicationService serviceInterface="com.intellij.ui.tabs.impl.TabsPainterProvider"
+                        serviceImplementation="com.intellij.openapi.application.impl.islands.IslandsTabsPainterProvider"/>
     <!---->
 
     <adEntityProvider implementation="com.intellij.openapi.editor.impl.ad.document.DefaultAdEntityProvider" />

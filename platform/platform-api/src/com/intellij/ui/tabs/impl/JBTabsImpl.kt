@@ -348,7 +348,7 @@ open class JBTabsImpl internal constructor(
 
   protected open fun createTabBorder(): JBTabsBorder = JBDefaultTabsBorder(this)
 
-  protected open fun createTabPainterAdapter(): TabPainterAdapter = DefaultTabPainterAdapter(DEFAULT)
+  protected open fun createTabPainterAdapter(): TabPainterAdapter = TabsPainterProvider.getInstance()?.createCommonTabPainter() ?: DefaultTabPainterAdapter(DEFAULT)
 
   private var tabLabelAtMouse: TabLabel? = null
   private val scrollBar: JBScrollBar

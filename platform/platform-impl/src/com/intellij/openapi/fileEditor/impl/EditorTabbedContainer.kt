@@ -651,7 +651,7 @@ private class EditorTabs(
     return closeTabAction?.getIcon(isHovered)
   }
 
-  override fun createTabPainterAdapter(): TabPainterAdapter = InternalUICustomization.getInstance()?.editorTabPainterAdapter ?: DefaultTabPainterAdapter(DEFAULT)
+  override fun createTabPainterAdapter(): TabPainterAdapter = InternalUICustomization.getInstance()?.editorTabPainterAdapter ?: EditorTabPainterAdapter()
 
   override fun createTabBorder(): JBTabsBorder = JBEditorTabsBorder(this)
 
