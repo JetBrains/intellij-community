@@ -15,6 +15,9 @@ public interface DiffUserDataKeys {
   // DiffContent
   //
 
+  /**
+   * Affects diff content highlighting specifically for DB diff trees, do not use it for other purposes.
+   */
   Key<Language> LANGUAGE = Key.create("Diff.Language");
 
   //
