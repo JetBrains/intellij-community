@@ -33,103 +33,114 @@ private class AstMarkerBuilder(
     return astMarkersResult
   }
 
+  private val nodeProductionIndices = IntStack()
+  private val astTreeIndices = IntStack()
+
+  private var lastErrorLexemeIndex = -1
+
+  private var isInsideChameleon = false
+  private var markersInsideChameleonCount = 0
+
   private fun processTree() {
-    var lastErrorLexemeIndex = -1
-    val nodeProductionIndices = IntStack()
-    val astTreeIndices = IntStack()
-
-    var isInsideChameleon = false
-    var markersInsideChameleonCount = 0
-
     for (i in 0 until productions.size) {
       val item = productions.getMarker(i)
-      val isEndMarker = productions.isDoneMarker(i)
-      val isErrorMarker = item.isErrorMarker()
 
       when {
-        isEndMarker -> {
-          if (isInsideChameleon) {
-            if (markersInsideChameleonCount != 0) {
-              markersInsideChameleonCount -= 1
-              continue
-            }
-            else {
-              isInsideChameleon = false
-            }
-          }
-          val nodeProductionStartIndex = nodeProductionIndices.pop()
-          val astIndexStart = astTreeIndices.pop()
-          val astIndexEnd = astMarkersResult.pushBack()
-
-          val prevLexemeIndex = if (astIndexStart > 0)
-            productions.getLexemeIndexAt(nodeProductionStartIndex - 1)
-          else 0
-
-          val lexemeStartIndex = productions.getLexemeIndexAt(nodeProductionStartIndex)
-          val lexemeEndIndex = productions.getLexemeIndexAt(i)
-
-          astMarkersResult.apply {
-            setMarker(
-              astIndexEnd,
-              (item as CompositeMarker).markerId,
-              MarkerKind.End,
-              collapsed = item.isCollapsed(),
-              null,
-              item.getNodeType()
-            )
-
-            setLexemeInfo(astIndexEnd, lexemeEndIndex - lexemeStartIndex, lexemeStartIndex - prevLexemeIndex)
-            setLexemeInfo(astIndexStart, lexemeEndIndex - lexemeStartIndex, lexemeStartIndex - prevLexemeIndex)
-
-            setMarkersCount(astIndexEnd, astIndexEnd - astIndexStart)
-            setMarkersCount(astIndexStart, astIndexEnd - astIndexStart)
-          }
+        productions.isDoneMarker(i) -> {
+          processDoneMarker(item, i)
         }
 
-        isErrorMarker -> {
-          val startLexemeIndex = item.getStartTokenIndex()
-          if (startLexemeIndex == lastErrorLexemeIndex) continue
-          val prevLexemeIndex = productions.getLexemeIndexAt(i - 1)
-          val startLexeme = item.getStartTokenIndex()
-          val endLexeme = item.getEndTokenIndex()
-          lastErrorLexemeIndex = startLexemeIndex
-          val index = astMarkersResult.pushBack()
-          astMarkersResult.setMarker(
-            index,
-            i,
-            MarkerKind.Error,
-            collapsed = false,
-            item.getErrorMessage(),
-            item.getNodeType()
-          )
-          astMarkersResult.setLexemeInfo(index, endLexeme - startLexeme, startLexeme - prevLexemeIndex)
+        item.isErrorMarker() -> {
+          processErrorMarker(item, i)
         }
 
         else -> {
           // start marker
-          if (isInsideChameleon) {
-            markersInsideChameleonCount += 1
-            continue
-          }
-
-          val astTreeIndex = astMarkersResult.pushBack()
-          val markerId = (item as CompositeMarker).markerId
-          astMarkersResult.setMarker(
-            astTreeIndex,
-            markerId,
-            MarkerKind.Start,
-            collapsed = item.isCollapsed(),
-            null,
-            item.getNodeType()
-          )
-          if (item.getNodeType().isLazyParseable() && item.isCollapsed()) {
-            astMarkersResult.setChameleon(item.startIndex, newChameleonRef())
-            isInsideChameleon = true
-          }
-          astTreeIndices.push(astTreeIndex)
-          nodeProductionIndices.push(i)
+          processStartMarker(item, i)
         }
       }
+    }
+  }
+
+  private fun processStartMarker(item: SyntaxTreeBuilder.Production, i: Int) {
+    if (isInsideChameleon) {
+      markersInsideChameleonCount += 1
+      return
+    }
+
+    val astTreeIndex = astMarkersResult.pushBack()
+    val markerId = (item as CompositeMarker).markerId
+    astMarkersResult.setMarker(
+      astTreeIndex,
+      markerId,
+      MarkerKind.Start,
+      collapsed = item.isCollapsed(),
+      null,
+      item.getNodeType()
+    )
+    if (item.getNodeType().isLazyParseable() && item.isCollapsed()) {
+      astMarkersResult.setChameleon(item.startIndex, newChameleonRef())
+      isInsideChameleon = true
+    }
+    astTreeIndices.push(astTreeIndex)
+    nodeProductionIndices.push(i)
+  }
+
+  private fun processErrorMarker(item: SyntaxTreeBuilder.Production, i: Int) {
+    val startLexemeIndex = item.getStartTokenIndex()
+    if (startLexemeIndex == lastErrorLexemeIndex) return
+    val prevLexemeIndex = productions.getLexemeIndexAt(i - 1)
+    val startLexeme = item.getStartTokenIndex()
+    val endLexeme = item.getEndTokenIndex()
+    lastErrorLexemeIndex = startLexemeIndex
+    val index = astMarkersResult.pushBack()
+    astMarkersResult.setMarker(
+      index,
+      i,
+      MarkerKind.Error,
+      collapsed = false,
+      item.getErrorMessage(),
+      item.getNodeType()
+    )
+    astMarkersResult.setLexemeInfo(index, endLexeme - startLexeme, startLexeme - prevLexemeIndex)
+  }
+
+  private fun processDoneMarker(item: SyntaxTreeBuilder.Production, i: Int) {
+    if (isInsideChameleon) {
+      if (markersInsideChameleonCount != 0) {
+        markersInsideChameleonCount -= 1
+        return
+      }
+      else {
+        isInsideChameleon = false
+      }
+    }
+    val nodeProductionStartIndex = nodeProductionIndices.pop()
+    val astIndexStart = astTreeIndices.pop()
+    val astIndexEnd = astMarkersResult.pushBack()
+
+    val prevLexemeIndex = if (astIndexStart > 0)
+      productions.getLexemeIndexAt(nodeProductionStartIndex - 1)
+    else 0
+
+    val lexemeStartIndex = productions.getLexemeIndexAt(nodeProductionStartIndex)
+    val lexemeEndIndex = productions.getLexemeIndexAt(i)
+
+    astMarkersResult.apply {
+      setMarker(
+        astIndexEnd,
+        (item as CompositeMarker).markerId,
+        MarkerKind.End,
+        collapsed = item.isCollapsed(),
+        null,
+        item.getNodeType()
+      )
+
+      setLexemeInfo(astIndexEnd, lexemeEndIndex - lexemeStartIndex, lexemeStartIndex - prevLexemeIndex)
+      setLexemeInfo(astIndexStart, lexemeEndIndex - lexemeStartIndex, lexemeStartIndex - prevLexemeIndex)
+
+      setMarkersCount(astIndexEnd, astIndexEnd - astIndexStart)
+      setMarkersCount(astIndexStart, astIndexEnd - astIndexStart)
     }
   }
 
