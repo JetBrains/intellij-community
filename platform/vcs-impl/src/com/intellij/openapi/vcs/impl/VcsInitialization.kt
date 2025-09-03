@@ -29,6 +29,7 @@ private val EP_NAME = ExtensionPointName<VcsStartupActivity>("com.intellij.vcsSt
  * An ordered pipeline for initialization of VCS-related services. Typically, it should not be needed by plugins.
  *
  * @see ProjectLevelVcsManager.runAfterInitialization
+ * @see ProjectLevelVcsManager.awaitInitialization
  * @see ProjectActivity
  */
 @Suppress("DeprecatedCallableAddReplaceWith")

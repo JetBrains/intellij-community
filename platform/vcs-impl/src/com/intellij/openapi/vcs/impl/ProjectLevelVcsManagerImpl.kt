@@ -7,10 +7,7 @@ import com.intellij.ide.trustedProjects.TrustedProjectsListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
-import com.intellij.openapi.components.service
+import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.fileTypes.FileTypeManager
@@ -481,6 +478,10 @@ class ProjectLevelVcsManagerImpl(
 
   override fun runAfterInitialization(runnable: Runnable) {
     addInitializationRequest(VcsInitObject.AFTER_COMMON, runnable)
+  }
+
+  override suspend fun awaitInitialization() {
+    project.serviceAsync<VcsInitialization>().await()
   }
 
   override fun isFileInContent(vf: VirtualFile?): Boolean {

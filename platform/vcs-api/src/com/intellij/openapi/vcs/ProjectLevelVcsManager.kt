@@ -216,6 +216,8 @@ abstract class ProjectLevelVcsManager {
    */
   abstract fun runAfterInitialization(runnable: Runnable)
 
+  abstract suspend fun awaitInitialization()
+
   companion object {
     /**
      * Fired when [.getVcsFor] and similar methods change their value.

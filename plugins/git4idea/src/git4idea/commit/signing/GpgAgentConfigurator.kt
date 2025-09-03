@@ -410,9 +410,8 @@ internal data class GpgAgentPaths(
 
 private class GpgAgentConfiguratorStartupActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
-    ProjectLevelVcsManager.getInstance(project).runAfterInitialization {
-      GpgAgentConfigurator.getInstance(project).init()
-      project.service<GpgAgentConfigurationNotificator>().proposeCustomPinentryAgentConfiguration(isSuggestion = true)
-    }
+    ProjectLevelVcsManager.getInstance(project).awaitInitialization()
+    GpgAgentConfigurator.getInstance(project).init()
+    project.service<GpgAgentConfigurationNotificator>().proposeCustomPinentryAgentConfiguration(isSuggestion = true)
   }
 }
