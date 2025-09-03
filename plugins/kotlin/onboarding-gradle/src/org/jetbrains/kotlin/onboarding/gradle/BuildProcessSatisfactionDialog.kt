@@ -155,7 +155,7 @@ internal class BuildProcessSatisfactionDialog(
     override val myBlocks: List<FeedbackBlock> = listOf(
         TopLabelBlock(GradleFeedbackBundle.message("dialog.build.process.gradle.satisfaction.title")),
         DescriptionBlock(GradleFeedbackBundle.message("dialog.build.process.gradle.satisfaction.description")),
-        SegmentedButtonBlock(GradleFeedbackBundle.message("dialog.build.process.gradle.satisfaction.rating.label",ApplicationInfo.getInstance().versionName),
+        SegmentedButtonBlock(GradleFeedbackBundle.message("dialog.build.process.gradle.satisfaction.rating.label", ApplicationInfo.getInstance().versionName),
                              List(5) { (it + 1).toString() },
                              "csat_rating",
                              listOf(
