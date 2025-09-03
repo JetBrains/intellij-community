@@ -84,6 +84,9 @@ abstract class MavenMultiVersionImportingTestCase : MavenImportingTestCase() {
   protected fun assumeModel_4_0_0(message: String) {
     Assume.assumeTrue(message, myMavenModelVersion == MavenConstants.MODEL_VERSION_4_0_0)
   }
+  protected fun assumeModel_4_1_0(message: String) {
+    Assume.assumeTrue(message, myMavenModelVersion == MavenConstants.MODEL_VERSION_4_1_0)
+  }
 
   protected fun assumeMaven3() {
     val version: String = getActualVersion(myMavenVersion!!)
