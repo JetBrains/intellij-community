@@ -222,6 +222,7 @@ community-resources
 fleet/andel
 fleet/compiler-plugins
 fleet/fastutil
+fleet/junit4
 fleet/kernel
 fleet/ktor/network/tls
 fleet/lsp.protocol
