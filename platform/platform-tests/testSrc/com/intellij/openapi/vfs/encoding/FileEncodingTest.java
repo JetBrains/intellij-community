@@ -1275,4 +1275,24 @@ public class FileEncodingTest implements TestDialog {
     assertEquals(WINDOWS_1252, v.getCharset());
   }
 
+  @Test
+  public void testCharsetToolkitMustNotTearTheByteSequenceAtPageBoundaryLeadingToSpuriousInvalidUTF8() throws IOException {
+    byte[] bytes = getTestRoot().findChild("pre-commit").getInputStream().readAllBytes();
+    CharsetToolkit toolkit = new CharsetToolkit(bytes, StandardCharsets.UTF_16BE, false);
+    assertEquals(CharsetToolkit.GuessedEncoding.VALID_UTF8, toolkit.guessFromContent(bytes.length));
+    assertEquals(CharsetToolkit.GuessedEncoding.VALID_UTF8, toolkit.guessFromContent(1024)); // tear at inconvenient offset
+  }
+  @Test
+  public void testCharsetToolkitMustDetectBinaryEvenThoughItThinksThereAreInvalidUTF8There() {
+    {
+      byte[] bytes = new byte[]{-1, -2, -3};
+      CharsetToolkit toolkit = new CharsetToolkit(bytes, StandardCharsets.UTF_16BE, false);
+      assertEquals(CharsetToolkit.GuessedEncoding.INVALID_UTF8, toolkit.guessFromContent(bytes.length));
+    }
+    {
+      byte[] bytes = new byte[]{-1, -2, -3, 0,0,0,0,0,0,0,0,0};
+      CharsetToolkit toolkit = new CharsetToolkit(bytes, StandardCharsets.UTF_16BE, false);
+      assertEquals(CharsetToolkit.GuessedEncoding.BINARY, toolkit.guessFromContent(bytes.length));
+    }
+  }
 }

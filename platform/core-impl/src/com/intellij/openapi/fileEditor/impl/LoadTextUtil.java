@@ -387,19 +387,19 @@ public final class LoadTextUtil {
     }
     CharsetToolkit.GuessedEncoding guessed = toolkit.guessFromContent(0, endOffset);
     if (guessed == CharsetToolkit.GuessedEncoding.VALID_UTF8) {
-      return new DetectResult(StandardCharsets.UTF_8, CharsetToolkit.GuessedEncoding.VALID_UTF8,
-                              null); //UTF detected, ignore all directives
+      return new DetectResult(StandardCharsets.UTF_8, CharsetToolkit.GuessedEncoding.VALID_UTF8, null); //UTF detected, ignore all directives
     }
-    if (guessed == CharsetToolkit.GuessedEncoding.INVALID_UTF8
-        && defaultCharset != StandardCharsets.UTF_8
-        && isEncodingSafe(defaultCharset, content)) {
+    if (guessed == CharsetToolkit.GuessedEncoding.INVALID_UTF8 &&
+        defaultCharset != StandardCharsets.UTF_8 &&
+        isEncodingSafe(defaultCharset, content)) {
       return new DetectResult(defaultCharset, guessed, null);
     }
     return new DetectResult(null, guessed, null);
   }
 
   private static boolean isEncodingSafe(@NotNull Charset charset, byte @NotNull [] content) {
-    return Arrays.equals(new String(content, charset).getBytes(charset), content);
+    String string = CharsetToolkit.tryDecodeString(content, charset);
+    return string != null && Arrays.equals(string.getBytes(charset), content);
   }
 
   private static @NotNull Pair.NonNull<Charset, byte[]> getOverriddenCharsetByBOM(byte @NotNull [] content, @NotNull Charset charset) {
