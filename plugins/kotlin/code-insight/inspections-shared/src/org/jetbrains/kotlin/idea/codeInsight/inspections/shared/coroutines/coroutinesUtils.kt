@@ -8,11 +8,11 @@ import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.successfulVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.findTopLevelCallables
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.equalsOrEqualsByPsi
 import org.jetbrains.kotlin.idea.codeinsight.utils.ConvertLambdaToReferenceUtils.singleStatementOrNull
 import org.jetbrains.kotlin.idea.codeinsight.utils.resolveExpression
-import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
@@ -104,4 +104,12 @@ internal fun KtFunction.findRelatedLabelReferences(): List<KtLabelReferenceExpre
             labelRef.resolveExpression().equalsOrEqualsByPsi(functionSymbol)
         }
         .toList()
+}
+
+context(_: KaSession)
+internal fun CallableId.canBeResolved(): Boolean {
+    // does not support non-top-level callables for now
+    if (this.classId != null) return false
+    
+    return findTopLevelCallables(packageName, callableName).any()
 }
