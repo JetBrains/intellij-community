@@ -3,6 +3,7 @@ package com.intellij.platform.eel.impl.fs.telemetry
 
 import com.intellij.platform.core.nio.fs.DelegatingFileSystemProvider
 import com.intellij.platform.core.nio.fs.RoutingAwareFileSystemProvider
+import org.jetbrains.annotations.ApiStatus
 import java.nio.channels.SeekableByteChannel
 import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
@@ -17,6 +18,7 @@ import java.nio.file.spi.FileSystemProvider
  * It's possible to get rid of this contract, but usages should be refactored then.
  */
 // TODO There should be an implementation for Path, to meet the contract `fsp.getPath(..).fileSystem.provider() === fsp`
+@ApiStatus.Internal
 class TracingFileSystemProvider(
   val delegate: FileSystemProvider,
   val spanNamePrefix: String = "",

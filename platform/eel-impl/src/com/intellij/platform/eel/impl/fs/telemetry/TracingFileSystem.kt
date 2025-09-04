@@ -2,9 +2,11 @@
 package com.intellij.platform.eel.impl.fs.telemetry
 
 import com.intellij.platform.core.nio.fs.DelegatingFileSystem
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.FileSystem
 import java.nio.file.WatchService
 
+@ApiStatus.Internal
 class TracingFileSystem(
   private val provider: TracingFileSystemProvider,
   private val delegate: FileSystem,

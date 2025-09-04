@@ -6,8 +6,10 @@ import com.intellij.platform.diagnostic.telemetry.Scope
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.TracerLevel
 import com.intellij.platform.diagnostic.telemetry.helpers.use
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicLong
 
+@ApiStatus.Internal
 object Measurer {
 
   internal val eventsCounter: AtomicLong = AtomicLong()
