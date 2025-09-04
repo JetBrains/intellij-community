@@ -22,7 +22,7 @@ import com.intellij.util.SmartList;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
@@ -32,13 +32,14 @@ import java.util.Set;
 import static com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
 import static com.intellij.codeInspection.ProblemHighlightType.INFORMATION;
 import static com.intellij.codeInspection.classCanBeRecord.ClassCanBeRecordInspection.ConversionStrategy.*;
-import static com.intellij.codeInspection.classCanBeRecord.ConvertToRecordFix.*;
+import static com.intellij.codeInspection.classCanBeRecord.ConvertToRecordFix.tryCreateRecordCandidate;
 import static com.intellij.codeInspection.options.OptPane.*;
 
+@NotNullByDefault
 public final class ClassCanBeRecordInspection extends BaseInspection implements CleanupLocalInspectionTool {
   private static final List<String> IGNORED_ANNOTATIONS = List.of("io.micronaut.*", "jakarta.*", "javax.*", "org.springframework.*");
 
-  public @NotNull ConversionStrategy myConversionStrategy = DO_NOT_SUGGEST;
+  public ConversionStrategy myConversionStrategy = DO_NOT_SUGGEST;
   public boolean suggestAccessorsRenaming = true;
 
   public final List<@NlsSafe String> myIgnoredAnnotations = new ArrayList<>();
@@ -49,18 +50,18 @@ public final class ClassCanBeRecordInspection extends BaseInspection implements 
   }
 
   @TestOnly
-  public ClassCanBeRecordInspection(@NotNull ConversionStrategy conversionStrategy, boolean suggestAccessorsRenaming) {
+  public ClassCanBeRecordInspection(ConversionStrategy conversionStrategy, boolean suggestAccessorsRenaming) {
     myConversionStrategy = conversionStrategy;
     this.suggestAccessorsRenaming = suggestAccessorsRenaming;
   }
 
   @Override
-  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+  public Set<JavaFeature> requiredFeatures() {
     return Set.of(JavaFeature.RECORDS);
   }
 
   @Override
-  protected @NotNull @InspectionMessage String buildErrorString(Object... infos) {
+  protected @InspectionMessage String buildErrorString(Object... infos) {
     return JavaBundle.message("class.can.be.record.display.name");
   }
 
@@ -70,7 +71,7 @@ public final class ClassCanBeRecordInspection extends BaseInspection implements 
   }
 
   @Override
-  protected LocalQuickFix @NotNull [] buildFixes(Object... infos) {
+  protected LocalQuickFix[] buildFixes(Object... infos) {
     List<LocalQuickFix> fixes = new SmartList<>();
 
     boolean suggestQuickFix = (boolean)infos[0];
@@ -97,7 +98,7 @@ public final class ClassCanBeRecordInspection extends BaseInspection implements 
   }
 
   @Override
-  public @NotNull OptPane getOptionsPane() {
+  public OptPane getOptionsPane() {
     //noinspection InjectedReferences
     return pane(
       checkbox("suggestAccessorsRenaming", JavaBundle.message("class.can.be.record.suggest.renaming.accessors")),
@@ -108,7 +109,7 @@ public final class ClassCanBeRecordInspection extends BaseInspection implements 
   }
 
   @Override
-  public @NotNull OptionController getOptionController() {
+  public OptionController getOptionController() {
     return super.getOptionController()
       .onValue(
         "noHighlightingFixAvailable",
@@ -126,14 +127,14 @@ public final class ClassCanBeRecordInspection extends BaseInspection implements 
 
     private ClassCanBeRecordVisitor(ConversionStrategy conversionStrategy,
                                     boolean suggestAccessorsRenaming,
-                                    @NotNull List<String> ignoredAnnotations) {
+                                    List<String> ignoredAnnotations) {
       myConversionStrategy = conversionStrategy;
       mySuggestAccessorsRenaming = suggestAccessorsRenaming;
       myIgnoredAnnotations = ignoredAnnotations;
     }
 
     @Override
-    public void visitClass(@NotNull PsiClass aClass) {
+    public void visitClass(PsiClass aClass) {
       super.visitClass(aClass);
       PsiIdentifier classIdentifier = aClass.getNameIdentifier();
       if (classIdentifier == null) return;
