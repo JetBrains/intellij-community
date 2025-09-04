@@ -16,17 +16,16 @@ internal abstract class LazyInstanceHolder(
   parentScope: CoroutineScope,
   initializer: InstanceInitializer,
 ) : InstanceHolder {
-
   private companion object {
     val stateHandle: VarHandle = MethodHandles
       .privateLookupIn(LazyInstanceHolder::class.java, MethodHandles.lookup())
       .findVarHandle(LazyInstanceHolder::class.java, "_state", Any::class.java)
   }
 
-  private class Initial(val parentScope: CoroutineScope, val initializer: InstanceInitializer)
-  private data class InProgress(val initializer: InstanceInitializer, val waiters: PersistentSet<Continuation<Any>>)
-  private class CannotLoadClass(val instanceClassName: String, val classLoadingError: Throwable)
-  private class CannotInitialize(val instanceClass: Class<*>, val initializationError: Throwable)
+  private class Initial(@JvmField val parentScope: CoroutineScope, @JvmField val initializer: InstanceInitializer)
+  private data class InProgress(@JvmField val initializer: InstanceInitializer, @JvmField val waiters: PersistentSet<Continuation<Any>>)
+  private class CannotLoadClass(@JvmField val instanceClassName: String, @JvmField val classLoadingError: Throwable)
+  private class CannotInitialize(@JvmField val instanceClass: Class<*>, @JvmField val initializationError: Throwable)
 
   private var _state: Any = Initial(parentScope, initializer)
   private fun state(): Any = stateHandle.getVolatile(this)
@@ -166,8 +165,8 @@ internal abstract class LazyInstanceHolder(
           val instance = initializer.createInstance(parentScope, instanceClass)
           complete(finalState = instance)
         }
-        catch (t: Throwable) {
-          complete(finalState = CannotInitialize(instanceClass = instanceClass, t))
+        catch (e: Throwable) {
+          complete(finalState = CannotInitialize(instanceClass = instanceClass, e))
         }
       }
     }
@@ -278,7 +277,7 @@ internal abstract class LazyInstanceHolder(
   }
 }
 
-private class CurrentlyInitializingInstance(val holder: LazyInstanceHolder)
+private class CurrentlyInitializingInstance(@JvmField val holder: LazyInstanceHolder)
   : AbstractCoroutineContextElement(CurrentlyInitializingInstance), IntelliJContextElement {
   override fun produceChildElement(parentContext: CoroutineContext, isStructured: Boolean): IntelliJContextElement = this
   companion object : CoroutineContext.Key<CurrentlyInitializingInstance>
@@ -291,5 +290,4 @@ internal class StaticInstanceHolder(scope: CoroutineScope, initializer: Instance
  * This class is separate from [StaticInstanceHolder] to differentiate them via `instanceof` later.
  * Another solution is to store a flag in a field.
  */
-internal class DynamicInstanceHolder(scope: CoroutineScope, initializer: InstanceInitializer)
-  : LazyInstanceHolder(scope, initializer)
+internal class DynamicInstanceHolder(scope: CoroutineScope, initializer: InstanceInitializer) : LazyInstanceHolder(scope, initializer)
