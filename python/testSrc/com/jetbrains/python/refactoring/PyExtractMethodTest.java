@@ -136,6 +136,10 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
     doFail("hello", "The method name clashes with an already existing name");
   }
 
+  public void testNameCollisionOuterFunction() {
+    doFail("bar", "The method name clashes with an already existing name");
+  }
+
   public void testOutNotEmptyStatements() {
     doTest("sum_squares");
   }
