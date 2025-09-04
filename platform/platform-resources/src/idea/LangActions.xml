@@ -7,6 +7,7 @@
 
     <group id="LangCodeInsightActions">
       <action id="EditorSelectWord" class="com.intellij.openapi.editor.actions.SelectWordAtCaretAction"/>
+      <action id="EditorSelectWordAtCurrentCaret" class="com.intellij.openapi.editor.actions.SelectWordAtCurrentCaretAction"/>
       <action id="EditorUnSelectWord" class="com.intellij.openapi.editor.actions.UnselectWordAtCaretAction"/>
 
       <add-to-group group-id="EditorActions" anchor="last"/>

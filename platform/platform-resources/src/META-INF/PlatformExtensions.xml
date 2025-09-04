@@ -2033,6 +2033,8 @@
 
     <!--<editor.rd.localSupport filetype="PLAIN_TEXT"/> IJPL-189393 -->
 
+    <remote.customDataContextSerializer implementation="com.intellij.openapi.editor.impl.HonorCamelWordsDataContextSerializer"/>
+
     <registryKey key="ide.suppress.low.memory.notifications.when.dumb" defaultValue="false"
                  description="Disables Low Memory notifications during indexing for the sake of less false-positive detection for users" />
     <configFolderChangedListener implementation="com.intellij.configurationStore.ComponentStoreImplReloadListener"/>

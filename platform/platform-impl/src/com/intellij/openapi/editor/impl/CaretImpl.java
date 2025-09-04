@@ -1,11 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.diagnostic.Dumpable;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.AttachmentFactory;
 import com.intellij.openapi.diagnostic.Logger;
@@ -39,6 +36,7 @@ import java.awt.*;
 public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
   private static final Logger LOG = Logger.getInstance(CaretImpl.class);
   private static final Key<CaretVisualAttributes> VISUAL_ATTRIBUTES_KEY = new Key<>("CaretAttributes");
+  public static final DataKey<Boolean> HONOR_CAMEL_WORDS = DataKey.create("HonorCamelWords");
 
   private final EditorImpl myEditor;
   private final @NotNull CaretModelImpl myCaretModel;
@@ -1287,29 +1285,17 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
   @Override
   public void selectWordAtCaret(final boolean honorCamelWordsSettings) {
     ThreadingAssertions.assertEventDispatchThread();
-    myCaretModel.doWithCaretMerging(() -> {
-      removeSelection();
-      final EditorSettings settings = myEditor.getSettings();
-      boolean camelTemp = settings.isCamelWords();
 
-      final boolean needOverrideSetting = camelTemp && !honorCamelWordsSettings;
-      if (needOverrideSetting) {
-        settings.setCamelWords(false);
-      }
-
-      try {
-        EditorActionHandler handler = EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_SELECT_WORD_AT_CARET);
-        DataContext context = AnActionEvent.getInjectedDataContext(EditorActionHandler.caretDataContext(myEditor.getDataContext(), this));
-        Caret caret = context.getData(CommonDataKeys.CARET);
-        assert caret != null;
-        handler.execute(caret.getEditor(), caret, context);
-      }
-      finally {
-        if (needOverrideSetting) {
-          settings.resetCamelWords();
-        }
-      }
-    });
+    EditorActionHandler handler = EditorActionManager.getInstance().getActionHandler("EditorSelectWordAtCurrentCaret");
+    DataContext context = AnActionEvent.getInjectedDataContext(EditorActionHandler.caretDataContext(myEditor.getDataContext(), this));
+    DataContext customizedContext = CustomizedDataContext.withSnapshot(
+      context,
+      sink -> {
+        sink.set(HONOR_CAMEL_WORDS, honorCamelWordsSettings);
+      });
+    Caret caret = customizedContext.getData(CommonDataKeys.CARET);
+    assert caret != null;
+    handler.execute(caret.getEditor(), caret, customizedContext);
   }
 
   @Override
