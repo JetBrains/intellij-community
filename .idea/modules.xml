@@ -18,6 +18,7 @@
       <module fileurl="file://$PROJECT_DIR$/fleet/util/codepoints/fleet.util.codepoints.iml" filepath="$PROJECT_DIR$/fleet/util/codepoints/fleet.util.codepoints.iml" />
       <module fileurl="file://$PROJECT_DIR$/fleet/util/codepoints/test/fleet.util.codepoints.test.iml" filepath="$PROJECT_DIR$/fleet/util/codepoints/test/fleet.util.codepoints.test.iml" />
       <module fileurl="file://$PROJECT_DIR$/fleet/util/core/fleet.util.core.iml" filepath="$PROJECT_DIR$/fleet/util/core/fleet.util.core.iml" />
+      <module fileurl="file://$PROJECT_DIR$/fleet/util/datetime/fleet.util.datetime.iml" filepath="$PROJECT_DIR$/fleet/util/datetime/fleet.util.datetime.iml" />
       <module fileurl="file://$PROJECT_DIR$/fleet/util/logging/api/fleet.util.logging.api.iml" filepath="$PROJECT_DIR$/fleet/util/logging/api/fleet.util.logging.api.iml" />
       <module fileurl="file://$PROJECT_DIR$/fleet/util/logging/slf4j/fleet.util.logging.slf4j.iml" filepath="$PROJECT_DIR$/fleet/util/logging/slf4j/fleet.util.logging.slf4j.iml" />
       <module fileurl="file://$PROJECT_DIR$/fleet/util/multiplatform/fleet.util.multiplatform.iml" filepath="$PROJECT_DIR$/fleet/util/multiplatform/fleet.util.multiplatform.iml" />

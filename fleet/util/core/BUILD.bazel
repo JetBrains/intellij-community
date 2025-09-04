@@ -37,7 +37,6 @@ jvm_library(
     "//fleet/reporting/shared",
     "//fleet/multiplatform.shims",
     "//fleet/fastutil",
-    "@lib//:kotlinx-datetime-jvm",
     ":fleet_util_multiplatform_provided",
   ],
   exports = [

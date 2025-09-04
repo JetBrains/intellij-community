@@ -44,7 +44,6 @@
     <orderEntry type="module" module-name="fleet.reporting.shared" />
     <orderEntry type="module" module-name="fleet.multiplatform.shims" exported="" />
     <orderEntry type="module" module-name="fleet.fastutil" exported="" />
-    <orderEntry type="library" name="kotlinx-datetime-jvm" level="project" />
     <orderEntry type="module" module-name="fleet.util.multiplatform" scope="PROVIDED" />
   </component>
 </module>

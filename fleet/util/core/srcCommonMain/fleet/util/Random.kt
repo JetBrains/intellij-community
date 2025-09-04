@@ -2,14 +2,13 @@
 package fleet.util
 
 import fleet.multiplatform.shims.synchronized
-import kotlinx.datetime.Clock
 import kotlin.random.Random
 
 object Random {
   private val cacheBits = ByteArray(8 * 1024)
   private var served: Int = cacheBits.size
 
-  private val rnd = Random(Clock.System.now().toEpochMilliseconds())
+  private val rnd = Random.Default
 
   fun nextBytes(len: Int): ByteArray {
     return ByteArray(len).also { answer ->
