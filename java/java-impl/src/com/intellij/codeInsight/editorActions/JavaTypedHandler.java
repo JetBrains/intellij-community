@@ -3,7 +3,6 @@ package com.intellij.codeInsight.editorActions;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.AutoPopupController;
-import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.JavaClassReferenceCompletionContributor;
 import com.intellij.codeInsight.completion.command.configuration.CommandCompletionSettingsService;
 import com.intellij.java.syntax.parser.JavaKeywords;
@@ -239,7 +238,7 @@ public final class JavaTypedHandler extends JavaTypedHandlerBase {
     int offset = editor.getCaretModel().getOffset();
     if (charTyped == ' ' &&
         StringUtil.endsWith(editor.getDocument().getImmutableCharSequence(), 0, offset, JavaKeywords.NEW)) {
-      AutoPopupController.getInstance(project).scheduleAutoPopup(editor, CompletionType.BASIC, f -> {
+      AutoPopupController.getInstance(project).scheduleAutoPopup(editor, f -> {
         PsiElement leaf = f.findElementAt(offset - JavaKeywords.NEW.length());
         return leaf instanceof PsiKeyword &&
                leaf.textMatches(JavaKeywords.NEW) &&
