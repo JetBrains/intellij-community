@@ -28,13 +28,13 @@ abstract class WelcomeScreenFeature {
 
   abstract val icon: IconKey
 
-  abstract fun invoke(project: Project)
+  abstract fun onClick(project: Project)
 }
 
 abstract class WelcomeScreenToolwindowFeature : WelcomeScreenFeature() {
   protected abstract val toolWindowId: String
 
-  final override fun invoke(project: Project) {
+  final override fun onClick(project: Project) {
     val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(toolWindowId)
     toolWindow?.activate(null, true)
   }
