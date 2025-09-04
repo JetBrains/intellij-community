@@ -65,13 +65,13 @@ object WelcomeScreenNewFileHandler {
       }
     }
     catch (e: Exception) {
-      showErrorMessage(project, NonModalWelcomeScreenBundle.message("non.modal.welcome.screen.error.dialog.message.cannot.create.file", fileName, e.message ?: "Unknown error"))
+      showErrorMessage(project, NonModalWelcomeScreenBundle.message("welcome.screen.error.dialog.message.cannot.create.file", fileName, e.message ?: "Unknown error"))
     }
   }
 
   private fun showErrorMessage(project: Project, @NlsContexts.DialogMessage message: String) {
     ApplicationManager.getApplication().invokeLater{
-      Messages.showMessageDialog(project, message, NonModalWelcomeScreenBundle.message("non.modal.welcome.screen.error.dialog.title.cannot.create.file"), Messages.getErrorIcon())
+      Messages.showMessageDialog(project, message, NonModalWelcomeScreenBundle.message("welcome.screen.error.dialog.title.cannot.create.file"), Messages.getErrorIcon())
     }
   }
 }

@@ -49,8 +49,8 @@ class WelcomeScreenNewFileDialog private constructor(
       setTextFieldPreferredWidth(MAX_PATH_LENGTH)
 
       val descriptor = FileChooserDescriptorFactory.singleDir()
-        .withTitle(NonModalWelcomeScreenBundle.message("non.modal.welcome.screen.create.file.dialog.select.target.directory"))
-        .withDescription(NonModalWelcomeScreenBundle.message("non.modal.welcome.screen.create.file.dialog.directory.chooser.description"))
+        .withTitle(NonModalWelcomeScreenBundle.message("welcome.screen.create.file.dialog.select.target.directory"))
+        .withDescription(NonModalWelcomeScreenBundle.message("welcome.screen.create.file.dialog.directory.chooser.description"))
 
       addBrowseFolderListener(project, descriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT)
     }
@@ -84,20 +84,20 @@ class WelcomeScreenNewFileDialog private constructor(
     }
 
     validateButtons()
-    setOKButtonText(NonModalWelcomeScreenBundle.message("non.modal.welcome.screen.create.file.dialog.create.button.label"))
+    setOKButtonText(NonModalWelcomeScreenBundle.message("welcome.screen.create.file.dialog.create.button.label"))
   }
 
   override fun getPreferredFocusedComponent(): JComponent = if (builder.showNameField) nameField else targetDirectoryField
 
   override fun createCenterPanel(): JComponent = FormBuilder.createFormBuilder().apply {
     if (builder.showNameField) {
-      addLabeledComponent(NonModalWelcomeScreenBundle.message("non.modal.welcome.screen.create.file.dialog.create.file.name.label"), nameField)
+      addLabeledComponent(NonModalWelcomeScreenBundle.message("welcome.screen.create.file.dialog.create.file.name.label"), nameField)
     }
     templateComboBox?.let {
-      addLabeledComponent(NonModalWelcomeScreenBundle.message("non.modal.welcome.screen.create.file.dialog.create.file.template.label"), it)
+      addLabeledComponent(NonModalWelcomeScreenBundle.message("welcome.screen.create.file.dialog.create.file.template.label"), it)
     }
     addLabeledComponent(
-      NonModalWelcomeScreenBundle.message("non.modal.welcome.screen.create.file.dialog.create.file.directory.label"),
+      NonModalWelcomeScreenBundle.message("welcome.screen.create.file.dialog.create.file.directory.label"),
       targetDirectoryField
     )
   }.panel
@@ -137,8 +137,8 @@ class WelcomeScreenNewFileDialog private constructor(
     if (builder.showNameField && newName.isEmpty()) {
       Messages.showErrorDialog(
         project,
-        NonModalWelcomeScreenBundle.message("non.modal.welcome.screen.create.file.dialog.no.name.specified"),
-        NonModalWelcomeScreenBundle.message("non.modal.welcome.screen.create.file.dialog.error.title")
+        NonModalWelcomeScreenBundle.message("welcome.screen.create.file.dialog.no.name.specified"),
+        NonModalWelcomeScreenBundle.message("welcome.screen.create.file.dialog.error.title")
       )
       return
     }
@@ -146,7 +146,7 @@ class WelcomeScreenNewFileDialog private constructor(
     if (builder.showNameField && !PathUtilRt.isValidFileName(newName, false)) {
       Messages.showErrorDialog(
         nameField,
-        NonModalWelcomeScreenBundle.message("non.modal.welcome.screen.create.file.dialog.invalid.file.name")
+        NonModalWelcomeScreenBundle.message("welcome.screen.create.file.dialog.invalid.file.name")
       )
       return
     }
@@ -156,8 +156,8 @@ class WelcomeScreenNewFileDialog private constructor(
     if (targetDirectoryName.isEmpty()) {
       Messages.showErrorDialog(
         project,
-        NonModalWelcomeScreenBundle.message("non.modal.welcome.screen.create.file.dialog.no.target.directory.specified"),
-        NonModalWelcomeScreenBundle.message("non.modal.welcome.screen.create.file.dialog.error.title")
+        NonModalWelcomeScreenBundle.message("welcome.screen.create.file.dialog.no.target.directory.specified"),
+        NonModalWelcomeScreenBundle.message("welcome.screen.create.file.dialog.error.title")
       )
       return
     }
@@ -173,15 +173,15 @@ class WelcomeScreenNewFileDialog private constructor(
         catch (_: IncorrectOperationException) {
         }
       }
-    }, NonModalWelcomeScreenBundle.message("non.modal.welcome.screen.create.file.dialog.create.directory"), null)
+    }, NonModalWelcomeScreenBundle.message("welcome.screen.create.file.dialog.create.directory"), null)
 
     val targetDirectory = targetDirectory
 
     if (targetDirectory == null) {
       Messages.showErrorDialog(
         project,
-        NonModalWelcomeScreenBundle.message("non.modal.welcome.screen.create.file.dialog.cannot.create.directory"),
-        NonModalWelcomeScreenBundle.message("non.modal.welcome.screen.create.file.dialog.error.title")
+        NonModalWelcomeScreenBundle.message("welcome.screen.create.file.dialog.cannot.create.directory"),
+        NonModalWelcomeScreenBundle.message("welcome.screen.create.file.dialog.error.title")
       )
       return
     }

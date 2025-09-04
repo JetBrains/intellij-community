@@ -29,7 +29,7 @@ class WelcomeScreenRightTabVirtualFile(val window: WelcomeScreenRightTab, val pr
     override fun getName(): @NonNls String = contentProvider.title
 
     override fun getDescription(): @NlsContexts.Label String =
-      NonModalWelcomeScreenBundle.message("non.modal.welcome.screen.virtual.file.type.description")
+      NonModalWelcomeScreenBundle.message("welcome.screen.virtual.file.type.description")
 
     override fun getIcon(): Icon = AllIcons.General.Settings
 

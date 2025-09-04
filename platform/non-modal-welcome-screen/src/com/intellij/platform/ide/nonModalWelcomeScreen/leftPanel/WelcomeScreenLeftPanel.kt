@@ -32,7 +32,7 @@ import javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED
 class WelcomeScreenLeftPanel(private val project: Project) : ProjectViewPane(project) {
   private var recentProjectTreeComponent: JComponent? = null
 
-  override fun getTitle(): String = NonModalWelcomeScreenBundle.message("non.modal.welcome.screen.project.view.title")
+  override fun getTitle(): String = NonModalWelcomeScreenBundle.message("welcome.screen.project.view.title")
 
   override fun getId(): String = ID
 
@@ -102,7 +102,7 @@ class WelcomeScreenLeftPanel(private val project: Project) : ProjectViewPane(pro
     RecentProjectPanelComponentFactory.createComponent(
       this, ProjectCollectors.all, treeBackground = null
     ).apply {
-      tree.emptyText.text = NonModalWelcomeScreenBundle.message("non.modal.welcome.screen.no.recent.projects")
+      tree.emptyText.text = NonModalWelcomeScreenBundle.message("welcome.screen.no.recent.projects")
       selectLastOpenedProject()
     }
 

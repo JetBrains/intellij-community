@@ -97,7 +97,7 @@ class WelcomeScreenRightTab(
                horizontalAlignment = Alignment.CenterHorizontally) {
           SwitchPanel()
 
-          CheckboxRow(text = NonModalWelcomeScreenBundle.message("non.modal.welcome.screen.right.tab.always.show.on.startup"),
+          CheckboxRow(text = NonModalWelcomeScreenBundle.message("welcome.screen.right.tab.always.show.on.startup"),
                       textStyle = TextStyle(color = fontColor),
                       modifier = Modifier.padding(vertical = 12.dp),
                       checked = showOnStartup, onCheckedChange = {
@@ -147,10 +147,10 @@ class WelcomeScreenRightTab(
   fun SwitchPanel() {
     Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
       InfoPanelItem(themeIconKey,
-                    NonModalWelcomeScreenBundle.message("non.modal.welcome.screen.right.tab.theme.switch.prefix"),
+                    NonModalWelcomeScreenBundle.message("welcome.screen.right.tab.theme.switch.prefix"),
                     ThemeModel())
       InfoPanelItem(AllIconsKeys.General.Keyboard,
-                    NonModalWelcomeScreenBundle.message("non.modal.welcome.screen.right.tab.keymap.switch.prefix"),
+                    NonModalWelcomeScreenBundle.message("welcome.screen.right.tab.keymap.switch.prefix"),
                     KeymapModel())
     }
   }

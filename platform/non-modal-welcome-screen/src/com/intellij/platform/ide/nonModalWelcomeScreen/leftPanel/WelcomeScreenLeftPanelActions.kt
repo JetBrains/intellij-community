@@ -35,13 +35,13 @@ import javax.swing.JComponent
 internal class WelcomeScreenLeftPanelActions(val project: Project) {
   internal val panelButtonModels: List<PanelButtonModel>
     get() = listOf(
-      PanelButtonModel(NonModalWelcomeScreenBundle.message ("non.modal.welcome.screen.action.open"), AllIcons.Nodes.Folder,
+      PanelButtonModel(NonModalWelcomeScreenBundle.message ("welcome.screen.action.open"), AllIcons.Nodes.Folder,
                        runPlatformAction("OpenFile")),
-      PanelButtonModel(NonModalWelcomeScreenBundle.message("non.modal.welcome.screen.action.new"), AllIcons.General.Add,
+      PanelButtonModel(NonModalWelcomeScreenBundle.message("welcome.screen.action.new"), AllIcons.General.Add,
                        showNewActionGroupDropDown()),
-      PanelButtonModel(NonModalWelcomeScreenBundle.message("non.modal.welcome.screen.action.clone"), AllIcons.General.Vcs,
+      PanelButtonModel(NonModalWelcomeScreenBundle.message("welcome.screen.action.clone"), AllIcons.General.Vcs,
                        runPlatformAction("Vcs.VcsClone")),
-      PanelButtonModel(NonModalWelcomeScreenBundle.message("non.modal.welcome.screen.action.remote.development"), AllIcons.Nodes.Plugin,
+      PanelButtonModel(NonModalWelcomeScreenBundle.message("welcome.screen.action.remote.development"), AllIcons.Nodes.Plugin,
                        runPlatformAction("OpenRemoteDevelopment")),
     )
 
