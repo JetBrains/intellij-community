@@ -1,34 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.util
 
-import fleet.util.logging.KLogger
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.transformWhile
-
-inline fun <T> Iterable<T>.forEachSafely(logger: KLogger, f: (T) -> Unit) {
-  forEach {
-    try {
-      f(it)
-    }
-    catch (c: CancellationException) {
-      throw c
-    }
-    catch (e: Throwable) {
-      logger.error(e)
-    }
-  }
-}
-
-fun <T, K> Iterable<T>.associateByUnique(keySelector: (T) -> K): Map<K, T> =
-  let { iter ->
-    buildMap {
-      for (x in iter) {
-        val key = keySelector(x)
-        require(put(key, x) == null) { "key $key is not unique" }
-      }
-    }
-  }
 
 /**
  * Same idea as [kotlin.collections.singleOrNull] but will throw if the collection contains more than one element.
@@ -134,12 +108,6 @@ fun <K, V> Map<K, V>.merge(other: Map<K, V>, f: (K, V, V) -> V = { k, v1, v2 -> 
     }
   }
   return x
-}
-
-fun <T> List<T>.zipWithIndex(): List<IndexedValue<T>> {
-  return zip(indices) { v, idx ->
-    IndexedValue(idx, v)
-  }
 }
 
 @Deprecated(replaceWith = ReplaceWith("maxOf(c1, c2)"), message = "use kotlin stdlib")
