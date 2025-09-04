@@ -3,37 +3,24 @@ package com.intellij.util.concurrency
 
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.concurrency.virtualThreads.IntelliJVirtualThreads
+import com.intellij.concurrency.virtualThreads.asyncAsVirtualThread
+import com.intellij.concurrency.virtualThreads.launchAsVirtualThread
+import com.intellij.concurrency.virtualThreads.virtualThread
 import com.intellij.openapi.application.EDT
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.ui.EDT
-import com.intellij.concurrency.virtualThreads.asyncAsVirtualThread
-import com.intellij.concurrency.virtualThreads.launchAsVirtualThread
-import com.intellij.concurrency.virtualThreads.virtualThread
-import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancelAndJoin
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
-import kotlinx.coroutines.job
-import kotlinx.coroutines.supervisorScope
-import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.fail
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CountDownLatch
-import java.util.concurrent.ThreadFactory
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.CoroutineContext
-import kotlin.test.assertContains
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertNotNull
-import kotlin.test.assertTrue
+import kotlin.test.*
 
 @TestApplication
 class VirtualThreadTest {
@@ -132,13 +119,9 @@ class VirtualThreadTest {
     val name = "TestVT-Context"
 
     val computationResult = withContext(DummyElement(name)) {
-      asyncAsVirtualThread { factory: ThreadFactory ->
+      asyncAsVirtualThread {
         val element = requireNotNull(currentThreadContext()[DummyElement.Key])
         assertEquals(name, element.name)
-        factory.newThread {
-          val innerElement = requireNotNull(currentThreadContext()[DummyElement.Key])
-          assertEquals(name, innerElement.name)
-        }.apply { start() }.join()
         "ok"
       }.await()
     }
@@ -150,7 +133,7 @@ class VirtualThreadTest {
   fun `exception in action completes deferred exceptionally`(): Unit = timeoutRunBlocking {
     val ex = RuntimeException("boom")
     supervisorScope {
-      val d: Deferred<Unit> = asyncAsVirtualThread { _ ->
+      val d: Deferred<Unit> = asyncAsVirtualThread {
         throw ex
       }
       try {
@@ -163,57 +146,9 @@ class VirtualThreadTest {
   }
 
   @Test
-  fun `threads in inner ThreadFactory are not started by default`(): Unit = timeoutRunBlocking {
-    asyncAsVirtualThread { factory ->
-      val future = Job(coroutineContext.job).asCompletableFuture()
-      val thread = factory.newThread { future.join() }
-      assertFalse(thread.isAlive) // should not be started
-      thread.start()
-      assertTrue(thread.isAlive)
-      future.complete(Unit)
-    }.join()
-  }
-
-  @Test
-  fun `structured concurrency waits for factory threads`() = timeoutRunBlocking {
-    val nestedThreadCanFinish = Job(coroutineContext.job).asCompletableFuture()
-
-    val d = asyncAsVirtualThread { factory ->
-      factory.newThread {
-        nestedThreadCanFinish.join()
-      }.start()
-      "done"
-    }
-
-    delay(100)
-    assertFalse { d.isCompleted }
-    nestedThreadCanFinish.complete(Unit)
-    assertEquals("done", d.await())
-  }
-
-  @Test
-  fun `exceptions get propagated from inner threads`(): Unit = timeoutRunBlocking {
-    val exception = RuntimeException("boom")
-
-    supervisorScope {
-      val d = asyncAsVirtualThread { factory ->
-        factory.newThread {
-          throw exception
-        }.start()
-      }
-      try {
-        d.await()
-        fail<Nothing>("must not be reached")
-      } catch (e: RuntimeException) {
-        assertEquals(exception, e.cause)
-      }
-    }
-  }
-
-  @Test
   fun `cancellation of virtual threads interrupts it`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
     val eternalSuspension = CompletableFuture<Unit>()
-    val d = asyncAsVirtualThread { _ ->
+    val d = asyncAsVirtualThread {
       eternalSuspension.get()
     }
     delay(100)
@@ -221,24 +156,9 @@ class VirtualThreadTest {
   }
 
   @Test
-  fun `cancellation of virtual threads interrupts nested threads`(): Unit = timeoutRunBlocking {
-    val eternalSuspension =  CompletableFuture<Unit>()
-    val nestedThreadStarted = Job(coroutineContext.job)
-    val d = asyncAsVirtualThread { factory ->
-      factory.newThread {
-        nestedThreadStarted.complete()
-        eternalSuspension.get()
-      }.start()
-    }
-    nestedThreadStarted.join()
-    delay(100)
-    d.cancelAndJoin()
-  }
-
-  @Test
   fun `lazy start delays thread creation until awaited or started`() = timeoutRunBlocking(context = Dispatchers.Default) {
     var executed = false
-    val d = asyncAsVirtualThread(start = CoroutineStart.LAZY) { _ ->
+    val d = asyncAsVirtualThread(start = CoroutineStart.LAZY) {
       executed = true
       "res"
     }
