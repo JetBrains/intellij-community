@@ -16,6 +16,7 @@ import java.awt.event.InvocationEvent;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Method;
+import java.util.function.Supplier;
 
 /**
  * <p>This class provides a static cache for a current Swing Event Dispatch thread. As {@code EventQueue.isDispatchThread()} calls
@@ -27,18 +28,17 @@ import java.lang.reflect.Method;
 public final class EDT {
   private static volatile Thread ourThread;
 
-  private static boolean disableEdtChecks = false;
+  /** @noinspection ALL*/
+  private static volatile boolean ourDisableEdtChecks;
+  /** @noinspection ALL */
+  private static volatile Supplier<Boolean> ourIsCurrentThreadEDT =
+    () -> EventQueue.isDispatchThread();
 
   private EDT() { }
 
   @ApiStatus.Internal
-  public static void disableEdtChecks() {
-    disableEdtChecks = true;
-  }
-
-  @ApiStatus.Internal
   public static boolean isDisableEdtChecks() {
-    return disableEdtChecks;
+    return ourDisableEdtChecks;
   }
 
   /**
@@ -73,12 +73,11 @@ public final class EDT {
   public static boolean isCurrentThreadEdt() {
     // actually, this `if` is not required, but it makes the class work correctly before `IdeEventQueue` initialization
     Thread thread = ourThread;
-    return thread != null ? Thread.currentThread() == thread :
-           !disableEdtChecks && EventQueue.isDispatchThread();
+    return thread != null ? Thread.currentThread() == thread : ourIsCurrentThreadEDT.get();
   }
 
   public static void assertIsEdt() {
-    if (!isCurrentThreadEdt() && !disableEdtChecks) {
+    if (!isCurrentThreadEdt() && !ourDisableEdtChecks) {
       Logger.getInstance(EDT.class).error("Assert: must be called on EDT");
     }
   }
