@@ -10,7 +10,7 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootModificationTracker
 import com.intellij.openapi.vfs.NonPhysicalFileSystem
-import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValueProvider.Result
 import com.intellij.psi.util.CachedValuesManager
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
@@ -50,16 +50,11 @@ fun KtFile.shouldHighlightFile(): Boolean {
     return if (isScript()) { /* isScript() is based on stub index */
         KotlinScriptHighlightingExtension.shouldHighlightScript(project, this)
     } else {
-        computeIfAbsent(ProjectRootModificationTracker.getInstance(project)) {
-            calculateShouldHighlightFile()
+        CachedValuesManager.getManager(this.project).getCachedValue(this) {
+            Result.create(calculateShouldHighlightFile(), ProjectRootModificationTracker.getInstance(project))
         }
     }
 }
-
-fun KtFile.computeIfAbsent(vararg dependencies: Any, compute: KtFile.() -> Boolean): Boolean =
-    CachedValuesManager.getManager(project).getCachedValue(this) {
-        CachedValueProvider.Result.create(compute(), dependencies)
-    }
 
 private fun isIndexingInProgress(project: Project) = runReadAction { DumbService.getInstance(project).isDumb }
 
