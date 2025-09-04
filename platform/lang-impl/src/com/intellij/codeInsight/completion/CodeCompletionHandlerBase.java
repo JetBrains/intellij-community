@@ -329,7 +329,7 @@ public class CodeCompletionHandlerBase {
       indicator.showLookup();
     }
     else {
-      phase = new CompletionPhase.CommittingDocuments(indicator, InjectedLanguageEditorUtil.getTopLevelEditor(indicator.getEditor()), null);
+      phase = CompletionPhase.CommittingDocuments.create(InjectedLanguageEditorUtil.getTopLevelEditor(indicator.getEditor()), indicator);
     }
     CompletionServiceImpl.setCompletionPhase(phase);
 

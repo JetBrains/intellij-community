@@ -65,7 +65,7 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
 
   override fun dispose() {}
 
-  class CommittingDocuments internal constructor(
+  class CommittingDocuments private constructor(
     indicator: CompletionProgressIndicator?,
     editor: Editor,
     private val event: TypedEvent?
@@ -121,6 +121,12 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
     @ApiStatus.Internal
     companion object {
       private val ourExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Completion Preparation", 1)
+
+      @ApiStatus.Internal
+      @JvmStatic
+      fun create(editor: Editor, indicator: CompletionProgressIndicator?): CommittingDocuments {
+        return CommittingDocuments(indicator, editor, null)
+      }
 
       /**
        * Schedules completion process for the given [editor] with [completionType] and [condition] for the state of the file.
