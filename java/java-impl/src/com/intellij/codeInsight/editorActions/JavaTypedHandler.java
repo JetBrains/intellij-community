@@ -191,7 +191,7 @@ public final class JavaTypedHandler extends JavaTypedHandlerBase {
 
   @Override
   protected void autoPopupMemberLookup(@NotNull Project project, final @NotNull Editor editor) {
-    AutoPopupController.getInstance(project).autoPopupMemberLookup(editor, file -> {
+    AutoPopupController.getInstance(project).scheduleAutoPopup(editor, file -> {
       int offset = editor.getCaretModel().getOffset();
 
       PsiElement lastElement = file.findElementAt(offset - 1);
@@ -253,7 +253,7 @@ public final class JavaTypedHandler extends JavaTypedHandlerBase {
 
   @Override
   protected void autoPopupJavadocLookup(final @NotNull Project project, final @NotNull Editor editor) {
-    AutoPopupController.getInstance(project).autoPopupMemberLookup(editor, file -> {
+    AutoPopupController.getInstance(project).scheduleAutoPopup(editor, file -> {
       int offset = editor.getCaretModel().getOffset();
 
       PsiElement lastElement = file.findElementAt(offset - 1);

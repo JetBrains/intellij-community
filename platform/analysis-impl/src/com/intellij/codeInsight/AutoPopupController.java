@@ -55,11 +55,25 @@ public abstract class AutoPopupController {
   }
 
 
+  /**
+   * @deprecated The name of the method is misleading.
+   *             Use {@link #scheduleAutoPopup(Editor, Condition)} instead.
+   */
+  @Deprecated
   public abstract void autoPopupMemberLookup(@NotNull Editor editor, @Nullable Condition<? super PsiFile> condition);
 
+  /**
+   * @deprecated The name of the method is misleading.
+   *             Use {@link #scheduleAutoPopup(Editor, CompletionType, Condition)} instead.
+   */
+  @Deprecated
   public abstract void autoPopupMemberLookup(@NotNull Editor editor,
                                              @NotNull CompletionType completionType,
                                              @Nullable Condition<? super PsiFile> condition);
+
+  public final void scheduleAutoPopup(@NotNull Editor editor, @Nullable Condition<? super PsiFile> condition) {
+    scheduleAutoPopup(editor, CompletionType.BASIC, condition);
+  }
 
   public abstract void scheduleAutoPopup(@NotNull Editor editor,
                                          @NotNull CompletionType completionType,

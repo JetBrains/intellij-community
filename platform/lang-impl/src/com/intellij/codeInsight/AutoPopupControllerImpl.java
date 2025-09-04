@@ -104,7 +104,7 @@ public class AutoPopupControllerImpl extends AutoPopupController {
 
   @Override
   public void autoPopupMemberLookup(@NotNull Editor editor, @Nullable Condition<? super PsiFile> condition) {
-    autoPopupMemberLookup(editor, CompletionType.BASIC, condition);
+    scheduleAutoPopup(editor, CompletionType.BASIC, condition);
   }
 
   @Override
