@@ -54,15 +54,50 @@ public abstract class AutoPopupController {
     return project.getService(AutoPopupController.class);
   }
 
+  /**
+   * Schedules auto-popup completion for the given editor with the Basic completion type.
+   *
+   * @param editor the editor to schedule completion for.
+   *
+   * @see #scheduleAutoPopup(Editor, Condition)
+   * @see #scheduleAutoPopup(Editor, CompletionType, Condition)
+   */
   public final void scheduleAutoPopup(@NotNull Editor editor) {
     scheduleAutoPopup(editor, CompletionType.BASIC, null);
   }
 
+  /**
+   * Schedules auto-popup completion for the given editor with the Basic completion type and the given condition for the state of the file
+   * associated with the editor.
+   * If the condition evaluates to {@code false}, the completion process won't be started.
+   *
+   * @param editor    the editor to schedule completion for.
+   * @param condition the condition to check before triggering completion.
+   *                  If the condition evaluates to {@code false}, completion won't be started.
+   *                  If the condition is {@code null}, the completion process will be started regardless of the file state.
+   *
+   * @see #scheduleAutoPopup(Editor)
+   * @see #scheduleAutoPopup(Editor, CompletionType, Condition)
+   */
   public final void scheduleAutoPopup(@NotNull Editor editor,
                                       @Nullable Condition<? super PsiFile> condition) {
     scheduleAutoPopup(editor, CompletionType.BASIC, condition);
   }
 
+  /**
+   * Schedules auto-popup completion for the given editor with the given completion type and the given condition for the state of the file
+   * associated with the editor.
+   * If the condition evaluates to {@code false}, the completion process won't be started.
+   *
+   * @param editor         the editor to schedule completion for.
+   * @param completionType the completion type to use.
+   * @param condition      the condition to check before triggering completion.
+   *                       If the condition evaluates to {@code false}, completion won't be started.
+   *                       If the condition is {@code null}, the completion process will be started regardless of the file state.
+   *
+   * @see #scheduleAutoPopup(Editor)
+   * @see #scheduleAutoPopup(Editor, Condition)
+   */
   public abstract void scheduleAutoPopup(@NotNull Editor editor,
                                          @NotNull CompletionType completionType,
                                          @Nullable Condition<? super PsiFile> condition);
