@@ -1,6 +1,7 @@
 package com.intellij.terminal.frontend
 
 import com.intellij.codeInsight.lookup.LookupManager
+import com.intellij.idea.AppModeAssertions
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.application.asContextElement
@@ -13,7 +14,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.terminal.session.TerminalContentUpdatedEvent
 import com.intellij.terminal.session.TerminalCursorPositionChangedEvent
 import com.intellij.terminal.session.TerminalOutputEvent
-import com.intellij.util.PlatformUtils
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -58,9 +58,7 @@ internal class TerminalTypeAheadOutputModelController(
   }
 
   override fun isEnabled(): Boolean {
-    return !PlatformUtils.isJetBrainsClient()
-           && Registry.`is`("terminal.type.ahead", false)
-           && isTypingCommand()
+    return Registry.`is`("terminal.type.ahead", false) && isTypingCommand()
   }
 
   override fun type(string: String) {
@@ -206,10 +204,11 @@ internal class TerminalTypeAheadOutputModelController(
     /**
      * The number of milliseconds to delay the output updates came from backend
      * after type-ahead prediction was applied.
-     * The value is chosen heuristically to be small enough to make the delay less noticeable
-     * when updates from the backend do not match the predictions.
+     * The value differs for RemDev and monolith scenario.
+     * In monolith, it is small enough to make the delay less noticeable when updates from the backend do not match the predictions.
+     * In RemDev, it should be greater than the regular ping.
      */
-    private const val BACKEND_EVENTS_DELAY_MILLIS = 100L
+    private val BACKEND_EVENTS_DELAY_MILLIS = if (AppModeAssertions.isMonolith()) 100L else 500L
   }
 }
 
