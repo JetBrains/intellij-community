@@ -294,6 +294,7 @@ sealed interface SubscriptionEvent {
  * [middleware] is applied to every change fn synchronously, being able to supply meta to the change, or alter the behavior of fn in other ways
  * Consider adding KernelMiddleware if additional routine has to be performed on every [Transactor.changeAsync]
  */
+@OptIn(ExperimentalForInheritanceCoroutinesApi::class)
 suspend fun <T> withTransactor(
   middleware: TransactorMiddleware = TransactorMiddleware.Identity,
   defaultPart: Int = CommonPart,
@@ -353,6 +354,7 @@ suspend fun <T> withTransactor(
     val transactor = object : Transactor {
       override val middleware: TransactorMiddleware get() = middleware
 
+      @Deprecated("will be removed")
       override val meta: MutableOpenMap<Transactor> = OpenMap<Transactor>().mutable()
 
       override val dbState: StateFlow<DB>

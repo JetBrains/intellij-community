@@ -1,8 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.util
 
-import fleet.util.bifurcan.SortedMap
-import fleet.util.bifurcan.SortedSet
 import fleet.util.logging.KLogger
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
@@ -79,9 +77,6 @@ inline fun <T> Iterable<T>.takeTillFirst(crossinline predicate: (T) -> Boolean):
   return list
 }
 
-fun <T> IBifurcanVector<T>.asReversedSequence(): Sequence<T> {
-  return ((size() - 1) downTo 0L).asSequence().map { nth(it) }
-}
 
 inline fun <T, K> Sequence<T>.chunkedBy(crossinline selector: (T) -> K): Sequence<List<T>> {
   return sequence {
@@ -154,50 +149,6 @@ fun <T : Comparable<T>> max(c1: T, c2: T): T {
     x < 0 -> c2
     else -> c1
   }
-}
-
-fun <T> Iterable<T>.toSortedSet(comparator: Comparator<T>): SortedSet<T> {
-  val result = SortedMap<T, Unit?>(comparator).linear()
-  forEach { e -> result.put(e, Unit) }
-  return SortedSet<T>(result.forked())
-}
-
-fun <T : Comparable<T>> Iterable<T>.toSortedSet(): SortedSet<T> {
-  val result = SortedMap<T, Unit?>().linear()
-  forEach { e -> result.put(e, Unit) }
-  return SortedSet<T>(result.forked())
-}
-
-fun <K : Comparable<K>, V> Map<K, V>.toSortedMap(): SortedMap<K, V> {
-  return SortedMap.from(this)
-}
-
-fun <K, V> Map<out K, V>.toSortedMap(comparator: Comparator<K>): SortedMap<K, V> {
-  val result = SortedMap<K, V>(comparator).linear()
-  forEach { (key, value) -> result.put(key, value) }
-  return result.forked()
-}
-
-fun <K : Comparable<K>, V> sortedMapOf(vararg pairs: Pair<K, V>): SortedMap<K, V> {
-  val result = SortedMap<K, V>().linear()
-  pairs.forEach { (key, value) -> result.put(key, value) }
-  return result.forked()
-}
-
-fun <K : Comparable<K>, V> sortedMapOf(comparator: Comparator<K>): SortedMap<K, V> = SortedMap<K, V>(comparator)
-
-inline fun <K, V, R, M : SortedMap<in K, in R>> Map<out K, V>.mapValuesTo(destination: M, transform: (Map.Entry<K, V>) -> R): M {
-  return entries.associateByTo(destination, { it.key }, transform)
-}
-
-inline fun <T, K, V, M : SortedMap<in K, in V>> Iterable<T>.associateByTo(destination: M, keySelector: (T) -> K, valueTransform: (T) -> V): M {
-  val forked = destination.linear()
-  for (element in this) {
-    forked.put(keySelector(element), valueTransform(element))
-  }
-
-  @Suppress("UNCHECKED_CAST")
-  return forked.forked() as M
 }
 
 /**

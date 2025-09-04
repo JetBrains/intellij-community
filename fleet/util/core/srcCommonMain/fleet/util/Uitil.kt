@@ -10,9 +10,6 @@ import kotlinx.coroutines.job
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.reflect.KClass
 
-typealias BifurcanVector<T> = fleet.util.bifurcan.List<T>
-typealias IBifurcanVector<T> = fleet.util.bifurcan.List<T>
-
 fun <K, V : Any> PersistentMap<K, V>.update(k: K, f: (V?) -> V?): PersistentMap<K, V> {
   val vPrime = f(this[k])
   return when {
@@ -40,9 +37,6 @@ suspend fun <T> SendChannel<T>.trySendSuspending(t: T): Boolean {
   }
 }
 
-fun <V> List<V>.toBifurcan(): BifurcanVector<V> {
-  return BifurcanVector.from(this)
-}
 
 fun <T : Any> Throwable.causeOfType(klass: KClass<T>): T? {
   // TODO handle cycles
