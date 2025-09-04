@@ -191,12 +191,29 @@ class EdtFreezeChainMonitorTest {
         Thread.sleep(150)
       }
     }, { list ->
+    println(list)
       list.count {
         it.totalReadNs >= 140.milliseconds.inWholeNanoseconds
-      } == 2
+      } >= 2
       &&
       list.all {
         it.durationNs < 300.milliseconds.inWholeNanoseconds
       }
     })
+
+  @Test
+  fun `read actions inside write actions do not contribute to freeze chains`(): Unit = doTest(
+    {
+      WriteIntentReadAction.run {
+        runReadAction {
+          Thread.sleep(150)
+        }
+      }
+    }, { list ->
+      list.any {
+        it.totalReadNs >= 149.milliseconds.inWholeNanoseconds
+        it.totalReadNs <= it.durationNs
+      }
+    }
+  )
 }

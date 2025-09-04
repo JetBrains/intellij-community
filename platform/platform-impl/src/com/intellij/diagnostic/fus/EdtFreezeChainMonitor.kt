@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic.fus
 
+import com.intellij.diagnostic.UILatencyLogger
 import com.intellij.diagnostic.fus.EdtFreezeChainMonitor.Companion.CHAIN_MONITOR_WINDOW_MS
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationManagerEx
@@ -16,6 +17,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import java.util.*
+import java.util.concurrent.ConcurrentSkipListSet
 import kotlin.math.min
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.nanoseconds
@@ -50,7 +53,8 @@ class EdtFreezeChainMonitor(val scope: CoroutineScope) {
     private val CHAIN_MONITOR_WINDOW_MS = SystemProperties.getIntProperty("ui.freeze.chain.window.ms", 100)
     private val CHAIN_END_THRESHOLD_MS = SystemProperties.getIntProperty("ui.freeze.chain.threshold.ms", 50)
     private val REPORTABLE_CHAIN_DURATION_MS = SystemProperties.getIntProperty("ui.freeze.chain.reportable.duration.ms", 1000)
-
+    private val PRIORITY_QUEUE_MAX_SIZE = SystemProperties.getIntProperty("ui.freeze.chain.priority.queue.max.size", 1_000)
+    private val FUS_REPORTING_DELAY = SystemProperties.getIntProperty("ui.freeze.chain.fus.reporting.delay.ms", 120_000)
 
     @JvmStatic
     @TestOnly
@@ -86,6 +90,11 @@ class EdtFreezeChainMonitor(val scope: CoroutineScope) {
   // We compute freeze chains from precise EDT lock intervals using our own listener.
   private val listener = FreezeChainLockListener()
 
+  // We need to carefully debounce data to avoid reporting too much data
+  // We decided to store freeze chains in a bounded priority queue and report the most severe chain each two minutes.
+  // The queue is bounded, i.e. we remove the minimal element if there are too many reports.
+  private val priorityQueue: SortedSet<FreezeChainReport> = ConcurrentSkipListSet(compareBy { it.durationNs })
+
   init {
     // Register listeners to get intervals on EDT for read/write/write-intent
     val disposable = scope.asDisposable()
@@ -94,6 +103,7 @@ class EdtFreezeChainMonitor(val scope: CoroutineScope) {
     ApplicationManagerEx.getApplicationEx().addWriteIntentReadActionListener(listener, disposable)
     LaterInvocator.addModalityStateListener(listener, disposable)
     launchWakeupCoroutine()
+    launchReportingCoroutine()
   }
 
   /**
@@ -106,6 +116,27 @@ class EdtFreezeChainMonitor(val scope: CoroutineScope) {
         val nowNs = System.nanoTime()
         checkForChainEnd(nowNs)
         delay(windowMs().milliseconds)
+      }
+    }
+  }
+
+  fun launchReportingCoroutine() {
+    scope.launch(Dispatchers.IO) {
+      while (true) {
+        try {
+          val topReport = priorityQueue.removeLast()
+          UILatencyLogger.reportFreezeChain(
+            totalDuration = topReport.durationNs.nanoseconds,
+            readingDuration = topReport.totalReadNs.nanoseconds,
+            writingDuration = topReport.totalWriteNs.nanoseconds,
+            readingOperations = topReport.totalReadOps,
+            writingOperations = topReport.totalWriteOps,
+          )
+        }
+        catch (_: NoSuchElementException) {
+          // ignored, no freeze chains to report
+        }
+        delay(FUS_REPORTING_DELAY.milliseconds)
       }
     }
   }
@@ -306,6 +337,13 @@ class EdtFreezeChainMonitor(val scope: CoroutineScope) {
                          ))
   }
 
+  fun recordReportForFus(report: FreezeChainReport) {
+    while (priorityQueue.size >= PRIORITY_QUEUE_MAX_SIZE) {
+      priorityQueue.removeFirst()
+    }
+    priorityQueue.add(report)
+  }
+
   private fun updateChain(nowNs: Long) {
     val blockReport = blockedInLastWindow(nowNs)
     val thresholdNs = thresholdMs() * 1_000_000L
@@ -326,14 +364,17 @@ class EdtFreezeChainMonitor(val scope: CoroutineScope) {
         val duration = (nowNs - chainStartNs).nanoseconds
         if (duration.inWholeMilliseconds >= reportableMs()) { // avoid spurious tiny chains
           thisLogger().trace("Freeze chain detected: $duration (Read duration: ${totalReadInChainNs.nanoseconds}, $totalReadOps operations, Write duration: ${totalWriteInChainNs.nanoseconds}, $totalWriteOps operations)")
+          val report = FreezeChainReport(
+            durationNs = nowNs - chainStartNs,
+            totalReadNs = totalReadInChainNs,
+            totalWriteNs = totalWriteInChainNs,
+            totalReadOps = totalReadOps,
+            totalWriteOps = totalWriteOps,
+          )
+
+          recordReportForFus(report)
+
           testingConfig?.apply {
-            val report = FreezeChainReport(
-              durationNs = nowNs - chainStartNs,
-              totalReadNs = totalReadInChainNs,
-              totalWriteNs = totalWriteInChainNs,
-              totalReadOps = totalReadOps,
-              totalWriteOps = totalWriteOps,
-            )
             recordReport(report)
           }
         }
