@@ -117,17 +117,23 @@ public final class EventLogMetadataUtils {
     }
   }
 
-  public static Map<String, Long> dictionariesLastModified(@Nullable String serviceUrl, @NotNull String recorderId, @NotNull StatsConnectionSettings settings) {
-    if (isEmptyOrSpaces(serviceUrl)) return Map.of();
+  public static Map<String, Long> dictionariesLastModified(@Nullable String serviceUrl, @NotNull String recorderId, @NotNull StatsConnectionSettings settings)
+    throws EventLogMetadataLoadException {
+    if (isEmptyOrSpaces(serviceUrl)) {
+      throw new EventLogMetadataLoadException(EventLogMetadataLoadErrorType.EMPTY_SERVICE_URL);
+    }
 
     String baseUrl = serviceUrl + recorderId + "/";
     RemoteDictionaryList dictionaryList;
     try {
       StatsRequestResult<String> result = StatsHttpRequests.request( baseUrl + "dictionaries.json", settings).send(r -> r.readAsString());
+      if (!result.isSucceed()) {
+        throw new EventLogMetadataLoadException(EventLogMetadataLoadErrorType.UNREACHABLE_SERVICE, result.getError());
+      }
       dictionaryList = parseRemoteDictionaryList(result.getResult());
     }
     catch (StatsResponseException | IOException | EventLogMetadataParseException e) {
-      return Map.of();
+      throw new EventLogMetadataLoadException(EventLogMetadataLoadErrorType.ERROR_ON_LOAD, e);
     }
 
     Map<String, Long> lastModifiedMap = new HashMap<>();

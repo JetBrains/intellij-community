@@ -142,9 +142,27 @@ public class ValidationRulesPersistedStorage implements IntellijValidationRulesS
     }
   }
 
+  private Map<String, Long> getDictionariesModifiedOnServer() {
+    try {
+      return myMetadataLoader.getDictionariesLastModifiedOnServer(myRecorderId);
+    }
+    catch (EventLogMetadataLoadException e) {
+      eventLogSystemCollector.logDictionaryUpdateFailed(e);
+    }
+    return null;
+  }
+
   private void updateDictionaries() {
     var dictionariesLastModifiedLocally = myMetadataPersistence.getDictionariesLastModified();
-    var dictionariesLastModifiedOnServer = myMetadataLoader.getDictionariesLastModifiedOnServer(myRecorderId);
+    Map<String, Long> dictionariesLastModifiedOnServer = getDictionariesModifiedOnServer();
+
+    if (dictionariesLastModifiedOnServer == null) {
+      if (LOG.isTraceEnabled()) {
+        LOG.trace("Error occurred loading dictionaries list from server");
+      }
+      return;
+    }
+
     if (LOG.isTraceEnabled()) {
       LOG.trace(
         "Loading dictionaries, last modified cached=" + dictionariesLastModifiedLocally +
