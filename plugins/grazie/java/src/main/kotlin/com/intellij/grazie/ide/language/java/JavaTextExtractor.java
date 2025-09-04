@@ -58,6 +58,7 @@ public class JavaTextExtractor extends TextExtractor {
     }
 
     if (root instanceof PsiCommentImpl && allowedDomains.contains(COMMENTS)) {
+      if (root.getTextLength() == 2) return List.of();
       List<PsiElement> roots = PsiUtilsKt.getNotSoDistantSimilarSiblings(root, e ->
         JAVA_PLAIN_COMMENT_BIT_SET.contains(PsiUtilCore.getElementType(e)));
       return ContainerUtil.createMaybeSingletonList(

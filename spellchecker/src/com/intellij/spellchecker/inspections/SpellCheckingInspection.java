@@ -133,8 +133,7 @@ public final class SpellCheckingInspection extends LocalInspectionTool implement
                        @NotNull SpellcheckingStrategy strategy,
                        @NotNull ProblemsHolder holder) {
     SpellCheckingResult result = SpellcheckingExtension.Companion.spellcheck(
-      element,
-      session,
+      element, strategy, session,
       typo -> {
         if (hasSameNamedReferenceInFile(typo.getWord(), element, strategy)) return;
         registerProblem(typo, holder);
