@@ -54,6 +54,25 @@ public abstract class AutoPopupController {
     return project.getService(AutoPopupController.class);
   }
 
+  public abstract void scheduleAutoPopup(@NotNull Editor editor);
+
+  public final void scheduleAutoPopup(@NotNull Editor editor,
+                                      @Nullable Condition<? super PsiFile> condition) {
+    scheduleAutoPopup(editor, CompletionType.BASIC, condition);
+  }
+
+  public abstract void scheduleAutoPopup(@NotNull Editor editor,
+                                         @NotNull CompletionType completionType,
+                                         @Nullable Condition<? super PsiFile> condition);
+
+  public abstract void cancelAllRequests();
+
+  public abstract void autoPopupParameterInfo(@NotNull Editor editor, @Nullable PsiElement highlightedMethod);
+
+  @TestOnly
+  public abstract void waitForDelayedActions(long timeout, @NotNull TimeUnit unit) throws TimeoutException;
+
+  //region Deprecated methods
 
   /**
    * @deprecated The name of the method is misleading.
@@ -70,21 +89,5 @@ public abstract class AutoPopupController {
   public abstract void autoPopupMemberLookup(@NotNull Editor editor,
                                              @NotNull CompletionType completionType,
                                              @Nullable Condition<? super PsiFile> condition);
-
-  public final void scheduleAutoPopup(@NotNull Editor editor, @Nullable Condition<? super PsiFile> condition) {
-    scheduleAutoPopup(editor, CompletionType.BASIC, condition);
-  }
-
-  public abstract void scheduleAutoPopup(@NotNull Editor editor,
-                                         @NotNull CompletionType completionType,
-                                         @Nullable Condition<? super PsiFile> condition);
-
-  public abstract void scheduleAutoPopup(@NotNull Editor editor);
-
-  public abstract void cancelAllRequests();
-
-  public abstract void autoPopupParameterInfo(@NotNull Editor editor, @Nullable PsiElement highlightedMethod);
-
-  @TestOnly
-  public abstract void waitForDelayedActions(long timeout, @NotNull TimeUnit unit) throws TimeoutException;
+  //endregion
 }
