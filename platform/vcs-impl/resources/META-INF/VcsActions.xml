@@ -130,8 +130,6 @@
             icon="AllIcons.Actions.Rollback"/>
     <action id="ChangesView.RevertFiles" class="com.intellij.openapi.vcs.changes.actions.RollbackFilesAction"/>
 
-    <group id="ChangesView.ViewOptions"/>
-
     <group id="ChangesView.GroupBy" icon="AllIcons.Actions.GroupBy" popup="true"
            class="com.intellij.openapi.vcs.changes.actions.SelectChangesGroupingActionGroup">
       <separator key="group.ChangesView.GroupBy.text"/>
@@ -707,5 +705,12 @@
     <action id="Vcs.Commit.CloseDialog"
             class="com.intellij.openapi.vcs.changes.actions.CloseCommitDialogAction"
             use-shortcut-of="EditorEscape"/>
+
+    <!-- TODO move to shared -->
+    <group id="ChangesView.ViewOptions" icon="AllIcons.Actions.Show" popup="true">
+      <reference ref="ChangesView.GroupBy"/>
+      <separator key="action.vcs.log.show.separator"/>
+      <action class="com.intellij.platform.vcs.impl.shared.changes.ToggleShowIgnoredAction"/>
+    </group>
   </actions>
 </idea-plugin>

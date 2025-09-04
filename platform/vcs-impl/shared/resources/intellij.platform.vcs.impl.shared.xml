@@ -15,6 +15,9 @@
     <registryKey key="vcs.rd.local.changes.enabled" defaultValue="false" restartRequired="true"
                  description="RD-friendly local changes view"/>
 
+    <projectService serviceInterface="com.intellij.platform.vcs.impl.shared.changes.ChangesViewSettings"
+                    serviceImplementation="com.intellij.platform.vcs.impl.shared.changes.ChangesViewSettingsImpl"/>
+
     <projectService serviceImplementation="com.intellij.openapi.vcs.IssueNavigationConfiguration"/>
     <projectSettings service="com.intellij.openapi.vcs.IssueNavigationConfiguration"/>
     <rdct.remoteSettingProvider implementation="com.intellij.platform.vcs.impl.shared.VcsRemoteSettingsInfoProvider"/>
