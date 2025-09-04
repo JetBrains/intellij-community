@@ -26,14 +26,6 @@ fun <T> constantly(f: () -> T): () -> T {
   return { r }
 }
 
-fun IBifurcanVector<*>.isEmpty(): Boolean {
-  return size() == 0L
-}
-
-fun IBifurcanVector<*>.isNotEmpty(): Boolean {
-  return !isEmpty()
-}
-
 suspend fun <T> SendChannel<T>.trySendSuspending(t: T): Boolean {
   return try {
     send(t)
