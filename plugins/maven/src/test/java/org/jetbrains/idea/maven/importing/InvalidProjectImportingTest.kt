@@ -1008,12 +1008,6 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
     assertProblems(root, "'settings.xml' has syntax errors")
   }
 
-  private val modulesTag: String
-    get() = if(isModel410()) "subprojects" else "modules"
-
-  private val moduleTag: String
-    get() = if(isModel410()) "subproject" else "module"
-
   private val rootProjects: List<MavenProject>
     get() = projectsTree.rootProjects
 

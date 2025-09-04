@@ -54,6 +54,12 @@ abstract class MavenMultiVersionImportingTestCase : MavenImportingTestCase() {
   @JvmField
   var myMavenModelVersion: String? = null
 
+  protected val modulesTag: String
+    get() = if(isModel410()) "subprojects" else "modules"
+
+  protected val moduleTag: String
+    get() = if(isModel410()) "subproject" else "module"
+
   protected var myWrapperTestFixture: MavenWrapperTestFixture? = null
 
   protected fun assumeVersionMoreThan(version: String) {
