@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
+import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
@@ -25,6 +26,9 @@ public final class JavaVirtualFileQualifiedNameProvider implements VirtualFileQu
     ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
     VirtualFile sourceRoot = index.getSourceRootForFile(virtualFile);
     if (sourceRoot != null && !sourceRoot.equals(virtualFile)) {
+      if (virtualFile instanceof VirtualFileWindow window) {
+        virtualFile = window.getDelegate();
+      }
       return Objects.requireNonNull(VfsUtilCore.getRelativePath(virtualFile, sourceRoot, '/'));
     }
 
