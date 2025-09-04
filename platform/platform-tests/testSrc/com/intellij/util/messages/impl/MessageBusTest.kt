@@ -13,6 +13,10 @@ import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.messages.MessageBus
 import com.intellij.util.messages.MessageBusOwner
 import com.intellij.util.messages.Topic
+import io.kotest.common.runBlocking
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withTimeout
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Fail
 import org.junit.jupiter.api.AfterEach
@@ -21,12 +25,11 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Future
-import java.util.concurrent.Semaphore
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Predicate
 import kotlin.coroutines.cancellation.CancellationException
+import kotlin.time.Duration.Companion.seconds
 
 private val TOPIC1 = Topic("T1", MessageBusTest.T1Listener::class.java, Topic.BroadcastDirection.TO_CHILDREN)
 private val TOPIC2 = Topic("T2", MessageBusTest.T2Listener::class.java, Topic.BroadcastDirection.TO_CHILDREN)
@@ -461,8 +464,8 @@ class MessageBusTest : MessageBusOwner {
   }
 
   @Test
-  fun scheduleEmptyConnectionRemoval() {
-    // this counter serves as a proxy to number of iterations inside the compaction task loop in root bus:
+  fun scheduleEmptyConnectionRemoval() = runBlocking<Unit> {
+    // this counter serves as a proxy to a number of iterations inside the compaction task loop in root bus:
     var compactionIterationCount = 0
     object : MessageBusImpl(this@MessageBusTest, bus) {
       override fun removeEmptyConnectionsRecursively() {
@@ -470,19 +473,16 @@ class MessageBusTest : MessageBusOwner {
       }
     }
 
-    // this child bus will block removal so that we can run asserts
-    val slowRemovalStarted = Semaphore(1)
+    // this child bus will block removal so that we can run assertions
+    val slowRemovalStarted = kotlinx.coroutines.sync.Semaphore(1)
     slowRemovalStarted.acquire()
     val slowRemovalCanFinish = CountDownLatch(1)
     object : MessageBusImpl(this@MessageBusTest, bus) {
       override fun removeEmptyConnectionsRecursively() {
-        slowRemovalStarted.release() // signal that slow removal has started
-        try {
-          slowRemovalCanFinish.await() // block until the test allows us to finish
-        }
-        catch (e: InterruptedException) {
-          throw RuntimeException(e)
-        }
+        // signal that slow removal has started
+        slowRemovalStarted.release()
+        // block until the test allows us to finish
+        slowRemovalCanFinish.await()
       }
     }
 
@@ -497,8 +497,8 @@ class MessageBusTest : MessageBusOwner {
     }
     assertThat(compactionIterationCount).isEqualTo(1)
 
-    // now compaction task is blocked in slow remove, schedule more compaction requests:
-    repeat(callCountToTriggerRemoval) {
+    // now the compaction task is blocked in slow remove, schedule more compaction requests:
+    repeat(10 * callCountToTriggerRemoval) {
       bus.scheduleEmptyConnectionRemoving()
     }
 
@@ -508,13 +508,21 @@ class MessageBusTest : MessageBusOwner {
     // allow slow removal to finish:
     slowRemovalCanFinish.countDown()
 
-    // wait until slow removal will finish one more time: we requested removal several times,
+    // wait until slow removal finishes one more time: we requested removal several times,
     // so we need one more loop iteration to handle pending removal requests
-    if (!slowRemovalStarted.tryAcquire(30, TimeUnit.SECONDS)) {
-      Fail.fail<Any>("Compaction requests were not served in 30 seconds")
+    try {
+      withTimeout(30.seconds) {
+        slowRemovalStarted.acquire()
+      }
     }
-    Thread.sleep(50) // give compaction task a chance to do more iterations
-    assertThat(compactionIterationCount).isEqualTo(2) // only one additional iteration is needed to handle pending removal requests
+    catch (e: TimeoutCancellationException) {
+      throw AssertionError("Compaction requests were not served in 30 seconds", e)
+    }
+
+    // give compaction task a chance to do more iterations
+    delay(50)
+    // only one additional iteration is needed to handle pending removal requests
+    assertThat(compactionIterationCount).isEqualTo(2)
   }
 
   @Test
