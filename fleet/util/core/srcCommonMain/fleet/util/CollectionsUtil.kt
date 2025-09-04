@@ -142,13 +142,9 @@ fun <T> List<T>.zipWithIndex(): List<IndexedValue<T>> {
   }
 }
 
+@Deprecated(replaceWith = ReplaceWith("maxOf(c1, c2)"), message = "use kotlin stdlib")
 fun <T : Comparable<T>> max(c1: T, c2: T): T {
-  val x = c1.compareTo(c2)
-  return when {
-    x == 0 -> c1
-    x < 0 -> c2
-    else -> c1
-  }
+  return maxOf(c1, c2)
 }
 
 /**
