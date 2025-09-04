@@ -143,11 +143,6 @@ public class AutoPopupControllerImpl extends AutoPopupController {
   }
 
   @Override
-  public void scheduleAutoPopup(@NotNull Editor editor) {
-    scheduleAutoPopup(editor, CompletionType.BASIC, null);
-  }
-
-  @Override
   public void cancelAllRequests() {
     myAlarm.cancelAllRequests();
   }

@@ -54,7 +54,9 @@ public abstract class AutoPopupController {
     return project.getService(AutoPopupController.class);
   }
 
-  public abstract void scheduleAutoPopup(@NotNull Editor editor);
+  public final void scheduleAutoPopup(@NotNull Editor editor) {
+    scheduleAutoPopup(editor, CompletionType.BASIC, null);
+  }
 
   public final void scheduleAutoPopup(@NotNull Editor editor,
                                       @Nullable Condition<? super PsiFile> condition) {
