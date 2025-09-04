@@ -1086,7 +1086,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     for (rootDescriptor in getInstalledAndPendingPlugins()) {
       val pluginId: PluginId = rootDescriptor.getPluginId()
       session.dependentToRequiredListMap.remove(pluginId)
-      if (session.uninstalledPlugins.contains(rootDescriptor.pluginId) || session.isPluginDisabled(pluginId)) {
+      if (session.uninstalledPlugins.contains(rootDescriptor.pluginId) || !session.isPluginEnabled(pluginId)) {
         continue
       }
 

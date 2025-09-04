@@ -127,7 +127,7 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
     applyResult.pluginsToEnable.forEach { id -> super.setEnabled(id, PluginEnabledState.ENABLED) }
     myUninstalled.clear()
     updateButtons(applyResult)
-    myPluginManagerCustomizer?.updateAfterModification { }
+    myPluginManagerCustomizer?.updateAfterModificationAsync {}
     return !applyResult.needRestart
   }
 
@@ -906,6 +906,7 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
         }
       }
       else {
+        removeProgresses(descriptor)
         updateUiAfterUninstall(descriptor, needRestartForUninstall, errors)
         callback?.run()
       }
