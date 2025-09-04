@@ -8,6 +8,8 @@ import com.intellij.platform.syntax.impl.builder.CompositeMarker
 import com.intellij.platform.syntax.parser.ProductionMarkerList
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilder
 import com.intellij.platform.syntax.parser.prepareProduction
+import com.intellij.util.fastutil.ints.IntArrayList
+import com.intellij.util.fastutil.ints.pop
 import org.jetbrains.annotations.ApiStatus
 
 fun SyntaxTreeBuilder.toAstMarkers(): ASTMarkers {
@@ -33,8 +35,8 @@ private class AstMarkerBuilder(
     return astMarkersResult
   }
 
-  private val nodeProductionIndices = IntStack()
-  private val astTreeIndices = IntStack()
+  private val nodeProductionIndices = IntArrayList()
+  private val astTreeIndices = IntArrayList()
 
   private var lastErrorLexemeIndex = -1
 
@@ -82,8 +84,8 @@ private class AstMarkerBuilder(
       astMarkersResult.setChameleon(item.startIndex, newChameleonRef())
       isInsideChameleon = true
     }
-    astTreeIndices.push(astTreeIndex)
-    nodeProductionIndices.push(i)
+    astTreeIndices.add(astTreeIndex)
+    nodeProductionIndices.add(i)
   }
 
   private fun processErrorMarker(item: SyntaxTreeBuilder.Production, i: Int) {
@@ -153,40 +155,6 @@ private class AstMarkerBuilder(
     }
   }
 }
-
-private class IntStack(initialCapacity: Int = 5) {
-  private var data = IntArray(initialCapacity)
-  var size = 0
-    private set
-
-  fun push(t: Int) {
-    if (size >= data.size) {
-      data = realloc(data, data.size * 3 / 2)
-    }
-    data[size] = t
-    size++
-  }
-
-  fun peek(): Int = if (size == 0) error("Stack is empty")
-  else data[size - 1]
-
-  fun pop(): Int = peek().also { size-- }
-
-  operator fun get(index: Int): Int = if (index !in 0 until size) {
-    throw IndexOutOfBoundsException("Index out of bounds: $index")
-  }
-  else data[index]
-
-  override fun toString(): String = data.copyOf(size).contentToString()
-}
-
-private fun realloc(array: IntArray, newSize: Int): IntArray = when (newSize) {
-  0 -> EMPTY_INT_ARRAY
-  array.size -> array
-  else -> array.copyOf(newSize)
-}
-
-private val EMPTY_INT_ARRAY = IntArray(0)
 
 private fun ProductionMarkerList.getLexemeIndexAt(productionIndex: Int): Int {
   val marker = getMarker(productionIndex)
