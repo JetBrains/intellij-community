@@ -22,9 +22,6 @@ public final class JavaSpellcheckingStrategy extends SpellcheckingStrategy imple
 
   @Override
   public @NotNull Tokenizer getTokenizer(PsiElement element) {
-    if (element instanceof PsiWhiteSpace) {
-      return EMPTY_TOKENIZER;
-    }
     if (element instanceof PsiMethod) {
       return myMethodNameTokenizer;
     }

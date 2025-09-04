@@ -15,6 +15,7 @@ import com.intellij.psi.impl.source.javadoc.PsiDocTagImpl;
 import com.intellij.psi.impl.source.tree.PsiCommentImpl;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiInlineDocTag;
+import com.intellij.psi.javadoc.PsiMarkdownCodeBlock;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiLiteralUtil;
 import com.intellij.psi.util.PsiUtilCore;
@@ -36,6 +37,7 @@ import static com.intellij.psi.impl.source.tree.JavaDocElementType.DOC_REFERENCE
 public class JavaTextExtractor extends TextExtractor {
   private static final TokenSet EXCLUDED =
     TokenSet.create(DOC_COMMENT_START, DOC_COMMENT_LEADING_ASTERISKS, DOC_COMMENT_END, DOC_PARAMETER_REF, DOC_REFERENCE_HOLDER);
+
   private static final TextContentBuilder javadocBuilder = TextContentBuilder.FromPsi
     .withUnknown(e -> e instanceof PsiInlineDocTag)
     .excluding(e -> EXCLUDED.contains(PsiUtilCore.getElementType(e)))
@@ -45,7 +47,10 @@ public class JavaTextExtractor extends TextExtractor {
   public @NotNull List<TextContent> buildTextContents(@NotNull PsiElement root, @NotNull Set<TextContent.TextDomain> allowedDomains) {
     if (allowedDomains.contains(DOCUMENTATION)) {
       if (root instanceof PsiDocComment) {
-        return HtmlUtilsKt.excludeHtml(javadocBuilder.excluding(e -> e instanceof PsiDocTagImpl).build(root, DOCUMENTATION));
+        return HtmlUtilsKt.excludeHtml(
+          javadocBuilder.excluding(e -> e instanceof PsiDocTagImpl || e instanceof PsiMarkdownCodeBlock)
+            .build(root, DOCUMENTATION)
+        );
       }
       if (root instanceof PsiDocTagImpl) {
         return HtmlUtilsKt.excludeHtml(javadocBuilder.build(root, DOCUMENTATION));
