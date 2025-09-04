@@ -41,7 +41,7 @@ internal class IntelliJPrePushHandler : IssueIDPrePushHandler() {
 }
 
 internal class IntelliJPlatformPrePushHandler : IssueIDPrePushHandler() {
-  override val paths: List<String> = listOf("/community/platform/")
+  override val paths: List<String> = listOf("/community/platform/", "remote-dev")
   override val pathsToIgnore: List<String> = listOf()
   override val commitMessageRegex = Regex("""(?:^|.*[^-A-Z0-9])[A-Z]+-(?:[A-Z]+-)?\d+.*""", RegexOption.DOT_MATCHES_ALL)
   override val ignorePattern = Regex("""^(?:\[.+\] ?)?\[?(?:tests?|cleanup|docs?|typo|refactor(?:ing)?|format|style|testFramework|test framework)\]?.*\s.*[A-Z0-9].*""", RegexOption.IGNORE_CASE)
