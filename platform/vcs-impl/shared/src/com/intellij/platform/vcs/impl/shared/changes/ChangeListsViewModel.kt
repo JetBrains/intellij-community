@@ -6,11 +6,11 @@ import com.intellij.openapi.application.UI
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.changes.ChangeList
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.projectIdOrNull
 import com.intellij.platform.vcs.changes.ChangeListManagerState
+import com.intellij.platform.vcs.impl.shared.RdLocalChanges
 import com.intellij.platform.vcs.impl.shared.rpc.ChangeListsApi
 import com.intellij.util.cancelOnDispose
 import kotlinx.coroutines.CoroutineScope
@@ -49,7 +49,7 @@ class ChangeListsViewModel(
   }
 
   private fun <T> changeListsApiFlow(checkRegistry: Boolean = true, flowProducer: suspend FlowCollector<T>.(ChangeListsApi, ProjectId) -> Unit): Flow<T> =
-    if (checkRegistry && !Registry.`is`("vcs.rd.local.changes.enabled")) emptyFlow()
+    if (checkRegistry && !RdLocalChanges.isEnabled()) emptyFlow()
     else flow {
       val projectId = project.projectIdOrNull() ?: return@flow
       val api = ChangeListsApi.getInstance()

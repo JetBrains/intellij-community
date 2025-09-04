@@ -7,13 +7,13 @@ import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.changes.ChangesViewPanel
 import com.intellij.openapi.vcs.changes.ChangesViewPanelActions
 import com.intellij.openapi.vcs.changes.LocalChangesListView
 import com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactory
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder
+import com.intellij.platform.vcs.impl.shared.RdLocalChanges
 import com.intellij.platform.vcs.impl.shared.changes.ChangeListsViewModel
 import com.intellij.ui.content.Content
 import com.intellij.util.cancelOnDispose
@@ -26,7 +26,7 @@ import javax.swing.tree.DefaultTreeModel
 internal class LocalChangesViewContentProvider : FrontendChangesViewContentProvider {
   override fun matchesTabName(tabName: @NonNls String): Boolean = tabName == "Local Changes" || tabName == "Commit"
 
-  override fun isAvailable(project: Project): Boolean = Registry.`is`("vcs.rd.local.changes.enabled")
+  override fun isAvailable(project: Project): Boolean = RdLocalChanges.isEnabled()
 
   override fun initTabContent(project: Project, content: Content) {
     val tree = LocalChangesListView(project)
