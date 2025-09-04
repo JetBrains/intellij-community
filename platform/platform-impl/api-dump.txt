@@ -1355,6 +1355,7 @@ com.intellij.ui.popup.list.FilterableListPopupStep
 - a:updateFilter(java.lang.String):V
 f:com.intellij.ui.render.RenderersKt
 f:com.intellij.ui.render.RenderingHelper
+- sf:RESIZE_EDITOR_TO_RENDERER_SIZE:com.intellij.openapi.util.Key
 - sf:SHRINK_LONG_RENDERER:com.intellij.openapi.util.Key
 - sf:SHRINK_LONG_SELECTION:com.intellij.openapi.util.Key
 - getHeight():I
@@ -1439,6 +1440,7 @@ c:com.intellij.ui.tree.ui.DefaultTreeUI
 - p:getRowX(I,I):I
 - p:installDefaults():V
 - p:installKeyboardActions():V
+- p:installListeners():V
 - isEditing(javax.swing.JTree):Z
 - p:isLocationInExpandControl(javax.swing.tree.TreePath,I,I):Z
 - p:isToggleEvent(java.awt.event.MouseEvent):Z
@@ -1446,9 +1448,11 @@ c:com.intellij.ui.tree.ui.DefaultTreeUI
 - p:setLargeModel(Z):V
 - p:setModel(javax.swing.tree.TreeModel):V
 - p:setRootVisible(Z):V
+- p:startEditing(javax.swing.tree.TreePath,java.awt.event.MouseEvent):Z
 - startEditingAtPath(javax.swing.JTree,javax.swing.tree.TreePath):V
 - stopEditing(javax.swing.JTree):Z
 - p:toggleExpandState(javax.swing.tree.TreePath):V
+- p:uninstallListeners():V
 - p:updateCachedPreferredSize():V
 - p:updateSize():V
 com.intellij.ui.tree.ui.PlainSelectionTree

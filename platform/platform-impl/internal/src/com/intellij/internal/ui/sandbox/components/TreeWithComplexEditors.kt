@@ -3,7 +3,9 @@ package com.intellij.internal.ui.sandbox.components
 
 import com.intellij.internal.ui.sandbox.UISandboxPanel
 import com.intellij.openapi.Disposable
+import com.intellij.ui.ClientProperty
 import com.intellij.ui.ScrollPaneFactory
+import com.intellij.ui.render.RenderingHelper
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.tree.TreeUtil
@@ -21,6 +23,7 @@ internal class TreeWithComplexEditors : UISandboxPanel {
 
   override fun createContent(disposable: Disposable): JComponent {
     val tree = Tree(createModel())
+    ClientProperty.put(tree, RenderingHelper.RESIZE_EDITOR_TO_RENDERER_SIZE, true)
     tree.cellRenderer = ComplexCellRenderer()
     tree.cellEditor = ComplexCellEditor()
     tree.invokesStopCellEditing = true

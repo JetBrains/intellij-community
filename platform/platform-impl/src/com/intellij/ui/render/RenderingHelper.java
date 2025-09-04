@@ -29,6 +29,18 @@ public final class RenderingHelper {
    */
   public static final Key<Boolean> SHRINK_LONG_SELECTION = Key.create("SHRINK_LONG_SELECTION");
 
+  /**
+   * This property can be set to a tree to force it to resize editor components to have the same size as renderers.
+   * 
+   * <p>
+   *   It's particularly useful when the editor is implemented using the same components as the renderer,
+   *   so it's desirable that the visual representation doesn't suddenly change size when editing starts / stops.
+   * </p>
+   *
+   * @see ClientProperty#put(JComponent, Key, Object)
+   */
+  public static final Key<Boolean> RESIZE_EDITOR_TO_RENDERER_SIZE = Key.create("RESIZE_EDITOR_TO_RENDERER_SIZE");
+
   private final Rectangle myViewBounds;
   private final int myHintIndex;
   private int myRightMargin;

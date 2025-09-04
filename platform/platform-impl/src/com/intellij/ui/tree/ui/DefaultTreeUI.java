@@ -844,6 +844,52 @@ public class DefaultTreeUI extends BasicTreeUI implements TreeUiBulkExpandCollap
       }
     }
   }
+  
+  private @Nullable ComponentListener resizeListener;
+
+  @Override
+  protected void installListeners() {
+    super.installListeners();
+    if (resizeListener == null) {
+      resizeListener = new ComponentAdapter() {
+        @Override
+        public void componentResized(ComponentEvent e) {
+          resizeEditorIfNeeded();
+        }
+      };
+    }
+    tree.addComponentListener(resizeListener);
+  }
+
+  @Override
+  protected void uninstallListeners() {
+    tree.removeComponentListener(resizeListener);
+    super.uninstallListeners();
+  }
+
+  @Override
+  protected boolean startEditing(TreePath path, MouseEvent event) {
+    var started = super.startEditing(path, event);
+    resizeEditorIfNeeded();
+    return started;
+  }
+
+  private void resizeEditorIfNeeded() {
+    if ( // not all of these are possible, but let's stay on the safe side
+      editingComponent == null ||
+      tree == null ||
+      editingPath == null ||
+      !ClientProperty.isTrue(tree, RenderingHelper.RESIZE_EDITOR_TO_RENDERER_SIZE)
+    ) {
+      return;
+    }
+    var bounds = getActualPathBounds(tree, editingPath);
+    if (bounds != null) {
+      editingComponent.setSize(bounds.getSize());
+      editingComponent.revalidate();
+      editingComponent.repaint();
+    }
+  }
 
   @Override
   protected MouseListener createMouseListener() {
