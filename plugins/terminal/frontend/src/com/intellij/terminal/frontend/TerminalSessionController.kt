@@ -7,7 +7,6 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.project.Project
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.frontend.hyperlinks.FrontendTerminalHyperlinkFacade
 import com.intellij.terminal.session.*
@@ -120,21 +119,21 @@ internal class TerminalSessionController(
       TerminalPromptStartedEvent -> {
         withContext(edtContext) {
           outputModelController.applyPendingUpdates()
-          blocksModel.promptStarted(outputModelController.model.cursorOffsetState.value)
+          blocksModel.promptStarted(outputModelController.model.cursorOffsetState.value.toRelative())
         }
         shellIntegrationEventDispatcher.multicaster.promptStarted()
       }
       TerminalPromptFinishedEvent -> {
         withContext(edtContext) {
           outputModelController.applyPendingUpdates()
-          blocksModel.promptFinished(outputModelController.model.cursorOffsetState.value)
+          blocksModel.promptFinished(outputModelController.model.cursorOffsetState.value.toRelative())
         }
         shellIntegrationEventDispatcher.multicaster.promptFinished()
       }
       is TerminalCommandStartedEvent -> {
         withContext(edtContext) {
           outputModelController.applyPendingUpdates()
-          blocksModel.commandStarted(outputModelController.model.cursorOffsetState.value)
+          blocksModel.commandStarted(outputModelController.model.cursorOffsetState.value.toRelative())
         }
         shellIntegrationEventDispatcher.multicaster.commandStarted(event.command)
       }

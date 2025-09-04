@@ -45,7 +45,7 @@ internal class TerminalCursorPainter private constructor(
   private var cursorPaintingJob: Job? = null
 
   private var curCursorState: CursorState = CursorState(
-    offset = outputModel.cursorOffsetState.value,
+    offset = outputModel.cursorOffsetState.value.toRelative(),
     isFocused = editor.contentComponent.hasFocus(),
     isCursorVisible = sessionModel.terminalState.value.isCursorVisible,
     cursorShape = sessionModel.terminalState.value.cursorShape,
@@ -56,7 +56,7 @@ internal class TerminalCursorPainter private constructor(
 
     coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
       outputModel.cursorOffsetState.collect { offset ->
-        curCursorState = curCursorState.copy(offset = offset)
+        curCursorState = curCursorState.copy(offset = offset.toRelative())
         updateCursor(curCursorState)
       }
     }
@@ -105,7 +105,7 @@ internal class TerminalCursorPainter private constructor(
         // but it may not have been collected yet,
         // because the collector might be called in an invokeLater by the coroutine dispatcher.
         // Therefore, the flow is guaranteed to have the correct value, but curCursorState is not.
-        curCursorState = curCursorState.copy(offset = outputModel.cursorOffsetState.value)
+        curCursorState = curCursorState.copy(offset = outputModel.cursorOffsetState.value.toRelative())
         updateCursor(curCursorState)
       }
     })

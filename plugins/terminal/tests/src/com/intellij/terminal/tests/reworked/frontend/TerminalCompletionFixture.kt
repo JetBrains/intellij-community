@@ -106,7 +106,7 @@ class TerminalCompletionFixture(val project: Project, val testRootDisposable: Di
       KeyEvent.KEY_LOCATION_STANDARD
     )
     view.outputEditorEventsHandler.keyPressed(TimedKeyEvent(keyPressEvent, TimeSource.Monotonic.markNow()))
-    val offset = view.outputModel.cursorOffsetState.value
+    val offset = view.outputModel.cursorOffsetState.value.toRelative()
     val newOffset = when (keycode) {
       KeyEvent.VK_LEFT -> offset - 1
       KeyEvent.VK_RIGHT -> offset + 1

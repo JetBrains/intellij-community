@@ -36,6 +36,7 @@ import com.intellij.util.ui.components.BorderLayoutPanel
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TtyConnector
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.map
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.terminal.TerminalPanelMarker
@@ -421,10 +422,10 @@ class ReworkedTerminalView(
       editor,
       coroutineScope = coroutineScope.childScope("TerminalInputMethodSupport"),
       getCaretPosition = {
-        val offset = model.cursorOffsetState.value
+        val offset = model.cursorOffsetState.value.toRelative()
         editor.offsetToLogicalPosition(offset)
       },
-      cursorOffsetFlow = model.cursorOffsetState,
+      cursorOffsetFlow = model.cursorOffsetState.map { it.toRelative() },
       sendInputString = { text -> terminalInput.sendString(text) },
     )
 
@@ -469,12 +470,13 @@ class ReworkedTerminalView(
         if (isTypeAhead) {
           // Trim because of differing whitespace between terminal and type ahead
           commandText = curCommandText
-          editor.caretModel.moveToOffset(outputModel.cursorOffsetState.value + 1)
+          val newCursorOffset = outputModel.cursorOffsetState.value.toRelative() + 1
+          editor.caretModel.moveToOffset(newCursorOffset)
           inlineCompletionTypingSession?.ignoreDocumentChanges = true
           inlineCompletionTypingSession?.endTypingSession(editor)
-          cursorPosition = outputModel.cursorOffsetState.value + 1
+          cursorPosition = newCursorOffset
         }
-        else if (commandText != null && (curCommandText != commandText || cursorPosition != outputModel.cursorOffsetState.value)) {
+        else if (commandText != null && (curCommandText != commandText || cursorPosition != outputModel.cursorOffsetState.value.toRelative())) {
           inlineCompletionTypingSession?.ignoreDocumentChanges = false
           inlineCompletionTypingSession?.collectTypedCharOrInvalidateSession(MockDocumentEvent(editor.document, 0), editor)
           commandText = null

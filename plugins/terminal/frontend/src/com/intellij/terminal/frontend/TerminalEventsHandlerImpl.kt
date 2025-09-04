@@ -91,8 +91,9 @@ internal open class TerminalEventsHandlerImpl(
     val lookup = LookupManager.getActiveLookup(editor)
     // Added to guarantee that the carets are synchronized after type-ahead.
     // Essential for correct lookup behavior.
-    val moveCaretAction = { editor.caretModel.moveToOffset(outputModel.cursorOffsetState.value) }
-    if (editor.caretModel.offset != outputModel.cursorOffsetState.value) {
+    val expectedCaretOffset = outputModel.cursorOffsetState.value.toRelative()
+    val moveCaretAction = { editor.caretModel.moveToOffset(expectedCaretOffset) }
+    if (editor.caretModel.offset != expectedCaretOffset) {
       if (lookup != null) {
         lookup.performGuardedChange(moveCaretAction)
       }
@@ -193,7 +194,7 @@ internal open class TerminalEventsHandlerImpl(
     val typedString = keyChar.toString()
     if (e.original.id == KeyEvent.KEY_TYPED) {
       val inlineCompletionTypingSession = InlineCompletion.getHandlerOrNull(editor)?.typingSessionTracker
-      editor.caretModel.moveToOffset(outputModel.cursorOffsetState.value)
+      editor.caretModel.moveToOffset(outputModel.cursorOffsetState.value.toRelative())
       inlineCompletionTypingSession?.startTypingSession(editor)
 
       typeAhead?.type(typedString)
@@ -239,7 +240,7 @@ internal open class TerminalEventsHandlerImpl(
 
   private fun updateLookupOnAction(keycode: Int) {
     val caret = editor.getCaretModel().getCurrentCaret()
-    val offset = outputModel.cursorOffsetState.value
+    val offset = outputModel.cursorOffsetState.value.toRelative()
     val lookup = LookupManager.getActiveLookup(editor) as LookupImpl?
     if (lookup == null) {
       return

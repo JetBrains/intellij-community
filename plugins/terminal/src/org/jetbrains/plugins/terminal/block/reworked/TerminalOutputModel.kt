@@ -24,7 +24,7 @@ interface TerminalOutputModel {
   /**
    * Offset in the document where the cursor is located now.
    */
-  val cursorOffsetState: StateFlow<Int>
+  val cursorOffsetState: StateFlow<TerminalOffset>
 
   fun freeze(): FrozenTerminalOutputModel
 
@@ -83,7 +83,7 @@ interface TerminalOutputModel {
 interface FrozenTerminalOutputModel {
   val document: FrozenDocument
 
-  val cursorOffset: Int
+  val cursorOffset: TerminalOffset
 
   fun relativeOffset(offset: Int): TerminalOffset
   fun absoluteOffset(offset: Long): TerminalOffset

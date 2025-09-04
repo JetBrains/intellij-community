@@ -76,7 +76,7 @@ internal class TerminalTypeAheadOutputModelController(
     if (!isEnabled()) return
 
     val lastBlock = blocksModel.blocks.lastOrNull()
-    val cursorOffset = outputModel.cursorOffsetState.value
+    val cursorOffset = outputModel.cursorOffsetState.value.toRelative()
     if (lastBlock == null || cursorOffset <= lastBlock.commandStartOffset || cursorOffset == 0) {
       // Cursor is placed before or at the command start, so we can't backspace anymore.
       return
@@ -216,7 +216,7 @@ private fun TerminalOutputModel.insertAtCursor(string: String) {
   withTypeAhead {
     val remainingLinePart = getRemainingLinePart()
     val replaceLength = string.length.coerceAtMost(remainingLinePart.length)
-    val replaceOffset = relativeOffset(cursorOffsetState.value)
+    val replaceOffset = cursorOffsetState.value
     replaceContent(replaceOffset, replaceLength, string, emptyList())
     // Do not reuse the cursorOffsetState.value because replaceContent might change it.
     // Instead, compute the new offset using the absolute offsets.
@@ -226,7 +226,7 @@ private fun TerminalOutputModel.insertAtCursor(string: String) {
 }
 
 private fun TerminalOutputModel.backspace() {
-  val offset = cursorOffsetState.value
+  val offset = cursorOffsetState.value.toRelative()
   if (offset < 1) return
   val replaceOffset = relativeOffset(offset - 1)
   replaceContent(replaceOffset, 1, " ", emptyList())
@@ -234,7 +234,7 @@ private fun TerminalOutputModel.backspace() {
 }
 
 private fun TerminalOutputModel.getRemainingLinePart(): @NlsSafe String {
-  val cursorOffset = cursorOffsetState.value
+  val cursorOffset = cursorOffsetState.value.toRelative()
   val document = document
   val line = document.getLineNumber(cursorOffset)
   val lineEnd = document.getLineEndOffset(line)
