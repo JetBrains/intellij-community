@@ -1,19 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.vcs.impl.shared.changes
 
-import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAwareToggleAction
-import com.intellij.openapi.vcs.VcsBundle
 
-internal class ToggleShowIgnoredAction() : DumbAwareToggleAction() {
-  init {
-    templatePresentation.setText(VcsBundle.messagePointer("changes.action.show.ignored.text"))
-    templatePresentation.setDescription(VcsBundle.messagePointer("changes.action.show.ignored.description"))
-    templatePresentation.icon = AllIcons.Actions.ToggleVisibility
-  }
-
+internal class ToggleShowIgnoredAction() : DumbAwareToggleAction(), ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
   override fun getActionUpdateThread(): ActionUpdateThread {
     return ActionUpdateThread.BGT
   }

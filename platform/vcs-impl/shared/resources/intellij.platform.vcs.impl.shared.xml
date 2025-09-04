@@ -27,7 +27,8 @@
   </extensions>
 
   <extensionPoints>
-    <extensionPoint name="changesGroupingPolicy" beanClass="com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactoryEPBean" dynamic="true">
+    <extensionPoint name="changesGroupingPolicy" beanClass="com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactoryEPBean"
+                    dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactory"/>
     </extensionPoint>
 
@@ -36,4 +37,24 @@
                     area="IDEA_PROJECT"
                     dynamic="true"/>
   </extensionPoints>
+
+  <actions>
+    <group id="ChangesView.GroupBy" icon="AllIcons.Actions.GroupBy" popup="true"
+           class="com.intellij.openapi.vcs.changes.actions.SelectChangesGroupingActionGroup">
+      <separator key="group.ChangesView.GroupBy.text"/>
+      <action id="ChangesView.GroupBy.Directory"
+              class="com.intellij.openapi.vcs.changes.actions.SetDirectoryChangesGroupingAction"/>
+      <add-to-group group-id="Vcs.KeymapGroup"/>
+    </group>
+  </actions>
+
+  <actions resource-bundle="messages.VcsBundle">
+    <group id="ChangesView.ViewOptions" icon="AllIcons.Actions.Show" popup="true">
+      <reference ref="ChangesView.GroupBy"/>
+      <separator key="action.vcs.log.show.separator"/>
+      <action id="ChangesView.ShowIgnored"
+              class="com.intellij.platform.vcs.impl.shared.changes.ToggleShowIgnoredAction"
+              icon="AllIcons.Actions.ToggleVisibility"/>
+    </group>
+  </actions>
 </idea-plugin>

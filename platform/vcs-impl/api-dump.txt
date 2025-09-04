@@ -793,21 +793,17 @@ com.intellij.openapi.vcs.changes.ChangesViewI
 - a:updateProgressText(java.lang.String,Z):V
 c:com.intellij.openapi.vcs.changes.ChangesViewManager
 - com.intellij.openapi.Disposable
-- com.intellij.openapi.components.PersistentStateComponent
 - com.intellij.openapi.vcs.changes.ChangesViewEx
 - <init>(com.intellij.openapi.project.Project):V
 - closeEditorPreview(Z):V
 - s:createTextStatusFactory(java.lang.String,Z):com.intellij.openapi.util.Factory
 - diffPreviewChanged(Z):V
 - dispose():V
-- getGrouping():java.util.Collection
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.changes.ChangesViewI
 - s:getInstanceEx(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.changes.ChangesViewEx
 - s:getLocalChangesToolWindowName(com.intellij.openapi.project.Project):java.lang.String
-- getState():com.intellij.openapi.vcs.changes.ChangesViewManager$State
 - isAllowExcludeFromCommit():Z
 - isDiffPreviewAvailable():Z
-- loadState(com.intellij.openapi.vcs.changes.ChangesViewManager$State):V
 - promiseRefresh(com.intellij.openapi.application.ModalityState):org.jetbrains.concurrency.Promise
 - refreshImmediately():V
 - resetViewImmediatelyAndRefreshLater():V
@@ -816,7 +812,6 @@ c:com.intellij.openapi.vcs.changes.ChangesViewManager
 - selectFile(com.intellij.openapi.vfs.VirtualFile):V
 - setBusy(Z):V
 - setGrouping(java.lang.String):V
-- setGrouping(java.util.Collection):V
 - updateProgressText(java.lang.String,Z):V
 f:com.intellij.openapi.vcs.changes.ChangesViewManager$ChangesViewToolWindowPanel
 - com.intellij.openapi.ui.SimpleToolWindowPanel
@@ -849,11 +844,6 @@ c:com.intellij.openapi.vcs.changes.ChangesViewManager$DisplayNameSupplier
 - java.util.function.Supplier
 - <init>(com.intellij.openapi.project.Project):V
 - get():java.lang.String
-c:com.intellij.openapi.vcs.changes.ChangesViewManager$State
-- groupingKeys:java.util.TreeSet
-- myShowFlatten:Z
-- myShowIgnored:Z
-- <init>():V
 com.intellij.openapi.vcs.changes.ChangesViewModifier
 - sf:KEY:com.intellij.openapi.extensions.ProjectExtensionPointName
 - sf:TOPIC:com.intellij.util.messages.Topic
@@ -1128,15 +1118,6 @@ com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionActionExtension
 - isStatusForDirectoryAddition(com.intellij.openapi.vcs.FileStatus):Z
 f:com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionActionExtension$Companion
 - f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
-a:com.intellij.openapi.vcs.changes.actions.SetChangesGroupingAction
-- com.intellij.openapi.actionSystem.ToggleAction
-- com.intellij.openapi.project.DumbAware
-- <init>():V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- a:getGroupingKey():java.lang.String
-- isSelected(com.intellij.openapi.actionSystem.AnActionEvent):Z
-- setSelected(com.intellij.openapi.actionSystem.AnActionEvent,Z):V
-- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 a:com.intellij.openapi.vcs.changes.actions.ShowDiffPreviewAction
 - com.intellij.openapi.actionSystem.ToggleAction
 - com.intellij.openapi.project.DumbAware

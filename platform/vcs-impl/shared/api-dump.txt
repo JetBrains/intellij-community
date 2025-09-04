@@ -104,6 +104,14 @@ c:com.intellij.openapi.vcs.changes.LocalChangeListImpl$Builder
 - setDefault(Z):com.intellij.openapi.vcs.changes.LocalChangeListImpl$Builder
 - setId(java.lang.String):com.intellij.openapi.vcs.changes.LocalChangeListImpl$Builder
 - setReadOnly(Z):com.intellij.openapi.vcs.changes.LocalChangeListImpl$Builder
+a:com.intellij.openapi.vcs.changes.actions.SetChangesGroupingAction
+- com.intellij.openapi.project.DumbAwareToggleAction
+- <init>():V
+- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- a:getGroupingKey():java.lang.String
+- isSelected(com.intellij.openapi.actionSystem.AnActionEvent):Z
+- setSelected(com.intellij.openapi.actionSystem.AnActionEvent,Z):V
+- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 c:com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer
 - <init>(com.intellij.openapi.project.Project,com.intellij.ui.SimpleColoredComponent):V
 - appendTextWithLinks(java.lang.String):java.util.List
