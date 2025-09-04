@@ -4,7 +4,6 @@
 package com.intellij.ide.plugins.newui
 
 import com.intellij.accessibility.AccessibilityUtils
-import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.IdeEventQueue
@@ -1060,7 +1059,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
                                                       }
                                                     }, ModalityState.any())
 
-    if (this@PluginDetailsPageComponent.pluginModel.isPluginInstallingOrUpdating(pluginModel)) {
+    if (this@PluginDetailsPageComponent.pluginModel.isPluginInstallingOrUpdating(pluginModel) && indicator == null) {
       showInstallProgress()
     }
     else {
@@ -1593,6 +1592,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     if (!showRestart) {
       scheduleNotificationsUpdate()
     }
+    fullRepaint()
   }
 
   private fun updateEnabledForProject() {
