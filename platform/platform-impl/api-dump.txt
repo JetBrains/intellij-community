@@ -1354,6 +1354,17 @@ com.intellij.ui.popup.list.FilterableListPopupStep
 - com.intellij.openapi.ui.popup.ListPopupStep
 - a:updateFilter(java.lang.String):V
 f:com.intellij.ui.render.RenderersKt
+f:com.intellij.ui.render.RenderingHelper
+- sf:SHRINK_LONG_RENDERER:com.intellij.openapi.util.Key
+- sf:SHRINK_LONG_SELECTION:com.intellij.openapi.util.Key
+- getHeight():I
+- getRightMargin():I
+- getWidth():I
+- getX():I
+- getY():I
+- isExpandableHintShown(I):Z
+- isRendererShrinkingDisabled(I):Z
+- isShrinkingSelectionDisabled(I):Z
 f:com.intellij.ui.tree.AsyncTreeModel
 - com.intellij.ui.tree.Searchable
 - com.intellij.ui.tree.TreeVisitor$LoadingAwareAcceptor
@@ -1404,7 +1415,44 @@ com.intellij.ui.tree.ui.Control$Painter
 - a:paint(java.awt.Component,java.awt.Graphics,I,I,I,I,com.intellij.ui.tree.ui.Control,I,Z,Z,Z):V
 c:com.intellij.ui.tree.ui.DefaultTreeUI
 - com.intellij.ui.tree.ui.CustomBoundsTreeUI
+- javax.swing.plaf.basic.BasicTreeUI
+- sf:AUTO_EXPAND_ALLOWED:com.intellij.openapi.util.Key
+- sf:AUTO_EXPAND_FILTER:com.intellij.openapi.util.Key
+- <init>():V
+- beginBulkOperation():V
+- cancelEditing(javax.swing.JTree):V
+- p:completeEditing():V
+- p:configureLayoutCache():V
+- p:createLayoutCache():javax.swing.tree.AbstractLayoutCache
+- p:createMouseListener():java.awt.event.MouseListener
+- p:createNodeDimensions():javax.swing.tree.AbstractLayoutCache$NodeDimensions
+- p:createPropertyChangeListener():java.beans.PropertyChangeListener
+- p:createTreeExpansionListener():javax.swing.event.TreeExpansionListener
+- s:createUI(javax.swing.JComponent):javax.swing.plaf.ComponentUI
+- endBulkOperation():V
 - getActualPathBounds(javax.swing.JTree,javax.swing.tree.TreePath):java.awt.Rectangle
+- getClosestPathForLocation(javax.swing.JTree,I,I):javax.swing.tree.TreePath
+- getEditingPath(javax.swing.JTree):javax.swing.tree.TreePath
+- getPathBounds(javax.swing.JTree,javax.swing.tree.TreePath):java.awt.Rectangle
+- getPathForRow(javax.swing.JTree,I):javax.swing.tree.TreePath
+- getPreferredSize(javax.swing.JComponent,Z):java.awt.Dimension
+- getRowCount(javax.swing.JTree):I
+- getRowForPath(javax.swing.JTree,javax.swing.tree.TreePath):I
+- p:getRowX(I,I):I
+- p:installDefaults():V
+- p:installKeyboardActions():V
+- isEditing(javax.swing.JTree):Z
+- p:isLocationInExpandControl(javax.swing.tree.TreePath,I,I):Z
+- p:isToggleEvent(java.awt.event.MouseEvent):Z
+- paint(java.awt.Graphics,javax.swing.JComponent):V
+- p:setLargeModel(Z):V
+- p:setModel(javax.swing.tree.TreeModel):V
+- p:setRootVisible(Z):V
+- startEditingAtPath(javax.swing.JTree,javax.swing.tree.TreePath):V
+- stopEditing(javax.swing.JTree):Z
+- p:toggleExpandState(javax.swing.tree.TreePath):V
+- p:updateCachedPreferredSize():V
+- p:updateSize():V
 com.intellij.ui.tree.ui.PlainSelectionTree
 com.intellij.util.textCompletion.TextCompletionCache
 - a:getItems(java.lang.String,com.intellij.codeInsight.completion.CompletionParameters):java.util.Collection
