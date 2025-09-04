@@ -23,6 +23,12 @@ internal object InMemoryRebaseOperations {
     }
   }
 
+  suspend fun drop(repository: GitRepository, logData: VcsLogData, commitsToDrop: List<VcsCommitMetadata>): GitCommitEditingOperationResult {
+    return executeInMemoryCommitModification(repository, logData, commitsToDrop) { model, toDropIndices ->
+      model.drop(toDropIndices)
+    }
+  }
+
   private suspend fun executeInMemoryCommitModification(
     repository: GitRepository,
     logData: VcsLogData,
