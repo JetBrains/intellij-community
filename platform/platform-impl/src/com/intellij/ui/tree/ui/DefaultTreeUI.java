@@ -774,6 +774,7 @@ public class DefaultTreeUI extends BasicTreeUI implements TreeUiBulkExpandCollap
   private final @NotNull AtomicInteger bulkOperationsInProgress = new AtomicInteger();
 
   @Override
+  @ApiStatus.Internal
   public void beginBulkOperation() {
     if (!bulkOperationsSupported()) {
       return;
@@ -782,6 +783,7 @@ public class DefaultTreeUI extends BasicTreeUI implements TreeUiBulkExpandCollap
   }
 
   @Override
+  @ApiStatus.Internal
   public void endBulkOperation() {
     if (!bulkOperationsSupported()) {
       return;

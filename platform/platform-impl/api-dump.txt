@@ -1419,7 +1419,6 @@ c:com.intellij.ui.tree.ui.DefaultTreeUI
 - sf:AUTO_EXPAND_ALLOWED:com.intellij.openapi.util.Key
 - sf:AUTO_EXPAND_FILTER:com.intellij.openapi.util.Key
 - <init>():V
-- beginBulkOperation():V
 - cancelEditing(javax.swing.JTree):V
 - p:completeEditing():V
 - p:configureLayoutCache():V
@@ -1429,7 +1428,6 @@ c:com.intellij.ui.tree.ui.DefaultTreeUI
 - p:createPropertyChangeListener():java.beans.PropertyChangeListener
 - p:createTreeExpansionListener():javax.swing.event.TreeExpansionListener
 - s:createUI(javax.swing.JComponent):javax.swing.plaf.ComponentUI
-- endBulkOperation():V
 - getActualPathBounds(javax.swing.JTree,javax.swing.tree.TreePath):java.awt.Rectangle
 - getClosestPathForLocation(javax.swing.JTree,I,I):javax.swing.tree.TreePath
 - getEditingPath(javax.swing.JTree):javax.swing.tree.TreePath
