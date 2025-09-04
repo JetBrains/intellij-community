@@ -11187,6 +11187,16 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/collections/redundantAsSequence/asSequenceCalledOnIterator.kt");
         }
 
+        @TestMetadata("availabilityRangeEndOfCall.kt")
+        public void testAvailabilityRangeEndOfCall() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/collections/redundantAsSequence/availabilityRangeEndOfCall.kt");
+        }
+
+        @TestMetadata("availabilityRangeReceiver.kt")
+        public void testAvailabilityRangeReceiver() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/collections/redundantAsSequence/availabilityRangeReceiver.kt");
+        }
+
         @TestMetadata("hasComment.kt")
         public void testHasComment() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/collections/redundantAsSequence/hasComment.kt");

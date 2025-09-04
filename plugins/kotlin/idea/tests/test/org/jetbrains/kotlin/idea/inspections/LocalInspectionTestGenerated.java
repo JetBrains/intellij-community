@@ -1460,6 +1460,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/collections/redundantAsSequence/asSequenceCalledOnIterator.kt");
             }
 
+            @TestMetadata("availabilityRangeEndOfCall.kt")
+            public void testAvailabilityRangeEndOfCall() throws Exception {
+                runTest("testData/inspectionsLocal/collections/redundantAsSequence/availabilityRangeEndOfCall.kt");
+            }
+
+            @TestMetadata("availabilityRangeReceiver.kt")
+            public void testAvailabilityRangeReceiver() throws Exception {
+                runTest("testData/inspectionsLocal/collections/redundantAsSequence/availabilityRangeReceiver.kt");
+            }
+
             @TestMetadata("hasComment.kt")
             public void testHasComment() throws Exception {
                 runTest("testData/inspectionsLocal/collections/redundantAsSequence/hasComment.kt");
