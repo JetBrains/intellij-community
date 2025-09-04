@@ -43,10 +43,10 @@ class GrazieSpellcheckingExtension : SpellcheckingExtension {
   private val knownPhrases = ContainerUtil.createConcurrentSoftValueMap<Language, KnownPhrases>()
 
   override fun spellcheck(element: PsiElement, session: LocalInspectionToolSession, consumer: Consumer<SpellingTypo>): SpellCheckingResult {
+    if (element is PsiWhiteSpace) return SpellCheckingResult.Checked
+
     val strategy = getSpellcheckingStrategy(element)
     if (!strategy.useTextLevelSpellchecking()) return SpellCheckingResult.Ignored
-
-    if (element is PsiWhiteSpace) return SpellCheckingResult.Checked
     ProgressManager.checkCanceled()
 
     val texts = sortByPriority(TextExtractor.findTextsExactlyAt(element, DOMAINS), session.priorityRange)
