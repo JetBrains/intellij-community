@@ -183,6 +183,37 @@ public final class PyUtil {
   // TODO: move to a more proper place?
 
   /**
+   * Determine the type of a special attribute. Currently supported: {@code __class__} and {@code __dict__}.
+   *
+   * @param ref reference to a possible attribute; only qualified references make sense.
+   * @return type, or null (if type cannot be determined, reference is not to a known attribute, etc.)
+   */
+  public static @Nullable PyType getSpecialAttributeType(@Nullable PyReferenceExpression ref, TypeEvalContext context) {
+    if (ref != null) {
+      PyExpression qualifier = ref.getQualifier();
+      if (qualifier != null) {
+        String attr_name = ref.getReferencedName();
+        if (PyNames.__CLASS__.equals(attr_name)) {
+          PyType qualifierType = context.getType(qualifier);
+          if (qualifierType instanceof PyClassType qClassType) {
+            return new PyClassTypeImpl(qClassType.getPyClass(), true); // always as class, never instance
+          }
+          if (qualifierType instanceof PySelfType selfType) {
+            return selfType.toClass();
+          }
+        }
+        else if (PyNames.DUNDER_DICT.equals(attr_name)) {
+          PyType qualifierType = context.getType(qualifier);
+          if (qualifierType instanceof PyClassType qClassType && qClassType.isDefinition()) {
+            return PyBuiltinCache.getInstance(ref).getDictType();
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  /**
    * Makes sure that 'thing' is not null; else throws an {@link IncorrectOperationException}.
    *
    * @param thing what we check.

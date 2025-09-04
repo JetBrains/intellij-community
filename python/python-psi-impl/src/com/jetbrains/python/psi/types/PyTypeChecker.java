@@ -1297,7 +1297,7 @@ public final class PyTypeChecker {
           }
         }
         // TODO remove !typeVar.equals(substitution) part, it's necessary due to the logic in unifyReceiverWithParamSpecs
-        if (!typeVarType.equals(substitution) && hasGenerics(substitution, context)) {
+        if (!typeVarType.equals(substitution) && !(substitution instanceof PySelfType) && hasGenerics(substitution, context)) {
           return clone(substitution);
         }
         return substitution;
@@ -1333,9 +1333,13 @@ public final class PyTypeChecker {
           return selfType;
         }
         return PyTypeUtil.toStream(qualifierType)
-          // Hack! Qualifier type is always an instance now. Needed to support type[Self]
-          .filter(memberType -> match(selfScopeClassType.toInstance(), memberType, context))
-          .map(qType -> qType instanceof PyClassType qualifierClassType && selfType.isDefinition() ? qualifierClassType.toClass() : qType)
+          .map(qType -> {
+            if (qType instanceof PyInstantiableType<?> instantiableType) {
+              return selfScopeClassType.isDefinition() ? instantiableType.toClass() : instantiableType.toInstance();
+            }
+            return qType;
+          })
+          .filter(normalizedQType -> match(selfScopeClassType, normalizedQType, context))
           .collect(PyTypeUtil.toUnion(qualifierType));
       }
 

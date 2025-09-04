@@ -49,6 +49,13 @@ public final class PySelfType implements PyTypeParameterType, PyClassLikeType {
     return myScopeClassType;
   }
 
+  public static @Nullable PyType extractScopeClassTypeIfNeeded(@Nullable PyType type) {
+    if (type instanceof PySelfType selfType) {
+      return selfType.myScopeClassType;
+    }
+    return type;
+  }
+
   /**
    * @return true if type[Self], false otherwise
    */

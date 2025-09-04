@@ -272,7 +272,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     final PyExpression qualifier = getQualifier();
     assert qualifier != null;
 
-    final PyType qType = context.getType(qualifier);
+    final PyType qType = PySelfType.extractScopeClassTypeIfNeeded(context.getType(qualifier));
     if (qType instanceof PyClassType classType) {
       final ResolveResult getattr = ContainerUtil.getFirstItem(
         classType.resolveMember(PyNames.GETATTR, qualifier, AccessDirection.READ, PyResolveContext.defaultContext(context)));
@@ -323,7 +323,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   }
 
   private @Nullable Ref<PyType> getTypeOfProperty(@Nullable PyType qualifierType, @NotNull String name, @NotNull TypeEvalContext context) {
-    if (qualifierType instanceof PyClassType classType) {
+    if (PySelfType.extractScopeClassTypeIfNeeded(qualifierType) instanceof PyClassType classType) {
       final PyClass pyClass = classType.getPyClass();
       final Property property = pyClass.findProperty(name, true, context);
 
@@ -489,7 +489,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
                                                              @NotNull TypeEvalContext context,
                                                              @NotNull PyReferenceExpression anchor) {
     if (type instanceof PyFunctionType functionType && context.maySwitchToAST(anchor) && anchor.getQualifier() != null) {
-      PyType qualifierType = context.getType(anchor.getQualifier());
+      PyType qualifierType = PySelfType.extractScopeClassTypeIfNeeded(context.getType(anchor.getQualifier()));
       if (qualifierType instanceof PyClassLikeType classLikeType && classLikeType.isDefinition() &&
           functionType.getModifier() != PyAstFunction.Modifier.CLASSMETHOD) {
         return type;

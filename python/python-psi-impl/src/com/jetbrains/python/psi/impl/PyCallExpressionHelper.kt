@@ -194,7 +194,7 @@ private fun PyCallExpression.getImplicitResolveResults(resolveContext: PyResolve
     val qualifier = callee.qualifier
     if (qualifier == null || !qualifier.canQualifyAnImplicitName()) return listOf()
 
-    val qualifierType = context.getType(qualifier)
+    val qualifierType = PySelfType.extractScopeClassTypeIfNeeded(context.getType(qualifier))
     if (PyTypeChecker.isUnknown(qualifierType, context) ||
         qualifierType is PyStructuralType && qualifierType.isInferredFromUsages
     ) {
@@ -407,7 +407,7 @@ private fun PyCallable?.isQualifiedByInstance(qualifier: PyExpression, context: 
 }
 
 private fun PyCallable?.isQualifiedByClass(qualifier: PyExpression, context: TypeEvalContext): Boolean {
-  val qualifierType = context.getType(qualifier)
+  val qualifierType = PySelfType.extractScopeClassTypeIfNeeded(context.getType(qualifier))
 
   if (qualifierType is PyClassType) {
     return qualifierType.isDefinition() && belongsToSpecifiedClassHierarchy(qualifierType.pyClass, context)
@@ -593,6 +593,12 @@ private fun PyCallExpression.getSuperCallType(context: TypeEvalContext): Maybe<P
     if (possible_class is PyClass && possible_class.isNewStyleClass(context)) {
       return Maybe(getSuperCallTypeForArguments(context, possible_class, args[1]))
     }
+    if (possible_class is PyNamedParameter) {
+      val paramType = PySelfType.extractScopeClassTypeIfNeeded(context.getType(possible_class))
+      if (paramType is PyClassType) {
+        return Maybe(getSuperCallTypeForArguments(context, paramType.pyClass, args[1]))
+      }
+    }
   }
   else if ((containingFile as? PyFile)?.languageLevel?.isPy3K == true && containingClass != null) {
     return Maybe(containingClass.getSuperClassUnionType(context))
@@ -603,7 +609,7 @@ private fun PyCallExpression.getSuperCallType(context: TypeEvalContext): Maybe<P
 private fun getSuperCallTypeForArguments(context: TypeEvalContext, firstClass: PyClass, second_arg: PyExpression?): PyType? {
   // check 2nd argument, too; it should be an instance
   if (second_arg != null) {
-    val second_type = context.getType(second_arg)
+    val second_type = PySelfType.extractScopeClassTypeIfNeeded(context.getType(second_arg));
     if (second_type is PyClassType) {
       // imitate isinstance(second_arg, possible_class)
       val secondClass = second_type.pyClass

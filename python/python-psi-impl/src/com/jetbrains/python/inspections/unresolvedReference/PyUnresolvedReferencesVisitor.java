@@ -80,7 +80,8 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
     final String attrName = node.getReferencedName();
     if (qualifier != null && attrName != null) {
       final PyType type = myTypeEvalContext.getType(qualifier);
-      if (type instanceof PyClassType && !((PyClassType)type).isAttributeWritable(attrName, myTypeEvalContext)) {
+      if (PySelfType.extractScopeClassTypeIfNeeded(type) instanceof PyClassType classType &&
+          !classType.isAttributeWritable(attrName, myTypeEvalContext)) {
         final ASTNode nameNode = node.getNameElement();
         final PsiElement e = nameNode != null ? nameNode.getPsi() : node;
         registerProblem(e, PyPsiBundle.message("INSP.unresolved.refs.class.object.has.no.attribute", type.getName(), attrName));

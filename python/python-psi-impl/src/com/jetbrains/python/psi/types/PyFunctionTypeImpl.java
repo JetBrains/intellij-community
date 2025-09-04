@@ -128,7 +128,7 @@ public class PyFunctionTypeImpl implements PyFunctionType {
         qualifier = ContainerUtil.getLastItem(location.followAssignmentsChain(resolveContext).getQualifiers());
       }
       if (qualifier != null) {
-        final PyType qualifierType = context.getType(qualifier);
+        final PyType qualifierType = PySelfType.extractScopeClassTypeIfNeeded(context.getType(qualifier));
         if (PyTypeUtil.toStream(qualifierType).select(PyClassType.class).anyMatch(it -> !it.isDefinition())) {
           return true;
         }
