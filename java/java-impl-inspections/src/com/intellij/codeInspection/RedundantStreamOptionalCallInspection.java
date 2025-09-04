@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.OptionalUtil;
@@ -353,6 +354,18 @@ public final class RedundantStreamOptionalCallInspection extends AbstractBaseJav
       return true;
     }
     if (expression instanceof PsiLambdaExpression lambda) {
+      PsiType functionalInterfaceType = lambda.getFunctionalInterfaceType();
+      if (functionalInterfaceType != null && lambda.getParameterList().getParametersCount() == 1) {
+        PsiType functionalInterfaceReturnType = LambdaUtil.getFunctionalInterfaceReturnType(functionalInterfaceType);
+        PsiType parameterType = lambda.getParameterList().getParameters()[0].getType();
+        if (functionalInterfaceReturnType != null) {
+          Nullability returnTypeNullability = functionalInterfaceReturnType.getNullability().nullability();
+          Nullability parameterNullability = parameterType.getNullability().nullability();
+          if (!returnTypeNullability.equals(Nullability.UNKNOWN) && !returnTypeNullability.equals(parameterNullability)) {
+            return false;
+          }
+        }
+      }
       if (LambdaUtil.isIdentityLambda(lambda)) return true;
       if (!allowBoxUnbox) return false;
       PsiExpression body = LambdaUtil.extractSingleExpressionFromBody(lambda.getBody());
