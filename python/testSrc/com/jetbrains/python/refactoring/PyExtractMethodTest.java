@@ -391,4 +391,9 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
   public void testMethodNameCanShadowModuleFunction() {
     doTest("_require_instance");
   }
+
+  // PY-61591
+  public void testNameCollisionInnerFunction() {
+    doFail("bar", "The method name clashes with an already existing name");
+  }
 }

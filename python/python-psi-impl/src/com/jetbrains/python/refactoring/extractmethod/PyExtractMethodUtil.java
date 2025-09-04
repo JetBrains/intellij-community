@@ -723,19 +723,40 @@ public final class PyExtractMethodUtil {
       myElement = element;
       myProject = project;
       final PyClass enclosingClass = PsiTreeUtil.getParentOfType(myElement, PyClass.class, false);
+      final ScopeOwner callSiteOwner = ScopeUtil.getScopeOwner(myElement);
       if (enclosingClass != null) {
-        // Extracting into a class: only check for clashes within the class namespace
+        // Extracting into a class: check class namespace AND the relevant call-site scopes
         myFunction = s -> {
+          // 1) Class-level names (methods/attributes)
           if (enclosingClass.findMethodByName(s, true, null) != null) {
             return false;
           }
           final Scope classScope = ControlFlowCache.getScope(enclosingClass);
-          return !classScope.containsDeclaration(s);
+          if (classScope.containsDeclaration(s)) {
+            return false;
+          }
+          // 2) Immediate call-site scope (e.g., the surrounding function where the call will be inserted)
+          if (callSiteOwner != null && !(callSiteOwner instanceof PyFile)) {
+            final Scope siteScope = ControlFlowCache.getScope(callSiteOwner);
+            if (siteScope.containsDeclaration(s)) {
+              return false;
+            }
+            // 3) Also check the outer owner of the call site (e.g., method scope), because names defined by an inner 'def name():'
+            // are bound in the enclosing function's scope, not inside the inner function's own body.
+            final ScopeOwner outerOwner = ScopeUtil.getScopeOwner(callSiteOwner);
+            if (outerOwner != null && !(outerOwner instanceof PyFile) && !(outerOwner instanceof PyClass)) {
+              final Scope outerScope = ControlFlowCache.getScope(outerOwner);
+              if (outerScope.containsDeclaration(s)) {
+                return false;
+              }
+            }
+          }
+          return true;
         };
       }
       else {
         // Extracting at module or function level: keep outward-scan behavior
-        final ScopeOwner parent = ScopeUtil.getScopeOwner(myElement);
+        final ScopeOwner parent = callSiteOwner;
         myFunction = s -> {
           ScopeOwner owner = parent;
           while (owner != null) {
@@ -772,5 +793,4 @@ public final class PyExtractMethodUtil {
     boolean selected = PropertiesComponent.getInstance(project).getBoolean(ADD_TYPE_ANNOTATIONS_VALUE_KEY, ADD_TYPE_ANNOTATIONS_DEFAULT);
     return selected;
   }
-
 }
