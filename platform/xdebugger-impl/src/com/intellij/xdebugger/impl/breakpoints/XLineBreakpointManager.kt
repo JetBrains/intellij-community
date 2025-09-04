@@ -184,7 +184,11 @@ class XLineBreakpointManager(private val project: Project, coroutineScope: Corou
     SlowOperations.knownIssue("IJPL-162343").use {
       breakpoints.forEach { it.updatePosition() }
     }
+    cleanUpBreakpoints(document)
+  }
 
+  private fun cleanUpBreakpoints(document: Document) {
+    val breakpoints = getDocumentBreakpointProxies(document)
     // Check if two or more breakpoints occurred at the same position and remove duplicates.
     val (valid, invalid) = breakpoints.partition {
       val highlighter = it.getHighlighter()
@@ -201,7 +205,7 @@ class XLineBreakpointManager(private val project: Project, coroutineScope: Corou
             val startOffset = when (val range = b.getHighlightRange()) {
               is XLineBreakpointHighlighterRange.Available -> range.range?.startOffset
               is XLineBreakpointHighlighterRange.Unavailable -> {
-                scheduleDocumentUpdate(document)
+                scheduleBreakpointsCleanUp(document)
                 return
               }
             }
@@ -312,10 +316,20 @@ class XLineBreakpointManager(private val project: Project, coroutineScope: Corou
   }
 
   private fun scheduleDocumentUpdate(document: Document) {
-    breakpointUpdateQueue.queue(object : Update(document) {
+    breakpointUpdateQueue.queue(object : Update("update" to document) {
       override fun run() {
         ApplicationManager.getApplication().invokeLater {
           updateBreakpoints(document)
+        }
+      }
+    })
+  }
+
+  private fun scheduleBreakpointsCleanUp(document: Document) {
+    breakpointUpdateQueue.queue(object : Update("clean up" to document) {
+      override fun run() {
+        ApplicationManager.getApplication().invokeLater {
+          cleanUpBreakpoints(document)
         }
       }
     })

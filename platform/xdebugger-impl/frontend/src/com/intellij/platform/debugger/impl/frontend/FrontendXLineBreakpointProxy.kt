@@ -90,10 +90,10 @@ internal class FrontendXLineBreakpointProxy(
   }
 
   override fun setLine(line: Int) {
-    return setLine(line, visualLineMightBeChanged = true)
+    return positionChanged(line, visualLineMightBeChanged = true)
   }
 
-  private fun setLine(line: Int, visualLineMightBeChanged: Boolean) {
+  private fun positionChanged(line: Int, visualLineMightBeChanged: Boolean) {
     val oldLine = getLine()
     if (oldLine != line) {
       // TODO IJPL-185322 support type.lineShouldBeChanged()
@@ -117,6 +117,7 @@ internal class FrontendXLineBreakpointProxy(
       }
     }
     else {
+      // We should always notify the backend the position might be changed
       updateLineBreakpointStateIfNeeded(
         newValue = lineBreakpointInfo.invalidateHighlightingRangeOrNull(),
         getter = { it.highlightingRange },
@@ -142,7 +143,7 @@ internal class FrontendXLineBreakpointProxy(
     val highlighter: RangeMarker? = visualRepresentation.rangeMarker
     if (highlighter != null && highlighter.isValid()) {
       lineSourcePosition = null // reset the source position even if the line number has not changed, as the offset may be cached inside
-      setLine(highlighter.getDocument().getLineNumber(highlighter.getStartOffset()), visualLineMightBeChanged = false)
+      positionChanged(highlighter.getDocument().getLineNumber(highlighter.getStartOffset()), visualLineMightBeChanged = false)
     }
   }
 
