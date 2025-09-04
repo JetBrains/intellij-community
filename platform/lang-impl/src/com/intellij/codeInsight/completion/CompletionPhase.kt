@@ -164,7 +164,7 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
           .withDocumentsCommitted(project)
           .expireWith(phase)
           .finishOnUiThread(ModalityState.current(), Consumer { completionEditor: Editor? ->
-            startAsyncCompletionIfNotExpired(phase, completionEditor, prevIndicator, completionType, autopopup, project)
+            startAsyncCompletionIfNotExpired(phase, completionEditor, completionType, autopopup, project)
           })
           .submit(ourExecutor)
       }
@@ -200,7 +200,6 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
       private fun startAsyncCompletionIfNotExpired(
         phase: CommittingDocuments,
         completionEditor: Editor?,
-        prevIndicator: CompletionProgressIndicator?,
         completionType: CompletionType,
         autopopup: Boolean,
         project: Project,
@@ -209,7 +208,7 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
         if (completionEditor != null && !phase.isExpired) {
           LOG.trace { "Starting completion phase :: completionEditor=$completionEditor" }
           phase.requestCompleted()
-          val time = prevIndicator?.invocationCount ?: 0
+          val time = phase.indicator?.invocationCount ?: 0
 
           val customId = completionEditor.getUserData(CUSTOM_CODE_COMPLETION_ACTION_ID) ?: "CodeCompletion"
           val handler = CodeCompletionHandlerBase.createHandler(completionType, false, autopopup, false, customId)
