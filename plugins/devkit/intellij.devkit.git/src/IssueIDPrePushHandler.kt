@@ -14,7 +14,6 @@ import com.intellij.vcs.log.VcsFullCommitDetails
 import git4idea.config.GitSharedSettings
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicReference
-import kotlin.collections.joinToString
 import kotlin.io.path.extension
 import kotlin.io.path.invariantSeparatorsPathString
 
@@ -60,8 +59,12 @@ internal abstract class AbstractIntelliJProjectPrePushHandler : PrePushHandler {
   protected open fun isTargetBranchProtected(project: Project, pushInfo: PushInfo): Boolean =
     GitSharedSettings.getInstance(project).isBranchProtected(pushInfo.pushSpec.target.presentation)
 
-  protected open fun breaksMessageRules(commit: VcsFullCommitDetails): Boolean =
-    containSources(commit.changes.mapNotNull { it.virtualFile })
+  protected open fun breaksMessageRules(commit: VcsFullCommitDetails): Boolean {
+    if (commit.subject.startsWith("Rename .java to .kt")) {
+      return false
+    }
+    return containSources(commit.changes.mapNotNull { it.virtualFile })
+  }
 
   companion object {
     internal val fileExtensionsNotToTrack = setOf("iml", "md")
