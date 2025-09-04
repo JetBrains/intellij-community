@@ -24,11 +24,11 @@ public final class MarkdownTypedHandler extends TypedHandlerDelegate {
         }
       }
 
-      AutoPopupController.getInstance(project).scheduleAutoPopup(editor, null);
+      AutoPopupController.getInstance(project).scheduleAutoPopup(editor);
       return Result.STOP;
     }
     if (charTyped == '<') {
-      AutoPopupController.getInstance(project).scheduleAutoPopup(editor, null);
+      AutoPopupController.getInstance(project).scheduleAutoPopup(editor);
       return Result.STOP;
     }
     return Result.CONTINUE;

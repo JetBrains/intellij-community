@@ -74,7 +74,7 @@ final class TemplateExpressionLookupElement extends LookupElementDecorator<Looku
 
   private static boolean handleCompletionChar(InsertionContext context) {
     if (context.getCompletionChar() == '.') {
-      AutoPopupController.getInstance(context.getProject()).scheduleAutoPopup(context.getEditor(), null);
+      AutoPopupController.getInstance(context.getProject()).scheduleAutoPopup(context.getEditor());
       return false;
     }
     return true;

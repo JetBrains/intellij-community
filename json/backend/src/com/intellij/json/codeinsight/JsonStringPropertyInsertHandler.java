@@ -58,7 +58,7 @@ public final class JsonStringPropertyInsertHandler implements InsertHandler<Look
     context.getEditor().getCaretModel().moveToOffset(newCaretOffset);
     reformat(context, toDelete.getStartOffset(), toDelete.getStartOffset() + textToInsert.length());
     if (showAutoPopup) {
-      AutoPopupController.getInstance(context.getProject()).scheduleAutoPopup(context.getEditor(), null);
+      AutoPopupController.getInstance(context.getProject()).scheduleAutoPopup(context.getEditor());
     }
   }
 

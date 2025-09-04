@@ -101,7 +101,7 @@ open class DeclarativeInsertHandler protected constructor(
       if (element != null && popupController != null) {
         when (popupOptions) {
           PopupOptions.ParameterInfo -> popupController.autoPopupParameterInfo(context.editor, element)
-          PopupOptions.MemberLookup -> popupController.scheduleAutoPopup(context.editor, null)
+          PopupOptions.MemberLookup -> popupController.scheduleAutoPopup(context.editor)
           PopupOptions.DoNotShow -> Unit
         }
       }

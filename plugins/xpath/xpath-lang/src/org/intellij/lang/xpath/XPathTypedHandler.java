@@ -14,7 +14,7 @@ public class XPathTypedHandler extends TypedHandlerDelegate {
     if (charTyped == '$') {
       if (!(file instanceof XPathFile)) return Result.CONTINUE;
 
-      AutoPopupController.getInstance(project).scheduleAutoPopup(editor, null);
+      AutoPopupController.getInstance(project).scheduleAutoPopup(editor);
       return Result.CONTINUE;
     } else if (charTyped == '.') {
       if (!(file instanceof XPathFile)) return Result.CONTINUE;

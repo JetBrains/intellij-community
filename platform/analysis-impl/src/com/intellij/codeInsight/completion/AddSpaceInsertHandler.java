@@ -56,7 +56,7 @@ public class AddSpaceInsertHandler implements InsertHandler<LookupElement> {
         editor.getCaretModel().moveToOffset(editor.getCaretModel().getOffset() + 1);
       }
       if (myTriggerAutoPopup) {
-        AutoPopupController.getInstance(project).scheduleAutoPopup(editor, null);
+        AutoPopupController.getInstance(project).scheduleAutoPopup(editor);
       }
     }
   }

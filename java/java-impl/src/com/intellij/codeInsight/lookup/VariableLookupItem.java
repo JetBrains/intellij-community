@@ -264,7 +264,7 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
       TailTypes.conditionalExpressionColonType().processTail(context.getEditor(), context.getTailOffset());
     }
     else if (completionChar == '.') {
-      AutoPopupController.getInstance(context.getProject()).scheduleAutoPopup(context.getEditor(), null);
+      AutoPopupController.getInstance(context.getProject()).scheduleAutoPopup(context.getEditor());
     }
     else if (completionChar == '!' && myNegatable) {
       context.setAddCompletionChar(false);
