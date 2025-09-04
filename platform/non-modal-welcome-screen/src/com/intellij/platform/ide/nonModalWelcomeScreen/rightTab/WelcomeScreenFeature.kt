@@ -14,12 +14,12 @@ import org.jetbrains.jewel.ui.icon.IconKey
  * Should either not depend on any other plugin
  * or be registered in a corresponding customization plugin which is not required for the main plugin.
  */
-abstract class WelcomeScreenFeatureProvider {
+abstract class WelcomeScreenFeature {
   companion object {
-    private val EP_NAME: ExtensionPointName<WelcomeScreenFeatureProvider> =
-      ExtensionPointName.create("com.intellij.platform.ide.nonModalWelcomeScreen.welcomeScreenFeatureProvider")
+    private val EP_NAME: ExtensionPointName<WelcomeScreenFeature> =
+      ExtensionPointName.create("com.intellij.platform.ide.nonModalWelcomeScreen.welcomeScreenFeature")
 
-    fun getForFeatureKey(featureKey: String): WelcomeScreenFeatureProvider? {
+    fun getForFeatureKey(featureKey: String): WelcomeScreenFeature? {
       return EP_NAME.lazySequence().firstOrNull { it.featureKey == featureKey }
     }
   }
@@ -31,7 +31,7 @@ abstract class WelcomeScreenFeatureProvider {
   abstract fun invoke(project: Project)
 }
 
-abstract class WelcomeScreenToolwindowFeatureProvider : WelcomeScreenFeatureProvider() {
+abstract class WelcomeScreenToolwindowFeature : WelcomeScreenFeature() {
   protected abstract val toolWindowId: String
 
   final override fun invoke(project: Project) {

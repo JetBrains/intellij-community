@@ -8,8 +8,8 @@
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.platform.ide.nonModalWelcomeScreen.welcomeScreenContentProvider"
                     interface="com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeRightTabContentProvider" dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.platform.ide.nonModalWelcomeScreen.welcomeScreenFeatureProvider"
-                    interface="com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenFeatureProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.platform.ide.nonModalWelcomeScreen.welcomeScreenFeature"
+                    interface="com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenFeature" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.platform.ide.nonModalWelcomeScreen.welcomeScreenRightTabBannerProvider"
                     interface="com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenRightTabBannerProvider" dynamic="true"/>
   </extensionPoints>

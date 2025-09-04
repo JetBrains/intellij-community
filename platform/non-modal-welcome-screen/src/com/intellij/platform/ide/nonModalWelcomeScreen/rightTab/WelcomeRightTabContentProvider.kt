@@ -42,12 +42,12 @@ interface WelcomeRightTabContentProvider {
       return providers.first()
     }
 
-    fun getPluginProvidedFeature(featureKey: String): WelcomeScreenFeatureProvider? {
-      val provider = WelcomeScreenFeatureProvider.getForFeatureKey(featureKey)
-      if (provider == null) {
-        thisLogger().warn("Feature provider for the feature key $featureKey not found")
+    fun getPluginProvidedFeature(featureKey: String): WelcomeScreenFeature? {
+      val feature = WelcomeScreenFeature.getForFeatureKey(featureKey)
+      if (feature == null) {
+        thisLogger().warn("Feature for the feature key $featureKey not found")
       }
-      return provider
+      return feature
     }
   }
 }
