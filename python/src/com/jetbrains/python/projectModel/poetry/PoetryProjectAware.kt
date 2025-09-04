@@ -16,9 +16,9 @@ import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.platform.workspace.storage.entities
 import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.workspaceModel.ide.toPath
 import com.jetbrains.python.projectModel.poetry.PoetryProjectAware.CoroutineScopeService.Companion.coroutineScope
-import com.intellij.python.pyproject.PY_PROJECT_TOML
 import kotlinx.coroutines.CoroutineScope
 import java.nio.file.Path
 
@@ -71,7 +71,7 @@ internal class PoetryProjectAware(
     }
   }
   
-  private class PoetrySyncStartupActivity: ProjectActivity {
+  internal class PoetrySyncStartupActivity: ProjectActivity {
     init {
       if (!Registry.`is`("python.project.model.poetry")) {
         throw ExtensionNotApplicableException.create()
@@ -88,8 +88,8 @@ internal class PoetryProjectAware(
       }
     }
   }
-  
-  private class PoetryListener(private val project: Project): PoetrySettingsListener {
+
+  internal class PoetryListener(private val project: Project): PoetrySettingsListener {
     init {
       if (!Registry.`is`("python.project.model.poetry")) {
         throw ExtensionNotApplicableException.create()
