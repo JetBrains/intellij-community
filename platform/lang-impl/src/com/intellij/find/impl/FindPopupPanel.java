@@ -229,6 +229,14 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
       adapters.add(adapter);
     }
 
+    if (FindKey.isLazyPreviewEnabled() &&
+        ContainerUtil.exists(adapters, adapter -> adapter instanceof ItemWithLazyContent &&
+                                                  !((ItemWithLazyContent)adapter).isContentComputed())) {
+      LOG.debug("Preview will be updated when item will be loaded");
+      myUsagePreviewPanel.showLoading();
+      return;
+    }
+
     String selectedFilePath = file;
 
     UsageAdaptersKt.getUsageInfoAsFuture(adapters, myProject).thenAccept(selectedUsages -> {

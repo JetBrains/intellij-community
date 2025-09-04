@@ -3,6 +3,7 @@ package com.intellij.platform.find
 
 
 import com.intellij.concurrency.captureThreadContext
+import com.intellij.find.impl.FindKey
 import com.intellij.ide.SelectInEditorManager
 import com.intellij.ide.ui.icons.icon
 import com.intellij.ide.ui.textChunk
@@ -27,6 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.findDocument
 import com.intellij.psi.*
 import com.intellij.usageView.UsageInfo
+import com.intellij.usages.ItemWithLazyContent
 import com.intellij.usages.TextChunk
 import com.intellij.usages.UsageInfoAdapter
 import com.intellij.usages.UsagePresentation
@@ -44,7 +46,7 @@ import javax.swing.Icon
 
 private val LOG = logger<UsageInfoModel>()
 
-internal class UsageInfoModel private constructor(val project: Project, val model: FindInFilesResult, val coroutineScope: CoroutineScope, private val initializationListener: Consumer<UsageInfoAdapter>) : UsageInfoAdapter, UsageInFile, UsageDocumentProcessor, Disposable {
+internal class UsageInfoModel private constructor(val project: Project, val model: FindInFilesResult, val coroutineScope: CoroutineScope, private val initializationListener: Consumer<UsageInfoAdapter>) : UsageInfoAdapter, UsageInFile, UsageDocumentProcessor, ItemWithLazyContent, Disposable {
   private val virtualFile: VirtualFile? = run {
     val virtualFile = model.usageInfos.firstOrNull()?.file?.virtualFile ?: model.fileId.virtualFile()
     if (virtualFile == null) LOG.error("Cannot find virtualFile for ${model.presentablePath}")
@@ -69,6 +71,8 @@ internal class UsageInfoModel private constructor(val project: Project, val mode
         initializationListener.accept(this)
       }
     }
+
+  private var isPreviewAccessed: Boolean = false
 
   private fun isRemDev(): Boolean = model.usageInfos.isEmpty()
   private var initializationJob: Job? = null
@@ -105,6 +109,9 @@ internal class UsageInfoModel private constructor(val project: Project, val mode
     }
     //RemDev case - we need to load psi elements
     else {
+      if (FindKey.isLazyPreviewEnabled && !isPreviewAccessed) {
+        return
+      }
       if (initializationJob?.isActive == true) {
         LOG.debug("Initialization job is already in progress ${model.presentablePath}")
         return
@@ -161,6 +168,13 @@ internal class UsageInfoModel private constructor(val project: Project, val mode
         }
       }
     }
+  }
+
+  override fun isContentComputed(): Boolean {
+    if (isLoaded) return true
+    isPreviewAccessed = true
+    initialize()
+    return isLoaded
   }
 
   companion object {
