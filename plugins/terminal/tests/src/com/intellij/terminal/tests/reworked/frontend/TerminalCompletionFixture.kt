@@ -2,6 +2,7 @@ package com.intellij.terminal.tests.reworked.frontend
 
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupManager
+import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionUiKind
@@ -15,11 +16,13 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.terminal.completion.spec.ShellCommandSpec
 import com.intellij.terminal.frontend.ReworkedTerminalView
 import com.intellij.terminal.frontend.TimedKeyEvent
+import com.intellij.terminal.frontend.completion.TerminalLookupPrefixUpdater
 import com.intellij.terminal.session.TerminalBlocksModelState
 import com.intellij.terminal.session.TerminalOutputBlock
 import com.intellij.terminal.session.TerminalSession
 import com.intellij.terminal.tests.block.util.TestCommandSpecsProvider
 import com.intellij.testFramework.ExtensionTestUtil
+import kotlinx.coroutines.yield
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecConflictStrategy
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecInfo
@@ -50,21 +53,23 @@ class TerminalCompletionFixture(val project: Project, val testRootDisposable: Di
     Assume.assumeTrue(TerminalCommandCompletion.isEnabled())
   }
 
-  fun type(text: String) {
+  suspend fun type(text: String) {
     for (c in text) {
       typeChar(c)
     }
+    awaitLookupPrefixUpdated()
   }
 
-  fun typeChar(keyChar: Char) {
+  private fun typeChar(keyChar: Char) {
     val keyEvent = KeyEvent(view.outputEditor.component, KeyEvent.KEY_TYPED, 1, 0,
                             VK_UNDEFINED, keyChar, KeyEvent.KEY_LOCATION_UNKNOWN)
     val timedKeyEvent = TimedKeyEvent(keyEvent, TimeSource.Monotonic.markNow())
     view.outputEditorEventsHandler.keyTyped(timedKeyEvent)
   }
 
-  fun callCompletionPopup() {
+  suspend fun callCompletionPopup() {
     runActionById("Terminal.CommandCompletion.Gen2")
+    awaitLookupPrefixUpdated()
   }
 
   fun isLookupActive(): Boolean {
@@ -95,7 +100,7 @@ class TerminalCompletionFixture(val project: Project, val testRootDisposable: Di
   /**
    * Simulates a key press in the active completion popup.
    */
-  fun pressKey(keycode: Int) {
+  suspend fun pressKey(keycode: Int) {
     val keyPressEvent = KeyEvent(
       view.outputEditor.component,
       KeyEvent.KEY_PRESSED,
@@ -110,10 +115,11 @@ class TerminalCompletionFixture(val project: Project, val testRootDisposable: Di
     val newOffset = when (keycode) {
       KeyEvent.VK_LEFT -> offset - 1
       KeyEvent.VK_RIGHT -> offset + 1
-      KeyEvent.VK_BACK_SPACE -> offset - 1
       else -> offset
     }
     view.outputModel.updateCursorPosition(view.outputModel.relativeOffset(newOffset))
+
+    awaitLookupPrefixUpdated()
   }
 
   private fun runActionById(actionId: String) {
@@ -136,5 +142,11 @@ class TerminalCompletionFixture(val project: Project, val testRootDisposable: Di
       ShellCommandSpecInfo.create(testCommandSpec, ShellCommandSpecConflictStrategy.DEFAULT)
     )
     ExtensionTestUtil.maskExtensions(ShellCommandSpecsProvider.EP_NAME, listOf(specsProvider), testRootDisposable)
+  }
+
+  private suspend fun awaitLookupPrefixUpdated() {
+    val lookup = LookupManager.getInstance(project).activeLookup as? LookupImpl ?: return
+    val prefixUpdater = TerminalLookupPrefixUpdater.get(lookup) ?: return
+    prefixUpdater.awaitPrefixUpdated()
   }
 }

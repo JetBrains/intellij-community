@@ -1,6 +1,9 @@
 package com.intellij.terminal.tests.reworked.frontend
 
+import com.intellij.openapi.application.EDT
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import kotlinx.coroutines.Dispatchers
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpec
 import org.junit.Assert.assertNotEquals
 import org.junit.Test
@@ -10,6 +13,7 @@ import java.awt.event.KeyEvent.*
 
 @RunWith(JUnit4::class)
 class TerminalCompletionTest : BasePlatformTestCase() {
+  override fun runInDispatchThread(): Boolean = false
 
   val testCommandSpec = ShellCommandSpec("test_cmd") {
     subcommands {
@@ -29,7 +33,7 @@ class TerminalCompletionTest : BasePlatformTestCase() {
   }
 
   @Test
-  fun `test completions list filtered on typing`() {
+  fun `test completions list filtered on typing`() = timeoutRunBlocking(context = Dispatchers.EDT) {
     val fixture = createFixture()
 
     fixture.type("test_cmd ")
@@ -37,16 +41,18 @@ class TerminalCompletionTest : BasePlatformTestCase() {
     assertEquals(true, fixture.isLookupActive())
     assertSameElements(fixture.getLookupElements().map { it.lookupString },
                        listOf("bind", "branch", "build", "set", "show", "start", "status", "stop", "sync"))
+
     fixture.type("s")
     assertSameElements(fixture.getLookupElements().map { it.lookupString },
                        listOf("set", "show", "start", "status", "stop", "sync"))
+
     fixture.type("t")
     assertSameElements(fixture.getLookupElements().map { it.lookupString },
                        listOf("start", "status", "stop"))
   }
 
   @Test
-  fun `test selection returns to original item after down and up actions`() {
+  fun `test selection returns to original item after down and up actions`() = timeoutRunBlocking(context = Dispatchers.EDT) {
     val fixture = createFixture()
 
     fixture.type("test_cmd ")
@@ -65,7 +71,7 @@ class TerminalCompletionTest : BasePlatformTestCase() {
   }
 
   @Test
-  fun `test completion list is re-filtered when caret moves over prefix to the left, right`() {
+  fun `test completion list is re-filtered when caret moves over prefix to the left, right`() = timeoutRunBlocking(context = Dispatchers.EDT) {
     val fixture = createFixture()
 
     fixture.type("test_cmd ")
@@ -95,7 +101,7 @@ class TerminalCompletionTest : BasePlatformTestCase() {
   }
 
   @Test
-  fun `test lookup remains active when caret moves into text typed before call popup`() {
+  fun `test lookup remains active when caret moves into text typed before call popup`() = timeoutRunBlocking(context = Dispatchers.EDT) {
     val fixture = createFixture()
 
     fixture.type("test_cmd st")
@@ -111,7 +117,7 @@ class TerminalCompletionTest : BasePlatformTestCase() {
   }
 
   @Test
-  fun `test completion list is correctly re-filtered after pressing backspace`() {
+  fun `test completion list is correctly re-filtered after pressing backspace`() = timeoutRunBlocking(context = Dispatchers.EDT) {
     val fixture = createFixture()
 
     fixture.type("test_cmd st")

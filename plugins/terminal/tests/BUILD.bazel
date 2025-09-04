@@ -45,6 +45,7 @@ jvm_library(
     "@lib//:guava",
     "@lib//:junit4",
     "//platform/eel-provider",
+    "//platform/lang-impl",
   ],
   runtime_deps = [":tests_test_resources"]
 )

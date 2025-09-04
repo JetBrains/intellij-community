@@ -7,10 +7,15 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.codeInsight.lookup.impl.PrefixChangeListener
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.TerminalUiSettingsManager
 import com.intellij.terminal.frontend.TerminalInput
+import kotlinx.coroutines.cancel
+import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isOutputModelEditor
+import org.jetbrains.plugins.terminal.util.terminalProjectScope
 import kotlin.math.max
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
@@ -26,6 +31,15 @@ internal class TerminalLookupManagerListener : LookupManagerListener {
       .build()
     newLookup.addLookupListener(TerminalLookupListener())
     newLookup.addPrefixChangeListener(TerminalSelectedItemIconUpdater(newLookup), newLookup)
+    installLookupPrefixUpdater(newLookup)
+  }
+
+  private fun installLookupPrefixUpdater(lookup: LookupImpl) {
+    val outputModel = lookup.editor.getUserData(TerminalOutputModel.KEY)
+                      ?: error("Output model is not set in the terminal editor")
+    val coroutineScope = terminalProjectScope(lookup.project).childScope("TerminalLookupPrefixUpdater")
+    Disposer.register(lookup) { coroutineScope.cancel() }
+    TerminalLookupPrefixUpdater.install(outputModel, lookup, coroutineScope)
   }
 
   private class MaxVisibleItemsProperty : ReadWriteProperty<LookupPresentation, Int> {

@@ -5,15 +5,9 @@ import com.google.common.base.Ascii
 import com.intellij.codeInsight.AutoPopupController
 import com.intellij.codeInsight.inline.completion.InlineCompletion
 import com.intellij.codeInsight.lookup.LookupManager
-import com.intellij.codeInsight.lookup.impl.BackspaceHandler
-import com.intellij.codeInsight.lookup.impl.LookupActionHandler
-import com.intellij.codeInsight.lookup.impl.LookupImpl
-import com.intellij.codeInsight.lookup.impl.LookupTypedHandler
-import com.intellij.ide.DataManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.psi.util.PsiUtilBase
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.session.TerminalState
 import com.jediterm.terminal.emulator.mouse.MouseButtonCodes
@@ -86,24 +80,11 @@ internal open class TerminalEventsHandlerImpl(
       }
     }
 
-    updateLookupOnTyping(charTyped)
+    syncEditorCaretWithModel()
 
-    val lookup = LookupManager.getActiveLookup(editor)
-    // Added to guarantee that the carets are synchronized after type-ahead.
-    // Essential for correct lookup behavior.
-    val expectedCaretOffset = outputModel.cursorOffsetState.value.toRelative()
-    val moveCaretAction = { editor.caretModel.moveToOffset(expectedCaretOffset) }
-    if (editor.caretModel.offset != expectedCaretOffset) {
-      if (lookup != null) {
-        lookup.performGuardedChange(moveCaretAction)
-      }
-      else {
-        moveCaretAction()
-      }
-    }
     val project = editor.project
     if (project != null && typeAhead?.isEnabled() != false &&
-        lookup == null &&
+        LookupManager.getActiveLookup(editor) == null &&
         editor.isOutputModelEditor &&
         (Character.isLetterOrDigit(charTyped) || charTyped == '-' || charTyped == File.separatorChar) &&
         TerminalCommandCompletion.isEnabled() &&
@@ -136,8 +117,6 @@ internal open class TerminalEventsHandlerImpl(
       if (isNoModifiers(e.original) && keyCode == KeyEvent.VK_BACK_SPACE) {
         typeAhead?.backspace()
       }
-      // All typeAhead updates should be done before calling updateLookupOnAction
-      updateLookupOnAction(keyCode)
 
       // numLock does not change the code sent by keypad VK_DELETE,
       // although it send the char '.'
@@ -176,6 +155,9 @@ internal open class TerminalEventsHandlerImpl(
     }
     catch (ex: Exception) {
       LOG.error("Error sending pressed key to emulator", ex)
+    }
+    finally {
+      syncEditorCaretWithModel()
     }
     return false
   }
@@ -236,37 +218,6 @@ internal open class TerminalEventsHandlerImpl(
            keycode == KeyEvent.VK_END ||
            keycode == KeyEvent.VK_PAGE_UP ||
            keycode == KeyEvent.VK_PAGE_DOWN
-  }
-
-  private fun updateLookupOnAction(keycode: Int) {
-    val caret = editor.getCaretModel().getCurrentCaret()
-    val offset = outputModel.cursorOffsetState.value.toRelative()
-    val lookup = LookupManager.getActiveLookup(editor) as LookupImpl?
-    if (lookup == null) {
-      return
-    }
-
-    val newOffset = when (keycode) {
-      KeyEvent.VK_LEFT -> offset - 1
-      KeyEvent.VK_BACK_SPACE -> offset - 1
-      else -> offset
-    }
-    lookup.performGuardedChange(Runnable { editor.caretModel.moveToOffset(newOffset) })
-
-    val handler = when (keycode) {
-      KeyEvent.VK_LEFT -> {
-        LookupActionHandler.LeftHandler(null)
-      }
-      KeyEvent.VK_RIGHT -> {
-        LookupActionHandler.RightHandler(null)
-      }
-      KeyEvent.VK_BACK_SPACE -> {
-        BackspaceHandler(null)
-      }
-      else -> return
-    }
-
-    handler.execute(editor, caret, DataManager.getInstance().getDataContext(editor.getComponent()))
   }
 
   private fun simpleMapKeyCodeToChar(e: KeyEvent): Char {
@@ -431,22 +382,19 @@ internal open class TerminalEventsHandlerImpl(
   }
 
   /**
-   * Should be called after typeahead is updated the document.
+   * Guarantee that the editor caret is synchronized with the output model's cursor offset.
+   * Essential for correct lookup behavior.
    */
-  private fun updateLookupOnTyping(charTyped: Char) {
-    val project = editor.project ?: return
-    val lookup = LookupManager.getActiveLookup(editor)
-    if (lookup != null) {
-      if (charTyped.code != KeyEvent.VK_BACK_SPACE) {
-        val psiFile = PsiUtilBase.getPsiFileInEditor(editor, project)
-        LookupTypedHandler.beforeCharTyped(
-          charTyped,
-          project,
-          editor,
-          editor,
-          psiFile,
-          Runnable { }
-        )
+  private fun syncEditorCaretWithModel() {
+    val expectedCaretOffset = outputModel.cursorOffsetState.value.toRelative()
+    val moveCaretAction = { editor.caretModel.moveToOffset(expectedCaretOffset) }
+    if (editor.caretModel.offset != expectedCaretOffset) {
+      val lookup = LookupManager.getActiveLookup(editor)
+      if (lookup != null) {
+        lookup.performGuardedChange(moveCaretAction)
+      }
+      else {
+        moveCaretAction()
       }
     }
   }
