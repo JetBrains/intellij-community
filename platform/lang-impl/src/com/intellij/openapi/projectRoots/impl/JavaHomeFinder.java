@@ -145,7 +145,8 @@ public abstract class JavaHomeFinder {
     return getFinder(project == null ? LocalEelDescriptor.INSTANCE : getEelDescriptor(project));
   }
 
-  private static @NotNull JavaHomeFinderBasic getFinder(@NotNull EelDescriptor descriptor) {
+  @ApiStatus.Internal
+  public static @NotNull JavaHomeFinderBasic getFinder(@NotNull EelDescriptor descriptor) {
     if (Registry.is("java.home.finder.use.eel")) {
       return javaHomeFinderEel(descriptor);
     }
