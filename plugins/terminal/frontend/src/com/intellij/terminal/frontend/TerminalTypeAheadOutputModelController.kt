@@ -103,7 +103,8 @@ internal class TerminalTypeAheadOutputModelController(
   override fun applyPendingUpdates() {
     if (!backendEventsDelayed) return
     try {
-      doApplyDelayedEvents(delayedEvents)
+      val merged = mergeOutputEvents(delayedEvents)
+      doApplyDelayedEvents(merged)
     }
     catch (e: CancellationException) {
       throw e
@@ -128,6 +129,37 @@ internal class TerminalTypeAheadOutputModelController(
   private fun delayUpdatesFromBackend() {
     backendEventsDelayed = true
     check(delayedUpdateRequests.tryEmit(Unit))
+  }
+
+  /**
+   * There might be events that override each other, so there is no need to apply them in the given order.
+   * Let's filter out meaningless events.
+   */
+  private fun mergeOutputEvents(events: List<TerminalOutputEvent>): List<TerminalOutputEvent> {
+    // Take only the last cursor position update if there are multiple updates
+    val lastCursorUpdate = events.lastOrNull { it is TerminalCursorPositionChangedEvent }
+
+    val contentEvents = events.filterIsInstance<TerminalContentUpdatedEvent>()
+    if (contentEvents.isEmpty()) {
+      return listOfNotNull(lastCursorUpdate)
+    }
+
+    // Merge consecutive updates of the content if it is on the same line.
+    // Take only the last update on each line.
+    val result = mutableListOf<TerminalOutputEvent>()
+    var curIndex = 0
+    while (curIndex < contentEvents.size) {
+      val curLine = contentEvents[curIndex].startLineLogicalIndex
+      while (curIndex < contentEvents.size && contentEvents[curIndex].startLineLogicalIndex == curLine) {
+        curIndex++
+      }
+      result.add(contentEvents[curIndex - 1])
+    }
+
+    return if (lastCursorUpdate != null) {
+      result + lastCursorUpdate
+    }
+    else result
   }
 
   private fun doApplyDelayedEvents(events: List<TerminalOutputEvent>) {
