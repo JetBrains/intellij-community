@@ -72,9 +72,7 @@ class ConvertCallChainIntoSequenceInspection : AbstractKotlinInspection() {
 }
 
 private class ConvertCallChainIntoSequenceFix : PsiUpdateModCommandQuickFix() {
-    override fun getName(): String = KotlinBundle.message("convert.call.chain.into.sequence.fix.text")
-
-    override fun getFamilyName(): String = name
+    override fun getFamilyName(): String = KotlinBundle.message("convert.call.chain.into.sequence.fix.text")
 
     override fun applyFix(
         project: Project,

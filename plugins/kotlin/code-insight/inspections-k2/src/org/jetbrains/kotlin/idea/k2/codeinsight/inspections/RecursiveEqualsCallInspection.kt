@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.utils.isEqualsMethodSymbol
@@ -107,18 +108,14 @@ internal class RecursiveEqualsCallInspection : KotlinApplicableInspectionBase.Si
 
         val argumentSymbol = argumentExpr.mainReference.resolveToSymbol() as? KaValueParameterSymbol ?: return null
         val parameterSymbol = containingSymbol.valueParameters.singleOrNull() ?: return null
-        if (argumentSymbol != parameterSymbol) return null
-
-        return Unit
+        return (argumentSymbol == parameterSymbol).asUnit
     }
 }
 
 private class ReplaceWithReferentialEqualityFix(invert: Boolean) : KotlinModCommandQuickFix<KtExpression>() {
     private val operator = if (invert) "!==" else "==="
 
-    override fun getName() = KotlinBundle.message("replace.with.0", operator)
-
-    override fun getFamilyName() = name
+    override fun getFamilyName(): String = KotlinBundle.message("replace.with.0", operator)
 
     override fun applyFix(project: Project, element: KtExpression, updater: ModPsiUpdater) {
         val (right, target) = when (element) {
