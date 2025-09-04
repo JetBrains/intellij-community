@@ -72,6 +72,7 @@ kotlin {
       isTransitive = false
     }
     implementation(project(":fleet.util.core"))
+    implementation(project(":fleet.util.codepoints"))
   }
   // KOTLIN__MARKER_END
 }

@@ -232,6 +232,8 @@ fleet/reporting/shared
 fleet/rhizomedb
 fleet/rpc
 fleet/rpc.server
+fleet/util/codepoints
+fleet/util/codepoints/test
 fleet/util/core
 fleet/util/logging/api
 fleet/util/logging/slf4j

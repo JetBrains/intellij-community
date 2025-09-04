@@ -38,7 +38,6 @@ jvm_library(
     "//fleet/multiplatform.shims",
     "//fleet/fastutil",
     "@lib//:kotlinx-datetime-jvm",
-    "@lib//:de-cketti-unicode-kotlin-codepoints-jvm",
     ":fleet_util_multiplatform_provided",
   ],
   exports = [

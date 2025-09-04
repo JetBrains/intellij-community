@@ -1,29 +1,24 @@
-### auto-generated section `build fleet.andel` start
+### auto-generated section `build fleet.util.codepoints` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 create_kotlinc_options(
-  name = "custom_andel",
+  name = "custom_codepoints",
   opt_in = ["kotlin.concurrent.atomics.ExperimentalAtomicApi"],
   x_consistent_data_class_copy_visibility = True,
   x_lambdas = "class"
 )
 
 jvm_library(
-  name = "andel",
-  module_name = "fleet.andel",
+  name = "codepoints",
+  module_name = "fleet.util.codepoints",
   visibility = ["//visibility:public"],
   srcs = glob(["srcCommonMain/**/*.kt", "srcCommonMain/**/*.java", "srcCommonMain/**/*.form"], allow_empty = True, exclude = ["**/module-info.java"]),
-  kotlinc_opts = ":custom_andel",
+  kotlinc_opts = ":custom_codepoints",
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinx-collections-immutable",
-    "@lib//:jetbrains-annotations",
     "//fleet/util/core",
-    "@lib//:fastutil-min",
-    "@lib//:kotlinx-serialization-core",
-    "@lib//:kotlinx-serialization-json",
-    "//fleet/util/codepoints",
+    "@lib//:de-cketti-unicode-kotlin-codepoints-jvm",
   ]
 )
-### auto-generated section `build fleet.andel` end
+### auto-generated section `build fleet.util.codepoints` end
