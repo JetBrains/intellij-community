@@ -22,6 +22,7 @@ private val COMMON_ADDITIONAL_VM_OPTIONS = listOf(
   "-Dide.region.url.mapping.expiration.timeout=7200",
   "-Dexternal.system.auto.import.headless.async=true",
   "-Dmaven.default.headless.import=true",
+  "-Didea.background.write.action.enabled=false"
   )
 
 private const val IS_EAP = false
