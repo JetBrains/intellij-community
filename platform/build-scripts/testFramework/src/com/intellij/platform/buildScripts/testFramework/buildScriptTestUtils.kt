@@ -16,7 +16,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.SoftAssertions
 import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.ProductProperties
 import org.jetbrains.intellij.build.ProprietaryBuildTools
@@ -34,6 +33,11 @@ import org.opentest4j.TestAbortedException
 import java.net.http.HttpConnectTimeoutException
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.OnErrorResult
+import kotlin.io.path.copyToRecursively
+import kotlin.io.path.exists
+import kotlin.io.path.name
 
 fun createBuildOptionsForTest(
   productProperties: ProductProperties,
@@ -198,13 +202,15 @@ private suspend fun doRunTestBuild(context: BuildContext, traceSpanName: String,
   var outDir: Path? = null
   var traceFile: Path? = null
   var error: Throwable? = null
+  val buildLogsDir = TestLoggerFactory.getTestLogDir().resolve("${context.productProperties.baseFileName}-$traceSpanName")
+  Logger.setFactory(TestLoggerFactory::class.java)
   try {
     spanBuilder(traceSpanName).use { span ->
       context.cleanupJarCache()
       outDir = context.paths.buildOutputDir
       span.setAttribute("outDir", outDir.toString())
       if (writeTelemetry) {
-        traceFile = TestLoggerFactory.getTestLogDir().resolve("${context.productProperties.baseFileName}-$traceSpanName-trace.json").also {
+        traceFile = buildLogsDir.resolve("trace.json").also {
           JaegerJsonSpanExporterManager.setOutput(it, addShutDownHook = false)
         }
       }
@@ -236,7 +242,7 @@ private suspend fun doRunTestBuild(context: BuildContext, traceSpanName: String,
         }
         span.setStatus(StatusCode.ERROR)
 
-        copyDebugLog(context.productProperties, context.messages)
+        copyLogs(context, buildLogsDir)
 
         if (ExceptionUtilRt.causedBy(e, HttpConnectTimeoutException::class.java)) {
           error = TestAbortedException("failed to load data for build scripts", e)
@@ -295,13 +301,21 @@ private suspend fun checkKeymapPluginsAreBundledWithFrontend(
     .containsExactlyInAnyOrder(*keymapPluginsBundledWithMonolith.toTypedArray())
 }
 
-private fun copyDebugLog(productProperties: ProductProperties, messages: BuildMessages) {
+@OptIn(ExperimentalPathApi::class)
+private fun copyLogs(context: BuildContext, buildLogsDir: Path) {
   try {
-    val debugLogFile = messages.getDebugLog()
-    if (!debugLogFile.isNullOrEmpty()) {
-      val targetFile = TestLoggerFactory.getTestLogDir().resolve("${productProperties.baseFileName}-test-build-debug.log")
-      Files.createDirectories(targetFile.parent)
-      Files.writeString(targetFile, debugLogFile)
+    if (context.paths.logDir.exists()) {
+      Files.createDirectories(buildLogsDir)
+      context.paths.logDir.copyToRecursively(buildLogsDir, followLinks = false, onError = { source, target, exception ->
+        Span.current().addEvent("failed to copy log file: ${source.name} -> ${target.name}: ${exception.message}")
+        OnErrorResult.SKIP_SUBTREE
+      })
+    }
+    
+    val debugLogText = context.messages.getDebugLog()
+    if (!debugLogText.isNullOrEmpty()) {
+      val targetFile = buildLogsDir.resolve("test-build-debug.log")
+      Files.writeString(targetFile, debugLogText)
       Span.current().addEvent("debug log copied to $targetFile")
     }
   }
