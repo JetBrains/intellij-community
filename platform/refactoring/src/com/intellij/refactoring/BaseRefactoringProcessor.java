@@ -692,14 +692,17 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     }
   }
 
+  /**
+   * The main entry point to the refactoring process. It calls {@link #doRun}.
+   */
   @Override
   public final void run() {
-    Runnable baseRunnable = () -> {
+    final Runnable baseRunnable = () -> {
       try (var ignored = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
         doRun();
       }
     };
-    Runnable runnable = shouldDisableAccessChecks() ?
+    final Runnable runnable = shouldDisableAccessChecks() ?
                         () -> NonProjectFileWritingAccessProvider.disableChecksDuring(baseRunnable) :
                         baseRunnable;
     if (ApplicationManager.getApplication().isUnitTestMode()) {
