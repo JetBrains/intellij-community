@@ -28,12 +28,13 @@ internal class LocalShellIntegrationInjectorTest {
     )
 
     assertEquals(listOf("/bin/zsh"), actual.shellCommand)
-    assertEquals(ShellIntegration(ShellType.ZSH, expectedCommandBlockIntegration()), actual.shellIntegration)
+    val expectedCommandBlockIntegration = expectedCommandBlockIntegration()
+    assertEquals(ShellIntegration(ShellType.ZSH, expectedCommandBlockIntegration), actual.shellIntegration)
     assertEquals(findAbsolutePath("shell-integrations/zsh/zsh-integration.zsh").parent.toString(), actual.envVariables[LocalShellIntegrationInjector.IJ_ZSH_DIR])
-    assertEquals("1", actual.envVariables["PROCESS_LAUNCHED_BY_CW"])
-    assertEquals("1", actual.envVariables["FIG_TERM"])
-    assertEquals("1", actual.envVariables["PROCESS_LAUNCHED_BY_Q"])
-    assertEquals("1", actual.envVariables["INTELLIJ_TERMINAL_COMMAND_BLOCKS"])
+    assertEquals("1".takeIf { expectedCommandBlockIntegration != null }, actual.envVariables["PROCESS_LAUNCHED_BY_CW"])
+    assertEquals("1".takeIf { expectedCommandBlockIntegration != null }, actual.envVariables["FIG_TERM"])
+    assertEquals("1".takeIf { expectedCommandBlockIntegration != null }, actual.envVariables["PROCESS_LAUNCHED_BY_Q"])
+    assertEquals("1".takeIf { expectedCommandBlockIntegration != null }, actual.envVariables["INTELLIJ_TERMINAL_COMMAND_BLOCKS"])
     assertEquals(findAbsolutePath("shell-integrations/zsh/zdotdir/.zshenv").parent.toString(), actual.envVariables["ZDOTDIR"])
     assertEquals("MY_CUSTOM_ENV_VALUE1", actual.envVariables["MY_CUSTOM_ENV1"])
   }
@@ -52,11 +53,12 @@ internal class LocalShellIntegrationInjectorTest {
     )
 
     assertEquals(listOf("/bin/bash", "--rcfile", findAbsolutePath("shell-integrations/bash/bash-integration.bash").toString()), actual.shellCommand)
-    assertEquals(ShellIntegration(ShellType.BASH, expectedCommandBlockIntegration()), actual.shellIntegration)
-    assertEquals("1", actual.envVariables["PROCESS_LAUNCHED_BY_CW"])
-    assertEquals("1", actual.envVariables["FIG_TERM"])
-    assertEquals("1", actual.envVariables["PROCESS_LAUNCHED_BY_Q"])
-    assertEquals("1", actual.envVariables["INTELLIJ_TERMINAL_COMMAND_BLOCKS"])
+    val expectedCommandBlockIntegration = expectedCommandBlockIntegration()
+    assertEquals(ShellIntegration(ShellType.BASH, expectedCommandBlockIntegration), actual.shellIntegration)
+    assertEquals("1".takeIf { expectedCommandBlockIntegration != null }, actual.envVariables["PROCESS_LAUNCHED_BY_CW"])
+    assertEquals("1".takeIf { expectedCommandBlockIntegration != null }, actual.envVariables["FIG_TERM"])
+    assertEquals("1".takeIf { expectedCommandBlockIntegration != null }, actual.envVariables["PROCESS_LAUNCHED_BY_Q"])
+    assertEquals("1".takeIf { expectedCommandBlockIntegration != null }, actual.envVariables["INTELLIJ_TERMINAL_COMMAND_BLOCKS"])
     assertEquals("MY_CUSTOM_ENV_VALUE1", actual.envVariables["MY_CUSTOM_ENV1"])
   }
 
