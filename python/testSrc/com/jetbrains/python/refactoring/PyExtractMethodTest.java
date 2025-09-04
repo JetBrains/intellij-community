@@ -403,4 +403,9 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
   public void testBracketedLiteralMultiline() {
     doTest("extracted");
   }
+
+  // PY-54512
+  public void testParenthesizedGeneratorAssigned() {
+    doTest("extracted");
+  }
 }
