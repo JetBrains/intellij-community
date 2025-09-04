@@ -37,6 +37,7 @@ jvm_library(
     "//fleet/reporting/shared",
     "//fleet/multiplatform.shims",
     "//fleet/fastutil",
+    "//fleet/util/serialization",
     ":fleet_util_multiplatform_provided",
   ],
   exports = [
@@ -44,6 +45,7 @@ jvm_library(
     "@lib//:kotlinx-collections-immutable",
     "//fleet/multiplatform.shims",
     "//fleet/fastutil",
+    "//fleet/util/serialization",
   ],
   runtime_deps = [":core_resources"]
 )
