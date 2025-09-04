@@ -22,7 +22,6 @@ jvm_library(
     "//platform/platform-api:ide",
     "//platform/util:util-ui",
     "//java/java-psi-api:psi",
-    "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared",
     "@lib//:kotlinc-analysis-api-provided",
     "@lib//:kotlinc-kotlin-compiler-common-provided",
   ],
