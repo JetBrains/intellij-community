@@ -28,6 +28,7 @@ import git4idea.inMemory.rebase.performInMemoryRebase
 import git4idea.rebase.*
 import git4idea.rebase.interactive.dialog.GitInteractiveRebaseDialog
 import git4idea.rebase.log.GitCommitEditingOperationResult
+import git4idea.rebase.log.indicesByPredicate
 import git4idea.repo.GitRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

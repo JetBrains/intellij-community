@@ -9,9 +9,7 @@ import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.ui.table.size
 import git4idea.GitDisposable
 import git4idea.i18n.GitBundle
-import git4idea.inMemory.GitObjectRepository
-import git4idea.inMemory.rebase.log.squash.GitInMemorySquashConsecutiveOperation
-import git4idea.rebase.GitRebaseUtils
+import git4idea.inMemory.rebase.log.InMemoryRebaseOperations
 import git4idea.rebase.GitSquashedCommitsMessage
 import git4idea.rebase.log.*
 import kotlinx.coroutines.launch
@@ -43,18 +41,7 @@ internal class GitSquashLogAction : GitMultipleCommitEditingAction() {
     newMessage: String,
   ) {
     GitDisposable.getInstance(commitEditingData.project).coroutineScope.launch {
-      val operationResult = withBackgroundProgress(commitEditingData.project, GitBundle.message("rebase.log.squash.progress.indicator.title")) {
-        if (Registry.`is`("git.in.memory.commit.editing.operations.enabled") && GitRebaseUtils.areConsecutiveCommits(selectedCommitsDetails)) {
-          GitInMemorySquashConsecutiveOperation(GitObjectRepository(commitEditingData.repository),
-                                                selectedCommitsDetails,
-                                                newMessage).execute()
-        }
-        else {
-          coroutineToIndicator {
-            GitSquashOperation(commitEditingData.repository).execute(selectedCommitsDetails, newMessage)
-          }
-        }
-      }
+      val operationResult = executeSquashOperation(commitEditingData, selectedCommitsDetails, newMessage)
 
       if (operationResult is GitCommitEditingOperationResult.Complete) {
         commitEditingData.logUiEx?.focusCommitWhenReady(commitEditingData.repository, operationResult.commitToFocus)
@@ -65,6 +52,25 @@ internal class GitSquashLogAction : GitMultipleCommitEditingAction() {
           GitBundle.message("rebase.log.squash.undo.impossible.title"),
           GitBundle.message("rebase.log.squash.undo.failed.title")
         )
+      }
+    }
+  }
+
+  private suspend fun executeSquashOperation(
+    commitEditingData: MultipleCommitEditingData,
+    commitsToSquash: List<VcsCommitMetadata>,
+    newMessage: String,
+  ): GitCommitEditingOperationResult {
+    return withBackgroundProgress(commitEditingData.project, GitBundle.message("rebase.log.squash.progress.indicator.title")) {
+      if (Registry.`is`("git.in.memory.commit.editing.operations.enabled")) {
+        val inMemoryResult = InMemoryRebaseOperations.squash(commitEditingData.repository, commitEditingData.logData, commitsToSquash, newMessage)
+        if (inMemoryResult is GitCommitEditingOperationResult.Complete) {
+          return@withBackgroundProgress inMemoryResult
+        }
+      }
+
+      coroutineToIndicator {
+        GitSquashOperation(commitEditingData.repository).execute(commitsToSquash, newMessage)
       }
     }
   }
