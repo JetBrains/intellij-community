@@ -29,6 +29,7 @@ jvm_library(
     "@lib//:jetbrains-annotations",
     "@lib//:kotlinx-serialization-core",
     "@lib//:kotlinx-serialization-json",
+    "//fleet/fastutil",
   ]
 )
 ### auto-generated section `build fleet.rhizomedb` end

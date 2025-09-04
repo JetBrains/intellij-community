@@ -72,6 +72,7 @@ kotlin {
     }
     implementation(project(":fleet.util.core"))
     implementation(project(":fleet.multiplatform.shims"))
+    implementation(project(":fleet.fastutil"))
   }
   // KOTLIN__MARKER_END
 }

@@ -34,6 +34,7 @@ jvm_library(
     "//fleet/multiplatform.shims",
     "@lib//:fastutil-min",
     "//fleet/bifurcan",
+    "//fleet/fastutil",
   ],
   exports = [
     "//fleet/rhizomedb",

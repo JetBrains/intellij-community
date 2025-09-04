@@ -39,5 +39,6 @@
     <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
     <orderEntry type="module" module-name="fleet.util.codepoints" />
     <orderEntry type="module" module-name="fleet.bifurcan" exported="" />
+    <orderEntry type="module" module-name="fleet.fastutil" />
   </component>
 </module>

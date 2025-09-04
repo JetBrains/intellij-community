@@ -45,5 +45,6 @@
     <orderEntry type="module" module-name="fleet.multiplatform.shims" />
     <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="module" module-name="fleet.bifurcan" />
+    <orderEntry type="module" module-name="fleet.fastutil" />
   </component>
 </module>

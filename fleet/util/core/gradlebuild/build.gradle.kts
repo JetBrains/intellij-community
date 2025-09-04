@@ -77,7 +77,6 @@ kotlin {
     implementation(project(":fleet.reporting.api"))
     implementation(project(":fleet.reporting.shared"))
     api(project(":fleet.multiplatform.shims"))
-    api(project(":fleet.fastutil"))
     compileOnly(project(":fleet.util.multiplatform"))
     api(project(":fleet.util.serialization"))
   }
