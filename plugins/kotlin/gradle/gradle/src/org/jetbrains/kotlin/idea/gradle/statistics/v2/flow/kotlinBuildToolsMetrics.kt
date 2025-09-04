@@ -3,8 +3,6 @@ package org.jetbrains.kotlin.idea.gradle.statistics.v2.flow
 
 //metric name and enum should be the same: KDoc + test, + version + test
 enum class KotlinBuildToolFusMetricName(val metric: KotlinBuildToolFusMetric<*>) {
-    BUILD_ID(BuildIdFusMetric()),
-
     //annotation processors
     EXECUTED_FROM_IDEA(KotlinBuildToolBooleanOverrideFusMetric("EXECUTED_FROM_IDEA")),
     ENABLED_KAPT(KotlinBuildToolBooleanFusMetric("ENABLED_KAPT")),
