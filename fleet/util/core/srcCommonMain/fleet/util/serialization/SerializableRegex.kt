@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class SerializableRegex(val pattern: String, val regexOption: RegexOption) {
-  val regex by lazy {
+  val regex: Regex by lazy {
     Regex(pattern, regexOption)
   }
 }
