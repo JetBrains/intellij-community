@@ -475,6 +475,10 @@ public final class ProgressRunner<R> {
       // cancellation of the Job cancels the future
       job.invokeOnCompletion(true, true, (throwable) -> {
         if (throwable != null) {
+          // surrounding code expects PCE
+          throwable = throwable instanceof CancellationException ?
+                      new CeProcessCanceledException((CancellationException)throwable) :
+                      throwable;
           resultFuture.completeExceptionally(throwable);
         }
         return Unit.INSTANCE;
