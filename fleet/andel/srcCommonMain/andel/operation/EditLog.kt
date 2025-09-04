@@ -4,9 +4,9 @@
 package andel.operation
 
 import fleet.util.UID
-import fleet.util.bifurcan.BifurcanVector
-import fleet.util.bifurcan.IBifurcanVector
-import fleet.util.bifurcan.serialization.BifurcanListSerializer
+import fleet.bifurcan.BifurcanVector
+import fleet.bifurcan.IBifurcanVector
+import fleet.bifurcan.serialization.BifurcanListSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.UseSerializers
 

@@ -220,6 +220,7 @@ build/tests
 commandInterface
 community-resources
 fleet/andel
+fleet/bifurcan
 fleet/compiler-plugins
 fleet/fastutil
 fleet/junit4

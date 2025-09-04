@@ -7,8 +7,8 @@ import fleet.rpc.core.AssumptionsViolatedException
 import fleet.util.UID
 import fleet.fastutil.ints.Int2ObjectOpenHashMap
 import fleet.fastutil.ints.IntMap
-import fleet.util.bifurcan.BifurcanVector
-import fleet.util.bifurcan.IBifurcanVector
+import fleet.bifurcan.BifurcanVector
+import fleet.bifurcan.IBifurcanVector
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 

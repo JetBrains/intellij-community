@@ -1,11 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package fleet.util.bifurcan
+package fleet.bifurcan
 
 import kotlin.collections.List
 
 
-typealias BifurcanVector<T> = fleet.util.bifurcan.List<T>
-typealias IBifurcanVector<T> = fleet.util.bifurcan.List<T>
+typealias BifurcanVector<T> = fleet.bifurcan.List<T>
+typealias IBifurcanVector<T> = fleet.bifurcan.List<T>
 
 fun <V> List<V>.toBifurcan(): BifurcanVector<V> {
   return BifurcanVector.from(this)

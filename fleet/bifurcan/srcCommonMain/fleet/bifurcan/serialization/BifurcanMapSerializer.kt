@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package fleet.util.bifurcan.serialization
+package fleet.bifurcan.serialization
 
-import fleet.util.bifurcan.SortedMap
+import fleet.bifurcan.SortedMap
 import fleet.util.serialization.DataSerializer
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.builtins.MapSerializer

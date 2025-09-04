@@ -80,6 +80,7 @@ kotlin {
     implementation(project(":fleet.reporting.api"))
     implementation(project(":fleet.reporting.shared"))
     implementation(project(":fleet.multiplatform.shims"))
+    implementation(project(":fleet.bifurcan"))
   }
   // KOTLIN__MARKER_END
 }

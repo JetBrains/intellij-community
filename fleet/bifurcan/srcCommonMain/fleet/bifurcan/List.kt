@@ -1,10 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package fleet.util.bifurcan
+package fleet.bifurcan
 
-import fleet.util.bifurcan.nodes.ListNodes.Node
-import fleet.util.bifurcan.utils.Bits.log2Ceil
-import fleet.util.bifurcan.nodes.ListNodes
-import fleet.util.bifurcan.serialization.BifurcanListSerializer
+import fleet.bifurcan.nodes.ListNodes.Node
+import fleet.bifurcan.utils.Bits.log2Ceil
+import fleet.bifurcan.nodes.ListNodes
+import fleet.bifurcan.serialization.BifurcanListSerializer
 
 import kotlin.math.min
 import kotlinx.collections.immutable.PersistentList

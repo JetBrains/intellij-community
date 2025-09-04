@@ -73,6 +73,7 @@ kotlin {
     }
     implementation(project(":fleet.util.core"))
     implementation(project(":fleet.util.codepoints"))
+    api(project(":fleet.bifurcan"))
   }
   // KOTLIN__MARKER_END
 }

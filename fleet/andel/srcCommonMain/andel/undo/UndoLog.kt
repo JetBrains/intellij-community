@@ -9,9 +9,9 @@ import andel.operation.Operation
 import andel.operation.compose
 import andel.operation.normalizeHard
 import fleet.util.*
-import fleet.util.bifurcan.BifurcanVector
-import fleet.util.bifurcan.IBifurcanVector
-import fleet.util.bifurcan.serialization.BifurcanListSerializer
+import fleet.bifurcan.BifurcanVector
+import fleet.bifurcan.IBifurcanVector
+import fleet.bifurcan.serialization.BifurcanListSerializer
 import fleet.util.openmap.SerializableKey
 import fleet.util.openmap.SerializableOpenMap
 import fleet.util.openmap.SerializedValue

@@ -33,6 +33,7 @@ jvm_library(
     "//fleet/reporting/shared",
     "//fleet/multiplatform.shims",
     "@lib//:fastutil-min",
+    "//fleet/bifurcan",
   ],
   exports = [
     "//fleet/rhizomedb",
