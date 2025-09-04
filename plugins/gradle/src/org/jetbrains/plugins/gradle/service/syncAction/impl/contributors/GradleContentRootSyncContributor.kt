@@ -51,7 +51,7 @@ internal class GradleContentRootSyncContributor : GradleSyncContributor {
         val moduleEntity = createModuleEntity(context, contentRootData)
         builder addEntity moduleEntity
 
-        addGradleModuleEntity(builder, projectModel, context, moduleEntity)
+        //addGradleModuleEntity(builder, projectModel, context, moduleEntity)
       }
     }
 

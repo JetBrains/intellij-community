@@ -54,14 +54,17 @@ class GradleContentRootSyncContributorTest : GradlePhasedSyncTestCase() {
           assertEntities<ExternalProjectEntity>(myProject, externalProjectId)
           assertEntities<GradleBuildEntity>(myProject, rootBuildId)
           assertEntities<GradleProjectEntity>(myProject, rootProjectId)
-          assertGradleModuleEntities(myProject, "project")
+          // TODO uncomment when GradleModuleEntity creation is fixed for GradleContentRootSyncContributor
+          //assertGradleModuleEntities(myProject, "project")
 
           assertGradleBuildEntity(myProject, rootBuildUrl, externalProjectId)
           assertGradleProjectEntity(
             myProject, projectUrl = rootBuildUrl,
             buildId = rootBuildId, path = ":",
             linkedProjectId = "project", identityPath = ":",
-            moduleName = "project",
+            // TODO uncomment non-null module name when GradleModuleEntity creation is fixed for GradleContentRootSyncContributor
+            moduleName = null,
+            //moduleName = "project",
           )
 
           assertContentRoots(myProject, "project", projectRoot)
@@ -116,13 +119,14 @@ class GradleContentRootSyncContributorTest : GradlePhasedSyncTestCase() {
           assertEntities<ExternalProjectEntity>(myProject, externalProjectId)
           assertEntities<GradleBuildEntity>(myProject, rootBuildId)
           assertEntities<GradleProjectEntity>(myProject, rootProjectId, rootSubprojectId)
-          assertGradleModuleEntities(myProject, "project.module") {
-            // TODO make sure that it's a correct behavior.
-            "The test expectation may be not correct, it just describes the existing behavior. " +
-            "The test expects GradleModuleEntity only for 'project.module', although GradleContentRootSyncContributor creates entities " +
-            "also for `project` and `project.module`. Somehow, they are not available at the end of the sync phase, " +
-            "when it's not the first project import."
-          }
+          // TODO uncomment when GradleModuleEntity creation is fixed for GradleContentRootSyncContributor
+          //assertGradleModuleEntities(myProject, "project.module") {
+          //  // TODO make sure that it's a correct behavior.
+          //  "The test expectation may be not correct, it just describes the existing behavior. " +
+          //  "The test expects GradleModuleEntity only for 'project.module', although GradleContentRootSyncContributor creates entities " +
+          //  "also for `project` and `project.module`. Somehow, they are not available at the end of the sync phase, " +
+          //  "when it's not the first project import."
+          //}
 
           assertGradleBuildEntity(myProject, rootBuildUrl, externalProjectId)
           assertGradleProjectEntity(
@@ -136,7 +140,9 @@ class GradleContentRootSyncContributorTest : GradlePhasedSyncTestCase() {
             myProject, projectUrl = rootSubprojectUrl,
             buildId = rootBuildId, path = ":module",
             linkedProjectId = ":module", identityPath = ":module",
-            moduleName = "project.module",
+            // TODO uncomment non-null module name when GradleModuleEntity creation is fixed for GradleContentRootSyncContributor
+            moduleName = null,
+            //moduleName = "project.module",
           )
 
           assertContentRoots(myProject, "project", projectRoot)
@@ -223,14 +229,17 @@ class GradleContentRootSyncContributorTest : GradlePhasedSyncTestCase() {
           assertEntities<ExternalProjectEntity>(myProject, externalProjectId)
           assertEntities<GradleBuildEntity>(myProject, rootBuildId, firstIncludedBuildId)
           assertEntities<GradleProjectEntity>(myProject, rootProjectId, firstIncludedProjectId)
-          assertGradleModuleEntities(myProject, "project", "includedProject1")
+          // TODO uncomment when GradleModuleEntity creation is fixed for GradleContentRootSyncContributor
+          //assertGradleModuleEntities(myProject, "project", "includedProject1")
 
           assertGradleBuildEntity(myProject, rootBuildUrl, externalProjectId)
           assertGradleProjectEntity(
             myProject, projectUrl = rootBuildUrl,
             buildId = rootBuildId, path = ":",
             linkedProjectId = "project", identityPath = ":",
-            moduleName = "project",
+            // TODO uncomment non-null module name when GradleModuleEntity creation is fixed for GradleContentRootSyncContributor
+            moduleName = null,
+            //moduleName = "project",
           )
 
           assertGradleBuildEntity(myProject, firstIncludedBuildUrl, externalProjectId)
@@ -238,7 +247,9 @@ class GradleContentRootSyncContributorTest : GradlePhasedSyncTestCase() {
             myProject, projectUrl = firstIncludedBuildUrl,
             buildId = firstIncludedBuildId, path = ":",
             linkedProjectId = ":includedProject1", identityPath = ":includedProject1",
-            moduleName = "includedProject1",
+            // TODO uncomment non-null module name when GradleModuleEntity creation is fixed for GradleContentRootSyncContributor
+            moduleName = null,
+            //moduleName = "includedProject1",
           )
 
           assertContentRoots(myProject, "project", projectRoot)
@@ -322,13 +333,14 @@ class GradleContentRootSyncContributorTest : GradlePhasedSyncTestCase() {
           assertEntities<ExternalProjectEntity>(myProject, externalProjectId)
           assertEntities<GradleBuildEntity>(myProject, rootBuildId, firstIncludedBuildId, secondIncludedBuildId)
           assertEntities<GradleProjectEntity>(myProject, rootProjectId, firstIncludedProjectId, secondIncludedProjectId)
-          assertGradleModuleEntities(myProject, "includedProject2") {
-            // TODO make sure that it's a correct behavior.
-            "The test expectation may be not correct, it just describes the existing behavior. " +
-            "The test expects GradleModuleEntity only for 'includedProject2', although GradleContentRootSyncContributor creates entities " +
-            "also for `project` and `includedProject1`. Somehow, they are not available at the end of the sync phase, " +
-            "when it's not the first project import."
-          }
+          // TODO uncomment when GradleModuleEntity creation is fixed for GradleContentRootSyncContributor
+          //assertGradleModuleEntities(myProject, "includedProject2") {
+          //  // TODO make sure that it's a correct behavior.
+          //  "The test expectation may be not correct, it just describes the existing behavior. " +
+          //  "The test expects GradleModuleEntity only for 'includedProject2', although GradleContentRootSyncContributor creates entities " +
+          //  "also for `project` and `includedProject1`. Somehow, they are not available at the end of the sync phase, " +
+          //  "when it's not the first project import."
+          //}
 
           assertGradleBuildEntity(myProject, rootBuildUrl, externalProjectId)
           assertGradleProjectEntity(
@@ -353,7 +365,9 @@ class GradleContentRootSyncContributorTest : GradlePhasedSyncTestCase() {
             myProject, projectUrl = secondIncludedBuildUrl,
             buildId = secondIncludedBuildId, path = ":",
             linkedProjectId = ":includedProject2", identityPath = ":includedProject2",
-            moduleName = "includedProject2",
+            // TODO uncomment non-null module name when GradleModuleEntity creation is fixed for GradleContentRootSyncContributor
+            moduleName = null,
+            //moduleName = "includedProject2",
           )
 
           assertContentRoots(myProject, "project", projectRoot)
@@ -475,14 +489,17 @@ class GradleContentRootSyncContributorTest : GradlePhasedSyncTestCase() {
               assertEntities<ExternalProjectEntity>(myProject, externalProjectId)
               assertEntities<GradleBuildEntity>(myProject, rootBuildId)
               assertEntities<GradleProjectEntity>(myProject, rootProjectId)
-              assertGradleModuleEntities(myProject, "project")
+              // TODO uncomment when GradleModuleEntity creation is fixed for GradleContentRootSyncContributor
+              //assertGradleModuleEntities(myProject, "project")
 
               assertGradleBuildEntity(myProject, rootBuildUrl, externalProjectId)
               assertGradleProjectEntity(
                 myProject, projectUrl = rootBuildUrl,
                 buildId = rootBuildId, path = ":",
                 linkedProjectId = "project", identityPath = ":",
-                moduleName = "project",
+                // TODO uncomment non-null module name when GradleModuleEntity creation is fixed for GradleContentRootSyncContributor
+                moduleName = null,
+                //moduleName = "project",
               )
 
               assertContentRoots(myProject, "project", projectRoot)
@@ -493,14 +510,17 @@ class GradleContentRootSyncContributorTest : GradlePhasedSyncTestCase() {
               assertEntities<ExternalProjectEntity>(myProject, externalProjectId)
               assertEntities<GradleBuildEntity>(myProject, rootBuildId, buildSrcBuildId)
               assertEntities<GradleProjectEntity>(myProject, rootProjectId, buildSrcProjectId)
-              assertGradleModuleEntities(myProject, "project", "project.buildSrc")
+              // TODO uncomment when GradleModuleEntity creation is fixed for GradleContentRootSyncContributor
+              //assertGradleModuleEntities(myProject, "project", "project.buildSrc")
 
               assertGradleBuildEntity(myProject, rootBuildUrl, externalProjectId)
               assertGradleProjectEntity(
                 myProject, projectUrl = rootBuildUrl,
                 buildId = rootBuildId, path = ":",
                 linkedProjectId = "project", identityPath = ":",
-                moduleName = "project",
+                // TODO uncomment non-null module name when GradleModuleEntity creation is fixed for GradleContentRootSyncContributor
+                moduleName = null,
+                //moduleName = "project",
               )
 
               assertGradleBuildEntity(myProject, buildSrcBuildUrl, externalProjectId)
@@ -510,7 +530,9 @@ class GradleContentRootSyncContributorTest : GradlePhasedSyncTestCase() {
                 buildId = buildSrcBuildId, path = ":",
                 // for Gradle < 8.0, linkedProjectId and identityPath are calculated incorrectly because buildSrc is synced separately
                 linkedProjectId = "project:buildSrc", identityPath = ":",
-                moduleName = "project.buildSrc",
+                // TODO uncomment non-null module name when GradleModuleEntity creation is fixed for GradleContentRootSyncContributor
+                moduleName = null,
+                //moduleName = "project.buildSrc",
               )
 
               assertContentRoots(myProject, "project", projectRoot)
@@ -524,14 +546,17 @@ class GradleContentRootSyncContributorTest : GradlePhasedSyncTestCase() {
               assertEntities<ExternalProjectEntity>(myProject, externalProjectId)
               assertEntities<GradleBuildEntity>(myProject, rootBuildId, buildSrcBuildId)
               assertEntities<GradleProjectEntity>(myProject, rootProjectId, buildSrcProjectId)
-              assertGradleModuleEntities(myProject, "project", "project.buildSrc")
+              // TODO uncomment when GradleModuleEntity creation is fixed for GradleContentRootSyncContributor
+              //assertGradleModuleEntities(myProject, "project", "project.buildSrc")
 
               assertGradleBuildEntity(myProject, rootBuildUrl, externalProjectId)
               assertGradleProjectEntity(
                 myProject, projectUrl = rootBuildUrl,
                 buildId = rootBuildId, path = ":",
                 linkedProjectId = "project", identityPath = ":",
-                moduleName = "project",
+                // TODO uncomment non-null module name when GradleModuleEntity creation is fixed for GradleContentRootSyncContributor
+                moduleName = null
+                //moduleName = "project",
               )
 
               assertGradleBuildEntity(myProject, buildSrcBuildUrl, externalProjectId)
@@ -539,7 +564,9 @@ class GradleContentRootSyncContributorTest : GradlePhasedSyncTestCase() {
                 myProject, projectUrl = buildSrcBuildUrl,
                 buildId = buildSrcBuildId, path = ":",
                 linkedProjectId = ":buildSrc", identityPath = ":buildSrc",
-                moduleName = "project.buildSrc",
+                // TODO uncomment non-null module name when GradleModuleEntity creation is fixed for GradleContentRootSyncContributor
+                moduleName = null
+                //moduleName = "project.buildSrc",
               )
 
               assertContentRoots(myProject, "project", projectRoot)
@@ -634,6 +661,8 @@ class GradleContentRootSyncContributorTest : GradlePhasedSyncTestCase() {
           assertEntities<ExternalProjectEntity>(myProject, externalProjectId)
           assertEntities<GradleBuildEntity>(myProject, rootBuildId, buildSrcBuildId)
           assertEntities<GradleProjectEntity>(myProject, rootProjectId, buildSrcProjectId)
+          // TODO uncomment when GradleModuleEntity creation is fixed for GradleContentRootSyncContributor
+          /*
           when {
             isFirstSyncBeforeStandaloneBuildSrcSync.getAndSet(false) -> {
               assertGradleModuleEntities(myProject, "project.buildSrc") {
@@ -664,6 +693,7 @@ class GradleContentRootSyncContributorTest : GradlePhasedSyncTestCase() {
               }
             }
           }
+          */
 
           assertContentRoots(myProject, "project", projectRoot)
           assertContentRoots(myProject, "project.main", projectRoot.resolve("src/main"))
@@ -749,14 +779,17 @@ class GradleContentRootSyncContributorTest : GradlePhasedSyncTestCase() {
           assertEntities<ExternalProjectEntity>(myProject, externalProjectId)
           assertEntities<GradleBuildEntity>(myProject, rootBuildId)
           assertEntities<GradleProjectEntity>(myProject, rootProjectId)
-          assertGradleModuleEntities(myProject, "project")
+          // TODO uncomment when GradleModuleEntity creation is fixed for GradleContentRootSyncContributor
+          //assertGradleModuleEntities(myProject, "project")
 
           assertGradleBuildEntity(myProject, rootBuildUrl, externalProjectId)
           assertGradleProjectEntity(
             myProject, projectUrl = rootBuildUrl,
             buildId = rootBuildId, path = ":",
             linkedProjectId = "project", identityPath = ":",
-            moduleName = "project",
+            // TODO uncomment non-null module name when GradleModuleEntity creation is fixed for GradleContentRootSyncContributor
+            moduleName = null,
+            //moduleName = "project",
           )
 
           assertContentRoots(myProject, "project", projectRoot)
@@ -824,14 +857,17 @@ class GradleContentRootSyncContributorTest : GradlePhasedSyncTestCase() {
           assertEntities<ExternalProjectEntity>(myProject, externalProjectId)
           assertEntities<GradleBuildEntity>(myProject, rootBuildId)
           assertEntities<GradleProjectEntity>(myProject, rootProjectId)
-          assertGradleModuleEntities(myProject, "project")
+          // TODO uncomment when GradleModuleEntity creation is fixed for GradleContentRootSyncContributor
+          //assertGradleModuleEntities(myProject, "project")
 
           assertGradleBuildEntity(myProject, rootBuildUrl, externalProjectId)
           assertGradleProjectEntity(
             myProject, projectUrl = rootBuildUrl,
             buildId = rootBuildId, path = ":",
             linkedProjectId = "project", identityPath = ":",
-            moduleName = "project",
+            // TODO uncomment non-null module name when GradleModuleEntity creation is fixed for GradleContentRootSyncContributor
+            moduleName = null,
+            //moduleName = "project",
           )
 
           assertContentRoots(myProject, "project", projectRoot)
@@ -913,13 +949,15 @@ class GradleContentRootSyncContributorTest : GradlePhasedSyncTestCase() {
           assertEntities(myProject, rootExternalProjectId, linkedExternalProjectId)
           assertEntities<GradleBuildEntity>(myProject, rootBuildId, linkedBuildId)
           assertEntities<GradleProjectEntity>(myProject, rootProjectId, linkedProjectId)
-          assertGradleModuleEntities(myProject, "project", "linked-project")
+          // TODO uncomment when GradleModuleEntity creation is fixed for GradleContentRootSyncContributor
+          //assertGradleModuleEntities(myProject, "project", "linked-project")
 
           assertGradleBuildEntity(myProject, rootBuildUrl, rootExternalProjectId)
           assertGradleProjectEntity(
             myProject, projectUrl = rootBuildUrl,
             buildId = rootBuildId, path = ":",
             linkedProjectId = "project", identityPath = ":",
+            // It's not clear why GradleModuleEntity exists here if its creation is disabled for GradleContentRootSyncContributor
             moduleName = "project",
           )
 
@@ -928,7 +966,9 @@ class GradleContentRootSyncContributorTest : GradlePhasedSyncTestCase() {
             myProject, projectUrl = linkedBuildUrl,
             buildId = linkedBuildId, path = ":",
             linkedProjectId = "linked-project", identityPath = ":",
-            moduleName = "linked-project",
+            // TODO uncomment non-null module name when GradleModuleEntity creation is fixed for GradleContentRootSyncContributor
+            moduleName = null,
+            //moduleName = "linked-project",
           )
 
           assertContentRoots(myProject, "project", projectRoot)
