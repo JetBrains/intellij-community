@@ -205,22 +205,26 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
         project: Project,
       ) {
         LOG.trace { "Finish on UI thread :: completionEditor=$completionEditor" }
-        if (completionEditor != null && !phase.isExpired) {
-          LOG.trace { "Starting completion phase :: completionEditor=$completionEditor" }
-          phase.requestCompleted()
-          val time = phase.indicator?.invocationCount ?: 0
 
-          val customId = completionEditor.getUserData(CUSTOM_CODE_COMPLETION_ACTION_ID) ?: "CodeCompletion"
-          val handler = CodeCompletionHandlerBase.createHandler(completionType, false, autopopup, false, customId)
-          handler.invokeCompletion(project, completionEditor, time, false)
-        }
-        else if (phase == CompletionServiceImpl.completionPhase) {
-          LOG.trace { "Setting NoCompletion phase :: completionEditor=$completionEditor, expirationReason=${phase.expirationReason}" }
-          phase.decrementRequestCount()
-          if (phase.isExpired) {
-            CompletionServiceImpl.setCompletionPhase(NoCompletion)
+        if (completionEditor == null || phase.isExpired) {
+          if (phase == CompletionServiceImpl.completionPhase) {
+            LOG.trace { "Setting NoCompletion phase :: completionEditor=$completionEditor, expirationReason=${phase.expirationReason}" }
+            phase.decrementRequestCount()
+            if (phase.isExpired) {
+              CompletionServiceImpl.setCompletionPhase(NoCompletion)
+            }
           }
+          return
         }
+
+        LOG.trace { "Starting completion phase :: completionEditor=$completionEditor" }
+
+        phase.requestCompleted()
+        val time = phase.indicator?.invocationCount ?: 0
+
+        val customId = completionEditor.getUserData(CUSTOM_CODE_COMPLETION_ACTION_ID) ?: "CodeCompletion"
+        val handler = CodeCompletionHandlerBase.createHandler(completionType, false, autopopup, false, customId)
+        handler.invokeCompletion(project, completionEditor, time, false)
       }
 
       private fun getCompletionPhase(
