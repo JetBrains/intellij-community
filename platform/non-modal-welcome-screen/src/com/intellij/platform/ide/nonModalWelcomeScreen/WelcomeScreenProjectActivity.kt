@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.nonModalWelcomeScreen
 
+import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener
@@ -16,8 +17,14 @@ import com.intellij.util.asSafely
 import kotlinx.coroutines.coroutineScope
 
 internal class WelcomeScreenProjectActivity : ProjectActivity {
+  init {
+    val isNotAvailable = application.isCommandLine || application.isHeadlessEnvironment || application.isUnitTestMode
+    if (isNotAvailable) {
+      throw ExtensionNotApplicableException.create()
+    }
+  }
+
   override suspend fun execute(project: Project) {
-    if (application.isHeadlessEnvironment) return
     if (isWelcomeScreenProject(project)) {
       dropModalWelcomeScreenOnClose(project)
       subscribeToWelcomeScreenTabClose(project)
