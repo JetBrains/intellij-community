@@ -9482,6 +9482,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         public void testBasic() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/missingConstructorBrackets/basic.kt");
         }
+
+        @TestMetadata("constructor.kt")
+        public void testConstructor() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/missingConstructorBrackets/constructor.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)

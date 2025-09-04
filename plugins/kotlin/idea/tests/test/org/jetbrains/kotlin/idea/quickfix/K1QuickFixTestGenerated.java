@@ -11678,6 +11678,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
         public void testBasic() throws Exception {
             runTest("testData/quickfix/missingConstructorBrackets/basic.kt");
         }
+
+        @TestMetadata("constructor.kt")
+        public void testConstructor() throws Exception {
+            runTest("testData/quickfix/missingConstructorBrackets/constructor.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
