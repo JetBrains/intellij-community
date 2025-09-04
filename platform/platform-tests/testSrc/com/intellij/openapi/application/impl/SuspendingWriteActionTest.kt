@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl
 
 import com.intellij.openapi.application.ApplicationManager
@@ -38,11 +38,11 @@ class SuspendingWriteActionTest {
         application.assertWriteAccessAllowed()
       }
 
-      fun assertWriteActionWithoutCurrentJob(job: Job) {
+      fun assertNoWriteActionWithoutCurrentJob(job: Job) {
         Assertions.assertTrue(EDT.isCurrentThreadEdt())
         Assertions.assertEquals(job, Cancellation.currentJob())
         Assertions.assertNull(ProgressManager.getGlobalProgressIndicator())
-        application.assertWriteAccessAllowed()
+        Assertions.assertFalse(application.isWriteAccessAllowed)
       }
 
       assertEmptyContext(rootJob)
@@ -51,11 +51,11 @@ class SuspendingWriteActionTest {
         assertWriteActionWithCurrentJob()
         runBlockingCancellable {
           val writeJob = coroutineContext.job
-          assertWriteActionWithoutCurrentJob(writeJob) // TODO consider explicitly turning off RA inside runBlockingCancellable
+          assertNoWriteActionWithoutCurrentJob(writeJob) // TODO consider explicitly turning off RA inside runBlockingCancellable
           withContext(Dispatchers.Default) {
             assertEmptyContext(coroutineContext.job)
           }
-          assertWriteActionWithoutCurrentJob(writeJob)
+          assertNoWriteActionWithoutCurrentJob(writeJob)
         }
         assertWriteActionWithCurrentJob()
         42

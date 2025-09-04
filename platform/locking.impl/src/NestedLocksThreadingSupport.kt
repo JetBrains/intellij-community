@@ -358,7 +358,7 @@ class NestedLocksThreadingSupport : ThreadingSupport {
      * Fast check for read access; skips unnecessary boxing that is caused by inline classes
      */
     fun isReadAcquired(): Boolean {
-      return isParallelizedRead || thisLevelPermit.get() != null
+      return isParallelizedRead || thisLevelPermit.get() != null || myWriteIntentAcquired.get()
     }
 
     /**
@@ -590,26 +590,15 @@ class NestedLocksThreadingSupport : ThreadingSupport {
       }
       is ParallelizablePermit.Write -> {
         // The parallelization of a write action is a very tricky topic.
-        // It is difficult to get right, and we are not sure about the valid semantics yet.
-        // Unfortunately, our old tests rely on this concept.
-        // We forbid write lock parallelization in production (see `runBlockingCancellable`), and instead allow it only in tests
-        val currentPermits = checkNotNull(hack_getPublishedWriteData()) { "Parallelization of write permit must happen when write lock is acquired" }
-        val currentWriteIntentPermit = currentPermits.originalWriteIntentPermit
-        // the idea of write lock parallelization is that we release the **top-level** write permit,
-        // capture read permit, and parallelize it.
-        // so this is the parallelization of the second kind.
-        currentPermit.writePermit.release()
-        val newPermit = currentComputationState.acquireReadPermit()
-        val (newState, cleanup) = currentComputationState.parallelizeRead()
+        // Unfortunately, our old tests and some of the production code (i.e., modal progresses under write lock) rely on this concept.
+        // In most places (like `runBlockingCancellable`) parallelization of write lock is forbidden
+        //
+        // In short, we apply the parallelization of write-intent lock here with downgrading of write permits back to write intent.
+        val token = downgradeWriteLockToWriteIntent()
+        val (newState, cleanup) = currentComputationState.parallelizeWriteIntent(thisLevelPermit.get() as WriteIntentPermit)
         return ComputationStateContextElement(newState) to {
-          cleanup()
-          currentComputationState.releaseReadPermit(newPermit)
-          // we need to reacquire the previously released write permit
-          val newWritePermit = runSuspendMaybeConsuming(false) {
-            currentWriteIntentPermit.acquireWriteActionPermit()
-          }
-          hack_setThisLevelPermit(newWritePermit)
-          hack_setPublishedPermitData(currentPermits.copy(finalWritePermit = newWritePermit))
+          cleanup.finish()
+          token.finish()
         }
       }
     }
@@ -1224,15 +1213,9 @@ class NestedLocksThreadingSupport : ThreadingSupport {
     }
   }
 
-
-  override fun executeSuspendingWriteAction(action: () -> Unit) {
+  fun downgradeWriteLockToWriteIntent(): AccessToken {
     val state = getComputationState()
     val permit = state.getThisThreadPermit()
-    if (permit is ParallelizablePermit.WriteIntent) {
-      action()
-      return
-    }
-
     check(permit is ParallelizablePermit.Write) {
       "Suspending write action must be called under write lock or write-intent lock"
     }
@@ -1251,30 +1234,41 @@ class NestedLocksThreadingSupport : ThreadingSupport {
     permit.writePermit.release()
     hack_setThisLevelPermit(rootWriteIntentPermit)
     drainWriteActionFollowups()
-    try {
-      action()
-    }
-    finally {
-      myWriteActionPending.get()[state.level()].incrementAndGet()
-      val (newWritePermits, newWritePermit) = try {
-        myWriteLockReacquisitionListener?.beforeWriteLockReacquired()
-        val newWritePermit = runSuspendMaybeConsuming(false) {
-          rootWriteIntentPermit.acquireWriteActionPermit()
-        }
-        hack_setThisLevelPermit(newWritePermit)
-        val newWritePermits = Array(exposedPermitData.writeIntentStack.size) {
-          runSuspendMaybeConsuming(false) {
-            exposedPermitData.writeIntentStack[it].acquireWriteActionPermit()
+    return object : AccessToken() {
+      override fun finish() {
+        myWriteActionPending.get()[state.level()].incrementAndGet()
+        val (newWritePermits, newWritePermit) = try {
+          myWriteLockReacquisitionListener?.beforeWriteLockReacquired()
+          val newWritePermit = runSuspendMaybeConsuming(false) {
+            rootWriteIntentPermit.acquireWriteActionPermit()
           }
+          hack_setThisLevelPermit(newWritePermit)
+          val newWritePermits = Array(exposedPermitData.writeIntentStack.size) {
+            runSuspendMaybeConsuming(false) {
+              exposedPermitData.writeIntentStack[it].acquireWriteActionPermit()
+            }
+          }
+          newWritePermits to newWritePermit
         }
-        newWritePermits to newWritePermit
+        finally {
+          myWriteActionPending.get()[state.level()].decrementAndGet()
+        }
+        hack_setPublishedPermitData(exposedPermitData.copy(writePermitStack = newWritePermits, finalWritePermit = newWritePermit))
+        myWriteAcquired = Thread.currentThread()
+        myWriteStackBase = prevBase
       }
-      finally {
-        myWriteActionPending.get()[state.level()].decrementAndGet()
-      }
-      hack_setPublishedPermitData(exposedPermitData.copy(writePermitStack = newWritePermits, finalWritePermit = newWritePermit))
-      myWriteAcquired = Thread.currentThread()
-      myWriteStackBase = prevBase
+    }
+  }
+
+  override fun executeSuspendingWriteAction(action: () -> Unit) {
+    val state = getComputationState()
+    val permit = state.getThisThreadPermit()
+    if (permit is ParallelizablePermit.WriteIntent) {
+      action()
+      return
+    }
+    downgradeWriteLockToWriteIntent().use {
+      action()
     }
   }
 
