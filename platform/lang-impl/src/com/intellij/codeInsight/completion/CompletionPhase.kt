@@ -127,7 +127,7 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
       fun scheduleAsyncCompletion(
         editor: Editor,
         completionType: CompletionType,
-        condition: Condition<in PsiFile?>?,
+        condition: Condition<in PsiFile>?,
         project: Project,
         prevIndicator: CompletionProgressIndicator?
       ) {
