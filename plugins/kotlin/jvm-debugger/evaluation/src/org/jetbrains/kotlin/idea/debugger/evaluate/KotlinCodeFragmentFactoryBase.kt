@@ -35,7 +35,7 @@ abstract class KotlinCodeFragmentFactoryBase : JavaDebuggerCodeFragmentFactory()
                     "dummy.java", JavaFileType.INSTANCE, it.text
                 ) as? PsiJavaFile)?.importList
             }
-        } catch (e: IncorrectOperationException) {
+        } catch (_: IncorrectOperationException) {
             null
         }
         val convertedFragment: KtExpressionCodeFragment? = runReadAction {

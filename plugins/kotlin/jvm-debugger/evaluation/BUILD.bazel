@@ -35,6 +35,9 @@ jvm_library(
     "//platform/statistics",
     "//plugins/kotlin/base/facet",
     "//platform/xdebugger-impl/shared",
+    "//platform/editor-ui-api:editor-ui",
+    "//plugins/kotlin/j2k/shared",
+    "//plugins/kotlin/j2k/k1.old",
   ],
   runtime_deps = [":evaluation_resources"]
 )

@@ -2,17 +2,16 @@
 package org.jetbrains.kotlin.idea.debugger.evaluate
 
 import com.intellij.debugger.DebuggerManagerEx
+import com.intellij.debugger.engine.DebuggerManagerThreadImpl
 import com.intellij.debugger.engine.evaluation.TextWithImports
-import com.intellij.openapi.progress.EmptyProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
+import com.intellij.debugger.engine.executeOnDMT
+import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.JavaCodeFragment
 import com.intellij.psi.PsiElement
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.TimeoutCancellationException
-import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.*
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.projectStructure.analysisContextModule
@@ -56,11 +55,52 @@ class KotlinK2CodeFragmentFactory : KotlinCodeFragmentFactoryBase() {
         return codeFragment
     }
 
-    override fun createPresentationPsiCodeFragmentImpl(item: TextWithImports, context: PsiElement?, project: Project): JavaCodeFragment? {
-        return createPsiCodeFragment(item, context, project)
-    }
+    @OptIn(KaExperimentalApi::class)
+    override fun KtBlockCodeFragment.registerCodeFragmentExtensions(contextElement: PsiElement?) {
+        putCopyableUserData(KotlinK2CodeFragmentUtils.RUNTIME_TYPE_EVALUATOR_K2) { expression: KtExpression ->
+            val debuggerContext = DebuggerManagerEx.getInstanceEx(project).context
+            val debuggerSession = debuggerContext.debuggerSession
+            val managerThread = debuggerContext.managerThread
+            if (debuggerSession == null || debuggerContext.suspendContext == null || managerThread == null) {
+                null
+            } else {
+                LOG.assertTrue(!DebuggerManagerThreadImpl.isManagerThread(), "Should be invoked outside manager thread")
+                val timeout = Registry.intValue("debugger.evaluation.runtime.type", 500).milliseconds
+                val runtimeType = CompletableDeferred<KaTypePointer<KaType>?>()
+                val job = executeOnDMT(managerThread) {
+                    coroutineToIndicator { indicator ->
+                        debuggerContext.managerThread?.invokeNow(
+                            object : KotlinK2RuntimeTypeEvaluator(
+                                null,
+                                expression,
+                                debuggerContext,
+                                indicator,
+                            ) {
+                                override fun typeCalculationFinished(type: KaTypePointer<KaType>?) {
+                                    runtimeType.complete(type)
+                                }
 
-    override fun KtBlockCodeFragment.registerCodeFragmentExtensions(contextElement: PsiElement?) {}
+                                override fun commandCancelled() {
+                                    runtimeType.complete(null)
+                                }
+                            }
+                        )
+                    }
+                }
+                runBlockingCancellable {
+                    try {
+                        withTimeout(timeout) {
+                            runtimeType.await()
+                        }
+                    } catch (e: TimeoutCancellationException) {
+                        job.cancel()
+                        LOG.error("Timeout while waiting for runtime type evaluation of ${expression.text}", e)
+                        null
+                    }
+                }
+            }
+        }
+    }
 
     override fun isContextAccepted(contextElement: PsiElement?): Boolean {
         return contextElement?.language == KotlinFileType.INSTANCE.language

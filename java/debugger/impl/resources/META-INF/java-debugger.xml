@@ -211,6 +211,8 @@
                  description="Get async stack trace for any thread using the same evaluationContext. By default debugger-agent only returns async stack trace for the current suspended thread."/>
     <registryKey key="debugger.stepping.current.thread.check.timeout.ms" defaultValue="100"
                  description="In the 'Resume only the current thread mode': Check timeout (in ms) for the stepping thread is running."/>
+    <registryKey key="debugger.evaluation.runtime.type" defaultValue="500"
+                 description="Timeout (in ms) to evaluate runtime type of a given expression"/>
   </extensions>
 
   <actions>
