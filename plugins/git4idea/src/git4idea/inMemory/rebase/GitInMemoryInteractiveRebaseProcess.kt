@@ -145,14 +145,29 @@ internal suspend fun performInMemoryRebase(
   repository: GitRepository,
   entries: List<GitRebaseEntryWithDetails>,
   model: GitRebaseTodoModel<out GitRebaseEntryWithDetails>,
-): Boolean {
+  notifySuccess: Boolean = true,
+): GitCommitEditingOperationResult {
   val showFailureNotification = Registry.`is`("git.in.memory.interactive.rebase.notify.errors")
 
-  val rebaseData = createRebaseData(model, entries, repository, showFailureNotification) ?: return false
+  val rebaseData = createRebaseData(model, entries, repository, showFailureNotification) ?: return GitCommitEditingOperationResult.Incomplete
   val rebaseActivity = GitOperationsCollector.startInMemoryInteractiveRebase(repository.project)
-  val operationResult = executeRebase(repository, rebaseData, showFailureNotification, rebaseActivity) ?: return false
+  val operationResult = executeRebase(repository, rebaseData, showFailureNotification, rebaseActivity) ?: return GitCommitEditingOperationResult.Incomplete
 
-  return handleRebaseResult(operationResult, rebaseActivity)
+  if (operationResult is GitCommitEditingOperationResult.Complete) {
+    GitOperationsCollector.endInMemoryInteractiveRebase(rebaseActivity, InMemoryRebaseResult.SUCCESS)
+    if (notifySuccess) {
+      operationResult.notifySuccess(
+        GitBundle.message("in.memory.rebase.log.interactive.action.notification.successful"),
+        null,
+        GitBundle.message("in.memory.rebase.log.interactive.action.progress.indicator.undo.title"),
+        GitBundle.message("in.memory.rebase.log.interactive.action.notification.undo.not.allowed.title"),
+        GitBundle.message("in.memory.rebase.log.interactive.action.notification.undo.failed.title")
+      )
+    }
+  } else {
+    GitOperationsCollector.endInMemoryInteractiveRebase(rebaseActivity, InMemoryRebaseResult.ERROR)
+  }
+  return operationResult
 }
 
 private fun createRebaseData(
@@ -185,10 +200,8 @@ private suspend fun executeRebase(
   rebaseActivity: StructuredIdeActivity
 ): GitCommitEditingOperationResult? {
   return try {
-    withBackgroundProgress(repository.project, GitBundle.message("rebase.progress.indicator.title"), true) {
-      val objectRepo = GitObjectRepository(repository)
-      GitInMemoryInteractiveRebaseProcess(objectRepo, rebaseData).execute(showFailureNotification)
-    }
+    val objectRepo = GitObjectRepository(repository)
+    GitInMemoryInteractiveRebaseProcess(objectRepo, rebaseData).execute(showFailureNotification)
   }
   catch (e: MergeConflictException) {
     GitOperationsCollector.endInMemoryInteractiveRebase(rebaseActivity, InMemoryRebaseResult.CONFLICT)
@@ -205,22 +218,6 @@ private suspend fun executeRebase(
     GitOperationsCollector.endInMemoryInteractiveRebase(rebaseActivity, InMemoryRebaseResult.ERROR)
     throw e
   }
-}
-
-private fun handleRebaseResult(operationResult: GitCommitEditingOperationResult, rebaseActivity: StructuredIdeActivity): Boolean {
-  if (operationResult is GitCommitEditingOperationResult.Complete) {
-    GitOperationsCollector.endInMemoryInteractiveRebase(rebaseActivity, InMemoryRebaseResult.SUCCESS)
-    operationResult.notifySuccess(
-      GitBundle.message("in.memory.rebase.log.interactive.action.notification.successful"),
-      null,
-      GitBundle.message("in.memory.rebase.log.interactive.action.progress.indicator.undo.title"),
-      GitBundle.message("in.memory.rebase.log.interactive.action.notification.undo.not.allowed.title"),
-      GitBundle.message("in.memory.rebase.log.interactive.action.notification.undo.failed.title")
-    )
-    return true
-  }
-  GitOperationsCollector.endInMemoryInteractiveRebase(rebaseActivity, InMemoryRebaseResult.ERROR)
-  return false
 }
 
 private fun notifyValidationFailure(repository: GitRepository, @Nls reason: String) {
