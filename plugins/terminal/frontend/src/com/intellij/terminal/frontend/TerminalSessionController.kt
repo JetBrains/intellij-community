@@ -13,17 +13,14 @@ import com.intellij.terminal.session.*
 import com.intellij.terminal.session.dto.toState
 import com.intellij.terminal.session.dto.toTerminalState
 import com.intellij.util.EventDispatcher
-import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.DisposableWrapperList
 import kotlinx.coroutines.*
 import org.jetbrains.plugins.terminal.block.reworked.TerminalAliasesStorage
 import org.jetbrains.plugins.terminal.block.reworked.TerminalBlocksModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalShellIntegrationEventsListener
-import org.jetbrains.plugins.terminal.fus.*
 import java.awt.Toolkit
 import kotlin.coroutines.cancellation.CancellationException
-import kotlin.time.TimeSource
 
 internal class TerminalSessionController(
   private val sessionModel: TerminalSessionModel,
@@ -34,7 +31,6 @@ internal class TerminalSessionController(
   private val blocksModel: TerminalBlocksModel,
   private val settings: JBTerminalSystemSettingsProviderBase,
   private val coroutineScope: CoroutineScope,
-  private val fusActivity: FrontendOutputActivity,
   private val terminalAliasesStorage: TerminalAliasesStorage,
 ) {
 
@@ -43,15 +39,6 @@ internal class TerminalSessionController(
     EventDispatcher.create(TerminalShellIntegrationEventsListener::class.java)
 
   private val edtContext = Dispatchers.EDT + ModalityState.any().asContextElement()
-
-  private val documentUpdateLatencyReporter = BatchLatencyReporter(batchSize = 100) { samples ->
-    ReworkedTerminalUsageCollector.logFrontendDocumentUpdateLatency(
-      totalDuration = samples.totalDurationOf(DurationAndTextLength::duration),
-      duration90 = samples.percentileOf(90, DurationAndTextLength::duration),
-      thirdLargestDuration = samples.thirdLargestOf(DurationAndTextLength::duration),
-      textLength90 = samples.percentileOf(90, DurationAndTextLength::textLength),
-    )
-  }
 
   fun handleEvents(session: TerminalSession) {
     coroutineScope.launch {
@@ -91,12 +78,8 @@ internal class TerminalSessionController(
         }
       }
       is TerminalContentUpdatedEvent -> {
-        // todo: move to controller
-        fusActivity.eventReceived(event)
         updateOutputModel { controller ->
-          fusActivity.beforeModelUpdate()
-          updateOutputModelContent(controller, event)
-          fusActivity.afterModelUpdate()
+          controller.updateContent(event)
         }
       }
       is TerminalCursorPositionChangedEvent -> {
@@ -167,17 +150,6 @@ internal class TerminalSessionController(
       val controller = getCurrentOutputModelController()
       block(controller)
     }
-  }
-
-  @RequiresEdt
-  private fun updateOutputModelContent(controller: TerminalOutputModelController, event: TerminalContentUpdatedEvent) {
-    // todo: move to controller
-    val startTime = TimeSource.Monotonic.markNow()
-
-    controller.updateContent(event)
-
-    val latencyData = DurationAndTextLength(duration = startTime.elapsedNow(), textLength = event.text.length)
-    documentUpdateLatencyReporter.update(latencyData)
   }
 
   private fun getCurrentOutputModelController(): TerminalOutputModelController {

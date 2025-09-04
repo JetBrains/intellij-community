@@ -56,7 +56,6 @@ import org.jetbrains.plugins.terminal.block.ui.addToLayer
 import org.jetbrains.plugins.terminal.block.ui.calculateTerminalSize
 import org.jetbrains.plugins.terminal.block.ui.isTerminalOutputScrollChangingActionInProgress
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.IS_ALTERNATE_BUFFER_DATA_KEY
-import org.jetbrains.plugins.terminal.fus.FrontendLatencyService
 import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
 import org.jetbrains.plugins.terminal.util.terminalProjectScope
 import java.awt.Component
@@ -222,11 +221,6 @@ class ReworkedTerminalView(
 
     outputEditor.putUserData(CompletionPhase.CUSTOM_CODE_COMPLETION_ACTION_ID, "Terminal.CommandCompletion.Gen2")
 
-    val fusActivity = FrontendLatencyService.getInstance().startFrontendOutputActivity(
-      outputEditor = outputEditor,
-      alternateBufferEditor = alternateBufferEditor,
-    )
-
     val terminalAliasesStorage = TerminalAliasesStorage()
 
     controller = TerminalSessionController(
@@ -238,7 +232,6 @@ class ReworkedTerminalView(
       blocksModel,
       settings,
       coroutineScope.childScope("TerminalSessionController"),
-      fusActivity,
       terminalAliasesStorage
     )
     outputEditor.putUserData(TerminalAliasesStorage.KEY, terminalAliasesStorage)
