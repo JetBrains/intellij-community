@@ -34,6 +34,8 @@ import com.intellij.ui.LightweightHint
 import com.intellij.util.ThreeState
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.accessibility.ScreenReader
 import org.jetbrains.annotations.ApiStatus
@@ -157,45 +159,69 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
 
         ReadAction
           .nonBlocking(Callable {
-            if (phase.isExpired) {
-              LOG.trace("Phase is expired")
-              return@Callable null
-            }
-            LOG.trace { "Start non-blocking read action :: phase=${phase.replaced}" }
-            // retrieve the injected file from scratch since our typing might have destroyed the old one completely
-            val topLevelFile = PsiDocumentManager.getInstance(project).getPsiFile(topLevelEditor.getDocument())
-            val completionEditor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(topLevelEditor, topLevelFile, offset)
-            val file = PsiDocumentManager.getInstance(project).getPsiFile(completionEditor.getDocument())
-            if (file == null || autopopup && shouldSkipAutoPopup(completionEditor, file) || condition != null && !condition.value(file)) {
-              LOG.trace { "File is null or should skip auto popup or condition is not met :: file=$file, condition=$condition" }
-              return@Callable null
-            }
-
-            loadContributorsOutsideEdt(completionEditor, file)
-            completionEditor
+            prepareEditorAndDocumentsForAsyncCompletion(phase, topLevelEditor, condition, offset, autopopup, project)
           })
           .withDocumentsCommitted(project)
           .expireWith(phase)
           .finishOnUiThread(ModalityState.current(), Consumer { completionEditor: Editor? ->
-            LOG.trace { "Finish on UI thread :: completionEditor=$completionEditor" }
-            if (completionEditor != null && !phase.isExpired) {
-              LOG.trace { "Starting completion phase :: completionEditor=$completionEditor" }
-              phase.requestCompleted()
-              val time = prevIndicator?.invocationCount ?: 0
-
-              val customId = completionEditor.getUserData(CUSTOM_CODE_COMPLETION_ACTION_ID) ?: "CodeCompletion"
-              val handler = CodeCompletionHandlerBase.createHandler(completionType, false, autopopup, false, customId)
-              handler.invokeCompletion(project, completionEditor, time, false)
-            }
-            else if (phase == CompletionServiceImpl.completionPhase) {
-              LOG.trace { "Setting NoCompletion phase :: completionEditor=$completionEditor, expirationReason=${phase.expirationReason}" }
-              phase.decrementRequestCount()
-              if (phase.isExpired) {
-                CompletionServiceImpl.setCompletionPhase(NoCompletion)
-              }
-            }
+            startAsyncCompletionIfNotExpired(phase, completionEditor, prevIndicator, completionType, autopopup, project)
           })
           .submit(ourExecutor)
+      }
+
+      @RequiresReadLock
+      private fun prepareEditorAndDocumentsForAsyncCompletion(
+        phase: CommittingDocuments,
+        topLevelEditor: Editor,
+        condition: Condition<in PsiFile>?,
+        offset: Int,
+        autopopup: Boolean,
+        project: Project,
+      ): Editor? {
+        if (phase.isExpired) {
+          LOG.trace("Phase is expired")
+          return null
+        }
+        LOG.trace { "Start non-blocking read action :: phase=${phase.replaced}" }
+        // retrieve the injected file from scratch since our typing might have destroyed the old one completely
+        val topLevelFile = PsiDocumentManager.getInstance(project).getPsiFile(topLevelEditor.getDocument())
+        val completionEditor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(topLevelEditor, topLevelFile, offset)
+        val file = PsiDocumentManager.getInstance(project).getPsiFile(completionEditor.getDocument())
+        if (file == null || autopopup && shouldSkipAutoPopup(completionEditor, file) || condition != null && !condition.value(file)) {
+          LOG.trace { "File is null or should skip auto popup or condition is not met :: file=$file, condition=$condition" }
+          return null
+        }
+
+        loadContributorsOutsideEdt(completionEditor, file)
+        return completionEditor
+      }
+
+      @RequiresEdt
+      private fun startAsyncCompletionIfNotExpired(
+        phase: CommittingDocuments,
+        completionEditor: Editor?,
+        prevIndicator: CompletionProgressIndicator?,
+        completionType: CompletionType,
+        autopopup: Boolean,
+        project: Project,
+      ) {
+        LOG.trace { "Finish on UI thread :: completionEditor=$completionEditor" }
+        if (completionEditor != null && !phase.isExpired) {
+          LOG.trace { "Starting completion phase :: completionEditor=$completionEditor" }
+          phase.requestCompleted()
+          val time = prevIndicator?.invocationCount ?: 0
+
+          val customId = completionEditor.getUserData(CUSTOM_CODE_COMPLETION_ACTION_ID) ?: "CodeCompletion"
+          val handler = CodeCompletionHandlerBase.createHandler(completionType, false, autopopup, false, customId)
+          handler.invokeCompletion(project, completionEditor, time, false)
+        }
+        else if (phase == CompletionServiceImpl.completionPhase) {
+          LOG.trace { "Setting NoCompletion phase :: completionEditor=$completionEditor, expirationReason=${phase.expirationReason}" }
+          phase.decrementRequestCount()
+          if (phase.isExpired) {
+            CompletionServiceImpl.setCompletionPhase(NoCompletion)
+          }
+        }
       }
 
       private fun getCompletionPhase(
