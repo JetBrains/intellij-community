@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.idea.facet.KotlinFacetType
 interface KotlinModuleFixtureBuilder : JavaModuleFixtureBuilder<KotlinModuleTestFixture>
 
 class KotlinModuleFixtureBuilderImpl(fixtureBuilder: TestFixtureBuilder<IdeaProjectTestFixture>) :
-    JavaModuleFixtureBuilderImpl<KotlinModuleTestFixture>(JavaModuleType.getModuleType(), fixtureBuilder), KotlinModuleFixtureBuilder {
+    JavaModuleFixtureBuilderImpl<KotlinModuleTestFixture>({ JavaModuleType.getModuleType() }, fixtureBuilder), KotlinModuleFixtureBuilder {
 
     override fun instantiateFixture() = KotlinModuleTestFixtureImpl(this)
     override fun createModule(): Module {
