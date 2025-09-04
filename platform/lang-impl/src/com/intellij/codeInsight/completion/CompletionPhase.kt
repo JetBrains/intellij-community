@@ -206,6 +206,8 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
         if (event != null) {
           val currentPhase = CompletionServiceImpl.completionPhase
           if (currentPhase is CommittingDocuments && !currentPhase.isExpired && event == currentPhase.event) {
+            LOG.assertTrue(prevIndicator == currentPhase.indicator, "Indicators must match. prevIndicator=$prevIndicator, currentPhase=$currentPhase, currentPhase.indicator=${currentPhase.indicator}")
+
             currentPhase.incrementRequestCount()
             return currentPhase
           }
