@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.debugger.evaluate
 
 import com.intellij.debugger.DebuggerManagerEx
-import com.intellij.debugger.engine.JavaDebuggerCodeFragmentFactory
 import com.intellij.debugger.engine.evaluation.TextWithImports
 import com.intellij.debugger.impl.DebuggerContextImpl
 import com.intellij.debugger.impl.PrioritizedTask
@@ -15,9 +14,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.*
-import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiTypesUtil
-import com.intellij.util.IncorrectOperationException
 import com.intellij.util.concurrency.Semaphore
 import com.sun.jdi.AbsentInformationException
 import com.sun.jdi.InvalidStackFrameException
@@ -28,24 +25,27 @@ import org.jetbrains.kotlin.idea.core.util.CodeFragmentUtils
 import org.jetbrains.kotlin.idea.debugger.base.util.hopelessAware
 import org.jetbrains.kotlin.idea.debugger.core.CodeFragmentContextTuner
 import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.DebugForeignPropertyDescriptorProvider
-import org.jetbrains.kotlin.idea.j2k.convertToKotlin
-import org.jetbrains.kotlin.idea.j2k.j2kText
-import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
-import org.jetbrains.kotlin.j2k.J2KPostProcessingRunner
-import org.jetbrains.kotlin.j2k.OldJ2kPostProcessor
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 import org.jetbrains.kotlin.types.KotlinType
 import java.util.concurrent.atomic.AtomicReference
 
-class KotlinK1CodeFragmentFactory : JavaDebuggerCodeFragmentFactory() {
+class KotlinK1CodeFragmentFactory : KotlinCodeFragmentFactoryBase() {
     override fun createPsiCodeFragmentImpl(item: TextWithImports, context: PsiElement?, project: Project): JavaCodeFragment {
         val contextElement = CodeFragmentContextTuner.getInstance().tuneContextElement(context)
 
         val codeFragment = KtBlockCodeFragment(project, "fragment.kt", item.text, initImports(item.imports), contextElement)
 
-        codeFragment.putCopyableUserData(CodeFragmentUtils.RUNTIME_TYPE_EVALUATOR) { expression: KtExpression ->
+        codeFragment.registerCodeFragmentExtensions(contextElement)
+
+        supplyDebugInformation(codeFragment, context)
+
+        return codeFragment
+    }
+
+    override fun KtBlockCodeFragment.registerCodeFragmentExtensions(contextElement: PsiElement?) {
+        putCopyableUserData(CodeFragmentUtils.RUNTIME_TYPE_EVALUATOR) { expression: KtExpression ->
             val debuggerContext = DebuggerManagerEx.getInstanceEx(project).context
             val debuggerSession = debuggerContext.debuggerSession
             if (debuggerSession == null || debuggerContext.suspendContext == null) {
@@ -78,7 +78,7 @@ class KotlinK1CodeFragmentFactory : JavaDebuggerCodeFragmentFactory() {
         }
 
         if (contextElement != null && contextElement !is KtElement) {
-            codeFragment.putCopyableUserData(KtCodeFragment.FAKE_CONTEXT_FOR_JAVA_FILE) {
+            putCopyableUserData(KtCodeFragment.FAKE_CONTEXT_FOR_JAVA_FILE) {
                 val emptyFile = createFakeFileWithJavaContextElement("", contextElement)
 
                 val debuggerContext = DebuggerManagerEx.getInstanceEx(project).context
@@ -124,10 +124,6 @@ class KotlinK1CodeFragmentFactory : JavaDebuggerCodeFragmentFactory() {
                 return@putCopyableUserData fakeContext ?: emptyFile
             }
         }
-
-        supplyDebugInformation(codeFragment, context)
-
-        return codeFragment
     }
 
     private fun KtTypeElement.unwrapNullableType(): KtTypeElement {
@@ -175,15 +171,6 @@ class KotlinK1CodeFragmentFactory : JavaDebuggerCodeFragmentFactory() {
         return frameInfo
     }
 
-    private fun initImports(imports: String?): String? {
-        if (!imports.isNullOrEmpty()) {
-            return imports.split(KtCodeFragment.IMPORT_SEPARATOR)
-                .mapNotNull { fixImportIfNeeded(it) }
-                .joinToString(KtCodeFragment.IMPORT_SEPARATOR)
-        }
-        return null
-    }
-
     private fun fixImportIfNeeded(import: String): String? {
         // skip arrays
         if (import.endsWith("[]")) {
@@ -195,54 +182,6 @@ class KotlinK1CodeFragmentFactory : JavaDebuggerCodeFragmentFactory() {
             return null
         }
         return import
-    }
-
-    override fun createPresentationPsiCodeFragmentImpl(item: TextWithImports, context: PsiElement?, project: Project): JavaCodeFragment? {
-        val kotlinCodeFragment = createPsiCodeFragment(item, context, project) ?: return null
-        if (PsiTreeUtil.hasErrorElements(kotlinCodeFragment) && kotlinCodeFragment is KtCodeFragment) {
-            val javaExpression = try {
-                PsiElementFactory.getInstance(project).createExpressionFromText(item.text, context)
-            } catch (e: IncorrectOperationException) {
-                null
-            }
-
-            val importList = try {
-                kotlinCodeFragment.importsAsImportList()?.let {
-                    (PsiFileFactory.getInstance(project).createFileFromText(
-                        "dummy.java", JavaFileType.INSTANCE, it.text
-                    ) as? PsiJavaFile)?.importList
-                }
-            } catch (e: IncorrectOperationException) {
-                null
-            }
-
-            if (javaExpression != null && !PsiTreeUtil.hasErrorElements(javaExpression)) {
-                var convertedFragment: KtExpressionCodeFragment? = null
-                project.executeWriteCommand(KotlinDebuggerEvaluationBundle.message("j2k.expression")) {
-                    try {
-                        val (elementResults, _, conversionContext) = javaExpression.convertToKotlin() ?: return@executeWriteCommand
-                        val newText = elementResults.singleOrNull()?.text
-                        val newImports = importList?.j2kText()
-                        if (newText != null) {
-                            convertedFragment = KtExpressionCodeFragment(
-                                project,
-                                kotlinCodeFragment.name,
-                                newText,
-                                newImports,
-                                kotlinCodeFragment.context
-                            )
-
-                            J2KPostProcessingRunner.run(OldJ2kPostProcessor(formatCode = false), convertedFragment, conversionContext)
-                        }
-                    } catch (e: Throwable) {
-                        // ignored because text can be invalid
-                        LOG.error("Couldn't convert expression:\n`${javaExpression.text}`", e)
-                    }
-                }
-                return convertedFragment ?: kotlinCodeFragment
-            }
-        }
-        return kotlinCodeFragment
     }
 
     override fun isContextAccepted(contextElement: PsiElement?): Boolean = runReadAction {
@@ -261,10 +200,6 @@ class KotlinK1CodeFragmentFactory : JavaDebuggerCodeFragmentFactory() {
     }
 
     private fun isJavaContextAccepted(): Boolean = Registry.`is`("debugger.enable.kotlin.evaluator.in.java.context", false)
-
-    override fun getFileType(): KotlinFileType = KotlinFileType.INSTANCE
-
-    override fun getEvaluatorBuilder() = KotlinEvaluatorBuilder
 
     companion object {
         private val LOG = Logger.getInstance(this::class.java)
