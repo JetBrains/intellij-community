@@ -70,7 +70,7 @@ object SuvorovProgress {
     eternalStealer = EternalEventStealer(disposable)
   }
 
-  private val title: AtomicReference<@Nls String> = AtomicReference()
+  private val title: AtomicReference<@Nls String?> = AtomicReference()
 
   fun <T> withProgressTitle(title: String, action: () -> T): T {
     val oldTitle = this.title.getAndSet(title)
@@ -112,6 +112,9 @@ object SuvorovProgress {
         processInvocationEventsWithoutDialog(awaitedValue, Int.MAX_VALUE)
       }
       "NiceOverlay" -> {
+        if (title.get() != null) {
+          showPotemkinProgress(awaitedValue, true)
+        }
         val currentFocusedPane = KeyboardFocusManager.getCurrentKeyboardFocusManager().focusedWindow?.let(SwingUtilities::getRootPane)
         // IJPL-203107 in remote development, there is no graphics for a component
         if (currentFocusedPane == null || GraphicsUtil.safelyGetGraphics(currentFocusedPane) == null) {
@@ -195,7 +198,7 @@ object SuvorovProgress {
     // some focus machinery may require Write-Intent read action
     // we need to remove it from there
     getGlobalThreadingSupport().relaxPreventiveLockingActions {
-      val title = this.title.get()
+      @Suppress("HardCodedStringLiteral") val title = this.title.get()
       val progress = if (title != null || isBar) {
         PotemkinProgress(title ?: CommonBundle.message("title.long.non.interactive.progress"), null, null, null)
       }
