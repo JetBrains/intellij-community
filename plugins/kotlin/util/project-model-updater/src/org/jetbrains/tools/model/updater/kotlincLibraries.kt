@@ -158,7 +158,10 @@ private fun JpsLibrary.convertMavenUrlToCooperativeIfNeeded(artifactsMode: Artif
     fun convertUrl(url: JpsUrl): JpsUrl {
         return when (url.path) {
             is JpsPath.ProjectDir -> url
-            is JpsPath.MavenRepository -> JpsUrl.Jar(JpsPath.ProjectDir("../build/repo/${url.path.relativePath}", isCommunity))
+            is JpsPath.MavenRepository -> {
+                val snapshotDirectoryPath = "lib/kotlin-snapshot"
+                JpsUrl.Jar(JpsPath.ProjectDir("$snapshotDirectoryPath/${url.path.relativePath}", isCommunity))
+            }
         }
     }
 
