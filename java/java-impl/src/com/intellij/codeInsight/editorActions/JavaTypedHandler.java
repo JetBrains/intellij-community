@@ -219,7 +219,7 @@ public final class JavaTypedHandler extends JavaTypedHandlerBase {
         return false;
       }
 
-      if (!".".equals(lastElement.getText()) && !"#".equals(lastElement.getText())) {
+      if (!".".equals(lastElement.getText()) && !"#".equals(lastElement.getText()) && !"##".equals(lastElement.getText())) {
         return JavaClassReferenceCompletionContributor.findJavaClassReference(file, offset - 1) != null;
       }
       else {
