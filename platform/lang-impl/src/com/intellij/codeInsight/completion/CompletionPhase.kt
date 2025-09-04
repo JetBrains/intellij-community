@@ -122,6 +122,16 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
     companion object {
       private val ourExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Completion Preparation", 1)
 
+      /**
+       * Schedules completion process for the given [editor] with [completionType] and [condition] for the state of the file.
+       * The condition is checked after committing all the documents inside a read-action.
+       *
+       * @param editor          editor where we start completion
+       * @param completionType  completion type
+       * @param condition       condition to check before starting the completion process.
+       * @param project         the current project
+       * @param prevIndicator   the completion indicator, if any. The indicator exists if completion was already started and we restart it with new parameters.
+       */
       @ApiStatus.Internal
       @JvmStatic
       fun scheduleAsyncCompletion(
