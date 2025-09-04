@@ -61,3 +61,15 @@ git_override(
     remote = "https://github.com/JetBrains/rules_python.git",
     commit = "92bf73a6867f143c5af49274f02140d118b84bb0"
 )
+
+# Use custom remote_java_tools_windows with vc_redist .dll files due to https://github.com/bazelbuild/rules_java/issues/316
+http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+http_archive(
+    name = "remote_java_tools_windows_with_vc_redist",
+    sha256 = "9ec4e41ebbb2b7259eb14f1ad708e8ee60087f33515bdec4876c675205e6950f",
+    url = "https://packages.jetbrains.team/files/p/ij/intellij-build-dependencies/rules-java/java_tools_windows-v13.18-with-vc_redist.zip",
+)
+override_repo(
+    use_extension("@rules_java//java:extensions.bzl", "toolchains"),
+    remote_java_tools_windows = "remote_java_tools_windows_with_vc_redist",
+)
