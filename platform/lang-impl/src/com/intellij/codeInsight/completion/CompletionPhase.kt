@@ -256,6 +256,11 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
       ) {
         LOG.trace { "Finish on UI thread :: completionEditor=$completionEditor" }
 
+        if (phase != CompletionServiceImpl.completionPhase) {
+          LOG.trace { "Phase is expired :: myPhase=${phase}, completionPhase=${CompletionServiceImpl.completionPhase} " }
+          return
+        }
+
         if (phase.myState !is InProgress) {
           LOG.trace { "Phase is expired :: myState=${phase.myState}" }
           return
@@ -265,24 +270,19 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
           // preparation has failed for this specific request. We must cancel only this request.
           // If no other requests are pending, we can cancel the phase altogether.
 
-          if (phase == CompletionServiceImpl.completionPhase) {
-            LOG.trace { "Setting NoCompletion phase :: completionEditor=$completionEditor, expirationReason=editor is null" }
-            phase.cancelThisRequest()
-            if (phase.myState == Cancelled) {
-              CompletionServiceImpl.setCompletionPhase(NoCompletion)
-            }
+          LOG.trace { "Setting NoCompletion phase :: completionEditor=$completionEditor, expirationReason=editor is null" }
+          phase.cancelThisRequest()
+          if (phase.myState == Cancelled) {
+            CompletionServiceImpl.setCompletionPhase(NoCompletion)
           }
           return
         }
 
         if (phase.myTracker.hasAnythingHappened()) {
           // activity has happened in the editor. We must cancel all the requests altogether
-
-          if (phase == CompletionServiceImpl.completionPhase) {
-            LOG.trace { "Setting NoCompletion phase :: completionEditor=$completionEditor, expirationReason=${phase.myTracker.describeChangeEvent()}" }
-            phase.cancelPhase()
-            CompletionServiceImpl.setCompletionPhase(NoCompletion)
-          }
+          LOG.trace { "Setting NoCompletion phase :: completionEditor=$completionEditor, expirationReason=${phase.myTracker.describeChangeEvent()}" }
+          phase.cancelPhase()
+          CompletionServiceImpl.setCompletionPhase(NoCompletion)
           return
         }
 
