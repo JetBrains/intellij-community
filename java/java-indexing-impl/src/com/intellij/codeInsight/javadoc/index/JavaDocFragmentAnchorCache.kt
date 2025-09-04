@@ -3,8 +3,11 @@ package com.intellij.codeInsight.javadoc.index
 
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiClass
+import com.intellij.psi.impl.source.javadoc.PsiDocFragmentName
 import com.intellij.psi.javadoc.PsiDocComment
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.indexing.ID
@@ -64,4 +67,16 @@ private class JavaDocFragmentCacheService {
 
 fun getAnchors(project: Project, fqnOrPackage: String): LinkedHashSet<JavaDocFragmentData> {
   return project.service<JavaDocFragmentCacheService>().getAnchors(project, fqnOrPackage)
+}
+
+fun getAnchor(project: Project, fragmentName: PsiDocFragmentName): Pair<PsiClass, JavaDocFragmentData>? {
+  if (DumbService.getInstance(project).isDumb) return null
+
+  val psiClass = fragmentName.getScope()
+  val fqn = psiClass?.qualifiedName ?: return null
+
+  val data = getAnchors(project, fqn).firstOrNull { data: JavaDocFragmentData -> data.name == fragmentName.text }
+             ?: return null
+
+  return psiClass to data
 }
