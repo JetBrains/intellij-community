@@ -37,6 +37,25 @@ f:com.intellij.codeInsight.daemon.SyntheticPsiFileSupport
 - s:markFileWithUrl(com.intellij.openapi.vfs.VirtualFile,java.lang.String):V
 com.intellij.codeInsight.daemon.impl.AsyncDescriptionSupplier
 - a:requestDescription():org.jetbrains.concurrency.Promise
+Fc:com.intellij.codeInsight.daemon.impl.HighlightInfo
+- f:findRegisteredQuickFix(java.util.function.BiFunction):java.lang.Object
+- f:getActualEndOffset():I
+- f:getActualStartOffset():I
+- f:getEndOffset():I
+- f:getGutterIconRenderer():com.intellij.codeInsight.daemon.GutterMark
+- f:getHighlighter():com.intellij.openapi.editor.ex.RangeHighlighterEx
+- f:getInspectionToolId():java.lang.String
+- f:getProblemGroup():com.intellij.lang.annotation.ProblemGroup
+- f:getSameFamilyFix(com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption):com.intellij.codeInsight.intention.IntentionAction
+- f:getSeverity():com.intellij.lang.annotation.HighlightSeverity
+- f:getStartOffset():I
+- f:getText():java.lang.String
+- f:getTextAttributes(com.intellij.psi.PsiElement,com.intellij.openapi.editor.colors.EditorColorsScheme):com.intellij.openapi.editor.markup.TextAttributes
+- f:hasHint():Z
+- f:isAfterEndOfLine():Z
+- f:registerFix(com.intellij.codeInsight.intention.IntentionAction,java.util.List,java.lang.String,com.intellij.openapi.util.TextRange,com.intellij.codeInsight.daemon.HighlightDisplayKey):V
+- f:setHighlighter(com.intellij.openapi.editor.ex.RangeHighlighterEx):V
+- f:unregisterQuickFix(com.intellij.openapi.util.Condition):V
 com.intellij.codeInsight.daemon.impl.HighlightInfo$Builder
 - a:create():com.intellij.codeInsight.daemon.impl.HighlightInfo
 - a:createUnconditionally():com.intellij.codeInsight.daemon.impl.HighlightInfo
