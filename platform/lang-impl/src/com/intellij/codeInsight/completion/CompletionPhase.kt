@@ -278,8 +278,9 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
           return
         }
 
-        if (phase.myTracker.hasAnythingHappened()) {
-          // activity has happened in the editor. We must cancel all the requests altogether
+        if (phase.myTracker.hasAnythingHappened() && (phase.indicator == null || !phase.indicator.lookup.isShown)) {
+          // activity has happened in the editor. We must cancel all the requests altogether.
+          // but we want to do this only if lookup is not shown yet. because if it's shown, the lookup is going to handle close by itself.
           LOG.trace { "Setting NoCompletion phase :: completionEditor=$completionEditor, expirationReason=${phase.myTracker.describeChangeEvent()}" }
           phase.cancelPhase()
           CompletionServiceImpl.setCompletionPhase(NoCompletion)
