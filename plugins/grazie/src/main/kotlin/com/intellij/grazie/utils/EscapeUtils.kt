@@ -10,7 +10,7 @@ fun TextContent.replaceBackslashEscapes(): TextContent {
   CodeInsightUtilCore.parseStringCharacters(text.toString(), offsets)
   val exclusions = (1 until offsets.size).asSequence()
     .filter { i -> offsets[i] != 0 && offsets[i] - offsets[i - 1] != 1 }
-    .map { index -> keepTrailingWhitespaces(text, offsets, index) }
+    .mapNotNull { index -> keepTrailingWhitespaces(text, offsets, index) }
     .map(TextContent.Exclusion::markUnknown)
     .toList()
   return text.excludeRanges(exclusions)
@@ -70,9 +70,10 @@ private fun invertExcludedToContentRanges(excluded: List<TextRange>, length: Int
   return result.sortedBy { it.startOffset }
 }
 
-private fun keepTrailingWhitespaces(text: TextContent, offsets: IntArray, index: Int): TextRange {
+private fun keepTrailingWhitespaces(text: TextContent, offsets: IntArray, index: Int): TextRange? {
   var offset = 0
-  while (text[index - 1 + offset].isWhitespace()) offset++
+  while (text[index - 1 + offset].isWhitespace() && offset < offsets[index] - offsets[index - 1]) offset++
+  if (offsets[index - 1] + offset == offsets[index]) return null
   return TextRange(offsets[index - 1] + offset, offsets[index])
 }
 
