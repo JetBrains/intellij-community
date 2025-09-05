@@ -40,27 +40,23 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
   public abstract void restart(@NotNull Object reason);
 
   // todo IJPL-339 mark deprecated
+  /**
+   * Do not perform any meaningful work inside the processor because iteration is performed under MarkupModel lock
+   */
   public static boolean processHighlights(@NotNull Document document,
                                           @NotNull Project project,
                                           @Nullable("null means all") HighlightSeverity minSeverity,
                                           int startOffset,
                                           int endOffset,
                                           @NotNull Processor<? super HighlightInfo> processor) {
-    return processHighlights(document, project, minSeverity, startOffset, endOffset, CodeInsightContexts.anyContext(), processor);
-  }
-
-  @ApiStatus.Experimental
-  public static boolean processHighlights(@NotNull Document document,
-                                          @NotNull Project project,
-                                          @Nullable("null means all") HighlightSeverity minSeverity,
-                                          int startOffset,
-                                          int endOffset,
-                                          @NotNull CodeInsightContext context,
-                                          @NotNull Processor<? super HighlightInfo> processor) {
+    CodeInsightContext context = CodeInsightContexts.anyContext();
     MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(document, project, true);
     return processHighlights(model, project, minSeverity, startOffset, endOffset, context, processor);
   }
 
+  /**
+   * Do not perform any meaningful work inside the processor because iteration is performed under MarkupModel lock
+   */
   @ApiStatus.Experimental
   public static boolean processHighlights(@NotNull MarkupModelEx model,
                                           @NotNull Project project,
@@ -82,6 +78,9 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
     });
   }
 
+  /**
+   * Do not perform any meaningful work inside the processor because iteration is performed under MarkupModel lock
+   */
   // todo IJPL-339 mark deprecated
   public static boolean processHighlights(@NotNull MarkupModelEx model,
                                           @NotNull Project project,
@@ -92,6 +91,9 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
     return processHighlights(model, project, minSeverity, startOffset, endOffset, CodeInsightContexts.anyContext(), processor);
   }
 
+  /**
+   * Do not perform any meaningful work inside the processor because iteration is performed under MarkupModel lock
+   */
   static boolean processHighlightsOverlappingOutside(MarkupModelEx model,
                                                      int startOffset,
                                                      int endOffset,

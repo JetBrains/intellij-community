@@ -50,6 +50,7 @@ public interface MarkupModelEx extends MarkupModel {
   /**
    * process all highlighters intersecting with [start, end) interval by {@code processor}.
    * You must not do any changes to the markup model in the processor.
+   * Moreover, no meaningful work should be performed in the {@code processor} because iteration happens under the MarkupModel lock.
    * @return true if no invocations of the {@code processor} returned false
    */
   boolean processRangeHighlightersOverlappingWith(int start, int end, @NotNull Processor<? super RangeHighlighterEx> processor);

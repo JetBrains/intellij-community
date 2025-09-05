@@ -1069,6 +1069,9 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     myUpdateProgress.remove(fileEditor, indicator);
   }
 
+  /**
+   * Do not perform any meaningful work inside the processor because iteration is performed under MarkupModel lock
+   */
   static boolean processHighlightsNearOffset(@NotNull Document document,
                                              @NotNull Project project,
                                              @NotNull HighlightSeverity minSeverity,

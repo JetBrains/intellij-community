@@ -21,6 +21,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.MarkupModelEx;
+import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
@@ -73,13 +75,16 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass impleme
                                                                                          int passId,
                                                                                          int offset) {
     Project project = psiFile.getProject();
-
-    List<HighlightInfo.IntentionActionDescriptor> result = new ArrayList<>();
+    List<HighlightInfo> nearInfos = new ArrayList<>();
     DaemonCodeAnalyzerImpl.processHighlightsNearOffset(editor.getDocument(), project, HighlightSeverity.INFORMATION, offset, true,
                                                        info-> {
-                                                         addAvailableFixesForGroups(info, editor, psiFile, result, passId, offset, true);
+                                                         nearInfos.add(info);
                                                          return true;
                                                        });
+    List<HighlightInfo.IntentionActionDescriptor> result = new ArrayList<>();
+    for (HighlightInfo info : nearInfos) {
+      addAvailableFixesForGroups(info, editor, psiFile, result, passId, offset, true);
+    }
     return result;
   }
 
@@ -306,7 +311,9 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass impleme
     int lineStartOffset = document.getLineStartOffset(line);
     int lineEndOffset = document.getLineEndOffset(line);
     // assumption: HighlightInfo.fixRange does not extend beyond that the containing lines, otherwise it would look silly, and searching for these infos would be expensive
-    DaemonCodeAnalyzerEx.processHighlights(document, hostFile.getProject(), HighlightSeverity.INFORMATION, lineStartOffset, lineEndOffset, context, info -> {
+    Project project = hostFile.getProject();
+    MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(document, project, true);
+    DaemonCodeAnalyzerEx.processHighlights(model, project, HighlightSeverity.INFORMATION, lineStartOffset, lineEndOffset, context, info -> {
       if (info.containsOffset(offset, true)) {
         infos.add(info);
       }

@@ -15,7 +15,6 @@ com.intellij.codeInsight.daemon.ReferenceImporter
 - s:setHighlightersToEditor(com.intellij.openapi.project.Project,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Document,I,I,java.util.Collection,I):V
 a:com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx
 - com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
-- *s:processHighlights(com.intellij.openapi.editor.Document,com.intellij.openapi.project.Project,com.intellij.lang.annotation.HighlightSeverity,I,I,com.intellij.codeInsight.multiverse.CodeInsightContext,com.intellij.util.Processor):Z
 - *s:processHighlights(com.intellij.openapi.editor.ex.MarkupModelEx,com.intellij.openapi.project.Project,com.intellij.lang.annotation.HighlightSeverity,I,I,com.intellij.codeInsight.multiverse.CodeInsightContext,com.intellij.util.Processor):Z
 f:com.intellij.codeInsight.daemon.impl.FileStatusMap
 - com.intellij.openapi.Disposable

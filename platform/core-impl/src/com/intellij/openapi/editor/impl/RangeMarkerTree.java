@@ -200,8 +200,11 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
     List<T> toInvalidate = Collections.emptyList();
     try {
       toInvalidate = runUnderWriteLock(() -> {
-        List<T> ret = Collections.emptyList();
-        if (size() != 0) {
+        List<T> ret;
+        if (size() == 0) {
+          ret = Collections.emptyList();
+        }
+        else {
           ret = updateMarkersOnChange(e);
           if (DocumentEventUtil.isMoveInsertion(e)) {
             ret = ContainerUtil.concat(ret, reTargetMarkersOnChange(e));
