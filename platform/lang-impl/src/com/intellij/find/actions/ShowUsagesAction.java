@@ -1029,8 +1029,6 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
     builder.addListener(processor);
 
     if (addCodePreview) {
-      SimpleColoredComponent previewTitle = new SimpleColoredComponent();
-      PopupUtil.applyPreviewTitleInsets(previewTitle);
       UsagePreviewPanel usagePreviewPanel = new UsagePreviewPanel(project, usageView.getPresentation(), false) {
         @Override
         public Dimension getPreferredSize() {
@@ -1057,13 +1055,11 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
       Disposer.register(contentDisposable, usagePreviewPanel);
 
       JPanel previewPanel = new JPanel(new BorderLayout());
-      previewPanel.add(previewTitle, BorderLayout.NORTH);
       previewPanel.add(usagePreviewPanel.createComponent(), BorderLayout.CENTER);
       contentSplitter.setSecondComponent(previewPanel);
 
       if (ExperimentalUI.isNewUI()) {
         previewPanel.setBackground(JBUI.CurrentTheme.Popup.BACKGROUND);
-        previewTitle.setOpaque(false);
       }
 
       new DoubleClickListener() {
@@ -1101,11 +1097,6 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
           ReadAction.nonBlocking(() -> UsagePreviewPanel.isOneAndOnlyOnePsiFileInUsages(selectedUsages))
               .finishOnUiThread(ModalityState.nonModal(), isOneAndOnlyOnePsiFileInUsages -> {
                 usagePreviewPanel.updateLayout(project, selectedUsages);
-                previewTitle.clear();
-
-                if (isOneAndOnlyOnePsiFileInUsages && selectedFile != null) {
-                  previewTitle.append(PathUtil.getFileName(selectedFile), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-                }
               })
             .expireWith(contentDisposable)
             .submit(AppExecutorUtil.getAppExecutorService());
