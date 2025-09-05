@@ -45,7 +45,9 @@ public final class QuickDocUtil {
    * Use {@link DocumentationResult#asyncDocumentation} or {@link DocumentationResult.Documentation#updates} for async updates.
    */
   @Deprecated(forRemoval = true)
-  public static void updateQuickDoc(final @NotNull Project project, final @NotNull PsiElement element, final @Nullable @Nls String documentation) {
+  public static void updateQuickDoc(final @NotNull Project project,
+                                    final @NotNull PsiElement element,
+                                    final @Nullable @Nls String documentation) {
     if (StringUtil.isEmpty(documentation)) return;
     // modal dialogs with fragment editors fix: can't guess proper modality state here
     UIUtil.invokeLaterIfNeeded(() -> {
@@ -88,7 +90,13 @@ public final class QuickDocUtil {
     if (navigationInfo != null) {
       String fqn = element instanceof PsiQualifiedNamedElement ? ((PsiQualifiedNamedElement)element).getQualifiedName() : null;
       String fullText = provider.generateDoc(element, originalElement);
-      return HintUtil.prepareHintText(DocPreviewUtil.buildPreview(navigationInfo, fqn, fullText), HintUtil.getInformationHint());
+      //noinspection HardCodedStringLiteral
+      if (!navigationInfo.startsWith("<pre>") && !navigationInfo.startsWith("<code>")) {
+        //noinspection HardCodedStringLiteral
+        navigationInfo = "<pre>" + navigationInfo + "</pre>";
+      }
+      return HintUtil.prepareHintText(DocPreviewUtil.buildPreview(navigationInfo, fqn, fullText),
+                                      HintUtil.getInformationHint());
     }
     return null;
   }

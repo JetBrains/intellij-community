@@ -25,6 +25,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.system.OS;
+import kotlin.text.StringsKt;
 import org.intellij.lang.annotations.JdkConstants;
 import org.intellij.lang.annotations.Language;
 import org.intellij.lang.annotations.MagicConstant;
@@ -333,6 +334,13 @@ public final class UIUtil {
   @Deprecated
   public static <T> void putClientProperty(@NotNull JComponent component, @NotNull Key<T> key, T value) {
     component.putClientProperty(key, value);
+  }
+
+  @Contract(pure = true)
+  @ApiStatus.Internal
+  public static @NotNull String getHtmlBodyWithoutPreWrapper(@NotNull String text) {
+    String result = getHtmlBody(text);
+    return StringsKt.removeSuffix(StringsKt.removePrefix(result, "<pre>"), "</pre>");
   }
 
   @Contract(pure = true)
@@ -1770,7 +1778,7 @@ public final class UIUtil {
            + "body, div, td, p {" + familyAndSize
            + (fgColor != null ? " color:#" + ColorUtil.toHex(fgColor) + ';' : "")
            + "}\n"
-           + "a {" + familyAndSize
+           + "a {"
            + (linkColor != null ? " color:#" + ColorUtil.toHex(linkColor) + ';' : "")
            + "}\n"
            + "code {font-size:" + font.getSize() + "pt;}\n"
