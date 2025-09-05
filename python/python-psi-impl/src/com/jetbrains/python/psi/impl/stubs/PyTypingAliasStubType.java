@@ -126,45 +126,11 @@ public final class PyTypingAliasStubType extends CustomTargetExpressionStubType<
       return callee != null &&
              ("TypeVar".equals(callee.getReferencedName()) || "TypeVarTuple".equals(callee.getReferencedName()) ||
               "ParamSpec".equals(callee.getReferencedName()));
-
     }
-
-    final PyStringLiteralExpression pyString = as(expression, PyStringLiteralExpression.class);
-    if (pyString != null) {
-      if (pyString.isInterpolated()) { // f-strings are not allowed
-        return false;
-      }
-      if (pyString.getStringNodes().size() != 1 || pyString.getTextLength() > STRING_LITERAL_LENGTH_THRESHOLD) {
-        return false;
-      }
-      else {
-        if (!pyString.getStringElements().get(0).getPrefix().isEmpty()) { // prefixed strings are not allowed
-          return false;
-        }
-      }
-      final String content = pyString.getStringValue();
-      return TYPE_ANNOTATION_LIKE.matcher(content).matches();
-    }
-
-    if (expression instanceof PyReferenceExpression || expression instanceof PySubscriptionExpression) {
-      return isSyntacticallyValidAnnotation(expression);
-    }
-    if (expression instanceof PyBinaryExpression binaryExpression) {
-      if (binaryExpression.getOperator() == PyTokenTypes.OR) {
-        PyExpression leftOperand = binaryExpression.getLeftExpression();
-        PyExpression rightOperand = binaryExpression.getRightExpression();
-        return leftOperand != null && rightOperand != null &&
-               isSyntacticallyValidAnnotation(leftOperand) && isSyntacticallyValidAnnotation(rightOperand);
-      }
-    }
-
-    return false;
+    return isSyntacticallyValidAnnotation(expression);
   }
 
   private static boolean isSyntacticallyValidAnnotation(@NotNull PyExpression expression) {
-    if (expression instanceof PyBinaryExpression) {
-      return looksLikeTypeHint(expression);
-    }
     boolean[] illegal = {false};
     expression.accept(new PyRecursiveElementVisitor() {
       @Override
@@ -181,6 +147,31 @@ public final class PyTypingAliasStubType extends CustomTargetExpressionStubType<
         }
         else {
           super.visitPySubscriptionExpression(node);
+        }
+      }
+
+      @Override
+      public void visitPyBinaryExpression(@NotNull PyBinaryExpression node) {
+        if (node.getOperator() != PyTokenTypes.OR) {
+          illegal[0] = true;
+          return;
+        }
+        node.getLeftExpression().accept(this);
+        PyExpression rightExpression = node.getRightExpression();
+        if (rightExpression != null) {
+          rightExpression.accept(this);
+        }
+      }
+
+      @Override
+      public void visitPyStringLiteralExpression(@NotNull PyStringLiteralExpression node) {
+        boolean nonTrivial = (node.isInterpolated()
+                              || node.getStringNodes().size() != 1
+                              || node.getTextLength() > STRING_LITERAL_LENGTH_THRESHOLD
+                              || !node.getStringElements().getFirst().getPrefix().isEmpty()
+                              || !TYPE_ANNOTATION_LIKE.matcher(node.getStringValue()).matches());
+        if (nonTrivial) {
+          illegal[0] = true;
         }
       }
 
