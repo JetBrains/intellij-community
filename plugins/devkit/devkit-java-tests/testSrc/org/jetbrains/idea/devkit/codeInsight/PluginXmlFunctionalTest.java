@@ -861,7 +861,7 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
         break;
       }
     }
-    assertNotNull("Should find the 'implementation' attribute in completion", lookupElement);
+    assertNotNull("Should find the '" + completedLookupString + "' item in completion", lookupElement);
     return lookupElement;
   }
 
