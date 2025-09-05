@@ -1,15 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.commit
 
-import com.intellij.mock.MockVirtualFile
-import com.intellij.openapi.vfs.VirtualFile
 import org.junit.Test
 import org.junit.experimental.runners.Enclosed
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import org.junit.runners.Parameterized.Parameter
+import java.nio.file.Path
 import java.nio.file.Paths
-import kotlin.io.path.pathString
 
 @RunWith(Enclosed::class)
 class KotlinPluginPrePushHandlerTest {
@@ -65,7 +63,7 @@ class KotlinPluginPrePushHandlerTest {
 
     @Test
     fun testThatChecksForFileSet() {
-      val filesSet = files.map { fileAt(it.first, it.second) }
+      val filesSet = files.asSequence().map { pathAt(it.first, it.second) }
       assert(prePushHandler.containSources(filesSet)) {
         "The following set of files doesn't trigger the check: $filesSet"
       }
@@ -110,7 +108,7 @@ class KotlinPluginPrePushHandlerTest {
 
     @Test
     fun testThatIgnoresFileSet() {
-      val filesSet = files.map { fileAt(it.first, it.second) }
+      val filesSet = files.asSequence().map { pathAt(it.first, it.second) }
       assert(!prePushHandler.containSources(filesSet)) {
         "The following set of files triggered the check: $filesSet"
       }
@@ -259,7 +257,7 @@ class KotlinPluginPrePushHandlerTest {
 
     @Test
     fun testThatCommitMessageIsValid() {
-      assert(prePushHandler.commitMessageIsCorrect(commitMessage)) {
+      assert(prePushHandler.isCommitMessageCorrect(commitMessage)) {
         "The following commit message was considered invalid: $commitMessage"
       }
     }
@@ -325,7 +323,7 @@ class KotlinPluginPrePushHandlerTest {
 
     @Test
     fun testThatCommitMessageIsValid() {
-      assert(!prePushHandler.commitMessageIsCorrect(commitMessage)) {
+      assert(!prePushHandler.isCommitMessageCorrect(commitMessage)) {
         "The following commit message was considered as valid: $commitMessage"
       }
     }
@@ -339,7 +337,6 @@ private const val COMMUNITY_KOTLIN_PLUGIN = "community/plugins/kotlin/package/"
 private const val FLEET_KOTLIN_PLUGIN = "fleet/plugins/kotlin/package/"
 
 
-private fun fileAt(dirPath: String, fileName: String): VirtualFile {
-  val path: String =  Paths.get(tempDir, *dirPath.split("/").toTypedArray(), fileName).pathString
-  return MockVirtualFile(path)
+private fun pathAt(dirPath: String, fileName: String): Path {
+  return Paths.get(tempDir, *dirPath.split("/").toTypedArray(), fileName)
 }
