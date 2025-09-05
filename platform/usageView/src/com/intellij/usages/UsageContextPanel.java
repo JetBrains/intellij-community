@@ -35,8 +35,14 @@ public interface UsageContextPanel extends Disposable {
   // usage selection changes, panel should update its view for the newly select usages
   void updateLayout(@NotNull Project project, @Nullable("null means there are no usages to show") List<? extends UsageInfo> infos);
 
-  default void updateLayout(@NotNull Project project, @NotNull List<? extends UsageInfo> infos, @NotNull UsageView usageView) {
+  @ApiStatus.Internal
+  default void updateLayout(@NotNull Project project, @Nullable("null means there are no usages to show") List<? extends UsageInfo> infos,
+                    boolean isOneFileForPreview) {
     updateLayout(project, infos);
+  }
+
+  default void updateLayout(@NotNull Project project, @NotNull List<? extends UsageInfo> infos, @NotNull UsageView usageView) {
+    updateLayout(project, infos, false);
   }
 
   /**

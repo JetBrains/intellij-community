@@ -229,11 +229,14 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
       adapters.add(adapter);
     }
 
-    if (FindKey.isLazyPreviewEnabled() &&
+    boolean isOneFileForPreview = adapters.size() == 1 || adapters.stream().map(UsageInfoAdapter::getPath).distinct().count() == 1;
+    if (FindKey.isLazyPreviewEnabled() && adapters.stream().map(UsageInfoAdapter::getPath).distinct().count() == 1 &&
         ContainerUtil.exists(adapters, adapter -> adapter instanceof ItemWithLazyContent &&
                                                   !((ItemWithLazyContent)adapter).isContentComputed())) {
       LOG.debug("Preview will be updated when item will be loaded");
-      myUsagePreviewPanel.showLoading();
+      ApplicationManager.getApplication().invokeLater(() -> {
+        myUsagePreviewPanel.showLoading();
+      });
       return;
     }
 
@@ -243,14 +246,14 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
       record UsagesFileInfo(boolean isOneAndOnlyOnePsiFileInUsages, @Nullable VirtualFile virtualFile, String path) {
       }
       ReadAction.nonBlocking(() -> new UsagesFileInfo(
-          UsagePreviewPanel.isOneAndOnlyOnePsiFileInUsages(selectedUsages),
+          isOneFileForPreview,
           selectedFilePath != null && !FindKey.isEnabled()? VfsUtil.findFileByIoFile(new File(selectedFilePath), true) : null,
           selectedFilePath
         ))
         .finishOnUiThread(ModalityState.nonModal(), usagesFileInfo -> {
           myReplaceSelectedButton.setText(FindBundle.message("find.popup.replace.selected.button", selectedUsages.size()));
           FindInProjectUtil.setupViewPresentation(myUsageViewPresentation, myHelper.getModel().clone());
-          myUsagePreviewPanel.updateLayout(myProject, selectedUsages);
+          myUsagePreviewPanel.updateLayout(myProject, selectedUsages, isOneFileForPreview);
           myUsagePreviewTitle.clear();
           if (usagesFileInfo.isOneAndOnlyOnePsiFileInUsages && selectedFilePath != null) {
             myUsagePreviewTitle.append(PathUtil.getFileName(selectedFilePath), SimpleTextAttributes.REGULAR_ATTRIBUTES);

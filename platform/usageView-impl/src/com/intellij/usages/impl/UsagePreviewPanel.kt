@@ -61,7 +61,6 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.*
 import kotlinx.coroutines.*
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Contract
 import java.awt.BorderLayout
@@ -284,7 +283,7 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
 
   @Deprecated("Implementation details of UsagePreviewPanel")
   fun getCannotPreviewMessage(infos: List<UsageInfo>): String? {
-    return cannotPreviewMessage(infos)
+    return cannotPreviewMessage(infos, false)
   }
 
   @RequiresEdt
@@ -339,8 +338,13 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
   }
 
   override fun updateLayoutLater(infos: List<UsageInfo>?) {
+    updateLayoutLater(infos, false)
+  }
+
+  @Internal
+  override fun updateLayoutLater(infos: List<UsageInfo>?, isOneFileForPreview: Boolean) {
     cs.launch(ModalityState.current().asContextElement()) {
-      previewUsages(infos)
+      previewUsages(infos, isOneFileForPreview)
     }
   }
 
@@ -351,10 +355,7 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
   @RequiresEdt
   @Internal
   fun showLoading() {
-    if (!EDT.isCurrentThreadEdt()) {
-      ApplicationManager.getApplication().invokeLater({ showLoading() }, ModalityState.any())
-      return
-    }
+    ThreadingAssertions.assertEventDispatchThread()
     val keepContent = myEditor != null
     if (keepContent && iconScope?.isActive == true) {
       return
@@ -394,8 +395,8 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
     processIcon.alignmentY = 0.5f
   }
 
-  private suspend fun previewUsages(infos: List<UsageInfo>?) {
-    val cannotPreviewMessage = readAction { cannotPreviewMessage(infos) }
+  private suspend fun previewUsages(infos: List<UsageInfo>?, isOneFileForPreview: Boolean) {
+    val cannotPreviewMessage = readAction { cannotPreviewMessage(infos, isOneFileForPreview) }
     if (cannotPreviewMessage == null) {
       resetEditor(infos!!)
     }
@@ -576,7 +577,7 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
      * @param infoRange the [UsageInfo.getRangeInElement] result in corresponding UsageInfo
      * @return range to highlight for in usage preview
      */
-    @ApiStatus.Internal
+    @Internal
     @JvmStatic
     fun calculateHighlightingRangeForUsage(psiElement: PsiElement, infoRange: ProperTextRange?): TextRange {
       val elementRange = psiElement.textRange
@@ -625,7 +626,10 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
     val PREVIEW_EDITOR_FLAG = Key.create<UsagePreviewPanel>("PREVIEW_EDITOR_FLAG")
 
     @Contract("null -> !null")
-    private fun cannotPreviewMessage(infos: List<UsageInfo>?): @NlsContexts.StatusText String? {
+    private fun cannotPreviewMessage(infos: List<UsageInfo>?, isOneFileForPreview: Boolean): @NlsContexts.StatusText String? {
+      if (!isOneFileForPreview) {
+        return UsageViewBundle.message("several.occurrences.selected")
+      }
       if (infos == null) {
         return UsageViewBundle.message("usage.preview.isnt.available")
       }
@@ -650,7 +654,7 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
     @RequiresReadLock
     @RequiresBackgroundThread
     @JvmStatic
-    fun isOneAndOnlyOnePsiFileInUsages(infos: List<UsageInfo>?) = cannotPreviewMessage(infos) == null
+    fun isOneAndOnlyOnePsiFileInUsages(infos: List<UsageInfo>?): Boolean = cannotPreviewMessage(infos, false) == null
 
     private fun isOnlyGroupNodesSelected(infos: List<UsageInfo>, groupNodes: Set<GroupNode>): Boolean {
       return infos.isEmpty() && !groupNodes.isEmpty()
