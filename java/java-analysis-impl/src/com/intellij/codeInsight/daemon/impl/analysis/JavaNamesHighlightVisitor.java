@@ -103,7 +103,7 @@ final class JavaNamesHighlightVisitor extends JavaElementVisitor implements High
     }
     else if (value instanceof PsiDocFragmentName docFragmentName) {
       final Pair<PsiClass, JavaDocFragmentData> fragmentData = computeIfSmartMode(value.getProject(), () -> {
-        return JavaDocFragmentAnchorCacheKt.getAnchor(value.getProject(), docFragmentName);
+        return JavaDocFragmentAnchorCacheKt.resolveJavaDocFragment(value.getProject(), docFragmentName);
       });
       if (fragmentData != null) {
         myHolder.add(HighlightNamesUtil.highlightFragmentReference(docFragmentName));

@@ -454,7 +454,7 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
   public @Nullable PsiSymbolReference getFragmentNameSymbol(@NotNull PsiDocFragmentName fragmentName) {
     if (DumbService.getInstance(myProject).isDumb()) return null;
 
-    final Pair<PsiClass, JavaDocFragmentData> fragmentData = JavaDocFragmentAnchorCacheKt.getAnchor(myProject, fragmentName);
+    final Pair<PsiClass, JavaDocFragmentData> fragmentData = JavaDocFragmentAnchorCacheKt.resolveJavaDocFragment(myProject, fragmentName);
     if (fragmentData == null) return null;
     final int offset = fragmentData.getSecond().getOffset();
 

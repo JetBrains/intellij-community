@@ -17,6 +17,12 @@ import java.util.regex.Pattern
 @JvmField
 val NAME: ID<String, LinkedHashSet<JavaDocFragmentData>> = ID.create("java.javadoc.fragment.anchors")
 
+/**
+ * Data associated with a JavaDoc fragment (e.g. `<p id=my-fragment-id></p>`).
+ *
+ * @param name fragment name
+ * @param offset fragment offset in the containing file
+ */
 data class JavaDocFragmentData(val name: String, val offset: Int)
 
 @Service(Service.Level.PROJECT)
@@ -65,17 +71,24 @@ private class JavaDocFragmentCacheService {
   }
 }
 
-fun getAnchors(project: Project, fqnOrPackage: String): LinkedHashSet<JavaDocFragmentData> {
-  return project.service<JavaDocFragmentCacheService>().getAnchors(project, fqnOrPackage)
+/**
+ * Resolves all fragment data for the class corresponding to the given fully qualified name.
+ */
+fun getJavaDocFragmentsForClass(project: Project, fqn: String): LinkedHashSet<JavaDocFragmentData> {
+  return project.service<JavaDocFragmentCacheService>().getAnchors(project, fqn)
 }
 
-fun getAnchor(project: Project, fragmentName: PsiDocFragmentName): Pair<PsiClass, JavaDocFragmentData>? {
+/**
+ * For a given `PsiDocFragmentName`, e.g. (`my-id` in `{@link MyClass##my-id …}`),
+ * returns the fragment data and its containing class if found.
+ */
+fun resolveJavaDocFragment(project: Project, fragmentName: PsiDocFragmentName): Pair<PsiClass, JavaDocFragmentData>? {
   if (DumbService.getInstance(project).isDumb) return null
 
   val psiClass = fragmentName.getScope()
   val fqn = psiClass?.qualifiedName ?: return null
 
-  val data = getAnchors(project, fqn).firstOrNull { data: JavaDocFragmentData -> data.name == fragmentName.text }
+  val data = getJavaDocFragmentsForClass(project, fqn).firstOrNull { data: JavaDocFragmentData? -> data!!.name == fragmentName.text }
              ?: return null
 
   return psiClass to data

@@ -141,7 +141,7 @@ public final class JavaDocCompletionContributor extends CompletionContributor im
           final PsiClass classRef = parent instanceof PsiDocFragmentRef ? ((PsiDocFragmentRef)docFragmentName.getParent()).getScope() : null;
           final String fqn = classRef == null ? null : classRef.getQualifiedName();
           if (fqn != null) {
-            for (JavaDocFragmentData anchor : JavaDocFragmentAnchorCacheKt.getAnchors(position.getProject(), fqn)) {
+            for (JavaDocFragmentData anchor : JavaDocFragmentAnchorCacheKt.getJavaDocFragmentsForClass(position.getProject(), fqn)) {
               result.addElement(LookupElementBuilder.create(anchor.getName()).withIcon(AllIcons.Nodes.Related));
             }
           }

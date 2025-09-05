@@ -37,7 +37,7 @@ public class JavaDocFragmentAnchorCacheTest extends LightJavaCodeInsightTestCase
 
     Project project = getProject();
 
-    Collection<JavaDocFragmentData> anchors = JavaDocFragmentAnchorCacheKt.getAnchors(project, "p.A");
+    Collection<JavaDocFragmentData> anchors = JavaDocFragmentAnchorCacheKt.getJavaDocFragmentsForClass(project, "p.A");
     assertNotNull(anchors);
     assertContainsElements(anchors,
                            new JavaDocFragmentData("equivalenceRelation", 25),
