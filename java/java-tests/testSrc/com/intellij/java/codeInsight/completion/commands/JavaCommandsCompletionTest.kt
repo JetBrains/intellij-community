@@ -1222,6 +1222,22 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
     assertTrue(elements.any { element -> element.lookupString.contains("Create method from", ignoreCase = true) })
   }
 
+
+  fun testViewStructure() {
+    Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+        enum Color {
+          RED, GREEN, BLUE, YELLOW, BROWN
+        }
+
+        class A {
+          Color color = Color.BROWN.<caret>;
+        }
+      """.trimIndent())
+    val elements = myFixture.completeBasic()
+    assertTrue(elements.any { element -> element.lookupString.contains("Go to members", ignoreCase = true) })
+  }
+
   fun testForceCallException() {
     Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
     myFixture.configureByText(JavaFileType.INSTANCE, """
