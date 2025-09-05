@@ -73,6 +73,10 @@ class PyTestUnpassedFixtureInspection : PyInspection() {
         }
       }
 
+      // If this is a qualified attribute reference with a qualifier and it doesn't resolve,
+      // do not treat it as a fixture by name.
+      if (element is PyQualifiedExpression && element.qualifier != null && element.reference?.resolve() == null) return
+
       // no warning if an element has type OTHER
       if (getType(element) == ResolveType.OTHER) return
 
