@@ -18,6 +18,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
 @ApiStatus.Internal
+@ApiStatus.Experimental
 object WelcomeScreenNewFileHandler {
   private fun getDefaultProjectPath(): String {
     val filePrefix = WelcomeScreenProjectProvider.getCreateNewFileProjectPrefix()
