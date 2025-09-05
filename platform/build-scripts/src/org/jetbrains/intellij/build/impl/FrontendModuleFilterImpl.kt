@@ -69,12 +69,12 @@ internal class FrontendModuleFilterImpl private constructor(
     }
   }
 
-  override fun isModuleIncluded(moduleName: String): Boolean {
-    return moduleName in includedModuleNames
+  override fun isBackendModule(moduleName: String): Boolean {
+    return moduleName !in includedModuleNames
   }
 
-  override fun isProjectLibraryIncluded(libraryName: String): Boolean {
-    return libraryName in includedProjectLibraryNames
+  override fun isBackendProjectLibrary(libraryName: String): Boolean {
+    return libraryName !in includedProjectLibraryNames
   }
 
   override fun isModuleCompatibleWithFrontend(moduleName: String): Boolean {
@@ -103,7 +103,7 @@ fun isScrambledWithFrontend(element: JpsNamedElement): Boolean = when (element) 
 }
 
 internal object EmptyFrontendModuleFilter : FrontendModuleFilter {
-  override fun isModuleIncluded(moduleName: String): Boolean = true
-  override fun isProjectLibraryIncluded(libraryName: String): Boolean = true
+  override fun isBackendModule(moduleName: String): Boolean = false
+  override fun isBackendProjectLibrary(libraryName: String): Boolean = false
   override fun isModuleCompatibleWithFrontend(moduleName: String): Boolean = false
 }

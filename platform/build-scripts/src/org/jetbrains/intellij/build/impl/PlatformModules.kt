@@ -338,7 +338,7 @@ internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedS
 
 private fun getProductModuleJarName(moduleName: String, context: BuildContext, frontendModuleFilter: FrontendModuleFilter): String {
   return when {
-    isModuleCloseSource(moduleName, context = context) -> if (frontendModuleFilter.isModuleIncluded(moduleName)) PRODUCT_JAR else PRODUCT_BACKEND_JAR
+    isModuleCloseSource(moduleName, context = context) -> if (frontendModuleFilter.isBackendModule(moduleName)) PRODUCT_BACKEND_JAR else PRODUCT_JAR
     else -> PlatformJarNames.getPlatformModuleJarName(moduleName, frontendModuleFilter)
   }
 }

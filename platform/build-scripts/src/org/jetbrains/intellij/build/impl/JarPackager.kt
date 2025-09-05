@@ -119,8 +119,8 @@ private val predefinedMergeRules = listOf<Pair<String, (String, FrontendModuleFi
   "guava.jar" to { it, _ -> it == "Guava" },
   "opentelemetry.jar" to { it, _ -> it == "opentelemetry" || it == "opentelemetry-semconv" || it.startsWith("opentelemetry-exporter-otlp") },
   "bouncy-castle.jar" to { it, _ -> it.startsWith("bouncy-castle-") },
-  PRODUCT_BACKEND_JAR to { name, filter -> (name.startsWith("License") || name.startsWith("jetbrains.codeWithMe.lobby.server.")) && !filter.isProjectLibraryIncluded(name) },
-  PRODUCT_JAR to { name, filter -> (name.startsWith("License") || name.startsWith("jetbrains.codeWithMe.lobby.server.")) && filter.isProjectLibraryIncluded(name) },
+  PRODUCT_BACKEND_JAR to { name, filter -> (name.startsWith("License") || name.startsWith("jetbrains.codeWithMe.lobby.server.")) && filter.isBackendProjectLibrary(name) },
+  PRODUCT_JAR to { name, filter -> (name.startsWith("License") || name.startsWith("jetbrains.codeWithMe.lobby.server.")) && !filter.isBackendProjectLibrary(name) },
   // see ClassPathUtil.getUtilClassPath
   UTIL_8_JAR to { it, _ ->
     libsUsedInJps.contains(it) ||
@@ -199,14 +199,14 @@ class JarPackager private constructor(
         }
 
         if (!libraryToMerge.isEmpty()) {
-          val clientLibraries = libraryToMerge.filterKeys { frontendModuleFilter.isProjectLibraryIncluded(it.name) }
-          if (clientLibraries.isNotEmpty()) {
-            packager.projectLibsToSourceWithMappings(uberJarFile = outputDir.resolve(PlatformJarNames.LIB_JAR), libraryToMerge = clientLibraries)
+          val commonLibraries = libraryToMerge.filterKeys { !frontendModuleFilter.isBackendProjectLibrary(it.name) }
+          if (commonLibraries.isNotEmpty()) {
+            packager.projectLibsToSourceWithMappings(uberJarFile = outputDir.resolve(PlatformJarNames.LIB_JAR), libraryToMerge = commonLibraries)
           }
 
-          val nonClientLibraries = libraryToMerge.filterKeys { !frontendModuleFilter.isProjectLibraryIncluded(it.name) }
-          if (nonClientLibraries.isNotEmpty()) {
-            packager.projectLibsToSourceWithMappings(uberJarFile = outputDir.resolve(PlatformJarNames.LIB_BACKEND_JAR), libraryToMerge = nonClientLibraries)
+          val backendLibraries = libraryToMerge.filterKeys { frontendModuleFilter.isBackendProjectLibrary(it.name) }
+          if (backendLibraries.isNotEmpty()) {
+            packager.projectLibsToSourceWithMappings(uberJarFile = outputDir.resolve(PlatformJarNames.LIB_BACKEND_JAR), libraryToMerge = backendLibraries)
           }
         }
       }

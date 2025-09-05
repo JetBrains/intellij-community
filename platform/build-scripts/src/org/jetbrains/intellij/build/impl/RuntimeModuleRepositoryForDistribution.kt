@@ -264,7 +264,7 @@ private suspend fun computeMainPathsForResourcesCopiedToMultiplePlaces(
     .groupBy({ it.first }, { Path(it.second) })
 
   suspend fun isIncludedInEmbeddedFrontend(entry: DistributionFileEntry): Boolean {
-    return entry is ModuleOutputEntry && context.getFrontendModuleFilter().isModuleIncluded(entry.moduleName)
+    return entry is ModuleOutputEntry && !context.getFrontendModuleFilter().isBackendModule(entry.moduleName)
   }
   
   suspend fun chooseMainLocation(element: JpsNamedElement, paths: List<Path>): String {
