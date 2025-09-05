@@ -56,6 +56,9 @@
 
     <module name="intellij.platform.langInjection"/>
     <module name="intellij.platform.langInjection.backend"/>
+
+    <module name="intellij.libraries.grpc"/>
+    <module name="intellij.libraries.grpc.netty.shaded"/>
   </content>
 
   <xi:include href="/META-INF/grid-core-modules.xml"/>

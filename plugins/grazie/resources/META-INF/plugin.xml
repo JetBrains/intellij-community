@@ -28,6 +28,7 @@
     <module name="intellij.libraries.ai.grazie.spell.gec.engine.local"/>
     <module name="intellij.spellchecker"/>
     <module name="intellij.platform.vcs.impl"/>
+    <module name="intellij.libraries.grpc"/>
   </dependencies>
 
   <content>

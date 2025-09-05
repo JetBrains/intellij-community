@@ -73,6 +73,7 @@ jvm_library(
     "//platform/util/coroutines",
     "//platform/util/progress",
     "//platform/util/text-matching",
+    "//libraries/grpc",
   ],
   exports = [
     "@lib//:grazie-core-org-jetbrains-intellij-deps-languagetool-languagetool-core",
@@ -86,9 +87,6 @@ jvm_library(
     "@lib//:guava",
     "@lib//:jetbrains-annotations",
     "@lib//:commons-lang3",
-    "@lib//:grpc-core",
-    "@lib//:grpc-protobuf",
-    "@lib//:grpc-stub",
   ]
 )
 ### auto-generated section `build intellij.grazie.core` end

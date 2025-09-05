@@ -407,10 +407,8 @@
     <orderEntry type="library" name="kotlinx-html-jvm" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="commons-lang3" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
-    <orderEntry type="library" scope="RUNTIME" name="grpc-core" level="project" />
-    <orderEntry type="library" scope="RUNTIME" name="grpc-protobuf" level="project" />
-    <orderEntry type="library" scope="RUNTIME" name="grpc-stub" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.progress" />
     <orderEntry type="module" module-name="intellij.platform.util.text.matching" />
+    <orderEntry type="module" module-name="intellij.libraries.grpc" />
   </component>
 </module>
