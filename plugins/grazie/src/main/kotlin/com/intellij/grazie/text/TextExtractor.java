@@ -113,7 +113,7 @@ public abstract class TextExtractor {
     PsiFile file = psi.getContainingFile();
     return ContainerUtil.filter(
       obtainContents(allowedDomains, file, psi),
-      c -> c.getUserData(IGNORED) == null && allowedDomains.contains(c.getDomain())
+      c -> Boolean.FALSE.equals(c.getUserData(IGNORED)) && allowedDomains.contains(c.getDomain())
     );
   }
 
@@ -128,7 +128,7 @@ public abstract class TextExtractor {
       CachedValue<Cache> cache = each.getUserData(COMMON_PARENT_CACHE);
       if (cache != null) {
         List<TextContent> cached = ContainerUtil.filter(cache.getValue().getCached(allowedDomains), c ->
-          c.getUserData(IGNORED) == null && c.intersectsRange(psiRange));
+          Boolean.FALSE.equals(c.getUserData(IGNORED)) && c.intersectsRange(psiRange));
         if (!cached.isEmpty()) {
           return cached;
         }
@@ -151,7 +151,7 @@ public abstract class TextExtractor {
 
       if (!contents.isEmpty()) {
         return ContainerUtil.filter(contents, c ->
-          c.getUserData(IGNORED) == null && allowedDomains.contains(c.getDomain()) && c.intersectsRange(psiRange));
+          Boolean.FALSE.equals(c.getUserData(IGNORED)) && allowedDomains.contains(c.getDomain()) && c.intersectsRange(psiRange));
       }
     }
 
@@ -200,9 +200,8 @@ public abstract class TextExtractor {
     contents = ContainerUtil.map(contents, content -> interner.computeIfAbsent(content, __ -> content));
 
     for (TextContent content : contents) {
-      if (shouldIgnore(content)) {
-        content.putUserData(IGNORED, true);
-      }
+      if (content.getUserData(IGNORED) != null) continue;
+      content.putUserData(IGNORED, shouldIgnore(content));
     }
 
     if (stamp.mayCacheNow()) {
@@ -249,9 +248,9 @@ public abstract class TextExtractor {
   }
 
   private static boolean shouldIgnore(TextContent content) {
-    return hasIntersectingInjection(content, content.getContainingFile()) ||
-           isSuppressionComment(content) ||
-           isCopyrightComment(content);
+    return isSuppressionComment(content) ||
+           isCopyrightComment(content) ||
+           hasIntersectingInjection(content, content.getContainingFile());
   }
 
   private static boolean isCopyrightComment(TextContent content) {

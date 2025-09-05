@@ -11,6 +11,7 @@ import com.intellij.grazie.text.CheckerRunner
 import com.intellij.grazie.text.TextContent
 import com.intellij.grazie.text.TextExtractor
 import com.intellij.grazie.text.TextExtractor.findAllTextContents
+import com.intellij.grazie.text.TextProblem
 import com.intellij.lang.Language
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.TextRange
@@ -39,16 +40,7 @@ class GrazieInspection : LocalInspectionTool(), DumbAware {
     return object : PsiElementVisitor() {
       override fun visitElement(element: PsiElement) {
         if (element is PsiWhiteSpace || areChecksDisabled(element)) return
-
-        val texts = TextExtractor.findUniqueTextsAt(element, checkedDomains)
-        if (skipCheckingTooLargeTexts(texts)) return
-
-        for (extracted in sortByPriority(texts, session.priorityRange)) {
-          val runner = CheckerRunner(extracted)
-          runner.run()
-            .filterNot { it.isStyleLike }
-            .forEach { runner.toProblemDescriptors(it, isOnTheFly).forEach(holder::registerProblem) }
-        }
+        inspectElement(element, { !it.isStyleLike }, session, holder, checkedDomains)
       }
     }
   }
@@ -121,6 +113,27 @@ class GrazieInspection : LocalInspectionTool(), DumbAware {
         }
         lang != null && lang.id in disabledLanguages
       }
+    }
+
+    @JvmStatic
+    fun inspectElement(
+      element: PsiElement,
+      problemFilter: (TextProblem) -> Boolean,
+      session: LocalInspectionToolSession,
+      problemsHolder: ProblemsHolder,
+      checkedDomains: Set<TextContent.TextDomain>,
+    ) {
+      val texts = TextExtractor.findUniqueTextsAt(element, checkedDomains)
+      if (skipCheckingTooLargeTexts(texts)) return
+
+      sortByPriority(texts, session.priorityRange)
+        .map { CheckerRunner(it) }
+        .map { it to it.run().filter(problemFilter) }
+        .forEach { (runner, problems) ->
+          problems.forEach { problem ->
+            runner.toProblemDescriptors(problem, problemsHolder.isOnTheFly).forEach(problemsHolder::registerProblem)
+          }
+        }
     }
 
     @JvmStatic

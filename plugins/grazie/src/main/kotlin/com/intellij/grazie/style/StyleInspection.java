@@ -3,9 +3,10 @@ package com.intellij.grazie.style;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.grazie.ide.inspection.grammar.GrazieInspection;
-import com.intellij.grazie.text.*;
+import com.intellij.grazie.text.CheckerRunner;
 import com.intellij.grazie.text.TextContent.TextDomain;
+import com.intellij.grazie.text.TextProblem;
+import com.intellij.grazie.text.TreeRuleChecker;
 import com.intellij.grazie.utils.HighlightingUtil;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiElement;
@@ -17,8 +18,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
-import static com.intellij.grazie.ide.inspection.grammar.GrazieInspection.ignoreGrammarChecking;
-import static com.intellij.grazie.ide.inspection.grammar.GrazieInspection.sortByPriority;
+import static com.intellij.grazie.ide.inspection.grammar.GrazieInspection.*;
 
 public class StyleInspection extends LocalInspectionTool {
   @Override
@@ -29,15 +29,16 @@ public class StyleInspection extends LocalInspectionTool {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
 
-    Set<TextDomain> domains = HighlightingUtil.checkedDomains();
-    Function1<PsiElement, Boolean> areChecksDisabled = GrazieInspection.getDisabledChecker(file);
+    Set<TextDomain> checkedDomains = HighlightingUtil.checkedDomains();
+    Function1<PsiElement, Boolean> areChecksDisabled = getDisabledChecker(file);
 
     return new PsiElementVisitor() {
       @Override
       public void visitElement(@NotNull PsiElement element) {
         if (element instanceof PsiWhiteSpace || areChecksDisabled.invoke(element)) return;
 
-        checkSpecificTexts(element, domains, holder, session);
+        inspectElement(element, TextProblem::isStyleLike, session, holder, checkedDomains);
+
         if (element == file) {
           checkTextLevel(file, holder);
         }
@@ -47,23 +48,6 @@ public class StyleInspection extends LocalInspectionTool {
 
   private static void checkTextLevel(PsiFile file, ProblemsHolder holder) {
     TreeRuleChecker.checkTextLevelProblems(file)
-      .stream()
-      .filter(TextProblem::isStyleLike)
-      .forEach(problem -> reportProblem(problem, holder));
-  }
-
-  private static void checkSpecificTexts(PsiElement element,
-                                         Set<TextDomain> domains,
-                                         ProblemsHolder holder,
-                                         LocalInspectionToolSession session) {
-    var texts = sortByPriority(TextExtractor.findUniqueTextsAt(element, domains), session.getPriorityRange());
-    if (HighlightingUtil.isTooLargeText(texts)) return;
-    texts.forEach(text -> analyzeText(text, holder));
-  }
-
-  private static void analyzeText(TextContent text, ProblemsHolder holder) {
-    CheckerRunner runner = new CheckerRunner(text);
-    runner.run()
       .stream()
       .filter(TextProblem::isStyleLike)
       .forEach(problem -> reportProblem(problem, holder));
