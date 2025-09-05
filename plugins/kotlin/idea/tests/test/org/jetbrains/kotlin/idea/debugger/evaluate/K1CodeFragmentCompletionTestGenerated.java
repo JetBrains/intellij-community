@@ -113,6 +113,16 @@ public abstract class K1CodeFragmentCompletionTestGenerated extends AbstractK1Co
             public void testExtensionMethod() throws Exception {
                 runTest("../../completion/testData/basic/codeFragments/runtimeType/extensionMethod.kt");
             }
+
+            @TestMetadata("extensionMethodForParameterizedType.kt")
+            public void testExtensionMethodForParameterizedType() throws Exception {
+                runTest("../../completion/testData/basic/codeFragments/runtimeType/extensionMethodForParameterizedType.kt");
+            }
+
+            @TestMetadata("extensionMethodForParameterizedTypeN.kt")
+            public void testExtensionMethodForParameterizedTypeN() throws Exception {
+                runTest("../../completion/testData/basic/codeFragments/runtimeType/extensionMethodForParameterizedTypeN.kt");
+            }
         }
     }
 

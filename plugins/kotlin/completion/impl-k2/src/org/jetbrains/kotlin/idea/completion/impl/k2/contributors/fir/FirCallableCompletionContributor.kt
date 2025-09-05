@@ -23,13 +23,13 @@ import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.abbreviationOrSelf
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.*
 import org.jetbrains.kotlin.idea.base.psi.isInsideAnnotationEntryArgumentList
 import org.jetbrains.kotlin.idea.codeinsight.utils.canBeUsedAsExtension
 import org.jetbrains.kotlin.idea.codeinsight.utils.isEnum
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.*
-import org.jetbrains.kotlin.idea.completion.contributors.helpers.CallableMetadataProvider.replaceTypeArgumentsWithStarProjections
 import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
 import org.jetbrains.kotlin.idea.completion.impl.k2.checkers.ApplicableExtension
 import org.jetbrains.kotlin.idea.completion.impl.k2.checkers.KtCompletionExtensionCandidateChecker
@@ -162,15 +162,24 @@ internal open class FirCallableCompletionContributor(
                     val explicitReceiverTypeHint = callableWithMetadata.explicitReceiverTypeHint
                         ?: return@map builder
 
+                    val typeWithStarProjections = explicitReceiverTypeHint.replaceTypeParametersWithStarProjections()
+                        ?: return@map builder
+
                     builder.adaptToExplicitReceiver(
                         receiver = receiver,
                         typeText =
                             @OptIn(KaExperimentalApi::class)
-                            explicitReceiverTypeHint.replaceTypeArgumentsWithStarProjections()?.render(position = Variance.INVARIANT), // See KTIJ-35541
+                            typeWithStarProjections.render(position = Variance.INVARIANT),
                     )
                 }
             }.forEach(sink::addElement)
     }
+
+    // See KTIJ-35541
+    @OptIn(KaExperimentalApi::class)
+    context(_: KaSession)
+    private fun KaType.replaceTypeParametersWithStarProjections(): KaType? =
+        abbreviationOrSelf.symbol?.let { buildClassTypeWithStarProjections(it) }
 
     @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
@@ -179,7 +188,7 @@ internal open class FirCallableCompletionContributor(
         nameExpression: KtSimpleNameExpression
     ): KtCompletionExtensionCandidateChecker {
         val runtimeType = receiver?.evaluateRuntimeKaType()
-        val runtimeTypeWithErasedTypeParameters = runtimeType?.replaceTypeArgumentsWithStarProjections()?.render(position = Variance.INVARIANT)
+        val runtimeTypeWithErasedTypeParameters = runtimeType?.replaceTypeParametersWithStarProjections()?.render(position = Variance.INVARIANT)
         val runtimeTypeClassId = runtimeType?.symbol?.classId
         val castedReceiver = if (runtimeTypeWithErasedTypeParameters == null || runtimeTypeClassId == receiver.expressionType?.symbol?.classId) {
             receiver
