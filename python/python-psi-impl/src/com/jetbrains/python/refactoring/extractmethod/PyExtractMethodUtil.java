@@ -576,16 +576,37 @@ public final class PyExtractMethodUtil {
       builder.makeAsync();
     }
     final String originalText = expression.getText();
-
-    boolean needsParens =
-      (expression instanceof PyYieldExpression) ||
-      ((originalText.contains("\n") || originalText.contains("\r")) &&
-       ((expression instanceof PyGeneratorExpression) || !isParenthesizedExpression((PyExpression)expression)));
-
-    final String text = needsParens ? "(" + originalText + ")" : originalText;
-
+    final String text = shouldAddParentheses(expression, originalText) ? "(" + originalText + ")" : originalText;
     builder.statement("return " + text);
     return builder.buildFunction();
+  }
+
+  private static boolean shouldAddParentheses(@NotNull PsiElement expression, @NotNull String originalText) {
+    // Always add parentheses for yield expressions
+    if (expression instanceof PyYieldExpression) {
+      return true;
+    }
+
+    // Check if expression contains newlines
+    boolean hasNewlines = containsNewlines(originalText);
+
+    // For generator expressions with newlines, always add parentheses
+    if (expression instanceof PyGeneratorExpression && hasNewlines) {
+      return true;
+    }
+
+    // For multi-line expressions that aren't already grouped and aren't generator expressions
+    if (hasNewlines &&
+        !hasImplicitContinuationGrouping(originalText) &&
+        !isParenthesizedExpression((PyExpression)expression)) {
+      return true;
+    }
+
+    return false;
+  }
+
+  private static boolean containsNewlines(@NotNull String text) {
+    return text.contains("\n") || text.contains("\r");
   }
 
   private static boolean isParenthesizedExpression(@NotNull PyExpression e) {
@@ -599,6 +620,10 @@ public final class PyExtractMethodUtil {
            || e instanceof PySetCompExpression
            || e instanceof PyGeneratorExpression
            || e instanceof PyCallExpression;
+  }
+
+  private static boolean hasImplicitContinuationGrouping(@NotNull String text) {
+    return text.indexOf('(') >= 0 || text.indexOf('[') >= 0 || text.indexOf('{') >= 0;
   }
 
   private static @NotNull PyFunction generateMethodFromElements(final @NotNull PyExtractMethodSettings methodSettings,
