@@ -1176,5 +1176,29 @@
                      level="WARNING"
                      language="kotlin"
                      key="script.not.executable.missing.execute.permission" bundle="messages.KotlinBundle"/>
-  </extensions>
+      <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.js.NonExternalClassifierExtendingStateOrPropsInspection"
+                       groupPath="Kotlin,React"
+                       groupBundle="messages.KotlinBundle" groupKey="group.names.probable.bugs"
+                       enabledByDefault="true"
+                       level="WARNING"
+                       language="kotlin"
+                       key="non.external.classifier.extending.state.or.props.name" bundle="messages.KotlinBundle"/>
+
+      <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.js.NonVarPropertyInExternalInterfaceInspection"
+                       groupPath="Kotlin"
+                       groupBundle="messages.KotlinBundle" groupKey="group.names.probable.bugs"
+                       enabledByDefault="true"
+                       level="WARNING"
+                       language="kotlin"
+                       key="external.interface.contains.val.property.name" bundle="messages.KotlinBundle"/>
+
+      <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.js.NonNullableBooleanPropertyInExternalInterfaceInspection"
+                       groupPath="Kotlin"
+                       groupBundle="messages.KotlinBundle" groupKey="group.names.probable.bugs"
+                       enabledByDefault="false"
+                       level="WARNING"
+                       language="kotlin"
+                       key="external.interface.contains.non.nullable.property.name" bundle="messages.KotlinBundle"/>
+
+    </extensions>
 </idea-plugin>
