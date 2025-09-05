@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -71,6 +72,7 @@ public final class CodeInsightUtilBase extends CodeInsightUtilCore {
   }
 
   @Override
+  @RequiresEdt
   public boolean prepareVirtualFilesForWrite(@NotNull Project project, @NotNull Collection<? extends VirtualFile> files) {
     ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(files);
     return !status.hasReadonlyFiles();

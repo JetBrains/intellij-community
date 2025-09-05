@@ -15,6 +15,7 @@ import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,6 +63,7 @@ public class ReadonlyStatusHandlerBase extends ReadonlyStatusHandler {
   }
 
   @Override
+  @RequiresEdt
   public @NotNull OperationStatus ensureFilesWritable(@NotNull Collection<? extends VirtualFile> originalFiles) {
     if (originalFiles.isEmpty()) {
       return new OperationStatusImpl(VirtualFile.EMPTY_ARRAY);
