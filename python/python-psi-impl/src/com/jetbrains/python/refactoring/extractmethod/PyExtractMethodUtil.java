@@ -722,23 +722,32 @@ public final class PyExtractMethodUtil {
     PyExtractMethodValidator(final PsiElement element, final Project project) {
       myElement = element;
       myProject = project;
-      final ScopeOwner parent = ScopeUtil.getScopeOwner(myElement);
-      myFunction = s -> {
-        ScopeOwner owner = parent;
-        while (owner != null) {
-          if (owner instanceof PyClass) {
-            if (((PyClass)owner).findMethodByName(s, true, null) != null) {
-              return false;
-            }
-          }
-          final Scope scope = ControlFlowCache.getScope(owner);
-          if (scope.containsDeclaration(s)) {
+      final PyClass enclosingClass = PsiTreeUtil.getParentOfType(myElement, PyClass.class, false);
+      if (enclosingClass != null) {
+        // Extracting into a class: only check for clashes within the class namespace
+        myFunction = s -> {
+          if (enclosingClass.findMethodByName(s, true, null) != null) {
             return false;
           }
-          owner = ScopeUtil.getScopeOwner(owner);
-        }
-        return true;
-      };
+          final Scope classScope = ControlFlowCache.getScope(enclosingClass);
+          return !classScope.containsDeclaration(s);
+        };
+      }
+      else {
+        // Extracting at module or function level: keep outward-scan behavior
+        final ScopeOwner parent = ScopeUtil.getScopeOwner(myElement);
+        myFunction = s -> {
+          ScopeOwner owner = parent;
+          while (owner != null) {
+            final Scope scope = ControlFlowCache.getScope(owner);
+            if (scope.containsDeclaration(s)) {
+              return false;
+            }
+            owner = ScopeUtil.getScopeOwner(owner);
+          }
+          return true;
+        };
+      }
     }
 
     @Override
