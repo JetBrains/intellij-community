@@ -182,7 +182,7 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
         scrollingModel.scrollTo(editor.offsetToLogicalPosition(Math.min(maxOffset, offset)), ScrollType.MAKE_VISIBLE);
 
         if (postNavigateRunnable != null) {
-          postNavigateRunnable.run();
+          scrollingModel.runActionOnScrollingFinished(postNavigateRunnable);
         }
       }
     );
