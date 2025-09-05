@@ -6,14 +6,18 @@ import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.externalSystem.impl.workspaceModel.ExternalProjectEntityId
 import com.intellij.platform.testFramework.assertion.collectionAssertion.CollectionAssertions
 import com.intellij.platform.workspace.jps.entities.ModuleId
+import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import com.intellij.workspaceModel.ide.toPath
 import org.jetbrains.plugins.gradle.model.projectModel.GradleBuildEntityId
 import org.jetbrains.plugins.gradle.model.projectModel.GradleModuleEntity
 import org.jetbrains.plugins.gradle.model.projectModel.GradleProjectEntityId
 import org.jetbrains.plugins.gradle.model.projectModel.gradleModuleEntity
+import org.jetbrains.plugins.gradle.model.versionCatalogs.GradleVersionCatalogEntity
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
+import java.nio.file.Path
 
 internal fun assertGradleBuildEntity(
   project: Project,
@@ -99,4 +103,24 @@ internal fun assertGradleModuleEntities(
     "For each module name from the expected list, there should be a GradleModuleEntity connected with ModuleEntity with the same name."
   }
   CollectionAssertions.assertEqualsUnordered(expectedModuleNames.toList(), actualModuleNames, message)
+}
+
+internal fun assertVersionCatalogEntities(
+  project: Project,
+  buildUrl: VirtualFileUrl,
+  vararg namePaths: Pair<String, Path>,
+  messageSupplier: (() -> String)? = null,
+) {
+  val storage = project.workspaceModel.currentSnapshot
+  val actualNamePaths: List<Pair<String, Path>> = storage.entities(GradleVersionCatalogEntity::class.java)
+    .filter { it.build.url == buildUrl }
+    .map { it.name to it.url.toPath() }
+    .toList()
+
+  val expectedNamePaths = namePaths.map { (name, path) -> name to path.normalize() }
+  val message = messageSupplier ?: {
+    "For build with the url = $buildUrl, there should be added into the storage all GradleVersionCatalogEntity entities with " +
+    "the expected names and paths."
+  }
+  CollectionAssertions.assertEqualsUnordered(expectedNamePaths, actualNamePaths, message)
 }
