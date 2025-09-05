@@ -68,6 +68,7 @@ import kotlinx.coroutines.Runnable
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.*
+import java.awt.event.ActionEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.util.concurrent.CancellationException
@@ -955,6 +956,16 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
   private class AddAccountDialog(parent: JComponent) : DialogWrapper(parent, false) {
 
     var providerCode: String = ""
+    private val loginAction = object : DialogWrapperAction(message("enable.sync.choose.data.provider.login.button")) {
+      init {
+        putValue(DEFAULT_ACTION, true)
+        isEnabled = false
+      }
+
+      override fun doAction(e: ActionEvent?) {
+        close(OK_EXIT_CODE)
+      }
+    }
 
     init {
       title = message("title.settings.sync")
@@ -1009,12 +1020,17 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
       }
     }
 
+    override fun createActions(): Array<Action> =
+      arrayOf(cancelAction, loginAction)
+
+
     private fun createRadioButtonPanelForProvider(provider: SettingsSyncCommunicatorProvider, buttonGroup: ButtonGroup): JPanel {
       val radioButton = JBRadioButton().apply {
         actionCommand = provider.providerCode
         addActionListener {
           if (isSelected) {
             providerCode = provider.providerCode
+            loginAction.isEnabled = true
           }
         }
       }
