@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Class MethodEvaluator
@@ -23,6 +23,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jdi.MethodImpl;
 import com.sun.jdi.*;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,13 +36,14 @@ public class MethodEvaluator implements Evaluator {
   private final Evaluator[] myArgumentEvaluators;
   private final Evaluator myObjectEvaluator;
   private final boolean myMustBeVararg;
+  private final boolean myLastArgumentIsNotArray;
 
   public MethodEvaluator(Evaluator objectEvaluator,
                          JVMName className,
                          String methodName,
                          JVMName signature,
                          Evaluator[] argumentEvaluators) {
-    this(objectEvaluator, className, methodName, signature, argumentEvaluators, false);
+    this(objectEvaluator, className, methodName, signature, argumentEvaluators, false, false);
   }
 
   public MethodEvaluator(Evaluator objectEvaluator,
@@ -49,13 +51,15 @@ public class MethodEvaluator implements Evaluator {
                          String methodName,
                          JVMName signature,
                          Evaluator[] argumentEvaluators,
-                         boolean mustBeVararg) {
+                         boolean mustBeVararg,
+                         boolean lastArgumentIsNotArray) {
     myObjectEvaluator = DisableGC.create(objectEvaluator);
     myClassName = className;
     myMethodName = methodName;
     myMethodSignature = signature;
     myArgumentEvaluators = argumentEvaluators;
     myMustBeVararg = mustBeVararg;
+    myLastArgumentIsNotArray = lastArgumentIsNotArray;
   }
 
   @Override
@@ -127,11 +131,9 @@ public class MethodEvaluator implements Evaluator {
       if (jdiMethod == null) {
         throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.no.instance.method", myMethodName));
       }
-      if (myMustBeVararg && !jdiMethod.isVarArgs() && ContainerUtil.getLastItem(jdiMethod.argumentTypes()) instanceof ArrayType) {
-        // this is a workaround for jdk bugs when bridge or proxy methods do not have ACC_VARARGS flags
-        // see IDEA-129869 and IDEA-202380
-        MethodImpl.handleVarArgs(jdiMethod, args);
-      }
+
+      handleVarargs(jdiMethod, args, context);
+
       if (signature == null) { // runtime conversions
         argsConversions(jdiMethod, args, context);
       }
@@ -163,6 +165,24 @@ public class MethodEvaluator implements Evaluator {
     catch (Exception e) {
       LOG.debug(e);
       throw EvaluateExceptionUtil.createEvaluateException(e);
+    }
+  }
+
+  private void handleVarargs(@NotNull Method jdiMethod, @NotNull List<Value> args, @NotNull EvaluationContextImpl context)
+    throws ClassNotLoadedException, InvalidTypeException, EvaluateException {
+    if (myMustBeVararg && !jdiMethod.isVarArgs() && ContainerUtil.getLastItem(jdiMethod.argumentTypes()) instanceof ArrayType) {
+      // this is a workaround for jdk bugs when bridge or proxy methods do not have ACC_VARARGS flags
+      // see IDEA-129869 and IDEA-202380
+      MethodImpl.handleVarArgs(jdiMethod, args);
+    }
+    List<String> argumentTypeNames = jdiMethod.argumentTypeNames();
+    int totalArguments = argumentTypeNames.size();
+    // special handling for the case when null was passed as varargs argument but not as the array type
+    if (jdiMethod.isVarArgs() && myLastArgumentIsNotArray && ContainerUtil.getLastItem(args) == null && totalArguments == args.size()) {
+      String varargTypeName = ContainerUtil.getLastItem(argumentTypeNames);
+      // type may not yet be loaded
+      ArrayType arrayType = (ArrayType)context.getDebugProcess().findClass(context, varargTypeName, context.getClassLoader());
+      args.set(totalArguments - 1, DebuggerUtilsEx.mirrorOfArray(arrayType, 1, context));
     }
   }
 
