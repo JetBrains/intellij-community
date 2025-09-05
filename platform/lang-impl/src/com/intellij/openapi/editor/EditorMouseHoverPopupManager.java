@@ -320,6 +320,12 @@ public class EditorMouseHoverPopupManager implements Disposable {
     }
   }
 
+  private static boolean isParentWindow(@NotNull Window parent, Object potentialChild) {
+    // hide editor mouse hover popup when any other popup/window is opened
+    return parent == potentialChild ||
+           (potentialChild instanceof Component) && isParentWindow(parent, ((Component)potentialChild).getParent());
+  }
+
   private void updateHint(JComponent component, PopupBridge popupBridge) {
     AbstractPopup popup = getCurrentHint();
     if (popup != null) {
@@ -385,12 +391,6 @@ public class EditorMouseHoverPopupManager implements Disposable {
       return event.getOffset();
     }
     return -1;
-  }
-
-  private static boolean isParentWindow(@NotNull Window parent, Object potentialChild) {
-    // hide editor mouse hover popup when any other popup/window is opened
-    return parent == potentialChild ||
-           (potentialChild instanceof Component) && isParentWindow(parent, ((Component)potentialChild).getParent());
   }
 
   private static @Nullable HoverPopupContext createContext(
