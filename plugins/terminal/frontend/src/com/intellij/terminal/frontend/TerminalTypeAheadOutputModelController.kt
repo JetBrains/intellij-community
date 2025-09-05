@@ -64,8 +64,8 @@ internal class TerminalTypeAheadOutputModelController(
   override fun type(string: String) {
     if (!isEnabled()) return
 
-    // At this moment we only support type-ahead at the end of a visible line
-    if (outputModel.getRemainingLinePart().isBlank()) {
+    // At this moment we only support type-ahead at the end of the output
+    if (outputModel.getTextAfterCursor().isBlank()) {
       updateOutputModel { outputModel.insertAtCursor(string) }
       delayUpdatesFromBackend()
       LOG.trace { "String typed prediction inserted: '$string'" }
@@ -82,8 +82,8 @@ internal class TerminalTypeAheadOutputModelController(
       return
     }
 
-    // At this moment we only support type-ahead at the end of a visible line
-    if (outputModel.getRemainingLinePart().isBlank()) {
+    // At this moment we only support type-ahead at the end of the output
+    if (outputModel.getTextAfterCursor().isBlank()) {
       updateOutputModel { outputModel.backspace() }
       delayUpdatesFromBackend()
       LOG.trace { "Backspace prediction applied" }
@@ -240,4 +240,9 @@ private fun TerminalOutputModel.getRemainingLinePart(): @NlsSafe String {
   val lineEnd = document.getLineEndOffset(line)
   val remainingLinePart = document.getText(TextRange(cursorOffset, lineEnd))
   return remainingLinePart
+}
+
+private fun TerminalOutputModel.getTextAfterCursor(): @NlsSafe String {
+  val cursorOffset = cursorOffsetState.value.toRelative()
+  return document.getText(TextRange(cursorOffset, document.textLength))
 }
