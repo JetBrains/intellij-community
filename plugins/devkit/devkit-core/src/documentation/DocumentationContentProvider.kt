@@ -17,7 +17,7 @@ import org.yaml.snakeyaml.Yaml
 import org.yaml.snakeyaml.constructor.Constructor
 import org.yaml.snakeyaml.nodes.Node
 import org.yaml.snakeyaml.representer.Representer
-import java.net.SocketTimeoutException
+import java.net.SocketException
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
@@ -95,7 +95,7 @@ internal class DocumentationContentProvider(private val coroutineScope: Coroutin
           contentCache.remove(coordinates) // so it is refreshed on the next content request
         }
       }
-      catch (_: SocketTimeoutException) {
+      catch (_: SocketException) {
         // offline mode
       }
       catch (e: Exception) {
