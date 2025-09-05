@@ -15,7 +15,9 @@ import com.intellij.find.usages.api.SearchTarget;
 import com.intellij.find.usages.impl.Psi2UsageInfo2UsageAdapter;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.IdeTooltipManager;
+import com.intellij.ide.actions.searcheverywhere.ExtendedInfo;
+import com.intellij.ide.actions.searcheverywhere.footer.ExtendedInfoComponent;
+import com.intellij.ide.actions.searcheverywhere.footer.ExtendedInfoImplKt;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.gotoByName.ModelDiff;
 import com.intellij.ide.util.scopeChooser.ScopeChooserGroup;
@@ -83,7 +85,10 @@ import com.intellij.util.concurrency.EdtScheduler;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.GridBag;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.SpeedSearchAdvertiser;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.context.Scope;
@@ -134,6 +139,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
   private static final String DIMENSION_SERVICE_KEY = "ShowUsagesActions.dimensionServiceKey";
   private static final String SPLITTER_SERVICE_KEY = "ShowUsagesActions.splitterServiceKey";
   private static final String PREVIEW_PROPERTY_KEY = "ShowUsagesActions.previewPropertyKey";
+  private static final String SHOW_PATH_PROPERTY_KEY = "ShowUsagesActions.showPathPropertyKey";
 
   private static final IJTracer myFindUsagesTracer = TelemetryManager.getInstance().getTracer(FindUsagesScope);
 
@@ -925,6 +931,12 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
 
     Disposable contentDisposable = Disposer.newDisposable();
 
+    JPanel extendedInfoContainer = new JPanel(new BorderLayout());
+    builder.setSouthComponent(extendedInfoContainer);
+    JPanel extendedInfoPanel = createExtendedInfo(project, table, contentDisposable);
+    extendedInfoContainer.add(extendedInfoPanel, BorderLayout.CENTER);
+    extendedInfoPanel.setVisible(properties.getBoolean(SHOW_PATH_PROPERTY_KEY, true));
+
     KeyboardShortcut shortcut = UsageViewUtil.getShowUsagesWithSettingsShortcut();
     if (shortcut != null) {
       new DumbAwareAction() {
@@ -948,7 +960,11 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
     DefaultActionGroup filteringGroup = new DefaultActionGroup();
     usageView.addFilteringActions(filteringGroup);
     ActionManager actionManager = ActionManager.getInstance();
-    filteringGroup.add(actionManager.getAction("UsageGrouping.FileStructure"));
+
+    DefaultActionGroup showOptionsActionGroup = createShowOptionsActionGroup(properties, extendedInfoPanel);
+    filteringGroup.add(showOptionsActionGroup);
+    filteringGroup.add(Separator.getInstance());
+
     filteringGroup.add(new ToggleAction(UsageViewBundle.message("preview.usages.action.text"), null, AllIcons.Actions.PreviewDetailsVertically) {
       @Override
       public boolean isSelected(@NotNull AnActionEvent e) {
@@ -1178,6 +1194,68 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
     });
     popupRef.set(popup);
     return popup;
+  }
+
+  private static DefaultActionGroup createShowOptionsActionGroup(PropertiesComponent properties, JPanel extendedInfoPanel) {
+    ActionManager actionManager = ActionManager.getInstance();
+    DefaultActionGroup showOptionsGroup = new DefaultActionGroup(UsageViewBundle.message("show.options.action.group.description"), null, AllIcons.Actions.Show);
+    showOptionsGroup.setPopup(true);
+
+    showOptionsGroup.add(Separator.create(UsageViewBundle.message("show.options.action.group.text")));
+    showOptionsGroup.add(new ToggleAction(UsageViewBundle.message("short.file.path.in.usages.action.text"), null, null) {
+      @Override
+      public boolean isSelected(@NotNull AnActionEvent e) {
+        return properties.getBoolean(SHOW_PATH_PROPERTY_KEY, true);
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
+      }
+
+      @Override
+      public void setSelected(@NotNull AnActionEvent e, boolean state) {
+        properties.setValue(SHOW_PATH_PROPERTY_KEY, state, true);
+        extendedInfoPanel.setVisible(state);
+      }
+    });
+    showOptionsGroup.add(actionManager.getAction("UsageGrouping.FileStructure"));
+
+    return showOptionsGroup;
+  }
+
+  private static JPanel createExtendedInfo(Project project, JTable table, Disposable parentDisposable) {
+    ExtendedInfo extendedInfo = ExtendedInfoImplKt.createPsiExtendedInfo((value) -> {
+      return project;
+    }, (value) -> {
+      if (value instanceof UsageNode) {
+        Usage usage = ((UsageNode)value).getUsage();
+        if (usage instanceof UsageInfoAdapter) {
+          UsageInfo[] infos = ((UsageInfoAdapter)usage).getMergedInfos();
+          if (infos.length > 0) {
+            return infos[0].getVirtualFile();
+          }
+        }
+      }
+      return null;
+    }, (value) -> {
+      return null;
+    }, false);
+
+    ExtendedInfoComponent extendedInfoComponent = new ExtendedInfoComponent(project, extendedInfo);
+    extendedInfoComponent.updateElement("", parentDisposable);
+
+    table.getSelectionModel().addListSelectionListener(e -> {
+      if (e.getValueIsAdjusting()) return;
+
+      int selectedIndex = table.getSelectionModel().getMinSelectionIndex();
+      if (selectedIndex >= 0 && selectedIndex < table.getModel().getRowCount()) {
+        Object value = table.getModel().getValueAt(selectedIndex, 0);
+        extendedInfoComponent.updateElement(value, parentDisposable);
+      }
+    });
+
+    return extendedInfoComponent.component;
   }
 
   private static Border createComplexPopupToolbarBorder() {
