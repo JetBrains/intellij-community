@@ -122,6 +122,8 @@ public class AutoPopupControllerImpl extends AutoPopupController {
       return;
     }
 
+    ThreadingAssertions.assertEventDispatchThread();
+
     boolean alwaysAutoPopup = Boolean.TRUE.equals(editor.getUserData(ALWAYS_AUTO_POPUP));
     if (!CodeInsightSettings.getInstance().AUTO_POPUP_COMPLETION_LOOKUP && !alwaysAutoPopup) {
       return;

@@ -34,6 +34,7 @@ import com.intellij.ui.HintListener
 import com.intellij.ui.LightweightHint
 import com.intellij.util.ThreeState
 import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresReadLock
@@ -77,7 +78,7 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
     internal var replaced: Boolean = false
 
     private val myTracker: ActionTracker = ActionTracker(editor, this)
-    private var myState: CommittingState = InProgress(1)
+    private var myState: CommittingState = InProgress(1) // access available on EDT only
 
     fun ignoreCurrentDocumentChange() {
       myTracker.ignoreCurrentDocumentChange()
@@ -94,6 +95,7 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
      * Several typedHandlers can request auto-popup completion during processing of a single event.
      * We need to trigger read-action for them independently because they can have different conditions for starting completion.
      */
+    @RequiresEdt
     private fun addRequest() {
       when (val cur = myState) {
         Cancelled, Disposed, Success -> {
@@ -110,6 +112,7 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
     /**
      * the current request was not successful (most likely because of the failed condition), but other requests still have a chance to succeed.
      */
+    @RequiresEdt
     private fun cancelThisRequest() {
       when (val cur = myState) {
         Disposed, Cancelled, Success -> {
@@ -136,6 +139,7 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
     /**
      * At least one of the requests succeeded, the completion process has been started, no more requests are necessary.
      */
+    @RequiresEdt
     private fun requestCompleted() {
       LOG.trace { "Request completed" }
       LOG.assertTrue(myState is InProgress, "myState=$myState")
@@ -191,6 +195,7 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
        * @param prevIndicator   the completion indicator, if any. The indicator exists if completion was already started and we restart it with new parameters.
        */
       @ApiStatus.Internal
+      @RequiresEdt
       @JvmStatic
       fun scheduleAsyncCompletion(
         editor: Editor,
@@ -200,6 +205,9 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
         prevIndicator: CompletionProgressIndicator?
       ) {
         LOG.trace("Schedule async completion")
+
+        ThreadingAssertions.assertEventDispatchThread()
+
         val topLevelEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor)
         val offset = topLevelEditor.getCaretModel().offset
 
@@ -297,6 +305,7 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
         handler.invokeCompletion(project, completionEditor, time, false)
       }
 
+      @RequiresEdt
       private fun getCompletionPhase(
         prevIndicator: CompletionProgressIndicator?,
         topLevelEditor: Editor,
@@ -321,6 +330,7 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
       @RequiresBackgroundThread
       @JvmStatic
       fun loadContributorsOutsideEdt(editor: Editor, file: PsiFile) {
+        ThreadingAssertions.assertBackgroundThread()
         CompletionContributor.forLanguage(PsiUtilCore.getLanguageAtOffset(file, editor.getCaretModel().offset))
       }
 
@@ -351,6 +361,7 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
       }
     }
 
+    @RequiresEdt
     private fun cancelPhase() {
       when (myState) {
         Cancelled, Disposed, Success -> {}

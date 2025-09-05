@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -62,6 +63,7 @@ public abstract class AutoPopupController {
    * @see #scheduleAutoPopup(Editor, Condition)
    * @see #scheduleAutoPopup(Editor, CompletionType, Condition)
    */
+  @RequiresEdt
   public final void scheduleAutoPopup(@NotNull Editor editor) {
     scheduleAutoPopup(editor, CompletionType.BASIC, null);
   }
@@ -79,6 +81,7 @@ public abstract class AutoPopupController {
    * @see #scheduleAutoPopup(Editor)
    * @see #scheduleAutoPopup(Editor, CompletionType, Condition)
    */
+  @RequiresEdt
   public final void scheduleAutoPopup(@NotNull Editor editor,
                                       @Nullable Condition<? super PsiFile> condition) {
     scheduleAutoPopup(editor, CompletionType.BASIC, condition);
@@ -98,6 +101,7 @@ public abstract class AutoPopupController {
    * @see #scheduleAutoPopup(Editor)
    * @see #scheduleAutoPopup(Editor, Condition)
    */
+  @RequiresEdt
   public abstract void scheduleAutoPopup(@NotNull Editor editor,
                                          @NotNull CompletionType completionType,
                                          @Nullable Condition<? super PsiFile> condition);
