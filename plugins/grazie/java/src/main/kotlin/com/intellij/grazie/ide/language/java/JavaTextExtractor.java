@@ -48,7 +48,8 @@ public class JavaTextExtractor extends TextExtractor {
     if (allowedDomains.contains(DOCUMENTATION)) {
       if (root instanceof PsiDocComment) {
         return HtmlUtilsKt.excludeHtml(
-          javadocBuilder.excluding(e -> e instanceof PsiDocTagImpl || e instanceof PsiMarkdownCodeBlock)
+          javadocBuilder.excluding(e -> e instanceof PsiDocTagImpl)
+            .withUnknown(e -> e instanceof PsiMarkdownCodeBlock)
             .build(root, DOCUMENTATION)
         );
       }

@@ -5,3 +5,10 @@
 ///   var a = args.length == 1 ? new ArrayList<String>() : new LinkedList<String>();
 ///}
 ///```
+
+/// Returns all [PsiClass]es annotated with `@io.cucumber.java.StepDefinitionAnnotation` (or similar).
+///
+/// In practice, this method returns a single list of all language-specific step definition annotations
+/// - English: `@io.cucumber.java.en.Given`, `@io.cucumber.java.en.When`, `@io.cucumber.java.en.Then`
+/// - Polish: `@io.cucumber.java.pl.Zakładając`, `@io.cucumber.java.pl.Jeżeli`, `@io.cucumber.java.pl.Wtedy`
+/// - and so on
