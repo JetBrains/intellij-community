@@ -252,10 +252,15 @@ internal class BuildTreeView(parentScope: CoroutineScope, private val buildViewI
   }
 
   private fun handleFilteringStateChange(filteringState: BuildTreeFilteringState) {
-    LOG.debug { "Filtering state update: $filteringState" }
-    this.filteringState = filteringState
-    rootNode.reload()
-    updateNavigationContext()
+    if (filteringState == this.filteringState) {
+      LOG.debug { "No-op filtering state update, already set to $filteringState" }
+    }
+    else {
+      LOG.debug { "Filtering state update: $filteringState" }
+      this.filteringState = filteringState
+      rootNode.reload()
+      updateNavigationContext()
+    }
   }
 
   private fun handleNavigation(forward: Boolean) {
