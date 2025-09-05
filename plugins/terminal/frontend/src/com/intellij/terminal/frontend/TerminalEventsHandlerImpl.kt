@@ -8,6 +8,8 @@ import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.TextRange
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.session.TerminalState
 import com.jediterm.terminal.emulator.mouse.MouseButtonCodes
@@ -396,6 +398,7 @@ internal open class TerminalEventsHandlerImpl(
         && blocksModel.isCommandTypingMode()
         && canTriggerCompletion(charTyped)
         && LookupManager.getActiveLookup(editor) == null
+        && outputModel.getTextAfterCursor().isBlank()
     ) {
       AutoPopupController.getInstance(project).scheduleAutoPopup(editor)
     }
@@ -403,6 +406,11 @@ internal open class TerminalEventsHandlerImpl(
 
   private fun canTriggerCompletion(char: Char): Boolean {
     return Character.isLetterOrDigit(char) || char == '-' || char == File.separatorChar
+  }
+
+  private fun TerminalOutputModel.getTextAfterCursor(): @NlsSafe String {
+    val cursorOffset = cursorOffsetState.value.toRelative()
+    return document.getText(TextRange(cursorOffset, document.textLength))
   }
 
   companion object {
