@@ -43,6 +43,9 @@ public final class ActionGroupPanelWrapper {
                                                                       @Nullable Runnable backAction,
                                                                       @NotNull Disposable parentDisposable) {
     var items = getFlattenedActionGroups(actionGroup);
+    if (!items.isEmpty()) {
+      items.removeFirst(); // Skip the root group.
+    }
     return createActionGroupPanel(items, backAction, parentDisposable);
   }
 
@@ -208,12 +211,8 @@ public final class ActionGroupPanelWrapper {
     });
   }
 
-  private static List<AnAction> getFlattenedActionGroups(ActionGroup actionGroup) {
+  private static ArrayList<AnAction> getFlattenedActionGroups(ActionGroup actionGroup) {
     ArrayList<AnAction> flatActions = new ArrayList<>();
-
-    if (actionGroup instanceof CollapsedActionGroup && ((CollapsedActionGroup)actionGroup).getCollapsed()) {
-      return flatActions;
-    }
 
     AnAction[] children;
     if (actionGroup instanceof DefaultActionGroup) {
@@ -225,6 +224,10 @@ public final class ActionGroupPanelWrapper {
 
     if (children.length != 0) {
       flatActions.add(actionGroup);
+    }
+
+    if (actionGroup instanceof CollapsedActionGroup && ((CollapsedActionGroup)actionGroup).getCollapsed()) {
+      return flatActions;
     }
 
     for (AnAction child : children) {
@@ -241,13 +244,13 @@ public final class ActionGroupPanelWrapper {
   private static @NotNull List<AnAction> getFlattenedActionGroups(@NotNull ActionGroup actionGroup, @NotNull AnActionEvent event) {
     ArrayList<AnAction> flatActions = new ArrayList<>();
 
-    if (actionGroup instanceof CollapsedActionGroup && ((CollapsedActionGroup)actionGroup).getCollapsed()) {
-      return flatActions;
-    }
-
     List<? extends AnAction> children = event.getUpdateSession().children(actionGroup);
     if (!children.isEmpty()) {
       flatActions.add(actionGroup);
+    }
+
+    if (actionGroup instanceof CollapsedActionGroup && ((CollapsedActionGroup)actionGroup).getCollapsed()) {
+      return flatActions;
     }
 
     for (AnAction action : children) {
@@ -273,6 +276,9 @@ public final class ActionGroupPanelWrapper {
         super.update(e);
         if (actionPanel == null) {
           var flatChildrenAndGroups = getFlattenedActionGroups(action, e);
+          if (!flatChildrenAndGroups.isEmpty()) {
+            flatChildrenAndGroups.removeFirst(); // Skip the root group.
+          }
           e.getUpdateSession().compute(this, "initPanel", ActionUpdateThread.EDT, () -> {
             initPanel(e, flatChildrenAndGroups);
             return true;
