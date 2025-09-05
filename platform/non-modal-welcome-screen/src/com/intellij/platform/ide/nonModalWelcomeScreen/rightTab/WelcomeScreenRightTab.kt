@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -61,7 +62,7 @@ class WelcomeScreenRightTab(
       modifier = Modifier.fillMaxSize().background(color = panelBackgroundColor)
     ) {
       Image(
-        imageVector = contentProvider.getBackgroundImageVectorLight(),
+        imageVector = backgroundImageVector,
         contentDescription = null,
         alignment = Alignment.TopCenter,
         // ImageVector has very sharp boundaries, apply the blur to soften them
@@ -302,6 +303,13 @@ class WelcomeScreenRightTab(
     get() = when (JewelTheme.isDark) {
       true -> SolidColor(Color.White.copy(alpha = 0.18f))
       false -> SolidColor(Color.Black.copy(alpha = 0.12f))
+    }
+
+  @get:Composable
+  private val backgroundImageVector: ImageVector
+    get() = when (JewelTheme.isDark) {
+      true -> contentProvider.getBackgroundImageVectorDark()
+      false -> contentProvider.getBackgroundImageVectorLight()
     }
 
   @get:Composable
