@@ -18,5 +18,7 @@
     <syntax.elementTypeConverter language="any" implementationClass="com.intellij.platform.syntax.psi.CommonElementTypeConverterFactory"/>
     <syntax.cancellationProviderExtension implementation="com.intellij.platform.syntax.psi.IntelliJCancellationProvider"/>
     <syntax.logProvider implementation="com.intellij.platform.syntax.psi.IntelliJLogProvider"/>
+    <applicationService serviceInterface="com.intellij.platform.syntax.psi.PsiSyntaxBuilderFactory"
+                        serviceImplementation="com.intellij.platform.syntax.psi.PsiSyntaxBuilderFactoryImpl"/>
   </extensions>
 </idea-plugin>

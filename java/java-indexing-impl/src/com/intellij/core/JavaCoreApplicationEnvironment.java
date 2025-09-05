@@ -25,6 +25,8 @@ import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.platform.syntax.psi.ElementTypeConverters;
 import com.intellij.platform.syntax.psi.LanguageSyntaxDefinitions;
+import com.intellij.platform.syntax.psi.PsiSyntaxBuilderFactory;
+import com.intellij.platform.syntax.psi.PsiSyntaxBuilderFactoryImpl;
 import com.intellij.psi.*;
 import com.intellij.psi.compiled.ClassFileDecompilers;
 import com.intellij.psi.impl.LanguageConstantExpressionEvaluator;
@@ -88,6 +90,8 @@ public class JavaCoreApplicationEnvironment extends CoreApplicationEnvironment {
     addExplicitExtension(ItemPresentationProviders.INSTANCE, PsiField.class, new FieldPresentationProvider());
     addExplicitExtension(ItemPresentationProviders.INSTANCE, PsiLocalVariable.class, new VariablePresentationProvider<>());
     addExplicitExtension(ItemPresentationProviders.INSTANCE, PsiParameter.class, new VariablePresentationProvider<>());
+
+    registerApplicationService(PsiSyntaxBuilderFactory.class, new PsiSyntaxBuilderFactoryImpl());
 
     registerApplicationService(JavaCodeFoldingSettings.class, new JavaCodeFoldingSettingsBase());
     addExplicitExtension(LanguageFolding.INSTANCE, JavaLanguage.INSTANCE, new JavaFoldingBuilderBase() {
