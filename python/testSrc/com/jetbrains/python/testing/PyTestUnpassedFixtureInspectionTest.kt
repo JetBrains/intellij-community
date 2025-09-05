@@ -55,4 +55,12 @@ class PyTestUnpassedFixtureInspectionTest : PyInspectionTestCase() {
   fun testNoInspectCorrectCode() {
     doTest()
   }
+
+  fun testWithShadowing() {
+    doTest()
+  }
+
+  fun testAsyncWithShadowing() {
+    doTest()
+  }
 }
