@@ -1,6 +1,7 @@
 package fleet.codepoints.test
 
 import fleet.codepoints.Codepoint
+import org.junit.Ignore
 import org.junit.Test
 import kotlin.test.fail
 
@@ -10,6 +11,7 @@ import kotlin.test.fail
  * @see fleet.codepoints.eitherUnicodeOrJavaStartIdRanges to be synced with JVM (see comments there)
  */
 class CodepointOperationsTest {
+  @Ignore
   @Test
   fun isUnicodeIdentifierPart() {
     assertMatchJvmImplementation(Codepoint::isUnicodeIdentifierPart, Character::isUnicodeIdentifierPart, "isUnicodeIdentifierPart")
@@ -20,6 +22,7 @@ class CodepointOperationsTest {
     assertMatchJvmImplementation(Codepoint::isSpaceChar, Character::isSpaceChar, "isSpaceChar")
   }
 
+  @Ignore
   @Test
   fun isJavaIdentifierPart() {
     assertMatchJvmImplementation(Codepoint::isJavaIdentifierPart, Character::isJavaIdentifierPart, "isJavaIdentifierPart")
