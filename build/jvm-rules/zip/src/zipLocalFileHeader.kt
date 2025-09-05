@@ -12,8 +12,8 @@ fun writeZipLocalFileHeader(path: ByteArray, size: Int, crc32: Long, buffer: Byt
 
 internal fun writeZipLocalFileHeader(path: ByteArray, size: Int, compressedSize: Int, crc32: Long, method: Int, buffer: ByteBuf) {
   buffer.writeIntLE(0x04034b50)
-  // Version needed to extract (2), General purpose bit flag (2)
-  buffer.writeZero(4)
+  buffer.writeShortLE(0x0014) // Version needed to extract
+  buffer.writeShortLE(0x0800) // General purpose bit flag
   // Compression method
   buffer.writeShortLE(method)
   // File last modification time (2), File last modification date (2)
@@ -45,8 +45,8 @@ internal fun writeZipLocalFileHeader(
 ) {
   assert(buffer.order() == ByteOrder.LITTLE_ENDIAN)
   buffer.putInt(0x04034b50) // Local file header signature
-  buffer.putShort(0) // Version needed to extract
-  buffer.putShort(0) // General purpose bit flag
+  buffer.putShort(0x0014) // Version needed to extract
+  buffer.putShort(0x0800) // General purpose bit flag
   buffer.putShort(method.toShort()) // Compression method
   buffer.putInt(0) // Last modification time and date
   buffer.putInt((crc32 and 0xffffffffL).toInt()) // CRC-32
@@ -101,7 +101,8 @@ private inline fun writeDirEntryUsingNioBuffer(
   assert(buffer.order() == ByteOrder.LITTLE_ENDIAN)
 
   buffer.putInt(0x04034b50)
-  buffer.putInt(0) // Version needed to extract (minimum), General purpose bit flag
+  buffer.putShort(0x0014) // Version needed to extract
+  buffer.putShort(0x0800) // General purpose bit flag set encoding to UTF-8 so target systems know how to decode
   buffer.putShort(0) // Compression method
   buffer.putLong(0) // File last modification time, File last modification date, CRC-32 of uncompressed data
   // Compressed size, Uncompressed size
@@ -138,11 +139,11 @@ private fun writeDirEntry(name: String, buffer: ByteBuf, zipIndexWriter: ZipInde
   buffer.ensureWritable(headerSize)
 
   buffer.writeIntLE(0x04034b50)
-
-  // Version needed to extract (minimum), General purpose bit flag, Compression method,
-  // File last modification time, File last modification date, CRC-32 of uncompressed data,
+  buffer.writeShortLE(0x0014) // Version needed to extract
+  buffer.writeShortLE(0x0800) // General purpose bit flag
+  // Compression Method, File last modification time, File last modification date, CRC-32 of uncompressed data,
   // Compressed size, Uncompressed size
-  buffer.writeZero(22)
+  buffer.writeZero(18)
   buffer.writeShortLE(nameSize) // File name length
   buffer.writeShortLE(0) // Extra field length
   buffer.writeBytes(key)

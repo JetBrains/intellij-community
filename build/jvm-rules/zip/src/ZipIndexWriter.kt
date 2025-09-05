@@ -35,8 +35,14 @@ class ZipIndexWriter(@JvmField val packageIndexBuilder: PackageIndexBuilder?, al
     buffer.ensureWritable(46 + path.size)
 
     buffer.writeIntLE(0x02014b50)
-    // Version made by (2), Version needed to extract (2), General purpose bit flag (2)
-    buffer.writeZero(6)
+    // Version made by (2) - high byte Unix, low byte version 2.0 see https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT for more details
+    buffer.writeShortLE(0x0314)
+    // Version needed to extract (2). The version gets encoded as 10 * major + minor % 10, so for version 2.0 this is 20 or 0x0014 hex.
+    // While some of these are stored as is i.e. ZipEntry.STORED (not using the deflate compression algorithm) i.e. support version 1
+    // version 2 is over 30 years old and is needed for directories
+    buffer.writeShortLE(0x0014)
+    // General purpose bit flag (2) set bit 11 so that target systems know to use UTF-8 when decoding
+    buffer.writeShortLE(0x0800)
     // compression method
     buffer.writeShortLE(method)
     // File last modification time (2), File last modification date(2)
@@ -56,8 +62,10 @@ class ZipIndexWriter(@JvmField val packageIndexBuilder: PackageIndexBuilder?, al
 
     // file name length
     buffer.writeShortLE((path.size and 0xffff))
-    // Extra field length (2), File comment length (2), Disk number where a file starts (or 0xffff for ZIP64)(2), Internal file attributes (2), External file attributes(4)
-    buffer.writeZero(12)
+    // Extra field length (2), File comment length (2), Disk number where a file starts (or 0xffff for ZIP64)(2), Internal file attributes (2)
+    buffer.writeZero(8)
+    // External file attributes(4) file, permissions=rw-r--r--
+    buffer.writeIntLE(0x81a40000L.toInt())
     // relative offset of local file header
     buffer.writeIntLE((headerOffset and 0xffffffffL).toInt())
     // file name
@@ -72,15 +80,24 @@ class ZipIndexWriter(@JvmField val packageIndexBuilder: PackageIndexBuilder?, al
     buffer.ensureWritable(46 + nameSize)
 
     buffer.writeIntLE(0x02014b50)
-    // Version made by (2), Version needed to extract (2), General purpose bit flag (2), compression method
+    // Version made by (2), Version needed to extract (2), General purpose bit flag (2),
+    // Version made by
+    buffer.writeShortLE(0x0314)
+    // Version needed to extract (minimum)
+    buffer.writeShortLE(0x0014)
+    //general purpose bit flag (utf-8)
+    buffer.writeShortLE(0x0800)
+    // compression method
     // File last modification time (2), File last modification date(2), CRC-32 of uncompressed data
     // compressed size, uncompressed size
-    buffer.writeZero(24)
+    buffer.writeZero(18)
     // file name length
     buffer.writeShortLE((nameSize and 0xffff))
     // Extra field length (2), File comment length (2), Disk number where a file starts (or 0xffff for ZIP64)(2),
-    // Internal file attributes (2), External file attributes(4)
-    buffer.writeZero(12)
+    // Internal file attributes (2)
+    buffer.writeZero(8)
+    // External file attributes(4) directory, permissions=rwxr-xr-x
+    buffer.writeIntLE(0x41ed0000L.toInt())
     // relative offset of local file header
     buffer.writeIntLE((headerOffset and 0xffffffffL).toInt())
     // file name
@@ -158,9 +175,9 @@ private fun writeZip64End(
   buffer.writeLongLE(0)
   val eocdSizeCalculationStartPosition = buffer.writerIndex()
   // Version made by
-  buffer.writeShortLE(0)
+  buffer.writeShortLE(0x0314)
   // Version needed to extract (minimum)
-  buffer.writeShortLE(0)
+  buffer.writeShortLE(0x0014)
   // Disk number
   buffer.writeIntLE(0)
   // Disk where the central directory starts
